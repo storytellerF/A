@@ -52,7 +52,7 @@ class CliBackend(
     override val userSearchService: UserSearchService,
     override val objectStorageService: ObjectStorageService,
     override val nameService: NameService,
-    override val combinedDatabase: CombinedDatabase
+    override val database: CombinedDatabase
 ) : Backend
 
 fun buildBackendFromEnv(env: MergedEnv): Backend {

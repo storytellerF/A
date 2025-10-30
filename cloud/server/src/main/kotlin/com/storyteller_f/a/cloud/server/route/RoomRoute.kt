@@ -7,7 +7,7 @@ import com.storyteller_f.a.cloud.core.service.createRoom
 import com.storyteller_f.a.cloud.core.service.exitRoom
 import com.storyteller_f.a.cloud.core.service.getRoomInfo
 import com.storyteller_f.a.cloud.core.service.getRoomPubKeys
-import com.storyteller_f.a.cloud.core.service.getTopLevelTopicsInObject
+import com.storyteller_f.a.cloud.core.service.getTopicsByParentId
 import com.storyteller_f.a.cloud.core.service.joinRoom
 import com.storyteller_f.a.cloud.core.service.searchRoomMembers
 import com.storyteller_f.a.cloud.core.service.searchRoomPaginationResult
@@ -59,7 +59,7 @@ fun Route.bindRoomRoute(backend: Backend) {
     CustomApi.Rooms.Id.Topics.get(RoutingContext::handleResult) { q, p ->
         usePrincipalOrNull { uid ->
             q.pagination(IdentifiablePagingGenerator) { f ->
-                backend.getTopLevelTopicsInObject(
+                backend.getTopicsByParentId(
                     p.id,
                     ObjectType.ROOM,
                     uid,

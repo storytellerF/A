@@ -32,7 +32,7 @@ interface Backend {
     val userSearchService: UserSearchService
     val objectStorageService: ObjectStorageService
     val nameService: NameService
-    val combinedDatabase: CombinedDatabase
+    val database: CombinedDatabase
 
     companion object
 }
@@ -198,7 +198,7 @@ suspend fun <T> Backend.addIfNotExists(
             Result.success(it)
         } else {
             add().recoverResult {
-                if (combinedDatabase.isDup(it)) {
+                if (database.isDup(it)) {
                     get()
                 } else {
                     Result.failure(it)

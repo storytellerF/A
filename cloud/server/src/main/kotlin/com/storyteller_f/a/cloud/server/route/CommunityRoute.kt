@@ -7,7 +7,7 @@ import com.storyteller_f.a.cloud.core.service.createCommunity
 import com.storyteller_f.a.cloud.core.service.doUserJoinCommunity
 import com.storyteller_f.a.cloud.core.service.exitCommunity
 import com.storyteller_f.a.cloud.core.service.getCommunity
-import com.storyteller_f.a.cloud.core.service.getTopLevelTopicsInObject
+import com.storyteller_f.a.cloud.core.service.getTopicsByParentId
 import com.storyteller_f.a.cloud.core.service.searchCommunities
 import com.storyteller_f.a.cloud.core.service.searchMembers
 import com.storyteller_f.a.cloud.core.service.updateCommunity
@@ -49,7 +49,7 @@ fun Route.bindCommunityRoute(backend: Backend) {
     CustomApi.Communities.Id.Topics.get(RoutingContext::handleResult) { q, p ->
         usePrincipalOrNull { uid ->
             q.pagination(IdentifiablePagingGenerator) { f ->
-                backend.getTopLevelTopicsInObject(
+                backend.getTopicsByParentId(
                     p.id,
                     ObjectType.COMMUNITY,
                     uid,

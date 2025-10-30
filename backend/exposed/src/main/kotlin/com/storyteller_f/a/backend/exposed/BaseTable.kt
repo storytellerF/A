@@ -52,23 +52,23 @@ fun Table.objectType(name: String) = enumerationByName<ObjectType>(name, 10)
 fun <T : Table> T.emoji() = varchar("emoji", 20)
 
 class ExposedDatabase(val databaseSession: ExposedDatabaseSession) : CombinedDatabase {
-    override val userDatabase: UserDatabase
+    override val user: UserDatabase
         get() = ExposedUserDatabase(databaseSession)
-    override val topicDatabase: TopicDatabase
-        get() = ExposedTopicDatabase(databaseSession, containerDatabase, fileDatabase)
-    override val titleDatabase: TitleDatabase
+    override val topic: TopicDatabase
+        get() = ExposedTopicDatabase(databaseSession, container, file)
+    override val title: TitleDatabase
         get() = ExposedTitleDatabase(databaseSession)
-    override val communityDatabase: CommunityDatabase
-        get() = ExposedCommunityDatabase(databaseSession, containerDatabase)
-    override val roomDatabase: RoomDatabase
-        get() = ExposedRoomDatabase(databaseSession, containerDatabase)
-    override val fileDatabase: FileDatabase
+    override val community: CommunityDatabase
+        get() = ExposedCommunityDatabase(databaseSession, container)
+    override val room: RoomDatabase
+        get() = ExposedRoomDatabase(databaseSession, container)
+    override val file: FileDatabase
         get() = ExposedFileDatabase(databaseSession)
-    override val containerDatabase: ContainerDatabase
+    override val container: ContainerDatabase
         get() = ExposedContainerDatabase(databaseSession)
-    override val cliDatabase: CliDatabase
+    override val cli: CliDatabase
         get() = ExposedCliDatabase(databaseSession)
-    override val panelAccountDatabase: PanelAccountDatabase
+    override val panelAccount: PanelAccountDatabase
         get() = ExposedPanelAccountDatabase(databaseSession)
 
     override suspend fun init() {

@@ -72,7 +72,7 @@ class DownloaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIView
         userSession: CustomUserSessionManager
     ) {
         val document =
-            modelStorage.downloadInfoStorage.getDocument(DownloadCollection, fileInfo.id) ?: return
+            modelStorage.download.getDocument(DownloadCollection, fileInfo.id) ?: return
         download(userSession, modelStorage, fileInfo, Path(document.path))
     }
 
@@ -84,7 +84,7 @@ class DownloaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIView
     ) {
         lock(fileInfo.id) {
             val document =
-                modelStorage.downloadInfoStorage.getDocument(DownloadCollection, fileInfo.id)
+                modelStorage.download.getDocument(DownloadCollection, fileInfo.id)
             if (document == null) {
                 val new = DownloadInfo(
                     fileInfo,
@@ -94,7 +94,7 @@ class DownloaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIView
                     0,
                     fileInfo.size
                 )
-                modelStorage.downloadInfoStorage.save(DownloadCollection, new)
+                modelStorage.download.save(DownloadCollection, new)
             } else if (document.status != DownloadStatus.NOT_DOWNLOADED) {
                 return
             }
@@ -110,7 +110,7 @@ class DownloaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIView
     ) {
         val id = fileInfo.id
         val downloadInfo =
-            modelStorage.downloadInfoStorage.getDocument(DownloadCollection, id) ?: return
+            modelStorage.download.getDocument(DownloadCollection, id) ?: return
         if (downloadInfo.status == DownloadStatus.PROCESSED) return
         val isNeedDownload =
             if (downloadInfo.status == DownloadStatus.DOWNLOADED ||
@@ -236,8 +236,8 @@ class DownloaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIView
         id: PrimaryKey,
         block: (DownloadInfo) -> DownloadInfo
     ) {
-        val uploadInfo = modelStorage.downloadInfoStorage.getDocument(collection, id) ?: return
-        modelStorage.downloadInfoStorage.save(collection, block(uploadInfo))
+        val uploadInfo = modelStorage.download.getDocument(collection, id) ?: return
+        modelStorage.download.save(collection, block(uploadInfo))
     }
 
     suspend inline fun lock(id: PrimaryKey, block: suspend () -> Unit) {

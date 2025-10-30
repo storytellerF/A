@@ -14,6 +14,6 @@ import org.jetbrains.compose.resources.PreviewContextConfigurationEffect
 fun UserDialogPreview() {
     PreviewContextConfigurationEffect()
     ProvideFontIcon {
-        UserDialog(true, UserInfo.EMPTY, true, {}) { }
+        UserDialog(UserInfo.EMPTY, true) { }
     }
 }

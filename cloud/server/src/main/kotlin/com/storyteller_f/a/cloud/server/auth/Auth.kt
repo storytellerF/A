@@ -122,7 +122,7 @@ private suspend fun Backend.checkDevWsLink(call: ApplicationCall): Result<Custom
     val did = call.request.queryParameters["did"]
     return if (did?.all { it.isDigit() } == true) {
         val id = did.toPrimaryKey()
-        combinedDatabase.userDatabase.getRawUser(ObjectFetch.IdFetch(id)).mapIfNotNull {
+        database.user.getRawUser(ObjectFetch.IdFetch(id)).mapIfNotNull {
             CustomPrincipal(id)
         }
     } else {

@@ -3,22 +3,48 @@ package com.storyteller_f.a.app.compose_app.pages.user
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SheetState
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.compose.LocalPlatformContext
-import com.attafitamim.krop.core.crop.*
+import com.attafitamim.krop.core.crop.AspectRatio
+import com.attafitamim.krop.core.crop.CropError
+import com.attafitamim.krop.core.crop.CropResult
+import com.attafitamim.krop.core.crop.ImageCropper
+import com.attafitamim.krop.core.crop.RectCropShape
+import com.attafitamim.krop.core.crop.crop
+import com.attafitamim.krop.core.crop.cropperStyle
+import com.attafitamim.krop.core.crop.rememberImageCropper
 import com.attafitamim.krop.core.images.ImageBitmapSrc
 import com.attafitamim.krop.ui.ImageCropperDialog
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.LocalToaster
 import com.storyteller_f.a.app.compose_app.common.OnUserUpdated
-import com.storyteller_f.a.app.compose_app.components.*
+import com.storyteller_f.a.app.compose_app.components.CustomAlertDialog
+import com.storyteller_f.a.app.compose_app.components.CustomAlertDialogController
+import com.storyteller_f.a.app.compose_app.components.GlobalDialogController
+import com.storyteller_f.a.app.compose_app.components.SettingOptionResettableView
+import com.storyteller_f.a.app.compose_app.components.SettingOptionView
+import com.storyteller_f.a.app.compose_app.components.imageRequest
+import com.storyteller_f.a.app.compose_app.components.rememberAlertDialogController
 import com.storyteller_f.a.app.compose_app.pages.topic.FilePicker
 import com.storyteller_f.a.app.compose_app.pages.topic.uploadPath
 import com.storyteller_f.a.app.core.utils.ImageFormat
@@ -34,6 +60,7 @@ import com.storyteller_f.shared.model.checkMediaFileDimensionRatioMatch
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import kotlinx.coroutines.CoroutineScope
@@ -44,6 +71,7 @@ sealed class SettingOption(open val value: String?) {
     data class Aid(override val value: String?) : SettingOption(value)
     data class Icon(override val value: String?) : SettingOption(value)
     data class Poster(override val value: String?) : SettingOption(value)
+    data class RoomIcon(override val value: String?, val roomId: PrimaryKey?) : SettingOption(value)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -105,10 +133,7 @@ fun ObjectSettingDialog(
     val context = LocalPlatformContext.current
     val scope = rememberCoroutineScope()
 
-    val ratio = when (currentOption) {
-        is SettingOption.Poster -> AspectRatio(3, 4)
-        else -> AspectRatio(1, 1)
-    }
+    val ratio = getRatio(currentOption)
     val imageCropper = rememberImageCropper()
     val cropState = imageCropper.cropState
     if (cropState != null) {
@@ -123,12 +148,12 @@ fun ObjectSettingDialog(
 
     val userSessionManager = LocalSessionManager.current
     val myInfo by userSessionManager.model.userHandler.data.collectAsState()
-    val my = myInfo
-    val mediaTarget = ObjectTuple(my?.id ?: 0, ObjectType.USER)
+    val mediaTarget = getMediaTarget(currentOption, myInfo)
     val globalDialogController = LocalGlobalDialog.current
     val alertDialogController = rememberAlertDialogController()
+    val showSheet = showFilePicker(currentOption)
     FilePicker(
-        currentOption is SettingOption.Icon || currentOption is SettingOption.Poster,
+        showSheet,
         sheetState,
         mediaTarget,
         listOf("files"),
@@ -151,7 +176,8 @@ fun ObjectSettingDialog(
     }
 
     currentOption?.let {
-        InputDialog(it !is SettingOption.Icon && it !is SettingOption.Poster, it.value.orEmpty(), {
+        val showInput = !showSheet
+        InputDialog(showInput, it.value.orEmpty(), {
             closeDialog()
         }, onInputString)
     }
@@ -160,6 +186,29 @@ fun ObjectSettingDialog(
     }) {
     }
 }
+
+private fun getMediaTarget(
+    currentOption: SettingOption?,
+    my: UserInfo?
+): ObjectTuple = if (currentOption is SettingOption.RoomIcon && currentOption.roomId != null) {
+    ObjectTuple(currentOption.roomId, ObjectType.ROOM)
+} else {
+    ObjectTuple(my?.id ?: 0, ObjectType.USER)
+}
+
+private fun getRatio(currentOption: SettingOption?): AspectRatio {
+    val dimension = when (currentOption) {
+        is SettingOption.RoomIcon -> Dimension.ROOM_DIMENSION
+        is SettingOption.Poster -> Dimension.COMMUNITY_POSTER
+        else -> Dimension.DEFAULT_DIMENSION
+    }
+    return AspectRatio(dimension.width, dimension.height)
+}
+
+private fun showFilePicker(currentOption: SettingOption?): Boolean =
+    currentOption is SettingOption.Icon ||
+        currentOption is SettingOption.Poster ||
+        currentOption is SettingOption.RoomIcon
 
 private fun processSelectedMedia(
     mediaList: List<FileInfo>,
@@ -177,28 +226,28 @@ private fun processSelectedMedia(
     val dimension = info.dimension
     if (dimension == null || !info.contentType.startsWith("image/")) {
         alertDialogController.showTitle("invalid image: ${info.contentType} $dimension")
-    } else {
-        if (checkMediaFileDimensionRatioMatch(
-                dimension,
-                Dimension(ratio.x, ratio.y)
+        return
+    }
+    if (checkMediaFileDimensionRatioMatch(
+            dimension,
+            Dimension(ratio.x, ratio.y)
+        )
+    ) {
+        onInputMedia(info)
+        return
+    }
+    scope.launch {
+        globalDialogController.useResult {
+            cropImage(
+                context,
+                sessionManager,
+                info,
+                imageCropper,
+                mediaTarget
             )
-        ) {
-            onInputMedia(info)
-        } else {
-            scope.launch {
-                globalDialogController.useResult {
-                    cropImage(
-                        context,
-                        sessionManager,
-                        info,
-                        imageCropper,
-                        mediaTarget
-                    )
-                }.onSuccess {
-                    if (it != null) {
-                        onInputMedia(it)
-                    }
-                }
+        }.onSuccess {
+            if (it != null) {
+                onInputMedia(it)
             }
         }
     }

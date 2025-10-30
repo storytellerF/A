@@ -101,7 +101,7 @@ fun RoutingContext.saveSuccessSessionOnFirst(id: PrimaryKey) {
 suspend fun Backend.getUserAuthData(
     credential: CustomCredential
 ): Result<Pair<String, Long>?> {
-    val userDatabase = combinedDatabase.userDatabase
+    val userDatabase = database.user
     return when (credential) {
         is CustomCredential.AidCredential -> userDatabase.getUserAuthDataByAid(credential.aid)
 
@@ -122,7 +122,7 @@ suspend fun ApplicationCall.checkApiRequest(
     return when {
         !ServerConfig.IS_PROD && credential is CustomCredential.IdCredential && sig == credential.id.toString() -> {
             val id = credential.id
-            backend.combinedDatabase.userDatabase.getRawUser(ObjectFetch.IdFetch(id)).mapIfNotNull {
+            backend.database.user.getRawUser(ObjectFetch.IdFetch(id)).mapIfNotNull {
                 saveSuccessSession(session, id)
                 CustomPrincipal(id)
             }
@@ -151,11 +151,11 @@ suspend fun Backend.getAdminAuthData(
     credential: CustomCredential
 ): Result<Pair<String, Long>?> {
     return when (credential) {
-        is CustomCredential.IdCredential -> combinedDatabase.panelAccountDatabase.getUserAuthDataById(
+        is CustomCredential.IdCredential -> database.panelAccount.getUserAuthDataById(
             credential.id
         )
 
-        is CustomCredential.AddressCredential -> combinedDatabase.panelAccountDatabase.getUserAuthDataByAddress(
+        is CustomCredential.AddressCredential -> database.panelAccount.getUserAuthDataByAddress(
             credential.ad
         )
 

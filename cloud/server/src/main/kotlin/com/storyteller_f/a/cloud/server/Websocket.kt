@@ -11,16 +11,20 @@ import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
 import io.github.aakira.napier.Napier
-import io.ktor.client.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.client.plugins.logging.*
-import io.ktor.client.request.*
-import io.ktor.http.*
-import io.ktor.serialization.kotlinx.json.*
-import io.ktor.server.application.*
-import io.ktor.server.websocket.*
+import io.ktor.client.HttpClient
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.logging.Logging
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
+import io.ktor.serialization.kotlinx.json.json
+import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationStopping
+import io.ktor.server.application.log
+import io.ktor.server.websocket.DefaultWebSocketServerSession
 import io.ktor.server.websocket.receiveDeserialized
-import io.ktor.util.logging.*
+import io.ktor.util.logging.error
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CancellationException
@@ -95,10 +99,7 @@ suspend fun DefaultWebSocketServerSession.webSocketContent(
     }
 }
 
-private fun DefaultWebSocketServerSession.printWsError(
-    e: Exception,
-    reader: DatabaseReader,
-) {
+private fun DefaultWebSocketServerSession.printWsError(e: Exception, reader: DatabaseReader) {
     val log = call.application.log
     when (e) {
         is ClosedReceiveChannelException -> log.info("ws closed ${call.remoteIp(reader).first()}")
@@ -114,6 +115,7 @@ private suspend fun DefaultWebSocketServerSession.processUserMessage(
     frame: RoomFrame,
     uid: PrimaryKey,
 ) {
+    call.application.log.info("receive message: $frame")
     try {
         if (frame is RoomFrame.Message) {
             processNewMessage(backend, frame, uid)
@@ -179,7 +181,7 @@ private suspend fun dispatchNewMessage(
     httpClient: HttpClient,
 ): Nothing {
     sharedFlow.collect { frame ->
-        backend.combinedDatabase.containerDatabase.getJoinedUserList(frame.topicInfo.rootId)
+        backend.database.container.getJoinedUserList(frame.topicInfo.rootId)
             .mapResult { list ->
                 val memberJoins = list.filter {
                     it.uid != frame.topicInfo.author
@@ -189,7 +191,7 @@ private suspend fun dispatchNewMessage(
                 }.flatten().map {
                     WebsocketDispatcher(it)
                 }
-                backend.combinedDatabase.userDatabase.getUserDevices(memberJoins.map {
+                backend.database.user.getUserDevices(memberJoins.map {
                     it.uid
                 }).map { list ->
                     list.map {

@@ -317,10 +317,7 @@ class TopicTest {
             }
             assertListSize(
                 1,
-                getRoomTopics(
-                    publicRoomId,
-                    paginationQuery = PaginationQuery(null, null, size = 10)
-                )
+                getRoomTopics(publicRoomId, paginationQuery = PaginationQuery(size = 10))
             )
         }
         receivedFrame.clear()

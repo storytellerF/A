@@ -1,6 +1,13 @@
 package com.storyteller_f.a.backend.exposed.database
 
-import com.storyteller_f.a.backend.core.*
+import com.storyteller_f.a.backend.core.ContainerDatabase
+import com.storyteller_f.a.backend.core.JoinSearch
+import com.storyteller_f.a.backend.core.ObjectFetch
+import com.storyteller_f.a.backend.core.ObjectListFetch
+import com.storyteller_f.a.backend.core.PaginationResult
+import com.storyteller_f.a.backend.core.PrimaryKeyFetch
+import com.storyteller_f.a.backend.core.RoomDatabase
+import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.backend.core.types.MemberJoin
 import com.storyteller_f.a.backend.core.types.RawRoom
 import com.storyteller_f.a.backend.core.types.Room
@@ -11,7 +18,14 @@ import com.storyteller_f.a.backend.exposed.map
 import com.storyteller_f.a.backend.exposed.query.bindPaginationQuery
 import com.storyteller_f.a.backend.exposed.query.buildRoomPubKeyQuery
 import com.storyteller_f.a.backend.exposed.query.buildRoomSearchWhereQuery
-import com.storyteller_f.a.backend.exposed.tables.*
+import com.storyteller_f.a.backend.exposed.tables.Aids
+import com.storyteller_f.a.backend.exposed.tables.MemberJoins
+import com.storyteller_f.a.backend.exposed.tables.Rooms
+import com.storyteller_f.a.backend.exposed.tables.UserTopicReads
+import com.storyteller_f.a.backend.exposed.tables.Users
+import com.storyteller_f.a.backend.exposed.tables.addJoinRaw
+import com.storyteller_f.a.backend.exposed.tables.findRoomById
+import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.UserPubKeyInfo
 import com.storyteller_f.shared.obj.UpdateRoomBody
 import com.storyteller_f.shared.type.ObjectType
@@ -108,8 +122,7 @@ class ExposedRoomDatabase(
         if (uid == null && fillJoinInfo == true) return Result.failure(UnauthorizedException())
         return databaseSession.dbSearch {
             search {
-                Rooms
-                    .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
+                Rooms.join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
                     .select(Rooms.fields + Aids.value)
                     .where {
                         when (objectFetch) {

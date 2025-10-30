@@ -59,7 +59,7 @@ suspend fun Backend.updateUser(
             else -> UNIT_RESULT
         }
     }, suspend {
-        checkIcon(newUser.avatar).mapResult {
+        checkIcon(newUser.avatar, Dimension.DEFAULT_DIMENSION).mapResult {
             when (it) {
                 MediaCheckResult.NOT_FOUND -> Result.failure(CustomBadRequestException("avatar not font"))
                 MediaCheckResult.CONTENT_TYPE_MISMATCH -> Result.failure(
@@ -73,7 +73,7 @@ suspend fun Backend.updateUser(
         it().exceptionOrNull()
     }
     if (firstError != null) return Result.failure(firstError)
-    return combinedDatabase.userDatabase.updateUserInfo(uid, newUser).mapResult {
+    return database.user.updateUserInfo(uid, newUser).mapResult {
         if (it) {
             addUserLog(uid, UserLogType.UPDATE, uid ob ObjectType.USER)
             getUserInfo(ObjectFetch.IdFetch(uid))
@@ -90,7 +90,7 @@ private suspend fun Backend.checkAidModifyTimes(
     UNIT_RESULT
 } else {
     // check aid is null
-    combinedDatabase.userDatabase.getUserAid(id).mapResult {
+    database.user.getUserAid(id).mapResult {
         if (it != null) {
             Result.failure(CustomBadRequestException("aid is not null."))
         } else {
@@ -100,24 +100,27 @@ private suspend fun Backend.checkAidModifyTimes(
 }
 
 fun checkAid(aid: String?, supportEmptyAid: Boolean = false): Result<Unit> {
-    return when {
-        aid.isNullOrBlank() -> if (supportEmptyAid) {
-            UNIT_RESULT
-        } else {
-            Result.failure(
-                CustomBadRequestException("aid is empty")
-            )
+    if (aid.isNullOrBlank()) {
+        if (supportEmptyAid) {
+            return UNIT_RESULT
         }
-
-        aid.length in 2..AID_LENGTH -> UNIT_RESULT
-        !aid.all {
-            it.isLetterOrDigit() || it == '_' || it == '-'
-        } -> {
-            Result.failure(CustomBadRequestException("only support alphabet, number, underline and hyphen"))
-        }
-
-        else -> Result.failure(CustomBadRequestException("aid too long"))
+        return Result.failure(CustomBadRequestException("aid is empty"))
     }
+    if (aid.length !in 2..AID_LENGTH) {
+        return Result.failure(CustomBadRequestException("aid too long or too short"))
+    }
+
+    if (aid.all {
+            !it.isEnglishLetter()
+        }) {
+        return Result.failure(CustomBadRequestException("aid must contains english letter"))
+    }
+    if (!aid.all {
+            it.isEnglishLetter() || it.isDigit() || it == '_' || it == '-'
+        }) {
+        return Result.failure(CustomBadRequestException("only support alphabet, number, underline and hyphen"))
+    }
+    return UNIT_RESULT
 }
 
 fun checkNickname(nickname: String?, range: IntRange): StringCheckResult {
@@ -147,7 +150,7 @@ suspend fun Backend.checkIcon(
     aspectRatio: Dimension? = null,
 ): Result<MediaCheckResult?> {
     return if (icon != null) {
-        combinedDatabase.fileDatabase.getFileRecordByIds(listOf(icon)).mapIfNotNull {
+        database.file.getFileRecordByIds(listOf(icon)).mapIfNotNull {
             val mediaInfo = it.firstOrNull()
             val dimension = mediaInfo?.dimension
             when {
@@ -173,7 +176,7 @@ suspend fun Backend.addReadLog(uid: PrimaryKey, tuple: UpdateUserRead): Result<U
         uid
     ).mapResultIfNotNull {
         if (it.hasRead) {
-            combinedDatabase.userDatabase.addReadLog(
+            database.user.addReadLog(
                 UserTopicRead(
                     uid,
                     now(),
@@ -189,7 +192,7 @@ suspend fun Backend.addReadLog(uid: PrimaryKey, tuple: UpdateUserRead): Result<U
 }
 
 suspend fun Backend.addChildAccount(uid: PrimaryKey): Result<ChildAccountInfo> {
-    return combinedDatabase.userDatabase.getRawChildAccount(uid).mapResult {
+    return database.user.getRawChildAccount(uid).mapResult {
         if (it != null) {
             Result.failure(CustomBadRequestException("child account can't create child account"))
         } else {
@@ -214,7 +217,7 @@ suspend fun Backend.addChildAccount(uid: PrimaryKey): Result<ChildAccountInfo> {
                     PassType.RAW,
                     AlgoType.P256
                 )
-                combinedDatabase.userDatabase.createChildAccount(uid, derPrivateKey, user)
+                database.user.createChildAccount(uid, derPrivateKey, user)
                     .getOrThrow()
                 userSearchService.saveDocument(listOf(UserDocument.fromUser(user)))
                     .onFailure { throwable ->
@@ -236,7 +239,7 @@ suspend fun Backend.addChildAccount(uid: PrimaryKey): Result<ChildAccountInfo> {
 suspend fun Backend.addUserLog(uid: PrimaryKey, type: UserLogType, objectTuple: ObjectTuple) {
     val logId = SnowflakeFactory.nextId()
     val log = UserLog(logId, now(), uid, type, objectTuple.objectId, objectTuple.objectType)
-    combinedDatabase.userDatabase.insertUserLog(log).onFailure {
+    database.user.insertUserLog(log).onFailure {
         Napier.i(tag = "user log", throwable = it) {
             "add failed"
         }
@@ -247,8 +250,8 @@ suspend fun Backend.addDevice(
     uid: PrimaryKey,
     newDevice: NewDevice
 ): Result<Unit> =
-    combinedDatabase.userDatabase.addDevice(uid, newDevice.endpointUrl).recoverResult {
-        if (combinedDatabase.isDup(it)) {
+    database.user.addDevice(uid, newDevice.endpointUrl).recoverResult {
+        if (database.isDup(it)) {
             UNIT_RESULT
         } else {
             Result.failure(it)
@@ -259,7 +262,7 @@ suspend fun Backend.getUserAlternateUserInfoList(
     uid: PrimaryKey,
     fetch: PrimaryKeyFetch,
 ): Result<PaginationResult<ChildAccountInfo>?> {
-    return combinedDatabase.userDatabase.getRawChildAccountPaginationListByHost(
+    return database.user.getRawChildAccountPaginationListByHost(
         uid,
         fetch
     ).mapResult { (results, total) ->
@@ -284,7 +287,7 @@ suspend fun Backend.isKeyVerified(
     roomId: PrimaryKey,
     encryptedAes: Map<PrimaryKey, String>,
 ): Result<Boolean> {
-    return combinedDatabase.containerDatabase.getJoinedUserList(roomId).map { value ->
+    return database.container.getJoinedUserList(roomId).map { value ->
         value.map {
             it.uid
         }.toSet().minus(encryptedAes.keys).isEmpty()
@@ -297,7 +300,7 @@ suspend fun Backend.searchMembers(
     primaryKeyFetch: PrimaryKeyFetch,
 ): Result<PaginationResult<UserInfo>?> {
     return if (word.isNullOrBlank()) {
-        combinedDatabase.containerDatabase.getMemberPaginationResult(
+        database.container.getMemberPaginationResult(
             objectId,
             word,
             primaryKeyFetch
@@ -305,7 +308,7 @@ suspend fun Backend.searchMembers(
     } else {
         userSearchService.searchDocument(UserDocumentSearch.Keyword(listOf(word)), primaryKeyFetch)
             .mapResult { (list, total) ->
-                combinedDatabase.userDatabase.getRawUsers(ObjectListFetch.IdListFetch(list.map {
+                database.user.getRawUsers(ObjectListFetch.IdListFetch(list.map {
                     it.id
                 })).map {
                     PaginationResult(it, total)
@@ -321,7 +324,7 @@ suspend fun Backend.searchMembers(
 suspend fun Backend.getUserInfoList(
     listFetch: ObjectListFetch,
 ): Result<List<UserInfo>> {
-    return combinedDatabase.userDatabase.getRawUsers(listFetch).mapResult {
+    return database.user.getRawUsers(listFetch).mapResult {
         processRawUserToUserInfo(it)
     }
 }
@@ -329,14 +332,14 @@ suspend fun Backend.getUserInfoList(
 suspend fun Backend.getUserInfo(
     fetch: ObjectFetch,
 ): Result<UserInfo?> {
-    return combinedDatabase.userDatabase.getRawUser(fetch).mapResultIfNotNull {
+    return database.user.getRawUser(fetch).mapResultIfNotNull {
         processRawUserToUserInfo(listOf(it)).mapIfNotNull(List<UserInfo>::first)
     }
 }
 
 suspend fun Backend.processRawUserToUserInfo(
     rawResults: List<RawUser>,
-) = combinedDatabase.fileDatabase.getFileRecordByIds(rawResults.mapNotNull {
+) = database.file.getFileRecordByIds(rawResults.mapNotNull {
     it.user.icon
 }).mapResult { medias ->
     processFileRecordToFileInfo(medias).map { list ->
@@ -348,8 +351,12 @@ suspend fun Backend.processRawUserToUserInfo(
 }
 
 suspend fun Backend.getAllUsers(primaryKeyFetch: PrimaryKeyFetch) =
-    combinedDatabase.userDatabase.getAllUsers(primaryKeyFetch).mapResult { result ->
+    database.user.getAllUsers(primaryKeyFetch).mapResult { result ->
         processRawUserToUserInfo(result.list).map {
             PaginationResult(it, result.total)
         }
     }
+
+fun Char.isEnglishLetter(): Boolean {
+    return this in 'a'..'z' || this in 'A'..'Z'
+}

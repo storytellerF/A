@@ -28,6 +28,7 @@ import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.PosterSearch
 import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.type.*
+import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import org.jetbrains.exposed.v1.core.JoinType
@@ -64,9 +65,9 @@ class ExposedCommunityDatabase(
             }
             first(Community::wrapRow)
         }.mapResultIfNotNull { community ->
-            processCommunityToRawCommunity(uid, listOf(community)).map {
-                it.first()
-            }
+            processCommunityToRawCommunity(uid, listOf(community))
+        }.mapIfNotNull {
+            it.first()
         }
     }
 

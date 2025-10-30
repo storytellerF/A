@@ -10,7 +10,7 @@ import kotlinx.coroutines.runBlocking
 class CleanCommand : Subcommand("clean", "clean all data") {
     override fun execute() {
         runBlocking {
-            backend.combinedDatabase.clean()
+            backend.database.clean()
             Napier.i {
                 "database tables delete done"
             }
@@ -27,7 +27,7 @@ class CleanCommand : Subcommand("clean", "clean all data") {
 class InitTableCommand : Subcommand("init", "init table data") {
     override fun execute() {
         runBlocking {
-            backend.combinedDatabase.init()
+            backend.database.init()
         }
         Napier.i {
             "init done"

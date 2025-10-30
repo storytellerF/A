@@ -10,7 +10,13 @@ import kotlin.math.abs
 const val A_FILE_DEFAULT_BUCKET = "default"
 
 @Serializable
-data class Dimension(val width: Int, val height: Int)
+data class Dimension(val width: Int, val height: Int) {
+    companion object {
+        val ROOM_DIMENSION = Dimension(4, 3)
+        val COMMUNITY_POSTER = Dimension(3, 4)
+        val DEFAULT_DIMENSION = Dimension(1, 1)
+    }
+}
 
 @Serializable
 data class FileInfo(

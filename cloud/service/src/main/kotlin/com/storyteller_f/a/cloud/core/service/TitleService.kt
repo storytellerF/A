@@ -24,7 +24,7 @@ suspend fun Backend.getUserTitles(
     type: TitleType? = null,
     scopeId: PrimaryKey? = null,
     fetch: PrimaryKeyFetch
-) = combinedDatabase.titleDatabase.getTitlePaginationResult(
+) = database.title.getTitlePaginationResult(
     fetch,
     uid,
     searchType,
@@ -108,7 +108,7 @@ private suspend fun Backend.getRelatedObject(
             Result.success(emptyList())
         }.getOrThrow()
         val r3 = if (communityIdList.isNotEmpty()) {
-            combinedDatabase.communityDatabase.getRawCommunities(
+            database.community.getRawCommunities(
                 ObjectListFetch.IdListFetch(communityIdList)
             ).mapResult {
                 processRawCommunityToCommunityInfo(it)
@@ -182,7 +182,7 @@ suspend fun Backend.createTitle(
             isPin = false,
             lastModifiedTime = null
         )
-        combinedDatabase.topicDatabase.createTitle(
+        database.topic.createTitle(
             title,
             topic
         ).mapResult {

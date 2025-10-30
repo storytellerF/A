@@ -388,18 +388,18 @@ object CustomApi {
             override val prePageToken: String? = null,
         ) : PageableQuery
 
-        val get = safeApiWithQuery<ServerResponse<FileInfo>, FileQuery>("medias")
+        val get = safeApiWithQuery<ServerResponse<FileInfo>, FileQuery>("files")
 
         object Id {
             val copy =
-                mutationApiWithPath<ServerResponse<FileInfo>, Unit, CommonPath>("medias/{id}/copy")
-            val get = safeApiWithPath<FileInfo, CommonPath>("medias/{id}")
+                mutationApiWithPath<ServerResponse<FileInfo>, Unit, CommonPath>("files/{id}/copy")
+            val get = safeApiWithPath<FileInfo, CommonPath>("files/{id}")
             val extractAlbum =
-                mutationApiWithPath<ServerResponse<FileInfo>, Unit, CommonPath>("medias/{id}/extract-album")
+                mutationApiWithPath<ServerResponse<FileInfo>, Unit, CommonPath>("files/{id}/extract-album")
         }
 
         val upload =
-            mutationApiWithQuery<ServerResponse<FileInfo>, Unit, ObjectTuple>("medias/upload")
+            mutationApiWithQuery<ServerResponse<FileInfo>, Unit, ObjectTuple>("files/upload")
 
         @Serializable
         class MediaSearchQuery(
@@ -408,7 +408,7 @@ object CustomApi {
             val objectType: ObjectType,
         )
 
-        val getByName = safeApiWithQuery<FileInfo, MediaSearchQuery>("medias/get-by-name")
+        val getByName = safeApiWithQuery<FileInfo, MediaSearchQuery>("files/get-by-name")
     }
 
     object Titles {

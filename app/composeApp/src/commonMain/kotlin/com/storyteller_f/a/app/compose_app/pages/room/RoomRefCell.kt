@@ -44,7 +44,7 @@ private fun RoomRefCellInternal(
         viewModel.handler,
         modifier = Modifier
             .fillMaxWidth()
-            .height(70.dp)
+            .height(65.dp)
             .background(MaterialTheme.colorScheme.secondaryContainer, shape)
             .clip(shape)
             .clickable {

@@ -74,7 +74,7 @@ class UploaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIViewMo
         collection: UploadCollection
     ) {
         val uploadInfo =
-            modelStorage.uploadInfoStorage.getDocument(collection, pathHash)
+            modelStorage.upload.getDocument(collection, pathHash)
         if (uploadInfo != null) {
             val clientFile = getClientFile(uploadInfo.path) ?: return
             upload(userSession, myUid, clientFile, modelStorage, collection, pathHash)
@@ -91,7 +91,7 @@ class UploaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIViewMo
     ) {
         val pathHash = md5(clipFile.path)
         mutex.withLock {
-            val existing = modelStorage.uploadInfoStorage.getDocument(collection, pathHash)
+            val existing = modelStorage.upload.getDocument(collection, pathHash)
             if (existing != null) {
                 return
             }
@@ -109,7 +109,7 @@ class UploaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIViewMo
                     "",
                     clipFile.name, clipFile.contentType.contentType
                 )
-            modelStorage.uploadInfoStorage.save(collection, uploadInfo)
+            modelStorage.upload.save(collection, uploadInfo)
         }
         upload(userSession, myUid, clipFile, modelStorage, collection, pathHash)
     }
@@ -158,7 +158,7 @@ class UploaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIViewMo
         pathHash: String,
         block: (UploadInfo) -> UploadInfo
     ) {
-        val uploadInfo = modelStorage.uploadInfoStorage.getDocument(collection, pathHash) ?: return
-        modelStorage.uploadInfoStorage.save(collection, block(uploadInfo))
+        val uploadInfo = modelStorage.upload.getDocument(collection, pathHash) ?: return
+        modelStorage.upload.save(collection, block(uploadInfo))
     }
 }

@@ -39,7 +39,7 @@ suspend fun Backend.getCommunity(
     id: PrimaryKey?,
     fillJoinInfo: Boolean?
 ): Result<CommunityInfo?> {
-    return combinedDatabase.communityDatabase.getRawCommunity(
+    return database.community.getRawCommunity(
         objectFetch,
         fillJoinInfo,
         id
@@ -60,7 +60,7 @@ suspend fun Backend.doUserJoinCommunity(
         Result.success(community)
     } else {
         val time = now()
-        combinedDatabase.containerDatabase.joinContainer(
+        database.container.joinContainer(
             communityId,
             uid,
             time,
@@ -69,7 +69,7 @@ suspend fun Backend.doUserJoinCommunity(
             addUserLog(uid, UserLogType.JOIN, communityId ob ObjectType.COMMUNITY)
             Result.success(community.copy(joinedTime = time))
         }.recoverResult {
-            if (combinedDatabase.isDup(it)) {
+            if (database.isDup(it)) {
                 getCommunity(ObjectFetch.IdFetch(communityId), uid, true)
             } else {
                 Result.failure(it)
@@ -85,7 +85,7 @@ suspend fun Backend.exitCommunity(
     if (info.joinedTime == null) {
         Result.success(info)
     } else {
-        combinedDatabase.containerDatabase.exitContainer(communityId, id).mapResult { i ->
+        database.container.exitContainer(communityId, id).mapResult { i ->
             addUserLog(id, UserLogType.EXIT, communityId ob ObjectType.COMMUNITY)
             Result.success(info.copy(joinedTime = null))
         }
@@ -104,7 +104,7 @@ suspend fun Backend.searchCommunities(
         search.joinStatus.toJoinSearch(uid)
     }
     return if (word.isNullOrBlank() || joinSearch !is JoinSearch.Unspecified) {
-        combinedDatabase.communityDatabase.getCommunityPaginationResult(
+        database.community.getCommunityPaginationResult(
             word,
             search.hasPoster,
             primaryKeyFetch,
@@ -116,7 +116,7 @@ suspend fun Backend.searchCommunities(
             primaryKeyFetch
         )
             .mapResult { (list, total) ->
-                combinedDatabase.communityDatabase.getRawCommunities(
+                database.community.getRawCommunities(
                     ObjectListFetch.IdListFetch(
                         list.map {
                             it.id
@@ -147,7 +147,7 @@ private suspend fun Backend.processUserJoinedTimeReplace(
     val communityIds = value.map {
         it.id
     }
-    return combinedDatabase.communityDatabase.getCommunityJoinedTimeByIds(uid, communityIds)
+    return database.community.getCommunityJoinedTimeByIds(uid, communityIds)
         .map { joinedTimeList ->
             val map = joinedTimeList.associate { it }
             PaginationResult(value.map {
@@ -181,7 +181,7 @@ suspend fun Backend.createCommunity(
             newCommunity.icon,
             null
         )
-        combinedDatabase.communityDatabase.createCommunity(community).map {
+        database.community.createCommunity(community).map {
             community
         }.onSuccess {
             communitySearchService.saveDocument(listOf(CommunityDocument.fromCommunity(community)))
@@ -192,7 +192,7 @@ suspend fun Backend.createCommunity(
                 }
         }
     }.mapResult { community ->
-        combinedDatabase.communityDatabase.createCommunityRooms(
+        database.community.createCommunityRooms(
             getCommunityRoomsTemplateList(community)
         )
         addUserLog(uid, UserLogType.CREATE, community.toCommunityIfo().tuple())
@@ -224,11 +224,11 @@ suspend fun Backend.updateCommunity(
     ).mapResultIfNotNull {
         checkBeforeUpdateCommunity(newCommunity)
     }.mapResultIfNotNull {
-        combinedDatabase.communityDatabase.updateCommunity(id, newCommunity).errorIfFalse {
+        database.community.updateCommunity(id, newCommunity).errorIfFalse {
             CustomBadRequestException("update failed")
         }
     }.mapResultIfNotNull {
-        combinedDatabase.communityDatabase.getRawCommunity(
+        database.community.getRawCommunity(
             ObjectFetch.IdFetch(id),
             true,
             uid
@@ -252,7 +252,7 @@ private suspend fun Backend.checkBeforeUpdateCommunity(
             else -> UNIT_RESULT
         }
     }, suspend {
-        checkIcon(newCommunity.icon, Dimension(1, 1)).mapResult { checkResult ->
+        checkIcon(newCommunity.icon, Dimension.DEFAULT_DIMENSION).mapResult { checkResult ->
             when (checkResult) {
                 MediaCheckResult.NOT_FOUND -> Result.failure(CustomBadRequestException("icon not found"))
                 MediaCheckResult.CONTENT_TYPE_MISMATCH -> Result.failure(
@@ -267,7 +267,7 @@ private suspend fun Backend.checkBeforeUpdateCommunity(
             }
         }
     }, suspend {
-        checkIcon(newCommunity.poster, Dimension(3, 4)).mapResult { checkResult ->
+        checkIcon(newCommunity.poster, Dimension.COMMUNITY_POSTER).mapResult { checkResult ->
             when (checkResult) {
                 MediaCheckResult.NOT_FOUND -> Result.failure(CustomBadRequestException("poster not found"))
                 MediaCheckResult.CONTENT_TYPE_MISMATCH -> Result.failure(
@@ -294,7 +294,7 @@ private suspend fun Backend.checkBeforeUpdateCommunity(
 suspend fun Backend.processRawCommunityToCommunityInfo(
     list: List<RawCommunity>,
 ): Result<List<CommunityInfo>?> {
-    return combinedDatabase.fileDatabase.getFileRecordByIds(list.flatMap { (community) ->
+    return database.file.getFileRecordByIds(list.flatMap { (community) ->
         listOf(community.iconId, community.posterId, community.fontId)
     }.filterNotNull()).mapResultIfNotNull { medias ->
         processFileRecordToFileInfo(medias).map { mediaList ->

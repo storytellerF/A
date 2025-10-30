@@ -2,6 +2,7 @@ package com.storyteller_f.a.app.core.compontents
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -23,17 +24,18 @@ fun UserIcon(
     size: Dp = 40.dp,
     onClick: () -> Unit
 ) {
+    val shape = CircleShape
     if (avatarUrl != null) {
         CommonImage(
             avatarUrl,
             contentDescription = "avatar",
-            modifier = Modifier.size(size).clip(CircleShape).let {
+            modifier = Modifier.size(size).clip(shape).let {
                 if (setClickEvent) {
                     it.clickable(onClick = onClick)
                 } else {
                     it
                 }
-            },
+            }.border(1.dp, MaterialTheme.colorScheme.primary, shape),
             contentScale = ContentScale.Crop
         )
     } else {
@@ -41,8 +43,8 @@ fun UserIcon(
             Icons.Default.AccountCircle,
             contentDescription = "avatar",
             modifier = Modifier.size(size)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape)
+                .clip(shape)
+                .background(MaterialTheme.colorScheme.surfaceVariant, shape)
                 .let {
                     if (setClickEvent) {
                         it.clickable(onClick = onClick)
@@ -50,6 +52,7 @@ fun UserIcon(
                         it
                     }
                 }
+                .border(1.dp, MaterialTheme.colorScheme.primary, shape)
                 .padding(size / 5)
         )
     }

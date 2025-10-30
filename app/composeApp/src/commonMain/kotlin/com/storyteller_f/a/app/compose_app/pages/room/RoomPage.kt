@@ -80,6 +80,7 @@ import com.storyteller_f.a.app.compose_app.components.CustomAlertDialog
 import com.storyteller_f.a.app.compose_app.components.CustomAlertDialogController
 import com.storyteller_f.a.app.compose_app.components.DialogContainer
 import com.storyteller_f.a.app.compose_app.components.GlobalDialogController
+import com.storyteller_f.a.app.compose_app.components.RoomIcon
 import com.storyteller_f.a.app.compose_app.components.RoomTopicList
 import com.storyteller_f.a.app.compose_app.components.imeAnimation
 import com.storyteller_f.a.app.compose_app.components.rememberAlertDialogController
@@ -161,7 +162,7 @@ private fun RoomPageInternal(
                 RoomIconWithDialog(
                     roomInfo,
                     showDialog = showDialog,
-                    size = 40.dp,
+                    width = 40.dp,
                     setClickEvent = true
                 ) {
                     showDialog = it
@@ -595,13 +596,12 @@ fun RoomDialogInternal(roomInfo: RoomInfo, dismiss: () -> Unit) {
                 .padding(8.dp),
             Arrangement.spacedBy(12.dp)
         ) {
-            val commonDialogController =
-                rememberCommonDialogController()
-            val shown by commonDialogController.shown
-            RoomIconWithDialog(
+            val commonDialogController = rememberCommonDialogController()
+            RoomIcon(
                 roomInfo,
-                showDialog = shown,
-                updateDialog = commonDialogController::update,
+                50.dp,
+                false,
+                commonDialogController::update
             )
             Column {
                 Text(roomInfo.name)

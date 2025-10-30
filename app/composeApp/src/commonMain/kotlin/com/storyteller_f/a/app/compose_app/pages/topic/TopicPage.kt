@@ -42,7 +42,6 @@ import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.itemKey
 import com.storyteller_f.a.app.compose_app.CustomUserSessionManager
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalGlobalTask
@@ -50,6 +49,7 @@ import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.common.OnTopicCreated
 import com.storyteller_f.a.app.compose_app.common.TopicComposeData
 import com.storyteller_f.a.app.compose_app.common.TopicViewModel
+import com.storyteller_f.a.app.compose_app.common.TopicsViewModel
 import com.storyteller_f.a.app.compose_app.common.createRoomViewModel
 import com.storyteller_f.a.app.compose_app.common.createTopicViewModel
 import com.storyteller_f.a.app.compose_app.common.createTopicsInTopicViewModel
@@ -69,6 +69,7 @@ import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
 import com.storyteller_f.a.app.compose_app.pages.user.UserIconWithDialog
 import com.storyteller_f.a.app.core.compontents.StateView
 import com.storyteller_f.a.app.core.compontents.bottomAppending
+import com.storyteller_f.a.app.core.compontents.pagingItems
 import com.storyteller_f.a.app.core.compontents.topPrepend
 import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.a.client.core.createTopic
@@ -85,6 +86,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun TopicPage(topicId: PrimaryKey) {
     val viewModel = createTopicViewModel(topicId)
+    val subTopicsViewModel = createTopicsInTopicViewModel(topicId)
     val snackBarHost = remember {
         SnackbarHostState()
     }
@@ -94,7 +96,7 @@ fun TopicPage(topicId: PrimaryKey) {
     Scaffold(snackbarHost = {
         SnackbarHost(snackBarHost)
     }) {
-        TopicPageInternal(topicId, viewModel, snackBarHost) {
+        TopicPageInternal(topicId, viewModel, subTopicsViewModel, snackBarHost) {
             showBottomSheet = true
         }
         TopicEmojiPicker(viewModel, sheetState, showBottomSheet) {
@@ -123,10 +125,11 @@ fun TopicEmojiPicker(
 private fun TopicPageInternal(
     topicId: PrimaryKey,
     viewModel: TopicViewModel,
+    subTopicsViewModel: TopicsViewModel,
     snackBarHostState: SnackbarHostState,
     startAddReaction: () -> Unit
 ) {
-    val topic by viewModel.handler.data.collectAsState()
+    val topicInfo by viewModel.handler.data.collectAsState()
     Column(modifier = Modifier.fillMaxSize()) {
         var showDialog by remember {
             mutableStateOf(false)
@@ -136,7 +139,7 @@ private fun TopicPageInternal(
                 verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                topic?.let {
+                topicInfo?.let {
                     val author = it.author
                     val authorViewModel =
                         createUserViewModel(author)
@@ -151,11 +154,11 @@ private fun TopicPageInternal(
                     }.padding(8.dp)
                 )
             }
-            TopicDialog(topic, showDialog) {
+            TopicDialog(topicInfo, showDialog) {
                 showDialog = false
             }
         }
-        topic?.let {
+        topicInfo?.let {
             if (it.rootId != it.parentId) {
                 Box(modifier = Modifier.padding(horizontal = 20.dp).padding(top = 8.dp)) {
                     TopicRefCell(it.parentId)
@@ -163,9 +166,9 @@ private fun TopicPageInternal(
             }
         }
         val lazyListState = rememberLazyListState()
-        TopicPageContent(topicId, viewModel, startAddReaction, lazyListState)
+        TopicPageContent(viewModel, subTopicsViewModel, startAddReaction, lazyListState)
         val scope = rememberCoroutineScope()
-        topic?.let {
+        topicInfo?.let {
             TopicPageInputGroup(it, snackBarHostState) {
                 scope.launch {
                     delay(200)
@@ -178,21 +181,19 @@ private fun TopicPageInternal(
 
 @Composable
 private fun ColumnScope.TopicPageContent(
-    topicId: PrimaryKey,
     viewModel: TopicViewModel,
+    subTopicsViewModel: TopicsViewModel,
     startAddReaction: () -> Unit,
     lazyListState: LazyListState
 ) {
-    val subTopicsViewModel =
-        createTopicsInTopicViewModel(topicId)
-    val subTopics = subTopicsViewModel.flow.collectAsLazyPagingItems()
     val topicState by viewModel.handler.state.collectAsState()
+    val subTopics = subTopicsViewModel.flow.collectAsLazyPagingItems()
     LaunchedEffect(topicState) {
         if (topicState is LoadingState.Done) {
             subTopics.refresh()
         }
     }
-    StateView(viewModel.handler, modifier = Modifier.weight(1f)) {
+    StateView(viewModel.handler, modifier = Modifier.weight(1f)) { topicInfo ->
         LazyColumn(
             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -200,9 +201,9 @@ private fun ColumnScope.TopicPageContent(
             modifier = Modifier.weight(1f).fillMaxWidth()
         ) {
             item {
-                TopicContentField(it)
+                TopicContentField(topicInfo)
                 Spacer(modifier = Modifier.height(12.dp))
-                InteractionRow(it, {
+                InteractionRow(topicInfo, {
                     startAddReaction()
                 }) {
                 }
@@ -211,12 +212,9 @@ private fun ColumnScope.TopicPageContent(
             }
 
             topPrepend(subTopics.loadState)
-            items(
-                subTopics.itemSnapshotList.size,
-                key = subTopics.itemKey { subTopic ->
-                    subTopic.id.toString()
-                }
-            ) { subTopicIndex ->
+            pagingItems(subTopics, {
+                it.id
+            }) { subTopicIndex ->
                 subTopics[subTopicIndex]?.let { it1 ->
                     TopicCell(it1)
                 }
@@ -274,13 +272,12 @@ private fun TopicInputGroup(
     val appNavFactory = LocalAppNavFactory.current
     val userSessionManager = LocalSessionManager.current
     val myInfo by userSessionManager.model.userHandler.data.collectAsState()
-    val my = myInfo
     InputGroupInternal(
         if (topic.isEncrypted) {
             ObjectTuple(topic.rootId, topic.rootType)
         } else {
             ObjectTuple(
-                my?.id ?: 0,
+                myInfo?.id ?: 0,
                 ObjectType.USER
             )
         },

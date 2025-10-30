@@ -75,7 +75,7 @@ suspend fun Backend.getFileInfoByName(
         parentId,
         uid
     ).mapResultIfNotNull { (_, rootId) ->
-        combinedDatabase.fileDatabase.getFileRecord(rootId, word)
+        database.file.getFileRecord(rootId, word)
             .mapResultIfNotNull { fileRecord ->
                 processFileRecordToFileInfo(listOf(fileRecord)).map {
                     it.first()
@@ -86,7 +86,7 @@ suspend fun Backend.getFileInfoByName(
 
 @OptIn(ExperimentalUuidApi::class)
 suspend fun Backend.extractAlbum(fileRecordId: PrimaryKey, root: File, uid: PrimaryKey) =
-    combinedDatabase.fileDatabase.getFileRecordByIds(listOf(fileRecordId))
+    database.file.getFileRecordByIds(listOf(fileRecordId))
         .mapResultIfNotNull { fileRecords ->
             val fileRecord = fileRecords.first()
             if (fileRecord.owner != uid) {
@@ -226,7 +226,7 @@ suspend fun Backend.getFileInfoPaginationResult(
     uid: PrimaryKey,
     primaryKeyFetch: PrimaryKeyFetch,
 ): Result<PaginationResult<FileInfo>> =
-    combinedDatabase.fileDatabase.getFileRecordPaginationList(uid, primaryKeyFetch)
+    database.file.getFileRecordPaginationList(uid, primaryKeyFetch)
         .mapResult { (list, count) ->
             processFileRecordToFileInfo(list).map {
                 PaginationResult(it, count)
@@ -237,7 +237,7 @@ suspend fun Backend.tryCopyFile(
     p: CommonPath,
     uid: PrimaryKey
 ): Result<ServerResponse<FileInfo>?> =
-    combinedDatabase.fileDatabase.getFileRecordByIds(listOf(p.id))
+    database.file.getFileRecordByIds(listOf(p.id))
         .mapResultIfNotNull { fileRecords ->
             val fileRecord = fileRecords.firstOrNull()
             if (fileRecord != null) {
@@ -271,7 +271,7 @@ private suspend fun Backend.copyFile(
     fileRecord: FileRecord,
     newOwner: PrimaryKey,
 ): Result<ServerResponse<FileInfo>?> {
-    return combinedDatabase.fileDatabase.getFileRecord(newOwner, fileRecord.name).map {
+    return database.file.getFileRecord(newOwner, fileRecord.name).map {
         if (it == null) {
             fileRecord.name
         } else {
@@ -292,7 +292,7 @@ private suspend fun Backend.copyFile(
             ).map {
                 it.first()
             }.getOrThrow()
-            combinedDatabase.fileDatabase.insertFileRecord(
+            database.file.insertFileRecord(
                 listOf(newFileRecord),
                 newOwner,
                 ObjectType.USER
@@ -378,7 +378,7 @@ private suspend fun Backend.uploadFiles(
         val r1 = objectStorageService.upload(A_FILE_DEFAULT_BUCKET, uploadPacks.map {
             it.pack
         }).getOrThrow()
-        combinedDatabase.fileDatabase.insertFileRecord(data, ownerId, ownerType).getOrThrow()
+        database.file.insertFileRecord(data, ownerId, ownerType).getOrThrow()
         r1.mapIndexed { i, e ->
             data[i].toFileInfo(e.url, e.lastModified)
         }
@@ -386,7 +386,7 @@ private suspend fun Backend.uploadFiles(
 }
 
 suspend fun Backend.getFileInfoList(names: List<String>): Result<List<FileInfo?>?> {
-    return combinedDatabase.fileDatabase.getFileRecordByNames(names).mapResult { fileRecords ->
+    return database.file.getFileRecordByNames(names).mapResult { fileRecords ->
         processFileRecordToFileInfo(fileRecords)
     }
 }

@@ -14,6 +14,7 @@ import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.SignalCellularAlt
 import androidx.compose.material.icons.filled.SwitchAccount
 import androidx.compose.material.icons.filled.Wifi
@@ -80,49 +81,33 @@ import org.jetbrains.compose.ui.tooling.preview.PreviewParameter
 import org.jetbrains.compose.ui.tooling.preview.PreviewParameterProvider
 
 @Composable
-fun UserDialogInternal(
-    isMe: Boolean,
+private fun SelfDialogInternal(
+    signOutController: CustomAlertDialogController,
     userInfo: UserInfo?,
-    clickCreate: () -> Unit,
-    dismiss: () -> Unit = {}
+    dismiss: () -> Unit,
+    clickCreate: () -> Unit
 ) {
-    val controller = remember {
-        CustomAlertDialogController()
-    }
     val sessionManager = LocalSessionManager.current
-    LaunchedEffect(isMe, userInfo) {
-        if (isMe) {
-            refreshMyInfo(userInfo, sessionManager)
-        }
-    }
-    val isSignIn by sessionManager.isAlreadySignIn.collectAsState()
+    val isAlreadySignIn by sessionManager.isAlreadySignIn.collectAsState()
     DialogContainer {
-        if (!isSignIn && isMe) {
-            SignInBox(dismiss)
-        } else {
+        if (isAlreadySignIn) {
             UserDialogUserInfoCell(userInfo, dismiss)
+        } else {
+            SignInBox(dismiss)
         }
         Column {
-            if (isMe && isSignIn) {
+            if (isAlreadySignIn) {
                 ButtonNav(MaterialSymbolsOutlined.Money, "ACG ${userInfo?.acg ?: 0}")
                 CreateButton(dismiss, clickCreate)
                 AccountSwitchButton(dismiss)
                 NotificationButton()
                 ConnectionButton()
                 SettingsButton(dismiss)
-                SignOutButton(controller)
+                SignOutButton(signOutController)
                 FavoriteButton(dismiss)
+                SubscriptionButton(dismiss)
             }
             SystemSettingsButton(dismiss)
-        }
-    }
-    val scope = rememberCoroutineScope()
-    val globalDialogController = LocalGlobalDialog.current
-    CustomAlertDialog(controller, {
-        controller.close()
-    }) {
-        scope.launch {
-            signOut(sessionManager, globalDialogController)
         }
     }
 }
@@ -130,9 +115,18 @@ fun UserDialogInternal(
 @Composable
 fun FavoriteButton(dismiss: () -> Unit) {
     val appNavFactory = LocalAppNavFactory.current
-    ButtonNav(Icons.Default.Favorite, "favorite") {
+    ButtonNav(Icons.Default.Favorite, "Favorites") {
         dismiss()
         appNavFactory.newAppNav().gotoFavoritePage()
+    }
+}
+
+@Composable
+fun SubscriptionButton(dismiss: () -> Unit) {
+    val appNavFactory = LocalAppNavFactory.current
+    ButtonNav(Icons.Default.NotificationsActive, "Subscriptions") {
+        dismiss()
+        appNavFactory.newAppNav().gotoSubscriptionPage()
     }
 }
 
@@ -337,7 +331,24 @@ fun refreshMyInfo(my: UserInfo?, sessionManager: UserSessionManager) {
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun UserDialog(
-    isMe: Boolean,
+    userInfo: UserInfo?,
+    showDialog: Boolean,
+    dismiss: () -> Unit,
+) {
+    if (showDialog) {
+        BasicAlertDialog({
+            dismiss()
+        }) {
+            DialogContainer {
+                UserDialogUserInfoCell(userInfo, dismiss)
+            }
+        }
+    }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+fun SelfDialog(
     userInfo: UserInfo?,
     showDialog: Boolean,
     clickCreate: () -> Unit,
@@ -347,7 +358,23 @@ fun UserDialog(
         BasicAlertDialog({
             dismiss()
         }) {
-            UserDialogInternal(isMe, userInfo, clickCreate, dismiss)
+            val signOutController = remember {
+                CustomAlertDialogController()
+            }
+            val sessionManager = LocalSessionManager.current
+            LaunchedEffect(userInfo) {
+                refreshMyInfo(userInfo, sessionManager)
+            }
+            SelfDialogInternal(signOutController, userInfo, dismiss, clickCreate)
+            val scope = rememberCoroutineScope()
+            val globalDialogController = LocalGlobalDialog.current
+            CustomAlertDialog(signOutController, {
+                signOutController.close()
+            }) {
+                scope.launch {
+                    signOut(sessionManager, globalDialogController)
+                }
+            }
         }
     }
 }
@@ -355,10 +382,8 @@ fun UserDialog(
 @Composable
 fun UserIconWithDialog(
     userInfo: UserInfo?,
-    isMe: Boolean = false,
     setClickEvent: Boolean = true,
     size: Dp = 40.dp,
-    onClickCreate: () -> Unit = {},
 ) {
     var showUserDialog by remember {
         mutableStateOf(false)
@@ -368,7 +393,27 @@ fun UserIconWithDialog(
         showUserDialog = true
     }
     UserDialog(
-        isMe,
+        userInfo,
+        showUserDialog
+    ) {
+        showUserDialog = false
+    }
+}
+
+@Composable
+fun SelfUserIconWithDialog(
+    userInfo: UserInfo?,
+    size: Dp = 40.dp,
+    onClickCreate: () -> Unit = {},
+) {
+    var showUserDialog by remember {
+        mutableStateOf(false)
+    }
+    val url = userInfo?.avatar?.url
+    UserIcon(true, url, size = size) {
+        showUserDialog = true
+    }
+    SelfDialog(
         userInfo,
         showUserDialog,
         onClickCreate
