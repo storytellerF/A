@@ -44,9 +44,7 @@ class SignatureTest {
                 println(AlgoP256.calcAddress(key).getOrThrow())
             }
         }
-
     }
-
 
     @Test
     fun `test pqc`() {
@@ -56,14 +54,12 @@ class SignatureTest {
         kpg.initialize(DilithiumParameterSpec.dilithium3, SecureRandom()) // 选择参数集：dilithium2/3/5 等
         val kp: KeyPair = kpg.generateKeyPair()
 
-
         // 2) 签名
         val signer: Signature = Signature.getInstance("Dilithium", "BCPQC")
         signer.initSign(kp.private, SecureRandom())
         val message = "hello post-quantum".toByteArray()
         signer.update(message)
         val signature: ByteArray? = signer.sign()
-
 
         // 3) 验证
         val verifier: Signature = Signature.getInstance("Dilithium", "BCPQC")

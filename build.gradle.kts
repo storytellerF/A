@@ -33,11 +33,16 @@ subprojects {
             "src/main/kotlin",
             "src/test/kotlin",
             "src/commonMain/kotlin",
-            "src/desktopMain/kotlin",
+            "src/commonTest/kotlin",
+            "src/jvmMain/kotlin",
+            "src/jvmTest/kotlin",
             "src/iosMain/kotlin",
             "src/wasmJsMain/kotlin",
             "src/androidMain/kotlin",
-            "build.gradle.kts"
+            "src/androidUnitTest/kotlin",
+            "src/androidDebug/kotlin",
+            "src/headlessTest/kotlin",
+            "build.gradle.kts",
         )
         // Builds the AST in parallel. Rules are always executed in parallel.
         // Can lead to speedups in larger projects. `false` by default.

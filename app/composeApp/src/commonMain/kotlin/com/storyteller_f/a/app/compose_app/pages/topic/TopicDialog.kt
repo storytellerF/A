@@ -30,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.unit.dp
+import com.storyteller_f.a.api.core.NewFavorite
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalGlobalTask
@@ -67,7 +68,6 @@ import com.storyteller_f.a.client.core.removeFavorite
 import com.storyteller_f.a.client.core.unpinTopic
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
-import com.storyteller_f.shared.obj.NewFavorite
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.formatTime
 import com.strabled.composepreferences.getPreference

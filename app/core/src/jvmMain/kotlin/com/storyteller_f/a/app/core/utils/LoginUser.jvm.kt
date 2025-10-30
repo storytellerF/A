@@ -10,4 +10,3 @@ actual fun buildLoginHistoryFactory(settings: Settings): SessionHistoryManager {
 actual fun createSettings(name: String): Settings {
     return PreferencesSettings.Factory().create(name)
 }
-

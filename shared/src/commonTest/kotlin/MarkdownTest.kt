@@ -1,10 +1,8 @@
 import com.storyteller_f.shared.utils.astNode
-import com.storyteller_f.shared.utils.checkContent
 import com.storyteller_f.shared.utils.extractHeadParagraph
 import com.storyteller_f.shared.utils.extractMarkdownHeadline
 import com.storyteller_f.shared.utils.extractMarkdownMediaLink
 import com.storyteller_f.shared.utils.readInlineMath
-import com.storyteller_f.shared.utils.safeFirstUnicode
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.ast.accept
 import org.intellij.markdown.ast.acceptChildren
@@ -28,13 +26,14 @@ class MarkdownTest {
         ## Second Level Header
 
         Content after the second level header.
-    """.trimIndent()
+        """.trimIndent()
         assertEquals(
             """
             # First Level Header
             Some introductory text before the second level header.
             Hello.
-        """.trimIndent(), extractMarkdownHeadline(markdownText)
+            """.trimIndent(),
+            extractMarkdownHeadline(markdownText)
         )
         assertEquals("*hello*", extractMarkdownHeadline("*hello*"))
     }
@@ -78,9 +77,6 @@ class MarkdownTest {
                 }
                 node.acceptChildren(this)
             }
-
         })
     }
-
 }
-

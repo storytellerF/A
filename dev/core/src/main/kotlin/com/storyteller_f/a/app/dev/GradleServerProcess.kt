@@ -1,10 +1,14 @@
 package com.storyteller_f.a.app.dev
 
 import io.github.aakira.napier.Napier
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
-import kotlin.collections.mapOf
-import kotlin.collections.putAll
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -40,7 +44,7 @@ fun stopServer(serverProcess: Process) {
 }
 
 @OptIn(ExperimentalUuidApi::class)
-suspend fun CoroutineScope.startServerByRun(projectRoot: String, port: Int): Process? {
+suspend fun CoroutineScope.startServerByRun(projectRoot: String, port: Int): ProcessMate? {
     val testEnvFile = File(projectRoot, "cloud/server/src/test/resources/.env")
     if (!testEnvFile.exists()) {
         println("${testEnvFile.canonicalPath} not exists")
@@ -53,23 +57,22 @@ suspend fun CoroutineScope.startServerByRun(projectRoot: String, port: Int): Pro
             .directory(File(projectRoot))
             .bindGradleProcessEnv(testEnvFile, port)
             .start()
-    waitRunServerProcess(serverProcess)
-    return serverProcess
+    val job = waitRunServerProcess(serverProcess)
+    return ProcessMate(serverProcess, job)
 }
 
 private suspend fun CoroutineScope.install(projectRoot: String) {
     val installDistProcess = getGradleProcessBuilder(
         File(projectRoot),
-        arrayOf(
-            "cloud:server:installDist"
-        )
+        arrayOf("cloud:server:installDist")
     ).start()
-    launch {
+    val job = launch {
         withContext(Dispatchers.IO) {
             installDistProcess.inputStream.bufferedReader().use {
                 while (installDistProcess.isRunning()) {
                     val line = it.readLine() ?: break
                     println(line)
+                    delay(100)
                 }
             }
         }
@@ -77,14 +80,22 @@ private suspend fun CoroutineScope.install(projectRoot: String) {
     val result = withContext(Dispatchers.IO) {
         installDistProcess.waitFor()
     }
+    job.cancel()
     check(result == 0) {
         "install failed"
     }
 }
 
-private suspend fun CoroutineScope.waitRunServerProcess(serverProcess: Process) {
+class ProcessMate(val process: Process, val job: Job) {
+    fun stop() {
+        stopServer(process)
+        job.cancel()
+    }
+}
+
+private suspend fun CoroutineScope.waitRunServerProcess(serverProcess: Process): Job {
     val task = CompletableDeferred<String>()
-    launch {
+    val job = launch {
         withContext(Dispatchers.IO) {
             serverProcess.inputStream.bufferedReader().use {
                 while (serverProcess.isRunning()) {
@@ -92,9 +103,10 @@ private suspend fun CoroutineScope.waitRunServerProcess(serverProcess: Process) 
                     println(line)
                     if (line.contains("Responding at")) {
                         task.complete(line)
-                    } else if (line.contains("Execution failed for task")) {
+                    } else if (line.contains("Execution failed for task") || line.contains("Exception in thread")) {
                         task.completeExceptionally(RuntimeException(line))
                     }
+                    delay(100)
                 }
             }
         }
@@ -103,6 +115,7 @@ private suspend fun CoroutineScope.waitRunServerProcess(serverProcess: Process) 
     Napier.i {
         "server started"
     }
+    return job
 }
 
 @OptIn(ExperimentalUuidApi::class)

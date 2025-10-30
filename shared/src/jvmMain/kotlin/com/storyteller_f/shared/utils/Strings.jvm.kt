@@ -8,9 +8,9 @@ actual fun checkContent(text: String): Result<Unit> {
     val emojiSet = UnicodeSet("[[:RGI_Emoji:]]").freeze()
     val nerdFontSet = UnicodeSet(
         "[\\uE000-\\uE0FF \\uE5FA-\\uE6B7 \\uE700-\\uE8EF " +
-                "\\uEA60-\\uEC1E \\uED00-\\uEFCE \\uF000-\\uF2FF " +
-                "\\uF300-\\uF381 \\uF400-\\uFD46 " +
-                "\\U000F0001-\\U000F1AF0]"
+            "\\uEA60-\\uEC1E \\uED00-\\uEFCE \\uF000-\\uF2FF " +
+            "\\uF300-\\uF381 \\uF400-\\uFD46 " +
+            "\\U000F0001-\\U000F1AF0]"
     ).freeze()
     val breakIterator = BreakIterator.getCharacterInstance().apply {
         setText(text)
@@ -48,7 +48,6 @@ actual fun safeFirstEmoji(text: String): String? {
     val sub = text.substring(first, next)
     if (emojiSet.contains(sub)) {
         return sub
-
     }
     return null
 }

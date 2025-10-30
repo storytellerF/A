@@ -1,16 +1,23 @@
 package com.storyteller_f.a.app.dev_server
 
 import com.storyteller_f.a.app.dev.GIT_BASH
+import com.storyteller_f.a.app.dev.ProcessMate
 import com.storyteller_f.a.app.dev.forceStop
 import com.storyteller_f.a.app.dev.startServerByRun
-import com.storyteller_f.a.app.dev.stopServer
 import io.github.aakira.napier.Napier
-import io.ktor.http.*
-import io.ktor.server.application.*
-import io.ktor.server.netty.*
-import io.ktor.server.request.*
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationStarted
+import io.ktor.server.application.ApplicationStopped
+import io.ktor.server.application.log
+import io.ktor.server.netty.EngineMain
+import io.ktor.server.request.receiveText
+import io.ktor.server.response.respond
+import io.ktor.server.response.respondText
+import io.ktor.server.routing.RoutingCall
+import io.ktor.server.routing.get
+import io.ktor.server.routing.post
+import io.ktor.server.routing.routing
 import io.ktor.util.encodeBase64
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -40,7 +47,7 @@ private fun isNestedPath(): Boolean {
 
 @Suppress("unused")
 fun Application.module() {
-    val processMap = mutableMapOf<Int, Process?>()
+    val processMap = mutableMapOf<Int, ProcessMate?>()
     val processLock = Mutex()
     val job = startListening(8888, previousDevices)
     monitor.subscribe(ApplicationStopped) { application ->
@@ -48,7 +55,7 @@ fun Application.module() {
         job.cancel()
         processMap.forEach {
             application.log.info("stop :${it.key}")
-            it.value?.let { process -> stopServer(process) }
+            it.value?.stop()
         }
         // Release resources and unsubscribe from events
         monitor.unsubscribe(ApplicationStarted) {}
@@ -78,7 +85,7 @@ fun Application.module() {
 }
 
 private suspend fun RoutingCall.handleStopRoute(
-    processMap: MutableMap<Int, Process?>,
+    processMap: MutableMap<Int, ProcessMate?>,
     processLock: Mutex,
 ) {
     val application = application
@@ -96,13 +103,13 @@ private suspend fun RoutingCall.handleStopRoute(
         respond(HttpStatusCode.NotFound)
         return
     }
-    stopServer(server)
+    server.stop()
     application.log.info("stop $port server success")
     respond(HttpStatusCode.OK)
 }
 
 private suspend fun RoutingCall.handleStartRoute(
-    processMap: MutableMap<Int, Process?>,
+    processMap: MutableMap<Int, ProcessMate?>,
     processLock: Mutex,
 ) {
     val application = application

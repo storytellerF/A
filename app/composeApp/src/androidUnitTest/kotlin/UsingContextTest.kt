@@ -1,4 +1,5 @@
 import android.content.ContentProvider
+import com.storyteller_f.a.app.BuildConfig
 import com.storyteller_f.a.app.compose_app.AApplication
 import org.junit.Before
 import org.junit.runner.RunWith
@@ -37,4 +38,6 @@ actual abstract class UsingContextTest {
             null
         }
     }
+
+    actual val portOffset: Int = if (BuildConfig.DEBUG) 1000 else 2000
 }
