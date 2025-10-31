@@ -26,7 +26,7 @@ fun TaskRecord.Companion.wrapRow(resultRow: ResultRow): TaskRecord {
         )
     }
 }
-suspend fun TaskRecord.Companion.addTaskRecord(taskRecord: TaskRecord) {
+suspend fun addTaskRecord(taskRecord: TaskRecord) {
     check(TaskRecords.insert {
         it[TaskRecords.id] = taskRecord.id
         it[TaskRecords.createdTime] = taskRecord.createdTime

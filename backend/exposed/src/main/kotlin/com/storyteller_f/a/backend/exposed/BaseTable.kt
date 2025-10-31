@@ -1,6 +1,6 @@
 package com.storyteller_f.a.backend.exposed
 
-import com.storyteller_f.a.backend.core.CliDatabase
+import com.storyteller_f.a.backend.core.AdminDatabase
 import com.storyteller_f.a.backend.core.CombinedDatabase
 import com.storyteller_f.a.backend.core.CommunityDatabase
 import com.storyteller_f.a.backend.core.ContainerDatabase
@@ -11,7 +11,7 @@ import com.storyteller_f.a.backend.core.RoomDatabase
 import com.storyteller_f.a.backend.core.TitleDatabase
 import com.storyteller_f.a.backend.core.TopicDatabase
 import com.storyteller_f.a.backend.core.UserDatabase
-import com.storyteller_f.a.backend.exposed.database.ExposedCliDatabase
+import com.storyteller_f.a.backend.exposed.database.ExposedAdminDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedCommunityDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedContainerDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedFileDatabase
@@ -20,6 +20,7 @@ import com.storyteller_f.a.backend.exposed.database.ExposedRoomDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedTitleDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedTopicDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedUserDatabase
+import com.storyteller_f.shared.type.MemberStatus
 import com.storyteller_f.shared.type.ObjectType
 import io.github.aakira.napier.Napier
 import org.jetbrains.exposed.v1.core.Table
@@ -48,6 +49,7 @@ fun Throwable.isDup(): Boolean {
 fun Table.customPrimaryKey(name: String) = long(name)
 
 fun Table.objectType(name: String) = enumerationByName<ObjectType>(name, 10)
+fun Table.memberStatus(name: String) = enumerationByName<MemberStatus>(name, 10)
 
 fun <T : Table> T.emoji() = varchar("emoji", 20)
 
@@ -66,8 +68,8 @@ class ExposedDatabase(val databaseSession: ExposedDatabaseSession) : CombinedDat
         get() = ExposedFileDatabase(databaseSession)
     override val container: ContainerDatabase
         get() = ExposedContainerDatabase(databaseSession)
-    override val cli: CliDatabase
-        get() = ExposedCliDatabase(databaseSession)
+    override val admin: AdminDatabase
+        get() = ExposedAdminDatabase(databaseSession)
     override val panelAccount: PanelAccountDatabase
         get() = ExposedPanelAccountDatabase(databaseSession)
 

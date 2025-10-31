@@ -15,6 +15,7 @@ import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.backend.core.service.CommunityDocument
 import com.storyteller_f.a.backend.core.service.CommunityDocumentSearch
 import com.storyteller_f.a.backend.core.types.Community
+import com.storyteller_f.a.backend.core.types.Member
 import com.storyteller_f.a.backend.core.types.RawCommunity
 import com.storyteller_f.a.backend.core.types.toCommunityIfo
 import com.storyteller_f.shared.model.CommunityInfo
@@ -23,6 +24,7 @@ import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.JoinStatusSearch
+import com.storyteller_f.shared.type.MemberStatus
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.UNIT_RESULT
@@ -48,7 +50,7 @@ suspend fun Backend.getCommunity(
     }
 }
 
-suspend fun Backend.doUserJoinCommunity(
+suspend fun Backend.joinCommunity(
     uid: PrimaryKey,
     communityId: PrimaryKey
 ) = getCommunity(
@@ -60,21 +62,27 @@ suspend fun Backend.doUserJoinCommunity(
         Result.success(community)
     } else {
         val time = now()
-        database.container.joinContainer(
-            communityId,
+        val memberId = SnowflakeFactory.nextId()
+        val member = Member(
+            memberId,
             uid,
+            communityId,
+            ObjectType.COMMUNITY,
             time,
-            ObjectType.COMMUNITY
-        ).mapResult {
-            addUserLog(uid, UserLogType.JOIN, communityId ob ObjectType.COMMUNITY)
-            Result.success(community.copy(joinedTime = time))
-        }.recoverResult {
-            if (database.isDup(it)) {
-                getCommunity(ObjectFetch.IdFetch(communityId), uid, true)
-            } else {
-                Result.failure(it)
+            MemberStatus.JOINED,
+            time
+        )
+        database.container.joinContainer(communityId, uid, time, ObjectType.COMMUNITY, member)
+            .mapResult {
+                addUserLog(uid, UserLogType.JOIN, communityId ob ObjectType.COMMUNITY)
+                Result.success(community.copy(joinedTime = time))
+            }.recoverResult {
+                if (database.isDup(it)) {
+                    getCommunity(ObjectFetch.IdFetch(communityId), uid, true)
+                } else {
+                    Result.failure(it)
+                }
             }
-        }
     }
 }
 
@@ -114,18 +122,15 @@ suspend fun Backend.searchCommunities(
         communitySearchService.searchDocument(
             CommunityDocumentSearch.Keyword(listOf(word)),
             primaryKeyFetch
-        )
-            .mapResult { (list, total) ->
-                database.community.getRawCommunities(
-                    ObjectListFetch.IdListFetch(
-                        list.map {
-                            it.id
-                        }
-                    )
-                ).map {
-                    PaginationResult(it, total)
-                }
+        ).mapResult { (list, total) ->
+            database.community.getRawCommunities(
+                ObjectListFetch.IdListFetch(list.map {
+                    it.id
+                })
+            ).map {
+                PaginationResult(it, total)
             }
+        }
     }.mapResultIfNotNull { (list, count) ->
         processRawCommunityToCommunityInfo(list).mapResultIfNotNull { value ->
             when {
@@ -172,6 +177,7 @@ suspend fun Backend.createCommunity(
         }.getOrThrow()
     }.mapResult {
         val id = SnowflakeFactory.nextId()
+        val memberId = SnowflakeFactory.nextId()
         val community = Community(
             id,
             now(),
@@ -181,7 +187,7 @@ suspend fun Backend.createCommunity(
             newCommunity.icon,
             null
         )
-        database.community.createCommunity(community).map {
+        database.community.createCommunity(community, memberId).map {
             community
         }.onSuccess {
             communitySearchService.saveDocument(listOf(CommunityDocument.fromCommunity(community)))
@@ -192,9 +198,6 @@ suspend fun Backend.createCommunity(
                 }
         }
     }.mapResult { community ->
-        database.community.createCommunityRooms(
-            getCommunityRoomsTemplateList(community)
-        )
         addUserLog(uid, UserLogType.CREATE, community.toCommunityIfo().tuple())
         processRawCommunityToCommunityInfo(
             listOf(

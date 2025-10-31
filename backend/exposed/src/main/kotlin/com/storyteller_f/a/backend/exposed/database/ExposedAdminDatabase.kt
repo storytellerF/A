@@ -1,21 +1,22 @@
 package com.storyteller_f.a.backend.exposed.database
 
-import com.storyteller_f.a.backend.core.CliDatabase
+import com.storyteller_f.a.backend.core.AdminDatabase
 import com.storyteller_f.a.backend.core.InsertTopicTuple
 import com.storyteller_f.a.backend.core.types.Community
+import com.storyteller_f.a.backend.core.types.Member
 import com.storyteller_f.a.backend.core.types.Room
+import com.storyteller_f.a.backend.core.types.TaskRecord
 import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.a.backend.exposed.ExposedDatabaseSession
 import com.storyteller_f.a.backend.exposed.tables.Aids
 import com.storyteller_f.a.backend.exposed.tables.Communities
 import com.storyteller_f.a.backend.exposed.tables.EncryptedKeys
-import com.storyteller_f.a.backend.exposed.tables.MemberJoins
-import com.storyteller_f.a.backend.exposed.tables.MemberJoins.joinedTime
-import com.storyteller_f.a.backend.exposed.tables.MemberJoins.objectId
-import com.storyteller_f.a.backend.exposed.tables.MemberJoins.uid
+import com.storyteller_f.a.backend.exposed.tables.Members
 import com.storyteller_f.a.backend.exposed.tables.Rooms
 import com.storyteller_f.a.backend.exposed.tables.Topics
 import com.storyteller_f.a.backend.exposed.tables.Users
+import com.storyteller_f.a.backend.exposed.tables.addTaskRecord
+import com.storyteller_f.a.backend.exposed.tables.batchAddMembers
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.now
@@ -25,9 +26,8 @@ import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.statements.api.ExposedBlob
 import org.jetbrains.exposed.v1.r2dbc.batchInsert
 import org.jetbrains.exposed.v1.r2dbc.select
-import kotlin.collections.map
 
-class ExposedCliDatabase(val databaseSession: ExposedDatabaseSession) : CliDatabase {
+class ExposedAdminDatabase(val databaseSession: ExposedDatabaseSession) : AdminDatabase {
     override suspend fun batchAddUser(users: List<User>) {
         databaseSession.dbQuery {
             Users.batchInsert(users) {
@@ -38,6 +38,7 @@ class ExposedCliDatabase(val databaseSession: ExposedDatabaseSession) : CliDatab
                 this[Users.address] = it.address
                 this[Users.createdTime] = it.createdTime
                 this[Users.passType] = it.passType
+                this[Users.notificationId] = it.notificationId
             }
             Aids.batchInsert(users) {
                 this[Aids.value] = it.aid!!
@@ -47,10 +48,7 @@ class ExposedCliDatabase(val databaseSession: ExposedDatabaseSession) : CliDatab
         }.getOrThrow()
     }
 
-    override suspend fun batchAddCommunities(
-        communities: List<Community>,
-        memberList: List<Pair<PrimaryKey, List<PrimaryKey>>>,
-    ) {
+    override suspend fun batchAddCommunities(communities: List<Community>, members: List<Member>) {
         databaseSession.dbQuery {
             Communities.batchInsert(communities) {
                 this[Communities.id] = it.id
@@ -65,21 +63,11 @@ class ExposedCliDatabase(val databaseSession: ExposedDatabaseSession) : CliDatab
                 this[Aids.objectId] = it.id
                 this[Aids.objectType] = ObjectType.COMMUNITY
             }
-            memberList.forEach { (communityId, uidList) ->
-                MemberJoins.batchInsert(uidList) {
-                    this[joinedTime] = now()
-                    this[uid] = it
-                    this[objectId] = communityId
-                    this[MemberJoins.objectType] = ObjectType.COMMUNITY
-                }
-            }
+            batchAddMembers(members)
         }.getOrThrow()
     }
 
-    override suspend fun batchAddRooms(
-        roomList: List<Room>,
-        membersList: List<Pair<List<PrimaryKey>, PrimaryKey>>
-    ) {
+    override suspend fun batchAddRooms(roomList: List<Room>, membersList: List<Member>) {
         databaseSession.dbQuery {
             Rooms.batchInsert(roomList) {
                 this[Rooms.id] = it.id
@@ -94,22 +82,15 @@ class ExposedCliDatabase(val databaseSession: ExposedDatabaseSession) : CliDatab
                 this[Aids.objectId] = it.id
                 this[Aids.objectType] = ObjectType.ROOM
             }
-            membersList.forEachIndexed { _, addRoom ->
-                MemberJoins.batchInsert(addRoom.first) {
-                    this[uid] = it
-                    this[objectId] = addRoom.second
-                    this[joinedTime] = now()
-                    this[MemberJoins.objectType] = ObjectType.ROOM
-                }
-            }
+            batchAddMembers(membersList)
         }.getOrThrow()
     }
 
     override suspend fun getAllMembers(distinct: List<String>) = databaseSession.dbQuery {
-        MemberJoins
-            .join(Rooms, JoinType.INNER, objectId, Rooms.id)
-            .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
-            .join(Users, JoinType.INNER, uid, Users.id)
+        Members
+            .join(Rooms, JoinType.INNER, Members.objectId, Rooms.id)
+            .join(Aids, JoinType.INNER, Members.objectId, Aids.objectId)
+            .join(Users, JoinType.INNER, Members.uid, Users.id)
             .select(Users.fields + Aids.value)
             .where {
                 Aids.value inList distinct
@@ -142,6 +123,11 @@ class ExposedCliDatabase(val databaseSession: ExposedDatabaseSession) : CliDatab
         databaseSession.dbQuery {
             insertTopics(tuples, userMap, objectType)
         }
+    }
+
+    override suspend fun createTaskRecord(record: TaskRecord) = databaseSession.dbQuery {
+        addTaskRecord(record)
+        record
     }
 
     private suspend fun insertTopics(

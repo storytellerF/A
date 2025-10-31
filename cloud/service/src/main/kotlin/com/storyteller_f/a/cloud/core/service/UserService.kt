@@ -205,6 +205,7 @@ suspend fun Backend.addChildAccount(uid: PrimaryKey): Result<ChildAccountInfo> {
                     Triple(publicKey, address, derPrivateKey)
                 }
                 val id = SnowflakeFactory.nextId()
+                val notificationId = SnowflakeFactory.nextId()
                 val user = User(
                     null,
                     publicKey,
@@ -215,7 +216,8 @@ suspend fun Backend.addChildAccount(uid: PrimaryKey): Result<ChildAccountInfo> {
                     now(),
                     0,
                     PassType.RAW,
-                    AlgoType.P256
+                    AlgoType.P256,
+                    notificationId
                 )
                 database.user.createChildAccount(uid, derPrivateKey, user)
                     .getOrThrow()

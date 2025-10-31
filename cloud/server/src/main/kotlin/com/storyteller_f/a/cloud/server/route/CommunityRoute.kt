@@ -4,10 +4,10 @@ import com.storyteller_f.a.api.core.CustomApi
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.cloud.core.service.createCommunity
-import com.storyteller_f.a.cloud.core.service.doUserJoinCommunity
 import com.storyteller_f.a.cloud.core.service.exitCommunity
 import com.storyteller_f.a.cloud.core.service.getCommunity
 import com.storyteller_f.a.cloud.core.service.getTopicsByParentId
+import com.storyteller_f.a.cloud.core.service.joinCommunity
 import com.storyteller_f.a.cloud.core.service.searchCommunities
 import com.storyteller_f.a.cloud.core.service.searchMembers
 import com.storyteller_f.a.cloud.core.service.updateCommunity
@@ -65,7 +65,7 @@ fun Route.bindCommunityRoute(backend: Backend) {
 fun Route.bindProtectedCommunityRoute(backend: Backend) {
     CustomApi.Communities.Id.Members.join(RoutingContext::handleResult) { p, api ->
         usePrincipal { uid ->
-            backend.doUserJoinCommunity(uid, p.id)
+            backend.joinCommunity(uid, p.id)
         }
     }
 

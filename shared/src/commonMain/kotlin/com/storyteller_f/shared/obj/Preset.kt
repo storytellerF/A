@@ -14,7 +14,11 @@ data class PresetCommunity(
     val users: List<String>? = null,
     val tag: List<String>? = null,
     val font: String? = null,
-)
+) {
+    fun getSafeAdmin(): String {
+        return admin ?: "System"
+    }
+}
 
 @Serializable
 data class PresetUser(

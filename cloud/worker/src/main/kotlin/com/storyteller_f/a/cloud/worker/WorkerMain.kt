@@ -3,11 +3,8 @@ package com.storyteller_f.a.cloud.worker
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.CombinedDatabase
-import com.storyteller_f.a.backend.core.Cursor
 import com.storyteller_f.a.backend.core.CustomConfig
 import com.storyteller_f.a.backend.core.MergedEnv
-import com.storyteller_f.a.backend.core.ObjectListFetch
-import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.buildCommunitySearchService
 import com.storyteller_f.a.backend.core.buildNameService
 import com.storyteller_f.a.backend.core.buildRoomSearchService
@@ -23,18 +20,10 @@ import com.storyteller_f.a.backend.core.service.RoomSearchService
 import com.storyteller_f.a.backend.core.service.TopicSearchService
 import com.storyteller_f.a.backend.core.service.UserSearchService
 import com.storyteller_f.a.backend.core.setLogPath
-import com.storyteller_f.a.backend.core.types.AssetTransaction
-import com.storyteller_f.a.backend.core.types.TaskRecord
 import com.storyteller_f.a.backend.exposed.buildExposedDatabase
-import com.storyteller_f.shared.model.AssetType
-import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.setupKmpLogger
-import com.storyteller_f.shared.utils.associateByPair
-import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
 import io.github.aakira.napier.Napier
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -54,11 +43,19 @@ fun main() {
         val job = launch {
             while (isActive) {
                 Napier.i(tag = "task") {
-                    "execute ${now()}"
+                    "execute agc task at ${now()}"
                 }
                 backend.doAcgTask()
             }
         }
+        listOf(job, launch {
+            while (isActive) {
+                Napier.i(tag = "task") {
+                    "execute intro task at ${now()}"
+                }
+                backend.doIntroTask()
+            }
+        })
         // 注册 JVM 关闭钩子，捕获 SIGINT / SIGTERM
         Runtime.getRuntime().addShutdownHook(Thread {
             println("🔻 收到终止信号，准备退出...")
@@ -69,67 +66,6 @@ fun main() {
         Napier.i("worker done")
     }
 }
-
-private suspend fun Backend.doAcgTask() {
-    getAcgTaskListFromTopics().mapResultIfNotNull { (acgList, userAcgMap, list) ->
-        database.user.addAcgForUser(
-            TaskRecord(
-                SnowflakeFactory.nextId(),
-                now(),
-                TaskRecordType.TOPIC_ACG,
-                list.last().id
-            ),
-            acgList.mapNotNull { (id, acg) ->
-                userAcgMap[id]?.let { oldAcgAmount ->
-                    AssetTransaction(
-                        SnowflakeFactory.nextId(),
-                        id,
-                        now(),
-                        AssetType.ACG,
-                        oldAcgAmount,
-                        oldAcgAmount + acg
-                    )
-                }
-            }
-        )
-    }.onSuccess {
-        delay(10000)
-        Napier.i(tag = "task") {
-            "task success $it"
-        }
-    }.onFailure {
-        delay(10000)
-        Napier.i(tag = "task", throwable = it) {
-            "task failed"
-        }
-    }
-}
-
-private suspend fun Backend.getAcgTaskListFromTopics() =
-    database.user.getLatestTaskRecord(TaskRecordType.TOPIC_ACG).mapResult { taskRecord ->
-        database.topic.getTopicList(PrimaryKeyFetch(taskRecord?.processedId?.let {
-            Cursor.PreCursor(it)
-        }, 10))
-    }.mapResult { list ->
-        if (list.isNotEmpty()) {
-            val acgList = list.groupBy {
-                it.author
-            }.mapValues {
-                it.value.count()
-            }.toList()
-            val uids = acgList.map {
-                it.first
-            }
-            database.user.getUserAcgByIds(ObjectListFetch.IdListFetch(uids))
-                .map { list ->
-                    list.associateByPair()
-                }.map { userAcgMap ->
-                    Triple(acgList, userAcgMap, list)
-                }
-        } else {
-            Result.success(null)
-        }
-    }
 
 class WorkerBackend(
     override val customConfig: CustomConfig,

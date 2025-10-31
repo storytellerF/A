@@ -98,16 +98,20 @@ class ExposedUserDatabase(private val databaseSession: ExposedDatabaseSession) :
         }
     }
 
-    override suspend fun createUser(user: User) = databaseSession.dbQuery {
+    override suspend fun createUser(user: User): Result<User> = databaseSession.dbQuery {
         createUserRaw(user)
+        user
     }
 
     private suspend fun createUserRaw(user: User) = check(Users.insert {
-        it[Users.id] = user.id
+        it[id] = user.id
         it[publicKey] = user.publicKey
         it[address] = user.address
         it[nickname] = user.nickname
-        it[Users.createdTime] = user.createdTime
+        it[createdTime] = user.createdTime
+        it[notificationId] = user.notificationId
+        it[passType] = user.passType
+        it[algoType] = user.algoType
     }.insertedCount > 0) {
         "insert user failed"
     }
@@ -303,7 +307,7 @@ class ExposedUserDatabase(private val databaseSession: ExposedDatabaseSession) :
             }
         }
 
-        TaskRecord.addTaskRecord(record)
+        addTaskRecord(record)
     }
 
     override suspend fun getLatestTaskRecord(type: TaskRecordType) = databaseSession.dbSearch {

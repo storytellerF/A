@@ -4,7 +4,7 @@ import com.storyteller_f.a.backend.core.types.AssetTransaction
 import com.storyteller_f.a.backend.core.types.ChildAccount
 import com.storyteller_f.a.backend.core.types.Community
 import com.storyteller_f.a.backend.core.types.FileRecord
-import com.storyteller_f.a.backend.core.types.MemberJoin
+import com.storyteller_f.a.backend.core.types.Member
 import com.storyteller_f.a.backend.core.types.PanelAccount
 import com.storyteller_f.a.backend.core.types.Quota
 import com.storyteller_f.a.backend.core.types.RawChildAccount
@@ -39,6 +39,7 @@ import com.storyteller_f.shared.model.TopicPinSearch
 import com.storyteller_f.shared.model.UserPubKeyInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.PresetCommunity
+import com.storyteller_f.shared.obj.PresetRoom
 import com.storyteller_f.shared.obj.PresetTopic
 import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.obj.UpdateRoomBody
@@ -50,7 +51,7 @@ import kotlinx.datetime.LocalDateTime
 data class PaginationResult<T>(val list: List<T>, val total: Long)
 
 data class ContainerInfo(
-    val memberJoin: MemberJoin?,
+    val member: Member?,
     val userTopicRead: UserTopicRead?,
     val memberCount: Long?,
     val latestTopicId: PrimaryKey?,
@@ -77,6 +78,14 @@ class InsertCommunityTuple(
     val icon: PrimaryKey?,
     val id: PrimaryKey,
     val font: PrimaryKey?,
+    val createdTime: LocalDateTime
+)
+
+class InsertRoomTuple(
+    val room: PresetRoom,
+    val icon: PrimaryKey?,
+    val id: PrimaryKey,
+    val createdTime: LocalDateTime,
 )
 
 interface CombinedDatabase {
@@ -87,7 +96,7 @@ interface CombinedDatabase {
     val room: RoomDatabase
     val file: FileDatabase
     val container: ContainerDatabase
-    val cli: CliDatabase
+    val admin: AdminDatabase
     val panelAccount: PanelAccountDatabase
 
     suspend fun init()
@@ -101,7 +110,7 @@ interface UserDatabase {
     suspend fun getUserAid(id: PrimaryKey): Result<String?>
     suspend fun getRawUser(objectFetch: ObjectFetch): Result<RawUser?>
     suspend fun getRawUserAndPublicKeyByAddress(ad: String): Result<Pair<RawUser, String>?>
-    suspend fun createUser(user: User): Result<Unit>
+    suspend fun createUser(user: User): Result<User>
     suspend fun isUserNotExistsByPublicKey(pk: String): Result<Boolean>
     suspend fun updateUserInfo(id: PrimaryKey, newUser: UpdateUserBody): Result<Boolean>
     suspend fun getUserAuthDataById(id: PrimaryKey): Result<Pair<String, Long>?>
@@ -116,7 +125,7 @@ interface UserDatabase {
     suspend fun getUserDevices(uid: List<PrimaryKey>): Result<List<UserDevice>>
     suspend fun addAcgForUser(
         record: TaskRecord,
-        assetTransactions: List<AssetTransaction>,
+        assetTransactions: List<AssetTransaction>
     ): Result<Unit>
 
     suspend fun getLatestTaskRecord(type: TaskRecordType): Result<TaskRecord?>
@@ -273,12 +282,11 @@ interface CommunityDatabase {
         joinSearch: JoinSearch,
     ): Result<PaginationResult<RawCommunity>?>
 
-    suspend fun createCommunity(community: Community): Result<Unit>
-    suspend fun createCommunityRooms(rooms: List<Room>): Result<Unit>
+    suspend fun createCommunity(community: Community, memberId: PrimaryKey): Result<Unit>
     suspend fun getCommunityJoinedTimeByIds(
         uid: PrimaryKey,
         communityIds: List<PrimaryKey>,
-    ): Result<List<Pair<Long, LocalDateTime>>>
+    ): Result<List<Pair<Long, LocalDateTime?>>>
 
     suspend fun getRawCommunities(objectListFetch: ObjectListFetch): Result<List<RawCommunity>>
     suspend fun updateCommunity(id: PrimaryKey, body: UpdateCommunityBody): Result<Boolean>
@@ -307,7 +315,7 @@ interface RoomDatabase {
         uid: PrimaryKey? = null,
     ): Result<RawRoom?>
 
-    suspend fun createRoom(room: Room): Result<Unit>
+    suspend fun createRoom(room: Room, members: List<Member>): Result<Room>
     suspend fun getRawRooms(objectListFetch: ObjectListFetch): Result<List<RawRoom>>
     suspend fun getRoomList(objectListFetch: ObjectListFetch): Result<List<Room>>
     suspend fun updateRoom(id: PrimaryKey, body: UpdateRoomBody): Result<Boolean>
@@ -355,14 +363,15 @@ interface ContainerDatabase {
         uid: PrimaryKey,
         time: LocalDateTime,
         objectType: ObjectType,
+        member: Member,
     ): Result<Unit>
 
     suspend fun exitContainer(containerId: PrimaryKey, id: PrimaryKey): Result<Unit>
-    suspend fun getJoinedUserList(roomId: PrimaryKey): Result<List<MemberJoin>>
+    suspend fun getJoinedUserList(roomId: PrimaryKey): Result<List<Member>>
     suspend fun getUserJoinedTime(
         parentIds: List<PrimaryKey>,
         uid: PrimaryKey
-    ): Result<List<MemberJoin>>
+    ): Result<List<Member>>
 
     suspend fun getMemberCount(parentIds: List<PrimaryKey>): Result<List<Pair<Long, Long>>>
     suspend fun getContainerInfo(
@@ -390,17 +399,11 @@ interface ContainerDatabase {
     ): Result<Map<PrimaryKey, PrimaryKey?>>
 }
 
-interface CliDatabase {
+interface AdminDatabase {
     suspend fun batchAddUser(users: List<User>)
-    suspend fun batchAddCommunities(
-        communities: List<Community>,
-        memberList: List<Pair<PrimaryKey, List<PrimaryKey>>>,
-    )
+    suspend fun batchAddCommunities(communities: List<Community>, members: List<Member>)
 
-    suspend fun batchAddRooms(
-        roomList: List<Room>,
-        membersList: List<Pair<List<PrimaryKey>, PrimaryKey>>
-    )
+    suspend fun batchAddRooms(roomList: List<Room>, membersList: List<Member>)
 
     suspend fun getAllMembers(distinct: List<String>): Result<List<Triple<String, Long, String>>>
     suspend fun batchAddEncryptTopics(
@@ -415,6 +418,7 @@ interface CliDatabase {
         userMap: Map<String, User>,
         objectType: ObjectType
     )
+    suspend fun createTaskRecord(record: TaskRecord): Result<TaskRecord>
 }
 
 interface PanelAccountDatabase {
@@ -429,9 +433,9 @@ interface PanelAccountDatabase {
 const val PUBLIC_KEY_LENGTH = 512
 const val ADDRESS_LENGTH = 100
 const val USER_NICKNAME = 20
-const val COMMUNITY_NAME_LENGTH = 10
+const val COMMUNITY_NAME_LENGTH = 20
 const val AID_LENGTH = 20
-const val ROOM_NAME_LENGTH = 10
+const val ROOM_NAME_LENGTH = 20
 
 // 最长60，如果超过60 会进行裁切然后在后面添加uuid，保存时预留一部分空间
 const val MEDIA_NAME_LENGTH = 120

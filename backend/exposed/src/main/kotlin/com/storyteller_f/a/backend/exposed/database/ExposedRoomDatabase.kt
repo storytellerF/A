@@ -8,7 +8,7 @@ import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.RoomDatabase
 import com.storyteller_f.a.backend.core.UnauthorizedException
-import com.storyteller_f.a.backend.core.types.MemberJoin
+import com.storyteller_f.a.backend.core.types.Member
 import com.storyteller_f.a.backend.core.types.RawRoom
 import com.storyteller_f.a.backend.core.types.Room
 import com.storyteller_f.a.backend.exposed.ExposedDatabaseSession
@@ -16,14 +16,13 @@ import com.storyteller_f.a.backend.exposed.count
 import com.storyteller_f.a.backend.exposed.first
 import com.storyteller_f.a.backend.exposed.map
 import com.storyteller_f.a.backend.exposed.query.bindPaginationQuery
-import com.storyteller_f.a.backend.exposed.query.buildRoomPubKeyQuery
 import com.storyteller_f.a.backend.exposed.query.buildRoomSearchWhereQuery
 import com.storyteller_f.a.backend.exposed.tables.Aids
-import com.storyteller_f.a.backend.exposed.tables.MemberJoins
+import com.storyteller_f.a.backend.exposed.tables.Members
 import com.storyteller_f.a.backend.exposed.tables.Rooms
 import com.storyteller_f.a.backend.exposed.tables.UserTopicReads
 import com.storyteller_f.a.backend.exposed.tables.Users
-import com.storyteller_f.a.backend.exposed.tables.addJoinRaw
+import com.storyteller_f.a.backend.exposed.tables.batchAddMembers
 import com.storyteller_f.a.backend.exposed.tables.findRoomById
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.UserPubKeyInfo
@@ -96,22 +95,28 @@ class ExposedRoomDatabase(
     override suspend fun getRoomPubKeyPaginationResult(
         roomId: PrimaryKey,
         primaryKeyFetch: PrimaryKeyFetch,
-    ) = databaseSession.dbSearch {
-        search {
-            buildRoomPubKeyQuery(roomId, false).bindPaginationQuery(Users, primaryKeyFetch)
-        }
-        map {
-            UserPubKeyInfo(it[Users.id], it[Users.publicKey])
-        }
-    }.mapResult { data ->
-        databaseSession.dbSearch {
+    ) = runCatching {
+        val list = databaseSession.dbSearch {
             search {
-                buildRoomPubKeyQuery(roomId, true)
+                Users.join(Members, JoinType.INNER, Users.id, Members.uid)
+                    .select(Users.id, Users.publicKey).where {
+                        Members.objectId eq roomId
+                    }.bindPaginationQuery(Users, primaryKeyFetch)
+            }
+            map {
+                UserPubKeyInfo(it[Users.id], it[Users.publicKey])
+            }
+        }.getOrThrow()
+        val total = databaseSession.dbSearch {
+            search {
+                Users.join(Members, JoinType.INNER, Users.id, Members.uid)
+                    .selectAll().where {
+                        Members.objectId eq roomId
+                    }
             }
             count()
-        }.map { value ->
-            PaginationResult(data, value)
-        }
+        }.getOrThrow()
+        PaginationResult(list, total)
     }
 
     override suspend fun getRawRoom(
@@ -149,7 +154,7 @@ class ExposedRoomDatabase(
             val containerInfo = map[room.id]
             RawRoom(
                 room,
-                containerInfo?.memberJoin?.joinedTime,
+                containerInfo?.member?.joinedTime,
                 containerInfo?.userTopicRead?.topicId,
                 containerInfo?.memberCount,
                 containerInfo?.latestTopicId,
@@ -157,26 +162,28 @@ class ExposedRoomDatabase(
         }
     }
 
-    override suspend fun createRoom(room: Room) = databaseSession.dbQuery {
-        check(Rooms.insert { statement ->
-            statement[Rooms.id] = room.id
-            statement[Rooms.createdTime] = room.createdTime
-            statement[Rooms.name] = room.name
-            statement[Rooms.icon] = room.icon
-            statement[Rooms.creator] = room.creator
-            statement[Rooms.communityId] = room.communityId
-        }.insertedCount > 0) {
-            "create room failed"
+    override suspend fun createRoom(room: Room, members: List<Member>): Result<Room> =
+        databaseSession.dbQuery {
+            check(Rooms.insert { statement ->
+                statement[Rooms.id] = room.id
+                statement[Rooms.createdTime] = room.createdTime
+                statement[Rooms.name] = room.name
+                statement[Rooms.icon] = room.icon
+                statement[Rooms.creator] = room.creator
+                statement[Rooms.communityId] = room.communityId
+            }.insertedCount > 0) {
+                "create room failed"
+            }
+            check(Aids.insert {
+                it[value] = room.aid
+                it[objectId] = room.id
+                it[objectType] = ObjectType.ROOM
+            }.insertedCount > 0) {
+                "create aid failed"
+            }
+            batchAddMembers(members)
+            room
         }
-        check(Aids.insert {
-            it[value] = room.aid
-            it[objectId] = room.id
-            it[objectType] = ObjectType.ROOM
-        }.insertedCount > 0) {
-            "create aid failed"
-        }
-        MemberJoin.addJoinRaw(room.creator, room.id, room.createdTime, ObjectType.ROOM)
-    }
 
     override suspend fun getRawRooms(objectListFetch: ObjectListFetch) = databaseSession.dbSearch {
         search {
@@ -190,7 +197,7 @@ class ExposedRoomDatabase(
                 }
         }
         map {
-            val joinedTime = it.getOrNull(MemberJoins.joinedTime)
+            val joinedTime = it.getOrNull(Members.joinedTime)
             val topicId = it.getOrNull(UserTopicReads.topicId)
             val room = Room.wrapRow(it)
             RawRoom(room, joinedTime, topicId)

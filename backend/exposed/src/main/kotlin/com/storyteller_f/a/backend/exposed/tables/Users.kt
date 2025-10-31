@@ -22,6 +22,7 @@ object Users : BaseTable() {
     val acgAmount = long("acg_amount").default(0)
     val passType = enumerationByName<PassType>("pass_type", 20).default(PassType.RAW)
     val algoType = enumerationByName<AlgoType>("algo_type", 20).default(AlgoType.P256)
+    val notificationId = customPrimaryKey("notification_id")
 }
 
 fun User.Companion.wrapRow(row: ResultRow): User {
@@ -36,7 +37,8 @@ fun User.Companion.wrapRow(row: ResultRow): User {
             row[createdTime],
             row[acgAmount],
             row[passType],
-            row[algoType]
+            row[algoType],
+            row[notificationId],
         )
     }
 }
