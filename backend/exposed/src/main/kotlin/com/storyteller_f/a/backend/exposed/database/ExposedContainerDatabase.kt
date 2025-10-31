@@ -4,7 +4,7 @@ import com.storyteller_f.a.backend.core.ContainerDatabase
 import com.storyteller_f.a.backend.core.ContainerInfo
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
-import com.storyteller_f.a.backend.core.types.MemberJoin
+import com.storyteller_f.a.backend.core.types.Member
 import com.storyteller_f.a.backend.core.types.Quota
 import com.storyteller_f.a.backend.core.types.UserTopicRead
 import com.storyteller_f.a.backend.exposed.ExposedDatabaseSession
@@ -14,7 +14,7 @@ import com.storyteller_f.a.backend.exposed.isNotEmpty
 import com.storyteller_f.a.backend.exposed.map
 import com.storyteller_f.a.backend.exposed.query.bindPaginationQuery
 import com.storyteller_f.a.backend.exposed.query.buildSearchMembersQuery
-import com.storyteller_f.a.backend.exposed.tables.MemberJoins
+import com.storyteller_f.a.backend.exposed.tables.Members
 import com.storyteller_f.a.backend.exposed.tables.Quotas
 import com.storyteller_f.a.backend.exposed.tables.Topics
 import com.storyteller_f.a.backend.exposed.tables.UserTopicReads
@@ -49,8 +49,8 @@ class ExposedContainerDatabase(val databaseSession: ExposedDatabaseSession) :
         }
         return databaseSession.dbSearch {
             search {
-                MemberJoins.selectAll().where {
-                    (MemberJoins.objectId eq objectId) and (MemberJoins.uid eq uid)
+                Members.selectAll().where {
+                    (Members.objectId eq objectId) and (Members.uid eq uid)
                 }
             }
             isNotEmpty()
@@ -62,15 +62,16 @@ class ExposedContainerDatabase(val databaseSession: ExposedDatabaseSession) :
         uid: PrimaryKey,
         time: LocalDateTime,
         objectType: ObjectType,
-    ) = databaseSession.dbQuery {
-        MemberJoin.addJoinRaw(uid, id, time, objectType)
+        member: Member
+    ): Result<Unit> = databaseSession.dbQuery {
+        addJoinRaw(member)
     }
 
     override suspend fun exitContainer(
         containerId: PrimaryKey,
         id: PrimaryKey,
     ) = databaseSession.dbQuery {
-        check(MemberJoins.deleteWhere {
+        check(Members.deleteWhere {
             objectId eq containerId and (uid eq id)
         } > 0) {
             "delete member failed"
@@ -79,11 +80,11 @@ class ExposedContainerDatabase(val databaseSession: ExposedDatabaseSession) :
 
     override suspend fun getJoinedUserList(roomId: PrimaryKey) = databaseSession.dbSearch {
         search {
-            MemberJoins.selectAll().where {
-                MemberJoins.objectId eq roomId
+            Members.selectAll().where {
+                Members.objectId eq roomId
             }
         }
-        map(MemberJoin::wrapRow)
+        map(Member::wrapRow)
     }
 
     override suspend fun getUserJoinedTime(
@@ -91,22 +92,22 @@ class ExposedContainerDatabase(val databaseSession: ExposedDatabaseSession) :
         uid: PrimaryKey,
     ) = databaseSession.dbSearch {
         search {
-            MemberJoins.select(MemberJoins.fields).where {
-                (MemberJoins.uid eq uid) and (MemberJoins.objectId inList parentIds)
+            Members.select(Members.fields).where {
+                (Members.uid eq uid) and (Members.objectId inList parentIds)
             }
         }
-        map(MemberJoin::wrapRow)
+        map(Member::wrapRow)
     }
 
     override suspend fun getMemberCount(parentIds: List<PrimaryKey>) = databaseSession.dbSearch {
-        val column = MemberJoins.uid.countDistinct()
+        val column = Members.uid.countDistinct()
         search {
-            MemberJoins.select(MemberJoins.objectId, column).where {
-                MemberJoins.objectId inList parentIds
-            }.groupBy(MemberJoins.objectId)
+            Members.select(Members.objectId, column).where {
+                Members.objectId inList parentIds
+            }.groupBy(Members.objectId)
         }
         map {
-            it[MemberJoins.objectId] to it[column]
+            it[Members.objectId] to it[column]
         }
     }
 

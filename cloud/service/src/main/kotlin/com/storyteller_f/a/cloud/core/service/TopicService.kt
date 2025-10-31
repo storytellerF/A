@@ -169,18 +169,17 @@ private suspend fun Backend.createTopicAtRoom(
     newTopic: NewRoomTopic,
     isPrivate: Boolean,
     content: TopicContent
-) = if (isPrivate) {
-    if (content is TopicContent.Encrypted) {
-        saveEncryptedTopic(permission, content, uid, permission.tuple, newTopic.tuple)
-    } else {
-        Result.failure(ForbiddenException("Private room only accept encrypted content."))
+): Result<TopicInfo?> {
+    if (isPrivate) {
+        if (content !is TopicContent.Encrypted) {
+            return Result.failure(ForbiddenException("Private room only accept encrypted content."))
+        }
+        return saveEncryptedTopic(permission, content, uid, permission.tuple, newTopic.tuple)
     }
-} else {
-    if (content is TopicContent.Plain) {
-        savePlainTopic(uid, content.plain, permission.level, newTopic.tuple, permission.tuple)
-    } else {
-        Result.failure(ForbiddenException("Public room only accept unencrypted content."))
+    if (content !is TopicContent.Plain) {
+        return Result.failure(ForbiddenException("Public room only accept unencrypted content."))
     }
+    return savePlainTopic(uid, content.plain, permission.level, newTopic.tuple, permission.tuple)
 }
 
 private suspend fun Backend.saveEncryptedTopic(

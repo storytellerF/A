@@ -3,20 +3,23 @@ package com.storyteller_f.a.cloud.cli
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.InsertCommunityTuple
+import com.storyteller_f.a.backend.core.InsertRoomTuple
 import com.storyteller_f.a.backend.core.InsertTopicTuple
-import com.storyteller_f.a.backend.core.ObjectListFetch
+import com.storyteller_f.a.backend.core.ObjectListFetch.AidListFetch
 import com.storyteller_f.a.backend.core.service.CommunityDocument
 import com.storyteller_f.a.backend.core.service.RoomDocument
 import com.storyteller_f.a.backend.core.service.TopicDocument
 import com.storyteller_f.a.backend.core.service.UploadPack
 import com.storyteller_f.a.backend.core.service.UserDocument
 import com.storyteller_f.a.backend.core.types.Community
+import com.storyteller_f.a.backend.core.types.Member
 import com.storyteller_f.a.backend.core.types.PanelAccount
 import com.storyteller_f.a.backend.core.types.Room
 import com.storyteller_f.a.backend.core.types.Title
 import com.storyteller_f.a.backend.core.types.Topic
 import com.storyteller_f.a.backend.core.types.User
-import com.storyteller_f.a.cloud.core.service.getCommunityRoomsTemplateList
+import com.storyteller_f.a.backend.core.types.buildMemberForNotificationRoom
+import com.storyteller_f.a.backend.core.types.buildUserNotificationRoom
 import com.storyteller_f.a.cloud.core.service.getFileInfoList
 import com.storyteller_f.a.cloud.core.service.tryUploadFiles
 import com.storyteller_f.shared.encryptDataByAES
@@ -31,6 +34,7 @@ import com.storyteller_f.shared.obj.PresetTitle
 import com.storyteller_f.shared.obj.PresetTopic
 import com.storyteller_f.shared.obj.PresetUser
 import com.storyteller_f.shared.obj.PresetValue
+import com.storyteller_f.shared.type.MemberStatus
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.extractMarkdownMediaLink
@@ -91,27 +95,21 @@ class AddPreset : Subcommand("add", "add entry") {
 
         val parentDir = jsonFile.parentFile.canonicalFile
         runBlocking {
-            try {
-                when (val type = presetValue.type) {
-                    "community" -> connected.addCommunities(presetValue, parentDir)
-                    "user" -> connected.addUsers(presetValue, parentDir)
-                    "topic" -> connected.addTopics(presetValue, parentDir)
-                    "room" -> connected.addRooms(presetValue, parentDir)
-                    "file" -> connected.addFiles(presetValue, parentDir)
-                    "title" -> connected.addTitles(presetValue)
-                    "panelAccount" -> connected.addPanels(presetValue, parentDir)
-                    else -> {
-                        println("unrecognized type $type")
-                        exitProcess(2)
-                    }
+            when (val type = presetValue.type) {
+                "community" -> connected.addCommunities(presetValue, parentDir)
+                "user" -> connected.addUsers(presetValue, parentDir)
+                "topic" -> connected.addTopics(presetValue, parentDir)
+                "room" -> connected.addRooms(presetValue, parentDir)
+                "file" -> connected.addFiles(presetValue, parentDir)
+                "title" -> connected.addTitles(presetValue)
+                "panelAccount" -> connected.addPanels(presetValue, parentDir)
+                else -> {
+                    println("unrecognized type $type")
+                    exitProcess(2)
                 }
-                Napier.i {
-                    "add done $jsonFilePath."
-                }
-            } catch (e: Exception) {
-                Napier.e(e) {
-                    "exception when add"
-                }
+            }
+            Napier.i {
+                "add done ${jsonFile.canonicalPath}"
             }
         }
     }
@@ -135,7 +133,7 @@ class AddPreset : Subcommand("add", "add entry") {
             "titles count ${presetValue.titleData?.size}"
         }
         val userMap =
-            database.user.getRawUsers(ObjectListFetch.AidListFetch(titles.flatMap {
+            database.user.getRawUsers(AidListFetch(titles.flatMap {
                 buildList {
                     addAll(listOf(it.creator, it.uid))
                     if (it.scopeType == ObjectType.USER) {
@@ -146,7 +144,7 @@ class AddPreset : Subcommand("add", "add entry") {
                 it.user.aid!! to it.user
             }
         val communityMap = database.community.getRawCommunities(
-            ObjectListFetch.AidListFetch(
+            AidListFetch(
                 titles.filter {
                     it.scopeType == ObjectType.COMMUNITY
                 }.map {
@@ -157,7 +155,7 @@ class AddPreset : Subcommand("add", "add entry") {
             it.community.aid to it.community
         }
         val roomMap = database.room.getRawRooms(
-            ObjectListFetch.AidListFetch(
+            AidListFetch(
                 titles.filter {
                     it.scopeType == ObjectType.ROOM
                 }.map {
@@ -219,7 +217,7 @@ class AddPreset : Subcommand("add", "add entry") {
             "files count ${presetValue.fileData?.size}"
         }
         val userMap =
-            database.user.getRawUsers(ObjectListFetch.AidListFetch(files.map {
+            database.user.getRawUsers(AidListFetch(files.map {
                 it.owner
             }.distinct())).getOrThrow().associate {
                 it.user.aid!! to it.user
@@ -274,15 +272,71 @@ class AddPreset : Subcommand("add", "add entry") {
     }
 
     private suspend fun Backend.addRooms(presetValue: PresetValue, parentDir: File) {
-        val l = presetValue.roomData ?: return
+        val presetRooms = presetValue.roomData ?: return
         Napier.i {
             "rooms count ${presetValue.roomData?.size}"
         }
-        val (roomList, membersList) = getRoomsData(l, parentDir)
-        database.cli.batchAddRooms(roomList, membersList)
+        val userMap = getRoomUserMap(presetRooms)
+        val communityMap = getRoomCommunityMap(presetRooms)
+        val data = presetRooms.map {
+            val id = SnowflakeFactory.nextId()
+            val icon = it.icon
+            val s = if (icon == null) {
+                null
+            } else {
+                uploadFile(id, ObjectType.ROOM, parentDir, listOf(icon))?.id
+            }
+            InsertRoomTuple(it, s, id, now())
+        }
+        val memberList = data.flatMap {
+            (it.room.users.map { s ->
+                userMap[s]!!.id
+            } + userMap[it.room.admin]!!.id).distinct().map { uid ->
+                Member(
+                    SnowflakeFactory.nextId(),
+                    uid,
+                    it.id,
+                    ObjectType.ROOM,
+                    it.createdTime,
+                    MemberStatus.JOINED,
+                    it.createdTime
+                )
+            }
+        }
+        val roomList = data.map {
+            val presetRoom = it.room
+            Room(
+                it.id,
+                it.createdTime,
+                presetRoom.id,
+                presetRoom.name,
+                userMap[presetRoom.admin]!!.id,
+                it.icon,
+                communityMap[presetRoom.community]?.id
+            )
+        }
+        database.admin.batchAddRooms(roomList, memberList)
         roomSearchService.saveDocument(roomList.map {
             RoomDocument.fromRoom(it)
         })
+    }
+
+    private suspend fun Backend.getRoomCommunityMap(l: List<PresetRoom>): Map<String, Community> =
+        database.community.getRawCommunities(AidListFetch(l.mapNotNull {
+            it.community
+        }.distinct())).getOrThrow().associate {
+            it.community.aid to it.community
+        }
+
+    private suspend fun Backend.getRoomUserMap(l: List<PresetRoom>): Map<String?, User> {
+        val userMap = database.user.getRawUsers(
+            AidListFetch(l.flatMap {
+                it.users + it.admin
+            }.distinct())
+        ).getOrThrow().associate {
+            it.user.aid to it.user
+        }
+        return userMap
     }
 
     private suspend fun Backend.addTopics(presetValue: PresetValue, parentDir: File) {
@@ -291,7 +345,7 @@ class AddPreset : Subcommand("add", "add entry") {
         }
         val data = presetValue.topicData!!
         val userMap =
-            database.user.getRawUsers(ObjectListFetch.AidListFetch(data.map {
+            database.user.getRawUsers(AidListFetch(data.map {
                 it.author
             }.distinct())).getOrThrow().associate {
                 it.user.aid!! to it.user
@@ -317,7 +371,21 @@ class AddPreset : Subcommand("add", "add entry") {
             "users count ${presetValue.userData?.size}"
         }
         val users = getUserData(userList, parentDir)
-        database.cli.batchAddUser(users)
+        database.admin.batchAddUser(users)
+        val userMap =
+            database.user.getRawUsers(AidListFetch(listOf("System"))).getOrThrow()
+                .associate {
+                    it.user.aid to it.user
+                }
+        val adminUid = userMap["System"]!!.id
+        val realUser = users.filter {
+            it.id > 1000
+        }
+        database.admin.batchAddRooms(realUser.map {
+            buildUserNotificationRoom(it, adminUid)
+        }, realUser.flatMap {
+            buildMemberForNotificationRoom(it, adminUid)
+        })
         userSearchService.saveDocument(users.map {
             UserDocument.fromUser(it)
         })
@@ -342,10 +410,10 @@ class AddPreset : Subcommand("add", "add entry") {
             } else {
                 backend.getFileInfoList(listOf("100/$font")).getOrThrow()?.firstOrNull()?.id
             }
-            InsertCommunityTuple(it, iconMedia, id, fontMedia)
+            InsertCommunityTuple(it, iconMedia, id, fontMedia, now())
         }
         val userMap =
-            database.user.getRawUsers(ObjectListFetch.AidListFetch(data.flatMap {
+            database.user.getRawUsers(AidListFetch(data.flatMap {
                 it.community.users.orEmpty() + (it.community.admin ?: "System")
             }.distinct())).getOrThrow().associate {
                 it.user.aid to it.user
@@ -353,26 +421,33 @@ class AddPreset : Subcommand("add", "add entry") {
         val communities = data.map {
             Community(
                 it.id,
-                now(),
+                it.createdTime,
                 it.community.id,
                 it.community.name,
-                userMap[it.community.admin ?: "System"]!!.id,
+                userMap[it.community.getSafeAdmin()]!!.id,
                 it.icon,
                 fontId = it.font,
             )
         }
-        database.cli.batchAddCommunities(communities, data.map {
-            it.id to it.community.users?.map { s ->
+        val memberList = data.flatMap {
+            (it.community.users?.map { s ->
                 userMap[s]!!.id
-            }.orEmpty() + userMap["System"]!!.id
-        })
+            }.orEmpty() + userMap[it.community.getSafeAdmin()]!!.id).map { uid ->
+                Member(
+                    SnowflakeFactory.nextId(),
+                    uid,
+                    it.id,
+                    ObjectType.COMMUNITY,
+                    it.createdTime,
+                    MemberStatus.JOINED,
+                    it.createdTime
+                )
+            }
+        }
+        database.admin.batchAddCommunities(communities, memberList)
         communitySearchService.saveDocument(communities.map {
             CommunityDocument.fromCommunity(it)
         })
-        communities.map {
-            database.community.createCommunityRooms(getCommunityRoomsTemplateList(it))
-                .getOrThrow()
-        }
     }
 
     private suspend fun Backend.addTopics(
@@ -382,7 +457,7 @@ class AddPreset : Subcommand("add", "add entry") {
         objectType: ObjectType,
     ) {
         val communityMap =
-            database.community.getRawCommunities(ObjectListFetch.AidListFetch(list.mapNotNull {
+            database.community.getRawCommunities(AidListFetch(list.mapNotNull {
                 it.community
             })).getOrThrow().associate {
                 it.community.aid to it.community.id
@@ -411,7 +486,7 @@ class AddPreset : Subcommand("add", "add entry") {
                 rootId
             )
         }
-        database.cli.batchAddTopics(tuples, userMap, objectType)
+        database.admin.batchAddTopics(tuples, userMap, objectType)
         topicSearchService.saveDocument(
             tuples.mapIndexed { index, topicTuple ->
                 val level = topicTuple.level
@@ -452,6 +527,7 @@ class AddPreset : Subcommand("add", "add entry") {
             }
             UserPresetTuple(it, p, derPublicKey, ad, id)
         }.map {
+            val notificationId = SnowflakeFactory.nextId()
             User(
                 it.presetUser.aid,
                 it.publicKey,
@@ -462,7 +538,8 @@ class AddPreset : Subcommand("add", "add entry") {
                 now(),
                 0,
                 PassType.RAW,
-                AlgoType.P256
+                AlgoType.P256,
+                notificationId
             )
         }
     }
@@ -481,59 +558,13 @@ class AddPreset : Subcommand("add", "add entry") {
         }
     }
 
-    private suspend fun Backend.getRoomsData(
-        l: List<PresetRoom>,
-        parentDir: File,
-    ): Pair<List<Room>, List<Pair<List<PrimaryKey>, PrimaryKey>>> {
-        val data = l.map {
-            val id = SnowflakeFactory.nextId()
-            val icon = it.icon
-            val s = if (icon == null) {
-                null
-            } else {
-                uploadFile(id, ObjectType.ROOM, parentDir, listOf(icon))?.id
-            }
-            Triple(it, s, id)
-        }
-
-        val userMap = database.user.getRawUsers(
-            ObjectListFetch.AidListFetch(l.flatMap {
-                it.users + it.admin
-            }.distinct())
-        ).getOrThrow().associate {
-            it.user.aid to it.user
-        }
-
-        val communityMap =
-            database.community.getRawCommunities(ObjectListFetch.AidListFetch(l.mapNotNull {
-                it.community
-            }.distinct())).getOrThrow().associate {
-                it.community.aid to it.community
-            }
-        return data.map { (presetRoom, pic, id) ->
-            Room(
-                id,
-                now(),
-                presetRoom.id,
-                presetRoom.name,
-                userMap[presetRoom.admin]!!.id,
-                pic,
-                communityMap[presetRoom.community]?.id
-            )
-        } to data.map {
-            it.first.users.map { s ->
-                userMap[s]!!.id
-            } to it.third
-        }
-    }
-
     private suspend fun Backend.addTopicsIntoRoom(
         list: List<PresetTopic>,
         userMap: Map<String, User>,
         parentDir: File,
     ) {
         val roomMap =
-            database.room.getRoomList(ObjectListFetch.AidListFetch(list.mapNotNull {
+            database.room.getRoomList(AidListFetch(list.mapNotNull {
                 it.room
             })).getOrThrow().associateBy { it.aid }
         insertEncryptedTopicToRoom(parentDir, roomMap, list.filter {
@@ -564,7 +595,7 @@ class AddPreset : Subcommand("add", "add entry") {
             }
             InsertTopicTuple(addTopic.first, index, l, id, content, false, rootId)
         }
-        database.cli.batchAddTopics(tuples, userMap, ObjectType.ROOM)
+        database.admin.batchAddTopics(tuples, userMap, ObjectType.ROOM)
         topicSearchService.saveDocument(
             publicRoomList.mapIndexed { index, first ->
                 val level = first.level
@@ -614,7 +645,7 @@ class AddPreset : Subcommand("add", "add entry") {
             it.room
         }.distinct()
         val roomMembers =
-            database.cli.getAllMembers(roomAids).getOrThrow().groupBy {
+            database.admin.getAllMembers(roomAids).getOrThrow().groupBy {
                 it.third
             }
         val encryptedContents = privateRoomList.map {
@@ -647,7 +678,7 @@ class AddPreset : Subcommand("add", "add entry") {
             }
             InsertTopicTuple(tuple.presetTopic, index, level1, id, content, true, rootId)
         }
-        database.cli.batchAddEncryptTopics(tuples, userMap, roomMap, encryptedKeys)
+        database.admin.batchAddEncryptTopics(tuples, userMap, roomMap, encryptedKeys)
         privateRoomList.forEach { topic ->
             val room = roomMap[topic.room]
             if (room != null) {

@@ -9,7 +9,7 @@ import com.storyteller_f.a.backend.exposed.tables.Communities
 import com.storyteller_f.a.backend.exposed.tables.EncryptedKeys
 import com.storyteller_f.a.backend.exposed.tables.FileRecords
 import com.storyteller_f.a.backend.exposed.tables.FileRefs
-import com.storyteller_f.a.backend.exposed.tables.MemberJoins
+import com.storyteller_f.a.backend.exposed.tables.Members
 import com.storyteller_f.a.backend.exposed.tables.PanelAccounts
 import com.storyteller_f.a.backend.exposed.tables.Quotas
 import com.storyteller_f.a.backend.exposed.tables.ReactionRecords
@@ -113,15 +113,16 @@ class ExposedDatabaseSession(val database: R2dbcDatabase, val port: Int?) {
         }
         val dialectName = database.dialect.name
         val isConnectFailed = e is ConnectException
-        anchor.initCause(e)
-        return Exception(
+        val exception = Exception(
             if (isConnectFailed) {
                 "$dialectName connect failed"
             } else {
                 "$dialectName query failed"
             },
-            anchor
+            e
         )
+        anchor.initCause(exception)
+        return anchor
     }
 
     suspend fun <T> dbQuery(block: suspend R2dbcTransaction.() -> T): Result<T> {
@@ -167,6 +168,7 @@ class ExposedDatabaseSession(val database: R2dbcDatabase, val port: Int?) {
         try {
             val explainResult = withContext(Dispatchers.IO) {
                 suspendTransaction(db = database) {
+                    maxAttempts = 1
                     explainQuery {
                         val databaseSearchConfig = DatabaseSearchConfig<R, Query>()
                         databaseSearchConfig.apply(query).searchFunc()
@@ -236,7 +238,7 @@ object ExposedDatabaseFactory {
         EncryptedKeys,
         FileRefs,
         FileRecords,
-        MemberJoins,
+        Members,
         Reactions,
         ReactionRecords,
         Rooms,

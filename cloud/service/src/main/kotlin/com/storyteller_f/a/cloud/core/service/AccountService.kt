@@ -38,6 +38,7 @@ suspend fun Backend.signUp(
             calcAddress(pack.pk)
         }.mapResult { ad ->
             val newId = SnowflakeFactory.nextId()
+            val notificationId = SnowflakeFactory.nextId()
             val name = nameService.parse(newId)
             val user = User(
                 null,
@@ -49,12 +50,13 @@ suspend fun Backend.signUp(
                 now(),
                 0,
                 PassType.RAW,
-                AlgoType.P256
+                AlgoType.P256,
+                notificationId
             )
-            database.user.createUser(user).map {
-                user.toUserInfo()
-            }
+            database.user.createUser(user)
         }
+    }.map {
+        it.toUserInfo()
     }
 }
 
@@ -77,9 +79,9 @@ suspend fun Backend.signIn(
         }.mapResult { rawUser ->
             val id = rawUser.user.id
             addUserLog(id, UserLogType.SIGN_IN, id ob ObjectType.USER)
-            processRawUserToUserInfo(listOf(rawUser)).map {
-                it.first()
-            }
+            processRawUserToUserInfo(listOf(rawUser))
+        }.map {
+            it.first()
         }
 }
 

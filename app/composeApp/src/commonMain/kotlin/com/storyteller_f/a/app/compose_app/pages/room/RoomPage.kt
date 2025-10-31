@@ -425,8 +425,7 @@ fun RoomSendButton(
     val state by wsClient.connectionHandler.state.collectAsState()
     val sendState by wsClient.localState.collectAsState()
     val isSending = sendState is LoadingState.Loading
-    val keysViewModel =
-        createRoomKeysViewModel(roomInfo.id, roomInfo)
+    val keysViewModel = createRoomKeysViewModel(roomInfo.id, roomInfo)
     CommonInputButton(state, input, isSending) {
         if (roomInfo.isJoined) {
             sendRoomTopic(
@@ -533,7 +532,7 @@ private fun InputGroupSuffix(
 ) {
     val userSessionManager = LocalSessionManager.current
     val alertDialogController = rememberAlertDialogController()
-    val alreadyLoginIn by userSessionManager.isAlreadySignIn.collectAsState(false)
+    val alreadySignIn by userSessionManager.isAlreadySignIn.collectAsState(false)
     var showSheet by remember {
         mutableStateOf(false)
     }
@@ -550,7 +549,7 @@ private fun InputGroupSuffix(
             Icons.Default.OpenInFull,
             "open in full",
             modifier = Modifier.clickable {
-                if (alreadyLoginIn) {
+                if (alreadySignIn) {
                     gotoCompose()
                 } else {
                     alertDialogController.showTitle("need sign in")
@@ -558,7 +557,7 @@ private fun InputGroupSuffix(
             }
         )
         Icon(Icons.Filled.PermMedia, contentDescription = null, modifier = Modifier.clickable {
-            if (alreadyLoginIn) {
+            if (alreadySignIn) {
                 showSheet = true
             } else {
                 alertDialogController.showTitle("need sign in")

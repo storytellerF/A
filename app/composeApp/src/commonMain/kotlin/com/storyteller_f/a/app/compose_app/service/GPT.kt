@@ -1,11 +1,17 @@
 package com.storyteller_f.a.app.compose_app.service
 
+import com.ashampoo.kim.common.exists
 import io.github.irgaly.kfswatch.KfsDirectoryWatcher
 import io.github.irgaly.kfswatch.KfsDirectoryWatcherEvent
 import io.github.irgaly.kfswatch.KfsEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -67,12 +73,20 @@ fun observeModels(
     return merge(watcher.onEventFlow, flow {
         emit(KfsDirectoryWatcherEvent("", "", KfsEvent.Create))
     }).debounce(1000).map {
-        SystemFileSystem.list(path).filter { child ->
-            supportList.any {
-                child.name.endsWith(it)
-            }
-        }.map {
+        filterModels(path, supportList).map {
             GPTModel(it.name, it.toString())
+        }
+    }
+}
+
+private fun filterModels(
+    path: Path,
+    supportList: List<String>
+): List<Path> {
+    if (!(path.exists())) return emptyList()
+    return SystemFileSystem.list(path).filter { child ->
+        supportList.any {
+            child.name.endsWith(it)
         }
     }
 }

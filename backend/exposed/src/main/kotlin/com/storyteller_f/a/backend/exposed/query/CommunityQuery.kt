@@ -2,7 +2,7 @@ package com.storyteller_f.a.backend.exposed.query
 
 import com.storyteller_f.a.backend.core.JoinSearch
 import com.storyteller_f.a.backend.exposed.tables.Communities
-import com.storyteller_f.a.backend.exposed.tables.MemberJoins
+import com.storyteller_f.a.backend.exposed.tables.Members
 import com.storyteller_f.shared.model.PosterSearch
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.SortOrder
@@ -41,16 +41,16 @@ fun Query.buildCommunitySearchQuery(
     when (joinSearch) {
         is JoinSearch.Joined -> {
             adjustColumnSet {
-                join(MemberJoins, JoinType.INNER, Communities.id, MemberJoins.objectId) {
-                    MemberJoins.uid eq joinSearch.uid
+                join(Members, JoinType.INNER, Communities.id, Members.objectId) {
+                    Members.uid eq joinSearch.uid
                 }
             }
         }
 
         is JoinSearch.NotJoined -> {
             where {
-                Communities.id notInSubQuery (MemberJoins.select(MemberJoins.objectId).where {
-                    MemberJoins.uid eq joinSearch.uid
+                Communities.id notInSubQuery (Members.select(Members.objectId).where {
+                    Members.uid eq joinSearch.uid
                 })
             }
         }

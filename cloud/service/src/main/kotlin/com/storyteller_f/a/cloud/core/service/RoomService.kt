@@ -10,6 +10,7 @@ import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.JoinSearch
 import com.storyteller_f.a.backend.core.ObjectFetch
+import com.storyteller_f.a.backend.core.ObjectFetch.IdFetch
 import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
@@ -17,7 +18,7 @@ import com.storyteller_f.a.backend.core.ROOM_NAME_LENGTH
 import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.backend.core.service.RoomDocument
 import com.storyteller_f.a.backend.core.service.RoomDocumentSearch
-import com.storyteller_f.a.backend.core.types.Community
+import com.storyteller_f.a.backend.core.types.Member
 import com.storyteller_f.a.backend.core.types.RawRoom
 import com.storyteller_f.a.backend.core.types.Room
 import com.storyteller_f.a.backend.core.types.toRoomInfo
@@ -29,6 +30,7 @@ import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.obj.UpdateRoomBody
 import com.storyteller_f.shared.obj.ob
+import com.storyteller_f.shared.type.MemberStatus
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.UNIT_RESULT
@@ -81,28 +83,23 @@ suspend fun Backend.joinRoom(
             }
         }
     }.mapResult {
-        directJoinRoom(uid, roomInfo)
-    }
-}
-
-private suspend fun Backend.directJoinRoom(
-    uid: PrimaryKey,
-    roomInfo: RoomInfo,
-): Result<RoomInfo?> {
-    val time = now()
-    return database.container.joinContainer(
-        roomInfo.id,
-        uid,
-        time,
-        ObjectType.ROOM,
-    ).mapResult {
-        addUserLog(uid, UserLogType.JOIN, roomInfo.tuple())
-        Result.success(roomInfo.copy(joinedTime = time))
-    }.recoverResult { exception ->
-        if (database.isDup(exception)) {
-            getRoomInfo(ObjectFetch.IdFetch(roomInfo.id), uid, true)
-        } else {
-            Result.failure(exception)
+        val time = now()
+        val memberId = SnowflakeFactory.nextId()
+        database.container.joinContainer(
+            roomInfo.id,
+            uid,
+            time,
+            ObjectType.ROOM,
+            Member(memberId, uid, roomInfo.id, ObjectType.ROOM, time, MemberStatus.JOINED, time)
+        ).mapResult {
+            addUserLog(uid, UserLogType.JOIN, roomInfo.tuple())
+            Result.success(roomInfo.copy(joinedTime = time))
+        }.recoverResult { exception ->
+            if (database.isDup(exception)) {
+                getRoomInfo(IdFetch(roomInfo.id), uid, true)
+            } else {
+                Result.failure(exception)
+            }
         }
     }
 }
@@ -155,9 +152,23 @@ suspend fun Backend.createRoom(
         Result.success(true)
     }.mapResultIfNotNull {
         val roomId = SnowflakeFactory.nextId()
+        val memberId = SnowflakeFactory.nextId()
         val room =
             Room(roomId, now(), newRoom.aid, newRoom.name, uid, newRoom.icon, communityId)
-        database.room.createRoom(room).map {
+        database.room.createRoom(
+            room,
+            listOf(
+                Member(
+                    memberId,
+                    room.creator,
+                    room.id,
+                    ObjectType.ROOM,
+                    room.createdTime,
+                    MemberStatus.JOINED,
+                    room.createdTime
+                )
+            )
+        ).map {
             roomSearchService.saveDocument(listOf(RoomDocument.fromRoom(room))).onFailure {
                 Napier.e(it) {
                     "save room document failed"
@@ -274,25 +285,7 @@ suspend fun Backend.processRawRoomToRoomInfo(list: List<RawRoom>) =
         }
     }
 
-suspend fun getCommunityRoomsTemplateList(community: Community): List<Room> {
-    val communityAid = community.aid
-    return listOf(
-        "${communityAid}_general" to "General",
-        "${communityAid}_lobby" to "Lobby",
-        "${communityAid}_support" to "Support"
-    ).mapIndexed { i, pair ->
-        Room(
-            SnowflakeFactory.nextId(),
-            now(),
-            pair.first,
-            pair.second,
-            community.owner,
-            communityId = community.id
-        )
-    }
-}
-
-suspend fun Backend.getRoomInfoList(listFetch: ObjectListFetch.IdListFetch): Result<List<RoomInfo>> =
+suspend fun Backend.getRoomInfoList(listFetch: ObjectListFetch.IdListFetch) =
     database.room.getRawRooms(listFetch).mapResult {
         processRawRoomToRoomInfo(it)
     }

@@ -86,18 +86,17 @@ import io.ktor.utils.io.ByteWriteChannel
 import io.ktor.utils.io.InternalAPI
 import io.ktor.utils.io.close
 import io.sentry.Sentry
-import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import org.slf4j.event.Level
 import java.io.File
 import java.io.OutputStreamWriter
 import java.net.InetAddress
 import java.security.SecureRandom
-import kotlin.concurrent.thread
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
 import kotlin.jvm.optionals.getOrNull
 import kotlin.system.exitProcess
 import kotlin.time.Duration.Companion.seconds
@@ -321,71 +320,43 @@ private fun processInitTaskIfNeed(env: MergedEnv) {
         "scripts: ${scriptArray.joinToString(" ")}. working dir: ${file.canonicalPath}"
     }
     runBlocking {
-        suspendCancellableCoroutine {
-            thread {
-                executeScriptInThread(scriptArray, file, it)
-            }
-        }
+        executeScriptInThread(scriptArray, file)
     }
 }
 
-private fun executeScriptInThread(
+private suspend fun CoroutineScope.executeScriptInThread(
     scriptArray: List<String>,
     file: File,
-    continuation: CancellableContinuation<Int>,
 ) {
-    val process = try {
-        ProcessBuilder(scriptArray).directory(file).start()
-    } catch (e: Exception) {
-        continuation.resumeWithException(e)
-        return
-    }
-    val reader = process.inputStream.bufferedReader()
-    val errorReader = process.errorStream.bufferedReader()
-    thread {
-        while (process.isAlive) {
-            val line = reader.readLine() ?: break
-            Napier.i(tag = "init") {
-                line
+    val process = ProcessBuilder(scriptArray).directory(file).start()
+    launch(Dispatchers.IO) {
+        process.inputStream.bufferedReader().use {
+            while (process.isAlive) {
+                val line = it.readLine() ?: break
+                Napier.i(tag = "init") {
+                    line
+                }
             }
         }
     }
-    thread {
-        while (process.isAlive) {
-            val line = errorReader.readLine() ?: break
-            Napier.e(tag = "init") {
-                line
+    launch(Dispatchers.IO) {
+        process.errorStream.bufferedReader().use {
+            while (process.isAlive) {
+                val line = it.readLine() ?: break
+                Napier.e(tag = "init") {
+                    line
+                }
             }
         }
     }
     Napier.i(tag = "init") {
         "started"
     }
-    try {
-        val code = process.waitFor()
-        reader.readLine()?.let {
-            Napier.i(tag = "init") {
-                it
-            }
-        }
-        errorReader.readLine()?.let {
-            Napier.i(tag = "init") {
-                it
-            }
-        }
-        Napier.i(tag = "init") {
-            "finished. code: $code"
-        }
-        continuation.resume(code)
-    } catch (e: Exception) {
-        Napier.e(tag = "init", throwable = e) {
-            "failed"
-        }
-        continuation.resumeWithException(e)
-    } finally {
-        reader.close()
-        errorReader.close()
-        process.destroy()
+    val exitValue = withContext(Dispatchers.IO) {
+        process.waitFor()
+    }
+    check(exitValue == 0) {
+        "init failed $exitValue"
     }
 }
 

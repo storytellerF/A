@@ -9,28 +9,29 @@ import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.backend.core.types.Community
-import com.storyteller_f.a.backend.core.types.MemberJoin
+import com.storyteller_f.a.backend.core.types.Member
 import com.storyteller_f.a.backend.core.types.RawCommunity
-import com.storyteller_f.a.backend.core.types.Room
 import com.storyteller_f.a.backend.exposed.ExposedDatabaseSession
 import com.storyteller_f.a.backend.exposed.count
 import com.storyteller_f.a.backend.exposed.first
 import com.storyteller_f.a.backend.exposed.map
-import com.storyteller_f.a.backend.exposed.query.batchCreateCommunityRooms
 import com.storyteller_f.a.backend.exposed.query.bindPaginationQuery
 import com.storyteller_f.a.backend.exposed.query.buildCommunitySearchQuery
 import com.storyteller_f.a.backend.exposed.tables.Aids
 import com.storyteller_f.a.backend.exposed.tables.Communities
-import com.storyteller_f.a.backend.exposed.tables.MemberJoins
+import com.storyteller_f.a.backend.exposed.tables.Members
 import com.storyteller_f.a.backend.exposed.tables.UserTopicReads
 import com.storyteller_f.a.backend.exposed.tables.addJoinRaw
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.PosterSearch
 import com.storyteller_f.shared.obj.UpdateCommunityBody
-import com.storyteller_f.shared.type.*
+import com.storyteller_f.shared.type.MemberStatus
+import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
+import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
@@ -74,8 +75,8 @@ class ExposedCommunityDatabase(
     override suspend fun getJoinedCommunityIds(uid: PrimaryKey) = databaseSession.dbSearch {
         search {
             Communities
-                .join(MemberJoins, JoinType.INNER, Communities.id, MemberJoins.objectId) {
-                    MemberJoins.uid eq uid
+                .join(Members, JoinType.INNER, Communities.id, Members.objectId) {
+                    Members.uid eq uid
                 }.select(Communities.id)
         }
         map {
@@ -123,7 +124,7 @@ class ExposedCommunityDatabase(
             val containerInfo = map[it.id]
             RawCommunity(
                 it,
-                containerInfo?.memberJoin?.joinedTime,
+                containerInfo?.member?.joinedTime,
                 containerInfo?.userTopicRead?.topicId,
                 containerInfo?.memberCount,
                 containerInfo?.latestTopicId
@@ -131,53 +132,57 @@ class ExposedCommunityDatabase(
         }
     }
 
-    override suspend fun createCommunity(community: Community) = databaseSession.dbQuery {
-        check(Communities.insert {
-            it[Communities.id] = community.id
-            it[Communities.name] = community.name
-            it[Communities.owner] = community.owner
-            it[Communities.createdTime] = community.createdTime
-        }.insertedCount > 0) {
-            "insert community failed"
+    override suspend fun createCommunity(community: Community, memberId: PrimaryKey) =
+        databaseSession.dbQuery {
+            check(Communities.insert {
+                it[Communities.id] = community.id
+                it[Communities.name] = community.name
+                it[Communities.owner] = community.owner
+                it[Communities.createdTime] = community.createdTime
+            }.insertedCount > 0) {
+                "insert community failed"
+            }
+            check(Aids.insert {
+                it[value] = community.aid
+                it[objectId] = community.id
+                it[objectType] = ObjectType.COMMUNITY
+            }.insertedCount > 0) {
+                "insert aid failed"
+            }
+            addJoinRaw(
+                Member(
+                    memberId,
+                    community.owner,
+                    community.id,
+                    ObjectType.COMMUNITY,
+                    community.createdTime,
+                    MemberStatus.JOINED,
+                    community.createdTime
+                )
+            )
         }
-        check(Aids.insert {
-            it[value] = community.aid
-            it[objectId] = community.id
-            it[objectType] = ObjectType.COMMUNITY
-        }.insertedCount > 0) {
-            "insert aid failed"
-        }
-        MemberJoin.addJoinRaw(
-            community.owner,
-            community.id,
-            community.createdTime,
-            ObjectType.COMMUNITY
-        )
-    }
-
-    override suspend fun createCommunityRooms(rooms: List<Room>) = databaseSession.dbQuery {
-        batchCreateCommunityRooms(rooms)
-    }
 
     override suspend fun getCommunityJoinedTimeByIds(
         uid: PrimaryKey,
         communityIds: List<PrimaryKey>
-    ) = databaseSession.dbSearch {
-        search {
-            Communities.join(
-                MemberJoins,
-                JoinType.INNER,
-                Communities.id,
-                MemberJoins.objectId
-            ) {
-                MemberJoins.uid eq uid
-            }.select(Communities.id, MemberJoins.joinedTime)
-                .where {
+    ): Result<List<Pair<Long, LocalDateTime?>>> {
+        if (communityIds.isEmpty()) return Result.success(emptyList())
+        return databaseSession.dbSearch {
+            search {
+                Communities.join(
+                    Members,
+                    JoinType.INNER,
+                    Communities.id,
+                    Members.objectId
+                ) {
+                    Members.uid eq uid
+                }.select(Communities.id, Members.joinedTime).where {
                     Communities.id.inList(communityIds)
                 }
-        }
-        map {
-            it[Communities.id] to it[MemberJoins.joinedTime]
+            }
+            map {
+                it[Communities.id] to it[Members.joinedTime]
+            }
         }
     }
 
@@ -195,7 +200,7 @@ class ExposedCommunityDatabase(
         }
         map {
             val community = Community.wrapRow(it)
-            val joinedTime = it.getOrNull(MemberJoins.joinedTime)
+            val joinedTime = it.getOrNull(Members.joinedTime)
             val lastRead = it.getOrNull(UserTopicReads.topicId)
             val communityInfo = community
             RawCommunity(communityInfo, joinedTime, lastRead)

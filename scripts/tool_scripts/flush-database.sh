@@ -37,10 +37,11 @@ for json_file in "$base"/*.json; do
 
     file_index=$(echo "$filename" | grep -o '^[0-9]\+')
 
+    rp=$(realpath $json_file)
     if [ "$file_index" -eq "$index" ]; then
-      log "Process start $json_file"
+      log "Process start $rp"
       sh "$cli_path" add "$json_file"
-      log "Process done $json_file, result is $?"
+      log "Process done $rp"
     fi
 
     index=$((index + 1))

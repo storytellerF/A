@@ -16,8 +16,7 @@ import com.storyteller_f.a.api.core.TopicQuery
 import com.storyteller_f.route4k.ktor.client.invoke
 import com.storyteller_f.shared.SignInPack
 import com.storyteller_f.shared.SignUpPack
-import com.storyteller_f.shared.encryptDataByAES
-import com.storyteller_f.shared.getAlgo
+import com.storyteller_f.shared.buildEncryptedTopicContent
 import com.storyteller_f.shared.model.PosterSearch
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TitleSearchType
@@ -456,10 +455,7 @@ suspend fun DefaultClientWebSocketSession.sendMessage(
     keyData: List<UserPubKeyInfo>,
 ) {
     val content = if (isPrivate) {
-        val (encrypted, aes) = encryptDataByAES(input).getOrThrow()
-        TopicContent.Encrypted(encrypted.toHexString(), keyData.associate {
-            it.id to getAlgo().eciesEncrypt(it.pubKey, aes).getOrThrow().toHexString()
-        })
+        buildEncryptedTopicContent(input, keyData)
     } else {
         TopicContent.Plain(input)
     }

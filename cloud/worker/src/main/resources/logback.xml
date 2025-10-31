@@ -70,4 +70,5 @@
     <logger name="reactor.netty.transport" level="INFO" />
     <logger name="reactor.netty.channel" level="INFO" />
     <logger name="reactor.netty.resources" level="INFO" />
+    <logger name="Exposed" level="DEBUG" />
 </configuration>

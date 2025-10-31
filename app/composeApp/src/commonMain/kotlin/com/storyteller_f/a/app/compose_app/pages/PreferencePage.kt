@@ -1,7 +1,19 @@
 package com.storyteller_f.a.app.compose_app.pages
 
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import com.storyteller_f.a.app.compose_app.pages.topic.TopicTranslateSheet
+import com.storyteller_f.a.app.compose_app.service.buildGPT
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.core.compontents.CustomIcon
 import com.storyteller_f.a.app.core.compontents.IconRes
@@ -24,9 +36,7 @@ fun PreferencePage() {
             }
             val sheetState = rememberModalBottomSheetState()
             val scope = rememberCoroutineScope()
-            val models by com.storyteller_f.a.app.compose_app.service.buildGPT().models(
-                scope
-            ).collectAsState(emptyList())
+            val models by buildGPT().models(scope).collectAsState(emptyList())
             BottomSheetListPreference(
                 getPreference("gpt_model"),
                 title = "Translate Model",
@@ -55,7 +65,7 @@ fun PreferencePage() {
                 }
             )
 
-            com.storyteller_f.a.app.compose_app.pages.topic.TopicTranslateSheet(
+            TopicTranslateSheet(
                 showSheet,
                 sheetState,
                 TopicInfo.EMPTY.copy(content = TopicContent.Plain("hello"))

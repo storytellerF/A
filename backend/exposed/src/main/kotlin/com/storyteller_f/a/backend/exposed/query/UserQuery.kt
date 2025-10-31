@@ -1,7 +1,7 @@
 package com.storyteller_f.a.backend.exposed.query
 
 import com.storyteller_f.a.backend.exposed.tables.Aids
-import com.storyteller_f.a.backend.exposed.tables.MemberJoins
+import com.storyteller_f.a.backend.exposed.tables.Members
 import com.storyteller_f.a.backend.exposed.tables.Users
 import com.storyteller_f.shared.type.PrimaryKey
 import org.jetbrains.exposed.v1.core.JoinType
@@ -16,13 +16,13 @@ fun buildSearchMembersQuery(objectId: PrimaryKey?, getCount: Boolean, word: Stri
     val query = if (objectId != null) {
         val join = Users
             .join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
-            .join(MemberJoins, JoinType.INNER, Users.id, MemberJoins.uid) {
-                MemberJoins.objectId eq objectId
+            .join(Members, JoinType.INNER, Users.id, Members.uid) {
+                Members.objectId eq objectId
             }
         if (getCount) {
             join.selectAll()
         } else {
-            join.select(Users.fields + MemberJoins.joinedTime + Aids.value)
+            join.select(Users.fields + Members.joinedTime + Aids.value)
         }
     } else {
         Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId).select(Users.fields + Aids.value)

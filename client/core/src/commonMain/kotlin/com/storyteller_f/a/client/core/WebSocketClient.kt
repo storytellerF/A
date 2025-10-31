@@ -73,13 +73,22 @@ class WebSocketClientImpl(
             else -> {}
         }
         connectionHandler.state.markLoading()
+        Napier.i(tag = "ws") {
+            "loading"
+        }
         try {
             val session = buildConnection(userInfo, sig)
             startListenerWebSocket(session, userInfo)
             connectionHandler.done(session)
             connectionHandler.state.markDone()
+            Napier.i(tag = "ws") {
+                "done"
+            }
         } catch (e: Exception) {
             connectionHandler.state.markError(e)
+            Napier.i(tag = "ws") {
+                "error"
+            }
         }
     }
 

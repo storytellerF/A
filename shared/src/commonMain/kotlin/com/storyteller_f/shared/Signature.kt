@@ -1,6 +1,8 @@
 package com.storyteller_f.shared
 
 import com.storyteller_f.shared.model.AlgoType
+import com.storyteller_f.shared.model.TopicContent
+import com.storyteller_f.shared.model.UserPubKeyInfo
 import com.storyteller_f.shared.utils.mapResult
 import dev.whyoleg.cryptography.BinarySize.Companion.bits
 import dev.whyoleg.cryptography.CryptographyProvider
@@ -232,4 +234,14 @@ expect val AlgoDilithium: Algo
 
 fun String.replaceCrlf(): String {
     return replace("\r\n", "\n")
+}
+
+suspend fun buildEncryptedTopicContent(
+    input: String,
+    keyData: List<UserPubKeyInfo>
+): TopicContent.Encrypted {
+    val (encrypted, aes) = encryptDataByAES(input).getOrThrow()
+    return TopicContent.Encrypted(encrypted.toHexString(), keyData.associate {
+        it.id to getAlgo().eciesEncrypt(it.pubKey, aes).getOrThrow().toHexString()
+    })
 }

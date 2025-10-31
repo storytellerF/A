@@ -17,6 +17,7 @@ class User(
     val acgAmount: Long,
     val passType: PassType,
     val algoType: AlgoType,
+    val notificationId: PrimaryKey,
 ) {
     companion object
 }

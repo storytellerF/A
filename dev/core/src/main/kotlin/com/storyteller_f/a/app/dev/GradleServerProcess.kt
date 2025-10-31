@@ -66,14 +66,12 @@ private suspend fun CoroutineScope.install(projectRoot: String) {
         File(projectRoot),
         arrayOf("cloud:server:installDist")
     ).start()
-    val job = launch {
-        withContext(Dispatchers.IO) {
-            installDistProcess.inputStream.bufferedReader().use {
-                while (installDistProcess.isRunning()) {
-                    val line = it.readLine() ?: break
-                    println(line)
-                    delay(100)
-                }
+    val job = launch(Dispatchers.IO) {
+        installDistProcess.inputStream.bufferedReader().use {
+            while (installDistProcess.isAlive) {
+                val line = it.readLine() ?: break
+                println(line)
+                delay(100)
             }
         }
     }
@@ -95,19 +93,17 @@ class ProcessMate(val process: Process, val job: Job) {
 
 private suspend fun CoroutineScope.waitRunServerProcess(serverProcess: Process): Job {
     val task = CompletableDeferred<String>()
-    val job = launch {
-        withContext(Dispatchers.IO) {
-            serverProcess.inputStream.bufferedReader().use {
-                while (serverProcess.isRunning()) {
-                    val line = it.readLine() ?: break
-                    println(line)
-                    if (line.contains("Responding at")) {
-                        task.complete(line)
-                    } else if (line.contains("Execution failed for task") || line.contains("Exception in thread")) {
-                        task.completeExceptionally(RuntimeException(line))
-                    }
-                    delay(100)
+    val job = launch(Dispatchers.IO) {
+        serverProcess.inputStream.bufferedReader().use {
+            while (serverProcess.isAlive) {
+                val line = it.readLine() ?: break
+                println(line)
+                if (line.contains("Responding at")) {
+                    task.complete(line)
+                } else if (line.contains("Execution failed for task") || line.contains("Exception in thread")) {
+                    task.completeExceptionally(RuntimeException(line))
                 }
+                delay(100)
             }
         }
     }
@@ -157,5 +153,3 @@ private fun getGradleProcessBuilder(
         *args
     ).directory(file.canonicalFile).redirectErrorStream(true)
 }
-
-private fun Process.isRunning() = runCatching { this@isRunning.exitValue() }.getOrNull() == null
