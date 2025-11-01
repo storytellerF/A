@@ -38,6 +38,7 @@ import com.storyteller_f.a.cloud.server.route.bindProtectedRoomRoute
 import com.storyteller_f.a.cloud.server.route.bindProtectedTitleRoute
 import com.storyteller_f.a.cloud.server.route.bindProtectedTopicRoute
 import com.storyteller_f.a.cloud.server.route.bindProtectedUserRoute
+import com.storyteller_f.a.cloud.server.route.bindProtectedUserSubscriptionRoute
 import com.storyteller_f.a.cloud.server.route.bindRoomRoute
 import com.storyteller_f.a.cloud.server.route.bindTopicRoute
 import com.storyteller_f.a.cloud.server.route.bindUnauthenticatedPanelRoute
@@ -446,6 +447,7 @@ fun Application.configureRoute(reader: DatabaseReader, backend: Backend) {
             bindProtectedTopicRoute(backend)
             bindProtectedCommunityRoute(backend)
             bindProtectedUserRoute(backend)
+            bindProtectedUserSubscriptionRoute(backend)
             webSocket("/link") {
                 webSocketContent(reader, backend)
             }

@@ -12,19 +12,17 @@ import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserFavoriteInfo
 import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.model.UserOverview
 import com.storyteller_f.shared.model.UserSubscriptionInfo
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.storage.ChildAccountCollection
 import com.storyteller_f.storage.ChildAccountStorage
 import com.storyteller_f.storage.CommunityCollection
 import com.storyteller_f.storage.CommunityInfoStorage
-import com.storyteller_f.storage.DownloadCollection
 import com.storyteller_f.storage.DownloadInfo
 import com.storyteller_f.storage.DownloadInfoStorage
 import com.storyteller_f.storage.FileInfoStorage
 import com.storyteller_f.storage.MediasCollection
 import com.storyteller_f.storage.ModelStorage
-import com.storyteller_f.storage.OverviewCollection
 import com.storyteller_f.storage.OverviewStorage
 import com.storyteller_f.storage.ReactionCollection
 import com.storyteller_f.storage.ReactionInfoStorage
@@ -42,10 +40,9 @@ import com.storyteller_f.storage.UploadCollection
 import com.storyteller_f.storage.UploadInfo
 import com.storyteller_f.storage.UploadInfoStorage
 import com.storyteller_f.storage.UserCollection
-import com.storyteller_f.storage.UserFavoriteCollection
 import com.storyteller_f.storage.UserFavoriteStorage
 import com.storyteller_f.storage.UserInfoStorage
-import com.storyteller_f.storage.UserSubscriptionCollection
+import com.storyteller_f.storage.UserOverviewStorage
 import com.storyteller_f.storage.UserSubscriptionStorage
 import com.storyteller_f.storage.WrappedPagingSource
 import com.storyteller_f.storage.getName
@@ -386,16 +383,14 @@ class ReactionRoomInfoStorage(val appDatabase: AppDatabase) : ReactionInfoStorag
 }
 
 class ChildAccountRoomStorage(val appDatabase: AppDatabase) : ChildAccountStorage {
-    override suspend fun save(
-        collection: ChildAccountCollection,
-        childAccountInfo: ChildAccountInfo
-    ) {
+    override suspend fun save(childAccountInfo: ChildAccountInfo) {
         val data = commonJson.encodeToString(childAccountInfo)
-        appDatabase.getCommonDao().insert(CommonEntity(childAccountInfo.id, collection.NAME, data))
+        appDatabase.getCommonDao()
+            .insert(CommonEntity(childAccountInfo.id, ChildAccountStorage.COLLECTION_NAME, data))
     }
 
-    override fun observeData(collection: ChildAccountCollection): PagingSource<Int, ChildAccountInfo> {
-        val raw = appDatabase.getCommonDao().getAsSource(collection.NAME)
+    override fun observeData(): PagingSource<Int, ChildAccountInfo> {
+        val raw = appDatabase.getCommonDao().getAsSource(ChildAccountStorage.COLLECTION_NAME)
         return WrappedPagingSource(raw) { list ->
             list.map {
                 commonJson.decodeFromString(it.data)
@@ -403,8 +398,8 @@ class ChildAccountRoomStorage(val appDatabase: AppDatabase) : ChildAccountStorag
         }
     }
 
-    override suspend fun clean(collection: ChildAccountCollection) {
-        appDatabase.getCommonDao().clean(collection.NAME)
+    override suspend fun clean() {
+        appDatabase.getCommonDao().clean(ChildAccountStorage.COLLECTION_NAME)
     }
 }
 
@@ -432,26 +427,30 @@ class FileInfoRoomStorage(val appDatabase: AppDatabase) : FileInfoStorage {
 }
 
 class DownloadInfoRoomStorage(val appDatabase: AppDatabase) : DownloadInfoStorage {
-    override suspend fun save(collection: DownloadCollection, downloadInfo: DownloadInfo) {
+    override suspend fun save(downloadInfo: DownloadInfo) {
         val data = commonJson.encodeToString(downloadInfo)
         appDatabase.getCommonDao()
-            .insert(CommonEntity(downloadInfo.fileInfo.id, collection.NAME, data))
+            .insert(
+                CommonEntity(
+                    downloadInfo.fileInfo.id,
+                    DownloadInfoStorage.COLLECTION_NAME,
+                    data
+                )
+            )
     }
 
     override fun observeDatum(id: PrimaryKey): Flow<DownloadInfo?> {
         return appDatabase.getCommonDao()
-            .getAsFlow(DownloadCollection.NAME, id.toString()).map {
+            .getAsFlow(DownloadInfoStorage.COLLECTION_NAME, id.toString()).map {
                 it?.data?.let { string -> commonJson.decodeFromString(string) }
             }
     }
 
-    override suspend fun getDocument(
-        collection: DownloadCollection,
-        id: PrimaryKey
-    ): DownloadInfo? {
-        return appDatabase.getCommonDao().get(collection.NAME, id.toString())?.let {
-            commonJson.decodeFromString(it.data)
-        }
+    override suspend fun getDocument(id: PrimaryKey): DownloadInfo? {
+        return appDatabase.getCommonDao().get(DownloadInfoStorage.COLLECTION_NAME, id.toString())
+            ?.let {
+                commonJson.decodeFromString(it.data)
+            }
     }
 }
 
@@ -471,7 +470,7 @@ class UploadInfoRoomStorage(val appDatabase: AppDatabase) : UploadInfoStorage {
 
     override fun observeDatum(pathHash: String): Flow<UploadInfo?> {
         return appDatabase.getUploadDao()
-            .getAsFlow(DownloadCollection.NAME, pathHash).map {
+            .getAsFlow(DownloadInfoStorage.COLLECTION_NAME, pathHash).map {
                 it?.data?.let { string -> commonJson.decodeFromString(string) }
             }
     }
@@ -496,15 +495,28 @@ class UploadInfoRoomStorage(val appDatabase: AppDatabase) : UploadInfoStorage {
 class OverviewRoomStorage(val appDatabase: AppDatabase) : OverviewStorage {
     val impl = CommonStorageImpl(appDatabase)
     override suspend fun save(
-        collection: OverviewCollection,
         overviewInfo: PanelOverview
     ) {
         val data = commonJson.encodeToString(overviewInfo)
-        appDatabase.getCommonDao().insert(CommonEntity("overview", collection.NAME, data))
+        appDatabase.getCommonDao()
+            .insert(CommonEntity("overview", OverviewStorage.COLLECTION_NAME, data))
     }
 
     override fun observeDatum(): Flow<PanelOverview?> {
-        return impl.observeDatum(OverviewCollection.NAME, "overview")
+        return impl.observeDatum(OverviewStorage.COLLECTION_NAME, "overview")
+    }
+}
+
+class UserOverviewRoomStorage(val appDatabase: AppDatabase) : UserOverviewStorage {
+    val impl = CommonStorageImpl(appDatabase)
+    override suspend fun save(overviewInfo: UserOverview) {
+        val data = commonJson.encodeToString(overviewInfo)
+        appDatabase.getCommonDao()
+            .insert(CommonEntity("overview", UserOverviewStorage.COLLECTION_NAME, data))
+    }
+
+    override fun observeDatum(): Flow<UserOverview?> {
+        return impl.observeDatum(UserOverviewStorage.COLLECTION_NAME, "overview")
     }
 }
 
@@ -512,47 +524,50 @@ class UserFavoriteRoomStorage(val appDatabase: AppDatabase) : UserFavoriteStorag
     val impl = CommonStorageImpl(appDatabase)
 
     override suspend fun save(
-        collection: UserFavoriteCollection,
         favoriteInfo: UserFavoriteInfo
     ) {
         val data = commonJson.encodeToString(favoriteInfo)
-        appDatabase.getCommonDao().insert(CommonEntity(favoriteInfo.id, collection.NAME, data))
+        appDatabase.getCommonDao()
+            .insert(CommonEntity(favoriteInfo.id, UserFavoriteStorage.COLLECTION_NAME, data))
     }
 
-    override fun observeData(collection: UserFavoriteCollection): PagingSource<Int, UserFavoriteInfo> {
-        return impl.observeData(collection.NAME)
+    override fun observeData(): PagingSource<Int, UserFavoriteInfo> {
+        return impl.observeData(UserFavoriteStorage.COLLECTION_NAME)
     }
 
     override fun observeDatum(id: String): Flow<UserFavoriteInfo?> {
-        return impl.observeDatum(UserFavoriteCollection.NAME, id)
+        return impl.observeDatum(UserFavoriteStorage.COLLECTION_NAME, id)
     }
 
-    override suspend fun clean(collection: UserFavoriteCollection) {
-        return impl.clean(collection.NAME)
+    override suspend fun clean() {
+        return impl.clean(UserFavoriteStorage.COLLECTION_NAME)
     }
 }
 
 class UserSubscriptionRoomStorage(val appDatabase: AppDatabase) : UserSubscriptionStorage {
     val impl = CommonStorageImpl(appDatabase)
 
-    override suspend fun save(
-        collection: UserSubscriptionCollection,
-        subscriptionInfo: UserSubscriptionInfo
-    ) {
+    override suspend fun save(subscriptionInfo: UserSubscriptionInfo) {
         val data = commonJson.encodeToString(subscriptionInfo)
-        appDatabase.getCommonDao().insert(CommonEntity(subscriptionInfo.id, collection.NAME, data))
+        appDatabase.getCommonDao().insert(
+            CommonEntity(
+                subscriptionInfo.id,
+                UserSubscriptionStorage.COLLECTION_NAME,
+                data
+            )
+        )
     }
 
-    override fun observeData(collection: UserSubscriptionCollection): PagingSource<Int, UserSubscriptionInfo> {
-        return impl.observeData(collection.NAME)
+    override fun observeData(): PagingSource<Int, UserSubscriptionInfo> {
+        return impl.observeData(UserSubscriptionStorage.COLLECTION_NAME)
     }
 
     override fun observeDatum(id: String): Flow<UserSubscriptionInfo?> {
-        return impl.observeDatum(UserSubscriptionCollection.NAME, id)
+        return impl.observeDatum(UserSubscriptionStorage.COLLECTION_NAME, id)
     }
 
-    override suspend fun clean(collection: UserSubscriptionCollection) {
-        return impl.clean(collection.NAME)
+    override suspend fun clean() {
+        return impl.clean(UserSubscriptionStorage.COLLECTION_NAME)
     }
 }
 
@@ -569,6 +584,7 @@ class RoomModelStorage(appDatabase: AppDatabase) : ModelStorage {
     override val download: DownloadInfoStorage = DownloadInfoRoomStorage(appDatabase)
     override val upload: UploadInfoStorage = UploadInfoRoomStorage(appDatabase)
     override val overview: OverviewStorage = OverviewRoomStorage(appDatabase)
+    override val userOverview: UserOverviewStorage = UserOverviewRoomStorage(appDatabase)
     override val favorite: UserFavoriteStorage = UserFavoriteRoomStorage(appDatabase)
     override val subscription: UserSubscriptionStorage = UserSubscriptionRoomStorage(appDatabase)
 }

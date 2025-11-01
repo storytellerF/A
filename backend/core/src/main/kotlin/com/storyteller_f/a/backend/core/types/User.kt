@@ -23,7 +23,7 @@ class User(
 }
 
 fun User.toUserInfo(): UserInfo {
-    return UserInfo(id, address, 0, aid, nickname, null)
+    return UserInfo(id, address, aid, nickname, null)
 }
 
 data class RawUser(val user: User)

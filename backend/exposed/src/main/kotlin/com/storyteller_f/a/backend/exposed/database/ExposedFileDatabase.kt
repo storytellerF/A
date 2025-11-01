@@ -43,13 +43,16 @@ class ExposedFileDatabase(val databaseSession: ExposedDatabaseSession) : FileDat
         first(FileRecord::wrapRow)
     }
 
-    override suspend fun getFileRecordByIds(ids: List<PrimaryKey>) = databaseSession.dbSearch {
-        search {
-            FileRecords.selectAll().where {
-                FileRecords.id inList ids
+    override suspend fun getFileRecordByIds(ids: List<PrimaryKey>): Result<List<FileRecord>> {
+        if (ids.isEmpty()) return Result.success(emptyList())
+        return databaseSession.dbSearch {
+            search {
+                FileRecords.selectAll().where {
+                    FileRecords.id inList ids
+                }
             }
+            map(FileRecord::wrapRow)
         }
-        map(FileRecord::wrapRow)
     }
 
     override suspend fun getFileRecordListByOwner(owner: PrimaryKey) = databaseSession.dbSearch {

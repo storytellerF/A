@@ -37,10 +37,10 @@ import com.storyteller_f.a.backend.exposed.tables.find
 import com.storyteller_f.a.backend.exposed.tables.mapUserInfo
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.TaskRecordType
+import com.storyteller_f.shared.model.UserOverview
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.mapResult
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.Op
 import org.jetbrains.exposed.v1.core.SortOrder
@@ -322,21 +322,27 @@ class ExposedUserDatabase(private val databaseSession: ExposedDatabaseSession) :
     override suspend fun getRawChildAccountPaginationListByHost(
         hostId: PrimaryKey,
         fetch: PrimaryKeyFetch,
-    ) = databaseSession.dbSearch {
-        search {
-            Users.join(ChildAccounts, JoinType.INNER, Users.id, ChildAccounts.uid)
-                .join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
-                .select(Users.fields + ChildAccounts.fields + Aids.value).where {
-                    ChildAccounts.hostId eq hostId
-                }.bindPaginationQuery(Users, fetch)
-        }
-        map {
-            val childAccount = ChildAccount.wrapRow(it)
-            val user = User.wrapRow(it)
-            RawChildAccount(childAccount, RawUser(user))
-        }
-    }.mapResult { list ->
-        databaseSession.dbSearch {
+    ) = runCatching {
+        val childAccounts = databaseSession.dbSearch {
+            search {
+                Users.join(ChildAccounts, JoinType.INNER, Users.id, ChildAccounts.uid)
+                    .join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
+                    .select(Users.fields + ChildAccounts.fields + Aids.value).where {
+                        ChildAccounts.hostId eq hostId
+                    }.bindPaginationQuery(Users, fetch)
+            }
+            map {
+                val childAccount = ChildAccount.wrapRow(it)
+                val user = User.wrapRow(it)
+                RawChildAccount(childAccount, RawUser(user))
+            }
+        }.getOrThrow()
+        val total = getChildAccountCount(hostId)
+        PaginationResult(childAccounts, total)
+    }
+
+    private suspend fun getChildAccountCount(hostId: PrimaryKey): Long {
+        val total = databaseSession.dbSearch {
             search {
                 ChildAccounts.join(Users, JoinType.INNER, ChildAccounts.uid, Users.id)
                     .selectAll()
@@ -345,9 +351,8 @@ class ExposedUserDatabase(private val databaseSession: ExposedDatabaseSession) :
                     }
             }
             count()
-        }.map { count ->
-            PaginationResult(list, count)
-        }
+        }.getOrThrow()
+        return total
     }
 
     override suspend fun getRawChildAccount(uid: PrimaryKey) = databaseSession.dbSearch {
@@ -413,14 +418,16 @@ class ExposedUserDatabase(private val databaseSession: ExposedDatabaseSession) :
                 UserFavorite.wrapRow(it)
             }
         }.getOrThrow()
-        val total = databaseSession.dbSearch {
-            search {
-                UserFavorites.selectAll()
-            }
-            count()
-        }.getOrThrow()
+        val total = getUserFavoriteCount()
         PaginationResult(userFavorites, total)
     }
+
+    private suspend fun getUserFavoriteCount() = databaseSession.dbSearch {
+        search {
+            UserFavorites.selectAll()
+        }
+        count()
+    }.getOrThrow()
 
     override suspend fun addFavorite(userFavorite: UserFavorite) = databaseSession.dbQuery {
         check(UserFavorites.insert {
@@ -484,16 +491,18 @@ class ExposedUserDatabase(private val databaseSession: ExposedDatabaseSession) :
                 UserSubscription.wrapRow(it)
             }
         }.getOrThrow()
-        val userSubscriptionCount = databaseSession.dbSearch {
-            search {
-                UserSubscriptions.selectAll().where {
-                    UserSubscriptions.uid eq uid
-                }
-            }
-            count()
-        }.getOrThrow()
-        PaginationResult(userSubscriptions, userSubscriptionCount)
+        val total = getUserSubscriptionCount(uid)
+        PaginationResult(userSubscriptions, total)
     }
+
+    private suspend fun getUserSubscriptionCount(uid: PrimaryKey) = databaseSession.dbSearch {
+        search {
+            UserSubscriptions.selectAll().where {
+                UserSubscriptions.uid eq uid
+            }
+        }
+        count()
+    }.getOrThrow()
 
     override suspend fun addSubscription(userSubscription: UserSubscription) =
         databaseSession.dbQuery {
@@ -541,6 +550,15 @@ class ExposedUserDatabase(private val databaseSession: ExposedDatabaseSession) :
             first {
                 UserSubscription.wrapRow(it)
             }
+        }
+    }
+
+    override suspend fun getUserOverview(uid: PrimaryKey): Result<UserOverview> {
+        return runCatching {
+            val subscriptionCount = getUserSubscriptionCount(uid)
+            val favoriteCount = getUserFavoriteCount()
+            val childAccountCount = getChildAccountCount(uid)
+            UserOverview(subscriptionCount, favoriteCount, 0, childAccountCount)
         }
     }
 }

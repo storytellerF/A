@@ -11,6 +11,7 @@ import com.storyteller_f.a.cloud.core.service.deleteFavorite
 import com.storyteller_f.a.cloud.core.service.getFavorites
 import com.storyteller_f.a.cloud.core.service.getTopicsByParentId
 import com.storyteller_f.a.cloud.core.service.getUserInfo
+import com.storyteller_f.a.cloud.core.service.getUserOverview
 import com.storyteller_f.a.cloud.core.service.getUserSubscriptions
 import com.storyteller_f.a.cloud.core.service.getUserTitles
 import com.storyteller_f.a.cloud.core.service.removeSubscription
@@ -64,6 +65,14 @@ fun Route.bindProtectedUserRoute(backend: Backend) {
             }
         }
     }
+    CustomApi.Users.overview(RoutingContext::handleResult) {
+        usePrincipal { uid ->
+            backend.getUserOverview(uid)
+        }
+    }
+}
+
+fun Route.bindProtectedUserSubscriptionRoute(backend: Backend) {
     CustomApi.Subscriptions.add(RoutingContext::handleResult) { api ->
         usePrincipal { uid ->
             backend.addSubscription(uid, api.receiveBody())
@@ -88,8 +97,8 @@ fun Route.bindProtectedUserRoute(backend: Backend) {
 }
 
 fun Route.bindUserRoute(backend: Backend) {
-    CustomApi.Users.Aid.get(RoutingContext::handleResult) {
-        backend.getUserInfo(ObjectFetch.AidFetch(it.aid))
+    CustomApi.Users.Aid.get(RoutingContext::handleResult) { q ->
+        backend.getUserInfo(ObjectFetch.AidFetch(q.aid))
     }
     CustomApi.Users.Id.get(RoutingContext::handleResult) {
         backend.getUserInfo(ObjectFetch.IdFetch(it.id))

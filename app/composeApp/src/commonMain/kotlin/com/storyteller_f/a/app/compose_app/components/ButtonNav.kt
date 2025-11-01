@@ -3,6 +3,7 @@ package com.storyteller_f.a.app.compose_app.components
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,16 +19,21 @@ import com.storyteller_f.a.app.core.compontents.IconRes
 
 @Composable
 fun ButtonNav(icon: ImageVector, title: String, onClick: () -> Unit = {}) {
-    ButtonNav(IconRes.Vector(icon), title, onClick)
+    ButtonNav(IconRes.Vector(icon), title, onClick = onClick)
 }
 
 @Composable
 fun ButtonNav(icon: Char, title: String, onClick: () -> Unit = {}) {
-    ButtonNav(IconRes.Font(icon), title, onClick)
+    ButtonNav(IconRes.Font(icon), title, onClick = onClick)
 }
 
 @Composable
-fun ButtonNav(icon: IconRes, title: String, onClick: () -> Unit = {}) {
+fun ButtonNav(
+    icon: IconRes,
+    title: String,
+    suffix: @Composable () -> Unit = {},
+    onClick: () -> Unit = {}
+) {
     val shape = RoundedCornerShape(8.dp)
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -38,5 +44,7 @@ fun ButtonNav(icon: IconRes, title: String, onClick: () -> Unit = {}) {
     ) {
         CustomIcon(icon)
         Text(title)
+        Spacer(modifier = Modifier.weight(1f))
+        suffix()
     }
 }

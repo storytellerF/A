@@ -10,7 +10,6 @@ import kotlinx.serialization.Serializable
 data class UserInfo(
     override val id: PrimaryKey,
     val address: String,
-    val acg: Long,
     val aid: String?,
     val nickname: String,
     val avatar: FileInfo?,
@@ -19,9 +18,17 @@ data class UserInfo(
         get() = ObjectType.USER
 
     companion object {
-        val EMPTY = UserInfo(DEFAULT_PRIMARY_KEY, "", 0, "", "", null)
+        val EMPTY = UserInfo(DEFAULT_PRIMARY_KEY, "", "", "", null)
     }
 }
+
+@Serializable
+data class UserOverview(
+    val subscriptionCount: Long,
+    val favoriteCount: Long,
+    val acg: Long,
+    val childAccountCount: Long
+)
 
 enum class UserLogType {
     SIGN_IN, SIGN_UP, CREATE, DELETE, UPDATE, JOIN, EXIT,

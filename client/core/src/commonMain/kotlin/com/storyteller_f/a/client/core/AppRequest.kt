@@ -310,7 +310,7 @@ suspend fun UserSessionManager.signIn(
 }
 
 suspend fun UserSessionManager.getData() = serviceCatching {
-    CustomApi.Accounts.getData.invoke()
+    CustomApi.Accounts.getData()
 }
 
 suspend fun UserSessionManager.getTopicSnapshot(topicId: PrimaryKey) = serviceCatching {
@@ -516,20 +516,20 @@ suspend fun UserSessionManager.pinTopic(topicId: PrimaryKey) = serviceCatching {
 }
 
 suspend fun UserSessionManager.unpinTopic(topicId: PrimaryKey) = serviceCatching {
-    CustomApi.Topics.Id.unpin.invoke(CommonPath(topicId), Unit) {
+    CustomApi.Topics.Id.unpin(CommonPath(topicId), Unit) {
     }
 }
 
 suspend fun UserSessionManager.updateCommunityInfo(id: PrimaryKey, newInfo: UpdateCommunityBody) =
     serviceCatching {
-        CustomApi.Communities.Id.update.invoke(CommonPath(id), newInfo) {
+        CustomApi.Communities.Id.update(CommonPath(id), newInfo) {
             contentType(ContentType.Application.Json)
         }
     }
 
 suspend fun UserSessionManager.updateRoomInfo(id: PrimaryKey, newInfo: UpdateRoomBody) =
     serviceCatching {
-        CustomApi.Rooms.Id.update.invoke(CommonPath(id), newInfo) {
+        CustomApi.Rooms.Id.update(CommonPath(id), newInfo) {
             contentType(ContentType.Application.Json)
         }
     }
@@ -549,28 +549,28 @@ suspend fun UserSessionManager.getTopicList(
 
 suspend fun UserSessionManager.addReadLog(info: UpdateUserRead): Result<Unit> {
     return serviceCatching {
-        CustomApi.Users.Read.add.invoke(info) {
+        CustomApi.Users.Read.add(info) {
             contentType(ContentType.Application.Json)
         }
     }
 }
 
 suspend fun UserSessionManager.addDevice(endpointUrl: String) = serviceCatching {
-    CustomApi.Users.Devices.add.invoke(NewDevice(endpointUrl)) {
+    CustomApi.Users.Devices.add(NewDevice(endpointUrl)) {
         contentType(ContentType.Application.Json)
     }
 }
 
 suspend fun UserSessionManager.extractAlbum(mediaId: PrimaryKey) = serviceCatching {
-    CustomApi.Files.Id.extractAlbum.invoke(CommonPath(mediaId), Unit) {}
+    CustomApi.Files.Id.extractAlbum(CommonPath(mediaId), Unit) {}
 }
 
 suspend fun UserSessionManager.addChildAccount() = serviceCatching {
-    CustomApi.Accounts.ChildAccounts.add.invoke(Unit) {}
+    CustomApi.Accounts.ChildAccounts.add(Unit) {}
 }
 
 suspend fun UserSessionManager.getChildAccounts(nextId: String?, size: Int) = serviceCatching {
-    CustomApi.Accounts.ChildAccounts.get.invoke(
+    CustomApi.Accounts.ChildAccounts.get(
         CustomApi.Accounts.ChildAccounts.ChildAccountQuery(
             nextId,
             size
@@ -579,31 +579,35 @@ suspend fun UserSessionManager.getChildAccounts(nextId: String?, size: Int) = se
 }
 
 suspend fun UserSessionManager.addFavorite(newFavorite: NewFavorite) = serviceCatching {
-    CustomApi.Favorites.add.invoke(newFavorite) {
+    CustomApi.Favorites.add(newFavorite) {
         contentType(ContentType.Application.Json)
     }
 }
 
 suspend fun UserSessionManager.removeFavorite(favoriteId: PrimaryKey) = serviceCatching {
-    CustomApi.Favorites.delete.invoke(CommonPath(favoriteId), Unit) {
+    CustomApi.Favorites.delete(CommonPath(favoriteId), Unit) {
     }
 }
 
 suspend fun UserSessionManager.getFavorites(paginationQuery: PaginationQuery) = serviceCatching {
-    CustomApi.Favorites.get.invoke(paginationQuery)
+    CustomApi.Favorites.get(paginationQuery)
 }
 
 suspend fun UserSessionManager.addSubscription(newFavorite: NewSubscription) = serviceCatching {
-    CustomApi.Subscriptions.add.invoke(newFavorite) {
+    CustomApi.Subscriptions.add(newFavorite) {
         contentType(ContentType.Application.Json)
     }
 }
 
 suspend fun UserSessionManager.removeSubscription(favoriteId: PrimaryKey) = serviceCatching {
-    CustomApi.Subscriptions.delete.invoke(CommonPath(favoriteId), Unit) {
+    CustomApi.Subscriptions.delete(CommonPath(favoriteId), Unit) {
     }
 }
 
 suspend fun UserSessionManager.getSubscriptions(paginationQuery: PaginationQuery) = serviceCatching {
-    CustomApi.Subscriptions.get.invoke(paginationQuery)
+    CustomApi.Subscriptions.get(paginationQuery)
+}
+
+suspend fun UserSessionManager.getUserOverview() = serviceCatching {
+    CustomApi.Users.overview()
 }

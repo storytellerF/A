@@ -6,7 +6,6 @@ import com.storyteller_f.a.client.core.serviceCatching
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.now
-import com.storyteller_f.storage.DownloadCollection
 import com.storyteller_f.storage.DownloadInfo
 import com.storyteller_f.storage.DownloadStatus
 import com.storyteller_f.storage.ModelStorage
@@ -72,7 +71,7 @@ class DownloaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIView
         userSession: CustomUserSessionManager
     ) {
         val document =
-            modelStorage.download.getDocument(DownloadCollection, fileInfo.id) ?: return
+            modelStorage.download.getDocument(fileInfo.id) ?: return
         download(userSession, modelStorage, fileInfo, Path(document.path))
     }
 
@@ -84,7 +83,7 @@ class DownloaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIView
     ) {
         lock(fileInfo.id) {
             val document =
-                modelStorage.download.getDocument(DownloadCollection, fileInfo.id)
+                modelStorage.download.getDocument(fileInfo.id)
             if (document == null) {
                 val new = DownloadInfo(
                     fileInfo,
@@ -94,7 +93,7 @@ class DownloaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIView
                     0,
                     fileInfo.size
                 )
-                modelStorage.download.save(DownloadCollection, new)
+                modelStorage.download.save(new)
             } else if (document.status != DownloadStatus.NOT_DOWNLOADED) {
                 return
             }
@@ -110,7 +109,7 @@ class DownloaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIView
     ) {
         val id = fileInfo.id
         val downloadInfo =
-            modelStorage.download.getDocument(DownloadCollection, id) ?: return
+            modelStorage.download.getDocument(id) ?: return
         if (downloadInfo.status == DownloadStatus.PROCESSED) return
         val isNeedDownload =
             if (downloadInfo.status == DownloadStatus.DOWNLOADED ||
@@ -128,7 +127,7 @@ class DownloaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIView
         if (path.toString().endsWith(".zip")) {
             if (extractFile(path, modelStorage, id)) return
         }
-        updateDownloadInfo(modelStorage, DownloadCollection, id) {
+        updateDownloadInfo(modelStorage, id) {
             it.copy(status = DownloadStatus.PROCESSED)
         }
     }
@@ -143,7 +142,7 @@ class DownloaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIView
                 zip.extractTo(Path(path.parent!!, "${path.name}.extracted"))
             }
         } catch (e: Exception) {
-            updateDownloadInfo(modelStorage, DownloadCollection, id) {
+            updateDownloadInfo(modelStorage, id) {
                 it.copy(status = DownloadStatus.PROCESS_FAILED, message = e.message.toString())
             }
             return true
@@ -160,7 +159,7 @@ class DownloaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIView
         path: Path
     ): Boolean {
         if (downloadInfo.status != DownloadStatus.DOWNLOADING) {
-            updateDownloadInfo(modelStorage, DownloadCollection, id) {
+            updateDownloadInfo(modelStorage, id) {
                 it.copy(status = DownloadStatus.DOWNLOADING)
             }
         }
@@ -172,7 +171,7 @@ class DownloaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIView
             Napier.e(throwable) {
                 "download failed ${fileInfo.fullName}"
             }
-            updateDownloadInfo(modelStorage, DownloadCollection, id) {
+            updateDownloadInfo(modelStorage, id) {
                 it.copy(
                     status = DownloadStatus.DOWNLOAD_FAILED,
                     message = throwable.message.toString()
@@ -180,7 +179,7 @@ class DownloaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIView
             }
             return true
         }
-        updateDownloadInfo(modelStorage, DownloadCollection, id) {
+        updateDownloadInfo(modelStorage, id) {
             it.copy(
                 status = DownloadStatus.DOWNLOADED,
                 message = "download success ${now()}"
@@ -222,7 +221,7 @@ class DownloaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIView
                     downloadedBytes += chunk.remaining
                     chunk.transferTo(sink)
 
-                    updateDownloadInfo(modelStorage, DownloadCollection, fileInfo.id) {
+                    updateDownloadInfo(modelStorage, fileInfo.id) {
                         it.copy(progress = downloadedBytes)
                     }
                 }
@@ -232,12 +231,11 @@ class DownloaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIView
 
     suspend fun updateDownloadInfo(
         modelStorage: ModelStorage,
-        collection: DownloadCollection,
         id: PrimaryKey,
         block: (DownloadInfo) -> DownloadInfo
     ) {
-        val uploadInfo = modelStorage.download.getDocument(collection, id) ?: return
-        modelStorage.download.save(collection, block(uploadInfo))
+        val uploadInfo = modelStorage.download.getDocument(id) ?: return
+        modelStorage.download.save(block(uploadInfo))
     }
 
     suspend inline fun lock(id: PrimaryKey, block: suspend () -> Unit) {
