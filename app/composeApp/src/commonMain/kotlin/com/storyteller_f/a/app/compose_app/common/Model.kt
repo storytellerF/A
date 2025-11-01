@@ -45,6 +45,7 @@ import com.storyteller_f.a.client.core.getTopicInfoByAid
 import com.storyteller_f.a.client.core.getTopicList
 import com.storyteller_f.a.client.core.getUserInfo
 import com.storyteller_f.a.client.core.getUserInfoByAid
+import com.storyteller_f.a.client.core.getUserOverview
 import com.storyteller_f.a.client.core.processEncryptedTopic
 import com.storyteller_f.a.client.core.searchAllMembers
 import com.storyteller_f.a.client.core.searchCommunity
@@ -68,6 +69,7 @@ import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.TopicPinSearch
 import com.storyteller_f.shared.model.UserFavoriteInfo
 import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.model.UserOverview
 import com.storyteller_f.shared.model.UserPubKeyInfo
 import com.storyteller_f.shared.model.UserSubscriptionInfo
 import com.storyteller_f.shared.obj.ObjectTuple
@@ -76,7 +78,7 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.extractMarkdownHeadline
 import com.storyteller_f.shared.utils.extractMarkdownMediaLink
-import com.storyteller_f.storage.ChildAccountCollection
+import com.storyteller_f.storage.ChildAccountStorage
 import com.storyteller_f.storage.CommunityCollection
 import com.storyteller_f.storage.DownloadStatus
 import com.storyteller_f.storage.MediasCollection
@@ -88,8 +90,8 @@ import com.storyteller_f.storage.TopicCollection
 import com.storyteller_f.storage.UploadCollection
 import com.storyteller_f.storage.UploadInfo
 import com.storyteller_f.storage.UserCollection
-import com.storyteller_f.storage.UserFavoriteCollection
-import com.storyteller_f.storage.UserSubscriptionCollection
+import com.storyteller_f.storage.UserFavoriteStorage
+import com.storyteller_f.storage.UserSubscriptionStorage
 import com.storyteller_f.storage.WrappedPagingSource
 import com.storyteller_f.storage.getName
 import kotlinx.coroutines.CoroutineScope
@@ -804,30 +806,28 @@ class MarkdownMediasViewModel(
 class ChildAccountsViewModel(
     modelStorage: ModelStorage,
     sessionManager: UserSessionManager,
-) :
-    PagingViewModel<ChildAccountInfo>() {
-    val modelCollection = ChildAccountCollection
+) : PagingViewModel<ChildAccountInfo>() {
 
     @OptIn(ExperimentalPagingApi::class)
     override val flow: Flow<PagingData<ChildAccountInfo>> = Pager(
         PagingConfig(pageSize = 20),
         remoteMediator = CustomRemoteMediator(
             modelStorage,
-            modelCollection.NAME,
+            ChildAccountStorage.COLLECTION_NAME,
             RegularPagingSource { key, size ->
                 sessionManager.getChildAccounts(key, size)
             },
         ) { data, clean ->
             if (clean) {
-                modelStorage.childAccount.clean(modelCollection)
+                modelStorage.childAccount.clean()
             }
             data.forEach {
-                modelStorage.childAccount.save(modelCollection, it)
+                modelStorage.childAccount.save(it)
             }
         },
     ) {
         CompatPagingSource(
-            modelStorage.childAccount.observeData(modelCollection),
+            modelStorage.childAccount.observeData(),
             IntKeyConverter
         )
     }.flow.cachedIn(viewModelScope)
@@ -859,28 +859,27 @@ class SessionHistoryViewModel(val sessionManager: CustomUserSessionManager) :
 
 class FavoritesViewModel(sessionManager: UserSessionManager, modelStorage: ModelStorage) :
     PagingViewModel<UserFavoriteInfo>() {
-    val modelCollection = UserFavoriteCollection
 
     @OptIn(ExperimentalPagingApi::class)
     override val flow: Flow<PagingData<UserFavoriteInfo>> = Pager(
         PagingConfig(pageSize = 20),
         remoteMediator = CustomRemoteMediator(
             modelStorage,
-            modelCollection.NAME,
+            UserFavoriteStorage.COLLECTION_NAME,
             RegularPagingSource { key, size ->
                 sessionManager.getFavorites(PaginationQuery(key, size = size))
             },
         ) { data, clean ->
             if (clean) {
-                modelStorage.favorite.clean(modelCollection)
+                modelStorage.favorite.clean()
             }
             data.forEach {
-                modelStorage.favorite.save(modelCollection, it)
+                modelStorage.favorite.save(it)
             }
         },
     ) {
         CompatPagingSource(
-            modelStorage.favorite.observeData(modelCollection),
+            modelStorage.favorite.observeData(),
             IntKeyConverter
         )
     }.flow.cachedIn(viewModelScope)
@@ -888,29 +887,41 @@ class FavoritesViewModel(sessionManager: UserSessionManager, modelStorage: Model
 
 class SubscriptionsViewModel(sessionManager: UserSessionManager, modelStorage: ModelStorage) :
     PagingViewModel<UserSubscriptionInfo>() {
-    val modelCollection = UserSubscriptionCollection
 
     @OptIn(ExperimentalPagingApi::class)
     override val flow: Flow<PagingData<UserSubscriptionInfo>> = Pager(
         PagingConfig(pageSize = 20),
         remoteMediator = CustomRemoteMediator(
             modelStorage,
-            modelCollection.NAME,
+            UserSubscriptionStorage.COLLECTION_NAME,
             RegularPagingSource { key, size ->
                 sessionManager.getSubscriptions(PaginationQuery(key, size = size))
             },
         ) { data, clean ->
             if (clean) {
-                modelStorage.subscription.clean(modelCollection)
+                modelStorage.subscription.clean()
             }
             data.forEach {
-                modelStorage.subscription.save(modelCollection, it)
+                modelStorage.subscription.save(it)
             }
         },
     ) {
         CompatPagingSource(
-            modelStorage.subscription.observeData(modelCollection),
+            modelStorage.subscription.observeData(),
             IntKeyConverter
         )
     }.flow.cachedIn(viewModelScope)
+}
+
+class UserOverviewViewModel(sessionManager: UserSessionManager, modelStorage: ModelStorage) :
+    SimpleViewModel<UserOverview>() {
+    override val handler: LoadingHandler<UserOverview> = CachedLoadingHandler(
+        modelStorage.userOverview.observeDatum(),
+        viewModelScope,
+        {
+            modelStorage.userOverview.save(it)
+        }
+    ) {
+        sessionManager.getUserOverview()
+    }
 }

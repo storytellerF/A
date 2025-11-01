@@ -36,6 +36,7 @@ import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicPinSearch
+import com.storyteller_f.shared.model.UserOverview
 import com.storyteller_f.shared.model.UserPubKeyInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.PresetCommunity
@@ -163,6 +164,7 @@ interface UserDatabase {
     suspend fun removeSubscription(id: PrimaryKey): Result<Unit>
     suspend fun getSubscription(id: PrimaryKey): Result<UserSubscription?>
     suspend fun getSubscription(uid: PrimaryKey, objectId: PrimaryKey): Result<UserSubscription?>
+    suspend fun getUserOverview(uid: PrimaryKey): Result<UserOverview>
 }
 
 interface TopicDatabase {

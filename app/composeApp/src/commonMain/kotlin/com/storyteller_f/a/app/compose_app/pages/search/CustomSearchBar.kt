@@ -27,6 +27,7 @@ import com.storyteller_f.a.app.compose_app.common.createTopicSearchInRoomViewMod
 import com.storyteller_f.a.app.compose_app.common.createTopicSearchInTopicViewModel
 import com.storyteller_f.a.app.compose_app.common.createTopicSearchInUserViewModel
 import com.storyteller_f.a.app.compose_app.common.createTopicSearchViewModel
+import com.storyteller_f.a.app.compose_app.common.getUserOverviewViewModel
 import com.storyteller_f.a.app.compose_app.components.TopicList
 import com.storyteller_f.a.app.compose_app.input_search_community
 import com.storyteller_f.a.app.compose_app.input_search_members
@@ -134,12 +135,7 @@ private fun CustomSearchBarInternal(
                         }
                     },
                     trailingIcon = {
-                        val userSessionManager = LocalSessionManager.current
-                        val myInfo by userSessionManager.model.userHandler.data.collectAsState()
-                        val userInfo = myInfo
-                        Box(modifier = Modifier.testTag("me")) {
-                            SelfUserIconWithDialog(userInfo, onClickCreate = onClickCreate)
-                        }
+                        SelfIcon(onClickCreate)
                     },
                     placeholder = {
                         SearchPlaceholder(scope)
@@ -153,6 +149,16 @@ private fun CustomSearchBarInternal(
                 SearchContent(scope, searchQuery)
             },
         )
+    }
+}
+
+@Composable
+private fun SelfIcon(onClickCreate: () -> Unit) {
+    val userSessionManager = LocalSessionManager.current
+    val myInfo by userSessionManager.model.userHandler.data.collectAsState()
+    val userOverviewViewModel = getUserOverviewViewModel()
+    Box(modifier = Modifier.testTag("me")) {
+        SelfUserIconWithDialog(myInfo, overviewHandler = userOverviewViewModel.handler, onClickCreate = onClickCreate)
     }
 }
 

@@ -6,11 +6,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Notifications
@@ -20,11 +24,14 @@ import androidx.compose.material.icons.filled.SwitchAccount
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -57,9 +64,13 @@ import com.storyteller_f.a.app.compose_app.sign_out_prompt
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.compose_app.utils.createConnectivity
 import com.storyteller_f.a.app.compose_app.utils.unregisterPushService
+import com.storyteller_f.a.app.core.compontents.CustomIcon
+import com.storyteller_f.a.app.core.compontents.IconRes
 import com.storyteller_f.a.app.core.compontents.SignInButton
 import com.storyteller_f.a.app.core.compontents.UserIcon
 import com.storyteller_f.a.client.core.ClientSessionState
+import com.storyteller_f.a.client.core.LoadingHandler
+import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.getData
 import com.storyteller_f.a.client.core.getUserInfo
@@ -69,12 +80,14 @@ import com.storyteller_f.a.client.core.signOut
 import com.storyteller_f.shared.SignInPack
 import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.model.UserOverview
 import dev.jordond.connectivity.Connectivity
 import dev.jordond.connectivity.compose.rememberConnectivityState
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import nl.jacobras.humanreadable.HumanReadable
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.ui.tooling.preview.PreviewParameter
@@ -85,48 +98,42 @@ private fun SelfDialogInternal(
     signOutController: CustomAlertDialogController,
     userInfo: UserInfo?,
     dismiss: () -> Unit,
-    clickCreate: () -> Unit
+    clickCreate: () -> Unit,
+    overviewHandler: LoadingHandler<UserOverview>
 ) {
     val sessionManager = LocalSessionManager.current
     val isAlreadySignIn by sessionManager.isAlreadySignIn.collectAsState()
     DialogContainer {
         if (isAlreadySignIn) {
-            UserDialogUserInfoCell(userInfo, dismiss)
+            SelfUserDetailCard(userInfo, dismiss, overviewHandler, clickCreate)
+            AccountSwitchButton(dismiss, overviewHandler)
+            NotificationButton()
+            ConnectionButton()
+            SettingsButton(dismiss)
+            SignOutButton(signOutController)
         } else {
             SignInBox(dismiss)
         }
-        Column {
-            if (isAlreadySignIn) {
-                ButtonNav(MaterialSymbolsOutlined.Money, "ACG ${userInfo?.acg ?: 0}")
-                CreateButton(dismiss, clickCreate)
-                AccountSwitchButton(dismiss)
-                NotificationButton()
-                ConnectionButton()
-                SettingsButton(dismiss)
-                SignOutButton(signOutController)
-                FavoriteButton(dismiss)
-                SubscriptionButton(dismiss)
-            }
-            SystemSettingsButton(dismiss)
-        }
+        SystemSettingsButton(dismiss)
     }
 }
 
 @Composable
-fun FavoriteButton(dismiss: () -> Unit) {
-    val appNavFactory = LocalAppNavFactory.current
-    ButtonNav(Icons.Default.Favorite, "Favorites") {
-        dismiss()
-        appNavFactory.newAppNav().gotoFavoritePage()
+private fun RowScope.StatCell(value: Long, iconRes: IconRes, onClick: () -> Unit) {
+    val str = remember(value) {
+        HumanReadable.number(value.toFloat())
     }
-}
-
-@Composable
-fun SubscriptionButton(dismiss: () -> Unit) {
-    val appNavFactory = LocalAppNavFactory.current
-    ButtonNav(Icons.Default.NotificationsActive, "Subscriptions") {
-        dismiss()
-        appNavFactory.newAppNav().gotoSubscriptionPage()
+    val shape = RoundedCornerShape(8.dp)
+    Row(
+        modifier = Modifier.weight(1f).clip(shape).clickable {
+            onClick()
+        }.padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
+    ) {
+        CustomIcon(iconRes)
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(str)
     }
 }
 
@@ -168,10 +175,17 @@ class UserInfoPreviewProvider : PreviewParameterProvider<UserInfo> {
 
 @Preview
 @Composable
-fun UserDialogUserInfoCell(
+fun UserCard(
     @PreviewParameter(UserInfoPreviewProvider::class) userInfo: UserInfo?,
     dismiss: () -> Unit = {}
 ) {
+    UserCardContainer(userInfo, dismiss) {
+        UnboundSimpleUserCell(userInfo)
+    }
+}
+
+@Composable
+fun UserCardContainer(userInfo: UserInfo?, dismiss: () -> Unit, content: @Composable () -> Unit) {
     val appNavFactory = LocalAppNavFactory.current
     val isUserPage by appNavFactory.hasRouteFlow<UserScreen> {
         it.uid == userInfo?.id
@@ -186,10 +200,85 @@ fun UserDialogUserInfoCell(
             dismiss()
             userInfo?.id?.let { appNavFactory.newAppNav().gotoUser(it) }
         }.padding(8.dp)
+    Box(modifier) {
+        content()
+    }
+}
+
+@Composable
+fun SelfUserDetailCard(
+    userInfo: UserInfo?,
+    dismiss: () -> Unit = {},
+    overviewHandler: LoadingHandler<UserOverview>,
+    onClickCreate: () -> Unit
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        UserCardContainer(userInfo, dismiss) {
+            UnboundSimpleUserCell(userInfo)
+        }
+        val userOverview by overviewHandler.data.collectAsState()
+        val userOverviewState by overviewHandler.state.collectAsState()
+        val isLoading by remember {
+            derivedStateOf {
+                userOverviewState is LoadingState.Loading
+            }
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton({
+                dismiss()
+                onClickCreate()
+            }) {
+                Icon(Icons.Default.Add, "create")
+            }
+            UserOverviewRow(userOverview, isLoading, dismiss)
+        }
+    }
+}
+
+@Composable
+private fun UserOverviewRow(
+    userOverview: UserOverview?,
+    isLoading: Boolean,
+    dismiss: () -> Unit
+) {
+    val shape = RoundedCornerShape(10.dp)
+    val appNav = LocalAppNavFactory.current
     Row(
-        modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        modifier = Modifier.clip(shape)
+            .background(MaterialTheme.colorScheme.surfaceDim, shape),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        StatCell(
+            userOverview?.acg ?: 0,
+            if (isLoading) IconRes.Loading else IconRes.Vector(Icons.Default.AccountBalanceWallet)
+        ) {
+        }
+        StatCell(
+            userOverview?.favoriteCount ?: 0,
+            if (isLoading) IconRes.Loading else IconRes.Vector(Icons.Default.Favorite)
+        ) {
+            dismiss()
+            appNav.newAppNav().gotoFavoritePage()
+        }
+        StatCell(
+            userOverview?.subscriptionCount ?: 0,
+            if (isLoading) IconRes.Loading else IconRes.Vector(Icons.Default.NotificationsActive)
+        ) {
+            dismiss()
+            appNav.newAppNav().gotoSubscriptionPage()
+        }
+    }
+}
+
+@Composable
+private fun UnboundSimpleUserCell(userInfo: UserInfo?) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         UserIcon(
             setClickEvent = false,
@@ -203,7 +292,10 @@ fun UserDialogUserInfoCell(
                 if (aid != null) {
                     Text("aid: $aid", style = MaterialTheme.typography.labelSmall)
                 } else {
-                    Text("ad: ${userInfo.address}", style = MaterialTheme.typography.labelSmall)
+                    Text(
+                        "ad: ${userInfo.address}",
+                        style = MaterialTheme.typography.labelSmall
+                    )
                 }
             }
         }
@@ -211,9 +303,28 @@ fun UserDialogUserInfoCell(
 }
 
 @Composable
-fun AccountSwitchButton(dismiss: () -> Unit) {
+fun AccountSwitchButton(dismiss: () -> Unit, overviewHandler: LoadingHandler<UserOverview>) {
     val accountSwitcher = LocalAccountSwitcher.current
-    ButtonNav(Icons.Default.SwitchAccount, "Switch Account") {
+    val userOverview by overviewHandler.data.collectAsState()
+    val userOverviewState by overviewHandler.state.collectAsState()
+    val isLoading by remember {
+        derivedStateOf {
+            userOverviewState is LoadingState.Loading
+        }
+    }
+    ButtonNav(
+        if (isLoading) IconRes.Loading else IconRes.Vector(Icons.Default.SwitchAccount),
+        "Switch Account",
+        {
+            val shape = RoundedCornerShape(8.dp)
+            Text(
+                (userOverview?.childAccountCount ?: 0).toString(),
+                modifier = Modifier.clip(shape)
+                    .background(MaterialTheme.colorScheme.primaryContainer, shape)
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
+            )
+        }
+    ) {
         dismiss()
         accountSwitcher.switch()
     }
@@ -340,7 +451,7 @@ fun UserDialog(
             dismiss()
         }) {
             DialogContainer {
-                UserDialogUserInfoCell(userInfo, dismiss)
+                UserCard(userInfo, dismiss)
             }
         }
     }
@@ -351,6 +462,7 @@ fun UserDialog(
 fun SelfDialog(
     userInfo: UserInfo?,
     showDialog: Boolean,
+    overviewHandler: LoadingHandler<UserOverview>,
     clickCreate: () -> Unit,
     dismiss: () -> Unit,
 ) {
@@ -365,7 +477,7 @@ fun SelfDialog(
             LaunchedEffect(userInfo) {
                 refreshMyInfo(userInfo, sessionManager)
             }
-            SelfDialogInternal(signOutController, userInfo, dismiss, clickCreate)
+            SelfDialogInternal(signOutController, userInfo, dismiss, clickCreate, overviewHandler)
             val scope = rememberCoroutineScope()
             val globalDialogController = LocalGlobalDialog.current
             CustomAlertDialog(signOutController, {
@@ -404,6 +516,7 @@ fun UserIconWithDialog(
 fun SelfUserIconWithDialog(
     userInfo: UserInfo?,
     size: Dp = 40.dp,
+    overviewHandler: LoadingHandler<UserOverview>,
     onClickCreate: () -> Unit = {},
 ) {
     var showUserDialog by remember {
@@ -416,6 +529,7 @@ fun SelfUserIconWithDialog(
     SelfDialog(
         userInfo,
         showUserDialog,
+        overviewHandler,
         onClickCreate
     ) {
         showUserDialog = false

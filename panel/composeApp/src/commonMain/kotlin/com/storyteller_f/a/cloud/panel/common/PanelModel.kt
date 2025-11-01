@@ -21,7 +21,6 @@ import com.storyteller_f.a.client.core.overview
 import com.storyteller_f.shared.model.PanelOverview
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.storage.ModelStorage
-import com.storyteller_f.storage.OverviewCollection
 import com.storyteller_f.storage.UserCollection
 import com.storyteller_f.storage.getName
 import kotlinx.coroutines.flow.Flow
@@ -63,7 +62,7 @@ class OverviewViewModel(sessionManager: PanelSessionManager, modelStorage: Model
         modelStorage.overview.observeDatum(),
         viewModelScope,
         {
-            modelStorage.overview.save(OverviewCollection, it)
+            modelStorage.overview.save(it)
         }
     ) {
         sessionManager.overview()

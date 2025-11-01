@@ -220,21 +220,20 @@ suspend fun Backend.processTopicAfterCreate(
     topicInfo: TopicInfo,
     uid: PrimaryKey
 ) = runCatching {
-    val content1 = topicInfo.content
-    val r1 = if (content1 is TopicContent.Plain) {
+    val info = if (topicInfo.content is TopicContent.Plain) {
         processTopicFileObject(
             listOf(topicInfo)
         ).mapIfNotNull {
             it.firstOrNull()
-        }
+        }.getOrThrow()
     } else {
-        Result.success(topicInfo)
-    }.getOrThrow()
-    val r2 = getUserInfo(ObjectFetch.IdFetch(uid)).getOrThrow()
-    if (r2 != null) {
-        r1?.copy(extension = TopicInfo.Extension(authorInfo = r2))
+        topicInfo
+    }
+    val authorInfo = getUserInfo(ObjectFetch.IdFetch(uid)).getOrThrow()
+    if (authorInfo != null) {
+        info?.copy(extension = TopicInfo.Extension(authorInfo = authorInfo))
     } else {
-        r1
+        info
     }
 }
 

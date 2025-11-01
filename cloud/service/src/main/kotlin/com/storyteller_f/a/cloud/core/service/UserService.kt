@@ -325,18 +325,14 @@ suspend fun Backend.searchMembers(
 
 suspend fun Backend.getUserInfoList(
     listFetch: ObjectListFetch,
-): Result<List<UserInfo>> {
-    return database.user.getRawUsers(listFetch).mapResult {
-        processRawUserToUserInfo(it)
-    }
+) = database.user.getRawUsers(listFetch).mapResult {
+    processRawUserToUserInfo(it)
 }
 
 suspend fun Backend.getUserInfo(
     fetch: ObjectFetch,
-): Result<UserInfo?> {
-    return database.user.getRawUser(fetch).mapResultIfNotNull {
-        processRawUserToUserInfo(listOf(it)).mapIfNotNull(List<UserInfo>::first)
-    }
+) = database.user.getRawUser(fetch).mapResultIfNotNull {
+    processRawUserToUserInfo(listOf(it)).mapIfNotNull(List<UserInfo>::first)
 }
 
 suspend fun Backend.processRawUserToUserInfo(
@@ -351,6 +347,8 @@ suspend fun Backend.processRawUserToUserInfo(
         }
     }
 }
+
+suspend fun Backend.getUserOverview(uid: PrimaryKey) = database.user.getUserOverview(uid)
 
 suspend fun Backend.getAllUsers(primaryKeyFetch: PrimaryKeyFetch) =
     database.user.getAllUsers(primaryKeyFetch).mapResult { result ->

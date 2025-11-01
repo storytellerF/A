@@ -26,6 +26,7 @@ import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.TopicPinSearch
 import com.storyteller_f.shared.model.UserFavoriteInfo
 import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.model.UserOverview
 import com.storyteller_f.shared.model.UserPubKeyInfo
 import com.storyteller_f.shared.model.UserSubscriptionInfo
 import com.storyteller_f.shared.obj.ObjectTuple
@@ -368,6 +369,7 @@ object CustomApi {
         val search = safeApiWithQuery<ServerResponse<UserInfo>, UserSearchQuery>("users/search")
 
         val update = mutationApi<UserInfo, UpdateUserBody>("users/update")
+        val overview = safeApi<UserOverview>("users/overview")
 
         object Read {
             val add = mutationApi<Unit, UpdateUserRead>("users/read")

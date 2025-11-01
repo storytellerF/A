@@ -15,6 +15,7 @@ import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserFavoriteInfo
 import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.model.UserOverview
 import com.storyteller_f.shared.model.UserSubscriptionInfo
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.PrimaryKey
@@ -71,29 +72,11 @@ sealed interface ReactionCollection {
     data class ReactionList(val objectId: PrimaryKey) : ReactionCollection
 }
 
-data object DownloadCollection {
-    const val NAME = "download"
-}
 data class UploadCollection(val objectId: PrimaryKey) {
     fun getName() = "upload_$objectId"
 }
 data class MediasCollection(val objectId: PrimaryKey) {
     fun getName() = "medias_$objectId"
-}
-data object ChildAccountCollection {
-    const val NAME = "child_accounts"
-}
-
-data object OverviewCollection {
-    const val NAME = "overview"
-}
-
-data object UserFavoriteCollection {
-    const val NAME = "user-favorite"
-}
-
-data object UserSubscriptionCollection {
-    const val NAME = "user-subscription"
 }
 
 fun UserCollection.getName(): String {
@@ -158,6 +141,7 @@ interface ModelStorage {
     val download: DownloadInfoStorage
     val upload: UploadInfoStorage
     val overview: OverviewStorage
+    val userOverview: UserOverviewStorage
     val favorite: UserFavoriteStorage
     val subscription: UserSubscriptionStorage
 }
@@ -210,9 +194,12 @@ interface ReactionInfoStorage {
 }
 
 interface ChildAccountStorage {
-    suspend fun save(collection: ChildAccountCollection, childAccountInfo: ChildAccountInfo)
-    fun observeData(collection: ChildAccountCollection): PagingSource<Int, ChildAccountInfo>
-    suspend fun clean(collection: ChildAccountCollection)
+    suspend fun save(childAccountInfo: ChildAccountInfo)
+    fun observeData(): PagingSource<Int, ChildAccountInfo>
+    suspend fun clean()
+    companion object {
+        const val COLLECTION_NAME = "child-account"
+    }
 }
 
 interface FileInfoStorage {
@@ -222,9 +209,13 @@ interface FileInfoStorage {
 }
 
 interface DownloadInfoStorage {
-    suspend fun save(collection: DownloadCollection, downloadInfo: DownloadInfo)
+    suspend fun save(downloadInfo: DownloadInfo)
     fun observeDatum(id: PrimaryKey): Flow<DownloadInfo?>
-    suspend fun getDocument(collection: DownloadCollection, id: PrimaryKey): DownloadInfo?
+    suspend fun getDocument(id: PrimaryKey): DownloadInfo?
+
+    companion object {
+        const val COLLECTION_NAME = "download"
+    }
 }
 
 interface UploadInfoStorage {
@@ -235,22 +226,42 @@ interface UploadInfoStorage {
 }
 
 interface OverviewStorage {
-    suspend fun save(collection: OverviewCollection, overviewInfo: PanelOverview)
+    suspend fun save(overviewInfo: PanelOverview)
     fun observeDatum(): Flow<PanelOverview?>
+
+    companion object {
+        const val COLLECTION_NAME = "panel-overview"
+    }
+}
+
+interface UserOverviewStorage {
+    suspend fun save(overviewInfo: UserOverview)
+    fun observeDatum(): Flow<UserOverview?>
+
+    companion object {
+        const val COLLECTION_NAME = "user-overview"
+    }
 }
 
 interface UserFavoriteStorage {
-    suspend fun save(collection: UserFavoriteCollection, favoriteInfo: UserFavoriteInfo)
-    fun observeData(collection: UserFavoriteCollection): PagingSource<Int, UserFavoriteInfo>
+    suspend fun save(favoriteInfo: UserFavoriteInfo)
+    fun observeData(): PagingSource<Int, UserFavoriteInfo>
     fun observeDatum(id: String): Flow<UserFavoriteInfo?>
-    suspend fun clean(collection: UserFavoriteCollection)
+    suspend fun clean()
+    companion object {
+        const val COLLECTION_NAME = "user-favorite"
+    }
 }
 
 interface UserSubscriptionStorage {
-    suspend fun save(collection: UserSubscriptionCollection, subscriptionInfo: UserSubscriptionInfo)
-    fun observeData(collection: UserSubscriptionCollection): PagingSource<Int, UserSubscriptionInfo>
+    suspend fun save(subscriptionInfo: UserSubscriptionInfo)
+    fun observeData(): PagingSource<Int, UserSubscriptionInfo>
     fun observeDatum(id: String): Flow<UserSubscriptionInfo?>
-    suspend fun clean(collection: UserSubscriptionCollection)
+    suspend fun clean()
+
+    companion object {
+        const val COLLECTION_NAME = "user-subscription"
+    }
 }
 
 interface RemoteKeyStorage {
