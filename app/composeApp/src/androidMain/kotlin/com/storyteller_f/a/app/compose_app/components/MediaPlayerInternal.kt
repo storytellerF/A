@@ -44,7 +44,8 @@ import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalMediaPlaySession
 import com.storyteller_f.a.app.compose_app.LocalToaster
 import com.storyteller_f.a.app.compose_app.MediaProvider
-import com.storyteller_f.a.app.compose_app.common.Toast
+import com.storyteller_f.a.app.core.compontents.GlobalDialogController
+import com.storyteller_f.a.app.core.compontents.Toast
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.utils.UNIT_RESULT
 import io.github.aakira.napier.Napier

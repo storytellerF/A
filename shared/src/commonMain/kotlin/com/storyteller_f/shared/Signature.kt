@@ -8,13 +8,6 @@ import dev.whyoleg.cryptography.BinarySize.Companion.bits
 import dev.whyoleg.cryptography.CryptographyProvider
 import dev.whyoleg.cryptography.algorithms.*
 import dev.whyoleg.cryptography.algorithms.AES
-import kotlinx.serialization.Serializable
-
-@Serializable
-class SignUpPack(val pk: String, val sig: String)
-
-@Serializable
-class SignInPack(val ad: String, val sig: String)
 
 fun finalData(data: String, salt: String = "a"): String {
     return (data + salt).toCharArray().sorted().joinToString("")

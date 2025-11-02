@@ -246,15 +246,14 @@ suspend fun Backend.updateCommunity(
 private suspend fun Backend.checkBeforeUpdateCommunity(
     newCommunity: UpdateCommunityBody,
 ): Result<Unit> {
-    val firstError = listOf(suspend {
+    runCatching {
         when (checkNickname(newCommunity.name, 1..COMMUNITY_NAME_LENGTH)) {
             StringCheckResult.RANGE_MISMATCH -> Result.failure(
                 CustomBadRequestException("community name must be between in 1 and 20")
             )
 
             else -> UNIT_RESULT
-        }
-    }, suspend {
+        }.getOrThrow()
         checkIcon(newCommunity.icon, Dimension.DEFAULT_DIMENSION).mapResult { checkResult ->
             when (checkResult) {
                 MediaCheckResult.NOT_FOUND -> Result.failure(CustomBadRequestException("icon not found"))
@@ -268,8 +267,7 @@ private suspend fun Backend.checkBeforeUpdateCommunity(
 
                 else -> UNIT_RESULT
             }
-        }
-    }, suspend {
+        }.getOrThrow()
         checkIcon(newCommunity.poster, Dimension.COMMUNITY_POSTER).mapResult { checkResult ->
             when (checkResult) {
                 MediaCheckResult.NOT_FOUND -> Result.failure(CustomBadRequestException("poster not found"))
@@ -283,15 +281,11 @@ private suspend fun Backend.checkBeforeUpdateCommunity(
 
                 else -> UNIT_RESULT
             }
-        }
-    }).firstNotNullOfOrNull {
-        it().exceptionOrNull()
+        }.getOrThrow()
+    }.exceptionOrNull()?.let {
+        return Result.failure(it)
     }
-    return if (firstError != null) {
-        Result.failure(firstError)
-    } else {
-        UNIT_RESULT
-    }
+    return UNIT_RESULT
 }
 
 suspend fun Backend.processRawCommunityToCommunityInfo(

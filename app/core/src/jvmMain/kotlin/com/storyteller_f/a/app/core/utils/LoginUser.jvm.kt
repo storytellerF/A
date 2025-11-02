@@ -3,7 +3,7 @@ package com.storyteller_f.a.app.core.utils
 import com.russhwolf.settings.PreferencesSettings
 import com.russhwolf.settings.Settings
 
-actual fun buildLoginHistoryFactory(settings: Settings): SessionHistoryManager {
+actual fun buildSessionHistoryFactory(settings: Settings): SessionHistoryManager {
     return DefaultSessionHistoryManager(settings)
 }
 

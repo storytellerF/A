@@ -1,5 +1,5 @@
 import com.storyteller_f.a.app.core.utils.SessionHistoryManager
-import com.storyteller_f.a.app.core.utils.buildLoginHistoryFactory
+import com.storyteller_f.a.app.core.utils.buildSessionHistoryFactory
 import com.storyteller_f.a.app.core.utils.createSettings
 import com.storyteller_f.a.client.core.RawUserPassInfo
 import com.storyteller_f.shared.encryptDataByAES
@@ -69,7 +69,7 @@ fun loginSessionTest(block: suspend (String, String, String, SessionHistoryManag
         loadCryptoLibIfNeed()
         val settings = createSettings("settings-test")
         settings.clear()
-        val sessionFactory = buildLoginHistoryFactory(settings)
+        val sessionFactory = buildSessionHistoryFactory(settings)
         assertEquals(0, sessionFactory.getSavedSession().alias.size)
         getAlgo().run {
             val privateKey = generateECDSAPemPrivateKey().getOrThrow()

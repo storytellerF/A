@@ -26,9 +26,9 @@ import com.storyteller_f.a.app.compose_app.common.CommunityScreen
 import com.storyteller_f.a.app.compose_app.common.createJoinedCommunitiesViewModel
 import com.storyteller_f.a.app.compose_app.common.hasRouteFlow
 import com.storyteller_f.a.app.compose_app.components.CommunityPoster
-import com.storyteller_f.a.app.compose_app.components.rememberCommonDialogController
 import com.storyteller_f.a.app.core.compontents.StateView
 import com.storyteller_f.a.app.core.compontents.bottomAppending
+import com.storyteller_f.a.app.core.compontents.rememberCommonDialogController
 import com.storyteller_f.a.app.core.compontents.topPrepend
 import com.storyteller_f.a.app.core.utils.lcm
 import com.storyteller_f.shared.model.CommunityInfo

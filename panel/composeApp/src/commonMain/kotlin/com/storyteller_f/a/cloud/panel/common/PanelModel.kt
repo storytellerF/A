@@ -1,5 +1,6 @@
 package com.storyteller_f.a.cloud.panel.common
 
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.ExperimentalPagingApi
 import androidx.paging.Pager
@@ -18,12 +19,18 @@ import com.storyteller_f.a.client.core.LoadingHandler
 import com.storyteller_f.a.client.core.PanelSessionManager
 import com.storyteller_f.a.client.core.getAllUsers
 import com.storyteller_f.a.client.core.overview
+import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.PanelOverview
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.storage.ModelStorage
 import com.storyteller_f.storage.UserCollection
 import com.storyteller_f.storage.getName
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 class AllUsersViewModel(
     sessionManager: PanelSessionManager,
@@ -66,5 +73,41 @@ class OverviewViewModel(sessionManager: PanelSessionManager, modelStorage: Model
         }
     ) {
         sessionManager.overview()
+    }
+}
+
+class AddUserViewModel : ViewModel() {
+    val privateKey = MutableStateFlow("")
+    val nickname = MutableStateFlow("")
+    val aid = MutableStateFlow("")
+    val publicKey = privateKey.map {
+        getAlgo().run {
+            getDerPublicKeyFromPrivateKey(it).getOrNull()
+        }
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+    val address = publicKey.map {
+        getAlgo().run {
+            it?.let { derPublicKeyStr -> calcAddress(derPublicKeyStr).getOrNull() }
+        }
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    fun updateNickname(nickname: String) {
+        this.nickname.value = nickname
+    }
+
+    fun updateAid(aid: String) {
+        this.aid.value = aid
+    }
+
+    fun updatePrivateKey(privateKey: String) {
+        this.privateKey.value = privateKey
+    }
+
+    fun autoGeneratePrivateKey() {
+        viewModelScope.launch {
+            getAlgo().generateECDSAPemPrivateKey().onSuccess {
+                updatePrivateKey(it)
+            }
+        }
     }
 }

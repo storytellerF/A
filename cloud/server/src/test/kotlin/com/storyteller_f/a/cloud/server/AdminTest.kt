@@ -2,13 +2,17 @@ package com.storyteller_f.a.cloud.server
 
 import com.storyteller_f.a.api.core.NewCommunity
 import com.storyteller_f.a.api.core.NewRoom
+import com.storyteller_f.a.api.core.NewUser
 import com.storyteller_f.a.api.core.PaginationQuery
+import com.storyteller_f.a.client.core.addUser
 import com.storyteller_f.a.client.core.createCommunity
 import com.storyteller_f.a.client.core.createRoom
 import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.a.client.core.getAllUsers
+import com.storyteller_f.a.client.core.getUserInfo
 import com.storyteller_f.a.client.core.overview
 import com.storyteller_f.a.client.core.upload
+import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import kotlin.test.Test
@@ -107,6 +111,24 @@ class AdminTest {
             val panelOverview = overview().getOrThrow()
             assertEquals(1, panelOverview.fileCount)
             assertEquals(5, panelOverview.fileVolume)
+        }
+    }
+
+    @Test
+    fun `test add user`() = test {
+        val privateKey = getAlgo().run {
+            generateECDSAPemPrivateKey().getOrThrow()
+        }
+        val publicKey = getAlgo().run {
+            getDerPublicKeyFromPrivateKey(privateKey).getOrThrow()
+        }
+        val userInfo = attachPanelSession {
+            addUser(NewUser(publicKey = publicKey)).getOrThrow()
+        }.custom
+        getAppSession(false, privateKey, { _, _, _ ->
+        }) {
+            val info = getUserInfo(it.uid).getOrThrow()
+            assertEquals(info.id, userInfo.id)
         }
     }
 }

@@ -137,19 +137,19 @@ suspend fun Backend.createRoom(
     newRoom: NewRoom,
     uid: PrimaryKey,
 ): Result<RoomInfo?> {
-    val firstError = listOf(suspend {
-        checkAid(newRoom.aid)
-    }, suspend {
-        checkRoomName(newRoom)
-    }).firstNotNullOfOrNull {
-        it().exceptionOrNull()
+    runCatching {
+        checkAid(newRoom.aid).getOrThrow()
+        checkRoomName(newRoom).getOrThrow()
+    }.exceptionOrNull()?.let {
+        return Result.failure(it)
     }
-    if (firstError != null) return Result.failure(firstError)
     val communityId = newRoom.communityId
     return if (communityId != null) {
-        checkRootAdminPermission(ObjectType.COMMUNITY, communityId, uid)
+        checkRootAdminPermission(ObjectType.COMMUNITY, communityId, uid).mapResultIfNotNull {
+            UNIT_RESULT
+        }
     } else {
-        Result.success(true)
+        Result.success(Unit)
     }.mapResultIfNotNull {
         val roomId = SnowflakeFactory.nextId()
         val memberId = SnowflakeFactory.nextId()

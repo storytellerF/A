@@ -42,9 +42,9 @@ import com.storyteller_f.a.app.compose_app.UIViewModel
 import com.storyteller_f.a.app.compose_app.common.ChildAccountsViewModel
 import com.storyteller_f.a.app.compose_app.common.getChildAccountsViewModel
 import com.storyteller_f.a.app.compose_app.components.BaseSheet
-import com.storyteller_f.a.app.compose_app.components.GlobalDialogController
 import com.storyteller_f.a.app.compose_app.components.SheetContainer
 import com.storyteller_f.a.app.core.compontents.CustomIcon
+import com.storyteller_f.a.app.core.compontents.GlobalDialogController
 import com.storyteller_f.a.app.core.compontents.StateView
 import com.storyteller_f.a.app.core.compontents.UserIcon
 import com.storyteller_f.a.app.core.compontents.pagingItems

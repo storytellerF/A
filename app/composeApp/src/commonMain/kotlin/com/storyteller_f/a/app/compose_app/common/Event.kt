@@ -1,7 +1,15 @@
 package com.storyteller_f.a.app.compose_app.common
 
+import com.storyteller_f.shared.model.CommunityInfo
+import com.storyteller_f.shared.model.FileInfo
+import com.storyteller_f.shared.model.ReactionInfo
+import com.storyteller_f.shared.model.RoomInfo
+import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.UserFavoriteInfo
 import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.model.UserSubscriptionInfo
+import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.storage.CommunityCollection
 import com.storyteller_f.storage.MediasCollection
@@ -13,6 +21,34 @@ import com.storyteller_f.storage.update
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.flow.MutableSharedFlow
+
+data class OnTopicChanged(val topicInfo: TopicInfo)
+data class OnTopicCreated(val topicInfo: TopicInfo)
+
+data class OnMediaUploaded(val fileInfos: List<FileInfo>)
+
+data class OnUserUpdated(val info: UserInfo)
+
+data class OnTitleCreated(val title: TitleInfo)
+
+data class OnCommunityCreated(val info: CommunityInfo)
+data class OnCommunityJoined(val info: CommunityInfo)
+data class OnCommunityExited(val info: CommunityInfo)
+
+data class OnCommunityUpdated(val info: CommunityInfo)
+data class OnRoomCreated(val info: RoomInfo)
+data class OnRoomJoined(val info: RoomInfo)
+data class OnRoomExited(val info: RoomInfo)
+
+data class OnRoomUpdated(val info: RoomInfo)
+data class OnAddReaction(val info: ReactionInfo, val topicInfo: TopicInfo)
+data class OnRemoveReaction(val info: ReactionInfo, val topicInfo: TopicInfo)
+
+data class OnAddFavorite(val info: UserFavoriteInfo)
+data class OnRemoveFavorite(val objectTuple: ObjectTuple)
+
+data class OnAddSubscription(val info: UserSubscriptionInfo)
+data class OnRemoveSubscription(val objectTuple: ObjectTuple)
 
 suspend fun processEvent(database: ModelStorage, bus: MutableSharedFlow<Any>) {
     bus.collect { event ->

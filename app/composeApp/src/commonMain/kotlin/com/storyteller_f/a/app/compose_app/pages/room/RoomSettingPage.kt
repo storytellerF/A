@@ -22,11 +22,11 @@ import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.LocalToaster
 import com.storyteller_f.a.app.compose_app.common.OnRoomUpdated
 import com.storyteller_f.a.app.compose_app.common.createRoomViewModel
-import com.storyteller_f.a.app.compose_app.components.GlobalDialogController
 import com.storyteller_f.a.app.compose_app.components.SettingOptionResettableView
 import com.storyteller_f.a.app.compose_app.components.SettingOptionView
 import com.storyteller_f.a.app.compose_app.pages.user.ObjectSettingDialog
 import com.storyteller_f.a.app.compose_app.pages.user.SettingOption
+import com.storyteller_f.a.app.core.compontents.GlobalDialogController
 import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.updateRoomInfo
 import com.storyteller_f.shared.model.RoomInfo

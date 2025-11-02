@@ -10,7 +10,6 @@ import androidx.paging.cachedIn
 import androidx.paging.map
 import com.storyteller_f.a.api.core.PaginationQuery
 import com.storyteller_f.a.app.compose_app.CustomUserSessionManager
-import com.storyteller_f.a.app.compose_app.components.DialogSaveState
 import com.storyteller_f.a.app.core.common.CachedLoadingHandler
 import com.storyteller_f.a.app.core.common.CompatPagingSource
 import com.storyteller_f.a.app.core.common.CustomRemoteMediator
@@ -21,6 +20,7 @@ import com.storyteller_f.a.app.core.common.RegularPagingSource
 import com.storyteller_f.a.app.core.common.SectionLoadParams
 import com.storyteller_f.a.app.core.common.SectionPagingSource
 import com.storyteller_f.a.app.core.common.SimpleViewModel
+import com.storyteller_f.a.app.core.compontents.DialogSaveState
 import com.storyteller_f.a.app.core.utils.SavedSession
 import com.storyteller_f.a.app.core.utils.loadFontFromLocal
 import com.storyteller_f.a.client.core.ClientSessionState
@@ -103,34 +103,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-
-data class OnTopicChanged(val topicInfo: TopicInfo)
-data class OnTopicCreated(val topicInfo: TopicInfo)
-
-data class OnMediaUploaded(val fileInfos: List<FileInfo>)
-
-data class OnUserUpdated(val info: UserInfo)
-
-data class OnTitleCreated(val title: TitleInfo)
-
-data class OnCommunityCreated(val info: CommunityInfo)
-data class OnCommunityJoined(val info: CommunityInfo)
-data class OnCommunityExited(val info: CommunityInfo)
-
-data class OnCommunityUpdated(val info: CommunityInfo)
-data class OnRoomCreated(val info: RoomInfo)
-data class OnRoomJoined(val info: RoomInfo)
-data class OnRoomExited(val info: RoomInfo)
-
-data class OnRoomUpdated(val info: RoomInfo)
-data class OnAddReaction(val info: ReactionInfo, val topicInfo: TopicInfo)
-data class OnRemoveReaction(val info: ReactionInfo, val topicInfo: TopicInfo)
-
-data class OnAddFavorite(val info: UserFavoriteInfo)
-data class OnRemoveFavorite(val objectTuple: ObjectTuple)
-
-data class OnAddSubscription(val info: UserSubscriptionInfo)
-data class OnRemoveSubscription(val objectTuple: ObjectTuple)
 
 abstract class CommunityViewModel :
     SimpleViewModel<CommunityInfo>() {

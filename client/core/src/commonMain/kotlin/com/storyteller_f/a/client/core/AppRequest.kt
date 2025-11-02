@@ -12,10 +12,10 @@ import com.storyteller_f.a.api.core.NewSubscription
 import com.storyteller_f.a.api.core.NewTitle
 import com.storyteller_f.a.api.core.NewTopic
 import com.storyteller_f.a.api.core.PaginationQuery
+import com.storyteller_f.a.api.core.SignInBody
+import com.storyteller_f.a.api.core.SignUpBody
 import com.storyteller_f.a.api.core.TopicQuery
 import com.storyteller_f.route4k.ktor.client.invoke
-import com.storyteller_f.shared.SignInPack
-import com.storyteller_f.shared.SignUpPack
 import com.storyteller_f.shared.buildEncryptedTopicContent
 import com.storyteller_f.shared.model.PosterSearch
 import com.storyteller_f.shared.model.TitleInfo
@@ -293,18 +293,14 @@ suspend fun UserSessionManager.createTopic(
     }
 }
 
-suspend fun UserSessionManager.signUp(
-    pack: SignUpPack,
-) = serviceCatching {
-    CustomApi.Accounts.signUp(pack) {
+suspend fun UserSessionManager.signUp(body: SignUpBody) = serviceCatching {
+    CustomApi.Accounts.signUp(body) {
         contentType(ContentType.Application.Json)
     }
 }
 
-suspend fun UserSessionManager.signIn(
-    pack: SignInPack,
-) = serviceCatching {
-    CustomApi.Accounts.signIn(pack) {
+suspend fun UserSessionManager.signIn(body: SignInBody) = serviceCatching {
+    CustomApi.Accounts.signIn(body) {
         contentType(ContentType.Application.Json)
     }
 }
@@ -604,9 +600,10 @@ suspend fun UserSessionManager.removeSubscription(favoriteId: PrimaryKey) = serv
     }
 }
 
-suspend fun UserSessionManager.getSubscriptions(paginationQuery: PaginationQuery) = serviceCatching {
-    CustomApi.Subscriptions.get(paginationQuery)
-}
+suspend fun UserSessionManager.getSubscriptions(paginationQuery: PaginationQuery) =
+    serviceCatching {
+        CustomApi.Subscriptions.get(paginationQuery)
+    }
 
 suspend fun UserSessionManager.getUserOverview() = serviceCatching {
     CustomApi.Users.overview()
