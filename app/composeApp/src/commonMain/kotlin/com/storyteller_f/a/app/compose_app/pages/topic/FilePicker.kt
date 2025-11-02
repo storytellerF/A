@@ -36,6 +36,9 @@ import com.storyteller_f.a.app.compose_app.components.*
 import com.storyteller_f.a.app.compose_app.utils.Recorder
 import com.storyteller_f.a.app.compose_app.utils.setText
 import com.storyteller_f.a.app.core.compontents.CustomIcon
+import com.storyteller_f.a.app.core.compontents.GlobalDialogController
+import com.storyteller_f.a.app.core.compontents.GlobalDialogState
+import com.storyteller_f.a.app.core.compontents.GlobalDialogStateProgress
 import com.storyteller_f.a.app.core.compontents.IconRes
 import com.storyteller_f.a.app.core.compontents.StateView
 import com.storyteller_f.a.app.core.compontents.bottomAppending

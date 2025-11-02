@@ -1,7 +1,7 @@
 package com.storyteller_f.a.client.core
 
-import com.storyteller_f.shared.SignInPack
-import com.storyteller_f.shared.SignUpPack
+import com.storyteller_f.a.api.core.SignInBody
+import com.storyteller_f.a.api.core.SignUpBody
 import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.PanelAccountInfo
@@ -13,9 +13,11 @@ import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.checkTsIsValid
 import com.storyteller_f.shared.utils.extractMarkdownMediaLink
-import io.ktor.client.*
-import io.ktor.client.plugins.cookies.*
-import io.ktor.client.plugins.websocket.*
+import io.ktor.client.HttpClient
+import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
+import io.ktor.client.plugins.cookies.CookiesStorage
+import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
+import io.ktor.client.plugins.websocket.webSocketSession
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlin.time.ExperimentalTime
@@ -169,7 +171,7 @@ suspend fun UserSessionManager.login() {
             val data = getData().getOrThrow()
             val address = userPass.address().getOrThrow()
             val signature = userPass.signature(finalData(data)).getOrThrow()
-            val userInfo = signIn(SignInPack(address, signature)).getOrThrow()
+            val userInfo = signIn(SignInBody(address, signature)).getOrThrow()
             model.updateSignature(data, signature)
             userInfo
         }
@@ -186,7 +188,7 @@ suspend fun PanelSessionManager.login() {
             val data = getData().getOrThrow()
             val address = userPass.address().getOrThrow()
             val signature = userPass.signature(finalData(data)).getOrThrow()
-            val userInfo = signIn(SignInPack(address, signature)).getOrThrow()
+            val userInfo = signIn(SignInBody(address, signature)).getOrThrow()
             model.updateSignature(data, signature)
             userInfo
         }
@@ -197,50 +199,46 @@ suspend fun UserSessionManager.getUserInfo(
     pemPrivateKey: String,
     isSignUp: Boolean,
     buildUserPass: suspend (RawUserPassInfo) -> UserPass
-): UserInfo {
-    return signUpOrInFromPrivateKey(pemPrivateKey, {
-        getData()
-    }, { publicKey, sig, ad ->
-        when {
-            isSignUp -> signUp(SignUpPack(publicKey, sig))
-            else -> signIn(SignInPack(ad, sig))
-        }
-    }, buildUserPass)
+) = signUpOrInFromPrivateKey(pemPrivateKey, {
+    getData()
+}, buildUserPass) { publicKey, signature, address ->
+    when {
+        isSignUp -> signUp(SignUpBody(publicKey, signature))
+        else -> signIn(SignInBody(address, signature))
+    }
 }
 
 suspend fun PanelSessionManager.getPanelAccountInfo(
     pemPrivateKey: String,
     isSignUp: Boolean,
     buildUserPass: suspend (RawUserPassInfo) -> UserPass
-): PanelAccountInfo {
-    return signUpOrInFromPrivateKey(pemPrivateKey, {
-        getData()
-    }, { publicKey, sig, ad ->
-        when {
-            isSignUp -> signUp(SignUpPack(publicKey, sig))
-            else -> signIn(SignInPack(ad, sig))
-        }
-    }, buildUserPass)
+) = signUpOrInFromPrivateKey(pemPrivateKey, {
+    getData()
+}, buildUserPass) { publicKey, signature, address ->
+    when {
+        isSignUp -> signUp(SignUpBody(publicKey, signature))
+        else -> signIn(SignInBody(address, signature))
+    }
 }
 
 suspend fun <U> SessionManager<U>.signUpOrInFromPrivateKey(
     pemPrivateKey: String,
     getData: suspend () -> Result<String>,
-    getUserInfo: suspend (String, String, String) -> Result<U>,
-    buildUserPass: suspend (RawUserPassInfo) -> UserPass
+    buildUserPass: suspend (RawUserPassInfo) -> UserPass,
+    getUserInfo: suspend (String, String, String) -> Result<U>
 ): U {
     getAlgo().run {
         val publicKey = getDerPublicKeyFromPrivateKey(pemPrivateKey).getOrThrow()
         val data = getData().getOrThrow()
         val f = finalData(data)
-        val sig = signature(pemPrivateKey, f).getOrThrow()
-        val ad = calcAddress(publicKey).getOrThrow()
-        val u = getUserInfo(publicKey, sig, ad).getOrThrow()
-        model.updateUser(u)
-        model.updateSignature(data, sig)
-        val p1 = RawUserPassInfo(pemPrivateKey, publicKey, ad)
-        model.updateState(ClientSessionState.Success(buildUserPass(p1)))
-        return u
+        val signature = signature(pemPrivateKey, f).getOrThrow()
+        val address = calcAddress(publicKey).getOrThrow()
+        val userInfo = getUserInfo(publicKey, signature, address).getOrThrow()
+        model.updateUser(userInfo)
+        model.updateSignature(data, signature)
+        val userPassInfo = RawUserPassInfo(pemPrivateKey, publicKey, address)
+        model.updateState(ClientSessionState.Success(buildUserPass(userPassInfo)))
+        return userInfo
     }
 }
 

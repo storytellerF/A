@@ -93,12 +93,12 @@ data class SavedSession(
     val history: SessionHistory?
 )
 
-expect fun buildLoginHistoryFactory(settings: Settings): SessionHistoryManager
+expect fun buildSessionHistoryFactory(settings: Settings): SessionHistoryManager
 
 expect fun createSettings(name: String = "a-default"): Settings
 
 fun <U> SessionManager<U>.restoreFromStorage(settings: Settings) {
-    val sessionFactory = buildLoginHistoryFactory(settings)
+    val sessionFactory = buildSessionHistoryFactory(settings)
     val (alias, history) = sessionFactory.getSavedSession()
     val current = history?.current
     if (current != null && alias.contains(current)) {

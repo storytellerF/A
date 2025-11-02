@@ -8,8 +8,6 @@ import com.storyteller_f.route4k.common.safeApi
 import com.storyteller_f.route4k.common.safeApiWithPath
 import com.storyteller_f.route4k.common.safeApiWithQuery
 import com.storyteller_f.route4k.common.safeApiWithQueryAndPath
-import com.storyteller_f.shared.SignInPack
-import com.storyteller_f.shared.SignUpPack
 import com.storyteller_f.shared.model.ChildAccountInfo
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.FileInfo
@@ -59,7 +57,7 @@ class PaginationQuery(
 class CommonPath(val id: PrimaryKey)
 
 @Serializable
-data class NewSubscription(
+class NewSubscription(
     val objectId: PrimaryKey,
     val objectType: ObjectType
 ) {
@@ -67,22 +65,19 @@ data class NewSubscription(
 }
 
 @Serializable
-data class NewCommunity(val name: String, val aid: String, val icon: PrimaryKey? = null)
+class NewCommunity(val name: String, val aid: String, val icon: PrimaryKey? = null)
 
 @Serializable
-data class NewDevice(val endpointUrl: String)
+class NewDevice(val endpointUrl: String)
 
 @Serializable
-data class NewMedia(val noPrefixName: String)
+class NewReaction(val emoji: String)
 
 @Serializable
-data class NewReaction(val emoji: String)
+class DeleteReaction(val emoji: String)
 
 @Serializable
-data class DeleteReaction(val emoji: String)
-
-@Serializable
-data class NewRoom(
+class NewRoom(
     val name: String,
     val aid: String,
     val icon: PrimaryKey? = null,
@@ -90,7 +85,7 @@ data class NewRoom(
 )
 
 @Serializable
-data class NewTitle(
+class NewTitle(
     val name: String,
     val type: TitleType,
     val receiver: PrimaryKey,
@@ -100,16 +95,29 @@ data class NewTitle(
 )
 
 @Serializable
-data class NewTopic(val parentType: ObjectType, val parentId: PrimaryKey, val content: String) {
+class NewTopic(val parentType: ObjectType, val parentId: PrimaryKey, val content: String) {
     val tuple = ObjectTuple(parentId, parentType)
 }
 
 @Serializable
-data class NewFavorite(val objectType: ObjectType, val objectId: PrimaryKey) {
+class NewFavorite(val objectType: ObjectType, val objectId: PrimaryKey) {
     fun tuple(): ObjectTuple {
         return ObjectTuple(objectId, objectType)
     }
 }
+
+@Serializable
+class NewUser(
+    val nickname: String? = null,
+    val aid: String? = null,
+    val publicKey: String,
+)
+
+@Serializable
+class SignUpBody(val publicKey: String, val signature: String)
+
+@Serializable
+class SignInBody(val address: String, val signature: String)
 
 object CustomApi {
     object Topics {
@@ -418,9 +426,9 @@ object CustomApi {
     }
 
     object Accounts {
-        val signIn = mutationApi<UserInfo, SignInPack>("/accounts/sign-in")
+        val signIn = mutationApi<UserInfo, SignInBody>("/accounts/sign-in")
         val signOut = mutationApi<Unit, Unit>("/accounts/sign-out")
-        val signUp = mutationApi<UserInfo, SignUpPack>("/accounts/sign-up")
+        val signUp = mutationApi<UserInfo, SignUpBody>("/accounts/sign-up")
         val getData = safeApi<String>("/accounts/get-data")
 
         object ChildAccounts {
@@ -456,11 +464,12 @@ object CustomApi {
 object AdminApi {
     object Users {
         val get = safeApiWithQuery<ServerResponse<UserInfo>, PaginationQuery>("/admin/users")
+        val add = mutationApi<UserInfo, NewUser>("/admin/users")
     }
 
-    val signIn = mutationApi<PanelAccountInfo, SignInPack>("/admin/sign-in")
+    val signIn = mutationApi<PanelAccountInfo, SignInBody>("/admin/sign-in")
     val signOut = mutationApi<Unit, Unit>("/admin/sign-out")
-    val signUp = mutationApi<PanelAccountInfo, SignUpPack>("/admin/sign-up")
+    val signUp = mutationApi<PanelAccountInfo, SignUpBody>("/admin/sign-up")
     val getData = safeApi<String>("/admin/get-data")
     val overview = safeApi<PanelOverview>("/admin/overview")
 }

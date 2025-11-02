@@ -2,6 +2,7 @@ package com.storyteller_f.a.cloud.server.route
 
 import com.storyteller_f.a.api.core.AdminApi
 import com.storyteller_f.a.backend.core.Backend
+import com.storyteller_f.a.cloud.core.service.addUser
 import com.storyteller_f.a.cloud.core.service.adminSignIn
 import com.storyteller_f.a.cloud.core.service.adminSignUp
 import com.storyteller_f.a.cloud.core.service.getAllUsers
@@ -22,7 +23,7 @@ import io.ktor.server.sessions.sessions
 
 fun Routing.bindProtectedAdminRoute(backend: Backend) {
     authenticate("admin") {
-        AdminApi.Users.get.invoke(RoutingContext::handleResult) {
+        AdminApi.Users.get(RoutingContext::handleResult) {
             it.pagination(IdentifiablePagingGenerator) { fetch ->
                 backend.getAllUsers(fetch)
             }
@@ -34,6 +35,9 @@ fun Routing.bindProtectedAdminRoute(backend: Backend) {
         AdminApi.overview(RoutingContext::handleResult) {
             backend.getOverview()
         }
+        AdminApi.Users.add(RoutingContext::handleResult, { api ->
+            backend.addUser(api.receiveBody())
+        })
     }
 }
 

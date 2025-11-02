@@ -46,33 +46,14 @@ suspend fun Backend.updateUser(
 ): Result<UserInfo?> {
     val newUser =
         old.copy(nickname = old.nickname?.trim(), aid = old.aid?.trim(), avatar = old.avatar)
-    val firstError = listOf(suspend {
-        checkAidModifyTimes(newUser, uid)
-    }, suspend {
-        checkAid(newUser.aid, true)
-    }, suspend {
-        when (checkNickname(newUser.nickname, 1..USER_NICKNAME)) {
-            StringCheckResult.RANGE_MISMATCH -> Result.failure(
-                CustomBadRequestException("user nickname must be between in 1 and 20")
-            )
-
-            else -> UNIT_RESULT
-        }
-    }, suspend {
-        checkIcon(newUser.avatar, Dimension.DEFAULT_DIMENSION).mapResult {
-            when (it) {
-                MediaCheckResult.NOT_FOUND -> Result.failure(CustomBadRequestException("avatar not font"))
-                MediaCheckResult.CONTENT_TYPE_MISMATCH -> Result.failure(
-                    CustomBadRequestException("avatar must be image")
-                )
-
-                else -> UNIT_RESULT
-            }
-        }
-    }).firstNotNullOfOrNull {
-        it().exceptionOrNull()
+    runCatching {
+        checkAidModifyTimes(newUser, uid).getOrThrow()
+        checkAid(newUser.aid, true).getOrThrow()
+        checkUserNickname(newUser.nickname)
+        checkUserIcon(newUser)
+    }.exceptionOrNull()?.let {
+        return Result.failure(it)
     }
-    if (firstError != null) return Result.failure(firstError)
     return database.user.updateUserInfo(uid, newUser).mapResult {
         if (it) {
             addUserLog(uid, UserLogType.UPDATE, uid ob ObjectType.USER)
@@ -80,6 +61,29 @@ suspend fun Backend.updateUser(
         } else {
             Result.success(null)
         }
+    }
+}
+
+private suspend fun Backend.checkUserIcon(newUser: UpdateUserBody) {
+    checkIcon(newUser.avatar, Dimension.DEFAULT_DIMENSION).mapResult {
+        when (it) {
+            MediaCheckResult.NOT_FOUND -> Result.failure(CustomBadRequestException("avatar not font"))
+            MediaCheckResult.CONTENT_TYPE_MISMATCH -> Result.failure(
+                CustomBadRequestException("avatar must be image")
+            )
+
+            else -> UNIT_RESULT
+        }
+    }.getOrThrow()
+}
+
+fun checkUserNickname(nickname: String?) {
+    if (checkNickname(
+            nickname,
+            1..USER_NICKNAME
+        ) == StringCheckResult.RANGE_MISMATCH
+    ) {
+        throw CustomBadRequestException("user nickname must be between in 1 and 20")
     }
 }
 
@@ -149,23 +153,22 @@ suspend fun Backend.checkIcon(
     icon: PrimaryKey?,
     aspectRatio: Dimension? = null,
 ): Result<MediaCheckResult?> {
-    return if (icon != null) {
-        database.file.getFileRecordByIds(listOf(icon)).mapIfNotNull {
-            val mediaInfo = it.firstOrNull()
-            val dimension = mediaInfo?.dimension
-            when {
-                mediaInfo == null -> MediaCheckResult.NOT_FOUND
-                !mediaInfo.contentType.startsWith("image/") -> MediaCheckResult.CONTENT_TYPE_MISMATCH
-                aspectRatio != null && (dimension == null || !checkMediaFileDimensionRatioMatch(
-                    dimension,
-                    aspectRatio
-                )) -> MediaCheckResult.DIMENSION_MISMATCH
+    if (icon == null) {
+        return Result.success(MediaCheckResult.EMPTY)
+    }
+    return database.file.getFileRecordByIds(listOf(icon)).mapIfNotNull {
+        val mediaInfo = it.firstOrNull()
+        val dimension = mediaInfo?.dimension
+        when {
+            mediaInfo == null -> MediaCheckResult.NOT_FOUND
+            !mediaInfo.contentType.startsWith("image/") -> MediaCheckResult.CONTENT_TYPE_MISMATCH
+            aspectRatio != null && (dimension == null || !checkMediaFileDimensionRatioMatch(
+                dimension,
+                aspectRatio
+            )) -> MediaCheckResult.DIMENSION_MISMATCH
 
-                else -> MediaCheckResult.SUCCESS
-            }
+            else -> MediaCheckResult.SUCCESS
         }
-    } else {
-        Result.success(MediaCheckResult.EMPTY)
     }
 }
 

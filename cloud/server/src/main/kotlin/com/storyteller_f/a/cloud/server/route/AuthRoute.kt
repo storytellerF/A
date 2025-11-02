@@ -1,6 +1,7 @@
 package com.storyteller_f.a.cloud.server.route
 
 import com.storyteller_f.a.api.core.CustomApi
+import com.storyteller_f.a.api.core.SignInBody
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.ObjectFetch
@@ -23,7 +24,6 @@ import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.cloud.server.common.pagination
 import com.storyteller_f.route4k.ktor.server.invoke
 import com.storyteller_f.route4k.ktor.server.receiveBody
-import com.storyteller_f.shared.SignInPack
 import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.UserInfo
@@ -61,7 +61,7 @@ fun Route.bindUnprotectedAccountRoute(
     }
 
     CustomApi.Accounts.signIn(RoutingContext::handleResult) { api ->
-        backend.signIn(call.getData(), api.receiveBody<UserInfo, SignInPack>()).onSuccess {
+        backend.signIn(call.getData(), api.receiveBody<UserInfo, SignInBody>()).onSuccess {
             saveSuccessSessionOnFirst(it.id)
         }
     }
@@ -82,9 +82,9 @@ fun Route.bindProtectedAccountRoute(backend: Backend) {
             backend.addChildAccount(uid)
         }
     }
-    CustomApi.Accounts.ChildAccounts.get(RoutingContext::handleResult) {
+    CustomApi.Accounts.ChildAccounts.get(RoutingContext::handleResult) { q ->
         usePrincipal { uid ->
-            it.pagination(IdentifiablePagingGenerator) {
+            q.pagination(IdentifiablePagingGenerator) {
                 backend.getUserAlternateUserInfoList(uid, it)
             }
         }

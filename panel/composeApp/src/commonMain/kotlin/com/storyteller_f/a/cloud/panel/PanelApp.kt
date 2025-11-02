@@ -28,26 +28,39 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.russhwolf.settings.Settings
 import com.storyteller_f.a.app.core.PanelConfig
 import com.storyteller_f.a.app.core.common.LocalClient
 import com.storyteller_f.a.app.core.compontents.CenterBox
+import com.storyteller_f.a.app.core.compontents.CustomGlobalDialogController
+import com.storyteller_f.a.app.core.compontents.GlobalDialog
+import com.storyteller_f.a.app.core.compontents.GlobalDialogController
+import com.storyteller_f.a.app.core.compontents.LocalGlobalDialog
 import com.storyteller_f.a.app.core.compontents.PrivateKeyInput
 import com.storyteller_f.a.app.core.compontents.SignInButton
-import com.storyteller_f.a.app.core.utils.buildLoginHistoryFactory
+import com.storyteller_f.a.app.core.utils.SavedSession
+import com.storyteller_f.a.app.core.utils.SessionHistoryManager
+import com.storyteller_f.a.app.core.utils.buildSessionHistoryFactory
 import com.storyteller_f.a.app.core.utils.createSettings
 import com.storyteller_f.a.app.core.utils.restoreFromStorage
 import com.storyteller_f.a.client.core.ClientSessionState
 import com.storyteller_f.a.client.core.PanelSessionManager
 import com.storyteller_f.a.client.core.PanelSessionModel
+import com.storyteller_f.a.client.core.RawUserPassInfo
+import com.storyteller_f.a.client.core.SessionModel
+import com.storyteller_f.a.client.core.UserPass
 import com.storyteller_f.a.client.core.createPanelSessionManager
 import com.storyteller_f.a.client.core.defaultClientConfigureForPanel
 import com.storyteller_f.a.client.core.getClient
 import com.storyteller_f.a.client.core.getPanelAccountInfo
 import com.storyteller_f.a.client.core.startBackgroundTask
+import com.storyteller_f.a.client.room.RoomModelStorage
 import com.storyteller_f.a.client.room.getRoomModelStorage
+import com.storyteller_f.a.cloud.panel.common.OnUserAdded
 import com.storyteller_f.a.cloud.panel.pages.AllUsersPage
 import com.storyteller_f.a.cloud.panel.pages.OverviewPage
+import com.storyteller_f.shared.model.PanelAccountInfo
+import com.storyteller_f.shared.replaceCrlf
+import com.storyteller_f.storage.UserCollection
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.openFilePicker
 import io.github.vinceglb.filekit.readBytes
@@ -56,7 +69,10 @@ import io.ktor.client.plugins.cookies.CookiesStorage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -87,15 +103,23 @@ class Nav2PanelNav(val navigator: NavHostController) : PanelNav {
 
 val LocalPanelNav = compositionLocalOf<PanelNav> { error("no nav") }
 
+val LocalSessionManager = compositionLocalOf {
+    CustomPanelSessionManager.EMPTY
+}
+
 @Composable
 fun App() {
     val sessionManager = panelAccountInstance.sessionManager
     val client = sessionManager.client
     val navigator = rememberNavController()
     val nav = remember { Nav2PanelNav(navigator) }
+    val controller = panelAccountInstance.controller
+
     CompositionLocalProvider(
         LocalClient provides client,
-        LocalPanelNav provides nav
+        LocalPanelNav provides nav,
+        LocalGlobalDialog provides controller,
+        LocalSessionManager provides sessionManager
     ) {
         MaterialTheme {
             NavHost(navigator, "overview") {
@@ -115,6 +139,7 @@ fun App() {
                 }
             }
         }
+        GlobalDialog(controller)
     }
 }
 
@@ -165,7 +190,7 @@ private fun PanelInputPage(back: () -> Unit) {
                         privateKey,
                         false
                     ) {
-                        buildLoginHistoryFactory(sessionManager.settings).addSession(it)
+                        sessionManager.historyFactory.addSession(it)
                     }
                     back()
                 } catch (e: Exception) {
@@ -208,25 +233,10 @@ private fun PanelSelectLoginPage(navigator: NavHostController, back: () -> Unit)
                     Text("Input")
                 }
                 val scope = rememberCoroutineScope()
+                val globalDialogController = LocalGlobalDialog.current
                 OutlinedButton({
                     scope.launch {
-                        try {
-                            val f = FileKit.openFilePicker()
-                            if (f != null) {
-                                val privateKey = String(f.readBytes()).replace("\r\n", "\n")
-                                panelSessionManager.getPanelAccountInfo(
-                                    privateKey,
-                                    false
-                                ) {
-                                    buildLoginHistoryFactory(panelSessionManager.settings).addSession(
-                                        it
-                                    )
-                                }
-                                back()
-                            }
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                        }
+                        globalDialogController.signInFromFile(panelSessionManager, back)
                     }
                 }) {
                     Text("Select File")
@@ -236,7 +246,31 @@ private fun PanelSelectLoginPage(navigator: NavHostController, back: () -> Unit)
     }
 }
 
+private suspend fun GlobalDialogController.signInFromFile(
+    panelSessionManager: CustomPanelSessionManager,
+    back: () -> Unit
+) {
+    useResult {
+        runCatching {
+            val f = FileKit.openFilePicker()
+            if (f != null) {
+                val privateKey = String(f.readBytes()).replaceCrlf()
+                panelSessionManager.getPanelAccountInfo(
+                    privateKey,
+                    false
+                ) {
+                    panelSessionManager.historyFactory.addSession(it)
+                }
+            }
+        }
+    }.onSuccess {
+        back()
+    }
+}
+
 class PanelAccountInstance(scope: CoroutineScope) {
+    val events = MutableSharedFlow<Any>()
+    val controller = CustomGlobalDialogController(events)
     val sessionManager = createCustomPanelSessionManager("default") { model, cookieManager ->
         getClient {
             defaultClientConfigureForPanel(
@@ -262,13 +296,72 @@ class PanelAccountInstance(scope: CoroutineScope) {
         scope.launch {
             sessionManager.startBackgroundTask()
         }
+        scope.launch {
+            database.collectLatest { storage ->
+                events.collectLatest {
+                    processEvent(it, storage)
+                }
+            }
+        }
+    }
+
+    private suspend fun processEvent(
+        any: Any,
+        storage: RoomModelStorage
+    ) {
+        when (any) {
+            is OnUserAdded -> {
+                storage.user.save(UserCollection.AllUsers, any.info)
+            }
+        }
     }
 }
 
 class CustomPanelSessionManager(
     val proxy: PanelSessionManager,
-    val settings: Settings,
-) : PanelSessionManager by proxy
+    val historyFactory: SessionHistoryManager,
+) : PanelSessionManager by proxy {
+    companion object {
+        val EMPTY = CustomPanelSessionManager(object : PanelSessionManager {
+            override val client: HttpClient
+                get() = TODO("Not yet implemented")
+            override val model: SessionModel<PanelAccountInfo>
+                get() = TODO("Not yet implemented")
+            override val isAlreadySignIn: StateFlow<Boolean>
+                get() = TODO("Not yet implemented")
+            override val address: StateFlow<String?>
+                get() = TODO("Not yet implemented")
+
+            override suspend fun updateAddress(clientSessionState: ClientSessionState) {
+                TODO("Not yet implemented")
+            }
+        }, object : SessionHistoryManager {
+            override fun getSavedSession(): SavedSession {
+                TODO("Not yet implemented")
+            }
+
+            override suspend fun addSession(session: RawUserPassInfo): UserPass {
+                TODO("Not yet implemented")
+            }
+
+            override fun buildSession(alias: String): UserPass? {
+                TODO("Not yet implemented")
+            }
+
+            override fun removeSession(session: String) {
+                TODO("Not yet implemented")
+            }
+
+            override fun exitSession(alias: String) {
+                TODO("Not yet implemented")
+            }
+
+            override fun logSession(alias: String) {
+                TODO("Not yet implemented")
+            }
+        })
+    }
+}
 
 fun createCustomPanelSessionManager(
     settingsName: String,
@@ -277,5 +370,6 @@ fun createCustomPanelSessionManager(
     val settings = createSettings(settingsName)
     val customSessionManager = createPanelSessionManager(createClient)
     customSessionManager.restoreFromStorage(settings)
-    return CustomPanelSessionManager(customSessionManager, settings)
+    val historyFactory = buildSessionHistoryFactory(settings)
+    return CustomPanelSessionManager(customSessionManager, historyFactory)
 }

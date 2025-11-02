@@ -286,14 +286,14 @@ suspend fun <R> ApplicationTestBuilder.attachSession(
     block: suspend UserSessionManager.(SessionTuple) -> R
 ): SessionOuterTuple<R> {
     val priKey = getAlgo().generateECDSAPemPrivateKey().getOrThrow()
-    return getAppSession(onReceive, priKey, block, true)
+    return getAppSession(true, priKey, onReceive, block)
 }
 
-private suspend fun <R> ApplicationTestBuilder.getAppSession(
-    onReceive: suspend (RoomFrame, UserSessionModel, DefaultClientWebSocketSession) -> Unit,
+suspend fun <R> ApplicationTestBuilder.getAppSession(
+    isSignUp: Boolean,
     priKey: String,
-    block: suspend UserSessionManager.(SessionTuple) -> R,
-    isSignUp: Boolean
+    onReceive: suspend (RoomFrame, UserSessionModel, DefaultClientWebSocketSession) -> Unit,
+    block: suspend UserSessionManager.(SessionTuple) -> R
 ): SessionOuterTuple<R> {
     return coroutineScope {
         val sessionManager = createUserSessionManager("link", { model, cookiesStorage ->
@@ -319,7 +319,7 @@ suspend fun <R1, R2> ApplicationTestBuilder.loginSession(
     onReceive: suspend (RoomFrame, UserSessionModel, DefaultClientWebSocketSession) -> Unit = { _, _, _ -> },
     block: suspend UserSessionManager.(SessionTuple) -> R2
 ): SessionOuterTuple<R2> {
-    return getAppSession(onReceive, tuple.privateKey, block, false)
+    return getAppSession(false, tuple.privateKey, onReceive, block)
 }
 
 suspend fun <R2> ApplicationTestBuilder.noneSession(

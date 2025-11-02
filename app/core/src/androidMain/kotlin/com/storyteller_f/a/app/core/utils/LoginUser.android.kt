@@ -27,7 +27,7 @@ import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
 import kotlin.io.encoding.Base64
 
-actual fun buildLoginHistoryFactory(settings: Settings): SessionHistoryManager {
+actual fun buildSessionHistoryFactory(settings: Settings): SessionHistoryManager {
     if (runCatching {
             Cipher.getInstance("ECIES", "AndroidKeyStore")
         }.isSuccess && runCatching {

@@ -31,8 +31,6 @@ import com.storyteller_f.a.app.compose_app.common.Downloader
 import com.storyteller_f.a.app.compose_app.common.HomeScreen
 import com.storyteller_f.a.app.compose_app.common.OnTopicCreated
 import com.storyteller_f.a.app.compose_app.common.RoomScreen
-import com.storyteller_f.a.app.compose_app.common.Sonner
-import com.storyteller_f.a.app.compose_app.common.Toast
 import com.storyteller_f.a.app.compose_app.common.TopicScreen
 import com.storyteller_f.a.app.compose_app.common.Uploader
 import com.storyteller_f.a.app.compose_app.common.buildRootNav
@@ -40,12 +38,7 @@ import com.storyteller_f.a.app.compose_app.common.newAppNav
 import com.storyteller_f.a.app.compose_app.common.processEvent
 import com.storyteller_f.a.app.compose_app.common.toRoute
 import com.storyteller_f.a.app.compose_app.components.ConstPlayItem
-import com.storyteller_f.a.app.compose_app.components.CustomGlobalDialogController
-import com.storyteller_f.a.app.compose_app.components.CustomGlobalTask
 import com.storyteller_f.a.app.compose_app.components.CustomVideoSize
-import com.storyteller_f.a.app.compose_app.components.GlobalDialog
-import com.storyteller_f.a.app.compose_app.components.GlobalDialogController
-import com.storyteller_f.a.app.compose_app.components.GlobalTask
 import com.storyteller_f.a.app.compose_app.components.RemoteMediaItem
 import com.storyteller_f.a.app.compose_app.components.globalPlayerState
 import com.storyteller_f.a.app.compose_app.components.rememberIsInPipMode
@@ -57,9 +50,16 @@ import com.storyteller_f.a.app.compose_app.ui.theme.AppTheme
 import com.storyteller_f.a.app.compose_app.utils.appPlatform
 import com.storyteller_f.a.app.compose_app.utils.createCustomDataStoreManager
 import com.storyteller_f.a.app.core.common.LocalClient
+import com.storyteller_f.a.app.core.compontents.CustomGlobalDialogController
+import com.storyteller_f.a.app.core.compontents.CustomGlobalTask
+import com.storyteller_f.a.app.core.compontents.GlobalDialog
+import com.storyteller_f.a.app.core.compontents.LocalGlobalDialog
+import com.storyteller_f.a.app.core.compontents.LocalGlobalTask
+import com.storyteller_f.a.app.core.compontents.LocalToaster
+import com.storyteller_f.a.app.core.compontents.Sonner
 import com.storyteller_f.a.app.core.utils.SavedSession
 import com.storyteller_f.a.app.core.utils.SessionHistoryManager
-import com.storyteller_f.a.app.core.utils.buildLoginHistoryFactory
+import com.storyteller_f.a.app.core.utils.buildSessionHistoryFactory
 import com.storyteller_f.a.app.core.utils.createSettings
 import com.storyteller_f.a.app.core.utils.restoreFromStorage
 import com.storyteller_f.a.client.core.ClientSessionState
@@ -130,19 +130,6 @@ interface ClientFileProvider {
 
 val LocalAppNavFactory = compositionLocalOf {
     AppNavFactory.EMPTY
-}
-
-val LocalGlobalDialog = compositionLocalOf {
-    GlobalDialogController.EMPTY
-}
-
-val LocalGlobalTask = compositionLocalOf {
-    GlobalTask.EMPTY
-}
-
-@OptIn(DelicateCoroutinesApi::class)
-val LocalToaster = compositionLocalOf {
-    Toast.EMPTY
 }
 
 val LocalSessionManager = compositionLocalOf {
@@ -520,7 +507,7 @@ fun createCustomUserSessionManager(
     onReceiveFrame: suspend (RoomFrame, UserSessionModel, DefaultClientWebSocketSession) -> Unit,
 ): CustomUserSessionManager {
     val settings = createSettings(settingsName)
-    val historyManager = buildLoginHistoryFactory(settings)
+    val historyManager = buildSessionHistoryFactory(settings)
     val customSessionManager = createUserSessionManager(webSocketUrl, createClient, onReceiveFrame)
     customSessionManager.restoreFromStorage(settings)
     return CustomUserSessionManager(customSessionManager, historyManager)

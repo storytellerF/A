@@ -1,17 +1,31 @@
-package com.storyteller_f.a.app.compose_app.components
+package com.storyteller_f.a.app.core.compontents
 
 import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
+import androidx.compose.material3.BasicAlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.runtime.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
-import com.storyteller_f.a.app.core.compontents.ExceptionView
 import io.github.aakira.napier.Napier
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
@@ -119,8 +133,7 @@ class CustomGlobalDialogController(
     override val state: MutableState<PersistentList<GlobalDialogState>> = mutableStateOf(
         persistentListOf()
     ),
-) :
-    GlobalDialogController {
+) : GlobalDialogController {
 
     @OptIn(ExperimentalUuidApi::class)
     override suspend fun <T> useResult(
@@ -151,7 +164,9 @@ class CustomGlobalDialogController(
         }
     }
 
-    override fun emitProgress(block: (GlobalDialogState.Loading) -> GlobalDialogState.Loading) = Unit
+    override fun emitProgress(block: (GlobalDialogState.Loading) -> GlobalDialogState.Loading) =
+        Unit
+
     override suspend fun emitEvent(any: Any) {
         events.emit(any)
     }
@@ -258,4 +273,8 @@ private fun LoadingGlobalDialogContent(
             }
         }
     }
+}
+
+val LocalGlobalDialog = compositionLocalOf {
+    GlobalDialogController.EMPTY
 }

@@ -82,9 +82,6 @@ import com.storyteller_f.a.app.compose_app.common.hasRouteFlow
 import com.storyteller_f.a.app.compose_app.components.BaseSheet
 import com.storyteller_f.a.app.compose_app.components.ButtonNav
 import com.storyteller_f.a.app.compose_app.components.CommunityIcon
-import com.storyteller_f.a.app.compose_app.components.CustomAlertDialog
-import com.storyteller_f.a.app.compose_app.components.CustomAlertDialogController
-import com.storyteller_f.a.app.compose_app.components.DialogContainer
 import com.storyteller_f.a.app.compose_app.components.SheetContainer
 import com.storyteller_f.a.app.compose_app.components.TopicList
 import com.storyteller_f.a.app.compose_app.exit_community
@@ -101,6 +98,9 @@ import com.storyteller_f.a.app.compose_app.rooms
 import com.storyteller_f.a.app.compose_app.topics
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.compose_app.ui.theme.AppTheme
+import com.storyteller_f.a.app.core.compontents.CustomAlertDialog
+import com.storyteller_f.a.app.core.compontents.CustomAlertDialogController
+import com.storyteller_f.a.app.core.compontents.DialogContainer
 import com.storyteller_f.a.client.core.exitCommunity
 import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.shared.model.CommunityInfo

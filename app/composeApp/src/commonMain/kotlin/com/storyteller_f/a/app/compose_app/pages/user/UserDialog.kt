@@ -24,8 +24,8 @@ import androidx.compose.material.icons.filled.SwitchAccount
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -45,27 +45,28 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.kdroid.composenotification.builder.getNotificationProvider
+import com.storyteller_f.a.api.core.SignInBody
 import com.storyteller_f.a.app.compose_app.CustomUserSessionManager
 import com.storyteller_f.a.app.compose_app.LocalAccountSwitcher
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
-import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.common.UserScreen
 import com.storyteller_f.a.app.compose_app.common.hasRouteFlow
 import com.storyteller_f.a.app.compose_app.components.ButtonNav
-import com.storyteller_f.a.app.compose_app.components.CustomAlertDialog
-import com.storyteller_f.a.app.compose_app.components.CustomAlertDialogController
-import com.storyteller_f.a.app.compose_app.components.DialogContainer
-import com.storyteller_f.a.app.compose_app.components.GlobalDialogController
 import com.storyteller_f.a.app.compose_app.settings
 import com.storyteller_f.a.app.compose_app.sign_out
 import com.storyteller_f.a.app.compose_app.sign_out_prompt
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.compose_app.utils.createConnectivity
 import com.storyteller_f.a.app.compose_app.utils.unregisterPushService
+import com.storyteller_f.a.app.core.compontents.CustomAlertDialog
+import com.storyteller_f.a.app.core.compontents.CustomAlertDialogController
 import com.storyteller_f.a.app.core.compontents.CustomIcon
+import com.storyteller_f.a.app.core.compontents.DialogContainer
+import com.storyteller_f.a.app.core.compontents.GlobalDialogController
 import com.storyteller_f.a.app.core.compontents.IconRes
+import com.storyteller_f.a.app.core.compontents.LocalGlobalDialog
 import com.storyteller_f.a.app.core.compontents.SignInButton
 import com.storyteller_f.a.app.core.compontents.UserIcon
 import com.storyteller_f.a.client.core.ClientSessionState
@@ -77,7 +78,6 @@ import com.storyteller_f.a.client.core.getUserInfo
 import com.storyteller_f.a.client.core.getUserInfoByAid
 import com.storyteller_f.a.client.core.signIn
 import com.storyteller_f.a.client.core.signOut
-import com.storyteller_f.shared.SignInPack
 import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.UserOverview
@@ -227,7 +227,7 @@ fun SelfUserDetailCard(
             }
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton({
+            FilledIconButton({
                 dismiss()
                 onClickCreate()
             }) {
@@ -418,7 +418,7 @@ fun refreshMyInfo(my: UserInfo?, sessionManager: UserSessionManager) {
                     val address = value.userPass.address().getOrThrow()
                     val signature = value.userPass.signature(finalData(data)).getOrThrow()
                     val userInfo =
-                        sessionManager.signIn(SignInPack(address, signature)).getOrThrow()
+                        sessionManager.signIn(SignInBody(address, signature)).getOrThrow()
                     sessionModel.updateUser(userInfo)
                     sessionModel.updateSignature(data, signature)
                 }

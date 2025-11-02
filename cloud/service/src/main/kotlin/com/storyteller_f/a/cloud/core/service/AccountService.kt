@@ -1,13 +1,13 @@
 package com.storyteller_f.a.cloud.core.service
 
 import com.perraco.utils.SnowflakeFactory
+import com.storyteller_f.a.api.core.SignInBody
+import com.storyteller_f.a.api.core.SignUpBody
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.types.PanelAccount
 import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.a.backend.core.types.toUserInfo
-import com.storyteller_f.shared.SignInPack
-import com.storyteller_f.shared.SignUpPack
 import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.AlgoType
@@ -24,25 +24,25 @@ import com.storyteller_f.shared.utils.now
 
 suspend fun Backend.signUp(
     data: String,
-    pack: SignUpPack
+    pack: SignUpBody
 ): Result<UserInfo> {
     val f = finalData(data)
     return getAlgo().run {
-        verify(pack.pk, pack.sig, f).errorIfFalse {
+        verify(pack.publicKey, pack.signature, f).errorIfFalse {
             CustomBadRequestException("Verify failed")
         }.mapResult {
-            database.user.isUserNotExistsByPublicKey(pack.pk).errorIfFalse {
+            database.user.isUserNotExistsByPublicKey(pack.publicKey).errorIfFalse {
                 CustomBadRequestException("User exists")
             }
         }.mapResult {
-            calcAddress(pack.pk)
+            calcAddress(pack.publicKey)
         }.mapResult { ad ->
             val newId = SnowflakeFactory.nextId()
             val notificationId = SnowflakeFactory.nextId()
             val name = nameService.parse(newId)
             val user = User(
                 null,
-                pack.pk,
+                pack.publicKey,
                 ad,
                 null,
                 name,
@@ -62,14 +62,14 @@ suspend fun Backend.signUp(
 
 suspend fun Backend.signIn(
     data: String,
-    pack: SignInPack
+    pack: SignInBody
 ): Result<UserInfo> {
     val f = finalData(data)
-    return database.user.getRawUserAndPublicKeyByAddress(pack.ad)
+    return database.user.getRawUserAndPublicKeyByAddress(pack.address)
         .filterNotNull {
             CustomBadRequestException("user not found")
         }.mapResult { (rawUser, publicKey) ->
-            getAlgo().verify(publicKey, pack.sig, f).mapResult { isVerified ->
+            getAlgo().verify(publicKey, pack.signature, f).mapResult { isVerified ->
                 if (isVerified) {
                     Result.success(rawUser)
                 } else {
@@ -85,13 +85,13 @@ suspend fun Backend.signIn(
         }
 }
 
-suspend fun Backend.adminSignIn(data: String, pack: SignInPack): Result<PanelAccountInfo> {
+suspend fun Backend.adminSignIn(data: String, pack: SignInBody): Result<PanelAccountInfo> {
     val f = finalData(data)
-    return database.panelAccount.getRawUserAndPublicKeyByAddress(pack.ad)
+    return database.panelAccount.getRawUserAndPublicKeyByAddress(pack.address)
         .filterNotNull {
             CustomBadRequestException("user not found")
         }.mapResult { (rawPanelAccount, publicKey) ->
-            getAlgo().verify(publicKey, pack.sig, f).mapResult { isVerified ->
+            getAlgo().verify(publicKey, pack.signature, f).mapResult { isVerified ->
                 if (isVerified) {
                     Result.success(rawPanelAccount)
                 } else {
@@ -106,18 +106,18 @@ suspend fun Backend.adminSignIn(data: String, pack: SignInPack): Result<PanelAcc
 
 suspend fun Backend.adminSignUp(
     data: String,
-    pack: SignUpPack
+    pack: SignUpBody
 ): Result<PanelAccountInfo> {
     val f = finalData(data)
     return getAlgo().run {
-        verify(pack.pk, pack.sig, f).errorIfFalse {
+        verify(pack.publicKey, pack.signature, f).errorIfFalse {
             CustomBadRequestException("Verify failed")
         }.mapResult {
-            database.panelAccount.isUserNotExistsByPublicKey(pack.pk).errorIfFalse {
+            database.panelAccount.isUserNotExistsByPublicKey(pack.publicKey).errorIfFalse {
                 CustomBadRequestException("User exists")
             }
         }.mapResult {
-            calcAddress(pack.pk)
+            calcAddress(pack.publicKey)
         }.mapResult { ad ->
             val newId = SnowflakeFactory.nextId()
             val name = nameService.parse(newId)
@@ -126,7 +126,7 @@ suspend fun Backend.adminSignUp(
                 name,
                 PassType.RAW,
                 AlgoType.P256,
-                pack.pk,
+                pack.publicKey,
                 ad,
             )
             database.panelAccount.addPanelAccount(user).map {

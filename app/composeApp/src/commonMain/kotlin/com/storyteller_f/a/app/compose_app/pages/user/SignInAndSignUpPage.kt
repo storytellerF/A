@@ -43,7 +43,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.storyteller_f.a.app.compose_app.CustomUserSessionManager
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
-import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.auto_generate
@@ -51,7 +50,6 @@ import com.storyteller_f.a.app.compose_app.common.AppNavFactory
 import com.storyteller_f.a.app.compose_app.common.SessionHistoryViewModel
 import com.storyteller_f.a.app.compose_app.common.getLoginHistoryViewModel
 import com.storyteller_f.a.app.compose_app.components.BaseSheet
-import com.storyteller_f.a.app.compose_app.components.GlobalDialogController
 import com.storyteller_f.a.app.compose_app.go_to_sign_in
 import com.storyteller_f.a.app.compose_app.go_to_sign_up
 import com.storyteller_f.a.app.compose_app.private_key
@@ -61,10 +59,13 @@ import com.storyteller_f.a.app.compose_app.start_sign_in
 import com.storyteller_f.a.app.compose_app.start_sign_up
 import com.storyteller_f.a.app.compose_app.utils.appPlatform
 import com.storyteller_f.a.app.core.compontents.CenterBox
+import com.storyteller_f.a.app.core.compontents.GlobalDialogController
+import com.storyteller_f.a.app.core.compontents.LocalGlobalDialog
 import com.storyteller_f.a.app.core.compontents.PrivateKeyInput
 import com.storyteller_f.a.app.core.compontents.StateView
 import com.storyteller_f.a.client.core.getUserInfo
 import com.storyteller_f.shared.getAlgo
+import com.storyteller_f.shared.replaceCrlf
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.openFilePicker
 import io.github.vinceglb.filekit.readBytes
@@ -356,9 +357,7 @@ fun InputPrivateKeyPage(isSignUp: Boolean) {
                 if (isSignUp) {
                     Button({
                         scope.launch {
-                            privateKey = getAlgo().run {
-                                generateECDSAPemPrivateKey().getOrThrow()
-                            }
+                            privateKey = getAlgo().generateECDSAPemPrivateKey().getOrThrow()
                         }
                     }, modifier = Modifier.testTag("auto_generate")) {
                         Text(stringResource(Res.string.auto_generate))
@@ -377,7 +376,7 @@ private suspend fun startSignFromFile(
 ) {
     val f = FileKit.openFilePicker()
     if (f != null) {
-        val privateKey = String(f.readBytes()).replace("\r\n", "\n")
+        val privateKey = String(f.readBytes()).replaceCrlf()
         globalDialogController.startSign(
             appNav,
             sessionManager,

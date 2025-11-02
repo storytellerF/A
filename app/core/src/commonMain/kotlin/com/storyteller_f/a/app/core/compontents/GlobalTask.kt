@@ -1,5 +1,6 @@
-package com.storyteller_f.a.app.compose_app.components
+package com.storyteller_f.a.app.core.compontents
 
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import com.storyteller_f.a.client.core.LoadingState
@@ -90,4 +91,8 @@ class CustomGlobalTask(val scope: CoroutineScope, val events: MutableSharedFlow<
 suspend inline fun <T> MutableStateFlow<LoadingState?>.use(block: suspend () -> Result<T>): Result<T> {
     value = LoadingState.Loading
     return block()
+}
+
+val LocalGlobalTask = compositionLocalOf {
+    GlobalTask.EMPTY
 }
