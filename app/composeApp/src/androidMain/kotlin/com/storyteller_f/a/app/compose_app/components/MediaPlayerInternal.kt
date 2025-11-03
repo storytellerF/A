@@ -42,10 +42,10 @@ import coil3.compose.AsyncImage
 import com.storyteller_f.a.app.compose_app.FileViewInfo
 import com.storyteller_f.a.app.compose_app.LocalMediaPlaySession
 import com.storyteller_f.a.app.compose_app.MediaProvider
-import com.storyteller_f.a.app.core.compontents.GlobalDialogController
-import com.storyteller_f.a.app.core.compontents.LocalGlobalDialog
-import com.storyteller_f.a.app.core.compontents.LocalToaster
-import com.storyteller_f.a.app.core.compontents.Toast
+import com.storyteller_f.a.app.core.components.GlobalDialogController
+import com.storyteller_f.a.app.core.components.LocalGlobalDialog
+import com.storyteller_f.a.app.core.components.LocalToaster
+import com.storyteller_f.a.app.core.components.Toast
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.utils.UNIT_RESULT
 import io.github.aakira.napier.Napier

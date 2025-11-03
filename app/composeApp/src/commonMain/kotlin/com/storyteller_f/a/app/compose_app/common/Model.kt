@@ -20,7 +20,7 @@ import com.storyteller_f.a.app.core.common.RegularPagingSource
 import com.storyteller_f.a.app.core.common.SectionLoadParams
 import com.storyteller_f.a.app.core.common.SectionPagingSource
 import com.storyteller_f.a.app.core.common.SimpleViewModel
-import com.storyteller_f.a.app.core.compontents.DialogSaveState
+import com.storyteller_f.a.app.core.components.DialogSaveState
 import com.storyteller_f.a.app.core.utils.SavedSession
 import com.storyteller_f.a.app.core.utils.loadFontFromLocal
 import com.storyteller_f.a.client.core.ClientSessionState

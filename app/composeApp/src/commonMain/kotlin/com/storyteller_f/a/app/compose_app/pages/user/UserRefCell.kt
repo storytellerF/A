@@ -15,7 +15,7 @@ import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.common.UserViewModel
 import com.storyteller_f.a.app.compose_app.common.createUserViewModel
 import com.storyteller_f.a.app.compose_app.components.UnboundedUserCell
-import com.storyteller_f.a.app.core.compontents.RefCellStateView
+import com.storyteller_f.a.app.core.components.RefCellStateView
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.PrimaryKey
 

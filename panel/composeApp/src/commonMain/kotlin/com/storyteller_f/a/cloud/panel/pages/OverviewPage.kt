@@ -18,7 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.storyteller_f.a.app.core.compontents.StateView
+import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.cloud.panel.LocalPanelNav
 import com.storyteller_f.a.cloud.panel.common.OverviewViewModel
 import com.storyteller_f.a.cloud.panel.common.createPanelOverviewViewModel

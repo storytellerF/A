@@ -21,8 +21,8 @@ import com.storyteller_f.a.app.compose_app.common.OnAddReaction
 import com.storyteller_f.a.app.compose_app.common.OnRemoveReaction
 import com.storyteller_f.a.app.compose_app.components.BaseSheet
 import com.storyteller_f.a.app.compose_app.components.SheetContainer
-import com.storyteller_f.a.app.core.compontents.LocalGlobalTask
-import com.storyteller_f.a.app.core.compontents.use
+import com.storyteller_f.a.app.core.components.LocalGlobalTask
+import com.storyteller_f.a.app.core.components.use
 import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.addReaction
 import com.storyteller_f.a.client.core.deleteReaction

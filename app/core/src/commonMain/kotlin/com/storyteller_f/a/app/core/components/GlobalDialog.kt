@@ -1,4 +1,4 @@
-package com.storyteller_f.a.app.core.compontents
+package com.storyteller_f.a.app.core.components
 
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Box

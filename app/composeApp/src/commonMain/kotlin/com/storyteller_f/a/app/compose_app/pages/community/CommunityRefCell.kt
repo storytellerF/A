@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.common.CommunityViewModel
 import com.storyteller_f.a.app.compose_app.common.createCommunityViewModel
-import com.storyteller_f.a.app.core.compontents.RefCellStateView
+import com.storyteller_f.a.app.core.components.RefCellStateView
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.type.PrimaryKey
 

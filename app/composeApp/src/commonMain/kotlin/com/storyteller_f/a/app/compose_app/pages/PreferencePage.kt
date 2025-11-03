@@ -15,8 +15,8 @@ import androidx.compose.runtime.setValue
 import com.storyteller_f.a.app.compose_app.pages.topic.TopicTranslateSheet
 import com.storyteller_f.a.app.compose_app.service.buildGPT
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
-import com.storyteller_f.a.app.core.compontents.CustomIcon
-import com.storyteller_f.a.app.core.compontents.IconRes
+import com.storyteller_f.a.app.core.components.CustomIcon
+import com.storyteller_f.a.app.core.components.IconRes
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.strabled.composepreferences.PreferenceScreen

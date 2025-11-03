@@ -1,4 +1,4 @@
-package com.storyteller_f.a.app.compontents
+package com.storyteller_f.a.app.components
 
 import androidx.compose.ui.graphics.painter.Painter
 

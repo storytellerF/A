@@ -14,9 +14,9 @@ import com.storyteller_f.a.app.compose_app.common.TitlesViewModel
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityIconWithDialog
 import com.storyteller_f.a.app.compose_app.pages.room.RoomIconWithDialog
 import com.storyteller_f.a.app.compose_app.pages.user.UserIconWithDialog
-import com.storyteller_f.a.app.core.compontents.StateView
-import com.storyteller_f.a.app.core.compontents.bottomAppending
-import com.storyteller_f.a.app.core.compontents.topPrepend
+import com.storyteller_f.a.app.core.components.StateView
+import com.storyteller_f.a.app.core.components.bottomAppending
+import com.storyteller_f.a.app.core.components.topPrepend
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.type.ObjectType

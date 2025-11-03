@@ -58,11 +58,11 @@ import com.storyteller_f.a.app.compose_app.sign_up
 import com.storyteller_f.a.app.compose_app.start_sign_in
 import com.storyteller_f.a.app.compose_app.start_sign_up
 import com.storyteller_f.a.app.compose_app.utils.appPlatform
-import com.storyteller_f.a.app.core.compontents.CenterBox
-import com.storyteller_f.a.app.core.compontents.GlobalDialogController
-import com.storyteller_f.a.app.core.compontents.LocalGlobalDialog
-import com.storyteller_f.a.app.core.compontents.PrivateKeyInput
-import com.storyteller_f.a.app.core.compontents.StateView
+import com.storyteller_f.a.app.core.components.CenterBox
+import com.storyteller_f.a.app.core.components.GlobalDialogController
+import com.storyteller_f.a.app.core.components.LocalGlobalDialog
+import com.storyteller_f.a.app.core.components.PrivateKeyInput
+import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.client.core.getUserInfo
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.replaceCrlf

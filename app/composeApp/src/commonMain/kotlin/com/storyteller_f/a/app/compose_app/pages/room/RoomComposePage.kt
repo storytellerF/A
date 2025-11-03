@@ -15,7 +15,7 @@ import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.common.OnRoomCreated
 import com.storyteller_f.a.app.compose_app.pages.title.CommonComposePage
-import com.storyteller_f.a.app.core.compontents.LocalGlobalDialog
+import com.storyteller_f.a.app.core.components.LocalGlobalDialog
 import com.storyteller_f.a.client.core.createRoom
 import kotlinx.coroutines.launch
 

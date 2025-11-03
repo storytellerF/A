@@ -20,7 +20,7 @@ import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.compose_app.utils.setText
-import com.storyteller_f.a.app.core.compontents.LocalToaster
+import com.storyteller_f.a.app.core.components.LocalToaster
 import dev.zt64.compose.pdf.RemotePdfState
 import dev.zt64.compose.pdf.component.PdfPage
 import kotlinx.coroutines.launch

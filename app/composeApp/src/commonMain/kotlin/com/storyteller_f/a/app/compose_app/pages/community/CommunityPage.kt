@@ -97,10 +97,10 @@ import com.storyteller_f.a.app.compose_app.rooms
 import com.storyteller_f.a.app.compose_app.topics
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.compose_app.ui.theme.AppTheme
-import com.storyteller_f.a.app.core.compontents.CustomAlertDialog
-import com.storyteller_f.a.app.core.compontents.CustomAlertDialogController
-import com.storyteller_f.a.app.core.compontents.DialogContainer
-import com.storyteller_f.a.app.core.compontents.LocalGlobalDialog
+import com.storyteller_f.a.app.core.components.CustomAlertDialog
+import com.storyteller_f.a.app.core.components.CustomAlertDialogController
+import com.storyteller_f.a.app.core.components.DialogContainer
+import com.storyteller_f.a.app.core.components.LocalGlobalDialog
 import com.storyteller_f.a.client.core.exitCommunity
 import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.shared.model.CommunityInfo

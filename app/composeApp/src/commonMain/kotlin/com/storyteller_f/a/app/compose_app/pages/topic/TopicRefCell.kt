@@ -17,7 +17,7 @@ import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.common.TopicViewModel
 import com.storyteller_f.a.app.compose_app.common.createTopicViewModel
 import com.storyteller_f.a.app.compose_app.pages.user.UserIconWithDialog
-import com.storyteller_f.a.app.core.compontents.RefCellStateView
+import com.storyteller_f.a.app.core.components.RefCellStateView
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.type.PrimaryKey

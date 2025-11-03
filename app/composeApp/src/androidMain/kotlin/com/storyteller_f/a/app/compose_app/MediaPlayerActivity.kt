@@ -5,7 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.Text
 import com.storyteller_f.a.app.compose_app.pages.file.FileViewPage
-import com.storyteller_f.a.app.core.compontents.CenterBox
+import com.storyteller_f.a.app.core.components.CenterBox
 import com.storyteller_f.shared.commonJson
 
 class MediaPlayerActivity : ComponentActivity() {
