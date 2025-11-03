@@ -38,7 +38,9 @@ jobs:
           cache: gradle
 
       - name: Build alpha app
-        run: ./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.link android
+        run: |
+          ./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.link android
+          ./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.link android-panel
 
       - uses: actions/upload-artifact@v4
         with:
@@ -67,7 +69,9 @@ jobs:
           cache: gradle
 
       - name: Build alpha deb
-        run: ./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.link desktop-deb
+        run: |
+          ./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.link desktop-deb
+          ./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.link desktop-deb-panel
 
       - uses: actions/upload-artifact@v4
         with:
@@ -98,6 +102,7 @@ jobs:
       - name: Build alpha msi
         run: |
           & "C:\\Program Files\\Git\\bin\\bash.exe" -c "./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.link desktop-msi"
+          & "C:\\Program Files\\Git\\bin\\bash.exe" -c "./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.link desktop-msi-panel"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -125,7 +130,9 @@ jobs:
           cache: gradle
 
       - name: Build alpha msi
-        run: ./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.link desktop-dmg
+        run: |
+          ./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.link desktop-dmg
+          ./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.link desktop-dmg-panel
 
       - uses: actions/upload-artifact@v4
         with:
