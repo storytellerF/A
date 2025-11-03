@@ -129,6 +129,7 @@ class TopicTest {
             val bytes =
                 ClassLoader.getSystemResourceAsStream("avatar1.png")!!.buffered().readBytes()
             val tmpFile = File("build/test/tmp/avatar1.png")
+            tmpFile.parentFile!!.mkdirs()
             tmpFile.writeBytes(bytes)
             val size = tmpFile.length()
             val info = upload(
@@ -147,7 +148,6 @@ class TopicTest {
             val fileInfo = getTopicSnapshot(topicInfo.id).getOrThrow()
             val url = fileInfo.url
             val file = File("build/test/tmp/${Uuid.random()}.pdf")
-            file.parentFile!!.mkdirs()
             val httpResponse = client.get(url) {
                 onDownload { bytesSentTotal, contentLength ->
                     println("Received $bytesSentTotal bytes from $contentLength")

@@ -39,7 +39,7 @@ fun Member.Companion.wrapRow(row: ResultRow): Member {
     }
 }
 
-suspend fun addJoinRaw(member: Member) {
+suspend fun addJoin(member: Member) {
     check(Members.insert {
         it[id] = member.id
         it[createdTime] = member.createdTime
@@ -48,6 +48,7 @@ suspend fun addJoinRaw(member: Member) {
         it[uid] = member.uid
         it[objectId] = member.objectId
         it[objectType] = member.objectType
+        it[status] = member.status
     }.insertedCount > 0) {
         "join failed"
     }

@@ -17,9 +17,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
-import com.storyteller_f.a.app.compose_app.LocalToaster
 import com.storyteller_f.a.app.compose_app.common.OnRoomUpdated
 import com.storyteller_f.a.app.compose_app.common.createRoomViewModel
 import com.storyteller_f.a.app.compose_app.components.SettingOptionResettableView
@@ -27,6 +25,8 @@ import com.storyteller_f.a.app.compose_app.components.SettingOptionView
 import com.storyteller_f.a.app.compose_app.pages.user.ObjectSettingDialog
 import com.storyteller_f.a.app.compose_app.pages.user.SettingOption
 import com.storyteller_f.a.app.core.compontents.GlobalDialogController
+import com.storyteller_f.a.app.core.compontents.LocalGlobalDialog
+import com.storyteller_f.a.app.core.compontents.LocalToaster
 import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.updateRoomInfo
 import com.storyteller_f.shared.model.RoomInfo

@@ -34,6 +34,7 @@ import com.storyteller_f.a.app.compose_app.components.TopicContentField
 import com.storyteller_f.a.app.compose_app.pages.community.getCommunityFont
 import com.storyteller_f.a.app.compose_app.pages.community.getFontFamily
 import com.storyteller_f.a.app.compose_app.ui.theme.AppTheme
+import com.storyteller_f.a.app.core.compontents.LocalGlobalDialog
 import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo

@@ -45,7 +45,6 @@ import org.jetbrains.exposed.v1.r2dbc.SchemaUtils
 import org.jetbrains.exposed.v1.r2dbc.explain
 import org.jetbrains.exposed.v1.r2dbc.transactions.suspendTransaction
 import java.io.PrintWriter
-import java.net.ConnectException
 import java.net.Socket
 import kotlin.concurrent.thread
 import kotlin.coroutines.resume
@@ -111,22 +110,12 @@ class ExposedDatabaseSession(val database: R2dbcDatabase, val port: Int?) {
         if (e is UnauthorizedException || e.isDup()) {
             return e
         }
-        val dialectName = database.dialect.name
-        val isConnectFailed = e is ConnectException
-        val exception = Exception(
-            if (isConnectFailed) {
-                "$dialectName connect failed"
-            } else {
-                "$dialectName query failed"
-            },
-            e
-        )
-        anchor.initCause(exception)
+        anchor.initCause(e)
         return anchor
     }
 
     suspend fun <T> dbQuery(block: suspend R2dbcTransaction.() -> T): Result<T> {
-        val anchor = Exception("dbQuery")
+        val anchor = Exception("dbQuery failed ${database.dialect.name}")
         return runCatching {
             withContext(Dispatchers.IO) {
                 suspendTransaction(db = database) {
@@ -143,7 +132,7 @@ class ExposedDatabaseSession(val database: R2dbcDatabase, val port: Int?) {
     suspend fun <R> dbSearch(
         block: DatabaseSearchConfig<R, Query>.() -> Unit,
     ): Result<R> {
-        val anchor = Exception()
+        val anchor = Exception("dbSearch failed ${database.dialect.name}")
         port?.let { explainQuery(it, block) }
         return runCatching {
             withContext(Dispatchers.IO) {
@@ -164,7 +153,7 @@ class ExposedDatabaseSession(val database: R2dbcDatabase, val port: Int?) {
         port: Int,
         query: DatabaseSearchConfig<R, Query>.() -> Unit
     ) {
-        val anchor = Exception()
+        val anchor = Exception("explainQuery failed ${database.dialect.name}")
         try {
             val explainResult = withContext(Dispatchers.IO) {
                 suspendTransaction(db = database) {

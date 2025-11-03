@@ -35,10 +35,7 @@ import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.api.core.NewFavorite
 import com.storyteller_f.a.api.core.NewSubscription
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
-import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
-import com.storyteller_f.a.app.compose_app.LocalGlobalTask
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
-import com.storyteller_f.a.app.compose_app.LocalToaster
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.common.OnAddFavorite
 import com.storyteller_f.a.app.compose_app.common.OnAddSubscription
@@ -62,6 +59,9 @@ import com.storyteller_f.a.app.core.compontents.DialogContainer
 import com.storyteller_f.a.app.core.compontents.ExceptionView
 import com.storyteller_f.a.app.core.compontents.GlobalDialogController
 import com.storyteller_f.a.app.core.compontents.IconRes
+import com.storyteller_f.a.app.core.compontents.LocalGlobalDialog
+import com.storyteller_f.a.app.core.compontents.LocalGlobalTask
+import com.storyteller_f.a.app.core.compontents.LocalToaster
 import com.storyteller_f.a.app.core.compontents.use
 import com.storyteller_f.a.app.core.utils.getCurrentLanguage
 import com.storyteller_f.a.client.core.LoadingState
