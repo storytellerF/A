@@ -28,7 +28,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
-import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.common.OnTopicChanged
 import com.storyteller_f.a.app.compose_app.pages.topic.EmojiPicker
@@ -37,6 +36,7 @@ import com.storyteller_f.a.app.compose_app.pages.user.UserIconWithDialog
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.core.compontents.CustomIcon
 import com.storyteller_f.a.app.core.compontents.IconRes
+import com.storyteller_f.a.app.core.compontents.LocalGlobalDialog
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import dev.tclement.fonticons.FontIcon

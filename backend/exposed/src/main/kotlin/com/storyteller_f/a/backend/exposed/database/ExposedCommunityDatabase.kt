@@ -21,7 +21,7 @@ import com.storyteller_f.a.backend.exposed.tables.Aids
 import com.storyteller_f.a.backend.exposed.tables.Communities
 import com.storyteller_f.a.backend.exposed.tables.Members
 import com.storyteller_f.a.backend.exposed.tables.UserTopicReads
-import com.storyteller_f.a.backend.exposed.tables.addJoinRaw
+import com.storyteller_f.a.backend.exposed.tables.addJoin
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.PosterSearch
 import com.storyteller_f.shared.obj.UpdateCommunityBody
@@ -149,7 +149,7 @@ class ExposedCommunityDatabase(
             }.insertedCount > 0) {
                 "insert aid failed"
             }
-            addJoinRaw(
+            addJoin(
                 Member(
                     memberId,
                     community.owner,

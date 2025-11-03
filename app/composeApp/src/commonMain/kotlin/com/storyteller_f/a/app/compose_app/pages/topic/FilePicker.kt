@@ -28,7 +28,6 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.compose.itemKey
 import coil3.compose.AsyncImage
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
-import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.common.OnMediaUploaded
 import com.storyteller_f.a.app.compose_app.common.createMediaListViewModel
@@ -40,6 +39,7 @@ import com.storyteller_f.a.app.core.compontents.GlobalDialogController
 import com.storyteller_f.a.app.core.compontents.GlobalDialogState
 import com.storyteller_f.a.app.core.compontents.GlobalDialogStateProgress
 import com.storyteller_f.a.app.core.compontents.IconRes
+import com.storyteller_f.a.app.core.compontents.LocalGlobalDialog
 import com.storyteller_f.a.app.core.compontents.StateView
 import com.storyteller_f.a.app.core.compontents.bottomAppending
 import com.storyteller_f.a.app.core.compontents.topPrepend

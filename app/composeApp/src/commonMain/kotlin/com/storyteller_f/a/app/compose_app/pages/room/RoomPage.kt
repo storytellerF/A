@@ -57,9 +57,7 @@ import androidx.navigation.toRoute
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
-import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
-import com.storyteller_f.a.app.compose_app.LocalToaster
 import com.storyteller_f.a.app.compose_app.LocalUiViewModel
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.all_members
@@ -97,6 +95,8 @@ import com.storyteller_f.a.app.core.compontents.CustomAlertDialog
 import com.storyteller_f.a.app.core.compontents.CustomAlertDialogController
 import com.storyteller_f.a.app.core.compontents.DialogContainer
 import com.storyteller_f.a.app.core.compontents.GlobalDialogController
+import com.storyteller_f.a.app.core.compontents.LocalGlobalDialog
+import com.storyteller_f.a.app.core.compontents.LocalToaster
 import com.storyteller_f.a.app.core.compontents.StateView
 import com.storyteller_f.a.app.core.compontents.Toast
 import com.storyteller_f.a.app.core.compontents.rememberAlertDialogController

@@ -40,11 +40,11 @@ import androidx.media3.common.VideoSize
 import androidx.media3.session.MediaController
 import coil3.compose.AsyncImage
 import com.storyteller_f.a.app.compose_app.FileViewInfo
-import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalMediaPlaySession
-import com.storyteller_f.a.app.compose_app.LocalToaster
 import com.storyteller_f.a.app.compose_app.MediaProvider
 import com.storyteller_f.a.app.core.compontents.GlobalDialogController
+import com.storyteller_f.a.app.core.compontents.LocalGlobalDialog
+import com.storyteller_f.a.app.core.compontents.LocalToaster
 import com.storyteller_f.a.app.core.compontents.Toast
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.utils.UNIT_RESULT

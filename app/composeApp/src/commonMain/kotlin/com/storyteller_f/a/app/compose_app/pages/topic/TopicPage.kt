@@ -44,7 +44,6 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.compose_app.CustomUserSessionManager
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
-import com.storyteller_f.a.app.compose_app.LocalGlobalTask
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.common.OnTopicCreated
 import com.storyteller_f.a.app.compose_app.common.TopicComposeData
@@ -66,6 +65,7 @@ import com.storyteller_f.a.app.compose_app.pages.user.UserIconWithDialog
 import com.storyteller_f.a.app.core.compontents.CustomAlertDialog
 import com.storyteller_f.a.app.core.compontents.CustomAlertDialogController
 import com.storyteller_f.a.app.core.compontents.GlobalTask
+import com.storyteller_f.a.app.core.compontents.LocalGlobalTask
 import com.storyteller_f.a.app.core.compontents.StateView
 import com.storyteller_f.a.app.core.compontents.bottomAppending
 import com.storyteller_f.a.app.core.compontents.pagingItems

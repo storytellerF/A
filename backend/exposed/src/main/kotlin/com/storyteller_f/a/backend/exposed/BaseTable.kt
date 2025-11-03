@@ -22,10 +22,10 @@ import com.storyteller_f.a.backend.exposed.database.ExposedTopicDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedUserDatabase
 import com.storyteller_f.shared.type.MemberStatus
 import com.storyteller_f.shared.type.ObjectType
-import io.github.aakira.napier.Napier
+import io.r2dbc.spi.R2dbcDataIntegrityViolationException
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.datetime.datetime
-import org.jetbrains.exposed.v1.exceptions.ExposedSQLException
+import org.jetbrains.exposed.v1.r2dbc.ExposedR2dbcException
 import java.sql.SQLIntegrityConstraintViolationException
 
 abstract class BaseTable : Table() {
@@ -37,10 +37,11 @@ abstract class BaseTable : Table() {
 
 fun Throwable.isDup(): Boolean {
     if (this is SQLIntegrityConstraintViolationException) return true
-    if (this is ExposedSQLException) {
+    if (this is R2dbcDataIntegrityViolationException) return true
+    if (this is ExposedR2dbcException) {
         val throwable = cause
-        Napier.e(throwable = this) {
-            "dup check exception $throwable"
+        if (throwable != null) {
+            return throwable.isDup()
         }
     }
     return false
@@ -86,7 +87,7 @@ class ExposedDatabase(val databaseSession: ExposedDatabaseSession) : CombinedDat
     }
 
     override fun isDup(throwable: Throwable): Boolean {
-        return throwable.isDup()
+        return throwable.cause?.isDup() ?: false
     }
 }
 

@@ -19,7 +19,7 @@ import com.storyteller_f.a.backend.exposed.tables.Quotas
 import com.storyteller_f.a.backend.exposed.tables.Topics
 import com.storyteller_f.a.backend.exposed.tables.UserTopicReads
 import com.storyteller_f.a.backend.exposed.tables.Users
-import com.storyteller_f.a.backend.exposed.tables.addJoinRaw
+import com.storyteller_f.a.backend.exposed.tables.addJoin
 import com.storyteller_f.a.backend.exposed.tables.mapUserInfo
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.QuotaType
@@ -64,7 +64,7 @@ class ExposedContainerDatabase(val databaseSession: ExposedDatabaseSession) :
         objectType: ObjectType,
         member: Member
     ): Result<Unit> = databaseSession.dbQuery {
-        addJoinRaw(member)
+        addJoin(member)
     }
 
     override suspend fun exitContainer(

@@ -18,9 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.github.panpf.zoomimage.CoilZoomAsyncImage
 import com.storyteller_f.a.app.compose_app.FileViewInfo
-import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
-import com.storyteller_f.a.app.compose_app.LocalToaster
 import com.storyteller_f.a.app.compose_app.components.AudioView
 import com.storyteller_f.a.app.compose_app.components.BaseSheet
 import com.storyteller_f.a.app.compose_app.components.ButtonNav
@@ -28,6 +26,8 @@ import com.storyteller_f.a.app.compose_app.components.PdfView
 import com.storyteller_f.a.app.compose_app.components.VideoView
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.core.compontents.CenterBox
+import com.storyteller_f.a.app.core.compontents.LocalGlobalDialog
+import com.storyteller_f.a.app.core.compontents.LocalToaster
 import com.storyteller_f.a.app.core.compontents.globalLoader
 import com.storyteller_f.a.client.core.copy
 import com.storyteller_f.shared.model.FileInfo

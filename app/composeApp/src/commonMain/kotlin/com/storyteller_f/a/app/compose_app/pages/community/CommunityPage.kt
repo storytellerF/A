@@ -64,7 +64,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalClientFileProvider
-import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.add
@@ -101,6 +100,7 @@ import com.storyteller_f.a.app.compose_app.ui.theme.AppTheme
 import com.storyteller_f.a.app.core.compontents.CustomAlertDialog
 import com.storyteller_f.a.app.core.compontents.CustomAlertDialogController
 import com.storyteller_f.a.app.core.compontents.DialogContainer
+import com.storyteller_f.a.app.core.compontents.LocalGlobalDialog
 import com.storyteller_f.a.client.core.exitCommunity
 import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.shared.model.CommunityInfo

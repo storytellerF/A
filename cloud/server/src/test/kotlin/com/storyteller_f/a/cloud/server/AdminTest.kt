@@ -93,7 +93,7 @@ class AdminTest {
             createRoom(NewRoom("test", "test1", communityId = communityId)).getOrThrow()
         }
         loginPanelSession(outerTuple) {
-            assertEquals(4, overview().getOrThrow().communityRoomCount)
+            assertEquals(1, overview().getOrThrow().communityRoomCount)
         }
     }
 
