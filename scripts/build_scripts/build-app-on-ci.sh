@@ -69,6 +69,33 @@ case "$TARGET" in
         mkdir -p "build/outputs/pkg/release"
         mv app/composeApp/build/compose/binaries/main-release/dmg/*.dmg "build/outputs/pkg/release/$FLAVOR.dmg"
         ;;
+    android-panel)
+        echo "Running AndroidPanel-specific command..."
+        # 在这里添加 AndroidPanel 相关命令
+        ./gradlew panel:composeApp:assembleRelease --no-daemon
+        mkdir -p "build/outputs/apk/release"
+        for f in panel/composeApp/build/outputs/apk/release/*.apk; do
+            cp "$f" "build/outputs/apk/release/${FLAVOR}_$(basename "$f")"
+        done
+        ;;
+    desktop-msi-panel)
+        echo "Running DesktopMsiPanel-specific command..."
+        ./gradlew panel:composeApp:packageReleaseMsi --no-daemon
+        mkdir -p "build/outputs/pkg/release"
+        mv panel/composeApp/build/compose/binaries/main-release/msi/*.msi "build/outputs/pkg/release/$FLAVOR-panel.msi"
+        ;;
+    desktop-deb-panel)
+        echo "Running DesktopDebPanel-specific command..."
+        ./gradlew panel:composeApp:packageReleaseDeb --no-daemon
+        mkdir -p "build/outputs/pkg/release"
+        mv panel/composeApp/build/compose/binaries/main-release/deb/*.deb "build/outputs/pkg/release/$FLAVOR-panel.deb"
+        ;;
+    desktop-dmg-panel)
+        echo "Running DesktopDmgPanel-specific command..."
+        ./gradlew panel:composeApp:packageReleaseDmg --no-daemon
+        mkdir -p "build/outputs/pkg/release"
+        mv panel/composeApp/build/compose/binaries/main-release/dmg/*.dmg "build/outputs/pkg/release/$FLAVOR-panel.dmg"
+        ;;
     *)
         echo "Invalid target: $TARGET. Use 'android' or 'desktop-*'."
         ;;
