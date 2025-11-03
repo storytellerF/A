@@ -16,14 +16,14 @@ fun Query.bindPaginationQuery(
 ): Query {
     val cursor = primaryKeyFetch.cursor
     val order = when (cursor) {
-        is Cursor.NextCursor<PrimaryKey> -> {
+        is Cursor.DescCursor<PrimaryKey> -> {
             andWhere {
                 table.id less cursor.value
             }
             SortOrder.DESC
         }
 
-        is Cursor.PreCursor<PrimaryKey> -> {
+        is Cursor.AscCursor<PrimaryKey> -> {
             andWhere {
                 table.id greater cursor.value
             }

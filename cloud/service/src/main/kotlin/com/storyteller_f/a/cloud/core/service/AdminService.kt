@@ -1,7 +1,7 @@
 package com.storyteller_f.a.cloud.core.service
 
 import com.perraco.utils.SnowflakeFactory
-import com.storyteller_f.a.api.core.NewUser
+import com.storyteller_f.a.api.NewUser
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.types.User

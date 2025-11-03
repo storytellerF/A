@@ -654,6 +654,19 @@ class ExposedTopicDatabase(
         count()
     }
 
+    override suspend fun getAllTopics(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<Topic>> {
+        return databaseSession.dbSearch {
+            search {
+                Topics.selectAll().bindPaginationQuery(Topics, primaryKeyFetch)
+            }
+            map {
+                Topic.wrapRow(it)
+            }
+        }.map {
+            PaginationResult(it, 0)
+        }
+    }
+
     suspend fun getHasFavorite(
         idList: ObjectListFetch.IdListFetch,
         uid: PrimaryKey

@@ -15,6 +15,7 @@ import com.storyteller_f.a.backend.exposed.tables.Quotas
 import com.storyteller_f.a.backend.exposed.tables.ReactionRecords
 import com.storyteller_f.a.backend.exposed.tables.Reactions
 import com.storyteller_f.a.backend.exposed.tables.Rooms
+import com.storyteller_f.a.backend.exposed.tables.SubscriptionSentLogs
 import com.storyteller_f.a.backend.exposed.tables.TaskRecords
 import com.storyteller_f.a.backend.exposed.tables.Titles
 import com.storyteller_f.a.backend.exposed.tables.Topics
@@ -239,6 +240,7 @@ object ExposedDatabaseFactory {
         UserTopicReads,
         UserFavorites,
         UserSubscriptions,
+        SubscriptionSentLogs,
         TaskRecords,
         Quotas,
         UploadRecords,

@@ -1,7 +1,7 @@
 package com.storyteller_f.a.cloud.core.service
 
 import com.perraco.utils.SnowflakeFactory
-import com.storyteller_f.a.api.core.NewSubscription
+import com.storyteller_f.a.api.NewSubscription
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.PaginationResult

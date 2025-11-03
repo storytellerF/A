@@ -14,8 +14,8 @@ sealed interface ObjectListFetch {
 }
 
 sealed interface Cursor<T> {
-    data class PreCursor<T>(val value: T) : Cursor<T>
-    data class NextCursor<T>(val value: T) : Cursor<T>
+    data class AscCursor<T>(val value: T) : Cursor<T>
+    data class DescCursor<T>(val value: T) : Cursor<T>
 }
 
 interface Fetch {

@@ -1,10 +1,10 @@
 package com.storyteller_f.a.client.core
 
-import com.storyteller_f.a.api.core.AdminApi
-import com.storyteller_f.a.api.core.NewUser
-import com.storyteller_f.a.api.core.PaginationQuery
-import com.storyteller_f.a.api.core.SignInBody
-import com.storyteller_f.a.api.core.SignUpBody
+import com.storyteller_f.a.api.AdminApi
+import com.storyteller_f.a.api.NewUser
+import com.storyteller_f.a.api.PaginationQuery
+import com.storyteller_f.a.api.SignInBody
+import com.storyteller_f.a.api.SignUpBody
 import com.storyteller_f.route4k.ktor.client.invoke
 import io.ktor.http.ContentType
 import io.ktor.http.contentType

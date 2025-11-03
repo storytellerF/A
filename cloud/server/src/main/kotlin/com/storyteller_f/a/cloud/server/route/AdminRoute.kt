@@ -1,6 +1,6 @@
 package com.storyteller_f.a.cloud.server.route
 
-import com.storyteller_f.a.api.core.AdminApi
+import com.storyteller_f.a.api.AdminApi
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.cloud.core.service.addUser
 import com.storyteller_f.a.cloud.core.service.adminSignIn

@@ -1,8 +1,8 @@
 package com.storyteller_f.a.cloud.server
 
-import com.storyteller_f.a.api.core.NewFavorite
-import com.storyteller_f.a.api.core.NewSubscription
-import com.storyteller_f.a.api.core.PaginationQuery
+import com.storyteller_f.a.api.NewFavorite
+import com.storyteller_f.a.api.NewSubscription
+import com.storyteller_f.a.api.PaginationQuery
 import com.storyteller_f.a.client.core.UploadData
 import com.storyteller_f.a.client.core.addChildAccount
 import com.storyteller_f.a.client.core.addFavorite

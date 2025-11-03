@@ -78,7 +78,7 @@ class LuceneCommunitySearchService(
         val combinedQuery = buildQuery(primaryKeyFetch, communityDocumentSearch)
         val reverse = when {
             primaryKeyFetch == null || primaryKeyFetch.cursor == null -> true
-            primaryKeyFetch.cursor is Cursor.NextCursor<PrimaryKey> -> true
+            primaryKeyFetch.cursor is Cursor.DescCursor<PrimaryKey> -> true
             else -> false
         }
         val sortById = Sort(SortField("id2", SortField.Type.LONG, reverse))

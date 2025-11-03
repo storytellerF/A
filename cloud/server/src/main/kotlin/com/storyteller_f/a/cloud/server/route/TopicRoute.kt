@@ -1,6 +1,6 @@
 package com.storyteller_f.a.cloud.server.route
 
-import com.storyteller_f.a.api.core.CustomApi
+import com.storyteller_f.a.api.CustomApi
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.cloud.core.service.addReaction

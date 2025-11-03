@@ -7,9 +7,9 @@ import com.storyteller_f.a.backend.core.types.ChildAccount
 import com.storyteller_f.a.backend.core.types.RawUser
 import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.a.backend.exposed.BaseTable
+import com.storyteller_f.a.backend.exposed.algoType
 import com.storyteller_f.a.backend.exposed.customPrimaryKey
-import com.storyteller_f.shared.model.AlgoType
-import com.storyteller_f.shared.model.PassType
+import com.storyteller_f.a.backend.exposed.passType
 import org.jetbrains.exposed.v1.core.*
 import org.jetbrains.exposed.v1.r2dbc.Query
 import org.jetbrains.exposed.v1.r2dbc.selectAll
@@ -20,8 +20,8 @@ object Users : BaseTable() {
     val icon = customPrimaryKey("icon").nullable()
     val nickname = varchar("nickname", USER_NICKNAME).index()
     val acgAmount = long("acg_amount").default(0)
-    val passType = enumerationByName<PassType>("pass_type", 20).default(PassType.RAW)
-    val algoType = enumerationByName<AlgoType>("algo_type", 20).default(AlgoType.P256)
+    val passType = passType("pass_type")
+    val algoType = algoType("algo_type")
     val notificationId = customPrimaryKey("notification_id")
 }
 
@@ -56,7 +56,7 @@ object ChildAccounts : Table() {
     val hostId = customPrimaryKey("host_id")
     val privateKey = varchar("private_key", PUBLIC_KEY_LENGTH).uniqueIndex()
     val remark = text("remark").nullable()
-    override val primaryKey: PrimaryKey = PrimaryKey(uid)
+    override val primaryKey = PrimaryKey(uid)
 
     init {
         index("child-accounts-main", false, hostId, uid)

@@ -39,7 +39,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.storyteller_f.a.api.core.NewUser
+import com.storyteller_f.a.api.NewUser
 import com.storyteller_f.a.app.core.components.DialogContainer
 import com.storyteller_f.a.app.core.components.GlobalDialogController
 import com.storyteller_f.a.app.core.components.LocalGlobalDialog

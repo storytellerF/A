@@ -67,9 +67,9 @@ suspend fun buildMemberForNotificationRoom(
         user.id,
         user.notificationId,
         ObjectType.ROOM,
-        user.createdTime,
+        now(),
         MemberStatus.INVITED,
-        user.createdTime,
+        now(),
         null,
     ),
     Member(
@@ -77,9 +77,9 @@ suspend fun buildMemberForNotificationRoom(
         adminUid,
         user.notificationId,
         ObjectType.ROOM,
-        user.createdTime,
+        now(),
         MemberStatus.JOINED,
         null,
-        user.createdTime,
+        now(),
     )
 )

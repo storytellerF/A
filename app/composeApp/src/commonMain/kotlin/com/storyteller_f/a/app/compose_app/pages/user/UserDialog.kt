@@ -45,7 +45,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.kdroid.composenotification.builder.getNotificationProvider
-import com.storyteller_f.a.api.core.SignInBody
+import com.storyteller_f.a.api.SignInBody
 import com.storyteller_f.a.app.compose_app.CustomUserSessionManager
 import com.storyteller_f.a.app.compose_app.LocalAccountSwitcher
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory

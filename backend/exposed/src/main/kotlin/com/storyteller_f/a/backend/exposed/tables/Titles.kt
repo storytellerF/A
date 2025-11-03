@@ -4,13 +4,9 @@ import com.storyteller_f.a.backend.core.types.Title
 import com.storyteller_f.a.backend.exposed.BaseTable
 import com.storyteller_f.a.backend.exposed.customPrimaryKey
 import com.storyteller_f.a.backend.exposed.objectType
-import com.storyteller_f.shared.model.TitleStatus
-import com.storyteller_f.shared.model.TitleType
+import com.storyteller_f.a.backend.exposed.titleStatus
+import com.storyteller_f.a.backend.exposed.titleType
 import org.jetbrains.exposed.v1.core.*
-
-fun Table.titleType(name: String) = enumerationByName<TitleType>(name, 10)
-
-fun Table.titleStatus(name: String) = enumerationByName<TitleStatus>(name, 10)
 
 object Titles : BaseTable() {
     val creator = customPrimaryKey("creator").index()

@@ -1,8 +1,8 @@
 package com.storyteller_f.a.cloud.core.service
 
 import com.perraco.utils.SnowflakeFactory
-import com.storyteller_f.a.api.core.SignInBody
-import com.storyteller_f.a.api.core.SignUpBody
+import com.storyteller_f.a.api.SignInBody
+import com.storyteller_f.a.api.SignUpBody
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.types.PanelAccount

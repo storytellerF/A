@@ -1,5 +1,6 @@
 package com.storyteller_f.a.backend.exposed.tables
 
+import com.storyteller_f.a.backend.core.types.SubscriptionSentLog
 import com.storyteller_f.a.backend.core.types.UserSubscription
 import com.storyteller_f.a.backend.exposed.BaseTable
 import com.storyteller_f.a.backend.exposed.customPrimaryKey
@@ -23,5 +24,27 @@ fun UserSubscription.Companion.wrapRow(resultRow: ResultRow): UserSubscription {
         resultRow[UserSubscriptions.objectId],
         resultRow[UserSubscriptions.objectType],
         resultRow[UserSubscriptions.createdTime],
+    )
+}
+
+object SubscriptionSentLogs : BaseTable() {
+    val uid = customPrimaryKey("uid")
+    val objectId = customPrimaryKey("object_id")
+    val objectType = objectType("object_type")
+    val subscriptionId = customPrimaryKey("subscription_id")
+
+    init {
+        uniqueIndex("subscription-sent-main", objectId, subscriptionId)
+    }
+}
+
+fun SubscriptionSentLog.Companion.wrapRow(resultRow: ResultRow): SubscriptionSentLog {
+    return SubscriptionSentLog(
+        resultRow[SubscriptionSentLogs.id],
+        resultRow[SubscriptionSentLogs.uid],
+        resultRow[SubscriptionSentLogs.objectId],
+        resultRow[SubscriptionSentLogs.objectType],
+        resultRow[SubscriptionSentLogs.subscriptionId],
+        resultRow[SubscriptionSentLogs.createdTime],
     )
 }

@@ -1,4 +1,4 @@
-package com.storyteller_f.a.api.core
+package com.storyteller_f.a.api
 
 import com.storyteller_f.route4k.common.MutationMethodType
 import com.storyteller_f.route4k.common.mutationApi

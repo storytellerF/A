@@ -2,12 +2,12 @@ package com.storyteller_f.a.backend.exposed.tables
 
 import com.storyteller_f.a.backend.core.types.AssetTransaction
 import com.storyteller_f.a.backend.exposed.BaseTable
+import com.storyteller_f.a.backend.exposed.assetType
 import com.storyteller_f.a.backend.exposed.customPrimaryKey
-import com.storyteller_f.shared.model.AssetType
 import org.jetbrains.exposed.v1.core.ResultRow
 
 object AssetTransactions : BaseTable() {
-    val type = enumerationByName<AssetType>("type", 20)
+    val type = assetType("type")
     val before = long("before")
     val after = long("after")
     val uid = customPrimaryKey("uid")

@@ -1,9 +1,9 @@
 package com.storyteller_f.a.cloud.core.service
 
 import com.perraco.utils.SnowflakeFactory
-import com.storyteller_f.a.api.core.CommonPath
-import com.storyteller_f.a.api.core.CustomApi
-import com.storyteller_f.a.api.core.NewRoom
+import com.storyteller_f.a.api.CommonPath
+import com.storyteller_f.a.api.CustomApi
+import com.storyteller_f.a.api.NewRoom
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.COMMUNITY_NAME_LENGTH
 import com.storyteller_f.a.backend.core.CustomBadRequestException

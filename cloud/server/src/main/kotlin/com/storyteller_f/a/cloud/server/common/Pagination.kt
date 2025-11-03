@@ -1,6 +1,6 @@
 package com.storyteller_f.a.cloud.server.common
 
-import com.storyteller_f.a.api.core.PageableQuery
+import com.storyteller_f.a.api.PageableQuery
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.Cursor
 import com.storyteller_f.a.backend.core.Fetch
@@ -34,13 +34,13 @@ abstract class PrimaryKeyPagingGenerator<T>(val block: (T) -> PrimaryKey) :
                 !nextPageToken.isNullOrBlank() -> getPageToken(
                     PrimaryKey::class,
                     nextPageToken
-                )?.let { Cursor.NextCursor(it) }
+                )?.let { Cursor.DescCursor(it) }
 
                 !prePageToken.isNullOrBlank() -> getPageToken(
                     PrimaryKey::class,
                     prePageToken
                 )?.let {
-                    Cursor.PreCursor(
+                    Cursor.AscCursor(
                         it
                     )
                 }
@@ -134,13 +134,13 @@ class ReactionPaginationGenerator(val backend: Backend) :
     override fun parse(prePageToken: String?, nextPageToken: String?, size: Int): ReactionFetch {
         return ReactionFetch(
             when {
-                !nextPageToken.isNullOrBlank() -> Cursor.NextCursor(
+                !nextPageToken.isNullOrBlank() -> Cursor.DescCursor(
                     commonJson.decodeFromString<ReactionCursorKey>(
                         nextPageToken
                     )
                 )
 
-                !prePageToken.isNullOrBlank() -> Cursor.PreCursor(
+                !prePageToken.isNullOrBlank() -> Cursor.AscCursor(
                     commonJson.decodeFromString<ReactionCursorKey>(
                         prePageToken
                     )

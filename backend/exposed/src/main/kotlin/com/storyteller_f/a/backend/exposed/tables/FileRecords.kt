@@ -3,7 +3,7 @@ package com.storyteller_f.a.backend.exposed.tables
 import com.storyteller_f.a.backend.core.types.FileRecord
 import com.storyteller_f.a.backend.exposed.BaseTable
 import com.storyteller_f.a.backend.exposed.customPrimaryKey
-import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.a.backend.exposed.objectType
 import org.jetbrains.exposed.v1.core.*
 
 object FileRecords : BaseTable() {
@@ -13,7 +13,7 @@ object FileRecords : BaseTable() {
     val width = integer("width")
     val height = integer("height")
     val owner = customPrimaryKey("owner")
-    val ownerType = enumerationByName<ObjectType>("owner_type", 10)
+    val ownerType = objectType("owner_type")
     val contentType = varchar("content_type", 50)
     val size = long("size")
 

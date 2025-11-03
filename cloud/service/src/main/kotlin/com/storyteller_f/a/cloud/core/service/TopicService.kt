@@ -1,8 +1,8 @@
 package com.storyteller_f.a.cloud.core.service
 
 import com.perraco.utils.SnowflakeFactory
-import com.storyteller_f.a.api.core.CustomApi
-import com.storyteller_f.a.api.core.NewTopic
+import com.storyteller_f.a.api.CustomApi
+import com.storyteller_f.a.api.NewTopic
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
@@ -18,6 +18,7 @@ import com.storyteller_f.a.backend.core.service.TopicDocumentSearch
 import com.storyteller_f.a.backend.core.service.UploadPack
 import com.storyteller_f.a.backend.core.types.RawTopic
 import com.storyteller_f.a.backend.core.types.Topic
+import com.storyteller_f.a.backend.core.types.UserSubscription
 import com.storyteller_f.a.backend.core.types.toTopicInfo
 import com.storyteller_f.a.cloud.pdf.PdfService
 import com.storyteller_f.a.cloud.pdf.SnapshotVerify
@@ -38,6 +39,7 @@ import com.storyteller_f.shared.utils.UNIT_RESULT
 import com.storyteller_f.shared.utils.checkContent
 import com.storyteller_f.shared.utils.extractMarkdownMediaLink
 import com.storyteller_f.shared.utils.groupByPair
+import com.storyteller_f.shared.utils.ifNotNull
 import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
@@ -82,6 +84,27 @@ suspend fun Backend.createPlainTopic(
             val parentTuple = ObjectTuple(newTopic.parentId, newTopic.parentType)
             val rootTuple = ObjectTuple(rootId, rootType)
             savePlainTopic(uid, content, level, parentTuple, rootTuple)
+        }
+    }.ifNotNull {
+        addSubscription(uid, it.tuple())
+    }
+}
+
+private suspend fun Backend.addSubscription(
+    uid: PrimaryKey,
+    objectTuple: ObjectTuple,
+) {
+    database.user.addSubscription(
+        UserSubscription(
+            SnowflakeFactory.nextId(),
+            uid,
+            objectTuple.objectId,
+            objectTuple.objectType,
+            now()
+        )
+    ).onFailure {
+        Napier.e(it) {
+            "add user subscription failed"
         }
     }
 }
@@ -141,7 +164,7 @@ private suspend fun Backend.savePlainTopic(
     }
 }
 
-suspend fun Backend.addTopicAtRoom(
+suspend fun Backend.createTopicAtRoom(
     newTopic: NewRoomTopic,
     uid: PrimaryKey,
 ): Result<TopicInfo?> {
@@ -160,6 +183,8 @@ suspend fun Backend.addTopicAtRoom(
                 createTopicAtRoom(uid, it, newTopic, isPrivate, newTopic.content)
             }
         }
+    }.ifNotNull {
+        addSubscription(uid, it.tuple())
     }
 }
 

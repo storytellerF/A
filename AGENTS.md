@@ -22,7 +22,7 @@
   - 通过 route4k invoke 调用（示例：AdminApi.Users.get.invoke(query)）。
 - client/core
   - Session 管理（SessionManager.kt）：UserSessionManager/PanelSessionManager 及工厂；基于私钥的一键登录流程。
-  - 请求封装（AppRequest.kt/PanelRequest.kt）：统一 serviceCatching，封装用户端与面板端请求，调用 api/core。
+  - 请求封装（AppRequest.kt/PanelRequest.kt）：统一 serviceCatching，封装用户端与面板端请求，调用 api。
 - client/model-storage
   - 抽象存储接口与集合标识（*Collection，*Storage，RemoteKeyStorage 等）。不含具体实现。
 - client/room
@@ -78,7 +78,7 @@
 **A) 新增后端 API 功能**
 
 1.  **定义 API 接口 (`api`)**
-    *   **位置**: `api/src/main/kotlin/com/storyteller_f/a/api/core/CustomApi.kt` (或 `AdminApi.kt`)
+    *   **位置**: `api/src/main/kotlin/com/storyteller_f/a/api/CustomApi.kt` (或 `AdminApi.kt`)
     *   **步骤**: 定义 `safeApi` 或 `mutationApi`，并为请求/响应创建数据类。
 
 2.  **定义和实现数据库操作 (`backend/core` & `backend/exposed`)**
@@ -104,8 +104,8 @@
 **B) 客户端接入已有 API**
 
 1.  **同步 API 端点定义 (`api`)**
-    *   **位置**: `api/src/main/kotlin/com/storyteller_f/a/api/core/CustomApi.kt`
-    *   **说明**: 此步骤通常由后端开发人员完成。客户端开发人员需确认 `api/core` 模块中已包含需要接入的 API 定义。若未定义，请遵循 **A) 新增后端 API 功能** 的第一步。
+    *   **位置**: `api/src/main/kotlin/com/storyteller_f/a/api/CustomApi.kt`
+    *   **说明**: 此步骤通常由后端开发人员完成。客户端开发人员需确认 `api` 模块中已包含需要接入的 API 定义。若未定义，请遵循 **A) 新增后端 API 功能** 的第一步。
 
 2.  **新增客户端请求 (`client/core`)**
     *   **用户端**: 在 `client/core/AppRequest.kt` 添加 `UserSessionManager` 的扩展函数。

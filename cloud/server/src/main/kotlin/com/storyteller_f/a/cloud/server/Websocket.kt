@@ -2,8 +2,8 @@ package com.storyteller_f.a.cloud.server
 
 import com.maxmind.geoip2.DatabaseReader
 import com.storyteller_f.a.backend.core.Backend
-import com.storyteller_f.a.cloud.core.service.addTopicAtRoom
 import com.storyteller_f.a.cloud.core.service.addUserLog
+import com.storyteller_f.a.cloud.core.service.createTopicAtRoom
 import com.storyteller_f.a.cloud.server.auth.usePrincipal
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.UserLogType
@@ -160,7 +160,7 @@ suspend fun DefaultWebSocketServerSession.processNewMessage(
             return
         }
     }
-    backend.addTopicAtRoom(newTopic, uid).onSuccess {
+    backend.createTopicAtRoom(newTopic, uid).onSuccess {
         if (it == null) {
             sendFrame(RoomFrame.Error("not found"))
         } else {

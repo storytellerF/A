@@ -82,3 +82,10 @@ suspend fun Result<Boolean>.errorIfFalse(error: () -> Exception): Result<Unit> {
         }
     }
 }
+
+suspend fun <T> Result<T?>.ifNotNull(block: suspend (T) -> Unit) =
+    onSuccess { value ->
+        if (value != null) {
+            block(value)
+        }
+    }

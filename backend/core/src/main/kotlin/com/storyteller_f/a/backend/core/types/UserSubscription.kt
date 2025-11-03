@@ -21,3 +21,14 @@ class UserSubscription(
 fun UserSubscription.toUserSubscriptionInfo(): UserSubscriptionInfo {
     return UserSubscriptionInfo(id, uid, objectId, objectType, createdTime)
 }
+
+class SubscriptionSentLog(
+    val id: PrimaryKey,
+    val uid: PrimaryKey,
+    val objectId: PrimaryKey,
+    val objectType: ObjectType,
+    val subscriptionId: PrimaryKey,
+    val createdTime: LocalDateTime
+) {
+    companion object
+}

@@ -20,6 +20,13 @@ import com.storyteller_f.a.backend.exposed.database.ExposedRoomDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedTitleDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedTopicDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedUserDatabase
+import com.storyteller_f.shared.model.AlgoType
+import com.storyteller_f.shared.model.AssetType
+import com.storyteller_f.shared.model.PassType
+import com.storyteller_f.shared.model.QuotaType
+import com.storyteller_f.shared.model.TaskRecordType
+import com.storyteller_f.shared.model.TitleStatus
+import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.type.MemberStatus
 import com.storyteller_f.shared.type.ObjectType
 import io.r2dbc.spi.R2dbcDataIntegrityViolationException
@@ -49,8 +56,18 @@ fun Throwable.isDup(): Boolean {
 
 fun Table.customPrimaryKey(name: String) = long(name)
 
-fun Table.objectType(name: String) = enumerationByName<ObjectType>(name, 10)
-fun Table.memberStatus(name: String) = enumerationByName<MemberStatus>(name, 10)
+fun Table.objectType(name: String) = enumerationByName<ObjectType>(name, 20)
+fun Table.memberStatus(name: String) = enumerationByName<MemberStatus>(name, 20)
+
+fun Table.algoType(name: String) = enumerationByName<AlgoType>(name, 20).default(AlgoType.P256)
+fun Table.passType(name: String) = enumerationByName<PassType>(name, 20).default(PassType.RAW)
+fun Table.titleType(name: String) = enumerationByName<TitleType>(name, 10)
+
+fun Table.titleStatus(name: String) = enumerationByName<TitleStatus>(name, 10)
+fun Table.assetType(name: String) = enumerationByName<AssetType>(name, 20)
+fun Table.quotaType(name: String) = enumerationByName<QuotaType>(name, 20)
+
+fun Table.taskRecordType(name: String) = enumerationByName<TaskRecordType>(name, 20)
 
 fun <T : Table> T.emoji() = varchar("emoji", 20)
 

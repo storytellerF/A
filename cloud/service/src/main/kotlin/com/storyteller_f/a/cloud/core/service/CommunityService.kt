@@ -1,8 +1,8 @@
 package com.storyteller_f.a.cloud.core.service
 
 import com.perraco.utils.SnowflakeFactory
-import com.storyteller_f.a.api.core.CustomApi
-import com.storyteller_f.a.api.core.NewCommunity
+import com.storyteller_f.a.api.CustomApi
+import com.storyteller_f.a.api.NewCommunity
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.COMMUNITY_NAME_LENGTH
 import com.storyteller_f.a.backend.core.CustomBadRequestException

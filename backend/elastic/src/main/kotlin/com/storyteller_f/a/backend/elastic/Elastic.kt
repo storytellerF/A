@@ -181,19 +181,19 @@ fun buildPrimaryKeyElasticSearchQuery(
     val queryList = buildList {
         when {
             primaryKeyFetch == null -> {}
-            primaryKeyFetch.cursor is Cursor.PreCursor<PrimaryKey> -> {
+            primaryKeyFetch.cursor is Cursor.AscCursor<PrimaryKey> -> {
                 add(RangeQuery.of { r ->
                     r.untyped {
-                        val cursor = primaryKeyFetch.cursor as Cursor.PreCursor<PrimaryKey>
+                        val cursor = primaryKeyFetch.cursor as Cursor.AscCursor<PrimaryKey>
                         it.field("id").gt(JsonData.of(cursor.value))
                     }
                 }._toQuery() to true)
             }
 
-            primaryKeyFetch.cursor is Cursor.NextCursor<PrimaryKey> -> {
+            primaryKeyFetch.cursor is Cursor.DescCursor<PrimaryKey> -> {
                 add(RangeQuery.of { r ->
                     r.untyped {
-                        val cursor = primaryKeyFetch.cursor as Cursor.NextCursor<PrimaryKey>
+                        val cursor = primaryKeyFetch.cursor as Cursor.DescCursor<PrimaryKey>
                         it.field("id").lt(JsonData.of(cursor.value))
                     }
                 }._toQuery() to true)

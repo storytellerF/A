@@ -40,29 +40,39 @@ fun main() {
     }
     val backend = buildBackendFromEnv(env)
     runBlocking {
-        val job = launch {
+        val jobs = listOf(launch {
             while (isActive) {
                 Napier.i(tag = "task") {
                     "execute agc task at ${now()}"
                 }
                 backend.doAcgTask()
             }
-        }
-        listOf(job, launch {
+        }, launch {
             while (isActive) {
                 Napier.i(tag = "task") {
                     "execute intro task at ${now()}"
                 }
                 backend.doIntroTask()
             }
+        }, launch {
+            while (isActive) {
+                Napier.i(tag = "task") {
+                    "execute subscription task at ${now()}"
+                }
+                backend.doSubscriptionTask()
+            }
         })
         // 注册 JVM 关闭钩子，捕获 SIGINT / SIGTERM
         Runtime.getRuntime().addShutdownHook(Thread {
             println("🔻 收到终止信号，准备退出...")
-            job.cancel()
+            jobs.forEach {
+                it.cancel()
+            }
             Thread.sleep(1000)
         })
-        job.join()
+        jobs.forEach {
+            it.join()
+        }
         Napier.i("worker done")
     }
 }

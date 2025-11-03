@@ -9,6 +9,7 @@ import com.storyteller_f.a.backend.core.types.AssetTransaction
 import com.storyteller_f.a.backend.core.types.ChildAccount
 import com.storyteller_f.a.backend.core.types.RawChildAccount
 import com.storyteller_f.a.backend.core.types.RawUser
+import com.storyteller_f.a.backend.core.types.SubscriptionSentLog
 import com.storyteller_f.a.backend.core.types.TaskRecord
 import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.a.backend.core.types.UserDevice
@@ -25,6 +26,7 @@ import com.storyteller_f.a.backend.exposed.query.bindPaginationQuery
 import com.storyteller_f.a.backend.exposed.tables.Aids
 import com.storyteller_f.a.backend.exposed.tables.AssetTransactions
 import com.storyteller_f.a.backend.exposed.tables.ChildAccounts
+import com.storyteller_f.a.backend.exposed.tables.SubscriptionSentLogs
 import com.storyteller_f.a.backend.exposed.tables.TaskRecords
 import com.storyteller_f.a.backend.exposed.tables.UserDevices
 import com.storyteller_f.a.backend.exposed.tables.UserFavorites
@@ -559,6 +561,51 @@ class ExposedUserDatabase(private val databaseSession: ExposedDatabaseSession) :
             val favoriteCount = getUserFavoriteCount()
             val childAccountCount = getChildAccountCount(uid)
             UserOverview(subscriptionCount, favoriteCount, 0, childAccountCount)
+        }
+    }
+
+    override suspend fun getSubscriptionsByObjectId(
+        objectId: PrimaryKey,
+        primaryKeyFetch: PrimaryKeyFetch
+    ): Result<List<UserSubscription>> {
+        return databaseSession.dbSearch {
+            search {
+                UserSubscriptions.selectAll().where {
+                    UserSubscriptions.objectId eq objectId
+                }.bindPaginationQuery(UserSubscriptions, primaryKeyFetch)
+            }
+            map {
+                UserSubscription.wrapRow(it)
+            }
+        }
+    }
+
+    override suspend fun insertSubscriptionSentLog(log: SubscriptionSentLog): Result<SubscriptionSentLog> {
+        return databaseSession.dbQuery {
+            check(SubscriptionSentLogs.insert {
+                it[id] = log.id
+                it[uid] = log.uid
+                it[objectId] = log.objectId
+                it[objectType] = log.objectType
+                it[createdTime] = log.createdTime
+                it[subscriptionId] = log.subscriptionId
+            }.insertedCount > 0) {
+                "Insert subscription sent log failed"
+            }
+            log
+        }
+    }
+
+    override suspend fun getLatestSubscriptionSentLog(objectId: PrimaryKey): Result<SubscriptionSentLog?> {
+        return databaseSession.dbSearch {
+            search {
+                SubscriptionSentLogs.selectAll().where {
+                    SubscriptionSentLogs.objectId eq objectId
+                }.orderBy(SubscriptionSentLogs.subscriptionId to SortOrder.DESC)
+            }
+            first {
+                SubscriptionSentLog.wrapRow(it)
+            }
         }
     }
 }

@@ -1,7 +1,7 @@
 package com.storyteller_f.a.client.core
 
-import com.storyteller_f.a.api.core.SignInBody
-import com.storyteller_f.a.api.core.SignUpBody
+import com.storyteller_f.a.api.SignInBody
+import com.storyteller_f.a.api.SignUpBody
 import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.PanelAccountInfo

@@ -7,7 +7,7 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import com.storyteller_f.a.api.core.PaginationQuery
+import com.storyteller_f.a.api.PaginationQuery
 import com.storyteller_f.a.app.core.common.CachedLoadingHandler
 import com.storyteller_f.a.app.core.common.CompatPagingSource
 import com.storyteller_f.a.app.core.common.CustomRemoteMediator

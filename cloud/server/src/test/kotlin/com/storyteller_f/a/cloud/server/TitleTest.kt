@@ -1,7 +1,7 @@
 package com.storyteller_f.a.cloud.server
 
-import com.storyteller_f.a.api.core.NewCommunity
-import com.storyteller_f.a.api.core.NewTitle
+import com.storyteller_f.a.api.NewCommunity
+import com.storyteller_f.a.api.NewTitle
 import com.storyteller_f.a.client.core.createCommunity
 import com.storyteller_f.a.client.core.createTitle
 import com.storyteller_f.a.client.core.userTitles
