@@ -10,7 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.storyteller_f.a.app.core.compontents.UserIcon
+import com.storyteller_f.a.app.core.components.UserIcon
 import com.storyteller_f.shared.model.UserInfo
 
 @Composable

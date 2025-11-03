@@ -25,10 +25,10 @@ import com.storyteller_f.a.app.compose_app.components.ButtonNav
 import com.storyteller_f.a.app.compose_app.components.PdfView
 import com.storyteller_f.a.app.compose_app.components.VideoView
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
-import com.storyteller_f.a.app.core.compontents.CenterBox
-import com.storyteller_f.a.app.core.compontents.LocalGlobalDialog
-import com.storyteller_f.a.app.core.compontents.LocalToaster
-import com.storyteller_f.a.app.core.compontents.globalLoader
+import com.storyteller_f.a.app.core.components.CenterBox
+import com.storyteller_f.a.app.core.components.LocalGlobalDialog
+import com.storyteller_f.a.app.core.components.LocalToaster
+import com.storyteller_f.a.app.core.components.globalLoader
 import com.storyteller_f.a.client.core.copy
 import com.storyteller_f.shared.model.FileInfo
 import kotlinx.coroutines.launch

@@ -71,8 +71,8 @@ import com.storyteller_f.a.app.compose_app.pages.room.RoomList
 import com.storyteller_f.a.app.compose_app.pages.room.RoomRefCell
 import com.storyteller_f.a.app.compose_app.pages.user.MemberList
 import com.storyteller_f.a.app.compose_app.pages.user.UserRefCell
-import com.storyteller_f.a.app.core.compontents.GlobalDialogController
-import com.storyteller_f.a.app.core.compontents.LocalGlobalDialog
+import com.storyteller_f.a.app.core.components.GlobalDialogController
+import com.storyteller_f.a.app.core.components.LocalGlobalDialog
 import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.createTitle
 import com.storyteller_f.shared.model.CommunityInfo

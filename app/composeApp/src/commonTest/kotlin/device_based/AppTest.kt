@@ -22,7 +22,7 @@ import com.storyteller_f.a.app.compose_app.App
 import com.storyteller_f.a.app.compose_app.LocalUiViewModel
 import com.storyteller_f.a.app.compose_app.UIViewModel
 import com.storyteller_f.a.app.compose_app.utils.initEnvironment
-import com.storyteller_f.a.app.core.compontents.CenterBox
+import com.storyteller_f.a.app.core.components.CenterBox
 import com.storyteller_f.a.client.core.RawUserPass
 import com.storyteller_f.a.client.core.getClient
 import com.storyteller_f.a.client.core.getUserInfo

@@ -24,9 +24,9 @@ import com.storyteller_f.a.app.compose_app.components.SettingOptionResettableVie
 import com.storyteller_f.a.app.compose_app.components.SettingOptionView
 import com.storyteller_f.a.app.compose_app.pages.user.ObjectSettingDialog
 import com.storyteller_f.a.app.compose_app.pages.user.SettingOption
-import com.storyteller_f.a.app.core.compontents.GlobalDialogController
-import com.storyteller_f.a.app.core.compontents.LocalGlobalDialog
-import com.storyteller_f.a.app.core.compontents.LocalToaster
+import com.storyteller_f.a.app.core.components.GlobalDialogController
+import com.storyteller_f.a.app.core.components.LocalGlobalDialog
+import com.storyteller_f.a.app.core.components.LocalToaster
 import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.updateRoomInfo
 import com.storyteller_f.shared.model.RoomInfo

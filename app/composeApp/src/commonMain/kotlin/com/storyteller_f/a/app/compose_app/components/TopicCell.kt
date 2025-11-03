@@ -34,9 +34,9 @@ import com.storyteller_f.a.app.compose_app.pages.topic.EmojiPicker
 import com.storyteller_f.a.app.compose_app.pages.topic.pinOrUnpinTopic
 import com.storyteller_f.a.app.compose_app.pages.user.UserIconWithDialog
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
-import com.storyteller_f.a.app.core.compontents.CustomIcon
-import com.storyteller_f.a.app.core.compontents.IconRes
-import com.storyteller_f.a.app.core.compontents.LocalGlobalDialog
+import com.storyteller_f.a.app.core.components.CustomIcon
+import com.storyteller_f.a.app.core.components.IconRes
+import com.storyteller_f.a.app.core.components.LocalGlobalDialog
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import dev.tclement.fonticons.FontIcon

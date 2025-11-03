@@ -39,8 +39,8 @@ import com.storyteller_f.a.app.compose_app.pages.community.MyCommunitiesPage
 import com.storyteller_f.a.app.compose_app.pages.room.MyRoomsPage
 import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
-import com.storyteller_f.a.app.core.compontents.CenterBox
-import com.storyteller_f.a.app.core.compontents.SignInButton
+import com.storyteller_f.a.app.core.components.CenterBox
+import com.storyteller_f.a.app.core.components.SignInButton
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 

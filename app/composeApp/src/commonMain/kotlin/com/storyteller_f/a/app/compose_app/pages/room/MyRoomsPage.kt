@@ -35,11 +35,11 @@ import com.storyteller_f.a.app.compose_app.common.createCommunityViewModel
 import com.storyteller_f.a.app.compose_app.common.createJoinedRoomsViewModel
 import com.storyteller_f.a.app.compose_app.components.RoomIcon
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityIconWithDialog
-import com.storyteller_f.a.app.core.compontents.StateView
-import com.storyteller_f.a.app.core.compontents.bottomAppending
-import com.storyteller_f.a.app.core.compontents.pagingItems
-import com.storyteller_f.a.app.core.compontents.rememberCommonDialogController
-import com.storyteller_f.a.app.core.compontents.topPrepend
+import com.storyteller_f.a.app.core.components.StateView
+import com.storyteller_f.a.app.core.components.bottomAppending
+import com.storyteller_f.a.app.core.components.pagingItems
+import com.storyteller_f.a.app.core.components.rememberCommonDialogController
+import com.storyteller_f.a.app.core.components.topPrepend
 import com.storyteller_f.shared.model.RoomInfo
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.ui.tooling.preview.PreviewParameter

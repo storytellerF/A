@@ -64,7 +64,7 @@ class LoginUserSessionTest : UsingContextTest() {
     }
 }
 
-fun loginSessionTest(block: suspend (String, String, String, SessionHistoryManager) -> Unit) {
+fun loginSessionTest(block: suspend (String, String, String, SessionHistoryManager) -> Unit) =
     runTest {
         loadCryptoLibIfNeed()
         val settings = createSettings("settings-test")
@@ -78,4 +78,3 @@ fun loginSessionTest(block: suspend (String, String, String, SessionHistoryManag
             block(privateKey, publicKey, ad, sessionFactory)
         }
     }
-}

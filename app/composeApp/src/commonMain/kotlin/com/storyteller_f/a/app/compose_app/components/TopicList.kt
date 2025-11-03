@@ -14,9 +14,9 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
 import com.storyteller_f.a.app.compose_app.common.TopicsViewModel
 import com.storyteller_f.a.app.core.common.PagingViewModel
-import com.storyteller_f.a.app.core.compontents.StateView
-import com.storyteller_f.a.app.core.compontents.bottomAppending
-import com.storyteller_f.a.app.core.compontents.topPrepend
+import com.storyteller_f.a.app.core.components.StateView
+import com.storyteller_f.a.app.core.components.bottomAppending
+import com.storyteller_f.a.app.core.components.topPrepend
 import com.storyteller_f.shared.model.TopicInfo
 
 @Composable
