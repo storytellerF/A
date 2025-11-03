@@ -12,6 +12,7 @@ if [[ "$(uname -s)" =~ MINGW|CYGWIN|MSYS ]]; then
 fi
 ./scripts/tool_scripts/modify-flavor.sh "$FLAVOR" dev
 ./gradlew cloud:cli:installDist
+source ./scripts/tool_scripts/set-log-path.sh
 cd cloud/cli
 cli_path=build/install/cli/bin/cli
 ../../scripts/tool_scripts/flush-database.sh $cli_path "../../$base"
