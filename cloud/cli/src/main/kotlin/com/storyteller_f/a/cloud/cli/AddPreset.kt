@@ -18,6 +18,7 @@ import com.storyteller_f.a.backend.core.types.Room
 import com.storyteller_f.a.backend.core.types.Title
 import com.storyteller_f.a.backend.core.types.Topic
 import com.storyteller_f.a.backend.core.types.User
+import com.storyteller_f.a.backend.core.types.UserSubscription
 import com.storyteller_f.a.backend.core.types.buildMemberForNotificationRoom
 import com.storyteller_f.a.backend.core.types.buildUserNotificationRoom
 import com.storyteller_f.a.cloud.core.service.getFileInfoList
@@ -486,7 +487,7 @@ class AddPreset : Subcommand("add", "add entry") {
                 rootId
             )
         }
-        database.admin.batchAddTopics(tuples, userMap, objectType)
+        database.admin.batchAddTopics(tuples, userMap, objectType).getOrThrow()
         topicSearchService.saveDocument(
             tuples.mapIndexed { index, topicTuple ->
                 val level = topicTuple.level
@@ -510,6 +511,7 @@ class AddPreset : Subcommand("add", "add entry") {
         tuples.forEach { topicTuple ->
             uploadTopicMedias(parentDir, userMap, topicTuple.id, topicTuple.topic)
         }
+        batchAddSubscriptions(tuples, userMap)
     }
 
     private suspend fun Backend.getUserData(
@@ -579,43 +581,44 @@ class AddPreset : Subcommand("add", "add entry") {
         parentDir: File,
         roomMap: Map<String, Room>,
         userMap: Map<String, User>,
-        publicRoomList: List<PresetTopic>,
+        topicList: List<PresetTopic>,
     ) {
-        val tuples = publicRoomList.mapIndexed { index, topic ->
-            val addTopic = topic to topic.content.encodeToByteArray()
+        val tuples = topicList.mapIndexed { index, topic ->
             val id = SnowflakeFactory.nextId()
-            val level = addTopic.first.level
-            val parent = addTopic.first.parent
-            val content = getTopicContent(addTopic.first, parentDir).encodeToByteArray()
+            val level = topic.level
+            val parent = topic.parent
+            val content = getTopicContent(topic, parentDir).encodeToByteArray()
             val rootId = roomMap[topic.room]!!.id
             val l = if (parent == null || parent == 0 || level == null || level == 0) {
                 0
             } else {
                 level
             }
-            InsertTopicTuple(addTopic.first, index, l, id, content, false, rootId)
+            InsertTopicTuple(topic, index, l, id, content, false, rootId)
         }
-        database.admin.batchAddTopics(tuples, userMap, ObjectType.ROOM)
+        database.admin.batchAddTopics(tuples, userMap, ObjectType.ROOM).getOrThrow()
         topicSearchService.saveDocument(
-            publicRoomList.mapIndexed { index, first ->
-                val level = first.level
+            tuples.mapIndexed { index, topicTuple ->
+                val topic = topicTuple.topic
+                val level = topic.level
                 TopicDocument(
-                    tuples[index].id,
-                    tuples[index].content.decodeToString(),
-                    roomMap[first.room]!!.id,
+                    topicTuple.id,
+                    topicTuple.content.decodeToString(),
+                    roomMap[topic.room]!!.id,
                     ObjectType.ROOM.name,
                     when (level) {
-                        null, 0 -> roomMap[first.room]!!.id
-                        else -> tuples[index - first.parent!!].id
+                        null, 0 -> roomMap[topic.room]!!.id
+                        else -> tuples[index - topic.parent!!].id
                     },
                     (if (level == 0) ObjectType.ROOM else ObjectType.TOPIC).name,
-                    userMap[first.author]!!.id
+                    userMap[topic.author]!!.id
                 )
             }
         ).getOrThrow()
-        publicRoomList.forEachIndexed { i, topic ->
-            uploadTopicMedias(parentDir, userMap, tuples[i].id, topic)
+        tuples.forEachIndexed { i, topicTuple ->
+            uploadTopicMedias(parentDir, userMap, topicTuple.id, topicTuple.topic)
         }
+        batchAddSubscriptions(tuples, userMap)
     }
 
     private suspend fun Backend.uploadTopicMedias(
@@ -638,17 +641,17 @@ class AddPreset : Subcommand("add", "add entry") {
     private suspend fun Backend.insertEncryptedTopicToRoom(
         parentDir: File,
         roomMap: Map<String, Room>,
-        privateRoomList: List<PresetTopic>,
+        topicList: List<PresetTopic>,
         userMap: Map<String, User>,
     ) {
-        val roomAids = privateRoomList.mapNotNull {
+        val roomAids = topicList.mapNotNull {
             it.room
         }.distinct()
         val roomMembers =
             database.admin.getAllMembers(roomAids).getOrThrow().groupBy {
                 it.third
             }
-        val encryptedContents = privateRoomList.map {
+        val encryptedContents = topicList.map {
             val (encryptedContent, aesBytes) = encryptDataByAES(
                 getTopicContent(
                     it,
@@ -678,11 +681,12 @@ class AddPreset : Subcommand("add", "add entry") {
             }
             InsertTopicTuple(tuple.presetTopic, index, level1, id, content, true, rootId)
         }
-        database.admin.batchAddEncryptTopics(tuples, userMap, roomMap, encryptedKeys)
-        privateRoomList.forEach { topic ->
-            val room = roomMap[topic.room]
+        database.admin.batchAddTopics(tuples, userMap, ObjectType.ROOM).getOrThrow()
+        database.admin.batchAddEncryptTopicKeys(encryptedKeys).getOrThrow()
+        tuples.forEach { topicTuple ->
+            val room = roomMap[topicTuple.topic.room]
             if (room != null) {
-                val content = getTopicContent(topic, parentDir)
+                val content = getTopicContent(topicTuple.topic, parentDir)
                 uploadFile(
                     room.id,
                     ObjectType.ROOM,
@@ -693,6 +697,22 @@ class AddPreset : Subcommand("add", "add entry") {
                 )
             }
         }
+        batchAddSubscriptions(tuples, userMap)
+    }
+
+    private suspend fun Backend.batchAddSubscriptions(
+        tuples: List<InsertTopicTuple>,
+        userMap: Map<String, User>
+    ) {
+        database.admin.batchAddSubscription(tuples.map {
+            UserSubscription(
+                it.id,
+                userMap[it.topic.author]!!.id,
+                it.id,
+                ObjectType.TOPIC,
+                now()
+            )
+        }).getOrThrow()
     }
 
     suspend fun Backend.uploadFile(

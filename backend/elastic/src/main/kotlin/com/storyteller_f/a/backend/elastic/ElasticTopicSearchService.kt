@@ -60,7 +60,7 @@ class ElasticTopicSearchService(connection: ElasticConnection) : Elastic(connect
                     sort.field { f ->
                         val sortOrder = when {
                             primaryKeyFetch == null || primaryKeyFetch.cursor == null -> null
-                            primaryKeyFetch.cursor is Cursor.PreCursor<PrimaryKey> -> SortOrder.Asc
+                            primaryKeyFetch.cursor is Cursor.AscCursor<PrimaryKey> -> SortOrder.Asc
                             else -> null
                         } ?: SortOrder.Desc
                         f.field("id").order(sortOrder)

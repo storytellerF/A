@@ -16,6 +16,7 @@ import com.storyteller_f.a.backend.core.types.RawTopic
 import com.storyteller_f.a.backend.core.types.RawUser
 import com.storyteller_f.a.backend.core.types.ReactionRecord
 import com.storyteller_f.a.backend.core.types.Room
+import com.storyteller_f.a.backend.core.types.SubscriptionSentLog
 import com.storyteller_f.a.backend.core.types.TaskRecord
 import com.storyteller_f.a.backend.core.types.Title
 import com.storyteller_f.a.backend.core.types.Topic
@@ -165,6 +166,12 @@ interface UserDatabase {
     suspend fun getSubscription(id: PrimaryKey): Result<UserSubscription?>
     suspend fun getSubscription(uid: PrimaryKey, objectId: PrimaryKey): Result<UserSubscription?>
     suspend fun getUserOverview(uid: PrimaryKey): Result<UserOverview>
+    suspend fun getSubscriptionsByObjectId(
+        objectId: PrimaryKey,
+        primaryKeyFetch: PrimaryKeyFetch
+    ): Result<List<UserSubscription>>
+    suspend fun insertSubscriptionSentLog(log: SubscriptionSentLog): Result<SubscriptionSentLog>
+    suspend fun getLatestSubscriptionSentLog(objectId: PrimaryKey): Result<SubscriptionSentLog?>
 }
 
 interface TopicDatabase {
@@ -257,6 +264,7 @@ interface TopicDatabase {
 
     suspend fun createTitle(title: Title, topic: Topic): Result<Unit>
     suspend fun getTopicCount(): Result<Long>
+    suspend fun getAllTopics(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<Topic>>
 }
 
 interface TitleDatabase {
@@ -408,19 +416,17 @@ interface AdminDatabase {
     suspend fun batchAddRooms(roomList: List<Room>, membersList: List<Member>)
 
     suspend fun getAllMembers(distinct: List<String>): Result<List<Triple<String, Long, String>>>
-    suspend fun batchAddEncryptTopics(
-        tuples: List<InsertTopicTuple>,
-        userMap: Map<String, User>,
-        roomMap: Map<String, Room>,
+    suspend fun batchAddEncryptTopicKeys(
         encryptedKeys: List<Triple<PrimaryKey, ByteArray, Long>>
-    )
+    ): Result<Unit>
 
     suspend fun batchAddTopics(
         tuples: List<InsertTopicTuple>,
         userMap: Map<String, User>,
         objectType: ObjectType
-    )
+    ): Result<Unit>
     suspend fun createTaskRecord(record: TaskRecord): Result<TaskRecord>
+    suspend fun batchAddSubscription(list: List<UserSubscription>): Result<Unit>
 }
 
 interface PanelAccountDatabase {

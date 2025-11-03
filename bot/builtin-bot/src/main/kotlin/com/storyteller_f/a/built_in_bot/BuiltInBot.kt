@@ -4,7 +4,7 @@ import com.google.genai.Client
 import com.google.genai.types.GenerateContentConfig
 import com.google.genai.types.GoogleSearch
 import com.google.genai.types.Tool
-import com.storyteller_f.a.api.core.PaginationQuery
+import com.storyteller_f.a.api.PaginationQuery
 import com.storyteller_f.a.client.core.RawUserPass
 import com.storyteller_f.a.client.core.SimpleUserSessionManager
 import com.storyteller_f.a.client.core.UserSessionManager

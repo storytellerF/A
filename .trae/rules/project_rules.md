@@ -33,7 +33,7 @@
 
 ### A) 新增后端 API 功能
 1. **定义 API 接口 (`api`)**
-    - 位置: `api/src/main/kotlin/com/storyteller_f/a/api/core/CustomApi.kt` (或 `AdminApi.kt`)
+    - 位置: `api/src/main/kotlin/com/storyteller_f/a/api/CustomApi.kt` (或 `AdminApi.kt`)
     - 步骤: 定义 `safeApi` 或 `mutationApi`，并为请求/响应创建数据类
 
 2. **定义和实现数据库操作 (`backend/core` & `backend/exposed`)**
@@ -49,7 +49,7 @@
 
 ### B) 客户端接入已有 API
 1. **同步 API 端点定义 (`api`)**
-    - 确认 `api/core` 模块中已包含需要接入的 API 定义
+    - 确认 `api` 模块中已包含需要接入的 API 定义
 
 2. **新增客户端请求 (`client/core`)**
     - 用户端: 在 `client/core/AppRequest.kt` 添加 `UserSessionManager` 的扩展函数
@@ -85,3 +85,9 @@
 - Admin API 示例: `AdminApi.Users.get.invoke(PaginationQuery(...))`
 - 用户 API 示例: `CustomApi.Rooms.Id.get(query, CommonPath(id))`
 - 存储集合: `UserCollection/TopicCollection/TitleCollection/RoomCollection/CommunityCollection/ReactionCollection/UploadCollection/MediasCollection`
+
+model 命名
+表名：复数形式，比如Users
+表中记录对应的模型类名：单数形式，比如User
+表中记录以及其他补充信息：Raw加上记录名，比如RawUser
+返回给客户端的模型类名：单数形式，比如UserInfo

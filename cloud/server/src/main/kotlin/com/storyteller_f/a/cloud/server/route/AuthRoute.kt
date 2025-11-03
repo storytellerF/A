@@ -1,7 +1,7 @@
 package com.storyteller_f.a.cloud.server.route
 
-import com.storyteller_f.a.api.core.CustomApi
-import com.storyteller_f.a.api.core.SignInBody
+import com.storyteller_f.a.api.CustomApi
+import com.storyteller_f.a.api.SignInBody
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.ObjectFetch

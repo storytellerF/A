@@ -7,6 +7,7 @@ import com.storyteller_f.a.backend.core.types.Member
 import com.storyteller_f.a.backend.core.types.Room
 import com.storyteller_f.a.backend.core.types.TaskRecord
 import com.storyteller_f.a.backend.core.types.User
+import com.storyteller_f.a.backend.core.types.UserSubscription
 import com.storyteller_f.a.backend.exposed.ExposedDatabaseSession
 import com.storyteller_f.a.backend.exposed.tables.Aids
 import com.storyteller_f.a.backend.exposed.tables.Communities
@@ -14,6 +15,7 @@ import com.storyteller_f.a.backend.exposed.tables.EncryptedKeys
 import com.storyteller_f.a.backend.exposed.tables.Members
 import com.storyteller_f.a.backend.exposed.tables.Rooms
 import com.storyteller_f.a.backend.exposed.tables.Topics
+import com.storyteller_f.a.backend.exposed.tables.UserSubscriptions
 import com.storyteller_f.a.backend.exposed.tables.Users
 import com.storyteller_f.a.backend.exposed.tables.addTaskRecord
 import com.storyteller_f.a.backend.exposed.tables.batchAddMembers
@@ -99,35 +101,41 @@ class ExposedAdminDatabase(val databaseSession: ExposedDatabaseSession) : AdminD
             }
     }
 
-    override suspend fun batchAddEncryptTopics(
-        tuples: List<InsertTopicTuple>,
-        userMap: Map<String, User>,
-        roomMap: Map<String, Room>,
+    override suspend fun batchAddEncryptTopicKeys(
         encryptedKeys: List<Triple<PrimaryKey, ByteArray, Long>>
-    ) {
-        databaseSession.dbQuery {
-            insertTopics(tuples, userMap, ObjectType.ROOM)
+    ): Result<Unit> {
+        return databaseSession.dbQuery {
             EncryptedKeys.batchInsert(encryptedKeys) { (topicId, b, uid) ->
                 this[EncryptedKeys.topicId] = topicId
                 this[EncryptedKeys.encryptedAes] = ExposedBlob(b)
                 this[EncryptedKeys.uid] = uid
             }
-        }.getOrThrow()
+        }
     }
 
     override suspend fun batchAddTopics(
         tuples: List<InsertTopicTuple>,
         userMap: Map<String, User>,
         objectType: ObjectType
-    ) {
-        databaseSession.dbQuery {
-            insertTopics(tuples, userMap, objectType)
-        }
+    ) = databaseSession.dbQuery {
+        insertTopics(tuples, userMap, objectType)
     }
 
     override suspend fun createTaskRecord(record: TaskRecord) = databaseSession.dbQuery {
         addTaskRecord(record)
         record
+    }
+
+    override suspend fun batchAddSubscription(list: List<UserSubscription>): Result<Unit> {
+        return databaseSession.dbQuery {
+            UserSubscriptions.batchInsert(list) {
+                this[UserSubscriptions.id] = it.id
+                this[UserSubscriptions.createdTime] = it.createdTime
+                this[UserSubscriptions.uid] = it.uid
+                this[UserSubscriptions.objectId] = it.objectId
+                this[UserSubscriptions.objectType] = it.objectType
+            }
+        }
     }
 
     private suspend fun insertTopics(

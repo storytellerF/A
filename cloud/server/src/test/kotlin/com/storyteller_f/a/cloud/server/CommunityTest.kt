@@ -1,8 +1,8 @@
 package com.storyteller_f.a.cloud.server
 
-import com.storyteller_f.a.api.core.NewCommunity
-import com.storyteller_f.a.api.core.NewTopic
-import com.storyteller_f.a.api.core.PaginationQuery
+import com.storyteller_f.a.api.NewCommunity
+import com.storyteller_f.a.api.NewTopic
+import com.storyteller_f.a.api.PaginationQuery
 import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.createCommunity
 import com.storyteller_f.a.client.core.createTopic

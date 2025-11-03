@@ -13,8 +13,7 @@ object UserTopicReads : Table() {
     val objectId = customPrimaryKey("object_id")
     val objectType = objectType("object_type")
     val topicId = customPrimaryKey("topic_id")
-    override val primaryKey: Table.PrimaryKey?
-        get() = PrimaryKey(uid, objectId)
+    override val primaryKey = PrimaryKey(uid, objectId)
 
     init {
         index("user-topic-reads-main", true, uid, objectId)

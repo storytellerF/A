@@ -124,7 +124,7 @@ class LuceneTopicSearchService(path: Path, isInMemory: Boolean = false) :
         val combinedQuery = buildQuery(primaryKeyFetch, topicDocumentSearch)
         val reverse = when {
             primaryKeyFetch == null || primaryKeyFetch.cursor == null -> true
-            primaryKeyFetch.cursor is Cursor.NextCursor<PrimaryKey> -> true
+            primaryKeyFetch.cursor is Cursor.DescCursor<PrimaryKey> -> true
             else -> false
         }
         val sortById = Sort(SortField("id2", SortField.Type.LONG, reverse))

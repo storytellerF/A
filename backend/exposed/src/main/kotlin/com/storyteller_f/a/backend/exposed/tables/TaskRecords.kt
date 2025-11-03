@@ -3,12 +3,12 @@ package com.storyteller_f.a.backend.exposed.tables
 import com.storyteller_f.a.backend.core.types.TaskRecord
 import com.storyteller_f.a.backend.exposed.BaseTable
 import com.storyteller_f.a.backend.exposed.customPrimaryKey
-import com.storyteller_f.shared.model.TaskRecordType
+import com.storyteller_f.a.backend.exposed.taskRecordType
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.r2dbc.insert
 
 object TaskRecords : BaseTable() {
-    val type = enumerationByName<TaskRecordType>("type", 10)
+    val type = taskRecordType("type")
     val processedId = customPrimaryKey("processed_id")
 
     init {

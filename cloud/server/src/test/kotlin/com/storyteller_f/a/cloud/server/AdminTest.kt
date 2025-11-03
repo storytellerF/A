@@ -1,9 +1,9 @@
 package com.storyteller_f.a.cloud.server
 
-import com.storyteller_f.a.api.core.NewCommunity
-import com.storyteller_f.a.api.core.NewRoom
-import com.storyteller_f.a.api.core.NewUser
-import com.storyteller_f.a.api.core.PaginationQuery
+import com.storyteller_f.a.api.NewCommunity
+import com.storyteller_f.a.api.NewRoom
+import com.storyteller_f.a.api.NewUser
+import com.storyteller_f.a.api.PaginationQuery
 import com.storyteller_f.a.client.core.addUser
 import com.storyteller_f.a.client.core.createCommunity
 import com.storyteller_f.a.client.core.createRoom
