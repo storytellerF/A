@@ -413,10 +413,7 @@ private fun NavGraphBuilder.buildMainScreen() {
 
     composable<MemberScreen> {
         val (objectType, objectId) = it.toRoute<MemberScreen>()
-        MemberPage(
-            objectId,
-            ObjectType.valueOf(objectType)
-        )
+        MemberPage(objectId, ObjectType.valueOf(objectType))
     }
     composable<UserScreen> {
         val route = it.toRoute<UserScreen>()

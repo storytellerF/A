@@ -5,7 +5,9 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import com.kdroid.composenotification.builder.AppConfig
 import com.kdroid.composenotification.builder.NotificationInitializer
+import com.storyteller_f.a.app.compose_app.common.Downloader
 import com.storyteller_f.a.app.compose_app.common.DownloaderImpl
+import com.storyteller_f.a.app.compose_app.common.Uploader
 import com.storyteller_f.a.app.compose_app.common.UploaderImpl
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.setupKmpLogger
@@ -68,9 +70,9 @@ fun main() {
     val downloader = DownloaderImpl(GlobalScope, uiViewModel)
     val uploader = UploaderImpl(GlobalScope, uiViewModel)
     val provider = object : ClientFileProvider {
-        override fun getDownloader() = downloader
+        override suspend fun getDownloader(): Downloader? = downloader
 
-        override fun getUploader() = uploader
+        override suspend fun getUploader(): Uploader? = uploader
     }
     loadCryptoLibIfNeed()
     application {

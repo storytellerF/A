@@ -31,7 +31,7 @@ class RTCService : LifecycleService() {
     override fun onCreate() {
         super.onCreate()
         val channel = "Upload"
-        getOrCreateNotificationManager(this, channel)
+        getOrCreateNotificationChannel(this, channel)
         val notification = NotificationCompat.Builder(this, channel)
             .setSmallIcon(com.storyteller_f.a.app.R.drawable.baseline_video_call_24)
             .setContentTitle("RTC")
@@ -41,8 +41,6 @@ class RTCService : LifecycleService() {
 
     override fun onBind(intent: Intent): IBinder? {
         super.onBind(intent)
-        (application as AApplication)
-        val uiViewModel = uiViewModel
         val rtcHandle = DefaultRTCHandle(uiViewModel, lifecycle)
         return RTCBinder(rtcHandle)
     }
