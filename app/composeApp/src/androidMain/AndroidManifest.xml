@@ -48,6 +48,17 @@
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
+
+                <!-- ✅ 必须：表示这个 Activity 能处理 VIEW 动作 -->
+                <action android:name="android.intent.action.VIEW" />
+
+                <!-- ✅ 必须：允许 App 从外部（浏览器、其他 App）打开 -->
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="${deepLinkHost}"
+                    android:scheme="${deepLinkScheme}" />
             </intent-filter>
         </activity>
         <activity

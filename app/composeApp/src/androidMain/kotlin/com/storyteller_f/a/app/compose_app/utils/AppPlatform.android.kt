@@ -24,6 +24,7 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.Lifecycle
 import com.storyteller_f.a.app.BuildConfig
 import com.storyteller_f.a.app.R
+import com.storyteller_f.a.app.compose_app.AppConfig
 import com.storyteller_f.a.app.compose_app.BubbleActivity
 import com.storyteller_f.a.app.compose_app.MainActivity
 import com.storyteller_f.a.app.compose_app.RTCActivity
@@ -198,4 +199,12 @@ private fun createShortcut(
         .setShortLabel(room.name)
         .build()
     ShortcutManagerCompat.pushDynamicShortcut(context, shortcut)
+}
+
+actual fun getDeepLinkHost(): String {
+    return AppConfig.DEEP_LINK_HOST
+}
+
+actual fun getDeepLinkScheme(): String {
+    return "${AppConfig.DEEP_LINK_SCHEME_PREFIX}${if (BuildConfig.DEBUG) "-debug" else ""}"
 }

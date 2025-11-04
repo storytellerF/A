@@ -5,6 +5,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.compositionLocalOf
@@ -16,6 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
+import androidx.navigation.NavUri
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import coil3.ImageLoader
@@ -31,6 +33,7 @@ import com.kdroid.composenotification.builder.getNotificationProvider
 import com.storyteller_f.a.app.compose_app.common.AppNav
 import com.storyteller_f.a.app.compose_app.common.AppNavFactory
 import com.storyteller_f.a.app.compose_app.common.Downloader
+import com.storyteller_f.a.app.compose_app.common.ExternalUriHandler
 import com.storyteller_f.a.app.compose_app.common.HomeScreen
 import com.storyteller_f.a.app.compose_app.common.OnTopicCreated
 import com.storyteller_f.a.app.compose_app.common.RoomScreen
@@ -228,6 +231,17 @@ private fun MainAppPage(
     appNav: AppNavFactory,
     navigator: NavHostController
 ) {
+    DisposableEffect(Unit) {
+        // Sets up the listener to call `NavController.navigate()`
+        // for the composable that has a matching `navDeepLink` listed
+        ExternalUriHandler.listener = { uri ->
+            navigator.navigate(NavUri(uri))
+        }
+        // Removes the listener when the composable is no longer active
+        onDispose {
+            ExternalUriHandler.listener = null
+        }
+    }
     ObserveMessage()
     CompositionLocalProvider(
         LocalAppNavFactory provides appNav,

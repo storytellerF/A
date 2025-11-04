@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSetTree
 import org.jetbrains.kotlin.gradle.targets.wasm.yarn.WasmYarnRootExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.io.FileInputStream
+import java.net.URI
 import java.util.Properties
 
 plugins {
@@ -218,12 +219,35 @@ composeCompiler {
     metricsDestination = layout.buildDirectory.dir("compose_compiler")
     stabilityConfigurationFiles.addAll(rootProject.layout.projectDirectory.file("stability_config.conf"))
 }
-
+val properties = Properties().apply {
+    val file = layout.projectDirectory.file("../../$flavorStr.env").asFile
+    if (file.exists()) {
+        load(FileInputStream(file))
+    }
+}
+val deepLinkHost = (properties["SERVER_URL"] as? String)?.let {
+    URI.create(it).host
+} ?: "storyteller_f.com"
+val deepLinkSchemePrefix = "a-$flavorStr"
 android {
     namespace = "com.storyteller_f.a.app"
 
     defaultConfig {
         applicationId = "com.storyteller_f.a.app.android.$flavorId"
+    }
+    buildTypes {
+        debug {
+            manifestPlaceholders.putAll(mapOf(
+                "deepLinkScheme" to "$deepLinkSchemePrefix-debug",
+                "deepLinkHost" to deepLinkHost
+            ))
+        }
+        release {
+            manifestPlaceholders.putAll(mapOf(
+                "deepLinkScheme" to deepLinkSchemePrefix,
+                "deepLinkHost" to deepLinkHost
+            ))
+        }
     }
 }
 
@@ -261,12 +285,7 @@ compose.desktop {
 buildkonfig {
     packageName = "com.storyteller_f.a.app.compose_app"
     objectName = "AppConfig"
-    val properties = Properties().apply {
-        val file = layout.projectDirectory.file("../../$flavorStr.env").asFile
-        if (file.exists()) {
-            load(FileInputStream(file))
-        }
-    }
+
     val serverUrl = properties["SERVER_URL"] as? String
     val wsServerUrl = properties["WS_SERVER_URL"] as? String
     defaultConfigs {
@@ -275,6 +294,8 @@ buildkonfig {
         buildConfigField(STRING, "BUILD_TYPE", buildType, const = true)
         buildConfigField(STRING, "FLAVOR", flavorStr, const = true)
         buildConfigField(BOOLEAN, "ENABLE_LOGIN_CHECK", "false", const = true)
+        buildConfigField(STRING, "DEEP_LINK_HOST", deepLinkHost, const = true)
+        buildConfigField(STRING, "DEEP_LINK_SCHEME_PREFIX", "a-$flavorStr", const = true)
     }
 }
 

@@ -7,6 +7,7 @@ import com.kdroid.composenotification.builder.AppConfig
 import com.kdroid.composenotification.builder.NotificationInitializer
 import com.storyteller_f.a.app.compose_app.common.Downloader
 import com.storyteller_f.a.app.compose_app.common.DownloaderImpl
+import com.storyteller_f.a.app.compose_app.common.ExternalUriHandler
 import com.storyteller_f.a.app.compose_app.common.Uploader
 import com.storyteller_f.a.app.compose_app.common.UploaderImpl
 import com.storyteller_f.shared.loadCryptoLibIfNeed
@@ -15,6 +16,7 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import java.awt.BorderLayout
 import java.awt.Button
+import java.awt.Desktop
 import java.awt.Dialog
 import java.awt.Frame
 import java.awt.TextArea
@@ -32,7 +34,7 @@ val uiViewModel by lazy {
 }
 
 @OptIn(DelicateCoroutinesApi::class)
-fun main() {
+fun main(args: Array<String>) {
     setupKmpLogger()
     Thread.setDefaultUncaughtExceptionHandler { _, e ->
         Dialog(Frame(), e.message ?: "Error").apply {
@@ -75,6 +77,13 @@ fun main() {
         override suspend fun getUploader(): Uploader? = uploader
     }
     loadCryptoLibIfNeed()
+    if (System.getProperty("os.name").indexOf("Mac") > -1) {
+        Desktop.getDesktop().setOpenURIHandler { uri ->
+            ExternalUriHandler.onNewUri(uri.uri.toString())
+        }
+    } else {
+        ExternalUriHandler.onNewUri(args.getOrNull(0).toString())
+    }
     application {
         Window(
             onCloseRequest = ::exitApplication,
