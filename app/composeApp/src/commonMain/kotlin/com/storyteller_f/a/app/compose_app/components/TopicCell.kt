@@ -47,14 +47,27 @@ import org.jetbrains.compose.ui.tooling.preview.PreviewParameterProvider
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopicCell(
+fun TopicCell(info: TopicInfo?) {
+    val sheetState = rememberModalBottomSheetState()
+    var showBottomSheet by remember { mutableStateOf(false) }
+    TopicCellInternal(info, showAvatar = true, supportPin = false) {
+        showBottomSheet = true
+    }
+    info?.let {
+        EmojiPicker(sheetState, showBottomSheet, it) {
+            showBottomSheet = false
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun UserTopicCell(
     info: TopicInfo?,
-    showAvatar: Boolean = true,
-    supportPin: Boolean = false,
 ) {
     val sheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
-    TopicCellInternal(info, showAvatar, supportPin) {
+    TopicCellInternal(info, showAvatar = false, supportPin = true) {
         showBottomSheet = true
     }
     info?.let {

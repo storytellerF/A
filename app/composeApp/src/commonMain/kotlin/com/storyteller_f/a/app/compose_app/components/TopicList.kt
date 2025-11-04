@@ -11,19 +11,38 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
-import androidx.paging.compose.itemKey
 import com.storyteller_f.a.app.compose_app.common.TopicsViewModel
 import com.storyteller_f.a.app.core.common.PagingViewModel
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.bottomAppending
+import com.storyteller_f.a.app.core.components.pagingItems
 import com.storyteller_f.a.app.core.components.topPrepend
 import com.storyteller_f.shared.model.TopicInfo
 
 @Composable
-fun TopicList(
+fun TopicList(topicsViewModel: PagingViewModel<TopicInfo>) {
+    CommonTopicList(topicsViewModel) { index, info, size ->
+        TopicCell(info)
+        if (index != size - 1) {
+            HorizontalDivider()
+        }
+    }
+}
+
+@Composable
+fun UserTopicList(topicsViewModel: PagingViewModel<TopicInfo>) {
+    CommonTopicList(topicsViewModel = topicsViewModel) { index, info, size ->
+        UserTopicCell(info)
+        if (index != size - 1) {
+            HorizontalDivider()
+        }
+    }
+}
+
+@Composable
+fun CommonTopicList(
     topicsViewModel: PagingViewModel<TopicInfo>,
-    showAvatar: Boolean = true,
-    supportPin: Boolean = false,
+    block: @Composable (index: Int, info: TopicInfo?, Int) -> Unit,
 ) {
     StateView(topicsViewModel) { items ->
         LazyColumn(
@@ -32,20 +51,10 @@ fun TopicList(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             topPrepend(items.loadState)
-            items(
-                count = items.itemSnapshotList.size,
-                key = items.itemKey {
-                    it.id
-                },
-            ) {
-                TopicCell(
-                    items[it],
-                    showAvatar = showAvatar,
-                    supportPin
-                )
-                if (it != items.itemSnapshotList.size - 1) {
-                    HorizontalDivider()
-                }
+            pagingItems(items, {
+                it.id
+            }) {
+                block(it, items[it], items.itemSnapshotList.size)
             }
             bottomAppending(items.loadState)
         }
@@ -66,12 +75,9 @@ fun RoomTopicList(
             reverseLayout = true,
         ) {
             bottomAppending(items.loadState)
-            items(
-                count = items.itemSnapshotList.size,
-                key = items.itemKey { topicInfo ->
-                    topicInfo.id.toString()
-                },
-            ) { index ->
+            pagingItems(items, {
+                it.id
+            }) { index ->
                 val next = if (index + 1 < items.itemSnapshotList.size) {
                     items[index + 1]
                 } else {
