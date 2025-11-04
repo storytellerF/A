@@ -269,7 +269,7 @@ fun imageRequest(
 @Composable
 fun getSize(info: FileInfo?): Pair<Float, Float>? {
     val dimension = info?.dimension
-    val s = if (info != null && dimension != null) {
+    return if (info != null && dimension != null) {
         val hDp = convertPxToDp(dimension.height).value
         val height = minOf(hDp, 200f)
         val width = dimension.width * height / dimension.height
@@ -277,7 +277,6 @@ fun getSize(info: FileInfo?): Pair<Float, Float>? {
     } else {
         null
     }
-    return s
 }
 
 class CustomCoil3ImageTransformerImpl(private val mediaMap: Map<String, FileInfo>) :

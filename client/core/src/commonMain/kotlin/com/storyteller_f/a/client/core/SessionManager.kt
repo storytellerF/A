@@ -32,7 +32,7 @@ interface SessionModel<U> {
     fun generateData(): String
     fun clear()
     fun updateState(newState: ClientSessionState)
-    fun updateUser(new: U)
+    fun updateUser(u: U)
 }
 
 class SimpleSessionModel<U : PrimaryKeyIdentifiable> : SessionModel<U> {
@@ -65,8 +65,8 @@ class SimpleSessionModel<U : PrimaryKeyIdentifiable> : SessionModel<U> {
         dataAndSignature = data to signature
     }
 
-    override fun updateUser(new: U) {
-        userHandler.done(new)
+    override fun updateUser(u: U) {
+        userHandler.done(u)
     }
 
     override fun updateState(newState: ClientSessionState) {

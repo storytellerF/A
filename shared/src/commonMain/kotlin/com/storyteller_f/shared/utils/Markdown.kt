@@ -1,6 +1,9 @@
 package com.storyteller_f.shared.utils
 
 import com.storyteller_f.shared.commonJson
+import com.storyteller_f.shared.model.FileInfo
+import com.storyteller_f.shared.obj.ObjectTuple
+import com.storyteller_f.shared.type.ObjectType
 import kotlinx.serialization.Serializable
 import org.intellij.markdown.IElementType
 import org.intellij.markdown.MarkdownElementTypes
@@ -245,3 +248,25 @@ data class MarkdownObject(
     val cover: String? = null,
     val title: String? = null,
 )
+
+fun generateImageMarkdownContent(info: FileInfo): String =
+    """![${info.name}](${info.name} "${info.name}")"""
+
+fun generateObjectMarkdownContent(info: FileInfo): String = """```object
+{
+    "contentType": "${info.contentType}",
+    "name": "${info.name}"
+}
+```"""
+
+fun generateModelMarkdownContent(objectTuple: ObjectTuple): String = """```csa
+/${
+    when (objectTuple.objectType) {
+        ObjectType.USER -> "user"
+        ObjectType.COMMUNITY -> "community"
+        ObjectType.ROOM -> "room"
+        ObjectType.TOPIC -> "topic"
+        else -> throw Exception("unknown object type ${objectTuple.objectType}")
+    }
+}/${objectTuple.objectId}
+```"""

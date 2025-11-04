@@ -572,8 +572,8 @@ private fun InputGroupSuffix(
         onClickItems = { info ->
             insertContent(
                 info.first(),
-                updateInput,
-                input
+                input,
+                updateInput
             )
         }
     ) {

@@ -4,15 +4,45 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.AttachFile
+import androidx.compose.material.icons.filled.AudioFile
+import androidx.compose.material.icons.filled.Cloud
+import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.Fullscreen
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.VideoFile
+import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.SheetState
+import androidx.compose.material3.Tab
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -25,13 +55,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.unit.dp
-import androidx.paging.compose.itemKey
 import coil3.compose.AsyncImage
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.common.OnMediaUploaded
 import com.storyteller_f.a.app.compose_app.common.createMediaListViewModel
-import com.storyteller_f.a.app.compose_app.components.*
+import com.storyteller_f.a.app.compose_app.components.BaseSheet
+import com.storyteller_f.a.app.compose_app.components.Permission
+import com.storyteller_f.a.app.compose_app.components.isPermissionGranted
+import com.storyteller_f.a.app.compose_app.components.requestPermission
 import com.storyteller_f.a.app.compose_app.utils.Recorder
 import com.storyteller_f.a.app.compose_app.utils.setText
 import com.storyteller_f.a.app.core.components.CustomIcon
@@ -42,6 +74,7 @@ import com.storyteller_f.a.app.core.components.IconRes
 import com.storyteller_f.a.app.core.components.LocalGlobalDialog
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.bottomAppending
+import com.storyteller_f.a.app.core.components.pagingItems
 import com.storyteller_f.a.app.core.components.topPrepend
 import com.storyteller_f.a.client.core.UploadData
 import com.storyteller_f.a.client.core.UserSessionManager
@@ -51,9 +84,15 @@ import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.utils.formatTime
 import com.storyteller_f.shared.utils.mapIfNotNull
 import io.github.aakira.napier.Napier
-import io.github.vinceglb.filekit.*
+import io.github.vinceglb.filekit.FileKit
+import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.dialogs.openFilePicker
-import io.ktor.http.*
+import io.github.vinceglb.filekit.extension
+import io.github.vinceglb.filekit.name
+import io.github.vinceglb.filekit.size
+import io.github.vinceglb.filekit.source
+import io.ktor.http.ContentType
+import io.ktor.http.defaultForFileExtension
 import kotlinx.coroutines.launch
 import kotlinx.io.buffered
 import kotlinx.io.files.FileMetadata
@@ -192,7 +231,7 @@ private fun BoxScope.RecorderButton(
 @Composable
 private fun FileListView(
     mediaTarget: ObjectTuple,
-    clickItem: (List<FileInfo>) -> Unit,
+    onClickItem: (List<FileInfo>) -> Unit,
 ) {
     val sessionManager = LocalSessionManager.current
     val viewModel = createMediaListViewModel(mediaTarget)
@@ -204,7 +243,7 @@ private fun FileListView(
             IconButton({
                 scope.launch {
                     globalDialogController.selectFileAndUpload(mediaTarget, sessionManager) {
-                        clickItem(it)
+                        onClickItem(it)
                     }
                 }
             }) {
@@ -214,11 +253,11 @@ private fun FileListView(
         StateView(viewModel, modifier = Modifier.weight(1f)) { pagingItems ->
             LazyColumn(modifier = Modifier.fillMaxWidth(), contentPadding = PaddingValues(20.dp)) {
                 topPrepend(pagingItems.loadState)
-                items(pagingItems.itemSnapshotList.size, key = pagingItems.itemKey {
+                pagingItems(pagingItems, {
                     it.id
                 }) {
                     val item = pagingItems[it]
-                    FileCell(item, clickItem)
+                    FileCell(item, onClickItem)
 
                     HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
                 }
@@ -411,24 +450,13 @@ suspend fun GlobalDialogController.upload(
 
 fun insertContent(
     it: FileInfo,
-    updateInput: (String) -> Unit,
     input: String,
+    updateInput: (String) -> Unit,
 ) {
-    if (it.contentType.startsWith("image/")) {
-        updateInput(
-            """$input
-![${it.name}](${it.name} "${it.name}")
-"""
-        )
+    val text = if (it.contentType.startsWith("image/")) {
+        "\n${generateImageMarkdownContent(it)}"
     } else {
-        updateInput(
-            """$input
-```object
-{
-    "contentType": "${it.contentType}",
-    "name": "${it.name}"
-}
-```"""
-        )
+        "\n${generateObjectMarkdownContent(it)}"
     }
+    updateInput(input + text)
 }

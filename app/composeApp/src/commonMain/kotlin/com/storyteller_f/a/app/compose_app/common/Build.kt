@@ -174,8 +174,8 @@ fun createRoomTopicsViewModel(roomId: PrimaryKey): TopicsViewModel {
             "room-topics",
             roomId
         )
-    ) { client, databaseSource ->
-        TopicsViewModel(client, databaseSource, roomId, ObjectType.ROOM)
+    ) { sessionManager, databaseSource ->
+        TopicsViewModel(sessionManager, databaseSource, roomId, ObjectType.ROOM)
     }
 }
 
@@ -183,8 +183,8 @@ fun createRoomTopicsViewModel(roomId: PrimaryKey): TopicsViewModel {
 fun createCommunityTopicsViewModel(communityId: PrimaryKey): TopicsViewModel {
     return customViewModel<TopicsViewModel>(
         keys = listOf("community-topics", communityId)
-    ) { client, databaseSource ->
-        TopicsViewModel(client, databaseSource, communityId, ObjectType.COMMUNITY)
+    ) { sessionManager, databaseSource ->
+        TopicsViewModel(sessionManager, databaseSource, communityId, ObjectType.COMMUNITY)
     }
 }
 
@@ -197,8 +197,8 @@ fun createUserTopicsViewModel(
             "user-topics",
             uid
         )
-    ) { client, databaseSource ->
-        TopicsViewModel(client, databaseSource, uid, ObjectType.USER)
+    ) { sessionManager, databaseSource ->
+        TopicsViewModel(sessionManager, databaseSource, uid, ObjectType.USER)
     }
 }
 
@@ -209,8 +209,8 @@ fun createTopicSearchViewModel(current: String) =
             "topic",
             current
         )
-    ) { client, databaseSource ->
-        TopicSearchViewModel(client, databaseSource, current.split(" "), null, null)
+    ) { sessionManager, databaseSource ->
+        TopicSearchViewModel(sessionManager, databaseSource, current.split(" "), null, null)
     }
 
 @Composable
@@ -223,9 +223,9 @@ fun createTopicSearchInTopicViewModel(
         scope.topicId,
         current
     )
-) { client, databaseSource ->
+) { sessionManager, databaseSource ->
     TopicSearchViewModel(
-        client,
+        sessionManager,
         databaseSource,
         current.split(" "),
         scope.topicId,
@@ -243,8 +243,8 @@ fun createTopicSearchInUserViewModel(
         scope.userId,
         current
     )
-) { client, databaseSource ->
-    TopicSearchViewModel(client, databaseSource, current.split(" "), scope.userId, ObjectType.USER)
+) { sessionManager, databaseSource ->
+    TopicSearchViewModel(sessionManager, databaseSource, current.split(" "), scope.userId, ObjectType.USER)
 }
 
 @Composable
@@ -254,8 +254,8 @@ fun createMemberSearchViewModel(current: String) =
             "members",
             current
         )
-    ) { client, databaseSource ->
-        MemberViewModel(client, databaseSource, 0, current, ObjectType.USER)
+    ) { sessionManager, databaseSource ->
+        MemberViewModel(sessionManager, databaseSource, 0, current, ObjectType.USER)
     }
 
 @Composable
@@ -268,9 +268,9 @@ fun createTopicSearchInCommunityViewModel(
         scope.communityId,
         current
     )
-) { client, databaseSource ->
+) { sessionManager, databaseSource ->
     TopicSearchViewModel(
-        client,
+        sessionManager,
         databaseSource,
         current.split(" "),
         scope.communityId,
@@ -285,8 +285,8 @@ fun createTopicViewModel(topicId: PrimaryKey) =
             "topic",
             topicId
         )
-    ) { client, databaseSource ->
-        IdTopicViewModel(client, databaseSource, topicId)
+    ) { sessionManager, databaseSource ->
+        IdTopicViewModel(sessionManager, databaseSource, topicId)
     }
 
 @Composable
@@ -296,8 +296,8 @@ fun createTopicsInTopicViewModel(topicId: PrimaryKey): TopicsViewModel {
             "topic-topics",
             topicId
         )
-    ) { client, databaseSource ->
-        TopicsViewModel(client, databaseSource, topicId, ObjectType.TOPIC)
+    ) { sessionManager, databaseSource ->
+        TopicsViewModel(sessionManager, databaseSource, topicId, ObjectType.TOPIC)
     }
 }
 
@@ -308,8 +308,8 @@ fun createTopicViewModel(topicAid: String) =
             "topic",
             topicAid
         )
-    ) { client, databaseSource ->
-        AidTopicViewModel(client, databaseSource, topicAid)
+    ) { sessionManager, databaseSource ->
+        AidTopicViewModel(sessionManager, databaseSource, topicAid)
     }
 
 @Composable
@@ -322,8 +322,8 @@ fun createTopicSearchInRoomViewModel(
         scope.roomId,
         current
     )
-) { client, databaseSource ->
-    TopicSearchViewModel(client, databaseSource, current.split(" "), scope.roomId, ObjectType.ROOM)
+) { sessionManager, databaseSource ->
+    TopicSearchViewModel(sessionManager, databaseSource, current.split(" "), scope.roomId, ObjectType.ROOM)
 }
 
 @Composable
@@ -336,8 +336,8 @@ fun createSearchMemberInRoomViewModel(
         scope.roomId,
         current
     )
-) { client, databaseSource ->
-    MemberViewModel(client, databaseSource, scope.roomId, current, ObjectType.ROOM)
+) { sessionManager, databaseSource ->
+    MemberViewModel(sessionManager, databaseSource, scope.roomId, current, ObjectType.ROOM)
 }
 
 @Composable
@@ -350,8 +350,8 @@ fun createMemberSearchInCommunityViewModel(
         scope.communityId,
         current
     )
-) { client, databaseSource ->
-    MemberViewModel(client, databaseSource, scope.communityId, current, ObjectType.COMMUNITY)
+) { sessionManager, databaseSource ->
+    MemberViewModel(sessionManager, databaseSource, scope.communityId, current, ObjectType.COMMUNITY)
 }
 
 @Composable
@@ -362,8 +362,8 @@ fun createMediaListViewModel(
         "media",
         objectTuple.objectId
     )
-) { client, databaseSource ->
-    MediaListViewModel(client, databaseSource, objectTuple.objectId, objectTuple.objectType)
+) { sessionManager, databaseSource ->
+    MediaListViewModel(sessionManager, databaseSource, objectTuple.objectId, objectTuple.objectType)
 }
 
 @Composable
@@ -375,8 +375,8 @@ fun createMemberViewModel(
         "members",
         objectId
     )
-) { client, databaseSource ->
-    MemberViewModel(client, databaseSource, objectId, "", objectType)
+) { sessionManager, databaseSource ->
+    MemberViewModel(sessionManager, databaseSource, objectId, "", objectType)
 }
 
 @Composable
@@ -386,8 +386,8 @@ fun createUserViewModel(userAid: String) =
             "user",
             userAid
         )
-    ) { client, databaseSource ->
-        AidUserViewModel(client, databaseSource, userAid)
+    ) { sessionManager, databaseSource ->
+        AidUserViewModel(sessionManager, databaseSource, userAid)
     }
 
 @Composable
@@ -397,16 +397,16 @@ fun createUserViewModel(userId: PrimaryKey) =
             "user",
             userId
         )
-    ) { client, databaseSource ->
-        IdUserViewModel(client, databaseSource, userId)
+    ) { sessionManager, databaseSource ->
+        IdUserViewModel(sessionManager, databaseSource, userId)
     }
 
 @Composable
 fun createWorldViewModel(): WorldViewModel {
     return customViewModel(
         keys = listOf("world")
-    ) { client, databaseSource ->
-        WorldViewModel(client, databaseSource)
+    ) { sessionManager, databaseSource ->
+        WorldViewModel(sessionManager, databaseSource)
     }
 }
 
@@ -417,8 +417,8 @@ fun createReactionsViewModel(objectId: PrimaryKey): ReactionsViewModel {
             "reactions",
             objectId
         )
-    ) { client, databaseSource ->
-        ReactionsViewModel(client, objectId, databaseSource)
+    ) { sessionManager, databaseSource ->
+        ReactionsViewModel(sessionManager, objectId, databaseSource)
     }
 }
 
@@ -434,8 +434,8 @@ fun createUserTitlesViewModel(
         "user-titles",
         uid
     )
-) { client, databaseSource ->
-    TitlesViewModel(client, databaseSource, uid, searchType, status, type, scopeId)
+) { sessionManager, databaseSource ->
+    TitlesViewModel(sessionManager, databaseSource, uid, searchType, status, type, scopeId)
 }
 
 @Composable
@@ -444,7 +444,7 @@ fun createUploadViewModel(myUid: PrimaryKey) =
         keys = listOf(
             "upload",
         )
-    ) { client, model ->
+    ) { _, model ->
         UploadViewModel(myUid, model)
     }
 
