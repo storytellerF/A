@@ -37,7 +37,7 @@ import com.storyteller_f.a.app.compose_app.common.createTargetUserJoinedCommunit
 import com.storyteller_f.a.app.compose_app.common.createUserTitlesViewModel
 import com.storyteller_f.a.app.compose_app.common.createUserTopicsViewModel
 import com.storyteller_f.a.app.compose_app.common.createUserViewModel
-import com.storyteller_f.a.app.compose_app.components.TopicList
+import com.storyteller_f.a.app.compose_app.components.UserTopicList
 import com.storyteller_f.a.app.compose_app.pages.CustomBottomNav
 import com.storyteller_f.a.app.compose_app.pages.CustomRailNav
 import com.storyteller_f.a.app.compose_app.pages.NavRoute
@@ -112,7 +112,7 @@ private fun UserNonCompatInternal(uid: PrimaryKey, user: UserInfo?) {
                 NavHost(navigator, "/topics") {
                     composable("/topics") {
                         val topicsViewModel = createUserTopicsViewModel(uid)
-                        TopicList(topicsViewModel, showAvatar = false, supportPin = true)
+                        UserTopicList(topicsViewModel)
                     }
                     composable("/communities") {
                         val communitiesViewModel = createTargetUserJoinedCommunitiesViewModel(uid)
@@ -156,12 +156,8 @@ private fun UserCompatInternal(
             HorizontalPager(pagerState) { pageIndex ->
                 when (pageIndex) {
                     0 -> {
-                        val topicsViewModel =
-                            createUserTopicsViewModel(uid)
-                        TopicList(
-                            topicsViewModel,
-                            showAvatar = false
-                        )
+                        val topicsViewModel = createUserTopicsViewModel(uid)
+                        UserTopicList(topicsViewModel)
                     }
 
                     1 -> {

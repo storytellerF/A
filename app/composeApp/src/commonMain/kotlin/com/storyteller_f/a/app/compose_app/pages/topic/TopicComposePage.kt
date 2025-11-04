@@ -1,16 +1,50 @@
 package com.storyteller_f.a.app.compose_app.pages.topic
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.FormatBold
+import androidx.compose.material.icons.filled.FormatItalic
+import androidx.compose.material.icons.filled.FormatListNumbered
+import androidx.compose.material.icons.filled.FormatStrikethrough
+import androidx.compose.material.icons.filled.FormatUnderlined
+import androidx.compose.material.icons.filled.PermMedia
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconToggleButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Tab
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.Typography
+import androidx.compose.material3.VerticalDivider
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -24,15 +58,18 @@ import androidx.compose.ui.unit.dp
 import com.mohamedrejeb.richeditor.model.RichTextState
 import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import com.mohamedrejeb.richeditor.ui.BasicRichTextEditor
-import com.storyteller_f.a.app.compose_app.*
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
+import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.common.MarkdownMediasViewModel
 import com.storyteller_f.a.app.compose_app.common.OnTopicCreated
 import com.storyteller_f.a.app.compose_app.common.TopicComposeData
 import com.storyteller_f.a.app.compose_app.common.getMarkdownMediasViewModel
 import com.storyteller_f.a.app.compose_app.components.TopicContentField
+import com.storyteller_f.a.app.compose_app.edit
 import com.storyteller_f.a.app.compose_app.pages.community.getCommunityFont
 import com.storyteller_f.a.app.compose_app.pages.community.getFontFamily
+import com.storyteller_f.a.app.compose_app.preview
+import com.storyteller_f.a.app.compose_app.raw
 import com.storyteller_f.a.app.compose_app.ui.theme.AppTheme
 import com.storyteller_f.a.app.core.components.LocalGlobalDialog
 import com.storyteller_f.a.client.core.createTopic
@@ -329,8 +366,6 @@ fun EditTopicPage(input: String, data: TopicComposeData, updateInput: (String) -
 @Composable
 private fun getFontFamily(data: TopicComposeData): FontFamily? {
     return (data as? TopicComposeData.PublicRoom)?.communityId?.let {
-        getFontFamily(
-            it
-        ).value
+        getFontFamily(it).value
     }
 }
