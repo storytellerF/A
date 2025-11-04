@@ -6,7 +6,9 @@ import androidx.compose.ui.graphics.asSkiaBitmap
 import coil3.Image
 import coil3.request.ImageRequest
 import coil3.toBitmap
-import com.storyteller_f.a.app.core.utils.ImageFormat.*
+import com.storyteller_f.a.app.core.utils.ImageFormat.JPEG
+import com.storyteller_f.a.app.core.utils.ImageFormat.PNG
+import com.storyteller_f.a.app.core.utils.ImageFormat.WEBP
 import kotlinx.io.files.Path
 import org.jetbrains.skia.EncodedImageFormat
 
@@ -18,13 +20,13 @@ actual fun Image.coilImageToImageBitmap(): Result<ImageBitmap> {
 
 actual fun saveImageBitmap(
     imageBitmap: ImageBitmap,
-    name: String,
+    path: String,
     format: ImageFormat,
     quality: Int,
 ): Result<Path> {
     return runCatching {
         val data = imageBitmapToByteArray(imageBitmap, format, quality)
-        writeImageFile(name, data)
+        writeImageFile(path, data)
     }
 }
 

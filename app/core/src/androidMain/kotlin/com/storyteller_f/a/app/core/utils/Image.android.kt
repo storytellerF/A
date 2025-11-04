@@ -20,12 +20,12 @@ actual fun Image.coilImageToImageBitmap(): Result<ImageBitmap> {
 
 actual fun saveImageBitmap(
     imageBitmap: ImageBitmap,
-    name: String,
+    path: String,
     format: ImageFormat,
-    quality: Int
+    quality: Int,
 ): Result<Path> {
     return runCatching {
-        val path = Path(SystemTemporaryDirectory, "tmpImage/$name-cropped.png")
+        val path = Path(SystemTemporaryDirectory, path)
         path.safeSink().buffered().asOutputStream().use {
             imageBitmap.asAndroidBitmap().compress(
                 when (format) {

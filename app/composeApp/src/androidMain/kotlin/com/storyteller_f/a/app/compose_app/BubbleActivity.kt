@@ -6,24 +6,21 @@ import androidx.activity.compose.setContent
 import androidx.compose.material3.Text
 import androidx.compose.runtime.CompositionLocalProvider
 import com.storyteller_f.a.app.core.components.CenterBox
-import com.storyteller_f.shared.commonJson
 
-class MediaPlayerActivity : ComponentActivity() {
+class BubbleActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        commonForActivity()
+        val roomId = intent.getLongExtra("roomId", 0)
         setContent {
-            val json = intent.getStringExtra("json")
-            if (json == null) {
+            if (roomId == 0L) {
                 CenterBox {
-                    Text("invalid")
+                    Text("invalid roomId")
                 }
             } else {
-                val session = commonJson.decodeFromString<FileViewInfo>(json)
                 CompositionLocalProvider(
                     LocalUiViewModel provides uiViewModel
                 ) {
-                    MediaPlayerPage(session)
+                    BubblePage(roomId)
                 }
             }
         }

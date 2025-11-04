@@ -24,7 +24,6 @@ import com.storyteller_f.shared.isRunningOnRobolectric
 import io.github.aakira.napier.Napier
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.init
-import kotlinx.collections.immutable.persistentListOf
 import org.unifiedpush.android.connector.UnifiedPush
 import java.util.concurrent.Future
 
@@ -70,7 +69,6 @@ class MainActivity : ComponentActivity(), ClientFileServiceContainer {
         commonForActivity()
         initEnvironment(this)
         registerDevice(this)
-        bindFileService(persistentListOf())
         val receiver = CustomClientFileProvider(this)
         setContent {
             CompositionLocalProvider(
@@ -106,6 +104,7 @@ class MainActivity : ComponentActivity(), ClientFileServiceContainer {
     }
 
     override var binder: FileBinder? = null
+    override var isConnecting: Boolean = false
 }
 
 fun ComponentActivity.initFromContext() {

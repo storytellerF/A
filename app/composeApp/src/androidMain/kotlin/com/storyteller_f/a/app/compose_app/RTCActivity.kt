@@ -30,6 +30,7 @@ import androidx.lifecycle.lifecycleScope
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.shepeliev.webrtckmp.*
+import com.storyteller_f.a.app.compose_app.ui.theme.AppTheme
 import com.storyteller_f.a.client.core.sendFrame
 import com.storyteller_f.shared.obj.CustomAnswer
 import com.storyteller_f.shared.obj.CustomCandidate
@@ -98,7 +99,7 @@ class RTCActivity : ComponentActivity(), RTCContainer {
             }
         })
         setContent {
-            CommonEntry {
+            AppTheme(dynamicColor = true) {
                 val roomId by this.roomId.collectAsState()
                 roomId?.let { WebRTCPage(this, it) }
             }

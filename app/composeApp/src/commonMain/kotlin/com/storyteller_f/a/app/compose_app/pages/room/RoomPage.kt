@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.AddHome
 import androidx.compose.material.icons.filled.ArrowCircleDown
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.CardMembership
+import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Error
@@ -90,6 +91,7 @@ import com.storyteller_f.a.app.compose_app.permission_denied
 import com.storyteller_f.a.app.compose_app.private_room_pub_key_loading
 import com.storyteller_f.a.app.compose_app.send
 import com.storyteller_f.a.app.compose_app.success
+import com.storyteller_f.a.app.compose_app.utils.notifyNotification
 import com.storyteller_f.a.app.compose_app.utils.startCall
 import com.storyteller_f.a.app.core.components.CustomAlertDialog
 import com.storyteller_f.a.app.core.components.CustomAlertDialogController
@@ -110,6 +112,7 @@ import com.storyteller_f.a.client.core.getCommunityInfo
 import com.storyteller_f.a.client.core.joinRoom
 import com.storyteller_f.a.client.core.processEncryptedTopic
 import com.storyteller_f.a.client.core.sendMessage
+import com.storyteller_f.shared.getPlatform
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
@@ -628,14 +631,14 @@ private fun RoomDialogButtons(roomInfo: RoomInfo, dismiss: () -> Unit) {
     val sessionManager = LocalSessionManager.current
     val globalDialogController = LocalGlobalDialog.current
     Column {
-        ButtonNav(Icons.Default.CardMembership, stringResource(Res.string.all_members)) {
-            dismiss()
-            appNavFactory.newAppNav().gotoMemberPage(roomInfo.id, ObjectType.ROOM)
-        }
         val isRoomPage by appNavFactory.hasRouteFlow<RoomScreen>()
         if (isRoomPage) {
             val scope = rememberCoroutineScope()
             val toasterState = LocalToaster.current
+            ButtonNav(Icons.Default.CardMembership, stringResource(Res.string.all_members)) {
+                dismiss()
+                appNavFactory.newAppNav().gotoMemberPage(roomInfo.id, ObjectType.ROOM)
+            }
             if (roomInfo.isJoined) {
                 ButtonNav(Icons.Default.Close, stringResource(Res.string.exit_room)) {
                     scope.launch {
@@ -659,6 +662,13 @@ private fun RoomDialogButtons(roomInfo: RoomInfo, dismiss: () -> Unit) {
 
             ButtonNav(Icons.Default.Call, "Start Call") {
                 startCall(roomInfo.id)
+            }
+            if (getPlatform().name.contains("android", ignoreCase = true)) {
+                ButtonNav(Icons.Default.ChatBubble, "Bubble") {
+                    scope.launch {
+                        notifyNotification(roomInfo)
+                    }
+                }
             }
 
             if (roomInfo.creator == me?.id) {

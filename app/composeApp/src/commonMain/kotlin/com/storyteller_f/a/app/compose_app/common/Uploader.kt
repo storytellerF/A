@@ -35,6 +35,9 @@ class UploaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIViewMo
     val mutex = Mutex()
     val runningSet = mutableSetOf<String>()
     override fun upload(clipData: ImmutableList<ClientFile>) {
+        if (clipData.isEmpty()) {
+            return
+        }
         Napier.i {
             "upload ${
                 clipData.joinToString {

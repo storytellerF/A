@@ -8,6 +8,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROCESSING" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_REMOTE_MESSAGING" />
 
     <application
         android:name=".compose_app.AApplication"
@@ -70,6 +71,13 @@
             android:exported="true"
             android:supportsPictureInPicture="true"
             android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".compose_app.BubbleActivity"
+            android:allowEmbedded="true"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|mnc|colorMode|density|fontScale|fontWeightAdjustment|keyboard|layoutDirection|locale|mcc|navigation|smallestScreenSize|touchscreen|uiMode"
+            android:documentLaunchMode="always"
+            android:exported="true"
+            android:resizeableActivity="true" />
 
         <service
             android:name=".compose_app.PlaybackService"
@@ -92,7 +100,8 @@
             android:foregroundServiceType="mediaProcessing">
 
         </service>
-        <service android:name=".compose_app.RTCService"
+        <service
+            android:name=".compose_app.RTCService"
             android:exported="false"
             android:foregroundServiceType="phoneCall">
 

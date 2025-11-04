@@ -43,7 +43,6 @@ import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -163,10 +162,11 @@ fun getCommunityFont(communityId: PrimaryKey): Typography {
 fun getFontFamily(communityId: PrimaryKey): State<FontFamily?> {
     val model = createCommunityViewModel(communityId)
     val community by model.handler.data.collectAsState()
-    val downloadViewModel = getDownloadViewModel(community?.font?.id)
+    val fileInfo = community?.font
+    val downloadViewModel = getDownloadViewModel(fileInfo?.id)
     val provider = LocalClientFileProvider.current
-    SideEffect {
-        val font = community?.font
+    LaunchedEffect(fileInfo) {
+        val font = fileInfo
         if (font != null) {
             val path = Path(SystemTemporaryDirectory, "downloads", font.id.toString(), font.name)
             provider.getDownloader()?.download(font, path)
@@ -600,6 +600,7 @@ private fun DownloadInfoTitle(
     it: FileInfo,
     data: DownloadInfo?,
 ) {
+    val scope = rememberCoroutineScope()
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(20.dp)
@@ -608,7 +609,9 @@ private fun DownloadInfoTitle(
         Text(it.name, modifier = Modifier.weight(1f))
         if (data != null && data.status != DownloadStatus.PROCESSED) {
             Button({
-                provider.getDownloader()?.resume(it)
+                scope.launch {
+                    provider.getDownloader()?.resume(it)
+                }
             }) {
                 Text("Retry")
             }

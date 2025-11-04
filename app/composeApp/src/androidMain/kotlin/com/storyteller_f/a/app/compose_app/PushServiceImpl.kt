@@ -31,8 +31,8 @@ class PushServiceImpl : PushService(), LifecycleOwner {
         Napier.i(tag = "push") {
             "receive message $message"
         }
-        val channel = "Regular"
-        val notificationManager = getOrCreateNotificationManager(this, channel)
+        val channel = "Push"
+        val notificationManager = getOrCreateNotificationChannel(this, channel)
         if (ActivityCompat.checkSelfPermission(
                 this,
                 Manifest.permission.POST_NOTIFICATIONS
@@ -86,7 +86,7 @@ class PushServiceImpl : PushService(), LifecycleOwner {
         get() = registry
 }
 
-fun getOrCreateNotificationManager(
+fun getOrCreateNotificationChannel(
     context: Context,
     channel: String
 ): NotificationManagerCompat {

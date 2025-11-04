@@ -21,13 +21,13 @@ enum class ImageFormat {
 
 expect fun saveImageBitmap(
     imageBitmap: ImageBitmap,
-    name: String,
+    path: String,
     format: ImageFormat = ImageFormat.PNG,
     quality: Int = 90
 ): Result<Path>
 
 fun writeImageFile(filePath: String, data: ByteArray): Path {
-    val path = Path(SystemTemporaryDirectory, "tmpImage/$filePath-cropped.png")
+    val path = Path(SystemTemporaryDirectory, filePath)
     SystemFileSystem.sink(path).buffered().use {
         it.writeFully(data)
     }

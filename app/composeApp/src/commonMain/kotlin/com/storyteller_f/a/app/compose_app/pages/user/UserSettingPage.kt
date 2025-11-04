@@ -19,10 +19,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import coil3.ImageLoader
 import coil3.PlatformContext
+import coil3.SingletonImageLoader
 import coil3.compose.LocalPlatformContext
 import com.attafitamim.krop.core.crop.AspectRatio
 import com.attafitamim.krop.core.crop.CropError
@@ -261,13 +262,7 @@ private suspend fun GlobalDialogController.cropImage(
     mediaTarget: ObjectTuple,
 ): Result<FileInfo?> {
     val image = useResult {
-        val image = ImageLoader(context)
-            .execute(
-                imageRequest(context, sessionManager.client, info).androidAllowHardware(false)
-                    .build()
-            )
-            .image
-        image?.coilImageToImageBitmap() ?: Result.failure(Exception("download"))
+        getRemoteImageBitmap(sessionManager, context, info) ?: Result.failure(Exception("download"))
     }
     return image.mapResult {
         when (val result = imageCropper.crop(ImageBitmapSrc(it))) {
@@ -281,14 +276,16 @@ private suspend fun GlobalDialogController.cropImage(
 
             is CropResult.Success -> {
                 useResult {
+                    val name = info.name.substringBeforeLast(".")
                     saveImageBitmap(
                         result.bitmap,
-                        info.name.substringBeforeLast("."),
+                        "tmpImage/$name-cropped.png",
                         when (info.contentType) {
                             "image/webp" -> ImageFormat.WEBP
                             "image/jpeg", "image/jpg" -> ImageFormat.JPEG
                             else -> ImageFormat.PNG
-                        }
+                        },
+
                     )
                 }
             }
@@ -393,4 +390,18 @@ fun InputDialog(show: Boolean, init: String, dismiss: () -> Unit, onConfirm: (St
             })
         })
     }
+}
+
+suspend fun getRemoteImageBitmap(
+    sessionManager: UserSessionManager,
+    context: PlatformContext,
+    info: FileInfo
+): Result<ImageBitmap>? {
+    val imageRequest = imageRequest(context, sessionManager.client, info)
+        .androidAllowHardware(false)
+        .build()
+    val image = SingletonImageLoader.get(context)
+        .execute(imageRequest)
+        .image
+    return image?.coilImageToImageBitmap()
 }

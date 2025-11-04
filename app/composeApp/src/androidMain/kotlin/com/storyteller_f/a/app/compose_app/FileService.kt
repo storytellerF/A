@@ -16,14 +16,17 @@ import com.storyteller_f.a.app.compose_app.common.Downloader
 import com.storyteller_f.a.app.compose_app.common.DownloaderImpl
 import com.storyteller_f.a.app.compose_app.common.Uploader
 import com.storyteller_f.a.app.compose_app.common.UploaderImpl
+import io.github.aakira.napier.Napier
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.delay
 import java.lang.ref.WeakReference
 
 class FileService : LifecycleService() {
     override fun onCreate() {
         super.onCreate()
-        val channel = "Upload"
-        getOrCreateNotificationManager(this, channel)
+        val channel = "File Service"
+        getOrCreateNotificationChannel(this, channel)
         val notification = NotificationCompat.Builder(this, channel)
             .setSmallIcon(com.storyteller_f.a.app.R.drawable.baseline_upload_file_24)
             .setContentTitle("Uploading")
@@ -49,6 +52,7 @@ class FileBinder(
 
 interface ClientFileServiceContainer {
     var binder: FileBinder?
+    var isConnecting: Boolean
 }
 
 class FileConnection(
@@ -58,7 +62,9 @@ class FileConnection(
     override fun onServiceConnected(p0: ComponentName?, p1: IBinder?) {
         val binder = p1 as FileBinder
         binder.upload(clipData)
-        context.get()?.binder = binder
+        val container = context.get() ?: return
+        container.binder = binder
+        container.isConnecting = false
     }
 
     override fun onServiceDisconnected(p0: ComponentName?) {
@@ -66,10 +72,11 @@ class FileConnection(
     }
 }
 
-fun <T> T.bindFileService(clipData: ImmutableList<ClipFile>)
+fun <T> T.bindFileService(clipFiles: ImmutableList<ClipFile>)
     where T : ComponentActivity, T : ClientFileServiceContainer {
+    isConnecting = true
     val serviceIntent = Intent(this, FileService::class.java)
-    val connection = FileConnection(WeakReference(this), clipData)
+    val connection = FileConnection(WeakReference(this), clipFiles)
     bindService(serviceIntent, connection, Context.BIND_AUTO_CREATE)
     lifecycle.addObserver(object : DefaultLifecycleObserver {
         override fun onDestroy(owner: LifecycleOwner) {
@@ -79,12 +86,31 @@ fun <T> T.bindFileService(clipData: ImmutableList<ClipFile>)
     })
 }
 
-class CustomClientFileProvider(val service: ClientFileServiceContainer) : ClientFileProvider {
-    override fun getDownloader(): Downloader? {
-        return service.binder?.downloader
+class CustomClientFileProvider<T>(val service: T) :
+    ClientFileProvider where T : ComponentActivity, T : ClientFileServiceContainer {
+    override suspend fun getDownloader(): Downloader? {
+        val binder = service.binder ?: awaitBinder()
+        return binder?.downloader
     }
 
-    override fun getUploader(): Uploader? {
-        return service.binder?.uploader
+    private suspend fun awaitBinder(): FileBinder? {
+        if (!service.isConnecting) {
+            service.bindFileService(persistentListOf())
+        }
+        while (service.isConnecting) {
+            delay(100)
+        }
+        val binder = service.binder
+        if (binder == null) {
+            Napier.w(tag = "file") {
+                "FileService binder is null after connect"
+            }
+        }
+        return binder
+    }
+
+    override suspend fun getUploader(): Uploader? {
+        val binder = service.binder ?: awaitBinder()
+        return binder?.uploader
     }
 }

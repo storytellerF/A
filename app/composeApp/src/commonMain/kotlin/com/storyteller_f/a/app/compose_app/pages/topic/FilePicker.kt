@@ -82,6 +82,8 @@ import com.storyteller_f.a.client.core.upload
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.utils.formatTime
+import com.storyteller_f.shared.utils.generateImageMarkdownContent
+import com.storyteller_f.shared.utils.generateObjectMarkdownContent
 import com.storyteller_f.shared.utils.mapIfNotNull
 import io.github.aakira.napier.Napier
 import io.github.vinceglb.filekit.FileKit

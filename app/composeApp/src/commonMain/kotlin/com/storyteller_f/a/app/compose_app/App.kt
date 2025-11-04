@@ -14,6 +14,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import coil3.ImageLoader
@@ -26,11 +28,13 @@ import com.dokar.sonner.rememberToasterState
 import com.kdroid.composenotification.builder.ExperimentalNotificationsApi
 import com.kdroid.composenotification.builder.Notification
 import com.kdroid.composenotification.builder.getNotificationProvider
+import com.storyteller_f.a.app.compose_app.common.AppNav
 import com.storyteller_f.a.app.compose_app.common.AppNavFactory
 import com.storyteller_f.a.app.compose_app.common.Downloader
 import com.storyteller_f.a.app.compose_app.common.HomeScreen
 import com.storyteller_f.a.app.compose_app.common.OnTopicCreated
 import com.storyteller_f.a.app.compose_app.common.RoomScreen
+import com.storyteller_f.a.app.compose_app.common.TopicComposeData
 import com.storyteller_f.a.app.compose_app.common.TopicScreen
 import com.storyteller_f.a.app.compose_app.common.Uploader
 import com.storyteller_f.a.app.compose_app.common.buildRootNav
@@ -43,6 +47,7 @@ import com.storyteller_f.a.app.compose_app.components.RemoteMediaItem
 import com.storyteller_f.a.app.compose_app.components.globalPlayerState
 import com.storyteller_f.a.app.compose_app.components.rememberIsInPipMode
 import com.storyteller_f.a.app.compose_app.pages.file.FileViewPage
+import com.storyteller_f.a.app.compose_app.pages.room.RoomPage
 import com.storyteller_f.a.app.compose_app.pages.user.AccountSwitch
 import com.storyteller_f.a.app.compose_app.pages.user.AccountSwitcher
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
@@ -81,6 +86,8 @@ import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.RoomFrame
+import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.type.PrimaryKey
 import com.strabled.composepreferences.ProvideDataStoreManager
 import com.strabled.composepreferences.setPreferences
 import dev.tclement.fonticons.ProvideIconParameters
@@ -91,7 +98,6 @@ import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -111,17 +117,20 @@ import kotlin.uuid.Uuid
 fun getAsyncImageLoader(context: PlatformContext) =
     ImageLoader.Builder(context).crossfade(true).logger(DebugLogger()).build()
 
+/**
+ * 可以通过lazy 的模式获取Downloader 和 Uploader
+ */
 interface ClientFileProvider {
-    fun getDownloader(): Downloader?
-    fun getUploader(): Uploader?
+    suspend fun getDownloader(): Downloader?
+    suspend fun getUploader(): Uploader?
 
     companion object {
         val EMPTY = object : ClientFileProvider {
-            override fun getDownloader(): Downloader? {
+            override suspend fun getDownloader(): Downloader? {
                 TODO("Not yet implemented")
             }
 
-            override fun getUploader(): Uploader? {
+            override suspend fun getUploader(): Uploader? {
                 TODO("Not yet implemented")
             }
         }
@@ -145,8 +154,8 @@ val LocalClientFileProvider = compositionLocalOf {
 }
 
 @OptIn(DelicateCoroutinesApi::class)
-val LocalUiViewModel = compositionLocalOf {
-    UIViewModel(GlobalScope, "", "")
+val LocalUiViewModel = compositionLocalOf<UIViewModel> {
+    error("LocalUiViewModel must be provided")
 }
 
 @Serializable
@@ -190,12 +199,12 @@ fun App() {
     CommonEntry {
         val playerSession by globalPlayerState
         val isPip = rememberIsInPipMode()
-        MainAppPage(isPip, playerSession)
+        AppInternal(isPip, playerSession)
     }
 }
 
 @Composable
-fun MainAppPage(
+fun AppInternal(
     isPip: Boolean,
     player: FileViewInfo.Player?,
 ) {
@@ -210,29 +219,37 @@ fun MainAppPage(
     if (isPip && player != null) {
         FileViewPage(player)
     } else {
-        ObserveMessage()
-        CompositionLocalProvider(
-            LocalAppNavFactory provides appNav,
-        ) {
-            NavHost(navigator, startDestination = HomeScreen, enterTransition = {
-                slideInHorizontally {
-                    it
-                }
-            }, exitTransition = {
-                slideOutHorizontally {
-                    -it
-                }
-            }, popEnterTransition = {
-                slideInHorizontally {
-                    -it
-                }
-            }, popExitTransition = {
-                slideOutHorizontally {
-                    it
-                }
-            }) {
-                buildRootNav(navigator)
+        MainAppPage(appNav, navigator)
+    }
+}
+
+@Composable
+private fun MainAppPage(
+    appNav: AppNavFactory,
+    navigator: NavHostController
+) {
+    ObserveMessage()
+    CompositionLocalProvider(
+        LocalAppNavFactory provides appNav,
+    ) {
+        NavHost(navigator, startDestination = HomeScreen, enterTransition = {
+            slideInHorizontally {
+                it
             }
+        }, exitTransition = {
+            slideOutHorizontally {
+                -it
+            }
+        }, popEnterTransition = {
+            slideInHorizontally {
+                -it
+            }
+        }, popExitTransition = {
+            slideOutHorizontally {
+                it
+            }
+        }) {
+            buildRootNav(navigator)
         }
     }
 }
@@ -257,7 +274,16 @@ fun CommonEntry(content: @Composable () -> Unit) {
             LocalGlobalDialog provides instance.controller,
             LocalGlobalTask provides instance.task
         ) {
-            CommonEntryInternal(content)
+            ProvideFontIcon {
+                val dataStoreManager = createCustomDataStoreManager()
+                ProvideDataStoreManager(dataStoreManager) {
+                    setPreferences {
+                        "gpt_model" defaultValue ""
+                    }
+                    content()
+                    AccountSwitch()
+                }
+            }
         }
     }
 }
@@ -327,20 +353,6 @@ class UIViewModel(viewModelScope: CoroutineScope, wsServerUrl: String, httpUrl: 
                     job.join()
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun CommonEntryInternal(content: @Composable (() -> Unit)) {
-    ProvideFontIcon {
-        val dataStoreManager = createCustomDataStoreManager()
-        ProvideDataStoreManager(dataStoreManager) {
-            setPreferences {
-                "gpt_model" defaultValue ""
-            }
-            content()
-            AccountSwitch()
         }
     }
 }
@@ -511,4 +523,76 @@ fun createCustomUserSessionManager(
     val customSessionManager = createUserSessionManager(webSocketUrl, createClient, onReceiveFrame)
     customSessionManager.restoreFromStorage(settings)
     return CustomUserSessionManager(customSessionManager, historyManager)
+}
+
+@Composable
+fun MediaPlayerPage(session: FileViewInfo) {
+    CommonEntry({
+        FileViewPage(session)
+    })
+}
+
+@Composable
+fun BubblePage(roomId: Long) {
+    CommonEntry({
+        val appNav = remember {
+            createAppNavFactoryForBubble()
+        }
+        CompositionLocalProvider(
+            LocalAppNavFactory provides appNav,
+        ) {
+            RoomPage(roomId, false)
+        }
+    })
+}
+
+private fun createAppNavFactoryForBubble(): AppNavFactory = object : AppNavFactory {
+    override fun newAppNav() = object : AppNav {
+        override val currentDestination: NavBackStackEntry? = null
+        override val currentDestinationFlow: StateFlow<NavBackStackEntry?> =
+            MutableStateFlow(null)
+
+        override fun gotoLogin() = Unit
+
+        override fun gotoRoom(roomId: PrimaryKey, showDialog: Boolean) = Unit
+
+        override fun gotoCommunity(communityId: PrimaryKey, showDialog: Boolean) = Unit
+
+        override fun gotoTopic(topicId: PrimaryKey) = Unit
+
+        override fun gotoHome() = Unit
+
+        override fun gotoTopicCompose(data: TopicComposeData) = Unit
+
+        override fun gotoMemberPage(objectId: PrimaryKey, objectType: ObjectType) = Unit
+
+        override fun gotoAbout() = Unit
+
+        override fun gotoUser(uid: PrimaryKey) = Unit
+
+        override fun back() = Unit
+
+        override fun gotoUserSetting() = Unit
+
+        override fun gotoPreference() = Unit
+
+        override fun gotoMedia(info: FileInfo) = Unit
+
+        override fun gotoLocalImage(url: String) = Unit
+
+        override fun gotoTitleCompose() = Unit
+
+        override fun gotoCommunityCompose() = Unit
+
+        override fun gotoRoomCompose() = Unit
+
+        override fun gotoSettingPage(objectId: PrimaryKey, objectType: ObjectType) =
+            Unit
+
+        override fun gotoReactionListPage(topicId: PrimaryKey) = Unit
+
+        override fun gotoFavoritePage() = Unit
+
+        override fun gotoSubscriptionPage() = Unit
+    }
 }
