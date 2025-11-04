@@ -40,3 +40,7 @@ expect fun createCustomDataStoreManager(): DataStoreManager
 expect fun unregisterPushService()
 
 expect suspend fun notifyNotification(room: RoomInfo)
+
+expect fun getDeepLinkHost(): String
+
+expect fun getDeepLinkScheme(): String

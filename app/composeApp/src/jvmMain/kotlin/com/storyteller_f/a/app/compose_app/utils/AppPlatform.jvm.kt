@@ -5,6 +5,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.platform.awtClipboard
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import com.storyteller_f.a.app.compose_app.AppConfig
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.type.PrimaryKey
 import com.strabled.composepreferences.utilis.DataStoreManager
@@ -87,3 +88,10 @@ actual fun createCustomDataStoreManager(): DataStoreManager {
 actual fun unregisterPushService() = Unit
 
 actual suspend fun notifyNotification(room: RoomInfo) = Unit
+actual fun getDeepLinkHost(): String {
+    return AppConfig.DEEP_LINK_HOST
+}
+
+actual fun getDeepLinkScheme(): String {
+    return AppConfig.DEEP_LINK_SCHEME_PREFIX
+}

@@ -16,6 +16,7 @@ import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
+import androidx.navigation.navDeepLink
 import androidx.navigation.toRoute
 import com.mikepenz.aboutlibraries.ui.compose.LibraryDefaults
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
@@ -42,6 +43,8 @@ import com.storyteller_f.a.app.compose_app.pages.user.UserFavoritePage
 import com.storyteller_f.a.app.compose_app.pages.user.UserPage
 import com.storyteller_f.a.app.compose_app.pages.user.UserSettingPage
 import com.storyteller_f.a.app.compose_app.pages.user.UserSubscriptionPage
+import com.storyteller_f.a.app.compose_app.utils.getDeepLinkHost
+import com.storyteller_f.a.app.compose_app.utils.getDeepLinkScheme
 import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.obj.ObjectTuple
@@ -63,10 +66,10 @@ import kotlin.reflect.KClass
 data object HomeScreen
 
 @Serializable
-data class CommunityScreen(val communityId: PrimaryKey, val showDialog: Boolean)
+data class CommunityScreen(val communityId: PrimaryKey, val showDialog: Boolean? = null)
 
 @Serializable
-data class RoomScreen(val roomId: PrimaryKey, val showDialog: Boolean)
+data class RoomScreen(val roomId: PrimaryKey, val showDialog: Boolean? = null)
 
 @Serializable
 data object SignSessionScreen
@@ -400,12 +403,14 @@ private fun NavGraphBuilder.buildMainScreen() {
         val screen = it.toRoute<CommunityScreen>()
         CommunityPage(
             screen.communityId,
-            screen.showDialog
+            screen.showDialog == true
         )
     }
-    composable<RoomScreen> {
+    composable<RoomScreen>(
+        deepLinks = listOf(navDeepLink<RoomScreen>(basePath = "${getDeepLinkScheme()}://${getDeepLinkHost()}/room"))
+    ) {
         val screen = it.toRoute<RoomScreen>()
-        RoomPage(screen.roomId, screen.showDialog)
+        RoomPage(screen.roomId, screen.showDialog == true)
     }
     composable<TopicScreen> {
         TopicPage(it.toRoute<TopicScreen>().topicId)
@@ -460,6 +465,32 @@ private fun NavGraphBuilder.buildComposeScreen(navigator: NavHostController) {
         val composeData = commonJson.decodeFromString<TopicComposeData>(route.json)
         TopicComposePage(composeData) {
             navigator.popBackStack()
+        }
+    }
+}
+
+object ExternalUriHandler {
+    // Storage for when a URI arrives before the listener is set up
+    private var cached: String? = null
+
+    var listener: ((uri: String) -> Unit)? = null
+        set(value) {
+            field = value
+            if (value != null) {
+                // When a listener is set and `cached` is not empty,
+                // immediately invoke the listener with the cached URI
+                cached?.let { value.invoke(it) }
+                cached = null
+            }
+        }
+
+    // When a new URI arrives, cache it.
+    // If the listener is already set, invoke it and clear the cache immediately.
+    fun onNewUri(uri: String) {
+        cached = uri
+        listener?.let {
+            it.invoke(uri)
+            cached = null
         }
     }
 }
