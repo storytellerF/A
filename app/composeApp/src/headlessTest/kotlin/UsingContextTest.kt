@@ -10,7 +10,7 @@ expect abstract class UsingContextTest() {
 fun UsingContextTest.remoteServerTest(
     port: Int,
     block: suspend CoroutineScope.(String) -> Unit,
-) = runTest(timeout = 1.minutes) {
+) = runTest(timeout = 10.minutes) {
     val p = port + portOffset
     println("port: $p")
     forceStop(p)

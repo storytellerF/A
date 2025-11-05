@@ -44,6 +44,7 @@ import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
+import com.storyteller_f.shared.utils.trimMarkdownUnusedContent
 import io.github.aakira.napier.Napier
 import kotlinx.collections.immutable.toImmutableList
 import java.io.File
@@ -116,6 +117,7 @@ private suspend fun Backend.savePlainTopic(
     parentTuple: ObjectTuple,
     rootTuple: ObjectTuple
 ): Result<TopicInfo?> {
+    val trimmedContent = trimMarkdownUnusedContent(content)
     val newId = SnowflakeFactory.nextId()
     val topic = Topic(
         id = newId,
@@ -125,12 +127,12 @@ private suspend fun Backend.savePlainTopic(
         parentType = parentTuple.objectType,
         rootId = rootTuple.objectId,
         rootType = rootTuple.objectType,
-        content.encodeToByteArray(),
+        trimmedContent.encodeToByteArray(),
         false,
         level + 1,
         lastModifiedTime = null,
     )
-    val plain = TopicContent.Plain(content)
+    val plain = TopicContent.Plain(trimmedContent)
     val topicInfo = RawTopic(topic, plain).toTopicInfo()
 
     val documentFileList = documentFileList(listOf(topicInfo)).map {
