@@ -202,10 +202,10 @@ composeCompiler {
 }
 
 android {
-    namespace = "com.storyteller_f.a.cloud.panel"
+    namespace = "com.storyteller_f.a.panel"
 
     defaultConfig {
-        applicationId = "com.storyteller_f.a.cloud.panel.android.$flavorId"
+        applicationId = "com.storyteller_f.a.panel.android.$flavorId"
     }
 }
 
@@ -229,11 +229,11 @@ easylauncher {
 
 compose.desktop {
     application {
-        mainClass = "org.storyteller_f.a.cloud.panel.MainKt"
+        mainClass = "com.storyteller_f.a.panel.PanelMainKt"
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "org.storyteller_f.a.cloud.panel"
+            packageName = "com.storyteller_f.a.panel"
             packageVersion = "1.0.0"
         }
         buildTypes.release.proguard {
@@ -266,7 +266,7 @@ buildkonfig {
 
 compose.resources {
     publicResClass = false
-    packageOfResClass = "com.storyteller_f.a.cloud.panel"
+    packageOfResClass = "com.storyteller_f.a.panel"
     generateResClass = auto
 }
 
