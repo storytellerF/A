@@ -3,6 +3,7 @@ import com.storyteller_f.shared.utils.extractHeadParagraph
 import com.storyteller_f.shared.utils.extractMarkdownHeadline
 import com.storyteller_f.shared.utils.extractMarkdownMediaLink
 import com.storyteller_f.shared.utils.readInlineMath
+import com.storyteller_f.shared.utils.trimMarkdownUnusedContent
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.ast.accept
 import org.intellij.markdown.ast.acceptChildren
@@ -78,5 +79,39 @@ class MarkdownTest {
                 node.acceptChildren(this)
             }
         })
+    }
+
+    @Test
+    fun `test filter code fence unused content`() {
+        val markdownText = """
+        hello
+        ```csa
+        
+            /user/1
+        ```
+        
+        
+        ```object
+        {
+            "contentType": "image/png",
+            "name": "imag.png",
+            "hello": "world"
+        }
+        ```
+        """.trimIndent()
+        val message = trimMarkdownUnusedContent(markdownText)
+        assertEquals(
+            """
+            hello
+            ```csa
+            /user/1
+            ```
+            
+            ```object
+            {"name":"imag.png","contentType":"image/png"}
+            ```
+            """.trimIndent(),
+            message
+        )
     }
 }

@@ -200,6 +200,63 @@ fun extractImageUrl(node: ASTNode, markdownText: String): String? {
     return imagePath
 }
 
+fun trimMarkdownUnusedContent(markdownText: String): String {
+    val parsedTree = astNode(markdownText)
+    return buildString {
+        parsedTree.accept(object : Visitor {
+            var lastNode: ASTNode? = null
+
+            /**
+             * 容量为3
+             */
+            val queue = mutableListOf<ASTNode>()
+
+            override fun visitNode(node: ASTNode) {
+                println("${node.type}")
+                queue.add(node)
+                if (queue.size > 3) {
+                    queue.removeAt(0)
+                }
+                if (node.type == MarkdownElementTypes.CODE_FENCE) {
+                    val lang = getLang(node, markdownText)
+                    val content = readCodeFence(node, markdownText)
+                    if (lang == "object") {
+                        try {
+                            val obj = commonJson.decodeFromString<MarkdownObject>(content)
+                            appendLine("```object")
+                            appendLine(commonJson.encodeToString<MarkdownObject>(obj))
+                            append("```")
+                        } catch (_: Exception) {
+                        }
+                    } else if (lang == "csa") {
+                        content.trim().lineSequence().firstNotNullOfOrNull {
+                            it.takeIf { it.isNotBlank() }?.trim()
+                        }?.let {
+                            appendLine("```csa")
+                            appendLine(it)
+                            append("```")
+                        }
+                    } else {
+                        append(content)
+                    }
+                } else if (node.type == MarkdownElementTypes.MARKDOWN_FILE) {
+                    node.acceptChildren(this)
+                } else if (node.type == MarkdownTokenTypes.EOL) {
+                    if (queue.any {
+                            it.type != MarkdownTokenTypes.EOL
+                        }) {
+                        appendLine()
+                    }
+                } else {
+                    val value = node.getTextInNode(markdownText)
+                    println("else ${value.chars().toArray().joinToString(",")}")
+                    append(value)
+                }
+            }
+        })
+    }.trim()
+}
+
 fun astNode(markdownText: String): ASTNode {
     val flavour = GFMFlavourDescriptor()
     val parser = MarkdownParser(flavour)
@@ -253,10 +310,7 @@ fun generateImageMarkdownContent(info: FileInfo): String =
     """![${info.name}](${info.name} "${info.name}")"""
 
 fun generateObjectMarkdownContent(info: FileInfo): String = """```object
-{
-    "contentType": "${info.contentType}",
-    "name": "${info.name}"
-}
+{"name": "${info.name}","contentType": "${info.contentType}"}
 ```"""
 
 fun generateModelMarkdownContent(objectTuple: ObjectTuple): String = """```csa
