@@ -44,8 +44,6 @@ kotlin {
         headlessTest.dependencies {
             implementation(projects.client.kotbase)
         }
-        androidMain.dependencies {
-        }
         commonMain.dependencies {
             implementation(projects.shared)
             implementation(projects.client.modelStorage)
@@ -67,18 +65,8 @@ kotlin {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
         }
-        jvmMain.dependencies {
-        }
-        jvmMain {
-        }
         jvmTest {
             dependsOn(headlessTest)
-        }
-        if (buildIosTarget) {
-            iosMain.dependencies {
-            }
-            iosMain {
-            }
         }
     }
     compilerOptions {
@@ -101,13 +89,12 @@ android {
     }
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
+        consumerProguardFiles("consumer-rules.pro")
     }
     testOptions {
         unitTests.all {
             val dir = project.layout.buildDirectory.dir("native-libs/couchbase").get().asFile
-            it.jvmArgs(
-                "-Djava.library.path=$dir"
-            )
+            it.jvmArgs("-Djava.library.path=$dir")
         }
         unitTests {
             isIncludeAndroidResources = true
