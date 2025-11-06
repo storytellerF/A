@@ -15,6 +15,7 @@ data class CommunityInfo(
     val owner: PrimaryKey,
     val createdTime: LocalDateTime,
     val memberCount: Long,
+    val memberPolicy: MemberPolicy,
     val icon: FileInfo? = null,
     val poster: FileInfo? = null,
     val joinedTime: LocalDateTime? = null,
@@ -32,10 +33,22 @@ data class CommunityInfo(
     data class Extension(val targetUserJoinedTime: LocalDateTime? = null)
 
     companion object {
-        val EMPTY = CommunityInfo(DEFAULT_PRIMARY_KEY, "", "", DEFAULT_PRIMARY_KEY, now(), 0, null, null, now())
+        val EMPTY = CommunityInfo(
+            DEFAULT_PRIMARY_KEY,
+            "",
+            "",
+            DEFAULT_PRIMARY_KEY,
+            now(),
+            0,
+            MemberPolicy.OPEN
+        )
     }
 }
 
 enum class PosterSearch {
     HAS_POSTER, NO_POSTER, UNSPECIFIED
+}
+
+enum class MemberPolicy {
+    OPEN, INVITE_ONLY
 }

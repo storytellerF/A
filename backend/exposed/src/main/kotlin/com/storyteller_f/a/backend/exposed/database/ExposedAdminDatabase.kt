@@ -59,6 +59,7 @@ class ExposedAdminDatabase(val databaseSession: ExposedDatabaseSession) : AdminD
                 this[Communities.icon] = it.iconId
                 this[Communities.owner] = it.owner
                 this[Communities.fontId] = it.fontId
+                this[Communities.memberPolicy] = it.memberPolicy
             }
             Aids.batchInsert(communities) {
                 this[Aids.value] = it.aid

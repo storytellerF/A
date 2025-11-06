@@ -15,6 +15,7 @@ actual fun getRoomDatabase(scope: String): AppDatabase {
     return builder
         .fallbackToDestructiveMigrationOnDowngrade(true)
         .fallbackToDestructiveMigration(true)
+        .fallbackToDestructiveMigrationFrom(true)
         .setDriver(BundledSQLiteDriver())
 //        .setAutoCloseTimeout(1, TimeUnit.HOURS)
 //        .setDriver(AndroidSQLiteDriver())

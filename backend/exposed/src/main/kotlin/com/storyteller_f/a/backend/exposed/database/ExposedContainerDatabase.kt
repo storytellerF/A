@@ -23,11 +23,9 @@ import com.storyteller_f.a.backend.exposed.tables.addJoin
 import com.storyteller_f.a.backend.exposed.tables.mapUserInfo
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.QuotaType
-import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.associateByPair
 import com.storyteller_f.shared.utils.mapResult
-import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.countDistinct
 import org.jetbrains.exposed.v1.core.eq
@@ -57,13 +55,7 @@ class ExposedContainerDatabase(val databaseSession: ExposedDatabaseSession) :
         }
     }
 
-    override suspend fun joinContainer(
-        id: PrimaryKey,
-        uid: PrimaryKey,
-        time: LocalDateTime,
-        objectType: ObjectType,
-        member: Member
-    ): Result<Unit> = databaseSession.dbQuery {
+    override suspend fun joinContainer(member: Member): Result<Unit> = databaseSession.dbQuery {
         addJoin(member)
     }
 

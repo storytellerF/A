@@ -1,10 +1,12 @@
 package com.storyteller_f.a.cloud.server
 
 import com.storyteller_f.a.api.NewCommunity
+import com.storyteller_f.a.api.NewTitle
 import com.storyteller_f.a.api.NewTopic
 import com.storyteller_f.a.api.PaginationQuery
 import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.createCommunity
+import com.storyteller_f.a.client.core.createTitle
 import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.a.client.core.exitCommunity
 import com.storyteller_f.a.client.core.getCommunityInfo
@@ -15,11 +17,21 @@ import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.a.client.core.searchCommunity
 import com.storyteller_f.a.client.core.searchCommunityMembers
 import com.storyteller_f.a.client.core.searchTopics
+import com.storyteller_f.a.cloud.core.service.createTitle
+import com.storyteller_f.shared.model.MemberPolicy
+import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
-import io.ktor.client.request.*
-import io.ktor.http.*
-import kotlin.test.*
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFails
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 class CommunityTest {
     @Test
@@ -204,6 +216,36 @@ class CommunityTest {
                 assertTrue(it.isJoined)
                 assertNotNull(it.extension?.targetUserJoinedTime)
             }
+        }
+    }
+
+    @Test
+    fun `test community invite only`() = test {
+        val firstTuple = attachSession {
+            createCommunity(
+                NewCommunity(
+                    "name1",
+                    "c1",
+                    memberPolicy = MemberPolicy.INVITE_ONLY
+                )
+            ).getOrThrow()
+        }
+        val communityId = firstTuple.custom.id
+        val secondTuple = attachSession {
+            assertFails {
+                joinCommunity(communityId).getOrThrow()
+            }
+        }
+        loginSession(firstTuple) {
+            createTitle(
+                NewTitle(
+                    "join", TitleType.JOIN, secondTuple.uid, communityId,
+                    ObjectType.COMMUNITY, "join"
+                )
+            ).getOrThrow()
+        }
+        loginSession(secondTuple) {
+            joinCommunity(communityId).getOrThrow()
         }
     }
 }

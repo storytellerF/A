@@ -57,26 +57,14 @@ suspend fun Backend.getRoomPubKeys(
 suspend fun Backend.joinRoom(
     roomId: PrimaryKey,
     uid: PrimaryKey,
-) = getRoomInfo(ObjectFetch.IdFetch(roomId), uid, true).mapResultIfNotNull { roomInfo ->
+) = getRoomInfo(IdFetch(roomId), uid, true).mapResultIfNotNull { roomInfo ->
     if (roomInfo.joinedTime != null) {
         Result.success(roomInfo)
     } else {
         val communityId = roomInfo.communityId
         if (communityId == null) {
             // 检查是否存在title
-            database.title.getTitlePaginationResult(
-                PrimaryKeyFetch(null, 1),
-                uid,
-                TitleSearchType.RECEIVER,
-                TitleType.JOIN,
-                roomId
-            ).mapResult {
-                if (it.list.firstOrNull() != null) {
-                    UNIT_RESULT
-                } else {
-                    Result.failure(ForbiddenException("Join failed."))
-                }
-            }
+            getJoinTitleByScope(uid, roomId)
         } else {
             database.container.isMemberJoined(communityId, uid).errorIfFalse {
                 ForbiddenException("you should join community first.")
@@ -86,10 +74,6 @@ suspend fun Backend.joinRoom(
         val time = now()
         val memberId = SnowflakeFactory.nextId()
         database.container.joinContainer(
-            roomInfo.id,
-            uid,
-            time,
-            ObjectType.ROOM,
             Member(memberId, uid, roomInfo.id, ObjectType.ROOM, time, MemberStatus.JOINED, time)
         ).mapResult {
             addUserLog(uid, UserLogType.JOIN, roomInfo.tuple())
@@ -104,8 +88,25 @@ suspend fun Backend.joinRoom(
     }
 }
 
+suspend fun Backend.getJoinTitleByScope(
+    uid: PrimaryKey,
+    scopeId: PrimaryKey
+): Result<Unit> = database.title.getTitlePaginationResult(
+    PrimaryKeyFetch(null, 1),
+    uid,
+    TitleSearchType.RECEIVER,
+    TitleType.JOIN,
+    scopeId
+).mapResult {
+    if (it.list.firstOrNull() != null) {
+        UNIT_RESULT
+    } else {
+        Result.failure(ForbiddenException("Join failed."))
+    }
+}
+
 suspend fun Backend.exitRoom(roomId: PrimaryKey, uid: PrimaryKey) =
-    getRoomInfo(ObjectFetch.IdFetch(roomId), uid, true).mapResultIfNotNull { info ->
+    getRoomInfo(IdFetch(roomId), uid, true).mapResultIfNotNull { info ->
         if (info.joinedTime == null) {
             Result.success(info)
         } else {
@@ -199,7 +200,7 @@ suspend fun Backend.updateRoom(
     }.mapResultIfNotNull {
         database.room.updateRoom(id, newRoom)
     }.mapResultIfNotNull {
-        getRoomInfo(ObjectFetch.IdFetch(id), uid, true)
+        getRoomInfo(IdFetch(id), uid, true)
     }
 }
 

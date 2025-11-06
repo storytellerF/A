@@ -20,6 +20,7 @@ import com.storyteller_f.a.backend.core.types.RawCommunity
 import com.storyteller_f.a.backend.core.types.toCommunityIfo
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.Dimension
+import com.storyteller_f.shared.model.MemberPolicy
 import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.obj.ob
@@ -61,28 +62,41 @@ suspend fun Backend.joinCommunity(
     if (community.joinedTime != null) {
         Result.success(community)
     } else {
-        val time = now()
-        val memberId = SnowflakeFactory.nextId()
-        val member = Member(
-            memberId,
-            uid,
-            communityId,
-            ObjectType.COMMUNITY,
-            time,
-            MemberStatus.JOINED,
-            time
-        )
-        database.container.joinContainer(communityId, uid, time, ObjectType.COMMUNITY, member)
-            .mapResult {
-                addUserLog(uid, UserLogType.JOIN, communityId ob ObjectType.COMMUNITY)
-                Result.success(community.copy(joinedTime = time))
-            }.recoverResult {
-                if (database.isDup(it)) {
-                    getCommunity(ObjectFetch.IdFetch(communityId), uid, true)
-                } else {
-                    Result.failure(it)
-                }
-            }
+        if (community.memberPolicy == MemberPolicy.INVITE_ONLY) {
+            getJoinTitleByScope(uid, communityId)
+        } else {
+            UNIT_RESULT
+        }.mapResult {
+            joinCommunity(uid, communityId, community)
+        }
+    }
+}
+
+private suspend fun Backend.joinCommunity(
+    uid: PrimaryKey,
+    communityId: PrimaryKey,
+    community: CommunityInfo
+): Result<CommunityInfo?> {
+    val time = now()
+    val memberId = SnowflakeFactory.nextId()
+    val member = Member(
+        memberId,
+        uid,
+        communityId,
+        ObjectType.COMMUNITY,
+        time,
+        MemberStatus.JOINED,
+        time
+    )
+    return database.container.joinContainer(member).mapResult {
+        addUserLog(uid, UserLogType.JOIN, communityId ob ObjectType.COMMUNITY)
+        Result.success(community.copy(joinedTime = time))
+    }.recoverResult {
+        if (database.isDup(it)) {
+            getCommunity(ObjectFetch.IdFetch(communityId), uid, true)
+        } else {
+            Result.failure(it)
+        }
     }
 }
 
@@ -184,12 +198,11 @@ suspend fun Backend.createCommunity(
             newCommunity.aid,
             newCommunity.name,
             uid,
+            newCommunity.memberPolicy,
             newCommunity.icon,
             null
         )
-        database.community.createCommunity(community, memberId).map {
-            community
-        }.onSuccess {
+        database.community.createCommunity(community, memberId).onSuccess {
             communitySearchService.saveDocument(listOf(CommunityDocument.fromCommunity(community)))
                 .onFailure {
                     Napier.e(it) {
@@ -198,7 +211,7 @@ suspend fun Backend.createCommunity(
                 }
         }
     }.mapResult { community ->
-        addUserLog(uid, UserLogType.CREATE, community.toCommunityIfo().tuple())
+        addUserLog(uid, UserLogType.CREATE, community.id ob ObjectType.COMMUNITY)
         processRawCommunityToCommunityInfo(
             listOf(
                 RawCommunity(
@@ -231,15 +244,12 @@ suspend fun Backend.updateCommunity(
             CustomBadRequestException("update failed")
         }
     }.mapResultIfNotNull {
-        database.community.getRawCommunity(
-            ObjectFetch.IdFetch(id),
-            true,
-            uid
-        ).mapResultIfNotNull { rawResult ->
-            processRawCommunityToCommunityInfo(
-                listOf(rawResult)
-            ).mapIfNotNull(List<CommunityInfo>::first)
-        }
+        database.community.getRawCommunity(ObjectFetch.IdFetch(id), true, uid)
+            .mapResultIfNotNull { rawResult ->
+                processRawCommunityToCommunityInfo(
+                    listOf(rawResult)
+                ).mapIfNotNull(List<CommunityInfo>::first)
+            }
     }
 }
 
@@ -297,15 +307,10 @@ suspend fun Backend.processRawCommunityToCommunityInfo(
         processFileRecordToFileInfo(medias).map { mediaList ->
             val map = mediaList.associateBy { it.id }
             list.mapIndexed { i, rawResult ->
-                rawResult.community.toCommunityIfo().copy(
-                    memberCount = rawResult.memberCount ?: 0,
-                    icon = rawResult.community.iconId?.let { map[it] },
-                    poster = rawResult.community.posterId?.let { map[it] },
-                    hasPoster = rawResult.community.posterId != null,
-                    joinedTime = rawResult.joinedTime,
-                    lastRead = rawResult.lastRead,
-                    latestTopic = rawResult.latestTopic,
-                    font = rawResult.community.fontId?.let { map[it] }
+                rawResult.toCommunityIfo(
+                    rawResult.community.iconId?.let { map[it] },
+                    rawResult.community.posterId?.let { map[it] },
+                    rawResult.community.fontId?.let { map[it] }
                 )
             }
         }
