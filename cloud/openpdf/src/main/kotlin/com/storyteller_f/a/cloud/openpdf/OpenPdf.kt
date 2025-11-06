@@ -250,6 +250,56 @@ class OpenPdfVisitor(
         }
     }
 
+    private fun buildBlockQuoteTable(paragraph: Paragraph): PdfPTable {
+        val table = PdfPTable(1)
+        table.keepTogether = true
+        table.setWidthPercentage(100f)
+        table.horizontalAlignment = Element.ALIGN_LEFT
+        table.setSpacingBefore(6f)
+        table.setSpacingAfter(6f)
+
+        paragraph.alignment = Element.ALIGN_LEFT
+        val cell = PdfPCell(paragraph)
+        cell.border = Rectangle.NO_BORDER
+        cell.horizontalAlignment = Element.ALIGN_LEFT
+
+        val horizontalPadding = 12f
+        val verticalPadding = 6f
+        val barWidth = 3f
+        val barGap = 6f
+        cell.paddingLeft = horizontalPadding + barWidth + barGap
+        cell.paddingRight = horizontalPadding
+        cell.paddingTop = verticalPadding
+        cell.paddingBottom = verticalPadding
+
+        cell.cellEvent = LeftBarCellEvent(
+            barWidth = barWidth,
+            barColor = Color(180, 180, 180)
+        )
+
+        table.addCell(cell)
+        return table
+    }
+
+    private class LeftBarCellEvent(
+        private val barWidth: Float,
+        private val barColor: Color
+    ) : PdfPCellEvent {
+        override fun cellLayout(
+            cell: PdfPCell?,
+            rect: Rectangle?,
+            canvas: Array<PdfContentByte?>?
+        ) {
+            if (rect == null || canvas == null) return
+            val cb = canvas.getOrNull(PdfPTable.BACKGROUNDCANVAS) ?: return
+            cb.saveState()
+            cb.setColorFill(barColor)
+            cb.rectangle(rect.left, rect.bottom, barWidth, rect.height)
+            cb.fill()
+            cb.restoreState()
+        }
+    }
+
     private fun addHeading(node: ASTNode, level: Int, isSetext: Boolean = false) {
         val raw = node.getTextInNode(content).toString().trim()
         val text = if (isSetext) {
@@ -287,8 +337,8 @@ class OpenPdfVisitor(
         val text = node.getTextInNode(content).toString().trim().trimMargin("> ")
         val quoteFont = FontFactory.getFont(font.familyname, font.size, Font.ITALIC)
         val paragraph = Paragraph(text, quoteFont)
-        paragraph.indentationLeft = 20f
-        document.add(paragraph)
+        val table = buildBlockQuoteTable(paragraph)
+        document.add(table)
     }
 
 }
