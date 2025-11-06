@@ -23,7 +23,7 @@ class LoginUserSessionTest : UsingContextTest() {
         // 加密测试
         val encrypt = encryptDataByAES("hello").getOrThrow()
         getAlgo().run {
-            val encryptAesKey = eciesEncrypt(publicKey, encrypt.second).getOrThrow()
+            val encryptAesKey = kemEncrypt(publicKey, encrypt.second).getOrThrow()
             assertEquals("hello", addSession.decrypt(encrypt.first, encryptAesKey).getOrThrow())
         }
     }
@@ -72,7 +72,7 @@ fun loginSessionTest(block: suspend (String, String, String, SessionHistoryManag
         val sessionFactory = buildSessionHistoryFactory(settings)
         assertEquals(0, sessionFactory.getSavedSession().alias.size)
         getAlgo().run {
-            val privateKey = generateECDSAPemPrivateKey().getOrThrow()
+            val privateKey = generatePemKeyPair().getOrThrow().first
             val publicKey = getDerPublicKeyFromPrivateKey(privateKey).getOrThrow()
             val ad = calcAddress(publicKey).getOrThrow()
             block(privateKey, publicKey, ad, sessionFactory)

@@ -667,7 +667,7 @@ class AddPreset : Subcommand("add", "add entry") {
             val id = it.id
             val aesBytes = it.aesKey
             roomMembers[topic.room]!!.map { (derPublicKey, uid) ->
-                Triple(id, getAlgo().eciesEncrypt(derPublicKey, aesBytes).getOrThrow(), uid)
+                Triple(id, getAlgo().kemEncrypt(derPublicKey, aesBytes).getOrThrow(), uid)
             }
         }
         val tuples = encryptedContents.mapIndexed { index, tuple ->

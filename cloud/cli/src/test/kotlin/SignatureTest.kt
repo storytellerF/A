@@ -51,7 +51,7 @@ class SignatureTest {
                 getAlgo().run {
                     val derPublicKeyStr = getDerPublicKeyFromPrivateKey(privateKeyStr).getOrThrow()
                     val (encrypted, aes) = encryptDataByAES(data).getOrThrow()
-                    val encryptedAes = eciesEncrypt(derPublicKeyStr, aes).getOrThrow()
+                    val encryptedAes = kemEncrypt(derPublicKeyStr, aes).getOrThrow()
                     val decrypted =
                         decryptMessage(
                             getDerPrivateKey(privateKeyStr).getOrThrow(),

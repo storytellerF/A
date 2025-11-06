@@ -105,8 +105,8 @@ class AddUserViewModel : ViewModel() {
 
     fun autoGeneratePrivateKey() {
         viewModelScope.launch {
-            getAlgo().generateECDSAPemPrivateKey().onSuccess {
-                updatePrivateKey(it)
+            getAlgo().generatePemKeyPair().onSuccess { (privateKey, _) ->
+                updatePrivateKey(privateKey)
             }
         }
     }
