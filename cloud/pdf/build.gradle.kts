@@ -16,4 +16,5 @@ kotlin {
 dependencies {
     implementation(projects.shared)
     implementation(libs.kotlinx.datetime)
+    implementation(libs.markdown)
 }
