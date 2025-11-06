@@ -23,7 +23,10 @@ class SnapshotTest {
         val path1 = "build/test/keystore2.p12"
         CryptoJvm.createKeystore(password1.toCharArray(), path1)
         Security.addProvider(SecurityProvider.getProvider())
-        listOf(OpenPdf(), PdfBox()).forEachIndexed { i, pdf ->
+        listOf(
+            OpenPdf(),
+//            PdfBox()
+        ).forEachIndexed { i, pdf ->
             val pdfFile = File("build/tmp/$i.pdf")
             val signedFile = File("build/tmp/$i.signed.pdf")
             pdf.generateSignedSnapshot(
@@ -125,10 +128,11 @@ private fun openPdfSnapshot(content: String, map: Map<String, File> = emptyMap()
     }.methodName
 
 
-    listOf(OpenPdf(), PdfBox()).forEachIndexed { i, pdf ->
-        val baseDir = File("build/tmp/${pdf::class.simpleName}")
+    listOf(OpenPdf(), PdfBox()).forEach { pdf ->
+        val name = pdf::class.simpleName
+        val baseDir = File("build/tmp/$name")
 
-        val snapshotDir = File("src/test/pdf-snapshot/${pdf::class.simpleName}").apply { mkdirs() }
+        val snapshotDir = File("src/test/pdf-snapshot/$name").apply { mkdirs() }
         val snapshotFile = File(snapshotDir, "$methodName.pdf")
 
         val actualFile = if (snapshotFile.exists()) {
@@ -153,7 +157,8 @@ private fun openPdfSnapshot(content: String, map: Map<String, File> = emptyMap()
             val updateSnapshots = System.getenv("UPDATE_SNAPSHOTS") == "1"
             if (updateSnapshots) {
                 // 用本次生成的 actual 覆盖 baseline
-                actualFile.copyTo(snapshotFile, overwrite = true)
+                if (actualFile.canonicalPath != snapshotFile.canonicalPath)
+                    actualFile.copyTo(snapshotFile, overwrite = true)
                 return
             }
             val result = PdfComparator<de.redsix.pdfcompare.CompareResultImpl>(

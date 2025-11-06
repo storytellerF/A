@@ -9,6 +9,7 @@ import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.utils.UNIT_RESULT
 import com.storyteller_f.shared.utils.astNode
 import com.storyteller_f.shared.utils.extractImageUrl
+import com.storyteller_f.shared.utils.readCodeFence
 import org.apache.pdfbox.examples.signature.CreateSignature
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.pdmodel.font.FontMappers
@@ -202,10 +203,7 @@ class PdfBoxVisitor(
             }
 
             MarkdownElementTypes.CODE_BLOCK, MarkdownElementTypes.CODE_FENCE -> {
-                val raw = node.getTextInNode(content).toString()
-                val code = raw
-                    .replace("```", "")
-                    .trim('\n')
+                val code = readCodeFence(node, content).trimIndent()
                 if (code.isNotBlank()) {
                     val codeParagraph = Paragraph().apply {
                         val tf = TextFlow()
