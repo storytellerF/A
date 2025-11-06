@@ -41,7 +41,7 @@ class SnapshotTest {
     }
 
     @Test
-    fun `test openpdf generate code fence`() = openPdfSnapshot(
+    fun `test generate code fence`() = openPdfSnapshot(
         """```kotlin
                 |fun main() {
                 |    println("hello world")
@@ -50,7 +50,7 @@ class SnapshotTest {
     )
 
     @Test
-    fun `test openpdf generate code block`() = openPdfSnapshot(
+    fun `test generate code block`() = openPdfSnapshot(
         """
                 |    fun main() {
                 |        println("hello world")
@@ -59,7 +59,7 @@ class SnapshotTest {
     )
 
     @Test
-    fun `test openpdf generate headings`() = openPdfSnapshot(
+    fun `test generate headings`() = openPdfSnapshot(
         """
         # Heading 1
         ## Heading 2
@@ -74,21 +74,21 @@ class SnapshotTest {
     )
 
     @Test
-    fun `test openpdf generate emphasis and strong`() = openPdfSnapshot(
+    fun `test generate emphasis and strong`() = openPdfSnapshot(
         """
         *italic* and **bold** text with normal content.
         """.trimIndent()
     )
 
     @Test
-    fun `test openpdf generate code span`() = openPdfSnapshot(
+    fun `test generate code span`() = openPdfSnapshot(
         """
         Inline `code` span inside a sentence.
         """.trimIndent()
     )
 
     @Test
-    fun `test openpdf generate lists`() = openPdfSnapshot(
+    fun `test generate lists`() = openPdfSnapshot(
         """
         - item 1
             - nested item 1.1
@@ -101,7 +101,7 @@ class SnapshotTest {
     )
 
     @Test
-    fun `test openpdf generate block quote`() = openPdfSnapshot(
+    fun `test generate block quote`() = openPdfSnapshot(
         """
         > quoted line
         > second line
@@ -109,7 +109,7 @@ class SnapshotTest {
     )
 
     @Test
-    fun `test openpdf generate link`() = openPdfSnapshot(
+    fun `test generate link`() = openPdfSnapshot(
         """
         This is a [link text](https://example.com) in paragraph.
         """.trimIndent()
@@ -123,41 +123,48 @@ private fun openPdfSnapshot(content: String, map: Map<String, File> = emptyMap()
     val methodName = Exception().stackTrace.first {
         it.className.endsWith("SnapshotTest")
     }.methodName
-    val snapshotDir = File("src/test/pdf-snapshot").apply { mkdirs() }
-    val snapshotFile = File(snapshotDir, "$methodName.pdf")
 
-    val actualFile = if (snapshotFile.exists()) {
-        File("build/tmp/$methodName.actual.pdf")
-    } else {
-        snapshotFile
-    }
 
-    OpenPdf().generateSignedSnapshot(
-        UserInfo.EMPTY,
-        UserInfo.EMPTY,
-        content,
-        map,
-        SnapshotGeneration.SimpleGeneration(actualFile),
-        PdfGenerationSpec(
-            LocalDateTime.parse("2023-01-01T00:00:00"),
-            LocalDateTime.parse("2023-01-01T00:00:00")
-        )
-    ).getOrThrow()
+    listOf(OpenPdf(), PdfBox()).forEachIndexed { i, pdf ->
+        val baseDir = File("build/tmp/${pdf::class.simpleName}")
 
-    if (snapshotFile.exists()) {
-        // 支持通过环境变量刷新快照：UPDATE_SNAPSHOTS=1 覆盖现有快照
-        val updateSnapshots = System.getenv("UPDATE_SNAPSHOTS") == "1"
-        if (updateSnapshots) {
-            // 用本次生成的 actual 覆盖 baseline
-            actualFile.copyTo(snapshotFile, overwrite = true)
-            return
+        val snapshotDir = File("src/test/pdf-snapshot/${pdf::class.simpleName}").apply { mkdirs() }
+        val snapshotFile = File(snapshotDir, "$methodName.pdf")
+
+        val actualFile = if (snapshotFile.exists()) {
+            File(baseDir, "$methodName.actual.pdf")
+        } else {
+            snapshotFile
         }
-        val result = PdfComparator<de.redsix.pdfcompare.CompareResultImpl>(
-            snapshotFile.absolutePath,
-            actualFile.absolutePath
-        ).compare()
-        // 可选：输出 diff 到目录（返回是否相等）
-        result.writeTo("build/tmp/$methodName-diff")
-        assertTrue(result.isEqual(), "PDF snapshot mismatch for $methodName")
+        actualFile.parentFile.mkdirs()
+        pdf.generateSignedSnapshot(
+            UserInfo.EMPTY,
+            UserInfo.EMPTY,
+            content,
+            map,
+            SnapshotGeneration.SimpleGeneration(actualFile),
+            PdfGenerationSpec(
+                LocalDateTime.parse("2023-01-01T00:00:00"),
+                LocalDateTime.parse("2023-01-01T00:00:00")
+            )
+        ).getOrThrow()
+        if (snapshotFile.exists()) {
+            // 支持通过环境变量刷新快照：UPDATE_SNAPSHOTS=1 覆盖现有快照
+            val updateSnapshots = System.getenv("UPDATE_SNAPSHOTS") == "1"
+            if (updateSnapshots) {
+                // 用本次生成的 actual 覆盖 baseline
+                actualFile.copyTo(snapshotFile, overwrite = true)
+                return
+            }
+            val result = PdfComparator<de.redsix.pdfcompare.CompareResultImpl>(
+                snapshotFile.absolutePath,
+                actualFile.absolutePath
+            ).compare()
+            // 可选：输出 diff 到目录（返回是否相等）
+            result.writeTo(baseDir.resolve("$methodName-diff").path)
+            assertTrue(result.isEqual(), "PDF snapshot mismatch for $methodName")
+        }
     }
+
+
 }
