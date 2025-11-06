@@ -366,7 +366,7 @@ private fun MyRoomSearchContent(current: String) {
         val isAlreadySignUp by userSessionManager.isAlreadySignIn.collectAsState()
         val finalOption = if (isAlreadySignUp) currentOption else JoinStatusSearch.UNSPECIFIED
         if (isAlreadySignUp) {
-            val options = listOf(JoinStatusSearch.JOINED, JoinStatusSearch.NOT_JOINED, JoinStatusSearch.UNSPECIFIED)
+            val options = listOf(JoinStatusSearch.JOINED, JoinStatusSearch.UNSPECIFIED)
             FlowRow(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
                 SingleChoiceSegmentedButtonRow {
                     options.forEachIndexed { i, e ->
@@ -400,7 +400,7 @@ private fun MyCommunitySearchContent(query: String) {
         val isAlreadySignUp by userSessionManager.isAlreadySignIn.collectAsState()
         val finalOption = if (isAlreadySignUp) currentOption else JoinStatusSearch.UNSPECIFIED
         if (isAlreadySignUp) {
-            val options = listOf(JoinStatusSearch.JOINED, JoinStatusSearch.NOT_JOINED, JoinStatusSearch.UNSPECIFIED)
+            val options = listOf(JoinStatusSearch.JOINED, JoinStatusSearch.UNSPECIFIED)
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center

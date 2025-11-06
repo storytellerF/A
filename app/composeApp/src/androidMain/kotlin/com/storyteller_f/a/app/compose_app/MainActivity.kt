@@ -11,6 +11,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionCommands
 import androidx.media3.session.SessionToken
@@ -122,6 +123,10 @@ fun ComponentActivity.initFromContext() {
 
 fun ComponentActivity.commonForActivity() {
     enableEdgeToEdge()
+    /**
+     * 在Android 13 上必须加这一行
+     */
+    WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightNavigationBars = false
 }
 
 fun registerDevice(context: Context) {

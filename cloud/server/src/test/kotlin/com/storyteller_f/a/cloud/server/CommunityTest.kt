@@ -150,7 +150,6 @@ class CommunityTest {
         attachSession {
             joinCommunity(session.custom)
             testSearchCommunityCount(1, null, 10, JoinStatusSearch.JOINED, null)
-            testSearchCommunityCount(1, null, 10, JoinStatusSearch.NOT_JOINED, null)
             testSearchCommunityCount(2, null, 10, JoinStatusSearch.UNSPECIFIED, null)
             testSearchCommunityCount(1, null, 10, JoinStatusSearch.UNSPECIFIED, "name2")
         }
@@ -239,8 +238,12 @@ class CommunityTest {
         loginSession(firstTuple) {
             createTitle(
                 NewTitle(
-                    "join", TitleType.JOIN, secondTuple.uid, communityId,
-                    ObjectType.COMMUNITY, "join"
+                    "join",
+                    TitleType.JOIN,
+                    secondTuple.uid,
+                    communityId,
+                    ObjectType.COMMUNITY,
+                    "join"
                 )
             ).getOrThrow()
         }
