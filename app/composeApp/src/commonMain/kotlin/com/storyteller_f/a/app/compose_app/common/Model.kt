@@ -878,10 +878,23 @@ class SubscriptionsViewModel(sessionManager: UserSessionManager, modelStorage: M
             }
         },
     ) {
-        CompatPagingSource(
-            modelStorage.subscription.observeData(),
-            IntKeyConverter
-        )
+        WrappedPagingSource(
+            CompatPagingSource(
+                modelStorage.subscription.observeData(),
+                IntKeyConverter,
+            )
+        ) { list ->
+            list.map {
+                val extensions = it.extensions
+                val topicInfo = extensions?.topicInfo
+                if (topicInfo != null) {
+                    val newTopic = processEncryptedTopic(listOf(topicInfo), sessionManager).first()
+                    it.copy(extensions = extensions.copy(topicInfo = newTopic))
+                } else {
+                    it
+                }
+            }
+        }
     }.flow.cachedIn(viewModelScope)
 }
 

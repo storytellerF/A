@@ -5,11 +5,15 @@ import android.app.Application
 import android.app.PendingIntent
 import android.content.ClipData
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.os.Build
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.Clipboard
 import androidx.core.app.ActivityCompat
@@ -22,12 +26,16 @@ import androidx.core.graphics.drawable.IconCompat
 import androidx.core.net.toUri
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.Lifecycle
+import coil3.SingletonImageLoader
+import coil3.request.ImageRequest
+import coil3.toBitmap
 import com.storyteller_f.a.app.BuildConfig
 import com.storyteller_f.a.app.R
 import com.storyteller_f.a.app.compose_app.AppConfig
 import com.storyteller_f.a.app.compose_app.BubbleActivity
 import com.storyteller_f.a.app.compose_app.MainActivity
 import com.storyteller_f.a.app.compose_app.RTCActivity
+import com.storyteller_f.a.app.compose_app.common.getDeepLink
 import com.storyteller_f.a.app.compose_app.components.mainAppRef
 import com.storyteller_f.a.app.compose_app.getClipFile
 import com.storyteller_f.a.app.compose_app.getOrCreateNotificationChannel
@@ -36,10 +44,13 @@ import com.storyteller_f.shared.appContextRef
 import com.storyteller_f.shared.getAppContextRefValue
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.safeFirstUnicode
 import com.strabled.composepreferences.utilis.DataStoreManager
 import dev.jordond.connectivity.Connectivity
 import okio.Path.Companion.toOkioPath
 import org.unifiedpush.android.connector.UnifiedPush
+import java.io.File
+import java.util.concurrent.atomic.AtomicInteger
 
 actual val appPlatform: AppPlatform
     get() {
@@ -100,7 +111,9 @@ actual fun unregisterPushService() {
     UnifiedPush.unregister(context, "A")
 }
 
-actual suspend fun notifyNotification(room: RoomInfo) {
+val notifyId = AtomicInteger(0)
+
+actual suspend fun notifyNotification(room: RoomInfo, bitmap: ImageBitmap?) {
     val context = appContextRef.get() ?: return
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
         return
@@ -110,57 +123,55 @@ actual suspend fun notifyNotification(room: RoomInfo) {
             Manifest.permission.POST_NOTIFICATIONS
         ) == PackageManager.PERMISSION_GRANTED
     ) {
+        val androidBitmap =
+            bitmap?.asAndroidBitmap() ?: getIconBitmapFromName(context, room.name) ?: return
+        val iconCompat = IconCompat.createWithBitmap(androidBitmap)
         val channel = "Message"
         val managerCompat = getOrCreateNotificationChannel(context, channel)
-        val target = Intent(context, BubbleActivity::class.java)
-            .putExtra("roomId", room.id)
-        val bubbleIntent = PendingIntent.getActivity(
-            context,
-            0,
-            target,
-            PendingIntent.FLAG_MUTABLE
-        )
-        val category = "com.storyteller_f.a.category.SHARE_MESSAGE_TARGET"
 
         val person = Person.Builder()
             .setName("Chat partner")
             .build()
         val user = Person.Builder().setName("You").build()
 
-        // Create a sharing shortcut.
         val shortcutId = "room_${room.id}"
-        createShortcut(context, shortcutId, category, person, room)
+        createShortcut(context, shortcutId, person, room, iconCompat)
 
         val notification = getBubbleNotificationBuilder(
-            bubbleIntent,
             context,
             user,
             channel,
             shortcutId,
             person,
-            room
+            room,
+            iconCompat
         )
-        managerCompat.notify(2, notification.build())
+        managerCompat.notify(notifyId.getAndIncrement(), notification.build())
     }
 }
 
 private fun getBubbleNotificationBuilder(
-    bubbleIntent: PendingIntent,
     context: Application,
     user: Person,
     channel: String,
     shortcutId: String,
     person: Person,
-    room: RoomInfo
+    room: RoomInfo,
+    bitmap: IconCompat,
 ): NotificationCompat.Builder {
-    val bubbleData = NotificationCompat.BubbleMetadata.Builder(
-        bubbleIntent,
-        IconCompat.createWithResource(context, R.drawable.ic_notify)
-    ).setDesiredHeight(600).build()
+    val bubbleIntent = PendingIntent.getActivity(
+        context,
+        1,
+        Intent(context, BubbleActivity::class.java)
+            .putExtra("roomId", room.id),
+        flagUpdateCurrent(true)
+    )
+    val bubbleData =
+        NotificationCompat.BubbleMetadata.Builder(bubbleIntent, bitmap).setDesiredHeight(600)
     val style = NotificationCompat.MessagingStyle(user).setGroupConversation(false)
-    val notification = NotificationCompat.Builder(context, channel)
+    return NotificationCompat.Builder(context, channel)
         .setSmallIcon(R.drawable.ic_notify)
-        .setBubbleMetadata(bubbleData)
+        .setBubbleMetadata(bubbleData.build())
         .setLocusId(LocusIdCompat(shortcutId))
         .setShortcutId(shortcutId)
         .addPerson(person)
@@ -170,35 +181,37 @@ private fun getBubbleNotificationBuilder(
                 context,
                 3,
                 Intent(context, MainActivity::class.java)
-                    .setAction(Intent.ACTION_VIEW),
-                PendingIntent.FLAG_MUTABLE,
+                    .setAction(Intent.ACTION_VIEW).setData(getDeepLink("/room/${room.id}").toUri()),
+                flagUpdateCurrent(true)
             ),
         )
         .setCategory(NotificationCompat.CATEGORY_MESSAGE)
         .setContentTitle(room.name)
-    return notification
 }
 
 private fun createShortcut(
     context: Application,
     shortcutId: String,
-    category: String,
     person: Person,
-    room: RoomInfo
+    room: RoomInfo,
+    iconCompat: IconCompat
 ) {
-    val shortcut = ShortcutInfoCompat.Builder(context, shortcutId)
+    val category = "com.storyteller_f.a.category.SHARE_MESSAGE_TARGET"
+
+    val builder = ShortcutInfoCompat.Builder(context, shortcutId)
         .setLocusId(LocusIdCompat(shortcutId))
         .setCategories(setOf(category))
         .setActivity(ComponentName(context, MainActivity::class.java))
         .setIntent(
             Intent(context, MainActivity::class.java)
                 .setAction(Intent.ACTION_VIEW)
+                .setData(getDeepLink("/room/${room.id}").toUri())
         )
         .setPerson(person)
         .setLongLived(true)
         .setShortLabel(room.name)
-        .build()
-    ShortcutManagerCompat.pushDynamicShortcut(context, shortcut)
+        .setIcon(iconCompat)
+    ShortcutManagerCompat.pushDynamicShortcut(context, builder.build())
 }
 
 actual fun getDeepLinkHost(): String {
@@ -207,4 +220,49 @@ actual fun getDeepLinkHost(): String {
 
 actual fun getDeepLinkScheme(): String {
     return "${AppConfig.DEEP_LINK_SCHEME_PREFIX}${if (BuildConfig.DEBUG) "-debug" else ""}"
+}
+
+suspend fun getIconBitmapFromName(context: Context, name: String): Bitmap? {
+    return svgStringToBitmap(
+        context,
+        """<svg xmlns="http://www.w3.org/2000/svg"
+     width="40" height="30" viewBox="0 0 400 300"
+     preserveAspectRatio="xMidYMid meet" role="img" aria-label="Centered star">
+  <!-- 背景（可删） -->
+  <rect x="0" y="0" width="400" height="300" fill="#BCECE7" stroke="#cccccc"/>
+
+  <!-- 居中 Unicode 字符 -->
+  <text x="200" y="150"
+        text-anchor="middle"
+        dominant-baseline="central"
+        font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Color Emoji', sans-serif"
+        font-size="160"
+        fill="#1f77b4">
+    ${safeFirstUnicode(name)}
+  </text>
+</svg>
+"""
+    )
+}
+
+suspend fun svgStringToBitmap(
+    context: Context,
+    svgString: String
+): Bitmap? {
+    val file = File(context.cacheDir, "temp.svg")
+    file.writeText(svgString)
+    return SingletonImageLoader.get(context)
+        .execute(ImageRequest.Builder(context).data(file).build()).image?.toBitmap()
+}
+
+private fun flagUpdateCurrent(mutable: Boolean): Int {
+    return if (mutable) {
+        if (Build.VERSION.SDK_INT >= 31) {
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+        } else {
+            PendingIntent.FLAG_UPDATE_CURRENT
+        }
+    } else {
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    }
 }

@@ -238,7 +238,7 @@ compose.desktop {
         }
         buildTypes.release.proguard {
             version.set("7.5.0")
-            isEnabled = true
+            isEnabled = false
             obfuscate = true
             optimize = true
             configurationFiles.from("proguard-rules-desktop.pro")

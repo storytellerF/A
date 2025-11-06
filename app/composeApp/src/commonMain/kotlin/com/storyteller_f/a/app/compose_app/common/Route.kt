@@ -494,3 +494,7 @@ object ExternalUriHandler {
         }
     }
 }
+
+fun getDeepLink(path: String): String {
+    return "${getDeepLinkScheme()}://${getDeepLinkHost()}$path"
+}

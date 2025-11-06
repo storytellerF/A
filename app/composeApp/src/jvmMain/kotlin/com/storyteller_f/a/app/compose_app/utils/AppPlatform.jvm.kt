@@ -2,6 +2,7 @@ package com.storyteller_f.a.app.compose_app.utils
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.platform.awtClipboard
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
@@ -87,7 +88,7 @@ actual fun createCustomDataStoreManager(): DataStoreManager {
 
 actual fun unregisterPushService() = Unit
 
-actual suspend fun notifyNotification(room: RoomInfo) = Unit
+actual suspend fun notifyNotification(room: RoomInfo, bitmap: ImageBitmap?) = Unit
 actual fun getDeepLinkHost(): String {
     return AppConfig.DEEP_LINK_HOST
 }

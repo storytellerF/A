@@ -1,8 +1,9 @@
 package com.storyteller_f.a.app.core.components
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material3.CircularProgressIndicator
@@ -13,6 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImagePainter
 import coil3.compose.LocalPlatformContext
 import coil3.compose.SubcomposeAsyncImage
@@ -30,7 +32,6 @@ import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.readByteArray
-import kotlin.use
 
 @Composable
 fun CommonImage(
@@ -60,8 +61,13 @@ fun ImageError() {
 
 @Composable
 fun ImageLoading() {
-    Box(modifier = Modifier.fillMaxSize(), Alignment.Center) {
-        CircularProgressIndicator()
+    BoxWithConstraints(modifier = Modifier.fillMaxSize(), Alignment.Center) {
+        val size = minOf(this.maxWidth, this.maxHeight, 20.dp)
+        val strokeWidth = if (size > 20.dp) 2.dp else 1.dp
+        CircularProgressIndicator(
+            modifier = Modifier.size(size),
+            strokeWidth = strokeWidth
+        )
     }
 }
 

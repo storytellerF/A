@@ -11,6 +11,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.coroutineScope
+import com.storyteller_f.a.app.compose_app.utils.notifyId
 import com.storyteller_f.a.client.core.addDevice
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.launch
@@ -41,7 +42,7 @@ class PushServiceImpl : PushService(), LifecycleOwner {
             val notification = NotificationCompat.Builder(this, channel)
                 .setSmallIcon(com.storyteller_f.a.app.R.drawable.ic_notify)
                 .setContentTitle("New message")
-            notificationManager.notify(1, notification.build())
+            notificationManager.notify(notifyId.getAndIncrement(), notification.build())
         }
     }
 
