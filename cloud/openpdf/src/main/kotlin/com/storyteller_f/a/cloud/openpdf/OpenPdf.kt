@@ -15,6 +15,7 @@ import dev.snipme.highlights.model.ColorHighlight
 import dev.snipme.highlights.model.SyntaxThemes
 import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.MarkdownTokenTypes
+import org.intellij.markdown.IElementType
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.ast.accept
 import org.intellij.markdown.ast.acceptChildren
@@ -70,6 +71,9 @@ class OpenPdfVisitor(
     val content: String,
     private val map: Map<String, File>
 ) : Visitor {
+    private val listTypeStack = mutableListOf<Boolean>() // true = ordered, false = unordered
+    private val listCounterStack = mutableListOf<Int>()
+
     override fun visitNode(node: ASTNode) {
         println(node.type)
         when (node.type) {
@@ -90,6 +94,48 @@ class OpenPdfVisitor(
                 val paragraph = buildParagraphFromCodeFence(node)
                 document.add(paragraph)
             }
+
+            // Headings
+            MarkdownElementTypes.ATX_1 -> addHeading(node, 1)
+            MarkdownElementTypes.ATX_2 -> addHeading(node, 2)
+            MarkdownElementTypes.ATX_3 -> addHeading(node, 3)
+            MarkdownElementTypes.ATX_4 -> addHeading(node, 4)
+            MarkdownElementTypes.ATX_5 -> addHeading(node, 5)
+            MarkdownElementTypes.ATX_6 -> addHeading(node, 6)
+            MarkdownElementTypes.SETEXT_1 -> addHeading(node, 1, isSetext = true)
+            MarkdownElementTypes.SETEXT_2 -> addHeading(node, 2, isSetext = true)
+
+            // Emphasis & strong
+            MarkdownElementTypes.EMPH -> addStyledBlock(node, Font.ITALIC)
+            MarkdownElementTypes.STRONG -> addStyledBlock(node, Font.BOLD)
+
+            // Inline code
+            MarkdownElementTypes.CODE_SPAN -> addCodeSpan(node)
+
+            // Lists
+            MarkdownElementTypes.ORDERED_LIST -> {
+                listTypeStack.add(true)
+                listCounterStack.add(1)
+                node.acceptChildren(this)
+                listTypeStack.removeAt(listTypeStack.lastIndex)
+                listCounterStack.removeAt(listCounterStack.lastIndex)
+            }
+            MarkdownElementTypes.UNORDERED_LIST -> {
+                listTypeStack.add(false)
+                listCounterStack.add(0)
+                node.acceptChildren(this)
+                listTypeStack.removeAt(listTypeStack.lastIndex)
+                listCounterStack.removeAt(listCounterStack.lastIndex)
+            }
+            MarkdownElementTypes.LIST_ITEM -> addListItem(node)
+
+            // Block quote
+            MarkdownElementTypes.BLOCK_QUOTE -> addBlockQuote(node)
+
+            // Links (render as text (url)) to avoid PDF-specific anchors
+            MarkdownElementTypes.INLINE_LINK,
+            MarkdownElementTypes.FULL_REFERENCE_LINK,
+            MarkdownElementTypes.SHORT_REFERENCE_LINK -> addLink(node)
 
             MarkdownElementTypes.MARKDOWN_FILE -> {
                 node.acceptChildren(this)
@@ -126,13 +172,13 @@ class OpenPdfVisitor(
     ) {
         val font = if (it is ColorHighlight) {
             FontFactory.getFont(
-                font.familyname,
+                "Courier",
                 font.size,
                 font.style,
                 Color(it.rgb)
             )
         } else {
-            FontFactory.getFont(font.familyname, font.size, Font.BOLD)
+            FontFactory.getFont("Courier", font.size, Font.BOLD)
         }
         paragraph.add(
             Chunk(
@@ -150,6 +196,73 @@ class OpenPdfVisitor(
                     font
                 )
             )
+        }
+    }
+
+    private fun addHeading(node: ASTNode, level: Int, isSetext: Boolean = false) {
+        val raw = node.getTextInNode(content).toString().trim()
+        val text = if (isSetext) {
+            raw.lineSequence().firstOrNull()?.trim().orEmpty()
+        } else {
+            raw.replace(Regex("^#{1,6}\\s*"), "").trim()
+        }
+        val sizeBoost = when (level) {
+            1 -> 8f
+            2 -> 6f
+            3 -> 4f
+            4 -> 2f
+            5 -> 1f
+            else -> 0f
+        }
+        val headerFont = FontFactory.getFont(font.familyname, font.size + sizeBoost, Font.BOLD)
+        document.add(Paragraph(text, headerFont))
+    }
+
+    private fun addStyledBlock(node: ASTNode, style: Int) {
+        val text = node.getTextInNode(content).toString()
+        val styledFont = FontFactory.getFont(font.familyname, font.size, style)
+        document.add(Paragraph(text, styledFont))
+    }
+
+    private fun addCodeSpan(node: ASTNode) {
+        val raw = node.getTextInNode(content).toString()
+        val text = raw.replace("`", "").trim()
+        val codeFont = FontFactory.getFont("Courier", font.size, Font.NORMAL)
+        document.add(Paragraph(text, codeFont))
+    }
+
+    private fun addListItem(node: ASTNode) {
+        val isOrdered = listTypeStack.lastOrNull() ?: false
+        val depth = listTypeStack.size
+        val counter = listCounterStack.lastOrNull() ?: 0
+        val prefix = if (isOrdered) "${counter}." else "•"
+        val text = node.getTextInNode(content).toString().trim()
+        val paragraph = Paragraph("$prefix $text", font)
+        paragraph.indentationLeft = 20f * depth
+        document.add(paragraph)
+        if (isOrdered && listCounterStack.isNotEmpty()) {
+            listCounterStack[listCounterStack.lastIndex] = counter + 1
+        }
+    }
+
+    private fun addBlockQuote(node: ASTNode) {
+        val text = node.getTextInNode(content).toString().trim()
+        val quoteFont = FontFactory.getFont(font.familyname, font.size, Font.ITALIC)
+        val paragraph = Paragraph(text, quoteFont)
+        paragraph.indentationLeft = 20f
+        document.add(paragraph)
+    }
+
+    private fun addLink(node: ASTNode) {
+        val raw = node.getTextInNode(content).toString()
+        val match = Regex("\\[([^]]+)]\\(([^)]+)\\)").find(raw)
+        val text = match?.groupValues?.getOrNull(1)?.trim()
+        val url = match?.groupValues?.getOrNull(2)?.trim()
+        if (!text.isNullOrEmpty() && !url.isNullOrEmpty()) {
+            val linkFont = FontFactory.getFont(font.familyname, font.size, Font.UNDERLINE)
+            document.add(Paragraph("$text ($url)", linkFont))
+        } else {
+            document.add(Paragraph(raw, font))
         }
     }
 }

@@ -51,6 +51,117 @@ class SnapshotTest {
             SnapshotGeneration.SimpleGeneration(pdfFile)
         ).getOrThrow()
     }
+
+    @Test
+    fun `test openpdf generate headings`() = testPdf {
+        val pdfFile = File("build/tmp/headings.pdf")
+        val content = """
+            # Heading 1
+            ## Heading 2
+            Normal paragraph
+
+            Heading A
+            ===
+
+            Heading B
+            ---
+        """.trimIndent()
+        OpenPdf().generateSignedSnapshot(
+            UserInfo.EMPTY,
+            UserInfo.EMPTY,
+            content,
+            TopicInfo.EMPTY,
+            emptyMap(),
+            SnapshotGeneration.SimpleGeneration(pdfFile)
+        ).getOrThrow()
+    }
+
+    @Test
+    fun `test openpdf generate emphasis and strong`() = testPdf {
+        val pdfFile = File("build/tmp/emph-strong.pdf")
+        val content = """
+            *italic* and **bold** text with normal content.
+        """.trimIndent()
+        OpenPdf().generateSignedSnapshot(
+            UserInfo.EMPTY,
+            UserInfo.EMPTY,
+            content,
+            TopicInfo.EMPTY,
+            emptyMap(),
+            SnapshotGeneration.SimpleGeneration(pdfFile)
+        ).getOrThrow()
+    }
+
+    @Test
+    fun `test openpdf generate code span`() = testPdf {
+        val pdfFile = File("build/tmp/code-span.pdf")
+        val content = """
+            Inline `code` span inside a sentence.
+        """.trimIndent()
+        OpenPdf().generateSignedSnapshot(
+            UserInfo.EMPTY,
+            UserInfo.EMPTY,
+            content,
+            TopicInfo.EMPTY,
+            emptyMap(),
+            SnapshotGeneration.SimpleGeneration(pdfFile)
+        ).getOrThrow()
+    }
+
+    @Test
+    fun `test openpdf generate lists`() = testPdf {
+        val pdfFile = File("build/tmp/lists.pdf")
+        val content = """
+            - item 1
+              - nested item 1.1
+            - item 2
+
+            1. first
+            2. second
+               1. sub first
+        """.trimIndent()
+        OpenPdf().generateSignedSnapshot(
+            UserInfo.EMPTY,
+            UserInfo.EMPTY,
+            content,
+            TopicInfo.EMPTY,
+            emptyMap(),
+            SnapshotGeneration.SimpleGeneration(pdfFile)
+        ).getOrThrow()
+    }
+
+    @Test
+    fun `test openpdf generate block quote`() = testPdf {
+        val pdfFile = File("build/tmp/blockquote.pdf")
+        val content = """
+            > quoted line
+            > second line
+        """.trimIndent()
+        OpenPdf().generateSignedSnapshot(
+            UserInfo.EMPTY,
+            UserInfo.EMPTY,
+            content,
+            TopicInfo.EMPTY,
+            emptyMap(),
+            SnapshotGeneration.SimpleGeneration(pdfFile)
+        ).getOrThrow()
+    }
+
+    @Test
+    fun `test openpdf generate link`() = testPdf {
+        val pdfFile = File("build/tmp/link.pdf")
+        val content = """
+            This is a [link text](https://example.com) in paragraph.
+        """.trimIndent()
+        OpenPdf().generateSignedSnapshot(
+            UserInfo.EMPTY,
+            UserInfo.EMPTY,
+            content,
+            TopicInfo.EMPTY,
+            emptyMap(),
+            SnapshotGeneration.SimpleGeneration(pdfFile)
+        ).getOrThrow()
+    }
 }
 
 fun testPdf(block: () -> Unit) {
