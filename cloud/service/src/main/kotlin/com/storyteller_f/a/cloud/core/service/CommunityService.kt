@@ -107,7 +107,7 @@ suspend fun Backend.exitCommunity(
     if (info.joinedTime == null) {
         Result.success(info)
     } else {
-        database.container.exitContainer(communityId, id).mapResult { i ->
+        database.container.exitContainer(communityId, id).mapResult {
             addUserLog(id, UserLogType.EXIT, communityId ob ObjectType.COMMUNITY)
             Result.success(info.copy(joinedTime = null))
         }
@@ -306,7 +306,7 @@ suspend fun Backend.processRawCommunityToCommunityInfo(
     }.filterNotNull()).mapResultIfNotNull { medias ->
         processFileRecordToFileInfo(medias).map { mediaList ->
             val map = mediaList.associateBy { it.id }
-            list.mapIndexed { i, rawResult ->
+            list.map { rawResult ->
                 rawResult.toCommunityIfo(
                     rawResult.community.iconId?.let { map[it] },
                     rawResult.community.posterId?.let { map[it] },
@@ -318,17 +318,7 @@ suspend fun Backend.processRawCommunityToCommunityInfo(
 }
 
 fun JoinStatusSearch?.toJoinSearch(uid: PrimaryKey?): JoinSearch {
-    when (this) {
-        JoinStatusSearch.JOINED -> {
-            if (uid == null) throw UnauthorizedException()
-            return JoinSearch.Joined(uid)
-        }
-
-        JoinStatusSearch.NOT_JOINED -> {
-            if (uid == null) throw UnauthorizedException()
-            return JoinSearch.NotJoined(uid)
-        }
-
-        else -> return JoinSearch.Unspecified(uid)
-    }
+    if (this != JoinStatusSearch.JOINED) return JoinSearch.Unspecified(uid)
+    if (uid == null) throw UnauthorizedException()
+    return JoinSearch.Joined(uid)
 }

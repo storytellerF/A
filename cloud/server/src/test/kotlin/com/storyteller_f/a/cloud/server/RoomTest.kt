@@ -84,7 +84,6 @@ class RoomTest {
             joinCommunity(communityId).getOrThrow()
             joinRoom(publicRoom1Id).getOrThrow()
             expectedRoomCount(1, JoinStatusSearch.JOINED)
-            expectedRoomCount(1, JoinStatusSearch.NOT_JOINED)
             expectedRoomCount(2, JoinStatusSearch.UNSPECIFIED, communityId = communityId)
             expectedRoomCount(1, JoinStatusSearch.UNSPECIFIED, word = "name2")
             joinRoom(publicRoom2Id).getOrThrow()

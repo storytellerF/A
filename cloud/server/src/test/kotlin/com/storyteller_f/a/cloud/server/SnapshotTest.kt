@@ -26,10 +26,10 @@ class SnapshotTest {
             val pdfFile = File("build/tmp/.pdf")
             val signedFile = File("build/tmp/signed.pdf")
             PdfBox().generateSignedSnapshot(
-                UserInfo.Companion.EMPTY,
-                UserInfo.Companion.EMPTY,
+                UserInfo.EMPTY,
+                UserInfo.EMPTY,
                 "hello world",
-                TopicInfo.Companion.EMPTY.copy(content = TopicContent.Plain("hello world")),
+                TopicInfo.EMPTY.copy(content = TopicContent.Plain("hello world")),
                 emptyMap(),
                 //            SnapshotVerify.KeyStoreVerify(path, password, pdfFile, signedFile)
                 SnapshotVerify.NoneVerify(pdfFile)
@@ -50,10 +50,10 @@ class SnapshotTest {
             Security.addProvider(SecurityProvider.getProvider())
             val pdfFile = File("build/tmp/.pdf")
             OpenPdf().generateSignedSnapshot(
-                UserInfo.Companion.EMPTY,
-                UserInfo.Companion.EMPTY,
+                UserInfo.EMPTY,
+                UserInfo.EMPTY,
                 "hello world",
-                TopicInfo.Companion.EMPTY.copy(content = TopicContent.Plain("hello world")),
+                TopicInfo.EMPTY.copy(content = TopicContent.Plain("hello world")),
                 emptyMap(),
                 //            SnapshotVerify.KeyStoreVerify(path, password, pdfFile, signedFile)
                 SnapshotVerify.NoneVerify(pdfFile)

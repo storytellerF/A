@@ -17,12 +17,12 @@ import org.intellij.markdown.ast.acceptChildren
 import org.intellij.markdown.ast.getTextInNode
 import org.intellij.markdown.ast.visitors.Visitor
 import org.openpdf.text.Document
+import org.openpdf.text.Font
 import org.openpdf.text.FontFactory
 import org.openpdf.text.Image
 import org.openpdf.text.Paragraph
 import org.openpdf.text.pdf.PdfWriter
 import java.io.File
-import kotlin.collections.get
 
 class OpenPdf : PdfService {
     override fun generateSignedSnapshot(
@@ -41,39 +41,46 @@ class OpenPdf : PdfService {
                 open()
                 val font = FontFactory.getFont(fontName)
                 add(Paragraph(content, font))
-                val creatorId = if (creatorInfo.aid == null) creatorInfo.address else creatorInfo.aid
+                val creatorId =
+                    if (creatorInfo.aid == null) creatorInfo.address else creatorInfo.aid
                 val authorId = if (authorInfo.aid == null) authorInfo.address else authorInfo.aid
                 add(Paragraph("pub by $authorId", font))
                 add(Paragraph("pub at ${topicInfo.createdTime}", font))
                 add(Paragraph("capture by $creatorId", font))
                 add(Paragraph("capture at ${now()}", font))
                 val parsedTree = astNode(content)
-                parsedTree.accept(object : Visitor {
-                    override fun visitNode(node: ASTNode) {
-                        val type = node.type
-                        when (type) {
-                            MarkdownElementTypes.PARAGRAPH -> {
-                                node.acceptChildren(this)
-                            }
-
-                            MarkdownTokenTypes.Companion.TEXT -> {
-                                add(Paragraph(node.getTextInNode(content).toString(), font))
-                            }
-
-                            MarkdownElementTypes.IMAGE -> {
-                                val name = extractImageUrl(node, content)
-                                add(Image.getInstance(map[name]!!.readBytes()))
-                            }
-
-                            MarkdownElementTypes.MARKDOWN_FILE -> {
-                                node.acceptChildren(this)
-                            }
-                        }
-                    }
-                })
+                parsedTree.accept(OpenPdfVisitor(this, font, content, map))
                 close()
             }
         }
         return UNIT_RESULT
+    }
+}
+
+class OpenPdfVisitor(
+    private val document: Document,
+    private val font: Font,
+    val content: String,
+    private val map: Map<String, File>
+) : Visitor {
+    override fun visitNode(node: ASTNode) {
+        when (node.type) {
+            MarkdownElementTypes.PARAGRAPH -> {
+                node.acceptChildren(this)
+            }
+
+            MarkdownTokenTypes.TEXT -> {
+                document.add(Paragraph(node.getTextInNode(content).toString(), font))
+            }
+
+            MarkdownElementTypes.IMAGE -> {
+                val name = extractImageUrl(node, content)
+                document.add(Image.getInstance(map[name]!!.readBytes()))
+            }
+
+            MarkdownElementTypes.MARKDOWN_FILE -> {
+                node.acceptChildren(this)
+            }
+        }
     }
 }
