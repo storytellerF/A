@@ -28,6 +28,7 @@ import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.FileInfo
+import com.storyteller_f.shared.model.MemberPolicy
 import com.storyteller_f.shared.model.PassType
 import com.storyteller_f.shared.model.TitleStatus
 import com.storyteller_f.shared.obj.PresetRoom
@@ -426,6 +427,7 @@ class AddPreset : Subcommand("add", "add entry") {
                 it.community.id,
                 it.community.name,
                 userMap[it.community.getSafeAdmin()]!!.id,
+                MemberPolicy.OPEN,
                 it.icon,
                 fontId = it.font,
             )

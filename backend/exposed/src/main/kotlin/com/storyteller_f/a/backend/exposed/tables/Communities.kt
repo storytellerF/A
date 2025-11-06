@@ -4,6 +4,7 @@ import com.storyteller_f.a.backend.core.COMMUNITY_NAME_LENGTH
 import com.storyteller_f.a.backend.core.types.Community
 import com.storyteller_f.a.backend.exposed.BaseTable
 import com.storyteller_f.a.backend.exposed.customPrimaryKey
+import com.storyteller_f.a.backend.exposed.memberPolicy
 import org.jetbrains.exposed.v1.core.*
 
 object Communities : BaseTable() {
@@ -12,6 +13,7 @@ object Communities : BaseTable() {
     val poster = customPrimaryKey("poster").index().nullable()
     val owner = customPrimaryKey("owner").index()
     val fontId = customPrimaryKey("font_id").nullable()
+    val memberPolicy = memberPolicy("member_policy")
 }
 
 fun Community.Companion.wrapRow(row: ResultRow): Community {
@@ -22,6 +24,7 @@ fun Community.Companion.wrapRow(row: ResultRow): Community {
             row[Aids.value],
             row[name],
             row[owner],
+            row[memberPolicy],
             row[icon],
             row[poster],
             row[fontId]

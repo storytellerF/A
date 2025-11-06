@@ -20,7 +20,6 @@ import com.storyteller_f.a.backend.exposed.query.buildCommunitySearchQuery
 import com.storyteller_f.a.backend.exposed.tables.Aids
 import com.storyteller_f.a.backend.exposed.tables.Communities
 import com.storyteller_f.a.backend.exposed.tables.Members
-import com.storyteller_f.a.backend.exposed.tables.UserTopicReads
 import com.storyteller_f.a.backend.exposed.tables.addJoin
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.PosterSearch
@@ -132,13 +131,14 @@ class ExposedCommunityDatabase(
         }
     }
 
-    override suspend fun createCommunity(community: Community, memberId: PrimaryKey) =
+    override suspend fun createCommunity(community: Community, memberId: PrimaryKey): Result<Community> =
         databaseSession.dbQuery {
             check(Communities.insert {
                 it[Communities.id] = community.id
                 it[Communities.name] = community.name
                 it[Communities.owner] = community.owner
                 it[Communities.createdTime] = community.createdTime
+                it[Communities.memberPolicy] = community.memberPolicy
             }.insertedCount > 0) {
                 "insert community failed"
             }
@@ -160,6 +160,7 @@ class ExposedCommunityDatabase(
                     community.createdTime
                 )
             )
+            community
         }
 
     override suspend fun getCommunityJoinedTimeByIds(
@@ -199,12 +200,10 @@ class ExposedCommunityDatabase(
                 }
         }
         map {
-            val community = Community.wrapRow(it)
-            val joinedTime = it.getOrNull(Members.joinedTime)
-            val lastRead = it.getOrNull(UserTopicReads.topicId)
-            val communityInfo = community
-            RawCommunity(communityInfo, joinedTime, lastRead)
+            Community.wrapRow(it)
         }
+    }.mapResult {
+        processCommunityToRawCommunity(null, it)
     }
 
     override suspend fun updateCommunity(

@@ -11,6 +11,7 @@ import com.storyteller_f.route4k.common.safeApiWithQueryAndPath
 import com.storyteller_f.shared.model.ChildAccountInfo
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.FileInfo
+import com.storyteller_f.shared.model.MemberPolicy
 import com.storyteller_f.shared.model.PanelAccountInfo
 import com.storyteller_f.shared.model.PanelOverview
 import com.storyteller_f.shared.model.PosterSearch
@@ -65,7 +66,12 @@ class NewSubscription(
 }
 
 @Serializable
-class NewCommunity(val name: String, val aid: String, val icon: PrimaryKey? = null)
+class NewCommunity(
+    val name: String,
+    val aid: String,
+    val icon: PrimaryKey? = null,
+    val memberPolicy: MemberPolicy = MemberPolicy.OPEN
+)
 
 @Serializable
 class NewDevice(val endpointUrl: String)

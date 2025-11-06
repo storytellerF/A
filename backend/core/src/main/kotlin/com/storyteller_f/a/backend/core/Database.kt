@@ -292,7 +292,7 @@ interface CommunityDatabase {
         joinSearch: JoinSearch,
     ): Result<PaginationResult<RawCommunity>?>
 
-    suspend fun createCommunity(community: Community, memberId: PrimaryKey): Result<Unit>
+    suspend fun createCommunity(community: Community, memberId: PrimaryKey): Result<Community>
     suspend fun getCommunityJoinedTimeByIds(
         uid: PrimaryKey,
         communityIds: List<PrimaryKey>,
@@ -368,13 +368,7 @@ interface FileDatabase {
 
 interface ContainerDatabase {
     suspend fun isMemberJoined(objectId: PrimaryKey, uid: PrimaryKey?): Result<Boolean>
-    suspend fun joinContainer(
-        id: PrimaryKey,
-        uid: PrimaryKey,
-        time: LocalDateTime,
-        objectType: ObjectType,
-        member: Member,
-    ): Result<Unit>
+    suspend fun joinContainer(member: Member): Result<Unit>
 
     suspend fun exitContainer(containerId: PrimaryKey, id: PrimaryKey): Result<Unit>
     suspend fun getJoinedUserList(roomId: PrimaryKey): Result<List<Member>>

@@ -1,6 +1,8 @@
 package com.storyteller_f.a.backend.core.types
 
 import com.storyteller_f.shared.model.CommunityInfo
+import com.storyteller_f.shared.model.FileInfo
+import com.storyteller_f.shared.model.MemberPolicy
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.datetime.LocalDateTime
 
@@ -10,6 +12,7 @@ class Community(
     val aid: String,
     val name: String,
     val owner: PrimaryKey,
+    val memberPolicy: MemberPolicy,
     val iconId: PrimaryKey? = null,
     val posterId: PrimaryKey? = null,
     val fontId: PrimaryKey? = null,
@@ -17,19 +20,25 @@ class Community(
     companion object
 }
 
-fun Community.toCommunityIfo(
-    memberCount: Long = 0,
-    joinTime: LocalDateTime? = null,
-    lastRead: PrimaryKey? = null
+fun RawCommunity.toCommunityIfo(
+    icon: FileInfo? = null,
+    poster: FileInfo? = null,
+    font: FileInfo? = null,
 ) = CommunityInfo(
-    id,
-    aid,
-    name,
-    owner,
-    createdTime,
-    memberCount,
-    joinedTime = joinTime,
-    lastRead = lastRead
+    community.id,
+    community.aid,
+    community.name,
+    community.owner,
+    community.createdTime,
+    memberCount ?: 0,
+    community.memberPolicy,
+    joinedTime = joinedTime,
+    lastRead = lastRead,
+    latestTopic = latestTopic,
+    icon = icon,
+    poster = poster,
+    hasPoster = poster != null,
+    font = font,
 )
 
 data class RawCommunity(

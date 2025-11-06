@@ -22,6 +22,7 @@ import com.storyteller_f.a.backend.exposed.database.ExposedTopicDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedUserDatabase
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.AssetType
+import com.storyteller_f.shared.model.MemberPolicy
 import com.storyteller_f.shared.model.PassType
 import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.model.TaskRecordType
@@ -68,6 +69,7 @@ fun Table.assetType(name: String) = enumerationByName<AssetType>(name, 20)
 fun Table.quotaType(name: String) = enumerationByName<QuotaType>(name, 20)
 
 fun Table.taskRecordType(name: String) = enumerationByName<TaskRecordType>(name, 20)
+fun Table.memberPolicy(name: String) = enumerationByName<MemberPolicy>(name, 20)
 
 fun <T : Table> T.emoji() = varchar("emoji", 20)
 
