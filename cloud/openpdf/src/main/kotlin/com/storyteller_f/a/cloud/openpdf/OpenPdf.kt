@@ -79,10 +79,12 @@ class OpenPdfVisitor(
     private val listCounterStack = mutableListOf<Int>()
 
     override fun visitNode(node: ASTNode) {
-        println(node.type)
+        println("root ${node.type}")
         when (node.type) {
             MarkdownElementTypes.PARAGRAPH -> {
-                node.acceptChildren(this)
+                val paragraph = Paragraph()
+                node.acceptChildren(ParagraphVisitor(paragraph, content, font))
+                document.add(paragraph)
             }
 
             MarkdownTokenTypes.TEXT -> {
@@ -114,12 +116,6 @@ class OpenPdfVisitor(
             MarkdownElementTypes.SETEXT_1 -> addHeading(node, 1, isSetext = true)
             MarkdownElementTypes.SETEXT_2 -> addHeading(node, 2, isSetext = true)
 
-            // Emphasis & strong
-            MarkdownElementTypes.EMPH -> addStyledBlock(node, Font.ITALIC)
-            MarkdownElementTypes.STRONG -> addStyledBlock(node, Font.BOLD)
-
-            // Inline code
-            MarkdownElementTypes.CODE_SPAN -> addCodeSpan(node)
 
             // Lists
             MarkdownElementTypes.ORDERED_LIST -> {
@@ -129,6 +125,7 @@ class OpenPdfVisitor(
                 listTypeStack.removeAt(listTypeStack.lastIndex)
                 listCounterStack.removeAt(listCounterStack.lastIndex)
             }
+
             MarkdownElementTypes.UNORDERED_LIST -> {
                 listTypeStack.add(false)
                 listCounterStack.add(0)
@@ -136,15 +133,11 @@ class OpenPdfVisitor(
                 listTypeStack.removeAt(listTypeStack.lastIndex)
                 listCounterStack.removeAt(listCounterStack.lastIndex)
             }
+
             MarkdownElementTypes.LIST_ITEM -> addListItem(node)
 
             // Block quote
             MarkdownElementTypes.BLOCK_QUOTE -> addBlockQuote(node)
-
-            // Links (render as text (url)) to avoid PDF-specific anchors
-            MarkdownElementTypes.INLINE_LINK,
-            MarkdownElementTypes.FULL_REFERENCE_LINK,
-            MarkdownElementTypes.SHORT_REFERENCE_LINK -> addLink(node)
 
             MarkdownElementTypes.MARKDOWN_FILE -> {
                 node.acceptChildren(this)
@@ -188,31 +181,21 @@ class OpenPdfVisitor(
         codeHighlights: List<CodeHighlight>
     ) {
         val font = if (it is ColorHighlight) {
-            FontFactory.getFont(
-                "Courier",
-                font.size,
-                font.style,
-                Color(it.rgb)
-            )
+            FontFactory.getFont("Courier", font.size, font.style, Color(it.rgb))
         } else {
             FontFactory.getFont("Courier", font.size, Font.BOLD)
         }
+        val endIndex = it.location.end
         paragraph.add(
-            Chunk(
-                codeFence.substring(it.location.start, it.location.end),
-                font
-            )
+            Chunk(codeFence.substring(it.location.start, endIndex), font)
         )
-        if (i != codeHighlights.lastIndex && codeHighlights[i + 1].location.start > it.location.end) {
-            paragraph.add(
-                Chunk(
-                    codeFence.substring(
-                        it.location.end,
-                        codeHighlights[i + 1].location.start
-                    ),
-                    font
+        if (i != codeHighlights.lastIndex) {
+            val nextStartIndex = codeHighlights[i + 1].location.start
+            if (nextStartIndex > endIndex) {
+                paragraph.add(
+                    Chunk(codeFence.substring(endIndex, nextStartIndex), font)
                 )
-            )
+            }
         }
     }
 
@@ -220,7 +203,7 @@ class OpenPdfVisitor(
         val table = PdfPTable(1)
         table.keepTogether = true
         table.setWidthPercentage(100f)
-        table.setHorizontalAlignment(Element.ALIGN_LEFT)
+        table.horizontalAlignment = Element.ALIGN_LEFT
         table.setSpacingBefore(6f)
         table.setSpacingAfter(6f)
 
@@ -236,11 +219,11 @@ class OpenPdfVisitor(
         cell.paddingTop = verticalPadding
         cell.paddingBottom = verticalPadding
 
-        cell.setCellEvent(RoundedBackgroundCellEvent(
+        cell.cellEvent = RoundedBackgroundCellEvent(
             radius = 6f,
             fillColor = Color(245, 245, 245),
             strokeColor = Color(220, 220, 220)
-        ))
+        )
 
         table.addCell(cell)
         return table
@@ -275,28 +258,15 @@ class OpenPdfVisitor(
             raw.replace(Regex("^#{1,6}\\s*"), "").trim()
         }
         val sizeBoost = when (level) {
-            1 -> 8f
-            2 -> 6f
-            3 -> 4f
-            4 -> 2f
-            5 -> 1f
+            1 -> 18f
+            2 -> 16f
+            3 -> 14f
+            4 -> 12f
+            5 -> 11f
             else -> 0f
         }
         val headerFont = FontFactory.getFont(font.familyname, font.size + sizeBoost, Font.BOLD)
         document.add(Paragraph(text, headerFont))
-    }
-
-    private fun addStyledBlock(node: ASTNode, style: Int) {
-        val text = node.getTextInNode(content).toString()
-        val styledFont = FontFactory.getFont(font.familyname, font.size, style)
-        document.add(Paragraph(text, styledFont))
-    }
-
-    private fun addCodeSpan(node: ASTNode) {
-        val raw = node.getTextInNode(content).toString()
-        val text = raw.replace("`", "").trim()
-        val codeFont = FontFactory.getFont("Courier", font.size, Font.NORMAL)
-        document.add(Paragraph(text, codeFont))
     }
 
     private fun addListItem(node: ASTNode) {
@@ -314,12 +284,53 @@ class OpenPdfVisitor(
     }
 
     private fun addBlockQuote(node: ASTNode) {
-        val text = node.getTextInNode(content).toString().trim()
+        val text = node.getTextInNode(content).toString().trim().trimMargin("> ")
         val quoteFont = FontFactory.getFont(font.familyname, font.size, Font.ITALIC)
         val paragraph = Paragraph(text, quoteFont)
         paragraph.indentationLeft = 20f
         document.add(paragraph)
     }
+
+}
+
+class ParagraphVisitor(private val paragraph: Paragraph, val content: String, val font: Font) :
+    Visitor {
+    override fun visitNode(node: ASTNode) {
+        println("paragraph ${node.type}")
+        when (node.type) {
+            MarkdownTokenTypes.TEXT -> {
+                val text = node.getTextInNode(content).toString()
+                paragraph.add(text)
+            }
+
+            // Emphasis & strong
+            MarkdownElementTypes.EMPH -> addStyledBlock(node, Font.ITALIC, 1)
+            MarkdownElementTypes.STRONG -> addStyledBlock(node, Font.BOLD, 2)
+
+            // Inline code
+            MarkdownElementTypes.CODE_SPAN -> addCodeSpan(node)
+            MarkdownTokenTypes.WHITE_SPACE -> paragraph.add(" ")
+
+            // Links (render as text (url)) to avoid PDF-specific anchors
+            MarkdownElementTypes.INLINE_LINK,
+            MarkdownElementTypes.FULL_REFERENCE_LINK,
+            MarkdownElementTypes.SHORT_REFERENCE_LINK -> addLink(node)
+        }
+    }
+
+    private fun addStyledBlock(node: ASTNode, style: Int, offset: Int) {
+        val text = node.getTextInNode(content).toString()
+        val styledFont = FontFactory.getFont(font.familyname, font.size, style)
+        paragraph.add(Chunk(text.substring(offset, text.length - offset), styledFont))
+    }
+
+    private fun addCodeSpan(node: ASTNode) {
+        val raw = node.getTextInNode(content).toString()
+        val text = raw.replace("`", "").trim()
+        val codeFont = FontFactory.getFont("Courier", font.size, Font.NORMAL)
+        paragraph.add(Chunk(text, codeFont))
+    }
+
 
     private fun addLink(node: ASTNode) {
         val raw = node.getTextInNode(content).toString()
@@ -328,9 +339,9 @@ class OpenPdfVisitor(
         val url = match?.groupValues?.getOrNull(2)?.trim()
         if (!text.isNullOrEmpty() && !url.isNullOrEmpty()) {
             val linkFont = FontFactory.getFont(font.familyname, font.size, Font.UNDERLINE)
-            document.add(Paragraph("$text ($url)", linkFont))
+            paragraph.add(Chunk(text, linkFont))
         } else {
-            document.add(Paragraph(raw, font))
+            paragraph.add(raw)
         }
     }
 }
