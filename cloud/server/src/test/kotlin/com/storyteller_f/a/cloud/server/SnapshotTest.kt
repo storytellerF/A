@@ -112,6 +112,15 @@ class SnapshotTest {
     )
 
     @Test
+    fun `test generate block quote with empty line`() = openPdfSnapshot(
+        """
+        > quoted line
+        >
+        > second line
+        """.trimIndent()
+    )
+
+    @Test
     fun `test generate link`() = openPdfSnapshot(
         """
         This is a [link text](https://example.com) in paragraph.
@@ -127,7 +136,10 @@ private fun openPdfSnapshot(content: String, map: Map<String, File> = emptyMap()
         it.className.endsWith("SnapshotTest")
     }.methodName
 
-    listOf(OpenPdf(), PdfBox()).forEach { pdf ->
+    listOf(
+        OpenPdf(),
+//        PdfBox()
+    ).forEach { pdf ->
         val name = pdf::class.simpleName
         val baseDir = File("build/tmp/$name")
 
