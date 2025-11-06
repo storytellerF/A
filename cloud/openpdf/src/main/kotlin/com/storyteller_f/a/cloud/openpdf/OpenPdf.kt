@@ -21,10 +21,16 @@ import org.intellij.markdown.ast.getTextInNode
 import org.intellij.markdown.ast.visitors.Visitor
 import org.openpdf.text.Chunk
 import org.openpdf.text.Document
+import org.openpdf.text.Element
 import org.openpdf.text.Font
 import org.openpdf.text.FontFactory
 import org.openpdf.text.Image
 import org.openpdf.text.Paragraph
+import org.openpdf.text.Rectangle
+import org.openpdf.text.pdf.PdfContentByte
+import org.openpdf.text.pdf.PdfPCell
+import org.openpdf.text.pdf.PdfPCellEvent
+import org.openpdf.text.pdf.PdfPTable
 import org.openpdf.text.pdf.PdfWriter
 import java.awt.Color
 import java.io.File
@@ -89,8 +95,13 @@ class OpenPdfVisitor(
             }
 
             MarkdownElementTypes.CODE_FENCE -> {
-                val paragraph = buildParagraphFromCodeFence(node)
-                document.add(paragraph)
+                val table = buildRoundedCodeBlockTable(buildParagraphFromCodeFence(node))
+                document.add(table)
+            }
+
+            MarkdownElementTypes.CODE_BLOCK -> {
+                val table = buildTableFromCodeBlock(node)
+                document.add(table)
             }
 
             // Headings
@@ -161,6 +172,14 @@ class OpenPdfVisitor(
         return paragraph
     }
 
+    private fun buildTableFromCodeBlock(node: ASTNode): PdfPTable {
+        val raw = node.getTextInNode(content).toString()
+        val paragraph = Paragraph()
+        val codeFont = FontFactory.getFont("Courier", font.size, Font.NORMAL)
+        paragraph.add(Chunk(raw, codeFont))
+        return buildRoundedCodeBlockTable(paragraph)
+    }
+
     private fun addHighlightCodeFence(
         it: CodeHighlight,
         paragraph: Paragraph,
@@ -194,6 +213,57 @@ class OpenPdfVisitor(
                     font
                 )
             )
+        }
+    }
+
+    private fun buildRoundedCodeBlockTable(paragraph: Paragraph): PdfPTable {
+        val table = PdfPTable(1)
+        table.keepTogether = true
+        table.setWidthPercentage(100f)
+        table.setHorizontalAlignment(Element.ALIGN_LEFT)
+        table.setSpacingBefore(6f)
+        table.setSpacingAfter(6f)
+
+        paragraph.alignment = Element.ALIGN_LEFT
+        val cell = PdfPCell(paragraph)
+        cell.border = Rectangle.NO_BORDER
+        cell.horizontalAlignment = Element.ALIGN_LEFT
+        // padding: left/right/top/bottom
+        val horizontalPadding = 12f
+        val verticalPadding = 8f
+        cell.paddingLeft = horizontalPadding
+        cell.paddingRight = horizontalPadding
+        cell.paddingTop = verticalPadding
+        cell.paddingBottom = verticalPadding
+
+        cell.setCellEvent(RoundedBackgroundCellEvent(
+            radius = 6f,
+            fillColor = Color(245, 245, 245),
+            strokeColor = Color(220, 220, 220)
+        ))
+
+        table.addCell(cell)
+        return table
+    }
+
+    private class RoundedBackgroundCellEvent(
+        private val radius: Float,
+        private val fillColor: Color,
+        private val strokeColor: Color
+    ) : PdfPCellEvent {
+        override fun cellLayout(
+            cell: PdfPCell?,
+            rect: Rectangle?,
+            canvas: Array<PdfContentByte?>?
+        ) {
+            if (rect == null || canvas == null) return
+            val cb = canvas.getOrNull(PdfPTable.BACKGROUNDCANVAS) ?: return
+            cb.saveState()
+            cb.setColorFill(fillColor)
+            cb.setColorStroke(strokeColor)
+            cb.roundRectangle(rect.left, rect.bottom, rect.width, rect.height, radius)
+            cb.fillStroke()
+            cb.restoreState()
         }
     }
 

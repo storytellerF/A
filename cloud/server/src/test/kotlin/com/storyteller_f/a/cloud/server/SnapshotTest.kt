@@ -10,7 +10,6 @@ import com.storyteller_f.shared.model.UserInfo
 import de.redsix.pdfcompare.PdfComparator
 import kotlinx.datetime.LocalDateTime
 import org.apache.pdfbox.pdmodel.encryption.SecurityProvider
-import org.intellij.lang.annotations.Language
 import java.io.File
 import java.security.Security
 import kotlin.test.Test
@@ -43,11 +42,20 @@ class SnapshotTest {
 
     @Test
     fun `test openpdf generate code fence`() = openPdfSnapshot(
-        @Language("kotlin") """```kotlin
+        """```kotlin
                 |fun main() {
                 |    println("hello world")
                 |}
                 |```""".trimMargin()
+    )
+
+    @Test
+    fun `test openpdf generate code block`() = openPdfSnapshot(
+        """
+                |    fun main() {
+                |        println("hello world")
+                |    }
+        """.trimMargin()
     )
 
     @Test
