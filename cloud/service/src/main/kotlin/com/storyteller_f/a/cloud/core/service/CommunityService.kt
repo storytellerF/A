@@ -181,14 +181,7 @@ suspend fun Backend.createCommunity(
 ): Result<CommunityInfo?> {
     return runCatching {
         checkAid(newCommunity.aid).getOrThrow()
-        when (checkNickname(newCommunity.name, 1..COMMUNITY_NAME_LENGTH)) {
-            StringCheckResult.RANGE_MISMATCH -> Result.failure(
-                CustomBadRequestException("community name must be between in 1 and 20")
-            )
-
-            StringCheckResult.EMPTY -> Result.failure(CustomBadRequestException("community name is empty"))
-            StringCheckResult.SUCCESS -> UNIT_RESULT
-        }.getOrThrow()
+        checkCommunityName(newCommunity).getOrThrow()
     }.mapResult {
         val id = SnowflakeFactory.nextId()
         val memberId = SnowflakeFactory.nextId()
@@ -227,6 +220,16 @@ suspend fun Backend.createCommunity(
     }
 }
 
+private fun checkCommunityName(newCommunity: NewCommunity): Result<Unit> =
+    when (checkNickname(newCommunity.name, 1..COMMUNITY_NAME_LENGTH)) {
+        StringCheckResult.RANGE_MISMATCH -> Result.failure(
+            CustomBadRequestException("community name must be between in 1 and 20")
+        )
+
+        StringCheckResult.EMPTY -> Result.failure(CustomBadRequestException("community name is empty"))
+        StringCheckResult.SUCCESS -> UNIT_RESULT
+    }
+
 suspend fun Backend.updateCommunity(
     id: PrimaryKey,
     old: UpdateCommunityBody,
@@ -257,46 +260,55 @@ private suspend fun Backend.checkBeforeUpdateCommunity(
     newCommunity: UpdateCommunityBody,
 ): Result<Unit> {
     runCatching {
-        when (checkNickname(newCommunity.name, 1..COMMUNITY_NAME_LENGTH)) {
-            StringCheckResult.RANGE_MISMATCH -> Result.failure(
-                CustomBadRequestException("community name must be between in 1 and 20")
-            )
-
-            else -> UNIT_RESULT
-        }.getOrThrow()
-        checkIcon(newCommunity.icon, Dimension.DEFAULT_DIMENSION).mapResult { checkResult ->
-            when (checkResult) {
-                MediaCheckResult.NOT_FOUND -> Result.failure(CustomBadRequestException("icon not found"))
-                MediaCheckResult.CONTENT_TYPE_MISMATCH -> Result.failure(
-                    CustomBadRequestException("only support image")
-                )
-
-                MediaCheckResult.DIMENSION_MISMATCH -> Result.failure(
-                    CustomBadRequestException("dimension mismatch")
-                )
-
-                else -> UNIT_RESULT
-            }
-        }.getOrThrow()
-        checkIcon(newCommunity.poster, Dimension.COMMUNITY_POSTER).mapResult { checkResult ->
-            when (checkResult) {
-                MediaCheckResult.NOT_FOUND -> Result.failure(CustomBadRequestException("poster not found"))
-                MediaCheckResult.CONTENT_TYPE_MISMATCH -> Result.failure(
-                    CustomBadRequestException("only support image")
-                )
-
-                MediaCheckResult.DIMENSION_MISMATCH -> Result.failure(
-                    CustomBadRequestException("dimension mismatch")
-                )
-
-                else -> UNIT_RESULT
-            }
-        }.getOrThrow()
+        checkCommunityNameForUpdate(newCommunity).getOrThrow()
+        checkCommunityIconForUpdate(newCommunity).getOrThrow()
+        checkCommunityPosterForUpdate(newCommunity).getOrThrow()
     }.exceptionOrNull()?.let {
         return Result.failure(it)
     }
     return UNIT_RESULT
 }
+
+private suspend fun Backend.checkCommunityPosterForUpdate(newCommunity: UpdateCommunityBody): Result<Unit> =
+    checkIcon(newCommunity.poster, Dimension.COMMUNITY_POSTER).mapResult { checkResult ->
+        when (checkResult) {
+            MediaCheckResult.NOT_FOUND -> Result.failure(CustomBadRequestException("poster not found"))
+            MediaCheckResult.CONTENT_TYPE_MISMATCH -> Result.failure(
+                CustomBadRequestException("only support image")
+            )
+
+            MediaCheckResult.DIMENSION_MISMATCH -> Result.failure(
+                CustomBadRequestException("dimension mismatch")
+            )
+
+            else -> UNIT_RESULT
+        }
+    }
+
+private suspend fun Backend.checkCommunityIconForUpdate(newCommunity: UpdateCommunityBody): Result<Unit> =
+    checkIcon(newCommunity.icon, Dimension.DEFAULT_DIMENSION).mapResult { checkResult ->
+        when (checkResult) {
+            MediaCheckResult.NOT_FOUND -> Result.failure(CustomBadRequestException("icon not found"))
+            MediaCheckResult.CONTENT_TYPE_MISMATCH -> Result.failure(
+                CustomBadRequestException("only support image")
+            )
+
+            MediaCheckResult.DIMENSION_MISMATCH -> Result.failure(
+                CustomBadRequestException("dimension mismatch")
+            )
+
+            else -> UNIT_RESULT
+        }
+    }
+
+private fun checkCommunityNameForUpdate(newCommunity: UpdateCommunityBody): Result<Unit> =
+    when (checkNickname(newCommunity.name, 1..COMMUNITY_NAME_LENGTH)) {
+        StringCheckResult.RANGE_MISMATCH -> Result.failure(
+            CustomBadRequestException("community name must be between in 1 and 20")
+        )
+
+        else -> UNIT_RESULT
+    }
 
 suspend fun Backend.processRawCommunityToCommunityInfo(
     list: List<RawCommunity>,

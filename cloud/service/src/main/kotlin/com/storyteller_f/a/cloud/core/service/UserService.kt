@@ -128,12 +128,24 @@ fun checkAid(aid: String?, supportEmptyAid: Boolean = false): Result<Unit> {
 }
 
 fun checkNickname(nickname: String?, range: IntRange): StringCheckResult {
-    return when {
-        nickname.isNullOrBlank() -> (StringCheckResult.EMPTY)
-        nickname.length in range -> (StringCheckResult.SUCCESS)
-        else -> StringCheckResult.RANGE_MISMATCH
-    }
+    if (nickname == null) return StringCheckResult.EMPTY
+    if (nickname.length !in range) return StringCheckResult.RANGE_MISMATCH
+    if (!isVisibleUnicodeString(nickname)) return StringCheckResult.RANGE_MISMATCH
+    return StringCheckResult.SUCCESS
 }
+
+fun isVisibleUnicodeString(s: String) = !s.codePoints().anyMatch { codePoint ->
+    val type = Character.getType(codePoint)
+    Character.isISOControl(codePoint)
+            || Character.getType(codePoint).toByte() == Character.FORMAT
+            || !Character.isDefined(codePoint)
+            || type == Character.NON_SPACING_MARK.toInt()
+            || type == Character.COMBINING_SPACING_MARK.toInt()
+            || type == Character.ENCLOSING_MARK.toInt()
+            || Character.isWhitespace(codePoint)
+            || type == Character.SPACE_SEPARATOR.toInt()
+}
+
 
 enum class MediaCheckResult {
     EMPTY,
