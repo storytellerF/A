@@ -1,6 +1,7 @@
 @file:Suppress("ImportOrdering")
 
 package com.storyteller_f.a.cloud.pdfbox
+
 import com.storyteller_f.a.cloud.pdf.PdfGenerationSpec
 import com.storyteller_f.a.cloud.pdf.PdfService
 import com.storyteller_f.a.cloud.pdf.SnapshotGeneration
@@ -16,7 +17,6 @@ import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.pdmodel.font.FontMappers
 import org.apache.pdfbox.pdmodel.font.PDFont
 import org.apache.pdfbox.pdmodel.font.PDType0Font
-import rst.pdfbox.layout.elements.Frame
 import org.intellij.markdown.IElementType
 import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.MarkdownTokenTypes
@@ -25,12 +25,13 @@ import org.intellij.markdown.ast.accept
 import org.intellij.markdown.ast.acceptChildren
 import org.intellij.markdown.ast.getTextInNode
 import org.intellij.markdown.ast.visitors.Visitor
+import rst.pdfbox.layout.elements.Document
+import rst.pdfbox.layout.elements.Frame
+import rst.pdfbox.layout.elements.ImageElement
+import rst.pdfbox.layout.elements.Paragraph
 import rst.pdfbox.layout.shape.RoundRect
 import rst.pdfbox.layout.text.TextFlow
 import java.awt.Color
-import rst.pdfbox.layout.elements.Document
-import rst.pdfbox.layout.elements.ImageElement
-import rst.pdfbox.layout.elements.Paragraph
 import java.io.File
 import java.io.FileInputStream
 import java.security.KeyStore
@@ -114,6 +115,7 @@ private fun loadFontBundle(document: PDDocument, content: String): PdfFontBundle
         FontMappers.instance().getTrueTypeFont((f ?: base).name, null).font,
         true
     )
+
     val bold = candidates.firstOrNull {
         it.name.contains("Bold") && !it.name.contains("Italic")
     }
@@ -191,7 +193,13 @@ class PdfBoxVisitor(
                 items.forEachIndexed { index, item ->
                     val text = collectPlainText(item, content)
                     if (text.isNotBlank()) {
-                        document.add(Paragraph().apply { addText("${index + 1}. $text", 14f, font) })
+                        document.add(Paragraph().apply {
+                            addText(
+                                "${index + 1}. $text",
+                                14f,
+                                font
+                            )
+                        })
                     }
                 }
             }
@@ -212,6 +220,7 @@ class PdfBoxVisitor(
                     document.add(frame)
                 }
             }
+
             MarkdownElementTypes.CODE_BLOCK -> {
                 val code = node.getTextInNode(content).toString().trimIndent()
                 if (code.isNotBlank()) {
@@ -230,20 +239,13 @@ class PdfBoxVisitor(
             }
 
             MarkdownElementTypes.BLOCK_QUOTE -> {
-                val q = collectPlainText(node, content)
-                if (q.isNotBlank()) {
-                    val quoteParagraph = Paragraph().apply {
-                        val tf = TextFlow()
-                        tf.addText(q, 14f, fontBundle.plain)
-                        add(tf)
-                    }
-                    val frame = Frame(quoteParagraph)
-                    frame.shape = RoundRect(6f)
-                    frame.backgroundColor = Color(0xF5, 0xF5, 0xF5)
-                    frame.setPadding(10f, 10f, 8f, 8f)
-                    frame.setMargin(6f, 6f, 6f, 6f)
-                    document.add(frame)
-                }
+                val flow = TextFlow()
+                node.acceptChildren(QuoteVisitor(content, flow, fontBundle))
+                val frame = Frame(Paragraph().apply { add(flow) })
+                frame.shape = RoundRect(6f)
+                frame.setPadding(10f, 10f, 8f, 8f)
+                frame.setMargin(6f, 6f, 6f, 6f)
+                document.add(frame)
             }
 
             MarkdownElementTypes.IMAGE -> {
@@ -299,4 +301,19 @@ private class ParagraphVisitor(
             flow.addText(raw, 14f, fontBundle.plain)
         }
     }
+}
+
+class QuoteVisitor(private val content: String, val paragraph: TextFlow, val font: PdfFontBundle) :
+    Visitor {
+    override fun visitNode(node: ASTNode) {
+        println("quota ${node.type}")
+        if (node.type == MarkdownTokenTypes.BLOCK_QUOTE) {
+            node.acceptChildren(this)
+        } else if (node.type == MarkdownElementTypes.PARAGRAPH) {
+            val value = node.getTextInNode(content).toString()
+                .trimMargin("> ").replace("\n", " ") + "\n\n"
+            paragraph.addText(value, 14f, font.italic)
+        }
+    }
+
 }

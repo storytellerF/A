@@ -12,7 +12,6 @@ import dev.snipme.highlights.Highlights
 import dev.snipme.highlights.model.CodeHighlight
 import dev.snipme.highlights.model.ColorHighlight
 import dev.snipme.highlights.model.SyntaxThemes
-import org.intellij.markdown.MarkdownElementType
 import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
@@ -337,7 +336,7 @@ class OpenPdfVisitor(
     private fun addBlockQuote(node: ASTNode) {
         val quoteFont = FontFactory.getFont(font.familyname, font.size, Font.ITALIC)
         val paragraph = Paragraph()
-        node.acceptChildren(QuotaVisitor(content, paragraph, quoteFont))
+        node.acceptChildren(QuoteVisitor(content, paragraph, quoteFont))
         val table = buildBlockQuoteTable(paragraph)
         document.add(table)
     }
@@ -397,13 +396,13 @@ class ParagraphVisitor(private val paragraph: Paragraph, val content: String, va
     }
 }
 
-class QuotaVisitor(private val content: String, val paragraph: Paragraph, val font: Font) : Visitor {
+class QuoteVisitor(private val content: String, val paragraph: Paragraph, val font: Font) : Visitor {
     override fun visitNode(node: ASTNode) {
         println("quota ${node.type}")
         if (node.type == MarkdownTokenTypes.BLOCK_QUOTE) {
             node.acceptChildren(this)
         } else if (node.type == MarkdownElementTypes.PARAGRAPH) {
-            val content = node.getTextInNode(content).toString().trimMargin(">") + "\n\n"
+            val content = node.getTextInNode(content).toString().trimMargin("> ").replace("\n", " ") + "\n\n"
             paragraph.add(Chunk(content, font))
         }
     }
