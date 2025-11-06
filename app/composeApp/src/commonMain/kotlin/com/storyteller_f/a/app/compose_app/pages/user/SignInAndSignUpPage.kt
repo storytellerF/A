@@ -357,7 +357,7 @@ fun InputPrivateKeyPage(isSignUp: Boolean) {
                 if (isSignUp) {
                     Button({
                         scope.launch {
-                            privateKey = getAlgo().generateECDSAPemPrivateKey().getOrThrow()
+                            privateKey = getAlgo().generatePemKeyPair().getOrThrow().first
                         }
                     }, modifier = Modifier.testTag("auto_generate")) {
                         Text(stringResource(Res.string.auto_generate))

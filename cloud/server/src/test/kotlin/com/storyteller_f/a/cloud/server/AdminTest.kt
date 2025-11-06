@@ -116,8 +116,8 @@ class AdminTest {
 
     @Test
     fun `test add user`() = test {
-        val privateKey = getAlgo().run {
-            generateECDSAPemPrivateKey().getOrThrow()
+        val (privateKey, _) = getAlgo().run {
+            generatePemKeyPair().getOrThrow()
         }
         val publicKey = getAlgo().run {
             getDerPublicKeyFromPrivateKey(privateKey).getOrThrow()

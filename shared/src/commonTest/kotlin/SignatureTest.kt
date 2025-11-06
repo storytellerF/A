@@ -1,8 +1,8 @@
-import com.storyteller_f.shared.*
 import com.storyteller_f.shared.AlgoP256
-import dev.whyoleg.cryptography.CryptographyProvider
-import dev.whyoleg.cryptography.algorithms.EC
-import dev.whyoleg.cryptography.algorithms.ECDSA
+import com.storyteller_f.shared.decryptDataByAES
+import com.storyteller_f.shared.encryptDataByAES
+import com.storyteller_f.shared.getAlgo
+import com.storyteller_f.shared.loadCryptoLibIfNeed
 import kotlinx.coroutines.test.runTest
 import org.bouncycastle.pqc.jcajce.spec.DilithiumParameterSpec
 import org.bouncycastle.pqc.jcajce.spec.KyberParameterSpec
@@ -14,6 +14,7 @@ import javax.crypto.Cipher
 import javax.crypto.SecretKey
 import javax.crypto.spec.SecretKeySpec
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 
 class SignatureTest {
@@ -21,15 +22,22 @@ class SignatureTest {
     @Test
     fun `test encrypt`() {
         runTest {
-            getAlgo().run {
-                val (encrypted, aesKey) = encryptDataByAES("hello").getOrThrow()
-                assertEquals("hello", decryptDataByAES(encrypted, aesKey).getOrThrow())
-                val keyPair = CryptographyProvider.Default.get(ECDSA).keyPairGenerator(EC.Curve.P256).generateKey()
-                val derPublicKey = keyPair.publicKey.encodeToByteArray(EC.PublicKey.Format.DER)
-                val derPrivateKey = keyPair.privateKey.encodeToByteArray(EC.PrivateKey.Format.DER)
-                val encrypt = eciesEncrypt(derPublicKey.toHexString(), "hello".encodeToByteArray()).getOrThrow()
-                val decrypted = eciesDecrypt(derPrivateKey.toHexString(), encrypt).getOrThrow()
-                assertEquals("hello", decrypted.decodeToString())
+            loadCryptoLibIfNeed()
+            listOf(AlgoP256).forEach {
+                println(it::class)
+                it.run {
+                    val (encrypted, aesKeyBytes) = encryptDataByAES("hello").getOrThrow()
+                    // 验证加密后的数据可以解密
+                    assertEquals("hello", decryptDataByAES(encrypted, aesKeyBytes).getOrThrow())
+
+                    val (pemPrivateKey, pemPublicKey) = generatePemKeyPair().getOrThrow()
+                    val derPublicKey = getDerPublicKeyFromPem(pemPublicKey).getOrThrow()
+                    val derPrivateKey = getDerPrivateKey(pemPrivateKey).getOrThrow()
+                    val encryptedAesKey = kemEncrypt(derPublicKey, aesKeyBytes).getOrThrow()
+                    val decryptedAesKey = kemDecrypt(derPrivateKey, encryptedAesKey).getOrThrow()
+                    // 验证解密后的AES密钥与原始AES密钥相同
+                    assertContentEquals(aesKeyBytes, decryptedAesKey)
+                }
             }
         }
     }
@@ -39,9 +47,9 @@ class SignatureTest {
         loadCryptoLibIfNeed()
         runTest {
             getAlgo().run {
-                val keyPair = generateECDSAPemPrivateKey().getOrThrow()
-                val key = getDerPublicKeyFromPrivateKey(keyPair).getOrThrow()
-                println(AlgoP256.calcAddress(key).getOrThrow())
+                val (_, publicPem) = generatePemKeyPair().getOrThrow()
+                val derPublic = getDerPublicKeyFromPem(publicPem).getOrThrow()
+                println(calcAddress(derPublic).getOrThrow())
             }
         }
     }

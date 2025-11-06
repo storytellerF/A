@@ -5,6 +5,8 @@
       <w>avif</w>
       <w>bcpqc</w>
       <w>ecdsa</w>
+      <w>ecies</w>
+      <w>hmac</w>
       <w>kotbase</w>
       <w>koyeb</w>
       <w>kyber</w>

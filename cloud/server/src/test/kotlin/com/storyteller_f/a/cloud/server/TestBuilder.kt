@@ -285,7 +285,7 @@ suspend fun <R> ApplicationTestBuilder.attachSession(
     onReceive: suspend (RoomFrame, UserSessionModel, DefaultClientWebSocketSession) -> Unit = { _, _, _ -> },
     block: suspend UserSessionManager.(SessionTuple) -> R
 ): SessionOuterTuple<R> {
-    val priKey = getAlgo().generateECDSAPemPrivateKey().getOrThrow()
+    val priKey = getAlgo().generatePemKeyPair().getOrThrow().first
     return getAppSession(true, priKey, onReceive, block)
 }
 
@@ -366,7 +366,7 @@ suspend fun UserSessionManager.waitAndSend(block: suspend DefaultClientWebSocket
 suspend fun <R> ApplicationTestBuilder.attachPanelSession(
     block: suspend PanelSessionManager.(SessionTuple) -> R
 ): SessionOuterTuple<R> {
-    val priKey = getAlgo().generateECDSAPemPrivateKey().getOrThrow()
+    val priKey = getAlgo().generatePemKeyPair().getOrThrow().first
     return getPanelSession(priKey, block, true)
 }
 

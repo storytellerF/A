@@ -201,7 +201,7 @@ suspend fun Backend.addChildAccount(uid: PrimaryKey): Result<ChildAccountInfo> {
         } else {
             runCatching {
                 val (publicKey, address, derPrivateKey) = getAlgo().run {
-                    val pemPrivateKey = generateECDSAPemPrivateKey().getOrThrow()
+                    val pemPrivateKey = generatePemKeyPair().getOrThrow().first
                     val publicKey = getDerPublicKeyFromPrivateKey(pemPrivateKey).getOrThrow()
                     val derPrivateKey = getDerPrivateKey(pemPrivateKey).getOrThrow()
                     val address = calcAddress(publicKey).getOrThrow()

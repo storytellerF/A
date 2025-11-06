@@ -1,6 +1,7 @@
 package com.storyteller_f.shared
 
 import com.storyteller_f.shared.utils.mapResult
+import org.bouncycastle.asn1.pkcs.PrivateKeyInfo
 import org.bouncycastle.asn1.x500.X500Name
 import org.bouncycastle.cert.X509v3CertificateBuilder
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
@@ -15,6 +16,7 @@ import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter
 import org.bouncycastle.operator.ContentSigner
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
 import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider
+import org.bouncycastle.pqc.jcajce.spec.DilithiumParameterSpec
 import org.bouncycastle.util.encoders.Hex.decode
 import org.bouncycastle.util.encoders.Hex.toHexString
 import java.io.File
@@ -33,11 +35,13 @@ import java.security.Security
 import java.security.cert.X509Certificate
 import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
-import java.util.*
+import java.util.Date
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 
 @OptIn(ExperimentalStdlibApi::class)
 actual suspend fun getDerPublicKeyFromPrivateKeyP256(pemPrivateKeyStr: String): Result<String> {
@@ -72,7 +76,7 @@ object CryptoJvm {
             when (any) {
                 is org.bouncycastle.openssl.PEMKeyPair -> converter.getPrivateKey(any.privateKeyInfo)
 
-                is org.bouncycastle.asn1.pkcs.PrivateKeyInfo -> converter.getPrivateKey(any)
+                is PrivateKeyInfo -> converter.getPrivateKey(any)
 
                 else -> throw IllegalArgumentException("Unsupported PEM object: " + any.javaClass)
             }
@@ -277,22 +281,69 @@ actual val AlgoDilithium: Algo = object : Algo {
         derSignature: String,
         data: String
     ): Result<Boolean> {
-        TODO("Not yet implemented")
+        return runCatching {
+            val publicKeyBytes = derPublicKey.hexToByteArray()
+            val keyFactory = KeyFactory.getInstance("Dilithium", "BCPQC")
+            val publicKey = keyFactory.generatePublic(X509EncodedKeySpec(publicKeyBytes))
+
+            val signature = java.security.Signature.getInstance("Dilithium", "BCPQC")
+            signature.initVerify(publicKey)
+            signature.update(data.encodeToByteArray())
+            signature.verify(derSignature.hexToByteArray())
+        }
     }
 
     override suspend fun signature(
         pemPrivateKey: String,
         data: String
     ): Result<String> {
-        TODO("Not yet implemented")
+        return runCatching {
+            val pemParser = PEMParser(StringReader(pemPrivateKey))
+            val converter = JcaPEMKeyConverter().setProvider("BCPQC")
+            val obj = pemParser.readObject()
+            pemParser.close()
+
+            val privateKey: PrivateKey = when (obj) {
+                is org.bouncycastle.openssl.PEMKeyPair -> converter.getPrivateKey(obj.privateKeyInfo)
+                is PrivateKeyInfo -> converter.getPrivateKey(obj)
+                else -> throw IllegalArgumentException("Unsupported PEM object: ${obj?.javaClass}")
+            }
+
+            val signer = java.security.Signature.getInstance("Dilithium", "BCPQC")
+            signer.initSign(privateKey, SecureRandom())
+            signer.update(data.encodeToByteArray())
+            signer.sign().toHexString()
+        }
     }
 
     override suspend fun getDerPrivateKey(pemPrivateKey: String): Result<String> {
-        TODO("Not yet implemented")
+        return runCatching {
+            val pemParser = PEMParser(StringReader(pemPrivateKey))
+            val converter = JcaPEMKeyConverter().setProvider("BCPQC")
+            val obj = pemParser.readObject()
+            pemParser.close()
+
+            val privateKey: PrivateKey = when (obj) {
+                is org.bouncycastle.openssl.PEMKeyPair -> converter.getPrivateKey(obj.privateKeyInfo)
+                is PrivateKeyInfo -> converter.getPrivateKey(obj)
+                else -> throw IllegalArgumentException("Unsupported PEM object: ${obj?.javaClass}")
+            }
+
+            privateKey.encoded.toHexString()
+        }
     }
 
+    @OptIn(ExperimentalEncodingApi::class)
     override suspend fun getPemPrivateKeyFromDer(derPrivateKey: String): Result<String> {
-        TODO("Not yet implemented")
+        return runCatching {
+            val der = derPrivateKey.hexToByteArray()
+            val base64 = Base64.encode(der).chunked(64).joinToString("\n")
+            buildString {
+                appendLine("-----BEGIN PRIVATE KEY-----")
+                appendLine(base64)
+                appendLine("-----END PRIVATE KEY-----")
+            }
+        }
     }
 
     override suspend fun decryptMessage(
@@ -300,32 +351,90 @@ actual val AlgoDilithium: Algo = object : Algo {
         encrypted: ByteArray,
         encryptedAesKey: ByteArray
     ): Result<String> {
-        TODO("Not yet implemented")
+        return runCatching {
+            throw UnsupportedOperationException("decryptMessage is not supported for Dilithium")
+        }
     }
 
-    override suspend fun eciesEncrypt(
+    override suspend fun kemEncrypt(
         derPublicKeyStr: String,
-        data: ByteArray
+        aesKeyBytes: ByteArray
     ): Result<ByteArray> {
-        TODO("Not yet implemented")
+        return runCatching {
+            val publicKeyBytes = derPublicKeyStr.hexToByteArray()
+            
+            val keyFactory = KeyFactory.getInstance("Kyber", "BCPQC")
+            val publicKey = keyFactory.generatePublic(X509EncodedKeySpec(publicKeyBytes))
+            val wrapCipher = Cipher.getInstance("Kyber", "BCPQC")
+            wrapCipher.init(Cipher.WRAP_MODE, publicKey)
+            wrapCipher.wrap(SecretKeySpec(aesKeyBytes, "AES"))
+        }
     }
 
-    override suspend fun eciesDecrypt(
+    override suspend fun kemDecrypt(
         derPrivateKeyStr: String,
         encrypted: ByteArray
     ): Result<ByteArray> {
-        TODO("Not yet implemented")
-    }
+        return runCatching {
+            val privateKeyBytes = derPrivateKeyStr.hexToByteArray()
+            val keyFactory = KeyFactory.getInstance("Kyber", "BCPQC")
+            val privateKey = keyFactory.generatePrivate(PKCS8EncodedKeySpec(privateKeyBytes))
 
-    override suspend fun getDerPublicKeyFromPrivateKey(pemPrivateKeyStr: String): Result<String> {
-        TODO("Not yet implemented")
+            val unwrapCipher = Cipher.getInstance("Kyber", "BCPQC")
+            unwrapCipher.init(Cipher.UNWRAP_MODE, privateKey)
+            val aesKey = unwrapCipher.unwrap(encrypted, "AES", Cipher.SECRET_KEY) as javax.crypto.SecretKey
+            aesKey.encoded
+        }
     }
 
     override suspend fun calcAddress(derPublicKeyStr: String): Result<String> {
-        TODO("Not yet implemented")
+        return runCatching {
+            val decode = decode(derPublicKeyStr)
+            val digest256 = Keccak.Digest256()
+            val digest = digest256.digest(decode).takeLast(20).toByteArray()
+            toHexString(digest)
+        }
     }
 
-    override suspend fun generateECDSAPemPrivateKey(): Result<String> {
+    @OptIn(ExperimentalEncodingApi::class)
+    override suspend fun generatePemKeyPair(): Result<Pair<String, String>> {
+        return runCatching {
+            val kpg = KeyPairGenerator.getInstance("Dilithium", "BCPQC")
+            kpg.initialize(DilithiumParameterSpec.dilithium3, SecureRandom())
+            val kp = kpg.generateKeyPair()
+            val privDer = kp.private.encoded
+            val privB64 = Base64.encode(privDer).chunked(64).joinToString("\n")
+            val privatePem = buildString {
+                appendLine("-----BEGIN PRIVATE KEY-----")
+                appendLine(privB64)
+                appendLine("-----END PRIVATE KEY-----")
+            }
+            val pubDer = kp.public.encoded
+            val pubB64 = Base64.encode(pubDer).chunked(64).joinToString("\n")
+            val publicPem = buildString {
+                appendLine("-----BEGIN PUBLIC KEY-----")
+                appendLine(pubB64)
+                appendLine("-----END PUBLIC KEY-----")
+            }
+            privatePem to publicPem
+        }
+    }
+
+    @OptIn(ExperimentalEncodingApi::class)
+    override suspend fun getDerPublicKeyFromPem(pemPublicKeyStr: String): Result<String> {
+        return runCatching {
+            val base64 = pemPublicKeyStr
+                .replace("-----BEGIN PUBLIC KEY-----", "")
+                .replace("-----END PUBLIC KEY-----", "")
+                .replace("\r", "")
+                .replace("\n", "")
+                .trim()
+            val der = Base64.decode(base64)
+            der.toHexString()
+        }
+    }
+
+    override suspend fun getDerPublicKeyFromPrivateKey(pemPrivateKeyStr: String): Result<String> {
         TODO("Not yet implemented")
     }
 
