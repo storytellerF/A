@@ -232,11 +232,19 @@ class PdfBoxVisitor(
             MarkdownElementTypes.BLOCK_QUOTE -> {
                 val q = collectPlainText(node, content)
                 if (q.isNotBlank()) {
-                    document.add(Paragraph().apply { addText(q, 14f, font) })
+                    val quoteParagraph = Paragraph().apply {
+                        val tf = TextFlow()
+                        tf.addText(q, 14f, fontBundle.plain)
+                        add(tf)
+                    }
+                    val frame = Frame(quoteParagraph)
+                    frame.shape = RoundRect(6f)
+                    frame.backgroundColor = Color(0xF5, 0xF5, 0xF5)
+                    frame.setPadding(10f, 10f, 8f, 8f)
+                    frame.setMargin(6f, 6f, 6f, 6f)
+                    document.add(frame)
                 }
             }
-
-            // Horizontal rule is not available in MarkdownElementTypes; skip explicit handling
 
             MarkdownElementTypes.IMAGE -> {
                 val name = extractImageUrl(node, content)
