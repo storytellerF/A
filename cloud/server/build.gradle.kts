@@ -60,7 +60,7 @@ dependencies {
     testImplementation(libs.javacv.platform)
     testImplementation(projects.cloud.pdfbox)
     testImplementation(libs.pdfbox)
-    testImplementation("de.redsix:pdfcompare:1.2.3")
+    testImplementation(libs.pdfcompare)
 }
 
 tasks.test {
