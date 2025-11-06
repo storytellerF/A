@@ -51,12 +51,14 @@ import com.storyteller_f.shared.setupKmpLogger
 import io.github.aakira.napier.Napier
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
+import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.ApplicationStarted
 import io.ktor.server.application.ApplicationStopped
+import io.ktor.server.application.createApplicationPlugin
 import io.ktor.server.application.install
 import io.ktor.server.auth.authenticate
 import io.ktor.server.netty.EngineMain
@@ -72,6 +74,7 @@ import io.ktor.server.request.header
 import io.ktor.server.request.httpMethod
 import io.ktor.server.request.queryString
 import io.ktor.server.request.uri
+import io.ktor.server.response.respond
 import io.ktor.server.routing.routing
 import io.ktor.server.sessions.SessionTransportTransformerEncrypt
 import io.ktor.server.sessions.Sessions
@@ -197,6 +200,11 @@ private fun Application.configurePlugin(
         setupRateLimit()
     }
     install(PartialContent)
+    install(RegionBlocker) {
+        this.reader = reader
+        denyIsoCodes = setOf("CN", "HK", "MO", "TW")
+        excludePaths = setOf("/metrics")
+    }
     configureMonitor()
 }
 
@@ -277,6 +285,26 @@ private fun buildLog(
                 |    Query: ${call.request.queryString()},
                 |    Headers: ${call.request.headers.toMap()},
                 |    Ip：$ipList""".trimMargin()
+}
+
+class RegionBlockerConfig {
+    lateinit var reader: DatabaseReader
+    var denyIsoCodes: Set<String> = setOf("CN")
+    var excludePaths: Set<String> = setOf("/metrics")
+}
+
+val RegionBlocker = createApplicationPlugin(name = "RegionBlocker", ::RegionBlockerConfig) {
+    val reader = pluginConfig.reader
+    val deny = pluginConfig.denyIsoCodes
+    val exclude = pluginConfig.excludePaths
+    onCall { call ->
+        val uri = call.request.uri
+        if (exclude.any { uri.startsWith(it) }) return@onCall
+        val codes = call.remoteIp(reader).mapNotNull { it.second }.toSet()
+        if (codes.any { it in deny }) {
+            call.respond(HttpStatusCode(451, "Unavailable For Legal Reasons"))
+        }
+    }
 }
 
 fun ApplicationCall.remoteIp(
