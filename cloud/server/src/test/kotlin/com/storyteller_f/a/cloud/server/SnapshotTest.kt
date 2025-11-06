@@ -138,7 +138,7 @@ private fun openPdfSnapshot(content: String, map: Map<String, File> = emptyMap()
 
     listOf(
         OpenPdf(),
-//        PdfBox()
+        PdfBox()
     ).forEach { pdf ->
         val name = pdf::class.simpleName
         val baseDir = File("build/tmp/$name")
