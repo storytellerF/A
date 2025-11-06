@@ -126,11 +126,7 @@ class TopicTest {
     @Test
     fun `test topic snapshot`() = test {
         attachSession {
-            val bytes =
-                ClassLoader.getSystemResourceAsStream("avatar1.png")!!.buffered().readBytes()
-            val tmpFile = File("build/test/tmp/avatar1.png")
-            tmpFile.parentFile!!.mkdirs()
-            tmpFile.writeBytes(bytes)
+            val tmpFile = File("src/test/resources/avatar1.png")
             val size = tmpFile.length()
             val info = upload(
                 ObjectTuple(it.uid, ObjectType.USER),

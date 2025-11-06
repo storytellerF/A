@@ -30,7 +30,7 @@ import kotlinx.coroutines.runBlocking
 import java.io.File
 
 fun main() {
-    setLogPath("A")
+    setLogPath()
     SnowflakeFactory.setMachine(1)
     setupKmpLogger()
     val flavorFilePath = File("../../${BackendConfig.FLAVOR}.env").canonicalPath

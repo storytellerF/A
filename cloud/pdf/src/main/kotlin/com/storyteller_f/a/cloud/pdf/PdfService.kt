@@ -6,15 +6,15 @@ import java.awt.Font
 import java.awt.GraphicsEnvironment
 import java.io.File
 
-sealed class SnapshotVerify(open val path: File) {
-    class KeyStoreVerify(
+sealed class SnapshotGeneration(open val path: File) {
+    class KeyStoreGeneration(
         val keyStorePath: String,
         val password: String,
         override val path: File,
         val signedFile: File,
-    ) : SnapshotVerify(path)
+    ) : SnapshotGeneration(path)
 
-    class NoneVerify(override val path: File) : SnapshotVerify(path)
+    class SimpleGeneration(override val path: File) : SnapshotGeneration(path)
 }
 
 interface PdfService {
@@ -24,7 +24,7 @@ interface PdfService {
         content: String,
         topicInfo: TopicInfo,
         map: Map<String, File>,
-        snapshotVerify: SnapshotVerify
+        snapshotGeneration: SnapshotGeneration
     ): Result<Unit>
 }
 

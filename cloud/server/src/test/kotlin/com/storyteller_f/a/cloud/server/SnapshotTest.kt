@@ -1,63 +1,59 @@
 package com.storyteller_f.a.cloud.server
 
+import com.storyteller_f.a.backend.core.setLogPath
 import com.storyteller_f.a.cloud.openpdf.OpenPdf
-import com.storyteller_f.a.cloud.pdf.SnapshotVerify
+import com.storyteller_f.a.cloud.pdf.SnapshotGeneration
 import com.storyteller_f.a.cloud.pdfbox.PdfBox
 import com.storyteller_f.shared.CryptoJvm
-import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
-import kotlinx.coroutines.test.runTest
-import org.apache.pdfbox.examples.signature.ShowSignature
 import org.apache.pdfbox.pdmodel.encryption.SecurityProvider
+import org.intellij.lang.annotations.Language
 import java.io.File
 import java.security.Security
 import kotlin.test.Test
-import kotlin.test.assertFails
 
 class SnapshotTest {
+
     @Test
-    fun `test pdfbox generate signed pdf`() {
-        runTest {
-            val password = "123456"
-            val path = "build/test/keystore2.p12"
-            CryptoJvm.createKeystore(password.toCharArray(), path)
-            Security.addProvider(SecurityProvider.getProvider())
-            val pdfFile = File("build/tmp/.pdf")
-            val signedFile = File("build/tmp/signed.pdf")
-            PdfBox().generateSignedSnapshot(
+    fun `test generate signed pdf`() = testPdf {
+        val password = "123456"
+        val path = "build/test/keystore2.p12"
+        CryptoJvm.createKeystore(password.toCharArray(), path)
+        Security.addProvider(SecurityProvider.getProvider())
+        listOf(OpenPdf(), PdfBox()).forEachIndexed { i, pdf ->
+            val pdfFile = File("build/tmp/$i.pdf")
+            val signedFile = File("build/tmp/$i.signed.pdf")
+            pdf.generateSignedSnapshot(
                 UserInfo.EMPTY,
                 UserInfo.EMPTY,
                 "hello world",
-                TopicInfo.EMPTY.copy(content = TopicContent.Plain("hello world")),
+                TopicInfo.EMPTY,
                 emptyMap(),
-                //            SnapshotVerify.KeyStoreVerify(path, password, pdfFile, signedFile)
-                SnapshotVerify.NoneVerify(pdfFile)
+                SnapshotGeneration.KeyStoreGeneration(path, password, pdfFile, signedFile)
             ).getOrThrow()
-
-            assertFails {
-                ShowSignature().showSignature(signedFile, password)
-            }
         }
     }
 
     @Test
-    fun `test openpdf generate signed pdf`() {
-        runTest {
-            val password = "123456"
-            val path = "build/test/keystore2.p12"
-            CryptoJvm.createKeystore(password.toCharArray(), path)
-            Security.addProvider(SecurityProvider.getProvider())
-            val pdfFile = File("build/tmp/.pdf")
-            OpenPdf().generateSignedSnapshot(
-                UserInfo.EMPTY,
-                UserInfo.EMPTY,
-                "hello world",
-                TopicInfo.EMPTY.copy(content = TopicContent.Plain("hello world")),
-                emptyMap(),
-                //            SnapshotVerify.KeyStoreVerify(path, password, pdfFile, signedFile)
-                SnapshotVerify.NoneVerify(pdfFile)
-            ).getOrThrow()
-        }
+    fun `test openpdf generate code fence`() = testPdf {
+        val pdfFile = File("build/tmp/code-fence.pdf")
+        OpenPdf().generateSignedSnapshot(
+            UserInfo.EMPTY,
+            UserInfo.EMPTY,
+            @Language("kotlin") """```kotlin
+                |fun main() {
+                |    println("hello world")
+                |}
+                |```""".trimMargin(),
+            TopicInfo.EMPTY,
+            emptyMap(),
+            SnapshotGeneration.SimpleGeneration(pdfFile)
+        ).getOrThrow()
     }
+}
+
+fun testPdf(block: () -> Unit) {
+    setLogPath()
+    block()
 }

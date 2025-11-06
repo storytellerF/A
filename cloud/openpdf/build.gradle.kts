@@ -19,4 +19,5 @@ dependencies {
     implementation(projects.cloud.pdf)
     implementation(libs.markdown)
     implementation(libs.openpdf)
+    implementation(libs.highlights)
 }
