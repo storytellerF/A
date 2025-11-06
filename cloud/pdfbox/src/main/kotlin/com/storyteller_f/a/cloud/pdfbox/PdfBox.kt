@@ -4,6 +4,7 @@ package com.storyteller_f.a.cloud.pdfbox
 import com.storyteller_f.a.cloud.pdf.PdfGenerationSpec
 import com.storyteller_f.a.cloud.pdf.PdfService
 import com.storyteller_f.a.cloud.pdf.SnapshotGeneration
+import com.storyteller_f.a.cloud.pdf.collectPlainText
 import com.storyteller_f.a.cloud.pdf.getFont
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.utils.UNIT_RESULT
@@ -113,29 +114,21 @@ private fun loadFontBundle(document: PDDocument, content: String): PdfFontBundle
         FontMappers.instance().getTrueTypeFont((f ?: base).name, null).font,
         true
     )
-    val bold = candidates.firstOrNull { it.isBold && !it.isItalic }
-    val italic = candidates.firstOrNull { it.isItalic && !it.isBold }
-    val boldItalic = candidates.firstOrNull { it.isBold && it.isItalic }
+    val bold = candidates.firstOrNull {
+        it.name.contains("Bold") && !it.name.contains("Italic")
+    }
+    val italic = candidates.firstOrNull {
+        it.name.contains("Italic") && !it.name.contains("Bold")
+    }
+    val boldItalic = candidates.firstOrNull {
+        it.name.contains("Bold") && it.name.contains("Italic")
+    }
     return PdfFontBundle(
         loadByName(base),
         loadByName(bold),
         loadByName(italic),
         loadByName(boldItalic)
     )
-}
-
-private fun collectPlainText(node: ASTNode, content: String): String {
-    val sb = StringBuilder()
-    node.acceptChildren(object : Visitor {
-        override fun visitNode(n: ASTNode) {
-            if (n.type == MarkdownTokenTypes.TEXT) {
-                sb.append(n.getTextInNode(content))
-            } else {
-                n.acceptChildren(this)
-            }
-        }
-    })
-    return sb.toString().trim()
 }
 
 private fun headerFontSizeFor(type: IElementType): Float = when (type) {
@@ -163,10 +156,11 @@ class PdfBoxVisitor(
             MarkdownElementTypes.MARKDOWN_FILE -> node.acceptChildren(this)
 
             MarkdownElementTypes.PARAGRAPH -> {
-                val text = collectPlainText(node, content)
-                if (text.isNotBlank()) {
-                    document.add(Paragraph().apply { addText(text, 14f, font) })
-                }
+                val p = Paragraph()
+                val tf = TextFlow()
+                node.acceptChildren(ParagraphVisitor(tf, content, fontBundle))
+                p.add(tf)
+                document.add(p)
             }
 
             MarkdownElementTypes.ATX_1,
@@ -202,8 +196,24 @@ class PdfBoxVisitor(
                 }
             }
 
-            MarkdownElementTypes.CODE_BLOCK, MarkdownElementTypes.CODE_FENCE -> {
+            MarkdownElementTypes.CODE_FENCE -> {
                 val code = readCodeFence(node, content).trimIndent()
+                if (code.isNotBlank()) {
+                    val codeParagraph = Paragraph().apply {
+                        val tf = TextFlow()
+                        tf.addText(code, 12f, fontBundle.plain)
+                        add(tf)
+                    }
+                    val frame = Frame(codeParagraph)
+                    frame.shape = RoundRect(8f)
+                    frame.backgroundColor = Color(0xF0, 0xF0, 0xF0)
+                    frame.setPadding(10f, 10f, 8f, 8f)
+                    frame.setMargin(6f, 6f, 6f, 6f)
+                    document.add(frame)
+                }
+            }
+            MarkdownElementTypes.CODE_BLOCK -> {
+                val code = node.getTextInNode(content).toString().trimIndent()
                 if (code.isNotBlank()) {
                     val codeParagraph = Paragraph().apply {
                         val tf = TextFlow()
@@ -222,7 +232,7 @@ class PdfBoxVisitor(
             MarkdownElementTypes.BLOCK_QUOTE -> {
                 val q = collectPlainText(node, content)
                 if (q.isNotBlank()) {
-                    document.add(Paragraph().apply { addText("> $q", 14f, font) })
+                    document.add(Paragraph().apply { addText(q, 14f, font) })
                 }
             }
 
@@ -232,39 +242,53 @@ class PdfBoxVisitor(
                 val name = extractImageUrl(node, content)
                 document.add(ImageElement(map[name]!!.canonicalPath))
             }
+        }
+    }
+}
 
-            MarkdownElementTypes.EMPH -> {
-                val text = node.getTextInNode(content).toString().replace("*", "").trim()
-                if (text.isNotBlank()) {
-                    val p = Paragraph()
-                    val tf = TextFlow()
-                    tf.addText(text, 14f, fontBundle.italic)
-                    p.add(tf)
-                    document.add(p)
-                }
+private class ParagraphVisitor(
+    private val flow: TextFlow,
+    private val content: String,
+    private val fontBundle: PdfFontBundle
+) : Visitor {
+    override fun visitNode(node: ASTNode) {
+        when (node.type) {
+            MarkdownTokenTypes.TEXT -> {
+                val text = node.getTextInNode(content).toString()
+                flow.addText(text, 14f, fontBundle.plain)
             }
 
-            MarkdownElementTypes.STRONG -> {
-                val text = node.getTextInNode(content).toString().replace("**", "").trim()
-                if (text.isNotBlank()) {
-                    val p = Paragraph()
-                    val tf = TextFlow()
-                    tf.addText(text, 14f, fontBundle.bold)
-                    p.add(tf)
-                    document.add(p)
-                }
-            }
+            MarkdownElementTypes.EMPH -> addStyledBlock(node, fontBundle.italic, 1)
+            MarkdownElementTypes.STRONG -> addStyledBlock(node, fontBundle.bold, 2)
 
             MarkdownElementTypes.CODE_SPAN -> {
-                val text = node.getTextInNode(content).toString().replace("`", "").trim()
-                if (text.isNotBlank()) {
-                    val p = Paragraph()
-                    val tf = TextFlow()
-                    tf.addText(text, 14f, fontBundle.plain)
-                    p.add(tf)
-                    document.add(p)
-                }
+                val raw = node.getTextInNode(content).toString()
+                val text = raw.replace("`", "").trim()
+                flow.addText(text, 14f, fontBundle.plain)
             }
+
+            MarkdownTokenTypes.WHITE_SPACE -> flow.addText(" ", 14f, fontBundle.plain)
+
+            MarkdownElementTypes.INLINE_LINK,
+            MarkdownElementTypes.FULL_REFERENCE_LINK,
+            MarkdownElementTypes.SHORT_REFERENCE_LINK -> addLink(node)
+        }
+    }
+
+    private fun addStyledBlock(node: ASTNode, font: PDFont, offset: Int) {
+        val text = node.getTextInNode(content).toString()
+        val actual = text.substring(offset, text.length - offset)
+        flow.addText(actual, 14f, font)
+    }
+
+    private fun addLink(node: ASTNode) {
+        val raw = node.getTextInNode(content).toString()
+        val match = Regex("\\[([^]]+)]\\(([^)]+)\\)").find(raw)
+        val text = match?.groupValues?.getOrNull(1)?.trim()
+        if (!text.isNullOrEmpty()) {
+            flow.addText(text, 14f, fontBundle.plain)
+        } else {
+            flow.addText(raw, 14f, fontBundle.plain)
         }
     }
 }

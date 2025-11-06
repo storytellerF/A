@@ -159,7 +159,6 @@ private fun openPdfSnapshot(content: String, map: Map<String, File> = emptyMap()
                 // 用本次生成的 actual 覆盖 baseline
                 if (actualFile.canonicalPath != snapshotFile.canonicalPath)
                     actualFile.copyTo(snapshotFile, overwrite = true)
-                return
             }
             val result = PdfComparator<de.redsix.pdfcompare.CompareResultImpl>(
                 snapshotFile.absolutePath,
@@ -167,7 +166,7 @@ private fun openPdfSnapshot(content: String, map: Map<String, File> = emptyMap()
             ).compare()
             // 可选：输出 diff 到目录（返回是否相等）
             result.writeTo(baseDir.resolve("$methodName-diff").path)
-            assertTrue(result.isEqual(), "PDF snapshot mismatch for $methodName")
+            assertTrue(result.isEqual(), "$name PDF snapshot mismatch for $methodName")
         }
     }
 
