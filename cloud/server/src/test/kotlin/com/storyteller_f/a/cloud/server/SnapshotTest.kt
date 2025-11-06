@@ -2,24 +2,27 @@ package com.storyteller_f.a.cloud.server
 
 import com.storyteller_f.a.backend.core.setLogPath
 import com.storyteller_f.a.cloud.openpdf.OpenPdf
+import com.storyteller_f.a.cloud.pdf.PdfGenerationSpec
 import com.storyteller_f.a.cloud.pdf.SnapshotGeneration
 import com.storyteller_f.a.cloud.pdfbox.PdfBox
 import com.storyteller_f.shared.CryptoJvm
-import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
+import de.redsix.pdfcompare.PdfComparator
+import kotlinx.datetime.LocalDateTime
 import org.apache.pdfbox.pdmodel.encryption.SecurityProvider
 import org.intellij.lang.annotations.Language
 import java.io.File
 import java.security.Security
 import kotlin.test.Test
+import kotlin.test.assertTrue
 
 class SnapshotTest {
 
     @Test
-    fun `test generate signed pdf`() = testPdf {
-        val password = "123456"
-        val path = "build/test/keystore2.p12"
-        CryptoJvm.createKeystore(password.toCharArray(), path)
+    fun `test generate signed pdf`() {
+        val password1 = "123456"
+        val path1 = "build/test/keystore2.p12"
+        CryptoJvm.createKeystore(password1.toCharArray(), path1)
         Security.addProvider(SecurityProvider.getProvider())
         listOf(OpenPdf(), PdfBox()).forEachIndexed { i, pdf ->
             val pdfFile = File("build/tmp/$i.pdf")
@@ -28,143 +31,125 @@ class SnapshotTest {
                 UserInfo.EMPTY,
                 UserInfo.EMPTY,
                 "hello world",
-                TopicInfo.EMPTY,
                 emptyMap(),
-                SnapshotGeneration.KeyStoreGeneration(path, password, pdfFile, signedFile)
+                SnapshotGeneration.KeyStoreGeneration(path1, password1, pdfFile, signedFile),
+                PdfGenerationSpec(
+                    LocalDateTime.parse("2023-01-01T00:00:00"),
+                    LocalDateTime.parse("2023-01-01T00:00:00")
+                )
             ).getOrThrow()
         }
     }
 
     @Test
-    fun `test openpdf generate code fence`() = testPdf {
-        val pdfFile = File("build/tmp/code-fence.pdf")
-        OpenPdf().generateSignedSnapshot(
-            UserInfo.EMPTY,
-            UserInfo.EMPTY,
-            @Language("kotlin") """```kotlin
+    fun `test openpdf generate code fence`() = openPdfSnapshot(
+        @Language("kotlin") """```kotlin
                 |fun main() {
                 |    println("hello world")
                 |}
-                |```""".trimMargin(),
-            TopicInfo.EMPTY,
-            emptyMap(),
-            SnapshotGeneration.SimpleGeneration(pdfFile)
-        ).getOrThrow()
-    }
+                |```""".trimMargin()
+    )
 
     @Test
-    fun `test openpdf generate headings`() = testPdf {
-        val pdfFile = File("build/tmp/headings.pdf")
-        val content = """
-            # Heading 1
-            ## Heading 2
-            Normal paragraph
+    fun `test openpdf generate headings`() = openPdfSnapshot(
+        """
+        # Heading 1
+        ## Heading 2
+        Normal paragraph
 
-            Heading A
-            ===
+        Heading A
+        ===
 
-            Heading B
-            ---
+        Heading B
+        ---
         """.trimIndent()
-        OpenPdf().generateSignedSnapshot(
-            UserInfo.EMPTY,
-            UserInfo.EMPTY,
-            content,
-            TopicInfo.EMPTY,
-            emptyMap(),
-            SnapshotGeneration.SimpleGeneration(pdfFile)
-        ).getOrThrow()
-    }
+    )
 
     @Test
-    fun `test openpdf generate emphasis and strong`() = testPdf {
-        val pdfFile = File("build/tmp/emph-strong.pdf")
-        val content = """
-            *italic* and **bold** text with normal content.
+    fun `test openpdf generate emphasis and strong`() = openPdfSnapshot(
+        """
+        *italic* and **bold** text with normal content.
         """.trimIndent()
-        OpenPdf().generateSignedSnapshot(
-            UserInfo.EMPTY,
-            UserInfo.EMPTY,
-            content,
-            TopicInfo.EMPTY,
-            emptyMap(),
-            SnapshotGeneration.SimpleGeneration(pdfFile)
-        ).getOrThrow()
-    }
+    )
 
     @Test
-    fun `test openpdf generate code span`() = testPdf {
-        val pdfFile = File("build/tmp/code-span.pdf")
-        val content = """
-            Inline `code` span inside a sentence.
+    fun `test openpdf generate code span`() = openPdfSnapshot(
+        """
+        Inline `code` span inside a sentence.
         """.trimIndent()
-        OpenPdf().generateSignedSnapshot(
-            UserInfo.EMPTY,
-            UserInfo.EMPTY,
-            content,
-            TopicInfo.EMPTY,
-            emptyMap(),
-            SnapshotGeneration.SimpleGeneration(pdfFile)
-        ).getOrThrow()
-    }
+    )
 
     @Test
-    fun `test openpdf generate lists`() = testPdf {
-        val pdfFile = File("build/tmp/lists.pdf")
-        val content = """
-            - item 1
-              - nested item 1.1
-            - item 2
+    fun `test openpdf generate lists`() = openPdfSnapshot(
+        """
+        - item 1
+            - nested item 1.1
+        - item 2
 
-            1. first
-            2. second
-               1. sub first
+        1. first
+        2. second
+            1. sub first
         """.trimIndent()
-        OpenPdf().generateSignedSnapshot(
-            UserInfo.EMPTY,
-            UserInfo.EMPTY,
-            content,
-            TopicInfo.EMPTY,
-            emptyMap(),
-            SnapshotGeneration.SimpleGeneration(pdfFile)
-        ).getOrThrow()
-    }
+    )
 
     @Test
-    fun `test openpdf generate block quote`() = testPdf {
-        val pdfFile = File("build/tmp/blockquote.pdf")
-        val content = """
-            > quoted line
-            > second line
+    fun `test openpdf generate block quote`() = openPdfSnapshot(
+        """
+        > quoted line
+        > second line
         """.trimIndent()
-        OpenPdf().generateSignedSnapshot(
-            UserInfo.EMPTY,
-            UserInfo.EMPTY,
-            content,
-            TopicInfo.EMPTY,
-            emptyMap(),
-            SnapshotGeneration.SimpleGeneration(pdfFile)
-        ).getOrThrow()
-    }
+    )
 
     @Test
-    fun `test openpdf generate link`() = testPdf {
-        val pdfFile = File("build/tmp/link.pdf")
-        val content = """
-            This is a [link text](https://example.com) in paragraph.
+    fun `test openpdf generate link`() = openPdfSnapshot(
+        """
+        This is a [link text](https://example.com) in paragraph.
         """.trimIndent()
-        OpenPdf().generateSignedSnapshot(
-            UserInfo.EMPTY,
-            UserInfo.EMPTY,
-            content,
-            TopicInfo.EMPTY,
-            emptyMap(),
-            SnapshotGeneration.SimpleGeneration(pdfFile)
-        ).getOrThrow()
-    }
+    )
 }
 
-fun testPdf(block: () -> Unit) {
+private fun openPdfSnapshot(content: String, map: Map<String, File> = emptyMap()) {
     setLogPath()
-    block()
+
+    // 从异常堆栈获取当前测试函数名
+    val methodName = Exception().stackTrace.first {
+        it.className.endsWith("SnapshotTest")
+    }.methodName
+    val snapshotDir = File("src/test/pdf-snapshot").apply { mkdirs() }
+    val snapshotFile = File(snapshotDir, "$methodName.pdf")
+
+    val actualFile = if (snapshotFile.exists()) {
+        File("build/tmp/$methodName.actual.pdf")
+    } else {
+        snapshotFile
+    }
+
+    OpenPdf().generateSignedSnapshot(
+        UserInfo.EMPTY,
+        UserInfo.EMPTY,
+        content,
+        map,
+        SnapshotGeneration.SimpleGeneration(actualFile),
+        PdfGenerationSpec(
+            LocalDateTime.parse("2023-01-01T00:00:00"),
+            LocalDateTime.parse("2023-01-01T00:00:00")
+        )
+    ).getOrThrow()
+
+    if (snapshotFile.exists()) {
+        // 支持通过环境变量刷新快照：UPDATE_SNAPSHOTS=1 覆盖现有快照
+        val updateSnapshots = System.getenv("UPDATE_SNAPSHOTS") == "1"
+        if (updateSnapshots) {
+            // 用本次生成的 actual 覆盖 baseline
+            actualFile.copyTo(snapshotFile, overwrite = true)
+            return
+        }
+        val result = PdfComparator<de.redsix.pdfcompare.CompareResultImpl>(
+            snapshotFile.absolutePath,
+            actualFile.absolutePath
+        ).compare()
+        // 可选：输出 diff 到目录（返回是否相等）
+        result.writeTo("build/tmp/$methodName-diff")
+        assertTrue(result.isEqual(), "PDF snapshot mismatch for $methodName")
+    }
 }

@@ -1,14 +1,13 @@
 package com.storyteller_f.a.cloud.pdfbox
 
+import com.storyteller_f.a.cloud.pdf.PdfGenerationSpec
 import com.storyteller_f.a.cloud.pdf.PdfService
 import com.storyteller_f.a.cloud.pdf.SnapshotGeneration
 import com.storyteller_f.a.cloud.pdf.getFont
-import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.utils.UNIT_RESULT
 import com.storyteller_f.shared.utils.astNode
 import com.storyteller_f.shared.utils.extractImageUrl
-import com.storyteller_f.shared.utils.now
 import org.apache.pdfbox.examples.signature.CreateSignature
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.pdmodel.font.FontMappers
@@ -33,9 +32,9 @@ class PdfBox : PdfService {
         creatorInfo: UserInfo,
         authorInfo: UserInfo,
         content: String,
-        topicInfo: TopicInfo,
         map: Map<String, File>,
-        snapshotGeneration: SnapshotGeneration
+        snapshotGeneration: SnapshotGeneration,
+        pdfGenerationSpec: PdfGenerationSpec
     ): Result<Unit> {
         val saveToFile = snapshotGeneration.path
         Document(50f, 50f, 50f, 50f).apply {
@@ -46,13 +45,13 @@ class PdfBox : PdfService {
                 addText("pub by $authorId", 14f, font)
             })
             add(Paragraph().apply {
-                addText("pub at ${topicInfo.createdTime}", 14f, font)
+                addText("pub at ${pdfGenerationSpec.created}", 14f, font)
             })
             add(Paragraph().apply {
                 addText("capture by $creatorId", 14f, font)
             })
             add(Paragraph().apply {
-                addText("capture at ${now()}", 14f, font)
+                addText("capture at ${pdfGenerationSpec.captured}", 14f, font)
             })
             val parsedTree = astNode(content)
             parsedTree.accept(PdfBoxVisitor(font, content, map, this))

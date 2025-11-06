@@ -1,13 +1,12 @@
 package com.storyteller_f.a.cloud.openpdf
 
+import com.storyteller_f.a.cloud.pdf.PdfGenerationSpec
 import com.storyteller_f.a.cloud.pdf.PdfService
 import com.storyteller_f.a.cloud.pdf.SnapshotGeneration
 import com.storyteller_f.a.cloud.pdf.getFont
-import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.utils.astNode
 import com.storyteller_f.shared.utils.extractImageUrl
-import com.storyteller_f.shared.utils.now
 import com.storyteller_f.shared.utils.readCodeFence
 import dev.snipme.highlights.Highlights
 import dev.snipme.highlights.model.CodeHighlight
@@ -15,7 +14,6 @@ import dev.snipme.highlights.model.ColorHighlight
 import dev.snipme.highlights.model.SyntaxThemes
 import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.MarkdownTokenTypes
-import org.intellij.markdown.IElementType
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.ast.accept
 import org.intellij.markdown.ast.acceptChildren
@@ -36,9 +34,9 @@ class OpenPdf : PdfService {
         creatorInfo: UserInfo,
         authorInfo: UserInfo,
         content: String,
-        topicInfo: TopicInfo,
         map: Map<String, File>,
-        snapshotGeneration: SnapshotGeneration
+        snapshotGeneration: SnapshotGeneration,
+        pdfGenerationSpec: PdfGenerationSpec
     ): Result<Unit> {
         val saveToFile = snapshotGeneration.path
         return runCatching {
@@ -53,9 +51,9 @@ class OpenPdf : PdfService {
                     val authorId =
                         if (authorInfo.aid == null) authorInfo.address else authorInfo.aid
                     add(Paragraph("pub by $authorId", font))
-                    add(Paragraph("pub at ${topicInfo.createdTime}", font))
+                    add(Paragraph("pub at ${pdfGenerationSpec.created}", font))
                     add(Paragraph("capture by $creatorId", font))
-                    add(Paragraph("capture at ${now()}", font))
+                    add(Paragraph("capture at ${pdfGenerationSpec.captured}", font))
                     val parsedTree = astNode(content)
                     parsedTree.accept(OpenPdfVisitor(this, font, content, map))
                     close()
@@ -235,7 +233,7 @@ class OpenPdfVisitor(
         val isOrdered = listTypeStack.lastOrNull() ?: false
         val depth = listTypeStack.size
         val counter = listCounterStack.lastOrNull() ?: 0
-        val prefix = if (isOrdered) "${counter}." else "•"
+        val prefix = if (isOrdered) "$counter." else "•"
         val text = node.getTextInNode(content).toString().trim()
         val paragraph = Paragraph("$prefix $text", font)
         paragraph.indentationLeft = 20f * depth

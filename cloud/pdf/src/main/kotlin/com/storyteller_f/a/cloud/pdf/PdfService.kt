@@ -1,7 +1,7 @@
 package com.storyteller_f.a.cloud.pdf
 
-import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
+import kotlinx.datetime.LocalDateTime
 import java.awt.Font
 import java.awt.GraphicsEnvironment
 import java.io.File
@@ -17,14 +17,16 @@ sealed class SnapshotGeneration(open val path: File) {
     class SimpleGeneration(override val path: File) : SnapshotGeneration(path)
 }
 
+class PdfGenerationSpec(val created: LocalDateTime, val captured: LocalDateTime)
+
 interface PdfService {
     fun generateSignedSnapshot(
         creatorInfo: UserInfo,
         authorInfo: UserInfo,
         content: String,
-        topicInfo: TopicInfo,
         map: Map<String, File>,
-        snapshotGeneration: SnapshotGeneration
+        snapshotGeneration: SnapshotGeneration,
+        pdfGenerationSpec: PdfGenerationSpec,
     ): Result<Unit>
 }
 
