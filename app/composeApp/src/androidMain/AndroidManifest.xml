@@ -48,7 +48,8 @@
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
-
+            </intent-filter>
+            <intent-filter>
                 <!-- ✅ 必须：表示这个 Activity 能处理 VIEW 动作 -->
                 <action android:name="android.intent.action.VIEW" />
 

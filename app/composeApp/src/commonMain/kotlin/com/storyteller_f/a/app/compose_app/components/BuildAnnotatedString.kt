@@ -12,7 +12,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
-import androidx.compose.ui.text.*
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.ParagraphStyle
+import androidx.compose.ui.text.Placeholder
+import androidx.compose.ui.text.PlaceholderVerticalAlign
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -398,11 +405,10 @@ private fun buildInlineTextContentFromMap(
             val imageWidth = pxToDp(dimension.width, density.density)
             val imageHeight = pxToDp(dimension.height, density.density)
             val width = minOf(width, imageWidth)
-            val height =
-                minOf(
-                    (width.value / imageWidth.value) * imageHeight,
-                    if (isEmbed) 300.dp else width * 2
-                )
+            val height = minOf(
+                (width.value / imageWidth.value) * imageHeight,
+                if (isEmbed) 300.dp else width * 2
+            )
             val recalculatedWidth = height.value * imageWidth / imageHeight.value
             InlineTextContent(
                 Placeholder(

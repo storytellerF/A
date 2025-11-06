@@ -57,6 +57,7 @@ import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.toRoute
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import coil3.compose.LocalPlatformContext
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.LocalUiViewModel
@@ -87,6 +88,7 @@ import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
 import com.storyteller_f.a.app.compose_app.pages.topic.FilePicker
 import com.storyteller_f.a.app.compose_app.pages.topic.insertContent
+import com.storyteller_f.a.app.compose_app.pages.user.getRemoteImageBitmap
 import com.storyteller_f.a.app.compose_app.permission_denied
 import com.storyteller_f.a.app.compose_app.private_room_pub_key_loading
 import com.storyteller_f.a.app.compose_app.send
@@ -664,9 +666,12 @@ private fun RoomDialogButtons(roomInfo: RoomInfo, dismiss: () -> Unit) {
                 startCall(roomInfo.id)
             }
             if (getPlatform().name.contains("android", ignoreCase = true)) {
+                val context = LocalPlatformContext.current
                 ButtonNav(Icons.Default.ChatBubble, "Bubble") {
                     scope.launch {
-                        notifyNotification(roomInfo)
+                        val bitmap =
+                            roomInfo.icon?.let { getRemoteImageBitmap(sessionManager, context, it) }?.getOrNull()
+                        notifyNotification(roomInfo, bitmap)
                     }
                 }
             }

@@ -2,6 +2,7 @@ package com.storyteller_f.a.app.compose_app.utils
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.platform.Clipboard
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.type.PrimaryKey
@@ -39,7 +40,7 @@ expect fun createCustomDataStoreManager(): DataStoreManager
 
 expect fun unregisterPushService()
 
-expect suspend fun notifyNotification(room: RoomInfo)
+expect suspend fun notifyNotification(room: RoomInfo, bitmap: ImageBitmap?)
 
 expect fun getDeepLinkHost(): String
 

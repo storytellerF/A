@@ -242,10 +242,10 @@ private fun MainAppPage(
             ExternalUriHandler.listener = null
         }
     }
-    ObserveMessage()
     CompositionLocalProvider(
         LocalAppNavFactory provides appNav,
     ) {
+        ObserveMessage()
         NavHost(navigator, startDestination = HomeScreen, enterTransition = {
             slideInHorizontally {
                 it
