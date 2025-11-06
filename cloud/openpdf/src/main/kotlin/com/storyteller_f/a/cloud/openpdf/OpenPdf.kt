@@ -176,7 +176,7 @@ class OpenPdfVisitor(
         val raw = node.getTextInNode(content).toString()
         val paragraph = Paragraph()
         val codeFont = FontFactory.getFont("Courier", font.size, Font.NORMAL)
-        paragraph.add(Chunk(raw, codeFont))
+        paragraph.add(Chunk(raw.trimIndent(), codeFont))
         return buildRoundedCodeBlockTable(paragraph)
     }
 
