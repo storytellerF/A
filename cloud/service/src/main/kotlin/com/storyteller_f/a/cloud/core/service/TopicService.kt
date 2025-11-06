@@ -20,6 +20,7 @@ import com.storyteller_f.a.backend.core.types.RawTopic
 import com.storyteller_f.a.backend.core.types.Topic
 import com.storyteller_f.a.backend.core.types.UserSubscription
 import com.storyteller_f.a.backend.core.types.toTopicInfo
+import com.storyteller_f.a.cloud.pdf.PdfGenerationSpec
 import com.storyteller_f.a.cloud.pdf.PdfService
 import com.storyteller_f.a.cloud.pdf.SnapshotGeneration
 import com.storyteller_f.shared.model.A_FILE_DEFAULT_BUCKET
@@ -373,9 +374,12 @@ suspend fun Backend.generateSignedSnapshot(
             creatorInfo,
             authorInfo,
             plainContent,
-            topicInfo,
             map,
-            snapshotGeneration
+            snapshotGeneration,
+            PdfGenerationSpec(
+                topicInfo.createdTime,
+                now()
+            )
         )
     } catch (e: Exception) {
         Result.failure(e)
