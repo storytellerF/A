@@ -69,7 +69,7 @@ fun readFileEnv(path: String): Map<String, String>? {
     }
 }
 
-fun setLogPath(name: String) {
+fun setLogPath(name: String = "A") {
     if (System.getProperty("LOG_PATH") == null) {
         val osName = System.getProperty("os.name").lowercase(Locale.getDefault())
         val envOs = System.getenv("OSTYPE")?.lowercase(Locale.getDefault()) ?: ""

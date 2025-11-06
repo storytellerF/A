@@ -1,7 +1,7 @@
 package com.storyteller_f.a.cloud.pdfbox
 
 import com.storyteller_f.a.cloud.pdf.PdfService
-import com.storyteller_f.a.cloud.pdf.SnapshotVerify
+import com.storyteller_f.a.cloud.pdf.SnapshotGeneration
 import com.storyteller_f.a.cloud.pdf.getFont
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
@@ -12,6 +12,7 @@ import com.storyteller_f.shared.utils.now
 import org.apache.pdfbox.examples.signature.CreateSignature
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.pdmodel.font.FontMappers
+import org.apache.pdfbox.pdmodel.font.PDFont
 import org.apache.pdfbox.pdmodel.font.PDType0Font
 import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.MarkdownTokenTypes
@@ -26,7 +27,6 @@ import rst.pdfbox.layout.elements.Paragraph
 import java.io.File
 import java.io.FileInputStream
 import java.security.KeyStore
-import kotlin.collections.get
 
 class PdfBox : PdfService {
     override fun generateSignedSnapshot(
@@ -35,13 +35,13 @@ class PdfBox : PdfService {
         content: String,
         topicInfo: TopicInfo,
         map: Map<String, File>,
-        snapshotVerify: SnapshotVerify
+        snapshotGeneration: SnapshotGeneration
     ): Result<Unit> {
-        val saveToFile = snapshotVerify.path
+        val saveToFile = snapshotGeneration.path
         Document(50f, 50f, 50f, 50f).apply {
             val creatorId = if (creatorInfo.aid == null) creatorInfo.address else creatorInfo.aid
             val authorId = if (authorInfo.aid == null) authorInfo.address else authorInfo.aid
-            val font = loadSystemFont(pdDocument, content)
+            val font = loadSystemFont(pdDocument, content)!!
             add(Paragraph().apply {
                 addText("pub by $authorId", 14f, font)
             })
@@ -55,44 +55,24 @@ class PdfBox : PdfService {
                 addText("capture at ${now()}", 14f, font)
             })
             val parsedTree = astNode(content)
-            parsedTree.accept(object : Visitor {
-                override fun visitNode(node: ASTNode) {
-                    val type = node.type
-                    when (type) {
-                        MarkdownElementTypes.PARAGRAPH -> {
-                            node.acceptChildren(this)
-                        }
-
-                        MarkdownTokenTypes.Companion.TEXT -> {
-                            add(Paragraph().apply {
-                                addText(node.getTextInNode(content).toString(), 14f, font)
-                            })
-                        }
-
-                        MarkdownElementTypes.IMAGE -> {
-                            val name = extractImageUrl(node, content)
-                            add(ImageElement(map[name]!!.canonicalPath))
-                        }
-
-                        MarkdownElementTypes.MARKDOWN_FILE -> {
-                            node.acceptChildren(this)
-                        }
-                    }
-                }
-            })
+            parsedTree.accept(PdfBoxVisitor(font, content, map, this))
             save(saveToFile)
         }
-        when (snapshotVerify) {
-            is SnapshotVerify.KeyStoreVerify -> {
-                val password = snapshotVerify.password
+        when (snapshotGeneration) {
+            is SnapshotGeneration.KeyStoreGeneration -> {
+                val password = snapshotGeneration.password
                 val store = KeyStore.getInstance("PKCS12").apply {
-                    load(FileInputStream(snapshotVerify.keyStorePath), password.toCharArray())
+                    load(FileInputStream(snapshotGeneration.keyStorePath), password.toCharArray())
                 }
                 CreateSignature(store, password.toCharArray())
-                    .signDetached(saveToFile, snapshotVerify.signedFile, "https://freetsa.org/tsr")
+                    .signDetached(
+                        saveToFile,
+                        snapshotGeneration.signedFile,
+                        "https://freetsa.org/tsr"
+                    )
             }
 
-            is SnapshotVerify.NoneVerify -> Unit
+            is SnapshotGeneration.SimpleGeneration -> Unit
         }
         return UNIT_RESULT
     }
@@ -109,4 +89,35 @@ fun loadSystemFont(
         FontMappers.instance().getTrueTypeFont(font?.name, null).font,
         true
     )
+}
+
+class PdfBoxVisitor(
+    val font: PDFont,
+    val content: String,
+    val map: Map<String, File>,
+    val document: Document
+) : Visitor {
+    override fun visitNode(node: ASTNode) {
+        val type = node.type
+        when (type) {
+            MarkdownElementTypes.PARAGRAPH -> {
+                node.acceptChildren(this)
+            }
+
+            MarkdownTokenTypes.TEXT -> {
+                document.add(Paragraph().apply {
+                    addText(node.getTextInNode(content).toString(), 14f, font)
+                })
+            }
+
+            MarkdownElementTypes.IMAGE -> {
+                val name = extractImageUrl(node, content)
+                document.add(ImageElement(map[name]!!.canonicalPath))
+            }
+
+            MarkdownElementTypes.MARKDOWN_FILE -> {
+                node.acceptChildren(this)
+            }
+        }
+    }
 }

@@ -21,7 +21,7 @@ import com.storyteller_f.a.backend.core.types.Topic
 import com.storyteller_f.a.backend.core.types.UserSubscription
 import com.storyteller_f.a.backend.core.types.toTopicInfo
 import com.storyteller_f.a.cloud.pdf.PdfService
-import com.storyteller_f.a.cloud.pdf.SnapshotVerify
+import com.storyteller_f.a.cloud.pdf.SnapshotGeneration
 import com.storyteller_f.shared.model.A_FILE_DEFAULT_BUCKET
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.ReactionInfo
@@ -311,8 +311,8 @@ private suspend fun Backend.createTopicSnapshot(
                 creatorInfo,
                 topicInfo,
                 customConfig.snapshotKeyStore?.let {
-                    SnapshotVerify.KeyStoreVerify(it.path, it.pass, pdfFile, signedFile)
-                } ?: SnapshotVerify.NoneVerify(pdfFile)
+                    SnapshotGeneration.KeyStoreGeneration(it.path, it.pass, pdfFile, signedFile)
+                } ?: SnapshotGeneration.SimpleGeneration(pdfFile)
             )
         }.mapResultIfNotNull {
             tryUploadFiles(
@@ -341,13 +341,13 @@ suspend fun Backend.generateSignedSnapshot(
     authorInfo: UserInfo,
     creatorInfo: UserInfo,
     topicInfo: TopicInfo,
-    snapshotVerify: SnapshotVerify,
+    snapshotGeneration: SnapshotGeneration,
 ): Result<Unit?> {
     val content = topicInfo.content
     if (content !is TopicContent.Plain) {
         return Result.failure(CustomBadRequestException("unsupported"))
     }
-    val saveToFile = snapshotVerify.path
+    val saveToFile = snapshotGeneration.path
     val parent = saveToFile.parentFile
     if (parent == null) return Result.success(null)
     if (!parent.exists() && !parent.mkdirs()) return Result.failure(Exception("failed"))
@@ -375,7 +375,7 @@ suspend fun Backend.generateSignedSnapshot(
             plainContent,
             topicInfo,
             map,
-            snapshotVerify
+            snapshotGeneration
         )
     } catch (e: Exception) {
         Result.failure(e)
