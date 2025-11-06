@@ -127,7 +127,6 @@ private fun openPdfSnapshot(content: String, map: Map<String, File> = emptyMap()
         it.className.endsWith("SnapshotTest")
     }.methodName
 
-
     listOf(OpenPdf(), PdfBox()).forEach { pdf ->
         val name = pdf::class.simpleName
         val baseDir = File("build/tmp/$name")
@@ -157,8 +156,9 @@ private fun openPdfSnapshot(content: String, map: Map<String, File> = emptyMap()
             val updateSnapshots = System.getenv("UPDATE_SNAPSHOTS") == "1"
             if (updateSnapshots) {
                 // 用本次生成的 actual 覆盖 baseline
-                if (actualFile.canonicalPath != snapshotFile.canonicalPath)
+                if (actualFile.canonicalPath != snapshotFile.canonicalPath) {
                     actualFile.copyTo(snapshotFile, overwrite = true)
+                }
             }
             val result = PdfComparator<de.redsix.pdfcompare.CompareResultImpl>(
                 snapshotFile.absolutePath,
@@ -169,6 +169,4 @@ private fun openPdfSnapshot(content: String, map: Map<String, File> = emptyMap()
             assertTrue(result.isEqual(), "$name PDF snapshot mismatch for $methodName")
         }
     }
-
-
 }
