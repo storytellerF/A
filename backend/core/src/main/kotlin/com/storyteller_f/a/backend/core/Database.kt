@@ -376,9 +376,11 @@ interface FileDatabase {
 
 interface ContainerDatabase {
     suspend fun isMemberJoined(objectId: PrimaryKey, uid: PrimaryKey?): Result<Boolean>
-    suspend fun joinContainer(member: Member): Result<Unit>
+    suspend fun addMember(member: Member): Result<Member>
 
-    suspend fun exitContainer(containerId: PrimaryKey, id: PrimaryKey): Result<Unit>
+    suspend fun updateMemberStatus(member: Member): Result<Member>
+
+    suspend fun deleteMember(containerId: PrimaryKey, id: PrimaryKey): Result<Unit>
     suspend fun getJoinedUserList(roomId: PrimaryKey): Result<List<Member>>
     suspend fun getUserJoinedTime(
         parentIds: List<PrimaryKey>,
@@ -409,6 +411,8 @@ interface ContainerDatabase {
         parentIds: List<PrimaryKey>,
         uid: PrimaryKey?
     ): Result<Map<PrimaryKey, PrimaryKey?>>
+
+    suspend fun getMember(containerId: PrimaryKey, id: PrimaryKey): Result<Member?>
 }
 
 interface AdminDatabase {

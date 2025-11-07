@@ -205,7 +205,7 @@ private suspend fun Backend.inviteMemberIfNeed(title: Title) {
     if (title.type == TitleType.JOIN) {
         val memberId = SnowflakeFactory.nextId()
         val invitedTime = now()
-        database.container.joinContainer(
+        database.container.addMember(
             Member(
                 memberId,
                 title.receiver,

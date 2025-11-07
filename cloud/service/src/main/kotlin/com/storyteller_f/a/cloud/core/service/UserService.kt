@@ -2,6 +2,7 @@ package com.storyteller_f.a.cloud.core.service
 
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.api.NewDevice
+import com.storyteller_f.a.api.NewUser
 import com.storyteller_f.a.backend.core.AID_LENGTH
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.CustomBadRequestException
@@ -77,13 +78,16 @@ private suspend fun Backend.checkUserIcon(newUser: UpdateUserBody) {
     }.getOrThrow()
 }
 
-fun checkUserNickname(nickname: String?) {
-    if (checkNickname(
-            nickname,
-            1..USER_NICKNAME
-        ) == StringCheckResult.RANGE_MISMATCH
-    ) {
-        throw CustomBadRequestException("user nickname must be between in 1 and 20")
+fun checkUserNickname(newUser: NewUser) {
+    when (checkNickname(
+        newUser.nickname,
+        1..USER_NICKNAME
+    )) {
+        StringCheckResult.CONTAIN_INVALID_CHAR -> throw CustomBadRequestException(
+            "user nickname must not contain invalid char"
+        )
+        StringCheckResult.RANGE_MISMATCH -> throw CustomBadRequestException("user nickname must be between in 1 and 20")
+        else -> UNIT_RESULT
     }
 }
 
@@ -147,9 +151,11 @@ fun checkUserNickname(update: UpdateUserBody): Result<Unit> {
         StringCheckResult.RANGE_MISMATCH -> Result.failure(
             CustomBadRequestException("user nickname must be between in 1 and $USER_NICKNAME")
         )
+
         StringCheckResult.CONTAIN_INVALID_CHAR -> Result.failure(
             CustomBadRequestException("user nickname must be visible")
         )
+
         else -> UNIT_RESULT
     }
 }

@@ -58,14 +58,13 @@ suspend fun Backend.checkRootReadPermission(
                 if (communityId == null && uid == null) {
                     Result.failure(UnauthorizedException())
                 } else {
-                    database.container.isMemberJoined(parentId, uid)
-                        .map { hasJoined ->
-                            RootReadPermission(
-                                hasJoined || communityId != null,
-                                hasJoined,
-                                communityId == null
-                            )
-                        }
+                    database.container.isMemberJoined(parentId, uid).map { hasJoined ->
+                        RootReadPermission(
+                            hasJoined || communityId != null,
+                            hasJoined,
+                            communityId == null
+                        )
+                    }
                 }
             }
         }
