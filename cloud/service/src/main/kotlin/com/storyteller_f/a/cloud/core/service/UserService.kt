@@ -136,16 +136,15 @@ fun checkNickname(nickname: String?, range: IntRange): StringCheckResult {
 
 fun isVisibleUnicodeString(s: String) = !s.codePoints().anyMatch { codePoint ->
     val type = Character.getType(codePoint)
-    Character.isISOControl(codePoint)
-            || Character.getType(codePoint).toByte() == Character.FORMAT
-            || !Character.isDefined(codePoint)
-            || type == Character.NON_SPACING_MARK.toInt()
-            || type == Character.COMBINING_SPACING_MARK.toInt()
-            || type == Character.ENCLOSING_MARK.toInt()
-            || Character.isWhitespace(codePoint)
-            || type == Character.SPACE_SEPARATOR.toInt()
+    Character.isISOControl(codePoint) ||
+        Character.getType(codePoint).toByte() == Character.FORMAT ||
+        !Character.isDefined(codePoint) ||
+        type == Character.NON_SPACING_MARK.toInt() ||
+        type == Character.COMBINING_SPACING_MARK.toInt() ||
+        type == Character.ENCLOSING_MARK.toInt() ||
+        Character.isWhitespace(codePoint) ||
+        type == Character.SPACE_SEPARATOR.toInt()
 }
-
 
 enum class MediaCheckResult {
     EMPTY,

@@ -315,5 +315,4 @@ class QuoteVisitor(private val content: String, val paragraph: TextFlow, val fon
             paragraph.addText(value, 14f, font.italic)
         }
     }
-
 }
