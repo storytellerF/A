@@ -46,9 +46,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.kdroid.composenotification.builder.getNotificationProvider
 import com.storyteller_f.a.api.SignInBody
+import com.storyteller_f.a.app.compose_app.AppGlobalDialogController
 import com.storyteller_f.a.app.compose_app.CustomUserSessionManager
 import com.storyteller_f.a.app.compose_app.LocalAccountSwitcher
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
+import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.common.UserScreen
@@ -64,9 +66,7 @@ import com.storyteller_f.a.app.core.components.CustomAlertDialog
 import com.storyteller_f.a.app.core.components.CustomAlertDialogController
 import com.storyteller_f.a.app.core.components.CustomIcon
 import com.storyteller_f.a.app.core.components.DialogContainer
-import com.storyteller_f.a.app.core.components.GlobalDialogController
 import com.storyteller_f.a.app.core.components.IconRes
-import com.storyteller_f.a.app.core.components.LocalGlobalDialog
 import com.storyteller_f.a.app.core.components.SignInButton
 import com.storyteller_f.a.app.core.components.UserIcon
 import com.storyteller_f.a.client.core.ClientSessionState
@@ -401,7 +401,7 @@ fun SettingsButton(dismiss: () -> Unit) {
 
 suspend fun signOut(
     sessionManager: CustomUserSessionManager,
-    globalDialogController: GlobalDialogController,
+    globalDialogController: AppGlobalDialogController,
 ) {
     globalDialogController.useResult {
         sessionManager.signOut()

@@ -56,8 +56,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.storyteller_f.a.app.compose_app.AppGlobalDialogController
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
-import com.storyteller_f.a.app.compose_app.LocalSessionManager
+import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.common.OnMediaUploaded
 import com.storyteller_f.a.app.compose_app.common.createMediaListViewModel
 import com.storyteller_f.a.app.compose_app.components.BaseSheet
@@ -67,17 +68,16 @@ import com.storyteller_f.a.app.compose_app.components.requestPermission
 import com.storyteller_f.a.app.compose_app.utils.Recorder
 import com.storyteller_f.a.app.compose_app.utils.setText
 import com.storyteller_f.a.app.core.components.CustomIcon
-import com.storyteller_f.a.app.core.components.GlobalDialogController
 import com.storyteller_f.a.app.core.components.GlobalDialogState
 import com.storyteller_f.a.app.core.components.GlobalDialogStateProgress
 import com.storyteller_f.a.app.core.components.IconRes
-import com.storyteller_f.a.app.core.components.LocalGlobalDialog
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.bottomAppending
+import com.storyteller_f.a.app.core.components.emitEvent
 import com.storyteller_f.a.app.core.components.pagingItems
+import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.app.core.components.topPrepend
 import com.storyteller_f.a.client.core.UploadData
-import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.upload
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.obj.ObjectTuple
@@ -188,7 +188,6 @@ private fun BoxScope.RecorderButton(
     uploadSuccess: (List<FileInfo>) -> Unit,
     mediaTarget: ObjectTuple,
 ) {
-    val sessionManager = LocalSessionManager.current
     val scope = rememberCoroutineScope()
     val globalDialogController = LocalGlobalDialog.current
     Box(
@@ -205,7 +204,7 @@ private fun BoxScope.RecorderButton(
                                 "save to $path"
                             }
                             if (path != null) {
-                                globalDialogController.uploadPath(path, sessionManager, mediaTarget)
+                                globalDialogController.uploadPath(path, mediaTarget)
                                     .mapIfNotNull {
                                         uploadSuccess(it)
                                     }
@@ -235,7 +234,6 @@ private fun FileListView(
     mediaTarget: ObjectTuple,
     onClickItem: (List<FileInfo>) -> Unit,
 ) {
-    val sessionManager = LocalSessionManager.current
     val viewModel = createMediaListViewModel(mediaTarget)
     val scope = rememberCoroutineScope()
     val globalDialogController = LocalGlobalDialog.current
@@ -244,7 +242,7 @@ private fun FileListView(
         Row {
             IconButton({
                 scope.launch {
-                    globalDialogController.selectFileAndUpload(mediaTarget, sessionManager) {
+                    globalDialogController.selectFileAndUpload(mediaTarget) {
                         onClickItem(it)
                     }
                 }
@@ -370,16 +368,14 @@ private fun FileIcon(it: FileInfo) {
     }
 }
 
-private suspend fun GlobalDialogController.selectFileAndUpload(
+private suspend fun AppGlobalDialogController.selectFileAndUpload(
     mediaTarget: ObjectTuple,
-    sessionManager: UserSessionManager,
     uploadSuccess: (List<FileInfo>) -> Unit,
 ) {
     useResult {
         val f = FileKit.openFilePicker()
         if (f != null) {
             upload(
-                sessionManager,
                 mediaTarget,
                 getUploadDataFromPlatformFile(f)
             ) { p, t ->
@@ -405,15 +401,13 @@ private fun getUploadDataFromPlatformFile(f: PlatformFile) = UploadData(
     f.source().buffered()
 }
 
-suspend fun GlobalDialogController.uploadPath(
+suspend fun AppGlobalDialogController.uploadPath(
     path: Path,
-    sessionManager: UserSessionManager,
     mediaTarget: ObjectTuple,
 ): Result<List<FileInfo>?> {
     val meta = SystemFileSystem.metadataOrNull(path) ?: return Result.success(null)
     return useResult {
         upload(
-            sessionManager,
             mediaTarget,
             getUploadDataFromPath(meta, path)
         ) { p, t ->
@@ -433,8 +427,7 @@ private fun getUploadDataFromPath(
     SystemFileSystem.source(path).buffered()
 }
 
-suspend fun GlobalDialogController.upload(
-    sessionManager: UserSessionManager,
+suspend fun AppGlobalDialogController.upload(
     mediaTarget: ObjectTuple,
     uploadData: UploadData,
     onUpload: (Long, Long?) -> Unit = { _, _ -> },
@@ -443,7 +436,7 @@ suspend fun GlobalDialogController.upload(
         return Result.failure(Exception("file size is too large"))
     }
 
-    return sessionManager.upload(mediaTarget, uploadData, onUpload).map {
+    return request { upload(mediaTarget, uploadData, onUpload) }.map {
         it.data
     }.onSuccess {
         emitEvent(OnMediaUploaded(it))

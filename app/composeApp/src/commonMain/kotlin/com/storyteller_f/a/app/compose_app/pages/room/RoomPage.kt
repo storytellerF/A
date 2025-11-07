@@ -58,8 +58,9 @@ import androidx.navigation.toRoute
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil3.compose.LocalPlatformContext
-import com.storyteller_f.a.app.compose_app.CustomUserSessionManager
+import com.storyteller_f.a.app.compose_app.AppGlobalDialogController
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
+import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.LocalUiViewModel
 import com.storyteller_f.a.app.compose_app.Res
@@ -100,16 +101,15 @@ import com.storyteller_f.a.app.compose_app.utils.startCall
 import com.storyteller_f.a.app.core.components.CustomAlertDialog
 import com.storyteller_f.a.app.core.components.CustomAlertDialogController
 import com.storyteller_f.a.app.core.components.DialogContainer
-import com.storyteller_f.a.app.core.components.GlobalDialogController
 import com.storyteller_f.a.app.core.components.IconRes
-import com.storyteller_f.a.app.core.components.LocalGlobalDialog
 import com.storyteller_f.a.app.core.components.LocalToaster
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.Toast
+import com.storyteller_f.a.app.core.components.emitEvent
 import com.storyteller_f.a.app.core.components.rememberAlertDialogController
 import com.storyteller_f.a.app.core.components.rememberCommonDialogController
+import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.client.core.LoadingState
-import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.WebSocketClient
 import com.storyteller_f.a.client.core.addReadLog
 import com.storyteller_f.a.client.core.exitRoom
@@ -264,8 +264,7 @@ fun RoomInputGroup(
     val controller = remember {
         CustomAlertDialogController()
     }
-    val sessionManager = LocalSessionManager.current
-    val wsClient = sessionManager.webSocketClient
+    val wsClient = userSessionManager.webSocketClient
     LaunchedEffect(wsClient.frameFlow) {
         wsClient.frameFlow.collect { frame ->
             if (frame is RoomFrame.Error) {
@@ -273,7 +272,7 @@ fun RoomInputGroup(
             } else if (frame is RoomFrame.NewTopicInfo) {
                 val plainFrame = if (frame.topicInfo.content is TopicContent.Encrypted) {
                     val topicInfo =
-                        processEncryptedTopic(listOf(frame.topicInfo), sessionManager).first()
+                        processEncryptedTopic(listOf(frame.topicInfo), userSessionManager).first()
                     RoomFrame.NewTopicInfo(topicInfo)
                 } else {
                     frame
@@ -634,14 +633,13 @@ private fun RoomDialogButtons(roomInfo: RoomInfo, dismiss: () -> Unit) {
     val userSessionManager = LocalSessionManager.current
     val myInfo by userSessionManager.model.userHandler.data.collectAsState()
     val me = myInfo
-    val sessionManager = LocalSessionManager.current
     val globalDialogController = LocalGlobalDialog.current
     Column {
         val isRoomPage by appNavFactory.hasRouteFlow<RoomScreen>()
         if (isRoomPage) {
             RoomAllMembers(roomInfo, dismiss, appNavFactory)
-            RoomMemberStatus(roomInfo, sessionManager, globalDialogController)
-            StartCallButton(roomInfo, sessionManager)
+            RoomMemberStatus(roomInfo, globalDialogController)
+            StartCallButton(roomInfo)
             RoomSettings(roomInfo, me, dismiss, appNavFactory)
         }
     }
@@ -683,8 +681,7 @@ private fun RoomAllMembers(
 @Composable
 private fun RoomMemberStatus(
     roomInfo: RoomInfo,
-    sessionManager: CustomUserSessionManager,
-    globalDialogController: GlobalDialogController
+    globalDialogController: AppGlobalDialogController
 ) {
     val scope = rememberCoroutineScope()
 
@@ -692,7 +689,7 @@ private fun RoomMemberStatus(
     if (roomInfo.isJoined) {
         ButtonNav(Icons.Default.Close, stringResource(Res.string.exit_room)) {
             scope.launch {
-                exitRoom(roomInfo, sessionManager, globalDialogController) {
+                exitRoom(roomInfo, globalDialogController) {
                     toasterState.showMessage(
                         getString(Res.string.success),
                     )
@@ -702,7 +699,7 @@ private fun RoomMemberStatus(
     } else {
         ButtonNav(Icons.Default.AddHome, stringResource(Res.string.join_room)) {
             scope.launch {
-                joinRoom(roomInfo, sessionManager, globalDialogController) {
+                joinRoom(roomInfo, globalDialogController) {
                     val message = getString(Res.string.success)
                     toasterState.showMessage(message)
                 }
@@ -713,9 +710,10 @@ private fun RoomMemberStatus(
 
 @Composable
 private fun StartCallButton(
-    roomInfo: RoomInfo,
-    sessionManager: CustomUserSessionManager
+    roomInfo: RoomInfo
 ) {
+    val sessionManager = LocalSessionManager.current
+
     val scope = rememberCoroutineScope()
 
     ButtonNav(Icons.Default.Call, "Start Call") {
@@ -736,19 +734,20 @@ private fun StartCallButton(
 
 private suspend fun joinRoom(
     roomInfo: RoomInfo,
-    sessionManager: UserSessionManager,
-    globalDialogController: GlobalDialogController,
+    globalDialogController: AppGlobalDialogController,
     onSuccess: suspend () -> Unit,
 ) {
     globalDialogController.useResult {
-        runCatching {
-            val communityId = roomInfo.communityId
-            if (communityId != null) {
-                if (!sessionManager.getCommunityInfo(communityId).getOrThrow().isJoined) {
-                    throw Exception("you should join community first.")
+        request {
+            runCatching {
+                val communityId = roomInfo.communityId
+                if (communityId != null) {
+                    if (!getCommunityInfo(communityId).getOrThrow().isJoined) {
+                        throw Exception("you should join community first.")
+                    }
                 }
+                joinRoom(roomInfo.id).getOrThrow()
             }
-            sessionManager.joinRoom(roomInfo.id).getOrThrow()
         }
     }.onSuccess { info ->
         globalDialogController.emitEvent(OnRoomJoined(info))
@@ -758,12 +757,13 @@ private suspend fun joinRoom(
 
 private suspend fun exitRoom(
     roomInfo: RoomInfo,
-    sessionManager: UserSessionManager,
-    globalDialogController: GlobalDialogController,
+    globalDialogController: AppGlobalDialogController,
     onSuccess: suspend () -> Unit,
 ) {
     globalDialogController.useResult {
-        sessionManager.exitRoom(roomInfo.id)
+        request {
+            exitRoom(roomInfo.id)
+        }
     }.onSuccess { info ->
         globalDialogController.emitEvent(OnRoomExited(info))
         onSuccess()

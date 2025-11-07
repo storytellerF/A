@@ -61,9 +61,10 @@ import androidx.navigation.NavOptions
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.storyteller_f.a.app.compose_app.CustomUserSessionManager
+import com.storyteller_f.a.app.compose_app.AppGlobalDialogController
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalClientFileProvider
+import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.add
@@ -73,6 +74,7 @@ import com.storyteller_f.a.app.compose_app.common.CommunityScreen
 import com.storyteller_f.a.app.compose_app.common.CommunityViewModel
 import com.storyteller_f.a.app.compose_app.common.DownloadViewModel
 import com.storyteller_f.a.app.compose_app.common.OnCommunityExited
+import com.storyteller_f.a.app.compose_app.common.OnCommunityJoined
 import com.storyteller_f.a.app.compose_app.common.TopicComposeData
 import com.storyteller_f.a.app.compose_app.common.createCommunityRoomsViewModel
 import com.storyteller_f.a.app.compose_app.common.createCommunityTopicsViewModel
@@ -102,9 +104,9 @@ import com.storyteller_f.a.app.compose_app.ui.theme.AppTheme
 import com.storyteller_f.a.app.core.components.CustomAlertDialog
 import com.storyteller_f.a.app.core.components.CustomAlertDialogController
 import com.storyteller_f.a.app.core.components.DialogContainer
-import com.storyteller_f.a.app.core.components.GlobalDialogController
 import com.storyteller_f.a.app.core.components.IconRes
-import com.storyteller_f.a.app.core.components.LocalGlobalDialog
+import com.storyteller_f.a.app.core.components.emitEvent
+import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.client.core.exitCommunity
 import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.shared.model.CommunityInfo
@@ -499,19 +501,26 @@ private fun CommunityMenus(
     dismiss: () -> Unit,
 ) {
     val appNavFactory = LocalAppNavFactory.current
-    val sessionViewModel = LocalSessionManager.current
     val globalDialogController = LocalGlobalDialog.current
     Column {
-        ButtonNav(IconRes.Vector(Icons.Default.CardMembership), stringResource(Res.string.all_members), {
-            ButtonBadgeSuffix(communityInfo.memberCount)
-        }) {
+        ButtonNav(
+            IconRes.Vector(Icons.Default.CardMembership),
+            stringResource(Res.string.all_members),
+            {
+                ButtonBadgeSuffix(communityInfo.memberCount)
+            }
+        ) {
             dismiss()
             appNavFactory.newAppNav().gotoMemberPage(communityId, ObjectType.COMMUNITY)
         }
         val appNavFactory = LocalAppNavFactory.current
         val isCommunityPage by appNavFactory.hasRouteFlow<CommunityScreen>()
         if (isCommunityPage) {
-            CommunityMemberStatusButton(communityInfo, globalDialogController, sessionViewModel, communityId)
+            CommunityMemberStatusButton(
+                communityInfo,
+                globalDialogController,
+                communityId
+            )
             CommunityCreateButton(dismiss, appNavFactory, communityId)
             CommunityAdminButtons(communityInfo, dismiss, appNavFactory, communityId)
         }
@@ -561,8 +570,7 @@ private fun CommunityCreateButton(
 @Composable
 private fun CommunityMemberStatusButton(
     communityInfo: CommunityInfo,
-    globalDialogController: GlobalDialogController,
-    sessionViewModel: CustomUserSessionManager,
+    globalDialogController: AppGlobalDialogController,
     communityId: PrimaryKey
 ) {
     val scope = rememberCoroutineScope()
@@ -570,7 +578,9 @@ private fun CommunityMemberStatusButton(
         ButtonNav(Icons.Default.Close, stringResource(Res.string.exit_community)) {
             scope.launch {
                 globalDialogController.useResult {
-                    sessionViewModel.exitCommunity(communityId)
+                    request {
+                        exitCommunity(communityId)
+                    }
                 }.onSuccess { info ->
                     globalDialogController.emitEvent(OnCommunityExited(info))
                 }
@@ -580,9 +590,11 @@ private fun CommunityMemberStatusButton(
         ButtonNav(Icons.Default.AddHome, stringResource(Res.string.join_community)) {
             scope.launch {
                 globalDialogController.useResult {
-                    sessionViewModel.joinCommunity(communityId)
+                    request {
+                        joinCommunity(communityId)
+                    }
                 }.onSuccess { info ->
-                    globalDialogController.emitEvent(OnCommunityExited(info))
+                    globalDialogController.emitEvent(OnCommunityJoined(info))
                 }
             }
         }

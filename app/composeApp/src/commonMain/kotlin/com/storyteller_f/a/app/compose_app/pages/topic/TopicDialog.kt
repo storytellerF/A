@@ -34,7 +34,9 @@ import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.api.NewFavorite
 import com.storyteller_f.a.api.NewSubscription
+import com.storyteller_f.a.app.compose_app.AppGlobalDialogController
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
+import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.common.OnAddFavorite
@@ -57,15 +59,13 @@ import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.compose_app.utils.setText
 import com.storyteller_f.a.app.core.components.DialogContainer
 import com.storyteller_f.a.app.core.components.ExceptionView
-import com.storyteller_f.a.app.core.components.GlobalDialogController
 import com.storyteller_f.a.app.core.components.IconRes
-import com.storyteller_f.a.app.core.components.LocalGlobalDialog
 import com.storyteller_f.a.app.core.components.LocalGlobalTask
 import com.storyteller_f.a.app.core.components.LocalToaster
+import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.app.core.components.use
 import com.storyteller_f.a.app.core.utils.getCurrentLanguage
 import com.storyteller_f.a.client.core.LoadingState
-import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.addFavorite
 import com.storyteller_f.a.client.core.addSubscription
 import com.storyteller_f.a.client.core.getTopicSnapshot
@@ -249,7 +249,7 @@ private fun SnapshotButton(topicInfo: TopicInfo) {
     ) {
         scope.launch {
             globalDialogController.useResult {
-                userSessionManager.getTopicSnapshot(topicInfo.id)
+                request { getTopicSnapshot(topicInfo.id) }
             }.onSuccess {
                 toast.showMessage(getString(Res.string.success))
             }
@@ -260,14 +260,13 @@ private fun SnapshotButton(topicInfo: TopicInfo) {
 @Composable
 private fun TopicPinButton(topicInfo: TopicInfo, dismissDialog: () -> Unit) {
     val scope = rememberCoroutineScope()
-    val userSessionManager = LocalSessionManager.current
     val globalDialogController = LocalGlobalDialog.current
     ButtonNav(
         if (topicInfo.isPin) MaterialSymbolsOutlined.KeepOff else MaterialSymbolsOutlined.Keep,
         if (topicInfo.isPin) "Unpin" else "Pin"
     ) {
         scope.launch {
-            globalDialogController.pinOrUnpinTopic(topicInfo, userSessionManager).onSuccess {
+            globalDialogController.pinOrUnpinTopic(topicInfo).onSuccess {
                 dismissDialog()
             }
         }
@@ -297,15 +296,14 @@ private fun TranslateButton(content: TopicContent, topicInfo: TopicInfo) {
     }
 }
 
-suspend fun GlobalDialogController.pinOrUnpinTopic(
+suspend fun AppGlobalDialogController.pinOrUnpinTopic(
     topicInfo: TopicInfo,
-    sessionManager: UserSessionManager,
 ): Result<TopicInfo> {
     return useResult {
         if (topicInfo.isPin) {
-            sessionManager.unpinTopic(topicInfo.id)
+            request { unpinTopic(topicInfo.id) }
         } else {
-            sessionManager.pinTopic(topicInfo.id)
+            request { pinTopic(topicInfo.id) }
         }
     }
 }

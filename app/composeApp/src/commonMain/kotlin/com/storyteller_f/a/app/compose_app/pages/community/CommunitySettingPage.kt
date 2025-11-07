@@ -20,7 +20,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import com.storyteller_f.a.app.compose_app.LocalSessionManager
+import com.storyteller_f.a.app.compose_app.AppGlobalDialogController
+import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.common.OnCommunityUpdated
 import com.storyteller_f.a.app.compose_app.common.createCommunityViewModel
 import com.storyteller_f.a.app.compose_app.components.CommunityPoster
@@ -28,10 +29,9 @@ import com.storyteller_f.a.app.compose_app.components.SettingOptionResettableVie
 import com.storyteller_f.a.app.compose_app.components.SettingOptionView
 import com.storyteller_f.a.app.compose_app.pages.user.ObjectSettingDialog
 import com.storyteller_f.a.app.compose_app.pages.user.SettingOption
-import com.storyteller_f.a.app.core.components.GlobalDialogController
-import com.storyteller_f.a.app.core.components.LocalGlobalDialog
 import com.storyteller_f.a.app.core.components.LocalToaster
-import com.storyteller_f.a.client.core.UserSessionManager
+import com.storyteller_f.a.app.core.components.emitEvent
+import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.client.core.updateCommunityInfo
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.obj.UpdateCommunityBody
@@ -58,7 +58,6 @@ fun CommunitySettingPage(communityId: PrimaryKey) {
                 currentOption = opt
             }, it1)
         }
-        val sessionManager = LocalSessionManager.current
         val scope = rememberCoroutineScope()
         ObjectSettingDialog(
             closeDialog,
@@ -73,7 +72,7 @@ fun CommunitySettingPage(communityId: PrimaryKey) {
                             } else {
                                 UpdateCommunityBody(icon = media.id)
                             }
-                        sessionManager.updateCommunityInfo(communityId, body)
+                        request { updateCommunityInfo(communityId, body) }
                     }.onSuccess { newInfo ->
                         globalDialogController.emitEvent(OnCommunityUpdated(newInfo))
                         closeDialog()
@@ -82,12 +81,10 @@ fun CommunitySettingPage(communityId: PrimaryKey) {
             },
             { input ->
                 scope.launch {
-                    updateCommunity(
+                    globalDialogController.updateCommunity(
                         communityId,
-                        sessionManager,
                         input,
                         currentOption,
-                        globalDialogController,
                         closeDialog
                     )
                 }
@@ -103,7 +100,6 @@ private fun CommunitySettingInternal(
     communityInfo: CommunityInfo,
 ) {
     val toasterState = LocalToaster.current
-    val sessionManager = LocalSessionManager.current
     val scope = rememberCoroutineScope()
     val globalDialogController = LocalGlobalDialog.current
     Column(modifier = Modifier.padding(horizontal = 20.dp).padding(values)) {
@@ -113,7 +109,7 @@ private fun CommunitySettingInternal(
             {
                 if (it) {
                     scope.launch {
-                        updateCommunityInfo(globalDialogController, sessionManager, communityInfo)
+                        updateCommunityInfo(globalDialogController, communityInfo)
                     }
                 } else {
                     showDialog(SettingOption.Icon(communityInfo.icon?.fullName))
@@ -134,7 +130,7 @@ private fun CommunitySettingInternal(
             {
                 if (it) {
                     scope.launch {
-                        updateCommunityInfo(globalDialogController, sessionManager, communityInfo)
+                        updateCommunityInfo(globalDialogController, communityInfo)
                     }
                 } else {
                     showDialog(SettingOption.Poster(communityInfo.poster?.fullName))
@@ -161,24 +157,21 @@ private fun CommunitySettingInternal(
 }
 
 private suspend fun updateCommunityInfo(
-    globalDialogController: GlobalDialogController,
-    sessionManager: UserSessionManager,
+    globalDialogController: AppGlobalDialogController,
     communityInfo: CommunityInfo,
 ) {
     globalDialogController.useResult {
         val body = UpdateCommunityBody(icon = 0)
-        sessionManager.updateCommunityInfo(communityInfo.id, body)
+        request { updateCommunityInfo(communityInfo.id, body) }
     }.onSuccess { newInfo ->
         globalDialogController.emitEvent(OnCommunityUpdated(newInfo))
     }
 }
 
-private suspend fun updateCommunity(
+private suspend fun AppGlobalDialogController.updateCommunity(
     communityId: PrimaryKey,
-    client: UserSessionManager,
     string: String,
     showInputDialog: SettingOption?,
-    globalDialogController: GlobalDialogController,
     closeDialog: () -> Unit,
 ) {
     val body = when (showInputDialog) {
@@ -190,10 +183,10 @@ private suspend fun updateCommunity(
             null
         }
     } ?: return
-    globalDialogController.useResult {
-        client.updateCommunityInfo(communityId, body)
+    useResult {
+        request { updateCommunityInfo(communityId, body) }
     }.onSuccess { newInfo ->
-        globalDialogController.emitEvent(OnCommunityUpdated(newInfo))
+        emitEvent(OnCommunityUpdated(newInfo))
         closeDialog()
     }
 }

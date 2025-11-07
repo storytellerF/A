@@ -28,7 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
-import com.storyteller_f.a.app.compose_app.LocalSessionManager
+import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.common.OnTopicChanged
 import com.storyteller_f.a.app.compose_app.pages.topic.EmojiPicker
 import com.storyteller_f.a.app.compose_app.pages.topic.pinOrUnpinTopic
@@ -36,7 +36,7 @@ import com.storyteller_f.a.app.compose_app.pages.user.UserIconWithDialog
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.core.components.CustomIcon
 import com.storyteller_f.a.app.core.components.IconRes
-import com.storyteller_f.a.app.core.components.LocalGlobalDialog
+import com.storyteller_f.a.app.core.components.emitEvent
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.type.PrimaryKey
@@ -282,7 +282,6 @@ private fun SubTopics(topicInfo: TopicInfo) {
 @Composable
 fun TopicDropdownMenu(expanded: Boolean, topicInfo: TopicInfo, onDismissRequest: () -> Unit) {
     val scope = rememberCoroutineScope()
-    val sessionManager = LocalSessionManager.current
     val globalDialogController = LocalGlobalDialog.current
     DropdownMenu(
         expanded = expanded,
@@ -302,7 +301,7 @@ fun TopicDropdownMenu(expanded: Boolean, topicInfo: TopicInfo, onDismissRequest:
             text = { Text(title) },
             onClick = {
                 scope.launch {
-                    globalDialogController.pinOrUnpinTopic(topicInfo, sessionManager).onSuccess {
+                    globalDialogController.pinOrUnpinTopic(topicInfo).onSuccess {
                         onDismissRequest()
                         globalDialogController.emitEvent(OnTopicChanged(it))
                     }
