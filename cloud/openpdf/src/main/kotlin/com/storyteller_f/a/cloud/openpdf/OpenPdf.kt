@@ -116,7 +116,6 @@ class OpenPdfVisitor(
             MarkdownElementTypes.SETEXT_1 -> addHeading(node, 1, isSetext = true)
             MarkdownElementTypes.SETEXT_2 -> addHeading(node, 2, isSetext = true)
 
-
             // Lists
             MarkdownElementTypes.ORDERED_LIST -> {
                 listTypeStack.add(true)
@@ -340,7 +339,6 @@ class OpenPdfVisitor(
         val table = buildBlockQuoteTable(paragraph)
         document.add(table)
     }
-
 }
 
 class ParagraphVisitor(private val paragraph: Paragraph, val content: String, val font: Font) :
@@ -381,7 +379,6 @@ class ParagraphVisitor(private val paragraph: Paragraph, val content: String, va
         paragraph.add(Chunk(text, codeFont))
     }
 
-
     private fun addLink(node: ASTNode) {
         val raw = node.getTextInNode(content).toString()
         val match = Regex("\\[([^]]+)]\\(([^)]+)\\)").find(raw)
@@ -406,5 +403,4 @@ class QuoteVisitor(private val content: String, val paragraph: Paragraph, val fo
             paragraph.add(Chunk(content, font))
         }
     }
-
 }
