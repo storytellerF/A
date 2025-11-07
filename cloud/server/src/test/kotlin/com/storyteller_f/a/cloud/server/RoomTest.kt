@@ -227,8 +227,8 @@ class RoomTest {
         attachSession {
             val id = createCommunityForTest().id
             val roomId = createPublicRoomForTest(id, "r1", "name1").id
-            updateRoomInfo(roomId, UpdateRoomBody("new name")).getOrThrow()
-            assertEquals("new name", getRoomInfo(roomId).getOrThrow().name)
+            updateRoomInfo(roomId, UpdateRoomBody("new-name")).getOrThrow()
+            assertEquals("new-name", getRoomInfo(roomId).getOrThrow().name)
         }
     }
 
@@ -274,7 +274,7 @@ class RoomTest {
             val firstUser = attachSession {
             }
             val secondUser = attachSession {
-                val roomInfo = createRoom(NewRoom("test rtc", "rtc")).getOrThrow()
+                val roomInfo = createRoom(NewRoom("test-rtc", "rtc")).getOrThrow()
                 createJoinRoomTitleForTest(roomInfo.id, firstUser.uid)
                 roomInfo
             }

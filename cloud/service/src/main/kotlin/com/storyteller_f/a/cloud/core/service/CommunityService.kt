@@ -88,7 +88,7 @@ private suspend fun Backend.joinCommunity(
         MemberStatus.JOINED,
         time
     )
-    return database.container.joinContainer(member).mapResult {
+    return database.container.addMember(member).mapResult {
         addUserLog(uid, UserLogType.JOIN, communityId ob ObjectType.COMMUNITY)
         Result.success(community.copy(joinedTime = time))
     }.recoverResult {
@@ -107,7 +107,7 @@ suspend fun Backend.exitCommunity(
     if (info.joinedTime == null) {
         Result.success(info)
     } else {
-        database.container.exitContainer(communityId, id).mapResult {
+        database.container.deleteMember(communityId, id).mapResult {
             addUserLog(id, UserLogType.EXIT, communityId ob ObjectType.COMMUNITY)
             Result.success(info.copy(joinedTime = null))
         }
@@ -229,6 +229,8 @@ private fun checkCommunityName(newCommunity: NewCommunity): Result<Unit> {
         StringCheckResult.CONTAIN_INVALID_CHAR -> Result.failure(
             CustomBadRequestException("community name must be visible")
         )
+
+        StringCheckResult.SUCCESS -> Result.success(Unit)
 
         else -> Result.failure(CustomBadRequestException("name must be set"))
     }

@@ -22,7 +22,6 @@ import com.storyteller_f.a.backend.exposed.tables.Users
 import com.storyteller_f.a.backend.exposed.tables.mapUserInfo
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.QuotaType
-import com.storyteller_f.shared.type.MemberStatus
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.associateByPair
 import com.storyteller_f.shared.utils.mapResult
@@ -35,7 +34,7 @@ import org.jetbrains.exposed.v1.r2dbc.deleteWhere
 import org.jetbrains.exposed.v1.r2dbc.insert
 import org.jetbrains.exposed.v1.r2dbc.select
 import org.jetbrains.exposed.v1.r2dbc.selectAll
-import org.jetbrains.exposed.v1.r2dbc.upsert
+import org.jetbrains.exposed.v1.r2dbc.update
 
 class ExposedContainerDatabase(val databaseSession: ExposedDatabaseSession) :
     ContainerDatabase {
@@ -56,14 +55,8 @@ class ExposedContainerDatabase(val databaseSession: ExposedDatabaseSession) :
         }
     }
 
-    override suspend fun joinContainer(member: Member): Result<Unit> = databaseSession.dbQuery {
-        check(Members.upsert(keys = arrayOf(Members.uid, Members.objectId), onUpdate = {
-            it[Members.joinedTime] = member.joinedTime
-            it[Members.invitedTime] = member.invitedTime
-            it[Members.status] = member.status
-        }, where = {
-            Members.status eq MemberStatus.INVITED
-        }) {
+    override suspend fun addMember(member: Member) = databaseSession.dbQuery {
+        check(Members.insert {
             it[id] = member.id
             it[createdTime] = member.createdTime
             it[joinedTime] = member.joinedTime
@@ -75,9 +68,23 @@ class ExposedContainerDatabase(val databaseSession: ExposedDatabaseSession) :
         }.insertedCount > 0) {
             "join failed"
         }
+        member
     }
 
-    override suspend fun exitContainer(
+    override suspend fun updateMemberStatus(member: Member) = databaseSession.dbQuery {
+        check(Members.update(where = {
+            Members.id eq member.id
+        }) {
+            it[joinedTime] = member.joinedTime
+            it[invitedTime] = member.invitedTime
+            it[status] = member.status
+        } > 0) {
+            "update member failed"
+        }
+        member
+    }
+
+    override suspend fun deleteMember(
         containerId: PrimaryKey,
         id: PrimaryKey,
     ) = databaseSession.dbQuery {
@@ -241,5 +248,19 @@ class ExposedContainerDatabase(val databaseSession: ExposedDatabaseSession) :
         }
     }.map {
         it.associateByPair()
+    }
+
+    override suspend fun getMember(
+        containerId: PrimaryKey,
+        id: PrimaryKey
+    ) = databaseSession.dbSearch {
+        search {
+            Members.selectAll().where {
+                Members.objectId eq containerId and (Members.uid eq id)
+            }
+        }
+        first {
+            Member.wrapRow(it)
+        }
     }
 }

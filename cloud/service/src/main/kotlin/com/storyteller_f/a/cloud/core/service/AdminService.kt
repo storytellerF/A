@@ -39,7 +39,7 @@ suspend fun Backend.addUser(newUser: NewUser): Result<UserInfo> {
         return Result.failure(Exception(CustomBadRequestException("invalid nickname")))
     }
     runCatching {
-        checkUserNickname(newUser.nickname)
+        checkUserNickname(newUser)
         checkAid(newUser.aid, true).getOrThrow()
     }.exceptionOrNull()?.let {
         return Result.failure(it)

@@ -17,7 +17,6 @@ import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.a.client.core.searchCommunity
 import com.storyteller_f.a.client.core.searchCommunityMembers
 import com.storyteller_f.a.client.core.searchTopics
-import com.storyteller_f.a.cloud.core.service.createTitle
 import com.storyteller_f.shared.model.MemberPolicy
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.type.JoinStatusSearch
@@ -127,8 +126,7 @@ class CommunityTest {
                     JoinStatusSearch.JOINED,
                     "",
                     nextCommunityId = lastCommunityId
-                )
-                    .getOrThrow()
+                ).getOrThrow()
                 val pagination = res.pagination!!
                 lastCommunityId = pagination.nextPageToken
                 sum += res.data.size

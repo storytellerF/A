@@ -56,34 +56,65 @@ suspend fun Backend.getRoomPubKeys(
 suspend fun Backend.joinRoom(
     roomId: PrimaryKey,
     uid: PrimaryKey,
-) = getRoomInfo(IdFetch(roomId), uid, true).mapResultIfNotNull { roomInfo ->
-    if (roomInfo.joinedTime != null) {
-        Result.success(roomInfo)
+) = database.room.getRoomCommunityId(roomId).mapResult { communityId ->
+    if (communityId == null) {
+        // 检查是否存在title
+        getJoinTitleByScope(uid, roomId)
     } else {
-        val communityId = roomInfo.communityId
-        if (communityId == null) {
-            // 检查是否存在title
-            getJoinTitleByScope(uid, roomId)
-        } else {
-            database.container.isMemberJoined(communityId, uid).errorIfFalse {
-                ForbiddenException("you should join community first.")
-            }
+        database.container.isMemberJoined(communityId, uid).errorIfFalse {
+            ForbiddenException("you should join community first.")
         }
     }.mapResult {
-        val time = now()
-        val memberId = SnowflakeFactory.nextId()
-        database.container.joinContainer(
-            Member(memberId, uid, roomInfo.id, ObjectType.ROOM, time, MemberStatus.JOINED, time)
-        ).mapResult {
-            addUserLog(uid, UserLogType.JOIN, roomInfo.tuple())
-            Result.success(roomInfo.copy(joinedTime = time))
-        }.recoverResult { exception ->
-            if (database.isDup(exception)) {
-                getRoomInfo(IdFetch(roomInfo.id), uid, true)
+        database.container.getMember(roomId, uid).mapResult {
+            if (it != null && it.status == MemberStatus.JOINED) {
+                Result.success(it)
             } else {
-                Result.failure(exception)
+                joinRoomOrUpdateMemberStatus(it, uid, roomId).onSuccess {
+                    addUserLog(uid, UserLogType.JOIN, roomId ob ObjectType.ROOM)
+                }
+            }.mapResult {
+                getRoomInfo(IdFetch(roomId), uid, true)
+            }.recoverResult { exception ->
+                if (database.isDup(exception)) {
+                    getRoomInfo(IdFetch(roomId), uid, true)
+                } else {
+                    Result.failure(exception)
+                }
             }
         }
+    }
+}
+
+private suspend fun Backend.joinRoomOrUpdateMemberStatus(
+    member: Member?,
+    uid: PrimaryKey,
+    roomId: PrimaryKey,
+): Result<Member> {
+    val time = now()
+    return if (member == null) {
+        database.container.addMember(
+            Member(
+                SnowflakeFactory.nextId(),
+                uid,
+                roomId,
+                ObjectType.ROOM,
+                time,
+                MemberStatus.JOINED,
+                time
+            )
+        )
+    } else {
+        database.container.updateMemberStatus(
+            Member(
+                member.id,
+                member.uid,
+                member.objectId,
+                member.objectType,
+                time,
+                MemberStatus.JOINED,
+                time
+            )
+        )
     }
 }
 
@@ -109,7 +140,7 @@ suspend fun Backend.exitRoom(roomId: PrimaryKey, uid: PrimaryKey) =
         if (info.joinedTime == null) {
             Result.success(info)
         } else {
-            database.container.exitContainer(roomId, uid).map {
+            database.container.deleteMember(roomId, uid).map {
                 addUserLog(uid, UserLogType.JOIN, roomId ob ObjectType.ROOM)
                 info.copy(joinedTime = null)
             }
