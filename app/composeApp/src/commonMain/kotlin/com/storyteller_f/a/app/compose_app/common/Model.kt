@@ -8,6 +8,7 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.map
+import com.storyteller_f.a.api.NewTitle
 import com.storyteller_f.a.api.PaginationQuery
 import com.storyteller_f.a.app.compose_app.CustomUserSessionManager
 import com.storyteller_f.a.app.core.common.CachedLoadingHandler
@@ -99,6 +100,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -910,6 +912,78 @@ class UserOverviewViewModel(sessionManager: UserSessionManager, modelStorage: Mo
             sessionManager.getUserOverview()
         } else {
             Result.failure(IllegalStateException("not logged in"))
+        }
+    }
+}
+
+enum class TitleComposeSheetType { NONE, SCOPE, RECEIVER }
+
+class TitleComposeViewModel : ViewModel() {
+    val name = MutableStateFlow("")
+    val showSheetType = MutableStateFlow(TitleComposeSheetType.NONE)
+    val titleScope = MutableStateFlow<ObjectTuple?>(null)
+    val titleType = MutableStateFlow(TitleType.REGULAR)
+    val receiver = MutableStateFlow<PrimaryKey?>(null)
+    val content = MutableStateFlow("")
+
+    fun setName(value: String) {
+        name.value = value
+    }
+
+    fun setTitleType(value: TitleType) {
+        titleType.value = value
+    }
+
+    fun setTitleScope(value: ObjectTuple?) {
+        titleScope.value = value
+    }
+
+    fun clearTitleScope() {
+        titleScope.value = null
+    }
+
+    fun setReceiver(value: PrimaryKey?) {
+        receiver.value = value
+    }
+
+    fun setContent(value: String) {
+        content.value = value
+    }
+
+    fun setShowSheetType(value: TitleComposeSheetType) {
+        showSheetType.value = value
+    }
+
+    fun clearShowSheetType() {
+        showSheetType.value = TitleComposeSheetType.NONE
+    }
+
+    // Readability helpers (Flow-based for Compose collectAsState)
+    val isSheetVisibleFlow: StateFlow<Boolean> = showSheetType
+        .map { it != TitleComposeSheetType.NONE }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    val supportedObjectTypesFlow: StateFlow<List<ObjectType>> = showSheetType
+        .map {
+            if (it == TitleComposeSheetType.SCOPE) {
+                listOf(ObjectType.COMMUNITY, ObjectType.ROOM)
+            } else {
+                listOf(ObjectType.USER)
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, listOf(ObjectType.USER))
+
+    fun openScopeSheet() = setShowSheetType(TitleComposeSheetType.SCOPE)
+    fun openReceiverSheet() = setShowSheetType(TitleComposeSheetType.RECEIVER)
+
+    fun buildNewTitle(): Result<NewTitle> {
+        val t = titleType.value
+        val r = receiver.value
+        val s = titleScope.value
+        return if (r != null && s != null) {
+            Result.success(NewTitle(name.value, t, r, s.objectId, s.objectType, content.value))
+        } else {
+            Result.failure(IllegalStateException("titleType/receiver/titleScope must not be null"))
         }
     }
 }
