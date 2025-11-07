@@ -7,16 +7,29 @@ import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
-import com.storyteller_f.a.backend.core.service.TopicDocument
+import com.storyteller_f.a.backend.core.types.Member
 import com.storyteller_f.a.backend.core.types.RawTitle
 import com.storyteller_f.a.backend.core.types.Title
 import com.storyteller_f.a.backend.core.types.Topic
 import com.storyteller_f.a.backend.core.types.toTitleInfo
-import com.storyteller_f.shared.model.*
+import com.storyteller_f.shared.model.CommunityInfo
+import com.storyteller_f.shared.model.RoomInfo
+import com.storyteller_f.shared.model.TitleInfo
+import com.storyteller_f.shared.model.TitleSearchType
+import com.storyteller_f.shared.model.TitleStatus
+import com.storyteller_f.shared.model.TitleType
+import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.obj.ObjectTuple
+import com.storyteller_f.shared.type.MemberStatus
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.*
+import com.storyteller_f.shared.utils.mapIfNotNull
+import com.storyteller_f.shared.utils.mapResult
+import com.storyteller_f.shared.utils.mapResultIfNotNull
+import com.storyteller_f.shared.utils.now
+import io.github.aakira.napier.Napier
 
 suspend fun Backend.getUserTitles(
     uid: PrimaryKey,
@@ -161,40 +174,55 @@ private fun processTitleList(
 suspend fun Backend.createTitle(
     newTitle: NewTitle,
     uid: PrimaryKey
-) =
-    checkRootAdminPermission(
-        newTitle.scopeType,
-        newTitle.scopeId,
-        uid
-    ).mapResultIfNotNull {
-        val title = toTitle(newTitle, uid)
-        val topic = Topic(
-            title.descriptionTopicId,
-            now(),
-            uid,
-            title.id,
-            ObjectType.TITLE,
-            title.id,
-            ObjectType.TITLE,
-            newTitle.description.encodeToByteArray(),
-            isEncrypted = false,
-            level = 1,
-            isPin = false,
-            lastModifiedTime = null
-        )
-        database.topic.createTitle(
-            title,
-            topic
-        ).mapResult {
-            topicSearchService.saveDocument(
-                listOf(TopicDocument.fromTopic(topic, TopicContent.Plain(newTitle.description)))
-            ).getOrThrow()
-            addUserLog(uid, UserLogType.CREATE, ObjectTuple(title.id, ObjectType.TITLE))
-            processTitleList(listOf(RawTitle(title)), uid).mapIfNotNull {
-                it.first()
+) = checkRootAdminPermission(newTitle.scopeType, newTitle.scopeId, uid).mapResultIfNotNull {
+    val title = toTitle(newTitle, uid)
+    val topic = Topic(
+        title.descriptionTopicId,
+        now(),
+        uid,
+        title.id,
+        ObjectType.TITLE,
+        title.id,
+        ObjectType.TITLE,
+        newTitle.description.encodeToByteArray(),
+        isEncrypted = false,
+        level = 1,
+        isPin = false,
+        lastModifiedTime = null
+    )
+    database.topic.createTitle(title, topic).onSuccess {
+        // 如果发送的title 类型是JOIN，插入一条Member 记录
+        inviteMemberIfNeed(title)
+    }.mapResult {
+        addUserLog(uid, UserLogType.CREATE, ObjectTuple(title.id, ObjectType.TITLE))
+        processTitleList(listOf(RawTitle(title)), uid).mapIfNotNull {
+            it.first()
+        }
+    }
+}
+
+private suspend fun Backend.inviteMemberIfNeed(title: Title) {
+    if (title.type == TitleType.JOIN) {
+        val memberId = SnowflakeFactory.nextId()
+        val invitedTime = now()
+        database.container.joinContainer(
+            Member(
+                memberId,
+                title.receiver,
+                title.scopeId,
+                title.scopeType,
+                invitedTime,
+                MemberStatus.INVITED,
+                null,
+                invitedTime
+            )
+        ).onFailure {
+            Napier.e(it) {
+                "create join title member failed $it"
             }
         }
     }
+}
 
 private suspend fun toTitle(
     newTitle: NewTitle,
@@ -238,14 +266,9 @@ suspend fun createTitle(
     backend: Backend,
     uid: PrimaryKey
 ): Result<TitleInfo?> {
-    val supportType = titleMap[title.scopeType]
-    return if (supportType != null) {
-        if (supportType.contains(title.type)) {
-            backend.createTitle(title, uid)
-        } else {
-            Result.failure(ForbiddenException("unsupported title type ${title.type} in ${title.scopeType}"))
-        }
-    } else {
-        Result.success(null)
+    val supportType = titleMap[title.scopeType] ?: return Result.success(null)
+    if (!supportType.contains(title.type)) {
+        return Result.failure(ForbiddenException("unsupported title type ${title.type} in ${title.scopeType}"))
     }
+    return backend.createTitle(title, uid)
 }

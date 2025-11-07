@@ -1,14 +1,31 @@
 package com.storyteller_f.a.app.compose_app.pages.user
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.DropdownMenuItem
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.paging.compose.itemKey
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.common.MemberViewModel
 import com.storyteller_f.a.app.compose_app.common.createMemberViewModel
@@ -17,6 +34,7 @@ import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.bottomAppending
+import com.storyteller_f.a.app.core.components.pagingItems
 import com.storyteller_f.a.app.core.components.topPrepend
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.ObjectType
@@ -24,6 +42,7 @@ import com.storyteller_f.shared.type.PrimaryKey
 
 @Composable
 fun MemberPage(objectId: PrimaryKey, objectType: ObjectType) {
+    val viewModel = createMemberViewModel(objectId, objectType)
     Scaffold {
         Column(
             Modifier.fillMaxWidth(),
@@ -31,18 +50,37 @@ fun MemberPage(objectId: PrimaryKey, objectType: ObjectType) {
         ) {
             CustomSearchBar(
                 when (objectType) {
-                    ObjectType.COMMUNITY -> SearchScope.CommunityMember(
-                        objectId
-                    )
+                    ObjectType.COMMUNITY -> SearchScope.CommunityMember(objectId)
 
-                    else -> SearchScope.RoomMember(
-                        objectId
-                    )
+                    else -> SearchScope.RoomMember(objectId)
                 }
             ) {
+                var expended by remember {
+                    mutableStateOf(false)
+                }
+                val appNav = LocalAppNavFactory.current
+
+                Row {
+                    FilledIconButton({
+                        appNav.newAppNav().gotoTitleCompose()
+                    }) {
+                        Icon(Icons.Default.Add, "add member")
+                    }
+                    FilledIconButton({
+                    }) {
+                        Icon(Icons.Default.Menu, "menu")
+                    }
+                }
+                DropdownMenu(expended, {
+                    expended = false
+                }) {
+                    DropdownMenuItem({
+                        expended = false
+                    }) {
+                        Text("Nothing")
+                    }
+                }
             }
-            val viewModel =
-                createMemberViewModel(objectId, objectType)
             MemberList(viewModel)
         }
     }
@@ -57,12 +95,9 @@ fun MemberList(memberViewModel: MemberViewModel, onClick: ((UserInfo) -> Unit)? 
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             topPrepend(items.loadState)
-            items(
-                count = items.itemSnapshotList.size,
-                key = items.itemKey {
-                    it.id
-                },
-            ) { index ->
+            pagingItems(items, {
+                it.id
+            }) { index ->
                 UserCell(items[index], onClickCell = {
                     onClick?.invoke(it) ?: appNavFactory.newAppNav().gotoUser(it.id)
                 })

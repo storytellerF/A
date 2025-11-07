@@ -58,6 +58,7 @@ import androidx.navigation.toRoute
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil3.compose.LocalPlatformContext
+import com.storyteller_f.a.app.compose_app.CustomUserSessionManager
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.LocalUiViewModel
@@ -88,6 +89,7 @@ import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
 import com.storyteller_f.a.app.compose_app.pages.topic.FilePicker
 import com.storyteller_f.a.app.compose_app.pages.topic.insertContent
+import com.storyteller_f.a.app.compose_app.pages.user.ButtonBadgeSuffix
 import com.storyteller_f.a.app.compose_app.pages.user.getRemoteImageBitmap
 import com.storyteller_f.a.app.compose_app.permission_denied
 import com.storyteller_f.a.app.compose_app.private_room_pub_key_loading
@@ -99,6 +101,7 @@ import com.storyteller_f.a.app.core.components.CustomAlertDialog
 import com.storyteller_f.a.app.core.components.CustomAlertDialogController
 import com.storyteller_f.a.app.core.components.DialogContainer
 import com.storyteller_f.a.app.core.components.GlobalDialogController
+import com.storyteller_f.a.app.core.components.IconRes
 import com.storyteller_f.a.app.core.components.LocalGlobalDialog
 import com.storyteller_f.a.app.core.components.LocalToaster
 import com.storyteller_f.a.app.core.components.StateView
@@ -118,6 +121,7 @@ import com.storyteller_f.shared.getPlatform
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.obj.UpdateUserRead
@@ -635,52 +639,96 @@ private fun RoomDialogButtons(roomInfo: RoomInfo, dismiss: () -> Unit) {
     Column {
         val isRoomPage by appNavFactory.hasRouteFlow<RoomScreen>()
         if (isRoomPage) {
-            val scope = rememberCoroutineScope()
-            val toasterState = LocalToaster.current
-            ButtonNav(Icons.Default.CardMembership, stringResource(Res.string.all_members)) {
-                dismiss()
-                appNavFactory.newAppNav().gotoMemberPage(roomInfo.id, ObjectType.ROOM)
-            }
-            if (roomInfo.isJoined) {
-                ButtonNav(Icons.Default.Close, stringResource(Res.string.exit_room)) {
-                    scope.launch {
-                        exitRoom(roomInfo, sessionManager, globalDialogController) {
-                            toasterState.showMessage(
-                                getString(Res.string.success),
-                            )
-                        }
-                    }
-                }
-            } else {
-                ButtonNav(Icons.Default.AddHome, stringResource(Res.string.join_room)) {
-                    scope.launch {
-                        joinRoom(roomInfo, sessionManager, globalDialogController) {
-                            val message = getString(Res.string.success)
-                            toasterState.showMessage(message)
-                        }
-                    }
-                }
-            }
+            RoomAllMembers(roomInfo, dismiss, appNavFactory)
+            RoomMemberStatus(roomInfo, sessionManager, globalDialogController)
+            StartCallButton(roomInfo, sessionManager)
+            RoomSettings(roomInfo, me, dismiss, appNavFactory)
+        }
+    }
+}
 
-            ButtonNav(Icons.Default.Call, "Start Call") {
-                startCall(roomInfo.id)
-            }
-            if (getPlatform().name.contains("android", ignoreCase = true)) {
-                val context = LocalPlatformContext.current
-                ButtonNav(Icons.Default.ChatBubble, "Bubble") {
-                    scope.launch {
-                        val bitmap =
-                            roomInfo.icon?.let { getRemoteImageBitmap(sessionManager, context, it) }?.getOrNull()
-                        notifyNotification(roomInfo, bitmap)
-                    }
-                }
-            }
+@Composable
+private fun RoomSettings(
+    roomInfo: RoomInfo,
+    me: UserInfo?,
+    dismiss: () -> Unit,
+    appNavFactory: AppNavFactory
+) {
+    if (roomInfo.creator == me?.id) {
+        ButtonNav(Icons.Default.Settings, "Settings") {
+            dismiss()
+            appNavFactory.newAppNav().gotoSettingPage(roomInfo.id, ObjectType.ROOM)
+        }
+    }
+}
 
-            if (roomInfo.creator == me?.id) {
-                ButtonNav(Icons.Default.Settings, "Settings") {
-                    dismiss()
-                    appNavFactory.newAppNav().gotoSettingPage(roomInfo.id, ObjectType.ROOM)
+@Composable
+private fun RoomAllMembers(
+    roomInfo: RoomInfo,
+    dismiss: () -> Unit,
+    appNavFactory: AppNavFactory
+) {
+    ButtonNav(
+        IconRes.Vector(Icons.Default.CardMembership),
+        stringResource(Res.string.all_members),
+        {
+            ButtonBadgeSuffix(roomInfo.memberCount)
+        }
+    ) {
+        dismiss()
+        appNavFactory.newAppNav().gotoMemberPage(roomInfo.id, ObjectType.ROOM)
+    }
+}
+
+@Composable
+private fun RoomMemberStatus(
+    roomInfo: RoomInfo,
+    sessionManager: CustomUserSessionManager,
+    globalDialogController: GlobalDialogController
+) {
+    val scope = rememberCoroutineScope()
+
+    val toasterState = LocalToaster.current
+    if (roomInfo.isJoined) {
+        ButtonNav(Icons.Default.Close, stringResource(Res.string.exit_room)) {
+            scope.launch {
+                exitRoom(roomInfo, sessionManager, globalDialogController) {
+                    toasterState.showMessage(
+                        getString(Res.string.success),
+                    )
                 }
+            }
+        }
+    } else {
+        ButtonNav(Icons.Default.AddHome, stringResource(Res.string.join_room)) {
+            scope.launch {
+                joinRoom(roomInfo, sessionManager, globalDialogController) {
+                    val message = getString(Res.string.success)
+                    toasterState.showMessage(message)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun StartCallButton(
+    roomInfo: RoomInfo,
+    sessionManager: CustomUserSessionManager
+) {
+    val scope = rememberCoroutineScope()
+
+    ButtonNav(Icons.Default.Call, "Start Call") {
+        startCall(roomInfo.id)
+    }
+    if (getPlatform().name.contains("android", ignoreCase = true)) {
+        val context = LocalPlatformContext.current
+        ButtonNav(Icons.Default.ChatBubble, "Bubble") {
+            scope.launch {
+                val bitmap =
+                    roomInfo.icon?.let { getRemoteImageBitmap(sessionManager, context, it) }
+                        ?.getOrNull()
+                notifyNotification(roomInfo, bitmap)
             }
         }
     }

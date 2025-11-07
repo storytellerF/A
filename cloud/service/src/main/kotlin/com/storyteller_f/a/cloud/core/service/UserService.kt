@@ -44,17 +44,17 @@ suspend fun Backend.updateUser(
     uid: PrimaryKey,
     old: UpdateUserBody,
 ): Result<UserInfo?> {
-    val newUser =
+    val newUpdate =
         old.copy(nickname = old.nickname?.trim(), aid = old.aid?.trim(), avatar = old.avatar)
     runCatching {
-        checkAidModifyTimes(newUser, uid).getOrThrow()
-        checkAid(newUser.aid, true).getOrThrow()
-        checkUserNickname(newUser.nickname)
-        checkUserIcon(newUser)
+        checkAidModifyTimes(newUpdate, uid).getOrThrow()
+        checkAid(newUpdate.aid, true).getOrThrow()
+        checkUserNickname(old).getOrThrow()
+        checkUserIcon(newUpdate)
     }.exceptionOrNull()?.let {
         return Result.failure(it)
     }
-    return database.user.updateUserInfo(uid, newUser).mapResult {
+    return database.user.updateUserInfo(uid, newUpdate).mapResult {
         if (it) {
             addUserLog(uid, UserLogType.UPDATE, uid ob ObjectType.USER)
             getUserInfo(ObjectFetch.IdFetch(uid))
@@ -124,17 +124,37 @@ fun checkAid(aid: String?, supportEmptyAid: Boolean = false): Result<Unit> {
         }) {
         return Result.failure(CustomBadRequestException("only support alphabet, number, underline and hyphen"))
     }
+    val underlineCount = aid.count { it == '_' || it == '-' }
+    if (underlineCount > 1.0 / aid.length) {
+        return Result.failure(CustomBadRequestException("aid contains too many underline or hyphen"))
+    }
     return UNIT_RESULT
 }
 
 fun checkNickname(nickname: String?, range: IntRange): StringCheckResult {
-    if (nickname == null) return StringCheckResult.EMPTY
+    if (nickname == null) return StringCheckResult.NULL
+    if (nickname.isBlank()) return StringCheckResult.EMPTY
     if (nickname.length !in range) return StringCheckResult.RANGE_MISMATCH
-    if (!isVisibleUnicodeString(nickname)) return StringCheckResult.RANGE_MISMATCH
+    if (!isAllVisibleChar(nickname)) return StringCheckResult.CONTAIN_INVALID_CHAR
     return StringCheckResult.SUCCESS
 }
 
-fun isVisibleUnicodeString(s: String) = !s.codePoints().anyMatch { codePoint ->
+/**
+ * 接受空字符串或者null
+ */
+fun checkUserNickname(update: UpdateUserBody): Result<Unit> {
+    return when (checkNickname(update.nickname, 1..USER_NICKNAME)) {
+        StringCheckResult.RANGE_MISMATCH -> Result.failure(
+            CustomBadRequestException("user nickname must be between in 1 and $USER_NICKNAME")
+        )
+        StringCheckResult.CONTAIN_INVALID_CHAR -> Result.failure(
+            CustomBadRequestException("user nickname must be visible")
+        )
+        else -> UNIT_RESULT
+    }
+}
+
+fun isAllVisibleChar(s: String) = !s.codePoints().anyMatch { codePoint ->
     val type = Character.getType(codePoint)
     Character.isISOControl(codePoint) ||
         Character.getType(codePoint).toByte() == Character.FORMAT ||
@@ -155,9 +175,11 @@ enum class MediaCheckResult {
 }
 
 enum class StringCheckResult {
+    NULL,
     EMPTY,
     SUCCESS,
-    RANGE_MISMATCH
+    RANGE_MISMATCH,
+    CONTAIN_INVALID_CHAR,
 }
 
 suspend fun Backend.checkIcon(

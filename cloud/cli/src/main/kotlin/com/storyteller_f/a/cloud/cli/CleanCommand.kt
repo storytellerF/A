@@ -16,6 +16,9 @@ class CleanCommand : Subcommand("clean", "clean all data") {
             }
             backend.objectStorageService.clean(A_FILE_DEFAULT_BUCKET).getOrThrow()
             backend.topicSearchService.clean().getOrThrow()
+            backend.userSearchService.clean().getOrThrow()
+            backend.roomSearchService.clean().getOrThrow()
+            backend.communitySearchService.clean().getOrThrow()
         }
         Napier.i {
             "clean done"

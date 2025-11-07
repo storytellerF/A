@@ -220,15 +220,19 @@ suspend fun Backend.createCommunity(
     }
 }
 
-private fun checkCommunityName(newCommunity: NewCommunity): Result<Unit> =
-    when (checkNickname(newCommunity.name, 1..COMMUNITY_NAME_LENGTH)) {
+private fun checkCommunityName(newCommunity: NewCommunity): Result<Unit> {
+    return when (checkNickname(newCommunity.name, 1..COMMUNITY_NAME_LENGTH)) {
         StringCheckResult.RANGE_MISMATCH -> Result.failure(
-            CustomBadRequestException("community name must be between in 1 and 20")
+            CustomBadRequestException("community name must be between in 1 and $COMMUNITY_NAME_LENGTH")
         )
 
-        StringCheckResult.EMPTY -> Result.failure(CustomBadRequestException("community name is empty"))
-        StringCheckResult.SUCCESS -> UNIT_RESULT
+        StringCheckResult.CONTAIN_INVALID_CHAR -> Result.failure(
+            CustomBadRequestException("community name must be visible")
+        )
+
+        else -> Result.failure(CustomBadRequestException("name must be set"))
     }
+}
 
 suspend fun Backend.updateCommunity(
     id: PrimaryKey,
@@ -236,11 +240,7 @@ suspend fun Backend.updateCommunity(
     uid: PrimaryKey
 ): Result<CommunityInfo?> {
     val newCommunity = old.copy(name = old.name?.trim(), icon = old.icon, poster = old.poster)
-    return checkRootAdminPermission(
-        ObjectType.COMMUNITY,
-        id,
-        uid
-    ).mapResultIfNotNull {
+    return checkRootAdminPermission(ObjectType.COMMUNITY, id, uid).mapResultIfNotNull {
         checkBeforeUpdateCommunity(newCommunity)
     }.mapResultIfNotNull {
         database.community.updateCommunity(id, newCommunity).errorIfFalse {
@@ -305,6 +305,10 @@ private fun checkCommunityNameForUpdate(newCommunity: UpdateCommunityBody): Resu
     when (checkNickname(newCommunity.name, 1..COMMUNITY_NAME_LENGTH)) {
         StringCheckResult.RANGE_MISMATCH -> Result.failure(
             CustomBadRequestException("community name must be between in 1 and 20")
+        )
+
+        StringCheckResult.CONTAIN_INVALID_CHAR -> Result.failure(
+            CustomBadRequestException("community name must be visible")
         )
 
         else -> UNIT_RESULT

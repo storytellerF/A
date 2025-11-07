@@ -208,9 +208,9 @@ class RoomsViewModel(
     modelStorage: ModelStorage,
     joinStatusSearch: JoinStatusSearch,
     word: String = "",
-    val community: PrimaryKey? = null,
+    communityId: PrimaryKey? = null,
 ) : PagingViewModel<RoomInfo>() {
-    private val modelCollection = RoomCollection.SearchRoom(word, community)
+    private val modelCollection = RoomCollection.SearchRoom(word, communityId, joinStatusSearch)
 
     override val flow: Flow<PagingData<RoomInfo>> = Pager(
         PagingConfig(pageSize = 20),
@@ -218,7 +218,7 @@ class RoomsViewModel(
             modelStorage,
             modelCollection.getName(),
             RegularPagingSource { key, size ->
-                sessionManager.searchRooms(size, key, joinStatusSearch, word, community)
+                sessionManager.searchRooms(joinStatusSearch, size, key, word, communityId)
             },
         ) { data, clean ->
             if (clean) {
@@ -518,8 +518,7 @@ class MemberViewModel(
     objectId: PrimaryKey,
     word: String,
     objectType: ObjectType,
-) :
-    PagingViewModel<UserInfo>() {
+) : PagingViewModel<UserInfo>() {
     private val modelCollection = UserCollection.Members(word, objectId)
 
     override val flow: Flow<PagingData<UserInfo>> = Pager(
@@ -907,6 +906,10 @@ class UserOverviewViewModel(sessionManager: UserSessionManager, modelStorage: Mo
             modelStorage.userOverview.save(it)
         }
     ) {
-        sessionManager.getUserOverview()
+        if (sessionManager.model.state.value is ClientSessionState.Success) {
+            sessionManager.getUserOverview()
+        } else {
+            Result.failure(IllegalStateException("not logged in"))
+        }
     }
 }

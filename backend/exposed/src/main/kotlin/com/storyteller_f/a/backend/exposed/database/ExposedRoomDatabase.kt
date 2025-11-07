@@ -20,7 +20,6 @@ import com.storyteller_f.a.backend.exposed.query.buildRoomSearchWhereQuery
 import com.storyteller_f.a.backend.exposed.tables.Aids
 import com.storyteller_f.a.backend.exposed.tables.Members
 import com.storyteller_f.a.backend.exposed.tables.Rooms
-import com.storyteller_f.a.backend.exposed.tables.UserTopicReads
 import com.storyteller_f.a.backend.exposed.tables.Users
 import com.storyteller_f.a.backend.exposed.tables.batchAddMembers
 import com.storyteller_f.a.backend.exposed.tables.findRoomById
@@ -29,6 +28,7 @@ import com.storyteller_f.shared.model.UserPubKeyInfo
 import com.storyteller_f.shared.obj.UpdateRoomBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import org.jetbrains.exposed.v1.core.JoinType
@@ -47,7 +47,7 @@ class ExposedRoomDatabase(
 ) : RoomDatabase {
     override suspend fun checkRoomIsPrivate(roomId: PrimaryKey) = databaseSession.dbSearch {
         search {
-            Room.Companion.findRoomById(roomId)
+            Room.findRoomById(roomId)
         }
         first {
             it[Rooms.communityId] == null
@@ -85,7 +85,7 @@ class ExposedRoomDatabase(
 
     override suspend fun getRoomCommunityId(parentId: PrimaryKey) = databaseSession.dbSearch {
         search {
-            Room.Companion.findRoomById(parentId)
+            Room.findRoomById(parentId)
         }
         first {
             it[Rooms.communityId]
@@ -138,9 +138,9 @@ class ExposedRoomDatabase(
             }
             first(Room::wrapRow)
         }.mapResultIfNotNull { room ->
-            processRoomListToRawRoom(uid, listOf(room)).map {
-                it.first()
-            }
+            processRoomListToRawRoom(uid, listOf(room))
+        }.mapIfNotNull {
+            it.first()
         }
     }
 
@@ -185,24 +185,23 @@ class ExposedRoomDatabase(
             room
         }
 
-    override suspend fun getRawRooms(objectListFetch: ObjectListFetch) = databaseSession.dbSearch {
-        search {
-            Rooms
-                .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
-                .select(Rooms.fields + Aids.value).where {
-                    when (objectListFetch) {
-                        is ObjectListFetch.AidListFetch -> Aids.value inList objectListFetch.aidList
-                        is ObjectListFetch.IdListFetch -> Rooms.id inList objectListFetch.idList
+    override suspend fun getRawRooms(objectListFetch: ObjectListFetch, uid: PrimaryKey?) =
+        databaseSession.dbSearch {
+            search {
+                Rooms.join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
+                    .select(Rooms.fields + Aids.value).where {
+                        when (objectListFetch) {
+                            is ObjectListFetch.AidListFetch -> Aids.value inList objectListFetch.aidList
+                            is ObjectListFetch.IdListFetch -> Rooms.id inList objectListFetch.idList
+                        }
                     }
-                }
+            }
+            map {
+                Room.wrapRow(it)
+            }
+        }.mapResult {
+            processRoomListToRawRoom(uid, it)
         }
-        map {
-            val joinedTime = it.getOrNull(Members.joinedTime)
-            val topicId = it.getOrNull(UserTopicReads.topicId)
-            val room = Room.wrapRow(it)
-            RawRoom(room, joinedTime, topicId)
-        }
-    }
 
     override suspend fun getRoomList(objectListFetch: ObjectListFetch) = databaseSession.dbSearch {
         search {

@@ -104,15 +104,14 @@ class RoomTest {
     ) {
         assertListSize(
             expected,
-            searchRooms(10, nextRoomId, joinStatusSearch, word, communityId)
+            searchRooms(joinStatusSearch, 10, nextRoomId, word, communityId)
         )
     }
 
     @Test
     fun `test search private room members`() = test {
         val sessionOuterTuple = attachSession {
-            val privateRoomId = createPrivateRoomForTest().id
-            privateRoomId
+            createPrivateRoomForTest().id
         }
         val privateRoomId = sessionOuterTuple.custom
         val secondTuple = attachSession {
@@ -124,6 +123,10 @@ class RoomTest {
             createJoinRoomTitleForTest(privateRoomId, secondTuple.uid)
         }
         loginSession(secondTuple) {
+            // 检查加入房间前是否可以查询到这个聊天室，并且状态是INVITED
+            val response = searchRooms(JoinStatusSearch.JOINED, 10, null, null, null).getOrThrow()
+            assertEquals(1, response.data.size)
+            assertEquals(false, response.data.first().isJoined)
             joinRoom(privateRoomId).getOrThrow()
             assertListSize(2, searchRoomMembers(privateRoomId, null, 10, null))
         }
@@ -169,8 +172,7 @@ class RoomTest {
     @Test
     fun `test private room join`() = test {
         val sessionOuterTuple = attachSession {
-            val privateRoomId = createPrivateRoomForTest().id
-            privateRoomId
+            createPrivateRoomForTest().id
         }
         val privateRoomId = sessionOuterTuple.custom
         val secondTuple = attachSession {

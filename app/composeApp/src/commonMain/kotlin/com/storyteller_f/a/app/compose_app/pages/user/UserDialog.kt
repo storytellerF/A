@@ -316,18 +316,23 @@ fun AccountSwitchButton(dismiss: () -> Unit, overviewHandler: LoadingHandler<Use
         if (isLoading) IconRes.Loading else IconRes.Vector(Icons.Default.SwitchAccount),
         "Switch Account",
         {
-            val shape = RoundedCornerShape(8.dp)
-            Text(
-                (userOverview?.childAccountCount ?: 0).toString(),
-                modifier = Modifier.clip(shape)
-                    .background(MaterialTheme.colorScheme.primaryContainer, shape)
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-            )
+            ButtonBadgeSuffix(userOverview?.childAccountCount ?: 0)
         }
     ) {
         dismiss()
         accountSwitcher.switch()
     }
+}
+
+@Composable
+fun ButtonBadgeSuffix(number: Long) {
+    val shape = RoundedCornerShape(8.dp)
+    Text(
+        number.toString(),
+        modifier = Modifier.clip(shape)
+            .background(MaterialTheme.colorScheme.primaryContainer, shape)
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+    )
 }
 
 @Composable

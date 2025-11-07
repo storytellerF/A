@@ -20,7 +20,6 @@ import com.storyteller_f.a.backend.exposed.query.buildCommunitySearchQuery
 import com.storyteller_f.a.backend.exposed.tables.Aids
 import com.storyteller_f.a.backend.exposed.tables.Communities
 import com.storyteller_f.a.backend.exposed.tables.Members
-import com.storyteller_f.a.backend.exposed.tables.addJoin
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.PosterSearch
 import com.storyteller_f.shared.obj.UpdateCommunityBody
@@ -149,17 +148,27 @@ class ExposedCommunityDatabase(
             }.insertedCount > 0) {
                 "insert aid failed"
             }
-            addJoin(
-                Member(
-                    memberId,
-                    community.owner,
-                    community.id,
-                    ObjectType.COMMUNITY,
-                    community.createdTime,
-                    MemberStatus.JOINED,
-                    community.createdTime
-                )
+            val member = Member(
+                memberId,
+                community.owner,
+                community.id,
+                ObjectType.COMMUNITY,
+                community.createdTime,
+                MemberStatus.JOINED,
+                community.createdTime
             )
+            check(Members.insert {
+                it[id] = member.id
+                it[createdTime] = member.createdTime
+                it[joinedTime] = member.joinedTime
+                it[invitedTime] = member.invitedTime
+                it[uid] = member.uid
+                it[objectId] = member.objectId
+                it[objectType] = member.objectType
+                it[status] = member.status
+            }.insertedCount > 0) {
+                "join failed"
+            }
             community
         }
 
@@ -210,29 +219,25 @@ class ExposedCommunityDatabase(
         id: PrimaryKey,
         body: UpdateCommunityBody
     ) = databaseSession.dbQuery {
-        listOf(suspend {
-            val newIcon = body.icon
-            val newName = body.name
-            val newPoster = body.poster
-            if (!newName.isNullOrBlank() || newIcon != null || newPoster != null) {
-                Communities.update({
-                    Communities.id eq id
-                }) {
-                    if (!newName.isNullOrBlank()) {
-                        it[Communities.name] = newName
-                    }
-                    if (newIcon != null) {
-                        it[Communities.icon] = newIcon
-                    }
-                    if (newPoster != null) {
-                        it[Communities.poster] = newPoster
-                    }
-                } > 0
-            } else {
-                true
-            }
-        }).all {
-            it()
+        val newIcon = body.icon
+        val newName = body.name
+        val newPoster = body.poster
+        if (!newName.isNullOrBlank() || newIcon != null || newPoster != null) {
+            Communities.update({
+                Communities.id eq id
+            }) {
+                if (!newName.isNullOrBlank()) {
+                    it[Communities.name] = newName
+                }
+                if (newIcon != null) {
+                    it[Communities.icon] = newIcon
+                }
+                if (newPoster != null) {
+                    it[Communities.poster] = newPoster
+                }
+            } > 0
+        } else {
+            true
         }
     }
 

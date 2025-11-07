@@ -163,7 +163,8 @@ class AddPreset : Subcommand("add", "add entry") {
                 }.map {
                     it.scope
                 }.distinct()
-            )
+            ),
+            null
         ).getOrThrow().associate {
             it.room.aid to it.room
         }

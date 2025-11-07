@@ -53,7 +53,11 @@ sealed interface TitleCollection {
 
 sealed interface RoomCollection {
     data object Rooms : RoomCollection
-    data class SearchRoom(val word: String, val community: PrimaryKey?) : RoomCollection
+    data class SearchRoom(
+        val word: String,
+        val communityId: PrimaryKey?,
+        val joinStatusSearch: JoinStatusSearch
+    ) : RoomCollection
 }
 
 sealed interface CommunityCollection {
@@ -75,6 +79,7 @@ sealed interface ReactionCollection {
 data class UploadCollection(val objectId: PrimaryKey) {
     fun getName() = "upload_$objectId"
 }
+
 data class MediasCollection(val objectId: PrimaryKey) {
     fun getName() = "medias_$objectId"
 }
@@ -91,7 +96,7 @@ fun UserCollection.getName(): String {
 fun RoomCollection.getName(): String {
     return when (this) {
         RoomCollection.Rooms -> "rooms"
-        is RoomCollection.SearchRoom -> "rooms_${word}_$community"
+        is RoomCollection.SearchRoom -> "rooms_${word}_${joinStatusSearch}_$communityId"
     }
 }
 
@@ -197,6 +202,7 @@ interface ChildAccountStorage {
     suspend fun save(childAccountInfo: ChildAccountInfo)
     fun observeData(): PagingSource<Int, ChildAccountInfo>
     suspend fun clean()
+
     companion object {
         const val COLLECTION_NAME = "child-account"
     }
@@ -248,6 +254,7 @@ interface UserFavoriteStorage {
     fun observeData(): PagingSource<Int, UserFavoriteInfo>
     fun observeDatum(id: String): Flow<UserFavoriteInfo?>
     suspend fun clean()
+
     companion object {
         const val COLLECTION_NAME = "user-favorite"
     }
@@ -272,6 +279,7 @@ interface RemoteKeyStorage {
 
     suspend fun deletePreRemoteKey(collection: String)
     suspend fun deleteNextRemoteKey(collection: String)
+
     companion object {
         const val PRE_COLLECTION = "pre_remote_keys"
         const val NEXT_COLLECTION = "next_remote_keys"

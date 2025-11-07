@@ -87,7 +87,7 @@ fun PrimaryRoomCell(
             .background(MaterialTheme.colorScheme.secondaryContainer, shape)
             .clip(shape)
             .clickable {
-                roomInfo?.let { onClick ?: appNavFactory.newAppNav().gotoRoom(it.id, false) }
+                roomInfo?.let { onClick?.invoke(it) ?: appNavFactory.newAppNav().gotoRoom(it.id, false) }
             }
             .padding(10.dp)
     )
