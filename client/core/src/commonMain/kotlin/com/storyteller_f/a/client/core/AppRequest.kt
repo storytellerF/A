@@ -18,6 +18,7 @@ import com.storyteller_f.a.api.TopicQuery
 import com.storyteller_f.route4k.ktor.client.invoke
 import com.storyteller_f.shared.buildEncryptedTopicContent
 import com.storyteller_f.shared.model.PosterSearch
+import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleStatus
@@ -266,12 +267,12 @@ suspend fun UserSessionManager.getTopicInfoByAid(aid: String) = serviceCatching 
 }
 
 suspend fun UserSessionManager.searchRooms(
+    joinStatusSearch: JoinStatusSearch,
     size: Int,
     nextRoomId: String?,
-    joinStatusSearch: JoinStatusSearch,
     word: String?,
     communityId: PrimaryKey?,
-) = serviceCatching {
+): Result<ServerResponse<RoomInfo>> = serviceCatching {
     CustomApi.Rooms.search(
         CustomApi.Rooms.RoomSearchQuery(
             joinStatusSearch,

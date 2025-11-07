@@ -10,6 +10,7 @@ import com.storyteller_f.shared.model.UserFavoriteInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.UserSubscriptionInfo
 import com.storyteller_f.shared.obj.ObjectTuple
+import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.storage.CommunityCollection
 import com.storyteller_f.storage.MediasCollection
@@ -77,6 +78,15 @@ suspend fun processEvent(database: ModelStorage, bus: MutableSharedFlow<Any>) {
             is OnRoomExited -> database.room.save(RoomCollection.Rooms, event.info)
 
             is OnRoomUpdated -> database.room.save(RoomCollection.Rooms, event.info)
+
+            is OnRoomCreated -> database.room.save(
+                RoomCollection.SearchRoom(
+                    "",
+                    event.info.communityId,
+                    JoinStatusSearch.JOINED
+                ),
+                event.info
+            )
 
             is OnUserUpdated -> database.user.save(UserCollection.Users, event.info)
 

@@ -202,19 +202,27 @@ class ExposedUserDatabase(private val databaseSession: ExposedDatabaseSession) :
         Users.address eq address
     }
 
-    override suspend fun getRawUsers(objectListFetch: ObjectListFetch) = databaseSession.dbSearch {
-        search {
-            Users
-                .join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
-                .select(Users.fields + Aids.value)
-                .where {
-                    when (objectListFetch) {
-                        is ObjectListFetch.AidListFetch -> Aids.value inList objectListFetch.aidList
-                        is ObjectListFetch.IdListFetch -> Users.id inList objectListFetch.idList
-                    }
-                }
+    override suspend fun getRawUsers(objectListFetch: ObjectListFetch): Result<List<RawUser>> {
+        if (objectListFetch is ObjectListFetch.AidListFetch && objectListFetch.aidList.isEmpty()) {
+            return Result.success(emptyList())
         }
-        map(::mapUserInfo)
+        if (objectListFetch is ObjectListFetch.IdListFetch && objectListFetch.idList.isEmpty()) {
+            return Result.success(emptyList())
+        }
+        return databaseSession.dbSearch {
+            search {
+                Users
+                    .join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
+                    .select(Users.fields + Aids.value)
+                    .where {
+                        when (objectListFetch) {
+                            is ObjectListFetch.AidListFetch -> Aids.value inList objectListFetch.aidList
+                            is ObjectListFetch.IdListFetch -> Users.id inList objectListFetch.idList
+                        }
+                    }
+            }
+            map(::mapUserInfo)
+        }
     }
 
     override suspend fun getUserAcgByIds(objectListFetch: ObjectListFetch) =
@@ -234,7 +242,10 @@ class ExposedUserDatabase(private val databaseSession: ExposedDatabaseSession) :
         }
 
     override suspend fun addReadLog(userTopicRead: UserTopicRead) = databaseSession.dbQuery {
-        check(UserTopicReads.upsert {
+        check(UserTopicReads.upsert(onUpdate = {
+            it[UserTopicReads.updatedAt] = userTopicRead.updatedAt
+            it[UserTopicReads.topicId] = userTopicRead.topicId
+        }) {
             it[uid] = userTopicRead.uid
             it[updatedAt] = userTopicRead.updatedAt
             it[objectId] = userTopicRead.objectId

@@ -39,6 +39,7 @@ import com.storyteller_f.a.app.core.components.IconRes
 import com.storyteller_f.a.app.core.components.LocalGlobalDialog
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.type.PrimaryKey
 import dev.tclement.fonticons.FontIcon
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -50,7 +51,7 @@ import org.jetbrains.compose.ui.tooling.preview.PreviewParameterProvider
 fun TopicCell(info: TopicInfo?) {
     val sheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
-    TopicCellInternal(info, showAvatar = true, supportPin = false) {
+    TopicCellInternal(info, supportPin = false) {
         showBottomSheet = true
     }
     info?.let {
@@ -67,7 +68,7 @@ fun UserTopicCell(
 ) {
     val sheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
-    TopicCellInternal(info, showAvatar = false, supportPin = true) {
+    UserTopicCellInternal(info, supportPin = true) {
         showBottomSheet = true
     }
     info?.let {
@@ -105,12 +106,61 @@ class TopicPreviewProvider : PreviewParameterProvider<TopicInfo> {
 @Composable
 fun TopicCellInternal(
     @PreviewParameter(TopicPreviewProvider::class) topicInfo: TopicInfo?,
-    showAvatar: Boolean = false,
     supportPin: Boolean = false,
     startAddReaction: () -> Unit = {}
 ) {
     topicInfo ?: return
+    val topicId = topicInfo.id
+    CommonTopicCellInternal(topicInfo, supportPin) {
+        TopicContentAndInteraction(topicInfo, startAddReaction, topicId)
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Preview
+@Composable
+fun UserTopicCellInternal(
+    @PreviewParameter(TopicPreviewProvider::class) topicInfo: TopicInfo?,
+    supportPin: Boolean = false,
+    startAddReaction: () -> Unit = {}
+) {
+    topicInfo ?: return
+    val topicId = topicInfo.id
     val authorInfo = topicInfo.extension?.authorInfo
+    CommonTopicCellInternal(topicInfo, supportPin) {
+        UserCell(authorInfo)
+        TopicContentAndInteraction(topicInfo, startAddReaction, topicId)
+    }
+}
+
+@Composable
+private fun TopicContentAndInteraction(
+    topicInfo: TopicInfo,
+    startAddReaction: () -> Unit,
+    topicId: PrimaryKey
+) {
+    val appNavFactory = LocalAppNavFactory.current
+    Column(
+        Modifier.padding(horizontal = 8.dp).padding(bottom = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        TopicContentField(topicInfo, true)
+        InteractionRow(topicInfo, startAddReaction) {
+            appNavFactory.newAppNav().gotoTopic(topicId)
+        }
+        SubTopics(topicInfo)
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Preview
+@Composable
+fun CommonTopicCellInternal(
+    @PreviewParameter(TopicPreviewProvider::class) topicInfo: TopicInfo?,
+    supportPin: Boolean = false,
+    block: @Composable () -> Unit = {}
+) {
+    topicInfo ?: return
     val topicId = topicInfo.id
     val appNavFactory = LocalAppNavFactory.current
     var expanded by remember { mutableStateOf(false) }
@@ -124,19 +174,7 @@ fun TopicCellInternal(
                 appNavFactory.newAppNav().gotoTopic(topicId)
             }
         ) {
-            if (showAvatar) {
-                UserCell(authorInfo)
-            }
-            Column(
-                Modifier.padding(horizontal = 8.dp).padding(bottom = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                TopicContentField(topicInfo, true)
-                InteractionRow(topicInfo, startAddReaction) {
-                    appNavFactory.newAppNav().gotoTopic(topicId)
-                }
-                SubTopics(topicInfo)
-            }
+            block()
         }
 
         if (topicInfo.isPin) {

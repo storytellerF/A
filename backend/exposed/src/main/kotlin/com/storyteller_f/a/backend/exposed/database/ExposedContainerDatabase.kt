@@ -19,10 +19,10 @@ import com.storyteller_f.a.backend.exposed.tables.Quotas
 import com.storyteller_f.a.backend.exposed.tables.Topics
 import com.storyteller_f.a.backend.exposed.tables.UserTopicReads
 import com.storyteller_f.a.backend.exposed.tables.Users
-import com.storyteller_f.a.backend.exposed.tables.addJoin
 import com.storyteller_f.a.backend.exposed.tables.mapUserInfo
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.QuotaType
+import com.storyteller_f.shared.type.MemberStatus
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.associateByPair
 import com.storyteller_f.shared.utils.mapResult
@@ -35,6 +35,7 @@ import org.jetbrains.exposed.v1.r2dbc.deleteWhere
 import org.jetbrains.exposed.v1.r2dbc.insert
 import org.jetbrains.exposed.v1.r2dbc.select
 import org.jetbrains.exposed.v1.r2dbc.selectAll
+import org.jetbrains.exposed.v1.r2dbc.upsert
 
 class ExposedContainerDatabase(val databaseSession: ExposedDatabaseSession) :
     ContainerDatabase {
@@ -56,7 +57,24 @@ class ExposedContainerDatabase(val databaseSession: ExposedDatabaseSession) :
     }
 
     override suspend fun joinContainer(member: Member): Result<Unit> = databaseSession.dbQuery {
-        addJoin(member)
+        check(Members.upsert(keys = arrayOf(Members.uid, Members.objectId), onUpdate = {
+            it[Members.joinedTime] = member.joinedTime
+            it[Members.invitedTime] = member.invitedTime
+            it[Members.status] = member.status
+        }, where = {
+            Members.status eq MemberStatus.INVITED
+        }) {
+            it[id] = member.id
+            it[createdTime] = member.createdTime
+            it[joinedTime] = member.joinedTime
+            it[invitedTime] = member.invitedTime
+            it[uid] = member.uid
+            it[objectId] = member.objectId
+            it[objectType] = member.objectType
+            it[status] = member.status
+        }.insertedCount > 0) {
+            "join failed"
+        }
     }
 
     override suspend fun exitContainer(

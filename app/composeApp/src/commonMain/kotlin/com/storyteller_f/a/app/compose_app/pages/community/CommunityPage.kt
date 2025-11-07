@@ -61,12 +61,14 @@ import androidx.navigation.NavOptions
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.storyteller_f.a.app.compose_app.CustomUserSessionManager
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalClientFileProvider
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.add
 import com.storyteller_f.a.app.compose_app.all_members
+import com.storyteller_f.a.app.compose_app.common.AppNavFactory
 import com.storyteller_f.a.app.compose_app.common.CommunityScreen
 import com.storyteller_f.a.app.compose_app.common.CommunityViewModel
 import com.storyteller_f.a.app.compose_app.common.DownloadViewModel
@@ -91,6 +93,7 @@ import com.storyteller_f.a.app.compose_app.pages.NavRoute
 import com.storyteller_f.a.app.compose_app.pages.room.RoomList
 import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
+import com.storyteller_f.a.app.compose_app.pages.user.ButtonBadgeSuffix
 import com.storyteller_f.a.app.compose_app.permission_denied
 import com.storyteller_f.a.app.compose_app.rooms
 import com.storyteller_f.a.app.compose_app.topics
@@ -99,6 +102,8 @@ import com.storyteller_f.a.app.compose_app.ui.theme.AppTheme
 import com.storyteller_f.a.app.core.components.CustomAlertDialog
 import com.storyteller_f.a.app.core.components.CustomAlertDialogController
 import com.storyteller_f.a.app.core.components.DialogContainer
+import com.storyteller_f.a.app.core.components.GlobalDialogController
+import com.storyteller_f.a.app.core.components.IconRes
 import com.storyteller_f.a.app.core.components.LocalGlobalDialog
 import com.storyteller_f.a.client.core.exitCommunity
 import com.storyteller_f.a.client.core.joinCommunity
@@ -497,56 +502,87 @@ private fun CommunityMenus(
     val sessionViewModel = LocalSessionManager.current
     val globalDialogController = LocalGlobalDialog.current
     Column {
-        ButtonNav(Icons.Default.CardMembership, stringResource(Res.string.all_members)) {
+        ButtonNav(IconRes.Vector(Icons.Default.CardMembership), stringResource(Res.string.all_members), {
+            ButtonBadgeSuffix(communityInfo.memberCount)
+        }) {
             dismiss()
             appNavFactory.newAppNav().gotoMemberPage(communityId, ObjectType.COMMUNITY)
         }
         val appNavFactory = LocalAppNavFactory.current
         val isCommunityPage by appNavFactory.hasRouteFlow<CommunityScreen>()
         if (isCommunityPage) {
-            val scope = rememberCoroutineScope()
-            if (communityInfo.isJoined) {
-                ButtonNav(Icons.Default.Close, stringResource(Res.string.exit_community)) {
-                    scope.launch {
-                        globalDialogController.useResult {
-                            sessionViewModel.exitCommunity(communityId)
-                        }.onSuccess { info ->
-                            globalDialogController.emitEvent(OnCommunityExited(info))
-                        }
-                    }
-                }
-            } else {
-                ButtonNav(Icons.Default.AddHome, stringResource(Res.string.join_community)) {
-                    scope.launch {
-                        globalDialogController.useResult {
-                            sessionViewModel.joinCommunity(communityId)
-                        }.onSuccess { info ->
-                            globalDialogController.emitEvent(OnCommunityExited(info))
-                        }
-                    }
-                }
-            }
-            ButtonNav(Icons.Default.Add, "Add") {
-                dismiss()
-                appNavFactory.newAppNav().gotoTopicCompose(
-                    TopicComposeData.Community(
-                        communityId,
-                        communityId ob ObjectType.COMMUNITY
-                    )
-                )
-            }
-            val userSessionManager = LocalSessionManager.current
-            val myInfo by userSessionManager.model.userHandler.data.collectAsState()
-            val my = myInfo
-            if (my?.id == communityInfo.owner) {
-                ButtonNav(Icons.Default.Title, "Add Title") {
-                    dismiss()
-                    appNavFactory.newAppNav().gotoTitleCompose()
-                }
+            CommunityMemberStatusButton(communityInfo, globalDialogController, sessionViewModel, communityId)
+            CommunityCreateButton(dismiss, appNavFactory, communityId)
+            CommunityAdminButtons(communityInfo, dismiss, appNavFactory, communityId)
+        }
+    }
+}
 
-                ButtonNav(Icons.Default.Settings, "Settings") {
-                    dismiss()
-                    appNavFactory.newAppNav().gotoSettingPage(communityId, ObjectType.COMMUNITY)
+@Composable
+private fun CommunityAdminButtons(
+    communityInfo: CommunityInfo,
+    dismiss: () -> Unit,
+    appNavFactory: AppNavFactory,
+    communityId: PrimaryKey
+) {
+    val userSessionManager = LocalSessionManager.current
+    val myInfo by userSessionManager.model.userHandler.data.collectAsState()
+    val my = myInfo
+    if (my?.id == communityInfo.owner) {
+        ButtonNav(Icons.Default.Title, "Add Title") {
+            dismiss()
+            appNavFactory.newAppNav().gotoTitleCompose()
+        }
+
+        ButtonNav(Icons.Default.Settings, "Settings") {
+            dismiss()
+            appNavFactory.newAppNav().gotoSettingPage(communityId, ObjectType.COMMUNITY)
+        }
+    }
+}
+
+@Composable
+private fun CommunityCreateButton(
+    dismiss: () -> Unit,
+    appNavFactory: AppNavFactory,
+    communityId: PrimaryKey
+) {
+    ButtonNav(Icons.Default.Add, "Add") {
+        dismiss()
+        appNavFactory.newAppNav().gotoTopicCompose(
+            TopicComposeData.Community(
+                communityId,
+                communityId ob ObjectType.COMMUNITY
+            )
+        )
+    }
+}
+
+@Composable
+private fun CommunityMemberStatusButton(
+    communityInfo: CommunityInfo,
+    globalDialogController: GlobalDialogController,
+    sessionViewModel: CustomUserSessionManager,
+    communityId: PrimaryKey
+) {
+    val scope = rememberCoroutineScope()
+    if (communityInfo.isJoined) {
+        ButtonNav(Icons.Default.Close, stringResource(Res.string.exit_community)) {
+            scope.launch {
+                globalDialogController.useResult {
+                    sessionViewModel.exitCommunity(communityId)
+                }.onSuccess { info ->
+                    globalDialogController.emitEvent(OnCommunityExited(info))
+                }
+            }
+        }
+    } else {
+        ButtonNav(Icons.Default.AddHome, stringResource(Res.string.join_community)) {
+            scope.launch {
+                globalDialogController.useResult {
+                    sessionViewModel.joinCommunity(communityId)
+                }.onSuccess { info ->
+                    globalDialogController.emitEvent(OnCommunityExited(info))
                 }
             }
         }

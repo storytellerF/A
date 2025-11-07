@@ -42,6 +42,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -56,6 +57,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
 import com.storyteller_f.a.api.NewTitle
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
@@ -105,7 +107,7 @@ fun TitleComposeInternal() {
     var name by remember {
         mutableStateOf("")
     }
-    var showSheet by remember {
+    var showSheetType by remember {
         mutableStateOf("")
     }
     var titleScope by remember {
@@ -133,29 +135,36 @@ fun TitleComposeInternal() {
             }
         }
     }) {
-        TitleComposeInternal2(name, {
+        TitleComposeInternalEdit(name, titleType, titleScope, receiver, content, {
             name = it
-        }, titleType, {
+        }, {
             titleType = it
-        }, titleScope, {
+        }, {
             titleScope = null
-        }, receiver, content) {
-            showSheet = it
+        }) {
+            showSheetType = it
         }
     }
     val sheetState = rememberModalBottomSheetState()
-    ObjectPicker(showSheet.isNotBlank(), sheetState, {
-        showSheet = ""
-    }, if (showSheet == "scope") listOf(ObjectType.COMMUNITY) else listOf(ObjectType.USER)) {
-        showSheet.let { s ->
-            if (s == "scope") {
-                titleScope = it
-                showSheet = ""
-            } else if (s == "receiver") {
-                receiver = it.objectId
-                showSheet = ""
-            }
+    ObjectPicker(
+        showSheetType.isNotBlank(),
+        sheetState,
+        if (showSheetType == "scope") {
+            listOf(ObjectType.COMMUNITY, ObjectType.ROOM)
+        } else {
+            listOf(
+                ObjectType.USER
+            )
+        },
+        {
+            showSheetType = ""
         }
+    ) {
+        when (showSheetType) {
+            "scope" -> titleScope = it
+            "receiver" -> receiver = it.objectId
+        }
+        showSheetType = ""
     }
 }
 
@@ -187,15 +196,15 @@ fun CommonComposePage(onCheck: () -> Unit, content: @Composable () -> Unit) {
 }
 
 @Composable
-fun TitleComposeInternal2(
+fun TitleComposeInternalEdit(
     name: String,
-    updateName: (String) -> Unit,
     titleType: TitleType,
-    updateTitleType: (TitleType) -> Unit,
     titleScope: ObjectTuple?,
-    updateTitleScope: () -> Unit,
     receiver: PrimaryKey?,
     content: String,
+    updateName: (String) -> Unit,
+    updateTitleType: (TitleType) -> Unit,
+    updateTitleScope: () -> Unit,
     showSheet: (String) -> Unit
 ) {
     Column(
@@ -278,28 +287,26 @@ private fun TitleScopeEditor(
         }.background(MaterialTheme.colorScheme.primaryContainer, shape)
             .padding(8.dp)
     ) {
-        titleScope.let {
-            if (it != null) {
-                when (it.objectType) {
-                    ObjectType.COMMUNITY -> CommunityRefCell(it.objectId) {
-                        updateTitleScope()
-                    }
-
-                    ObjectType.ROOM -> RoomRefCell(it.objectId) {
-                        updateTitleScope()
-                    }
-
-                    ObjectType.TOPIC -> TODO()
-                    ObjectType.USER -> UserRefCell(it.objectId)
-
-                    ObjectType.TITLE -> TODO()
-                    ObjectType.File -> TODO()
-                    ObjectType.PANEL_ACCOUNT -> TODO()
+        if (titleScope != null) {
+            when (titleScope.objectType) {
+                ObjectType.COMMUNITY -> CommunityRefCell(titleScope.objectId) {
+                    updateTitleScope()
                 }
-            } else {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("作用范围")
+
+                ObjectType.ROOM -> RoomRefCell(titleScope.objectId) {
+                    updateTitleScope()
                 }
+
+                ObjectType.TOPIC -> TODO()
+                ObjectType.USER -> UserRefCell(titleScope.objectId)
+
+                ObjectType.TITLE -> TODO()
+                ObjectType.File -> TODO()
+                ObjectType.PANEL_ACCOUNT -> TODO()
+            }
+        } else {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("作用范围")
             }
         }
     }
@@ -379,8 +386,8 @@ private suspend fun GlobalDialogController.createTitle(
 fun ObjectPicker(
     showSheet: Boolean,
     sheetState: SheetState,
-    hideSheet: () -> Unit,
     supportObjectType: List<ObjectType>,
+    hideSheet: () -> Unit,
     onCheck: (ObjectTuple) -> Unit
 ) {
     BaseSheet(showSheet, sheetState, hideSheet) {
@@ -479,10 +486,7 @@ fun ObjectList(
             ObjectType.COMMUNITY -> {
                 val communitiesViewModel =
                     createSearchCommunitiesViewModel(JoinStatusSearch.JOINED, input)
-                CommunityList(
-                    communitiesViewModel,
-                    onClickCommunity
-                )
+                CommunityList(communitiesViewModel, onClickCommunity)
             }
 
             ObjectType.ROOM -> {

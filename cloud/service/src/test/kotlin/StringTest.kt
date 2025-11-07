@@ -1,4 +1,4 @@
-import com.storyteller_f.a.cloud.core.service.isVisibleUnicodeString
+import com.storyteller_f.a.cloud.core.service.isAllVisibleChar
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -6,16 +6,17 @@ import kotlin.test.assertTrue
 class StringTest {
     @Test
     fun testVisibleUnicodeString() {
-        assertTrue(isVisibleUnicodeString("a"))
-        assertFalse(isVisibleUnicodeString("\uFEFF"))
-        assertFalse(isVisibleUnicodeString("\u0301"))
-        assertFalse(isVisibleUnicodeString("\u00A0"))
-        assertFalse(isVisibleUnicodeString("\u202F"))
-        assertFalse(isVisibleUnicodeString("\u3000"))
-        assertFalse(isVisibleUnicodeString("\u200B"))
-        assertFalse(isVisibleUnicodeString("\u202A"))
+        assertTrue(isAllVisibleChar("a"))
+        assertFalse(isAllVisibleChar("\uFEFF"))
+        assertFalse(isAllVisibleChar("\u0301"))
+        assertFalse(isAllVisibleChar("\u00A0"))
+        assertFalse(isAllVisibleChar("\u202F"))
+        assertFalse(isAllVisibleChar("\u3000"))
+        assertFalse(isAllVisibleChar("\u200B"))
+        assertFalse(isAllVisibleChar("\u202A"))
         // U+1AFF is a non-spacing mark
-        assertFalse(isVisibleUnicodeString("\u1AFF"))
-        assertFalse(isVisibleUnicodeString("\u206F"))
+        assertFalse(isAllVisibleChar("\u1AFF"))
+        assertFalse(isAllVisibleChar("\u206F"))
+        assertFalse(isAllVisibleChar(" "))
     }
 }

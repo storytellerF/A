@@ -541,10 +541,9 @@ private suspend fun Backend.getRoomMapByTopics(topics: List<RawTopic>): Map<Prim
             null
         }
     }
-    val rooms = getRoomInfoList(ObjectListFetch.IdListFetch(roomIds)).getOrThrow().associateBy {
+    return getRoomInfoList(ObjectListFetch.IdListFetch(roomIds)).getOrThrow().associateBy {
         it.id
     }
-    return rooms
 }
 
 suspend fun Backend.searchPublicTopics(

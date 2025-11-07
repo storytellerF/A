@@ -114,6 +114,10 @@ interface UserDatabase {
     suspend fun getRawUserAndPublicKeyByAddress(ad: String): Result<Pair<RawUser, String>?>
     suspend fun createUser(user: User): Result<User>
     suspend fun isUserNotExistsByPublicKey(pk: String): Result<Boolean>
+
+    /**
+     * nickname 为null 或者空字符串时不更新，avatar 为null 时不更新,aid 为null 或者空字符串时不更新
+     */
     suspend fun updateUserInfo(id: PrimaryKey, newUser: UpdateUserBody): Result<Boolean>
     suspend fun getUserAuthDataById(id: PrimaryKey): Result<Pair<String, Long>?>
     suspend fun getUserAuthDataByAid(aid: String): Result<Pair<String, Long>?>
@@ -299,6 +303,10 @@ interface CommunityDatabase {
     ): Result<List<Pair<Long, LocalDateTime?>>>
 
     suspend fun getRawCommunities(objectListFetch: ObjectListFetch): Result<List<RawCommunity>>
+
+    /**
+     * name 为null 或者空字符串时不更新，icon，poster 为null时不更新
+     */
     suspend fun updateCommunity(id: PrimaryKey, body: UpdateCommunityBody): Result<Boolean>
     suspend fun getCommunityCount(): Result<Long>
 }
@@ -326,7 +334,7 @@ interface RoomDatabase {
     ): Result<RawRoom?>
 
     suspend fun createRoom(room: Room, members: List<Member>): Result<Room>
-    suspend fun getRawRooms(objectListFetch: ObjectListFetch): Result<List<RawRoom>>
+    suspend fun getRawRooms(objectListFetch: ObjectListFetch, uid: PrimaryKey?): Result<List<RawRoom>>
     suspend fun getRoomList(objectListFetch: ObjectListFetch): Result<List<Room>>
     suspend fun updateRoom(id: PrimaryKey, body: UpdateRoomBody): Result<Boolean>
     suspend fun getPrivateRoomCount(): Result<Long>

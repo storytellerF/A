@@ -8,7 +8,6 @@ import com.storyteller_f.a.backend.exposed.objectType
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.datetime.datetime
 import org.jetbrains.exposed.v1.r2dbc.batchInsert
-import org.jetbrains.exposed.v1.r2dbc.insert
 
 object Members : BaseTable() {
     val uid = customPrimaryKey("uid").index()
@@ -36,21 +35,6 @@ fun Member.Companion.wrapRow(row: ResultRow): Member {
             row[joinedTime],
             row[invitedTime]
         )
-    }
-}
-
-suspend fun addJoin(member: Member) {
-    check(Members.insert {
-        it[id] = member.id
-        it[createdTime] = member.createdTime
-        it[joinedTime] = member.joinedTime
-        it[invitedTime] = member.invitedTime
-        it[uid] = member.uid
-        it[objectId] = member.objectId
-        it[objectType] = member.objectType
-        it[status] = member.status
-    }.insertedCount > 0) {
-        "join failed"
     }
 }
 

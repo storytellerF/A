@@ -19,7 +19,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
@@ -35,7 +34,6 @@ import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.compose_app.LocalAccountSwitcher
-import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.LocalUiViewModel
 import com.storyteller_f.a.app.compose_app.UIViewModel
 import com.storyteller_f.a.app.compose_app.common.ChildAccountsViewModel
@@ -72,12 +70,8 @@ fun AccountSwitch() {
         expand = false
     }) {
         SheetContainer {
-            val uiViewModel = LocalUiViewModel.current
-            val mainUserSessionManager = uiViewModel.mainInstance.sessionManager
-            CompositionLocalProvider(LocalSessionManager provides mainUserSessionManager) {
-                val viewModel = getChildAccountsViewModel()
-                AccountSwitchInternal(viewModel)
-            }
+            val viewModel = getChildAccountsViewModel()
+            AccountSwitchInternal(viewModel)
         }
     }
 }

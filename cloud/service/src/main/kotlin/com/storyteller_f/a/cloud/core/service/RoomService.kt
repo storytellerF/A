@@ -5,7 +5,6 @@ import com.storyteller_f.a.api.CommonPath
 import com.storyteller_f.a.api.CustomApi
 import com.storyteller_f.a.api.NewRoom
 import com.storyteller_f.a.backend.core.Backend
-import com.storyteller_f.a.backend.core.COMMUNITY_NAME_LENGTH
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.JoinSearch
@@ -126,11 +125,17 @@ suspend fun Backend.getRoomInfo(
 }
 
 private fun checkRoomName(newRoom: NewRoom): Result<Unit> {
-    val nickname = newRoom.name
-    return when {
-        nickname.isEmpty() -> Result.failure(CustomBadRequestException("room name is empty"))
-        nickname.length in 1..COMMUNITY_NAME_LENGTH -> UNIT_RESULT
-        else -> Result.failure(CustomBadRequestException("room name must be between in 1 and 20"))
+    return when (checkNickname(newRoom.name, 1..ROOM_NAME_LENGTH)) {
+        StringCheckResult.RANGE_MISMATCH -> Result.failure(
+            CustomBadRequestException("room name must be between in 1 and 20")
+        )
+
+        StringCheckResult.CONTAIN_INVALID_CHAR -> Result.failure(
+            CustomBadRequestException("room name must be visible")
+        )
+
+        StringCheckResult.SUCCESS -> UNIT_RESULT
+        else -> Result.failure(CustomBadRequestException("room name must be visible"))
     }
 }
 
@@ -178,11 +183,7 @@ suspend fun Backend.createRoom(
             room
         }
     }.mapResultIfNotNull { room ->
-        processRawRoomToRoomInfo(
-            listOf(
-                RawRoom(room, room.createdTime)
-            )
-        )
+        processRawRoomToRoomInfo(listOf(RawRoom(room, room.createdTime)))
     }.mapIfNotNull(List<RoomInfo>::first)
 }
 
@@ -191,21 +192,21 @@ suspend fun Backend.updateRoom(
     old: UpdateRoomBody,
     uid: PrimaryKey,
 ): Result<RoomInfo?> {
-    val newRoom = old.copy(name = old.name?.trim(), icon = old.icon)
+    val newUpdate = old.copy(name = old.name?.trim(), icon = old.icon)
     return checkRootAdminPermission(ObjectType.ROOM, id, uid).mapResultIfNotNull { permission ->
         runCatching {
-            checkRoomName(newRoom).getOrThrow()
-            checkRoomIcon(newRoom).getOrThrow()
+            checkRoomName(newUpdate).getOrThrow()
+            checkRoomIcon(newUpdate).getOrThrow()
         }
     }.mapResultIfNotNull {
-        database.room.updateRoom(id, newRoom)
+        database.room.updateRoom(id, newUpdate)
     }.mapResultIfNotNull {
         getRoomInfo(IdFetch(id), uid, true)
     }
 }
 
-private suspend fun Backend.checkRoomIcon(newRoom: UpdateRoomBody): Result<Unit> =
-    checkIcon(newRoom.icon, Dimension.ROOM_DIMENSION).mapResult { checkResult ->
+private suspend fun Backend.checkRoomIcon(update: UpdateRoomBody): Result<Unit> =
+    checkIcon(update.icon, Dimension.ROOM_DIMENSION).mapResult { checkResult ->
         when (checkResult) {
             MediaCheckResult.NOT_FOUND -> Result.failure(CustomBadRequestException("icon not found"))
             MediaCheckResult.CONTENT_TYPE_MISMATCH -> Result.failure(
@@ -220,12 +221,20 @@ private suspend fun Backend.checkRoomIcon(newRoom: UpdateRoomBody): Result<Unit>
         }
     }
 
-private fun checkRoomName(newRoom: UpdateRoomBody): Result<Unit> =
-    if (checkNickname(newRoom.name, 1..ROOM_NAME_LENGTH) == StringCheckResult.RANGE_MISMATCH) {
-        Result.failure(CustomBadRequestException("community name must be between in 1 and 20"))
-    } else {
-        UNIT_RESULT
+private fun checkRoomName(update: UpdateRoomBody): Result<Unit> {
+    return when (checkNickname(update.name, 1..ROOM_NAME_LENGTH)) {
+        StringCheckResult.RANGE_MISMATCH -> Result.failure(
+            CustomBadRequestException("room name must be between in 1 and $ROOM_NAME_LENGTH")
+        )
+
+        StringCheckResult.CONTAIN_INVALID_CHAR -> Result.failure(
+            CustomBadRequestException("room name must be visible")
+        )
+
+        StringCheckResult.SUCCESS -> UNIT_RESULT
+        else -> Result.failure(CustomBadRequestException("room name must be visible"))
     }
+}
 
 suspend fun searchRoomMembers(
     backend: Backend,
@@ -259,14 +268,17 @@ suspend fun Backend.searchRoomPaginationResult(
             search
         )
     } else {
-        roomSearchService.searchDocument(RoomDocumentSearch.Keyword(listOf(word)), primaryKeyFetch)
-            .mapResult { (list, total) ->
-                database.room.getRawRooms(ObjectListFetch.IdListFetch(list.map {
+        val keyword = RoomDocumentSearch.Keyword(listOf(word))
+        roomSearchService.searchDocument(keyword, primaryKeyFetch).mapResult { (list, total) ->
+            database.room.getRawRooms(
+                ObjectListFetch.IdListFetch(list.map {
                     it.id
-                })).map {
-                    PaginationResult(it, total)
-                }
+                }),
+                uid
+            ).map {
+                PaginationResult(it, total)
             }
+        }
     }.mapResult { (list, count) ->
         processRawRoomToRoomInfo(list).mapIfNotNull { value ->
             PaginationResult(value, count)
@@ -286,7 +298,10 @@ suspend fun Backend.processRawRoomToRoomInfo(list: List<RawRoom>) =
         }
     }
 
-suspend fun Backend.getRoomInfoList(listFetch: ObjectListFetch.IdListFetch) =
-    database.room.getRawRooms(listFetch).mapResult {
+suspend fun Backend.getRoomInfoList(
+    listFetch: ObjectListFetch.IdListFetch,
+    uid: PrimaryKey? = null
+) =
+    database.room.getRawRooms(listFetch, uid).mapResult {
         processRawRoomToRoomInfo(it)
     }

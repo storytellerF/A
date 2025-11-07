@@ -74,8 +74,8 @@ class ElasticUserSearchService(connection: ElasticConnection) : Elastic(connecti
                     preprocessUserInputKeyword(userDocumentSearch.word)?.let { v ->
                         add(QueryBuilders.bool { b ->
                             b.should { s ->
-                                s.match {
-                                    it.field("name").query(v).boost(3f)
+                                s.matchPhrasePrefix {
+                                    it.field("nickname").query(v).boost(3f)
                                 }
                             }.should { s ->
                                 s.match { p ->
