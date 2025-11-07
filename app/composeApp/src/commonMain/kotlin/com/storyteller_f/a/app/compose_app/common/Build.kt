@@ -486,6 +486,12 @@ fun getUserOverviewViewModel() =
     }
 
 @Composable
+fun createTitleComposeViewModel(): TitleComposeViewModel =
+    customViewModel(listOf("title-compose")) { _, _ ->
+        TitleComposeViewModel()
+    }
+
+@Composable
 inline fun <reified VM : ViewModel> customViewModel(
     keys: List<Comparable<*>?>? = null,
     crossinline factory: (CustomUserSessionManager, ModelStorage) -> VM

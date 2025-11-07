@@ -42,7 +42,6 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -57,20 +56,23 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
 import com.storyteller_f.a.api.NewTitle
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.common.OnTitleCreated
+import com.storyteller_f.a.app.compose_app.common.TitleComposeSheetType
+import com.storyteller_f.a.app.compose_app.common.TitleComposeViewModel
 import com.storyteller_f.a.app.compose_app.common.createMemberSearchViewModel
 import com.storyteller_f.a.app.compose_app.common.createRoomSearchViewModel
 import com.storyteller_f.a.app.compose_app.common.createSearchCommunitiesViewModel
+import com.storyteller_f.a.app.compose_app.common.createTitleComposeViewModel
 import com.storyteller_f.a.app.compose_app.components.BaseSheet
 import com.storyteller_f.a.app.compose_app.components.TopicContentField
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityList
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityRefCell
 import com.storyteller_f.a.app.compose_app.pages.room.RoomList
 import com.storyteller_f.a.app.compose_app.pages.room.RoomRefCell
+import com.storyteller_f.a.app.compose_app.pages.user.InputDialog
 import com.storyteller_f.a.app.compose_app.pages.user.MemberList
 import com.storyteller_f.a.app.compose_app.pages.user.UserRefCell
 import com.storyteller_f.a.app.core.components.GlobalDialogController
@@ -104,67 +106,45 @@ fun TitleComposePage() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TitleComposeInternal() {
-    var name by remember {
-        mutableStateOf("")
-    }
-    var showSheetType by remember {
-        mutableStateOf("")
-    }
-    var titleScope by remember {
-        mutableStateOf<ObjectTuple?>(null)
-    }
-    var titleType by remember {
-        mutableStateOf(TitleType.REGULAR)
-    }
-    var receiver by remember {
-        mutableStateOf<PrimaryKey?>(null)
-    }
+    val vm = createTitleComposeViewModel()
     val appNavFactory = LocalAppNavFactory.current
     val sessionManager = LocalSessionManager.current
-    val content by remember {
-        mutableStateOf("")
-    }
+
     val scope = rememberCoroutineScope()
     val globalDialogController = LocalGlobalDialog.current
     CommonComposePage({
         scope.launch {
             globalDialogController.useResult {
-                createTitle(titleType, receiver, titleScope, sessionManager, name, content)
+                createTitle(vm.buildNewTitle().getOrThrow(), sessionManager)
             }.onSuccess {
                 appNavFactory.newAppNav().back()
             }
         }
     }) {
-        TitleComposeInternalEdit(name, titleType, titleScope, receiver, content, {
-            name = it
-        }, {
-            titleType = it
-        }, {
-            titleScope = null
-        }) {
-            showSheetType = it
-        }
+        TitleComposeInternalEdit(vm)
     }
+    TitleComposeSheet(vm)
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun TitleComposeSheet(vm: TitleComposeViewModel) {
     val sheetState = rememberModalBottomSheetState()
+
+    val isSheetVisible by vm.isSheetVisibleFlow.collectAsState()
+    val supportedObjectTypes by vm.supportedObjectTypesFlow.collectAsState()
     ObjectPicker(
-        showSheetType.isNotBlank(),
+        isSheetVisible,
         sheetState,
-        if (showSheetType == "scope") {
-            listOf(ObjectType.COMMUNITY, ObjectType.ROOM)
-        } else {
-            listOf(
-                ObjectType.USER
-            )
-        },
-        {
-            showSheetType = ""
-        }
+        supportedObjectTypes,
+        vm::clearShowSheetType
     ) {
-        when (showSheetType) {
-            "scope" -> titleScope = it
-            "receiver" -> receiver = it.objectId
+        when (vm.showSheetType.value) {
+            TitleComposeSheetType.SCOPE -> vm.setTitleScope(it)
+            TitleComposeSheetType.RECEIVER -> vm.setReceiver(it.objectId)
+            TitleComposeSheetType.NONE -> {}
         }
-        showSheetType = ""
+        vm.clearShowSheetType()
     }
 }
 
@@ -197,38 +177,36 @@ fun CommonComposePage(onCheck: () -> Unit, content: @Composable () -> Unit) {
 
 @Composable
 fun TitleComposeInternalEdit(
-    name: String,
-    titleType: TitleType,
-    titleScope: ObjectTuple?,
-    receiver: PrimaryKey?,
-    content: String,
-    updateName: (String) -> Unit,
-    updateTitleType: (TitleType) -> Unit,
-    updateTitleScope: () -> Unit,
-    showSheet: (String) -> Unit
+    vm: TitleComposeViewModel
 ) {
+    val name by vm.name.collectAsState()
+    val titleType by vm.titleType.collectAsState()
+    val titleScope by vm.titleScope.collectAsState()
+    val receiver by vm.receiver.collectAsState()
     Column(
         modifier = Modifier.width(300.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        OutlinedTextField(name, updateName, label = {
+        OutlinedTextField(name, vm::setName, label = {
             Text("name")
         }, modifier = Modifier.fillMaxWidth())
 
-        TitleTypeSelector(titleType, updateTitleType)
+        TitleTypeSelector(titleType, vm::setTitleType)
 
         val shape = RoundedCornerShape(10.dp)
-        TitleScopeEditor(shape, showSheet, titleScope, updateTitleScope)
+        TitleScopeEditor(shape, vm::openScopeSheet, titleScope, vm::clearTitleScope)
 
-        ReceiverEditor(shape, showSheet, receiver)
+        ReceiverEditor(shape, vm::openReceiverSheet, receiver)
 
-        DescriptionEditor(content)
+        DescriptionEditor(vm)
     }
 }
 
 @Composable
-private fun DescriptionEditor(content: String) {
+private fun DescriptionEditor(vm: TitleComposeViewModel) {
+    val content by vm.content.collectAsState()
+    var showDescriptionDialog by remember { mutableStateOf(false) }
     val descriptionShape = RoundedCornerShape(12.dp)
     Column(
         modifier = Modifier.clip(descriptionShape)
@@ -239,7 +217,14 @@ private fun DescriptionEditor(content: String) {
     ) {
         Row {
             Text("Description", modifier = Modifier.weight(1f))
-            Icon(Icons.Default.Edit, "edit")
+            IconButton({ showDescriptionDialog = true }) {
+                Icon(Icons.Default.Edit, "edit")
+            }
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        InputDialog(showDescriptionDialog, content, { showDescriptionDialog = false }) { newValue ->
+            vm.setContent(newValue)
+            showDescriptionDialog = false
         }
         Spacer(modifier = Modifier.height(8.dp))
         if (content.isEmpty()) {
@@ -253,12 +238,12 @@ private fun DescriptionEditor(content: String) {
 @Composable
 private fun ReceiverEditor(
     shape: RoundedCornerShape,
-    showSheet: (String) -> Unit,
+    showReceiverSheet: () -> Unit,
     receiver: PrimaryKey?
 ) {
     Row(
         modifier = Modifier.height(78.dp).fillMaxWidth().clip(shape).clickable {
-            showSheet("receiver")
+            showReceiverSheet()
         }.background(MaterialTheme.colorScheme.primaryContainer, shape)
             .padding(8.dp)
     ) {
@@ -277,13 +262,13 @@ private fun ReceiverEditor(
 @Composable
 private fun TitleScopeEditor(
     shape: RoundedCornerShape,
-    showSheet: (String) -> Unit,
+    showScopeSheet: () -> Unit,
     titleScope: ObjectTuple?,
     updateTitleScope: () -> Unit
 ) {
     Row(
         modifier = Modifier.height(90.dp).fillMaxWidth().clip(shape).clickable {
-            showSheet("scope")
+            showScopeSheet()
         }.background(MaterialTheme.colorScheme.primaryContainer, shape)
             .padding(8.dp)
     ) {
@@ -358,25 +343,10 @@ private fun TitleTypeSelector(
 }
 
 private suspend fun GlobalDialogController.createTitle(
-    titleType: TitleType?,
-    receiver: PrimaryKey?,
-    titleScope: ObjectTuple?,
+    newTitle: NewTitle,
     sessionManager: UserSessionManager,
-    name: String,
-    content: String,
 ): Result<TitleInfo> {
-    check(titleType != null) {
-        "titleType is empty"
-    }
-    check(receiver != null) {
-        "receiver is empty"
-    }
-    check(titleScope != null) {
-        "titleScope is empty"
-    }
-    return sessionManager.createTitle(
-        NewTitle(name, titleType, receiver, titleScope.objectId, titleScope.objectType, content)
-    ).onSuccess { title ->
+    return sessionManager.createTitle(newTitle).onSuccess { title ->
         emitEvent(OnTitleCreated(title))
     }
 }
