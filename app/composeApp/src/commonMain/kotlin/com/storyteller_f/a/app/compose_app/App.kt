@@ -61,7 +61,8 @@ import com.storyteller_f.a.app.core.common.LocalClient
 import com.storyteller_f.a.app.core.components.CustomGlobalDialogController
 import com.storyteller_f.a.app.core.components.CustomGlobalTask
 import com.storyteller_f.a.app.core.components.GlobalDialog
-import com.storyteller_f.a.app.core.components.LocalGlobalDialog
+import com.storyteller_f.a.app.core.components.GlobalDialogContext
+import com.storyteller_f.a.app.core.components.GlobalDialogController
 import com.storyteller_f.a.app.core.components.LocalGlobalTask
 import com.storyteller_f.a.app.core.components.LocalToaster
 import com.storyteller_f.a.app.core.components.Sonner
@@ -110,6 +111,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
@@ -159,6 +161,11 @@ val LocalClientFileProvider = compositionLocalOf {
 @OptIn(DelicateCoroutinesApi::class)
 val LocalUiViewModel = compositionLocalOf<UIViewModel> {
     error("LocalUiViewModel must be provided")
+}
+typealias AppGlobalDialogController = GlobalDialogController<GlobalDialogContext<CustomUserSessionManager>>
+
+val LocalGlobalDialog = compositionLocalOf<AppGlobalDialogController> {
+    error("LocalGlobalDialog must be provided")
 }
 
 @Serializable
@@ -304,7 +311,6 @@ fun CommonEntry(content: @Composable () -> Unit) {
 
 class AccountInstance(scope: CoroutineScope, name: String, wsServerUrl: String, httpUrl: String) {
     val events = MutableSharedFlow<Any>()
-    val controller = CustomGlobalDialogController(events)
     val task = CustomGlobalTask(scope, events)
     val sessionManager = createCustomUserSessionManager(
         name,
@@ -317,6 +323,7 @@ class AccountInstance(scope: CoroutineScope, name: String, wsServerUrl: String, 
             events.emit(OnTopicCreated(frame.topicInfo))
         }
     }
+    val controller = CustomGlobalDialogController(GlobalDialogContext(events, sessionManager))
     val guestDatabase = getRoomModelStorage("guest")
     val database = sessionManager.model.state.distinctUntilChangedBy {
         it
@@ -363,9 +370,7 @@ class UIViewModel(viewModelScope: CoroutineScope, wsServerUrl: String, httpUrl: 
     init {
         viewModelScope.launch {
             instance.collectLatest {
-                it.sessionManager.proxy.startBackgroundTask().forEach { job ->
-                    job.join()
-                }
+                it.sessionManager.proxy.startBackgroundTask().joinAll()
             }
         }
     }

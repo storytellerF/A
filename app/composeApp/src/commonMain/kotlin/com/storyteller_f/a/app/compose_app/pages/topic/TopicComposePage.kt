@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.dp
 import com.mohamedrejeb.richeditor.model.RichTextState
 import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import com.mohamedrejeb.richeditor.ui.BasicRichTextEditor
+import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.common.MarkdownMediasViewModel
@@ -71,7 +72,8 @@ import com.storyteller_f.a.app.compose_app.pages.community.getFontFamily
 import com.storyteller_f.a.app.compose_app.preview
 import com.storyteller_f.a.app.compose_app.raw
 import com.storyteller_f.a.app.compose_app.ui.theme.AppTheme
-import com.storyteller_f.a.app.core.components.LocalGlobalDialog
+import com.storyteller_f.a.app.core.components.emitEvent
+import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
@@ -302,14 +304,15 @@ private fun TopicComposeSubmitButton(
 ) {
     val (objectId, objectType) = data.getParent()
     val scope = rememberCoroutineScope()
-    val sessionManager = LocalSessionManager.current
     val globalDialogController = LocalGlobalDialog.current
     IconButton({
         val finalInput = input.trim()
         if (finalInput.isNotEmpty()) {
             scope.launch {
                 globalDialogController.useResult {
-                    sessionManager.createTopic(objectType, objectId, finalInput)
+                    request {
+                        createTopic(objectType, objectId, finalInput)
+                    }
                 }.onSuccess { info ->
                     globalDialogController.emitEvent(OnTopicCreated(info))
                     backPrePage()

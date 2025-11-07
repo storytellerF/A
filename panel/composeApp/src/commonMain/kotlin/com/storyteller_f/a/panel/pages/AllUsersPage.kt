@@ -41,15 +41,15 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.storyteller_f.a.api.NewUser
 import com.storyteller_f.a.app.core.components.DialogContainer
+import com.storyteller_f.a.app.core.components.GlobalDialogContext
 import com.storyteller_f.a.app.core.components.GlobalDialogController
-import com.storyteller_f.a.app.core.components.LocalGlobalDialog
 import com.storyteller_f.a.app.core.components.LocalToaster
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.Toast
 import com.storyteller_f.a.app.core.components.pagingItems
 import com.storyteller_f.a.client.core.addUser
 import com.storyteller_f.a.panel.CustomPanelSessionManager
-import com.storyteller_f.a.panel.LocalSessionManager
+import com.storyteller_f.a.panel.LocalPanelGlobalDialog
 import com.storyteller_f.a.panel.common.AddUserViewModel
 import com.storyteller_f.a.panel.common.AllUsersViewModel
 import com.storyteller_f.a.panel.common.OnUserAdded
@@ -224,13 +224,11 @@ private fun AddUserProfilePage(
                 Text("Cancel")
             }
             val scope = rememberCoroutineScope()
-            val globalDialogController = LocalGlobalDialog.current
-            val sessionManager = LocalSessionManager.current
+            val globalDialogController = LocalPanelGlobalDialog.current
             val toast = LocalToaster.current
             Button({
                 globalDialogController.addUser(
                     scope,
-                    sessionManager,
                     addUserViewModel,
                     toast,
                     dismiss
@@ -242,9 +240,8 @@ private fun AddUserProfilePage(
     }
 }
 
-private fun GlobalDialogController.addUser(
+private fun GlobalDialogController<GlobalDialogContext<CustomPanelSessionManager>>.addUser(
     scope: CoroutineScope,
-    sessionManager: CustomPanelSessionManager,
     addUserViewModel: AddUserViewModel,
     toast: Toast,
     dismiss: () -> Unit
@@ -259,8 +256,8 @@ private fun GlobalDialogController.addUser(
     val newUser = NewUser(nickname, aid, publicKey)
     scope.launch {
         useResult {
-            sessionManager.addUser(newUser).onSuccess {
-                emitEvent(OnUserAdded(it))
+            context.request { addUser(newUser) }.onSuccess {
+                context.emitEvent(OnUserAdded(it))
             }
         }.onSuccess {
             dismiss()

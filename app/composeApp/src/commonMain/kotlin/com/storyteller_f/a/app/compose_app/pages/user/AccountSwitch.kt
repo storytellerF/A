@@ -33,7 +33,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.storyteller_f.a.app.compose_app.AppGlobalDialogController
 import com.storyteller_f.a.app.compose_app.LocalAccountSwitcher
+import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalUiViewModel
 import com.storyteller_f.a.app.compose_app.UIViewModel
 import com.storyteller_f.a.app.compose_app.common.ChildAccountsViewModel
@@ -41,8 +43,6 @@ import com.storyteller_f.a.app.compose_app.common.getChildAccountsViewModel
 import com.storyteller_f.a.app.compose_app.components.BaseSheet
 import com.storyteller_f.a.app.compose_app.components.SheetContainer
 import com.storyteller_f.a.app.core.components.CustomIcon
-import com.storyteller_f.a.app.core.components.GlobalDialogController
-import com.storyteller_f.a.app.core.components.LocalGlobalDialog
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.UserIcon
 import com.storyteller_f.a.app.core.components.pagingItems
@@ -177,7 +177,7 @@ fun isInChildAccount(): State<Boolean> {
     }
 }
 
-suspend fun GlobalDialogController.switchUser(
+suspend fun AppGlobalDialogController.switchUser(
     derPrivateKeyStr: String,
     uiViewModel: UIViewModel
 ) {

@@ -18,7 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.github.panpf.zoomimage.CoilZoomAsyncImage
 import com.storyteller_f.a.app.compose_app.FileViewInfo
-import com.storyteller_f.a.app.compose_app.LocalSessionManager
+import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.components.AudioView
 import com.storyteller_f.a.app.compose_app.components.BaseSheet
 import com.storyteller_f.a.app.compose_app.components.ButtonNav
@@ -26,9 +26,9 @@ import com.storyteller_f.a.app.compose_app.components.PdfView
 import com.storyteller_f.a.app.compose_app.components.VideoView
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.core.components.CenterBox
-import com.storyteller_f.a.app.core.components.LocalGlobalDialog
 import com.storyteller_f.a.app.core.components.LocalToaster
 import com.storyteller_f.a.app.core.components.globalLoader
+import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.client.core.copy
 import com.storyteller_f.shared.model.FileInfo
 import kotlinx.coroutines.launch
@@ -103,7 +103,6 @@ fun ImageSheet(
     sheetState: SheetState,
     hideSheet: () -> Unit,
 ) {
-    val sessionManager = LocalSessionManager.current
     val scope = rememberCoroutineScope()
     val toaster = LocalToaster.current
     val globalDialogController = LocalGlobalDialog.current
@@ -116,8 +115,10 @@ fun ImageSheet(
             ButtonNav(MaterialSymbolsOutlined.FileCopy, "copy") {
                 scope.launch {
                     globalDialogController.useResult {
-                        sessionManager.copy(session.fileInfo.id)
-                    }.onSuccess { newInfo ->
+                        request {
+                            copy(session.fileInfo.id)
+                        }
+                    }.onSuccess {
                         toaster.showMessage("done")
                     }
                 }

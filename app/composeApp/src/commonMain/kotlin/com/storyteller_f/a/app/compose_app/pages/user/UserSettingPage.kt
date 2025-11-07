@@ -35,6 +35,8 @@ import com.attafitamim.krop.core.crop.cropperStyle
 import com.attafitamim.krop.core.crop.rememberImageCropper
 import com.attafitamim.krop.core.images.ImageBitmapSrc
 import com.attafitamim.krop.ui.ImageCropperDialog
+import com.storyteller_f.a.app.compose_app.AppGlobalDialogController
+import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.common.OnUserUpdated
 import com.storyteller_f.a.app.compose_app.components.SettingOptionResettableView
@@ -44,10 +46,10 @@ import com.storyteller_f.a.app.compose_app.pages.topic.FilePicker
 import com.storyteller_f.a.app.compose_app.pages.topic.uploadPath
 import com.storyteller_f.a.app.core.components.CustomAlertDialog
 import com.storyteller_f.a.app.core.components.CustomAlertDialogController
-import com.storyteller_f.a.app.core.components.GlobalDialogController
-import com.storyteller_f.a.app.core.components.LocalGlobalDialog
 import com.storyteller_f.a.app.core.components.LocalToaster
+import com.storyteller_f.a.app.core.components.emitEvent
 import com.storyteller_f.a.app.core.components.rememberAlertDialogController
+import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.app.core.utils.ImageFormat
 import com.storyteller_f.a.app.core.utils.androidAllowHardware
 import com.storyteller_f.a.app.core.utils.coilImageToImageBitmap
@@ -95,14 +97,15 @@ fun UserSettingPage() {
         val globalDialogController = LocalGlobalDialog.current
         Scaffold { padding ->
             UserSettingInternal(padding, showDialog, m)
-            val sessionManager = LocalSessionManager.current
             val scope = rememberCoroutineScope()
             ObjectSettingDialog(closeDialog, currentOption, sheetState, {
                 scope.launch {
                     globalDialogController.useResult {
-                        sessionManager.updateUserInfo(UpdateUserBody(avatar = it.id))
+                        request {
+                            updateUserInfo(UpdateUserBody(avatar = it.id))
+                        }
                     }.onSuccess { newInfo ->
-                        sessionManager.model.updateUser(newInfo)
+                        globalDialogController.context.sessionManager.model.updateUser(newInfo)
                         closeDialog()
                     }
                 }
@@ -110,7 +113,6 @@ fun UserSettingPage() {
                 scope.launch {
                     updateUser(
                         currentOption,
-                        sessionManager,
                         it,
                         globalDialogController,
                         closeDialog
@@ -130,7 +132,6 @@ fun ObjectSettingDialog(
     onInputMedia: (FileInfo) -> Unit,
     onInputString: (String) -> Unit,
 ) {
-    val sessionManager = LocalSessionManager.current
     val context = LocalPlatformContext.current
     val scope = rememberCoroutineScope()
 
@@ -163,7 +164,6 @@ fun ObjectSettingDialog(
                 mediaList,
                 scope,
                 context,
-                sessionManager,
                 imageCropper,
                 ratio,
                 mediaTarget,
@@ -215,11 +215,10 @@ private fun processSelectedMedia(
     mediaList: List<FileInfo>,
     scope: CoroutineScope,
     context: PlatformContext,
-    sessionManager: UserSessionManager,
     imageCropper: ImageCropper,
     ratio: AspectRatio,
     mediaTarget: ObjectTuple,
-    globalDialogController: GlobalDialogController,
+    globalDialogController: AppGlobalDialogController,
     alertDialogController: CustomAlertDialogController,
     onInputMedia: (FileInfo) -> Unit,
 ) {
@@ -241,7 +240,6 @@ private fun processSelectedMedia(
         globalDialogController.useResult {
             cropImage(
                 context,
-                sessionManager,
                 info,
                 imageCropper,
                 mediaTarget
@@ -254,15 +252,14 @@ private fun processSelectedMedia(
     }
 }
 
-private suspend fun GlobalDialogController.cropImage(
+private suspend fun AppGlobalDialogController.cropImage(
     context: PlatformContext,
-    sessionManager: UserSessionManager,
     info: FileInfo,
     imageCropper: ImageCropper,
     mediaTarget: ObjectTuple,
 ): Result<FileInfo?> {
     val image = useResult {
-        getRemoteImageBitmap(sessionManager, context, info) ?: Result.failure(Exception("download"))
+        getRemoteImageBitmap(this.context.sessionManager, context, info) ?: Result.failure(Exception("download"))
     }
     return image.mapResult {
         when (val result = imageCropper.crop(ImageBitmapSrc(it))) {
@@ -291,7 +288,7 @@ private suspend fun GlobalDialogController.cropImage(
             }
         }
     }.mapIfNotNull {
-        uploadPath(it, sessionManager, mediaTarget).getOrThrow()?.first()
+        uploadPath(it, mediaTarget).getOrThrow()?.first()
     }
 }
 
@@ -302,7 +299,6 @@ private fun UserSettingInternal(
     m: UserInfo,
 ) {
     val toasterState = LocalToaster.current
-    val sessionManager = LocalSessionManager.current
     val scope = rememberCoroutineScope()
     val globalDialogController = LocalGlobalDialog.current
     Column(modifier = Modifier.padding(values).padding(horizontal = 20.dp)) {
@@ -314,7 +310,7 @@ private fun UserSettingInternal(
                     scope.launch {
                         globalDialogController.useResult {
                             val body = UpdateUserBody(avatar = 0)
-                            sessionManager.updateUserInfo(body)
+                            request { updateUserInfo(body) }
                         }.onSuccess { newInfo ->
                             globalDialogController.emitEvent(OnUserUpdated(newInfo))
                         }
@@ -351,9 +347,8 @@ private fun UserSettingInternal(
 
 private suspend fun updateUser(
     showInputDialog: SettingOption?,
-    sessionManager: UserSessionManager,
     string: String,
-    globalDialogController: GlobalDialogController,
+    globalDialogController: AppGlobalDialogController,
     closeDialog: () -> Unit,
 ) {
     val body = when (showInputDialog) {
@@ -364,9 +359,11 @@ private suspend fun updateUser(
         else -> null
     } ?: return
     globalDialogController.useResult {
-        sessionManager.updateUserInfo(body)
+        request {
+            updateUserInfo(body)
+        }
     }.onSuccess { newInfo ->
-        sessionManager.model.updateUser(newInfo)
+        globalDialogController.context.sessionManager.model.updateUser(newInfo)
         globalDialogController.emitEvent(OnUserUpdated(newInfo))
         closeDialog()
     }

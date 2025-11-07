@@ -12,10 +12,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.api.NewRoom
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
-import com.storyteller_f.a.app.compose_app.LocalSessionManager
+import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.common.OnRoomCreated
 import com.storyteller_f.a.app.compose_app.pages.title.CommonComposePage
-import com.storyteller_f.a.app.core.components.LocalGlobalDialog
+import com.storyteller_f.a.app.core.components.emitEvent
+import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.client.core.createRoom
 import kotlinx.coroutines.launch
 
@@ -28,14 +29,15 @@ fun RoomComposePage() {
     var aid by remember {
         mutableStateOf("")
     }
-    val sessionManager = LocalSessionManager.current
     val appNavFactory = LocalAppNavFactory.current
     val scope = rememberCoroutineScope()
     val globalDialogController = LocalGlobalDialog.current
     CommonComposePage({
         scope.launch {
             globalDialogController.useResult {
-                sessionManager.createRoom(NewRoom(name, aid))
+                request {
+                    createRoom(NewRoom(name, aid))
+                }
             }.onSuccess { roomInfo ->
                 globalDialogController.emitEvent(OnRoomCreated(roomInfo))
                 appNavFactory.newAppNav().back()

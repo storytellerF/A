@@ -14,6 +14,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
@@ -33,10 +34,12 @@ import com.storyteller_f.a.app.core.common.LocalClient
 import com.storyteller_f.a.app.core.components.CenterBox
 import com.storyteller_f.a.app.core.components.CustomGlobalDialogController
 import com.storyteller_f.a.app.core.components.GlobalDialog
+import com.storyteller_f.a.app.core.components.GlobalDialogContext
 import com.storyteller_f.a.app.core.components.GlobalDialogController
-import com.storyteller_f.a.app.core.components.LocalGlobalDialog
+import com.storyteller_f.a.app.core.components.GlobalDialogState
 import com.storyteller_f.a.app.core.components.PrivateKeyInput
 import com.storyteller_f.a.app.core.components.SignInButton
+import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.app.core.utils.SavedSession
 import com.storyteller_f.a.app.core.utils.SessionHistoryManager
 import com.storyteller_f.a.app.core.utils.buildSessionHistoryFactory
@@ -66,6 +69,7 @@ import io.github.vinceglb.filekit.dialogs.openFilePicker
 import io.github.vinceglb.filekit.readBytes
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.cookies.CookiesStorage
+import kotlinx.collections.immutable.PersistentList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -103,8 +107,26 @@ class Nav2PanelNav(val navigator: NavHostController) : PanelNav {
 
 val LocalPanelNav = compositionLocalOf<PanelNav> { error("no nav") }
 
-val LocalSessionManager = compositionLocalOf {
-    CustomPanelSessionManager.EMPTY
+typealias PanelGlobalDialogController = GlobalDialogController<GlobalDialogContext<CustomPanelSessionManager>>
+
+val LocalPanelGlobalDialog = compositionLocalOf<PanelGlobalDialogController> {
+    object : PanelGlobalDialogController {
+        override val state: MutableState<PersistentList<GlobalDialogState>>
+            get() = TODO("Not yet implemented")
+
+        override suspend fun <T> useResult(
+            block: suspend PanelGlobalDialogController.() -> Result<T>
+        ): Result<T> {
+            TODO("Not yet implemented")
+        }
+
+        override fun emitProgress(block: (GlobalDialogState.Loading) -> GlobalDialogState.Loading) {
+            TODO("Not yet implemented")
+        }
+
+        override val context: GlobalDialogContext<CustomPanelSessionManager>
+            get() = TODO("Not yet implemented")
+    }
 }
 
 @Composable
@@ -118,8 +140,7 @@ fun App() {
     CompositionLocalProvider(
         LocalClient provides client,
         LocalPanelNav provides nav,
-        LocalGlobalDialog provides controller,
-        LocalSessionManager provides sessionManager
+        LocalPanelGlobalDialog provides controller,
     ) {
         MaterialTheme {
             NavHost(navigator, "overview") {
@@ -213,7 +234,6 @@ private fun PanelInputPage(back: () -> Unit) {
 
 @Composable
 private fun PanelSelectLoginPage(navigator: NavHostController, back: () -> Unit) {
-    val panelSessionManager = panelAccountInstance.sessionManager
     CenterBox {
         Column(
             verticalArrangement = Arrangement.spacedBy(40.dp),
@@ -233,10 +253,10 @@ private fun PanelSelectLoginPage(navigator: NavHostController, back: () -> Unit)
                     Text("Input")
                 }
                 val scope = rememberCoroutineScope()
-                val globalDialogController = LocalGlobalDialog.current
+                val globalDialogController = LocalPanelGlobalDialog.current
                 OutlinedButton({
                     scope.launch {
-                        globalDialogController.signInFromFile(panelSessionManager, back)
+                        globalDialogController.signInFromFile(back)
                     }
                 }) {
                     Text("Select File")
@@ -246,20 +266,21 @@ private fun PanelSelectLoginPage(navigator: NavHostController, back: () -> Unit)
     }
 }
 
-private suspend fun GlobalDialogController.signInFromFile(
-    panelSessionManager: CustomPanelSessionManager,
+private suspend fun PanelGlobalDialogController.signInFromFile(
     back: () -> Unit
 ) {
     useResult {
-        runCatching {
-            val f = FileKit.openFilePicker()
-            if (f != null) {
-                val privateKey = String(f.readBytes()).replaceCrlf()
-                panelSessionManager.getPanelAccountInfo(
-                    privateKey,
-                    false
-                ) {
-                    panelSessionManager.historyFactory.addSession(it)
+        request {
+            runCatching {
+                val f = FileKit.openFilePicker()
+                if (f != null) {
+                    val privateKey = String(f.readBytes()).replaceCrlf()
+                    getPanelAccountInfo(
+                        privateKey,
+                        false
+                    ) {
+                        historyFactory.addSession(it)
+                    }
                 }
             }
         }
@@ -269,8 +290,6 @@ private suspend fun GlobalDialogController.signInFromFile(
 }
 
 class PanelAccountInstance(scope: CoroutineScope) {
-    val events = MutableSharedFlow<Any>()
-    val controller = CustomGlobalDialogController(events)
     val sessionManager = createCustomPanelSessionManager("default") { model, cookieManager ->
         getClient {
             defaultClientConfigureForPanel(
@@ -280,6 +299,8 @@ class PanelAccountInstance(scope: CoroutineScope) {
             )
         }
     }
+    val events = MutableSharedFlow<Any>()
+    val controller = CustomGlobalDialogController(GlobalDialogContext(events, sessionManager))
     val guestDatabase = getRoomModelStorage("guest")
     val database = sessionManager.model.state.distinctUntilChangedBy {
         it
@@ -344,7 +365,7 @@ class CustomPanelSessionManager(
                 TODO("Not yet implemented")
             }
 
-            override fun buildSession(alias: String): UserPass? {
+            override fun buildSession(alias: String): UserPass {
                 TODO("Not yet implemented")
             }
 

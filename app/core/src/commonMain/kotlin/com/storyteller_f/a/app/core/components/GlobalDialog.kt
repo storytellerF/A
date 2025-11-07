@@ -18,7 +18,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -50,23 +49,23 @@ private val mutex = Mutex()
 
 data class GlobalDialogStateProgress(val value: Long, val total: Long?)
 
-interface GlobalDialogController {
+interface GlobalDialogController<out C> {
     val state: MutableState<PersistentList<GlobalDialogState>>
 
     suspend fun <T> useResult(
-        block: suspend GlobalDialogController.() -> Result<T>,
+        block: suspend GlobalDialogController<C>.() -> Result<T>,
     ): Result<T>
 
     fun emitProgress(block: (GlobalDialogState.Loading) -> GlobalDialogState.Loading)
 
-    suspend fun emitEvent(any: Any)
+    val context: C
 
     companion object {
-        val EMPTY = object : GlobalDialogController {
+        val EMPTY = object : GlobalDialogController<Unit> {
             override val state: MutableState<PersistentList<GlobalDialogState>>
                 get() = TODO("Not yet implemented")
 
-            override suspend fun <T> useResult(block: suspend GlobalDialogController.() -> Result<T>): Result<T> {
+            override suspend fun <T> useResult(block: suspend GlobalDialogController<Unit>.() -> Result<T>): Result<T> {
                 TODO("Not yet implemented")
             }
 
@@ -74,23 +73,23 @@ interface GlobalDialogController {
                 TODO("Not yet implemented")
             }
 
-            override suspend fun emitEvent(any: Any) {
-                TODO("Not yet implemented")
-            }
+            override val context: Unit
+                get() = TODO("Not yet implemented")
         }
     }
 }
 
 @OptIn(ExperimentalUuidApi::class)
-class NestedGlobalDialogController(
-    val customGlobalDialogController: CustomGlobalDialogController,
+class NestedGlobalDialogController<C>(
+    val customGlobalDialogController: CustomGlobalDialogController<C>,
     val level: Int
-) :
-    GlobalDialogController {
+) : GlobalDialogController<C> {
     override val state: MutableState<PersistentList<GlobalDialogState>>
         get() = customGlobalDialogController.state
+    override val context: C
+        get() = customGlobalDialogController.context
 
-    override suspend fun <T> useResult(block: suspend GlobalDialogController.() -> Result<T>): Result<T> {
+    override suspend fun <T> useResult(block: suspend GlobalDialogController<C>.() -> Result<T>): Result<T> {
         val value = state.value
         if (value.last() !is GlobalDialogState.Loading) {
             return Result.failure(Exception("lock failed"))
@@ -120,24 +119,30 @@ class NestedGlobalDialogController(
         }
         state.value = value.set(level - 1, block(last))
     }
-
-    override suspend fun emitEvent(any: Any) {
-        customGlobalDialogController.events.emit(any)
-    }
 }
 
 class CustomGlobalDialogContent(val content: @Composable () -> Unit)
 
-class CustomGlobalDialogController(
-    val events: MutableSharedFlow<Any>,
+class GlobalDialogContext<out C>(val events: MutableSharedFlow<Any>, val sessionManager: C) {
+    suspend fun emitEvent(any: Any) {
+        events.emit(any)
+    }
+
+    suspend fun <T> request(block: suspend C.() -> Result<T>): Result<T> {
+        return block(sessionManager)
+    }
+}
+
+class CustomGlobalDialogController<C>(
+    override val context: C,
     override val state: MutableState<PersistentList<GlobalDialogState>> = mutableStateOf(
         persistentListOf()
-    ),
-) : GlobalDialogController {
+    )
+) : GlobalDialogController<C> {
 
     @OptIn(ExperimentalUuidApi::class)
     override suspend fun <T> useResult(
-        block: suspend GlobalDialogController.() -> Result<T>,
+        block: suspend GlobalDialogController<C>.() -> Result<T>,
     ): Result<T> {
         return mutex.withLock {
             val dialogState = state.value
@@ -166,14 +171,10 @@ class CustomGlobalDialogController(
 
     override fun emitProgress(block: (GlobalDialogState.Loading) -> GlobalDialogState.Loading) =
         Unit
-
-    override suspend fun emitEvent(any: Any) {
-        events.emit(any)
-    }
 }
 
 @Composable
-fun GlobalDialog(state: CustomGlobalDialogController) {
+fun <C> GlobalDialog(state: GlobalDialogController<C>) {
     var message by state.state
     val dialogState = message.lastOrNull()
     dialogState?.let {
@@ -275,6 +276,12 @@ private fun LoadingGlobalDialogContent(
     }
 }
 
-val LocalGlobalDialog = compositionLocalOf {
-    GlobalDialogController.EMPTY
+suspend inline fun <T, R> GlobalDialogController<GlobalDialogContext<T>>.request(
+    noinline block: suspend T.() -> Result<R>
+): Result<R> {
+    return context.request(block)
+}
+
+suspend inline fun <T> GlobalDialogController<GlobalDialogContext<T>>.emitEvent(event: Any) {
+    context.emitEvent(event)
 }

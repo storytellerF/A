@@ -41,9 +41,9 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.storyteller_f.a.app.compose_app.CustomUserSessionManager
+import com.storyteller_f.a.app.compose_app.AppGlobalDialogController
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
-import com.storyteller_f.a.app.compose_app.LocalSessionManager
+import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.auto_generate
 import com.storyteller_f.a.app.compose_app.common.AppNavFactory
@@ -59,10 +59,9 @@ import com.storyteller_f.a.app.compose_app.start_sign_in
 import com.storyteller_f.a.app.compose_app.start_sign_up
 import com.storyteller_f.a.app.compose_app.utils.appPlatform
 import com.storyteller_f.a.app.core.components.CenterBox
-import com.storyteller_f.a.app.core.components.GlobalDialogController
-import com.storyteller_f.a.app.core.components.LocalGlobalDialog
 import com.storyteller_f.a.app.core.components.PrivateKeyInput
 import com.storyteller_f.a.app.core.components.StateView
+import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.client.core.getUserInfo
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.replaceCrlf
@@ -297,12 +296,11 @@ fun SelectSignUpPage(loginNav: LoginNav) {
 fun SelectFile(isSignUp: Boolean) {
     val scope = rememberCoroutineScope()
     val appNavFactory = LocalAppNavFactory.current
-    val sessionManager = LocalSessionManager.current
     val globalDialogController = LocalGlobalDialog.current
     if (isSignUp) {
         Button({
             scope.launch {
-                startSignFromFile(appNavFactory, sessionManager, true, globalDialogController)
+                startSignFromFile(appNavFactory, true, globalDialogController)
             }
         }) {
             Text("Select File")
@@ -310,7 +308,7 @@ fun SelectFile(isSignUp: Boolean) {
     } else {
         OutlinedButton({
             scope.launch {
-                startSignFromFile(appNavFactory, sessionManager, false, globalDialogController)
+                startSignFromFile(appNavFactory, false, globalDialogController)
             }
         }) {
             Text("Select File")
@@ -325,13 +323,11 @@ fun InputPrivateKeyPage(isSignUp: Boolean) {
     }
     val scope = rememberCoroutineScope()
     val appNavFactory = LocalAppNavFactory.current
-    val sessionManager = LocalSessionManager.current
     val globalDialogController = LocalGlobalDialog.current
     val startSign: () -> Unit = {
         scope.launch {
             globalDialogController.startSign(
                 appNavFactory,
-                sessionManager,
                 privateKey,
                 isSignUp
             )
@@ -370,35 +366,34 @@ fun InputPrivateKeyPage(isSignUp: Boolean) {
 
 private suspend fun startSignFromFile(
     appNav: AppNavFactory,
-    sessionManager: CustomUserSessionManager,
     isSignUp: Boolean,
-    globalDialogController: GlobalDialogController,
+    globalDialogController: AppGlobalDialogController,
 ) {
     val f = FileKit.openFilePicker()
     if (f != null) {
         val privateKey = String(f.readBytes()).replaceCrlf()
         globalDialogController.startSign(
             appNav,
-            sessionManager,
             privateKey,
             isSignUp
         )
     }
 }
 
-private suspend fun GlobalDialogController.startSign(
+private suspend fun AppGlobalDialogController.startSign(
     appNav: AppNavFactory,
-    sessionManager: CustomUserSessionManager,
     privateKey: String,
     isSignUp: Boolean,
 ) {
     if (privateKey.isBlank()) return
 
     useResult {
-        runCatching {
-            sessionManager.getUserInfo(privateKey, isSignUp) {
-                sessionManager.sessionHistoryManager.addSession(it)
-            }
+        request {
+            Result.success(
+                getUserInfo(privateKey, isSignUp) { raw ->
+                    sessionHistoryManager.addSession(raw)
+                }
+            )
         }
     }.onSuccess {
         appNav.newAppNav().gotoHome()

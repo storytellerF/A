@@ -57,7 +57,9 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.storyteller_f.a.api.NewTitle
+import com.storyteller_f.a.app.compose_app.AppGlobalDialogController
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
+import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.common.OnTitleCreated
 import com.storyteller_f.a.app.compose_app.common.TitleComposeSheetType
@@ -75,9 +77,8 @@ import com.storyteller_f.a.app.compose_app.pages.room.RoomRefCell
 import com.storyteller_f.a.app.compose_app.pages.user.InputDialog
 import com.storyteller_f.a.app.compose_app.pages.user.MemberList
 import com.storyteller_f.a.app.compose_app.pages.user.UserRefCell
-import com.storyteller_f.a.app.core.components.GlobalDialogController
-import com.storyteller_f.a.app.core.components.LocalGlobalDialog
-import com.storyteller_f.a.client.core.UserSessionManager
+import com.storyteller_f.a.app.core.components.emitEvent
+import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.client.core.createTitle
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.RoomInfo
@@ -108,14 +109,12 @@ fun TitleComposePage() {
 fun TitleComposeInternal() {
     val vm = createTitleComposeViewModel()
     val appNavFactory = LocalAppNavFactory.current
-    val sessionManager = LocalSessionManager.current
-
     val scope = rememberCoroutineScope()
     val globalDialogController = LocalGlobalDialog.current
     CommonComposePage({
         scope.launch {
             globalDialogController.useResult {
-                createTitle(vm.buildNewTitle().getOrThrow(), sessionManager)
+                createTitle(vm.buildNewTitle().getOrThrow())
             }.onSuccess {
                 appNavFactory.newAppNav().back()
             }
@@ -342,11 +341,10 @@ private fun TitleTypeSelector(
     }
 }
 
-private suspend fun GlobalDialogController.createTitle(
+private suspend fun AppGlobalDialogController.createTitle(
     newTitle: NewTitle,
-    sessionManager: UserSessionManager,
 ): Result<TitleInfo> {
-    return sessionManager.createTitle(newTitle).onSuccess { title ->
+    return request { createTitle(newTitle) }.onSuccess { title ->
         emitEvent(OnTitleCreated(title))
     }
 }

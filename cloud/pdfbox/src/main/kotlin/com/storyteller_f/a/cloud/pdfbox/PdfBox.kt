@@ -1,5 +1,3 @@
-@file:Suppress("ImportOrdering")
-
 package com.storyteller_f.a.cloud.pdfbox
 
 import com.storyteller_f.a.cloud.pdf.PdfGenerationSpec
