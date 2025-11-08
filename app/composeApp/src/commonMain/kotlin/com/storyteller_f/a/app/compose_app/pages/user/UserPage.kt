@@ -29,7 +29,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
-import com.storyteller_f.a.app.compose_app.LocalSessionManager
+import com.storyteller_f.a.app.compose_app.LocalUserInfo
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.common.IdUserViewModel
 import com.storyteller_f.a.app.compose_app.common.TopicComposeData
@@ -66,8 +66,7 @@ private fun UserPageInternal(
     userViewModel: IdUserViewModel,
 ) {
     val user by userViewModel.handler.data.collectAsState()
-    val userSessionManager = LocalSessionManager.current
-    val my by userSessionManager.model.userHandler.data.collectAsState()
+    val my = LocalUserInfo.current
     val pagerState = rememberPagerState {
         3
     }
@@ -100,9 +99,7 @@ private fun UserNonCompatInternal(uid: PrimaryKey, user: UserInfo?) {
                     "/titles" -> SearchScope.UserReceivedTitle(uid)
                     else -> SearchScope.UserCommunities(uid)
                 }
-                val userSessionManager = LocalSessionManager.current
-                val myInfo by userSessionManager.model.userHandler.data.collectAsState()
-                val my = myInfo
+                val my = LocalUserInfo.current
                 CustomSearchBar(searchScope) {
                     if (uid != my?.id) {
                         UserIconWithDialog(user)

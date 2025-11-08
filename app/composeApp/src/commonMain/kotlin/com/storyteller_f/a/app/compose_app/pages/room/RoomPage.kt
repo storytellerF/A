@@ -62,6 +62,7 @@ import com.storyteller_f.a.app.compose_app.AppGlobalDialogController
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
+import com.storyteller_f.a.app.compose_app.LocalUserInfo
 import com.storyteller_f.a.app.compose_app.LocalUiViewModel
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.all_members
@@ -259,8 +260,7 @@ fun RoomInputGroup(
         mutableStateOf("")
     }
     val userSessionManager = LocalSessionManager.current
-    val myInfo1 by userSessionManager.model.userHandler.data.collectAsState()
-    val myInfo = myInfo1
+    val myInfo = LocalUserInfo.current
     val controller = remember {
         CustomAlertDialogController()
     }
@@ -313,8 +313,7 @@ private fun RoomInputGroupInternal(
     scrollToNew: () -> Unit,
     updateInput: (String) -> Unit,
 ) {
-    val userSessionManager = LocalSessionManager.current
-    val myInfo by userSessionManager.model.userHandler.data.collectAsState()
+    val myInfo = LocalUserInfo.current
     val mediaTarget = if (roomInfo.isPrivate) {
         ObjectTuple(roomInfo.id, ObjectType.ROOM)
     } else {
@@ -630,9 +629,7 @@ fun RoomDialogInternal(roomInfo: RoomInfo, dismiss: () -> Unit) {
 @Composable
 private fun RoomDialogButtons(roomInfo: RoomInfo, dismiss: () -> Unit) {
     val appNavFactory = LocalAppNavFactory.current
-    val userSessionManager = LocalSessionManager.current
-    val myInfo by userSessionManager.model.userHandler.data.collectAsState()
-    val me = myInfo
+    val me = LocalUserInfo.current
     val globalDialogController = LocalGlobalDialog.current
     Column {
         val isRoomPage by appNavFactory.hasRouteFlow<RoomScreen>()

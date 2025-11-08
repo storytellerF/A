@@ -12,7 +12,6 @@ import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,7 +36,7 @@ import com.attafitamim.krop.core.images.ImageBitmapSrc
 import com.attafitamim.krop.ui.ImageCropperDialog
 import com.storyteller_f.a.app.compose_app.AppGlobalDialogController
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
-import com.storyteller_f.a.app.compose_app.LocalSessionManager
+import com.storyteller_f.a.app.compose_app.LocalUserInfo
 import com.storyteller_f.a.app.compose_app.common.OnUserUpdated
 import com.storyteller_f.a.app.compose_app.components.SettingOptionResettableView
 import com.storyteller_f.a.app.compose_app.components.SettingOptionView
@@ -84,9 +83,7 @@ fun UserSettingPage() {
         mutableStateOf<SettingOption?>(null)
     }
     val sheetState = rememberModalBottomSheetState()
-    val userSessionManager = LocalSessionManager.current
-    val myInfo by userSessionManager.model.userHandler.data.collectAsState()
-    val my = myInfo
+    val my = LocalUserInfo.current
     val showDialog = { option: SettingOption ->
         currentOption = option
     }
@@ -148,8 +145,7 @@ fun ObjectSettingDialog(
         )
     }
 
-    val userSessionManager = LocalSessionManager.current
-    val myInfo by userSessionManager.model.userHandler.data.collectAsState()
+    val myInfo = LocalUserInfo.current
     val mediaTarget = getMediaTarget(currentOption, myInfo)
     val globalDialogController = LocalGlobalDialog.current
     val alertDialogController = rememberAlertDialogController()

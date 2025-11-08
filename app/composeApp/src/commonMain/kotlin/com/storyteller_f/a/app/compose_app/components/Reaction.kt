@@ -12,10 +12,10 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
-import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.pages.topic.addReaction
 import com.storyteller_f.a.app.compose_app.pages.topic.deleteReaction
-import com.storyteller_f.a.app.core.components.LocalGlobalTask
+import com.storyteller_f.a.app.compose_app.LocalGlobalTask
+import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.core.components.use
 import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.shared.model.ReactionInfo
@@ -216,7 +216,6 @@ private fun EmojiCell(
     val topicId = topicInfo.id
     val emoji = info.emoji
     val hasReacted = info.hasReacted
-    val sessionManager = LocalSessionManager.current
     val globalTask = LocalGlobalTask.current
     val key = "$topicId $emoji"
     val loadingState = globalTask.stateMap[key]
@@ -232,12 +231,12 @@ private fun EmojiCell(
         emoji = emoji,
         selected = hasReacted
     ) {
-        globalTask.use(key) { state, bus ->
+        globalTask.use(key) { state ->
             state.use {
                 if (hasReacted) {
-                    deleteReaction(topicInfo, emoji, info, bus, sessionManager)
+                    deleteReaction(topicInfo, emoji, info)
                 } else {
-                    addReaction(topicInfo, emoji, bus, sessionManager)
+                    addReaction(topicInfo, emoji)
                 }
             }
         }

@@ -65,7 +65,7 @@ import com.storyteller_f.a.app.compose_app.AppGlobalDialogController
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalClientFileProvider
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
-import com.storyteller_f.a.app.compose_app.LocalSessionManager
+import com.storyteller_f.a.app.compose_app.LocalUserInfo
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.add
 import com.storyteller_f.a.app.compose_app.all_members
@@ -534,10 +534,8 @@ private fun CommunityAdminButtons(
     appNavFactory: AppNavFactory,
     communityId: PrimaryKey
 ) {
-    val userSessionManager = LocalSessionManager.current
-    val myInfo by userSessionManager.model.userHandler.data.collectAsState()
-    val my = myInfo
-    if (my?.id == communityInfo.owner) {
+    val myInfo = LocalUserInfo.current
+    if (myInfo?.id == communityInfo.owner) {
         ButtonNav(Icons.Default.Title, "Add Title") {
             dismiss()
             appNavFactory.newAppNav().gotoTitleCompose()

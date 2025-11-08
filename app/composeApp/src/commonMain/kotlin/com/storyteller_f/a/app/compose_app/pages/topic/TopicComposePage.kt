@@ -59,7 +59,7 @@ import com.mohamedrejeb.richeditor.model.RichTextState
 import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import com.mohamedrejeb.richeditor.ui.BasicRichTextEditor
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
-import com.storyteller_f.a.app.compose_app.LocalSessionManager
+import com.storyteller_f.a.app.compose_app.LocalUserInfo
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.common.MarkdownMediasViewModel
 import com.storyteller_f.a.app.compose_app.common.OnTopicCreated
@@ -94,10 +94,8 @@ fun TopicComposePage(
     AppTheme(
         typography = typography ?: MaterialTheme.typography
     ) {
-        val userSessionManager = LocalSessionManager.current
-        val myInfo by userSessionManager.model.userHandler.data.collectAsState()
-        val user = myInfo
-        user?.let {
+        val myInfo = LocalUserInfo.current
+        myInfo?.let {
             TopicComposeScaffold(
                 data,
                 data.getMediaTarget() ?: (it.id ob ObjectType.USER),

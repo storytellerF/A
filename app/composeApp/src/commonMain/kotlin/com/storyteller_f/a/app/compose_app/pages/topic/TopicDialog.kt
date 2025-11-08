@@ -60,8 +60,9 @@ import com.storyteller_f.a.app.compose_app.utils.setText
 import com.storyteller_f.a.app.core.components.DialogContainer
 import com.storyteller_f.a.app.core.components.ExceptionView
 import com.storyteller_f.a.app.core.components.IconRes
-import com.storyteller_f.a.app.core.components.LocalGlobalTask
+import com.storyteller_f.a.app.compose_app.LocalGlobalTask
 import com.storyteller_f.a.app.core.components.LocalToaster
+import com.storyteller_f.a.app.core.components.emitEvent
 import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.app.core.components.use
 import com.storyteller_f.a.app.core.utils.getCurrentLanguage
@@ -143,7 +144,6 @@ private fun TopicDialogMenuList(topicInfo: TopicInfo, dismissDialog: () -> Unit)
 
 @Composable
 fun SubscriptionButton(topicInfo: TopicInfo) {
-    val sessionManager = LocalSessionManager.current
     val dialogController = LocalGlobalTask.current
     val scope = rememberCoroutineScope()
     val subscriptionId = topicInfo.subscriptionId
@@ -158,20 +158,22 @@ fun SubscriptionButton(topicInfo: TopicInfo) {
     }
     ButtonNav(icon, "Subscription") {
         scope.launch {
-            dialogController.use(taskId) { state, bus ->
+            dialogController.use(taskId) { state ->
                 state.use {
-                    if (subscriptionId != null) {
-                        sessionManager.removeSubscription(subscriptionId).onSuccess {
-                            bus.emit(OnRemoveSubscription(topicInfo.tuple()))
-                        }
-                    } else {
-                        sessionManager.addSubscription(
-                            NewSubscription(
-                                topicInfo.id,
-                                ObjectType.TOPIC
-                            )
-                        ).onSuccess {
-                            bus.emit(OnAddSubscription(it))
+                    request {
+                        if (subscriptionId != null) {
+                            removeSubscription(subscriptionId).onSuccess {
+                                emitEvent(OnRemoveSubscription(topicInfo.tuple()))
+                            }
+                        } else {
+                            addSubscription(
+                                NewSubscription(
+                                    topicInfo.id,
+                                    ObjectType.TOPIC
+                                )
+                            ).onSuccess {
+                                emitEvent(OnAddSubscription(it))
+                            }
                         }
                     }
                 }
@@ -182,7 +184,6 @@ fun SubscriptionButton(topicInfo: TopicInfo) {
 
 @Composable
 private fun FavoriteButton(topicInfo: TopicInfo) {
-    val sessionManager = LocalSessionManager.current
     val dialogController = LocalGlobalTask.current
     val scope = rememberCoroutineScope()
     val favoriteId = topicInfo.favoriteId
@@ -197,17 +198,18 @@ private fun FavoriteButton(topicInfo: TopicInfo) {
     }
     ButtonNav(icon, "Favorite") {
         scope.launch {
-            dialogController.use(taskId) { state, bus ->
+            dialogController.use(taskId) { state ->
                 state.use {
-                    if (favoriteId != null) {
-                        sessionManager.removeFavorite(favoriteId).onSuccess {
-                            bus.emit(OnRemoveFavorite(topicInfo.tuple()))
-                        }
-                    } else {
-                        sessionManager.addFavorite(NewFavorite(ObjectType.TOPIC, topicInfo.id))
-                            .onSuccess {
-                                bus.emit(OnAddFavorite(it))
+                    request {
+                        if (favoriteId != null) {
+                            removeFavorite(favoriteId).onSuccess {
+                                emitEvent(OnRemoveFavorite(topicInfo.tuple()))
                             }
+                        } else {
+                            addFavorite(NewFavorite(ObjectType.TOPIC, topicInfo.id)).onSuccess {
+                                emitEvent(OnAddFavorite(it))
+                            }
+                        }
                     }
                 }
             }

@@ -18,14 +18,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import com.storyteller_f.a.app.compose_app.CommonEntry
-import com.storyteller_f.a.app.compose_app.LocalSessionManager
+import com.storyteller_f.a.app.compose_app.LocalUserInfo
 import com.storyteller_f.a.app.compose_app.common.createUploadViewModel
 import com.storyteller_f.a.app.compose_app.utils.ClientFile
 import com.storyteller_f.a.app.core.components.CenterBox
@@ -51,8 +49,7 @@ class UploadSession(val name: String, val list: ImmutableList<ClientFile>) {
 @Composable
 fun UploadPage() {
     CommonEntry({
-        val userSessionManager = LocalSessionManager.current
-        val myInfo by userSessionManager.model.userHandler.data.collectAsState()
+        val myInfo = LocalUserInfo.current
         UploadInternal(myInfo)
     })
 }

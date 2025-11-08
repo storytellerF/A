@@ -44,7 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.compose_app.CustomUserSessionManager
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
-import com.storyteller_f.a.app.compose_app.LocalSessionManager
+import com.storyteller_f.a.app.compose_app.LocalUserInfo
 import com.storyteller_f.a.app.compose_app.common.OnTopicCreated
 import com.storyteller_f.a.app.compose_app.common.TopicComposeData
 import com.storyteller_f.a.app.compose_app.common.TopicViewModel
@@ -65,10 +65,12 @@ import com.storyteller_f.a.app.compose_app.pages.user.UserIconWithDialog
 import com.storyteller_f.a.app.core.components.CustomAlertDialog
 import com.storyteller_f.a.app.core.components.CustomAlertDialogController
 import com.storyteller_f.a.app.core.components.GlobalTask
-import com.storyteller_f.a.app.core.components.LocalGlobalTask
+import com.storyteller_f.a.app.compose_app.LocalGlobalTask
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.bottomAppending
+import com.storyteller_f.a.app.core.components.emitEvent
 import com.storyteller_f.a.app.core.components.pagingItems
+import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.app.core.components.topPrepend
 import com.storyteller_f.a.app.core.components.use
 import com.storyteller_f.a.client.core.LoadingState
@@ -270,8 +272,7 @@ private fun TopicInputGroup(
         mutableStateOf("")
     }
     val appNavFactory = LocalAppNavFactory.current
-    val userSessionManager = LocalSessionManager.current
-    val myInfo by userSessionManager.model.userHandler.data.collectAsState()
+    val myInfo = LocalUserInfo.current
     InputGroupInternal(
         if (topic.isEncrypted) {
             ObjectTuple(topic.rootId, topic.rootType)
@@ -324,7 +325,6 @@ fun TopicSendButton(
 ) {
     val focusManager = LocalFocusManager.current
     val scope = rememberCoroutineScope()
-    val sessionManager = LocalSessionManager.current
     val globalTask = LocalGlobalTask.current
     val key = "topic ${topic.id}"
     val isSending = globalTask.stateMap[key] is LoadingState.Loading
@@ -339,7 +339,6 @@ fun TopicSendButton(
             snackBarHostState,
             globalTask,
             key,
-            sessionManager,
             topic,
             updateInput,
             focusManager,
@@ -352,9 +351,8 @@ private fun sendTopicInTopicPage(
     input: String,
     scope: CoroutineScope,
     snackBarHostState: SnackbarHostState,
-    globalTask: GlobalTask,
+    globalTask: GlobalTask<CustomUserSessionManager>,
     key: String,
-    sessionManager: CustomUserSessionManager,
     topic: TopicInfo,
     updateInput: (String) -> Unit,
     focusManager: FocusManager,
@@ -366,17 +364,19 @@ private fun sendTopicInTopicPage(
         }
         return
     }
-    globalTask.use(key) { state, bus ->
+    globalTask.use(key) { state ->
         state.use {
-            sessionManager.createTopic(ObjectType.TOPIC, topic.id, input).onSuccess {
-                bus.emit(OnTopicCreated(it))
-                updateInput("")
-                focusManager.clearFocus()
-                scrollToNew()
-            }.onFailure {
-                snackBarHostState
-                    .showSnackbar(it.message.toString())
+            request {
+                createTopic(ObjectType.TOPIC, topic.id, input).onSuccess {
+                    emitEvent(OnTopicCreated(it))
+                    updateInput("")
+                    focusManager.clearFocus()
+                    scrollToNew()
+                }
             }
+        }.onFailure {
+            snackBarHostState
+                .showSnackbar(it.message.toString())
         }
     }
 }
