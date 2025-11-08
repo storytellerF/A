@@ -76,11 +76,10 @@ suspend fun Backend.getFileInfoByName(
         uid
     ).mapResultIfNotNull { (_, rootId) ->
         database.file.getFileRecord(rootId, word)
-            .mapResultIfNotNull { fileRecord ->
-                processFileRecordToFileInfo(listOf(fileRecord)).map {
-                    it.first()
-                }
-            }
+    }.mapResultIfNotNull { fileRecord ->
+        processFileRecordToFileInfo(listOf(fileRecord)).map {
+            it.first()
+        }
     }
 }
 
