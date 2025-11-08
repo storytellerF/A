@@ -132,8 +132,8 @@
         *   `client/core: add searchUsers request`
 
 构建与运行（常用）
-- Desktop 运行（dev）：gradlew :app:composeApp:run -Pserver.flavor=dev.win -Pserver.buildType=dev
-- Desktop 打包（release）：gradlew :app:composeApp:packageRelease -Pserver.flavor=dev.win -Pserver.buildType=dev
+- Desktop 运行（dev）：gradlew -Pserver.flavor=dev.win -Pserver.buildType=dev :app:composeApp:run
+- Desktop 打包（release）：gradlew -Pserver.flavor=dev.win -Pserver.buildType=release :app:composeApp:packageRelease
 - Android 单测：
   - gradlew :shared:testDebugUnitTest
   - gradlew :app:composeApp:testDebugUnitTest

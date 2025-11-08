@@ -15,6 +15,8 @@ import com.storyteller_f.shared.model.MemberPolicy
 import com.storyteller_f.shared.model.PanelAccountInfo
 import com.storyteller_f.shared.model.PanelOverview
 import com.storyteller_f.shared.model.PosterSearch
+import com.storyteller_f.shared.model.QuotaInfo
+import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TitleInfo
@@ -425,6 +427,15 @@ object CustomApi {
         )
 
         val getByName = safeApiWithQuery<FileInfo, MediaSearchQuery>("files/get-by-name")
+
+        @Serializable
+        class QuotaQuery(
+            val objectId: PrimaryKey,
+            val objectType: ObjectType,
+            val quotaType: QuotaType = QuotaType.FILE
+        )
+
+        val quota = safeApiWithQuery<QuotaInfo, QuotaQuery>("files/quota")
     }
 
     object Titles {

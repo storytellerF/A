@@ -6,7 +6,6 @@ import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.cloud.core.service.FileResponse
 import com.storyteller_f.a.cloud.core.service.PathResponse
 import com.storyteller_f.a.cloud.server.ServerConfig
-import com.storyteller_f.route4k.ktor.server.handleCaughtException
 import com.storyteller_f.shared.type.PrimaryKey
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -22,7 +21,7 @@ import io.sentry.Sentry
 import io.sentry.protocol.Request
 import kotlin.io.path.name
 
-suspend inline fun <reified R : Any> RoutingContext.omitPrincipal(block: () -> Result<R?>) = callRespond<R>(block)
+inline fun <reified R : Any> omitPrincipal(block: () -> Result<R?>) = block()
 
 inline fun <reified R : Any> RoutingContext.usePrincipal(
     block: (uid: PrimaryKey) -> Result<R?>,
@@ -37,21 +36,6 @@ inline fun <reified R : Any> RoutingContext.usePrincipal(
 inline fun <reified R : Any> RoutingContext.usePrincipalOrNull(
     block: (uid: PrimaryKey?) -> Result<R?>?,
 ) = block(call.principal<CustomPrincipal>()?.uid)
-
-suspend inline fun <reified R : Any> RoutingContext.callRespond(
-    block: () -> Result<R?>?,
-) {
-    try {
-        val result = block()
-        if (result == null) {
-            call.respond(HttpStatusCode.NotFound)
-            return
-        }
-        handleResult(result)
-    } catch (e: Exception) {
-        handleCaughtException(e)
-    }
-}
 
 suspend fun RoutingContext.respondError(e: Throwable) {
     when (e) {

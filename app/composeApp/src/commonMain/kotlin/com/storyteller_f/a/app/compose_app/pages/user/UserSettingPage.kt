@@ -83,38 +83,36 @@ fun UserSettingPage() {
         mutableStateOf<SettingOption?>(null)
     }
     val sheetState = rememberModalBottomSheetState()
-    val my = LocalUserInfo.current
+    val my = LocalUserInfo.current ?: return
     val showDialog = { option: SettingOption ->
         currentOption = option
     }
     val closeDialog = {
         currentOption = null
     }
-    my?.let { m ->
-        val globalDialogController = LocalGlobalDialog.current
-        Scaffold { padding ->
-            UserSettingInternal(padding, showDialog, m)
-            val scope = rememberCoroutineScope()
-            ObjectSettingDialog(closeDialog, currentOption, sheetState, {
-                scope.launch {
-                    globalDialogController.useResult {
-                        request {
-                            updateUserInfo(UpdateUserBody(avatar = it.id))
-                        }
-                    }.onSuccess { newInfo ->
-                        globalDialogController.context.sessionManager.model.updateUser(newInfo)
-                        closeDialog()
+    val globalDialogController = LocalGlobalDialog.current
+    Scaffold { padding ->
+        UserSettingInternal(padding, showDialog, my)
+        val scope = rememberCoroutineScope()
+        ObjectSettingDialog(closeDialog, currentOption, sheetState, {
+            scope.launch {
+                globalDialogController.useResult {
+                    request {
+                        updateUserInfo(UpdateUserBody(avatar = it.id))
                     }
+                }.onSuccess { newInfo ->
+                    globalDialogController.context.sessionManager.model.updateUser(newInfo)
+                    closeDialog()
                 }
-            }) {
-                scope.launch {
-                    updateUser(
-                        currentOption,
-                        it,
-                        globalDialogController,
-                        closeDialog
-                    )
-                }
+            }
+        }) {
+            scope.launch {
+                updateUser(
+                    currentOption,
+                    it,
+                    globalDialogController,
+                    closeDialog
+                )
             }
         }
     }
@@ -255,7 +253,8 @@ private suspend fun AppGlobalDialogController.cropImage(
     mediaTarget: ObjectTuple,
 ): Result<FileInfo?> {
     val image = useResult {
-        getRemoteImageBitmap(this.context.sessionManager, context, info) ?: Result.failure(Exception("download"))
+        getRemoteImageBitmap(this.context.sessionManager, context, info)
+            ?: Result.failure(Exception("download"))
     }
     return image.mapResult {
         when (val result = imageCropper.crop(ImageBitmapSrc(it))) {

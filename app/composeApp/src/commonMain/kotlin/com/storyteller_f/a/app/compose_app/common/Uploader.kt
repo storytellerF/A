@@ -50,8 +50,18 @@ class UploaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIViewMo
         val modelStorage = instance.database.value
         val userSession = instance.sessionManager
         lifecycleScope.launch {
-            clipData.forEach {
-                uploadIfNeed(userSession, myUid, it, modelStorage, UploadCollection(myUid))
+            try {
+                clipData.forEach {
+                    uploadIfNeed(userSession, myUid, it, modelStorage, UploadCollection(myUid))
+                }
+            } catch (e: Exception) {
+                Napier.e(e) {
+                    "upload ${
+                        clipData.joinToString {
+                            it.name
+                        }
+                    }"
+                }
             }
         }
     }
@@ -65,7 +75,13 @@ class UploaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIViewMo
         val modelStorage = instance.database.value
         val userSession = instance.sessionManager
         lifecycleScope.launch {
-            resumeIfNeed(modelStorage, myUid, pathHash, userSession, UploadCollection(myUid))
+            try {
+                resumeIfNeed(modelStorage, myUid, pathHash, userSession, UploadCollection(myUid))
+            } catch (e: Exception) {
+                Napier.e(e) {
+                    "resume upload $pathHash"
+                }
+            }
         }
     }
 
@@ -96,6 +112,9 @@ class UploaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIViewMo
         mutex.withLock {
             val existing = modelStorage.upload.getDocument(collection, pathHash)
             if (existing != null) {
+                Napier.i {
+                    "upload $pathHash exists"
+                }
                 return
             }
             val id = now().toInstant(
@@ -135,7 +154,7 @@ class UploaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIViewMo
             userSession.upload(
                 myUid ob ObjectType.USER,
                 clipFile.getUploadDataFromClipFile()
-            ) { p, t ->
+            ) { p, _ ->
                 updateUploadInfo(modelStorage, collection, pathHash) {
                     it.copy(progress = p)
                 }

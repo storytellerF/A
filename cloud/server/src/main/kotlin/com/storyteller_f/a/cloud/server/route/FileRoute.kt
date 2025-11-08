@@ -9,6 +9,7 @@ import com.storyteller_f.a.cloud.core.service.checkRootWritePermission
 import com.storyteller_f.a.cloud.core.service.extractAlbum
 import com.storyteller_f.a.cloud.core.service.getFileInfoByName
 import com.storyteller_f.a.cloud.core.service.getFileList
+import com.storyteller_f.a.cloud.core.service.getQuotaInfo
 import com.storyteller_f.a.cloud.core.service.newFileName
 import com.storyteller_f.a.cloud.core.service.tryCopyFile
 import com.storyteller_f.a.cloud.core.service.tryUploadFiles
@@ -24,16 +25,18 @@ import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResultIfNotNull
-import io.ktor.http.HttpHeaders
 import io.ktor.http.content.PartData
 import io.ktor.http.content.forEachPart
 import io.ktor.server.request.receiveMultipart
-import io.ktor.server.routing.*
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.RoutingContext
 import io.ktor.util.cio.writeChannel
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.ByteWriteChannel
 import io.ktor.utils.io.InternalAPI
 import io.ktor.utils.io.close
+import io.ktor.utils.io.copyAndClose
+import kotlinx.coroutines.coroutineScope
 import java.io.File
 import kotlin.uuid.ExperimentalUuidApi
 
@@ -49,6 +52,15 @@ fun Route.bindProtectedMediaRoute(backend: Backend) {
     CustomApi.Files.getByName(RoutingContext::handleResult) {
         usePrincipal { uid ->
             backend.getFileInfoByName(uid, it.objectId ob it.objectType, it.name)
+        }
+    }
+
+    CustomApi.Files.quota(RoutingContext::handleResult) {
+        usePrincipal { _ ->
+            backend.getQuotaInfo(
+                it.quotaType,
+                ObjectTuple(it.objectId, it.objectType)
+            )
         }
     }
 
@@ -89,30 +101,29 @@ suspend fun RoutingContext.uploadMedia(
     val parentType = objectTuple.objectType
     val parentId = objectTuple.objectId
     backend.checkRootWritePermission(parentType, parentId, id).mapResultIfNotNull {
-        val result = mutableListOf<FileInfo>()
+        runCatching {
+            val result = mutableListOf<FileInfo>()
+            coroutineScope {
+                call.receiveMultipart(1024 * 1024 * 100).forEachPart { part ->
+                    when (part) {
+                        is PartData.FileItem -> {
+                            backend.processFilePart(
+                                root,
+                                it,
+                                result,
+                                part.originalFileName as String
+                            ) {
+                                part.provider()
+                            }
+                        }
 
-        call.receiveMultipart().forEachPart { part ->
-            when (part) {
-                is PartData.FileItem -> {
-                    val length = part.headers[HttpHeaders.ContentLength]?.toLongOrNull()
-                    if (length == null) error("content length not exists")
-                    if (length > 1024 * 1024 * 100) error("file too large")
-                    backend.processFilePart(
-                        root,
-                        it,
-                        result,
-                        part.originalFileName as String,
-                        length
-                    ) {
-                        part.provider()
+                        else -> {}
                     }
+                    part.dispose()
                 }
-
-                else -> {}
             }
-            part.dispose()
+            ServerResponse(result)
         }
-        Result.success(ServerResponse(result))
     }
 }
 
@@ -121,12 +132,11 @@ private suspend fun Backend.processFilePart(
     permission: RootWritePermission,
     result: MutableList<FileInfo>,
     fileName: String,
-    length: Long,
     provider: () -> ByteReadChannel
 ) {
     val newSavedName = newFileName(fileName)
     val file = File(root, "$newSavedName.tmp")
-    provider().copyContentAndClose(file.writeChannel(), length)
+    provider().copyAndClose(file.writeChannel())
     try {
         val mediaInfos = tryUploadFiles(
             permission.rootId,
@@ -135,7 +145,7 @@ private suspend fun Backend.processFilePart(
                 UploadPack(
                     file,
                     newSavedName,
-                    length,
+                    file.length(),
                     "${permission.rootId}/$newSavedName"
                 ),
             )

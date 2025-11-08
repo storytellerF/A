@@ -60,11 +60,11 @@ import com.storyteller_f.a.app.compose_app.utils.createCustomDataStoreManager
 import com.storyteller_f.a.app.core.common.LocalClient
 import com.storyteller_f.a.app.core.components.CustomGlobalDialogController
 import com.storyteller_f.a.app.core.components.CustomGlobalTask
-import com.storyteller_f.a.app.core.components.GlobalTaskContext
 import com.storyteller_f.a.app.core.components.GlobalDialog
 import com.storyteller_f.a.app.core.components.GlobalDialogContext
 import com.storyteller_f.a.app.core.components.GlobalDialogController
 import com.storyteller_f.a.app.core.components.GlobalTask
+import com.storyteller_f.a.app.core.components.GlobalTaskContext
 import com.storyteller_f.a.app.core.components.LocalToaster
 import com.storyteller_f.a.app.core.components.Sonner
 import com.storyteller_f.a.app.core.utils.SavedSession
@@ -624,5 +624,6 @@ private fun createAppNavFactoryForBubble(): AppNavFactory = object : AppNavFacto
         override fun gotoFavoritePage() = Unit
 
         override fun gotoSubscriptionPage() = Unit
+        override fun gotoFileExplorer() = Unit
     }
 }

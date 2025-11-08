@@ -17,6 +17,7 @@ import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.SignalCellularAlt
@@ -109,6 +110,7 @@ private fun SelfDialogInternal(
             AccountSwitchButton(dismiss, overviewHandler)
             NotificationButton()
             ConnectionButton()
+            FileExplorerButton(dismiss)
             SettingsButton(dismiss)
             SignOutButton(signOutController)
         } else {
@@ -396,6 +398,15 @@ fun SettingsButton(dismiss: () -> Unit) {
     ButtonNav(MaterialSymbolsOutlined.SettingsAccountBox, stringResource(Res.string.settings)) {
         dismiss()
         appNavFactory.newAppNav().gotoUserSetting()
+    }
+}
+
+@Composable
+fun FileExplorerButton(dismiss: () -> Unit) {
+    val appNavFactory = LocalAppNavFactory.current
+    ButtonNav(Icons.Default.Folder, "File Explorer") {
+        dismiss()
+        appNavFactory.newAppNav().gotoFileExplorer()
     }
 }
 

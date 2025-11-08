@@ -65,6 +65,7 @@ import com.storyteller_f.a.app.compose_app.components.BaseSheet
 import com.storyteller_f.a.app.compose_app.components.Permission
 import com.storyteller_f.a.app.compose_app.components.isPermissionGranted
 import com.storyteller_f.a.app.compose_app.components.requestPermission
+import com.storyteller_f.a.app.compose_app.utils.ClientFile
 import com.storyteller_f.a.app.compose_app.utils.Recorder
 import com.storyteller_f.a.app.compose_app.utils.setText
 import com.storyteller_f.a.app.core.components.CustomIcon
@@ -88,6 +89,7 @@ import com.storyteller_f.shared.utils.mapIfNotNull
 import io.github.aakira.napier.Napier
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.PlatformFile
+import io.github.vinceglb.filekit.absolutePath
 import io.github.vinceglb.filekit.dialogs.openFilePicker
 import io.github.vinceglb.filekit.extension
 import io.github.vinceglb.filekit.name
@@ -96,6 +98,7 @@ import io.github.vinceglb.filekit.source
 import io.ktor.http.ContentType
 import io.ktor.http.defaultForFileExtension
 import kotlinx.coroutines.launch
+import kotlinx.io.Source
 import kotlinx.io.buffered
 import kotlinx.io.files.FileMetadata
 import kotlinx.io.files.Path
@@ -269,7 +272,7 @@ private fun FileListView(
 
 @OptIn(ExperimentalTime::class)
 @Composable
-private fun FileCell(
+fun FileCell(
     fileInfo: FileInfo?,
     clickItem: (kotlin.collections.List<FileInfo>) -> Unit
 ) {
@@ -349,7 +352,7 @@ fun FileCellMenu(expanded: Boolean, updateExpanded: (Boolean) -> Unit, fileInfo:
 }
 
 @Composable
-private fun FileIcon(it: FileInfo) {
+fun FileIcon(it: FileInfo) {
     val contentType = it.contentType
     val modifier = Modifier.size(40.dp)
     if (contentType.startsWith("image")) {
@@ -368,7 +371,7 @@ private fun FileIcon(it: FileInfo) {
     }
 }
 
-private suspend fun AppGlobalDialogController.selectFileAndUpload(
+suspend fun AppGlobalDialogController.selectFileAndUpload(
     mediaTarget: ObjectTuple,
     uploadSuccess: (List<FileInfo>) -> Unit,
 ) {
@@ -399,6 +402,21 @@ private fun getUploadDataFromPlatformFile(f: PlatformFile) = UploadData(
     ContentType.defaultForFileExtension(f.extension)
 ) {
     f.source().buffered()
+}
+
+class PlatformClientFile(val platformFile: PlatformFile) : ClientFile {
+    override val name: String
+        get() = platformFile.name
+    override val contentType: ContentType
+        get() = ContentType.defaultForFileExtension(platformFile.extension)
+    override val size: Long
+        get() = platformFile.size()
+    override val path: String
+        get() = platformFile.absolutePath()
+
+    override fun source(): Source {
+        return platformFile.source().buffered()
+    }
 }
 
 suspend fun AppGlobalDialogController.uploadPath(

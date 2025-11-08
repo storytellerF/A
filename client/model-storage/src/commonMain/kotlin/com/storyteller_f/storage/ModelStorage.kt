@@ -218,6 +218,7 @@ interface DownloadInfoStorage {
     suspend fun save(downloadInfo: DownloadInfo)
     fun observeDatum(id: PrimaryKey): Flow<DownloadInfo?>
     suspend fun getDocument(id: PrimaryKey): DownloadInfo?
+    fun observeData(): PagingSource<Int, DownloadInfo>
 
     companion object {
         const val COLLECTION_NAME = "download"

@@ -12,6 +12,7 @@ import com.storyteller_f.a.app.compose_app.common.Uploader
 import com.storyteller_f.a.app.compose_app.common.UploaderImpl
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.setupKmpLogger
+import io.github.aakira.napier.Napier
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import java.awt.BorderLayout
@@ -37,6 +38,9 @@ val uiViewModel by lazy {
 fun main(args: Array<String>) {
     setupKmpLogger()
     Thread.setDefaultUncaughtExceptionHandler { _, e ->
+        Napier.e(e) {
+            "uncaught exception"
+        }
         Dialog(Frame(), e.message ?: "Error").apply {
             layout = BorderLayout()
             val label = TextArea(e.stackTraceToString())
@@ -82,7 +86,9 @@ fun main(args: Array<String>) {
             ExternalUriHandler.onNewUri(uri.uri.toString())
         }
     } else {
-        ExternalUriHandler.onNewUri(args.getOrNull(0).toString())
+        args.getOrNull(0).toString()?.let {
+            ExternalUriHandler.onNewUri(it)
+        }
     }
     application {
         Window(

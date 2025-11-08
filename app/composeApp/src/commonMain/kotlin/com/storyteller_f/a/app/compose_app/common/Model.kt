@@ -35,6 +35,7 @@ import com.storyteller_f.a.client.core.getCommunityInfoByAid
 import com.storyteller_f.a.client.core.getFavorites
 import com.storyteller_f.a.client.core.getMediaByName
 import com.storyteller_f.a.client.core.getMediaList
+import com.storyteller_f.a.client.core.getQuotaInfo
 import com.storyteller_f.a.client.core.getReactions
 import com.storyteller_f.a.client.core.getRecommendTopics
 import com.storyteller_f.a.client.core.getRoomInfo
@@ -59,6 +60,8 @@ import com.storyteller_f.shared.model.ChildAccountInfo
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.PosterSearch
+import com.storyteller_f.shared.model.QuotaInfo
+import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TitleInfo
@@ -81,6 +84,7 @@ import com.storyteller_f.shared.utils.extractMarkdownHeadline
 import com.storyteller_f.shared.utils.extractMarkdownMediaLink
 import com.storyteller_f.storage.ChildAccountStorage
 import com.storyteller_f.storage.CommunityCollection
+import com.storyteller_f.storage.DownloadInfo
 import com.storyteller_f.storage.DownloadStatus
 import com.storyteller_f.storage.MediasCollection
 import com.storyteller_f.storage.ModelStorage
@@ -719,6 +723,24 @@ class UploadViewModel(
             UploadCollection(myUid)
         )
     }.flow.cachedIn(viewModelScope)
+}
+
+class DownloadListViewModel(
+    modelStorage: ModelStorage,
+) : PagingViewModel<DownloadInfo>() {
+    override val flow = Pager(PagingConfig(10)) {
+        modelStorage.download.observeData()
+    }.flow.cachedIn(viewModelScope)
+}
+
+class QuotaViewModel(
+    private val sessionManager: UserSessionManager,
+    private val objectTuple: ObjectTuple,
+    private val quotaType: QuotaType
+) : SimpleViewModel<QuotaInfo>() {
+    override val handler: LoadingHandler<QuotaInfo> = SimpleLoadingHandler(viewModelScope) {
+        sessionManager.getQuotaInfo(objectTuple, quotaType)
+    }
 }
 
 class DownloadHandler<T>(

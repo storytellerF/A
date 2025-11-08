@@ -455,6 +455,13 @@ class DownloadInfoRoomStorage(val appDatabase: AppDatabase) : DownloadInfoStorag
                 commonJson.safeDecodeFromStringOrNull(it.data)
             }
     }
+
+    override fun observeData(): PagingSource<Int, DownloadInfo> {
+        val raw = appDatabase.getCommonDao().getAsSource(DownloadInfoStorage.COLLECTION_NAME)
+        return WrappedPagingSource(raw) { list ->
+            list.mapNotNull { commonJson.safeDecodeFromStringOrNull<DownloadInfo>(it.data) }
+        }
+    }
 }
 
 class UploadInfoRoomStorage(val appDatabase: AppDatabase) : UploadInfoStorage {

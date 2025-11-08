@@ -10,6 +10,7 @@ import com.storyteller_f.a.app.compose_app.CustomUserSessionManager
 import com.storyteller_f.a.app.compose_app.LocalUiViewModel
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
 import com.storyteller_f.a.client.room.RoomModelStorage
+import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleStatus
@@ -454,6 +455,23 @@ fun getDownloadViewModel(fileId: PrimaryKey?): DownloadViewModel = customViewMod
     listOf("download", fileId)
 ) { _, storageSource ->
     DownloadViewModel(storageSource, fileId)
+}
+
+@Composable
+fun getDownloadListViewModel(): DownloadListViewModel = customViewModel(
+    listOf("download-list")
+) { _, storageSource ->
+    DownloadListViewModel(storageSource)
+}
+
+@Composable
+fun getQuotaViewModel(
+    objectTuple: ObjectTuple,
+    quotaType: QuotaType = QuotaType.FILE
+): QuotaViewModel = customViewModel(
+    listOf("quota", objectTuple.objectId, quotaType.name)
+) { sessionManager, _ ->
+    QuotaViewModel(sessionManager, objectTuple, quotaType)
 }
 
 @Composable
