@@ -265,7 +265,7 @@ easylauncher {
 
 compose.desktop {
     application {
-        mainClass = "com.storyteller_f.a.app.compose_app.MainKt"
+        mainClass = "com.storyteller_f.a.app.compose_app.JvmMainKt"
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
