@@ -4,6 +4,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.setupKmpLogger
+import io.github.aakira.napier.Napier
 import java.awt.BorderLayout
 import java.awt.Button
 import java.awt.Dialog

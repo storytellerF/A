@@ -6,6 +6,7 @@ import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.cloud.core.service.FileResponse
 import com.storyteller_f.a.cloud.core.service.PathResponse
 import com.storyteller_f.a.cloud.server.ServerConfig
+import com.storyteller_f.route4k.ktor.server.handleCaughtException
 import com.storyteller_f.shared.type.PrimaryKey
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -30,6 +31,21 @@ inline fun <reified R : Any> RoutingContext.usePrincipal(
         block(uid)
     } else {
         Result.failure(UnauthorizedException())
+    }
+}
+
+suspend inline fun <reified R : Any> RoutingContext.callRespond(
+    block: () -> Result<R?>?,
+) {
+    try {
+        val result = block()
+        if (result == null) {
+            call.respond(HttpStatusCode.NotFound)
+            return
+        }
+        handleResult(result)
+    } catch (e: Exception) {
+        handleCaughtException(e)
     }
 }
 
