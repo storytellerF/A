@@ -60,10 +60,11 @@ import com.storyteller_f.a.app.compose_app.utils.createCustomDataStoreManager
 import com.storyteller_f.a.app.core.common.LocalClient
 import com.storyteller_f.a.app.core.components.CustomGlobalDialogController
 import com.storyteller_f.a.app.core.components.CustomGlobalTask
+import com.storyteller_f.a.app.core.components.GlobalTaskContext
 import com.storyteller_f.a.app.core.components.GlobalDialog
 import com.storyteller_f.a.app.core.components.GlobalDialogContext
 import com.storyteller_f.a.app.core.components.GlobalDialogController
-import com.storyteller_f.a.app.core.components.LocalGlobalTask
+import com.storyteller_f.a.app.core.components.GlobalTask
 import com.storyteller_f.a.app.core.components.LocalToaster
 import com.storyteller_f.a.app.core.components.Sonner
 import com.storyteller_f.a.app.core.utils.SavedSession
@@ -131,11 +132,11 @@ interface ClientFileProvider {
 
     companion object {
         val EMPTY = object : ClientFileProvider {
-            override suspend fun getDownloader(): Downloader? {
+            override suspend fun getDownloader(): Downloader {
                 TODO("Not yet implemented")
             }
 
-            override suspend fun getUploader(): Uploader? {
+            override suspend fun getUploader(): Uploader {
                 TODO("Not yet implemented")
             }
         }
@@ -148,6 +149,10 @@ val LocalAppNavFactory = compositionLocalOf {
 
 val LocalSessionManager = compositionLocalOf {
     CustomUserSessionManager.EMPTY
+}
+
+val LocalUserInfo = compositionLocalOf<UserInfo?> {
+    null
 }
 
 val LocalAccountSwitcher = compositionLocalOf {
@@ -166,6 +171,10 @@ typealias AppGlobalDialogController = GlobalDialogController<GlobalDialogContext
 
 val LocalGlobalDialog = compositionLocalOf<AppGlobalDialogController> {
     error("LocalGlobalDialog must be provided")
+}
+
+val LocalGlobalTask = compositionLocalOf<GlobalTask<CustomUserSessionManager>> {
+    error("LocalGlobalTask must be provided")
 }
 
 @Serializable
@@ -284,6 +293,7 @@ fun CommonEntry(content: @Composable () -> Unit) {
         val uiViewModel = LocalUiViewModel.current
         val instance by uiViewModel.instance.collectAsState()
         val currentUserSessionManager = instance.sessionManager
+        val user by currentUserSessionManager.model.userHandler.data.collectAsState()
 
         val toasterState = rememberToasterState()
         Toaster(toasterState, alignment = Alignment.TopCenter)
@@ -293,7 +303,8 @@ fun CommonEntry(content: @Composable () -> Unit) {
             LocalClient provides currentUserSessionManager.client,
             LocalToaster provides Sonner(toasterState),
             LocalGlobalDialog provides instance.controller,
-            LocalGlobalTask provides instance.task
+            LocalGlobalTask provides instance.task,
+            LocalUserInfo provides user
         ) {
             ProvideFontIcon {
                 val dataStoreManager = createCustomDataStoreManager()
@@ -311,7 +322,6 @@ fun CommonEntry(content: @Composable () -> Unit) {
 
 class AccountInstance(scope: CoroutineScope, name: String, wsServerUrl: String, httpUrl: String) {
     val events = MutableSharedFlow<Any>()
-    val task = CustomGlobalTask(scope, events)
     val sessionManager = createCustomUserSessionManager(
         name,
         buildWebSocketUrl(wsServerUrl),
@@ -323,6 +333,7 @@ class AccountInstance(scope: CoroutineScope, name: String, wsServerUrl: String, 
             events.emit(OnTopicCreated(frame.topicInfo))
         }
     }
+    val task = CustomGlobalTask(scope, GlobalTaskContext(events, sessionManager))
     val controller = CustomGlobalDialogController(GlobalDialogContext(events, sessionManager))
     val guestDatabase = getRoomModelStorage("guest")
     val database = sessionManager.model.state.distinctUntilChangedBy {
@@ -506,7 +517,7 @@ class CustomUserSessionManager(
                 TODO("Not yet implemented")
             }
 
-            override fun buildSession(alias: String): UserPass? {
+            override fun buildSession(alias: String): UserPass {
                 TODO("Not yet implemented")
             }
 

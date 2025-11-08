@@ -16,19 +16,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.storyteller_f.a.app.compose_app.LocalSessionManager
+import com.storyteller_f.a.app.compose_app.CustomUserSessionManager
+import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.app.compose_app.common.OnAddReaction
 import com.storyteller_f.a.app.compose_app.common.OnRemoveReaction
 import com.storyteller_f.a.app.compose_app.components.BaseSheet
 import com.storyteller_f.a.app.compose_app.components.SheetContainer
-import com.storyteller_f.a.app.core.components.LocalGlobalTask
+import com.storyteller_f.a.app.compose_app.LocalGlobalTask
+import com.storyteller_f.a.app.core.components.GlobalTask
+import com.storyteller_f.a.app.core.components.emitEvent
 import com.storyteller_f.a.app.core.components.use
-import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.addReaction
 import com.storyteller_f.a.client.core.deleteReaction
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.TopicInfo
-import kotlinx.coroutines.flow.MutableSharedFlow
 import org.kodein.emoji.Emoji
 import org.kodein.emoji.list
 
@@ -117,14 +118,13 @@ private fun EmojiItem(
     emoji: Emoji,
     hideSheet: () -> Unit,
 ) {
-    val sessionManager = LocalSessionManager.current
     val globalTask = LocalGlobalTask.current
     val emojiText = emoji.details.string
     Box(modifier = Modifier.size(emojiSize).clickable {
         hideSheet()
-        globalTask.use("${topic.id} $emojiText") { state, bus ->
+        globalTask.use("${topic.id} $emojiText") { state ->
             state.use {
-                addReaction(topic, emojiText, bus, sessionManager)
+                addReaction(topic, emojiText)
             }
         }
     }, contentAlignment = Alignment.Center) {
@@ -132,11 +132,9 @@ private fun EmojiItem(
     }
 }
 
-suspend fun addReaction(
+suspend fun GlobalTask<CustomUserSessionManager>.addReaction(
     topic: TopicInfo,
     emojiText: String,
-    bus: MutableSharedFlow<Any>,
-    sessionManager: UserSessionManager,
 ): Result<ReactionInfo> {
     val existing = topic.extension?.reactions?.firstOrNull {
         it.emoji == emojiText
@@ -148,26 +146,26 @@ suspend fun addReaction(
         true,
         Long.MAX_VALUE
     )
-    bus.emit(OnAddReaction(fakeInfo, topic))
-    return sessionManager.addReaction(topic.id, emojiText).onSuccess {
-        bus.emit(OnAddReaction(it, topic))
+    emitEvent(OnAddReaction(fakeInfo, topic))
+    return request {
+        addReaction(topic.id, emojiText)
+    }.onSuccess {
+        emitEvent(OnAddReaction(it, topic))
     }.onFailure {
-        bus.emit(OnRemoveReaction(fakeInfo.copy(count = fakeInfo.count - 1), topic))
+        emitEvent(OnRemoveReaction(fakeInfo.copy(count = fakeInfo.count - 1), topic))
     }
 }
 
-suspend fun deleteReaction(
+suspend fun GlobalTask<CustomUserSessionManager>.deleteReaction(
     topic: TopicInfo,
     emojiText: String,
     existing: ReactionInfo,
-    bus: MutableSharedFlow<Any>,
-    sessionManager: UserSessionManager,
 ): Result<ReactionInfo> {
     val fakeInfo = existing.copy(count = existing.count - 1)
-    bus.emit(OnRemoveReaction(fakeInfo, topic))
-    return sessionManager.deleteReaction(emojiText, topic.id).onSuccess {
-        bus.emit(OnRemoveReaction(it, topic))
+    emitEvent(OnRemoveReaction(fakeInfo, topic))
+    return request { deleteReaction(emojiText, topic.id) }.onSuccess {
+        emitEvent(OnRemoveReaction(it, topic))
     }.onFailure {
-        bus.emit(OnRemoveReaction(existing, topic))
+        emitEvent(OnRemoveReaction(existing, topic))
     }
 }

@@ -14,6 +14,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
+import com.storyteller_f.a.app.compose_app.LocalUserInfo
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.common.createMemberSearchInCommunityViewModel
 import com.storyteller_f.a.app.compose_app.common.createMemberSearchViewModel
@@ -154,8 +155,7 @@ private fun CustomSearchBarInternal(
 
 @Composable
 private fun SelfIcon(onClickCreate: () -> Unit) {
-    val userSessionManager = LocalSessionManager.current
-    val myInfo by userSessionManager.model.userHandler.data.collectAsState()
+    val myInfo = LocalUserInfo.current
     val userOverviewViewModel = getUserOverviewViewModel()
     Box(modifier = Modifier.testTag("me")) {
         SelfUserIconWithDialog(myInfo, overviewHandler = userOverviewViewModel.handler, onClickCreate = onClickCreate)

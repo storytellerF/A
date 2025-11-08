@@ -1,6 +1,5 @@
 package com.storyteller_f.a.app.core.components
 
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import com.storyteller_f.a.client.core.LoadingState
@@ -14,36 +13,29 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-interface GlobalTask {
+interface GlobalTask<out C> {
     val stateMap: SnapshotStateMap<String, LoadingState?>
+
+    val context: GlobalTaskContext<C>
 
     fun use(
         key: String,
-        block: suspend (MutableStateFlow<LoadingState?>, MutableSharedFlow<Any>) -> Unit
+        block: suspend GlobalTask<C>.(MutableStateFlow<LoadingState?>) -> Unit
     )
 
-    companion object {
-        val EMPTY = object : GlobalTask {
-            override val stateMap: SnapshotStateMap<String, LoadingState?>
-                get() = TODO("Not yet implemented")
-
-            override fun use(
-                key: String,
-                block: suspend (MutableStateFlow<LoadingState?>, MutableSharedFlow<Any>) -> Unit
-            ) {
-                TODO("Not yet implemented")
-            }
-        }
-    }
+    companion object
 }
 
-class CustomGlobalTask(val scope: CoroutineScope, val events: MutableSharedFlow<Any>) : GlobalTask {
+class CustomGlobalTask<C>(
+    val scope: CoroutineScope,
+    override val context: GlobalTaskContext<C>
+) : GlobalTask<C> {
     val mutex = Mutex()
     override val stateMap = mutableStateMapOf<String, LoadingState?>()
 
     override fun use(
         key: String,
-        block: suspend (MutableStateFlow<LoadingState?>, MutableSharedFlow<Any>) -> Unit
+        block: suspend GlobalTask<C>.(MutableStateFlow<LoadingState?>) -> Unit
     ) {
         scope.launch {
             useInternal(key, block)
@@ -52,14 +44,14 @@ class CustomGlobalTask(val scope: CoroutineScope, val events: MutableSharedFlow<
 
     private suspend fun useInternal(
         key: String,
-        block: suspend (MutableStateFlow<LoadingState?>, MutableSharedFlow<Any>) -> Unit
+        block: suspend GlobalTask<C>.(MutableStateFlow<LoadingState?>) -> Unit
     ) {
         val newFlow = mutex.withLock {
             if (stateMap.contains(key)) {
                 null
             } else {
                 val flow = MutableStateFlow<LoadingState?>(null)
-                stateMap.put(key, null)
+                stateMap[key] = null
                 flow
             }
         }
@@ -69,22 +61,29 @@ class CustomGlobalTask(val scope: CoroutineScope, val events: MutableSharedFlow<
             }
             return
         }
-        coroutineScope {
-            val job = launch {
-                newFlow.collectLatest {
-                    stateMap[key] = it
+        try {
+            coroutineScope {
+                val job = launch {
+                    newFlow.collectLatest {
+                        stateMap[key] = it
+                    }
+                }
+                try {
+                    block.invoke(this@CustomGlobalTask, newFlow)
+                } catch (e: Exception) {
+                    Napier.e(e) {
+                        "global task $key failed"
+                    }
+                } finally {
+                    job.cancel()
                 }
             }
-            try {
-                block(newFlow, events)
-            } catch (_: Exception) {
-            } finally {
-                job.cancel()
-                mutex.withLock {
-                    stateMap.remove(key)
-                }
+        } finally {
+            mutex.withLock {
+                stateMap.remove(key)
             }
         }
+
     }
 }
 
@@ -93,6 +92,23 @@ suspend inline fun <T> MutableStateFlow<LoadingState?>.use(block: suspend () -> 
     return block()
 }
 
-val LocalGlobalTask = compositionLocalOf {
-    GlobalTask.EMPTY
+class GlobalTaskContext<out C>(val events: MutableSharedFlow<Any>, val sessionManager: C) {
+    suspend fun emitEvent(any: Any) {
+        events.emit(any)
+    }
+
+    suspend fun <T> request(block: suspend C.() -> Result<T>): Result<T> {
+        return block(sessionManager)
+    }
+}
+
+/**
+ * 便捷方法：从 GlobalTask 触发事件或发起请求（与 GlobalDialogController 的扩展一致）。
+ */
+suspend inline fun <T, R> GlobalTask<T>.request(noinline block: suspend T.() -> Result<R>): Result<R> {
+    return context.request(block)
+}
+
+suspend inline fun <T> GlobalTask<T>.emitEvent(event: Any) {
+    context.emitEvent(event)
 }

@@ -22,6 +22,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -33,24 +34,24 @@ import com.storyteller_f.a.app.core.PanelConfig
 import com.storyteller_f.a.app.core.common.LocalClient
 import com.storyteller_f.a.app.core.components.CenterBox
 import com.storyteller_f.a.app.core.components.CustomGlobalDialogController
+import com.storyteller_f.a.app.core.components.CustomGlobalTask
 import com.storyteller_f.a.app.core.components.GlobalDialog
 import com.storyteller_f.a.app.core.components.GlobalDialogContext
 import com.storyteller_f.a.app.core.components.GlobalDialogController
 import com.storyteller_f.a.app.core.components.GlobalDialogState
+import com.storyteller_f.a.app.core.components.GlobalTask
+import com.storyteller_f.a.app.core.components.GlobalTaskContext
 import com.storyteller_f.a.app.core.components.PrivateKeyInput
 import com.storyteller_f.a.app.core.components.SignInButton
 import com.storyteller_f.a.app.core.components.request
-import com.storyteller_f.a.app.core.utils.SavedSession
 import com.storyteller_f.a.app.core.utils.SessionHistoryManager
 import com.storyteller_f.a.app.core.utils.buildSessionHistoryFactory
 import com.storyteller_f.a.app.core.utils.createSettings
 import com.storyteller_f.a.app.core.utils.restoreFromStorage
 import com.storyteller_f.a.client.core.ClientSessionState
+import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.a.client.core.PanelSessionManager
 import com.storyteller_f.a.client.core.PanelSessionModel
-import com.storyteller_f.a.client.core.RawUserPassInfo
-import com.storyteller_f.a.client.core.SessionModel
-import com.storyteller_f.a.client.core.UserPass
 import com.storyteller_f.a.client.core.createPanelSessionManager
 import com.storyteller_f.a.client.core.defaultClientConfigureForPanel
 import com.storyteller_f.a.client.core.getClient
@@ -61,7 +62,6 @@ import com.storyteller_f.a.client.room.getRoomModelStorage
 import com.storyteller_f.a.panel.common.OnUserAdded
 import com.storyteller_f.a.panel.pages.AllUsersPage
 import com.storyteller_f.a.panel.pages.OverviewPage
-import com.storyteller_f.shared.model.PanelAccountInfo
 import com.storyteller_f.shared.replaceCrlf
 import com.storyteller_f.storage.UserCollection
 import io.github.vinceglb.filekit.FileKit
@@ -74,8 +74,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.map
@@ -129,6 +129,23 @@ val LocalPanelGlobalDialog = compositionLocalOf<PanelGlobalDialogController> {
     }
 }
 
+val LocalPanelGlobalTask = compositionLocalOf<GlobalTask<CustomPanelSessionManager>> {
+    object : GlobalTask<CustomPanelSessionManager> {
+        override val stateMap: SnapshotStateMap<String, LoadingState?>
+            get() = TODO("Not yet implemented")
+        override val context: GlobalTaskContext<CustomPanelSessionManager>
+            get() = TODO("Not yet implemented")
+
+        override fun use(
+            key: String,
+            block: suspend GlobalTask<CustomPanelSessionManager>.(MutableStateFlow<LoadingState?>) -> Unit
+        ) {
+            TODO("Not yet implemented")
+        }
+
+    }
+}
+
 @Composable
 fun App() {
     val sessionManager = panelAccountInstance.sessionManager
@@ -136,11 +153,13 @@ fun App() {
     val navigator = rememberNavController()
     val nav = remember { Nav2PanelNav(navigator) }
     val controller = panelAccountInstance.controller
+    val task = panelAccountInstance.task
 
     CompositionLocalProvider(
         LocalClient provides client,
         LocalPanelNav provides nav,
         LocalPanelGlobalDialog provides controller,
+        LocalPanelGlobalTask provides task
     ) {
         MaterialTheme {
             NavHost(navigator, "overview") {
@@ -200,22 +219,25 @@ fun PanelLoginPage(back: () -> Unit) {
 
 @Composable
 private fun PanelInputPage(back: () -> Unit) {
-    val sessionManager = panelAccountInstance.sessionManager
+    val dialogController = LocalPanelGlobalDialog.current
     CenterBox {
         val scope = rememberCoroutineScope()
         var privateKey by remember { mutableStateOf("") }
         val startSign: () -> Unit = {
             scope.launch {
-                try {
-                    sessionManager.getPanelAccountInfo(
-                        privateKey,
-                        false
-                    ) {
-                        sessionManager.historyFactory.addSession(it)
+                dialogController.useResult {
+                    request {
+                        runCatching {
+                            getPanelAccountInfo(
+                                privateKey,
+                                false
+                            ) {
+                                historyFactory.addSession(it)
+                            }
+                        }
                     }
+                }.onSuccess {
                     back()
-                } catch (e: Exception) {
-                    e.printStackTrace()
                 }
             }
         }
@@ -301,6 +323,7 @@ class PanelAccountInstance(scope: CoroutineScope) {
     }
     val events = MutableSharedFlow<Any>()
     val controller = CustomGlobalDialogController(GlobalDialogContext(events, sessionManager))
+    val task = CustomGlobalTask(scope, GlobalTaskContext(events, sessionManager))
     val guestDatabase = getRoomModelStorage("guest")
     val database = sessionManager.model.state.distinctUntilChangedBy {
         it
@@ -342,46 +365,7 @@ class CustomPanelSessionManager(
     val proxy: PanelSessionManager,
     val historyFactory: SessionHistoryManager,
 ) : PanelSessionManager by proxy {
-    companion object {
-        val EMPTY = CustomPanelSessionManager(object : PanelSessionManager {
-            override val client: HttpClient
-                get() = TODO("Not yet implemented")
-            override val model: SessionModel<PanelAccountInfo>
-                get() = TODO("Not yet implemented")
-            override val isAlreadySignIn: StateFlow<Boolean>
-                get() = TODO("Not yet implemented")
-            override val address: StateFlow<String?>
-                get() = TODO("Not yet implemented")
-
-            override suspend fun updateAddress(clientSessionState: ClientSessionState) {
-                TODO("Not yet implemented")
-            }
-        }, object : SessionHistoryManager {
-            override fun getSavedSession(): SavedSession {
-                TODO("Not yet implemented")
-            }
-
-            override suspend fun addSession(session: RawUserPassInfo): UserPass {
-                TODO("Not yet implemented")
-            }
-
-            override fun buildSession(alias: String): UserPass {
-                TODO("Not yet implemented")
-            }
-
-            override fun removeSession(session: String) {
-                TODO("Not yet implemented")
-            }
-
-            override fun exitSession(alias: String) {
-                TODO("Not yet implemented")
-            }
-
-            override fun logSession(alias: String) {
-                TODO("Not yet implemented")
-            }
-        })
-    }
+    companion object
 }
 
 fun createCustomPanelSessionManager(
