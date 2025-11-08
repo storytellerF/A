@@ -83,7 +83,6 @@ class CustomGlobalTask<C>(
                 stateMap.remove(key)
             }
         }
-
     }
 }
 

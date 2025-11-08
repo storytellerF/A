@@ -90,18 +90,16 @@ fun TopicComposePage(
     data: TopicComposeData,
     backPrePage: () -> Unit
 ) {
+    val myInfo = LocalUserInfo.current ?: return
     val typography = getTypography(data)
     AppTheme(
         typography = typography ?: MaterialTheme.typography
     ) {
-        val myInfo = LocalUserInfo.current
-        myInfo?.let {
-            TopicComposeScaffold(
-                data,
-                data.getMediaTarget() ?: (it.id ob ObjectType.USER),
-                backPrePage,
-            )
-        }
+        TopicComposeScaffold(
+            data,
+            data.getMediaTarget() ?: (myInfo.id ob ObjectType.USER),
+            backPrePage,
+        )
     }
 }
 

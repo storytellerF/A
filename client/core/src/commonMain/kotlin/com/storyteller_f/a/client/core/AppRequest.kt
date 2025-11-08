@@ -18,6 +18,8 @@ import com.storyteller_f.a.api.TopicQuery
 import com.storyteller_f.route4k.ktor.client.invoke
 import com.storyteller_f.shared.buildEncryptedTopicContent
 import com.storyteller_f.shared.model.PosterSearch
+import com.storyteller_f.shared.model.QuotaInfo
+import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TitleSearchType
@@ -433,7 +435,6 @@ suspend fun UserSessionManager.upload(
         )
         onUpload { bytesSentTotal, contentLength ->
             onUpload(bytesSentTotal, contentLength)
-            println("Sent $bytesSentTotal bytes from $contentLength")
         }
     }
 }
@@ -609,3 +610,16 @@ suspend fun UserSessionManager.getSubscriptions(paginationQuery: PaginationQuery
 suspend fun UserSessionManager.getUserOverview() = serviceCatching {
     CustomApi.Users.overview()
 }
+suspend fun UserSessionManager.getQuotaInfo(
+    objectTuple: ObjectTuple,
+    quotaType: QuotaType = QuotaType.FILE
+): Result<QuotaInfo> =
+    serviceCatching {
+        CustomApi.Files.quota(
+            CustomApi.Files.QuotaQuery(
+                objectTuple.objectId,
+                objectTuple.objectType,
+                quotaType
+            )
+        )
+    }

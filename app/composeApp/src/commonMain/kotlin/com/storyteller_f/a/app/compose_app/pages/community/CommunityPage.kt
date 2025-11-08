@@ -473,6 +473,11 @@ private fun FontView(info: FileInfo) {
 @Composable
 private fun DownloadStatusView(downloadViewModel: DownloadViewModel) {
     val data by downloadViewModel.data.collectAsState(null)
+    DownloadStatusViewInternal(data)
+}
+
+@Composable
+fun DownloadStatusViewInternal(data: DownloadInfo?) {
     val downloadStatus = data?.status
     when {
         data == null ||
@@ -607,13 +612,13 @@ private fun DownloadInfoPage(
     sheetState: SheetState,
     hideSheet: () -> Unit,
 ) {
+    val downloadViewModel = getDownloadViewModel(fileInfo.id)
     BaseSheet(showSheet, sheetState, hideSheet) {
         SheetContainer {
             Column(
                 modifier = Modifier.heightIn(200.dp, 600.dp).padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                val downloadViewModel = getDownloadViewModel(fileInfo.id)
                 DownloadInfoPageInternal(downloadViewModel, fileInfo)
             }
         }
@@ -635,11 +640,14 @@ private fun DownloadInfoPageInternal(
             LinearProgressIndicator(progress = {
                 it.progress.toFloat() / it.total
             })
-            Text("${(it.progress.toFloat() * 100 / it.total).roundToDecimalPlaces(2)} %")
+            Text(it.getPercent())
         }
     }
     DownloadInfoTable(downloadInfo, fileInfo)
 }
+
+fun DownloadInfo.getPercent(): String =
+    "${(progress.toFloat() * 100 / total).roundToDecimalPlaces(2)} %"
 
 @Composable
 private fun DownloadInfoTitle(
@@ -666,7 +674,7 @@ private fun DownloadInfoTitle(
 }
 
 @Composable
-private fun DownloadInfoTable(
+fun DownloadInfoTable(
     downloadInfo: DownloadInfo?,
     fileInfo: FileInfo
 ) {

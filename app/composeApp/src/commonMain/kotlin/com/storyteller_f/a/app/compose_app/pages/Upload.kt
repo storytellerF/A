@@ -1,8 +1,10 @@
 package com.storyteller_f.a.app.compose_app.pages
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -25,6 +27,7 @@ import androidx.paging.compose.itemKey
 import com.storyteller_f.a.app.compose_app.CommonEntry
 import com.storyteller_f.a.app.compose_app.LocalUserInfo
 import com.storyteller_f.a.app.compose_app.common.createUploadViewModel
+import com.storyteller_f.a.app.compose_app.pages.file.UploadIcon
 import com.storyteller_f.a.app.compose_app.utils.ClientFile
 import com.storyteller_f.a.app.core.components.CenterBox
 import com.storyteller_f.a.app.core.components.CustomAlertDialog
@@ -34,6 +37,7 @@ import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.storage.UploadInfo
 import com.storyteller_f.storage.UploadStatus
 import kotlinx.collections.immutable.ImmutableList
+import nl.jacobras.humanreadable.HumanReadable
 
 @Stable
 class UploadSession(val name: String, val list: ImmutableList<ClientFile>) {
@@ -79,15 +83,19 @@ fun UploadInternal(my: UserInfo?) {
 }
 
 @Composable
-private fun UploadItem(
-    file: UploadInfo?,
-) {
+fun UploadItem(file: UploadInfo?) {
     file ?: return
     val globalDialogController = rememberAlertDialogController()
-    Row(modifier = Modifier.padding(20.dp)) {
+    Row(modifier = Modifier.padding(20.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        UploadIcon(contentType = file.contentType)
+
         Column(modifier = Modifier.weight(1f)) {
-            Text(file.path)
-            Text(file.message)
+            Text(file.name)
+            Row {
+                Text(HumanReadable.fileSize(file.total))
+                Spacer(modifier = Modifier.weight(1f))
+                Text(file.status.name)
+            }
             LinearProgressIndicator(
                 progress = { file.progress.toFloat() / file.total },
             )

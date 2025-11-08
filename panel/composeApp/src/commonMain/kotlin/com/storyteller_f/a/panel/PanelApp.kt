@@ -142,7 +142,6 @@ val LocalPanelGlobalTask = compositionLocalOf<GlobalTask<CustomPanelSessionManag
         ) {
             TODO("Not yet implemented")
         }
-
     }
 }
 

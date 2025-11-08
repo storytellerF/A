@@ -12,10 +12,10 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
-import com.storyteller_f.a.app.compose_app.pages.topic.addReaction
-import com.storyteller_f.a.app.compose_app.pages.topic.deleteReaction
 import com.storyteller_f.a.app.compose_app.LocalGlobalTask
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
+import com.storyteller_f.a.app.compose_app.pages.topic.addReaction
+import com.storyteller_f.a.app.compose_app.pages.topic.deleteReaction
 import com.storyteller_f.a.app.core.components.use
 import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.shared.model.ReactionInfo

@@ -438,6 +438,15 @@ class DownloadInfoDocumentStorage(val kotbaseDocumentSource: KotbaseDocumentSour
         return kotbaseDocumentSource.getCollection<DownloadInfo>(collection.NAME)
             .getDocument(id)
     }
+
+    override fun observeData(): PagingSource<Int, DownloadInfo> {
+        return kotbaseDocumentSource.getCollection<DownloadInfo>(DownloadCollection.NAME)
+            .getSource {
+                orderBy {
+                    "_id".descending()
+                }
+            }
+    }
 }
 
 class DocumentModelStorage(source: KotbaseDocumentSource) : ModelStorage {

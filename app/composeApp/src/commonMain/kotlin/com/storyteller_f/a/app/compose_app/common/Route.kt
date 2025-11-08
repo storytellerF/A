@@ -29,6 +29,7 @@ import com.storyteller_f.a.app.compose_app.pages.PreferencePage
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityComposePage
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityPage
 import com.storyteller_f.a.app.compose_app.pages.community.CommunitySettingPage
+import com.storyteller_f.a.app.compose_app.pages.file.FileExplorerPage
 import com.storyteller_f.a.app.compose_app.pages.file.FileViewPage
 import com.storyteller_f.a.app.compose_app.pages.room.RoomComposePage
 import com.storyteller_f.a.app.compose_app.pages.room.RoomPage
@@ -181,6 +182,9 @@ data object FavoriteScreen
 @Serializable
 data object SubscriptionScreen
 
+@Serializable
+data object FileExplorerScreen
+
 inline fun <reified T : Any> AppNav.toRoute(): T? {
     if (!hasRoute(T::class)) return null
     return currentDestination?.toRoute<T>()
@@ -249,6 +253,8 @@ interface AppNav {
     fun gotoFavoritePage()
 
     fun gotoSubscriptionPage()
+
+    fun gotoFileExplorer()
 }
 
 interface AppNavFactory {
@@ -365,6 +371,10 @@ fun newAppNav(navigator: NavHostController, scope: CoroutineScope) = object : Ap
     override fun gotoSubscriptionPage() {
         navigator.navigate(SubscriptionScreen)
     }
+
+    override fun gotoFileExplorer() {
+        navigator.navigate(FileExplorerScreen)
+    }
 }
 
 @OptIn(ExperimentalResourceApi::class)
@@ -447,6 +457,9 @@ private fun NavGraphBuilder.buildMainScreen() {
     }
     composable<SubscriptionScreen> {
         UserSubscriptionPage()
+    }
+    composable<FileExplorerScreen> {
+        FileExplorerPage()
     }
 }
 
