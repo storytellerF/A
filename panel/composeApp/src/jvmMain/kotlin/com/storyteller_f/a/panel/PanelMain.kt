@@ -16,6 +16,9 @@ import kotlin.system.exitProcess
 fun main() {
     setupKmpLogger()
     Thread.setDefaultUncaughtExceptionHandler { _, e ->
+        Napier.e(e) {
+            "uncaught exception"
+        }
         Dialog(Frame(), e.message ?: "Error").apply {
             layout = BorderLayout()
             val label = TextArea(e.stackTraceToString())

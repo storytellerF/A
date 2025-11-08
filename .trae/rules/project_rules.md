@@ -9,6 +9,7 @@
 - 覆盖率：Kover 可按需生成报告
 - 环境/密钥：app/composeApp 通过 BuildKonfig 从 {flavor}.env 注入；务必传入 -Pserver.flavor 与 -Pserver.buildType
 - 提交信息：使用动词开头的英文/中文短语，标注模块与范围（例如：client/core: add getAllUsers request）
+- 不能用中文做方法名
 
 ## 模块职责概览
 - **api**: 定义 REST API 端点、查询/路径模型；包含管理员 AdminApi（/admin/*）
