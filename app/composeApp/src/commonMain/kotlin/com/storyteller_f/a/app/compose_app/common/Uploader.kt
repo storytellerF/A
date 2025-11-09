@@ -2,7 +2,7 @@ package com.storyteller_f.a.app.compose_app.common
 
 import com.storyteller_f.a.app.compose_app.CustomUserSessionManager
 import com.storyteller_f.a.app.compose_app.UIViewModel
-import com.storyteller_f.a.app.compose_app.pages.getUploadDataFromClipFile
+import com.storyteller_f.a.app.compose_app.pages.file.getUploadDataFromClipFile
 import com.storyteller_f.a.app.compose_app.utils.ClientFile
 import com.storyteller_f.a.app.compose_app.utils.getClientFile
 import com.storyteller_f.a.client.core.upload
