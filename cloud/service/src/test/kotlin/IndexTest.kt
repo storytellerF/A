@@ -25,22 +25,24 @@ class IndexTest {
 
 fun testIndex(block: suspend (TopicSearchService) -> Unit) {
     runBlocking {
-        ElasticsearchContainer(
-            "docker.elastic.co/elasticsearch/elasticsearch:8.17.0"
-        )
-            // disable SSL
-            .withEnv("xpack.security.transport.ssl.enabled", "false")
-            .withEnv("xpack.security.http.ssl.enabled", "false").use { elasticClient ->
-                elasticClient.start()
-                val connection = ElasticConnection(
-                    "http://${elasticClient.httpHostAddress}",
-                    "",
-                    "elastic",
-                    "changeme"
-                )
-                val service = ElasticTopicSearchService(connection)
-                block(service)
-            }
+        if (System.getenv("ENABLE_TEST_CONTAINER") == "true") {
+            ElasticsearchContainer(
+                "docker.elastic.co/elasticsearch/elasticsearch:8.17.0"
+            )
+                // disable SSL
+                .withEnv("xpack.security.transport.ssl.enabled", "false")
+                .withEnv("xpack.security.http.ssl.enabled", "false").use { elasticClient ->
+                    elasticClient.start()
+                    val connection = ElasticConnection(
+                        "http://${elasticClient.httpHostAddress}",
+                        "",
+                        "elastic",
+                        "changeme"
+                    )
+                    val service = ElasticTopicSearchService(connection)
+                    block(service)
+                }
+        }
         block(
             buildLuceneSearchService(MergedEnv(listOf())) { path, isInMemory ->
                 LuceneTopicSearchService(path, isInMemory)
