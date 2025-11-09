@@ -74,7 +74,7 @@ class ReCaptchaActivity : ComponentActivity() {
             prefs.edit().putString("recaptcha_cookies_key", foundCookies).apply()
 
             // give cookies to Downloader class
-            DownloaderImpl.setCookie(RECAPTCHA_COOKIES_KEY, foundCookies)
+            NewPipeDownloaderImpl.setCookie(RECAPTCHA_COOKIES_KEY, foundCookies)
             setResult(RESULT_OK)
         }
 
