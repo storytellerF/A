@@ -16,19 +16,15 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AttachFile
-import androidx.compose.material.icons.filled.AudioFile
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Folder
-import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.NotStarted
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.VideoFile
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -73,19 +69,19 @@ import com.storyteller_f.a.app.compose_app.common.getDownloadViewModel
 import com.storyteller_f.a.app.compose_app.common.getQuotaViewModel
 import com.storyteller_f.a.app.compose_app.common.getUploadViewModel
 import com.storyteller_f.a.app.compose_app.components.BaseSheet
+import com.storyteller_f.a.app.compose_app.components.CustomBottomNav
+import com.storyteller_f.a.app.compose_app.components.CustomRailNav
+import com.storyteller_f.a.app.compose_app.components.FileCell
+import com.storyteller_f.a.app.compose_app.components.FileIcon
+import com.storyteller_f.a.app.compose_app.components.NavRoute
 import com.storyteller_f.a.app.compose_app.components.SheetContainer
-import com.storyteller_f.a.app.compose_app.pages.CustomBottomNav
-import com.storyteller_f.a.app.compose_app.pages.CustomRailNav
-import com.storyteller_f.a.app.compose_app.pages.NavRoute
-import com.storyteller_f.a.app.compose_app.pages.topic.FileCell
-import com.storyteller_f.a.app.compose_app.pages.topic.FileIcon
+import com.storyteller_f.a.app.compose_app.components.SimpleMessageWithButton
+import com.storyteller_f.a.app.compose_app.components.UploadIcon
 import com.storyteller_f.a.app.compose_app.pages.topic.PlatformClientFile
 import com.storyteller_f.a.app.compose_app.utils.ClientFile
-import com.storyteller_f.a.app.core.components.CustomAlertDialog
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.bottomAppending
 import com.storyteller_f.a.app.core.components.pagingItems
-import com.storyteller_f.a.app.core.components.rememberAlertDialogController
 import com.storyteller_f.a.app.core.components.topPrepend
 import com.storyteller_f.a.client.core.UploadData
 import com.storyteller_f.shared.model.FileInfo
@@ -348,24 +344,6 @@ private fun DownloadRecordPage() {
                 HorizontalDivider()
             }
         }
-    }
-}
-
-@Composable
-fun UploadIcon(contentType: String) {
-    val modifier = Modifier.padding(4.dp)
-    when {
-        contentType.startsWith("audio") -> Icon(
-            Icons.Default.AudioFile,
-            contentDescription = "audio"
-        )
-
-        contentType.startsWith("video") -> Icon(
-            Icons.Default.VideoFile,
-            contentDescription = "video"
-        )
-
-        else -> Icon(Icons.Default.AttachFile, contentDescription = "file", modifier = modifier)
     }
 }
 
@@ -907,23 +885,6 @@ private fun UploadInfoTable(uploadInfo: UploadInfo?) {
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun SimpleMessageWithButton(string: String, key: String) {
-    val alterDialogController = rememberAlertDialogController()
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(string, maxLines = 1, modifier = Modifier.weight(1f))
-        IconButton({
-            alterDialogController.showMessage(key, string)
-        }) {
-            Icon(Icons.Default.Fullscreen, "fullscreen")
-        }
-    }
-    CustomAlertDialog(alterDialogController, {
-        alterDialogController.close()
-    }) {
     }
 }
 

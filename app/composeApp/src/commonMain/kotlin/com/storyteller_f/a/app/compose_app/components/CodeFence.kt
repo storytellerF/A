@@ -18,11 +18,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil3.PlatformContext
 import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.compose.rememberAsyncImagePainter
-import coil3.network.ktor3.KtorNetworkFetcherFactory
 import coil3.request.ImageRequest
 import com.eygraber.uri.Uri
 import com.mikepenz.markdown.compose.components.MarkdownComponentModel
@@ -31,6 +29,7 @@ import com.mikepenz.markdown.model.ImageData
 import com.mikepenz.markdown.model.ImageTransformer
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.pages.topic.TopicRoute
+import com.storyteller_f.a.app.compose_app.utils.imageRequest
 import com.storyteller_f.a.app.core.common.LocalClient
 import com.storyteller_f.a.app.core.utils.safeSink
 import com.storyteller_f.shared.commonJson
@@ -42,7 +41,6 @@ import com.storyteller_f.shared.utils.readCodeFence
 import dev.snipme.highlights.Highlights
 import dev.snipme.highlights.model.SyntaxThemes
 import io.github.aakira.napier.Napier
-import io.ktor.client.HttpClient
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -257,14 +255,6 @@ fun imageRequestInMarkdown(
     val context = LocalPlatformContext.current
     return imageRequest(context, client, info).build()
 }
-
-fun imageRequest(
-    context: PlatformContext,
-    client: HttpClient,
-    info: FileInfo?
-) = ImageRequest.Builder(context)
-    .fetcherFactory(KtorNetworkFetcherFactory(client))
-    .data(info?.url)
 
 @Composable
 fun getSize(info: FileInfo?): Pair<Float, Float>? {

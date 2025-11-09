@@ -18,11 +18,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import coil3.PlatformContext
-import coil3.SingletonImageLoader
 import coil3.compose.LocalPlatformContext
 import com.attafitamim.krop.core.crop.AspectRatio
 import com.attafitamim.krop.core.crop.CropError
@@ -40,9 +38,9 @@ import com.storyteller_f.a.app.compose_app.LocalUserInfo
 import com.storyteller_f.a.app.compose_app.common.OnUserUpdated
 import com.storyteller_f.a.app.compose_app.components.SettingOptionResettableView
 import com.storyteller_f.a.app.compose_app.components.SettingOptionView
-import com.storyteller_f.a.app.compose_app.components.imageRequest
 import com.storyteller_f.a.app.compose_app.pages.topic.FilePicker
 import com.storyteller_f.a.app.compose_app.pages.topic.uploadPath
+import com.storyteller_f.a.app.compose_app.utils.getRemoteImageBitmap
 import com.storyteller_f.a.app.core.components.CustomAlertDialog
 import com.storyteller_f.a.app.core.components.CustomAlertDialogController
 import com.storyteller_f.a.app.core.components.LocalToaster
@@ -50,10 +48,7 @@ import com.storyteller_f.a.app.core.components.emitEvent
 import com.storyteller_f.a.app.core.components.rememberAlertDialogController
 import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.app.core.utils.ImageFormat
-import com.storyteller_f.a.app.core.utils.androidAllowHardware
-import com.storyteller_f.a.app.core.utils.coilImageToImageBitmap
 import com.storyteller_f.a.app.core.utils.saveImageBitmap
-import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.updateUserInfo
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.FileInfo
@@ -382,18 +377,4 @@ fun InputDialog(show: Boolean, init: String, dismiss: () -> Unit, onConfirm: (St
             })
         })
     }
-}
-
-suspend fun getRemoteImageBitmap(
-    sessionManager: UserSessionManager,
-    context: PlatformContext,
-    info: FileInfo
-): Result<ImageBitmap>? {
-    val imageRequest = imageRequest(context, sessionManager.client, info)
-        .androidAllowHardware(false)
-        .build()
-    val image = SingletonImageLoader.get(context)
-        .execute(imageRequest)
-        .image
-    return image?.coilImageToImageBitmap()
 }

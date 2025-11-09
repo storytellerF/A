@@ -91,7 +91,7 @@ fun TopicComposePage(
     backPrePage: () -> Unit
 ) {
     val myInfo = LocalUserInfo.current ?: return
-    val typography = getTypography(data)
+    val typography = getCommunityTypography(data)
     AppTheme(
         typography = typography ?: MaterialTheme.typography
     ) {
@@ -104,7 +104,7 @@ fun TopicComposePage(
 }
 
 @Composable
-private fun getTypography(data: TopicComposeData): Typography? =
+private fun getCommunityTypography(data: TopicComposeData): Typography? =
     (data as? TopicComposeData.PublicRoom)?.communityId?.let {
         getCommunityFont(it)
     }

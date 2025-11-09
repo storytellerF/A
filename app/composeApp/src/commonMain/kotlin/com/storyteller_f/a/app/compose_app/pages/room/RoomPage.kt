@@ -92,11 +92,11 @@ import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
 import com.storyteller_f.a.app.compose_app.pages.topic.FilePicker
 import com.storyteller_f.a.app.compose_app.pages.topic.insertContent
 import com.storyteller_f.a.app.compose_app.pages.user.ButtonBadgeSuffix
-import com.storyteller_f.a.app.compose_app.pages.user.getRemoteImageBitmap
 import com.storyteller_f.a.app.compose_app.permission_denied
 import com.storyteller_f.a.app.compose_app.private_room_pub_key_loading
 import com.storyteller_f.a.app.compose_app.send
 import com.storyteller_f.a.app.compose_app.success
+import com.storyteller_f.a.app.compose_app.utils.getRemoteImageBitmap
 import com.storyteller_f.a.app.compose_app.utils.notifyNotification
 import com.storyteller_f.a.app.compose_app.utils.startCall
 import com.storyteller_f.a.app.core.components.CustomAlertDialog
