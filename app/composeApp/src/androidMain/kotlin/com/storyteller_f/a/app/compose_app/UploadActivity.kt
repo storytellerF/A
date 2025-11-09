@@ -11,7 +11,6 @@ import androidx.activity.compose.setContent
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
-import com.storyteller_f.a.app.compose_app.pages.UploadPage
 import com.storyteller_f.a.app.compose_app.utils.ClientFile
 import io.ktor.http.ContentType
 import kotlinx.collections.immutable.ImmutableList

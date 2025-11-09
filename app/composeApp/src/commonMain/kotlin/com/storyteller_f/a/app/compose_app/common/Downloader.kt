@@ -28,19 +28,26 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
+import kotlinx.io.files.SystemTemporaryDirectory
 import kotlin.use
 
 interface Downloader {
-    fun download(fileInfo: FileInfo, path: Path)
+    fun download(fileInfo: FileInfo)
 
-    fun resume(fileInfo: FileInfo)
+    fun resume(id: PrimaryKey)
 }
 
 class DownloaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIViewModel) :
     Downloader {
     val mutex = Mutex()
     val runningSet = mutableSetOf<PrimaryKey>()
-    override fun download(fileInfo: FileInfo, path: Path) {
+    override fun download(fileInfo: FileInfo) {
+        val path = Path(
+            SystemTemporaryDirectory,
+            "downloads",
+            fileInfo.id.toString(),
+            fileInfo.name
+        )
         Napier.i {
             "download $fileInfo to $path"
         }
@@ -53,26 +60,16 @@ class DownloaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIView
         }
     }
 
-    override fun resume(fileInfo: FileInfo) {
+    override fun resume(id: PrimaryKey) {
         Napier.i {
-            "resume download $fileInfo"
+            "resume download $id"
         }
         val instance = uiViewModel.instance.value
         val modelStorage = instance.database.value
         val userSession = instance.sessionManager
         lifecycleScope.launch {
-            resumeIfNeed(fileInfo, modelStorage, userSession)
+            download(userSession, modelStorage, id)
         }
-    }
-
-    private suspend fun resumeIfNeed(
-        fileInfo: FileInfo,
-        modelStorage: ModelStorage,
-        userSession: CustomUserSessionManager
-    ) {
-        val document =
-            modelStorage.download.getDocument(fileInfo.id) ?: return
-        download(userSession, modelStorage, fileInfo, Path(document.path))
     }
 
     private suspend fun downloadIfNeed(
@@ -97,32 +94,40 @@ class DownloaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIView
             } else if (document.status != DownloadStatus.NOT_DOWNLOADED) {
                 return
             }
-            download(userSession, modelStorage, fileInfo, path)
+            download(userSession, modelStorage, fileInfo.id)
         }
     }
 
     private suspend fun download(
         userSession: CustomUserSessionManager,
         modelStorage: ModelStorage,
-        fileInfo: FileInfo,
-        path: Path,
+        id: PrimaryKey,
     ) {
-        val id = fileInfo.id
         val downloadInfo =
             modelStorage.download.getDocument(id) ?: return
         if (downloadInfo.status == DownloadStatus.PROCESSED) return
+        val path = Path(downloadInfo.path)
         val isNeedDownload =
             if (downloadInfo.status == DownloadStatus.DOWNLOADED ||
                 downloadInfo.status == DownloadStatus.PROCESS_FAILED
             ) {
                 val isFileExists = SystemFileSystem.exists(path)
-                val isMediaSizeMatch = SystemFileSystem.metadataOrNull(path)?.size == fileInfo.size
+                val isMediaSizeMatch = SystemFileSystem.metadataOrNull(path)?.size == downloadInfo.total
                 !isFileExists || !isMediaSizeMatch
             } else {
                 true
             }
         if (isNeedDownload) {
-            if (downloadFile(downloadInfo, modelStorage, id, userSession, fileInfo, path)) return
+            if (downloadFile(
+                    downloadInfo,
+                    modelStorage,
+                    id,
+                    userSession,
+                    downloadInfo.fileInfo,
+                    path
+                )) {
+                return
+            }
         }
         if (path.toString().endsWith(".zip")) {
             if (extractFile(path, modelStorage, id)) return
@@ -169,7 +174,7 @@ class DownloaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIView
             }.getOrThrow()
         } catch (throwable: Exception) {
             Napier.e(throwable) {
-                "download failed ${fileInfo.fullName}"
+                "download failed ${fileInfo.name}"
             }
             updateDownloadInfo(modelStorage, id) {
                 it.copy(

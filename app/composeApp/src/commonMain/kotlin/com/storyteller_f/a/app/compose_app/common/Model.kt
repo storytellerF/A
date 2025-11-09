@@ -725,6 +725,13 @@ class UploadViewModel(
     }.flow.cachedIn(viewModelScope)
 }
 
+class UploadDetailViewModel(
+    modelStorage: ModelStorage,
+    pathHash: String,
+) : ViewModel() {
+    val data = modelStorage.upload.observeDatum(pathHash)
+}
+
 class DownloadListViewModel(
     modelStorage: ModelStorage,
 ) : PagingViewModel<DownloadInfo>() {

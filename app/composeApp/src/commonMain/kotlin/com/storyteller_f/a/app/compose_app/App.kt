@@ -49,6 +49,7 @@ import com.storyteller_f.a.app.compose_app.components.CustomVideoSize
 import com.storyteller_f.a.app.compose_app.components.RemoteMediaItem
 import com.storyteller_f.a.app.compose_app.components.globalPlayerState
 import com.storyteller_f.a.app.compose_app.components.rememberIsInPipMode
+import com.storyteller_f.a.app.compose_app.pages.file.FileExplorerPage
 import com.storyteller_f.a.app.compose_app.pages.file.FileViewPage
 import com.storyteller_f.a.app.compose_app.pages.room.RoomPage
 import com.storyteller_f.a.app.compose_app.pages.user.AccountSwitch
@@ -625,5 +626,12 @@ private fun createAppNavFactoryForBubble(): AppNavFactory = object : AppNavFacto
 
         override fun gotoSubscriptionPage() = Unit
         override fun gotoFileExplorer() = Unit
+    }
+}
+
+@Composable
+fun UploadPage() {
+    CommonEntry {
+        FileExplorerPage()
     }
 }

@@ -438,6 +438,13 @@ fun createUploadViewModel(myUid: PrimaryKey) =
     }
 
 @Composable
+fun getUploadViewModel(pathHash: String): UploadDetailViewModel = customViewModel(
+    listOf("upload-detail", pathHash)
+) { _, modelStorage ->
+    UploadDetailViewModel(modelStorage, pathHash)
+}
+
+@Composable
 fun getMarkdownMediasViewModel(
     input: String,
     objectTuple: ObjectTuple,

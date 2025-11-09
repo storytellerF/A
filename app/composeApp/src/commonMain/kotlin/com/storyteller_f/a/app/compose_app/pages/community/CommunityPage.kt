@@ -4,11 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
@@ -26,15 +24,12 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Title
 import androidx.compose.material.icons.filled.Topic
 import androidx.compose.material3.BasicAlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.Typography
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -53,7 +48,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -81,10 +75,8 @@ import com.storyteller_f.a.app.compose_app.common.createCommunityTopicsViewModel
 import com.storyteller_f.a.app.compose_app.common.createCommunityViewModel
 import com.storyteller_f.a.app.compose_app.common.getDownloadViewModel
 import com.storyteller_f.a.app.compose_app.common.hasRouteFlow
-import com.storyteller_f.a.app.compose_app.components.BaseSheet
 import com.storyteller_f.a.app.compose_app.components.ButtonNav
 import com.storyteller_f.a.app.compose_app.components.CommunityIcon
-import com.storyteller_f.a.app.compose_app.components.SheetContainer
 import com.storyteller_f.a.app.compose_app.components.TopicList
 import com.storyteller_f.a.app.compose_app.exit_community
 import com.storyteller_f.a.app.compose_app.join_community
@@ -92,6 +84,7 @@ import com.storyteller_f.a.app.compose_app.join_community_prompt
 import com.storyteller_f.a.app.compose_app.pages.CustomBottomNav
 import com.storyteller_f.a.app.compose_app.pages.CustomRailNav
 import com.storyteller_f.a.app.compose_app.pages.NavRoute
+import com.storyteller_f.a.app.compose_app.pages.file.DownloadInfoPage
 import com.storyteller_f.a.app.compose_app.pages.room.RoomList
 import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
@@ -117,14 +110,10 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.storage.DownloadInfo
 import com.storyteller_f.storage.DownloadStatus
 import dev.tclement.fonticons.FontIcon
-import io.github.windedge.table.DataTable
 import kotlinx.coroutines.launch
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemTemporaryDirectory
-import nl.jacobras.humanreadable.HumanReadable
 import org.jetbrains.compose.resources.stringResource
-import kotlin.math.pow
-import kotlin.math.round
 
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
 @Composable
@@ -173,10 +162,14 @@ fun getFontFamily(communityId: PrimaryKey): State<FontFamily?> {
     val downloadViewModel = getDownloadViewModel(fileInfo?.id)
     val provider = LocalClientFileProvider.current
     LaunchedEffect(fileInfo) {
-        val font = fileInfo
-        if (font != null) {
-            val path = Path(SystemTemporaryDirectory, "downloads", font.id.toString(), font.name)
-            provider.getDownloader()?.download(font, path)
+        if (fileInfo != null) {
+            val path = Path(
+                SystemTemporaryDirectory,
+                "downloads",
+                fileInfo.id.toString(),
+                fileInfo.name
+            )
+            provider.getDownloader()?.download(fileInfo)
         }
     }
     return downloadViewModel.fontFamily.collectAsState()
@@ -465,7 +458,7 @@ private fun FontView(info: FileInfo) {
         val downloadViewModel = getDownloadViewModel(info.id)
         DownloadStatusView(downloadViewModel)
     }
-    DownloadInfoPage(info, showSheet, sheetState) {
+    DownloadInfoPage(showSheet, sheetState, info.id) {
         showSheet = false
     }
 }
@@ -602,122 +595,6 @@ private fun CommunityMemberStatusButton(
             }
         }
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun DownloadInfoPage(
-    fileInfo: FileInfo,
-    showSheet: Boolean,
-    sheetState: SheetState,
-    hideSheet: () -> Unit,
-) {
-    val downloadViewModel = getDownloadViewModel(fileInfo.id)
-    BaseSheet(showSheet, sheetState, hideSheet) {
-        SheetContainer {
-            Column(
-                modifier = Modifier.heightIn(200.dp, 600.dp).padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                DownloadInfoPageInternal(downloadViewModel, fileInfo)
-            }
-        }
-    }
-}
-
-@Composable
-private fun DownloadInfoPageInternal(
-    downloadViewModel: DownloadViewModel,
-    fileInfo: FileInfo
-) {
-    val downloadInfo by downloadViewModel.data.collectAsState(null)
-    DownloadInfoTitle(fileInfo, downloadInfo)
-    downloadInfo?.let {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            LinearProgressIndicator(progress = {
-                it.progress.toFloat() / it.total
-            })
-            Text(it.getPercent())
-        }
-    }
-    DownloadInfoTable(downloadInfo, fileInfo)
-}
-
-fun DownloadInfo.getPercent(): String =
-    "${(progress.toFloat() * 100 / total).roundToDecimalPlaces(2)} %"
-
-@Composable
-private fun DownloadInfoTitle(
-    it: FileInfo,
-    data: DownloadInfo?,
-) {
-    val scope = rememberCoroutineScope()
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(20.dp)
-    ) {
-        val provider = LocalClientFileProvider.current
-        Text(it.name, modifier = Modifier.weight(1f))
-        if (data != null && data.status != DownloadStatus.PROCESSED) {
-            Button({
-                scope.launch {
-                    provider.getDownloader()?.resume(it)
-                }
-            }) {
-                Text("Retry")
-            }
-        }
-    }
-}
-
-@Composable
-fun DownloadInfoTable(
-    downloadInfo: DownloadInfo?,
-    fileInfo: FileInfo
-) {
-    val tableData = remember(downloadInfo, fileInfo) {
-        buildMap {
-            put("Path", downloadInfo?.path)
-            put("Size", HumanReadable.fileSize(fileInfo.size))
-            put("Status", downloadInfo?.status?.name)
-            if (downloadInfo?.status == DownloadStatus.DOWNLOAD_FAILED) {
-                put("Error", downloadInfo.message)
-            }
-            put("Message", downloadInfo?.message)
-            put("Url", fileInfo.url)
-        }
-    }
-    DataTable(
-        {
-            headerBackground {
-                Box(modifier = Modifier.background(color = Color.LightGray))
-            }
-            column { Text("Key") }
-            column { Text("Value") }
-        }
-    ) {
-        tableData.forEach { (key, value) ->
-            row(modifier = Modifier) {
-                cell {
-                    Text(key)
-                }
-                cell {
-                    value?.let {
-                        val scrollState = rememberScrollState()
-                        Text(it, maxLines = 1, modifier = Modifier.horizontalScroll(scrollState))
-                    }
-                }
-            }
-        }
-    }
-}
-
-fun Float.roundToDecimalPlaces(decimals: Int): Float {
-    val multiplier = 10.0f.pow(decimals)
-    return round(this * multiplier) / multiplier
 }
 
 @Composable
