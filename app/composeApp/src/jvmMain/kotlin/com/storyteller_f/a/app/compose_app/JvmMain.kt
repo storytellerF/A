@@ -38,15 +38,14 @@ val uiViewModel by lazy {
 @OptIn(DelicateCoroutinesApi::class)
 fun main(args: Array<String>) {
     setupKmpLogger()
-
+    initForJvmMain(args)
+    loadCryptoLibIfNeed()
     val taskRegister = SimpleTaskRegister(GlobalScope)
     val provider = object : ClientFileProvider {
         override suspend fun getDownloader(): Downloader = DownloaderImpl(uiViewModel, taskRegister)
 
         override suspend fun getUploader(): Uploader = UploaderImpl(uiViewModel, taskRegister)
     }
-    loadCryptoLibIfNeed()
-    initForJvmMain(args)
     application {
         Window(
             onCloseRequest = ::exitApplication,
@@ -63,15 +62,6 @@ fun main(args: Array<String>) {
 }
 
 private fun initForJvmMain(args: Array<String>) {
-    if (System.getProperty("os.name").indexOf("Mac") > -1) {
-        Desktop.getDesktop().setOpenURIHandler { uri ->
-            ExternalUriHandler.onNewUri(uri.uri.toString())
-        }
-    } else {
-        args.getOrNull(0)?.let {
-            ExternalUriHandler.onNewUri(it)
-        }
-    }
     Thread.setDefaultUncaughtExceptionHandler { _, e ->
         Napier.e(e) {
             "uncaught exception"
@@ -89,6 +79,15 @@ private fun initForJvmMain(args: Array<String>) {
             add(button, BorderLayout.SOUTH)
             setSize(300, 300)
             isVisible = true
+        }
+    }
+    if (System.getProperty("os.name").indexOf("Mac") > -1) {
+        Desktop.getDesktop().setOpenURIHandler { uri ->
+            ExternalUriHandler.onNewUri(uri.uri.toString())
+        }
+    } else {
+        args.getOrNull(0)?.let {
+            ExternalUriHandler.onNewUri(it)
         }
     }
 

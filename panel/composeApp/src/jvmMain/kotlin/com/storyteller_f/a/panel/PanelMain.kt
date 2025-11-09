@@ -16,6 +16,19 @@ import kotlin.system.exitProcess
 
 fun main() {
     setupKmpLogger()
+    initForJvmMain()
+    loadCryptoLibIfNeed()
+    application {
+        Window(
+            onCloseRequest = ::exitApplication,
+            title = "Panel",
+        ) {
+            App()
+        }
+    }
+}
+
+private fun initForJvmMain() {
     Thread.setDefaultUncaughtExceptionHandler { _, e ->
         Napier.e(e) {
             "uncaught exception"
@@ -45,14 +58,4 @@ fun main() {
 //    System.setProperty("sun.java2d.uiScale", "$uiScale")
 //    UIManager.put("swing.boldMetal", "false")
 //    System.setProperty("awt.useSystemAAFontSettings", "on")
-
-    loadCryptoLibIfNeed()
-    application {
-        Window(
-            onCloseRequest = ::exitApplication,
-            title = "Panel",
-        ) {
-            App()
-        }
-    }
 }
