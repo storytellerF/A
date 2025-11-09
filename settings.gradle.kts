@@ -1,6 +1,5 @@
 @file:Suppress("UnstableApiUsage")
 
-val isLlamaEnable = providers.gradleProperty("llama.enable").get() == "true"
 val isAppiumTestEnable = providers.gradleProperty("appium").get() == "true"
 
 rootProject.name = "A"
@@ -81,7 +80,5 @@ include(":client:room")
 include(":api")
 
 include(":bot:builtin-bot")
-if (isLlamaEnable)
-    include(":android-llama-cpp")
 
 includeBuild("bgscripts")

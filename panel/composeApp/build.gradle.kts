@@ -183,9 +183,6 @@ kotlin {
             implementation(libs.connectivity.compose.http)
             implementation(libs.tika.core)
         }
-        jvmTest.dependencies {
-            implementation(compose.desktop.currentOs)
-        }
         jvmTest {
             dependsOn(headlessTest)
         }

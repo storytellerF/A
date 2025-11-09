@@ -54,8 +54,6 @@
     如果返回的是分页的结果，返回PaginationResult对象，有pagination 扩展函数变成ServerResponse。
 - bot/*
   - 机器人模块。
-- android-llama-cpp（条件启用）
-  - 通过 -Pllama.enable=true 引入。
 
 代码风格与实践
 - Kotlin
