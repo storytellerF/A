@@ -4,7 +4,7 @@ import com.storyteller_f.shared.model.FileInfo
 import kotlinx.serialization.Serializable
 
 enum class DownloadStatus {
-    NOT_DOWNLOADED, DOWNLOADING, DOWNLOADED, PROCESSED, DOWNLOAD_FAILED, PROCESS_FAILED
+    NOT_DOWNLOADED, DOWNLOADING, PAUSED, DOWNLOADED, PROCESSED, DOWNLOAD_FAILED, PROCESS_FAILED
 }
 
 @Serializable

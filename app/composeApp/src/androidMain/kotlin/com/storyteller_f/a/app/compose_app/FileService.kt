@@ -12,35 +12,59 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
+import com.storyteller_f.a.app.R.drawable.baseline_upload_file_24
 import com.storyteller_f.a.app.compose_app.common.Downloader
 import com.storyteller_f.a.app.compose_app.common.DownloaderImpl
+import com.storyteller_f.a.app.compose_app.common.SimpleTaskRegister
 import com.storyteller_f.a.app.compose_app.common.Uploader
 import com.storyteller_f.a.app.compose_app.common.UploaderImpl
 import io.github.aakira.napier.Napier
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.launch
 import java.lang.ref.WeakReference
 
 class FileService : LifecycleService() {
+    val channel = "File Service"
+    val taskRegister by lazy { SimpleTaskRegister(lifecycleScope) }
+
+    @OptIn(FlowPreview::class)
     override fun onCreate() {
         super.onCreate()
-        val channel = "File Service"
-        getOrCreateNotificationChannel(this, channel)
-        val notification = NotificationCompat.Builder(this, channel)
-            .setSmallIcon(com.storyteller_f.a.app.R.drawable.baseline_upload_file_24)
-            .setContentTitle("Uploading")
-            .setOngoing(true)
-        startForeground(2, notification.build())
+        lifecycleScope.launch {
+            taskRegister.runningTaskCount.debounce(1000).collectLatest {
+                updateNotification(it)
+            }
+        }
     }
 
-    override fun onBind(intent: Intent): IBinder? {
+    private fun updateNotification(count: Int) {
+        Napier.i(tag = "File Service") {
+            "task count $count"
+        }
+        getOrCreateNotificationChannel(this, channel)
+        val id = 2
+        if (count > 0) {
+            val notification = NotificationCompat.Builder(this, channel)
+                .setSmallIcon(baseline_upload_file_24)
+                .setContentTitle("Uploading")
+                .setOngoing(true)
+            startForeground(id, notification.build())
+        } else {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        }
+    }
+
+    override fun onBind(intent: Intent): IBinder {
         super.onBind(intent)
-        (application as AApplication)
         val uiViewModel = uiViewModel
         return FileBinder(
-            DownloaderImpl(lifecycleScope, uiViewModel),
-            UploaderImpl(lifecycleScope, uiViewModel)
+            DownloaderImpl(uiViewModel, taskRegister),
+            UploaderImpl(uiViewModel, taskRegister)
         )
     }
 }

@@ -17,10 +17,6 @@ import com.storyteller_f.storage.UploadInfo
 import com.storyteller_f.storage.UploadStatus
 import io.github.aakira.napier.Napier
 import kotlinx.collections.immutable.ImmutableList
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlin.time.ExperimentalTime
@@ -31,9 +27,10 @@ interface Uploader {
     fun resume(pathHash: String)
 }
 
-class UploaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIViewModel) : Uploader {
-    val mutex = Mutex()
-    val runningSet = mutableSetOf<String>()
+class UploaderImpl(
+    val uiViewModel: UIViewModel,
+    val taskRegister: TaskRegister
+) : Uploader {
     override fun upload(clipData: ImmutableList<ClientFile>) {
         if (clipData.isEmpty()) {
             return
@@ -49,18 +46,14 @@ class UploaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIViewMo
         val myUid = instance.sessionManager.model.uid ?: return
         val modelStorage = instance.database.value
         val userSession = instance.sessionManager
-        lifecycleScope.launch {
-            try {
-                clipData.forEach {
+        clipData.forEach {
+            taskRegister.lockTask(md5(it.path)) {
+                try {
                     uploadIfNeed(userSession, myUid, it, modelStorage, UploadCollection(myUid))
-                }
-            } catch (e: Exception) {
-                Napier.e(e) {
-                    "upload ${
-                        clipData.joinToString {
-                            it.name
-                        }
-                    }"
+                } catch (e: Exception) {
+                    Napier.e(e) {
+                        "upload failed ${it.path}"
+                    }
                 }
             }
         }
@@ -74,7 +67,7 @@ class UploaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIViewMo
         val myUid = instance.sessionManager.model.uid ?: return
         val modelStorage = instance.database.value
         val userSession = instance.sessionManager
-        lifecycleScope.launch {
+        taskRegister.lockTask(pathHash) {
             try {
                 resumeIfNeed(modelStorage, myUid, pathHash, userSession, UploadCollection(myUid))
             } catch (e: Exception) {
@@ -109,30 +102,28 @@ class UploaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIViewMo
         collection: UploadCollection
     ) {
         val pathHash = md5(clipFile.path)
-        mutex.withLock {
-            val existing = modelStorage.upload.getDocument(collection, pathHash)
-            if (existing != null) {
-                Napier.i {
-                    "upload $pathHash exists"
-                }
-                return
+        val existing = modelStorage.upload.getDocument(collection, pathHash)
+        if (existing != null) {
+            Napier.i {
+                "upload $pathHash exists"
             }
-            val id = now().toInstant(
-                TimeZone.UTC
-            ).toEpochMilliseconds()
-            val uploadInfo =
-                UploadInfo(
-                    id,
-                    pathHash,
-                    clipFile.path,
-                    0,
-                    clipFile.size,
-                    UploadStatus.UPLOADING,
-                    "",
-                    clipFile.name, clipFile.contentType.contentType
-                )
-            modelStorage.upload.save(collection, uploadInfo)
+            return
         }
+        val id = now().toInstant(
+            TimeZone.UTC
+        ).toEpochMilliseconds()
+        val uploadInfo =
+            UploadInfo(
+                id,
+                pathHash,
+                clipFile.path,
+                0,
+                clipFile.size,
+                UploadStatus.UPLOADING,
+                "",
+                clipFile.name, clipFile.contentType.contentType
+            )
+        modelStorage.upload.save(collection, uploadInfo)
         upload(userSession, myUid, clipFile, modelStorage, collection, pathHash)
     }
 
@@ -144,32 +135,20 @@ class UploaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIViewMo
         collection: UploadCollection,
         pathHash: String
     ) {
-        mutex.withLock {
-            if (runningSet.contains(pathHash)) {
-                return
+        userSession.upload(
+            myUid ob ObjectType.USER,
+            clipFile.getUploadDataFromClipFile()
+        ) { p, _ ->
+            updateUploadInfo(modelStorage, collection, pathHash) {
+                it.copy(progress = p)
             }
-            runningSet.add(pathHash)
-        }
-        try {
-            userSession.upload(
-                myUid ob ObjectType.USER,
-                clipFile.getUploadDataFromClipFile()
-            ) { p, _ ->
-                updateUploadInfo(modelStorage, collection, pathHash) {
-                    it.copy(progress = p)
-                }
-            }.onSuccess {
-                updateUploadInfo(modelStorage, collection, pathHash) {
-                    it.copy(status = UploadStatus.SUCCESS)
-                }
-            }.onFailure {
-                updateUploadInfo(modelStorage, collection, pathHash) {
-                    it.copy(status = UploadStatus.FAILED, message = it.message)
-                }
+        }.onSuccess {
+            updateUploadInfo(modelStorage, collection, pathHash) {
+                it.copy(status = UploadStatus.SUCCESS)
             }
-        } finally {
-            mutex.withLock {
-                runningSet.remove(pathHash)
+        }.onFailure {
+            updateUploadInfo(modelStorage, collection, pathHash) {
+                it.copy(status = UploadStatus.FAILED, message = it.message)
             }
         }
     }

@@ -59,6 +59,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalClientFileProvider
+import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalUserInfo
 import com.storyteller_f.a.app.compose_app.common.DownloadViewModel
 import com.storyteller_f.a.app.compose_app.common.UploadDetailViewModel
@@ -81,6 +82,7 @@ import com.storyteller_f.a.app.compose_app.pages.topic.PlatformClientFile
 import com.storyteller_f.a.app.compose_app.utils.ClientFile
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.bottomAppending
+import com.storyteller_f.a.app.core.components.catchingResult
 import com.storyteller_f.a.app.core.components.pagingItems
 import com.storyteller_f.a.app.core.components.topPrepend
 import com.storyteller_f.a.client.core.UploadData
@@ -241,9 +243,10 @@ private fun FileQuotaActionButton(onClick: () -> Unit) {
 @Composable
 private fun UploadFileActionButton() {
     val fileProvider = LocalClientFileProvider.current
+    val globalDialogController = LocalGlobalDialog.current
     val scope = rememberCoroutineScope()
     FloatingActionButton({
-        scope.launch {
+        globalDialogController.catchingResult(scope) {
             val f = FileKit.openFilePicker()
             if (f != null) {
                 fileProvider.getUploader()?.upload(persistentListOf(PlatformClientFile(f)))
@@ -338,8 +341,7 @@ private fun DownloadRecordPage() {
         contentPadding = PaddingValues(20.dp)
     ) {
         pagingItems(items, key = { it.fileInfo.id }) {
-            val d: DownloadInfo? = items[it]
-            DownloadRecordItem(d)
+            DownloadRecordItem(items[it])
             if (it != items.itemSnapshotList.size - 1) {
                 HorizontalDivider()
             }
@@ -458,10 +460,10 @@ private fun DownloadRecordItem(@PreviewParameter(DownloadRecordItemPreviewProvid
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
             .clickable {
                 showSheet = true
-            },
+            }
+            .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
@@ -475,10 +477,7 @@ private fun DownloadRecordItem(@PreviewParameter(DownloadRecordItemPreviewProvid
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 LinearProgressIndicator(progress = {
-                    (d.progress.toFloat() / (if (d.total == 0L) 1 else d.total)).coerceIn(
-                        0f,
-                        1f
-                    )
+                    getDownloadProgress(d)
                 }, modifier = Modifier.weight(1f))
                 Spacer(modifier = Modifier.padding(horizontal = 8.dp))
                 Text(d.getPercent())
@@ -491,22 +490,35 @@ private fun DownloadRecordItem(@PreviewParameter(DownloadRecordItemPreviewProvid
     }
 }
 
+private fun getDownloadProgress(d: DownloadInfo): Float =
+    (d.progress.toFloat() / (if (d.total == 0L) 1 else d.total)).coerceIn(
+        0f,
+        1f
+    )
+
 @Composable
 private fun DownloadStatusButton(d: DownloadInfo) {
     val fileProvider = LocalClientFileProvider.current
+    val globalDialogController = LocalGlobalDialog.current
     val scope = rememberCoroutineScope()
     // 根据下载状态显示操作按钮
     when (d.status) {
         DownloadStatus.DOWNLOADING -> {
             IconButton(onClick = {
+                globalDialogController.catchingResult(scope) {
+                    fileProvider.getDownloader()?.pause(d.fileInfo.id)
+                }
             }) {
                 Icon(Icons.Default.Pause, contentDescription = "pause")
             }
         }
 
-        DownloadStatus.DOWNLOAD_FAILED, DownloadStatus.PROCESS_FAILED, DownloadStatus.DOWNLOADED -> {
+        DownloadStatus.PAUSED,
+        DownloadStatus.DOWNLOAD_FAILED,
+        DownloadStatus.PROCESS_FAILED,
+        DownloadStatus.DOWNLOADED -> {
             IconButton(onClick = {
-                scope.launch {
+                globalDialogController.catchingResult(scope) {
                     fileProvider.getDownloader()?.resume(d.fileInfo.id)
                 }
             }) {
@@ -522,7 +534,7 @@ private fun DownloadStatusButton(d: DownloadInfo) {
 
         DownloadStatus.NOT_DOWNLOADED -> {
             IconButton({
-                scope.launch {
+                globalDialogController.catchingResult(scope) {
                     fileProvider.getDownloader()?.download(d.fileInfo)
                 }
             }) {
@@ -579,6 +591,7 @@ fun DownloadInfo.getPercent(): String =
 private fun DownloadInfoTitle(data: DownloadInfo?) {
     val it = data?.fileInfo
     val scope = rememberCoroutineScope()
+    val globalDialogController = LocalGlobalDialog.current
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(20.dp)
@@ -587,7 +600,7 @@ private fun DownloadInfoTitle(data: DownloadInfo?) {
         Text(it?.name ?: "-", modifier = Modifier.weight(1f))
         if (data != null && data.status != DownloadStatus.PROCESSED) {
             Button({
-                scope.launch {
+                globalDialogController.catchingResult(scope) {
                     it?.id?.let { id -> provider.getDownloader()?.resume(id) }
                 }
             }) {
@@ -713,8 +726,8 @@ fun UploadItem(@PreviewParameter(UploadItemPreviewProvider::class) uploadInfo: U
     val sheetState = rememberModalBottomSheetState()
     Row(
         modifier = Modifier
-            .padding(20.dp)
-            .clickable { showSheet = true },
+            .clickable { showSheet = true }
+            .padding(20.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         UploadIcon(contentType = uploadInfo.contentType)
@@ -742,6 +755,7 @@ fun UploadItem(@PreviewParameter(UploadItemPreviewProvider::class) uploadInfo: U
 private fun UploadStatusButton(file: UploadInfo) {
     val provider = LocalClientFileProvider.current
     val scope = rememberCoroutineScope()
+    val globalDialogController = LocalGlobalDialog.current
     when (file.status) {
         UploadStatus.SUCCESS -> {
             Icon(Icons.Default.Done, "done")
@@ -749,7 +763,7 @@ private fun UploadStatusButton(file: UploadInfo) {
 
         UploadStatus.FAILED -> {
             IconButton({
-                scope.launch {
+                globalDialogController.catchingResult(scope) {
                     provider.getUploader()?.resume(file.pathHash)
                 }
             }) {
@@ -759,7 +773,7 @@ private fun UploadStatusButton(file: UploadInfo) {
 
         UploadStatus.PAUSED, UploadStatus.NOT_UPLOADING -> {
             IconButton({
-                scope.launch {
+                globalDialogController.catchingResult(scope) {
                     provider.getUploader()?.resume(file.pathHash)
                 }
             }) {
@@ -832,6 +846,7 @@ private fun getUploadProgress(info: UploadInfo): Float =
 
 @Composable
 private fun UploadInfoTitle(data: UploadInfo?) {
+    val globalDialogController = LocalGlobalDialog.current
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(20.dp)
@@ -841,7 +856,7 @@ private fun UploadInfoTitle(data: UploadInfo?) {
         Text(data?.name ?: "-", modifier = Modifier.weight(1f))
         if (data != null && data.status != UploadStatus.SUCCESS) {
             Button({
-                scope.launch {
+                globalDialogController.catchingResult(scope) {
                     provider.getUploader()?.resume(data.pathHash)
                 }
             }) {

@@ -94,18 +94,22 @@ fun getOrCreateNotificationChannel(
     val notificationManager = NotificationManagerCompat.from(context)
     val notificationChannel = notificationManager.getNotificationChannel(channel)
     if (notificationChannel == null) {
-        val channelBuilder = NotificationChannelCompat.Builder(
-            channel,
-            NotificationManagerCompat.IMPORTANCE_DEFAULT
-        )
-        if (channel == "Regular") {
-            channelBuilder.setName("Regular")
-            channelBuilder.setDescription("Regular")
-        } else {
-            channelBuilder.setName("Upload")
-            channelBuilder.setDescription("Upload")
-        }
-        notificationManager.createNotificationChannel(channelBuilder.build())
+        notificationManager.deleteNotificationChannel(channel)
     }
+    val channelBuilder = NotificationChannelCompat.Builder(
+        channel,
+        NotificationManagerCompat.IMPORTANCE_LOW
+    )
+        .setSound(null, null)
+        .setVibrationEnabled(true)
+    if (channel == "Regular") {
+        channelBuilder.setName("Regular")
+        channelBuilder.setDescription("Regular")
+    } else {
+        channelBuilder.setName("Upload")
+        channelBuilder.setDescription("Upload")
+    }
+
+    notificationManager.createNotificationChannel(channelBuilder.build())
     return notificationManager
 }

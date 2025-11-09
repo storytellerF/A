@@ -28,7 +28,9 @@ import androidx.compose.ui.window.DialogProperties
 import io.github.aakira.napier.Napier
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.uuid.ExperimentalUuidApi
@@ -284,4 +286,14 @@ suspend inline fun <T, R> GlobalDialogController<GlobalDialogContext<T>>.request
 
 suspend inline fun <T> GlobalDialogController<GlobalDialogContext<T>>.emitEvent(event: Any) {
     context.emitEvent(event)
+}
+
+fun <C> GlobalDialogController<C>.catchingResult(scope: CoroutineScope, block: suspend () -> Unit) {
+    scope.launch {
+        useResult {
+            runCatching {
+                block()
+            }
+        }
+    }
 }

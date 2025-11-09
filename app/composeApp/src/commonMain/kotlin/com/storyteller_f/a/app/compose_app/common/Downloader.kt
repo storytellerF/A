@@ -3,6 +3,7 @@ package com.storyteller_f.a.app.compose_app.common
 import com.storyteller_f.a.app.compose_app.CustomUserSessionManager
 import com.storyteller_f.a.app.compose_app.UIViewModel
 import com.storyteller_f.a.client.core.serviceCatching
+import com.storyteller_f.a.client.room.RoomModelStorage
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.now
@@ -23,24 +24,84 @@ import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.core.remaining
 import io.ktor.utils.io.readRemaining
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.files.SystemTemporaryDirectory
-import kotlin.use
+import kotlin.coroutines.cancellation.CancellationException
 
 interface Downloader {
     fun download(fileInfo: FileInfo)
 
     fun resume(id: PrimaryKey)
+
+    fun pause(id: PrimaryKey)
 }
 
-class DownloaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIViewModel) :
-    Downloader {
+interface TaskRegister {
+    fun lockTask(key: String, block: suspend () -> Unit)
+    fun stop(key: String, block: suspend () -> Unit)
+}
+
+class SimpleTaskRegister(val lifecycleScope: CoroutineScope) : TaskRegister {
+    val runningTaskCount = MutableStateFlow(0)
     val mutex = Mutex()
-    val runningSet = mutableSetOf<PrimaryKey>()
+    val runningSet = mutableMapOf<String, Job>()
+
+    override fun lockTask(key: String, block: suspend () -> Unit) {
+        lifecycleScope.launch {
+            lock(key, block)
+        }
+    }
+
+    override fun stop(key: String, block: suspend () -> Unit) {
+        lifecycleScope.launch {
+            runningSet[key]?.cancelAndJoin()
+            block()
+        }
+    }
+
+    suspend inline fun lock(id: String, block: suspend () -> Unit) {
+        val job = currentCoroutineContext()[Job]
+        if (job == null) {
+            Napier.w(tag = "download") {
+                "no job in lock"
+            }
+            return
+        }
+        mutex.withLock {
+            if (runningSet.contains(id)) {
+                return
+            }
+            runningTaskCount.update {
+                it + 1
+            }
+            runningSet[id] = job
+        }
+        try {
+            block()
+        } finally {
+            mutex.withLock {
+                runningTaskCount.update {
+                    it - 1
+                }
+                runningSet.remove(id)
+            }
+        }
+    }
+}
+
+class DownloaderImpl(
+    val uiViewModel: UIViewModel,
+    val register: TaskRegister
+) : Downloader {
     override fun download(fileInfo: FileInfo) {
         val path = Path(
             SystemTemporaryDirectory,
@@ -48,53 +109,84 @@ class DownloaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIView
             fileInfo.id.toString(),
             fileInfo.name
         )
-        Napier.i {
+        Napier.i(tag = "download") {
             "download $fileInfo to $path"
         }
         path.parent?.let { SystemFileSystem.createDirectories(it) }
         val instance = uiViewModel.instance.value
         val modelStorage = instance.database.value
         val userSession = instance.sessionManager
-        lifecycleScope.launch {
-            downloadIfNeed(userSession, path, fileInfo, modelStorage)
+        register.lockTask(fileInfo.id.toString()) {
+            try {
+                downloadIfNeed(modelStorage, fileInfo, path, userSession)
+            } catch (e: Exception) {
+                Napier.e(e, tag = "download") {
+                    "download failed"
+                }
+            }
         }
     }
 
     override fun resume(id: PrimaryKey) {
-        Napier.i {
+        Napier.i(tag = "download") {
             "resume download $id"
         }
         val instance = uiViewModel.instance.value
         val modelStorage = instance.database.value
         val userSession = instance.sessionManager
-        lifecycleScope.launch {
-            download(userSession, modelStorage, id)
+        register.lockTask(id.toString()) {
+            try {
+                download(userSession, modelStorage, id)
+            } catch (e: Exception) {
+                Napier.e(e, tag = "download") {
+                    "resume failed"
+                }
+            }
         }
     }
 
+    override fun pause(id: PrimaryKey) {
+        Napier.i(tag = "download") {
+            "pause download $id"
+        }
+        val instance = uiViewModel.instance.value
+        val modelStorage = instance.database.value
+        pauseIfNeed(id, modelStorage)
+    }
+
     private suspend fun downloadIfNeed(
-        userSession: CustomUserSessionManager,
-        path: Path,
+        modelStorage: RoomModelStorage,
         fileInfo: FileInfo,
+        path: Path,
+        userSession: CustomUserSessionManager
+    ) {
+        val document =
+            modelStorage.download.getDocument(fileInfo.id)
+        if (document == null) {
+            val new = DownloadInfo(
+                fileInfo,
+                DownloadStatus.NOT_DOWNLOADED,
+                "",
+                path.toString(),
+                0,
+                fileInfo.size
+            )
+            modelStorage.download.save(new)
+        } else if (document.status != DownloadStatus.NOT_DOWNLOADED) {
+            return
+        }
+        download(userSession, modelStorage, fileInfo.id)
+        return
+    }
+
+    private fun pauseIfNeed(
+        id: PrimaryKey,
         modelStorage: ModelStorage,
     ) {
-        lock(fileInfo.id) {
-            val document =
-                modelStorage.download.getDocument(fileInfo.id)
-            if (document == null) {
-                val new = DownloadInfo(
-                    fileInfo,
-                    DownloadStatus.NOT_DOWNLOADED,
-                    "",
-                    path.toString(),
-                    0,
-                    fileInfo.size
-                )
-                modelStorage.download.save(new)
-            } else if (document.status != DownloadStatus.NOT_DOWNLOADED) {
-                return
+        register.stop(id.toString()) {
+            updateDownloadInfo(modelStorage, id) {
+                it.copy(status = DownloadStatus.PAUSED)
             }
-            download(userSession, modelStorage, fileInfo.id)
         }
     }
 
@@ -105,6 +197,9 @@ class DownloaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIView
     ) {
         val downloadInfo =
             modelStorage.download.getDocument(id) ?: return
+        Napier.w(tag = "download") {
+            "no downloadInfo"
+        }
         if (downloadInfo.status == DownloadStatus.PROCESSED) return
         val path = Path(downloadInfo.path)
         val isNeedDownload =
@@ -112,20 +207,15 @@ class DownloaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIView
                 downloadInfo.status == DownloadStatus.PROCESS_FAILED
             ) {
                 val isFileExists = SystemFileSystem.exists(path)
-                val isMediaSizeMatch = SystemFileSystem.metadataOrNull(path)?.size == downloadInfo.total
+                val isMediaSizeMatch =
+                    SystemFileSystem.metadataOrNull(path)?.size == downloadInfo.total
                 !isFileExists || !isMediaSizeMatch
             } else {
                 true
             }
         if (isNeedDownload) {
-            if (downloadFile(
-                    downloadInfo,
-                    modelStorage,
-                    id,
-                    userSession,
-                    downloadInfo.fileInfo,
-                    path
-                )) {
+            val fileInfo = downloadInfo.fileInfo
+            if (downloadFile(downloadInfo, modelStorage, id, userSession, fileInfo, path)) {
                 return
             }
         }
@@ -155,6 +245,9 @@ class DownloaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIView
         return false
     }
 
+    /**
+     * @return 返回是否下载成功
+     */
     private suspend fun downloadFile(
         downloadInfo: DownloadInfo,
         modelStorage: ModelStorage,
@@ -172,25 +265,27 @@ class DownloaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIView
             userSession.serviceCatching {
                 segmentedDownload(modelStorage, fileInfo, path)
             }.getOrThrow()
-        } catch (throwable: Exception) {
-            Napier.e(throwable) {
-                "download failed ${fileInfo.name}"
-            }
             updateDownloadInfo(modelStorage, id) {
                 it.copy(
-                    status = DownloadStatus.DOWNLOAD_FAILED,
-                    message = throwable.message.toString()
+                    status = DownloadStatus.DOWNLOADED,
+                    message = "download success ${now()}"
                 )
+            }
+            return false
+        } catch (throwable: Exception) {
+            if (throwable is CancellationException) {
+                Napier.e(throwable) {
+                    "download failed ${fileInfo.name}"
+                }
+                updateDownloadInfo(modelStorage, id) {
+                    it.copy(
+                        status = DownloadStatus.DOWNLOAD_FAILED,
+                        message = throwable.message.toString()
+                    )
+                }
             }
             return true
         }
-        updateDownloadInfo(modelStorage, id) {
-            it.copy(
-                status = DownloadStatus.DOWNLOADED,
-                message = "download success ${now()}"
-            )
-        }
-        return false
     }
 
     suspend fun HttpClient.segmentedDownload(
@@ -229,6 +324,9 @@ class DownloaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIView
                     updateDownloadInfo(modelStorage, fileInfo.id) {
                         it.copy(progress = downloadedBytes)
                     }
+                    Napier.i {
+                        "download progress $downloadedBytes"
+                    }
                 }
             }
         }
@@ -241,21 +339,5 @@ class DownloaderImpl(val lifecycleScope: CoroutineScope, val uiViewModel: UIView
     ) {
         val uploadInfo = modelStorage.download.getDocument(id) ?: return
         modelStorage.download.save(block(uploadInfo))
-    }
-
-    suspend inline fun lock(id: PrimaryKey, block: suspend () -> Unit) {
-        mutex.withLock {
-            if (runningSet.contains(id)) {
-                return
-            }
-            runningSet.add(id)
-        }
-        try {
-            block()
-        } finally {
-            mutex.withLock {
-                runningSet.remove(id)
-            }
-        }
     }
 }

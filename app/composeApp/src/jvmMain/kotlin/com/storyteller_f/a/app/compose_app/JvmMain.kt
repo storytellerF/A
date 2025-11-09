@@ -8,6 +8,7 @@ import com.kdroid.composenotification.builder.NotificationInitializer
 import com.storyteller_f.a.app.compose_app.common.Downloader
 import com.storyteller_f.a.app.compose_app.common.DownloaderImpl
 import com.storyteller_f.a.app.compose_app.common.ExternalUriHandler
+import com.storyteller_f.a.app.compose_app.common.SimpleTaskRegister
 import com.storyteller_f.a.app.compose_app.common.Uploader
 import com.storyteller_f.a.app.compose_app.common.UploaderImpl
 import com.storyteller_f.shared.loadCryptoLibIfNeed
@@ -37,6 +38,40 @@ val uiViewModel by lazy {
 @OptIn(DelicateCoroutinesApi::class)
 fun main(args: Array<String>) {
     setupKmpLogger()
+
+    val taskRegister = SimpleTaskRegister(GlobalScope)
+    val provider = object : ClientFileProvider {
+        override suspend fun getDownloader(): Downloader = DownloaderImpl(uiViewModel, taskRegister)
+
+        override suspend fun getUploader(): Uploader = UploaderImpl(uiViewModel, taskRegister)
+    }
+    loadCryptoLibIfNeed()
+    initForJvmMain(args)
+    application {
+        Window(
+            onCloseRequest = ::exitApplication,
+            title = "A",
+        ) {
+            CompositionLocalProvider(
+                LocalClientFileProvider provides provider,
+                LocalUiViewModel provides uiViewModel
+            ) {
+                App()
+            }
+        }
+    }
+}
+
+private fun initForJvmMain(args: Array<String>) {
+    if (System.getProperty("os.name").indexOf("Mac") > -1) {
+        Desktop.getDesktop().setOpenURIHandler { uri ->
+            ExternalUriHandler.onNewUri(uri.uri.toString())
+        }
+    } else {
+        args.getOrNull(0)?.let {
+            ExternalUriHandler.onNewUri(it)
+        }
+    }
     Thread.setDefaultUncaughtExceptionHandler { _, e ->
         Napier.e(e) {
             "uncaught exception"
@@ -72,35 +107,4 @@ fun main(args: Array<String>) {
             appName = "My awesome app",
         )
     )
-
-    val downloader = DownloaderImpl(GlobalScope, uiViewModel)
-    val uploader = UploaderImpl(GlobalScope, uiViewModel)
-    val provider = object : ClientFileProvider {
-        override suspend fun getDownloader(): Downloader? = downloader
-
-        override suspend fun getUploader(): Uploader? = uploader
-    }
-    loadCryptoLibIfNeed()
-    if (System.getProperty("os.name").indexOf("Mac") > -1) {
-        Desktop.getDesktop().setOpenURIHandler { uri ->
-            ExternalUriHandler.onNewUri(uri.uri.toString())
-        }
-    } else {
-        args.getOrNull(0).toString()?.let {
-            ExternalUriHandler.onNewUri(it)
-        }
-    }
-    application {
-        Window(
-            onCloseRequest = ::exitApplication,
-            title = "A",
-        ) {
-            CompositionLocalProvider(
-                LocalClientFileProvider provides provider,
-                LocalUiViewModel provides uiViewModel
-            ) {
-                App()
-            }
-        }
-    }
 }
