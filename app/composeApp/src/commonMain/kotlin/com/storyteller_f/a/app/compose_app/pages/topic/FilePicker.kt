@@ -3,37 +3,27 @@ package com.storyteller_f.a.app.compose_app.pages.topic
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AttachFile
-import androidx.compose.material.icons.filled.AudioFile
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.CloudUpload
-import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Stop
-import androidx.compose.material.icons.filled.VideoFile
 import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -45,33 +35,25 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
 import com.storyteller_f.a.app.compose_app.AppGlobalDialogController
-import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.common.OnMediaUploaded
 import com.storyteller_f.a.app.compose_app.common.createMediaListViewModel
 import com.storyteller_f.a.app.compose_app.components.BaseSheet
+import com.storyteller_f.a.app.compose_app.components.FileCell
 import com.storyteller_f.a.app.compose_app.components.Permission
 import com.storyteller_f.a.app.compose_app.components.isPermissionGranted
 import com.storyteller_f.a.app.compose_app.components.requestPermission
 import com.storyteller_f.a.app.compose_app.utils.ClientFile
 import com.storyteller_f.a.app.compose_app.utils.Recorder
-import com.storyteller_f.a.app.compose_app.utils.setText
-import com.storyteller_f.a.app.core.components.CustomIcon
+import com.storyteller_f.a.app.compose_app.utils.getUploadDataFromPath
 import com.storyteller_f.a.app.core.components.GlobalDialogState
 import com.storyteller_f.a.app.core.components.GlobalDialogStateProgress
-import com.storyteller_f.a.app.core.components.IconRes
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.bottomAppending
 import com.storyteller_f.a.app.core.components.emitEvent
@@ -82,7 +64,6 @@ import com.storyteller_f.a.client.core.UploadData
 import com.storyteller_f.a.client.core.upload
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.obj.ObjectTuple
-import com.storyteller_f.shared.utils.formatTime
 import com.storyteller_f.shared.utils.generateImageMarkdownContent
 import com.storyteller_f.shared.utils.generateObjectMarkdownContent
 import com.storyteller_f.shared.utils.mapIfNotNull
@@ -100,11 +81,8 @@ import io.ktor.http.defaultForFileExtension
 import kotlinx.coroutines.launch
 import kotlinx.io.Source
 import kotlinx.io.buffered
-import kotlinx.io.files.FileMetadata
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
-import nl.jacobras.humanreadable.HumanReadable
-import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -270,107 +248,6 @@ private fun FileListView(
     }
 }
 
-@OptIn(ExperimentalTime::class)
-@Composable
-fun FileCell(
-    fileInfo: FileInfo?,
-    clickItem: (kotlin.collections.List<FileInfo>) -> Unit
-) {
-    if (fileInfo != null) {
-        var expanded by remember { mutableStateOf(false) }
-
-        Row(modifier = Modifier.fillMaxWidth().combinedClickable(onLongClick = {
-            expanded = true
-        }) {
-            clickItem(listOf(fileInfo))
-        }) {
-            FileIcon(fileInfo)
-            Spacer(modifier = Modifier.width(20.dp))
-            Column {
-                Text(fileInfo.name, style = MaterialTheme.typography.labelMedium)
-                Spacer(modifier = Modifier.height(10.dp))
-                Row {
-                    Text(
-                        fileInfo.lastModified.formatTime(),
-                        style = MaterialTheme.typography.labelSmall
-                    )
-                    Spacer(modifier = Modifier.weight(1f))
-                    Text(
-                        HumanReadable.fileSize(fileInfo.size),
-                        style = MaterialTheme.typography.labelSmall
-                    )
-                }
-                Spacer(modifier = Modifier.height(5.dp))
-                fileInfo.dimension?.let {
-                    Text(
-                        "w${it.width}·h${it.height}",
-                        style = MaterialTheme.typography.labelSmall
-                    )
-                }
-            }
-        }
-        FileCellMenu(expanded, {
-            expanded = it
-        }, fileInfo)
-    }
-}
-
-@Composable
-fun FileCellMenu(expanded: Boolean, updateExpanded: (Boolean) -> Unit, fileInfo: FileInfo) {
-    val appNavFactory = LocalAppNavFactory.current
-    DropdownMenu(
-        expanded = expanded,
-        onDismissRequest = {
-            updateExpanded(false)
-        }
-    ) {
-        DropdownMenuItem(
-            leadingIcon = {
-                CustomIcon(IconRes.Vector(Icons.Default.Fullscreen))
-            },
-            text = { Text("View") },
-            onClick = {
-                updateExpanded(false)
-                appNavFactory.newAppNav().gotoMedia(fileInfo)
-            }
-        )
-        val clipboardManager = LocalClipboard.current
-        val scope = rememberCoroutineScope()
-        DropdownMenuItem(
-            leadingIcon = {
-                CustomIcon(IconRes.Vector(Icons.Default.Fullscreen))
-            },
-            text = { Text("Copy name") },
-            onClick = {
-                updateExpanded(false)
-                scope.launch {
-                    clipboardManager.setText(fileInfo.name)
-                }
-            }
-        )
-    }
-}
-
-@Composable
-fun FileIcon(it: FileInfo) {
-    val contentType = it.contentType
-    val modifier = Modifier.size(40.dp)
-    if (contentType.startsWith("image")) {
-        AsyncImage(
-            it.url,
-            it.name,
-            modifier = modifier.clip(RoundedCornerShape(5.dp)),
-            contentScale = ContentScale.Crop
-        )
-    } else if (contentType.startsWith("audio")) {
-        Icon(Icons.Default.AudioFile, "audio file", modifier)
-    } else if (contentType.startsWith("video")) {
-        Icon(Icons.Default.VideoFile, "video file", modifier)
-    } else {
-        Icon(Icons.Default.AttachFile, "other file", modifier)
-    }
-}
-
 suspend fun AppGlobalDialogController.selectFileAndUpload(
     mediaTarget: ObjectTuple,
     uploadSuccess: (List<FileInfo>) -> Unit,
@@ -436,13 +313,6 @@ suspend fun AppGlobalDialogController.uploadPath(
             }
         }
     }
-}
-
-private fun getUploadDataFromPath(
-    meta: FileMetadata,
-    path: Path
-) = UploadData(meta.size, path.name, ContentType.defaultForFileExtension(path.toString())) {
-    SystemFileSystem.source(path).buffered()
 }
 
 suspend fun AppGlobalDialogController.upload(

@@ -1,0 +1,37 @@
+package com.storyteller_f.a.app.compose_app.utils
+
+import androidx.compose.ui.graphics.ImageBitmap
+import coil3.PlatformContext
+import coil3.SingletonImageLoader
+import coil3.network.ktor3.KtorNetworkFetcherFactory
+import coil3.request.ImageRequest
+import com.storyteller_f.a.app.core.utils.androidAllowHardware
+import com.storyteller_f.a.app.core.utils.coilImageToImageBitmap
+import com.storyteller_f.a.client.core.UserSessionManager
+import com.storyteller_f.shared.model.FileInfo
+import io.ktor.client.HttpClient
+
+/**
+ * Load a remote image as ImageBitmap using Coil and Ktor client.
+ */
+suspend fun getRemoteImageBitmap(
+    sessionManager: UserSessionManager,
+    context: PlatformContext,
+    info: FileInfo
+): Result<ImageBitmap>? {
+    val imageRequest = imageRequest(context, sessionManager.client, info)
+        .androidAllowHardware(false)
+        .build()
+    val image = SingletonImageLoader.get(context)
+        .execute(imageRequest)
+        .image
+    return image?.coilImageToImageBitmap()
+}
+
+fun imageRequest(
+    context: PlatformContext,
+    client: HttpClient,
+    info: FileInfo?
+) = ImageRequest.Builder(context)
+    .fetcherFactory(KtorNetworkFetcherFactory(client))
+    .data(info?.url)

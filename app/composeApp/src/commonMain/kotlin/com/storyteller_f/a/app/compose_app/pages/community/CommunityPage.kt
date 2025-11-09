@@ -1,18 +1,14 @@
 package com.storyteller_f.a.app.compose_app.pages.community
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -24,7 +20,6 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Title
 import androidx.compose.material.icons.filled.Topic
 import androidx.compose.material3.BasicAlertDialog
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -32,7 +27,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.Typography
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
@@ -45,9 +39,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -66,7 +58,6 @@ import com.storyteller_f.a.app.compose_app.all_members
 import com.storyteller_f.a.app.compose_app.common.AppNavFactory
 import com.storyteller_f.a.app.compose_app.common.CommunityScreen
 import com.storyteller_f.a.app.compose_app.common.CommunityViewModel
-import com.storyteller_f.a.app.compose_app.common.DownloadViewModel
 import com.storyteller_f.a.app.compose_app.common.OnCommunityExited
 import com.storyteller_f.a.app.compose_app.common.OnCommunityJoined
 import com.storyteller_f.a.app.compose_app.common.TopicComposeData
@@ -77,14 +68,14 @@ import com.storyteller_f.a.app.compose_app.common.getDownloadViewModel
 import com.storyteller_f.a.app.compose_app.common.hasRouteFlow
 import com.storyteller_f.a.app.compose_app.components.ButtonNav
 import com.storyteller_f.a.app.compose_app.components.CommunityIcon
+import com.storyteller_f.a.app.compose_app.components.CustomBottomNav
+import com.storyteller_f.a.app.compose_app.components.CustomRailNav
+import com.storyteller_f.a.app.compose_app.components.FontView
+import com.storyteller_f.a.app.compose_app.components.NavRoute
 import com.storyteller_f.a.app.compose_app.components.TopicList
 import com.storyteller_f.a.app.compose_app.exit_community
 import com.storyteller_f.a.app.compose_app.join_community
 import com.storyteller_f.a.app.compose_app.join_community_prompt
-import com.storyteller_f.a.app.compose_app.pages.CustomBottomNav
-import com.storyteller_f.a.app.compose_app.pages.CustomRailNav
-import com.storyteller_f.a.app.compose_app.pages.NavRoute
-import com.storyteller_f.a.app.compose_app.pages.file.DownloadInfoPage
 import com.storyteller_f.a.app.compose_app.pages.room.RoomList
 import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
@@ -92,7 +83,6 @@ import com.storyteller_f.a.app.compose_app.pages.user.ButtonBadgeSuffix
 import com.storyteller_f.a.app.compose_app.permission_denied
 import com.storyteller_f.a.app.compose_app.rooms
 import com.storyteller_f.a.app.compose_app.topics
-import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.compose_app.ui.theme.AppTheme
 import com.storyteller_f.a.app.core.components.CustomAlertDialog
 import com.storyteller_f.a.app.core.components.CustomAlertDialogController
@@ -103,16 +93,10 @@ import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.client.core.exitCommunity
 import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.shared.model.CommunityInfo
-import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.storage.DownloadInfo
-import com.storyteller_f.storage.DownloadStatus
-import dev.tclement.fonticons.FontIcon
 import kotlinx.coroutines.launch
-import kotlinx.io.files.Path
-import kotlinx.io.files.SystemTemporaryDirectory
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
@@ -163,12 +147,6 @@ fun getFontFamily(communityId: PrimaryKey): State<FontFamily?> {
     val provider = LocalClientFileProvider.current
     LaunchedEffect(fileInfo) {
         if (fileInfo != null) {
-            val path = Path(
-                SystemTemporaryDirectory,
-                "downloads",
-                fileInfo.id.toString(),
-                fileInfo.name
-            )
             provider.getDownloader()?.download(fileInfo)
         }
     }
@@ -435,60 +413,6 @@ fun CommunityDialogInternal(communityInfo: CommunityInfo, dismiss: () -> Unit) {
             FontView(it)
         }
         CommunityMenus(communityId, communityInfo, dismiss)
-    }
-}
-
-@Composable
-@OptIn(ExperimentalMaterial3Api::class)
-private fun FontView(info: FileInfo) {
-    var showSheet by remember {
-        mutableStateOf(false)
-    }
-    val sheetState = rememberModalBottomSheetState()
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).clickable {
-            showSheet = true
-        }.padding(horizontal = 8.dp, vertical = 12.dp)
-    ) {
-        FontIcon(MaterialSymbolsOutlined.FontDownload, "font")
-        val scrollState = rememberScrollState()
-        Text(info.name, modifier = Modifier.weight(1f).horizontalScroll(scrollState))
-        val downloadViewModel = getDownloadViewModel(info.id)
-        DownloadStatusView(downloadViewModel)
-    }
-    DownloadInfoPage(showSheet, sheetState, info.id) {
-        showSheet = false
-    }
-}
-
-@Composable
-private fun DownloadStatusView(downloadViewModel: DownloadViewModel) {
-    val data by downloadViewModel.data.collectAsState(null)
-    DownloadStatusViewInternal(data)
-}
-
-@Composable
-fun DownloadStatusViewInternal(data: DownloadInfo?) {
-    val downloadStatus = data?.status
-    when {
-        data == null ||
-            downloadStatus == DownloadStatus.NOT_DOWNLOADED ||
-            downloadStatus == DownloadStatus.DOWNLOADING -> CircularProgressIndicator(
-            modifier = Modifier.size(20.dp),
-            strokeWidth = 2.dp
-        )
-
-        downloadStatus == DownloadStatus.DOWNLOADED -> FontIcon(
-            MaterialSymbolsOutlined.DownloadDone,
-            "download done"
-        )
-
-        downloadStatus == DownloadStatus.DOWNLOAD_FAILED -> FontIcon(
-            MaterialSymbolsOutlined.Error,
-            "error"
-        )
     }
 }
 

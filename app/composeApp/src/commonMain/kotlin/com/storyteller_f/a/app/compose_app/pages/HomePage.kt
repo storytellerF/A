@@ -19,7 +19,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
@@ -33,6 +32,9 @@ import com.storyteller_f.a.app.compose_app.LocalUiViewModel
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.common.createWorldViewModel
 import com.storyteller_f.a.app.compose_app.components.ButtonNav
+import com.storyteller_f.a.app.compose_app.components.CustomBottomNav
+import com.storyteller_f.a.app.compose_app.components.CustomRailNav
+import com.storyteller_f.a.app.compose_app.components.NavRoute
 import com.storyteller_f.a.app.compose_app.components.TopicList
 import com.storyteller_f.a.app.compose_app.design_spec
 import com.storyteller_f.a.app.compose_app.pages.community.MyCommunitiesPage
@@ -128,8 +130,6 @@ private fun HomeCompatPage(
     }
 }
 
-class NavRoute(val path: String, val icon: ImageVector, val label: String)
-
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 private fun ProjectIcon() {
@@ -154,44 +154,6 @@ private fun ProjectIcon() {
             ProjectDialogInternal {
                 showDialog = false
             }
-        }
-    }
-}
-
-@Composable
-fun CustomRailNav(
-    currentEntry: String?,
-    navRoutes: List<NavRoute>,
-    navigate: (String) -> Unit = {}
-) {
-    NavigationRail(modifier = Modifier.padding(horizontal = 8.dp)) {
-        navRoutes.forEach {
-            NavigationRailItem(currentEntry == it.path, {
-                navigate(it.path)
-            }, icon = {
-                Icon(imageVector = it.icon, contentDescription = it.label)
-            }, label = {
-                Text(it.label)
-            })
-        }
-    }
-}
-
-@Composable
-fun CustomBottomNav(
-    path: String,
-    navRoutes: List<NavRoute>,
-    navigate: (String) -> Unit = { }
-) {
-    NavigationBar {
-        navRoutes.forEach {
-            NavigationBarItem(path == it.path, {
-                navigate(it.path)
-            }, {
-                Icon(imageVector = it.icon, it.label)
-            }, label = {
-                Text(it.label)
-            }, modifier = Modifier.testTag(it.label))
         }
     }
 }
