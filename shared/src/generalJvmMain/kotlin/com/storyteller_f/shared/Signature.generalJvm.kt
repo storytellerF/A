@@ -274,7 +274,6 @@ actual fun loadCryptoLibIfNeed() {
     Security.addProvider(BouncyCastleProvider())
 }
 
-
 actual val AlgoDilithium: Algo = object : Algo {
     override suspend fun verify(
         derPublicKey: String,
