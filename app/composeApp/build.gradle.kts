@@ -32,7 +32,6 @@ val buildWasmTarget = project.findProperty("target.wasm") == "true"
 val flavorStr = project.findProperty("server.flavor") as String
 val flavorId = CaseFormat.LOWER_HYPHEN.converterTo(CaseFormat.LOWER_UNDERSCORE).convert(flavorStr)!!
 val buildType = project.findProperty("server.buildType") as String
-val isLlamaEnable = project.findProperty("llama.enable") == "true"
 
 kotlin {
     androidTarget {
@@ -98,10 +97,6 @@ kotlin {
             implementation(libs.github.newpipeextractor)
             implementation(libs.androidx.core.splashscreen)
             implementation(libs.androidx.datastore.preferences.core)
-
-            if (isLlamaEnable) {
-                implementation(":android-llama-cpp")
-            }
 
             implementation(libs.connector) {
                 exclude(group = "com.google.protobuf", module = "protobuf-java")
@@ -195,9 +190,6 @@ kotlin {
             implementation(libs.connectivity.http)
             implementation(libs.connectivity.compose.http)
             implementation(libs.tika.core)
-        }
-        jvmTest.dependencies {
-            implementation(compose.desktop.currentOs)
         }
         jvmTest {
             dependsOn(headlessTest)
