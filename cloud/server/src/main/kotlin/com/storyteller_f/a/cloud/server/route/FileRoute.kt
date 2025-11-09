@@ -101,7 +101,7 @@ suspend fun RoutingContext.uploadMedia(
     val parentType = objectTuple.objectType
     val parentId = objectTuple.objectId
     backend.checkRootWritePermission(parentType, parentId, id).mapResultIfNotNull {
-        runCatching {
+        try {
             val result = mutableListOf<FileInfo>()
             coroutineScope {
                 call.receiveMultipart(1024 * 1024 * 100).forEachPart { part ->
@@ -122,7 +122,9 @@ suspend fun RoutingContext.uploadMedia(
                     part.dispose()
                 }
             }
-            ServerResponse(result)
+            Result.success(ServerResponse(result))
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 }
