@@ -14,7 +14,7 @@ import java.util.function.Consumer
 import java.util.stream.Collectors
 import java.util.stream.Stream
 
-object DownloaderImpl : Downloader() {
+object NewPipeDownloaderImpl : Downloader() {
     private val mCookies: MutableMap<String, String> =
         HashMap()
 

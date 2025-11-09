@@ -7,7 +7,7 @@ import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.setupKmpLogger
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
-import org.schabi.newpipe.DownloaderImpl
+import org.schabi.newpipe.NewPipeDownloaderImpl
 import org.schabi.newpipe.ReCaptchaActivity
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.localization.ContentCountry
@@ -31,11 +31,11 @@ class AApplication : Application() {
 
         appContextRef = WeakReference(this)
         loadCryptoLibIfNeed()
-        setCookiesToDownloader(DownloaderImpl)
-        NewPipe.init(DownloaderImpl, Localization.DEFAULT, ContentCountry.DEFAULT)
+        setCookiesToDownloader(NewPipeDownloaderImpl)
+        NewPipe.init(NewPipeDownloaderImpl, Localization.DEFAULT, ContentCountry.DEFAULT)
     }
 
-    private fun setCookiesToDownloader(downloader: DownloaderImpl) {
+    private fun setCookiesToDownloader(downloader: NewPipeDownloaderImpl) {
         val prefs = getSharedPreferences("global", MODE_PRIVATE)
         val string = prefs.getString("recaptcha_cookies_key", null) ?: return
         downloader.setCookie(ReCaptchaActivity.RECAPTCHA_COOKIES_KEY, string)
