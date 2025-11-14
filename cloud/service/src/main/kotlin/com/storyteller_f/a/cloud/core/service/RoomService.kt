@@ -332,3 +332,22 @@ suspend fun Backend.getRoomInfoList(
     database.room.getRawRooms(listFetch, uid).mapResult {
         processRawRoomToRoomInfo(it)
     }
+
+suspend fun Backend.getAllPublicRooms(primaryKeyFetch: PrimaryKeyFetch) =
+    database.room.getRoomPaginationResult(
+        uid = null,
+        word = null,
+        community = null,
+        primaryKeyFetch = primaryKeyFetch,
+        joinSearch = JoinSearch.Unspecified(null)
+    ).mapResult { (list, total) ->
+        processRawRoomToRoomInfo(list).map { PaginationResult(it, total) }
+    }
+
+suspend fun Backend.getAllPrivateRooms(primaryKeyFetch: PrimaryKeyFetch) =
+    database.room.getPrivateRoomPaginationResult(
+        primaryKeyFetch = primaryKeyFetch,
+        word = null
+    ).mapResult { (list, total) ->
+        processRawRoomToRoomInfo(list).map { PaginationResult(it, total) }
+    }

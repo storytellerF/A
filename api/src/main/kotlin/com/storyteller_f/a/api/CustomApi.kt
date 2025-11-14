@@ -536,6 +536,27 @@ object AdminApi {
     val signUp = mutationApi<PanelAccountInfo, SignUpBody>("/admin/sign-up")
     val getData = safeApi<String>("/admin/get-data")
     val overview = safeApi<PanelOverview>("/admin/overview")
+
+    object Communities {
+        val get = safeApiWithQuery<ServerResponse<CommunityInfo>, PaginationQuery>("/admin/communities")
+    }
+
+    object Rooms {
+        val getPublic = safeApiWithQuery<ServerResponse<RoomInfo>, PaginationQuery>("/admin/rooms/public")
+        val getPrivate = safeApiWithQuery<ServerResponse<RoomInfo>, PaginationQuery>("/admin/rooms/private")
+    }
+
+    object Topics {
+        val get = safeApiWithQuery<ServerResponse<TopicInfo>, PaginationQuery>("/admin/topics")
+    }
+
+    object Titles {
+        val get = safeApiWithQuery<ServerResponse<TitleInfo>, PaginationQuery>("/admin/titles")
+    }
+
+    object Files {
+        val get = safeApiWithQuery<ServerResponse<FileInfo>, PaginationQuery>("/admin/files")
+    }
 }
 
 @Serializable

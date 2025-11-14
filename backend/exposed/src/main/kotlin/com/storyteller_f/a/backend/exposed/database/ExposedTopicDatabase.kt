@@ -2,7 +2,6 @@ package com.storyteller_f.a.backend.exposed.database
 
 import com.storyteller_f.a.backend.core.ContainerDatabase
 import com.storyteller_f.a.backend.core.FileDatabase
-import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PaginationResult
@@ -277,7 +276,7 @@ class ExposedTopicDatabase(
             val commentCountMap = getCommentCountMap(topicIds)
             val reactionCountMap = getReactionCountMap(topicIds)
             val lastReadMap = getLastReadMap(uid, topicIds)
-            val contentMap = processByteArrayToTopicContent(topics, uid).getOrThrow()
+            val contentMap = getTopicContentFromByteArray(topics, uid).getOrThrow()
             val favoriteMap = if (uid != null) {
                 getHasFavorite(
                     ObjectListFetch.IdListFetch(topicIds),
@@ -298,7 +297,7 @@ class ExposedTopicDatabase(
                 val id = topic.id
                 RawTopic(
                     topic,
-                    contentMap[id]!!,
+                    contentMap[id] ?: TopicContent.Nil,
                     commentCountMap[id] ?: 0,
                     commentedMap.contains(id),
                     reactionCountMap[id] ?: 0,
@@ -345,40 +344,34 @@ class ExposedTopicDatabase(
         Result.success(emptySet())
     }.getOrThrow()
 
-    override suspend fun processByteArrayToTopicContent(
+    override suspend fun getTopicContentFromByteArray(
         topics: List<Topic>,
         uid: PrimaryKey?,
     ): Result<Map<PrimaryKey, TopicContent>> {
         val encryptedTopic = topics.filter {
             it.isEncrypted
         }
-        return (if (encryptedTopic.isEmpty()) {
-            Result.success(emptyList())
-        } else if (uid != null) {
-            getEncryptedTopicContents(encryptedTopic, uid).map {
-                it.mapIndexed { i, e ->
-                    topics[i].id to e
-                }
+        return runCatching {
+            val encryptedTopicList = if (encryptedTopic.isNotEmpty() && uid != null) {
+                getEncryptedTopicContents(encryptedTopic, uid).getOrThrow()
+            } else {
+                emptyList()
             }
-        } else {
-            Result.failure(ForbiddenException("Permission denied"))
-        }).map {
-            it + topics.filter { topic ->
+            val unEncryptedTopicList = topics.filter { topic ->
                 !topic.isEncrypted
             }.map { topic ->
                 topic.id to TopicContent.Plain(topic.content.decodeToString())
             }
-        }.map { list ->
-            list.associate { it }
+            (encryptedTopicList + unEncryptedTopicList).associateByPair()
         }
     }
 
     // 加密内容不能处理media，需要客户端处理
     @OptIn(ExperimentalStdlibApi::class)
-    override suspend fun getEncryptedTopicContents(
+    suspend fun getEncryptedTopicContents(
         data: List<Topic>,
         uid: PrimaryKey,
-    ): Result<List<TopicContent.Encrypted>> {
+    ): Result<List<Pair<PrimaryKey, TopicContent>>> {
         val topicId = data.map {
             it.id
         }
@@ -398,7 +391,7 @@ class ExposedTopicDatabase(
             data.map {
                 val map = aesMap[it.id] ?: emptyMap()
                 val content = it.content.toHexString()
-                TopicContent.Encrypted(content, map)
+                it.id to TopicContent.Encrypted(content, map)
             }
         }
     }
@@ -664,6 +657,27 @@ class ExposedTopicDatabase(
             }
         }.map {
             PaginationResult(it, 0)
+        }
+    }
+
+    override suspend fun getAllRawTopics(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<RawTopic>> {
+        return runCatching {
+            val topics = databaseSession.dbSearch {
+                search {
+                    Topics.selectAll().bindPaginationQuery(Topics, primaryKeyFetch)
+                }
+                map {
+                    Topic.wrapRow(it)
+                }
+            }.getOrThrow()
+            val total = databaseSession.dbSearch {
+                search {
+                    Topics.selectAll().bindPaginationQuery(Topics, primaryKeyFetch)
+                }
+                count()
+            }.getOrThrow()
+            val rawTopic = processTopicToRawTopic(null, topics).getOrThrow()
+            PaginationResult(rawTopic, total)
         }
     }
 

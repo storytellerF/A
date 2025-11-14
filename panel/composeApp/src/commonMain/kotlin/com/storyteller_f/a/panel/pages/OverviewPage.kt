@@ -3,6 +3,7 @@ package com.storyteller_f.a.panel.pages
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -11,6 +12,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -77,10 +79,10 @@ private fun OverviewFlow(@PreviewParameter(OverviewFlowPreviewProvider::class) p
         UserCountOverviewCell(panelOverview)
         CommunityCountOverviewCell(panelOverview)
         TopicCountOverviewCell(panelOverview)
+        TitleCountOverviewCell(panelOverview)
         PrivateRoomCountOverviewCell(panelOverview)
         CommunityRoomCountOverviewCell(panelOverview)
         FileCountOverviewCell(panelOverview)
-        FileVolumeOverviewCell(panelOverview)
     }
 }
 
@@ -106,7 +108,8 @@ fun UserCountOverviewCell(panelOverview: PanelOverview) {
 
 @Composable
 fun CommunityCountOverviewCell(panelOverview: PanelOverview) {
-    Card {
+    val panelNav = LocalPanelNav.current
+    Card(onClick = { panelNav.gotoAllCommunities() }) {
         Box(modifier = Modifier.padding(16.dp)) {
             val text = remember(panelOverview.communityCount) {
                 buildAnnotatedString {
@@ -123,7 +126,8 @@ fun CommunityCountOverviewCell(panelOverview: PanelOverview) {
 
 @Composable
 fun TopicCountOverviewCell(panelOverview: PanelOverview) {
-    Card {
+    val panelNav = LocalPanelNav.current
+    Card(onClick = { panelNav.gotoAllTopics() }) {
         Box(modifier = Modifier.padding(16.dp)) {
             val text = remember(panelOverview.topicCount) {
                 buildAnnotatedString {
@@ -139,8 +143,27 @@ fun TopicCountOverviewCell(panelOverview: PanelOverview) {
 }
 
 @Composable
+fun TitleCountOverviewCell(panelOverview: PanelOverview) {
+    val panelNav = LocalPanelNav.current
+    Card(onClick = { panelNav.gotoAllTitles() }) {
+        Box(modifier = Modifier.padding(16.dp)) {
+            val text = remember(panelOverview.titleCount) {
+                buildAnnotatedString {
+                    withStyle(style = SpanStyle(fontSize = 40.sp, fontWeight = FontWeight.Bold)) {
+                        append(panelOverview.titleCount.toString())
+                    }
+                    append(" 个称号")
+                }
+            }
+            Text(text)
+        }
+    }
+}
+
+@Composable
 fun PrivateRoomCountOverviewCell(panelOverview: PanelOverview) {
-    Card {
+    val panelNav = LocalPanelNav.current
+    Card(onClick = { panelNav.gotoAllPrivateRooms() }) {
         Box(modifier = Modifier.padding(16.dp)) {
             val text = remember(panelOverview.privateRoomCount) {
                 buildAnnotatedString {
@@ -157,7 +180,8 @@ fun PrivateRoomCountOverviewCell(panelOverview: PanelOverview) {
 
 @Composable
 fun CommunityRoomCountOverviewCell(panelOverview: PanelOverview) {
-    Card {
+    val panelNav = LocalPanelNav.current
+    Card(onClick = { panelNav.gotoAllPublicRooms() }) {
         Box(modifier = Modifier.padding(16.dp)) {
             val text = remember(panelOverview.communityRoomCount) {
                 buildAnnotatedString {
@@ -174,34 +198,32 @@ fun CommunityRoomCountOverviewCell(panelOverview: PanelOverview) {
 
 @Composable
 fun FileCountOverviewCell(panelOverview: PanelOverview) {
-    Card {
+    val panelNav = LocalPanelNav.current
+    Card(onClick = { panelNav.gotoAllFiles() }) {
         Box(modifier = Modifier.padding(16.dp)) {
-            val text = remember(panelOverview.fileCount) {
-                buildAnnotatedString {
-                    withStyle(style = SpanStyle(fontSize = 40.sp, fontWeight = FontWeight.Bold)) {
-                        append(panelOverview.fileCount.toString())
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
+                Text(remember(panelOverview.fileCount) {
+                    buildAnnotatedString {
+                        withStyle(style = SpanStyle(fontSize = 40.sp, fontWeight = FontWeight.Bold)) {
+                            append(panelOverview.fileCount.toString())
+                        }
+                        append(" 个文件")
                     }
-                    append(" 个文件")
-                }
-            }
-            Text(text)
-        }
-    }
-}
+                })
 
-@Composable
-fun FileVolumeOverviewCell(panelOverview: PanelOverview) {
-    Card {
-        Box(modifier = Modifier.padding(16.dp)) {
-            val text = remember(panelOverview.fileVolume) {
-                buildAnnotatedString {
-                    withStyle(style = SpanStyle(fontSize = 40.sp, fontWeight = FontWeight.Bold)) {
-                        append(HumanReadable.fileSize(panelOverview.fileVolume))
+                Text(remember(panelOverview.fileVolume) {
+                    buildAnnotatedString {
+                        withStyle(
+                            style = SpanStyle(
+                                fontSize = 30.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        ) {
+                            append(HumanReadable.fileSize(panelOverview.fileVolume))
+                        }
                     }
-                    append(" 文件")
-                }
+                })
             }
-            Text(text)
         }
     }
 }

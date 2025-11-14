@@ -216,6 +216,11 @@ suspend fun Backend.getFileInfoPaginationResult(
             }
         }
 
+suspend fun Backend.getAllFileInfos(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<FileInfo>> =
+    database.file.getAllFileRecordPaginationList(primaryKeyFetch).mapResult { (list, count) ->
+        processFileRecordToFileInfo(list).map { PaginationResult(it, count) }
+    }
+
 suspend fun Backend.tryCopyFile(p: CommonPath, uid: PrimaryKey): Result<ServerResponse<FileInfo>?> =
     database.file.getFileRecordByIds(listOf(p.id)).firstOrNull().mapResultIfNotNull { fileRecord ->
         checkRootReadPermission(

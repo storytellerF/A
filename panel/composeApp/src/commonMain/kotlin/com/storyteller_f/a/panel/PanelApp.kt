@@ -60,6 +60,12 @@ import com.storyteller_f.a.client.core.startBackgroundTask
 import com.storyteller_f.a.client.room.RoomModelStorage
 import com.storyteller_f.a.client.room.getRoomModelStorage
 import com.storyteller_f.a.panel.common.OnUserAdded
+import com.storyteller_f.a.panel.pages.AllCommunitiesPage
+import com.storyteller_f.a.panel.pages.AllFilesPage
+import com.storyteller_f.a.panel.pages.AllPrivateRoomsPage
+import com.storyteller_f.a.panel.pages.AllPublicRoomsPage
+import com.storyteller_f.a.panel.pages.AllTitlesPage
+import com.storyteller_f.a.panel.pages.AllTopicsPage
 import com.storyteller_f.a.panel.pages.AllUsersPage
 import com.storyteller_f.a.panel.pages.OverviewPage
 import com.storyteller_f.shared.replaceCrlf
@@ -89,6 +95,12 @@ interface PanelNav {
     fun gotoLogin()
     fun gotoOverview()
     fun gotoAllUsers()
+    fun gotoAllCommunities()
+    fun gotoAllPublicRooms()
+    fun gotoAllPrivateRooms()
+    fun gotoAllTopics()
+    fun gotoAllFiles()
+    fun gotoAllTitles()
 }
 
 class Nav2PanelNav(val navigator: NavHostController) : PanelNav {
@@ -102,6 +114,30 @@ class Nav2PanelNav(val navigator: NavHostController) : PanelNav {
 
     override fun gotoAllUsers() {
         navigator.navigate("all-users")
+    }
+
+    override fun gotoAllCommunities() {
+        navigator.navigate("all-communities")
+    }
+
+    override fun gotoAllPublicRooms() {
+        navigator.navigate("all-rooms-public")
+    }
+
+    override fun gotoAllPrivateRooms() {
+        navigator.navigate("all-rooms-private")
+    }
+
+    override fun gotoAllTopics() {
+        navigator.navigate("all-topics")
+    }
+
+    override fun gotoAllFiles() {
+        navigator.navigate("all-files")
+    }
+
+    override fun gotoAllTitles() {
+        navigator.navigate("all-titles")
     }
 }
 
@@ -170,6 +206,24 @@ fun App() {
                 }
                 composable("all-users") {
                     AllUsersPage()
+                }
+                composable("all-communities") {
+                    AllCommunitiesPage()
+                }
+                composable("all-rooms-public") {
+                    AllPublicRoomsPage()
+                }
+                composable("all-rooms-private") {
+                    AllPrivateRoomsPage()
+                }
+                composable("all-topics") {
+                    AllTopicsPage()
+                }
+                composable("all-files") {
+                    AllFilesPage()
+                }
+                composable("all-titles") {
+                    AllTitlesPage()
                 }
                 composable("overview") {
                     PanelHost {

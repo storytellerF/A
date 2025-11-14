@@ -48,9 +48,22 @@ import com.storyteller_f.shared.obj.UpdateRoomBody
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.mapIfNotNull
 import kotlinx.datetime.LocalDateTime
 
 data class PaginationResult<T>(val list: List<T>, val total: Long)
+
+suspend fun <T> Result<List<T>?>.paging(total: Long): Result<PaginationResult<T>?> {
+    return mapIfNotNull {
+        PaginationResult(it, total)
+    }
+}
+
+fun <T> Result<List<T>>.pagingNotNull(total: Long): Result<PaginationResult<T>> {
+    return map {
+        PaginationResult(it, total)
+    }
+}
 
 data class ContainerInfo(
     val member: Member?,
@@ -205,16 +218,10 @@ interface TopicDatabase {
 
     suspend fun isUserCommented(uid: PrimaryKey, topicId: List<PrimaryKey>): Result<List<Long>>
 
-    suspend fun processByteArrayToTopicContent(
+    suspend fun getTopicContentFromByteArray(
         topics: List<Topic>,
         uid: PrimaryKey?,
     ): Result<Map<PrimaryKey, TopicContent>>
-
-    @OptIn(ExperimentalStdlibApi::class)
-    suspend fun getEncryptedTopicContents(
-        data: List<Topic>,
-        uid: PrimaryKey,
-    ): Result<List<TopicContent.Encrypted>>
 
     suspend fun statsReactionRecord(
         objectId: PrimaryKey,
@@ -268,6 +275,7 @@ interface TopicDatabase {
     suspend fun createTitle(title: Title, topic: Topic): Result<Unit>
     suspend fun getTopicCount(): Result<Long>
     suspend fun getAllTopics(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<Topic>>
+    suspend fun getAllRawTopics(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<RawTopic>>
 }
 
 interface TitleDatabase {
@@ -278,6 +286,8 @@ interface TitleDatabase {
         type: TitleType? = null,
         scopeId: PrimaryKey? = null,
     ): Result<PaginationResult<RawTitle>>
+
+    suspend fun getAllRawTitles(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<RawTitle>>
 }
 
 interface CommunityDatabase {
@@ -338,6 +348,10 @@ interface RoomDatabase {
     suspend fun updateRoom(id: PrimaryKey, body: UpdateRoomBody): Result<Boolean>
     suspend fun getPrivateRoomCount(): Result<Long>
     suspend fun getPublicRoomCount(): Result<Long>
+    suspend fun getPrivateRoomPaginationResult(
+        primaryKeyFetch: PrimaryKeyFetch,
+        word: String? = null,
+    ): Result<PaginationResult<RawRoom>>
 }
 
 interface FileDatabase {
@@ -356,6 +370,8 @@ interface FileDatabase {
         uid: PrimaryKey,
         primaryKeyFetch: PrimaryKeyFetch,
     ): Result<PaginationResult<FileRecord>>
+
+    suspend fun getAllFileRecordPaginationList(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<FileRecord>>
 
     suspend fun insertFileRecord(
         fileRecordList: List<FileRecord>,

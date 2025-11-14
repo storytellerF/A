@@ -22,6 +22,36 @@ fun createPanelOverviewViewModel() = panelViewModel { sessionManager, modelStora
 }
 
 @Composable
+fun createPanelAllCommunitiesViewModel() = panelViewModel { sessionManager, modelStorage ->
+    AllCommunitiesViewModel(sessionManager, modelStorage)
+}
+
+@Composable
+fun createPanelAllPublicRoomsViewModel() = panelViewModel { sessionManager, modelStorage ->
+    AllPublicRoomsViewModel(sessionManager, modelStorage)
+}
+
+@Composable
+fun createPanelAllPrivateRoomsViewModel() = panelViewModel { sessionManager, modelStorage ->
+    AllPrivateRoomsViewModel(sessionManager, modelStorage)
+}
+
+@Composable
+fun createPanelAllTopicsViewModel() = panelViewModel { sessionManager, modelStorage ->
+    AllTopicsViewModel(sessionManager, modelStorage)
+}
+
+@Composable
+fun createPanelAllTitlesViewModel() = panelViewModel { sessionManager, modelStorage ->
+    AllTitlesViewModel(sessionManager, modelStorage)
+}
+
+@Composable
+fun createPanelAllFilesViewModel() = panelViewModel { sessionManager, modelStorage ->
+    AllFilesViewModel(sessionManager, modelStorage)
+}
+
+@Composable
 inline fun <reified VM : ViewModel> panelViewModel(
     keys: List<Comparable<*>?>? = null,
     crossinline factory: (PanelSessionManager, ModelStorage) -> VM
