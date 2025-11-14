@@ -2,19 +2,34 @@ package com.storyteller_f.a.cloud.server
 
 import com.storyteller_f.a.backend.core.getImageDimension
 import com.storyteller_f.a.client.core.UploadData
+import com.storyteller_f.a.client.core.UserSessionManager
+import com.storyteller_f.a.client.core.abortChunkUpload
+import com.storyteller_f.a.client.core.completeChunkUpload
 import com.storyteller_f.a.client.core.copy
 import com.storyteller_f.a.client.core.extractAlbum
+import com.storyteller_f.a.client.core.getChunkStatus
 import com.storyteller_f.a.client.core.getMediaList
+import com.storyteller_f.a.client.core.getQuotaInfo
+import com.storyteller_f.a.client.core.initChunkUpload
 import com.storyteller_f.a.client.core.upload
-import com.storyteller_f.a.cloud.core.service.getExtensionFromMimeType
+import com.storyteller_f.a.client.core.uploadChunk
+import com.storyteller_f.a.cloud.core.service.getCoverExtensionFromMimeType
 import com.storyteller_f.a.cloud.core.utils.readFlacAlbumFromAudioStream
+import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.type.UploadRecordStatus
+import com.storyteller_f.shared.utils.sha256
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.request.get
 import io.ktor.http.ContentType
 import io.ktor.http.defaultForFileExtension
 import kotlinx.coroutines.test.runTest
 import kotlinx.io.Buffer
+import org.apache.commons.imaging.Imaging
+import org.apache.commons.imaging.formats.jpeg.JpegImageMetadata
 import org.bytedeco.opencv.global.opencv_core
 import org.bytedeco.opencv.global.opencv_imgcodecs
 import org.bytedeco.opencv.global.opencv_imgproc
@@ -26,10 +41,14 @@ import java.io.FileOutputStream
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import kotlin.io.path.Path
+import kotlin.math.ceil
 import kotlin.math.log10
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -45,19 +64,26 @@ class MediaTest {
             assertEquals("${it.uid}/hello.txt", response.data.first().fullName)
             val mediaList = getMediaList(it.uid, ObjectType.USER, null, 10)
             assertListSize(1, mediaList)
-            mediaList.getOrThrow().data.first()
+            val quotaInfo = getQuotaInfo(ObjectTuple(it.uid, ObjectType.USER)).getOrThrow()
+            val fileInfo = mediaList.getOrThrow().data.first()
+            assertEquals(fileInfo.size, quotaInfo.used)
+            assertEquals(null, quotaInfo.lockId)
+            fileInfo
         }
         attachSession {
             val response = copy(firstTuple.custom.id).getOrThrow()
             assertEquals("${it.uid}/hello.txt", response.data.first().fullName)
             assertListSize(1, getMediaList(it.uid, ObjectType.USER, null, 10))
+            val quotaInfo = getQuotaInfo(ObjectTuple(it.uid, ObjectType.USER)).getOrThrow()
+            assertEquals(firstTuple.custom.size, quotaInfo.used)
+            assertEquals(null, quotaInfo.lockId)
         }
     }
 
     @Test
     fun `get png size`() = runTest {
         val dimension = getImageDimension("avatar1.png", "image/png") {
-            ClassLoader.getSystemResourceAsStream("avatar1.png")!!
+            ClassLoader.getSystemResourceAsStream("avatar1.png")!!.buffered()
         }
         assertNotNull(dimension)
         assertEquals(dimension.width, 420)
@@ -75,15 +101,14 @@ class MediaTest {
         if (vendor.contains("OpenJDK", ignoreCase = true)) {
             error("❌ 不允许使用 OpenJDK")
         }
-        ClassLoader.getSystemResourceAsStream("I_Do_not_Wanna_Live_Forever.flac")
-            ?.use {
-                it.readFlacAlbumFromAudioStream { image, mimeType ->
-                    val name = "build/test/cover.${getExtensionFromMimeType(mimeType)}"
-                    FileOutputStream(name).use { output ->
-                        output.write(image)
-                    }
+        ClassLoader.getSystemResourceAsStream("I_Do_not_Wanna_Live_Forever.flac")?.buffered()?.use {
+            it.readFlacAlbumFromAudioStream { image, mimeType ->
+                val name = "build/test/cover${getCoverExtensionFromMimeType(mimeType)}"
+                FileOutputStream(name).use { output ->
+                    output.write(image)
                 }
-            } ?: throw Exception("flac is not exists")
+            }
+        } ?: throw Exception("flac is not exists")
         ClassLoader.getSystemResourceAsStream("cover.jpg")?.use {
             Files.copy(it, Path("build/test/cover_origin.jpg"), StandardCopyOption.REPLACE_EXISTING)
         } ?: throw Exception("cover is not exists")
@@ -114,10 +139,7 @@ class MediaTest {
             attachSession {
                 val name = "I_Do_not_Wanna_Live_Forever.flac"
                 val data = getUploadDataFromResources(name)
-                val response = upload(
-                    ObjectTuple(it.uid, ObjectType.USER),
-                    data
-                ).getOrThrow()
+                val response = upload(it.uid ob ObjectType.USER, data).getOrThrow()
                 extractAlbum(response.data.first().id).getOrThrow()
             }
         }
@@ -126,12 +148,159 @@ class MediaTest {
     @Test
     fun `test remove image info`() = test {
         attachSession {
-            upload(
+            val oldMeta =
+                Imaging.getMetadata(
+                    ClassLoader.getSystemResourceAsStream("52873358902_7857530666_o.jpg")!!,
+                    null
+                )
+            val first = upload(
                 it.uid ob ObjectType.USER,
-                getUploadDataFromResources("cover.jpg")
-            ).getOrThrow()
+                getUploadDataFromResources("52873358902_7857530666_o.jpg")
+            ).getOrThrow().data.first()
+            val tmpFile = File("build/test/52873358902_7857530666_o.jpg")
+            downloadFile(tmpFile, first)
+            val newMeta = Imaging.getMetadata(tmpFile)
+            assertTrue(oldMeta is JpegImageMetadata)
+            assertTrue(newMeta is JpegImageMetadata)
+            assertNotNull(oldMeta.exif)
+            assertNull(newMeta.exif)
         }
     }
+
+    @Test
+    fun `chunked upload end-to-end`() = test {
+        attachSession {
+            val tuple = ObjectTuple(it.uid, ObjectType.USER)
+            val name = "chunked.bin" // 保持长度 < 60，避免保存名被改写
+            val totalSize = 6_000_000L // 5.72Mib
+            val chunkSize = 5_242_880L // 5Mib
+
+            // 初始化分块上传，拿到 recordId
+            val init = initChunkUpload(
+                tuple,
+                name,
+                totalSize,
+                ContentType.Application.OctetStream,
+                chunkSize
+            ).getOrThrow()
+            val recordId = init.recordId
+
+            val chunkCount = ceil(totalSize / chunkSize.toDouble()).toInt()
+            for (index in 0 until chunkCount) {
+                val start = index * chunkSize
+                val endExclusive = minOf(start + chunkSize, totalSize)
+                val buf = Buffer().apply {
+                    for (i in start until endExclusive) {
+                        writeByte((i % 256).toByte())
+                    }
+                }
+                val hash = sha256(buf.peek())
+                uploadChunk(recordId, index, buf, hash).getOrThrow()
+            }
+
+            // 校验状态返回的分片索引与元信息
+            val status = getChunkStatus(recordId).getOrThrow()
+            assertEquals(chunkCount, status.uploaded.size)
+            assertEquals((0 until chunkCount).toList(), status.uploaded)
+            assertEquals(chunkSize, status.chunkSize)
+            assertEquals(totalSize, status.size)
+
+            // 完成分块合并并验证文件记录
+            val fileInfo = completeChunkUpload(recordId).getOrThrow()
+            assertEquals("${it.uid}/$name", fileInfo.fullName)
+            assertEquals(totalSize, fileInfo.size)
+            assertTrue(fileInfo.contentType.startsWith("application"))
+
+            // 列表查询应返回 1 个文件
+            val mediaList = getMediaList(it.uid, ObjectType.USER, null, 10)
+            assertEquals(1, mediaList.getOrThrow().data.size)
+        }
+    }
+
+    @Test
+    fun `abort chunk upload cleans up and unlocks quota`() = test {
+        attachSession {
+            val tuple = ObjectTuple(it.uid, ObjectType.USER)
+            val name = "to-abort.bin"
+            val totalSize = 180_500L
+            val chunkSize = 64_000L
+
+            val init = initChunkUpload(
+                tuple,
+                name,
+                totalSize,
+                ContentType.Application.OctetStream,
+                chunkSize
+            ).getOrThrow()
+            val recordId = init.recordId
+
+            // 初始锁应打开
+            val quotaLockId = getQuotaInfo(tuple).getOrThrow().lockId
+            assertNotEquals(quotaLockId, null)
+
+            // 上传一个分片后取消
+            val bytes = ByteArray(chunkSize.toInt()) { idx -> (idx % 256).toByte() }
+            val buf = Buffer().apply { write(bytes) }
+            val hash = sha256(buf.peek())
+            uploadChunk(recordId, 0, buf, hash).getOrThrow()
+
+            // 取消上传
+            abortChunkUpload(recordId).getOrThrow()
+
+            // 状态查询应失败（记录已删除 + 分片已清理）
+            val statusResult = getChunkStatus(recordId).getOrThrow()
+            assertEquals(UploadRecordStatus.ABORTED, statusResult.status)
+
+            // 配额锁应释放
+            val quotaAfter = getQuotaInfo(tuple).getOrThrow()
+            assertEquals(quotaAfter.lockId, null)
+        }
+    }
+
+    @Test
+    fun `chunk hash mismatch is rejected`() = test {
+        attachSession {
+            val tuple = ObjectTuple(it.uid, ObjectType.USER)
+            val name = "bad-hash.bin"
+            val totalSize = 10_000L
+            val chunkSize = 1_000L
+
+            val init = initChunkUpload(
+                tuple,
+                name,
+                totalSize,
+                ContentType.Application.OctetStream,
+                chunkSize
+            ).getOrThrow()
+            val recordId = init.recordId
+
+            // 构造错误哈希的分片
+            val bytes = ByteArray(chunkSize.toInt()) { 1 }
+            val buf = Buffer().apply { write(bytes) }
+
+            @Suppress("SpellCheckingInspection")
+            val wrongHash = "deadbeef" // 故意错误
+            val r = uploadChunk(recordId, 0, buf, wrongHash)
+            assertTrue(r.isFailure)
+
+            // 状态查询不应包含该分片索引
+            val status = getChunkStatus(recordId).getOrThrow()
+            assertTrue(status.uploaded.isEmpty())
+        }
+    }
+}
+
+suspend fun UserSessionManager.downloadFile(
+    tmpFile: File,
+    first: FileInfo
+) {
+    tmpFile.parentFile.mkdir()
+    val bytes = if (first.url.startsWith("http://localhost/")) {
+        client
+    } else {
+        HttpClient { }
+    }.get(first.url) { }.body<ByteArray>()
+    tmpFile.writeBytes(bytes)
 }
 
 private fun getUploadDataFromResources(name: String): UploadData {

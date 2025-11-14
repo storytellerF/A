@@ -61,12 +61,13 @@ dependencies {
     testImplementation(projects.cloud.pdfbox)
     testImplementation(libs.pdfbox)
     testImplementation(libs.pdfcompare)
+    testImplementation(libs.commons.imaging)
 }
 
 tasks.test {
     useJUnitPlatform()
     // 设置测试 JVM 的最大堆内存为 1024MB
-    maxHeapSize = "1024m"
+    maxHeapSize = "3096m"
 
     // 设置初始堆内存
     minHeapSize = "256m"

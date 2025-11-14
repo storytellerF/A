@@ -61,13 +61,13 @@ abstract class Elastic(private val connection: ElasticConnection) {
             }
         }.recoverResult { e ->
             Result.failure(
-                when {
-                    e is ConnectException || e is ConnectionClosedException -> Exception(
+                when (e) {
+                    is ConnectException, is ConnectionClosedException -> Exception(
                         "elastic service unavailable",
                         e
                     )
 
-                    e is ElasticsearchException && e.status() == 400 ->
+                    is ElasticsearchException if e.status() == 400 ->
                         Exception("index not found", e)
 
                     else -> {

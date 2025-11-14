@@ -55,6 +55,7 @@ import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.append
 import io.ktor.http.contentType
+import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.core.Input
 
 suspend fun <R, U> SessionManager<U>.serviceCatching(block: suspend HttpClient.() -> R): Result<R> {
@@ -312,7 +313,7 @@ suspend fun UserSessionManager.getData() = serviceCatching {
     CustomApi.Accounts.getData()
 }
 
-suspend fun UserSessionManager.getTopicSnapshot(topicId: PrimaryKey) = serviceCatching {
+suspend fun UserSessionManager.createTopicSnapshot(topicId: PrimaryKey) = serviceCatching {
     CustomApi.Topics.Id.createSnapshot(CommonPath(topicId), Unit) {
     }
 }
@@ -427,7 +428,6 @@ suspend fun UserSessionManager.upload(
                     appendInput("file", Headers.build {
                         append(HttpHeaders.ContentType, data.contentType)
                         append(HttpHeaders.ContentDisposition, "filename=\"${data.name}\"")
-                        append(HttpHeaders.ContentLength, data.size)
                     }, data.size, data.block)
                 },
                 boundary = "WebAppBoundary"
@@ -437,6 +437,73 @@ suspend fun UserSessionManager.upload(
             onUpload(bytesSentTotal, contentLength)
         }
     }
+}
+
+// Chunked upload APIs
+suspend fun UserSessionManager.initChunkUpload(
+    objectTuple: ObjectTuple,
+    name: String,
+    size: Long,
+    contentType: ContentType,
+    chunkSize: Long
+) = serviceCatching {
+    CustomApi.Files.Chunks.init(
+        CustomApi.Files.Chunks.InitBody(
+            objectTuple.objectId,
+            objectTuple.objectType,
+            name,
+            size,
+            contentType.contentType,
+            chunkSize
+        )
+    ) {
+        contentType(ContentType.Application.Json)
+    }
+}
+
+suspend fun UserSessionManager.uploadChunk(
+    recordId: PrimaryKey,
+    index: Int,
+    input: Input,
+    hash: String,
+    onUpload: suspend (Long, Long?) -> Unit = { _, _ -> },
+) = serviceCatching {
+    CustomApi.Files.Chunks.upload(
+        CustomApi.Files.Chunks.UploadQuery(hash),
+        CustomApi.Files.Chunks.UploadPath(recordId, index),
+        Unit
+    ) {
+        setBody(ByteReadChannel(input))
+        onUpload { bytesSentTotal, contentLength ->
+            onUpload(bytesSentTotal, contentLength)
+        }
+    }
+}
+
+suspend fun UserSessionManager.completeChunkUpload(
+    recordId: PrimaryKey
+) = serviceCatching {
+    CustomApi.Files.Chunks.complete(
+        CommonPath(recordId),
+        Unit
+    ) {
+    }
+}
+
+suspend fun UserSessionManager.abortChunkUpload(
+    recordId: PrimaryKey
+) = serviceCatching {
+    CustomApi.Files.Chunks.abort(
+        CommonPath(recordId),
+        Unit
+    ) {
+    }
+}
+
+suspend fun UserSessionManager.getChunkStatus(
+    recordId: PrimaryKey
+) = serviceCatching {
+    CustomApi.Files.Chunks.status(CommonPath(recordId))
 }
 
 suspend fun UserSessionManager.copy(mediaId: PrimaryKey) =

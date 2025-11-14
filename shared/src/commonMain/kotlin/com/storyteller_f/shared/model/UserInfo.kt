@@ -82,5 +82,5 @@ data class QuotaInfo(
     val quotaType: QuotaType,
     val total: Long,
     val used: Long,
-    val locking: Boolean
+    val lockId: PrimaryKey?
 )

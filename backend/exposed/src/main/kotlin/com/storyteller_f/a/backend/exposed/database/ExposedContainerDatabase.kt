@@ -227,7 +227,7 @@ class ExposedContainerDatabase(val databaseSession: ExposedDatabaseSession) :
             it[total] = quota.total
             it[used] = quota.used
             it[quotaType] = quota.quotaType
-            it[locking] = false
+            it[lockId] = null
         }.insertedCount > 0) {
             "insert quota failed"
         }

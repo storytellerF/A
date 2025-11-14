@@ -12,6 +12,7 @@ import com.storyteller_f.a.client.core.createCommunity
 import com.storyteller_f.a.client.core.createRoom
 import com.storyteller_f.a.client.core.createTitle
 import com.storyteller_f.a.client.core.createTopic
+import com.storyteller_f.a.client.core.createTopicSnapshot
 import com.storyteller_f.a.client.core.deleteReaction
 import com.storyteller_f.a.client.core.getCommunityInfo
 import com.storyteller_f.a.client.core.getCommunityTopics
@@ -21,7 +22,6 @@ import com.storyteller_f.a.client.core.getRoomInfo
 import com.storyteller_f.a.client.core.getRoomMembersPublicKeys
 import com.storyteller_f.a.client.core.getRoomTopics
 import com.storyteller_f.a.client.core.getTopicInfo
-import com.storyteller_f.a.client.core.getTopicSnapshot
 import com.storyteller_f.a.client.core.getUserTopics
 import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.a.client.core.joinRoom
@@ -36,8 +36,6 @@ import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.obj.UpdateUserRead
 import com.storyteller_f.shared.type.ObjectType
-import io.ktor.client.call.body
-import io.ktor.client.plugins.onDownload
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.client.request.get
 import io.ktor.http.ContentType
@@ -48,9 +46,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.io.Buffer
 import kotlinx.io.writeString
+import org.apache.pdfbox.Loader
+import org.apache.pdfbox.text.PDFTextStripper
 import org.junit.jupiter.api.assertNotNull
 import java.io.File
 import kotlin.test.Test
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertFalse
@@ -141,16 +142,13 @@ class TopicTest {
                 |![png](${info.name})
                 """.trimMargin()
             ).getOrThrow()
-            val fileInfo = getTopicSnapshot(topicInfo.id).getOrThrow()
-            val url = fileInfo.url
+            val fileInfo = createTopicSnapshot(topicInfo.id).getOrThrow()
             val file = File("build/test/tmp/${Uuid.random()}.pdf")
-            val httpResponse = client.get(url) {
-                onDownload { bytesSentTotal, contentLength ->
-                    println("Received $bytesSentTotal bytes from $contentLength")
-                }
+            downloadFile(file, fileInfo)
+            Loader.loadPDF(file).use { document ->
+                val stripper = PDFTextStripper()
+                assertContains(stripper.getText(document), "hello")
             }
-            val responseBody: ByteArray = httpResponse.body()
-            file.writeBytes(responseBody)
         }
     }
 

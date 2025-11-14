@@ -128,11 +128,8 @@ object CryptoJvm {
 
                 // 5️⃣ 生成 X.509 证书
                 val certHolder = certBuilder.build(signer)
-                val certificate: X509Certificate = JcaX509CertificateConverter()
-                    .setProvider("BC")
-                    .getCertificate(certHolder)
 
-                certificate
+                JcaX509CertificateConverter().setProvider("BC").getCertificate(certHolder)
             }
 
         }
@@ -361,7 +358,7 @@ actual val AlgoDilithium: Algo = object : Algo {
     ): Result<ByteArray> {
         return runCatching {
             val publicKeyBytes = derPublicKeyStr.hexToByteArray()
-            
+
             val keyFactory = KeyFactory.getInstance("Kyber", "BCPQC")
             val publicKey = keyFactory.generatePublic(X509EncodedKeySpec(publicKeyBytes))
             val wrapCipher = Cipher.getInstance("Kyber", "BCPQC")
@@ -381,7 +378,8 @@ actual val AlgoDilithium: Algo = object : Algo {
 
             val unwrapCipher = Cipher.getInstance("Kyber", "BCPQC")
             unwrapCipher.init(Cipher.UNWRAP_MODE, privateKey)
-            val aesKey = unwrapCipher.unwrap(encrypted, "AES", Cipher.SECRET_KEY) as javax.crypto.SecretKey
+            val aesKey =
+                unwrapCipher.unwrap(encrypted, "AES", Cipher.SECRET_KEY) as javax.crypto.SecretKey
             aesKey.encoded
         }
     }

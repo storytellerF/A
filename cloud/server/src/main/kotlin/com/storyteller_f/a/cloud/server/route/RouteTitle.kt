@@ -8,10 +8,9 @@ import com.storyteller_f.a.cloud.server.auth.usePrincipal
 import com.storyteller_f.route4k.ktor.server.invoke
 import com.storyteller_f.route4k.ktor.server.receiveBody
 import io.ktor.server.routing.Route
-import io.ktor.server.routing.RoutingContext
 
 fun Route.bindProtectedTitleRoute(backend: Backend) {
-    CustomApi.Titles.add(RoutingContext::handleResult) {
+    CustomApi.Titles.add(handleResult()) {
         usePrincipal { uid ->
             val title = it.receiveBody()
             createTitle(title, backend, uid)

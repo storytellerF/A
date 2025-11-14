@@ -261,7 +261,7 @@ private fun Application.buildBackend(): Backend {
         if (env["BUILD_TYPE"] == "test") {
             "start server in `${env["METHOD_NAME"]}`"
         } else {
-            "start server at ${env["SERVER_PORT"]}"
+            "start server on ${env["SERVER_PORT"]}"
         }
     }
     return buildBackendFromEnv(env)

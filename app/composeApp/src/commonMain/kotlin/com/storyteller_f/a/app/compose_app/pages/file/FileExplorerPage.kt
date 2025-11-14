@@ -2,6 +2,7 @@ package com.storyteller_f.a.app.compose_app.pages.file
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,7 +26,9 @@ import androidx.compose.material.icons.filled.NotStarted
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
@@ -60,6 +63,7 @@ import androidx.paging.compose.itemKey
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalClientFileProvider
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
+import com.storyteller_f.a.app.compose_app.LocalUiViewModel
 import com.storyteller_f.a.app.compose_app.LocalUserInfo
 import com.storyteller_f.a.app.compose_app.common.DownloadViewModel
 import com.storyteller_f.a.app.compose_app.common.UploadDetailViewModel
@@ -84,8 +88,10 @@ import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.bottomAppending
 import com.storyteller_f.a.app.core.components.catchingResult
 import com.storyteller_f.a.app.core.components.pagingItems
+import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.app.core.components.topPrepend
 import com.storyteller_f.a.client.core.UploadData
+import com.storyteller_f.a.client.core.abortChunkUpload
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.QuotaInfo
 import com.storyteller_f.shared.obj.ObjectTuple
@@ -95,6 +101,7 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.storage.DownloadInfo
 import com.storyteller_f.storage.DownloadStatus
+import com.storyteller_f.storage.UploadCollection
 import com.storyteller_f.storage.UploadInfo
 import com.storyteller_f.storage.UploadStatus
 import io.github.vinceglb.filekit.FileKit
@@ -203,7 +210,7 @@ private fun FileExplorerNonCompatPageInternal(mediaTarget: ObjectTuple) {
     Scaffold(floatingActionButton = {
         when (current?.destination?.route) {
             "/uploaded" -> {
-                FileQuotaActionButton({ -> showQuota = true })
+                FileQuotaActionButton({ showQuota = true })
             }
 
             "/upload-record" -> {
@@ -497,7 +504,8 @@ private fun getDownloadProgress(d: DownloadInfo): Float =
     )
 
 @Composable
-private fun DownloadStatusButton(d: DownloadInfo) {
+private fun DownloadStatusButton(d: DownloadInfo?) {
+    d ?: return
     val fileProvider = LocalClientFileProvider.current
     val globalDialogController = LocalGlobalDialog.current
     val scope = rememberCoroutineScope()
@@ -598,15 +606,7 @@ private fun DownloadInfoTitle(data: DownloadInfo?) {
     ) {
         val provider = LocalClientFileProvider.current
         Text(it?.name ?: "-", modifier = Modifier.weight(1f))
-        if (data != null && data.status != DownloadStatus.PROCESSED) {
-            Button({
-                globalDialogController.catchingResult(scope) {
-                    it?.id?.let { id -> provider.getDownloader()?.resume(id) }
-                }
-            }) {
-                Text("Retry")
-            }
-        }
+        DownloadStatusButton(data)
     }
 }
 
@@ -659,61 +659,58 @@ fun Float.roundToDecimalPlaces(decimals: Int): Float {
 class UploadItemPreviewProvider : PreviewParameterProvider<UploadInfo> {
     override val values: Sequence<UploadInfo>
         get() = sequenceOf(
-            UploadInfo(
-                1,
-                "test",
-                "text/plain",
-                100,
-                0,
-                UploadStatus.SUCCESS,
-                "message",
-                "name",
-                "image/png"
+            UploadInfo.EMPTY.copy(
+                id = 1,
+                pathHash = "test",
+                path = "text/plain",
+                progress = 100,
+                status = UploadStatus.SUCCESS,
+                message = "message",
+                name = "name",
+                contentType = "image/png",
             ),
-            UploadInfo(
-                2,
-                "test",
-                "text/plain",
-                100,
-                50,
-                UploadStatus.FAILED,
-                "message",
-                "name",
-                "image/png"
+            UploadInfo.EMPTY.copy(
+                id = 2,
+                pathHash = "test",
+                path = "text/plain",
+                progress = 100,
+                chunkProgress = 50,
+                status = UploadStatus.FAILED,
+                message = "message",
+                name = "name",
+                contentType = "image/png",
             ),
-            UploadInfo(
-                3,
-                "test",
-                "text/plain",
-                100,
-                100,
-                UploadStatus.NOT_UPLOADING,
-                "message",
-                "name",
-                "image/png"
+            UploadInfo.EMPTY.copy(
+                id = 3,
+                pathHash = "test",
+                path = "text/plain",
+                progress = 100,
+                chunkProgress = 100,
+                status = UploadStatus.NOT_UPLOADING,
+                message = "message",
+                name = "name",
+                contentType = "image/png",
             ),
-            UploadInfo(
-                4,
-                "test",
-                "text/plain",
-                100,
-                0,
-                UploadStatus.PAUSED,
-                "message",
-                "name",
-                "image/png"
+            UploadInfo.EMPTY.copy(
+                id = 4,
+                pathHash = "test",
+                path = "text/plain",
+                progress = 100,
+                status = UploadStatus.PAUSED,
+                message = "message",
+                name = "name",
+                contentType = "image/png",
             ),
-            UploadInfo(
-                5,
-                "test",
-                "text/plain",
-                100,
-                0,
-                UploadStatus.UPLOADING,
-                "message",
-                "name",
-                "image/png"
-            )
+            UploadInfo.EMPTY.copy(
+                id = 5,
+                pathHash = "test",
+                path = "text/plain",
+                progress = 100,
+                status = UploadStatus.UPLOADING,
+                message = "message",
+                name = "name",
+                contentType = "image/png",
+            ),
         )
 }
 
@@ -723,10 +720,15 @@ class UploadItemPreviewProvider : PreviewParameterProvider<UploadInfo> {
 fun UploadItem(@PreviewParameter(UploadItemPreviewProvider::class) uploadInfo: UploadInfo?) {
     uploadInfo ?: return
     var showSheet by remember { mutableStateOf(false) }
+    var showDropdown by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
     Row(
         modifier = Modifier
             .clickable { showSheet = true }
+            .combinedClickable(
+                onClick = { showSheet = true },
+                onLongClick = { showDropdown = true }
+            )
             .padding(20.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
@@ -739,20 +741,66 @@ fun UploadItem(@PreviewParameter(UploadItemPreviewProvider::class) uploadInfo: U
                 Spacer(modifier = Modifier.weight(1f))
                 Text(uploadInfo.status.name)
             }
-            LinearProgressIndicator(
-                progress = { uploadInfo.progress.toFloat() / uploadInfo.total },
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                LinearProgressIndicator(
+                    progress = { uploadInfo.progress.toFloat() / uploadInfo.total },
+                    modifier = Modifier.weight(1f)
+                )
+                Text(uploadInfo.getPercent())
+            }
+
         }
 
         UploadStatusButton(uploadInfo)
     }
+
+    DropdownMenu(
+        expanded = showDropdown,
+        onDismissRequest = { showDropdown = false }
+    ) {
+        if (uploadInfo.recordId != null) {
+            CancelUploadButton(uploadInfo) { showDropdown = false }
+        }
+    }
+
     UploadInfoPage(showSheet, sheetState, uploadInfo.pathHash) {
         showSheet = false
     }
 }
 
 @Composable
-private fun UploadStatusButton(file: UploadInfo) {
+fun CancelUploadButton(uploadInfo: UploadInfo, updateDropdown: (Boolean) -> Unit) {
+    val scope = rememberCoroutineScope()
+    val globalDialogController = LocalGlobalDialog.current
+    val current = LocalUiViewModel.current
+    val state by current.instance.collectAsState()
+    val modelStorage by state.database.collectAsState()
+    val myUid = state.sessionManager.model.uid ?: return
+    DropdownMenuItem(
+        text = { Text("Abort Upload") },
+        onClick = {
+            updateDropdown(false)
+            globalDialogController.catchingResult(scope) {
+                uploadInfo.recordId?.let {
+                    request {
+                        abortChunkUpload(it)
+                    }.getOrThrow()
+                }
+                modelStorage.upload.delete(
+                    UploadCollection(myUid),
+                    uploadInfo.pathHash
+                )
+            }
+        },
+        leadingIcon = {
+            Icon(Icons.Default.Stop, contentDescription = "Cancel")
+        }
+    )
+}
+
+@Composable
+private fun UploadStatusButton(file: UploadInfo?) {
+    file ?: return
     val provider = LocalClientFileProvider.current
     val scope = rememberCoroutineScope()
     val globalDialogController = LocalGlobalDialog.current
@@ -783,8 +831,11 @@ private fun UploadStatusButton(file: UploadInfo) {
 
         UploadStatus.UPLOADING -> {
             IconButton({
+                globalDialogController.catchingResult(scope) {
+                    provider.getUploader()?.pause(file.pathHash)
+                }
             }) {
-                Icon(Icons.Default.Pause, "resume")
+                Icon(Icons.Default.Pause, "pause")
             }
         }
     }
@@ -807,7 +858,8 @@ fun UploadInfoPage(
     hideSheet: () -> Unit,
 ) {
     if (LocalInspectionMode.current) return
-    val uploadViewModel = getUploadViewModel(pathHash)
+    val my = LocalUserInfo.current ?: return
+    val uploadViewModel = getUploadViewModel(pathHash, my.id)
     BaseSheet(showSheet, sheetState, hideSheet) {
         SheetContainer {
             Column(
@@ -824,45 +876,31 @@ fun UploadInfoPage(
 private fun UploadInfoPageInternal(uploadViewModel: UploadDetailViewModel) {
     val data by uploadViewModel.data.collectAsState(null)
     UploadInfoTitle(data)
-    data?.let {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            LinearProgressIndicator(progress = {
-                getUploadProgress(it)
-            })
-            Text(it.getPercent())
-        }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        LinearProgressIndicator(progress = {
+            getUploadProgress(data)
+        })
+        Text(data.getPercent())
     }
     UploadInfoTable(data)
 }
 
-private fun getUploadProgress(info: UploadInfo): Float =
-    (info.progress.toFloat() / (if (info.total == 0L) 1 else info.total)).coerceIn(
-        0f,
-        1f
-    )
+private fun getUploadProgress(info: UploadInfo?): Float {
+    info ?: return 0f
+    return (info.progress.toFloat() / (if (info.total == 0L) 1 else info.total)).coerceIn(0f, 1f)
+}
 
 @Composable
 private fun UploadInfoTitle(data: UploadInfo?) {
-    val globalDialogController = LocalGlobalDialog.current
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        val provider = LocalClientFileProvider.current
-        val scope = rememberCoroutineScope()
         Text(data?.name ?: "-", modifier = Modifier.weight(1f))
-        if (data != null && data.status != UploadStatus.SUCCESS) {
-            Button({
-                globalDialogController.catchingResult(scope) {
-                    provider.getUploader()?.resume(data.pathHash)
-                }
-            }) {
-                Text("Resume")
-            }
-        }
+        UploadStatusButton(data)
     }
 }
 
@@ -903,5 +941,7 @@ private fun UploadInfoTable(uploadInfo: UploadInfo?) {
     }
 }
 
-fun UploadInfo.getPercent(): String =
-    "${(progress.toFloat() * 100 / (if (total == 0L) 1 else total)).roundToDecimalPlaces(2)} %"
+fun UploadInfo?.getPercent(): String {
+    this ?: return "-"
+    return "${(progress.toFloat() * 100 / (if (total == 0L) 1 else total)).roundToDecimalPlaces(2)} %"
+}

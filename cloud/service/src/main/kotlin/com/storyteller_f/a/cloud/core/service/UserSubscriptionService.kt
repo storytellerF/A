@@ -13,7 +13,7 @@ import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.model.UserSubscriptionInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.mapIfNotNull
+import com.storyteller_f.shared.utils.firstOrNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
@@ -37,9 +37,7 @@ suspend fun Backend.addSubscription(
     }
 }).mapResultIfNotNull {
     processUserSubscriptionToUserSubscriptionInfo(uid, listOf(it))
-}.mapIfNotNull {
-    it.firstOrNull()
-}
+}.firstOrNull()
 
 suspend fun Backend.removeSubscription(
     uid: PrimaryKey,

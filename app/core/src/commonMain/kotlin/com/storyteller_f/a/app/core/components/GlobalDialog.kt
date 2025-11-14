@@ -288,7 +288,10 @@ suspend inline fun <T> GlobalDialogController<GlobalDialogContext<T>>.emitEvent(
     context.emitEvent(event)
 }
 
-fun <C> GlobalDialogController<C>.catchingResult(scope: CoroutineScope, block: suspend () -> Unit) {
+fun <C> GlobalDialogController<C>.catchingResult(
+    scope: CoroutineScope,
+    block: suspend GlobalDialogController<C>.() -> Unit
+) {
     scope.launch {
         useResult {
             runCatching {

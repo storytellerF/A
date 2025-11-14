@@ -105,7 +105,6 @@ class ExposedCommunityDatabase(
         }.mapResult { count ->
             val uid = when (joinSearch) {
                 is JoinSearch.Joined -> joinSearch.uid
-                is JoinSearch.NotJoined -> joinSearch.uid
                 is JoinSearch.Unspecified -> joinSearch.uid
             }
             processCommunityToRawCommunity(uid, list).map { list ->

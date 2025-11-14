@@ -89,3 +89,15 @@ suspend fun <T> Result<T?>.ifNotNull(block: suspend (T) -> Unit) =
             block(value)
         }
     }
+
+/**
+ * 获取列表中第一个
+ */
+fun <T> Result<List<T>?>.firstOrNull(): Result<T?> {
+    return map { it?.firstOrNull() }
+}
+
+fun <T> Result<T>.unit(): Result<Unit> {
+    return map {
+    }
+}

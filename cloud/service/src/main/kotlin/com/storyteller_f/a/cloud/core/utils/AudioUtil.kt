@@ -1,8 +1,8 @@
 package com.storyteller_f.a.cloud.core.utils
 
-import java.io.InputStream
+import java.io.BufferedInputStream
 
-fun <T> InputStream.readFlacAlbumFromAudioStream(saveAlbum: (ByteArray, String) -> T): T? {
+fun <T> BufferedInputStream.readFlacAlbumFromAudioStream(saveAlbum: (ByteArray, String) -> T): Pair<T, String>? {
     val signature = ByteArray(4)
     read(signature)
 
@@ -21,7 +21,13 @@ fun <T> InputStream.readFlacAlbumFromAudioStream(saveAlbum: (ByteArray, String) 
 
         if (blockType == 6) {
             val pictureData = ByteArray(blockLength)
-            read(pictureData)
+            var count = 0
+            while (count < blockLength) {
+                val r = read(pictureData, count, blockLength - count)
+                if (r < 0) break
+                count += r
+            }
+            if (count != blockLength) return null
 
             val dataInput = pictureData.inputStream().buffered()
 
@@ -47,7 +53,7 @@ fun <T> InputStream.readFlacAlbumFromAudioStream(saveAlbum: (ByteArray, String) 
             val realImage = ByteArray(picDataLength)
             dataInput.read(realImage)
 
-            return saveAlbum(realImage, mimeType)
+            return saveAlbum(realImage, mimeType) to mimeType
         } else {
             skip(blockLength.toLong())
         }
@@ -60,9 +66,9 @@ fun <T> InputStream.readFlacAlbumFromAudioStream(saveAlbum: (ByteArray, String) 
 }
 
 @Suppress("CyclomaticComplexMethod")
-fun <T> InputStream.readMp3AlbumFromAudioStream(
+fun <T> BufferedInputStream.readMp3AlbumFromAudioStream(
     saveAlbum: (ByteArray, String) -> T
-): T? {
+): Pair<T, String>? {
     // 读取 ID3 header（10 bytes）
     val header = ByteArray(10)
     if (read(header) != 10 ||
@@ -79,8 +85,13 @@ fun <T> InputStream.readMp3AlbumFromAudioStream(
 
     while (totalRead < tagSize) {
         val frameHeader = ByteArray(10)
-        val read = read(frameHeader)
-        if (read < 10) break
+        var countFrame = 0
+        while (countFrame < 10) {
+            val r = read(frameHeader, countFrame, 10 - countFrame)
+            if (r < 0) break
+            countFrame += r
+        }
+        if (countFrame != 10) break
 
         val frameId = String(frameHeader, 0, 4)
         val frameSize = ((frameHeader[4].toInt() and 0xFF) shl 24) or
@@ -95,7 +106,13 @@ fun <T> InputStream.readMp3AlbumFromAudioStream(
         }
 
         val frameData = ByteArray(frameSize)
-        if (read(frameData) != frameSize) return null
+        var count = 0
+        while (count < frameSize) {
+            val r = read(frameData, count, frameSize - count)
+            if (r < 0) break
+            count += r
+        }
+        if (count != frameSize) return null
 
         var idx = 1 // skip text encoding byte
 
@@ -115,7 +132,7 @@ fun <T> InputStream.readMp3AlbumFromAudioStream(
         if (idx >= frameData.size) return null
 
         val imageData = frameData.copyOfRange(idx, frameData.size)
-        return saveAlbum(imageData, mimeType)
+        return saveAlbum(imageData, mimeType) to mimeType
     }
     return null
 }

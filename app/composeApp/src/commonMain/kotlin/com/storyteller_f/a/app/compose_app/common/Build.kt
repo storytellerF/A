@@ -438,10 +438,10 @@ fun createUploadViewModel(myUid: PrimaryKey) =
     }
 
 @Composable
-fun getUploadViewModel(pathHash: String): UploadDetailViewModel = customViewModel(
+fun getUploadViewModel(pathHash: String, myUid: PrimaryKey): UploadDetailViewModel = customViewModel(
     listOf("upload-detail", pathHash)
 ) { _, modelStorage ->
-    UploadDetailViewModel(modelStorage, pathHash)
+    UploadDetailViewModel(modelStorage, pathHash, myUid)
 }
 
 @Composable

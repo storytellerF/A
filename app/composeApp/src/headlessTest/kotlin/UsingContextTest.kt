@@ -1,6 +1,5 @@
 import com.storyteller_f.a.app.dev.forceStop
 import com.storyteller_f.a.app.dev.startServerByRun
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.test.runTest
 import kotlin.time.Duration.Companion.minutes
 
@@ -9,7 +8,7 @@ expect abstract class UsingContextTest() {
 }
 fun UsingContextTest.remoteServerTest(
     port: Int,
-    block: suspend CoroutineScope.(String) -> Unit,
+    block: suspend (String) -> Unit,
 ) = runTest(timeout = 10.minutes) {
     val p = port + portOffset
     println("port: $p")

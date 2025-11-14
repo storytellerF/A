@@ -5,19 +5,27 @@ import com.storyteller_f.a.client.core.buildWebSocketUrl
 import com.storyteller_f.a.client.core.createUserSessionManager
 import com.storyteller_f.a.client.core.getRecommendTopics
 import com.storyteller_f.a.client.core.startBackgroundTask
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.coroutineScope
 import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class TopicContentTest : UsingContextTest() {
 
     @OptIn(ExperimentalTestApi::class)
     @Test
-    fun testApp() = remoteServerTest(8080) {
-        val webSocketUrl = buildWebSocketUrl(it.replace("http", "ws"))
+    fun testApp() = remoteServerTest(8080) { url ->
+        assertEquals(2, 1 + 1)
+        val webSocketUrl = buildWebSocketUrl(url.replace("http", "ws"))
         val manager = createUserSessionManager(webSocketUrl, { model, cookie ->
-            buildHttpClient(it, cookie, model)
+            buildHttpClient(url, cookie, model)
         }, { _, _, _ -> })
-        manager.getRecommendTopics(PaginationQuery()).getOrThrow()
-        manager.startBackgroundTask().forEach(Job::cancel)
+        coroutineScope {
+            val jobs = manager.startBackgroundTask()
+            manager.getRecommendTopics(PaginationQuery()).getOrThrow()
+            jobs.forEach {
+                it.cancelAndJoin()
+            }
+        }
     }
 }

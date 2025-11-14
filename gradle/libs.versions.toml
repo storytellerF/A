@@ -6,6 +6,7 @@ agp = "8.13.0"
 android-compileSdk = "36"
 android-minSdk = "26"
 android-targetSdk = "36"
+commonsImaging = "1.0.0-alpha6"
 javaClient = "10.0.0"
 kodio-core = "0.0.6"
 jdk = "65"
@@ -137,6 +138,7 @@ coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" 
 coil-compose-core = { module = "io.coil-kt.coil3:coil-compose-core", version.ref = "coil" }
 coil-network-ktor = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
 coil-svg = { module = "io.coil-kt.coil3:coil-svg", version.ref = "coil" }
+commons-imaging = { module = "org.apache.commons:commons-imaging", version.ref = "commonsImaging" }
 gradle = { module = "com.android.tools.build:gradle", version.ref = "agp" }
 java-client = { module = "io.appium:java-client", version.ref = "javaClient" }
 kodio-core = { module = "space.kodio:core", version.ref = "kodio-core" }

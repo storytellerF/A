@@ -4,6 +4,7 @@ import com.storyteller_f.route4k.common.MutationMethodType
 import com.storyteller_f.route4k.common.mutationApi
 import com.storyteller_f.route4k.common.mutationApiWithPath
 import com.storyteller_f.route4k.common.mutationApiWithQuery
+import com.storyteller_f.route4k.common.mutationApiWithQueryAndPath
 import com.storyteller_f.route4k.common.safeApi
 import com.storyteller_f.route4k.common.safeApiWithPath
 import com.storyteller_f.route4k.common.safeApiWithQuery
@@ -39,6 +40,7 @@ import com.storyteller_f.shared.obj.UpdateUserRead
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.type.UploadRecordStatus
 import kotlinx.serialization.Serializable
 
 const val DEFAULT_PAGE_SIZE = 10
@@ -436,6 +438,51 @@ object CustomApi {
         )
 
         val quota = safeApiWithQuery<QuotaInfo, QuotaQuery>("files/quota")
+
+        object Chunks {
+            @Serializable
+            class InitBody(
+                val objectId: PrimaryKey,
+                val objectType: ObjectType,
+                val name: String,
+                val size: Long,
+                val contentType: String,
+                val chunkSize: Long
+            )
+
+            @Serializable
+            class InitResponse(
+                val recordId: PrimaryKey,
+                val chunkSize: Long
+            )
+
+            @Serializable
+            class UploadQuery(val hash: String)
+
+            val init = mutationApi<InitResponse, InitBody>("files/chunk/init")
+
+            @Serializable
+            class UploadPath(
+                val id: PrimaryKey,
+                val index: Int
+            )
+
+            val upload =
+                mutationApiWithQueryAndPath<Unit, Unit, UploadQuery, UploadPath>("files/chunk/{id}/{index}/upload")
+
+            val complete = mutationApiWithPath<FileInfo, Unit, CommonPath>("files/chunk/{id}/complete")
+            val abort = mutationApiWithPath<Unit, Unit, CommonPath>("files/chunk/{id}/abort")
+
+            @Serializable
+            class StatusResponse(
+                val uploaded: List<Int>,
+                val chunkSize: Long,
+                val size: Long,
+                val id: PrimaryKey,
+                val status: UploadRecordStatus
+            )
+            val status = safeApiWithPath<StatusResponse, CommonPath>("files/chunk/{id}/status")
+        }
     }
 
     object Titles {

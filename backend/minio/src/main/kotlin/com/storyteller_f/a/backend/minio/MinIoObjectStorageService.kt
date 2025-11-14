@@ -59,10 +59,18 @@ class MinIoObjectStorageService(
         prefix: String
     ): Result<List<ObjectStorageRecord>> {
         return useMinIoClient(connection) {
-            val names = listObjects(
-                ListObjectsArgs.builder().bucket(bucketName).prefix(prefix).recursive(false).build()
-            ).map {
-                it.get().objectName()
+            val names = try {
+                listObjects(
+                    ListObjectsArgs.builder().bucket(bucketName).prefix(prefix).recursive(false).build()
+                ).map {
+                    it.get().objectName()
+                }
+            } catch (e: ErrorResponseException) {
+                if (e.errorResponse().code() == "NoSuchBucket") {
+                    emptyList()
+                } else {
+                    throw e
+                }
             }
             get(bucketName, names).getOrThrow()
         }
@@ -147,11 +155,55 @@ class MinIoObjectStorageService(
                     UploadObjectArgs.builder()
                         .bucket(bucketName)
                         .`object`(it.fullName)
-                        .filename(it.path.absolutePath)
+                        .filename(it.file.absolutePath)
                         .build()
                 ).`object`()
             }
             get(bucketName, names).getOrThrow()
+        }
+    }
+
+    override suspend fun compose(
+        bucketName: String,
+        targetFullName: String,
+        sourceFullNames: List<String>
+    ): Result<ObjectStorageRecord> {
+        return useMinIoClient(connection) {
+            if (!bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
+                makeBucket(MakeBucketArgs.builder().bucket(bucketName).build())
+            }
+            val sources = sourceFullNames.map {
+                ComposeSource.builder()
+                    .bucket(bucketName)
+                    .`object`(it)
+                    .build()
+            }
+            composeObject(
+                ComposeObjectArgs.builder()
+                    .bucket(bucketName)
+                    .`object`(targetFullName)
+                    .sources(sources)
+                    .build()
+            )
+            get(bucketName, listOf(targetFullName)).getOrThrow().first()
+        }
+    }
+
+    override suspend fun delete(bucketName: String, names: List<String>): Result<Unit> {
+        return useMinIoClient(connection) {
+            names.forEach { name ->
+                try {
+                    removeObject(
+                        RemoveObjectArgs.builder()
+                            .bucket(bucketName)
+                            .`object`(name)
+                            .build()
+                    )
+                } catch (e: ErrorResponseException) {
+                    // Ignore missing keys
+                    if (e.errorResponse().code() != "NoSuchKey") throw e
+                }
+            }
         }
     }
 }

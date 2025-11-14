@@ -78,6 +78,10 @@ sealed interface ReactionCollection {
 
 data class UploadCollection(val objectId: PrimaryKey) {
     fun getName() = "upload_$objectId"
+
+    companion object {
+        fun fromInfo(uploadInfo: UploadInfo) = UploadCollection(uploadInfo.objectId)
+    }
 }
 
 data class MediasCollection(val objectId: PrimaryKey) {
@@ -227,9 +231,10 @@ interface DownloadInfoStorage {
 
 interface UploadInfoStorage {
     suspend fun save(collection: UploadCollection, uploadInfo: UploadInfo)
-    fun observeDatum(pathHash: String): Flow<UploadInfo?>
+    fun observeDatum(collection: UploadCollection, pathHash: String): Flow<UploadInfo?>
     suspend fun getDocument(collection: UploadCollection, pathHash: String): UploadInfo?
     fun observeData(collection: UploadCollection): PagingSource<Int, UploadInfo>
+    suspend fun delete(collection: UploadCollection, pathHash: String)
 }
 
 interface OverviewStorage {

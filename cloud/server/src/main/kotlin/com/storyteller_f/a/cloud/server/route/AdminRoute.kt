@@ -17,40 +17,39 @@ import com.storyteller_f.route4k.ktor.server.receiveBody
 import com.storyteller_f.shared.utils.UNIT_RESULT
 import io.ktor.server.auth.authenticate
 import io.ktor.server.routing.Routing
-import io.ktor.server.routing.RoutingContext
 import io.ktor.server.sessions.clear
 import io.ktor.server.sessions.sessions
 
 fun Routing.bindProtectedAdminRoute(backend: Backend) {
     authenticate("admin") {
-        AdminApi.Users.get(RoutingContext::handleResult) {
+        AdminApi.Users.get(handleResult()) {
             it.pagination(IdentifiablePagingGenerator) { fetch ->
                 backend.getAllUsers(fetch)
             }
         }
-        AdminApi.signOut(RoutingContext::handleResult) {
+        AdminApi.signOut(handleResult()) {
             call.sessions.clear(UserSession::class)
             UNIT_RESULT
         }
-        AdminApi.overview(RoutingContext::handleResult) {
+        AdminApi.overview(handleResult()) {
             backend.getOverview()
         }
-        AdminApi.Users.add(RoutingContext::handleResult, { api ->
+        AdminApi.Users.add(handleResult(), { api ->
             backend.addUser(api.receiveBody())
         })
     }
 }
 
 fun Routing.bindUnauthenticatedPanelRoute(backend: Backend) {
-    AdminApi.signIn.invoke(RoutingContext::handleResult) { api ->
+    AdminApi.signIn.invoke(handleResult()) { api ->
         backend.adminSignIn(call.getData(), api.receiveBody()).onSuccess {
             saveSuccessSessionOnFirst(it.id)
         }
     }
-    AdminApi.signUp.invoke(RoutingContext::handleResult) {
+    AdminApi.signUp.invoke(handleResult()) {
         backend.adminSignUp(call.getData(), it.receiveBody())
     }
-    AdminApi.getData.invoke(RoutingContext::handleResult) {
+    AdminApi.getData.invoke(handleResult()) {
         Result.success(call.getData())
     }
 }

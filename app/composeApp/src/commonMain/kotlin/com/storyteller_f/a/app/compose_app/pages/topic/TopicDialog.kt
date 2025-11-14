@@ -69,7 +69,7 @@ import com.storyteller_f.a.app.core.utils.getCurrentLanguage
 import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.a.client.core.addFavorite
 import com.storyteller_f.a.client.core.addSubscription
-import com.storyteller_f.a.client.core.getTopicSnapshot
+import com.storyteller_f.a.client.core.createTopicSnapshot
 import com.storyteller_f.a.client.core.pinTopic
 import com.storyteller_f.a.client.core.removeFavorite
 import com.storyteller_f.a.client.core.removeSubscription
@@ -251,7 +251,7 @@ private fun SnapshotButton(topicInfo: TopicInfo) {
     ) {
         scope.launch {
             globalDialogController.useResult {
-                request { getTopicSnapshot(topicInfo.id) }
+                request { createTopicSnapshot(topicInfo.id) }
             }.onSuccess {
                 toast.showMessage(getString(Res.string.success))
             }
