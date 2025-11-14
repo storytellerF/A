@@ -38,7 +38,7 @@ import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
-import com.storyteller_f.shared.utils.recoverResult
+import com.storyteller_f.shared.utils.recoverIfDup
 import io.github.aakira.napier.Napier
 
 suspend fun Backend.updateUser(
@@ -294,12 +294,8 @@ suspend fun Backend.addDevice(
     uid: PrimaryKey,
     newDevice: NewDevice
 ): Result<Unit> =
-    database.user.addDevice(uid, newDevice.endpointUrl).recoverResult {
-        if (database.isDup(it)) {
-            UNIT_RESULT
-        } else {
-            Result.failure(it)
-        }
+    database.user.addDevice(uid, newDevice.endpointUrl).recoverIfDup(database::isDup) {
+        UNIT_RESULT
     }
 
 suspend fun Backend.getUserAlternateUserInfoList(

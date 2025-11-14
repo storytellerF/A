@@ -60,7 +60,14 @@ fun test(
     SnowflakeFactory.setMachine(0)
     loadCryptoLibIfNeed()
     loadAvif()
-    val methodName = Exception().stackTrace[2].methodName
+    val traceElements = Exception().stackTrace
+    val methodNameIndex = traceElements.indexOfFirst {
+        it.fileName != "TestBuilder.kt"
+    }
+    if (methodNameIndex < 0) {
+        throw Exception("test not found")
+    }
+    val methodName = traceElements[methodNameIndex + 1].methodName
     Napier.i {
         "start test `$methodName`"
     }

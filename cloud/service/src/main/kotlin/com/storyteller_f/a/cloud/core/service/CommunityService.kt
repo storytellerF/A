@@ -34,7 +34,7 @@ import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
-import com.storyteller_f.shared.utils.recoverResult
+import com.storyteller_f.shared.utils.recoverIfDup
 import io.github.aakira.napier.Napier
 
 suspend fun Backend.getCommunity(
@@ -91,12 +91,8 @@ private suspend fun Backend.joinCommunity(
     return database.container.addMember(member).mapResult {
         addUserLog(uid, UserLogType.JOIN, communityId ob ObjectType.COMMUNITY)
         Result.success(community.copy(joinedTime = time))
-    }.recoverResult {
-        if (database.isDup(it)) {
-            getCommunity(ObjectFetch.IdFetch(communityId), uid, true)
-        } else {
-            Result.failure(it)
-        }
+    }.recoverIfDup(database::isDup) {
+        getCommunity(ObjectFetch.IdFetch(communityId), uid, true)
     }
 }
 

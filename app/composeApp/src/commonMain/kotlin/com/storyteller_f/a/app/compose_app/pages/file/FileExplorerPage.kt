@@ -748,7 +748,6 @@ fun UploadItem(@PreviewParameter(UploadItemPreviewProvider::class) uploadInfo: U
                 )
                 Text(uploadInfo.getPercent())
             }
-
         }
 
         UploadStatusButton(uploadInfo)

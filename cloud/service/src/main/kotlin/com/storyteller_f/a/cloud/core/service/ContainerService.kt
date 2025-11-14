@@ -20,7 +20,7 @@ import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
-import com.storyteller_f.shared.utils.recoverResult
+import com.storyteller_f.shared.utils.recoverIfDup
 import io.github.aakira.napier.Napier
 import org.apache.tika.Tika
 
@@ -296,17 +296,13 @@ private suspend fun Backend.insertQuotaAndGet(
     )
     return database.container.insertQuota(quota).map {
         quota
-    }.recoverResult { throwable ->
-        if (database.isDup(throwable)) {
-            database.container.getQuotaInfo(ownerId, quotaType).mapResult {
-                if (it == null) {
-                    Result.failure(Exception("get quota failed"))
-                } else {
-                    Result.success(it)
-                }
+    }.recoverIfDup(database::isDup) {
+        database.container.getQuotaInfo(ownerId, quotaType).mapResult {
+            if (it == null) {
+                Result.failure(Exception("get quota failed"))
+            } else {
+                Result.success(it)
             }
-        } else {
-            Result.failure(throwable)
         }
     }.map {
         it.toQuotaInfo()

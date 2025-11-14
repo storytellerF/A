@@ -92,6 +92,7 @@ import io.ktor.utils.io.close
 import io.sentry.Sentry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -358,9 +359,12 @@ private suspend fun CoroutineScope.executeScriptInThread(
     file: File,
 ) {
     val process = ProcessBuilder(scriptArray).directory(file).start()
+    Napier.i(tag = "init") {
+        "script started"
+    }
     launch(Dispatchers.IO) {
         process.inputStream.bufferedReader().use {
-            while (process.isAlive) {
+            while (process.isAlive && isActive) {
                 val line = it.readLine() ?: break
                 Napier.i(tag = "init") {
                     line
@@ -370,7 +374,7 @@ private suspend fun CoroutineScope.executeScriptInThread(
     }
     launch(Dispatchers.IO) {
         process.errorStream.bufferedReader().use {
-            while (process.isAlive) {
+            while (process.isAlive && isActive) {
                 val line = it.readLine() ?: break
                 Napier.e(tag = "init") {
                     line
@@ -378,14 +382,11 @@ private suspend fun CoroutineScope.executeScriptInThread(
             }
         }
     }
-    Napier.i(tag = "init") {
-        "started"
-    }
     val exitValue = withContext(Dispatchers.IO) {
         process.waitFor()
     }
     check(exitValue == 0) {
-        "init failed $exitValue"
+        "script failed $exitValue"
     }
 }
 

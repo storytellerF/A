@@ -38,7 +38,7 @@ import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
-import com.storyteller_f.shared.utils.recoverResult
+import com.storyteller_f.shared.utils.recoverIfDup
 import io.github.aakira.napier.Napier
 
 suspend fun Backend.getRoomPubKeys(
@@ -74,12 +74,8 @@ suspend fun Backend.joinRoom(
                 }
             }.mapResult {
                 getRoomInfo(IdFetch(roomId), uid, true)
-            }.recoverResult { exception ->
-                if (database.isDup(exception)) {
-                    getRoomInfo(IdFetch(roomId), uid, true)
-                } else {
-                    Result.failure(exception)
-                }
+            }.recoverIfDup(database::isDup) {
+                getRoomInfo(IdFetch(roomId), uid, true)
             }
         }
     }
