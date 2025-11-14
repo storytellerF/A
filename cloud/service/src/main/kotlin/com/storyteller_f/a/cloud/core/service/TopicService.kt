@@ -13,6 +13,7 @@ import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.ReactionFetch
 import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.backend.core.fixedSort
+import com.storyteller_f.a.backend.core.paging
 import com.storyteller_f.a.backend.core.service.TopicDocument
 import com.storyteller_f.a.backend.core.service.TopicDocumentSearch
 import com.storyteller_f.a.backend.core.service.UploadPack
@@ -710,3 +711,8 @@ suspend fun Backend.updateTopicPin(
         }
     }
 }
+
+suspend fun Backend.getAllTopics(primaryKeyFetch: PrimaryKeyFetch) =
+    database.topic.getAllRawTopics(primaryKeyFetch).mapResult { (topics, total) ->
+        processRawTopicToTopicInfo(topics, uid = null, addLatestSubTopic = true).paging(total)
+    }

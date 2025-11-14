@@ -125,6 +125,22 @@ class ExposedFileDatabase(val databaseSession: ExposedDatabaseSession) : FileDat
         PaginationResult(r1, r2)
     }
 
+    override suspend fun getAllFileRecordPaginationList(primaryKeyFetch: PrimaryKeyFetch) = runCatching {
+        val r1 = databaseSession.dbSearch {
+            search {
+                FileRecords.selectAll().bindPaginationQuery(FileRecords, primaryKeyFetch)
+            }
+            map(FileRecord::wrapRow)
+        }.getOrThrow()
+        val r2 = databaseSession.dbSearch {
+            search {
+                FileRecords.selectAll()
+            }
+            count()
+        }.getOrThrow()
+        PaginationResult(r1, r2)
+    }
+
     override suspend fun insertFileRecord(
         fileRecordList: List<FileRecord>,
         ownerId: PrimaryKey,

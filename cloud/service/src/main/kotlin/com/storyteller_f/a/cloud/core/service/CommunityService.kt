@@ -21,6 +21,7 @@ import com.storyteller_f.a.backend.core.types.toCommunityIfo
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.MemberPolicy
+import com.storyteller_f.shared.model.PosterSearch
 import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.obj.ob
@@ -336,3 +337,15 @@ fun JoinStatusSearch?.toJoinSearch(uid: PrimaryKey?): JoinSearch {
     if (uid == null) throw UnauthorizedException()
     return JoinSearch.Joined(uid)
 }
+
+suspend fun Backend.getAllCommunities(primaryKeyFetch: PrimaryKeyFetch) =
+    database.community.getCommunityPaginationResult(
+        word = null,
+        hasPosterSearch = PosterSearch.UNSPECIFIED,
+        primaryKeyFetch = primaryKeyFetch,
+        joinSearch = JoinSearch.Unspecified(null)
+    ).mapResultIfNotNull { (list, total) ->
+        processRawCommunityToCommunityInfo(list).mapIfNotNull {
+            PaginationResult(it, total)
+        }
+    }

@@ -52,7 +52,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 
-class UserRoomInfoStorage(val appDatabase: AppDatabase) : UserInfoStorage {
+class RoomUserInfoStorage(val appDatabase: AppDatabase) : UserInfoStorage {
     val impl = CommonStorageImpl(appDatabase)
     override suspend fun save(
         collection: UserCollection,
@@ -66,9 +66,7 @@ class UserRoomInfoStorage(val appDatabase: AppDatabase) : UserInfoStorage {
         }.forEach {
             appDatabase.getCommonDao().insert(it)
         }
-        if (collection is UserCollection.SearchUser ||
-            collection is UserCollection.AllUsers ||
-            collection is UserCollection.Members) {
+        if (collection !is UserCollection.Users) {
             appDatabase.getCommonDao().insert(item.copy(collection = collection.getName()))
         }
     }
@@ -94,7 +92,7 @@ class UserRoomInfoStorage(val appDatabase: AppDatabase) : UserInfoStorage {
     }
 }
 
-class CommunityRoomInfoStorage(val appDatabase: AppDatabase) : CommunityInfoStorage {
+class RoomCommunityInfoStorage(val appDatabase: AppDatabase) : CommunityInfoStorage {
     override suspend fun save(
         collection: CommunityCollection,
         communityInfo: CommunityInfo
@@ -110,7 +108,7 @@ class CommunityRoomInfoStorage(val appDatabase: AppDatabase) : CommunityInfoStor
         listOf(item, item.copy(id = communityInfo.aid)).forEach {
             appDatabase.getCommunityDao().insert(it)
         }
-        if (collection is CommunityCollection.SearchCommunity) {
+        if (collection !is CommunityCollection.Communities) {
             appDatabase.getCommunityDao().insert(item.copy(collection = collection.getName()))
         }
     }
@@ -150,7 +148,7 @@ class CommunityRoomInfoStorage(val appDatabase: AppDatabase) : CommunityInfoStor
     }
 }
 
-class TopicRoomInfoStorage(val appDatabase: AppDatabase) : TopicInfoStorage {
+class RoomTopicInfoStorage(val appDatabase: AppDatabase) : TopicInfoStorage {
     override suspend fun save(
         collection: TopicCollection,
         topicInfo: TopicInfo
@@ -164,10 +162,7 @@ class TopicRoomInfoStorage(val appDatabase: AppDatabase) : TopicInfoStorage {
         }.forEach {
             appDatabase.getTopicDao().insert(it)
         }
-        if (collection is TopicCollection.TopicList ||
-            collection is TopicCollection.SearchTopic ||
-            collection is TopicCollection.Recommend
-        ) {
+        if (collection !is TopicCollection.Topics) {
             appDatabase.getTopicDao().insert(item.copy(collection = collection.getName()))
         }
     }
@@ -207,7 +202,7 @@ class TopicRoomInfoStorage(val appDatabase: AppDatabase) : TopicInfoStorage {
     }
 }
 
-class TitleRoomInfoStorage(val appDatabase: AppDatabase) : TitleInfoStorage {
+class RoomTitleInfoStorage(val appDatabase: AppDatabase) : TitleInfoStorage {
     override suspend fun save(
         collection: TitleCollection,
         titleInfo: TitleInfo
@@ -215,7 +210,7 @@ class TitleRoomInfoStorage(val appDatabase: AppDatabase) : TitleInfoStorage {
         val data = commonJson.encodeToString(titleInfo)
         val item = CommonEntity(titleInfo.id, TitleCollection.Titles.getName(), data)
         appDatabase.getCommonDao().insert(item)
-        if (collection is TitleCollection.SearchTitle) {
+        if (collection !is TitleCollection.Titles) {
             appDatabase.getCommonDao().insert(item.copy(collection = collection.getName()))
         }
     }
@@ -284,7 +279,7 @@ class RoomRoomInfoStorage(val appDatabase: AppDatabase) : RoomInfoStorage {
         ).forEach {
             appDatabase.getCommonDao().insert(it)
         }
-        if (collection is RoomCollection.SearchRoom) {
+        if (collection !is RoomCollection.Rooms) {
             appDatabase.getCommonDao().insert(item.copy(collection = collection.getName()))
         }
     }
@@ -352,7 +347,7 @@ class RemoteKeyRoomStorage(val appDatabase: AppDatabase) : RemoteKeyStorage {
     }
 }
 
-class ReactionRoomInfoStorage(val appDatabase: AppDatabase) : ReactionInfoStorage {
+class RoomReactionInfoStorage(val appDatabase: AppDatabase) : ReactionInfoStorage {
     override suspend fun save(
         collection: ReactionCollection,
         reactionInfo: ReactionInfo
@@ -386,7 +381,7 @@ class ReactionRoomInfoStorage(val appDatabase: AppDatabase) : ReactionInfoStorag
     }
 }
 
-class ChildAccountRoomStorage(val appDatabase: AppDatabase) : ChildAccountStorage {
+class RoomChildAccountStorage(val appDatabase: AppDatabase) : ChildAccountStorage {
     override suspend fun save(childAccountInfo: ChildAccountInfo) {
         val data = commonJson.encodeToString(childAccountInfo)
         appDatabase.getCommonDao()
@@ -407,7 +402,7 @@ class ChildAccountRoomStorage(val appDatabase: AppDatabase) : ChildAccountStorag
     }
 }
 
-class FileInfoRoomStorage(val appDatabase: AppDatabase) : FileInfoStorage {
+class RoomFileInfoStorage(val appDatabase: AppDatabase) : FileInfoStorage {
     override suspend fun save(
         collection: MediasCollection,
         fileInfo: FileInfo
@@ -430,7 +425,7 @@ class FileInfoRoomStorage(val appDatabase: AppDatabase) : FileInfoStorage {
     }
 }
 
-class DownloadInfoRoomStorage(val appDatabase: AppDatabase) : DownloadInfoStorage {
+class RoomDownloadInfoStorage(val appDatabase: AppDatabase) : DownloadInfoStorage {
     override suspend fun save(downloadInfo: DownloadInfo) {
         val data = commonJson.encodeToString(downloadInfo)
         appDatabase.getCommonDao().insert(
@@ -464,7 +459,7 @@ class DownloadInfoRoomStorage(val appDatabase: AppDatabase) : DownloadInfoStorag
     }
 }
 
-class UploadInfoRoomStorage(val appDatabase: AppDatabase) : UploadInfoStorage {
+class RoomUploadInfoStorage(val appDatabase: AppDatabase) : UploadInfoStorage {
     override suspend fun save(collection: UploadCollection, uploadInfo: UploadInfo) {
         val data = commonJson.encodeToString(uploadInfo)
         appDatabase.getUploadDao().insert(
@@ -505,7 +500,7 @@ class UploadInfoRoomStorage(val appDatabase: AppDatabase) : UploadInfoStorage {
     }
 }
 
-class OverviewRoomStorage(val appDatabase: AppDatabase) : OverviewStorage {
+class RoomOverviewStorage(val appDatabase: AppDatabase) : OverviewStorage {
     val impl = CommonStorageImpl(appDatabase)
     override suspend fun save(
         overviewInfo: PanelOverview
@@ -520,7 +515,7 @@ class OverviewRoomStorage(val appDatabase: AppDatabase) : OverviewStorage {
     }
 }
 
-class UserOverviewRoomStorage(val appDatabase: AppDatabase) : UserOverviewStorage {
+class RoomUserOverviewStorage(val appDatabase: AppDatabase) : UserOverviewStorage {
     val impl = CommonStorageImpl(appDatabase)
     override suspend fun save(overviewInfo: UserOverview) {
         val data = commonJson.encodeToString(overviewInfo)
@@ -533,7 +528,7 @@ class UserOverviewRoomStorage(val appDatabase: AppDatabase) : UserOverviewStorag
     }
 }
 
-class UserFavoriteRoomStorage(val appDatabase: AppDatabase) : UserFavoriteStorage {
+class RoomUserFavoriteStorage(val appDatabase: AppDatabase) : UserFavoriteStorage {
     val impl = CommonStorageImpl(appDatabase)
 
     override suspend fun save(
@@ -557,7 +552,7 @@ class UserFavoriteRoomStorage(val appDatabase: AppDatabase) : UserFavoriteStorag
     }
 }
 
-class UserSubscriptionRoomStorage(val appDatabase: AppDatabase) : UserSubscriptionStorage {
+class RoomUserSubscriptionStorage(val appDatabase: AppDatabase) : UserSubscriptionStorage {
     val impl = CommonStorageImpl(appDatabase)
 
     override suspend fun save(subscriptionInfo: UserSubscriptionInfo) {
@@ -585,21 +580,21 @@ class UserSubscriptionRoomStorage(val appDatabase: AppDatabase) : UserSubscripti
 }
 
 class RoomModelStorage(appDatabase: AppDatabase) : ModelStorage {
-    override val user: UserInfoStorage = UserRoomInfoStorage(appDatabase)
-    override val community: CommunityInfoStorage = CommunityRoomInfoStorage(appDatabase)
-    override val topic: TopicInfoStorage = TopicRoomInfoStorage(appDatabase)
-    override val title: TitleInfoStorage = TitleRoomInfoStorage(appDatabase)
+    override val user: UserInfoStorage = RoomUserInfoStorage(appDatabase)
+    override val community: CommunityInfoStorage = RoomCommunityInfoStorage(appDatabase)
+    override val topic: TopicInfoStorage = RoomTopicInfoStorage(appDatabase)
+    override val title: TitleInfoStorage = RoomTitleInfoStorage(appDatabase)
     override val room: RoomInfoStorage = RoomRoomInfoStorage(appDatabase)
     override val remoteKey: RemoteKeyStorage = RemoteKeyRoomStorage(appDatabase)
-    override val reaction: ReactionInfoStorage = ReactionRoomInfoStorage(appDatabase)
-    override val childAccount: ChildAccountStorage = ChildAccountRoomStorage(appDatabase)
-    override val fileInfo: FileInfoStorage = FileInfoRoomStorage(appDatabase)
-    override val download: DownloadInfoStorage = DownloadInfoRoomStorage(appDatabase)
-    override val upload: UploadInfoStorage = UploadInfoRoomStorage(appDatabase)
-    override val overview: OverviewStorage = OverviewRoomStorage(appDatabase)
-    override val userOverview: UserOverviewStorage = UserOverviewRoomStorage(appDatabase)
-    override val favorite: UserFavoriteStorage = UserFavoriteRoomStorage(appDatabase)
-    override val subscription: UserSubscriptionStorage = UserSubscriptionRoomStorage(appDatabase)
+    override val reaction: ReactionInfoStorage = RoomReactionInfoStorage(appDatabase)
+    override val childAccount: ChildAccountStorage = RoomChildAccountStorage(appDatabase)
+    override val fileInfo: FileInfoStorage = RoomFileInfoStorage(appDatabase)
+    override val download: DownloadInfoStorage = RoomDownloadInfoStorage(appDatabase)
+    override val upload: UploadInfoStorage = RoomUploadInfoStorage(appDatabase)
+    override val overview: OverviewStorage = RoomOverviewStorage(appDatabase)
+    override val userOverview: UserOverviewStorage = RoomUserOverviewStorage(appDatabase)
+    override val favorite: UserFavoriteStorage = RoomUserFavoriteStorage(appDatabase)
+    override val subscription: UserSubscriptionStorage = RoomUserSubscriptionStorage(appDatabase)
 }
 
 fun getRoomModelStorage(name: String) = RoomModelStorage(getRoomDatabase(name))

@@ -5,6 +5,12 @@ import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.cloud.core.service.addUser
 import com.storyteller_f.a.cloud.core.service.adminSignIn
 import com.storyteller_f.a.cloud.core.service.adminSignUp
+import com.storyteller_f.a.cloud.core.service.getAllCommunities
+import com.storyteller_f.a.cloud.core.service.getAllFileInfos
+import com.storyteller_f.a.cloud.core.service.getAllPrivateRooms
+import com.storyteller_f.a.cloud.core.service.getAllPublicRooms
+import com.storyteller_f.a.cloud.core.service.getAllTitles
+import com.storyteller_f.a.cloud.core.service.getAllTopics
 import com.storyteller_f.a.cloud.core.service.getAllUsers
 import com.storyteller_f.a.cloud.core.service.getOverview
 import com.storyteller_f.a.cloud.server.auth.UserSession
@@ -25,6 +31,36 @@ fun Routing.bindProtectedAdminRoute(backend: Backend) {
         AdminApi.Users.get(handleResult()) {
             it.pagination(IdentifiablePagingGenerator) { fetch ->
                 backend.getAllUsers(fetch)
+            }
+        }
+        AdminApi.Communities.get(handleResult()) {
+            it.pagination(IdentifiablePagingGenerator) { fetch ->
+                backend.getAllCommunities(fetch)
+            }
+        }
+        AdminApi.Rooms.getPublic(handleResult()) {
+            it.pagination(IdentifiablePagingGenerator) { fetch ->
+                backend.getAllPublicRooms(fetch)
+            }
+        }
+        AdminApi.Rooms.getPrivate(handleResult()) {
+            it.pagination(IdentifiablePagingGenerator) { fetch ->
+                backend.getAllPrivateRooms(fetch)
+            }
+        }
+        AdminApi.Topics.get(handleResult()) {
+            it.pagination(IdentifiablePagingGenerator) { fetch ->
+                backend.getAllTopics(fetch)
+            }
+        }
+        AdminApi.Titles.get(handleResult()) {
+            it.pagination(IdentifiablePagingGenerator) { fetch ->
+                backend.getAllTitles(fetch)
+            }
+        }
+        AdminApi.Files.get(handleResult()) {
+            it.pagination(IdentifiablePagingGenerator) { fetch ->
+                backend.getAllFileInfos(fetch)
             }
         }
         AdminApi.signOut(handleResult()) {

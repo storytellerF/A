@@ -16,6 +16,7 @@ import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
+import org.jetbrains.exposed.v1.r2dbc.selectAll
 
 class ExposedTitleDatabase(val exposedDatabaseSession: ExposedDatabaseSession) : TitleDatabase {
     override suspend fun getTitlePaginationResult(
@@ -38,6 +39,24 @@ class ExposedTitleDatabase(val exposedDatabaseSession: ExposedDatabaseSession) :
         exposedDatabaseSession.dbSearch {
             search {
                 buildTitleSearchQuery(searchType, uid, type, scopeId)
+            }
+            count()
+        }.map { count ->
+            PaginationResult(list, count)
+        }
+    }
+
+    override suspend fun getAllRawTitles(primaryKeyFetch: PrimaryKeyFetch) = exposedDatabaseSession.dbSearch {
+        search {
+            Titles.selectAll().bindPaginationQuery(Titles, primaryKeyFetch)
+        }
+        map {
+            RawTitle(Title.wrapRow(it))
+        }
+    }.mapResult { list ->
+        exposedDatabaseSession.dbSearch {
+            search {
+                Titles.selectAll()
             }
             count()
         }.map { count ->

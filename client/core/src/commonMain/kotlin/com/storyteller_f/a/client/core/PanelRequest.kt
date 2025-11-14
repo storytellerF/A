@@ -44,3 +44,27 @@ suspend fun PanelSessionManager.addUser(newUser: NewUser) = serviceCatching {
         contentType(ContentType.Application.Json)
     }
 }
+
+suspend fun PanelSessionManager.getAllCommunities(query: PaginationQuery) = serviceCatching {
+    AdminApi.Communities.get(query)
+}
+
+suspend fun PanelSessionManager.getAllPublicRooms(query: PaginationQuery) = serviceCatching {
+    AdminApi.Rooms.getPublic(query)
+}
+
+suspend fun PanelSessionManager.getAllPrivateRooms(query: PaginationQuery) = serviceCatching {
+    AdminApi.Rooms.getPrivate(query)
+}
+
+suspend fun PanelSessionManager.getAllTopics(query: PaginationQuery) = serviceCatching {
+    AdminApi.Topics.get(query)
+}
+
+suspend fun PanelSessionManager.getAllTitles(query: PaginationQuery) = serviceCatching {
+    AdminApi.Titles.get(query)
+}
+
+suspend fun PanelSessionManager.getAllFiles(query: PaginationQuery) = serviceCatching {
+    AdminApi.Files.get(query)
+}

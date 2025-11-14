@@ -36,6 +36,8 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.isNotNull
 import org.jetbrains.exposed.v1.core.isNull
+import org.jetbrains.exposed.v1.core.like
+import org.jetbrains.exposed.v1.r2dbc.andWhere
 import org.jetbrains.exposed.v1.r2dbc.insert
 import org.jetbrains.exposed.v1.r2dbc.select
 import org.jetbrains.exposed.v1.r2dbc.selectAll
@@ -261,5 +263,46 @@ class ExposedRoomDatabase(
             }
         }
         count()
+    }
+
+    override suspend fun getPrivateRoomPaginationResult(
+        primaryKeyFetch: PrimaryKeyFetch,
+        word: String?,
+    ) = runCatching {
+        val rooms = databaseSession.dbSearch {
+            search {
+                Rooms
+                    .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
+                    .select(Rooms.fields + Aids.value)
+                    .where {
+                        Rooms.communityId.isNull()
+                    }
+                    .let { q ->
+                        if (!word.isNullOrBlank()) {
+                            q.andWhere { Rooms.name like "%$word%" }
+                        } else {
+                            q
+                        }
+                    }
+                    .bindPaginationQuery(Rooms, primaryKeyFetch)
+            }
+            map(Room::wrapRow)
+        }.getOrThrow()
+        val total = databaseSession.dbSearch {
+            search {
+                Rooms.select(Rooms.id).where {
+                    Rooms.communityId.isNull()
+                }.let { q ->
+                    if (!word.isNullOrBlank()) {
+                        q.andWhere { Rooms.name like "%$word%" }
+                    } else {
+                        q
+                    }
+                }
+            }
+            count()
+        }.getOrThrow()
+        val rawRooms = processRoomListToRawRoom(null, rooms).getOrThrow()
+        PaginationResult(rawRooms, total)
     }
 }

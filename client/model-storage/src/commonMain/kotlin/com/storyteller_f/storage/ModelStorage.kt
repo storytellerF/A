@@ -38,6 +38,7 @@ sealed interface TopicCollection {
 
     data object Recommend : TopicCollection
     data class TopicList(val objectId: PrimaryKey) : TopicCollection
+    data object AllTopics : TopicCollection
 }
 
 sealed interface TitleCollection {
@@ -49,6 +50,8 @@ sealed interface TitleCollection {
         val type: TitleType? = null,
         val scopeId: PrimaryKey? = null,
     ) : TitleCollection
+
+    data object AllTitles : TitleCollection
 }
 
 sealed interface RoomCollection {
@@ -58,6 +61,8 @@ sealed interface RoomCollection {
         val communityId: PrimaryKey?,
         val joinStatusSearch: JoinStatusSearch
     ) : RoomCollection
+
+    data class AllRooms(val isPrivate: Boolean) : RoomCollection
 }
 
 sealed interface CommunityCollection {
@@ -68,6 +73,8 @@ sealed interface CommunityCollection {
         val word: String,
         val target: PrimaryKey? = null,
     ) : CommunityCollection
+
+    data object AllCommunities : CommunityCollection
 }
 
 sealed interface ReactionCollection {
@@ -101,6 +108,7 @@ fun RoomCollection.getName(): String {
     return when (this) {
         RoomCollection.Rooms -> "rooms"
         is RoomCollection.SearchRoom -> "rooms_${word}_${joinStatusSearch}_$communityId"
+        is RoomCollection.AllRooms -> "all_rooms_$isPrivate"
     }
 }
 
@@ -117,6 +125,7 @@ fun TopicCollection.getName(): String {
         is TopicCollection.TopicList -> "topics_$objectId"
         TopicCollection.Topics -> "topics"
         TopicCollection.Recommend -> "topics_recommend"
+        TopicCollection.AllTopics -> "all_topics"
     }
 }
 
@@ -124,6 +133,7 @@ fun CommunityCollection.getName(): String {
     return when (this) {
         CommunityCollection.Communities -> "communities"
         is CommunityCollection.SearchCommunity -> "communities_${word}_${target}_$joinStatusSearch"
+        CommunityCollection.AllCommunities -> "all_communities"
     }
 }
 
@@ -131,6 +141,7 @@ fun TitleCollection.getName(): String {
     return when (this) {
         is TitleCollection.SearchTitle -> "titles_${uid}_${searchType}_${status}_${type}_$scopeId"
         TitleCollection.Titles -> "title"
+        TitleCollection.AllTitles -> "all_titles"
     }
 }
 
