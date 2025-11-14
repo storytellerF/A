@@ -65,6 +65,16 @@ suspend fun <T> Result<T>.recoverResult(block: suspend (Throwable) -> Result<T>)
     }
 }
 
+suspend fun <T> Result<T>.recoverIfDup(isDup: (Throwable) -> Boolean, block: suspend () -> Result<T>): Result<T> {
+    return recoverResult { e ->
+        if (isDup(e)) {
+            block()
+        } else {
+            Result.failure(e)
+        }
+    }
+}
+
 suspend fun <T> Result<T>.transformThrowable(block: suspend (Throwable) -> Throwable): Result<T> {
     return if (isSuccess) {
         this

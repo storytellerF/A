@@ -14,7 +14,7 @@ import com.storyteller_f.a.backend.core.service.UserSearchService
 import com.storyteller_f.a.backend.core.service.UserSearchServiceFactory
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.shared.utils.recoverResult
+import com.storyteller_f.shared.utils.recoverIfDup
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -198,12 +198,8 @@ suspend fun <T> Backend.addIfNotExists(
         if (it != null) {
             Result.success(it)
         } else {
-            add().recoverResult {
-                if (database.isDup(it)) {
-                    get()
-                } else {
-                    Result.failure(it)
-                }
+            add().recoverIfDup(database::isDup) {
+                get()
             }
         }
     }

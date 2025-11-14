@@ -16,7 +16,7 @@ import com.storyteller_f.shared.utils.UNIT_RESULT
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
-import com.storyteller_f.shared.utils.recoverResult
+import com.storyteller_f.shared.utils.recoverIfDup
 import com.storyteller_f.shared.utils.safeFirstEmoji
 import io.github.aakira.napier.Napier
 
@@ -51,12 +51,8 @@ suspend fun Backend.addReaction(
                         }
                     }
                     reactionInfo
-                }.recoverResult { throwable ->
-                    if (database.isDup(throwable)) {
-                        Result.success(reactionInfo)
-                    } else {
-                        Result.failure(throwable)
-                    }
+                }.recoverIfDup(database::isDup) {
+                    Result.success(reactionInfo)
                 }
             }
         }

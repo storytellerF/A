@@ -5,10 +5,13 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import java.io.File
+import kotlin.concurrent.thread
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -61,8 +64,7 @@ suspend fun CoroutineScope.startServerByRun(projectRoot: String, port: Int): Pro
             .directory(File(projectRoot))
             .bindGradleProcessEnv(testEnvFile, port)
             .start()
-    val job = waitRunServerProcess(serverProcess)
-    return ProcessMate(serverProcess, job)
+    return waitRunServerProcess(serverProcess)
 }
 
 private suspend fun CoroutineScope.install(projectRoot: String) {
@@ -72,42 +74,51 @@ private suspend fun CoroutineScope.install(projectRoot: String) {
     ).start()
     val job = launch(Dispatchers.IO) {
         installDistProcess.inputStream.bufferedReader().use {
-            while (installDistProcess.isAlive) {
+            while (installDistProcess.isAlive && isActive) {
                 val line = it.readLine() ?: break
                 println(line)
-                delay(100)
             }
         }
     }
     val result = withContext(Dispatchers.IO) {
         installDistProcess.waitFor()
     }
-    job.cancel()
+    job.cancelAndJoin()
     check(result == 0) {
-        "install failed"
+        "install failed $result"
     }
 }
 
 class ProcessMate(val process: Process, val job: Job) {
     fun stop() {
+        Napier.i {
+            "stop process ${process.pid()}"
+        }
         stopServer(process)
         job.cancel()
     }
 }
 
-private suspend fun CoroutineScope.waitRunServerProcess(serverProcess: Process): Job {
+private suspend fun CoroutineScope.waitRunServerProcess(serverProcess: Process): ProcessMate {
     val task = CompletableDeferred<String>()
-    val job = launch(Dispatchers.IO) {
-        serverProcess.inputStream.bufferedReader().use {
-            while (serverProcess.isAlive) {
-                val line = it.readLine() ?: break
-                println(line)
-                if (line.contains("Responding at")) {
-                    task.complete(line)
-                } else if (line.contains("Execution failed for task") || line.contains("Exception in thread")) {
-                    task.completeExceptionally(RuntimeException(line))
+    val job = launch {
+        suspendCancellableCoroutine { continuation ->
+            // 进程停止还是会卡在readLine，需要使用thread 保证job 正常退出
+            thread {
+                serverProcess.inputStream.bufferedReader().use {
+                    while (serverProcess.isAlive && isActive) {
+                        val line = it.readLine() ?: break
+                        println(line)
+                        if (line.contains("Responding at")) {
+                            task.complete(line)
+                        } else if (line.contains("Execution failed for task") ||
+                            line.contains("Exception in thread")
+                        ) {
+                            task.completeExceptionally(RuntimeException(line))
+                        }
+                    }
                 }
-                delay(100)
+                continuation.resumeWith(Result.success(Unit))
             }
         }
     }
@@ -115,7 +126,7 @@ private suspend fun CoroutineScope.waitRunServerProcess(serverProcess: Process):
     Napier.i {
         "server started"
     }
-    return job
+    return ProcessMate(serverProcess, job)
 }
 
 @OptIn(ExperimentalUuidApi::class)
