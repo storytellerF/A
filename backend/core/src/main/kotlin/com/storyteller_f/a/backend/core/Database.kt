@@ -61,7 +61,6 @@ data class ContainerInfo(
 
 sealed interface JoinSearch {
     data class Joined(val uid: PrimaryKey) : JoinSearch
-    data class NotJoined(val uid: PrimaryKey) : JoinSearch
     data class Unspecified(val uid: PrimaryKey?) : JoinSearch
 }
 
@@ -346,6 +345,7 @@ interface FileDatabase {
     suspend fun getFileRecordByIds(ids: List<PrimaryKey>): Result<List<FileRecord>>
     suspend fun getFileRecordListByOwner(owner: PrimaryKey): Result<List<FileRecord>>
     suspend fun getFileRecordByNames(names: List<String>): Result<List<FileRecord>>
+    suspend fun getUploadRecord(id: PrimaryKey): Result<UploadRecord?>
     suspend fun insertFileRefs(
         objectId: PrimaryKey,
         objectType: ObjectType,
@@ -363,12 +363,16 @@ interface FileDatabase {
         ownerType: ObjectType
     ): Result<Unit>
 
-    suspend fun insertUploadRecord(record: UploadRecord): Result<Unit>
-    suspend fun deleteUploadRecord(
-        id: PrimaryKey,
+    suspend fun insertUploadRecord(record: UploadRecord): Result<UploadRecord>
+
+    /**
+     * 只有在插入文件记录成功后才更新上传记录状态，避免文件上传了但是配额没有更新的情况
+     */
+    suspend fun updateUploadRecordStatus(
         quotaInfo: QuotaInfo,
-        length: Long
-    ): Result<Unit>
+        record: UploadRecord,
+        fileRecordList: List<FileRecord>,
+    ): Result<List<FileRecord>>
 
     suspend fun getFileCount(): Result<Long>
     suspend fun getFileVolume(): Result<Long>

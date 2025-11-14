@@ -9,7 +9,7 @@ import java.io.InputStream
 data class ObjectStorageRecord(val url: String, val lastModified: LocalDateTime, val fullName: String)
 
 data class UploadPack(
-    val path: File,
+    val file: File,
     val name: String,
     val size: Long,
     val fullName: String
@@ -38,6 +38,23 @@ interface ObjectStorageService {
     suspend fun copy(bucketName: String, copyPacks: List<CopyPack>): Result<List<ObjectStorageRecord>>
 
     suspend fun getInputStream(bucketName: String, name: String): Result<InputStream>
+
+    /**
+     * 使用对象存储的 compose/concat 能力，将同一 bucket 下的多个源对象顺序合并为一个目标对象。
+     * @param bucketName 目标与源对象所在的 bucket（需相同）
+     * @param targetFullName 合并后目标对象完整路径
+     * @param sourceFullNames 源对象完整路径列表，按顺序依次合并
+     */
+    suspend fun compose(
+        bucketName: String,
+        targetFullName: String,
+        sourceFullNames: List<String>
+    ): Result<ObjectStorageRecord>
+
+    /**
+     * 删除 bucket 下的多个对象。
+     */
+    suspend fun delete(bucketName: String, names: List<String>): Result<Unit>
 }
 
 interface ObjectStorageServiceFactory {

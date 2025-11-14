@@ -30,6 +30,7 @@ import com.storyteller_f.shared.model.TitleStatus
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.type.MemberStatus
 import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.type.UploadRecordStatus
 import io.r2dbc.spi.R2dbcDataIntegrityViolationException
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.datetime.datetime
@@ -70,6 +71,7 @@ fun Table.quotaType(name: String) = enumerationByName<QuotaType>(name, 20)
 
 fun Table.taskRecordType(name: String) = enumerationByName<TaskRecordType>(name, 20)
 fun Table.memberPolicy(name: String) = enumerationByName<MemberPolicy>(name, 20)
+fun Table.uploadRecordStatus(name: String) = enumerationByName<UploadRecordStatus>(name, 20)
 
 fun <T : Table> T.emoji() = varchar("emoji", 20)
 

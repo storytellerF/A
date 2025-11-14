@@ -180,8 +180,11 @@ interface UploadDao {
     @Query("select * from UploadEntity where collection = :collection order by id desc")
     fun getAsSource(collection: String): PagingSource<Int, UploadEntity>
 
-    @Query("select * from UploadEntity where collection = :collection and id = :id")
-    fun getAsFlow(collection: String, id: String): Flow<UploadEntity?>
+    @Query("select * from UploadEntity where collection = :collection and pathHash = :pathHash")
+    fun getAsFlow(collection: String, pathHash: String): Flow<UploadEntity?>
+
+    @Query("delete from UploadEntity where collection = :collection and pathHash = :pathHash")
+    suspend fun delete(collection: String, pathHash: String)
 
     @Query("delete from UploadEntity where collection = :collection")
     suspend fun clean(collection: String)

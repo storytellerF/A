@@ -30,6 +30,7 @@ import io.github.aakira.napier.Napier
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.util.decodeBase64String
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -124,7 +125,7 @@ private suspend fun CoroutineScope.processJob(
     job1.join()
     job2.join()
     jobs.forEach {
-        it.cancel()
+        it.cancelAndJoin()
     }
 }
 

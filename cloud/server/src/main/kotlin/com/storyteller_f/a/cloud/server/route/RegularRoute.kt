@@ -24,7 +24,7 @@ fun Routing.bindUnauthenticatedRoute(backend: Backend) {
         }
     }
 
-    CustomApi.Root.get(RoutingContext::handleResult) {
+    CustomApi.Root.get(handleResult()) {
         Result.success("${backend.customConfig.flavor} ${backend.customConfig.buildType}")
     }
 }

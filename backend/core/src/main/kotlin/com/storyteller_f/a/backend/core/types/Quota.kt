@@ -11,11 +11,11 @@ class Quota(
     val total: Long,
     val used: Long,
     val quotaType: QuotaType,
-    val locking: Boolean
+    val lockId: PrimaryKey?
 ) {
     companion object
 }
 
 fun Quota.toQuotaInfo(): QuotaInfo {
-    return QuotaInfo(ownerId, ownerType, quotaType, total, used, locking)
+    return QuotaInfo(ownerId, ownerType, quotaType, total, used, lockId)
 }

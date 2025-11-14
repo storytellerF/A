@@ -18,6 +18,7 @@ import com.storyteller_f.shared.utils.recoverResult
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.BufferedInputStream
 import java.io.InputStream
 import java.util.*
 import javax.imageio.ImageIO
@@ -140,7 +141,7 @@ suspend fun extractSvgDimensionInfo(inputStreamProducer: suspend () -> InputStre
 suspend fun getImageDimension(
     filePath: String,
     contentType: String,
-    inputStreamProducer: suspend () -> InputStream,
+    inputStreamProducer: suspend () -> BufferedInputStream,
 ): Dimension? {
     if (contentType == "image/svg+xml") {
         return extractSvgDimensionInfo(inputStreamProducer)

@@ -72,12 +72,14 @@ fun FileCell(
                         style = MaterialTheme.typography.labelSmall
                     )
                 }
-                Spacer(modifier = Modifier.height(5.dp))
-                fileInfo.dimension?.let {
-                    Text(
-                        "w${it.width}·h${it.height}",
-                        style = MaterialTheme.typography.labelSmall
-                    )
+                if (fileInfo.contentType.startsWith("image")) {
+                    Spacer(modifier = Modifier.height(5.dp))
+                    fileInfo.dimension?.let {
+                        Text(
+                            "w${it.width}·h${it.height}",
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    }
                 }
             }
         }

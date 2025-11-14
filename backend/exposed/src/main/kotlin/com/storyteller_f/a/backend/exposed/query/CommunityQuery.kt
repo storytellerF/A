@@ -10,10 +10,8 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.isNotNull
 import org.jetbrains.exposed.v1.core.isNull
 import org.jetbrains.exposed.v1.core.like
-import org.jetbrains.exposed.v1.core.notInSubQuery
 import org.jetbrains.exposed.v1.r2dbc.Query
 import org.jetbrains.exposed.v1.r2dbc.andWhere
-import org.jetbrains.exposed.v1.r2dbc.select
 
 fun Query.bindPosterSearch(
     hasPosterSearch: PosterSearch?
@@ -44,14 +42,6 @@ fun Query.buildCommunitySearchQuery(
                 join(Members, JoinType.INNER, Communities.id, Members.objectId) {
                     Members.uid eq joinSearch.uid
                 }
-            }
-        }
-
-        is JoinSearch.NotJoined -> {
-            where {
-                Communities.id notInSubQuery (Members.select(Members.objectId).where {
-                    Members.uid eq joinSearch.uid
-                })
             }
         }
 

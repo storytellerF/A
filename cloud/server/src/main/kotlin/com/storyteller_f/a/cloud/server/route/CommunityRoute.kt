@@ -22,7 +22,7 @@ import com.storyteller_f.shared.type.ObjectType
 import io.ktor.server.routing.*
 
 fun Route.bindCommunityRoute(backend: Backend) {
-    CustomApi.Communities.search(RoutingContext::handleResult) {
+    CustomApi.Communities.search(handleResult()) {
         usePrincipalOrNull { uid ->
             it.pagination(IdentifiablePagingGenerator) { f ->
                 backend.searchCommunities(uid, it, f)
@@ -30,23 +30,23 @@ fun Route.bindCommunityRoute(backend: Backend) {
         }
     }
 
-    CustomApi.Communities.Id.Members.get(RoutingContext::handleResult) { q, p ->
+    CustomApi.Communities.Id.Members.get(handleResult()) { q, p ->
         q.pagination(IdentifiablePagingGenerator) { f ->
             backend.searchMembers(p.id, q.word, f)
         }
     }
-    CustomApi.Communities.Id.get(RoutingContext::handleResult) { q, p ->
+    CustomApi.Communities.Id.get(handleResult()) { q, p ->
         usePrincipalOrNull { uid ->
             backend.getCommunity(ObjectFetch.IdFetch(p.id), uid, q.fillJoinInfo)
         }
     }
-    CustomApi.Communities.Aid.get(RoutingContext::handleResult) {
+    CustomApi.Communities.Aid.get(handleResult()) {
         usePrincipalOrNull { uid ->
             backend.getCommunity(ObjectFetch.AidFetch(it.aid), uid, it.fillJoinInfo)
         }
     }
 
-    CustomApi.Communities.Id.Topics.get(RoutingContext::handleResult) { q, p ->
+    CustomApi.Communities.Id.Topics.get(handleResult()) { q, p ->
         usePrincipalOrNull { uid ->
             q.pagination(IdentifiablePagingGenerator) { f ->
                 backend.getTopicsByParentId(
@@ -63,25 +63,25 @@ fun Route.bindCommunityRoute(backend: Backend) {
 }
 
 fun Route.bindProtectedCommunityRoute(backend: Backend) {
-    CustomApi.Communities.Id.Members.join(RoutingContext::handleResult) { p, api ->
+    CustomApi.Communities.Id.Members.join(handleResult()) { p, api ->
         usePrincipal { uid ->
             backend.joinCommunity(uid, p.id)
         }
     }
 
-    CustomApi.Communities.Id.Members.leave(RoutingContext::handleResult) { p, api ->
+    CustomApi.Communities.Id.Members.leave(handleResult()) { p, api ->
         usePrincipal { uid ->
             backend.exitCommunity(p.id, uid)
         }
     }
-    CustomApi.Communities.add(RoutingContext::handleResult) { api ->
+    CustomApi.Communities.add(handleResult()) { api ->
         val newCommunity = api.receiveBody()
         usePrincipal { uid ->
             backend.createCommunity(newCommunity, uid)
         }
     }
 
-    CustomApi.Communities.Id.update(RoutingContext::handleResult) { p, api ->
+    CustomApi.Communities.Id.update(handleResult()) { p, api ->
         val newCommunity = api.receiveBody()
         usePrincipal { uid ->
             backend.updateCommunity(p.id, newCommunity, uid)

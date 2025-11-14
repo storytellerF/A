@@ -10,11 +10,9 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.isNotNull
 import org.jetbrains.exposed.v1.core.isNull
 import org.jetbrains.exposed.v1.core.like
-import org.jetbrains.exposed.v1.core.notInSubQuery
 import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.r2dbc.Query
 import org.jetbrains.exposed.v1.r2dbc.andWhere
-import org.jetbrains.exposed.v1.r2dbc.select
 
 fun Query.buildRoomSearchWhereQuery(
     joinStatusSearch: JoinSearch,
@@ -36,12 +34,6 @@ fun Query.buildRoomSearchWhereQuery(
             this.join(Members, JoinType.INNER, Rooms.id, Members.objectId) {
                 Members.uid eq joinStatusSearch.uid
             }
-        }
-
-        is JoinSearch.NotJoined -> where {
-            Rooms.id notInSubQuery (Members.select(Members.objectId).where {
-                Members.uid eq joinStatusSearch.uid
-            }) and Rooms.communityId.isNotNull()
         }
 
         is JoinSearch.Unspecified -> {

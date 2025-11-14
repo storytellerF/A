@@ -12,3 +12,6 @@ expect fun checkContent(text: String): Result<Unit>
 expect fun safeFirstUnicode(text: String): String?
 
 expect fun safeFirstEmoji(text: String): String?
+
+fun Throwable.safeMessage(): String =
+    message ?: this::class.simpleName ?: toString()

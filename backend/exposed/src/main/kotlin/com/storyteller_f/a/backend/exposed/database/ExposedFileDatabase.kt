@@ -1,5 +1,6 @@
 package com.storyteller_f.a.backend.exposed.database
 
+import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.FileDatabase
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
@@ -20,20 +21,28 @@ import com.storyteller_f.shared.model.QuotaInfo
 import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.now
+import com.storyteller_f.shared.type.UploadRecordStatus
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.sum
 import org.jetbrains.exposed.v1.r2dbc.batchInsert
-import org.jetbrains.exposed.v1.r2dbc.deleteWhere
 import org.jetbrains.exposed.v1.r2dbc.insert
 import org.jetbrains.exposed.v1.r2dbc.select
 import org.jetbrains.exposed.v1.r2dbc.selectAll
 import org.jetbrains.exposed.v1.r2dbc.update
 
 class ExposedFileDatabase(val databaseSession: ExposedDatabaseSession) : FileDatabase {
+    override suspend fun getUploadRecord(id: PrimaryKey) = databaseSession.dbSearch {
+        search {
+            UploadRecords.selectAll().where {
+                UploadRecords.id eq id
+            }
+        }
+        first(UploadRecord::wrapRow)
+    }
+
     override suspend fun getFileRecord(owner: PrimaryKey, name: String) = databaseSession.dbSearch {
         search {
             FileRecords.selectAll().where {
@@ -123,7 +132,7 @@ class ExposedFileDatabase(val databaseSession: ExposedDatabaseSession) : FileDat
     ) = databaseSession.dbQuery {
         check(FileRecords.batchInsert(fileRecordList) { e ->
             this[FileRecords.id] = e.id
-            this[FileRecords.createdTime] = now()
+            this[FileRecords.createdTime] = e.createdTime
             this[FileRecords.name] = e.name
             this[FileRecords.duration] = 0
             this[FileRecords.width] = e.width
@@ -138,47 +147,79 @@ class ExposedFileDatabase(val databaseSession: ExposedDatabaseSession) : FileDat
         }
     }
 
-    override suspend fun insertUploadRecord(record: UploadRecord) = databaseSession.dbQuery {
+    override suspend fun insertUploadRecord(record: UploadRecord): Result<UploadRecord> = databaseSession.dbQuery {
         check(UploadRecords.insert {
             it[UploadRecords.id] = record.id
             it[UploadRecords.createdTime] = record.createdTime
             it[UploadRecords.objectId] = record.objectId
             it[UploadRecords.objectType] = record.objectType
+            it[UploadRecords.status] = record.status
             it[UploadRecords.total] = record.total
             it[UploadRecords.progress] = record.progress
             it[UploadRecords.name] = record.name
+            it[UploadRecords.chunkSize] = record.chunkSize
         }.insertedCount > 0) {
             "insert upload record failed"
         }
         check(Quotas.update({
-            Quotas.ownerId eq record.objectId and (Quotas.quotaType eq QuotaType.FILE) and (Quotas.locking eq false)
+            Quotas.ownerId eq record.objectId and
+                (Quotas.quotaType eq QuotaType.FILE) and
+                (Quotas.lockId eq null)
         }) {
-            it[this.locking] = true
+            it[this.lockId] = record.id
         } > 0) {
             "lock quota failed"
         }
+        record
     }
 
-    override suspend fun deleteUploadRecord(
-        id: PrimaryKey,
+    override suspend fun updateUploadRecordStatus(
         quotaInfo: QuotaInfo,
-        length: Long
-    ) = databaseSession.dbQuery {
-        check(UploadRecords.deleteWhere {
-            UploadRecords.id eq id
-        } > 0) {
-            "delete upload record failed"
+        record: UploadRecord,
+        fileRecordList: List<FileRecord>,
+    ): Result<List<FileRecord>> {
+        if (record.status == UploadRecordStatus.PENDING) {
+            return Result.failure(CustomBadRequestException("can't update pending record"))
         }
-        check(Quotas.update({
-            Quotas.ownerId eq quotaInfo.ownerId and
-                (Quotas.quotaType eq QuotaType.FILE) and
-                (Quotas.locking eq true) and
-                (Quotas.used eq quotaInfo.used)
-        }) {
-            it[Quotas.locking] = false
-            it[Quotas.used] = quotaInfo.used + length
-        } > 0) {
-            "unlock quota failed"
+        return databaseSession.dbQuery {
+            check(UploadRecords.update({
+                UploadRecords.id eq record.id
+            }) {
+                it[UploadRecords.status] = record.status
+            } > 0) {
+                "delete upload record failed"
+            }
+            check(Quotas.update({
+                Quotas.ownerId eq quotaInfo.ownerId and
+                    (Quotas.quotaType eq QuotaType.FILE) and
+                    (Quotas.lockId eq record.id) and
+                    (Quotas.used eq quotaInfo.used)
+            }) {
+                it[Quotas.lockId] = null
+                if (record.status != UploadRecordStatus.SUCCESS) {
+                    it[Quotas.used] = quotaInfo.used
+                } else {
+                    it[Quotas.used] = quotaInfo.used + record.total
+                }
+            } > 0) {
+                "unlock quota failed"
+            }
+            check(FileRecords.batchInsert(fileRecordList) { e ->
+                this[FileRecords.id] = e.id
+                this[FileRecords.createdTime] = e.createdTime
+                this[FileRecords.name] = e.name
+                this[FileRecords.duration] = 0
+                this[FileRecords.width] = e.width
+                this[FileRecords.height] = e.height
+                this[FileRecords.owner] = e.owner
+                this[FileRecords.ownerType] = e.ownerType
+                this[FileRecords.contentType] = e.contentType
+                this[FileRecords.size] = e.size
+                this[FileRecords.fullName] = e.fullName
+            }.size == fileRecordList.size) {
+                "insert file record failed"
+            }
+            fileRecordList
         }
     }
 

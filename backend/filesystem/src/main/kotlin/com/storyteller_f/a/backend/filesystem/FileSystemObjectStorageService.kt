@@ -31,6 +31,7 @@ import kotlin.io.path.exists
 import kotlin.io.path.getLastModifiedTime
 import kotlin.io.path.inputStream
 import kotlin.io.path.name
+import kotlin.io.path.notExists
 import kotlin.io.path.pathString
 import kotlin.io.path.visitFileTree
 import kotlin.time.ExperimentalTime
@@ -57,7 +58,7 @@ class FileSystemObjectStorageService(private val url: String, base: Path) : Obje
             val bucketPath = base.resolve(bucketName)
             uploadPacks.map { uploadPack ->
                 val target = bucketPath.resolve(uploadPack.fullName).createParentDirectories()
-                Files.copy(uploadPack.path.toPath(), target, StandardCopyOption.REPLACE_EXISTING)
+                Files.copy(uploadPack.file.toPath(), target, StandardCopyOption.REPLACE_EXISTING)
             }
         }.mapResult {
             get(bucketName, uploadPacks.map {
@@ -104,8 +105,11 @@ class FileSystemObjectStorageService(private val url: String, base: Path) : Obje
         bucketName: String,
         prefix: String
     ): Result<List<ObjectStorageRecord>> {
+        val p = base.resolve("$bucketName/$prefix")
+        if (p.notExists()) {
+            return Result.success(emptyList())
+        }
         return useFileSystem {
-            val p = base.resolve("$bucketName/$prefix")
             buildList<String?> {
                 p.visitFileTree(1) {
                     onVisitFile { file, _ ->
@@ -150,6 +154,40 @@ class FileSystemObjectStorageService(private val url: String, base: Path) : Obje
             } else {
                 throw Exception("file $name not exists")
             }
+        }
+    }
+
+    override suspend fun compose(
+        bucketName: String,
+        targetFullName: String,
+        sourceFullNames: List<String>
+    ): Result<ObjectStorageRecord> {
+        return useFileSystem {
+            val bucketPath = base.resolve(bucketName)
+            val target = bucketPath.resolve(targetFullName).createParentDirectories()
+            Files.newOutputStream(target).use { out ->
+                sourceFullNames.forEach { src ->
+                    val p = bucketPath.resolve(src)
+                    if (!p.exists()) throw Exception("source $src not exists")
+                    Files.newInputStream(p).use { ins ->
+                        ins.copyTo(out)
+                    }
+                }
+            }
+            get(bucketName, listOf(targetFullName)).getOrThrow().first()
+        }
+    }
+
+    override suspend fun delete(bucketName: String, names: List<String>): Result<Unit> {
+        return useFileSystem {
+            val bucketPath = base.resolve(bucketName)
+            names.forEach { name ->
+                val p = bucketPath.resolve(name)
+                if (p.exists()) {
+                    Files.deleteIfExists(p)
+                }
+            }
+            Unit
         }
     }
 

@@ -27,36 +27,35 @@ import com.storyteller_f.route4k.ktor.server.invoke
 import com.storyteller_f.route4k.ktor.server.receiveBody
 import com.storyteller_f.shared.type.ObjectType
 import io.ktor.server.routing.Route
-import io.ktor.server.routing.RoutingContext
 
 fun Route.bindProtectedUserRoute(backend: Backend) {
-    CustomApi.Users.update(RoutingContext::handleResult) { api ->
+    CustomApi.Users.update(handleResult()) { api ->
         usePrincipal { uid ->
             backend.updateUser(uid, api.receiveBody())
         }
     }
-    CustomApi.Users.Read.add(RoutingContext::handleResult) { api ->
+    CustomApi.Users.Read.add(handleResult()) { api ->
         usePrincipal { uid ->
             backend.addReadLog(uid, api.receiveBody())
         }
     }
-    CustomApi.Users.Devices.add(RoutingContext::handleResult) { api ->
+    CustomApi.Users.Devices.add(handleResult()) { api ->
         usePrincipal { uid ->
             val newDevice = api.receiveBody()
             backend.addDevice(uid, newDevice)
         }
     }
-    CustomApi.Favorites.add(RoutingContext::handleResult) { api ->
+    CustomApi.Favorites.add(handleResult()) { api ->
         usePrincipal { uid ->
             backend.addFavorite(uid, api.receiveBody())
         }
     }
-    CustomApi.Favorites.delete(RoutingContext::handleResult) { path, api ->
+    CustomApi.Favorites.delete(handleResult()) { path, api ->
         usePrincipal { uid ->
             backend.deleteFavorite(uid, path.id)
         }
     }
-    CustomApi.Favorites.get(RoutingContext::handleResult) { q ->
+    CustomApi.Favorites.get(handleResult()) { q ->
         usePrincipal { uid ->
             q.pagination(pagingGenerator {
                 it.id
@@ -65,7 +64,7 @@ fun Route.bindProtectedUserRoute(backend: Backend) {
             }
         }
     }
-    CustomApi.Users.overview(RoutingContext::handleResult) {
+    CustomApi.Users.overview(handleResult()) {
         usePrincipal { uid ->
             backend.getUserOverview(uid)
         }
@@ -73,19 +72,19 @@ fun Route.bindProtectedUserRoute(backend: Backend) {
 }
 
 fun Route.bindProtectedUserSubscriptionRoute(backend: Backend) {
-    CustomApi.Subscriptions.add(RoutingContext::handleResult) { api ->
+    CustomApi.Subscriptions.add(handleResult()) { api ->
         usePrincipal { uid ->
             backend.addSubscription(uid, api.receiveBody())
         }
     }
 
-    CustomApi.Subscriptions.delete(RoutingContext::handleResult) { path, api ->
+    CustomApi.Subscriptions.delete(handleResult()) { path, api ->
         usePrincipal { uid ->
             backend.removeSubscription(uid, path.id)
         }
     }
 
-    CustomApi.Subscriptions.get(RoutingContext::handleResult) { q ->
+    CustomApi.Subscriptions.get(handleResult()) { q ->
         usePrincipal { uid ->
             q.pagination(pagingGenerator {
                 it.id
@@ -97,14 +96,14 @@ fun Route.bindProtectedUserSubscriptionRoute(backend: Backend) {
 }
 
 fun Route.bindUserRoute(backend: Backend) {
-    CustomApi.Users.Aid.get(RoutingContext::handleResult) { q ->
+    CustomApi.Users.Aid.get(handleResult()) { q ->
         backend.getUserInfo(ObjectFetch.AidFetch(q.aid))
     }
-    CustomApi.Users.Id.get(RoutingContext::handleResult) {
+    CustomApi.Users.Id.get(handleResult()) {
         backend.getUserInfo(ObjectFetch.IdFetch(it.id))
     }
 
-    CustomApi.Users.Id.Topics.get(RoutingContext::handleResult) { q, p ->
+    CustomApi.Users.Id.Topics.get(handleResult()) { q, p ->
         usePrincipalOrNull { uid ->
             q.pagination(IdentifiablePagingGenerator) { f ->
                 backend.getTopicsByParentId(
@@ -119,13 +118,13 @@ fun Route.bindUserRoute(backend: Backend) {
         }
     }
 
-    CustomApi.Users.Id.Titles.get(RoutingContext::handleResult) { q, p ->
+    CustomApi.Users.Id.Titles.get(handleResult()) { q, p ->
         q.pagination(IdentifiablePagingGenerator) { f ->
             backend.getUserTitles(p.id, q.searchType, q.type, q.scopeId, f)
         }
     }
 
-    CustomApi.Users.search(RoutingContext::handleResult) {
+    CustomApi.Users.search(handleResult()) {
         it.pagination(IdentifiablePagingGenerator) { f ->
             backend.searchMembers(null, it.word, f)
         }

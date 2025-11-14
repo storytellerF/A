@@ -17,8 +17,8 @@ import com.storyteller_f.a.client.core.removeFavorite
 import com.storyteller_f.a.client.core.removeSubscription
 import com.storyteller_f.a.client.core.updateUserInfo
 import com.storyteller_f.a.client.core.upload
-import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.UpdateUserBody
+import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import io.ktor.http.ContentType
 import kotlinx.io.Buffer
@@ -53,10 +53,10 @@ class UserTest {
     @Test
     fun `test update user avatar`() = test {
         attachSession {
-            val stream = ClassLoader.getSystemResourceAsStream("avatar1.png")!!
+            val stream = ClassLoader.getSystemResourceAsStream("avatar1.png")!!.buffered()
             val bytes = stream.readBytes()
             val info = upload(
-                ObjectTuple(it.uid, ObjectType.USER),
+                it.uid ob ObjectType.USER,
                 getUploadDataFromBytes(bytes)
             ).getOrThrow().data.first()
             assertEquals(

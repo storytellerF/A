@@ -10,6 +10,8 @@
 - 环境/密钥：app/composeApp 通过 BuildKonfig 从 {flavor}.env 注入；务必传入 -Pserver.flavor 与 -Pserver.buildType
 - 提交信息：使用动词开头的英文/中文短语，标注模块与范围（例如：client/core: add getAllUsers request）
 - 不能用中文做方法名
+- 使用表达式来取代var，例如：val x = if (a) b else c
+- 不要使用裸的 InputStream/OutputStream，而要使用 BufferedInputStream/BufferedOutputStream
 
 ## 模块职责概览
 - **api**: 定义 REST API 端点、查询/路径模型；包含管理员 AdminApi（/admin/*）
@@ -66,8 +68,8 @@
     - 需要分页则使用 `Pager` + `PagingSource/RemoteMediator`
 
 ## 构建与运行
-- Desktop 运行（dev）: `gradlew -Pserver.flavor=dev.win -Pserver.buildType=dev :app:composeApp:run`
-- Desktop 打包（release）: `gradlew -Pserver.flavor=dev.win -Pserver.buildType=release :app:composeApp:packageRelease`
+- Desktop 运行（dev）: `gradlew :app:composeApp:run -Pserver.flavor=dev.win -Pserver.buildType=dev`
+- Desktop 打包（release）: `gradlew :app:composeApp:packageRelease -Pserver.flavor=dev.win -Pserver.buildType=release`
 - Android 单测: `gradlew :shared:testDebugUnitTest`、`gradlew :app:composeApp:testDebugUnitTest`
 - JVM 测试: `gradlew :shared:jvmTest`、`gradlew :app:composeApp:desktopTest`
 

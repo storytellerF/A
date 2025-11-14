@@ -8,7 +8,6 @@ import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 
 class QuotaTest {
     @Test
@@ -21,7 +20,7 @@ class QuotaTest {
             assertEquals(QuotaType.FILE, quota.quotaType)
             assertEquals(1024L * 1024 * 1024, quota.total) // 默认 1GB
             assertEquals(0L, quota.used)
-            assertFalse(quota.locking)
+            assertEquals(null, quota.lockId)
         }
     }
 
@@ -38,7 +37,7 @@ class QuotaTest {
             val after = getQuotaInfo(mediaTarget).getOrThrow()
             assertEquals(before.total, after.total)
             assertEquals(before.used + uploadSize, after.used)
-            assertFalse(after.locking)
+            assertEquals(null, after.lockId)
         }
     }
 }

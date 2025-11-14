@@ -477,9 +477,9 @@ class UploadInfoRoomStorage(val appDatabase: AppDatabase) : UploadInfoStorage {
         )
     }
 
-    override fun observeDatum(pathHash: String): Flow<UploadInfo?> {
+    override fun observeDatum(collection: UploadCollection, pathHash: String): Flow<UploadInfo?> {
         return appDatabase.getUploadDao()
-            .getAsFlow(DownloadInfoStorage.COLLECTION_NAME, pathHash).map {
+            .getAsFlow(collection.getName(), pathHash).map {
                 it?.data?.let { string -> commonJson.safeDecodeFromStringOrNull(string) }
             }
     }
@@ -498,6 +498,10 @@ class UploadInfoRoomStorage(val appDatabase: AppDatabase) : UploadInfoStorage {
                 commonJson.safeDecodeFromStringOrNull(it.data)
             }
         }
+    }
+
+    override suspend fun delete(collection: UploadCollection, pathHash: String) {
+        appDatabase.getUploadDao().delete(collection.getName(), pathHash)
     }
 }
 

@@ -39,6 +39,7 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.UNIT_RESULT
 import com.storyteller_f.shared.utils.checkContent
 import com.storyteller_f.shared.utils.extractMarkdownMediaLink
+import com.storyteller_f.shared.utils.firstOrNull
 import com.storyteller_f.shared.utils.groupByPair
 import com.storyteller_f.shared.utils.ifNotNull
 import com.storyteller_f.shared.utils.mapIfNotNull
@@ -251,9 +252,7 @@ suspend fun Backend.processTopicAfterCreate(
     val info = if (topicInfo.content is TopicContent.Plain) {
         processTopicFileObject(
             listOf(topicInfo)
-        ).mapIfNotNull {
-            it.firstOrNull()
-        }.getOrThrow()
+        ).firstOrNull().getOrThrow()
     } else {
         topicInfo
     }
@@ -283,10 +282,8 @@ suspend fun Backend.createTopicSnapshot(
             Result.failure(ForbiddenException("Permission denied"))
         }
     }.mapResultIfNotNull {
-        processRawTopicToTopicInfo(listOf(it), uid, false).map { list ->
-            list?.firstOrNull()
-        }
-    }.mapResultIfNotNull { topicInfo ->
+        processRawTopicToTopicInfo(listOf(it), uid, false)
+    }.firstOrNull().mapResultIfNotNull { topicInfo ->
         getUserInfo(ObjectFetch.IdFetch(uid)).mapResultIfNotNull { userInfo ->
             createTopicSnapshot(topicInfo, userInfo, uid)
         }
@@ -328,9 +325,7 @@ private suspend fun Backend.createTopicSnapshot(
                     )
                 )
             )
-        }.mapIfNotNull {
-            it.firstOrNull()
-        }
+        }.firstOrNull()
     } finally {
         pdfFile.delete()
         signedFile.delete()
@@ -362,10 +357,10 @@ suspend fun Backend.generateSignedSnapshot(
     return try {
         content.fileInfos.forEach {
             val targetFile = File(userHome, "a-temp/${Uuid.random()}")
-            map.put(it.name, targetFile)
+            map[it.name] = targetFile
             objectStorageService.getInputStream(A_FILE_DEFAULT_BUCKET, it.fullName).getOrThrow()
                 .buffered().use { input ->
-                    targetFile.outputStream().use { output ->
+                    targetFile.outputStream().buffered().use { output ->
                         input.copyTo(output)
                     }
                 }
@@ -376,10 +371,7 @@ suspend fun Backend.generateSignedSnapshot(
             plainContent,
             map,
             snapshotGeneration,
-            PdfGenerationSpec(
-                topicInfo.createdTime,
-                now()
-            )
+            PdfGenerationSpec(topicInfo.createdTime, now())
         )
     } catch (e: Exception) {
         Result.failure(e)

@@ -8,15 +8,23 @@ import com.storyteller_f.a.cloud.core.service.PathResponse
 import com.storyteller_f.a.cloud.server.ServerConfig
 import com.storyteller_f.route4k.ktor.server.handleCaughtException
 import com.storyteller_f.shared.type.PrimaryKey
-import io.ktor.http.*
-import io.ktor.server.application.*
-import io.ktor.server.auth.*
-import io.ktor.server.plugins.*
+import io.ktor.http.ContentDisposition
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.log
+import io.ktor.server.auth.principal
+import io.ktor.server.plugins.BadRequestException
+import io.ktor.server.plugins.ContentTransformationException
+import io.ktor.server.plugins.MissingRequestParameterException
+import io.ktor.server.plugins.ParameterConversionException
 import io.ktor.server.request.queryString
 import io.ktor.server.request.uri
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
-import io.ktor.server.websocket.*
+import io.ktor.server.response.header
+import io.ktor.server.response.respond
+import io.ktor.server.response.respondFile
+import io.ktor.server.response.respondPath
+import io.ktor.server.routing.RoutingContext
+import io.ktor.server.websocket.DefaultWebSocketServerSession
 import io.ktor.util.toMap
 import io.sentry.Sentry
 import io.sentry.protocol.Request
@@ -43,7 +51,7 @@ suspend inline fun <reified R : Any> RoutingContext.callRespond(
             call.respond(HttpStatusCode.NotFound)
             return
         }
-        handleResult(result)
+        handleResultInternal(result)
     } catch (e: Exception) {
         handleCaughtException(e)
     }
@@ -89,7 +97,13 @@ inline fun <reified R : Any> DefaultWebSocketServerSession.usePrincipal(block: (
     }
 }
 
-suspend inline fun <reified R> RoutingContext.handleResult(it: Result<R>) {
+inline fun <reified R> handleResult(): suspend RoutingContext.(it: Result<R>) -> Unit {
+    return { result ->
+        handleResultInternal(result)
+    }
+}
+
+suspend inline fun <reified R> RoutingContext.handleResultInternal(it: Result<R>) {
     it.onSuccess {
         when (it) {
             null -> call.respond(HttpStatusCode.NotFound)
@@ -99,8 +113,7 @@ suspend inline fun <reified R> RoutingContext.handleResult(it: Result<R>) {
                     ContentDisposition.Attachment.withParameter(
                         ContentDisposition.Parameters.FileName,
                         it.file.name
-                    )
-                        .toString()
+                    ).toString()
                 )
                 call.respondFile(it.file)
             }
@@ -134,6 +147,6 @@ suspend inline fun <reified R> RoutingContext.handleResult(it: Result<R>) {
                 Sentry.captureException(throwable)
             }
         }
-        call.application.log.error("Occur server exception", throwable)
+        call.application.log.error("Occur server exception $", throwable)
     }
 }

@@ -43,10 +43,10 @@ import io.ktor.server.sessions.sessions
 fun Route.bindUnprotectedAccountRoute(
     backend: Backend
 ) {
-    CustomApi.Accounts.getData(RoutingContext::handleResult) {
+    CustomApi.Accounts.getData(handleResult()) {
         Result.success(call.getData())
     }
-    CustomApi.Accounts.signUp(RoutingContext::handleResult) { api ->
+    CustomApi.Accounts.signUp(handleResult()) { api ->
         if (backend.customConfig.buildType == "prod") {
             Result.failure(Exception("not support"))
         } else {
@@ -60,7 +60,7 @@ fun Route.bindUnprotectedAccountRoute(
         }
     }
 
-    CustomApi.Accounts.signIn(RoutingContext::handleResult) { api ->
+    CustomApi.Accounts.signIn(handleResult()) { api ->
         backend.signIn(call.getData(), api.receiveBody<UserInfo, SignInBody>()).onSuccess {
             saveSuccessSessionOnFirst(it.id)
         }
@@ -68,7 +68,7 @@ fun Route.bindUnprotectedAccountRoute(
 }
 
 fun Route.bindAccountRoute() {
-    CustomApi.Accounts.signOut(RoutingContext::handleResult) {
+    CustomApi.Accounts.signOut(handleResult()) {
         usePrincipalOrNull {
             call.sessions.clear(UserSession::class)
             UNIT_RESULT
@@ -77,12 +77,12 @@ fun Route.bindAccountRoute() {
 }
 
 fun Route.bindProtectedAccountRoute(backend: Backend) {
-    CustomApi.Accounts.ChildAccounts.add(RoutingContext::handleResult) {
+    CustomApi.Accounts.ChildAccounts.add(handleResult()) {
         usePrincipal { uid ->
             backend.addChildAccount(uid)
         }
     }
-    CustomApi.Accounts.ChildAccounts.get(RoutingContext::handleResult) { q ->
+    CustomApi.Accounts.ChildAccounts.get(handleResult()) { q ->
         usePrincipal { uid ->
             q.pagination(IdentifiablePagingGenerator) {
                 backend.getUserAlternateUserInfoList(uid, it)

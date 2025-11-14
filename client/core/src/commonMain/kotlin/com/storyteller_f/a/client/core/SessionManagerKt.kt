@@ -4,6 +4,7 @@ package com.storyteller_f.a.client.core
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
@@ -29,10 +30,12 @@ fun UserSessionManager.startBackgroundTask(): List<Job> {
 }
 
 context(c: CoroutineScope)
-inline fun <R> UserSessionManager.startBackgroundTask(block: UserSessionManager.() -> R): R {
+suspend inline fun <R> UserSessionManager.startBackgroundTask(block: UserSessionManager.() -> R): R {
     val jobs = startBackgroundTask()
     val result = block()
-    jobs.forEach(Job::cancel)
+    jobs.forEach {
+        it.cancelAndJoin()
+    }
     return result
 }
 
@@ -55,9 +58,11 @@ fun PanelSessionManager.startBackgroundTask(): List<Job> {
 }
 
 context(c: CoroutineScope)
-inline fun <R> PanelSessionManager.startBackgroundTask(block: PanelSessionManager.() -> R): R {
+suspend inline fun <R> PanelSessionManager.startBackgroundTask(block: PanelSessionManager.() -> R): R {
     val jobs = startBackgroundTask()
     val result = block()
-    jobs.forEach(Job::cancel)
+    jobs.forEach {
+        it.cancelAndJoin()
+    }
     return result
 }

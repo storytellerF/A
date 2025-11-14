@@ -728,8 +728,9 @@ class UploadViewModel(
 class UploadDetailViewModel(
     modelStorage: ModelStorage,
     pathHash: String,
+    myUid: PrimaryKey,
 ) : ViewModel() {
-    val data = modelStorage.upload.observeDatum(pathHash)
+    val data = modelStorage.upload.observeDatum(UploadCollection(myUid), pathHash)
 }
 
 class DownloadListViewModel(

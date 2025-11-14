@@ -6,6 +6,7 @@ import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.ObjectFetch.IdFetch
 import com.storyteller_f.a.backend.core.UnauthorizedException
+import com.storyteller_f.a.backend.core.types.FileRecord
 import com.storyteller_f.a.backend.core.types.Quota
 import com.storyteller_f.a.backend.core.types.UploadRecord
 import com.storyteller_f.a.backend.core.types.toQuotaInfo
@@ -14,11 +15,13 @@ import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.type.UploadRecordStatus
 import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.shared.utils.recoverResult
+import io.github.aakira.napier.Napier
 import org.apache.tika.Tika
 
 data class RootReadPermission(
@@ -208,36 +211,48 @@ suspend fun Backend.checkRootAdminPermission(
     }
 }
 
-suspend fun <T> Backend.lockQuotaInfo(
+/**
+ * 执行出错会释放配额并标记为失败
+ */
+suspend fun Backend.lockQuotaInfo(
     objectTuple: ObjectTuple,
     quotaType: QuotaType,
     length: Long,
     name: String,
-    block: suspend () -> Result<T>
-): Result<T> {
-    try {
-        val quotaInfo = getQuotaInfo(quotaType, objectTuple).getOrThrow()
-        if (quotaInfo.locking) {
-            throw CustomBadRequestException("quota is locking")
+    block: suspend () -> Result<List<FileRecord>>
+) = checkQuotaStatus(objectTuple, length, quotaType).mapResult { quotaInfo ->
+    database.file.insertUploadRecord(
+        UploadRecord(
+            SnowflakeFactory.nextId(),
+            now(),
+            objectTuple.objectId,
+            objectTuple.objectType,
+            UploadRecordStatus.PENDING,
+            length,
+            0,
+            name,
+            0
+        )
+    ).mapResult { uploadRecord ->
+        try {
+            // 避免block 中出现未捕获的异常导致配额未释放
+            val t = block().getOrThrow()
+            val newRecord = uploadRecord.copy(status = UploadRecordStatus.SUCCESS)
+            database.file.updateUploadRecordStatus(quotaInfo, newRecord, t).onFailure {
+                Napier.e(it) {
+                    "update upload record status failed ${uploadRecord.id} $quotaInfo $length"
+                }
+            }
+            Result.success(t)
+        } catch (e: Exception) {
+            val record = uploadRecord.copy(status = UploadRecordStatus.FAILED)
+            database.file.updateUploadRecordStatus(quotaInfo, record, emptyList()).onFailure {
+                Napier.e(it) {
+                    "update upload record status failed ${uploadRecord.id} $quotaInfo $length"
+                }
+            }
+            Result.failure(e)
         }
-        val id = SnowflakeFactory.nextId()
-        database.file.insertUploadRecord(
-            UploadRecord(
-                id,
-                now(),
-                objectTuple.objectId,
-                objectTuple.objectType,
-                length,
-                0,
-                name
-            )
-        ).getOrThrow()
-        val t = block()
-        quotaInfo.used
-        database.file.deleteUploadRecord(id, quotaInfo, length).getOrThrow()
-        return t
-    } catch (e: Exception) {
-        return Result.failure(e)
     }
 }
 
@@ -252,6 +267,20 @@ suspend fun Backend.getQuotaInfo(
     }
 }
 
+suspend fun Backend.checkQuotaStatus(
+    tuple: ObjectTuple,
+    size: Long,
+    quotaType: QuotaType
+): Result<QuotaInfo> = getQuotaInfo(quotaType, tuple).mapResult {
+    if (it.lockId != null) {
+        Result.failure(CustomBadRequestException("quota is locking"))
+    } else if (it.used + size > it.total) {
+        Result.failure(CustomBadRequestException("quota is not enough"))
+    } else {
+        Result.success(it)
+    }
+}
+
 private suspend fun Backend.insertQuotaAndGet(
     quotaType: QuotaType,
     objectTuple: ObjectTuple
@@ -263,7 +292,7 @@ private suspend fun Backend.insertQuotaAndGet(
         1024 * 1024 * 1024,
         0,
         quotaType,
-        false
+        null
     )
     return database.container.insertQuota(quota).map {
         quota

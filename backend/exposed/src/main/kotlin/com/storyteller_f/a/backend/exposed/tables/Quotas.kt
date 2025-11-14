@@ -13,7 +13,7 @@ object Quotas : Table() {
     val quotaType = quotaType("quota_type")
     val used = long("used")
     val total = long("total")
-    val locking = bool("locking")
+    val lockId = customPrimaryKey("lock_id").nullable()
     override val primaryKey = PrimaryKey(ownerId, quotaType)
 }
 
@@ -24,6 +24,6 @@ fun Quota.Companion.wrapRow(resultRow: ResultRow): Quota {
         resultRow[Quotas.total],
         resultRow[Quotas.used],
         resultRow[Quotas.quotaType],
-        resultRow[Quotas.locking]
+        resultRow[Quotas.lockId]
     )
 }

@@ -105,6 +105,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -360,7 +361,7 @@ class AccountInstance(scope: CoroutineScope, name: String, wsServerUrl: String, 
                 awaitCancellation()
             } finally {
                 jobs.forEach {
-                    it.cancel()
+                    it.cancelAndJoin()
                 }
             }
         }

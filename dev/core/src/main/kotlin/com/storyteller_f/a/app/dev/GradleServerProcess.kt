@@ -23,7 +23,7 @@ fun forceStop(port: Int) {
     Napier.i {
         "forceStop $port"
     }
-    if (isWin()) {
+    val result = if (isWin()) {
         // for /f "tokens=5" %a in ('netstat -ano ^| findstr :8080') do taskkill /PID %a /F
         Runtime.getRuntime()
             .exec(
@@ -32,10 +32,14 @@ fun forceStop(port: Int) {
                     "/c",
                     """for /f "tokens=5" %i in ('netstat -ano ^| findstr :$port') do taskkill /PID %i /F"""
                 )
-            )
+            ).waitFor()
     } else {
         Runtime.getRuntime()
-            .exec(arrayOf("/bin/sh", "-c", "pid=$(lsof -t -i :8080) && kill -9 \$pid"))
+            .exec(arrayOf("/bin/sh", "-c", "pid=$(lsof -t -i :$port) && kill -9 \$pid"))
+            .waitFor()
+    }
+    check(result != 0) {
+        "forceStop failed"
     }
 }
 
@@ -130,7 +134,8 @@ private fun ProcessBuilder.bindGradleProcessEnv(envFile: File, port: Int): Proce
     environment.putAll(
         mapOf(
             "DATABASE_URI" to url,
-            "DATABASE_DRIVER" to "h2"
+            "DATABASE_DRIVER" to "h2",
+            "BUILD_TYPE" to "dev-test"
         )
     )
     environment["SERVER_PORT"] = port.toString()
