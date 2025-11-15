@@ -100,7 +100,7 @@ suspend fun Backend.checkRootWritePermission(
 ): Result<RootWritePermission?> {
     return when (parentType) {
         ObjectType.TOPIC -> {
-            database.topic.getRawTopic(IdFetch(parentId), null).mapResultIfNotNull { topicInfo ->
+            database.getRawTopic(IdFetch(parentId), null).mapResultIfNotNull { topicInfo ->
                 checkRootWritePermission(
                     topicInfo.topic.rootType,
                     topicInfo.topic.rootId,
