@@ -50,10 +50,9 @@ suspend fun Backend.checkRootReadPermission(
 ): Result<RootReadPermission?> {
     return when (parentType) {
         ObjectType.TOPIC -> {
-            database.topic.getTopicRootTuple(parentId)
-                .mapResultIfNotNull { (rootId, rootType) ->
-                    checkRootReadPermission(rootType, rootId, uid)
-                }
+            database.topic.getTopicRootTuple(parentId).mapResultIfNotNull { (rootId, rootType) ->
+                checkRootReadPermission(rootType, rootId, uid)
+            }
         }
 
         ObjectType.ROOM -> {
@@ -88,7 +87,7 @@ suspend fun Backend.checkRootReadPermission(
             RootReadPermission(hasRead = true, hasJoined = false, isPrivate = false)
         )
 
-        ObjectType.File -> Result.failure(ForbiddenException())
+        ObjectType.FILE -> Result.failure(ForbiddenException())
         ObjectType.PANEL_ACCOUNT -> Result.failure(ForbiddenException())
     }
 }
@@ -144,7 +143,7 @@ suspend fun Backend.checkRootWritePermission(
         }
 
         ObjectType.TITLE -> Result.failure(ForbiddenException())
-        ObjectType.File -> Result.failure(ForbiddenException())
+        ObjectType.FILE -> Result.failure(ForbiddenException())
         ObjectType.PANEL_ACCOUNT -> Result.failure(ForbiddenException())
     }
 }
@@ -206,7 +205,7 @@ suspend fun Backend.checkRootAdminPermission(
         }
 
         ObjectType.TITLE -> Result.success(RootAdminPermission(parentType, parentId))
-        ObjectType.File -> Result.failure(ForbiddenException())
+        ObjectType.FILE -> Result.failure(ForbiddenException())
         ObjectType.PANEL_ACCOUNT -> Result.failure(ForbiddenException())
     }
 }

@@ -84,19 +84,17 @@ private suspend fun Backend.processTitleList(
             if (title.scopeType == ObjectType.TOPIC) {
                 add(title.scopeId)
             }
-            add(title.descriptionTopicId)
+            if (title.descriptionTopicId != 0L) {
+                add(title.descriptionTopicId)
+            }
         }
     }.distinct()
-    return getRelatedObject(
-        uidList,
-        communityIdList,
-        roomIdList
-    ).mapResult { (userList, roomList, communityList) ->
+    return getRelatedObject(uidList, communityIdList, roomIdList).mapResult {
         getTopicByIds(topicIdList, uid).mapIfNotNull { topicList ->
             processTitleList(
-                userList.orEmpty(),
-                communityList.orEmpty(),
-                roomList.orEmpty(),
+                it.first.orEmpty(),
+                it.third.orEmpty(),
+                it.second.orEmpty(),
                 list,
                 topicList
             )

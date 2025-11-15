@@ -11,5 +11,5 @@ data class PanelOverview(
     val communityRoomCount: Long,
     val fileCount: Long,
     val fileVolume: Long,
-    val titleCount: Long = 0,
+    val titleCount: Long,
 )

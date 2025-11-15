@@ -1,5 +1,6 @@
 package com.storyteller_f.a.backend.exposed.database
 
+import com.storyteller_f.a.backend.core.Cursor
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.ReactionDatabase
 import com.storyteller_f.a.backend.core.ReactionFetch
@@ -10,12 +11,12 @@ import com.storyteller_f.a.backend.exposed.count
 import com.storyteller_f.a.backend.exposed.first
 import com.storyteller_f.a.backend.exposed.isNotEmpty
 import com.storyteller_f.a.backend.exposed.map
-import com.storyteller_f.a.backend.exposed.query.buildReactionInfoQuery
 import com.storyteller_f.a.backend.exposed.tables.ReactionRecords
 import com.storyteller_f.a.backend.exposed.tables.Reactions
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.ReactionRecordInfo
+import com.storyteller_f.shared.obj.ReactionCursorKey
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.groupByPair
@@ -25,8 +26,14 @@ import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.countDistinct
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.greater
+import org.jetbrains.exposed.v1.core.greaterEq
 import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.core.less
+import org.jetbrains.exposed.v1.core.lessEq
 import org.jetbrains.exposed.v1.core.max
+import org.jetbrains.exposed.v1.r2dbc.Query
+import org.jetbrains.exposed.v1.r2dbc.andWhere
 import org.jetbrains.exposed.v1.r2dbc.deleteWhere
 import org.jetbrains.exposed.v1.r2dbc.insert
 import org.jetbrains.exposed.v1.r2dbc.select
@@ -245,5 +252,25 @@ class ExposedReactionDatabase(
             }.groupBy(ReactionRecords.objectId)
         }
         map { Triple(it[ReactionRecords.objectId], it[column], it[lastReactionId] ?: 0) }
+    }
+
+    fun buildReactionInfoQuery(objectId: List<PrimaryKey>, reactionFetch: ReactionFetch): Query {
+        val query = Reactions.selectAll().where {
+            Reactions.objectId inList objectId
+        }
+        when (val cursor = reactionFetch.cursor) {
+            is Cursor.DescCursor<ReactionCursorKey> -> query.andWhere {
+                val value = cursor.value
+                Reactions.count greaterEq value.count and (Reactions.lastReactionId less value.reactionId)
+            }
+
+            is Cursor.AscCursor<ReactionCursorKey> -> query.andWhere {
+                val value = cursor.value
+                Reactions.count lessEq value.count and (Reactions.lastReactionId greater value.reactionId)
+            }
+
+            null -> {}
+        }
+        return query
     }
 }

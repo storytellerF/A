@@ -281,7 +281,7 @@ private fun TitleScopeEditor(
                 ObjectType.USER -> UserRefCell(titleScope.objectId)
 
                 ObjectType.TITLE -> TODO()
-                ObjectType.File -> TODO()
+                ObjectType.FILE -> TODO()
                 ObjectType.PANEL_ACCOUNT -> TODO()
             }
         } else {
@@ -415,7 +415,7 @@ private fun TypeSelector(
                     ObjectType.TOPIC -> Icons.Default.Topic
                     ObjectType.USER -> Icons.Default.AccountBox
                     ObjectType.TITLE -> TODO()
-                    ObjectType.File -> TODO()
+                    ObjectType.FILE -> TODO()
                     ObjectType.PANEL_ACCOUNT -> TODO()
                 },
                 "icon"
@@ -465,7 +465,7 @@ fun ObjectList(
             }
 
             ObjectType.TITLE -> TODO()
-            ObjectType.File -> TODO()
+            ObjectType.FILE -> TODO()
             ObjectType.PANEL_ACCOUNT -> TODO()
         }
     }

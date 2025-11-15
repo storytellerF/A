@@ -16,7 +16,6 @@ import com.storyteller_f.a.backend.exposed.count
 import com.storyteller_f.a.backend.exposed.first
 import com.storyteller_f.a.backend.exposed.map
 import com.storyteller_f.a.backend.exposed.query.bindPaginationQuery
-import com.storyteller_f.a.backend.exposed.query.buildCommunitySearchQuery
 import com.storyteller_f.a.backend.exposed.tables.Aids
 import com.storyteller_f.a.backend.exposed.tables.Communities
 import com.storyteller_f.a.backend.exposed.tables.Members
@@ -31,9 +30,14 @@ import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.v1.core.JoinType
+import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.core.isNotNull
+import org.jetbrains.exposed.v1.core.isNull
+import org.jetbrains.exposed.v1.core.like
 import org.jetbrains.exposed.v1.r2dbc.Query
+import org.jetbrains.exposed.v1.r2dbc.andWhere
 import org.jetbrains.exposed.v1.r2dbc.insert
 import org.jetbrains.exposed.v1.r2dbc.select
 import org.jetbrains.exposed.v1.r2dbc.selectAll
@@ -263,5 +267,48 @@ class ExposedCommunityDatabase(
             Communities.select(Communities.id).queryBuilder()
         }
         count()
+    }
+
+    fun Query.bindPosterSearch(
+        hasPosterSearch: PosterSearch?
+    ): Query {
+        return when (hasPosterSearch) {
+            PosterSearch.HAS_POSTER -> andWhere {
+                Communities.poster.isNotNull()
+            }
+
+            PosterSearch.NO_POSTER -> andWhere {
+                Communities.poster.isNull()
+            }
+
+            else -> {
+                orderBy(Communities.poster.isNull(), SortOrder.ASC)
+            }
+        }
+    }
+
+    fun Query.buildCommunitySearchQuery(
+        joinSearch: JoinSearch,
+        word: String?,
+        hasPosterSearch: PosterSearch?
+    ): Query {
+        when (joinSearch) {
+            is JoinSearch.Joined -> {
+                adjustColumnSet {
+                    join(Members, JoinType.INNER, Communities.id, Members.objectId) {
+                        Members.uid eq joinSearch.uid
+                    }
+                }
+            }
+
+            else -> {
+            }
+        }
+        if (!word.isNullOrBlank()) {
+            andWhere {
+                Communities.name like "$word%"
+            }
+        }
+        return bindPosterSearch(hasPosterSearch)
     }
 }

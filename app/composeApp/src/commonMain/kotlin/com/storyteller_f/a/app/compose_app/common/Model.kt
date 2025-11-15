@@ -250,8 +250,6 @@ class RoomsViewModel(
     ) { key, size ->
         sessionManager.searchRooms(joinStatusSearch, size, key, word, communityId)
     }.flow.cachedIn(viewModelScope)
-
-
 }
 
 @OptIn(ExperimentalPagingApi::class)

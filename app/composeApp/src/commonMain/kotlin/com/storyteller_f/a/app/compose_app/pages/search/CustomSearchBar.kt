@@ -102,7 +102,7 @@ fun CustomSearchBar(scope: SearchScope, leadingIcon: @Composable () -> Unit) {
             ObjectType.TOPIC -> TODO()
             ObjectType.USER -> TODO()
             ObjectType.TITLE -> appNavFactory.newAppNav().gotoTitleCompose()
-            ObjectType.File -> TODO()
+            ObjectType.FILE -> TODO()
             ObjectType.PANEL_ACCOUNT -> TODO()
         }
     }

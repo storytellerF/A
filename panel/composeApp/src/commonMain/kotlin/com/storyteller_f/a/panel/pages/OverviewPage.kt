@@ -2,11 +2,17 @@ package com.storyteller_f.a.panel.pages
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -39,11 +45,12 @@ fun OverviewPage() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OverviewPageInternal(viewModel: OverviewViewModel) {
+    val panelNav = LocalPanelNav.current
     Scaffold(
         topBar = {
             TopAppBar(title = {
                 Text("Overview")
-            })
+            }, navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } })
         }
     ) {
         Box(modifier = Modifier.padding(top = it.calculateTopPadding()).padding(16.dp)) {
@@ -64,7 +71,8 @@ class OverviewFlowPreviewProvider : PreviewParameterProvider<PanelOverview> {
                 4,
                 5,
                 6,
-                7000
+                7000,
+                8000,
             )
         )
 }
@@ -72,17 +80,19 @@ class OverviewFlowPreviewProvider : PreviewParameterProvider<PanelOverview> {
 @Preview
 @Composable
 private fun OverviewFlow(@PreviewParameter(OverviewFlowPreviewProvider::class) panelOverview: PanelOverview) {
-    FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        UserCountOverviewCell(panelOverview)
-        CommunityCountOverviewCell(panelOverview)
-        TopicCountOverviewCell(panelOverview)
-        TitleCountOverviewCell(panelOverview)
-        PrivateRoomCountOverviewCell(panelOverview)
-        CommunityRoomCountOverviewCell(panelOverview)
-        FileCountOverviewCell(panelOverview)
+    Column(modifier = Modifier.fillMaxSize()) {
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            UserCountOverviewCell(panelOverview)
+            CommunityCountOverviewCell(panelOverview)
+            TopicCountOverviewCell(panelOverview)
+            TitleCountOverviewCell(panelOverview)
+            PrivateRoomCountOverviewCell(panelOverview)
+            CommunityRoomCountOverviewCell(panelOverview)
+            FileCountOverviewCell(panelOverview)
+        }
     }
 }
 
