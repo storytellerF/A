@@ -112,6 +112,7 @@ interface CombinedDatabase {
     val container: ContainerDatabase
     val admin: AdminDatabase
     val panelAccount: PanelAccountDatabase
+    val reaction: ReactionDatabase
 
     suspend fun init()
     suspend fun clean()
@@ -223,6 +224,13 @@ interface TopicDatabase {
         uid: PrimaryKey?,
     ): Result<Map<PrimaryKey, TopicContent>>
 
+    suspend fun createTitle(title: Title, topic: Topic): Result<Unit>
+    suspend fun getTopicCount(): Result<Long>
+    suspend fun getAllTopics(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<Topic>>
+    suspend fun getAllRawTopics(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<RawTopic>>
+}
+
+interface ReactionDatabase {
     suspend fun statsReactionRecord(
         objectId: PrimaryKey,
         emoji: String,
@@ -271,11 +279,6 @@ interface TopicDatabase {
         objectId: List<PrimaryKey>,
         emoji: String
     ): Result<List<Triple<Long, Long, PrimaryKey?>>>
-
-    suspend fun createTitle(title: Title, topic: Topic): Result<Unit>
-    suspend fun getTopicCount(): Result<Long>
-    suspend fun getAllTopics(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<Topic>>
-    suspend fun getAllRawTopics(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<RawTopic>>
 }
 
 interface TitleDatabase {
