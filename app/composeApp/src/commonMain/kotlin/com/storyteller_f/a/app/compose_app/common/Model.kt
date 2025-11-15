@@ -77,18 +77,21 @@ import com.storyteller_f.shared.model.UserOverview
 import com.storyteller_f.shared.model.UserPubKeyInfo
 import com.storyteller_f.shared.model.UserSubscriptionInfo
 import com.storyteller_f.shared.obj.ObjectTuple
+import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.extractMarkdownHeadline
 import com.storyteller_f.shared.utils.extractMarkdownMediaLink
 import com.storyteller_f.storage.ChildAccountStorage
+import com.storyteller_f.storage.CollectionListStorage
 import com.storyteller_f.storage.CommunityCollection
 import com.storyteller_f.storage.DownloadInfo
 import com.storyteller_f.storage.DownloadStatus
 import com.storyteller_f.storage.MediasCollection
 import com.storyteller_f.storage.ModelStorage
 import com.storyteller_f.storage.ReactionCollection
+import com.storyteller_f.storage.RemoteKeyStorage
 import com.storyteller_f.storage.RoomCollection
 import com.storyteller_f.storage.TitleCollection
 import com.storyteller_f.storage.TopicCollection
@@ -163,35 +166,9 @@ class CommunitiesViewModel(
     override val flow = Pager(
         PagingConfig(pageSize = 20),
         remoteMediator = CustomRemoteMediator(
-            modelStorage,
             modelCollection.getName(),
-            IntermediatePagingSource(
-                SectionPagingSource(
-                    listOf(
-                        RegularPagingSource { key, size ->
-                            sessionManager.searchCommunity(
-                                size,
-                                joinStatusSearch,
-                                word,
-                                target,
-                                key,
-                                PosterSearch.HAS_POSTER
-                            )
-                        },
-                        RegularPagingSource { key, size ->
-                            sessionManager.searchCommunity(
-                                size,
-                                joinStatusSearch,
-                                word,
-                                target,
-                                key,
-                                PosterSearch.NO_POSTER
-                            )
-                        }
-                    )
-                ),
-                SectionLoadParams::class
-            ),
+            modelStorage.remoteKey,
+            buildCommunityNetworkService(sessionManager, joinStatusSearch, word, target),
         ) { data, clean ->
             if (clean) {
                 modelStorage.community.clean(modelCollection)
@@ -206,6 +183,53 @@ class CommunitiesViewModel(
             IntKeyConverter
         )
     }.flow.cachedIn(viewModelScope)
+
+    private fun buildCommunityNetworkService(
+        sessionManager: UserSessionManager,
+        joinStatusSearch: JoinStatusSearch,
+        word: String,
+        target: PrimaryKey?
+    ) = IntermediatePagingSource(
+        SectionLoadParams::class,
+        SectionPagingSource(
+            listOf(
+                hasPosterCommunitySource(sessionManager, joinStatusSearch, word, target),
+                notHasPosterCommunitySource(sessionManager, joinStatusSearch, word, target)
+            )
+        )
+    )
+
+    private fun notHasPosterCommunitySource(
+        sessionManager: UserSessionManager,
+        joinStatusSearch: JoinStatusSearch,
+        word: String,
+        target: PrimaryKey?
+    ): RegularPagingSource<CommunityInfo> = RegularPagingSource { key, size ->
+        sessionManager.searchCommunity(
+            size,
+            joinStatusSearch,
+            word,
+            target,
+            key,
+            PosterSearch.NO_POSTER
+        )
+    }
+
+    private fun hasPosterCommunitySource(
+        sessionManager: UserSessionManager,
+        joinStatusSearch: JoinStatusSearch,
+        word: String,
+        target: PrimaryKey?
+    ) = RegularPagingSource { key, size ->
+        sessionManager.searchCommunity(
+            size,
+            joinStatusSearch,
+            word,
+            target,
+            key,
+            PosterSearch.HAS_POSTER
+        )
+    }
 }
 
 @OptIn(ExperimentalPagingApi::class)
@@ -218,28 +242,43 @@ class RoomsViewModel(
 ) : PagingViewModel<RoomInfo>() {
     private val modelCollection = RoomCollection.SearchRoom(word, communityId, joinStatusSearch)
 
-    override val flow: Flow<PagingData<RoomInfo>> = Pager(
-        PagingConfig(pageSize = 20),
-        remoteMediator = CustomRemoteMediator(
-            modelStorage,
-            modelCollection.getName(),
-            RegularPagingSource { key, size ->
-                sessionManager.searchRooms(joinStatusSearch, size, key, word, communityId)
-            },
-        ) { data, clean ->
-            if (clean) {
-                modelStorage.room.clean(modelCollection)
-            }
-            data.forEach {
-                modelStorage.room.save(modelCollection, it)
-            }
-        },
-    ) {
-        CompatPagingSource(
-            modelStorage.room.observeData(modelCollection),
-            IntKeyConverter
-        )
+    override val flow: Flow<PagingData<RoomInfo>> = buildPager(
+        modelCollection,
+        modelCollection.getName(),
+        modelStorage.remoteKey,
+        modelStorage.room
+    ) { key, size ->
+        sessionManager.searchRooms(joinStatusSearch, size, key, word, communityId)
     }.flow.cachedIn(viewModelScope)
+
+
+}
+
+@OptIn(ExperimentalPagingApi::class)
+private fun <C : Any, T : Any> buildPager(
+    collection: C,
+    collectionName: String,
+    remoteKeyStorage: RemoteKeyStorage,
+    storage: CollectionListStorage<C, T>,
+    service: suspend (String?, Int) -> Result<ServerResponse<T>>
+): Pager<String, T> = Pager(
+    PagingConfig(pageSize = 20),
+    remoteMediator = CustomRemoteMediator(
+        collectionName,
+        remoteKeyStorage,
+        RegularPagingSource { key, size ->
+            service(key, size)
+        },
+    ) { data, clean ->
+        if (clean) {
+            storage.clean(collection)
+        }
+        data.forEach {
+            storage.save(collection, it)
+        }
+    },
+) {
+    CompatPagingSource(storage.observeData(collection), IntKeyConverter)
 }
 
 @OptIn(ExperimentalPagingApi::class)
@@ -254,17 +293,17 @@ class WorldViewModel(
     override val flow: Flow<PagingData<TopicInfo>> = Pager(
         PagingConfig(pageSize = 20),
         remoteMediator = CustomRemoteMediator(
-            modelStorage,
             modelCollection.getName(),
+            modelStorage.remoteKey,
             IntermediatePagingSource(
+                SectionLoadParams::class,
                 SectionPagingSource(
                     listOf(
                         RegularPagingSource { loadKey, size ->
                             sessionManager.getRecommendTopics(PaginationQuery(loadKey, size = size))
                         }
                     )
-                ),
-                SectionLoadParams::class
+                )
             ),
         ) { data, clean ->
             if (clean) {
@@ -299,9 +338,10 @@ class TopicsViewModel(
     override val flow: Flow<PagingData<TopicInfo>> = Pager(
         PagingConfig(pageSize = 20),
         remoteMediator = CustomRemoteMediator(
-            modelStorage,
             modelCollection.getName(),
+            modelStorage.remoteKey,
             IntermediatePagingSource(
+                SectionLoadParams::class,
                 SectionPagingSource(
                     listOf(
                         RegularPagingSource { loadKey, size ->
@@ -321,8 +361,7 @@ class TopicsViewModel(
                             )
                         }
                     )
-                ),
-                SectionLoadParams::class
+                )
             ),
         ) { data, refresh ->
             if (refresh) {
@@ -419,27 +458,13 @@ class TopicSearchViewModel(
     PagingViewModel<TopicInfo>() {
     private val modelCollection = TopicCollection.SearchTopic(word, parentId)
 
-    override val flow: Flow<PagingData<TopicInfo>> = Pager(
-        PagingConfig(pageSize = 20),
-        remoteMediator = CustomRemoteMediator(
-            modelStorage,
-            modelCollection.getName(),
-            RegularPagingSource { key, size ->
-                sessionManager.searchTopics(size, word, parentId, parentType, key)
-            },
-        ) { data, clean ->
-            if (clean) {
-                modelStorage.topic.clean(modelCollection)
-            }
-            data.forEach {
-                modelStorage.topic.save(modelCollection, it)
-            }
-        },
-    ) {
-        CompatPagingSource(
-            modelStorage.topic.observeData(modelCollection),
-            IntKeyConverter
-        )
+    override val flow: Flow<PagingData<TopicInfo>> = buildPager(
+        modelCollection,
+        modelCollection.getName(),
+        modelStorage.remoteKey,
+        modelStorage.topic
+    ) { key, size ->
+        sessionManager.searchTopics(size, word, parentId, parentType, key)
     }.flow.cachedIn(viewModelScope)
 }
 
@@ -453,27 +478,13 @@ class MediaListViewModel(
     private val modelCollection = MediasCollection(objectId)
 
     @OptIn(ExperimentalPagingApi::class)
-    override val flow: Flow<PagingData<FileInfo>> = Pager(
-        PagingConfig(pageSize = 20),
-        remoteMediator = CustomRemoteMediator(
-            modelStorage,
-            modelCollection.getName(),
-            RegularPagingSource { key, size ->
-                sessionManager.getMediaList(objectId, objectType, key, size)
-            },
-        ) { data, clean ->
-            if (clean) {
-                modelStorage.fileInfo.clean(modelCollection)
-            }
-            data.forEach {
-                modelStorage.fileInfo.save(modelCollection, it)
-            }
-        },
-    ) {
-        CompatPagingSource(
-            modelStorage.fileInfo.observeData(modelCollection),
-            IntKeyConverter
-        )
+    override val flow: Flow<PagingData<FileInfo>> = buildPager(
+        modelCollection,
+        modelCollection.getName(),
+        modelStorage.remoteKey,
+        modelStorage.fileInfo
+    ) { key, size ->
+        sessionManager.getMediaList(objectId, objectType, key, size)
     }.flow.cachedIn(viewModelScope)
 }
 
@@ -527,33 +538,19 @@ class MemberViewModel(
 ) : PagingViewModel<UserInfo>() {
     private val modelCollection = UserCollection.Members(word, objectId)
 
-    override val flow: Flow<PagingData<UserInfo>> = Pager(
-        PagingConfig(pageSize = 20),
-        remoteMediator = CustomRemoteMediator(
-            modelStorage,
-            modelCollection.getName(),
-            RegularPagingSource { key, size ->
-                sessionManager.run {
-                    when (objectType) {
-                        ObjectType.COMMUNITY -> searchCommunityMembers(objectId, key, size, word)
-                        ObjectType.ROOM -> searchRoomMembers(objectId, key, size, word)
-                        else -> searchAllMembers(key, size, word)
-                    }
-                }
-            },
-        ) { data, clean ->
-            if (clean) {
-                modelStorage.user.clean(modelCollection)
+    override val flow: Flow<PagingData<UserInfo>> = buildPager(
+        modelCollection,
+        modelCollection.getName(),
+        modelStorage.remoteKey,
+        modelStorage.user
+    ) { key, size ->
+        sessionManager.run {
+            when (objectType) {
+                ObjectType.COMMUNITY -> searchCommunityMembers(objectId, key, size, word)
+                ObjectType.ROOM -> searchRoomMembers(objectId, key, size, word)
+                else -> searchAllMembers(key, size, word)
             }
-            data.forEach {
-                modelStorage.user.save(modelCollection, it)
-            }
-        },
-    ) {
-        CompatPagingSource(
-            modelStorage.user.observeData(modelCollection),
-            IntKeyConverter
-        )
+        }
     }.flow.cachedIn(viewModelScope)
 }
 
@@ -565,27 +562,13 @@ class ReactionsViewModel(
     val modelCollection = ReactionCollection.ReactionList(objectId)
 
     @OptIn(ExperimentalPagingApi::class)
-    override val flow = Pager(
-        PagingConfig(pageSize = 20),
-        remoteMediator = CustomRemoteMediator(
-            modelStorage,
-            modelCollection.getName(),
-            RegularPagingSource { key, size ->
-                sessionManager.getReactions(objectId, size, key)
-            },
-        ) { data, clean ->
-            if (clean) {
-                modelStorage.reaction.clean(modelCollection)
-            }
-            data.forEach {
-                modelStorage.reaction.save(modelCollection, it)
-            }
-        }
-    ) {
-        CompatPagingSource(
-            modelStorage.reaction.observeData(modelCollection),
-            IntKeyConverter
-        )
+    override val flow = buildPager(
+        modelCollection,
+        modelCollection.getName(),
+        modelStorage.remoteKey,
+        modelStorage.reaction
+    ) { key, size ->
+        sessionManager.getReactions(objectId, size, key)
     }.flow.cachedIn(viewModelScope)
 }
 
@@ -673,27 +656,13 @@ class TitlesViewModel(
     private val modelCollection =
         TitleCollection.SearchTitle(uid, searchType, status, type, scopeId)
 
-    override val flow: Flow<PagingData<TitleInfo>> = Pager(
-        PagingConfig(pageSize = 20),
-        remoteMediator = CustomRemoteMediator(
-            modelStorage,
-            modelCollection.getName(),
-            RegularPagingSource { key, size ->
-                sessionManager.userTitles(uid, size, searchType, key, status, type, scopeId)
-            },
-        ) { data, clean ->
-            if (clean) {
-                modelStorage.title.clean(modelCollection)
-            }
-            data.forEach {
-                modelStorage.title.save(modelCollection, it)
-            }
-        },
-    ) {
-        CompatPagingSource(
-            modelStorage.title.observeData(modelCollection),
-            IntKeyConverter
-        )
+    override val flow: Flow<PagingData<TitleInfo>> = buildPager(
+        modelCollection,
+        modelCollection.getName(),
+        modelStorage.remoteKey,
+        modelStorage.title
+    ) { key, size ->
+        sessionManager.userTitles(uid, size, searchType, key, status, type, scopeId)
     }.flow.cachedIn(viewModelScope)
 }
 
@@ -815,8 +784,8 @@ class ChildAccountsViewModel(
     override val flow: Flow<PagingData<ChildAccountInfo>> = Pager(
         PagingConfig(pageSize = 20),
         remoteMediator = CustomRemoteMediator(
-            modelStorage,
             ChildAccountStorage.COLLECTION_NAME,
+            modelStorage.remoteKey,
             RegularPagingSource { key, size ->
                 sessionManager.getChildAccounts(key, size)
             },
@@ -867,8 +836,8 @@ class FavoritesViewModel(sessionManager: UserSessionManager, modelStorage: Model
     override val flow: Flow<PagingData<UserFavoriteInfo>> = Pager(
         PagingConfig(pageSize = 20),
         remoteMediator = CustomRemoteMediator(
-            modelStorage,
             UserFavoriteStorage.COLLECTION_NAME,
+            modelStorage.remoteKey,
             RegularPagingSource { key, size ->
                 sessionManager.getFavorites(PaginationQuery(key, size = size))
             },
@@ -895,8 +864,8 @@ class SubscriptionsViewModel(sessionManager: UserSessionManager, modelStorage: M
     override val flow: Flow<PagingData<UserSubscriptionInfo>> = Pager(
         PagingConfig(pageSize = 20),
         remoteMediator = CustomRemoteMediator(
-            modelStorage,
             UserSubscriptionStorage.COLLECTION_NAME,
+            modelStorage.remoteKey,
             RegularPagingSource { key, size ->
                 sessionManager.getSubscriptions(PaginationQuery(key, size = size))
             },

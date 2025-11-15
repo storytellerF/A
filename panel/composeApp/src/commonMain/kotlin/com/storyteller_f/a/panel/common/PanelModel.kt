@@ -53,8 +53,8 @@ class AllUsersViewModel(
     override val flow: Flow<PagingData<UserInfo>> = Pager(
         PagingConfig(pageSize = 20),
         remoteMediator = CustomRemoteMediator(
-            modelStorage,
             modelCollection.getName(),
+            modelStorage.remoteKey,
             RegularPagingSource { key, size ->
                 sessionManager.getAllUsers(PaginationQuery(key, size = size))
             },
@@ -84,8 +84,8 @@ class AllCommunitiesViewModel(
     override val flow: Flow<PagingData<CommunityInfo>> = Pager(
         PagingConfig(pageSize = 20),
         remoteMediator = CustomRemoteMediator(
-            modelStorage,
             modelCollection.getName(),
+            modelStorage.remoteKey,
             RegularPagingSource { key, size ->
                 sessionManager.getAllCommunities(PaginationQuery(key, size = size))
             },
@@ -113,8 +113,8 @@ class AllPublicRoomsViewModel(
     override val flow: Flow<PagingData<RoomInfo>> = Pager(
         PagingConfig(pageSize = 20),
         remoteMediator = CustomRemoteMediator(
-            modelStorage,
             modelCollection.getName(),
+            modelStorage.remoteKey,
             RegularPagingSource { key, size ->
                 sessionManager.getAllPublicRooms(PaginationQuery(key, size = size))
             },
@@ -142,8 +142,8 @@ class AllPrivateRoomsViewModel(
     override val flow: Flow<PagingData<RoomInfo>> = Pager(
         PagingConfig(pageSize = 20),
         remoteMediator = CustomRemoteMediator(
-            modelStorage,
             modelCollection.getName(),
+            modelStorage.remoteKey,
             RegularPagingSource { key, size ->
                 sessionManager.getAllPrivateRooms(PaginationQuery(key, size = size))
             },
@@ -171,8 +171,8 @@ class AllTopicsViewModel(
     override val flow: Flow<PagingData<TopicInfo>> = Pager(
         PagingConfig(pageSize = 20),
         remoteMediator = CustomRemoteMediator(
-            modelStorage,
             modelCollection.getName(),
+            modelStorage.remoteKey,
             RegularPagingSource { key, size ->
                 sessionManager.getAllTopics(PaginationQuery(key, size = size))
             },
@@ -200,8 +200,8 @@ class AllTitlesViewModel(
     override val flow: Flow<PagingData<TitleInfo>> = Pager(
         PagingConfig(pageSize = 20),
         remoteMediator = CustomRemoteMediator(
-            modelStorage,
             modelCollection.getName(),
+            modelStorage.remoteKey,
             RegularPagingSource { key, size ->
                 sessionManager.getAllTitles(PaginationQuery(key, size = size))
             },
@@ -229,8 +229,8 @@ class AllFilesViewModel(
     override val flow: Flow<PagingData<FileInfo>> = Pager(
         PagingConfig(pageSize = 20),
         remoteMediator = CustomRemoteMediator(
-            modelStorage,
             modelCollection.getName(),
+            modelStorage.remoteKey,
             RegularPagingSource { key, size ->
                 sessionManager.getAllFiles(PaginationQuery(key, size = size))
             },
