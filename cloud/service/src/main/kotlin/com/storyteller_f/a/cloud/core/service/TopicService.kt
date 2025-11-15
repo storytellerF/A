@@ -98,7 +98,7 @@ private suspend fun Backend.addSubscription(
     uid: PrimaryKey,
     objectTuple: ObjectTuple,
 ) {
-    database.user.addSubscription(
+    database.subscription.addSubscription(
         UserSubscription(
             SnowflakeFactory.nextId(),
             uid,

@@ -22,7 +22,7 @@ suspend fun Backend.addFavorite(
     uid: PrimaryKey,
     newFavorite: NewFavorite
 ) = addIfNotExists({
-    database.user.getFavorite(uid, newFavorite.objectId)
+    database.favorite.getFavorite(uid, newFavorite.objectId)
 }) {
     val id = SnowflakeFactory.nextId()
     val userFavorite = UserFavorite(
@@ -32,7 +32,7 @@ suspend fun Backend.addFavorite(
         newFavorite.objectType,
         now()
     )
-    database.user.addFavorite(userFavorite).onSuccess<UserFavorite> {
+    database.favorite.addFavorite(userFavorite).onSuccess<UserFavorite> {
         addUserLog(uid, UserLogType.ADD_FAVORITE, newFavorite.tuple())
     }
 }.mapResultIfNotNull {
@@ -40,9 +40,9 @@ suspend fun Backend.addFavorite(
 }.firstOrNull()
 
 suspend fun Backend.deleteFavorite(uid: PrimaryKey, id: PrimaryKey) =
-    database.user.getFavorite(id).mapResultIfNotNull { userFavorite ->
+    database.favorite.getFavorite(id).mapResultIfNotNull { userFavorite ->
         if (userFavorite.uid == uid) {
-            database.user.removeFavorite(id).onSuccess {
+            database.favorite.removeFavorite(id).onSuccess {
                 addUserLog(uid, UserLogType.REMOVE_FAVORITE, userFavorite.objectTuple())
             }
         } else {
@@ -51,7 +51,7 @@ suspend fun Backend.deleteFavorite(uid: PrimaryKey, id: PrimaryKey) =
     }
 
 suspend fun Backend.getFavorites(uid: PrimaryKey, fetch: PrimaryKeyFetch) =
-    database.user.getUserFavorites(uid, fetch).mapResult {
+    database.favorite.getUserFavorites(uid, fetch).mapResult {
         processUserFavoriteToUserFavoriteInfo(uid, it.list).map { list ->
             PaginationResult(list, it.total)
         }

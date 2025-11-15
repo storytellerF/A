@@ -1,21 +1,20 @@
 package com.storyteller_f.a.backend.exposed.database
 
+import com.storyteller_f.a.backend.core.FavoriteDatabase
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
+import com.storyteller_f.a.backend.core.SubscriptionDatabase
 import com.storyteller_f.a.backend.core.UserDatabase
 import com.storyteller_f.a.backend.core.types.AssetTransaction
 import com.storyteller_f.a.backend.core.types.ChildAccount
 import com.storyteller_f.a.backend.core.types.RawChildAccount
 import com.storyteller_f.a.backend.core.types.RawUser
-import com.storyteller_f.a.backend.core.types.SubscriptionSentLog
 import com.storyteller_f.a.backend.core.types.TaskRecord
 import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.a.backend.core.types.UserDevice
-import com.storyteller_f.a.backend.core.types.UserFavorite
 import com.storyteller_f.a.backend.core.types.UserLog
-import com.storyteller_f.a.backend.core.types.UserSubscription
 import com.storyteller_f.a.backend.core.types.UserTopicRead
 import com.storyteller_f.a.backend.exposed.ExposedDatabaseSession
 import com.storyteller_f.a.backend.exposed.count
@@ -26,12 +25,9 @@ import com.storyteller_f.a.backend.exposed.query.bindPaginationQuery
 import com.storyteller_f.a.backend.exposed.tables.Aids
 import com.storyteller_f.a.backend.exposed.tables.AssetTransactions
 import com.storyteller_f.a.backend.exposed.tables.ChildAccounts
-import com.storyteller_f.a.backend.exposed.tables.SubscriptionSentLogs
 import com.storyteller_f.a.backend.exposed.tables.TaskRecords
 import com.storyteller_f.a.backend.exposed.tables.UserDevices
-import com.storyteller_f.a.backend.exposed.tables.UserFavorites
 import com.storyteller_f.a.backend.exposed.tables.UserLogs
-import com.storyteller_f.a.backend.exposed.tables.UserSubscriptions
 import com.storyteller_f.a.backend.exposed.tables.UserTopicReads
 import com.storyteller_f.a.backend.exposed.tables.Users
 import com.storyteller_f.a.backend.exposed.tables.addTaskRecord
@@ -56,8 +52,11 @@ import org.jetbrains.exposed.v1.r2dbc.selectAll
 import org.jetbrains.exposed.v1.r2dbc.update
 import org.jetbrains.exposed.v1.r2dbc.upsert
 
-class ExposedUserDatabase(private val databaseSession: ExposedDatabaseSession) :
-    UserDatabase {
+class ExposedUserDatabase(
+    private val databaseSession: ExposedDatabaseSession,
+    private val favoriteDatabase: FavoriteDatabase,
+    private val subscriptionDatabase: SubscriptionDatabase,
+) : UserDatabase {
     override suspend fun getUserAid(id: PrimaryKey) = databaseSession.dbSearch {
         search {
             Aids.selectAll().where {
@@ -420,203 +419,10 @@ class ExposedUserDatabase(private val databaseSession: ExposedDatabaseSession) :
         count()
     }
 
-    override suspend fun getUserFavorites(uid: PrimaryKey, fetch: PrimaryKeyFetch) = runCatching {
-        val userFavorites = databaseSession.dbSearch {
-            search {
-                UserFavorites.selectAll().where {
-                    UserFavorites.uid eq uid
-                }.bindPaginationQuery(UserFavorites, fetch)
-            }
-            map {
-                UserFavorite.wrapRow(it)
-            }
-        }.getOrThrow()
-        val total = getUserFavoriteCount()
-        PaginationResult(userFavorites, total)
-    }
-
-    private suspend fun getUserFavoriteCount() = databaseSession.dbSearch {
-        search {
-            UserFavorites.selectAll()
-        }
-        count()
-    }.getOrThrow()
-
-    override suspend fun addFavorite(userFavorite: UserFavorite) = databaseSession.dbQuery {
-        check(UserFavorites.insert {
-            it[id] = userFavorite.id
-            it[uid] = userFavorite.uid
-            it[objectId] = userFavorite.objectId
-            it[objectType] = userFavorite.objectType
-            it[createdTime] = userFavorite.createdTime
-        }.insertedCount > 0) {
-            "Insert favorite failed"
-        }
-        userFavorite
-    }
-
-    override suspend fun removeFavorite(id: PrimaryKey) = databaseSession.dbQuery {
-        check(UserFavorites.deleteWhere {
-            UserFavorites.id eq id
-        } > 0) {
-            "Remove favorite failed"
-        }
-    }
-
-    override suspend fun getFavorite(id: PrimaryKey) = databaseSession.dbSearch {
-        search {
-            UserFavorites.selectAll().where {
-                UserFavorites.id eq id
-            }
-        }
-        first {
-            UserFavorite.wrapRow(it)
-        }
-    }
-
-    override suspend fun getFavorite(
-        uid: PrimaryKey,
-        objectId: PrimaryKey
-    ): Result<UserFavorite?> {
-        return databaseSession.dbSearch {
-            search {
-                UserFavorites.selectAll().where {
-                    (UserFavorites.uid eq uid) and (UserFavorites.objectId eq objectId)
-                }
-            }
-            first {
-                UserFavorite.wrapRow(it)
-            }
-        }
-    }
-
-    override suspend fun getUserSubscriptions(
-        uid: PrimaryKey,
-        fetch: PrimaryKeyFetch
-    ) = runCatching {
-        val userSubscriptions = databaseSession.dbSearch {
-            search {
-                UserSubscriptions.selectAll().where {
-                    UserSubscriptions.uid eq uid
-                }.bindPaginationQuery(UserSubscriptions, fetch)
-            }
-            map {
-                UserSubscription.wrapRow(it)
-            }
-        }.getOrThrow()
-        val total = getUserSubscriptionCount(uid)
-        PaginationResult(userSubscriptions, total)
-    }
-
-    private suspend fun getUserSubscriptionCount(uid: PrimaryKey) = databaseSession.dbSearch {
-        search {
-            UserSubscriptions.selectAll().where {
-                UserSubscriptions.uid eq uid
-            }
-        }
-        count()
-    }.getOrThrow()
-
-    override suspend fun addSubscription(userSubscription: UserSubscription) =
-        databaseSession.dbQuery {
-            check(UserSubscriptions.insert {
-                it[id] = userSubscription.id
-                it[uid] = userSubscription.uid
-                it[objectId] = userSubscription.objectId
-                it[objectType] = userSubscription.objectType
-                it[createdTime] = userSubscription.createdTime
-            }.insertedCount > 0) {
-                "Insert subscription failed"
-            }
-            userSubscription
-        }
-
-    override suspend fun removeSubscription(id: PrimaryKey) = databaseSession.dbQuery {
-        check(UserSubscriptions.deleteWhere {
-            UserSubscriptions.id eq id
-        } > 0) {
-            "Remove subscription failed"
-        }
-    }
-
-    override suspend fun getSubscription(id: PrimaryKey) = databaseSession.dbSearch {
-        search {
-            UserSubscriptions.selectAll().where {
-                UserSubscriptions.id eq id
-            }
-        }
-        first {
-            UserSubscription.wrapRow(it)
-        }
-    }
-
-    override suspend fun getSubscription(
-        uid: PrimaryKey,
-        objectId: PrimaryKey
-    ): Result<UserSubscription?> {
-        return databaseSession.dbSearch {
-            search {
-                UserSubscriptions.selectAll().where {
-                    (UserSubscriptions.uid eq uid) and (UserSubscriptions.objectId eq objectId)
-                }
-            }
-            first {
-                UserSubscription.wrapRow(it)
-            }
-        }
-    }
-
-    override suspend fun getUserOverview(uid: PrimaryKey): Result<UserOverview> {
-        return runCatching {
-            val subscriptionCount = getUserSubscriptionCount(uid)
-            val favoriteCount = getUserFavoriteCount()
-            val childAccountCount = getChildAccountCount(uid)
-            UserOverview(subscriptionCount, favoriteCount, 0, childAccountCount)
-        }
-    }
-
-    override suspend fun getSubscriptionsByObjectId(
-        objectId: PrimaryKey,
-        primaryKeyFetch: PrimaryKeyFetch
-    ): Result<List<UserSubscription>> {
-        return databaseSession.dbSearch {
-            search {
-                UserSubscriptions.selectAll().where {
-                    UserSubscriptions.objectId eq objectId
-                }.bindPaginationQuery(UserSubscriptions, primaryKeyFetch)
-            }
-            map {
-                UserSubscription.wrapRow(it)
-            }
-        }
-    }
-
-    override suspend fun insertSubscriptionSentLog(log: SubscriptionSentLog): Result<SubscriptionSentLog> {
-        return databaseSession.dbQuery {
-            check(SubscriptionSentLogs.insert {
-                it[id] = log.id
-                it[uid] = log.uid
-                it[objectId] = log.objectId
-                it[objectType] = log.objectType
-                it[createdTime] = log.createdTime
-                it[subscriptionId] = log.subscriptionId
-            }.insertedCount > 0) {
-                "Insert subscription sent log failed"
-            }
-            log
-        }
-    }
-
-    override suspend fun getLatestSubscriptionSentLog(objectId: PrimaryKey): Result<SubscriptionSentLog?> {
-        return databaseSession.dbSearch {
-            search {
-                SubscriptionSentLogs.selectAll().where {
-                    SubscriptionSentLogs.objectId eq objectId
-                }.orderBy(SubscriptionSentLogs.subscriptionId to SortOrder.DESC)
-            }
-            first {
-                SubscriptionSentLog.wrapRow(it)
-            }
-        }
+    override suspend fun getUserOverview(uid: PrimaryKey): Result<UserOverview> = runCatching {
+        val subscriptionCount = subscriptionDatabase.getUserSubscriptionCount(uid).getOrThrow()
+        val favoriteCount = favoriteDatabase.getUserFavoriteCount().getOrThrow()
+        val childAccountCount = getChildAccountCount(uid)
+        UserOverview(subscriptionCount, favoriteCount, 0, childAccountCount)
     }
 }

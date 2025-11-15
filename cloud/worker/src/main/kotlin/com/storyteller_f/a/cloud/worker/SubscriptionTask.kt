@@ -57,17 +57,17 @@ private suspend fun Backend.processTopicSubscription(topic: Topic) {
     val topicParentId = topic.parentId
     val content = generateTopicSubscriptionContent(topic, topicParentId) ?: return
     val log =
-        database.user.getLatestSubscriptionSentLog(topicParentId)
+        database.subscription.getLatestSubscriptionSentLog(topicParentId)
             .getOrThrow()?.subscriptionId
     val cursor = Cursor.AscCursor(log ?: 0)
     val userSubscriptions =
-        database.user.getSubscriptionsByObjectId(topicParentId, PrimaryKeyFetch(cursor, 10))
+        database.subscription.getSubscriptionsByObjectId(topicParentId, PrimaryKeyFetch(cursor, 10))
             .getOrThrow()
     userSubscriptions.forEach { userSubscription ->
         val rawUser = database.user.getRawUser(ObjectFetch.IdFetch(userSubscription.uid))
             .getOrThrow() ?: throw Exception("user not found")
         sendTopicToNotificationRoom(1L, rawUser.user, content)
-        database.user.insertSubscriptionSentLog(
+        database.subscription.insertSubscriptionSentLog(
             SubscriptionSentLog(
                 SnowflakeFactory.nextId(),
                 userSubscription.uid,
