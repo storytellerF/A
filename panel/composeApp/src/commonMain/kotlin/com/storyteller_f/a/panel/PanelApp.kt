@@ -294,35 +294,43 @@ private fun PanelDrawer(
         DrawerNavItem(
             Icons.Default.Home,
             "概览",
-            onNavigate(scope, drawerState) { nav.gotoOverview() })
+            onNavigate(scope, drawerState) { nav.gotoOverview() }
+        )
         DrawerNavItem(
             Icons.Default.People,
             "所有用户",
-            onNavigate(scope, drawerState) { nav.gotoAllUsers() })
+            onNavigate(scope, drawerState) { nav.gotoAllUsers() }
+        )
         DrawerNavItem(
             Icons.Default.Group,
             "所有社区",
-            onNavigate(scope, drawerState) { nav.gotoAllCommunities() })
+            onNavigate(scope, drawerState) { nav.gotoAllCommunities() }
+        )
         DrawerNavItem(
             Icons.Default.Public,
             "所有公共房间",
-            onNavigate(scope, drawerState) { nav.gotoAllPublicRooms() })
+            onNavigate(scope, drawerState) { nav.gotoAllPublicRooms() }
+        )
         DrawerNavItem(
             Icons.Default.Lock,
             "所有私有房间",
-            onNavigate(scope, drawerState) { nav.gotoAllPrivateRooms() })
+            onNavigate(scope, drawerState) { nav.gotoAllPrivateRooms() }
+        )
         DrawerNavItem(
             Icons.Default.Topic,
             "所有主题",
-            onNavigate(scope, drawerState) { nav.gotoAllTopics() })
+            onNavigate(scope, drawerState) { nav.gotoAllTopics() }
+        )
         DrawerNavItem(
             Icons.Default.FilePresent,
             "所有文件",
-            onNavigate(scope, drawerState) { nav.gotoAllFiles() })
+            onNavigate(scope, drawerState) { nav.gotoAllFiles() }
+        )
         DrawerNavItem(
             Icons.Default.Title,
             "所有标题",
-            onNavigate(scope, drawerState) { nav.gotoAllTitles() })
+            onNavigate(scope, drawerState) { nav.gotoAllTitles() }
+        )
     }
 }
 
