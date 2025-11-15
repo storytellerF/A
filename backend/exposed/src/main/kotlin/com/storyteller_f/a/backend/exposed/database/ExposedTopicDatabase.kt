@@ -308,7 +308,7 @@ class ExposedTopicDatabase(
     override suspend fun getTopicCount() = getTopicCountByPredicate()
 
     override suspend fun getAllTopicPagination(primaryKeyFetch: PrimaryKeyFetch):
-            Result<PaginationResult<Topic>> = getTopicPaginationByPredicate(primaryKeyFetch)
+        Result<PaginationResult<Topic>> = getTopicPaginationByPredicate(primaryKeyFetch)
 }
 
 private suspend fun Topic.Companion.new(info: Topic) = check(Topics.insert {
