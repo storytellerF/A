@@ -16,6 +16,7 @@ import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
+import org.jetbrains.exposed.v1.r2dbc.Query
 import org.jetbrains.exposed.v1.r2dbc.selectAll
 
 class ExposedTitleDatabase(val exposedDatabaseSession: ExposedDatabaseSession) : TitleDatabase {
@@ -25,22 +26,12 @@ class ExposedTitleDatabase(val exposedDatabaseSession: ExposedDatabaseSession) :
         searchType: TitleSearchType,
         type: TitleType?,
         scopeId: PrimaryKey?
-    ) = exposedDatabaseSession.dbSearch {
-        search {
-            buildTitleSearchQuery(searchType, uid, type, scopeId).bindPaginationQuery(
-                Titles,
-                primaryKeyFetch
-            )
-        }
-        map {
-            RawTitle(Title.wrapRow(it))
-        }
+    ) = getTitleListByPredicate {
+        buildTitleSearchQuery(searchType, uid, type, scopeId)
+            .bindPaginationQuery(Titles, primaryKeyFetch)
     }.mapResult { list ->
-        exposedDatabaseSession.dbSearch {
-            search {
-                buildTitleSearchQuery(searchType, uid, type, scopeId)
-            }
-            count()
+        getTitleCountByPredicate {
+            buildTitleSearchQuery(searchType, uid, type, scopeId)
         }.map { count ->
             PaginationResult(list, count)
         }
@@ -54,13 +45,30 @@ class ExposedTitleDatabase(val exposedDatabaseSession: ExposedDatabaseSession) :
             RawTitle(Title.wrapRow(it))
         }
     }.mapResult { list ->
-        exposedDatabaseSession.dbSearch {
-            search {
-                Titles.selectAll()
-            }
-            count()
+        getTitleCountByPredicate {
+            Titles.selectAll()
         }.map { count ->
             PaginationResult(list, count)
         }
+    }
+
+    private suspend fun getTitleListByPredicate(
+        queryProvider: () -> Query
+    ) = exposedDatabaseSession.dbSearch {
+        search {
+            queryProvider()
+        }
+        map {
+            RawTitle(Title.wrapRow(it))
+        }
+    }
+
+    private suspend fun getTitleCountByPredicate(
+        queryProvider: () -> Query
+    ) = exposedDatabaseSession.dbSearch {
+        search {
+            queryProvider()
+        }
+        count()
     }
 }

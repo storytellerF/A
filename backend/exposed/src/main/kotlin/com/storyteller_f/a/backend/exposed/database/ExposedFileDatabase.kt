@@ -27,6 +27,7 @@ import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.sum
+import org.jetbrains.exposed.v1.r2dbc.Query
 import org.jetbrains.exposed.v1.r2dbc.batchInsert
 import org.jetbrains.exposed.v1.r2dbc.insert
 import org.jetbrains.exposed.v1.r2dbc.select
@@ -106,38 +107,16 @@ class ExposedFileDatabase(val databaseSession: ExposedDatabaseSession) : FileDat
         uid: PrimaryKey,
         primaryKeyFetch: PrimaryKeyFetch,
     ) = runCatching {
-        val r1 = databaseSession.dbSearch {
-            search {
-                FileRecords.selectAll().where {
-                    FileRecords.owner eq uid
-                }.bindPaginationQuery(FileRecords, primaryKeyFetch)
-            }
-            map(FileRecord::wrapRow)
+        val r1 = getFileRecordListByPredicate {
+            where { FileRecords.owner eq uid }.bindPaginationQuery(FileRecords, primaryKeyFetch)
         }.getOrThrow()
-        val r2 = databaseSession.dbSearch {
-            search {
-                FileRecords.selectAll().where {
-                    FileRecords.owner eq uid
-                }
-            }
-            count()
-        }.getOrThrow()
+        val r2 = getFileRecordCountByPredicate { where { FileRecords.owner eq uid } }.getOrThrow()
         PaginationResult(r1, r2)
     }
 
     override suspend fun getAllFileRecordPaginationList(primaryKeyFetch: PrimaryKeyFetch) = runCatching {
-        val r1 = databaseSession.dbSearch {
-            search {
-                FileRecords.selectAll().bindPaginationQuery(FileRecords, primaryKeyFetch)
-            }
-            map(FileRecord::wrapRow)
-        }.getOrThrow()
-        val r2 = databaseSession.dbSearch {
-            search {
-                FileRecords.selectAll()
-            }
-            count()
-        }.getOrThrow()
+        val r1 = getFileRecordListByPredicate { bindPaginationQuery(FileRecords, primaryKeyFetch) }.getOrThrow()
+        val r2 = getFileRecordCountByPredicate { this }.getOrThrow()
         PaginationResult(r1, r2)
     }
 
@@ -254,5 +233,23 @@ class ExposedFileDatabase(val databaseSession: ExposedDatabaseSession) : FileDat
         firstNotNull {
             it[sumColumn] ?: 0
         }
+    }
+
+    private suspend fun getFileRecordListByPredicate(
+        queryBuilder: Query.() -> Query = { this }
+    ) = databaseSession.dbSearch {
+        search {
+            FileRecords.selectAll().queryBuilder()
+        }
+        map(FileRecord::wrapRow)
+    }
+
+    private suspend fun getFileRecordCountByPredicate(
+        queryBuilder: Query.() -> Query = { this }
+    ) = databaseSession.dbSearch {
+        search {
+            FileRecords.selectAll().queryBuilder()
+        }
+        count()
     }
 }

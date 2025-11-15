@@ -19,6 +19,7 @@ import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.r2dbc.Query
 import org.jetbrains.exposed.v1.r2dbc.deleteWhere
 import org.jetbrains.exposed.v1.r2dbc.insert
 import org.jetbrains.exposed.v1.r2dbc.selectAll
@@ -29,17 +30,11 @@ class ExposedSubscriptionDatabase(private val databaseSession: ExposedDatabaseSe
         uid: PrimaryKey,
         fetch: PrimaryKeyFetch
     ) = runCatching {
-        val userSubscriptions = databaseSession.dbSearch {
-            search {
-                UserSubscriptions.selectAll().where {
-                    UserSubscriptions.uid eq uid
-                }.bindPaginationQuery(UserSubscriptions, fetch)
-            }
-            map {
-                UserSubscription.wrapRow(it)
-            }
+        val userSubscriptions = getSubscriptionListByPredicate {
+            where { UserSubscriptions.uid eq uid }
+                .bindPaginationQuery(UserSubscriptions, fetch)
         }.getOrThrow()
-        val total = getUserSubscriptionCount(uid).getOrThrow()
+        val total = getSubscriptionCountByPredicate { where { UserSubscriptions.uid eq uid } }.getOrThrow()
         PaginationResult(userSubscriptions, total)
     }
 
@@ -91,15 +86,9 @@ class ExposedSubscriptionDatabase(private val databaseSession: ExposedDatabaseSe
     override suspend fun getSubscriptionsByObjectId(
         objectId: PrimaryKey,
         primaryKeyFetch: PrimaryKeyFetch
-    ) = databaseSession.dbSearch {
-        search {
-            UserSubscriptions.selectAll().where {
-                UserSubscriptions.objectId eq objectId
-            }.bindPaginationQuery(UserSubscriptions, primaryKeyFetch)
-        }
-        map {
-            UserSubscription.wrapRow(it)
-        }
+    ) = getSubscriptionListByPredicate {
+        where { UserSubscriptions.objectId eq objectId }
+            .bindPaginationQuery(UserSubscriptions, primaryKeyFetch)
     }
 
     override suspend fun insertSubscriptionSentLog(log: SubscriptionSentLog) =
@@ -146,6 +135,24 @@ class ExposedSubscriptionDatabase(private val databaseSession: ExposedDatabaseSe
             UserSubscriptions.selectAll().where {
                 UserSubscriptions.uid eq uid
             }
+        }
+        count()
+    }
+
+    private suspend fun getSubscriptionListByPredicate(
+        queryBuilder: Query.() -> Query = { this }
+    ) = databaseSession.dbSearch {
+        search {
+            UserSubscriptions.selectAll().queryBuilder()
+        }
+        map(UserSubscription::wrapRow)
+    }
+
+    private suspend fun getSubscriptionCountByPredicate(
+        queryBuilder: Query.() -> Query = { this }
+    ) = databaseSession.dbSearch {
+        search {
+            UserSubscriptions.selectAll().queryBuilder()
         }
         count()
     }
