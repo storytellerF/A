@@ -9,7 +9,7 @@ import com.storyteller_f.a.client.core.LoadingHandler
 import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.a.client.core.request
 import com.storyteller_f.shared.commonJson
-import com.storyteller_f.storage.ModelStorage
+import com.storyteller_f.storage.RemoteKeyStorage
 import com.storyteller_f.storage.RemoteKeys
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
@@ -52,8 +52,8 @@ class CachedLoadingHandler<T : Any>(
 @Suppress("unused")
 @OptIn(ExperimentalPagingApi::class)
 class CustomRemoteMediator<Datum : Any>(
-    private val modelStorage: ModelStorage,
     private val collection: String,
+    private val remoteKeyStorage: RemoteKeyStorage,
     private val networkService: PagingSource<String, Datum>,
     private val update: suspend (List<Datum>, Boolean) -> Unit,
 ) :
@@ -75,7 +75,7 @@ class CustomRemoteMediator<Datum : Any>(
 
             LoadType.PREPEND -> {
                 val remoteKey =
-                    modelStorage.remoteKey.getPreRemoteKey(collection)?.key
+                    remoteKeyStorage.getPreRemoteKey(collection)?.key
                 PagingSource.LoadParams.Append(
                     remoteKey
                         ?: return MediatorResult.Success(endOfPaginationReached = true),
@@ -86,7 +86,7 @@ class CustomRemoteMediator<Datum : Any>(
 
             LoadType.APPEND -> {
                 val remoteKey =
-                    modelStorage.remoteKey.getNextRemoteKey(collection)?.key
+                    remoteKeyStorage.getNextRemoteKey(collection)?.key
                 PagingSource.LoadParams.Append(
                     remoteKey
                         ?: return MediatorResult.Success(endOfPaginationReached = true),
@@ -121,8 +121,8 @@ class CustomRemoteMediator<Datum : Any>(
             val data = loadResult.data
             val nextKey = loadResult.nextKey
             val preKey = loadResult.prevKey
-            modelStorage.remoteKey.savePreRemoteKey(RemoteKeys(collection, preKey))
-            modelStorage.remoteKey.saveNextRemoteKey(RemoteKeys(collection, nextKey))
+            remoteKeyStorage.savePreRemoteKey(RemoteKeys(collection, preKey))
+            remoteKeyStorage.saveNextRemoteKey(RemoteKeys(collection, nextKey))
             update(data, loadType == LoadType.REFRESH)
             Napier.v(tag = "pagination") {
                 "mediator success type: $loadType key: ${params.key}"
@@ -135,8 +135,8 @@ class CustomRemoteMediator<Datum : Any>(
 }
 
 class IntermediatePagingSource<Key : Any, T : Any>(
-    val pagingSource: PagingSource<Key, T>,
-    val clazz: KClass<Key>
+    val clazz: KClass<Key>,
+    val pagingSource: PagingSource<Key, T>
 ) : PagingSource<String, T>() {
 
     override fun getRefreshKey(state: PagingState<String, T>): String? {

@@ -29,6 +29,51 @@ sealed interface UserCollection {
     data object AllUsers : UserCollection
 }
 
+interface CollectionListStorage<C, I : Any> {
+    suspend fun save(collection: C, item: I)
+    fun observeData(collection: C): PagingSource<Int, I>
+    suspend fun clean(collection: C)
+}
+
+interface CollectionItemStorageByKey<C, I : Any> : CollectionListStorage<C, I> {
+    fun observeDatum(collection: C, key: String): Flow<I?>
+    suspend fun getDocument(collection: C, key: String): I?
+    suspend fun delete(collection: C, key: String)
+}
+
+interface CollectionItemStorageById<C, I : Any> : CollectionListStorage<C, I> {
+    fun observeDatum(id: PrimaryKey): Flow<I?>
+}
+
+interface CollectionItemStorageByIdAndKey<C, I : Any> : CollectionItemStorageById<C, I> {
+    fun observeDatum(key: String): Flow<I?>
+}
+
+interface CollectionItemStorageByIdAndKeyWithGet<C, I : Any> :
+    CollectionItemStorageByIdAndKey<C, I> {
+    suspend fun getDocument(collection: C, id: PrimaryKey): I?
+}
+
+interface GlobalListStorage<I : Any> {
+    suspend fun save(item: I)
+    fun observeData(): PagingSource<Int, I>
+    suspend fun clean()
+}
+
+interface GlobalItemStorageById<I : Any> : GlobalListStorage<I> {
+    fun observeDatum(id: PrimaryKey): Flow<I?>
+    suspend fun getDocument(id: PrimaryKey): I?
+}
+
+interface GlobalListStorageWithKey<I : Any, K> : GlobalListStorage<I> {
+    fun observeDatum(key: K): Flow<I?>
+}
+
+interface SingletonItemStorage<I : Any> {
+    suspend fun save(item: I)
+    fun observeDatum(): Flow<I?>
+}
+
 sealed interface TopicCollection {
     data object Topics : TopicCollection
     data class SearchTopic(
@@ -166,123 +211,54 @@ interface ModelStorage {
     val subscription: UserSubscriptionStorage
 }
 
-interface UserInfoStorage {
-    fun observeDatum(id: PrimaryKey): Flow<UserInfo?>
-    suspend fun save(collection: UserCollection, userInfo: UserInfo)
-    fun observeData(collection: UserCollection): PagingSource<Int, UserInfo>
-    fun observeDatum(key: String): Flow<UserInfo?>
-    suspend fun clean(collection: UserCollection)
-}
+interface UserInfoStorage : CollectionItemStorageByIdAndKey<UserCollection, UserInfo>
 
-interface CommunityInfoStorage {
-    fun observeDatum(id: PrimaryKey): Flow<CommunityInfo?>
-    fun observeDatum(key: String): Flow<CommunityInfo?>
-    suspend fun save(collection: CommunityCollection, communityInfo: CommunityInfo)
-    fun observeData(collection: CommunityCollection): PagingSource<Int, CommunityInfo>
-    suspend fun getDocument(collection: CommunityCollection, id: PrimaryKey): CommunityInfo?
-    suspend fun clean(collection: CommunityCollection)
-}
+interface CommunityInfoStorage :
+    CollectionItemStorageByIdAndKeyWithGet<CommunityCollection, CommunityInfo>
 
-interface TopicInfoStorage {
-    fun observeDatum(id: PrimaryKey): Flow<TopicInfo?>
-    suspend fun save(collection: TopicCollection, topicInfo: TopicInfo)
-    fun observeData(collection: TopicCollection): PagingSource<Int, TopicInfo>
-    fun observeDatum(key: String): Flow<TopicInfo?>
-    suspend fun getDocument(collection: TopicCollection, id: PrimaryKey): TopicInfo?
-    suspend fun clean(collection: TopicCollection)
-}
+interface TopicInfoStorage : CollectionItemStorageByIdAndKeyWithGet<TopicCollection, TopicInfo>
 
-interface TitleInfoStorage {
-    fun observeDatum(id: PrimaryKey): Flow<TitleInfo?>
-    suspend fun save(collection: TitleCollection, titleInfo: TitleInfo)
-    fun observeData(collection: TitleCollection): PagingSource<Int, TitleInfo>
-    suspend fun clean(collection: TitleCollection)
-}
+interface TitleInfoStorage : CollectionItemStorageById<TitleCollection, TitleInfo>
 
-interface RoomInfoStorage {
-    fun observeDatum(id: PrimaryKey): Flow<RoomInfo?>
-    suspend fun save(collection: RoomCollection, roomInfo: RoomInfo)
-    fun observeData(collection: RoomCollection): PagingSource<Int, RoomInfo>
-    fun observeDatum(key: String): Flow<RoomInfo?>
-    suspend fun clean(collection: RoomCollection)
-}
+interface RoomInfoStorage : CollectionItemStorageByIdAndKey<RoomCollection, RoomInfo>
 
-interface ReactionInfoStorage {
-    suspend fun save(collection: ReactionCollection, reactionInfo: ReactionInfo)
-    fun observeData(collection: ReactionCollection): PagingSource<Int, ReactionInfo>
-    suspend fun clean(collection: ReactionCollection)
-}
+interface ReactionInfoStorage : CollectionListStorage<ReactionCollection, ReactionInfo>
 
-interface ChildAccountStorage {
-    suspend fun save(childAccountInfo: ChildAccountInfo)
-    fun observeData(): PagingSource<Int, ChildAccountInfo>
-    suspend fun clean()
-
+interface ChildAccountStorage : GlobalListStorage<ChildAccountInfo> {
     companion object {
         const val COLLECTION_NAME = "child-account"
     }
 }
 
-interface FileInfoStorage {
-    suspend fun save(collection: MediasCollection, fileInfo: FileInfo)
-    fun observeData(collection: MediasCollection): PagingSource<Int, FileInfo>
-    suspend fun clean(collection: MediasCollection)
-}
+interface FileInfoStorage : CollectionListStorage<MediasCollection, FileInfo>
 
-interface DownloadInfoStorage {
-    suspend fun save(downloadInfo: DownloadInfo)
-    fun observeDatum(id: PrimaryKey): Flow<DownloadInfo?>
-    suspend fun getDocument(id: PrimaryKey): DownloadInfo?
-    fun observeData(): PagingSource<Int, DownloadInfo>
-
+interface DownloadInfoStorage : GlobalItemStorageById<DownloadInfo> {
     companion object {
         const val COLLECTION_NAME = "download"
     }
 }
 
-interface UploadInfoStorage {
-    suspend fun save(collection: UploadCollection, uploadInfo: UploadInfo)
-    fun observeDatum(collection: UploadCollection, pathHash: String): Flow<UploadInfo?>
-    suspend fun getDocument(collection: UploadCollection, pathHash: String): UploadInfo?
-    fun observeData(collection: UploadCollection): PagingSource<Int, UploadInfo>
-    suspend fun delete(collection: UploadCollection, pathHash: String)
-}
+interface UploadInfoStorage : CollectionItemStorageByKey<UploadCollection, UploadInfo>
 
-interface OverviewStorage {
-    suspend fun save(overviewInfo: PanelOverview)
-    fun observeDatum(): Flow<PanelOverview?>
-
+interface OverviewStorage : SingletonItemStorage<PanelOverview> {
     companion object {
         const val COLLECTION_NAME = "panel-overview"
     }
 }
 
-interface UserOverviewStorage {
-    suspend fun save(overviewInfo: UserOverview)
-    fun observeDatum(): Flow<UserOverview?>
-
+interface UserOverviewStorage : SingletonItemStorage<UserOverview> {
     companion object {
         const val COLLECTION_NAME = "user-overview"
     }
 }
 
-interface UserFavoriteStorage {
-    suspend fun save(favoriteInfo: UserFavoriteInfo)
-    fun observeData(): PagingSource<Int, UserFavoriteInfo>
-    fun observeDatum(id: String): Flow<UserFavoriteInfo?>
-    suspend fun clean()
-
+interface UserFavoriteStorage : GlobalListStorageWithKey<UserFavoriteInfo, String> {
     companion object {
         const val COLLECTION_NAME = "user-favorite"
     }
 }
 
-interface UserSubscriptionStorage {
-    suspend fun save(subscriptionInfo: UserSubscriptionInfo)
-    fun observeData(): PagingSource<Int, UserSubscriptionInfo>
-    fun observeDatum(id: String): Flow<UserSubscriptionInfo?>
-    suspend fun clean()
-
+interface UserSubscriptionStorage : GlobalListStorageWithKey<UserSubscriptionInfo, String> {
     companion object {
         const val COLLECTION_NAME = "user-subscription"
     }
@@ -329,8 +305,7 @@ class WrappedPagingSource<K : Any, T : Any, M : Any>(
     }
 
     override suspend fun load(params: LoadParams<K>): LoadResult<K, M> {
-        val result = rawSource.load(params)
-        return when (result) {
+        return when (val result = rawSource.load(params)) {
             is LoadResult.Page<K, T> -> LoadResult.Page(
                 process(result.data),
                 result.prevKey,
