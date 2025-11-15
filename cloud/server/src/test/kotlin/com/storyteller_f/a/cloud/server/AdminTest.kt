@@ -2,12 +2,20 @@ package com.storyteller_f.a.cloud.server
 
 import com.storyteller_f.a.api.NewCommunity
 import com.storyteller_f.a.api.NewRoom
+import com.storyteller_f.a.api.NewTitle
 import com.storyteller_f.a.api.NewUser
 import com.storyteller_f.a.api.PaginationQuery
 import com.storyteller_f.a.client.core.addUser
 import com.storyteller_f.a.client.core.createCommunity
 import com.storyteller_f.a.client.core.createRoom
+import com.storyteller_f.a.client.core.createTitle
 import com.storyteller_f.a.client.core.createTopic
+import com.storyteller_f.a.client.core.getAllCommunities
+import com.storyteller_f.a.client.core.getAllFiles
+import com.storyteller_f.a.client.core.getAllPrivateRooms
+import com.storyteller_f.a.client.core.getAllPublicRooms
+import com.storyteller_f.a.client.core.getAllTitles
+import com.storyteller_f.a.client.core.getAllTopics
 import com.storyteller_f.a.client.core.getAllUsers
 import com.storyteller_f.a.client.core.getUserInfo
 import com.storyteller_f.a.client.core.overview
@@ -129,6 +137,86 @@ class AdminTest {
         }) {
             val info = getUserInfo(it.uid).getOrThrow()
             assertEquals(info.id, userInfo.id)
+        }
+    }
+
+    @Test
+    fun `admin list communities`() = test {
+        val outer = attachPanelSession {
+            assertListSize(0, getAllCommunities(PaginationQuery()))
+        }
+        attachSession {
+            createCommunity(NewCommunity("c1", "c1")).getOrThrow()
+        }
+        loginPanelSession(outer) {
+            assertListSize(1, getAllCommunities(PaginationQuery()))
+        }
+    }
+
+    @Test
+    fun `admin list public rooms`() = test {
+        val outer = attachPanelSession {
+            assertListSize(0, getAllPublicRooms(PaginationQuery()))
+        }
+        attachSession {
+            val c = createCommunity(NewCommunity("c1", "c1")).getOrThrow()
+            createRoom(NewRoom("r1", "desc", communityId = c.id)).getOrThrow()
+        }
+        loginPanelSession(outer) {
+            assertListSize(1, getAllPublicRooms(PaginationQuery()))
+        }
+    }
+
+    @Test
+    fun `admin list private rooms`() = test {
+        val outer = attachPanelSession {
+            assertListSize(0, getAllPrivateRooms(PaginationQuery()))
+        }
+        attachSession {
+            createRoom(NewRoom("r1", "desc")).getOrThrow()
+        }
+        loginPanelSession(outer) {
+            assertListSize(1, getAllPrivateRooms(PaginationQuery()))
+        }
+    }
+
+    @Test
+    fun `admin list topics`() = test {
+        val outer = attachPanelSession {
+            assertListSize(0, getAllTopics(PaginationQuery()))
+        }
+        attachSession {
+            createTopic(ObjectType.USER, it.uid, "hello").getOrThrow()
+        }
+        loginPanelSession(outer) {
+            assertListSize(1, getAllTopics(PaginationQuery()))
+        }
+    }
+
+    @Test
+    fun `admin list titles`() = test {
+        val outer = attachPanelSession {
+            assertListSize(0, getAllTitles(PaginationQuery()))
+        }
+        attachSession {
+            val c = createCommunity(NewCommunity("c1", "c1")).getOrThrow()
+            createTitle(NewTitle("c KOL", com.storyteller_f.shared.model.TitleType.REGULAR, it.uid, c.id, ObjectType.COMMUNITY, "hello")).getOrThrow()
+        }
+        loginPanelSession(outer) {
+            assertListSize(1, getAllTitles(PaginationQuery()))
+        }
+    }
+
+    @Test
+    fun `admin list files`() = test {
+        val outer = attachPanelSession {
+            assertListSize(0, getAllFiles(PaginationQuery()))
+        }
+        attachSession {
+            upload(it.uid ob ObjectType.USER, getUploadDataFromText("hello")).getOrThrow()
+        }
+        loginPanelSession(outer) {
+            assertListSize(1, getAllFiles(PaginationQuery()))
         }
     }
 }
