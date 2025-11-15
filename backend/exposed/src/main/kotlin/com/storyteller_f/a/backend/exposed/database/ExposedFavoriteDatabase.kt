@@ -16,6 +16,7 @@ import com.storyteller_f.shared.type.PrimaryKey
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.r2dbc.Query
 import org.jetbrains.exposed.v1.r2dbc.deleteWhere
 import org.jetbrains.exposed.v1.r2dbc.insert
 import org.jetbrains.exposed.v1.r2dbc.selectAll
@@ -26,17 +27,11 @@ class ExposedFavoriteDatabase(private val databaseSession: ExposedDatabaseSessio
         uid: PrimaryKey,
         fetch: PrimaryKeyFetch
     ) = runCatching {
-        val userFavorites = databaseSession.dbSearch {
-            search {
-                UserFavorites.selectAll().where {
-                    UserFavorites.uid eq uid
-                }.bindPaginationQuery(UserFavorites, fetch)
-            }
-            map {
-                UserFavorite.wrapRow(it)
-            }
+        val userFavorites = getFavoriteListByPredicate {
+            where { UserFavorites.uid eq uid }
+                .bindPaginationQuery(UserFavorites, fetch)
         }.getOrThrow()
-        val total = getUserFavoriteCount().getOrThrow()
+        val total = getFavoriteCountByPredicate { where { UserFavorites.uid eq uid } }.getOrThrow()
         PaginationResult(userFavorites, total)
     }
 
@@ -99,6 +94,24 @@ class ExposedFavoriteDatabase(private val databaseSession: ExposedDatabaseSessio
     override suspend fun getUserFavoriteCount() = databaseSession.dbSearch {
         search {
             UserFavorites.selectAll()
+        }
+        count()
+    }
+
+    private suspend fun getFavoriteListByPredicate(
+        queryBuilder: Query.() -> Query = { this }
+    ) = databaseSession.dbSearch {
+        search {
+            UserFavorites.selectAll().queryBuilder()
+        }
+        map(UserFavorite::wrapRow)
+    }
+
+    private suspend fun getFavoriteCountByPredicate(
+        queryBuilder: Query.() -> Query = { this }
+    ) = databaseSession.dbSearch {
+        search {
+            UserFavorites.selectAll().queryBuilder()
         }
         count()
     }
