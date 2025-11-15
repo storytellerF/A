@@ -22,19 +22,19 @@ import kotlinx.coroutines.delay
 suspend fun Backend.doSubscriptionTask() {
     database.user.getLatestTaskRecord(TaskRecordType.SUBSCRIPTION).mapResult { taskRecord ->
         val cursor = Cursor.AscCursor(taskRecord?.processedId ?: 0)
-        database.topic.getAllTopics(PrimaryKeyFetch(cursor, 10))
+        database.topic.getTopicList(PrimaryKeyFetch(cursor, 10))
     }.mapResult {
-        if (it.list.isEmpty()) {
+        if (it.isEmpty()) {
             Napier.i(tag = "subscription") {
                 "no topic to send"
             }
             UNIT_RESULT
         } else {
             Napier.i(tag = "subscription") {
-                "send ${it.list.size} topics"
+                "send ${it.size} topics"
             }
             runCatching {
-                it.list.forEach { topic ->
+                it.forEach { topic ->
                     processTopicSubscription(topic)
                 }
             }

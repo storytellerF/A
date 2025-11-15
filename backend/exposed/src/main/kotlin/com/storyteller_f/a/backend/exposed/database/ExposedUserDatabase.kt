@@ -398,12 +398,7 @@ class ExposedUserDatabase(
             }
             map(::mapUserInfo)
         }.getOrThrow()
-        val total = databaseSession.dbSearch {
-            search {
-                Users.selectAll()
-            }
-            count()
-        }.getOrThrow()
+        val total = getUserCount().getOrThrow()
         PaginationResult(rawUsers, total)
     }
 
@@ -413,5 +408,4 @@ class ExposedUserDatabase(
         }
         count()
     }
-
 }

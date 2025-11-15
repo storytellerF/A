@@ -36,7 +36,6 @@ import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.model.TopicContent
-import com.storyteller_f.shared.utils.associateByPair
 import com.storyteller_f.shared.model.TopicPinSearch
 import com.storyteller_f.shared.model.UserOverview
 import com.storyteller_f.shared.model.UserPubKeyInfo
@@ -49,7 +48,11 @@ import com.storyteller_f.shared.obj.UpdateRoomBody
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.associateByPair
+import com.storyteller_f.shared.utils.firstOrNull
 import com.storyteller_f.shared.utils.mapIfNotNull
+import com.storyteller_f.shared.utils.mapResult
+import com.storyteller_f.shared.utils.mapResultIfNotNull
 import kotlinx.datetime.LocalDateTime
 
 data class PaginationResult<T>(val list: List<T>, val total: Long)
@@ -139,28 +142,38 @@ interface CombinedDatabase {
 
         val commentedSet = if (uid != null) {
             topic.isUserCommented(uid, topicIds).map { it.toSet() }.getOrThrow()
-        } else emptySet()
+        } else {
+            emptySet()
+        }
 
-        val commentCountMap = topic.getTopicCommentCount(topicIds).map { it.associateByPair() }.getOrThrow()
-        val reactionCountMap = reaction.getReactionCount(topicIds).map { it.associateByPair() }.getOrThrow()
+        val commentCountMap =
+            topic.getTopicCommentCount(topicIds).map { it.associateByPair() }.getOrThrow()
+        val reactionCountMap =
+            reaction.getReactionCount(topicIds).map { it.associateByPair() }.getOrThrow()
 
         val lastReadMap = if (uid != null) {
             container.getTopicReadList(topicIds, uid).map {
                 it.associateBy { userTopicRead -> userTopicRead.objectId }
             }.getOrThrow()
-        } else emptyMap()
+        } else {
+            emptyMap()
+        }
 
         val contentMap = topic.getTopicContentFromByteArray(topics, uid).getOrThrow()
 
         val favoriteMap = if (uid != null) {
             favorite.getHasFavorite(ObjectListFetch.IdListFetch(topicIds), uid)
                 .getOrThrow().associateBy { it.objectId }
-        } else emptyMap()
+        } else {
+            emptyMap()
+        }
 
         val subscriptionMap = if (uid != null) {
             subscription.getHasSubscription(ObjectListFetch.IdListFetch(topicIds), uid)
                 .getOrThrow().associateBy { it.objectId }
-        } else emptyMap()
+        } else {
+            emptyMap()
+        }
 
         topics.map { topic ->
             val id = topic.id
@@ -175,6 +188,40 @@ interface CombinedDatabase {
                 subscriptionId = subscriptionMap[id]?.id,
             )
         }
+    }
+
+    suspend fun getRawTopic(fetch: ObjectFetch, uid: PrimaryKey?) =
+        topic.getTopic(fetch).mapResultIfNotNull { topic ->
+            processTopicToRawTopic(uid, listOf(topic))
+        }.firstOrNull()
+
+    suspend fun getAllRawTopics(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<RawTopic>> {
+        return topic.getAllTopicPagination(primaryKeyFetch).mapResult {
+            processTopicToRawTopic(null, it.list).pagingNotNull(it.total)
+        }
+    }
+
+    suspend fun getRawTopicListByIds(
+        uid: PrimaryKey?,
+        ids: List<PrimaryKey>
+    ) = topic.getTopicListByIds(ids).mapResult {
+        processTopicToRawTopic(uid, it)
+    }
+
+    suspend fun getRawTopicByParentId(
+        uid: PrimaryKey?,
+        primaryKeyFetch: PrimaryKeyFetch,
+        parentId: PrimaryKey,
+        pinType: TopicPinSearch?
+    ) = topic.getTopicByParentId(uid, primaryKeyFetch, parentId, pinType).mapResult {
+        processTopicToRawTopic(uid, it.list).pagingNotNull(it.total)
+    }
+
+    suspend fun getLatestRawTopic(
+        uid: PrimaryKey?,
+        parentId: PrimaryKey
+    ) = topic.getLatestTopic(parentId).mapResult {
+        processTopicToRawTopic(uid, it)
     }
 }
 
@@ -226,22 +273,7 @@ interface UserDatabase {
 
 interface TopicDatabase {
     suspend fun getTopicRootTuple(parentId: PrimaryKey): Result<ObjectTuple?>
-    suspend fun getRawTopic(fetch: ObjectFetch, uid: PrimaryKey?): Result<RawTopic?>
-    suspend fun getRawTopicListByIds(
-        uid: PrimaryKey?,
-        ids: List<PrimaryKey>
-    ): Result<List<RawTopic>>
 
-    suspend fun getRawTopicByParentId(
-        uid: PrimaryKey?,
-        primaryKeyFetch: PrimaryKeyFetch,
-        parentId: PrimaryKey,
-        pinType: TopicPinSearch?
-    ): Result<PaginationResult<RawTopic>>
-
-    suspend fun getLatestRawTopic(uid: PrimaryKey?, parentId: PrimaryKey): Result<List<RawTopic>>
-
-    @OptIn(ExperimentalStdlibApi::class)
     suspend fun saveEncryptedTopic(topic: Topic, content: TopicContent.Encrypted): Result<Unit>
     suspend fun savePlainTopic(topic: Topic, content: TopicContent.Plain): Result<Unit>
     suspend fun updateTopicStatus(topicId: PrimaryKey, newValue: Boolean): Result<Boolean>
@@ -259,8 +291,17 @@ interface TopicDatabase {
 
     suspend fun createTitle(title: Title, topic: Topic): Result<Unit>
     suspend fun getTopicCount(): Result<Long>
-    suspend fun getAllTopics(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<Topic>>
-    suspend fun getAllRawTopics(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<RawTopic>>
+    suspend fun getTopic(fetch: ObjectFetch): Result<Topic?>
+    suspend fun getAllTopicPagination(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<Topic>>
+    suspend fun getTopicListByIds(ids: List<PrimaryKey>): Result<List<Topic>>
+    suspend fun getTopicByParentId(
+        uid: PrimaryKey?,
+        primaryKeyFetch: PrimaryKeyFetch,
+        parentId: PrimaryKey,
+        pinType: TopicPinSearch?
+    ): Result<PaginationResult<Topic>>
+
+    suspend fun getLatestTopic(parentId: PrimaryKey): Result<List<Topic>>
 }
 
 interface FavoriteDatabase {
@@ -273,7 +314,11 @@ interface FavoriteDatabase {
     suspend fun removeFavorite(id: PrimaryKey): Result<Unit>
     suspend fun getFavorite(id: PrimaryKey): Result<UserFavorite?>
     suspend fun getFavorite(uid: PrimaryKey, objectId: PrimaryKey): Result<UserFavorite?>
-    suspend fun getHasFavorite(idList: ObjectListFetch.IdListFetch, uid: PrimaryKey): Result<List<UserFavorite>>
+    suspend fun getHasFavorite(
+        idList: ObjectListFetch.IdListFetch,
+        uid: PrimaryKey
+    ): Result<List<UserFavorite>>
+
     suspend fun getUserFavoriteCount(): Result<Long>
 }
 
@@ -291,9 +336,14 @@ interface SubscriptionDatabase {
         objectId: PrimaryKey,
         primaryKeyFetch: PrimaryKeyFetch
     ): Result<List<UserSubscription>>
+
     suspend fun insertSubscriptionSentLog(log: SubscriptionSentLog): Result<SubscriptionSentLog>
     suspend fun getLatestSubscriptionSentLog(objectId: PrimaryKey): Result<SubscriptionSentLog?>
-    suspend fun getHasSubscription(idList: ObjectListFetch.IdListFetch, uid: PrimaryKey): Result<List<UserSubscription>>
+    suspend fun getHasSubscription(
+        idList: ObjectListFetch.IdListFetch,
+        uid: PrimaryKey
+    ): Result<List<UserSubscription>>
+
     suspend fun getUserSubscriptionCount(uid: PrimaryKey): Result<Long>
 }
 
@@ -413,7 +463,11 @@ interface RoomDatabase {
     ): Result<RawRoom?>
 
     suspend fun createRoom(room: Room, members: List<Member>): Result<Room>
-    suspend fun getRawRooms(objectListFetch: ObjectListFetch, uid: PrimaryKey?): Result<List<RawRoom>>
+    suspend fun getRawRooms(
+        objectListFetch: ObjectListFetch,
+        uid: PrimaryKey?
+    ): Result<List<RawRoom>>
+
     suspend fun getRoomList(objectListFetch: ObjectListFetch): Result<List<Room>>
     suspend fun updateRoom(id: PrimaryKey, body: UpdateRoomBody): Result<Boolean>
     suspend fun getPrivateRoomCount(): Result<Long>
@@ -521,6 +575,7 @@ interface AdminDatabase {
         userMap: Map<String, User>,
         objectType: ObjectType
     ): Result<Unit>
+
     suspend fun createTaskRecord(record: TaskRecord): Result<TaskRecord>
     suspend fun batchAddSubscription(list: List<UserSubscription>): Result<Unit>
 }

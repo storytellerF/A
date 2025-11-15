@@ -275,7 +275,7 @@ suspend fun Backend.createTopicSnapshot(
         uid
     ).mapResultIfNotNull { (hasRead, _, isPrivate) ->
         if (hasRead && !isPrivate) {
-            database.topic.getRawTopic(
+            database.getRawTopic(
                 ObjectFetch.IdFetch(topicId),
                 null
             )
@@ -345,8 +345,7 @@ suspend fun Backend.generateSignedSnapshot(
         return Result.failure(CustomBadRequestException("unsupported"))
     }
     val saveToFile = snapshotGeneration.path
-    val parent = saveToFile.parentFile
-    if (parent == null) return Result.success(null)
+    val parent = saveToFile.parentFile ?: return Result.success(null)
     if (!parent.exists() && !parent.mkdirs()) return Result.failure(Exception("failed"))
     val plainContent = content.plain
     val map = mutableMapOf<String, File>()
@@ -391,7 +390,7 @@ suspend fun Backend.getTopic(
     if (uid == null && fillHasCommented == true) return Result.failure(UnauthorizedException())
     return checkRootReadPermission(ObjectType.TOPIC, topicId, uid).mapResultIfNotNull {
         if (it.hasRead) {
-            database.topic.getRawTopic(
+            database.getRawTopic(
                 ObjectFetch.IdFetch(topicId),
                 uid
             ).mapIfNotNull { value ->
@@ -413,7 +412,7 @@ suspend fun Backend.getTopicByAid(
     fillHasCommented: Boolean?,
 ): Result<TopicInfo?> {
     if (uid == null && fillHasCommented == true) return Result.failure(UnauthorizedException())
-    return database.topic.getRawTopic(ObjectFetch.AidFetch(aid), uid)
+    return database.getRawTopic(ObjectFetch.AidFetch(aid), uid)
         .mapResultIfNotNull { info ->
             checkRootReadPermission(
                 ObjectType.TOPIC,
@@ -453,7 +452,7 @@ suspend fun Backend.getTopicsByParentId(
             UNIT_RESULT
         }
     }.mapResultIfNotNull {
-        database.topic.getRawTopicByParentId(
+        database.getRawTopicByParentId(
             uid,
             primaryKeyFetch,
             parentId,
@@ -476,7 +475,7 @@ suspend fun Backend.processRawTopicToTopicInfo(
         val rooms = getRoomMapByTopics(topics)
         val subTopicsMap = if (addLatestSubTopic) {
             topics.flatMap { t ->
-                database.topic.getLatestRawTopic(uid, t.topic.id).getOrThrow()
+                database.getLatestRawTopic(uid, t.topic.id).getOrThrow()
             }.groupBy {
                 it.topic.parentId
             }
@@ -653,7 +652,7 @@ private suspend fun Backend.processTopicsDocument(
     if (ids.isEmpty()) {
         return Result.success(emptyList())
     }
-    return database.topic.getRawTopicListByIds(uid, ids).mapResult { infos ->
+    return database.getRawTopicListByIds(uid, ids).mapResult { infos ->
         val processedTopics = fixedSort(infos, ids) {
             it.topic.id
         }
@@ -686,7 +685,7 @@ suspend fun Backend.getTopicByIds(
             }
         }
     }
-    return database.topic.getRawTopicListByIds(uid, ids).mapResult { infos ->
+    return database.getRawTopicListByIds(uid, ids).mapResult { infos ->
         processRawTopicToTopicInfo(infos, uid, true)
     }
 }
@@ -696,7 +695,7 @@ suspend fun Backend.updateTopicPin(
     topicId: PrimaryKey,
     newValue: Boolean,
 ) = checkRootAdminPermission(ObjectType.TOPIC, topicId, uid).mapResultIfNotNull {
-    database.topic.getRawTopic(ObjectFetch.IdFetch(topicId), uid)
+    database.getRawTopic(ObjectFetch.IdFetch(topicId), uid)
 }.mapResultIfNotNull { rawTopic ->
     val topicInfo = rawTopic.toTopicInfo()
     if (rawTopic.topic.isPin == newValue) {
@@ -713,6 +712,6 @@ suspend fun Backend.updateTopicPin(
 }
 
 suspend fun Backend.getAllTopics(primaryKeyFetch: PrimaryKeyFetch) =
-    database.topic.getAllRawTopics(primaryKeyFetch).mapResult { (topics, total) ->
+    database.getAllRawTopics(primaryKeyFetch).mapResult { (topics, total) ->
         processRawTopicToTopicInfo(topics, uid = null, addLatestSubTopic = true).paging(total)
     }
