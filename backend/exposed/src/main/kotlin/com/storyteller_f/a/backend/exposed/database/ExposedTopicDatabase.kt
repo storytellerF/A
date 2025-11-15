@@ -17,7 +17,6 @@ import com.storyteller_f.a.backend.core.types.UserSubscription
 import com.storyteller_f.a.backend.exposed.ExposedDatabaseSession
 import com.storyteller_f.a.backend.exposed.count
 import com.storyteller_f.a.backend.exposed.first
-import com.storyteller_f.a.backend.exposed.isNotEmpty
 import com.storyteller_f.a.backend.exposed.map
 import com.storyteller_f.a.backend.exposed.query.bindPaginationQuery
 import com.storyteller_f.a.backend.exposed.tables.Aids
@@ -74,27 +73,25 @@ class ExposedTopicDatabase(
         }
     }
 
-    override suspend fun getRawTopic(
-        fetch: ObjectFetch,
-        uid: PrimaryKey?,
-    ) = databaseSession.dbSearch {
-        search {
-            Topics.join(Aids, JoinType.LEFT, Topics.id, Aids.objectId)
-                .select(Topics.fields + Aids.value).where {
-                    when (fetch) {
-                        is ObjectFetch.IdFetch -> Topics.id eq fetch.id
-                        is ObjectFetch.AidFetch -> Aids.value eq fetch.aid
+    override suspend fun getRawTopic(fetch: ObjectFetch, uid: PrimaryKey?) =
+        databaseSession.dbSearch {
+            search {
+                Topics.join(Aids, JoinType.LEFT, Topics.id, Aids.objectId)
+                    .select(Topics.fields + Aids.value).where {
+                        when (fetch) {
+                            is ObjectFetch.IdFetch -> Topics.id eq fetch.id
+                            is ObjectFetch.AidFetch -> Aids.value eq fetch.aid
+                        }
                     }
-                }
+            }
+            first(Topic::wrapRow)
+        }.mapResultIfNotNull { topic ->
+            processTopicToRawTopic(uid, listOf(topic))
+        }.mapIfNotNull {
+            it.first()
         }
-        first(Topic::wrapRow)
-    }.mapResultIfNotNull { topic ->
-        processTopicToRawTopic(uid, listOf(topic))
-    }.mapIfNotNull {
-        it.first()
-    }
 
-    suspend fun getTopicInfoListByPredicate(
+    suspend fun getRawTopicListByPredicate(
         uid: PrimaryKey?,
         queryBuilder: Query.() -> Query,
     ) = databaseSession.dbSearch {
@@ -108,30 +105,34 @@ class ExposedTopicDatabase(
         processTopicToRawTopic(uid, it)
     }
 
+    suspend fun getTopicCountByPredicate(
+        queryBuilder: Query.() -> Query = { this },
+    ) = databaseSession.dbSearch {
+        search {
+            Topics.selectAll().queryBuilder()
+        }
+        count()
+    }
+
     override suspend fun getRawTopicListByIds(
         uid: PrimaryKey?,
         ids: List<PrimaryKey>
-    ) = getTopicInfoListByPredicate(uid) {
+    ) = getRawTopicListByPredicate(uid) {
         where {
             Topics.id inList ids
         }
     }
 
-    suspend fun getTopicInfoPaginationByPredicate(
+    suspend fun getRawTopicPaginationByPredicate(
         uid: PrimaryKey?,
         primaryKeyFetch: PrimaryKeyFetch,
         extraQuery: Query.() -> Query,
     ) = runCatching {
-        val rawTopics = getTopicInfoListByPredicate(uid) {
+        val rawTopics = getRawTopicListByPredicate(uid) {
             extraQuery().bindPaginationQuery(Topics, primaryKeyFetch)
         }.getOrThrow()
-        val total = databaseSession.dbSearch {
-            search {
-                Topics
-                    .selectAll()
-                    .extraQuery()
-            }
-            count()
+        val total = getTopicCountByPredicate {
+            extraQuery()
         }.getOrThrow()
         PaginationResult(rawTopics, total)
     }
@@ -141,7 +142,7 @@ class ExposedTopicDatabase(
         primaryKeyFetch: PrimaryKeyFetch,
         parentId: PrimaryKey,
         pinType: TopicPinSearch?
-    ) = getTopicInfoPaginationByPredicate(uid, primaryKeyFetch) { ->
+    ) = getRawTopicPaginationByPredicate(uid, primaryKeyFetch) { ->
         where {
             Topics.parentId eq parentId
         }
@@ -163,7 +164,7 @@ class ExposedTopicDatabase(
     override suspend fun getLatestRawTopic(
         uid: PrimaryKey?,
         parentId: PrimaryKey
-    ) = getTopicInfoListByPredicate(uid) {
+    ) = getRawTopicListByPredicate(uid) {
         where {
             Topics.parentId eq parentId
         }.orderBy(Topics.pinned to SortOrder.DESC)
@@ -407,12 +408,7 @@ class ExposedTopicDatabase(
         Topic.new(topic)
     }
 
-    override suspend fun getTopicCount() = databaseSession.dbSearch {
-        search {
-            Topics.selectAll()
-        }
-        count()
-    }
+    override suspend fun getTopicCount() = getTopicCountByPredicate()
 
     override suspend fun getAllTopics(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<Topic>> {
         return databaseSession.dbSearch {
@@ -429,22 +425,11 @@ class ExposedTopicDatabase(
 
     override suspend fun getAllRawTopics(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<RawTopic>> {
         return runCatching {
-            val topics = databaseSession.dbSearch {
-                search {
-                    Topics.selectAll().bindPaginationQuery(Topics, primaryKeyFetch)
-                }
-                map {
-                    Topic.wrapRow(it)
-                }
+            val topics = getRawTopicListByPredicate(null) {
+                bindPaginationQuery(Topics, primaryKeyFetch)
             }.getOrThrow()
-            val total = databaseSession.dbSearch {
-                search {
-                    Topics.selectAll().bindPaginationQuery(Topics, primaryKeyFetch)
-                }
-                count()
-            }.getOrThrow()
-            val rawTopic = processTopicToRawTopic(null, topics).getOrThrow()
-            PaginationResult(rawTopic, total)
+            val total = getTopicCount().getOrThrow()
+            PaginationResult(topics, total)
         }
     }
 
