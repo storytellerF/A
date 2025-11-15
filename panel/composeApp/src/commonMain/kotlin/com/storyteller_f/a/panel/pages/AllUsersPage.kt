@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Casino
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FileOpen
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -61,6 +62,7 @@ import io.github.vinceglb.filekit.dialogs.openFilePicker
 import io.github.vinceglb.filekit.readBytes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import com.storyteller_f.a.panel.LocalPanelNav
 
 @Composable
 fun AllUsersPage() {
@@ -71,6 +73,7 @@ fun AllUsersPage() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AllUsersPageInternal(viewModel: AllUsersViewModel) {
+    val panelNav = LocalPanelNav.current
     Scaffold(
         topBar = {
             var showDialog by remember {
@@ -78,6 +81,8 @@ fun AllUsersPageInternal(viewModel: AllUsersViewModel) {
             }
             TopAppBar(title = {
                 Text("All users")
+            }, navigationIcon = {
+                IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, "menu") }
             }, actions = {
                 IconButton({
                     showDialog = true

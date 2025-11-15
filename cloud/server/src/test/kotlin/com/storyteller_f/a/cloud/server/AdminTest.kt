@@ -200,7 +200,16 @@ class AdminTest {
         }
         attachSession {
             val c = createCommunity(NewCommunity("c1", "c1")).getOrThrow()
-            createTitle(NewTitle("c KOL", com.storyteller_f.shared.model.TitleType.REGULAR, it.uid, c.id, ObjectType.COMMUNITY, "hello")).getOrThrow()
+            createTitle(
+                NewTitle(
+                    "c KOL",
+                    com.storyteller_f.shared.model.TitleType.REGULAR,
+                    it.uid,
+                    c.id,
+                    ObjectType.COMMUNITY,
+                    "hello"
+                )
+            ).getOrThrow()
         }
         loginPanelSession(outer) {
             assertListSize(1, getAllTitles(PaginationQuery()))

@@ -32,7 +32,7 @@ data class FileInfo(
     val dimension: Dimension?,
 ) : PrimaryKeyIdentifiable {
     override val objectType: ObjectType
-        get() = ObjectType.File
+        get() = ObjectType.FILE
 
     companion object {
         const val PDF_CONTENT_TYPE = "application/pdf"

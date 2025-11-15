@@ -9,14 +9,15 @@ import com.storyteller_f.a.backend.exposed.ExposedDatabaseSession
 import com.storyteller_f.a.backend.exposed.count
 import com.storyteller_f.a.backend.exposed.map
 import com.storyteller_f.a.backend.exposed.query.bindPaginationQuery
-import com.storyteller_f.a.backend.exposed.query.buildTitleSearchQuery
 import com.storyteller_f.a.backend.exposed.tables.Titles
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
+import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.r2dbc.Query
+import org.jetbrains.exposed.v1.r2dbc.andWhere
 import org.jetbrains.exposed.v1.r2dbc.selectAll
 
 class ExposedTitleDatabase(val exposedDatabaseSession: ExposedDatabaseSession) : TitleDatabase {
@@ -37,26 +38,46 @@ class ExposedTitleDatabase(val exposedDatabaseSession: ExposedDatabaseSession) :
         }
     }
 
-    override suspend fun getAllRawTitles(primaryKeyFetch: PrimaryKeyFetch) = exposedDatabaseSession.dbSearch {
-        search {
-            Titles.selectAll().bindPaginationQuery(Titles, primaryKeyFetch)
+    fun Query.buildTitleSearchQuery(
+        searchType: TitleSearchType,
+        uid: PrimaryKey,
+        type: TitleType?,
+        scopeId: PrimaryKey?
+    ): Query {
+        val rows = where {
+            when (searchType) {
+                TitleSearchType.CREATOR -> Titles.creator eq uid
+                else -> Titles.receiver eq uid
+            }
         }
-        map {
-            RawTitle(Title.wrapRow(it))
+        if (type != null) {
+            rows.andWhere {
+                Titles.type eq type
+            }
         }
-    }.mapResult { list ->
-        getTitleCountByPredicate {
-            Titles.selectAll()
-        }.map { count ->
-            PaginationResult(list, count)
+        if (scopeId != null) {
+            rows.andWhere {
+                Titles.scopeId eq scopeId
+            }
         }
+        return rows
     }
 
+    override suspend fun getAllRawTitles(primaryKeyFetch: PrimaryKeyFetch) = runCatching {
+        val titles = getTitleListByPredicate {
+            bindPaginationQuery(Titles, primaryKeyFetch)
+        }.getOrThrow()
+        val count = getTitleCountByPredicate().getOrThrow()
+        PaginationResult(titles, count)
+    }
+
+    override suspend fun getTitleCount() = getTitleCountByPredicate()
+
     private suspend fun getTitleListByPredicate(
-        queryProvider: () -> Query
+        queryProvider: Query.() -> Query
     ) = exposedDatabaseSession.dbSearch {
         search {
-            queryProvider()
+            Titles.selectAll().queryProvider()
         }
         map {
             RawTitle(Title.wrapRow(it))
@@ -64,10 +85,10 @@ class ExposedTitleDatabase(val exposedDatabaseSession: ExposedDatabaseSession) :
     }
 
     private suspend fun getTitleCountByPredicate(
-        queryProvider: () -> Query
+        queryProvider: Query.() -> Query = { this }
     ) = exposedDatabaseSession.dbSearch {
         search {
-            queryProvider()
+            Titles.selectAll().queryProvider()
         }
         count()
     }

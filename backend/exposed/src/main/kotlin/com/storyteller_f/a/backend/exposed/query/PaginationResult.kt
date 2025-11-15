@@ -14,8 +14,7 @@ fun Query.bindPaginationQuery(
     table: BaseTable,
     primaryKeyFetch: PrimaryKeyFetch
 ): Query {
-    val cursor = primaryKeyFetch.cursor
-    val order = when (cursor) {
+    val order = when (val cursor = primaryKeyFetch.cursor) {
         is Cursor.DescCursor<PrimaryKey> -> {
             andWhere {
                 table.id less cursor.value

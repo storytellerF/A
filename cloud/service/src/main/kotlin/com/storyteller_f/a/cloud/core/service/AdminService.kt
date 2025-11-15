@@ -22,6 +22,8 @@ suspend fun Backend.getOverview() = runCatching {
     val publicRoomCount = database.room.getPublicRoomCount().getOrThrow()
     val fileCount = database.file.getFileCount().getOrThrow()
     val fileVolume = database.file.getFileVolume().getOrThrow()
+    val titleCount = database.title.getTitleCount().getOrThrow()
+
     PanelOverview(
         userCount,
         topicCount,
@@ -29,7 +31,8 @@ suspend fun Backend.getOverview() = runCatching {
         privateRoomCount,
         publicRoomCount,
         fileCount,
-        fileVolume
+        fileVolume,
+        titleCount,
     )
 }
 

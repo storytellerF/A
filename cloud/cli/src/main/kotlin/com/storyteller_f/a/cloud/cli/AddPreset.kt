@@ -196,7 +196,7 @@ class AddPreset : Subcommand("add", "add entry") {
             }
             val title = Title(
                 titleId, now(), it.name, creatorUid, receiverUid, it.type, scopeId, it.scopeType,
-                TitleStatus.OK, titleId
+                TitleStatus.OK, topicId
             )
             val topic = Topic(
                 topicId,
@@ -618,7 +618,7 @@ class AddPreset : Subcommand("add", "add entry") {
                 )
             }
         ).getOrThrow()
-        tuples.forEachIndexed { i, topicTuple ->
+        tuples.forEach { topicTuple ->
             uploadTopicMedias(parentDir, userMap, topicTuple.id, topicTuple.topic)
         }
         batchAddSubscriptions(tuples, userMap)

@@ -667,24 +667,17 @@ suspend fun Backend.getTopicByIds(
     if (ids.isEmpty()) {
         return Result.success(emptyList())
     }
-    val map = ids.map {
-        checkRootReadPermission(ObjectType.TOPIC, it, uid) to it
-    }
-    val private = mutableSetOf<PrimaryKey>()
-    map.forEach { (r, id) ->
-        val exceptionOrNull = r.exceptionOrNull()
-        if (exceptionOrNull != null) {
-            return Result.failure(exceptionOrNull)
-        } else {
-            val permission = r.getOrThrow()
-            when {
-                permission == null -> return Result.failure(Exception("root not exists"))
-                !permission.hasRead -> return Result.failure(ForbiddenException("Permission Denied"))
-                permission.isPrivate -> private.add(id)
-                else -> {}
+    try {
+        ids.forEach {
+            val permission = checkRootReadPermission(ObjectType.TOPIC, it, uid).getOrThrow()
+            if (permission == null || !permission.hasRead) {
+                return Result.failure(ForbiddenException("Permission Denied"))
             }
         }
+    } catch (e: Exception) {
+        return Result.failure(e)
     }
+
     return database.getRawTopicListByIds(uid, ids).mapResult { infos ->
         processRawTopicToTopicInfo(infos, uid, true)
     }

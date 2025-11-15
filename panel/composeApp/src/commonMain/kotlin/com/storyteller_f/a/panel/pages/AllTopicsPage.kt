@@ -4,6 +4,8 @@ package com.storyteller_f.a.panel.pages
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -11,6 +13,7 @@ import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.pagingItems
 import com.storyteller_f.a.panel.common.AllTopicsViewModel
 import com.storyteller_f.a.panel.common.createPanelAllTopicsViewModel
+import com.storyteller_f.a.panel.LocalPanelNav
 
 @Composable
 fun AllTopicsPage() {
@@ -21,8 +24,12 @@ fun AllTopicsPage() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AllTopicsPageInternal(viewModel: AllTopicsViewModel) {
+    val panelNav = LocalPanelNav.current
     Scaffold(
-        topBar = { TopAppBar(title = { Text("All topics") }) }
+        topBar = { TopAppBar(
+            title = { Text("All topics") },
+            navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } }
+        ) }
     ) {
         Box(Modifier.padding(top = it.calculateTopPadding())) {
             StateView(viewModel) { items ->

@@ -66,7 +66,7 @@ fun TitleItem(titleInfo: TitleInfo) {
                 ObjectType.TOPIC -> {}
                 ObjectType.USER -> UserIconWithDialog(it.receiverInfo)
                 ObjectType.TITLE -> {}
-                ObjectType.File -> {}
+                ObjectType.FILE -> {}
                 ObjectType.PANEL_ACCOUNT -> {}
             }
         }

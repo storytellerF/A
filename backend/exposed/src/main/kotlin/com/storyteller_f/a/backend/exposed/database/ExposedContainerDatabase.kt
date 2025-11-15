@@ -13,7 +13,7 @@ import com.storyteller_f.a.backend.exposed.first
 import com.storyteller_f.a.backend.exposed.isNotEmpty
 import com.storyteller_f.a.backend.exposed.map
 import com.storyteller_f.a.backend.exposed.query.bindPaginationQuery
-import com.storyteller_f.a.backend.exposed.query.buildSearchMembersQuery
+import com.storyteller_f.a.backend.exposed.tables.Aids
 import com.storyteller_f.a.backend.exposed.tables.Members
 import com.storyteller_f.a.backend.exposed.tables.Quotas
 import com.storyteller_f.a.backend.exposed.tables.Topics
@@ -25,11 +25,15 @@ import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.associateByPair
 import com.storyteller_f.shared.utils.mapResult
+import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.countDistinct
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.core.like
 import org.jetbrains.exposed.v1.core.max
+import org.jetbrains.exposed.v1.r2dbc.Query
+import org.jetbrains.exposed.v1.r2dbc.andWhere
 import org.jetbrains.exposed.v1.r2dbc.deleteWhere
 import org.jetbrains.exposed.v1.r2dbc.insert
 import org.jetbrains.exposed.v1.r2dbc.select
@@ -262,5 +266,29 @@ class ExposedContainerDatabase(val databaseSession: ExposedDatabaseSession) :
         first {
             Member.wrapRow(it)
         }
+    }
+
+    fun buildSearchMembersQuery(objectId: PrimaryKey?, getCount: Boolean, word: String?): Query {
+        val query = if (objectId != null) {
+            val join = Users
+                .join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
+                .join(Members, JoinType.INNER, Users.id, Members.uid) {
+                    Members.objectId eq objectId
+                }
+            if (getCount) {
+                join.selectAll()
+            } else {
+                join.select(Users.fields + Members.joinedTime + Aids.value)
+            }
+        } else {
+            Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId).select(Users.fields + Aids.value)
+        }
+
+        if (!word.isNullOrBlank()) {
+            query.andWhere {
+                Users.nickname like "%$word%"
+            }
+        }
+        return query
     }
 }
