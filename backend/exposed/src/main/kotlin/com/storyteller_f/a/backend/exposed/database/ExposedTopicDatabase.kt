@@ -33,6 +33,7 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.associateByPair
 import com.storyteller_f.shared.utils.extractMarkdownMediaLink
+import com.storyteller_f.shared.utils.firstOrNull
 import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
@@ -74,36 +75,39 @@ class ExposedTopicDatabase(
     }
 
     override suspend fun getRawTopic(fetch: ObjectFetch, uid: PrimaryKey?) =
-        databaseSession.dbSearch {
-            search {
-                Topics.join(Aids, JoinType.LEFT, Topics.id, Aids.objectId)
-                    .select(Topics.fields + Aids.value).where {
-                        when (fetch) {
-                            is ObjectFetch.IdFetch -> Topics.id eq fetch.id
-                            is ObjectFetch.AidFetch -> Aids.value eq fetch.aid
-                        }
-                    }
-            }
-            first(Topic::wrapRow)
-        }.mapResultIfNotNull { topic ->
+        getTopic(fetch).mapResultIfNotNull { topic ->
             processTopicToRawTopic(uid, listOf(topic))
-        }.mapIfNotNull {
-            it.first()
+        }.firstOrNull()
+
+    private suspend fun getTopic(fetch: ObjectFetch): Result<Topic?> = databaseSession.dbSearch {
+        search {
+            Topics.join(Aids, JoinType.LEFT, Topics.id, Aids.objectId)
+                .select(Topics.fields + Aids.value).where {
+                    when (fetch) {
+                        is ObjectFetch.IdFetch -> Topics.id eq fetch.id
+                        is ObjectFetch.AidFetch -> Aids.value eq fetch.aid
+                    }
+                }
         }
+        first(Topic::wrapRow)
+    }
 
     suspend fun getRawTopicListByPredicate(
         uid: PrimaryKey?,
         queryBuilder: Query.() -> Query,
-    ) = databaseSession.dbSearch {
-        search {
-            Topics.join(Aids, JoinType.LEFT, Topics.id, Aids.objectId)
-                .select(Topics.fields + Aids.value)
-                .queryBuilder()
-        }
-        map(Topic::wrapRow)
-    }.mapResult {
+    ) = getTopicListByPredicate(queryBuilder).mapResult {
         processTopicToRawTopic(uid, it)
     }
+
+    private suspend fun getTopicListByPredicate(queryBuilder: Query.() -> Query): Result<List<Topic>> =
+        databaseSession.dbSearch {
+            search {
+                Topics.join(Aids, JoinType.LEFT, Topics.id, Aids.objectId)
+                    .select(Topics.fields + Aids.value)
+                    .queryBuilder()
+            }
+            map(Topic::wrapRow)
+        }
 
     suspend fun getTopicCountByPredicate(
         queryBuilder: Query.() -> Query = { this },
