@@ -518,7 +518,7 @@ private suspend fun Backend.getReactionMap(
     topics: List<RawTopic>,
     uid: PrimaryKey?
 ): Map<PrimaryKey, List<ReactionInfo>> =
-    database.topic.getReactionInfoPaginationResult(topics.map {
+    database.reaction.getReactionInfoPaginationResult(topics.map {
         it.topic.id
     }, uid, ReactionFetch(null, 20)).map {
         it.list

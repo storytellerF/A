@@ -7,6 +7,7 @@ import com.storyteller_f.a.backend.core.ContainerDatabase
 import com.storyteller_f.a.backend.core.DatabaseConnection
 import com.storyteller_f.a.backend.core.FileDatabase
 import com.storyteller_f.a.backend.core.PanelAccountDatabase
+import com.storyteller_f.a.backend.core.ReactionDatabase
 import com.storyteller_f.a.backend.core.RoomDatabase
 import com.storyteller_f.a.backend.core.TitleDatabase
 import com.storyteller_f.a.backend.core.TopicDatabase
@@ -16,6 +17,7 @@ import com.storyteller_f.a.backend.exposed.database.ExposedCommunityDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedContainerDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedFileDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedPanelAccountDatabase
+import com.storyteller_f.a.backend.exposed.database.ExposedReactionDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedRoomDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedTitleDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedTopicDatabase
@@ -79,7 +81,7 @@ class ExposedDatabase(val databaseSession: ExposedDatabaseSession) : CombinedDat
     override val user: UserDatabase
         get() = ExposedUserDatabase(databaseSession)
     override val topic: TopicDatabase
-        get() = ExposedTopicDatabase(databaseSession, container, file)
+        get() = ExposedTopicDatabase(databaseSession, container, file, reaction)
     override val title: TitleDatabase
         get() = ExposedTitleDatabase(databaseSession)
     override val community: CommunityDatabase
@@ -94,6 +96,9 @@ class ExposedDatabase(val databaseSession: ExposedDatabaseSession) : CombinedDat
         get() = ExposedAdminDatabase(databaseSession)
     override val panelAccount: PanelAccountDatabase
         get() = ExposedPanelAccountDatabase(databaseSession)
+
+    override val reaction: ReactionDatabase
+        get() = ExposedReactionDatabase(databaseSession)
 
     override suspend fun init() {
         ExposedDatabaseFactory.init(databaseSession.database)

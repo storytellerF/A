@@ -25,7 +25,7 @@ suspend fun Backend.addReaction(
     topicId: PrimaryKey,
     emojiText: String
 ) = checkRootWritePermission(ObjectType.TOPIC, topicId, userId).mapResultIfNotNull {
-    database.topic.getReactionInfo(userId, topicId, emojiText)
+    database.reaction.getReactionInfo(userId, topicId, emojiText)
         .mapResult { oldReaction ->
             if (oldReaction != null && oldReaction.hasReacted) {
                 Result.success(oldReaction)
@@ -40,8 +40,8 @@ suspend fun Backend.addReaction(
                     true,
                     reactionRecord.id
                 )
-                database.topic.insertReaction(reactionRecord).map {
-                    database.topic.statsReactionRecord(
+                database.reaction.insertReaction(reactionRecord).map {
+                    database.reaction.statsReactionRecord(
                         reactionRecord.objectId,
                         reactionRecord.emoji,
                         reactionRecord.objectType
@@ -65,7 +65,7 @@ suspend fun Backend.reactionList(
     reactionFetch: ReactionFetch,
 ): Result<PaginationResult<ReactionInfo>> {
     if (fillHasReacted == true && uid == null) return Result.failure(UnauthorizedException())
-    return database.topic.getReactionInfoPaginationResult(
+    return database.reaction.getReactionInfoPaginationResult(
         listOf(objectId),
         uid,
         reactionFetch
@@ -91,9 +91,9 @@ suspend fun deleteReaction(
 ): Result<ReactionInfo?> {
     val emoji = deleteReaction.emoji
     return if (isEmoji(emoji)) {
-        backend.database.topic.deleteReaction(uid, emoji, p.id).mapResult {
+        backend.database.reaction.deleteReaction(uid, emoji, p.id).mapResult {
             if (it) {
-                backend.database.topic.statsReactionRecord(
+                backend.database.reaction.statsReactionRecord(
                     p.id,
                     emoji,
                     ObjectType.TOPIC
@@ -105,7 +105,7 @@ suspend fun deleteReaction(
     } else {
         Result.failure(CustomBadRequestException("invalid emoji"))
     }.mapResult {
-        backend.database.topic.getReactionInfo(uid, p.id, emoji)
+        backend.database.reaction.getReactionInfo(uid, p.id, emoji)
             .map { reactionInfo ->
                 reactionInfo ?: ReactionInfo(emoji, p.id, 0, false, 0)
             }
