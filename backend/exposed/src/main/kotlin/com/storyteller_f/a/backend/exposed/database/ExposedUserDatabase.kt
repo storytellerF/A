@@ -38,10 +38,12 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.Op
+import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.r2dbc.Query
 import org.jetbrains.exposed.v1.r2dbc.deleteWhere
 import org.jetbrains.exposed.v1.r2dbc.insert
 import org.jetbrains.exposed.v1.r2dbc.select
@@ -65,32 +67,23 @@ class ExposedUserDatabase(
 
     override suspend fun getRawUser(
         objectFetch: ObjectFetch,
-    ) = databaseSession.dbSearch {
-        search {
-            Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId).selectAll().where {
-                when (objectFetch) {
-                    is ObjectFetch.AidFetch -> Aids.value eq objectFetch.aid
-                    is ObjectFetch.IdFetch -> Users.id eq objectFetch.id
-                }
+    ) = getUserByPredicate(::mapUserInfo) {
+        where {
+            when (objectFetch) {
+                is ObjectFetch.AidFetch -> Aids.value eq objectFetch.aid
+                is ObjectFetch.IdFetch -> Users.id eq objectFetch.id
             }
         }
-        first(::mapUserInfo)
     }
 
     override suspend fun getRawUserAndPublicKeyByAddress(
         ad: String,
-    ) = databaseSession.dbSearch {
-        search {
-            Users
-                .join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
-                .select(Users.fields + Aids.value)
-                .where {
-                    Users.address eq ad
-                }
-        }
-        first {
-            val value = User.wrapRow(it)
-            Pair(RawUser(value), value.publicKey)
+    ) = getUserByPredicate({
+        val value = User.wrapRow(it)
+        Pair(RawUser(value), value.publicKey)
+    }) {
+        where {
+            Users.address eq ad
         }
     }
 
@@ -179,16 +172,11 @@ class ExposedUserDatabase(
         Users.id eq id
     }
 
-    override suspend fun getUserAuthDataByAid(aid: String) = databaseSession.dbSearch {
-        search {
-            Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
-                .select(listOf(Users.publicKey, Users.id))
-                .where {
-                    Aids.value eq aid
-                }
-        }
-        first {
-            it[Users.publicKey] to it[Users.id]
+    override suspend fun getUserAuthDataByAid(aid: String) = getUserByPredicate({
+        it[Users.publicKey] to it[Users.id]
+    }) {
+        where {
+            Aids.value eq aid
         }
     }
 
@@ -203,37 +191,28 @@ class ExposedUserDatabase(
         if (objectListFetch is ObjectListFetch.IdListFetch && objectListFetch.idList.isEmpty()) {
             return Result.success(emptyList())
         }
-        return databaseSession.dbSearch {
-            search {
-                Users
-                    .join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
-                    .select(Users.fields + Aids.value)
-                    .where {
-                        when (objectListFetch) {
-                            is ObjectListFetch.AidListFetch -> Aids.value inList objectListFetch.aidList
-                            is ObjectListFetch.IdListFetch -> Users.id inList objectListFetch.idList
-                        }
-                    }
+        return getUserListByPredicate({
+            where {
+                when (objectListFetch) {
+                    is ObjectListFetch.AidListFetch -> Aids.value inList objectListFetch.aidList
+                    is ObjectListFetch.IdListFetch -> Users.id inList objectListFetch.idList
+                }
             }
-            map(::mapUserInfo)
-        }
+        }, ::mapUserInfo)
     }
 
-    override suspend fun getUserAcgByIds(objectListFetch: ObjectListFetch) =
-        databaseSession.dbSearch {
-            search {
-                Users.select(Users.fields)
-                    .where {
-                        when (objectListFetch) {
-                            is ObjectListFetch.AidListFetch -> Aids.value inList objectListFetch.aidList
-                            is ObjectListFetch.IdListFetch -> Users.id inList objectListFetch.idList
-                        }
-                    }
-            }
-            map {
-                it[Users.id] to it[Users.acgAmount]
+    override suspend fun getUserAcgByIds(objectListFetch: ObjectListFetch) = getUserListByPredicate(
+        {
+            where {
+                when (objectListFetch) {
+                    is ObjectListFetch.AidListFetch -> Aids.value inList objectListFetch.aidList
+                    is ObjectListFetch.IdListFetch -> Users.id inList objectListFetch.idList
+                }
             }
         }
+    ) {
+        it[Users.id] to it[Users.acgAmount]
+    }
 
     override suspend fun addReadLog(userTopicRead: UserTopicRead) = databaseSession.dbQuery {
         check(UserTopicReads.upsert(onUpdate = {
@@ -389,15 +368,9 @@ class ExposedUserDatabase(
     }
 
     override suspend fun getAllUsers(primaryKeyFetch: PrimaryKeyFetch) = runCatching {
-        val rawUsers = databaseSession.dbSearch {
-            search {
-                Users
-                    .join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
-                    .select(Users.fields + Aids.value)
-                    .bindPaginationQuery(Users, primaryKeyFetch)
-            }
-            map(::mapUserInfo)
-        }.getOrThrow()
+        val rawUsers = getUserListByPredicate({
+            bindPaginationQuery(Users, primaryKeyFetch)
+        }, ::mapUserInfo).getOrThrow()
         val total = getUserCount().getOrThrow()
         PaginationResult(rawUsers, total)
     }
@@ -407,5 +380,29 @@ class ExposedUserDatabase(
             Users.selectAll()
         }
         count()
+    }
+
+    private suspend fun <T> getUserListByPredicate(
+        queryBuilder: Query.() -> Query = { this },
+        block: (ResultRow) -> T
+    ) = databaseSession.dbSearch {
+        search {
+            Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
+                .selectAll()
+                .queryBuilder()
+        }
+        map(block)
+    }
+
+    private suspend fun <T> getUserByPredicate(
+        block: (ResultRow) -> T,
+        queryBuilder: Query.() -> Query = { this }
+    ) = databaseSession.dbSearch {
+        search {
+            Users.join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
+                .selectAll()
+                .queryBuilder()
+        }
+        first(block)
     }
 }

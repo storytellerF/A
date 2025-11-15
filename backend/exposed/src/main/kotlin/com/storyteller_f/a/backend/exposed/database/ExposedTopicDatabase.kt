@@ -27,6 +27,7 @@ import com.storyteller_f.shared.utils.associateByPair
 import com.storyteller_f.shared.utils.extractMarkdownMediaLink
 import com.storyteller_f.shared.utils.now
 import org.jetbrains.exposed.v1.core.JoinType
+import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.countDistinct
@@ -45,32 +46,34 @@ class ExposedTopicDatabase(
     val databaseSession: ExposedDatabaseSession,
     val combinedDatabase: CombinedDatabase,
 ) : TopicDatabase {
-    override suspend fun getTopicRootTuple(parentId: PrimaryKey) = databaseSession.dbSearch {
-        search {
-            Topics.selectAll().where {
+    override suspend fun getTopicRootTuple(parentId: PrimaryKey) =
+        getTopicByPredicate({
+            ObjectTuple(it[Topics.rootId], it[Topics.rootType])
+        }) {
+            where {
                 Topics.id eq parentId
             }
         }
-        first {
-            val topic = Topic.wrapRow(it)
-            ObjectTuple(
-                topic.rootId,
-                topic.rootType,
-            )
-        }
-    }
 
-    override suspend fun getTopic(fetch: ObjectFetch): Result<Topic?> = databaseSession.dbSearch {
+    override suspend fun getTopic(fetch: ObjectFetch): Result<Topic?> =
+        getTopicByPredicate(Topic::wrapRow) {
+            where {
+                when (fetch) {
+                    is ObjectFetch.IdFetch -> Topics.id eq fetch.id
+                    is ObjectFetch.AidFetch -> Aids.value eq fetch.aid
+                }
+            }
+        }
+
+    private suspend fun <T> getTopicByPredicate(
+        block: (ResultRow) -> T,
+        extraQuery: Query.() -> Query = { this }
+    ): Result<T?> = databaseSession.dbSearch {
         search {
             Topics.join(Aids, JoinType.LEFT, Topics.id, Aids.objectId)
-                .select(Topics.fields + Aids.value).where {
-                    when (fetch) {
-                        is ObjectFetch.IdFetch -> Topics.id eq fetch.id
-                        is ObjectFetch.AidFetch -> Aids.value eq fetch.aid
-                    }
-                }
+                .select(Topics.fields + Aids.value).extraQuery()
         }
-        first(Topic::wrapRow)
+        first(block)
     }
 
     private suspend fun getTopicListByPredicate(
@@ -305,7 +308,7 @@ class ExposedTopicDatabase(
     override suspend fun getTopicCount() = getTopicCountByPredicate()
 
     override suspend fun getAllTopicPagination(primaryKeyFetch: PrimaryKeyFetch):
-        Result<PaginationResult<Topic>> = getTopicPaginationByPredicate(primaryKeyFetch)
+            Result<PaginationResult<Topic>> = getTopicPaginationByPredicate(primaryKeyFetch)
 }
 
 private suspend fun Topic.Companion.new(info: Topic) = check(Topics.insert {
