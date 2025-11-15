@@ -42,6 +42,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -122,7 +123,11 @@ interface PanelNav {
     fun open()
 }
 
-class Nav2PanelNav(val navigator: NavHostController, override val drawerState: DrawerState, private val scope: CoroutineScope) : PanelNav {
+class Nav2PanelNav(
+    val navigator: NavHostController,
+    override val drawerState: DrawerState,
+    private val scope: CoroutineScope
+) : PanelNav {
     override fun gotoLogin() {
         navigator.navigate("login")
     }
@@ -230,43 +235,51 @@ fun App() {
                     PanelDrawer(scope, drawerState, nav)
                 }
             ) {
-                NavHost(navigator, "overview") {
-                    composable("login") {
-                        PanelLoginPage {
-                            navigator.popBackStack()
-                            nav.gotoOverview()
-                        }
-                    }
-                    composable("all-users") {
-                        AllUsersPage()
-                    }
-                    composable("all-communities") {
-                        AllCommunitiesPage()
-                    }
-                    composable("all-rooms-public") {
-                        AllPublicRoomsPage()
-                    }
-                    composable("all-rooms-private") {
-                        AllPrivateRoomsPage()
-                    }
-                    composable("all-topics") {
-                        AllTopicsPage()
-                    }
-                    composable("all-files") {
-                        AllFilesPage()
-                    }
-                    composable("all-titles") {
-                        AllTitlesPage()
-                    }
-                    composable("overview") {
-                        PanelHost {
-                            OverviewPage()
-                        }
-                    }
-                }
+                PanelAppNavHost(navigator, nav)
             }
         }
         GlobalDialog(controller)
+    }
+}
+
+@Composable
+private fun PanelAppNavHost(
+    navigator: NavHostController,
+    nav: Nav2PanelNav
+) {
+    NavHost(navigator, "overview") {
+        composable("login") {
+            PanelLoginPage {
+                navigator.popBackStack()
+                nav.gotoOverview()
+            }
+        }
+        composable("all-users") {
+            AllUsersPage()
+        }
+        composable("all-communities") {
+            AllCommunitiesPage()
+        }
+        composable("all-rooms-public") {
+            AllPublicRoomsPage()
+        }
+        composable("all-rooms-private") {
+            AllPrivateRoomsPage()
+        }
+        composable("all-topics") {
+            AllTopicsPage()
+        }
+        composable("all-files") {
+            AllFilesPage()
+        }
+        composable("all-titles") {
+            AllTitlesPage()
+        }
+        composable("overview") {
+            PanelHost {
+                OverviewPage()
+            }
+        }
     }
 }
 
@@ -277,85 +290,69 @@ private fun PanelDrawer(
     nav: Nav2PanelNav
 ) {
     ModalDrawerSheet {
-        Text(
-            "导航菜单",
-            modifier = Modifier.padding(16.dp),
-            style = MaterialTheme.typography.titleLarge
-        )
-        HorizontalDivider()
-        NavigationDrawerItem(
-            icon = { Icon(Icons.Default.Home, contentDescription = null) },
-            label = { Text("概览") },
-            selected = false,
-            onClick = {
-                scope.launch { drawerState.close() }
-                nav.gotoOverview()
-            }
-        )
-        NavigationDrawerItem(
-            icon = { Icon(Icons.Default.People, contentDescription = null) },
-            label = { Text("所有用户") },
-            selected = false,
-            onClick = {
-                scope.launch { drawerState.close() }
-                nav.gotoAllUsers()
-            }
-        )
-        NavigationDrawerItem(
-            icon = { Icon(Icons.Default.Group, contentDescription = null) },
-            label = { Text("所有社区") },
-            selected = false,
-            onClick = {
-                scope.launch { drawerState.close() }
-                nav.gotoAllCommunities()
-            }
-        )
-        NavigationDrawerItem(
-            icon = { Icon(Icons.Default.Public, contentDescription = null) },
-            label = { Text("所有公共房间") },
-            selected = false,
-            onClick = {
-                scope.launch { drawerState.close() }
-                nav.gotoAllPublicRooms()
-            }
-        )
-        NavigationDrawerItem(
-            icon = { Icon(Icons.Default.Lock, contentDescription = null) },
-            label = { Text("所有私有房间") },
-            selected = false,
-            onClick = {
-                scope.launch { drawerState.close() }
-                nav.gotoAllPrivateRooms()
-            }
-        )
-        NavigationDrawerItem(
-            icon = { Icon(Icons.Default.Topic, contentDescription = null) },
-            label = { Text("所有主题") },
-            selected = false,
-            onClick = {
-                scope.launch { drawerState.close() }
-                nav.gotoAllTopics()
-            }
-        )
-        NavigationDrawerItem(
-            icon = { Icon(Icons.Default.FilePresent, contentDescription = null) },
-            label = { Text("所有文件") },
-            selected = false,
-            onClick = {
-                scope.launch { drawerState.close() }
-                nav.gotoAllFiles()
-            }
-        )
-        NavigationDrawerItem(
-            icon = { Icon(Icons.Default.Title, contentDescription = null) },
-            label = { Text("所有标题") },
-            selected = false,
-            onClick = {
-                scope.launch { drawerState.close() }
-                nav.gotoAllTitles()
-            }
-        )
+        DrawerHeader()
+        DrawerNavItem(
+            Icons.Default.Home,
+            "概览",
+            onNavigate(scope, drawerState) { nav.gotoOverview() })
+        DrawerNavItem(
+            Icons.Default.People,
+            "所有用户",
+            onNavigate(scope, drawerState) { nav.gotoAllUsers() })
+        DrawerNavItem(
+            Icons.Default.Group,
+            "所有社区",
+            onNavigate(scope, drawerState) { nav.gotoAllCommunities() })
+        DrawerNavItem(
+            Icons.Default.Public,
+            "所有公共房间",
+            onNavigate(scope, drawerState) { nav.gotoAllPublicRooms() })
+        DrawerNavItem(
+            Icons.Default.Lock,
+            "所有私有房间",
+            onNavigate(scope, drawerState) { nav.gotoAllPrivateRooms() })
+        DrawerNavItem(
+            Icons.Default.Topic,
+            "所有主题",
+            onNavigate(scope, drawerState) { nav.gotoAllTopics() })
+        DrawerNavItem(
+            Icons.Default.FilePresent,
+            "所有文件",
+            onNavigate(scope, drawerState) { nav.gotoAllFiles() })
+        DrawerNavItem(
+            Icons.Default.Title,
+            "所有标题",
+            onNavigate(scope, drawerState) { nav.gotoAllTitles() })
     }
+}
+
+@Composable
+private fun DrawerHeader() {
+    Text(
+        "导航菜单",
+        modifier = Modifier.padding(16.dp),
+        style = MaterialTheme.typography.titleLarge
+    )
+    HorizontalDivider()
+}
+
+@Composable
+private fun DrawerNavItem(icon: ImageVector, label: String, onClick: () -> Unit) {
+    NavigationDrawerItem(
+        icon = { Icon(icon, contentDescription = null) },
+        label = { Text(label) },
+        selected = false,
+        onClick = onClick
+    )
+}
+
+private fun onNavigate(
+    scope: CoroutineScope,
+    drawerState: DrawerState,
+    navigate: () -> Unit
+): () -> Unit = {
+    scope.launch { drawerState.close() }
+    navigate()
 }
 
 @Composable
