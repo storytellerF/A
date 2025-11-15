@@ -11,9 +11,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.pagingItems
+import com.storyteller_f.a.panel.LocalPanelNav
 import com.storyteller_f.a.panel.common.AllTopicsViewModel
 import com.storyteller_f.a.panel.common.createPanelAllTopicsViewModel
-import com.storyteller_f.a.panel.LocalPanelNav
 
 @Composable
 fun AllTopicsPage() {
