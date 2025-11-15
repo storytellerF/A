@@ -1,14 +1,10 @@
 package com.storyteller_f.a.backend.exposed.database
 
-import com.storyteller_f.a.backend.core.ContainerDatabase
-import com.storyteller_f.a.backend.core.FavoriteDatabase
-import com.storyteller_f.a.backend.core.FileDatabase
+import com.storyteller_f.a.backend.core.CombinedDatabase
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
-import com.storyteller_f.a.backend.core.ReactionDatabase
-import com.storyteller_f.a.backend.core.SubscriptionDatabase
 import com.storyteller_f.a.backend.core.TopicDatabase
 import com.storyteller_f.a.backend.core.types.EncryptedKey
 import com.storyteller_f.a.backend.core.types.RawTopic
@@ -52,11 +48,7 @@ import org.jetbrains.exposed.v1.r2dbc.update
 
 class ExposedTopicDatabase(
     val databaseSession: ExposedDatabaseSession,
-    val containerDatabase: ContainerDatabase,
-    val fileDatabase: FileDatabase,
-    val reactionDatabase: ReactionDatabase,
-    val favoriteDatabase: FavoriteDatabase,
-    val subscriptionDatabase: SubscriptionDatabase,
+    val combinedDatabase: CombinedDatabase,
 ) : TopicDatabase {
     override suspend fun getTopicRootTuple(parentId: PrimaryKey) = databaseSession.dbSearch {
         search {
@@ -75,7 +67,7 @@ class ExposedTopicDatabase(
 
     override suspend fun getRawTopic(fetch: ObjectFetch, uid: PrimaryKey?) =
         getTopic(fetch).mapResultIfNotNull { topic ->
-            processTopicToRawTopic(uid, listOf(topic))
+            combinedDatabase.processTopicToRawTopic(uid, listOf(topic))
         }.firstOrNull()
 
     private suspend fun getTopic(fetch: ObjectFetch): Result<Topic?> = databaseSession.dbSearch {
@@ -95,7 +87,7 @@ class ExposedTopicDatabase(
         uid: PrimaryKey?,
         queryBuilder: Query.() -> Query,
     ) = getTopicListByPredicate(queryBuilder).mapResult {
-        processTopicToRawTopic(uid, it)
+        combinedDatabase.processTopicToRawTopic(uid, it)
     }
 
     private suspend fun getTopicListByPredicate(queryBuilder: Query.() -> Query): Result<List<Topic>> =
@@ -194,7 +186,7 @@ class ExposedTopicDatabase(
         content: TopicContent.Plain
     ) = databaseSession.dbQuery {
         Topic.new(topic)
-        fileDatabase.insertFileRefs(
+        combinedDatabase.file.insertFileRefs(
             topic.id,
             ObjectType.TOPIC,
             extractMarkdownMediaLink(content.plain).map {
@@ -257,86 +249,7 @@ class ExposedTopicDatabase(
         }
     }
 
-    suspend fun processTopicToRawTopic(
-        uid: PrimaryKey?,
-        topics: List<Topic>
-    ): Result<List<RawTopic>> {
-        val topicIds = topics.map {
-            it.id
-        }
-        if (topicIds.isEmpty()) return Result.success(emptyList())
-        return runCatching {
-            val commentedMap = getUserCommentMap(uid, topicIds)
-            val commentCountMap = getCommentCountMap(topicIds)
-            val reactionCountMap = getReactionCountMap(topicIds)
-            val lastReadMap = getLastReadMap(uid, topicIds)
-            val contentMap = getTopicContentFromByteArray(topics, uid).getOrThrow()
-            val favoriteMap = if (uid != null) {
-                favoriteDatabase.getHasFavorite(
-                    ObjectListFetch.IdListFetch(topicIds),
-                    uid
-                ).getOrThrow().associateBy { it.objectId }
-            } else {
-                emptyMap()
-            }
-            val subscriptionMap = if (uid != null) {
-                subscriptionDatabase.getHasSubscription(
-                    ObjectListFetch.IdListFetch(topicIds),
-                    uid
-                ).getOrThrow().associateBy { it.objectId }
-            } else {
-                emptyMap()
-            }
-            topics.map { topic ->
-                val id = topic.id
-                RawTopic(
-                    topic,
-                    contentMap[id] ?: TopicContent.Nil,
-                    commentCountMap[id] ?: 0,
-                    commentedMap.contains(id),
-                    reactionCountMap[id] ?: 0,
-                    lastReadMap[id]?.topicId,
-                    favoriteId = favoriteMap[id]?.id,
-                    subscriptionId = subscriptionMap[id]?.id,
-                )
-            }
-        }
-    }
 
-    private suspend fun getReactionCountMap(topicIds: List<PrimaryKey>) =
-        reactionDatabase.getReactionCount(topicIds).map {
-            it.associateByPair()
-        }.getOrThrow()
-
-    private suspend fun getLastReadMap(
-        uid: PrimaryKey?,
-        topicIds: List<PrimaryKey>
-    ) = if (uid != null) {
-        containerDatabase.getTopicReadList(topicIds, uid)
-            .map {
-                it.associateBy { userTopicRead ->
-                    userTopicRead.objectId
-                }
-            }
-    } else {
-        Result.success(emptyMap())
-    }.getOrThrow()
-
-    private suspend fun getCommentCountMap(topicIds: List<PrimaryKey>) =
-        getTopicCommentCount(topicIds).map {
-            it.associateByPair()
-        }.getOrThrow()
-
-    private suspend fun getUserCommentMap(
-        uid: PrimaryKey?,
-        topicIds: List<PrimaryKey>
-    ) = if (uid != null) {
-        isUserCommented(uid, topicIds).map {
-            it.toSet()
-        }
-    } else {
-        Result.success(emptySet())
-    }.getOrThrow()
 
     override suspend fun getTopicContentFromByteArray(
         topics: List<Topic>,

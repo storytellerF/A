@@ -386,7 +386,7 @@ suspend fun Backend.processRawUserToUserInfo(
     }
 }
 
-suspend fun Backend.getUserOverview(uid: PrimaryKey) = database.user.getUserOverview(uid)
+suspend fun Backend.getUserOverview(uid: PrimaryKey) = database.getUserOverview(uid)
 
 suspend fun Backend.getAllUsers(primaryKeyFetch: PrimaryKeyFetch) =
     database.user.getAllUsers(primaryKeyFetch).mapResult { result ->

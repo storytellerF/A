@@ -36,6 +36,7 @@ import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.model.TopicContent
+import com.storyteller_f.shared.utils.associateByPair
 import com.storyteller_f.shared.model.TopicPinSearch
 import com.storyteller_f.shared.model.UserOverview
 import com.storyteller_f.shared.model.UserPubKeyInfo
@@ -121,6 +122,60 @@ interface CombinedDatabase {
     suspend fun migration()
 
     fun isDup(throwable: Throwable): Boolean
+
+    suspend fun getUserOverview(uid: PrimaryKey): Result<UserOverview> = runCatching {
+        val subscriptionCount = subscription.getUserSubscriptionCount(uid).getOrThrow()
+        val favoriteCount = favorite.getUserFavoriteCount().getOrThrow()
+        val childAccountCount = user.getChildAccountCount(uid)
+        UserOverview(subscriptionCount, favoriteCount, 0, childAccountCount)
+    }
+
+    suspend fun processTopicToRawTopic(
+        uid: PrimaryKey?,
+        topics: List<Topic>
+    ): Result<List<RawTopic>> = runCatching {
+        val topicIds = topics.map { it.id }
+        if (topicIds.isEmpty()) return@runCatching emptyList()
+
+        val commentedSet = if (uid != null) {
+            topic.isUserCommented(uid, topicIds).map { it.toSet() }.getOrThrow()
+        } else emptySet()
+
+        val commentCountMap = topic.getTopicCommentCount(topicIds).map { it.associateByPair() }.getOrThrow()
+        val reactionCountMap = reaction.getReactionCount(topicIds).map { it.associateByPair() }.getOrThrow()
+
+        val lastReadMap = if (uid != null) {
+            container.getTopicReadList(topicIds, uid).map {
+                it.associateBy { userTopicRead -> userTopicRead.objectId }
+            }.getOrThrow()
+        } else emptyMap()
+
+        val contentMap = topic.getTopicContentFromByteArray(topics, uid).getOrThrow()
+
+        val favoriteMap = if (uid != null) {
+            favorite.getHasFavorite(ObjectListFetch.IdListFetch(topicIds), uid)
+                .getOrThrow().associateBy { it.objectId }
+        } else emptyMap()
+
+        val subscriptionMap = if (uid != null) {
+            subscription.getHasSubscription(ObjectListFetch.IdListFetch(topicIds), uid)
+                .getOrThrow().associateBy { it.objectId }
+        } else emptyMap()
+
+        topics.map { topic ->
+            val id = topic.id
+            RawTopic(
+                topic,
+                contentMap[id] ?: TopicContent.Nil,
+                commentCountMap[id] ?: 0,
+                commentedSet.contains(id),
+                reactionCountMap[id] ?: 0,
+                lastReadMap[id]?.topicId,
+                favoriteId = favoriteMap[id]?.id,
+                subscriptionId = subscriptionMap[id]?.id,
+            )
+        }
+    }
 }
 
 interface UserDatabase {
@@ -166,7 +221,7 @@ interface UserDatabase {
     suspend fun getAllUsers(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<RawUser>>
     suspend fun getUserCount(): Result<Long>
 
-    suspend fun getUserOverview(uid: PrimaryKey): Result<UserOverview>
+    suspend fun getChildAccountCount(hostId: PrimaryKey): Long
 }
 
 interface TopicDatabase {
