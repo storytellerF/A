@@ -5,20 +5,24 @@ import com.storyteller_f.a.backend.core.CombinedDatabase
 import com.storyteller_f.a.backend.core.CommunityDatabase
 import com.storyteller_f.a.backend.core.ContainerDatabase
 import com.storyteller_f.a.backend.core.DatabaseConnection
+import com.storyteller_f.a.backend.core.FavoriteDatabase
 import com.storyteller_f.a.backend.core.FileDatabase
 import com.storyteller_f.a.backend.core.PanelAccountDatabase
 import com.storyteller_f.a.backend.core.ReactionDatabase
 import com.storyteller_f.a.backend.core.RoomDatabase
+import com.storyteller_f.a.backend.core.SubscriptionDatabase
 import com.storyteller_f.a.backend.core.TitleDatabase
 import com.storyteller_f.a.backend.core.TopicDatabase
 import com.storyteller_f.a.backend.core.UserDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedAdminDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedCommunityDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedContainerDatabase
+import com.storyteller_f.a.backend.exposed.database.ExposedFavoriteDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedFileDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedPanelAccountDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedReactionDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedRoomDatabase
+import com.storyteller_f.a.backend.exposed.database.ExposedSubscriptionDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedTitleDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedTopicDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedUserDatabase
@@ -79,9 +83,9 @@ fun <T : Table> T.emoji() = varchar("emoji", 20)
 
 class ExposedDatabase(val databaseSession: ExposedDatabaseSession) : CombinedDatabase {
     override val user: UserDatabase
-        get() = ExposedUserDatabase(databaseSession)
+        get() = ExposedUserDatabase(databaseSession, favorite, subscription)
     override val topic: TopicDatabase
-        get() = ExposedTopicDatabase(databaseSession, container, file, reaction)
+        get() = ExposedTopicDatabase(databaseSession, container, file, reaction, favorite, subscription)
     override val title: TitleDatabase
         get() = ExposedTitleDatabase(databaseSession)
     override val community: CommunityDatabase
@@ -99,6 +103,12 @@ class ExposedDatabase(val databaseSession: ExposedDatabaseSession) : CombinedDat
 
     override val reaction: ReactionDatabase
         get() = ExposedReactionDatabase(databaseSession)
+
+    override val favorite: FavoriteDatabase
+        get() = ExposedFavoriteDatabase(databaseSession)
+
+    override val subscription: SubscriptionDatabase
+        get() = ExposedSubscriptionDatabase(databaseSession)
 
     override suspend fun init() {
         ExposedDatabaseFactory.init(databaseSession.database)

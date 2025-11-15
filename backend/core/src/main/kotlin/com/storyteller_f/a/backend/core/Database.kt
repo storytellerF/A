@@ -113,6 +113,8 @@ interface CombinedDatabase {
     val admin: AdminDatabase
     val panelAccount: PanelAccountDatabase
     val reaction: ReactionDatabase
+    val favorite: FavoriteDatabase
+    val subscription: SubscriptionDatabase
 
     suspend fun init()
     suspend fun clean()
@@ -163,32 +165,8 @@ interface UserDatabase {
 
     suspend fun getAllUsers(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<RawUser>>
     suspend fun getUserCount(): Result<Long>
-    suspend fun getUserFavorites(
-        uid: PrimaryKey,
-        fetch: PrimaryKeyFetch
-    ): Result<PaginationResult<UserFavorite>>
 
-    suspend fun addFavorite(userFavorite: UserFavorite): Result<UserFavorite>
-    suspend fun removeFavorite(id: PrimaryKey): Result<Unit>
-    suspend fun getFavorite(id: PrimaryKey): Result<UserFavorite?>
-    suspend fun getFavorite(uid: PrimaryKey, objectId: PrimaryKey): Result<UserFavorite?>
-
-    suspend fun getUserSubscriptions(
-        uid: PrimaryKey,
-        fetch: PrimaryKeyFetch
-    ): Result<PaginationResult<UserSubscription>>
-
-    suspend fun addSubscription(userSubscription: UserSubscription): Result<UserSubscription>
-    suspend fun removeSubscription(id: PrimaryKey): Result<Unit>
-    suspend fun getSubscription(id: PrimaryKey): Result<UserSubscription?>
-    suspend fun getSubscription(uid: PrimaryKey, objectId: PrimaryKey): Result<UserSubscription?>
     suspend fun getUserOverview(uid: PrimaryKey): Result<UserOverview>
-    suspend fun getSubscriptionsByObjectId(
-        objectId: PrimaryKey,
-        primaryKeyFetch: PrimaryKeyFetch
-    ): Result<List<UserSubscription>>
-    suspend fun insertSubscriptionSentLog(log: SubscriptionSentLog): Result<SubscriptionSentLog>
-    suspend fun getLatestSubscriptionSentLog(objectId: PrimaryKey): Result<SubscriptionSentLog?>
 }
 
 interface TopicDatabase {
@@ -228,6 +206,40 @@ interface TopicDatabase {
     suspend fun getTopicCount(): Result<Long>
     suspend fun getAllTopics(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<Topic>>
     suspend fun getAllRawTopics(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<RawTopic>>
+}
+
+interface FavoriteDatabase {
+    suspend fun getUserFavorites(
+        uid: PrimaryKey,
+        fetch: PrimaryKeyFetch
+    ): Result<PaginationResult<UserFavorite>>
+
+    suspend fun addFavorite(userFavorite: UserFavorite): Result<UserFavorite>
+    suspend fun removeFavorite(id: PrimaryKey): Result<Unit>
+    suspend fun getFavorite(id: PrimaryKey): Result<UserFavorite?>
+    suspend fun getFavorite(uid: PrimaryKey, objectId: PrimaryKey): Result<UserFavorite?>
+    suspend fun getHasFavorite(idList: ObjectListFetch.IdListFetch, uid: PrimaryKey): Result<List<UserFavorite>>
+    suspend fun getUserFavoriteCount(): Result<Long>
+}
+
+interface SubscriptionDatabase {
+    suspend fun getUserSubscriptions(
+        uid: PrimaryKey,
+        fetch: PrimaryKeyFetch
+    ): Result<PaginationResult<UserSubscription>>
+
+    suspend fun addSubscription(userSubscription: UserSubscription): Result<UserSubscription>
+    suspend fun removeSubscription(id: PrimaryKey): Result<Unit>
+    suspend fun getSubscription(id: PrimaryKey): Result<UserSubscription?>
+    suspend fun getSubscription(uid: PrimaryKey, objectId: PrimaryKey): Result<UserSubscription?>
+    suspend fun getSubscriptionsByObjectId(
+        objectId: PrimaryKey,
+        primaryKeyFetch: PrimaryKeyFetch
+    ): Result<List<UserSubscription>>
+    suspend fun insertSubscriptionSentLog(log: SubscriptionSentLog): Result<SubscriptionSentLog>
+    suspend fun getLatestSubscriptionSentLog(objectId: PrimaryKey): Result<SubscriptionSentLog?>
+    suspend fun getHasSubscription(idList: ObjectListFetch.IdListFetch, uid: PrimaryKey): Result<List<UserSubscription>>
+    suspend fun getUserSubscriptionCount(uid: PrimaryKey): Result<Long>
 }
 
 interface ReactionDatabase {

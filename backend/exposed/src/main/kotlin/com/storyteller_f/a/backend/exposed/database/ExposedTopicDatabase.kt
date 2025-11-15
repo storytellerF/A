@@ -1,19 +1,19 @@
 package com.storyteller_f.a.backend.exposed.database
 
 import com.storyteller_f.a.backend.core.ContainerDatabase
+import com.storyteller_f.a.backend.core.FavoriteDatabase
 import com.storyteller_f.a.backend.core.FileDatabase
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.ReactionDatabase
+import com.storyteller_f.a.backend.core.SubscriptionDatabase
 import com.storyteller_f.a.backend.core.TopicDatabase
 import com.storyteller_f.a.backend.core.types.EncryptedKey
 import com.storyteller_f.a.backend.core.types.RawTopic
 import com.storyteller_f.a.backend.core.types.Title
 import com.storyteller_f.a.backend.core.types.Topic
-import com.storyteller_f.a.backend.core.types.UserFavorite
-import com.storyteller_f.a.backend.core.types.UserSubscription
 import com.storyteller_f.a.backend.exposed.ExposedDatabaseSession
 import com.storyteller_f.a.backend.exposed.count
 import com.storyteller_f.a.backend.exposed.first
@@ -23,8 +23,6 @@ import com.storyteller_f.a.backend.exposed.tables.Aids
 import com.storyteller_f.a.backend.exposed.tables.EncryptedKeys
 import com.storyteller_f.a.backend.exposed.tables.Titles
 import com.storyteller_f.a.backend.exposed.tables.Topics
-import com.storyteller_f.a.backend.exposed.tables.UserFavorites
-import com.storyteller_f.a.backend.exposed.tables.UserSubscriptions
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicPinSearch
@@ -34,7 +32,6 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.associateByPair
 import com.storyteller_f.shared.utils.extractMarkdownMediaLink
 import com.storyteller_f.shared.utils.firstOrNull
-import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
@@ -58,6 +55,8 @@ class ExposedTopicDatabase(
     val containerDatabase: ContainerDatabase,
     val fileDatabase: FileDatabase,
     val reactionDatabase: ReactionDatabase,
+    val favoriteDatabase: FavoriteDatabase,
+    val subscriptionDatabase: SubscriptionDatabase,
 ) : TopicDatabase {
     override suspend fun getTopicRootTuple(parentId: PrimaryKey) = databaseSession.dbSearch {
         search {
@@ -273,7 +272,7 @@ class ExposedTopicDatabase(
             val lastReadMap = getLastReadMap(uid, topicIds)
             val contentMap = getTopicContentFromByteArray(topics, uid).getOrThrow()
             val favoriteMap = if (uid != null) {
-                getHasFavorite(
+                favoriteDatabase.getHasFavorite(
                     ObjectListFetch.IdListFetch(topicIds),
                     uid
                 ).getOrThrow().associateBy { it.objectId }
@@ -281,7 +280,7 @@ class ExposedTopicDatabase(
                 emptyMap()
             }
             val subscriptionMap = if (uid != null) {
-                getHasSubscription(
+                subscriptionDatabase.getHasSubscription(
                     ObjectListFetch.IdListFetch(topicIds),
                     uid
                 ).getOrThrow().associateBy { it.objectId }
@@ -434,34 +433,6 @@ class ExposedTopicDatabase(
             }.getOrThrow()
             val total = getTopicCount().getOrThrow()
             PaginationResult(topics, total)
-        }
-    }
-
-    suspend fun getHasFavorite(
-        idList: ObjectListFetch.IdListFetch,
-        uid: PrimaryKey
-    ) = databaseSession.dbSearch {
-        search {
-            UserFavorites.selectAll().where {
-                (UserFavorites.uid eq uid) and (UserFavorites.objectId inList idList.idList)
-            }
-        }
-        map {
-            UserFavorite.wrapRow(it)
-        }
-    }
-
-    suspend fun getHasSubscription(
-        idList: ObjectListFetch.IdListFetch,
-        uid: PrimaryKey
-    ) = databaseSession.dbSearch {
-        search {
-            UserSubscriptions.selectAll().where {
-                (UserSubscriptions.uid eq uid) and (UserSubscriptions.objectId inList idList.idList)
-            }
-        }
-        map {
-            UserSubscription.wrapRow(it)
         }
     }
 }

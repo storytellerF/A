@@ -22,7 +22,7 @@ suspend fun Backend.addSubscription(
     uid: PrimaryKey,
     newSubscription: NewSubscription
 ) = addIfNotExists({
-    database.user.getSubscription(uid, newSubscription.objectId)
+    database.subscription.getSubscription(uid, newSubscription.objectId)
 }, {
     val id = SnowflakeFactory.nextId()
     val userSubscription = UserSubscription(
@@ -32,7 +32,7 @@ suspend fun Backend.addSubscription(
         newSubscription.objectType,
         now()
     )
-    database.user.addSubscription(userSubscription).onSuccess {
+    database.subscription.addSubscription(userSubscription).onSuccess {
         addUserLog(uid, UserLogType.ADD_SUBSCRIPTION, newSubscription.tuple())
     }
 }).mapResultIfNotNull {
@@ -42,10 +42,10 @@ suspend fun Backend.addSubscription(
 suspend fun Backend.removeSubscription(
     uid: PrimaryKey,
     subscriptionId: PrimaryKey
-) = database.user.getSubscription(subscriptionId)
+) = database.subscription.getSubscription(subscriptionId)
     .mapResultIfNotNull { subscription ->
         if (subscription.uid == uid) {
-            database.user.removeSubscription(subscriptionId).onSuccess {
+            database.subscription.removeSubscription(subscriptionId).onSuccess {
                 addUserLog(uid, UserLogType.REMOVE_SUBSCRIPTION, subscription.objectTuple())
             }
         } else {
@@ -56,7 +56,7 @@ suspend fun Backend.removeSubscription(
 suspend fun Backend.getUserSubscriptions(
     uid: PrimaryKey,
     fetch: PrimaryKeyFetch
-) = database.user.getUserSubscriptions(uid, fetch)
+) = database.subscription.getUserSubscriptions(uid, fetch)
     .mapResult { paginationResult ->
         processUserSubscriptionToUserSubscriptionInfo(uid, paginationResult.list).map { list ->
             PaginationResult(list, paginationResult.total)
