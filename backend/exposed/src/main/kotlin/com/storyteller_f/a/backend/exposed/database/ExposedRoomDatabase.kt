@@ -37,6 +37,7 @@ import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.isNotNull
 import org.jetbrains.exposed.v1.core.isNull
 import org.jetbrains.exposed.v1.core.like
+import org.jetbrains.exposed.v1.r2dbc.Query
 import org.jetbrains.exposed.v1.r2dbc.andWhere
 import org.jetbrains.exposed.v1.r2dbc.insert
 import org.jetbrains.exposed.v1.r2dbc.select
@@ -62,22 +63,12 @@ class ExposedRoomDatabase(
         community: PrimaryKey?,
         primaryKeyFetch: PrimaryKeyFetch,
         joinSearch: JoinSearch,
-    ) = databaseSession.dbSearch {
-        search {
-            Rooms
-                .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
-                .select(Rooms.fields + Aids.value)
-                .buildRoomSearchWhereQuery(joinSearch, community, word)
-                .bindPaginationQuery(Rooms, primaryKeyFetch)
-        }
-        map(Room::wrapRow)
+    ) = getRoomListByPredicate {
+        buildRoomSearchWhereQuery(joinSearch, community, word)
+            .bindPaginationQuery(Rooms, primaryKeyFetch)
     }.mapResult {
-        databaseSession.dbSearch {
-            search {
-                Rooms.select(Rooms.id)
-                    .buildRoomSearchWhereQuery(joinSearch, community, word)
-            }
-            count()
+        getRoomCountByPredicate {
+            buildRoomSearchWhereQuery(joinSearch, community, word)
         }.mapResult { count ->
             processRoomListToRawRoom(uid, it).map { list ->
                 PaginationResult(list, count)
@@ -127,18 +118,14 @@ class ExposedRoomDatabase(
         uid: PrimaryKey?,
     ): Result<RawRoom?> {
         if (uid == null && fillJoinInfo == true) return Result.failure(UnauthorizedException())
-        return databaseSession.dbSearch {
-            search {
-                Rooms.join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
-                    .select(Rooms.fields + Aids.value)
-                    .where {
-                        when (objectFetch) {
-                            is ObjectFetch.AidFetch -> Aids.value eq objectFetch.aid
-                            is ObjectFetch.IdFetch -> Rooms.id eq objectFetch.id
-                        }
-                    }
+
+        return getRoomByPredicate {
+            where {
+                when (objectFetch) {
+                    is ObjectFetch.AidFetch -> Aids.value eq objectFetch.aid
+                    is ObjectFetch.IdFetch -> Rooms.id eq objectFetch.id
+                }
             }
-            first(Room::wrapRow)
         }.mapResultIfNotNull { room ->
             processRoomListToRawRoom(uid, listOf(room))
         }.mapIfNotNull {
@@ -188,36 +175,23 @@ class ExposedRoomDatabase(
         }
 
     override suspend fun getRawRooms(objectListFetch: ObjectListFetch, uid: PrimaryKey?) =
-        databaseSession.dbSearch {
-            search {
-                Rooms.join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
-                    .select(Rooms.fields + Aids.value).where {
-                        when (objectListFetch) {
-                            is ObjectListFetch.AidListFetch -> Aids.value inList objectListFetch.aidList
-                            is ObjectListFetch.IdListFetch -> Rooms.id inList objectListFetch.idList
-                        }
-                    }
-            }
-            map {
-                Room.wrapRow(it)
+        getRoomListByPredicate {
+            where {
+                when (objectListFetch) {
+                    is ObjectListFetch.AidListFetch -> Aids.value inList objectListFetch.aidList
+                    is ObjectListFetch.IdListFetch -> Rooms.id inList objectListFetch.idList
+                }
             }
         }.mapResult {
             processRoomListToRawRoom(uid, it)
         }
 
-    override suspend fun getRoomList(objectListFetch: ObjectListFetch) = databaseSession.dbSearch {
-        search {
-            Rooms.join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
-                .select(Rooms.fields + Aids.value)
-                .where {
-                    when (objectListFetch) {
-                        is ObjectListFetch.AidListFetch -> Aids.value inList objectListFetch.aidList
-                        is ObjectListFetch.IdListFetch -> Rooms.id inList objectListFetch.idList
-                    }
-                }
-        }
-        map {
-            Room.wrapRow(it)
+    override suspend fun getRoomList(objectListFetch: ObjectListFetch) = getRoomListByPredicate {
+        where {
+            when (objectListFetch) {
+                is ObjectListFetch.AidListFetch -> Aids.value inList objectListFetch.aidList
+                is ObjectListFetch.IdListFetch -> Rooms.id inList objectListFetch.idList
+            }
         }
     }
 
@@ -269,40 +243,61 @@ class ExposedRoomDatabase(
         primaryKeyFetch: PrimaryKeyFetch,
         word: String?,
     ) = runCatching {
-        val rooms = databaseSession.dbSearch {
-            search {
-                Rooms
-                    .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
-                    .select(Rooms.fields + Aids.value)
-                    .where {
-                        Rooms.communityId.isNull()
-                    }
-                    .let { q ->
-                        if (!word.isNullOrBlank()) {
-                            q.andWhere { Rooms.name like "%$word%" }
-                        } else {
-                            q
-                        }
-                    }
-                    .bindPaginationQuery(Rooms, primaryKeyFetch)
-            }
-            map(Room::wrapRow)
-        }.getOrThrow()
-        val total = databaseSession.dbSearch {
-            search {
-                Rooms.select(Rooms.id).where {
-                    Rooms.communityId.isNull()
-                }.let { q ->
+        val rooms = getRoomListByPredicate {
+            where { Rooms.communityId.isNull() }
+                .let { q ->
                     if (!word.isNullOrBlank()) {
                         q.andWhere { Rooms.name like "%$word%" }
                     } else {
                         q
                     }
                 }
-            }
-            count()
+                .bindPaginationQuery(Rooms, primaryKeyFetch)
+        }.getOrThrow()
+        val total = getRoomCountByPredicate {
+            where { Rooms.communityId.isNull() }
+                .let { q ->
+                    if (!word.isNullOrBlank()) {
+                        q.andWhere { Rooms.name like "%$word%" }
+                    } else {
+                        q
+                    }
+                }
         }.getOrThrow()
         val rawRooms = processRoomListToRawRoom(null, rooms).getOrThrow()
         PaginationResult(rawRooms, total)
+    }
+
+    private suspend fun getRoomListByPredicate(
+        queryBuilder: Query.() -> Query = { this }
+    ) = databaseSession.dbSearch {
+        search {
+            Rooms
+                .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
+                .select(Rooms.fields + Aids.value)
+                .queryBuilder()
+        }
+        map(Room::wrapRow)
+    }
+
+    private suspend fun getRoomByPredicate(
+        queryBuilder: Query.() -> Query = { this }
+    ) = databaseSession.dbSearch {
+        search {
+            Rooms
+                .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
+                .select(Rooms.fields + Aids.value)
+                .queryBuilder()
+        }
+        first(Room::wrapRow)
+    }
+
+    private suspend fun getRoomCountByPredicate(
+        queryBuilder: Query.() -> Query = { this }
+    ) = databaseSession.dbSearch {
+        search {
+            Rooms.select(Rooms.id).queryBuilder()
+        }
+        count()
     }
 }

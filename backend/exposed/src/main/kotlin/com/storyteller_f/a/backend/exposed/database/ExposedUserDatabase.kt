@@ -375,12 +375,7 @@ class ExposedUserDatabase(
         PaginationResult(rawUsers, total)
     }
 
-    override suspend fun getUserCount() = databaseSession.dbSearch {
-        search {
-            Users.selectAll()
-        }
-        count()
-    }
+    override suspend fun getUserCount() = getUserCountByPredicate()
 
     private suspend fun <T> getUserListByPredicate(
         queryBuilder: Query.() -> Query = { this },
@@ -404,5 +399,14 @@ class ExposedUserDatabase(
                 .queryBuilder()
         }
         first(block)
+    }
+
+    private suspend fun getUserCountByPredicate(
+        queryBuilder: Query.() -> Query = { this }
+    ) = databaseSession.dbSearch {
+        search {
+            Users.select(Users.id).queryBuilder()
+        }
+        count()
     }
 }

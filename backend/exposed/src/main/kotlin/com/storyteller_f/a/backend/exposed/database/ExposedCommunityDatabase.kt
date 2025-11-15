@@ -33,6 +33,7 @@ import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.r2dbc.Query
 import org.jetbrains.exposed.v1.r2dbc.insert
 import org.jetbrains.exposed.v1.r2dbc.select
 import org.jetbrains.exposed.v1.r2dbc.selectAll
@@ -51,18 +52,14 @@ class ExposedCommunityDatabase(
         if (uid == null && fillJoinInfo == true) {
             return Result.failure(UnauthorizedException())
         }
-        return databaseSession.dbSearch {
-            search {
-                Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
-                    .select(Communities.fields + Aids.value)
-                    .where {
-                        when (objectFetch) {
-                            is ObjectFetch.AidFetch -> Aids.value eq objectFetch.aid
-                            is ObjectFetch.IdFetch -> Communities.id eq objectFetch.id
-                        }
-                    }
+
+        return getCommunityByPredicate {
+            where {
+                when (objectFetch) {
+                    is ObjectFetch.AidFetch -> Aids.value eq objectFetch.aid
+                    is ObjectFetch.IdFetch -> Communities.id eq objectFetch.id
+                }
             }
-            first(Community::wrapRow)
         }.mapResultIfNotNull { community ->
             processCommunityToRawCommunity(uid, listOf(community))
         }.mapIfNotNull {
@@ -87,28 +84,19 @@ class ExposedCommunityDatabase(
         hasPosterSearch: PosterSearch?,
         primaryKeyFetch: PrimaryKeyFetch,
         joinSearch: JoinSearch
-    ) = databaseSession.dbSearch {
-        search {
-            Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
-                .select(Communities.fields + Aids.value)
-                .buildCommunitySearchQuery(joinSearch, word, hasPosterSearch)
-                .bindPaginationQuery(Communities, primaryKeyFetch)
-        }
-        map(Community::wrapRow)
+    ) = getCommunityListByPredicate {
+        buildCommunitySearchQuery(joinSearch, word, hasPosterSearch)
+            .bindPaginationQuery(Communities, primaryKeyFetch)
     }.mapResultIfNotNull { list ->
-        databaseSession.dbSearch {
-            search {
-                Communities.select(Communities.id)
-                    .buildCommunitySearchQuery(joinSearch, word, hasPosterSearch)
-            }
-            count()
+        getCommunityCountByPredicate {
+            buildCommunitySearchQuery(joinSearch, word, hasPosterSearch)
         }.mapResult { count ->
             val uid = when (joinSearch) {
                 is JoinSearch.Joined -> joinSearch.uid
                 is JoinSearch.Unspecified -> joinSearch.uid
             }
-            processCommunityToRawCommunity(uid, list).map { list ->
-                PaginationResult(list, count)
+            processCommunityToRawCommunity(uid, list).map { result ->
+                PaginationResult(result, count)
             }
         }
     }
@@ -129,7 +117,10 @@ class ExposedCommunityDatabase(
         }
     }
 
-    override suspend fun createCommunity(community: Community, memberId: PrimaryKey): Result<Community> =
+    override suspend fun createCommunity(
+        community: Community,
+        memberId: PrimaryKey
+    ): Result<Community> =
         databaseSession.dbQuery {
             check(Communities.insert {
                 it[Communities.id] = community.id
@@ -197,18 +188,12 @@ class ExposedCommunityDatabase(
 
     override suspend fun getRawCommunities(
         objectListFetch: ObjectListFetch
-    ) = databaseSession.dbSearch {
-        search {
-            Communities.join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
-                .selectAll().where {
-                    when (objectListFetch) {
-                        is ObjectListFetch.AidListFetch -> Aids.value inList objectListFetch.aidList
-                        is ObjectListFetch.IdListFetch -> Communities.id inList objectListFetch.idList
-                    }
-                }
-        }
-        map {
-            Community.wrapRow(it)
+    ) = getCommunityListByPredicate {
+        where {
+            when (objectListFetch) {
+                is ObjectListFetch.AidListFetch -> Aids.value inList objectListFetch.aidList
+                is ObjectListFetch.IdListFetch -> Communities.id inList objectListFetch.idList
+            }
         }
     }.mapResult {
         processCommunityToRawCommunity(null, it)
@@ -243,6 +228,39 @@ class ExposedCommunityDatabase(
     override suspend fun getCommunityCount() = databaseSession.dbSearch {
         search {
             Communities.selectAll()
+        }
+        count()
+    }
+
+    private suspend fun getCommunityListByPredicate(
+        queryBuilder: Query.() -> Query = { this }
+    ) = databaseSession.dbSearch {
+        search {
+            Communities
+                .join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
+                .select(Communities.fields + Aids.value)
+                .queryBuilder()
+        }
+        map(Community::wrapRow)
+    }
+
+    private suspend fun getCommunityByPredicate(
+        queryBuilder: Query.() -> Query = { this }
+    ) = databaseSession.dbSearch {
+        search {
+            Communities
+                .join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
+                .select(Communities.fields + Aids.value)
+                .queryBuilder()
+        }
+        first(Community::wrapRow)
+    }
+
+    private suspend fun getCommunityCountByPredicate(
+        queryBuilder: Query.() -> Query = { this }
+    ) = databaseSession.dbSearch {
+        search {
+            Communities.select(Communities.id).queryBuilder()
         }
         count()
     }
