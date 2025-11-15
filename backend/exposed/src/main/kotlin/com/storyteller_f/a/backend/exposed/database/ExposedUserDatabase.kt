@@ -1,11 +1,9 @@
 package com.storyteller_f.a.backend.exposed.database
 
-import com.storyteller_f.a.backend.core.FavoriteDatabase
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
-import com.storyteller_f.a.backend.core.SubscriptionDatabase
 import com.storyteller_f.a.backend.core.UserDatabase
 import com.storyteller_f.a.backend.core.types.AssetTransaction
 import com.storyteller_f.a.backend.core.types.ChildAccount
@@ -35,7 +33,6 @@ import com.storyteller_f.a.backend.exposed.tables.find
 import com.storyteller_f.a.backend.exposed.tables.mapUserInfo
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.TaskRecordType
-import com.storyteller_f.shared.model.UserOverview
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -54,8 +51,6 @@ import org.jetbrains.exposed.v1.r2dbc.upsert
 
 class ExposedUserDatabase(
     private val databaseSession: ExposedDatabaseSession,
-    private val favoriteDatabase: FavoriteDatabase,
-    private val subscriptionDatabase: SubscriptionDatabase,
 ) : UserDatabase {
     override suspend fun getUserAid(id: PrimaryKey) = databaseSession.dbSearch {
         search {
@@ -353,7 +348,7 @@ class ExposedUserDatabase(
         PaginationResult(childAccounts, total)
     }
 
-    private suspend fun getChildAccountCount(hostId: PrimaryKey): Long {
+    override suspend fun getChildAccountCount(hostId: PrimaryKey): Long {
         val total = databaseSession.dbSearch {
             search {
                 ChildAccounts.join(Users, JoinType.INNER, ChildAccounts.uid, Users.id)
@@ -419,10 +414,4 @@ class ExposedUserDatabase(
         count()
     }
 
-    override suspend fun getUserOverview(uid: PrimaryKey): Result<UserOverview> = runCatching {
-        val subscriptionCount = subscriptionDatabase.getUserSubscriptionCount(uid).getOrThrow()
-        val favoriteCount = favoriteDatabase.getUserFavoriteCount().getOrThrow()
-        val childAccountCount = getChildAccountCount(uid)
-        UserOverview(subscriptionCount, favoriteCount, 0, childAccountCount)
-    }
 }
