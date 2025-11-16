@@ -33,9 +33,9 @@ import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
-import com.storyteller_f.a.app.core.components.setText
 import com.storyteller_f.a.app.core.components.CustomIcon
 import com.storyteller_f.a.app.core.components.IconRes
+import com.storyteller_f.a.app.core.components.setText
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.utils.formatTime
 import kotlinx.coroutines.launch

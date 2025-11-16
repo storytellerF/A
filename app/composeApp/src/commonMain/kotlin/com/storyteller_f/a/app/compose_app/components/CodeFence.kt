@@ -13,11 +13,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.compose.rememberAsyncImagePainter
@@ -32,23 +29,17 @@ import com.storyteller_f.a.app.compose_app.pages.topic.TopicRoute
 import com.storyteller_f.a.app.compose_app.utils.imageRequest
 import com.storyteller_f.a.app.core.common.LocalClient
 import com.storyteller_f.a.app.core.components.PdfViewBlock
+import com.storyteller_f.a.app.core.components.convertPxToDp
 import com.storyteller_f.a.app.core.components.generateLatexImage
-import com.storyteller_f.a.app.core.utils.safeSink
 import com.storyteller_f.a.app.core.components.textUnitToPx
-import com.storyteller_f.a.app.core.components.saveLatexToImage
 import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.utils.MarkdownObject
 import com.storyteller_f.shared.utils.getLang
-import com.storyteller_f.shared.utils.md5
 import com.storyteller_f.shared.utils.readCodeFence
 import dev.snipme.highlights.Highlights
 import dev.snipme.highlights.model.SyntaxThemes
-import io.github.aakira.napier.Napier
-import kotlinx.io.buffered
 import kotlinx.io.files.Path
-import kotlinx.io.files.SystemFileSystem
-import kotlinx.io.files.SystemTemporaryDirectory
 
 @Composable
 fun CustomCodeFence(modal: MarkdownComponentModel, mediaList: Map<String, FileInfo>) {
@@ -223,7 +214,6 @@ fun rememberGeneratedLatexImage(modal: MarkdownComponentModel): Result<Path?> {
         )
     }
 }
-
 
 @Composable
 fun imageRequestInMarkdown(

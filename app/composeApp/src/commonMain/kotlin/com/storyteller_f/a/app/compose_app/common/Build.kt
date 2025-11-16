@@ -438,11 +438,12 @@ fun createUploadViewModel(myUid: PrimaryKey) =
     }
 
 @Composable
-fun getUploadViewModel(pathHash: String, myUid: PrimaryKey): UploadDetailViewModel = customViewModel(
-    listOf("upload-detail", pathHash)
-) { _, modelStorage ->
-    UploadDetailViewModel(modelStorage, pathHash, myUid)
-}
+fun getUploadViewModel(pathHash: String, myUid: PrimaryKey): UploadDetailViewModel =
+    customViewModel(
+        listOf("upload-detail", pathHash)
+    ) { _, modelStorage ->
+        UploadDetailViewModel(modelStorage, pathHash, myUid)
+    }
 
 @Composable
 fun getMarkdownMediasViewModel(
@@ -514,6 +515,17 @@ fun getUserOverviewViewModel() =
 fun createTitleComposeViewModel(): TitleComposeViewModel =
     customViewModel(listOf("title-compose")) { _, _ ->
         TitleComposeViewModel()
+    }
+
+@Composable
+fun createFileViewModel(objectId: PrimaryKey) =
+    customViewModel(
+        listOf(
+            "files",
+            objectId
+        )
+    ) { sessionManager, databaseSource ->
+        FileViewViewModel(objectId, sessionManager, databaseSource)
     }
 
 @Composable

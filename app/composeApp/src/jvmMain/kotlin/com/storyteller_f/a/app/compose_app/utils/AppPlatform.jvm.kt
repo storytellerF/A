@@ -1,10 +1,7 @@
 package com.storyteller_f.a.app.compose_app.utils
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.platform.Clipboard
-import androidx.compose.ui.platform.awtClipboard
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.storyteller_f.a.app.compose_app.AppConfig
 import com.storyteller_f.shared.model.RoomInfo
@@ -21,7 +18,6 @@ import kotlinx.io.files.Path
 import kotlinx.io.files.SystemTemporaryDirectory
 import okio.Path.Companion.toOkioPath
 import org.apache.tika.Tika
-import java.awt.datatransfer.StringSelection
 import java.io.File
 
 val tika = Tika()
@@ -30,7 +26,6 @@ actual val appPlatform: AppPlatform
     get() = AppPlatform(false, debug = true)
 
 actual fun initEnvironment(context: Any) = Unit
-
 
 actual fun createConnectivity(): Connectivity {
     return Connectivity {

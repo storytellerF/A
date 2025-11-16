@@ -438,7 +438,7 @@ val downloadFonts by tasks.registering(Download::class) {
             "master"
         }/variablefont/MaterialSymbols${
             name.uppercaseFirstChar()
-        }%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf" to "material_symbols_${name}"
+        }%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf" to "material_symbols_$name"
 
     val fonts = mapOf(ms("outlined"))
 

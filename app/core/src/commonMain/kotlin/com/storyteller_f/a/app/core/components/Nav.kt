@@ -13,7 +13,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 
-
 class NavRoute(val path: String, val icon: ImageVector, val label: String)
 
 @Composable

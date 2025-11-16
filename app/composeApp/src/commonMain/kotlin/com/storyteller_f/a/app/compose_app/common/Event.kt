@@ -13,7 +13,7 @@ import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.storage.CommunityCollection
-import com.storyteller_f.storage.MediasCollection
+import com.storyteller_f.storage.FileCollection
 import com.storyteller_f.storage.ModelStorage
 import com.storyteller_f.storage.RoomCollection
 import com.storyteller_f.storage.TopicCollection
@@ -108,7 +108,7 @@ private suspend fun processOnMediaUploaded(
     database: ModelStorage
 ) {
     event.fileInfos.forEach {
-        database.fileInfo.save(MediasCollection(it.owner), it)
+        database.fileInfo.save(FileCollection.FileList(it.owner), it)
     }
 }
 

@@ -14,17 +14,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
-import com.storyteller_f.a.app.compose_app.FileViewInfo
+import com.storyteller_f.a.app.compose_app.MediaPlayerSession
+import com.storyteller_f.a.app.core.components.BaseSheet
 import com.storyteller_f.shared.model.FileInfo
 import kotlinx.serialization.Serializable
-import com.storyteller_f.a.app.core.components.BaseSheet
 
-val globalPlayerState: MutableState<FileViewInfo.Player?> =
+val globalPlayerState: MutableState<MediaPlayerSession?> =
     mutableStateOf(null)
 
 val currentPlayerState get() = globalPlayerState.value
 
-fun setCurrentPlayerState(player: FileViewInfo.Player?) {
+fun setCurrentPlayerState(player: MediaPlayerSession?) {
     globalPlayerState.value = player
 }
 

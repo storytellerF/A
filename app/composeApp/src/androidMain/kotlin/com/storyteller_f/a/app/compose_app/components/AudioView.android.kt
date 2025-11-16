@@ -18,8 +18,8 @@ import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.unit.dp
 import androidx.media3.session.MediaController
 import coil3.compose.AsyncImage
-import com.storyteller_f.a.app.compose_app.FileViewInfo
 import com.storyteller_f.a.app.compose_app.LocalMediaPlaySession
+import com.storyteller_f.a.app.compose_app.MediaPlayerSession
 import kotlin.uuid.ExperimentalUuidApi
 
 @Composable
@@ -32,7 +32,7 @@ actual fun AudioView(obj: RemoteMediaItem, isFilled: Boolean) {
 @OptIn(ExperimentalUuidApi::class)
 @Composable
 private fun AudioPlayer(
-    playingSession: FileViewInfo.Player?,
+    playingSession: MediaPlayerSession?,
     currentSession: LocalMediaPlaySession,
     obj: RemoteMediaItem,
     player: MediaController
@@ -58,7 +58,7 @@ private fun BoxScope.AudioPlayer(
     player: MediaController,
     currentSession: LocalMediaPlaySession,
     obj: RemoteMediaItem,
-    playingSession: FileViewInfo.Player
+    playingSession: MediaPlayerSession
 ) {
     AndroidPlayerContainer(currentSession, player) { pipModifier, state ->
         val coverMediaInfo = obj.cover
@@ -93,7 +93,7 @@ private fun BoxScope.AudioPlayer(
 @Composable
 private fun AudioPlayerInternal(
     state: MediaPlayerState,
-    playingSession: FileViewInfo.Player,
+    playingSession: MediaPlayerSession,
     player: MediaController
 ) {
     Column(modifier = Modifier.padding(10.dp)) {

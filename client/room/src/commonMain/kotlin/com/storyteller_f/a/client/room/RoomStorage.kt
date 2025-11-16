@@ -20,8 +20,8 @@ import com.storyteller_f.storage.CommunityCollection
 import com.storyteller_f.storage.CommunityInfoStorage
 import com.storyteller_f.storage.DownloadInfo
 import com.storyteller_f.storage.DownloadInfoStorage
+import com.storyteller_f.storage.FileCollection
 import com.storyteller_f.storage.FileInfoStorage
-import com.storyteller_f.storage.MediasCollection
 import com.storyteller_f.storage.ModelStorage
 import com.storyteller_f.storage.OverviewStorage
 import com.storyteller_f.storage.ReactionCollection
@@ -404,14 +404,19 @@ class RoomChildAccountStorage(val appDatabase: AppDatabase) : ChildAccountStorag
 
 class RoomFileInfoStorage(val appDatabase: AppDatabase) : FileInfoStorage {
     override suspend fun save(
-        collection: MediasCollection,
+        collection: FileCollection,
         item: FileInfo
     ) {
         val data = commonJson.encodeToString(item)
-        appDatabase.getCommonDao().insert(CommonEntity(item.id, collection.getName(), data))
+        val entity = CommonEntity(item.id, FileCollection.Files.getName(), data)
+        appDatabase.getCommonDao().insert(entity)
+        if (collection !is FileCollection.Files) {
+            appDatabase.getCommonDao().insert(entity.copy(collection = collection.getName()))
+            return
+        }
     }
 
-    override fun observeData(collection: MediasCollection): PagingSource<Int, FileInfo> {
+    override fun observeData(collection: FileCollection): PagingSource<Int, FileInfo> {
         val raw = appDatabase.getCommonDao().getAsSource(collection.getName())
         return WrappedPagingSource(raw) { list ->
             list.mapNotNull {
@@ -420,8 +425,15 @@ class RoomFileInfoStorage(val appDatabase: AppDatabase) : FileInfoStorage {
         }
     }
 
-    override suspend fun clean(collection: MediasCollection) {
+    override suspend fun clean(collection: FileCollection) {
         appDatabase.getCommonDao().clean(collection.getName())
+    }
+
+    override fun observeDatum(id: PrimaryKey): Flow<FileInfo?> {
+        return appDatabase.getCommonDao()
+            .getAsFlow(FileCollection.Files.getName(), id.toString()).map {
+                it?.data?.let { string -> commonJson.safeDecodeFromStringOrNull(string) }
+            }
     }
 }
 

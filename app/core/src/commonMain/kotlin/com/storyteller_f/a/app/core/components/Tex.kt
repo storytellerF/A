@@ -1,9 +1,5 @@
 package com.storyteller_f.a.app.core.components
 
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.TextUnit
 import com.storyteller_f.a.app.core.utils.safeSink
 import com.storyteller_f.shared.utils.md5
 import io.github.aakira.napier.Napier
@@ -21,8 +17,6 @@ expect fun saveLatexToImage(
     textSize: Float,
     outputStream: Sink
 ): Boolean
-
-
 
 fun generateLatexImage(
     backgroundColor: Int,

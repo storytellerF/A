@@ -136,8 +136,16 @@ data class UploadCollection(val objectId: PrimaryKey) {
     }
 }
 
-data class MediasCollection(val objectId: PrimaryKey) {
-    fun getName() = "medias_$objectId"
+sealed interface FileCollection {
+    data class FileList(val objectId: PrimaryKey) : FileCollection
+    data object Files : FileCollection
+}
+
+fun FileCollection.getName(): String {
+    return when (this) {
+        FileCollection.Files -> "files"
+        is FileCollection.FileList -> "files_$objectId"
+    }
 }
 
 fun UserCollection.getName(): String {
@@ -230,7 +238,7 @@ interface ChildAccountStorage : GlobalListStorage<ChildAccountInfo> {
     }
 }
 
-interface FileInfoStorage : CollectionListStorage<MediasCollection, FileInfo>
+interface FileInfoStorage : CollectionItemStorageById<FileCollection, FileInfo>
 
 interface DownloadInfoStorage : GlobalItemStorageById<DownloadInfo> {
     companion object {

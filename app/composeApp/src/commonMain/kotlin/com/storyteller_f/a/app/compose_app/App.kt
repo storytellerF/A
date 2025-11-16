@@ -117,7 +117,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -179,37 +178,32 @@ val LocalGlobalTask = compositionLocalOf<GlobalTask<CustomUserSessionManager>> {
     error("LocalGlobalTask must be provided")
 }
 
+@OptIn(ExperimentalUuidApi::class)
 @Serializable
-sealed interface FileViewInfo {
+data class MediaPlayerSession(
+    val obj: RemoteMediaItem,
+    val playList: List<ConstPlayItem>,
+    val uuids: List<Uuid>,
+    val videoSize: CustomVideoSize?,
+) {
+    val id = obj.url
+
+    val lastUuid get() = uuids.lastOrNull()
+
     @OptIn(ExperimentalUuidApi::class)
-    @Serializable
-    @SerialName("player")
-    data class Player(
-        val obj: RemoteMediaItem,
-        val contentType: String,
-        val playList: List<ConstPlayItem>,
-        val uuids: List<Uuid>,
-        val videoSize: CustomVideoSize?,
-    ) : FileViewInfo {
-        val id = obj.url
+    fun appendUuid(
+        uuid: Uuid
+    ) = copy(uuids = uuids + uuid)
 
-        val lastUuid get() = uuids.lastOrNull()
+    val uuidCount get() = uuids.size
+}
 
-        @OptIn(ExperimentalUuidApi::class)
-        fun appendUuid(
-            uuid: Uuid
-        ) = copy(uuids = uuids + uuid)
+sealed interface FileViewData {
+    data class Player(val obj: RemoteMediaItem) : FileViewData
 
-        val uuidCount get() = uuids.size
-    }
+    data class Regular(val fileId: PrimaryKey) : FileViewData
 
-    @Serializable
-    @SerialName("regular")
-    data class Regular(val fileInfo: FileInfo) : FileViewInfo
-
-    @Serializable
-    @SerialName("local-image")
-    data class LocalImage(val url: String) : FileViewInfo
+    data class LocalImage(val url: String) : FileViewData
 }
 
 @OptIn(ExperimentalUuidApi::class)
@@ -227,7 +221,7 @@ fun App() {
 @Composable
 fun AppInternal(
     isPip: Boolean,
-    player: FileViewInfo.Player?,
+    player: MediaPlayerSession?,
 ) {
     val navigator = rememberNavController()
     val scope = rememberCoroutineScope()
@@ -238,7 +232,7 @@ fun AppInternal(
         }
     }
     if (isPip && player != null) {
-        FileViewPage(player)
+        FileViewPage(FileViewData.Player(player.obj))
     } else {
         MainAppPage(appNav, navigator)
     }
@@ -558,9 +552,9 @@ fun createCustomUserSessionManager(
 }
 
 @Composable
-fun MediaPlayerPage(session: FileViewInfo) {
+fun MediaPlayerPage(remoteMediaItem: RemoteMediaItem) {
     CommonEntry({
-        FileViewPage(session)
+        FileViewPage(FileViewData.Player(remoteMediaItem))
     })
 }
 

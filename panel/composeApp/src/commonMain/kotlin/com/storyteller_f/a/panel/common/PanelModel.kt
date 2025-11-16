@@ -29,7 +29,7 @@ import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.storage.CommunityCollection
-import com.storyteller_f.storage.MediasCollection
+import com.storyteller_f.storage.FileCollection
 import com.storyteller_f.storage.ModelStorage
 import com.storyteller_f.storage.RoomCollection
 import com.storyteller_f.storage.TitleCollection
@@ -223,7 +223,7 @@ class AllFilesViewModel(
     sessionManager: PanelSessionManager,
     modelStorage: ModelStorage,
 ) : PagingViewModel<FileInfo>() {
-    private val modelCollection = MediasCollection(0)
+    private val modelCollection = FileCollection.FileList(0)
 
     @OptIn(ExperimentalPagingApi::class)
     override val flow: Flow<PagingData<FileInfo>> = Pager(
