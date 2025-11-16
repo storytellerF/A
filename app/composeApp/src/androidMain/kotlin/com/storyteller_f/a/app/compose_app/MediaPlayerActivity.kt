@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.Text
 import androidx.compose.runtime.CompositionLocalProvider
+import com.storyteller_f.a.app.compose_app.components.RemoteMediaItem
 import com.storyteller_f.a.app.core.components.CenterBox
 import com.storyteller_f.shared.commonJson
 
@@ -19,11 +20,11 @@ class MediaPlayerActivity : ComponentActivity() {
                     Text("invalid")
                 }
             } else {
-                val session = commonJson.decodeFromString<FileViewInfo>(json)
+                val remoteMediaItem = commonJson.decodeFromString<RemoteMediaItem>(json)
                 CompositionLocalProvider(
                     LocalUiViewModel provides uiViewModel
                 ) {
-                    MediaPlayerPage(session)
+                    MediaPlayerPage(remoteMediaItem)
                 }
             }
         }

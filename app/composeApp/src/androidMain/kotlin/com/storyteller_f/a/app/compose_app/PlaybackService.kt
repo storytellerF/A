@@ -22,8 +22,8 @@ object MediaProvider {
 
     @Synchronized
     fun get(
-        currentSession: FileViewInfo.Player,
-        init: (MediaController, FileViewInfo.Player) -> Unit
+        currentSession: MediaPlayerSession,
+        init: (MediaController, MediaPlayerSession) -> Unit
     ) {
         val c = controller ?: return
         val session = currentPlayerState

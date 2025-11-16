@@ -33,6 +33,7 @@ import com.storyteller_f.a.client.core.getChildAccounts
 import com.storyteller_f.a.client.core.getCommunityInfo
 import com.storyteller_f.a.client.core.getCommunityInfoByAid
 import com.storyteller_f.a.client.core.getFavorites
+import com.storyteller_f.a.client.core.getFileInfo
 import com.storyteller_f.a.client.core.getMediaByName
 import com.storyteller_f.a.client.core.getMediaList
 import com.storyteller_f.a.client.core.getQuotaInfo
@@ -88,7 +89,7 @@ import com.storyteller_f.storage.CollectionListStorage
 import com.storyteller_f.storage.CommunityCollection
 import com.storyteller_f.storage.DownloadInfo
 import com.storyteller_f.storage.DownloadStatus
-import com.storyteller_f.storage.MediasCollection
+import com.storyteller_f.storage.FileCollection
 import com.storyteller_f.storage.ModelStorage
 import com.storyteller_f.storage.ReactionCollection
 import com.storyteller_f.storage.RemoteKeyStorage
@@ -473,7 +474,7 @@ class MediaListViewModel(
     objectType: ObjectType,
 ) :
     PagingViewModel<FileInfo>() {
-    private val modelCollection = MediasCollection(objectId)
+    private val modelCollection = FileCollection.FileList(objectId)
 
     @OptIn(ExperimentalPagingApi::class)
     override val flow: Flow<PagingData<FileInfo>> = buildPager(
@@ -910,6 +911,23 @@ class UserOverviewViewModel(sessionManager: UserSessionManager, modelStorage: Mo
         } else {
             Result.failure(IllegalStateException("not logged in"))
         }
+    }
+}
+
+class FileViewViewModel(
+    fileId: PrimaryKey,
+    sessionManager: UserSessionManager,
+    modelStorage: ModelStorage
+) :
+    SimpleViewModel<FileInfo>() {
+    override val handler: LoadingHandler<FileInfo> = CachedLoadingHandler(
+        modelStorage.fileInfo.observeDatum(fileId),
+        viewModelScope,
+        {
+            modelStorage.fileInfo.save(FileCollection.Files, it)
+        }
+    ) {
+        sessionManager.getFileInfo(fileId)
     }
 }
 

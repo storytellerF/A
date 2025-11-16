@@ -8,7 +8,6 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-
 @Composable
 fun convertPxToDp(px: Int): Dp {
     // 获取当前屏幕密度
@@ -28,7 +27,6 @@ fun convertPxToSp(px: Int): TextUnit {
 }
 
 fun pxToSp(px: Int, density: Float): TextUnit = (px / density).sp
-
 
 @Composable
 fun textUnitToPx(textUnit: TextUnit): Float {

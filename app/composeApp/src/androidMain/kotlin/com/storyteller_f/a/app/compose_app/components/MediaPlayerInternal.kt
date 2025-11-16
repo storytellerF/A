@@ -40,9 +40,9 @@ import androidx.media3.common.VideoSize
 import androidx.media3.session.MediaController
 import coil3.compose.AsyncImage
 import com.storyteller_f.a.app.compose_app.AppGlobalDialogController
-import com.storyteller_f.a.app.compose_app.FileViewInfo
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.LocalMediaPlaySession
+import com.storyteller_f.a.app.compose_app.MediaPlayerSession
 import com.storyteller_f.a.app.compose_app.MediaProvider
 import com.storyteller_f.a.app.compose_app.utils.parseM3UPlayList
 import com.storyteller_f.a.app.core.components.LocalToaster
@@ -76,7 +76,7 @@ fun MediaPlayerInternal(
     id: String,
     contentType: String,
     isFilled: Boolean,
-    block: @Composable (MediaController, FileViewInfo.Player?, LocalMediaPlaySession) -> Unit
+    block: @Composable (MediaController, MediaPlayerSession?, LocalMediaPlaySession) -> Unit
 ) {
     val uuid = rememberSaveable {
         Uuid.random()
@@ -111,7 +111,7 @@ fun MediaPlayerInternal(
 
 @OptIn(ExperimentalUuidApi::class)
 private fun switchSessionIfNeed(
-    playingSession: FileViewInfo.Player?,
+    playingSession: MediaPlayerSession?,
     currentSession: LocalMediaPlaySession,
     isFilled: Boolean
 ) {
@@ -124,11 +124,11 @@ private fun switchSessionIfNeed(
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalUuidApi::class)
 @Composable
 fun MediaPlayerContainer(
-    playingSession: FileViewInfo.Player?,
+    playingSession: MediaPlayerSession?,
     player: MediaController,
     currentSession: LocalMediaPlaySession,
     contentType: String,
-    block: @Composable (MediaController, FileViewInfo.Player?, LocalMediaPlaySession) -> Unit,
+    block: @Composable (MediaController, MediaPlayerSession?, LocalMediaPlaySession) -> Unit,
     isFilled: Boolean
 ) {
     var showSheet by remember {
@@ -240,9 +240,8 @@ private suspend fun startPlay(
             else -> listOf(ConstPlayItem(obj.url, title = obj.url))
         }
         if (playList.isNotEmpty()) {
-            val newSession = FileViewInfo.Player(
+            val newSession = MediaPlayerSession(
                 obj,
-                contentType,
                 playList,
                 listOf(localMediaPlaySession.uuid),
                 null

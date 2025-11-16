@@ -690,3 +690,7 @@ suspend fun UserSessionManager.getQuotaInfo(
             )
         )
     }
+
+suspend fun UserSessionManager.getFileInfo(fileId: PrimaryKey) = serviceCatching {
+    CustomApi.Files.Id.get(CommonPath(fileId))
+}

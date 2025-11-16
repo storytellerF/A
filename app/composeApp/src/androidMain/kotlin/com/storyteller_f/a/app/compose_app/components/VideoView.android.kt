@@ -51,9 +51,9 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.ui.PlayerView
-import com.storyteller_f.a.app.compose_app.FileViewInfo
 import com.storyteller_f.a.app.compose_app.LocalMediaPlaySession
 import com.storyteller_f.a.app.compose_app.MediaPlayerActivity
+import com.storyteller_f.a.app.compose_app.MediaPlayerSession
 import com.storyteller_f.a.app.core.components.LocalToaster
 import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.model.FileInfo
@@ -83,7 +83,7 @@ actual fun VideoView(
 @OptIn(ExperimentalUuidApi::class)
 @Composable
 private fun VideoPlayer(
-    playingSession: FileViewInfo.Player?,
+    playingSession: MediaPlayerSession?,
     currentSession: LocalMediaPlaySession,
     player: MediaController,
     obj: RemoteMediaItem,
@@ -213,7 +213,7 @@ private fun Modifier.enablePictureInPicture(
 @Composable
 fun VideoOrAudioOpRow(
     localMediaPlaySession: LocalMediaPlaySession,
-    playingSession: FileViewInfo.Player?,
+    playingSession: MediaPlayerSession?,
     contentType: String,
     showSheet: () -> Unit,
 ) {
@@ -260,7 +260,7 @@ fun VideoOrAudioOpRow(
         IconButton({
             if (localMediaPlaySession.uuid == playingSession?.lastUuid) {
                 context.startActivity(Intent(context, MediaPlayerActivity::class.java).apply {
-                    putExtra("json", commonJson.encodeToString<FileViewInfo>(playingSession))
+                    putExtra("json", commonJson.encodeToString<RemoteMediaItem>(playingSession.obj))
                 })
             }
         }, enabled = isActive) {

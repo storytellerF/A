@@ -15,8 +15,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.storyteller_f.a.app.core.components.CommonImage
 import com.storyteller_f.a.app.core.components.CharSequenceText
+import com.storyteller_f.a.app.core.components.CommonImage
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.utils.safeFirstUnicode
 

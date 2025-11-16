@@ -22,7 +22,7 @@ import com.mikepenz.aboutlibraries.ui.compose.LibraryDefaults
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 import com.mikepenz.aboutlibraries.ui.compose.m3.libraryColors
 import com.mikepenz.aboutlibraries.ui.compose.produceLibraries
-import com.storyteller_f.a.app.compose_app.FileViewInfo
+import com.storyteller_f.a.app.compose_app.FileViewData
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.pages.HomePage
 import com.storyteller_f.a.app.compose_app.pages.PreferencePage
@@ -156,7 +156,10 @@ data object UserSettingScreen
 data object PreferenceScreen
 
 @Serializable
-data class MediaScreen(val json: String)
+data class LocalImageScreen(val url: String)
+
+@Serializable
+data class FileInfoScreen(val fileId: PrimaryKey)
 
 @Serializable
 data object TitleComposeScreen
@@ -330,14 +333,11 @@ fun newAppNav(navigator: NavHostController, scope: CoroutineScope) = object : Ap
     }
 
     override fun gotoMedia(info: FileInfo) {
-        val route = MediaScreen(commonJson.encodeToString<FileViewInfo>(FileViewInfo.Regular(info)))
-        navigator.navigate(route)
+        navigator.navigate(FileInfoScreen(info.id))
     }
 
     override fun gotoLocalImage(url: String) {
-        val route =
-            MediaScreen(commonJson.encodeToString<FileViewInfo>(FileViewInfo.LocalImage(url)))
-        navigator.navigate(route)
+        navigator.navigate(LocalImageScreen(url))
     }
 
     override fun gotoTitleCompose() {
@@ -395,10 +395,14 @@ fun NavGraphBuilder.buildRootNav(
             )
         }
     }
-    composable<MediaScreen> {
-        val route = it.toRoute<MediaScreen>()
-        val pack = commonJson.decodeFromString<FileViewInfo>(route.json)
-        FileViewPage(pack)
+    composable<FileInfoScreen> {
+        val route = it.toRoute<FileInfoScreen>()
+        FileViewPage(FileViewData.Regular(route.fileId))
+    }
+
+    composable<LocalImageScreen> {
+        val route = it.toRoute<LocalImageScreen>()
+        FileViewPage(FileViewData.LocalImage(route.url))
     }
 }
 

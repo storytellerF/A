@@ -3,7 +3,6 @@ package com.storyteller_f.a.app.compose_app.utils
 import android.Manifest
 import android.app.Application
 import android.app.PendingIntent
-import android.content.ClipData
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -14,8 +13,6 @@ import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
-import androidx.compose.ui.platform.ClipEntry
-import androidx.compose.ui.platform.Clipboard
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.Person
@@ -65,7 +62,6 @@ actual fun initEnvironment(context: Any) {
         context.initFromContext()
     }
 }
-
 
 actual fun createConnectivity(): Connectivity {
     return Connectivity {

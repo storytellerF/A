@@ -26,4 +26,3 @@ fun SimpleMessageWithButton(string: String, key: String) {
     }) {
     }
 }
-
