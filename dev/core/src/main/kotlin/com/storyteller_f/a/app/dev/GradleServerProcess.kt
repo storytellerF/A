@@ -3,13 +3,10 @@ package com.storyteller_f.a.app.dev
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.concurrent.thread
 import kotlin.uuid.ExperimentalUuidApi
@@ -57,7 +54,6 @@ suspend fun CoroutineScope.startServerByRun(projectRoot: String, port: Int): Pro
         println("${testEnvFile.canonicalPath} not exists")
         return null
     }
-    install(projectRoot)
     val serverProcess =
         ProcessBuilder(GIT_BASH, "-c", "cloud/server/build/install/server/bin/server")
             .redirectErrorStream(true)
@@ -65,28 +61,6 @@ suspend fun CoroutineScope.startServerByRun(projectRoot: String, port: Int): Pro
             .bindGradleProcessEnv(testEnvFile, port)
             .start()
     return waitRunServerProcess(serverProcess)
-}
-
-private suspend fun CoroutineScope.install(projectRoot: String) {
-    val installDistProcess = getGradleProcessBuilder(
-        File(projectRoot),
-        arrayOf("cloud:server:installDist")
-    ).start()
-    val job = launch(Dispatchers.IO) {
-        installDistProcess.inputStream.bufferedReader().use {
-            while (installDistProcess.isAlive && isActive) {
-                val line = it.readLine() ?: break
-                println(line)
-            }
-        }
-    }
-    val result = withContext(Dispatchers.IO) {
-        installDistProcess.waitFor()
-    }
-    job.cancelAndJoin()
-    check(result == 0) {
-        "install failed $result"
-    }
 }
 
 class ProcessMate(val process: Process, val job: Job) {
@@ -151,21 +125,4 @@ private fun ProcessBuilder.bindGradleProcessEnv(envFile: File, port: Int): Proce
     )
     environment["SERVER_PORT"] = port.toString()
     return this
-}
-
-private fun getGradleProcessBuilder(
-    file: File,
-    args: Array<String>
-): ProcessBuilder {
-    val gradleCommand = if (isWin()) {
-        // Windows
-        File(file, "gradlew.bat").absolutePath
-    } else {
-        // Linux/MacOS
-        "./gradlew"
-    }
-    return ProcessBuilder(
-        gradleCommand,
-        *args
-    ).directory(file.canonicalFile).redirectErrorStream(true)
 }

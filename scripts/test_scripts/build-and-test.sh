@@ -21,7 +21,8 @@ shutdownServer() {
     echo "Server shut down."
 }
 
-./gradlew build
+./gradlew cloud:server:installDist --no-daemon
+./gradlew build --no-daemon
 ./scripts/android_scripts/create-avd.sh ATest "system-images;android-30;default;x86_64" "pixel4"
 ./scripts/android_scripts/start-avd.sh ATest
 trap shutdownEmu EXIT
@@ -29,7 +30,7 @@ trap shutdownEmu EXIT
 ./scripts/test_scripts/start-test-server.sh
 trap shutdownServer EXIT
 
-./gradlew app:composeApp:connectedAndroidTest
-./gradlew app:composeApp:desktopTest
+./gradlew app:composeApp:connectedAndroidTest --no-daemon
+./gradlew app:composeApp:desktopTest --no-daemon
 #./gradlew :composeApp:wasmJsTest
 #./gradlew :composeApp:iosSimulatorArm64Test
