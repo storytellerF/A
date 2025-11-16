@@ -7,12 +7,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
@@ -31,6 +33,7 @@ import com.storyteller_f.a.app.core.common.LocalClient
 import com.storyteller_f.a.app.core.components.PdfViewBlock
 import com.storyteller_f.a.app.core.components.convertPxToDp
 import com.storyteller_f.a.app.core.components.generateLatexImage
+import com.storyteller_f.a.app.core.components.getBlockMathTextStyle
 import com.storyteller_f.a.app.core.components.textUnitToPx
 import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.model.FileInfo
@@ -196,19 +199,17 @@ private fun LatexBlock(
 
 @Composable
 fun rememberGeneratedLatexImage(modal: MarkdownComponentModel): Result<Path?> {
-    val textStyle = LocalTextStyle.current
+    val textStyle = LocalTextStyle.current.copy(color = LocalContentColor.current)
     val size = textUnitToPx(textStyle.fontSize)
-    val backgroundColor = 0
-    val textColor = textStyle.color.value.toInt()
     return remember(
         modal.node,
         modal.content,
-        backgroundColor,
-        textColor
+        textStyle
     ) {
+        val style = getBlockMathTextStyle(textStyle)
         generateLatexImage(
-            backgroundColor,
-            textColor,
+            style.background.toArgb(),
+            style.color.toArgb(),
             size,
             readCodeFence(modal.node, modal.content)
         )

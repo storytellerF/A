@@ -146,7 +146,7 @@ suspend fun getImageDimension(
     if (contentType == "image/svg+xml") {
         return extractSvgDimensionInfo(inputStreamProducer)
     }
-    return ImageIO.getImageReadersByMIMEType(contentType).asSequence()
+    val dimension = ImageIO.getImageReadersByMIMEType(contentType).asSequence()
         .firstNotNullOfOrNull { reader ->
             try {
                 inputStreamProducer().use {
@@ -166,6 +166,10 @@ suspend fun getImageDimension(
                 reader.dispose()
             }
         }
+    if (dimension == null) {
+        throw Exception("get image dimension failed")
+    }
+    return dimension
 }
 
 fun getSvgDimension(viewBox: String?, pair: Pair<String?, String?>): Dimension? {
