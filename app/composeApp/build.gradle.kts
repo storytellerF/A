@@ -3,7 +3,9 @@
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.BOOLEAN
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING
 import com.google.common.base.CaseFormat
+import org.gradle.kotlin.dsl.support.uppercaseFirstChar
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+import org.jetbrains.compose.internal.de.undercouch.gradle.tasks.download.Download
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -383,7 +385,9 @@ aboutLibraries {
 tasks.withType(KotlinCompile::class.java).configureEach {
     dependsOn("exportLibraryDefinitions")
 }
-tasks.getByName("copyNonXmlValueResourcesForCommonMain").dependsOn("exportLibraryDefinitions")
+tasks.named("copyNonXmlValueResourcesForCommonMain") {
+    dependsOn("exportLibraryDefinitions")
+}
 
 tasks.withType<Test> {
     when (name) {
@@ -425,4 +429,24 @@ private fun KotlinDependencyHandler.implementation(
     configure: ExternalModuleDependency.() -> Unit
 ) {
     implementation(dependencyNotation.get().toString(), configure)
+}
+
+// Should be run at least once before running the app
+val downloadFonts by tasks.registering(Download::class) {
+    fun ms(name: String) =
+        "https://github.com/google/material-design-icons/raw/${
+            "master"
+        }/variablefont/MaterialSymbols${
+            name.uppercaseFirstChar()
+        }%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf" to "material_symbols_${name}"
+
+    val fonts = mapOf(ms("outlined"))
+
+    src(fonts.keys)
+    dest(layout.projectDirectory.file("src/commonMain/composeResources/font/${fonts.values.first()}.ttf"))
+    overwrite(false)
+}
+
+tasks.named("copyNonXmlValueResourcesForCommonMain") {
+    dependsOn(downloadFonts)
 }
