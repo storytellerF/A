@@ -25,9 +25,7 @@ fun generateLatexImage(
     tex: String
 ): Result<Path?> {
     return runCatching {
-        val key = md5(tex)
-        val output =
-            Path(SystemTemporaryDirectory, "latex/$key-$backgroundColor-$textColor-$size.png")
+        val output = getTexPath(tex, backgroundColor, textColor, size)
         Napier.i {
             "generate latex $tex to $output"
         }
@@ -43,4 +41,14 @@ fun generateLatexImage(
             }
         }
     }
+}
+
+fun getTexPath(
+    tex: String,
+    backgroundColor: Int,
+    textColor: Int,
+    size: Float
+): Path {
+    val key = md5(tex)
+    return Path(SystemTemporaryDirectory, "latex/$key-$backgroundColor-$textColor-$size.png")
 }

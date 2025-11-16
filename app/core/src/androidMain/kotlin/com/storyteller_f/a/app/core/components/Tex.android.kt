@@ -15,7 +15,8 @@ actual fun saveLatexToImage(
 ): Boolean {
     val drawable = JLatexMathDrawable.builder(tex)
         .textSize(textSize)
-        .padding(8)
+        .padding(0)
+        .color(color)
         .background(backgroundColor)
         .align(JLatexMathDrawable.ALIGN_RIGHT)
         .build()

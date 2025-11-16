@@ -3,6 +3,8 @@ package com.storyteller_f.a.app.core.components
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
@@ -59,6 +61,7 @@ fun AnnotatedString.Builder.customBuildMarkdownAnnotatedString(
     density: Density,
     inlineContentMap: MutableMap<String, String>,
     maxWidth: Dp,
+    textStyle: TextStyle,
 ) {
     val annotate = annotatorSettings.annotator.annotate
     var skipIfNext: Any? = null
@@ -74,7 +77,8 @@ fun AnnotatedString.Builder.customBuildMarkdownAnnotatedString(
                     inlineContentMap,
                     parentType,
                     density,
-                    maxWidth
+                    maxWidth,
+                    textStyle
                 )?.let {
                     skipIfNext = it
                 }
@@ -94,6 +98,7 @@ private fun AnnotatedString.Builder.processCustomMarkdownElement(
     parentType: IElementType?,
     density: Density,
     width: Dp,
+    textStyle: TextStyle,
 ): Any? {
     when (child.type) {
         // Element types
@@ -103,7 +108,8 @@ private fun AnnotatedString.Builder.processCustomMarkdownElement(
             annotatorSettings = annotatorSettings,
             density = density,
             inlineContentMap = inlineContentMap,
-            width
+            width,
+            textStyle
         )
 
         MarkdownElementTypes.IMAGE -> child.findChildOfTypeRecursive(MarkdownElementTypes.LINK_DESTINATION)
@@ -122,7 +128,8 @@ private fun AnnotatedString.Builder.processCustomMarkdownElement(
                 annotatorSettings,
                 density,
                 inlineContentMap,
-                width
+                width,
+                textStyle
             )
             pop()
         }
@@ -135,7 +142,8 @@ private fun AnnotatedString.Builder.processCustomMarkdownElement(
                 annotatorSettings,
                 density,
                 inlineContentMap,
-                width
+                width,
+                textStyle
             )
             pop()
         }
@@ -148,7 +156,8 @@ private fun AnnotatedString.Builder.processCustomMarkdownElement(
                 annotatorSettings,
                 density,
                 inlineContentMap,
-                width
+                width,
+                textStyle
             )
             pop()
         }
@@ -162,7 +171,8 @@ private fun AnnotatedString.Builder.processCustomMarkdownElement(
                 annotatorSettings,
                 density,
                 inlineContentMap,
-                width
+                width,
+                textStyle
             )
             append(' ')
             pop()
@@ -218,42 +228,56 @@ private fun AnnotatedString.Builder.processCustomMarkdownElement(
             return MarkdownTokenTypes.WHITE_SPACE
         }
 
-        GFMElementTypes.INLINE_MATH, GFMElementTypes.BLOCK_MATH -> {
-            appendMathContent(child, content, density, inlineContentMap)
+        GFMElementTypes.INLINE_MATH -> {
+            val style = getInlineMathTextStyle(annotatorSettings, textStyle.color)
+            val (id, url) = mathContent(child, content, style, density)
+            inlineContentMap[id] = url
+            appendInlineContent(id, url)
+        }
+
+        GFMElementTypes.BLOCK_MATH -> {
+            val style = getBlockMathTextStyle(textStyle)
+            val (id, url) = mathContent(child, content, style, density)
+            inlineContentMap[id] = url
+            val paragraphStyle = ParagraphStyle()
+            pushStyle(paragraphStyle)
+            appendInlineContent(id, url)
+            pop()
         }
     }
     return null
 }
 
-private fun AnnotatedString.Builder.appendMathContent(
+private fun mathContent(
     child: ASTNode,
     content: String,
-    density: Density,
-    inlineContentMap: MutableMap<String, String>,
-) {
+    style: TextStyle,
+    density: Density
+): Pair<String, String> {
     val tex = readInlineMath(child, content)
-    val size = textUnitToPx(13.sp, density)
-    val path = generateLatexImage(
-        if (child.type == GFMElementTypes.INLINE_MATH) Color.LightGray.toArgb() else 0,
-        Color.Black.toArgb(),
-        size,
-        tex
-    ).getOrNull()
-    if (path == null) {
-        append(tex)
-        return
-    }
+    val size = textUnitToPx(style.fontSize, density)
+    val backgroundColor = style.background.toArgb()
+    val textColor = style.color.toArgb()
+    val path = getTexPath(tex, backgroundColor, textColor, size)
     val id = "math${child.startOffset}-${child.endOffset}"
     val url = "file://$path"
-    inlineContentMap[id] = url
-    if (child.type == GFMElementTypes.BLOCK_MATH) {
-        val style = ParagraphStyle()
-        pushStyle(style)
-        appendInlineContent(id, url)
-        pop()
-    } else {
-        appendInlineContent(id, url)
-    }
+    return Pair(id, url)
+}
+
+fun getInlineMathTextStyle(annotatorSettings: AnnotatorSettings, contentColor: Color): TextStyle {
+    return TextStyle(
+        color = contentColor,
+        background = annotatorSettings.codeSpanStyle.background,
+        fontSize = annotatorSettings.codeSpanStyle.fontSize
+    )
+}
+
+fun getBlockMathTextStyle(textStyle: TextStyle): TextStyle {
+    return TextStyle(
+        color = textStyle.color,
+        background = Color.Transparent,
+        fontSize = textStyle.fontSize
+    )
 }
 
 internal fun ASTNode.findChildOfTypeRecursive(type: IElementType): ASTNode? {
@@ -350,12 +374,10 @@ fun CustomMarkdownParagraph(
     val density = LocalDensity.current
     val annotatorSettings = annotatorSettings()
     val transformer = LocalImageTransformer.current
+    val textStyle = LocalTextStyle.current.copy(color = LocalContentColor.current)
     BoxWithConstraints {
         val width = this.maxWidth
-        val (styledText, inlineContentMap) = remember(
-            mediaMap,
-            content
-        ) {
+        val (styledText, inlineContentMap) = remember(mediaMap, content) {
             val inlineContentMap = mutableMapOf<String, String>()
             val text = buildAnnotatedString {
                 pushStyle(style.toSpanStyle())
@@ -365,7 +387,8 @@ fun CustomMarkdownParagraph(
                     annotatorSettings,
                     density,
                     inlineContentMap,
-                    width
+                    width,
+                    textStyle
                 )
                 pop()
             }

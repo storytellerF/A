@@ -32,7 +32,9 @@ fun cleanImageMeta(input: File, output: BufferedOutputStream, mimeType: String) 
 
         else -> {
             Napier.i("⚠️ 暂不支持该格式（$mimeType），仅复制文件。", tag = "ImageUtil")
-            copyFile(input, output)
+            output.use {
+                copyFile(input, it)
+            }
         }
     }
 }
