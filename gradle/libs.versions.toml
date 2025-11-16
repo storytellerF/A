@@ -2,7 +2,7 @@
 aboutlibrariesComposeM3 = "13.1.0"
 aboutlibrariesCore = "13.1.0"
 accompanistPermissions = "0.37.3"
-agp = "8.13.0"
+agp = "8.13.1"
 android-compileSdk = "36"
 android-minSdk = "26"
 android-targetSdk = "36"
