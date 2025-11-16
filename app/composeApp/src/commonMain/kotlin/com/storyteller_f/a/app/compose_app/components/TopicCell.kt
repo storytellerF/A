@@ -111,7 +111,9 @@ fun TopicCellInternal(
 ) {
     topicInfo ?: return
     val topicId = topicInfo.id
+    val authorInfo = topicInfo.extension?.authorInfo
     CommonTopicCellInternal(topicInfo, supportPin) {
+        UserCell(authorInfo)
         TopicContentAndInteraction(topicInfo, startAddReaction, topicId)
     }
 }
@@ -126,9 +128,7 @@ fun UserTopicCellInternal(
 ) {
     topicInfo ?: return
     val topicId = topicInfo.id
-    val authorInfo = topicInfo.extension?.authorInfo
     CommonTopicCellInternal(topicInfo, supportPin) {
-        UserCell(authorInfo)
         TopicContentAndInteraction(topicInfo, startAddReaction, topicId)
     }
 }
