@@ -44,7 +44,7 @@ import com.storyteller_f.a.app.compose_app.AppGlobalDialogController
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.common.OnMediaUploaded
 import com.storyteller_f.a.app.compose_app.common.createMediaListViewModel
-import com.storyteller_f.a.app.compose_app.components.BaseSheet
+import com.storyteller_f.a.app.core.components.BaseSheet
 import com.storyteller_f.a.app.compose_app.components.FileCell
 import com.storyteller_f.a.app.compose_app.components.Permission
 import com.storyteller_f.a.app.compose_app.components.isPermissionGranted

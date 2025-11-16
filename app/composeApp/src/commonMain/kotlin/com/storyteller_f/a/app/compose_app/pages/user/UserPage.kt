@@ -37,9 +37,9 @@ import com.storyteller_f.a.app.compose_app.common.createTargetUserJoinedCommunit
 import com.storyteller_f.a.app.compose_app.common.createUserTitlesViewModel
 import com.storyteller_f.a.app.compose_app.common.createUserTopicsViewModel
 import com.storyteller_f.a.app.compose_app.common.createUserViewModel
-import com.storyteller_f.a.app.compose_app.components.CustomBottomNav
-import com.storyteller_f.a.app.compose_app.components.CustomRailNav
-import com.storyteller_f.a.app.compose_app.components.NavRoute
+import com.storyteller_f.a.app.core.components.CustomBottomNav
+import com.storyteller_f.a.app.core.components.CustomRailNav
+import com.storyteller_f.a.app.core.components.NavRoute
 import com.storyteller_f.a.app.compose_app.components.UserTopicList
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityList
 import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar

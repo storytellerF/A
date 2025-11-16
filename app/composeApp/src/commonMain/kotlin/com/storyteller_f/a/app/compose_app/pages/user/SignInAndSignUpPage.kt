@@ -49,7 +49,7 @@ import com.storyteller_f.a.app.compose_app.auto_generate
 import com.storyteller_f.a.app.compose_app.common.AppNavFactory
 import com.storyteller_f.a.app.compose_app.common.SessionHistoryViewModel
 import com.storyteller_f.a.app.compose_app.common.getLoginHistoryViewModel
-import com.storyteller_f.a.app.compose_app.components.BaseSheet
+import com.storyteller_f.a.app.core.components.BaseSheet
 import com.storyteller_f.a.app.compose_app.go_to_sign_in
 import com.storyteller_f.a.app.compose_app.go_to_sign_up
 import com.storyteller_f.a.app.compose_app.private_key

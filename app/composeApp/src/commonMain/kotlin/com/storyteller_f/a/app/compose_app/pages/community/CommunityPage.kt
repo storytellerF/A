@@ -66,12 +66,12 @@ import com.storyteller_f.a.app.compose_app.common.createCommunityTopicsViewModel
 import com.storyteller_f.a.app.compose_app.common.createCommunityViewModel
 import com.storyteller_f.a.app.compose_app.common.getDownloadViewModel
 import com.storyteller_f.a.app.compose_app.common.hasRouteFlow
-import com.storyteller_f.a.app.compose_app.components.ButtonNav
+import com.storyteller_f.a.app.core.components.ButtonNav
 import com.storyteller_f.a.app.compose_app.components.CommunityIcon
-import com.storyteller_f.a.app.compose_app.components.CustomBottomNav
-import com.storyteller_f.a.app.compose_app.components.CustomRailNav
+import com.storyteller_f.a.app.core.components.CustomBottomNav
+import com.storyteller_f.a.app.core.components.CustomRailNav
 import com.storyteller_f.a.app.compose_app.components.FontView
-import com.storyteller_f.a.app.compose_app.components.NavRoute
+import com.storyteller_f.a.app.core.components.NavRoute
 import com.storyteller_f.a.app.compose_app.components.TopicList
 import com.storyteller_f.a.app.compose_app.exit_community
 import com.storyteller_f.a.app.compose_app.join_community

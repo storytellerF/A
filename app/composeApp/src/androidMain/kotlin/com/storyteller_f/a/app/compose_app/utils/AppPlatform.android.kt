@@ -66,9 +66,6 @@ actual fun initEnvironment(context: Any) {
     }
 }
 
-actual suspend fun Clipboard.setText(string: String) {
-    setClipEntry(ClipEntry(ClipData.newPlainText("text", string)))
-}
 
 actual fun createConnectivity(): Connectivity {
     return Connectivity {

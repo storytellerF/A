@@ -31,7 +31,11 @@ import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.pages.topic.TopicRoute
 import com.storyteller_f.a.app.compose_app.utils.imageRequest
 import com.storyteller_f.a.app.core.common.LocalClient
+import com.storyteller_f.a.app.core.components.PdfViewBlock
+import com.storyteller_f.a.app.core.components.generateLatexImage
 import com.storyteller_f.a.app.core.utils.safeSink
+import com.storyteller_f.a.app.core.components.textUnitToPx
+import com.storyteller_f.a.app.core.components.saveLatexToImage
 import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.utils.MarkdownObject
@@ -220,32 +224,6 @@ fun rememberGeneratedLatexImage(modal: MarkdownComponentModel): Result<Path?> {
     }
 }
 
-fun generateLatexImage(
-    backgroundColor: Int,
-    textColor: Int,
-    size: Float,
-    tex: String
-): Result<Path?> {
-    return runCatching {
-        val key = md5(tex)
-        val output =
-            Path(SystemTemporaryDirectory, "latex/$key-$backgroundColor-$textColor-$size.png")
-        Napier.i {
-            "generate latex $tex to $output"
-        }
-        if (SystemFileSystem.exists(output)) {
-            output
-        } else {
-            output.safeSink().buffered().use {
-                if (saveLatexToImage(tex, backgroundColor, textColor, size, it)) {
-                    output
-                } else {
-                    null
-                }
-            }
-        }
-    }
-}
 
 @Composable
 fun imageRequestInMarkdown(
@@ -291,26 +269,6 @@ class CustomCoil3ImageTransformerImpl(private val mediaMap: Map<String, FileInfo
         }
     }
 }
-
-@Composable
-fun convertPxToDp(px: Int): Dp {
-    // 获取当前屏幕密度
-    val density = LocalDensity.current.density
-    // 将像素值转换为 dp
-    return pxToDp(px, density)
-}
-
-fun pxToDp(px: Int, density: Float) = (px / density).dp
-
-@Composable
-fun convertPxToSp(px: Int): TextUnit {
-    // 获取当前屏幕密度
-    val density = LocalDensity.current.density
-    // 将像素值转换为 dp
-    return pxToSp(px, density)
-}
-
-fun pxToSp(px: Int, density: Float): TextUnit = (px / density).sp
 
 @Composable
 fun ObjectBlock(maxHeight: Dp = 200.dp, block: @Composable ColumnScope.() -> Unit) {

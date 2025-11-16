@@ -1,4 +1,4 @@
-package com.storyteller_f.a.app.compose_app.components
+package com.storyteller_f.a.app.core.components
 
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.text.InlineTextContent
@@ -41,8 +41,6 @@ import com.mikepenz.markdown.compose.extendedspans.ExtendedSpans
 import com.mikepenz.markdown.compose.extendedspans.drawBehind
 import com.mikepenz.markdown.model.ImageTransformer
 import com.mikepenz.markdown.utils.getUnescapedTextInNode
-import com.storyteller_f.a.app.core.components.CustomMarkdownImage
-import com.storyteller_f.a.app.core.components.getImageDimension
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.utils.readInlineMath
 import kotlinx.collections.immutable.ImmutableMap

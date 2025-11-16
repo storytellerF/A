@@ -1,4 +1,4 @@
-package com.storyteller_f.a.app.compose_app.components
+package com.storyteller_f.a.app.core.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -14,8 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import com.storyteller_f.a.app.core.components.CustomIcon
-import com.storyteller_f.a.app.core.components.IconRes
 
 @Composable
 fun ButtonNav(icon: ImageVector, title: String, onClick: () -> Unit = {}) {
