@@ -1,6 +1,7 @@
 #!/usr/bin/env sh
 set -e
-./gradlew dev:server:installDist
+./gradlew cloud:server:installDist --no-daemon
+./gradlew dev:server:installDist --no-daemon
 ./dev/server/build/install/server/bin/server &
 echo "Waiting for port 8888 to become available..."
 counter=0
