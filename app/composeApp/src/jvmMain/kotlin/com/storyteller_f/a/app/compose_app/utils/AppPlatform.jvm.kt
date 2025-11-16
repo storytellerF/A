@@ -31,10 +31,6 @@ actual val appPlatform: AppPlatform
 
 actual fun initEnvironment(context: Any) = Unit
 
-@OptIn(ExperimentalComposeUiApi::class)
-actual suspend fun Clipboard.setText(string: String) {
-    awtClipboard?.setContents(StringSelection(string), null)
-}
 
 actual fun createConnectivity(): Connectivity {
     return Connectivity {

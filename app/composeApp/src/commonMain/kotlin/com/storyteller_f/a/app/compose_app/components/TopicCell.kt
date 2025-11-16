@@ -63,9 +63,7 @@ fun TopicCell(info: TopicInfo?) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UserTopicCell(
-    info: TopicInfo?,
-) {
+fun UserTopicCell(info: TopicInfo?) {
     val sheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
     UserTopicCellInternal(info, supportPin = true) {

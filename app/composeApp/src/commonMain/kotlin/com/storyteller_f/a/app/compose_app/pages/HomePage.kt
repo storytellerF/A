@@ -31,10 +31,10 @@ import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalUiViewModel
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.common.createWorldViewModel
-import com.storyteller_f.a.app.compose_app.components.ButtonNav
-import com.storyteller_f.a.app.compose_app.components.CustomBottomNav
-import com.storyteller_f.a.app.compose_app.components.CustomRailNav
-import com.storyteller_f.a.app.compose_app.components.NavRoute
+import com.storyteller_f.a.app.core.components.ButtonNav
+import com.storyteller_f.a.app.core.components.CustomBottomNav
+import com.storyteller_f.a.app.core.components.CustomRailNav
+import com.storyteller_f.a.app.core.components.NavRoute
 import com.storyteller_f.a.app.compose_app.components.TopicList
 import com.storyteller_f.a.app.compose_app.design_spec
 import com.storyteller_f.a.app.compose_app.pages.community.MyCommunitiesPage

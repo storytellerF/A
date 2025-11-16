@@ -44,9 +44,9 @@ import com.storyteller_f.a.app.compose_app.common.OnAddFavorite
 import com.storyteller_f.a.app.compose_app.common.OnAddSubscription
 import com.storyteller_f.a.app.compose_app.common.OnRemoveFavorite
 import com.storyteller_f.a.app.compose_app.common.OnRemoveSubscription
-import com.storyteller_f.a.app.compose_app.components.BaseSheet
-import com.storyteller_f.a.app.compose_app.components.ButtonNav
-import com.storyteller_f.a.app.compose_app.components.SheetContainer
+import com.storyteller_f.a.app.core.components.BaseSheet
+import com.storyteller_f.a.app.core.components.ButtonNav
+import com.storyteller_f.a.app.core.components.SheetContainer
 import com.storyteller_f.a.app.compose_app.components.TopicContentField
 import com.storyteller_f.a.app.compose_app.copy
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityRefCell
@@ -57,7 +57,7 @@ import com.storyteller_f.a.app.compose_app.service.buildTranslatePrompt
 import com.storyteller_f.a.app.compose_app.snapshot
 import com.storyteller_f.a.app.compose_app.success
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
-import com.storyteller_f.a.app.compose_app.utils.setText
+import com.storyteller_f.a.app.core.components.setText
 import com.storyteller_f.a.app.core.components.DialogContainer
 import com.storyteller_f.a.app.core.components.ExceptionView
 import com.storyteller_f.a.app.core.components.IconRes

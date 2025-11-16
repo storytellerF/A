@@ -68,7 +68,7 @@ import com.storyteller_f.a.app.compose_app.common.createMemberSearchViewModel
 import com.storyteller_f.a.app.compose_app.common.createRoomSearchViewModel
 import com.storyteller_f.a.app.compose_app.common.createSearchCommunitiesViewModel
 import com.storyteller_f.a.app.compose_app.common.createTitleComposeViewModel
-import com.storyteller_f.a.app.compose_app.components.BaseSheet
+import com.storyteller_f.a.app.core.components.BaseSheet
 import com.storyteller_f.a.app.compose_app.components.TopicContentField
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityList
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityRefCell

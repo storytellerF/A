@@ -17,6 +17,7 @@ import coil3.compose.AsyncImage
 import com.storyteller_f.a.app.compose_app.FileViewInfo
 import com.storyteller_f.shared.model.FileInfo
 import kotlinx.serialization.Serializable
+import com.storyteller_f.a.app.core.components.BaseSheet
 
 val globalPlayerState: MutableState<FileViewInfo.Player?> =
     mutableStateOf(null)

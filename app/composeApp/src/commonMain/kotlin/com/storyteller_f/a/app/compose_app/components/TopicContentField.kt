@@ -17,6 +17,7 @@ import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.permission_denied
+import com.storyteller_f.a.app.core.components.CustomMarkdownParagraph
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo

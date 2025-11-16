@@ -27,8 +27,6 @@ expect val appPlatform: AppPlatform
 
 expect fun initEnvironment(context: Any)
 
-expect suspend fun Clipboard.setText(string: String)
-
 expect fun getClientFile(path: String): ClientFile?
 
 expect fun startCall(roomId: PrimaryKey)

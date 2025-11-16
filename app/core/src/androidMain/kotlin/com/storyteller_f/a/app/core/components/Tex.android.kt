@@ -1,4 +1,4 @@
-package com.storyteller_f.a.app.compose_app.components
+package com.storyteller_f.a.app.core.components
 
 import android.graphics.Bitmap
 import androidx.core.graphics.drawable.toBitmap
