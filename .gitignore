@@ -36,3 +36,4 @@ CouchbaseLiteTemp
 dev/logs
 dev/reports
 *.hprof
+*.ttf
