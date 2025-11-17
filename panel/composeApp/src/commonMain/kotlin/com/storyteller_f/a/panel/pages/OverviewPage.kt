@@ -31,7 +31,14 @@ import com.storyteller_f.a.panel.LocalPanelNav
 import com.storyteller_f.a.panel.Res
 import com.storyteller_f.a.panel.common.OverviewViewModel
 import com.storyteller_f.a.panel.common.createPanelOverviewViewModel
+import com.storyteller_f.a.panel.communities_suffix
+import com.storyteller_f.a.panel.files_suffix
 import com.storyteller_f.a.panel.overview
+import com.storyteller_f.a.panel.private_rooms_suffix
+import com.storyteller_f.a.panel.public_rooms_suffix
+import com.storyteller_f.a.panel.titles_suffix
+import com.storyteller_f.a.panel.topics_suffix
+import com.storyteller_f.a.panel.users_suffix
 import com.storyteller_f.shared.model.PanelOverview
 import nl.jacobras.humanreadable.HumanReadable
 import org.jetbrains.compose.resources.stringResource
@@ -106,12 +113,13 @@ fun UserCountOverviewCell(panelOverview: PanelOverview) {
         panelNav.gotoAllUsers()
     }) {
         Box(modifier = Modifier.padding(16.dp)) {
-            val text = remember(panelOverview.userCount) {
+            val suffix = stringResource(Res.string.users_suffix)
+            val text = remember(panelOverview.userCount, suffix) {
                 buildAnnotatedString {
                     withStyle(style = SpanStyle(fontSize = 40.sp, fontWeight = FontWeight.Bold)) {
                         append(panelOverview.userCount.toString())
                     }
-                    append(" 个用户")
+                    append(suffix)
                 }
             }
             Text(text)
@@ -124,12 +132,13 @@ fun CommunityCountOverviewCell(panelOverview: PanelOverview) {
     val panelNav = LocalPanelNav.current
     Card(onClick = { panelNav.gotoAllCommunities() }) {
         Box(modifier = Modifier.padding(16.dp)) {
-            val text = remember(panelOverview.communityCount) {
+            val suffix = stringResource(Res.string.communities_suffix)
+            val text = remember(panelOverview.communityCount, suffix) {
                 buildAnnotatedString {
                     withStyle(style = SpanStyle(fontSize = 40.sp, fontWeight = FontWeight.Bold)) {
                         append(panelOverview.communityCount.toString())
                     }
-                    append(" 个社区")
+                    append(suffix)
                 }
             }
             Text(text)
@@ -142,12 +151,13 @@ fun TopicCountOverviewCell(panelOverview: PanelOverview) {
     val panelNav = LocalPanelNav.current
     Card(onClick = { panelNav.gotoAllTopics() }) {
         Box(modifier = Modifier.padding(16.dp)) {
-            val text = remember(panelOverview.topicCount) {
+            val suffix = stringResource(Res.string.topics_suffix)
+            val text = remember(panelOverview.topicCount, suffix) {
                 buildAnnotatedString {
                     withStyle(style = SpanStyle(fontSize = 40.sp, fontWeight = FontWeight.Bold)) {
                         append(panelOverview.topicCount.toString())
                     }
-                    append(" 个话题")
+                    append(suffix)
                 }
             }
             Text(text)
@@ -160,12 +170,13 @@ fun TitleCountOverviewCell(panelOverview: PanelOverview) {
     val panelNav = LocalPanelNav.current
     Card(onClick = { panelNav.gotoAllTitles() }) {
         Box(modifier = Modifier.padding(16.dp)) {
-            val text = remember(panelOverview.titleCount) {
+            val suffix = stringResource(Res.string.titles_suffix)
+            val text = remember(panelOverview.titleCount, suffix) {
                 buildAnnotatedString {
                     withStyle(style = SpanStyle(fontSize = 40.sp, fontWeight = FontWeight.Bold)) {
                         append(panelOverview.titleCount.toString())
                     }
-                    append(" 个称号")
+                    append(suffix)
                 }
             }
             Text(text)
@@ -178,12 +189,13 @@ fun PrivateRoomCountOverviewCell(panelOverview: PanelOverview) {
     val panelNav = LocalPanelNav.current
     Card(onClick = { panelNav.gotoAllPrivateRooms() }) {
         Box(modifier = Modifier.padding(16.dp)) {
-            val text = remember(panelOverview.privateRoomCount) {
+            val suffix = stringResource(Res.string.private_rooms_suffix)
+            val text = remember(panelOverview.privateRoomCount, suffix) {
                 buildAnnotatedString {
                     withStyle(style = SpanStyle(fontSize = 40.sp, fontWeight = FontWeight.Bold)) {
                         append(panelOverview.privateRoomCount.toString())
                     }
-                    append(" 个私有聊天室")
+                    append(suffix)
                 }
             }
             Text(text)
@@ -196,12 +208,13 @@ fun CommunityRoomCountOverviewCell(panelOverview: PanelOverview) {
     val panelNav = LocalPanelNav.current
     Card(onClick = { panelNav.gotoAllPublicRooms() }) {
         Box(modifier = Modifier.padding(16.dp)) {
-            val text = remember(panelOverview.communityRoomCount) {
+            val suffix = stringResource(Res.string.public_rooms_suffix)
+            val text = remember(panelOverview.communityRoomCount, suffix) {
                 buildAnnotatedString {
                     withStyle(style = SpanStyle(fontSize = 40.sp, fontWeight = FontWeight.Bold)) {
                         append(panelOverview.communityRoomCount.toString())
                     }
-                    append(" 个公开聊天室")
+                    append(suffix)
                 }
             }
             Text(text)
@@ -215,12 +228,13 @@ fun FileCountOverviewCell(panelOverview: PanelOverview) {
     Card(onClick = { panelNav.gotoAllFiles() }) {
         Box(modifier = Modifier.padding(16.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
-                Text(remember(panelOverview.fileCount) {
+                val suffix = stringResource(Res.string.files_suffix)
+                Text(remember(panelOverview.fileCount, suffix) {
                     buildAnnotatedString {
                         withStyle(style = SpanStyle(fontSize = 40.sp, fontWeight = FontWeight.Bold)) {
                             append(panelOverview.fileCount.toString())
                         }
-                        append(" 个文件")
+                        append(suffix)
                     }
                 })
 

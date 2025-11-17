@@ -54,13 +54,20 @@ import com.storyteller_f.a.panel.CustomPanelSessionManager
 import com.storyteller_f.a.panel.LocalPanelGlobalDialog
 import com.storyteller_f.a.panel.LocalPanelNav
 import com.storyteller_f.a.panel.Res
+import com.storyteller_f.a.panel.add
+import com.storyteller_f.a.panel.add_user
 import com.storyteller_f.a.panel.aid
+import com.storyteller_f.a.panel.all_users
 import com.storyteller_f.a.panel.common.AddUserViewModel
 import com.storyteller_f.a.panel.common.AllUsersViewModel
 import com.storyteller_f.a.panel.common.OnUserAdded
 import com.storyteller_f.a.panel.common.createPanelAllUserViewModel
 import com.storyteller_f.a.panel.components.UserCell
+import com.storyteller_f.a.panel.edit_private_key
+import com.storyteller_f.a.panel.menu
 import com.storyteller_f.a.panel.nickname
+import com.storyteller_f.a.panel.private_key_required
+import com.storyteller_f.a.panel.random
 import com.storyteller_f.shared.replaceCrlf
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.openFilePicker
@@ -85,14 +92,14 @@ fun AllUsersPageInternal(viewModel: AllUsersViewModel) {
                 mutableStateOf(false)
             }
             TopAppBar(title = {
-                Text("All users")
+                Text(stringResource(Res.string.all_users))
             }, navigationIcon = {
-                IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, "menu") }
+                IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, stringResource(Res.string.menu)) }
             }, actions = {
                 IconButton({
                     showDialog = true
                 }) {
-                    Icon(Icons.Default.Add, "add user")
+                    Icon(Icons.Default.Add, stringResource(Res.string.add_user))
                 }
             })
             AddUserDialog(showDialog) {
@@ -173,12 +180,12 @@ private fun AddUserPrivateKeyPage(
                     }
                 }
             }) {
-                Icon(Icons.Default.FileOpen, "select file")
+                Icon(Icons.Default.FileOpen, CoreStrings.selectFile())
             }
             IconButton({
                 addUserViewModel.autoGeneratePrivateKey()
             }) {
-                Icon(Icons.Default.Casino, "random")
+                Icon(Icons.Default.Casino, stringResource(Res.string.random))
             }
             Spacer(modifier = Modifier.weight(1f))
         }
@@ -229,7 +236,7 @@ private fun AddUserProfilePage(
             IconButton({
                 addUserNavigator.navigate("private_key")
             }) {
-                Icon(Icons.Default.Edit, "edit private key")
+                Icon(Icons.Default.Edit, stringResource(Res.string.edit_private_key))
             }
         }
 
@@ -242,15 +249,17 @@ private fun AddUserProfilePage(
             val scope = rememberCoroutineScope()
             val globalDialogController = LocalPanelGlobalDialog.current
             val toast = LocalToaster.current
+            val requiredPrivateKeyMessage = stringResource(Res.string.private_key_required)
             Button({
                 globalDialogController.addUser(
                     scope,
                     addUserViewModel,
                     toast,
-                    dismiss
+                    dismiss,
+                    requiredPrivateKeyMessage
                 )
             }) {
-                Text("Add")
+                Text(stringResource(Res.string.add))
             }
         }
     }
@@ -260,13 +269,14 @@ private fun GlobalDialogController<GlobalDialogContext<CustomPanelSessionManager
     scope: CoroutineScope,
     addUserViewModel: AddUserViewModel,
     toast: Toast,
-    dismiss: () -> Unit
+    dismiss: () -> Unit,
+    requiredPrivateKeyMessage: String
 ) {
     val nickname = addUserViewModel.nickname.value.takeIf { it.isNotBlank() }
     val aid = addUserViewModel.aid.value.takeIf { it.isNotBlank() }
     val publicKey = addUserViewModel.publicKey.value?.takeIf { it.isNotBlank() }
     if (publicKey == null) {
-        toast.showMessage("Private key must be specified")
+        toast.showMessage(requiredPrivateKeyMessage)
         return
     }
     val newUser = NewUser(nickname, aid, publicKey)

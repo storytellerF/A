@@ -306,42 +306,42 @@ private fun PanelDrawer(
         DrawerHeader()
         DrawerNavItem(
             Icons.Default.Home,
-            "概览",
+            stringResource(Res.string.overview),
             onNavigate(scope, drawerState) { nav.gotoOverview() }
         )
         DrawerNavItem(
             Icons.Default.People,
-            "所有用户",
+            stringResource(Res.string.all_users),
             onNavigate(scope, drawerState) { nav.gotoAllUsers() }
         )
         DrawerNavItem(
             Icons.Default.Group,
-            "所有社区",
+            stringResource(Res.string.all_communities),
             onNavigate(scope, drawerState) { nav.gotoAllCommunities() }
         )
         DrawerNavItem(
             Icons.Default.Public,
-            "所有公共房间",
+            stringResource(Res.string.all_public_rooms),
             onNavigate(scope, drawerState) { nav.gotoAllPublicRooms() }
         )
         DrawerNavItem(
             Icons.Default.Lock,
-            "所有私有房间",
+            stringResource(Res.string.all_private_rooms),
             onNavigate(scope, drawerState) { nav.gotoAllPrivateRooms() }
         )
         DrawerNavItem(
             Icons.Default.Topic,
-            "所有主题",
+            stringResource(Res.string.all_topics),
             onNavigate(scope, drawerState) { nav.gotoAllTopics() }
         )
         DrawerNavItem(
             Icons.Default.FilePresent,
-            "所有文件",
+            stringResource(Res.string.all_files),
             onNavigate(scope, drawerState) { nav.gotoAllFiles() }
         )
         DrawerNavItem(
             Icons.Default.Title,
-            "所有标题",
+            stringResource(Res.string.all_titles),
             onNavigate(scope, drawerState) { nav.gotoAllTitles() }
         )
     }
@@ -350,7 +350,7 @@ private fun PanelDrawer(
 @Composable
 private fun DrawerHeader() {
     Text(
-        "导航菜单",
+        stringResource(Res.string.navigation_menu),
         modifier = Modifier.padding(16.dp),
         style = MaterialTheme.typography.titleLarge
     )
@@ -455,7 +455,7 @@ private fun PanelSelectLoginPage(navigator: NavHostController, back: () -> Unit)
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                "Sign In",
+                stringResource(Res.string.sign_in),
                 style = MaterialTheme.typography.headlineMedium
             )
             Column(
