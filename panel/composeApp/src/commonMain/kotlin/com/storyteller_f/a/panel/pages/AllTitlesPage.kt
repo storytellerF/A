@@ -3,6 +3,7 @@
 
 package com.storyteller_f.a.panel.pages
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -55,6 +56,7 @@ fun AllTitlesPageInternal(viewModel: AllTitlesViewModel) {
                             val creator = info.creator.toString()
                             val receiver = info.receiver.toString()
                             ListItem(
+                                modifier = Modifier.clickable { panelNav.gotoTitleDetail(info.id) },
                                 headlineContent = { Text(info.name) },
                                 overlineContent = { Text(type) },
                                 supportingContent = {

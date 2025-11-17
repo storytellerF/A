@@ -73,6 +73,18 @@ class ExposedTitleDatabase(val exposedDatabaseSession: ExposedDatabaseSession) :
 
     override suspend fun getTitleCount() = getTitleCountByPredicate()
 
+    override suspend fun getTitle(id: PrimaryKey) = runCatching {
+        val list = exposedDatabaseSession.dbSearch {
+            search {
+                Titles.selectAll().andWhere { Titles.id eq id }
+            }
+            map {
+                Title.wrapRow(it)
+            }
+        }.getOrThrow()
+        list.firstOrNull()?.let { RawTitle(it) }
+    }
+
     private suspend fun getTitleListByPredicate(
         queryProvider: Query.() -> Query
     ) = exposedDatabaseSession.dbSearch {

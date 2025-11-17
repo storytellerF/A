@@ -56,7 +56,7 @@ fun UserDetailPage(uid: PrimaryKey) {
             }
         }
     }) { paddingValues ->
-        Column(Modifier.padding(bottom = paddingValues.calculateBottomPadding())) {
+        Column(Modifier.padding(top = paddingValues.calculateTopPadding())) {
             HorizontalPager(pagerState) { pageIndex ->
                 when (pageIndex) {
                     0 -> UserInfoTabs(uid)

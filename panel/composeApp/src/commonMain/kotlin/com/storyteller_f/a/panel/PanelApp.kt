@@ -87,7 +87,12 @@ import com.storyteller_f.a.panel.pages.AllPublicRoomsPage
 import com.storyteller_f.a.panel.pages.AllTitlesPage
 import com.storyteller_f.a.panel.pages.AllTopicsPage
 import com.storyteller_f.a.panel.pages.AllUsersPage
+import com.storyteller_f.a.panel.pages.CommunityDetailPage
+import com.storyteller_f.a.panel.pages.FileDetailPage
 import com.storyteller_f.a.panel.pages.OverviewPage
+import com.storyteller_f.a.panel.pages.RoomDetailPage
+import com.storyteller_f.a.panel.pages.TitleDetailPage
+import com.storyteller_f.a.panel.pages.TopicDetailPage
 import com.storyteller_f.shared.replaceCrlf
 import com.storyteller_f.storage.UserCollection
 import io.github.vinceglb.filekit.FileKit
@@ -120,11 +125,16 @@ interface PanelNav {
     fun gotoAllUsers()
     fun gotoUserDetail(uid: Long)
     fun gotoAllCommunities()
+    fun gotoCommunityDetail(id: Long)
     fun gotoAllPublicRooms()
+    fun gotoRoomDetail(id: Long)
     fun gotoAllPrivateRooms()
     fun gotoAllTopics()
+    fun gotoTopicDetail(id: Long)
     fun gotoAllFiles()
+    fun gotoFileDetail(id: Long)
     fun gotoAllTitles()
+    fun gotoTitleDetail(id: Long)
     fun open()
 }
 
@@ -153,8 +163,16 @@ class Nav2PanelNav(
         navigator.navigate(PanelAllCommunitiesScreen)
     }
 
+    override fun gotoCommunityDetail(id: Long) {
+        navigator.navigate(PanelCommunityDetailScreen(id))
+    }
+
     override fun gotoAllPublicRooms() {
         navigator.navigate(PanelAllPublicRoomsScreen)
+    }
+
+    override fun gotoRoomDetail(id: Long) {
+        navigator.navigate(PanelRoomDetailScreen(id))
     }
 
     override fun gotoAllPrivateRooms() {
@@ -165,12 +183,24 @@ class Nav2PanelNav(
         navigator.navigate(PanelAllTopicsScreen)
     }
 
+    override fun gotoTopicDetail(id: Long) {
+        navigator.navigate(PanelTopicDetailScreen(id))
+    }
+
     override fun gotoAllFiles() {
         navigator.navigate(PanelAllFilesScreen)
     }
 
+    override fun gotoFileDetail(id: Long) {
+        navigator.navigate(PanelFileDetailScreen(id))
+    }
+
     override fun gotoAllTitles() {
         navigator.navigate(PanelAllTitlesScreen)
+    }
+
+    override fun gotoTitleDetail(id: Long) {
+        navigator.navigate(PanelTitleDetailScreen(id))
     }
 
     override fun open() {
@@ -257,42 +287,48 @@ private fun PanelAppNavHost(
     nav: Nav2PanelNav
 ) {
     NavHost(navigator, "overview") {
-        composable("login") {
-            PanelLoginPage {
-                navigator.popBackStack()
-                nav.gotoOverview()
-            }
-        }
-        composable("all-users") { AllUsersPage() }
         composable<PanelLoginScreen> {
             PanelLoginPage {
                 navigator.popBackStack()
                 nav.gotoOverview()
             }
         }
-        composable<PanelOverviewScreen> { OverviewPage() }
+        composable<PanelOverviewScreen> {
+            PanelHost {
+                OverviewPage()
+            }
+        }
         composable<PanelAllUsersScreen> { AllUsersPage() }
         composable<PanelUserDetailScreen> {
             val screen = it.toRoute<PanelUserDetailScreen>()
             com.storyteller_f.a.panel.pages.UserDetailPage(screen.uid)
         }
-        composable("all-communities") { AllCommunitiesPage() }
-        composable("all-rooms-public") { AllPublicRoomsPage() }
-        composable("all-rooms-private") { AllPrivateRoomsPage() }
-        composable("all-topics") { AllTopicsPage() }
-        composable("all-files") { AllFilesPage() }
-        composable("all-titles") { AllTitlesPage() }
+        composable<PanelCommunityDetailScreen> {
+            val screen = it.toRoute<PanelCommunityDetailScreen>()
+            CommunityDetailPage(screen.id)
+        }
+        composable<PanelRoomDetailScreen> {
+            val screen = it.toRoute<PanelRoomDetailScreen>()
+            RoomDetailPage(screen.id)
+        }
+        composable<PanelTopicDetailScreen> {
+            val screen = it.toRoute<PanelTopicDetailScreen>()
+            TopicDetailPage(screen.id)
+        }
+        composable<PanelFileDetailScreen> {
+            val screen = it.toRoute<PanelFileDetailScreen>()
+            FileDetailPage(screen.id)
+        }
+        composable<PanelTitleDetailScreen> {
+            val screen = it.toRoute<PanelTitleDetailScreen>()
+            TitleDetailPage(screen.id)
+        }
         composable<PanelAllCommunitiesScreen> { AllCommunitiesPage() }
         composable<PanelAllPublicRoomsScreen> { AllPublicRoomsPage() }
         composable<PanelAllPrivateRoomsScreen> { AllPrivateRoomsPage() }
         composable<PanelAllTopicsScreen> { AllTopicsPage() }
         composable<PanelAllFilesScreen> { AllFilesPage() }
         composable<PanelAllTitlesScreen> { AllTitlesPage() }
-        composable("overview") {
-            PanelHost {
-                OverviewPage()
-            }
-        }
     }
 }
 
@@ -574,6 +610,21 @@ fun createCustomPanelSessionManager(
 
 @Serializable
 data class PanelUserDetailScreen(val uid: Long)
+
+@Serializable
+data class PanelCommunityDetailScreen(val id: Long)
+
+@Serializable
+data class PanelRoomDetailScreen(val id: Long)
+
+@Serializable
+data class PanelTopicDetailScreen(val id: Long)
+
+@Serializable
+data class PanelFileDetailScreen(val id: Long)
+
+@Serializable
+data class PanelTitleDetailScreen(val id: Long)
 
 @Serializable
 object PanelLoginScreen

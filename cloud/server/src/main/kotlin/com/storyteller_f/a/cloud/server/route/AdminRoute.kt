@@ -2,6 +2,7 @@ package com.storyteller_f.a.cloud.server.route
 
 import com.storyteller_f.a.api.AdminApi
 import com.storyteller_f.a.backend.core.Backend
+import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.cloud.core.service.addUser
 import com.storyteller_f.a.cloud.core.service.adminSignIn
 import com.storyteller_f.a.cloud.core.service.adminSignUp
@@ -12,8 +13,13 @@ import com.storyteller_f.a.cloud.core.service.getAllPublicRooms
 import com.storyteller_f.a.cloud.core.service.getAllTitles
 import com.storyteller_f.a.cloud.core.service.getAllTopics
 import com.storyteller_f.a.cloud.core.service.getAllUsers
+import com.storyteller_f.a.cloud.core.service.getCommunity
+import com.storyteller_f.a.cloud.core.service.getFileInfoById
 import com.storyteller_f.a.cloud.core.service.getFileInfoPaginationResult
 import com.storyteller_f.a.cloud.core.service.getOverview
+import com.storyteller_f.a.cloud.core.service.getRoomInfo
+import com.storyteller_f.a.cloud.core.service.getTitleInfo
+import com.storyteller_f.a.cloud.core.service.getTopic
 import com.storyteller_f.a.cloud.core.service.getUserById
 import com.storyteller_f.a.cloud.core.service.getUserJoinedCommunities
 import com.storyteller_f.a.cloud.core.service.getUserJoinedRooms
@@ -41,30 +47,33 @@ fun Routing.bindProtectedAdminRoute(backend: Backend) {
                 backend.getAllCommunities(fetch)
             }
         }
-        AdminApi.Rooms.getPublic(handleResult()) {
-            it.pagination(IdentifiablePagingGenerator) { fetch ->
-                backend.getAllPublicRooms(fetch)
-            }
+        AdminApi.Communities.Id.get(handleResult()) { p ->
+            backend.getCommunity(ObjectFetch.IdFetch(p.id), null, null)
         }
-        AdminApi.Rooms.getPrivate(handleResult()) {
-            it.pagination(IdentifiablePagingGenerator) { fetch ->
-                backend.getAllPrivateRooms(fetch)
-            }
-        }
+        bindAdminRoomRoutes(backend)
         AdminApi.Topics.get(handleResult()) {
             it.pagination(IdentifiablePagingGenerator) { fetch ->
                 backend.getAllTopics(fetch)
             }
+        }
+        AdminApi.Topics.Id.get(handleResult()) { p ->
+            backend.getTopic(p.id, null, null)
         }
         AdminApi.Titles.get(handleResult()) {
             it.pagination(IdentifiablePagingGenerator) { fetch ->
                 backend.getAllTitles(fetch)
             }
         }
+        AdminApi.Titles.Id.get(handleResult()) { p ->
+            backend.getTitleInfo(p.id)
+        }
         AdminApi.Files.get(handleResult()) {
             it.pagination(IdentifiablePagingGenerator) { fetch ->
                 backend.getAllFileInfos(fetch)
             }
+        }
+        AdminApi.Files.Id.get(handleResult()) { p ->
+            backend.getFileInfoById(p.id)
         }
         AdminApi.signOut(handleResult()) {
             call.sessions.clear(UserSession::class)
@@ -76,6 +85,22 @@ fun Routing.bindProtectedAdminRoute(backend: Backend) {
         AdminApi.Users.add(handleResult(), { api ->
             backend.addUser(api.receiveBody())
         })
+    }
+}
+
+private fun Routing.bindAdminRoomRoutes(backend: Backend) {
+    AdminApi.Rooms.getPublic(handleResult()) {
+        it.pagination(IdentifiablePagingGenerator) { fetch ->
+            backend.getAllPublicRooms(fetch)
+        }
+    }
+    AdminApi.Rooms.getPrivate(handleResult()) {
+        it.pagination(IdentifiablePagingGenerator) { fetch ->
+            backend.getAllPrivateRooms(fetch)
+        }
+    }
+    AdminApi.Rooms.Id.get(handleResult()) { p ->
+        backend.getRoomInfo(ObjectFetch.IdFetch(p.id), null, null)
     }
 }
 

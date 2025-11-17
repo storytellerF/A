@@ -2,6 +2,7 @@ package com.storyteller_f.a.client.core
 
 import com.storyteller_f.a.api.AdminApi
 import com.storyteller_f.a.api.CommonPath
+import com.storyteller_f.a.api.CustomApi
 import com.storyteller_f.a.api.NewUser
 import com.storyteller_f.a.api.PaginationQuery
 import com.storyteller_f.a.api.SignInBody
@@ -96,4 +97,25 @@ suspend fun PanelSessionManager.getUserFiles(uid: PrimaryKey, query: PaginationQ
 
 suspend fun PanelSessionManager.getUserLogs(uid: PrimaryKey, query: PaginationQuery) = serviceCatching {
     AdminApi.Users.Id.Logs.get(query, CommonPath(uid))
+}
+
+// Detail fetch for other entities via CustomApi
+suspend fun PanelSessionManager.getCommunityById(id: PrimaryKey) = serviceCatching {
+    AdminApi.Communities.Id.get(CommonPath(id))
+}
+
+suspend fun PanelSessionManager.getRoomById(id: PrimaryKey) = serviceCatching {
+    AdminApi.Rooms.Id.get(CommonPath(id))
+}
+
+suspend fun PanelSessionManager.getTopicById(id: PrimaryKey) = serviceCatching {
+    AdminApi.Topics.Id.get(CommonPath(id))
+}
+
+suspend fun PanelSessionManager.getFileById(id: PrimaryKey) = serviceCatching {
+    AdminApi.Files.Id.get(CommonPath(id))
+}
+
+suspend fun PanelSessionManager.getTitleById(id: PrimaryKey) = serviceCatching {
+    AdminApi.Titles.Id.get(CommonPath(id))
 }

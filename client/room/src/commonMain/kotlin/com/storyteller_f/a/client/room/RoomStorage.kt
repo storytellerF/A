@@ -84,7 +84,7 @@ class RoomUserInfoStorage(val appDatabase: AppDatabase) : UserInfoStorage {
     }
 
     override suspend fun clean(collection: UserCollection) {
-        appDatabase.getCommonDao().clean(collection.getName())
+        impl.clean(collection.getName())
     }
 
     override fun observeDatum(id: PrimaryKey): Flow<UserInfo?> {
@@ -203,6 +203,7 @@ class RoomTopicInfoStorage(val appDatabase: AppDatabase) : TopicInfoStorage {
 }
 
 class RoomTitleInfoStorage(val appDatabase: AppDatabase) : TitleInfoStorage {
+    val impl = CommonStorageImpl(appDatabase)
     override suspend fun save(
         collection: TitleCollection,
         item: TitleInfo
@@ -218,23 +219,15 @@ class RoomTitleInfoStorage(val appDatabase: AppDatabase) : TitleInfoStorage {
     override fun observeData(
         collection: TitleCollection,
     ): PagingSource<Int, TitleInfo> {
-        val source = appDatabase.getCommonDao().getAsSource(collection.getName())
-        return WrappedPagingSource(source) { list ->
-            list.mapNotNull {
-                commonJson.safeDecodeFromStringOrNull(it.data)
-            }
-        }
+        return impl.observeData(collection.getName())
     }
 
     override suspend fun clean(collection: TitleCollection) {
-        appDatabase.getCommonDao().clean(collection.getName())
+        impl.clean(TitleCollection.Titles.getName())
     }
 
     override fun observeDatum(id: PrimaryKey): Flow<TitleInfo?> {
-        val scope = TitleCollection.Titles.getName()
-        return appDatabase.getTopicDao().getAsFlow(scope, id.toString()).map {
-            it?.data?.let { string -> commonJson.safeDecodeFromStringOrNull(string) }
-        }
+        return impl.observeDatum(TitleCollection.Titles.getName(), id.toString())
     }
 }
 
@@ -262,6 +255,14 @@ class CommonStorageImpl(val appDatabase: AppDatabase) {
 
     suspend fun clean(collection: String) {
         appDatabase.getCommonDao().clean(collection)
+    }
+
+    suspend inline fun<reified T> getDocument(
+        collection: String,
+        id: String
+    ): T? {
+        val entity = appDatabase.getCommonDao().get(collection, id)
+        return entity?.data?.let { commonJson.safeDecodeFromStringOrNull(it) }
     }
 }
 
@@ -295,7 +296,7 @@ class RoomRoomInfoStorage(val appDatabase: AppDatabase) : RoomInfoStorage {
     }
 
     override suspend fun clean(collection: RoomCollection) {
-        appDatabase.getCommonDao().clean(collection.getName())
+        impl.clean(RoomCollection.Rooms.getName())
     }
 
     override fun observeDatum(id: PrimaryKey): Flow<RoomInfo?> {
@@ -382,6 +383,7 @@ class RoomReactionInfoStorage(val appDatabase: AppDatabase) : ReactionInfoStorag
 }
 
 class RoomChildAccountStorage(val appDatabase: AppDatabase) : ChildAccountStorage {
+    val impl = CommonStorageImpl(appDatabase)
     override suspend fun save(item: ChildAccountInfo) {
         val data = commonJson.encodeToString(item)
         appDatabase.getCommonDao()
@@ -389,20 +391,16 @@ class RoomChildAccountStorage(val appDatabase: AppDatabase) : ChildAccountStorag
     }
 
     override fun observeData(): PagingSource<Int, ChildAccountInfo> {
-        val raw = appDatabase.getCommonDao().getAsSource(ChildAccountStorage.COLLECTION_NAME)
-        return WrappedPagingSource(raw) { list ->
-            list.mapNotNull {
-                commonJson.safeDecodeFromStringOrNull(it.data)
-            }
-        }
+        return impl.observeData(ChildAccountStorage.COLLECTION_NAME)
     }
 
     override suspend fun clean() {
-        appDatabase.getCommonDao().clean(ChildAccountStorage.COLLECTION_NAME)
+        impl.clean(ChildAccountStorage.COLLECTION_NAME)
     }
 }
 
 class RoomFileInfoStorage(val appDatabase: AppDatabase) : FileInfoStorage {
+    val impl = CommonStorageImpl(appDatabase)
     override suspend fun save(
         collection: FileCollection,
         item: FileInfo
@@ -417,27 +415,20 @@ class RoomFileInfoStorage(val appDatabase: AppDatabase) : FileInfoStorage {
     }
 
     override fun observeData(collection: FileCollection): PagingSource<Int, FileInfo> {
-        val raw = appDatabase.getCommonDao().getAsSource(collection.getName())
-        return WrappedPagingSource(raw) { list ->
-            list.mapNotNull {
-                commonJson.safeDecodeFromStringOrNull(it.data)
-            }
-        }
+        return impl.observeData(collection.getName())
     }
 
     override suspend fun clean(collection: FileCollection) {
-        appDatabase.getCommonDao().clean(collection.getName())
+        impl.clean(collection.getName())
     }
 
     override fun observeDatum(id: PrimaryKey): Flow<FileInfo?> {
-        return appDatabase.getCommonDao()
-            .getAsFlow(FileCollection.Files.getName(), id.toString()).map {
-                it?.data?.let { string -> commonJson.safeDecodeFromStringOrNull(string) }
-            }
+        return impl.observeDatum(FileCollection.Files.getName(), id.toString())
     }
 }
 
 class RoomDownloadInfoStorage(val appDatabase: AppDatabase) : DownloadInfoStorage {
+    val impl = CommonStorageImpl(appDatabase)
     override suspend fun save(item: DownloadInfo) {
         val data = commonJson.encodeToString(item)
         appDatabase.getCommonDao().insert(
@@ -450,28 +441,19 @@ class RoomDownloadInfoStorage(val appDatabase: AppDatabase) : DownloadInfoStorag
     }
 
     override fun observeDatum(id: PrimaryKey): Flow<DownloadInfo?> {
-        return appDatabase.getCommonDao()
-            .getAsFlow(DownloadInfoStorage.COLLECTION_NAME, id.toString()).map {
-                it?.data?.let { string -> commonJson.safeDecodeFromStringOrNull(string) }
-            }
+        return impl.observeDatum(DownloadInfoStorage.COLLECTION_NAME, id.toString())
     }
 
     override suspend fun getDocument(id: PrimaryKey): DownloadInfo? {
-        return appDatabase.getCommonDao().get(DownloadInfoStorage.COLLECTION_NAME, id.toString())
-            ?.let {
-                commonJson.safeDecodeFromStringOrNull(it.data)
-            }
+        return impl.getDocument(DownloadInfoStorage.COLLECTION_NAME, id.toString())
     }
 
     override fun observeData(): PagingSource<Int, DownloadInfo> {
-        val raw = appDatabase.getCommonDao().getAsSource(DownloadInfoStorage.COLLECTION_NAME)
-        return WrappedPagingSource(raw) { list ->
-            list.mapNotNull { commonJson.safeDecodeFromStringOrNull<DownloadInfo>(it.data) }
-        }
+        return impl.observeData(DownloadInfoStorage.COLLECTION_NAME)
     }
 
     override suspend fun clean() {
-        appDatabase.getCommonDao().clean(DownloadInfoStorage.COLLECTION_NAME)
+        impl.clean(DownloadInfoStorage.COLLECTION_NAME)
     }
 }
 

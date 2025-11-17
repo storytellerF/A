@@ -44,6 +44,11 @@
     <string name="none">None</string>
     <string name="user_info">User info</string>
     <string name="user_logs">User logs</string>
+    <string name="community_info">Community info</string>
+    <string name="room_info">Room info</string>
+    <string name="topic_info">Topic info</string>
+    <string name="title_info">Title info</string>
+    <string name="file_info">File info</string>
     <string name="tab_basic_info">Basic info</string>
     <string name="tab_joined_communities">Joined communities</string>
     <string name="tab_joined_rooms">Joined rooms</string>
