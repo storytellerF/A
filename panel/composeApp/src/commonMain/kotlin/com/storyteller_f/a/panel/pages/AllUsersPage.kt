@@ -41,6 +41,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.storyteller_f.a.api.NewUser
+import com.storyteller_f.a.app.core.CoreStrings
 import com.storyteller_f.a.app.core.components.DialogContainer
 import com.storyteller_f.a.app.core.components.GlobalDialogContext
 import com.storyteller_f.a.app.core.components.GlobalDialogController
@@ -52,17 +53,21 @@ import com.storyteller_f.a.client.core.addUser
 import com.storyteller_f.a.panel.CustomPanelSessionManager
 import com.storyteller_f.a.panel.LocalPanelGlobalDialog
 import com.storyteller_f.a.panel.LocalPanelNav
+import com.storyteller_f.a.panel.Res
+import com.storyteller_f.a.panel.aid
 import com.storyteller_f.a.panel.common.AddUserViewModel
 import com.storyteller_f.a.panel.common.AllUsersViewModel
 import com.storyteller_f.a.panel.common.OnUserAdded
 import com.storyteller_f.a.panel.common.createPanelAllUserViewModel
 import com.storyteller_f.a.panel.components.UserCell
+import com.storyteller_f.a.panel.nickname
 import com.storyteller_f.shared.replaceCrlf
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.openFilePicker
 import io.github.vinceglb.filekit.readBytes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun AllUsersPage() {
@@ -174,12 +179,12 @@ private fun AddUserPrivateKeyPage(
         OutlinedTextField(privateKey, {
             addUserViewModel.updatePrivateKey(it)
         }, label = {
-            Text("private key")
+            Text(CoreStrings.privateKey())
         })
         Button({
             addUserNavigator.popBackStack()
         }) {
-            Text("OK")
+            Text(CoreStrings.ok())
         }
     }
 }
@@ -197,12 +202,12 @@ private fun AddUserProfilePage(
         OutlinedTextField(nickname, {
             addUserViewModel.updateNickname(it)
         }, label = {
-            Text("Nickname")
+            Text(stringResource(Res.string.nickname))
         })
         OutlinedTextField(aid, {
             addUserViewModel.updateAid(it)
         }, label = {
-            Text("Aid")
+            Text(stringResource(Res.string.aid))
         })
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -226,7 +231,7 @@ private fun AddUserProfilePage(
             Button({
                 dismiss()
             }) {
-                Text("Cancel")
+                Text(CoreStrings.cancel())
             }
             val scope = rememberCoroutineScope()
             val globalDialogController = LocalPanelGlobalDialog.current

@@ -21,8 +21,11 @@ import androidx.compose.ui.Modifier
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.pagingItems
 import com.storyteller_f.a.panel.LocalPanelNav
+import com.storyteller_f.a.panel.Res
+import com.storyteller_f.a.panel.all_titles
 import com.storyteller_f.a.panel.common.AllTitlesViewModel
 import com.storyteller_f.a.panel.common.createPanelAllTitlesViewModel
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,7 +40,7 @@ fun AllTitlesPageInternal(viewModel: AllTitlesViewModel) {
     val panelNav = LocalPanelNav.current
     Scaffold(
         topBar = { TopAppBar(
-            title = { Text("All titles") },
+            title = { Text(stringResource(Res.string.all_titles)) },
             navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } }
         ) }
     ) {
@@ -47,12 +50,12 @@ fun AllTitlesPageInternal(viewModel: AllTitlesViewModel) {
                     pagingItems(items, key = { it.id }) { index ->
                         val info = items[index]
                         if (info != null) {
-                            val type = info.type?.name ?: ""
-                            val scope = info.scopeType?.name ?: ""
-                            val creator = info.creator?.toString() ?: ""
-                            val receiver = info.receiver?.toString() ?: ""
+                            val type = info.type.name
+                            val scope = info.scopeType.name
+                            val creator = info.creator.toString()
+                            val receiver = info.receiver.toString()
                             ListItem(
-                                headlineContent = { Text(info.name ?: "") },
+                                headlineContent = { Text(info.name) },
                                 overlineContent = { Text(type) },
                                 supportingContent = {
                                     Text(

@@ -78,6 +78,7 @@ import com.storyteller_f.a.app.compose_app.components.FileIcon
 import com.storyteller_f.a.app.compose_app.components.UploadIcon
 import com.storyteller_f.a.app.compose_app.pages.topic.PlatformClientFile
 import com.storyteller_f.a.app.compose_app.utils.ClientFile
+import com.storyteller_f.a.app.core.CoreStrings
 import com.storyteller_f.a.app.core.components.BaseSheet
 import com.storyteller_f.a.app.core.components.CustomBottomNav
 import com.storyteller_f.a.app.core.components.CustomRailNav
@@ -792,7 +793,7 @@ fun CancelUploadButton(uploadInfo: UploadInfo, updateDropdown: (Boolean) -> Unit
             }
         },
         leadingIcon = {
-            Icon(Icons.Default.Stop, contentDescription = "Cancel")
+            Icon(Icons.Default.Stop, contentDescription = CoreStrings.cancel())
         }
     )
 }

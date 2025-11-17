@@ -21,8 +21,11 @@ import androidx.compose.ui.Modifier
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.pagingItems
 import com.storyteller_f.a.panel.LocalPanelNav
+import com.storyteller_f.a.panel.Res
+import com.storyteller_f.a.panel.all_files
 import com.storyteller_f.a.panel.common.AllFilesViewModel
 import com.storyteller_f.a.panel.common.createPanelAllFilesViewModel
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,19 +40,19 @@ fun AllFilesPageInternal(viewModel: AllFilesViewModel) {
     val panelNav = LocalPanelNav.current
     Scaffold(
         topBar = { TopAppBar(
-            title = { Text("All files") },
+            title = { Text(stringResource(Res.string.all_files)) },
             navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } }
         ) }
-    ) {
-        Box(Modifier.padding(top = it.calculateTopPadding())) {
+    ) { paddingValues ->
+        Box(Modifier.padding(top = paddingValues.calculateTopPadding())) {
             StateView(viewModel) { items ->
                 LazyColumn {
                     pagingItems(items, key = { it.id }) { index ->
                         val info = items[index]
                         if (info != null) {
-                            val name = info.name ?: info.fullName ?: ""
-                            val type = info.contentType ?: ""
-                            val size = info.size?.toString() ?: ""
+                            val name = info.name
+                            val type = info.contentType
+                            val size = info.size.toString()
                             val dim = info.dimension?.let { "${it.width}x${it.height}" } ?: ""
                             ListItem(
                                 headlineContent = { Text(name) },

@@ -57,6 +57,7 @@ import com.storyteller_f.a.app.compose_app.sign_up
 import com.storyteller_f.a.app.compose_app.start_sign_in
 import com.storyteller_f.a.app.compose_app.start_sign_up
 import com.storyteller_f.a.app.compose_app.utils.appPlatform
+import com.storyteller_f.a.app.core.CoreStrings
 import com.storyteller_f.a.app.core.components.BaseSheet
 import com.storyteller_f.a.app.core.components.CenterBox
 import com.storyteller_f.a.app.core.components.PrivateKeyInput
@@ -303,7 +304,7 @@ fun SelectFile(isSignUp: Boolean) {
                 startSignFromFile(appNavFactory, true, globalDialogController)
             }
         }) {
-            Text("Select File")
+            Text(CoreStrings.selectFile())
         }
     } else {
         OutlinedButton({
@@ -311,7 +312,7 @@ fun SelectFile(isSignUp: Boolean) {
                 startSignFromFile(appNavFactory, false, globalDialogController)
             }
         }) {
-            Text("Select File")
+            Text(CoreStrings.selectFile())
         }
     }
 }

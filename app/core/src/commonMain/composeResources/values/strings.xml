@@ -41,4 +41,10 @@
     <string name="no_content_yet">No content yet ┑(￣Д ￣)┍</string>
     <string name="copy">Copy</string>
     <string name="snapshot">Snapshot</string>
+    <string name="select_file">Select File</string>
+    <string name="ok">OK</string>
+    <string name="start">Start</string>
+    <string name="cancel">Cancel</string>
+    <string name="aid_label">aid: %1$s</string>
+    <string name="ad_label">ad: %1$s</string>
 </resources>

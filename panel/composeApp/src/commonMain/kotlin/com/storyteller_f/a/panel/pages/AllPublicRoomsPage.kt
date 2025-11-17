@@ -20,8 +20,11 @@ import androidx.compose.ui.Modifier
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.pagingItems
 import com.storyteller_f.a.panel.LocalPanelNav
+import com.storyteller_f.a.panel.Res
+import com.storyteller_f.a.panel.all_public_rooms
 import com.storyteller_f.a.panel.common.AllPublicRoomsViewModel
 import com.storyteller_f.a.panel.common.createPanelAllPublicRoomsViewModel
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun AllPublicRoomsPage() {
@@ -35,20 +38,20 @@ fun AllPublicRoomsPageInternal(viewModel: AllPublicRoomsViewModel) {
     val panelNav = LocalPanelNav.current
     Scaffold(
         topBar = { TopAppBar(
-            title = { Text("All public rooms") },
+            title = { Text(stringResource(Res.string.all_public_rooms)) },
             navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } }
         ) }
-    ) {
-        Box(Modifier.padding(top = it.calculateTopPadding())) {
+    ) { paddingValues ->
+        Box(Modifier.padding(top = paddingValues.calculateTopPadding())) {
             StateView(viewModel) { items ->
                 LazyColumn {
                     pagingItems(items, key = { it.id }) { index ->
                         val info = items[index]
                         if (info != null) {
-                            val members = info.memberCount?.toString() ?: ""
-                            val aid = info.aid ?: ""
+                            val members = info.memberCount.toString()
+                            val aid = info.aid
                             ListItem(
-                                headlineContent = { Text(info.name ?: "") },
+                                headlineContent = { Text(info.name) },
                                 overlineContent = { Text(aid) },
                                 supportingContent = {
                                     Text(

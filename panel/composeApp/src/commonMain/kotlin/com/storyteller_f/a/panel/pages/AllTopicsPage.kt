@@ -12,8 +12,11 @@ import androidx.compose.ui.Modifier
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.pagingItems
 import com.storyteller_f.a.panel.LocalPanelNav
+import com.storyteller_f.a.panel.Res
+import com.storyteller_f.a.panel.all_topics
 import com.storyteller_f.a.panel.common.AllTopicsViewModel
 import com.storyteller_f.a.panel.common.createPanelAllTopicsViewModel
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun AllTopicsPage() {
@@ -27,7 +30,7 @@ fun AllTopicsPageInternal(viewModel: AllTopicsViewModel) {
     val panelNav = LocalPanelNav.current
     Scaffold(
         topBar = { TopAppBar(
-            title = { Text("All topics") },
+            title = { Text(stringResource(Res.string.all_topics)) },
             navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } }
         ) }
     ) {
