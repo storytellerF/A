@@ -414,6 +414,7 @@ interface TitleDatabase {
 
     suspend fun getAllRawTitles(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<RawTitle>>
     suspend fun getTitleCount(): Result<Long>
+    suspend fun getTitle(id: PrimaryKey): Result<RawTitle?>
 }
 
 interface CommunityDatabase {

@@ -44,6 +44,11 @@
     <string name="none">无</string>
     <string name="user_info">用户信息</string>
     <string name="user_logs">用户日志</string>
+    <string name="community_info">社区信息</string>
+    <string name="room_info">聊天室信息</string>
+    <string name="topic_info">话题信息</string>
+    <string name="title_info">头衔信息</string>
+    <string name="file_info">文件信息</string>
     <string name="tab_basic_info">基本信息</string>
     <string name="tab_joined_communities">加入的社区</string>
     <string name="tab_joined_rooms">加入的聊天室</string>

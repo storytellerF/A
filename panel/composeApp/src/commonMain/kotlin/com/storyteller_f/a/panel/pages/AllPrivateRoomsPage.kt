@@ -2,6 +2,7 @@
 
 package com.storyteller_f.a.panel.pages
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -52,6 +53,7 @@ fun AllPrivateRoomsPageInternal(viewModel: AllPrivateRoomsViewModel) {
                             val members = info.memberCount.toString()
                             val aid = info.aid
                             ListItem(
+                                modifier = Modifier.clickable { panelNav.gotoRoomDetail(info.id) },
                                 headlineContent = { Text(info.name) },
                                 overlineContent = { Text(aid) },
                                 supportingContent = {

@@ -113,3 +113,38 @@ fun createPanelUserLogsViewModel(
 ) = panelViewModel(keys = listOf("user-logs", uid)) { sessionManager, _ ->
     UserLogsViewModel(sessionManager, uid)
 }
+
+@Composable
+fun createPanelCommunityViewModel(
+    id: PrimaryKey
+) = panelViewModel(keys = listOf("community", id)) { sessionManager, modelStorage ->
+    IdCommunityViewModel(sessionManager, modelStorage, id)
+}
+
+@Composable
+fun createPanelRoomViewModel(
+    id: PrimaryKey
+) = panelViewModel(keys = listOf("room", id)) { sessionManager, modelStorage ->
+    IdRoomViewModel(sessionManager, modelStorage, id)
+}
+
+@Composable
+fun createPanelTopicViewModel(
+    id: PrimaryKey
+) = panelViewModel(keys = listOf("topic", id)) { sessionManager, modelStorage ->
+    IdTopicViewModel(sessionManager, modelStorage, id)
+}
+
+@Composable
+fun createPanelFileViewModel(
+    id: PrimaryKey
+) = panelViewModel(keys = listOf("file", id)) { sessionManager, modelStorage ->
+    IdFileViewModel(sessionManager, modelStorage, id)
+}
+
+@Composable
+fun createPanelTitleViewModel(
+    id: PrimaryKey
+) = panelViewModel(keys = listOf("title", id)) { sessionManager, modelStorage ->
+    IdTitleViewModel(sessionManager, modelStorage, id)
+}

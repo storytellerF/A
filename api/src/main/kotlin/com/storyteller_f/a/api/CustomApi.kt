@@ -593,6 +593,9 @@ object AdminApi {
     object Communities {
         val get =
             safeApiWithQuery<ServerResponse<CommunityInfo>, PaginationQuery>("/admin/communities")
+        object Id {
+            val get = safeApiWithPath<CommunityInfo, CommonPath>("/admin/communities/{id}")
+        }
     }
 
     object Rooms {
@@ -600,18 +603,31 @@ object AdminApi {
             safeApiWithQuery<ServerResponse<RoomInfo>, PaginationQuery>("/admin/rooms/public")
         val getPrivate =
             safeApiWithQuery<ServerResponse<RoomInfo>, PaginationQuery>("/admin/rooms/private")
+        object Id {
+            val get = safeApiWithPath<RoomInfo, CommonPath>("/admin/rooms/{id}")
+        }
     }
 
     object Topics {
         val get = safeApiWithQuery<ServerResponse<TopicInfo>, PaginationQuery>("/admin/topics")
+        object Id {
+            val get = safeApiWithPath<TopicInfo, CommonPath>("/admin/topics/{id}")
+        }
     }
 
     object Titles {
         val get = safeApiWithQuery<ServerResponse<TitleInfo>, PaginationQuery>("/admin/titles")
+
+        object Id {
+            val get = safeApiWithPath<TitleInfo, CommonPath>("/admin/titles/{id}")
+        }
     }
 
     object Files {
         val get = safeApiWithQuery<ServerResponse<FileInfo>, PaginationQuery>("/admin/files")
+        object Id {
+            val get = safeApiWithPath<FileInfo, CommonPath>("/admin/files/{id}")
+        }
     }
 }
 

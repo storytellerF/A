@@ -3,6 +3,7 @@
 
 package com.storyteller_f.a.panel.pages
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -55,6 +56,7 @@ fun AllFilesPageInternal(viewModel: AllFilesViewModel) {
                             val size = info.size.toString()
                             val dim = info.dimension?.let { "${it.width}x${it.height}" } ?: ""
                             ListItem(
+                                modifier = Modifier.clickable { panelNav.gotoFileDetail(info.id) },
                                 headlineContent = { Text(name) },
                                 overlineContent = { Text(type) },
                                 supportingContent = {

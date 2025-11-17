@@ -1,5 +1,6 @@
 package com.storyteller_f.a.panel.pages
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -51,6 +52,7 @@ fun AllCommunitiesPageInternal(viewModel: AllCommunitiesViewModel) {
                         val info = items[index]
                         if (info != null) {
                             ListItem(
+                                modifier = Modifier.clickable { panelNav.gotoCommunityDetail(info.id) },
                                 headlineContent = { Text(info.name) },
                                 overlineContent = { Text(info.aid) },
                                 supportingContent = {

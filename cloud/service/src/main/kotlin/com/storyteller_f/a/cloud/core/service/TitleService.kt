@@ -162,6 +162,11 @@ suspend fun Backend.getAllTitles(primaryKeyFetch: PrimaryKeyFetch): Result<Pagin
         processTitleList(list, null).map { it ?: emptyList() }.map { PaginationResult(it, count) }
     }
 
+suspend fun Backend.getTitleInfo(id: PrimaryKey): Result<TitleInfo?> =
+    database.title.getTitle(id).mapResultIfNotNull { raw ->
+        processTitleList(listOf(raw), null).map { it?.firstOrNull() }
+    }
+
 suspend fun Backend.createTitle(
     newTitle: NewTitle,
     uid: PrimaryKey

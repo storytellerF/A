@@ -18,6 +18,11 @@ import com.storyteller_f.a.client.core.getAllPublicRooms
 import com.storyteller_f.a.client.core.getAllTitles
 import com.storyteller_f.a.client.core.getAllTopics
 import com.storyteller_f.a.client.core.getAllUsers
+import com.storyteller_f.a.client.core.getCommunityById
+import com.storyteller_f.a.client.core.getFileById
+import com.storyteller_f.a.client.core.getRoomById
+import com.storyteller_f.a.client.core.getTitleById
+import com.storyteller_f.a.client.core.getTopicById
 import com.storyteller_f.a.client.core.getUserById
 import com.storyteller_f.a.client.core.getUserFiles
 import com.storyteller_f.a.client.core.getUserJoinedCommunities
@@ -233,6 +238,76 @@ class IdUserViewModel(
     }
 }
 
+class IdCommunityViewModel(
+    sessionManager: PanelSessionManager,
+    modelStorage: ModelStorage,
+    id: PrimaryKey
+) : SimpleViewModel<CommunityInfo>() {
+    override val handler: LoadingHandler<CommunityInfo> = CachedLoadingHandler(
+        modelStorage.community.observeDatum(id),
+        viewModelScope,
+        { modelStorage.community.save(CommunityCollection.Communities, it) }
+    ) {
+        sessionManager.getCommunityById(id)
+    }
+}
+
+class IdRoomViewModel(
+    sessionManager: PanelSessionManager,
+    modelStorage: ModelStorage,
+    id: PrimaryKey
+) : SimpleViewModel<RoomInfo>() {
+    override val handler: LoadingHandler<RoomInfo> = CachedLoadingHandler(
+        modelStorage.room.observeDatum(id),
+        viewModelScope,
+        { modelStorage.room.save(RoomCollection.Rooms, it) }
+    ) {
+        sessionManager.getRoomById(id)
+    }
+}
+
+class IdTopicViewModel(
+    sessionManager: PanelSessionManager,
+    modelStorage: ModelStorage,
+    id: PrimaryKey
+) : SimpleViewModel<TopicInfo>() {
+    override val handler: LoadingHandler<TopicInfo> = CachedLoadingHandler(
+        modelStorage.topic.observeDatum(id),
+        viewModelScope,
+        { modelStorage.topic.save(TopicCollection.Topics, it) }
+    ) {
+        sessionManager.getTopicById(id)
+    }
+}
+
+class IdFileViewModel(
+    sessionManager: PanelSessionManager,
+    modelStorage: ModelStorage,
+    id: PrimaryKey
+) : SimpleViewModel<FileInfo>() {
+    override val handler: LoadingHandler<FileInfo> = CachedLoadingHandler(
+        modelStorage.fileInfo.observeDatum(id),
+        viewModelScope,
+        { modelStorage.fileInfo.save(FileCollection.Files, it) }
+    ) {
+        sessionManager.getFileById(id)
+    }
+}
+
+class IdTitleViewModel(
+    sessionManager: PanelSessionManager,
+    modelStorage: ModelStorage,
+    id: PrimaryKey
+) : SimpleViewModel<TitleInfo>() {
+    override val handler: LoadingHandler<TitleInfo> = CachedLoadingHandler(
+        modelStorage.title.observeDatum(id),
+        viewModelScope,
+        { modelStorage.title.save(TitleCollection.Titles, it) }
+    ) {
+        sessionManager.getTitleById(id)
+    }
+}
+
 class UserJoinedCommunitiesViewModel(
     sessionManager: PanelSessionManager,
     modelStorage: ModelStorage,
@@ -328,7 +403,7 @@ class UserLogsViewModel(
     private val uid: PrimaryKey,
 ) : PagingViewModel<UserLogInfo>() {
     override val flow: Flow<PagingData<UserLogInfo>> = Pager(PagingConfig(pageSize = 20)) {
-        RegularPagingSource<UserLogInfo> { key, size ->
+        RegularPagingSource { key, size ->
             sessionManager.getUserLogs(uid, PaginationQuery(key, size = size))
         }
     }.flow.cachedIn(viewModelScope)
