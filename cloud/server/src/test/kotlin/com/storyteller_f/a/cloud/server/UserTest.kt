@@ -68,8 +68,7 @@ class UserTest {
 
     @Test
     fun `test login`() = test {
-        val session = attachSession {
-        }
+        val session = attachSession()
         loginSession(session) {
             assertEquals(session.uid, it.uid)
         }
@@ -79,7 +78,6 @@ class UserTest {
     fun `test add alternative account`() = test {
         attachSession {
             val childAccountInfo = addChildAccount().getOrThrow()
-            childAccountInfo
             assertEquals(it.uid, childAccountInfo.hostId)
             val response = getChildAccounts(null, 10).getOrThrow()
             assertEquals(1, response.pagination?.total)

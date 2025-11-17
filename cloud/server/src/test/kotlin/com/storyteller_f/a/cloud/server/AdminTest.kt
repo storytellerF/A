@@ -1,5 +1,6 @@
 package com.storyteller_f.a.cloud.server
 
+import com.storyteller_f.a.api.CustomApi
 import com.storyteller_f.a.api.NewCommunity
 import com.storyteller_f.a.api.NewRoom
 import com.storyteller_f.a.api.NewTitle
@@ -17,10 +18,18 @@ import com.storyteller_f.a.client.core.getAllPublicRooms
 import com.storyteller_f.a.client.core.getAllTitles
 import com.storyteller_f.a.client.core.getAllTopics
 import com.storyteller_f.a.client.core.getAllUsers
+import com.storyteller_f.a.client.core.getUserById
+import com.storyteller_f.a.client.core.getUserFiles
 import com.storyteller_f.a.client.core.getUserInfo
+import com.storyteller_f.a.client.core.getUserJoinedCommunities
+import com.storyteller_f.a.client.core.getUserJoinedRooms
+import com.storyteller_f.a.client.core.getUserLogs
+import com.storyteller_f.a.client.core.getUserReceivedTitles
+import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.a.client.core.overview
 import com.storyteller_f.a.client.core.upload
 import com.storyteller_f.shared.getAlgo
+import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import kotlin.test.Test
@@ -32,8 +41,7 @@ class AdminTest {
         val panelTuple = attachPanelSession {
             assertListSize(0, getAllUsers(PaginationQuery()))
         }
-        attachSession {
-        }
+        attachSession()
         loginPanelSession(panelTuple) {
             assertListSize(1, getAllUsers(PaginationQuery()))
         }
@@ -44,8 +52,7 @@ class AdminTest {
         val outerTuple = attachPanelSession {
             assertEquals(0, overview().getOrThrow().userCount)
         }
-        attachSession {
-        }
+        attachSession()
         loginPanelSession(outerTuple) {
             assertEquals(1, overview().getOrThrow().userCount)
         }
@@ -226,6 +233,100 @@ class AdminTest {
         }
         loginPanelSession(outer) {
             assertListSize(1, getAllFiles(PaginationQuery()))
+        }
+    }
+
+    @Test
+    fun `admin user detail by id`() = test {
+        val outer = attachPanelSession()
+        val uid = attachSession {
+        }.uid
+        loginPanelSession(outer) {
+            val info = getUserById(uid).getOrThrow()
+            assertEquals(uid, info.id)
+        }
+    }
+
+    @Test
+    fun `admin user joined communities`() = test {
+        val outer = attachPanelSession()
+        val uid = attachSession {
+            createCommunity(NewCommunity("c1", "c1")).getOrThrow()
+        }.uid
+        loginPanelSession(outer) {
+            assertListSize(1, getUserJoinedCommunities(uid, PaginationQuery()))
+        }
+    }
+
+    @Test
+    fun `admin user joined rooms`() = test {
+        val outer = attachPanelSession()
+        val uid = attachSession {
+            createRoom(NewRoom("r1", "desc")).getOrThrow()
+        }.uid
+        loginPanelSession(outer) {
+            assertListSize(1, getUserJoinedRooms(uid, PaginationQuery()))
+        }
+    }
+
+    @Test
+    fun `admin user received titles`() = test {
+        val outer = attachPanelSession()
+        val uid = attachSession {
+            createCommunity(NewCommunity("c1", "c1")).getOrThrow()
+        }.uid
+        attachSession {
+            val c = createCommunity(NewCommunity("c1", "c2")).getOrThrow()
+            createTitle(
+                NewTitle(
+                    "c KOL",
+                    com.storyteller_f.shared.model.TitleType.REGULAR,
+                    uid,
+                    c.id,
+                    ObjectType.COMMUNITY,
+                    "hello"
+                )
+            ).getOrThrow()
+        }
+        loginPanelSession(outer) {
+            assertListSize(
+                1,
+                getUserReceivedTitles(
+                    uid,
+                    CustomApi.Users.Id.Titles.TitleQuery(searchType = TitleSearchType.RECEIVER)
+                )
+            )
+        }
+    }
+
+    @Test
+    fun `admin user files`() = test {
+        val outer = attachPanelSession {}
+        val uid = attachSession {
+            val uid = it.uid
+            upload(uid ob ObjectType.USER, getUploadDataFromText("hello")).getOrThrow()
+        }.uid
+        loginPanelSession(outer) {
+            assertListSize(1, getUserFiles(uid, PaginationQuery()))
+        }
+    }
+
+    @Test
+    fun `admin user logs after join community`() = test {
+        val outer = attachPanelSession {}
+        val outerTuple = attachSession {
+            val c = createCommunity(NewCommunity("lc1", "lc1")).getOrThrow()
+            val communityId = c.id
+            joinCommunity(communityId).getOrThrow().id
+        }
+        val uid = outerTuple.uid
+        val communityId = outerTuple.custom
+        loginPanelSession(outer) {
+            val logs = getUserLogs(uid, PaginationQuery()).getOrThrow().data
+            kotlin.test.assertTrue(
+                logs.any { it.objectType == ObjectType.COMMUNITY && it.objectId == communityId },
+                "Expect community-related log for user $uid"
+            )
         }
     }
 }

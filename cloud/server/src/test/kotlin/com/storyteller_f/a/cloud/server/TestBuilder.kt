@@ -296,6 +296,10 @@ suspend fun <R> ApplicationTestBuilder.attachSession(
     return getAppSession(true, priKey, onReceive, block)
 }
 
+suspend fun ApplicationTestBuilder.attachSession(): SessionOuterTuple<Unit> {
+    return attachSession({ _, _, _ -> }, {})
+}
+
 suspend fun <R> ApplicationTestBuilder.getAppSession(
     isSignUp: Boolean,
     priKey: String,
@@ -375,6 +379,10 @@ suspend fun <R> ApplicationTestBuilder.attachPanelSession(
 ): SessionOuterTuple<R> {
     val priKey = getAlgo().generatePemKeyPair().getOrThrow().first
     return getPanelSession(priKey, block, true)
+}
+
+suspend fun ApplicationTestBuilder.attachPanelSession(): SessionOuterTuple<Unit> {
+    return attachPanelSession { }
 }
 
 private suspend fun <R> ApplicationTestBuilder.getPanelSession(

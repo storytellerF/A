@@ -271,8 +271,7 @@ class RoomTest {
         }
 
         test {
-            val firstUser = attachSession {
-            }
+            val firstUser = attachSession()
             val secondUser = attachSession {
                 val roomInfo = createRoom(NewRoom("test-rtc", "rtc")).getOrThrow()
                 createJoinRoomTitleForTest(roomInfo.id, firstUser.uid)
