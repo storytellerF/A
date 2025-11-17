@@ -16,6 +16,9 @@ import com.storyteller_f.a.panel.Res
 import com.storyteller_f.a.panel.all_topics
 import com.storyteller_f.a.panel.common.AllTopicsViewModel
 import com.storyteller_f.a.panel.common.createPanelAllTopicsViewModel
+import com.storyteller_f.a.panel.encrypted
+import com.storyteller_f.a.panel.interaction
+import com.storyteller_f.a.panel.pinned
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -49,13 +52,13 @@ fun AllTopicsPageInternal(viewModel: AllTopicsViewModel) {
                             val room = info.extension?.roomInfo?.name ?: ""
                             val overline = listOf(author, room).filter { it.isNotEmpty() }.joinToString(" @ ")
                             val counts = if (info.commentCount > 0 || info.reactionCount > 0) {
-                                "互动 ${info.commentCount}/${info.reactionCount}"
+                                stringResource(Res.string.interaction, info.commentCount, info.reactionCount)
                             } else {
                                 ""
                             }
                             val flags = listOfNotNull(
-                                if (info.isEncrypted) "加密" else null,
-                                if (info.isPin) "置顶" else null
+                                if (info.isEncrypted) stringResource(Res.string.encrypted) else null,
+                                if (info.isPin) stringResource(Res.string.pinned) else null
                             ).joinToString(" • ")
                             val supporting = listOf(
                                 info.createdTime.toString(),

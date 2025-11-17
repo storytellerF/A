@@ -23,9 +23,23 @@ import com.storyteller_f.a.app.core.components.CustomBottomNav
 import com.storyteller_f.a.app.core.components.NavRoute
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.pagingItems
+import com.storyteller_f.a.panel.Res
+import com.storyteller_f.a.panel.address_label
+import com.storyteller_f.a.panel.aid_label
 import com.storyteller_f.a.panel.common.createPanelUserViewModel
+import com.storyteller_f.a.panel.log_supporting
+import com.storyteller_f.a.panel.nickname_label
+import com.storyteller_f.a.panel.none
+import com.storyteller_f.a.panel.tab_basic_info
+import com.storyteller_f.a.panel.tab_created_files
+import com.storyteller_f.a.panel.tab_joined_communities
+import com.storyteller_f.a.panel.tab_joined_rooms
+import com.storyteller_f.a.panel.tab_received_titles
+import com.storyteller_f.a.panel.user_info
+import com.storyteller_f.a.panel.user_logs
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun UserDetailPage(uid: PrimaryKey) {
@@ -33,8 +47,8 @@ fun UserDetailPage(uid: PrimaryKey) {
     val scope = rememberCoroutineScope()
     Scaffold(bottomBar = {
         val navRoutes = listOf(
-            NavRoute("/info", Icons.Default.People, "用户信息"),
-            NavRoute("/logs", Icons.AutoMirrored.Filled.Article, "用户日志"),
+            NavRoute("/info", Icons.Default.People, stringResource(Res.string.user_info)),
+            NavRoute("/logs", Icons.AutoMirrored.Filled.Article, stringResource(Res.string.user_logs)),
         )
         CustomBottomNav(navRoutes[pagerState.currentPage].path, navRoutes) { path ->
             scope.launch {
@@ -56,7 +70,13 @@ fun UserDetailPage(uid: PrimaryKey) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun UserInfoTabs(uid: PrimaryKey) {
-    val tabs = listOf("基本信息", "加入的社区", "加入的聊天室", "收到的头衔", "创建的文件")
+    val tabs = listOf(
+        stringResource(Res.string.tab_basic_info),
+        stringResource(Res.string.tab_joined_communities),
+        stringResource(Res.string.tab_joined_rooms),
+        stringResource(Res.string.tab_received_titles),
+        stringResource(Res.string.tab_created_files)
+    )
     val pagerState = rememberPagerState { tabs.size }
     val scope = rememberCoroutineScope()
     Column {
@@ -183,7 +203,12 @@ private fun UserLogsTab(uid: PrimaryKey) {
                     ListItem(
                         headlineContent = { Text(info.type.name) },
                         supportingContent = { Text(
-                            "对象: ${info.objectType}(${info.objectId}) • 时间: ${info.createdTime}"
+                            stringResource(
+                                Res.string.log_supporting,
+                                info.objectType,
+                                info.objectId.toString(),
+                                info.createdTime.toString()
+                            )
                         ) }
                     )
                     HorizontalDivider()
@@ -201,10 +226,10 @@ private fun UserBasicInfoSectionVM(uid: PrimaryKey) {
     val vm = createPanelUserViewModel(uid)
     StateView(vm.handler) { u ->
         Column(Modifier.padding(16.dp)) {
-            Text("昵称: ${u.nickname}")
-            Text("地址: ${u.address}")
-            val aidText = u.aid ?: "无"
-            Text("AID: $aidText")
+            Text(stringResource(Res.string.nickname_label, u.nickname))
+            Text(stringResource(Res.string.address_label, u.address))
+            val aidText = u.aid ?: stringResource(Res.string.none)
+            Text(stringResource(Res.string.aid_label, aidText))
         }
     }
 }

@@ -24,6 +24,7 @@ import com.storyteller_f.a.panel.Res
 import com.storyteller_f.a.panel.all_private_rooms
 import com.storyteller_f.a.panel.common.AllPrivateRoomsViewModel
 import com.storyteller_f.a.panel.common.createPanelAllPrivateRoomsViewModel
+import com.storyteller_f.a.panel.room_private
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -55,7 +56,10 @@ fun AllPrivateRoomsPageInternal(viewModel: AllPrivateRoomsViewModel) {
                                 overlineContent = { Text(aid) },
                                 supportingContent = {
                                     Text(
-                                        listOf(members, "私有").filter { it.isNotEmpty() }.joinToString(" • ")
+                                        listOf(
+                                            members,
+                                            stringResource(Res.string.room_private)
+                                        ).filter { it.isNotEmpty() }.joinToString(" • ")
                                     )
                                 },
                             )

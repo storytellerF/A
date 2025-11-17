@@ -24,6 +24,7 @@ import com.storyteller_f.a.panel.Res
 import com.storyteller_f.a.panel.all_public_rooms
 import com.storyteller_f.a.panel.common.AllPublicRoomsViewModel
 import com.storyteller_f.a.panel.common.createPanelAllPublicRoomsViewModel
+import com.storyteller_f.a.panel.room_public
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -55,7 +56,10 @@ fun AllPublicRoomsPageInternal(viewModel: AllPublicRoomsViewModel) {
                                 overlineContent = { Text(aid) },
                                 supportingContent = {
                                     Text(
-                                        listOf(members, "公开").filter { it.isNotEmpty() }.joinToString(" • ")
+                                        listOf(
+                                            members,
+                                            stringResource(Res.string.room_public)
+                                        ).filter { it.isNotEmpty() }.joinToString(" • ")
                                     )
                                 },
                             )
