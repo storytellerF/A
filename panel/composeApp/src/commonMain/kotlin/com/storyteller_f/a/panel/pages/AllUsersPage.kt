@@ -106,7 +106,13 @@ fun AllUsersPageInternal(viewModel: AllUsersViewModel) {
                     pagingItems(items, key = {
                         it.id
                     }) {
-                        UserCell(items.get(it))
+                        val info = items.get(it)
+                        UserCell(info) {
+                            val uid = info?.id
+                            if (uid != null) {
+                                panelNav.gotoUserDetail(uid)
+                            }
+                        }
                     }
                 }
             }

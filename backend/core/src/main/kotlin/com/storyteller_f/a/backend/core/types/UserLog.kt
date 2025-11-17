@@ -1,5 +1,6 @@
 package com.storyteller_f.a.backend.core.types
 
+import com.storyteller_f.shared.model.UserLogInfo
 import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -15,3 +16,12 @@ class UserLog(
 ) {
     companion object
 }
+
+fun UserLog.toUserLogInfo() = UserLogInfo(
+    id = id,
+    uid = uid,
+    type = type,
+    objectId = objectId,
+    objectType = objectType,
+    createdTime = createdTime.date
+)

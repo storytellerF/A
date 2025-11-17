@@ -268,6 +268,11 @@ interface UserDatabase {
     suspend fun getAllUsers(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<RawUser>>
     suspend fun getUserCount(): Result<Long>
 
+    suspend fun getUserLogs(
+        uid: PrimaryKey,
+        fetch: PrimaryKeyFetch
+    ): Result<PaginationResult<UserLog>>
+
     suspend fun getChildAccountCount(hostId: PrimaryKey): Long
 }
 

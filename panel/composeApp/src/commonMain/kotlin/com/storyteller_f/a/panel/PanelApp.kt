@@ -48,6 +48,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.storyteller_f.a.app.core.CoreStrings
 import com.storyteller_f.a.app.core.PanelConfig
 import com.storyteller_f.a.app.core.common.LocalClient
@@ -106,6 +107,7 @@ import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(DelicateCoroutinesApi::class)
@@ -116,6 +118,7 @@ interface PanelNav {
     fun gotoLogin()
     fun gotoOverview()
     fun gotoAllUsers()
+    fun gotoUserDetail(uid: Long)
     fun gotoAllCommunities()
     fun gotoAllPublicRooms()
     fun gotoAllPrivateRooms()
@@ -131,39 +134,43 @@ class Nav2PanelNav(
     private val scope: CoroutineScope
 ) : PanelNav {
     override fun gotoLogin() {
-        navigator.navigate("login")
+        navigator.navigate(PanelLoginScreen)
     }
 
     override fun gotoOverview() {
-        navigator.navigate("overview")
+        navigator.navigate(PanelOverviewScreen)
     }
 
     override fun gotoAllUsers() {
-        navigator.navigate("all-users")
+        navigator.navigate(PanelAllUsersScreen)
+    }
+
+    override fun gotoUserDetail(uid: Long) {
+        navigator.navigate(PanelUserDetailScreen(uid))
     }
 
     override fun gotoAllCommunities() {
-        navigator.navigate("all-communities")
+        navigator.navigate(PanelAllCommunitiesScreen)
     }
 
     override fun gotoAllPublicRooms() {
-        navigator.navigate("all-rooms-public")
+        navigator.navigate(PanelAllPublicRoomsScreen)
     }
 
     override fun gotoAllPrivateRooms() {
-        navigator.navigate("all-rooms-private")
+        navigator.navigate(PanelAllPrivateRoomsScreen)
     }
 
     override fun gotoAllTopics() {
-        navigator.navigate("all-topics")
+        navigator.navigate(PanelAllTopicsScreen)
     }
 
     override fun gotoAllFiles() {
-        navigator.navigate("all-files")
+        navigator.navigate(PanelAllFilesScreen)
     }
 
     override fun gotoAllTitles() {
-        navigator.navigate("all-titles")
+        navigator.navigate(PanelAllTitlesScreen)
     }
 
     override fun open() {
@@ -256,27 +263,31 @@ private fun PanelAppNavHost(
                 nav.gotoOverview()
             }
         }
-        composable("all-users") {
-            AllUsersPage()
+        composable("all-users") { AllUsersPage() }
+        composable<PanelLoginScreen> {
+            PanelLoginPage {
+                navigator.popBackStack()
+                nav.gotoOverview()
+            }
         }
-        composable("all-communities") {
-            AllCommunitiesPage()
+        composable<PanelOverviewScreen> { OverviewPage() }
+        composable<PanelAllUsersScreen> { AllUsersPage() }
+        composable<PanelUserDetailScreen> {
+            val screen = it.toRoute<PanelUserDetailScreen>()
+            com.storyteller_f.a.panel.pages.UserDetailPage(screen.uid)
         }
-        composable("all-rooms-public") {
-            AllPublicRoomsPage()
-        }
-        composable("all-rooms-private") {
-            AllPrivateRoomsPage()
-        }
-        composable("all-topics") {
-            AllTopicsPage()
-        }
-        composable("all-files") {
-            AllFilesPage()
-        }
-        composable("all-titles") {
-            AllTitlesPage()
-        }
+        composable("all-communities") { AllCommunitiesPage() }
+        composable("all-rooms-public") { AllPublicRoomsPage() }
+        composable("all-rooms-private") { AllPrivateRoomsPage() }
+        composable("all-topics") { AllTopicsPage() }
+        composable("all-files") { AllFilesPage() }
+        composable("all-titles") { AllTitlesPage() }
+        composable<PanelAllCommunitiesScreen> { AllCommunitiesPage() }
+        composable<PanelAllPublicRoomsScreen> { AllPublicRoomsPage() }
+        composable<PanelAllPrivateRoomsScreen> { AllPrivateRoomsPage() }
+        composable<PanelAllTopicsScreen> { AllTopicsPage() }
+        composable<PanelAllFilesScreen> { AllFilesPage() }
+        composable<PanelAllTitlesScreen> { AllTitlesPage() }
         composable("overview") {
             PanelHost {
                 OverviewPage()
@@ -560,3 +571,33 @@ fun createCustomPanelSessionManager(
     val historyFactory = buildSessionHistoryFactory(settings)
     return CustomPanelSessionManager(customSessionManager, historyFactory)
 }
+
+@Serializable
+data class PanelUserDetailScreen(val uid: Long)
+
+@Serializable
+object PanelLoginScreen
+
+@Serializable
+object PanelOverviewScreen
+
+@Serializable
+object PanelAllUsersScreen
+
+@Serializable
+object PanelAllCommunitiesScreen
+
+@Serializable
+object PanelAllPublicRoomsScreen
+
+@Serializable
+object PanelAllPrivateRoomsScreen
+
+@Serializable
+object PanelAllTopicsScreen
+
+@Serializable
+object PanelAllFilesScreen
+
+@Serializable
+object PanelAllTitlesScreen

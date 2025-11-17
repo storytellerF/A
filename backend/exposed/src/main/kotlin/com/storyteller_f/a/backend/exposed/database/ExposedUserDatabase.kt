@@ -409,4 +409,22 @@ class ExposedUserDatabase(
         }
         count()
     }
+
+    override suspend fun getUserLogs(uid: PrimaryKey, fetch: PrimaryKeyFetch) = runCatching {
+        val logs = databaseSession.dbSearch {
+            search {
+                UserLogs.selectAll().where {
+                    UserLogs.uid eq uid
+                }.orderBy(UserLogs.id, SortOrder.DESC).bindPaginationQuery(UserLogs, fetch)
+            }
+            map(UserLog::wrapRow)
+        }.getOrThrow()
+        val total = databaseSession.dbSearch {
+            search {
+                UserLogs.select(UserLogs.id).where { UserLogs.uid eq uid }
+            }
+            count()
+        }.getOrThrow()
+        PaginationResult(logs, total)
+    }
 }

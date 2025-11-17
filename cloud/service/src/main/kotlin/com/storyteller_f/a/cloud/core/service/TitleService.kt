@@ -108,24 +108,12 @@ private suspend fun Backend.getRelatedObject(
     roomIdList: List<PrimaryKey>
 ): Result<Triple<List<UserInfo>?, List<RoomInfo>?, List<CommunityInfo>?>> {
     return runCatching {
-        val r1 = if (uidList.isNotEmpty()) {
-            getUserInfoList(ObjectListFetch.IdListFetch(uidList))
-        } else {
-            Result.success(emptyList())
-        }.getOrThrow()
-        val r2 = if (roomIdList.isNotEmpty()) {
-            getRoomInfoList(ObjectListFetch.IdListFetch(roomIdList))
-        } else {
-            Result.success(emptyList())
-        }.getOrThrow()
-        val r3 = if (communityIdList.isNotEmpty()) {
-            database.community.getRawCommunities(
-                ObjectListFetch.IdListFetch(communityIdList)
-            ).mapResult {
-                processRawCommunityToCommunityInfo(it)
-            }
-        } else {
-            Result.success(emptyList())
+        val r1 = getUserInfoList(ObjectListFetch.IdListFetch(uidList)).getOrThrow()
+        val r2 = getRoomInfoList(ObjectListFetch.IdListFetch(roomIdList)).getOrThrow()
+        val r3 = database.community.getRawCommunities(
+            ObjectListFetch.IdListFetch(communityIdList)
+        ).mapResult {
+            processRawCommunityToCommunityInfo(it)
         }.getOrThrow()
         Triple(r1, r2, r3)
     }

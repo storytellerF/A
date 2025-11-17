@@ -328,10 +328,9 @@ suspend fun Backend.processRawRoomToRoomInfo(list: List<RawRoom>) =
 suspend fun Backend.getRoomInfoList(
     listFetch: ObjectListFetch.IdListFetch,
     uid: PrimaryKey? = null
-) =
-    database.room.getRawRooms(listFetch, uid).mapResult {
-        processRawRoomToRoomInfo(it)
-    }
+) = database.room.getRawRooms(listFetch, uid).mapResult {
+    processRawRoomToRoomInfo(it)
+}
 
 suspend fun Backend.getAllPublicRooms(primaryKeyFetch: PrimaryKeyFetch) =
     database.room.getRoomPaginationResult(
@@ -348,6 +347,20 @@ suspend fun Backend.getAllPrivateRooms(primaryKeyFetch: PrimaryKeyFetch) =
     database.room.getPrivateRoomPaginationResult(
         primaryKeyFetch = primaryKeyFetch,
         word = null
+    ).mapResult { (list, total) ->
+        processRawRoomToRoomInfo(list).map { PaginationResult(it, total) }
+    }
+
+suspend fun Backend.getUserJoinedRooms(
+    uid: PrimaryKey,
+    primaryKeyFetch: PrimaryKeyFetch
+): Result<PaginationResult<RoomInfo>> =
+    database.room.getRoomPaginationResult(
+        uid = null,
+        word = null,
+        community = null,
+        primaryKeyFetch = primaryKeyFetch,
+        joinSearch = JoinSearch.Joined(uid)
     ).mapResult { (list, total) ->
         processRawRoomToRoomInfo(list).map { PaginationResult(it, total) }
     }

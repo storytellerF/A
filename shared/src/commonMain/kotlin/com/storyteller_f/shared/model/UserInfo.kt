@@ -44,8 +44,17 @@ data class UserLogInfo(
     val type: UserLogType,
     val objectId: PrimaryKey,
     val objectType: ObjectType,
-    val createdTime: LocalDate
-)
+    val createdTime: LocalDate,
+    val extensions: Extensions? = null
+) {
+    @Serializable
+    data class Extensions(
+        val user: UserInfo? = null,
+        val topic: TopicInfo? = null,
+        val community: CommunityInfo? = null,
+        val room: RoomInfo? = null,
+    )
+}
 
 @Serializable
 data class UserPubKeyInfo(val id: PrimaryKey, val pubKey: String)
