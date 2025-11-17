@@ -13,6 +13,7 @@ import org.intellij.markdown.ast.accept
 import org.intellij.markdown.ast.acceptChildren
 import org.intellij.markdown.ast.getTextInNode
 import org.intellij.markdown.ast.visitors.Visitor
+import org.intellij.markdown.flavours.gfm.GFMElementTypes
 import org.intellij.markdown.flavours.gfm.GFMFlavourDescriptor
 import org.intellij.markdown.flavours.gfm.GFMTokenTypes
 import org.intellij.markdown.parser.MarkdownParser
@@ -204,8 +205,6 @@ fun trimMarkdownUnusedContent(markdownText: String): String {
     val parsedTree = astNode(markdownText)
     return buildString {
         parsedTree.accept(object : Visitor {
-            var lastNode: ASTNode? = null
-
             /**
              * 容量为3
              */
@@ -255,6 +254,41 @@ fun trimMarkdownUnusedContent(markdownText: String): String {
             }
         })
     }.trim()
+}
+
+class MathContext(val content: String, val start: Int, val end: Int, val isInline: Boolean)
+
+fun extractMath(markdownText: String): MutableList<MathContext> {
+    val parsedTree = astNode(markdownText)
+    val images = mutableListOf<MathContext>()
+    parsedTree.accept(object : Visitor {
+        override fun visitNode(node: ASTNode) {
+            when (node.type) {
+                GFMElementTypes.INLINE_MATH, GFMElementTypes.BLOCK_MATH -> {
+                    val mathContent = readInlineMath(node, markdownText)
+                    images.add(
+                        MathContext(
+                            mathContent,
+                            node.startOffset,
+                            node.endOffset,
+                            node.type == GFMElementTypes.INLINE_MATH
+                        )
+                    )
+                }
+
+                MarkdownElementTypes.CODE_FENCE -> {
+                    val lang = getLang(node, markdownText)
+                    if (lang == "math") {
+                        val content = readCodeFence(node, markdownText)
+                        images.add(MathContext(content, node.startOffset, node.endOffset, false))
+                    }
+                }
+            }
+
+            node.acceptChildren(this)
+        }
+    })
+    return images
 }
 
 fun astNode(markdownText: String): ASTNode {

@@ -2,6 +2,7 @@ package com.storyteller_f.shared.model
 
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.now
 import io.github.aakira.napier.Napier
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
@@ -39,6 +40,10 @@ data class FileInfo(
         const val M3U8_MIMETYPE = "application/vnd.apple.mpegurl"
         const val YOUTUBE_MIMETYPE = "video/youtube"
         const val SOUND_CLOUD_MIME_TYPE = "audio/sound.cloud"
+
+        val EMPTY = FileInfo(
+            0, "", "", "", 0, "", 0, ObjectType.USER, now(), null
+        )
     }
 }
 

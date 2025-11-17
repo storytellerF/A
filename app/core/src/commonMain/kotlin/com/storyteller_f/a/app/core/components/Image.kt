@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -21,17 +22,9 @@ import coil3.compose.SubcomposeAsyncImage
 import coil3.network.ktor3.KtorNetworkFetcherFactory
 import coil3.request.ImageRequest
 import coil3.request.crossfade
-import com.ashampoo.kim.Kim
 import com.mikepenz.markdown.model.ImageData
 import com.storyteller_f.a.app.core.common.LocalClient
-import com.storyteller_f.shared.model.Dimension
-import com.storyteller_f.shared.model.FileInfo
 import io.github.aakira.napier.Napier
-import kotlinx.collections.immutable.ImmutableMap
-import kotlinx.io.buffered
-import kotlinx.io.files.Path
-import kotlinx.io.files.SystemFileSystem
-import kotlinx.io.readByteArray
 
 @Composable
 fun CommonImage(
@@ -124,21 +117,4 @@ fun CustomMarkdownImage(imageData: ImageData) {
             colorFilter = imageData.colorFilter
         )
     }
-}
-
-fun getImageDimension(
-    value: String,
-    mediaMap: ImmutableMap<String, FileInfo>,
-): Dimension? {
-    if (!value.startsWith("file:///")) {
-        return mediaMap[value]?.dimension
-    }
-
-    val metadata = SystemFileSystem.source(Path(value.substring(7))).buffered().use {
-        Kim.readMetadata(it.readByteArray())?.imageSize
-    } ?: return null
-
-    val widthPx = metadata.width
-    val heightPx = metadata.height
-    return Dimension(widthPx, heightPx)
 }
