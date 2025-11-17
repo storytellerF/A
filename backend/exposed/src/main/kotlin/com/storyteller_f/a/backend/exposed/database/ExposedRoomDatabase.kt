@@ -175,8 +175,21 @@ class ExposedRoomDatabase(
             room
         }
 
-    override suspend fun getRawRooms(objectListFetch: ObjectListFetch, uid: PrimaryKey?) =
-        getRoomListByPredicate {
+    override suspend fun getRawRooms(
+        objectListFetch: ObjectListFetch,
+        uid: PrimaryKey?
+    ): Result<List<RawRoom>> {
+        if (objectListFetch is ObjectListFetch.AidListFetch && objectListFetch.aidList.isEmpty()) {
+            return Result.success(
+                emptyList()
+            )
+        }
+        if (objectListFetch is ObjectListFetch.IdListFetch && objectListFetch.idList.isEmpty()) {
+            return Result.success(
+                emptyList()
+            )
+        }
+        return getRoomListByPredicate {
             where {
                 when (objectListFetch) {
                     is ObjectListFetch.AidListFetch -> Aids.value inList objectListFetch.aidList
@@ -186,6 +199,7 @@ class ExposedRoomDatabase(
         }.mapResult {
             processRoomListToRawRoom(uid, it)
         }
+    }
 
     override suspend fun getRoomList(objectListFetch: ObjectListFetch) = getRoomListByPredicate {
         where {

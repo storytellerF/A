@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.storyteller_f.a.client.core.PanelSessionManager
 import com.storyteller_f.a.panel.panelAccountInstance
+import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.storage.ModelStorage
 import io.github.aakira.napier.Napier
 
@@ -69,4 +70,46 @@ inline fun <reified VM : ViewModel> panelViewModel(
         }
         factory(sessionManager, modelStorage)
     }
+}
+
+@Composable
+fun createPanelUserViewModel(
+    id: PrimaryKey
+) = panelViewModel(keys = listOf("user", id)) { sessionManager, modelStorage ->
+    IdUserViewModel(sessionManager, modelStorage, id)
+}
+
+@Composable
+fun createPanelJoinedCommunitiesViewModel(
+    uid: PrimaryKey
+) = panelViewModel(keys = listOf("user-communities", uid)) { sessionManager, modelStorage ->
+    UserJoinedCommunitiesViewModel(sessionManager, modelStorage, uid)
+}
+
+@Composable
+fun createPanelJoinedRoomsViewModel(
+    uid: PrimaryKey
+) = panelViewModel(keys = listOf("user-rooms", uid)) { sessionManager, modelStorage ->
+    UserJoinedRoomsViewModel(sessionManager, modelStorage, uid)
+}
+
+@Composable
+fun createPanelReceivedTitlesViewModel(
+    uid: PrimaryKey
+) = panelViewModel(keys = listOf("user-titles", uid)) { sessionManager, modelStorage ->
+    UserReceivedTitlesViewModel(sessionManager, modelStorage, uid)
+}
+
+@Composable
+fun createPanelUserFilesViewModel(
+    uid: PrimaryKey
+) = panelViewModel(keys = listOf("user-files", uid)) { sessionManager, modelStorage ->
+    UserFilesViewModel(sessionManager, modelStorage, uid)
+}
+
+@Composable
+fun createPanelUserLogsViewModel(
+    uid: PrimaryKey
+) = panelViewModel(keys = listOf("user-logs", uid)) { sessionManager, _ ->
+    UserLogsViewModel(sessionManager, uid)
 }

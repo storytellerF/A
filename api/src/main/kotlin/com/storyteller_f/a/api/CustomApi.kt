@@ -28,6 +28,7 @@ import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.TopicPinSearch
 import com.storyteller_f.shared.model.UserFavoriteInfo
 import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.model.UserLogInfo
 import com.storyteller_f.shared.model.UserOverview
 import com.storyteller_f.shared.model.UserPubKeyInfo
 import com.storyteller_f.shared.model.UserSubscriptionInfo
@@ -470,7 +471,8 @@ object CustomApi {
             val upload =
                 mutationApiWithQueryAndPath<Unit, Unit, UploadQuery, UploadPath>("files/chunk/{id}/{index}/upload")
 
-            val complete = mutationApiWithPath<FileInfo, Unit, CommonPath>("files/chunk/{id}/complete")
+            val complete =
+                mutationApiWithPath<FileInfo, Unit, CommonPath>("files/chunk/{id}/complete")
             val abort = mutationApiWithPath<Unit, Unit, CommonPath>("files/chunk/{id}/abort")
 
             @Serializable
@@ -481,6 +483,7 @@ object CustomApi {
                 val id: PrimaryKey,
                 val status: UploadRecordStatus
             )
+
             val status = safeApiWithPath<StatusResponse, CommonPath>("files/chunk/{id}/status")
         }
     }
@@ -529,6 +532,56 @@ object AdminApi {
     object Users {
         val get = safeApiWithQuery<ServerResponse<UserInfo>, PaginationQuery>("/admin/users")
         val add = mutationApi<UserInfo, NewUser>("/admin/users")
+
+        object Id {
+            val get = safeApiWithPath<UserInfo, CommonPath>("/admin/users/{id}")
+
+            object Communities {
+                val get =
+                    safeApiWithQueryAndPath<
+                        ServerResponse<CommunityInfo>,
+                        PaginationQuery,
+                        CommonPath>(
+                        "/admin/users/{id}/communities"
+                    )
+            }
+
+            object Rooms {
+                val get =
+                    safeApiWithQueryAndPath<
+                        ServerResponse<RoomInfo>,
+                        PaginationQuery,
+                        CommonPath>(
+                        "/admin/users/{id}/rooms"
+                    )
+            }
+
+            object Titles {
+                val get =
+                    safeApiWithQueryAndPath<
+                        ServerResponse<TitleInfo>,
+                        CustomApi.Users.Id.Titles.TitleQuery,
+                        CommonPath>(
+                        "/admin/users/{id}/titles"
+                    )
+            }
+
+            object Files {
+                val get =
+                    safeApiWithQueryAndPath<ServerResponse<FileInfo>, PaginationQuery, CommonPath>(
+                        "/admin/users/{id}/files"
+                    )
+            }
+
+            object Logs {
+                val get =
+                    safeApiWithQueryAndPath<ServerResponse<UserLogInfo>,
+                        PaginationQuery,
+                        CommonPath>(
+                        "/admin/users/{id}/logs"
+                    )
+            }
+        }
     }
 
     val signIn = mutationApi<PanelAccountInfo, SignInBody>("/admin/sign-in")
@@ -538,12 +591,15 @@ object AdminApi {
     val overview = safeApi<PanelOverview>("/admin/overview")
 
     object Communities {
-        val get = safeApiWithQuery<ServerResponse<CommunityInfo>, PaginationQuery>("/admin/communities")
+        val get =
+            safeApiWithQuery<ServerResponse<CommunityInfo>, PaginationQuery>("/admin/communities")
     }
 
     object Rooms {
-        val getPublic = safeApiWithQuery<ServerResponse<RoomInfo>, PaginationQuery>("/admin/rooms/public")
-        val getPrivate = safeApiWithQuery<ServerResponse<RoomInfo>, PaginationQuery>("/admin/rooms/private")
+        val getPublic =
+            safeApiWithQuery<ServerResponse<RoomInfo>, PaginationQuery>("/admin/rooms/public")
+        val getPrivate =
+            safeApiWithQuery<ServerResponse<RoomInfo>, PaginationQuery>("/admin/rooms/private")
     }
 
     object Topics {

@@ -192,15 +192,23 @@ class ExposedCommunityDatabase(
 
     override suspend fun getRawCommunities(
         objectListFetch: ObjectListFetch
-    ) = getCommunityListByPredicate {
-        where {
-            when (objectListFetch) {
-                is ObjectListFetch.AidListFetch -> Aids.value inList objectListFetch.aidList
-                is ObjectListFetch.IdListFetch -> Communities.id inList objectListFetch.idList
-            }
+    ): Result<List<RawCommunity>> {
+        if (objectListFetch is ObjectListFetch.AidListFetch && objectListFetch.aidList.isEmpty()) {
+            return Result.success(emptyList())
         }
-    }.mapResult {
-        processCommunityToRawCommunity(null, it)
+        if (objectListFetch is ObjectListFetch.IdListFetch && objectListFetch.idList.isEmpty()) {
+            return Result.success(emptyList())
+        }
+        return getCommunityListByPredicate {
+            where {
+                when (objectListFetch) {
+                    is ObjectListFetch.AidListFetch -> Aids.value inList objectListFetch.aidList
+                    is ObjectListFetch.IdListFetch -> Communities.id inList objectListFetch.idList
+                }
+            }
+        }.mapResult {
+            processCommunityToRawCommunity(null, it)
+        }
     }
 
     override suspend fun updateCommunity(

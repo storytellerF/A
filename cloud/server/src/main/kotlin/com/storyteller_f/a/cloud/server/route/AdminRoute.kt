@@ -12,12 +12,19 @@ import com.storyteller_f.a.cloud.core.service.getAllPublicRooms
 import com.storyteller_f.a.cloud.core.service.getAllTitles
 import com.storyteller_f.a.cloud.core.service.getAllTopics
 import com.storyteller_f.a.cloud.core.service.getAllUsers
+import com.storyteller_f.a.cloud.core.service.getFileInfoPaginationResult
 import com.storyteller_f.a.cloud.core.service.getOverview
+import com.storyteller_f.a.cloud.core.service.getUserById
+import com.storyteller_f.a.cloud.core.service.getUserJoinedCommunities
+import com.storyteller_f.a.cloud.core.service.getUserJoinedRooms
+import com.storyteller_f.a.cloud.core.service.getUserLogs
+import com.storyteller_f.a.cloud.core.service.getUserTitles
 import com.storyteller_f.a.cloud.server.auth.UserSession
 import com.storyteller_f.a.cloud.server.auth.getData
 import com.storyteller_f.a.cloud.server.auth.handleResult
 import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.cloud.server.common.pagination
+import com.storyteller_f.a.cloud.server.common.pagingGenerator
 import com.storyteller_f.route4k.ktor.server.invoke
 import com.storyteller_f.route4k.ktor.server.receiveBody
 import com.storyteller_f.shared.utils.UNIT_RESULT
@@ -28,11 +35,7 @@ import io.ktor.server.sessions.sessions
 
 fun Routing.bindProtectedAdminRoute(backend: Backend) {
     authenticate("admin") {
-        AdminApi.Users.get(handleResult()) {
-            it.pagination(IdentifiablePagingGenerator) { fetch ->
-                backend.getAllUsers(fetch)
-            }
-        }
+        bindAdminUserRoutes(backend)
         AdminApi.Communities.get(handleResult()) {
             it.pagination(IdentifiablePagingGenerator) { fetch ->
                 backend.getAllCommunities(fetch)
@@ -73,6 +76,44 @@ fun Routing.bindProtectedAdminRoute(backend: Backend) {
         AdminApi.Users.add(handleResult(), { api ->
             backend.addUser(api.receiveBody())
         })
+    }
+}
+
+private fun Routing.bindAdminUserRoutes(backend: Backend) {
+    AdminApi.Users.get(handleResult()) {
+        it.pagination(IdentifiablePagingGenerator) { fetch ->
+            backend.getAllUsers(fetch)
+        }
+    }
+    AdminApi.Users.Id.get(handleResult()) { p ->
+        backend.getUserById(p.id)
+    }
+    AdminApi.Users.Id.Communities.get(handleResult()) { q, p ->
+        q.pagination(IdentifiablePagingGenerator) { f ->
+            backend.getUserJoinedCommunities(p.id, f)
+        }
+    }
+    AdminApi.Users.Id.Rooms.get(handleResult()) { q, p ->
+        q.pagination(IdentifiablePagingGenerator) { f ->
+            backend.getUserJoinedRooms(p.id, f)
+        }
+    }
+    AdminApi.Users.Id.Titles.get(handleResult()) { q, p ->
+        q.pagination(IdentifiablePagingGenerator) { f ->
+            backend.getUserTitles(p.id, q.searchType, q.type, q.scopeId, f)
+        }
+    }
+    AdminApi.Users.Id.Files.get(handleResult()) { q, p ->
+        q.pagination(IdentifiablePagingGenerator) { f ->
+            backend.getFileInfoPaginationResult(p.id, f)
+        }
+    }
+    AdminApi.Users.Id.Logs.get(handleResult()) { q, p ->
+        q.pagination(pagingGenerator {
+            it.id
+        }) { f ->
+            backend.getUserLogs(p.id, f)
+        }
     }
 }
 

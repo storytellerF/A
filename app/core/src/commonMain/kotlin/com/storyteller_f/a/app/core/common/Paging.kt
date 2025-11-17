@@ -1,11 +1,16 @@
 package com.storyteller_f.a.app.core.common
 
 import androidx.lifecycle.ViewModel
+import androidx.paging.ExperimentalPagingApi
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.storyteller_f.shared.obj.Pagination
 import com.storyteller_f.shared.obj.ServerResponse
+import com.storyteller_f.storage.CollectionListStorage
+import com.storyteller_f.storage.RemoteKeyStorage
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
 
@@ -151,4 +156,31 @@ class RegularPagingSource<DATUM : Any>(
     override fun getRefreshKey(state: PagingState<String, DATUM>): String? {
         return null
     }
+}
+
+@OptIn(ExperimentalPagingApi::class)
+fun <C : Any, T : Any> buildPager(
+    collection: C,
+    collectionName: String,
+    remoteKeyStorage: RemoteKeyStorage,
+    storage: CollectionListStorage<C, T>,
+    service: suspend (String?, Int) -> Result<ServerResponse<T>>
+): Pager<String, T> = Pager(
+    PagingConfig(pageSize = 20),
+    remoteMediator = CustomRemoteMediator(
+        collectionName,
+        remoteKeyStorage,
+        RegularPagingSource { key, size ->
+            service(key, size)
+        },
+    ) { data, clean ->
+        if (clean) {
+            storage.clean(collection)
+        }
+        data.forEach {
+            storage.save(collection, it)
+        }
+    },
+) {
+    CompatPagingSource(storage.observeData(collection), IntKeyConverter)
 }

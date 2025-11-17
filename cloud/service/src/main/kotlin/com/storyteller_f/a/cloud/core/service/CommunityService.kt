@@ -349,3 +349,20 @@ suspend fun Backend.getAllCommunities(primaryKeyFetch: PrimaryKeyFetch) =
             PaginationResult(it, total)
         }
     }
+
+suspend fun Backend.getUserJoinedCommunities(
+    uid: PrimaryKey,
+    primaryKeyFetch: PrimaryKeyFetch
+): Result<PaginationResult<CommunityInfo>> {
+    val result = database.community.getCommunityPaginationResult(
+        word = null,
+        hasPosterSearch = PosterSearch.UNSPECIFIED,
+        primaryKeyFetch = primaryKeyFetch,
+        joinSearch = JoinSearch.Joined(uid)
+    ).mapResultIfNotNull { (list, total) ->
+        processRawCommunityToCommunityInfo(list).mapIfNotNull { value ->
+            processUserJoinedTimeReplace(value, uid, total).getOrThrow()
+        }
+    }.getOrElse { null }
+    return Result.success(result ?: PaginationResult(emptyList(), 0))
+}

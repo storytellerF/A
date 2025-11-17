@@ -12,6 +12,7 @@ import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.USER_NICKNAME
+import com.storyteller_f.a.backend.core.pagingNotNull
 import com.storyteller_f.a.backend.core.service.UserDocument
 import com.storyteller_f.a.backend.core.service.UserDocumentSearch
 import com.storyteller_f.a.backend.core.types.RawUser
@@ -19,12 +20,14 @@ import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.a.backend.core.types.UserLog
 import com.storyteller_f.a.backend.core.types.UserTopicRead
 import com.storyteller_f.a.backend.core.types.toUserInfo
+import com.storyteller_f.a.backend.core.types.toUserLogInfo
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.ChildAccountInfo
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.PassType
 import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.model.UserLogInfo
 import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.model.checkMediaFileDimensionRatioMatch
 import com.storyteller_f.shared.obj.ObjectTuple
@@ -394,6 +397,55 @@ suspend fun Backend.getAllUsers(primaryKeyFetch: PrimaryKeyFetch) =
             PaginationResult(it, result.total)
         }
     }
+
+suspend fun Backend.getUserById(id: PrimaryKey) = getUserInfo(ObjectFetch.IdFetch(id))
+
+suspend fun Backend.getUserLogs(
+    uid: PrimaryKey,
+    fetch: PrimaryKeyFetch
+) = database.user.getUserLogs(uid, fetch).mapResult { (list, total) ->
+    processUserLogToUserLogInfo(list, uid).pagingNotNull(total)
+}
+
+private suspend fun Backend.processUserLogToUserLogInfo(
+    list: List<UserLog>,
+    uid: PrimaryKey
+) = runCatching {
+    val userIds = mutableListOf<PrimaryKey>()
+    val communityIds = mutableListOf<PrimaryKey>()
+    val roomIds = mutableListOf<PrimaryKey>()
+    val topicIds = mutableListOf<PrimaryKey>()
+    list.forEach { log ->
+        when (log.objectType) {
+            ObjectType.USER -> userIds += log.objectId
+            ObjectType.COMMUNITY -> communityIds += log.objectId
+            ObjectType.ROOM -> roomIds += log.objectId
+            ObjectType.TOPIC -> topicIds += log.objectId
+            else -> {}
+        }
+    }
+    val users = getUserInfoList(ObjectListFetch.IdListFetch(userIds)).getOrThrow()
+    val communities =
+        database.community.getRawCommunities(ObjectListFetch.IdListFetch(communityIds))
+            .mapResult { processRawCommunityToCommunityInfo(it) }.getOrThrow()
+            ?: emptyList()
+    val rooms = getRoomInfoList(ObjectListFetch.IdListFetch(roomIds)).getOrThrow()
+    val topics = getTopicByIds(topicIds, uid).getOrThrow() ?: emptyList()
+    val userMap = users.associateBy { it.id }
+    val communityMap = communities.associateBy { it.id }
+    val roomMap = rooms.associateBy { it.id }
+    val topicMap = topics.associateBy { it.id }
+    list.map { log ->
+        val ext = when (log.objectType) {
+            ObjectType.USER -> UserLogInfo.Extensions(user = userMap[log.objectId])
+            ObjectType.COMMUNITY -> UserLogInfo.Extensions(community = communityMap[log.objectId])
+            ObjectType.ROOM -> UserLogInfo.Extensions(room = roomMap[log.objectId])
+            ObjectType.TOPIC -> UserLogInfo.Extensions(topic = topicMap[log.objectId])
+            else -> null
+        }
+        log.toUserLogInfo().copy(extensions = ext)
+    }
+}
 
 fun Char.isEnglishLetter(): Boolean {
     return this in 'a'..'z' || this in 'A'..'Z'

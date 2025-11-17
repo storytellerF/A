@@ -1,11 +1,13 @@
 package com.storyteller_f.a.client.core
 
 import com.storyteller_f.a.api.AdminApi
+import com.storyteller_f.a.api.CommonPath
 import com.storyteller_f.a.api.NewUser
 import com.storyteller_f.a.api.PaginationQuery
 import com.storyteller_f.a.api.SignInBody
 import com.storyteller_f.a.api.SignUpBody
 import com.storyteller_f.route4k.ktor.client.invoke
+import com.storyteller_f.shared.type.PrimaryKey
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 
@@ -67,4 +69,31 @@ suspend fun PanelSessionManager.getAllTitles(query: PaginationQuery) = serviceCa
 
 suspend fun PanelSessionManager.getAllFiles(query: PaginationQuery) = serviceCatching {
     AdminApi.Files.get(query)
+}
+
+suspend fun PanelSessionManager.getUserById(uid: PrimaryKey) = serviceCatching {
+    AdminApi.Users.Id.get(CommonPath(uid))
+}
+
+suspend fun PanelSessionManager.getUserJoinedCommunities(uid: PrimaryKey, query: PaginationQuery) = serviceCatching {
+    AdminApi.Users.Id.Communities.get(query, CommonPath(uid))
+}
+
+suspend fun PanelSessionManager.getUserJoinedRooms(uid: PrimaryKey, query: PaginationQuery) = serviceCatching {
+    AdminApi.Users.Id.Rooms.get(query, CommonPath(uid))
+}
+
+suspend fun PanelSessionManager.getUserReceivedTitles(
+    uid: PrimaryKey,
+    query: com.storyteller_f.a.api.CustomApi.Users.Id.Titles.TitleQuery
+) = serviceCatching {
+    AdminApi.Users.Id.Titles.get(query, CommonPath(uid))
+}
+
+suspend fun PanelSessionManager.getUserFiles(uid: PrimaryKey, query: PaginationQuery) = serviceCatching {
+    AdminApi.Users.Id.Files.get(query, CommonPath(uid))
+}
+
+suspend fun PanelSessionManager.getUserLogs(uid: PrimaryKey, query: PaginationQuery) = serviceCatching {
+    AdminApi.Users.Id.Logs.get(query, CommonPath(uid))
 }

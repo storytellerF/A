@@ -23,6 +23,7 @@ import com.storyteller_f.a.app.core.common.RegularPagingSource
 import com.storyteller_f.a.app.core.common.SectionLoadParams
 import com.storyteller_f.a.app.core.common.SectionPagingSource
 import com.storyteller_f.a.app.core.common.SimpleViewModel
+import com.storyteller_f.a.app.core.common.buildPager
 import com.storyteller_f.a.app.core.components.DialogSaveState
 import com.storyteller_f.a.app.core.components.generateMathIfNeed
 import com.storyteller_f.a.app.core.utils.SavedSession
@@ -81,21 +82,18 @@ import com.storyteller_f.shared.model.UserOverview
 import com.storyteller_f.shared.model.UserPubKeyInfo
 import com.storyteller_f.shared.model.UserSubscriptionInfo
 import com.storyteller_f.shared.obj.ObjectTuple
-import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.extractMarkdownHeadline
 import com.storyteller_f.shared.utils.extractMarkdownMediaLink
 import com.storyteller_f.storage.ChildAccountStorage
-import com.storyteller_f.storage.CollectionListStorage
 import com.storyteller_f.storage.CommunityCollection
 import com.storyteller_f.storage.DownloadInfo
 import com.storyteller_f.storage.DownloadStatus
 import com.storyteller_f.storage.FileCollection
 import com.storyteller_f.storage.ModelStorage
 import com.storyteller_f.storage.ReactionCollection
-import com.storyteller_f.storage.RemoteKeyStorage
 import com.storyteller_f.storage.RoomCollection
 import com.storyteller_f.storage.TitleCollection
 import com.storyteller_f.storage.TopicCollection
@@ -254,33 +252,6 @@ class RoomsViewModel(
     ) { key, size ->
         sessionManager.searchRooms(joinStatusSearch, size, key, word, communityId)
     }.flow.cachedIn(viewModelScope)
-}
-
-@OptIn(ExperimentalPagingApi::class)
-private fun <C : Any, T : Any> buildPager(
-    collection: C,
-    collectionName: String,
-    remoteKeyStorage: RemoteKeyStorage,
-    storage: CollectionListStorage<C, T>,
-    service: suspend (String?, Int) -> Result<ServerResponse<T>>
-): Pager<String, T> = Pager(
-    PagingConfig(pageSize = 20),
-    remoteMediator = CustomRemoteMediator(
-        collectionName,
-        remoteKeyStorage,
-        RegularPagingSource { key, size ->
-            service(key, size)
-        },
-    ) { data, clean ->
-        if (clean) {
-            storage.clean(collection)
-        }
-        data.forEach {
-            storage.save(collection, it)
-        }
-    },
-) {
-    CompatPagingSource(storage.observeData(collection), IntKeyConverter)
 }
 
 @OptIn(ExperimentalPagingApi::class)

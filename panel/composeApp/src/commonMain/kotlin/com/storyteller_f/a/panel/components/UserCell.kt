@@ -1,8 +1,10 @@
 package com.storyteller_f.a.panel.components
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -15,9 +17,11 @@ import com.storyteller_f.a.app.core.components.UserIcon
 import com.storyteller_f.shared.model.UserInfo
 
 @Composable
-fun UserCell(userInfo: UserInfo?) {
+fun UserCell(userInfo: UserInfo?, onClick: (() -> Unit)? = null) {
     Row(
-        modifier = Modifier.padding(8.dp),
+        modifier = Modifier.fillMaxWidth().let { m ->
+            if (onClick != null) m.clickable { onClick() } else m
+        }.padding(8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
