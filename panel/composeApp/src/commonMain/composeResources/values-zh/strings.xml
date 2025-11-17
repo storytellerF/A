@@ -1,0 +1,12 @@
+<resources>
+    <string name="input">输入</string>
+    <string name="all_topics">所有主题</string>
+    <string name="all_titles">所有头衔</string>
+    <string name="all_public_rooms">所有公开房间</string>
+    <string name="all_private_rooms">所有私密房间</string>
+    <string name="all_files">所有文件</string>
+    <string name="all_communities">所有社区</string>
+    <string name="overview">总览</string>
+    <string name="nickname">昵称</string>
+    <string name="aid">Aid</string>
+</resources>

@@ -11,6 +11,8 @@
     <string name="add">Add</string>
     <string name="topics">Topics</string>
     <string name="rooms">Rooms</string>
+    <string name="world">World</string>
+    <string name="communities">Communities</string>
     <string name="nyi">not yet implemented</string>
     <string name="success">Success</string>
     <string name="design_spec">Design Spec</string>
@@ -45,4 +47,11 @@
     <string name="no_content_yet">No content yet ┑(￣Д ￣)┍</string>
     <string name="copy">Copy</string>
     <string name="snapshot">Snapshot</string>
+    <string name="preference">Preference</string>
+    <string name="switch_account">Switch Account</string>
+    <string name="create">Create</string>
+    <string name="grant_notification">Grant notification</string>
+    <string name="connected">Connected</string>
+    <string name="disconnected">Disconnected</string>
+    <string name="file_explorer">File Explorer</string>
 </resources>

@@ -56,9 +56,15 @@ import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.common.UserScreen
 import com.storyteller_f.a.app.compose_app.common.hasRouteFlow
+import com.storyteller_f.a.app.compose_app.connected
+import com.storyteller_f.a.app.compose_app.create
+import com.storyteller_f.a.app.compose_app.disconnected
+import com.storyteller_f.a.app.compose_app.file_explorer
+import com.storyteller_f.a.app.compose_app.grant_notification
 import com.storyteller_f.a.app.compose_app.settings
 import com.storyteller_f.a.app.compose_app.sign_out
 import com.storyteller_f.a.app.compose_app.sign_out_prompt
+import com.storyteller_f.a.app.compose_app.switch_account
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.compose_app.utils.createConnectivity
 import com.storyteller_f.a.app.compose_app.utils.unregisterPushService
@@ -157,7 +163,10 @@ fun SignInBox(dismiss: () -> Unit) {
 @Composable
 fun SystemSettingsButton(dismiss: () -> Unit) {
     val appNavFactory = LocalAppNavFactory.current
-    ButtonNav(MaterialSymbolsOutlined.Settings, "Preference") {
+    ButtonNav(
+        MaterialSymbolsOutlined.Settings,
+        stringResource(Res.string.settings)
+    ) {
         dismiss()
         appNavFactory.newAppNav().gotoPreference()
     }
@@ -165,7 +174,7 @@ fun SystemSettingsButton(dismiss: () -> Unit) {
 
 @Composable
 fun CreateButton(dismiss: () -> Unit, clickCreate: () -> Unit) {
-    ButtonNav(Icons.Default.Add, "Create") {
+    ButtonNav(Icons.Default.Add, stringResource(Res.string.create)) {
         dismiss()
         clickCreate()
     }
@@ -317,7 +326,7 @@ fun AccountSwitchButton(dismiss: () -> Unit, overviewHandler: LoadingHandler<Use
     }
     ButtonNav(
         if (isLoading) IconRes.Loading else IconRes.Vector(Icons.Default.SwitchAccount),
-        "Switch Account",
+        stringResource(Res.string.switch_account),
         {
             ButtonBadgeSuffix(userOverview?.childAccountCount ?: 0)
         }
@@ -357,7 +366,7 @@ fun NotificationButton() {
     val hasPermission by notificationProvider.hasPermissionState
 
     if (!hasPermission) {
-        ButtonNav(Icons.Default.Notifications, "Grant notification") {
+        ButtonNav(Icons.Default.Notifications, stringResource(Res.string.grant_notification)) {
             notificationProvider.requestPermission(
                 onGranted = {
                     notificationProvider.updatePermissionState(true)
@@ -383,12 +392,12 @@ fun ConnectionButton() {
         is Connectivity.Status.Connected -> {
             ButtonNav(
                 if (s.metered) Icons.Default.SignalCellularAlt else Icons.Default.Wifi,
-                "Connected"
+                stringResource(Res.string.connected)
             )
         }
 
         else -> {
-            ButtonNav(MaterialSymbolsOutlined.SignalDisconnected, "Disconnected")
+            ButtonNav(MaterialSymbolsOutlined.SignalDisconnected, stringResource(Res.string.disconnected))
         }
     }
 }
@@ -405,7 +414,7 @@ fun SettingsButton(dismiss: () -> Unit) {
 @Composable
 fun FileExplorerButton(dismiss: () -> Unit) {
     val appNavFactory = LocalAppNavFactory.current
-    ButtonNav(Icons.Default.Folder, "File Explorer") {
+    ButtonNav(Icons.Default.Folder, stringResource(Res.string.file_explorer)) {
         dismiss()
         appNavFactory.newAppNav().gotoFileExplorer()
     }

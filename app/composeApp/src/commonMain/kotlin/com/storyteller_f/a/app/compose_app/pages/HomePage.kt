@@ -31,12 +31,15 @@ import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalUiViewModel
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.common.createWorldViewModel
+import com.storyteller_f.a.app.compose_app.communities
 import com.storyteller_f.a.app.compose_app.components.TopicList
 import com.storyteller_f.a.app.compose_app.design_spec
 import com.storyteller_f.a.app.compose_app.pages.community.MyCommunitiesPage
 import com.storyteller_f.a.app.compose_app.pages.room.MyRoomsPage
 import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
+import com.storyteller_f.a.app.compose_app.rooms
+import com.storyteller_f.a.app.compose_app.world
 import com.storyteller_f.a.app.core.components.ButtonNav
 import com.storyteller_f.a.app.core.components.CenterBox
 import com.storyteller_f.a.app.core.components.CustomBottomNav
@@ -51,9 +54,21 @@ import org.jetbrains.compose.resources.stringResource
 fun HomePage() {
     val size = calculateWindowSizeClass()
     val homeNavRoutes = listOf(
-        NavRoute("/world", Icons.Default.Public, "world"),
-        NavRoute("/communities", Icons.Default.Diversity3, "communities"),
-        NavRoute("/rooms", Icons.Default.ChatBubble, "rooms"),
+        NavRoute(
+            "/world",
+            Icons.Default.Public,
+            stringResource(com.storyteller_f.a.app.compose_app.Res.string.world)
+        ),
+        NavRoute(
+            "/communities",
+            Icons.Default.Diversity3,
+            stringResource(com.storyteller_f.a.app.compose_app.Res.string.communities)
+        ),
+        NavRoute(
+            "/rooms",
+            Icons.Default.ChatBubble,
+            stringResource(com.storyteller_f.a.app.compose_app.Res.string.rooms)
+        ),
     )
     val modifier = Modifier.testTag("home")
     when (size.widthSizeClass) {
