@@ -335,8 +335,7 @@ class TopicTest {
 
     @Test
     fun `test create topic in private room`() = test {
-        val user2 = attachSession {
-        }
+        val user2 = attachSession()
         val user1 = attachSession {
             val id = createRoom(NewRoom("room2", "room2")).getOrThrow().id
             createTitle(
