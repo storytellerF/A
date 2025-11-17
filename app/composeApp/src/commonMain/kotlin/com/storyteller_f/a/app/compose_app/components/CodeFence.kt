@@ -7,8 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -22,6 +20,7 @@ import coil3.compose.LocalPlatformContext
 import coil3.compose.rememberAsyncImagePainter
 import coil3.request.ImageRequest
 import com.eygraber.uri.Uri
+import com.mikepenz.markdown.compose.LocalMarkdownTypography
 import com.mikepenz.markdown.compose.components.MarkdownComponentModel
 import com.mikepenz.markdown.compose.elements.MarkdownHighlightedCodeFence
 import com.mikepenz.markdown.model.ImageData
@@ -32,8 +31,7 @@ import com.storyteller_f.a.app.compose_app.utils.imageRequest
 import com.storyteller_f.a.app.core.common.LocalClient
 import com.storyteller_f.a.app.core.components.PdfViewBlock
 import com.storyteller_f.a.app.core.components.convertPxToDp
-import com.storyteller_f.a.app.core.components.generateLatexImage
-import com.storyteller_f.a.app.core.components.getBlockMathTextStyle
+import com.storyteller_f.a.app.core.components.getTexPath
 import com.storyteller_f.a.app.core.components.textUnitToPx
 import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.model.FileInfo
@@ -42,7 +40,6 @@ import com.storyteller_f.shared.utils.getLang
 import com.storyteller_f.shared.utils.readCodeFence
 import dev.snipme.highlights.Highlights
 import dev.snipme.highlights.model.SyntaxThemes
-import kotlinx.io.files.Path
 
 @Composable
 fun CustomCodeFence(modal: MarkdownComponentModel, mediaList: Map<String, FileInfo>) {
@@ -132,7 +129,7 @@ private fun CustomObjectBlock(
             return
         }
     }
-    val obj1 = RemoteMediaItem(
+    val mediaItem = RemoteMediaItem(
         obj.url,
         FileInfo.YOUTUBE_MIMETYPE,
         false,
@@ -142,15 +139,15 @@ private fun CustomObjectBlock(
     )
     when (obj.contentType) {
         FileInfo.YOUTUBE_MIMETYPE -> {
-            VideoView(obj1, false)
+            VideoView(mediaItem, false)
         }
 
         FileInfo.SOUND_CLOUD_MIME_TYPE -> {
-            AudioView(obj1, false)
+            AudioView(mediaItem, false)
         }
 
         FileInfo.M3U8_MIMETYPE -> {
-            VideoView(obj1, false)
+            VideoView(mediaItem, false)
         }
     }
 }
@@ -172,7 +169,7 @@ private fun RefBlock(
 ) {
     val (first, second) = remember(modal.node, modal.content) {
         val textInNode = readCodeFence(modal.node, modal.content)
-        TopicRoute.Companion.parseRefUri(textInNode)
+        TopicRoute.parseRefUri(textInNode)
     }
     first?.let { it1 -> it1(second) }
 }
@@ -181,39 +178,15 @@ private fun RefBlock(
 private fun LatexBlock(
     modal: MarkdownComponentModel
 ) {
-    val paintState = rememberGeneratedLatexImage(modal)
-    if (paintState.isSuccess) {
-        val path = paintState.getOrNull()
-        if (path != null) {
-            AsyncImage(
-                model = path.toString(),
-                contentDescription = "math",
-            )
-        } else {
-            HighlightCodeBlock(modal)
-        }
-    } else {
-        HighlightCodeBlock(modal)
-    }
-}
-
-@Composable
-fun rememberGeneratedLatexImage(modal: MarkdownComponentModel): Result<Path?> {
-    val textStyle = LocalTextStyle.current.copy(color = LocalContentColor.current)
-    val size = textUnitToPx(textStyle.fontSize)
-    return remember(
-        modal.node,
-        modal.content,
-        textStyle
-    ) {
-        val style = getBlockMathTextStyle(textStyle)
-        generateLatexImage(
-            style.background.toArgb(),
-            style.color.toArgb(),
-            size,
-            readCodeFence(modal.node, modal.content)
-        )
-    }
+    val typography = LocalMarkdownTypography.current
+    val textStyle = typography.code
+    val path = getTexPath(
+        readCodeFence(modal.node, modal.content),
+        textStyle.background.toArgb(),
+        textStyle.color.toArgb(),
+        textUnitToPx(textStyle.fontSize)
+    )
+    AsyncImage(model = path.toString(), contentDescription = "math")
 }
 
 @Composable
@@ -254,7 +227,7 @@ class CustomCoil3ImageTransformerImpl(private val mediaMap: Map<String, FileInfo
             ImageData(
                 painter,
                 modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable(info != null) {
-                    info?.let { it1 -> appNavFactory.newAppNav().gotoMedia(info) }
+                    info?.let { it1 -> appNavFactory.newAppNav().gotoMedia(it1) }
                 }
             )
         }

@@ -1,6 +1,10 @@
 package com.storyteller_f.a.app.core.components
 
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.Density
 import com.storyteller_f.a.app.core.utils.safeSink
+import com.storyteller_f.shared.utils.MathContext
 import com.storyteller_f.shared.utils.md5
 import io.github.aakira.napier.Napier
 import kotlinx.io.Sink
@@ -17,6 +21,19 @@ expect fun saveLatexToImage(
     textSize: Float,
     outputStream: Sink
 ): Boolean
+
+fun generateLatexImage(
+    style: TextStyle,
+    density: Density,
+    context: MathContext
+): Result<Path?> {
+    return generateLatexImage(
+        style.background.toArgb(),
+        style.color.toArgb(),
+        textUnitToPx(style.fontSize, density),
+        context.content
+    )
+}
 
 fun generateLatexImage(
     backgroundColor: Int,

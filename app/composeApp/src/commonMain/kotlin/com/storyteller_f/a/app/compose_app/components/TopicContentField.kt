@@ -1,23 +1,33 @@
 package com.storyteller_f.a.app.compose_app.components
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.dp
 import com.mikepenz.markdown.compose.Markdown
 import com.mikepenz.markdown.compose.components.markdownComponents
+import com.mikepenz.markdown.compose.extendedspans.ExtendedSpans
+import com.mikepenz.markdown.compose.extendedspans.RoundedCornerSpanPainter
+import com.mikepenz.markdown.compose.extendedspans.SquigglyUnderlineSpanPainter
+import com.mikepenz.markdown.compose.extendedspans.rememberSquigglyUnderlineAnimator
 import com.mikepenz.markdown.m3.markdownColor
-import com.mikepenz.markdown.m3.markdownTypography
+import com.mikepenz.markdown.model.markdownAnnotator
+import com.mikepenz.markdown.model.markdownExtendedSpans
+import com.mikepenz.markdown.model.markdownInlineContent
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.permission_denied
-import com.storyteller_f.a.app.core.components.CustomMarkdownParagraph
+import com.storyteller_f.a.app.core.components.customMarkdownTypography
+import com.storyteller_f.a.app.core.components.imageAnnotator
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
@@ -77,27 +87,56 @@ private fun TopicContentFieldInternal(
     val mediaMap = remember(rawMediaList) {
         rawMediaList.associateBy { it.name }.toImmutableMap()
     }
-    CompositionLocalProvider(LocalInspectionMode provides true) {
-        Markdown(
-            plain,
-            modifier = Modifier.fillMaxWidth(),
-            colors = markdownColor(),
-            typography = markdownTypography(),
-            imageTransformer = CustomCoil3ImageTransformerImpl(mediaMap),
-            components = markdownComponents(
-                codeFence = {
-                    CustomCodeFence(it, mediaMap)
-                },
-                codeBlock = { HighlightCodeBlock(it) },
-                paragraph = {
-                    CustomMarkdownParagraph(
-                        it.content,
-                        it.node,
-                        mediaMap = mediaMap,
-                        isEmbed = isEmbed
+    val dimensionMap = remember(rawMediaList) {
+        rawMediaList.associate { it.name to it.dimension }.toImmutableMap()
+    }
+    val inlineContentMap = remember { mutableMapOf<String, InlineTextContent>() }
+    val density = LocalDensity.current
+    BoxWithConstraints {
+        val maxWidth = this.maxWidth
+        CompositionLocalProvider(LocalInspectionMode provides true) {
+            val imageTransformer = remember(mediaMap) {
+                CustomCoil3ImageTransformerImpl(mediaMap)
+            }
+            val colors = markdownColor()
+            val typography = customMarkdownTypography(colors)
+            Markdown(
+                plain,
+                modifier = Modifier.fillMaxWidth(),
+                colors = colors,
+                typography = typography,
+                imageTransformer = imageTransformer,
+                components = markdownComponents(
+                    codeFence = {
+                        CustomCodeFence(it, mediaMap)
+                    },
+                    codeBlock = { HighlightCodeBlock(it) },
+                ),
+                annotator = markdownAnnotator { content, child ->
+                    imageAnnotator(
+                        child,
+                        content,
+                        inlineContentMap,
+                        dimensionMap,
+                        maxWidth,
+                        density,
+                        isEmbed,
+                        imageTransformer,
+                        typography,
+                        colors
                     )
+                },
+                inlineContent = markdownInlineContent(inlineContentMap),
+                extendedSpans = markdownExtendedSpans {
+                    val animator = rememberSquigglyUnderlineAnimator()
+                    remember {
+                        ExtendedSpans(
+                            RoundedCornerSpanPainter(),
+                            SquigglyUnderlineSpanPainter(animator = animator)
+                        )
+                    }
                 }
             )
-        )
+        }
     }
 }
