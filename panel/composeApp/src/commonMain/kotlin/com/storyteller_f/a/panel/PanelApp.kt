@@ -48,6 +48,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.storyteller_f.a.app.core.CoreStrings
 import com.storyteller_f.a.app.core.PanelConfig
 import com.storyteller_f.a.app.core.common.LocalClient
 import com.storyteller_f.a.app.core.components.CenterBox
@@ -105,6 +106,7 @@ import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(DelicateCoroutinesApi::class)
 val panelAccountInstance = PanelAccountInstance(GlobalScope)
@@ -427,7 +429,7 @@ private fun PanelInputPage(back: () -> Unit) {
             }, startSign)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Button(startSign) {
-                    Text("Start")
+                    Text(CoreStrings.start())
                 }
             }
         }
@@ -452,7 +454,7 @@ private fun PanelSelectLoginPage(navigator: NavHostController, back: () -> Unit)
                 OutlinedButton({
                     navigator.navigate("input")
                 }, shape = ButtonDefaults.outlinedShape) {
-                    Text("Input")
+                    Text(stringResource(Res.string.input))
                 }
                 val scope = rememberCoroutineScope()
                 val globalDialogController = LocalPanelGlobalDialog.current
@@ -461,7 +463,7 @@ private fun PanelSelectLoginPage(navigator: NavHostController, back: () -> Unit)
                         globalDialogController.signInFromFile(back)
                     }
                 }) {
-                    Text("Select File")
+                    Text(CoreStrings.selectFile())
                 }
             }
         }

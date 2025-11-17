@@ -16,6 +16,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.compose_app.pages.user.UserIconWithDialog
+import com.storyteller_f.a.app.core.CoreStrings
 import com.storyteller_f.shared.model.UserInfo
 
 @Composable
@@ -62,9 +63,9 @@ fun UserCellInternal(
                 Text(userInfo.nickname, style = MaterialTheme.typography.titleMedium)
                 val aid = userInfo.aid
                 if (aid != null) {
-                    Text("aid: $aid", style = MaterialTheme.typography.labelSmall)
+                    Text(CoreStrings.aid(aid), style = MaterialTheme.typography.labelSmall)
                 } else {
-                    Text("ad: ${userInfo.address}", style = MaterialTheme.typography.labelSmall)
+                    Text(CoreStrings.ad(userInfo.address), style = MaterialTheme.typography.labelSmall)
                 }
             }
         }

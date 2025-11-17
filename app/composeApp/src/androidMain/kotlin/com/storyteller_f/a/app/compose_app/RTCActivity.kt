@@ -31,6 +31,7 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.shepeliev.webrtckmp.*
 import com.storyteller_f.a.app.compose_app.ui.theme.AppTheme
+import com.storyteller_f.a.app.core.CoreStrings
 import com.storyteller_f.a.client.core.sendFrame
 import com.storyteller_f.shared.obj.CustomAnswer
 import com.storyteller_f.shared.obj.CustomCandidate
@@ -414,7 +415,7 @@ fun StartButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
             permissions.launchMultiplePermissionRequest()
         }
     }, modifier = modifier) {
-        Text("Start")
+        Text(CoreStrings.start())
     }
 }
 

@@ -62,6 +62,7 @@ import com.storyteller_f.a.app.compose_app.sign_out_prompt
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.compose_app.utils.createConnectivity
 import com.storyteller_f.a.app.compose_app.utils.unregisterPushService
+import com.storyteller_f.a.app.core.CoreStrings
 import com.storyteller_f.a.app.core.components.ButtonNav
 import com.storyteller_f.a.app.core.components.CustomAlertDialog
 import com.storyteller_f.a.app.core.components.CustomAlertDialogController
@@ -292,10 +293,10 @@ private fun UnboundSimpleUserCell(userInfo: UserInfo?) {
                 Text(userInfo.nickname, style = MaterialTheme.typography.titleMedium)
                 val aid = userInfo.aid
                 if (aid != null) {
-                    Text("aid: $aid", style = MaterialTheme.typography.labelSmall)
+                    Text(CoreStrings.aid(aid), style = MaterialTheme.typography.labelSmall)
                 } else {
                     Text(
-                        "ad: ${userInfo.address}",
+                        CoreStrings.ad(userInfo.address),
                         style = MaterialTheme.typography.labelSmall
                     )
                 }

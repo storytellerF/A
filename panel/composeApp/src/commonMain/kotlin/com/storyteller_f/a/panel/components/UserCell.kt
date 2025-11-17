@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.storyteller_f.a.app.core.CoreStrings
 import com.storyteller_f.a.app.core.components.UserIcon
 import com.storyteller_f.shared.model.UserInfo
 
@@ -30,9 +31,9 @@ fun UserCell(userInfo: UserInfo?) {
                 Text(userInfo.nickname, style = MaterialTheme.typography.titleMedium)
                 val aid = userInfo.aid
                 if (aid != null) {
-                    Text("aid: $aid", style = MaterialTheme.typography.labelSmall)
+                    Text(CoreStrings.aid(aid), style = MaterialTheme.typography.labelSmall)
                 } else {
-                    Text("ad: ${userInfo.address}", style = MaterialTheme.typography.labelSmall)
+                    Text(CoreStrings.ad(userInfo.address), style = MaterialTheme.typography.labelSmall)
                 }
             }
         }

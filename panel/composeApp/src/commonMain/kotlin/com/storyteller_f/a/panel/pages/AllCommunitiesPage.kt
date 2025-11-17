@@ -1,5 +1,3 @@
-
-
 package com.storyteller_f.a.panel.pages
 
 import androidx.compose.foundation.layout.Box
@@ -20,8 +18,11 @@ import androidx.compose.ui.Modifier
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.pagingItems
 import com.storyteller_f.a.panel.LocalPanelNav
+import com.storyteller_f.a.panel.Res
+import com.storyteller_f.a.panel.all_communities
 import com.storyteller_f.a.panel.common.AllCommunitiesViewModel
 import com.storyteller_f.a.panel.common.createPanelAllCommunitiesViewModel
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun AllCommunitiesPage() {
@@ -35,9 +36,12 @@ fun AllCommunitiesPageInternal(viewModel: AllCommunitiesViewModel) {
     val panelNav = LocalPanelNav.current
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("All communities") }, navigationIcon = {
-                IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) }
-            })
+            TopAppBar(
+                title = { Text(stringResource(Res.string.all_communities)) },
+                navigationIcon = {
+                    IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) }
+                }
+            )
         }
     ) { paddingValues ->
         Box(Modifier.padding(top = paddingValues.calculateTopPadding())) {
@@ -48,12 +52,15 @@ fun AllCommunitiesPageInternal(viewModel: AllCommunitiesViewModel) {
                         if (info != null) {
                             ListItem(
                                 headlineContent = { Text(info.name) },
-                                overlineContent = { Text(info.aid ?: "") },
+                                overlineContent = { Text(info.aid) },
                                 supportingContent = {
-                                    val owner = info.owner?.toString() ?: ""
-                                    val members = info.memberCount?.toString() ?: ""
-                                    val policy = info.memberPolicy?.name ?: ""
-                                    Text(listOf(owner, members, policy).filter { it.isNotEmpty() }.joinToString(" • "))
+                                    val owner = info.owner.toString()
+                                    val members = info.memberCount.toString()
+                                    val policy = info.memberPolicy.name
+                                    Text(
+                                        listOf(owner, members, policy).filter { it.isNotEmpty() }
+                                            .joinToString(" • ")
+                                    )
                                 }
                             )
                             HorizontalDivider()

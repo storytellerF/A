@@ -28,10 +28,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.panel.LocalPanelNav
+import com.storyteller_f.a.panel.Res
 import com.storyteller_f.a.panel.common.OverviewViewModel
 import com.storyteller_f.a.panel.common.createPanelOverviewViewModel
+import com.storyteller_f.a.panel.overview
 import com.storyteller_f.shared.model.PanelOverview
 import nl.jacobras.humanreadable.HumanReadable
+import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.ui.tooling.preview.PreviewParameter
 import org.jetbrains.compose.ui.tooling.preview.PreviewParameterProvider
@@ -49,7 +52,7 @@ fun OverviewPageInternal(viewModel: OverviewViewModel) {
     Scaffold(
         topBar = {
             TopAppBar(title = {
-                Text("Overview")
+                Text(stringResource(Res.string.overview))
             }, navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } })
         }
     ) {

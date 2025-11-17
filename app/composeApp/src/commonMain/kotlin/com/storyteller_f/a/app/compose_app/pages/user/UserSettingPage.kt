@@ -41,6 +41,7 @@ import com.storyteller_f.a.app.compose_app.components.SettingOptionView
 import com.storyteller_f.a.app.compose_app.pages.topic.FilePicker
 import com.storyteller_f.a.app.compose_app.pages.topic.uploadPath
 import com.storyteller_f.a.app.compose_app.utils.getRemoteImageBitmap
+import com.storyteller_f.a.app.core.CoreStrings
 import com.storyteller_f.a.app.core.components.CustomAlertDialog
 import com.storyteller_f.a.app.core.components.CustomAlertDialogController
 import com.storyteller_f.a.app.core.components.LocalToaster
@@ -369,7 +370,7 @@ fun InputDialog(show: Boolean, init: String, dismiss: () -> Unit, onConfirm: (St
             Button({
                 onConfirm(input)
             }) {
-                Text("OK")
+                Text(CoreStrings.ok())
             }
         }, text = {
             OutlinedTextField(input, {
