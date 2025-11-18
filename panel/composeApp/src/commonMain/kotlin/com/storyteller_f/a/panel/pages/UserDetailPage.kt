@@ -26,7 +26,7 @@ import com.storyteller_f.a.app.core.components.pagingItems
 import com.storyteller_f.a.panel.Res
 import com.storyteller_f.a.panel.address_label
 import com.storyteller_f.a.panel.aid_label
-import com.storyteller_f.a.panel.common.createPanelUserViewModel
+import com.storyteller_f.a.panel.common.createPanelUserOverviewViewModel
 import com.storyteller_f.a.panel.log_supporting
 import com.storyteller_f.a.panel.nickname_label
 import com.storyteller_f.a.panel.none
@@ -223,13 +223,18 @@ private fun UserLogsTab(uid: PrimaryKey) {
 
 @Composable
 private fun UserBasicInfoSectionVM(uid: PrimaryKey) {
-    val vm = createPanelUserViewModel(uid)
-    StateView(vm.handler) { u ->
+    val vm = createPanelUserOverviewViewModel(uid)
+    StateView(vm.handler) { overview ->
         Column(Modifier.padding(16.dp)) {
+            val u = overview.userInfo
             Text(stringResource(Res.string.nickname_label, u.nickname))
             Text(stringResource(Res.string.address_label, u.address))
             val aidText = u.aid ?: stringResource(Res.string.none)
             Text(stringResource(Res.string.aid_label, aidText))
+            Text("favoriteCount: ${overview.favoriteCount}")
+            Text("subscriptionCount: ${overview.subscriptionCount}")
+            Text("acg: ${overview.acg}")
+            Text("childAccountCount: ${overview.childAccountCount}")
         }
     }
 }

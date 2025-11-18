@@ -24,6 +24,7 @@ import com.storyteller_f.a.client.core.getRoomById
 import com.storyteller_f.a.client.core.getTitleById
 import com.storyteller_f.a.client.core.getTopicById
 import com.storyteller_f.a.client.core.getUserById
+import com.storyteller_f.a.client.core.getUserOverview
 import com.storyteller_f.a.client.core.getUserFiles
 import com.storyteller_f.a.client.core.getUserJoinedCommunities
 import com.storyteller_f.a.client.core.getUserJoinedRooms
@@ -34,6 +35,7 @@ import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.PanelOverview
+import com.storyteller_f.shared.model.UserOverview
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TitleSearchType
@@ -235,6 +237,20 @@ class IdUserViewModel(
         { modelStorage.user.save(UserCollection.Users, it) }
     ) {
         sessionManager.getUserById(id)
+    }
+}
+
+class IdUserOverviewViewModel(
+    sessionManager: PanelSessionManager,
+    modelStorage: ModelStorage,
+    id: PrimaryKey
+) : SimpleViewModel<UserOverview>() {
+    override val handler: LoadingHandler<UserOverview> = CachedLoadingHandler(
+        modelStorage.userOverview.observeDatum(),
+        viewModelScope,
+        { modelStorage.userOverview.save(it) }
+    ) {
+        sessionManager.getUserOverview(id)
     }
 }
 

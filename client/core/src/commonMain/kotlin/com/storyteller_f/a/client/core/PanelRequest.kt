@@ -76,6 +76,10 @@ suspend fun PanelSessionManager.getUserById(uid: PrimaryKey) = serviceCatching {
     AdminApi.Users.Id.get(CommonPath(uid))
 }
 
+suspend fun PanelSessionManager.getUserOverview(uid: PrimaryKey) = serviceCatching {
+    AdminApi.Users.Id.Overview.get(CommonPath(uid))
+}
+
 suspend fun PanelSessionManager.getUserJoinedCommunities(uid: PrimaryKey, query: PaginationQuery) = serviceCatching {
     AdminApi.Users.Id.Communities.get(query, CommonPath(uid))
 }
