@@ -1,15 +1,8 @@
 package com.storyteller_f.a.app.compose_app.components
 
 import android.app.PictureInPictureParams
-import android.content.BroadcastReceiver
 import android.content.ClipData
-import android.content.Context
-import android.content.ContextWrapper
-import android.content.Intent
-import android.content.IntentFilter
-import android.os.Build
 import android.util.Rational
-import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.FlowRow
@@ -27,6 +20,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,9 +28,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.toAndroidRectF
-import androidx.compose.ui.layout.boundsInWindow
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
@@ -44,18 +35,15 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.app.PictureInPictureModeChangedInfo
-import androidx.core.content.ContextCompat
-import androidx.core.graphics.toRect
 import androidx.core.util.Consumer
-import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.ui.PlayerView
-import com.storyteller_f.a.app.compose_app.LocalMediaPlaySession
-import com.storyteller_f.a.app.compose_app.MediaPlayerActivity
-import com.storyteller_f.a.app.compose_app.MediaPlayerSession
+import com.storyteller_f.a.app.core.components.LocalMediaPlaySession
+import com.storyteller_f.a.app.core.components.LocalMediaPlayerService
 import com.storyteller_f.a.app.core.components.LocalToaster
-import com.storyteller_f.shared.commonJson
+import com.storyteller_f.a.app.core.components.MediaPlaySession
+import com.storyteller_f.a.app.core.components.RemoteMediaItem
 import com.storyteller_f.shared.model.FileInfo
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.launch
@@ -70,50 +58,69 @@ const val EXTRA_CONTROL_PLAY = 1
 const val EXTRA_CONTROL_PAUSE = 2
 
 @Composable
-actual fun VideoView(
-    obj: RemoteMediaItem,
-    isFilled: Boolean,
-) {
-    val contentType = obj.contentType
-    MediaPlayerInternal(obj.url, contentType, isFilled, { player, playingSession, currentSession ->
-        VideoPlayer(playingSession, currentSession, player, obj, isFilled)
+actual fun VideoViewEmbed(remoteMediaItem: RemoteMediaItem) {
+    MediaPlayerEmbed(remoteMediaItem, { playingSession, localMediaPlaySession ->
+        VideoPlayer(playingSession, localMediaPlaySession, remoteMediaItem)
+    })
+}
+
+@Composable
+actual fun VideoViewFullScreen(remoteMediaItem: RemoteMediaItem) {
+    MediaPlayerFullScreen(remoteMediaItem, { playingSession, localMediaPlaySession ->
+        VideoPlayer(playingSession, localMediaPlaySession, remoteMediaItem)
+    })
+}
+
+@Composable
+actual fun VideoViewFilled(remoteMediaItem: RemoteMediaItem) {
+    MediaPlayerFilled(remoteMediaItem, { playingSession, localMediaPlaySession ->
+        VideoPlayer(playingSession, localMediaPlaySession, remoteMediaItem)
     })
 }
 
 @OptIn(ExperimentalUuidApi::class)
 @Composable
 private fun VideoPlayer(
-    playingSession: MediaPlayerSession?,
-    currentSession: LocalMediaPlaySession,
-    player: MediaController,
-    obj: RemoteMediaItem,
-    isFilled: Boolean,
+    playingSession: MediaPlaySession?,
+    localMediaPlaySession: LocalMediaPlaySession,
+    remoteMediaItem: RemoteMediaItem,
 ) {
-    val contentType = obj.contentType
-    val ratio = remember(playingSession, currentSession, isFilled) {
-        if (playingSession?.videoSize != null &&
-            playingSession.lastUuid == currentSession.uuid &&
-            isFilled
+    val mediaPlayerService = LocalMediaPlayerService.current
+    val player by mediaPlayerService.controller.collectAsState()
+    val contentType = remoteMediaItem.contentType
+    val videoSize = playingSession?.videoSize
+    val ratio = remember(playingSession, localMediaPlaySession) {
+        if (videoSize != null &&
+            playingSession.lastUuid == localMediaPlaySession.uuid
         ) {
-            playingSession.videoSize.width.toFloat() / playingSession.videoSize.height
+            Rational(videoSize.width, videoSize.height)
         } else {
-            16f / 9
+            Rational(16, 9)
         }
     }
     Napier.d {
-        "Video ${currentSession.uuid} ratio $ratio ${playingSession?.uuids} ${playingSession?.videoSize} $isFilled"
+        "VideoPlayer ${localMediaPlaySession.uuid} ratio $ratio ${playingSession?.uuids} $videoSize"
     }
-    Box(modifier = Modifier.aspectRatio(ratio)) {
+    val playerState by rememberPlayerState(player, localMediaPlaySession)
+    val enablePip =
+        playerState.currentIsPlaying && (playingSession?.lastUuid == localMediaPlaySession.uuid)
+    Napier.d(tag = "MediaPlayer") {
+        "VideoPlayer ${localMediaPlaySession.uuid} $enablePip"
+    }
+    val pipModifier = Modifier.androidPipMode(enablePip, ratio)
+    EnablePipPre31(enablePip, localMediaPlaySession)
+    Box(modifier = pipModifier.aspectRatio(ratio.toFloat())) {
         when {
-            playingSession == null -> PlayerWaiting(currentSession, obj)
-            playingSession.lastUuid == currentSession.uuid -> VideoPlayerInternal(
-                currentSession,
+            player == null -> PlayerWaiting(localMediaPlaySession, remoteMediaItem)
+            playingSession == null -> PlayerWaiting(localMediaPlaySession, remoteMediaItem)
+            playingSession.lastUuid == localMediaPlaySession.uuid -> VideoPlayerInternal(
+                localMediaPlaySession,
                 player,
                 contentType
             )
 
-            playingSession.id == currentSession.id -> PlayerOccupy(currentSession)
-            else -> PlayerWaiting(currentSession, obj)
+            playingSession.id == localMediaPlaySession.id -> PlayerOccupy(localMediaPlaySession)
+            else -> PlayerWaiting(localMediaPlaySession, remoteMediaItem)
         }
     }
 }
@@ -122,25 +129,27 @@ private fun VideoPlayer(
 @androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 private fun BoxScope.VideoPlayerInternal(
-    currentSession: LocalMediaPlaySession,
-    player: MediaController,
+    localMediaPlaySession: LocalMediaPlaySession,
+    player: MediaController?,
     contentType: String,
 ) {
-    AndroidPlayerContainer(currentSession, player) { pipModifier, (currentIsLoading) ->
+    player ?: return
+    AndroidPlayerContainer(localMediaPlaySession, player) {
         AndroidView(
             factory = {
                 PlayerView(it).apply {
                     controllerShowTimeoutMs = 1000
                 }
             },
-            modifier = pipModifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize()
         ) {
             Napier.i {
-                "Video ${currentSession.uuid} update"
+                "Video ${localMediaPlaySession.uuid} update"
             }
             it.player = player
         }
-        if (currentIsLoading && contentType != FileInfo.M3U8_MIMETYPE) {
+        val playerState by rememberPlayerState(player, localMediaPlaySession)
+        if (playerState.currentIsPlaying && contentType != FileInfo.M3U8_MIMETYPE) {
             CircularProgressIndicator(
                 modifier = Modifier
                     .align(Alignment.Center)
@@ -150,70 +159,11 @@ private fun BoxScope.VideoPlayerInternal(
     }
 }
 
-@androidx.annotation.OptIn(UnstableApi::class)
-@Composable
-fun BoxScope.AndroidPlayerContainer(
-    currentSession: LocalMediaPlaySession,
-    player: MediaController,
-    block: @Composable BoxScope.(Modifier, MediaPlayerState) -> Unit,
-) {
-    val playerState = rememberPlayerState(player, currentSession)
-    val pipModifier = Modifier.enablePictureInPicture(playerState.currentIsPlaying, player)
-    block(pipModifier, playerState)
-    CheckEnterPipPre31(playerState.currentIsPlaying)
-    PlayerBroadcastReceiver(player)
-}
-
-@Composable
-private fun CheckEnterPipPre31(currentIsPlaying: Boolean) {
-    val context = LocalContext.current
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
-        DisposableEffect(context) {
-            val onUserLeaveBehavior = Runnable {
-                if (currentIsPlaying) {
-                    context.findActivity()
-                        .enterPictureInPictureMode(PictureInPictureParams.Builder().build())
-                }
-            }
-            context.findActivity().addOnUserLeaveHintListener(onUserLeaveBehavior)
-            onDispose {
-                context.findActivity().removeOnUserLeaveHintListener(onUserLeaveBehavior)
-            }
-        }
-    }
-}
-
-@Composable
-private fun Modifier.enablePictureInPicture(
-    currentIsPlaying: Boolean,
-    player: MediaController,
-): Modifier {
-    val context = LocalContext.current
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
-        return this
-    }
-    return onGloballyPositioned { layoutCoordinates ->
-        val sourceRect = layoutCoordinates.boundsInWindow().toAndroidRectF().toRect()
-        val builder = PictureInPictureParams.Builder()
-        // 12 之后引入
-        builder.setSourceRectHint(sourceRect)
-        builder.setAutoEnterEnabled(currentIsPlaying)
-        builder.setActions(listOf())
-        val rational = if (player.videoSize.height != 0 && player.videoSize.width != 0) {
-            Rational(player.videoSize.width, player.videoSize.height)
-        } else {
-            Rational(16, 9)
-        }
-        builder.setAspectRatio(rational)
-        context.findActivity().setPictureInPictureParams(builder.build())
-    }
-}
-
 @OptIn(ExperimentalUuidApi::class)
 @Composable
-fun VideoOrAudioOpRow(
+fun EmbedMediaPlayerMenus(
     localMediaPlaySession: LocalMediaPlaySession,
-    playingSession: MediaPlayerSession?,
+    playingSession: MediaPlaySession?,
     contentType: String,
     showSheet: () -> Unit,
 ) {
@@ -257,25 +207,15 @@ fun VideoOrAudioOpRow(
         }, enabled = isActive) {
             Icon(Icons.Default.PictureInPicture, "pip")
         }
+        val mediaPlayerService = LocalMediaPlayerService.current
         IconButton({
             if (localMediaPlaySession.uuid == playingSession?.lastUuid) {
-                context.startActivity(Intent(context, MediaPlayerActivity::class.java).apply {
-                    putExtra("json", commonJson.encodeToString<RemoteMediaItem>(playingSession.obj))
-                })
+                mediaPlayerService.fullscreen(playingSession.remoteMediaItem)
             }
         }, enabled = isActive) {
             Icon(Icons.Default.Fullscreen, "fullscreen")
         }
     }
-}
-
-internal fun Context.findActivity(): ComponentActivity {
-    var context = this
-    while (context is ContextWrapper) {
-        if (context is ComponentActivity) return context
-        context = context.baseContext
-    }
-    error("Picture in picture should be called in the context of an Activity")
 }
 
 @Composable
@@ -290,35 +230,4 @@ actual fun rememberIsInPipMode(): Boolean {
         onDispose { activity.removeOnPictureInPictureModeChangedListener(observer) }
     }
     return pipMode
-}
-
-@Composable
-fun PlayerBroadcastReceiver(player: Player) {
-    val isInPipMode = rememberIsInPipMode()
-    if (!isInPipMode) return
-    val context = LocalContext.current
-
-    DisposableEffect(player) {
-        val broadcastReceiver: BroadcastReceiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                if ((intent == null) || (intent.action != ACTION_BROADCAST_CONTROL)) {
-                    return
-                }
-
-                when (intent.getIntExtra(EXTRA_CONTROL_TYPE, 0)) {
-                    EXTRA_CONTROL_PAUSE -> player.pause()
-                    EXTRA_CONTROL_PLAY -> player.play()
-                }
-            }
-        }
-        ContextCompat.registerReceiver(
-            context,
-            broadcastReceiver,
-            IntentFilter(ACTION_BROADCAST_CONTROL),
-            ContextCompat.RECEIVER_NOT_EXPORTED
-        )
-        onDispose {
-            context.unregisterReceiver(broadcastReceiver)
-        }
-    }
 }

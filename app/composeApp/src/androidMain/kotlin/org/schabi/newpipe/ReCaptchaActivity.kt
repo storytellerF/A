@@ -1,7 +1,6 @@
 package org.schabi.newpipe
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.webkit.*
@@ -12,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.*
 import androidx.compose.ui.Modifier
+import androidx.core.content.edit
 import com.kevinnzou.web.*
 import org.schabi.newpipe.extractor.utils.Utils
 
@@ -40,7 +40,7 @@ class ReCaptchaActivity : ComponentActivity() {
                         Icon(Icons.Default.Done, "done")
                     }
                 })
-            }) {
+            }) { paddingValues ->
                 WebView(state, onCreated = { it.settings.javaScriptEnabled = true }, client = object :
                     AccompanistWebViewClient() {
                     override fun shouldOverrideUrlLoading(
@@ -57,7 +57,7 @@ class ReCaptchaActivity : ComponentActivity() {
                         super.onPageFinished(view, url)
                         handleCookiesFromUrl(url)
                     }
-                }, navigator = navigator, modifier = Modifier.padding(it))
+                }, navigator = navigator, modifier = Modifier.padding(paddingValues))
             }
         }
         CookieManager.getInstance().removeAllCookies(null)
@@ -70,8 +70,8 @@ class ReCaptchaActivity : ComponentActivity() {
 
         if (foundCookies.isNotEmpty()) {
             // save cookies to preferences
-            val prefs = this.getSharedPreferences("global", Context.MODE_PRIVATE)
-            prefs.edit().putString("recaptcha_cookies_key", foundCookies).apply()
+            val prefs = this.getSharedPreferences("global", MODE_PRIVATE)
+            prefs.edit { putString("recaptcha_cookies_key", foundCookies) }
 
             // give cookies to Downloader class
             NewPipeDownloaderImpl.setCookie(RECAPTCHA_COOKIES_KEY, foundCookies)

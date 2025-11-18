@@ -1,40 +1,106 @@
 package com.storyteller_f.a.app.compose_app.components
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PauseCircle
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.SwingPanel
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.unit.dp
-import io.github.aakira.napier.Napier
+import com.storyteller_f.a.app.core.components.RemoteMediaItem
 import uk.co.caprica.vlcj.factory.discovery.NativeDiscovery
 import uk.co.caprica.vlcj.player.base.MediaPlayer
 import uk.co.caprica.vlcj.player.base.MediaPlayerEventAdapter
-import uk.co.caprica.vlcj.player.base.MediaPlayerEventListener
 import uk.co.caprica.vlcj.player.component.CallbackMediaPlayerComponent
 import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent
 import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer
 import java.awt.Component
-import java.util.*
+import java.util.Locale
 
 @Composable
-actual fun VideoView(
-    obj: RemoteMediaItem,
-    isFilled: Boolean
-) {
-    val id = obj.url
+actual fun VideoViewEmbed(remoteMediaItem: RemoteMediaItem) {
+    VideoPlayerInternal { mediaPlayerComponent, mediaPlayerState ->
+        val controls = mediaPlayerComponent.mediaPlayer().controls()
+        ObjectBlock {
+            Box(Modifier.weight(1f)) {
+                VideoPlayer(mediaPlayerComponent)
+            }
+            Row(modifier = Modifier) {
+                if (mediaPlayerState.currentIsPlaying) {
+                    IconButton({
+                        controls.pause()
+                    }) {
+                        Icon(Icons.Default.PauseCircle, "pause")
+                    }
+                } else {
+                    IconButton({
+                        controls.play()
+                    }) {
+                        Icon(Icons.Default.PlayCircle, "play")
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+actual fun VideoViewFullScreen(remoteMediaItem: RemoteMediaItem) = Unit
+
+@Composable
+actual fun VideoViewFilled(remoteMediaItem: RemoteMediaItem) = Unit
+
+@Composable
+fun VideoPlayer(mediaPlayerComponent: Component) {
+    SwingPanel(
+        factory = {
+            mediaPlayerComponent
+        },
+        modifier = Modifier.aspectRatio(16f / 9)
+    ) {
+    }
+}
+
+@Composable
+fun VideoPlayerInternal(block: @Composable (Component, VideoMediaPlayerState) -> Unit) {
+    val mediaPlayerComponent = remember {
+        initializeMediaPlayerComponent()
+    }
+    DisposableEffect(mediaPlayerComponent) {
+        onDispose {
+            mediaPlayerComponent.release()
+        }
+    }
+    val mediaPlayerState by rememberMediaPlayerState(mediaPlayerComponent)
+    block(mediaPlayerComponent, mediaPlayerState)
+}
+
+data class VideoMediaPlayerState(
+    val currentLoading: Boolean,
+    val currentIsPlaying: Boolean,
+)
+
+@Composable
+fun rememberMediaPlayerState(mediaPlayerComponent: Component): State<VideoMediaPlayerState> {
     var isPlaying by remember {
         mutableStateOf(false)
     }
-    val mediaPlayerComponent = remember {
-        initializeMediaPlayerComponent(object : MediaPlayerEventAdapter() {
+    var isBuffering by remember {
+        mutableStateOf(false)
+    }
+    DisposableEffect(mediaPlayerComponent) {
+        val listener = object : MediaPlayerEventAdapter() {
             override fun playing(mediaPlayer: MediaPlayer?) {
                 super.playing(mediaPlayer)
                 isPlaying = true
@@ -47,57 +113,32 @@ actual fun VideoView(
 
             override fun error(mediaPlayer: MediaPlayer?) {
                 super.error(mediaPlayer)
-                Napier.i {
-                    "Video $id error"
-                }
+                isBuffering = false
             }
-        }).apply {
-            mediaPlayer().media().prepare(id)
+
+            override fun buffering(mediaPlayer: MediaPlayer?, newCache: Float) {
+                super.buffering(mediaPlayer, newCache)
+            }
         }
-    }
-    val mediaPlayer = mediaPlayerComponent.mediaPlayer()
-    val controls = mediaPlayer.controls()
-    DisposableEffect(mediaPlayerComponent) {
+        mediaPlayerComponent.mediaPlayer().events().addMediaPlayerEventListener(listener)
         onDispose {
-            mediaPlayerComponent.release()
+            mediaPlayerComponent.mediaPlayer().events().removeMediaPlayerEventListener(listener)
         }
     }
-    val shape = RoundedCornerShape(20.dp)
-    ObjectBlock {
-        SwingPanel(
-            factory = {
-                mediaPlayerComponent
-            },
-            modifier = Modifier.weight(1f)
-                .aspectRatio(16f / 9).clip(shape)
-        ) {
-        }
-        Row(modifier = Modifier) {
-            if (isPlaying) {
-                IconButton({
-                    controls.pause()
-                }) {
-                    Icon(Icons.Default.PauseCircle, "pause")
-                }
-            } else {
-                IconButton({
-                    controls.play()
-                }) {
-                    Icon(Icons.Default.PlayCircle, "play")
-                }
-            }
+    return remember {
+        derivedStateOf {
+            VideoMediaPlayerState(currentLoading = isBuffering, currentIsPlaying = isPlaying)
         }
     }
 }
 
-fun initializeMediaPlayerComponent(listener: MediaPlayerEventListener): Component {
+fun initializeMediaPlayerComponent(): Component {
     NativeDiscovery().discover()
     val component: Component = if (isMacOS()) {
         CallbackMediaPlayerComponent()
     } else {
         EmbeddedMediaPlayerComponent()
     }
-    component.mediaPlayer().events().addMediaPlayerEventListener(listener)
     return component
 }
 

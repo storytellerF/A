@@ -19,6 +19,7 @@ import com.mikepenz.markdown.compose.LocalMarkdownTypography
 import com.mikepenz.markdown.compose.components.MarkdownComponentModel
 import com.mikepenz.markdown.compose.elements.highlightedCodeFence
 import com.storyteller_f.a.app.core.components.PdfViewBlock
+import com.storyteller_f.a.app.core.components.RemoteMediaItem
 import com.storyteller_f.a.app.core.components.getTexPath
 import com.storyteller_f.a.app.core.components.textUnitToPx
 import com.storyteller_f.shared.commonJson
@@ -69,29 +70,35 @@ private fun FileObjectBlock(
     modal: MarkdownComponentModel,
     mediaMap: Map<String, FileInfo>
 ) {
-    val mediaInfo = mediaMap[obj.name]
-    val url = mediaInfo?.url
-    val contentType = mediaInfo?.contentType
-    when {
-        contentType.isNullOrBlank() || url.isNullOrBlank() -> HighlightCodeBlock(modal)
-
-        contentType == FileInfo.PDF_CONTENT_TYPE -> PdfViewBlock(url)
-
-        contentType.startsWith("video/") -> {
-            val coverInfo = mediaMap[obj.cover]
-            val obj1 =
-                RemoteMediaItem(url, contentType, false, obj.name, coverInfo, obj.title)
-            VideoView(obj1, false)
-        }
-
-        contentType.startsWith("audio/") -> {
-            val coverInfo = mediaMap[obj.cover]
-            val obj1 =
-                RemoteMediaItem(url, contentType, false, obj.name, coverInfo, obj.title)
-            AudioView(obj1, false)
-        }
-
-        else -> HighlightCodeBlock(modal)
+    val mediaInfo = mediaMap[obj.name] ?: return HighlightCodeBlock(modal)
+    val url = mediaInfo.url
+    val contentType = mediaInfo.contentType
+    if (contentType.isBlank() || url.isBlank()) {
+        HighlightCodeBlock(modal)
+        return
+    }
+    if (contentType == FileInfo.PDF_CONTENT_TYPE) {
+        PdfViewBlock(url)
+        return
+    }
+    if (!contentType.startsWith("audio") && !contentType.startsWith("video/")) {
+        HighlightCodeBlock(modal)
+        return
+    }
+    val coverInfo = mediaMap[obj.cover]
+    val obj1 = RemoteMediaItem(
+        mediaInfo.id.toString(),
+        url,
+        contentType,
+        false,
+        obj.name,
+        coverInfo,
+        obj.title
+    )
+    if (contentType.startsWith("video/")) {
+        VideoViewEmbed(obj1)
+    } else if (contentType.startsWith("audio/")) {
+        AudioViewEmbed(obj1)
     }
 }
 
@@ -121,6 +128,7 @@ private fun CustomObjectBlock(
     }
     val mediaItem = RemoteMediaItem(
         obj.url,
+        obj.url,
         FileInfo.YOUTUBE_MIMETYPE,
         false,
         name,
@@ -129,15 +137,15 @@ private fun CustomObjectBlock(
     )
     when (obj.contentType) {
         FileInfo.YOUTUBE_MIMETYPE -> {
-            VideoView(mediaItem, false)
+            VideoViewEmbed(mediaItem)
         }
 
         FileInfo.SOUND_CLOUD_MIME_TYPE -> {
-            AudioView(mediaItem, false)
+            AudioViewEmbed(mediaItem)
         }
 
         FileInfo.M3U8_MIMETYPE -> {
-            VideoView(mediaItem, false)
+            VideoViewEmbed(mediaItem)
         }
     }
 }

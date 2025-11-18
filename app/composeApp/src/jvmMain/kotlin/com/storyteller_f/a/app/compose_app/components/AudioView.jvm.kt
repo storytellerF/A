@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PauseCircle
 import androidx.compose.material.icons.filled.PlayCircle
@@ -15,55 +14,53 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import com.storyteller_f.a.app.core.components.RemoteMediaItem
 import io.github.aakira.napier.Napier
 import javazoom.jl.player.FactoryRegistry
 import javazoom.jl.player.JavaSoundAudioDeviceFactory
 import javazoom.jl.player.jlp
 
 @Composable
-actual fun AudioView(obj: RemoteMediaItem, isFilled: Boolean) {
-    val url = obj.url
-    Napier.i(tag = "MediaPlayer") {
-        "AudioView $url"
+actual fun AudioViewEmbed(remoteMediaItem: RemoteMediaItem) {
+    AudioPlayerInternal(remoteMediaItem.url) {
+        AudioPlayer(it)
     }
+}
 
-    var currentPlaying by remember {
-        mutableStateOf(false)
-    }
+@Composable
+actual fun AudioViewFilled(remoteMediaItem: RemoteMediaItem) = Unit
 
-    val player = remember {
-        createPlayer(url)
-    }
+@Composable
+actual fun AudioViewFullScreen(remoteMediaItem: RemoteMediaItem) = Unit
 
-    DisposableEffect(player) {
-        onDispose {
-            try {
-                player?.stop()
-            } catch (e: Exception) {
-                Napier.e(e) {
-                    "AudioView"
-                }
-            }
-        }
+@Composable
+fun AudioPlayerInternal(url: String, block: @Composable (AudioPlayerComponent) -> Unit) {
+    val component = remember {
+        AudioPlayerComponent(url)
     }
-    val shape = RoundedCornerShape(20.dp)
+    block(component)
+}
+
+@Composable
+fun AudioPlayer(component: AudioPlayerComponent) {
+    val currentPlaying by component.isPlaying
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .height(100.dp)
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surfaceContainer, shape)
-            .clip(shape)
+            .background(MaterialTheme.colorScheme.surfaceContainer)
     ) {
         IconButton(
             {
-                adjust(currentPlaying, player) {
-                    currentPlaying = it
+                if (currentPlaying) {
+                    component.stop()
+                } else {
+                    component.play()
                 }
             },
-            enabled = player != null,
+            enabled = component.player != null,
         ) {
             when {
                 currentPlaying -> Icon(
@@ -75,6 +72,21 @@ actual fun AudioView(obj: RemoteMediaItem, isFilled: Boolean) {
                 else -> Icon(Icons.Default.PlayCircle, "play", modifier = Modifier.size(40.dp))
             }
         }
+    }
+}
+
+class AudioPlayerComponent(url: String) {
+    val isPlaying = mutableStateOf(false)
+    val player: jlp? = createPlayer(url)
+
+    fun play() {
+        isPlaying.value = true
+        player?.play()
+    }
+
+    fun stop() {
+        isPlaying.value = false
+        player?.stop()
     }
 }
 
@@ -90,20 +102,4 @@ private fun createPlayer(url: String): jlp? = try {
         "AudioView"
     }
     null
-}
-
-private fun adjust(currentPlaying: Boolean, player: jlp?, update: (Boolean) -> Unit) {
-    try {
-        if (currentPlaying) {
-            player?.stop()
-            update(false)
-        } else {
-            player?.play()
-            update(false)
-        }
-    } catch (e: Exception) {
-        Napier.e(e) {
-            "AudioView"
-        }
-    }
 }
