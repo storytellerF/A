@@ -27,7 +27,7 @@ import com.mikepenz.markdown.model.ImageData
 import com.mikepenz.markdown.model.ImageTransformer
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.pages.topic.TopicRoute
-import com.storyteller_f.a.app.compose_app.utils.imageRequest
+import com.storyteller_f.a.app.core.utils.imageRequest
 import com.storyteller_f.a.app.core.common.LocalClient
 import com.storyteller_f.a.app.core.components.PdfViewBlock
 import com.storyteller_f.a.app.core.components.convertPxToDp
