@@ -83,14 +83,16 @@ sealed interface TopicContent {
 
     @Serializable
     @SerialName("plain")
-    data class Plain(val plain: String, val fileInfos: List<FileInfo> = emptyList()) : TopicContent {
+    data class Plain(val plain: String, val fileInfos: List<FileInfo> = emptyList()) :
+        TopicContent {
         val bytes: ByteArray
             get() = plain.encodeToByteArray()
     }
 
     @Serializable
     @SerialName("encrypted")
-    data class Encrypted(val encrypted: String, val encryptedKey: Map<PrimaryKey, String>) : TopicContent {
+    data class Encrypted(val encrypted: String, val encryptedKey: Map<PrimaryKey, String>) :
+        TopicContent {
         @OptIn(ExperimentalStdlibApi::class)
         val bytes: ByteArray
             get() = encrypted.hexToByteArray()
@@ -99,12 +101,7 @@ sealed interface TopicContent {
     @Serializable
     @SerialName("decrypted-failed")
     data class DecryptFailed(val message: String) : TopicContent
-
-    @Serializable
-    @SerialName("invalid")
-    data object Invalid : TopicContent
 }
-
 enum class TopicPinSearch {
     PINNED,
     UNPINNED,

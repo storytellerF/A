@@ -1,103 +1,55 @@
-package com.storyteller_f.a.app.compose_app.components
+package com.storyteller_f.a.app.core.components
 
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.InlineTextContent
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.dp
+import coil3.compose.LocalPlatformContext
+import coil3.compose.rememberAsyncImagePainter
+import coil3.request.ImageRequest
 import com.mikepenz.markdown.compose.Markdown
+import com.mikepenz.markdown.compose.components.MarkdownComponent
 import com.mikepenz.markdown.compose.components.markdownComponents
+import com.mikepenz.markdown.compose.elements.highlightedCodeBlock
 import com.mikepenz.markdown.compose.extendedspans.ExtendedSpans
 import com.mikepenz.markdown.compose.extendedspans.RoundedCornerSpanPainter
 import com.mikepenz.markdown.compose.extendedspans.SquigglyUnderlineSpanPainter
 import com.mikepenz.markdown.compose.extendedspans.rememberSquigglyUnderlineAnimator
 import com.mikepenz.markdown.m3.markdownColor
+import com.mikepenz.markdown.model.ImageData
+import com.mikepenz.markdown.model.ImageTransformer
 import com.mikepenz.markdown.model.markdownAnnotator
 import com.mikepenz.markdown.model.markdownExtendedSpans
 import com.mikepenz.markdown.model.markdownInlineContent
-import com.storyteller_f.a.app.compose_app.Res
-import com.storyteller_f.a.app.compose_app.permission_denied
-import com.storyteller_f.a.app.core.components.customMarkdownTypography
-import com.storyteller_f.a.app.core.components.imageAnnotator
+import com.mohamedrejeb.richeditor.annotation.ExperimentalRichTextApi
+import com.storyteller_f.a.app.core.common.LocalClient
+import com.storyteller_f.a.app.core.utils.imageRequest
+import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.FileInfo
-import com.storyteller_f.shared.model.TopicContent
-import com.storyteller_f.shared.model.TopicInfo
-import com.storyteller_f.shared.type.CustomImmutableList
-import kotlinx.collections.immutable.toImmutableList
-import kotlinx.collections.immutable.toImmutableMap
-import org.jetbrains.compose.resources.stringResource
+import kotlinx.collections.immutable.ImmutableMap
 
 @Composable
-fun TopicContentField(
-    topicInfo: TopicInfo,
-    isEmbed: Boolean = false,
-) {
-    when (val content = topicInfo.content) {
-        is TopicContent.Plain -> {
-            TopicContentFieldInternal(content.fileInfos.toImmutableList(), content.plain, isEmbed)
-        }
-
-        is TopicContent.Extracted -> {
-            TopicContentFieldInternal(content.fileInfos.toImmutableList(), content.plain, isEmbed)
-        }
-
-        is TopicContent.Encrypted, is TopicContent.DecryptFailed, is TopicContent.Invalid -> {
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                when (content) {
-                    is TopicContent.DecryptFailed -> {
-                        Text(content.message)
-                    }
-
-                    is TopicContent.Encrypted -> {
-                        Text(stringResource(Res.string.permission_denied))
-                    }
-
-                    TopicContent.Invalid -> {
-                        Text("invalid")
-                    }
-
-                    else -> {}
-                }
-            }
-        }
-
-        else -> {
-        }
-    }
-}
-
-@Composable
-private fun TopicContentFieldInternal(
-    rawMediaList: CustomImmutableList<FileInfo>,
+fun CustomMarkdown(
     plain: String,
     isEmbed: Boolean,
+    imageTransformer: ImageTransformer,
+    dimensionMap: ImmutableMap<String, Dimension?>,
+    codeFence: MarkdownComponent
 ) {
-    val mediaMap = remember(rawMediaList) {
-        rawMediaList.associateBy { it.name }.toImmutableMap()
-    }
-    val dimensionMap = remember(rawMediaList) {
-        rawMediaList.associate { it.name to it.dimension }.toImmutableMap()
-    }
     val inlineContentMap = remember { mutableMapOf<String, InlineTextContent>() }
     val density = LocalDensity.current
     BoxWithConstraints {
         val maxWidth = this.maxWidth
         CompositionLocalProvider(LocalInspectionMode provides true) {
-            val imageTransformer = remember(mediaMap) {
-                CustomCoil3ImageTransformerImpl(mediaMap)
-            }
             val colors = markdownColor()
             val typography = customMarkdownTypography(colors)
             Markdown(
@@ -107,10 +59,8 @@ private fun TopicContentFieldInternal(
                 typography = typography,
                 imageTransformer = imageTransformer,
                 components = markdownComponents(
-                    codeFence = {
-                        CustomCodeFence(it, mediaMap)
-                    },
-                    codeBlock = { HighlightCodeBlock(it) },
+                    codeFence = codeFence,
+                    codeBlock = highlightedCodeBlock,
                 ),
                 annotator = markdownAnnotator { content, child ->
                     imageAnnotator(
@@ -139,4 +89,39 @@ private fun TopicContentFieldInternal(
             )
         }
     }
+}
+
+class CustomCoil3ImageTransformerImpl(
+    private val mediaMap: Map<String, FileInfo>,
+    val onClick: (FileInfo) -> Unit
+) :
+    ImageTransformer {
+    @OptIn(ExperimentalRichTextApi::class)
+    @Composable
+    override fun transform(link: String): ImageData {
+        return if (link.startsWith("file:///")) {
+            val model = link.substring(7)
+            val painter = rememberAsyncImagePainter(model = model)
+            ImageData(painter)
+        } else {
+            val info = mediaMap[link]
+            val model = imageRequestInMarkdown(info)
+            val painter = rememberAsyncImagePainter(model = model)
+            ImageData(
+                painter,
+                modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable(info != null) {
+                    info?.let { it1 -> onClick(it1) }
+                }
+            )
+        }
+    }
+}
+
+@Composable
+fun imageRequestInMarkdown(
+    info: FileInfo?
+): ImageRequest {
+    val client = LocalClient.current
+    val context = LocalPlatformContext.current
+    return imageRequest(context, client, info).build()
 }

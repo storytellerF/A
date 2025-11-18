@@ -16,6 +16,7 @@ import com.storyteller_f.a.backend.core.pagingNotNull
 import com.storyteller_f.a.backend.core.service.UserDocument
 import com.storyteller_f.a.backend.core.service.UserDocumentSearch
 import com.storyteller_f.a.backend.core.types.RawUser
+import com.storyteller_f.a.backend.core.types.RawUserOverview
 import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.a.backend.core.types.UserLog
 import com.storyteller_f.a.backend.core.types.UserTopicRead
@@ -90,6 +91,7 @@ fun checkUserNickname(newUser: NewUser) {
         StringCheckResult.CONTAIN_INVALID_CHAR -> throw CustomBadRequestException(
             "user nickname must not contain invalid char"
         )
+
         StringCheckResult.RANGE_MISMATCH -> throw CustomBadRequestException("user nickname must be between in 1 and 20")
         else -> UNIT_RESULT
     }
@@ -394,10 +396,16 @@ suspend fun Backend.getUserOverview(uid: PrimaryKey) = database.getUserOverview(
     processRawUserOverviewToUserOverview(it)
 }
 
-suspend fun Backend.processRawUserOverviewToUserOverview(raw: com.storyteller_f.a.backend.core.types.RawUserOverview): Result<UserOverview> {
+suspend fun Backend.processRawUserOverviewToUserOverview(raw: RawUserOverview): Result<UserOverview> {
     return processRawUserToUserInfo(listOf(raw.rawUser)).map { users ->
         val userInfo = users.first()
-        UserOverview(raw.subscriptionCount, raw.favoriteCount, raw.acg, raw.childAccountCount, userInfo)
+        UserOverview(
+            raw.subscriptionCount,
+            raw.favoriteCount,
+            raw.acg,
+            raw.childAccountCount,
+            userInfo
+        )
     }
 }
 

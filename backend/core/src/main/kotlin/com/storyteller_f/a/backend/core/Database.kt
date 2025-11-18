@@ -14,6 +14,7 @@ import com.storyteller_f.a.backend.core.types.RawRoom
 import com.storyteller_f.a.backend.core.types.RawTitle
 import com.storyteller_f.a.backend.core.types.RawTopic
 import com.storyteller_f.a.backend.core.types.RawUser
+import com.storyteller_f.a.backend.core.types.RawUserOverview
 import com.storyteller_f.a.backend.core.types.ReactionRecord
 import com.storyteller_f.a.backend.core.types.Room
 import com.storyteller_f.a.backend.core.types.SubscriptionSentLog
@@ -37,9 +38,6 @@ import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicPinSearch
-import com.storyteller_f.shared.model.UserOverview
-import com.storyteller_f.a.backend.core.ObjectFetch
-import com.storyteller_f.a.backend.core.types.RawUserOverview
 import com.storyteller_f.shared.model.UserPubKeyInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.PresetCommunity

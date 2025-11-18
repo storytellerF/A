@@ -116,7 +116,7 @@ class PlaybackService : MediaSessionService() {
         pauseAllPlayersAndStopSelf()
     }
 
-    private inner class MyCallback : MediaSession.Callback {
+    private class MyCallback : MediaSession.Callback {
         @androidx.annotation.OptIn(UnstableApi::class)
         override fun onConnect(
             session: MediaSession,

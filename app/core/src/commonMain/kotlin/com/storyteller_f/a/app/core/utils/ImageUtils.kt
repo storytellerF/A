@@ -5,8 +5,6 @@ import coil3.PlatformContext
 import coil3.SingletonImageLoader
 import coil3.network.ktor3.KtorNetworkFetcherFactory
 import coil3.request.ImageRequest
-import com.storyteller_f.a.app.core.utils.androidAllowHardware
-import com.storyteller_f.a.app.core.utils.coilImageToImageBitmap
 import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.shared.model.FileInfo
 import io.ktor.client.HttpClient

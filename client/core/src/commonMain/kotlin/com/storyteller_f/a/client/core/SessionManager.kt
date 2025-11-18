@@ -255,7 +255,7 @@ suspend fun processEncryptedTopic(
         if (content !is TopicContent.Encrypted) {
             topicInfo
         } else if (uid == null || key == null) {
-            topicInfo.copy(content = TopicContent.Invalid)
+            topicInfo.copy(content = TopicContent.Nil)
         } else {
             val s = content.encryptedKey[uid]
             if (s != null) {

@@ -47,6 +47,7 @@ import com.storyteller_f.a.app.compose_app.MediaProvider
 import com.storyteller_f.a.app.compose_app.utils.parseM3UPlayList
 import com.storyteller_f.a.app.core.components.LocalToaster
 import com.storyteller_f.a.app.core.components.Toast
+import com.storyteller_f.a.app.core.components.imageRequestInMarkdown
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.utils.UNIT_RESULT
 import io.github.aakira.napier.Napier

@@ -20,6 +20,7 @@ import androidx.media3.session.MediaController
 import coil3.compose.AsyncImage
 import com.storyteller_f.a.app.compose_app.LocalMediaPlaySession
 import com.storyteller_f.a.app.compose_app.MediaPlayerSession
+import com.storyteller_f.a.app.core.components.imageRequestInMarkdown
 import kotlin.uuid.ExperimentalUuidApi
 
 @Composable

@@ -24,4 +24,7 @@ object CoreStrings {
 
     @Composable
     fun privateKey(): String = stringResource(Res.string.private_key)
+
+    @Composable
+    fun permission_denied(): String = stringResource(Res.string.permission_denied)
 }

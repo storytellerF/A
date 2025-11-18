@@ -44,7 +44,7 @@ import com.storyteller_f.a.app.compose_app.common.OnAddFavorite
 import com.storyteller_f.a.app.compose_app.common.OnAddSubscription
 import com.storyteller_f.a.app.compose_app.common.OnRemoveFavorite
 import com.storyteller_f.a.app.compose_app.common.OnRemoveSubscription
-import com.storyteller_f.a.app.compose_app.components.TopicContentField
+import com.storyteller_f.a.app.compose_app.components.TopicContentView
 import com.storyteller_f.a.app.compose_app.copy
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityRefCell
 import com.storyteller_f.a.app.compose_app.pages.room.RoomRefCell
@@ -384,7 +384,7 @@ private fun BoxScope.TopicTranslateSheetInternal(
                     job.cancel()
                 }
             }
-            TopicContentField(
+            TopicContentView(
                 topicInfo.copy(
                     content = content.copy(
                         plain = output
