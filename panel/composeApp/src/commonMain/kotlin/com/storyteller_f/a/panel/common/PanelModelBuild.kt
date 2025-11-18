@@ -80,6 +80,13 @@ fun createPanelUserViewModel(
 }
 
 @Composable
+fun createPanelUserOverviewViewModel(
+    id: PrimaryKey
+) = panelViewModel(keys = listOf("user-overview", id)) { sessionManager, modelStorage ->
+    IdUserOverviewViewModel(sessionManager, modelStorage, id)
+}
+
+@Composable
 fun createPanelJoinedCommunitiesViewModel(
     uid: PrimaryKey
 ) = panelViewModel(keys = listOf("user-communities", uid)) { sessionManager, modelStorage ->

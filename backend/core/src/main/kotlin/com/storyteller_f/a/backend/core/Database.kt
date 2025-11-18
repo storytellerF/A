@@ -38,6 +38,8 @@ import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicPinSearch
 import com.storyteller_f.shared.model.UserOverview
+import com.storyteller_f.a.backend.core.ObjectFetch
+import com.storyteller_f.a.backend.core.types.RawUserOverview
 import com.storyteller_f.shared.model.UserPubKeyInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.PresetCommunity
@@ -126,11 +128,12 @@ interface CombinedDatabase {
 
     fun isDup(throwable: Throwable): Boolean
 
-    suspend fun getUserOverview(uid: PrimaryKey): Result<UserOverview> = runCatching {
+    suspend fun getUserOverview(uid: PrimaryKey): Result<RawUserOverview> = runCatching {
         val subscriptionCount = subscription.getUserSubscriptionCount(uid).getOrThrow()
         val favoriteCount = favorite.getUserFavoriteCount().getOrThrow()
         val childAccountCount = user.getChildAccountCount(uid)
-        UserOverview(subscriptionCount, favoriteCount, 0, childAccountCount)
+        val rawUser = user.getRawUser(ObjectFetch.IdFetch(uid)).getOrThrow() ?: error("user not found")
+        RawUserOverview(subscriptionCount, favoriteCount, 0, childAccountCount, rawUser)
     }
 
     suspend fun processTopicToRawTopic(

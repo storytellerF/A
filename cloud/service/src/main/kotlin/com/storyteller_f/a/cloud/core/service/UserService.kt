@@ -29,6 +29,7 @@ import com.storyteller_f.shared.model.PassType
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.UserLogInfo
 import com.storyteller_f.shared.model.UserLogType
+import com.storyteller_f.shared.model.UserOverview
 import com.storyteller_f.shared.model.checkMediaFileDimensionRatioMatch
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.UpdateUserBody
@@ -389,7 +390,16 @@ suspend fun Backend.processRawUserToUserInfo(
     }
 }
 
-suspend fun Backend.getUserOverview(uid: PrimaryKey) = database.getUserOverview(uid)
+suspend fun Backend.getUserOverview(uid: PrimaryKey) = database.getUserOverview(uid).mapResult {
+    processRawUserOverviewToUserOverview(it)
+}
+
+suspend fun Backend.processRawUserOverviewToUserOverview(raw: com.storyteller_f.a.backend.core.types.RawUserOverview): Result<UserOverview> {
+    return processRawUserToUserInfo(listOf(raw.rawUser)).map { users ->
+        val userInfo = users.first()
+        UserOverview(raw.subscriptionCount, raw.favoriteCount, raw.acg, raw.childAccountCount, userInfo)
+    }
+}
 
 suspend fun Backend.getAllUsers(primaryKeyFetch: PrimaryKeyFetch) =
     database.user.getAllUsers(primaryKeyFetch).mapResult { result ->

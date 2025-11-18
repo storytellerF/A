@@ -535,6 +535,9 @@ object AdminApi {
 
         object Id {
             val get = safeApiWithPath<UserInfo, CommonPath>("/admin/users/{id}")
+            object Overview {
+                val get = safeApiWithPath<UserOverview, CommonPath>("/admin/users/{id}/overview")
+            }
 
             object Communities {
                 val get =

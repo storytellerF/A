@@ -27,7 +27,8 @@ data class UserOverview(
     val subscriptionCount: Long,
     val favoriteCount: Long,
     val acg: Long,
-    val childAccountCount: Long
+    val childAccountCount: Long,
+    val userInfo: UserInfo
 )
 
 enum class UserLogType {

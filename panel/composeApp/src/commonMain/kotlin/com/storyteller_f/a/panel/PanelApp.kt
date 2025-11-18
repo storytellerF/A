@@ -286,7 +286,7 @@ private fun PanelAppNavHost(
     navigator: NavHostController,
     nav: Nav2PanelNav
 ) {
-    NavHost(navigator, "overview") {
+    NavHost(navigator, PanelOverviewScreen) {
         composable<PanelLoginScreen> {
             PanelLoginPage {
                 navigator.popBackStack()
