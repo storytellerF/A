@@ -40,7 +40,6 @@ import com.storyteller_f.a.app.compose_app.components.SettingOptionResettableVie
 import com.storyteller_f.a.app.compose_app.components.SettingOptionView
 import com.storyteller_f.a.app.compose_app.pages.topic.FilePicker
 import com.storyteller_f.a.app.compose_app.pages.topic.uploadPath
-import com.storyteller_f.a.app.core.utils.getRemoteImageBitmap
 import com.storyteller_f.a.app.core.CoreStrings
 import com.storyteller_f.a.app.core.components.CustomAlertDialog
 import com.storyteller_f.a.app.core.components.CustomAlertDialogController
@@ -49,6 +48,7 @@ import com.storyteller_f.a.app.core.components.emitEvent
 import com.storyteller_f.a.app.core.components.rememberAlertDialogController
 import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.app.core.utils.ImageFormat
+import com.storyteller_f.a.app.core.utils.getRemoteImageBitmap
 import com.storyteller_f.a.app.core.utils.saveImageBitmap
 import com.storyteller_f.a.client.core.updateUserInfo
 import com.storyteller_f.shared.model.Dimension

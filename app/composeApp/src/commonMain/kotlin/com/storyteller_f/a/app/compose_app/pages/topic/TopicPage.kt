@@ -56,7 +56,7 @@ import com.storyteller_f.a.app.compose_app.common.createTopicsInTopicViewModel
 import com.storyteller_f.a.app.compose_app.common.createUserViewModel
 import com.storyteller_f.a.app.compose_app.components.InteractionRow
 import com.storyteller_f.a.app.compose_app.components.TopicCell
-import com.storyteller_f.a.app.compose_app.components.TopicContentField
+import com.storyteller_f.a.app.compose_app.components.TopicContentView
 import com.storyteller_f.a.app.compose_app.pages.room.CommonInputButton
 import com.storyteller_f.a.app.compose_app.pages.room.InputGroupInternal
 import com.storyteller_f.a.app.compose_app.pages.room.RoomInputGroup
@@ -203,7 +203,7 @@ private fun ColumnScope.TopicPageContent(
             modifier = Modifier.weight(1f).fillMaxWidth()
         ) {
             item {
-                TopicContentField(topicInfo)
+                TopicContentView(topicInfo)
                 Spacer(modifier = Modifier.height(12.dp))
                 InteractionRow(topicInfo, {
                     startAddReaction()

@@ -21,10 +21,10 @@ import com.storyteller_f.a.cloud.core.service.getRoomInfo
 import com.storyteller_f.a.cloud.core.service.getTitleInfo
 import com.storyteller_f.a.cloud.core.service.getTopic
 import com.storyteller_f.a.cloud.core.service.getUserById
-import com.storyteller_f.a.cloud.core.service.getUserOverview
 import com.storyteller_f.a.cloud.core.service.getUserJoinedCommunities
 import com.storyteller_f.a.cloud.core.service.getUserJoinedRooms
 import com.storyteller_f.a.cloud.core.service.getUserLogs
+import com.storyteller_f.a.cloud.core.service.getUserOverview
 import com.storyteller_f.a.cloud.core.service.getUserTitles
 import com.storyteller_f.a.cloud.server.auth.UserSession
 import com.storyteller_f.a.cloud.server.auth.getData

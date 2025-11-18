@@ -1,8 +1,6 @@
 package com.storyteller_f.a.app.compose_app.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.heightIn
@@ -16,21 +14,11 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
-import coil3.compose.LocalPlatformContext
-import coil3.compose.rememberAsyncImagePainter
-import coil3.request.ImageRequest
 import com.eygraber.uri.Uri
 import com.mikepenz.markdown.compose.LocalMarkdownTypography
 import com.mikepenz.markdown.compose.components.MarkdownComponentModel
-import com.mikepenz.markdown.compose.elements.MarkdownHighlightedCodeFence
-import com.mikepenz.markdown.model.ImageData
-import com.mikepenz.markdown.model.ImageTransformer
-import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
-import com.storyteller_f.a.app.compose_app.pages.topic.TopicRoute
-import com.storyteller_f.a.app.core.utils.imageRequest
-import com.storyteller_f.a.app.core.common.LocalClient
+import com.mikepenz.markdown.compose.elements.highlightedCodeFence
 import com.storyteller_f.a.app.core.components.PdfViewBlock
-import com.storyteller_f.a.app.core.components.convertPxToDp
 import com.storyteller_f.a.app.core.components.getTexPath
 import com.storyteller_f.a.app.core.components.textUnitToPx
 import com.storyteller_f.shared.commonJson
@@ -38,16 +26,18 @@ import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.utils.MarkdownObject
 import com.storyteller_f.shared.utils.getLang
 import com.storyteller_f.shared.utils.readCodeFence
-import dev.snipme.highlights.Highlights
-import dev.snipme.highlights.model.SyntaxThemes
 
 @Composable
-fun CustomCodeFence(modal: MarkdownComponentModel, mediaList: Map<String, FileInfo>) {
+fun CustomCodeFence(
+    modal: MarkdownComponentModel,
+    mediaList: Map<String, FileInfo>,
+    refBlock: @Composable (MarkdownComponentModel) -> Unit
+) {
     val lang = remember(modal.node, modal.content) {
         getLang(modal.node, modal.content)
     }
     when {
-        listOf("com.storyteller_f.a", "c.s.a", "csa").contains(lang) -> RefBlock(modal)
+        listOf("com.storyteller_f.a", "c.s.a", "csa").contains(lang) -> refBlock(modal)
 
         lang == "math" -> LatexBlock(modal)
 
@@ -156,22 +146,7 @@ private fun CustomObjectBlock(
 fun HighlightCodeBlock(
     modal: MarkdownComponentModel
 ) {
-    val isDarkTheme = isSystemInDarkTheme()
-    val highlightsBuilder = remember(isDarkTheme) {
-        Highlights.Builder().theme(SyntaxThemes.atom(darkMode = isDarkTheme))
-    }
-    MarkdownHighlightedCodeFence(modal.content, modal.node, highlightsBuilder = highlightsBuilder)
-}
-
-@Composable
-private fun RefBlock(
-    modal: MarkdownComponentModel
-) {
-    val (first, second) = remember(modal.node, modal.content) {
-        val textInNode = readCodeFence(modal.node, modal.content)
-        TopicRoute.parseRefUri(textInNode)
-    }
-    first?.let { it1 -> it1(second) }
+    highlightedCodeFence(modal)
 }
 
 @Composable
@@ -187,51 +162,6 @@ private fun LatexBlock(
         textUnitToPx(textStyle.fontSize)
     )
     AsyncImage(model = path.toString(), contentDescription = "math")
-}
-
-@Composable
-fun imageRequestInMarkdown(
-    info: FileInfo?
-): ImageRequest {
-    val client = LocalClient.current
-    val context = LocalPlatformContext.current
-    return imageRequest(context, client, info).build()
-}
-
-@Composable
-fun getSize(info: FileInfo?): Pair<Float, Float>? {
-    val dimension = info?.dimension
-    return if (info != null && dimension != null) {
-        val hDp = convertPxToDp(dimension.height).value
-        val height = minOf(hDp, 200f)
-        val width = dimension.width * height / dimension.height
-        width to height
-    } else {
-        null
-    }
-}
-
-class CustomCoil3ImageTransformerImpl(private val mediaMap: Map<String, FileInfo>) :
-    ImageTransformer {
-    @Composable
-    override fun transform(link: String): ImageData {
-        val appNavFactory = LocalAppNavFactory.current
-        return if (link.startsWith("file:///")) {
-            val model = link.substring(7)
-            val painter = rememberAsyncImagePainter(model = model)
-            ImageData(painter)
-        } else {
-            val info = mediaMap[link]
-            val model = imageRequestInMarkdown(info)
-            val painter = rememberAsyncImagePainter(model = model)
-            ImageData(
-                painter,
-                modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable(info != null) {
-                    info?.let { it1 -> appNavFactory.newAppNav().gotoMedia(it1) }
-                }
-            )
-        }
-    }
 }
 
 @Composable
