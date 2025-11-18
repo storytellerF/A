@@ -94,7 +94,7 @@ import com.storyteller_f.a.app.compose_app.permission_denied
 import com.storyteller_f.a.app.compose_app.private_room_pub_key_loading
 import com.storyteller_f.a.app.compose_app.send
 import com.storyteller_f.a.app.compose_app.success
-import com.storyteller_f.a.app.compose_app.utils.getRemoteImageBitmap
+import com.storyteller_f.a.app.core.utils.getRemoteImageBitmap
 import com.storyteller_f.a.app.compose_app.utils.notifyNotification
 import com.storyteller_f.a.app.compose_app.utils.startCall
 import com.storyteller_f.a.app.core.components.ButtonNav
