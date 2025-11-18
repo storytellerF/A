@@ -10,6 +10,7 @@ import com.storyteller_f.a.backend.core.types.FileRecord
 import com.storyteller_f.a.backend.core.types.Quota
 import com.storyteller_f.a.backend.core.types.UploadRecord
 import com.storyteller_f.a.backend.core.types.toQuotaInfo
+import com.storyteller_f.a.backend.core.types.toUploadRecordInfo
 import com.storyteller_f.shared.model.QuotaInfo
 import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.obj.ObjectTuple
@@ -262,7 +263,19 @@ suspend fun Backend.getQuotaInfo(
     if (it == null) {
         insertQuotaAndGet(quotaType, objectTuple)
     } else {
-        Result.success(it.toQuotaInfo())
+        val info = it.toQuotaInfo()
+        val lockId = info.lockId
+        if (lockId != null) {
+            database.file.getUploadRecord(lockId).mapResult { rec ->
+                Result.success(
+                    info.copy(
+                        extensions = QuotaInfo.Extensions(uploadRecord = rec?.toUploadRecordInfo())
+                    )
+                )
+            }
+        } else {
+            Result.success(info)
+        }
     }
 }
 
