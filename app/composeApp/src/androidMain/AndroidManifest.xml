@@ -92,7 +92,7 @@
             android:resizeableActivity="true" />
 
         <service
-            android:name=".compose_app.PlaybackService"
+            android:name=".core.PlaybackService"
             android:exported="true"
             android:foregroundServiceType="mediaPlayback">
             <intent-filter>

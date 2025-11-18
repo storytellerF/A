@@ -4,8 +4,6 @@ import android.app.NotificationManager
 import android.content.ComponentName
 import android.content.Context
 import android.os.Bundle
-import android.view.View
-import android.view.ViewTreeObserver
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -21,6 +19,8 @@ import com.kdroid.composenotification.builder.NotificationInitializer.notificati
 import com.storyteller_f.a.app.compose_app.components.bindActivity
 import com.storyteller_f.a.app.compose_app.components.unbindActivity
 import com.storyteller_f.a.app.compose_app.utils.initEnvironment
+import com.storyteller_f.a.app.core.PlaybackService
+import com.storyteller_f.a.app.core.components.LocalMediaPlayerService
 import com.storyteller_f.shared.isRunningOnRobolectric
 import io.github.aakira.napier.Napier
 import io.github.vinceglb.filekit.FileKit
@@ -58,7 +58,7 @@ class MainActivity : ComponentActivity(), ClientFileServiceContainer {
                 MediaController.Builder(this, sessionToken).setListener(listener).buildAsync()
             controllerFuture = future
             future.addListener({
-                MediaProvider.controller = future.get()
+                (application as AApplication).mediaPlayer.controller.value = future.get()
             }, MoreExecutors.directExecutor())
         }
     }
@@ -74,7 +74,8 @@ class MainActivity : ComponentActivity(), ClientFileServiceContainer {
         setContent {
             CompositionLocalProvider(
                 LocalClientFileProvider provides receiver,
-                LocalUiViewModel provides uiViewModel
+                LocalUiViewModel provides uiViewModel,
+                LocalMediaPlayerService provides (application as AApplication).mediaPlayer
             ) {
                 App()
             }
@@ -83,19 +84,6 @@ class MainActivity : ComponentActivity(), ClientFileServiceContainer {
 
     private fun setupForSplash() {
         installSplashScreen()
-        @Suppress("KotlinConstantConditions")
-        if (AppConfig.ENABLE_LOGIN_CHECK) {
-            val content = findViewById<View>(android.R.id.content)
-            content.viewTreeObserver.addOnPreDrawListener(
-                object : ViewTreeObserver.OnPreDrawListener {
-                    override fun onPreDraw(): Boolean {
-                        // Check whether the initial data is ready.
-                        content.viewTreeObserver.removeOnPreDrawListener(this)
-                        return true
-                    }
-                }
-            )
-        }
     }
 
     override fun onDestroy() {

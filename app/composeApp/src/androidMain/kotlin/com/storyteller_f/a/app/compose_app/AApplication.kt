@@ -1,8 +1,13 @@
 package com.storyteller_f.a.app.compose_app
 
 import android.app.Application
+import android.content.Intent
 import android.os.StrictMode
+import com.storyteller_f.a.app.compose_app.components.mainAppRef
+import com.storyteller_f.a.app.core.components.MediaPlayerService
+import com.storyteller_f.a.app.core.components.RemoteMediaItem
 import com.storyteller_f.shared.appContextRef
+import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.setupKmpLogger
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -20,6 +25,16 @@ val uiViewModel by lazy {
 }
 
 class AApplication : Application() {
+    val mediaPlayer = object : MediaPlayerService() {
+        override fun fullscreen(remoteMediaItem: RemoteMediaItem) {
+            val context = mainAppRef?.get() ?: return
+            context.startActivity(Intent(context, MediaPlayerActivity::class.java).apply {
+//                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+//                addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+                putExtra("json", commonJson.encodeToString<RemoteMediaItem>(remoteMediaItem))
+            })
+        }
+    }
     override fun onCreate() {
         super.onCreate()
         setupKmpLogger()

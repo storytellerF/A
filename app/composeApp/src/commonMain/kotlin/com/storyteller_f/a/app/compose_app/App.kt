@@ -44,10 +44,8 @@ import com.storyteller_f.a.app.compose_app.common.buildRootNav
 import com.storyteller_f.a.app.compose_app.common.newAppNav
 import com.storyteller_f.a.app.compose_app.common.processEvent
 import com.storyteller_f.a.app.compose_app.common.toRoute
-import com.storyteller_f.a.app.compose_app.components.ConstPlayItem
-import com.storyteller_f.a.app.compose_app.components.CustomVideoSize
-import com.storyteller_f.a.app.compose_app.components.RemoteMediaItem
-import com.storyteller_f.a.app.compose_app.components.globalPlayerState
+import com.storyteller_f.a.app.compose_app.components.AudioViewFilled
+import com.storyteller_f.a.app.compose_app.components.VideoViewFilled
 import com.storyteller_f.a.app.compose_app.components.rememberIsInPipMode
 import com.storyteller_f.a.app.compose_app.pages.file.FileExplorerPage
 import com.storyteller_f.a.app.compose_app.pages.file.FileViewPage
@@ -61,12 +59,16 @@ import com.storyteller_f.a.app.compose_app.utils.createCustomDataStoreManager
 import com.storyteller_f.a.app.core.common.LocalClient
 import com.storyteller_f.a.app.core.components.CustomGlobalDialogController
 import com.storyteller_f.a.app.core.components.CustomGlobalTask
+import com.storyteller_f.a.app.core.components.FileViewData
 import com.storyteller_f.a.app.core.components.GlobalDialog
 import com.storyteller_f.a.app.core.components.GlobalDialogContext
 import com.storyteller_f.a.app.core.components.GlobalDialogController
 import com.storyteller_f.a.app.core.components.GlobalTask
 import com.storyteller_f.a.app.core.components.GlobalTaskContext
+import com.storyteller_f.a.app.core.components.LocalMediaPlayerService
 import com.storyteller_f.a.app.core.components.LocalToaster
+import com.storyteller_f.a.app.core.components.MediaPlaySession
+import com.storyteller_f.a.app.core.components.RemoteMediaItem
 import com.storyteller_f.a.app.core.components.Sonner
 import com.storyteller_f.a.app.core.utils.SavedSession
 import com.storyteller_f.a.app.core.utils.SessionHistoryManager
@@ -117,9 +119,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.Serializable
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 fun getAsyncImageLoader(context: PlatformContext) =
     ImageLoader.Builder(context).crossfade(true).logger(DebugLogger()).build()
@@ -178,51 +177,18 @@ val LocalGlobalTask = compositionLocalOf<GlobalTask<CustomUserSessionManager>> {
     error("LocalGlobalTask must be provided")
 }
 
-@OptIn(ExperimentalUuidApi::class)
-@Serializable
-data class MediaPlayerSession(
-    val obj: RemoteMediaItem,
-    val playList: List<ConstPlayItem>,
-    val uuids: List<Uuid>,
-    val videoSize: CustomVideoSize?,
-) {
-    val id = obj.url
-
-    val lastUuid get() = uuids.lastOrNull()
-
-    @OptIn(ExperimentalUuidApi::class)
-    fun appendUuid(
-        uuid: Uuid
-    ) = copy(uuids = uuids + uuid)
-
-    val uuidCount get() = uuids.size
-}
-
-sealed interface FileViewData {
-    data class Player(val obj: RemoteMediaItem) : FileViewData
-
-    data class Regular(val fileId: PrimaryKey) : FileViewData
-
-    data class LocalImage(val url: String) : FileViewData
-}
-
-@OptIn(ExperimentalUuidApi::class)
-data class LocalMediaPlaySession(val id: String, val uuid: Uuid)
-
 @Composable
 fun App() {
     CommonEntry {
-        val playerSession by globalPlayerState
-        val isPip = rememberIsInPipMode()
-        AppInternal(isPip, playerSession)
+        val mediaPlayerService = LocalMediaPlayerService.current
+        val playerSession by mediaPlayerService.state.collectAsState()
+        AppInternal(playerSession)
     }
 }
 
 @Composable
-fun AppInternal(
-    isPip: Boolean,
-    player: MediaPlayerSession?,
-) {
+fun AppInternal(mediaPlaySession: MediaPlaySession?) {
+    val isPip = rememberIsInPipMode()
     val navigator = rememberNavController()
     val scope = rememberCoroutineScope()
     val appNav = remember {
@@ -231,10 +197,15 @@ fun AppInternal(
             override fun newAppNav() = appNav
         }
     }
-    if (isPip && player != null) {
-        FileViewPage(FileViewData.Player(player.obj))
-    } else {
+    if (!isPip || mediaPlaySession == null) {
         MainAppPage(appNav, navigator)
+    } else {
+        val remoteMediaItem = mediaPlaySession.remoteMediaItem
+        if (remoteMediaItem.contentType.startsWith("video")) {
+            VideoViewFilled(remoteMediaItem)
+        } else {
+            AudioViewFilled(remoteMediaItem)
+        }
     }
 }
 

@@ -8,66 +8,32 @@ import androidx.compose.material3.*
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
-import com.storyteller_f.a.app.compose_app.MediaPlayerSession
 import com.storyteller_f.a.app.core.components.BaseSheet
-import com.storyteller_f.shared.model.FileInfo
-import kotlinx.serialization.Serializable
-
-val globalPlayerState: MutableState<MediaPlayerSession?> =
-    mutableStateOf(null)
-
-val currentPlayerState get() = globalPlayerState.value
-
-fun setCurrentPlayerState(player: MediaPlayerSession?) {
-    globalPlayerState.value = player
-}
-
-@Serializable
-data class RemoteMediaItem(
-    val url: String,
-    val contentType: String,
-    val isM3U8PlayList: Boolean,
-    val name: String,
-    val cover: FileInfo? = null,
-    val title: String? = null
-)
+import com.storyteller_f.a.app.core.components.CustomVideoSize
+import com.storyteller_f.a.app.core.components.PlayItem
+import com.storyteller_f.a.app.core.components.RemoteMediaItem
 
 @Composable
-expect fun VideoView(obj: RemoteMediaItem, isFilled: Boolean)
+expect fun VideoViewEmbed(remoteMediaItem: RemoteMediaItem)
+
+@Composable
+expect fun VideoViewFilled(remoteMediaItem: RemoteMediaItem)
+
+@Composable
+expect fun VideoViewFullScreen(remoteMediaItem: RemoteMediaItem)
 
 @Composable
 expect fun rememberIsInPipMode(): Boolean
-
-@Serializable
-data class CustomVideoSize(val width: Int, val height: Int)
 
 interface VideoListener {
     fun onPlayStateChange(isPlaying: Boolean)
     fun onUpdateSize(size: CustomVideoSize)
     fun onUpdateLoading(isLoading: Boolean)
     fun onMediaItemChanged(mediaId: String?, currentMediaItemIndex: Int)
-}
-
-interface PlayItem {
-    val id: String
-    val icon: String?
-    val title: String?
-}
-
-@Serializable
-data class ConstPlayItem(
-    val url: String,
-    override val icon: String? = null,
-    override val title: String? = null
-) : PlayItem {
-    override val id: String
-        get() = url
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

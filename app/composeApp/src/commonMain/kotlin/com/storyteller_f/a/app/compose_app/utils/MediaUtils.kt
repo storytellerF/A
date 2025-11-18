@@ -1,7 +1,7 @@
 package com.storyteller_f.a.app.compose_app.utils
 
-import com.storyteller_f.a.app.compose_app.components.ConstPlayItem
-import com.storyteller_f.a.app.compose_app.components.RemoteMediaItem
+import com.storyteller_f.a.app.core.components.ConstPlayItem
+import com.storyteller_f.a.app.core.components.RemoteMediaItem
 import com.storyteller_f.a.client.core.UploadData
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
@@ -17,12 +17,14 @@ import kotlinx.io.files.SystemFileSystem
 import net.bjoernpetersen.m3u.M3uParser
 
 suspend fun parseM3UPlayList(
-    obj: RemoteMediaItem,
+    remoteMediaItem: RemoteMediaItem,
     client: HttpClient
 ): List<ConstPlayItem> =
-    if ((obj.url.startsWith("http://") || obj.url.startsWith("https://")) && obj.isM3U8PlayList) {
+    if ((remoteMediaItem.url.startsWith("http://") ||
+            remoteMediaItem.url.startsWith("https://")) && remoteMediaItem.isM3U8PlayList
+    ) {
         val entries = withContext(Dispatchers.IO) {
-            val content = client.get(obj.url).bodyAsText()
+            val content = client.get(remoteMediaItem.url).bodyAsText()
             M3uParser.parse(content)
         }
         entries.map {
@@ -31,7 +33,7 @@ suspend fun parseM3UPlayList(
             it.id
         }
     } else {
-        listOf(ConstPlayItem(obj.url, "", obj.url))
+        listOf(ConstPlayItem(remoteMediaItem.url, "", remoteMediaItem.url))
     }
 
 fun getUploadDataFromPath(

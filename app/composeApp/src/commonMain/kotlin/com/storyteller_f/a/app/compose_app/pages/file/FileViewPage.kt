@@ -18,16 +18,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.github.panpf.zoomimage.CoilZoomAsyncImage
-import com.storyteller_f.a.app.compose_app.FileViewData
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.common.FileViewViewModel
 import com.storyteller_f.a.app.compose_app.common.createFileViewModel
-import com.storyteller_f.a.app.compose_app.components.AudioView
-import com.storyteller_f.a.app.compose_app.components.VideoView
+import com.storyteller_f.a.app.compose_app.components.AudioViewFullScreen
+import com.storyteller_f.a.app.compose_app.components.VideoViewFullScreen
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.core.components.BaseSheet
 import com.storyteller_f.a.app.core.components.ButtonNav
 import com.storyteller_f.a.app.core.components.CenterBox
+import com.storyteller_f.a.app.core.components.FileViewData
 import com.storyteller_f.a.app.core.components.LocalToaster
 import com.storyteller_f.a.app.core.components.PdfView
 import com.storyteller_f.a.app.core.components.globalLoader
@@ -47,11 +47,11 @@ fun FileViewPage(session: FileViewData) {
 
         is FileViewData.Player -> {
             CenterBox {
-                val remoteMediaItem = session.obj
+                val remoteMediaItem = session.remoteMediaItem
                 if (remoteMediaItem.contentType.startsWith("video")) {
-                    VideoView(remoteMediaItem, true)
+                    VideoViewFullScreen(remoteMediaItem)
                 } else {
-                    AudioView(remoteMediaItem, true)
+                    AudioViewFullScreen(remoteMediaItem)
                 }
             }
         }

@@ -148,7 +148,7 @@ kotlin {
         }
     }
     compilerOptions {
-        freeCompilerArgs.add("-Xcontext-parameters")
+        freeCompilerArgs.addAll("-Xcontext-parameters", "-Xexpect-actual-classes")
     }
 }
 
