@@ -1,12 +1,13 @@
-package com.storyteller_f.a.backend.core.types
+package com.storyteller_f.shared.model
 
-import com.storyteller_f.shared.model.UploadRecordInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.UploadRecordStatus
 import kotlinx.datetime.LocalDateTime
+import kotlinx.serialization.Serializable
 
-data class UploadRecord(
+@Serializable
+data class UploadRecordInfo(
     val id: PrimaryKey,
     val createdTime: LocalDateTime,
     val objectId: PrimaryKey,
@@ -16,20 +17,4 @@ data class UploadRecord(
     val progress: Long,
     val name: String,
     val chunkSize: Long
-) {
-    companion object
-}
-
-fun UploadRecord.toUploadRecordInfo(): UploadRecordInfo {
-    return UploadRecordInfo(
-        id,
-        createdTime,
-        objectId,
-        objectType,
-        status,
-        total,
-        progress,
-        name,
-        chunkSize
-    )
-}
+)

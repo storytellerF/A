@@ -91,5 +91,9 @@ data class QuotaInfo(
     val quotaType: QuotaType,
     val total: Long,
     val used: Long,
-    val lockId: PrimaryKey?
-)
+    val lockId: PrimaryKey?,
+    val extensions: Extensions? = null
+) {
+    @Serializable
+    data class Extensions(val uploadRecord: UploadRecordInfo? = null)
+}

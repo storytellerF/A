@@ -14,6 +14,7 @@
 - 不要使用裸的 InputStream/OutputStream，而要使用 BufferedInputStream/BufferedOutputStream
 - 代码编辑之后不要用build 任务检查编译错误，要使用compileKotlin 任务检查错误，如果要执行test 任务，要使用test 任务，不要执行detekt 任务
 - 不要在代码中使用 println 或 System.out.println
+- 编辑文件时需要注意不要改变当前文件的换行符
 
 ## 模块职责概览
 - **api**: 定义 REST API 端点、查询/路径模型；包含管理员 AdminApi（/admin/*）

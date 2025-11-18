@@ -317,6 +317,30 @@ private fun QuotaSheet(
                     val percent = if (q.total > 0) (q.used * 100f / q.total) else 0f
                     Text("${percent.toInt()}%")
                 }
+                val rec = q.extensions?.uploadRecord
+                if (rec != null) {
+                    Spacer(modifier = Modifier.padding(8.dp))
+                    Text("上传记录: ${rec.name}")
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        LinearProgressIndicator(
+                            progress = { (rec.progress.toFloat() / rec.total.coerceAtLeast(1)).coerceIn(0f, 1f) },
+                            modifier = Modifier.weight(1f)
+                        )
+                        Spacer(modifier = Modifier.padding(horizontal = 8.dp))
+                        val uploadPercent = if (rec.total > 0) (rec.progress * 100f / rec.total) else 0f
+                        Text("${uploadPercent.toInt()}%")
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(HumanReadable.fileSize(rec.progress))
+                        Spacer(modifier = Modifier.padding(horizontal = 8.dp))
+                        Text("/ ${HumanReadable.fileSize(rec.total)}")
+                        Spacer(modifier = Modifier.weight(1f))
+                        Text(rec.status.name)
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("分片大小: ${HumanReadable.fileSize(rec.chunkSize)}")
+                    }
+                }
             }
         }
     }
