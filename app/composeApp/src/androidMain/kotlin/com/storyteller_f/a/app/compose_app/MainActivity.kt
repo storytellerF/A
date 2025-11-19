@@ -16,8 +16,8 @@ import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.MoreExecutors
 import com.kdroid.composenotification.builder.AndroidChannelConfig
 import com.kdroid.composenotification.builder.NotificationInitializer.notificationInitializer
-import com.storyteller_f.a.app.compose_app.components.bindActivity
-import com.storyteller_f.a.app.compose_app.components.unbindActivity
+import com.storyteller_f.a.app.core.components.bindActivity
+import com.storyteller_f.a.app.core.components.unbindActivity
 import com.storyteller_f.a.app.compose_app.utils.initEnvironment
 import com.storyteller_f.a.app.core.PlaybackService
 import com.storyteller_f.a.app.core.components.LocalMediaPlayerService
