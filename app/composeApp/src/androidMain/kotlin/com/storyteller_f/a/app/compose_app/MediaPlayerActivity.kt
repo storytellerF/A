@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.Text
 import androidx.compose.runtime.CompositionLocalProvider
+import com.storyteller_f.a.app.core.commonForActivity
 import com.storyteller_f.a.app.core.components.CenterBox
 import com.storyteller_f.a.app.core.components.LocalMediaPlayerService
 import com.storyteller_f.a.app.core.components.RemoteMediaItem

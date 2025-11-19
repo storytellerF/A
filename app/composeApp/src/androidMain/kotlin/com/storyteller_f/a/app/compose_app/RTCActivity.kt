@@ -32,6 +32,7 @@ import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.shepeliev.webrtckmp.*
 import com.storyteller_f.a.app.compose_app.ui.theme.AppTheme
 import com.storyteller_f.a.app.core.CoreStrings
+import com.storyteller_f.a.app.core.commonForActivity
 import com.storyteller_f.a.client.core.sendFrame
 import com.storyteller_f.shared.obj.CustomAnswer
 import com.storyteller_f.shared.obj.CustomCandidate

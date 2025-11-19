@@ -1,6 +1,7 @@
 package com.storyteller_f.a.panel.pages
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
@@ -10,7 +11,7 @@ import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
@@ -59,7 +60,7 @@ private fun CommunityInfoTabs(id: PrimaryKey) {
     val pagerState = rememberPagerState { tabs.size }
     val scope = rememberCoroutineScope()
     Column {
-        PrimaryTabRow(pagerState.currentPage) {
+        PrimaryScrollableTabRow(pagerState.currentPage) {
             tabs.forEachIndexed { i, label ->
                 Tab(selected = pagerState.currentPage == i, onClick = {
                     scope.launch { pagerState.scrollToPage(i) }
@@ -68,7 +69,7 @@ private fun CommunityInfoTabs(id: PrimaryKey) {
                 }
             }
         }
-        HorizontalPager(pagerState) { _ ->
+        HorizontalPager(pagerState, modifier = Modifier.weight(1f)) { _ ->
             CommunityBasicInfoSection(id)
         }
     }
@@ -77,7 +78,7 @@ private fun CommunityInfoTabs(id: PrimaryKey) {
 @Composable
 private fun CommunityBasicInfoSection(id: PrimaryKey) {
     val vm = createPanelCommunityViewModel(id)
-    StateView(vm.handler) { info ->
+    StateView(vm.handler, modifier = Modifier.fillMaxSize()) { info ->
         Column(Modifier.padding(16.dp)) {
             Text(info.name)
             val aidText = info.aid

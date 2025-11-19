@@ -1,13 +1,14 @@
 package com.storyteller_f.a.panel.pages
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.filled.Title
-import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
@@ -54,7 +55,7 @@ private fun TitleInfoTabs(id: PrimaryKey) {
     val pagerState = rememberPagerState { tabs.size }
     val scope = rememberCoroutineScope()
     Column {
-        PrimaryTabRow(pagerState.currentPage) {
+        PrimaryScrollableTabRow(pagerState.currentPage) {
             tabs.forEachIndexed { i, label ->
                 Tab(selected = pagerState.currentPage == i, onClick = {
                     scope.launch { pagerState.scrollToPage(i) }
@@ -63,7 +64,7 @@ private fun TitleInfoTabs(id: PrimaryKey) {
                 }
             }
         }
-        HorizontalPager(pagerState) { _ ->
+        HorizontalPager(pagerState, modifier = Modifier.weight(1f)) { _ ->
             TitleBasicInfoSection(id)
         }
     }
@@ -72,7 +73,7 @@ private fun TitleInfoTabs(id: PrimaryKey) {
 @Composable
 private fun TitleBasicInfoSection(id: PrimaryKey) {
     val vm = createPanelTitleViewModel(id)
-    StateView(vm.handler) { info ->
+    StateView(vm.handler, modifier = Modifier.fillMaxSize()) { info ->
         Column(Modifier.padding(16.dp)) {
             Text(info.name)
             Text(info.type.name)

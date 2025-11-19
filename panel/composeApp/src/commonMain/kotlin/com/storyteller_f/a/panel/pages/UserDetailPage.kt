@@ -1,6 +1,7 @@
 package com.storyteller_f.a.panel.pages
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
@@ -11,7 +12,7 @@ import androidx.compose.material.icons.filled.People
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
@@ -26,6 +27,8 @@ import com.storyteller_f.a.app.core.components.pagingItems
 import com.storyteller_f.a.panel.Res
 import com.storyteller_f.a.panel.address_label
 import com.storyteller_f.a.panel.aid_label
+import com.storyteller_f.a.panel.common.createPanelJoinedCommunitiesViewModel
+import com.storyteller_f.a.panel.common.createPanelJoinedRoomsViewModel
 import com.storyteller_f.a.panel.common.createPanelUserOverviewViewModel
 import com.storyteller_f.a.panel.log_supporting
 import com.storyteller_f.a.panel.nickname_label
@@ -80,7 +83,7 @@ private fun UserInfoTabs(uid: PrimaryKey) {
     val pagerState = rememberPagerState { tabs.size }
     val scope = rememberCoroutineScope()
     Column {
-        PrimaryTabRow(pagerState.currentPage) {
+        PrimaryScrollableTabRow(pagerState.currentPage) {
             tabs.forEachIndexed { i, label ->
                 Tab(selected = pagerState.currentPage == i, onClick = {
                     scope.launch { pagerState.scrollToPage(i) }
@@ -89,7 +92,7 @@ private fun UserInfoTabs(uid: PrimaryKey) {
                 }
             }
         }
-        HorizontalPager(pagerState) { index ->
+        HorizontalPager(pagerState, modifier = Modifier.weight(1f)) { index ->
             when (index) {
                 0 -> UserBasicInfoSectionVM(uid)
                 1 -> UserJoinedCommunitiesSection(uid)
@@ -103,8 +106,8 @@ private fun UserInfoTabs(uid: PrimaryKey) {
 
 @Composable
 private fun UserJoinedCommunitiesSection(uid: PrimaryKey) {
-    val vm = com.storyteller_f.a.panel.common.createPanelJoinedCommunitiesViewModel(uid)
-    StateView(vm) { items ->
+    val vm = createPanelJoinedCommunitiesViewModel(uid)
+    StateView(vm, modifier = Modifier.fillMaxSize()) { items ->
         LazyColumn {
             pagingItems(items, key = { it.id }) { index ->
                 val info = items[index]
@@ -125,8 +128,8 @@ private fun UserJoinedCommunitiesSection(uid: PrimaryKey) {
 
 @Composable
 private fun UserJoinedRoomsSection(uid: PrimaryKey) {
-    val vm = com.storyteller_f.a.panel.common.createPanelJoinedRoomsViewModel(uid)
-    StateView(vm) { items ->
+    val vm = createPanelJoinedRoomsViewModel(uid)
+    StateView(vm, modifier = Modifier.fillMaxSize()) { items ->
         LazyColumn {
             pagingItems(items, key = { it.id }) { index ->
                 val info = items[index]
@@ -151,7 +154,7 @@ private fun UserJoinedRoomsSection(uid: PrimaryKey) {
 @Composable
 private fun UserReceivedTitlesSection(uid: PrimaryKey) {
     val vm = com.storyteller_f.a.panel.common.createPanelReceivedTitlesViewModel(uid)
-    StateView(vm) { items ->
+    StateView(vm, modifier = Modifier.fillMaxSize()) { items ->
         LazyColumn {
             pagingItems(items, key = { it.id }) { index ->
                 val info = items[index]
@@ -173,7 +176,7 @@ private fun UserReceivedTitlesSection(uid: PrimaryKey) {
 @Composable
 private fun UserCreatedFilesSection(uid: PrimaryKey) {
     val vm = com.storyteller_f.a.panel.common.createPanelUserFilesViewModel(uid)
-    StateView(vm) { items ->
+    StateView(vm, modifier = Modifier.fillMaxSize()) { items ->
         LazyColumn {
             pagingItems(items, key = { it.id }) { index ->
                 val info = items[index]
@@ -195,7 +198,7 @@ private fun UserCreatedFilesSection(uid: PrimaryKey) {
 @Composable
 private fun UserLogsTab(uid: PrimaryKey) {
     val vm = com.storyteller_f.a.panel.common.createPanelUserLogsViewModel(uid)
-    StateView(vm) { items ->
+    StateView(vm, modifier = Modifier.fillMaxSize()) { items ->
         LazyColumn {
             pagingItems(items, key = { it.id }) { index ->
                 val info = items[index]
@@ -224,7 +227,7 @@ private fun UserLogsTab(uid: PrimaryKey) {
 @Composable
 private fun UserBasicInfoSectionVM(uid: PrimaryKey) {
     val vm = createPanelUserOverviewViewModel(uid)
-    StateView(vm.handler) { overview ->
+    StateView(vm.handler, modifier = Modifier.fillMaxSize()) { overview ->
         Column(Modifier.padding(16.dp)) {
             val u = overview.userInfo
             Text(stringResource(Res.string.nickname_label, u.nickname))
