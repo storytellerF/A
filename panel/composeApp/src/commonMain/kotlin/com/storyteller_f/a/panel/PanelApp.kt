@@ -93,6 +93,7 @@ import com.storyteller_f.a.panel.pages.OverviewPage
 import com.storyteller_f.a.panel.pages.RoomDetailPage
 import com.storyteller_f.a.panel.pages.TitleDetailPage
 import com.storyteller_f.a.panel.pages.TopicDetailPage
+import com.storyteller_f.a.panel.pages.UserDetailPage
 import com.storyteller_f.shared.replaceCrlf
 import com.storyteller_f.storage.UserCollection
 import io.github.vinceglb.filekit.FileKit
@@ -301,7 +302,7 @@ private fun PanelAppNavHost(
         composable<PanelAllUsersScreen> { AllUsersPage() }
         composable<PanelUserDetailScreen> {
             val screen = it.toRoute<PanelUserDetailScreen>()
-            com.storyteller_f.a.panel.pages.UserDetailPage(screen.uid)
+            UserDetailPage(screen.uid)
         }
         composable<PanelCommunityDetailScreen> {
             val screen = it.toRoute<PanelCommunityDetailScreen>()

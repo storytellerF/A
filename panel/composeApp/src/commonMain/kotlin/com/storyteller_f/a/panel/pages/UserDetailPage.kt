@@ -17,7 +17,10 @@ import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -35,6 +38,7 @@ import com.storyteller_f.a.panel.aid_label
 import com.storyteller_f.a.panel.common.createPanelJoinedCommunitiesViewModel
 import com.storyteller_f.a.panel.common.createPanelJoinedRoomsViewModel
 import com.storyteller_f.a.panel.common.createPanelUserOverviewViewModel
+import com.storyteller_f.a.panel.common.createPanelUserViewModel
 import com.storyteller_f.a.panel.log_supporting
 import com.storyteller_f.a.panel.nickname_label
 import com.storyteller_f.a.panel.none
@@ -51,11 +55,12 @@ import kotlinx.coroutines.launch
 import nl.jacobras.humanreadable.HumanReadable
 import org.jetbrains.compose.resources.stringResource
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserDetailPage(uid: PrimaryKey) {
     val pagerState = rememberPagerState { 2 }
     val scope = rememberCoroutineScope()
-    Scaffold(bottomBar = {
+    Scaffold(topBar = { UserTopBar(uid) }, bottomBar = {
         val navRoutes = listOf(
             NavRoute("/info", Icons.Default.People, stringResource(Res.string.user_info)),
             NavRoute("/logs", Icons.AutoMirrored.Filled.Article, stringResource(Res.string.user_logs)),
@@ -75,6 +80,16 @@ fun UserDetailPage(uid: PrimaryKey) {
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun UserTopBar(uid: PrimaryKey) {
+    val vm = createPanelUserViewModel(uid)
+    val info by vm.handler.data.collectAsState(null)
+    val title = listOf("User Detail", info?.nickname ?: "", info?.aid ?: "").filter { it.isNotBlank() }
+        .joinToString(" • ")
+    TopAppBar(title = { Text(title.ifBlank { "User Detail • $uid" }) })
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
