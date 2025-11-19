@@ -1,4 +1,4 @@
-package com.storyteller_f.a.app.compose_app.components
+package com.storyteller_f.a.app.core.components
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -18,7 +18,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.SwingPanel
-import com.storyteller_f.a.app.core.components.RemoteMediaItem
 import uk.co.caprica.vlcj.factory.discovery.NativeDiscovery
 import uk.co.caprica.vlcj.player.base.MediaPlayer
 import uk.co.caprica.vlcj.player.base.MediaPlayerEventAdapter
@@ -32,7 +31,7 @@ import java.util.Locale
 actual fun VideoViewEmbed(remoteMediaItem: RemoteMediaItem) {
     VideoPlayerInternal { mediaPlayerComponent, mediaPlayerState ->
         val controls = mediaPlayerComponent.mediaPlayer().controls()
-        ObjectBlock {
+        MediaObjectBlock {
             Box(Modifier.weight(1f)) {
                 VideoPlayer(mediaPlayerComponent)
             }

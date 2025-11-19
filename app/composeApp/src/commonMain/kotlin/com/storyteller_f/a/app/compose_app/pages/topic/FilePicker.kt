@@ -50,7 +50,6 @@ import com.storyteller_f.a.app.compose_app.components.isPermissionGranted
 import com.storyteller_f.a.app.compose_app.components.requestPermission
 import com.storyteller_f.a.app.compose_app.utils.ClientFile
 import com.storyteller_f.a.app.compose_app.utils.Recorder
-import com.storyteller_f.a.app.compose_app.utils.getUploadDataFromPath
 import com.storyteller_f.a.app.core.components.BaseSheet
 import com.storyteller_f.a.app.core.components.GlobalDialogState
 import com.storyteller_f.a.app.core.components.GlobalDialogStateProgress
@@ -60,6 +59,7 @@ import com.storyteller_f.a.app.core.components.emitEvent
 import com.storyteller_f.a.app.core.components.pagingItems
 import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.app.core.components.topPrepend
+import com.storyteller_f.a.app.core.utils.getUploadDataFromPath
 import com.storyteller_f.a.client.core.UploadData
 import com.storyteller_f.a.client.core.upload
 import com.storyteller_f.shared.model.FileInfo

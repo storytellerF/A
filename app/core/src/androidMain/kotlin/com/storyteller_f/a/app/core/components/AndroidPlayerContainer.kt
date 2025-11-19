@@ -1,4 +1,4 @@
-package com.storyteller_f.a.app.compose_app.components
+package com.storyteller_f.a.app.core.components
 
 import android.app.PictureInPictureParams
 import android.content.BroadcastReceiver
@@ -22,8 +22,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.toRect
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
-import com.storyteller_f.a.app.core.components.LocalMediaPlaySession
-import com.storyteller_f.a.app.core.components.LocalToaster
 import io.github.aakira.napier.Napier
 import kotlin.uuid.ExperimentalUuidApi
 
