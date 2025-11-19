@@ -18,6 +18,8 @@ import com.storyteller_f.a.client.core.getAllPublicRooms
 import com.storyteller_f.a.client.core.getAllTitles
 import com.storyteller_f.a.client.core.getAllTopics
 import com.storyteller_f.a.client.core.getAllUsers
+import com.storyteller_f.a.client.core.getCommunityMembers
+import com.storyteller_f.a.client.core.getRoomMembers
 import com.storyteller_f.a.client.core.getUserById
 import com.storyteller_f.a.client.core.getUserFiles
 import com.storyteller_f.a.client.core.getUserInfo
@@ -327,6 +329,31 @@ class AdminTest {
                 logs.any { it.objectType == ObjectType.COMMUNITY && it.objectId == communityId },
                 "Expect community-related log for user $uid"
             )
+        }
+    }
+
+    @Test
+    fun `admin community members`() = test {
+        val outer = attachPanelSession {}
+        val communityId = attachSession {
+            val c = createCommunity(NewCommunity("c1", "c1")).getOrThrow()
+            joinCommunity(c.id).getOrThrow()
+            c.id
+        }.custom
+        loginPanelSession(outer) {
+            assertListSize(1, getCommunityMembers(communityId, PaginationQuery()))
+        }
+    }
+
+    @Test
+    fun `admin room members`() = test {
+        val outer = attachPanelSession {}
+        val roomId = attachSession {
+            val r = createRoom(NewRoom("r1", "desc")).getOrThrow()
+            r.id
+        }.custom
+        loginPanelSession(outer) {
+            assertListSize(1, getRoomMembers(roomId, PaginationQuery()))
         }
     }
 }
