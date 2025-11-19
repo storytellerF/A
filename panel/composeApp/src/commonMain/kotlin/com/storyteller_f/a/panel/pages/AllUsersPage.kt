@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -34,6 +36,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -107,7 +110,14 @@ fun AllUsersPageInternal(viewModel: AllUsersViewModel) {
             }
         }
     ) {
-        Box(Modifier.padding(top = it.calculateTopPadding())) {
+        val direction = LocalLayoutDirection.current
+        Box(
+            Modifier.padding(
+                top = it.calculateTopPadding(),
+                start = it.calculateStartPadding(direction),
+                end = it.calculateEndPadding(direction)
+            )
+        ) {
             StateView(viewModel) { items ->
                 LazyColumn {
                     pagingItems(items, key = {

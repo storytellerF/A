@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilePresent
@@ -43,6 +45,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -434,7 +437,14 @@ private fun PanelHost(content: @Composable () -> Unit) {
 fun PanelLoginPage(back: () -> Unit) {
     val navigator = rememberNavController()
     Scaffold {
-        Box(Modifier.padding(top = it.calculateTopPadding())) {
+        val direction = LocalLayoutDirection.current
+        Box(
+            Modifier.padding(
+                top = it.calculateTopPadding(),
+                start = it.calculateStartPadding(direction),
+                end = it.calculateEndPadding(direction)
+            )
+        ) {
             NavHost(navigator, "select") {
                 composable("select") {
                     PanelSelectLoginPage(navigator, back)

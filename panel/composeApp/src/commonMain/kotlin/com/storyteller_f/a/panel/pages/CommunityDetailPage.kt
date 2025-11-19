@@ -2,6 +2,8 @@ package com.storyteller_f.a.panel.pages
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -26,6 +28,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.core.components.CustomBottomNav
 import com.storyteller_f.a.app.core.components.NavRoute
@@ -53,7 +56,14 @@ fun CommunityDetailPage(id: PrimaryKey) {
             }
         }
     }) { paddingValues ->
-        Column(Modifier.padding(top = paddingValues.calculateTopPadding())) {
+        val direction = LocalLayoutDirection.current
+        Column(
+            Modifier.padding(
+                top = paddingValues.calculateTopPadding(),
+                start = paddingValues.calculateStartPadding(direction),
+                end = paddingValues.calculateEndPadding(direction)
+            )
+        ) {
             HorizontalPager(pagerState) { pageIndex ->
                 when (pageIndex) {
                     0 -> CommunityInfoTabs(id)
