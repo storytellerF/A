@@ -10,8 +10,11 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Scaffold
@@ -68,7 +71,15 @@ private fun CommunityTopBar(id: PrimaryKey) {
     val info by vm.handler.data.collectAsState(null)
     val title = listOf("Community Detail", info?.name ?: "", info?.aid ?: "").filter { it.isNotBlank() }
         .joinToString(" • ")
-    TopAppBar(title = { Text(title.ifBlank { "Community Detail • $id" }) })
+    val nav = LocalPanelNav.current
+    TopAppBar(
+        title = { Text(title.ifBlank { "Community Detail • $id" }) },
+        navigationIcon = {
+            IconButton(onClick = { nav.open() }) {
+                Icon(Icons.Default.Menu, null)
+            }
+        }
+    )
 }
 
 @Composable
