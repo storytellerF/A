@@ -142,7 +142,7 @@ private fun TopicContentAndInteraction(
         Modifier.padding(horizontal = 8.dp).padding(bottom = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        TopicContentView(topicInfo, true)
+        AppTopicContentView(topicInfo, true)
         InteractionRow(topicInfo, startAddReaction) {
             appNavFactory.newAppNav().gotoTopic(topicId)
         }
@@ -220,7 +220,7 @@ fun RoomTopicCellInternal(
                     .padding(horizontal = 12.dp).padding(top = 8.dp, bottom = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                TopicContentView(topicInfo, true)
+                AppTopicContentView(topicInfo, true)
                 if (topicInfo.reactionCount > 0) {
                     InteractionRow(topicInfo, startAddReaction) {
                         appNavFactory.newAppNav().gotoTopic(topicId)

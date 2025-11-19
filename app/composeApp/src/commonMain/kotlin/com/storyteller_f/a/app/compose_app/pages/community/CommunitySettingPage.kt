@@ -24,11 +24,11 @@ import com.storyteller_f.a.app.compose_app.AppGlobalDialogController
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.common.OnCommunityUpdated
 import com.storyteller_f.a.app.compose_app.common.createCommunityViewModel
-import com.storyteller_f.a.app.compose_app.components.CommunityPoster
 import com.storyteller_f.a.app.compose_app.components.SettingOptionResettableView
 import com.storyteller_f.a.app.compose_app.components.SettingOptionView
 import com.storyteller_f.a.app.compose_app.pages.user.ObjectSettingDialog
 import com.storyteller_f.a.app.compose_app.pages.user.SettingOption
+import com.storyteller_f.a.app.core.components.CommunityPoster
 import com.storyteller_f.a.app.core.components.LocalToaster
 import com.storyteller_f.a.app.core.components.emitEvent
 import com.storyteller_f.a.app.core.components.request

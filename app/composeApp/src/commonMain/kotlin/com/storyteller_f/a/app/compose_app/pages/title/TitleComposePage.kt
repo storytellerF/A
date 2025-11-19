@@ -68,7 +68,7 @@ import com.storyteller_f.a.app.compose_app.common.createMemberSearchViewModel
 import com.storyteller_f.a.app.compose_app.common.createRoomSearchViewModel
 import com.storyteller_f.a.app.compose_app.common.createSearchCommunitiesViewModel
 import com.storyteller_f.a.app.compose_app.common.createTitleComposeViewModel
-import com.storyteller_f.a.app.compose_app.components.TopicContentView
+import com.storyteller_f.a.app.compose_app.components.AppTopicContentView
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityList
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityRefCell
 import com.storyteller_f.a.app.compose_app.pages.room.RoomList
@@ -225,7 +225,7 @@ private fun DescriptionEditor(vm: TitleComposeViewModel) {
         if (content.isEmpty()) {
             Text("No Description", fontStyle = FontStyle.Italic, fontSize = 10.sp)
         } else {
-            TopicContentView(TopicInfo.EMPTY.copy(content = TopicContent.Plain(content)))
+            AppTopicContentView(TopicInfo.EMPTY.copy(content = TopicContent.Plain(content)))
         }
     }
 }
