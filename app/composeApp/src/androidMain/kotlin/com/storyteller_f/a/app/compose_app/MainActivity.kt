@@ -18,6 +18,7 @@ import com.kdroid.composenotification.builder.AndroidChannelConfig
 import com.kdroid.composenotification.builder.NotificationInitializer.notificationInitializer
 import com.storyteller_f.a.app.compose_app.utils.initEnvironment
 import com.storyteller_f.a.app.core.PlaybackService
+import com.storyteller_f.a.app.core.commonForActivity
 import com.storyteller_f.a.app.core.components.LocalMediaPlayerService
 import com.storyteller_f.a.app.core.components.bindActivity
 import com.storyteller_f.a.app.core.components.unbindActivity
@@ -107,14 +108,6 @@ fun ComponentActivity.initFromContext() {
             smallIcon = com.storyteller_f.a.app.R.drawable.ic_notify
         )
     )
-}
-
-fun ComponentActivity.commonForActivity() {
-    enableEdgeToEdge()
-    /**
-     * 在Android 13 上必须加这一行
-     */
-    WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightNavigationBars = false
 }
 
 fun registerDevice(context: Context) {
