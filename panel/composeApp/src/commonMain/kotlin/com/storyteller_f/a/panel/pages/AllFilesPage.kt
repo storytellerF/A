@@ -27,6 +27,7 @@ import com.storyteller_f.a.panel.Res
 import com.storyteller_f.a.panel.all_files
 import com.storyteller_f.a.panel.common.AllFilesViewModel
 import com.storyteller_f.a.panel.common.createPanelAllFilesViewModel
+import nl.jacobras.humanreadable.HumanReadable
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,7 +55,7 @@ fun AllFilesPageInternal(viewModel: AllFilesViewModel) {
                         if (info != null) {
                             val name = info.name
                             val type = info.contentType
-                            val size = info.size.toString()
+                            val size = HumanReadable.fileSize(info.size)
                             val dim = info.dimension?.let { "${it.width}x${it.height}" } ?: ""
                             ListItem(
                                 modifier = Modifier.clickable { panelNav.gotoFileDetail(info.id) },

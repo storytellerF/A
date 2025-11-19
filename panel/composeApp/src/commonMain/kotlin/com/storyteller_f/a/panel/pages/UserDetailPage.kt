@@ -48,6 +48,7 @@ import com.storyteller_f.a.panel.user_logs
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
+import nl.jacobras.humanreadable.HumanReadable
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -202,7 +203,7 @@ private fun UserCreatedFilesSection(uid: PrimaryKey) {
                     val panelNav = LocalPanelNav.current
                     ListItem(
                         headlineContent = { Text(info.name) },
-                        supportingContent = { Text(info.contentType) },
+                        supportingContent = { Text(HumanReadable.fileSize(info.size)) },
                         leadingContent = { FileIcon(info) },
                         modifier = Modifier.clickable { panelNav.gotoFileDetail(info.id) }
                     )
