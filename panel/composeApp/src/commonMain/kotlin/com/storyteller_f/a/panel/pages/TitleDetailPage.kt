@@ -7,8 +7,11 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Article
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Title
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
@@ -60,7 +63,15 @@ private fun TitleTopBar(id: PrimaryKey) {
     val vm = createPanelTitleViewModel(id)
     val info by vm.handler.data.collectAsState(null)
     val title = listOf("Title Detail", info?.name ?: "").filter { it.isNotBlank() }.joinToString(" • ")
-    TopAppBar(title = { Text(title.ifBlank { "Title Detail • $id" }) })
+    val nav = com.storyteller_f.a.panel.LocalPanelNav.current
+    TopAppBar(
+        title = { Text(title.ifBlank { "Title Detail • $id" }) },
+        navigationIcon = {
+            IconButton(onClick = { nav.open() }) {
+                Icon(Icons.Default.Menu, null)
+            }
+        }
+    )
 }
 
 @Composable
