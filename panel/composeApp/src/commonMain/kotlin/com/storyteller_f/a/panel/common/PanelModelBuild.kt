@@ -129,10 +129,24 @@ fun createPanelCommunityViewModel(
 }
 
 @Composable
+fun createPanelCommunityMembersViewModel(
+    id: PrimaryKey
+) = panelViewModel(keys = listOf("community-members", id)) { sessionManager, modelStorage ->
+    CommunityMembersViewModel(sessionManager, modelStorage, id)
+}
+
+@Composable
 fun createPanelRoomViewModel(
     id: PrimaryKey
 ) = panelViewModel(keys = listOf("room", id)) { sessionManager, modelStorage ->
     IdRoomViewModel(sessionManager, modelStorage, id)
+}
+
+@Composable
+fun createPanelRoomMembersViewModel(
+    id: PrimaryKey
+) = panelViewModel(keys = listOf("room-members", id)) { sessionManager, modelStorage ->
+    RoomMembersViewModel(sessionManager, modelStorage, id)
 }
 
 @Composable

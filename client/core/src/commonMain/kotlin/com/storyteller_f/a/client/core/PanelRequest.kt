@@ -108,8 +108,16 @@ suspend fun PanelSessionManager.getCommunityById(id: PrimaryKey) = serviceCatchi
     AdminApi.Communities.Id.get(CommonPath(id))
 }
 
+suspend fun PanelSessionManager.getCommunityMembers(communityId: PrimaryKey, query: PaginationQuery) = serviceCatching {
+    AdminApi.Communities.Id.Members.get(query, CommonPath(communityId))
+}
+
 suspend fun PanelSessionManager.getRoomById(id: PrimaryKey) = serviceCatching {
     AdminApi.Rooms.Id.get(CommonPath(id))
+}
+
+suspend fun PanelSessionManager.getRoomMembers(roomId: PrimaryKey, query: PaginationQuery) = serviceCatching {
+    AdminApi.Rooms.Id.Members.get(query, CommonPath(roomId))
 }
 
 suspend fun PanelSessionManager.getTopicById(id: PrimaryKey) = serviceCatching {

@@ -5,6 +5,7 @@ import androidx.paging.PagingState
 import com.storyteller_f.shared.model.ChildAccountInfo
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.FileInfo
+import com.storyteller_f.shared.model.MemberInfo
 import com.storyteller_f.shared.model.PanelOverview
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.RoomInfo
@@ -207,6 +208,7 @@ interface ModelStorage {
     val topic: TopicInfoStorage
     val title: TitleInfoStorage
     val room: RoomInfoStorage
+    val member: MemberInfoStorage
     val remoteKey: RemoteKeyStorage
     val reaction: ReactionInfoStorage
     val childAccount: ChildAccountStorage
@@ -231,6 +233,20 @@ interface TitleInfoStorage : CollectionItemStorageById<TitleCollection, TitleInf
 interface RoomInfoStorage : CollectionItemStorageByIdAndKey<RoomCollection, RoomInfo>
 
 interface ReactionInfoStorage : CollectionListStorage<ReactionCollection, ReactionInfo>
+
+sealed interface MemberCollection {
+    data class CommunityMembers(val objectId: PrimaryKey) : MemberCollection
+    data class RoomMembers(val objectId: PrimaryKey) : MemberCollection
+}
+
+fun MemberCollection.getName(): String {
+    return when (this) {
+        is MemberCollection.CommunityMembers -> "community_members_$objectId"
+        is MemberCollection.RoomMembers -> "room_members_$objectId"
+    }
+}
+
+interface MemberInfoStorage : CollectionListStorage<MemberCollection, MemberInfo>
 
 interface ChildAccountStorage : GlobalListStorage<ChildAccountInfo> {
     companion object {

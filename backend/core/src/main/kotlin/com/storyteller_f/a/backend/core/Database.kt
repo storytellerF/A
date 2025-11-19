@@ -69,6 +69,20 @@ fun <T> Result<List<T>>.pagingNotNull(total: Long): Result<PaginationResult<T>> 
     }
 }
 
+suspend fun <T> paginationFromResults(
+    listResult: Result<List<T>>,
+    totalResult: Result<Long>
+): Result<PaginationResult<T>> = listResult.mapResult { list ->
+    totalResult.map { total -> PaginationResult(list, total) }
+}
+
+suspend fun <T> paginationNullableFromResults(
+    listResult: Result<List<T>?>,
+    totalResult: Result<Long>
+): Result<PaginationResult<T>?> = listResult.mapResultIfNotNull { list ->
+    totalResult.map { total -> PaginationResult(list, total) }
+}
+
 data class ContainerInfo(
     val member: Member?,
     val userTopicRead: UserTopicRead?,
@@ -555,6 +569,11 @@ interface ContainerDatabase {
         word: String?,
         fetch: PrimaryKeyFetch
     ): Result<PaginationResult<RawUser>>
+
+    suspend fun getMemberWithUserPaginationResult(
+        objectId: PrimaryKey,
+        fetch: PrimaryKeyFetch
+    ): Result<PaginationResult<Pair<Member, RawUser>>>
 
     suspend fun getQuotaInfo(ownerId: PrimaryKey, quotaType: QuotaType): Result<Quota?>
     suspend fun insertQuota(quota: Quota): Result<Unit>

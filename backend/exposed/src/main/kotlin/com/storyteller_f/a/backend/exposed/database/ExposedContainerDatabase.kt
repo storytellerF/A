@@ -2,8 +2,8 @@ package com.storyteller_f.a.backend.exposed.database
 
 import com.storyteller_f.a.backend.core.ContainerDatabase
 import com.storyteller_f.a.backend.core.ContainerInfo
-import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
+import com.storyteller_f.a.backend.core.paginationFromResults
 import com.storyteller_f.a.backend.core.types.Member
 import com.storyteller_f.a.backend.core.types.Quota
 import com.storyteller_f.a.backend.core.types.UserTopicRead
@@ -24,7 +24,6 @@ import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.associateByPair
-import com.storyteller_f.shared.utils.mapResult
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.countDistinct
@@ -191,24 +190,47 @@ class ExposedContainerDatabase(val databaseSession: ExposedDatabaseSession) :
         objectId: PrimaryKey?,
         word: String?,
         fetch: PrimaryKeyFetch,
-    ) = databaseSession.dbSearch {
-        search {
-            buildSearchMembersQuery(objectId, false, word).bindPaginationQuery(
-                Users,
-                fetch
-            )
-        }
-        map(::mapUserInfo)
-    }.mapResult { results ->
+    ) = paginationFromResults(
+        databaseSession.dbSearch {
+            search {
+                buildSearchMembersQuery(objectId, false, word).bindPaginationQuery(
+                    Users,
+                    fetch
+                )
+            }
+            map(::mapUserInfo)
+        },
         databaseSession.dbSearch {
             search {
                 buildSearchMembersQuery(objectId, true, word)
             }
             count()
-        }.map { value ->
-            PaginationResult(results, value)
         }
-    }
+    )
+
+    override suspend fun getMemberWithUserPaginationResult(
+        objectId: PrimaryKey,
+        fetch: PrimaryKeyFetch
+    ) = paginationFromResults(
+        databaseSession.dbSearch {
+            search {
+                Users
+                    .join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
+                    .join(Members, JoinType.INNER, Users.id, Members.uid) {
+                        Members.objectId eq objectId
+                    }
+                    .select(Users.fields + Aids.value + Members.fields)
+                    .bindPaginationQuery(Users, fetch)
+            }
+            map { row -> Pair(Member.wrapRow(row), mapUserInfo(row)) }
+        },
+        databaseSession.dbSearch {
+            search {
+                Members.selectAll().where { Members.objectId eq objectId }
+            }
+            count()
+        }
+    )
 
     override suspend fun getQuotaInfo(
         ownerId: PrimaryKey,

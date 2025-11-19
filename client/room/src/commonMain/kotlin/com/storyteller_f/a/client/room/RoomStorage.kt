@@ -5,6 +5,7 @@ import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.model.ChildAccountInfo
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.FileInfo
+import com.storyteller_f.shared.model.MemberInfo
 import com.storyteller_f.shared.model.PanelOverview
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.RoomInfo
@@ -22,6 +23,8 @@ import com.storyteller_f.storage.DownloadInfo
 import com.storyteller_f.storage.DownloadInfoStorage
 import com.storyteller_f.storage.FileCollection
 import com.storyteller_f.storage.FileInfoStorage
+import com.storyteller_f.storage.MemberCollection
+import com.storyteller_f.storage.MemberInfoStorage
 import com.storyteller_f.storage.ModelStorage
 import com.storyteller_f.storage.OverviewStorage
 import com.storyteller_f.storage.ReactionCollection
@@ -301,6 +304,24 @@ class RoomRoomInfoStorage(val appDatabase: AppDatabase) : RoomInfoStorage {
 
     override fun observeDatum(id: PrimaryKey): Flow<RoomInfo?> {
         return observeDatum(id.toString())
+    }
+}
+
+class RoomMemberInfoStorage(val appDatabase: AppDatabase) : MemberInfoStorage {
+    val impl = CommonStorageImpl(appDatabase)
+    override suspend fun save(collection: MemberCollection, item: MemberInfo) {
+        val data = commonJson.encodeToString(item)
+        appDatabase.getCommonDao().insert(
+            CommonEntity(item.id, collection.getName(), data)
+        )
+    }
+
+    override fun observeData(collection: MemberCollection): PagingSource<Int, MemberInfo> {
+        return impl.observeData(collection.getName())
+    }
+
+    override suspend fun clean(collection: MemberCollection) {
+        impl.clean(collection.getName())
     }
 }
 
@@ -587,6 +608,7 @@ class RoomModelStorage(appDatabase: AppDatabase) : ModelStorage {
     override val topic: TopicInfoStorage = RoomTopicInfoStorage(appDatabase)
     override val title: TitleInfoStorage = RoomTitleInfoStorage(appDatabase)
     override val room: RoomInfoStorage = RoomRoomInfoStorage(appDatabase)
+    override val member: MemberInfoStorage = RoomMemberInfoStorage(appDatabase)
     override val remoteKey: RemoteKeyStorage = RemoteKeyRoomStorage(appDatabase)
     override val reaction: ReactionInfoStorage = RoomReactionInfoStorage(appDatabase)
     override val childAccount: ChildAccountStorage = RoomChildAccountStorage(appDatabase)

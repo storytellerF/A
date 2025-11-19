@@ -20,6 +20,7 @@ import com.storyteller_f.a.backend.core.types.RawCommunity
 import com.storyteller_f.a.backend.core.types.toCommunityIfo
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.Dimension
+import com.storyteller_f.shared.model.MemberInfo
 import com.storyteller_f.shared.model.MemberPolicy
 import com.storyteller_f.shared.model.PosterSearch
 import com.storyteller_f.shared.model.UserLogType
@@ -365,4 +366,35 @@ suspend fun Backend.getUserJoinedCommunities(
         }
     }.getOrElse { null }
     return Result.success(result ?: PaginationResult(emptyList(), 0))
+}
+suspend fun Backend.getCommunityMemberInfos(
+    communityId: PrimaryKey,
+    primaryKeyFetch: PrimaryKeyFetch
+): Result<PaginationResult<MemberInfo>> = getContainerMemberInfos(communityId, primaryKeyFetch)
+suspend fun Backend.getContainerMemberInfos(
+    objectId: PrimaryKey,
+    primaryKeyFetch: PrimaryKeyFetch
+): Result<PaginationResult<MemberInfo>> {
+    return database.container.getMemberWithUserPaginationResult(objectId, primaryKeyFetch)
+        .mapResult { (list, total) ->
+            val rawUsers = list.map { it.second }
+            processRawUserToUserInfo(rawUsers).map { users ->
+                val userMap = users.associateBy { it.id }
+                PaginationResult(
+                    list.map { (member, rawUser) ->
+                        MemberInfo(
+                            id = member.id,
+                            uid = member.uid,
+                            objectId = member.objectId,
+                            objectType = member.objectType,
+                            status = member.status,
+                            joinedTime = (member.joinedTime ?: member.createdTime).date,
+                            invitedTime = member.invitedTime?.date,
+                            userInfo = userMap[rawUser.user.id]!!
+                        )
+                    },
+                    total
+                )
+            }
+        }
 }
