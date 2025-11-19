@@ -19,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.storyteller_f.a.app.core.components.FileIcon
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.pagingItems
 import com.storyteller_f.a.panel.LocalPanelNav
@@ -57,6 +58,7 @@ fun AllFilesPageInternal(viewModel: AllFilesViewModel) {
                             val dim = info.dimension?.let { "${it.width}x${it.height}" } ?: ""
                             ListItem(
                                 modifier = Modifier.clickable { panelNav.gotoFileDetail(info.id) },
+                                leadingContent = { FileIcon(info) },
                                 headlineContent = { Text(name) },
                                 overlineContent = { Text(type) },
                                 supportingContent = {

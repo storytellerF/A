@@ -21,8 +21,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.storyteller_f.a.app.core.components.CommunityIcon
 import com.storyteller_f.a.app.core.components.CustomBottomNav
+import com.storyteller_f.a.app.core.components.FileIcon
 import com.storyteller_f.a.app.core.components.NavRoute
+import com.storyteller_f.a.app.core.components.RoomIcon
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.pagingItems
 import com.storyteller_f.a.panel.LocalPanelNav
@@ -42,8 +45,8 @@ import com.storyteller_f.a.panel.tab_joined_rooms
 import com.storyteller_f.a.panel.tab_received_titles
 import com.storyteller_f.a.panel.user_info
 import com.storyteller_f.a.panel.user_logs
-import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
@@ -117,6 +120,9 @@ private fun UserJoinedCommunitiesSection(uid: PrimaryKey) {
                 if (info != null) {
                     val panelNav = LocalPanelNav.current
                     ListItem(
+                        leadingContent = {
+                            CommunityIcon(info, 40.dp, false) {}
+                        },
                         headlineContent = { Text(info.name) },
                         overlineContent = { Text(info.aid) },
                         modifier = Modifier.clickable { panelNav.gotoCommunityDetail(info.id) }
@@ -141,6 +147,9 @@ private fun UserJoinedRoomsSection(uid: PrimaryKey) {
                 if (info != null) {
                     val panelNav = LocalPanelNav.current
                     ListItem(
+                        leadingContent = {
+                            RoomIcon(info, 40.dp, false) {}
+                        },
                         headlineContent = { Text(info.name) },
                         supportingContent = {
                             val creator = info.creator.toString()
@@ -194,6 +203,7 @@ private fun UserCreatedFilesSection(uid: PrimaryKey) {
                     ListItem(
                         headlineContent = { Text(info.name) },
                         supportingContent = { Text(info.contentType) },
+                        leadingContent = { FileIcon(info) },
                         modifier = Modifier.clickable { panelNav.gotoFileDetail(info.id) }
                     )
                     HorizontalDivider()

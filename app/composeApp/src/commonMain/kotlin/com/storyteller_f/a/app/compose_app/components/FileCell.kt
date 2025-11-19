@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachFile
 import androidx.compose.material.icons.filled.AudioFile
@@ -27,11 +26,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.core.components.CustomIcon
 import com.storyteller_f.a.app.core.components.IconRes
@@ -122,26 +118,6 @@ fun FileCellMenu(expanded: Boolean, updateExpanded: (Boolean) -> Unit, fileInfo:
                 }
             }
         )
-    }
-}
-
-@Composable
-fun FileIcon(it: FileInfo) {
-    val contentType = it.contentType
-    val modifier = Modifier.size(40.dp)
-    if (contentType.startsWith("image")) {
-        AsyncImage(
-            it.url,
-            it.name,
-            modifier = modifier.clip(RoundedCornerShape(5.dp)),
-            contentScale = ContentScale.Crop
-        )
-    } else if (contentType.startsWith("audio")) {
-        Icon(Icons.Default.AudioFile, "audio file", modifier)
-    } else if (contentType.startsWith("video")) {
-        Icon(Icons.Default.VideoFile, "video file", modifier)
-    } else {
-        Icon(Icons.Default.AttachFile, "other file", modifier)
     }
 }
 
