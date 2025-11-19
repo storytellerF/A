@@ -1,25 +1,17 @@
 package com.storyteller_f.a.app.compose_app.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.eygraber.uri.Uri
 import com.mikepenz.markdown.compose.LocalMarkdownTypography
 import com.mikepenz.markdown.compose.components.MarkdownComponentModel
 import com.mikepenz.markdown.compose.elements.highlightedCodeFence
+import com.storyteller_f.a.app.core.components.AudioViewEmbed
 import com.storyteller_f.a.app.core.components.PdfViewBlock
 import com.storyteller_f.a.app.core.components.RemoteMediaItem
+import com.storyteller_f.a.app.core.components.VideoViewEmbed
 import com.storyteller_f.a.app.core.components.getTexPath
 import com.storyteller_f.a.app.core.components.textUnitToPx
 import com.storyteller_f.shared.commonJson
@@ -170,18 +162,4 @@ private fun LatexBlock(
         textUnitToPx(textStyle.fontSize)
     )
     AsyncImage(model = path.toString(), contentDescription = "math")
-}
-
-@Composable
-fun ObjectBlock(maxHeight: Dp = 200.dp, block: @Composable ColumnScope.() -> Unit) {
-    val shape = RoundedCornerShape(20.dp)
-    Column(
-        modifier = Modifier
-            .heightIn(max = maxHeight)
-            .background(MaterialTheme.colorScheme.surfaceContainer, shape)
-            .clip(shape)
-
-    ) {
-        block()
-    }
 }

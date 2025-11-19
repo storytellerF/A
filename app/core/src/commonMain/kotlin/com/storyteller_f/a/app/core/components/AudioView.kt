@@ -1,7 +1,6 @@
-package com.storyteller_f.a.app.compose_app.components
+package com.storyteller_f.a.app.core.components
 
 import androidx.compose.runtime.Composable
-import com.storyteller_f.a.app.core.components.RemoteMediaItem
 
 @Composable
 expect fun AudioViewEmbed(remoteMediaItem: RemoteMediaItem)

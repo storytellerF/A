@@ -1,4 +1,4 @@
-package com.storyteller_f.a.app.compose_app.components
+package com.storyteller_f.a.app.core.components
 
 import android.util.Rational
 import androidx.compose.foundation.background
@@ -36,34 +36,38 @@ import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.unit.dp
 import androidx.media3.session.MediaController
 import coil3.compose.AsyncImage
-import com.storyteller_f.a.app.core.components.LocalMediaPlaySession
-import com.storyteller_f.a.app.core.components.LocalMediaPlayerService
-import com.storyteller_f.a.app.core.components.MediaPlaySession
-import com.storyteller_f.a.app.core.components.RemoteMediaItem
-import com.storyteller_f.a.app.core.components.imageRequestInMarkdown
 import com.storyteller_f.shared.model.FileInfo
 import io.github.aakira.napier.Napier
 import kotlin.uuid.ExperimentalUuidApi
 
 @Composable
 actual fun AudioViewEmbed(remoteMediaItem: RemoteMediaItem) {
-    MediaPlayerEmbed(remoteMediaItem, { playingSession, localMediaPlaySession ->
-        AudioPlayer(playingSession, localMediaPlaySession, remoteMediaItem)
-    })
+    MediaPlayerEmbed(
+        remoteMediaItem,
+        { playingSession, localMediaPlaySession ->
+            AudioPlayer(playingSession, localMediaPlaySession, remoteMediaItem)
+        }
+    )
 }
 
 @Composable
 actual fun AudioViewFilled(remoteMediaItem: RemoteMediaItem) {
-    MediaPlayerFilled(remoteMediaItem, { playingSession, localMediaPlaySession ->
-        AudioPlayer(playingSession, localMediaPlaySession, remoteMediaItem)
-    })
+    MediaPlayerFilled(
+        remoteMediaItem,
+        { playingSession, localMediaPlaySession ->
+            AudioPlayer(playingSession, localMediaPlaySession, remoteMediaItem)
+        }
+    )
 }
 
 @Composable
 actual fun AudioViewFullScreen(remoteMediaItem: RemoteMediaItem) {
-    MediaPlayerFullScreen(remoteMediaItem, { playingSession, localMediaPlaySession ->
-        AudioPlayer(playingSession, localMediaPlaySession, remoteMediaItem)
-    })
+    MediaPlayerFullScreen(
+        remoteMediaItem,
+        { playingSession, localMediaPlaySession ->
+            AudioPlayer(playingSession, localMediaPlaySession, remoteMediaItem)
+        }
+    )
 }
 
 @OptIn(ExperimentalUuidApi::class)
@@ -75,14 +79,17 @@ private fun AudioPlayer(
 ) {
     val mediaPlayerService = LocalMediaPlayerService.current
     val player by mediaPlayerService.controller.collectAsState(null)
-    val playerState by rememberPlayerState(player, localMediaPlaySession)
+    val playerState by rememberPlayerState(
+        player,
+        localMediaPlaySession
+    )
     val enablePip =
         playerState.currentIsPlaying && (playingSession?.lastUuid == localMediaPlaySession.uuid)
     Napier.d(tag = "MediaPlayer") {
         "VideoPlayer ${localMediaPlaySession.uuid} enablePip: $enablePip"
     }
     val ratio = Rational(16, 9)
-    val pipModifier = Modifier.androidPipMode(enablePip, ratio)
+    val pipModifier = Modifier.Companion.androidPipMode(enablePip, ratio)
     Box(modifier = pipModifier.aspectRatio(ratio.toFloat())) {
         when {
             player == null -> PlayerWaiting(localMediaPlaySession, remoteMediaItem)
@@ -139,7 +146,10 @@ private fun RowScope.AudioDetail(
         contentAlignment = Alignment.Center
     ) {
         Column(modifier = Modifier.padding(10.dp)) {
-            val state by rememberPlayerState(player, localMediaPlaySession)
+            val state by rememberPlayerState(
+                player,
+                localMediaPlaySession
+            )
             if (state.currentLoading) {
                 CircularProgressIndicator(modifier = Modifier.size(40.dp))
             } else {

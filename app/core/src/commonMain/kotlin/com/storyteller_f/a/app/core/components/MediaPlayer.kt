@@ -1,6 +1,17 @@
 package com.storyteller_f.a.app.core.components
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.serialization.Serializable
 import kotlin.uuid.ExperimentalUuidApi
@@ -56,4 +67,19 @@ expect abstract class MediaPlayerService {
     val state: MutableStateFlow<MediaPlaySession?>
 
     abstract fun fullscreen(remoteMediaItem: RemoteMediaItem)
+    abstract suspend fun start(remoteMediaItem: RemoteMediaItem, localMediaPlaySession: LocalMediaPlaySession)
+}
+
+@Composable
+fun MediaObjectBlock(maxHeight: Dp = 200.dp, block: @Composable ColumnScope.() -> Unit) {
+    val shape = RoundedCornerShape(20.dp)
+    Column(
+        modifier = Modifier
+            .heightIn(max = maxHeight)
+            .background(MaterialTheme.colorScheme.surfaceContainer, shape)
+            .clip(shape)
+
+    ) {
+        block()
+    }
 }

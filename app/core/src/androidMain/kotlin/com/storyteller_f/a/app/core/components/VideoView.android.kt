@@ -1,4 +1,4 @@
-package com.storyteller_f.a.app.compose_app.components
+package com.storyteller_f.a.app.core.components
 
 import android.app.PictureInPictureParams
 import android.content.ClipData
@@ -39,11 +39,6 @@ import androidx.core.util.Consumer
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.ui.PlayerView
-import com.storyteller_f.a.app.core.components.LocalMediaPlaySession
-import com.storyteller_f.a.app.core.components.LocalMediaPlayerService
-import com.storyteller_f.a.app.core.components.LocalToaster
-import com.storyteller_f.a.app.core.components.MediaPlaySession
-import com.storyteller_f.a.app.core.components.RemoteMediaItem
 import com.storyteller_f.shared.model.FileInfo
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.launch
@@ -59,23 +54,32 @@ const val EXTRA_CONTROL_PAUSE = 2
 
 @Composable
 actual fun VideoViewEmbed(remoteMediaItem: RemoteMediaItem) {
-    MediaPlayerEmbed(remoteMediaItem, { playingSession, localMediaPlaySession ->
-        VideoPlayer(playingSession, localMediaPlaySession, remoteMediaItem)
-    })
+    MediaPlayerEmbed(
+        remoteMediaItem,
+        { playingSession, localMediaPlaySession ->
+            VideoPlayer(playingSession, localMediaPlaySession, remoteMediaItem)
+        }
+    )
 }
 
 @Composable
 actual fun VideoViewFullScreen(remoteMediaItem: RemoteMediaItem) {
-    MediaPlayerFullScreen(remoteMediaItem, { playingSession, localMediaPlaySession ->
-        VideoPlayer(playingSession, localMediaPlaySession, remoteMediaItem)
-    })
+    MediaPlayerFullScreen(
+        remoteMediaItem,
+        { playingSession, localMediaPlaySession ->
+            VideoPlayer(playingSession, localMediaPlaySession, remoteMediaItem)
+        }
+    )
 }
 
 @Composable
 actual fun VideoViewFilled(remoteMediaItem: RemoteMediaItem) {
-    MediaPlayerFilled(remoteMediaItem, { playingSession, localMediaPlaySession ->
-        VideoPlayer(playingSession, localMediaPlaySession, remoteMediaItem)
-    })
+    MediaPlayerFilled(
+        remoteMediaItem,
+        { playingSession, localMediaPlaySession ->
+            VideoPlayer(playingSession, localMediaPlaySession, remoteMediaItem)
+        }
+    )
 }
 
 @OptIn(ExperimentalUuidApi::class)
@@ -101,7 +105,10 @@ private fun VideoPlayer(
     Napier.d {
         "VideoPlayer ${localMediaPlaySession.uuid} ratio $ratio ${playingSession?.uuids} $videoSize"
     }
-    val playerState by rememberPlayerState(player, localMediaPlaySession)
+    val playerState by rememberPlayerState(
+        player,
+        localMediaPlaySession
+    )
     val enablePip =
         playerState.currentIsPlaying && (playingSession?.lastUuid == localMediaPlaySession.uuid)
     Napier.d(tag = "MediaPlayer") {
@@ -148,7 +155,10 @@ private fun BoxScope.VideoPlayerInternal(
             }
             it.player = player
         }
-        val playerState by rememberPlayerState(player, localMediaPlaySession)
+        val playerState by rememberPlayerState(
+            player,
+            localMediaPlaySession
+        )
         if (playerState.currentIsPlaying && contentType != FileInfo.M3U8_MIMETYPE) {
             CircularProgressIndicator(
                 modifier = Modifier

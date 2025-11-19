@@ -1,7 +1,5 @@
-package com.storyteller_f.a.app.compose_app.components
+package com.storyteller_f.a.app.core.components
 
-import android.content.Context
-import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -41,35 +39,12 @@ import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
 import androidx.media3.session.MediaController
 import coil3.compose.AsyncImage
-import com.storyteller_f.a.app.compose_app.AppGlobalDialogController
-import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
-import com.storyteller_f.a.app.compose_app.utils.parseM3UPlayList
-import com.storyteller_f.a.app.core.components.ConstPlayItem
-import com.storyteller_f.a.app.core.components.CustomVideoSize
-import com.storyteller_f.a.app.core.components.LocalMediaPlaySession
-import com.storyteller_f.a.app.core.components.LocalMediaPlayerService
-import com.storyteller_f.a.app.core.components.MediaPlaySession
-import com.storyteller_f.a.app.core.components.MediaPlayerService
-import com.storyteller_f.a.app.core.components.RemoteMediaItem
-import com.storyteller_f.a.app.core.components.Toast
-import com.storyteller_f.a.app.core.components.imageRequestInMarkdown
 import com.storyteller_f.shared.model.FileInfo
-import com.storyteller_f.shared.utils.UNIT_RESULT
 import io.github.aakira.napier.Napier
-import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import org.schabi.newpipe.ReCaptchaActivity
-import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.StreamingService
-import org.schabi.newpipe.extractor.StreamingService.LinkType.CHANNEL
-import org.schabi.newpipe.extractor.StreamingService.LinkType.NONE
-import org.schabi.newpipe.extractor.StreamingService.LinkType.PLAYLIST
-import org.schabi.newpipe.extractor.StreamingService.LinkType.STREAM
-import org.schabi.newpipe.extractor.exceptions.ReCaptchaException
 import org.schabi.newpipe.extractor.playlist.PlaylistInfo
 import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.StreamType
@@ -164,27 +139,36 @@ fun EmbedMediaPlayerContainer(
     var showSheet by remember {
         mutableStateOf(false)
     }
-    ObjectBlock {
+    MediaObjectBlock {
         Box(modifier = Modifier.weight(1f)) {
             block(playingSession, localMediaPlaySession)
         }
-        EmbedMediaPlayerMenus(localMediaPlaySession, playingSession, contentType) {
+        EmbedMediaPlayerMenus(
+            localMediaPlaySession,
+            playingSession,
+            contentType
+        ) {
             showSheet = true
         }
     }
     val sheetState = rememberModalBottomSheetState()
     val mediaPlayerService = LocalMediaPlayerService.current
     if (playingSession?.lastUuid == localMediaPlaySession.uuid) {
-        VideoPlaylistPicker(showSheet, sheetState, {
-            showSheet = false
-        }, playingSession.playList) { _, i ->
+        VideoPlaylistPicker(
+            showSheet,
+            sheetState,
+            {
+                showSheet = false
+            },
+            playingSession.playList
+        ) { _, i ->
             switchPlaylist(i, mediaPlayerService)
         }
     }
 }
 
-private fun switchPlaylist(i: Int, playerComponent1: MediaPlayerService) {
-    val player = playerComponent1.controller.value ?: return
+private fun switchPlaylist(i: Int, mediaPlayerService: MediaPlayerService) {
+    val player = mediaPlayerService.controller.value ?: return
 
     player.seekTo(i, 0)
     player.play()
@@ -219,22 +203,11 @@ fun BoxScope.PlayerWaiting(
                 .fillMaxSize()
         )
     }
-    val scope = rememberCoroutineScope()
-    val client = remember {
-        HttpClient()
-    }
-    val context = LocalContext.current
-    val globalDialogController = LocalGlobalDialog.current
     val mediaPlayerService = LocalMediaPlayerService.current
+    val scope = rememberCoroutineScope()
     IconButton({
         scope.launch {
-            globalDialogController.startPlay(
-                remoteMediaItem,
-                client,
-                localMediaPlaySession,
-                context,
-                mediaPlayerService
-            )
+            mediaPlayerService.start(remoteMediaItem, localMediaPlaySession)
         }
     }, modifier = Modifier.align(Alignment.Center)) {
         Icon(Icons.Default.PlayArrow, "play")
@@ -260,78 +233,7 @@ fun BoxScope.PlayerWaiting(
     }
 }
 
-@OptIn(ExperimentalUuidApi::class)
-private suspend fun AppGlobalDialogController.startPlay(
-    remoteMediaItem: RemoteMediaItem,
-    client: HttpClient,
-    localMediaPlaySession: LocalMediaPlaySession,
-    context: Context,
-    playerComponent: MediaPlayerService
-) {
-    val contentType = remoteMediaItem.contentType
-    useResult {
-        val playList = when (contentType) {
-            FileInfo.M3U8_MIMETYPE -> parseM3UPlayList(remoteMediaItem, client)
-            FileInfo.YOUTUBE_MIMETYPE, FileInfo.SOUND_CLOUD_MIME_TYPE -> getPlaylistFromNewPipe(
-                remoteMediaItem,
-                context
-            )
-
-            else -> listOf(ConstPlayItem(remoteMediaItem.url, title = remoteMediaItem.url))
-        }
-        if (playList.isNotEmpty()) {
-            val newSession = MediaPlaySession(
-                remoteMediaItem,
-                playList,
-                listOf(localMediaPlaySession.uuid),
-                null
-            )
-            playerComponent.get(newSession) { player, s ->
-                player.playNewMedia(s.playList, contentType)
-            }
-            UNIT_RESULT
-        } else {
-            Result.failure(Exception("can't play"))
-        }
-    }
-}
-
-suspend fun getPlaylistFromNewPipe(
-    remoteMediaItem: RemoteMediaItem,
-    context: Context
-): List<ConstPlayItem> {
-    val s = NewPipe.getServiceByUrl(remoteMediaItem.url)
-    val name = when (remoteMediaItem.contentType) {
-        FileInfo.YOUTUBE_MIMETYPE -> "YouTube"
-        FileInfo.SOUND_CLOUD_MIME_TYPE -> "SoundCloud"
-        else -> null
-    } ?: return emptyList()
-    if (s.serviceInfo.name != name) {
-        return emptyList()
-    }
-    val supportStreamType = if (remoteMediaItem.contentType.startsWith("video/")) {
-        listOf(StreamType.VIDEO_STREAM)
-    } else {
-        listOf(StreamType.AUDIO_STREAM)
-    }
-    try {
-        return withContext(Dispatchers.IO) {
-            val type = s.getLinkTypeByUrl(remoteMediaItem.url)
-            when (type) {
-                null, NONE, CHANNEL -> emptyList()
-                STREAM -> getPlayItemFromStreamInfo(StreamInfo.getInfo(s, remoteMediaItem.url))
-                PLAYLIST -> getPlayListInList(s, remoteMediaItem, supportStreamType)
-            }
-        }
-    } catch (e: ReCaptchaException) {
-        context.startActivity(Intent(context, ReCaptchaActivity::class.java).apply {
-            putExtra(ReCaptchaActivity.RECAPTCHA_URL_EXTRA, e.url)
-        })
-        return emptyList()
-    }
-}
-
-private fun getPlayListInList(
+fun getPlayListInList(
     s: StreamingService,
     remoteMediaItem: RemoteMediaItem,
     supportStreamType: List<StreamType>
@@ -362,7 +264,7 @@ private fun getPlayListInList(
     }
 }
 
-private fun getPlayItemFromStreamInfo(info: StreamInfo): List<ConstPlayItem> {
+fun getPlayItemFromStreamInfo(info: StreamInfo): List<ConstPlayItem> {
     return when (val streamType = info.streamType) {
         StreamType.VIDEO_STREAM -> {
             val firstOrNull = info.videoStreams.firstOrNull()
@@ -429,7 +331,8 @@ fun rememberPlayerState(
     val mediaPlayerService = LocalMediaPlayerService.current
     DisposableEffect(localMediaPlaySession, player) {
         val customListener =
-            buildListener(player, object : VideoListener {
+            buildListener(player, object :
+                VideoListener {
                 override fun onPlayStateChange(isPlaying: Boolean) {
                     Napier.d(tag = "MediaPlayer") {
                         "rememberPlayerState ${localMediaPlaySession.uuid} playStateChange $isPlaying"
@@ -471,7 +374,7 @@ fun rememberPlayerState(
     }
 }
 
-private fun MediaController.playNewMedia(
+fun MediaController.playNewMedia(
     playList: List<ConstPlayItem>,
     contentType: String
 ) {

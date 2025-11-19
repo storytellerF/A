@@ -1,4 +1,4 @@
-package com.storyteller_f.a.app.compose_app.components
+package com.storyteller_f.a.app.core.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -12,10 +12,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
-import com.storyteller_f.a.app.core.components.BaseSheet
-import com.storyteller_f.a.app.core.components.CustomVideoSize
-import com.storyteller_f.a.app.core.components.PlayItem
-import com.storyteller_f.a.app.core.components.RemoteMediaItem
 
 @Composable
 expect fun VideoViewEmbed(remoteMediaItem: RemoteMediaItem)
