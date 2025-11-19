@@ -65,7 +65,7 @@ import com.storyteller_f.a.app.compose_app.common.MarkdownMediasViewModel
 import com.storyteller_f.a.app.compose_app.common.OnTopicCreated
 import com.storyteller_f.a.app.compose_app.common.TopicComposeData
 import com.storyteller_f.a.app.compose_app.common.getMarkdownMediasViewModel
-import com.storyteller_f.a.app.compose_app.components.TopicContentView
+import com.storyteller_f.a.app.compose_app.components.AppTopicContentView
 import com.storyteller_f.a.app.compose_app.edit
 import com.storyteller_f.a.app.compose_app.pages.community.getCommunityFont
 import com.storyteller_f.a.app.compose_app.pages.community.getFontFamily
@@ -343,7 +343,7 @@ private fun PreviewTopicInternal(
         modifier = Modifier.fillMaxSize().navigationBarsPadding().padding(horizontal = 20.dp)
     ) {
         item {
-            TopicContentView(topicInfo)
+            AppTopicContentView(topicInfo)
         }
     }
 }

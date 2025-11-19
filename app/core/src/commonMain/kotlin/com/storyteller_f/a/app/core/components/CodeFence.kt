@@ -1,4 +1,4 @@
-package com.storyteller_f.a.app.compose_app.components
+package com.storyteller_f.a.app.core.components
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -8,17 +8,12 @@ import com.eygraber.uri.Uri
 import com.mikepenz.markdown.compose.LocalMarkdownTypography
 import com.mikepenz.markdown.compose.components.MarkdownComponentModel
 import com.mikepenz.markdown.compose.elements.highlightedCodeFence
-import com.storyteller_f.a.app.core.components.AudioViewEmbed
-import com.storyteller_f.a.app.core.components.PdfViewBlock
-import com.storyteller_f.a.app.core.components.RemoteMediaItem
-import com.storyteller_f.a.app.core.components.VideoViewEmbed
-import com.storyteller_f.a.app.core.components.getTexPath
-import com.storyteller_f.a.app.core.components.textUnitToPx
 import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.utils.MarkdownObject
 import com.storyteller_f.shared.utils.getLang
 import com.storyteller_f.shared.utils.readCodeFence
+import kotlin.collections.get
 
 @Composable
 fun CustomCodeFence(

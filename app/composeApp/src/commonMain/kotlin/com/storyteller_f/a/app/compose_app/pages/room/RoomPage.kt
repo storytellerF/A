@@ -77,7 +77,6 @@ import com.storyteller_f.a.app.compose_app.common.createRoomKeysViewModel
 import com.storyteller_f.a.app.compose_app.common.createRoomTopicsViewModel
 import com.storyteller_f.a.app.compose_app.common.createRoomViewModel
 import com.storyteller_f.a.app.compose_app.common.hasRouteFlow
-import com.storyteller_f.a.app.compose_app.components.RoomIcon
 import com.storyteller_f.a.app.compose_app.components.RoomTopicList
 import com.storyteller_f.a.app.compose_app.error
 import com.storyteller_f.a.app.compose_app.exit_room
@@ -102,6 +101,7 @@ import com.storyteller_f.a.app.core.components.CustomAlertDialogController
 import com.storyteller_f.a.app.core.components.DialogContainer
 import com.storyteller_f.a.app.core.components.IconRes
 import com.storyteller_f.a.app.core.components.LocalToaster
+import com.storyteller_f.a.app.core.components.RoomIcon
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.Toast
 import com.storyteller_f.a.app.core.components.emitEvent

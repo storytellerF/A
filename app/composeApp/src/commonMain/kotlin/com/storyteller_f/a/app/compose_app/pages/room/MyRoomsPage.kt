@@ -33,8 +33,8 @@ import com.storyteller_f.a.app.compose_app.common.IdCommunityViewModel
 import com.storyteller_f.a.app.compose_app.common.RoomsViewModel
 import com.storyteller_f.a.app.compose_app.common.createCommunityViewModel
 import com.storyteller_f.a.app.compose_app.common.createJoinedRoomsViewModel
-import com.storyteller_f.a.app.compose_app.components.RoomIcon
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityIconWithDialog
+import com.storyteller_f.a.app.core.components.RoomIcon
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.bottomAppending
 import com.storyteller_f.a.app.core.components.pagingItems
