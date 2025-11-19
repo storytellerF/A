@@ -1,5 +1,6 @@
 package com.storyteller_f.a.panel.pages
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -24,6 +25,7 @@ import com.storyteller_f.a.app.core.components.CustomBottomNav
 import com.storyteller_f.a.app.core.components.NavRoute
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.pagingItems
+import com.storyteller_f.a.panel.LocalPanelNav
 import com.storyteller_f.a.panel.Res
 import com.storyteller_f.a.panel.address_label
 import com.storyteller_f.a.panel.aid_label
@@ -41,6 +43,7 @@ import com.storyteller_f.a.panel.tab_received_titles
 import com.storyteller_f.a.panel.user_info
 import com.storyteller_f.a.panel.user_logs
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.type.ObjectType
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
@@ -112,9 +115,11 @@ private fun UserJoinedCommunitiesSection(uid: PrimaryKey) {
             pagingItems(items, key = { it.id }) { index ->
                 val info = items[index]
                 if (info != null) {
+                    val panelNav = LocalPanelNav.current
                     ListItem(
                         headlineContent = { Text(info.name) },
-                        overlineContent = { Text(info.aid) }
+                        overlineContent = { Text(info.aid) },
+                        modifier = Modifier.clickable { panelNav.gotoCommunityDetail(info.id) }
                     )
                     HorizontalDivider()
                 } else {
@@ -134,12 +139,14 @@ private fun UserJoinedRoomsSection(uid: PrimaryKey) {
             pagingItems(items, key = { it.id }) { index ->
                 val info = items[index]
                 if (info != null) {
+                    val panelNav = LocalPanelNav.current
                     ListItem(
                         headlineContent = { Text(info.name) },
                         supportingContent = {
                             val creator = info.creator.toString()
                             Text(listOf(creator).filter { it.isNotEmpty() }.joinToString(" • "))
-                        }
+                        },
+                        modifier = Modifier.clickable { panelNav.gotoRoomDetail(info.id) }
                     )
                     HorizontalDivider()
                 } else {
@@ -159,9 +166,11 @@ private fun UserReceivedTitlesSection(uid: PrimaryKey) {
             pagingItems(items, key = { it.id }) { index ->
                 val info = items[index]
                 if (info != null) {
+                    val panelNav = LocalPanelNav.current
                     ListItem(
                         headlineContent = { Text(info.name) },
-                        supportingContent = { Text(info.type.name) }
+                        supportingContent = { Text(info.type.name) },
+                        modifier = Modifier.clickable { panelNav.gotoTitleDetail(info.id) }
                     )
                     HorizontalDivider()
                 } else {
@@ -181,9 +190,11 @@ private fun UserCreatedFilesSection(uid: PrimaryKey) {
             pagingItems(items, key = { it.id }) { index ->
                 val info = items[index]
                 if (info != null) {
+                    val panelNav = LocalPanelNav.current
                     ListItem(
                         headlineContent = { Text(info.name) },
-                        supportingContent = { Text(info.contentType) }
+                        supportingContent = { Text(info.contentType) },
+                        modifier = Modifier.clickable { panelNav.gotoFileDetail(info.id) }
                     )
                     HorizontalDivider()
                 } else {
@@ -203,6 +214,7 @@ private fun UserLogsTab(uid: PrimaryKey) {
             pagingItems(items, key = { it.id }) { index ->
                 val info = items[index]
                 if (info != null) {
+                    val panelNav = LocalPanelNav.current
                     ListItem(
                         headlineContent = { Text(info.type.name) },
                         supportingContent = { Text(
@@ -212,7 +224,18 @@ private fun UserLogsTab(uid: PrimaryKey) {
                                 info.objectId.toString(),
                                 info.createdTime.toString()
                             )
-                        ) }
+                        ) },
+                        modifier = Modifier.clickable {
+                            when (info.objectType) {
+                                ObjectType.USER -> panelNav.gotoUserDetail(info.objectId)
+                                ObjectType.COMMUNITY -> panelNav.gotoCommunityDetail(info.objectId)
+                                ObjectType.ROOM -> panelNav.gotoRoomDetail(info.objectId)
+                                ObjectType.TOPIC -> panelNav.gotoTopicDetail(info.objectId)
+                                ObjectType.TITLE -> panelNav.gotoTitleDetail(info.objectId)
+                                ObjectType.FILE -> panelNav.gotoFileDetail(info.objectId)
+                                else -> {}
+                            }
+                        }
                     )
                     HorizontalDivider()
                 } else {
