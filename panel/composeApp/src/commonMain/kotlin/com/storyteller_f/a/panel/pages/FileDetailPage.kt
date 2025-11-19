@@ -8,11 +8,15 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.filled.FilePresent
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -23,11 +27,12 @@ import com.storyteller_f.a.panel.common.createPanelFileViewModel
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FileDetailPage(id: PrimaryKey) {
     val pagerState = rememberPagerState { 2 }
     val scope = rememberCoroutineScope()
-    Scaffold(bottomBar = {
+    Scaffold(topBar = { FileTopBar(id) }, bottomBar = {
         val navRoutes = listOf(
             NavRoute("/info", Icons.Default.FilePresent, "Info"),
             NavRoute("/logs", Icons.AutoMirrored.Filled.Article, "Logs"),
@@ -47,6 +52,15 @@ fun FileDetailPage(id: PrimaryKey) {
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FileTopBar(id: PrimaryKey) {
+    val vm = createPanelFileViewModel(id)
+    val info by vm.handler.data.collectAsState(null)
+    val title = listOf("File Detail", info?.name ?: "").filter { it.isNotBlank() }.joinToString(" • ")
+    TopAppBar(title = { Text(title.ifBlank { "File Detail • $id" }) })
 }
 
 @Composable
