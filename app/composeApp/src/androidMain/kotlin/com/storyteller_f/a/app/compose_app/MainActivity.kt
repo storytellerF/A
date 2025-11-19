@@ -16,11 +16,11 @@ import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.MoreExecutors
 import com.kdroid.composenotification.builder.AndroidChannelConfig
 import com.kdroid.composenotification.builder.NotificationInitializer.notificationInitializer
-import com.storyteller_f.a.app.core.components.bindActivity
-import com.storyteller_f.a.app.core.components.unbindActivity
 import com.storyteller_f.a.app.compose_app.utils.initEnvironment
 import com.storyteller_f.a.app.core.PlaybackService
 import com.storyteller_f.a.app.core.components.LocalMediaPlayerService
+import com.storyteller_f.a.app.core.components.bindActivity
+import com.storyteller_f.a.app.core.components.unbindActivity
 import com.storyteller_f.shared.isRunningOnRobolectric
 import io.github.aakira.napier.Napier
 import io.github.vinceglb.filekit.FileKit
