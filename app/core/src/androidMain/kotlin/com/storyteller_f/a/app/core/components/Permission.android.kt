@@ -54,10 +54,10 @@ actual fun requestPermission(permission: Permission) {
 }
 
 var launcherRef: WeakReference<ActivityResultLauncher<String>>? = null
-var mainAppRef: WeakReference<ComponentActivity>? = null
+var mainActivityRef: WeakReference<ComponentActivity>? = null
 
 fun bindActivity(activity: ComponentActivity) {
-    mainAppRef = WeakReference(activity)
+    mainActivityRef = WeakReference(activity)
     val currentState = activity.lifecycle.currentState
     if (currentState.isAtLeast(Lifecycle.State.CREATED) &&
         !currentState.isAtLeast(Lifecycle.State.DESTROYED)

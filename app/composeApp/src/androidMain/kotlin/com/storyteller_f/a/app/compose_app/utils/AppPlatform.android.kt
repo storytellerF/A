@@ -33,10 +33,10 @@ import com.storyteller_f.a.app.compose_app.BubbleActivity
 import com.storyteller_f.a.app.compose_app.MainActivity
 import com.storyteller_f.a.app.compose_app.RTCActivity
 import com.storyteller_f.a.app.compose_app.common.getDeepLink
-import com.storyteller_f.a.app.compose_app.components.mainAppRef
 import com.storyteller_f.a.app.compose_app.getClipFile
 import com.storyteller_f.a.app.compose_app.getOrCreateNotificationChannel
 import com.storyteller_f.a.app.compose_app.initFromContext
+import com.storyteller_f.a.app.core.components.mainActivityRef
 import com.storyteller_f.shared.appContextRef
 import com.storyteller_f.shared.getAppContextRefValue
 import com.storyteller_f.shared.model.RoomInfo
@@ -51,7 +51,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 actual val appPlatform: AppPlatform
     get() {
-        val activity = mainAppRef?.get()
+        val activity = mainActivityRef?.get()
         val currentState = activity?.lifecycle?.currentState
         val isActive = currentState?.isAtLeast(Lifecycle.State.RESUMED) == true
         return AppPlatform(true, isActive, BuildConfig.DEBUG)

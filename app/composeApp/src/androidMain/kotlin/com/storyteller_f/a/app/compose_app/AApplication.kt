@@ -4,10 +4,10 @@ import android.app.Application
 import android.content.Context
 import android.content.Intent
 import android.os.StrictMode
-import com.storyteller_f.a.app.compose_app.components.mainAppRef
 import com.storyteller_f.a.app.core.components.LocalMediaPlaySession
 import com.storyteller_f.a.app.core.components.MediaPlayerService
 import com.storyteller_f.a.app.core.components.RemoteMediaItem
+import com.storyteller_f.a.app.core.components.mainActivityRef
 import com.storyteller_f.a.app.core.components.startPlay
 import com.storyteller_f.shared.appContextRef
 import com.storyteller_f.shared.commonJson
@@ -32,7 +32,7 @@ class AApplication : Application() {
     @OptIn(DelicateCoroutinesApi::class)
     val mediaPlayer = object : MediaPlayerService() {
         override fun fullscreen(remoteMediaItem: RemoteMediaItem) {
-            val context = mainAppRef?.get() ?: return
+            val context = mainActivityRef?.get() ?: return
             context.startActivity(Intent(context, MediaPlayerActivity::class.java).apply {
 //                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 //                addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
