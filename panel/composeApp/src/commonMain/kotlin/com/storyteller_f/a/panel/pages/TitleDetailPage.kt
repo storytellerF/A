@@ -46,7 +46,7 @@ fun TitleDetailPage(id: PrimaryKey) {
             }
         }
     }) { paddingValues ->
-        Column(Modifier.padding(top = paddingValues.calculateTopPadding())) {
+        Column(Modifier.padding(paddingValues)) {
             HorizontalPager(pagerState) { pageIndex ->
                 when (pageIndex) {
                     0 -> TitleInfoTabs(id)
