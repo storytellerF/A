@@ -18,6 +18,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.storyteller_f.a.app.core.components.RoomIcon
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.pagingItems
 import com.storyteller_f.a.panel.LocalPanelNav
@@ -54,6 +56,9 @@ fun AllPrivateRoomsPageInternal(viewModel: AllPrivateRoomsViewModel) {
                             val aid = info.aid
                             ListItem(
                                 modifier = Modifier.clickable { panelNav.gotoRoomDetail(info.id) },
+                                leadingContent = {
+                                    RoomIcon(info, 40.dp, false) {}
+                                },
                                 headlineContent = { Text(info.name) },
                                 overlineContent = { Text(aid) },
                                 supportingContent = {

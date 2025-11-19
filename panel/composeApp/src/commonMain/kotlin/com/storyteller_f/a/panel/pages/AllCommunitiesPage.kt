@@ -16,6 +16,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.storyteller_f.a.app.core.components.CommunityIcon
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.pagingItems
 import com.storyteller_f.a.panel.LocalPanelNav
@@ -53,6 +55,9 @@ fun AllCommunitiesPageInternal(viewModel: AllCommunitiesViewModel) {
                         if (info != null) {
                             ListItem(
                                 modifier = Modifier.clickable { panelNav.gotoCommunityDetail(info.id) },
+                                leadingContent = {
+                                    CommunityIcon(info, 40.dp, false) {}
+                                },
                                 headlineContent = { Text(info.name) },
                                 overlineContent = { Text(info.aid) },
                                 supportingContent = {
