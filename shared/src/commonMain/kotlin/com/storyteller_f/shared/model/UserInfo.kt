@@ -1,6 +1,7 @@
 package com.storyteller_f.shared.model
 
 import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
+import com.storyteller_f.shared.type.MemberStatus
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.datetime.LocalDate
@@ -98,3 +99,15 @@ data class QuotaInfo(
     @Serializable
     data class Extensions(val uploadRecord: UploadRecordInfo? = null)
 }
+
+@Serializable
+data class MemberInfo(
+    override val id: PrimaryKey,
+    val uid: PrimaryKey,
+    val objectId: PrimaryKey,
+    override val objectType: ObjectType,
+    val status: MemberStatus,
+    val joinedTime: LocalDate,
+    val invitedTime: LocalDate?,
+    val userInfo: UserInfo,
+) : PrimaryKeyIdentifiable

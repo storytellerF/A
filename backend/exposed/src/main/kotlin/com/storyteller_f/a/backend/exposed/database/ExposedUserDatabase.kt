@@ -5,6 +5,7 @@ import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.UserDatabase
+import com.storyteller_f.a.backend.core.paginationFromResults
 import com.storyteller_f.a.backend.core.types.AssetTransaction
 import com.storyteller_f.a.backend.core.types.ChildAccount
 import com.storyteller_f.a.backend.core.types.RawChildAccount
@@ -367,13 +368,10 @@ class ExposedUserDatabase(
         }
     }
 
-    override suspend fun getAllUsers(primaryKeyFetch: PrimaryKeyFetch) = runCatching {
-        val rawUsers = getUserListByPredicate({
-            bindPaginationQuery(Users, primaryKeyFetch)
-        }, ::mapUserInfo).getOrThrow()
-        val total = getUserCount().getOrThrow()
-        PaginationResult(rawUsers, total)
-    }
+    override suspend fun getAllUsers(primaryKeyFetch: PrimaryKeyFetch) = paginationFromResults(
+        getUserListByPredicate({ bindPaginationQuery(Users, primaryKeyFetch) }, ::mapUserInfo),
+        getUserCount()
+    )
 
     override suspend fun getUserCount() = getUserCountByPredicate()
 
@@ -410,21 +408,21 @@ class ExposedUserDatabase(
         count()
     }
 
-    override suspend fun getUserLogs(uid: PrimaryKey, fetch: PrimaryKeyFetch) = runCatching {
-        val logs = databaseSession.dbSearch {
-            search {
-                UserLogs.selectAll().where {
-                    UserLogs.uid eq uid
-                }.orderBy(UserLogs.id, SortOrder.DESC).bindPaginationQuery(UserLogs, fetch)
+    override suspend fun getUserLogs(uid: PrimaryKey, fetch: PrimaryKeyFetch) =
+        paginationFromResults(
+            databaseSession.dbSearch {
+                search {
+                    UserLogs.selectAll().where {
+                        UserLogs.uid eq uid
+                    }.orderBy(UserLogs.id, SortOrder.DESC).bindPaginationQuery(UserLogs, fetch)
+                }
+                map(UserLog::wrapRow)
+            },
+            databaseSession.dbSearch {
+                search {
+                    UserLogs.select(UserLogs.id).where { UserLogs.uid eq uid }
+                }
+                count()
             }
-            map(UserLog::wrapRow)
-        }.getOrThrow()
-        val total = databaseSession.dbSearch {
-            search {
-                UserLogs.select(UserLogs.id).where { UserLogs.uid eq uid }
-            }
-            count()
-        }.getOrThrow()
-        PaginationResult(logs, total)
-    }
+        )
 }

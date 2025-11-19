@@ -89,8 +89,8 @@ class ExposedRoomDatabase(
     override suspend fun getRoomPubKeyPaginationResult(
         roomId: PrimaryKey,
         primaryKeyFetch: PrimaryKeyFetch,
-    ) = runCatching {
-        val list = databaseSession.dbSearch {
+    ) = com.storyteller_f.a.backend.core.paginationFromResults(
+        databaseSession.dbSearch {
             search {
                 Users.join(Members, JoinType.INNER, Users.id, Members.uid)
                     .select(Users.id, Users.publicKey).where {
@@ -100,8 +100,8 @@ class ExposedRoomDatabase(
             map {
                 UserPubKeyInfo(it[Users.id], it[Users.publicKey])
             }
-        }.getOrThrow()
-        val total = databaseSession.dbSearch {
+        },
+        databaseSession.dbSearch {
             search {
                 Users.join(Members, JoinType.INNER, Users.id, Members.uid)
                     .selectAll().where {
@@ -109,9 +109,8 @@ class ExposedRoomDatabase(
                     }
             }
             count()
-        }.getOrThrow()
-        PaginationResult(list, total)
-    }
+        }
+    )
 
     override suspend fun getRawRoom(
         objectFetch: ObjectFetch,

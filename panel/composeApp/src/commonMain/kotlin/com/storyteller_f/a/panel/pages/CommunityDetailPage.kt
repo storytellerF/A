@@ -1,5 +1,6 @@
 package com.storyteller_f.a.panel.pages
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -22,6 +23,9 @@ import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.core.components.CustomBottomNav
 import com.storyteller_f.a.app.core.components.NavRoute
 import com.storyteller_f.a.app.core.components.StateView
+import com.storyteller_f.a.app.core.components.pagingItems
+import com.storyteller_f.a.panel.LocalPanelNav
+import com.storyteller_f.a.panel.common.createPanelCommunityMembersViewModel
 import com.storyteller_f.a.panel.common.createPanelCommunityViewModel
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
@@ -56,6 +60,7 @@ fun CommunityDetailPage(id: PrimaryKey) {
 private fun CommunityInfoTabs(id: PrimaryKey) {
     val tabs = listOf(
         "Basic info",
+        "Members",
     )
     val pagerState = rememberPagerState { tabs.size }
     val scope = rememberCoroutineScope()
@@ -69,8 +74,11 @@ private fun CommunityInfoTabs(id: PrimaryKey) {
                 }
             }
         }
-        HorizontalPager(pagerState, modifier = Modifier.weight(1f)) { _ ->
-            CommunityBasicInfoSection(id)
+        HorizontalPager(pagerState, modifier = Modifier.weight(1f)) { pageIndex ->
+            when (pageIndex) {
+                0 -> CommunityBasicInfoSection(id)
+                else -> CommunityMembersTab(id)
+            }
         }
     }
 }
@@ -99,6 +107,31 @@ private fun CommunityLogsTab() {
         items(1) {
             ListItem(headlineContent = { Text("None") })
             HorizontalDivider()
+        }
+    }
+}
+
+@Composable
+private fun CommunityMembersTab(id: PrimaryKey) {
+    val nav = LocalPanelNav.current
+    val vm = createPanelCommunityMembersViewModel(id)
+    StateView(vm, modifier = Modifier.fillMaxSize()) { items ->
+        LazyColumn {
+            pagingItems(items, key = { it.userInfo.id }) {
+                val m = items[it]
+                if (m != null) {
+                    ListItem(
+                        modifier = Modifier.clickable { nav.gotoUserDetail(m.userInfo.id) },
+                        headlineContent = { Text(m.userInfo.nickname) },
+                        supportingContent = {
+                            val joined = m.joinedTime.toString()
+                            val status = m.status.name
+                            Text(listOf(joined, status).joinToString(" • "))
+                        }
+                    )
+                    HorizontalDivider()
+                }
+            }
         }
     }
 }

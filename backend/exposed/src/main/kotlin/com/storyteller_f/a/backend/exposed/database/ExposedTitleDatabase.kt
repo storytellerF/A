@@ -1,8 +1,8 @@
 package com.storyteller_f.a.backend.exposed.database
 
-import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.TitleDatabase
+import com.storyteller_f.a.backend.core.paginationFromResults
 import com.storyteller_f.a.backend.core.types.RawTitle
 import com.storyteller_f.a.backend.core.types.Title
 import com.storyteller_f.a.backend.exposed.ExposedDatabaseSession
@@ -14,7 +14,6 @@ import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.mapResult
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.r2dbc.Query
 import org.jetbrains.exposed.v1.r2dbc.andWhere
@@ -27,16 +26,15 @@ class ExposedTitleDatabase(val exposedDatabaseSession: ExposedDatabaseSession) :
         searchType: TitleSearchType,
         type: TitleType?,
         scopeId: PrimaryKey?
-    ) = getTitleListByPredicate {
-        buildTitleSearchQuery(searchType, uid, type, scopeId)
-            .bindPaginationQuery(Titles, primaryKeyFetch)
-    }.mapResult { list ->
+    ) = paginationFromResults(
+        getTitleListByPredicate {
+            buildTitleSearchQuery(searchType, uid, type, scopeId)
+                .bindPaginationQuery(Titles, primaryKeyFetch)
+        },
         getTitleCountByPredicate {
             buildTitleSearchQuery(searchType, uid, type, scopeId)
-        }.map { count ->
-            PaginationResult(list, count)
         }
-    }
+    )
 
     fun Query.buildTitleSearchQuery(
         searchType: TitleSearchType,
@@ -63,13 +61,12 @@ class ExposedTitleDatabase(val exposedDatabaseSession: ExposedDatabaseSession) :
         return rows
     }
 
-    override suspend fun getAllRawTitles(primaryKeyFetch: PrimaryKeyFetch) = runCatching {
-        val titles = getTitleListByPredicate {
+    override suspend fun getAllRawTitles(primaryKeyFetch: PrimaryKeyFetch) = paginationFromResults(
+        getTitleListByPredicate {
             bindPaginationQuery(Titles, primaryKeyFetch)
-        }.getOrThrow()
-        val count = getTitleCountByPredicate().getOrThrow()
-        PaginationResult(titles, count)
-    }
+        },
+        getTitleCountByPredicate()
+    )
 
     override suspend fun getTitleCount() = getTitleCountByPredicate()
 

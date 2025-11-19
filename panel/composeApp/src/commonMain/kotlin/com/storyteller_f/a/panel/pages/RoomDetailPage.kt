@@ -1,13 +1,17 @@
 package com.storyteller_f.a.panel.pages
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.filled.People
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
@@ -19,6 +23,9 @@ import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.core.components.CustomBottomNav
 import com.storyteller_f.a.app.core.components.NavRoute
 import com.storyteller_f.a.app.core.components.StateView
+import com.storyteller_f.a.app.core.components.pagingItems
+import com.storyteller_f.a.panel.LocalPanelNav
+import com.storyteller_f.a.panel.common.createPanelRoomMembersViewModel
 import com.storyteller_f.a.panel.common.createPanelRoomViewModel
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
@@ -51,7 +58,7 @@ fun RoomDetailPage(id: PrimaryKey) {
 
 @Composable
 private fun RoomInfoTabs(id: PrimaryKey) {
-    val tabs = listOf("Basic info")
+    val tabs = listOf("Basic info", "Members")
     val pagerState = rememberPagerState { tabs.size }
     val scope = rememberCoroutineScope()
     Column {
@@ -64,8 +71,11 @@ private fun RoomInfoTabs(id: PrimaryKey) {
                 }
             }
         }
-        HorizontalPager(pagerState, modifier = Modifier.weight(1f)) { _ ->
-            RoomBasicInfoSection(id)
+        HorizontalPager(pagerState, modifier = Modifier.weight(1f)) { pageIndex ->
+            when (pageIndex) {
+                0 -> RoomBasicInfoSection(id)
+                else -> RoomMembersTab(id)
+            }
         }
     }
 }
@@ -86,4 +96,29 @@ private fun RoomBasicInfoSection(id: PrimaryKey) {
 @Composable
 private fun RoomLogsTab() {
     Column(Modifier.padding(16.dp)) { Text("None") }
+}
+
+@Composable
+private fun RoomMembersTab(id: PrimaryKey) {
+    val nav = LocalPanelNav.current
+    val vm = createPanelRoomMembersViewModel(id)
+    StateView(vm, modifier = Modifier.fillMaxSize()) { items ->
+        LazyColumn {
+            pagingItems(items, key = { it.userInfo.id }) {
+                val m = items[it]
+                if (m != null) {
+                    ListItem(
+                        modifier = Modifier.clickable { nav.gotoUserDetail(m.userInfo.id) },
+                        headlineContent = { Text(m.userInfo.nickname) },
+                        supportingContent = {
+                            val joined = m.joinedTime.toString()
+                            val status = m.status.name
+                            Text(listOf(joined, status).joinToString(" • "))
+                        }
+                    )
+                    HorizontalDivider()
+                }
+            }
+        }
+    }
 }

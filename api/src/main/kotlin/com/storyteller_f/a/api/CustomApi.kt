@@ -12,6 +12,7 @@ import com.storyteller_f.route4k.common.safeApiWithQueryAndPath
 import com.storyteller_f.shared.model.ChildAccountInfo
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.FileInfo
+import com.storyteller_f.shared.model.MemberInfo
 import com.storyteller_f.shared.model.MemberPolicy
 import com.storyteller_f.shared.model.PanelAccountInfo
 import com.storyteller_f.shared.model.PanelOverview
@@ -598,6 +599,15 @@ object AdminApi {
             safeApiWithQuery<ServerResponse<CommunityInfo>, PaginationQuery>("/admin/communities")
         object Id {
             val get = safeApiWithPath<CommunityInfo, CommonPath>("/admin/communities/{id}")
+            object Members {
+                val get =
+                    safeApiWithQueryAndPath<
+                        ServerResponse<MemberInfo>,
+                        PaginationQuery,
+                        CommonPath>(
+                        "/admin/communities/{id}/members"
+                    )
+            }
         }
     }
 
@@ -608,6 +618,15 @@ object AdminApi {
             safeApiWithQuery<ServerResponse<RoomInfo>, PaginationQuery>("/admin/rooms/private")
         object Id {
             val get = safeApiWithPath<RoomInfo, CommonPath>("/admin/rooms/{id}")
+            object Members {
+                val get =
+                    safeApiWithQueryAndPath<
+                        ServerResponse<MemberInfo>,
+                        PaginationQuery,
+                        CommonPath>(
+                        "/admin/rooms/{id}/members"
+                    )
+            }
         }
     }
 

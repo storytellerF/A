@@ -22,6 +22,7 @@ import com.storyteller_f.a.backend.core.types.RawRoom
 import com.storyteller_f.a.backend.core.types.Room
 import com.storyteller_f.a.backend.core.types.toRoomInfo
 import com.storyteller_f.shared.model.Dimension
+import com.storyteller_f.shared.model.MemberInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleType
@@ -364,3 +365,7 @@ suspend fun Backend.getUserJoinedRooms(
     ).mapResult { (list, total) ->
         processRawRoomToRoomInfo(list).map { PaginationResult(it, total) }
     }
+suspend fun Backend.getRoomMemberInfos(
+    roomId: PrimaryKey,
+    primaryKeyFetch: PrimaryKeyFetch
+): Result<PaginationResult<MemberInfo>> = getContainerMemberInfos(roomId, primaryKeyFetch)

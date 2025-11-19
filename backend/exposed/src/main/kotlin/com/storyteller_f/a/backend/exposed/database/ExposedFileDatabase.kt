@@ -2,8 +2,8 @@ package com.storyteller_f.a.backend.exposed.database
 
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.FileDatabase
-import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
+import com.storyteller_f.a.backend.core.paginationFromResults
 import com.storyteller_f.a.backend.core.types.FileRecord
 import com.storyteller_f.a.backend.core.types.UploadRecord
 import com.storyteller_f.a.backend.exposed.ExposedDatabaseSession
@@ -106,19 +106,17 @@ class ExposedFileDatabase(val databaseSession: ExposedDatabaseSession) : FileDat
     override suspend fun getFileRecordPaginationList(
         uid: PrimaryKey,
         primaryKeyFetch: PrimaryKeyFetch,
-    ) = runCatching {
-        val r1 = getFileRecordListByPredicate {
+    ) = paginationFromResults(
+        getFileRecordListByPredicate {
             where { FileRecords.owner eq uid }.bindPaginationQuery(FileRecords, primaryKeyFetch)
-        }.getOrThrow()
-        val r2 = getFileRecordCountByPredicate { where { FileRecords.owner eq uid } }.getOrThrow()
-        PaginationResult(r1, r2)
-    }
+        },
+        getFileRecordCountByPredicate { where { FileRecords.owner eq uid } }
+    )
 
-    override suspend fun getAllFileRecordPaginationList(primaryKeyFetch: PrimaryKeyFetch) = runCatching {
-        val r1 = getFileRecordListByPredicate { bindPaginationQuery(FileRecords, primaryKeyFetch) }.getOrThrow()
-        val r2 = getFileRecordCountByPredicate { this }.getOrThrow()
-        PaginationResult(r1, r2)
-    }
+    override suspend fun getAllFileRecordPaginationList(primaryKeyFetch: PrimaryKeyFetch) = paginationFromResults(
+        getFileRecordListByPredicate { bindPaginationQuery(FileRecords, primaryKeyFetch) },
+        getFileRecordCountByPredicate { this }
+    )
 
     override suspend fun insertFileRecord(
         fileRecordList: List<FileRecord>,
