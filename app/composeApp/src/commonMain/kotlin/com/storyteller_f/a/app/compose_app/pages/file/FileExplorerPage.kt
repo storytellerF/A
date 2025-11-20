@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -58,8 +59,6 @@ import androidx.navigation.NavOptions
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.itemKey
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalClientFileProvider
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
@@ -96,7 +95,6 @@ import com.storyteller_f.a.client.core.abortChunkUpload
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.QuotaInfo
 import com.storyteller_f.shared.obj.ObjectTuple
-import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.now
@@ -119,10 +117,8 @@ import kotlin.math.round
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3WindowSizeClassApi::class)
 @Composable
-fun FileExplorerPage() {
-    val my = LocalUserInfo.current ?: return
+fun FileExplorerPage(mediaTarget: ObjectTuple) {
     val size = calculateWindowSizeClass()
-    val mediaTarget = my.id ob ObjectType.USER
     when (size.widthSizeClass) {
         WindowWidthSizeClass.Compact -> FileExplorerCompatPageInternal(mediaTarget)
         else -> FileExplorerNonCompatPageInternal(mediaTarget)
@@ -130,8 +126,8 @@ fun FileExplorerPage() {
 }
 
 @Composable
-private fun fileNavRoutes(): List<NavRoute> {
-    return listOf(
+private fun fileNavRoutes(mediaTarget: ObjectTuple): List<NavRoute> {
+    val list = mutableListOf(
         NavRoute(
             "/uploaded",
             Icons.Filled.Folder,
@@ -141,20 +137,25 @@ private fun fileNavRoutes(): List<NavRoute> {
             "/upload-record",
             Icons.Filled.CloudUpload,
             "Upload"
-        ),
-        NavRoute(
-            "/download-record",
-            Icons.Filled.Download,
-            "Download"
         )
     )
+    if (mediaTarget.objectType == ObjectType.USER) {
+        list.add(
+            NavRoute(
+                "/download-record",
+                Icons.Filled.Download,
+                "Download"
+            )
+        )
+    }
+    return list
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FileExplorerCompatPageInternal(mediaTarget: ObjectTuple) {
-    val pagerState = rememberPagerState { 3 }
-    val navRoutes = fileNavRoutes()
+    val navRoutes = fileNavRoutes(mediaTarget)
+    val pagerState = rememberPagerState { navRoutes.size }
     var showQuota by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
     Scaffold(floatingActionButton = {
@@ -194,7 +195,7 @@ private fun FileExplorerPager(
     ) { index ->
         when (index) {
             0 -> UploadedPage(mediaTarget = mediaTarget)
-            1 -> UploadRecordPage()
+            1 -> UploadRecordPage(mediaTarget = mediaTarget)
             else -> DownloadRecordPage()
         }
     }
@@ -203,7 +204,7 @@ private fun FileExplorerPager(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FileExplorerNonCompatPageInternal(mediaTarget: ObjectTuple) {
-    val navRoutes = fileNavRoutes()
+    val navRoutes = fileNavRoutes(mediaTarget)
     val navigator = rememberNavController()
     val current by navigator.currentBackStackEntryFlow.collectAsState(null)
     var showQuota by remember { mutableStateOf(false) }
@@ -229,7 +230,7 @@ private fun FileExplorerNonCompatPageInternal(mediaTarget: ObjectTuple) {
                         UploadedPage(mediaTarget)
                     }
                     composable("/upload-record") {
-                        UploadRecordPage()
+                        UploadRecordPage(mediaTarget)
                     }
                     composable("/download-record") {
                         DownloadRecordPage()
@@ -270,24 +271,20 @@ private fun UploadFileActionButton() {
 private fun UploadedPage(mediaTarget: ObjectTuple) {
     val vm = createMediaListViewModel(mediaTarget)
     val appNavFactory = LocalAppNavFactory.current
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        StateView(vm) { pagingItems ->
-            LazyColumn(contentPadding = PaddingValues(10.dp)) {
-                topPrepend(pagingItems.loadState)
-                pagingItems(pagingItems, key = { it.id }) {
-                    val item: FileInfo? = pagingItems[it]
-                    FileCell(item) { items ->
-                        val first = items.firstOrNull()
-                        if (first != null) {
-                            appNavFactory.newAppNav().gotoMedia(first)
-                        }
+    StateView(vm, modifier = Modifier.fillMaxSize()) { pagingItems ->
+        LazyColumn(contentPadding = PaddingValues(10.dp)) {
+            topPrepend(pagingItems.loadState)
+            pagingItems(pagingItems, key = { it.id }) {
+                val item: FileInfo? = pagingItems[it]
+                FileCell(item) { items ->
+                    val first = items.firstOrNull()
+                    if (first != null) {
+                        appNavFactory.newAppNav().gotoMedia(first)
                     }
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
                 }
-                bottomAppending(pagingItems.loadState)
+                HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
             }
+            bottomAppending(pagingItems.loadState)
         }
     }
 }
@@ -323,11 +320,17 @@ private fun QuotaSheet(
                     Text("上传记录: ${rec.name}")
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         LinearProgressIndicator(
-                            progress = { (rec.progress.toFloat() / rec.total.coerceAtLeast(1)).coerceIn(0f, 1f) },
+                            progress = {
+                                (rec.progress.toFloat() / rec.total.coerceAtLeast(1)).coerceIn(
+                                    0f,
+                                    1f
+                                )
+                            },
                             modifier = Modifier.weight(1f)
                         )
                         Spacer(modifier = Modifier.padding(horizontal = 8.dp))
-                        val uploadPercent = if (rec.total > 0) (rec.progress * 100f / rec.total) else 0f
+                        val uploadPercent =
+                            if (rec.total > 0) (rec.progress * 100f / rec.total) else 0f
                         Text("${uploadPercent.toInt()}%")
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -347,18 +350,18 @@ private fun QuotaSheet(
 }
 
 @Composable
-private fun UploadRecordPage() {
-    val my = LocalUserInfo.current ?: return
-    val viewModel = createUploadViewModel(my.id)
-    val pagingItems = viewModel.flow.collectAsLazyPagingItems()
-    LazyColumn(
-        contentPadding = PaddingValues(20.dp)
-    ) {
-        items(pagingItems.itemSnapshotList.size, key = pagingItems.itemKey { it.id }) {
-            val file = pagingItems[it]
-            UploadItem(file)
-            if (it != pagingItems.itemSnapshotList.size - 1) {
-                HorizontalDivider()
+private fun UploadRecordPage(mediaTarget: ObjectTuple) {
+    val viewModel = createUploadViewModel(mediaTarget.objectId)
+    StateView(viewModel, modifier = Modifier.fillMaxSize()) { items ->
+        LazyColumn(
+            contentPadding = PaddingValues(20.dp)
+        ) {
+            pagingItems(items, key = { it.id }) {
+                val file = items[it]
+                UploadItem(file)
+                if (it != items.itemSnapshotList.size - 1) {
+                    HorizontalDivider()
+                }
             }
         }
     }
@@ -368,14 +371,15 @@ private fun UploadRecordPage() {
 @Composable
 private fun DownloadRecordPage() {
     val vm = getDownloadListViewModel()
-    val items = vm.flow.collectAsLazyPagingItems()
-    LazyColumn(
-        contentPadding = PaddingValues(20.dp)
-    ) {
-        pagingItems(items, key = { it.fileInfo.id }) {
-            DownloadRecordItem(items[it])
-            if (it != items.itemSnapshotList.size - 1) {
-                HorizontalDivider()
+    StateView(vm, modifier = Modifier.fillMaxSize()) { items ->
+        LazyColumn(
+            contentPadding = PaddingValues(20.dp)
+        ) {
+            pagingItems(items, key = { it.fileInfo.id }) {
+                DownloadRecordItem(items[it])
+                if (it != items.itemSnapshotList.size - 1) {
+                    HorizontalDivider()
+                }
             }
         }
     }
@@ -914,7 +918,10 @@ private fun UploadInfoPageInternal(uploadViewModel: UploadDetailViewModel) {
 
 private fun getUploadProgress(info: UploadInfo?): Float {
     info ?: return 0f
-    return (info.progress.toFloat() / (if (info.total == 0L) 1 else info.total)).coerceIn(0f, 1f)
+    return (info.progress.toFloat() / (if (info.total == 0L) 1 else info.total)).coerceIn(
+        0f,
+        1f
+    )
 }
 
 @Composable
@@ -967,5 +974,9 @@ private fun UploadInfoTable(uploadInfo: UploadInfo?) {
 
 fun UploadInfo?.getPercent(): String {
     this ?: return "-"
-    return "${(progress.toFloat() * 100 / (if (total == 0L) 1 else total)).roundToDecimalPlaces(2)} %"
+    return "${
+        (progress.toFloat() * 100 / (if (total == 0L) 1 else total)).roundToDecimalPlaces(
+            2
+        )
+    } %"
 }
