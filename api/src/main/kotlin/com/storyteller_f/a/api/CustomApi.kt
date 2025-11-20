@@ -585,6 +585,15 @@ object AdminApi {
                         "/admin/users/{id}/logs"
                     )
             }
+
+            object UploadRecords {
+                val get =
+                    safeApiWithQueryAndPath<ServerResponse<com.storyteller_f.shared.model.UploadRecordInfo>,
+                        PaginationQuery,
+                        CommonPath>(
+                        "/admin/users/{id}/upload-records"
+                    )
+            }
         }
     }
 

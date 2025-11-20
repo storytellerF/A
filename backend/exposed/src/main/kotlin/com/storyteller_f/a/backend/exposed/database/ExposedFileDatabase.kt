@@ -233,6 +233,22 @@ class ExposedFileDatabase(val databaseSession: ExposedDatabaseSession) : FileDat
         }
     }
 
+    override suspend fun getUploadRecordPaginationList(
+        uid: PrimaryKey,
+        primaryKeyFetch: PrimaryKeyFetch,
+    ) = paginationFromResults(
+        getUploadRecordListByPredicate {
+            where {
+                UploadRecords.objectId eq uid and (UploadRecords.objectType eq ObjectType.USER)
+            }.bindPaginationQuery(UploadRecords, primaryKeyFetch)
+        },
+        getUploadRecordCountByPredicate {
+            where {
+                UploadRecords.objectId eq uid and (UploadRecords.objectType eq ObjectType.USER)
+            }
+        }
+    )
+
     private suspend fun getFileRecordListByPredicate(
         queryBuilder: Query.() -> Query = { this }
     ) = databaseSession.dbSearch {
@@ -247,6 +263,24 @@ class ExposedFileDatabase(val databaseSession: ExposedDatabaseSession) : FileDat
     ) = databaseSession.dbSearch {
         search {
             FileRecords.selectAll().queryBuilder()
+        }
+        count()
+    }
+
+    private suspend fun getUploadRecordListByPredicate(
+        queryBuilder: Query.() -> Query = { this }
+    ) = databaseSession.dbSearch {
+        search {
+            UploadRecords.selectAll().queryBuilder()
+        }
+        map(UploadRecord::wrapRow)
+    }
+
+    private suspend fun getUploadRecordCountByPredicate(
+        queryBuilder: Query.() -> Query = { this }
+    ) = databaseSession.dbSearch {
+        search {
+            UploadRecords.selectAll().queryBuilder()
         }
         count()
     }

@@ -122,6 +122,13 @@ fun createPanelUserLogsViewModel(
 }
 
 @Composable
+fun createPanelUserUploadRecordsViewModel(
+    uid: PrimaryKey
+) = panelViewModel(keys = listOf("user-upload-records", uid)) { sessionManager, _ ->
+    UserUploadRecordsViewModel(sessionManager, uid)
+}
+
+@Composable
 fun createPanelCommunityViewModel(
     id: PrimaryKey
 ) = panelViewModel(keys = listOf("community", id)) { sessionManager, modelStorage ->

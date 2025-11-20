@@ -538,6 +538,11 @@ interface FileDatabase {
 
     suspend fun getFileCount(): Result<Long>
     suspend fun getFileVolume(): Result<Long>
+
+    suspend fun getUploadRecordPaginationList(
+        uid: PrimaryKey,
+        primaryKeyFetch: PrimaryKeyFetch,
+    ): Result<PaginationResult<UploadRecord>>
 }
 
 interface ContainerDatabase {

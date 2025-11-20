@@ -22,8 +22,8 @@ import com.storyteller_f.a.client.core.getCommunityById
 import com.storyteller_f.a.client.core.getCommunityMembers
 import com.storyteller_f.a.client.core.getFileById
 import com.storyteller_f.a.client.core.getRoomById
-import com.storyteller_f.a.client.core.getRoomMembers
 import com.storyteller_f.a.client.core.getRoomFiles
+import com.storyteller_f.a.client.core.getRoomMembers
 import com.storyteller_f.a.client.core.getTitleById
 import com.storyteller_f.a.client.core.getTopicById
 import com.storyteller_f.a.client.core.getUserById
@@ -33,6 +33,7 @@ import com.storyteller_f.a.client.core.getUserJoinedRooms
 import com.storyteller_f.a.client.core.getUserLogs
 import com.storyteller_f.a.client.core.getUserOverview
 import com.storyteller_f.a.client.core.getUserReceivedTitles
+import com.storyteller_f.a.client.core.getUserUploadRecords
 import com.storyteller_f.a.client.core.overview
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.CommunityInfo
@@ -43,15 +44,16 @@ import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.UploadRecordInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.UserLogInfo
 import com.storyteller_f.shared.model.UserOverview
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.storage.CommunityCollection
+import com.storyteller_f.storage.FileCollection
 import com.storyteller_f.storage.ModelStorage
 import com.storyteller_f.storage.RoomCollection
-import com.storyteller_f.storage.FileCollection
 import com.storyteller_f.storage.TitleCollection
 import com.storyteller_f.storage.TopicCollection
 import com.storyteller_f.storage.UserCollection
@@ -425,6 +427,17 @@ class UserLogsViewModel(
     override val flow: Flow<PagingData<UserLogInfo>> = Pager(PagingConfig(pageSize = 20)) {
         RegularPagingSource { key, size ->
             sessionManager.getUserLogs(uid, PaginationQuery(key, size = size))
+        }
+    }.flow.cachedIn(viewModelScope)
+}
+
+class UserUploadRecordsViewModel(
+    private val sessionManager: PanelSessionManager,
+    private val uid: PrimaryKey,
+) : PagingViewModel<UploadRecordInfo>() {
+    override val flow: Flow<PagingData<UploadRecordInfo>> = Pager(PagingConfig(pageSize = 20)) {
+        RegularPagingSource { key, size ->
+            sessionManager.getUserUploadRecords(uid, PaginationQuery(key, size = size))
         }
     }.flow.cachedIn(viewModelScope)
 }

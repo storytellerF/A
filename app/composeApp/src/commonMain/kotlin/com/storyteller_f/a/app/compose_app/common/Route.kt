@@ -45,7 +45,6 @@ import com.storyteller_f.a.app.compose_app.pages.user.UserSubscriptionPage
 import com.storyteller_f.a.app.compose_app.utils.getDeepLinkHost
 import com.storyteller_f.a.app.compose_app.utils.getDeepLinkScheme
 import com.storyteller_f.a.app.core.components.FileViewData
-import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.ob
@@ -388,6 +387,7 @@ fun NavGraphBuilder.buildRootNav(
     navigator: NavHostController,
 ) {
     buildMainScreen()
+    buildSettingsScreen()
     buildComposeScreen(navigator)
     composable<AboutScreen> {
         val libraries by produceLibraries {
@@ -448,6 +448,22 @@ private fun NavGraphBuilder.buildMainScreen() {
         val route = it.toRoute<UserScreen>()
         UserPage(route.uid)
     }
+    composable<ReactionListScreen> {
+        val topicId = it.toRoute<ReactionListScreen>().topicId
+        ReactionListPage(topicId)
+    }
+    composable<FavoriteScreen> {
+        UserFavoritePage()
+    }
+    composable<SubscriptionScreen> {
+        UserSubscriptionPage()
+    }
+    composable<FileExplorerScreen> {
+        FileExplorerPage()
+    }
+}
+
+private fun NavGraphBuilder.buildSettingsScreen() {
     composable<UserSettingScreen> {
         UserSettingPage()
     }
@@ -461,19 +477,6 @@ private fun NavGraphBuilder.buildMainScreen() {
     composable<RoomSettingScreen> {
         val roomId = it.toRoute<RoomSettingScreen>().roomId
         RoomSettingPage(roomId)
-    }
-    composable<ReactionListScreen> {
-        val topicId = it.toRoute<ReactionListScreen>().topicId
-        ReactionListPage(topicId)
-    }
-    composable<FavoriteScreen> {
-        UserFavoritePage()
-    }
-    composable<SubscriptionScreen> {
-        UserSubscriptionPage()
-    }
-    composable<FileExplorerScreen> {
-        FileExplorerPage()
     }
 }
 
