@@ -464,31 +464,33 @@ fun CommonInputButton(
 ) {
     val alertDialogController = rememberAlertDialogController()
     val scope = rememberCoroutineScope()
-    when (state) {
-        is LoadingState.Done -> {
-            IconButton({
-                if (input.isBlank()) {
-                    scope.launch {
-                        alertDialogController.showTitle(getString(Res.string.input_is_empty))
+    Box(modifier = Modifier.size(40.dp), contentAlignment = Alignment.Center) {
+        when (state) {
+            is LoadingState.Done -> {
+                IconButton({
+                    if (input.isBlank()) {
+                        scope.launch {
+                            alertDialogController.showTitle(getString(Res.string.input_is_empty))
+                        }
+                    } else {
+                        send()
                     }
-                } else {
-                    send()
+                }, enabled = !isSending) {
+                    Icon(Icons.AutoMirrored.Default.Send, stringResource(Res.string.send))
                 }
-            }, enabled = !isSending) {
-                Icon(Icons.AutoMirrored.Default.Send, stringResource(Res.string.send))
             }
-        }
 
-        is LoadingState.Error -> {
-            IconButton({
-                alertDialogController.showErrorMessage(state.e)
-            }) {
-                Icon(Icons.Default.Error, stringResource(Res.string.error))
+            is LoadingState.Error -> {
+                IconButton({
+                    alertDialogController.showErrorMessage(state.e)
+                }) {
+                    Icon(Icons.Default.Error, stringResource(Res.string.error))
+                }
             }
-        }
 
-        else -> {
-            CircularProgressIndicator()
+            else -> {
+                CircularProgressIndicator()
+            }
         }
     }
 }
@@ -514,17 +516,21 @@ fun InputGroupInternal(
         Row(
             modifier = Modifier.padding(bottom = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+            horizontalArrangement = Arrangement.spacedBy(2.dp)
         ) {
             OutlinedTextField(input, {
                 updateInput(it)
             }, modifier = Modifier.weight(1f), suffix = {
-                InputGroupSuffix(input, updateInput, mediaTarget, gotoCompose)
+                if (input.isNotEmpty()) {
+                    Icon(Icons.Default.Clear, "clear input", modifier = Modifier.clickable {
+                        updateInput("")
+                    })
+                }
             })
 
-            Box(modifier = Modifier.size(40.dp), contentAlignment = Alignment.Center) {
-                sendButton()
-            }
+            InputGroupSuffix(input, updateInput, mediaTarget, gotoCompose)
+
+            sendButton()
         }
     }
 }
@@ -543,33 +549,27 @@ private fun InputGroupSuffix(
     var showSheet by remember {
         mutableStateOf(false)
     }
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        if (input.isNotEmpty()) {
-            Icon(Icons.Default.Clear, "clear input", modifier = Modifier.clickable {
-                updateInput("")
-            })
+
+    IconButton({
+        if (alreadySignIn) {
+            gotoCompose()
+        } else {
+            alertDialogController.showTitle("need sign in")
         }
+    }) {
         Icon(
             Icons.Default.OpenInFull,
             "open in full",
-            modifier = Modifier.clickable {
-                if (alreadySignIn) {
-                    gotoCompose()
-                } else {
-                    alertDialogController.showTitle("need sign in")
-                }
-            }
         )
-        Icon(Icons.Filled.PermMedia, contentDescription = null, modifier = Modifier.clickable {
-            if (alreadySignIn) {
-                showSheet = true
-            } else {
-                alertDialogController.showTitle("need sign in")
-            }
-        })
+    }
+    IconButton({
+        if (alreadySignIn) {
+            showSheet = true
+        } else {
+            alertDialogController.showTitle("need sign in")
+        }
+    }) {
+        Icon(Icons.Filled.PermMedia, contentDescription = null)
     }
     val sheetState = rememberModalBottomSheetState()
     FilePicker(
