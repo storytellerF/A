@@ -150,6 +150,13 @@ fun createPanelRoomMembersViewModel(
 }
 
 @Composable
+fun createPanelRoomFilesViewModel(
+    id: PrimaryKey
+) = panelViewModel(keys = listOf("room-files", id)) { sessionManager, modelStorage ->
+    RoomFilesViewModel(sessionManager, modelStorage, id)
+}
+
+@Composable
 fun createPanelTopicViewModel(
     id: PrimaryKey
 ) = panelViewModel(keys = listOf("topic", id)) { sessionManager, modelStorage ->

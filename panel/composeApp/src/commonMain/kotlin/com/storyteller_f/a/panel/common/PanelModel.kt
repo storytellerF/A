@@ -23,6 +23,7 @@ import com.storyteller_f.a.client.core.getCommunityMembers
 import com.storyteller_f.a.client.core.getFileById
 import com.storyteller_f.a.client.core.getRoomById
 import com.storyteller_f.a.client.core.getRoomMembers
+import com.storyteller_f.a.client.core.getRoomFiles
 import com.storyteller_f.a.client.core.getTitleById
 import com.storyteller_f.a.client.core.getTopicById
 import com.storyteller_f.a.client.core.getUserById
@@ -48,9 +49,9 @@ import com.storyteller_f.shared.model.UserOverview
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.storage.CommunityCollection
-import com.storyteller_f.storage.FileCollection
 import com.storyteller_f.storage.ModelStorage
 import com.storyteller_f.storage.RoomCollection
+import com.storyteller_f.storage.FileCollection
 import com.storyteller_f.storage.TitleCollection
 import com.storyteller_f.storage.TopicCollection
 import com.storyteller_f.storage.UserCollection
@@ -461,5 +462,23 @@ class RoomMembersViewModel(
         modelStorage.member
     ) { key, size ->
         sessionManager.getRoomMembers(roomId, PaginationQuery(key, size = size))
+    }.flow.cachedIn(viewModelScope)
+}
+
+class RoomFilesViewModel(
+    sessionManager: PanelSessionManager,
+    modelStorage: ModelStorage,
+    roomId: PrimaryKey,
+) : PagingViewModel<FileInfo>() {
+    private val modelCollection = FileCollection.FileList(roomId)
+
+    @OptIn(ExperimentalPagingApi::class)
+    override val flow: Flow<PagingData<FileInfo>> = buildPager(
+        modelCollection,
+        modelCollection.getName(),
+        modelStorage.remoteKey,
+        modelStorage.fileInfo
+    ) { key, size ->
+        sessionManager.getRoomFiles(roomId, PaginationQuery(key, size = size))
     }.flow.cachedIn(viewModelScope)
 }

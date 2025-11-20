@@ -12,6 +12,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.FilePresent
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -37,6 +38,7 @@ import com.storyteller_f.a.app.core.components.pagingItems
 import com.storyteller_f.a.panel.LocalPanelNav
 import com.storyteller_f.a.panel.common.createPanelRoomMembersViewModel
 import com.storyteller_f.a.panel.common.createPanelRoomViewModel
+import com.storyteller_f.a.panel.common.createPanelRoomFilesViewModel
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
 
@@ -94,7 +96,7 @@ private fun RoomTopBar(id: PrimaryKey) {
 
 @Composable
 private fun RoomInfoTabs(id: PrimaryKey) {
-    val tabs = listOf("Basic info", "Members")
+    val tabs = listOf("Basic info", "Members", "Files")
     val pagerState = rememberPagerState { tabs.size }
     val scope = rememberCoroutineScope()
     Column {
@@ -110,7 +112,8 @@ private fun RoomInfoTabs(id: PrimaryKey) {
         HorizontalPager(pagerState, modifier = Modifier.weight(1f)) { pageIndex ->
             when (pageIndex) {
                 0 -> RoomBasicInfoSection(id)
-                else -> RoomMembersTab(id)
+                1 -> RoomMembersTab(id)
+                else -> RoomFilesTab(id)
             }
         }
     }
@@ -151,6 +154,32 @@ private fun RoomMembersTab(id: PrimaryKey) {
                             val status = m.status.name
                             Text(listOf(joined, status).joinToString(" • "))
                         }
+                    )
+                    HorizontalDivider()
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RoomFilesTab(id: PrimaryKey) {
+    val nav = LocalPanelNav.current
+    val vm = createPanelRoomFilesViewModel(id)
+    StateView(vm, modifier = Modifier.fillMaxSize()) { items ->
+        LazyColumn {
+            pagingItems(items, key = { it.id }) {
+                val info = items[it]
+                if (info != null) {
+                    ListItem(
+                        modifier = Modifier.clickable { nav.gotoFileDetail(info.id) },
+                        headlineContent = { Text(info.name) },
+                        supportingContent = {
+                            val ct = info.contentType
+                            val s = listOf(ct).filter { it.isNotEmpty() }.joinToString(" • ")
+                            Text(s)
+                        },
+                        leadingContent = { Icon(Icons.Default.FilePresent, null) }
                     )
                     HorizontalDivider()
                 }

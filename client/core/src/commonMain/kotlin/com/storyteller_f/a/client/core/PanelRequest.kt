@@ -99,6 +99,10 @@ suspend fun PanelSessionManager.getUserFiles(uid: PrimaryKey, query: PaginationQ
     AdminApi.Users.Id.Files.get(query, CommonPath(uid))
 }
 
+suspend fun PanelSessionManager.getRoomFiles(roomId: PrimaryKey, query: PaginationQuery) = serviceCatching {
+    AdminApi.Rooms.Id.Files.get(query, CommonPath(roomId))
+}
+
 suspend fun PanelSessionManager.getUserLogs(uid: PrimaryKey, query: PaginationQuery) = serviceCatching {
     AdminApi.Users.Id.Logs.get(query, CommonPath(uid))
 }

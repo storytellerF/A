@@ -19,6 +19,7 @@ import com.storyteller_f.a.client.core.getAllTitles
 import com.storyteller_f.a.client.core.getAllTopics
 import com.storyteller_f.a.client.core.getAllUsers
 import com.storyteller_f.a.client.core.getCommunityMembers
+import com.storyteller_f.a.client.core.getRoomFiles
 import com.storyteller_f.a.client.core.getRoomMembers
 import com.storyteller_f.a.client.core.getUserById
 import com.storyteller_f.a.client.core.getUserFiles
@@ -354,6 +355,19 @@ class AdminTest {
         }.custom
         loginPanelSession(outer) {
             assertListSize(1, getRoomMembers(roomId, PaginationQuery()))
+        }
+    }
+
+    @Test
+    fun `admin room files`() = test {
+        val outer = attachPanelSession {}
+        val roomId = attachSession {
+            val r = createRoom(NewRoom("r1", "desc")).getOrThrow()
+            upload(r.id ob ObjectType.ROOM, getUploadDataFromText("hello room file")).getOrThrow()
+            r.id
+        }.custom
+        loginPanelSession(outer) {
+            assertListSize(1, getRoomFiles(roomId, PaginationQuery()))
         }
     }
 }
