@@ -27,7 +27,6 @@ import com.storyteller_f.shared.model.MemberInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleType
-import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.obj.UpdateRoomBody
 import com.storyteller_f.shared.obj.ob
@@ -318,14 +317,13 @@ suspend fun searchRoomMembers(
     uid: PrimaryKey?,
     q: CustomApi.Rooms.Id.Members.MemberQuery,
     f: PrimaryKeyFetch
-): Result<PaginationResult<UserInfo>?> =
-    backend.checkRootReadPermission(ObjectType.ROOM, p.id, uid).mapResultIfNotNull { permission ->
-        if (permission.hasRead) {
-            backend.searchMembers(p.id, q.word, f)
-        } else {
-            Result.failure(UnauthorizedException())
-        }
+) = backend.checkRootReadPermission(ObjectType.ROOM, p.id, uid).mapResultIfNotNull { permission ->
+    if (permission.hasRead) {
+        backend.searchContainerMembers(p.id, q.word, f)
+    } else {
+        Result.failure(UnauthorizedException())
     }
+}
 
 suspend fun Backend.searchRoomPaginationResult(
     uid: PrimaryKey?,

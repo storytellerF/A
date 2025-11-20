@@ -272,7 +272,7 @@ fun createTopicSearchInUserViewModel(
 fun createMemberSearchViewModel(word: String) = customViewModel(
     listOf("members", word)
 ) { sessionManager, databaseSource ->
-    MemberViewModel(sessionManager, databaseSource, 0, word, ObjectType.USER)
+    UserSearchViewModel(sessionManager, databaseSource, word)
 }
 
 @Composable
@@ -390,7 +390,7 @@ fun createSearchMemberInRoomViewModel(
         current
     )
 ) { sessionManager, databaseSource ->
-    MemberViewModel(sessionManager, databaseSource, scope.roomId, current, ObjectType.ROOM)
+    ContainerMemberViewModel(sessionManager, databaseSource, scope.roomId, current, ObjectType.ROOM)
 }
 
 @Composable
@@ -404,7 +404,7 @@ fun createMemberSearchInCommunityViewModel(
         current
     )
 ) { sessionManager, databaseSource ->
-    MemberViewModel(
+    ContainerMemberViewModel(
         sessionManager,
         databaseSource,
         scope.communityId,
@@ -435,7 +435,7 @@ fun createMemberViewModel(
         objectId
     )
 ) { sessionManager, databaseSource ->
-    MemberViewModel(sessionManager, databaseSource, objectId, "", objectType)
+    ContainerMemberViewModel(sessionManager, databaseSource, objectId, "", objectType)
 }
 
 @Composable

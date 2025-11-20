@@ -232,6 +232,21 @@ class ExposedContainerDatabase(val databaseSession: ExposedDatabaseSession) :
         }
     )
 
+    override suspend fun getMemberWithUserByUids(
+        objectId: PrimaryKey,
+        uidList: List<PrimaryKey>
+    ) = databaseSession.dbSearch {
+        search {
+            Users
+                .join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
+                .join(Members, JoinType.INNER, Users.id, Members.uid) {
+                    (Members.objectId eq objectId) and (Members.uid inList uidList)
+                }
+                .select(Users.fields + Aids.value + Members.fields)
+        }
+        map { row -> Pair(Member.wrapRow(row), mapUserInfo(row)) }
+    }
+
     override suspend fun getQuotaInfo(
         ownerId: PrimaryKey,
         quotaType: QuotaType

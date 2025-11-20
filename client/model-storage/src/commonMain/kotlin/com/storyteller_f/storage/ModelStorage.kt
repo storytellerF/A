@@ -235,14 +235,22 @@ interface RoomInfoStorage : CollectionItemStorageByIdAndKey<RoomCollection, Room
 interface ReactionInfoStorage : CollectionListStorage<ReactionCollection, ReactionInfo>
 
 sealed interface MemberCollection {
-    data class CommunityMembers(val objectId: PrimaryKey) : MemberCollection
-    data class RoomMembers(val objectId: PrimaryKey) : MemberCollection
+    data class CommunityMembers(val objectId: PrimaryKey, val word: String? = null) : MemberCollection
+    data class RoomMembers(val objectId: PrimaryKey, val word: String? = null) : MemberCollection
 }
 
 fun MemberCollection.getName(): String {
     return when (this) {
-        is MemberCollection.CommunityMembers -> "community_members_$objectId"
-        is MemberCollection.RoomMembers -> "room_members_$objectId"
+        is MemberCollection.CommunityMembers -> if (word.isNullOrBlank()) {
+            "community_members_$objectId"
+        } else {
+            "community_members_${objectId}_$word"
+        }
+        is MemberCollection.RoomMembers -> if (word.isNullOrBlank()) {
+            "room_members_$objectId"
+        } else {
+            "room_members_${objectId}_$word"
+        }
     }
 }
 

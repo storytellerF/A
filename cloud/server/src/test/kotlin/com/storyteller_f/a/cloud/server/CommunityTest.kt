@@ -172,25 +172,25 @@ class CommunityTest {
     }
 
     @Test
-    fun `test search community member`() = test {
-        val (_, _, community1) = attachSession {
+    fun `test jon community search member count`() = test {
+        val communityId = attachSession {
             createCommunity(NewCommunity("name1", "c1")).getOrThrow().id
-        }
+        }.custom
         attachSession {
-            assertListSize(1, searchCommunityMembers(community1, null, 10, null))
-            joinCommunity(community1)
-            assertListSize(2, searchCommunityMembers(community1, null, 10, null))
+            assertListSize(1, searchCommunityMembers(communityId, null, 10, null))
+            joinCommunity(communityId)
+            assertListSize(2, searchCommunityMembers(communityId, null, 10, null))
         }
     }
 
     @Test
     fun `test get other user joined communities`() = test {
-        val (_, id, _) = attachSession {
+        val id = attachSession {
             repeat(10) {
                 val communityInfo = createCommunity(NewCommunity("c$it", "c$it")).getOrThrow()
                 joinCommunity(communityInfo.id).getOrThrow()
             }
-        }
+        }.uid
         noneSession {
             val response =
                 searchCommunity(10, JoinStatusSearch.JOINED, target = id).getOrThrow()

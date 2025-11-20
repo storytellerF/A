@@ -253,7 +253,7 @@ object CustomApi {
                 ) : PageableQuery
 
                 val get =
-                    safeApiWithQueryAndPath<ServerResponse<UserInfo>, CommunityMemberQuery, CommonPath>(
+                    safeApiWithQueryAndPath<ServerResponse<MemberInfo>, CommunityMemberQuery, CommonPath>(
                         "communities/{id}/members"
                     )
                 val join =
@@ -309,7 +309,7 @@ object CustomApi {
                     PageableQuery
 
                 val get =
-                    safeApiWithQueryAndPath<ServerResponse<UserInfo>, MemberQuery, CommonPath>("rooms/{id}/members")
+                    safeApiWithQueryAndPath<ServerResponse<MemberInfo>, MemberQuery, CommonPath>("rooms/{id}/members")
                 val join =
                     mutationApiWithPath<RoomInfo, Unit, CommonPath>(
                         "rooms/{id}/members",

@@ -27,6 +27,7 @@ import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.ChildAccountInfo
 import com.storyteller_f.shared.model.Dimension
+import com.storyteller_f.shared.model.MemberInfo
 import com.storyteller_f.shared.model.PassType
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.UserLogInfo
@@ -341,44 +342,80 @@ suspend fun Backend.isKeyVerified(
     }
 }
 
-suspend fun Backend.searchMembers(
-    objectId: PrimaryKey?,
+/**
+ * 搜索 room/community 的成员列表
+ * @param objectId 容器 ID（room 或 community）
+ * @param word 搜索关键字，可选
+ * @return 返回 MemberInfo 列表，包含成员关系信息
+ */
+suspend fun Backend.searchContainerMembers(
+    objectId: PrimaryKey,
     word: String?,
     primaryKeyFetch: PrimaryKeyFetch,
-): Result<PaginationResult<UserInfo>?> {
+): Result<PaginationResult<MemberInfo>> {
     val result = if (word.isNullOrBlank()) {
-        database.container.getMemberPaginationResult(
-            objectId,
-            word,
-            primaryKeyFetch
-        )
-    } else if (objectId != null) {
-        // 同时有关键字和 objectId，使用 MemberSearchService
+        // 无关键字，直接获取成员列表
+        database.container.getMemberWithUserPaginationResult(objectId, primaryKeyFetch)
+    } else {
+        // 有关键字，使用 MemberSearchService 搜索
         memberSearchService.searchDocument(
             MemberDocumentSearch.Keyword(objectId = objectId, nickname = word),
             primaryKeyFetch
-        ).mapResult { (list, total) ->
-            database.user.getRawUsers(ObjectListFetch.IdListFetch(list.map {
-                it.uid
-            })).map {
-                PaginationResult(it, total)
+        ).mapResult { (searchResults, total) ->
+            // 从搜索结果中提取 uid 列表
+            val uidList = searchResults.map { it.uid }
+            // 获取 member 和 user 信息
+            database.container.getMemberWithUserByUids(objectId, uidList).map { memberUserPairs ->
+                PaginationResult(memberUserPairs, total)
             }
         }
-    } else {
-        // 只有关键字，使用 UserSearchService
-        userSearchService.searchDocument(UserDocumentSearch.Keyword(listOf(word)), primaryKeyFetch)
-            .mapResult { (list, total) ->
-                database.user.getRawUsers(ObjectListFetch.IdListFetch(list.map {
-                    it.id
-                })).map {
-                    PaginationResult(it, total)
-                }
-            }
     }
 
-    return result.mapResult { paginationResult ->
-        processRawUserToUserInfo(paginationResult.list).map {
-            PaginationResult(it, paginationResult.total)
+    return result.mapResult { (list, total) ->
+        val rawUsers = list.map { it.second }
+        processRawUserToUserInfo(rawUsers).map { users ->
+            val userMap = users.associateBy { it.id }
+            PaginationResult(
+                list.map { (member, rawUser) ->
+                    MemberInfo(
+                        id = member.id,
+                        uid = member.uid,
+                        objectId = member.objectId,
+                        objectType = member.objectType,
+                        status = member.status,
+                        joinedTime = (member.joinedTime ?: member.createdTime).date,
+                        invitedTime = member.invitedTime?.date,
+                        userInfo = userMap[rawUser.user.id]!!
+                    )
+                },
+                total
+            )
+        }
+    }
+}
+
+/**
+ * 搜索用户
+ * @param word 搜索关键字
+ * @return 返回 UserInfo 列表
+ */
+suspend fun Backend.searchUsers(
+    word: String?,
+    primaryKeyFetch: PrimaryKeyFetch,
+): Result<PaginationResult<UserInfo>?> {
+    if (word.isNullOrBlank()) {
+        return Result.success(null)
+    }
+    return userSearchService.searchDocument(
+        UserDocumentSearch.Keyword(listOf(word)),
+        primaryKeyFetch
+    ).mapResult { (list, total) ->
+        database.user.getRawUsers(ObjectListFetch.IdListFetch(list.map {
+            it.id
+        })).mapResult {
+            processRawUserToUserInfo(it).map { users ->
+                PaginationResult(users, total)
+            }
         }
     }
 }
