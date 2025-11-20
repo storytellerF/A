@@ -47,7 +47,6 @@ import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalGlobalTask
 import com.storyteller_f.a.app.compose_app.LocalUserInfo
 import com.storyteller_f.a.app.compose_app.common.OnTopicCreated
-import com.storyteller_f.a.app.compose_app.common.TopicComposeData
 import com.storyteller_f.a.app.compose_app.common.TopicViewModel
 import com.storyteller_f.a.app.compose_app.common.TopicsViewModel
 import com.storyteller_f.a.app.compose_app.common.createRoomViewModel

@@ -107,11 +107,14 @@ class CommonDialogController(val shown: MutableState<Boolean> = mutableStateOf(f
 }
 
 @Composable
-fun DialogContainer(block: @Composable ColumnScope.() -> Unit) {
+fun DialogContainer(
+    verticalArrangement: Arrangement.Vertical = Arrangement.Top,
+    block: @Composable ColumnScope.() -> Unit
+) {
     Surface(shape = RoundedCornerShape(8.dp)) {
         Column(
             modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = verticalArrangement
         ) {
             block()
         }

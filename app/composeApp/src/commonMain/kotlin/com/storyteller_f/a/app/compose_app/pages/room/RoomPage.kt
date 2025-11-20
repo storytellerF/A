@@ -72,7 +72,6 @@ import com.storyteller_f.a.app.compose_app.common.OnRoomExited
 import com.storyteller_f.a.app.compose_app.common.OnRoomJoined
 import com.storyteller_f.a.app.compose_app.common.RoomKeysViewModel
 import com.storyteller_f.a.app.compose_app.common.RoomScreen
-import com.storyteller_f.a.app.compose_app.common.TopicComposeData
 import com.storyteller_f.a.app.compose_app.common.createRoomKeysViewModel
 import com.storyteller_f.a.app.compose_app.common.createRoomTopicsViewModel
 import com.storyteller_f.a.app.compose_app.common.createRoomViewModel
@@ -87,6 +86,7 @@ import com.storyteller_f.a.app.compose_app.pages.community.CommunityRefCell
 import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
 import com.storyteller_f.a.app.compose_app.pages.topic.FilePicker
+import com.storyteller_f.a.app.compose_app.pages.topic.TopicComposeData
 import com.storyteller_f.a.app.compose_app.pages.topic.insertContent
 import com.storyteller_f.a.app.compose_app.pages.user.ButtonBadgeSuffix
 import com.storyteller_f.a.app.compose_app.permission_denied

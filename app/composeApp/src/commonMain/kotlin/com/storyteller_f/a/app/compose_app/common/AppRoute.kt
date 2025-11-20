@@ -34,6 +34,7 @@ import com.storyteller_f.a.app.compose_app.pages.room.RoomPage
 import com.storyteller_f.a.app.compose_app.pages.room.RoomSettingPage
 import com.storyteller_f.a.app.compose_app.pages.title.TitleComposePage
 import com.storyteller_f.a.app.compose_app.pages.topic.ReactionListPage
+import com.storyteller_f.a.app.compose_app.pages.topic.TopicComposeData
 import com.storyteller_f.a.app.compose_app.pages.topic.TopicComposePage
 import com.storyteller_f.a.app.compose_app.pages.topic.TopicPage
 import com.storyteller_f.a.app.compose_app.pages.user.LoginPage
@@ -46,7 +47,6 @@ import com.storyteller_f.a.app.compose_app.utils.getDeepLinkHost
 import com.storyteller_f.a.app.compose_app.utils.getDeepLinkScheme
 import com.storyteller_f.a.app.core.components.FileViewData
 import com.storyteller_f.shared.model.FileInfo
-import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -56,7 +56,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import kotlin.reflect.KClass
@@ -83,66 +82,45 @@ data object AboutScreen
 data class UserScreen(val uid: PrimaryKey)
 
 @Serializable
-data class TopicComposeScreen(val json: String)
+data class TopicComposePublicRoomScreen(
+    val roomId: PrimaryKey,
+    val communityId: PrimaryKey,
+)
 
 @Serializable
-sealed interface TopicComposeData {
-    fun getMediaTarget(): ObjectTuple?
-    fun getParent(): ObjectTuple
+data class TopicComposePublicRoomTopicScreen(
+    val roomId: PrimaryKey,
+    val communityId: PrimaryKey,
+    val topicId: PrimaryKey
+)
 
-    @Serializable
-    @SerialName("public-room")
-    data class PublicRoom(
-        val roomId: PrimaryKey,
-        val communityId: PrimaryKey,
-        val parentTuple: ObjectTuple
-    ) : TopicComposeData {
-        override fun getMediaTarget(): ObjectTuple? {
-            return null
-        }
+@Serializable
+data class TopicComposePrivateRoomScreen(
+    val roomId: PrimaryKey,
+)
 
-        override fun getParent() = parentTuple
-    }
+@Serializable
+data class TopicComposePrivateRoomTopicScreen(
+    val roomId: PrimaryKey,
+    val topicId: PrimaryKey
+)
 
-    @Serializable
-    @SerialName("private-room")
-    data class PrivateRoom(
-        val roomId: PrimaryKey,
-        val parentTuple: ObjectTuple
-    ) : TopicComposeData {
-        override fun getMediaTarget(): ObjectTuple {
-            return roomId ob ObjectType.ROOM
-        }
+@Serializable
+data class TopicComposeUserScreen(
+    val uid: PrimaryKey,
+)
 
-        override fun getParent() = parentTuple
-    }
+@Serializable
+data class TopicComposeUserTopicScreen(
+    val uid: PrimaryKey,
+    val topicId: PrimaryKey
+)
 
-    @Serializable
-    @SerialName("user")
-    data class User(
-        val uid: PrimaryKey,
-        val objectTuple: ObjectTuple
-    ) : TopicComposeData {
-        override fun getMediaTarget(): ObjectTuple? {
-            return null
-        }
+@Serializable
+data class TopicComposeCommunityScreen(val communityId: PrimaryKey)
 
-        override fun getParent() = objectTuple
-    }
-
-    @Serializable
-    @SerialName("community")
-    data class Community(val communityId: PrimaryKey, val objectTuple: ObjectTuple) :
-        TopicComposeData {
-        override fun getMediaTarget(): ObjectTuple? {
-            return null
-        }
-
-        override fun getParent(): ObjectTuple {
-            return objectTuple
-        }
-    }
-}
+@Serializable
+data class TopicComposeCommunityTopicScreen(val communityId: PrimaryKey, val topicId: PrimaryKey)
 
 @Serializable
 data class RoomMemberScreen(val objectId: PrimaryKey)
@@ -299,11 +277,66 @@ fun newAppNav(navigator: NavHostController, scope: CoroutineScope) = object : Ap
         navigator.popBackStack(HomeScreen, false)
     }
 
-    override fun gotoTopicCompose(
-        data: TopicComposeData,
-    ) {
-        val text = commonJson.encodeToString(data)
-        navigator.navigate(TopicComposeScreen(text))
+    override fun gotoTopicCompose(data: TopicComposeData) {
+        when (data) {
+            is TopicComposeData.PublicRoom -> {
+                if (data.parentTuple.objectType == ObjectType.TOPIC) {
+                    navigator.navigate(
+                        TopicComposePublicRoomTopicScreen(
+                            data.roomId,
+                            data.communityId,
+                            data.parentTuple.objectId
+                        )
+                    )
+                } else {
+                    navigator.navigate(
+                        TopicComposePublicRoomScreen(
+                            data.roomId,
+                            data.communityId
+                        )
+                    )
+                }
+            }
+
+            is TopicComposeData.PrivateRoom -> {
+                if (data.parentTuple.objectType == ObjectType.TOPIC) {
+                    navigator.navigate(
+                        TopicComposePrivateRoomTopicScreen(
+                            data.roomId,
+                            data.parentTuple.objectId
+                        )
+                    )
+                } else {
+                    navigator.navigate(TopicComposePrivateRoomScreen(data.roomId))
+                }
+            }
+
+            is TopicComposeData.User -> {
+                if (data.objectTuple.objectType == ObjectType.TOPIC) {
+                    navigator.navigate(
+                        TopicComposeUserTopicScreen(
+                            data.uid,
+                            data.objectTuple.objectId
+                        )
+                    )
+                } else {
+                    navigator.navigate(TopicComposeUserScreen(data.uid))
+                }
+            }
+
+            is TopicComposeData.Community -> {
+                if (data.objectTuple.objectType == ObjectType.TOPIC) {
+                    navigator.navigate(
+                        TopicComposeCommunityTopicScreen(
+                            data.communityId,
+                            data.objectTuple.objectId
+                        )
+                    )
+                } else {
+                    navigator.navigate(TopicComposeCommunityScreen(data.communityId))
+                }
+            }
+        }
     }
 
     override fun gotoMemberPage(
@@ -490,12 +523,86 @@ private fun NavGraphBuilder.buildComposeScreen(navigator: NavHostController) {
     composable<RoomComposeScreen> {
         RoomComposePage()
     }
-    composable<TopicComposeScreen> {
-        val route = it.toRoute<TopicComposeScreen>()
-        val composeData = commonJson.decodeFromString<TopicComposeData>(route.json)
-        TopicComposePage(composeData) {
-            navigator.popBackStack()
-        }
+    val backPrePage: () -> Unit = {
+        navigator.popBackStack()
+    }
+    buildTopicComposeRoomScreen(backPrePage)
+    buildTopicComposeUserScreen(backPrePage)
+    buildTopicComposeCommunityScreen(backPrePage)
+}
+
+private fun NavGraphBuilder.buildTopicComposeRoomScreen(backPrePage: () -> Unit) {
+    composable<TopicComposePublicRoomScreen> {
+        val route = it.toRoute<TopicComposePublicRoomScreen>()
+        val composeData = TopicComposeData.PublicRoom(
+            route.roomId,
+            route.communityId,
+            route.roomId ob ObjectType.ROOM
+        )
+        TopicComposePage(composeData, backPrePage)
+    }
+    composable<TopicComposePublicRoomTopicScreen> {
+        val route = it.toRoute<TopicComposePublicRoomTopicScreen>()
+        val composeData = TopicComposeData.PublicRoom(
+            route.roomId,
+            route.communityId,
+            route.topicId ob ObjectType.TOPIC
+        )
+        TopicComposePage(composeData, backPrePage)
+    }
+    composable<TopicComposePrivateRoomScreen> {
+        val route = it.toRoute<TopicComposePrivateRoomScreen>()
+        val composeData = TopicComposeData.PrivateRoom(
+            route.roomId,
+            route.roomId ob ObjectType.ROOM
+        )
+        TopicComposePage(composeData, backPrePage)
+    }
+    composable<TopicComposePrivateRoomTopicScreen> {
+        val route = it.toRoute<TopicComposePrivateRoomTopicScreen>()
+        val composeData = TopicComposeData.PrivateRoom(
+            route.roomId,
+            route.topicId ob ObjectType.TOPIC
+        )
+        TopicComposePage(composeData, backPrePage)
+    }
+}
+
+private fun NavGraphBuilder.buildTopicComposeUserScreen(backPrePage: () -> Unit) {
+    composable<TopicComposeUserScreen> {
+        val route = it.toRoute<TopicComposeUserScreen>()
+        val composeData = TopicComposeData.User(
+            route.uid,
+            route.uid ob ObjectType.USER
+        )
+        TopicComposePage(composeData, backPrePage)
+    }
+    composable<TopicComposeUserTopicScreen> {
+        val route = it.toRoute<TopicComposeUserTopicScreen>()
+        val composeData = TopicComposeData.User(
+            route.uid,
+            route.topicId ob ObjectType.TOPIC
+        )
+        TopicComposePage(composeData, backPrePage)
+    }
+}
+
+private fun NavGraphBuilder.buildTopicComposeCommunityScreen(backPrePage: () -> Unit) {
+    composable<TopicComposeCommunityScreen> {
+        val route = it.toRoute<TopicComposeCommunityScreen>()
+        val composeData = TopicComposeData.Community(
+            route.communityId,
+            route.communityId ob ObjectType.COMMUNITY
+        )
+        TopicComposePage(composeData, backPrePage)
+    }
+    composable<TopicComposeCommunityTopicScreen> {
+        val route = it.toRoute<TopicComposeCommunityTopicScreen>()
+        val composeData = TopicComposeData.Community(
+            route.communityId,
+            route.topicId ob ObjectType.TOPIC
+        )
+        TopicComposePage(composeData, backPrePage)
     }
 }
 
