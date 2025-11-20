@@ -22,6 +22,7 @@ import com.mikepenz.aboutlibraries.ui.compose.LibraryDefaults
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 import com.mikepenz.aboutlibraries.ui.compose.m3.libraryColors
 import com.mikepenz.aboutlibraries.ui.compose.produceLibraries
+import com.storyteller_f.a.app.compose_app.LocalUserInfo
 import com.storyteller_f.a.app.compose_app.pages.HomePage
 import com.storyteller_f.a.app.compose_app.pages.PreferencePage
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityComposePage
@@ -167,6 +168,9 @@ data object SubscriptionScreen
 @Serializable
 data object FileExplorerScreen
 
+@Serializable
+data class RoomFileExplorerScreen(val roomId: Long)
+
 inline fun <reified T : Any> AppNav.toRoute(): T? {
     if (!hasRoute(T::class)) return null
     return currentDestination?.toRoute<T>()
@@ -237,6 +241,8 @@ interface AppNav {
     fun gotoSubscriptionPage()
 
     fun gotoFileExplorer()
+
+    fun gotoRoomFileExplorer(roomId: PrimaryKey)
 }
 
 interface AppNavFactory {
@@ -413,6 +419,10 @@ fun newAppNav(navigator: NavHostController, scope: CoroutineScope) = object : Ap
     override fun gotoFileExplorer() {
         navigator.navigate(FileExplorerScreen)
     }
+
+    override fun gotoRoomFileExplorer(roomId: PrimaryKey) {
+        navigator.navigate(RoomFileExplorerScreen(roomId))
+    }
 }
 
 @OptIn(ExperimentalResourceApi::class)
@@ -492,7 +502,12 @@ private fun NavGraphBuilder.buildMainScreen() {
         UserSubscriptionPage()
     }
     composable<FileExplorerScreen> {
-        FileExplorerPage()
+        val id = LocalUserInfo.current?.id ?: return@composable
+        FileExplorerPage(mediaTarget = id ob ObjectType.USER)
+    }
+    composable<RoomFileExplorerScreen> {
+        val route = it.toRoute<RoomFileExplorerScreen>()
+        FileExplorerPage(mediaTarget = route.roomId ob ObjectType.ROOM)
     }
 }
 

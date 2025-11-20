@@ -94,6 +94,7 @@ import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.RoomFrame
+import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.strabled.composepreferences.ProvideDataStoreManager
@@ -592,12 +593,15 @@ private fun createAppNavFactoryForBubble(): AppNavFactory = object : AppNavFacto
 
         override fun gotoSubscriptionPage() = Unit
         override fun gotoFileExplorer() = Unit
+
+        override fun gotoRoomFileExplorer(roomId: PrimaryKey) = Unit
     }
 }
 
 @Composable
 fun UploadPage() {
+    val userInfo = LocalUserInfo.current ?: return
     CommonEntry {
-        FileExplorerPage()
+        FileExplorerPage(mediaTarget = userInfo.id ob ObjectType.USER)
     }
 }

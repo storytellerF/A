@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.OpenInFull
 import androidx.compose.material.icons.filled.PermMedia
 import androidx.compose.material.icons.filled.Settings
@@ -637,6 +638,7 @@ private fun RoomDialogButtons(roomInfo: RoomInfo, dismiss: () -> Unit) {
             RoomAllMembers(roomInfo, dismiss, appNavFactory)
             RoomMemberStatus(roomInfo, globalDialogController)
             StartCallButton(roomInfo)
+            RoomFileExplorerButton(roomInfo, dismiss, appNavFactory)
             RoomSettings(roomInfo, me, dismiss, appNavFactory)
         }
     }
@@ -654,6 +656,18 @@ private fun RoomSettings(
             dismiss()
             appNavFactory.newAppNav().gotoSettingPage(roomInfo.id, ObjectType.ROOM)
         }
+    }
+}
+
+@Composable
+private fun RoomFileExplorerButton(
+    roomInfo: RoomInfo,
+    dismiss: () -> Unit,
+    appNavFactory: AppNavFactory
+) {
+    ButtonNav(Icons.Default.Folder, "Files") {
+        dismiss()
+        appNavFactory.newAppNav().gotoRoomFileExplorer(roomInfo.id)
     }
 }
 
