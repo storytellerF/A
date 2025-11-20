@@ -28,6 +28,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconToggleButton
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
@@ -49,7 +51,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -63,7 +64,6 @@ import com.storyteller_f.a.app.compose_app.LocalUserInfo
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.common.MarkdownMediasViewModel
 import com.storyteller_f.a.app.compose_app.common.OnTopicCreated
-import com.storyteller_f.a.app.compose_app.common.TopicComposeData
 import com.storyteller_f.a.app.compose_app.common.getMarkdownMediasViewModel
 import com.storyteller_f.a.app.compose_app.components.AppTopicContentView
 import com.storyteller_f.a.app.compose_app.edit
@@ -80,10 +80,61 @@ import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.type.PrimaryKey
 import io.github.aakira.napier.Napier
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
+
+sealed interface TopicComposeData {
+    fun getMediaTarget(): ObjectTuple?
+    fun getParent(): ObjectTuple
+
+    data class PublicRoom(
+        val roomId: PrimaryKey,
+        val communityId: PrimaryKey,
+        val parentTuple: ObjectTuple
+    ) : TopicComposeData {
+        override fun getMediaTarget(): ObjectTuple? {
+            return null
+        }
+
+        override fun getParent() = parentTuple
+    }
+
+    data class PrivateRoom(
+        val roomId: PrimaryKey,
+        val parentTuple: ObjectTuple
+    ) : TopicComposeData {
+        override fun getMediaTarget(): ObjectTuple {
+            return roomId ob ObjectType.ROOM
+        }
+
+        override fun getParent() = parentTuple
+    }
+
+    data class User(
+        val uid: PrimaryKey,
+        val objectTuple: ObjectTuple
+    ) : TopicComposeData {
+        override fun getMediaTarget(): ObjectTuple? {
+            return null
+        }
+
+        override fun getParent() = objectTuple
+    }
+
+    data class Community(val communityId: PrimaryKey, val objectTuple: ObjectTuple) :
+        TopicComposeData {
+        override fun getMediaTarget(): ObjectTuple? {
+            return null
+        }
+
+        override fun getParent(): ObjectTuple {
+            return objectTuple
+        }
+    }
+}
 
 @Composable
 fun TopicComposePage(
@@ -235,12 +286,13 @@ fun RichEditTopicPage(
     }
     val currentSpanStyle = state.currentSpanStyle
     val fontFamily = getFontFamily(data)
+    val textStyle = LocalTextStyle.current
     Column(modifier = Modifier.navigationBarsPadding()) {
         TopicComposeToolbar(currentSpanStyle, state)
         BasicRichTextEditor(
             state = state,
             modifier = Modifier.weight(1f).fillMaxWidth().padding(horizontal = 20.dp),
-            textStyle = TextStyle(fontFamily = fontFamily)
+            textStyle = textStyle.merge(color = LocalContentColor.current, fontFamily = fontFamily)
         )
     }
 }
@@ -352,12 +404,12 @@ private fun PreviewTopicInternal(
 fun EditTopicPage(input: String, data: TopicComposeData, updateInput: (String) -> Unit) {
     Box(modifier = Modifier.navigationBarsPadding()) {
         val fontFamily = getFontFamily(data)
-
+        val textStyle = LocalTextStyle.current
         BasicTextField(
             input,
             updateInput,
             modifier = Modifier.fillMaxSize().padding(20.dp),
-            textStyle = TextStyle(fontFamily = fontFamily)
+            textStyle = textStyle.merge(color = LocalContentColor.current, fontFamily = fontFamily)
         )
     }
 }

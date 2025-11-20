@@ -397,7 +397,10 @@ fun ConnectionButton() {
         }
 
         else -> {
-            ButtonNav(MaterialSymbolsOutlined.SignalDisconnected, stringResource(Res.string.disconnected))
+            ButtonNav(
+                MaterialSymbolsOutlined.SignalDisconnected,
+                stringResource(Res.string.disconnected)
+            )
         }
     }
 }

@@ -37,7 +37,6 @@ import com.storyteller_f.a.app.compose_app.common.ExternalUriHandler
 import com.storyteller_f.a.app.compose_app.common.HomeScreen
 import com.storyteller_f.a.app.compose_app.common.OnTopicCreated
 import com.storyteller_f.a.app.compose_app.common.RoomScreen
-import com.storyteller_f.a.app.compose_app.common.TopicComposeData
 import com.storyteller_f.a.app.compose_app.common.TopicScreen
 import com.storyteller_f.a.app.compose_app.common.Uploader
 import com.storyteller_f.a.app.compose_app.common.buildRootNav
@@ -47,6 +46,7 @@ import com.storyteller_f.a.app.compose_app.common.toRoute
 import com.storyteller_f.a.app.compose_app.pages.file.FileExplorerPage
 import com.storyteller_f.a.app.compose_app.pages.file.FileViewPage
 import com.storyteller_f.a.app.compose_app.pages.room.RoomPage
+import com.storyteller_f.a.app.compose_app.pages.topic.TopicComposeData
 import com.storyteller_f.a.app.compose_app.pages.user.AccountSwitch
 import com.storyteller_f.a.app.compose_app.pages.user.AccountSwitcher
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined

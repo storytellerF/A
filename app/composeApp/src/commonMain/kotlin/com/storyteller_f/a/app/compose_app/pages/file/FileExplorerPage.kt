@@ -74,7 +74,6 @@ import com.storyteller_f.a.app.compose_app.common.getDownloadViewModel
 import com.storyteller_f.a.app.compose_app.common.getQuotaViewModel
 import com.storyteller_f.a.app.compose_app.common.getUploadViewModel
 import com.storyteller_f.a.app.compose_app.components.FileCell
-import com.storyteller_f.a.app.compose_app.components.FileIcon
 import com.storyteller_f.a.app.compose_app.components.UploadIcon
 import com.storyteller_f.a.app.compose_app.pages.topic.PlatformClientFile
 import com.storyteller_f.a.app.compose_app.utils.ClientFile
@@ -82,6 +81,7 @@ import com.storyteller_f.a.app.core.CoreStrings
 import com.storyteller_f.a.app.core.components.BaseSheet
 import com.storyteller_f.a.app.core.components.CustomBottomNav
 import com.storyteller_f.a.app.core.components.CustomRailNav
+import com.storyteller_f.a.app.core.components.FileIcon
 import com.storyteller_f.a.app.core.components.NavRoute
 import com.storyteller_f.a.app.core.components.SheetContainer
 import com.storyteller_f.a.app.core.components.SimpleMessageWithButton
