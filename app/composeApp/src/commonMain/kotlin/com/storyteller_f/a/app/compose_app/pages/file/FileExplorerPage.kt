@@ -59,6 +59,7 @@ import androidx.navigation.NavOptions
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalClientFileProvider
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
@@ -371,15 +372,15 @@ private fun UploadRecordPage(mediaTarget: ObjectTuple) {
 @Composable
 private fun DownloadRecordPage() {
     val vm = getDownloadListViewModel()
-    StateView(vm, modifier = Modifier.fillMaxSize()) { items ->
-        LazyColumn(
-            contentPadding = PaddingValues(20.dp)
-        ) {
-            pagingItems(items, key = { it.fileInfo.id }) {
-                DownloadRecordItem(items[it])
-                if (it != items.itemSnapshotList.size - 1) {
-                    HorizontalDivider()
-                }
+    val items = vm.flow.collectAsLazyPagingItems()
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(20.dp)
+    ) {
+        pagingItems(items, key = { it.fileInfo.id }) {
+            DownloadRecordItem(items[it])
+            if (it != items.itemSnapshotList.size - 1) {
+                HorizontalDivider()
             }
         }
     }

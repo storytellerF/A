@@ -580,6 +580,11 @@ interface ContainerDatabase {
         fetch: PrimaryKeyFetch
     ): Result<PaginationResult<Pair<Member, RawUser>>>
 
+    suspend fun getMemberWithUserByUids(
+        objectId: PrimaryKey,
+        uidList: List<PrimaryKey>
+    ): Result<List<Pair<Member, RawUser>>>
+
     suspend fun getQuotaInfo(ownerId: PrimaryKey, quotaType: QuotaType): Result<Quota?>
     suspend fun insertQuota(quota: Quota): Result<Unit>
 

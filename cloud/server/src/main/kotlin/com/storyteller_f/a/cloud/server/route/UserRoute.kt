@@ -15,7 +15,7 @@ import com.storyteller_f.a.cloud.core.service.getUserOverview
 import com.storyteller_f.a.cloud.core.service.getUserSubscriptions
 import com.storyteller_f.a.cloud.core.service.getUserTitles
 import com.storyteller_f.a.cloud.core.service.removeSubscription
-import com.storyteller_f.a.cloud.core.service.searchMembers
+import com.storyteller_f.a.cloud.core.service.searchUsers
 import com.storyteller_f.a.cloud.core.service.updateUser
 import com.storyteller_f.a.cloud.server.auth.handleResult
 import com.storyteller_f.a.cloud.server.auth.usePrincipal
@@ -126,7 +126,7 @@ fun Route.bindUserRoute(backend: Backend) {
 
     CustomApi.Users.search(handleResult()) {
         it.pagination(IdentifiablePagingGenerator) { f ->
-            backend.searchMembers(null, it.word, f)
+            backend.searchUsers(it.word, f)
         }
     }
 }

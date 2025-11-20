@@ -64,6 +64,7 @@ import com.storyteller_f.a.client.core.userTitles
 import com.storyteller_f.shared.model.ChildAccountInfo
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.FileInfo
+import com.storyteller_f.shared.model.MemberInfo
 import com.storyteller_f.shared.model.PosterSearch
 import com.storyteller_f.shared.model.QuotaInfo
 import com.storyteller_f.shared.model.QuotaType
@@ -92,6 +93,7 @@ import com.storyteller_f.storage.CommunityCollection
 import com.storyteller_f.storage.DownloadInfo
 import com.storyteller_f.storage.DownloadStatus
 import com.storyteller_f.storage.FileCollection
+import com.storyteller_f.storage.MemberCollection
 import com.storyteller_f.storage.ModelStorage
 import com.storyteller_f.storage.ReactionCollection
 import com.storyteller_f.storage.RoomCollection
@@ -508,14 +510,42 @@ class AidUserViewModel(
 }
 
 @OptIn(ExperimentalPagingApi::class)
-class MemberViewModel(
+class ContainerMemberViewModel(
     sessionManager: UserSessionManager,
     modelStorage: ModelStorage,
     objectId: PrimaryKey,
     word: String,
     objectType: ObjectType,
+) : PagingViewModel<MemberInfo>() {
+    private val modelCollection = when (objectType) {
+        ObjectType.COMMUNITY -> MemberCollection.CommunityMembers(objectId, word)
+        ObjectType.ROOM -> MemberCollection.RoomMembers(objectId, word)
+        else -> throw IllegalArgumentException("Unsupported objectType: $objectType")
+    }
+
+    override val flow: Flow<PagingData<MemberInfo>> = buildPager(
+        modelCollection,
+        modelCollection.getName(),
+        modelStorage.remoteKey,
+        modelStorage.member
+    ) { key, size ->
+        sessionManager.run {
+            when (objectType) {
+                ObjectType.COMMUNITY -> searchCommunityMembers(objectId, key, size, word)
+                ObjectType.ROOM -> searchRoomMembers(objectId, key, size, word)
+                else -> throw IllegalArgumentException("Unsupported objectType: $objectType")
+            }
+        }
+    }.flow.cachedIn(viewModelScope)
+}
+
+@OptIn(ExperimentalPagingApi::class)
+class UserSearchViewModel(
+    sessionManager: UserSessionManager,
+    modelStorage: ModelStorage,
+    word: String,
 ) : PagingViewModel<UserInfo>() {
-    private val modelCollection = UserCollection.Members(word, objectId)
+    private val modelCollection = UserCollection.SearchUser(word)
 
     override val flow: Flow<PagingData<UserInfo>> = buildPager(
         modelCollection,
@@ -523,13 +553,7 @@ class MemberViewModel(
         modelStorage.remoteKey,
         modelStorage.user
     ) { key, size ->
-        sessionManager.run {
-            when (objectType) {
-                ObjectType.COMMUNITY -> searchCommunityMembers(objectId, key, size, word)
-                ObjectType.ROOM -> searchRoomMembers(objectId, key, size, word)
-                else -> searchAllMembers(key, size, word)
-            }
-        }
+        sessionManager.searchAllMembers(key, size, word)
     }.flow.cachedIn(viewModelScope)
 }
 

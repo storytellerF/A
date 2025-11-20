@@ -59,7 +59,7 @@ sealed interface SearchScope {
     data class TopicTopic(val topicId: PrimaryKey) : SearchScope
     data class CommunityMember(val communityId: PrimaryKey) : SearchScope
     data class RoomMember(val roomId: PrimaryKey) : SearchScope
-    data object Member : SearchScope
+    data object Users : SearchScope
     data class UserTopic(val userId: PrimaryKey) : SearchScope
     data class UserCommunities(val userId: PrimaryKey) : SearchScope
     data class UserReceivedTitle(val userId: PrimaryKey) : SearchScope
@@ -201,7 +201,7 @@ private fun SearchPlaceholder(scope: SearchScope) {
                 is SearchScope.TopicTopic -> Res.string.input_search_topics
                 is SearchScope.CommunityMember -> Res.string.input_search_members
                 is SearchScope.RoomMember -> Res.string.input_search_members
-                SearchScope.Member -> Res.string.input_search_members
+                SearchScope.Users -> Res.string.input_search_members
                 is SearchScope.UserTopic -> Res.string.input_search_topics
                 is SearchScope.UserCommunities -> Res.string.input_search_community
                 is SearchScope.UserReceivedTitle -> Res.string.input_search_user_received_titles
@@ -227,7 +227,7 @@ private fun SearchContent(
         is SearchScope.TopicTopic -> TopicTopicSearchContent(current, scope)
         is SearchScope.CommunityMember -> CommunityMemberSearchContent(current, scope)
         is SearchScope.RoomMember -> RoomMemberSearchContent(current, scope)
-        SearchScope.Member -> MemberSearchContent(current)
+        SearchScope.Users -> MemberSearchContent(current)
         is SearchScope.UserTopic -> UserTopicSearchContent(current, scope)
         is SearchScope.UserCommunities -> UserCommunitySearchContent(current, scope)
         is SearchScope.UserReceivedTitle -> UserReceivedTitleSearchContent(current, scope)
@@ -264,9 +264,7 @@ private fun MemberSearchContent(current: String) {
     if (current.isNotBlank()) {
         val viewModel =
             createMemberSearchViewModel(current)
-        MemberList(
-            viewModel
-        )
+        MemberList(viewModel)
     }
 }
 
@@ -453,15 +451,12 @@ private fun WorldSearchContent(current: String) {
         }
         HorizontalPager(pagerState) {
             if (it == 0) {
-                val viewModel =
-                    createTopicSearchViewModel(current)
+                val viewModel = createTopicSearchViewModel(current)
                 TopicList(viewModel)
             } else {
                 val viewModel =
                     createMemberSearchViewModel(current)
-                MemberList(
-                    viewModel
-                )
+                MemberList(viewModel)
             }
         }
     }

@@ -8,11 +8,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -27,7 +27,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
-import com.storyteller_f.a.app.compose_app.common.MemberViewModel
+import com.storyteller_f.a.app.compose_app.common.ContainerMemberViewModel
+import com.storyteller_f.a.app.compose_app.common.UserSearchViewModel
 import com.storyteller_f.a.app.compose_app.common.createMemberViewModel
 import com.storyteller_f.a.app.compose_app.components.UserCell
 import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar
@@ -74,11 +75,11 @@ fun MemberPage(objectId: PrimaryKey, objectType: ObjectType) {
                 DropdownMenu(expended, {
                     expended = false
                 }) {
-                    DropdownMenuItem({
-                        expended = false
-                    }) {
+                    DropdownMenuItem(text = {
                         Text("Nothing")
-                    }
+                    }, onClick = {
+                        expended = false
+                    })
                 }
             }
             MemberList(viewModel)
@@ -87,7 +88,32 @@ fun MemberPage(objectId: PrimaryKey, objectType: ObjectType) {
 }
 
 @Composable
-fun MemberList(memberViewModel: MemberViewModel, onClick: ((UserInfo) -> Unit)? = null) {
+fun MemberList(memberViewModel: ContainerMemberViewModel, onClick: ((UserInfo) -> Unit)? = null) {
+    val appNavFactory = LocalAppNavFactory.current
+    StateView(memberViewModel) { items ->
+        LazyColumn(
+            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            topPrepend(items.loadState)
+            pagingItems(items, {
+                it.id
+            }) { index ->
+                UserCell(items[index]?.userInfo, onClickCell = {
+                    onClick?.invoke(it) ?: appNavFactory.newAppNav().gotoUser(it.id)
+                })
+                Spacer(modifier = Modifier.height(20.dp))
+                if (index != items.itemSnapshotList.size - 1) {
+                    HorizontalDivider()
+                }
+            }
+            bottomAppending(items.loadState)
+        }
+    }
+}
+
+@Composable
+fun MemberList(memberViewModel: UserSearchViewModel, onClick: ((UserInfo) -> Unit)? = null) {
     val appNavFactory = LocalAppNavFactory.current
     StateView(memberViewModel) { items ->
         LazyColumn(

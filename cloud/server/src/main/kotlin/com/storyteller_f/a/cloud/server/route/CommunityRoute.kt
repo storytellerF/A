@@ -9,13 +9,14 @@ import com.storyteller_f.a.cloud.core.service.getCommunity
 import com.storyteller_f.a.cloud.core.service.getTopicsByParentId
 import com.storyteller_f.a.cloud.core.service.joinCommunity
 import com.storyteller_f.a.cloud.core.service.searchCommunities
-import com.storyteller_f.a.cloud.core.service.searchMembers
+import com.storyteller_f.a.cloud.core.service.searchContainerMembers
 import com.storyteller_f.a.cloud.core.service.updateCommunity
 import com.storyteller_f.a.cloud.server.auth.handleResult
 import com.storyteller_f.a.cloud.server.auth.usePrincipal
 import com.storyteller_f.a.cloud.server.auth.usePrincipalOrNull
 import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.cloud.server.common.pagination
+import com.storyteller_f.a.cloud.server.common.pagingGenerator
 import com.storyteller_f.route4k.ktor.server.invoke
 import com.storyteller_f.route4k.ktor.server.receiveBody
 import com.storyteller_f.shared.type.ObjectType
@@ -31,8 +32,10 @@ fun Route.bindCommunityRoute(backend: Backend) {
     }
 
     CustomApi.Communities.Id.Members.get(handleResult()) { q, p ->
-        q.pagination(IdentifiablePagingGenerator) { f ->
-            backend.searchMembers(p.id, q.word, f)
+        q.pagination(pagingGenerator {
+            it.id
+        }) { f ->
+            backend.searchContainerMembers(p.id, q.word, f)
         }
     }
     CustomApi.Communities.Id.get(handleResult()) { q, p ->
