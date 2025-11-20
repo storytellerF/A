@@ -638,7 +638,9 @@ private fun RoomDialogButtons(roomInfo: RoomInfo, dismiss: () -> Unit) {
             RoomAllMembers(roomInfo, dismiss, appNavFactory)
             RoomMemberStatus(roomInfo, globalDialogController)
             StartCallButton(roomInfo)
-            RoomFileExplorerButton(roomInfo, dismiss, appNavFactory)
+            if (roomInfo.isPrivate || roomInfo.creator == me?.id) {
+                RoomFileExplorerButton(roomInfo, dismiss, appNavFactory)
+            }
             RoomSettings(roomInfo, me, dismiss, appNavFactory)
         }
     }
@@ -667,7 +669,7 @@ private fun RoomFileExplorerButton(
 ) {
     ButtonNav(Icons.Default.Folder, "Files") {
         dismiss()
-        appNavFactory.newAppNav().gotoRoomFileExplorer(roomInfo.id)
+        appNavFactory.newAppNav().gotoFileExplorer(roomInfo.id ob ObjectType.ROOM)
     }
 }
 

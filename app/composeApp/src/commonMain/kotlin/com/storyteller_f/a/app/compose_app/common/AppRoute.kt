@@ -48,6 +48,7 @@ import com.storyteller_f.a.app.compose_app.utils.getDeepLinkHost
 import com.storyteller_f.a.app.compose_app.utils.getDeepLinkScheme
 import com.storyteller_f.a.app.core.components.FileViewData
 import com.storyteller_f.shared.model.FileInfo
+import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -169,7 +170,10 @@ data object SubscriptionScreen
 data object FileExplorerScreen
 
 @Serializable
-data class RoomFileExplorerScreen(val roomId: Long)
+data class RoomFileExplorerScreen(val roomId: PrimaryKey)
+
+@Serializable
+data class CommunityFileExplorerScreen(val communityId: PrimaryKey)
 
 inline fun <reified T : Any> AppNav.toRoute(): T? {
     if (!hasRoute(T::class)) return null
@@ -240,9 +244,7 @@ interface AppNav {
 
     fun gotoSubscriptionPage()
 
-    fun gotoFileExplorer()
-
-    fun gotoRoomFileExplorer(roomId: PrimaryKey)
+    fun gotoFileExplorer(objectTuple: ObjectTuple? = null)
 }
 
 interface AppNavFactory {
@@ -416,12 +418,16 @@ fun newAppNav(navigator: NavHostController, scope: CoroutineScope) = object : Ap
         navigator.navigate(SubscriptionScreen)
     }
 
-    override fun gotoFileExplorer() {
-        navigator.navigate(FileExplorerScreen)
-    }
-
-    override fun gotoRoomFileExplorer(roomId: PrimaryKey) {
-        navigator.navigate(RoomFileExplorerScreen(roomId))
+    override fun gotoFileExplorer(objectTuple: ObjectTuple?) {
+        if (objectTuple == null) {
+            navigator.navigate(FileExplorerScreen)
+        } else {
+            when (objectTuple.objectType) {
+                ObjectType.ROOM -> navigator.navigate(RoomFileExplorerScreen(objectTuple.objectId))
+                ObjectType.COMMUNITY -> navigator.navigate(CommunityFileExplorerScreen(objectTuple.objectId))
+                else -> error("Unsupported object type for file explorer: ${objectTuple.objectType}")
+            }
+        }
     }
 }
 
@@ -508,6 +514,10 @@ private fun NavGraphBuilder.buildMainScreen() {
     composable<RoomFileExplorerScreen> {
         val route = it.toRoute<RoomFileExplorerScreen>()
         FileExplorerPage(mediaTarget = route.roomId ob ObjectType.ROOM)
+    }
+    composable<CommunityFileExplorerScreen> {
+        val route = it.toRoute<CommunityFileExplorerScreen>()
+        FileExplorerPage(mediaTarget = route.communityId ob ObjectType.COMMUNITY)
     }
 }
 
