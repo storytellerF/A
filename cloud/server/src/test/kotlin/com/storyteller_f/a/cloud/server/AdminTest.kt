@@ -28,6 +28,7 @@ import com.storyteller_f.a.client.core.getUserJoinedCommunities
 import com.storyteller_f.a.client.core.getUserJoinedRooms
 import com.storyteller_f.a.client.core.getUserLogs
 import com.storyteller_f.a.client.core.getUserReceivedTitles
+import com.storyteller_f.a.client.core.getUserUploadRecords
 import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.a.client.core.overview
 import com.storyteller_f.a.client.core.upload
@@ -368,6 +369,18 @@ class AdminTest {
         }.custom
         loginPanelSession(outer) {
             assertListSize(1, getRoomFiles(roomId, PaginationQuery()))
+        }
+    }
+
+    @Test
+    fun `admin user upload records`() = test {
+        val outer = attachPanelSession {}
+        val uid = attachSession {
+            val uid = it.uid
+            upload(uid ob ObjectType.USER, getUploadDataFromText("hello")).getOrThrow()
+        }.uid
+        loginPanelSession(outer) {
+            assertListSize(1, getUserUploadRecords(uid, PaginationQuery()))
         }
     }
 }

@@ -45,6 +45,7 @@ import com.storyteller_f.a.panel.common.createPanelJoinedCommunitiesViewModel
 import com.storyteller_f.a.panel.common.createPanelJoinedRoomsViewModel
 import com.storyteller_f.a.panel.common.createPanelUserLogsViewModel
 import com.storyteller_f.a.panel.common.createPanelUserOverviewViewModel
+import com.storyteller_f.a.panel.common.createPanelUserUploadRecordsViewModel
 import com.storyteller_f.a.panel.common.createPanelUserViewModel
 import com.storyteller_f.a.panel.log_supporting
 import com.storyteller_f.a.panel.nickname_label
@@ -122,7 +123,8 @@ private fun UserInfoTabs(uid: PrimaryKey) {
         stringResource(Res.string.tab_joined_communities),
         stringResource(Res.string.tab_joined_rooms),
         stringResource(Res.string.tab_received_titles),
-        stringResource(Res.string.tab_created_files)
+        stringResource(Res.string.tab_created_files),
+        "UploadRecords"
     )
     val pagerState = rememberPagerState { tabs.size }
     val scope = rememberCoroutineScope()
@@ -142,7 +144,8 @@ private fun UserInfoTabs(uid: PrimaryKey) {
                 1 -> UserJoinedCommunitiesSection(uid)
                 2 -> UserJoinedRoomsSection(uid)
                 3 -> UserReceivedTitlesSection(uid)
-                else -> UserCreatedFilesSection(uid)
+                4 -> UserCreatedFilesSection(uid)
+                else -> UserUploadRecordsSection(uid)
             }
         }
     }
@@ -243,6 +246,32 @@ private fun UserCreatedFilesSection(uid: PrimaryKey) {
                         supportingContent = { Text(HumanReadable.fileSize(info.size)) },
                         leadingContent = { FileIcon(info) },
                         modifier = Modifier.clickable { panelNav.gotoFileDetail(info.id) }
+                    )
+                    HorizontalDivider()
+                } else {
+                    ListItem(headlineContent = { Text("") })
+                    HorizontalDivider()
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun UserUploadRecordsSection(uid: PrimaryKey) {
+    val vm = createPanelUserUploadRecordsViewModel(uid)
+    StateView(vm, modifier = Modifier.fillMaxSize()) { items ->
+        LazyColumn {
+            pagingItems(items, key = { it.id }) { index ->
+                val info = items[index]
+                if (info != null) {
+                    ListItem(
+                        headlineContent = { Text(info.name) },
+                        supportingContent = { Text(
+                            "${info.status} ${HumanReadable.fileSize(
+                                info.progress
+                            )}/${HumanReadable.fileSize(info.total)}"
+                        ) },
                     )
                     HorizontalDivider()
                 } else {

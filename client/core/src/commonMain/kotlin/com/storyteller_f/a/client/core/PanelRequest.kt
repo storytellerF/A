@@ -107,6 +107,10 @@ suspend fun PanelSessionManager.getUserLogs(uid: PrimaryKey, query: PaginationQu
     AdminApi.Users.Id.Logs.get(query, CommonPath(uid))
 }
 
+suspend fun PanelSessionManager.getUserUploadRecords(uid: PrimaryKey, query: PaginationQuery) = serviceCatching {
+    AdminApi.Users.Id.UploadRecords.get(query, CommonPath(uid))
+}
+
 // Detail fetch for other entities via CustomApi
 suspend fun PanelSessionManager.getCommunityById(id: PrimaryKey) = serviceCatching {
     AdminApi.Communities.Id.get(CommonPath(id))

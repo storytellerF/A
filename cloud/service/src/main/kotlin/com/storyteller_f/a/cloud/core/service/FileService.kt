@@ -15,6 +15,7 @@ import com.storyteller_f.a.backend.core.service.UploadPack
 import com.storyteller_f.a.backend.core.types.FileRecord
 import com.storyteller_f.a.backend.core.types.UploadRecord
 import com.storyteller_f.a.backend.core.types.toFileInfo
+import com.storyteller_f.a.backend.core.types.toUploadRecordInfo
 import com.storyteller_f.a.backend.filesystem.FileSystemObjectStorageService
 import com.storyteller_f.a.cloud.core.utils.cleanImageMeta
 import com.storyteller_f.a.cloud.core.utils.readFlacAlbumFromAudioStream
@@ -22,6 +23,7 @@ import com.storyteller_f.a.cloud.core.utils.readMp3AlbumFromAudioStream
 import com.storyteller_f.shared.model.A_FILE_DEFAULT_BUCKET
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.QuotaType
+import com.storyteller_f.shared.model.UploadRecordInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.obj.ob
@@ -219,6 +221,14 @@ suspend fun Backend.getFileInfoPaginationResult(
 suspend fun Backend.getAllFileInfos(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<FileInfo>> =
     database.file.getAllFileRecordPaginationList(primaryKeyFetch).mapResult { (list, count) ->
         processFileRecordToFileInfo(list).map { PaginationResult(it, count) }
+    }
+
+suspend fun Backend.getUserUploadRecords(
+    uid: PrimaryKey,
+    primaryKeyFetch: PrimaryKeyFetch
+): Result<PaginationResult<UploadRecordInfo>> =
+    database.file.getUploadRecordPaginationList(uid, primaryKeyFetch).map { (list, count) ->
+        PaginationResult(list.map { it.toUploadRecordInfo() }, count)
     }
 
 suspend fun Backend.getFileInfoById(id: PrimaryKey): Result<FileInfo?> =

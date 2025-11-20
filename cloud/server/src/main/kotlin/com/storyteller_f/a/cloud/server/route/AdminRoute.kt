@@ -28,6 +28,7 @@ import com.storyteller_f.a.cloud.core.service.getUserJoinedRooms
 import com.storyteller_f.a.cloud.core.service.getUserLogs
 import com.storyteller_f.a.cloud.core.service.getUserOverview
 import com.storyteller_f.a.cloud.core.service.getUserTitles
+import com.storyteller_f.a.cloud.core.service.getUserUploadRecords
 import com.storyteller_f.a.cloud.server.auth.UserSession
 import com.storyteller_f.a.cloud.server.auth.getData
 import com.storyteller_f.a.cloud.server.auth.handleResult
@@ -159,6 +160,13 @@ private fun Routing.bindAdminUserRoutes(backend: Backend) {
             it.id
         }) { f ->
             backend.getUserLogs(p.id, f)
+        }
+    }
+    AdminApi.Users.Id.UploadRecords.get(handleResult()) { q, p ->
+        q.pagination(pagingGenerator {
+            it.id
+        }) { f ->
+            backend.getUserUploadRecords(p.id, f)
         }
     }
 }
