@@ -2,7 +2,6 @@ package com.storyteller_f.a.app.core.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.pager.HorizontalPager
@@ -40,7 +39,7 @@ fun PdfViewBlock(url: String) {
             .then(Modifier)
             .background(MaterialTheme.colorScheme.surfaceContainer, shape)
     ) {
-        PdfView(url)
+        PdfView(url, Modifier.weight(1f))
         val toasterState = LocalToaster.current
         val scope = rememberCoroutineScope()
         FlowRow {
@@ -64,7 +63,7 @@ fun PdfViewBlock(url: String) {
 }
 
 @Composable
-fun ColumnScope.PdfView(url: String) {
+fun PdfView(url: String, modifier: Modifier) {
     val errorIndicator = rememberVectorPainter(Icons.Default.Error)
     val refreshIndicator = rememberVectorPainter(Icons.Default.Refresh)
     val state = remember(url, errorIndicator, refreshIndicator) {
@@ -72,7 +71,7 @@ fun ColumnScope.PdfView(url: String) {
     }
     HorizontalPager(
         state = rememberPagerState { state.pageCount },
-        modifier = Modifier.weight(1f)
+        modifier = modifier
     ) { i ->
         PdfPage(state = state, index = i)
     }

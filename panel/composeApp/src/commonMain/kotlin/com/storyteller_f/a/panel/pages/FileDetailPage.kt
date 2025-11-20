@@ -1,7 +1,9 @@
 package com.storyteller_f.a.panel.pages
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -9,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.filled.FilePresent
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -23,9 +26,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.github.panpf.zoomimage.CoilZoomAsyncImage
 import com.storyteller_f.a.app.core.components.CustomBottomNav
 import com.storyteller_f.a.app.core.components.NavRoute
+import com.storyteller_f.a.app.core.components.PdfView
 import com.storyteller_f.a.app.core.components.StateView
+import com.storyteller_f.a.app.core.components.globalLoader
+import com.storyteller_f.a.panel.LocalPanelNav
 import com.storyteller_f.a.panel.common.createPanelFileViewModel
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
@@ -63,7 +70,7 @@ private fun FileTopBar(id: PrimaryKey) {
     val vm = createPanelFileViewModel(id)
     val info by vm.handler.data.collectAsState(null)
     val title = listOf("File Detail", info?.name ?: "").filter { it.isNotBlank() }.joinToString(" • ")
-    val nav = com.storyteller_f.a.panel.LocalPanelNav.current
+    val nav = LocalPanelNav.current
     TopAppBar(
         title = { Text(title.ifBlank { "File Detail • $id" }) },
         navigationIcon = {
@@ -98,10 +105,33 @@ private fun FileInfoTabs(id: PrimaryKey) {
 @Composable
 private fun FileBasicInfoSection(id: PrimaryKey) {
     val vm = createPanelFileViewModel(id)
+    val nav = LocalPanelNav.current
     StateView(vm.handler, modifier = Modifier.fillMaxSize()) { info ->
         Column(Modifier.padding(16.dp)) {
             Text(info.name)
             Text(info.contentType)
+            Box(modifier = Modifier.heightIn(max = 200.dp)) {
+                when {
+                    info.contentType.startsWith("image") -> {
+                        CoilZoomAsyncImage(
+                            model = globalLoader(info.url),
+                            contentDescription = "preview image",
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                    info.contentType == com.storyteller_f.shared.model.FileInfo.PDF_CONTENT_TYPE -> {
+                        PdfView(info.url, Modifier.fillMaxSize())
+                    }
+                    info.contentType.startsWith("video") || info.contentType.startsWith("audio") -> {
+                        Text("该文件可全屏预览播放")
+                    }
+                }
+            }
+            Button(onClick = {
+                nav.gotoFilePreview(info.id, info.url, info.contentType, info.name)
+            }) {
+                Text("全屏预览")
+            }
         }
     }
 }

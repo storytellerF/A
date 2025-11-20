@@ -1,5 +1,6 @@
 package com.storyteller_f.a.panel
 
+import PanelFilePreviewPage
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -139,6 +140,7 @@ interface PanelNav {
     fun gotoFileDetail(id: Long)
     fun gotoAllTitles()
     fun gotoTitleDetail(id: Long)
+    fun gotoFilePreview(id: Long, url: String, contentType: String, name: String)
     fun open()
 }
 
@@ -205,6 +207,10 @@ class Nav2PanelNav(
 
     override fun gotoTitleDetail(id: Long) {
         navigator.navigate(PanelTitleDetailScreen(id))
+    }
+
+    override fun gotoFilePreview(id: Long, url: String, contentType: String, name: String) {
+        navigator.navigate(PanelFilePreviewScreen(id))
     }
 
     override fun open() {
@@ -322,6 +328,10 @@ private fun PanelAppNavHost(
         composable<PanelFileDetailScreen> {
             val screen = it.toRoute<PanelFileDetailScreen>()
             FileDetailPage(screen.id)
+        }
+        composable<PanelFilePreviewScreen> {
+            val screen = it.toRoute<PanelFilePreviewScreen>()
+            PanelFilePreviewPage(screen.id)
         }
         composable<PanelTitleDetailScreen> {
             val screen = it.toRoute<PanelTitleDetailScreen>()
@@ -633,6 +643,9 @@ data class PanelTopicDetailScreen(val id: Long)
 
 @Serializable
 data class PanelFileDetailScreen(val id: Long)
+
+@Serializable
+data class PanelFilePreviewScreen(val id: Long)
 
 @Serializable
 data class PanelTitleDetailScreen(val id: Long)

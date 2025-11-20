@@ -64,10 +64,14 @@ val LocalMediaPlayerService = compositionLocalOf<MediaPlayerService> {
 }
 
 expect abstract class MediaPlayerService {
+    abstract val enablePip: Boolean
     val state: MutableStateFlow<MediaPlaySession?>
 
     abstract fun fullscreen(remoteMediaItem: RemoteMediaItem)
-    abstract suspend fun start(remoteMediaItem: RemoteMediaItem, localMediaPlaySession: LocalMediaPlaySession)
+    abstract suspend fun start(
+        remoteMediaItem: RemoteMediaItem,
+        localMediaPlaySession: LocalMediaPlaySession
+    )
 }
 
 @Composable
