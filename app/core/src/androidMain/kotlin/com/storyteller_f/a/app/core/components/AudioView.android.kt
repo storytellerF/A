@@ -89,7 +89,7 @@ private fun AudioPlayer(
         "VideoPlayer ${localMediaPlaySession.uuid} enablePip: $enablePip"
     }
     val ratio = Rational(16, 9)
-    val pipModifier = Modifier.Companion.androidPipMode(enablePip, ratio)
+    val pipModifier = Modifier.androidPipMode(enablePip, ratio)
     Box(modifier = pipModifier.aspectRatio(ratio.toFloat())) {
         when {
             player == null -> PlayerWaiting(localMediaPlaySession, remoteMediaItem)

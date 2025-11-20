@@ -9,4 +9,6 @@ actual abstract class MediaPlayerService {
         remoteMediaItem: RemoteMediaItem,
         localMediaPlaySession: LocalMediaPlaySession
     )
+
+    actual abstract val enablePip: Boolean
 }

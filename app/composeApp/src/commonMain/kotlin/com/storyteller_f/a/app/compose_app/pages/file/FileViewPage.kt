@@ -83,7 +83,7 @@ private fun RegularFileViewInternal(info: FileInfo) {
 
         info.contentType == FileInfo.PDF_CONTENT_TYPE -> {
             Column {
-                PdfView(info.url)
+                PdfView(info.url, Modifier.weight(1f))
             }
         }
     }

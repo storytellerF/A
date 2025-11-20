@@ -72,6 +72,8 @@ fun Modifier.androidPipMode(
     enable: Boolean,
     ratio: Rational,
 ): Modifier {
+    val mediaPlayerService = LocalMediaPlayerService.current
+    if (!(mediaPlayerService.enablePip)) return this
     val context = LocalContext.current
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
         return this
