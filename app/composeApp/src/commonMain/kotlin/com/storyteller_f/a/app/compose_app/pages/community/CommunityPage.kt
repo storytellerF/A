@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.AddHome
 import androidx.compose.material.icons.filled.CardMembership
 import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Title
 import androidx.compose.material.icons.filled.Topic
@@ -458,6 +459,11 @@ private fun CommunityAdminButtons(
 ) {
     val myInfo = LocalUserInfo.current
     if (myInfo?.id == communityInfo.owner) {
+        ButtonNav(Icons.Default.Folder, "Files") {
+            dismiss()
+            appNavFactory.newAppNav().gotoFileExplorer(communityId ob ObjectType.COMMUNITY)
+        }
+
         ButtonNav(Icons.Default.Title, "Add Title") {
             dismiss()
             appNavFactory.newAppNav().gotoTitleCompose()

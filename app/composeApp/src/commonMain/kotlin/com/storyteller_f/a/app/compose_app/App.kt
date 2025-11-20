@@ -93,6 +93,7 @@ import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
@@ -592,9 +593,7 @@ private fun createAppNavFactoryForBubble(): AppNavFactory = object : AppNavFacto
         override fun gotoFavoritePage() = Unit
 
         override fun gotoSubscriptionPage() = Unit
-        override fun gotoFileExplorer() = Unit
-
-        override fun gotoRoomFileExplorer(roomId: PrimaryKey) = Unit
+        override fun gotoFileExplorer(objectTuple: ObjectTuple?) = Unit
     }
 }
 
