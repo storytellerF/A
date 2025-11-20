@@ -81,10 +81,10 @@ abstract class Elastic(private val connection: ElasticConnection) {
 }
 
 suspend fun ElasticsearchAsyncClient.cleanAll(indexName: String) {
-    if (indices().exists {
+    if (exists {
             it.index(indexName)
         }.await().value()) {
-        val response = indices().delete {
+        val response = delete {
             it.index(indexName)
         }.await()
         Napier.i {

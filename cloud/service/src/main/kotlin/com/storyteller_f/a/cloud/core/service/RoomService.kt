@@ -15,6 +15,7 @@ import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.ROOM_NAME_LENGTH
 import com.storyteller_f.a.backend.core.UnauthorizedException
+import com.storyteller_f.a.backend.core.service.MemberDocument
 import com.storyteller_f.a.backend.core.service.RoomDocument
 import com.storyteller_f.a.backend.core.service.RoomDocumentSearch
 import com.storyteller_f.a.backend.core.types.Member
@@ -35,6 +36,7 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.UNIT_RESULT
 import com.storyteller_f.shared.utils.errorIfFalse
+import com.storyteller_f.shared.utils.ifNotNull
 import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
@@ -99,7 +101,20 @@ private suspend fun Backend.joinRoomOrUpdateMemberStatus(
                 MemberStatus.JOINED,
                 time
             )
-        )
+        ).onSuccess {
+            // 保存到 MemberSearchService
+            getUserInfo(IdFetch(uid)).ifNotNull { userInfo ->
+                memberSearchService.saveDocument(
+                    listOf(
+                        MemberDocument.fromUserInfo(it.id, userInfo, roomId, ObjectType.ROOM)
+                    )
+                ).onFailure { e ->
+                    Napier.e(e) {
+                        "save member document failed"
+                    }
+                }
+            }
+        }
     } else {
         database.container.updateMemberStatus(
             Member(
@@ -111,7 +126,20 @@ private suspend fun Backend.joinRoomOrUpdateMemberStatus(
                 MemberStatus.JOINED,
                 time
             )
-        )
+        ).onSuccess {
+            // 保存到 MemberSearchService
+            getUserInfo(IdFetch(uid)).ifNotNull { userInfo ->
+                memberSearchService.saveDocument(
+                    listOf(
+                        MemberDocument.fromUserInfo(it.id, userInfo, roomId, ObjectType.ROOM)
+                    )
+                ).onFailure { e ->
+                    Napier.e(e) {
+                        "save member document failed"
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -138,6 +166,12 @@ suspend fun Backend.exitRoom(roomId: PrimaryKey, uid: PrimaryKey) =
             Result.success(info)
         } else {
             database.container.deleteMember(roomId, uid).map {
+                // 从 MemberSearchService 删除
+                memberSearchService.deleteDocument(uid, roomId).onFailure { e ->
+                    Napier.e(e) {
+                        "delete member document failed"
+                    }
+                }
                 addUserLog(uid, UserLogType.JOIN, roomId ob ObjectType.ROOM)
                 info.copy(joinedTime = null)
             }
@@ -206,6 +240,20 @@ suspend fun Backend.createRoom(
             roomSearchService.saveDocument(listOf(RoomDocument.fromRoom(room))).onFailure {
                 Napier.e(it) {
                     "save room document failed"
+                }
+            }
+            // 保存创建者到 MemberSearchService
+            getUserInfo(IdFetch(uid)).onSuccess { userInfo ->
+                userInfo?.let {
+                    memberSearchService.saveDocument(
+                        listOf(
+                            MemberDocument.fromUserInfo(memberId, it, room.id, ObjectType.ROOM)
+                        )
+                    ).onFailure { e ->
+                        Napier.e(e) {
+                            "save member document failed"
+                        }
+                    }
                 }
             }
             room
@@ -365,6 +413,7 @@ suspend fun Backend.getUserJoinedRooms(
     ).mapResult { (list, total) ->
         processRawRoomToRoomInfo(list).map { PaginationResult(it, total) }
     }
+
 suspend fun Backend.getRoomMemberInfos(
     roomId: PrimaryKey,
     primaryKeyFetch: PrimaryKeyFetch

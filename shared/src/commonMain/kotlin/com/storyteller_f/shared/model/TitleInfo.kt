@@ -17,7 +17,7 @@ data class TitleInfo(
     val name: String,
     val descriptionTopicId: PrimaryKey,
     val extension: Extension? = null
-) : PrimaryKeyIdentifiable {
+) : ModelObject {
     override val objectType: ObjectType
         get() = ObjectType.TITLE
 

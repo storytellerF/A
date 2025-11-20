@@ -2,6 +2,8 @@ package com.storyteller_f.a.backend.core
 
 import com.storyteller_f.a.backend.core.service.CommunitySearchService
 import com.storyteller_f.a.backend.core.service.CommunitySearchServiceFactory
+import com.storyteller_f.a.backend.core.service.MemberSearchService
+import com.storyteller_f.a.backend.core.service.MemberSearchServiceFactory
 import com.storyteller_f.a.backend.core.service.NameService
 import com.storyteller_f.a.backend.core.service.NameServiceFactory
 import com.storyteller_f.a.backend.core.service.ObjectStorageService
@@ -31,6 +33,7 @@ interface Backend {
     val roomSearchService: RoomSearchService
     val communitySearchService: CommunitySearchService
     val userSearchService: UserSearchService
+    val memberSearchService: MemberSearchService
     val objectStorageService: ObjectStorageService
     val nameService: NameService
     val database: CombinedDatabase
@@ -70,6 +73,13 @@ fun buildCommunitySearchService(env: MergedEnv): CommunitySearchService {
     val factory = ServiceLoader.load(CommunitySearchServiceFactory::class.java).firstOrNull {
         it.match(env)
     } ?: throw Exception("unsupported community search service type ${env["SEARCH_SERVICE"]}")
+    return factory.build(env)
+}
+
+fun buildMemberSearchService(env: MergedEnv): MemberSearchService {
+    val factory = ServiceLoader.load(MemberSearchServiceFactory::class.java).firstOrNull {
+        it.match(env)
+    } ?: throw Exception("unsupported member search service type ${env["SEARCH_SERVICE"]}")
     return factory.build(env)
 }
 

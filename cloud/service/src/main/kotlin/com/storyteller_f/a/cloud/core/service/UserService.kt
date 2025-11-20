@@ -13,6 +13,7 @@ import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.USER_NICKNAME
 import com.storyteller_f.a.backend.core.pagingNotNull
+import com.storyteller_f.a.backend.core.service.MemberDocumentSearch
 import com.storyteller_f.a.backend.core.service.UserDocument
 import com.storyteller_f.a.backend.core.service.UserDocumentSearch
 import com.storyteller_f.a.backend.core.types.RawUser
@@ -345,13 +346,26 @@ suspend fun Backend.searchMembers(
     word: String?,
     primaryKeyFetch: PrimaryKeyFetch,
 ): Result<PaginationResult<UserInfo>?> {
-    return if (word.isNullOrBlank()) {
+    val result = if (word.isNullOrBlank()) {
         database.container.getMemberPaginationResult(
             objectId,
             word,
             primaryKeyFetch
         )
+    } else if (objectId != null) {
+        // 同时有关键字和 objectId，使用 MemberSearchService
+        memberSearchService.searchDocument(
+            MemberDocumentSearch.Keyword(objectId = objectId, nickname = word),
+            primaryKeyFetch
+        ).mapResult { (list, total) ->
+            database.user.getRawUsers(ObjectListFetch.IdListFetch(list.map {
+                it.uid
+            })).map {
+                PaginationResult(it, total)
+            }
+        }
     } else {
+        // 只有关键字，使用 UserSearchService
         userSearchService.searchDocument(UserDocumentSearch.Keyword(listOf(word)), primaryKeyFetch)
             .mapResult { (list, total) ->
                 database.user.getRawUsers(ObjectListFetch.IdListFetch(list.map {
@@ -360,9 +374,11 @@ suspend fun Backend.searchMembers(
                     PaginationResult(it, total)
                 }
             }
-    }.mapResult { (rawUsers, count) ->
-        processRawUserToUserInfo(rawUsers).map {
-            PaginationResult(it, count)
+    }
+
+    return result.mapResult { paginationResult ->
+        processRawUserToUserInfo(paginationResult.list).map {
+            PaginationResult(it, paginationResult.total)
         }
     }
 }

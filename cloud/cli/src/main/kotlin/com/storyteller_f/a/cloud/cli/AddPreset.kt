@@ -7,6 +7,7 @@ import com.storyteller_f.a.backend.core.InsertRoomTuple
 import com.storyteller_f.a.backend.core.InsertTopicTuple
 import com.storyteller_f.a.backend.core.ObjectListFetch.AidListFetch
 import com.storyteller_f.a.backend.core.service.CommunityDocument
+import com.storyteller_f.a.backend.core.service.MemberDocument
 import com.storyteller_f.a.backend.core.service.RoomDocument
 import com.storyteller_f.a.backend.core.service.TopicDocument
 import com.storyteller_f.a.backend.core.service.UploadPack
@@ -321,7 +322,8 @@ class AddPreset : Subcommand("add", "add entry") {
         database.admin.batchAddRooms(roomList, memberList)
         roomSearchService.saveDocument(roomList.map {
             RoomDocument.fromRoom(it)
-        })
+        }).getOrThrow()
+        addMemberDocuments(memberList, userMap)
     }
 
     private suspend fun Backend.getRoomCommunityMap(l: List<PresetRoom>): Map<String, Community> =
@@ -415,12 +417,11 @@ class AddPreset : Subcommand("add", "add entry") {
             }
             InsertCommunityTuple(it, iconMedia, id, fontMedia, now())
         }
-        val userMap =
-            database.user.getRawUsers(AidListFetch(data.flatMap {
-                it.community.users.orEmpty() + (it.community.admin ?: "System")
-            }.distinct())).getOrThrow().associate {
-                it.user.aid to it.user
-            }
+        val userMap = database.user.getRawUsers(AidListFetch(data.flatMap {
+            it.community.users.orEmpty() + (it.community.admin ?: "System")
+        }.distinct())).getOrThrow().associate {
+            it.user.aid to it.user
+        }
         val communities = data.map {
             Community(
                 it.id,
@@ -451,7 +452,28 @@ class AddPreset : Subcommand("add", "add entry") {
         database.admin.batchAddCommunities(communities, memberList)
         communitySearchService.saveDocument(communities.map {
             CommunityDocument.fromCommunity(it)
-        })
+        }).getOrThrow()
+        addMemberDocuments(memberList, userMap)
+    }
+
+    private suspend fun Backend.addMemberDocuments(
+        memberList: List<Member>,
+        userMap: Map<String?, User>
+    ) {
+        memberSearchService.saveDocument(
+            memberList.mapNotNull { member ->
+                val user = userMap.values.find { it.id == member.uid }
+                user?.let {
+                    MemberDocument(
+                        id = member.id,
+                        uid = member.uid,
+                        objectId = member.objectId,
+                        objectType = member.objectType,
+                        nickname = it.nickname
+                    )
+                }
+            }
+        ).getOrThrow()
     }
 
     private suspend fun Backend.addTopics(

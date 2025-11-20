@@ -14,7 +14,7 @@ data class UserInfo(
     val aid: String?,
     val nickname: String,
     val avatar: FileInfo?,
-) : PrimaryKeyIdentifiable {
+) : ModelObject {
     override val objectType: ObjectType
         get() = ObjectType.USER
 
@@ -78,8 +78,6 @@ data class ChildAccountInfo(
 ) : PrimaryKeyIdentifiable {
     override val id: PrimaryKey
         get() = userInfo.id
-    override val objectType: ObjectType
-        get() = ObjectType.USER
 }
 
 enum class QuotaType {
@@ -105,7 +103,7 @@ data class MemberInfo(
     override val id: PrimaryKey,
     val uid: PrimaryKey,
     val objectId: PrimaryKey,
-    override val objectType: ObjectType,
+    val objectType: ObjectType,
     val status: MemberStatus,
     val joinedTime: LocalDate,
     val invitedTime: LocalDate?,

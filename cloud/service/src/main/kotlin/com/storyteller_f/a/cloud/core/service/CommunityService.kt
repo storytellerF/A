@@ -14,6 +14,7 @@ import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.backend.core.service.CommunityDocument
 import com.storyteller_f.a.backend.core.service.CommunityDocumentSearch
+import com.storyteller_f.a.backend.core.service.MemberDocument
 import com.storyteller_f.a.backend.core.types.Community
 import com.storyteller_f.a.backend.core.types.Member
 import com.storyteller_f.a.backend.core.types.RawCommunity
@@ -92,6 +93,20 @@ private suspend fun Backend.joinCommunity(
     )
     return database.container.addMember(member).mapResult {
         addUserLog(uid, UserLogType.JOIN, communityId ob ObjectType.COMMUNITY)
+        // 保存到 MemberSearchService
+        getUserInfo(ObjectFetch.IdFetch(uid)).onSuccess { userInfo ->
+            userInfo?.let {
+                memberSearchService.saveDocument(
+                    listOf(
+                        MemberDocument.fromUserInfo(memberId, it, communityId, ObjectType.COMMUNITY)
+                    )
+                ).onFailure { e ->
+                    Napier.e(e) {
+                        "save member document failed"
+                    }
+                }
+            }
+        }
         Result.success(community.copy(joinedTime = time))
     }.recoverIfDup(database::isDup) {
         getCommunity(ObjectFetch.IdFetch(communityId), uid, true)
@@ -107,6 +122,12 @@ suspend fun Backend.exitCommunity(
     } else {
         database.container.deleteMember(communityId, id).mapResult {
             addUserLog(id, UserLogType.EXIT, communityId ob ObjectType.COMMUNITY)
+            // 从 MemberSearchService 删除
+            memberSearchService.deleteDocument(id, communityId).onFailure { e ->
+                Napier.e(e) {
+                    "delete member document failed"
+                }
+            }
             Result.success(info.copy(joinedTime = null))
         }
     }
@@ -200,6 +221,20 @@ suspend fun Backend.createCommunity(
                         "save community document failed"
                     }
                 }
+            // 保存创建者到 MemberSearchService
+            getUserInfo(ObjectFetch.IdFetch(uid)).onSuccess { userInfo ->
+                userInfo?.let {
+                    memberSearchService.saveDocument(
+                        listOf(
+                            MemberDocument.fromUserInfo(memberId, it, id, ObjectType.COMMUNITY)
+                        )
+                    ).onFailure { e ->
+                        Napier.e(e) {
+                            "save member document failed"
+                        }
+                    }
+                }
+            }
         }
     }.mapResult { community ->
         addUserLog(uid, UserLogType.CREATE, community.id ob ObjectType.COMMUNITY)

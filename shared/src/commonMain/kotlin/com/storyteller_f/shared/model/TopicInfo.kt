@@ -32,7 +32,7 @@ data class TopicInfo(
     val lastRead: PrimaryKey? = null,
     val favoriteId: PrimaryKey? = null,
     val subscriptionId: PrimaryKey? = null,
-) : PrimaryKeyIdentifiable {
+) : ModelObject {
     override val objectType: ObjectType
         get() = ObjectType.TOPIC
 

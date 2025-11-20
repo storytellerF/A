@@ -10,7 +10,7 @@ import com.storyteller_f.shared.type.PrimaryKey
 
 data class RoomDocument(override val id: PrimaryKey, val name: String, val aid: String) :
     PrimaryKeyIdentifiable {
-    override val objectType: ObjectType = ObjectType.ROOM
+    val objectType: ObjectType = ObjectType.ROOM
     companion object {
         fun fromRoom(room: Room): RoomDocument {
             return RoomDocument(room.id, room.name, room.aid)

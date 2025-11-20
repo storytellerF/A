@@ -5,7 +5,6 @@ import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.types.Community
 import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
-import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 
 data class CommunityDocument(
@@ -14,7 +13,6 @@ data class CommunityDocument(
     val aid: String,
     val owner: PrimaryKey,
 ) : PrimaryKeyIdentifiable {
-    override val objectType: ObjectType = ObjectType.COMMUNITY
     companion object {
         fun fromCommunity(community: Community): CommunityDocument {
             return CommunityDocument(community.id, community.name, community.aid, community.owner)
