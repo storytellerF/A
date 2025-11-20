@@ -16,7 +16,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
-import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.FormatBold
 import androidx.compose.material.icons.filled.FormatItalic
@@ -64,15 +64,19 @@ import com.storyteller_f.a.app.compose_app.LocalUserInfo
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.common.MarkdownMediasViewModel
 import com.storyteller_f.a.app.compose_app.common.OnTopicCreated
+import com.storyteller_f.a.app.compose_app.common.createRoomViewModel
 import com.storyteller_f.a.app.compose_app.common.getMarkdownMediasViewModel
 import com.storyteller_f.a.app.compose_app.components.AppTopicContentView
 import com.storyteller_f.a.app.compose_app.edit
 import com.storyteller_f.a.app.compose_app.pages.community.getCommunityFont
 import com.storyteller_f.a.app.compose_app.pages.community.getFontFamily
+import com.storyteller_f.a.app.compose_app.pages.room.RoomSendButton
 import com.storyteller_f.a.app.compose_app.preview
 import com.storyteller_f.a.app.compose_app.raw
 import com.storyteller_f.a.app.compose_app.ui.theme.AppTheme
+import com.storyteller_f.a.app.core.components.CustomAlertDialog
 import com.storyteller_f.a.app.core.components.emitEvent
+import com.storyteller_f.a.app.core.components.rememberAlertDialogController
 import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.shared.model.TopicContent
@@ -350,6 +354,38 @@ private fun TopicComposeSubmitButton(
     data: TopicComposeData,
     backPrePage: () -> Unit
 ) {
+    val alertDialogController = rememberAlertDialogController()
+    CustomAlertDialog(alertDialogController, {
+        alertDialogController.close()
+    }) {
+    }
+    if (data is TopicComposeData.PublicRoom) {
+        val roomViewModel = createRoomViewModel(data.roomId)
+        val roomData by roomViewModel.handler.data.collectAsState()
+        roomData?.let {
+            RoomSendButton(
+                input,
+                it,
+                data.parentTuple,
+                alertDialogController,
+            ) {
+            }
+        }
+        return
+    }
+    if (data is TopicComposeData.PrivateRoom) {
+        val roomViewModel = createRoomViewModel(data.roomId)
+        val roomData by roomViewModel.handler.data.collectAsState()
+        roomData?.let {
+            RoomSendButton(
+                input,
+                it,
+                data.parentTuple,
+                alertDialogController,
+            ) {}
+        }
+        return
+    }
     val (objectId, objectType) = data.getParent()
     val scope = rememberCoroutineScope()
     val globalDialogController = LocalGlobalDialog.current
@@ -368,7 +404,7 @@ private fun TopicComposeSubmitButton(
             }
         }
     }) {
-        Icon(imageVector = Icons.Default.Check, "submit")
+        Icon(imageVector = Icons.AutoMirrored.Filled.Send, "submit")
     }
 }
 
