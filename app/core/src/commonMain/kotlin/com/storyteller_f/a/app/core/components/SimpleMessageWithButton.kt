@@ -9,14 +9,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 
 @Composable
-fun SimpleMessageWithButton(string: String, key: String) {
+fun SimpleMessageWithButton(message: String, title: String) {
     val alterDialogController = rememberAlertDialogController()
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(string, maxLines = 1, modifier = Modifier.weight(1f))
+        Text(message, maxLines = 1, modifier = Modifier.weight(1f), overflow = TextOverflow.MiddleEllipsis)
         IconButton({
-            alterDialogController.showMessage(key, string)
+            alterDialogController.showMessage(title, message, enableCopy = true)
         }) {
             Icon(Icons.Default.Fullscreen, "fullscreen")
         }

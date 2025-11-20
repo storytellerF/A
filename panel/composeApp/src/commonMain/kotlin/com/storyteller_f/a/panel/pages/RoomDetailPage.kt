@@ -2,8 +2,6 @@ package com.storyteller_f.a.panel.pages
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -29,7 +27,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.core.components.CustomBottomNav
 import com.storyteller_f.a.app.core.components.NavRoute
@@ -39,6 +36,7 @@ import com.storyteller_f.a.panel.LocalPanelNav
 import com.storyteller_f.a.panel.common.createPanelRoomFilesViewModel
 import com.storyteller_f.a.panel.common.createPanelRoomMembersViewModel
 import com.storyteller_f.a.panel.common.createPanelRoomViewModel
+import com.storyteller_f.a.panel.components.InfoTable
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
 
@@ -58,13 +56,8 @@ fun RoomDetailPage(id: PrimaryKey) {
             }
         }
     }) { paddingValues ->
-        val direction = LocalLayoutDirection.current
         Column(
-            Modifier.padding(
-                top = paddingValues.calculateTopPadding(),
-                start = paddingValues.calculateStartPadding(direction),
-                end = paddingValues.calculateEndPadding(direction)
-            )
+            Modifier.padding(paddingValues)
         ) {
             HorizontalPager(pagerState) { pageIndex ->
                 when (pageIndex) {
@@ -123,12 +116,22 @@ private fun RoomInfoTabs(id: PrimaryKey) {
 private fun RoomBasicInfoSection(id: PrimaryKey) {
     val vm = createPanelRoomViewModel(id)
     StateView(vm.handler, modifier = Modifier.fillMaxSize()) { info ->
-        Column(Modifier.padding(16.dp)) {
-            Text(info.name)
-            val creator = info.creator.toString()
-            val isPrivate = info.isPrivate.toString()
-            Text(listOf(creator, isPrivate).filter { it.isNotEmpty() }.joinToString(" • "))
+        val items = buildList {
+            add("id" to info.id.toString())
+            add("name" to info.name)
+            add("aid" to info.aid)
+            add("creator" to info.creator.toString())
+            add("createdTime" to info.createdTime.toString())
+            add("memberCount" to info.memberCount.toString())
+            add("icon" to (info.icon?.name ?: "null"))
+            add("joinedTime" to (info.joinedTime?.toString() ?: "null"))
+            add("communityId" to (info.communityId?.toString() ?: "null"))
+            add("latestTopic" to (info.latestTopic?.toString() ?: "null"))
+            add("isPrivate" to info.isPrivate.toString())
+            add("isJoined" to info.isJoined.toString())
+            add("hasUnread" to info.hasUnread.toString())
         }
+        InfoTable(items, Modifier.padding(16.dp))
     }
 }
 

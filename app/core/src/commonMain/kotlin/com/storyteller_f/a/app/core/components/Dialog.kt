@@ -14,9 +14,12 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 
 class DialogSaveState {
     val dialogShown = MutableStateFlow(false)
@@ -38,8 +41,8 @@ class CustomAlertDialogController(
     )
 ) {
 
-    fun showMessage(title: String, message: String) {
-        state.value = CustomAlertDialogState(title, message)
+    fun showMessage(title: String, message: String, enableCopy: Boolean = false) {
+        state.value = CustomAlertDialogState(title, message, enableCopy = enableCopy)
     }
 
     fun showTitle(title: String) {
@@ -55,7 +58,12 @@ class CustomAlertDialogController(
     }
 }
 
-class CustomAlertDialogState(val title: String?, val message: String)
+class CustomAlertDialogState(
+    val title: String?,
+    val message: String,
+    val positiveButton: String = "Yes",
+    val enableCopy: Boolean = false
+)
 
 @Composable
 fun CustomAlertDialog(
@@ -83,11 +91,24 @@ fun CustomAlertDialogInternal(
     }, text = {
         Text(dialogState.message)
     }, confirmButton = {
-        Button({
-            dismiss()
-            onClickOk()
-        }) {
-            Text("Yes")
+        if (dialogState.enableCopy) {
+            val clipboardManager = LocalClipboard.current
+            val scope = rememberCoroutineScope()
+            Button({
+                dismiss()
+                scope.launch {
+                    clipboardManager.setText(dialogState.message)
+                }
+            }) {
+                Text("Copy")
+            }
+        } else {
+            Button({
+                dismiss()
+                onClickOk()
+            }) {
+                Text(dialogState.positiveButton)
+            }
         }
     })
 }

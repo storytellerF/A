@@ -2,8 +2,6 @@ package com.storyteller_f.a.panel.pages
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -28,7 +26,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.core.components.CommunityIcon
 import com.storyteller_f.a.app.core.components.CustomBottomNav
@@ -39,17 +36,14 @@ import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.pagingItems
 import com.storyteller_f.a.panel.LocalPanelNav
 import com.storyteller_f.a.panel.Res
-import com.storyteller_f.a.panel.address_label
-import com.storyteller_f.a.panel.aid_label
 import com.storyteller_f.a.panel.common.createPanelJoinedCommunitiesViewModel
 import com.storyteller_f.a.panel.common.createPanelJoinedRoomsViewModel
 import com.storyteller_f.a.panel.common.createPanelUserLogsViewModel
 import com.storyteller_f.a.panel.common.createPanelUserOverviewViewModel
 import com.storyteller_f.a.panel.common.createPanelUserUploadRecordsViewModel
 import com.storyteller_f.a.panel.common.createPanelUserViewModel
+import com.storyteller_f.a.panel.components.InfoTable
 import com.storyteller_f.a.panel.log_supporting
-import com.storyteller_f.a.panel.nickname_label
-import com.storyteller_f.a.panel.none
 import com.storyteller_f.a.panel.tab_basic_info
 import com.storyteller_f.a.panel.tab_created_files
 import com.storyteller_f.a.panel.tab_joined_communities
@@ -71,7 +65,11 @@ fun UserDetailPage(uid: PrimaryKey) {
     Scaffold(topBar = { UserTopBar(uid) }, bottomBar = {
         val navRoutes = listOf(
             NavRoute("/info", Icons.Default.People, stringResource(Res.string.user_info)),
-            NavRoute("/logs", Icons.AutoMirrored.Filled.Article, stringResource(Res.string.user_logs)),
+            NavRoute(
+                "/logs",
+                Icons.AutoMirrored.Filled.Article,
+                stringResource(Res.string.user_logs)
+            ),
         )
         CustomBottomNav(navRoutes[pagerState.currentPage].path, navRoutes) { path ->
             scope.launch {
@@ -79,14 +77,7 @@ fun UserDetailPage(uid: PrimaryKey) {
             }
         }
     }) { paddingValues ->
-        val direction = LocalLayoutDirection.current
-        Column(
-            Modifier.padding(
-                top = paddingValues.calculateTopPadding(),
-                start = paddingValues.calculateStartPadding(direction),
-                end = paddingValues.calculateEndPadding(direction)
-            )
-        ) {
+        Column(Modifier.padding(paddingValues)) {
             HorizontalPager(pagerState) { pageIndex ->
                 when (pageIndex) {
                     0 -> UserInfoTabs(uid)
@@ -102,8 +93,9 @@ fun UserDetailPage(uid: PrimaryKey) {
 private fun UserTopBar(uid: PrimaryKey) {
     val vm = createPanelUserViewModel(uid)
     val info by vm.handler.data.collectAsState(null)
-    val title = listOf("User Detail", info?.nickname ?: "", info?.aid ?: "").filter { it.isNotBlank() }
-        .joinToString(" • ")
+    val title =
+        listOf("User Detail", info?.nickname ?: "", info?.aid ?: "").filter { it.isNotBlank() }
+            .joinToString(" • ")
     val nav = LocalPanelNav.current
     TopAppBar(
         title = { Text(title.ifBlank { "User Detail • $uid" }) },
@@ -267,11 +259,15 @@ private fun UserUploadRecordsSection(uid: PrimaryKey) {
                 if (info != null) {
                     ListItem(
                         headlineContent = { Text(info.name) },
-                        supportingContent = { Text(
-                            "${info.status} ${HumanReadable.fileSize(
-                                info.progress
-                            )}/${HumanReadable.fileSize(info.total)}"
-                        ) },
+                        supportingContent = {
+                            Text(
+                                "${info.status} ${
+                                    HumanReadable.fileSize(
+                                        info.progress
+                                    )
+                                }/${HumanReadable.fileSize(info.total)}"
+                            )
+                        },
                     )
                     HorizontalDivider()
                 } else {
@@ -294,14 +290,16 @@ private fun UserLogsTab(uid: PrimaryKey) {
                     val panelNav = LocalPanelNav.current
                     ListItem(
                         headlineContent = { Text(info.type.name) },
-                        supportingContent = { Text(
-                            stringResource(
-                                Res.string.log_supporting,
-                                info.objectType,
-                                info.objectId.toString(),
-                                info.createdTime.toString()
+                        supportingContent = {
+                            Text(
+                                stringResource(
+                                    Res.string.log_supporting,
+                                    info.objectType,
+                                    info.objectId.toString(),
+                                    info.createdTime.toString()
+                                )
                             )
-                        ) },
+                        },
                         modifier = Modifier.clickable {
                             when (info.objectType) {
                                 ObjectType.USER -> panelNav.gotoUserDetail(info.objectId)
@@ -328,16 +326,16 @@ private fun UserLogsTab(uid: PrimaryKey) {
 private fun UserBasicInfoSectionVM(uid: PrimaryKey) {
     val vm = createPanelUserOverviewViewModel(uid)
     StateView(vm.handler, modifier = Modifier.fillMaxSize()) { overview ->
-        Column(Modifier.padding(16.dp)) {
-            val u = overview.userInfo
-            Text(stringResource(Res.string.nickname_label, u.nickname))
-            Text(stringResource(Res.string.address_label, u.address))
-            val aidText = u.aid ?: stringResource(Res.string.none)
-            Text(stringResource(Res.string.aid_label, aidText))
-            Text("favoriteCount: ${overview.favoriteCount}")
-            Text("subscriptionCount: ${overview.subscriptionCount}")
-            Text("acg: ${overview.acg}")
-            Text("childAccountCount: ${overview.childAccountCount}")
+        val items = buildList {
+            add("id" to overview.userInfo.id.toString())
+            add("nickname" to overview.userInfo.nickname)
+            add("address" to overview.userInfo.address)
+            add("aid" to overview.userInfo.aid.toString())
+            add("favoriteCount" to overview.favoriteCount.toString())
+            add("subscriptionCount" to overview.subscriptionCount.toString())
+            add("acg" to overview.acg.toString())
+            add("childAccountCount" to overview.childAccountCount.toString())
         }
+        InfoTable(items, Modifier.padding(16.dp))
     }
 }

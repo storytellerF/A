@@ -1,8 +1,6 @@
 package com.storyteller_f.a.panel.pages
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
@@ -24,12 +22,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.core.components.CustomBottomNav
 import com.storyteller_f.a.app.core.components.NavRoute
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.panel.common.createPanelTopicViewModel
+import com.storyteller_f.a.panel.components.InfoTable
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
 
@@ -49,14 +47,7 @@ fun TopicDetailPage(id: PrimaryKey) {
             }
         }
     }) { paddingValues ->
-        val direction = LocalLayoutDirection.current
-        Column(
-            Modifier.padding(
-                top = paddingValues.calculateTopPadding(),
-                start = paddingValues.calculateStartPadding(direction),
-                end = paddingValues.calculateEndPadding(direction)
-            )
-        ) {
+        Column(Modifier.padding(paddingValues)) {
             HorizontalPager(pagerState) { pageIndex ->
                 when (pageIndex) {
                     0 -> TopicInfoTabs(id)
@@ -72,7 +63,8 @@ fun TopicDetailPage(id: PrimaryKey) {
 private fun TopicTopBar(id: PrimaryKey) {
     val vm = createPanelTopicViewModel(id)
     val info by vm.handler.data.collectAsState(null)
-    val title = listOf("Topic Detail", info?.id?.toString() ?: "").filter { it.isNotBlank() }.joinToString(" • ")
+    val title = listOf("Topic Detail", info?.id?.toString() ?: "").filter { it.isNotBlank() }
+        .joinToString(" • ")
     val nav = com.storyteller_f.a.panel.LocalPanelNav.current
     TopAppBar(
         title = { Text(title.ifBlank { "Topic Detail • $id" }) },
@@ -109,11 +101,24 @@ private fun TopicInfoTabs(id: PrimaryKey) {
 private fun TopicBasicInfoSection(id: PrimaryKey) {
     val vm = createPanelTopicViewModel(id)
     StateView(vm.handler, modifier = Modifier.fillMaxSize()) { info ->
-        Column(Modifier.padding(16.dp)) {
-            Text(info.id.toString())
-            Text(info.createdTime.toString())
-            Text(info.parentType.name)
+        val items = buildList {
+            add("id" to info.id.toString())
+            add("author" to info.author.toString())
+            add("rootId" to info.rootId.toString())
+            add("rootType" to info.rootType.name)
+            add("parentId" to info.parentId.toString())
+            add("parentType" to info.parentType.name)
+            add("createdTime" to info.createdTime.toString())
+            add("commentCount" to info.commentCount.toString())
+            add("reactionCount" to info.reactionCount.toString())
+            add("hasComment" to info.hasComment.toString())
+            add("isEncrypted" to info.isEncrypted.toString())
+            add("level" to info.level.toString())
+            add("isPin" to info.isPin.toString())
+            add("lastModifiedTime" to (info.lastModifiedTime?.toString() ?: "null"))
+            add("aid" to (info.aid ?: "null"))
         }
+        InfoTable(items, Modifier.padding(16.dp))
     }
 }
 

@@ -2,8 +2,6 @@ package com.storyteller_f.a.panel.pages
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -28,7 +26,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.core.components.CustomBottomNav
 import com.storyteller_f.a.app.core.components.NavRoute
@@ -37,6 +34,7 @@ import com.storyteller_f.a.app.core.components.pagingItems
 import com.storyteller_f.a.panel.LocalPanelNav
 import com.storyteller_f.a.panel.common.createPanelCommunityMembersViewModel
 import com.storyteller_f.a.panel.common.createPanelCommunityViewModel
+import com.storyteller_f.a.panel.components.InfoTable
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
 
@@ -56,14 +54,7 @@ fun CommunityDetailPage(id: PrimaryKey) {
             }
         }
     }) { paddingValues ->
-        val direction = LocalLayoutDirection.current
-        Column(
-            Modifier.padding(
-                top = paddingValues.calculateTopPadding(),
-                start = paddingValues.calculateStartPadding(direction),
-                end = paddingValues.calculateEndPadding(direction)
-            )
-        ) {
+        Column(Modifier.padding(paddingValues)) {
             HorizontalPager(pagerState) { pageIndex ->
                 when (pageIndex) {
                     0 -> CommunityInfoTabs(id)
@@ -123,17 +114,22 @@ private fun CommunityInfoTabs(id: PrimaryKey) {
 private fun CommunityBasicInfoSection(id: PrimaryKey) {
     val vm = createPanelCommunityViewModel(id)
     StateView(vm.handler, modifier = Modifier.fillMaxSize()) { info ->
-        Column(Modifier.padding(16.dp)) {
-            Text(info.name)
-            val aidText = info.aid
-            if (aidText.isNotEmpty()) {
-                Text(aidText)
-            }
-            val owner = info.owner.toString()
-            val members = info.memberCount.toString()
-            val policy = info.memberPolicy.name
-            Text(listOf(owner, members, policy).filter { it.isNotEmpty() }.joinToString(" • "))
+        val items = buildList {
+            add("id" to info.id.toString())
+            add("name" to info.name)
+            add("aid" to info.aid)
+            add("owner" to info.owner.toString())
+            add("createdTime" to info.createdTime.toString())
+            add("memberCount" to info.memberCount.toString())
+            add("memberPolicy" to info.memberPolicy.name)
+            add("icon" to (info.icon?.name ?: "null"))
+            add("poster" to (info.poster?.name ?: "null"))
+            add("joinedTime" to (info.joinedTime?.toString() ?: "null"))
+            add("latestTopic" to (info.latestTopic?.toString() ?: "null"))
+            add("hasPoster" to info.hasPoster.toString())
+            add("font" to (info.font?.name ?: "null"))
         }
+        InfoTable(items, Modifier.padding(16.dp))
     }
 }
 
