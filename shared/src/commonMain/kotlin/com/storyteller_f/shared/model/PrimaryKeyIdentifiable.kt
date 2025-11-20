@@ -6,7 +6,9 @@ import com.storyteller_f.shared.type.PrimaryKey
 
 interface PrimaryKeyIdentifiable {
     val id: PrimaryKey
+}
 
+interface ModelObject : PrimaryKeyIdentifiable {
     val objectType: ObjectType
 
     fun tuple() = id ob objectType

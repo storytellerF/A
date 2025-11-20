@@ -20,7 +20,7 @@ data class RoomInfo(
     val communityId: PrimaryKey? = null,
     val lastRead: PrimaryKey? = null,
     val latestTopic: PrimaryKey? = null,
-) : PrimaryKeyIdentifiable {
+) : ModelObject {
     val isPrivate get() = communityId == null
     val isJoined get() = joinedTime != null
     val hasUnread get() = latestTopic != null && (lastRead != null && lastRead < latestTopic || lastRead == null)

@@ -6,7 +6,6 @@ import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.types.Topic
 import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.model.TopicContent
-import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 
 data class TopicDocument(
@@ -18,7 +17,6 @@ data class TopicDocument(
     val parentType: String,
     val author: PrimaryKey
 ) : PrimaryKeyIdentifiable {
-    override val objectType: ObjectType = ObjectType.TOPIC
 
     companion object {
         fun fromTopic(topic: Topic, content: TopicContent.Plain): TopicDocument {

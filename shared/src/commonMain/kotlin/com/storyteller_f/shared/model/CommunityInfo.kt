@@ -24,7 +24,7 @@ data class CommunityInfo(
     val latestTopic: PrimaryKey? = null,
     val hasPoster: Boolean = poster != null,
     val font: FileInfo? = null,
-) : PrimaryKeyIdentifiable {
+) : ModelObject {
     val isJoined = joinedTime != null
     override val objectType: ObjectType
         get() = ObjectType.COMMUNITY

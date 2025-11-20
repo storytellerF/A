@@ -5,12 +5,10 @@ import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
-import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 
 data class UserDocument(override val id: PrimaryKey, val nickname: String, val aid: String?) :
     PrimaryKeyIdentifiable {
-    override val objectType: ObjectType = ObjectType.USER
 
     companion object {
         fun fromUser(user: User): UserDocument {

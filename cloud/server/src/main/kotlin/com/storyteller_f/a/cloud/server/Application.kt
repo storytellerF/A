@@ -9,6 +9,7 @@ import com.storyteller_f.a.backend.core.CustomConfig
 import com.storyteller_f.a.backend.core.CustomKeyStore
 import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.buildCommunitySearchService
+import com.storyteller_f.a.backend.core.buildMemberSearchService
 import com.storyteller_f.a.backend.core.buildNameService
 import com.storyteller_f.a.backend.core.buildRoomSearchService
 import com.storyteller_f.a.backend.core.buildTopicSearchService
@@ -18,6 +19,7 @@ import com.storyteller_f.a.backend.core.loadAvif
 import com.storyteller_f.a.backend.core.mediaService
 import com.storyteller_f.a.backend.core.readEnv
 import com.storyteller_f.a.backend.core.service.CommunitySearchService
+import com.storyteller_f.a.backend.core.service.MemberSearchService
 import com.storyteller_f.a.backend.core.service.NameService
 import com.storyteller_f.a.backend.core.service.ObjectStorageService
 import com.storyteller_f.a.backend.core.service.RoomSearchService
@@ -396,6 +398,7 @@ class ServerBackend(
     override val roomSearchService: RoomSearchService,
     override val communitySearchService: CommunitySearchService,
     override val userSearchService: UserSearchService,
+    override val memberSearchService: MemberSearchService,
     override val objectStorageService: ObjectStorageService,
     override val nameService: NameService,
     override val database: CombinedDatabase
@@ -413,6 +416,7 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
     val userSearchService = buildUserSearchService(env)
     val roomSearchService = buildRoomSearchService(env)
     val communitySearchService = buildCommunitySearchService(env)
+    val memberSearchService = buildMemberSearchService(env)
     val mediaService = mediaService(env)
 
     val snapshotKeyStorePath = env["SNAPSHOT_KEYSTORE_PATH"]
@@ -437,6 +441,7 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
         roomSearchService,
         communitySearchService,
         userSearchService,
+        memberSearchService,
         mediaService,
         buildNameService(env),
         buildExposedDatabase(databaseConnection)
