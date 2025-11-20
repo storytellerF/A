@@ -34,6 +34,7 @@ import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.globalLoader
 import com.storyteller_f.a.panel.LocalPanelNav
 import com.storyteller_f.a.panel.common.createPanelFileViewModel
+import com.storyteller_f.a.panel.components.InfoTable
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
 
@@ -108,9 +109,7 @@ private fun FileBasicInfoSection(id: PrimaryKey) {
     val nav = LocalPanelNav.current
     StateView(vm.handler, modifier = Modifier.fillMaxSize()) { info ->
         Column(Modifier.padding(16.dp)) {
-            Text(info.name)
-            Text(info.contentType)
-            Box(modifier = Modifier.heightIn(max = 200.dp)) {
+            Box(modifier = Modifier.heightIn(max = 200.dp).padding(top = 16.dp)) {
                 when {
                     info.contentType.startsWith("image") -> {
                         CoilZoomAsyncImage(
@@ -127,11 +126,27 @@ private fun FileBasicInfoSection(id: PrimaryKey) {
                     }
                 }
             }
-            Button(onClick = {
-                nav.gotoFilePreview(info.id, info.url, info.contentType, info.name)
-            }) {
+            Button(
+                onClick = {
+                    nav.gotoFilePreview(info.id, info.url, info.contentType, info.name)
+                },
+                modifier = Modifier.padding(top = 16.dp)
+            ) {
                 Text("全屏预览")
             }
+            val items = buildList {
+                add("id" to info.id.toString())
+                add("name" to info.name)
+                add("fullName" to info.fullName)
+                add("url" to info.url)
+                add("contentType" to info.contentType)
+                add("size" to info.size.toString())
+                add("owner" to info.owner.toString())
+                add("ownerType" to info.ownerType.name)
+                add("lastModified" to info.lastModified.toString())
+                add("dimension" to (info.dimension?.let { "${it.width}x${it.height}" } ?: "null"))
+            }
+            InfoTable(items)
         }
     }
 }

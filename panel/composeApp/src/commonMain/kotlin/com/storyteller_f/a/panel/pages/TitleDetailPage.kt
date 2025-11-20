@@ -27,6 +27,7 @@ import com.storyteller_f.a.app.core.components.CustomBottomNav
 import com.storyteller_f.a.app.core.components.NavRoute
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.panel.common.createPanelTitleViewModel
+import com.storyteller_f.a.panel.components.InfoTable
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
 
@@ -99,10 +100,18 @@ private fun TitleInfoTabs(id: PrimaryKey) {
 private fun TitleBasicInfoSection(id: PrimaryKey) {
     val vm = createPanelTitleViewModel(id)
     StateView(vm.handler, modifier = Modifier.fillMaxSize()) { info ->
-        Column(Modifier.padding(16.dp)) {
-            Text(info.name)
-            Text(info.type.name)
+        val items = buildList {
+            add("id" to info.id.toString())
+            add("name" to info.name)
+            add("createdTime" to info.createdTime.toString())
+            add("type" to info.type.name)
+            add("creator" to info.creator.toString())
+            add("receiver" to info.receiver.toString())
+            add("scopeId" to info.scopeId.toString())
+            add("scopeType" to info.scopeType.name)
+            add("descriptionTopicId" to info.descriptionTopicId.toString())
         }
+        InfoTable(items, Modifier.padding(16.dp))
     }
 }
 

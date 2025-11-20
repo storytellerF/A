@@ -388,22 +388,21 @@ suspend fun Backend.getTopic(
     fillHasCommented: Boolean?,
 ): Result<TopicInfo?> {
     if (uid == null && fillHasCommented == true) return Result.failure(UnauthorizedException())
-    return checkRootReadPermission(ObjectType.TOPIC, topicId, uid).mapResultIfNotNull {
-        if (it.hasRead) {
-            database.getRawTopic(
-                ObjectFetch.IdFetch(topicId),
-                uid
-            ).mapIfNotNull { value ->
-                value.copy(hasJoined = it.hasJoined)
+    return checkRootReadPermission(ObjectType.TOPIC, topicId, uid).mapResultIfNotNull { permission ->
+        if (permission.hasRead) {
+            getTopicById(topicId, uid).mapIfNotNull {
+                it.copy(hasJoined = it.hasJoined)
             }
         } else {
             Result.failure(ForbiddenException("Permission Denied"))
         }
-    }.mapResultIfNotNull { info ->
-        processRawTopicToTopicInfo(listOf(info), uid, true).mapIfNotNull {
-            it.first()
-        }
     }
+}
+
+suspend fun Backend.getTopicById(topicId: PrimaryKey, uid: PrimaryKey?): Result<TopicInfo?> {
+    return database.getRawTopic(ObjectFetch.IdFetch(topicId), uid).mapResultIfNotNull { info ->
+        processRawTopicToTopicInfo(listOf(info), uid, true)
+    }.firstOrNull()
 }
 
 suspend fun Backend.getTopicByAid(
@@ -426,10 +425,8 @@ suspend fun Backend.getTopicByAid(
                 }
             }
         }.mapResultIfNotNull { info ->
-            processRawTopicToTopicInfo(listOf(info), uid, true).mapIfNotNull {
-                it.first()
-            }
-        }
+            processRawTopicToTopicInfo(listOf(info), uid, true)
+        }.firstOrNull()
 }
 
 suspend fun Backend.getTopicsByParentId(

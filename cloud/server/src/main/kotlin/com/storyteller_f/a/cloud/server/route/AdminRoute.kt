@@ -21,7 +21,7 @@ import com.storyteller_f.a.cloud.core.service.getOverview
 import com.storyteller_f.a.cloud.core.service.getRoomInfo
 import com.storyteller_f.a.cloud.core.service.getRoomMemberInfos
 import com.storyteller_f.a.cloud.core.service.getTitleInfo
-import com.storyteller_f.a.cloud.core.service.getTopic
+import com.storyteller_f.a.cloud.core.service.getTopicById
 import com.storyteller_f.a.cloud.core.service.getUserById
 import com.storyteller_f.a.cloud.core.service.getUserJoinedCommunities
 import com.storyteller_f.a.cloud.core.service.getUserJoinedRooms
@@ -66,7 +66,7 @@ fun Routing.bindProtectedAdminRoute(backend: Backend) {
             }
         }
         AdminApi.Topics.Id.get(handleResult()) { p ->
-            backend.getTopic(p.id, null, null)
+            backend.getTopicById(p.id, null)
         }
         AdminApi.Titles.get(handleResult()) {
             it.pagination(IdentifiablePagingGenerator) { fetch ->
