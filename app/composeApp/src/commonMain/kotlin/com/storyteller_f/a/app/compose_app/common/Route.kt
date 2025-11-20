@@ -146,7 +146,10 @@ sealed interface TopicComposeData {
 }
 
 @Serializable
-data class MemberScreen(val objectType: String, val objectId: PrimaryKey)
+data class RoomMemberScreen(val objectId: PrimaryKey)
+
+@Serializable
+data class CommunityMemberScreen(val objectId: PrimaryKey)
 
 @Serializable
 data object UserSettingScreen
@@ -308,7 +311,11 @@ fun newAppNav(navigator: NavHostController, scope: CoroutineScope) = object : Ap
         objectId: PrimaryKey,
         objectType: ObjectType,
     ) {
-        navigator.navigate(MemberScreen(objectType.name, objectId))
+        if (objectType == ObjectType.COMMUNITY) {
+            navigator.navigate(CommunityMemberScreen(objectId))
+        } else {
+            navigator.navigate(RoomMemberScreen(objectId))
+        }
     }
 
     override fun gotoAbout() {
@@ -429,9 +436,13 @@ private fun NavGraphBuilder.buildMainScreen() {
         TopicPage(it.toRoute<TopicScreen>().topicId)
     }
 
-    composable<MemberScreen> {
-        val (objectType, objectId) = it.toRoute<MemberScreen>()
-        MemberPage(objectId, ObjectType.valueOf(objectType))
+    composable<RoomMemberScreen> {
+        val route = it.toRoute<RoomMemberScreen>()
+        MemberPage(route.objectId, ObjectType.ROOM)
+    }
+    composable<CommunityMemberScreen> {
+        val route = it.toRoute<CommunityMemberScreen>()
+        MemberPage(route.objectId, ObjectType.COMMUNITY)
     }
     composable<UserScreen> {
         val route = it.toRoute<UserScreen>()
@@ -486,22 +497,17 @@ private fun NavGraphBuilder.buildComposeScreen(navigator: NavHostController) {
 }
 
 object ExternalUriHandler {
-    // Storage for when a URI arrives before the listener is set up
     private var cached: String? = null
 
     var listener: ((uri: String) -> Unit)? = null
         set(value) {
             field = value
             if (value != null) {
-                // When a listener is set and `cached` is not empty,
-                // immediately invoke the listener with the cached URI
                 cached?.let { value.invoke(it) }
                 cached = null
             }
         }
 
-    // When a new URI arrives, cache it.
-    // If the listener is already set, invoke it and clear the cache immediately.
     fun onNewUri(uri: String) {
         cached = uri
         listener?.let {
