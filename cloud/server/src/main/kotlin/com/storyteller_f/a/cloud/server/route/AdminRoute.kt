@@ -115,6 +115,11 @@ private fun Routing.bindAdminRoomRoutes(backend: Backend) {
             backend.getRoomMemberInfos(p.id, f)
         }
     }
+    AdminApi.Rooms.Id.Files.get(handleResult()) { q, p ->
+        q.pagination(IdentifiablePagingGenerator) { f ->
+            backend.getFileInfoPaginationResult(p.id, f)
+        }
+    }
 }
 
 private fun Routing.bindAdminUserRoutes(backend: Backend) {

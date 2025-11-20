@@ -627,6 +627,15 @@ object AdminApi {
                         "/admin/rooms/{id}/members"
                     )
             }
+            object Files {
+                val get =
+                    safeApiWithQueryAndPath<
+                        ServerResponse<FileInfo>,
+                        PaginationQuery,
+                        CommonPath>(
+                        "/admin/rooms/{id}/files"
+                    )
+            }
         }
     }
 
