@@ -137,8 +137,17 @@ fun checkAid(aid: String?, supportEmptyAid: Boolean = false): Result<Unit> {
         return Result.failure(CustomBadRequestException("only support alphabet, number, underline and hyphen"))
     }
     val underlineCount = aid.count { it == '_' || it == '-' }
-    if (underlineCount > 1.0 / aid.length) {
+    if (underlineCount / aid.length > (1.0 / 4)) {
         return Result.failure(CustomBadRequestException("aid contains too many underline or hyphen"))
+    }
+    return checkUnderlineAndHyphen(aid)
+}
+
+private fun checkUnderlineAndHyphen(aid: String): Result<Unit> {
+    for (i in 0 until aid.length - 1) {
+        if ((aid[i] == '_' || aid[i] == '-') && (aid[i + 1] == '_' || aid[i + 1] == '-')) {
+            return Result.failure(CustomBadRequestException("aid contains double underline or hyphen"))
+        }
     }
     return UNIT_RESULT
 }
