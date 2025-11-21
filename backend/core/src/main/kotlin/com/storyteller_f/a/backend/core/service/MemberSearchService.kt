@@ -46,6 +46,11 @@ sealed interface MemberDocumentSearch {
         val uid: PrimaryKey,
         val objectName: String
     ) : MemberDocumentSearch
+
+    data class RoomMembers(
+        val uid: PrimaryKey,
+        val objectName: String
+    ) : MemberDocumentSearch
 }
 
 interface MemberSearchService {

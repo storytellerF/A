@@ -138,29 +138,45 @@ class LuceneMemberSearchService(path: Path, isInMemory: Boolean = false) : Lucen
                         )
                     }
                 }
+
                 is MemberDocumentSearch.CommunityMembers -> {
-                    // 按 uid 搜索（该用户加入的社区）
-                    add(
-                        LongPoint.newExactQuery("uid", memberDocumentSearch.uid),
-                        BooleanClause.Occur.MUST
-                    )
-                    // 按 objectType 搜索（只搜索社区）
-                    add(
-                        TermQuery(Term("objectType", ObjectType.COMMUNITY.name)),
-                        BooleanClause.Occur.MUST
-                    )
-                    // 按社区名称搜索
-                    preprocessUserInputKeyword(listOf(memberDocumentSearch.objectName))?.let {
-                        add(
-                            MultiFieldQueryParser(
-                                arrayOf("objectName"),
-                                analyzer
-                            ).parse(it),
-                            BooleanClause.Occur.MUST
-                        )
-                    }
+                    addUidQuery(memberDocumentSearch.uid)
+                    addObjectTypeQuery(ObjectType.COMMUNITY)
+                    addObjectNameQuery(memberDocumentSearch.objectName)
+                }
+
+                is MemberDocumentSearch.RoomMembers -> {
+                    addUidQuery(memberDocumentSearch.uid)
+                    addObjectTypeQuery(ObjectType.ROOM)
+                    addObjectNameQuery(memberDocumentSearch.objectName)
                 }
             }
+        }
+    }
+
+    private fun BooleanQuery.Builder.addUidQuery(uid: PrimaryKey) {
+        add(
+            LongPoint.newExactQuery("uid", uid),
+            BooleanClause.Occur.MUST
+        )
+    }
+
+    private fun BooleanQuery.Builder.addObjectTypeQuery(objectType: ObjectType) {
+        add(
+            TermQuery(Term("objectType", objectType.name)),
+            BooleanClause.Occur.MUST
+        )
+    }
+
+    private fun BooleanQuery.Builder.addObjectNameQuery(name: String) {
+        preprocessUserInputKeyword(listOf(name))?.let {
+            add(
+                MultiFieldQueryParser(
+                    arrayOf("objectName"),
+                    analyzer
+                ).parse(it),
+                BooleanClause.Occur.MUST
+            )
         }
     }
 }

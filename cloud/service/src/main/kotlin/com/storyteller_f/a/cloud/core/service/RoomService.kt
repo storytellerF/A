@@ -17,6 +17,7 @@ import com.storyteller_f.a.backend.core.ROOM_NAME_LENGTH
 import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.backend.core.pagingNotNull
 import com.storyteller_f.a.backend.core.service.MemberDocument
+import com.storyteller_f.a.backend.core.service.MemberDocumentSearch
 import com.storyteller_f.a.backend.core.service.RoomDocument
 import com.storyteller_f.a.backend.core.service.RoomDocumentSearch
 import com.storyteller_f.a.backend.core.types.Member
@@ -323,23 +324,40 @@ suspend fun Backend.searchRoomPaginationResult(
     val word = query.word
     val search = query.joinStatus.toJoinSearch(uid)
     val community = query.community
-    return if (word.isNullOrBlank() || search !is JoinSearch.Unspecified) {
-        database.room.getRoomPaginationResult(
+    return when {
+        // word 为空，使用 database 查询
+        word.isNullOrBlank() -> database.room.getRoomPaginationResult(
             uid,
             word,
             community,
             primaryKeyFetch,
             search
         )
-    } else {
-        val keyword = RoomDocumentSearch.Keyword(listOf(word))
-        roomSearchService.searchDocument(keyword, primaryKeyFetch).mapResult { (list, total) ->
-            database.room.getRawRooms(
-                ObjectListFetch.IdListFetch(list.map {
-                    it.id
-                }),
-                uid
-            ).pagingNotNull(total)
+        // word 不为空 && 搜索已加入的房间，使用 memberSearchService
+        search is JoinSearch.Joined -> {
+            memberSearchService.searchDocument(
+                MemberDocumentSearch.RoomMembers(uid = search.uid, objectName = word),
+                primaryKeyFetch
+            ).mapResult { (searchResults, total) ->
+                val roomIds = searchResults
+                    .map { it.objectId }
+                database.room.getRawRooms(
+                    ObjectListFetch.IdListFetch(roomIds),
+                    uid
+                ).pagingNotNull(total)
+            }
+        }
+        // word 不为空 && 不是搜索已加入（Unspecified），使用 roomSearchService
+        else -> {
+            val keyword = RoomDocumentSearch.Keyword(listOf(word))
+            roomSearchService.searchDocument(keyword, primaryKeyFetch).mapResult { (list, total) ->
+                database.room.getRawRooms(
+                    ObjectListFetch.IdListFetch(list.map {
+                        it.id
+                    }),
+                    uid
+                ).pagingNotNull(total)
+            }
         }
     }.mapResult { (list, count) ->
         processRawRoomToRoomInfo(list).mapIfNotNull { value ->
