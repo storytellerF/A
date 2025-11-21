@@ -30,7 +30,7 @@
     <string name="overview_private_room_count">%1$d private rooms</string>
     <string name="overview_public_room_count">%1$d public rooms</string>
     <string name="overview_file_count">%1$d files</string>
-    <string name="users_suffix"> users</string>
+    <string name="users_suffix"><big>%1$d</big> users</string>
     <string name="communities_suffix"> communities</string>
     <string name="topics_suffix"> topics</string>
     <string name="titles_suffix"> titles</string>

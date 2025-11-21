@@ -30,7 +30,7 @@
     <string name="overview_private_room_count">%1$d 个私有聊天室</string>
     <string name="overview_public_room_count">%1$d 个公开聊天室</string>
     <string name="overview_file_count">%1$d 个文件</string>
-    <string name="users_suffix"> 个用户</string>
+    <string name="users_suffix">%1$d 个用户</string>
     <string name="communities_suffix"> 个社区</string>
     <string name="topics_suffix"> 个话题</string>
     <string name="titles_suffix"> 个称号</string>
