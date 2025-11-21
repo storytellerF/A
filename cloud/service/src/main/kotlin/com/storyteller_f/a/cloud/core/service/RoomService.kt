@@ -15,6 +15,7 @@ import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.ROOM_NAME_LENGTH
 import com.storyteller_f.a.backend.core.UnauthorizedException
+import com.storyteller_f.a.backend.core.pagingNotNull
 import com.storyteller_f.a.backend.core.service.MemberDocument
 import com.storyteller_f.a.backend.core.service.RoomDocument
 import com.storyteller_f.a.backend.core.service.RoomDocumentSearch
@@ -35,6 +36,7 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.UNIT_RESULT
 import com.storyteller_f.shared.utils.errorIfFalse
+import com.storyteller_f.shared.utils.firstOrNull
 import com.storyteller_f.shared.utils.ifNotNull
 import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
@@ -58,7 +60,8 @@ suspend fun Backend.getRoomPubKeys(
 suspend fun Backend.joinRoom(
     roomId: PrimaryKey,
     uid: PrimaryKey,
-) = database.room.getRoomCommunityId(roomId).mapResult { communityId ->
+) = database.room.getRawRoom(IdFetch(roomId)).mapResultIfNotNull { rawRoom ->
+    val communityId = rawRoom.room.communityId
     if (communityId == null) {
         // 检查是否存在title
         getJoinTitleByScope(uid, roomId)
@@ -71,24 +74,26 @@ suspend fun Backend.joinRoom(
             if (it != null && it.status == MemberStatus.JOINED) {
                 Result.success(it)
             } else {
-                joinRoomOrUpdateMemberStatus(it, uid, roomId).onSuccess {
+                joinRoomOrUpdateMemberStatus(it, uid, rawRoom).onSuccess {
                     addUserLog(uid, UserLogType.JOIN, roomId ob ObjectType.ROOM)
                 }
-            }.mapResult {
-                getRoomInfo(IdFetch(roomId), uid, true)
-            }.recoverIfDup(database::isDup) {
-                getRoomInfo(IdFetch(roomId), uid, true)
             }
         }
+    }.mapResult {
+        getRoomInfo(IdFetch(roomId), uid, true)
+    }.recoverIfDup(database::isDup) {
+        getRoomInfo(IdFetch(roomId), uid, true)
     }
 }
 
 private suspend fun Backend.joinRoomOrUpdateMemberStatus(
     member: Member?,
     uid: PrimaryKey,
-    roomId: PrimaryKey,
+    rawRoom: RawRoom,
 ): Result<Member> {
     val time = now()
+    val room = rawRoom.room
+    val roomId = room.id
     return if (member == null) {
         database.container.addMember(
             Member(
@@ -100,20 +105,7 @@ private suspend fun Backend.joinRoomOrUpdateMemberStatus(
                 MemberStatus.JOINED,
                 time
             )
-        ).onSuccess {
-            // 保存到 MemberSearchService
-            getUserInfo(IdFetch(uid)).ifNotNull { userInfo ->
-                memberSearchService.saveDocument(
-                    listOf(
-                        MemberDocument.fromUserInfo(it.id, userInfo, roomId, ObjectType.ROOM)
-                    )
-                ).onFailure { e ->
-                    Napier.e(e) {
-                        "save member document failed"
-                    }
-                }
-            }
-        }
+        )
     } else {
         database.container.updateMemberStatus(
             Member(
@@ -125,18 +117,33 @@ private suspend fun Backend.joinRoomOrUpdateMemberStatus(
                 MemberStatus.JOINED,
                 time
             )
-        ).onSuccess {
-            // 保存到 MemberSearchService
-            getUserInfo(IdFetch(uid)).ifNotNull { userInfo ->
-                memberSearchService.saveDocument(
-                    listOf(
-                        MemberDocument.fromUserInfo(it.id, userInfo, roomId, ObjectType.ROOM)
-                    )
-                ).onFailure { e ->
-                    Napier.e(e) {
-                        "save member document failed"
-                    }
-                }
+        )
+    }.onSuccess {
+        // 保存到 MemberSearchService
+        saveMemberDocument(uid, it, roomId, room)
+    }
+}
+
+private suspend fun Backend.saveMemberDocument(
+    uid: PrimaryKey,
+    member: Member,
+    roomId: PrimaryKey,
+    room: Room
+) {
+    getUserInfo(IdFetch(uid)).ifNotNull { userInfo ->
+        memberSearchService.saveDocument(
+            listOf(
+                MemberDocument.fromUserInfo(
+                    member.id,
+                    userInfo,
+                    roomId,
+                    ObjectType.ROOM,
+                    room.name
+                )
+            )
+        ).onFailure { e ->
+            Napier.e(e) {
+                "save member document failed"
             }
         }
     }
@@ -152,7 +159,7 @@ suspend fun Backend.getJoinTitleByScope(
     TitleType.JOIN,
     scopeId
 ).mapResult {
-    if (it.list.firstOrNull() != null) {
+    if (it.list.isNotEmpty()) {
         UNIT_RESULT
     } else {
         Result.failure(ForbiddenException("Join failed."))
@@ -164,13 +171,14 @@ suspend fun Backend.exitRoom(roomId: PrimaryKey, uid: PrimaryKey) =
         if (info.joinedTime == null) {
             Result.success(info)
         } else {
-            database.container.deleteMember(roomId, uid).map {
+            database.container.deleteMember(roomId, uid).onSuccess {
                 // 从 MemberSearchService 删除
                 memberSearchService.deleteDocument(uid, roomId).onFailure { e ->
                     Napier.e(e) {
                         "delete member document failed"
                     }
                 }
+            }.map {
                 addUserLog(uid, UserLogType.JOIN, roomId ob ObjectType.ROOM)
                 info.copy(joinedTime = null)
             }
@@ -222,44 +230,26 @@ suspend fun Backend.createRoom(
         val memberId = SnowflakeFactory.nextId()
         val room =
             Room(roomId, now(), newRoom.aid, newRoom.name, uid, newRoom.icon, communityId)
-        database.room.createRoom(
-            room,
-            listOf(
-                Member(
-                    memberId,
-                    room.creator,
-                    room.id,
-                    ObjectType.ROOM,
-                    room.createdTime,
-                    MemberStatus.JOINED,
-                    room.createdTime
-                )
-            )
-        ).map {
+        val member = Member(
+            memberId,
+            room.creator,
+            room.id,
+            ObjectType.ROOM,
+            room.createdTime,
+            MemberStatus.JOINED,
+            room.createdTime
+        )
+        database.room.createRoom(room, listOf(member)).onSuccess {
             roomSearchService.saveDocument(listOf(RoomDocument.fromRoom(room))).onFailure {
                 Napier.e(it) {
                     "save room document failed"
                 }
             }
-            // 保存创建者到 MemberSearchService
-            getUserInfo(IdFetch(uid)).onSuccess { userInfo ->
-                userInfo?.let {
-                    memberSearchService.saveDocument(
-                        listOf(
-                            MemberDocument.fromUserInfo(memberId, it, room.id, ObjectType.ROOM)
-                        )
-                    ).onFailure { e ->
-                        Napier.e(e) {
-                            "save member document failed"
-                        }
-                    }
-                }
-            }
-            room
+            saveMemberDocument(uid, member, roomId, room)
         }
     }.mapResultIfNotNull { room ->
         processRawRoomToRoomInfo(listOf(RawRoom(room, room.createdTime)))
-    }.mapIfNotNull(List<RoomInfo>::first)
+    }.firstOrNull()
 }
 
 suspend fun Backend.updateRoom(
@@ -268,7 +258,7 @@ suspend fun Backend.updateRoom(
     uid: PrimaryKey,
 ): Result<RoomInfo?> {
     val newUpdate = old.copy(name = old.name?.trim(), icon = old.icon)
-    return checkRootAdminPermission(ObjectType.ROOM, id, uid).mapResultIfNotNull { permission ->
+    return checkRootAdminPermission(ObjectType.ROOM, id, uid).mapResultIfNotNull {
         runCatching {
             checkRoomName(newUpdate).getOrThrow()
             checkRoomIcon(newUpdate).getOrThrow()
@@ -349,9 +339,7 @@ suspend fun Backend.searchRoomPaginationResult(
                     it.id
                 }),
                 uid
-            ).map {
-                PaginationResult(it, total)
-            }
+            ).pagingNotNull(total)
         }
     }.mapResult { (list, count) ->
         processRawRoomToRoomInfo(list).mapIfNotNull { value ->

@@ -97,7 +97,7 @@ class MemberSearchTest {
             val members = searchRoomMembers(roomId, null, 10, "Bob").getOrThrow()
             assertTrue(members.data.isNotEmpty(), "Should find members with keyword 'Bob'")
             assertTrue(
-                members.data.any { it.nickname.contains("Bob") },
+                members.data.any { it.userInfo.nickname.contains("Bob") },
                 "Should contain member with nickname 'Bob'"
             )
         }
@@ -150,7 +150,7 @@ class MemberSearchTest {
             val members = searchCommunityMembers(communityId, null, 10, "Eve").getOrThrow()
             assertTrue(members.data.isNotEmpty(), "Should find members with keyword 'Eve'")
             assertTrue(
-                members.data.any { it.nickname.contains("Eve") },
+                members.data.any { it.userInfo.nickname.contains("Eve") },
                 "Should contain member with nickname 'Eve'"
             )
         }
@@ -178,7 +178,7 @@ class MemberSearchTest {
         noneSession {
             val membersBeforeExit = searchRoomMembers(roomId, null, 10, "Henry").getOrThrow()
             assertTrue(
-                membersBeforeExit.data.any { it.nickname.contains("Henry") },
+                membersBeforeExit.data.any { it.userInfo.nickname.contains("Henry") },
                 "Should find Henry before exit"
             )
         }
@@ -192,7 +192,7 @@ class MemberSearchTest {
         noneSession {
             val membersAfterExit = searchRoomMembers(roomId, null, 10, "Henry").getOrThrow()
             assertTrue(
-                membersAfterExit.data.none { it.nickname.contains("Henry") },
+                membersAfterExit.data.none { it.userInfo.nickname.contains("Henry") },
                 "Should not find Henry after exit"
             )
         }
@@ -215,7 +215,7 @@ class MemberSearchTest {
         noneSession {
             val membersBeforeExit = searchCommunityMembers(communityId, null, 10, "Jack").getOrThrow()
             assertTrue(
-                membersBeforeExit.data.any { it.nickname.contains("Jack") },
+                membersBeforeExit.data.any { it.userInfo.nickname.contains("Jack") },
                 "Should find Jack before exit"
             )
         }
@@ -229,7 +229,7 @@ class MemberSearchTest {
         noneSession {
             val membersAfterExit = searchCommunityMembers(communityId, null, 10, "Jack").getOrThrow()
             assertTrue(
-                membersAfterExit.data.none { it.nickname.contains("Jack") },
+                membersAfterExit.data.none { it.userInfo.nickname.contains("Jack") },
                 "Should not find Jack after exit"
             )
         }

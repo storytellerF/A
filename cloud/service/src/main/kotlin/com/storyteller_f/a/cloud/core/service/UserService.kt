@@ -169,15 +169,15 @@ fun checkUserNickname(update: UpdateUserBody): Result<Unit> {
 }
 
 fun isAllVisibleChar(s: String) = !s.codePoints().anyMatch { codePoint ->
-    val type = Character.getType(codePoint)
-    Character.isISOControl(codePoint) ||
-        Character.getType(codePoint).toByte() == Character.FORMAT ||
+    val type = Character.getType(codePoint).toByte()
+    type == Character.FORMAT ||
+        type == Character.NON_SPACING_MARK ||
+        type == Character.COMBINING_SPACING_MARK ||
+        type == Character.ENCLOSING_MARK ||
+        Character.isISOControl(codePoint) ||
+        ((Character.isWhitespace(codePoint) || Character.isSpaceChar(codePoint)) && codePoint != ' '.code) ||
         !Character.isDefined(codePoint) ||
-        type == Character.NON_SPACING_MARK.toInt() ||
-        type == Character.COMBINING_SPACING_MARK.toInt() ||
-        type == Character.ENCLOSING_MARK.toInt() ||
-        Character.isWhitespace(codePoint) ||
-        type == Character.SPACE_SEPARATOR.toInt()
+        !Character.isValidCodePoint(codePoint)
 }
 
 enum class MediaCheckResult {

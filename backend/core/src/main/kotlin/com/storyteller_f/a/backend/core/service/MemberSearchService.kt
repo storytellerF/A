@@ -13,21 +13,24 @@ data class MemberDocument(
     val uid: PrimaryKey,
     val objectId: PrimaryKey,
     val objectType: ObjectType,
-    val nickname: String
+    val nickname: String,
+    val objectName: String,
 ) : PrimaryKeyIdentifiable {
     companion object {
         fun fromUserInfo(
             id: PrimaryKey,
             userInfo: UserInfo,
             objectId: PrimaryKey,
-            objectType: ObjectType
+            objectType: ObjectType,
+            objectName: String
         ): MemberDocument {
             return MemberDocument(
                 id = id,
                 uid = userInfo.id,
                 objectId = objectId,
                 objectType = objectType,
-                nickname = userInfo.nickname
+                nickname = userInfo.nickname,
+                objectName = objectName
             )
         }
     }
@@ -37,6 +40,11 @@ sealed interface MemberDocumentSearch {
     data class Keyword(
         val objectId: PrimaryKey? = null,
         val nickname: String? = null
+    ) : MemberDocumentSearch
+
+    data class CommunityMembers(
+        val uid: PrimaryKey,
+        val objectName: String
     ) : MemberDocumentSearch
 }
 

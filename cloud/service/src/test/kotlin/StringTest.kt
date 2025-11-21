@@ -17,6 +17,6 @@ class StringTest {
         // U+1AFF is a non-spacing mark
         assertFalse(isAllVisibleChar("\u1AFF"))
         assertFalse(isAllVisibleChar("\u206F"))
-        assertFalse(isAllVisibleChar(" "))
+        assertTrue(isAllVisibleChar(" "))
     }
 }
