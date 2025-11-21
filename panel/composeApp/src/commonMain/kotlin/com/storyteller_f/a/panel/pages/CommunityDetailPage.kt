@@ -32,11 +32,17 @@ import com.storyteller_f.a.app.core.components.NavRoute
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.pagingItems
 import com.storyteller_f.a.panel.LocalPanelNav
+import com.storyteller_f.a.panel.Res
 import com.storyteller_f.a.panel.common.createPanelCommunityMembersViewModel
 import com.storyteller_f.a.panel.common.createPanelCommunityViewModel
+import com.storyteller_f.a.panel.community_detail_title
+import com.storyteller_f.a.panel.community_detail_title_with_info
 import com.storyteller_f.a.panel.components.InfoTable
+import com.storyteller_f.a.panel.tab_basic_info
+import com.storyteller_f.a.panel.tab_members
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,11 +76,22 @@ fun CommunityDetailPage(id: PrimaryKey) {
 private fun CommunityTopBar(id: PrimaryKey) {
     val vm = createPanelCommunityViewModel(id)
     val info by vm.handler.data.collectAsState(null)
-    val title = listOf("Community Detail", info?.name ?: "", info?.aid ?: "").filter { it.isNotBlank() }
-        .joinToString(" • ")
+    val name = info?.name
+    val aid = info?.aid
+    val title = if (name != null && aid != null) {
+        stringResource(
+            Res.string.community_detail_title_with_info,
+            name,
+            aid
+        )
+    } else {
+        stringResource(Res.string.community_detail_title)
+    }
     val nav = LocalPanelNav.current
     TopAppBar(
-        title = { Text(title.ifBlank { "Community Detail • $id" }) },
+        title = {
+            Text(title)
+        },
         navigationIcon = {
             IconButton(onClick = { nav.open() }) {
                 Icon(Icons.Default.Menu, null)
@@ -86,8 +103,8 @@ private fun CommunityTopBar(id: PrimaryKey) {
 @Composable
 private fun CommunityInfoTabs(id: PrimaryKey) {
     val tabs = listOf(
-        "Basic info",
-        "Members",
+        stringResource(Res.string.tab_basic_info),
+        stringResource(Res.string.tab_members),
     )
     val pagerState = rememberPagerState { tabs.size }
     val scope = rememberCoroutineScope()

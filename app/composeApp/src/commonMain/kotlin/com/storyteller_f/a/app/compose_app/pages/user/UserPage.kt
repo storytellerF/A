@@ -31,11 +31,13 @@ import androidx.navigation.compose.rememberNavController
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalUserInfo
 import com.storyteller_f.a.app.compose_app.Res
+import com.storyteller_f.a.app.compose_app.add_topic
 import com.storyteller_f.a.app.compose_app.common.IdUserViewModel
 import com.storyteller_f.a.app.compose_app.common.createTargetUserJoinedCommunitiesViewModel
 import com.storyteller_f.a.app.compose_app.common.createUserTitlesViewModel
 import com.storyteller_f.a.app.compose_app.common.createUserTopicsViewModel
 import com.storyteller_f.a.app.compose_app.common.createUserViewModel
+import com.storyteller_f.a.app.compose_app.communities_title
 import com.storyteller_f.a.app.compose_app.components.UserTopicList
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityList
 import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar
@@ -43,6 +45,7 @@ import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
 import com.storyteller_f.a.app.compose_app.pages.title.TitleList
 import com.storyteller_f.a.app.compose_app.pages.topic.TopicComposeData
 import com.storyteller_f.a.app.compose_app.rooms
+import com.storyteller_f.a.app.compose_app.titles
 import com.storyteller_f.a.app.compose_app.topics
 import com.storyteller_f.a.app.core.components.CustomBottomNav
 import com.storyteller_f.a.app.core.components.CustomRailNav
@@ -82,8 +85,8 @@ private fun UserNonCompatInternal(uid: PrimaryKey, user: UserInfo?) {
     val navRoutes =
         listOf(
             NavRoute("/topics", Icons.Default.Topic, stringResource(Res.string.topics)),
-            NavRoute("/communities", Icons.Default.ChatBubble, "Communities"),
-            NavRoute("/titles", Icons.Default.Badge, "Titles")
+            NavRoute("/communities", Icons.Default.ChatBubble, stringResource(Res.string.communities_title)),
+            NavRoute("/titles", Icons.Default.Badge, stringResource(Res.string.titles))
         )
     val navigator = rememberNavController()
     val current by navigator.currentBackStackEntryFlow.collectAsState(null)
@@ -191,7 +194,7 @@ private fun UserComposeButton(
         FloatingActionButton({
             appNavFactory.newAppNav().gotoTopicCompose(TopicComposeData.User(user.id, user.tuple()))
         }) {
-            Icon(Icons.Default.Add, "add topic")
+            Icon(Icons.Default.Add, stringResource(Res.string.add_topic))
         }
     }
 }
@@ -210,7 +213,7 @@ private fun UserPageBottomNavBar(pagerState: PagerState) {
             Icons.Default.Diversity3,
             stringResource(Res.string.rooms)
         ),
-        NavRoute("/titles", Icons.Default.Badge, "titles")
+        NavRoute("/titles", Icons.Default.Badge, stringResource(Res.string.titles))
     )
     CustomBottomNav(
         navRoutes[pagerState.currentPage].path,

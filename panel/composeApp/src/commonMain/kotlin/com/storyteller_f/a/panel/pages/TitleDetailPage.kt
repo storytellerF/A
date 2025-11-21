@@ -26,10 +26,15 @@ import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.core.components.CustomBottomNav
 import com.storyteller_f.a.app.core.components.NavRoute
 import com.storyteller_f.a.app.core.components.StateView
+import com.storyteller_f.a.panel.Res
 import com.storyteller_f.a.panel.common.createPanelTitleViewModel
 import com.storyteller_f.a.panel.components.InfoTable
+import com.storyteller_f.a.panel.tab_basic_info
+import com.storyteller_f.a.panel.title_detail_title
+import com.storyteller_f.a.panel.title_detail_title_with_info
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,10 +68,19 @@ fun TitleDetailPage(id: PrimaryKey) {
 private fun TitleTopBar(id: PrimaryKey) {
     val vm = createPanelTitleViewModel(id)
     val info by vm.handler.data.collectAsState(null)
-    val title = listOf("Title Detail", info?.name ?: "").filter { it.isNotBlank() }.joinToString(" • ")
+    val title = if (info?.name != null) {
+        stringResource(
+            Res.string.title_detail_title_with_info,
+            id
+        )
+    } else {
+        stringResource(Res.string.title_detail_title)
+    }
     val nav = com.storyteller_f.a.panel.LocalPanelNav.current
     TopAppBar(
-        title = { Text(title.ifBlank { "Title Detail • $id" }) },
+        title = {
+            Text(title)
+        },
         navigationIcon = {
             IconButton(onClick = { nav.open() }) {
                 Icon(Icons.Default.Menu, null)
@@ -77,7 +91,7 @@ private fun TitleTopBar(id: PrimaryKey) {
 
 @Composable
 private fun TitleInfoTabs(id: PrimaryKey) {
-    val tabs = listOf("Basic info")
+    val tabs = listOf(stringResource(Res.string.tab_basic_info))
     val pagerState = rememberPagerState { tabs.size }
     val scope = rememberCoroutineScope()
     Column {

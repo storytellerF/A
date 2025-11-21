@@ -66,7 +66,11 @@ import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.LocalUiViewModel
 import com.storyteller_f.a.app.compose_app.LocalUserInfo
 import com.storyteller_f.a.app.compose_app.Res
+import com.storyteller_f.a.app.compose_app.aid_display
 import com.storyteller_f.a.app.compose_app.all_members
+import com.storyteller_f.a.app.compose_app.bubble
+import com.storyteller_f.a.app.compose_app.check_mark
+import com.storyteller_f.a.app.compose_app.clear_input
 import com.storyteller_f.a.app.compose_app.common.AppNavFactory
 import com.storyteller_f.a.app.compose_app.common.IdRoomViewModel
 import com.storyteller_f.a.app.compose_app.common.OnRoomExited
@@ -79,10 +83,14 @@ import com.storyteller_f.a.app.compose_app.common.createRoomViewModel
 import com.storyteller_f.a.app.compose_app.common.hasRouteFlow
 import com.storyteller_f.a.app.compose_app.components.RoomTopicList
 import com.storyteller_f.a.app.compose_app.error
+import com.storyteller_f.a.app.compose_app.exclamation_mark
 import com.storyteller_f.a.app.compose_app.exit_room
+import com.storyteller_f.a.app.compose_app.files_title
 import com.storyteller_f.a.app.compose_app.input_is_empty
 import com.storyteller_f.a.app.compose_app.join_room
 import com.storyteller_f.a.app.compose_app.join_room_prompt
+import com.storyteller_f.a.app.compose_app.need_sign_in
+import com.storyteller_f.a.app.compose_app.open_in_full
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityRefCell
 import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
@@ -93,6 +101,8 @@ import com.storyteller_f.a.app.compose_app.pages.user.ButtonBadgeSuffix
 import com.storyteller_f.a.app.compose_app.permission_denied
 import com.storyteller_f.a.app.compose_app.private_room_pub_key_loading
 import com.storyteller_f.a.app.compose_app.send
+import com.storyteller_f.a.app.compose_app.settings_title
+import com.storyteller_f.a.app.compose_app.start_call
 import com.storyteller_f.a.app.compose_app.success
 import com.storyteller_f.a.app.compose_app.utils.notifyNotification
 import com.storyteller_f.a.app.compose_app.utils.startCall
@@ -354,8 +364,10 @@ private fun RoomInputTopContent(
     if (roomInfo.isPrivate) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             when (val ks = keysState) {
-                LoadingState.Done -> Text("✅")
-                is LoadingState.Error -> Text(ks.e.localizedMessage?.take(10) ?: "!")
+                LoadingState.Done -> Text(stringResource(Res.string.check_mark))
+                is LoadingState.Error -> Text(
+                    ks.e.localizedMessage?.take(10) ?: stringResource(Res.string.exclamation_mark)
+                )
                 else -> CircularProgressIndicator(
                     modifier = Modifier.size(10.dp),
                     strokeWidth = 2.dp
@@ -523,7 +535,7 @@ fun InputGroupInternal(
                 updateInput(it)
             }, modifier = Modifier.weight(1f), suffix = {
                 if (input.isNotEmpty()) {
-                    Icon(Icons.Default.Clear, "clear input", modifier = Modifier.clickable {
+                    Icon(Icons.Default.Clear, stringResource(Res.string.clear_input), modifier = Modifier.clickable {
                         updateInput("")
                     })
                 }
@@ -544,6 +556,7 @@ private fun InputGroupSuffix(
     mediaTarget: ObjectTuple,
     gotoCompose: () -> Unit,
 ) {
+    val scope = rememberCoroutineScope()
     val userSessionManager = LocalSessionManager.current
     val alertDialogController = rememberAlertDialogController()
     val alreadySignIn by userSessionManager.isAlreadySignIn.collectAsState(false)
@@ -555,19 +568,23 @@ private fun InputGroupSuffix(
         if (alreadySignIn) {
             gotoCompose()
         } else {
-            alertDialogController.showTitle("need sign in")
+            scope.launch {
+                alertDialogController.showTitle(getString(Res.string.need_sign_in))
+            }
         }
     }) {
         Icon(
             Icons.Default.OpenInFull,
-            "open in full",
+            stringResource(Res.string.open_in_full),
         )
     }
     IconButton({
         if (alreadySignIn) {
             showSheet = true
         } else {
-            alertDialogController.showTitle("need sign in")
+            scope.launch {
+                alertDialogController.showTitle(getString(Res.string.need_sign_in))
+            }
         }
     }) {
         Icon(Icons.Filled.PermMedia, contentDescription = null)
@@ -612,7 +629,7 @@ fun RoomDialogInternal(roomInfo: RoomInfo, dismiss: () -> Unit) {
             )
             Column {
                 Text(roomInfo.name)
-                Text("aid: ${roomInfo.aid}")
+                Text(stringResource(Res.string.aid_display, roomInfo.aid.toString()))
             }
         }
 
@@ -654,7 +671,7 @@ private fun RoomSettings(
     appNavFactory: AppNavFactory
 ) {
     if (roomInfo.creator == me?.id) {
-        ButtonNav(Icons.Default.Settings, "Settings") {
+        ButtonNav(Icons.Default.Settings, stringResource(Res.string.settings_title)) {
             dismiss()
             appNavFactory.newAppNav().gotoSettingPage(roomInfo.id, ObjectType.ROOM)
         }
@@ -667,7 +684,7 @@ private fun RoomFileExplorerButton(
     dismiss: () -> Unit,
     appNavFactory: AppNavFactory
 ) {
-    ButtonNav(Icons.Default.Folder, "Files") {
+    ButtonNav(Icons.Default.Folder, stringResource(Res.string.files_title)) {
         dismiss()
         appNavFactory.newAppNav().gotoFileExplorer(roomInfo.id ob ObjectType.ROOM)
     }
@@ -729,12 +746,12 @@ private fun StartCallButton(
 
     val scope = rememberCoroutineScope()
 
-    ButtonNav(Icons.Default.Call, "Start Call") {
+    ButtonNav(Icons.Default.Call, stringResource(Res.string.start_call)) {
         startCall(roomInfo.id)
     }
     if (getPlatform().name.contains("android", ignoreCase = true)) {
         val context = LocalPlatformContext.current
-        ButtonNav(Icons.Default.ChatBubble, "Bubble") {
+        ButtonNav(Icons.Default.ChatBubble, stringResource(Res.string.bubble)) {
             scope.launch {
                 val bitmap =
                     roomInfo.icon?.let { getRemoteImageBitmap(sessionManager, context, it) }

@@ -18,18 +18,21 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.core.components.CustomBottomNav
 import com.storyteller_f.a.app.core.components.NavRoute
 import com.storyteller_f.a.app.core.components.StateView
+import com.storyteller_f.a.panel.LocalPanelNav
+import com.storyteller_f.a.panel.Res
 import com.storyteller_f.a.panel.common.createPanelTopicViewModel
 import com.storyteller_f.a.panel.components.InfoTable
+import com.storyteller_f.a.panel.tab_basic_info
+import com.storyteller_f.a.panel.topic_detail_title_with_info
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,13 +64,15 @@ fun TopicDetailPage(id: PrimaryKey) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TopicTopBar(id: PrimaryKey) {
-    val vm = createPanelTopicViewModel(id)
-    val info by vm.handler.data.collectAsState(null)
-    val title = listOf("Topic Detail", info?.id?.toString() ?: "").filter { it.isNotBlank() }
-        .joinToString(" • ")
-    val nav = com.storyteller_f.a.panel.LocalPanelNav.current
+    val title = stringResource(
+        Res.string.topic_detail_title_with_info,
+        id
+    )
+    val nav = LocalPanelNav.current
     TopAppBar(
-        title = { Text(title.ifBlank { "Topic Detail • $id" }) },
+        title = {
+            Text(title)
+        },
         navigationIcon = {
             IconButton(onClick = { nav.open() }) {
                 Icon(Icons.Default.Menu, null)
@@ -78,7 +83,7 @@ private fun TopicTopBar(id: PrimaryKey) {
 
 @Composable
 private fun TopicInfoTabs(id: PrimaryKey) {
-    val tabs = listOf("Basic info")
+    val tabs = listOf(stringResource(Res.string.tab_basic_info))
     val pagerState = rememberPagerState { tabs.size }
     val scope = rememberCoroutineScope()
     Column {

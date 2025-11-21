@@ -46,11 +46,14 @@ import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.auto_generate
+import com.storyteller_f.a.app.compose_app.back_to_pre_page
 import com.storyteller_f.a.app.compose_app.common.AppNavFactory
 import com.storyteller_f.a.app.compose_app.common.SessionHistoryViewModel
 import com.storyteller_f.a.app.compose_app.common.getLoginHistoryViewModel
+import com.storyteller_f.a.app.compose_app.delete
 import com.storyteller_f.a.app.compose_app.go_to_sign_in
 import com.storyteller_f.a.app.compose_app.go_to_sign_up
+import com.storyteller_f.a.app.compose_app.last_used
 import com.storyteller_f.a.app.compose_app.private_key
 import com.storyteller_f.a.app.compose_app.sign_in
 import com.storyteller_f.a.app.compose_app.sign_up
@@ -90,7 +93,7 @@ fun LoginPage() {
                         appNavFactory.newAppNav().back()
                     }
                 }) {
-                    Icon(Icons.AutoMirrored.Default.ArrowBack, "back to pre page")
+                    Icon(Icons.AutoMirrored.Default.ArrowBack, stringResource(Res.string.back_to_pre_page))
                 }
             }
             NavHost(navigator, "/select_signIn") {
@@ -189,7 +192,7 @@ private fun SelectFromHistoryInternal(viewModel: SessionHistoryViewModel) {
     OutlinedButton({
         showSheet = true
     }) {
-        Text("Last Used")
+        Text(stringResource(Res.string.last_used))
     }
     BaseSheet(showSheet, sheetState, {
         showSheet = false
@@ -249,7 +252,7 @@ private fun LoginHistoryCell(
         val shape = RoundedCornerShape(10.dp)
         if (address == last) {
             Text(
-                "上次登录",
+                stringResource(Res.string.last_used),
                 modifier = Modifier.clip(shape)
                     .background(MaterialTheme.colorScheme.primaryContainer, shape)
                     .padding(8.dp),
@@ -259,7 +262,7 @@ private fun LoginHistoryCell(
         IconButton({
             onDelete()
         }) {
-            Icon(Icons.Default.Delete, "delete")
+            Icon(Icons.Default.Delete, stringResource(Res.string.delete))
         }
     }
 }

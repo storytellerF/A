@@ -33,10 +33,20 @@ import com.storyteller_f.a.app.core.components.PdfView
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.globalLoader
 import com.storyteller_f.a.panel.LocalPanelNav
+import com.storyteller_f.a.panel.Res
 import com.storyteller_f.a.panel.common.createPanelFileViewModel
 import com.storyteller_f.a.panel.components.InfoTable
+import com.storyteller_f.a.panel.file_can_preview
+import com.storyteller_f.a.panel.file_detail_title
+import com.storyteller_f.a.panel.file_detail_title_with_info
+import com.storyteller_f.a.panel.fullscreen_preview
+import com.storyteller_f.a.panel.preview_image
+import com.storyteller_f.a.panel.tab_basic_info_file
+import com.storyteller_f.a.panel.tab_info
+import com.storyteller_f.a.panel.tab_logs
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,8 +55,8 @@ fun FileDetailPage(id: PrimaryKey) {
     val scope = rememberCoroutineScope()
     Scaffold(topBar = { FileTopBar(id) }, bottomBar = {
         val navRoutes = listOf(
-            NavRoute("/info", Icons.Default.FilePresent, "Info"),
-            NavRoute("/logs", Icons.AutoMirrored.Filled.Article, "Logs"),
+            NavRoute("/info", Icons.Default.FilePresent, stringResource(Res.string.tab_info)),
+            NavRoute("/logs", Icons.AutoMirrored.Filled.Article, stringResource(Res.string.tab_logs)),
         )
         CustomBottomNav(navRoutes[pagerState.currentPage].path, navRoutes) { path ->
             scope.launch {
@@ -70,10 +80,17 @@ fun FileDetailPage(id: PrimaryKey) {
 private fun FileTopBar(id: PrimaryKey) {
     val vm = createPanelFileViewModel(id)
     val info by vm.handler.data.collectAsState(null)
-    val title = listOf("File Detail", info?.name ?: "").filter { it.isNotBlank() }.joinToString(" • ")
+    val name = info?.name
+    val title = if (name != null) {
+        stringResource(Res.string.file_detail_title_with_info, name)
+    } else {
+        stringResource(Res.string.file_detail_title)
+    }
     val nav = LocalPanelNav.current
     TopAppBar(
-        title = { Text(title.ifBlank { "File Detail • $id" }) },
+        title = {
+            Text(title)
+        },
         navigationIcon = {
             IconButton(onClick = { nav.open() }) {
                 Icon(Icons.Default.Menu, null)
@@ -84,7 +101,7 @@ private fun FileTopBar(id: PrimaryKey) {
 
 @Composable
 private fun FileInfoTabs(id: PrimaryKey) {
-    val tabs = listOf("Basic info")
+    val tabs = listOf(stringResource(Res.string.tab_basic_info_file))
     val pagerState = rememberPagerState { tabs.size }
     val scope = rememberCoroutineScope()
     Column {
@@ -114,7 +131,9 @@ private fun FileBasicInfoSection(id: PrimaryKey) {
                     info.contentType.startsWith("image") -> {
                         CoilZoomAsyncImage(
                             model = globalLoader(info.url),
-                            contentDescription = "preview image",
+                            contentDescription = stringResource(
+                                Res.string.preview_image
+                            ),
                             modifier = Modifier.fillMaxSize()
                         )
                     }
@@ -122,7 +141,7 @@ private fun FileBasicInfoSection(id: PrimaryKey) {
                         PdfView(info.url, Modifier.fillMaxSize())
                     }
                     info.contentType.startsWith("video") || info.contentType.startsWith("audio") -> {
-                        Text("该文件可全屏预览播放")
+                        Text(stringResource(Res.string.file_can_preview))
                     }
                 }
             }
@@ -132,7 +151,7 @@ private fun FileBasicInfoSection(id: PrimaryKey) {
                 },
                 modifier = Modifier.padding(top = 16.dp)
             ) {
-                Text("全屏预览")
+                Text(stringResource(Res.string.fullscreen_preview))
             }
             val items = buildList {
                 add("id" to info.id.toString())

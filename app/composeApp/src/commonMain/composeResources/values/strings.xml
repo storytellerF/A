@@ -54,4 +54,74 @@
     <string name="connected">Connected</string>
     <string name="disconnected">Disconnected</string>
     <string name="file_explorer">File Explorer</string>
+    
+    <!-- HomePage strings -->
+    <string name="open_source_libraries">Open Source Libraries</string>
+    <string name="download_latest_app">Download latest app</string>
+    
+    <!-- PreferencePage strings -->
+    <string name="translate_model">Translate Model</string>
+    <string name="current_selected">current selected %1$s</string>
+    <string name="try_button">Try</string>
+    
+    <!-- TopicComposePage strings -->
+    <string name="toggle_bold">toggle bold</string>
+    <string name="toggle_italic">toggle italic</string>
+    <string name="toggle_underline">toggle underline</string>
+    <string name="toggle_line_through">toggle line through</string>
+    <string name="toggle_ordered_list">toggle ordered list</string>
+    <string name="toggle_unordered_list">toggle unordered list</string>
+    <string name="toggle_code_span">toggle code span</string>
+    <string name="submit">submit</string>
+    
+    <!-- FilePicker strings -->
+    <string name="files">files</string>
+    <string name="audio_recorder">audio recorder</string>
+    <string name="provide_permission">Provide permission</string>
+    <string name="stop_record">stop record</string>
+    <string name="start_record">start record</string>
+    <string name="upload_file">upload file</string>
+    
+    <!-- SignInAndSignUpPage strings -->
+    <string name="back_to_pre_page">back to pre page</string>
+    <string name="last_used">Last Used</string>
+    <string name="delete">delete</string>
+    
+    <!-- UserPage strings -->
+    <string name="communities_title">Communities</string>
+    <string name="titles">Titles</string>
+    <string name="add_topic">add topic</string>
+    
+    <!-- RoomPage strings -->
+    <string name="check_mark">✅</string>
+    <string name="exclamation_mark">!</string>
+    <string name="clear_input">clear input</string>
+    <string name="open_in_full">open in full</string>
+    <string name="need_sign_in">need sign in</string>
+    <string name="aid_display">aid: %1$s</string>
+    <string name="settings_title">Settings</string>
+    <string name="files_title">Files</string>
+    <string name="start_call">Start Call</string>
+    <string name="bubble">Bubble</string>
+    
+    <!-- TopicCell strings -->
+    <string name="topic_menu">topic menu</string>
+    <string name="is_pinned">is pinned</string>
+    <string name="invalid_content">invalid</string>
+    <string name="unpin">Unpin</string>
+    <string name="pin">Pin</string>
+    <string name="add_reaction">add reaction</string>
+    
+    <!-- FileCell strings -->
+    <string name="image_dimension">w%1$d·h%2$d</string>
+    <string name="view">View</string>
+    <string name="copy_name">Copy name</string>
+    <string name="audio_content_description">audio</string>
+    <string name="video_content_description">video</string>
+    <string name="file_content_description">file</string>
+    
+    <!-- ComposePage strings -->
+    <string name="name">name</string>
+    <string name="aid">aid</string>
+    <string name="member_join_policy">Member join policy</string>
 </resources>

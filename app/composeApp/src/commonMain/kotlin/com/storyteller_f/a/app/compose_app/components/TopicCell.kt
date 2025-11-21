@@ -29,11 +29,18 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
+import com.storyteller_f.a.app.compose_app.Res
+import com.storyteller_f.a.app.compose_app.add_reaction
 import com.storyteller_f.a.app.compose_app.common.OnTopicChanged
+import com.storyteller_f.a.app.compose_app.invalid_content
+import com.storyteller_f.a.app.compose_app.is_pinned
 import com.storyteller_f.a.app.compose_app.pages.topic.EmojiPicker
 import com.storyteller_f.a.app.compose_app.pages.topic.pinOrUnpinTopic
 import com.storyteller_f.a.app.compose_app.pages.user.UserIconWithDialog
+import com.storyteller_f.a.app.compose_app.pin
+import com.storyteller_f.a.app.compose_app.topic_menu
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
+import com.storyteller_f.a.app.compose_app.unpin
 import com.storyteller_f.a.app.core.components.CustomIcon
 import com.storyteller_f.a.app.core.components.IconRes
 import com.storyteller_f.a.app.core.components.emitEvent
@@ -42,6 +49,7 @@ import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.type.PrimaryKey
 import dev.tclement.fonticons.FontIcon
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.ui.tooling.preview.PreviewParameter
 import org.jetbrains.compose.ui.tooling.preview.PreviewParameterProvider
@@ -168,7 +176,7 @@ fun CommonTopicCellInternal(
                 if (supportPin) {
                     expanded = true
                 }
-            }, onLongClickLabel = "topic menu") {
+            }, onLongClickLabel = stringResource(Res.string.topic_menu)) {
                 appNavFactory.newAppNav().gotoTopic(topicId)
             }
         ) {
@@ -178,7 +186,7 @@ fun CommonTopicCellInternal(
         if (topicInfo.isPin) {
             FontIcon(
                 MaterialSymbolsOutlined.Keep,
-                "is pinned",
+                stringResource(Res.string.is_pinned),
                 modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)
             )
         }
@@ -204,7 +212,7 @@ fun RoomTopicCellInternal(
         Column(
             modifier = Modifier.clip(RoundedCornerShape(8.dp)).combinedClickable(onLongClick = {
                 expanded = true
-            }, onLongClickLabel = "topic menu") {
+            }, onLongClickLabel = stringResource(Res.string.topic_menu)) {
                 appNavFactory.newAppNav().gotoTopic(topicId)
             }.padding(8.dp)
         ) {
@@ -268,7 +276,7 @@ private fun SubTopics(topicInfo: TopicInfo) {
                         }
 
                         else -> {
-                            Text("invalid")
+                            Text(stringResource(Res.string.invalid_content))
                         }
                     }
                 }
@@ -285,7 +293,7 @@ fun TopicDropdownMenu(expanded: Boolean, topicInfo: TopicInfo, onDismissRequest:
         expanded = expanded,
         onDismissRequest = onDismissRequest
     ) {
-        val title = if (topicInfo.isPin) "Unpin" else "Pin"
+        val title = if (topicInfo.isPin) stringResource(Res.string.unpin) else stringResource(Res.string.pin)
         DropdownMenuItem(
             leadingIcon = {
                 val char = when {
@@ -325,7 +333,7 @@ fun RoomTopicDropdownMenu(
                     CustomIcon(IconRes.Font(MaterialSymbolsOutlined.AddReaction))
                 }
             },
-            text = { Text("add reaction") },
+            text = { Text(stringResource(Res.string.add_reaction)) },
             onClick = {
                 startAddReaction()
             }

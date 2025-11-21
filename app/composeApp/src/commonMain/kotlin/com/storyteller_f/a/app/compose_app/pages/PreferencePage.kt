@@ -12,8 +12,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import com.storyteller_f.a.app.compose_app.Res
+import com.storyteller_f.a.app.compose_app.current_selected
 import com.storyteller_f.a.app.compose_app.pages.topic.TopicTranslateSheet
 import com.storyteller_f.a.app.compose_app.service.buildGPT
+import com.storyteller_f.a.app.compose_app.translate_model
+import com.storyteller_f.a.app.compose_app.try_button
 import com.storyteller_f.a.app.compose_app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.core.components.CustomIcon
 import com.storyteller_f.a.app.core.components.IconRes
@@ -23,6 +27,7 @@ import com.strabled.composepreferences.PreferenceScreen
 import com.strabled.composepreferences.PreferenceTheme
 import com.strabled.composepreferences.getPreference
 import com.strabled.composepreferences.preferences.BottomSheetListPreference
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,13 +44,13 @@ fun PreferencePage() {
             val models by buildGPT().models(scope).collectAsState(emptyList())
             BottomSheetListPreference(
                 getPreference("gpt_model"),
-                title = "Translate Model",
+                title = stringResource(Res.string.translate_model),
                 items = models.associate {
                     it.value to it.key
                 },
                 summary = {
                     if (!it.isNullOrBlank()) {
-                        Text("current selected $it")
+                        Text(stringResource(Res.string.current_selected, it))
                     }
                 },
                 leadingIcon = {
@@ -60,7 +65,7 @@ fun PreferencePage() {
                     Button({
                         showSheet = true
                     }) {
-                        Text("Try")
+                        Text(stringResource(Res.string.try_button))
                     }
                 }
             )

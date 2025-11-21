@@ -73,6 +73,14 @@ import com.storyteller_f.a.app.compose_app.pages.community.getFontFamily
 import com.storyteller_f.a.app.compose_app.pages.room.RoomSendButton
 import com.storyteller_f.a.app.compose_app.preview
 import com.storyteller_f.a.app.compose_app.raw
+import com.storyteller_f.a.app.compose_app.submit
+import com.storyteller_f.a.app.compose_app.toggle_bold
+import com.storyteller_f.a.app.compose_app.toggle_code_span
+import com.storyteller_f.a.app.compose_app.toggle_italic
+import com.storyteller_f.a.app.compose_app.toggle_line_through
+import com.storyteller_f.a.app.compose_app.toggle_ordered_list
+import com.storyteller_f.a.app.compose_app.toggle_underline
+import com.storyteller_f.a.app.compose_app.toggle_unordered_list
 import com.storyteller_f.a.app.compose_app.ui.theme.AppTheme
 import com.storyteller_f.a.app.core.components.CustomAlertDialog
 import com.storyteller_f.a.app.core.components.emitEvent
@@ -311,39 +319,39 @@ private fun TopicComposeToolbar(
         IconToggleButton(currentSpanStyle.fontWeight == FontWeight.Bold, {
             state.toggleSpanStyle(SpanStyle(fontWeight = FontWeight.Bold))
         }) {
-            Icon(Icons.Default.FormatBold, "toggle bold")
+            Icon(Icons.Default.FormatBold, stringResource(Res.string.toggle_bold))
         }
         IconToggleButton(currentSpanStyle.fontStyle == FontStyle.Italic, {
             state.toggleSpanStyle(SpanStyle(fontStyle = FontStyle.Italic))
         }) {
-            Icon(Icons.Default.FormatItalic, "toggle italic")
+            Icon(Icons.Default.FormatItalic, stringResource(Res.string.toggle_italic))
         }
         IconToggleButton(currentSpanStyle.textDecoration == TextDecoration.Underline, {
             state.toggleSpanStyle(SpanStyle(textDecoration = TextDecoration.Underline))
         }) {
-            Icon(Icons.Default.FormatUnderlined, "toggle underline")
+            Icon(Icons.Default.FormatUnderlined, stringResource(Res.string.toggle_underline))
         }
         IconToggleButton(currentSpanStyle.textDecoration == TextDecoration.LineThrough, {
             state.toggleSpanStyle(SpanStyle(textDecoration = TextDecoration.LineThrough))
         }) {
-            Icon(Icons.Default.FormatStrikethrough, "toggle line through")
+            Icon(Icons.Default.FormatStrikethrough, stringResource(Res.string.toggle_line_through))
         }
         VerticalDivider(modifier = Modifier.height(20.dp).align(Alignment.CenterVertically))
         IconToggleButton(state.isOrderedList, {
             state.toggleOrderedList()
         }) {
-            Icon(Icons.Default.FormatListNumbered, "toggle ordered list")
+            Icon(Icons.Default.FormatListNumbered, stringResource(Res.string.toggle_ordered_list))
         }
         IconToggleButton(state.isUnorderedList, {
             state.toggleUnorderedList()
         }) {
-            Icon(Icons.AutoMirrored.Filled.FormatListBulleted, "toggle unordered list")
+            Icon(Icons.AutoMirrored.Filled.FormatListBulleted, stringResource(Res.string.toggle_unordered_list))
         }
         VerticalDivider(modifier = Modifier.height(20.dp).align(Alignment.CenterVertically))
         IconToggleButton(state.isCodeSpan, {
             state.toggleCodeSpan()
         }) {
-            Icon(Icons.Default.Code, "toggle code span")
+            Icon(Icons.Default.Code, stringResource(Res.string.toggle_code_span))
         }
     }
 }
@@ -404,7 +412,7 @@ private fun TopicComposeSubmitButton(
             }
         }
     }) {
-        Icon(imageVector = Icons.AutoMirrored.Filled.Send, "submit")
+        Icon(imageVector = Icons.AutoMirrored.Filled.Send, stringResource(Res.string.submit))
     }
 }
 

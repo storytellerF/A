@@ -34,6 +34,8 @@ import com.storyteller_f.a.app.compose_app.common.createWorldViewModel
 import com.storyteller_f.a.app.compose_app.communities
 import com.storyteller_f.a.app.compose_app.components.TopicList
 import com.storyteller_f.a.app.compose_app.design_spec
+import com.storyteller_f.a.app.compose_app.download_latest_app
+import com.storyteller_f.a.app.compose_app.open_source_libraries
 import com.storyteller_f.a.app.compose_app.pages.community.MyCommunitiesPage
 import com.storyteller_f.a.app.compose_app.pages.room.MyRoomsPage
 import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar
@@ -57,17 +59,17 @@ fun HomePage() {
         NavRoute(
             "/world",
             Icons.Default.Public,
-            stringResource(com.storyteller_f.a.app.compose_app.Res.string.world)
+            stringResource(Res.string.world)
         ),
         NavRoute(
             "/communities",
             Icons.Default.Diversity3,
-            stringResource(com.storyteller_f.a.app.compose_app.Res.string.communities)
+            stringResource(Res.string.communities)
         ),
         NavRoute(
             "/rooms",
             Icons.Default.ChatBubble,
-            stringResource(com.storyteller_f.a.app.compose_app.Res.string.rooms)
+            stringResource(Res.string.rooms)
         ),
     )
     val modifier = Modifier.testTag("home")
@@ -261,14 +263,14 @@ private fun ProjectDialogInternal(dismiss: () -> Unit) {
                 }
                 ButtonNav(
                     Icons.Default.Code,
-                    "Open Source Libraries"
+                    stringResource(Res.string.open_source_libraries)
                 ) {
                     dismiss()
                     appNavFactory.newAppNav().gotoAbout()
                 }
                 ButtonNav(
                     Icons.Default.Download,
-                    "Download latest app"
+                    stringResource(Res.string.download_latest_app)
                 ) {
                     dismiss()
                     uriHandler.openUri(
