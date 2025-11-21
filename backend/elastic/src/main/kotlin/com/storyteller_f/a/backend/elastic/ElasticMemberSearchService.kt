@@ -124,6 +124,21 @@ class ElasticMemberSearchService(connection: ElasticConnection) : Elastic(connec
                         p.field("objectName").query(memberDocumentSearch.objectName).boost(2f)
                     } to true)
                 }
+
+                is MemberDocumentSearch.RoomMembers -> {
+                    // 按 uid 搜索（该用户加入的房间）
+                    add(QueryBuilders.term { t ->
+                        t.field("uid").value(memberDocumentSearch.uid)
+                    } to true)
+                    // 按 objectType 搜索（只搜索房间）
+                    add(QueryBuilders.term { t ->
+                        t.field("objectType.keyword").value(ObjectType.ROOM.name)
+                    } to true)
+                    // 按房间名称前缀搜索
+                    add(QueryBuilders.matchPhrasePrefix { p ->
+                        p.field("objectName").query(memberDocumentSearch.objectName).boost(2f)
+                    } to true)
+                }
             }
         }
     }
