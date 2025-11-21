@@ -13,6 +13,7 @@ import com.storyteller_f.a.backend.core.service.MemberDocument
 import com.storyteller_f.a.backend.core.service.MemberDocumentSearch
 import com.storyteller_f.a.backend.core.service.MemberSearchService
 import com.storyteller_f.a.backend.core.service.MemberSearchServiceFactory
+import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.future.await
@@ -107,6 +108,21 @@ class ElasticMemberSearchService(connection: ElasticConnection) : Elastic(connec
                             p.field("nickname").query(nickname).boost(2f)
                         } to true)
                     }
+                }
+
+                is MemberDocumentSearch.CommunityMembers -> {
+                    // 按 uid 搜索（该用户加入的社区）
+                    add(QueryBuilders.term { t ->
+                        t.field("uid").value(memberDocumentSearch.uid)
+                    } to true)
+                    // 按 objectType 搜索（只搜索社区）
+                    add(QueryBuilders.term { t ->
+                        t.field("objectType.keyword").value(ObjectType.COMMUNITY.name)
+                    } to true)
+                    // 按社区名称前缀搜索
+                    add(QueryBuilders.matchPhrasePrefix { p ->
+                        p.field("objectName").query(memberDocumentSearch.objectName).boost(2f)
+                    } to true)
                 }
             }
         }

@@ -21,12 +21,14 @@ import org.apache.lucene.document.StringField
 import org.apache.lucene.document.TextField
 import org.apache.lucene.index.IndexWriter
 import org.apache.lucene.index.IndexWriterConfig
+import org.apache.lucene.index.Term
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser
 import org.apache.lucene.search.BooleanClause
 import org.apache.lucene.search.BooleanQuery
 import org.apache.lucene.search.Query
 import org.apache.lucene.search.Sort
 import org.apache.lucene.search.SortField
+import org.apache.lucene.search.TermQuery
 import java.nio.file.Path
 
 data class LuceneMemberDocument(val memberDocument: MemberDocument) :
@@ -40,6 +42,7 @@ data class LuceneMemberDocument(val memberDocument: MemberDocument) :
             add(LongField("objectId", memberDocument.objectId, Field.Store.YES))
             add(StringField("objectType", memberDocument.objectType.name, Field.Store.YES))
             add(TextField("nickname", memberDocument.nickname, Field.Store.YES))
+            add(TextField("objectName", memberDocument.objectName, Field.Store.YES))
         }
     }
 
@@ -53,7 +56,8 @@ data class LuceneMemberDocument(val memberDocument: MemberDocument) :
                 uid = document.get("uid").toLong(),
                 objectId = document.get("objectId").toLong(),
                 objectType = ObjectType.valueOf(document.get("objectType")),
-                nickname = document.get("nickname")
+                nickname = document.get("nickname"),
+                objectName = document.get("objectName")
             )
         }
     }
@@ -128,6 +132,28 @@ class LuceneMemberSearchService(path: Path, isInMemory: Boolean = false) : Lucen
                         add(
                             MultiFieldQueryParser(
                                 arrayOf("nickname"),
+                                analyzer
+                            ).parse(it),
+                            BooleanClause.Occur.MUST
+                        )
+                    }
+                }
+                is MemberDocumentSearch.CommunityMembers -> {
+                    // 按 uid 搜索（该用户加入的社区）
+                    add(
+                        LongPoint.newExactQuery("uid", memberDocumentSearch.uid),
+                        BooleanClause.Occur.MUST
+                    )
+                    // 按 objectType 搜索（只搜索社区）
+                    add(
+                        TermQuery(Term("objectType", ObjectType.COMMUNITY.name)),
+                        BooleanClause.Occur.MUST
+                    )
+                    // 按社区名称搜索
+                    preprocessUserInputKeyword(listOf(memberDocumentSearch.objectName))?.let {
+                        add(
+                            MultiFieldQueryParser(
+                                arrayOf("objectName"),
                                 analyzer
                             ).parse(it),
                             BooleanClause.Occur.MUST

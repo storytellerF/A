@@ -12,9 +12,11 @@ import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.UnauthorizedException
+import com.storyteller_f.a.backend.core.paging
 import com.storyteller_f.a.backend.core.service.CommunityDocument
 import com.storyteller_f.a.backend.core.service.CommunityDocumentSearch
 import com.storyteller_f.a.backend.core.service.MemberDocument
+import com.storyteller_f.a.backend.core.service.MemberDocumentSearch
 import com.storyteller_f.a.backend.core.types.Community
 import com.storyteller_f.a.backend.core.types.Member
 import com.storyteller_f.a.backend.core.types.RawCommunity
@@ -33,6 +35,8 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.UNIT_RESULT
 import com.storyteller_f.shared.utils.errorIfFalse
+import com.storyteller_f.shared.utils.firstOrNull
+import com.storyteller_f.shared.utils.ifNotNull
 import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
@@ -91,22 +95,10 @@ private suspend fun Backend.joinCommunity(
         MemberStatus.JOINED,
         time
     )
-    return database.container.addMember(member).mapResult {
+    return database.container.addMember(member).onSuccess {
         addUserLog(uid, UserLogType.JOIN, communityId ob ObjectType.COMMUNITY)
-        // 保存到 MemberSearchService
-        getUserInfo(ObjectFetch.IdFetch(uid)).onSuccess { userInfo ->
-            userInfo?.let {
-                memberSearchService.saveDocument(
-                    listOf(
-                        MemberDocument.fromUserInfo(memberId, it, communityId, ObjectType.COMMUNITY)
-                    )
-                ).onFailure { e ->
-                    Napier.e(e) {
-                        "save member document failed"
-                    }
-                }
-            }
-        }
+        saveMemberDocument(uid, memberId, communityId, community.name)
+    }.mapResult {
         Result.success(community.copy(joinedTime = time))
     }.recoverIfDup(database::isDup) {
         getCommunity(ObjectFetch.IdFetch(communityId), uid, true)
@@ -120,7 +112,7 @@ suspend fun Backend.exitCommunity(
     if (info.joinedTime == null) {
         Result.success(info)
     } else {
-        database.container.deleteMember(communityId, id).mapResult {
+        database.container.deleteMember(communityId, id).onSuccess {
             addUserLog(id, UserLogType.EXIT, communityId ob ObjectType.COMMUNITY)
             // 从 MemberSearchService 删除
             memberSearchService.deleteDocument(id, communityId).onFailure { e ->
@@ -128,6 +120,7 @@ suspend fun Backend.exitCommunity(
                     "delete member document failed"
                 }
             }
+        }.mapResult {
             Result.success(info.copy(joinedTime = null))
         }
     }
@@ -144,15 +137,31 @@ suspend fun Backend.searchCommunities(
     } else {
         search.joinStatus.toJoinSearch(uid)
     }
-    return if (word.isNullOrBlank() || joinSearch !is JoinSearch.Unspecified) {
-        database.community.getCommunityPaginationResult(
+    return when {
+        // word 为空，使用 database 查询
+        word.isNullOrBlank() -> database.community.getCommunityPaginationResult(
             word,
             search.hasPoster,
             primaryKeyFetch,
             joinSearch
         )
-    } else {
-        communitySearchService.searchDocument(
+        // word 不为空 && 搜索已加入的社区，使用 memberSearchService
+        joinSearch is JoinSearch.Joined -> {
+            memberSearchService.searchDocument(
+                MemberDocumentSearch.CommunityMembers(uid = joinSearch.uid, objectName = word),
+                primaryKeyFetch
+            ).mapResult { (searchResults, total) ->
+                val communityIds = searchResults
+                    .map { it.objectId }
+                database.community.getRawCommunities(
+                    ObjectListFetch.IdListFetch(communityIds)
+                ).map {
+                    PaginationResult(it, total)
+                }
+            }
+        }
+        // word 不为空 && 不是搜索已加入（Unspecified），使用 communitySearchService
+        else -> communitySearchService.searchDocument(
             CommunityDocumentSearch.Keyword(listOf(word)),
             primaryKeyFetch
         ).mapResult { (list, total) ->
@@ -221,23 +230,11 @@ suspend fun Backend.createCommunity(
                         "save community document failed"
                     }
                 }
+            addUserLog(uid, UserLogType.CREATE, community.id ob ObjectType.COMMUNITY)
             // 保存创建者到 MemberSearchService
-            getUserInfo(ObjectFetch.IdFetch(uid)).onSuccess { userInfo ->
-                userInfo?.let {
-                    memberSearchService.saveDocument(
-                        listOf(
-                            MemberDocument.fromUserInfo(memberId, it, id, ObjectType.COMMUNITY)
-                        )
-                    ).onFailure { e ->
-                        Napier.e(e) {
-                            "save member document failed"
-                        }
-                    }
-                }
-            }
+            saveMemberDocument(uid, memberId, id, newCommunity.name)
         }
     }.mapResult { community ->
-        addUserLog(uid, UserLogType.CREATE, community.id ob ObjectType.COMMUNITY)
         processRawCommunityToCommunityInfo(
             listOf(
                 RawCommunity(
@@ -247,8 +244,31 @@ suspend fun Backend.createCommunity(
                     0
                 )
             )
-        ).mapIfNotNull {
-            it.first()
+        )
+    }.firstOrNull()
+}
+
+private suspend fun Backend.saveMemberDocument(
+    uid: PrimaryKey,
+    memberId: PrimaryKey,
+    id: PrimaryKey,
+    name: String
+) {
+    getUserInfo(ObjectFetch.IdFetch(uid)).ifNotNull { userInfo ->
+        memberSearchService.saveDocument(
+            listOf(
+                MemberDocument.fromUserInfo(
+                    memberId,
+                    userInfo,
+                    id,
+                    ObjectType.COMMUNITY,
+                    name
+                )
+            )
+        ).onFailure { e ->
+            Napier.e(e) {
+                "save member document failed"
+            }
         }
     }
 }
@@ -283,12 +303,9 @@ suspend fun Backend.updateCommunity(
         }
     }.mapResultIfNotNull {
         database.community.getRawCommunity(ObjectFetch.IdFetch(id), true, uid)
-            .mapResultIfNotNull { rawResult ->
-                processRawCommunityToCommunityInfo(
-                    listOf(rawResult)
-                ).mapIfNotNull(List<CommunityInfo>::first)
-            }
-    }
+    }.mapResultIfNotNull { rawResult ->
+        processRawCommunityToCommunityInfo(listOf(rawResult))
+    }.firstOrNull()
 }
 
 private suspend fun Backend.checkBeforeUpdateCommunity(
@@ -381,31 +398,30 @@ suspend fun Backend.getAllCommunities(primaryKeyFetch: PrimaryKeyFetch) =
         primaryKeyFetch = primaryKeyFetch,
         joinSearch = JoinSearch.Unspecified(null)
     ).mapResultIfNotNull { (list, total) ->
-        processRawCommunityToCommunityInfo(list).mapIfNotNull {
-            PaginationResult(it, total)
-        }
+        processRawCommunityToCommunityInfo(list).paging(total)
     }
 
 suspend fun Backend.getUserJoinedCommunities(
     uid: PrimaryKey,
     primaryKeyFetch: PrimaryKeyFetch
-): Result<PaginationResult<CommunityInfo>> {
-    val result = database.community.getCommunityPaginationResult(
+): Result<PaginationResult<CommunityInfo>?> {
+    return database.community.getCommunityPaginationResult(
         word = null,
         hasPosterSearch = PosterSearch.UNSPECIFIED,
         primaryKeyFetch = primaryKeyFetch,
         joinSearch = JoinSearch.Joined(uid)
     ).mapResultIfNotNull { (list, total) ->
-        processRawCommunityToCommunityInfo(list).mapIfNotNull { value ->
-            processUserJoinedTimeReplace(value, uid, total).getOrThrow()
+        processRawCommunityToCommunityInfo(list).mapResultIfNotNull { value ->
+            processUserJoinedTimeReplace(value, uid, total)
         }
-    }.getOrElse { null }
-    return Result.success(result ?: PaginationResult(emptyList(), 0))
+    }
 }
+
 suspend fun Backend.getCommunityMemberInfos(
     communityId: PrimaryKey,
     primaryKeyFetch: PrimaryKeyFetch
 ): Result<PaginationResult<MemberInfo>> = getContainerMemberInfos(communityId, primaryKeyFetch)
+
 suspend fun Backend.getContainerMemberInfos(
     objectId: PrimaryKey,
     primaryKeyFetch: PrimaryKeyFetch

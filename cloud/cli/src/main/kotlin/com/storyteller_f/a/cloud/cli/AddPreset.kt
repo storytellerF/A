@@ -22,6 +22,7 @@ import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.a.backend.core.types.UserSubscription
 import com.storyteller_f.a.backend.core.types.buildMemberForNotificationRoom
 import com.storyteller_f.a.backend.core.types.buildUserNotificationRoom
+import com.storyteller_f.a.backend.core.types.toUserInfo
 import com.storyteller_f.a.cloud.core.service.getFileInfoList
 import com.storyteller_f.a.cloud.core.service.tryUploadFiles
 import com.storyteller_f.shared.encryptDataByAES
@@ -323,7 +324,7 @@ class AddPreset : Subcommand("add", "add entry") {
         roomSearchService.saveDocument(roomList.map {
             RoomDocument.fromRoom(it)
         }).getOrThrow()
-        addMemberDocuments(memberList, userMap)
+        addMemberDocuments(memberList, userMap, roomMap = roomList.associateBy { it.id })
     }
 
     private suspend fun Backend.getRoomCommunityMap(l: List<PresetRoom>): Map<String, Community> =
@@ -453,23 +454,30 @@ class AddPreset : Subcommand("add", "add entry") {
         communitySearchService.saveDocument(communities.map {
             CommunityDocument.fromCommunity(it)
         }).getOrThrow()
-        addMemberDocuments(memberList, userMap)
+        addMemberDocuments(memberList, userMap, communityMap = communities.associateBy { it.id })
     }
 
     private suspend fun Backend.addMemberDocuments(
         memberList: List<Member>,
-        userMap: Map<String?, User>
+        userMap: Map<String?, User>,
+        communityMap: Map<PrimaryKey, Community> = emptyMap(),
+        roomMap: Map<PrimaryKey, Room> = emptyMap()
     ) {
         memberSearchService.saveDocument(
             memberList.mapNotNull { member ->
                 val user = userMap.values.find { it.id == member.uid }
                 user?.let {
-                    MemberDocument(
+                    val objectName = when (member.objectType) {
+                        ObjectType.COMMUNITY -> communityMap[member.objectId]?.name
+                        ObjectType.ROOM -> roomMap[member.objectId]?.name
+                        else -> null
+                    }!!
+                    MemberDocument.fromUserInfo(
                         id = member.id,
-                        uid = member.uid,
+                        userInfo = it.toUserInfo(),
                         objectId = member.objectId,
                         objectType = member.objectType,
-                        nickname = it.nickname
+                        objectName = objectName
                     )
                 }
             }
