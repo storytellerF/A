@@ -13,9 +13,11 @@ import com.storyteller_f.a.app.compose_app.common.Uploader
 import com.storyteller_f.a.app.compose_app.common.UploaderImpl
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.setupKmpLogger
+import com.storyteller_f.shared.utils.safeMessage
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
+import org.jetbrains.compose.resources.stringResource
 import java.awt.BorderLayout
 import java.awt.Button
 import java.awt.Desktop
@@ -49,7 +51,7 @@ fun main(args: Array<String>) {
     application {
         Window(
             onCloseRequest = ::exitApplication,
-            title = "A",
+            title = stringResource(Res.string.app_name),
         ) {
             CompositionLocalProvider(
                 LocalClientFileProvider provides provider,
@@ -66,7 +68,7 @@ private fun initForJvmMain(args: Array<String>) {
         Napier.e(e) {
             "uncaught exception"
         }
-        Dialog(Frame(), e.message ?: "Error").apply {
+        Dialog(Frame(), e.safeMessage()).apply {
             layout = BorderLayout()
             val label = TextArea(e.stackTraceToString())
             add(label, BorderLayout.CENTER)
@@ -102,8 +104,6 @@ private fun initForJvmMain(args: Array<String>) {
 //    System.setProperty("awt.useSystemAAFontSettings", "on")
 
     NotificationInitializer.configure(
-        AppConfig(
-            appName = "My awesome app",
-        )
+        AppConfig(appName = "A")
     )
 }

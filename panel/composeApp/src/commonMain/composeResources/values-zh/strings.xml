@@ -54,4 +54,9 @@
     <string name="tab_joined_rooms">加入的聊天室</string>
     <string name="tab_received_titles">收到的头衔</string>
     <string name="tab_created_files">创建的文件</string>
+    <string name="tab_info">信息</string>
+    <string name="tab_logs">日志</string>
+    <string name="tab_basic_info_file">基本信息</string>
+    <string name="tab_members">成员</string>
+    <string name="tab_files">文件</string>
 </resources>

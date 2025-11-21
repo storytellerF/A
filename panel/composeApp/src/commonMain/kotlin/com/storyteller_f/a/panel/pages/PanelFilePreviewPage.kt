@@ -9,7 +9,11 @@ import com.storyteller_f.a.app.core.components.PdfView
 import com.storyteller_f.a.app.core.components.RemoteMediaItem
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.VideoViewFullScreen
+import com.storyteller_f.a.panel.Res
 import com.storyteller_f.a.panel.common.createPanelFileViewModel
+import com.storyteller_f.a.panel.unsupported_content_type
+import com.storyteller_f.a.panel.view_image
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun PanelFilePreviewPage(id: Long) {
@@ -45,7 +49,7 @@ fun PanelFilePreviewPage(id: Long) {
                 contentType.startsWith("image") -> {
                     com.github.panpf.zoomimage.CoilZoomAsyncImage(
                         model = com.storyteller_f.a.app.core.components.globalLoader(url),
-                        contentDescription = "view image",
+                        contentDescription = stringResource(Res.string.view_image),
                         modifier = Modifier.fillMaxSize(),
                     )
                 }
@@ -56,7 +60,7 @@ fun PanelFilePreviewPage(id: Long) {
 
                 else -> {
                     CenterBox {
-                        Text("Unsupported content type: $contentType")
+                        Text(stringResource(Res.string.unsupported_content_type, contentType))
                     }
                 }
             }

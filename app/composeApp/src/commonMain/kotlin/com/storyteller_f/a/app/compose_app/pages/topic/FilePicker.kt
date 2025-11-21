@@ -42,9 +42,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.compose_app.AppGlobalDialogController
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
+import com.storyteller_f.a.app.compose_app.Res
+import com.storyteller_f.a.app.compose_app.audio_recorder
 import com.storyteller_f.a.app.compose_app.common.OnMediaUploaded
 import com.storyteller_f.a.app.compose_app.common.createMediaListViewModel
 import com.storyteller_f.a.app.compose_app.components.FileCell
+import com.storyteller_f.a.app.compose_app.files
+import com.storyteller_f.a.app.compose_app.provide_permission
+import com.storyteller_f.a.app.compose_app.start_record
+import com.storyteller_f.a.app.compose_app.stop_record
+import com.storyteller_f.a.app.compose_app.upload_file
 import com.storyteller_f.a.app.compose_app.utils.ClientFile
 import com.storyteller_f.a.app.compose_app.utils.Recorder
 import com.storyteller_f.a.app.core.components.BaseSheet
@@ -83,6 +90,7 @@ import kotlinx.io.Source
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -99,7 +107,10 @@ fun FilePicker(
             support.size
         }
         val tabs =
-            listOf(Icons.Default.Cloud to "files", Icons.Default.Mic to "audio recorder").filter {
+            listOf(
+                Icons.Default.Cloud to stringResource(Res.string.files),
+                Icons.Default.Mic to stringResource(Res.string.audio_recorder)
+            ).filter {
                 support.contains(it.second)
             }
         if (support.size != 1) {
@@ -155,7 +166,7 @@ fun AudioRecorder(
                         Permission.Audio
                     )
                 }, modifier = Modifier.align(Alignment.Center)) {
-                    Text("Provide permission")
+                    Text(stringResource(Res.string.provide_permission))
                 }
             }
         }
@@ -203,9 +214,9 @@ private fun BoxScope.RecorderButton(
         contentAlignment = Alignment.Center
     ) {
         if (isRecording) {
-            Icon(Icons.Default.Stop, "stop record", modifier = Modifier.size(50.dp))
+            Icon(Icons.Default.Stop, stringResource(Res.string.stop_record), modifier = Modifier.size(50.dp))
         } else {
-            Icon(Icons.Default.PlayArrow, "start record", modifier = Modifier.size(50.dp))
+            Icon(Icons.Default.PlayArrow, stringResource(Res.string.start_record), modifier = Modifier.size(50.dp))
         }
     }
 }
@@ -228,7 +239,7 @@ private fun FileListView(
                     }
                 }
             }) {
-                Icon(Icons.Default.CloudUpload, "upload file")
+                Icon(Icons.Default.CloudUpload, stringResource(Res.string.upload_file))
             }
         }
         StateView(viewModel, modifier = Modifier.weight(1f)) { pagingItems ->

@@ -27,13 +27,18 @@ import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.api.NewCommunity
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
+import com.storyteller_f.a.app.compose_app.Res
+import com.storyteller_f.a.app.compose_app.aid
 import com.storyteller_f.a.app.compose_app.common.OnCommunityCreated
+import com.storyteller_f.a.app.compose_app.member_join_policy
+import com.storyteller_f.a.app.compose_app.name
 import com.storyteller_f.a.app.compose_app.pages.title.CommonComposePage
 import com.storyteller_f.a.app.core.components.emitEvent
 import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.client.core.createCommunity
 import com.storyteller_f.shared.model.MemberPolicy
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
@@ -105,12 +110,12 @@ fun CommunityComposeInternal(
         OutlinedTextField(name, onValueChange = {
             onNameChange(it)
         }, label = {
-            Text("name")
+            Text(stringResource(Res.string.name))
         })
         OutlinedTextField(aid, onValueChange = {
             onAidChange(it)
         }, label = {
-            Text("aid")
+            Text(stringResource(Res.string.aid))
         })
         val radioOptions = getMemberPolicies()
         CommunityMemberPolicyRadioGroup(radioOptions, memberJoinPolicy, onMemberJoinPolicyChange)
@@ -153,7 +158,7 @@ private fun CommunityMemberPolicyRadioGroup(
         Modifier.padding(horizontal = 10.dp).border(1.dp, MaterialTheme.colorScheme.primary)
             .padding(10.dp)
     ) {
-        Text("Member join policy")
+        Text(stringResource(Res.string.member_join_policy))
         // Note that Modifier.selectableGroup() is essential to ensure correct accessibility behavior
         Column(Modifier.selectableGroup()) {
             radioOptions.forEach { text ->

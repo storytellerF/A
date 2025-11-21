@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachFile
@@ -29,6 +28,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
+import com.storyteller_f.a.app.compose_app.Res
+import com.storyteller_f.a.app.compose_app.audio_content_description
+import com.storyteller_f.a.app.compose_app.copy_name
+import com.storyteller_f.a.app.compose_app.file_content_description
+import com.storyteller_f.a.app.compose_app.image_dimension
+import com.storyteller_f.a.app.compose_app.video_content_description
+import com.storyteller_f.a.app.compose_app.view
 import com.storyteller_f.a.app.core.components.CustomIcon
 import com.storyteller_f.a.app.core.components.FileIcon
 import com.storyteller_f.a.app.core.components.IconRes
@@ -37,6 +43,7 @@ import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.utils.formatTime
 import kotlinx.coroutines.launch
 import nl.jacobras.humanreadable.HumanReadable
+import org.jetbrains.compose.resources.stringResource
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)
@@ -73,7 +80,7 @@ fun FileCell(
                     Spacer(modifier = Modifier.height(5.dp))
                     fileInfo.dimension?.let {
                         Text(
-                            "w${it.width}·h${it.height}",
+                            stringResource(Res.string.image_dimension, it.width, it.height),
                             style = MaterialTheme.typography.labelSmall
                         )
                     }
@@ -99,7 +106,7 @@ fun FileCellMenu(expanded: Boolean, updateExpanded: (Boolean) -> Unit, fileInfo:
             leadingIcon = {
                 CustomIcon(IconRes.Vector(Icons.Default.Fullscreen))
             },
-            text = { Text("View") },
+            text = { Text(stringResource(Res.string.view)) },
             onClick = {
                 updateExpanded(false)
                 appNavFactory.newAppNav().gotoMedia(fileInfo)
@@ -111,7 +118,7 @@ fun FileCellMenu(expanded: Boolean, updateExpanded: (Boolean) -> Unit, fileInfo:
             leadingIcon = {
                 CustomIcon(IconRes.Vector(Icons.Default.Fullscreen))
             },
-            text = { Text("Copy name") },
+            text = { Text(stringResource(Res.string.copy_name)) },
             onClick = {
                 updateExpanded(false)
                 scope.launch {
@@ -128,14 +135,18 @@ fun UploadIcon(contentType: String) {
     when {
         contentType.startsWith("audio") -> Icon(
             Icons.Default.AudioFile,
-            contentDescription = "audio"
+            contentDescription = stringResource(Res.string.audio_content_description)
         )
 
         contentType.startsWith("video") -> Icon(
             Icons.Default.VideoFile,
-            contentDescription = "video"
+            contentDescription = stringResource(Res.string.video_content_description)
         )
 
-        else -> Icon(Icons.Default.AttachFile, contentDescription = "file", modifier = modifier)
+        else -> Icon(
+            Icons.Default.AttachFile,
+            contentDescription = stringResource(Res.string.file_content_description),
+            modifier = modifier
+        )
     }
 }

@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.Text
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.res.stringResource
 import com.storyteller_f.a.app.core.commonForActivity
 import com.storyteller_f.a.app.core.components.CenterBox
 import com.storyteller_f.a.app.core.components.LocalMediaPlayerService
@@ -18,7 +19,7 @@ class PanelMediaPlayerActivity : ComponentActivity() {
             val fileId = intent.getLongExtra("id", 0)
             if (fileId == 0L) {
                 CenterBox {
-                    Text("invalid")
+                    Text(stringResource(R.string.invalid))
                 }
             } else {
                 CompositionLocalProvider(

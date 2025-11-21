@@ -43,12 +43,16 @@ import com.storyteller_f.a.panel.common.createPanelUserOverviewViewModel
 import com.storyteller_f.a.panel.common.createPanelUserUploadRecordsViewModel
 import com.storyteller_f.a.panel.common.createPanelUserViewModel
 import com.storyteller_f.a.panel.components.InfoTable
+import com.storyteller_f.a.panel.file_progress
 import com.storyteller_f.a.panel.log_supporting
 import com.storyteller_f.a.panel.tab_basic_info
 import com.storyteller_f.a.panel.tab_created_files
 import com.storyteller_f.a.panel.tab_joined_communities
 import com.storyteller_f.a.panel.tab_joined_rooms
 import com.storyteller_f.a.panel.tab_received_titles
+import com.storyteller_f.a.panel.upload_records
+import com.storyteller_f.a.panel.user_detail_title
+import com.storyteller_f.a.panel.user_detail_title_with_info
 import com.storyteller_f.a.panel.user_info
 import com.storyteller_f.a.panel.user_logs
 import com.storyteller_f.shared.type.ObjectType
@@ -93,12 +97,22 @@ fun UserDetailPage(uid: PrimaryKey) {
 private fun UserTopBar(uid: PrimaryKey) {
     val vm = createPanelUserViewModel(uid)
     val info by vm.handler.data.collectAsState(null)
-    val title =
-        listOf("User Detail", info?.nickname ?: "", info?.aid ?: "").filter { it.isNotBlank() }
-            .joinToString(" • ")
+    val nickname = info?.nickname
+    val aid = info?.aid
+    val title = if (nickname != null && aid != null) {
+        stringResource(
+            Res.string.user_detail_title_with_info,
+            nickname,
+            aid
+        )
+    } else {
+        stringResource(Res.string.user_detail_title)
+    }
     val nav = LocalPanelNav.current
     TopAppBar(
-        title = { Text(title.ifBlank { "User Detail • $uid" }) },
+        title = {
+            Text(title)
+        },
         navigationIcon = {
             IconButton(onClick = { nav.open() }) {
                 Icon(Icons.Default.Menu, null)
@@ -116,7 +130,7 @@ private fun UserInfoTabs(uid: PrimaryKey) {
         stringResource(Res.string.tab_joined_rooms),
         stringResource(Res.string.tab_received_titles),
         stringResource(Res.string.tab_created_files),
-        "UploadRecords"
+        stringResource(Res.string.upload_records)
     )
     val pagerState = rememberPagerState { tabs.size }
     val scope = rememberCoroutineScope()
@@ -261,13 +275,14 @@ private fun UserUploadRecordsSection(uid: PrimaryKey) {
                         headlineContent = { Text(info.name) },
                         supportingContent = {
                             Text(
-                                "${info.status} ${
-                                    HumanReadable.fileSize(
-                                        info.progress
-                                    )
-                                }/${HumanReadable.fileSize(info.total)}"
+                                stringResource(
+                                    Res.string.file_progress,
+                                    info.status,
+                                    HumanReadable.fileSize(info.progress),
+                                    HumanReadable.fileSize(info.total)
+                                )
                             )
-                        },
+                        }
                     )
                     HorizontalDivider()
                 } else {

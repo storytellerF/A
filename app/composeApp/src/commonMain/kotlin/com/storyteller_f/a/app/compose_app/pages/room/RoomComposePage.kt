@@ -13,12 +13,16 @@ import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.api.NewRoom
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
+import com.storyteller_f.a.app.compose_app.Res
+import com.storyteller_f.a.app.compose_app.aid
 import com.storyteller_f.a.app.compose_app.common.OnRoomCreated
+import com.storyteller_f.a.app.compose_app.name
 import com.storyteller_f.a.app.compose_app.pages.title.CommonComposePage
 import com.storyteller_f.a.app.core.components.emitEvent
 import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.client.core.createRoom
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,12 +56,12 @@ fun RoomComposePage() {
             OutlinedTextField(name, onValueChange = {
                 name = it
             }, label = {
-                Text("name")
+                Text(stringResource(Res.string.name))
             })
             OutlinedTextField(aid, onValueChange = {
                 aid = it
             }, label = {
-                Text("aid")
+                Text(stringResource(Res.string.aid))
             })
         }
     }
