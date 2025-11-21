@@ -91,7 +91,8 @@ class RoomTest {
             exitRoom(publicRoom1Id).getOrThrow()
             // 测试幂等
             exitRoom(publicRoom1Id).getOrThrow()
-            expectedRoomCount(1, JoinStatusSearch.UNSPECIFIED, communityId = communityId)
+            expectedRoomCount(1, JoinStatusSearch.JOINED, communityId = communityId)
+            expectedRoomCount(2, JoinStatusSearch.UNSPECIFIED, communityId = communityId)
         }
     }
 

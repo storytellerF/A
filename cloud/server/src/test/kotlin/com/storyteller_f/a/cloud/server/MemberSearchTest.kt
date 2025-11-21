@@ -2,9 +2,11 @@ package com.storyteller_f.a.cloud.server
 
 import com.storyteller_f.a.api.NewCommunity
 import com.storyteller_f.a.api.NewRoom
+import com.storyteller_f.a.api.NewTitle
 import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.createCommunity
 import com.storyteller_f.a.client.core.createRoom
+import com.storyteller_f.a.client.core.createTitle
 import com.storyteller_f.a.client.core.exitCommunity
 import com.storyteller_f.a.client.core.exitRoom
 import com.storyteller_f.a.client.core.joinCommunity
@@ -14,7 +16,9 @@ import com.storyteller_f.a.client.core.searchRoomMembers
 import com.storyteller_f.a.client.core.updateUserInfo
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.RoomInfo
+import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.obj.UpdateUserBody
+import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -37,6 +41,115 @@ class MemberSearchTest {
         roomName: String
     ): RoomInfo =
         createRoom(NewRoom(roomName, roomAid, communityId = communityId)).getOrThrow()
+
+    private suspend fun UserSessionManager.createPrivateRoomForTest(): RoomInfo =
+        createRoom(NewRoom("private_room", "private_room_aid")).getOrThrow()
+
+    private suspend fun UserSessionManager.createJoinRoomTitleForTest(
+        privateRoomId: PrimaryKey,
+        uid: PrimaryKey
+    ) = createTitle(
+        NewTitle(
+            "invite",
+            TitleType.JOIN,
+            uid,
+            privateRoomId,
+            ObjectType.ROOM,
+            "invite for test"
+        )
+    ).getOrThrow()
+
+    @Test
+    fun `test private room member search without keyword`() = test {
+        val firstUser = attachSession {
+            updateUserInfo(UpdateUserBody(nickname = "Alice")).getOrThrow()
+            val privateRoomId = createPrivateRoomForTest().id
+            privateRoomId
+        }
+        val privateRoomId = firstUser.custom
+
+        // 第二个用户加入私有房间
+        val secondUser = attachSession {
+            updateUserInfo(UpdateUserBody(nickname = "Bob")).getOrThrow()
+        }
+
+        // 创建邀请标题让第二个用户加入私有房间
+        loginSession(firstUser) {
+            createJoinRoomTitleForTest(privateRoomId, secondUser.uid)
+        }
+
+        loginSession(secondUser) {
+            joinRoom(privateRoomId).getOrThrow()
+        }
+
+        // 第三个用户加入私有房间
+        val thirdUser = attachSession {
+            updateUserInfo(UpdateUserBody(nickname = "Charlie")).getOrThrow()
+        }
+
+        // 创建邀请标题让第三个用户加入私有房间
+        loginSession(firstUser) {
+            createJoinRoomTitleForTest(privateRoomId, thirdUser.uid)
+        }
+
+        loginSession(thirdUser) {
+            joinRoom(privateRoomId).getOrThrow()
+        }
+
+        // 测试无关键字搜索 - 应该返回所有成员
+        loginSession(thirdUser) {
+            val members = searchRoomMembers(privateRoomId, null, 10, null).getOrThrow()
+            assertEquals(3, members.data.size, "Should have 3 members in private room without keyword search")
+        }
+    }
+
+    @Test
+    fun `test private room member search with keyword and objectId`() = test {
+        val firstUser = attachSession {
+            updateUserInfo(UpdateUserBody(nickname = "Alice")).getOrThrow()
+            val privateRoomId = createPrivateRoomForTest().id
+            privateRoomId
+        }
+        val privateRoomId = firstUser.custom
+
+        // 第二个用户设置昵称并加入私有房间
+        val secondUser = attachSession {
+            updateUserInfo(UpdateUserBody(nickname = "Bob")).getOrThrow()
+        }
+
+        // 创建邀请标题让第二个用户加入私有房间
+        loginSession(firstUser) {
+            createJoinRoomTitleForTest(privateRoomId, secondUser.uid)
+        }
+
+        loginSession(secondUser) {
+            joinRoom(privateRoomId).getOrThrow()
+        }
+
+        // 第三个用户设置昵称并加入私有房间
+        val thirdUser = attachSession {
+            updateUserInfo(UpdateUserBody(nickname = "Charlie")).getOrThrow()
+        }
+
+        // 创建邀请标题让第三个用户加入私有房间
+        loginSession(firstUser) {
+            createJoinRoomTitleForTest(privateRoomId, thirdUser.uid)
+        }
+
+        loginSession(thirdUser) {
+            joinRoom(privateRoomId).getOrThrow()
+        }
+
+        // 测试使用 MemberSearchService - 在私有房间搜索包含 "Bob" 的成员
+        loginSession(thirdUser) {
+            val members = searchRoomMembers(privateRoomId, null, 10, "Bob").getOrThrow()
+            assertTrue(members.data.isNotEmpty(), "Should find members with keyword 'Bob' in private room")
+            assertTrue(
+                members.data.any { it.userInfo.nickname.contains("Bob") },
+                "Should contain member with nickname 'Bob' in private room"
+            )
+        }
+    }
 
     @Test
     fun `test room member search without keyword`() = test {
