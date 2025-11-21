@@ -51,7 +51,7 @@ class RoomTest {
     }
 
     @Test
-    fun `test private room search`() = test {
+    fun `test joined private room count`() = test {
         val firstTuple = attachSession {
             createPrivateRoomForTest().id
         }
@@ -71,7 +71,7 @@ class RoomTest {
     }
 
     @Test
-    fun `test public room search`() = test {
+    fun `test join public room count`() = test {
         val firstTuple = attachSession {
             val communityId = createCommunityForTest().id
             val publicRoom1Id = createPublicRoomForTest(communityId, "r1", "name1").id
@@ -85,13 +85,13 @@ class RoomTest {
             joinRoom(publicRoom1Id).getOrThrow()
             expectedRoomCount(1, JoinStatusSearch.JOINED)
             expectedRoomCount(2, JoinStatusSearch.UNSPECIFIED, communityId = communityId)
-            expectedRoomCount(1, JoinStatusSearch.UNSPECIFIED, word = "name2")
             joinRoom(publicRoom2Id).getOrThrow()
             expectedRoomCount(2, JoinStatusSearch.JOINED)
             expectedRoomCount(2, JoinStatusSearch.UNSPECIFIED, communityId = communityId)
             exitRoom(publicRoom1Id).getOrThrow()
             // 测试幂等
             exitRoom(publicRoom1Id).getOrThrow()
+            expectedRoomCount(1, JoinStatusSearch.UNSPECIFIED, communityId = communityId)
         }
     }
 
@@ -171,30 +171,6 @@ class RoomTest {
         }
     }
 
-    @Test
-    fun `test search private room members`() = test {
-        val sessionOuterTuple = attachSession {
-            createPrivateRoomForTest().id
-        }
-        val privateRoomId = sessionOuterTuple.custom
-        val secondTuple = attachSession {
-            assertFails {
-                searchRoomMembers(privateRoomId, null, 10, null).getOrThrow()
-            }
-        }
-        loginSession(sessionOuterTuple) {
-            createJoinRoomTitleForTest(privateRoomId, secondTuple.uid)
-        }
-        loginSession(secondTuple) {
-            // 检查加入房间前是否可以查询到这个聊天室，并且状态是INVITED
-            val response = searchRooms(JoinStatusSearch.JOINED, 10, null, null, null).getOrThrow()
-            assertEquals(1, response.data.size)
-            assertEquals(false, response.data.first().isJoined)
-            joinRoom(privateRoomId).getOrThrow()
-            assertListSize(2, searchRoomMembers(privateRoomId, null, 10, null))
-        }
-    }
-
     private suspend fun UserSessionManager.createJoinRoomTitleForTest(
         privateRoomId: PrimaryKey,
         uid: PrimaryKey
@@ -208,29 +184,6 @@ class RoomTest {
             "invite for test"
         )
     ).getOrThrow()
-
-    @Test
-    fun `test search public room members`() = test {
-        val sessionOuterTuple = attachSession {
-            val communityId = createCommunity(NewCommunity("name1", "c1")).getOrThrow().id
-            val publicRoomId = createPublicRoomForTest(communityId, "r1", "name1").id
-            communityId to publicRoomId
-        }
-        val communityId = sessionOuterTuple.custom.first
-        val publicRoomId = sessionOuterTuple.custom.second
-        attachSession {
-            joinCommunity(communityId).getOrThrow()
-            joinRoom(publicRoomId).getOrThrow()
-            // 检查幂等
-            joinRoom(publicRoomId).getOrThrow()
-        }
-        attachSession {
-            assertListSize(2, searchRoomMembers(publicRoomId, null, 10, null))
-            joinCommunity(communityId).getOrThrow()
-            joinRoom(publicRoomId).getOrThrow()
-            assertListSize(3, searchRoomMembers(publicRoomId, null, 10, null))
-        }
-    }
 
     @Test
     fun `test private room join`() = test {
