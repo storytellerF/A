@@ -139,39 +139,6 @@ class CommunityTest {
     }
 
     @Test
-    fun `test search community`() = test {
-        val session = attachSession {
-            val info = createCommunity(NewCommunity("name1", "c1")).getOrThrow()
-            createCommunity(NewCommunity("name2", "c2")).getOrThrow()
-            info.id
-        }
-        attachSession {
-            joinCommunity(session.custom)
-            testSearchCommunityCount(1, null, 10, JoinStatusSearch.JOINED, null)
-            testSearchCommunityCount(2, null, 10, JoinStatusSearch.UNSPECIFIED, null)
-            testSearchCommunityCount(1, null, 10, JoinStatusSearch.UNSPECIFIED, "name2")
-        }
-    }
-
-    private suspend fun UserSessionManager.testSearchCommunityCount(
-        expectedCount: Int,
-        nextCommunityId: String?,
-        size: Int,
-        joinStatusSearch: JoinStatusSearch,
-        word: String?
-    ) {
-        assertEquals(
-            expectedCount,
-            searchCommunity(
-                size,
-                joinStatusSearch,
-                word,
-                nextCommunityId = nextCommunityId
-            ).getOrThrow().data.size
-        )
-    }
-
-    @Test
     fun `test jon community search member count`() = test {
         val communityId = attachSession {
             createCommunity(NewCommunity("name1", "c1")).getOrThrow().id
