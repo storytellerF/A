@@ -69,4 +69,40 @@ class RoomSearchTest {
             expectedRoomCount(3, JoinStatusSearch.JOINED)
         }
     }
+
+    @Test
+    fun `test private room cannot be searched unless joined`() = test {
+        val sessionOuterTuple = attachSession {
+            val privateRoomId = createPrivateRoomForTest().id
+            expectedRoomCount(1, JoinStatusSearch.JOINED)
+            expectedRoomCount(1, JoinStatusSearch.JOINED, word = "name")
+            privateRoomId
+        }
+        val privateRoomId = sessionOuterTuple.custom
+
+        // 测试未加入的私有房间不应出现在搜索结果中
+        val secondTuple = attachSession {
+            // 搜索所有房间（不指定社区），私有房间不应出现
+            expectedRoomCount(0, JoinStatusSearch.UNSPECIFIED)
+
+            // 尝试通过名称搜索私有房间，也不应出现（使用roomSearchService）
+            expectedRoomCount(0, JoinStatusSearch.UNSPECIFIED, word = "name")
+
+            expectedRoomCount(0, JoinStatusSearch.JOINED)
+            expectedRoomCount(0, JoinStatusSearch.JOINED, word = "name")
+
+            // 即使使用 UNSPECIFIED 搜索，未加入的私有房间也不应出现
+            expectedRoomCount(0, JoinStatusSearch.UNSPECIFIED, word = "name")
+        }
+
+        loginSession(sessionOuterTuple) {
+            createJoinRoomTitleForTest(privateRoomId, secondTuple.uid)
+        }
+
+        loginSession(secondTuple) {
+            joinRoom(privateRoomId).getOrThrow()
+            expectedRoomCount(1, JoinStatusSearch.JOINED)
+            expectedRoomCount(1, JoinStatusSearch.JOINED, word = "name")
+        }
+    }
 }

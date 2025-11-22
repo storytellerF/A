@@ -24,7 +24,7 @@ class ElasticUserSearchService(connection: ElasticConnection) : Elastic(connecti
     }
     override suspend fun saveDocument(documents: List<UserDocument>): Result<Unit> {
         return useElasticClient {
-            saveDocumentList(documents, INDEX_NAME)
+            saveDocumentList(connection, documents, INDEX_NAME)
         }
     }
 

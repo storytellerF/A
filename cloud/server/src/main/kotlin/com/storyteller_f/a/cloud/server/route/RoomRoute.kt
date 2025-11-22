@@ -28,11 +28,7 @@ fun Route.bindRoomRoute(backend: Backend) {
     CustomApi.Rooms.search(handleResult()) {
         usePrincipalOrNull { uid ->
             it.pagination(IdentifiablePagingGenerator) { f ->
-                backend.searchRoomPaginationResult(
-                    uid,
-                    f,
-                    it
-                )
+                backend.searchRoomPaginationResult(uid, f, it)
             }
         }
     }

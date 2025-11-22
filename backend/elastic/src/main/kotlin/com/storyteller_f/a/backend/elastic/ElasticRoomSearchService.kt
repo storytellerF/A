@@ -24,7 +24,7 @@ class ElasticRoomSearchService(connection: ElasticConnection) : Elastic(connecti
     }
     override suspend fun saveDocument(documents: List<RoomDocument>): Result<Unit> {
         return useElasticClient {
-            saveDocumentList(documents, INDEX_NAME)
+            saveDocumentList(connection, documents, INDEX_NAME)
         }
     }
 

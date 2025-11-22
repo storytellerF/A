@@ -26,7 +26,7 @@ class ElasticMemberSearchService(connection: ElasticConnection) : Elastic(connec
 
     override suspend fun saveDocument(documents: List<MemberDocument>): Result<Unit> {
         return useElasticClient {
-            saveDocumentList(documents, INDEX_NAME)
+            saveDocumentList(connection, documents, INDEX_NAME)
         }
     }
 
@@ -45,11 +45,11 @@ class ElasticMemberSearchService(connection: ElasticConnection) : Elastic(connec
             }
 
             val response = deleteByQuery { d ->
-                d.index(INDEX_NAME).query(query).refresh(true)
+                d.index(INDEX_NAME).query(query).refresh(connection.refresh)
             }.await()
 
             Napier.d {
-                "elastic delete member document: uid=$uid, objectId=$objectId, deleted=${response.deleted()}"
+                "elastic delete member document: query=$query, deleted=${response.deleted()}"
             }
         }
     }

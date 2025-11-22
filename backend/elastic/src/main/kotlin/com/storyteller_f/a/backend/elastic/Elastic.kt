@@ -35,7 +35,7 @@ import java.io.FileInputStream
 import java.net.ConnectException
 import javax.net.ssl.SSLContext
 
-abstract class Elastic(private val connection: ElasticConnection) {
+abstract class Elastic(val connection: ElasticConnection) {
     val sslContext = getSslContext(connection)
 
     suspend fun <T> useElasticClient(
@@ -60,14 +60,18 @@ abstract class Elastic(private val connection: ElasticConnection) {
                 }
             }
         }.recoverResult { e ->
+            if (e is ElasticsearchException) {
+                Napier.e {
+                    "elastic search failed ${e.status()}"
+                }
+            }
             Result.failure(
                 when (e) {
-                    is ConnectException, is ConnectionClosedException -> Exception(
-                        "elastic service unavailable",
-                        e
-                    )
+                    is ConnectException,
+                    is ConnectionClosedException ->
+                        Exception("elastic service unavailable", e)
 
-                    is ElasticsearchException if e.status() == 400 ->
+                    is ElasticsearchException if e.status() == 404 ->
                         Exception("index not found", e)
 
                     else -> {
@@ -118,6 +122,7 @@ suspend fun <T> ElasticsearchAsyncClient.getDocumentList(
 }
 
 suspend fun <T : PrimaryKeyIdentifiable> ElasticsearchAsyncClient.saveDocumentList(
+    connection: ElasticConnection,
     documents: List<T>,
     indexName: String
 ) {
@@ -125,7 +130,7 @@ suspend fun <T : PrimaryKeyIdentifiable> ElasticsearchAsyncClient.saveDocumentLi
         val topic = documents.first()
         val response = index {
             it.index(indexName).id(topic.id.toString()).document(topic)
-                .refresh(Refresh.WaitFor)
+                .refresh(if (connection.refresh) Refresh.WaitFor else Refresh.False)
         }.await()
         Napier.i(tag = "elastic save") {
             response.toString()
@@ -166,12 +171,19 @@ suspend fun <T> ElasticsearchAsyncClient.searchDocumentList(
     request: SearchRequest?,
     clazz: Class<T>
 ): PaginationResult<T> {
-    val response = search(request, clazz).await()
-    val hits = response.hits()
-    val total = hits.total()
-    return PaginationResult(hits.hits().mapNotNull {
-        it.source()
-    }, total?.value() ?: 0)
+    return try {
+        val response = search(request, clazz).await()
+        val hits = response.hits()
+        val total = hits.total()
+        PaginationResult(hits.hits().mapNotNull {
+            it.source()
+        }, total?.value() ?: 0)
+    } catch (e: Exception) {
+        Napier.e(e) {
+            "elastic search failed"
+        }
+        PaginationResult(emptyList(), 0)
+    }
 }
 
 fun buildPrimaryKeyElasticSearchQuery(
@@ -240,11 +252,11 @@ fun MutableList<Pair<Query, Boolean>>.addTermQuery(
     }._toQuery() to false)
 }
 
-fun<T> buildElasticSearchService(env: MergedEnv, b: (ElasticConnection) -> T): T {
+fun <T> buildElasticSearchService(env: MergedEnv, b: (ElasticConnection) -> T): T {
     val certFile = env["ELASTIC_CERT_FILE"] ?: throw Exception("ELASTIC_CERT_FILE is empty")
     val url = env["ELASTIC_URL"] ?: throw Exception("ELASTIC_URL is empty")
     val name = env["ELASTIC_NAME"] ?: throw Exception("ELASTIC_NAME is empty")
     val pass = env["ELASTIC_PASSWORD"] ?: throw Exception("ELASTIC_PASSWORD is empty")
-    val connection = ElasticConnection(url, certFile, name, pass)
+    val connection = ElasticConnection(url, certFile, name, pass, env["BUILD_TYPE"] == "test")
     return b(connection)
 }

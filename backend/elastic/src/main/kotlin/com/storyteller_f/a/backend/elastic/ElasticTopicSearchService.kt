@@ -28,7 +28,7 @@ class ElasticTopicSearchService(connection: ElasticConnection) : Elastic(connect
     override suspend fun saveDocument(documents: List<TopicDocument>): Result<Unit> {
         if (documents.isEmpty()) return UNIT_RESULT
         return useElasticClient {
-            saveDocumentList(documents, INDEX_NAME)
+            saveDocumentList(connection, documents, INDEX_NAME)
         }
     }
 
