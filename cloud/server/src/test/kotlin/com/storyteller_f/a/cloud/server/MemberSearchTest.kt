@@ -274,6 +274,53 @@ class MemberSearchTest {
     }
 
     @Test
+    fun `test member search after exit private room`() = test {
+        val firstUser = attachSession {
+            updateUserInfo(UpdateUserBody(nickname = "Alice")).getOrThrow()
+            val privateRoomId = createPrivateRoomForTest().id
+            privateRoomId
+        }
+        val privateRoomId = firstUser.custom
+
+        // 第二个用户加入私有房间
+        val secondUser = attachSession {
+            updateUserInfo(UpdateUserBody(nickname = "Bob")).getOrThrow()
+        }
+
+        // 创建邀请标题让第二个用户加入私有房间
+        loginSession(firstUser) {
+            createJoinRoomTitleForTest(privateRoomId, secondUser.uid)
+        }
+
+        loginSession(secondUser) {
+            joinRoom(privateRoomId).getOrThrow()
+        }
+
+        // 退出前应该能搜索到
+        loginSession(firstUser) {
+            val membersBeforeExit = searchRoomMembers(privateRoomId, null, 10, "Bob").getOrThrow()
+            assertTrue(
+                membersBeforeExit.data.any { it.userInfo.nickname.contains("Bob") },
+                "Should find Bob before exit from private room"
+            )
+        }
+
+        // 退出私有房间
+        loginSession(secondUser) {
+            exitRoom(privateRoomId).getOrThrow()
+        }
+
+        // 退出后不应该搜索到
+        loginSession(firstUser) {
+            val membersAfterExit = searchRoomMembers(privateRoomId, null, 10, "Bob").getOrThrow()
+            assertTrue(
+                membersAfterExit.data.none { it.userInfo.nickname.contains("Bob") },
+                "Should not find Bob after exit from private room"
+            )
+        }
+    }
+
+    @Test
     fun `test member search after exit community`() = test {
         val communityId = attachSession {
             updateUserInfo(UpdateUserBody(nickname = "Iris")).getOrThrow()

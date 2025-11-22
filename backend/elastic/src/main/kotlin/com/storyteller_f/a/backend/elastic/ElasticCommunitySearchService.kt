@@ -27,7 +27,7 @@ class ElasticCommunitySearchService(connection: ElasticConnection) :
     override suspend fun saveDocument(documents: List<CommunityDocument>): Result<Unit> {
         if (documents.isEmpty()) return UNIT_RESULT
         return useElasticClient {
-            saveDocumentList(documents, INDEX_NAME)
+            saveDocumentList(connection, documents, INDEX_NAME,)
         }
     }
 

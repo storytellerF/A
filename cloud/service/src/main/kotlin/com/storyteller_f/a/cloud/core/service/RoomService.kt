@@ -241,9 +241,11 @@ suspend fun Backend.createRoom(
             room.createdTime
         )
         database.room.createRoom(room, listOf(member)).onSuccess {
-            roomSearchService.saveDocument(listOf(RoomDocument.fromRoom(room))).onFailure {
-                Napier.e(it) {
-                    "save room document failed"
+            if (communityId != null) {
+                roomSearchService.saveDocument(listOf(RoomDocument.fromRoom(room))).onFailure {
+                    Napier.e(it) {
+                        "save room document failed"
+                    }
                 }
             }
             saveMemberDocument(uid, member, roomId, room)

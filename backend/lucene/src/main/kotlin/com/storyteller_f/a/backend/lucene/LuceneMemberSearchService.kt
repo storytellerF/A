@@ -82,7 +82,7 @@ class LuceneMemberSearchService(path: Path, isInMemory: Boolean = false) : Lucen
                 }.build()
                 val deletedCount = writer.deleteDocuments(query)
                 Napier.d {
-                    "lucene delete member document: uid=$uid, objectId=$objectId, deleted=$deletedCount"
+                    "lucene delete member document: query=$query, deleted=$deletedCount"
                 }
             }
         }
