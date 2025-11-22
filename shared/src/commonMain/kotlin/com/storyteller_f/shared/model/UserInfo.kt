@@ -5,6 +5,7 @@ import com.storyteller_f.shared.type.MemberStatus
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -105,7 +106,14 @@ data class MemberInfo(
     val objectId: PrimaryKey,
     val objectType: ObjectType,
     val status: MemberStatus,
-    val joinedTime: LocalDate,
-    val invitedTime: LocalDate?,
+    val joinedTime: LocalDateTime?,
+    val invitedTime: LocalDateTime?,
     val userInfo: UserInfo,
 ) : PrimaryKeyIdentifiable
+
+@Serializable
+data class NestedMemberInfo(
+    val status: MemberStatus,
+    val joinedTime: LocalDateTime? = null,
+    val invitedTime: LocalDateTime? = null,
+)

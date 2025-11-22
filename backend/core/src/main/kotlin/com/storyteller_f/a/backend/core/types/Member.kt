@@ -1,5 +1,8 @@
 package com.storyteller_f.a.backend.core.types
 
+import com.storyteller_f.shared.model.MemberInfo
+import com.storyteller_f.shared.model.NestedMemberInfo
+import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.MemberStatus
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -17,3 +20,20 @@ class Member(
 ) {
     companion object
 }
+
+fun Member.toNestedMemberInfo() = NestedMemberInfo(
+    status,
+    joinedTime,
+    invitedTime,
+)
+
+fun Member.toMemberInfo(userInfo: UserInfo) = MemberInfo(
+    id,
+    uid,
+    objectId,
+    objectType,
+    status,
+    joinedTime,
+    invitedTime,
+    userInfo,
+)

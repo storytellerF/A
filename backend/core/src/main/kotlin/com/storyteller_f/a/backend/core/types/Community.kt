@@ -3,6 +3,7 @@ package com.storyteller_f.a.backend.core.types
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.MemberPolicy
+import com.storyteller_f.shared.model.NestedMemberInfo
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.datetime.LocalDateTime
 
@@ -32,7 +33,13 @@ fun RawCommunity.toCommunityIfo(
     community.createdTime,
     memberCount ?: 0,
     community.memberPolicy,
-    joinedTime = joinedTime,
+    member = member?.let {
+        NestedMemberInfo(
+            it.status,
+            it.joinedTime,
+            it.invitedTime,
+        )
+    },
     lastRead = lastRead,
     latestTopic = latestTopic,
     icon = icon,
@@ -43,8 +50,10 @@ fun RawCommunity.toCommunityIfo(
 
 data class RawCommunity(
     val community: Community,
-    val joinedTime: LocalDateTime?,
+    val member: Member?,
     val lastRead: Long?,
     val memberCount: Long? = null,
     val latestTopic: PrimaryKey? = null
-)
+) {
+    val hasJoined = member != null
+}

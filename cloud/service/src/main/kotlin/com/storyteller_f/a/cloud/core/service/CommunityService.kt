@@ -13,6 +13,7 @@ import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.backend.core.paging
+import com.storyteller_f.a.backend.core.pagingNotNull
 import com.storyteller_f.a.backend.core.service.CommunityDocument
 import com.storyteller_f.a.backend.core.service.CommunityDocumentSearch
 import com.storyteller_f.a.backend.core.service.MemberDocument
@@ -21,6 +22,8 @@ import com.storyteller_f.a.backend.core.types.Community
 import com.storyteller_f.a.backend.core.types.Member
 import com.storyteller_f.a.backend.core.types.RawCommunity
 import com.storyteller_f.a.backend.core.types.toCommunityIfo
+import com.storyteller_f.a.backend.core.types.toMemberInfo
+import com.storyteller_f.a.backend.core.types.toNestedMemberInfo
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.MemberInfo
@@ -48,25 +51,15 @@ suspend fun Backend.getCommunity(
     objectFetch: ObjectFetch,
     id: PrimaryKey?,
     fillJoinInfo: Boolean?
-): Result<CommunityInfo?> {
-    return database.community.getRawCommunity(
-        objectFetch,
-        fillJoinInfo,
-        id
-    ).mapResultIfNotNull {
-        processRawCommunityToCommunityInfo(listOf(it)).mapIfNotNull(List<CommunityInfo>::first)
-    }
+) = database.community.getRawCommunity(objectFetch, fillJoinInfo, id).mapResultIfNotNull {
+    processRawCommunityToCommunityInfo(listOf(it)).mapIfNotNull(List<CommunityInfo>::first)
 }
 
 suspend fun Backend.joinCommunity(
     uid: PrimaryKey,
     communityId: PrimaryKey
-) = getCommunity(
-    ObjectFetch.IdFetch(communityId),
-    uid,
-    true
-).mapResultIfNotNull { community ->
-    if (community.joinedTime != null) {
+) = getCommunity(ObjectFetch.IdFetch(communityId), uid, true).mapResultIfNotNull { community ->
+    if (community.member != null) {
         Result.success(community)
     } else {
         if (community.memberPolicy == MemberPolicy.INVITE_ONLY) {
@@ -82,7 +75,7 @@ suspend fun Backend.joinCommunity(
 private suspend fun Backend.joinCommunity(
     uid: PrimaryKey,
     communityId: PrimaryKey,
-    community: CommunityInfo
+    communityInfo: CommunityInfo
 ): Result<CommunityInfo?> {
     val time = now()
     val memberId = SnowflakeFactory.nextId()
@@ -97,9 +90,9 @@ private suspend fun Backend.joinCommunity(
     )
     return database.container.addMember(member).onSuccess {
         addUserLog(uid, UserLogType.JOIN, communityId ob ObjectType.COMMUNITY)
-        saveMemberDocument(uid, memberId, communityId, community.name)
+        saveMemberDocument(uid, memberId, communityId, communityInfo.name)
     }.mapResult {
-        Result.success(community.copy(joinedTime = time))
+        Result.success(communityInfo.copy(member = member.toNestedMemberInfo()))
     }.recoverIfDup(database::isDup) {
         getCommunity(ObjectFetch.IdFetch(communityId), uid, true)
     }
@@ -109,7 +102,7 @@ suspend fun Backend.exitCommunity(
     communityId: PrimaryKey,
     id: PrimaryKey
 ) = getCommunity(ObjectFetch.IdFetch(communityId), id, true).mapResultIfNotNull { info ->
-    if (info.joinedTime == null) {
+    if (info.member == null) {
         Result.success(info)
     } else {
         database.container.deleteMember(communityId, id).onSuccess {
@@ -121,7 +114,7 @@ suspend fun Backend.exitCommunity(
                 }
             }
         }.mapResult {
-            Result.success(info.copy(joinedTime = null))
+            Result.success(info.copy(member = null))
         }
     }
 }
@@ -140,7 +133,6 @@ suspend fun Backend.searchCommunities(
     return when {
         // word 为空，使用 database 查询
         word.isNullOrBlank() -> database.community.getCommunityPaginationResult(
-            word,
             search.hasPoster,
             primaryKeyFetch,
             joinSearch
@@ -179,7 +171,7 @@ suspend fun Backend.searchCommunities(
                 search.target == null -> Result.success(PaginationResult(value, count))
                 uid != null -> processUserJoinedTimeReplace(value, uid, count)
                 else -> Result.success(PaginationResult(value.map {
-                    it.copy(joinedTime = null, extension = CommunityInfo.Extension(it.joinedTime))
+                    it.copy(member = null, extension = CommunityInfo.Extension(it.member))
                 }, count))
             }
         }
@@ -187,20 +179,19 @@ suspend fun Backend.searchCommunities(
 }
 
 private suspend fun Backend.processUserJoinedTimeReplace(
-    value: List<CommunityInfo>,
+    communityInfos: List<CommunityInfo>,
     uid: PrimaryKey,
-    count: Long
+    total: Long
 ): Result<PaginationResult<CommunityInfo>> {
-    val communityIds = value.map {
+    val communityIds = communityInfos.map {
         it.id
     }
-    return database.community.getCommunityJoinedTimeByIds(uid, communityIds)
-        .map { joinedTimeList ->
-            val map = joinedTimeList.associate { it }
-            PaginationResult(value.map {
-                it.copy(joinedTime = map[it.id], extension = CommunityInfo.Extension(it.joinedTime))
-            }, count)
+    return database.container.getMemberByIds(uid, communityIds).map { joinedTimeList ->
+        val map = joinedTimeList.associate { it }
+        communityInfos.map {
+            it.copy(member = map[it.id], extension = CommunityInfo.Extension(map[it.id]))
         }
+    }.pagingNotNull(total)
 }
 
 suspend fun Backend.createCommunity(
@@ -234,17 +225,9 @@ suspend fun Backend.createCommunity(
             // 保存创建者到 MemberSearchService
             saveMemberDocument(uid, memberId, id, newCommunity.name)
         }
-    }.mapResult { community ->
-        processRawCommunityToCommunityInfo(
-            listOf(
-                RawCommunity(
-                    community,
-                    community.createdTime,
-                    null,
-                    0
-                )
-            )
-        )
+    }.mapResult { (community, member) ->
+        val rawCommunity = RawCommunity(community, member, null, 0)
+        processRawCommunityToCommunityInfo(listOf(rawCommunity))
     }.firstOrNull()
 }
 
@@ -393,7 +376,6 @@ fun JoinStatusSearch?.toJoinSearch(uid: PrimaryKey?): JoinSearch {
 
 suspend fun Backend.getAllCommunities(primaryKeyFetch: PrimaryKeyFetch) =
     database.community.getCommunityPaginationResult(
-        word = null,
         hasPosterSearch = PosterSearch.UNSPECIFIED,
         primaryKeyFetch = primaryKeyFetch,
         joinSearch = JoinSearch.Unspecified(null)
@@ -406,7 +388,6 @@ suspend fun Backend.getUserJoinedCommunities(
     primaryKeyFetch: PrimaryKeyFetch
 ): Result<PaginationResult<CommunityInfo>?> {
     return database.community.getCommunityPaginationResult(
-        word = null,
         hasPosterSearch = PosterSearch.UNSPECIFIED,
         primaryKeyFetch = primaryKeyFetch,
         joinSearch = JoinSearch.Joined(uid)
@@ -425,27 +406,13 @@ suspend fun Backend.getCommunityMemberInfos(
 suspend fun Backend.getContainerMemberInfos(
     objectId: PrimaryKey,
     primaryKeyFetch: PrimaryKeyFetch
-): Result<PaginationResult<MemberInfo>> {
-    return database.container.getMemberWithUserPaginationResult(objectId, primaryKeyFetch)
-        .mapResult { (list, total) ->
-            val rawUsers = list.map { it.second }
-            processRawUserToUserInfo(rawUsers).map { users ->
-                val userMap = users.associateBy { it.id }
-                PaginationResult(
-                    list.map { (member, rawUser) ->
-                        MemberInfo(
-                            id = member.id,
-                            uid = member.uid,
-                            objectId = member.objectId,
-                            objectType = member.objectType,
-                            status = member.status,
-                            joinedTime = (member.joinedTime ?: member.createdTime).date,
-                            invitedTime = member.invitedTime?.date,
-                            userInfo = userMap[rawUser.user.id]!!
-                        )
-                    },
-                    total
-                )
+) = database.container.getMemberWithUserPaginationResult(objectId, primaryKeyFetch)
+    .mapResult { (list, total) ->
+        val rawUsers = list.map { it.second }
+        processRawUserToUserInfo(rawUsers).map { users ->
+            val userMap = users.associateBy { it.id }
+            list.map { (member, rawUser) ->
+                member.toMemberInfo(userMap[rawUser.user.id]!!)
             }
-        }
-}
+        }.pagingNotNull(total)
+    }

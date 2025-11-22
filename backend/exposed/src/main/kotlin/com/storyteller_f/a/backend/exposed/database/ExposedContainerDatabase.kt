@@ -21,6 +21,7 @@ import com.storyteller_f.a.backend.exposed.tables.UserTopicReads
 import com.storyteller_f.a.backend.exposed.tables.Users
 import com.storyteller_f.a.backend.exposed.tables.mapUserInfo
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
+import com.storyteller_f.shared.model.NestedMemberInfo
 import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.associateByPair
@@ -302,6 +303,28 @@ class ExposedContainerDatabase(val databaseSession: ExposedDatabaseSession) :
         }
         first {
             Member.wrapRow(it)
+        }
+    }
+
+    override suspend fun getMemberByIds(
+        uid: PrimaryKey,
+        objectIds: List<PrimaryKey>
+    ): Result<List<Pair<Long, NestedMemberInfo?>>> {
+        if (objectIds.isEmpty()) return Result.success(emptyList())
+        return databaseSession.dbSearch {
+            search {
+                Members.selectAll().where {
+                    Members.objectId inList objectIds and (Members.uid eq uid)
+                }
+            }
+            map {
+                val member = Member.wrapRow(it)
+                it[Members.objectId] to NestedMemberInfo(
+                    member.status,
+                    member.joinedTime,
+                    member.invitedTime
+                )
+            }
         }
     }
 

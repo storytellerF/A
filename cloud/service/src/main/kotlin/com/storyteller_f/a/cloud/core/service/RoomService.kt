@@ -15,6 +15,7 @@ import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.ROOM_NAME_LENGTH
 import com.storyteller_f.a.backend.core.UnauthorizedException
+import com.storyteller_f.a.backend.core.idListFetch
 import com.storyteller_f.a.backend.core.pagingNotNull
 import com.storyteller_f.a.backend.core.service.MemberDocument
 import com.storyteller_f.a.backend.core.service.MemberDocumentSearch
@@ -330,7 +331,6 @@ suspend fun Backend.searchRoomPaginationResult(
         // word 为空，使用 database 查询
         word.isNullOrBlank() -> database.room.getRoomPaginationResult(
             uid,
-            word,
             community,
             primaryKeyFetch,
             search
@@ -341,24 +341,16 @@ suspend fun Backend.searchRoomPaginationResult(
                 MemberDocumentSearch.RoomMembers(uid = search.uid, objectName = word),
                 primaryKeyFetch
             ).mapResult { (searchResults, total) ->
-                val roomIds = searchResults
-                    .map { it.objectId }
-                database.room.getRawRooms(
-                    ObjectListFetch.IdListFetch(roomIds),
-                    uid
-                ).pagingNotNull(total)
+                val roomIds = searchResults.map { it.objectId }
+                database.room.getRawRooms(idListFetch(roomIds), uid).pagingNotNull(total)
             }
         }
         // word 不为空 && 不是搜索已加入（Unspecified），使用 roomSearchService
         else -> {
             val keyword = RoomDocumentSearch.Keyword(listOf(word))
             roomSearchService.searchDocument(keyword, primaryKeyFetch).mapResult { (list, total) ->
-                database.room.getRawRooms(
-                    ObjectListFetch.IdListFetch(list.map {
-                        it.id
-                    }),
-                    uid
-                ).pagingNotNull(total)
+                val roomIds = list.map { it.id }
+                database.room.getRawRooms(idListFetch(roomIds), uid).pagingNotNull(total)
             }
         }
     }.mapResult { (list, count) ->
@@ -390,7 +382,6 @@ suspend fun Backend.getRoomInfoList(
 suspend fun Backend.getAllPublicRooms(primaryKeyFetch: PrimaryKeyFetch) =
     database.room.getRoomPaginationResult(
         uid = null,
-        word = null,
         community = null,
         primaryKeyFetch = primaryKeyFetch,
         joinSearch = JoinSearch.Unspecified(null)
@@ -412,7 +403,6 @@ suspend fun Backend.getUserJoinedRooms(
 ): Result<PaginationResult<RoomInfo>> =
     database.room.getRoomPaginationResult(
         uid = null,
-        word = null,
         community = null,
         primaryKeyFetch = primaryKeyFetch,
         joinSearch = JoinSearch.Joined(uid)
