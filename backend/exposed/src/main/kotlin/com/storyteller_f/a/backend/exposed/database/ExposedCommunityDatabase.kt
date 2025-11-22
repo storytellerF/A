@@ -28,14 +28,12 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
-import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.isNotNull
 import org.jetbrains.exposed.v1.core.isNull
-import org.jetbrains.exposed.v1.core.like
 import org.jetbrains.exposed.v1.r2dbc.Query
 import org.jetbrains.exposed.v1.r2dbc.andWhere
 import org.jetbrains.exposed.v1.r2dbc.insert
@@ -84,16 +82,15 @@ class ExposedCommunityDatabase(
     }
 
     override suspend fun getCommunityPaginationResult(
-        word: String?,
         hasPosterSearch: PosterSearch?,
         primaryKeyFetch: PrimaryKeyFetch,
         joinSearch: JoinSearch
     ) = getCommunityListByPredicate {
-        buildCommunitySearchQuery(joinSearch, word, hasPosterSearch)
+        buildCommunitySearchQuery(joinSearch, hasPosterSearch)
             .bindPaginationQuery(Communities, primaryKeyFetch)
     }.mapResultIfNotNull { list ->
         getCommunityCountByPredicate {
-            buildCommunitySearchQuery(joinSearch, word, hasPosterSearch)
+            buildCommunitySearchQuery(joinSearch, hasPosterSearch)
         }.mapResult { count ->
             val uid = when (joinSearch) {
                 is JoinSearch.Joined -> joinSearch.uid
@@ -113,7 +110,7 @@ class ExposedCommunityDatabase(
             val containerInfo = map[it.id]
             RawCommunity(
                 it,
-                containerInfo?.member?.joinedTime,
+                containerInfo?.member,
                 containerInfo?.userTopicRead?.topicId,
                 containerInfo?.memberCount,
                 containerInfo?.latestTopicId
@@ -124,7 +121,7 @@ class ExposedCommunityDatabase(
     override suspend fun createCommunity(
         community: Community,
         memberId: PrimaryKey
-    ): Result<Community> =
+    ): Result<Pair<Community, Member>> =
         databaseSession.dbQuery {
             check(Communities.insert {
                 it[Communities.id] = community.id
@@ -163,32 +160,8 @@ class ExposedCommunityDatabase(
             }.insertedCount > 0) {
                 "join failed"
             }
-            community
+            community to member
         }
-
-    override suspend fun getCommunityJoinedTimeByIds(
-        uid: PrimaryKey,
-        communityIds: List<PrimaryKey>
-    ): Result<List<Pair<Long, LocalDateTime?>>> {
-        if (communityIds.isEmpty()) return Result.success(emptyList())
-        return databaseSession.dbSearch {
-            search {
-                Communities.join(
-                    Members,
-                    JoinType.INNER,
-                    Communities.id,
-                    Members.objectId
-                ) {
-                    Members.uid eq uid
-                }.select(Communities.id, Members.joinedTime).where {
-                    Communities.id.inList(communityIds)
-                }
-            }
-            map {
-                it[Communities.id] to it[Members.joinedTime]
-            }
-        }
-    }
 
     override suspend fun getRawCommunities(
         objectListFetch: ObjectListFetch
@@ -297,7 +270,6 @@ class ExposedCommunityDatabase(
 
     fun Query.buildCommunitySearchQuery(
         joinSearch: JoinSearch,
-        word: String?,
         hasPosterSearch: PosterSearch?
     ): Query {
         when (joinSearch) {
@@ -310,11 +282,6 @@ class ExposedCommunityDatabase(
             }
 
             else -> {
-            }
-        }
-        if (!word.isNullOrBlank()) {
-            andWhere {
-                Communities.name like "$word%"
             }
         }
         return bindPosterSearch(hasPosterSearch)

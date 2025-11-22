@@ -141,7 +141,6 @@ private fun CommunityBasicInfoSection(id: PrimaryKey) {
             add("memberPolicy" to info.memberPolicy.name)
             add("icon" to (info.icon?.name ?: "null"))
             add("poster" to (info.poster?.name ?: "null"))
-            add("joinedTime" to (info.joinedTime?.toString() ?: "null"))
             add("latestTopic" to (info.latestTopic?.toString() ?: "null"))
             add("hasPoster" to info.hasPoster.toString())
             add("font" to (info.font?.name ?: "null"))

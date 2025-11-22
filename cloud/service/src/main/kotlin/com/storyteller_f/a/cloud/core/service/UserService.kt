@@ -392,8 +392,8 @@ suspend fun Backend.searchContainerMembers(
                         objectId = member.objectId,
                         objectType = member.objectType,
                         status = member.status,
-                        joinedTime = (member.joinedTime ?: member.createdTime).date,
-                        invitedTime = member.invitedTime?.date,
+                        joinedTime = member.joinedTime,
+                        invitedTime = member.invitedTime,
                         userInfo = userMap[rawUser.user.id]!!
                     )
                 },

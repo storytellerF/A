@@ -27,7 +27,9 @@ data class RawRoom(
     val lastRead: PrimaryKey? = null,
     val memberCount: Long? = null,
     val latestTopic: PrimaryKey? = null,
-)
+) {
+    val hasJoined = joinedTime != null
+}
 
 fun RawRoom.toRoomInfo(icon: FileInfo? = null): RoomInfo {
     return RoomInfo(

@@ -113,8 +113,7 @@ suspend fun Backend.checkRootWritePermission(
 
         ObjectType.ROOM -> {
             database.room.getRawRoom(IdFetch(parentId), true, uid).mapResultIfNotNull {
-                val hasJoined = it.joinedTime != null
-                if (hasJoined) {
+                if (it.hasJoined) {
                     Result.success(RootWritePermission(parentType, parentId))
                 } else {
                     Result.failure(ForbiddenException())
@@ -124,8 +123,7 @@ suspend fun Backend.checkRootWritePermission(
 
         ObjectType.COMMUNITY -> {
             database.community.getRawCommunity(IdFetch(parentId), true, uid).mapResultIfNotNull {
-                val hasJoined = it.joinedTime != null
-                if (hasJoined) {
+                if (it.hasJoined) {
                     Result.success(RootWritePermission(parentType, parentId))
                 } else {
                     Result.failure(ForbiddenException())

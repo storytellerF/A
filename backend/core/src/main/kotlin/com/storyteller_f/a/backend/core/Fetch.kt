@@ -13,6 +13,12 @@ sealed interface ObjectListFetch {
     data class IdListFetch(val idList: List<PrimaryKey>) : ObjectListFetch
 }
 
+fun idListFetch(idList: List<PrimaryKey>) = ObjectListFetch.IdListFetch(idList)
+fun aidListFetch(aidList: List<String>) = ObjectListFetch.AidListFetch(aidList)
+
+fun idFetch(id: PrimaryKey) = ObjectFetch.IdFetch(id)
+fun aidFetch(aid: String) = ObjectFetch.AidFetch(aid)
+
 sealed interface Cursor<T> {
     data class AscCursor<T>(val value: T) : Cursor<T>
     data class DescCursor<T>(val value: T) : Cursor<T>

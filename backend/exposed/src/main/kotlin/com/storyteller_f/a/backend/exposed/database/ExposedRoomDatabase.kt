@@ -60,21 +60,19 @@ class ExposedRoomDatabase(
 
     override suspend fun getRoomPaginationResult(
         uid: PrimaryKey?,
-        word: String?,
         community: PrimaryKey?,
         primaryKeyFetch: PrimaryKeyFetch,
         joinSearch: JoinSearch,
-    ) = getRoomListByPredicate {
-        buildRoomSearchWhereQuery(joinSearch, community, word)
-            .bindPaginationQuery(Rooms, primaryKeyFetch)
-    }.mapResult {
-        getRoomCountByPredicate {
-            buildRoomSearchWhereQuery(joinSearch, community, word)
-        }.mapResult { count ->
-            processRoomListToRawRoom(uid, it).map { list ->
-                PaginationResult(list, count)
-            }
-        }
+    ) = runCatching {
+        val rooms = getRoomListByPredicate {
+            buildRoomSearchWhereQuery(joinSearch, community)
+                .bindPaginationQuery(Rooms, primaryKeyFetch)
+        }.getOrThrow()
+        val total = getRoomCountByPredicate {
+            buildRoomSearchWhereQuery(joinSearch, community)
+        }.getOrThrow()
+        val rawRooms = processRoomListToRawRoom(uid, rooms).getOrThrow()
+        PaginationResult(rawRooms, total)
     }
 
     override suspend fun getRoomCommunityId(parentId: PrimaryKey) = databaseSession.dbSearch {
@@ -318,16 +316,10 @@ class ExposedRoomDatabase(
     fun Query.buildRoomSearchWhereQuery(
         joinStatusSearch: JoinSearch,
         community: PrimaryKey?,
-        word: String?,
     ): Query {
         if (community != null) {
             andWhere {
                 Rooms.communityId eq community
-            }
-        }
-        if (!word.isNullOrBlank()) {
-            andWhere {
-                Rooms.name like "%$word%"
             }
         }
         when (joinStatusSearch) {

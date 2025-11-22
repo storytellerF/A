@@ -18,19 +18,19 @@ data class CommunityInfo(
     val memberPolicy: MemberPolicy,
     val icon: FileInfo? = null,
     val poster: FileInfo? = null,
-    val joinedTime: LocalDateTime? = null,
+    val member: NestedMemberInfo? = null,
     val extension: Extension? = null,
     val lastRead: PrimaryKey? = null,
     val latestTopic: PrimaryKey? = null,
     val hasPoster: Boolean = poster != null,
     val font: FileInfo? = null,
 ) : ModelObject {
-    val isJoined = joinedTime != null
+    val isJoined = member != null
     override val objectType: ObjectType
         get() = ObjectType.COMMUNITY
 
     @Serializable
-    data class Extension(val targetUserJoinedTime: LocalDateTime? = null)
+    data class Extension(val targetMemberInfo: NestedMemberInfo? = null)
 
     companion object {
         val EMPTY = CommunityInfo(

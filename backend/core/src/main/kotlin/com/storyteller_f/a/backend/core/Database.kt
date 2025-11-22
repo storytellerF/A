@@ -28,6 +28,7 @@ import com.storyteller_f.a.backend.core.types.UserFavorite
 import com.storyteller_f.a.backend.core.types.UserLog
 import com.storyteller_f.a.backend.core.types.UserSubscription
 import com.storyteller_f.a.backend.core.types.UserTopicRead
+import com.storyteller_f.shared.model.NestedMemberInfo
 import com.storyteller_f.shared.model.PosterSearch
 import com.storyteller_f.shared.model.QuotaInfo
 import com.storyteller_f.shared.model.QuotaType
@@ -441,17 +442,12 @@ interface CommunityDatabase {
 
     suspend fun getJoinedCommunityIds(uid: PrimaryKey): Result<List<Long>>
     suspend fun getCommunityPaginationResult(
-        word: String?,
         hasPosterSearch: PosterSearch?,
         primaryKeyFetch: PrimaryKeyFetch,
         joinSearch: JoinSearch,
     ): Result<PaginationResult<RawCommunity>?>
 
-    suspend fun createCommunity(community: Community, memberId: PrimaryKey): Result<Community>
-    suspend fun getCommunityJoinedTimeByIds(
-        uid: PrimaryKey,
-        communityIds: List<PrimaryKey>,
-    ): Result<List<Pair<Long, LocalDateTime?>>>
+    suspend fun createCommunity(community: Community, memberId: PrimaryKey): Result<Pair<Community, Member>>
 
     suspend fun getRawCommunities(objectListFetch: ObjectListFetch): Result<List<RawCommunity>>
 
@@ -466,7 +462,6 @@ interface RoomDatabase {
     suspend fun checkRoomIsPrivate(roomId: PrimaryKey): Result<Boolean?>
     suspend fun getRoomPaginationResult(
         uid: PrimaryKey?,
-        word: String?,
         community: PrimaryKey?,
         primaryKeyFetch: PrimaryKeyFetch,
         joinSearch: JoinSearch,
@@ -594,6 +589,10 @@ interface ContainerDatabase {
     ): Result<Map<PrimaryKey, PrimaryKey?>>
 
     suspend fun getMember(containerId: PrimaryKey, id: PrimaryKey): Result<Member?>
+    suspend fun getMemberByIds(
+        uid: PrimaryKey,
+        objectIds: List<PrimaryKey>,
+    ): Result<List<Pair<Long, NestedMemberInfo?>>>
 }
 
 interface AdminDatabase {

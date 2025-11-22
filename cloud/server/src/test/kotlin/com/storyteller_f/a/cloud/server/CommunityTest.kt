@@ -165,7 +165,7 @@ class CommunityTest {
             assertEquals(10, response.data.size)
             response.data.forEach {
                 assertFalse(it.isJoined)
-                assertNotNull(it.extension?.targetUserJoinedTime)
+                assertNotNull(it.extension?.targetMemberInfo)
             }
         }
         attachSession {
@@ -179,7 +179,7 @@ class CommunityTest {
                 searchCommunity(10, JoinStatusSearch.JOINED, target = id).getOrThrow()
             response2.data.forEach {
                 assertTrue(it.isJoined)
-                assertNotNull(it.extension?.targetUserJoinedTime)
+                assertNotNull(it.extension?.targetMemberInfo)
             }
         }
     }
