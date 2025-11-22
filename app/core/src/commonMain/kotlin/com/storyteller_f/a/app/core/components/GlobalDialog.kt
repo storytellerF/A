@@ -25,6 +25,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
+import com.storyteller_f.a.app.core.Res
+import com.storyteller_f.a.app.core.close
 import io.github.aakira.napier.Napier
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
@@ -33,6 +35,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.jetbrains.compose.resources.stringResource
 import kotlin.uuid.ExperimentalUuidApi
 
 sealed interface GlobalDialogState {
@@ -225,7 +228,7 @@ private fun GlobalDialogContent(
                     Button({
                         onDismissRequest()
                     }) {
-                        Text("Close")
+                        Text(stringResource(Res.string.close))
                     }
                 }
             }

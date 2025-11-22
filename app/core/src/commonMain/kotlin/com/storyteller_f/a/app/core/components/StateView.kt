@@ -29,12 +29,15 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
+import com.storyteller_f.a.app.core.Res
 import com.storyteller_f.a.app.core.common.PagingViewModel
+import com.storyteller_f.a.app.core.no_content_yet
 import com.storyteller_f.a.client.core.LoadingHandler
 import com.storyteller_f.a.client.core.LoadingState
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.ui.tooling.preview.PreviewParameter
 import org.jetbrains.compose.ui.tooling.preview.PreviewParameterProvider
@@ -77,7 +80,7 @@ fun <T : Any> StateView(
                     }
 
                     is LoadingState.Done ->
-                        Text(text = "No content yet")
+                        Text(text = stringResource(Res.string.no_content_yet))
 
                     else -> CircularProgressIndicator()
                 }

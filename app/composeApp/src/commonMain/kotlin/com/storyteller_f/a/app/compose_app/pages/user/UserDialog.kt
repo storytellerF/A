@@ -61,6 +61,7 @@ import com.storyteller_f.a.app.compose_app.create
 import com.storyteller_f.a.app.compose_app.disconnected
 import com.storyteller_f.a.app.compose_app.file_explorer
 import com.storyteller_f.a.app.compose_app.grant_notification
+import com.storyteller_f.a.app.compose_app.preference
 import com.storyteller_f.a.app.compose_app.settings
 import com.storyteller_f.a.app.compose_app.sign_out
 import com.storyteller_f.a.app.compose_app.sign_out_prompt
@@ -165,7 +166,7 @@ fun SystemSettingsButton(dismiss: () -> Unit) {
     val appNavFactory = LocalAppNavFactory.current
     ButtonNav(
         MaterialSymbolsOutlined.Settings,
-        stringResource(Res.string.settings)
+        stringResource(Res.string.preference)
     ) {
         dismiss()
         appNavFactory.newAppNav().gotoPreference()

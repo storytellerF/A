@@ -7,8 +7,13 @@ OS_TYPE=$(uname -s)
 notify_success() {
     case "$OS_TYPE" in
         MINGW*|MSYS*|CYGWIN*)
-            # Windows系统
-            powershell.exe -Command "[System.Media.SystemSounds]::Beep.Play(); New-Object -ComObject WScript.Shell | ForEach-Object { \$_.Popup('编译和单元测试已完成！', 5, '任务完成', 64) }"
+            # Windows系统 - 直接使用WScript.Shell的Popup方法并设置置顶标志
+            powershell.exe -Command "
+                [System.Media.SystemSounds]::Beep.Play()
+                \$shell = New-Object -ComObject WScript.Shell
+                # 第二个参数0表示无超时，第四个参数4096表示vbSystemModal(置顶) + 64表示vbInformation(信息图标)
+                \$shell.Popup('编译和单元测试已完成！', 0, '任务完成', 4160)
+            "
             ;;
         Darwin)
             # macOS系统
@@ -34,8 +39,13 @@ notify_success() {
 notify_failure() {
     case "$OS_TYPE" in
         MINGW*|MSYS*|CYGWIN*)
-            # Windows系统
-            powershell.exe -Command "[System.Media.SystemSounds]::Hand.Play(); New-Object -ComObject WScript.Shell | ForEach-Object { \$_.Popup('编译或单元测试失败！请检查控制台输出。', 5, '任务失败', 16) }"
+            # Windows系统 - 直接使用WScript.Shell的Popup方法并设置置顶标志
+            powershell.exe -Command "
+                [System.Media.SystemSounds]::Hand.Play()
+                \$shell = New-Object -ComObject WScript.Shell
+                # 第二个参数0表示无超时，第四个参数4096表示vbSystemModal(置顶) + 16表示vbCritical(错误图标)
+                \$shell.Popup('编译或单元测试失败！请检查控制台输出。', 0, '任务失败', 4112)
+            "
             ;;
         Darwin)
             # macOS系统
