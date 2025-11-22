@@ -12,9 +12,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import com.mohamedrejeb.richeditor.ui.material3.RichText
+import com.storyteller_f.a.app.core.Res
+import com.storyteller_f.a.app.core.refresh
 import com.storyteller_f.a.client.core.ServerErrorException
 import com.storyteller_f.shared.utils.safeMessage
 import io.ktor.client.network.sockets.*
+import org.jetbrains.compose.resources.stringResource
 
 fun ServerErrorException.isHtmlContent(): Boolean = text.startsWith("<html") || text.startsWith("<!DOCTYPE html")
 
@@ -58,7 +61,7 @@ fun ExceptionCell(
         Button({
             extraRefresh()
         }, modifier = Modifier) {
-            Text("Refresh")
+            Text(stringResource(Res.string.refresh))
         }
     }
 }

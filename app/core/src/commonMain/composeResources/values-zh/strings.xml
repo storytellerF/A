@@ -10,13 +10,11 @@
     <string name="add">添加</string>
     <string name="topics">主题</string>
     <string name="rooms">房间</string>
-    <string name="nyi">尚未实现</string>
     <string name="success">成功</string>
     <string name="design_spec">设计规范</string>
     <string name="private_key">私钥</string>
     <string name="go_to_sign_up">前往注册</string>
     <string name="go_to_sign_in">前往登录</string>
-    <string name="input_private_key">输入私钥</string>
     <string name="start_sign_up">开始注册</string>
     <string name="start_sign_in">开始登录</string>
     <string name="auto_generate">自动生成</string>
