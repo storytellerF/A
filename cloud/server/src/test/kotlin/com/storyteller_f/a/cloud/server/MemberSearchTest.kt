@@ -1,12 +1,7 @@
 package com.storyteller_f.a.cloud.server
 
 import com.storyteller_f.a.api.NewCommunity
-import com.storyteller_f.a.api.NewRoom
-import com.storyteller_f.a.api.NewTitle
-import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.createCommunity
-import com.storyteller_f.a.client.core.createRoom
-import com.storyteller_f.a.client.core.createTitle
 import com.storyteller_f.a.client.core.exitCommunity
 import com.storyteller_f.a.client.core.exitRoom
 import com.storyteller_f.a.client.core.joinCommunity
@@ -14,12 +9,7 @@ import com.storyteller_f.a.client.core.joinRoom
 import com.storyteller_f.a.client.core.searchCommunityMembers
 import com.storyteller_f.a.client.core.searchRoomMembers
 import com.storyteller_f.a.client.core.updateUserInfo
-import com.storyteller_f.shared.model.CommunityInfo
-import com.storyteller_f.shared.model.RoomInfo
-import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.obj.UpdateUserBody
-import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.shared.type.PrimaryKey
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -31,34 +21,6 @@ import kotlin.test.assertTrue
  * 3. 只有关键字（使用 UserSearchService）
  */
 class MemberSearchTest {
-
-    private suspend fun UserSessionManager.createCommunityForTest(): CommunityInfo =
-        createCommunity(NewCommunity("name1", "c1")).getOrThrow()
-
-    private suspend fun UserSessionManager.createPublicRoomForTest(
-        communityId: PrimaryKey,
-        roomAid: String,
-        roomName: String
-    ): RoomInfo =
-        createRoom(NewRoom(roomName, roomAid, communityId = communityId)).getOrThrow()
-
-    private suspend fun UserSessionManager.createPrivateRoomForTest(): RoomInfo =
-        createRoom(NewRoom("private_room", "private_room_aid")).getOrThrow()
-
-    private suspend fun UserSessionManager.createJoinRoomTitleForTest(
-        privateRoomId: PrimaryKey,
-        uid: PrimaryKey
-    ) = createTitle(
-        NewTitle(
-            "invite",
-            TitleType.JOIN,
-            uid,
-            privateRoomId,
-            ObjectType.ROOM,
-            "invite for test"
-        )
-    ).getOrThrow()
-
     @Test
     fun `test private room member search without keyword`() = test {
         val firstUser = attachSession {

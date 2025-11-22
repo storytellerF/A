@@ -1,10 +1,8 @@
 package com.storyteller_f.a.cloud.server
 
-import com.storyteller_f.a.api.NewCommunity
 import com.storyteller_f.a.api.NewRoom
 import com.storyteller_f.a.api.NewTitle
 import com.storyteller_f.a.client.core.UserSessionManager
-import com.storyteller_f.a.client.core.createCommunity
 import com.storyteller_f.a.client.core.createRoom
 import com.storyteller_f.a.client.core.createTitle
 import com.storyteller_f.a.client.core.exitRoom
@@ -16,7 +14,6 @@ import com.storyteller_f.a.client.core.searchRoomMembers
 import com.storyteller_f.a.client.core.searchRooms
 import com.storyteller_f.a.client.core.sendFrame
 import com.storyteller_f.a.client.core.updateRoomInfo
-import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TitleType
@@ -96,96 +93,6 @@ class RoomTest {
         }
     }
 
-    private suspend fun UserSessionManager.expectedRoomCount(
-        expected: Int,
-        joinStatusSearch: JoinStatusSearch,
-        nextRoomId: String? = null,
-        word: String? = null,
-        communityId: PrimaryKey? = null,
-    ) {
-        assertListSize(
-            expected,
-            searchRooms(joinStatusSearch, 10, nextRoomId, word, communityId)
-        )
-    }
-
-    @Test
-    fun `test search joined rooms by name`() = test {
-        val sessionOuterTuple = attachSession {
-            val communityId = createCommunityForTest().id
-            val room1Id = createPublicRoomForTest(communityId, "r1", "game room").id
-            val room2Id = createPublicRoomForTest(communityId, "r2", "study room").id
-            val room3Id = createPublicRoomForTest(communityId, "r3", "chat room").id
-            communityId to listOf(room1Id, room2Id, room3Id)
-        }
-        val communityId = sessionOuterTuple.custom.first
-        val (room1Id, room2Id, room3Id) = sessionOuterTuple.custom.second
-
-        attachSession {
-            joinCommunity(communityId).getOrThrow()
-            joinRoom(room1Id).getOrThrow()
-            joinRoom(room2Id).getOrThrow()
-            joinRoom(room3Id).getOrThrow()
-
-            // 测试搜索所有已加入的房间
-            expectedRoomCount(3, JoinStatusSearch.JOINED)
-
-            // 测试按名称搜索已加入的房间
-            expectedRoomCount(1, JoinStatusSearch.JOINED, word = "game")
-            expectedRoomCount(1, JoinStatusSearch.JOINED, word = "study")
-            expectedRoomCount(1, JoinStatusSearch.JOINED, word = "chat")
-
-            // 测试部分匹配
-            expectedRoomCount(3, JoinStatusSearch.JOINED, word = "room")
-        }
-    }
-
-    @Test
-    fun `test search rooms with member search service`() = test {
-        val sessionOuterTuple = attachSession {
-            val communityId = createCommunityForTest().id
-            val room1Id = createPublicRoomForTest(communityId, "r1", "dragon ball").id
-            val room2Id = createPublicRoomForTest(communityId, "r2", "one piece").id
-            val room3Id = createPublicRoomForTest(communityId, "r3", "naruto").id
-            communityId to listOf(room1Id, room2Id, room3Id)
-        }
-        val communityId = sessionOuterTuple.custom.first
-        val (room1Id, room2Id, room3Id) = sessionOuterTuple.custom.second
-
-        attachSession {
-            joinCommunity(communityId).getOrThrow()
-            joinRoom(room1Id).getOrThrow()
-            joinRoom(room2Id).getOrThrow()
-
-            // 测试搜索已加入的房间，使用memberSearchService
-            expectedRoomCount(2, JoinStatusSearch.JOINED)
-            expectedRoomCount(1, JoinStatusSearch.JOINED, word = "dragon")
-            expectedRoomCount(1, JoinStatusSearch.JOINED, word = "piece")
-
-            // 测试未加入的房间不会出现在结果中
-            expectedRoomCount(0, JoinStatusSearch.JOINED, word = "naruto")
-
-            // 加入第三个房间后再搜索
-            joinRoom(room3Id).getOrThrow()
-            expectedRoomCount(1, JoinStatusSearch.JOINED, word = "naruto")
-            expectedRoomCount(3, JoinStatusSearch.JOINED)
-        }
-    }
-
-    private suspend fun UserSessionManager.createJoinRoomTitleForTest(
-        privateRoomId: PrimaryKey,
-        uid: PrimaryKey
-    ): TitleInfo = createTitle(
-        NewTitle(
-            "invite",
-            TitleType.JOIN,
-            uid,
-            privateRoomId,
-            ObjectType.ROOM,
-            "invite for test"
-        )
-    ).getOrThrow()
-
     @Test
     fun `test private room join`() = test {
         val sessionOuterTuple = attachSession {
@@ -205,9 +112,6 @@ class RoomTest {
             assertListSize(2, searchRoomMembers(privateRoomId, null, 10, null))
         }
     }
-
-    private suspend fun UserSessionManager.createPrivateRoomForTest(): RoomInfo =
-        createRoom(NewRoom("name", "r3")).getOrThrow()
 
     @Test
     fun `test public room join`() = test {
@@ -229,16 +133,6 @@ class RoomTest {
         }
     }
 
-    private suspend fun UserSessionManager.createCommunityForTest(): CommunityInfo =
-        createCommunity(NewCommunity("name1", "c1")).getOrThrow()
-
-    private suspend fun UserSessionManager.createPublicRoomForTest(
-        communityId: PrimaryKey,
-        roomAid: String,
-        roomName: String
-    ): RoomInfo =
-        createRoom(NewRoom(roomName, roomAid, communityId = communityId)).getOrThrow()
-
     @Test
     fun `test update room`() = test {
         attachSession {
@@ -249,79 +143,113 @@ class RoomTest {
         }
     }
 
-    @Suppress("LongMethod", "CyclomaticComplexMethod")
     @Test
-    fun `test rtc`() {
-        suspend fun waitAnswer(list: MutableList<RoomFrame>) {
-            var i = 0
-            while (i < 10) {
-                i++
-                if (list.firstOrNull {
-                        it is RoomFrame.RespondAnswer
-                    } != null) {
-                    break
-                }
-                withContext(Dispatchers.IO) {
-                    delay(1000)
-                }
-            }
+    fun `test rtc`() = test {
+        val firstUser = attachSession()
+        val secondUser = attachSession {
+            val roomInfo = createRoom(NewRoom("test-rtc", "rtc")).getOrThrow()
+            createJoinRoomTitleForTest(roomInfo.id, firstUser.uid)
+            roomInfo
         }
-
-        suspend fun process(frame: RoomFrame, session: DefaultClientWebSocketSession) {
-            if (frame is RoomFrame.CreateOffer) {
-                session.sendFrame(
-                    RoomFrame.SendOffer(
-                        CustomOffer("offer"),
-                        frame.roomId,
-                        frame.targetUid
-                    )
-                )
-            } else if (frame is RoomFrame.CreateAnswer) {
-                session.sendFrame(
-                    RoomFrame.SendAnswer(
-                        CustomAnswer("answer"),
-                        frame.roomId,
-                        frame.targetUid
-                    )
-                )
-            }
+        loginSession(firstUser) {
+            joinRoom(secondUser.custom.id).getOrThrow()
         }
-
-        test {
-            val firstUser = attachSession()
-            val secondUser = attachSession {
-                val roomInfo = createRoom(NewRoom("test-rtc", "rtc")).getOrThrow()
-                createJoinRoomTitleForTest(roomInfo.id, firstUser.uid)
-                roomInfo
-            }
-            loginSession(firstUser) {
-                joinRoom(secondUser.custom.id).getOrThrow()
-            }
-            val list = mutableListOf<RoomFrame>()
-            coroutineScope {
-                launch {
-                    loginSession(secondUser, { frame, model, session ->
-                        list.add(frame)
-                        process(frame, session)
-                    }) {
-                        waitAndSend {
-                            sendFrame(RoomFrame.StartCall(secondUser.custom.id))
-                        }
-                        waitAnswer(list)
+        val list = mutableListOf<RoomFrame>()
+        coroutineScope {
+            launch {
+                loginSession(secondUser, { frame, _, session ->
+                    list.add(frame)
+                    processRTCMessage(frame, session)
+                }) {
+                    waitAndSend {
+                        sendFrame(RoomFrame.StartCall(secondUser.custom.id))
                     }
+                    waitRTCAnswer(list)
                 }
-                launch {
-                    loginSession(firstUser, { frame, model, session ->
-                        list.add(frame)
-                        process(frame, session)
-                    }) {
-                        waitAndSend {
-                            sendFrame(RoomFrame.StartCall(secondUser.custom.id))
-                        }
-                        waitAnswer(list)
+            }
+            launch {
+                loginSession(firstUser, { frame, _, session ->
+                    list.add(frame)
+                    processRTCMessage(frame, session)
+                }) {
+                    waitAndSend {
+                        sendFrame(RoomFrame.StartCall(secondUser.custom.id))
                     }
+                    waitRTCAnswer(list)
                 }
             }
         }
+    }
+}
+
+suspend fun UserSessionManager.createPrivateRoomForTest(): RoomInfo =
+    createRoom(NewRoom("name", "r3")).getOrThrow()
+
+suspend fun UserSessionManager.createPublicRoomForTest(
+    communityId: PrimaryKey,
+    roomAid: String,
+    roomName: String
+): RoomInfo =
+    createRoom(NewRoom(roomName, roomAid, communityId = communityId)).getOrThrow()
+
+suspend fun UserSessionManager.expectedRoomCount(
+    expected: Int,
+    joinStatusSearch: JoinStatusSearch,
+    nextRoomId: String? = null,
+    word: String? = null,
+    communityId: PrimaryKey? = null,
+) {
+    assertListSize(
+        expected,
+        searchRooms(joinStatusSearch, 10, nextRoomId, word, communityId)
+    )
+}
+
+suspend fun UserSessionManager.createJoinRoomTitleForTest(
+    privateRoomId: PrimaryKey,
+    uid: PrimaryKey
+): TitleInfo = createTitle(
+    NewTitle(
+        "invite",
+        TitleType.JOIN,
+        uid,
+        privateRoomId,
+        ObjectType.ROOM,
+        "invite for test"
+    )
+).getOrThrow()
+
+suspend fun waitRTCAnswer(list: MutableList<RoomFrame>) {
+    var i = 0
+    while (i < 10) {
+        i++
+        if (list.firstOrNull {
+                it is RoomFrame.RespondAnswer
+            } != null) {
+            break
+        }
+        withContext(Dispatchers.IO) {
+            delay(1000)
+        }
+    }
+}
+
+suspend fun processRTCMessage(frame: RoomFrame, session: DefaultClientWebSocketSession) {
+    if (frame is RoomFrame.CreateOffer) {
+        session.sendFrame(
+            RoomFrame.SendOffer(
+                CustomOffer("offer"),
+                frame.roomId,
+                frame.targetUid
+            )
+        )
+    } else if (frame is RoomFrame.CreateAnswer) {
+        session.sendFrame(
+            RoomFrame.SendAnswer(
+                CustomAnswer("answer"),
+                frame.roomId,
+                frame.targetUid
+            )
+        )
     }
 }
