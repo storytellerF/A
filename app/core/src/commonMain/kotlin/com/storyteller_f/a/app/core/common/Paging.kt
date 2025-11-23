@@ -165,14 +165,27 @@ fun <C : Any, T : Any> buildPager(
     remoteKeyStorage: RemoteKeyStorage,
     storage: CollectionListStorage<C, T>,
     service: suspend (String?, Int) -> Result<ServerResponse<T>>
+): Pager<String, T> = buildPager(
+    collection,
+    collectionName,
+    remoteKeyStorage,
+    storage,
+    RegularPagingSource(service)
+)
+
+@OptIn(ExperimentalPagingApi::class)
+fun <C : Any, T : Any> buildPager(
+    collection: C,
+    collectionName: String,
+    remoteKeyStorage: RemoteKeyStorage,
+    storage: CollectionListStorage<C, T>,
+    source: PagingSource<String, T>
 ): Pager<String, T> = Pager(
     PagingConfig(pageSize = 20),
     remoteMediator = CustomRemoteMediator(
         collectionName,
         remoteKeyStorage,
-        RegularPagingSource { key, size ->
-            service(key, size)
-        },
+        source,
     ) { data, clean ->
         if (clean) {
             storage.clean(collection)
