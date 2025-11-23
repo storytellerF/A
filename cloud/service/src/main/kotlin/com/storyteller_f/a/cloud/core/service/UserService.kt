@@ -297,10 +297,10 @@ suspend fun Backend.addChildAccount(uid: PrimaryKey): Result<ChildAccountInfo> {
     }
 }
 
-suspend fun Backend.addUserLog(uid: PrimaryKey, type: UserLogType, objectTuple: ObjectTuple) {
+suspend fun Backend.addUserLog(uid: PrimaryKey, type: UserLogType, objectTuple: ObjectTuple): Result<Unit> {
     val logId = SnowflakeFactory.nextId()
     val log = UserLog(logId, now(), uid, type, objectTuple.objectId, objectTuple.objectType)
-    database.user.insertUserLog(log).onFailure {
+    return database.user.insertUserLog(log).onFailure {
         Napier.i(tag = "user log", throwable = it) {
             "add failed"
         }

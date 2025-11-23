@@ -23,6 +23,7 @@ import com.storyteller_f.a.backend.core.types.UserSubscription
 import com.storyteller_f.a.backend.core.types.buildMemberForNotificationRoom
 import com.storyteller_f.a.backend.core.types.buildUserNotificationRoom
 import com.storyteller_f.a.backend.core.types.toUserInfo
+import com.storyteller_f.a.cloud.core.service.addUserLog
 import com.storyteller_f.a.cloud.core.service.getFileInfoList
 import com.storyteller_f.a.cloud.core.service.tryUploadFiles
 import com.storyteller_f.shared.encryptDataByAES
@@ -33,11 +34,14 @@ import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.MemberPolicy
 import com.storyteller_f.shared.model.PassType
 import com.storyteller_f.shared.model.TitleStatus
+import com.storyteller_f.shared.model.UserLogType
+import com.storyteller_f.shared.obj.PresetCommunity
 import com.storyteller_f.shared.obj.PresetRoom
 import com.storyteller_f.shared.obj.PresetTitle
 import com.storyteller_f.shared.obj.PresetTopic
 import com.storyteller_f.shared.obj.PresetUser
 import com.storyteller_f.shared.obj.PresetValue
+import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.MemberStatus
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -213,6 +217,8 @@ class AddPreset : Subcommand("add", "add entry") {
                 1
             )
             database.topic.createTitle(title, topic).getOrThrow()
+            // 为创建者添加 user log
+            addUserLog(creatorUid, UserLogType.CREATE, titleId ob ObjectType.TITLE).getOrThrow()
         }
     }
 
@@ -324,6 +330,14 @@ class AddPreset : Subcommand("add", "add entry") {
         roomSearchService.saveDocument(roomList.map {
             RoomDocument.fromRoom(it)
         }).getOrThrow()
+        // 为加入房间的成员添加 user log
+        memberList.forEach { member ->
+            addUserLog(
+                member.uid,
+                UserLogType.JOIN,
+                member.objectId ob member.objectType
+            ).getOrThrow()
+        }
         addMemberDocuments(memberList, userMap, roomMap = roomList.associateBy { it.id })
     }
 
@@ -378,6 +392,10 @@ class AddPreset : Subcommand("add", "add entry") {
         }
         val users = getUserData(userList, parentDir)
         database.admin.batchAddUser(users)
+        // 为每个创建的用户添加 user log
+        users.forEach { user ->
+            addUserLog(user.id, UserLogType.SIGN_UP, user.id ob ObjectType.USER).getOrThrow()
+        }
         val userMap =
             database.user.getRawUsers(AidListFetch(listOf("System"))).getOrThrow()
                 .associate {
@@ -402,22 +420,7 @@ class AddPreset : Subcommand("add", "add entry") {
         Napier.i {
             "communities count ${presetValue.communityData?.size}"
         }
-        val data = communityData.map {
-            val id = SnowflakeFactory.nextId()
-            val icon = it.icon
-            val font = it.font
-            val iconMedia = if (icon == null) {
-                null
-            } else {
-                uploadFile(id, ObjectType.COMMUNITY, parentDir, listOf(icon))?.id
-            }
-            val fontMedia = if (font == null) {
-                null
-            } else {
-                backend.getFileInfoList(listOf("100/$font")).getOrThrow()?.firstOrNull()?.id
-            }
-            InsertCommunityTuple(it, iconMedia, id, fontMedia, now())
-        }
+        val data = getCommunityTuples(communityData, parentDir)
         val userMap = database.user.getRawUsers(AidListFetch(data.flatMap {
             it.community.users.orEmpty() + (it.community.admin ?: "System")
         }.distinct())).getOrThrow().associate {
@@ -454,7 +457,43 @@ class AddPreset : Subcommand("add", "add entry") {
         communitySearchService.saveDocument(communities.map {
             CommunityDocument.fromCommunity(it)
         }).getOrThrow()
+        // 为社区创建者添加 user log
+        communities.forEach { community ->
+            addUserLog(
+                community.owner,
+                UserLogType.CREATE,
+                community.id ob ObjectType.COMMUNITY
+            ).getOrThrow()
+        }
+        // 为加入的成员添加 user log
+        memberList.forEach { member ->
+            addUserLog(
+                member.uid,
+                UserLogType.JOIN,
+                member.objectId ob member.objectType
+            ).getOrThrow()
+        }
         addMemberDocuments(memberList, userMap, communityMap = communities.associateBy { it.id })
+    }
+
+    private suspend fun Backend.getCommunityTuples(
+        communityData: List<PresetCommunity>,
+        parentDir: File
+    ): List<InsertCommunityTuple> = communityData.map {
+        val id = SnowflakeFactory.nextId()
+        val icon = it.icon
+        val font = it.font
+        val iconMedia = if (icon == null) {
+            null
+        } else {
+            uploadFile(id, ObjectType.COMMUNITY, parentDir, listOf(icon))?.id
+        }
+        val fontMedia = if (font == null) {
+            null
+        } else {
+            backend.getFileInfoList(listOf("100/$font")).getOrThrow()?.firstOrNull()?.id
+        }
+        InsertCommunityTuple(it, iconMedia, id, fontMedia, now())
     }
 
     private suspend fun Backend.addMemberDocuments(
@@ -488,38 +527,14 @@ class AddPreset : Subcommand("add", "add entry") {
         list: List<PresetTopic>,
         userMap: Map<String, User>,
         parentDir: File,
-        objectType: ObjectType,
+        objectType: ObjectType
     ) {
-        val communityMap =
-            database.community.getRawCommunities(AidListFetch(list.mapNotNull {
-                it.community
-            })).getOrThrow().associate {
-                it.community.aid to it.community.id
-            }
-        val tuples = list.mapIndexed { index, addTopic ->
-            val id = SnowflakeFactory.nextId()
-            val level = addTopic.level
-            val parent = addTopic.parent
-            val content = getTopicContent(addTopic, parentDir).encodeToByteArray()
-            val rootId = if (objectType == ObjectType.USER) {
-                userMap[addTopic.author]!!.id
-            } else {
-                communityMap[addTopic.community]!!
-            }
-            InsertTopicTuple(
-                addTopic,
-                index,
-                if (parent == null || parent == 0 || level == null || level == 0) {
-                    0
-                } else {
-                    level
-                },
-                id,
-                content,
-                false,
-                rootId
-            )
+        val communityMap = database.community.getRawCommunities(AidListFetch(list.mapNotNull {
+            it.community
+        })).getOrThrow().associate {
+            it.community.aid to it.community.id
         }
+        val tuples = getTopicTuples(list, parentDir, objectType, userMap, communityMap)
         database.admin.batchAddTopics(tuples, userMap, objectType).getOrThrow()
         topicSearchService.saveDocument(
             tuples.mapIndexed { index, topicTuple ->
@@ -544,7 +559,43 @@ class AddPreset : Subcommand("add", "add entry") {
         tuples.forEach { topicTuple ->
             uploadTopicMedias(parentDir, userMap, topicTuple.id, topicTuple.topic)
         }
+        // 为 topic 作者添加 user log
+        tuples.forEach { tuple ->
+            val authorId = userMap[tuple.topic.author]!!.id
+            addUserLog(authorId, UserLogType.CREATE, tuple.id ob ObjectType.TOPIC).getOrThrow()
+        }
         batchAddSubscriptions(tuples, userMap)
+    }
+
+    private suspend fun getTopicTuples(
+        list: List<PresetTopic>,
+        parentDir: File,
+        objectType: ObjectType,
+        userMap: Map<String, User>,
+        communityMap: Map<String, PrimaryKey>
+    ): List<InsertTopicTuple> = list.mapIndexed { index, addTopic ->
+        val id = SnowflakeFactory.nextId()
+        val level = addTopic.level
+        val parent = addTopic.parent
+        val content = getTopicContent(addTopic, parentDir).encodeToByteArray()
+        val rootId = if (objectType == ObjectType.USER) {
+            userMap[addTopic.author]!!.id
+        } else {
+            communityMap[addTopic.community]!!
+        }
+        InsertTopicTuple(
+            addTopic,
+            index,
+            if (parent == null || parent == 0 || level == null || level == 0) {
+                0
+            } else {
+                level
+            },
+            id,
+            content,
+            false,
+            rootId
+        )
     }
 
     private suspend fun Backend.getUserData(
@@ -651,6 +702,11 @@ class AddPreset : Subcommand("add", "add entry") {
         tuples.forEach { topicTuple ->
             uploadTopicMedias(parentDir, userMap, topicTuple.id, topicTuple.topic)
         }
+        // 为 topic 作者添加 user log
+        tuples.forEach { tuple ->
+            val authorId = userMap[tuple.topic.author]!!.id
+            addUserLog(authorId, UserLogType.CREATE, tuple.id ob ObjectType.TOPIC).getOrThrow()
+        }
         batchAddSubscriptions(tuples, userMap)
     }
 
@@ -680,10 +736,9 @@ class AddPreset : Subcommand("add", "add entry") {
         val roomAids = topicList.mapNotNull {
             it.room
         }.distinct()
-        val roomMembers =
-            database.admin.getAllMembers(roomAids).getOrThrow().groupBy {
-                it.third
-            }
+        val roomMembers = database.admin.getAllMembers(roomAids).getOrThrow().groupBy {
+            it.third
+        }
         val encryptedContents = topicList.map {
             val (encryptedContent, aesBytes) = encryptDataByAES(
                 getTopicContent(
@@ -730,6 +785,11 @@ class AddPreset : Subcommand("add", "add entry") {
                 )
             }
         }
+        // 为 topic 作者添加 user log
+        tuples.forEach { tuple ->
+            val authorId = userMap[tuple.topic.author]!!.id
+            addUserLog(authorId, UserLogType.CREATE, tuple.id ob ObjectType.TOPIC).getOrThrow()
+        }
         batchAddSubscriptions(tuples, userMap)
     }
 
@@ -746,6 +806,15 @@ class AddPreset : Subcommand("add", "add entry") {
                 now()
             )
         }).getOrThrow()
+        // 为订阅添加 user log
+        tuples.forEach { tuple ->
+            val authorId = userMap[tuple.topic.author]!!.id
+            addUserLog(
+                authorId,
+                UserLogType.ADD_SUBSCRIPTION,
+                tuple.id ob ObjectType.TOPIC
+            ).getOrThrow()
+        }
     }
 
     suspend fun Backend.uploadFile(
