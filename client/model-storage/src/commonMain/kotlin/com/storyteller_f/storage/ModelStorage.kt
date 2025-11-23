@@ -14,8 +14,10 @@ import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleStatus
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.UploadRecordInfo
 import com.storyteller_f.shared.model.UserFavoriteInfo
 import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.model.UserLogInfo
 import com.storyteller_f.shared.model.UserOverview
 import com.storyteller_f.shared.model.UserSubscriptionInfo
 import com.storyteller_f.shared.type.JoinStatusSearch
@@ -142,6 +144,14 @@ sealed interface FileCollection {
     data object Files : FileCollection
 }
 
+sealed interface UserLogCollection {
+    data class UserLogs(val uid: PrimaryKey) : UserLogCollection
+}
+
+sealed interface UploadRecordCollection {
+    data class UserUploadRecords(val uid: PrimaryKey) : UploadRecordCollection
+}
+
 fun FileCollection.getName(): String {
     return when (this) {
         FileCollection.Files -> "files"
@@ -199,6 +209,18 @@ fun TitleCollection.getName(): String {
     }
 }
 
+fun UserLogCollection.getName(): String {
+    return when (this) {
+        is UserLogCollection.UserLogs -> "user_logs_$uid"
+    }
+}
+
+fun UploadRecordCollection.getName(): String {
+    return when (this) {
+        is UploadRecordCollection.UserUploadRecords -> "upload_records_$uid"
+    }
+}
+
 @Serializable
 data class RemoteKeys(val collectionName: String, val key: String?)
 
@@ -219,6 +241,8 @@ interface ModelStorage {
     val userOverview: UserOverviewStorage
     val favorite: UserFavoriteStorage
     val subscription: UserSubscriptionStorage
+    val userLog: UserLogInfoStorage
+    val uploadRecord: UploadRecordInfoStorage
 }
 
 interface UserInfoStorage : CollectionItemStorageByIdAndKey<UserCollection, UserInfo>
@@ -295,6 +319,10 @@ interface UserSubscriptionStorage : GlobalListStorageWithKey<UserSubscriptionInf
         const val COLLECTION_NAME = "user-subscription"
     }
 }
+
+interface UserLogInfoStorage : CollectionListStorage<UserLogCollection, UserLogInfo>
+
+interface UploadRecordInfoStorage : CollectionListStorage<UploadRecordCollection, UploadRecordInfo>
 
 interface RemoteKeyStorage {
     suspend fun getPreRemoteKey(collection: String): RemoteKeys?

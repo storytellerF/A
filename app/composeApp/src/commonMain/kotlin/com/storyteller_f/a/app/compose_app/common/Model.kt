@@ -268,7 +268,8 @@ class WorldViewModel(
                     }
                 )
             )
-        )).flow.map { pagingData ->
+        )
+    ).flow.map { pagingData ->
         pagingData.map {
             generateMathIfNeed(it, codeTextStyle, inlineCodeTextStyle, density)
         }.map {
