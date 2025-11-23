@@ -117,15 +117,15 @@ fun createPanelUserFilesViewModel(
 @Composable
 fun createPanelUserLogsViewModel(
     uid: PrimaryKey
-) = panelViewModel(keys = listOf("user-logs", uid)) { sessionManager, _ ->
-    UserLogsViewModel(sessionManager, uid)
+) = panelViewModel(keys = listOf("user-logs", uid)) { sessionManager, modelStorage ->
+    UserLogsViewModel(sessionManager, modelStorage, uid)
 }
 
 @Composable
 fun createPanelUserUploadRecordsViewModel(
     uid: PrimaryKey
-) = panelViewModel(keys = listOf("user-upload-records", uid)) { sessionManager, _ ->
-    UserUploadRecordsViewModel(sessionManager, uid)
+) = panelViewModel(keys = listOf("user-upload-records", uid)) { sessionManager, modelStorage ->
+    UserUploadRecordsViewModel(sessionManager, modelStorage, uid)
 }
 
 @Composable

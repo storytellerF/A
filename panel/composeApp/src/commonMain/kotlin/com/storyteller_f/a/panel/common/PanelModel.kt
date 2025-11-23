@@ -6,7 +6,6 @@ import com.storyteller_f.a.api.CustomApi
 import com.storyteller_f.a.api.PaginationQuery
 import com.storyteller_f.a.app.core.common.CachedLoadingHandler
 import com.storyteller_f.a.app.core.common.PagingViewModel
-import com.storyteller_f.a.app.core.common.RegularPagingSource
 import com.storyteller_f.a.app.core.common.SimpleViewModel
 import com.storyteller_f.a.app.core.common.buildPager
 import com.storyteller_f.a.client.core.LoadingHandler
@@ -423,24 +422,38 @@ class UserFilesViewModel(
 }
 
 class UserLogsViewModel(
-    private val sessionManager: PanelSessionManager,
-    private val uid: PrimaryKey,
+    sessionManager: PanelSessionManager,
+    modelStorage: ModelStorage,
+    uid: PrimaryKey,
 ) : PagingViewModel<UserLogInfo>() {
-    override val flow: Flow<PagingData<UserLogInfo>> = Pager(PagingConfig(pageSize = 20)) {
-        RegularPagingSource { key, size ->
-            sessionManager.getUserLogs(uid, PaginationQuery(key, size = size))
-        }
+    private val modelCollection = com.storyteller_f.storage.UserLogCollection.UserLogs(uid)
+
+    @OptIn(ExperimentalPagingApi::class)
+    override val flow: Flow<PagingData<UserLogInfo>> = buildPager(
+        modelCollection,
+        modelCollection.getName(),
+        modelStorage.remoteKey,
+        modelStorage.userLog
+    ) { key, size ->
+        sessionManager.getUserLogs(uid, PaginationQuery(key, size = size))
     }.flow.cachedIn(viewModelScope)
 }
 
 class UserUploadRecordsViewModel(
-    private val sessionManager: PanelSessionManager,
-    private val uid: PrimaryKey,
+    sessionManager: PanelSessionManager,
+    modelStorage: ModelStorage,
+    uid: PrimaryKey,
 ) : PagingViewModel<UploadRecordInfo>() {
-    override val flow: Flow<PagingData<UploadRecordInfo>> = Pager(PagingConfig(pageSize = 20)) {
-        RegularPagingSource { key, size ->
-            sessionManager.getUserUploadRecords(uid, PaginationQuery(key, size = size))
-        }
+    private val modelCollection = com.storyteller_f.storage.UploadRecordCollection.UserUploadRecords(uid)
+
+    @OptIn(ExperimentalPagingApi::class)
+    override val flow: Flow<PagingData<UploadRecordInfo>> = buildPager(
+        modelCollection,
+        modelCollection.getName(),
+        modelStorage.remoteKey,
+        modelStorage.uploadRecord
+    ) { key, size ->
+        sessionManager.getUserUploadRecords(uid, PaginationQuery(key, size = size))
     }.flow.cachedIn(viewModelScope)
 }
 
