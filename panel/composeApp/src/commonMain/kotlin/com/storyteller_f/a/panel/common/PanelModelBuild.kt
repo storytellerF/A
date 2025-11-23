@@ -183,3 +183,10 @@ fun createPanelTitleViewModel(
 ) = panelViewModel(keys = listOf("title", id)) { sessionManager, modelStorage ->
     IdTitleViewModel(sessionManager, modelStorage, id)
 }
+
+@Composable
+fun createPanelTopicTopicsViewModel(
+    id: PrimaryKey
+) = panelViewModel(keys = listOf("topic-topics", id)) { sessionManager, modelStorage ->
+    TopicTopicsViewModel(sessionManager, modelStorage, id)
+}

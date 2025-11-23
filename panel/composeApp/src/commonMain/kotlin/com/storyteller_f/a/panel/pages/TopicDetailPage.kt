@@ -1,8 +1,10 @@
 package com.storyteller_f.a.panel.pages
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
@@ -10,8 +12,10 @@ import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Topic
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
@@ -24,12 +28,22 @@ import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.core.components.CustomBottomNav
 import com.storyteller_f.a.app.core.components.NavRoute
 import com.storyteller_f.a.app.core.components.StateView
+import com.storyteller_f.a.app.core.components.pagingItems
 import com.storyteller_f.a.panel.LocalPanelNav
+import com.storyteller_f.a.panel.PanelNav
 import com.storyteller_f.a.panel.Res
+import com.storyteller_f.a.panel.common.createPanelTopicTopicsViewModel
 import com.storyteller_f.a.panel.common.createPanelTopicViewModel
 import com.storyteller_f.a.panel.components.InfoTable
+import com.storyteller_f.a.panel.encrypted
+import com.storyteller_f.a.panel.interaction
+import com.storyteller_f.a.panel.pinned
 import com.storyteller_f.a.panel.tab_basic_info
+import com.storyteller_f.a.panel.tab_logs
+import com.storyteller_f.a.panel.tab_topics
 import com.storyteller_f.a.panel.topic_detail_title_with_info
+import com.storyteller_f.shared.model.TopicContent
+import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -37,12 +51,13 @@ import org.jetbrains.compose.resources.stringResource
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopicDetailPage(id: PrimaryKey) {
-    val pagerState = rememberPagerState { 2 }
+    val pagerState = rememberPagerState { 3 }
     val scope = rememberCoroutineScope()
     Scaffold(topBar = { TopicTopBar(id) }, bottomBar = {
         val navRoutes = listOf(
-            NavRoute("/info", Icons.Default.Topic, "Info"),
-            NavRoute("/logs", Icons.AutoMirrored.Filled.Article, "Logs"),
+            NavRoute("/info", Icons.Default.Topic, stringResource(Res.string.tab_basic_info)),
+            NavRoute("/topics", Icons.Default.Topic, stringResource(Res.string.tab_topics)),
+            NavRoute("/logs", Icons.AutoMirrored.Filled.Article, stringResource(Res.string.tab_logs)),
         )
         CustomBottomNav(navRoutes[pagerState.currentPage].path, navRoutes) { path ->
             scope.launch {
@@ -54,6 +69,7 @@ fun TopicDetailPage(id: PrimaryKey) {
             HorizontalPager(pagerState) { pageIndex ->
                 when (pageIndex) {
                     0 -> TopicInfoTabs(id)
+                    1 -> TopicTopicsTab(id)
                     else -> TopicLogsTab()
                 }
             }
@@ -130,4 +146,62 @@ private fun TopicBasicInfoSection(id: PrimaryKey) {
 @Composable
 private fun TopicLogsTab() {
     Column(Modifier.padding(16.dp)) { Text("None") }
+}
+
+@Composable
+private fun TopicTopicsTab(id: PrimaryKey) {
+    val nav = LocalPanelNav.current
+    val vm = createPanelTopicTopicsViewModel(id)
+    StateView(vm, modifier = Modifier.fillMaxSize()) { items ->
+        LazyColumn {
+            pagingItems(items, key = { it.id }) { index ->
+                val info = items[index]
+                if (info != null) {
+                    TopicCell(info, nav)
+                    HorizontalDivider()
+                } else {
+                    ListItem(headlineContent = { Text("") })
+                    HorizontalDivider()
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TopicCell(
+    info: TopicInfo,
+    panelNav: PanelNav
+) {
+    val text = when (val content = info.content) {
+        is TopicContent.Plain -> content.plain
+        is TopicContent.Extracted -> content.plain
+        else -> ""
+    }
+    val author = info.extension?.authorInfo?.nickname ?: info.author.toString()
+    val room = info.extension?.roomInfo?.name ?: ""
+    val overline = listOf(author, room).filter { it.isNotEmpty() }.joinToString(" @ ")
+    val counts = if (info.commentCount > 0 || info.reactionCount > 0) {
+        stringResource(Res.string.interaction, info.commentCount, info.reactionCount)
+    } else {
+        ""
+    }
+    val flags = listOfNotNull(
+        if (info.isEncrypted) stringResource(Res.string.encrypted) else null,
+        if (info.isPin) stringResource(Res.string.pinned) else null
+    ).joinToString(" • ")
+    val supporting = listOf(
+        info.createdTime.toString(),
+        counts,
+        flags
+    ).filter { it.isNotEmpty() }.joinToString(" • ")
+
+    ListItem(
+        modifier = Modifier.clickable { panelNav.gotoTopicDetail(info.id) },
+        headlineContent = { Text(text) },
+        overlineContent = { Text(overline) },
+        supportingContent = {
+            Text(supporting)
+        },
+    )
 }

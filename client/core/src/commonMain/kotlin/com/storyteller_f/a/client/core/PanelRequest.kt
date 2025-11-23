@@ -7,7 +7,9 @@ import com.storyteller_f.a.api.NewUser
 import com.storyteller_f.a.api.PaginationQuery
 import com.storyteller_f.a.api.SignInBody
 import com.storyteller_f.a.api.SignUpBody
+import com.storyteller_f.a.api.TopicQuery
 import com.storyteller_f.route4k.ktor.client.invoke
+import com.storyteller_f.shared.model.TopicPinSearch
 import com.storyteller_f.shared.type.PrimaryKey
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
@@ -138,4 +140,19 @@ suspend fun PanelSessionManager.getFileById(id: PrimaryKey) = serviceCatching {
 
 suspend fun PanelSessionManager.getTitleById(id: PrimaryKey) = serviceCatching {
     AdminApi.Titles.Id.get(CommonPath(id))
+}
+
+suspend fun PanelSessionManager.getTopicTopics(
+    topicId: PrimaryKey,
+    pinType: TopicPinSearch,
+    paginationQuery: PaginationQuery,
+) = serviceCatching {
+    AdminApi.Topics.Id.Topics.get(
+        TopicQuery(
+            pinType,
+            fillHasCommented = null,
+            paginationQuery
+        ),
+        CommonPath(topicId)
+    )
 }
