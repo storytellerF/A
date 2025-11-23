@@ -388,9 +388,13 @@ suspend fun Backend.getTopic(
     fillHasCommented: Boolean?,
 ): Result<TopicInfo?> {
     if (uid == null && fillHasCommented == true) return Result.failure(UnauthorizedException())
-    return checkRootReadPermission(ObjectType.TOPIC, topicId, uid).mapResultIfNotNull { permission ->
+    return checkRootReadPermission(
+        ObjectType.TOPIC,
+        topicId,
+        uid
+    ).mapResultIfNotNull { permission ->
         if (permission.hasRead) {
-            getTopicById(topicId, uid).mapIfNotNull {
+            uncheckGetTopicById(topicId, uid).mapIfNotNull {
                 it.copy(hasJoined = it.hasJoined)
             }
         } else {
@@ -399,7 +403,7 @@ suspend fun Backend.getTopic(
     }
 }
 
-suspend fun Backend.getTopicById(topicId: PrimaryKey, uid: PrimaryKey?): Result<TopicInfo?> {
+suspend fun Backend.uncheckGetTopicById(topicId: PrimaryKey, uid: PrimaryKey?): Result<TopicInfo?> {
     return database.getRawTopic(ObjectFetch.IdFetch(topicId), uid).mapResultIfNotNull { info ->
         processRawTopicToTopicInfo(listOf(info), uid, true)
     }.firstOrNull()
@@ -449,18 +453,19 @@ suspend fun Backend.getTopicsByParentId(
             UNIT_RESULT
         }
     }.mapResultIfNotNull {
-        database.getRawTopicByParentId(
-            uid,
-            primaryKeyFetch,
-            parentId,
-            pinType
-        )
-    }.mapResultIfNotNull { (data, count) ->
-        processRawTopicToTopicInfo(data, uid, true).mapIfNotNull {
-            PaginationResult(it, count)
-        }
+        uncheckGetTopicsByParentId(uid, parentId, primaryKeyFetch, pinType)
     }
 }
+
+suspend fun Backend.uncheckGetTopicsByParentId(
+    uid: PrimaryKey?,
+    parentId: PrimaryKey,
+    primaryKeyFetch: PrimaryKeyFetch,
+    pinType: TopicPinSearch? = null,
+) = database.getRawTopicByParentId(uid, primaryKeyFetch, parentId, pinType)
+    .mapResultIfNotNull { (data, total) ->
+        processRawTopicToTopicInfo(data, uid, true).paging(total)
+    }
 
 suspend fun Backend.processRawTopicToTopicInfo(
     topics: List<RawTopic>,

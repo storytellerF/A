@@ -317,22 +317,6 @@ class TopicTest {
         receivedFrame.clear()
     }
 
-    private suspend fun UserSessionManager.createTopicInRoomAndWait(
-        receivedFrame: MutableList<RoomFrame>,
-        block: suspend DefaultClientWebSocketSession.() -> Unit
-    ) {
-        val old = receivedFrame.size
-        webSocketClient.useWebSocket(block)?.join()
-        while (true) {
-            if (receivedFrame.size == old + 1) {
-                break
-            }
-            withContext(Dispatchers.IO) {
-                delay(100)
-            }
-        }
-    }
-
     @Test
     fun `test create topic in private room`() = test {
         val user2 = attachSession()
@@ -544,5 +528,21 @@ fun getUploadDataFromText(string: String) = UploadData(
 ) {
     Buffer().apply {
         writeString(string)
+    }
+}
+
+suspend fun UserSessionManager.createTopicInRoomAndWait(
+    receivedFrame: MutableList<RoomFrame>,
+    block: suspend DefaultClientWebSocketSession.() -> Unit
+) {
+    val old = receivedFrame.size
+    webSocketClient.useWebSocket(block)?.join()
+    while (true) {
+        if (receivedFrame.size == old + 1) {
+            break
+        }
+        withContext(Dispatchers.IO) {
+            delay(100)
+        }
     }
 }

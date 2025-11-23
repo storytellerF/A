@@ -21,7 +21,6 @@ import com.storyteller_f.a.cloud.core.service.getOverview
 import com.storyteller_f.a.cloud.core.service.getRoomInfo
 import com.storyteller_f.a.cloud.core.service.getRoomMemberInfos
 import com.storyteller_f.a.cloud.core.service.getTitleInfo
-import com.storyteller_f.a.cloud.core.service.getTopicById
 import com.storyteller_f.a.cloud.core.service.getUserById
 import com.storyteller_f.a.cloud.core.service.getUserJoinedCommunities
 import com.storyteller_f.a.cloud.core.service.getUserJoinedRooms
@@ -29,6 +28,8 @@ import com.storyteller_f.a.cloud.core.service.getUserLogs
 import com.storyteller_f.a.cloud.core.service.getUserOverview
 import com.storyteller_f.a.cloud.core.service.getUserTitles
 import com.storyteller_f.a.cloud.core.service.getUserUploadRecords
+import com.storyteller_f.a.cloud.core.service.uncheckGetTopicById
+import com.storyteller_f.a.cloud.core.service.uncheckGetTopicsByParentId
 import com.storyteller_f.a.cloud.server.auth.UserSession
 import com.storyteller_f.a.cloud.server.auth.getData
 import com.storyteller_f.a.cloud.server.auth.handleResult
@@ -66,7 +67,12 @@ fun Routing.bindProtectedAdminRoute(backend: Backend) {
             }
         }
         AdminApi.Topics.Id.get(handleResult()) { p ->
-            backend.getTopicById(p.id, null)
+            backend.uncheckGetTopicById(p.id, null)
+        }
+        AdminApi.Topics.Id.Topics.get(handleResult()) { q, p ->
+            q.pagination(IdentifiablePagingGenerator) { f ->
+                backend.uncheckGetTopicsByParentId(null, p.id, f, q.pinType)
+            }
         }
         AdminApi.Titles.get(handleResult()) {
             it.pagination(IdentifiablePagingGenerator) { fetch ->

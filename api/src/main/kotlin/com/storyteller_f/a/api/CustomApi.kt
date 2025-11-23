@@ -652,6 +652,12 @@ object AdminApi {
         val get = safeApiWithQuery<ServerResponse<TopicInfo>, PaginationQuery>("/admin/topics")
         object Id {
             val get = safeApiWithPath<TopicInfo, CommonPath>("/admin/topics/{id}")
+            object Topics {
+                val get =
+                    safeApiWithQueryAndPath<ServerResponse<TopicInfo>, TopicQuery, CommonPath>(
+                        "/admin/topics/{id}/topics"
+                    )
+            }
         }
     }
 

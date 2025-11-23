@@ -21,6 +21,8 @@ import com.storyteller_f.a.client.core.getAllUsers
 import com.storyteller_f.a.client.core.getCommunityMembers
 import com.storyteller_f.a.client.core.getRoomFiles
 import com.storyteller_f.a.client.core.getRoomMembers
+import com.storyteller_f.a.client.core.getRoomMembersPublicKeys
+import com.storyteller_f.a.client.core.getTopicTopics
 import com.storyteller_f.a.client.core.getUserById
 import com.storyteller_f.a.client.core.getUserFiles
 import com.storyteller_f.a.client.core.getUserInfo
@@ -31,9 +33,13 @@ import com.storyteller_f.a.client.core.getUserReceivedTitles
 import com.storyteller_f.a.client.core.getUserUploadRecords
 import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.a.client.core.overview
+import com.storyteller_f.a.client.core.sendMessage
 import com.storyteller_f.a.client.core.upload
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.TitleSearchType
+import com.storyteller_f.shared.model.TopicPinSearch
+import com.storyteller_f.shared.obj.ObjectTuple
+import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import kotlin.test.Test
@@ -381,6 +387,142 @@ class AdminTest {
         }.uid
         loginPanelSession(outer) {
             assertListSize(1, getUserUploadRecords(uid, PaginationQuery()))
+        }
+    }
+
+    @Test
+    fun `admin get user topics`() = test {
+        val outer = attachPanelSession()
+        val uid = attachSession {
+            createTopic(ObjectType.USER, it.uid, "user topic").getOrThrow()
+        }.uid
+        loginPanelSession(outer) {
+            val topics = getAllTopics(PaginationQuery()).getOrThrow().data
+            assertEquals(1, topics.size)
+            assertEquals(ObjectType.USER, topics[0].rootType)
+            assertEquals(uid, topics[0].rootId)
+        }
+    }
+
+    @Test
+    fun `admin get community topics`() = test {
+        val outer = attachPanelSession()
+        val communityId = attachSession {
+            val c = createCommunity(NewCommunity("c1", "c1")).getOrThrow()
+            createTopic(ObjectType.COMMUNITY, c.id, "community topic").getOrThrow()
+            c.id
+        }.custom
+        loginPanelSession(outer) {
+            val topics = getAllTopics(PaginationQuery()).getOrThrow().data
+            assertEquals(1, topics.size)
+            assertEquals(ObjectType.COMMUNITY, topics[0].rootType)
+            assertEquals(communityId, topics[0].rootId)
+        }
+    }
+
+    @Test
+    fun `admin get room topics`() = test {
+        val outer = attachPanelSession()
+        val receivedFrame = mutableListOf<RoomFrame>()
+        val roomId = attachSession({ frame, _, _ ->
+            receivedFrame.add(frame)
+        }) {
+            val c = createCommunity(NewCommunity("c1", "c1")).getOrThrow()
+            joinCommunity(c.id).getOrThrow()
+            val r = createRoom(NewRoom("r1", "desc", communityId = c.id)).getOrThrow()
+            createTopicInRoomAndWait(receivedFrame) {
+                sendMessage(
+                    ObjectTuple(r.id, ObjectType.ROOM),
+                    r.isPrivate,
+                    "hello",
+                    getRoomMembersPublicKeys(
+                        r.id,
+                        PaginationQuery(null, size = 10)
+                    ).getOrThrow().data
+                )
+            }
+            r.id
+        }.custom
+        loginPanelSession(outer) {
+            val topics = getAllTopics(PaginationQuery()).getOrThrow().data
+            assertEquals(1, topics.size)
+            assertEquals(ObjectType.ROOM, topics[0].rootType)
+            assertEquals(roomId, topics[0].rootId)
+        }
+    }
+
+    @Test
+    fun `admin get topic sub topics`() = test {
+        val outer = attachPanelSession()
+        val topicId = attachSession {
+            val parentTopic = createTopic(ObjectType.USER, it.uid, "parent topic").getOrThrow()
+            createTopic(ObjectType.TOPIC, parentTopic.id, "sub topic 1").getOrThrow()
+            createTopic(ObjectType.TOPIC, parentTopic.id, "sub topic 2").getOrThrow()
+            parentTopic.id
+        }.custom
+        loginPanelSession(outer) {
+            val subTopics = getTopicTopics(
+                topicId,
+                TopicPinSearch.UNSPECIFIED,
+                PaginationQuery()
+            ).getOrThrow().data
+            assertEquals(2, subTopics.size)
+            // Sub topics inherit root from parent
+            assertEquals(ObjectType.USER, subTopics[0].rootType)
+            assertEquals(topicId, subTopics[0].parentId)
+            assertEquals(ObjectType.TOPIC, subTopics[0].parentType)
+            assertEquals(ObjectType.USER, subTopics[1].rootType)
+            assertEquals(topicId, subTopics[1].parentId)
+            assertEquals(ObjectType.TOPIC, subTopics[1].parentType)
+        }
+    }
+
+    @Test
+    fun `admin get all topic types`() = test {
+        val outer = attachPanelSession()
+        val receivedFrame = mutableListOf<RoomFrame>()
+        attachSession({ frame, _, _ ->
+            receivedFrame.add(frame)
+        }) {
+            // Create user topic
+            createTopic(ObjectType.USER, it.uid, "user topic").getOrThrow()
+
+            // Create community topic
+            val c = createCommunity(NewCommunity("c1", "c1")).getOrThrow()
+            createTopic(ObjectType.COMMUNITY, c.id, "community topic").getOrThrow()
+
+            // Create community room topic
+            joinCommunity(c.id).getOrThrow()
+            val r = createRoom(NewRoom("r1", "desc", communityId = c.id)).getOrThrow()
+            createTopicInRoomAndWait(receivedFrame) {
+                sendMessage(
+                    ObjectTuple(r.id, ObjectType.ROOM),
+                    r.isPrivate,
+                    "hello",
+                    getRoomMembersPublicKeys(
+                        r.id,
+                        PaginationQuery(null, size = 10)
+                    ).getOrThrow().data
+                )
+            }
+
+            // Create topic sub topic
+            val parentTopic = createTopic(ObjectType.USER, it.uid, "parent topic").getOrThrow()
+            createTopic(ObjectType.TOPIC, parentTopic.id, "sub topic").getOrThrow()
+        }
+        loginPanelSession(outer) {
+            val allTopics = getAllTopics(PaginationQuery()).getOrThrow().data
+            assertEquals(5, allTopics.size)
+
+            // Verify we have all types
+            val rootTypes = allTopics.map { it.rootType }.toSet()
+            kotlin.test.assertTrue(rootTypes.contains(ObjectType.USER))
+            kotlin.test.assertTrue(rootTypes.contains(ObjectType.COMMUNITY))
+            kotlin.test.assertTrue(rootTypes.contains(ObjectType.ROOM))
+
+            // Verify sub topic
+            val subTopics = allTopics.filter { it.parentType == ObjectType.TOPIC }
+            assertEquals(1, subTopics.size)
         }
     }
 }
