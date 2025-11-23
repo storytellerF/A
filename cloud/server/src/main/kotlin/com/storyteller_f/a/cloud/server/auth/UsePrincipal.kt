@@ -6,7 +6,7 @@ import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.cloud.core.service.FileResponse
 import com.storyteller_f.a.cloud.core.service.PathResponse
 import com.storyteller_f.a.cloud.server.ServerConfig
-import com.storyteller_f.route4k.ktor.server.handleCaughtException
+import com.storyteller_f.endpoint4k.ktor.server.handleCaughtException
 import com.storyteller_f.shared.type.PrimaryKey
 import io.ktor.http.ContentDisposition
 import io.ktor.http.HttpHeaders

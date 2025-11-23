@@ -21,8 +21,8 @@ import com.storyteller_f.a.cloud.server.auth.handleResult
 import com.storyteller_f.a.cloud.server.auth.usePrincipal
 import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.cloud.server.common.pagination
-import com.storyteller_f.route4k.ktor.server.invoke
-import com.storyteller_f.route4k.ktor.server.receiveBody
+import com.storyteller_f.endpoint4k.ktor.server.invoke
+import com.storyteller_f.endpoint4k.ktor.server.receiveBody
 import com.storyteller_f.shared.model.A_FILE_DEFAULT_BUCKET
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.obj.ObjectTuple

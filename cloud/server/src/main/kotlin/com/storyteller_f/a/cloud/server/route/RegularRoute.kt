@@ -7,7 +7,7 @@ import com.storyteller_f.a.cloud.core.service.getFileSystemDownloadUrl
 import com.storyteller_f.a.cloud.server.auth.callRespond
 import com.storyteller_f.a.cloud.server.auth.handleResult
 import com.storyteller_f.a.cloud.server.common.checkParameter
-import com.storyteller_f.route4k.ktor.server.invoke
+import com.storyteller_f.endpoint4k.ktor.server.invoke
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 

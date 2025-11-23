@@ -19,7 +19,7 @@ icu4j = "77.1"
 openpdf = "3.0.0"
 pdfcompare = "1.2.5"
 roomRuntime = "2.8.3"
-route4k-common = "1.0.0"
+endpoint4k-common = "v1.0.0"
 commonsLogging = "1.3.5"
 compose-plugin = "1.9.1"
 composeNativeNotification = "0.2.0"
@@ -147,9 +147,9 @@ google-genai = { module = "com.google.genai:google-genai", version.ref = "google
 icu4j = { module = "com.ibm.icu:icu4j", version.ref = "icu4j" }
 openpdf = { module = "com.github.librepdf:openpdf", version.ref = "openpdf" }
 pdfcompare = { module = "de.redsix:pdfcompare", version.ref = "pdfcompare" }
-route4k-common = { module = "com.github.storytellerF.route4k:common", version.ref = "route4k-common" }
-route4k-ktor-client = { module = "com.github.storytellerF.route4k:ktor-client", version.ref = "route4k-common" }
-route4k-ktor-server = { module = "com.github.storytellerF.route4k:ktor-server", version.ref = "route4k-common" }
+endpoint4k-common = { module = "com.github.storytellerF.endpoint4k:common", version.ref = "endpoint4k-common" }
+endpoint4k-ktor-client = { module = "com.github.storytellerF.endpoint4k:ktor-client", version.ref = "endpoint4k-common" }
+endpoint4k-ktor-server = { module = "com.github.storytellerF.endpoint4k:ktor-server", version.ref = "endpoint4k-common" }
 commons-logging = { module = "commons-logging:commons-logging", version.ref = "commonsLogging" }
 compose-native-notification = { module = "io.github.kdroidfilter:compose-native-notification", version.ref = "composeNativeNotification" }
 compose-pdf = { module = "dev.zt64:compose-pdf", version.ref = "composePdf" }

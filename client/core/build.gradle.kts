@@ -47,8 +47,8 @@ kotlin {
             implementation(libs.bundles.ktor.client)
             implementation(libs.kotlinx.datetime)
             implementation(projects.api)
-            implementation(libs.route4k.common)
-            implementation(libs.route4k.ktor.client)
+            implementation(libs.endpoint4k.common)
+            implementation(libs.endpoint4k.ktor.client)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

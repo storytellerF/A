@@ -15,7 +15,7 @@ import com.storyteller_f.a.api.PaginationQuery
 import com.storyteller_f.a.api.SignInBody
 import com.storyteller_f.a.api.SignUpBody
 import com.storyteller_f.a.api.TopicQuery
-import com.storyteller_f.route4k.ktor.client.invoke
+import com.storyteller_f.endpoint4k.ktor.client.invoke
 import com.storyteller_f.shared.buildEncryptedTopicContent
 import com.storyteller_f.shared.model.PosterSearch
 import com.storyteller_f.shared.model.QuotaInfo
