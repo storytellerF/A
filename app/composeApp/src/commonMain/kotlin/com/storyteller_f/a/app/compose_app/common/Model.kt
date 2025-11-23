@@ -167,26 +167,13 @@ class CommunitiesViewModel(
     private val modelCollection =
         CommunityCollection.SearchCommunity(joinStatusSearch, word, target)
 
-    override val flow = Pager(
-        PagingConfig(pageSize = 20),
-        remoteMediator = CustomRemoteMediator(
-            modelCollection.getName(),
-            modelStorage.remoteKey,
-            buildCommunityNetworkService(sessionManager, joinStatusSearch, word, target),
-        ) { data, clean ->
-            if (clean) {
-                modelStorage.community.clean(modelCollection)
-            }
-            data.forEach {
-                modelStorage.community.save(modelCollection, it)
-            }
-        },
-    ) {
-        CompatPagingSource(
-            modelStorage.community.observeData(modelCollection),
-            IntKeyConverter
-        )
-    }.flow.cachedIn(viewModelScope)
+    override val flow = buildPager(
+        modelCollection,
+        modelCollection.getName(),
+        modelStorage.remoteKey,
+        modelStorage.community,
+        buildCommunityNetworkService(sessionManager, joinStatusSearch, word, target)
+    ).flow.cachedIn(viewModelScope)
 
     private fun buildCommunityNetworkService(
         sessionManager: UserSessionManager,
@@ -267,35 +254,21 @@ class WorldViewModel(
     private val modelCollection = TopicCollection.Recommend
 
     @OptIn(FlowPreview::class)
-    override val flow: Flow<PagingData<TopicInfo>> = Pager(
-        PagingConfig(pageSize = 20),
-        remoteMediator = CustomRemoteMediator(
-            modelCollection.getName(),
-            modelStorage.remoteKey,
-            IntermediatePagingSource(
-                SectionLoadParams::class,
-                SectionPagingSource(
-                    listOf(
-                        RegularPagingSource { loadKey, size ->
-                            sessionManager.getRecommendTopics(PaginationQuery(loadKey, size = size))
-                        }
-                    )
+    override val flow = buildPager(
+        modelCollection,
+        modelCollection.getName(),
+        modelStorage.remoteKey,
+        modelStorage.topic,
+        IntermediatePagingSource(
+            SectionLoadParams::class,
+            SectionPagingSource(
+                listOf(
+                    RegularPagingSource { loadKey, size ->
+                        sessionManager.getRecommendTopics(PaginationQuery(loadKey, size = size))
+                    }
                 )
-            ),
-        ) { data, clean ->
-            if (clean) {
-                modelStorage.topic.clean(modelCollection)
-            }
-            data.forEach {
-                modelStorage.topic.save(modelCollection, it)
-            }
-        },
-    ) {
-        CompatPagingSource(
-            modelStorage.topic.observeData(modelCollection),
-            IntKeyConverter
-        )
-    }.flow.map { pagingData ->
+            )
+        )).flow.map { pagingData ->
         pagingData.map {
             generateMathIfNeed(it, codeTextStyle, inlineCodeTextStyle, density)
         }.map {
