@@ -23,8 +23,8 @@ import com.storyteller_f.a.cloud.server.auth.usePrincipalOrNull
 import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.cloud.server.common.pagination
 import com.storyteller_f.a.cloud.server.common.pagingGenerator
-import com.storyteller_f.route4k.ktor.server.invoke
-import com.storyteller_f.route4k.ktor.server.receiveBody
+import com.storyteller_f.endpoint4k.ktor.server.invoke
+import com.storyteller_f.endpoint4k.ktor.server.receiveBody
 import com.storyteller_f.shared.type.ObjectType
 import io.ktor.server.routing.Route
 
@@ -50,7 +50,7 @@ fun Route.bindProtectedUserRoute(backend: Backend) {
             backend.addFavorite(uid, api.receiveBody())
         }
     }
-    CustomApi.Favorites.delete(handleResult()) { path, api ->
+    CustomApi.Favorites.delete(handleResult()) { path, _ ->
         usePrincipal { uid ->
             backend.deleteFavorite(uid, path.id)
         }
@@ -78,7 +78,7 @@ fun Route.bindProtectedUserSubscriptionRoute(backend: Backend) {
         }
     }
 
-    CustomApi.Subscriptions.delete(handleResult()) { path, api ->
+    CustomApi.Subscriptions.delete(handleResult()) { path, _ ->
         usePrincipal { uid ->
             backend.removeSubscription(uid, path.id)
         }

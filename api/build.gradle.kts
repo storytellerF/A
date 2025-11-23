@@ -10,7 +10,7 @@ version = "unspecified"
 dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(projects.shared)
-    implementation(libs.route4k.common)
+    implementation(libs.endpoint4k.common)
     testImplementation(kotlin("test"))
 }
 

@@ -2,13 +2,12 @@ package com.storyteller_f.a.client.core
 
 import com.storyteller_f.a.api.AdminApi
 import com.storyteller_f.a.api.CommonPath
-import com.storyteller_f.a.api.CustomApi
 import com.storyteller_f.a.api.NewUser
 import com.storyteller_f.a.api.PaginationQuery
 import com.storyteller_f.a.api.SignInBody
 import com.storyteller_f.a.api.SignUpBody
 import com.storyteller_f.a.api.TopicQuery
-import com.storyteller_f.route4k.ktor.client.invoke
+import com.storyteller_f.endpoint4k.ktor.client.invoke
 import com.storyteller_f.shared.model.TopicPinSearch
 import com.storyteller_f.shared.type.PrimaryKey
 import io.ktor.http.ContentType

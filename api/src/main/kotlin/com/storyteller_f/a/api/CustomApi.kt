@@ -1,14 +1,14 @@
 package com.storyteller_f.a.api
 
-import com.storyteller_f.route4k.common.MutationMethodType
-import com.storyteller_f.route4k.common.mutationApi
-import com.storyteller_f.route4k.common.mutationApiWithPath
-import com.storyteller_f.route4k.common.mutationApiWithQuery
-import com.storyteller_f.route4k.common.mutationApiWithQueryAndPath
-import com.storyteller_f.route4k.common.safeApi
-import com.storyteller_f.route4k.common.safeApiWithPath
-import com.storyteller_f.route4k.common.safeApiWithQuery
-import com.storyteller_f.route4k.common.safeApiWithQueryAndPath
+import com.storyteller_f.endpoint4k.common.MutationMethodType
+import com.storyteller_f.endpoint4k.common.mutationEndpoint
+import com.storyteller_f.endpoint4k.common.mutationEndpointWithPath
+import com.storyteller_f.endpoint4k.common.mutationEndpointWithQuery
+import com.storyteller_f.endpoint4k.common.mutationEndpointWithQueryAndPath
+import com.storyteller_f.endpoint4k.common.safeEndpoint
+import com.storyteller_f.endpoint4k.common.safeEndpointWithPath
+import com.storyteller_f.endpoint4k.common.safeEndpointWithQuery
+import com.storyteller_f.endpoint4k.common.safeEndpointWithQueryAndPath
 import com.storyteller_f.shared.model.ChildAccountInfo
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.FileInfo
@@ -137,7 +137,7 @@ object CustomApi {
             @Serializable
             class TopicAidQuery(val aid: String, val fillHasCommented: Boolean? = null)
 
-            val get = safeApiWithQuery<TopicInfo, TopicAidQuery>("topics/aid")
+            val get = safeEndpointWithQuery<TopicInfo, TopicAidQuery>("topics/aid")
         }
 
         @Serializable
@@ -151,7 +151,7 @@ object CustomApi {
             val fillHasCommented: Boolean? = null
         ) : PageableQuery
 
-        val search = safeApiWithQuery<ServerResponse<TopicInfo>, TopicSearchQuery>("topics/search")
+        val search = safeEndpointWithQuery<ServerResponse<TopicInfo>, TopicSearchQuery>("topics/search")
 
         @Serializable
         class RecommendQuery(
@@ -162,17 +162,19 @@ object CustomApi {
         ) : PageableQuery
 
         val recommend =
-            safeApiWithQuery<ServerResponse<TopicInfo>, RecommendQuery>("topics/recommend")
+            safeEndpointWithQuery<ServerResponse<TopicInfo>, RecommendQuery>("topics/recommend")
 
         object Id {
             @Serializable
             class TopicIdQuery(val fillHasCommented: Boolean? = null)
 
-            val get = safeApiWithQueryAndPath<TopicInfo, TopicIdQuery, CommonPath>("topics/{id}")
+            val get = safeEndpointWithQueryAndPath<TopicInfo, TopicIdQuery, CommonPath>("topics/{id}")
 
             object Topics {
                 val get =
-                    safeApiWithQueryAndPath<ServerResponse<TopicInfo>, TopicQuery, CommonPath>("topics/{id}/topics")
+                    safeEndpointWithQueryAndPath<ServerResponse<TopicInfo>, TopicQuery, CommonPath>(
+                        "topics/{id}/topics"
+                    )
             }
 
             object Reactions {
@@ -185,33 +187,33 @@ object CustomApi {
                 ) : PageableQuery
 
                 val get =
-                    safeApiWithQueryAndPath<ServerResponse<ReactionInfo>, ReactionQuery, CommonPath>(
+                    safeEndpointWithQueryAndPath<ServerResponse<ReactionInfo>, ReactionQuery, CommonPath>(
                         "topics/{id}/reactions"
                     )
                 val add =
-                    mutationApiWithPath<ReactionInfo, NewReaction, CommonPath>("topics/{id}/reactions")
+                    mutationEndpointWithPath<ReactionInfo, NewReaction, CommonPath>("topics/{id}/reactions")
                 val delete =
-                    mutationApiWithPath<ReactionInfo, DeleteReaction, CommonPath>(
+                    mutationEndpointWithPath<ReactionInfo, DeleteReaction, CommonPath>(
                         "topics/{id}/reactions",
                         methodType = MutationMethodType.DELETE
                     )
             }
 
-            val pin = mutationApiWithPath<TopicInfo, Unit, CommonPath>("topics/{id}/pin")
+            val pin = mutationEndpointWithPath<TopicInfo, Unit, CommonPath>("topics/{id}/pin")
             val unpin =
-                mutationApiWithPath<TopicInfo, Unit, CommonPath>(
+                mutationEndpointWithPath<TopicInfo, Unit, CommonPath>(
                     "topics/{id}/pin",
                     methodType = MutationMethodType.DELETE
                 )
             val createSnapshot =
-                mutationApiWithPath<FileInfo, Unit, CommonPath>("topics/{id}/create-snapshot")
+                mutationEndpointWithPath<FileInfo, Unit, CommonPath>("topics/{id}/create-snapshot")
         }
 
-        val add = mutationApi<TopicInfo, NewTopic>("topics")
+        val add = mutationEndpoint<TopicInfo, NewTopic>("topics")
     }
 
     object Root {
-        val get = safeApi<String>("/")
+        val get = safeEndpoint<String>("/")
     }
 
     object Communities {
@@ -227,13 +229,13 @@ object CustomApi {
         ) : PageableQuery
 
         val search =
-            safeApiWithQuery<ServerResponse<CommunityInfo>, CommunitySearchQuery>("communities/search")
+            safeEndpointWithQuery<ServerResponse<CommunityInfo>, CommunitySearchQuery>("communities/search")
 
         object Aid {
             @Serializable
             class CommunityAidQuery(val aid: String, val fillJoinInfo: Boolean? = null)
 
-            val get = safeApiWithQuery<CommunityInfo, CommunityAidQuery>("communities/aid")
+            val get = safeEndpointWithQuery<CommunityInfo, CommunityAidQuery>("communities/aid")
         }
 
         object Id {
@@ -241,7 +243,7 @@ object CustomApi {
             class CommunityIdQuery(val fillJoinInfo: Boolean = false)
 
             val get =
-                safeApiWithQueryAndPath<CommunityInfo, CommunityIdQuery, CommonPath>("communities/{id}")
+                safeEndpointWithQueryAndPath<CommunityInfo, CommunityIdQuery, CommonPath>("communities/{id}")
 
             object Members {
                 @Serializable
@@ -253,13 +255,13 @@ object CustomApi {
                 ) : PageableQuery
 
                 val get =
-                    safeApiWithQueryAndPath<ServerResponse<MemberInfo>, CommunityMemberQuery, CommonPath>(
+                    safeEndpointWithQueryAndPath<ServerResponse<MemberInfo>, CommunityMemberQuery, CommonPath>(
                         "communities/{id}/members"
                     )
                 val join =
-                    mutationApiWithPath<CommunityInfo, Unit, CommonPath>("communities/{id}/members")
+                    mutationEndpointWithPath<CommunityInfo, Unit, CommonPath>("communities/{id}/members")
                 val leave =
-                    mutationApiWithPath<CommunityInfo, Unit, CommonPath>(
+                    mutationEndpointWithPath<CommunityInfo, Unit, CommonPath>(
                         "communities/{id}/members",
                         methodType = MutationMethodType.DELETE
                     )
@@ -267,16 +269,16 @@ object CustomApi {
 
             object Topics {
                 val get =
-                    safeApiWithQueryAndPath<ServerResponse<TopicInfo>, TopicQuery, CommonPath>(
+                    safeEndpointWithQueryAndPath<ServerResponse<TopicInfo>, TopicQuery, CommonPath>(
                         "communities/{id}/topics"
                     )
             }
 
             val update =
-                mutationApiWithPath<CommunityInfo, UpdateCommunityBody, CommonPath>("communities/{id}")
+                mutationEndpointWithPath<CommunityInfo, UpdateCommunityBody, CommonPath>("communities/{id}")
         }
 
-        val add = mutationApi<CommunityInfo, NewCommunity>("communities")
+        val add = mutationEndpoint<CommunityInfo, NewCommunity>("communities")
     }
 
     object Rooms {
@@ -290,13 +292,13 @@ object CustomApi {
             override val prePageToken: String? = null,
         ) : PageableQuery
 
-        val search = safeApiWithQuery<ServerResponse<RoomInfo>, RoomSearchQuery>("rooms/search")
+        val search = safeEndpointWithQuery<ServerResponse<RoomInfo>, RoomSearchQuery>("rooms/search")
 
         object Id {
             @Serializable
             class RoomIdQuery(val fillJoinInfo: Boolean = false)
 
-            val get = safeApiWithQueryAndPath<RoomInfo, RoomIdQuery, CommonPath>("rooms/{id}")
+            val get = safeEndpointWithQueryAndPath<RoomInfo, RoomIdQuery, CommonPath>("rooms/{id}")
 
             object Members {
                 @Serializable
@@ -309,40 +311,42 @@ object CustomApi {
                     PageableQuery
 
                 val get =
-                    safeApiWithQueryAndPath<ServerResponse<MemberInfo>, MemberQuery, CommonPath>("rooms/{id}/members")
+                    safeEndpointWithQueryAndPath<ServerResponse<MemberInfo>, MemberQuery, CommonPath>(
+                        "rooms/{id}/members"
+                    )
                 val join =
-                    mutationApiWithPath<RoomInfo, Unit, CommonPath>(
+                    mutationEndpointWithPath<RoomInfo, Unit, CommonPath>(
                         "rooms/{id}/members",
                         methodType = MutationMethodType.POST
                     )
                 val leave =
-                    mutationApiWithPath<RoomInfo, Unit, CommonPath>(
+                    mutationEndpointWithPath<RoomInfo, Unit, CommonPath>(
                         "rooms/{id}/members",
                         methodType = MutationMethodType.DELETE
                     )
                 val publicKeys =
-                    safeApiWithQueryAndPath<ServerResponse<UserPubKeyInfo>, PaginationQuery, CommonPath>(
+                    safeEndpointWithQueryAndPath<ServerResponse<UserPubKeyInfo>, PaginationQuery, CommonPath>(
                         "rooms/{id}/public-keys"
                     )
             }
 
             object Topics {
                 val get =
-                    safeApiWithQueryAndPath<ServerResponse<TopicInfo>, TopicQuery, CommonPath>("rooms/{id}/topics")
+                    safeEndpointWithQueryAndPath<ServerResponse<TopicInfo>, TopicQuery, CommonPath>("rooms/{id}/topics")
             }
 
             val update =
-                mutationApiWithPath<RoomInfo, UpdateRoomBody, CommonPath>("rooms/{id}/update")
+                mutationEndpointWithPath<RoomInfo, UpdateRoomBody, CommonPath>("rooms/{id}/update")
         }
 
         object Aid {
             @Serializable
             class RoomAidQuery(val aid: String, val fillJoinInfo: Boolean? = null)
 
-            val get = safeApiWithQuery<RoomInfo, RoomAidQuery>("rooms/aid")
+            val get = safeEndpointWithQuery<RoomInfo, RoomAidQuery>("rooms/aid")
         }
 
-        val add = mutationApi<RoomInfo, NewRoom>("rooms")
+        val add = mutationEndpoint<RoomInfo, NewRoom>("rooms")
     }
 
     object Users {
@@ -350,15 +354,15 @@ object CustomApi {
             @Serializable
             class UserAidQuery(val aid: String)
 
-            val get = safeApiWithQuery<UserInfo, UserAidQuery>("users/aid")
+            val get = safeEndpointWithQuery<UserInfo, UserAidQuery>("users/aid")
         }
 
         object Id {
-            val get = safeApiWithPath<UserInfo, CommonPath>("users/{id}")
+            val get = safeEndpointWithPath<UserInfo, CommonPath>("users/{id}")
 
             object Topics {
                 val get =
-                    safeApiWithQueryAndPath<ServerResponse<TopicInfo>, TopicQuery, CommonPath>("users/{id}/topics")
+                    safeEndpointWithQueryAndPath<ServerResponse<TopicInfo>, TopicQuery, CommonPath>("users/{id}/topics")
             }
 
             object Titles {
@@ -374,7 +378,7 @@ object CustomApi {
                 ) : PageableQuery
 
                 val get =
-                    safeApiWithQueryAndPath<ServerResponse<TitleInfo>, TitleQuery, CommonPath>("users/{id}/titles")
+                    safeEndpointWithQueryAndPath<ServerResponse<TitleInfo>, TitleQuery, CommonPath>("users/{id}/titles")
             }
         }
 
@@ -386,17 +390,17 @@ object CustomApi {
             override val prePageToken: String? = null,
         ) : PageableQuery
 
-        val search = safeApiWithQuery<ServerResponse<UserInfo>, UserSearchQuery>("users/search")
+        val search = safeEndpointWithQuery<ServerResponse<UserInfo>, UserSearchQuery>("users/search")
 
-        val update = mutationApi<UserInfo, UpdateUserBody>("users/update")
-        val overview = safeApi<UserOverview>("users/overview")
+        val update = mutationEndpoint<UserInfo, UpdateUserBody>("users/update")
+        val overview = safeEndpoint<UserOverview>("users/overview")
 
         object Read {
-            val add = mutationApi<Unit, UpdateUserRead>("users/read")
+            val add = mutationEndpoint<Unit, UpdateUserRead>("users/read")
         }
 
         object Devices {
-            val add = mutationApi<Unit, NewDevice>("users/devices")
+            val add = mutationEndpoint<Unit, NewDevice>("users/devices")
         }
     }
 
@@ -410,18 +414,18 @@ object CustomApi {
             override val prePageToken: String? = null,
         ) : PageableQuery
 
-        val get = safeApiWithQuery<ServerResponse<FileInfo>, FileQuery>("files")
+        val get = safeEndpointWithQuery<ServerResponse<FileInfo>, FileQuery>("files")
 
         object Id {
             val copy =
-                mutationApiWithPath<ServerResponse<FileInfo>, Unit, CommonPath>("files/{id}/copy")
-            val get = safeApiWithPath<FileInfo, CommonPath>("files/{id}")
+                mutationEndpointWithPath<ServerResponse<FileInfo>, Unit, CommonPath>("files/{id}/copy")
+            val get = safeEndpointWithPath<FileInfo, CommonPath>("files/{id}")
             val extractAlbum =
-                mutationApiWithPath<ServerResponse<FileInfo>, Unit, CommonPath>("files/{id}/extract-album")
+                mutationEndpointWithPath<ServerResponse<FileInfo>, Unit, CommonPath>("files/{id}/extract-album")
         }
 
         val upload =
-            mutationApiWithQuery<ServerResponse<FileInfo>, Unit, ObjectTuple>("files/upload")
+            mutationEndpointWithQuery<ServerResponse<FileInfo>, Unit, ObjectTuple>("files/upload")
 
         @Serializable
         class MediaSearchQuery(
@@ -430,7 +434,7 @@ object CustomApi {
             val objectType: ObjectType,
         )
 
-        val getByName = safeApiWithQuery<FileInfo, MediaSearchQuery>("files/get-by-name")
+        val getByName = safeEndpointWithQuery<FileInfo, MediaSearchQuery>("files/get-by-name")
 
         @Serializable
         class QuotaQuery(
@@ -439,7 +443,7 @@ object CustomApi {
             val quotaType: QuotaType = QuotaType.FILE
         )
 
-        val quota = safeApiWithQuery<QuotaInfo, QuotaQuery>("files/quota")
+        val quota = safeEndpointWithQuery<QuotaInfo, QuotaQuery>("files/quota")
 
         object Chunks {
             @Serializable
@@ -461,7 +465,7 @@ object CustomApi {
             @Serializable
             class UploadQuery(val hash: String)
 
-            val init = mutationApi<InitResponse, InitBody>("files/chunk/init")
+            val init = mutationEndpoint<InitResponse, InitBody>("files/chunk/init")
 
             @Serializable
             class UploadPath(
@@ -470,11 +474,11 @@ object CustomApi {
             )
 
             val upload =
-                mutationApiWithQueryAndPath<Unit, Unit, UploadQuery, UploadPath>("files/chunk/{id}/{index}/upload")
+                mutationEndpointWithQueryAndPath<Unit, Unit, UploadQuery, UploadPath>("files/chunk/{id}/{index}/upload")
 
             val complete =
-                mutationApiWithPath<FileInfo, Unit, CommonPath>("files/chunk/{id}/complete")
-            val abort = mutationApiWithPath<Unit, Unit, CommonPath>("files/chunk/{id}/abort")
+                mutationEndpointWithPath<FileInfo, Unit, CommonPath>("files/chunk/{id}/complete")
+            val abort = mutationEndpointWithPath<Unit, Unit, CommonPath>("files/chunk/{id}/abort")
 
             @Serializable
             class StatusResponse(
@@ -485,19 +489,19 @@ object CustomApi {
                 val status: UploadRecordStatus
             )
 
-            val status = safeApiWithPath<StatusResponse, CommonPath>("files/chunk/{id}/status")
+            val status = safeEndpointWithPath<StatusResponse, CommonPath>("files/chunk/{id}/status")
         }
     }
 
     object Titles {
-        val add = mutationApi<TitleInfo, NewTitle>("titles")
+        val add = mutationEndpoint<TitleInfo, NewTitle>("titles")
     }
 
     object Accounts {
-        val signIn = mutationApi<UserInfo, SignInBody>("/accounts/sign-in")
-        val signOut = mutationApi<Unit, Unit>("/accounts/sign-out")
-        val signUp = mutationApi<UserInfo, SignUpBody>("/accounts/sign-up")
-        val getData = safeApi<String>("/accounts/get-data")
+        val signIn = mutationEndpoint<UserInfo, SignInBody>("/accounts/sign-in")
+        val signOut = mutationEndpoint<Unit, Unit>("/accounts/sign-out")
+        val signUp = mutationEndpoint<UserInfo, SignUpBody>("/accounts/sign-up")
+        val getData = safeEndpoint<String>("/accounts/get-data")
 
         object ChildAccounts {
             @Serializable
@@ -508,41 +512,41 @@ object CustomApi {
             ) : PageableQuery
 
             val get =
-                safeApiWithQuery<ServerResponse<ChildAccountInfo>, ChildAccountQuery>(
+                safeEndpointWithQuery<ServerResponse<ChildAccountInfo>, ChildAccountQuery>(
                     "/accounts/child-accounts"
                 )
-            val add = mutationApi<ChildAccountInfo, Unit>("/accounts/child-accounts")
+            val add = mutationEndpoint<ChildAccountInfo, Unit>("/accounts/child-accounts")
         }
     }
 
     object Subscriptions {
-        val add = mutationApi<UserSubscriptionInfo, NewSubscription>("/subscriptions")
-        val delete = mutationApiWithPath<Unit, Unit, CommonPath>("/subscriptions/{id}")
+        val add = mutationEndpoint<UserSubscriptionInfo, NewSubscription>("/subscriptions")
+        val delete = mutationEndpointWithPath<Unit, Unit, CommonPath>("/subscriptions/{id}")
         val get =
-            safeApiWithQuery<ServerResponse<UserSubscriptionInfo>, PaginationQuery>("/subscriptions")
+            safeEndpointWithQuery<ServerResponse<UserSubscriptionInfo>, PaginationQuery>("/subscriptions")
     }
 
     object Favorites {
-        val add = mutationApi<UserFavoriteInfo, NewFavorite>("/favorites")
-        val delete = mutationApiWithPath<Unit, Unit, CommonPath>("/favorites/{id}")
-        val get = safeApiWithQuery<ServerResponse<UserFavoriteInfo>, PaginationQuery>("/favorites")
+        val add = mutationEndpoint<UserFavoriteInfo, NewFavorite>("/favorites")
+        val delete = mutationEndpointWithPath<Unit, Unit, CommonPath>("/favorites/{id}")
+        val get = safeEndpointWithQuery<ServerResponse<UserFavoriteInfo>, PaginationQuery>("/favorites")
     }
 }
 
 object AdminApi {
     object Users {
-        val get = safeApiWithQuery<ServerResponse<UserInfo>, PaginationQuery>("/admin/users")
-        val add = mutationApi<UserInfo, NewUser>("/admin/users")
+        val get = safeEndpointWithQuery<ServerResponse<UserInfo>, PaginationQuery>("/admin/users")
+        val add = mutationEndpoint<UserInfo, NewUser>("/admin/users")
 
         object Id {
-            val get = safeApiWithPath<UserInfo, CommonPath>("/admin/users/{id}")
+            val get = safeEndpointWithPath<UserInfo, CommonPath>("/admin/users/{id}")
             object Overview {
-                val get = safeApiWithPath<UserOverview, CommonPath>("/admin/users/{id}/overview")
+                val get = safeEndpointWithPath<UserOverview, CommonPath>("/admin/users/{id}/overview")
             }
 
             object Communities {
                 val get =
-                    safeApiWithQueryAndPath<
+                    safeEndpointWithQueryAndPath<
                         ServerResponse<CommunityInfo>,
                         PaginationQuery,
                         CommonPath>(
@@ -552,7 +556,7 @@ object AdminApi {
 
             object Rooms {
                 val get =
-                    safeApiWithQueryAndPath<
+                    safeEndpointWithQueryAndPath<
                         ServerResponse<RoomInfo>,
                         PaginationQuery,
                         CommonPath>(
@@ -562,7 +566,7 @@ object AdminApi {
 
             object Titles {
                 val get =
-                    safeApiWithQueryAndPath<
+                    safeEndpointWithQueryAndPath<
                         ServerResponse<TitleInfo>,
                         CustomApi.Users.Id.Titles.TitleQuery,
                         CommonPath>(
@@ -572,14 +576,14 @@ object AdminApi {
 
             object Files {
                 val get =
-                    safeApiWithQueryAndPath<ServerResponse<FileInfo>, PaginationQuery, CommonPath>(
+                    safeEndpointWithQueryAndPath<ServerResponse<FileInfo>, PaginationQuery, CommonPath>(
                         "/admin/users/{id}/files"
                     )
             }
 
             object Logs {
                 val get =
-                    safeApiWithQueryAndPath<ServerResponse<UserLogInfo>,
+                    safeEndpointWithQueryAndPath<ServerResponse<UserLogInfo>,
                         PaginationQuery,
                         CommonPath>(
                         "/admin/users/{id}/logs"
@@ -588,7 +592,7 @@ object AdminApi {
 
             object UploadRecords {
                 val get =
-                    safeApiWithQueryAndPath<ServerResponse<com.storyteller_f.shared.model.UploadRecordInfo>,
+                    safeEndpointWithQueryAndPath<ServerResponse<com.storyteller_f.shared.model.UploadRecordInfo>,
                         PaginationQuery,
                         CommonPath>(
                         "/admin/users/{id}/upload-records"
@@ -597,20 +601,20 @@ object AdminApi {
         }
     }
 
-    val signIn = mutationApi<PanelAccountInfo, SignInBody>("/admin/sign-in")
-    val signOut = mutationApi<Unit, Unit>("/admin/sign-out")
-    val signUp = mutationApi<PanelAccountInfo, SignUpBody>("/admin/sign-up")
-    val getData = safeApi<String>("/admin/get-data")
-    val overview = safeApi<PanelOverview>("/admin/overview")
+    val signIn = mutationEndpoint<PanelAccountInfo, SignInBody>("/admin/sign-in")
+    val signOut = mutationEndpoint<Unit, Unit>("/admin/sign-out")
+    val signUp = mutationEndpoint<PanelAccountInfo, SignUpBody>("/admin/sign-up")
+    val getData = safeEndpoint<String>("/admin/get-data")
+    val overview = safeEndpoint<PanelOverview>("/admin/overview")
 
     object Communities {
         val get =
-            safeApiWithQuery<ServerResponse<CommunityInfo>, PaginationQuery>("/admin/communities")
+            safeEndpointWithQuery<ServerResponse<CommunityInfo>, PaginationQuery>("/admin/communities")
         object Id {
-            val get = safeApiWithPath<CommunityInfo, CommonPath>("/admin/communities/{id}")
+            val get = safeEndpointWithPath<CommunityInfo, CommonPath>("/admin/communities/{id}")
             object Members {
                 val get =
-                    safeApiWithQueryAndPath<
+                    safeEndpointWithQueryAndPath<
                         ServerResponse<MemberInfo>,
                         PaginationQuery,
                         CommonPath>(
@@ -622,14 +626,14 @@ object AdminApi {
 
     object Rooms {
         val getPublic =
-            safeApiWithQuery<ServerResponse<RoomInfo>, PaginationQuery>("/admin/rooms/public")
+            safeEndpointWithQuery<ServerResponse<RoomInfo>, PaginationQuery>("/admin/rooms/public")
         val getPrivate =
-            safeApiWithQuery<ServerResponse<RoomInfo>, PaginationQuery>("/admin/rooms/private")
+            safeEndpointWithQuery<ServerResponse<RoomInfo>, PaginationQuery>("/admin/rooms/private")
         object Id {
-            val get = safeApiWithPath<RoomInfo, CommonPath>("/admin/rooms/{id}")
+            val get = safeEndpointWithPath<RoomInfo, CommonPath>("/admin/rooms/{id}")
             object Members {
                 val get =
-                    safeApiWithQueryAndPath<
+                    safeEndpointWithQueryAndPath<
                         ServerResponse<MemberInfo>,
                         PaginationQuery,
                         CommonPath>(
@@ -638,7 +642,7 @@ object AdminApi {
             }
             object Files {
                 val get =
-                    safeApiWithQueryAndPath<
+                    safeEndpointWithQueryAndPath<
                         ServerResponse<FileInfo>,
                         PaginationQuery,
                         CommonPath>(
@@ -649,12 +653,12 @@ object AdminApi {
     }
 
     object Topics {
-        val get = safeApiWithQuery<ServerResponse<TopicInfo>, PaginationQuery>("/admin/topics")
+        val get = safeEndpointWithQuery<ServerResponse<TopicInfo>, PaginationQuery>("/admin/topics")
         object Id {
-            val get = safeApiWithPath<TopicInfo, CommonPath>("/admin/topics/{id}")
+            val get = safeEndpointWithPath<TopicInfo, CommonPath>("/admin/topics/{id}")
             object Topics {
                 val get =
-                    safeApiWithQueryAndPath<ServerResponse<TopicInfo>, TopicQuery, CommonPath>(
+                    safeEndpointWithQueryAndPath<ServerResponse<TopicInfo>, TopicQuery, CommonPath>(
                         "/admin/topics/{id}/topics"
                     )
             }
@@ -662,17 +666,17 @@ object AdminApi {
     }
 
     object Titles {
-        val get = safeApiWithQuery<ServerResponse<TitleInfo>, PaginationQuery>("/admin/titles")
+        val get = safeEndpointWithQuery<ServerResponse<TitleInfo>, PaginationQuery>("/admin/titles")
 
         object Id {
-            val get = safeApiWithPath<TitleInfo, CommonPath>("/admin/titles/{id}")
+            val get = safeEndpointWithPath<TitleInfo, CommonPath>("/admin/titles/{id}")
         }
     }
 
     object Files {
-        val get = safeApiWithQuery<ServerResponse<FileInfo>, PaginationQuery>("/admin/files")
+        val get = safeEndpointWithQuery<ServerResponse<FileInfo>, PaginationQuery>("/admin/files")
         object Id {
-            val get = safeApiWithPath<FileInfo, CommonPath>("/admin/files/{id}")
+            val get = safeEndpointWithPath<FileInfo, CommonPath>("/admin/files/{id}")
         }
     }
 }

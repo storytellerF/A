@@ -36,8 +36,8 @@ import com.storyteller_f.a.cloud.server.auth.handleResult
 import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.cloud.server.common.pagination
 import com.storyteller_f.a.cloud.server.common.pagingGenerator
-import com.storyteller_f.route4k.ktor.server.invoke
-import com.storyteller_f.route4k.ktor.server.receiveBody
+import com.storyteller_f.endpoint4k.ktor.server.invoke
+import com.storyteller_f.endpoint4k.ktor.server.receiveBody
 import com.storyteller_f.shared.utils.UNIT_RESULT
 import io.ktor.server.auth.authenticate
 import io.ktor.server.routing.Routing
