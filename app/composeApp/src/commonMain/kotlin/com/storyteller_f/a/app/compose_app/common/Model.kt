@@ -169,53 +169,43 @@ class CommunitiesViewModel(
     target: PrimaryKey? = null,
 ) : PagingViewModel<CommunityInfo>() {
     private val modelCollection =
-        CommunityCollection.SearchCommunity(joinStatusSearch, word, target)
+        CommunityCollection.SearchCommunity(joinStatusSearch, word, target, PosterSearch.UNSPECIFIED)
 
     override val flow = buildPager(
         modelCollection,
         modelCollection.getName(),
         modelStorage.remoteKey,
         modelStorage.community,
-        buildCommunityNetworkService(sessionManager, joinStatusSearch, word, target)
-    ).flow.cachedIn(viewModelScope)
-
-    private fun buildCommunityNetworkService(
-        sessionManager: UserSessionManager,
-        joinStatusSearch: JoinStatusSearch,
-        word: String,
-        target: PrimaryKey?
-    ) = IntermediatePagingSource(
-        SectionLoadParams::class,
-        SectionPagingSource(
-            listOf(
-                hasPosterCommunitySource(sessionManager, joinStatusSearch, word, target),
-                notHasPosterCommunitySource(sessionManager, joinStatusSearch, word, target)
+        RegularPagingSource { key, size ->
+            sessionManager.searchCommunity(
+                size,
+                joinStatusSearch,
+                word,
+                target,
+                key,
+                PosterSearch.UNSPECIFIED
             )
-        )
-    )
+        }
+    ).flow.cachedIn(viewModelScope)
+}
 
-    private fun notHasPosterCommunitySource(
-        sessionManager: UserSessionManager,
-        joinStatusSearch: JoinStatusSearch,
-        word: String,
-        target: PrimaryKey?
-    ): RegularPagingSource<CommunityInfo> = RegularPagingSource { key, size ->
-        sessionManager.searchCommunity(
-            size,
-            joinStatusSearch,
-            word,
-            target,
-            key,
-            PosterSearch.NO_POSTER
-        )
-    }
+@OptIn(ExperimentalPagingApi::class)
+class CommunitiesWithPosterViewModel(
+    sessionManager: UserSessionManager,
+    modelStorage: ModelStorage,
+    joinStatusSearch: JoinStatusSearch,
+    word: String = "",
+    target: PrimaryKey? = null,
+) : PagingViewModel<CommunityInfo>() {
+    private val modelCollection =
+        CommunityCollection.SearchCommunity(joinStatusSearch, word, target, PosterSearch.HAS_POSTER)
 
-    private fun hasPosterCommunitySource(
-        sessionManager: UserSessionManager,
-        joinStatusSearch: JoinStatusSearch,
-        word: String,
-        target: PrimaryKey?
-    ) = RegularPagingSource { key, size ->
+    override val flow = buildPager(
+        modelCollection,
+        modelCollection.getName(),
+        modelStorage.remoteKey,
+        modelStorage.community
+    ) { key, size ->
         sessionManager.searchCommunity(
             size,
             joinStatusSearch,
@@ -224,7 +214,7 @@ class CommunitiesViewModel(
             key,
             PosterSearch.HAS_POSTER
         )
-    }
+    }.flow.cachedIn(viewModelScope)
 }
 
 @OptIn(ExperimentalPagingApi::class)

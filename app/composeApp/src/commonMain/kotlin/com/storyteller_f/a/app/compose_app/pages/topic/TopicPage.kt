@@ -65,6 +65,7 @@ import com.storyteller_f.a.app.compose_app.pages.user.UserIconWithDialog
 import com.storyteller_f.a.app.core.components.CustomAlertDialog
 import com.storyteller_f.a.app.core.components.CustomAlertDialogController
 import com.storyteller_f.a.app.core.components.GlobalTask
+import com.storyteller_f.a.app.core.components.LayoutDefaults
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.bottomAppending
 import com.storyteller_f.a.app.core.components.emitEvent
@@ -196,10 +197,10 @@ private fun ColumnScope.TopicPageContent(
     }
     StateView(viewModel.handler, modifier = Modifier.weight(1f)) { topicInfo ->
         LazyColumn(
-            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            state = lazyListState,
-            modifier = Modifier.weight(1f).fillMaxWidth()
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+            contentPadding = LayoutDefaults.contentPadding,
+            verticalArrangement = LayoutDefaults.pagingVerticalArrangement,
+            state = lazyListState
         ) {
             item {
                 AppTopicContentView(topicInfo)

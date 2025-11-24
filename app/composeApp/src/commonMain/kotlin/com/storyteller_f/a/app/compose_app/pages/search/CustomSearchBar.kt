@@ -1,13 +1,37 @@
 package com.storyteller_f.a.app.compose_app.pages.search
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.SearchBar
+import androidx.compose.material3.SearchBarDefaults
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Tab
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -158,7 +182,11 @@ private fun SelfIcon(onClickCreate: () -> Unit) {
     val myInfo = LocalUserInfo.current
     val userOverviewViewModel = getUserOverviewViewModel()
     Box(modifier = Modifier.testTag("me")) {
-        SelfUserIconWithDialog(myInfo, overviewHandler = userOverviewViewModel.handler, onClickCreate = onClickCreate)
+        SelfUserIconWithDialog(
+            myInfo,
+            overviewHandler = userOverviewViewModel.handler,
+            onClickCreate = onClickCreate
+        )
     }
 }
 
@@ -365,12 +393,22 @@ private fun MyRoomSearchContent(current: String) {
         val finalOption = if (isAlreadySignUp) currentOption else JoinStatusSearch.UNSPECIFIED
         if (isAlreadySignUp) {
             val options = listOf(JoinStatusSearch.JOINED, JoinStatusSearch.UNSPECIFIED)
-            FlowRow(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
                 SingleChoiceSegmentedButtonRow {
                     options.forEachIndexed { i, e ->
-                        SegmentedButton(currentOption == e, {
-                            currentOption = e
-                        }, shape = SegmentedButtonDefaults.itemShape(index = i, count = options.size)) {
+                        SegmentedButton(
+                            currentOption == e,
+                            {
+                                currentOption = e
+                            },
+                            shape = SegmentedButtonDefaults.itemShape(
+                                index = i,
+                                count = options.size
+                            )
+                        ) {
                             Text(e.name.lowercase().replace("_", " "))
                         }
                     }
@@ -405,9 +443,16 @@ private fun MyCommunitySearchContent(query: String) {
             ) {
                 SingleChoiceSegmentedButtonRow {
                     options.forEachIndexed { i, e ->
-                        SegmentedButton(currentOption == e, {
-                            currentOption = e
-                        }, shape = SegmentedButtonDefaults.itemShape(index = i, count = options.size)) {
+                        SegmentedButton(
+                            currentOption == e,
+                            {
+                                currentOption = e
+                            },
+                            shape = SegmentedButtonDefaults.itemShape(
+                                index = i,
+                                count = options.size
+                            )
+                        ) {
                             Text(e.name.lowercase().replace("_", " "))
                         }
                     }
@@ -415,11 +460,7 @@ private fun MyCommunitySearchContent(query: String) {
             }
         }
         if (query.isNotBlank()) {
-            val viewModel =
-                createSearchCommunitiesViewModel(
-                    finalOption,
-                    query
-                )
+            val viewModel = createSearchCommunitiesViewModel(finalOption, query)
             CommunityList(viewModel)
         }
     }

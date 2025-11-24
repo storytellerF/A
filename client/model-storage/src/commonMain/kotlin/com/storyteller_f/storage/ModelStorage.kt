@@ -7,6 +7,7 @@ import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.MemberInfo
 import com.storyteller_f.shared.model.PanelOverview
+import com.storyteller_f.shared.model.PosterSearch
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.ReactionRecordInfo
 import com.storyteller_f.shared.model.RoomInfo
@@ -123,6 +124,7 @@ sealed interface CommunityCollection {
         val joinStatusSearch: JoinStatusSearch,
         val word: String,
         val target: PrimaryKey? = null,
+        val hasPointer: PosterSearch? = null,
     ) : CommunityCollection
 
     data object AllCommunities : CommunityCollection
@@ -211,7 +213,7 @@ fun TopicCollection.getName(): String {
 fun CommunityCollection.getName(): String {
     return when (this) {
         CommunityCollection.Communities -> "communities"
-        is CommunityCollection.SearchCommunity -> "communities_${word}_${target}_$joinStatusSearch"
+        is CommunityCollection.SearchCommunity -> "communities_${word}_${target}_${joinStatusSearch}_$hasPointer"
         CommunityCollection.AllCommunities -> "all_communities"
     }
 }
