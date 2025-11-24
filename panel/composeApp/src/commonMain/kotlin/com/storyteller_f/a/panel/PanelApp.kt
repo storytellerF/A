@@ -5,8 +5,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilePresent
@@ -68,6 +66,7 @@ import com.storyteller_f.a.app.core.components.GlobalTaskContext
 import com.storyteller_f.a.app.core.components.PrivateKeyInput
 import com.storyteller_f.a.app.core.components.SignInButton
 import com.storyteller_f.a.app.core.components.request
+import com.storyteller_f.a.app.core.components.safeArea
 import com.storyteller_f.a.app.core.utils.SessionHistoryManager
 import com.storyteller_f.a.app.core.utils.buildSessionHistoryFactory
 import com.storyteller_f.a.app.core.utils.createSettings
@@ -448,13 +447,7 @@ fun PanelLoginPage(back: () -> Unit) {
     val navigator = rememberNavController()
     Scaffold {
         val direction = LocalLayoutDirection.current
-        Box(
-            Modifier.padding(
-                top = it.calculateTopPadding(),
-                start = it.calculateStartPadding(direction),
-                end = it.calculateEndPadding(direction)
-            )
-        ) {
+        Box(Modifier.safeArea(it, direction)) {
             NavHost(navigator, "select") {
                 composable("select") {
                     PanelSelectLoginPage(navigator, back)

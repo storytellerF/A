@@ -53,6 +53,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.toRoute
@@ -116,6 +117,7 @@ import com.storyteller_f.a.app.core.components.RoomIcon
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.Toast
 import com.storyteller_f.a.app.core.components.emitEvent
+import com.storyteller_f.a.app.core.components.horizontalSafeArea
 import com.storyteller_f.a.app.core.components.imeAnimation
 import com.storyteller_f.a.app.core.components.rememberAlertDialogController
 import com.storyteller_f.a.app.core.components.rememberCommonDialogController
@@ -167,7 +169,7 @@ private fun RoomPageInternal(
     Scaffold(snackbarHost = {
         SnackbarHost(snackBarHost)
     }) {
-        Column(modifier = Modifier) {
+        Column(modifier = Modifier.horizontalSafeArea(it, LocalLayoutDirection.current)) {
             var showDialog by remember {
                 mutableStateOf(false)
             }
@@ -368,6 +370,7 @@ private fun RoomInputTopContent(
                 is LoadingState.Error -> Text(
                     ks.e.localizedMessage?.take(10) ?: stringResource(Res.string.exclamation_mark)
                 )
+
                 else -> CircularProgressIndicator(
                     modifier = Modifier.size(10.dp),
                     strokeWidth = 2.dp
@@ -535,9 +538,13 @@ fun InputGroupInternal(
                 updateInput(it)
             }, modifier = Modifier.weight(1f), suffix = {
                 if (input.isNotEmpty()) {
-                    Icon(Icons.Default.Clear, stringResource(Res.string.clear_input), modifier = Modifier.clickable {
-                        updateInput("")
-                    })
+                    Icon(
+                        Icons.Default.Clear,
+                        stringResource(Res.string.clear_input),
+                        modifier = Modifier.clickable {
+                            updateInput("")
+                        }
+                    )
                 }
             })
 

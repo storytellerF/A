@@ -6,8 +6,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -52,6 +50,7 @@ import com.storyteller_f.a.app.core.components.LocalToaster
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.Toast
 import com.storyteller_f.a.app.core.components.pagingItems
+import com.storyteller_f.a.app.core.components.safeArea
 import com.storyteller_f.a.client.core.addUser
 import com.storyteller_f.a.panel.CustomPanelSessionManager
 import com.storyteller_f.a.panel.LocalPanelGlobalDialog
@@ -111,13 +110,7 @@ fun AllUsersPageInternal(viewModel: AllUsersViewModel) {
         }
     ) {
         val direction = LocalLayoutDirection.current
-        Box(
-            Modifier.padding(
-                top = it.calculateTopPadding(),
-                start = it.calculateStartPadding(direction),
-                end = it.calculateEndPadding(direction)
-            )
-        ) {
+        Box(Modifier.safeArea(it, direction)) {
             StateView(viewModel) { items ->
                 LazyColumn {
                     pagingItems(items, key = {

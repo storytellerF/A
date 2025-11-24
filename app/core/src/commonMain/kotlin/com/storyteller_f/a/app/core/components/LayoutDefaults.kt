@@ -24,3 +24,11 @@ fun Modifier.safeArea(
     start = paddingValues.calculateStartPadding(layoutDirection),
     end = paddingValues.calculateEndPadding(layoutDirection)
 )
+
+fun Modifier.horizontalSafeArea(
+    paddingValues: PaddingValues,
+    layoutDirection: LayoutDirection
+): Modifier = padding(
+    start = paddingValues.calculateStartPadding(layoutDirection),
+    end = paddingValues.calculateEndPadding(layoutDirection)
+)

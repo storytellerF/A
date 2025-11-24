@@ -5,9 +5,6 @@ package com.storyteller_f.a.panel.pages
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
@@ -24,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.pagingItems
+import com.storyteller_f.a.app.core.components.safeArea
 import com.storyteller_f.a.panel.LocalPanelNav
 import com.storyteller_f.a.panel.Res
 import com.storyteller_f.a.panel.all_titles
@@ -49,13 +47,7 @@ fun AllTitlesPageInternal(viewModel: AllTitlesViewModel) {
         ) }
     ) {
         val direction = LocalLayoutDirection.current
-        Box(
-            Modifier.padding(
-                top = it.calculateTopPadding(),
-                start = it.calculateStartPadding(direction),
-                end = it.calculateEndPadding(direction)
-            )
-        ) {
+        Box(Modifier.safeArea(it, direction)) {
             StateView(viewModel) { items ->
                 LazyColumn {
                     pagingItems(items, key = { it.id }) { index ->
