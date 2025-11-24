@@ -269,12 +269,11 @@ private fun RemoteMediatorLoadingView() {
 }
 
 fun LazyGridScope.topPrepend(
-    count: Int,
     combinedLoadStates: CombinedLoadStates
 ) {
     if (combinedLoadStates.prepend == LoadState.Loading) {
         item("prepend", span = {
-            GridItemSpan(count)
+            GridItemSpan(maxLineSpan)
         }) {
             RemoteMediatorLoadingView()
         }
@@ -290,12 +289,11 @@ fun LazyListScope.bottomAppending(combinedLoadStates: CombinedLoadStates) {
 }
 
 fun LazyGridScope.bottomAppending(
-    count: Int,
     combinedLoadStates: CombinedLoadStates,
 ) {
     if (combinedLoadStates.append == LoadState.Loading) {
         item("append", span = {
-            GridItemSpan(count)
+            GridItemSpan(maxLineSpan)
         }) {
             RemoteMediatorLoadingView()
         }

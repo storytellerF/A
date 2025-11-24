@@ -42,6 +42,13 @@ fun createJoinedCommunitiesViewModel() = customViewModel(
 }
 
 @Composable
+fun createJoinedCommunitiesWithPosterViewModel() = customViewModel(
+    listOf("joined-communities-with-poster")
+) { client, databaseSource ->
+    CommunitiesWithPosterViewModel(client, databaseSource, JoinStatusSearch.JOINED)
+}
+
+@Composable
 fun createTargetUserJoinedCommunitiesViewModel(
     target: PrimaryKey,
     word: String = "",

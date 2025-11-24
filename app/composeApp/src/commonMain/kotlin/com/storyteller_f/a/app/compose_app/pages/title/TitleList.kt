@@ -14,6 +14,7 @@ import com.storyteller_f.a.app.compose_app.common.TitlesViewModel
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityIconWithDialog
 import com.storyteller_f.a.app.compose_app.pages.room.RoomIconWithDialog
 import com.storyteller_f.a.app.compose_app.pages.user.UserIconWithDialog
+import com.storyteller_f.a.app.core.components.LayoutDefaults
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.bottomAppending
 import com.storyteller_f.a.app.core.components.topPrepend
@@ -25,9 +26,9 @@ import com.storyteller_f.shared.type.ObjectType
 fun TitleList(titlesViewModel: TitlesViewModel) {
     StateView(titlesViewModel) { pagingItems ->
         LazyColumn(
-            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
             modifier = Modifier.fillMaxHeight(),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            contentPadding = LayoutDefaults.contentPadding,
+            verticalArrangement = LayoutDefaults.pagingVerticalArrangement
         ) {
             topPrepend(pagingItems.loadState)
             items(

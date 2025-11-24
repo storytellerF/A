@@ -85,7 +85,11 @@ private fun UserNonCompatInternal(uid: PrimaryKey, user: UserInfo?) {
     val navRoutes =
         listOf(
             NavRoute("/topics", Icons.Default.Topic, stringResource(Res.string.topics)),
-            NavRoute("/communities", Icons.Default.ChatBubble, stringResource(Res.string.communities_title)),
+            NavRoute(
+                "/communities",
+                Icons.Default.ChatBubble,
+                stringResource(Res.string.communities_title)
+            ),
             NavRoute("/titles", Icons.Default.Badge, stringResource(Res.string.titles))
         )
     val navigator = rememberNavController()
@@ -161,21 +165,13 @@ private fun UserCompatInternal(
                     }
 
                     1 -> {
-                        val communitiesViewModel =
-                            createTargetUserJoinedCommunitiesViewModel(
-                                uid
-                            )
-                        CommunityList(
-                            communitiesViewModel
-                        )
+                        val communitiesViewModel = createTargetUserJoinedCommunitiesViewModel(uid)
+                        CommunityList(communitiesViewModel)
                     }
 
                     else -> {
                         val titlesViewModel =
-                            createUserTitlesViewModel(
-                                uid,
-                                TitleSearchType.RECEIVER
-                            )
+                            createUserTitlesViewModel(uid, TitleSearchType.RECEIVER)
                         TitleList(titlesViewModel)
                     }
                 }

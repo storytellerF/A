@@ -33,6 +33,7 @@ import com.storyteller_f.a.app.compose_app.common.createMemberViewModel
 import com.storyteller_f.a.app.compose_app.components.UserCell
 import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
+import com.storyteller_f.a.app.core.components.LayoutDefaults
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.bottomAppending
 import com.storyteller_f.a.app.core.components.pagingItems
@@ -92,8 +93,8 @@ fun MemberList(memberViewModel: ContainerMemberViewModel, onClick: ((UserInfo) -
     val appNavFactory = LocalAppNavFactory.current
     StateView(memberViewModel) { items ->
         LazyColumn(
-            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            contentPadding = LayoutDefaults.contentPadding,
+            verticalArrangement = LayoutDefaults.pagingVerticalArrangement
         ) {
             topPrepend(items.loadState)
             pagingItems(items, {
@@ -117,7 +118,7 @@ fun MemberList(memberViewModel: UserSearchViewModel, onClick: ((UserInfo) -> Uni
     val appNavFactory = LocalAppNavFactory.current
     StateView(memberViewModel) { items ->
         LazyColumn(
-            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
+            contentPadding = LayoutDefaults.contentPadding,
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             topPrepend(items.loadState)

@@ -34,6 +34,7 @@ import com.storyteller_f.a.app.compose_app.common.RoomsViewModel
 import com.storyteller_f.a.app.compose_app.common.createCommunityViewModel
 import com.storyteller_f.a.app.compose_app.common.createJoinedRoomsViewModel
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityIconWithDialog
+import com.storyteller_f.a.app.core.components.LayoutDefaults
 import com.storyteller_f.a.app.core.components.RoomIcon
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.bottomAppending
@@ -58,9 +59,9 @@ fun RoomList(
 ) {
     StateView(roomsViewModel) { items ->
         LazyColumn(
-            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
             modifier = Modifier.fillMaxHeight(),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            contentPadding = LayoutDefaults.contentPadding,
+            verticalArrangement = LayoutDefaults.pagingVerticalArrangement
         ) {
             topPrepend(items.loadState)
             pagingItems(items, {
