@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -40,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.compose_app.CustomUserSessionManager
@@ -69,6 +69,7 @@ import com.storyteller_f.a.app.core.components.LayoutDefaults
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.bottomAppending
 import com.storyteller_f.a.app.core.components.emitEvent
+import com.storyteller_f.a.app.core.components.horizontalSafeArea
 import com.storyteller_f.a.app.core.components.pagingItems
 import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.app.core.components.topPrepend
@@ -89,16 +90,22 @@ import kotlinx.coroutines.launch
 fun TopicPage(topicId: PrimaryKey) {
     val viewModel = createTopicViewModel(topicId)
     val subTopicsViewModel = createTopicsInTopicViewModel(topicId)
-    val snackBarHost = remember {
+    val snackBarHostState = remember {
         SnackbarHostState()
     }
     val sheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
 
     Scaffold(snackbarHost = {
-        SnackbarHost(snackBarHost)
+        SnackbarHost(snackBarHostState)
     }) {
-        TopicPageInternal(topicId, viewModel, subTopicsViewModel, snackBarHost) {
+        TopicPageInternal(
+            Modifier.horizontalSafeArea(it, LocalLayoutDirection.current),
+            topicId,
+            viewModel,
+            subTopicsViewModel,
+            snackBarHostState
+        ) {
             showBottomSheet = true
         }
         TopicEmojiPicker(viewModel, sheetState, showBottomSheet) {
@@ -125,6 +132,7 @@ fun TopicEmojiPicker(
 
 @Composable
 private fun TopicPageInternal(
+    modifier: Modifier,
     topicId: PrimaryKey,
     viewModel: TopicViewModel,
     subTopicsViewModel: TopicsViewModel,
@@ -132,7 +140,7 @@ private fun TopicPageInternal(
     startAddReaction: () -> Unit
 ) {
     val topicInfo by viewModel.handler.data.collectAsState()
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(modifier = modifier.fillMaxSize()) {
         var showDialog by remember {
             mutableStateOf(false)
         }

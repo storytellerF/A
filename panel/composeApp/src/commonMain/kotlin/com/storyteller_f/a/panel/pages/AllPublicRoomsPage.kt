@@ -45,10 +45,7 @@ fun AllPublicRoomsPageInternal(viewModel: AllPublicRoomsViewModel) {
                 title = { Text(stringResource(Res.string.all_public_rooms)) },
                 navigationIcon = {
                     IconButton({ panelNav.open() }) {
-                        Icon(
-                            Icons.Default.Menu,
-                            null
-                        )
+                        Icon(Icons.Default.Menu, null)
                     }
                 }
             )

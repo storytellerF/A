@@ -254,10 +254,8 @@ private fun CommunityCompatPageInternal(
         }
     }, bottomBar = {
         CommunityBottomNav(navRoutes, pagerState)
-    }) { paddingValues ->
-        Column(
-            modifier = Modifier.padding(bottom = paddingValues.calculateBottomPadding()),
-        ) {
+    }) {
+        Column {
             CustomSearchBar(searchScope) {
                 LaunchedEffect(needShowDialog) {
                     if (needShowDialog && !dialogShown) {

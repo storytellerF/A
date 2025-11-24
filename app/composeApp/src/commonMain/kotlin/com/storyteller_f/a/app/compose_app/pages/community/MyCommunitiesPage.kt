@@ -4,9 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraintsScope
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -31,7 +29,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
-import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
 import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.common.CommunitiesViewModel
@@ -136,27 +133,6 @@ fun CommunityList(
             bottomAppending(items.loadState)
         }
     }
-}
-
-@Composable
-private fun BoxWithConstraintsScope.getCommunityGridEndPadding(
-    index: Int,
-    items: LazyPagingItems<CommunityInfo>,
-    gridCount: Int
-): Dp {
-    val padding = if (index + 1 < items.itemSnapshotList.size && items[index + 1]?.poster == null) {
-        val t = (index + 1) % gridCount
-        if (t == 0) {
-            0.dp
-        } else {
-            val itemWidth =
-                (this.maxWidth - (gridCount - 1) * 10.dp - 40.dp) / gridCount
-            (gridCount - t) * itemWidth + (gridCount - t) * 10.dp
-        }
-    } else {
-        0.dp
-    }
-    return padding
 }
 
 @OptIn(ExperimentalHazeMaterialsApi::class)

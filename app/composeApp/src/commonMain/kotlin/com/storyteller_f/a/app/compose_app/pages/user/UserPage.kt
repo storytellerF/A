@@ -2,7 +2,6 @@ package com.storyteller_f.a.app.compose_app.pages.user
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
@@ -145,14 +144,8 @@ private fun UserCompatInternal(
     }, bottomBar = {
         UserPageBottomNavBar(pagerState)
     }, modifier = Modifier.testTag("user-page")) {
-        Column(
-            modifier = Modifier.padding(bottom = it.calculateBottomPadding()),
-        ) {
-            CustomSearchBar(
-                SearchScope.UserTopic(
-                    uid
-                )
-            ) {
+        Column {
+            CustomSearchBar(SearchScope.UserTopic(uid)) {
                 if (uid != my?.id) {
                     UserIconWithDialog(user)
                 }
