@@ -8,6 +8,7 @@ import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.MemberInfo
 import com.storyteller_f.shared.model.PanelOverview
 import com.storyteller_f.shared.model.ReactionInfo
+import com.storyteller_f.shared.model.ReactionRecordInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TopicInfo
@@ -52,6 +53,8 @@ import com.storyteller_f.storage.UserInfoStorage
 import com.storyteller_f.storage.UserLogCollection
 import com.storyteller_f.storage.UserLogInfoStorage
 import com.storyteller_f.storage.UserOverviewStorage
+import com.storyteller_f.storage.UserReactionRecordCollection
+import com.storyteller_f.storage.UserReactionRecordStorage
 import com.storyteller_f.storage.UserSubscriptionStorage
 import com.storyteller_f.storage.WrappedPagingSource
 import com.storyteller_f.storage.getName
@@ -608,6 +611,34 @@ class RoomUserSubscriptionStorage(val appDatabase: AppDatabase) : UserSubscripti
     }
 }
 
+class RoomUserReactionRecordStorage(val appDatabase: AppDatabase) : UserReactionRecordStorage {
+    val impl = CommonStorageImpl(appDatabase)
+
+    override suspend fun save(
+        collection: UserReactionRecordCollection,
+        item: ReactionRecordInfo
+    ) {
+        val data = commonJson.encodeToString(item)
+        appDatabase.getCommonDao().insert(
+            CommonEntity(
+                item.id,
+                collection.getName(),
+                data
+            )
+        )
+    }
+
+    override fun observeData(
+        collection: UserReactionRecordCollection,
+    ): PagingSource<Int, ReactionRecordInfo> {
+        return impl.observeData(collection.getName())
+    }
+
+    override suspend fun clean(collection: UserReactionRecordCollection) {
+        return impl.clean(collection.getName())
+    }
+}
+
 class RoomUserLogInfoStorage(val appDatabase: AppDatabase) : UserLogInfoStorage {
     val impl = CommonStorageImpl(appDatabase)
 
@@ -671,6 +702,7 @@ class RoomModelStorage(appDatabase: AppDatabase) : ModelStorage {
     override val userOverview: UserOverviewStorage = RoomUserOverviewStorage(appDatabase)
     override val favorite: UserFavoriteStorage = RoomUserFavoriteStorage(appDatabase)
     override val subscription: UserSubscriptionStorage = RoomUserSubscriptionStorage(appDatabase)
+    override val userReactionRecord: UserReactionRecordStorage = RoomUserReactionRecordStorage(appDatabase)
     override val userLog: UserLogInfoStorage = RoomUserLogInfoStorage(appDatabase)
     override val uploadRecord: UploadRecordInfoStorage = RoomUploadRecordInfoStorage(appDatabase)
 }

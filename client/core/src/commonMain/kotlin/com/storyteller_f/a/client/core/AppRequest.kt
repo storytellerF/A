@@ -626,6 +626,14 @@ suspend fun UserSessionManager.addDevice(endpointUrl: String) = serviceCatching 
     }
 }
 
+suspend fun UserSessionManager.getReactionRecords(query: PaginationQuery) = serviceCatching {
+    CustomApi.Users.ReactionRecords.get(query)
+}
+
+suspend fun UserSessionManager.getComments(query: PaginationQuery) = serviceCatching {
+    CustomApi.Users.Comments.get(query)
+}
+
 suspend fun UserSessionManager.extractAlbum(mediaId: PrimaryKey) = serviceCatching {
     CustomApi.Files.Id.extractAlbum(CommonPath(mediaId), Unit) {}
 }

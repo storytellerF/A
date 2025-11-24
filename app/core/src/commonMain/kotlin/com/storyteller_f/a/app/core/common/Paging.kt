@@ -197,3 +197,28 @@ fun <C : Any, T : Any> buildPager(
 ) {
     CompatPagingSource(storage.observeData(collection), IntKeyConverter)
 }
+
+@OptIn(ExperimentalPagingApi::class)
+fun <C : Any, T : Any> buildPager(
+    collection: C,
+    collectionName: String,
+    remoteKeyStorage: RemoteKeyStorage,
+    storage: CollectionListStorage<C, T>,
+    networkSource: PagingSource<String, T>,
+    localSourceFactory: () -> PagingSource<String, T>
+): Pager<String, T> = Pager(
+    PagingConfig(pageSize = 20),
+    remoteMediator = CustomRemoteMediator(
+        collectionName,
+        remoteKeyStorage,
+        networkSource,
+    ) { data, clean ->
+        if (clean) {
+            storage.clean(collection)
+        }
+        data.forEach {
+            storage.save(collection, it)
+        }
+    },
+    pagingSourceFactory = localSourceFactory,
+)

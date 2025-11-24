@@ -16,12 +16,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.SignalCellularAlt
 import androidx.compose.material.icons.filled.SwitchAccount
+import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -282,6 +284,20 @@ private fun UserOverviewRow(
         ) {
             dismiss()
             appNav.newAppNav().gotoSubscriptionPage()
+        }
+        StatCell(
+            userOverview?.reactionRecordCount ?: 0,
+            if (isLoading) IconRes.Loading else IconRes.Vector(Icons.Default.ThumbUp)
+        ) {
+            dismiss()
+            appNav.newAppNav().gotoUserReactionRecordsPage()
+        }
+        StatCell(
+            userOverview?.commentCount ?: 0,
+            if (isLoading) IconRes.Loading else IconRes.Vector(Icons.Default.ChatBubble)
+        ) {
+            dismiss()
+            appNav.newAppNav().gotoUserCommentsPage()
         }
     }
 }

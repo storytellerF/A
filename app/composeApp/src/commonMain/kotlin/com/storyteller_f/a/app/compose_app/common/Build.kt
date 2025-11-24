@@ -593,6 +593,28 @@ fun getSubscriptionViewModel(): SubscriptionsViewModel {
 }
 
 @Composable
+fun getUserReactionRecordsViewModel() = customViewModel(
+    listOf("user-reaction-records")
+) { sessionManager, modelStorage ->
+    UserReactionRecordsViewModel(sessionManager, modelStorage)
+}
+
+@Composable
+fun getUserCommentsViewModel(): UserCommentsViewModel {
+    return buildByMarkdown { typography, density ->
+        customViewModel(listOf("user-comments")) { sessionManager, modelStorage ->
+            UserCommentsViewModel(
+                sessionManager,
+                modelStorage,
+                typography.code,
+                typography.inlineCode,
+                density
+            )
+        }
+    }
+}
+
+@Composable
 fun getUserOverviewViewModel() =
     customViewModel(listOf("user-overview")) { sessionManager, modelStorage ->
         UserOverviewViewModel(sessionManager, modelStorage)

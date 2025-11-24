@@ -2,8 +2,10 @@ package com.storyteller_f.a.backend.exposed.database
 
 import com.storyteller_f.a.backend.core.Cursor
 import com.storyteller_f.a.backend.core.PaginationResult
+import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.ReactionDatabase
 import com.storyteller_f.a.backend.core.ReactionFetch
+import com.storyteller_f.a.backend.core.paginationFromResults
 import com.storyteller_f.a.backend.core.types.Reaction
 import com.storyteller_f.a.backend.core.types.ReactionRecord
 import com.storyteller_f.a.backend.exposed.ExposedDatabaseSession
@@ -11,6 +13,7 @@ import com.storyteller_f.a.backend.exposed.count
 import com.storyteller_f.a.backend.exposed.first
 import com.storyteller_f.a.backend.exposed.isNotEmpty
 import com.storyteller_f.a.backend.exposed.map
+import com.storyteller_f.a.backend.exposed.query.bindPaginationQuery
 import com.storyteller_f.a.backend.exposed.tables.ReactionRecords
 import com.storyteller_f.a.backend.exposed.tables.Reactions
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
@@ -272,5 +275,36 @@ class ExposedReactionDatabase(
             null -> {}
         }
         return query
+    }
+
+    override suspend fun getUserReactionRecordsPaginationResult(
+        uid: PrimaryKey,
+        primaryKeyFetch: PrimaryKeyFetch
+    ) = paginationFromResults(
+        databaseSession.dbSearch {
+            search {
+                ReactionRecords.selectAll().where {
+                    ReactionRecords.uid eq uid
+                }.orderBy(ReactionRecords.id to SortOrder.DESC)
+                    .bindPaginationQuery(ReactionRecords, primaryKeyFetch)
+            }
+            map(ReactionRecord::wrapRow)
+        },
+        getUserReactionRecordCountByUid(uid)
+    )
+
+    override suspend fun getUserReactionRecordCount(
+        uid: PrimaryKey
+    ) = getUserReactionRecordCountByUid(uid)
+
+    private suspend fun getUserReactionRecordCountByUid(
+        uid: PrimaryKey
+    ) = databaseSession.dbSearch {
+        search {
+            ReactionRecords.selectAll().where {
+                ReactionRecords.uid eq uid
+            }
+        }
+        count()
     }
 }

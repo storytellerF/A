@@ -232,6 +232,23 @@ class ExposedTopicDatabase(
         }
     }
 
+    override suspend fun getUserCommentedTopicsPaginationResult(
+        uid: PrimaryKey,
+        primaryKeyFetch: PrimaryKeyFetch
+    ): Result<PaginationResult<Topic>> = getTopicPaginationByPredicate(primaryKeyFetch) {
+        where {
+            Topics.author eq uid and (Topics.parentType eq ObjectType.TOPIC)
+        }
+    }
+
+    override suspend fun getUserCommentCount(
+        uid: PrimaryKey
+    ): Result<Long> = getTopicCountByPredicate {
+        where {
+            Topics.author eq uid and (Topics.parentType eq ObjectType.TOPIC)
+        }
+    }
+
     override suspend fun getTopicContentFromByteArray(
         topics: List<Topic>,
         uid: PrimaryKey?,

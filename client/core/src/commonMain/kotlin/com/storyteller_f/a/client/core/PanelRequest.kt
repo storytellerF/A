@@ -112,6 +112,14 @@ suspend fun PanelSessionManager.getUserUploadRecords(uid: PrimaryKey, query: Pag
     AdminApi.Users.Id.UploadRecords.get(query, CommonPath(uid))
 }
 
+suspend fun PanelSessionManager.getUserReactions(uid: PrimaryKey, query: PaginationQuery) = serviceCatching {
+    AdminApi.Users.Id.Reactions.get(query, CommonPath(uid))
+}
+
+suspend fun PanelSessionManager.getUserComments(uid: PrimaryKey, query: PaginationQuery) = serviceCatching {
+    AdminApi.Users.Id.Comments.get(query, CommonPath(uid))
+}
+
 // Detail fetch for other entities via CustomApi
 suspend fun PanelSessionManager.getCommunityById(id: PrimaryKey) = serviceCatching {
     AdminApi.Communities.Id.get(CommonPath(id))

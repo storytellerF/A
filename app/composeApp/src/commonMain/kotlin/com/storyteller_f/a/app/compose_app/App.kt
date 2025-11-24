@@ -593,6 +593,10 @@ private fun createAppNavFactoryForBubble(): AppNavFactory = object : AppNavFacto
         override fun gotoFavoritePage() = Unit
 
         override fun gotoSubscriptionPage() = Unit
+        override fun gotoUserReactionRecordsPage() = Unit
+
+        override fun gotoUserCommentsPage() = Unit
+
         override fun gotoFileExplorer(objectTuple: ObjectTuple?) = Unit
     }
 }

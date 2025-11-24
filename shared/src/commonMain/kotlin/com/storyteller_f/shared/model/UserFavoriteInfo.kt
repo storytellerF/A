@@ -9,13 +9,13 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class UserFavoriteInfo(
-    val id: PrimaryKey,
+    override val id: PrimaryKey,
     val uid: PrimaryKey,
     val objectId: PrimaryKey,
     val objectType: ObjectType,
     val createdTime: LocalDateTime,
     val extensions: Extensions? = null
-) {
+) : PrimaryKeyIdentifiable {
     @Serializable
     data class Extensions(val topicInfo: TopicInfo? = null)
 

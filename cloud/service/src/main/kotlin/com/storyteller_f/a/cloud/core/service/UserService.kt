@@ -12,6 +12,7 @@ import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.USER_NICKNAME
+import com.storyteller_f.a.backend.core.paging
 import com.storyteller_f.a.backend.core.pagingNotNull
 import com.storyteller_f.a.backend.core.service.MemberDocumentSearch
 import com.storyteller_f.a.backend.core.service.UserDocument
@@ -29,6 +30,7 @@ import com.storyteller_f.shared.model.ChildAccountInfo
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.MemberInfo
 import com.storyteller_f.shared.model.PassType
+import com.storyteller_f.shared.model.ReactionRecordInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.UserLogInfo
 import com.storyteller_f.shared.model.UserLogType
@@ -466,6 +468,8 @@ suspend fun Backend.processRawUserOverviewToUserOverview(raw: RawUserOverview): 
             raw.favoriteCount,
             raw.acg,
             raw.childAccountCount,
+            raw.reactionRecordCount,
+            raw.commentCount,
             userInfo
         )
     }
@@ -529,4 +533,29 @@ private suspend fun Backend.processUserLogToUserLogInfo(
 
 fun Char.isEnglishLetter(): Boolean {
     return this in 'a'..'z' || this in 'A'..'Z'
+}
+
+suspend fun Backend.getUserReactions(
+    uid: PrimaryKey,
+    fetch: PrimaryKeyFetch
+) = database.reaction.getUserReactionRecordsPaginationResult(uid, fetch).map { (list, total) ->
+    PaginationResult(list.map { record ->
+        ReactionRecordInfo(
+            record.id,
+            record.emoji,
+            record.objectId,
+            record.objectType,
+            record.createdTime,
+            record.uid
+        )
+    }, total)
+}
+
+suspend fun Backend.getUserCommentedTopics(
+    uid: PrimaryKey,
+    fetch: PrimaryKeyFetch
+) = database.topic.getUserCommentedTopicsPaginationResult(uid, fetch).mapResult { (list, total) ->
+    processRawTopicToTopicInfo(list.map { topic ->
+        database.processTopicToRawTopic(uid, listOf(topic)).getOrThrow().first()
+    }, uid, false).paging(total)
 }

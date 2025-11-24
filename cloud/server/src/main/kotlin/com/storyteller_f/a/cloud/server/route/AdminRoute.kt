@@ -22,10 +22,12 @@ import com.storyteller_f.a.cloud.core.service.getRoomInfo
 import com.storyteller_f.a.cloud.core.service.getRoomMemberInfos
 import com.storyteller_f.a.cloud.core.service.getTitleInfo
 import com.storyteller_f.a.cloud.core.service.getUserById
+import com.storyteller_f.a.cloud.core.service.getUserCommentedTopics
 import com.storyteller_f.a.cloud.core.service.getUserJoinedCommunities
 import com.storyteller_f.a.cloud.core.service.getUserJoinedRooms
 import com.storyteller_f.a.cloud.core.service.getUserLogs
 import com.storyteller_f.a.cloud.core.service.getUserOverview
+import com.storyteller_f.a.cloud.core.service.getUserReactions
 import com.storyteller_f.a.cloud.core.service.getUserTitles
 import com.storyteller_f.a.cloud.core.service.getUserUploadRecords
 import com.storyteller_f.a.cloud.core.service.uncheckGetTopicById
@@ -173,6 +175,18 @@ private fun Routing.bindAdminUserRoutes(backend: Backend) {
             it.id
         }) { f ->
             backend.getUserUploadRecords(p.id, f)
+        }
+    }
+    AdminApi.Users.Id.Reactions.get(handleResult()) { q, p ->
+        q.pagination(pagingGenerator {
+            it.id
+        }) { f ->
+            backend.getUserReactions(p.id, f)
+        }
+    }
+    AdminApi.Users.Id.Comments.get(handleResult()) { q, p ->
+        q.pagination(IdentifiablePagingGenerator) { f ->
+            backend.getUserCommentedTopics(p.id, f)
         }
     }
 }

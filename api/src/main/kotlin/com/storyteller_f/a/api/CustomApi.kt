@@ -20,6 +20,7 @@ import com.storyteller_f.shared.model.PosterSearch
 import com.storyteller_f.shared.model.QuotaInfo
 import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.model.ReactionInfo
+import com.storyteller_f.shared.model.ReactionRecordInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TitleSearchType
@@ -402,6 +403,16 @@ object CustomApi {
         object Devices {
             val add = mutationEndpoint<Unit, NewDevice>("users/devices")
         }
+
+        object ReactionRecords {
+            val get = safeEndpointWithQuery<ServerResponse<ReactionRecordInfo>, PaginationQuery>(
+                "users/reaction-records"
+            )
+        }
+
+        object Comments {
+            val get = safeEndpointWithQuery<ServerResponse<TopicInfo>, PaginationQuery>("users/comments")
+        }
     }
 
     object Files {
@@ -596,6 +607,24 @@ object AdminApi {
                         PaginationQuery,
                         CommonPath>(
                         "/admin/users/{id}/upload-records"
+                    )
+            }
+
+            object Reactions {
+                val get =
+                    safeEndpointWithQueryAndPath<ServerResponse<ReactionRecordInfo>,
+                        PaginationQuery,
+                        CommonPath>(
+                        "/admin/users/{id}/reactions"
+                    )
+            }
+
+            object Comments {
+                val get =
+                    safeEndpointWithQueryAndPath<ServerResponse<TopicInfo>,
+                        PaginationQuery,
+                        CommonPath>(
+                        "/admin/users/{id}/comments"
                     )
             }
         }
