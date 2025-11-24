@@ -25,6 +25,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import com.storyteller_f.a.app.core.components.FileIcon
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.pagingItems
+import com.storyteller_f.a.app.core.components.safeArea
 import com.storyteller_f.a.panel.LocalPanelNav
 import com.storyteller_f.a.panel.Res
 import com.storyteller_f.a.panel.all_files
@@ -51,13 +52,7 @@ fun AllFilesPageInternal(viewModel: AllFilesViewModel) {
         ) }
     ) { paddingValues ->
         val direction = LocalLayoutDirection.current
-        Box(
-            Modifier.padding(
-                top = paddingValues.calculateTopPadding(),
-                start = paddingValues.calculateStartPadding(direction),
-                end = paddingValues.calculateEndPadding(direction)
-            )
-        ) {
+        Box(Modifier.safeArea(paddingValues, direction)) {
             StateView(viewModel) { items ->
                 LazyColumn {
                     pagingItems(items, key = { it.id }) { index ->

@@ -1,7 +1,10 @@
 package com.storyteller_f.a.app.compose_app.pages.user
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.HorizontalDivider
@@ -10,11 +13,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.compose_app.common.UserReactionRecordsViewModel
 import com.storyteller_f.a.app.compose_app.common.getUserReactionRecordsViewModel
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.pagingItems
+import com.storyteller_f.a.app.core.components.safeArea
 import com.storyteller_f.shared.model.ReactionRecordInfo
 
 @Composable
@@ -26,9 +32,10 @@ fun UserReactionRecordsPage() {
 @Composable
 fun UserReactionRecordsPageInternal(viewModel: UserReactionRecordsViewModel) {
     Scaffold { paddingValues ->
+        val layoutDirection = LocalLayoutDirection.current
         StateView(
             viewModel,
-            modifier = Modifier.padding(top = paddingValues.calculateTopPadding())
+            modifier = Modifier.safeArea(paddingValues, layoutDirection)
         ) { items ->
             LazyColumn {
                 pagingItems(items, {
@@ -41,6 +48,8 @@ fun UserReactionRecordsPageInternal(viewModel: UserReactionRecordsViewModel) {
         }
     }
 }
+
+
 
 @Composable
 fun UserReactionRecordCell(reactionRecordInfo: ReactionRecordInfo?) {
