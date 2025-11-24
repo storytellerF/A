@@ -86,6 +86,7 @@ import com.storyteller_f.a.app.core.components.CustomAlertDialog
 import com.storyteller_f.a.app.core.components.emitEvent
 import com.storyteller_f.a.app.core.components.rememberAlertDialogController
 import com.storyteller_f.a.app.core.components.request
+import com.storyteller_f.a.app.core.components.safeArea
 import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
@@ -201,13 +202,7 @@ private fun TopicComposeScaffold(
         })
     }) { paddingValues ->
         val direction = LocalLayoutDirection.current
-        Column(
-            modifier = Modifier.padding(
-                top = paddingValues.calculateTopPadding(),
-                start = paddingValues.calculateStartPadding(direction),
-                end = paddingValues.calculateRightPadding(direction)
-            )
-        ) {
+        Column(modifier = Modifier.safeArea(paddingValues, direction)) {
             TopicComposeInternal(input, mediaTarget, data) {
                 input = it
             }

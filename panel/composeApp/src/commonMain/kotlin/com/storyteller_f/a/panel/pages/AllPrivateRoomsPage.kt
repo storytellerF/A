@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.core.components.RoomIcon
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.pagingItems
+import com.storyteller_f.a.app.core.components.safeArea
 import com.storyteller_f.a.panel.LocalPanelNav
 import com.storyteller_f.a.panel.Res
 import com.storyteller_f.a.panel.all_private_rooms
@@ -50,13 +51,7 @@ fun AllPrivateRoomsPageInternal(viewModel: AllPrivateRoomsViewModel) {
         ) }
     ) { paddingValues ->
         val direction = LocalLayoutDirection.current
-        Box(
-            Modifier.padding(
-                top = paddingValues.calculateTopPadding(),
-                start = paddingValues.calculateStartPadding(direction),
-                end = paddingValues.calculateEndPadding(direction)
-            )
-        ) {
+        Box(Modifier.safeArea(paddingValues, direction)) {
             StateView(viewModel) { items ->
                 LazyColumn {
                     pagingItems(items, key = { it.id }) { index ->

@@ -2,6 +2,11 @@ package com.storyteller_f.a.app.core.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 
 object LayoutDefaults {
@@ -10,3 +15,12 @@ object LayoutDefaults {
     val pagingVerticalArrangement = Arrangement.spacedBy(10.dp)
     val pagingHorizontalArrangement = Arrangement.spacedBy(10.dp)
 }
+
+fun Modifier.safeArea(
+    paddingValues: PaddingValues,
+    layoutDirection: LayoutDirection
+): Modifier = padding(
+    top = paddingValues.calculateTopPadding(),
+    start = paddingValues.calculateStartPadding(layoutDirection),
+    end = paddingValues.calculateEndPadding(layoutDirection)
+)

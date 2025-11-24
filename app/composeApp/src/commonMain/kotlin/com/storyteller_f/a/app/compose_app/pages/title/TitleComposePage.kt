@@ -7,8 +7,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -79,6 +77,7 @@ import com.storyteller_f.a.app.compose_app.pages.user.UserRefCell
 import com.storyteller_f.a.app.core.components.BaseSheet
 import com.storyteller_f.a.app.core.components.emitEvent
 import com.storyteller_f.a.app.core.components.request
+import com.storyteller_f.a.app.core.components.safeArea
 import com.storyteller_f.a.client.core.createTitle
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.RoomInfo
@@ -158,11 +157,7 @@ fun CommonComposePage(onCheck: () -> Unit, content: @Composable () -> Unit) {
     }) { paddingValues ->
         val direction = LocalLayoutDirection.current
         Box(
-            Modifier.padding(
-                top = paddingValues.calculateTopPadding(),
-                start = paddingValues.calculateStartPadding(direction),
-                end = paddingValues.calculateEndPadding(direction)
-            ).fillMaxWidth(),
+            Modifier.safeArea(paddingValues, direction).fillMaxWidth(),
             contentAlignment = Alignment.TopCenter
         ) {
             content()

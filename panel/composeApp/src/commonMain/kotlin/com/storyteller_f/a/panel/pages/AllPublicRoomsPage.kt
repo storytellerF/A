@@ -1,12 +1,7 @@
-
-
 package com.storyteller_f.a.panel.pages
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
@@ -25,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.core.components.RoomIcon
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.pagingItems
+import com.storyteller_f.a.app.core.components.safeArea
 import com.storyteller_f.a.panel.LocalPanelNav
 import com.storyteller_f.a.panel.Res
 import com.storyteller_f.a.panel.all_public_rooms
@@ -44,19 +40,22 @@ fun AllPublicRoomsPage() {
 fun AllPublicRoomsPageInternal(viewModel: AllPublicRoomsViewModel) {
     val panelNav = LocalPanelNav.current
     Scaffold(
-        topBar = { TopAppBar(
-            title = { Text(stringResource(Res.string.all_public_rooms)) },
-            navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } }
-        ) }
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(Res.string.all_public_rooms)) },
+                navigationIcon = {
+                    IconButton({ panelNav.open() }) {
+                        Icon(
+                            Icons.Default.Menu,
+                            null
+                        )
+                    }
+                }
+            )
+        }
     ) { paddingValues ->
         val direction = LocalLayoutDirection.current
-        Box(
-            Modifier.padding(
-                top = paddingValues.calculateTopPadding(),
-                start = paddingValues.calculateStartPadding(direction),
-                end = paddingValues.calculateEndPadding(direction)
-            )
-        ) {
+        Box(Modifier.safeArea(paddingValues, direction)) {
             StateView(viewModel) { items ->
                 LazyColumn {
                     pagingItems(items, key = { it.id }) { index ->
