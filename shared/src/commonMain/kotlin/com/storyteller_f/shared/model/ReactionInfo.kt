@@ -16,10 +16,10 @@ data class ReactionInfo(
 
 @Serializable
 data class ReactionRecordInfo(
-    val id: PrimaryKey,
+    override val id: PrimaryKey,
     val emoji: String,
     val objectId: PrimaryKey,
     val objectType: ObjectType,
     val createdTime: LocalDateTime,
     val uid: PrimaryKey
-)
+) : PrimaryKeyIdentifiable

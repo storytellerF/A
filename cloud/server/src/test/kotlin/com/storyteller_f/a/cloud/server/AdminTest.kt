@@ -6,6 +6,7 @@ import com.storyteller_f.a.api.NewRoom
 import com.storyteller_f.a.api.NewTitle
 import com.storyteller_f.a.api.NewUser
 import com.storyteller_f.a.api.PaginationQuery
+import com.storyteller_f.a.client.core.addReaction
 import com.storyteller_f.a.client.core.addUser
 import com.storyteller_f.a.client.core.createCommunity
 import com.storyteller_f.a.client.core.createRoom
@@ -24,11 +25,14 @@ import com.storyteller_f.a.client.core.getRoomMembers
 import com.storyteller_f.a.client.core.getRoomMembersPublicKeys
 import com.storyteller_f.a.client.core.getTopicTopics
 import com.storyteller_f.a.client.core.getUserById
+import com.storyteller_f.a.client.core.getUserComments
 import com.storyteller_f.a.client.core.getUserFiles
 import com.storyteller_f.a.client.core.getUserInfo
 import com.storyteller_f.a.client.core.getUserJoinedCommunities
 import com.storyteller_f.a.client.core.getUserJoinedRooms
 import com.storyteller_f.a.client.core.getUserLogs
+import com.storyteller_f.a.client.core.getUserOverview
+import com.storyteller_f.a.client.core.getUserReactions
 import com.storyteller_f.a.client.core.getUserReceivedTitles
 import com.storyteller_f.a.client.core.getUserUploadRecords
 import com.storyteller_f.a.client.core.joinCommunity
@@ -523,6 +527,90 @@ class AdminTest {
             // Verify sub topic
             val subTopics = allTopics.filter { it.parentType == ObjectType.TOPIC }
             assertEquals(1, subTopics.size)
+        }
+    }
+
+    @Test
+    fun `admin get user reactions`() = test {
+        val outer = attachPanelSession()
+        val emoji1 = "😀"
+        val emoji2 = "👍"
+        val userTuple = attachSession {
+            // Create topics and add reactions
+            val topic1 = createTopic(ObjectType.USER, it.uid, "topic 1").getOrThrow()
+            val topic2 = createTopic(ObjectType.USER, it.uid, "topic 2").getOrThrow()
+
+            // Add reactions to different topics
+            addReaction(topic1.id, emoji1).getOrThrow()
+            addReaction(topic2.id, emoji2).getOrThrow()
+        }
+
+        loginPanelSession(outer) {
+            val reactions = getUserReactions(userTuple.uid, PaginationQuery()).getOrThrow().data
+            assertEquals(2, reactions.size)
+
+            // Verify reaction info
+            val emojis = reactions.map { it.emoji }.toSet()
+            kotlin.test.assertTrue(emojis.contains(emoji1))
+            kotlin.test.assertTrue(emojis.contains(emoji2))
+
+            // Verify all reactions belong to the user
+            reactions.forEach { reaction ->
+                assertEquals(userTuple.uid, reaction.uid)
+            }
+        }
+    }
+
+    @Test
+    fun `admin get user comments`() = test {
+        val outer = attachPanelSession()
+        val userTuple = attachSession {
+            // Create parent topics
+            val userTopic = createTopic(ObjectType.USER, it.uid, "user topic").getOrThrow()
+            val c = createCommunity(NewCommunity("c1", "c1")).getOrThrow()
+            val communityTopic = createTopic(ObjectType.COMMUNITY, c.id, "community topic").getOrThrow()
+
+            // Create sub topics (comments/replies to other topics)
+            createTopic(ObjectType.TOPIC, userTopic.id, "reply to user topic").getOrThrow()
+            createTopic(ObjectType.TOPIC, communityTopic.id, "reply to community topic").getOrThrow()
+            createTopic(ObjectType.TOPIC, userTopic.id, "another reply to user topic").getOrThrow()
+        }
+
+        loginPanelSession(outer) {
+            val comments = getUserComments(userTuple.uid, PaginationQuery()).getOrThrow().data
+            assertEquals(3, comments.size)
+
+            // Verify all comments are authored by the user
+            comments.forEach { comment ->
+                assertEquals(userTuple.uid, comment.author)
+            }
+
+            // Verify all are sub topics (comments)
+            comments.forEach { comment ->
+                assertEquals(ObjectType.TOPIC, comment.parentType)
+            }
+
+            // Verify different root types exist
+            val rootTypes = comments.map { it.rootType }.toSet()
+            kotlin.test.assertTrue(rootTypes.contains(ObjectType.USER))
+            kotlin.test.assertTrue(rootTypes.contains(ObjectType.COMMUNITY))
+        }
+    }
+
+    @Test
+    fun `admin user overview counts`() = test {
+        val outer = attachPanelSession()
+        val userTuple = attachSession {
+            val t1 = createTopic(ObjectType.USER, it.uid, "topic for counts").getOrThrow()
+            addReaction(t1.id, "😀").getOrThrow()
+            addReaction(t1.id, "👍").getOrThrow()
+            createTopic(ObjectType.TOPIC, t1.id, "reply 1").getOrThrow()
+            createTopic(ObjectType.TOPIC, t1.id, "reply 2").getOrThrow()
+        }
+        loginPanelSession(outer) {
+            val overview = getUserOverview(userTuple.uid).getOrThrow()
+            assertEquals(2, overview.reactionRecordCount)
+            assertEquals(2, overview.commentCount)
         }
     }
 }

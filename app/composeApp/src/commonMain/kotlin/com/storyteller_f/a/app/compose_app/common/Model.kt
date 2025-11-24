@@ -34,6 +34,7 @@ import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.a.client.core.SimpleLoadingHandler
 import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.getChildAccounts
+import com.storyteller_f.a.client.core.getComments
 import com.storyteller_f.a.client.core.getCommunityInfo
 import com.storyteller_f.a.client.core.getCommunityInfoByAid
 import com.storyteller_f.a.client.core.getFavorites
@@ -41,6 +42,7 @@ import com.storyteller_f.a.client.core.getFileInfo
 import com.storyteller_f.a.client.core.getMediaByName
 import com.storyteller_f.a.client.core.getMediaList
 import com.storyteller_f.a.client.core.getQuotaInfo
+import com.storyteller_f.a.client.core.getReactionRecords
 import com.storyteller_f.a.client.core.getReactions
 import com.storyteller_f.a.client.core.getRecommendTopics
 import com.storyteller_f.a.client.core.getRoomInfo
@@ -69,6 +71,7 @@ import com.storyteller_f.shared.model.PosterSearch
 import com.storyteller_f.shared.model.QuotaInfo
 import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.model.ReactionInfo
+import com.storyteller_f.shared.model.ReactionRecordInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TitleSearchType
@@ -103,6 +106,7 @@ import com.storyteller_f.storage.UploadCollection
 import com.storyteller_f.storage.UploadInfo
 import com.storyteller_f.storage.UserCollection
 import com.storyteller_f.storage.UserFavoriteStorage
+import com.storyteller_f.storage.UserReactionRecordCollection
 import com.storyteller_f.storage.UserSubscriptionStorage
 import com.storyteller_f.storage.WrappedPagingSource
 import com.storyteller_f.storage.getName
@@ -885,6 +889,58 @@ class SubscriptionsViewModel(
                 } else {
                     subscriptionInfo
                 }
+            }
+        }
+    }.flow.cachedIn(viewModelScope)
+}
+
+class UserReactionRecordsViewModel(
+    sessionManager: UserSessionManager,
+    modelStorage: ModelStorage
+) : PagingViewModel<ReactionRecordInfo>() {
+
+    val collection = UserReactionRecordCollection.UserReactionRecords(0)
+
+    @OptIn(ExperimentalPagingApi::class)
+    override val flow: Flow<PagingData<ReactionRecordInfo>> = buildPager(
+        collection,
+        collection.getName(),
+        modelStorage.remoteKey,
+        modelStorage.userReactionRecord,
+        RegularPagingSource { key, size ->
+            sessionManager.getReactionRecords(PaginationQuery(key, size = size))
+        },
+    ).flow.cachedIn(viewModelScope)
+}
+
+class UserCommentsViewModel(
+    sessionManager: UserSessionManager,
+    modelStorage: ModelStorage,
+    textStyle: TextStyle,
+    inlineCodeTextStyle: TextStyle,
+    density: Density,
+) : PagingViewModel<TopicInfo>() {
+
+    val collection = TopicCollection.UserComments(0)
+
+    @OptIn(ExperimentalPagingApi::class)
+    override val flow: Flow<PagingData<TopicInfo>> = buildPager(
+        collection,
+        collection.getName(),
+        modelStorage.remoteKey,
+        modelStorage.topic,
+        RegularPagingSource { key, size ->
+            sessionManager.getComments(PaginationQuery(key, size = size))
+        }
+    ) {
+        WrappedPagingSource(
+            CompatPagingSource(
+                modelStorage.topic.observeData(collection),
+                IntKeyConverter,
+            )
+        ) { list ->
+            processEncryptedTopic(list, sessionManager).map {
+                generateMathIfNeed(it, textStyle, inlineCodeTextStyle, density)
             }
         }
     }.flow.cachedIn(viewModelScope)

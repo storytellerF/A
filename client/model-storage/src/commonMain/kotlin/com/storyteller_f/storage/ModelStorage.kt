@@ -8,6 +8,7 @@ import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.MemberInfo
 import com.storyteller_f.shared.model.PanelOverview
 import com.storyteller_f.shared.model.ReactionInfo
+import com.storyteller_f.shared.model.ReactionRecordInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TitleSearchType
@@ -86,6 +87,8 @@ sealed interface TopicCollection {
 
     data object Recommend : TopicCollection
     data class TopicList(val objectId: PrimaryKey) : TopicCollection
+    data class TopicComments(val objectId: PrimaryKey) : TopicCollection
+    data class UserComments(val uid: PrimaryKey) : TopicCollection
     data object AllTopics : TopicCollection
 }
 
@@ -129,6 +132,10 @@ sealed interface ReactionCollection {
     data object Reactions : ReactionCollection
 
     data class ReactionList(val objectId: PrimaryKey) : ReactionCollection
+}
+
+sealed interface UserReactionRecordCollection {
+    data class UserReactionRecords(val uid: PrimaryKey) : UserReactionRecordCollection
 }
 
 data class UploadCollection(val objectId: PrimaryKey) {
@@ -183,6 +190,12 @@ fun ReactionCollection.getName(): String {
     }
 }
 
+fun UserReactionRecordCollection.getName(): String {
+    return when (this) {
+        is UserReactionRecordCollection.UserReactionRecords -> "user_reaction_records_$uid"
+    }
+}
+
 fun TopicCollection.getName(): String {
     return when (this) {
         is TopicCollection.SearchTopic -> "topics_${word}_$parentId"
@@ -190,6 +203,8 @@ fun TopicCollection.getName(): String {
         TopicCollection.Topics -> "topics"
         TopicCollection.Recommend -> "topics_recommend"
         TopicCollection.AllTopics -> "all_topics"
+        is TopicCollection.TopicComments -> "topic_comments_$objectId"
+        is TopicCollection.UserComments -> "user_comments"
     }
 }
 
@@ -241,6 +256,7 @@ interface ModelStorage {
     val userOverview: UserOverviewStorage
     val favorite: UserFavoriteStorage
     val subscription: UserSubscriptionStorage
+    val userReactionRecord: UserReactionRecordStorage
     val userLog: UserLogInfoStorage
     val uploadRecord: UploadRecordInfoStorage
 }
@@ -319,6 +335,8 @@ interface UserSubscriptionStorage : GlobalListStorageWithKey<UserSubscriptionInf
         const val COLLECTION_NAME = "user-subscription"
     }
 }
+
+interface UserReactionRecordStorage : CollectionListStorage<UserReactionRecordCollection, ReactionRecordInfo>
 
 interface UserLogInfoStorage : CollectionListStorage<UserLogCollection, UserLogInfo>
 

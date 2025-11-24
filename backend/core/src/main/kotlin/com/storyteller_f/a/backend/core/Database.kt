@@ -145,8 +145,18 @@ interface CombinedDatabase {
         val subscriptionCount = subscription.getUserSubscriptionCount(uid).getOrThrow()
         val favoriteCount = favorite.getUserFavoriteCount().getOrThrow()
         val childAccountCount = user.getChildAccountCount(uid)
+        val reactionRecordCount = reaction.getUserReactionRecordCount(uid).getOrThrow()
+        val commentCount = topic.getUserCommentCount(uid).getOrThrow()
         val rawUser = user.getRawUser(ObjectFetch.IdFetch(uid)).getOrThrow() ?: error("user not found")
-        RawUserOverview(subscriptionCount, favoriteCount, 0, childAccountCount, rawUser)
+        RawUserOverview(
+            subscriptionCount,
+            favoriteCount,
+            0,
+            childAccountCount,
+            reactionRecordCount,
+            commentCount,
+            rawUser
+        )
     }
 
     suspend fun processTopicToRawTopic(
@@ -305,6 +315,13 @@ interface TopicDatabase {
 
     suspend fun isUserCommented(uid: PrimaryKey, topicId: List<PrimaryKey>): Result<List<Long>>
 
+    suspend fun getUserCommentedTopicsPaginationResult(
+        uid: PrimaryKey,
+        primaryKeyFetch: PrimaryKeyFetch
+    ): Result<PaginationResult<Topic>>
+
+    suspend fun getUserCommentCount(uid: PrimaryKey): Result<Long>
+
     suspend fun getTopicContentFromByteArray(
         topics: List<Topic>,
         uid: PrimaryKey?,
@@ -417,6 +434,13 @@ interface ReactionDatabase {
         objectId: List<PrimaryKey>,
         emoji: String
     ): Result<List<Triple<Long, Long, PrimaryKey?>>>
+
+    suspend fun getUserReactionRecordsPaginationResult(
+        uid: PrimaryKey,
+        primaryKeyFetch: PrimaryKeyFetch
+    ): Result<PaginationResult<ReactionRecord>>
+
+    suspend fun getUserReactionRecordCount(uid: PrimaryKey): Result<Long>
 }
 
 interface TitleDatabase {

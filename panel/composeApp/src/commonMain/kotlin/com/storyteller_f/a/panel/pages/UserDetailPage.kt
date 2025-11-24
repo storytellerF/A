@@ -38,11 +38,14 @@ import com.storyteller_f.a.panel.LocalPanelNav
 import com.storyteller_f.a.panel.Res
 import com.storyteller_f.a.panel.common.createPanelJoinedCommunitiesViewModel
 import com.storyteller_f.a.panel.common.createPanelJoinedRoomsViewModel
+import com.storyteller_f.a.panel.common.createPanelUserCommentsViewModel
 import com.storyteller_f.a.panel.common.createPanelUserLogsViewModel
 import com.storyteller_f.a.panel.common.createPanelUserOverviewViewModel
+import com.storyteller_f.a.panel.common.createPanelUserReactionsViewModel
 import com.storyteller_f.a.panel.common.createPanelUserUploadRecordsViewModel
 import com.storyteller_f.a.panel.common.createPanelUserViewModel
 import com.storyteller_f.a.panel.components.InfoTable
+import com.storyteller_f.a.panel.components.TopicCell
 import com.storyteller_f.a.panel.file_progress
 import com.storyteller_f.a.panel.log_supporting
 import com.storyteller_f.a.panel.tab_basic_info
@@ -50,6 +53,8 @@ import com.storyteller_f.a.panel.tab_created_files
 import com.storyteller_f.a.panel.tab_joined_communities
 import com.storyteller_f.a.panel.tab_joined_rooms
 import com.storyteller_f.a.panel.tab_received_titles
+import com.storyteller_f.a.panel.tab_user_comments
+import com.storyteller_f.a.panel.tab_user_reactions
 import com.storyteller_f.a.panel.upload_records
 import com.storyteller_f.a.panel.user_detail_title
 import com.storyteller_f.a.panel.user_detail_title_with_info
@@ -130,7 +135,9 @@ private fun UserInfoTabs(uid: PrimaryKey) {
         stringResource(Res.string.tab_joined_rooms),
         stringResource(Res.string.tab_received_titles),
         stringResource(Res.string.tab_created_files),
-        stringResource(Res.string.upload_records)
+        stringResource(Res.string.upload_records),
+        stringResource(Res.string.tab_user_reactions),
+        stringResource(Res.string.tab_user_comments)
     )
     val pagerState = rememberPagerState { tabs.size }
     val scope = rememberCoroutineScope()
@@ -140,18 +147,20 @@ private fun UserInfoTabs(uid: PrimaryKey) {
                 Tab(selected = pagerState.currentPage == i, onClick = {
                     scope.launch { pagerState.scrollToPage(i) }
                 }) {
-                    Text(label, modifier = Modifier.padding(vertical = 12.dp))
+                    Text(label, modifier = Modifier.padding(vertical = 12.dp, horizontal = 16.dp))
                 }
             }
         }
         HorizontalPager(pagerState, modifier = Modifier.weight(1f)) { index ->
             when (index) {
-                0 -> UserBasicInfoSectionVM(uid)
+                0 -> UserBasicInfoSection(uid)
                 1 -> UserJoinedCommunitiesSection(uid)
                 2 -> UserJoinedRoomsSection(uid)
                 3 -> UserReceivedTitlesSection(uid)
                 4 -> UserCreatedFilesSection(uid)
-                else -> UserUploadRecordsSection(uid)
+                5 -> UserUploadRecordsSection(uid)
+                6 -> UserReactionsSection(uid)
+                else -> UserCommentsSection(uid)
             }
         }
     }
@@ -338,7 +347,7 @@ private fun UserLogsTab(uid: PrimaryKey) {
 }
 
 @Composable
-private fun UserBasicInfoSectionVM(uid: PrimaryKey) {
+private fun UserBasicInfoSection(uid: PrimaryKey) {
     val vm = createPanelUserOverviewViewModel(uid)
     StateView(vm.handler, modifier = Modifier.fillMaxSize()) { overview ->
         val items = buildList {
@@ -349,8 +358,54 @@ private fun UserBasicInfoSectionVM(uid: PrimaryKey) {
             add("favoriteCount" to overview.favoriteCount.toString())
             add("subscriptionCount" to overview.subscriptionCount.toString())
             add("acg" to overview.acg.toString())
+            add("reactionRecordCount" to overview.reactionRecordCount.toString())
+            add("commentCount" to overview.commentCount.toString())
             add("childAccountCount" to overview.childAccountCount.toString())
         }
         InfoTable(items, Modifier.padding(16.dp))
+    }
+}
+
+@Composable
+private fun UserReactionsSection(uid: PrimaryKey) {
+    val vm = createPanelUserReactionsViewModel(uid)
+    StateView(vm, modifier = Modifier.fillMaxSize()) { items ->
+        LazyColumn {
+            pagingItems(items, key = { it.id }) { index ->
+                val info = items[index]
+                if (info != null) {
+                    val panelNav = LocalPanelNav.current
+                    ListItem(
+                        headlineContent = { Text("${info.emoji} • Topic ${info.objectId}") },
+                        supportingContent = { Text("${info.objectType} • ${info.createdTime}") },
+                        modifier = Modifier.clickable { panelNav.gotoTopicDetail(info.objectId) }
+                    )
+                    HorizontalDivider()
+                } else {
+                    ListItem(headlineContent = { Text("") })
+                    HorizontalDivider()
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun UserCommentsSection(uid: PrimaryKey) {
+    val vm = createPanelUserCommentsViewModel(uid)
+    StateView(vm, modifier = Modifier.fillMaxSize()) { items ->
+        LazyColumn {
+            pagingItems(items, key = { it.id }) { index ->
+                val info = items[index]
+                if (info != null) {
+                    val panelNav = LocalPanelNav.current
+                    TopicCell(info, panelNav)
+                    HorizontalDivider()
+                } else {
+                    ListItem(headlineContent = { Text("") })
+                    HorizontalDivider()
+                }
+            }
+        }
     }
 }

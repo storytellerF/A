@@ -10,8 +10,10 @@ import com.storyteller_f.a.cloud.core.service.addSubscription
 import com.storyteller_f.a.cloud.core.service.deleteFavorite
 import com.storyteller_f.a.cloud.core.service.getFavorites
 import com.storyteller_f.a.cloud.core.service.getTopicsByParentId
+import com.storyteller_f.a.cloud.core.service.getUserCommentedTopics
 import com.storyteller_f.a.cloud.core.service.getUserInfo
 import com.storyteller_f.a.cloud.core.service.getUserOverview
+import com.storyteller_f.a.cloud.core.service.getUserReactions
 import com.storyteller_f.a.cloud.core.service.getUserSubscriptions
 import com.storyteller_f.a.cloud.core.service.getUserTitles
 import com.storyteller_f.a.cloud.core.service.removeSubscription
@@ -22,7 +24,6 @@ import com.storyteller_f.a.cloud.server.auth.usePrincipal
 import com.storyteller_f.a.cloud.server.auth.usePrincipalOrNull
 import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.cloud.server.common.pagination
-import com.storyteller_f.a.cloud.server.common.pagingGenerator
 import com.storyteller_f.endpoint4k.ktor.server.invoke
 import com.storyteller_f.endpoint4k.ktor.server.receiveBody
 import com.storyteller_f.shared.type.ObjectType
@@ -57,9 +58,7 @@ fun Route.bindProtectedUserRoute(backend: Backend) {
     }
     CustomApi.Favorites.get(handleResult()) { q ->
         usePrincipal { uid ->
-            q.pagination(pagingGenerator {
-                it.id
-            }) { fetch ->
+            q.pagination(IdentifiablePagingGenerator) { fetch ->
                 backend.getFavorites(uid, fetch)
             }
         }
@@ -67,6 +66,20 @@ fun Route.bindProtectedUserRoute(backend: Backend) {
     CustomApi.Users.overview(handleResult()) {
         usePrincipal { uid ->
             backend.getUserOverview(uid)
+        }
+    }
+    CustomApi.Users.ReactionRecords.get(handleResult()) { q ->
+        usePrincipal { uid ->
+            q.pagination(IdentifiablePagingGenerator) { fetch ->
+                backend.getUserReactions(uid, fetch)
+            }
+        }
+    }
+    CustomApi.Users.Comments.get(handleResult()) { q ->
+        usePrincipal { uid ->
+            q.pagination(IdentifiablePagingGenerator) { fetch ->
+                backend.getUserCommentedTopics(uid, fetch)
+            }
         }
     }
 }
@@ -86,9 +99,7 @@ fun Route.bindProtectedUserSubscriptionRoute(backend: Backend) {
 
     CustomApi.Subscriptions.get(handleResult()) { q ->
         usePrincipal { uid ->
-            q.pagination(pagingGenerator {
-                it.id
-            }) { fetch ->
+            q.pagination(IdentifiablePagingGenerator) { fetch ->
                 backend.getUserSubscriptions(uid, fetch)
             }
         }

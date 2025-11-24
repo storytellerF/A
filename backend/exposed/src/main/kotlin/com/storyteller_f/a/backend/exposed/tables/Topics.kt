@@ -19,6 +19,10 @@ object Topics : BaseTable() {
     val content = blob("content")
     val isEncrypted = bool("is_encrypted")
     val level = integer("level")
+
+    init {
+        index("user_comments", false, author, parentType)
+    }
 }
 
 fun Topic.Companion.wrapRow(row: ResultRow): Topic {

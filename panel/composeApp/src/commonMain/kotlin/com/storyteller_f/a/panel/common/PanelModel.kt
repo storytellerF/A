@@ -27,11 +27,13 @@ import com.storyteller_f.a.client.core.getTitleById
 import com.storyteller_f.a.client.core.getTopicById
 import com.storyteller_f.a.client.core.getTopicTopics
 import com.storyteller_f.a.client.core.getUserById
+import com.storyteller_f.a.client.core.getUserComments
 import com.storyteller_f.a.client.core.getUserFiles
 import com.storyteller_f.a.client.core.getUserJoinedCommunities
 import com.storyteller_f.a.client.core.getUserJoinedRooms
 import com.storyteller_f.a.client.core.getUserLogs
 import com.storyteller_f.a.client.core.getUserOverview
+import com.storyteller_f.a.client.core.getUserReactions
 import com.storyteller_f.a.client.core.getUserReceivedTitles
 import com.storyteller_f.a.client.core.getUserUploadRecords
 import com.storyteller_f.a.client.core.overview
@@ -40,6 +42,7 @@ import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.MemberInfo
 import com.storyteller_f.shared.model.PanelOverview
+import com.storyteller_f.shared.model.ReactionRecordInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TitleSearchType
@@ -58,6 +61,7 @@ import com.storyteller_f.storage.RoomCollection
 import com.storyteller_f.storage.TitleCollection
 import com.storyteller_f.storage.TopicCollection
 import com.storyteller_f.storage.UserCollection
+import com.storyteller_f.storage.UserReactionRecordCollection
 import com.storyteller_f.storage.getName
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -454,6 +458,42 @@ class UserUploadRecordsViewModel(
         modelStorage.uploadRecord
     ) { key, size ->
         sessionManager.getUserUploadRecords(uid, PaginationQuery(key, size = size))
+    }.flow.cachedIn(viewModelScope)
+}
+
+class UserReactionsViewModel(
+    sessionManager: PanelSessionManager,
+    modelStorage: ModelStorage,
+    uid: PrimaryKey,
+) : PagingViewModel<ReactionRecordInfo>() {
+    private val modelCollection = UserReactionRecordCollection.UserReactionRecords(uid)
+
+    @OptIn(ExperimentalPagingApi::class)
+    override val flow: Flow<PagingData<ReactionRecordInfo>> = buildPager(
+        modelCollection,
+        modelCollection.getName(),
+        modelStorage.remoteKey,
+        modelStorage.userReactionRecord
+    ) { key, size ->
+        sessionManager.getUserReactions(uid, PaginationQuery(key, size = size))
+    }.flow.cachedIn(viewModelScope)
+}
+
+class UserCommentsViewModel(
+    sessionManager: PanelSessionManager,
+    modelStorage: ModelStorage,
+    uid: PrimaryKey,
+) : PagingViewModel<TopicInfo>() {
+    private val modelCollection = TopicCollection.UserComments(uid)
+
+    @OptIn(ExperimentalPagingApi::class)
+    override val flow: Flow<PagingData<TopicInfo>> = buildPager(
+        modelCollection,
+        modelCollection.getName(),
+        modelStorage.remoteKey,
+        modelStorage.topic
+    ) { key, size ->
+        sessionManager.getUserComments(uid, PaginationQuery(key, size = size))
     }.flow.cachedIn(viewModelScope)
 }
 

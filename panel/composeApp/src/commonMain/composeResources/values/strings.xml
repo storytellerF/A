@@ -64,4 +64,6 @@
     <string name="tab_members">Members</string>
     <string name="tab_files">Files</string>
     <string name="tab_topics">Topics</string>
+    <string name="tab_user_reactions">User reactions</string>
+    <string name="tab_user_comments">User comments</string>
 </resources>

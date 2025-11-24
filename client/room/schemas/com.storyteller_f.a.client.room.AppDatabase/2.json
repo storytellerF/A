@@ -1,0 +1,280 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 2,
+    "identityHash": "f5070e3719bcbca504630ac53e9ed7c5",
+    "entities": [
+      {
+        "tableName": "CommonEntity",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `collection` TEXT NOT NULL, `data` TEXT NOT NULL, PRIMARY KEY(`collection`, `id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "collection",
+            "columnName": "collection",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "data",
+            "columnName": "data",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "collection",
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "CommunityEntity",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `collection` TEXT NOT NULL, `data` TEXT NOT NULL, `hasPoster` INTEGER NOT NULL, PRIMARY KEY(`collection`, `id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "collection",
+            "columnName": "collection",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "data",
+            "columnName": "data",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "hasPoster",
+            "columnName": "hasPoster",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "collection",
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_CommunityEntity_collection_hasPoster_id",
+            "unique": false,
+            "columnNames": [
+              "collection",
+              "hasPoster",
+              "id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_CommunityEntity_collection_hasPoster_id` ON `${TABLE_NAME}` (`collection`, `hasPoster`, `id`)"
+          }
+        ]
+      },
+      {
+        "tableName": "TopicEntity",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `collection` TEXT NOT NULL, `data` TEXT NOT NULL, `isPinned` INTEGER NOT NULL, PRIMARY KEY(`collection`, `id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "collection",
+            "columnName": "collection",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "data",
+            "columnName": "data",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isPinned",
+            "columnName": "isPinned",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "collection",
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_TopicEntity_collection_isPinned_id",
+            "unique": false,
+            "columnNames": [
+              "collection",
+              "isPinned",
+              "id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_TopicEntity_collection_isPinned_id` ON `${TABLE_NAME}` (`collection`, `isPinned`, `id`)"
+          }
+        ]
+      },
+      {
+        "tableName": "ReactionEntity",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `collection` TEXT NOT NULL, `data` TEXT NOT NULL, `count` INTEGER NOT NULL, `lastReactionId` INTEGER NOT NULL, PRIMARY KEY(`collection`, `id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "collection",
+            "columnName": "collection",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "data",
+            "columnName": "data",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "count",
+            "columnName": "count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastReactionId",
+            "columnName": "lastReactionId",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "collection",
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_ReactionEntity_collection_count_lastReactionId",
+            "unique": false,
+            "columnNames": [
+              "collection",
+              "count",
+              "lastReactionId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_ReactionEntity_collection_count_lastReactionId` ON `${TABLE_NAME}` (`collection`, `count`, `lastReactionId`)"
+          }
+        ]
+      },
+      {
+        "tableName": "ReactionRecordEntity",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `collection` TEXT NOT NULL, `data` TEXT NOT NULL, PRIMARY KEY(`collection`, `id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "collection",
+            "columnName": "collection",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "data",
+            "columnName": "data",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "collection",
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "UploadEntity",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `collection` TEXT NOT NULL, `data` TEXT NOT NULL, `pathHash` TEXT NOT NULL, PRIMARY KEY(`collection`, `id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "collection",
+            "columnName": "collection",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "data",
+            "columnName": "data",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pathHash",
+            "columnName": "pathHash",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "collection",
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_UploadEntity_collection_pathHash",
+            "unique": true,
+            "columnNames": [
+              "collection",
+              "pathHash"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_UploadEntity_collection_pathHash` ON `${TABLE_NAME}` (`collection`, `pathHash`)"
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'f5070e3719bcbca504630ac53e9ed7c5')"
+    ]
+  }
+}

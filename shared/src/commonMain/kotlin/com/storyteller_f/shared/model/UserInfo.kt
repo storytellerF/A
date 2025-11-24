@@ -30,6 +30,8 @@ data class UserOverview(
     val favoriteCount: Long,
     val acg: Long,
     val childAccountCount: Long,
+    val reactionRecordCount: Long,
+    val commentCount: Long,
     val userInfo: UserInfo
 )
 

@@ -5,5 +5,7 @@ data class RawUserOverview(
     val favoriteCount: Long,
     val acg: Long,
     val childAccountCount: Long,
+    val reactionRecordCount: Long,
+    val commentCount: Long,
     val rawUser: RawUser
 )

@@ -40,8 +40,10 @@ import com.storyteller_f.a.app.compose_app.pages.topic.TopicComposePage
 import com.storyteller_f.a.app.compose_app.pages.topic.TopicPage
 import com.storyteller_f.a.app.compose_app.pages.user.LoginPage
 import com.storyteller_f.a.app.compose_app.pages.user.MemberPage
+import com.storyteller_f.a.app.compose_app.pages.user.UserCommentsPage
 import com.storyteller_f.a.app.compose_app.pages.user.UserFavoritePage
 import com.storyteller_f.a.app.compose_app.pages.user.UserPage
+import com.storyteller_f.a.app.compose_app.pages.user.UserReactionRecordsPage
 import com.storyteller_f.a.app.compose_app.pages.user.UserSettingPage
 import com.storyteller_f.a.app.compose_app.pages.user.UserSubscriptionPage
 import com.storyteller_f.a.app.compose_app.utils.getDeepLinkHost
@@ -167,6 +169,12 @@ data object FavoriteScreen
 data object SubscriptionScreen
 
 @Serializable
+data object UserReactionRecordsScreen
+
+@Serializable
+data object UserCommentsScreen
+
+@Serializable
 data object FileExplorerScreen
 
 @Serializable
@@ -243,6 +251,10 @@ interface AppNav {
     fun gotoFavoritePage()
 
     fun gotoSubscriptionPage()
+
+    fun gotoUserReactionRecordsPage()
+
+    fun gotoUserCommentsPage()
 
     fun gotoFileExplorer(objectTuple: ObjectTuple? = null)
 }
@@ -418,6 +430,14 @@ fun newAppNav(navigator: NavHostController, scope: CoroutineScope) = object : Ap
         navigator.navigate(SubscriptionScreen)
     }
 
+    override fun gotoUserReactionRecordsPage() {
+        navigator.navigate(UserReactionRecordsScreen)
+    }
+
+    override fun gotoUserCommentsPage() {
+        navigator.navigate(UserCommentsScreen)
+    }
+
     override fun gotoFileExplorer(objectTuple: ObjectTuple?) {
         if (objectTuple == null) {
             navigator.navigate(FileExplorerScreen)
@@ -438,6 +458,7 @@ fun NavGraphBuilder.buildRootNav(
     buildMainScreen()
     buildSettingsScreen()
     buildComposeScreen(navigator)
+    buildFileExplorerScreen()
     composable<AboutScreen> {
         val libraries by produceLibraries {
             io.github.windedge.table.res.Res.readBytes("files/aboutlibraries.json").decodeToString()
@@ -507,6 +528,15 @@ private fun NavGraphBuilder.buildMainScreen() {
     composable<SubscriptionScreen> {
         UserSubscriptionPage()
     }
+    composable<UserReactionRecordsScreen> {
+        UserReactionRecordsPage()
+    }
+    composable<UserCommentsScreen> {
+        UserCommentsPage()
+    }
+}
+
+private fun NavGraphBuilder.buildFileExplorerScreen() {
     composable<FileExplorerScreen> {
         val id = LocalUserInfo.current?.id ?: return@composable
         FileExplorerPage(mediaTarget = id ob ObjectType.USER)
