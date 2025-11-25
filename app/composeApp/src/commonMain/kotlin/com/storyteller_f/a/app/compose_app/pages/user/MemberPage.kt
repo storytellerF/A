@@ -29,7 +29,6 @@ import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.common.ContainerMemberViewModel
 import com.storyteller_f.a.app.compose_app.common.UserSearchViewModel
 import com.storyteller_f.a.app.compose_app.common.createMemberViewModel
-import com.storyteller_f.a.app.compose_app.components.UserCell
 import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
 import com.storyteller_f.a.app.core.components.LayoutDefaults

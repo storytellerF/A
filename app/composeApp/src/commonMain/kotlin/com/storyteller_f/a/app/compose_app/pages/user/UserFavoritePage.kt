@@ -7,7 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.storyteller_f.a.app.compose_app.common.FavoritesViewModel
 import com.storyteller_f.a.app.compose_app.common.getFavoriteViewModel
-import com.storyteller_f.a.app.compose_app.components.TopicCell
+import com.storyteller_f.a.app.compose_app.pages.topic.TopicCell
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.pagingItems
 import com.storyteller_f.shared.model.TopicContent

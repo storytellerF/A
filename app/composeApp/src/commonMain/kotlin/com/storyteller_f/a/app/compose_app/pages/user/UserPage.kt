@@ -37,12 +37,12 @@ import com.storyteller_f.a.app.compose_app.common.createUserTitlesViewModel
 import com.storyteller_f.a.app.compose_app.common.createUserTopicsViewModel
 import com.storyteller_f.a.app.compose_app.common.createUserViewModel
 import com.storyteller_f.a.app.compose_app.communities_title
-import com.storyteller_f.a.app.compose_app.components.UserTopicList
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityList
 import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
 import com.storyteller_f.a.app.compose_app.pages.title.TitleList
 import com.storyteller_f.a.app.compose_app.pages.topic.TopicComposeData
+import com.storyteller_f.a.app.compose_app.pages.topic.UserTopicList
 import com.storyteller_f.a.app.compose_app.rooms
 import com.storyteller_f.a.app.compose_app.titles
 import com.storyteller_f.a.app.compose_app.topics

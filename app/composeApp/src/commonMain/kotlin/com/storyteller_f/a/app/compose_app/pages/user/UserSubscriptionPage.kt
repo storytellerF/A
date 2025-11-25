@@ -17,7 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.compose_app.common.SubscriptionsViewModel
 import com.storyteller_f.a.app.compose_app.common.getSubscriptionViewModel
-import com.storyteller_f.a.app.compose_app.components.TopicCell
+import com.storyteller_f.a.app.compose_app.pages.topic.TopicCell
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.pagingItems
 import com.storyteller_f.shared.model.TopicContent

@@ -1,4 +1,4 @@
-package com.storyteller_f.a.app.compose_app.components
+package com.storyteller_f.a.app.compose_app.pages.topic
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues

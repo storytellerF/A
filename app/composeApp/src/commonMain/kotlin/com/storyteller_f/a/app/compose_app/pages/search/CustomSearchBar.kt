@@ -53,7 +53,6 @@ import com.storyteller_f.a.app.compose_app.common.createTopicSearchInTopicViewMo
 import com.storyteller_f.a.app.compose_app.common.createTopicSearchInUserViewModel
 import com.storyteller_f.a.app.compose_app.common.createTopicSearchViewModel
 import com.storyteller_f.a.app.compose_app.common.getUserOverviewViewModel
-import com.storyteller_f.a.app.compose_app.components.TopicList
 import com.storyteller_f.a.app.compose_app.input_search_community
 import com.storyteller_f.a.app.compose_app.input_search_members
 import com.storyteller_f.a.app.compose_app.input_search_room
@@ -64,6 +63,7 @@ import com.storyteller_f.a.app.compose_app.input_search_user_received_titles
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityList
 import com.storyteller_f.a.app.compose_app.pages.room.RoomList
 import com.storyteller_f.a.app.compose_app.pages.title.ComposeMenu
+import com.storyteller_f.a.app.compose_app.pages.topic.TopicList
 import com.storyteller_f.a.app.compose_app.pages.user.MemberList
 import com.storyteller_f.a.app.compose_app.pages.user.SelfUserIconWithDialog
 import com.storyteller_f.a.app.compose_app.utils.appPlatform

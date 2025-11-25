@@ -1,4 +1,4 @@
-package com.storyteller_f.a.app.compose_app.components
+package com.storyteller_f.a.app.compose_app.pages.user
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,7 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.storyteller_f.a.app.compose_app.pages.user.UserIconWithDialog
 import com.storyteller_f.a.app.core.CoreStrings
 import com.storyteller_f.shared.model.UserInfo
 
