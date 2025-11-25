@@ -8,7 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import com.storyteller_f.a.app.compose_app.common.UserCommentsViewModel
 import com.storyteller_f.a.app.compose_app.common.getUserCommentsViewModel
-import com.storyteller_f.a.app.compose_app.components.TopicCell
+import com.storyteller_f.a.app.compose_app.pages.topic.TopicCell
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.pagingItems
 import com.storyteller_f.a.app.core.components.safeArea

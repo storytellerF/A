@@ -56,7 +56,6 @@ import com.storyteller_f.a.app.compose_app.LocalUiViewModel
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.common.createWorldViewModel
 import com.storyteller_f.a.app.compose_app.communities
-import com.storyteller_f.a.app.compose_app.components.TopicList
 import com.storyteller_f.a.app.compose_app.design_spec
 import com.storyteller_f.a.app.compose_app.download_latest_app
 import com.storyteller_f.a.app.compose_app.open_source_libraries
@@ -64,6 +63,7 @@ import com.storyteller_f.a.app.compose_app.pages.community.MyCommunitiesPage
 import com.storyteller_f.a.app.compose_app.pages.room.MyRoomsPage
 import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
+import com.storyteller_f.a.app.compose_app.pages.topic.TopicList
 import com.storyteller_f.a.app.compose_app.rooms
 import com.storyteller_f.a.app.compose_app.world
 import com.storyteller_f.a.app.core.components.ButtonNav

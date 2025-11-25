@@ -82,7 +82,6 @@ import com.storyteller_f.a.app.compose_app.common.createRoomKeysViewModel
 import com.storyteller_f.a.app.compose_app.common.createRoomTopicsViewModel
 import com.storyteller_f.a.app.compose_app.common.createRoomViewModel
 import com.storyteller_f.a.app.compose_app.common.hasRouteFlow
-import com.storyteller_f.a.app.compose_app.components.RoomTopicList
 import com.storyteller_f.a.app.compose_app.error
 import com.storyteller_f.a.app.compose_app.exclamation_mark
 import com.storyteller_f.a.app.compose_app.exit_room
@@ -96,6 +95,7 @@ import com.storyteller_f.a.app.compose_app.pages.community.CommunityRefCell
 import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
 import com.storyteller_f.a.app.compose_app.pages.topic.FilePicker
+import com.storyteller_f.a.app.compose_app.pages.topic.RoomTopicList
 import com.storyteller_f.a.app.compose_app.pages.topic.TopicComposeData
 import com.storyteller_f.a.app.compose_app.pages.topic.insertContent
 import com.storyteller_f.a.app.compose_app.pages.user.ButtonBadgeSuffix

@@ -46,8 +46,8 @@ import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.audio_recorder
 import com.storyteller_f.a.app.compose_app.common.OnMediaUploaded
 import com.storyteller_f.a.app.compose_app.common.createMediaListViewModel
-import com.storyteller_f.a.app.compose_app.components.FileCell
 import com.storyteller_f.a.app.compose_app.files
+import com.storyteller_f.a.app.compose_app.pages.file.FileCell
 import com.storyteller_f.a.app.compose_app.provide_permission
 import com.storyteller_f.a.app.compose_app.start_record
 import com.storyteller_f.a.app.compose_app.stop_record

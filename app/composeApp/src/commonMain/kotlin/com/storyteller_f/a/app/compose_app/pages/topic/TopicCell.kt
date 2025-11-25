@@ -1,4 +1,4 @@
-package com.storyteller_f.a.app.compose_app.components
+package com.storyteller_f.a.app.compose_app.pages.topic
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -32,10 +32,11 @@ import com.storyteller_f.a.app.compose_app.LocalGlobalDialog
 import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.add_reaction
 import com.storyteller_f.a.app.compose_app.common.OnTopicChanged
+import com.storyteller_f.a.app.compose_app.components.AppTopicContentView
+import com.storyteller_f.a.app.compose_app.components.InteractionRow
 import com.storyteller_f.a.app.compose_app.invalid_content
 import com.storyteller_f.a.app.compose_app.is_pinned
-import com.storyteller_f.a.app.compose_app.pages.topic.EmojiPicker
-import com.storyteller_f.a.app.compose_app.pages.topic.pinOrUnpinTopic
+import com.storyteller_f.a.app.compose_app.pages.user.UserCell
 import com.storyteller_f.a.app.compose_app.pages.user.UserIconWithDialog
 import com.storyteller_f.a.app.compose_app.pin
 import com.storyteller_f.a.app.compose_app.topic_menu

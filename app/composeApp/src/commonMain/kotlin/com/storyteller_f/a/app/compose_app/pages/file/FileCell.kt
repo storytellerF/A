@@ -1,4 +1,4 @@
-package com.storyteller_f.a.app.compose_app.components
+package com.storyteller_f.a.app.compose_app.pages.file
 
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column

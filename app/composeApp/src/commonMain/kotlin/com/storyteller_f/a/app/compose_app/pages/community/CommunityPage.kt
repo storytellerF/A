@@ -67,7 +67,6 @@ import com.storyteller_f.a.app.compose_app.common.createCommunityViewModel
 import com.storyteller_f.a.app.compose_app.common.getDownloadViewModel
 import com.storyteller_f.a.app.compose_app.common.hasRouteFlow
 import com.storyteller_f.a.app.compose_app.components.FontView
-import com.storyteller_f.a.app.compose_app.components.TopicList
 import com.storyteller_f.a.app.compose_app.exit_community
 import com.storyteller_f.a.app.compose_app.join_community
 import com.storyteller_f.a.app.compose_app.join_community_prompt
@@ -75,6 +74,7 @@ import com.storyteller_f.a.app.compose_app.pages.room.RoomList
 import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
 import com.storyteller_f.a.app.compose_app.pages.topic.TopicComposeData
+import com.storyteller_f.a.app.compose_app.pages.topic.TopicList
 import com.storyteller_f.a.app.compose_app.pages.user.ButtonBadgeSuffix
 import com.storyteller_f.a.app.compose_app.permission_denied
 import com.storyteller_f.a.app.compose_app.rooms
