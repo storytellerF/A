@@ -41,6 +41,7 @@
     <string name="input_search_topics_and_users">Input to search topics/users</string>
     <string name="input_search_user_received_titles">Input to search received titles</string>
     <string name="input_search_user_created_titles">Input to search received titles</string>
+    <string name="input_search_files">Input to search files</string>
     <string name="refresh">Refresh</string>
     <string name="no_content_yet">No content yet ┑(￣Д ￣)┍</string>
     <string name="copy">Copy</string>
@@ -117,6 +118,7 @@
     <string name="audio_content_description">audio</string>
     <string name="video_content_description">video</string>
     <string name="file_content_description">file</string>
+    <string name="file_refs">File References</string>
     
     <!-- ComposePage strings -->
     <string name="name">name</string>

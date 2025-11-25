@@ -32,6 +32,7 @@ import com.storyteller_f.a.app.compose_app.Res
 import com.storyteller_f.a.app.compose_app.audio_content_description
 import com.storyteller_f.a.app.compose_app.copy_name
 import com.storyteller_f.a.app.compose_app.file_content_description
+import com.storyteller_f.a.app.compose_app.file_refs
 import com.storyteller_f.a.app.compose_app.image_dimension
 import com.storyteller_f.a.app.compose_app.video_content_description
 import com.storyteller_f.a.app.compose_app.view
@@ -124,6 +125,16 @@ fun FileCellMenu(expanded: Boolean, updateExpanded: (Boolean) -> Unit, fileInfo:
                 scope.launch {
                     clipboardManager.setText(fileInfo.name)
                 }
+            }
+        )
+        DropdownMenuItem(
+            leadingIcon = {
+                CustomIcon(IconRes.Vector(Icons.Default.AttachFile))
+            },
+            text = { Text(stringResource(Res.string.file_refs)) },
+            onClick = {
+                updateExpanded(false)
+                appNavFactory.newAppNav().gotoFileRefs(fileInfo.id)
             }
         )
     }

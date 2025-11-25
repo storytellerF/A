@@ -17,6 +17,7 @@ import com.storyteller_f.a.cloud.core.service.initChunkUpload
 import com.storyteller_f.a.cloud.core.service.newFileName
 import com.storyteller_f.a.cloud.core.service.tryCopyFile
 import com.storyteller_f.a.cloud.core.service.tryUploadFiles
+import com.storyteller_f.a.cloud.core.service.uncheckedGetFileRefsByFileId
 import com.storyteller_f.a.cloud.server.auth.handleResult
 import com.storyteller_f.a.cloud.server.auth.usePrincipal
 import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
@@ -97,6 +98,14 @@ fun Route.bindProtectedMediaRoute(backend: Backend) {
     CustomApi.Files.Id.copy(handleResult()) { p, _ ->
         usePrincipal { uid ->
             backend.tryCopyFile(p, uid)
+        }
+    }
+
+    CustomApi.Files.Id.Refs.get(handleResult()) { q, p ->
+        usePrincipal { _ ->
+            q.pagination(IdentifiablePagingGenerator) { f ->
+                backend.uncheckedGetFileRefsByFileId(p.id, f)
+            }
         }
     }
 }

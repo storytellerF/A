@@ -378,7 +378,7 @@ suspend fun UserSessionManager.signOut() = serviceCatching {
     CustomApi.Accounts.signOut(Unit) {}
 }
 
-suspend fun UserSessionManager.getMediaList(
+suspend fun UserSessionManager.getFileList(
     objectId: PrimaryKey,
     objectType: ObjectType,
     nextId: String?,
@@ -405,6 +405,16 @@ suspend fun UserSessionManager.getMediaByName(
             objectId,
             objectType
         )
+    )
+}
+
+suspend fun UserSessionManager.getFileRefs(
+    fileId: PrimaryKey,
+    query: PaginationQuery
+) = serviceCatching {
+    CustomApi.Files.Id.Refs.get(
+        query,
+        CommonPath(fileId)
     )
 }
 

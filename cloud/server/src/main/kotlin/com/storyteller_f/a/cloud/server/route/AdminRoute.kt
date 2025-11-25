@@ -17,7 +17,6 @@ import com.storyteller_f.a.cloud.core.service.getCommunity
 import com.storyteller_f.a.cloud.core.service.getCommunityMemberInfos
 import com.storyteller_f.a.cloud.core.service.getFileInfoById
 import com.storyteller_f.a.cloud.core.service.getFileInfoPaginationResult
-import com.storyteller_f.a.cloud.core.service.getFileRefsByFileId
 import com.storyteller_f.a.cloud.core.service.getOverview
 import com.storyteller_f.a.cloud.core.service.getRoomInfo
 import com.storyteller_f.a.cloud.core.service.getRoomMemberInfos
@@ -33,6 +32,7 @@ import com.storyteller_f.a.cloud.core.service.getUserTitles
 import com.storyteller_f.a.cloud.core.service.getUserUploadRecords
 import com.storyteller_f.a.cloud.core.service.uncheckGetTopicById
 import com.storyteller_f.a.cloud.core.service.uncheckGetTopicsByParentId
+import com.storyteller_f.a.cloud.core.service.uncheckedGetFileRefsByFileId
 import com.storyteller_f.a.cloud.server.auth.UserSession
 import com.storyteller_f.a.cloud.server.auth.getData
 import com.storyteller_f.a.cloud.server.auth.handleResult
@@ -102,7 +102,7 @@ private fun Routing.bindAdminFileRoutes(backend: Backend) {
     }
     AdminApi.Files.Id.Refs.get(handleResult()) { q, p ->
         q.pagination(IdentifiablePagingGenerator) { f ->
-            backend.getFileRefsByFileId(p.id, f)
+            backend.uncheckedGetFileRefsByFileId(p.id, f)
         }
     }
 }

@@ -598,6 +598,8 @@ private fun createAppNavFactoryForBubble(): AppNavFactory = object : AppNavFacto
         override fun gotoUserCommentsPage() = Unit
 
         override fun gotoFileExplorer(objectTuple: ObjectTuple?) = Unit
+
+        override fun gotoFileRefs(fileId: PrimaryKey) = Unit
     }
 }
 

@@ -39,8 +39,9 @@ import com.storyteller_f.a.client.core.getCommunityInfo
 import com.storyteller_f.a.client.core.getCommunityInfoByAid
 import com.storyteller_f.a.client.core.getFavorites
 import com.storyteller_f.a.client.core.getFileInfo
+import com.storyteller_f.a.client.core.getFileList
+import com.storyteller_f.a.client.core.getFileRefs
 import com.storyteller_f.a.client.core.getMediaByName
-import com.storyteller_f.a.client.core.getMediaList
 import com.storyteller_f.a.client.core.getQuotaInfo
 import com.storyteller_f.a.client.core.getReactionRecords
 import com.storyteller_f.a.client.core.getReactions
@@ -66,6 +67,7 @@ import com.storyteller_f.a.client.core.userTitles
 import com.storyteller_f.shared.model.ChildAccountInfo
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.FileInfo
+import com.storyteller_f.shared.model.FileRefInfo
 import com.storyteller_f.shared.model.MemberInfo
 import com.storyteller_f.shared.model.PosterSearch
 import com.storyteller_f.shared.model.QuotaInfo
@@ -96,6 +98,7 @@ import com.storyteller_f.storage.CommunityCollection
 import com.storyteller_f.storage.DownloadInfo
 import com.storyteller_f.storage.DownloadStatus
 import com.storyteller_f.storage.FileCollection
+import com.storyteller_f.storage.FileRefCollection
 import com.storyteller_f.storage.MemberCollection
 import com.storyteller_f.storage.ModelStorage
 import com.storyteller_f.storage.ReactionCollection
@@ -433,7 +436,7 @@ class MediaListViewModel(
         modelStorage.remoteKey,
         modelStorage.fileInfo
     ) { key, size ->
-        sessionManager.getMediaList(objectId, objectType, key, size)
+        sessionManager.getFileList(objectId, objectType, key, size)
     }.flow.cachedIn(viewModelScope)
 }
 
@@ -951,6 +954,24 @@ class UserOverviewViewModel(sessionManager: UserSessionManager, modelStorage: Mo
             Result.failure(IllegalStateException("not logged in"))
         }
     }
+}
+
+@OptIn(ExperimentalPagingApi::class)
+class FileRefsViewModel(
+    sessionManager: UserSessionManager,
+    modelStorage: ModelStorage,
+    fileId: PrimaryKey
+) : PagingViewModel<FileRefInfo>() {
+    private val modelCollection = FileRefCollection.FileRefs(fileId)
+
+    override val flow: Flow<PagingData<FileRefInfo>> = buildPager(
+        modelCollection,
+        modelCollection.getName(),
+        modelStorage.remoteKey,
+        modelStorage.fileRef
+    ) { key, size ->
+        sessionManager.getFileRefs(fileId, PaginationQuery(key, size = size))
+    }.flow.cachedIn(viewModelScope)
 }
 
 class FileViewViewModel(

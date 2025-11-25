@@ -645,6 +645,17 @@ fun createFileViewModel(objectId: PrimaryKey) =
     }
 
 @Composable
+fun createFileRefsViewModel(fileId: PrimaryKey) =
+    customViewModel(
+        listOf(
+            "file-refs",
+            fileId
+        )
+    ) { sessionManager, databaseSource ->
+        FileRefsViewModel(sessionManager, databaseSource, fileId)
+    }
+
+@Composable
 inline fun <reified VM : ViewModel> customViewModel(
     keys: List<Comparable<*>?>? = null,
     crossinline factory: (CustomUserSessionManager, ModelStorage) -> VM
