@@ -16,6 +16,7 @@ import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.ROOM_NAME_LENGTH
 import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.backend.core.idListFetch
+import com.storyteller_f.a.backend.core.mapPagingResultNotNull
 import com.storyteller_f.a.backend.core.pagingNotNull
 import com.storyteller_f.a.backend.core.service.MemberDocument
 import com.storyteller_f.a.backend.core.service.MemberDocumentSearch
@@ -353,10 +354,8 @@ suspend fun Backend.searchRoomPaginationResult(
                 database.room.getRawRooms(idListFetch(roomIds), uid).pagingNotNull(total)
             }
         }
-    }.mapResult { (list, count) ->
-        processRawRoomToRoomInfo(list).mapIfNotNull { value ->
-            PaginationResult(value, count)
-        }
+    }.mapPagingResultNotNull { list ->
+        processRawRoomToRoomInfo(list)
     }
 }
 
@@ -385,16 +384,16 @@ suspend fun Backend.getAllPublicRooms(primaryKeyFetch: PrimaryKeyFetch) =
         community = null,
         primaryKeyFetch = primaryKeyFetch,
         joinSearch = JoinSearch.Unspecified(null)
-    ).mapResult { (list, total) ->
-        processRawRoomToRoomInfo(list).map { PaginationResult(it, total) }
+    ).mapPagingResultNotNull { list ->
+        processRawRoomToRoomInfo(list)
     }
 
 suspend fun Backend.getAllPrivateRooms(primaryKeyFetch: PrimaryKeyFetch) =
     database.room.getPrivateRoomPaginationResult(
         primaryKeyFetch = primaryKeyFetch,
         word = null
-    ).mapResult { (list, total) ->
-        processRawRoomToRoomInfo(list).map { PaginationResult(it, total) }
+    ).mapPagingResultNotNull { list ->
+        processRawRoomToRoomInfo(list)
     }
 
 suspend fun Backend.getUserJoinedRooms(
@@ -406,8 +405,8 @@ suspend fun Backend.getUserJoinedRooms(
         community = null,
         primaryKeyFetch = primaryKeyFetch,
         joinSearch = JoinSearch.Joined(uid)
-    ).mapResult { (list, total) ->
-        processRawRoomToRoomInfo(list).map { PaginationResult(it, total) }
+    ).mapPagingResultNotNull { list ->
+        processRawRoomToRoomInfo(list)
     }
 
 suspend fun Backend.getRoomMemberInfos(

@@ -5,9 +5,10 @@ import com.storyteller_f.a.backend.core.ContainerDatabase
 import com.storyteller_f.a.backend.core.JoinSearch
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.ObjectListFetch
-import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.UnauthorizedException
+import com.storyteller_f.a.backend.core.mapPagingResultNotNull
+import com.storyteller_f.a.backend.core.paginationFromResults
 import com.storyteller_f.a.backend.core.types.Community
 import com.storyteller_f.a.backend.core.types.Member
 import com.storyteller_f.a.backend.core.types.RawCommunity
@@ -85,21 +86,19 @@ class ExposedCommunityDatabase(
         hasPosterSearch: PosterSearch?,
         primaryKeyFetch: PrimaryKeyFetch,
         joinSearch: JoinSearch
-    ) = getCommunityListByPredicate {
+    ) = paginationFromResults(getCommunityListByPredicate {
         buildCommunitySearchQuery(joinSearch, hasPosterSearch)
             .bindPaginationQuery(Communities, primaryKeyFetch)
-    }.mapResultIfNotNull { list ->
-        getCommunityCountByPredicate {
-            buildCommunitySearchQuery(joinSearch, hasPosterSearch)
-        }.mapResult { count ->
-            val uid = when (joinSearch) {
+    }, getCommunityCountByPredicate {
+        buildCommunitySearchQuery(joinSearch, hasPosterSearch)
+    }).mapPagingResultNotNull { list ->
+        processCommunityToRawCommunity(
+            when (joinSearch) {
                 is JoinSearch.Joined -> joinSearch.uid
                 is JoinSearch.Unspecified -> joinSearch.uid
-            }
-            processCommunityToRawCommunity(uid, list).map { result ->
-                PaginationResult(result, count)
-            }
-        }
+            },
+            list
+        )
     }
 
     suspend fun processCommunityToRawCommunity(

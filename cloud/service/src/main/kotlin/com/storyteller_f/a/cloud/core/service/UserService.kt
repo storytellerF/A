@@ -12,6 +12,7 @@ import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.USER_NICKNAME
+import com.storyteller_f.a.backend.core.mapPagingResultNotNull
 import com.storyteller_f.a.backend.core.paging
 import com.storyteller_f.a.backend.core.pagingNotNull
 import com.storyteller_f.a.backend.core.service.MemberDocumentSearch
@@ -299,7 +300,11 @@ suspend fun Backend.addChildAccount(uid: PrimaryKey): Result<ChildAccountInfo> {
     }
 }
 
-suspend fun Backend.addUserLog(uid: PrimaryKey, type: UserLogType, objectTuple: ObjectTuple): Result<Unit> {
+suspend fun Backend.addUserLog(
+    uid: PrimaryKey,
+    type: UserLogType,
+    objectTuple: ObjectTuple
+): Result<Unit> {
     val logId = SnowflakeFactory.nextId()
     val log = UserLog(logId, now(), uid, type, objectTuple.objectId, objectTuple.objectType)
     return database.user.insertUserLog(log).onFailure {
@@ -324,12 +329,12 @@ suspend fun Backend.getUserAlternateUserInfoList(
     return database.user.getRawChildAccountPaginationListByHost(
         uid,
         fetch
-    ).mapResult { (results, total) ->
+    ).mapPagingResultNotNull { results ->
         processRawUserToUserInfo(results.map {
             it.rawUser
-        }).mapIfNotNull { userList ->
+        }).map { userList ->
             val map = userList.associateBy { it.id }
-            PaginationResult(results.mapNotNull {
+            results.mapNotNull {
                 map[it.rawUser.user.id]?.let { userInfo ->
                     ChildAccountInfo(
                         it.rawUser.user.id,
@@ -337,7 +342,7 @@ suspend fun Backend.getUserAlternateUserInfoList(
                         userInfo
                     )
                 }
-            }, total)
+            }
         }
     }
 }
@@ -372,35 +377,30 @@ suspend fun Backend.searchContainerMembers(
         memberSearchService.searchDocument(
             MemberDocumentSearch.Keyword(objectId = objectId, nickname = word),
             primaryKeyFetch
-        ).mapResult { (searchResults, total) ->
+        ).mapPagingResultNotNull { searchResults ->
             // 从搜索结果中提取 uid 列表
             val uidList = searchResults.map { it.uid }
             // 获取 member 和 user 信息
-            database.container.getMemberWithUserByUids(objectId, uidList).map { memberUserPairs ->
-                PaginationResult(memberUserPairs, total)
-            }
+            database.container.getMemberWithUserByUids(objectId, uidList)
         }
     }
 
-    return result.mapResult { (list, total) ->
+    return result.mapPagingResultNotNull { list ->
         val rawUsers = list.map { it.second }
         processRawUserToUserInfo(rawUsers).map { users ->
             val userMap = users.associateBy { it.id }
-            PaginationResult(
-                list.map { (member, rawUser) ->
-                    MemberInfo(
-                        id = member.id,
-                        uid = member.uid,
-                        objectId = member.objectId,
-                        objectType = member.objectType,
-                        status = member.status,
-                        joinedTime = member.joinedTime,
-                        invitedTime = member.invitedTime,
-                        userInfo = userMap[rawUser.user.id]!!
-                    )
-                },
-                total
-            )
+            list.map { (member, rawUser) ->
+                MemberInfo(
+                    id = member.id,
+                    uid = member.uid,
+                    objectId = member.objectId,
+                    objectType = member.objectType,
+                    status = member.status,
+                    joinedTime = member.joinedTime,
+                    invitedTime = member.invitedTime,
+                    userInfo = userMap[rawUser.user.id]!!
+                )
+            }
         }
     }
 }
@@ -424,10 +424,8 @@ suspend fun Backend.searchUsers(
         database.user.getRawUsers(ObjectListFetch.IdListFetch(list.map {
             it.id
         })).mapResult {
-            processRawUserToUserInfo(it).map { users ->
-                PaginationResult(users, total)
-            }
-        }
+            processRawUserToUserInfo(it)
+        }.pagingNotNull(total)
     }
 }
 
@@ -476,10 +474,8 @@ suspend fun Backend.processRawUserOverviewToUserOverview(raw: RawUserOverview): 
 }
 
 suspend fun Backend.getAllUsers(primaryKeyFetch: PrimaryKeyFetch) =
-    database.user.getAllUsers(primaryKeyFetch).mapResult { result ->
-        processRawUserToUserInfo(result.list).map {
-            PaginationResult(it, result.total)
-        }
+    database.user.getAllUsers(primaryKeyFetch).mapPagingResultNotNull { list ->
+        processRawUserToUserInfo(list)
     }
 
 suspend fun Backend.getUserById(id: PrimaryKey) = getUserInfo(ObjectFetch.IdFetch(id))
@@ -538,8 +534,8 @@ fun Char.isEnglishLetter(): Boolean {
 suspend fun Backend.getUserReactions(
     uid: PrimaryKey,
     fetch: PrimaryKeyFetch
-) = database.reaction.getUserReactionRecordsPaginationResult(uid, fetch).map { (list, total) ->
-    PaginationResult(list.map { record ->
+) = database.reaction.getUserReactionRecordsPaginationResult(uid, fetch).mapPagingResultNotNull { list ->
+    Result.success(list.map { record ->
         ReactionRecordInfo(
             record.id,
             record.emoji,
@@ -548,7 +544,7 @@ suspend fun Backend.getUserReactions(
             record.createdTime,
             record.uid
         )
-    }, total)
+    })
 }
 
 suspend fun Backend.getUserCommentedTopics(

@@ -7,6 +7,8 @@ import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
+import com.storyteller_f.a.backend.core.mapPagingResultIfNotNullNullable
+import com.storyteller_f.a.backend.core.mapPagingResultNotNull
 import com.storyteller_f.a.backend.core.types.Member
 import com.storyteller_f.a.backend.core.types.RawTitle
 import com.storyteller_f.a.backend.core.types.Title
@@ -43,10 +45,8 @@ suspend fun Backend.getUserTitles(
     searchType,
     type,
     scopeId
-).mapResultIfNotNull { (list, count) ->
-    processTitleList(list, uid).mapIfNotNull {
-        PaginationResult(it, count)
-    }
+).mapPagingResultIfNotNullNullable { list ->
+    processTitleList(list, uid)
 }
 
 private suspend fun Backend.processTitleList(
@@ -158,8 +158,8 @@ private fun processTitleList(
 }
 
 suspend fun Backend.getAllTitles(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<TitleInfo>> =
-    database.title.getAllRawTitles(primaryKeyFetch).mapResult { (list, count) ->
-        processTitleList(list, null).map { it ?: emptyList() }.map { PaginationResult(it, count) }
+    database.title.getAllRawTitles(primaryKeyFetch).mapPagingResultNotNull { list ->
+        processTitleList(list, null).map { it ?: emptyList() }
     }
 
 suspend fun Backend.getTitleInfo(id: PrimaryKey): Result<TitleInfo?> =

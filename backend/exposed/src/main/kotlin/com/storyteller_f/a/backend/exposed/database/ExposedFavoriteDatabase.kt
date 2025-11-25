@@ -2,8 +2,8 @@ package com.storyteller_f.a.backend.exposed.database
 
 import com.storyteller_f.a.backend.core.FavoriteDatabase
 import com.storyteller_f.a.backend.core.ObjectListFetch
-import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
+import com.storyteller_f.a.backend.core.paginationFromResults
 import com.storyteller_f.a.backend.core.types.UserFavorite
 import com.storyteller_f.a.backend.exposed.ExposedDatabaseSession
 import com.storyteller_f.a.backend.exposed.count
@@ -26,14 +26,10 @@ class ExposedFavoriteDatabase(private val databaseSession: ExposedDatabaseSessio
     override suspend fun getUserFavorites(
         uid: PrimaryKey,
         fetch: PrimaryKeyFetch
-    ) = runCatching {
-        val userFavorites = getFavoriteListByPredicate {
-            where { UserFavorites.uid eq uid }
-                .bindPaginationQuery(UserFavorites, fetch)
-        }.getOrThrow()
-        val total = getFavoriteCountByPredicate { where { UserFavorites.uid eq uid } }.getOrThrow()
-        PaginationResult(userFavorites, total)
-    }
+    ) = paginationFromResults(getFavoriteListByPredicate {
+        where { UserFavorites.uid eq uid }
+            .bindPaginationQuery(UserFavorites, fetch)
+    }, getFavoriteCountByPredicate { where { UserFavorites.uid eq uid } })
 
     override suspend fun addFavorite(userFavorite: UserFavorite) = databaseSession.dbQuery {
         check(UserFavorites.insert {
