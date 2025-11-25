@@ -1,10 +1,12 @@
 package com.storyteller_f.a.panel.pages
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
@@ -13,8 +15,10 @@ import androidx.compose.material.icons.filled.FilePresent
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
@@ -32,8 +36,10 @@ import com.storyteller_f.a.app.core.components.NavRoute
 import com.storyteller_f.a.app.core.components.PdfView
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.globalLoader
+import com.storyteller_f.a.app.core.components.pagingItems
 import com.storyteller_f.a.panel.LocalPanelNav
 import com.storyteller_f.a.panel.Res
+import com.storyteller_f.a.panel.common.createPanelFileRefsViewModel
 import com.storyteller_f.a.panel.common.createPanelFileViewModel
 import com.storyteller_f.a.panel.components.InfoTable
 import com.storyteller_f.a.panel.file_can_preview
@@ -42,6 +48,7 @@ import com.storyteller_f.a.panel.file_detail_title_with_info
 import com.storyteller_f.a.panel.fullscreen_preview
 import com.storyteller_f.a.panel.preview_image
 import com.storyteller_f.a.panel.tab_basic_info_file
+import com.storyteller_f.a.panel.tab_file_refs
 import com.storyteller_f.a.panel.tab_info
 import com.storyteller_f.a.panel.tab_logs
 import com.storyteller_f.shared.type.PrimaryKey
@@ -101,7 +108,10 @@ private fun FileTopBar(id: PrimaryKey) {
 
 @Composable
 private fun FileInfoTabs(id: PrimaryKey) {
-    val tabs = listOf(stringResource(Res.string.tab_basic_info_file))
+    val tabs = listOf(
+        stringResource(Res.string.tab_basic_info_file),
+        stringResource(Res.string.tab_file_refs)
+    )
     val pagerState = rememberPagerState { tabs.size }
     val scope = rememberCoroutineScope()
     Column {
@@ -114,8 +124,12 @@ private fun FileInfoTabs(id: PrimaryKey) {
                 }
             }
         }
-        HorizontalPager(pagerState, modifier = Modifier.weight(1f)) { _ ->
-            FileBasicInfoSection(id)
+        HorizontalPager(pagerState, modifier = Modifier.weight(1f)) { pageIndex ->
+            when (pageIndex) {
+                0 -> FileBasicInfoSection(id)
+                1 -> FileRefsSection(id)
+                else -> FileBasicInfoSection(id)
+            }
         }
     }
 }
@@ -173,4 +187,39 @@ private fun FileBasicInfoSection(id: PrimaryKey) {
 @Composable
 private fun FileLogsTab() {
     Column(Modifier.padding(16.dp)) { Text("None") }
+}
+
+@Composable
+private fun FileRefsSection(id: PrimaryKey) {
+    val nav = LocalPanelNav.current
+    val vm = createPanelFileRefsViewModel(id)
+    StateView(vm, modifier = Modifier.fillMaxSize()) { fileRefs ->
+        LazyColumn {
+            pagingItems(fileRefs, key = { it.fileId }) {
+                val ref = fileRefs[it]
+                ListItem(
+                    modifier = Modifier.clickable {
+                        when (ref?.objectType) {
+                            com.storyteller_f.shared.type.ObjectType.COMMUNITY ->
+                                nav.gotoCommunityDetail(ref.objectId)
+                            com.storyteller_f.shared.type.ObjectType.ROOM ->
+                                nav.gotoRoomDetail(ref.objectId)
+                            com.storyteller_f.shared.type.ObjectType.TOPIC ->
+                                nav.gotoTopicDetail(ref.objectId)
+                            com.storyteller_f.shared.type.ObjectType.USER ->
+                                nav.gotoUserDetail(ref.objectId)
+                            else -> {}
+                        }
+                    },
+                    headlineContent = {
+                        Text("${ref?.objectType?.name ?: "Unknown"} #${ref?.objectId ?: "Unknown"}")
+                    },
+                    supportingContent = {
+                        Text("Author: ${ref?.author ?: "Unknown"}")
+                    }
+                )
+                HorizontalDivider()
+            }
+        }
+    }
 }

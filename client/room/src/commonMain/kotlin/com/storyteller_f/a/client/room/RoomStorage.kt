@@ -5,6 +5,7 @@ import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.model.ChildAccountInfo
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.FileInfo
+import com.storyteller_f.shared.model.FileRefInfo
 import com.storyteller_f.shared.model.MemberInfo
 import com.storyteller_f.shared.model.PanelOverview
 import com.storyteller_f.shared.model.ReactionInfo
@@ -26,6 +27,8 @@ import com.storyteller_f.storage.DownloadInfo
 import com.storyteller_f.storage.DownloadInfoStorage
 import com.storyteller_f.storage.FileCollection
 import com.storyteller_f.storage.FileInfoStorage
+import com.storyteller_f.storage.FileRefCollection
+import com.storyteller_f.storage.FileRefInfoStorage
 import com.storyteller_f.storage.MemberCollection
 import com.storyteller_f.storage.MemberInfoStorage
 import com.storyteller_f.storage.ModelStorage
@@ -269,7 +272,7 @@ class CommonStorageImpl(val appDatabase: AppDatabase) {
         appDatabase.getCommonDao().clean(collection)
     }
 
-    suspend inline fun<reified T> getDocument(
+    suspend inline fun <reified T> getDocument(
         collection: String,
         id: String
     ): T? {
@@ -685,6 +688,28 @@ class RoomUploadRecordInfoStorage(val appDatabase: AppDatabase) : UploadRecordIn
     }
 }
 
+class RoomFileRefInfoStorage(val appDatabase: AppDatabase) : FileRefInfoStorage {
+    private val impl = CommonStorageImpl(appDatabase)
+
+    override suspend fun save(
+        collection: FileRefCollection,
+        item: FileRefInfo
+    ) {
+        val data = commonJson.encodeToString(item)
+        appDatabase.getCommonDao().insert(
+            CommonEntity(item.id, collection.getName(), data)
+        )
+    }
+
+    override fun observeData(collection: FileRefCollection): PagingSource<Int, FileRefInfo> {
+        return impl.observeData(collection.getName())
+    }
+
+    override suspend fun clean(collection: FileRefCollection) {
+        impl.clean(collection.getName())
+    }
+}
+
 class RoomModelStorage(appDatabase: AppDatabase) : ModelStorage {
     override val user: UserInfoStorage = RoomUserInfoStorage(appDatabase)
     override val community: CommunityInfoStorage = RoomCommunityInfoStorage(appDatabase)
@@ -702,9 +727,11 @@ class RoomModelStorage(appDatabase: AppDatabase) : ModelStorage {
     override val userOverview: UserOverviewStorage = RoomUserOverviewStorage(appDatabase)
     override val favorite: UserFavoriteStorage = RoomUserFavoriteStorage(appDatabase)
     override val subscription: UserSubscriptionStorage = RoomUserSubscriptionStorage(appDatabase)
-    override val userReactionRecord: UserReactionRecordStorage = RoomUserReactionRecordStorage(appDatabase)
+    override val userReactionRecord: UserReactionRecordStorage =
+        RoomUserReactionRecordStorage(appDatabase)
     override val userLog: UserLogInfoStorage = RoomUserLogInfoStorage(appDatabase)
     override val uploadRecord: UploadRecordInfoStorage = RoomUploadRecordInfoStorage(appDatabase)
+    override val fileRef: FileRefInfoStorage = RoomFileRefInfoStorage(appDatabase)
 }
 
 fun getRoomModelStorage(name: String) = RoomModelStorage(getRoomDatabase(name))

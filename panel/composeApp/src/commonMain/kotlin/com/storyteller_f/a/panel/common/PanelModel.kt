@@ -20,6 +20,7 @@ import com.storyteller_f.a.client.core.getAllUsers
 import com.storyteller_f.a.client.core.getCommunityById
 import com.storyteller_f.a.client.core.getCommunityMembers
 import com.storyteller_f.a.client.core.getFileById
+import com.storyteller_f.a.client.core.getFileRefs
 import com.storyteller_f.a.client.core.getRoomById
 import com.storyteller_f.a.client.core.getRoomFiles
 import com.storyteller_f.a.client.core.getRoomMembers
@@ -319,6 +320,24 @@ class IdFileViewModel(
     ) {
         sessionManager.getFileById(id)
     }
+}
+
+class FileRefsViewModel(
+    sessionManager: PanelSessionManager,
+    modelStorage: ModelStorage,
+    fileId: PrimaryKey
+) : PagingViewModel<com.storyteller_f.shared.model.FileRefInfo>() {
+    private val modelCollection = com.storyteller_f.storage.FileRefCollection.FileRefs(fileId)
+
+    @OptIn(ExperimentalPagingApi::class)
+    override val flow: Flow<PagingData<com.storyteller_f.shared.model.FileRefInfo>> = buildPager(
+        modelCollection,
+        modelCollection.getName(),
+        modelStorage.remoteKey,
+        modelStorage.fileRef
+    ) { key, size ->
+        sessionManager.getFileRefs(fileId, PaginationQuery(key, size = size))
+    }.flow.cachedIn(viewModelScope)
 }
 
 class IdTitleViewModel(

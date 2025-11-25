@@ -44,14 +44,14 @@ enum class UserLogType {
 
 @Serializable
 data class UserLogInfo(
-    val id: PrimaryKey,
+    override val id: PrimaryKey,
     val uid: PrimaryKey,
     val type: UserLogType,
     val objectId: PrimaryKey,
     val objectType: ObjectType,
     val createdTime: LocalDate,
     val extensions: Extensions? = null
-) {
+) : PrimaryKeyIdentifiable {
     @Serializable
     data class Extensions(
         val user: UserInfo? = null,

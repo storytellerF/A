@@ -145,6 +145,10 @@ suspend fun PanelSessionManager.getFileById(id: PrimaryKey) = serviceCatching {
     AdminApi.Files.Id.get(CommonPath(id))
 }
 
+suspend fun PanelSessionManager.getFileRefs(id: PrimaryKey, query: PaginationQuery) = serviceCatching {
+    AdminApi.Files.Id.Refs.get(query, CommonPath(id))
+}
+
 suspend fun PanelSessionManager.getTitleById(id: PrimaryKey) = serviceCatching {
     AdminApi.Titles.Id.get(CommonPath(id))
 }

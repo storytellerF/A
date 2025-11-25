@@ -161,6 +161,10 @@ sealed interface UploadRecordCollection {
     data class UserUploadRecords(val uid: PrimaryKey) : UploadRecordCollection
 }
 
+sealed interface FileRefCollection {
+    data class FileRefs(val fileId: PrimaryKey) : FileRefCollection
+}
+
 fun FileCollection.getName(): String {
     return when (this) {
         FileCollection.Files -> "files"
@@ -238,6 +242,12 @@ fun UploadRecordCollection.getName(): String {
     }
 }
 
+fun FileRefCollection.getName(): String {
+    return when (this) {
+        is FileRefCollection.FileRefs -> "file_refs_$fileId"
+    }
+}
+
 @Serializable
 data class RemoteKeys(val collectionName: String, val key: String?)
 
@@ -261,6 +271,7 @@ interface ModelStorage {
     val userReactionRecord: UserReactionRecordStorage
     val userLog: UserLogInfoStorage
     val uploadRecord: UploadRecordInfoStorage
+    val fileRef: FileRefInfoStorage
 }
 
 interface UserInfoStorage : CollectionItemStorageByIdAndKey<UserCollection, UserInfo>
@@ -343,6 +354,8 @@ interface UserReactionRecordStorage : CollectionListStorage<UserReactionRecordCo
 interface UserLogInfoStorage : CollectionListStorage<UserLogCollection, UserLogInfo>
 
 interface UploadRecordInfoStorage : CollectionListStorage<UploadRecordCollection, UploadRecordInfo>
+
+interface FileRefInfoStorage : CollectionListStorage<FileRefCollection, com.storyteller_f.shared.model.FileRefInfo>
 
 interface RemoteKeyStorage {
     suspend fun getPreRemoteKey(collection: String): RemoteKeys?

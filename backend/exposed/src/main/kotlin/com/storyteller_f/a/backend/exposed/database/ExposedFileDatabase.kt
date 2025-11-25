@@ -5,6 +5,7 @@ import com.storyteller_f.a.backend.core.FileDatabase
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.paginationFromResults
 import com.storyteller_f.a.backend.core.types.FileRecord
+import com.storyteller_f.a.backend.core.types.FileRef
 import com.storyteller_f.a.backend.core.types.UploadRecord
 import com.storyteller_f.a.backend.exposed.ExposedDatabaseSession
 import com.storyteller_f.a.backend.exposed.count
@@ -89,16 +90,17 @@ class ExposedFileDatabase(val databaseSession: ExposedDatabaseSession) : FileDat
     }
 
     override suspend fun insertFileRefs(
-        objectId: PrimaryKey,
-        objectType: ObjectType,
-        mediaName: List<Pair<PrimaryKey, String>>,
+        fileRefs: List<FileRef>,
     ) = databaseSession.dbQuery {
-        check(FileRefs.batchInsert(mediaName) {
-            this[FileRefs.objectId] = objectId
-            this[FileRefs.objectType] = objectType
-            this[FileRefs.mediaName] = it.second
-            this[FileRefs.author] = it.first
-        }.size == mediaName.size) {
+        check(FileRefs.batchInsert(fileRefs) {
+            this[FileRefs.id] = it.id
+            this[FileRefs.createdTime] = it.createdTime
+            this[FileRefs.objectId] = it.objectId
+            this[FileRefs.objectType] = it.objectType
+            this[FileRefs.mediaName] = it.mediaName
+            this[FileRefs.author] = it.author
+            this[FileRefs.fileId] = it.fileId
+        }.size == fileRefs.size) {
             "insert file refs failed"
         }
     }
@@ -113,10 +115,11 @@ class ExposedFileDatabase(val databaseSession: ExposedDatabaseSession) : FileDat
         getFileRecordCountByPredicate { where { FileRecords.owner eq uid } }
     )
 
-    override suspend fun getAllFileRecordPaginationList(primaryKeyFetch: PrimaryKeyFetch) = paginationFromResults(
-        getFileRecordListByPredicate { bindPaginationQuery(FileRecords, primaryKeyFetch) },
-        getFileRecordCountByPredicate { this }
-    )
+    override suspend fun getAllFileRecordPaginationList(primaryKeyFetch: PrimaryKeyFetch) =
+        paginationFromResults(
+            getFileRecordListByPredicate { bindPaginationQuery(FileRecords, primaryKeyFetch) },
+            getFileRecordCountByPredicate { this }
+        )
 
     override suspend fun insertFileRecord(
         fileRecordList: List<FileRecord>,
@@ -140,31 +143,32 @@ class ExposedFileDatabase(val databaseSession: ExposedDatabaseSession) : FileDat
         }
     }
 
-    override suspend fun insertUploadRecord(record: UploadRecord): Result<UploadRecord> = databaseSession.dbQuery {
-        check(UploadRecords.insert {
-            it[UploadRecords.id] = record.id
-            it[UploadRecords.createdTime] = record.createdTime
-            it[UploadRecords.objectId] = record.objectId
-            it[UploadRecords.objectType] = record.objectType
-            it[UploadRecords.status] = record.status
-            it[UploadRecords.total] = record.total
-            it[UploadRecords.progress] = record.progress
-            it[UploadRecords.name] = record.name
-            it[UploadRecords.chunkSize] = record.chunkSize
-        }.insertedCount > 0) {
-            "insert upload record failed"
+    override suspend fun insertUploadRecord(record: UploadRecord): Result<UploadRecord> =
+        databaseSession.dbQuery {
+            check(UploadRecords.insert {
+                it[UploadRecords.id] = record.id
+                it[UploadRecords.createdTime] = record.createdTime
+                it[UploadRecords.objectId] = record.objectId
+                it[UploadRecords.objectType] = record.objectType
+                it[UploadRecords.status] = record.status
+                it[UploadRecords.total] = record.total
+                it[UploadRecords.progress] = record.progress
+                it[UploadRecords.name] = record.name
+                it[UploadRecords.chunkSize] = record.chunkSize
+            }.insertedCount > 0) {
+                "insert upload record failed"
+            }
+            check(Quotas.update({
+                Quotas.ownerId eq record.objectId and
+                    (Quotas.quotaType eq QuotaType.FILE) and
+                    (Quotas.lockId eq null)
+            }) {
+                it[this.lockId] = record.id
+            } > 0) {
+                "lock quota failed"
+            }
+            record
         }
-        check(Quotas.update({
-            Quotas.ownerId eq record.objectId and
-                (Quotas.quotaType eq QuotaType.FILE) and
-                (Quotas.lockId eq null)
-        }) {
-            it[this.lockId] = record.id
-        } > 0) {
-            "lock quota failed"
-        }
-        record
-    }
 
     override suspend fun updateUploadRecordStatus(
         quotaInfo: QuotaInfo,
@@ -281,6 +285,40 @@ class ExposedFileDatabase(val databaseSession: ExposedDatabaseSession) : FileDat
     ) = databaseSession.dbSearch {
         search {
             UploadRecords.selectAll().queryBuilder()
+        }
+        count()
+    }
+
+    override suspend fun getFileRefsByFileId(
+        fileId: PrimaryKey,
+        primaryKeyFetch: PrimaryKeyFetch
+    ) = paginationFromResults(
+        getFileRefListByPredicate {
+            where {
+                FileRefs.fileId eq fileId
+            }.bindPaginationQuery(FileRefs, primaryKeyFetch)
+        },
+        getFileRefCountByPredicate {
+            where {
+                FileRefs.fileId eq fileId
+            }
+        }
+    )
+
+    private suspend fun getFileRefListByPredicate(
+        queryBuilder: Query.() -> Query = { this }
+    ) = databaseSession.dbSearch {
+        search {
+            FileRefs.selectAll().queryBuilder()
+        }
+        map(FileRef::wrapRow)
+    }
+
+    private suspend fun getFileRefCountByPredicate(
+        queryBuilder: Query.() -> Query = { this }
+    ) = databaseSession.dbSearch {
+        search {
+            FileRefs.selectAll().queryBuilder()
         }
         count()
     }

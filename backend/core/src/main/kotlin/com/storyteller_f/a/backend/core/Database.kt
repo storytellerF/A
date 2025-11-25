@@ -4,6 +4,7 @@ import com.storyteller_f.a.backend.core.types.AssetTransaction
 import com.storyteller_f.a.backend.core.types.ChildAccount
 import com.storyteller_f.a.backend.core.types.Community
 import com.storyteller_f.a.backend.core.types.FileRecord
+import com.storyteller_f.a.backend.core.types.FileRef
 import com.storyteller_f.a.backend.core.types.Member
 import com.storyteller_f.a.backend.core.types.PanelAccount
 import com.storyteller_f.a.backend.core.types.Quota
@@ -147,7 +148,8 @@ interface CombinedDatabase {
         val childAccountCount = user.getChildAccountCount(uid)
         val reactionRecordCount = reaction.getUserReactionRecordCount(uid).getOrThrow()
         val commentCount = topic.getUserCommentCount(uid).getOrThrow()
-        val rawUser = user.getRawUser(ObjectFetch.IdFetch(uid)).getOrThrow() ?: error("user not found")
+        val rawUser =
+            user.getRawUser(ObjectFetch.IdFetch(uid)).getOrThrow() ?: error("user not found")
         RawUserOverview(
             subscriptionCount,
             favoriteCount,
@@ -306,7 +308,12 @@ interface TopicDatabase {
     suspend fun getTopicRootTuple(parentId: PrimaryKey): Result<ObjectTuple?>
 
     suspend fun saveEncryptedTopic(topic: Topic, content: TopicContent.Encrypted): Result<Unit>
-    suspend fun savePlainTopic(topic: Topic, content: TopicContent.Plain): Result<Unit>
+    suspend fun savePlainTopic(
+        topic: Topic,
+        content: TopicContent.Plain,
+        fileRefs: List<FileRef>
+    ): Result<Unit>
+
     suspend fun updateTopicStatus(topicId: PrimaryKey, newValue: Boolean): Result<Boolean>
     suspend fun getTopicList(primaryKeyFetch: PrimaryKeyFetch): Result<List<Topic>>
     suspend fun getTopicCommentCount(
@@ -471,7 +478,10 @@ interface CommunityDatabase {
         joinSearch: JoinSearch,
     ): Result<PaginationResult<RawCommunity>?>
 
-    suspend fun createCommunity(community: Community, memberId: PrimaryKey): Result<Pair<Community, Member>>
+    suspend fun createCommunity(
+        community: Community,
+        memberId: PrimaryKey
+    ): Result<Pair<Community, Member>>
 
     suspend fun getRawCommunities(objectListFetch: ObjectListFetch): Result<List<RawCommunity>>
 
@@ -525,11 +535,7 @@ interface FileDatabase {
     suspend fun getFileRecordListByOwner(owner: PrimaryKey): Result<List<FileRecord>>
     suspend fun getFileRecordByNames(names: List<String>): Result<List<FileRecord>>
     suspend fun getUploadRecord(id: PrimaryKey): Result<UploadRecord?>
-    suspend fun insertFileRefs(
-        objectId: PrimaryKey,
-        objectType: ObjectType,
-        mediaName: List<Pair<PrimaryKey, String>>,
-    ): Result<Unit>
+    suspend fun insertFileRefs(fileRefs: List<FileRef>): Result<Unit>
 
     suspend fun getFileRecordPaginationList(
         uid: PrimaryKey,
@@ -562,6 +568,11 @@ interface FileDatabase {
         uid: PrimaryKey,
         primaryKeyFetch: PrimaryKeyFetch,
     ): Result<PaginationResult<UploadRecord>>
+
+    suspend fun getFileRefsByFileId(
+        fileId: PrimaryKey,
+        primaryKeyFetch: PrimaryKeyFetch
+    ): Result<PaginationResult<FileRef>>
 }
 
 interface ContainerDatabase {

@@ -17,6 +17,7 @@ import com.storyteller_f.a.backend.core.paging
 import com.storyteller_f.a.backend.core.service.TopicDocument
 import com.storyteller_f.a.backend.core.service.TopicDocumentSearch
 import com.storyteller_f.a.backend.core.service.UploadPack
+import com.storyteller_f.a.backend.core.types.FileRef
 import com.storyteller_f.a.backend.core.types.RawTopic
 import com.storyteller_f.a.backend.core.types.Topic
 import com.storyteller_f.a.backend.core.types.UserSubscription
@@ -141,6 +142,7 @@ private suspend fun Backend.savePlainTopic(
     val documentFileList = documentFileList(listOf(topicInfo)).map {
         it.second
     }
+
     objectStorageService.get(A_FILE_DEFAULT_BUCKET, documentFileList).map { list ->
         list.map {
             it.fullName
@@ -163,9 +165,37 @@ private suspend fun Backend.savePlainTopic(
             "save plain topic document failed"
         }
     }
-    return database.topic.savePlainTopic(topic, plain).mapResult {
-        addUserLog(uid, UserLogType.CREATE, topicInfo.tuple())
+    return buildFileRefs(documentFileList, topic, uid).mapResult {
+        database.topic.savePlainTopic(topic, plain, it).onSuccess {
+            addUserLog(uid, UserLogType.CREATE, topicInfo.tuple())
+        }
+    }.mapResult {
         processTopicAfterCreate(topicInfo, uid)
+    }
+}
+
+private suspend fun Backend.buildFileRefs(
+    documentFileList: List<String>,
+    topic: Topic,
+    uid: PrimaryKey
+): Result<List<FileRef>> {
+    return database.file.getFileRecordByNames(documentFileList).map {
+        it.associateBy { fileRecord ->
+            fileRecord.fullName
+        }
+    }.map {
+        documentFileList.map { mediaName ->
+            val fileRecord = it[mediaName]!!
+            FileRef(
+                id = SnowflakeFactory.nextId(),
+                createdTime = now(),
+                objectId = topic.id,
+                objectType = ObjectType.TOPIC,
+                author = uid,
+                mediaName = mediaName,
+                fileId = fileRecord.id
+            )
+        }
     }
 }
 
