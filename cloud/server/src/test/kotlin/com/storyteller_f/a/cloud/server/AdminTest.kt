@@ -20,6 +20,7 @@ import com.storyteller_f.a.client.core.getAllTitles
 import com.storyteller_f.a.client.core.getAllTopics
 import com.storyteller_f.a.client.core.getAllUsers
 import com.storyteller_f.a.client.core.getCommunityMembers
+import com.storyteller_f.a.client.core.getFileRefs
 import com.storyteller_f.a.client.core.getRoomFiles
 import com.storyteller_f.a.client.core.getRoomMembers
 import com.storyteller_f.a.client.core.getRoomMembersPublicKeys
@@ -568,11 +569,16 @@ class AdminTest {
             // Create parent topics
             val userTopic = createTopic(ObjectType.USER, it.uid, "user topic").getOrThrow()
             val c = createCommunity(NewCommunity("c1", "c1")).getOrThrow()
-            val communityTopic = createTopic(ObjectType.COMMUNITY, c.id, "community topic").getOrThrow()
+            val communityTopic =
+                createTopic(ObjectType.COMMUNITY, c.id, "community topic").getOrThrow()
 
             // Create sub topics (comments/replies to other topics)
             createTopic(ObjectType.TOPIC, userTopic.id, "reply to user topic").getOrThrow()
-            createTopic(ObjectType.TOPIC, communityTopic.id, "reply to community topic").getOrThrow()
+            createTopic(
+                ObjectType.TOPIC,
+                communityTopic.id,
+                "reply to community topic"
+            ).getOrThrow()
             createTopic(ObjectType.TOPIC, userTopic.id, "another reply to user topic").getOrThrow()
         }
 
@@ -611,6 +617,110 @@ class AdminTest {
             val overview = getUserOverview(userTuple.uid).getOrThrow()
             assertEquals(2, overview.reactionRecordCount)
             assertEquals(2, overview.commentCount)
+        }
+    }
+
+    @Test
+    fun `admin get file refs for topic with media`() = test {
+        val outer = attachPanelSession()
+        val result = attachSession {
+            // Upload a file to user
+            val fileInfo =
+                upload(
+                    it.uid ob ObjectType.USER,
+                    getUploadDataFromText("test file")
+                ).getOrThrow().data.first()
+
+            // Create a topic that references the file
+            val topic = createTopic(
+                ObjectType.USER,
+                it.uid,
+                "Topic with media: ![image](${fileInfo.name})"
+            ).getOrThrow()
+
+            fileInfo.id to topic.id
+        }.custom
+
+        val (fileId, topicId) = result
+
+        loginPanelSession(outer) {
+            val refs = getFileRefs(fileId, PaginationQuery()).getOrThrow().data
+            assertEquals(1, refs.size)
+
+            val ref = refs[0]
+            kotlin.test.assertNotEquals(0L, ref.id) // 验证id字段存在且有效
+            assertEquals(topicId, ref.objectId)
+            assertEquals(ObjectType.TOPIC, ref.objectType)
+            assertEquals(fileId, ref.fileId) // 验证fileId字段
+        }
+    }
+
+    @Test
+    fun `admin get file refs for file with no references`() = test {
+        val outer = attachPanelSession()
+        val fileId = attachSession {
+            // Upload a file without any references
+            val fileInfo =
+                upload(
+                    it.uid ob ObjectType.USER,
+                    getUploadDataFromText("unused file")
+                ).getOrThrow().data.first()
+            fileInfo.id
+        }.custom
+
+        loginPanelSession(outer) {
+            val refs = getFileRefs(fileId, PaginationQuery()).getOrThrow().data
+            assertEquals(0, refs.size)
+        }
+    }
+
+    @Test
+    fun `admin get file refs for file with multiple references`() = test {
+        val outer = attachPanelSession()
+        val result = attachSession {
+            // Upload a file
+            val fileInfo = upload(
+                it.uid ob ObjectType.USER,
+                getUploadDataFromText("shared file")
+            ).getOrThrow().data.first()
+
+            // Create multiple topics that reference the same file
+            val topic1 = createTopic(
+                ObjectType.USER,
+                it.uid,
+                "Topic 1 with media: ![image](${fileInfo.name})"
+            ).getOrThrow()
+
+            val topic2 = createTopic(
+                ObjectType.USER,
+                it.uid,
+                "Topic 2 also uses: ![image](${fileInfo.name})"
+            ).getOrThrow()
+
+            Triple(fileInfo.id, topic1.id, topic2.id)
+        }.custom
+
+        val (fileId, topic1Id, topic2Id) = result
+
+        loginPanelSession(outer) {
+            val refs = getFileRefs(fileId, PaginationQuery()).getOrThrow().data
+            assertEquals(2, refs.size)
+
+            // 验证所有引用都有有效的 id
+            refs.forEach { ref ->
+                kotlin.test.assertNotEquals(0L, ref.id)
+            }
+
+            // Verify both topics reference the file
+            val objectIds = refs.map { it.objectId }.toSet()
+            kotlin.test.assertTrue(objectIds.contains(topic1Id))
+            kotlin.test.assertTrue(objectIds.contains(topic2Id))
+
+            // Verify all references are topics
+            refs.forEach { ref ->
+                assertEquals(ObjectType.TOPIC, ref.objectType)
+                assertEquals(fileId, ref.fileId) // 验证fileId字段
+            }
         }
     }
 }

@@ -15,6 +15,7 @@ import com.storyteller_f.a.backend.core.service.UploadPack
 import com.storyteller_f.a.backend.core.types.FileRecord
 import com.storyteller_f.a.backend.core.types.UploadRecord
 import com.storyteller_f.a.backend.core.types.toFileInfo
+import com.storyteller_f.a.backend.core.types.toFileRefInfo
 import com.storyteller_f.a.backend.core.types.toUploadRecordInfo
 import com.storyteller_f.a.backend.filesystem.FileSystemObjectStorageService
 import com.storyteller_f.a.cloud.core.utils.cleanImageMeta
@@ -22,6 +23,7 @@ import com.storyteller_f.a.cloud.core.utils.readFlacAlbumFromAudioStream
 import com.storyteller_f.a.cloud.core.utils.readMp3AlbumFromAudioStream
 import com.storyteller_f.shared.model.A_FILE_DEFAULT_BUCKET
 import com.storyteller_f.shared.model.FileInfo
+import com.storyteller_f.shared.model.FileRefInfo
 import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.model.UploadRecordInfo
 import com.storyteller_f.shared.obj.ObjectTuple
@@ -587,3 +589,16 @@ suspend fun getChunkStatus(
         )
     }
 }
+
+suspend fun Backend.getFileRefsByFileId(
+    fileId: PrimaryKey,
+    primaryKeyFetch: PrimaryKeyFetch
+): Result<PaginationResult<FileRefInfo>> =
+    database.file.getFileRefsByFileId(fileId, primaryKeyFetch).map { (list, count) ->
+        PaginationResult(
+            list.map { ref ->
+                ref.toFileRefInfo()
+            },
+            count
+        )
+    }

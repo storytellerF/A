@@ -295,7 +295,7 @@ class AddPreset : Subcommand("add", "add entry") {
             val s = if (icon == null) {
                 null
             } else {
-                uploadFile(id, ObjectType.ROOM, parentDir, listOf(icon))?.id
+                uploadFile(id, ObjectType.ROOM, parentDir, listOf(icon)).first().id
             }
             InsertRoomTuple(it, s, id, now())
         }
@@ -486,7 +486,7 @@ class AddPreset : Subcommand("add", "add entry") {
         val iconMedia = if (icon == null) {
             null
         } else {
-            uploadFile(id, ObjectType.COMMUNITY, parentDir, listOf(icon))?.id
+            uploadFile(id, ObjectType.COMMUNITY, parentDir, listOf(icon)).first().id
         }
         val fontMedia = if (font == null) {
             null
@@ -609,7 +609,7 @@ class AddPreset : Subcommand("add", "add entry") {
             val p = if (icon == null) {
                 null
             } else {
-                uploadFile(id, ObjectType.USER, parentDir, listOf(icon))?.id
+                uploadFile(id, ObjectType.USER, parentDir, listOf(icon)).first().id
             }
             UserPresetTuple(it, p, derPublicKey, ad, id)
         }.map {
@@ -719,12 +719,21 @@ class AddPreset : Subcommand("add", "add entry") {
         val content = getTopicContent(presetTopic, parentDir)
         val mediaLink = extractMarkdownMediaLink(content)
         val author = userMap[presetTopic.author]!!.id
-        uploadFile(author, ObjectType.USER, parentDir, mediaLink.map {
+        val fileInfos = uploadFile(author, ObjectType.USER, parentDir, mediaLink.map {
             "medias/topics/$it"
         })
-        database.file.insertFileRefs(topicId, ObjectType.TOPIC, mediaLink.map {
-            author to it
-        })
+        val fileRefs = fileInfos.map { info ->
+            com.storyteller_f.a.backend.core.types.FileRef(
+                id = SnowflakeFactory.nextId(),
+                createdTime = now(),
+                objectId = topicId,
+                objectType = ObjectType.TOPIC,
+                author = author,
+                mediaName = info.name,
+                fileId = info.id,
+            )
+        }
+        database.file.insertFileRefs(fileRefs).getOrThrow()
     }
 
     private suspend fun Backend.insertEncryptedTopicToRoom(
@@ -822,8 +831,8 @@ class AddPreset : Subcommand("add", "add entry") {
         type: ObjectType,
         parentDir: File,
         p: List<String>
-    ): FileInfo? {
-        if (p.isEmpty()) return null
+    ): List<FileInfo> {
+        if (p.isEmpty()) return emptyList()
         return tryUploadFiles(
             id,
             type,
@@ -837,7 +846,7 @@ class AddPreset : Subcommand("add", "add entry") {
                     "$id/$name"
                 )
             }
-        ).getOrThrow().first()
+        ).getOrThrow()
     }
 
     private fun getTopicContent(presetTopic: PresetTopic, parentDir: File): String {

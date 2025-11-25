@@ -6,6 +6,7 @@ import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.TopicDatabase
 import com.storyteller_f.a.backend.core.types.EncryptedKey
+import com.storyteller_f.a.backend.core.types.FileRef
 import com.storyteller_f.a.backend.core.types.Title
 import com.storyteller_f.a.backend.core.types.Topic
 import com.storyteller_f.a.backend.exposed.ExposedDatabaseSession
@@ -24,7 +25,6 @@ import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.associateByPair
-import com.storyteller_f.shared.utils.extractMarkdownMediaLink
 import com.storyteller_f.shared.utils.now
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.ResultRow
@@ -169,16 +169,11 @@ class ExposedTopicDatabase(
 
     override suspend fun savePlainTopic(
         topic: Topic,
-        content: TopicContent.Plain
+        content: TopicContent.Plain,
+        fileRefs: List<FileRef>
     ) = databaseSession.dbQuery {
         Topic.new(topic)
-        combinedDatabase.file.insertFileRefs(
-            topic.id,
-            ObjectType.TOPIC,
-            extractMarkdownMediaLink(content.plain).map {
-                topic.author to it
-            }
-        ).getOrThrow()
+        combinedDatabase.file.insertFileRefs(fileRefs).getOrThrow()
     }
 
     override suspend fun updateTopicStatus(

@@ -192,6 +192,13 @@ fun createPanelFileViewModel(
 }
 
 @Composable
+fun createPanelFileRefsViewModel(
+    id: PrimaryKey
+) = panelViewModel(keys = listOf("file-refs", id)) { sessionManager, modelStorage ->
+    FileRefsViewModel(sessionManager, modelStorage, id)
+}
+
+@Composable
 fun createPanelTitleViewModel(
     id: PrimaryKey
 ) = panelViewModel(keys = listOf("title", id)) { sessionManager, modelStorage ->

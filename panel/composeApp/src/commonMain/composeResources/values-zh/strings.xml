@@ -47,4 +47,5 @@
     <string name="tab_files">文件</string>
     <string name="tab_user_reactions">用户反应</string>
     <string name="tab_user_comments">用户评论</string>
+    <string name="tab_file_refs">文件引用</string>
 </resources>

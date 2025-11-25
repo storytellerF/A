@@ -17,6 +17,7 @@ import com.storyteller_f.a.cloud.core.service.getCommunity
 import com.storyteller_f.a.cloud.core.service.getCommunityMemberInfos
 import com.storyteller_f.a.cloud.core.service.getFileInfoById
 import com.storyteller_f.a.cloud.core.service.getFileInfoPaginationResult
+import com.storyteller_f.a.cloud.core.service.getFileRefsByFileId
 import com.storyteller_f.a.cloud.core.service.getOverview
 import com.storyteller_f.a.cloud.core.service.getRoomInfo
 import com.storyteller_f.a.cloud.core.service.getRoomMemberInfos
@@ -37,7 +38,6 @@ import com.storyteller_f.a.cloud.server.auth.getData
 import com.storyteller_f.a.cloud.server.auth.handleResult
 import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.cloud.server.common.pagination
-import com.storyteller_f.a.cloud.server.common.pagingGenerator
 import com.storyteller_f.endpoint4k.ktor.server.invoke
 import com.storyteller_f.endpoint4k.ktor.server.receiveBody
 import com.storyteller_f.shared.utils.UNIT_RESULT
@@ -49,49 +49,11 @@ import io.ktor.server.sessions.sessions
 fun Routing.bindProtectedAdminRoute(backend: Backend) {
     authenticate("admin") {
         bindAdminUserRoutes(backend)
-        AdminApi.Communities.get(handleResult()) {
-            it.pagination(IdentifiablePagingGenerator) { fetch ->
-                backend.getAllCommunities(fetch)
-            }
-        }
-        AdminApi.Communities.Id.get(handleResult()) { p ->
-            backend.getCommunity(ObjectFetch.IdFetch(p.id), null, null)
-        }
-        AdminApi.Communities.Id.Members.get(handleResult()) { q, p ->
-            q.pagination(IdentifiablePagingGenerator) { f ->
-                backend.getCommunityMemberInfos(p.id, f)
-            }
-        }
+        bindAdminCommunityRoutes(backend)
         bindAdminRoomRoutes(backend)
-        AdminApi.Topics.get(handleResult()) {
-            it.pagination(IdentifiablePagingGenerator) { fetch ->
-                backend.getAllTopics(fetch)
-            }
-        }
-        AdminApi.Topics.Id.get(handleResult()) { p ->
-            backend.uncheckGetTopicById(p.id, null)
-        }
-        AdminApi.Topics.Id.Topics.get(handleResult()) { q, p ->
-            q.pagination(IdentifiablePagingGenerator) { f ->
-                backend.uncheckGetTopicsByParentId(null, p.id, f, q.pinType)
-            }
-        }
-        AdminApi.Titles.get(handleResult()) {
-            it.pagination(IdentifiablePagingGenerator) { fetch ->
-                backend.getAllTitles(fetch)
-            }
-        }
-        AdminApi.Titles.Id.get(handleResult()) { p ->
-            backend.getTitleInfo(p.id)
-        }
-        AdminApi.Files.get(handleResult()) {
-            it.pagination(IdentifiablePagingGenerator) { fetch ->
-                backend.getAllFileInfos(fetch)
-            }
-        }
-        AdminApi.Files.Id.get(handleResult()) { p ->
-            backend.getFileInfoById(p.id)
-        }
+        bindAdminTopicRoutes(backend)
+        bindAdminTitleRoutes(backend)
+        bindAdminFileRoutes(backend)
         AdminApi.signOut(handleResult()) {
             call.sessions.clear(UserSession::class)
             UNIT_RESULT
@@ -99,9 +61,65 @@ fun Routing.bindProtectedAdminRoute(backend: Backend) {
         AdminApi.overview(handleResult()) {
             backend.getOverview()
         }
-        AdminApi.Users.add(handleResult(), { api ->
-            backend.addUser(api.receiveBody())
-        })
+    }
+}
+
+private fun Routing.bindAdminTitleRoutes(backend: Backend) {
+    AdminApi.Titles.get(handleResult()) {
+        it.pagination(IdentifiablePagingGenerator) { fetch ->
+            backend.getAllTitles(fetch)
+        }
+    }
+    AdminApi.Titles.Id.get(handleResult()) { p ->
+        backend.getTitleInfo(p.id)
+    }
+}
+
+private fun Routing.bindAdminCommunityRoutes(backend: Backend) {
+    AdminApi.Communities.get(handleResult()) {
+        it.pagination(IdentifiablePagingGenerator) { fetch ->
+            backend.getAllCommunities(fetch)
+        }
+    }
+    AdminApi.Communities.Id.get(handleResult()) { p ->
+        backend.getCommunity(ObjectFetch.IdFetch(p.id), null, null)
+    }
+    AdminApi.Communities.Id.Members.get(handleResult()) { q, p ->
+        q.pagination(IdentifiablePagingGenerator) { f ->
+            backend.getCommunityMemberInfos(p.id, f)
+        }
+    }
+}
+
+private fun Routing.bindAdminFileRoutes(backend: Backend) {
+    AdminApi.Files.get(handleResult()) {
+        it.pagination(IdentifiablePagingGenerator) { fetch ->
+            backend.getAllFileInfos(fetch)
+        }
+    }
+    AdminApi.Files.Id.get(handleResult()) { p ->
+        backend.getFileInfoById(p.id)
+    }
+    AdminApi.Files.Id.Refs.get(handleResult()) { q, p ->
+        q.pagination(IdentifiablePagingGenerator) { f ->
+            backend.getFileRefsByFileId(p.id, f)
+        }
+    }
+}
+
+private fun Routing.bindAdminTopicRoutes(backend: Backend) {
+    AdminApi.Topics.get(handleResult()) {
+        it.pagination(IdentifiablePagingGenerator) { fetch ->
+            backend.getAllTopics(fetch)
+        }
+    }
+    AdminApi.Topics.Id.get(handleResult()) { p ->
+        backend.uncheckGetTopicById(p.id, null)
+    }
+    AdminApi.Topics.Id.Topics.get(handleResult()) { q, p ->
+        q.pagination(IdentifiablePagingGenerator) { f ->
+            backend.uncheckGetTopicsByParentId(null, p.id, f, q.pinType)
+        }
     }
 }
 
@@ -164,23 +182,17 @@ private fun Routing.bindAdminUserRoutes(backend: Backend) {
         }
     }
     AdminApi.Users.Id.Logs.get(handleResult()) { q, p ->
-        q.pagination(pagingGenerator {
-            it.id
-        }) { f ->
+        q.pagination(IdentifiablePagingGenerator) { f ->
             backend.getUserLogs(p.id, f)
         }
     }
     AdminApi.Users.Id.UploadRecords.get(handleResult()) { q, p ->
-        q.pagination(pagingGenerator {
-            it.id
-        }) { f ->
+        q.pagination(IdentifiablePagingGenerator) { f ->
             backend.getUserUploadRecords(p.id, f)
         }
     }
     AdminApi.Users.Id.Reactions.get(handleResult()) { q, p ->
-        q.pagination(pagingGenerator {
-            it.id
-        }) { f ->
+        q.pagination(IdentifiablePagingGenerator) { f ->
             backend.getUserReactions(p.id, f)
         }
     }
@@ -188,6 +200,9 @@ private fun Routing.bindAdminUserRoutes(backend: Backend) {
         q.pagination(IdentifiablePagingGenerator) { f ->
             backend.getUserCommentedTopics(p.id, f)
         }
+    }
+    AdminApi.Users.add(handleResult()) { api ->
+        backend.addUser(api.receiveBody())
     }
 }
 

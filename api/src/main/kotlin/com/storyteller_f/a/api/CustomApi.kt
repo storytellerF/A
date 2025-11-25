@@ -12,6 +12,7 @@ import com.storyteller_f.endpoint4k.common.safeEndpointWithQueryAndPath
 import com.storyteller_f.shared.model.ChildAccountInfo
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.FileInfo
+import com.storyteller_f.shared.model.FileRefInfo
 import com.storyteller_f.shared.model.MemberInfo
 import com.storyteller_f.shared.model.MemberPolicy
 import com.storyteller_f.shared.model.PanelAccountInfo
@@ -706,6 +707,13 @@ object AdminApi {
         val get = safeEndpointWithQuery<ServerResponse<FileInfo>, PaginationQuery>("/admin/files")
         object Id {
             val get = safeEndpointWithPath<FileInfo, CommonPath>("/admin/files/{id}")
+
+            object Refs {
+                val get =
+                    safeEndpointWithQueryAndPath<ServerResponse<FileRefInfo>, PaginationQuery, CommonPath>(
+                        "/admin/files/{id}/refs"
+                    )
+            }
         }
     }
 }
