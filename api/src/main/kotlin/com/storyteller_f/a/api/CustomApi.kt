@@ -434,6 +434,13 @@ object CustomApi {
             val get = safeEndpointWithPath<FileInfo, CommonPath>("files/{id}")
             val extractAlbum =
                 mutationEndpointWithPath<ServerResponse<FileInfo>, Unit, CommonPath>("files/{id}/extract-album")
+
+            object Refs {
+                val get =
+                    safeEndpointWithQueryAndPath<ServerResponse<FileRefInfo>, PaginationQuery, CommonPath>(
+                        "files/{id}/refs"
+                    )
+            }
         }
 
         val upload =

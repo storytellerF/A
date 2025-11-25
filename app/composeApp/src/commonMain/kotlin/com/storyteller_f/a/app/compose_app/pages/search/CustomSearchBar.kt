@@ -54,6 +54,7 @@ import com.storyteller_f.a.app.compose_app.common.createTopicSearchInUserViewMod
 import com.storyteller_f.a.app.compose_app.common.createTopicSearchViewModel
 import com.storyteller_f.a.app.compose_app.common.getUserOverviewViewModel
 import com.storyteller_f.a.app.compose_app.input_search_community
+import com.storyteller_f.a.app.compose_app.input_search_files
 import com.storyteller_f.a.app.compose_app.input_search_members
 import com.storyteller_f.a.app.compose_app.input_search_room
 import com.storyteller_f.a.app.compose_app.input_search_topics
@@ -88,6 +89,7 @@ sealed interface SearchScope {
     data class UserCommunities(val userId: PrimaryKey) : SearchScope
     data class UserReceivedTitle(val userId: PrimaryKey) : SearchScope
     data class UserCreatedTitle(val userId: PrimaryKey) : SearchScope
+    data class UploadedFiles(val objectId: PrimaryKey, val objectType: ObjectType) : SearchScope
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -234,6 +236,7 @@ private fun SearchPlaceholder(scope: SearchScope) {
                 is SearchScope.UserCommunities -> Res.string.input_search_community
                 is SearchScope.UserReceivedTitle -> Res.string.input_search_user_received_titles
                 is SearchScope.UserCreatedTitle -> Res.string.input_search_user_created_titles
+                is SearchScope.UploadedFiles -> Res.string.input_search_files
             }
         )
     )
@@ -260,6 +263,7 @@ private fun SearchContent(
         is SearchScope.UserCommunities -> UserCommunitySearchContent(current, scope)
         is SearchScope.UserReceivedTitle -> UserReceivedTitleSearchContent(current, scope)
         is SearchScope.UserCreatedTitle -> UserCreatedTitleSearchContent(current, scope)
+        is SearchScope.UploadedFiles -> {} // 暂不实现文件搜索
     }
 }
 

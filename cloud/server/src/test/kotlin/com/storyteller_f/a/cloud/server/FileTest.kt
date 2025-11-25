@@ -1,14 +1,19 @@
 package com.storyteller_f.a.cloud.server
 
+import com.storyteller_f.a.api.NewCommunity
+import com.storyteller_f.a.api.PaginationQuery
 import com.storyteller_f.a.backend.core.getImageDimension
 import com.storyteller_f.a.client.core.UploadData
 import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.abortChunkUpload
 import com.storyteller_f.a.client.core.completeChunkUpload
 import com.storyteller_f.a.client.core.copy
+import com.storyteller_f.a.client.core.createCommunity
+import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.a.client.core.extractAlbum
 import com.storyteller_f.a.client.core.getChunkStatus
-import com.storyteller_f.a.client.core.getMediaList
+import com.storyteller_f.a.client.core.getFileList
+import com.storyteller_f.a.client.core.getFileRefs
 import com.storyteller_f.a.client.core.getQuotaInfo
 import com.storyteller_f.a.client.core.initChunkUpload
 import com.storyteller_f.a.client.core.upload
@@ -52,9 +57,9 @@ import kotlin.test.assertTrue
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-class MediaTest {
+class FileTest {
     @Test
-    fun `test upload media`() = test {
+    fun `test upload file`() = test {
         val firstTuple = attachSession {
             val response =
                 upload(
@@ -62,10 +67,10 @@ class MediaTest {
                     getUploadDataFromText("hello")
                 ).getOrThrow()
             assertEquals("${it.uid}/hello.txt", response.data.first().fullName)
-            val mediaList = getMediaList(it.uid, ObjectType.USER, null, 10)
-            assertListSize(1, mediaList)
+            val fileList = getFileList(it.uid, ObjectType.USER, null, 10)
+            assertListSize(1, fileList)
             val quotaInfo = getQuotaInfo(ObjectTuple(it.uid, ObjectType.USER)).getOrThrow()
-            val fileInfo = mediaList.getOrThrow().data.first()
+            val fileInfo = fileList.getOrThrow().data.first()
             assertEquals(fileInfo.size, quotaInfo.used)
             assertEquals(null, quotaInfo.lockId)
             fileInfo
@@ -73,7 +78,7 @@ class MediaTest {
         attachSession {
             val response = copy(firstTuple.custom.id).getOrThrow()
             assertEquals("${it.uid}/hello.txt", response.data.first().fullName)
-            assertListSize(1, getMediaList(it.uid, ObjectType.USER, null, 10))
+            assertListSize(1, getFileList(it.uid, ObjectType.USER, null, 10))
             val quotaInfo = getQuotaInfo(ObjectTuple(it.uid, ObjectType.USER)).getOrThrow()
             assertEquals(firstTuple.custom.size, quotaInfo.used)
             assertEquals(null, quotaInfo.lockId)
@@ -212,8 +217,8 @@ class MediaTest {
             assertTrue(fileInfo.contentType.startsWith("application"))
 
             // 列表查询应返回 1 个文件
-            val mediaList = getMediaList(it.uid, ObjectType.USER, null, 10)
-            assertEquals(1, mediaList.getOrThrow().data.size)
+            val list = getFileList(it.uid, ObjectType.USER, null, 10)
+            assertEquals(1, list.getOrThrow().data.size)
         }
     }
 
@@ -286,6 +291,81 @@ class MediaTest {
             // 状态查询不应包含该分片索引
             val status = getChunkStatus(recordId).getOrThrow()
             assertTrue(status.uploaded.isEmpty())
+        }
+    }
+
+    @Test
+    fun `test get file refs when file is referenced by topic`() = test {
+        attachSession {
+            // 上传一个文件
+            val fileInfo = upload(
+                ObjectTuple(it.uid, ObjectType.USER),
+                getUploadDataFromText("test file content")
+            ).getOrThrow().data.first()
+
+            // 创建一个community和topic引用该文件
+            val communityId = createCommunity(NewCommunity("test-aid", "test-name")).getOrThrow().id
+            createTopic(
+                ObjectType.COMMUNITY,
+                communityId,
+                "![image](${fileInfo.name})"
+            ).getOrThrow()
+
+            // 获取文件引用
+            val refs = getFileRefs(fileInfo.id, PaginationQuery(size = 10)).getOrThrow()
+            assertEquals(1, refs.data.size)
+            assertEquals(ObjectType.TOPIC, refs.data.first().objectType)
+            assertEquals(fileInfo.id, refs.data.first().fileId)
+        }
+    }
+
+    @Test
+    fun `test get file refs when file has no references`() = test {
+        attachSession {
+            // 上传一个文件但不引用它
+            val fileInfo = upload(
+                ObjectTuple(it.uid, ObjectType.USER),
+                getUploadDataFromText("unreferenced file")
+            ).getOrThrow().data.first()
+
+            // 获取文件引用应该为空
+            val refs = getFileRefs(fileInfo.id, PaginationQuery(size = 10)).getOrThrow()
+            assertEquals(0, refs.data.size)
+        }
+    }
+
+    @Test
+    fun `test get file refs when file is referenced by multiple topics`() = test {
+        attachSession {
+            // 上传一个文件
+            val fileInfo = upload(
+                ObjectTuple(it.uid, ObjectType.USER),
+                getUploadDataFromText("shared file")
+            ).getOrThrow().data.first()
+
+            // 创建community
+            val communityId = createCommunity(NewCommunity("test-aid-2", "test-name-2")).getOrThrow().id
+
+            // 创建多个topic引用该文件
+            createTopic(
+                ObjectType.COMMUNITY,
+                communityId,
+                "First topic ![image](${fileInfo.name})"
+            ).getOrThrow()
+
+            createTopic(
+                ObjectType.COMMUNITY,
+                communityId,
+                "Second topic ![image](${fileInfo.name})"
+            ).getOrThrow()
+
+            // 获取文件引用应该有2个
+            val refs = getFileRefs(fileInfo.id, PaginationQuery(size = 10)).getOrThrow()
+            assertEquals(2, refs.data.size)
+            refs.data.forEach { ref ->
+                assertEquals(ObjectType.TOPIC, ref.objectType)
+                assertEquals(fileInfo.id, ref.fileId)
+            }
         }
     }
 }

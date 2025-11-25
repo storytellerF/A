@@ -25,7 +25,6 @@ import com.storyteller_f.a.cloud.core.utils.readFlacAlbumFromAudioStream
 import com.storyteller_f.a.cloud.core.utils.readMp3AlbumFromAudioStream
 import com.storyteller_f.shared.model.A_FILE_DEFAULT_BUCKET
 import com.storyteller_f.shared.model.FileInfo
-import com.storyteller_f.shared.model.FileRefInfo
 import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.ServerResponse
@@ -588,12 +587,23 @@ suspend fun getChunkStatus(
     }
 }
 
-suspend fun Backend.getFileRefsByFileId(
+suspend fun Backend.uncheckedGetFileRefsByFileId(
     fileId: PrimaryKey,
     primaryKeyFetch: PrimaryKeyFetch
-): Result<PaginationResult<FileRefInfo>> =
+) = database.file.getFileRefsByFileId(fileId, primaryKeyFetch).mapPagingNotNull { list ->
+    list.map { ref ->
+        ref.toFileRefInfo()
+    }
+}
+
+suspend fun Backend.getFileRefsByFileId(
+    uid: PrimaryKey,
+    fileId: PrimaryKey,
+    primaryKeyFetch: PrimaryKeyFetch
+) = checkRootReadPermission(ObjectType.FILE, fileId, uid).mapResultIfNotNull {
     database.file.getFileRefsByFileId(fileId, primaryKeyFetch).mapPagingNotNull { list ->
         list.map { ref ->
             ref.toFileRefInfo()
         }
     }
+}

@@ -73,6 +73,8 @@ import com.storyteller_f.a.app.compose_app.common.getDownloadListViewModel
 import com.storyteller_f.a.app.compose_app.common.getDownloadViewModel
 import com.storyteller_f.a.app.compose_app.common.getQuotaViewModel
 import com.storyteller_f.a.app.compose_app.common.getUploadViewModel
+import com.storyteller_f.a.app.compose_app.pages.search.CustomSearchBar
+import com.storyteller_f.a.app.compose_app.pages.search.SearchScope
 import com.storyteller_f.a.app.compose_app.pages.topic.PlatformClientFile
 import com.storyteller_f.a.app.compose_app.utils.ClientFile
 import com.storyteller_f.a.app.core.CoreStrings
@@ -270,20 +272,26 @@ private fun UploadFileActionButton() {
 private fun UploadedPage(mediaTarget: ObjectTuple) {
     val vm = createMediaListViewModel(mediaTarget)
     val appNavFactory = LocalAppNavFactory.current
-    StateView(vm, modifier = Modifier.fillMaxSize()) { pagingItems ->
-        LazyColumn(contentPadding = PaddingValues(10.dp)) {
-            topPrepend(pagingItems.loadState)
-            pagingItems(pagingItems, key = { it.id }) {
-                val item: FileInfo? = pagingItems[it]
-                FileCell(item) { items ->
-                    val first = items.firstOrNull()
-                    if (first != null) {
-                        appNavFactory.newAppNav().gotoMedia(first)
+    Column(modifier = Modifier.fillMaxSize()) {
+        CustomSearchBar(
+            scope = SearchScope.UploadedFiles(mediaTarget.objectId, mediaTarget.objectType),
+            leadingIcon = {}
+        )
+        StateView(vm, modifier = Modifier.fillMaxSize()) { pagingItems ->
+            LazyColumn(contentPadding = PaddingValues(10.dp)) {
+                topPrepend(pagingItems.loadState)
+                pagingItems(pagingItems, key = { it.id }) {
+                    val item: FileInfo? = pagingItems[it]
+                    FileCell(item) { items ->
+                        val first = items.firstOrNull()
+                        if (first != null) {
+                            appNavFactory.newAppNav().gotoMedia(first)
+                        }
                     }
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
                 }
-                HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
+                bottomAppending(pagingItems.loadState)
             }
-            bottomAppending(pagingItems.loadState)
         }
     }
 }

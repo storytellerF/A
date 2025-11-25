@@ -29,6 +29,7 @@ import com.storyteller_f.a.app.compose_app.pages.community.CommunityComposePage
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityPage
 import com.storyteller_f.a.app.compose_app.pages.community.CommunitySettingPage
 import com.storyteller_f.a.app.compose_app.pages.file.FileExplorerPage
+import com.storyteller_f.a.app.compose_app.pages.file.FileRefsPage
 import com.storyteller_f.a.app.compose_app.pages.file.FileViewPage
 import com.storyteller_f.a.app.compose_app.pages.room.RoomComposePage
 import com.storyteller_f.a.app.compose_app.pages.room.RoomPage
@@ -183,6 +184,9 @@ data class RoomFileExplorerScreen(val roomId: PrimaryKey)
 @Serializable
 data class CommunityFileExplorerScreen(val communityId: PrimaryKey)
 
+@Serializable
+data class FileRefsScreen(val fileId: PrimaryKey)
+
 inline fun <reified T : Any> AppNav.toRoute(): T? {
     if (!hasRoute(T::class)) return null
     return currentDestination?.toRoute<T>()
@@ -257,6 +261,8 @@ interface AppNav {
     fun gotoUserCommentsPage()
 
     fun gotoFileExplorer(objectTuple: ObjectTuple? = null)
+
+    fun gotoFileRefs(fileId: PrimaryKey)
 }
 
 interface AppNavFactory {
@@ -449,6 +455,10 @@ fun newAppNav(navigator: NavHostController, scope: CoroutineScope) = object : Ap
             }
         }
     }
+
+    override fun gotoFileRefs(fileId: PrimaryKey) {
+        navigator.navigate(FileRefsScreen(fileId))
+    }
 }
 
 @OptIn(ExperimentalResourceApi::class)
@@ -479,6 +489,10 @@ fun NavGraphBuilder.buildRootNav(
     composable<LocalImageScreen> {
         val route = it.toRoute<LocalImageScreen>()
         FileViewPage(FileViewData.LocalImage(route.url))
+    }
+    composable<FileRefsScreen> {
+        val route = it.toRoute<FileRefsScreen>()
+        FileRefsPage(route.fileId)
     }
 }
 
