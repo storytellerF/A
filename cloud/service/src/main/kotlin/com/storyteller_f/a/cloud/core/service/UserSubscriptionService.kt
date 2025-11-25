@@ -4,9 +4,9 @@ import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.api.NewSubscription
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.ForbiddenException
-import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.addIfNotExists
+import com.storyteller_f.a.backend.core.mapPagingResultNotNull
 import com.storyteller_f.a.backend.core.types.UserSubscription
 import com.storyteller_f.a.backend.core.types.toUserSubscriptionInfo
 import com.storyteller_f.shared.model.UserLogType
@@ -14,7 +14,6 @@ import com.storyteller_f.shared.model.UserSubscriptionInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.firstOrNull
-import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
 
@@ -56,12 +55,9 @@ suspend fun Backend.removeSubscription(
 suspend fun Backend.getUserSubscriptions(
     uid: PrimaryKey,
     fetch: PrimaryKeyFetch
-) = database.subscription.getUserSubscriptions(uid, fetch)
-    .mapResult { paginationResult ->
-        processUserSubscriptionToUserSubscriptionInfo(uid, paginationResult.list).map { list ->
-            PaginationResult(list, paginationResult.total)
-        }
-    }
+) = database.subscription.getUserSubscriptions(uid, fetch).mapPagingResultNotNull { list ->
+    processUserSubscriptionToUserSubscriptionInfo(uid, list)
+}
 
 suspend fun Backend.processUserSubscriptionToUserSubscriptionInfo(
     uid: PrimaryKey,

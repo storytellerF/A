@@ -9,6 +9,8 @@ import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.getImageDimension
+import com.storyteller_f.a.backend.core.mapPagingNotNull
+import com.storyteller_f.a.backend.core.mapPagingResultNotNull
 import com.storyteller_f.a.backend.core.service.CopyPack
 import com.storyteller_f.a.backend.core.service.ProcessedUploadPack
 import com.storyteller_f.a.backend.core.service.UploadPack
@@ -25,7 +27,6 @@ import com.storyteller_f.shared.model.A_FILE_DEFAULT_BUCKET
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.FileRefInfo
 import com.storyteller_f.shared.model.QuotaType
-import com.storyteller_f.shared.model.UploadRecordInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.obj.ob
@@ -214,24 +215,21 @@ suspend fun Backend.getFileInfoPaginationResult(
     primaryKeyFetch: PrimaryKeyFetch,
 ): Result<PaginationResult<FileInfo>> =
     database.file.getFileRecordPaginationList(uid, primaryKeyFetch)
-        .mapResult { (list, count) ->
-            processFileRecordToFileInfo(list).map {
-                PaginationResult(it, count)
-            }
+        .mapPagingResultNotNull { list ->
+            processFileRecordToFileInfo(list)
         }
 
 suspend fun Backend.getAllFileInfos(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<FileInfo>> =
-    database.file.getAllFileRecordPaginationList(primaryKeyFetch).mapResult { (list, count) ->
-        processFileRecordToFileInfo(list).map { PaginationResult(it, count) }
+    database.file.getAllFileRecordPaginationList(primaryKeyFetch).mapPagingResultNotNull { list ->
+        processFileRecordToFileInfo(list)
     }
 
 suspend fun Backend.getUserUploadRecords(
     uid: PrimaryKey,
     primaryKeyFetch: PrimaryKeyFetch
-): Result<PaginationResult<UploadRecordInfo>> =
-    database.file.getUploadRecordPaginationList(uid, primaryKeyFetch).map { (list, count) ->
-        PaginationResult(list.map { it.toUploadRecordInfo() }, count)
-    }
+) = database.file.getUploadRecordPaginationList(uid, primaryKeyFetch).mapPagingNotNull { list ->
+    list.map { it.toUploadRecordInfo() }
+}
 
 suspend fun Backend.getFileInfoById(id: PrimaryKey): Result<FileInfo?> =
     database.file.getFileRecordByIds(listOf(id)).mapResultIfNotNull { list ->
@@ -594,11 +592,8 @@ suspend fun Backend.getFileRefsByFileId(
     fileId: PrimaryKey,
     primaryKeyFetch: PrimaryKeyFetch
 ): Result<PaginationResult<FileRefInfo>> =
-    database.file.getFileRefsByFileId(fileId, primaryKeyFetch).map { (list, count) ->
-        PaginationResult(
-            list.map { ref ->
-                ref.toFileRefInfo()
-            },
-            count
-        )
+    database.file.getFileRefsByFileId(fileId, primaryKeyFetch).mapPagingNotNull { list ->
+        list.map { ref ->
+            ref.toFileRefInfo()
+        }
     }

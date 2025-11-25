@@ -59,15 +59,49 @@ import kotlinx.datetime.LocalDateTime
 
 data class PaginationResult<T>(val list: List<T>, val total: Long)
 
-suspend fun <T> Result<List<T>?>.paging(total: Long): Result<PaginationResult<T>?> {
-    return mapIfNotNull {
-        PaginationResult(it, total)
+suspend fun <T> Result<List<T>?>.paging(total: Long) = mapIfNotNull {
+    PaginationResult(it, total)
+}
+
+fun <T> Result<List<T>>.pagingNotNull(total: Long) = map {
+    PaginationResult(it, total)
+}
+
+suspend fun <T, R> Result<PaginationResult<T>>.mapPagingResultNotNull(
+    block: suspend (List<T>) -> Result<List<R>>
+) = mapResult { paging ->
+    block(paging.list).map {
+        PaginationResult(it, paging.total)
     }
 }
 
-fun <T> Result<List<T>>.pagingNotNull(total: Long): Result<PaginationResult<T>> {
-    return map {
-        PaginationResult(it, total)
+suspend fun <T, R> Result<PaginationResult<T>>.mapPagingNotNull(
+    block: suspend (List<T>) -> List<R>
+) = map { paging ->
+    PaginationResult(block(paging.list), paging.total)
+}
+
+suspend fun <T, R> Result<PaginationResult<T>?>.mapPagingIfNotNull(
+    block: suspend (List<T>) -> Result<List<R>>
+) = mapResultIfNotNull { paging ->
+    block(paging.list).map {
+        PaginationResult(it, paging.total)
+    }
+}
+
+suspend fun <T, R> Result<PaginationResult<T>?>.mapPagingResultIfNotNullNullable(
+    block: suspend (List<T>) -> Result<List<R>?>
+) = mapResultIfNotNull { paging ->
+    block(paging.list).mapIfNotNull {
+        PaginationResult(it, paging.total)
+    }
+}
+
+suspend fun <T, R> Result<PaginationResult<T>>.mapPagingResultNullable(
+    block: suspend (List<T>) -> Result<List<R>?>
+) = mapResult { paging ->
+    block(paging.list).mapIfNotNull {
+        PaginationResult(it, paging.total)
     }
 }
 
@@ -145,7 +179,7 @@ interface CombinedDatabase {
     suspend fun getUserOverview(uid: PrimaryKey): Result<RawUserOverview> = runCatching {
         val subscriptionCount = subscription.getUserSubscriptionCount(uid).getOrThrow()
         val favoriteCount = favorite.getUserFavoriteCount().getOrThrow()
-        val childAccountCount = user.getChildAccountCount(uid)
+        val childAccountCount = user.getChildAccountCount(uid).getOrThrow()
         val reactionRecordCount = reaction.getUserReactionRecordCount(uid).getOrThrow()
         val commentCount = topic.getUserCommentCount(uid).getOrThrow()
         val rawUser =
@@ -153,7 +187,7 @@ interface CombinedDatabase {
         RawUserOverview(
             subscriptionCount,
             favoriteCount,
-            0,
+            rawUser.user.acgAmount,
             childAccountCount,
             reactionRecordCount,
             commentCount,
@@ -301,7 +335,7 @@ interface UserDatabase {
         fetch: PrimaryKeyFetch
     ): Result<PaginationResult<UserLog>>
 
-    suspend fun getChildAccountCount(hostId: PrimaryKey): Long
+    suspend fun getChildAccountCount(hostId: PrimaryKey): Result<Long>
 }
 
 interface TopicDatabase {

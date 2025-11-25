@@ -13,6 +13,8 @@ import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.ReactionFetch
 import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.backend.core.fixedSort
+import com.storyteller_f.a.backend.core.mapPagingResultIfNotNullNullable
+import com.storyteller_f.a.backend.core.mapPagingResultNullable
 import com.storyteller_f.a.backend.core.paging
 import com.storyteller_f.a.backend.core.service.TopicDocument
 import com.storyteller_f.a.backend.core.service.TopicDocumentSearch
@@ -595,14 +597,9 @@ suspend fun Backend.searchPublicTopics(
     } else {
         Result.success(TopicDocumentSearch.CommunityRoot(word))
     }.mapResultIfNotNull { documentSearch ->
-        topicSearchService.searchDocument(
-            topicDocumentSearch = documentSearch,
-            primaryKeyFetch
-        )
-    }.mapResultIfNotNull { (list, total) ->
-        processTopicsDocument(uid, list).mapIfNotNull {
-            PaginationResult(it, total)
-        }
+        topicSearchService.searchDocument(documentSearch, primaryKeyFetch)
+    }.mapPagingResultIfNotNullNullable { list ->
+        processTopicsDocument(uid, list)
     }
 }
 
@@ -667,10 +664,8 @@ suspend fun Backend.recommendTopics(
             topicDocumentSearch = TopicDocumentSearch.RecommendNotLogin,
             primaryKeyFetch = primaryKeyFetch
         )
-    }.mapResult { (list, total) ->
-        processTopicsDocument(uid, list).mapIfNotNull {
-            PaginationResult(it, total)
-        }
+    }.mapPagingResultNullable { list ->
+        processTopicsDocument(uid, list)
     }
 }
 

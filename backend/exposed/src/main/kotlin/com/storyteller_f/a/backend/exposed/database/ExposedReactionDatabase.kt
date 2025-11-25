@@ -1,10 +1,10 @@
 package com.storyteller_f.a.backend.exposed.database
 
 import com.storyteller_f.a.backend.core.Cursor
-import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.ReactionDatabase
 import com.storyteller_f.a.backend.core.ReactionFetch
+import com.storyteller_f.a.backend.core.mapPagingResultNotNull
 import com.storyteller_f.a.backend.core.paginationFromResults
 import com.storyteller_f.a.backend.core.types.Reaction
 import com.storyteller_f.a.backend.core.types.ReactionRecord
@@ -78,7 +78,7 @@ class ExposedReactionDatabase(
         objectId: List<PrimaryKey>,
         uid: PrimaryKey?,
         reactionFetch: ReactionFetch,
-    ) = databaseSession.dbSearch {
+    ) = paginationFromResults(databaseSession.dbSearch {
         search {
             buildReactionInfoQuery(objectId, reactionFetch).limit(reactionFetch.size)
                 .orderBy(
@@ -87,17 +87,13 @@ class ExposedReactionDatabase(
                 )
         }
         map(Reaction::wrapRow)
-    }.mapResult { list ->
-        databaseSession.dbSearch {
-            search {
-                buildReactionInfoQuery(objectId, reactionFetch)
-            }
-            count()
-        }.mapResult { count ->
-            processReactionToReactionInfo(uid, list).map { reactionInfos ->
-                PaginationResult(reactionInfos, count)
-            }
+    }, databaseSession.dbSearch {
+        search {
+            buildReactionInfoQuery(objectId, reactionFetch)
         }
+        count()
+    }).mapPagingResultNotNull { list ->
+        processReactionToReactionInfo(uid, list)
     }
 
     private suspend fun processReactionToReactionInfo(

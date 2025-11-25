@@ -5,6 +5,7 @@ import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.TopicDatabase
+import com.storyteller_f.a.backend.core.paginationFromResults
 import com.storyteller_f.a.backend.core.types.EncryptedKey
 import com.storyteller_f.a.backend.core.types.FileRef
 import com.storyteller_f.a.backend.core.types.Title
@@ -107,18 +108,14 @@ class ExposedTopicDatabase(
     private suspend fun getTopicPaginationByPredicate(
         primaryKeyFetch: PrimaryKeyFetch,
         extraQuery: Query.() -> Query = { this }
-    ): Result<PaginationResult<Topic>> = runCatching {
-        val rawTopics = getTopicListByPredicate {
-            extraQuery().bindPaginationQuery(
-                Topics,
-                primaryKeyFetch
-            )
-        }.getOrThrow()
-        val total = getTopicCountByPredicate {
-            extraQuery()
-        }.getOrThrow()
-        PaginationResult(rawTopics, total)
-    }
+    ): Result<PaginationResult<Topic>> = paginationFromResults(getTopicListByPredicate {
+        extraQuery().bindPaginationQuery(
+            Topics,
+            primaryKeyFetch
+        )
+    }, getTopicCountByPredicate {
+        extraQuery()
+    })
 
     override suspend fun getTopicByParentId(
         uid: PrimaryKey?,

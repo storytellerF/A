@@ -2,7 +2,6 @@ package com.storyteller_f.a.backend.exposed.database
 
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.ObjectListFetch
-import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.UserDatabase
 import com.storyteller_f.a.backend.core.paginationFromResults
@@ -309,37 +308,30 @@ class ExposedUserDatabase(
     override suspend fun getRawChildAccountPaginationListByHost(
         hostId: PrimaryKey,
         fetch: PrimaryKeyFetch,
-    ) = runCatching {
-        val childAccounts = databaseSession.dbSearch {
-            search {
-                Users.join(ChildAccounts, JoinType.INNER, Users.id, ChildAccounts.uid)
-                    .join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
-                    .select(Users.fields + ChildAccounts.fields + Aids.value).where {
-                        ChildAccounts.hostId eq hostId
-                    }.bindPaginationQuery(Users, fetch)
-            }
-            map {
-                val childAccount = ChildAccount.wrapRow(it)
-                val user = User.wrapRow(it)
-                RawChildAccount(childAccount, RawUser(user))
-            }
-        }.getOrThrow()
-        val total = getChildAccountCount(hostId)
-        PaginationResult(childAccounts, total)
-    }
+    ) = paginationFromResults(databaseSession.dbSearch {
+        search {
+            Users.join(ChildAccounts, JoinType.INNER, Users.id, ChildAccounts.uid)
+                .join(Aids, JoinType.LEFT, Users.id, Aids.objectId)
+                .select(Users.fields + ChildAccounts.fields + Aids.value).where {
+                    ChildAccounts.hostId eq hostId
+                }.bindPaginationQuery(Users, fetch)
+        }
+        map {
+            val childAccount = ChildAccount.wrapRow(it)
+            val user = User.wrapRow(it)
+            RawChildAccount(childAccount, RawUser(user))
+        }
+    }, getChildAccountCount(hostId))
 
-    override suspend fun getChildAccountCount(hostId: PrimaryKey): Long {
-        val total = databaseSession.dbSearch {
-            search {
-                ChildAccounts.join(Users, JoinType.INNER, ChildAccounts.uid, Users.id)
-                    .selectAll()
-                    .where {
-                        ChildAccounts.hostId eq hostId
-                    }
-            }
-            count()
-        }.getOrThrow()
-        return total
+    override suspend fun getChildAccountCount(hostId: PrimaryKey) = databaseSession.dbSearch {
+        search {
+            ChildAccounts.join(Users, JoinType.INNER, ChildAccounts.uid, Users.id)
+                .selectAll()
+                .where {
+                    ChildAccounts.hostId eq hostId
+                }
+        }
+        count()
     }
 
     override suspend fun getRawChildAccount(uid: PrimaryKey) = databaseSession.dbSearch {

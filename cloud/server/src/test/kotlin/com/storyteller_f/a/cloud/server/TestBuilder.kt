@@ -79,6 +79,7 @@ fun test(
         block
     )
     if (System.getenv("ENABLE_TEST_CONTAINER") == "true") {
+        System.setProperty("api.version", "1.44")
         startTestContainerTest(overrideEnv + mapOf("METHOD_NAME" to methodName), false, block)
     }
     Napier.i {

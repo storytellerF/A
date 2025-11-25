@@ -4,9 +4,9 @@ import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.api.NewFavorite
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.ForbiddenException
-import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.addIfNotExists
+import com.storyteller_f.a.backend.core.mapPagingResultNotNull
 import com.storyteller_f.a.backend.core.types.UserFavorite
 import com.storyteller_f.a.backend.core.types.toUserFavoriteInfo
 import com.storyteller_f.shared.model.UserFavoriteInfo
@@ -14,7 +14,6 @@ import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.firstOrNull
-import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
 
@@ -51,10 +50,8 @@ suspend fun Backend.deleteFavorite(uid: PrimaryKey, id: PrimaryKey) =
     }
 
 suspend fun Backend.getFavorites(uid: PrimaryKey, fetch: PrimaryKeyFetch) =
-    database.favorite.getUserFavorites(uid, fetch).mapResult {
-        processUserFavoriteToUserFavoriteInfo(uid, it.list).map { list ->
-            PaginationResult(list, it.total)
-        }
+    database.favorite.getUserFavorites(uid, fetch).mapPagingResultNotNull {
+        processUserFavoriteToUserFavoriteInfo(uid, it)
     }
 
 suspend fun Backend.processUserFavoriteToUserFavoriteInfo(

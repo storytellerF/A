@@ -4,10 +4,11 @@ import com.storyteller_f.a.backend.core.ContainerDatabase
 import com.storyteller_f.a.backend.core.JoinSearch
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.ObjectListFetch
-import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.RoomDatabase
 import com.storyteller_f.a.backend.core.UnauthorizedException
+import com.storyteller_f.a.backend.core.mapPagingResultNotNull
+import com.storyteller_f.a.backend.core.paginationFromResults
 import com.storyteller_f.a.backend.core.types.Member
 import com.storyteller_f.a.backend.core.types.RawRoom
 import com.storyteller_f.a.backend.core.types.Room
@@ -63,16 +64,13 @@ class ExposedRoomDatabase(
         community: PrimaryKey?,
         primaryKeyFetch: PrimaryKeyFetch,
         joinSearch: JoinSearch,
-    ) = runCatching {
-        val rooms = getRoomListByPredicate {
-            buildRoomSearchWhereQuery(joinSearch, community)
-                .bindPaginationQuery(Rooms, primaryKeyFetch)
-        }.getOrThrow()
-        val total = getRoomCountByPredicate {
-            buildRoomSearchWhereQuery(joinSearch, community)
-        }.getOrThrow()
-        val rawRooms = processRoomListToRawRoom(uid, rooms).getOrThrow()
-        PaginationResult(rawRooms, total)
+    ) = paginationFromResults(getRoomListByPredicate {
+        buildRoomSearchWhereQuery(joinSearch, community)
+            .bindPaginationQuery(Rooms, primaryKeyFetch)
+    }, getRoomCountByPredicate {
+        buildRoomSearchWhereQuery(joinSearch, community)
+    }).mapPagingResultNotNull {
+        processRoomListToRawRoom(uid, it)
     }
 
     override suspend fun getRoomCommunityId(parentId: PrimaryKey) = databaseSession.dbSearch {
@@ -87,7 +85,7 @@ class ExposedRoomDatabase(
     override suspend fun getRoomPubKeyPaginationResult(
         roomId: PrimaryKey,
         primaryKeyFetch: PrimaryKeyFetch,
-    ) = com.storyteller_f.a.backend.core.paginationFromResults(
+    ) = paginationFromResults(
         databaseSession.dbSearch {
             search {
                 Users.join(Members, JoinType.INNER, Users.id, Members.uid)
@@ -254,30 +252,27 @@ class ExposedRoomDatabase(
     override suspend fun getPrivateRoomPaginationResult(
         primaryKeyFetch: PrimaryKeyFetch,
         word: String?,
-    ) = runCatching {
-        val rooms = getRoomListByPredicate {
-            where { Rooms.communityId.isNull() }
-                .let { q ->
-                    if (!word.isNullOrBlank()) {
-                        q.andWhere { Rooms.name like "%$word%" }
-                    } else {
-                        q
-                    }
+    ) = paginationFromResults(getRoomListByPredicate {
+        where { Rooms.communityId.isNull() }
+            .let { q ->
+                if (!word.isNullOrBlank()) {
+                    q.andWhere { Rooms.name like "%$word%" }
+                } else {
+                    q
                 }
-                .bindPaginationQuery(Rooms, primaryKeyFetch)
-        }.getOrThrow()
-        val total = getRoomCountByPredicate {
-            where { Rooms.communityId.isNull() }
-                .let { q ->
-                    if (!word.isNullOrBlank()) {
-                        q.andWhere { Rooms.name like "%$word%" }
-                    } else {
-                        q
-                    }
+            }
+            .bindPaginationQuery(Rooms, primaryKeyFetch)
+    }, getRoomCountByPredicate {
+        where { Rooms.communityId.isNull() }
+            .let { q ->
+                if (!word.isNullOrBlank()) {
+                    q.andWhere { Rooms.name like "%$word%" }
+                } else {
+                    q
                 }
-        }.getOrThrow()
-        val rawRooms = processRoomListToRawRoom(null, rooms).getOrThrow()
-        PaginationResult(rawRooms, total)
+            }
+    }).mapPagingResultNotNull {
+        processRoomListToRawRoom(null, it)
     }
 
     private suspend fun getRoomListByPredicate(

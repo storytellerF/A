@@ -12,6 +12,7 @@ import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.UnauthorizedException
+import com.storyteller_f.a.backend.core.mapPagingResultNotNull
 import com.storyteller_f.a.backend.core.paging
 import com.storyteller_f.a.backend.core.pagingNotNull
 import com.storyteller_f.a.backend.core.service.CommunityDocument
@@ -142,28 +143,24 @@ suspend fun Backend.searchCommunities(
             memberSearchService.searchDocument(
                 MemberDocumentSearch.CommunityMembers(uid = joinSearch.uid, objectName = word),
                 primaryKeyFetch
-            ).mapResult { (searchResults, total) ->
+            ).mapPagingResultNotNull { searchResults ->
                 val communityIds = searchResults
                     .map { it.objectId }
                 database.community.getRawCommunities(
                     ObjectListFetch.IdListFetch(communityIds)
-                ).map {
-                    PaginationResult(it, total)
-                }
+                )
             }
         }
         // word 不为空 && 不是搜索已加入（Unspecified），使用 communitySearchService
         else -> communitySearchService.searchDocument(
             CommunityDocumentSearch.Keyword(listOf(word)),
             primaryKeyFetch
-        ).mapResult { (list, total) ->
+        ).mapPagingResultNotNull { list ->
             database.community.getRawCommunities(
                 ObjectListFetch.IdListFetch(list.map {
                     it.id
                 })
-            ).map {
-                PaginationResult(it, total)
-            }
+            )
         }
     }.mapResultIfNotNull { (list, count) ->
         processRawCommunityToCommunityInfo(list).mapResultIfNotNull { value ->
@@ -407,12 +404,12 @@ suspend fun Backend.getContainerMemberInfos(
     objectId: PrimaryKey,
     primaryKeyFetch: PrimaryKeyFetch
 ) = database.container.getMemberWithUserPaginationResult(objectId, primaryKeyFetch)
-    .mapResult { (list, total) ->
+    .mapPagingResultNotNull { list ->
         val rawUsers = list.map { it.second }
         processRawUserToUserInfo(rawUsers).map { users ->
             val userMap = users.associateBy { it.id }
             list.map { (member, rawUser) ->
                 member.toMemberInfo(userMap[rawUser.user.id]!!)
             }
-        }.pagingNotNull(total)
+        }
     }

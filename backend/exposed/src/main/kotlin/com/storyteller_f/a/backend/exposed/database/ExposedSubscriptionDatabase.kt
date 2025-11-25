@@ -1,9 +1,9 @@
 package com.storyteller_f.a.backend.exposed.database
 
 import com.storyteller_f.a.backend.core.ObjectListFetch
-import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.SubscriptionDatabase
+import com.storyteller_f.a.backend.core.paginationFromResults
 import com.storyteller_f.a.backend.core.types.SubscriptionSentLog
 import com.storyteller_f.a.backend.core.types.UserSubscription
 import com.storyteller_f.a.backend.exposed.ExposedDatabaseSession
@@ -29,14 +29,10 @@ class ExposedSubscriptionDatabase(private val databaseSession: ExposedDatabaseSe
     override suspend fun getUserSubscriptions(
         uid: PrimaryKey,
         fetch: PrimaryKeyFetch
-    ) = runCatching {
-        val userSubscriptions = getSubscriptionListByPredicate {
-            where { UserSubscriptions.uid eq uid }
-                .bindPaginationQuery(UserSubscriptions, fetch)
-        }.getOrThrow()
-        val total = getSubscriptionCountByPredicate { where { UserSubscriptions.uid eq uid } }.getOrThrow()
-        PaginationResult(userSubscriptions, total)
-    }
+    ) = paginationFromResults(getSubscriptionListByPredicate {
+        where { UserSubscriptions.uid eq uid }
+            .bindPaginationQuery(UserSubscriptions, fetch)
+    }, getSubscriptionCountByPredicate { where { UserSubscriptions.uid eq uid } })
 
     override suspend fun addSubscription(userSubscription: UserSubscription) =
         databaseSession.dbQuery {
