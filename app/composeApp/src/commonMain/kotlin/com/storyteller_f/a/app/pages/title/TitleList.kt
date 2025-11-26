@@ -8,13 +8,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.paging.compose.itemKey
 import com.storyteller_f.a.app.common.TitlesViewModel
-import com.storyteller_f.a.app.pages.community.CommunityIconWithDialog
-import com.storyteller_f.a.app.pages.room.RoomIconWithDialog
-import com.storyteller_f.a.app.pages.user.UserIconWithDialog
 import com.storyteller_f.a.app.core.components.LayoutDefaults
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.bottomAppending
 import com.storyteller_f.a.app.core.components.topPrepend
+import com.storyteller_f.a.app.pages.community.CommunityIconWithDialog
+import com.storyteller_f.a.app.pages.room.RoomIconWithDialog
+import com.storyteller_f.a.app.pages.user.UserIconWithDialog
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.type.ObjectType

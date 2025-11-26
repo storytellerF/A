@@ -55,12 +55,6 @@ import com.storyteller_f.a.app.common.createTopicsInTopicViewModel
 import com.storyteller_f.a.app.common.createUserViewModel
 import com.storyteller_f.a.app.components.AppTopicContentView
 import com.storyteller_f.a.app.components.InteractionRow
-import com.storyteller_f.a.app.pages.room.CommonInputButton
-import com.storyteller_f.a.app.pages.room.InputGroupInternal
-import com.storyteller_f.a.app.pages.room.RoomInputGroup
-import com.storyteller_f.a.app.pages.search.CustomSearchBar
-import com.storyteller_f.a.app.pages.search.SearchScope
-import com.storyteller_f.a.app.pages.user.UserIconWithDialog
 import com.storyteller_f.a.app.core.components.CustomAlertDialog
 import com.storyteller_f.a.app.core.components.CustomAlertDialogController
 import com.storyteller_f.a.app.core.components.GlobalTask
@@ -73,6 +67,12 @@ import com.storyteller_f.a.app.core.components.pagingItems
 import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.app.core.components.topPrepend
 import com.storyteller_f.a.app.core.components.use
+import com.storyteller_f.a.app.pages.room.CommonInputButton
+import com.storyteller_f.a.app.pages.room.InputGroupInternal
+import com.storyteller_f.a.app.pages.room.RoomInputGroup
+import com.storyteller_f.a.app.pages.search.CustomSearchBar
+import com.storyteller_f.a.app.pages.search.SearchScope
+import com.storyteller_f.a.app.pages.user.UserIconWithDialog
 import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.shared.model.TopicInfo

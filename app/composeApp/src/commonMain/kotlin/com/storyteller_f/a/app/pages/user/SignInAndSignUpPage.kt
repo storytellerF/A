@@ -50,6 +50,12 @@ import com.storyteller_f.a.app.back_to_pre_page
 import com.storyteller_f.a.app.common.AppNavFactory
 import com.storyteller_f.a.app.common.SessionHistoryViewModel
 import com.storyteller_f.a.app.common.getLoginHistoryViewModel
+import com.storyteller_f.a.app.core.CoreStrings
+import com.storyteller_f.a.app.core.components.BaseSheet
+import com.storyteller_f.a.app.core.components.CenterBox
+import com.storyteller_f.a.app.core.components.PrivateKeyInput
+import com.storyteller_f.a.app.core.components.StateView
+import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.app.delete
 import com.storyteller_f.a.app.go_to_sign_in
 import com.storyteller_f.a.app.go_to_sign_up
@@ -60,12 +66,6 @@ import com.storyteller_f.a.app.sign_up
 import com.storyteller_f.a.app.start_sign_in
 import com.storyteller_f.a.app.start_sign_up
 import com.storyteller_f.a.app.utils.appPlatform
-import com.storyteller_f.a.app.core.CoreStrings
-import com.storyteller_f.a.app.core.components.BaseSheet
-import com.storyteller_f.a.app.core.components.CenterBox
-import com.storyteller_f.a.app.core.components.PrivateKeyInput
-import com.storyteller_f.a.app.core.components.StateView
-import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.client.core.getUserInfo
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.replaceCrlf

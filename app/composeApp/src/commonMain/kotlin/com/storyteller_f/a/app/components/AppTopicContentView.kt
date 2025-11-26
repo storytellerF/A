@@ -4,8 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import com.mikepenz.markdown.compose.components.MarkdownComponentModel
 import com.storyteller_f.a.app.LocalAppNavFactory
-import com.storyteller_f.a.app.pages.topic.TopicRoute
 import com.storyteller_f.a.app.core.components.TopicContentView
+import com.storyteller_f.a.app.pages.topic.TopicRoute
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.utils.readCodeFence
 

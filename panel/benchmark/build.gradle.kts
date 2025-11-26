@@ -1,3 +1,5 @@
+@file:Suppress("UnstableApiUsage")
+
 plugins {
     alias(libs.plugins.android.test)
     alias(libs.plugins.kotlin.android)
@@ -29,6 +31,11 @@ android {
 
     targetProjectPath = ":panel:composeApp"
     experimentalProperties["android.experimental.self-instrumenting"] = true
+    compileOptions {
+        val javaVersion = JavaVersion.forClassVersion(libs.versions.jdk.get().toInt())
+        sourceCompatibility = javaVersion
+        targetCompatibility = javaVersion
+    }
 }
 
 dependencies {

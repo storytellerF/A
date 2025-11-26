@@ -8,10 +8,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import com.storyteller_f.a.app.common.UserCommentsViewModel
 import com.storyteller_f.a.app.common.getUserCommentsViewModel
-import com.storyteller_f.a.app.pages.topic.TopicCell
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.pagingItems
 import com.storyteller_f.a.app.core.components.safeArea
+import com.storyteller_f.a.app.pages.topic.TopicCell
 
 @Composable
 fun UserCommentsPage() {

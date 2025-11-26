@@ -397,15 +397,7 @@ tasks.named("copyNonXmlValueResourcesForCommonMain") {
 
 tasks.withType<Test> {
     when (name) {
-        "testDebugUnitTest" -> {
-            exclude("**/device_based/*")
-        }
-
-        "testReleaseUnitTest" -> {
-            exclude("**/device_based/*")
-        }
-
-        "jvmTest" -> {
+        "testDebugUnitTest", "testReleaseUnitTest", "jvmTest", "testBenchmarkUnitTest" -> {
             exclude("**/device_based/*")
         }
     }

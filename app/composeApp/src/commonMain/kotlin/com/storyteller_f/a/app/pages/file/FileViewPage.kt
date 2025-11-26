@@ -21,7 +21,6 @@ import com.github.panpf.zoomimage.CoilZoomAsyncImage
 import com.storyteller_f.a.app.LocalGlobalDialog
 import com.storyteller_f.a.app.common.FileViewViewModel
 import com.storyteller_f.a.app.common.createFileViewModel
-import com.storyteller_f.a.app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.core.components.AudioViewFullScreen
 import com.storyteller_f.a.app.core.components.BaseSheet
 import com.storyteller_f.a.app.core.components.ButtonNav
@@ -32,6 +31,7 @@ import com.storyteller_f.a.app.core.components.PdfView
 import com.storyteller_f.a.app.core.components.VideoViewFullScreen
 import com.storyteller_f.a.app.core.components.globalLoader
 import com.storyteller_f.a.app.core.components.request
+import com.storyteller_f.a.app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.client.core.copy
 import com.storyteller_f.shared.model.FileInfo
 import kotlinx.coroutines.launch

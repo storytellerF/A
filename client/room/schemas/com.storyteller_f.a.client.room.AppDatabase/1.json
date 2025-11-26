@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "b21d5ca54a295e6181d420d7a365ad66",
+    "identityHash": "fd37fbf63264aa7fa98054b18a6473e1",
     "entities": [
       {
         "tableName": "CommonEntity",
@@ -239,11 +239,60 @@
             "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_UploadEntity_collection_pathHash` ON `${TABLE_NAME}` (`collection`, `pathHash`)"
           }
         ]
+      },
+      {
+        "tableName": "DownloadEntity",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `collection` TEXT NOT NULL, `fileId` INTEGER NOT NULL, `data` TEXT NOT NULL, PRIMARY KEY(`collection`, `id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "collection",
+            "columnName": "collection",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fileId",
+            "columnName": "fileId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "data",
+            "columnName": "data",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "collection",
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_DownloadEntity_collection_fileId",
+            "unique": true,
+            "columnNames": [
+              "collection",
+              "fileId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_DownloadEntity_collection_fileId` ON `${TABLE_NAME}` (`collection`, `fileId`)"
+          }
+        ]
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'b21d5ca54a295e6181d420d7a365ad66')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'fd37fbf63264aa7fa98054b18a6473e1')"
     ]
   }
 }

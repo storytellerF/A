@@ -228,7 +228,7 @@ private fun Application.setupRateLimit() {
             requestKey { call ->
                 call.getRateLimitKey()
             }
-            requestWeight { applicationCall, key ->
+            requestWeight { applicationCall, _ ->
                 when (applicationCall.request.httpMethod) {
                     HttpMethod.Post -> 2
                     else -> 1
@@ -272,9 +272,7 @@ private fun Application.buildBackend(): Backend {
     return buildBackendFromEnv(env)
 }
 
-private fun getFlavorFilePath() = File(
-    "../../${com.storyteller_f.a.cloud.server.ServerConfig.FLAVOR}.env"
-).canonicalPath
+private fun getFlavorFilePath() = File("../../${ServerConfig.FLAVOR}.env").canonicalPath
 
 private fun buildDatabaseReader() = DatabaseReader.Builder(
     ClassLoader.getSystemResourceAsStream("GeoLite2-Country.mmdb")
@@ -323,7 +321,7 @@ fun ApplicationCall.remoteIp(
         request.header("X-Forwarded-For")?.split(", ").orEmpty().mapNotNull {
             val c = reader.tryCountry(InetAddress.getByName(it)).getOrNull()
             if (c != null) {
-                it to c.country.isoCode
+                it to c.country().isoCode()
             } else {
                 null
             }
@@ -331,7 +329,7 @@ fun ApplicationCall.remoteIp(
             listOf("127.0.0.1" to null)
         }
     } else {
-        listOf(remoteAddress to country.country.isoCode)
+        listOf(remoteAddress to country.country().isoCode())
     }
 }
 

@@ -16,8 +16,8 @@ import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.LocalAppNavFactory
 import com.storyteller_f.a.app.common.TopicViewModel
 import com.storyteller_f.a.app.common.createTopicViewModel
-import com.storyteller_f.a.app.pages.user.UserIconWithDialog
 import com.storyteller_f.a.app.core.components.RefCellStateView
+import com.storyteller_f.a.app.pages.user.UserIconWithDialog
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.type.PrimaryKey

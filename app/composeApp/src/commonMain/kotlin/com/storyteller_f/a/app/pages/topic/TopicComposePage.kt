@@ -66,6 +66,11 @@ import com.storyteller_f.a.app.common.OnTopicCreated
 import com.storyteller_f.a.app.common.createRoomViewModel
 import com.storyteller_f.a.app.common.getMarkdownMediasViewModel
 import com.storyteller_f.a.app.components.AppTopicContentView
+import com.storyteller_f.a.app.core.components.CustomAlertDialog
+import com.storyteller_f.a.app.core.components.emitEvent
+import com.storyteller_f.a.app.core.components.rememberAlertDialogController
+import com.storyteller_f.a.app.core.components.request
+import com.storyteller_f.a.app.core.components.safeArea
 import com.storyteller_f.a.app.edit
 import com.storyteller_f.a.app.pages.community.getCommunityFont
 import com.storyteller_f.a.app.pages.community.getFontFamily
@@ -81,11 +86,6 @@ import com.storyteller_f.a.app.toggle_ordered_list
 import com.storyteller_f.a.app.toggle_underline
 import com.storyteller_f.a.app.toggle_unordered_list
 import com.storyteller_f.a.app.ui.theme.AppTheme
-import com.storyteller_f.a.app.core.components.CustomAlertDialog
-import com.storyteller_f.a.app.core.components.emitEvent
-import com.storyteller_f.a.app.core.components.rememberAlertDialogController
-import com.storyteller_f.a.app.core.components.request
-import com.storyteller_f.a.app.core.components.safeArea
 import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo

@@ -461,32 +461,43 @@ class RoomFileInfoStorage(val appDatabase: AppDatabase) : FileInfoStorage {
 }
 
 class RoomDownloadInfoStorage(val appDatabase: AppDatabase) : DownloadInfoStorage {
-    val impl = CommonStorageImpl(appDatabase)
     override suspend fun save(item: DownloadInfo) {
         val data = commonJson.encodeToString(item)
-        appDatabase.getCommonDao().insert(
-            CommonEntity(
-                item.fileInfo.id,
-                DownloadInfoStorage.COLLECTION_NAME,
-                data
+        appDatabase.getDownloadDao().insert(
+            DownloadEntity(
+                id = item.id,
+                collection = DownloadInfoStorage.COLLECTION_NAME,
+                fileId = item.fileInfo.id,
+                data = data
             )
         )
     }
 
     override fun observeDatum(id: PrimaryKey): Flow<DownloadInfo?> {
-        return impl.observeDatum(DownloadInfoStorage.COLLECTION_NAME, id.toString())
+        return appDatabase.getDownloadDao()
+            .getByFileIdAsFlow(DownloadInfoStorage.COLLECTION_NAME, id).map {
+                it?.data?.let { string -> commonJson.safeDecodeFromStringOrNull(string) }
+            }
     }
 
     override suspend fun getDocument(id: PrimaryKey): DownloadInfo? {
-        return impl.getDocument(DownloadInfoStorage.COLLECTION_NAME, id.toString())
+        return appDatabase.getDownloadDao().getByFileId(DownloadInfoStorage.COLLECTION_NAME, id)?.let {
+            commonJson.safeDecodeFromStringOrNull(it.data)
+        }
     }
 
     override fun observeData(): PagingSource<Int, DownloadInfo> {
-        return impl.observeData(DownloadInfoStorage.COLLECTION_NAME)
+        return WrappedPagingSource(
+            appDatabase.getDownloadDao().getAsSource(DownloadInfoStorage.COLLECTION_NAME)
+        ) { entities ->
+            entities.mapNotNull {
+                commonJson.safeDecodeFromStringOrNull(it.data)
+            }
+        }
     }
 
     override suspend fun clean() {
-        impl.clean(DownloadInfoStorage.COLLECTION_NAME)
+        appDatabase.getDownloadDao().clean(DownloadInfoStorage.COLLECTION_NAME)
     }
 }
 
