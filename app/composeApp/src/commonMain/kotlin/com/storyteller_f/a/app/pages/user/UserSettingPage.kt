@@ -38,8 +38,6 @@ import com.storyteller_f.a.app.LocalUserInfo
 import com.storyteller_f.a.app.common.OnUserUpdated
 import com.storyteller_f.a.app.components.SettingOptionResettableView
 import com.storyteller_f.a.app.components.SettingOptionView
-import com.storyteller_f.a.app.pages.topic.FilePicker
-import com.storyteller_f.a.app.pages.topic.uploadPath
 import com.storyteller_f.a.app.core.CoreStrings
 import com.storyteller_f.a.app.core.components.CustomAlertDialog
 import com.storyteller_f.a.app.core.components.CustomAlertDialogController
@@ -50,6 +48,8 @@ import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.app.core.utils.ImageFormat
 import com.storyteller_f.a.app.core.utils.getRemoteImageBitmap
 import com.storyteller_f.a.app.core.utils.saveImageBitmap
+import com.storyteller_f.a.app.pages.topic.FilePicker
+import com.storyteller_f.a.app.pages.topic.uploadPath
 import com.storyteller_f.a.client.core.updateUserInfo
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.FileInfo

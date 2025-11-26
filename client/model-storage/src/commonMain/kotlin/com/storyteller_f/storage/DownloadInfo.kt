@@ -9,6 +9,7 @@ enum class DownloadStatus {
 
 @Serializable
 data class DownloadInfo(
+    val id: Long,
     val fileInfo: FileInfo,
     val status: DownloadStatus,
     val message: String,

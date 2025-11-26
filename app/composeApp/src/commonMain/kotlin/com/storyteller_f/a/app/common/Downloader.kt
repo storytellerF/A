@@ -7,6 +7,7 @@ import com.storyteller_f.a.client.room.RoomModelStorage
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.now
+import com.storyteller_f.shared.utils.nowInstance
 import com.storyteller_f.storage.DownloadInfo
 import com.storyteller_f.storage.DownloadStatus
 import com.storyteller_f.storage.ModelStorage
@@ -36,6 +37,7 @@ import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.files.SystemTemporaryDirectory
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.ExperimentalTime
 
 interface Downloader {
     fun download(fileInfo: FileInfo)
@@ -154,6 +156,7 @@ class DownloaderImpl(
         pauseIfNeed(id, modelStorage)
     }
 
+    @OptIn(ExperimentalTime::class)
     private suspend fun downloadIfNeed(
         modelStorage: RoomModelStorage,
         fileInfo: FileInfo,
@@ -164,6 +167,7 @@ class DownloaderImpl(
             modelStorage.download.getDocument(fileInfo.id)
         if (document == null) {
             val new = DownloadInfo(
+                nowInstance().epochSeconds,
                 fileInfo,
                 DownloadStatus.NOT_DOWNLOADED,
                 "",

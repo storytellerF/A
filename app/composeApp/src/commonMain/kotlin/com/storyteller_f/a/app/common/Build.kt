@@ -8,8 +8,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.storyteller_f.a.app.CustomUserSessionManager
 import com.storyteller_f.a.app.LocalUiViewModel
-import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.a.app.core.components.buildByMarkdown
+import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.a.client.room.RoomModelStorage
 import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.model.RoomInfo

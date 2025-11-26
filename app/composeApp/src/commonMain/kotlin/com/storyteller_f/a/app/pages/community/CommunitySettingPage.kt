@@ -26,12 +26,12 @@ import com.storyteller_f.a.app.common.OnCommunityUpdated
 import com.storyteller_f.a.app.common.createCommunityViewModel
 import com.storyteller_f.a.app.components.SettingOptionResettableView
 import com.storyteller_f.a.app.components.SettingOptionView
-import com.storyteller_f.a.app.pages.user.ObjectSettingDialog
-import com.storyteller_f.a.app.pages.user.SettingOption
 import com.storyteller_f.a.app.core.components.CommunityPoster
 import com.storyteller_f.a.app.core.components.LocalToaster
 import com.storyteller_f.a.app.core.components.emitEvent
 import com.storyteller_f.a.app.core.components.request
+import com.storyteller_f.a.app.pages.user.ObjectSettingDialog
+import com.storyteller_f.a.app.pages.user.SettingOption
 import com.storyteller_f.a.client.core.updateCommunityInfo
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.obj.UpdateCommunityBody

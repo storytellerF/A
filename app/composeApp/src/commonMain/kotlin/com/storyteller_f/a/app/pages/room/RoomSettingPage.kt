@@ -23,11 +23,11 @@ import com.storyteller_f.a.app.common.OnRoomUpdated
 import com.storyteller_f.a.app.common.createRoomViewModel
 import com.storyteller_f.a.app.components.SettingOptionResettableView
 import com.storyteller_f.a.app.components.SettingOptionView
-import com.storyteller_f.a.app.pages.user.ObjectSettingDialog
-import com.storyteller_f.a.app.pages.user.SettingOption
 import com.storyteller_f.a.app.core.components.LocalToaster
 import com.storyteller_f.a.app.core.components.emitEvent
 import com.storyteller_f.a.app.core.components.request
+import com.storyteller_f.a.app.pages.user.ObjectSettingDialog
+import com.storyteller_f.a.app.pages.user.SettingOption
 import com.storyteller_f.a.client.core.updateRoomInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.obj.UpdateRoomBody

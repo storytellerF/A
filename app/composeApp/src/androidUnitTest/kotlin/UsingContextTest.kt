@@ -1,6 +1,6 @@
 import android.content.ContentProvider
-import com.storyteller_f.a.app.BuildConfig
 import com.storyteller_f.a.app.AApplication
+import com.storyteller_f.a.app.BuildConfig
 import org.junit.Before
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric

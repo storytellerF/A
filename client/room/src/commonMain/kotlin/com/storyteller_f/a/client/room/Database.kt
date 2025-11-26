@@ -18,7 +18,8 @@ import kotlinx.coroutines.flow.Flow
         CommunityEntity::class,
         TopicEntity::class,
         ReactionEntity::class,
-        UploadEntity::class],
+        UploadEntity::class,
+        DownloadEntity::class],
     version = 1
 )
 @ConstructedBy(AppDatabaseConstructor::class)
@@ -28,6 +29,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun getTopicDao(): TopicDao
     abstract fun getReactionDao(): ReactionDao
     abstract fun getUploadDao(): UploadDao
+    abstract fun getDownloadDao(): DownloadDao
 }
 
 // The Room compiler generates the `actual` implementations.
@@ -199,4 +201,39 @@ data class UploadEntity(
     val collection: String,
     val data: String,
     val pathHash: String,
+)
+
+@Dao
+interface DownloadDao {
+    @Insert(onConflict = REPLACE)
+    suspend fun insert(item: DownloadEntity)
+
+    @Query("select * from DownloadEntity where collection = :collection and id = :id")
+    suspend fun getById(collection: String, id: Long): DownloadEntity?
+
+    @Query("select * from DownloadEntity where collection = :collection and fileId = :fileId")
+    suspend fun getByFileId(collection: String, fileId: Long): DownloadEntity?
+
+    @Query("SELECT * FROM DownloadEntity where collection = :collection and id = :id")
+    fun getByIdAsFlow(collection: String, id: Long): Flow<DownloadEntity?>
+
+    @Query("SELECT * FROM DownloadEntity where collection = :collection and fileId = :fileId")
+    fun getByFileIdAsFlow(collection: String, fileId: Long): Flow<DownloadEntity?>
+
+    @Query("select * from DownloadEntity where collection = :collection order by id desc")
+    fun getAsSource(collection: String): PagingSource<Int, DownloadEntity>
+
+    @Query("delete from DownloadEntity where collection = :collection")
+    suspend fun clean(collection: String)
+}
+
+@Entity(
+    primaryKeys = ["collection", "id"],
+    indices = [Index("collection", "fileId", unique = true)]
+)
+data class DownloadEntity(
+    val id: Long,
+    val collection: String,
+    val fileId: Long,
+    val data: String,
 )

@@ -29,13 +29,13 @@ import com.storyteller_f.a.app.LocalAppNavFactory
 import com.storyteller_f.a.app.common.ContainerMemberViewModel
 import com.storyteller_f.a.app.common.UserSearchViewModel
 import com.storyteller_f.a.app.common.createMemberViewModel
-import com.storyteller_f.a.app.pages.search.CustomSearchBar
-import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.a.app.core.components.LayoutDefaults
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.bottomAppending
 import com.storyteller_f.a.app.core.components.pagingItems
 import com.storyteller_f.a.app.core.components.topPrepend
+import com.storyteller_f.a.app.pages.search.CustomSearchBar
+import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey

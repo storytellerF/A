@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
@@ -73,10 +74,6 @@ import com.storyteller_f.a.app.common.getDownloadListViewModel
 import com.storyteller_f.a.app.common.getDownloadViewModel
 import com.storyteller_f.a.app.common.getQuotaViewModel
 import com.storyteller_f.a.app.common.getUploadViewModel
-import com.storyteller_f.a.app.pages.search.CustomSearchBar
-import com.storyteller_f.a.app.pages.search.SearchScope
-import com.storyteller_f.a.app.pages.topic.PlatformClientFile
-import com.storyteller_f.a.app.utils.ClientFile
 import com.storyteller_f.a.app.core.CoreStrings
 import com.storyteller_f.a.app.core.components.BaseSheet
 import com.storyteller_f.a.app.core.components.CustomBottomNav
@@ -91,6 +88,11 @@ import com.storyteller_f.a.app.core.components.catchingResult
 import com.storyteller_f.a.app.core.components.pagingItems
 import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.app.core.components.topPrepend
+import com.storyteller_f.a.app.pages.search.CustomSearchBar
+import com.storyteller_f.a.app.pages.search.SearchScope
+import com.storyteller_f.a.app.pages.topic.PlatformClientFile
+import com.storyteller_f.a.app.ui.theme.AppTheme
+import com.storyteller_f.a.app.utils.ClientFile
 import com.storyteller_f.a.client.core.UploadData
 import com.storyteller_f.a.client.core.abortChunkUpload
 import com.storyteller_f.shared.model.FileInfo
@@ -195,8 +197,8 @@ private fun FileExplorerPager(
         modifier = Modifier.padding(top = paddingValues.calculateTopPadding())
     ) { index ->
         when (index) {
-            0 -> UploadedPage(mediaTarget = mediaTarget)
-            1 -> UploadRecordPage(mediaTarget = mediaTarget)
+            0 -> UploadedPage(mediaTarget)
+            1 -> UploadRecordPage(mediaTarget)
             else -> DownloadRecordPage()
         }
     }
@@ -396,6 +398,7 @@ class DownloadRecordItemPreviewProvider : PreviewParameterProvider<DownloadInfo?
     override val values: Sequence<DownloadInfo?>
         get() = sequenceOf(
             DownloadInfo(
+                id = 1000L,
                 fileInfo = FileInfo(
                     id = 1L,
                     url = "https://example.com/files/sample1.png",
@@ -415,6 +418,7 @@ class DownloadRecordItemPreviewProvider : PreviewParameterProvider<DownloadInfo?
                 total = 5_000_000
             ),
             DownloadInfo(
+                id = 2000L,
                 fileInfo = FileInfo(
                     id = 2L,
                     url = "https://example.com/files/sample2.mp4",
@@ -434,6 +438,7 @@ class DownloadRecordItemPreviewProvider : PreviewParameterProvider<DownloadInfo?
                 total = 120_000_000
             ),
             DownloadInfo(
+                id = 3000L,
                 fileInfo = FileInfo(
                     id = 3L,
                     url = "https://example.com/files/sample3.pdf",
@@ -453,6 +458,7 @@ class DownloadRecordItemPreviewProvider : PreviewParameterProvider<DownloadInfo?
                 total = 2_000_000
             ),
             DownloadInfo(
+                id = 4000L,
                 fileInfo = FileInfo(
                     id = 4L,
                     url = "https://example.com/files/sample4.m3u8",
@@ -472,6 +478,7 @@ class DownloadRecordItemPreviewProvider : PreviewParameterProvider<DownloadInfo?
                 total = 50_000_000
             ),
             DownloadInfo(
+                id = 5000L,
                 fileInfo = FileInfo(
                     id = 5L,
                     url = "https://example.com/files/sample5.jpg",
@@ -523,7 +530,7 @@ private fun DownloadRecordItem(@PreviewParameter(DownloadRecordItemPreviewProvid
                     getDownloadProgress(d)
                 }, modifier = Modifier.weight(1f))
                 Spacer(modifier = Modifier.padding(horizontal = 8.dp))
-                Text(d.getPercent())
+                FixedProgress(d.getPercent())
             }
         }
         DownloadStatusButton(d)
@@ -622,7 +629,7 @@ private fun DownloadInfoPageInternal(downloadViewModel: DownloadViewModel) {
             LinearProgressIndicator(progress = {
                 it.progress.toFloat() / it.total
             })
-            Text(it.getPercent())
+            FixedProgress(it.getPercent())
         }
     }
     DownloadInfoTable(downloadInfo)
@@ -986,4 +993,17 @@ fun UploadInfo?.getPercent(): String {
             2
         )
     } %"
+}
+
+class ProgressPreviewProvider : PreviewParameterProvider<String> {
+    override val values: Sequence<String>
+        get() = sequenceOf("0 %", "50 %", "89.99 %", "100.0 %")
+}
+
+@Preview
+@Composable
+fun FixedProgress(@PreviewParameter(ProgressPreviewProvider::class) percent: String) {
+    AppTheme {
+        Text(percent, modifier = Modifier.width(60.dp))
+    }
 }
