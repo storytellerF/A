@@ -1,6 +1,6 @@
 import androidx.compose.ui.test.ExperimentalTestApi
 import com.storyteller_f.a.api.PaginationQuery
-import com.storyteller_f.a.app.compose_app.buildHttpClient
+import com.storyteller_f.a.app.buildHttpClient
 import com.storyteller_f.a.client.core.buildWebSocketUrl
 import com.storyteller_f.a.client.core.createUserSessionManager
 import com.storyteller_f.a.client.core.getRecommendTopics
