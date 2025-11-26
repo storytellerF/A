@@ -6,6 +6,7 @@ import com.storyteller_f.a.backend.core.CombinedDatabase
 import com.storyteller_f.a.backend.core.CustomConfig
 import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.buildCommunitySearchService
+import com.storyteller_f.a.backend.core.buildFileSearchService
 import com.storyteller_f.a.backend.core.buildMemberSearchService
 import com.storyteller_f.a.backend.core.buildNameService
 import com.storyteller_f.a.backend.core.buildRoomSearchService
@@ -16,6 +17,7 @@ import com.storyteller_f.a.backend.core.loadAvif
 import com.storyteller_f.a.backend.core.mediaService
 import com.storyteller_f.a.backend.core.readEnv
 import com.storyteller_f.a.backend.core.service.CommunitySearchService
+import com.storyteller_f.a.backend.core.service.FileSearchService
 import com.storyteller_f.a.backend.core.service.MemberSearchService
 import com.storyteller_f.a.backend.core.service.NameService
 import com.storyteller_f.a.backend.core.service.ObjectStorageService
@@ -53,6 +55,7 @@ class CliBackend(
     override val communitySearchService: CommunitySearchService,
     override val userSearchService: UserSearchService,
     override val memberSearchService: MemberSearchService,
+    override val fileSearchService: FileSearchService,
     override val objectStorageService: ObjectStorageService,
     override val nameService: NameService,
     override val database: CombinedDatabase
@@ -73,6 +76,7 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
     val roomSearchService = buildRoomSearchService(env)
     val communitySearchService = buildCommunitySearchService(env)
     val memberSearchService = buildMemberSearchService(env)
+    val fileSearchService = buildFileSearchService(env)
     val mediaService = mediaService(env)
 
     val exposedDatabase = buildExposedDatabase(databaseConnection)
@@ -83,6 +87,7 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
         communitySearchService,
         userSearchService,
         memberSearchService,
+        fileSearchService,
         mediaService,
         buildNameService(env),
         exposedDatabase

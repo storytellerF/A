@@ -521,9 +521,9 @@ private fun getUploadDataFromStream(
     tmpFile.inputStream().asInput()
 }
 
-fun getUploadDataFromText(string: String) = UploadData(
+fun getUploadDataFromText(string: String, fileName: String = "hello.txt") = UploadData(
     string.length.toLong(),
-    "hello.txt",
+    fileName,
     ContentType.defaultForFileExtension("txt")
 ) {
     Buffer().apply {

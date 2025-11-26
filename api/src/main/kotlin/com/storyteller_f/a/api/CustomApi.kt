@@ -428,6 +428,18 @@ object CustomApi {
 
         val get = safeEndpointWithQuery<ServerResponse<FileInfo>, FileQuery>("files")
 
+        @Serializable
+        class FileSearchQuery(
+            val word: String? = null,
+            val objectId: PrimaryKey? = null,
+            val objectType: ObjectType? = null,
+            override val nextPageToken: String? = null,
+            override val size: Int = DEFAULT_PAGE_SIZE,
+            override val prePageToken: String? = null,
+        ) : PageableQuery
+
+        val search = safeEndpointWithQuery<ServerResponse<FileInfo>, FileSearchQuery>("files/search")
+
         object Id {
             val copy =
                 mutationEndpointWithPath<ServerResponse<FileInfo>, Unit, CommonPath>("files/{id}/copy")
@@ -712,6 +724,17 @@ object AdminApi {
 
     object Files {
         val get = safeEndpointWithQuery<ServerResponse<FileInfo>, PaginationQuery>("/admin/files")
+
+        @Serializable
+        class FileSearchQuery(
+            val word: String? = null,
+            override val nextPageToken: String? = null,
+            override val size: Int = DEFAULT_PAGE_SIZE,
+            override val prePageToken: String? = null,
+        ) : PageableQuery
+
+        val search = safeEndpointWithQuery<ServerResponse<FileInfo>, FileSearchQuery>("/admin/files/search")
+
         object Id {
             val get = safeEndpointWithPath<FileInfo, CommonPath>("/admin/files/{id}")
 

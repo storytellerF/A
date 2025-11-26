@@ -73,6 +73,10 @@ suspend fun PanelSessionManager.getAllFiles(query: PaginationQuery) = serviceCat
     AdminApi.Files.get(query)
 }
 
+suspend fun PanelSessionManager.searchFiles(query: AdminApi.Files.FileSearchQuery) = serviceCatching {
+    AdminApi.Files.search(query)
+}
+
 suspend fun PanelSessionManager.getUserById(uid: PrimaryKey) = serviceCatching {
     AdminApi.Users.Id.get(CommonPath(uid))
 }

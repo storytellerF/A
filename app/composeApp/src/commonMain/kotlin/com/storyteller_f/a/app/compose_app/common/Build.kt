@@ -433,6 +433,21 @@ fun createMediaListViewModel(
 }
 
 @Composable
+fun createFileSearchViewModel(
+    objectId: PrimaryKey,
+    objectType: ObjectType,
+    word: String,
+) = customViewModel(
+    listOf(
+        "file-search",
+        objectId,
+        word
+    )
+) { sessionManager, databaseSource ->
+    FileSearchViewModel(sessionManager, databaseSource, word, objectId, objectType)
+}
+
+@Composable
 fun createMemberViewModel(
     objectId: PrimaryKey,
     objectType: ObjectType,
