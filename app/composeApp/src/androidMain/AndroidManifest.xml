@@ -21,6 +21,9 @@
         android:supportsRtl="true"
         android:theme="@style/App"
         tools:targetApi="33">
+        <profileable
+            android:shell="true"
+            tools:targetApi="29" />
         <activity
             android:name=".RTCActivity"
             android:exported="false"

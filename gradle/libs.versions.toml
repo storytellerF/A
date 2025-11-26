@@ -108,6 +108,10 @@ vaviImageAvif = "0.0.7"
 vlcj = "4.11.0"
 webrtcKmp = "0.125.11"
 zoomimageComposeCoil3 = "1.4.0"
+junit = "1.3.0"
+espressoCore = "3.7.0"
+uiautomator = "2.2.0"
+benchmarkMacroJunit4 = "1.2.0-beta01"
 
 [libraries]
 aboutlibraries-compose-m3 = { module = "com.mikepenz:aboutlibraries-compose-m3", version.ref = "aboutlibrariesComposeM3" }
@@ -291,6 +295,10 @@ vavi-image-avif = { module = "com.github.umjammer:vavi-image-avif", version.ref 
 vlcj = { module = "uk.co.caprica:vlcj", version.ref = "vlcj" }
 webrtc-kmp = { module = "com.shepeliev:webrtc-kmp", version.ref = "webrtcKmp" }
 zoomimage-compose-coil3 = { module = "io.github.panpf.zoomimage:zoomimage-compose-coil3", version.ref = "zoomimageComposeCoil3" }
+androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junit" }
+androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+androidx-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "uiautomator" }
+androidx-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version.ref = "benchmarkMacroJunit4" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
@@ -311,6 +319,7 @@ room = { id = "androidx.room", version.ref = "roomRuntime" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detektVersion" }
 aboutlibrary = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "aboutlibrariesCore" }
 composeHotReload = { id = "org.jetbrains.compose.hot-reload", version.ref = "composeHotReload" }
+android-test = { id = "com.android.test", version.ref = "agp" }
 
 [bundles]
 coil = [

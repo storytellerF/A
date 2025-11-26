@@ -19,6 +19,7 @@ plugins {
     alias(libs.plugins.detekt)
     id("com.github.ben-manes.versions") version "0.53.0"
     id("nl.littlerobots.version-catalog-update") version "1.0.1"
+    alias(libs.plugins.android.test) apply false
 }
 
 val detektReportMergeSarif by tasks.registering(ReportMergeTask::class) {
