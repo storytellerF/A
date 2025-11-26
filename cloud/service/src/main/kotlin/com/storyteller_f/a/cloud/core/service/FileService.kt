@@ -12,6 +12,8 @@ import com.storyteller_f.a.backend.core.getImageDimension
 import com.storyteller_f.a.backend.core.mapPagingNotNull
 import com.storyteller_f.a.backend.core.mapPagingResultNotNull
 import com.storyteller_f.a.backend.core.service.CopyPack
+import com.storyteller_f.a.backend.core.service.FileDocument
+import com.storyteller_f.a.backend.core.service.FileDocumentSearch
 import com.storyteller_f.a.backend.core.service.ProcessedUploadPack
 import com.storyteller_f.a.backend.core.service.UploadPack
 import com.storyteller_f.a.backend.core.types.FileRecord
@@ -91,6 +93,74 @@ suspend fun Backend.getFileInfoByName(
         processFileRecordToFileInfo(listOf(fileRecord))
     }.mapIfNotNull {
         it.first()
+    }
+}
+
+suspend fun Backend.searchFiles(
+    uid: PrimaryKey,
+    query: CustomApi.Files.FileSearchQuery,
+    primaryKeyFetch: PrimaryKeyFetch
+): Result<PaginationResult<FileInfo>?> {
+    val word = query.word
+    val objectId = query.objectId
+    val objectType = query.objectType
+
+    // 如果指定了 objectId 和 objectType，需要检查权限
+    if (objectId != null && objectType != null) {
+        return checkRootWritePermission(objectType, objectId, uid).mapResultIfNotNull {
+            searchFilesByWord(word, objectId, primaryKeyFetch)
+        }
+    }
+
+    // 否则只搜索用户自己的文件
+    return searchFilesByWord(word, uid, primaryKeyFetch)
+}
+
+suspend fun Backend.uncheckedSearchFiles(
+    query: com.storyteller_f.a.api.AdminApi.Files.FileSearchQuery,
+    primaryKeyFetch: PrimaryKeyFetch
+): Result<PaginationResult<FileInfo>?> {
+    val word = query.word
+    return if (word.isNullOrBlank()) {
+        // 如果没有关键词，返回所有文件
+        getAllFileInfos(primaryKeyFetch)
+    } else {
+        // 使用 fileSearchService 搜索
+        searchFilesByWord(word, null, primaryKeyFetch)
+    }
+}
+
+private suspend fun Backend.searchFilesByWord(
+    word: String?,
+    ownerId: PrimaryKey?,
+    primaryKeyFetch: PrimaryKeyFetch
+): Result<PaginationResult<FileInfo>?> {
+    return if (word.isNullOrBlank()) {
+        // 如果没有关键词，从数据库直接查询
+        if (ownerId != null) {
+            getFileInfoPaginationResult(ownerId, primaryKeyFetch)
+        } else {
+            getAllFileInfos(primaryKeyFetch)
+        }
+    } else {
+        // 使用 fileSearchService 搜索
+        val searchQuery = if (ownerId != null) {
+            FileDocumentSearch.Keyword(listOf(word), ownerId)
+        } else {
+            FileDocumentSearch.Keyword(listOf(word))
+        }
+        fileSearchService.searchDocument(searchQuery, primaryKeyFetch).mapResultIfNotNull { (documents, total) ->
+            val fileIds = documents.map { it.id }
+            if (fileIds.isEmpty()) {
+                Result.success(PaginationResult(emptyList(), total))
+            } else {
+                database.file.getFileRecordByIds(fileIds).mapResultIfNotNull { fileRecords ->
+                    processFileRecordToFileInfo(fileRecords)
+                }.mapIfNotNull { fileInfos ->
+                    PaginationResult(fileInfos, total)
+                }
+            }
+        }
     }
 }
 
@@ -466,7 +536,16 @@ suspend fun completeChunkUpload(
                     quotaInfo,
                     record.copy(status = UploadRecordStatus.SUCCESS),
                     listOf(fileRecord),
-                ).getOrThrow()
+                ).onSuccess {
+                    // 保存文件文档到搜索服务
+                    backend.fileSearchService.saveDocument(
+                        listOf(FileDocument.fromFileRecord(fileRecord))
+                    ).onFailure { error ->
+                        Napier.e(error) {
+                            "save file document failed"
+                        }
+                    }
+                }.getOrThrow()
                 // 清理分片与元数据
                 cleanChunk(backend, sortedSources, recordId)
                 listOf(fileRecord)

@@ -33,6 +33,7 @@ import com.storyteller_f.a.cloud.core.service.getUserUploadRecords
 import com.storyteller_f.a.cloud.core.service.uncheckGetTopicById
 import com.storyteller_f.a.cloud.core.service.uncheckGetTopicsByParentId
 import com.storyteller_f.a.cloud.core.service.uncheckedGetFileRefsByFileId
+import com.storyteller_f.a.cloud.core.service.uncheckedSearchFiles
 import com.storyteller_f.a.cloud.server.auth.UserSession
 import com.storyteller_f.a.cloud.server.auth.getData
 import com.storyteller_f.a.cloud.server.auth.handleResult
@@ -95,6 +96,11 @@ private fun Routing.bindAdminFileRoutes(backend: Backend) {
     AdminApi.Files.get(handleResult()) {
         it.pagination(IdentifiablePagingGenerator) { fetch ->
             backend.getAllFileInfos(fetch)
+        }
+    }
+    AdminApi.Files.search(handleResult()) {
+        it.pagination(IdentifiablePagingGenerator) { fetch ->
+            backend.uncheckedSearchFiles(it, fetch)
         }
     }
     AdminApi.Files.Id.get(handleResult()) { p ->

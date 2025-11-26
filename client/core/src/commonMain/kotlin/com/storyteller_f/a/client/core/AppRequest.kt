@@ -394,6 +394,12 @@ suspend fun UserSessionManager.getFileList(
     )
 }
 
+suspend fun UserSessionManager.searchFiles(
+    query: CustomApi.Files.FileSearchQuery
+) = serviceCatching {
+    CustomApi.Files.search(query)
+}
+
 suspend fun UserSessionManager.getMediaByName(
     word: String,
     objectId: PrimaryKey,

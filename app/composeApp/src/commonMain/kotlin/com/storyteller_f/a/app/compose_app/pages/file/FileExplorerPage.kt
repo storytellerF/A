@@ -220,8 +220,8 @@ private fun FileExplorerNonCompatPageInternal(mediaTarget: ObjectTuple) {
                 UploadFileActionButton()
             }
         }
-    }) { paddingValues ->
-        Row(modifier = Modifier.padding(bottom = paddingValues.calculateBottomPadding())) {
+    }) {
+        Row {
             CustomRailNav(current?.destination?.route, navRoutes) {
                 navigator.navigate(it, NavOptions.Builder().setLaunchSingleTop(true).build())
             }
@@ -634,13 +634,13 @@ fun DownloadInfo.getPercent(): String =
 @Composable
 private fun DownloadInfoTitle(data: DownloadInfo?) {
     val it = data?.fileInfo
-    val scope = rememberCoroutineScope()
-    val globalDialogController = LocalGlobalDialog.current
+    rememberCoroutineScope()
+    LocalGlobalDialog.current
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        val provider = LocalClientFileProvider.current
+        LocalClientFileProvider.current
         Text(it?.name ?: "-", modifier = Modifier.weight(1f))
         DownloadStatusButton(data)
     }

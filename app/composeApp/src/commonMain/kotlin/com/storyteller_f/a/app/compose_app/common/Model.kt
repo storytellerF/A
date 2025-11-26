@@ -10,6 +10,7 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.map
+import com.storyteller_f.a.api.CustomApi
 import com.storyteller_f.a.api.NewTitle
 import com.storyteller_f.a.api.PaginationQuery
 import com.storyteller_f.a.app.compose_app.CustomUserSessionManager
@@ -60,6 +61,7 @@ import com.storyteller_f.a.client.core.processEncryptedTopic
 import com.storyteller_f.a.client.core.searchAllMembers
 import com.storyteller_f.a.client.core.searchCommunity
 import com.storyteller_f.a.client.core.searchCommunityMembers
+import com.storyteller_f.a.client.core.searchFiles
 import com.storyteller_f.a.client.core.searchRoomMembers
 import com.storyteller_f.a.client.core.searchRooms
 import com.storyteller_f.a.client.core.searchTopics
@@ -437,6 +439,34 @@ class MediaListViewModel(
         modelStorage.fileInfo
     ) { key, size ->
         sessionManager.getFileList(objectId, objectType, key, size)
+    }.flow.cachedIn(viewModelScope)
+}
+
+@OptIn(ExperimentalPagingApi::class)
+class FileSearchViewModel(
+    sessionManager: UserSessionManager,
+    modelStorage: ModelStorage,
+    word: String,
+    objectId: PrimaryKey,
+    objectType: ObjectType,
+) : PagingViewModel<FileInfo>() {
+    private val modelCollection = FileCollection.FileSearch(objectId, word)
+
+    override val flow: Flow<PagingData<FileInfo>> = buildPager(
+        modelCollection,
+        modelCollection.getName(),
+        modelStorage.remoteKey,
+        modelStorage.fileInfo
+    ) { key, size ->
+        sessionManager.searchFiles(
+            CustomApi.Files.FileSearchQuery(
+                word = word,
+                objectId = objectId,
+                objectType = objectType,
+                nextPageToken = key,
+                size = size
+            )
+        )
     }.flow.cachedIn(viewModelScope)
 }
 

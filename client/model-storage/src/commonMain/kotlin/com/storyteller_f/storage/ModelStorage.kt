@@ -150,6 +150,7 @@ data class UploadCollection(val objectId: PrimaryKey) {
 
 sealed interface FileCollection {
     data class FileList(val objectId: PrimaryKey) : FileCollection
+    data class FileSearch(val objectId: PrimaryKey, val word: String) : FileCollection
     data object Files : FileCollection
 }
 
@@ -169,6 +170,7 @@ fun FileCollection.getName(): String {
     return when (this) {
         FileCollection.Files -> "files"
         is FileCollection.FileList -> "files_$objectId"
+        is FileCollection.FileSearch -> "files_${objectId}_$word"
     }
 }
 

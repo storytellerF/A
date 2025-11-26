@@ -15,6 +15,7 @@ import com.storyteller_f.a.cloud.core.service.getFileList
 import com.storyteller_f.a.cloud.core.service.getQuotaInfo
 import com.storyteller_f.a.cloud.core.service.initChunkUpload
 import com.storyteller_f.a.cloud.core.service.newFileName
+import com.storyteller_f.a.cloud.core.service.searchFiles
 import com.storyteller_f.a.cloud.core.service.tryCopyFile
 import com.storyteller_f.a.cloud.core.service.tryUploadFiles
 import com.storyteller_f.a.cloud.core.service.uncheckedGetFileRefsByFileId
@@ -55,6 +56,14 @@ fun Route.bindProtectedMediaRoute(backend: Backend) {
         usePrincipal { uid ->
             it.pagination(IdentifiablePagingGenerator) { pagingFetch ->
                 backend.getFileList(uid, it, pagingFetch)
+            }
+        }
+    }
+
+    CustomApi.Files.search(handleResult()) {
+        usePrincipal { uid ->
+            it.pagination(IdentifiablePagingGenerator) { pagingFetch ->
+                backend.searchFiles(uid, it, pagingFetch)
             }
         }
     }

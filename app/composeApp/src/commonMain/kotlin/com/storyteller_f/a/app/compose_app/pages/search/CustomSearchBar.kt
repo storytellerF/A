@@ -5,14 +5,18 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.PrimaryTabRow
@@ -40,6 +44,8 @@ import com.storyteller_f.a.app.compose_app.LocalAppNavFactory
 import com.storyteller_f.a.app.compose_app.LocalSessionManager
 import com.storyteller_f.a.app.compose_app.LocalUserInfo
 import com.storyteller_f.a.app.compose_app.Res
+import com.storyteller_f.a.app.compose_app.common.FileSearchViewModel
+import com.storyteller_f.a.app.compose_app.common.createFileSearchViewModel
 import com.storyteller_f.a.app.compose_app.common.createMemberSearchInCommunityViewModel
 import com.storyteller_f.a.app.compose_app.common.createMemberSearchViewModel
 import com.storyteller_f.a.app.compose_app.common.createRoomSearchInCommunityViewModel
@@ -62,12 +68,18 @@ import com.storyteller_f.a.app.compose_app.input_search_topics_and_users
 import com.storyteller_f.a.app.compose_app.input_search_user_created_titles
 import com.storyteller_f.a.app.compose_app.input_search_user_received_titles
 import com.storyteller_f.a.app.compose_app.pages.community.CommunityList
+import com.storyteller_f.a.app.compose_app.pages.file.FileCell
 import com.storyteller_f.a.app.compose_app.pages.room.RoomList
 import com.storyteller_f.a.app.compose_app.pages.title.ComposeMenu
 import com.storyteller_f.a.app.compose_app.pages.topic.TopicList
 import com.storyteller_f.a.app.compose_app.pages.user.MemberList
 import com.storyteller_f.a.app.compose_app.pages.user.SelfUserIconWithDialog
 import com.storyteller_f.a.app.compose_app.utils.appPlatform
+import com.storyteller_f.a.app.core.components.StateView
+import com.storyteller_f.a.app.core.components.bottomAppending
+import com.storyteller_f.a.app.core.components.pagingItems
+import com.storyteller_f.a.app.core.components.topPrepend
+import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -263,7 +275,7 @@ private fun SearchContent(
         is SearchScope.UserCommunities -> UserCommunitySearchContent(current, scope)
         is SearchScope.UserReceivedTitle -> UserReceivedTitleSearchContent(current, scope)
         is SearchScope.UserCreatedTitle -> UserCreatedTitleSearchContent(current, scope)
-        is SearchScope.UploadedFiles -> {} // 暂不实现文件搜索
+        is SearchScope.UploadedFiles -> UploadedFilesSearchContent(current, scope)
     }
 }
 
@@ -503,6 +515,39 @@ private fun WorldSearchContent(current: String) {
                     createMemberSearchViewModel(current)
                 MemberList(viewModel)
             }
+        }
+    }
+}
+
+@Composable
+private fun UploadedFilesSearchContent(current: String, scope: SearchScope.UploadedFiles) {
+    if (current.isNotBlank()) {
+        val viewModel = createFileSearchViewModel(
+            scope.objectId,
+            scope.objectType,
+            current
+        )
+        FileList(viewModel)
+    }
+}
+
+@Composable
+private fun FileList(viewModel: FileSearchViewModel) {
+    val appNavFactory = LocalAppNavFactory.current
+    StateView(viewModel, modifier = Modifier.fillMaxSize()) { pagingItems ->
+        LazyColumn(contentPadding = PaddingValues(10.dp)) {
+            topPrepend(pagingItems.loadState)
+            pagingItems(pagingItems, key = { it.id }) {
+                val item: FileInfo? = pagingItems[it]
+                FileCell(item) { items ->
+                    val first = items.firstOrNull()
+                    if (first != null) {
+                        appNavFactory.newAppNav().gotoMedia(first)
+                    }
+                }
+                HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
+            }
+            bottomAppending(pagingItems.loadState)
         }
     }
 }

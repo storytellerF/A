@@ -6,6 +6,7 @@ import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.ObjectFetch.IdFetch
 import com.storyteller_f.a.backend.core.UnauthorizedException
+import com.storyteller_f.a.backend.core.service.FileDocument
 import com.storyteller_f.a.backend.core.types.FileRecord
 import com.storyteller_f.a.backend.core.types.Quota
 import com.storyteller_f.a.backend.core.types.UploadRecord
@@ -239,6 +240,17 @@ suspend fun Backend.lockQuotaInfo(
             database.file.updateUploadRecordStatus(quotaInfo, newRecord, t).onFailure {
                 Napier.e(it) {
                     "update upload record status failed ${uploadRecord.id} $quotaInfo $length"
+                }
+            }.onSuccess {
+                // 保存文件文档到搜索服务
+                fileSearchService.saveDocument(
+                    t.map { fileRecord ->
+                        FileDocument.fromFileRecord(fileRecord)
+                    }
+                ).onFailure { error ->
+                    Napier.e(error) {
+                        "save file document failed"
+                    }
                 }
             }
             Result.success(t)

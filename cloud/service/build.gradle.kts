@@ -46,17 +46,6 @@ tasks.withType<Test> {
     jvmArgs = listOf("--add-modules", "jdk.incubator.vector")
 }
 
-val buildType = project.findProperty("server.buildType") as String
-val flavor = project.findProperty("server.flavor").toString()
-
-buildConfig {
-    className = "ServerConfig"
-    packageName = "com.storyteller_f.a.cloud.server"
-    buildConfigField<String>("BUILD_TYPE", buildType)
-    buildConfigField<Boolean>("IS_PROD", buildType == "prod")
-    buildConfigField<String>("FLAVOR", flavor)
-}
-
 sentry {
     org = "acommunity"
     projectName = "kotlin"

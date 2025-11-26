@@ -87,6 +87,8 @@ fun setLogPath(name: String = "A") {
     }
 }
 
-fun preprocessUserInputKeyword(words: List<String>?): String? = words?.let {
-    it.filter { w -> w.isNotBlank() }.takeIf { list -> list.isNotEmpty() }?.joinToString(" ")
+fun preprocessUserInputKeyword(words: List<String>?): String? = words?.let { list ->
+    list.map {
+        it.lowercase()
+    }.filter { w -> w.isNotBlank() }.takeIf { list -> list.isNotEmpty() }?.joinToString(" ")
 }
