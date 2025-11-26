@@ -1,4 +1,4 @@
-import com.storyteller_f.a.app.compose_app.pages.topic.TopicRoute
+import com.storyteller_f.a.app.pages.topic.TopicRoute
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull

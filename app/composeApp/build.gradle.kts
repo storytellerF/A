@@ -227,7 +227,7 @@ android {
     namespace = "com.storyteller_f.a.app"
 
     defaultConfig {
-        applicationId = "com.storyteller_f.a.app.android.$flavorId"
+        applicationId = "com.storyteller_f.a.app.$flavorId"
     }
     buildTypes {
         debug {
@@ -259,7 +259,7 @@ easylauncher {
 
 compose.desktop {
     application {
-        mainClass = "com.storyteller_f.a.app.compose_app.JvmMainKt"
+        mainClass = "com.storyteller_f.a.app.JvmMainKt"
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
@@ -277,7 +277,7 @@ compose.desktop {
 }
 
 buildkonfig {
-    packageName = "com.storyteller_f.a.app.compose_app"
+    packageName = "com.storyteller_f.a.app"
     objectName = "AppConfig"
 
     val serverUrl = properties["SERVER_URL"] as? String
@@ -407,7 +407,7 @@ tasks.withType<Test> {
 
 compose.resources {
     publicResClass = false
-    packageOfResClass = "com.storyteller_f.a.app.compose_app"
+    packageOfResClass = "com.storyteller_f.a.app"
     generateResClass = auto
 }
 

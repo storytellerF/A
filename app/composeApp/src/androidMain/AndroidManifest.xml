@@ -11,7 +11,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_REMOTE_MESSAGING" />
 
     <application
-        android:name=".compose_app.AApplication"
+        android:name=".AApplication"
         android:allowBackup="true"
         android:enableOnBackInvokedCallback="true"
         android:icon="@mipmap/ic_launcher"
@@ -22,7 +22,7 @@
         android:theme="@style/App"
         tools:targetApi="33">
         <activity
-            android:name=".compose_app.RTCActivity"
+            android:name=".RTCActivity"
             android:exported="false"
             android:launchMode="singleTask"
             android:taskAffinity="a.rtc" />
@@ -38,7 +38,7 @@
             android:required="false" />
 
         <activity
-            android:name=".compose_app.MainActivity"
+            android:name=".MainActivity"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|mnc|colorMode|density|fontScale|fontWeightAdjustment|keyboard|layoutDirection|locale|mcc|navigation|smallestScreenSize|touchscreen|uiMode"
             android:exported="true"
             android:supportsPictureInPicture="true"
@@ -63,7 +63,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".compose_app.UploadActivity"
+            android:name=".UploadActivity"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|mnc|colorMode|density|fontScale|fontWeightAdjustment|keyboard|layoutDirection|locale|mcc|navigation|smallestScreenSize|touchscreen|uiMode"
             android:exported="true"
             android:windowSoftInputMode="adjustResize">
@@ -78,13 +78,13 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".compose_app.MediaPlayerActivity"
+            android:name=".MediaPlayerActivity"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|mnc|colorMode|density|fontScale|fontWeightAdjustment|keyboard|layoutDirection|locale|mcc|navigation|smallestScreenSize|touchscreen|uiMode"
             android:exported="true"
             android:supportsPictureInPicture="true"
             android:windowSoftInputMode="adjustResize" />
         <activity
-            android:name=".compose_app.BubbleActivity"
+            android:name=".BubbleActivity"
             android:allowEmbedded="true"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|mnc|colorMode|density|fontScale|fontWeightAdjustment|keyboard|layoutDirection|locale|mcc|navigation|smallestScreenSize|touchscreen|uiMode"
             android:documentLaunchMode="always"
@@ -100,20 +100,20 @@
             </intent-filter>
         </service>
         <service
-            android:name=".compose_app.PushServiceImpl"
+            android:name=".PushServiceImpl"
             android:exported="false">
             <intent-filter>
                 <action android:name="org.unifiedpush.android.connector.PUSH_EVENT" />
             </intent-filter>
         </service>
         <service
-            android:name=".compose_app.FileService"
+            android:name=".FileService"
             android:exported="false"
             android:foregroundServiceType="mediaProcessing">
 
         </service>
         <service
-            android:name=".compose_app.RTCService"
+            android:name=".RTCService"
             android:exported="false"
             android:foregroundServiceType="phoneCall">
 

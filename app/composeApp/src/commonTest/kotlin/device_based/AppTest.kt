@@ -18,10 +18,10 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
 import coil3.compose.LocalPlatformContext
-import com.storyteller_f.a.app.compose_app.App
-import com.storyteller_f.a.app.compose_app.LocalUiViewModel
-import com.storyteller_f.a.app.compose_app.UIViewModel
-import com.storyteller_f.a.app.compose_app.utils.initEnvironment
+import com.storyteller_f.a.app.App
+import com.storyteller_f.a.app.LocalUiViewModel
+import com.storyteller_f.a.app.UIViewModel
+import com.storyteller_f.a.app.utils.initEnvironment
 import com.storyteller_f.a.app.core.components.CenterBox
 import com.storyteller_f.a.client.core.RawUserPass
 import com.storyteller_f.a.client.core.getClient
