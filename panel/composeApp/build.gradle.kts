@@ -203,7 +203,15 @@ android {
     namespace = "com.storyteller_f.a.panel"
 
     defaultConfig {
-        applicationId = "com.storyteller_f.a.panel.android.$flavorId"
+        applicationId = "com.storyteller_f.a.panel.$flavorId"
+    }
+    buildTypes {
+        create("benchmark") {
+            initWith(buildTypes.getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("release")
+            isDebuggable = false
+        }
     }
 }
 
@@ -245,7 +253,7 @@ compose.desktop {
 }
 
 buildkonfig {
-    packageName = "com.storyteller_f.a.app.core"
+    packageName = "com.storyteller_f.a.panel"
     objectName = "PanelConfig"
     val properties = Properties().apply {
         val file = layout.projectDirectory.file("../../$flavorStr.env").asFile

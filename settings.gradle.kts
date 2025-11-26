@@ -1,5 +1,11 @@
 @file:Suppress("UnstableApiUsage")
 
+include(":panel:benchmark")
+
+
+include(":app:benchmark")
+
+
 val isAppiumTestEnable = providers.gradleProperty("appium").get() == "true"
 
 rootProject.name = "A"

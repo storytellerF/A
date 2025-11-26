@@ -52,7 +52,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.storyteller_f.a.app.core.CoreStrings
-import com.storyteller_f.a.app.core.PanelConfig
 import com.storyteller_f.a.app.core.common.LocalClient
 import com.storyteller_f.a.app.core.components.CenterBox
 import com.storyteller_f.a.app.core.components.CustomGlobalDialogController
