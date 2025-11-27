@@ -151,7 +151,7 @@ class UploaderImpl(
             contentType = clipFile.contentType.contentType,
             chunkSize = 10L * 1024 * 1024 // 10MB
         )
-        modelStorage.upload.save(collection, uploadInfo)
+        modelStorage.upload.saveLast(UploadCollection.fromInfo(uploadInfo), uploadInfo)
         upload(userSession, myUid, clipFile, modelStorage, collection, pathHash, uploadInfo)
     }
 
@@ -338,6 +338,6 @@ class UploaderImpl(
         block: (UploadInfo) -> UploadInfo
     ) {
         val uploadInfo = modelStorage.upload.getDocument(collection, pathHash) ?: return
-        modelStorage.upload.save(collection, block(uploadInfo))
+        modelStorage.upload.saveLast(collection, block(uploadInfo))
     }
 }

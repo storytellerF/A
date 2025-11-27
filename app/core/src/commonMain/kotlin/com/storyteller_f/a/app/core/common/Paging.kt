@@ -2,6 +2,7 @@ package com.storyteller_f.a.app.core.common
 
 import androidx.lifecycle.ViewModel
 import androidx.paging.ExperimentalPagingApi
+import androidx.paging.LoadType
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
@@ -10,6 +11,7 @@ import androidx.paging.PagingState
 import com.storyteller_f.shared.obj.Pagination
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.storage.CollectionListStorage
+import com.storyteller_f.storage.GlobalListStorage
 import com.storyteller_f.storage.RemoteKeyStorage
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
@@ -186,12 +188,16 @@ fun <C : Any, T : Any> buildPager(
         collectionName,
         remoteKeyStorage,
         source,
-    ) { data, clean ->
-        if (clean) {
+    ) { data, loadType ->
+        if (loadType == LoadType.REFRESH) {
             storage.clean(collection)
         }
         data.forEach {
-            storage.save(collection, it)
+            if (loadType == LoadType.PREPEND) {
+                storage.saveFirst(collection, it)
+            } else {
+                storage.saveLast(collection, it)
+            }
         }
     },
 ) {
@@ -212,13 +218,52 @@ fun <C : Any, T : Any> buildPager(
         collectionName,
         remoteKeyStorage,
         networkSource,
-    ) { data, clean ->
-        if (clean) {
+    ) { data, loadType ->
+        if (loadType == LoadType.REFRESH) {
             storage.clean(collection)
         }
         data.forEach {
-            storage.save(collection, it)
+            if (loadType == LoadType.PREPEND) {
+                storage.saveFirst(collection, it)
+            } else {
+                storage.saveLast(collection, it)
+            }
         }
     },
     pagingSourceFactory = localSourceFactory,
+)
+
+@OptIn(ExperimentalPagingApi::class)
+fun <T : Any> buildPager(
+    collectionName: String,
+    remoteKeyStorage: RemoteKeyStorage,
+    storage: GlobalListStorage<T>,
+    service: suspend (String?, Int) -> Result<ServerResponse<T>>
+): Pager<String, T> =
+    buildPager(collectionName, remoteKeyStorage, storage, RegularPagingSource(service)) {
+        CompatPagingSource(storage.observeData(), IntKeyConverter)
+    }
+
+@OptIn(ExperimentalPagingApi::class)
+fun <T : Any> buildPager(
+    collectionName: String,
+    remoteKeyStorage: RemoteKeyStorage,
+    storage: GlobalListStorage<T>,
+    networkSource: PagingSource<String, T>,
+    localSourceFactory: () -> PagingSource<String, T>
+): Pager<String, T> = Pager(
+    PagingConfig(pageSize = 20),
+    remoteMediator = CustomRemoteMediator(
+        collectionName,
+        remoteKeyStorage,
+        networkSource
+    ) { data, loadType ->
+        if (loadType == LoadType.REFRESH) {
+            storage.clean()
+        }
+        data.forEach {
+            storage.save(it)
+        }
+    },
+    pagingSourceFactory = localSourceFactory
 )

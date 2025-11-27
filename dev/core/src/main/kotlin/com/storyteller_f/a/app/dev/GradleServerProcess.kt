@@ -20,24 +20,31 @@ fun isWin(): Boolean {
 }
 
 fun forceStop(port: Int) {
-    Napier.i {
-        "forceStop $port"
-    }
-    val result = if (isWin()) {
+    println("forceStop $port")
+    val process = if (isWin()) {
         // for /f "tokens=5" %a in ('netstat -ano ^| findstr :8080') do taskkill /PID %a /F
-        Runtime.getRuntime()
-            .exec(
-                arrayOf(
-                    "cmd",
-                    "/c",
-                    """for /f "tokens=5" %i in ('netstat -ano ^| findstr :$port') do taskkill /PID %i /F"""
-                )
-            ).waitFor()
+        ProcessBuilder().command(
+            "cmd",
+            "/c",
+            """"for /f "tokens=5" %i in ('netstat -ano ^| findstr :$port') do taskkill /PID %i /F""""
+        )
     } else {
-        Runtime.getRuntime()
-            .exec(arrayOf("/bin/sh", "-c", "pid=$(lsof -t -i :$port) && kill -9 \$pid"))
-            .waitFor()
+        ProcessBuilder().command(
+            "/bin/sh",
+            "-c",
+            $$""""pid=$(lsof -t -i :$$port) && kill -9 $pid""""
+        )
+    }.redirectErrorStream(true).start()
+    val thread = thread {
+        process.inputStream.bufferedReader().use {
+            while (process.isAlive) {
+                val output = it.readLine()
+                println(output)
+            }
+        }
     }
+    val result = process.waitFor()
+    thread.interrupt()
     check(result != 0) {
         "forceStop failed"
     }

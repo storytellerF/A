@@ -55,7 +55,7 @@ class CustomRemoteMediator<Datum : Any>(
     private val collection: String,
     private val remoteKeyStorage: RemoteKeyStorage,
     private val networkService: PagingSource<String, Datum>,
-    private val update: suspend (List<Datum>, Boolean) -> Unit,
+    private val update: suspend (List<Datum>, LoadType) -> Unit,
 ) :
     RemoteMediator<String, Datum>() {
 
@@ -123,7 +123,7 @@ class CustomRemoteMediator<Datum : Any>(
             val preKey = loadResult.prevKey
             remoteKeyStorage.savePreRemoteKey(RemoteKeys(collection, preKey))
             remoteKeyStorage.saveNextRemoteKey(RemoteKeys(collection, nextKey))
-            update(data, loadType == LoadType.REFRESH)
+            update(data, loadType)
             Napier.v(tag = "pagination") {
                 "mediator success type: $loadType key: ${params.key}"
             }

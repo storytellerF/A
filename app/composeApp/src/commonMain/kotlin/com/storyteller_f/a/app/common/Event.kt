@@ -10,14 +10,9 @@ import com.storyteller_f.shared.model.UserFavoriteInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.UserSubscriptionInfo
 import com.storyteller_f.shared.obj.ObjectTuple
-import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.storage.CommunityCollection
-import com.storyteller_f.storage.FileCollection
 import com.storyteller_f.storage.ModelStorage
-import com.storyteller_f.storage.RoomCollection
 import com.storyteller_f.storage.TopicCollection
-import com.storyteller_f.storage.UserCollection
 import com.storyteller_f.storage.update
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toPersistentList
@@ -59,36 +54,30 @@ suspend fun processEvent(database: ModelStorage, bus: MutableSharedFlow<Any>) {
             is OnRemoveReaction -> processRemoveReaction(database, event)
 
             is OnCommunityJoined -> database.community.save(
-                CommunityCollection.Communities,
                 event.info
             )
 
             is OnCommunityExited -> database.community
-                .save(CommunityCollection.Communities, event.info)
+                .save(event.info)
 
             is OnCommunityUpdated -> database.community
-                .save(CommunityCollection.Communities, event.info)
+                .save(event.info)
 
             is OnTopicChanged -> processTopicChanged(event, database)
 
             is OnTopicCreated -> processTopicCreated(event, database)
 
-            is OnRoomJoined -> database.room.save(RoomCollection.Rooms, event.info)
+            is OnRoomJoined -> database.room.save(event.info)
 
-            is OnRoomExited -> database.room.save(RoomCollection.Rooms, event.info)
+            is OnRoomExited -> database.room.save(event.info)
 
-            is OnRoomUpdated -> database.room.save(RoomCollection.Rooms, event.info)
+            is OnRoomUpdated -> database.room.save(event.info)
 
             is OnRoomCreated -> database.room.save(
-                RoomCollection.SearchRoom(
-                    "",
-                    event.info.communityId,
-                    JoinStatusSearch.JOINED
-                ),
                 event.info
             )
 
-            is OnUserUpdated -> database.user.save(UserCollection.Users, event.info)
+            is OnUserUpdated -> database.user.save(event.info)
 
             is OnMediaUploaded -> processOnMediaUploaded(event, database)
 
@@ -108,7 +97,7 @@ private suspend fun processOnMediaUploaded(
     database: ModelStorage
 ) {
     event.fileInfos.forEach {
-        database.fileInfo.save(FileCollection.FileList(it.owner), it)
+        database.fileInfo.save(it)
     }
 }
 
@@ -167,7 +156,7 @@ private suspend fun processTopicCreated(
     database: ModelStorage,
 ) {
     val topicInfo = event.topicInfo
-    database.topic.save(TopicCollection.TopicList(topicInfo.parentId), topicInfo)
+    database.topic.save(topicInfo)
 }
 
 private suspend fun processTopicChanged(
@@ -175,13 +164,13 @@ private suspend fun processTopicChanged(
     database: ModelStorage,
 ) {
     val topicInfo = event.topicInfo
-    database.topic.save(TopicCollection.TopicList(topicInfo.parentId), topicInfo)
+    database.topic.save(topicInfo)
     if (database.topic.getDocument(
             TopicCollection.Recommend,
             event.topicInfo.id
         ) != null
     ) {
-        database.topic.save(TopicCollection.Recommend, topicInfo)
+        database.topic.save(topicInfo)
     }
 }
 

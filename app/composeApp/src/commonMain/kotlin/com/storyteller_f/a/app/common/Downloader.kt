@@ -164,7 +164,7 @@ class DownloaderImpl(
         userSession: CustomUserSessionManager
     ) {
         val document =
-            modelStorage.download.getDocument(fileInfo.id)
+            modelStorage.download.getDocumentByFileId(fileInfo.id)
         if (document == null) {
             val new = DownloadInfo(
                 nowInstance().epochSeconds,
