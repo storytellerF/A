@@ -31,6 +31,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.github.panpf.zoomimage.CoilZoomAsyncImage
+import com.storyteller_f.a.app.core.components.CenterBox
 import com.storyteller_f.a.app.core.components.CustomBottomNav
 import com.storyteller_f.a.app.core.components.NavRoute
 import com.storyteller_f.a.app.core.components.PdfView
@@ -186,7 +187,9 @@ private fun FileBasicInfoSection(id: PrimaryKey) {
 
 @Composable
 private fun FileLogsTab() {
-    Column(Modifier.padding(16.dp)) { Text("None") }
+    CenterBox {
+        Text("None")
+    }
 }
 
 @Composable

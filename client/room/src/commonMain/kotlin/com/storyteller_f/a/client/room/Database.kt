@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.Flow
 
 @Database(
     entities = [CommonEntity::class,
-        CommunityEntity::class,
         TopicEntity::class,
         ReactionEntity::class,
         UploadEntity::class,
@@ -25,7 +24,6 @@ import kotlinx.coroutines.flow.Flow
 @ConstructedBy(AppDatabaseConstructor::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun getCommonDao(): CommonDao
-    abstract fun getCommunityDao(): CommunityDao
     abstract fun getTopicDao(): TopicDao
     abstract fun getReactionDao(): ReactionDao
     abstract fun getUploadDao(): UploadDao
@@ -77,39 +75,6 @@ data class CommonEntity(
         collection: String,
         data: String
     ) : this(id.toString(), collection, data)
-}
-
-@Dao
-interface CommunityDao {
-    @Insert(onConflict = REPLACE)
-    suspend fun insert(item: CommunityEntity)
-
-    @Query("select * from CommunityEntity where collection = :collection order by hasPoster desc, id desc")
-    fun getAsSource(collection: String): PagingSource<Int, CommunityEntity>
-
-    @Query("select * from CommunityEntity where collection = :collection and id = :id")
-    fun getAsFlow(collection: String, id: String): Flow<CommunityEntity?>
-
-    @Query("select * from CommunityEntity where collection = :collection and id = :id")
-    suspend fun get(collection: String, id: String): CommunityEntity?
-
-    @Query("delete from CommunityEntity where collection = :collection")
-    suspend fun clean(collection: String)
-}
-
-@Entity(primaryKeys = ["collection", "id"], indices = [Index("collection", "hasPoster", "id")])
-data class CommunityEntity(
-    val id: String,
-    val collection: String,
-    val data: String,
-    val hasPoster: Boolean
-) {
-    constructor(id: Long, collection: String, data: String, hasPoster: Boolean) : this(
-        id.toString(),
-        collection,
-        data,
-        hasPoster
-    )
 }
 
 @Dao

@@ -108,42 +108,37 @@ class RoomUserInfoStorage(val appDatabase: AppDatabase) : UserInfoStorage {
 }
 
 class RoomCommunityInfoStorage(val appDatabase: AppDatabase) : CommunityInfoStorage {
+    val impl = CommonStorageImpl(appDatabase)
     override suspend fun save(
         collection: CommunityCollection,
         item: CommunityInfo
     ) {
         val data = commonJson.encodeToString(item)
-        val entity =
-            CommunityEntity(
-                item.id,
-                CommunityCollection.Communities.getName(),
-                data,
-                item.hasPoster
-            )
-        listOf(entity, entity.copy(id = item.aid)).forEach {
-            appDatabase.getCommunityDao().insert(it)
+        val entity = CommonEntity(
+            item.id,
+            CommunityCollection.Communities.getName(),
+            data,
+        )
+        buildList {
+            add(entity)
+            add(entity.copy(id = item.aid))
+        }.forEach {
+            appDatabase.getCommonDao().insert(it)
         }
         if (collection !is CommunityCollection.Communities) {
-            appDatabase.getCommunityDao().insert(entity.copy(collection = collection.getName()))
+            appDatabase.getCommonDao().insert(entity.copy(collection = collection.getName()))
         }
     }
 
     override fun observeData(
         collection: CommunityCollection,
     ): PagingSource<Int, CommunityInfo> {
-        val source = appDatabase.getCommunityDao().getAsSource(collection.getName())
-        return WrappedPagingSource(source) { list ->
-            list.mapNotNull {
-                commonJson.safeDecodeFromStringOrNull(it.data)
-            }
-        }
+        return impl.observeData(collection.getName())
     }
 
     override fun observeDatum(key: String): Flow<CommunityInfo?> {
         val scope = CommunityCollection.Communities.getName()
-        return appDatabase.getCommunityDao().getAsFlow(scope, key).map {
-            it?.let { it1 -> commonJson.safeDecodeFromStringOrNull(it1.data) }
-        }
+        return impl.observeDatum(scope, key)
     }
 
     override fun observeDatum(id: PrimaryKey): Flow<CommunityInfo?> {
@@ -154,12 +149,11 @@ class RoomCommunityInfoStorage(val appDatabase: AppDatabase) : CommunityInfoStor
         collection: CommunityCollection,
         id: PrimaryKey
     ): CommunityInfo? {
-        val entity = appDatabase.getCommunityDao().get(collection.getName(), id.toString())
-        return entity?.data?.let { commonJson.safeDecodeFromStringOrNull(it) }
+        return impl.getDocument(collection.getName(), id.toString())
     }
 
     override suspend fun clean(collection: CommunityCollection) {
-        appDatabase.getCommunityDao().clean(collection.getName())
+        impl.clean(collection.getName())
     }
 }
 
@@ -481,9 +475,10 @@ class RoomDownloadInfoStorage(val appDatabase: AppDatabase) : DownloadInfoStorag
     }
 
     override suspend fun getDocument(id: PrimaryKey): DownloadInfo? {
-        return appDatabase.getDownloadDao().getByFileId(DownloadInfoStorage.COLLECTION_NAME, id)?.let {
-            commonJson.safeDecodeFromStringOrNull(it.data)
-        }
+        return appDatabase.getDownloadDao().getByFileId(DownloadInfoStorage.COLLECTION_NAME, id)
+            ?.let {
+                commonJson.safeDecodeFromStringOrNull(it.data)
+            }
     }
 
     override fun observeData(): PagingSource<Int, DownloadInfo> {
