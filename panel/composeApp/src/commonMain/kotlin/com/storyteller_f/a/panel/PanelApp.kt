@@ -98,7 +98,6 @@ import com.storyteller_f.a.panel.pages.TopicDetailPage
 import com.storyteller_f.a.panel.pages.UserDetailPage
 import com.storyteller_f.a.panel.ui.theme.PanelTheme
 import com.storyteller_f.shared.replaceCrlf
-import com.storyteller_f.storage.UserCollection
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.openFilePicker
 import io.github.vinceglb.filekit.readBytes
@@ -598,7 +597,7 @@ class PanelAccountInstance(scope: CoroutineScope) {
     ) {
         when (any) {
             is OnUserAdded -> {
-                storage.user.save(UserCollection.AllUsers, any.info)
+                storage.user.save(any.info)
             }
         }
     }

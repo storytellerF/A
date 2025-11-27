@@ -5,6 +5,7 @@ import androidx.paging.PagingState
 import com.storyteller_f.shared.model.ChildAccountInfo
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.FileInfo
+import com.storyteller_f.shared.model.FileRefInfo
 import com.storyteller_f.shared.model.MemberInfo
 import com.storyteller_f.shared.model.PanelOverview
 import com.storyteller_f.shared.model.PosterSearch
@@ -35,43 +36,30 @@ sealed interface UserCollection {
 }
 
 interface CollectionListStorage<C, I : Any> {
-    suspend fun save(collection: C, item: I)
+    suspend fun saveLast(collection: C, item: I)
+    suspend fun saveFirst(collection: C, item: I)
     fun observeData(collection: C): PagingSource<Int, I>
     suspend fun clean(collection: C)
-}
 
-interface CollectionItemStorageByKey<C, I : Any> : CollectionListStorage<C, I> {
-    fun observeDatum(collection: C, key: String): Flow<I?>
+    suspend fun getDocument(collection: C, id: PrimaryKey): I? = getDocument(collection, id.toString())
     suspend fun getDocument(collection: C, key: String): I?
     suspend fun delete(collection: C, key: String)
 }
 
-interface CollectionItemStorageById<C, I : Any> : CollectionListStorage<C, I> {
-    fun observeDatum(id: PrimaryKey): Flow<I?>
-}
-
-interface CollectionItemStorageByIdAndKey<C, I : Any> : CollectionItemStorageById<C, I> {
+interface CollectionListStorageWithDefault<C, I : Any> : CollectionListStorage<C, I> {
+    suspend fun save(item: I)
+    fun observeDatum(id: PrimaryKey): Flow<I?> = observeDatum(id.toString())
     fun observeDatum(key: String): Flow<I?>
-}
-
-interface CollectionItemStorageByIdAndKeyWithGet<C, I : Any> :
-    CollectionItemStorageByIdAndKey<C, I> {
-    suspend fun getDocument(collection: C, id: PrimaryKey): I?
 }
 
 interface GlobalListStorage<I : Any> {
     suspend fun save(item: I)
     fun observeData(): PagingSource<Int, I>
     suspend fun clean()
-}
-
-interface GlobalItemStorageById<I : Any> : GlobalListStorage<I> {
-    fun observeDatum(id: PrimaryKey): Flow<I?>
-    suspend fun getDocument(id: PrimaryKey): I?
-}
-
-interface GlobalListStorageWithKey<I : Any, K> : GlobalListStorage<I> {
-    fun observeDatum(key: K): Flow<I?>
+    fun observeDatum(id: PrimaryKey): Flow<I?> = observeDatum(id.toString())
+    fun observeDatum(key: String): Flow<I?>
+    suspend fun getDocument(id: PrimaryKey): I? = getDocument(id.toString())
+    suspend fun getDocument(key: String): I?
 }
 
 interface SingletonItemStorage<I : Any> {
@@ -276,16 +264,16 @@ interface ModelStorage {
     val fileRef: FileRefInfoStorage
 }
 
-interface UserInfoStorage : CollectionItemStorageByIdAndKey<UserCollection, UserInfo>
+interface UserInfoStorage : CollectionListStorageWithDefault<UserCollection, UserInfo>
 
 interface CommunityInfoStorage :
-    CollectionItemStorageByIdAndKeyWithGet<CommunityCollection, CommunityInfo>
+    CollectionListStorageWithDefault<CommunityCollection, CommunityInfo>
 
-interface TopicInfoStorage : CollectionItemStorageByIdAndKeyWithGet<TopicCollection, TopicInfo>
+interface TopicInfoStorage : CollectionListStorageWithDefault<TopicCollection, TopicInfo>
 
-interface TitleInfoStorage : CollectionItemStorageById<TitleCollection, TitleInfo>
+interface TitleInfoStorage : CollectionListStorageWithDefault<TitleCollection, TitleInfo>
 
-interface RoomInfoStorage : CollectionItemStorageByIdAndKey<RoomCollection, RoomInfo>
+interface RoomInfoStorage : CollectionListStorageWithDefault<RoomCollection, RoomInfo>
 
 interface ReactionInfoStorage : CollectionListStorage<ReactionCollection, ReactionInfo>
 
@@ -317,15 +305,19 @@ interface ChildAccountStorage : GlobalListStorage<ChildAccountInfo> {
     }
 }
 
-interface FileInfoStorage : CollectionItemStorageById<FileCollection, FileInfo>
+interface FileInfoStorage : CollectionListStorageWithDefault<FileCollection, FileInfo>
 
-interface DownloadInfoStorage : GlobalItemStorageById<DownloadInfo> {
+interface DownloadInfoStorage : GlobalListStorage<DownloadInfo> {
+    suspend fun getDocumentByFileId(fileId: PrimaryKey): DownloadInfo?
+
     companion object {
         const val COLLECTION_NAME = "download"
     }
 }
 
-interface UploadInfoStorage : CollectionItemStorageByKey<UploadCollection, UploadInfo>
+interface UploadInfoStorage : CollectionListStorage<UploadCollection, UploadInfo> {
+    fun observeDatumByHash(collection: UploadCollection, pathHash: String): Flow<UploadInfo?>
+}
 
 interface OverviewStorage : SingletonItemStorage<PanelOverview> {
     companion object {
@@ -339,13 +331,13 @@ interface UserOverviewStorage : SingletonItemStorage<UserOverview> {
     }
 }
 
-interface UserFavoriteStorage : GlobalListStorageWithKey<UserFavoriteInfo, String> {
+interface UserFavoriteStorage : GlobalListStorage<UserFavoriteInfo> {
     companion object {
         const val COLLECTION_NAME = "user-favorite"
     }
 }
 
-interface UserSubscriptionStorage : GlobalListStorageWithKey<UserSubscriptionInfo, String> {
+interface UserSubscriptionStorage : GlobalListStorage<UserSubscriptionInfo> {
     companion object {
         const val COLLECTION_NAME = "user-subscription"
     }
@@ -357,7 +349,7 @@ interface UserLogInfoStorage : CollectionListStorage<UserLogCollection, UserLogI
 
 interface UploadRecordInfoStorage : CollectionListStorage<UploadRecordCollection, UploadRecordInfo>
 
-interface FileRefInfoStorage : CollectionListStorage<FileRefCollection, com.storyteller_f.shared.model.FileRefInfo>
+interface FileRefInfoStorage : CollectionListStorage<FileRefCollection, FileRefInfo>
 
 interface RemoteKeyStorage {
     suspend fun getPreRemoteKey(collection: String): RemoteKeys?
@@ -381,7 +373,7 @@ suspend fun TopicInfoStorage.update(
 ) {
     val document = getDocument(collection, id) ?: return
     val value = block(document)
-    save(collection, value)
+    save(value)
 }
 
 class WrappedPagingSource<K : Any, T : Any, M : Any>(

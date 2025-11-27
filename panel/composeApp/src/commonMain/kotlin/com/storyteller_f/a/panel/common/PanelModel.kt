@@ -246,7 +246,7 @@ class IdUserViewModel(
     override val handler: LoadingHandler<UserInfo> = CachedLoadingHandler(
         modelStorage.user.observeDatum(id),
         viewModelScope,
-        { modelStorage.user.save(UserCollection.Users, it) }
+        { modelStorage.user.save(it) }
     ) {
         sessionManager.getUserById(id)
     }
@@ -274,7 +274,7 @@ class IdCommunityViewModel(
     override val handler: LoadingHandler<CommunityInfo> = CachedLoadingHandler(
         modelStorage.community.observeDatum(id),
         viewModelScope,
-        { modelStorage.community.save(CommunityCollection.Communities, it) }
+        { modelStorage.community.save(it) }
     ) {
         sessionManager.getCommunityById(id)
     }
@@ -288,7 +288,7 @@ class IdRoomViewModel(
     override val handler: LoadingHandler<RoomInfo> = CachedLoadingHandler(
         modelStorage.room.observeDatum(id),
         viewModelScope,
-        { modelStorage.room.save(RoomCollection.Rooms, it) }
+        { modelStorage.room.save(it) }
     ) {
         sessionManager.getRoomById(id)
     }
@@ -302,7 +302,7 @@ class IdTopicViewModel(
     override val handler: LoadingHandler<TopicInfo> = CachedLoadingHandler(
         modelStorage.topic.observeDatum(id),
         viewModelScope,
-        { modelStorage.topic.save(TopicCollection.Topics, it) }
+        { modelStorage.topic.save(it) }
     ) {
         sessionManager.getTopicById(id)
     }
@@ -316,7 +316,7 @@ class IdFileViewModel(
     override val handler: LoadingHandler<FileInfo> = CachedLoadingHandler(
         modelStorage.fileInfo.observeDatum(id),
         viewModelScope,
-        { modelStorage.fileInfo.save(FileCollection.Files, it) }
+        { modelStorage.fileInfo.save(it) }
     ) {
         sessionManager.getFileById(id)
     }
@@ -348,7 +348,7 @@ class IdTitleViewModel(
     override val handler: LoadingHandler<TitleInfo> = CachedLoadingHandler(
         modelStorage.title.observeDatum(id),
         viewModelScope,
-        { modelStorage.title.save(TitleCollection.Titles, it) }
+        { modelStorage.title.save(it) }
     ) {
         sessionManager.getTitleById(id)
     }
