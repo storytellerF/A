@@ -1,7 +1,10 @@
-package com.storyteller_f.a.app.ui.theme
+package com.storyteller_f.a.panel.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Typography
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
@@ -83,7 +86,7 @@ private val darkScheme = darkColorScheme(
     surfaceContainerHighest = surfaceContainerHighestDark,
 )
 //
-// private val mediumContrastLightColorScheme = lightColorScheme(
+//private val mediumContrastLightColorScheme = lightColorScheme(
 //    primary = primaryLightMediumContrast,
 //    onPrimary = onPrimaryLightMediumContrast,
 //    primaryContainer = primaryContainerLightMediumContrast,
@@ -119,9 +122,9 @@ private val darkScheme = darkColorScheme(
 //    surfaceContainer = surfaceContainerLightMediumContrast,
 //    surfaceContainerHigh = surfaceContainerHighLightMediumContrast,
 //    surfaceContainerHighest = surfaceContainerHighestLightMediumContrast,
-// )
+//)
 //
-// private val highContrastLightColorScheme = lightColorScheme(
+//private val highContrastLightColorScheme = lightColorScheme(
 //    primary = primaryLightHighContrast,
 //    onPrimary = onPrimaryLightHighContrast,
 //    primaryContainer = primaryContainerLightHighContrast,
@@ -157,9 +160,9 @@ private val darkScheme = darkColorScheme(
 //    surfaceContainer = surfaceContainerLightHighContrast,
 //    surfaceContainerHigh = surfaceContainerHighLightHighContrast,
 //    surfaceContainerHighest = surfaceContainerHighestLightHighContrast,
-// )
+//)
 //
-// private val mediumContrastDarkColorScheme = darkColorScheme(
+//private val mediumContrastDarkColorScheme = darkColorScheme(
 //    primary = primaryDarkMediumContrast,
 //    onPrimary = onPrimaryDarkMediumContrast,
 //    primaryContainer = primaryContainerDarkMediumContrast,
@@ -195,9 +198,9 @@ private val darkScheme = darkColorScheme(
 //    surfaceContainer = surfaceContainerDarkMediumContrast,
 //    surfaceContainerHigh = surfaceContainerHighDarkMediumContrast,
 //    surfaceContainerHighest = surfaceContainerHighestDarkMediumContrast,
-// )
+//)
 //
-// private val highContrastDarkColorScheme = darkColorScheme(
+//private val highContrastDarkColorScheme = darkColorScheme(
 //    primary = primaryDarkHighContrast,
 //    onPrimary = onPrimaryDarkHighContrast,
 //    primaryContainer = primaryContainerDarkHighContrast,
@@ -233,7 +236,7 @@ private val darkScheme = darkColorScheme(
 //    surfaceContainer = surfaceContainerDarkHighContrast,
 //    surfaceContainerHigh = surfaceContainerHighDarkHighContrast,
 //    surfaceContainerHighest = surfaceContainerHighestDarkHighContrast,
-// )
+//)
 
 @Immutable
 data class ColorFamily(
@@ -244,25 +247,22 @@ data class ColorFamily(
 )
 
 val unspecified_scheme = ColorFamily(
-    Color.Unspecified,
-    Color.Unspecified,
-    Color.Unspecified,
-    Color.Unspecified
+    Color.Unspecified, Color.Unspecified, Color.Unspecified, Color.Unspecified
 )
 
 @Composable
-fun AppTheme(
+fun PanelTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
     dynamicColor: Boolean = true,
-    typography: Typography = AppTypography,
     content: @Composable () -> Unit
 ) {
     val colorScheme = getAppDynamicColorScheme(dynamicColor, darkTheme) ?: if (darkTheme) darkScheme else lightScheme
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = typography,
+        typography = Typography(),
         content = content
     )
 }
+

@@ -96,6 +96,7 @@ import com.storyteller_f.a.panel.pages.RoomDetailPage
 import com.storyteller_f.a.panel.pages.TitleDetailPage
 import com.storyteller_f.a.panel.pages.TopicDetailPage
 import com.storyteller_f.a.panel.pages.UserDetailPage
+import com.storyteller_f.a.panel.ui.theme.PanelTheme
 import com.storyteller_f.shared.replaceCrlf
 import com.storyteller_f.storage.UserCollection
 import io.github.vinceglb.filekit.FileKit
@@ -274,7 +275,7 @@ fun App() {
         LocalPanelGlobalDialog provides controller,
         LocalPanelGlobalTask provides task
     ) {
-        MaterialTheme {
+        PanelTheme {
             val scope = rememberCoroutineScope()
             ModalNavigationDrawer(
                 drawerState = drawerState,
@@ -284,8 +285,8 @@ fun App() {
             ) {
                 PanelAppNavHost(navigator, nav)
             }
+            GlobalDialog(controller)
         }
-        GlobalDialog(controller)
     }
 }
 
