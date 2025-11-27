@@ -1,4 +1,4 @@
-package com.storyteller_f.a.app.ui.theme
+package com.storyteller_f.a.app.core.utils
 
 import android.os.Build
 import androidx.compose.material3.ColorScheme
