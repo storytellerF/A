@@ -23,6 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.storyteller_f.a.app.core.components.CenterBox
 import com.storyteller_f.a.app.core.components.CustomBottomNav
 import com.storyteller_f.a.app.core.components.NavRoute
 import com.storyteller_f.a.app.core.components.StateView
@@ -131,5 +132,7 @@ private fun TitleBasicInfoSection(id: PrimaryKey) {
 
 @Composable
 private fun TitleLogsTab() {
-    Column(Modifier.padding(16.dp)) { Text("None") }
+    CenterBox {
+        Text("None")
+    }
 }

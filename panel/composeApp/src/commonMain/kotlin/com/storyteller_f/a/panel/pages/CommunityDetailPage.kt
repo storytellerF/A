@@ -27,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.storyteller_f.a.app.core.components.CenterBox
 import com.storyteller_f.a.app.core.components.CustomBottomNav
 import com.storyteller_f.a.app.core.components.NavRoute
 import com.storyteller_f.a.app.core.components.StateView
@@ -151,11 +152,8 @@ private fun CommunityBasicInfoSection(id: PrimaryKey) {
 
 @Composable
 private fun CommunityLogsTab() {
-    LazyColumn {
-        items(1) {
-            ListItem(headlineContent = { Text("None") })
-            HorizontalDivider()
-        }
+    CenterBox {
+        Text("None")
     }
 }
 

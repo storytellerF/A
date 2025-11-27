@@ -25,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.storyteller_f.a.app.core.components.CenterBox
 import com.storyteller_f.a.app.core.components.CustomBottomNav
 import com.storyteller_f.a.app.core.components.NavRoute
 import com.storyteller_f.a.app.core.components.StateView
@@ -57,7 +58,11 @@ fun TopicDetailPage(id: PrimaryKey) {
         val navRoutes = listOf(
             NavRoute("/info", Icons.Default.Topic, stringResource(Res.string.tab_basic_info)),
             NavRoute("/topics", Icons.Default.Topic, stringResource(Res.string.tab_topics)),
-            NavRoute("/logs", Icons.AutoMirrored.Filled.Article, stringResource(Res.string.tab_logs)),
+            NavRoute(
+                "/logs",
+                Icons.AutoMirrored.Filled.Article,
+                stringResource(Res.string.tab_logs)
+            ),
         )
         CustomBottomNav(navRoutes[pagerState.currentPage].path, navRoutes) { path ->
             scope.launch {
@@ -145,7 +150,9 @@ private fun TopicBasicInfoSection(id: PrimaryKey) {
 
 @Composable
 private fun TopicLogsTab() {
-    Column(Modifier.padding(16.dp)) { Text("None") }
+    CenterBox {
+        Text("None")
+    }
 }
 
 @Composable
