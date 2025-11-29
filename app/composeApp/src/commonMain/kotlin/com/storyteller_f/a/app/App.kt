@@ -435,23 +435,14 @@ private suspend fun sendTopicNotification(
             title = "New topic",
             message = message.plain,
             onActivated = {
-                Napier.d(
-                    message = "Notification 1 activated",
-                    tag = "NotificationLog"
-                )
+                Napier.d(message = "Notification 1 activated", tag = "NotificationLog")
                 onClickTopic(topicInfo)
             },
             onDismissed = { reason ->
-                Napier.d(
-                    message = "Notification 1 dismissed: $reason",
-                    tag = "NotificationLog"
-                )
+                Napier.d(message = "Notification 1 dismissed: $reason", tag = "NotificationLog")
             },
             onFailed = {
-                Napier.d(
-                    tag = "NotificationLog",
-                    message = "Notification 1 failed"
-                )
+                Napier.d(tag = "NotificationLog", message = "Notification 1 failed")
             }
         ) {
         }

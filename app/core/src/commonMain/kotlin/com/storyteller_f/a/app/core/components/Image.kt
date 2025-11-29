@@ -56,10 +56,7 @@ fun ImageLoading() {
     BoxWithConstraints(modifier = Modifier.fillMaxSize(), Alignment.Center) {
         val size = minOf(this.maxWidth, this.maxHeight, 20.dp)
         val strokeWidth = if (size > 20.dp) 2.dp else 1.dp
-        CircularProgressIndicator(
-            modifier = Modifier.size(size),
-            strokeWidth = strokeWidth
-        )
+        CircularProgressIndicator(modifier = Modifier.size(size), strokeWidth = strokeWidth)
     }
 }
 

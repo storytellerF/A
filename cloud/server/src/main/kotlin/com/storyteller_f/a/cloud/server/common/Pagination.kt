@@ -40,9 +40,7 @@ abstract class PrimaryKeyPagingGenerator<T>(val block: (T) -> PrimaryKey) :
                     PrimaryKey::class,
                     prePageToken
                 )?.let {
-                    Cursor.AscCursor(
-                        it
-                    )
+                    Cursor.AscCursor(it)
                 }
 
                 else -> null
@@ -135,15 +133,11 @@ class ReactionPaginationGenerator(val backend: Backend) :
         return ReactionFetch(
             when {
                 !nextPageToken.isNullOrBlank() -> Cursor.DescCursor(
-                    commonJson.decodeFromString<ReactionCursorKey>(
-                        nextPageToken
-                    )
+                    commonJson.decodeFromString<ReactionCursorKey>(nextPageToken)
                 )
 
                 !prePageToken.isNullOrBlank() -> Cursor.AscCursor(
-                    commonJson.decodeFromString<ReactionCursorKey>(
-                        prePageToken
-                    )
+                    commonJson.decodeFromString<ReactionCursorKey>(prePageToken)
                 )
 
                 else -> null

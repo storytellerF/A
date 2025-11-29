@@ -84,10 +84,7 @@ fun RoomTopicList(
                     null
                 }
                 val info = items[index]
-                RoomTopicCell(
-                    info,
-                    info != null && next?.author != info.author
-                )
+                RoomTopicCell(info, info != null && next?.author != info.author)
             }
             topPrepend(items.loadState)
         }

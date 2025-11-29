@@ -105,12 +105,7 @@ class DownloaderImpl(
     val register: TaskRegister
 ) : Downloader {
     override fun download(fileInfo: FileInfo) {
-        val path = Path(
-            SystemTemporaryDirectory,
-            "downloads",
-            fileInfo.id.toString(),
-            fileInfo.name
-        )
+        val path = Path(SystemTemporaryDirectory, "downloads", fileInfo.id.toString(), fileInfo.name)
         Napier.i(tag = "download") {
             "download $fileInfo to $path"
         }
@@ -282,10 +277,7 @@ class DownloaderImpl(
                     "download failed ${fileInfo.name}"
                 }
                 updateDownloadInfo(modelStorage, id) {
-                    it.copy(
-                        status = DownloadStatus.DOWNLOAD_FAILED,
-                        message = throwable.message.toString()
-                    )
+                    it.copy(status = DownloadStatus.DOWNLOAD_FAILED, message = throwable.message.toString())
                 }
             }
             return true

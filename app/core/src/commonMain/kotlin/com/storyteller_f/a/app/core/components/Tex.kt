@@ -14,13 +14,7 @@ import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.files.SystemTemporaryDirectory
 import kotlin.use
 
-expect fun saveLatexToImage(
-    tex: String,
-    backgroundColor: Int,
-    color: Int,
-    textSize: Float,
-    outputStream: Sink
-): Boolean
+expect fun saveLatexToImage(tex: String, backgroundColor: Int, color: Int, textSize: Float, outputStream: Sink): Boolean
 
 fun generateLatexImage(
     style: TextStyle,

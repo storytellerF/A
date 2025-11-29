@@ -71,10 +71,6 @@ fun TopicRefCellContent(
         val plain = remember(text) {
             extractMarkdownHeadline(text)
         }
-        Text(
-            plain,
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 4
-        )
+        Text(plain, color = MaterialTheme.colorScheme.onSurface, maxLines = 4)
     }
 }

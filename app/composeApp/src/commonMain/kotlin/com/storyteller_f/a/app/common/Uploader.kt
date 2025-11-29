@@ -205,14 +205,7 @@ class UploaderImpl(
         getUploadId(modelStorage, userSession, objectTuple, clipFile, uploadInfo).mapResult {
             userSession.getChunkStatus(it)
         }.mapResult {
-            uploadChunkedFiles(
-                userSession,
-                it.id,
-                clipFile,
-                modelStorage,
-                uploadInfo,
-                it
-            )
+            uploadChunkedFiles(userSession, it.id, clipFile, modelStorage, uploadInfo, it)
         }.mapResult {
             userSession.completeChunkUpload(it)
         }.onSuccess {

@@ -172,10 +172,7 @@ suspend fun getImageDimension(
                 inputStreamProducer().use {
                     reader.input = ImageIO.createImageInputStream(it)
                     reader.read(reader.minIndex)
-                    Dimension(
-                        reader.getWidth(reader.minIndex),
-                        reader.getHeight(reader.minIndex)
-                    )
+                    Dimension(reader.getWidth(reader.minIndex), reader.getHeight(reader.minIndex))
                 }
             } catch (e: Throwable) {
                 Napier.e(throwable = e) {

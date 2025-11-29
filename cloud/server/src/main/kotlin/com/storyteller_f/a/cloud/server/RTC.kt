@@ -98,11 +98,7 @@ private suspend fun processSendAnswer(
     val session = rtcSession[frame.roomId]
     if (session != null) {
         session.socketMap[frame.targetUid]?.sendFrame(
-            RoomFrame.RespondAnswer(
-                answer,
-                frame.roomId,
-                frame.targetUid
-            )
+            RoomFrame.RespondAnswer(answer, frame.roomId, frame.targetUid)
         )
         session.answerList[uid]?.let {
             it[frame.targetUid] = answer
@@ -124,11 +120,7 @@ private suspend fun processSendOffer(
     }
     if (session != null) {
         session.socketMap[frame.targetUid]?.sendFrame(
-            RoomFrame.CreateAnswer(
-                uid,
-                offer,
-                frame.roomId
-            )
+            RoomFrame.CreateAnswer(uid, offer, frame.roomId)
         )
         session.offerList[uid]?.let {
             it[frame.targetUid] = offer
@@ -247,11 +239,7 @@ suspend fun processSendCandidate(
 ) {
     val session = rtcSession[frame.roomId] ?: return
     val targetSession = session.socketMap[frame.targetUid] ?: return
-    val f = RoomFrame.ReceiveCandidate(
-        frame.candidate,
-        frame.roomId,
-        uid
-    )
+    val f = RoomFrame.ReceiveCandidate(frame.candidate, frame.roomId, uid)
     targetSession.sendFrame(f)
 }
 

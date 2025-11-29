@@ -117,10 +117,7 @@ class ExposedCommunityDatabase(
         }
     }
 
-    override suspend fun createCommunity(
-        community: Community,
-        memberId: PrimaryKey
-    ): Result<Pair<Community, Member>> =
+    override suspend fun createCommunity(community: Community, memberId: PrimaryKey): Result<Pair<Community, Member>> =
         databaseSession.dbQuery {
             check(Communities.insert {
                 it[Communities.id] = community.id

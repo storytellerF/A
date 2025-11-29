@@ -11,9 +11,6 @@ object UserDevices : Table() {
 
 fun UserDevice.Companion.wrapRow(row: ResultRow): UserDevice {
     return with(UserDevices) {
-        UserDevice(
-            row[uid],
-            row[endpointUrl]
-        )
+        UserDevice(row[uid], row[endpointUrl])
     }
 }

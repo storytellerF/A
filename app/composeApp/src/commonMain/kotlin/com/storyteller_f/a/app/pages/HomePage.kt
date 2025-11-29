@@ -80,21 +80,9 @@ import org.jetbrains.compose.resources.stringResource
 fun HomePage() {
     val size = calculateWindowSizeClass()
     val homeNavRoutes = listOf(
-        NavRoute(
-            "/world",
-            Icons.Default.Public,
-            stringResource(Res.string.world)
-        ),
-        NavRoute(
-            "/communities",
-            Icons.Default.Diversity3,
-            stringResource(Res.string.communities)
-        ),
-        NavRoute(
-            "/rooms",
-            Icons.Default.ChatBubble,
-            stringResource(Res.string.rooms)
-        ),
+        NavRoute("/world", Icons.Default.Public, stringResource(Res.string.world)),
+        NavRoute("/communities", Icons.Default.Diversity3, stringResource(Res.string.communities)),
+        NavRoute("/rooms", Icons.Default.ChatBubble, stringResource(Res.string.rooms)),
     )
     val modifier = Modifier.testTag("home")
     when (size.widthSizeClass) {
@@ -118,10 +106,7 @@ private fun HomeNonCompatPage(
             val navigator = rememberNavController()
             val currentEntry by navigator.currentBackStackEntryFlow.collectAsState(null)
             CustomRailNav(currentEntry?.destination?.route, homeNavRoutes) {
-                navigator.navigate(
-                    it,
-                    NavOptions.Builder().setLaunchSingleTop(true).build()
-                )
+                navigator.navigate(it, NavOptions.Builder().setLaunchSingleTop(true).build())
             }
             HomeNavHost(navigator, modifier = Modifier.weight(1f))
         }
@@ -159,10 +144,7 @@ private fun HomeCompatPage(
                 ProjectIcon()
             }
             Spacer(modifier = Modifier.height(10.dp))
-            HomePager(
-                Modifier.weight(1f).padding(bottom = it.calculateBottomPadding()),
-                pagerState
-            )
+            HomePager(Modifier.weight(1f).padding(bottom = it.calculateBottomPadding()), pagerState)
         }
     }
 }

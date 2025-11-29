@@ -80,11 +80,7 @@ private fun CommunityTopBar(id: PrimaryKey) {
     val name = info?.name
     val aid = info?.aid
     val title = if (name != null && aid != null) {
-        stringResource(
-            Res.string.community_detail_title_with_info,
-            name,
-            aid
-        )
+        stringResource(Res.string.community_detail_title_with_info, name, aid)
     } else {
         stringResource(Res.string.community_detail_title)
     }

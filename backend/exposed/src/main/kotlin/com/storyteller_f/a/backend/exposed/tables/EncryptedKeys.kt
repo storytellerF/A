@@ -17,10 +17,6 @@ object EncryptedKeys : Table() {
 
 fun EncryptedKey.Companion.wrapRow(row: ResultRow): EncryptedKey {
     return with(EncryptedKeys) {
-        EncryptedKey(
-            row[topicId],
-            row[uid],
-            row[encryptedAes].bytes
-        )
+        EncryptedKey(row[topicId], row[uid], row[encryptedAes].bytes)
     }
 }

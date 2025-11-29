@@ -16,10 +16,7 @@ import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import net.bjoernpetersen.m3u.M3uParser
 
-suspend fun parseM3UPlayList(
-    remoteMediaItem: RemoteMediaItem,
-    client: HttpClient
-): List<ConstPlayItem> =
+suspend fun parseM3UPlayList(remoteMediaItem: RemoteMediaItem, client: HttpClient): List<ConstPlayItem> =
     if ((remoteMediaItem.url.startsWith("http://") ||
             remoteMediaItem.url.startsWith("https://")) && remoteMediaItem.isM3U8PlayList
     ) {

@@ -106,12 +106,7 @@ private suspend fun CoroutineScope.processJob(
     val job1 = launch {
         loop(1.minutes) {
             processCommunityTask(sessionManager) { communityInfo ->
-                handleCommunityComment(
-                    sessionManager,
-                    client,
-                    communityInfo,
-                    commentPrompt
-                )
+                handleCommunityComment(sessionManager, client, communityInfo, commentPrompt)
             }
         }
     }

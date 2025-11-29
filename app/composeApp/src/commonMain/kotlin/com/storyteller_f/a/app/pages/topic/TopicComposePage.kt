@@ -158,11 +158,7 @@ fun TopicComposePage(
     AppTheme(
         typography = typography ?: MaterialTheme.typography
     ) {
-        TopicComposeScaffold(
-            data,
-            data.getMediaTarget() ?: (myInfo.id ob ObjectType.USER),
-            backPrePage,
-        )
+        TopicComposeScaffold(data, data.getMediaTarget() ?: (myInfo.id ob ObjectType.USER), backPrePage,)
     }
 }
 
@@ -423,12 +419,7 @@ private fun PreviewTopicInternal(
     input: String
 ) {
     val list by markdownMediasViewModel.handler.data.collectAsState()
-    val topicInfo = TopicInfo.EMPTY.copy(
-        content = TopicContent.Plain(
-            input,
-            list.orEmpty().toImmutableList()
-        )
-    )
+    val topicInfo = TopicInfo.EMPTY.copy(content = TopicContent.Plain(input, list.orEmpty().toImmutableList()))
     LazyColumn(
         modifier = Modifier.fillMaxSize().navigationBarsPadding().padding(horizontal = 20.dp)
     ) {

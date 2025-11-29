@@ -146,9 +146,7 @@ private fun FileBasicInfoSection(id: PrimaryKey) {
                     info.contentType.startsWith("image") -> {
                         CoilZoomAsyncImage(
                             model = globalLoader(info.url),
-                            contentDescription = stringResource(
-                                Res.string.preview_image
-                            ),
+                            contentDescription = stringResource(Res.string.preview_image),
                             modifier = Modifier.fillMaxSize()
                         )
                     }

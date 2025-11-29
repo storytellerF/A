@@ -11,9 +11,7 @@ class TopicRoute(
     val builder: @Composable (Map<String, String>) -> Unit
 ) {
     companion object {
-        fun parseRefUri(
-            string: String
-        ): Pair<@Composable ((
+        fun parseRefUri(string: String): Pair<@Composable ((
             Map<String, String>,
         ) -> Unit)?, MutableMap<String, String>> {
             val target = string.split("/")

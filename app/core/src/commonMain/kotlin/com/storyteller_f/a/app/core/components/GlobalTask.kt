@@ -18,10 +18,7 @@ interface GlobalTask<out C> {
 
     val context: GlobalTaskContext<C>
 
-    fun use(
-        key: String,
-        block: suspend GlobalTask<C>.(MutableStateFlow<LoadingState?>) -> Unit
-    )
+    fun use(key: String, block: suspend GlobalTask<C>.(MutableStateFlow<LoadingState?>) -> Unit)
 
     companion object
 }

@@ -197,11 +197,7 @@ fun BoxScope.PlayerWaiting(
         val request = imageRequestInMarkdown(coverMediaInfo)
         AsyncImage(request, contentDescription = "cover", modifier = Modifier.fillMaxSize())
     } else {
-        Box(
-            modifier = Modifier
-                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                .fillMaxSize()
-        )
+        Box(modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainerHigh).fillMaxSize())
     }
     val mediaPlayerService = LocalMediaPlayerService.current
     val scope = rememberCoroutineScope()
@@ -269,11 +265,7 @@ fun getPlayItemFromStreamInfo(info: StreamInfo): List<ConstPlayItem> {
         StreamType.VIDEO_STREAM -> {
             val firstOrNull = info.videoStreams.firstOrNull()
             firstOrNull?.let { it1 ->
-                ConstPlayItem(
-                    it1.content,
-                    info.thumbnails.firstOrNull()?.url,
-                    info.name
-                )
+                ConstPlayItem(it1.content, info.thumbnails.firstOrNull()?.url, info.name)
             }
                 ?.let {
                     listOf(it)
@@ -283,11 +275,7 @@ fun getPlayItemFromStreamInfo(info: StreamInfo): List<ConstPlayItem> {
         StreamType.AUDIO_STREAM -> {
             val firstOrNull = info.audioStreams.firstOrNull()
             firstOrNull?.let { it1 ->
-                ConstPlayItem(
-                    it1.content,
-                    info.thumbnails.firstOrNull()?.url,
-                    info.name
-                )
+                ConstPlayItem(it1.content, info.thumbnails.firstOrNull()?.url, info.name)
             }
                 ?.let {
                     listOf(it)
@@ -311,13 +299,7 @@ fun rememberPlayerState(
     localMediaPlaySession: LocalMediaPlaySession
 ): State<MediaPlayerState> {
     player ?: return remember {
-        mutableStateOf(
-            MediaPlayerState(
-                currentLoading = false,
-                currentIsPlaying = false,
-                currentPlayingItem = null
-            )
-        )
+        mutableStateOf(MediaPlayerState(currentLoading = false, currentIsPlaying = false, currentPlayingItem = null))
     }
     var currentLoading by remember {
         mutableStateOf(player.isLoading)

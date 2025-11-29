@@ -150,11 +150,7 @@ class AndroidKeyStoreSessionHistoryManager(val settings: Settings) : SessionHist
     override suspend fun addSession(session: RawUserPassInfo): UserPass {
         val current = "default"
         importEcdsaPrivateKey(current, session.pemPrivateKey)
-        settings.encodeValue(
-            SessionHistory.serializer(),
-            "session_history",
-            SessionHistory(current)
-        )
+        settings.encodeValue(SessionHistory.serializer(), "session_history", SessionHistory(current))
         return AndroidKeyStoreUserPass(current)
     }
 

@@ -81,12 +81,7 @@ fun CommunitySettingPage(communityId: PrimaryKey) {
             },
             { input ->
                 scope.launch {
-                    globalDialogController.updateCommunity(
-                        communityId,
-                        input,
-                        currentOption,
-                        closeDialog
-                    )
+                    globalDialogController.updateCommunity(communityId, input, currentOption, closeDialog)
                 }
             }
         )

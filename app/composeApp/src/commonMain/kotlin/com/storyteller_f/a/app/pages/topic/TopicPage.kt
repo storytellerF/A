@@ -284,10 +284,7 @@ private fun TopicInputGroup(
         if (topic.isEncrypted) {
             ObjectTuple(topic.rootId, topic.rootType)
         } else {
-            ObjectTuple(
-                myInfo?.id ?: 0,
-                ObjectType.USER
-            )
+            ObjectTuple(myInfo?.id ?: 0, ObjectType.USER)
         },
         MaterialTheme.colorScheme.secondaryContainer,
         input,

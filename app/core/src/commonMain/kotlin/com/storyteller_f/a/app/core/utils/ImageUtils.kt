@@ -26,10 +26,6 @@ suspend fun getRemoteImageBitmap(
     return image?.coilImageToImageBitmap()
 }
 
-fun imageRequest(
-    context: PlatformContext,
-    client: HttpClient,
-    info: FileInfo?
-) = ImageRequest.Builder(context)
+fun imageRequest(context: PlatformContext, client: HttpClient, info: FileInfo?) = ImageRequest.Builder(context)
     .fetcherFactory(KtorNetworkFetcherFactory(client))
     .data(info?.url)

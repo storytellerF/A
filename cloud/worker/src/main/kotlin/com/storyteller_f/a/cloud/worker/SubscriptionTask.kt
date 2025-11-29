@@ -83,12 +83,7 @@ private suspend fun Backend.processTopicSubscription(topic: Topic) {
             "no user subscription to send topic ${topic.id}"
         }
         database.admin.createTaskRecord(
-            TaskRecord(
-                SnowflakeFactory.nextId(),
-                now(),
-                TaskRecordType.SUBSCRIPTION,
-                topic.id,
-            )
+            TaskRecord(SnowflakeFactory.nextId(), now(), TaskRecordType.SUBSCRIPTION, topic.id,)
         ).getOrThrow()
     }
 }
@@ -123,14 +118,7 @@ private fun generateTopicSubscriptionContentForCommunity(
 ) = buildString {
     appendLine("New topic at community")
     appendLine(generateModelMarkdownContent(ObjectTuple(topicId, ObjectType.TOPIC)))
-    appendLine(
-        generateModelMarkdownContent(
-            ObjectTuple(
-                topicParentId,
-                ObjectType.COMMUNITY
-            )
-        )
-    )
+    appendLine(generateModelMarkdownContent(ObjectTuple(topicParentId, ObjectType.COMMUNITY)))
 }
 
 private fun generateTopicSubscriptionContentForRoom(

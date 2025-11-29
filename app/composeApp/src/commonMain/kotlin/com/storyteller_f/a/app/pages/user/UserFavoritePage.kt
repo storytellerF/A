@@ -43,9 +43,7 @@ class UserFavoritePreviewProvider : PreviewParameterProvider<UserFavoriteInfo> {
     override val values: Sequence<UserFavoriteInfo>
         get() = sequenceOf(
             UserFavoriteInfo.EMPTY.copy(
-                extensions = UserFavoriteInfo.Extensions(
-                    TopicInfo.EMPTY.copy(content = TopicContent.Plain("hello"))
-                )
+                extensions = UserFavoriteInfo.Extensions(TopicInfo.EMPTY.copy(content = TopicContent.Plain("hello")))
             )
         )
 }

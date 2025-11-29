@@ -85,11 +85,7 @@ private fun RoomTopBar(id: PrimaryKey) {
     val name = info?.name
     val aid = info?.aid
     val title = if (name != null && aid != null) {
-        stringResource(
-            Res.string.room_detail_title_with_info,
-            name,
-            aid
-        )
+        stringResource(Res.string.room_detail_title_with_info, name, aid)
     } else {
         stringResource(Res.string.room_detail_title)
     }

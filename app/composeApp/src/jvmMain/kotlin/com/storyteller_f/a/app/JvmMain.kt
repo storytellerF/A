@@ -103,7 +103,5 @@ private fun initForJvmMain(args: Array<String>) {
 //    UIManager.put("swing.boldMetal", "false")
 //    System.setProperty("awt.useSystemAAFontSettings", "on")
 
-    NotificationInitializer.configure(
-        AppConfig(appName = "A")
-    )
+    NotificationInitializer.configure(AppConfig(appName = "A"))
 }

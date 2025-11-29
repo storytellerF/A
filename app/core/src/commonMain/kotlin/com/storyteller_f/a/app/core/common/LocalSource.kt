@@ -127,9 +127,7 @@ class CustomRemoteMediator<Datum : Any>(
             Napier.v(tag = "pagination") {
                 "mediator success type: $loadType key: ${params.key}"
             }
-            MediatorResult.Success(
-                endOfPaginationReached = nextKey == null
-            )
+            MediatorResult.Success(endOfPaginationReached = nextKey == null)
         }
     }
 }
@@ -161,11 +159,7 @@ class IntermediatePagingSource<Key : Any, T : Any>(
                 LoadParams.Prepend(key, params.loadSize, params.placeholdersEnabled)
             }
 
-            is LoadParams.Refresh<*> -> LoadParams.Refresh(
-                null,
-                params.loadSize,
-                params.placeholdersEnabled
-            )
+            is LoadParams.Refresh<*> -> LoadParams.Refresh(null, params.loadSize, params.placeholdersEnabled)
         }
         val load = pagingSource.load(loadParams)
         return when (load) {

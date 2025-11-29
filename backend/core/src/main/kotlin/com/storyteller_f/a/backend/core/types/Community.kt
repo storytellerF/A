@@ -34,11 +34,7 @@ fun RawCommunity.toCommunityIfo(
     memberCount ?: 0,
     community.memberPolicy,
     member = member?.let {
-        NestedMemberInfo(
-            it.status,
-            it.joinedTime,
-            it.invitedTime,
-        )
+        NestedMemberInfo(it.status, it.joinedTime, it.invitedTime,)
     },
     lastRead = lastRead,
     latestTopic = latestTopic,

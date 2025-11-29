@@ -45,12 +45,7 @@ private fun buildPanelMediaPlayer(): MediaPlayerService = object : MediaPlayerSe
     ) {
         val context = mainActivityRef?.get() ?: return
         val instance = panelAccountInstance
-        instance.controller.startPlayMedia(
-            remoteMediaItem,
-            localMediaPlaySession,
-            this,
-            context
-        )
+        instance.controller.startPlayMedia(remoteMediaItem, localMediaPlaySession, this, context)
     }
 
     override val enablePip: Boolean

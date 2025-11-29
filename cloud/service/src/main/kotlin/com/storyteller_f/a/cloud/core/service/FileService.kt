@@ -404,11 +404,7 @@ private fun removeExifIfImage(
             System.getProperty("java.io.tmpdir"),
             Uuid.random().toHexString() + it.pack.name
         )
-        cleanImageMeta(
-            it.pack.file,
-            target.outputStream().buffered(),
-            it.contentType
-        )
+        cleanImageMeta(it.pack.file, target.outputStream().buffered(), it.contentType)
         f.add(target)
         it.copy(pack = it.pack.copy(file = target))
     } else {
@@ -601,10 +597,7 @@ private suspend fun cleanChunk(
     recordId: PrimaryKey
 ) {
     runCatching {
-        backend.objectStorageService.delete(
-            A_FILE_DEFAULT_BUCKET,
-            sortedSources
-        ).getOrThrow()
+        backend.objectStorageService.delete(A_FILE_DEFAULT_BUCKET, sortedSources).getOrThrow()
         // 删除整个分片目录下可能残留的对象
         val sessionObjects = backend.objectStorageService.list(
             A_FILE_DEFAULT_BUCKET,

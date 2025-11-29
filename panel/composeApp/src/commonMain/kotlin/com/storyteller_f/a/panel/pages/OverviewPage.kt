@@ -64,10 +64,7 @@ fun OverviewPageInternal(viewModel: OverviewViewModel) {
                 },
                 navigationIcon = {
                     IconButton({ panelNav.open() }) {
-                        Icon(
-                            Icons.Default.Menu,
-                            null
-                        )
+                        Icon(Icons.Default.Menu, null)
                     }
                 }
             )
@@ -84,16 +81,7 @@ fun OverviewPageInternal(viewModel: OverviewViewModel) {
 class OverviewFlowPreviewProvider : PreviewParameterProvider<PanelOverview> {
     override val values: Sequence<PanelOverview>
         get() = sequenceOf(
-            PanelOverview(
-                1,
-                2,
-                3,
-                4,
-                5,
-                6,
-                7000,
-                8000,
-            )
+            PanelOverview(1, 2, 3, 4, 5, 6, 7000, 8000,)
         )
 }
 
@@ -261,10 +249,7 @@ fun FileCountOverviewCell(panelOverview: PanelOverview) {
                 Text(remember(panelOverview.fileVolume) {
                     buildAnnotatedString {
                         withStyle(
-                            style = SpanStyle(
-                                fontSize = 30.sp,
-                                fontWeight = FontWeight.Bold
-                            )
+                            style = SpanStyle(fontSize = 30.sp, fontWeight = FontWeight.Bold)
                         ) {
                             append(HumanReadable.fileSize(panelOverview.fileVolume))
                         }

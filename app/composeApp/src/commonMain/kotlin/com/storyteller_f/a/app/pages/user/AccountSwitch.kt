@@ -122,10 +122,7 @@ private fun AccountSwitchInternal(viewModel: ChildAccountsViewModel) {
                 childAccountInfo?.let {
                     ChildAccountCell(it.userInfo) {
                         scope.launch {
-                            globalDialogController.switchUser(
-                                childAccountInfo.privateKey,
-                                uiViewModel
-                            )
+                            globalDialogController.switchUser(childAccountInfo.privateKey, uiViewModel)
                         }
                     }
                 }

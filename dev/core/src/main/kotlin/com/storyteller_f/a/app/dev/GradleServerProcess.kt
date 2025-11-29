@@ -124,11 +124,7 @@ private fun ProcessBuilder.bindGradleProcessEnv(envFile: File, port: Int): Proce
     val environment = environment()
     environment.putAll(envList)
     environment.putAll(
-        mapOf(
-            "DATABASE_URI" to url,
-            "DATABASE_DRIVER" to "h2",
-            "BUILD_TYPE" to "dev-test"
-        )
+        mapOf("DATABASE_URI" to url, "DATABASE_DRIVER" to "h2", "BUILD_TYPE" to "dev-test")
     )
     environment["SERVER_PORT"] = port.toString()
     return this

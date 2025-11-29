@@ -136,13 +136,7 @@ private suspend fun Backend.saveMemberDocument(
     getUserInfo(IdFetch(uid)).ifNotNull { userInfo ->
         memberSearchService.saveDocument(
             listOf(
-                MemberDocument.fromUserInfo(
-                    member.id,
-                    userInfo,
-                    roomId,
-                    ObjectType.ROOM,
-                    room.name
-                )
+                MemberDocument.fromUserInfo(member.id, userInfo, roomId, ObjectType.ROOM, room.name)
             )
         ).onFailure { e ->
             Napier.e(e) {

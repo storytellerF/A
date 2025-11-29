@@ -18,12 +18,7 @@ object TaskRecords : BaseTable() {
 
 fun TaskRecord.Companion.wrapRow(resultRow: ResultRow): TaskRecord {
     return with(TaskRecords) {
-        TaskRecord(
-            resultRow[id],
-            resultRow[createdTime],
-            resultRow[type],
-            resultRow[processedId]
-        )
+        TaskRecord(resultRow[id], resultRow[createdTime], resultRow[type], resultRow[processedId])
     }
 }
 suspend fun addTaskRecord(taskRecord: TaskRecord) {

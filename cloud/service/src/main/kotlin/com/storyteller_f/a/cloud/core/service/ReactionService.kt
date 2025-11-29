@@ -65,11 +65,7 @@ suspend fun Backend.reactionList(
     reactionFetch: ReactionFetch,
 ): Result<PaginationResult<ReactionInfo>> {
     if (fillHasReacted == true && uid == null) return Result.failure(UnauthorizedException())
-    return database.reaction.getReactionInfoPaginationResult(
-        listOf(objectId),
-        uid,
-        reactionFetch
-    )
+    return database.reaction.getReactionInfoPaginationResult(listOf(objectId), uid, reactionFetch)
 }
 
 suspend fun addReaction(
@@ -93,11 +89,7 @@ suspend fun deleteReaction(
     return if (isEmoji(emoji)) {
         backend.database.reaction.deleteReaction(uid, emoji, p.id).mapResult {
             if (it) {
-                backend.database.reaction.statsReactionRecord(
-                    p.id,
-                    emoji,
-                    ObjectType.TOPIC
-                )
+                backend.database.reaction.statsReactionRecord(p.id, emoji, ObjectType.TOPIC)
             } else {
                 UNIT_RESULT
             }

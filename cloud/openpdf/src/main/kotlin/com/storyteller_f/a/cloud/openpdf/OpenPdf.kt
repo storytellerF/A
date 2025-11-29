@@ -185,15 +185,11 @@ class OpenPdfVisitor(
             FontFactory.getFont("Courier", font.size, Font.BOLD)
         }
         val endIndex = it.location.end
-        paragraph.add(
-            Chunk(codeFence.substring(it.location.start, endIndex), font)
-        )
+        paragraph.add(Chunk(codeFence.substring(it.location.start, endIndex), font))
         if (i != codeHighlights.lastIndex) {
             val nextStartIndex = codeHighlights[i + 1].location.start
             if (nextStartIndex > endIndex) {
-                paragraph.add(
-                    Chunk(codeFence.substring(endIndex, nextStartIndex), font)
-                )
+                paragraph.add(Chunk(codeFence.substring(endIndex, nextStartIndex), font))
             }
         }
     }
@@ -271,10 +267,7 @@ class OpenPdfVisitor(
         cell.paddingTop = verticalPadding
         cell.paddingBottom = verticalPadding
 
-        cell.cellEvent = LeftBarCellEvent(
-            barWidth = barWidth,
-            barColor = Color(180, 180, 180)
-        )
+        cell.cellEvent = LeftBarCellEvent(barWidth = barWidth, barColor = Color(180, 180, 180))
 
         table.addCell(cell)
         return table

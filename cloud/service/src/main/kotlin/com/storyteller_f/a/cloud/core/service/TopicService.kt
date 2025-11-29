@@ -283,9 +283,7 @@ suspend fun Backend.processTopicAfterCreate(
     uid: PrimaryKey
 ) = runCatching {
     val info = if (topicInfo.content is TopicContent.Plain) {
-        processTopicFileObject(
-            listOf(topicInfo)
-        ).firstOrNull().getOrThrow()
+        processTopicFileObject(listOf(topicInfo)).firstOrNull().getOrThrow()
     } else {
         topicInfo
     }
@@ -307,10 +305,7 @@ suspend fun Backend.createTopicSnapshot(
         uid
     ).mapResultIfNotNull { (hasRead, _, isPrivate) ->
         if (hasRead && !isPrivate) {
-            database.getRawTopic(
-                ObjectFetch.IdFetch(topicId),
-                null
-            )
+            database.getRawTopic(ObjectFetch.IdFetch(topicId), null)
         } else {
             Result.failure(ForbiddenException("Permission denied"))
         }
@@ -349,14 +344,7 @@ private suspend fun Backend.createTopicSnapshot(
             tryUploadFiles(
                 uid,
                 ObjectType.USER,
-                listOf(
-                    UploadPack(
-                        pdfFile,
-                        "$topicId.pdf",
-                        pdfFile.length(),
-                        "$uid/$topicId.pdf"
-                    )
-                )
+                listOf(UploadPack(pdfFile, "$topicId.pdf", pdfFile.length(), "$uid/$topicId.pdf"))
             )
         }.firstOrNull()
     } finally {

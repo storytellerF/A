@@ -543,9 +543,7 @@ object CustomApi {
             ) : PageableQuery
 
             val get =
-                safeEndpointWithQuery<ServerResponse<ChildAccountInfo>, ChildAccountQuery>(
-                    "/accounts/child-accounts"
-                )
+                safeEndpointWithQuery<ServerResponse<ChildAccountInfo>, ChildAccountQuery>("/accounts/child-accounts")
             val add = mutationEndpoint<ChildAccountInfo, Unit>("/accounts/child-accounts")
         }
     }

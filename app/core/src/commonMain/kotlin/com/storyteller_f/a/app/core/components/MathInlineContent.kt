@@ -83,17 +83,10 @@ fun imageInlineContent(
     val imageWidth = pxToDp(dimension.width, density.density)
     val imageHeight = pxToDp(dimension.height, density.density)
     val width = minOf(maxWidth, imageWidth)
-    val height = minOf(
-        (width.value / imageWidth.value) * imageHeight,
-        if (isEmbed) 300.dp else width * 2
-    )
+    val height = minOf((width.value / imageWidth.value) * imageHeight, if (isEmbed) 300.dp else width * 2)
     val recalculatedWidth = height.value * imageWidth / imageHeight.value
     return InlineTextContent(
-        Placeholder(
-            recalculatedWidth.value.sp,
-            height.value.sp,
-            PlaceholderVerticalAlign.Center
-        )
+        Placeholder(recalculatedWidth.value.sp, height.value.sp, PlaceholderVerticalAlign.Center)
     ) {
         CompositionLocalProvider(LocalInspectionMode provides false) {
             transformer.transform(uri)?.let { imageData ->
@@ -139,24 +132,13 @@ fun generateMathIfNeed(
             )
         }
     }
-    return info.copy(
-        content = TopicContent.Plain(
-            content.plain,
-            content.fileInfos + fileInfos,
-        )
-    )
+    return info.copy(content = TopicContent.Plain(content.plain, content.fileInfos + fileInfos,))
 }
 
 @Composable
 fun customMarkdownTypography(colors: MarkdownColors): MarkdownTypography = markdownTypography(
-    code = MaterialTheme.typography.bodyMedium.copy(
-        fontFamily = FontFamily.Monospace,
-        color = colors.text
-    ),
-    inlineCode = MaterialTheme.typography.bodyLarge.copy(
-        fontFamily = FontFamily.Monospace,
-        color = colors.text
-    )
+    code = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace, color = colors.text),
+    inlineCode = MaterialTheme.typography.bodyLarge.copy(fontFamily = FontFamily.Monospace, color = colors.text)
 )
 
 fun AnnotatedString.Builder.imageAnnotator(
@@ -195,9 +177,7 @@ fun AnnotatedString.Builder.imageAnnotator(
     GFMElementTypes.INLINE_MATH, GFMElementTypes.BLOCK_MATH -> {
         val style =
             if (child.type == GFMElementTypes.INLINE_MATH) {
-                typography.inlineCode.copy(
-                    background = colors.inlineCodeBackground,
-                )
+                typography.inlineCode.copy(background = colors.inlineCodeBackground,)
             } else {
                 typography.code
             }

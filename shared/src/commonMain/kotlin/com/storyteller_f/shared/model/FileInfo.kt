@@ -41,9 +41,7 @@ data class FileInfo(
         const val YOUTUBE_MIMETYPE = "video/youtube"
         const val SOUND_CLOUD_MIME_TYPE = "audio/sound.cloud"
 
-        val EMPTY = FileInfo(
-            0, "", "", "", 0, "", 0, ObjectType.USER, now(), null
-        )
+        val EMPTY = FileInfo(0, "", "", "", 0, "", 0, ObjectType.USER, now(), null)
     }
 }
 

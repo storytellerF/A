@@ -126,11 +126,7 @@ fun FilePicker(
                             pagerState.scrollToPage(index)
                         }
                     }) {
-                        Icon(
-                            pair.first,
-                            pair.second,
-                            modifier = Modifier.padding(vertical = 10.dp).size(30.dp)
-                        )
+                        Icon(pair.first, pair.second, modifier = Modifier.padding(vertical = 10.dp).size(30.dp))
                     }
                 }
             }
@@ -151,9 +147,7 @@ fun AudioRecorder(
     uploadSuccess: (List<FileInfo>) -> Unit,
 ) {
     val isRecording by Recorder.isRecording
-    val isGranted by isPermissionGranted(
-        Permission.Audio
-    )
+    val isGranted by isPermissionGranted(Permission.Audio)
     Box(modifier = Modifier.fillMaxSize()) {
         RecorderButton(isGranted, isRecording, uploadSuccess, mediaTarget)
         if (!isGranted) {
@@ -162,9 +156,7 @@ fun AudioRecorder(
                     .background(MaterialTheme.colorScheme.primaryContainer)
             ) {
                 Button({
-                    requestPermission(
-                        Permission.Audio
-                    )
+                    requestPermission(Permission.Audio)
                 }, modifier = Modifier.align(Alignment.Center)) {
                     Text(stringResource(Res.string.provide_permission))
                 }
@@ -271,9 +263,7 @@ suspend fun AppGlobalDialogController.selectFileAndUpload(
                 getUploadDataFromPlatformFile(f)
             ) { p, t ->
                 emitProgress {
-                    GlobalDialogState.Loading(
-                        progress = GlobalDialogStateProgress(p, t)
-                    )
+                    GlobalDialogState.Loading(progress = GlobalDialogStateProgress(p, t))
                 }
             }
         } else {
@@ -318,9 +308,7 @@ suspend fun AppGlobalDialogController.uploadPath(
             getUploadDataFromPath(meta, path)
         ) { p, t ->
             emitProgress {
-                GlobalDialogState.Loading(
-                    progress = GlobalDialogStateProgress(p, t)
-                )
+                GlobalDialogState.Loading(progress = GlobalDialogStateProgress(p, t))
             }
         }
     }

@@ -121,14 +121,7 @@ suspend fun Backend.adminSignUp(
         }.mapResult { ad ->
             val newId = SnowflakeFactory.nextId()
             val name = nameService.parse(newId)
-            val user = PanelAccount(
-                newId,
-                name,
-                PassType.RAW,
-                AlgoType.P256,
-                pack.publicKey,
-                ad,
-            )
+            val user = PanelAccount(newId, name, PassType.RAW, AlgoType.P256, pack.publicKey, ad,)
             database.panelAccount.addPanelAccount(user).map {
                 PanelAccountInfo(newId, name)
             }

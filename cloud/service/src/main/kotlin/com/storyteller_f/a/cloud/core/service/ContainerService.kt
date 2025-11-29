@@ -165,12 +165,7 @@ suspend fun Backend.checkRootAdminPermission(
             database.room.getRawRoom(IdFetch(parentId), true, uid)
                 .mapResultIfNotNull {
                     if (it.room.creator == uid) {
-                        Result.success(
-                            RootAdminPermission(
-                                parentType,
-                                parentId
-                            )
-                        )
+                        Result.success(RootAdminPermission(parentType, parentId))
                     } else {
                         Result.failure(ForbiddenException())
                     }
@@ -181,12 +176,7 @@ suspend fun Backend.checkRootAdminPermission(
             database.community.getRawCommunity(IdFetch(parentId))
                 .mapResultIfNotNull {
                     if (it.community.owner == uid) {
-                        Result.success(
-                            RootAdminPermission(
-                                parentType,
-                                parentId
-                            )
-                        )
+                        Result.success(RootAdminPermission(parentType, parentId))
                     } else {
                         Result.failure(ForbiddenException())
                     }
@@ -308,14 +298,7 @@ private suspend fun Backend.insertQuotaAndGet(
     objectTuple: ObjectTuple
 ): Result<QuotaInfo> {
     val (ownerId, ownerType) = objectTuple
-    val quota = Quota(
-        ownerId,
-        ownerType,
-        1024 * 1024 * 1024,
-        0,
-        quotaType,
-        null
-    )
+    val quota = Quota(ownerId, ownerType, 1024 * 1024 * 1024, 0, quotaType, null)
     return database.container.insertQuota(quota).map {
         quota
     }.recoverIfDup(database::isDup) {

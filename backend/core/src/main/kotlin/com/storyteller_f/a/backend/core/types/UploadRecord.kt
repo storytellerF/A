@@ -21,15 +21,5 @@ data class UploadRecord(
 }
 
 fun UploadRecord.toUploadRecordInfo(): UploadRecordInfo {
-    return UploadRecordInfo(
-        id,
-        createdTime,
-        objectId,
-        objectType,
-        status,
-        total,
-        progress,
-        name,
-        chunkSize
-    )
+    return UploadRecordInfo(id, createdTime, objectId, objectType, status, total, progress, name, chunkSize)
 }

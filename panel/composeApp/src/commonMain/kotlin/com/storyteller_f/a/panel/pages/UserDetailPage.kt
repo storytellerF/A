@@ -105,11 +105,7 @@ private fun UserTopBar(uid: PrimaryKey) {
     val nickname = info?.nickname
     val aid = info?.aid
     val title = if (nickname != null && aid != null) {
-        stringResource(
-            Res.string.user_detail_title_with_info,
-            nickname,
-            aid
-        )
+        stringResource(Res.string.user_detail_title_with_info, nickname, aid)
     } else {
         stringResource(Res.string.user_detail_title)
     }

@@ -102,11 +102,7 @@ fun UnboundedRoomCell(@PreviewParameter(RoomCellPreviewProvider::class) roomInfo
 class RoomCellPreviewProvider : PreviewParameterProvider<RoomInfo> {
     override val values: Sequence<RoomInfo>
         get() = sequenceOf(
-            RoomInfo.EMPTY.copy(
-                name = "Room Name",
-                latestTopic = 1,
-                lastRead = 0
-            )
+            RoomInfo.EMPTY.copy(name = "Room Name", latestTopic = 1, lastRead = 0)
         )
 }
 
@@ -123,16 +119,9 @@ private fun RoomCellInternal(
         Row(modifier = modifier) {
             val dialogController = rememberCommonDialogController()
             val shown by dialogController.shown
-            RoomIconWithDialog(
-                roomInfo,
-                showDialog = shown,
-                updateDialog = dialogController::update
-            )
+            RoomIconWithDialog(roomInfo, showDialog = shown, updateDialog = dialogController::update)
             Column(modifier = Modifier.padding(start = 8.dp)) {
-                Text(
-                    roomInfo?.name.orEmpty(),
-                    color = MaterialTheme.colorScheme.onSecondaryContainer
-                )
+                Text(roomInfo?.name.orEmpty(), color = MaterialTheme.colorScheme.onSecondaryContainer)
             }
             CommunityIconInRoomCell(roomInfo)
         }

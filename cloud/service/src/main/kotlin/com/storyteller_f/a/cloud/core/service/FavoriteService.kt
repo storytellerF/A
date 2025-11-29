@@ -24,13 +24,7 @@ suspend fun Backend.addFavorite(
     database.favorite.getFavorite(uid, newFavorite.objectId)
 }) {
     val id = SnowflakeFactory.nextId()
-    val userFavorite = UserFavorite(
-        id,
-        uid,
-        newFavorite.objectId,
-        newFavorite.objectType,
-        now()
-    )
+    val userFavorite = UserFavorite(id, uid, newFavorite.objectId, newFavorite.objectType, now())
     database.favorite.addFavorite(userFavorite).onSuccess<UserFavorite> {
         addUserLog(uid, UserLogType.ADD_FAVORITE, newFavorite.tuple())
     }

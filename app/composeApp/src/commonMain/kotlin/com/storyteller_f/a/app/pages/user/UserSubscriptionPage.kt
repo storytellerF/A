@@ -58,9 +58,7 @@ class UserSubscriptionPreviewProvider : PreviewParameterProvider<UserFavoriteInf
     override val values: Sequence<UserFavoriteInfo>
         get() = sequenceOf(
             UserFavoriteInfo.EMPTY.copy(
-                extensions = UserFavoriteInfo.Extensions(
-                    TopicInfo.EMPTY.copy(content = TopicContent.Plain("hello"))
-                )
+                extensions = UserFavoriteInfo.Extensions(TopicInfo.EMPTY.copy(content = TopicContent.Plain("hello")))
             )
         )
 }
@@ -68,9 +66,7 @@ class UserSubscriptionPreviewProvider : PreviewParameterProvider<UserFavoriteInf
 @Preview(widthDp = 300)
 @Composable
 fun UserSubscriptionCell(
-    @PreviewParameter(
-        UserSubscriptionPreviewProvider::class
-    ) userFavoriteInfo: UserSubscriptionInfo?
+    @PreviewParameter(UserSubscriptionPreviewProvider::class) userFavoriteInfo: UserSubscriptionInfo?
 ) {
     Column(Modifier.padding(vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(

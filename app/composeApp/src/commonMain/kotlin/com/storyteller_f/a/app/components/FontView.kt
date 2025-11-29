@@ -78,14 +78,8 @@ fun DownloadStatusViewInternal(data: DownloadInfo?) {
             strokeWidth = 2.dp
         )
 
-        downloadStatus == DownloadStatus.DOWNLOADED -> FontIcon(
-            MaterialSymbolsOutlined.DownloadDone,
-            "download done"
-        )
+        downloadStatus == DownloadStatus.DOWNLOADED -> FontIcon(MaterialSymbolsOutlined.DownloadDone, "download done")
 
-        downloadStatus == DownloadStatus.DOWNLOAD_FAILED -> FontIcon(
-            MaterialSymbolsOutlined.Error,
-            "error"
-        )
+        downloadStatus == DownloadStatus.DOWNLOAD_FAILED -> FontIcon(MaterialSymbolsOutlined.Error, "error")
     }
 }

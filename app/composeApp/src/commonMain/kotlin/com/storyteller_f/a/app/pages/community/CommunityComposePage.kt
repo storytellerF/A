@@ -58,20 +58,10 @@ fun CommunityComposePage() {
         scope.launch {
             globalDialogController.useResult {
                 request {
-                    createCommunity(
-                        NewCommunity(
-                            name,
-                            aid,
-                            memberPolicy = memberJoinPolicy
-                        )
-                    )
+                    createCommunity(NewCommunity(name, aid, memberPolicy = memberJoinPolicy))
                 }
             }.onSuccess {
-                globalDialogController.emitEvent(
-                    OnCommunityCreated(
-                        it
-                    )
-                )
+                globalDialogController.emitEvent(OnCommunityCreated(it))
                 appNavFactory.newAppNav().back()
             }
         }
@@ -135,16 +125,8 @@ private fun SelectedMemberPolicyDescription(
 
 private fun getMemberPolicies(): List<MemberJoinPolicy> {
     return listOf(
-        MemberJoinPolicy(
-            "Open",
-            MemberPolicy.OPEN,
-            "Anyone can join this community"
-        ),
-        MemberJoinPolicy(
-            "Invite Only",
-            MemberPolicy.INVITE_ONLY,
-            "Only invite members can join this community"
-        )
+        MemberJoinPolicy("Open", MemberPolicy.OPEN, "Anyone can join this community"),
+        MemberJoinPolicy("Invite Only", MemberPolicy.INVITE_ONLY, "Only invite members can join this community")
     )
 }
 

@@ -137,13 +137,7 @@ fun BooleanQuery.Builder.addMatchQuery(
     fieldName: String
 ) {
     preprocessUserInputKeyword(words)?.let {
-        add(
-            MultiFieldQueryParser(
-                arrayOf(fieldName),
-                analyzer
-            ).parse(it),
-            BooleanClause.Occur.MUST
-        )
+        add(MultiFieldQueryParser(arrayOf(fieldName), analyzer).parse(it), BooleanClause.Occur.MUST)
     }
 }
 

@@ -175,14 +175,10 @@ class ExposedRoomDatabase(
         uid: PrimaryKey?
     ): Result<List<RawRoom>> {
         if (objectListFetch is ObjectListFetch.AidListFetch && objectListFetch.aidList.isEmpty()) {
-            return Result.success(
-                emptyList()
-            )
+            return Result.success(emptyList())
         }
         if (objectListFetch is ObjectListFetch.IdListFetch && objectListFetch.idList.isEmpty()) {
-            return Result.success(
-                emptyList()
-            )
+            return Result.success(emptyList())
         }
         return getRoomListByPredicate {
             where {

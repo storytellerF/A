@@ -64,12 +64,7 @@ class SectionPagingSource<DATUM : Any>(
         return when (pageResult) {
             is LoadResult.Error<String, DATUM> -> LoadResult.Error(pageResult.throwable)
             is LoadResult.Invalid<String, DATUM> -> LoadResult.Invalid()
-            is LoadResult.Page<String, DATUM> -> load(
-                loadSize,
-                pageResult,
-                index,
-                placeholdersEnabled
-            )
+            is LoadResult.Page<String, DATUM> -> load(loadSize, pageResult, index, placeholdersEnabled)
         }
     }
 
@@ -91,11 +86,7 @@ class SectionPagingSource<DATUM : Any>(
 
                     is LoadResult.Page<SectionLoadParams, DATUM> -> {
                         // 合并两页
-                        LoadResult.Page(
-                            prePageResult.data + nextPageResult.data,
-                            null,
-                            nextPageResult.nextKey
-                        )
+                        LoadResult.Page(prePageResult.data + nextPageResult.data, null, nextPageResult.nextKey)
                     }
                 }
             } ?: LoadResult.Page(
@@ -104,18 +95,11 @@ class SectionPagingSource<DATUM : Any>(
                 getNextParams(prePageResult.nextKey, index)
             )
         } else {
-            LoadResult.Page(
-                prePageResult.data,
-                null,
-                getNextParams(prePageResult.nextKey, index)
-            )
+            LoadResult.Page(prePageResult.data, null, getNextParams(prePageResult.nextKey, index))
         }
     }
 
-    private fun getNextParams(
-        nextToken: String?,
-        index: Int
-    ): SectionLoadParams? =
+    private fun getNextParams(nextToken: String?, index: Int): SectionLoadParams? =
         if (nextToken != null) {
             SectionLoadParams(index, nextToken)
         } else {
@@ -138,18 +122,10 @@ class RegularPagingSource<DATUM : Any>(
             val pagination = it.pagination
             APagingData(
                 it.data,
-                Pagination(
-                    pagination?.nextPageToken,
-                    pagination?.prePageToken,
-                    pagination?.total ?: 0
-                )
+                Pagination(pagination?.nextPageToken, pagination?.prePageToken, pagination?.total ?: 0)
             )
         }.fold(onSuccess = { (data, pagination) ->
-            LoadResult.Page(
-                data = data,
-                prevKey = null,
-                nextKey = pagination?.nextPageToken
-            )
+            LoadResult.Page(data = data, prevKey = null, nextKey = pagination?.nextPageToken)
         }, onFailure = {
             LoadResult.Error(it)
         })

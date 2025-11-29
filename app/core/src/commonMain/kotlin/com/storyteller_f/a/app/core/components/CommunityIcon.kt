@@ -55,15 +55,8 @@ fun CommunityPoster(communityInfo: CommunityInfo?) {
     val url = communityInfo?.poster?.url
     val shape = RoundedCornerShape(14.dp)
     if (url != null) {
-        CommonImage(
-            url,
-            contentDescription = "community poster",
-            modifier = Modifier.fillMaxSize().clip(shape)
-        )
+        CommonImage(url, contentDescription = "community poster", modifier = Modifier.fillMaxSize().clip(shape))
     } else {
-        Box(
-            modifier = Modifier.background(MaterialTheme.colorScheme.secondaryContainer, shape)
-                .fillMaxSize()
-        )
+        Box(modifier = Modifier.background(MaterialTheme.colorScheme.secondaryContainer, shape).fillMaxSize())
     }
 }

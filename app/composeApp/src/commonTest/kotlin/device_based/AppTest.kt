@@ -95,10 +95,7 @@ class AppTest {
         // Replace with your own declarations to test the code of your project
         setContent {
             var text by remember { mutableStateOf("Hello") }
-            Text(
-                text = text,
-                modifier = Modifier.testTag("text")
-            )
+            Text(text = text, modifier = Modifier.testTag("text"))
             Button(
                 onClick = { text = "Compose" },
                 modifier = Modifier.testTag("button")

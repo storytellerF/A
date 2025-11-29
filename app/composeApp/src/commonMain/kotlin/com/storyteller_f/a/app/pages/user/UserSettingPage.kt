@@ -103,12 +103,7 @@ fun UserSettingPage() {
             }
         }) {
             scope.launch {
-                updateUser(
-                    currentOption,
-                    it,
-                    globalDialogController,
-                    closeDialog
-                )
+                updateUser(currentOption, it, globalDialogController, closeDialog)
             }
         }
     }
@@ -130,13 +125,7 @@ fun ObjectSettingDialog(
     val imageCropper = rememberImageCropper()
     val cropState = imageCropper.cropState
     if (cropState != null) {
-        ImageCropperDialog(
-            state = cropState,
-            cropperStyle(
-                shapes = listOf(RectCropShape),
-                aspects = listOf(ratio)
-            )
-        )
+        ImageCropperDialog(state = cropState, cropperStyle(shapes = listOf(RectCropShape), aspects = listOf(ratio)))
     }
 
     val myInfo = LocalUserInfo.current
@@ -228,12 +217,7 @@ private fun processSelectedMedia(
     }
     scope.launch {
         globalDialogController.useResult {
-            cropImage(
-                context,
-                info,
-                imageCropper,
-                mediaTarget
-            )
+            cropImage(context, info, imageCropper, mediaTarget)
         }.onSuccess {
             if (it != null) {
                 onInputMedia(it)

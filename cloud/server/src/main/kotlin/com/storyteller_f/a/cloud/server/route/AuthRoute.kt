@@ -151,9 +151,7 @@ suspend fun Backend.getAdminAuthData(
     credential: CustomCredential
 ): Result<Pair<String, Long>?> {
     return when (credential) {
-        is CustomCredential.IdCredential -> database.panelAccount.getUserAuthDataById(
-            credential.id
-        )
+        is CustomCredential.IdCredential -> database.panelAccount.getUserAuthDataById(credential.id)
 
         is CustomCredential.AddressCredential -> database.panelAccount.getUserAuthDataByAddress(
             credential.ad

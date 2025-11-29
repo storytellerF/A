@@ -26,11 +26,7 @@ fun MeasureTextLineCount(
             (maxWidth - extra).roundToPx()
         }
         val lineCount = remember(textStyle, text, width) {
-            textMeasurer.measure(
-                text = text,
-                style = textStyle,
-                constraints = Constraints.fixedWidth(width)
-            ).lineCount
+            textMeasurer.measure(text = text, style = textStyle, constraints = Constraints.fixedWidth(width)).lineCount
         }
         val total = remember {
             (maxHeight.value / textStyle.lineHeight.value).toInt()

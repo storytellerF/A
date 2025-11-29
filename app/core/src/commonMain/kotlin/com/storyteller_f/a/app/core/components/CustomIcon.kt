@@ -35,11 +35,7 @@ fun CustomIcon(icon: IconRes, onClick: (() -> Unit)? = null) {
                 size = 20.dp,
                 tintProvider = LocalContentColor
             ) {
-                FontIcon(
-                    icon.char,
-                    icon.description,
-                    modifier = Modifier.clickableIfNotNull(onClick).size(20.dp)
-                )
+                FontIcon(icon.char, icon.description, modifier = Modifier.clickableIfNotNull(onClick).size(20.dp))
             }
         }
 

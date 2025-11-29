@@ -199,24 +199,14 @@ suspend fun UserSessionManager.expectedRoomCount(
     word: String? = null,
     communityId: PrimaryKey? = null,
 ) {
-    assertListSize(
-        expected,
-        searchRooms(joinStatusSearch, 10, nextRoomId, word, communityId)
-    )
+    assertListSize(expected, searchRooms(joinStatusSearch, 10, nextRoomId, word, communityId))
 }
 
 suspend fun UserSessionManager.createJoinRoomTitleForTest(
     privateRoomId: PrimaryKey,
     uid: PrimaryKey
 ): TitleInfo = createTitle(
-    NewTitle(
-        "invite",
-        TitleType.JOIN,
-        uid,
-        privateRoomId,
-        ObjectType.ROOM,
-        "invite for test"
-    )
+    NewTitle("invite", TitleType.JOIN, uid, privateRoomId, ObjectType.ROOM, "invite for test")
 ).getOrThrow()
 
 suspend fun waitRTCAnswer(list: MutableList<RoomFrame>) {
@@ -236,20 +226,10 @@ suspend fun waitRTCAnswer(list: MutableList<RoomFrame>) {
 
 suspend fun processRTCMessage(frame: RoomFrame, session: DefaultClientWebSocketSession) {
     if (frame is RoomFrame.CreateOffer) {
-        session.sendFrame(
-            RoomFrame.SendOffer(
-                CustomOffer("offer"),
-                frame.roomId,
-                frame.targetUid
-            )
-        )
+        session.sendFrame(RoomFrame.SendOffer(CustomOffer("offer"), frame.roomId, frame.targetUid))
     } else if (frame is RoomFrame.CreateAnswer) {
         session.sendFrame(
-            RoomFrame.SendAnswer(
-                CustomAnswer("answer"),
-                frame.roomId,
-                frame.targetUid
-            )
+            RoomFrame.SendAnswer(CustomAnswer("answer"), frame.roomId, frame.targetUid)
         )
     }
 }
