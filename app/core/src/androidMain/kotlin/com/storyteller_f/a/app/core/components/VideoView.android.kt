@@ -106,8 +106,7 @@ private fun VideoPlayer(
         "VideoPlayer ${localMediaPlaySession.uuid} ratio $ratio ${playingSession?.uuids} $videoSize"
     }
     val playerState by rememberPlayerState(player, localMediaPlaySession)
-    val enablePip =
-        playerState.currentIsPlaying && (playingSession?.lastUuid == localMediaPlaySession.uuid)
+    val enablePip = playerState.currentIsPlaying && (playingSession?.lastUuid == localMediaPlaySession.uuid)
     Napier.d(tag = "MediaPlayer") {
         "VideoPlayer ${localMediaPlaySession.uuid} $enablePip"
     }

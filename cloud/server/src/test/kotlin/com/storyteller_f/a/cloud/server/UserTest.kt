@@ -53,14 +53,8 @@ class UserTest {
         attachSession {
             val stream = ClassLoader.getSystemResourceAsStream("avatar1.png")!!.buffered()
             val bytes = stream.readBytes()
-            val info = upload(
-                it.uid ob ObjectType.USER,
-                getUploadDataFromBytes(bytes)
-            ).getOrThrow().data.first()
-            assertEquals(
-                "avatar1.png",
-                updateUserInfo(UpdateUserBody(avatar = info.id)).getOrThrow().avatar!!.name
-            )
+            val info = upload(it.uid ob ObjectType.USER, getUploadDataFromBytes(bytes)).getOrThrow().data.first()
+            assertEquals("avatar1.png", updateUserInfo(UpdateUserBody(avatar = info.id)).getOrThrow().avatar!!.name)
         }
     }
 
@@ -90,8 +84,7 @@ class UserTest {
         }
         attachSession {
             val topicId = outerTuple.custom.id
-            val userFavoriteInfo =
-                addFavorite(NewFavorite(ObjectType.TOPIC, topicId)).getOrThrow()
+            val userFavoriteInfo = addFavorite(NewFavorite(ObjectType.TOPIC, topicId)).getOrThrow()
             assertEquals(topicId, userFavoriteInfo.objectId)
             assertNotNull(userFavoriteInfo.extensions?.topicInfo)
             assertListTotalSize(1, getFavorites(PaginationQuery()))
@@ -112,8 +105,7 @@ class UserTest {
         }
         attachSession {
             val topicId = outerTuple.custom.id
-            val userSubscriptionInfo =
-                addSubscription(NewSubscription(topicId, ObjectType.TOPIC)).getOrThrow()
+            val userSubscriptionInfo = addSubscription(NewSubscription(topicId, ObjectType.TOPIC)).getOrThrow()
             assertEquals(topicId, userSubscriptionInfo.objectId)
             assertNotNull(userSubscriptionInfo.extensions?.topicInfo)
             assertListTotalSize(1, getSubscriptions(PaginationQuery()))

@@ -27,8 +27,7 @@ class PlaybackService : MediaSessionService() {
             "PlaybackService onCreate"
         }
         val player = ExoPlayer.Builder(this).build()
-        mediaSession =
-            MediaSession.Builder(this, player)
+        mediaSession = MediaSession.Builder(this, player)
                 .setCallback(MyCallback())
                 .build()
     }

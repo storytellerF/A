@@ -121,10 +121,7 @@ suspend inline fun <reified R> RoutingContext.handleResultInternal(it: Result<R>
             is PathResponse -> {
                 call.response.header(
                     HttpHeaders.ContentDisposition,
-                    ContentDisposition.Attachment.withParameter(
-                        ContentDisposition.Parameters.FileName,
-                        it.file.name
-                    )
+                    ContentDisposition.Attachment.withParameter(ContentDisposition.Parameters.FileName, it.file.name)
                         .toString()
                 )
                 call.respondPath(it.file)

@@ -254,13 +254,7 @@ private fun AddUserProfilePage(
             val toast = LocalToaster.current
             val requiredPrivateKeyMessage = stringResource(Res.string.private_key_required)
             Button({
-                globalDialogController.addUser(
-                    scope,
-                    addUserViewModel,
-                    toast,
-                    dismiss,
-                    requiredPrivateKeyMessage
-                )
+                globalDialogController.addUser(scope, addUserViewModel, toast, dismiss, requiredPrivateKeyMessage)
             }) {
                 Text(stringResource(Res.string.add))
             }

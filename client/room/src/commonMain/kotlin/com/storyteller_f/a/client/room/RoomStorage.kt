@@ -527,23 +527,13 @@ class RemoteKeyRoomStorage(val appDatabase: AppDatabase) : RemoteKeyStorage {
 
     override suspend fun savePreRemoteKey(remoteKeys: RemoteKeys) {
         appDatabase.getCommonDao().insert(
-            CommonEntity(
-                remoteKeys.collectionName,
-                PRE_COLLECTION,
-                commonJson.encodeToString(remoteKeys)
-            )
+            CommonEntity(remoteKeys.collectionName, PRE_COLLECTION, commonJson.encodeToString(remoteKeys))
         )
     }
 
     override suspend fun saveNextRemoteKey(remoteKeys: RemoteKeys) {
         appDatabase.getCommonDao()
-            .insert(
-                CommonEntity(
-                    remoteKeys.collectionName,
-                    NEXT_COLLECTION,
-                    commonJson.encodeToString(remoteKeys)
-                )
-            )
+            .insert(CommonEntity(remoteKeys.collectionName, NEXT_COLLECTION, commonJson.encodeToString(remoteKeys)))
     }
 
     override suspend fun deletePreRemoteKey(collection: String) {
@@ -1025,8 +1015,7 @@ class RoomModelStorage(appDatabase: AppDatabase) : ModelStorage {
     override val userOverview: UserOverviewStorage = RoomUserOverviewStorage(appDatabase)
     override val favorite: UserFavoriteStorage = RoomUserFavoriteStorage(appDatabase)
     override val subscription: UserSubscriptionStorage = RoomUserSubscriptionStorage(appDatabase)
-    override val userReactionRecord: UserReactionRecordStorage =
-        RoomUserReactionRecordStorage(appDatabase)
+    override val userReactionRecord: UserReactionRecordStorage = RoomUserReactionRecordStorage(appDatabase)
     override val userLog: UserLogInfoStorage = RoomUserLogInfoStorage(appDatabase)
     override val uploadRecord: UploadRecordInfoStorage = RoomUploadRecordInfoStorage(appDatabase)
     override val fileRef: FileRefInfoStorage = RoomFileRefInfoStorage(appDatabase)

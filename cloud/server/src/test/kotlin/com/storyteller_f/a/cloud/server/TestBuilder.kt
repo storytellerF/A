@@ -142,8 +142,7 @@ private suspend fun useDatabaseContainer(
         ).use { postgreSQLContainer ->
             postgreSQLContainer.start()
             Napier.i("jdbc: ${postgreSQLContainer.jdbcUrl}")
-            env["DATABASE_URI"] =
-                postgreSQLContainer.jdbcUrl.replace("jdbc", "r2dbc")
+            env["DATABASE_URI"] = postgreSQLContainer.jdbcUrl.replace("jdbc", "r2dbc")
             env["DATABASE_DRIVER"] = "postgresql"
             env["DATABASE_USER"] = postgreSQLContainer.username
             env["DATABASE_PASS"] = postgreSQLContainer.password
@@ -230,8 +229,7 @@ private suspend fun receiveExplainResult(
                 yield()
                 serverSocket.accept().use { socket ->
                     socket.getInputStream().bufferedReader().use {
-                        val explainResult =
-                            commonJson.decodeFromString<ExplainResult>(it.readText())
+                        val explainResult = commonJson.decodeFromString<ExplainResult>(it.readText())
                         saveDatabaseExplainResult(explainResult)
                     }
                 }

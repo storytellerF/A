@@ -91,13 +91,7 @@ private suspend fun Backend.processTitleList(
     }.distinct()
     return getRelatedObject(uidList, communityIdList, roomIdList).mapResult {
         getTopicByIds(topicIdList, uid).mapIfNotNull { topicList ->
-            processTitleList(
-                it.first.orEmpty(),
-                it.third.orEmpty(),
-                it.second.orEmpty(),
-                list,
-                topicList
-            )
+            processTitleList(it.first.orEmpty(), it.third.orEmpty(), it.second.orEmpty(), list, topicList)
         }
     }
 }

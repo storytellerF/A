@@ -403,10 +403,7 @@ class UserReceivedTitlesViewModel(
     private val modelStorage: ModelStorage,
     private val uid: PrimaryKey,
 ) : PagingViewModel<TitleInfo>() {
-    private val modelCollection = TitleCollection.SearchTitle(
-        uid = uid,
-        searchType = TitleSearchType.RECEIVER,
-    )
+    private val modelCollection = TitleCollection.SearchTitle(uid = uid, searchType = TitleSearchType.RECEIVER,)
 
     @OptIn(ExperimentalPagingApi::class)
     override val flow: Flow<PagingData<TitleInfo>> = buildPager(

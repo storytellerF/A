@@ -169,10 +169,7 @@ class LuceneTopicSearchService(path: Path, isInMemory: Boolean = false) :
     }
 
     private fun BooleanQuery.Builder.addParentIdListQuery(topicDocumentSearch: TopicDocumentSearch.Recommend) {
-        add(
-            LongPoint.newSetQuery("parentId", topicDocumentSearch.communities),
-            BooleanClause.Occur.MUST
-        )
+        add(LongPoint.newSetQuery("parentId", topicDocumentSearch.communities), BooleanClause.Occur.MUST)
     }
 
     private fun BooleanQuery.Builder.addLongQuery(

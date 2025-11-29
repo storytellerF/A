@@ -72,14 +72,8 @@ class CommunityTest {
         attachSession {
             joinCommunity(communityId).getOrThrow()
             createTopic(ObjectType.COMMUNITY, communityId, "hello").getOrThrow()
-            assertListSize(
-                1,
-                searchTopics(10, parentId = communityId, parentType = ObjectType.COMMUNITY)
-            )
-            assertListSize(
-                1,
-                getCommunityTopics(communityId, paginationQuery = PaginationQuery(size = 10))
-            )
+            assertListSize(1, searchTopics(10, parentId = communityId, parentType = ObjectType.COMMUNITY))
+            assertListSize(1, getCommunityTopics(communityId, paginationQuery = PaginationQuery(size = 10)))
             val topicId = searchTopics(10, emptyList(), communityId, ObjectType.COMMUNITY)
                 .getOrThrow().data.first().id
             val new = createTopic(ObjectType.TOPIC, topicId, "test").getOrThrow()
@@ -157,8 +151,7 @@ class CommunityTest {
             }
         }.uid
         noneSession {
-            val response =
-                searchCommunity(10, JoinStatusSearch.JOINED, target = id).getOrThrow()
+            val response = searchCommunity(10, JoinStatusSearch.JOINED, target = id).getOrThrow()
             assertEquals(10, response.data.size)
             response.data.forEach {
                 assertFalse(it.isJoined)
@@ -166,14 +159,12 @@ class CommunityTest {
             }
         }
         attachSession {
-            val response =
-                searchCommunity(10, JoinStatusSearch.JOINED, target = id).getOrThrow()
+            val response = searchCommunity(10, JoinStatusSearch.JOINED, target = id).getOrThrow()
             assertEquals(10, response.data.size)
             response.data.forEach {
                 joinCommunity(it.id).getOrThrow()
             }
-            val response2 =
-                searchCommunity(10, JoinStatusSearch.JOINED, target = id).getOrThrow()
+            val response2 = searchCommunity(10, JoinStatusSearch.JOINED, target = id).getOrThrow()
             response2.data.forEach {
                 assertTrue(it.isJoined)
                 assertNotNull(it.extension?.targetMemberInfo)
@@ -194,14 +185,7 @@ class CommunityTest {
         }
         loginSession(firstTuple) {
             createTitle(
-                NewTitle(
-                    "join",
-                    TitleType.JOIN,
-                    secondTuple.uid,
-                    communityId,
-                    ObjectType.COMMUNITY,
-                    "join"
-                )
+                NewTitle("join", TitleType.JOIN, secondTuple.uid, communityId, ObjectType.COMMUNITY, "join")
             ).getOrThrow()
         }
         loginSession(secondTuple) {
@@ -214,5 +198,4 @@ suspend fun UserSessionManager.createCommunityForTest(
     name: String = "name1",
     id: String = "c1",
     memberPolicy: MemberPolicy = MemberPolicy.OPEN
-): CommunityInfo =
-    createCommunity(NewCommunity(name, id, memberPolicy = memberPolicy)).getOrThrow()
+): CommunityInfo = createCommunity(NewCommunity(name, id, memberPolicy = memberPolicy)).getOrThrow()

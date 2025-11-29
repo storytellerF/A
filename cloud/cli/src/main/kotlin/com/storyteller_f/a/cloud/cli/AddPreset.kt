@@ -332,11 +332,7 @@ class AddPreset : Subcommand("add", "add entry") {
         }).getOrThrow()
         // 为加入房间的成员添加 user log
         memberList.forEach { member ->
-            addUserLog(
-                member.uid,
-                UserLogType.JOIN,
-                member.objectId ob member.objectType
-            ).getOrThrow()
+            addUserLog(member.uid, UserLogType.JOIN, member.objectId ob member.objectType).getOrThrow()
         }
         addMemberDocuments(memberList, userMap, roomMap = roomList.associateBy { it.id })
     }
@@ -396,8 +392,7 @@ class AddPreset : Subcommand("add", "add entry") {
         users.forEach { user ->
             addUserLog(user.id, UserLogType.SIGN_UP, user.id ob ObjectType.USER).getOrThrow()
         }
-        val userMap =
-            database.user.getRawUsers(AidListFetch(listOf("System"))).getOrThrow()
+        val userMap = database.user.getRawUsers(AidListFetch(listOf("System"))).getOrThrow()
                 .associate {
                     it.user.aid to it.user
                 }
@@ -459,19 +454,11 @@ class AddPreset : Subcommand("add", "add entry") {
         }).getOrThrow()
         // 为社区创建者添加 user log
         communities.forEach { community ->
-            addUserLog(
-                community.owner,
-                UserLogType.CREATE,
-                community.id ob ObjectType.COMMUNITY
-            ).getOrThrow()
+            addUserLog(community.owner, UserLogType.CREATE, community.id ob ObjectType.COMMUNITY).getOrThrow()
         }
         // 为加入的成员添加 user log
         memberList.forEach { member ->
-            addUserLog(
-                member.uid,
-                UserLogType.JOIN,
-                member.objectId ob member.objectType
-            ).getOrThrow()
+            addUserLog(member.uid, UserLogType.JOIN, member.objectId ob member.objectType).getOrThrow()
         }
         addMemberDocuments(memberList, userMap, communityMap = communities.associateBy { it.id })
     }
@@ -809,11 +796,7 @@ class AddPreset : Subcommand("add", "add entry") {
         // 为订阅添加 user log
         tuples.forEach { tuple ->
             val authorId = userMap[tuple.topic.author]!!.id
-            addUserLog(
-                authorId,
-                UserLogType.ADD_SUBSCRIPTION,
-                tuple.id ob ObjectType.TOPIC
-            ).getOrThrow()
+            addUserLog(authorId, UserLogType.ADD_SUBSCRIPTION, tuple.id ob ObjectType.TOPIC).getOrThrow()
         }
     }
 

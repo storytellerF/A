@@ -99,10 +99,7 @@ private fun CommunityTopBar(id: PrimaryKey) {
 
 @Composable
 private fun CommunityInfoTabs(id: PrimaryKey) {
-    val tabs = listOf(
-        stringResource(Res.string.tab_basic_info),
-        stringResource(Res.string.tab_members),
-    )
+    val tabs = listOf(stringResource(Res.string.tab_basic_info), stringResource(Res.string.tab_members),)
     val pagerState = rememberPagerState { tabs.size }
     val scope = rememberCoroutineScope()
     Column {

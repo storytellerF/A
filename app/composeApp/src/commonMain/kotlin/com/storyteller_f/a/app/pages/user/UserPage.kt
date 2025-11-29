@@ -118,8 +118,7 @@ private fun UserNonCompatInternal(uid: PrimaryKey, user: UserInfo?) {
                         CommunityList(communitiesViewModel)
                     }
                     composable("/titles") {
-                        val titlesViewModel =
-                            createUserTitlesViewModel(uid, TitleSearchType.RECEIVER)
+                        val titlesViewModel = createUserTitlesViewModel(uid, TitleSearchType.RECEIVER)
                         TitleList(titlesViewModel)
                     }
                 }
@@ -159,8 +158,7 @@ private fun UserCompatInternal(
                     }
 
                     else -> {
-                        val titlesViewModel =
-                            createUserTitlesViewModel(uid, TitleSearchType.RECEIVER)
+                        val titlesViewModel = createUserTitlesViewModel(uid, TitleSearchType.RECEIVER)
                         TitleList(titlesViewModel)
                     }
                 }

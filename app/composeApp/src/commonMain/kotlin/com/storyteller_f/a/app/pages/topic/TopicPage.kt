@@ -150,8 +150,7 @@ private fun TopicPageInternal(
             ) {
                 topicInfo?.let {
                     val author = it.author
-                    val authorViewModel =
-                        createUserViewModel(author)
+                    val authorViewModel = createUserViewModel(author)
                     val authorInfo by authorViewModel.handler.data.collectAsState()
                     UserIconWithDialog(authorInfo)
                 }

@@ -52,10 +52,8 @@ class OpenPdf : PdfService {
                     PdfWriter.getInstance(this, it)
                     open()
                     val font = FontFactory.getFont(fontName)
-                    val creatorId =
-                        if (creatorInfo.aid == null) creatorInfo.address else creatorInfo.aid
-                    val authorId =
-                        if (authorInfo.aid == null) authorInfo.address else authorInfo.aid
+                    val creatorId = if (creatorInfo.aid == null) creatorInfo.address else creatorInfo.aid
+                    val authorId = if (authorInfo.aid == null) authorInfo.address else authorInfo.aid
                     add(Paragraph("pub by $authorId", font))
                     add(Paragraph("pub at ${pdfGenerationSpec.created}", font))
                     add(Paragraph("capture by $creatorId", font))

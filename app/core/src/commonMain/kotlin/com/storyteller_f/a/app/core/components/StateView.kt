@@ -343,9 +343,7 @@ fun <T : Any> LazyGridScope.pagingItems(
     items(lazyPagingItems.itemCount, k, s, c, itemContent)
 }
 
-private fun LoadState?.toLoadingState() =
-    when (this) {
-        null -> null
+private fun LoadState?.toLoadingState() = when (this) { null -> null
 
         is LoadState.Loading -> LoadingState.Loading
 

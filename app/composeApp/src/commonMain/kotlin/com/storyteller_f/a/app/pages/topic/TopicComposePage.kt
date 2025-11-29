@@ -408,8 +408,7 @@ private fun TopicComposeSubmitButton(
 
 @Composable
 fun PreviewTopicPage(input: String, objectTuple: ObjectTuple) {
-    val markdownMediasViewModel =
-        getMarkdownMediasViewModel(input, objectTuple)
+    val markdownMediasViewModel = getMarkdownMediasViewModel(input, objectTuple)
     PreviewTopicInternal(markdownMediasViewModel, input)
 }
 

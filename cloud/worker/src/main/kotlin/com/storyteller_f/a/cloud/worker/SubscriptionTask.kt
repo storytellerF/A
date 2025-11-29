@@ -56,12 +56,10 @@ private suspend fun Backend.processTopicSubscription(topic: Topic) {
     // 当前对象发送的最新日志
     val topicParentId = topic.parentId
     val content = generateTopicSubscriptionContent(topic, topicParentId) ?: return
-    val log =
-        database.subscription.getLatestSubscriptionSentLog(topicParentId)
+    val log = database.subscription.getLatestSubscriptionSentLog(topicParentId)
             .getOrThrow()?.subscriptionId
     val cursor = Cursor.AscCursor(log ?: 0)
-    val userSubscriptions =
-        database.subscription.getSubscriptionsByObjectId(topicParentId, PrimaryKeyFetch(cursor, 10))
+    val userSubscriptions = database.subscription.getSubscriptionsByObjectId(topicParentId, PrimaryKeyFetch(cursor, 10))
             .getOrThrow()
     userSubscriptions.forEach { userSubscription ->
         val rawUser = database.user.getRawUser(ObjectFetch.IdFetch(userSubscription.uid))

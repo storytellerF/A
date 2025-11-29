@@ -80,8 +80,7 @@ private fun AudioPlayer(
     val mediaPlayerService = LocalMediaPlayerService.current
     val player by mediaPlayerService.controller.collectAsState(null)
     val playerState by rememberPlayerState(player, localMediaPlaySession)
-    val enablePip =
-        playerState.currentIsPlaying && (playingSession?.lastUuid == localMediaPlaySession.uuid)
+    val enablePip = playerState.currentIsPlaying && (playingSession?.lastUuid == localMediaPlaySession.uuid)
     Napier.d(tag = "MediaPlayer") {
         "VideoPlayer ${localMediaPlaySession.uuid} enablePip: $enablePip"
     }
@@ -156,8 +155,7 @@ private fun AudioTitle(
     state: MediaPlayerState,
     playingSession: MediaPlaySession
 ) {
-    val title =
-        state.currentPlayingItem?.mediaMetadata?.title?.toString()
+    val title = state.currentPlayingItem?.mediaMetadata?.title?.toString()
             ?: playingSession.remoteMediaItem.title
             ?: playingSession.remoteMediaItem.name
     Text(title, maxLines = 2, modifier = Modifier.basicMarquee().padding(horizontal = 20.dp))

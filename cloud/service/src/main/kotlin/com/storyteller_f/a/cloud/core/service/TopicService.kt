@@ -102,13 +102,7 @@ private suspend fun Backend.addSubscription(
     objectTuple: ObjectTuple,
 ) {
     database.subscription.addSubscription(
-        UserSubscription(
-            SnowflakeFactory.nextId(),
-            uid,
-            objectTuple.objectId,
-            objectTuple.objectType,
-            now()
-        )
+        UserSubscription(SnowflakeFactory.nextId(), uid, objectTuple.objectId, objectTuple.objectType, now())
     ).onFailure {
         Napier.e(it) {
             "add user subscription failed"
@@ -326,8 +320,7 @@ private suspend fun Backend.createTopicSnapshot(
     val topicId = topicInfo.id
     val name = "$uid/$topicId.pdf"
     val pdfFile = File(System.getProperty("java.io.tmpdir"), name)
-    val signedFile =
-        File(System.getProperty("java.io.tmpdir"), "${pdfFile.nameWithoutExtension}_signed.pdf")
+    val signedFile = File(System.getProperty("java.io.tmpdir"), "${pdfFile.nameWithoutExtension}_signed.pdf")
     return try {
         getUserInfo(
             ObjectFetch.IdFetch(topicInfo.author)
@@ -512,8 +505,7 @@ suspend fun Backend.processRawTopicToTopicInfo(
         }.map {
             it.topic.author
         }.distinct()
-        val userMap =
-            getUserInfoList(ObjectListFetch.IdListFetch(uidList)).getOrThrow().associateBy { it.id }
+        val userMap = getUserInfoList(ObjectListFetch.IdListFetch(uidList)).getOrThrow().associateBy { it.id }
         val processedSubTopic = subTopicsMap.mapValues {
             it.value.map { subTopic ->
                 subTopic.toTopicInfo(TopicInfo.Extension(authorInfo = userMap[subTopic.topic.author]))

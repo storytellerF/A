@@ -74,8 +74,7 @@ class CustomRemoteMediator<Datum : Any>(
             )
 
             LoadType.PREPEND -> {
-                val remoteKey =
-                    remoteKeyStorage.getPreRemoteKey(collection)?.key
+                val remoteKey = remoteKeyStorage.getPreRemoteKey(collection)?.key
                 PagingSource.LoadParams.Append(
                     remoteKey
                         ?: return MediatorResult.Success(endOfPaginationReached = true),
@@ -85,8 +84,7 @@ class CustomRemoteMediator<Datum : Any>(
             }
 
             LoadType.APPEND -> {
-                val remoteKey =
-                    remoteKeyStorage.getNextRemoteKey(collection)?.key
+                val remoteKey = remoteKeyStorage.getNextRemoteKey(collection)?.key
                 PagingSource.LoadParams.Append(
                     remoteKey
                         ?: return MediatorResult.Success(endOfPaginationReached = true),

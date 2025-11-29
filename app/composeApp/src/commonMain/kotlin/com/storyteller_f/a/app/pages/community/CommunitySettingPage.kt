@@ -44,8 +44,7 @@ fun CommunitySettingPage(communityId: PrimaryKey) {
     var currentOption by remember {
         mutableStateOf<SettingOption?>(null)
     }
-    val communityViewModel =
-        createCommunityViewModel(communityId)
+    val communityViewModel = createCommunityViewModel(communityId)
     val communityInfo by communityViewModel.handler.data.collectAsState()
     val sheetState = rememberModalBottomSheetState()
     val globalDialogController = LocalGlobalDialog.current

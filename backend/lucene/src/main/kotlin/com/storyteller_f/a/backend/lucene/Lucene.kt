@@ -112,19 +112,13 @@ fun BooleanQuery.Builder.addPagingQuery(fetch: PrimaryKeyFetch?) {
         fetch.cursor is Cursor.AscCursor<PrimaryKey> -> {
             val cursor = fetch.cursor as Cursor.AscCursor<PrimaryKey>
             val preTopicId = cursor.value + 1
-            add(
-                LongPoint.newRangeQuery("id1", preTopicId, Long.MAX_VALUE),
-                BooleanClause.Occur.MUST
-            )
+            add(LongPoint.newRangeQuery("id1", preTopicId, Long.MAX_VALUE), BooleanClause.Occur.MUST)
         }
 
         fetch.cursor is Cursor.DescCursor<PrimaryKey> -> {
             val cursor = fetch.cursor as Cursor.DescCursor<PrimaryKey>
             val nextTopicId = cursor.value - 1
-            add(
-                LongPoint.newRangeQuery("id1", Long.MIN_VALUE, nextTopicId),
-                BooleanClause.Occur.MUST
-            )
+            add(LongPoint.newRangeQuery("id1", Long.MIN_VALUE, nextTopicId), BooleanClause.Occur.MUST)
         }
 
         else -> {}

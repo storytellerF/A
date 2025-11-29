@@ -55,8 +55,7 @@ suspend fun Backend.updateUser(
     uid: PrimaryKey,
     old: UpdateUserBody,
 ): Result<UserInfo?> {
-    val newUpdate =
-        old.copy(nickname = old.nickname?.trim(), aid = old.aid?.trim(), avatar = old.avatar)
+    val newUpdate = old.copy(nickname = old.nickname?.trim(), aid = old.aid?.trim(), avatar = old.avatar)
     runCatching {
         checkAidModifyTimes(newUpdate, uid).getOrThrow()
         checkAid(newUpdate.aid, true).getOrThrow()
@@ -79,9 +78,7 @@ private suspend fun Backend.checkUserIcon(newUser: UpdateUserBody) {
     checkIcon(newUser.avatar, Dimension.DEFAULT_DIMENSION).mapResult {
         when (it) {
             MediaCheckResult.NOT_FOUND -> Result.failure(CustomBadRequestException("avatar not font"))
-            MediaCheckResult.CONTENT_TYPE_MISMATCH -> Result.failure(
-                CustomBadRequestException("avatar must be image")
-            )
+            MediaCheckResult.CONTENT_TYPE_MISMATCH -> Result.failure(CustomBadRequestException("avatar must be image"))
 
             else -> UNIT_RESULT
         }
@@ -239,13 +236,7 @@ suspend fun Backend.addReadLog(uid: PrimaryKey, tuple: UpdateUserRead): Result<U
     ).mapResultIfNotNull {
         if (it.hasRead) {
             database.user.addReadLog(
-                UserTopicRead(
-                    uid,
-                    now(),
-                    tuple.objectTuple.objectId,
-                    tuple.objectTuple.objectType,
-                    tuple.topicId
-                )
+                UserTopicRead(uid, now(), tuple.objectTuple.objectId, tuple.objectTuple.objectType, tuple.topicId)
             )
         } else {
             Result.failure(ForbiddenException("Permission denied"))
@@ -494,8 +485,7 @@ private suspend fun Backend.processUserLogToUserLogInfo(
         }
     }
     val users = getUserInfoList(ObjectListFetch.IdListFetch(userIds)).getOrThrow()
-    val communities =
-        database.community.getRawCommunities(ObjectListFetch.IdListFetch(communityIds))
+    val communities = database.community.getRawCommunities(ObjectListFetch.IdListFetch(communityIds))
             .mapResult { processRawCommunityToCommunityInfo(it) }.getOrThrow()
             ?: emptyList()
     val rooms = getRoomInfoList(ObjectListFetch.IdListFetch(roomIds)).getOrThrow()
@@ -525,14 +515,7 @@ suspend fun Backend.getUserReactions(
     fetch: PrimaryKeyFetch
 ) = database.reaction.getUserReactionRecordsPaginationResult(uid, fetch).mapPagingResultNotNull { list ->
     Result.success(list.map { record ->
-        ReactionRecordInfo(
-            record.id,
-            record.emoji,
-            record.objectId,
-            record.objectType,
-            record.createdTime,
-            record.uid
-        )
+        ReactionRecordInfo(record.id, record.emoji, record.objectId, record.objectType, record.createdTime, record.uid)
     })
 }
 

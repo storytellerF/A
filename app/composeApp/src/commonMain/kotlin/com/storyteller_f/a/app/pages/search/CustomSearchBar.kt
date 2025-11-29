@@ -290,8 +290,7 @@ fun UserReceivedTitleSearchContent(x0: String, x1: SearchScope.UserReceivedTitle
 @Composable
 fun UserCommunitySearchContent(current: String, scope: SearchScope.UserCommunities) {
     if (current.isNotBlank()) {
-        val communitiesViewModel =
-            createTargetUserJoinedCommunitiesViewModel(scope.userId, current)
+        val communitiesViewModel = createTargetUserJoinedCommunitiesViewModel(scope.userId, current)
         CommunityList(communitiesViewModel)
     }
 }
@@ -299,8 +298,7 @@ fun UserCommunitySearchContent(current: String, scope: SearchScope.UserCommuniti
 @Composable
 private fun MemberSearchContent(current: String) {
     if (current.isNotBlank()) {
-        val viewModel =
-            createMemberSearchViewModel(current)
+        val viewModel = createMemberSearchViewModel(current)
         MemberList(viewModel)
     }
 }
@@ -316,8 +314,7 @@ private fun RoomMemberSearchContent(current: String, scope: SearchScope.RoomMemb
 @Composable
 private fun CommunityMemberSearchContent(current: String, scope: SearchScope.CommunityMember) {
     if (current.isNotBlank()) {
-        val viewModel =
-            createMemberSearchInCommunityViewModel(scope, current)
+        val viewModel = createMemberSearchInCommunityViewModel(scope, current)
         MemberList(viewModel)
     }
 }
@@ -349,8 +346,7 @@ private fun RoomTopicSearchContent(current: String, scope: SearchScope.RoomTopic
 @Composable
 private fun CommunityRoomSearchContent(current: String, scope: SearchScope.CommunityRoom) {
     if (current.isNotBlank()) {
-        val viewModel =
-            createRoomSearchInCommunityViewModel(scope, current)
+        val viewModel = createRoomSearchInCommunityViewModel(scope, current)
         RoomList(viewModel)
     }
 }
@@ -358,8 +354,7 @@ private fun CommunityRoomSearchContent(current: String, scope: SearchScope.Commu
 @Composable
 private fun CommunityTopicSearchContent(current: String, scope: SearchScope.CommunityTopic) {
     if (current.isNotBlank()) {
-        val viewModel =
-            createTopicSearchInCommunityViewModel(scope, current)
+        val viewModel = createTopicSearchInCommunityViewModel(scope, current)
         TopicList(viewModel)
     }
 }
@@ -470,8 +465,7 @@ private fun WorldSearchContent(current: String) {
                 val viewModel = createTopicSearchViewModel(current)
                 TopicList(viewModel)
             } else {
-                val viewModel =
-                    createMemberSearchViewModel(current)
+                val viewModel = createMemberSearchViewModel(current)
                 MemberList(viewModel)
             }
         }

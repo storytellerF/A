@@ -158,8 +158,7 @@ class ExposedTopicDatabase(
         EncryptedKeys.batchInsert(content.encryptedKey.keys) {
             this[EncryptedKeys.topicId] = topic.id
             this[EncryptedKeys.uid] = it
-            this[EncryptedKeys.encryptedAes] =
-                ExposedBlob(content.encryptedKey[it]!!.hexToByteArray())
+            this[EncryptedKeys.encryptedAes] = ExposedBlob(content.encryptedKey[it]!!.hexToByteArray())
         }
         Unit
     }

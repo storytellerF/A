@@ -109,8 +109,7 @@ class SimpleUserSessionManager(
     override val isAlreadySignIn = MutableStateFlow(false)
     override val address = MutableStateFlow<String?>(null)
     override suspend fun updateAddress(clientSessionState: ClientSessionState) {
-        address.value =
-            (clientSessionState as? ClientSessionState.Success)?.userPass?.address()?.getOrNull()
+        address.value = (clientSessionState as? ClientSessionState.Success)?.userPass?.address()?.getOrNull()
         isAlreadySignIn.value = clientSessionState is ClientSessionState.Success
     }
 }
@@ -125,8 +124,7 @@ class SimplePanelSessionManager(
     override val address = MutableStateFlow<String?>(null)
 
     override suspend fun updateAddress(clientSessionState: ClientSessionState) {
-        address.value =
-            (clientSessionState as? ClientSessionState.Success)?.userPass?.address()?.getOrNull()
+        address.value = (clientSessionState as? ClientSessionState.Success)?.userPass?.address()?.getOrNull()
         isAlreadySignIn.value = clientSessionState is ClientSessionState.Success
     }
 }

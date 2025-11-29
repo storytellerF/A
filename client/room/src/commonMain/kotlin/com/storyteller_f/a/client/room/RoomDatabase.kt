@@ -13,13 +13,7 @@ import androidx.room.RoomDatabase
 import androidx.room.RoomDatabaseConstructor
 import kotlinx.coroutines.flow.Flow
 
-@Database(
-    entities = [CommonEntity::class,
-        TopicEntity::class,
-        UploadEntity::class,
-        DownloadEntity::class],
-    version = 2
-)
+@Database(entities = [CommonEntity::class, TopicEntity::class, UploadEntity::class, DownloadEntity::class], version = 2)
 @ConstructedBy(AppDatabaseConstructor::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun getCommonDao(): CommonDao
@@ -85,12 +79,7 @@ data class CommonEntity(
     val data: String,
     val seq: Long = 0,
 ) {
-    constructor(
-        id: Long,
-        collection: String,
-        data: String,
-        seq: Long = 0
-    ) : this(id.toString(), collection, data, seq)
+    constructor(id: Long, collection: String, data: String, seq: Long = 0) : this(id.toString(), collection, data, seq)
 }
 
 @Dao
@@ -166,10 +155,7 @@ interface UploadDao {
     suspend fun clean(collection: String)
 }
 
-@Entity(
-    primaryKeys = ["collection", "id"],
-    indices = [Index("collection", "pathHash", unique = true)]
-)
+@Entity(primaryKeys = ["collection", "id"], indices = [Index("collection", "pathHash", unique = true)])
 data class UploadEntity(
     val id: String,
     val collection: String,
@@ -201,10 +187,7 @@ interface DownloadDao {
     suspend fun clean(collection: String)
 }
 
-@Entity(
-    primaryKeys = ["collection", "id"],
-    indices = [Index("collection", "fileId", unique = true)]
-)
+@Entity(primaryKeys = ["collection", "id"], indices = [Index("collection", "fileId", unique = true)])
 data class DownloadEntity(
     val id: String,
     val collection: String,

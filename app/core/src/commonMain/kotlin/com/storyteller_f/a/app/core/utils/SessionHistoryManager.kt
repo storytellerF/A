@@ -51,8 +51,7 @@ class DefaultSessionHistoryManager(val settings: Settings) : SessionHistoryManag
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
     override suspend fun addSession(session: RawUserPassInfo): UserPass {
         val address = session.address
-        val rawUserPass =
-            RawUserPassInfo(session.pemPrivateKey, session.derPublicKey, address)
+        val rawUserPass = RawUserPassInfo(session.pemPrivateKey, session.derPublicKey, address)
         settings.encodeValue("session_user_$address", rawUserPass)
         settings.encodeValue("session_history", SessionHistory(address, address))
         return RawUserPass(session)
@@ -60,8 +59,7 @@ class DefaultSessionHistoryManager(val settings: Settings) : SessionHistoryManag
 
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
     override fun buildSession(alias: String): UserPass? {
-        val rawUserPass =
-            settings.decodeValueOrNull<RawUserPassInfo>("session_user_$alias") ?: return null
+        val rawUserPass = settings.decodeValueOrNull<RawUserPassInfo>("session_user_$alias") ?: return null
         return RawUserPass(rawUserPass)
     }
 

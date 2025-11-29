@@ -281,8 +281,7 @@ fun RoomInputGroup(
                 snackBarHost.showSnackbar(frame.error, withDismissAction = true)
             } else if (frame is RoomFrame.NewTopicInfo) {
                 val plainFrame = if (frame.topicInfo.content is TopicContent.Encrypted) {
-                    val topicInfo =
-                        processEncryptedTopic(listOf(frame.topicInfo), userSessionManager).first()
+                    val topicInfo = processEncryptedTopic(listOf(frame.topicInfo), userSessionManager).first()
                     RoomFrame.NewTopicInfo(topicInfo)
                 } else {
                     frame
@@ -356,8 +355,7 @@ private fun RoomInputGroupInternal(
 private fun RoomInputTopContent(
     roomInfo: RoomInfo,
 ) {
-    val keysViewModel =
-        createRoomKeysViewModel(roomInfo.id, roomInfo)
+    val keysViewModel = createRoomKeysViewModel(roomInfo.id, roomInfo)
     val keysData by keysViewModel.handler.data.collectAsState()
     val keysState by keysViewModel.handler.state.collectAsState()
     if (roomInfo.isPrivate) {
@@ -729,8 +727,7 @@ private fun StartCallButton(
         val context = LocalPlatformContext.current
         ButtonNav(Icons.Default.ChatBubble, stringResource(Res.string.bubble)) {
             scope.launch {
-                val bitmap =
-                    roomInfo.icon?.let { getRemoteImageBitmap(sessionManager, context, it) }
+                val bitmap = roomInfo.icon?.let { getRemoteImageBitmap(sessionManager, context, it) }
                         ?.getOrNull()
                 notifyNotification(roomInfo, bitmap)
             }

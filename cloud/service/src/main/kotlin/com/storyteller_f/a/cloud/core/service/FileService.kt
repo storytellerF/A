@@ -282,8 +282,7 @@ suspend fun getFileSystemDownloadUrl(
 suspend fun Backend.getFileInfoPaginationResult(
     uid: PrimaryKey,
     primaryKeyFetch: PrimaryKeyFetch,
-): Result<PaginationResult<FileInfo>> =
-    database.file.getFileRecordPaginationList(uid, primaryKeyFetch)
+): Result<PaginationResult<FileInfo>> = database.file.getFileRecordPaginationList(uid, primaryKeyFetch)
         .mapPagingResultNotNull { list ->
             processFileRecordToFileInfo(list)
         }
@@ -345,12 +344,7 @@ private suspend fun Backend.copyFile(
     }
 }.mapResult { newName ->
     val id = SnowflakeFactory.nextId()
-    val newFileRecord = fileRecord.copy(
-        id = id,
-        owner = newOwner,
-        name = newName,
-        fullName = "$newOwner/$newName"
-    )
+    val newFileRecord = fileRecord.copy(id = id, owner = newOwner, name = newName, fullName = "$newOwner/$newName")
     objectStorageService.copy(
         A_FILE_DEFAULT_BUCKET,
         listOf(CopyPack(fileRecord.fullName, newFileRecord.fullName))
@@ -400,10 +394,7 @@ private fun removeExifIfImage(
     f: MutableList<File>
 ): List<ProcessedUploadPack> = uploadPacks.map {
     if (it.contentType.startsWith("image")) {
-        val target = File(
-            System.getProperty("java.io.tmpdir"),
-            Uuid.random().toHexString() + it.pack.name
-        )
+        val target = File(System.getProperty("java.io.tmpdir"), Uuid.random().toHexString() + it.pack.name)
         cleanImageMeta(it.pack.file, target.outputStream().buffered(), it.contentType)
         f.add(target)
         it.copy(pack = it.pack.copy(file = target))
@@ -515,11 +506,7 @@ suspend fun completeChunkUpload(
                 }.map { it.fullName }
                 val targetFullName = "${tuple.objectId}/$newSavedName"
                 // 合并到最终对象
-                backend.objectStorageService.compose(
-                    A_FILE_DEFAULT_BUCKET,
-                    targetFullName,
-                    sortedSources
-                ).getOrThrow()
+                backend.objectStorageService.compose(A_FILE_DEFAULT_BUCKET, targetFullName, sortedSources).getOrThrow()
                 val fileRecord = backend.buildFileRecordFromComposedObject(
                     targetFullName,
                     newSavedName,
@@ -566,10 +553,7 @@ private suspend fun Backend.buildFileRecordFromComposedObject(
     }
     val dimension = if (contentType.startsWith("image")) {
         getImageDimension(targetFullName, contentType) {
-            objectStorageService.getInputStream(
-                A_FILE_DEFAULT_BUCKET,
-                targetFullName
-            ).getOrThrow().buffered()
+            objectStorageService.getInputStream(A_FILE_DEFAULT_BUCKET, targetFullName).getOrThrow().buffered()
         }
     } else {
         null
@@ -626,10 +610,7 @@ suspend fun abortChunkUpload(
             uploadRecord.copy(status = UploadRecordStatus.ABORTED),
             emptyList()
         ).getOrThrow()
-        val records = backend.objectStorageService.list(
-            A_FILE_DEFAULT_BUCKET,
-            "chunks/$recordId/"
-        ).getOrThrow()
+        val records = backend.objectStorageService.list(A_FILE_DEFAULT_BUCKET, "chunks/$recordId/").getOrThrow()
         val names = records.map { it.fullName }
         backend.objectStorageService.delete(A_FILE_DEFAULT_BUCKET, names).getOrThrow()
     }
@@ -649,13 +630,7 @@ suspend fun getChunkStatus(
             r.fullName.substringAfter("chunk_").toIntOrNull()
         }.sorted()
         // 从数据库中的 UploadRecord 获取 chunkSize/size
-        CustomApi.Files.Chunks.StatusResponse(
-            uploadedIndices,
-            record.chunkSize,
-            record.total,
-            record.id,
-            record.status
-        )
+        CustomApi.Files.Chunks.StatusResponse(uploadedIndices, record.chunkSize, record.total, record.id, record.status)
     }
 }
 

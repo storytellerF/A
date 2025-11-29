@@ -89,8 +89,7 @@ private fun EmojiRow(
     val horizontalPx = 8.dp
     SubcomposeLayout { constraints ->
         val maxWidth = constraints.maxWidth
-        val firstMeasureResult =
-            measureFirstStage(data, constraints, maxWidth, horizontalPx, content)
+        val firstMeasureResult = measureFirstStage(data, constraints, maxWidth, horizontalPx, content)
         val currentRow = firstMeasureResult.first.last()
         var currentWidth = firstMeasureResult.second
         var emojiUsed = firstMeasureResult.third
@@ -161,8 +160,7 @@ private fun SubcomposeMeasureScope.measureFirstStage(
             it.width
         } + horizontalPx.roundToPx() * (placeableList.size - 1)
 
-        val nextWidth =
-            if (currentRow.isEmpty()) newWidth else currentWidth + horizontalPx.roundToPx() + newWidth
+        val nextWidth = if (currentRow.isEmpty()) newWidth else currentWidth + horizontalPx.roundToPx() + newWidth
 
         when {
             nextWidth <= maxWidth -> {

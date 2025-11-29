@@ -80,15 +80,7 @@ private suspend fun Backend.joinCommunity(
 ): Result<CommunityInfo?> {
     val time = now()
     val memberId = SnowflakeFactory.nextId()
-    val member = Member(
-        memberId,
-        uid,
-        communityId,
-        ObjectType.COMMUNITY,
-        time,
-        MemberStatus.JOINED,
-        time
-    )
+    val member = Member(memberId, uid, communityId, ObjectType.COMMUNITY, time, MemberStatus.JOINED, time)
     return database.container.addMember(member).onSuccess {
         addUserLog(uid, UserLogType.JOIN, communityId ob ObjectType.COMMUNITY)
         saveMemberDocument(uid, memberId, communityId, communityInfo.name)
@@ -295,13 +287,9 @@ private suspend fun Backend.checkCommunityPosterForUpdate(newCommunity: UpdateCo
     checkIcon(newCommunity.poster, Dimension.COMMUNITY_POSTER).mapResult { checkResult ->
         when (checkResult) {
             MediaCheckResult.NOT_FOUND -> Result.failure(CustomBadRequestException("poster not found"))
-            MediaCheckResult.CONTENT_TYPE_MISMATCH -> Result.failure(
-                CustomBadRequestException("only support image")
-            )
+            MediaCheckResult.CONTENT_TYPE_MISMATCH -> Result.failure(CustomBadRequestException("only support image"))
 
-            MediaCheckResult.DIMENSION_MISMATCH -> Result.failure(
-                CustomBadRequestException("dimension mismatch")
-            )
+            MediaCheckResult.DIMENSION_MISMATCH -> Result.failure(CustomBadRequestException("dimension mismatch"))
 
             else -> UNIT_RESULT
         }
@@ -311,13 +299,9 @@ private suspend fun Backend.checkCommunityIconForUpdate(newCommunity: UpdateComm
     checkIcon(newCommunity.icon, Dimension.DEFAULT_DIMENSION).mapResult { checkResult ->
         when (checkResult) {
             MediaCheckResult.NOT_FOUND -> Result.failure(CustomBadRequestException("icon not found"))
-            MediaCheckResult.CONTENT_TYPE_MISMATCH -> Result.failure(
-                CustomBadRequestException("only support image")
-            )
+            MediaCheckResult.CONTENT_TYPE_MISMATCH -> Result.failure(CustomBadRequestException("only support image"))
 
-            MediaCheckResult.DIMENSION_MISMATCH -> Result.failure(
-                CustomBadRequestException("dimension mismatch")
-            )
+            MediaCheckResult.DIMENSION_MISMATCH -> Result.failure(CustomBadRequestException("dimension mismatch"))
 
             else -> UNIT_RESULT
         }

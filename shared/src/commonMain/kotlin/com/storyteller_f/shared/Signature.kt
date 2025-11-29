@@ -52,11 +52,7 @@ interface Algo {
      * @param encryptedAesKey the encrypted AES key
      * @return the decrypted message
      */
-    suspend fun decryptMessage(
-        derPrivateKey: String,
-        encrypted: ByteArray,
-        encryptedAesKey: ByteArray
-    ): Result<String>
+    suspend fun decryptMessage(derPrivateKey: String, encrypted: ByteArray, encryptedAesKey: ByteArray): Result<String>
 
     /**
      * @param derPublicKeyStr hex string
@@ -111,14 +107,9 @@ object AlgoP256 : Algo {
 
     override suspend fun signature(pemPrivateKey: String, data: String): Result<String> {
         return runCatching {
-            val privateKey =
-                CryptographyProvider.Default.get(ECDSA).privateKeyDecoder(EC.Curve.P256)
-                    .decodeFromByteArray(
-                        EC.PrivateKey.Format.PEM,
-                        pemPrivateKey.encodeToByteArray()
-                    )
-            val signature =
-                privateKey.signatureGenerator(SHA256, ECDSA.SignatureFormat.DER)
+            val privateKey = CryptographyProvider.Default.get(ECDSA).privateKeyDecoder(EC.Curve.P256)
+                    .decodeFromByteArray(EC.PrivateKey.Format.PEM, pemPrivateKey.encodeToByteArray())
+            val signature = privateKey.signatureGenerator(SHA256, ECDSA.SignatureFormat.DER)
                     .generateSignature(data.encodeToByteArray())
             signature.toHexString()
         }
@@ -162,14 +153,12 @@ object AlgoP256 : Algo {
         aesKeyBytes: ByteArray
     ): Result<ByteArray> {
         return runCatching {
-            val tempKeyPair =
-                CryptographyProvider.Default.get(ECDH).keyPairGenerator(EC.Curve.P256).generateKey()
+            val tempKeyPair = CryptographyProvider.Default.get(ECDH).keyPairGenerator(EC.Curve.P256).generateKey()
 
             val publicKey = CryptographyProvider.Default.get(ECDH).publicKeyDecoder(EC.Curve.P256)
                 .decodeFromByteArray(EC.PublicKey.Format.DER, derPublicKeyStr.hexToByteArray())
 
-            val shared =
-                tempKeyPair.privateKey.sharedSecretGenerator()
+            val shared = tempKeyPair.privateKey.sharedSecretGenerator()
                     .generateSharedSecretToByteArray(publicKey)
 
             val derivedKeys = CryptographyProvider.Default.get(HKDF)
@@ -185,10 +174,8 @@ object AlgoP256 : Algo {
                 .cipher()
                 .encrypt(aesKeyBytes)
 
-            val concat =
-                tempKeyPair.publicKey.encodeToByteArray(EC.PublicKey.Format.RAW) + encrypted
-            val signature =
-                CryptographyProvider.Default.get(HMAC).keyDecoder(SHA256)
+            val concat = tempKeyPair.publicKey.encodeToByteArray(EC.PublicKey.Format.RAW) + encrypted
+            val signature = CryptographyProvider.Default.get(HMAC).keyDecoder(SHA256)
                     .decodeFromByteArray(HMAC.Key.Format.RAW, macKey)
                     .signatureGenerator()
                     .generateSignature(concat)

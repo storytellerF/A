@@ -22,8 +22,7 @@ class SignatureTest {
         runTest {
             val data = "hello"
             presetValue.userData!!.forEach {
-                val privateKeyStr =
-                    File(jsonFile.parentFile, it.privateKey).readText().replace("\r\n", "\n")
+                val privateKeyStr = File(jsonFile.parentFile, it.privateKey).readText().replace("\r\n", "\n")
                 getAlgo().run {
                     val s = signature(privateKeyStr, data).getOrThrow()
                     val derPublicKeyStr = getDerPublicKeyFromPrivateKey(privateKeyStr).getOrThrow()
@@ -46,8 +45,7 @@ class SignatureTest {
         runTest {
             val data = "hello"
             presetValue.userData!!.forEach {
-                val privateKeyStr =
-                    File(jsonFile.parentFile, it.privateKey).readText().replaceCrlf()
+                val privateKeyStr = File(jsonFile.parentFile, it.privateKey).readText().replaceCrlf()
                 getAlgo().run {
                     val derPublicKeyStr = getDerPublicKeyFromPrivateKey(privateKeyStr).getOrThrow()
                     val (encrypted, aes) = encryptDataByAES(data).getOrThrow()

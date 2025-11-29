@@ -33,15 +33,7 @@ data class CommunityInfo(
     data class Extension(val targetMemberInfo: NestedMemberInfo? = null)
 
     companion object {
-        val EMPTY = CommunityInfo(
-            DEFAULT_PRIMARY_KEY,
-            "",
-            "",
-            DEFAULT_PRIMARY_KEY,
-            now(),
-            0,
-            MemberPolicy.OPEN
-        )
+        val EMPTY = CommunityInfo(DEFAULT_PRIMARY_KEY, "", "", DEFAULT_PRIMARY_KEY, now(), 0, MemberPolicy.OPEN)
     }
 }
 

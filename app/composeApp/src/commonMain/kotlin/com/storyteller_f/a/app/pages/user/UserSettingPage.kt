@@ -185,8 +185,7 @@ private fun getRatio(currentOption: SettingOption?): AspectRatio {
     return AspectRatio(dimension.width, dimension.height)
 }
 
-private fun showFilePicker(currentOption: SettingOption?): Boolean =
-    currentOption is SettingOption.Icon ||
+private fun showFilePicker(currentOption: SettingOption?): Boolean = currentOption is SettingOption.Icon ||
         currentOption is SettingOption.Poster ||
         currentOption is SettingOption.RoomIcon
 

@@ -116,8 +116,7 @@ actual suspend fun notifyNotification(room: RoomInfo, bitmap: ImageBitmap?) {
             Manifest.permission.POST_NOTIFICATIONS
         ) == PackageManager.PERMISSION_GRANTED
     ) {
-        val androidBitmap =
-            bitmap?.asAndroidBitmap() ?: getIconBitmapFromName(context, room.name) ?: return
+        val androidBitmap = bitmap?.asAndroidBitmap() ?: getIconBitmapFromName(context, room.name) ?: return
         val iconCompat = IconCompat.createWithBitmap(androidBitmap)
         val channel = "Message"
         val managerCompat = getOrCreateNotificationChannel(context, channel)
@@ -151,8 +150,7 @@ private fun getBubbleNotificationBuilder(
             .putExtra("roomId", room.id),
         flagUpdateCurrent(true)
     )
-    val bubbleData =
-        NotificationCompat.BubbleMetadata.Builder(bubbleIntent, bitmap).setDesiredHeight(600)
+    val bubbleData = NotificationCompat.BubbleMetadata.Builder(bubbleIntent, bitmap).setDesiredHeight(600)
     val style = NotificationCompat.MessagingStyle(user).setGroupConversation(false)
     return NotificationCompat.Builder(context, channel)
         .setSmallIcon(R.drawable.ic_notify)

@@ -18,11 +18,8 @@ class KotbaseTest : UsingContextTest() {
     fun testSectionLoadParams() {
         val modelStorage = DocumentModelStorage(createKotbaseSource(null))
         runTest {
-            modelStorage.remoteKeyStorage.saveNextRemoteKey(
-                RemoteKeys(TopicCollection.Recommend.getName(), "1")
-            )
-            val remoteKeys =
-                modelStorage.remoteKeyStorage.getNextRemoteKey(TopicCollection.Recommend.getName())
+            modelStorage.remoteKeyStorage.saveNextRemoteKey(RemoteKeys(TopicCollection.Recommend.getName(), "1"))
+            val remoteKeys = modelStorage.remoteKeyStorage.getNextRemoteKey(TopicCollection.Recommend.getName())
             assertEquals("1", remoteKeys?.key)
         }
     }
