@@ -126,10 +126,7 @@ class LuceneMemberSearchService(path: Path, isInMemory: Boolean = false) : Lucen
                     }
                     // 按 nickname 搜索
                     preprocessUserInputKeyword(memberDocumentSearch.nickname?.let { listOf(it) })?.let {
-                        add(
-                            MultiFieldQueryParser(arrayOf("nickname"), analyzer).parse(it),
-                            BooleanClause.Occur.MUST
-                        )
+                        add(MultiFieldQueryParser(arrayOf("nickname"), analyzer).parse(it), BooleanClause.Occur.MUST)
                     }
                 }
 
@@ -158,10 +155,7 @@ class LuceneMemberSearchService(path: Path, isInMemory: Boolean = false) : Lucen
 
     private fun BooleanQuery.Builder.addObjectNameQuery(name: String) {
         preprocessUserInputKeyword(listOf(name))?.let {
-            add(
-                MultiFieldQueryParser(arrayOf("objectName"), analyzer).parse(it),
-                BooleanClause.Occur.MUST
-            )
+            add(MultiFieldQueryParser(arrayOf("objectName"), analyzer).parse(it), BooleanClause.Occur.MUST)
         }
     }
 }

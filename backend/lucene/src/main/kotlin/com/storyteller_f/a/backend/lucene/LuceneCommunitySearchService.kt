@@ -99,14 +99,8 @@ class LuceneCommunitySearchService(
                 is CommunityDocumentSearch.Keyword -> {
                     preprocessUserInputKeyword(communityDocumentSearch.keyword)?.let {
                         add(BooleanQuery.Builder().apply {
-                            add(
-                                MultiFieldQueryParser(arrayOf("name"), analyzer).parse(it),
-                                BooleanClause.Occur.SHOULD
-                            )
-                            add(
-                                MultiFieldQueryParser(arrayOf("aid"), analyzer).parse(it),
-                                BooleanClause.Occur.SHOULD
-                            )
+                            add(MultiFieldQueryParser(arrayOf("name"), analyzer).parse(it), BooleanClause.Occur.SHOULD)
+                            add(MultiFieldQueryParser(arrayOf("aid"), analyzer).parse(it), BooleanClause.Occur.SHOULD)
                         }.build(), BooleanClause.Occur.MUST)
                     }
                 }

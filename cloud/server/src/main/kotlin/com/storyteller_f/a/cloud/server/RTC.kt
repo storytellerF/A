@@ -97,9 +97,7 @@ private suspend fun processSendAnswer(
     val answer = frame.answer
     val session = rtcSession[frame.roomId]
     if (session != null) {
-        session.socketMap[frame.targetUid]?.sendFrame(
-            RoomFrame.RespondAnswer(answer, frame.roomId, frame.targetUid)
-        )
+        session.socketMap[frame.targetUid]?.sendFrame(RoomFrame.RespondAnswer(answer, frame.roomId, frame.targetUid))
         session.answerList[uid]?.let {
             it[frame.targetUid] = answer
         }
@@ -119,9 +117,7 @@ private suspend fun processSendOffer(
         "processSendOffer $frame ${session?.socketMap[frame.targetUid]}"
     }
     if (session != null) {
-        session.socketMap[frame.targetUid]?.sendFrame(
-            RoomFrame.CreateAnswer(uid, offer, frame.roomId)
-        )
+        session.socketMap[frame.targetUid]?.sendFrame(RoomFrame.CreateAnswer(uid, offer, frame.roomId))
         session.offerList[uid]?.let {
             it[frame.targetUid] = offer
         }
@@ -135,15 +131,7 @@ suspend fun listenerRoomRTC() {
                 val frontSocket = frontRtcUser.session
                 if (!(frontSocket.isActive)) return@forEachIndexed
                 it.uidList.forEachIndexed { backUserIndex, backRtcUser ->
-                    processRTCSession(
-                        frontUserIndex,
-                        backUserIndex,
-                        backRtcUser,
-                        it,
-                        frontRtcUser,
-                        frontSocket,
-                        roomId
-                    )
+                    processRTCSession(frontUserIndex, backUserIndex, backRtcUser, it, frontRtcUser, frontSocket, roomId)
                 }
             }
         }
@@ -170,8 +158,7 @@ private suspend fun processRTCSession(
         "processRTCSession $frontUserIndex ${frontRtcUser.uid} $backUserIndex ${backRtcUser.uid} $offer"
     }
     if (offer != null) {
-        val answer =
-            session.answerList.getOrPut(frontRtcUser.uid) { mutableMapOf() }[backRtcUser.uid]
+        val answer = session.answerList.getOrPut(frontRtcUser.uid) { mutableMapOf() }[backRtcUser.uid]
         if (answer != null) return
         try {
             val frame = RoomFrame.CreateAnswer(frontRtcUser.uid, offer, session.roomId)

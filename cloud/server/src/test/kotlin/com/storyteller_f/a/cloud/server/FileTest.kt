@@ -61,11 +61,7 @@ class FileTest {
     @Test
     fun `test upload file`() = test {
         val firstTuple = attachSession {
-            val response =
-                upload(
-                    ObjectTuple(it.uid, ObjectType.USER),
-                    getUploadDataFromText("hello")
-                ).getOrThrow()
+            val response = upload( ObjectTuple(it.uid, ObjectType.USER), getUploadDataFromText("hello") ).getOrThrow()
             assertEquals("${it.uid}/hello.txt", response.data.first().fullName)
             val fileList = getFileList(it.uid, ObjectType.USER, null, 10)
             assertListSize(1, fileList)
@@ -154,10 +150,7 @@ class FileTest {
     fun `test remove image info`() = test {
         attachSession {
             val oldMeta =
-                Imaging.getMetadata(
-                    ClassLoader.getSystemResourceAsStream("52873358902_7857530666_o.jpg")!!,
-                    null
-                )
+                Imaging.getMetadata(ClassLoader.getSystemResourceAsStream("52873358902_7857530666_o.jpg")!!, null)
             val first = upload(
                 it.uid ob ObjectType.USER,
                 getUploadDataFromResources("52873358902_7857530666_o.jpg")
@@ -384,8 +377,7 @@ suspend fun UserSessionManager.downloadFile(
 }
 
 private fun getUploadDataFromResources(name: String): UploadData {
-    val inputStream =
-        ClassLoader.getSystemResourceAsStream(name)!!
+    val inputStream = ClassLoader.getSystemResourceAsStream(name)!!
     val bytes = inputStream.readBytes()
     val data = UploadData(
         bytes.size.toLong(),
@@ -449,17 +441,13 @@ private fun getMSSIM(i1: Mat, i2: Mat): Scalar? {
     val sigma2Squared1 = opencv_core.subtract(sigma2Squared, mean2Squared).asMat()
     opencv_imgproc.GaussianBlur(matrix1Matrix2, sigma12, Size(11, 11), 1.5)
     val sigma121 = opencv_core.subtract(sigma12, mean1Mean2).asMat()
-    val temp1 =
-        opencv_core.add(opencv_core.multiply(2.0, mean1Mean2), Scalar.all(constant1)).asMat()
+    val temp1 = opencv_core.add(opencv_core.multiply(2.0, mean1Mean2), Scalar.all(constant1)).asMat()
     val temp2 = opencv_core.add(opencv_core.multiply(2.0, sigma121), Scalar.all(constant2)).asMat()
     val temp3 = temp1.mul(temp2).asMat() // t3 = ((2*mu1_mu2 + C1).*(2*sigma12 + C2))
-    val temp1Final =
-        opencv_core.add(opencv_core.add(mean1Squared, mean2Squared), Scalar.all(constant1)).asMat()
-    val temp2Final =
-        opencv_core.add(opencv_core.add(sigma1Squared1, sigma2Squared1), Scalar.all(constant2))
+    val temp1Final = opencv_core.add(opencv_core.add(mean1Squared, mean2Squared), Scalar.all(constant1)).asMat()
+    val temp2Final = opencv_core.add(opencv_core.add(sigma1Squared1, sigma2Squared1), Scalar.all(constant2))
             .asMat()
-    val temp1Result =
-        temp1Final.mul(temp2Final).asMat() // t1 =((mu1_2 + mu2_2 + C1).*(sigma1_2 + sigma2_2 + C2))
+    val temp1Result = temp1Final.mul(temp2Final).asMat() // t1 =((mu1_2 + mu2_2 + C1).*(sigma1_2 + sigma2_2 + C2))
     val ssimMap = Mat()
     opencv_core.divide(temp3, temp1Result, ssimMap) // ssim_map =  t3./t1;
     return opencv_core.mean(ssimMap)

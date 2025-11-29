@@ -109,10 +109,7 @@ private fun FileTopBar(id: PrimaryKey) {
 
 @Composable
 private fun FileInfoTabs(id: PrimaryKey) {
-    val tabs = listOf(
-        stringResource(Res.string.tab_basic_info_file),
-        stringResource(Res.string.tab_file_refs)
-    )
+    val tabs = listOf(stringResource(Res.string.tab_basic_info_file), stringResource(Res.string.tab_file_refs))
     val pagerState = rememberPagerState { tabs.size }
     val scope = rememberCoroutineScope()
     Column {

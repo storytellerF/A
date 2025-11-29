@@ -428,10 +428,7 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
     val snapshotKeyStore =
         if (!snapshotKeyStorePath.isNullOrBlank() && !snapshotKeyStorePassword.isNullOrBlank()) {
             if (!File(snapshotKeyStorePath).exists()) {
-                CryptoJvm.createKeystore(
-                    snapshotKeyStorePassword.toCharArray(),
-                    snapshotKeyStorePath
-                )
+                CryptoJvm.createKeystore(snapshotKeyStorePassword.toCharArray(), snapshotKeyStorePath)
             }
             CustomKeyStore(snapshotKeyStorePath, snapshotKeyStorePassword)
         } else {

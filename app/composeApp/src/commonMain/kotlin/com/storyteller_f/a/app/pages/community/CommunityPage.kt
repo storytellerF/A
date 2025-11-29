@@ -124,8 +124,7 @@ fun getCommunityFont(communityId: PrimaryKey): Typography {
     val fontFamily by getFontFamily(communityId)
     val typography = MaterialTheme.typography
     return typography.copy(
-        bodyLarge =
-        typography.bodyLarge.copy(fontFamily = fontFamily ?: typography.bodyLarge.fontFamily),
+        bodyLarge = typography.bodyLarge.copy(fontFamily = fontFamily ?: typography.bodyLarge.fontFamily),
         bodyMedium = typography.bodyMedium.copy(fontFamily = fontFamily ?: typography.bodyMedium.fontFamily),
         bodySmall = typography.bodySmall.copy(fontFamily = fontFamily ?: typography.bodySmall.fontFamily)
     )
@@ -203,13 +202,11 @@ private fun CommunityNonCompatPageInternal(
 
                 NavHost(navigator, "/topics") {
                     composable("/topics") {
-                        val viewModel =
-                            createCommunityTopicsViewModel(communityId)
+                        val viewModel = createCommunityTopicsViewModel(communityId)
                         TopicList(viewModel)
                     }
                     composable("/rooms") {
-                        val viewModel =
-                            createCommunityRoomsViewModel(communityId)
+                        val viewModel = createCommunityRoomsViewModel(communityId)
                         RoomList(viewModel)
                     }
                 }
@@ -316,14 +313,12 @@ private fun CommunityPageInternal(
     HorizontalPager(pagerState) {
         when (it) {
             0 -> {
-                val viewModel =
-                    createCommunityTopicsViewModel(communityId)
+                val viewModel = createCommunityTopicsViewModel(communityId)
                 TopicList(viewModel)
             }
 
             else -> {
-                val viewModel =
-                    createCommunityRoomsViewModel(communityId)
+                val viewModel = createCommunityRoomsViewModel(communityId)
                 RoomList(viewModel)
             }
         }

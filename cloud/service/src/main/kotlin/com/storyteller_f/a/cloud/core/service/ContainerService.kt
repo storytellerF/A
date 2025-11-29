@@ -63,11 +63,7 @@ suspend fun Backend.checkRootReadPermission(
                     Result.failure(UnauthorizedException())
                 } else {
                     database.container.isMemberJoined(parentId, uid).map { hasJoined ->
-                        RootReadPermission(
-                            hasJoined || communityId != null,
-                            hasJoined,
-                            communityId == null
-                        )
+                        RootReadPermission(hasJoined || communityId != null, hasJoined, communityId == null)
                     }
                 }
             }
@@ -85,9 +81,7 @@ suspend fun Backend.checkRootReadPermission(
             RootReadPermission(hasRead = true, hasJoined = false, isPrivate = false)
         }
 
-        ObjectType.TITLE -> Result.success(
-            RootReadPermission(hasRead = true, hasJoined = false, isPrivate = false)
-        )
+        ObjectType.TITLE -> Result.success(RootReadPermission(hasRead = true, hasJoined = false, isPrivate = false))
 
         ObjectType.FILE -> Result.failure(ForbiddenException())
         ObjectType.PANEL_ACCOUNT -> Result.failure(ForbiddenException())
@@ -267,11 +261,7 @@ suspend fun Backend.getQuotaInfo(
         val lockId = info.lockId
         if (lockId != null) {
             database.file.getUploadRecord(lockId).mapResult { rec ->
-                Result.success(
-                    info.copy(
-                        extensions = QuotaInfo.Extensions(uploadRecord = rec?.toUploadRecordInfo())
-                    )
-                )
+                Result.success(info.copy(extensions = QuotaInfo.Extensions(uploadRecord = rec?.toUploadRecordInfo())))
             }
         } else {
             Result.success(info)

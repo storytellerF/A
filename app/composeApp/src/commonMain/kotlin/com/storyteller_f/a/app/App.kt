@@ -392,8 +392,7 @@ private fun ObserveMessage() {
         sessionManager.webSocketClient.frameFlow.collect { frame ->
             if (frame is RoomFrame.NewTopicInfo) {
                 val plainFrame = if (frame.topicInfo.content is TopicContent.Encrypted) {
-                    val topicInfo =
-                        processEncryptedTopic(listOf(frame.topicInfo), sessionManager).first()
+                    val topicInfo = processEncryptedTopic(listOf(frame.topicInfo), sessionManager).first()
                     RoomFrame.NewTopicInfo(topicInfo)
                 } else {
                     frame
@@ -539,8 +538,7 @@ fun BubblePage(roomId: Long) {
 private fun createAppNavFactoryForBubble(): AppNavFactory = object : AppNavFactory {
     override fun newAppNav() = object : AppNav {
         override val currentDestination: NavBackStackEntry? = null
-        override val currentDestinationFlow: StateFlow<NavBackStackEntry?> =
-            MutableStateFlow(null)
+        override val currentDestinationFlow: StateFlow<NavBackStackEntry?> = MutableStateFlow(null)
 
         override fun gotoLogin() = Unit
 
@@ -576,8 +574,7 @@ private fun createAppNavFactoryForBubble(): AppNavFactory = object : AppNavFacto
 
         override fun gotoRoomCompose() = Unit
 
-        override fun gotoSettingPage(objectId: PrimaryKey, objectType: ObjectType) =
-            Unit
+        override fun gotoSettingPage(objectId: PrimaryKey, objectType: ObjectType) = Unit
 
         override fun gotoReactionListPage(topicId: PrimaryKey) = Unit
 

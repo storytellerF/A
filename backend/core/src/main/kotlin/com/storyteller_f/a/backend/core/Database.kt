@@ -182,8 +182,7 @@ interface CombinedDatabase {
         val childAccountCount = user.getChildAccountCount(uid).getOrThrow()
         val reactionRecordCount = reaction.getUserReactionRecordCount(uid).getOrThrow()
         val commentCount = topic.getUserCommentCount(uid).getOrThrow()
-        val rawUser =
-            user.getRawUser(ObjectFetch.IdFetch(uid)).getOrThrow() ?: error("user not found")
+        val rawUser = user.getRawUser(ObjectFetch.IdFetch(uid)).getOrThrow() ?: error("user not found")
         RawUserOverview(
             subscriptionCount,
             favoriteCount,
@@ -208,10 +207,8 @@ interface CombinedDatabase {
             emptySet()
         }
 
-        val commentCountMap =
-            topic.getTopicCommentCount(topicIds).map { it.associateByPair() }.getOrThrow()
-        val reactionCountMap =
-            reaction.getReactionCount(topicIds).map { it.associateByPair() }.getOrThrow()
+        val commentCountMap = topic.getTopicCommentCount(topicIds).map { it.associateByPair() }.getOrThrow()
+        val reactionCountMap = reaction.getReactionCount(topicIds).map { it.associateByPair() }.getOrThrow()
 
         val lastReadMap = if (uid != null) {
             container.getTopicReadList(topicIds, uid).map {

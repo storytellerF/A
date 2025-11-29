@@ -443,8 +443,7 @@ fun ObjectList(
     if (input.isNotBlank() && currentType != null) {
         when (currentType) {
             ObjectType.COMMUNITY -> {
-                val communitiesViewModel =
-                    createSearchCommunitiesViewModel(JoinStatusSearch.JOINED, input)
+                val communitiesViewModel = createSearchCommunitiesViewModel(JoinStatusSearch.JOINED, input)
                 CommunityList(communitiesViewModel, onClickCommunity)
             }
 

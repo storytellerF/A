@@ -31,8 +31,7 @@ suspend fun Backend.addReaction(
                 Result.success(oldReaction)
             } else {
                 val newId = SnowflakeFactory.nextId()
-                val reactionRecord =
-                    ReactionRecord(userId, topicId, ObjectType.TOPIC, emojiText, newId, now())
+                val reactionRecord = ReactionRecord(userId, topicId, ObjectType.TOPIC, emojiText, newId, now())
                 val reactionInfo = ReactionInfo(
                     reactionRecord.emoji,
                     reactionRecord.objectId,

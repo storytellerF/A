@@ -15,8 +15,7 @@ import java.util.stream.Collectors
 import java.util.stream.Stream
 
 object NewPipeDownloaderImpl : Downloader() {
-    private val mCookies: MutableMap<String, String> =
-        HashMap()
+    private val mCookies: MutableMap<String, String> = HashMap()
 
     private val client = OkHttpClient.Builder()
         .readTimeout(30, TimeUnit.SECONDS)
@@ -70,8 +69,7 @@ object NewPipeDownloaderImpl : Downloader() {
         val url = request.url()
         val headers = request.headers()
 
-        val requestBody =
-            request.dataToSend()?.toRequestBody()
+        val requestBody = request.dataToSend()?.toRequestBody()
 
         val requestBuilder = okhttp3.Request.Builder()
             .method(httpMethod, requestBody)

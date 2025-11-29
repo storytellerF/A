@@ -75,8 +75,7 @@ fun setLogPath(name: String = "A") {
         val envOs = System.getenv("OSTYPE")?.lowercase(Locale.getDefault()) ?: ""
 
         // 判断是否是 Windows 原生或 Cygwin / MINGW
-        val isWindowsLike =
-            osName.contains("win") || envOs.contains("cygwin") || envOs.contains("mingw")
+        val isWindowsLike = osName.contains("win") || envOs.contains("cygwin") || envOs.contains("mingw")
 
         val logPath = if (isWindowsLike) {
             System.getProperty("java.io.tmpdir")

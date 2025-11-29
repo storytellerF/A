@@ -36,17 +36,14 @@ import kotlinx.serialization.Serializable
 
 val messageResponseFlow = MutableSharedFlow<RoomFrame.NewTopicInfo>()
 val sharedFlow = messageResponseFlow.asSharedFlow()
-val userWebSocketSessionMap =
-    mutableMapOf<PrimaryKey, PersistentList<DefaultWebSocketServerSession>>()
+val userWebSocketSessionMap = mutableMapOf<PrimaryKey, PersistentList<DefaultWebSocketServerSession>>()
 
 suspend fun DefaultWebSocketServerSession.useWebSocket(uid: PrimaryKey, block: suspend () -> Unit) {
-    userWebSocketSessionMap[uid] =
-        userWebSocketSessionMap.getOrDefault(uid, persistentListOf()).add(this)
+    userWebSocketSessionMap[uid] = userWebSocketSessionMap.getOrDefault(uid, persistentListOf()).add(this)
     try {
         block()
     } finally {
-        userWebSocketSessionMap[uid] =
-            userWebSocketSessionMap.getOrDefault(uid, persistentListOf()).remove(this)
+        userWebSocketSessionMap[uid] = userWebSocketSessionMap.getOrDefault(uid, persistentListOf()).remove(this)
     }
 }
 

@@ -55,14 +55,7 @@ fun Route.bindRoomRoute(backend: Backend) {
     CustomApi.Rooms.Id.Topics.get(handleResult()) { q, p ->
         usePrincipalOrNull { uid ->
             q.pagination(IdentifiablePagingGenerator) { f ->
-                backend.getTopicsByParentId(
-                    p.id,
-                    ObjectType.ROOM,
-                    uid,
-                    q.fillHasCommented,
-                    f,
-                    q.pinType
-                )
+                backend.getTopicsByParentId(p.id, ObjectType.ROOM, uid, q.fillHasCommented, f, q.pinType)
             }
         }
     }

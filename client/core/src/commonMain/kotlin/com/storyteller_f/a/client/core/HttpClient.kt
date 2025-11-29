@@ -95,11 +95,7 @@ fun HttpClientConfig<*>.defaultClientConfigure(
             if (exception is ResponseException) {
                 val exceptionResponse = exception.response
                 val exceptionResponseText = exceptionResponse.bodyAsText()
-                throw ServerErrorException(
-                    exceptionResponse.status,
-                    exceptionResponseText,
-                    exception
-                )
+                throw ServerErrorException(exceptionResponse.status, exceptionResponseText, exception)
             }
         }
     }
@@ -157,11 +153,7 @@ fun HttpClientConfig<*>.defaultClientConfigureForPanel(
             if (exception is ResponseException) {
                 val exceptionResponse = exception.response
                 val exceptionResponseText = exceptionResponse.bodyAsText()
-                throw ServerErrorException(
-                    exceptionResponse.status,
-                    exceptionResponseText,
-                    exception
-                )
+                throw ServerErrorException(exceptionResponse.status, exceptionResponseText, exception)
             }
         }
     }

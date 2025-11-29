@@ -25,8 +25,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
-        val sessionToken =
-            SessionToken(this, ComponentName(this, PlaybackService::class.java))
+        val sessionToken = SessionToken(this, ComponentName(this, PlaybackService::class.java))
         val listener = object : MediaController.Listener {
             override fun onAvailableSessionCommandsChanged(
                 controller: MediaController,
@@ -46,8 +45,7 @@ class MainActivity : ComponentActivity() {
             }
         }
         if (!isRunningOnRobolectric) {
-            val future =
-                MediaController.Builder(this, sessionToken).setListener(listener).buildAsync()
+            val future = MediaController.Builder(this, sessionToken).setListener(listener).buildAsync()
             controllerFuture = future
             future.addListener({
                 (application as PanelApplication).mediaPlayer.controller.value = future.get()

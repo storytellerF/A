@@ -117,14 +117,7 @@ fun Route.bindUserRoute(backend: Backend) {
     CustomApi.Users.Id.Topics.get(handleResult()) { q, p ->
         usePrincipalOrNull { uid ->
             q.pagination(IdentifiablePagingGenerator) { f ->
-                backend.getTopicsByParentId(
-                    p.id,
-                    ObjectType.USER,
-                    uid,
-                    q.fillHasCommented,
-                    f,
-                    q.pinType
-                )
+                backend.getTopicsByParentId(p.id, ObjectType.USER, uid, q.fillHasCommented, f, q.pinType)
             }
         }
     }

@@ -61,8 +61,7 @@ suspend fun CoroutineScope.startServerByRun(projectRoot: String, port: Int): Pro
         println("${testEnvFile.canonicalPath} not exists")
         return null
     }
-    val serverProcess =
-        ProcessBuilder(GIT_BASH, "-c", "cloud/server/build/install/server/bin/server")
+    val serverProcess = ProcessBuilder(GIT_BASH, "-c", "cloud/server/build/install/server/bin/server")
             .redirectErrorStream(true)
             .directory(File(projectRoot))
             .bindGradleProcessEnv(testEnvFile, port)
@@ -123,9 +122,7 @@ private fun ProcessBuilder.bindGradleProcessEnv(envFile: File, port: Int): Proce
     val url = "r2dbc:h2:file:///./build/test/process/h2/${Uuid.random().toHexString()}"
     val environment = environment()
     environment.putAll(envList)
-    environment.putAll(
-        mapOf("DATABASE_URI" to url, "DATABASE_DRIVER" to "h2", "BUILD_TYPE" to "dev-test")
-    )
+    environment.putAll(mapOf("DATABASE_URI" to url, "DATABASE_DRIVER" to "h2", "BUILD_TYPE" to "dev-test"))
     environment["SERVER_PORT"] = port.toString()
     return this
 }

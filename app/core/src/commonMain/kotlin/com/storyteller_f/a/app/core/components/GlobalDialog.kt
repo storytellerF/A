@@ -102,8 +102,7 @@ class NestedGlobalDialogController<C>(
             return Result.failure(Exception("level mismatch"))
         }
         state.value = stack.add(GlobalDialogState.Loading())
-        val nestedGlobalDialogController =
-            NestedGlobalDialogController(customGlobalDialogController, level + 1)
+        val nestedGlobalDialogController = NestedGlobalDialogController(customGlobalDialogController, level + 1)
         try {
             return nestedGlobalDialogController.block()
         } finally {
@@ -170,8 +169,7 @@ class CustomGlobalDialogController<C>(
         }
     }
 
-    override fun emitProgress(block: (GlobalDialogState.Loading) -> GlobalDialogState.Loading) =
-        Unit
+    override fun emitProgress(block: (GlobalDialogState.Loading) -> GlobalDialogState.Loading) = Unit
 }
 
 @Composable

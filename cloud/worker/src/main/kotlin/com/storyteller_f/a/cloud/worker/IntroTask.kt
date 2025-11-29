@@ -53,8 +53,7 @@ suspend fun Backend.doIntroTask() {
 
 private suspend fun Backend.sendHelloTopic(rawUsers: List<RawUser>): Result<Unit> {
     return runCatching {
-        val adminAid =
-            database.user.getRawUser(ObjectFetch.AidFetch("System")).getOrThrow()!!.user.id
+        val adminAid = database.user.getRawUser(ObjectFetch.AidFetch("System")).getOrThrow()!!.user.id
         rawUsers.forEach {
             sendTopicToNotificationRoom(adminAid, it.user, "Hello, ${it.user.nickname}")
             database.admin.createTaskRecord(
@@ -90,7 +89,6 @@ suspend fun Backend.sedTopicAtRoom(
         roomId,
         PrimaryKeyFetch(null, 10)
     ).getOrThrow().list
-    val encrypted =
-        buildEncryptedTopicContent(content, userPubKeyInfos)
+    val encrypted = buildEncryptedTopicContent(content, userPubKeyInfos)
     createTopicAtRoom(NewRoomTopic(ObjectType.ROOM, roomId, encrypted), uid).getOrThrow()
 }

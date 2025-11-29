@@ -457,8 +457,7 @@ fun refreshMyInfo(my: UserInfo?, sessionManager: UserSessionManager) {
                     val data = sessionManager.getData().getOrThrow()
                     val address = value.userPass.address().getOrThrow()
                     val signature = value.userPass.signature(finalData(data)).getOrThrow()
-                    val userInfo =
-                        sessionManager.signIn(SignInBody(address, signature)).getOrThrow()
+                    val userInfo = sessionManager.signIn(SignInBody(address, signature)).getOrThrow()
                     sessionModel.updateUser(userInfo)
                     sessionModel.updateSignature(data, signature)
                 }

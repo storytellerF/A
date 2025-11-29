@@ -88,10 +88,7 @@ object CryptoJvm {
     fun getPublicKeyFromPrivateKey(privateKey: PrivateKey): Result<PublicKey> {
         return runCatching {
             val keyFactory = KeyFactory.getInstance("ECDSA", "BC")
-            val ecSpec = (keyFactory.getKeySpec(
-                privateKey,
-                ECPrivateKeySpec::class.java
-            ) as ECPrivateKeySpec).params
+            val ecSpec = (keyFactory.getKeySpec(privateKey, ECPrivateKeySpec::class.java) as ECPrivateKeySpec).params
 
             val ecPrivateKeySpec = ECPrivateKeySpec((privateKey as ECPrivateKey).d, ecSpec)
             val publicKeySpec = ECPublicKeySpec(ecSpec.g.multiply(ecPrivateKeySpec.d), ecSpec)
@@ -108,8 +105,7 @@ object CryptoJvm {
                 val subject = X500Name("CN=MyCertificate, O=MyCompany, C=US") // 证书主体（自签名）
                 val serialNumber = BigInteger.valueOf(System.currentTimeMillis()) // 唯一序列号
                 val notBefore = Date(System.currentTimeMillis() - 1000L * 60 * 60 * 24) // 生效时间
-                val notAfter =
-                    Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 365 * 10) // 过期时间 (10 年)
+                val notAfter = Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 365 * 10) // 过期时间 (10 年)
 
                 // 3️⃣ 创建 X509v3 证书
                 val certBuilder: X509v3CertificateBuilder = JcaX509v3CertificateBuilder(
@@ -378,8 +374,7 @@ actual val AlgoDilithium: Algo = object : Algo {
 
             val unwrapCipher = Cipher.getInstance("Kyber", "BCPQC")
             unwrapCipher.init(Cipher.UNWRAP_MODE, privateKey)
-            val aesKey =
-                unwrapCipher.unwrap(encrypted, "AES", Cipher.SECRET_KEY) as javax.crypto.SecretKey
+            val aesKey = unwrapCipher.unwrap(encrypted, "AES", Cipher.SECRET_KEY) as javax.crypto.SecretKey
             aesKey.encoded
         }
     }

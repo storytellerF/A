@@ -306,10 +306,7 @@ class AdminTest {
         loginPanelSession(outer) {
             assertListSize(
                 1,
-                getUserReceivedTitles(
-                    uid,
-                    CustomApi.Users.Id.Titles.TitleQuery(searchType = TitleSearchType.RECEIVER)
-                )
+                getUserReceivedTitles(uid, CustomApi.Users.Id.Titles.TitleQuery(searchType = TitleSearchType.RECEIVER))
             )
         }
     }
@@ -440,10 +437,7 @@ class AdminTest {
                     ObjectTuple(r.id, ObjectType.ROOM),
                     r.isPrivate,
                     "hello",
-                    getRoomMembersPublicKeys(
-                        r.id,
-                        PaginationQuery(null, size = 10)
-                    ).getOrThrow().data
+                    getRoomMembersPublicKeys(r.id, PaginationQuery(null, size = 10)).getOrThrow().data
                 )
             }
             r.id
@@ -466,11 +460,7 @@ class AdminTest {
             parentTopic.id
         }.custom
         loginPanelSession(outer) {
-            val subTopics = getTopicTopics(
-                topicId,
-                TopicPinSearch.UNSPECIFIED,
-                PaginationQuery()
-            ).getOrThrow().data
+            val subTopics = getTopicTopics(topicId, TopicPinSearch.UNSPECIFIED, PaginationQuery()).getOrThrow().data
             assertEquals(2, subTopics.size)
             // Sub topics inherit root from parent
             assertEquals(ObjectType.USER, subTopics[0].rootType)
@@ -504,10 +494,7 @@ class AdminTest {
                     ObjectTuple(r.id, ObjectType.ROOM),
                     r.isPrivate,
                     "hello",
-                    getRoomMembersPublicKeys(
-                        r.id,
-                        PaginationQuery(null, size = 10)
-                    ).getOrThrow().data
+                    getRoomMembersPublicKeys(r.id, PaginationQuery(null, size = 10)).getOrThrow().data
                 )
             }
 
@@ -569,16 +556,11 @@ class AdminTest {
             // Create parent topics
             val userTopic = createTopic(ObjectType.USER, it.uid, "user topic").getOrThrow()
             val c = createCommunity(NewCommunity("c1", "c1")).getOrThrow()
-            val communityTopic =
-                createTopic(ObjectType.COMMUNITY, c.id, "community topic").getOrThrow()
+            val communityTopic = createTopic(ObjectType.COMMUNITY, c.id, "community topic").getOrThrow()
 
             // Create sub topics (comments/replies to other topics)
             createTopic(ObjectType.TOPIC, userTopic.id, "reply to user topic").getOrThrow()
-            createTopic(
-                ObjectType.TOPIC,
-                communityTopic.id,
-                "reply to community topic"
-            ).getOrThrow()
+            createTopic(ObjectType.TOPIC, communityTopic.id, "reply to community topic").getOrThrow()
             createTopic(ObjectType.TOPIC, userTopic.id, "another reply to user topic").getOrThrow()
         }
 
@@ -626,10 +608,7 @@ class AdminTest {
         val result = attachSession {
             // Upload a file to user
             val fileInfo =
-                upload(
-                    it.uid ob ObjectType.USER,
-                    getUploadDataFromText("test file")
-                ).getOrThrow().data.first()
+                upload(it.uid ob ObjectType.USER, getUploadDataFromText("test file")).getOrThrow().data.first()
 
             // Create a topic that references the file
             val topic = createTopic(
@@ -661,10 +640,7 @@ class AdminTest {
         val fileId = attachSession {
             // Upload a file without any references
             val fileInfo =
-                upload(
-                    it.uid ob ObjectType.USER,
-                    getUploadDataFromText("unused file")
-                ).getOrThrow().data.first()
+                upload(it.uid ob ObjectType.USER, getUploadDataFromText("unused file")).getOrThrow().data.first()
             fileInfo.id
         }.custom
 

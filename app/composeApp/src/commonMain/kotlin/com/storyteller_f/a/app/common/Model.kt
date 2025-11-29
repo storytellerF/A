@@ -624,8 +624,7 @@ class TitlesViewModel(
     type: TitleType? = null,
     scopeId: PrimaryKey? = null,
 ) : PagingViewModel<TitleInfo>() {
-    private val modelCollection =
-        TitleCollection.SearchTitle(uid, searchType, status, type, scopeId)
+    private val modelCollection = TitleCollection.SearchTitle(uid, searchType, status, type, scopeId)
 
     override val flow: Flow<PagingData<TitleInfo>> = buildPager(
         modelCollection,
@@ -714,8 +713,7 @@ class DownloadViewModel(
     modelStorage: ModelStorage,
     fileId: PrimaryKey?,
 ) : ViewModel() {
-    val data =
-        fileId?.let { modelStorage.download.observeDatum(it) } ?: MutableStateFlow(null)
+    val data = fileId?.let { modelStorage.download.observeDatum(it) } ?: MutableStateFlow(null)
 
     val fontFamily = data.distinctUntilChanged { t1, t2 ->
         t1?.status == t2?.status

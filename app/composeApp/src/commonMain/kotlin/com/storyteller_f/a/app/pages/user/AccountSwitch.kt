@@ -87,8 +87,7 @@ private fun AccountSwitchInternal(viewModel: ChildAccountsViewModel) {
     Row(modifier = Modifier.padding(horizontal = 10.dp)) {
         if (isInChildAccount) {
             FilledIconButton({
-                val rawUserPass =
-                    mainSessionManager.model.currentUserPass as? RawUserPass
+                val rawUserPass = mainSessionManager.model.currentUserPass as? RawUserPass
                 uiViewModel.childAccount.value = rawUserPass
             }) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, "Switch to main account")

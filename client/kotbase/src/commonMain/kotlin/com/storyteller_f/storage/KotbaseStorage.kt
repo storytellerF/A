@@ -450,21 +450,14 @@ class DownloadInfoDocumentStorage(val kotbaseDocumentSource: KotbaseDocumentSour
 }
 
 class DocumentModelStorage(source: KotbaseDocumentSource) : ModelStorage {
-    override val userInfoStorage: UserInfoStorage =
-        UserDocumentInfoStorage(source)
-    override val communityInfoStorage: CommunityInfoStorage =
-        CommunityDocumentInfoStorage(source)
-    override val topicInfoStorage: TopicInfoStorage =
-        TopicDocumentInfoStorage(source)
-    override val titleInfoStorage: TitleInfoStorage =
-        TitleDocumentInfoStorage(source)
-    override val roomInfoStorage: RoomInfoStorage =
-        RoomDocumentInfoStorage(source)
-    override val remoteKeyStorage: RemoteKeyStorage =
-        RemoteKeyDocumentStorage(source)
+    override val userInfoStorage: UserInfoStorage = UserDocumentInfoStorage(source)
+    override val communityInfoStorage: CommunityInfoStorage = CommunityDocumentInfoStorage(source)
+    override val topicInfoStorage: TopicInfoStorage = TopicDocumentInfoStorage(source)
+    override val titleInfoStorage: TitleInfoStorage = TitleDocumentInfoStorage(source)
+    override val roomInfoStorage: RoomInfoStorage = RoomDocumentInfoStorage(source)
+    override val remoteKeyStorage: RemoteKeyStorage = RemoteKeyDocumentStorage(source)
     override val reactionInfoStorage: ReactionInfoStorage = ReactionDocumentInfoStorage(source)
-    override val childAccountStorage: ChildAccountStorage =
-        ChildAccountDocumentStorage(source)
+    override val childAccountStorage: ChildAccountStorage = ChildAccountDocumentStorage(source)
     override val fileInfoStorage: FileInfoStorage = FileInfoDocumentStorage(source)
     override val downloadInfoStorage: DownloadInfoStorage = DownloadInfoDocumentStorage(source)
 }

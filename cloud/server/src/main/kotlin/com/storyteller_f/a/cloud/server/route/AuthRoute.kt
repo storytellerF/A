@@ -153,9 +153,7 @@ suspend fun Backend.getAdminAuthData(
     return when (credential) {
         is CustomCredential.IdCredential -> database.panelAccount.getUserAuthDataById(credential.id)
 
-        is CustomCredential.AddressCredential -> database.panelAccount.getUserAuthDataByAddress(
-            credential.ad
-        )
+        is CustomCredential.AddressCredential -> database.panelAccount.getUserAuthDataByAddress(credential.ad)
 
         else -> Result.failure(ForbiddenException())
     }

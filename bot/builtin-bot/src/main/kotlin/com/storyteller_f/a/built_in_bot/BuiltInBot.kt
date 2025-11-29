@@ -56,12 +56,7 @@ fun main() {
     val sessionManager =
         createUserSessionManager(buildWebSocketUrl(wsUrl), { model, cookieManager ->
             getClient {
-                defaultClientConfigure(
-                    cookieManager,
-                    manager = model,
-                    httpUrl = httpUrl,
-                    logLevel = LogLevel.INFO
-                )
+                defaultClientConfigure(cookieManager, manager = model, httpUrl = httpUrl, logLevel = LogLevel.INFO)
             }
         }) { r, t, _ ->
         }
@@ -152,11 +147,7 @@ private suspend fun processCommunityTask(
 ) {
     var next: String? = null
     while (true) {
-        val resp = sessionManager.searchCommunity(
-            10,
-            JoinStatusSearch.JOINED,
-            nextCommunityId = next
-        ).getOrThrow()
+        val resp = sessionManager.searchCommunity(10, JoinStatusSearch.JOINED, nextCommunityId = next).getOrThrow()
         delay(1.seconds)
         resp.data.forEach { communityInfo ->
             extracted(communityInfo)

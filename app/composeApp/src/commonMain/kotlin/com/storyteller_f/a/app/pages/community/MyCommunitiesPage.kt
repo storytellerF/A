@@ -169,8 +169,7 @@ fun CommunityGrid(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 if (communityInfo != null) {
-                    val commonDialogController =
-                        rememberCommonDialogController()
+                    val commonDialogController = rememberCommonDialogController()
                     val shown by commonDialogController.shown
                     CommunityIconWithDialog(communityInfo, shown, 30.dp, onClickIcon = commonDialogController::update)
                     Text(

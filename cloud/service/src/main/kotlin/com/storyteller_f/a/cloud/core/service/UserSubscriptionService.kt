@@ -24,13 +24,7 @@ suspend fun Backend.addSubscription(
     database.subscription.getSubscription(uid, newSubscription.objectId)
 }, {
     val id = SnowflakeFactory.nextId()
-    val userSubscription = UserSubscription(
-        id,
-        uid,
-        newSubscription.objectId,
-        newSubscription.objectType,
-        now()
-    )
+    val userSubscription = UserSubscription(id, uid, newSubscription.objectId, newSubscription.objectType, now())
     database.subscription.addSubscription(userSubscription).onSuccess {
         addUserLog(uid, UserLogType.ADD_SUBSCRIPTION, newSubscription.tuple())
     }

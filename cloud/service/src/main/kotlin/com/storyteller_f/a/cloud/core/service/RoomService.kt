@@ -99,27 +99,11 @@ private suspend fun Backend.joinRoomOrUpdateMemberStatus(
     val roomId = room.id
     return if (member == null) {
         database.container.addMember(
-            Member(
-                SnowflakeFactory.nextId(),
-                uid,
-                roomId,
-                ObjectType.ROOM,
-                time,
-                MemberStatus.JOINED,
-                time
-            )
+            Member(SnowflakeFactory.nextId(), uid, roomId, ObjectType.ROOM, time, MemberStatus.JOINED, time)
         )
     } else {
         database.container.updateMemberStatus(
-            Member(
-                member.id,
-                member.uid,
-                member.objectId,
-                member.objectType,
-                time,
-                MemberStatus.JOINED,
-                time
-            )
+            Member(member.id, member.uid, member.objectId, member.objectType, time, MemberStatus.JOINED, time)
         )
     }.onSuccess {
         // 保存到 MemberSearchService
@@ -135,9 +119,7 @@ private suspend fun Backend.saveMemberDocument(
 ) {
     getUserInfo(IdFetch(uid)).ifNotNull { userInfo ->
         memberSearchService.saveDocument(
-            listOf(
-                MemberDocument.fromUserInfo(member.id, userInfo, roomId, ObjectType.ROOM, room.name)
-            )
+            listOf(MemberDocument.fromUserInfo(member.id, userInfo, roomId, ObjectType.ROOM, room.name))
         ).onFailure { e ->
             Napier.e(e) {
                 "save member document failed"
@@ -196,9 +178,7 @@ private fun checkRoomName(newRoom: NewRoom): Result<Unit> {
             CustomBadRequestException("room name must be between in 1 and 20")
         )
 
-        StringCheckResult.CONTAIN_INVALID_CHAR -> Result.failure(
-            CustomBadRequestException("room name must be visible")
-        )
+        StringCheckResult.CONTAIN_INVALID_CHAR -> Result.failure(CustomBadRequestException("room name must be visible"))
 
         StringCheckResult.SUCCESS -> UNIT_RESULT
         else -> Result.failure(CustomBadRequestException("room name must be visible"))
@@ -225,8 +205,7 @@ suspend fun Backend.createRoom(
     }.mapResultIfNotNull {
         val roomId = SnowflakeFactory.nextId()
         val memberId = SnowflakeFactory.nextId()
-        val room =
-            Room(roomId, now(), newRoom.aid, newRoom.name, uid, newRoom.icon, communityId)
+        val room = Room(roomId, now(), newRoom.aid, newRoom.name, uid, newRoom.icon, communityId)
         val member = Member(
             memberId,
             room.creator,
@@ -273,13 +252,9 @@ private suspend fun Backend.checkRoomIcon(update: UpdateRoomBody): Result<Unit> 
     checkIcon(update.icon, Dimension.ROOM_DIMENSION).mapResult { checkResult ->
         when (checkResult) {
             MediaCheckResult.NOT_FOUND -> Result.failure(CustomBadRequestException("icon not found"))
-            MediaCheckResult.CONTENT_TYPE_MISMATCH -> Result.failure(
-                CustomBadRequestException("only support image")
-            )
+            MediaCheckResult.CONTENT_TYPE_MISMATCH -> Result.failure(CustomBadRequestException("only support image"))
 
-            MediaCheckResult.DIMENSION_MISMATCH -> Result.failure(
-                CustomBadRequestException("dimension mismatch")
-            )
+            MediaCheckResult.DIMENSION_MISMATCH -> Result.failure(CustomBadRequestException("dimension mismatch"))
 
             else -> UNIT_RESULT
         }
@@ -291,9 +266,7 @@ private fun checkRoomName(update: UpdateRoomBody): Result<Unit> {
             CustomBadRequestException("room name must be between in 1 and $ROOM_NAME_LENGTH")
         )
 
-        StringCheckResult.CONTAIN_INVALID_CHAR -> Result.failure(
-            CustomBadRequestException("room name must be visible")
-        )
+        StringCheckResult.CONTAIN_INVALID_CHAR -> Result.failure(CustomBadRequestException("room name must be visible"))
 
         StringCheckResult.SUCCESS -> UNIT_RESULT
         else -> Result.failure(CustomBadRequestException("room name must be visible"))

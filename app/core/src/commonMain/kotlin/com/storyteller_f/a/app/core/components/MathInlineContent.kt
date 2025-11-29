@@ -155,8 +155,7 @@ fun AnnotatedString.Builder.imageAnnotator(
 ): Boolean = when (child.type) {
     MarkdownElementTypes.IMAGE -> {
         val id = "image${child.startOffset}-${child.endOffset}"
-        val name =
-            child.findChildOfTypeRecursive(MarkdownElementTypes.LINK_DESTINATION)
+        val name = child.findChildOfTypeRecursive(MarkdownElementTypes.LINK_DESTINATION)
                 ?.getUnescapedTextInNode(content)
         if (name != null) {
             inlineContentMap[id] = imageInlineContent(

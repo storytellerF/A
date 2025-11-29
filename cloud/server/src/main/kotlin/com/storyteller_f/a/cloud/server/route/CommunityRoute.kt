@@ -52,14 +52,7 @@ fun Route.bindCommunityRoute(backend: Backend) {
     CustomApi.Communities.Id.Topics.get(handleResult()) { q, p ->
         usePrincipalOrNull { uid ->
             q.pagination(IdentifiablePagingGenerator) { f ->
-                backend.getTopicsByParentId(
-                    p.id,
-                    ObjectType.COMMUNITY,
-                    uid,
-                    q.fillHasCommented,
-                    f,
-                    q.pinType
-                )
+                backend.getTopicsByParentId(p.id, ObjectType.COMMUNITY, uid, q.fillHasCommented, f, q.pinType)
             }
         }
     }

@@ -158,10 +158,7 @@ private fun openPdfSnapshot(content: String, map: Map<String, File> = emptyMap()
             content,
             map,
             SnapshotGeneration.SimpleGeneration(actualFile),
-            PdfGenerationSpec(
-                LocalDateTime.parse("2023-01-01T00:00:00"),
-                LocalDateTime.parse("2023-01-01T00:00:00")
-            )
+            PdfGenerationSpec(LocalDateTime.parse("2023-01-01T00:00:00"), LocalDateTime.parse("2023-01-01T00:00:00"))
         ).getOrThrow()
         if (snapshotFile.exists()) {
             // 支持通过环境变量刷新快照：UPDATE_SNAPSHOTS=1 覆盖现有快照

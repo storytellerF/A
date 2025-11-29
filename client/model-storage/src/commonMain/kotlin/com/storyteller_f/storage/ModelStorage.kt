@@ -393,11 +393,7 @@ class WrappedPagingSource<K : Any, T : Any, M : Any>(
 
     override suspend fun load(params: LoadParams<K>): LoadResult<K, M> {
         return when (val result = rawSource.load(params)) {
-            is LoadResult.Page<K, T> -> LoadResult.Page(
-                process(result.data),
-                result.prevKey,
-                result.nextKey
-            )
+            is LoadResult.Page<K, T> -> LoadResult.Page(process(result.data), result.prevKey, result.nextKey)
 
             is LoadResult.Error<K, T> -> LoadResult.Error(result.throwable)
             is LoadResult.Invalid<K, T> -> LoadResult.Invalid()

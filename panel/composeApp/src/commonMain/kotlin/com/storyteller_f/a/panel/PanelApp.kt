@@ -503,10 +503,7 @@ private fun PanelSelectLoginPage(navigator: NavHostController, back: () -> Unit)
             verticalArrangement = Arrangement.spacedBy(40.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                stringResource(Res.string.sign_in),
-                style = MaterialTheme.typography.headlineMedium
-            )
+            Text(stringResource(Res.string.sign_in), style = MaterialTheme.typography.headlineMedium)
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -556,11 +553,7 @@ private suspend fun PanelGlobalDialogController.signInFromFile(
 class PanelAccountInstance(scope: CoroutineScope) {
     val sessionManager = createCustomPanelSessionManager("default") { model, cookieManager ->
         getClient {
-            defaultClientConfigureForPanel(
-                cookieManager,
-                manager = model,
-                httpUrl = PanelConfig.SERVER_URL
-            )
+            defaultClientConfigureForPanel(cookieManager, manager = model, httpUrl = PanelConfig.SERVER_URL)
         }
     }
     val events = MutableSharedFlow<Any>()

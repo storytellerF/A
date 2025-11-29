@@ -58,11 +58,7 @@ fun TopicDetailPage(id: PrimaryKey) {
         val navRoutes = listOf(
             NavRoute("/info", Icons.Default.Topic, stringResource(Res.string.tab_basic_info)),
             NavRoute("/topics", Icons.Default.Topic, stringResource(Res.string.tab_topics)),
-            NavRoute(
-                "/logs",
-                Icons.AutoMirrored.Filled.Article,
-                stringResource(Res.string.tab_logs)
-            ),
+            NavRoute("/logs", Icons.AutoMirrored.Filled.Article, stringResource(Res.string.tab_logs)),
         )
         CustomBottomNav(navRoutes[pagerState.currentPage].path, navRoutes) { path ->
             scope.launch {

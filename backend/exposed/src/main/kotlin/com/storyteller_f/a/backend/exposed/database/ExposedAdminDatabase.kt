@@ -154,8 +154,7 @@ class ExposedAdminDatabase(val databaseSession: ExposedDatabaseSession) : AdminD
             this[Topics.createdTime] = now()
             this[Topics.rootId] = it.rootId
             this[Topics.rootType] = rootType
-            this[Topics.parentId] =
-                if (level == 0) it.rootId else topicTuples[index - presetTopic.parent!!].id
+            this[Topics.parentId] = if (level == 0) it.rootId else topicTuples[index - presetTopic.parent!!].id
             this[Topics.parentType] = if (level == 0) rootType else ObjectType.TOPIC
             this[Topics.content] = ExposedBlob(it.content)
             this[Topics.isEncrypted] = it.isEncrypted

@@ -324,8 +324,7 @@ private fun QuotaSheet(
                             modifier = Modifier.weight(1f)
                         )
                         Spacer(modifier = Modifier.padding(horizontal = 8.dp))
-                        val uploadPercent =
-                            if (rec.total > 0) (rec.progress * 100f / rec.total) else 0f
+                        val uploadPercent = if (rec.total > 0) (rec.progress * 100f / rec.total) else 0f
                         Text("${uploadPercent.toInt()}%")
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -621,8 +620,7 @@ private fun DownloadInfoPageInternal(downloadViewModel: DownloadViewModel) {
     DownloadInfoTable(downloadInfo)
 }
 
-fun DownloadInfo.getPercent(): String =
-    "${(progress.toFloat() * 100 / total).roundToDecimalPlaces(2)} %"
+fun DownloadInfo.getPercent(): String = "${(progress.toFloat() * 100 / total).roundToDecimalPlaces(2)} %"
 
 @Composable
 private fun DownloadInfoTitle(data: DownloadInfo?) {

@@ -90,11 +90,7 @@ fun loadSystemFont(
 ): PDType0Font? {
     val font = getFont(content)
     // 使用 PDFBox 加载字体
-    return PDType0Font.load(
-        document,
-        FontMappers.instance().getTrueTypeFont(font?.name, null).font,
-        true
-    )
+    return PDType0Font.load(document, FontMappers.instance().getTrueTypeFont(font?.name, null).font, true)
 }
 
 data class PdfFontBundle(
@@ -123,12 +119,7 @@ private fun loadFontBundle(document: PDDocument, content: String): PdfFontBundle
     val boldItalic = candidates.firstOrNull {
         it.name.contains("Bold") && it.name.contains("Italic")
     }
-    return PdfFontBundle(
-        loadByName(base),
-        loadByName(bold),
-        loadByName(italic),
-        loadByName(boldItalic)
-    )
+    return PdfFontBundle(loadByName(base), loadByName(bold), loadByName(italic), loadByName(boldItalic))
 }
 
 private fun headerFontSizeFor(type: IElementType): Float = when (type) {

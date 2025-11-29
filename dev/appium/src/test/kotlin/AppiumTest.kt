@@ -19,8 +19,7 @@ class AppiumTest {
         val storageClient = StorageClient(URI(url).toURL())
         ProcessBuilder("")
         storageClient.reset()
-        val file =
-            File("../../app/composeApp/build/outputs/apk/release/composeApp-universal-release.apk")
+        val file = File("../../app/composeApp/build/outputs/apk/release/composeApp-universal-release.apk")
         val privateKeyContent = File("../../../AData/data/ecdsa/p-system")
             .readText()
             .replace("\r\n", "\n")
@@ -47,8 +46,7 @@ class AppiumTest {
 
 private fun assertElementVisible(driver: AndroidDriver, selector: String) {
     val wait = WebDriverWait(driver, Duration.ofSeconds(10))
-    val element =
-        wait.until(ExpectedConditions.presenceOfElementLocated(AppiumBy.androidUIAutomator(selector)))
+    val element = wait.until(ExpectedConditions.presenceOfElementLocated(AppiumBy.androidUIAutomator(selector)))
     assertTrue(element.isDisplayed)
 }
 

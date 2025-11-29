@@ -158,8 +158,7 @@ class DownloaderImpl(
         path: Path,
         userSession: CustomUserSessionManager
     ) {
-        val document =
-            modelStorage.download.getDocumentByFileId(fileInfo.id)
+        val document = modelStorage.download.getDocumentByFileId(fileInfo.id)
         if (document == null) {
             val new = DownloadInfo(
                 nowInstance().epochSeconds,
@@ -194,8 +193,7 @@ class DownloaderImpl(
         modelStorage: ModelStorage,
         id: PrimaryKey,
     ) {
-        val downloadInfo =
-            modelStorage.download.getDocument(id) ?: return
+        val downloadInfo = modelStorage.download.getDocument(id) ?: return
         Napier.w(tag = "download") {
             "no downloadInfo"
         }
@@ -206,8 +204,7 @@ class DownloaderImpl(
                 downloadInfo.status == DownloadStatus.PROCESS_FAILED
             ) {
                 val isFileExists = SystemFileSystem.exists(path)
-                val isMediaSizeMatch =
-                    SystemFileSystem.metadataOrNull(path)?.size == downloadInfo.total
+                val isMediaSizeMatch = SystemFileSystem.metadataOrNull(path)?.size == downloadInfo.total
                 !isFileExists || !isMediaSizeMatch
             } else {
                 true

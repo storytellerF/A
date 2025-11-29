@@ -182,15 +182,13 @@ class RoomTest {
     }
 }
 
-suspend fun UserSessionManager.createPrivateRoomForTest(): RoomInfo =
-    createRoom(NewRoom("name", "r3")).getOrThrow()
+suspend fun UserSessionManager.createPrivateRoomForTest(): RoomInfo = createRoom(NewRoom("name", "r3")).getOrThrow()
 
 suspend fun UserSessionManager.createPublicRoomForTest(
     communityId: PrimaryKey,
     roomAid: String,
     roomName: String
-): RoomInfo =
-    createRoom(NewRoom(roomName, roomAid, communityId = communityId)).getOrThrow()
+): RoomInfo = createRoom(NewRoom(roomName, roomAid, communityId = communityId)).getOrThrow()
 
 suspend fun UserSessionManager.expectedRoomCount(
     expected: Int,
@@ -228,8 +226,6 @@ suspend fun processRTCMessage(frame: RoomFrame, session: DefaultClientWebSocketS
     if (frame is RoomFrame.CreateOffer) {
         session.sendFrame(RoomFrame.SendOffer(CustomOffer("offer"), frame.roomId, frame.targetUid))
     } else if (frame is RoomFrame.CreateAnswer) {
-        session.sendFrame(
-            RoomFrame.SendAnswer(CustomAnswer("answer"), frame.roomId, frame.targetUid)
-        )
+        session.sendFrame(RoomFrame.SendAnswer(CustomAnswer("answer"), frame.roomId, frame.targetUid))
     }
 }

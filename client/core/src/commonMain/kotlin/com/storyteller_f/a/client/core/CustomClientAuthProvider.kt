@@ -109,7 +109,5 @@ fun HttpRequestBuilder.addRequestHeadersFromInfo(userInfo: PanelAccountInfo, sig
 }
 
 fun AuthConfig.custom(block: CustomClientAuthProvider.CustomAuthConfig.() -> Unit) {
-    providers.add(
-        CustomClientAuthProvider(CustomClientAuthProvider.CustomAuthConfig().apply(block))
-    )
+    providers.add(CustomClientAuthProvider(CustomClientAuthProvider.CustomAuthConfig().apply(block)))
 }

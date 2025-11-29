@@ -76,8 +76,7 @@ class FileSystemObjectStorageService(private val url: String, base: Path) : Obje
             names.mapNotNull {
                 val mediaPath = base.resolve("$bucketName/$it")
                 if (mediaPath.exists()) {
-                    val newUrl =
-                        UrlBuilder.fromString(url)
+                    val newUrl = UrlBuilder.fromString(url)
                             .withPath("a_file/${A_FILE_DEFAULT_BUCKET}/$it")
                             .toString()
                     ObjectStorageRecord(

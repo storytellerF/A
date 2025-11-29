@@ -74,11 +74,7 @@ fun UserDetailPage(uid: PrimaryKey) {
     Scaffold(topBar = { UserTopBar(uid) }, bottomBar = {
         val navRoutes = listOf(
             NavRoute("/info", Icons.Default.People, stringResource(Res.string.user_info)),
-            NavRoute(
-                "/logs",
-                Icons.AutoMirrored.Filled.Article,
-                stringResource(Res.string.user_logs)
-            ),
+            NavRoute("/logs", Icons.AutoMirrored.Filled.Article, stringResource(Res.string.user_logs)),
         )
         CustomBottomNav(navRoutes[pagerState.currentPage].path, navRoutes) { path ->
             scope.launch {

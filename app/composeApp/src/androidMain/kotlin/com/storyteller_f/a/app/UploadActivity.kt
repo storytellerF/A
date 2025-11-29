@@ -32,8 +32,7 @@ fun getClipFile(context: Context, uri: Uri): ClipFile? {
     }
     val (name, size) = query.use { cursor ->
         if (cursor.moveToFirst()) {
-            val name =
-                cursor.getString(cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME))
+            val name = cursor.getString(cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME))
             val size = cursor.getLong(cursor.getColumnIndexOrThrow(OpenableColumns.SIZE))
             name to size
         } else {
@@ -54,8 +53,7 @@ class ClipFile(
     private val contentResolver: ContentResolver = context.contentResolver
 
     override fun source(): Source {
-        val stream =
-            contentResolver.openInputStream(path.toUri()) ?: throw Exception("get stream failed")
+        val stream = contentResolver.openInputStream(path.toUri()) ?: throw Exception("get stream failed")
         return stream.asSource().buffered()
     }
 }

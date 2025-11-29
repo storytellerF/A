@@ -94,10 +94,7 @@ class LuceneUserSearchService(path: Path, isInMemory: Boolean = false) : Lucene(
                                 MultiFieldQueryParser(arrayOf("nickname"), analyzer).parse(it),
                                 BooleanClause.Occur.SHOULD
                             )
-                            add(
-                                MultiFieldQueryParser(arrayOf("aid"), analyzer).parse(it),
-                                BooleanClause.Occur.SHOULD
-                            )
+                            add(MultiFieldQueryParser(arrayOf("aid"), analyzer).parse(it), BooleanClause.Occur.SHOULD)
                         }.build(), BooleanClause.Occur.MUST)
                     }
                 }

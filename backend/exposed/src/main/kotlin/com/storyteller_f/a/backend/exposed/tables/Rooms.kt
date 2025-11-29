@@ -18,15 +18,7 @@ object Rooms : BaseTable() {
 
 fun Room.Companion.wrapRow(row: ResultRow): Room {
     return with(Rooms) {
-        Room(
-            row[id],
-            row[createdTime],
-            row[Aids.value],
-            row[name],
-            row[creator],
-            row[icon],
-            row[communityId]
-        )
+        Room(row[id], row[createdTime], row[Aids.value], row[name], row[creator], row[icon], row[communityId])
     }
 }
 
