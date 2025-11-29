@@ -83,7 +83,7 @@ class FileSystemObjectStorageService(private val url: String, base: Path) : Obje
                     ObjectStorageRecord(
                         newUrl,
                         mediaPath.getLastModifiedTime().toInstant().toKotlinInstant()
-                            .toLocalDateTime(TimeZone.Companion.UTC),
+                            .toLocalDateTime(TimeZone.UTC),
                         it
                     )
                 } else {
