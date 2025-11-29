@@ -26,13 +26,7 @@ fun getClipFile(context: Context, uri: Uri): ClipFile? {
     val contentResolver: ContentResolver = context.contentResolver
 
     val query =
-        contentResolver.query(
-            uri,
-            arrayOf(OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE),
-            null,
-            null,
-            null
-        )
+        contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE), null, null, null)
     if (query == null) {
         return null
     }
@@ -47,13 +41,7 @@ fun getClipFile(context: Context, uri: Uri): ClipFile? {
         }
     } ?: return null
     val type = contentResolver.getType(uri) ?: "*/*"
-    return ClipFile(
-        context,
-        name,
-        ContentType.parse(type),
-        size,
-        uri.toString()
-    )
+    return ClipFile(context, name, ContentType.parse(type), size, uri.toString())
 }
 
 class ClipFile(

@@ -148,10 +148,7 @@ fun SelectSignInPage(loginNav: LoginNav) {
             verticalArrangement = Arrangement.spacedBy(40.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                stringResource(Res.string.sign_in),
-                style = MaterialTheme.typography.headlineMedium
-            )
+            Text(stringResource(Res.string.sign_in), style = MaterialTheme.typography.headlineMedium)
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -274,10 +271,7 @@ fun SelectSignUpPage(loginNav: LoginNav) {
             verticalArrangement = Arrangement.spacedBy(40.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                stringResource(Res.string.sign_up),
-                style = MaterialTheme.typography.headlineMedium
-            )
+            Text(stringResource(Res.string.sign_up), style = MaterialTheme.typography.headlineMedium)
             Column(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -330,11 +324,7 @@ fun InputPrivateKeyPage(isSignUp: Boolean) {
     val globalDialogController = LocalGlobalDialog.current
     val startSign: () -> Unit = {
         scope.launch {
-            globalDialogController.startSign(
-                appNavFactory,
-                privateKey,
-                isSignUp
-            )
+            globalDialogController.startSign(appNavFactory, privateKey, isSignUp)
         }
     }
     CenterBox {
@@ -376,11 +366,7 @@ private suspend fun startSignFromFile(
     val f = FileKit.openFilePicker()
     if (f != null) {
         val privateKey = String(f.readBytes()).replaceCrlf()
-        globalDialogController.startSign(
-            appNav,
-            privateKey,
-            isSignUp
-        )
+        globalDialogController.startSign(appNav, privateKey, isSignUp)
     }
 }
 

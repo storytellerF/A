@@ -38,9 +38,7 @@ fun rememberAlertDialogController(): CustomAlertDialogController {
 }
 
 class CustomAlertDialogController(
-    val state: MutableState<CustomAlertDialogState?> = mutableStateOf(
-        null
-    )
+    val state: MutableState<CustomAlertDialogState?> = mutableStateOf(null)
 ) {
 
     fun showMessage(title: String, message: String, enableCopy: Boolean = false) {

@@ -52,11 +52,7 @@ fun UserCellInternal(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        UserIconWithDialog(
-            userInfo,
-            setClickEvent = true,
-            size = iconSize
-        )
+        UserIconWithDialog(userInfo, setClickEvent = true, size = iconSize)
         if (userInfo != null) {
             Column {
                 Text(userInfo.nickname, style = MaterialTheme.typography.titleMedium)

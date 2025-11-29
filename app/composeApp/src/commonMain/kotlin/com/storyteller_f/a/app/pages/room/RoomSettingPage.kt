@@ -70,12 +70,7 @@ fun RoomSettingPage(roomId: PrimaryKey) {
             },
             {
                 scope.launch {
-                    globalDialogController.updateRoom(
-                        roomId,
-                        it,
-                        currentOption,
-                        closeDialog
-                    )
+                    globalDialogController.updateRoom(roomId, it, currentOption, closeDialog)
                 }
             }
         )
@@ -119,9 +114,7 @@ private fun RoomSettingInternal(
             }
         )
         SettingOptionView("Name", {
-            showDialog(
-                SettingOption.Name(roomInfo.name)
-            )
+            showDialog(SettingOption.Name(roomInfo.name))
         }, {
             Text(roomInfo.name, textDecoration = TextDecoration.Underline)
         })

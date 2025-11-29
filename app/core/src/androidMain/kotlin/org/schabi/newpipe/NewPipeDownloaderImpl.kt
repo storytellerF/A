@@ -58,10 +58,7 @@ object NewPipeDownloaderImpl : Downloader() {
 
     private fun updateYoutubeRestrictedModeCookies(youtubeRestrictedModeEnabled: Boolean) {
         if (youtubeRestrictedModeEnabled) {
-            setCookie(
-                YOUTUBE_RESTRICTED_MODE_COOKIE_KEY,
-                YOUTUBE_RESTRICTED_MODE_COOKIE
-            )
+            setCookie(YOUTUBE_RESTRICTED_MODE_COOKIE_KEY, YOUTUBE_RESTRICTED_MODE_COOKIE)
         } else {
             removeCookie(YOUTUBE_RESTRICTED_MODE_COOKIE_KEY)
         }
@@ -90,10 +87,7 @@ object NewPipeDownloaderImpl : Downloader() {
             if (headerName != null && headerValueList != null) {
                 requestBuilder.removeHeader(headerName)
                 headerValueList.forEach(Consumer { headerValue: String? ->
-                    requestBuilder.addHeader(
-                        headerName,
-                        headerValue!!
-                    )
+                    requestBuilder.addHeader(headerName, headerValue!!)
                 })
             }
         }

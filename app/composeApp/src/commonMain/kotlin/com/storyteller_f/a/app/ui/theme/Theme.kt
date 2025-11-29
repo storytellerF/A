@@ -243,12 +243,7 @@ data class ColorFamily(
     val onColorContainer: Color
 )
 
-val unspecified_scheme = ColorFamily(
-    Color.Unspecified,
-    Color.Unspecified,
-    Color.Unspecified,
-    Color.Unspecified
-)
+val unspecified_scheme = ColorFamily(Color.Unspecified, Color.Unspecified, Color.Unspecified, Color.Unspecified)
 
 @Composable
 fun AppTheme(
@@ -260,9 +255,5 @@ fun AppTheme(
 ) {
     val colorScheme = getAppDynamicColorScheme(dynamicColor, darkTheme) ?: if (darkTheme) darkScheme else lightScheme
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = typography,
-        content = content
-    )
+    MaterialTheme(colorScheme = colorScheme, typography = typography, content = content)
 }

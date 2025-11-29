@@ -321,10 +321,7 @@ private fun UnboundSimpleUserCell(userInfo: UserInfo?) {
                 if (aid != null) {
                     Text(CoreStrings.aid(aid), style = MaterialTheme.typography.labelSmall)
                 } else {
-                    Text(
-                        CoreStrings.ad(userInfo.address),
-                        style = MaterialTheme.typography.labelSmall
-                    )
+                    Text(CoreStrings.ad(userInfo.address), style = MaterialTheme.typography.labelSmall)
                 }
             }
         }
@@ -414,10 +411,7 @@ fun ConnectionButton() {
         }
 
         else -> {
-            ButtonNav(
-                MaterialSymbolsOutlined.SignalDisconnected,
-                stringResource(Res.string.disconnected)
-            )
+            ButtonNav(MaterialSymbolsOutlined.SignalDisconnected, stringResource(Res.string.disconnected))
         }
     }
 }

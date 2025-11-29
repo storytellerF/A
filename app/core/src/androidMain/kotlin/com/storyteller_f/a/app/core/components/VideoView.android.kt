@@ -105,10 +105,7 @@ private fun VideoPlayer(
     Napier.d {
         "VideoPlayer ${localMediaPlaySession.uuid} ratio $ratio ${playingSession?.uuids} $videoSize"
     }
-    val playerState by rememberPlayerState(
-        player,
-        localMediaPlaySession
-    )
+    val playerState by rememberPlayerState(player, localMediaPlaySession)
     val enablePip =
         playerState.currentIsPlaying && (playingSession?.lastUuid == localMediaPlaySession.uuid)
     Napier.d(tag = "MediaPlayer") {
@@ -155,16 +152,9 @@ private fun BoxScope.VideoPlayerInternal(
             }
             it.player = player
         }
-        val playerState by rememberPlayerState(
-            player,
-            localMediaPlaySession
-        )
+        val playerState by rememberPlayerState(player, localMediaPlaySession)
         if (playerState.currentIsPlaying && contentType != FileInfo.M3U8_MIMETYPE) {
-            CircularProgressIndicator(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .height(40.dp)
-            )
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center).height(40.dp))
         }
     }
 }
@@ -189,14 +179,7 @@ fun EmbedMediaPlayerMenus(
         }
         IconButton({
             scope.launch {
-                clipboardManager.setClipEntry(
-                    ClipEntry(
-                        ClipData.newPlainText(
-                            "text",
-                            localMediaPlaySession.id
-                        )
-                    )
-                )
+                clipboardManager.setClipEntry(ClipEntry(ClipData.newPlainText("text", localMediaPlaySession.id)))
                 toasterState.showMessage("copied")
             }
         }) {

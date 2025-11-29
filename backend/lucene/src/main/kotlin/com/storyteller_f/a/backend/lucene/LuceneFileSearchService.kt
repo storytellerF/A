@@ -41,11 +41,7 @@ data class LuceneFileDocument(val fileDocument: FileDocument) : LuceneDocument {
             id: PrimaryKey,
             document: Document
         ): FileDocument {
-            return FileDocument(
-                id,
-                document.get("name"),
-                document.get("ownerId").toLong()
-            )
+            return FileDocument(id, document.get("name"), document.get("ownerId").toLong())
         }
     }
 }
@@ -94,18 +90,12 @@ class LuceneFileSearchService(path: Path, isInMemory: Boolean = false) : Lucene(
                 is FileDocumentSearch.Keyword -> {
                     // 添加 ownerId 过滤
                     fileDocumentSearch.ownerId?.let { owner ->
-                        add(
-                            LongField.newExactQuery("ownerId", owner),
-                            BooleanClause.Occur.MUST
-                        )
+                        add(LongField.newExactQuery("ownerId", owner), BooleanClause.Occur.MUST)
                     }
                     // 添加关键词搜索
                     preprocessUserInputKeyword(fileDocumentSearch.word)?.let {
                         add(BooleanQuery.Builder().apply {
-                            add(
-                                PrefixQuery(Term("name", it)),
-                                BooleanClause.Occur.SHOULD
-                            )
+                            add(PrefixQuery(Term("name", it)), BooleanClause.Occur.SHOULD)
                         }.build(), BooleanClause.Occur.MUST)
                     }
                 }

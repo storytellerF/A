@@ -146,9 +146,7 @@ suspend fun Backend.searchCommunities(
             ).mapPagingResultNotNull { searchResults ->
                 val communityIds = searchResults
                     .map { it.objectId }
-                database.community.getRawCommunities(
-                    ObjectListFetch.IdListFetch(communityIds)
-                )
+                database.community.getRawCommunities(ObjectListFetch.IdListFetch(communityIds))
             }
         }
         // word 不为空 && 不是搜索已加入（Unspecified），使用 communitySearchService
@@ -236,15 +234,7 @@ private suspend fun Backend.saveMemberDocument(
 ) {
     getUserInfo(ObjectFetch.IdFetch(uid)).ifNotNull { userInfo ->
         memberSearchService.saveDocument(
-            listOf(
-                MemberDocument.fromUserInfo(
-                    memberId,
-                    userInfo,
-                    id,
-                    ObjectType.COMMUNITY,
-                    name
-                )
-            )
+            listOf(MemberDocument.fromUserInfo(memberId, userInfo, id, ObjectType.COMMUNITY, name))
         ).onFailure { e ->
             Napier.e(e) {
                 "save member document failed"

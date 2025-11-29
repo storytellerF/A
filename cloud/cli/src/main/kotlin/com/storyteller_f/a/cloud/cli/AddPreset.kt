@@ -750,10 +750,7 @@ class AddPreset : Subcommand("add", "add entry") {
         }
         val encryptedContents = topicList.map {
             val (encryptedContent, aesBytes) = encryptDataByAES(
-                getTopicContent(
-                    it,
-                    parentDir
-                )
+                getTopicContent(it, parentDir)
             ).getOrThrow()
             EncryptedTopicTuple(encryptedContent, aesBytes, SnowflakeFactory.nextId(), it)
         }
@@ -807,13 +804,7 @@ class AddPreset : Subcommand("add", "add entry") {
         userMap: Map<String, User>
     ) {
         database.admin.batchAddSubscription(tuples.map {
-            UserSubscription(
-                it.id,
-                userMap[it.topic.author]!!.id,
-                it.id,
-                ObjectType.TOPIC,
-                now()
-            )
+            UserSubscription(it.id, userMap[it.topic.author]!!.id, it.id, ObjectType.TOPIC, now())
         }).getOrThrow()
         // 为订阅添加 user log
         tuples.forEach { tuple ->
@@ -839,12 +830,7 @@ class AddPreset : Subcommand("add", "add entry") {
             p.map {
                 val path = File(parentDir, it)
                 val name = path.name
-                UploadPack(
-                    path,
-                    name,
-                    path.length(),
-                    "$id/$name"
-                )
+                UploadPack(path, name, path.length(), "$id/$name")
             }
         ).getOrThrow()
     }

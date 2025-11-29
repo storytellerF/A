@@ -58,12 +58,7 @@ private suspend fun Backend.acgTask(list: List<Topic>): Result<Unit> {
         list.associateByPair()
     }.mapResult { userAcgMap ->
         database.user.addAcgForUser(
-            TaskRecord(
-                SnowflakeFactory.nextId(),
-                now(),
-                TaskRecordType.TOPIC_ACG,
-                list.last().id
-            ),
+            TaskRecord(SnowflakeFactory.nextId(), now(), TaskRecordType.TOPIC_ACG, list.last().id),
             acgList.mapNotNull { (id, acg) ->
                 userAcgMap[id]?.let { oldAcgAmount ->
                     AssetTransaction(

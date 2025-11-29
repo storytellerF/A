@@ -196,11 +196,7 @@ private fun SelfIcon(onClickCreate: () -> Unit) {
     val myInfo = LocalUserInfo.current
     val userOverviewViewModel = getUserOverviewViewModel()
     Box(modifier = Modifier.testTag("me")) {
-        SelfUserIconWithDialog(
-            myInfo,
-            overviewHandler = userOverviewViewModel.handler,
-            onClickCreate = onClickCreate
-        )
+        SelfUserIconWithDialog(myInfo, overviewHandler = userOverviewViewModel.handler, onClickCreate = onClickCreate)
     }
 }
 
@@ -295,10 +291,7 @@ fun UserReceivedTitleSearchContent(x0: String, x1: SearchScope.UserReceivedTitle
 fun UserCommunitySearchContent(current: String, scope: SearchScope.UserCommunities) {
     if (current.isNotBlank()) {
         val communitiesViewModel =
-            createTargetUserJoinedCommunitiesViewModel(
-                scope.userId,
-                current
-            )
+            createTargetUserJoinedCommunitiesViewModel(scope.userId, current)
         CommunityList(communitiesViewModel)
     }
 }
@@ -315,13 +308,8 @@ private fun MemberSearchContent(current: String) {
 @Composable
 private fun RoomMemberSearchContent(current: String, scope: SearchScope.RoomMember) {
     if (current.isNotBlank()) {
-        val viewModel = createSearchMemberInRoomViewModel(
-            scope,
-            current
-        )
-        MemberList(
-            viewModel
-        )
+        val viewModel = createSearchMemberInRoomViewModel(scope, current)
+        MemberList(viewModel)
     }
 }
 
@@ -329,23 +317,15 @@ private fun RoomMemberSearchContent(current: String, scope: SearchScope.RoomMemb
 private fun CommunityMemberSearchContent(current: String, scope: SearchScope.CommunityMember) {
     if (current.isNotBlank()) {
         val viewModel =
-            createMemberSearchInCommunityViewModel(
-                scope,
-                current
-            )
-        MemberList(
-            viewModel
-        )
+            createMemberSearchInCommunityViewModel(scope, current)
+        MemberList(viewModel)
     }
 }
 
 @Composable
 private fun TopicTopicSearchContent(current: String, scope: SearchScope.TopicTopic) {
     if (current.isNotBlank()) {
-        val viewModel = createTopicSearchInTopicViewModel(
-            scope,
-            current
-        )
+        val viewModel = createTopicSearchInTopicViewModel(scope, current)
         TopicList(viewModel)
     }
 }
@@ -353,10 +333,7 @@ private fun TopicTopicSearchContent(current: String, scope: SearchScope.TopicTop
 @Composable
 private fun UserTopicSearchContent(current: String, scope: SearchScope.UserTopic) {
     if (current.isNotBlank()) {
-        val viewModel = createTopicSearchInUserViewModel(
-            scope,
-            current
-        )
+        val viewModel = createTopicSearchInUserViewModel(scope, current)
         TopicList(viewModel)
     }
 }
@@ -364,10 +341,7 @@ private fun UserTopicSearchContent(current: String, scope: SearchScope.UserTopic
 @Composable
 private fun RoomTopicSearchContent(current: String, scope: SearchScope.RoomTopic) {
     if (current.isNotBlank()) {
-        val viewModel = createTopicSearchInRoomViewModel(
-            scope,
-            current
-        )
+        val viewModel = createTopicSearchInRoomViewModel(scope, current)
         TopicList(viewModel)
     }
 }
@@ -376,10 +350,7 @@ private fun RoomTopicSearchContent(current: String, scope: SearchScope.RoomTopic
 private fun CommunityRoomSearchContent(current: String, scope: SearchScope.CommunityRoom) {
     if (current.isNotBlank()) {
         val viewModel =
-            createRoomSearchInCommunityViewModel(
-                scope,
-                current
-            )
+            createRoomSearchInCommunityViewModel(scope, current)
         RoomList(viewModel)
     }
 }
@@ -388,10 +359,7 @@ private fun CommunityRoomSearchContent(current: String, scope: SearchScope.Commu
 private fun CommunityTopicSearchContent(current: String, scope: SearchScope.CommunityTopic) {
     if (current.isNotBlank()) {
         val viewModel =
-            createTopicSearchInCommunityViewModel(
-                scope,
-                current
-            )
+            createTopicSearchInCommunityViewModel(scope, current)
         TopicList(viewModel)
     }
 }
@@ -420,10 +388,7 @@ private fun MyRoomSearchContent(current: String) {
                             {
                                 currentOption = e
                             },
-                            shape = SegmentedButtonDefaults.itemShape(
-                                index = i,
-                                count = options.size
-                            )
+                            shape = SegmentedButtonDefaults.itemShape(index = i, count = options.size)
                         ) {
                             Text(e.name.lowercase().replace("_", " "))
                         }
@@ -432,10 +397,7 @@ private fun MyRoomSearchContent(current: String) {
             }
         }
         if (current.isNotBlank()) {
-            val viewModel = createRoomSearchViewModel(
-                finalOption,
-                current
-            )
+            val viewModel = createRoomSearchViewModel(finalOption, current)
             RoomList(viewModel)
         }
     }
@@ -464,10 +426,7 @@ private fun MyCommunitySearchContent(query: String) {
                             {
                                 currentOption = e
                             },
-                            shape = SegmentedButtonDefaults.itemShape(
-                                index = i,
-                                count = options.size
-                            )
+                            shape = SegmentedButtonDefaults.itemShape(index = i, count = options.size)
                         ) {
                             Text(e.name.lowercase().replace("_", " "))
                         }
@@ -522,11 +481,7 @@ private fun WorldSearchContent(current: String) {
 @Composable
 private fun UploadedFilesSearchContent(current: String, scope: SearchScope.UploadedFiles) {
     if (current.isNotBlank()) {
-        val viewModel = createFileSearchViewModel(
-            scope.objectId,
-            scope.objectType,
-            current
-        )
+        val viewModel = createFileSearchViewModel(scope.objectId, scope.objectType, current)
         FileList(viewModel)
     }
 }

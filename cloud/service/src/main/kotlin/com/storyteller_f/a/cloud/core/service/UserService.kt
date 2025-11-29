@@ -289,11 +289,7 @@ suspend fun Backend.addChildAccount(uid: PrimaryKey): Result<ChildAccountInfo> {
                             "save user document failed"
                         }
                     }
-                addUserLog(
-                    uid,
-                    UserLogType.ADD_ALTERNATIVE_ACCOUNT,
-                    id ob ObjectType.USER
-                )
+                addUserLog(uid, UserLogType.ADD_ALTERNATIVE_ACCOUNT, id ob ObjectType.USER)
                 ChildAccountInfo(uid, derPrivateKey, user.toUserInfo())
             }
         }
@@ -314,10 +310,7 @@ suspend fun Backend.addUserLog(
     }
 }
 
-suspend fun Backend.addDevice(
-    uid: PrimaryKey,
-    newDevice: NewDevice
-): Result<Unit> =
+suspend fun Backend.addDevice(uid: PrimaryKey, newDevice: NewDevice): Result<Unit> =
     database.user.addDevice(uid, newDevice.endpointUrl).recoverIfDup(database::isDup) {
         UNIT_RESULT
     }
@@ -336,11 +329,7 @@ suspend fun Backend.getUserAlternateUserInfoList(
             val map = userList.associateBy { it.id }
             results.mapNotNull {
                 map[it.rawUser.user.id]?.let { userInfo ->
-                    ChildAccountInfo(
-                        it.rawUser.user.id,
-                        it.childAccount.privateKey,
-                        userInfo
-                    )
+                    ChildAccountInfo(it.rawUser.user.id, it.childAccount.privateKey, userInfo)
                 }
             }
         }

@@ -41,9 +41,7 @@ class UserTest {
     @Test
     fun `test update user nickname and aid`() = test {
         attachSession {
-            val updateRow = updateUserInfo(
-                UpdateUserBody(aid = "aid")
-            ).getOrThrow()
+            val updateRow = updateUserInfo(UpdateUserBody(aid = "aid")).getOrThrow()
             assertEquals(updateRow.aid, "aid")
             updateUserInfo(UpdateUserBody(nickname = "test")).getOrThrow()
             assertEquals("test", getUserInfo(it.uid).getOrThrow().nickname)

@@ -73,15 +73,7 @@ private fun FileObjectBlock(
         return
     }
     val coverInfo = mediaMap[obj.cover]
-    val obj1 = RemoteMediaItem(
-        mediaInfo.id.toString(),
-        url,
-        contentType,
-        false,
-        obj.name,
-        coverInfo,
-        obj.title
-    )
+    val obj1 = RemoteMediaItem(mediaInfo.id.toString(), url, contentType, false, obj.name, coverInfo, obj.title)
     if (contentType.startsWith("video/")) {
         VideoViewEmbed(obj1)
     } else if (contentType.startsWith("audio/")) {

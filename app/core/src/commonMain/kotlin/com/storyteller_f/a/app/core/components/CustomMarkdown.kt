@@ -58,10 +58,7 @@ fun CustomMarkdown(
                 colors = colors,
                 typography = typography,
                 imageTransformer = imageTransformer,
-                components = markdownComponents(
-                    codeFence = codeFence,
-                    codeBlock = highlightedCodeBlock,
-                ),
+                components = markdownComponents(codeFence = codeFence, codeBlock = highlightedCodeBlock,),
                 annotator = markdownAnnotator { content, child ->
                     imageAnnotator(
                         child,
@@ -80,10 +77,7 @@ fun CustomMarkdown(
                 extendedSpans = markdownExtendedSpans {
                     val animator = rememberSquigglyUnderlineAnimator()
                     remember {
-                        ExtendedSpans(
-                            RoundedCornerSpanPainter(),
-                            SquigglyUnderlineSpanPainter(animator = animator)
-                        )
+                        ExtendedSpans(RoundedCornerSpanPainter(), SquigglyUnderlineSpanPainter(animator = animator))
                     }
                 }
             )

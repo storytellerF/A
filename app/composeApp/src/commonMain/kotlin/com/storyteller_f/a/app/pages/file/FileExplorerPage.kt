@@ -131,25 +131,11 @@ fun FileExplorerPage(mediaTarget: ObjectTuple) {
 @Composable
 private fun fileNavRoutes(mediaTarget: ObjectTuple): List<NavRoute> {
     val list = mutableListOf(
-        NavRoute(
-            "/uploaded",
-            Icons.Filled.Folder,
-            "Uploaded"
-        ),
-        NavRoute(
-            "/upload-record",
-            Icons.Filled.CloudUpload,
-            "Upload"
-        )
+        NavRoute("/uploaded", Icons.Filled.Folder, "Uploaded"),
+        NavRoute("/upload-record", Icons.Filled.CloudUpload, "Upload")
     )
     if (mediaTarget.objectType == ObjectType.USER) {
-        list.add(
-            NavRoute(
-                "/download-record",
-                Icons.Filled.Download,
-                "Download"
-            )
-        )
+        list.add(NavRoute("/download-record", Icons.Filled.Download, "Download"))
     }
     return list
 }
@@ -828,10 +814,7 @@ fun CancelUploadButton(uploadInfo: UploadInfo, updateDropdown: (Boolean) -> Unit
                         abortChunkUpload(it)
                     }.getOrThrow()
                 }
-                modelStorage.upload.delete(
-                    UploadCollection(myUid),
-                    uploadInfo.pathHash
-                )
+                modelStorage.upload.delete(UploadCollection(myUid), uploadInfo.pathHash)
             }
         },
         leadingIcon = {

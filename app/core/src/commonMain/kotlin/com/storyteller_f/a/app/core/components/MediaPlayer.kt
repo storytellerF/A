@@ -52,9 +52,7 @@ data class MediaPlaySession(
     val lastUuid get() = uuids.lastOrNull()
 
     @OptIn(ExperimentalUuidApi::class)
-    fun appendUuid(
-        uuid: Uuid
-    ) = copy(uuids = uuids + uuid)
+    fun appendUuid(uuid: Uuid) = copy(uuids = uuids + uuid)
 
     val uuidCount get() = uuids.size
 }
@@ -68,10 +66,7 @@ expect abstract class MediaPlayerService {
     val state: MutableStateFlow<MediaPlaySession?>
 
     abstract fun fullscreen(remoteMediaItem: RemoteMediaItem)
-    abstract suspend fun start(
-        remoteMediaItem: RemoteMediaItem,
-        localMediaPlaySession: LocalMediaPlaySession
-    )
+    abstract suspend fun start(remoteMediaItem: RemoteMediaItem, localMediaPlaySession: LocalMediaPlaySession)
 }
 
 @Composable

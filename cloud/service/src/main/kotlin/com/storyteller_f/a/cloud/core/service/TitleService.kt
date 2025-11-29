@@ -241,20 +241,10 @@ private suspend fun toTitle(
 }
 
 val titleMap = mutableMapOf(
-    ObjectType.COMMUNITY to listOf(
-        TitleType.REGULAR,
-        TitleType.JOIN
-    ),
-    ObjectType.ROOM to listOf(
-        TitleType.REGULAR,
-        TitleType.JOIN
-    ),
-    ObjectType.USER to listOf(
-        TitleType.REGULAR
-    ),
-    ObjectType.TOPIC to listOf(
-        TitleType.REGULAR
-    )
+    ObjectType.COMMUNITY to listOf(TitleType.REGULAR, TitleType.JOIN),
+    ObjectType.ROOM to listOf(TitleType.REGULAR, TitleType.JOIN),
+    ObjectType.USER to listOf(TitleType.REGULAR),
+    ObjectType.TOPIC to listOf(TitleType.REGULAR)
 )
 
 suspend fun createTitle(

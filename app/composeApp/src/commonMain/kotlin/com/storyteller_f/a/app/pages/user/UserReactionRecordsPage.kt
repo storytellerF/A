@@ -52,10 +52,7 @@ fun UserReactionRecordCell(reactionRecordInfo: ReactionRecordInfo?) {
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                reactionRecordInfo.emoji,
-                modifier = Modifier.padding(end = 8.dp)
-            )
+            Text(reactionRecordInfo.emoji, modifier = Modifier.padding(end = 8.dp))
             Column {
                 Text("Object ID: ${reactionRecordInfo.objectId}")
                 Text("Type: ${reactionRecordInfo.objectType}")

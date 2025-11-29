@@ -25,10 +25,7 @@ import com.storyteller_f.storage.ModelStorage
 import io.github.aakira.napier.Napier
 
 @Composable
-fun createSearchCommunitiesViewModel(
-    finalOption: JoinStatusSearch,
-    query: String,
-) = customViewModel(
+fun createSearchCommunitiesViewModel(finalOption: JoinStatusSearch, query: String,) = customViewModel(
     listOf("search-community", finalOption.name, query)
 ) { client, databaseSource ->
     CommunitiesViewModel(client, databaseSource, finalOption, query)
@@ -49,52 +46,31 @@ fun createJoinedCommunitiesWithPosterViewModel() = customViewModel(
 }
 
 @Composable
-fun createTargetUserJoinedCommunitiesViewModel(
-    target: PrimaryKey,
-    word: String = "",
-) = customViewModel(
-    listOf(
-        "communities",
-        target,
-        word
-    )
+fun createTargetUserJoinedCommunitiesViewModel(target: PrimaryKey, word: String = "",) = customViewModel(
+    listOf("communities", target, word)
 ) { client, databaseSource ->
     CommunitiesViewModel(client, databaseSource, JoinStatusSearch.JOINED, word, target)
 }
 
 @Composable
 fun createCommunityViewModel(communityId: PrimaryKey) = customViewModel(
-    listOf(
-        "community",
-        communityId
-    )
+    listOf("community", communityId)
 ) { client, databaseSource ->
     IdCommunityViewModel(client, databaseSource, communityId)
 }
 
 @Composable
 fun createCommunityViewModel(communityAid: String) = customViewModel(
-    listOf(
-        "community",
-        communityAid
-    )
+    listOf("community", communityAid)
 ) { client, databaseSource ->
     AidCommunityViewModel(client, databaseSource, communityAid)
 }
 
 @Composable
 fun createCommunityRoomsViewModel(communityId: PrimaryKey) = customViewModel(
-    listOf(
-        "community-rooms",
-        communityId
-    )
+    listOf("community-rooms", communityId)
 ) { client, databaseSource ->
-    RoomsViewModel(
-        client,
-        databaseSource,
-        JoinStatusSearch.UNSPECIFIED,
-        communityId = communityId
-    )
+    RoomsViewModel(client, databaseSource, JoinStatusSearch.UNSPECIFIED, communityId = communityId)
 }
 
 @Composable
@@ -104,24 +80,14 @@ fun createJoinedRoomsViewModel() = customViewModel { client, databaseSource ->
 
 @Composable
 fun createRoomViewModel(roomId: PrimaryKey) = customViewModel(
-    listOf(
-        "room",
-        roomId
-    )
+    listOf("room", roomId)
 ) { client, databaseSource ->
     IdRoomViewModel(client, databaseSource, roomId)
 }
 
 @Composable
-fun createRoomSearchInCommunityViewModel(
-    scope: SearchScope.CommunityRoom,
-    current: String,
-) = customViewModel(
-    listOf(
-        "rooms",
-        scope.communityId,
-        current
-    )
+fun createRoomSearchInCommunityViewModel(scope: SearchScope.CommunityRoom, current: String,) = customViewModel(
+    listOf("rooms", scope.communityId, current)
 ) { client, databaseSource ->
     RoomsViewModel(client, databaseSource, JoinStatusSearch.UNSPECIFIED, current, scope.communityId)
 }
@@ -135,24 +101,15 @@ fun createRoomSearchViewModel(
 }
 
 @Composable
-fun createRoomKeysViewModel(
-    roomId: PrimaryKey,
-    roomInfo: RoomInfo,
-) = customViewModel(
-    listOf(
-        "room-keys",
-        roomId
-    )
+fun createRoomKeysViewModel(roomId: PrimaryKey, roomInfo: RoomInfo,) = customViewModel(
+    listOf("room-keys", roomId)
 ) { client, _ ->
     RoomKeysViewModel(client, roomId, roomInfo.isPrivate)
 }
 
 @Composable
 fun createRoomViewModel(roomAid: String) = customViewModel(
-    listOf(
-        "room",
-        roomAid
-    )
+    listOf("room", roomAid)
 ) { client, databaseSource ->
     AidRoomViewModel(client, databaseSource, roomAid)
 }
@@ -161,10 +118,7 @@ fun createRoomViewModel(roomAid: String) = customViewModel(
 fun createRoomTopicsViewModel(roomId: PrimaryKey): TopicsViewModel {
     return buildByMarkdown { typography, density ->
         customViewModel(
-            listOf(
-                "room-topics",
-                roomId
-            )
+            listOf("room-topics", roomId)
         ) { sessionManager, databaseSource ->
             TopicsViewModel(
                 sessionManager,
@@ -183,10 +137,7 @@ fun createRoomTopicsViewModel(roomId: PrimaryKey): TopicsViewModel {
 fun createCommunityTopicsViewModel(communityId: PrimaryKey): TopicsViewModel {
     return buildByMarkdown { typography, density ->
         customViewModel(
-            listOf(
-                "community-topics",
-                communityId
-            )
+            listOf("community-topics", communityId)
         ) { sessionManager, databaseSource ->
             TopicsViewModel(
                 sessionManager,
@@ -207,10 +158,7 @@ fun createUserTopicsViewModel(
 ): TopicsViewModel {
     return buildByMarkdown { typography, density ->
         customViewModel(
-            listOf(
-                "user-topics",
-                uid
-            )
+            listOf("user-topics", uid)
         ) { sessionManager, databaseSource ->
             TopicsViewModel(
                 sessionManager,
@@ -227,52 +175,23 @@ fun createUserTopicsViewModel(
 
 @Composable
 fun createTopicSearchViewModel(current: String) = customViewModel(
-    listOf(
-        "topic",
-        current
-    )
+    listOf("topic", current)
 ) { sessionManager, databaseSource ->
     TopicSearchViewModel(sessionManager, databaseSource, current.split(" "), null, null)
 }
 
 @Composable
-fun createTopicSearchInTopicViewModel(
-    scope: SearchScope.TopicTopic,
-    current: String,
-) = customViewModel(
-    listOf(
-        "topic",
-        scope.topicId,
-        current
-    )
+fun createTopicSearchInTopicViewModel(scope: SearchScope.TopicTopic, current: String,) = customViewModel(
+    listOf("topic", scope.topicId, current)
 ) { sessionManager, databaseSource ->
-    TopicSearchViewModel(
-        sessionManager,
-        databaseSource,
-        current.split(" "),
-        scope.topicId,
-        ObjectType.TOPIC
-    )
+    TopicSearchViewModel(sessionManager, databaseSource, current.split(" "), scope.topicId, ObjectType.TOPIC)
 }
 
 @Composable
-fun createTopicSearchInUserViewModel(
-    scope: SearchScope.UserTopic,
-    current: String,
-) = customViewModel(
-    listOf(
-        "topic",
-        scope.userId,
-        current
-    )
+fun createTopicSearchInUserViewModel(scope: SearchScope.UserTopic, current: String,) = customViewModel(
+    listOf("topic", scope.userId, current)
 ) { sessionManager, databaseSource ->
-    TopicSearchViewModel(
-        sessionManager,
-        databaseSource,
-        current.split(" "),
-        scope.userId,
-        ObjectType.USER
-    )
+    TopicSearchViewModel(sessionManager, databaseSource, current.split(" "), scope.userId, ObjectType.USER)
 }
 
 @Composable
@@ -283,42 +202,19 @@ fun createMemberSearchViewModel(word: String) = customViewModel(
 }
 
 @Composable
-fun createTopicSearchInCommunityViewModel(
-    scope: SearchScope.CommunityTopic,
-    current: String,
-) = customViewModel(
-    listOf(
-        "topic",
-        scope.communityId,
-        current
-    )
+fun createTopicSearchInCommunityViewModel(scope: SearchScope.CommunityTopic, current: String,) = customViewModel(
+    listOf("topic", scope.communityId, current)
 ) { sessionManager, databaseSource ->
-    TopicSearchViewModel(
-        sessionManager,
-        databaseSource,
-        current.split(" "),
-        scope.communityId,
-        ObjectType.COMMUNITY
-    )
+    TopicSearchViewModel(sessionManager, databaseSource, current.split(" "), scope.communityId, ObjectType.COMMUNITY)
 }
 
 @Composable
 fun createTopicViewModel(topicId: PrimaryKey): IdTopicViewModel {
     return buildByMarkdown { typography, density ->
         customViewModel(
-            listOf(
-                "topic",
-                topicId
-            )
+            listOf("topic", topicId)
         ) { sessionManager, databaseSource ->
-            IdTopicViewModel(
-                sessionManager,
-                databaseSource,
-                topicId,
-                typography.code,
-                typography.inlineCode,
-                density
-            )
+            IdTopicViewModel(sessionManager, databaseSource, topicId, typography.code, typography.inlineCode, density)
         }
     }
 }
@@ -327,10 +223,7 @@ fun createTopicViewModel(topicId: PrimaryKey): IdTopicViewModel {
 fun createTopicsInTopicViewModel(topicId: PrimaryKey): TopicsViewModel {
     return buildByMarkdown { typography, density ->
         customViewModel(
-            listOf(
-                "topic-topics",
-                topicId
-            )
+            listOf("topic-topics", topicId)
         ) { sessionManager, databaseSource ->
             TopicsViewModel(
                 sessionManager,
@@ -349,113 +242,51 @@ fun createTopicsInTopicViewModel(topicId: PrimaryKey): TopicsViewModel {
 fun createTopicViewModel(topicAid: String): AidTopicViewModel {
     return buildByMarkdown { typography, density ->
         customViewModel(
-            listOf(
-                "topic",
-                topicAid
-            )
+            listOf("topic", topicAid)
         ) { sessionManager, databaseSource ->
-            AidTopicViewModel(
-                sessionManager,
-                databaseSource,
-                topicAid,
-                typography.code,
-                typography.inlineCode,
-                density
-            )
+            AidTopicViewModel(sessionManager, databaseSource, topicAid, typography.code, typography.inlineCode, density)
         }
     }
 }
 
 @Composable
-fun createTopicSearchInRoomViewModel(
-    scope: SearchScope.RoomTopic,
-    current: String,
-) = customViewModel(
-    listOf(
-        "topic",
-        scope.roomId,
-        current
-    )
+fun createTopicSearchInRoomViewModel(scope: SearchScope.RoomTopic, current: String,) = customViewModel(
+    listOf("topic", scope.roomId, current)
 ) { sessionManager, databaseSource ->
-    TopicSearchViewModel(
-        sessionManager,
-        databaseSource,
-        current.split(" "),
-        scope.roomId,
-        ObjectType.ROOM
-    )
+    TopicSearchViewModel(sessionManager, databaseSource, current.split(" "), scope.roomId, ObjectType.ROOM)
 }
 
 @Composable
-fun createSearchMemberInRoomViewModel(
-    scope: SearchScope.RoomMember,
-    current: String,
-) = customViewModel(
-    listOf(
-        "members",
-        scope.roomId,
-        current
-    )
+fun createSearchMemberInRoomViewModel(scope: SearchScope.RoomMember, current: String,) = customViewModel(
+    listOf("members", scope.roomId, current)
 ) { sessionManager, databaseSource ->
     ContainerMemberViewModel(sessionManager, databaseSource, scope.roomId, current, ObjectType.ROOM)
 }
 
 @Composable
-fun createMemberSearchInCommunityViewModel(
-    scope: SearchScope.CommunityMember,
-    current: String,
-) = customViewModel(
-    listOf(
-        "members",
-        scope.communityId,
-        current
-    )
+fun createMemberSearchInCommunityViewModel(scope: SearchScope.CommunityMember, current: String,) = customViewModel(
+    listOf("members", scope.communityId, current)
 ) { sessionManager, databaseSource ->
-    ContainerMemberViewModel(
-        sessionManager,
-        databaseSource,
-        scope.communityId,
-        current,
-        ObjectType.COMMUNITY
-    )
+    ContainerMemberViewModel(sessionManager, databaseSource, scope.communityId, current, ObjectType.COMMUNITY)
 }
 
 @Composable
-fun createMediaListViewModel(
-    objectTuple: ObjectTuple,
-) = customViewModel(
-    listOf(
-        "media",
-        objectTuple.objectId
-    )
+fun createMediaListViewModel(objectTuple: ObjectTuple,) = customViewModel(
+    listOf("media", objectTuple.objectId)
 ) { sessionManager, databaseSource ->
     MediaListViewModel(sessionManager, databaseSource, objectTuple.objectId, objectTuple.objectType)
 }
 
 @Composable
-fun createFileSearchViewModel(
-    objectId: PrimaryKey,
-    objectType: ObjectType,
-    word: String,
-) = customViewModel(
-    listOf(
-        "file-search",
-        objectId,
-        word
-    )
+fun createFileSearchViewModel(objectId: PrimaryKey, objectType: ObjectType, word: String,) = customViewModel(
+    listOf("file-search", objectId, word)
 ) { sessionManager, databaseSource ->
     FileSearchViewModel(sessionManager, databaseSource, word, objectId, objectType)
 }
 
 @Composable
-fun createMemberViewModel(
-    objectId: PrimaryKey,
-    objectType: ObjectType,
-) = customViewModel(
-    listOf(
-        "members",
-        objectId
-    )
+fun createMemberViewModel(objectId: PrimaryKey, objectType: ObjectType,) = customViewModel(
+    listOf("members", objectId)
 ) { sessionManager, databaseSource ->
     ContainerMemberViewModel(sessionManager, databaseSource, objectId, "", objectType)
 }
@@ -463,10 +294,7 @@ fun createMemberViewModel(
 @Composable
 fun createUserViewModel(userAid: String) =
     customViewModel(
-        listOf(
-            "user",
-            userAid
-        )
+        listOf("user", userAid)
     ) { sessionManager, databaseSource ->
         AidUserViewModel(sessionManager, databaseSource, userAid)
     }
@@ -474,10 +302,7 @@ fun createUserViewModel(userAid: String) =
 @Composable
 fun createUserViewModel(userId: PrimaryKey) =
     customViewModel(
-        listOf(
-            "user",
-            userId
-        )
+        listOf("user", userId)
     ) { sessionManager, databaseSource ->
         IdUserViewModel(sessionManager, databaseSource, userId)
     }
@@ -488,13 +313,7 @@ fun createWorldViewModel(): WorldViewModel {
         customViewModel(
             listOf("world")
         ) { sessionManager, databaseSource ->
-            WorldViewModel(
-                sessionManager,
-                databaseSource,
-                typography.code,
-                typography.inlineCode,
-                density
-            )
+            WorldViewModel(sessionManager, databaseSource, typography.code, typography.inlineCode, density)
         }
     }
 }
@@ -502,10 +321,7 @@ fun createWorldViewModel(): WorldViewModel {
 @Composable
 fun createReactionsViewModel(objectId: PrimaryKey): ReactionsViewModel {
     return customViewModel(
-        listOf(
-            "reactions",
-            objectId
-        )
+        listOf("reactions", objectId)
     ) { sessionManager, databaseSource ->
         ReactionsViewModel(sessionManager, objectId, databaseSource)
     }
@@ -519,10 +335,7 @@ fun createUserTitlesViewModel(
     type: TitleType? = null,
     scopeId: PrimaryKey? = null,
 ) = customViewModel(
-    listOf(
-        "user-titles",
-        uid
-    )
+    listOf("user-titles", uid)
 ) { sessionManager, databaseSource ->
     TitlesViewModel(sessionManager, databaseSource, uid, searchType, status, type, scopeId)
 }
@@ -530,9 +343,7 @@ fun createUserTitlesViewModel(
 @Composable
 fun createUploadViewModel(myUid: PrimaryKey) =
     customViewModel(
-        listOf(
-            "upload",
-        )
+        listOf("upload",)
     ) { _, model ->
         UploadViewModel(myUid, model)
     }
@@ -546,14 +357,8 @@ fun getUploadViewModel(pathHash: String, myUid: PrimaryKey): UploadDetailViewMod
     }
 
 @Composable
-fun getMarkdownMediasViewModel(
-    input: String,
-    objectTuple: ObjectTuple,
-): MarkdownMediasViewModel = customViewModel(
-    listOf(
-        "content",
-        md5(input)
-    )
+fun getMarkdownMediasViewModel(input: String, objectTuple: ObjectTuple,): MarkdownMediasViewModel = customViewModel(
+    listOf("content", md5(input))
 ) { sessionManager, _ ->
     MarkdownMediasViewModel(sessionManager, input, objectTuple)
 }
@@ -603,13 +408,7 @@ fun getFavoriteViewModel() = customViewModel(listOf("favorite")) { sessionManage
 fun getSubscriptionViewModel(): SubscriptionsViewModel {
     return buildByMarkdown { typography, density ->
         customViewModel(listOf("subscription")) { sessionManager, modelStorage ->
-            SubscriptionsViewModel(
-                sessionManager,
-                modelStorage,
-                typography.code,
-                typography.inlineCode,
-                density
-            )
+            SubscriptionsViewModel(sessionManager, modelStorage, typography.code, typography.inlineCode, density)
         }
     }
 }
@@ -625,13 +424,7 @@ fun getUserReactionRecordsViewModel() = customViewModel(
 fun getUserCommentsViewModel(): UserCommentsViewModel {
     return buildByMarkdown { typography, density ->
         customViewModel(listOf("user-comments")) { sessionManager, modelStorage ->
-            UserCommentsViewModel(
-                sessionManager,
-                modelStorage,
-                typography.code,
-                typography.inlineCode,
-                density
-            )
+            UserCommentsViewModel(sessionManager, modelStorage, typography.code, typography.inlineCode, density)
         }
     }
 }
@@ -651,10 +444,7 @@ fun createTitleComposeViewModel(): TitleComposeViewModel =
 @Composable
 fun createFileViewModel(objectId: PrimaryKey) =
     customViewModel(
-        listOf(
-            "files",
-            objectId
-        )
+        listOf("files", objectId)
     ) { sessionManager, databaseSource ->
         FileViewViewModel(objectId, sessionManager, databaseSource)
     }
@@ -662,10 +452,7 @@ fun createFileViewModel(objectId: PrimaryKey) =
 @Composable
 fun createFileRefsViewModel(fileId: PrimaryKey) =
     customViewModel(
-        listOf(
-            "file-refs",
-            fileId
-        )
+        listOf("file-refs", fileId)
     ) { sessionManager, databaseSource ->
         FileRefsViewModel(sessionManager, databaseSource, fileId)
     }

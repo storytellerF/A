@@ -98,12 +98,7 @@ class CustomSlf4jLogger(private val customName: String) : AbstractLogger() {
                 "argument is not empty $arguments"
             }
         }
-        Napier.log(
-            getLevel(level),
-            customName,
-            throwable,
-            messagePattern
-        )
+        Napier.log(getLevel(level), customName, throwable, messagePattern)
     }
 
     private fun getLevel(level: Level): LogLevel = when (level) {

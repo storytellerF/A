@@ -57,9 +57,7 @@ data class GlobalDialogStateProgress(val value: Long, val total: Long?)
 interface GlobalDialogController<out C> {
     val state: MutableState<PersistentList<GlobalDialogState>>
 
-    suspend fun <T> useResult(
-        block: suspend GlobalDialogController<C>.() -> Result<T>,
-    ): Result<T>
+    suspend fun <T> useResult(block: suspend GlobalDialogController<C>.() -> Result<T>,): Result<T>
 
     fun emitProgress(block: (GlobalDialogState.Loading) -> GlobalDialogState.Loading)
 
@@ -140,9 +138,7 @@ class GlobalDialogContext<out C>(val events: MutableSharedFlow<Any>, val session
 
 class CustomGlobalDialogController<C>(
     override val context: C,
-    override val state: MutableState<PersistentList<GlobalDialogState>> = mutableStateOf(
-        persistentListOf()
-    )
+    override val state: MutableState<PersistentList<GlobalDialogState>> = mutableStateOf(persistentListOf())
 ) : GlobalDialogController<C> {
 
     @OptIn(ExperimentalUuidApi::class)
@@ -197,10 +193,7 @@ fun GlobalDialogInternal(message: GlobalDialogState, dismiss: () -> Unit) {
     BasicAlertDialog(
         dismiss,
         properties = if (message is GlobalDialogState.Loading) {
-            DialogProperties(
-                dismissOnClickOutside = false,
-                dismissOnBackPress = false
-            )
+            DialogProperties(dismissOnClickOutside = false, dismissOnBackPress = false)
         } else {
             DialogProperties()
         }
@@ -220,10 +213,7 @@ private fun GlobalDialogContent(
     Column(modifier = Modifier.height(200.dp)) {
         when (message) {
             is GlobalDialogState.Error -> {
-                ExceptionView(
-                    message.throwable,
-                    modifier = Modifier.weight(1f).verticalScroll(scrollState)
-                )
+                ExceptionView(message.throwable, modifier = Modifier.weight(1f).verticalScroll(scrollState))
                 Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
                     Button({
                         onDismissRequest()

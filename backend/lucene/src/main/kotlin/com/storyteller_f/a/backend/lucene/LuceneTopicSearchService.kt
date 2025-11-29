@@ -179,27 +179,18 @@ class LuceneTopicSearchService(path: Path, isInMemory: Boolean = false) :
         fieldName: String,
         termValue: PrimaryKey
     ) {
-        add(
-            LongPoint.newExactQuery(fieldName, termValue),
-            BooleanClause.Occur.MUST_NOT
-        )
+        add(LongPoint.newExactQuery(fieldName, termValue), BooleanClause.Occur.MUST_NOT)
     }
 
     private fun BooleanQuery.Builder.addMustLongQuery(
         fieldName: String,
         termValue: PrimaryKey
     ) {
-        add(
-            LongPoint.newExactQuery(fieldName, termValue),
-            BooleanClause.Occur.MUST
-        )
+        add(LongPoint.newExactQuery(fieldName, termValue), BooleanClause.Occur.MUST)
     }
 
     private fun BooleanQuery.Builder.addParentTypeQuery() {
-        add(
-            TermQuery(Term("parentType", ObjectType.COMMUNITY.name)),
-            BooleanClause.Occur.MUST
-        )
+        add(TermQuery(Term("parentType", ObjectType.COMMUNITY.name)), BooleanClause.Occur.MUST)
     }
 }
 

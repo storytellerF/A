@@ -62,11 +62,7 @@ fun AudioPlayer(component: AudioPlayerComponent) {
             enabled = component.player != null,
         ) {
             when {
-                currentPlaying -> Icon(
-                    Icons.Default.PauseCircle,
-                    "pause",
-                    modifier = Modifier.size(40.dp)
-                )
+                currentPlaying -> Icon(Icons.Default.PauseCircle, "pause", modifier = Modifier.size(40.dp))
 
                 else -> Icon(Icons.Default.PlayCircle, "play", modifier = Modifier.size(40.dp))
             }
@@ -91,10 +87,7 @@ class AudioPlayerComponent(url: String) {
 
 private fun createPlayer(url: String): jlp? = try {
     jlp.createInstance(arrayOf("-url", url)).apply {
-        setAudioDevice(
-            FactoryRegistry.systemRegistry()
-                .createAudioDevice(JavaSoundAudioDeviceFactory::class.java)
-        )
+        setAudioDevice(FactoryRegistry.systemRegistry().createAudioDevice(JavaSoundAudioDeviceFactory::class.java))
     }
 } catch (e: Exception) {
     Napier.e(e) {

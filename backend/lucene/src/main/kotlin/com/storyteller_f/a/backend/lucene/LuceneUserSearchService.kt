@@ -91,17 +91,11 @@ class LuceneUserSearchService(path: Path, isInMemory: Boolean = false) : Lucene(
                     preprocessUserInputKeyword(userDocumentSearch.word)?.let {
                         add(BooleanQuery.Builder().apply {
                             add(
-                                MultiFieldQueryParser(
-                                    arrayOf("nickname"),
-                                    analyzer
-                                ).parse(it),
+                                MultiFieldQueryParser(arrayOf("nickname"), analyzer).parse(it),
                                 BooleanClause.Occur.SHOULD
                             )
                             add(
-                                MultiFieldQueryParser(
-                                    arrayOf("aid"),
-                                    analyzer
-                                ).parse(it),
+                                MultiFieldQueryParser(arrayOf("aid"), analyzer).parse(it),
                                 BooleanClause.Occur.SHOULD
                             )
                         }.build(), BooleanClause.Occur.MUST)

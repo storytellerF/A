@@ -308,30 +308,16 @@ fun newAppNav(navigator: NavHostController, scope: CoroutineScope) = object : Ap
             is TopicComposeData.PublicRoom -> {
                 if (data.parentTuple.objectType == ObjectType.TOPIC) {
                     navigator.navigate(
-                        TopicComposePublicRoomTopicScreen(
-                            data.roomId,
-                            data.communityId,
-                            data.parentTuple.objectId
-                        )
+                        TopicComposePublicRoomTopicScreen(data.roomId, data.communityId, data.parentTuple.objectId)
                     )
                 } else {
-                    navigator.navigate(
-                        TopicComposePublicRoomScreen(
-                            data.roomId,
-                            data.communityId
-                        )
-                    )
+                    navigator.navigate(TopicComposePublicRoomScreen(data.roomId, data.communityId))
                 }
             }
 
             is TopicComposeData.PrivateRoom -> {
                 if (data.parentTuple.objectType == ObjectType.TOPIC) {
-                    navigator.navigate(
-                        TopicComposePrivateRoomTopicScreen(
-                            data.roomId,
-                            data.parentTuple.objectId
-                        )
-                    )
+                    navigator.navigate(TopicComposePrivateRoomTopicScreen(data.roomId, data.parentTuple.objectId))
                 } else {
                     navigator.navigate(TopicComposePrivateRoomScreen(data.roomId))
                 }
@@ -339,12 +325,7 @@ fun newAppNav(navigator: NavHostController, scope: CoroutineScope) = object : Ap
 
             is TopicComposeData.User -> {
                 if (data.objectTuple.objectType == ObjectType.TOPIC) {
-                    navigator.navigate(
-                        TopicComposeUserTopicScreen(
-                            data.uid,
-                            data.objectTuple.objectId
-                        )
-                    )
+                    navigator.navigate(TopicComposeUserTopicScreen(data.uid, data.objectTuple.objectId))
                 } else {
                     navigator.navigate(TopicComposeUserScreen(data.uid))
                 }
@@ -352,12 +333,7 @@ fun newAppNav(navigator: NavHostController, scope: CoroutineScope) = object : Ap
 
             is TopicComposeData.Community -> {
                 if (data.objectTuple.objectType == ObjectType.TOPIC) {
-                    navigator.navigate(
-                        TopicComposeCommunityTopicScreen(
-                            data.communityId,
-                            data.objectTuple.objectId
-                        )
-                    )
+                    navigator.navigate(TopicComposeCommunityTopicScreen(data.communityId, data.objectTuple.objectId))
                 } else {
                     navigator.navigate(TopicComposeCommunityScreen(data.communityId))
                 }
@@ -505,10 +481,7 @@ private fun NavGraphBuilder.buildMainScreen() {
     }
     composable<CommunityScreen> {
         val screen = it.toRoute<CommunityScreen>()
-        CommunityPage(
-            screen.communityId,
-            screen.showDialog == true
-        )
+        CommunityPage(screen.communityId, screen.showDialog == true)
     }
     composable<RoomScreen>(
         deepLinks = listOf(navDeepLink<RoomScreen>(basePath = "${getDeepLinkScheme()}://${getDeepLinkHost()}/room"))
@@ -603,11 +576,7 @@ private fun NavGraphBuilder.buildComposeScreen(navigator: NavHostController) {
 private fun NavGraphBuilder.buildTopicComposeRoomScreen(backPrePage: () -> Unit) {
     composable<TopicComposePublicRoomScreen> {
         val route = it.toRoute<TopicComposePublicRoomScreen>()
-        val composeData = TopicComposeData.PublicRoom(
-            route.roomId,
-            route.communityId,
-            route.roomId ob ObjectType.ROOM
-        )
+        val composeData = TopicComposeData.PublicRoom(route.roomId, route.communityId, route.roomId ob ObjectType.ROOM)
         TopicComposePage(composeData, backPrePage)
     }
     composable<TopicComposePublicRoomTopicScreen> {
@@ -621,18 +590,12 @@ private fun NavGraphBuilder.buildTopicComposeRoomScreen(backPrePage: () -> Unit)
     }
     composable<TopicComposePrivateRoomScreen> {
         val route = it.toRoute<TopicComposePrivateRoomScreen>()
-        val composeData = TopicComposeData.PrivateRoom(
-            route.roomId,
-            route.roomId ob ObjectType.ROOM
-        )
+        val composeData = TopicComposeData.PrivateRoom(route.roomId, route.roomId ob ObjectType.ROOM)
         TopicComposePage(composeData, backPrePage)
     }
     composable<TopicComposePrivateRoomTopicScreen> {
         val route = it.toRoute<TopicComposePrivateRoomTopicScreen>()
-        val composeData = TopicComposeData.PrivateRoom(
-            route.roomId,
-            route.topicId ob ObjectType.TOPIC
-        )
+        val composeData = TopicComposeData.PrivateRoom(route.roomId, route.topicId ob ObjectType.TOPIC)
         TopicComposePage(composeData, backPrePage)
     }
 }
@@ -640,18 +603,12 @@ private fun NavGraphBuilder.buildTopicComposeRoomScreen(backPrePage: () -> Unit)
 private fun NavGraphBuilder.buildTopicComposeUserScreen(backPrePage: () -> Unit) {
     composable<TopicComposeUserScreen> {
         val route = it.toRoute<TopicComposeUserScreen>()
-        val composeData = TopicComposeData.User(
-            route.uid,
-            route.uid ob ObjectType.USER
-        )
+        val composeData = TopicComposeData.User(route.uid, route.uid ob ObjectType.USER)
         TopicComposePage(composeData, backPrePage)
     }
     composable<TopicComposeUserTopicScreen> {
         val route = it.toRoute<TopicComposeUserTopicScreen>()
-        val composeData = TopicComposeData.User(
-            route.uid,
-            route.topicId ob ObjectType.TOPIC
-        )
+        val composeData = TopicComposeData.User(route.uid, route.topicId ob ObjectType.TOPIC)
         TopicComposePage(composeData, backPrePage)
     }
 }
@@ -659,18 +616,12 @@ private fun NavGraphBuilder.buildTopicComposeUserScreen(backPrePage: () -> Unit)
 private fun NavGraphBuilder.buildTopicComposeCommunityScreen(backPrePage: () -> Unit) {
     composable<TopicComposeCommunityScreen> {
         val route = it.toRoute<TopicComposeCommunityScreen>()
-        val composeData = TopicComposeData.Community(
-            route.communityId,
-            route.communityId ob ObjectType.COMMUNITY
-        )
+        val composeData = TopicComposeData.Community(route.communityId, route.communityId ob ObjectType.COMMUNITY)
         TopicComposePage(composeData, backPrePage)
     }
     composable<TopicComposeCommunityTopicScreen> {
         val route = it.toRoute<TopicComposeCommunityTopicScreen>()
-        val composeData = TopicComposeData.Community(
-            route.communityId,
-            route.topicId ob ObjectType.TOPIC
-        )
+        val composeData = TopicComposeData.Community(route.communityId, route.topicId ob ObjectType.TOPIC)
         TopicComposePage(composeData, backPrePage)
     }
 }

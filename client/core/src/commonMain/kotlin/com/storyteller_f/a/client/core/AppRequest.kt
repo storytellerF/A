@@ -103,11 +103,7 @@ suspend fun UserSessionManager.getRoomTopics(
     paginationQuery: PaginationQuery,
 ) = serviceCatching {
     CustomApi.Rooms.Id.Topics.get(
-        TopicQuery(
-            pinType,
-            currentIsAlreadySignUp,
-            paginationQuery
-        ),
+        TopicQuery(pinType, currentIsAlreadySignUp, paginationQuery),
         CommonPath(roomId)
     )
 }
@@ -118,11 +114,7 @@ suspend fun UserSessionManager.getCommunityTopics(
     paginationQuery: PaginationQuery,
 ) = serviceCatching {
     CustomApi.Communities.Id.Topics.get(
-        TopicQuery(
-            pinType,
-            currentIsAlreadySignUp,
-            paginationQuery
-        ),
+        TopicQuery(pinType, currentIsAlreadySignUp, paginationQuery),
         CommonPath(communityId)
     )
 }
@@ -133,30 +125,21 @@ suspend fun UserSessionManager.getUserTopics(
     paginationQuery: PaginationQuery,
 ) = serviceCatching {
     CustomApi.Users.Id.Topics.get(
-        TopicQuery(
-            pinType,
-            currentIsAlreadySignUp,
-            paginationQuery
-        ),
+        TopicQuery(pinType, currentIsAlreadySignUp, paginationQuery),
         CommonPath(userId)
     )
 }
 
 suspend fun UserSessionManager.getCommunityInfo(id: PrimaryKey) = serviceCatching {
     CustomApi.Communities.Id.get(
-        CustomApi.Communities.Id.CommunityIdQuery(
-            currentIsAlreadySignUp
-        ),
+        CustomApi.Communities.Id.CommunityIdQuery(currentIsAlreadySignUp),
         CommonPath(id)
     )
 }
 
 suspend fun UserSessionManager.getCommunityInfoByAid(aid: String) = serviceCatching {
     CustomApi.Communities.Aid.get(
-        CustomApi.Communities.Aid.CommunityAidQuery(
-            aid,
-            currentIsAlreadySignUp
-        )
+        CustomApi.Communities.Aid.CommunityAidQuery(aid, currentIsAlreadySignUp)
     )
 }
 
@@ -207,11 +190,7 @@ suspend fun UserSessionManager.searchRoomMembers(
     word: String?,
 ) = serviceCatching {
     CustomApi.Rooms.Id.Members.get(
-        CustomApi.Rooms.Id.Members.MemberQuery(
-            word,
-            nextCommunityId,
-            size
-        ),
+        CustomApi.Rooms.Id.Members.MemberQuery(word, nextCommunityId, size),
         CommonPath(roomId)
     )
 }
@@ -249,11 +228,7 @@ suspend fun UserSessionManager.getTopicTopics(
     paginationQuery: PaginationQuery,
 ) = serviceCatching {
     CustomApi.Topics.Id.Topics.get(
-        TopicQuery(
-            pinType,
-            currentIsAlreadySignUp,
-            paginationQuery
-        ),
+        TopicQuery(pinType, currentIsAlreadySignUp, paginationQuery),
         CommonPath(topicId)
     )
 }
@@ -277,13 +252,7 @@ suspend fun UserSessionManager.searchRooms(
     communityId: PrimaryKey?,
 ): Result<ServerResponse<RoomInfo>> = serviceCatching {
     CustomApi.Rooms.search(
-        CustomApi.Rooms.RoomSearchQuery(
-            joinStatusSearch,
-            word,
-            communityId,
-            nextRoomId,
-            size
-        )
+        CustomApi.Rooms.RoomSearchQuery(joinStatusSearch, word, communityId, nextRoomId, size)
     )
 }
 
@@ -384,14 +353,7 @@ suspend fun UserSessionManager.getFileList(
     nextId: String?,
     size: Int
 ) = serviceCatching {
-    CustomApi.Files.get(
-        CustomApi.Files.FileQuery(
-            objectId,
-            objectType,
-            nextId,
-            size = size
-        )
-    )
+    CustomApi.Files.get(CustomApi.Files.FileQuery(objectId, objectType, nextId, size = size))
 }
 
 suspend fun UserSessionManager.searchFiles(
@@ -405,23 +367,14 @@ suspend fun UserSessionManager.getMediaByName(
     objectId: PrimaryKey,
     objectType: ObjectType
 ) = serviceCatching {
-    CustomApi.Files.getByName(
-        CustomApi.Files.MediaSearchQuery(
-            word,
-            objectId,
-            objectType
-        )
-    )
+    CustomApi.Files.getByName(CustomApi.Files.MediaSearchQuery(word, objectId, objectType))
 }
 
 suspend fun UserSessionManager.getFileRefs(
     fileId: PrimaryKey,
     query: PaginationQuery
 ) = serviceCatching {
-    CustomApi.Files.Id.Refs.get(
-        query,
-        CommonPath(fileId)
-    )
+    CustomApi.Files.Id.Refs.get(query, CommonPath(fileId))
 }
 
 class UploadData(
@@ -541,11 +494,7 @@ suspend fun DefaultClientWebSocketSession.sendMessage(
         TopicContent.Plain(input)
     }
     val message = RoomFrame.Message(
-        NewRoomTopic(
-            parentTarget.objectType,
-            parentTarget.objectId,
-            content
-        )
+        NewRoomTopic(parentTarget.objectType, parentTarget.objectId, content)
     )
     sendFrame(message)
 }
@@ -560,14 +509,7 @@ suspend fun UserSessionManager.userTitles(
     scopeId: PrimaryKey? = null,
 ): Result<ServerResponse<TitleInfo>> = serviceCatching {
     CustomApi.Users.Id.Titles.get(
-        CustomApi.Users.Id.Titles.TitleQuery(
-            searchType,
-            type,
-            scopeId,
-            status,
-            nextId,
-            size
-        ),
+        CustomApi.Users.Id.Titles.TitleQuery(searchType, type, scopeId, status, nextId, size),
         CommonPath(uid)
     )
 }
@@ -660,10 +602,7 @@ suspend fun UserSessionManager.addChildAccount() = serviceCatching {
 
 suspend fun UserSessionManager.getChildAccounts(nextId: String?, size: Int) = serviceCatching {
     CustomApi.Accounts.ChildAccounts.get(
-        CustomApi.Accounts.ChildAccounts.ChildAccountQuery(
-            nextId,
-            size
-        )
+        CustomApi.Accounts.ChildAccounts.ChildAccountQuery(nextId, size)
     )
 }
 
@@ -707,11 +646,7 @@ suspend fun UserSessionManager.getQuotaInfo(
 ): Result<QuotaInfo> =
     serviceCatching {
         CustomApi.Files.quota(
-            CustomApi.Files.QuotaQuery(
-                objectTuple.objectId,
-                objectTuple.objectType,
-                quotaType
-            )
+            CustomApi.Files.QuotaQuery(objectTuple.objectId, objectTuple.objectType, quotaType)
         )
     }
 

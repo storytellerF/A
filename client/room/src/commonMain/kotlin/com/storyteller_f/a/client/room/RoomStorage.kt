@@ -144,11 +144,7 @@ class RoomCommunityInfoStorage(appDatabase: AppDatabase) : CommunityInfoStorage 
 
     private suspend fun saveToDefaultCollections(item: CommunityInfo): CommonEntity {
         val data = commonJson.encodeToString(item)
-        val entity = CommonEntity(
-            item.id,
-            CommunityCollection.Communities.getName(),
-            data,
-        )
+        val entity = CommonEntity(item.id, CommunityCollection.Communities.getName(), data,)
         buildList {
             add(entity)
             add(entity.copy(id = item.aid))
@@ -735,24 +731,14 @@ class RoomUploadInfoStorage(val appDatabase: AppDatabase) : UploadInfoStorage {
     override suspend fun saveFirst(collection: UploadCollection, item: UploadInfo) {
         val data = commonJson.encodeToString(item)
         appDatabase.getUploadDao().insert(
-            UploadEntity(
-                item.id.toString(),
-                collection.getName(),
-                data,
-                item.pathHash
-            )
+            UploadEntity(item.id.toString(), collection.getName(), data, item.pathHash)
         )
     }
 
     override suspend fun saveLast(collection: UploadCollection, item: UploadInfo) {
         val data = commonJson.encodeToString(item)
         appDatabase.getUploadDao().insert(
-            UploadEntity(
-                item.id.toString(),
-                collection.getName(),
-                data,
-                item.pathHash
-            )
+            UploadEntity(item.id.toString(), collection.getName(), data, item.pathHash)
         )
     }
 

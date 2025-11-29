@@ -58,18 +58,14 @@ class MarkdownTest {
     fun `test extract image`() {
         assertEquals(
             """![I00012733.jpg](I00012733.jpg "I00012733.jpg")""",
-            extractMarkdownHeadline(
-                """![I00012733.jpg](I00012733.jpg "I00012733.jpg")"""
-            )
+            extractMarkdownHeadline("""![I00012733.jpg](I00012733.jpg "I00012733.jpg")""")
         )
     }
 
     @Test
     fun `test extract inline math`() {
         val markdownText = "$\\`\\sqrt{3x-1}+(1+x)^2\\`$".trimIndent()
-        val parsedTree = astNode(
-            markdownText
-        )
+        val parsedTree = astNode(markdownText)
         parsedTree.accept(object : Visitor {
             override fun visitNode(node: ASTNode) {
                 println(node.type)

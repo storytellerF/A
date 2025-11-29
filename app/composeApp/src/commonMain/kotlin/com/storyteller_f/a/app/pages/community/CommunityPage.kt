@@ -112,11 +112,7 @@ fun CommunityPage(
 
     AppTheme(typography = typography) {
         when (size.widthSizeClass) {
-            WindowWidthSizeClass.Compact -> CommunityCompatPageInternal(
-                communityId,
-                showDialog,
-                model
-            )
+            WindowWidthSizeClass.Compact -> CommunityCompatPageInternal(communityId, showDialog, model)
 
             else -> CommunityNonCompatPageInternal(communityId, showDialog, model)
         }
@@ -130,12 +126,8 @@ fun getCommunityFont(communityId: PrimaryKey): Typography {
     return typography.copy(
         bodyLarge =
         typography.bodyLarge.copy(fontFamily = fontFamily ?: typography.bodyLarge.fontFamily),
-        bodyMedium = typography.bodyMedium.copy(
-            fontFamily = fontFamily ?: typography.bodyMedium.fontFamily
-        ),
-        bodySmall = typography.bodySmall.copy(
-            fontFamily = fontFamily ?: typography.bodySmall.fontFamily
-        )
+        bodyMedium = typography.bodyMedium.copy(fontFamily = fontFamily ?: typography.bodyMedium.fontFamily),
+        bodySmall = typography.bodySmall.copy(fontFamily = fontFamily ?: typography.bodySmall.fontFamily)
     )
 }
 
@@ -166,9 +158,7 @@ private fun buildSearchScope(
     currentRoute: String?,
     communityId: PrimaryKey,
 ) = when (currentRoute) {
-    "/topics" -> SearchScope.CommunityTopic(
-        communityId
-    )
+    "/topics" -> SearchScope.CommunityTopic(communityId)
 
     else -> SearchScope.CommunityRoom(communityId)
 }
@@ -214,16 +204,12 @@ private fun CommunityNonCompatPageInternal(
                 NavHost(navigator, "/topics") {
                     composable("/topics") {
                         val viewModel =
-                            createCommunityTopicsViewModel(
-                                communityId
-                            )
+                            createCommunityTopicsViewModel(communityId)
                         TopicList(viewModel)
                     }
                     composable("/rooms") {
                         val viewModel =
-                            createCommunityRoomsViewModel(
-                                communityId
-                            )
+                            createCommunityRoomsViewModel(communityId)
                         RoomList(viewModel)
                     }
                 }
@@ -291,10 +277,7 @@ private fun CommunityFloatingButton(
     FloatingActionButton(onClick = {
         if (community?.isJoined == true) {
             appNavFactory.newAppNav().gotoTopicCompose(
-                TopicComposeData.Community(
-                    communityId,
-                    communityId ob ObjectType.COMMUNITY
-                )
+                TopicComposeData.Community(communityId, communityId ob ObjectType.COMMUNITY)
             )
         } else {
             alertDialogState.showMessage(title, message)
@@ -334,17 +317,13 @@ private fun CommunityPageInternal(
         when (it) {
             0 -> {
                 val viewModel =
-                    createCommunityTopicsViewModel(
-                        communityId
-                    )
+                    createCommunityTopicsViewModel(communityId)
                 TopicList(viewModel)
             }
 
             else -> {
                 val viewModel =
-                    createCommunityRoomsViewModel(
-                        communityId
-                    )
+                    createCommunityRoomsViewModel(communityId)
                 RoomList(viewModel)
             }
         }
@@ -354,16 +333,8 @@ private fun CommunityPageInternal(
 @Composable
 fun communityNavRoutes(): List<NavRoute> {
     return listOf(
-        NavRoute(
-            "/topics",
-            Icons.Default.Topic,
-            stringResource(Res.string.topics)
-        ),
-        NavRoute(
-            "/rooms",
-            Icons.Default.ChatBubble,
-            stringResource(Res.string.rooms)
-        )
+        NavRoute("/topics", Icons.Default.Topic, stringResource(Res.string.topics)),
+        NavRoute("/rooms", Icons.Default.ChatBubble, stringResource(Res.string.rooms))
     )
 }
 
@@ -391,10 +362,7 @@ fun CommunityDialogInternal(communityInfo: CommunityInfo, dismiss: () -> Unit) {
     val communityId = communityInfo.id
     DialogContainer {
         Row(
-            modifier = Modifier.background(
-                MaterialTheme.colorScheme.surfaceDim,
-                RoundedCornerShape(8.dp)
-            )
+            modifier = Modifier.background(MaterialTheme.colorScheme.surfaceDim, RoundedCornerShape(8.dp))
                 .padding(8.dp).fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
@@ -437,11 +405,7 @@ private fun CommunityMenus(
         val appNavFactory = LocalAppNavFactory.current
         val isCommunityPage by appNavFactory.hasRouteFlow<CommunityScreen>()
         if (isCommunityPage) {
-            CommunityMemberStatusButton(
-                communityInfo,
-                globalDialogController,
-                communityId
-            )
+            CommunityMemberStatusButton(communityInfo, globalDialogController, communityId)
             CommunityCreateButton(dismiss, appNavFactory, communityId)
             CommunityAdminButtons(communityInfo, dismiss, appNavFactory, communityId)
         }
@@ -483,10 +447,7 @@ private fun CommunityCreateButton(
     ButtonNav(Icons.Default.Add, "Add") {
         dismiss()
         appNavFactory.newAppNav().gotoTopicCompose(
-            TopicComposeData.Community(
-                communityId,
-                communityId ob ObjectType.COMMUNITY
-            )
+            TopicComposeData.Community(communityId, communityId ob ObjectType.COMMUNITY)
         )
     }
 }

@@ -44,10 +44,7 @@ fun main() {
                         append("width=")
                     }
                     withStyle(
-                        SpanStyle(
-                            color = BrightBlue,
-                            textStyle = TextStyle.Bold,
-                        ),
+                        SpanStyle(color = BrightBlue, textStyle = TextStyle.Bold,),
                     ) {
                         append(terminal.size.width.toString())
                     }
@@ -56,10 +53,7 @@ fun main() {
                         append("height=")
                     }
                     withStyle(
-                        SpanStyle(
-                            color = BrightBlue,
-                            textStyle = TextStyle.Bold,
-                        ),
+                        SpanStyle(color = BrightBlue, textStyle = TextStyle.Bold,),
                     ) {
                         append(terminal.size.height.toString())
                     }

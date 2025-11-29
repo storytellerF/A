@@ -70,10 +70,7 @@ private fun TitleTopBar(id: PrimaryKey) {
     val vm = createPanelTitleViewModel(id)
     val info by vm.handler.data.collectAsState(null)
     val title = if (info?.name != null) {
-        stringResource(
-            Res.string.title_detail_title_with_info,
-            id
-        )
+        stringResource(Res.string.title_detail_title_with_info, id)
     } else {
         stringResource(Res.string.title_detail_title)
     }

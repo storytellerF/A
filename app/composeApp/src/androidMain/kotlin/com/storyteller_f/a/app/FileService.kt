@@ -62,10 +62,7 @@ class FileService : LifecycleService() {
     override fun onBind(intent: Intent): IBinder {
         super.onBind(intent)
         val uiViewModel = uiViewModel
-        return FileBinder(
-            DownloaderImpl(uiViewModel, taskRegister),
-            UploaderImpl(uiViewModel, taskRegister)
-        )
+        return FileBinder(DownloaderImpl(uiViewModel, taskRegister), UploaderImpl(uiViewModel, taskRegister))
     }
 }
 

@@ -76,10 +76,7 @@ fun Route.bindProtectedMediaRoute(backend: Backend) {
 
     CustomApi.Files.quota(handleResult()) {
         usePrincipal { _ ->
-            backend.getQuotaInfo(
-                it.quotaType,
-                ObjectTuple(it.objectId, it.objectType)
-            )
+            backend.getQuotaInfo(it.quotaType, ObjectTuple(it.objectId, it.objectType))
         }
     }
 

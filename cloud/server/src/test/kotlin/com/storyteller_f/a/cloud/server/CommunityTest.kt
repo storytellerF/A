@@ -78,10 +78,7 @@ class CommunityTest {
             )
             assertListSize(
                 1,
-                getCommunityTopics(
-                    communityId,
-                    paginationQuery = PaginationQuery(size = 10)
-                )
+                getCommunityTopics(communityId, paginationQuery = PaginationQuery(size = 10))
             )
             val topicId = searchTopics(10, emptyList(), communityId, ObjectType.COMMUNITY)
                 .getOrThrow().data.first().id

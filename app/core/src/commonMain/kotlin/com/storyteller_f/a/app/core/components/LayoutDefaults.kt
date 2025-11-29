@@ -16,19 +16,13 @@ object LayoutDefaults {
     val pagingHorizontalArrangement = Arrangement.spacedBy(10.dp)
 }
 
-fun Modifier.safeArea(
-    paddingValues: PaddingValues,
-    layoutDirection: LayoutDirection
-): Modifier = padding(
+fun Modifier.safeArea(paddingValues: PaddingValues, layoutDirection: LayoutDirection): Modifier = padding(
     top = paddingValues.calculateTopPadding(),
     start = paddingValues.calculateStartPadding(layoutDirection),
     end = paddingValues.calculateEndPadding(layoutDirection)
 )
 
-fun Modifier.horizontalSafeArea(
-    paddingValues: PaddingValues,
-    layoutDirection: LayoutDirection
-): Modifier = padding(
+fun Modifier.horizontalSafeArea(paddingValues: PaddingValues, layoutDirection: LayoutDirection): Modifier = padding(
     start = paddingValues.calculateStartPadding(layoutDirection),
     end = paddingValues.calculateEndPadding(layoutDirection)
 )

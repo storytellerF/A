@@ -65,11 +65,6 @@ object ChildAccounts : Table() {
 
 fun ChildAccount.Companion.wrapRow(row: ResultRow): ChildAccount {
     return with(ChildAccounts) {
-        ChildAccount(
-            row[uid],
-            row[privateKey],
-            row[hostId],
-            row[remark]
-        )
+        ChildAccount(row[uid], row[privateKey], row[hostId], row[remark])
     }
 }

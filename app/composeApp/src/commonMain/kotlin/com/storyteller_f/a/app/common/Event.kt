@@ -53,9 +53,7 @@ suspend fun processEvent(database: ModelStorage, bus: MutableSharedFlow<Any>) {
 
             is OnRemoveReaction -> processRemoveReaction(database, event)
 
-            is OnCommunityJoined -> database.community.save(
-                event.info
-            )
+            is OnCommunityJoined -> database.community.save(event.info)
 
             is OnCommunityExited -> database.community
                 .save(event.info)
@@ -73,9 +71,7 @@ suspend fun processEvent(database: ModelStorage, bus: MutableSharedFlow<Any>) {
 
             is OnRoomUpdated -> database.room.save(event.info)
 
-            is OnRoomCreated -> database.room.save(
-                event.info
-            )
+            is OnRoomCreated -> database.room.save(event.info)
 
             is OnUserUpdated -> database.user.save(event.info)
 
@@ -194,10 +190,7 @@ private suspend fun processRemoveReaction(
             }.filter {
                 it.count > 0
             }.toImmutableList()
-            old.copy(
-                extension = extension.copy(reactions = newReactions),
-                reactionCount = old.reactionCount - 1
-            )
+            old.copy(extension = extension.copy(reactions = newReactions), reactionCount = old.reactionCount - 1)
         }
     }
 }
@@ -229,10 +222,7 @@ private suspend fun processOnAddReaction(
                     }
                 }.toImmutableList()
             }
-            old.copy(
-                extension = extension.copy(reactions = newReactions),
-                reactionCount = old.reactionCount + 1
-            )
+            old.copy(extension = extension.copy(reactions = newReactions), reactionCount = old.reactionCount + 1)
         }
     }
 }

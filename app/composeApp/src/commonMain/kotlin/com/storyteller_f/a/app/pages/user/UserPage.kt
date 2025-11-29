@@ -84,11 +84,7 @@ private fun UserNonCompatInternal(uid: PrimaryKey, user: UserInfo?) {
     val navRoutes =
         listOf(
             NavRoute("/topics", Icons.Default.Topic, stringResource(Res.string.topics)),
-            NavRoute(
-                "/communities",
-                Icons.Default.ChatBubble,
-                stringResource(Res.string.communities_title)
-            ),
+            NavRoute("/communities", Icons.Default.ChatBubble, stringResource(Res.string.communities_title)),
             NavRoute("/titles", Icons.Default.Badge, stringResource(Res.string.titles))
         )
     val navigator = rememberNavController()
@@ -192,16 +188,8 @@ private fun UserComposeButton(
 private fun UserPageBottomNavBar(pagerState: PagerState) {
     val scope = rememberCoroutineScope()
     val navRoutes = listOf(
-        NavRoute(
-            "/topics",
-            Icons.Default.Topic,
-            stringResource(Res.string.topics)
-        ),
-        NavRoute(
-            "/communities",
-            Icons.Default.Diversity3,
-            stringResource(Res.string.rooms)
-        ),
+        NavRoute("/topics", Icons.Default.Topic, stringResource(Res.string.topics)),
+        NavRoute("/communities", Icons.Default.Diversity3, stringResource(Res.string.rooms)),
         NavRoute("/titles", Icons.Default.Badge, stringResource(Res.string.titles))
     )
     CustomBottomNav(

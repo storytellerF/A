@@ -67,15 +67,9 @@ fun FileCell(
                 Text(fileInfo.name, style = MaterialTheme.typography.labelMedium)
                 Spacer(modifier = Modifier.height(10.dp))
                 Row {
-                    Text(
-                        fileInfo.lastModified.formatTime(),
-                        style = MaterialTheme.typography.labelSmall
-                    )
+                    Text(fileInfo.lastModified.formatTime(), style = MaterialTheme.typography.labelSmall)
                     Spacer(modifier = Modifier.weight(1f))
-                    Text(
-                        HumanReadable.fileSize(fileInfo.size),
-                        style = MaterialTheme.typography.labelSmall
-                    )
+                    Text(HumanReadable.fileSize(fileInfo.size), style = MaterialTheme.typography.labelSmall)
                 }
                 if (fileInfo.contentType.startsWith("image")) {
                     Spacer(modifier = Modifier.height(5.dp))

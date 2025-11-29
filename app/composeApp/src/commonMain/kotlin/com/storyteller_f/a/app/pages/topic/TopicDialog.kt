@@ -167,10 +167,7 @@ fun SubscriptionButton(topicInfo: TopicInfo) {
                             }
                         } else {
                             addSubscription(
-                                NewSubscription(
-                                    topicInfo.id,
-                                    ObjectType.TOPIC
-                                )
+                                NewSubscription(topicInfo.id, ObjectType.TOPIC)
                             ).onSuccess {
                                 emitEvent(OnAddSubscription(it))
                             }
@@ -384,21 +381,12 @@ private fun BoxScope.TopicTranslateSheetInternal(
                     job.cancel()
                 }
             }
-            AppTopicContentView(
-                topicInfo.copy(
-                    content = content.copy(
-                        plain = output
-                    )
-                )
-            )
+            AppTopicContentView(topicInfo.copy(content = content.copy(plain = output)))
         }
 
         else ->
             result.exceptionOrNull()?.let {
-                ExceptionView(
-                    it,
-                    modifier = Modifier.Companion.align(Alignment.Center)
-                )
+                ExceptionView(it, modifier = Modifier.Companion.align(Alignment.Center))
             }
     }
 }

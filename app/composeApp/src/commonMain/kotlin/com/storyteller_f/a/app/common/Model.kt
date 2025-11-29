@@ -170,12 +170,7 @@ class CommunitiesViewModel(
     target: PrimaryKey? = null,
 ) : PagingViewModel<CommunityInfo>() {
     private val modelCollection =
-        CommunityCollection.SearchCommunity(
-            joinStatusSearch,
-            word,
-            target,
-            PosterSearch.UNSPECIFIED
-        )
+        CommunityCollection.SearchCommunity(joinStatusSearch, word, target, PosterSearch.UNSPECIFIED)
 
     override val flow = buildPager(
         modelCollection,
@@ -183,14 +178,7 @@ class CommunitiesViewModel(
         modelStorage.remoteKey,
         modelStorage.community,
         RegularPagingSource { key, size ->
-            sessionManager.searchCommunity(
-                size,
-                joinStatusSearch,
-                word,
-                target,
-                key,
-                PosterSearch.UNSPECIFIED
-            )
+            sessionManager.searchCommunity(size, joinStatusSearch, word, target, key, PosterSearch.UNSPECIFIED)
         }
     ).flow.cachedIn(viewModelScope)
 }
@@ -212,14 +200,7 @@ class CommunitiesWithPosterViewModel(
         modelStorage.remoteKey,
         modelStorage.community
     ) { key, size ->
-        sessionManager.searchCommunity(
-            size,
-            joinStatusSearch,
-            word,
-            target,
-            key,
-            PosterSearch.HAS_POSTER
-        )
+        sessionManager.searchCommunity(size, joinStatusSearch, word, target, key, PosterSearch.HAS_POSTER)
     }.flow.cachedIn(viewModelScope)
 }
 
@@ -321,10 +302,7 @@ class TopicsViewModel(
         )
     ) {
         WrappedPagingSource(
-            CompatPagingSource(
-                modelStorage.topic.observeData(modelCollection),
-                IntKeyConverter
-            )
+            CompatPagingSource(modelStorage.topic.observeData(modelCollection), IntKeyConverter)
         ) { topicInfos ->
             processEncryptedTopic(topicInfos, sessionManager).map {
                 generateMathIfNeed(it, codeTextStyle, inlineCodeTextStyle, density)
@@ -339,11 +317,7 @@ private fun extractHeadlineIfPlain(it: TopicInfo): TopicInfo {
     val content = it.content
     return if (content is TopicContent.Plain) {
         it.copy(
-            content = TopicContent.Extracted(
-                extractMarkdownHeadline(content.plain),
-                content.fileInfos,
-                content.plain
-            )
+            content = TopicContent.Extracted(extractMarkdownHeadline(content.plain), content.fileInfos, content.plain)
         )
     } else {
         it
@@ -363,9 +337,7 @@ class IdRoomViewModel(
     RoomViewModel() {
     override val handler: LoadingHandler<RoomInfo> =
         CachedLoadingHandler(
-            modelStorage.room.observeDatum(
-                communityId
-            ),
+            modelStorage.room.observeDatum(communityId),
             viewModelScope,
             { t ->
                 modelStorage.room.save(t)
@@ -687,9 +659,7 @@ class UploadViewModel(
     modelStorage: ModelStorage,
 ) : PagingViewModel<UploadInfo>() {
     override val flow = Pager(PagingConfig(10)) {
-        modelStorage.upload.observeData(
-            UploadCollection(myUid)
-        )
+        modelStorage.upload.observeData(UploadCollection(myUid))
     }.flow.cachedIn(viewModelScope)
 }
 
@@ -844,10 +814,7 @@ class SubscriptionsViewModel(
         }
     ) {
         WrappedPagingSource(
-            CompatPagingSource(
-                modelStorage.subscription.observeData(),
-                IntKeyConverter,
-            )
+            CompatPagingSource(modelStorage.subscription.observeData(), IntKeyConverter,)
         ) { list ->
             list.map { subscriptionInfo ->
                 val extensions = subscriptionInfo.extensions
@@ -905,10 +872,7 @@ class UserCommentsViewModel(
         }
     ) {
         WrappedPagingSource(
-            CompatPagingSource(
-                modelStorage.topic.observeData(collection),
-                IntKeyConverter,
-            )
+            CompatPagingSource(modelStorage.topic.observeData(collection), IntKeyConverter,)
         ) { list ->
             processEncryptedTopic(list, sessionManager).map {
                 generateMathIfNeed(it, textStyle, inlineCodeTextStyle, density)

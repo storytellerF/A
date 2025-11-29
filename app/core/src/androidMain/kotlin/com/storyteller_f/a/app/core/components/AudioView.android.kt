@@ -79,10 +79,7 @@ private fun AudioPlayer(
 ) {
     val mediaPlayerService = LocalMediaPlayerService.current
     val player by mediaPlayerService.controller.collectAsState(null)
-    val playerState by rememberPlayerState(
-        player,
-        localMediaPlaySession
-    )
+    val playerState by rememberPlayerState(player, localMediaPlaySession)
     val enablePip =
         playerState.currentIsPlaying && (playingSession?.lastUuid == localMediaPlaySession.uuid)
     Napier.d(tag = "MediaPlayer") {
@@ -139,17 +136,11 @@ private fun RowScope.AudioDetail(
     Box(
         modifier = Modifier
             .weight(2f)
-            .background(
-                MaterialTheme.colorScheme.surfaceContainerLow,
-                RoundedCornerShape(8.dp)
-            ),
+            .background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(8.dp)),
         contentAlignment = Alignment.Center
     ) {
         Column(modifier = Modifier.padding(10.dp)) {
-            val state by rememberPlayerState(
-                player,
-                localMediaPlaySession
-            )
+            val state by rememberPlayerState(player, localMediaPlaySession)
             if (state.currentLoading) {
                 CircularProgressIndicator(modifier = Modifier.size(40.dp))
             } else {
@@ -169,13 +160,7 @@ private fun AudioTitle(
         state.currentPlayingItem?.mediaMetadata?.title?.toString()
             ?: playingSession.remoteMediaItem.title
             ?: playingSession.remoteMediaItem.name
-    Text(
-        title,
-        maxLines = 2,
-        modifier = Modifier
-            .basicMarquee()
-            .padding(horizontal = 20.dp)
-    )
+    Text(title, maxLines = 2, modifier = Modifier.basicMarquee().padding(horizontal = 20.dp))
 }
 
 @Composable
@@ -212,17 +197,9 @@ private fun AudioPlayerControls(
             }
         }) {
             when {
-                state.currentIsPlaying -> Icon(
-                    Icons.Default.PauseCircle,
-                    "pause",
-                    modifier = Modifier.size(40.dp)
-                )
+                state.currentIsPlaying -> Icon(Icons.Default.PauseCircle, "pause", modifier = Modifier.size(40.dp))
 
-                else -> Icon(
-                    Icons.Default.PlayCircle,
-                    "play",
-                    modifier = Modifier.size(40.dp)
-                )
+                else -> Icon(Icons.Default.PlayCircle, "play", modifier = Modifier.size(40.dp))
             }
         }
     }

@@ -90,10 +90,7 @@ actual abstract class MediaPlayerService {
     }
 
     actual abstract fun fullscreen(remoteMediaItem: RemoteMediaItem)
-    actual abstract suspend fun start(
-        remoteMediaItem: RemoteMediaItem,
-        localMediaPlaySession: LocalMediaPlaySession
-    )
+    actual abstract suspend fun start(remoteMediaItem: RemoteMediaItem, localMediaPlaySession: LocalMediaPlaySession)
 
     actual abstract val enablePip: Boolean
 }
@@ -107,20 +104,12 @@ suspend fun MediaPlayerService.startPlay(
 ): Result<Unit> {
     val playList = when (contentType) {
         FileInfo.M3U8_MIMETYPE -> parseM3UPlayList(remoteMediaItem, HttpClient { })
-        FileInfo.YOUTUBE_MIMETYPE, FileInfo.SOUND_CLOUD_MIME_TYPE -> getPlaylistFromNewPipe(
-            remoteMediaItem,
-            context
-        )
+        FileInfo.YOUTUBE_MIMETYPE, FileInfo.SOUND_CLOUD_MIME_TYPE -> getPlaylistFromNewPipe(remoteMediaItem, context)
 
         else -> listOf(ConstPlayItem(remoteMediaItem.url, title = remoteMediaItem.url))
     }
     return if (playList.isNotEmpty()) {
-        val newSession = MediaPlaySession(
-            remoteMediaItem,
-            playList,
-            listOf(localMediaPlaySession.uuid),
-            null
-        )
+        val newSession = MediaPlaySession(remoteMediaItem, playList, listOf(localMediaPlaySession.uuid), null)
         get(newSession) { player, s ->
             player.playNewMedia(s.playList, contentType)
         }

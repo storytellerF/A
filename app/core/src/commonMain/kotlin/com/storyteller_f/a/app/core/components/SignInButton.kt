@@ -21,10 +21,7 @@ fun SignInButton(onClick: () -> Unit = {}) {
     Button({
         onClick()
     }, modifier = Modifier.testTag("sign_in")) {
-        Icon(
-            Icons.AutoMirrored.Default.Login,
-            signIn
-        )
+        Icon(Icons.AutoMirrored.Default.Login, signIn)
         Spacer(modifier = Modifier.width(10.dp))
         Text(signIn)
     }

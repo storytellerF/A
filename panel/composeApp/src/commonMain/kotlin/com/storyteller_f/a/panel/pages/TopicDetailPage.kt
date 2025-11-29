@@ -85,10 +85,7 @@ fun TopicDetailPage(id: PrimaryKey) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TopicTopBar(id: PrimaryKey) {
-    val title = stringResource(
-        Res.string.topic_detail_title_with_info,
-        id
-    )
+    val title = stringResource(Res.string.topic_detail_title_with_info, id)
     val nav = LocalPanelNav.current
     TopAppBar(
         title = {

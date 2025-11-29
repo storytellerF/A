@@ -19,10 +19,7 @@ class KotbaseTest : UsingContextTest() {
         val modelStorage = DocumentModelStorage(createKotbaseSource(null))
         runTest {
             modelStorage.remoteKeyStorage.saveNextRemoteKey(
-                RemoteKeys(
-                    TopicCollection.Recommend.getName(),
-                    "1"
-                )
+                RemoteKeys(TopicCollection.Recommend.getName(), "1")
             )
             val remoteKeys =
                 modelStorage.remoteKeyStorage.getNextRemoteKey(TopicCollection.Recommend.getName())
@@ -33,9 +30,7 @@ class KotbaseTest : UsingContextTest() {
     @OptIn(ExperimentalTime::class)
     @Test
     fun `test kotbase order`() = runTest {
-        val collection = CommunityCollection.SearchCommunity(
-            JoinStatusSearch.JOINED, ""
-        )
+        val collection = CommunityCollection.SearchCommunity(JoinStatusSearch.JOINED, "")
         val modelStorage = DocumentModelStorage(createKotbaseSource(null))
         modelStorage.communityInfoStorage.save(collection, CommunityInfo.Companion.EMPTY.copy(hasPoster = true, id = 1))
         modelStorage.communityInfoStorage.save(collection, CommunityInfo.Companion.EMPTY.copy(hasPoster = false, id = 2))

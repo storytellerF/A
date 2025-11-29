@@ -308,10 +308,7 @@ interface UserDatabase {
     suspend fun addDevice(uid: PrimaryKey, endpointUrl: String): Result<Unit>
     suspend fun removeDevice(uid: PrimaryKey, endpointUrl: String): Result<Int>
     suspend fun getUserDevices(uid: List<PrimaryKey>): Result<List<UserDevice>>
-    suspend fun addAcgForUser(
-        record: TaskRecord,
-        assetTransactions: List<AssetTransaction>
-    ): Result<Unit>
+    suspend fun addAcgForUser(record: TaskRecord, assetTransactions: List<AssetTransaction>): Result<Unit>
 
     suspend fun getLatestTaskRecord(type: TaskRecordType): Result<TaskRecord?>
     suspend fun getRawChildAccountPaginationListByHost(
@@ -321,19 +318,12 @@ interface UserDatabase {
 
     suspend fun getRawChildAccount(uid: PrimaryKey): Result<ChildAccount?>
 
-    suspend fun createChildAccount(
-        hostId: PrimaryKey,
-        privateKey: String,
-        user: User
-    ): Result<Unit>
+    suspend fun createChildAccount(hostId: PrimaryKey, privateKey: String, user: User): Result<Unit>
 
     suspend fun getAllUsers(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<RawUser>>
     suspend fun getUserCount(): Result<Long>
 
-    suspend fun getUserLogs(
-        uid: PrimaryKey,
-        fetch: PrimaryKeyFetch
-    ): Result<PaginationResult<UserLog>>
+    suspend fun getUserLogs(uid: PrimaryKey, fetch: PrimaryKeyFetch): Result<PaginationResult<UserLog>>
 
     suspend fun getChildAccountCount(hostId: PrimaryKey): Result<Long>
 }
@@ -342,17 +332,11 @@ interface TopicDatabase {
     suspend fun getTopicRootTuple(parentId: PrimaryKey): Result<ObjectTuple?>
 
     suspend fun saveEncryptedTopic(topic: Topic, content: TopicContent.Encrypted): Result<Unit>
-    suspend fun savePlainTopic(
-        topic: Topic,
-        content: TopicContent.Plain,
-        fileRefs: List<FileRef>
-    ): Result<Unit>
+    suspend fun savePlainTopic(topic: Topic, content: TopicContent.Plain, fileRefs: List<FileRef>): Result<Unit>
 
     suspend fun updateTopicStatus(topicId: PrimaryKey, newValue: Boolean): Result<Boolean>
     suspend fun getTopicList(primaryKeyFetch: PrimaryKeyFetch): Result<List<Topic>>
-    suspend fun getTopicCommentCount(
-        topicIdList: List<PrimaryKey>,
-    ): Result<List<Pair<Long, Long>>>
+    suspend fun getTopicCommentCount(topicIdList: List<PrimaryKey>,): Result<List<Pair<Long, Long>>>
 
     suspend fun isUserCommented(uid: PrimaryKey, topicId: List<PrimaryKey>): Result<List<Long>>
 
@@ -384,19 +368,13 @@ interface TopicDatabase {
 }
 
 interface FavoriteDatabase {
-    suspend fun getUserFavorites(
-        uid: PrimaryKey,
-        fetch: PrimaryKeyFetch
-    ): Result<PaginationResult<UserFavorite>>
+    suspend fun getUserFavorites(uid: PrimaryKey, fetch: PrimaryKeyFetch): Result<PaginationResult<UserFavorite>>
 
     suspend fun addFavorite(userFavorite: UserFavorite): Result<UserFavorite>
     suspend fun removeFavorite(id: PrimaryKey): Result<Unit>
     suspend fun getFavorite(id: PrimaryKey): Result<UserFavorite?>
     suspend fun getFavorite(uid: PrimaryKey, objectId: PrimaryKey): Result<UserFavorite?>
-    suspend fun getHasFavorite(
-        idList: ObjectListFetch.IdListFetch,
-        uid: PrimaryKey
-    ): Result<List<UserFavorite>>
+    suspend fun getHasFavorite(idList: ObjectListFetch.IdListFetch, uid: PrimaryKey): Result<List<UserFavorite>>
 
     suspend fun getUserFavoriteCount(): Result<Long>
 }
@@ -418,20 +396,13 @@ interface SubscriptionDatabase {
 
     suspend fun insertSubscriptionSentLog(log: SubscriptionSentLog): Result<SubscriptionSentLog>
     suspend fun getLatestSubscriptionSentLog(objectId: PrimaryKey): Result<SubscriptionSentLog?>
-    suspend fun getHasSubscription(
-        idList: ObjectListFetch.IdListFetch,
-        uid: PrimaryKey
-    ): Result<List<UserSubscription>>
+    suspend fun getHasSubscription(idList: ObjectListFetch.IdListFetch, uid: PrimaryKey): Result<List<UserSubscription>>
 
     suspend fun getUserSubscriptionCount(uid: PrimaryKey): Result<Long>
 }
 
 interface ReactionDatabase {
-    suspend fun statsReactionRecord(
-        objectId: PrimaryKey,
-        emoji: String,
-        objectType: ObjectType
-    ): Result<Unit>
+    suspend fun statsReactionRecord(objectId: PrimaryKey, emoji: String, objectType: ObjectType): Result<Unit>
 
     suspend fun getReactionInfoPaginationResult(
         objectId: List<PrimaryKey>,
@@ -439,34 +410,15 @@ interface ReactionDatabase {
         reactionFetch: ReactionFetch,
     ): Result<PaginationResult<ReactionInfo>>
 
-    suspend fun hasReactedEmoji(
-        objectIdList: List<PrimaryKey>,
-        uid: PrimaryKey
-    ): Result<List<Pair<Long, String>>>
+    suspend fun hasReactedEmoji(objectIdList: List<PrimaryKey>, uid: PrimaryKey): Result<List<Pair<Long, String>>>
 
-    suspend fun getReactionInfo(
-        uid: PrimaryKey,
-        objectId: PrimaryKey,
-        emojiText: String
-    ): Result<ReactionInfo?>
+    suspend fun getReactionInfo(uid: PrimaryKey, objectId: PrimaryKey, emojiText: String): Result<ReactionInfo?>
 
-    suspend fun hasReactedForEmoji(
-        objectId: PrimaryKey,
-        uid: PrimaryKey,
-        emoji: String
-    ): Result<Boolean>
+    suspend fun hasReactedForEmoji(objectId: PrimaryKey, uid: PrimaryKey, emoji: String): Result<Boolean>
 
-    suspend fun deleteReaction(
-        uid: PrimaryKey,
-        emoji: String,
-        objectId: PrimaryKey
-    ): Result<Boolean>
+    suspend fun deleteReaction(uid: PrimaryKey, emoji: String, objectId: PrimaryKey): Result<Boolean>
 
-    suspend fun getReactionRecordInfo(
-        uid: PrimaryKey,
-        emoji: String,
-        objectId: PrimaryKey
-    ): Result<ReactionRecordInfo?>
+    suspend fun getReactionRecordInfo(uid: PrimaryKey, emoji: String, objectId: PrimaryKey): Result<ReactionRecordInfo?>
 
     suspend fun deleteReaction(reactionId: PrimaryKey): Result<Boolean>
     suspend fun insertReaction(reactionRecord: ReactionRecord): Result<Unit>
@@ -512,10 +464,7 @@ interface CommunityDatabase {
         joinSearch: JoinSearch,
     ): Result<PaginationResult<RawCommunity>?>
 
-    suspend fun createCommunity(
-        community: Community,
-        memberId: PrimaryKey
-    ): Result<Pair<Community, Member>>
+    suspend fun createCommunity(community: Community, memberId: PrimaryKey): Result<Pair<Community, Member>>
 
     suspend fun getRawCommunities(objectListFetch: ObjectListFetch): Result<List<RawCommunity>>
 
@@ -548,10 +497,7 @@ interface RoomDatabase {
     ): Result<RawRoom?>
 
     suspend fun createRoom(room: Room, members: List<Member>): Result<Room>
-    suspend fun getRawRooms(
-        objectListFetch: ObjectListFetch,
-        uid: PrimaryKey?
-    ): Result<List<RawRoom>>
+    suspend fun getRawRooms(objectListFetch: ObjectListFetch, uid: PrimaryKey?): Result<List<RawRoom>>
 
     suspend fun getRoomList(objectListFetch: ObjectListFetch): Result<List<Room>>
     suspend fun updateRoom(id: PrimaryKey, body: UpdateRoomBody): Result<Boolean>
@@ -617,21 +563,12 @@ interface ContainerDatabase {
 
     suspend fun deleteMember(containerId: PrimaryKey, id: PrimaryKey): Result<Unit>
     suspend fun getJoinedUserList(roomId: PrimaryKey): Result<List<Member>>
-    suspend fun getUserJoinedTime(
-        parentIds: List<PrimaryKey>,
-        uid: PrimaryKey
-    ): Result<List<Member>>
+    suspend fun getUserJoinedTime(parentIds: List<PrimaryKey>, uid: PrimaryKey): Result<List<Member>>
 
     suspend fun getMemberCount(parentIds: List<PrimaryKey>): Result<List<Pair<Long, Long>>>
-    suspend fun getContainerInfo(
-        parentIds: List<PrimaryKey>,
-        uid: PrimaryKey?,
-    ): Result<Map<PrimaryKey, ContainerInfo>>
+    suspend fun getContainerInfo(parentIds: List<PrimaryKey>, uid: PrimaryKey?,): Result<Map<PrimaryKey, ContainerInfo>>
 
-    suspend fun getTopicReadList(
-        parentIds: List<PrimaryKey>,
-        uid: PrimaryKey
-    ): Result<List<UserTopicRead>>
+    suspend fun getTopicReadList(parentIds: List<PrimaryKey>, uid: PrimaryKey): Result<List<UserTopicRead>>
 
     suspend fun getMemberPaginationResult(
         objectId: PrimaryKey?,
@@ -671,9 +608,7 @@ interface AdminDatabase {
     suspend fun batchAddRooms(roomList: List<Room>, membersList: List<Member>)
 
     suspend fun getAllMembers(distinct: List<String>): Result<List<Triple<String, Long, String>>>
-    suspend fun batchAddEncryptTopicKeys(
-        encryptedKeys: List<Triple<PrimaryKey, ByteArray, Long>>
-    ): Result<Unit>
+    suspend fun batchAddEncryptTopicKeys(encryptedKeys: List<Triple<PrimaryKey, ByteArray, Long>>): Result<Unit>
 
     suspend fun batchAddTopics(
         tuples: List<InsertTopicTuple>,

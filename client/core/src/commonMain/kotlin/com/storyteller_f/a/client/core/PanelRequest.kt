@@ -163,11 +163,7 @@ suspend fun PanelSessionManager.getTopicTopics(
     paginationQuery: PaginationQuery,
 ) = serviceCatching {
     AdminApi.Topics.Id.Topics.get(
-        TopicQuery(
-            pinType,
-            fillHasCommented = null,
-            paginationQuery
-        ),
+        TopicQuery(pinType, fillHasCommented = null, paginationQuery),
         CommonPath(topicId)
     )
 }

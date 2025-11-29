@@ -72,10 +72,7 @@ fun test(
         "start test `$methodName`"
     }
     startMemoryTest(
-        overrideEnv + mapOf(
-            "SERVER_URL" to "http://localhost",
-            "METHOD_NAME" to methodName
-        ),
+        overrideEnv + mapOf("SERVER_URL" to "http://localhost", "METHOD_NAME" to methodName),
         block
     )
     if (System.getenv("ENABLE_TEST_CONTAINER") == "true") {
@@ -99,10 +96,7 @@ private fun startMemoryTest(
         }
     }
     val url = "r2dbc:h2:file:///${h2File.path.replace("\\", "/")}"
-    val env = mapOf(
-        "DATABASE_URI" to url,
-        "DATABASE_DRIVER" to "h2"
-    ) + overrideEnv
+    val env = mapOf("DATABASE_URI" to url, "DATABASE_DRIVER" to "h2") + overrideEnv
     doTest(env, block)
 }
 
@@ -129,9 +123,7 @@ private suspend fun useDatabaseContainer(
     block: suspend () -> Unit
 ) {
     if (databaseTypeIsMysql) {
-        MySQLContainer(
-            "mysql:8.0"
-        ).withUrlParam("characterEncoding", "utf8")
+        MySQLContainer("mysql:8.0").withUrlParam("characterEncoding", "utf8")
             .withUrlParam("useUnicode", "true")
             .withUrlParam("connectionCollation", "utf8mb4_unicode_ci")
             .use { mySQLContainer ->
@@ -165,9 +157,7 @@ private suspend fun useMinioTestContainer(
     env: MutableMap<String, String>,
     block: suspend () -> Unit
 ) {
-    MinIOContainer(
-        "minio/minio:RELEASE.2024-12-18T13-15-44Z"
-    )
+    MinIOContainer("minio/minio:RELEASE.2024-12-18T13-15-44Z")
         .use { minioContainer ->
             minioContainer.start()
             env["MEDIA_SERVICE"] = "minio"

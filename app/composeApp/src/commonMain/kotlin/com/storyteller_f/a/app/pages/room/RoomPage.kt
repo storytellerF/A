@@ -251,10 +251,7 @@ private fun BoxScope.NewTopicView(
                 lazyListState.animateScrollToItem(0, 0)
             }
         }, modifier = Modifier.align(Alignment.BottomStart)) {
-            Icon(
-                Icons.Default.ArrowCircleDown,
-                "move to newer topic",
-            )
+            Icon(Icons.Default.ArrowCircleDown, "move to newer topic",)
         }
     }
 }
@@ -371,10 +368,7 @@ private fun RoomInputTopContent(
                     ks.e.localizedMessage?.take(10) ?: stringResource(Res.string.exclamation_mark)
                 )
 
-                else -> CircularProgressIndicator(
-                    modifier = Modifier.size(10.dp),
-                    strokeWidth = 2.dp
-                )
+                else -> CircularProgressIndicator(modifier = Modifier.size(10.dp), strokeWidth = 2.dp)
             }
             Text("${keysData?.size ?: 0}/${roomInfo.memberCount}")
         }
@@ -400,9 +394,7 @@ private fun sendRoomTopic(
     }
     if ((keyState !is LoadingState.Done || keyData == null) && roomInfo.isPrivate) {
         scope.launch {
-            toasterState.showMessage(
-                getString(Res.string.private_room_pub_key_loading),
-            )
+            toasterState.showMessage(getString(Res.string.private_room_pub_key_loading),)
         }
         return
     }
@@ -451,16 +443,7 @@ fun RoomSendButton(
     val keysViewModel = createRoomKeysViewModel(roomInfo.id, roomInfo)
     CommonInputButton(state, input, isSending) {
         if (roomInfo.isJoined) {
-            sendRoomTopic(
-                roomInfo,
-                input,
-                scrollToNew,
-                scope,
-                toasterState,
-                keysViewModel,
-                wsClient,
-                parentTarget
-            )
+            sendRoomTopic(roomInfo, input, scrollToNew, scope, toasterState, keysViewModel, wsClient, parentTarget)
         } else {
             scope.launch {
                 val title = getString(Res.string.permission_denied)
@@ -580,10 +563,7 @@ private fun InputGroupSuffix(
             }
         }
     }) {
-        Icon(
-            Icons.Default.OpenInFull,
-            stringResource(Res.string.open_in_full),
-        )
+        Icon(Icons.Default.OpenInFull, stringResource(Res.string.open_in_full),)
     }
     IconButton({
         if (alreadySignIn) {
@@ -602,11 +582,7 @@ private fun InputGroupSuffix(
         sheetState,
         mediaTarget,
         onClickItems = { info ->
-            insertContent(
-                info.first(),
-                input,
-                updateInput
-            )
+            insertContent(info.first(), input, updateInput)
         }
     ) {
         showSheet = false
@@ -628,12 +604,7 @@ fun RoomDialogInternal(roomInfo: RoomInfo, dismiss: () -> Unit) {
             Arrangement.spacedBy(12.dp)
         ) {
             val commonDialogController = rememberCommonDialogController()
-            RoomIcon(
-                roomInfo,
-                50.dp,
-                false,
-                commonDialogController::update
-            )
+            RoomIcon(roomInfo, 50.dp, false, commonDialogController::update)
             Column {
                 Text(roomInfo.name)
                 Text(stringResource(Res.string.aid_display, roomInfo.aid.toString()))
@@ -727,9 +698,7 @@ private fun RoomMemberStatus(
         ButtonNav(Icons.Default.Close, stringResource(Res.string.exit_room)) {
             scope.launch {
                 exitRoom(roomInfo, globalDialogController) {
-                    toasterState.showMessage(
-                        getString(Res.string.success),
-                    )
+                    toasterState.showMessage(getString(Res.string.success),)
                 }
             }
         }

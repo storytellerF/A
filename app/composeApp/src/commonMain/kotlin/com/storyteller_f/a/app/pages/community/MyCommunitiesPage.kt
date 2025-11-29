@@ -172,12 +172,7 @@ fun CommunityGrid(
                     val commonDialogController =
                         rememberCommonDialogController()
                     val shown by commonDialogController.shown
-                    CommunityIconWithDialog(
-                        communityInfo,
-                        shown,
-                        30.dp,
-                        onClickIcon = commonDialogController::update
-                    )
+                    CommunityIconWithDialog(communityInfo, shown, 30.dp, onClickIcon = commonDialogController::update)
                     Text(
                         communityInfo.name,
                         Modifier.fillMaxWidth(),
@@ -224,12 +219,7 @@ fun CommunityCell(
     ) {
         val commonDialogController = rememberCommonDialogController()
         val shown by commonDialogController.shown
-        CommunityIconWithDialog(
-            communityInfo,
-            shown,
-            50.dp,
-            onClickIcon = commonDialogController::update
-        )
+        CommunityIconWithDialog(communityInfo, shown, 50.dp, onClickIcon = commonDialogController::update)
         Text(
             communityInfo?.name.orEmpty(),
             color = MaterialTheme.colorScheme.onSecondaryContainer,

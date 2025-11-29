@@ -117,13 +117,7 @@ class CustomKotbaseCollection<T : Any>(
         val mapper = { json: String ->
             commonJson.decodeFromString(serializer, json)
         }
-        return QueryPagingSource(
-            Dispatchers.IO,
-            select(all()),
-            collection,
-            mapper,
-            queryProvider
-        )
+        return QueryPagingSource(Dispatchers.IO, select(all()), collection, mapper, queryProvider)
     }
 }
 
@@ -137,17 +131,11 @@ class KotbaseDocumentSource(val database: Database, val scope: String?) {
         )
         if (name.startsWith("communities_") && !name.endsWith("keys")) {
             if (!collection.indexes.contains("poster_index")) {
-                collection.createIndex(
-                    "poster_index",
-                    ValueIndexConfiguration("hasPoster", "id")
-                )
+                collection.createIndex("poster_index", ValueIndexConfiguration("hasPoster", "id"))
             }
         } else if (name.startsWith("topics_") && !name.endsWith("keys")) {
             if (!collection.indexes.contains("pinned_index")) {
-                collection.createIndex(
-                    "pinned_index",
-                    ValueIndexConfiguration("pinned", "id")
-                )
+                collection.createIndex("pinned_index", ValueIndexConfiguration("pinned", "id"))
             }
         }
         return CustomKotbaseCollection(collection, clazz.serializer())

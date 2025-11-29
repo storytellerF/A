@@ -126,12 +126,7 @@ fun WebRTCPage(rtcContainer: RTCContainer, roomId: PrimaryKey) {
             val localVideoTrack = localStream?.videoTracks?.firstOrNull()
 
             localVideoTrack?.let {
-                Video(
-                    videoTrack = it,
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
-                )
+                Video(videoTrack = it, modifier = Modifier.weight(1f).fillMaxWidth(),)
             } ?: Box(
                 modifier = Modifier
                     .weight(1f)
@@ -180,13 +175,7 @@ fun WebRTCPage(rtcContainer: RTCContainer, roomId: PrimaryKey) {
 private fun ColumnScope.RemoteStreamView(rtcContainer: RTCContainer) {
     val remoteStream by rtcContainer.remoteStream.collectAsState()
     remoteStream?.second?.let {
-        Video(
-            videoTrack = it,
-            audioTrack = remoteStream?.first,
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
-        )
+        Video(videoTrack = it, audioTrack = remoteStream?.first, modifier = Modifier.weight(1f).fillMaxWidth(),)
     } ?: Box(
         modifier = Modifier
             .weight(1f)
@@ -241,12 +230,7 @@ suspend fun makeCallByOffer(
             .launchIn(this)
 
         // 创建 Offer
-        val offer = pc.createOffer(
-            OfferAnswerOptions(
-                offerToReceiveVideo = true,
-                offerToReceiveAudio = true
-            )
-        )
+        val offer = pc.createOffer(OfferAnswerOptions(offerToReceiveVideo = true, offerToReceiveAudio = true))
         pc.setLocalDescription(offer)
 
         // 通过信令发送给 Callee
@@ -273,13 +257,7 @@ suspend fun makeCallByOffer(
             it.roomId == roomId && it.uid == targetUid
         }.onEach {
             val candidate = it.candidate
-            pc.addIceCandidate(
-                IceCandidate(
-                    candidate.sdpMid,
-                    candidate.sdpMLineIndex,
-                    candidate.candidate
-                )
-            )
+            pc.addIceCandidate(IceCandidate(candidate.sdpMid, candidate.sdpMLineIndex, candidate.candidate))
         }.launchIn(this)
         try {
             awaitCancellation()
@@ -358,11 +336,7 @@ suspend fun makeCallByAnswer(
             (frame.roomId == roomId && frame.uid == targetUid)
         }.onEach { frame ->
             val native = frame.candidate
-            val candidate = IceCandidate(
-                native.sdpMid,
-                native.sdpMLineIndex,
-                native.candidate
-            )
+            val candidate = IceCandidate(native.sdpMid, native.sdpMLineIndex, native.candidate)
             pc.addIceCandidate(candidate)
         }.launchIn(this)
         try {
@@ -391,10 +365,7 @@ fun StartButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
     val context = LocalContext.current
 
     val permissions = rememberMultiplePermissionsState(
-        listOf(
-            Manifest.permission.CAMERA,
-            Manifest.permission.RECORD_AUDIO
-        )
+        listOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO)
     ) {
         if (it.all { (_, granted) -> granted }) {
             onClick()

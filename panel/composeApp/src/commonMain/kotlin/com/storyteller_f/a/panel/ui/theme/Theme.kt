@@ -262,9 +262,5 @@ fun PanelTheme(
 ) {
     val colorScheme = getAppDynamicColorScheme(dynamicColor, darkTheme) ?: if (darkTheme) darkScheme else lightScheme
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography(),
-        content = content
-    )
+    MaterialTheme(colorScheme = colorScheme, typography = Typography(), content = content)
 }

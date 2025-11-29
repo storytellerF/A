@@ -96,10 +96,7 @@ fun getOrCreateNotificationChannel(
     if (notificationChannel == null) {
         notificationManager.deleteNotificationChannel(channel)
     }
-    val channelBuilder = NotificationChannelCompat.Builder(
-        channel,
-        NotificationManagerCompat.IMPORTANCE_LOW
-    )
+    val channelBuilder = NotificationChannelCompat.Builder(channel, NotificationManagerCompat.IMPORTANCE_LOW)
         .setSound(null, null)
         .setVibrationEnabled(true)
     if (channel == "Regular") {

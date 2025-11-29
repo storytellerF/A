@@ -239,19 +239,13 @@ class TopicTest {
             // 查询单个topic
             assertListSize(
                 1,
-                getUserTopics(
-                    it.uid,
-                    paginationQuery = PaginationQuery(null, null, size = 10)
-                )
+                getUserTopics(it.uid, paginationQuery = PaginationQuery(null, null, size = 10))
             )
             createTopic(ObjectType.USER, it.uid, "test").getOrThrow()
             // 查询多个topic
             assertListSize(
                 2,
-                getUserTopics(
-                    it.uid,
-                    paginationQuery = PaginationQuery(null, null, size = 10)
-                )
+                getUserTopics(it.uid, paginationQuery = PaginationQuery(null, null, size = 10))
             )
         }
     }
@@ -322,9 +316,7 @@ class TopicTest {
         val user2 = attachSession()
         val user1 = attachSession {
             val id = createRoom(NewRoom("room2", "room2")).getOrThrow().id
-            createTitle(
-                NewTitle("join", TitleType.JOIN, user2.uid, id, ObjectType.ROOM, "")
-            )
+            createTitle(NewTitle("join", TitleType.JOIN, user2.uid, id, ObjectType.ROOM, ""))
             id
         }
         val privateRoomId = user1.custom
@@ -441,12 +433,7 @@ class TopicTest {
                     sendMessage(roomInfo.tuple(), true, "hello", keys)
                 }
                 val topicId = (receivedFrame.first() as RoomFrame.NewTopicInfo).topicInfo.id
-                addReadLog(
-                    UpdateUserRead(
-                        roomInfo.tuple(),
-                        topicId
-                    )
-                ).getOrThrow()
+                addReadLog(UpdateUserRead(roomInfo.tuple(), topicId)).getOrThrow()
                 assertEquals(topicId, getRoomInfo(roomInfo.id).getOrThrow().lastRead)
                 receivedFrame.clear()
             }
@@ -459,12 +446,7 @@ class TopicTest {
             val communityInfo = createCommunity(NewCommunity("r1", "r1")).getOrThrow()
             val topic =
                 createTopic(ObjectType.COMMUNITY, communityInfo.id, "hello").getOrThrow()
-            addReadLog(
-                UpdateUserRead(
-                    communityInfo.tuple(),
-                    topic.id
-                )
-            ).getOrThrow()
+            addReadLog(UpdateUserRead(communityInfo.tuple(), topic.id)).getOrThrow()
             assertEquals(topic.id, getCommunityInfo(communityInfo.id).getOrThrow().lastRead)
             val subTopic = createTopic(ObjectType.TOPIC, topic.id, "world").getOrThrow()
             addReadLog(UpdateUserRead(topic.tuple(), subTopic.id)).getOrThrow()
@@ -510,10 +492,7 @@ class TopicTest {
     }
 }
 
-private fun getUploadDataFromStream(
-    size: Long,
-    tmpFile: File
-) = UploadData(
+private fun getUploadDataFromStream(size: Long, tmpFile: File) = UploadData(
     size,
     "avatar1.png",
     ContentType.defaultForFileExtension("png")

@@ -26,8 +26,5 @@ actual fun getRoomDatabase(scope: String): AppDatabase {
 fun getDatabaseBuilder(ctx: Context, scope: String): RoomDatabase.Builder<AppDatabase> {
     val appContext = ctx.applicationContext
     val dbFile = appContext.getDatabasePath("$scope.db")
-    return Room.databaseBuilder<AppDatabase>(
-        context = appContext,
-        name = dbFile.absolutePath
-    )
+    return Room.databaseBuilder<AppDatabase>(context = appContext, name = dbFile.absolutePath)
 }

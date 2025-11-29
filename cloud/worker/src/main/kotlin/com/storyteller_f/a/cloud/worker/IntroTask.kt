@@ -58,12 +58,7 @@ private suspend fun Backend.sendHelloTopic(rawUsers: List<RawUser>): Result<Unit
         rawUsers.forEach {
             sendTopicToNotificationRoom(adminAid, it.user, "Hello, ${it.user.nickname}")
             database.admin.createTaskRecord(
-                TaskRecord(
-                    SnowflakeFactory.nextId(),
-                    now(),
-                    TaskRecordType.INTRO,
-                    it.user.id
-                )
+                TaskRecord(SnowflakeFactory.nextId(), now(), TaskRecordType.INTRO, it.user.id)
             )
             Napier.i(tag = "intro") {
                 "send hello success"
@@ -97,8 +92,5 @@ suspend fun Backend.sedTopicAtRoom(
     ).getOrThrow().list
     val encrypted =
         buildEncryptedTopicContent(content, userPubKeyInfos)
-    createTopicAtRoom(
-        NewRoomTopic(ObjectType.ROOM, roomId, encrypted),
-        uid
-    ).getOrThrow()
+    createTopicAtRoom(NewRoomTopic(ObjectType.ROOM, roomId, encrypted), uid).getOrThrow()
 }

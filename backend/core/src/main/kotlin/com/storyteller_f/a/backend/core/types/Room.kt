@@ -47,10 +47,7 @@ fun RawRoom.toRoomInfo(icon: FileInfo? = null): RoomInfo {
     )
 }
 
-fun buildUserNotificationRoom(
-    user: User,
-    adminUid: PrimaryKey
-): Room = Room(
+fun buildUserNotificationRoom(user: User, adminUid: PrimaryKey): Room = Room(
     user.notificationId,
     now(),
     "${user.aid}_notification",
@@ -60,10 +57,7 @@ fun buildUserNotificationRoom(
     null
 )
 
-suspend fun buildMemberForNotificationRoom(
-    user: User,
-    adminUid: PrimaryKey
-): List<Member> = listOf(
+suspend fun buildMemberForNotificationRoom(user: User, adminUid: PrimaryKey): List<Member> = listOf(
     Member(
         SnowflakeFactory.nextId(),
         user.id,

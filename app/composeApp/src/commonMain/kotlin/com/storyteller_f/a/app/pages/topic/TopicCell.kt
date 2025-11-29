@@ -222,10 +222,7 @@ fun RoomTopicCellInternal(
             }
             Column(
                 Modifier.fillMaxWidth().padding(start = 48.dp, end = 8.dp)
-                    .background(
-                        MaterialTheme.colorScheme.surfaceContainerHigh,
-                        RoundedCornerShape(8.dp)
-                    )
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(8.dp))
                     .padding(horizontal = 12.dp).padding(top = 8.dp, bottom = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -252,10 +249,7 @@ private fun SubTopics(topicInfo: TopicInfo) {
     if (topics.isNotEmpty()) {
         Column(
             modifier = Modifier
-                .background(
-                    MaterialTheme.colorScheme.surfaceContainerHigh,
-                    RoundedCornerShape(10.dp)
-                )
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(10.dp))
                 .padding(horizontal = 8.dp)
         ) {
             repeat(topics.size) {

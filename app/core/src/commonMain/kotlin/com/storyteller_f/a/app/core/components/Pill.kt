@@ -37,10 +37,7 @@ fun Pill(
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
     Row(
-        modifier = Modifier.background(
-            background,
-            shape
-        )
+        modifier = Modifier.background(background, shape)
             .height(28.dp)
             .clip(shape)
             .clickable {
@@ -51,12 +48,7 @@ fun Pill(
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         when {
-            icon != null -> Icon(
-                icon,
-                contentDescription = text,
-                modifier = Modifier.size(15.dp),
-                tint = textColor
-            )
+            icon != null -> Icon(icon, contentDescription = text, modifier = Modifier.size(15.dp), tint = textColor)
 
             emoji != null -> {
                 Text(emoji)

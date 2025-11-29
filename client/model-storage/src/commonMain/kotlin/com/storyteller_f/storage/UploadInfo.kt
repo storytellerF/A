@@ -27,19 +27,6 @@ data class UploadInfo(
     val recordId: PrimaryKey? = null
 ) {
     companion object {
-        val EMPTY = UploadInfo(
-            0,
-            0,
-            "",
-            "",
-            0,
-            0,
-            0,
-            UploadStatus.NOT_UPLOADING,
-            "",
-            "",
-            "",
-            0,
-        )
+        val EMPTY = UploadInfo(0, 0, "", "", 0, 0, 0, UploadStatus.NOT_UPLOADING, "", "", "", 0,)
     }
 }

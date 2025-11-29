@@ -165,12 +165,7 @@ class ExposedContainerDatabase(val databaseSession: ExposedDatabaseSession) :
             }.getOrThrow()
             val latestMap = getLatestTopicInContainer(parentIds, uid).getOrThrow()
             parentIds.associateWith {
-                ContainerInfo(
-                    joinMap[it],
-                    readMap[it],
-                    memberCountMap[it],
-                    latestMap[it]
-                )
+                ContainerInfo(joinMap[it], readMap[it], memberCountMap[it], latestMap[it])
             }
         }
     }
@@ -319,11 +314,7 @@ class ExposedContainerDatabase(val databaseSession: ExposedDatabaseSession) :
             }
             map {
                 val member = Member.wrapRow(it)
-                it[Members.objectId] to NestedMemberInfo(
-                    member.status,
-                    member.joinedTime,
-                    member.invitedTime
-                )
+                it[Members.objectId] to NestedMemberInfo(member.status, member.joinedTime, member.invitedTime)
             }
         }
     }
