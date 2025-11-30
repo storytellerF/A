@@ -283,9 +283,9 @@ suspend fun Backend.getFileInfoPaginationResult(
     uid: PrimaryKey,
     primaryKeyFetch: PrimaryKeyFetch,
 ): Result<PaginationResult<FileInfo>> = database.file.getFileRecordPaginationList(uid, primaryKeyFetch)
-        .mapPagingResultNotNull { list ->
-            processFileRecordToFileInfo(list)
-        }
+    .mapPagingResultNotNull { list ->
+        processFileRecordToFileInfo(list)
+    }
 
 suspend fun Backend.getAllFileInfos(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<FileInfo>> =
     database.file.getAllFileRecordPaginationList(primaryKeyFetch).mapPagingResultNotNull { list ->

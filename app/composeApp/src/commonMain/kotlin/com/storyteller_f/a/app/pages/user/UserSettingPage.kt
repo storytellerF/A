@@ -186,8 +186,8 @@ private fun getRatio(currentOption: SettingOption?): AspectRatio {
 }
 
 private fun showFilePicker(currentOption: SettingOption?): Boolean = currentOption is SettingOption.Icon ||
-        currentOption is SettingOption.Poster ||
-        currentOption is SettingOption.RoomIcon
+    currentOption is SettingOption.Poster ||
+    currentOption is SettingOption.RoomIcon
 
 private fun processSelectedMedia(
     mediaList: List<FileInfo>,

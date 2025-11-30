@@ -20,14 +20,9 @@ fun isWin(): Boolean {
 }
 
 fun forceStop(port: Int) {
-    println("forceStop $port")
+    println("forceStop $port ${File(".").canonicalPath}")
     val process = if (isWin()) {
-        // for /f "tokens=5" %a in ('netstat -ano ^| findstr :8080') do taskkill /PID %a /F
-        ProcessBuilder().command(
-            "cmd",
-            "/c",
-            """"for /f "tokens=5" %i in ('netstat -ano ^| findstr :$port') do taskkill /PID %i /F""""
-        )
+        ProcessBuilder().command(File("../../scripts/tool_scripts/kill-port.bat").canonicalPath, port.toString())
     } else {
         ProcessBuilder().command(
             "/bin/sh",
@@ -38,14 +33,14 @@ fun forceStop(port: Int) {
     val thread = thread {
         process.inputStream.bufferedReader().use {
             while (process.isAlive) {
-                val output = it.readLine()
+                val output = it.readLine() ?: break
                 println(output)
             }
         }
     }
     val result = process.waitFor()
     thread.interrupt()
-    check(result != 0) {
+    check(result == 0) {
         "forceStop failed"
     }
 }
@@ -62,10 +57,10 @@ suspend fun CoroutineScope.startServerByRun(projectRoot: String, port: Int): Pro
         return null
     }
     val serverProcess = ProcessBuilder(GIT_BASH, "-c", "cloud/server/build/install/server/bin/server")
-            .redirectErrorStream(true)
-            .directory(File(projectRoot))
-            .bindGradleProcessEnv(testEnvFile, port)
-            .start()
+        .redirectErrorStream(true)
+        .directory(File(projectRoot))
+        .bindGradleProcessEnv(testEnvFile, port)
+        .start()
     return waitRunServerProcess(serverProcess)
 }
 

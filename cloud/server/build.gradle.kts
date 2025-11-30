@@ -66,14 +66,7 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
-    // 设置测试 JVM 的最大堆内存为 1024MB
     maxHeapSize = "3096m"
-
-    // 设置初始堆内存
-    minHeapSize = "256m"
-
-    // 传递额外的 JVM 参数
-    jvmArgs("-XX:MaxMetaspaceSize=512m")
 }
 
 val buildType = project.findProperty("server.buildType") as String

@@ -108,9 +108,9 @@ object AlgoP256 : Algo {
     override suspend fun signature(pemPrivateKey: String, data: String): Result<String> {
         return runCatching {
             val privateKey = CryptographyProvider.Default.get(ECDSA).privateKeyDecoder(EC.Curve.P256)
-                    .decodeFromByteArray(EC.PrivateKey.Format.PEM, pemPrivateKey.encodeToByteArray())
+                .decodeFromByteArray(EC.PrivateKey.Format.PEM, pemPrivateKey.encodeToByteArray())
             val signature = privateKey.signatureGenerator(SHA256, ECDSA.SignatureFormat.DER)
-                    .generateSignature(data.encodeToByteArray())
+                .generateSignature(data.encodeToByteArray())
             signature.toHexString()
         }
     }
@@ -159,7 +159,7 @@ object AlgoP256 : Algo {
                 .decodeFromByteArray(EC.PublicKey.Format.DER, derPublicKeyStr.hexToByteArray())
 
             val shared = tempKeyPair.privateKey.sharedSecretGenerator()
-                    .generateSharedSecretToByteArray(publicKey)
+                .generateSharedSecretToByteArray(publicKey)
 
             val derivedKeys = CryptographyProvider.Default.get(HKDF)
                 .secretDerivation(SHA256, 512.bits, null, "ecies".encodeToByteArray())
@@ -176,9 +176,9 @@ object AlgoP256 : Algo {
 
             val concat = tempKeyPair.publicKey.encodeToByteArray(EC.PublicKey.Format.RAW) + encrypted
             val signature = CryptographyProvider.Default.get(HMAC).keyDecoder(SHA256)
-                    .decodeFromByteArray(HMAC.Key.Format.RAW, macKey)
-                    .signatureGenerator()
-                    .generateSignature(concat)
+                .decodeFromByteArray(HMAC.Key.Format.RAW, macKey)
+                .signatureGenerator()
+                .generateSignature(concat)
 
             concat + signature
         }

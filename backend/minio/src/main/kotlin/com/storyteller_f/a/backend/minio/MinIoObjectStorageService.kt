@@ -88,7 +88,7 @@ class MinIoObjectStorageService(
                         .`object`(it.newFullName)
                         .metadataDirective(Directive.COPY)
                         .taggingDirective(Directive.COPY)
-                        .source(CopySource.builder() .bucket(bucketName) .`object`(it.originFullName) .build())
+                        .source(CopySource.builder().bucket(bucketName).`object`(it.originFullName).build())
                         .build()
                 ).`object`()
             }
@@ -186,7 +186,7 @@ class MinIoObjectStorageService(
         return useMinIoClient(connection) {
             names.forEach { name ->
                 try {
-                    removeObject(RemoveObjectArgs.builder() .bucket(bucketName) .`object`(name) .build())
+                    removeObject(RemoveObjectArgs.builder().bucket(bucketName).`object`(name).build())
                 } catch (e: ErrorResponseException) {
                     // Ignore missing keys
                     if (e.errorResponse().code() != "NoSuchKey") throw e
@@ -231,7 +231,7 @@ private suspend fun <R> useMinIoClient(
 private fun MinioClient.removeAllObject(bucketName: String) {
     listObjects(ListObjectsArgs.builder().bucket(bucketName).recursive(true).build()).forEach {
         if (!it.get().isDir) {
-            removeObject(RemoveObjectArgs.builder().bucket(bucketName).`object`(it.get().objectName()) .build())
+            removeObject(RemoveObjectArgs.builder().bucket(bucketName).`object`(it.get().objectName()).build())
         }
     }
 }

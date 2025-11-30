@@ -208,7 +208,7 @@ class TopicTest {
                 ObjectTuple(it.uid, ObjectType.USER),
                 getUploadDataFromText(string)
             ).getOrThrow().data.first()
-            val info = createTopic( ObjectType.USER, it.uid, "![hello.txt](${fileInfo.name})" ).getOrThrow()
+            val info = createTopic(ObjectType.USER, it.uid, "![hello.txt](${fileInfo.name})").getOrThrow()
             val plain = info.content as TopicContent.Plain
             assertEquals(fileInfo.fullName, plain.fileInfos.first().fullName)
             val topicInfo = getTopicInfo(info.id).getOrThrow()
@@ -370,7 +370,7 @@ class TopicTest {
                 receivedFrame.add(roomFrame)
             }) {
                 val roomInfo = createRoom(NewRoom("r1", "r1")).getOrThrow()
-                val keys = getRoomMembersPublicKeys( roomInfo.id, PaginationQuery(null, size = 10) ).getOrThrow().data
+                val keys = getRoomMembersPublicKeys(roomInfo.id, PaginationQuery(null, size = 10)).getOrThrow().data
                 createTopicInRoomAndWait(receivedFrame) {
                     sendMessage(roomInfo.tuple(), true, "hello", keys)
                 }

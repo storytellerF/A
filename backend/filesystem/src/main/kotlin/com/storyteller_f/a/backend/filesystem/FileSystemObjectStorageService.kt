@@ -77,8 +77,8 @@ class FileSystemObjectStorageService(private val url: String, base: Path) : Obje
                 val mediaPath = base.resolve("$bucketName/$it")
                 if (mediaPath.exists()) {
                     val newUrl = UrlBuilder.fromString(url)
-                            .withPath("a_file/${A_FILE_DEFAULT_BUCKET}/$it")
-                            .toString()
+                        .withPath("a_file/${A_FILE_DEFAULT_BUCKET}/$it")
+                        .toString()
                     ObjectStorageRecord(
                         newUrl,
                         mediaPath.getLastModifiedTime().toInstant().toKotlinInstant()

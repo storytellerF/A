@@ -32,7 +32,7 @@ fun <T> BufferedInputStream.readFlacAlbumFromAudioStream(saveAlbum: (ByteArray, 
             val dataInput = pictureData.inputStream().buffered()
 
             fun readInt(): Int = (dataInput.read() shl 24) or (dataInput.read() shl 16) or
-                    (dataInput.read() shl 8) or dataInput.read()
+                (dataInput.read() shl 8) or dataInput.read()
 
             readInt() // picture type
             val mimeLength = readInt()

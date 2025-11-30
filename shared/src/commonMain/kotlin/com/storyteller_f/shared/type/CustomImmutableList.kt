@@ -27,7 +27,8 @@ class ImmutableListSerializer<T>(elementSerializer: KSerializer<T>) : KSerialize
     }
 }
 
-typealias CustomImmutableList<T> = @Serializable(ImmutableListSerializer::class)
+typealias CustomImmutableList<T> =
+    @Serializable(ImmutableListSerializer::class)
     ImmutableList<T>
 
 class ImmutableMapSerializer<K, V>(
@@ -48,5 +49,6 @@ class ImmutableMapSerializer<K, V>(
         return mapSerializer.deserialize(decoder).toImmutableMap()
     }
 }
-typealias CustomImmutableMap<K, V> = @Serializable(ImmutableMapSerializer::class)
+typealias CustomImmutableMap<K, V> =
+    @Serializable(ImmutableMapSerializer::class)
     ImmutableMap<K, V>

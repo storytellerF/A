@@ -393,9 +393,9 @@ class AddPreset : Subcommand("add", "add entry") {
             addUserLog(user.id, UserLogType.SIGN_UP, user.id ob ObjectType.USER).getOrThrow()
         }
         val userMap = database.user.getRawUsers(AidListFetch(listOf("System"))).getOrThrow()
-                .associate {
-                    it.user.aid to it.user
-                }
+            .associate {
+                it.user.aid to it.user
+            }
         val adminUid = userMap["System"]!!.id
         val realUser = users.filter {
             it.id > 1000
