@@ -486,8 +486,8 @@ private suspend fun Backend.processUserLogToUserLogInfo(
     }
     val users = getUserInfoList(ObjectListFetch.IdListFetch(userIds)).getOrThrow()
     val communities = database.community.getRawCommunities(ObjectListFetch.IdListFetch(communityIds))
-            .mapResult { processRawCommunityToCommunityInfo(it) }.getOrThrow()
-            ?: emptyList()
+        .mapResult { processRawCommunityToCommunityInfo(it) }.getOrThrow()
+        ?: emptyList()
     val rooms = getRoomInfoList(ObjectListFetch.IdListFetch(roomIds)).getOrThrow()
     val topics = getTopicByIds(topicIds, uid).getOrThrow() ?: emptyList()
     val userMap = users.associateBy { it.id }

@@ -728,7 +728,7 @@ private fun StartCallButton(
         ButtonNav(Icons.Default.ChatBubble, stringResource(Res.string.bubble)) {
             scope.launch {
                 val bitmap = roomInfo.icon?.let { getRemoteImageBitmap(sessionManager, context, it) }
-                        ?.getOrNull()
+                    ?.getOrNull()
                 notifyNotification(roomInfo, bitmap)
             }
         }

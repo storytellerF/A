@@ -156,8 +156,8 @@ private fun AudioTitle(
     playingSession: MediaPlaySession
 ) {
     val title = state.currentPlayingItem?.mediaMetadata?.title?.toString()
-            ?: playingSession.remoteMediaItem.title
-            ?: playingSession.remoteMediaItem.name
+        ?: playingSession.remoteMediaItem.title
+        ?: playingSession.remoteMediaItem.name
     Text(title, maxLines = 2, modifier = Modifier.basicMarquee().padding(horizontal = 20.dp))
 }
 

@@ -401,6 +401,9 @@ tasks.withType<Test> {
             exclude("**/device_based/*")
         }
     }
+    if (name == "testBenchmarkUnitTest") {
+        exclude("**/headless/*")
+    }
 }
 
 compose.resources {
@@ -447,4 +450,8 @@ val downloadFonts by tasks.registering(Download::class) {
 
 tasks.named("copyNonXmlValueResourcesForCommonMain") {
     dependsOn(downloadFonts)
+}
+
+tasks.withType<Test>().configureEach {
+    maxHeapSize = "3096m"
 }

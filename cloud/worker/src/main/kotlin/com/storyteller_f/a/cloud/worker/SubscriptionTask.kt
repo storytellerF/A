@@ -57,10 +57,10 @@ private suspend fun Backend.processTopicSubscription(topic: Topic) {
     val topicParentId = topic.parentId
     val content = generateTopicSubscriptionContent(topic, topicParentId) ?: return
     val log = database.subscription.getLatestSubscriptionSentLog(topicParentId)
-            .getOrThrow()?.subscriptionId
+        .getOrThrow()?.subscriptionId
     val cursor = Cursor.AscCursor(log ?: 0)
     val userSubscriptions = database.subscription.getSubscriptionsByObjectId(topicParentId, PrimaryKeyFetch(cursor, 10))
-            .getOrThrow()
+        .getOrThrow()
     userSubscriptions.forEach { userSubscription ->
         val rawUser = database.user.getRawUser(ObjectFetch.IdFetch(userSubscription.uid))
             .getOrThrow() ?: throw Exception("user not found")

@@ -563,29 +563,29 @@ object AdminApi {
 
             object Communities {
                 val get = safeEndpointWithQueryAndPath<
-                        ServerResponse<CommunityInfo>,
-                        PaginationQuery,
-                        CommonPath>(
-                        "/admin/users/{id}/communities"
-                    )
+                    ServerResponse<CommunityInfo>,
+                    PaginationQuery,
+                    CommonPath>(
+                    "/admin/users/{id}/communities"
+                )
             }
 
             object Rooms {
                 val get = safeEndpointWithQueryAndPath<
-                        ServerResponse<RoomInfo>,
-                        PaginationQuery,
-                        CommonPath>(
-                        "/admin/users/{id}/rooms"
-                    )
+                    ServerResponse<RoomInfo>,
+                    PaginationQuery,
+                    CommonPath>(
+                    "/admin/users/{id}/rooms"
+                )
             }
 
             object Titles {
                 val get = safeEndpointWithQueryAndPath<
-                        ServerResponse<TitleInfo>,
-                        CustomApi.Users.Id.Titles.TitleQuery,
-                        CommonPath>(
-                        "/admin/users/{id}/titles"
-                    )
+                    ServerResponse<TitleInfo>,
+                    CustomApi.Users.Id.Titles.TitleQuery,
+                    CommonPath>(
+                    "/admin/users/{id}/titles"
+                )
             }
 
             object Files {
@@ -597,34 +597,34 @@ object AdminApi {
 
             object Logs {
                 val get = safeEndpointWithQueryAndPath<ServerResponse<UserLogInfo>,
-                        PaginationQuery,
-                        CommonPath>(
-                        "/admin/users/{id}/logs"
-                    )
+                    PaginationQuery,
+                    CommonPath>(
+                    "/admin/users/{id}/logs"
+                )
             }
 
             object UploadRecords {
                 val get = safeEndpointWithQueryAndPath<ServerResponse<com.storyteller_f.shared.model.UploadRecordInfo>,
-                        PaginationQuery,
-                        CommonPath>(
-                        "/admin/users/{id}/upload-records"
-                    )
+                    PaginationQuery,
+                    CommonPath>(
+                    "/admin/users/{id}/upload-records"
+                )
             }
 
             object Reactions {
                 val get = safeEndpointWithQueryAndPath<ServerResponse<ReactionRecordInfo>,
-                        PaginationQuery,
-                        CommonPath>(
-                        "/admin/users/{id}/reactions"
-                    )
+                    PaginationQuery,
+                    CommonPath>(
+                    "/admin/users/{id}/reactions"
+                )
             }
 
             object Comments {
                 val get = safeEndpointWithQueryAndPath<ServerResponse<TopicInfo>,
-                        PaginationQuery,
-                        CommonPath>(
-                        "/admin/users/{id}/comments"
-                    )
+                    PaginationQuery,
+                    CommonPath>(
+                    "/admin/users/{id}/comments"
+                )
             }
         }
     }
@@ -641,11 +641,11 @@ object AdminApi {
             val get = safeEndpointWithPath<CommunityInfo, CommonPath>("/admin/communities/{id}")
             object Members {
                 val get = safeEndpointWithQueryAndPath<
-                        ServerResponse<MemberInfo>,
-                        PaginationQuery,
-                        CommonPath>(
-                        "/admin/communities/{id}/members"
-                    )
+                    ServerResponse<MemberInfo>,
+                    PaginationQuery,
+                    CommonPath>(
+                    "/admin/communities/{id}/members"
+                )
             }
         }
     }
@@ -657,19 +657,19 @@ object AdminApi {
             val get = safeEndpointWithPath<RoomInfo, CommonPath>("/admin/rooms/{id}")
             object Members {
                 val get = safeEndpointWithQueryAndPath<
-                        ServerResponse<MemberInfo>,
-                        PaginationQuery,
-                        CommonPath>(
-                        "/admin/rooms/{id}/members"
-                    )
+                    ServerResponse<MemberInfo>,
+                    PaginationQuery,
+                    CommonPath>(
+                    "/admin/rooms/{id}/members"
+                )
             }
             object Files {
                 val get = safeEndpointWithQueryAndPath<
-                        ServerResponse<FileInfo>,
-                        PaginationQuery,
-                        CommonPath>(
-                        "/admin/rooms/{id}/files"
-                    )
+                    ServerResponse<FileInfo>,
+                    PaginationQuery,
+                    CommonPath>(
+                    "/admin/rooms/{id}/files"
+                )
             }
         }
     }
