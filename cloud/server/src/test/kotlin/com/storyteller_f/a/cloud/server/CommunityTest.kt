@@ -13,14 +13,14 @@ import com.storyteller_f.a.client.core.getCommunityInfo
 import com.storyteller_f.a.client.core.getCommunityInfoByAid
 import com.storyteller_f.a.client.core.getCommunityTopics
 import com.storyteller_f.a.client.core.getTopicInfo
+import com.storyteller_f.a.client.core.getUserCommunities
+import com.storyteller_f.a.client.core.getUserJoinedCommunities
 import com.storyteller_f.a.client.core.joinCommunity
-import com.storyteller_f.a.client.core.searchCommunity
 import com.storyteller_f.a.client.core.searchCommunityMembers
 import com.storyteller_f.a.client.core.searchTopics
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.MemberPolicy
 import com.storyteller_f.shared.model.TitleType
-import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
@@ -113,11 +113,8 @@ class CommunityTest {
             var lastCommunityId: String? = null
             var sum = 0L
             while (true) {
-                val res = searchCommunity(
-                    3,
-                    JoinStatusSearch.JOINED,
-                    "",
-                    nextCommunityId = lastCommunityId
+                val res = getUserCommunities(
+                    PaginationQuery(lastCommunityId, size = 3)
                 ).getOrThrow()
                 val pagination = res.pagination!!
                 lastCommunityId = pagination.nextPageToken
@@ -151,7 +148,7 @@ class CommunityTest {
             }
         }.uid
         noneSession {
-            val response = searchCommunity(10, JoinStatusSearch.JOINED, target = id).getOrThrow()
+            val response = getUserJoinedCommunities(id, PaginationQuery(size = 10)).getOrThrow()
             assertEquals(10, response.data.size)
             response.data.forEach {
                 assertFalse(it.isJoined)
@@ -159,12 +156,12 @@ class CommunityTest {
             }
         }
         attachSession {
-            val response = searchCommunity(10, JoinStatusSearch.JOINED, target = id).getOrThrow()
+            val response = getUserJoinedCommunities(id, PaginationQuery(size = 10)).getOrThrow()
             assertEquals(10, response.data.size)
             response.data.forEach {
                 joinCommunity(it.id).getOrThrow()
             }
-            val response2 = searchCommunity(10, JoinStatusSearch.JOINED, target = id).getOrThrow()
+            val response2 = getUserJoinedCommunities(id, PaginationQuery(size = 10)).getOrThrow()
             response2.data.forEach {
                 assertTrue(it.isJoined)
                 assertNotNull(it.extension?.targetMemberInfo)

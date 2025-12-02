@@ -135,7 +135,7 @@ suspend fun UserSessionManager.getCommunityInfoByAid(aid: String) = serviceCatch
 suspend fun UserSessionManager.searchCommunity(
     size: Int,
     joinStatusSearch: JoinStatusSearch,
-    word: String? = null,
+    word: String,
     target: PrimaryKey? = null,
     nextCommunityId: String? = null,
     hasPosterSearch: PosterSearch? = null,
@@ -150,6 +150,19 @@ suspend fun UserSessionManager.searchCommunity(
             size,
         )
     )
+}
+
+suspend fun UserSessionManager.getUserCommunities(
+    paginationQuery: PaginationQuery,
+) = serviceCatching {
+    CustomApi.Communities.get(paginationQuery)
+}
+
+suspend fun UserSessionManager.getUserJoinedCommunities(
+    userId: PrimaryKey,
+    paginationQuery: PaginationQuery,
+) = serviceCatching {
+    CustomApi.Users.Id.Communities.get(paginationQuery, CommonPath(userId))
 }
 
 suspend fun UserSessionManager.searchCommunityMembers(

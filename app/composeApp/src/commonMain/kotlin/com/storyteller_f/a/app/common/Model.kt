@@ -53,8 +53,10 @@ import com.storyteller_f.a.client.core.getSubscriptions
 import com.storyteller_f.a.client.core.getTopicInfo
 import com.storyteller_f.a.client.core.getTopicInfoByAid
 import com.storyteller_f.a.client.core.getTopicList
+import com.storyteller_f.a.client.core.getUserCommunities
 import com.storyteller_f.a.client.core.getUserInfo
 import com.storyteller_f.a.client.core.getUserInfoByAid
+import com.storyteller_f.a.client.core.getUserJoinedCommunities
 import com.storyteller_f.a.client.core.getUserOverview
 import com.storyteller_f.a.client.core.processEncryptedTopic
 import com.storyteller_f.a.client.core.searchAllMembers
@@ -166,7 +168,7 @@ class CommunitiesViewModel(
     sessionManager: UserSessionManager,
     modelStorage: ModelStorage,
     joinStatusSearch: JoinStatusSearch,
-    word: String = "",
+    word: String,
     target: PrimaryKey? = null,
 ) : PagingViewModel<CommunityInfo>() {
     private val modelCollection =
@@ -184,15 +186,36 @@ class CommunitiesViewModel(
 }
 
 @OptIn(ExperimentalPagingApi::class)
-class CommunitiesWithPosterViewModel(
+class UserJoinedCommunitiesViewModel(
     sessionManager: UserSessionManager,
     modelStorage: ModelStorage,
-    joinStatusSearch: JoinStatusSearch,
-    word: String = "",
     target: PrimaryKey? = null,
 ) : PagingViewModel<CommunityInfo>() {
     private val modelCollection =
-        CommunityCollection.SearchCommunity(joinStatusSearch, word, target, PosterSearch.HAS_POSTER)
+        CommunityCollection.SearchCommunity(JoinStatusSearch.JOINED, "", target, PosterSearch.UNSPECIFIED)
+
+    override val flow = buildPager(
+        modelCollection,
+        modelCollection.getName(),
+        modelStorage.remoteKey,
+        modelStorage.community,
+        RegularPagingSource { key, size ->
+            if (target == null) {
+                sessionManager.getUserCommunities(PaginationQuery(key, size = size))
+            } else {
+                sessionManager.getUserJoinedCommunities(target, PaginationQuery(key, size = size))
+            }
+        }
+    ).flow.cachedIn(viewModelScope)
+}
+
+@OptIn(ExperimentalPagingApi::class)
+class UserJoinedCommunitiesWithPosterViewModel(
+    sessionManager: UserSessionManager,
+    modelStorage: ModelStorage,
+) : PagingViewModel<CommunityInfo>() {
+    private val modelCollection =
+        CommunityCollection.SearchCommunity(JoinStatusSearch.JOINED, "", null, PosterSearch.HAS_POSTER)
 
     override val flow = buildPager(
         modelCollection,
@@ -200,7 +223,7 @@ class CommunitiesWithPosterViewModel(
         modelStorage.remoteKey,
         modelStorage.community
     ) { key, size ->
-        sessionManager.searchCommunity(size, joinStatusSearch, word, target, key, PosterSearch.HAS_POSTER)
+        sessionManager.getUserCommunities(PaginationQuery(key, size = size))
     }.flow.cachedIn(viewModelScope)
 }
 
@@ -812,7 +835,7 @@ class SubscriptionsViewModel(
         }
     ) {
         WrappedPagingSource(
-            CompatPagingSource(modelStorage.subscription.observeData(), IntKeyConverter,)
+            CompatPagingSource(modelStorage.subscription.observeData(), IntKeyConverter)
         ) { list ->
             list.map { subscriptionInfo ->
                 val extensions = subscriptionInfo.extensions
@@ -870,7 +893,7 @@ class UserCommentsViewModel(
         }
     ) {
         WrappedPagingSource(
-            CompatPagingSource(modelStorage.topic.observeData(collection), IntKeyConverter,)
+            CompatPagingSource(modelStorage.topic.observeData(collection), IntKeyConverter)
         ) { list ->
             processEncryptedTopic(list, sessionManager).map {
                 generateMathIfNeed(it, textStyle, inlineCodeTextStyle, density)

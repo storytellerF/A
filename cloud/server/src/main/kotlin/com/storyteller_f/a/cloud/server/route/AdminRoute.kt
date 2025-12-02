@@ -169,7 +169,7 @@ private fun Routing.bindAdminUserRoutes(backend: Backend) {
     }
     AdminApi.Users.Id.Communities.get(handleResult()) { q, p ->
         q.pagination(IdentifiablePagingGenerator) { f ->
-            backend.getUserJoinedCommunities(p.id, f)
+            backend.getUserJoinedCommunities(null, p.id, f)
         }
     }
     AdminApi.Users.Id.Rooms.get(handleResult()) { q, p ->

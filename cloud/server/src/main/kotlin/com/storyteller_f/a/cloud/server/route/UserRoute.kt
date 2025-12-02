@@ -12,6 +12,7 @@ import com.storyteller_f.a.cloud.core.service.getFavorites
 import com.storyteller_f.a.cloud.core.service.getTopicsByParentId
 import com.storyteller_f.a.cloud.core.service.getUserCommentedTopics
 import com.storyteller_f.a.cloud.core.service.getUserInfo
+import com.storyteller_f.a.cloud.core.service.getUserJoinedCommunities
 import com.storyteller_f.a.cloud.core.service.getUserOverview
 import com.storyteller_f.a.cloud.core.service.getUserReactions
 import com.storyteller_f.a.cloud.core.service.getUserSubscriptions
@@ -82,6 +83,17 @@ fun Route.bindProtectedUserRoute(backend: Backend) {
             }
         }
     }
+    bindUserCommunitiesRoute(backend)
+}
+
+private fun Route.bindUserCommunitiesRoute(backend: Backend) {
+    CustomApi.Communities.get(handleResult()) { q ->
+        usePrincipal { uid ->
+            q.pagination(IdentifiablePagingGenerator) { fetch ->
+                backend.getUserJoinedCommunities(uid, uid, fetch)
+            }
+        }
+    }
 }
 
 fun Route.bindProtectedUserSubscriptionRoute(backend: Backend) {
@@ -118,6 +130,14 @@ fun Route.bindUserRoute(backend: Backend) {
         usePrincipalOrNull { uid ->
             q.pagination(IdentifiablePagingGenerator) { f ->
                 backend.getTopicsByParentId(p.id, ObjectType.USER, uid, q.fillHasCommented, f, q.pinType)
+            }
+        }
+    }
+
+    CustomApi.Users.Id.Communities.get(handleResult()) { q, p ->
+        usePrincipalOrNull { uid ->
+            q.pagination(IdentifiablePagingGenerator) { f ->
+                backend.getUserJoinedCommunities(uid, p.id, f)
             }
         }
     }

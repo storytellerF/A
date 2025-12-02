@@ -1,5 +1,7 @@
 package com.storyteller_f.a.cloud.server
 
+import com.storyteller_f.a.api.PaginationQuery
+import com.storyteller_f.a.client.core.getUserCommunities
 import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.a.client.core.searchCommunity
 import com.storyteller_f.shared.type.JoinStatusSearch
@@ -25,14 +27,11 @@ class CommunitySearchTest {
             joinCommunity(community1Id).getOrThrow()
             joinCommunity(community2Id).getOrThrow()
 
-            // 测试情况1: word 为空，使用 database 查询
-            // 搜索已加入的社区，不带关键字
-            val result1 = searchCommunity(
-                size = 10,
-                joinStatusSearch = JoinStatusSearch.JOINED,
-                word = null
+            // 测试情况1: 使用新的 getUserCommunities API 获取已加入的社区（不带关键字）
+            val result1 = getUserCommunities(
+                paginationQuery = PaginationQuery(size = 10)
             ).getOrThrow()
-            assertEquals(2, result1.data.size, "Should find 2 joined communities when word is null")
+            assertEquals(2, result1.data.size, "Should find 2 joined communities")
 
             // 测试情况2: word 不为空 && 搜索已加入的社区，使用 memberSearchService
             // 搜索已加入的社区，带关键字"test"

@@ -12,9 +12,9 @@ import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.UnauthorizedException
+import com.storyteller_f.a.backend.core.mapPagingResultIfNotNullNullable
 import com.storyteller_f.a.backend.core.mapPagingResultNotNull
 import com.storyteller_f.a.backend.core.paging
-import com.storyteller_f.a.backend.core.pagingNotNull
 import com.storyteller_f.a.backend.core.service.CommunityDocument
 import com.storyteller_f.a.backend.core.service.CommunityDocumentSearch
 import com.storyteller_f.a.backend.core.service.MemberDocument
@@ -123,13 +123,10 @@ suspend fun Backend.searchCommunities(
     } else {
         search.joinStatus.toJoinSearch(uid)
     }
+    if (word.isBlank()) {
+        return Result.success(null)
+    }
     return when {
-        // word 为空，使用 database 查询
-        word.isNullOrBlank() -> database.community.getCommunityPaginationResult(
-            search.hasPoster,
-            primaryKeyFetch,
-            joinSearch
-        )
         // word 不为空 && 搜索已加入的社区，使用 memberSearchService
         joinSearch is JoinSearch.Joined -> {
             memberSearchService.searchDocument(
@@ -152,33 +149,38 @@ suspend fun Backend.searchCommunities(
                 })
             )
         }
-    }.mapResultIfNotNull { (list, count) ->
-        processRawCommunityToCommunityInfo(list).mapResultIfNotNull { value ->
-            when {
-                search.target == null -> Result.success(PaginationResult(value, count))
-                uid != null -> processUserJoinedTimeReplace(value, uid, count)
-                else -> Result.success(PaginationResult(value.map {
-                    it.copy(member = null, extension = CommunityInfo.Extension(it.member))
-                }, count))
-            }
-        }
+    }.mapPagingResultIfNotNullNullable { communities ->
+        processCommunities(communities, uid, search.target)
+    }
+}
+
+private suspend fun Backend.processCommunities(
+    communities: List<RawCommunity>,
+    uid: PrimaryKey?,
+    target: PrimaryKey?
+): Result<List<CommunityInfo>?> = processRawCommunityToCommunityInfo(communities).mapResultIfNotNull { value ->
+    when {
+        target == null -> Result.success(value)
+        uid != null -> processUserJoinedTimeReplace(value, uid)
+        else -> Result.success(value.map {
+            it.copy(member = null, extension = CommunityInfo.Extension(it.member))
+        })
     }
 }
 
 private suspend fun Backend.processUserJoinedTimeReplace(
     communityInfos: List<CommunityInfo>,
-    uid: PrimaryKey,
-    total: Long
-): Result<PaginationResult<CommunityInfo>> {
+    uid: PrimaryKey
+): Result<List<CommunityInfo>> {
     val communityIds = communityInfos.map {
         it.id
     }
     return database.container.getMemberByIds(uid, communityIds).map { joinedTimeList ->
         val map = joinedTimeList.associate { it }
         communityInfos.map {
-            it.copy(member = map[it.id], extension = CommunityInfo.Extension(map[it.id]))
+            it.copy(member = map[it.id], extension = CommunityInfo.Extension(it.member))
         }
-    }.pagingNotNull(total)
+    }
 }
 
 suspend fun Backend.createCommunity(
@@ -355,17 +357,16 @@ suspend fun Backend.getAllCommunities(primaryKeyFetch: PrimaryKeyFetch) =
     }
 
 suspend fun Backend.getUserJoinedCommunities(
-    uid: PrimaryKey,
+    uid: PrimaryKey?,
+    target: PrimaryKey,
     primaryKeyFetch: PrimaryKeyFetch
 ): Result<PaginationResult<CommunityInfo>?> {
     return database.community.getCommunityPaginationResult(
         hasPosterSearch = PosterSearch.UNSPECIFIED,
         primaryKeyFetch = primaryKeyFetch,
-        joinSearch = JoinSearch.Joined(uid)
-    ).mapResultIfNotNull { (list, total) ->
-        processRawCommunityToCommunityInfo(list).mapResultIfNotNull { value ->
-            processUserJoinedTimeReplace(value, uid, total)
-        }
+        joinSearch = JoinSearch.Joined(target)
+    ).mapPagingResultIfNotNullNullable {
+        processCommunities(it, uid, target)
     }
 }
 

@@ -31,11 +31,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
 import androidx.paging.compose.itemKey
 import com.storyteller_f.a.app.LocalAppNavFactory
-import com.storyteller_f.a.app.common.CommunitiesViewModel
 import com.storyteller_f.a.app.common.CommunityScreen
 import com.storyteller_f.a.app.common.createJoinedCommunitiesViewModel
 import com.storyteller_f.a.app.common.createJoinedCommunitiesWithPosterViewModel
 import com.storyteller_f.a.app.common.hasRouteFlow
+import com.storyteller_f.a.app.core.common.PagingViewModel
 import com.storyteller_f.a.app.core.components.CommunityPoster
 import com.storyteller_f.a.app.core.components.LayoutDefaults
 import com.storyteller_f.a.app.core.components.StateView
@@ -112,7 +112,7 @@ fun CommunityPosterGrid(
 
 @Composable
 fun CommunityList(
-    communitiesViewModel: CommunitiesViewModel,
+    communitiesViewModel: PagingViewModel<CommunityInfo>,
     onClick: ((CommunityInfo) -> Unit)? = null
 ) {
     StateView(communitiesViewModel, modifier = Modifier.fillMaxSize()) { items ->
