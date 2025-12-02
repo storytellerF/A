@@ -14,8 +14,8 @@ import com.storyteller_f.a.client.core.createUserSessionManager
 import com.storyteller_f.a.client.core.defaultClientConfigure
 import com.storyteller_f.a.client.core.getClient
 import com.storyteller_f.a.client.core.getTopicList
+import com.storyteller_f.a.client.core.getUserCommunities
 import com.storyteller_f.a.client.core.getUserInfo
-import com.storyteller_f.a.client.core.searchCommunity
 import com.storyteller_f.a.client.core.startBackgroundTask
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.model.CommunityInfo
@@ -23,7 +23,6 @@ import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.TopicPinSearch
 import com.storyteller_f.shared.setupKmpLogger
-import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.now
 import io.github.aakira.napier.Napier
@@ -147,7 +146,7 @@ private suspend fun processCommunityTask(
 ) {
     var next: String? = null
     while (true) {
-        val resp = sessionManager.searchCommunity(10, JoinStatusSearch.JOINED, nextCommunityId = next).getOrThrow()
+        val resp = sessionManager.getUserCommunities(PaginationQuery(nextPageToken = next)).getOrThrow()
         delay(1.seconds)
         resp.data.forEach { communityInfo ->
             extracted(communityInfo)

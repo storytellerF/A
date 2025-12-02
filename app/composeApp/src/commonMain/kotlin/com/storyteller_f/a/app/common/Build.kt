@@ -35,21 +35,25 @@ fun createSearchCommunitiesViewModel(finalOption: JoinStatusSearch, query: Strin
 fun createJoinedCommunitiesViewModel() = customViewModel(
     listOf("joined-communities")
 ) { client, databaseSource ->
-    CommunitiesViewModel(client, databaseSource, JoinStatusSearch.JOINED)
+    UserJoinedCommunitiesViewModel(client, databaseSource)
 }
 
 @Composable
 fun createJoinedCommunitiesWithPosterViewModel() = customViewModel(
     listOf("joined-communities-with-poster")
 ) { client, databaseSource ->
-    CommunitiesWithPosterViewModel(client, databaseSource, JoinStatusSearch.JOINED)
+    UserJoinedCommunitiesWithPosterViewModel(client, databaseSource)
 }
 
 @Composable
 fun createTargetUserJoinedCommunitiesViewModel(target: PrimaryKey, word: String = "",) = customViewModel(
     listOf("communities", target, word)
 ) { client, databaseSource ->
-    CommunitiesViewModel(client, databaseSource, JoinStatusSearch.JOINED, word, target)
+    if (word.isNotBlank()) {
+        CommunitiesViewModel(client, databaseSource, JoinStatusSearch.JOINED, word, target)
+    } else {
+        UserJoinedCommunitiesViewModel(client, databaseSource, target)
+    }
 }
 
 @Composable

@@ -219,7 +219,7 @@ object CustomApi {
         @Serializable
         data class CommunitySearchQuery(
             val joinStatus: JoinStatusSearch? = null,
-            val word: String? = null,
+            val word: String,
             val target: PrimaryKey? = null,
             val hasPoster: PosterSearch? = null,
             override val nextPageToken: String? = null,
@@ -228,6 +228,7 @@ object CustomApi {
         ) : PageableQuery
 
         val search = safeEndpointWithQuery<ServerResponse<CommunityInfo>, CommunitySearchQuery>("communities/search")
+        val get = safeEndpointWithQuery<ServerResponse<CommunityInfo>, PaginationQuery>("users/communities")
 
         object Aid {
             @Serializable
@@ -357,6 +358,13 @@ object CustomApi {
             object Topics {
                 val get =
                     safeEndpointWithQueryAndPath<ServerResponse<TopicInfo>, TopicQuery, CommonPath>("users/{id}/topics")
+            }
+
+            object Communities {
+                val get =
+                    safeEndpointWithQueryAndPath<ServerResponse<CommunityInfo>, PaginationQuery, CommonPath>(
+                        "users/{id}/communities"
+                    )
             }
 
             object Titles {
