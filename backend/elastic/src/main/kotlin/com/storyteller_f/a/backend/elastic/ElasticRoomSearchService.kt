@@ -84,6 +84,12 @@ class ElasticRoomSearchService(connection: ElasticConnection) : Elastic(connecti
                             }
                         } to true)
                     }
+                    // 添加对communityId的过滤
+                    roomDocumentSearch.communityId?.let { communityId ->
+                        add(QueryBuilders.term { t ->
+                            t.field("communityId").value(communityId)
+                        } to true)
+                    }
                 }
             }
         }

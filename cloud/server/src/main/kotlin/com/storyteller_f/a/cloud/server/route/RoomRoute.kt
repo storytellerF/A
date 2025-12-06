@@ -10,7 +10,6 @@ import com.storyteller_f.a.cloud.core.service.getRoomPubKeys
 import com.storyteller_f.a.cloud.core.service.getTopicsByParentId
 import com.storyteller_f.a.cloud.core.service.joinRoom
 import com.storyteller_f.a.cloud.core.service.searchRoomMembers
-import com.storyteller_f.a.cloud.core.service.searchRoomPaginationResult
 import com.storyteller_f.a.cloud.core.service.updateRoom
 import com.storyteller_f.a.cloud.server.auth.handleResult
 import com.storyteller_f.a.cloud.server.auth.usePrincipal
@@ -25,13 +24,6 @@ import com.storyteller_f.shared.type.ObjectType
 import io.ktor.server.routing.*
 
 fun Route.bindRoomRoute(backend: Backend) {
-    CustomApi.Rooms.search(handleResult()) {
-        usePrincipalOrNull { uid ->
-            it.pagination(IdentifiablePagingGenerator) { f ->
-                backend.searchRoomPaginationResult(uid, f, it)
-            }
-        }
-    }
 
     CustomApi.Rooms.Id.Members.get(handleResult()) { q, p ->
         usePrincipalOrNull { uid ->

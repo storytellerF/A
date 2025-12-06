@@ -74,12 +74,13 @@ fun createCommunityViewModel(communityAid: String) = customViewModel(
 fun createCommunityRoomsViewModel(communityId: PrimaryKey) = customViewModel(
     listOf("community-rooms", communityId)
 ) { client, databaseSource ->
-    RoomsViewModel(client, databaseSource, JoinStatusSearch.UNSPECIFIED, communityId = communityId)
+    // 使用专门的社区房间ViewModel
+    CommunityRoomsViewModel(client, databaseSource, communityId)
 }
 
 @Composable
 fun createJoinedRoomsViewModel() = customViewModel { client, databaseSource ->
-    RoomsViewModel(client, databaseSource, JoinStatusSearch.JOINED)
+    UserJoinedRoomsViewModel(client, databaseSource)
 }
 
 @Composable
@@ -93,7 +94,8 @@ fun createRoomViewModel(roomId: PrimaryKey) = customViewModel(
 fun createRoomSearchInCommunityViewModel(scope: SearchScope.CommunityRoom, current: String,) = customViewModel(
     listOf("rooms", scope.communityId, current)
 ) { client, databaseSource ->
-    RoomsViewModel(client, databaseSource, JoinStatusSearch.UNSPECIFIED, current, scope.communityId)
+    // 使用专门的社区房间搜索ViewModel
+    CommunityRoomSearchViewModel(client, databaseSource, scope.communityId, current)
 }
 
 @Composable

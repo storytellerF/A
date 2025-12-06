@@ -228,7 +228,6 @@ object CustomApi {
         ) : PageableQuery
 
         val search = safeEndpointWithQuery<ServerResponse<CommunityInfo>, CommunitySearchQuery>("communities/search")
-        val get = safeEndpointWithQuery<ServerResponse<CommunityInfo>, PaginationQuery>("users/communities")
 
         object Aid {
             @Serializable
@@ -271,6 +270,34 @@ object CustomApi {
                     )
             }
 
+            object Rooms {
+                @Serializable
+                data class CommunityRoomQuery(
+                    override val nextPageToken: String? = null,
+                    override val prePageToken: String? = null,
+                    override val size: Int = DEFAULT_PAGE_SIZE,
+                    val joinStatus: JoinStatusSearch? = null
+                ) : PageableQuery
+
+                @Serializable
+                data class CommunityRoomSearchQuery(
+                    val word: String,
+                    val joinStatus: JoinStatusSearch? = null,
+                    override val nextPageToken: String? = null,
+                    override val size: Int = DEFAULT_PAGE_SIZE,
+                    override val prePageToken: String? = null,
+                ) : PageableQuery
+
+                val get =
+                    safeEndpointWithQueryAndPath<ServerResponse<RoomInfo>, CommunityRoomQuery, CommonPath>(
+                        "communities/{id}/rooms"
+                    )
+                val search =
+                    safeEndpointWithQueryAndPath<ServerResponse<RoomInfo>, CommunityRoomSearchQuery, CommonPath>(
+                        "communities/{id}/rooms/search"
+                    )
+            }
+
             val update = mutationEndpointWithPath<CommunityInfo, UpdateCommunityBody, CommonPath>("communities/{id}")
         }
 
@@ -278,17 +305,7 @@ object CustomApi {
     }
 
     object Rooms {
-        @Serializable
-        data class RoomSearchQuery(
-            val joinStatus: JoinStatusSearch? = null,
-            val word: String? = null,
-            val community: PrimaryKey? = null,
-            override val nextPageToken: String? = null,
-            override val size: Int = DEFAULT_PAGE_SIZE,
-            override val prePageToken: String? = null,
-        ) : PageableQuery
-
-        val search = safeEndpointWithQuery<ServerResponse<RoomInfo>, RoomSearchQuery>("rooms/search")
+        
 
         object Id {
             @Serializable
@@ -413,6 +430,35 @@ object CustomApi {
 
         object Comments {
             val get = safeEndpointWithQuery<ServerResponse<TopicInfo>, PaginationQuery>("users/comments")
+        }
+
+        object JoinedRooms {
+            @Serializable
+            data class UserRoomsSearchQuery(
+                val word: String,
+                override val nextPageToken: String? = null,
+                override val size: Int = DEFAULT_PAGE_SIZE,
+                override val prePageToken: String? = null,
+            ) : PageableQuery
+            val get = safeEndpointWithQuery<ServerResponse<RoomInfo>, PaginationQuery>("users/joined-rooms")
+
+            val search =
+                safeEndpointWithQuery<ServerResponse<RoomInfo>, UserRoomsSearchQuery>("users/joined-rooms/search")
+        }
+
+        object JoinedCommunities {
+            @Serializable
+            data class UserCommunitiesSearchQuery(
+                val word: String,
+                override val nextPageToken: String? = null,
+                override val size: Int = DEFAULT_PAGE_SIZE,
+                override val prePageToken: String? = null,
+            ) : PageableQuery
+            val get = safeEndpointWithQuery<ServerResponse<CommunityInfo>, PaginationQuery>("users/joined-communities")
+            val search =
+                safeEndpointWithQuery<ServerResponse<CommunityInfo>, UserCommunitiesSearchQuery>(
+                    "users/joined-communities/search"
+                )
         }
     }
 

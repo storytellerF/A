@@ -1,17 +1,23 @@
 package com.storyteller_f.a.cloud.server
 
+import com.storyteller_f.a.api.CustomApi
 import com.storyteller_f.a.api.NewRoom
 import com.storyteller_f.a.api.NewTitle
+import com.storyteller_f.a.api.PaginationQuery
 import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.createRoom
 import com.storyteller_f.a.client.core.createTitle
 import com.storyteller_f.a.client.core.exitRoom
+import com.storyteller_f.a.client.core.getCommunityRooms
 import com.storyteller_f.a.client.core.getRoomInfo
 import com.storyteller_f.a.client.core.getRoomInfoByAid
+import com.storyteller_f.a.client.core.getUserRooms
 import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.a.client.core.joinRoom
+import com.storyteller_f.a.client.core.searchCommunityRooms
+import com.storyteller_f.a.client.core.searchCurrentUserRooms
 import com.storyteller_f.a.client.core.searchRoomMembers
-import com.storyteller_f.a.client.core.searchRooms
+
 import com.storyteller_f.a.client.core.sendFrame
 import com.storyteller_f.a.client.core.updateRoomInfo
 import com.storyteller_f.shared.model.RoomInfo
@@ -63,7 +69,7 @@ class RoomTest {
         }
         loginSession(secondTuple) {
             joinRoom(privateRoomId).getOrThrow()
-            expectedRoomCount(1, JoinStatusSearch.JOINED)
+            expectedRoomCountForJoinedRoomList(1)
         }
     }
 
@@ -80,16 +86,16 @@ class RoomTest {
         attachSession {
             joinCommunity(communityId).getOrThrow()
             joinRoom(publicRoom1Id).getOrThrow()
-            expectedRoomCount(1, JoinStatusSearch.JOINED)
-            expectedRoomCount(2, JoinStatusSearch.UNSPECIFIED, communityId = communityId)
+            expectedRoomCountForJoinedRoomList(1)
+            expectedRoomCountForCommunityRoomList(2, communityId, JoinStatusSearch.UNSPECIFIED)
             joinRoom(publicRoom2Id).getOrThrow()
-            expectedRoomCount(2, JoinStatusSearch.JOINED)
-            expectedRoomCount(2, JoinStatusSearch.UNSPECIFIED, communityId = communityId)
+            expectedRoomCountForJoinedRoomList(2)
+            expectedRoomCountForCommunityRoomList(2, communityId, JoinStatusSearch.UNSPECIFIED)
             exitRoom(publicRoom1Id).getOrThrow()
             // 测试幂等
             exitRoom(publicRoom1Id).getOrThrow()
-            expectedRoomCount(1, JoinStatusSearch.JOINED, communityId = communityId)
-            expectedRoomCount(2, JoinStatusSearch.UNSPECIFIED, communityId = communityId)
+            expectedRoomCountForJoinedRoomList(1)
+            expectedRoomCountForCommunityRoomList(2, communityId, JoinStatusSearch.UNSPECIFIED)
         }
     }
 
@@ -190,14 +196,67 @@ suspend fun UserSessionManager.createPublicRoomForTest(
     roomName: String
 ): RoomInfo = createRoom(NewRoom(roomName, roomAid, communityId = communityId)).getOrThrow()
 
-suspend fun UserSessionManager.expectedRoomCount(
+suspend fun UserSessionManager.expectedRoomCountForJoinedRooms(
     expected: Int,
-    joinStatusSearch: JoinStatusSearch,
+    word: String,
     nextRoomId: String? = null,
-    word: String? = null,
+) {
+    val result = searchCurrentUserRooms(word, JoinStatusSearch.JOINED, 10, nextRoomId)
+    assertListSize(expected, result)
+}
+
+suspend fun UserSessionManager.expectedRoomCountForAllRooms(
+    expected: Int,
+    word: String,
+    joinStatusSearch: JoinStatusSearch = JoinStatusSearch.UNSPECIFIED,
+    nextRoomId: String? = null,
     communityId: PrimaryKey? = null,
 ) {
-    assertListSize(expected, searchRooms(joinStatusSearch, 10, nextRoomId, word, communityId))
+    val result = if (communityId != null) {
+        // 公开聊天室通过 communities/{id}/rooms/search 查询
+        searchCommunityRooms(communityId, word, joinStatusSearch, 10, nextRoomId)
+    } else {
+        // 搜索本人已加入的房间使用 users/joined-rooms/search
+        searchCurrentUserRooms(word, joinStatusSearch, 10, nextRoomId)
+    }
+    assertListSize(expected, result)
+}
+
+suspend fun UserSessionManager.expectedRoomCountForJoinedRoomList(
+    expected: Int,
+    nextRoomId: String? = null,
+) {
+    val result = getUserRooms(PaginationQuery(nextRoomId, size = 10))
+    assertListSize(expected, result)
+}
+
+/**
+ * 用于搜索社区中的所有房间（不带关键词）
+ */
+suspend fun UserSessionManager.expectedRoomCountForCommunityRoomList(
+    expected: Int,
+    communityId: PrimaryKey,
+    joinStatusSearch: JoinStatusSearch = JoinStatusSearch.UNSPECIFIED,
+    nextRoomId: String? = null,
+) {
+    // 公开聊天室通过 communities/{id}/rooms 查询
+    val result = getCommunityRooms(
+        communityId,
+        CustomApi.Communities.Id.Rooms.CommunityRoomQuery(nextRoomId, size = 10, joinStatus = joinStatusSearch)
+    )
+    assertListSize(expected, result)
+}
+
+/**
+ * 用于搜索当前用户的所有房间（不带关键词）
+ */
+suspend fun UserSessionManager.expectedRoomCountForAllRoomList(
+    expected: Int,
+    nextRoomId: String? = null,
+) {
+    // 搜索本人已加入的房间使用 users/rooms
+    val result = getUserRooms(PaginationQuery(nextRoomId, size = 10))
+    assertListSize(expected, result)
 }
 
 suspend fun UserSessionManager.createJoinRoomTitleForTest(

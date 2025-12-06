@@ -13,11 +13,14 @@ import com.storyteller_f.a.cloud.core.service.getTopicsByParentId
 import com.storyteller_f.a.cloud.core.service.getUserCommentedTopics
 import com.storyteller_f.a.cloud.core.service.getUserInfo
 import com.storyteller_f.a.cloud.core.service.getUserJoinedCommunities
+import com.storyteller_f.a.cloud.core.service.getUserJoinedRooms
 import com.storyteller_f.a.cloud.core.service.getUserOverview
 import com.storyteller_f.a.cloud.core.service.getUserReactions
 import com.storyteller_f.a.cloud.core.service.getUserSubscriptions
 import com.storyteller_f.a.cloud.core.service.getUserTitles
 import com.storyteller_f.a.cloud.core.service.removeSubscription
+import com.storyteller_f.a.cloud.core.service.searchCurrentUserRooms
+import com.storyteller_f.a.cloud.core.service.searchUserJoinedCommunities
 import com.storyteller_f.a.cloud.core.service.searchUsers
 import com.storyteller_f.a.cloud.core.service.updateUser
 import com.storyteller_f.a.cloud.server.auth.handleResult
@@ -87,10 +90,31 @@ fun Route.bindProtectedUserRoute(backend: Backend) {
 }
 
 private fun Route.bindUserCommunitiesRoute(backend: Backend) {
-    CustomApi.Communities.get(handleResult()) { q ->
+    CustomApi.Users.JoinedCommunities.get(handleResult()) { q ->
         usePrincipal { uid ->
             q.pagination(IdentifiablePagingGenerator) { fetch ->
                 backend.getUserJoinedCommunities(uid, uid, fetch)
+            }
+        }
+    }
+    CustomApi.Users.JoinedCommunities.search(handleResult()) { q ->
+        usePrincipal { uid ->
+            q.pagination(IdentifiablePagingGenerator) { fetch ->
+                backend.searchUserJoinedCommunities(uid, q, fetch)
+            }
+        }
+    }
+    CustomApi.Users.JoinedRooms.get(handleResult()) { q ->
+        usePrincipal { uid ->
+            q.pagination(IdentifiablePagingGenerator) { fetch ->
+                backend.getUserJoinedRooms(uid, fetch)
+            }
+        }
+    }
+    CustomApi.Users.JoinedRooms.search(handleResult()) { q ->
+        usePrincipal { uid ->
+            q.pagination(IdentifiablePagingGenerator) { fetch ->
+                backend.searchCurrentUserRooms(uid, fetch, q)
             }
         }
     }

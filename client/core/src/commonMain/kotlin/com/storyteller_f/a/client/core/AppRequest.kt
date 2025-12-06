@@ -20,7 +20,6 @@ import com.storyteller_f.shared.buildEncryptedTopicContent
 import com.storyteller_f.shared.model.PosterSearch
 import com.storyteller_f.shared.model.QuotaInfo
 import com.storyteller_f.shared.model.QuotaType
-import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleStatus
@@ -155,7 +154,7 @@ suspend fun UserSessionManager.searchCommunity(
 suspend fun UserSessionManager.getUserCommunities(
     paginationQuery: PaginationQuery,
 ) = serviceCatching {
-    CustomApi.Communities.get(paginationQuery)
+    CustomApi.Users.JoinedCommunities.get(paginationQuery)
 }
 
 suspend fun UserSessionManager.getUserJoinedCommunities(
@@ -163,6 +162,26 @@ suspend fun UserSessionManager.getUserJoinedCommunities(
     paginationQuery: PaginationQuery,
 ) = serviceCatching {
     CustomApi.Users.Id.Communities.get(paginationQuery, CommonPath(userId))
+}
+
+suspend fun UserSessionManager.getCommunityRooms(
+    communityId: PrimaryKey,
+    paginationQuery: CustomApi.Communities.Id.Rooms.CommunityRoomQuery,
+) = serviceCatching {
+    CustomApi.Communities.Id.Rooms.get(paginationQuery, CommonPath(communityId))
+}
+
+suspend fun UserSessionManager.searchCommunityRooms(
+    communityId: PrimaryKey,
+    word: String,
+    joinStatusSearch: JoinStatusSearch,
+    size: Int,
+    nextRoomId: String?,
+) = serviceCatching {
+    CustomApi.Communities.Id.Rooms.search(
+        CustomApi.Communities.Id.Rooms.CommunityRoomSearchQuery(word, joinStatusSearch, nextRoomId, size),
+        CommonPath(communityId)
+    )
 }
 
 suspend fun UserSessionManager.searchCommunityMembers(
@@ -240,14 +259,21 @@ suspend fun UserSessionManager.getTopicInfoByAid(aid: String) = serviceCatching 
     CustomApi.Topics.Aid.get(CustomApi.Topics.Aid.TopicAidQuery(aid, currentIsAlreadySignUp))
 }
 
-suspend fun UserSessionManager.searchRooms(
+suspend fun UserSessionManager.getUserRooms(
+    paginationQuery: PaginationQuery,
+) = serviceCatching {
+    CustomApi.Users.JoinedRooms.get(paginationQuery)
+}
+
+suspend fun UserSessionManager.searchCurrentUserRooms(
+    word: String,
     joinStatusSearch: JoinStatusSearch,
     size: Int,
     nextRoomId: String?,
-    word: String?,
-    communityId: PrimaryKey?,
-): Result<ServerResponse<RoomInfo>> = serviceCatching {
-    CustomApi.Rooms.search(CustomApi.Rooms.RoomSearchQuery(joinStatusSearch, word, communityId, nextRoomId, size))
+) = serviceCatching {
+    CustomApi.Users.JoinedRooms.search(
+        CustomApi.Users.JoinedRooms.UserRoomsSearchQuery(word, nextRoomId, size)
+    )
 }
 
 suspend fun UserSessionManager.createTopic(

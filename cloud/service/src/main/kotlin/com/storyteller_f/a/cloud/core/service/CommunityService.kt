@@ -154,6 +154,27 @@ suspend fun Backend.searchCommunities(
     }
 }
 
+suspend fun Backend.searchUserJoinedCommunities(
+    uid: PrimaryKey,
+    search: CustomApi.Users.JoinedCommunities.UserCommunitiesSearchQuery,
+    primaryKeyFetch: PrimaryKeyFetch
+): Result<PaginationResult<CommunityInfo>?> {
+    val word = search.word
+    if (word.isBlank()) {
+        return Result.success(null)
+    }
+    return memberSearchService.searchDocument(
+        MemberDocumentSearch.CommunityMembers(uid = uid, objectName = word),
+        primaryKeyFetch
+    ).mapPagingResultNotNull { searchResults ->
+        val communityIds = searchResults
+            .map { it.objectId }
+        database.community.getRawCommunities(ObjectListFetch.IdListFetch(communityIds))
+    }.mapPagingResultIfNotNullNullable { communities ->
+        processCommunities(communities, uid, null)
+    }
+}
+
 private suspend fun Backend.processCommunities(
     communities: List<RawCommunity>,
     uid: PrimaryKey?,

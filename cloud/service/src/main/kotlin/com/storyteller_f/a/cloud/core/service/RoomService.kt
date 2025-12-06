@@ -34,6 +34,7 @@ import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.obj.UpdateRoomBody
 import com.storyteller_f.shared.obj.ob
+import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.MemberStatus
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -119,7 +120,16 @@ private suspend fun Backend.saveMemberDocument(
 ) {
     getUserInfo(IdFetch(uid)).ifNotNull { userInfo ->
         memberSearchService.saveDocument(
-            listOf(MemberDocument.fromUserInfo(member.id, userInfo, roomId, ObjectType.ROOM, room.name))
+            listOf(
+                MemberDocument.fromUserInfo(
+                    member.id,
+                    userInfo,
+                    roomId,
+                    ObjectType.ROOM,
+                    room.name,
+                    room.communityId
+                )
+            )
         ).onFailure { e ->
             Napier.e(e) {
                 "save member document failed"
@@ -287,45 +297,6 @@ suspend fun searchRoomMembers(
     }
 }
 
-suspend fun Backend.searchRoomPaginationResult(
-    uid: PrimaryKey?,
-    primaryKeyFetch: PrimaryKeyFetch,
-    query: CustomApi.Rooms.RoomSearchQuery,
-): Result<PaginationResult<RoomInfo>?> {
-    val word = query.word
-    val search = query.joinStatus.toJoinSearch(uid)
-    val community = query.community
-    return when {
-        // word 为空，使用 database 查询
-        word.isNullOrBlank() -> database.room.getRoomPaginationResult(
-            uid,
-            community,
-            primaryKeyFetch,
-            search
-        )
-        // word 不为空 && 搜索已加入的房间，使用 memberSearchService
-        search is JoinSearch.Joined -> {
-            memberSearchService.searchDocument(
-                MemberDocumentSearch.RoomMembers(uid = search.uid, objectName = word),
-                primaryKeyFetch
-            ).mapResult { (searchResults, total) ->
-                val roomIds = searchResults.map { it.objectId }
-                database.room.getRawRooms(idListFetch(roomIds), uid).pagingNotNull(total)
-            }
-        }
-        // word 不为空 && 不是搜索已加入（Unspecified），使用 roomSearchService
-        else -> {
-            val keyword = RoomDocumentSearch.Keyword(listOf(word))
-            roomSearchService.searchDocument(keyword, primaryKeyFetch).mapResult { (list, total) ->
-                val roomIds = list.map { it.id }
-                database.room.getRawRooms(idListFetch(roomIds), uid).pagingNotNull(total)
-            }
-        }
-    }.mapPagingResultNotNull { list ->
-        processRawRoomToRoomInfo(list)
-    }
-}
-
 suspend fun Backend.processRawRoomToRoomInfo(list: List<RawRoom>) =
     database.file.getFileRecordByIds(list.mapNotNull {
         it.room.icon
@@ -368,13 +339,100 @@ suspend fun Backend.getUserJoinedRooms(
     primaryKeyFetch: PrimaryKeyFetch
 ): Result<PaginationResult<RoomInfo>> =
     database.room.getRoomPaginationResult(
-        uid = null,
+        uid = uid,
         community = null,
         primaryKeyFetch = primaryKeyFetch,
         joinSearch = JoinSearch.Joined(uid)
     ).mapPagingResultNotNull { list ->
         processRawRoomToRoomInfo(list)
     }
+
+suspend fun Backend.getCommunityRooms(
+    communityId: PrimaryKey,
+    primaryKeyFetch: PrimaryKeyFetch,
+    uid: PrimaryKey?,
+    joinStatus: JoinStatusSearch? = null
+): Result<PaginationResult<RoomInfo>> =
+    database.room.getRoomPaginationResult(
+        uid = uid,
+        community = communityId,
+        primaryKeyFetch = primaryKeyFetch,
+        joinSearch = joinStatus.toJoinSearch(uid)
+    ).mapPagingResultNotNull { list ->
+        processRawRoomToRoomInfo(list)
+    }
+
+/**
+ * 搜索社区中的房间
+ * @param uid 用户ID
+ * @param communityId 社区ID
+ * @param primaryKeyFetch 分页参数
+ * @param query 搜索查询参数
+ * @return 返回房间信息列表
+ */
+suspend fun Backend.searchCommunityRooms(
+    uid: PrimaryKey?,
+    communityId: PrimaryKey,
+    primaryKeyFetch: PrimaryKeyFetch,
+    query: CustomApi.Communities.Id.Rooms.CommunityRoomSearchQuery,
+): Result<PaginationResult<RoomInfo>> {
+    val word = query.word
+    val search = query.joinStatus?.toJoinSearch(uid)
+    if (word.isBlank()) return Result.success(PaginationResult(emptyList(), 0))
+
+    return when {
+        // word 不为空 && 搜索已加入的房间，使用 memberSearchService
+        search is JoinSearch.Joined -> {
+            memberSearchService.searchDocument(
+                MemberDocumentSearch.RoomMembers(uid = search.uid, objectName = word, communityId = communityId),
+                primaryKeyFetch
+            ).mapPagingResultNotNull { searchResults ->
+                val roomIds = searchResults.map { it.objectId }
+                // 过滤出属于该社区的房间
+                database.room.getRawRooms(idListFetch(roomIds), uid)
+            }
+        }
+        // word 不为空 && 不是搜索已加入（Unspecified），使用 roomSearchService
+        else -> {
+            val keyword = RoomDocumentSearch.Keyword(listOf(word), communityId)
+            roomSearchService.searchDocument(
+                keyword,
+                primaryKeyFetch
+            ).mapPagingResultNotNull { list ->
+                val roomIds = list.map { it.id }
+                // 过滤出属于该社区的房间
+                database.room.getRawRooms(idListFetch(roomIds), uid)
+            }
+        }
+    }.mapPagingResultNotNull { list ->
+        processRawRoomToRoomInfo(list)
+    }
+}
+
+/**
+ * 搜索当前用户的房间
+ * @param uid 当前登录用户ID
+ * @param primaryKeyFetch 分页参数
+ * @param query 搜索查询参数
+ * @return 返回房间信息列表
+ */
+suspend fun Backend.searchCurrentUserRooms(
+    uid: PrimaryKey,
+    primaryKeyFetch: PrimaryKeyFetch,
+    query: CustomApi.Users.JoinedRooms.UserRoomsSearchQuery,
+): Result<PaginationResult<RoomInfo>?> {
+    val word = query.word
+    if (word.isBlank()) return Result.success(PaginationResult(emptyList(), 0))
+    return memberSearchService.searchDocument(
+        MemberDocumentSearch.RoomMembers(uid = uid, objectName = word),
+        primaryKeyFetch
+    ).mapPagingResultNotNull { searchResults ->
+        val roomIds = searchResults.map { it.objectId }
+        database.room.getRawRooms(idListFetch(roomIds), uid)
+    }.mapPagingResultNotNull { list ->
+        processRawRoomToRoomInfo(list)
+    }
+}
 
 suspend fun Backend.getRoomMemberInfos(
     roomId: PrimaryKey,

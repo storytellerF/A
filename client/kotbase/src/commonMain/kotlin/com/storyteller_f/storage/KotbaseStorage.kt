@@ -270,6 +270,15 @@ class RoomDocumentInfoStorage(
                 kotbaseDocumentSource.getCollection<RoomInfo>(collection.getName())
                     .save(roomInfo.id, roomInfo)
             }
+            // 添加对新集合的支持
+            is RoomCollection.CommunityRooms -> {
+                kotbaseDocumentSource.getCollection<RoomInfo>(collection.getName())
+                    .save(roomInfo.id, roomInfo)
+            }
+            is RoomCollection.CommunityRoomSearch -> {
+                kotbaseDocumentSource.getCollection<RoomInfo>(collection.getName())
+                    .save(roomInfo.id, roomInfo)
+            }
 
             else -> {}
         }
@@ -288,6 +297,25 @@ class RoomDocumentInfoStorage(
                     }
                 }
             }
+            // 添加对新集合的支持
+            is RoomCollection.CommunityRooms -> {
+                kotbaseDocumentSource.getCollection<RoomInfo>(
+                    collection.getName(),
+                ).getSource {
+                    orderBy {
+                        "id".descending()
+                    }
+                }
+            }
+            is RoomCollection.CommunityRoomSearch -> {
+                kotbaseDocumentSource.getCollection<RoomInfo>(
+                    collection.getName(),
+                ).getSource {
+                    orderBy {
+                        "id".descending()
+                    }
+                }
+            }
 
             else -> throw Exception("unsupported")
         }
@@ -296,13 +324,37 @@ class RoomDocumentInfoStorage(
     override fun observeDatum(
         key: String
     ): Flow<RoomInfo?> {
-        return kotbaseDocumentSource.getCollection<RoomInfo>(RoomCollection.Rooms.getName())
-            .observeDatum {
-                "aid" equalTo key
-            }
+        return kotbaseDocumentSource.getCollection<RoomInfo>(RoomCollection.Rooms.getName()).observeDatum(key)
     }
 
-    override suspend fun clean(collection: RoomCollection) = Unit
+    override suspend fun getDocument(
+        collection: RoomCollection,
+        key: String
+    ): RoomInfo? {
+        return when (collection) {
+            is RoomCollection.SearchRoom -> {
+                kotbaseDocumentSource.getCollection<RoomInfo>(collection.getName()).getDocument(key)
+            }
+            // 添加对新集合的支持
+            is RoomCollection.CommunityRooms -> {
+                kotbaseDocumentSource.getCollection<RoomInfo>(collection.getName()).getDocument(key)
+            }
+            is RoomCollection.CommunityRoomSearch -> {
+                kotbaseDocumentSource.getCollection<RoomInfo>(collection.getName()).getDocument(key)
+            }
+            else -> {
+                kotbaseDocumentSource.getCollection<RoomInfo>(RoomCollection.Rooms.getName()).getDocument(key)
+            }
+        }
+    }
+
+    override suspend fun delete(collection: RoomCollection, key: String) {
+        kotbaseDocumentSource.getCollection<RoomInfo>(collection.getName()).delete(key)
+    }
+
+    override suspend fun clean(collection: RoomCollection) {
+        kotbaseDocumentSource.getCollection<RoomInfo>(RoomCollection.Rooms.getName()).clean()
+    }
 }
 
 class RemoteKeyDocumentStorage(
