@@ -103,6 +103,10 @@ sealed interface RoomCollection {
     ) : RoomCollection
 
     data class AllRooms(val isPrivate: Boolean) : RoomCollection
+
+    // 添加社区房间相关的集合定义
+    data class CommunityRooms(val communityId: PrimaryKey) : RoomCollection
+    data class CommunityRoomSearch(val communityId: PrimaryKey, val word: String) : RoomCollection
 }
 
 sealed interface CommunityCollection {
@@ -176,6 +180,9 @@ fun RoomCollection.getName(): String {
         RoomCollection.Rooms -> "rooms"
         is RoomCollection.SearchRoom -> "rooms_${word}_${joinStatusSearch}_$communityId"
         is RoomCollection.AllRooms -> "all_rooms_$isPrivate"
+        // 添加社区房间相关的名称生成
+        is RoomCollection.CommunityRooms -> "community_rooms_$communityId"
+        is RoomCollection.CommunityRoomSearch -> "community_rooms_${communityId}_$word"
     }
 }
 

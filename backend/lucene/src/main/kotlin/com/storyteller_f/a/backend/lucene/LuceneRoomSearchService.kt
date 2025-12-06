@@ -33,6 +33,10 @@ data class LuceneRoomDocument(val roomDocument: RoomDocument) :
             add(NumericDocValuesField("id2", id))
             add(TextField("name", roomDocument.name, Field.Store.YES))
             add(TextField("aid", roomDocument.aid, Field.Store.YES))
+            // 添加communityId字段（如果存在）
+            roomDocument.communityId?.let { communityId ->
+                add(LongField("communityId", communityId, Field.Store.YES))
+            }
         }
     }
 
@@ -41,7 +45,9 @@ data class LuceneRoomDocument(val roomDocument: RoomDocument) :
             id: PrimaryKey,
             document: Document
         ): RoomDocument {
-            return RoomDocument(id, document.get("name"), document.get("aid"))
+            // 尝试从文档中获取communityId，如果不存在则为null
+
+            return RoomDocument(id, document.get("name"), document.get("aid"), document.get("communityId")?.toLong())
         }
     }
 }
@@ -93,6 +99,10 @@ class LuceneRoomSearchService(path: Path, isInMemory: Boolean = false) : Lucene(
                             add(MultiFieldQueryParser(arrayOf("name"), analyzer).parse(it), BooleanClause.Occur.SHOULD)
                             add(MultiFieldQueryParser(arrayOf("aid"), analyzer).parse(it), BooleanClause.Occur.SHOULD)
                         }.build(), BooleanClause.Occur.MUST)
+                    }
+                    // 添加对communityId的过滤
+                    roomDocumentSearch.communityId?.let { communityId ->
+                        add(LongField.newExactQuery("communityId", communityId), BooleanClause.Occur.MUST)
                     }
                 }
             }

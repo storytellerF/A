@@ -43,6 +43,10 @@ data class LuceneMemberDocument(val memberDocument: MemberDocument) :
             add(StringField("objectType", memberDocument.objectType.name, Field.Store.YES))
             add(TextField("nickname", memberDocument.nickname, Field.Store.YES))
             add(TextField("objectName", memberDocument.objectName, Field.Store.YES))
+            // 添加communityId字段（如果存在）
+            memberDocument.communityId?.let { communityId ->
+                add(LongField("communityId", communityId, Field.Store.YES))
+            }
         }
     }
 
@@ -57,7 +61,8 @@ data class LuceneMemberDocument(val memberDocument: MemberDocument) :
                 objectId = document.get("objectId").toLong(),
                 objectType = ObjectType.valueOf(document.get("objectType")),
                 nickname = document.get("nickname"),
-                objectName = document.get("objectName")
+                objectName = document.get("objectName"),
+                communityId = document.get("communityId")?.toLong()
             )
         }
     }
@@ -140,6 +145,10 @@ class LuceneMemberSearchService(path: Path, isInMemory: Boolean = false) : Lucen
                     addUidQuery(memberDocumentSearch.uid)
                     addObjectTypeQuery(ObjectType.ROOM)
                     addObjectNameQuery(memberDocumentSearch.objectName)
+                    // 添加对communityId的过滤
+                    memberDocumentSearch.communityId?.let { communityId ->
+                        add(LongField.newExactQuery("communityId", communityId), BooleanClause.Occur.MUST)
+                    }
                 }
             }
         }

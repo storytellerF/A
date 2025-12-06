@@ -6,9 +6,11 @@ import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.cloud.core.service.createCommunity
 import com.storyteller_f.a.cloud.core.service.exitCommunity
 import com.storyteller_f.a.cloud.core.service.getCommunity
+import com.storyteller_f.a.cloud.core.service.getCommunityRooms
 import com.storyteller_f.a.cloud.core.service.getTopicsByParentId
 import com.storyteller_f.a.cloud.core.service.joinCommunity
 import com.storyteller_f.a.cloud.core.service.searchCommunities
+import com.storyteller_f.a.cloud.core.service.searchCommunityRooms
 import com.storyteller_f.a.cloud.core.service.searchContainerMembers
 import com.storyteller_f.a.cloud.core.service.updateCommunity
 import com.storyteller_f.a.cloud.server.auth.handleResult
@@ -20,7 +22,7 @@ import com.storyteller_f.a.cloud.server.common.pagingGenerator
 import com.storyteller_f.endpoint4k.ktor.server.invoke
 import com.storyteller_f.endpoint4k.ktor.server.receiveBody
 import com.storyteller_f.shared.type.ObjectType
-import io.ktor.server.routing.*
+import io.ktor.server.routing.Route
 
 fun Route.bindCommunityRoute(backend: Backend) {
     CustomApi.Communities.search(handleResult()) {
@@ -53,6 +55,22 @@ fun Route.bindCommunityRoute(backend: Backend) {
         usePrincipalOrNull { uid ->
             q.pagination(IdentifiablePagingGenerator) { f ->
                 backend.getTopicsByParentId(p.id, ObjectType.COMMUNITY, uid, q.fillHasCommented, f, q.pinType)
+            }
+        }
+    }
+
+    CustomApi.Communities.Id.Rooms.get(handleResult()) { q, p ->
+        usePrincipalOrNull {
+            q.pagination(IdentifiablePagingGenerator) { f ->
+                backend.getCommunityRooms(p.id, f, it, q.joinStatus)
+            }
+        }
+    }
+
+    CustomApi.Communities.Id.Rooms.search(handleResult()) { q, p ->
+        usePrincipalOrNull { uid ->
+            q.pagination(IdentifiablePagingGenerator) { f ->
+                backend.searchCommunityRooms(uid, p.id, f, q)
             }
         }
     }

@@ -56,6 +56,7 @@ import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import kotlinx.datetime.LocalDateTime
+import kotlin.collections.emptyList
 
 data class PaginationResult<T>(val list: List<T>, val total: Long)
 

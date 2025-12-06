@@ -1,5 +1,6 @@
 package com.storyteller_f.a.cloud.server
 
+import com.storyteller_f.a.api.CustomApi
 import com.storyteller_f.a.api.NewCommunity
 import com.storyteller_f.a.api.NewTitle
 import com.storyteller_f.a.api.NewTopic
@@ -11,6 +12,7 @@ import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.a.client.core.exitCommunity
 import com.storyteller_f.a.client.core.getCommunityInfo
 import com.storyteller_f.a.client.core.getCommunityInfoByAid
+import com.storyteller_f.a.client.core.getCommunityRooms
 import com.storyteller_f.a.client.core.getCommunityTopics
 import com.storyteller_f.a.client.core.getTopicInfo
 import com.storyteller_f.a.client.core.getUserCommunities
@@ -187,6 +189,19 @@ class CommunityTest {
         }
         loginSession(secondTuple) {
             joinCommunity(communityId).getOrThrow()
+        }
+    }
+
+    @Test
+    fun `test get community rooms`() = test {
+        val communityId = attachSession {
+            createCommunityForTest().id
+        }.custom
+
+        attachSession {
+            // 测试获取社区中的所有房间
+            val rooms = getCommunityRooms(communityId, CustomApi.Communities.Id.Rooms.CommunityRoomQuery())
+            assertListSize(0, rooms)
         }
     }
 }

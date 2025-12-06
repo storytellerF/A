@@ -28,9 +28,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.LocalAppNavFactory
 import com.storyteller_f.a.app.common.IdCommunityViewModel
-import com.storyteller_f.a.app.common.RoomsViewModel
 import com.storyteller_f.a.app.common.createCommunityViewModel
 import com.storyteller_f.a.app.common.createJoinedRoomsViewModel
+import com.storyteller_f.a.app.core.common.PagingViewModel
 import com.storyteller_f.a.app.core.components.LayoutDefaults
 import com.storyteller_f.a.app.core.components.RoomIcon
 import com.storyteller_f.a.app.core.components.StateView
@@ -52,7 +52,7 @@ fun MyRoomsPage() {
 
 @Composable
 fun RoomList(
-    roomsViewModel: RoomsViewModel,
+    roomsViewModel: PagingViewModel<RoomInfo>,
     onClick: ((RoomInfo) -> Unit)? = null
 ) {
     StateView(roomsViewModel) { items ->

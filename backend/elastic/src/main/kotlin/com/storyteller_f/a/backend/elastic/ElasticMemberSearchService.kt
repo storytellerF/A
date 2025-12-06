@@ -9,6 +9,7 @@ import com.storyteller_f.a.backend.core.ElasticConnection
 import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
+import com.storyteller_f.a.backend.core.preprocessUserInputKeyword
 import com.storyteller_f.a.backend.core.service.MemberDocument
 import com.storyteller_f.a.backend.core.service.MemberDocumentSearch
 import com.storyteller_f.a.backend.core.service.MemberSearchService
@@ -102,11 +103,13 @@ class ElasticMemberSearchService(connection: ElasticConnection) : Elastic(connec
                             t.field("objectId").value(objId)
                         } to true)
                     }
-                    // 按 nickname 前缀搜索
+                    // 按 nickname 搜索
                     memberDocumentSearch.nickname?.let { nickname ->
-                        add(QueryBuilders.matchPhrasePrefix { p ->
-                            p.field("nickname").query(nickname).boost(2f)
-                        } to true)
+                        preprocessUserInputKeyword(listOf(nickname))?.let { v ->
+                            add(QueryBuilders.multiMatch { m ->
+                                m.fields("nickname").query(v)
+                            } to true)
+                        }
                     }
                 }
 
@@ -138,6 +141,12 @@ class ElasticMemberSearchService(connection: ElasticConnection) : Elastic(connec
                     add(QueryBuilders.matchPhrasePrefix { p ->
                         p.field("objectName").query(memberDocumentSearch.objectName).boost(2f)
                     } to true)
+                    // 添加对communityId的过滤
+                    memberDocumentSearch.communityId?.let { communityId ->
+                        add(QueryBuilders.term { t ->
+                            t.field("communityId").value(communityId)
+                        } to true)
+                    }
                 }
             }
         }

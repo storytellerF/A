@@ -8,18 +8,24 @@ import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 
-data class RoomDocument(override val id: PrimaryKey, val name: String, val aid: String) :
+data class RoomDocument(
+    override val id: PrimaryKey,
+    val name: String,
+    val aid: String,
+    val communityId: PrimaryKey? = null
+) :
     PrimaryKeyIdentifiable {
     val objectType: ObjectType = ObjectType.ROOM
+
     companion object {
         fun fromRoom(room: Room): RoomDocument {
-            return RoomDocument(room.id, room.name, room.aid)
+            return RoomDocument(room.id, room.name, room.aid, room.communityId)
         }
     }
 }
 
 sealed interface RoomDocumentSearch {
-    data class Keyword(val words: List<String>? = null) : RoomDocumentSearch
+    data class Keyword(val words: List<String>? = null, val communityId: PrimaryKey? = null) : RoomDocumentSearch
 }
 
 interface RoomSearchService {
