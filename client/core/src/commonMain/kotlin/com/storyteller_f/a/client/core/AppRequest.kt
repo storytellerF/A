@@ -427,20 +427,15 @@ suspend fun UserSessionManager.getFileList(
 }
 
 suspend fun UserSessionManager.searchFiles(
-    query: CustomApi.Files.FileSearchQuery
+    query: CustomApi.Files.ScopedFileSearchQuery,
+    objectId: PrimaryKey,
+    objectType: ObjectType
 ) = serviceCatching {
-    val scopedQuery = CustomApi.Files.ScopedFileSearchQuery(
-        query.word,
-        query.nextPageToken,
-        query.size,
-        query.prePageToken
-    )
-    val objectId = query.objectId ?: throw IllegalArgumentException("objectId is required")
-    when (query.objectType) {
-        USER -> CustomApi.Users.Id.Files.search(scopedQuery, CommonPath(objectId))
-        ROOM -> CustomApi.Rooms.Id.Files.search(scopedQuery, CommonPath(objectId))
-        COMMUNITY -> CustomApi.Communities.Id.Files.search(scopedQuery, CommonPath(objectId))
-        else -> throw IllegalArgumentException("Unsupported object type: ${query.objectType}")
+    when (objectType) {
+        USER -> CustomApi.Users.Id.Files.search(query, CommonPath(objectId))
+        ROOM -> CustomApi.Rooms.Id.Files.search(query, CommonPath(objectId))
+        COMMUNITY -> CustomApi.Communities.Id.Files.search(query, CommonPath(objectId))
+        else -> throw IllegalArgumentException("Unsupported object type: $objectType")
     }
 }
 
