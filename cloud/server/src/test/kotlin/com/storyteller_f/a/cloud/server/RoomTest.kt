@@ -17,7 +17,6 @@ import com.storyteller_f.a.client.core.joinRoom
 import com.storyteller_f.a.client.core.searchCommunityRooms
 import com.storyteller_f.a.client.core.searchCurrentUserRooms
 import com.storyteller_f.a.client.core.searchRoomMembers
-
 import com.storyteller_f.a.client.core.sendFrame
 import com.storyteller_f.a.client.core.updateRoomInfo
 import com.storyteller_f.shared.model.RoomInfo
@@ -201,7 +200,7 @@ suspend fun UserSessionManager.expectedRoomCountForJoinedRooms(
     word: String,
     nextRoomId: String? = null,
 ) {
-    val result = searchCurrentUserRooms(word, JoinStatusSearch.JOINED, 10, nextRoomId)
+    val result = searchCurrentUserRooms(word, 10, nextRoomId)
     assertListSize(expected, result)
 }
 
@@ -217,7 +216,7 @@ suspend fun UserSessionManager.expectedRoomCountForAllRooms(
         searchCommunityRooms(communityId, word, joinStatusSearch, 10, nextRoomId)
     } else {
         // 搜索本人已加入的房间使用 users/joined-rooms/search
-        searchCurrentUserRooms(word, joinStatusSearch, 10, nextRoomId)
+        searchCurrentUserRooms(word, 10, nextRoomId)
     }
     assertListSize(expected, result)
 }

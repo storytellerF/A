@@ -267,7 +267,6 @@ suspend fun UserSessionManager.getUserRooms(
 
 suspend fun UserSessionManager.searchCurrentUserRooms(
     word: String,
-    joinStatusSearch: JoinStatusSearch,
     size: Int,
     nextRoomId: String?,
 ) = serviceCatching {
@@ -307,15 +306,72 @@ suspend fun UserSessionManager.createTopicSnapshot(topicId: PrimaryKey) = servic
     }
 }
 
-suspend fun UserSessionManager.searchTopics(
+/**
+ * 搜索用户主题
+ */
+suspend fun UserSessionManager.searchUserTopics(
+    userId: PrimaryKey,
     size: Int,
     word: List<String>? = null,
-    parentId: PrimaryKey? = null,
-    parentType: ObjectType? = null,
     nextTopicId: String? = null,
+    prePageToken: String? = null,
+    fillHasCommented: Boolean? = null
 ) = serviceCatching {
-    CustomApi.Topics.search(
-        CustomApi.Topics.TopicSearchQuery(word, parentId, parentType, nextTopicId, null, size, currentIsAlreadySignUp)
+    CustomApi.Topics.Users.Id.search(
+        CustomApi.Topics.Users.Id.UserTopicSearchQuery(
+            word,
+            nextTopicId,
+            prePageToken,
+            size,
+            fillHasCommented
+        ),
+        CommonPath(userId)
+    )
+}
+
+/**
+ * 搜索房间主题
+ */
+suspend fun UserSessionManager.searchRoomTopics(
+    roomId: PrimaryKey,
+    size: Int,
+    word: List<String>? = null,
+    nextTopicId: String? = null,
+    prePageToken: String? = null,
+    fillHasCommented: Boolean? = null
+) = serviceCatching {
+    CustomApi.Topics.Rooms.Id.search(
+        CustomApi.Topics.Rooms.Id.RoomTopicSearchQuery(
+            word,
+            nextTopicId,
+            prePageToken,
+            size,
+            fillHasCommented
+        ),
+        CommonPath(roomId)
+    )
+}
+
+/**
+ * 搜索社区主题
+ */
+suspend fun UserSessionManager.searchCommunityTopics(
+    communityId: PrimaryKey,
+    size: Int,
+    word: List<String>? = null,
+    nextTopicId: String? = null,
+    prePageToken: String? = null,
+    fillHasCommented: Boolean? = null
+) = serviceCatching {
+    CustomApi.Topics.Communities.Id.search(
+        CustomApi.Topics.Communities.Id.CommunityTopicSearchQuery(
+            word,
+            nextTopicId,
+            prePageToken,
+            size,
+            fillHasCommented
+        ),
+        CommonPath(communityId)
     )
 }
 

@@ -249,7 +249,7 @@ fun MutableList<Pair<Query, Boolean>>.addTermQuery(
 ) {
     add(TermQuery.of { t ->
         t.field(fieldName).value(termValue)
-    }._toQuery() to false)
+    }._toQuery() to true)
 }
 
 fun <T> buildElasticSearchService(env: MergedEnv, b: (ElasticConnection) -> T): T {
