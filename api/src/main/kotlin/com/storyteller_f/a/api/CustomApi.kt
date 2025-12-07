@@ -325,6 +325,18 @@ object CustomApi {
                     )
             }
 
+            object Files {
+                val get =
+                    safeEndpointWithQueryAndPath<ServerResponse<FileInfo>, PaginationQuery, CommonPath>(
+                        "communities/{id}/files"
+                    )
+
+                val search =
+                    safeEndpointWithQueryAndPath<ServerResponse<FileInfo>, CustomApi.Files.ScopedFileSearchQuery, CommonPath>(
+                        "communities/{id}/files/search"
+                    )
+            }
+
             object Rooms {
                 @Serializable
                 data class CommunityRoomQuery(
@@ -402,6 +414,18 @@ object CustomApi {
                     safeEndpointWithQueryAndPath<ServerResponse<TopicInfo>, TopicQuery, CommonPath>("rooms/{id}/topics")
             }
 
+            object Files {
+                val get =
+                    safeEndpointWithQueryAndPath<ServerResponse<FileInfo>, PaginationQuery, CommonPath>(
+                        "rooms/{id}/files"
+                    )
+
+                val search =
+                    safeEndpointWithQueryAndPath<ServerResponse<FileInfo>, CustomApi.Files.ScopedFileSearchQuery, CommonPath>(
+                        "rooms/{id}/files/search"
+                    )
+            }
+
             val update = mutationEndpointWithPath<RoomInfo, UpdateRoomBody, CommonPath>("rooms/{id}/update")
         }
 
@@ -435,6 +459,18 @@ object CustomApi {
                 val get =
                     safeEndpointWithQueryAndPath<ServerResponse<CommunityInfo>, PaginationQuery, CommonPath>(
                         "users/{id}/communities"
+                    )
+            }
+
+            object Files {
+                val get =
+                    safeEndpointWithQueryAndPath<ServerResponse<FileInfo>, PaginationQuery, CommonPath>(
+                        "users/{id}/files"
+                    )
+
+                val search =
+                    safeEndpointWithQueryAndPath<ServerResponse<FileInfo>, CustomApi.Files.ScopedFileSearchQuery, CommonPath>(
+                        "users/{id}/files/search"
                     )
             }
 
@@ -533,6 +569,14 @@ object CustomApi {
             val word: String? = null,
             val objectId: PrimaryKey? = null,
             val objectType: ObjectType? = null,
+            override val nextPageToken: String? = null,
+            override val size: Int = DEFAULT_PAGE_SIZE,
+            override val prePageToken: String? = null,
+        ) : PageableQuery
+
+        @Serializable
+        class ScopedFileSearchQuery(
+            val word: String? = null,
             override val nextPageToken: String? = null,
             override val size: Int = DEFAULT_PAGE_SIZE,
             override val prePageToken: String? = null,
