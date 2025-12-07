@@ -4,6 +4,7 @@ import com.storyteller_f.a.api.AdminApi
 import com.storyteller_f.a.api.CommonPath
 import com.storyteller_f.a.api.NewUser
 import com.storyteller_f.a.api.PaginationQuery
+import com.storyteller_f.a.api.SearchQuery
 import com.storyteller_f.a.api.SignInBody
 import com.storyteller_f.a.api.SignUpBody
 import com.storyteller_f.a.api.TopicQuery
@@ -73,7 +74,7 @@ suspend fun PanelSessionManager.getAllFiles(query: PaginationQuery) = serviceCat
     AdminApi.Files.get(query)
 }
 
-suspend fun PanelSessionManager.searchFiles(query: AdminApi.Files.FileSearchQuery) = serviceCatching {
+suspend fun PanelSessionManager.searchFiles(query: SearchQuery) = serviceCatching {
     AdminApi.Files.search(query)
 }
 

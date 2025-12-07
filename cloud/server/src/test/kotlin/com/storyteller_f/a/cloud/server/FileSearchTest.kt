@@ -1,8 +1,8 @@
 package com.storyteller_f.a.cloud.server
 
-import com.storyteller_f.a.api.CustomApi
 import com.storyteller_f.a.api.NewCommunity
 import com.storyteller_f.a.api.NewRoom
+import com.storyteller_f.a.api.SearchQuery
 import com.storyteller_f.a.client.core.createCommunity
 import com.storyteller_f.a.client.core.createRoom
 import com.storyteller_f.a.client.core.joinCommunity
@@ -27,7 +27,7 @@ class FileSearchTest {
 
             // 搜索所有文件（不指定关键词）
             val allFiles = searchFiles(
-                CustomApi.Files.ScopedFileSearchQuery(word = null),
+                SearchQuery(word = null),
                 it.uid,
                 ObjectType.USER
             ).getOrThrow().data
@@ -35,7 +35,7 @@ class FileSearchTest {
 
             // 按名称搜索
             val testFiles = searchFiles(
-                CustomApi.Files.ScopedFileSearchQuery(word = "test"),
+                SearchQuery(word = "test"),
                 it.uid,
                 ObjectType.USER
             ).getOrThrow().data
@@ -44,7 +44,7 @@ class FileSearchTest {
 
             // 搜索特定文件
             val docFiles = searchFiles(
-                CustomApi.Files.ScopedFileSearchQuery(word = "document"),
+                SearchQuery(word = "document"),
                 it.uid,
                 ObjectType.USER
             ).getOrThrow().data
@@ -64,7 +64,7 @@ class FileSearchTest {
 
             // 搜索自己的文件，不应包含其他用户的文件
             val myFiles = searchFiles(
-                CustomApi.Files.ScopedFileSearchQuery(word = "user"),
+                SearchQuery(word = "user"),
                 it.uid,
                 ObjectType.USER
             ).getOrThrow().data
@@ -97,7 +97,7 @@ class FileSearchTest {
             joinRoom(roomId).getOrThrow()
 
             val roomFiles = searchFiles(
-                CustomApi.Files.ScopedFileSearchQuery(word = "room"),
+                SearchQuery(word = "room"),
                 roomId,
                 ObjectType.ROOM
             ).getOrThrow().data
@@ -123,7 +123,7 @@ class FileSearchTest {
         // 未加入房间的用户不应能搜索房间文件
         attachSession {
             val result = searchFiles(
-                CustomApi.Files.ScopedFileSearchQuery(word = "private"),
+                SearchQuery(word = "private"),
                 roomId,
                 ObjectType.ROOM
             )
@@ -141,7 +141,7 @@ class FileSearchTest {
 
             // 空关键词应返回所有文件
             val allFiles = searchFiles(
-                CustomApi.Files.ScopedFileSearchQuery(word = ""),
+                SearchQuery(word = ""),
                 it.uid,
                 ObjectType.USER
             ).getOrThrow().data
@@ -157,13 +157,13 @@ class FileSearchTest {
 
             // 搜索应该不区分大小写
             val upperCase = searchFiles(
-                CustomApi.Files.ScopedFileSearchQuery(word = "TEST"),
+                SearchQuery(word = "TEST"),
                 it.uid,
                 ObjectType.USER
             ).getOrThrow().data
 
             val lowerCase = searchFiles(
-                CustomApi.Files.ScopedFileSearchQuery(word = "test"),
+                SearchQuery(word = "test"),
                 it.uid,
                 ObjectType.USER
             ).getOrThrow().data

@@ -4,6 +4,7 @@ import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.api.CommonPath
 import com.storyteller_f.a.api.CustomApi
 import com.storyteller_f.a.api.NewRoom
+import com.storyteller_f.a.api.SearchQuery
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
@@ -286,7 +287,7 @@ suspend fun searchRoomMembers(
     backend: Backend,
     p: CommonPath,
     uid: PrimaryKey?,
-    q: CustomApi.Rooms.Id.Members.MemberQuery,
+    q: SearchQuery,
     f: PrimaryKeyFetch
 ) = backend.checkRootReadPermission(ObjectType.ROOM, p.id, uid).mapResultIfNotNull { permission ->
     if (permission.hasRead) {

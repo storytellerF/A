@@ -13,6 +13,7 @@ import androidx.paging.map
 import com.storyteller_f.a.api.CustomApi
 import com.storyteller_f.a.api.NewTitle
 import com.storyteller_f.a.api.PaginationQuery
+import com.storyteller_f.a.api.SearchQuery
 import com.storyteller_f.a.app.CustomUserSessionManager
 import com.storyteller_f.a.app.core.common.CachedLoadingHandler
 import com.storyteller_f.a.app.core.common.CompatPagingSource
@@ -477,13 +478,13 @@ class FileSearchViewModel(
         modelStorage.fileInfo
     ) { key, size ->
         sessionManager.searchFiles(
-            CustomApi.Files.FileSearchQuery(
+            SearchQuery(
                 word = word,
-                objectId = objectId,
-                objectType = objectType,
                 nextPageToken = key,
                 size = size
-            )
+            ),
+            objectId,
+            objectType
         )
     }.flow.cachedIn(viewModelScope)
 }

@@ -51,84 +51,10 @@ import kotlinx.coroutines.coroutineScope
 import java.io.File
 import kotlin.uuid.ExperimentalUuidApi
 
-fun Route.bindProtectedMediaRoute(backend: Backend) {
-    CustomApi.Users.Id.Files.get(handleResult()) { query, path ->
-        usePrincipal { uid ->
-            query.pagination(IdentifiablePagingGenerator) { pagingFetch ->
-                backend.getFileList(uid, path.id ob ObjectType.USER, pagingFetch)
-            }
-        }
-    }
-
-    CustomApi.Users.Id.Files.search(handleResult()) { query, path ->
-        usePrincipal { uid ->
-            query.pagination(IdentifiablePagingGenerator) { pagingFetch ->
-                backend.searchFiles(
-                    uid,
-                    CustomApi.Files.ScopedFileSearchQuery(
-                        query.word,
-                        query.nextPageToken,
-                        query.size,
-                        query.prePageToken
-                    ),
-                    path.id ob ObjectType.USER,
-                    pagingFetch
-                )
-            }
-        }
-    }
-
-    CustomApi.Rooms.Id.Files.get(handleResult()) { query, path ->
-        usePrincipal { uid ->
-            query.pagination(IdentifiablePagingGenerator) { pagingFetch ->
-                backend.getFileList(uid, path.id ob ObjectType.ROOM, pagingFetch)
-            }
-        }
-    }
-
-    CustomApi.Rooms.Id.Files.search(handleResult()) { query, path ->
-        usePrincipal { uid ->
-            query.pagination(IdentifiablePagingGenerator) { pagingFetch ->
-                backend.searchFiles(
-                    uid,
-                    CustomApi.Files.ScopedFileSearchQuery(
-                        query.word,
-                        query.nextPageToken,
-                        query.size,
-                        query.prePageToken
-                    ),
-                    path.id ob ObjectType.ROOM,
-                    pagingFetch
-                )
-            }
-        }
-    }
-
-    CustomApi.Communities.Id.Files.get(handleResult()) { query, path ->
-        usePrincipal { uid ->
-            query.pagination(IdentifiablePagingGenerator) { pagingFetch ->
-                backend.getFileList(uid, path.id ob ObjectType.COMMUNITY, pagingFetch)
-            }
-        }
-    }
-
-    CustomApi.Communities.Id.Files.search(handleResult()) { query, path ->
-        usePrincipal { uid ->
-            query.pagination(IdentifiablePagingGenerator) { pagingFetch ->
-                backend.searchFiles(
-                    uid,
-                    CustomApi.Files.ScopedFileSearchQuery(
-                        query.word,
-                        query.nextPageToken,
-                        query.size,
-                        query.prePageToken
-                    ),
-                    path.id ob ObjectType.COMMUNITY,
-                    pagingFetch
-                )
-            }
-        }
-    }
+fun Route.bindProtectedFileRoute(backend: Backend) {
+    bindUserFileRoute(backend)
+    bindUserRoomRoute(backend)
+    bindUserCommunityRoute(backend)
 
     CustomApi.Files.getByName(handleResult()) {
         usePrincipal { uid ->
@@ -173,6 +99,60 @@ fun Route.bindProtectedMediaRoute(backend: Backend) {
         usePrincipal { _ ->
             q.pagination(IdentifiablePagingGenerator) { f ->
                 backend.uncheckedGetFileRefsByFileId(p.id, f)
+            }
+        }
+    }
+}
+
+private fun Route.bindUserCommunityRoute(backend: Backend) {
+    CustomApi.Communities.Id.Files.get(handleResult()) { query, path ->
+        usePrincipal { uid ->
+            query.pagination(IdentifiablePagingGenerator) { pagingFetch ->
+                backend.getFileList(uid, path.id ob ObjectType.COMMUNITY, pagingFetch)
+            }
+        }
+    }
+
+    CustomApi.Communities.Id.Files.search(handleResult()) { query, path ->
+        usePrincipal { uid ->
+            query.pagination(IdentifiablePagingGenerator) { pagingFetch ->
+                backend.searchFiles(uid, query, path.id ob ObjectType.COMMUNITY, pagingFetch)
+            }
+        }
+    }
+}
+
+private fun Route.bindUserRoomRoute(backend: Backend) {
+    CustomApi.Rooms.Id.Files.get(handleResult()) { query, path ->
+        usePrincipal { uid ->
+            query.pagination(IdentifiablePagingGenerator) { pagingFetch ->
+                backend.getFileList(uid, path.id ob ObjectType.ROOM, pagingFetch)
+            }
+        }
+    }
+
+    CustomApi.Rooms.Id.Files.search(handleResult()) { query, path ->
+        usePrincipal { uid ->
+            query.pagination(IdentifiablePagingGenerator) { pagingFetch ->
+                backend.searchFiles(uid, query, path.id ob ObjectType.ROOM, pagingFetch)
+            }
+        }
+    }
+}
+
+private fun Route.bindUserFileRoute(backend: Backend) {
+    CustomApi.Users.Id.Files.get(handleResult()) { query, path ->
+        usePrincipal { uid ->
+            query.pagination(IdentifiablePagingGenerator) { pagingFetch ->
+                backend.getFileList(uid, path.id ob ObjectType.USER, pagingFetch)
+            }
+        }
+    }
+
+    CustomApi.Users.Id.Files.search(handleResult()) { query, path ->
+        usePrincipal { uid ->
+            query.pagination(IdentifiablePagingGenerator) { pagingFetch ->
+                backend.searchFiles(uid, query, path.id ob ObjectType.USER, pagingFetch)
             }
         }
     }

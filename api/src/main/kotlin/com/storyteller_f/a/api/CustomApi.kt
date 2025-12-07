@@ -63,6 +63,14 @@ class PaginationQuery(
 ) : PageableQuery
 
 @Serializable
+class SearchQuery(
+    val word: String? = null,
+    override val nextPageToken: String? = null,
+    override val size: Int = DEFAULT_PAGE_SIZE,
+    override val prePageToken: String? = null,
+) : PageableQuery
+
+@Serializable
 class CommonPath(val id: PrimaryKey)
 
 @Serializable
@@ -298,16 +306,8 @@ object CustomApi {
             val get = safeEndpointWithQueryAndPath<CommunityInfo, CommunityIdQuery, CommonPath>("communities/{id}")
 
             object Members {
-                @Serializable
-                class CommunityMemberQuery(
-                    val word: String? = null,
-                    override val nextPageToken: String? = null,
-                    override val size: Int = DEFAULT_PAGE_SIZE,
-                    override val prePageToken: String? = null,
-                ) : PageableQuery
-
                 val get =
-                    safeEndpointWithQueryAndPath<ServerResponse<MemberInfo>, CommunityMemberQuery, CommonPath>(
+                    safeEndpointWithQueryAndPath<ServerResponse<MemberInfo>, SearchQuery, CommonPath>(
                         "communities/{id}/members"
                     )
                 val join = mutationEndpointWithPath<CommunityInfo, Unit, CommonPath>("communities/{id}/members")
@@ -332,7 +332,7 @@ object CustomApi {
                     )
 
                 val search =
-                    safeEndpointWithQueryAndPath<ServerResponse<FileInfo>, CustomApi.Files.ScopedFileSearchQuery, CommonPath>(
+                    safeEndpointWithQueryAndPath<ServerResponse<FileInfo>, SearchQuery, CommonPath>(
                         "communities/{id}/files/search"
                     )
             }
@@ -380,17 +380,8 @@ object CustomApi {
             val get = safeEndpointWithQueryAndPath<RoomInfo, RoomIdQuery, CommonPath>("rooms/{id}")
 
             object Members {
-                @Serializable
-                class MemberQuery(
-                    val word: String? = null,
-                    override val nextPageToken: String? = null,
-                    override val size: Int = DEFAULT_PAGE_SIZE,
-                    override val prePageToken: String? = null
-                ) :
-                    PageableQuery
-
                 val get =
-                    safeEndpointWithQueryAndPath<ServerResponse<MemberInfo>, MemberQuery, CommonPath>(
+                    safeEndpointWithQueryAndPath<ServerResponse<MemberInfo>, SearchQuery, CommonPath>(
                         "rooms/{id}/members"
                     )
                 val join =
@@ -421,7 +412,7 @@ object CustomApi {
                     )
 
                 val search =
-                    safeEndpointWithQueryAndPath<ServerResponse<FileInfo>, CustomApi.Files.ScopedFileSearchQuery, CommonPath>(
+                    safeEndpointWithQueryAndPath<ServerResponse<FileInfo>, SearchQuery, CommonPath>(
                         "rooms/{id}/files/search"
                     )
             }
@@ -469,7 +460,7 @@ object CustomApi {
                     )
 
                 val search =
-                    safeEndpointWithQueryAndPath<ServerResponse<FileInfo>, CustomApi.Files.ScopedFileSearchQuery, CommonPath>(
+                    safeEndpointWithQueryAndPath<ServerResponse<FileInfo>, SearchQuery, CommonPath>(
                         "users/{id}/files/search"
                     )
             }
@@ -491,15 +482,7 @@ object CustomApi {
             }
         }
 
-        @Serializable
-        class UserSearchQuery(
-            val word: String? = null,
-            override val nextPageToken: String? = null,
-            override val size: Int = DEFAULT_PAGE_SIZE,
-            override val prePageToken: String? = null,
-        ) : PageableQuery
-
-        val search = safeEndpointWithQuery<ServerResponse<UserInfo>, UserSearchQuery>("users/search")
+        val search = safeEndpointWithQuery<ServerResponse<UserInfo>, SearchQuery>("users/search")
 
         val update = mutationEndpoint<UserInfo, UpdateUserBody>("users/update")
         val overview = safeEndpoint<UserOverview>("users/overview")
@@ -555,14 +538,6 @@ object CustomApi {
     }
 
     object Files {
-
-        @Serializable
-        class ScopedFileSearchQuery(
-            val word: String? = null,
-            override val nextPageToken: String? = null,
-            override val size: Int = DEFAULT_PAGE_SIZE,
-            override val prePageToken: String? = null,
-        ) : PageableQuery
 
         object Id {
             val copy = mutationEndpointWithPath<ServerResponse<FileInfo>, Unit, CommonPath>("files/{id}/copy")
@@ -696,27 +671,27 @@ object AdminApi {
 
             object Communities {
                 val get = safeEndpointWithQueryAndPath<
-                        ServerResponse<CommunityInfo>,
-                        PaginationQuery,
-                        CommonPath>(
+                    ServerResponse<CommunityInfo>,
+                    PaginationQuery,
+                    CommonPath>(
                     "/admin/users/{id}/communities"
                 )
             }
 
             object Rooms {
                 val get = safeEndpointWithQueryAndPath<
-                        ServerResponse<RoomInfo>,
-                        PaginationQuery,
-                        CommonPath>(
+                    ServerResponse<RoomInfo>,
+                    PaginationQuery,
+                    CommonPath>(
                     "/admin/users/{id}/rooms"
                 )
             }
 
             object Titles {
                 val get = safeEndpointWithQueryAndPath<
-                        ServerResponse<TitleInfo>,
-                        CustomApi.Users.Id.Titles.TitleQuery,
-                        CommonPath>(
+                    ServerResponse<TitleInfo>,
+                    CustomApi.Users.Id.Titles.TitleQuery,
+                    CommonPath>(
                     "/admin/users/{id}/titles"
                 )
             }
@@ -730,32 +705,32 @@ object AdminApi {
 
             object Logs {
                 val get = safeEndpointWithQueryAndPath<ServerResponse<UserLogInfo>,
-                        PaginationQuery,
-                        CommonPath>(
+                    PaginationQuery,
+                    CommonPath>(
                     "/admin/users/{id}/logs"
                 )
             }
 
             object UploadRecords {
                 val get = safeEndpointWithQueryAndPath<ServerResponse<com.storyteller_f.shared.model.UploadRecordInfo>,
-                        PaginationQuery,
-                        CommonPath>(
+                    PaginationQuery,
+                    CommonPath>(
                     "/admin/users/{id}/upload-records"
                 )
             }
 
             object Reactions {
                 val get = safeEndpointWithQueryAndPath<ServerResponse<ReactionRecordInfo>,
-                        PaginationQuery,
-                        CommonPath>(
+                    PaginationQuery,
+                    CommonPath>(
                     "/admin/users/{id}/reactions"
                 )
             }
 
             object Comments {
                 val get = safeEndpointWithQueryAndPath<ServerResponse<TopicInfo>,
-                        PaginationQuery,
-                        CommonPath>(
+                    PaginationQuery,
+                    CommonPath>(
                     "/admin/users/{id}/comments"
                 )
             }
@@ -776,9 +751,9 @@ object AdminApi {
 
             object Members {
                 val get = safeEndpointWithQueryAndPath<
-                        ServerResponse<MemberInfo>,
-                        PaginationQuery,
-                        CommonPath>(
+                    ServerResponse<MemberInfo>,
+                    PaginationQuery,
+                    CommonPath>(
                     "/admin/communities/{id}/members"
                 )
             }
@@ -794,18 +769,18 @@ object AdminApi {
 
             object Members {
                 val get = safeEndpointWithQueryAndPath<
-                        ServerResponse<MemberInfo>,
-                        PaginationQuery,
-                        CommonPath>(
+                    ServerResponse<MemberInfo>,
+                    PaginationQuery,
+                    CommonPath>(
                     "/admin/rooms/{id}/members"
                 )
             }
 
             object Files {
                 val get = safeEndpointWithQueryAndPath<
-                        ServerResponse<FileInfo>,
-                        PaginationQuery,
-                        CommonPath>(
+                    ServerResponse<FileInfo>,
+                    PaginationQuery,
+                    CommonPath>(
                     "/admin/rooms/{id}/files"
                 )
             }
@@ -838,15 +813,7 @@ object AdminApi {
     object Files {
         val get = safeEndpointWithQuery<ServerResponse<FileInfo>, PaginationQuery>("/admin/files")
 
-        @Serializable
-        class FileSearchQuery(
-            val word: String? = null,
-            override val nextPageToken: String? = null,
-            override val size: Int = DEFAULT_PAGE_SIZE,
-            override val prePageToken: String? = null,
-        ) : PageableQuery
-
-        val search = safeEndpointWithQuery<ServerResponse<FileInfo>, FileSearchQuery>("/admin/files/search")
+        val search = safeEndpointWithQuery<ServerResponse<FileInfo>, SearchQuery>("/admin/files/search")
 
         object Id {
             val get = safeEndpointWithPath<FileInfo, CommonPath>("/admin/files/{id}")
