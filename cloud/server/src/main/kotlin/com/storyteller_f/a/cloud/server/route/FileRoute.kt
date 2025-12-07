@@ -52,18 +52,113 @@ import java.io.File
 import kotlin.uuid.ExperimentalUuidApi
 
 fun Route.bindProtectedMediaRoute(backend: Backend) {
-    CustomApi.Files.get(handleResult()) {
+    CustomApi.Users.Id.Files.get(handleResult()) { query, path ->
         usePrincipal { uid ->
-            it.pagination(IdentifiablePagingGenerator) { pagingFetch ->
-                backend.getFileList(uid, it, pagingFetch)
+            query.pagination(IdentifiablePagingGenerator) { pagingFetch ->
+                backend.getFileList(
+                    uid,
+                    CustomApi.Files.FileQuery(
+                        path.id,
+                        ObjectType.USER,
+                        query.nextPageToken,
+                        query.size,
+                        query.prePageToken
+                    ),
+                    pagingFetch
+                )
             }
         }
     }
 
-    CustomApi.Files.search(handleResult()) {
+    CustomApi.Users.Id.Files.search(handleResult()) { query, path ->
         usePrincipal { uid ->
-            it.pagination(IdentifiablePagingGenerator) { pagingFetch ->
-                backend.searchFiles(uid, it, pagingFetch)
+            query.pagination(IdentifiablePagingGenerator) { pagingFetch ->
+                backend.searchFiles(
+                    uid,
+                    CustomApi.Files.FileSearchQuery(
+                        query.word,
+                        path.id,
+                        ObjectType.USER,
+                        query.nextPageToken,
+                        query.size,
+                        query.prePageToken
+                    ),
+                    pagingFetch
+                )
+            }
+        }
+    }
+
+    CustomApi.Rooms.Id.Files.get(handleResult()) { query, path ->
+        usePrincipal { uid ->
+            query.pagination(IdentifiablePagingGenerator) { pagingFetch ->
+                backend.getFileList(
+                    uid,
+                    CustomApi.Files.FileQuery(
+                        path.id,
+                        ObjectType.ROOM,
+                        query.nextPageToken,
+                        query.size,
+                        query.prePageToken
+                    ),
+                    pagingFetch
+                )
+            }
+        }
+    }
+
+    CustomApi.Rooms.Id.Files.search(handleResult()) { query, path ->
+        usePrincipal { uid ->
+            query.pagination(IdentifiablePagingGenerator) { pagingFetch ->
+                backend.searchFiles(
+                    uid,
+                    CustomApi.Files.FileSearchQuery(
+                        query.word,
+                        path.id,
+                        ObjectType.ROOM,
+                        query.nextPageToken,
+                        query.size,
+                        query.prePageToken
+                    ),
+                    pagingFetch
+                )
+            }
+        }
+    }
+
+    CustomApi.Communities.Id.Files.get(handleResult()) { query, path ->
+        usePrincipal { uid ->
+            query.pagination(IdentifiablePagingGenerator) { pagingFetch ->
+                backend.getFileList(
+                    uid,
+                    CustomApi.Files.FileQuery(
+                        path.id,
+                        ObjectType.COMMUNITY,
+                        query.nextPageToken,
+                        query.size,
+                        query.prePageToken
+                    ),
+                    pagingFetch
+                )
+            }
+        }
+    }
+
+    CustomApi.Communities.Id.Files.search(handleResult()) { query, path ->
+        usePrincipal { uid ->
+            query.pagination(IdentifiablePagingGenerator) { pagingFetch ->
+                backend.searchFiles(
+                    uid,
+                    CustomApi.Files.FileSearchQuery(
+                        query.word,
+                        path.id,
+                        ObjectType.COMMUNITY,
+                        query.nextPageToken,
+                        query.size,
+                        query.prePageToken
+                    ),
+                    pagingFetch
+                )
             }
         }
     }
