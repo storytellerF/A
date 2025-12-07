@@ -65,11 +65,12 @@ import com.storyteller_f.a.client.core.searchAllMembers
 import com.storyteller_f.a.client.core.searchCommunity
 import com.storyteller_f.a.client.core.searchCommunityMembers
 import com.storyteller_f.a.client.core.searchCommunityRooms
+import com.storyteller_f.a.client.core.searchCommunityTopics
 import com.storyteller_f.a.client.core.searchCurrentUserRooms
 import com.storyteller_f.a.client.core.searchFiles
 import com.storyteller_f.a.client.core.searchRoomMembers
-
-import com.storyteller_f.a.client.core.searchTopics
+import com.storyteller_f.a.client.core.searchRoomTopics
+import com.storyteller_f.a.client.core.searchUserTopics
 import com.storyteller_f.a.client.core.userTitles
 import com.storyteller_f.shared.model.ChildAccountInfo
 import com.storyteller_f.shared.model.CommunityInfo
@@ -246,7 +247,7 @@ class RoomsViewModel(
         modelStorage.remoteKey,
         modelStorage.room
     ) { key, size ->
-        sessionManager.searchCurrentUserRooms(word, joinStatusSearch, size, key)
+        sessionManager.searchCurrentUserRooms(word, size, key)
     }.flow.cachedIn(viewModelScope)
 }
 
@@ -424,7 +425,18 @@ class TopicSearchViewModel(
         modelStorage.remoteKey,
         modelStorage.topic
     ) { key, size ->
-        sessionManager.searchTopics(size, word, parentId, parentType, key)
+        // 内联并确保调用正确的endpoint
+        if (parentId != null && parentType != null) {
+            when (parentType) {
+                ObjectType.COMMUNITY -> sessionManager.searchCommunityTopics(parentId, size, word, key)
+                ObjectType.ROOM -> sessionManager.searchRoomTopics(parentId, size, word, key)
+                ObjectType.USER -> sessionManager.searchUserTopics(parentId, size, word, key)
+                else -> throw IllegalArgumentException("Unsupported parentType: $parentType")
+            }
+        } else {
+            // 如果没有指定父对象，则搜索推荐主题
+            sessionManager.getRecommendTopics(PaginationQuery(key, size = size))
+        }
     }.flow.cachedIn(viewModelScope)
 }
 

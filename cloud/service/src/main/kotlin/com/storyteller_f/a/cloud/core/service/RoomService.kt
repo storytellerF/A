@@ -17,7 +17,6 @@ import com.storyteller_f.a.backend.core.ROOM_NAME_LENGTH
 import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.backend.core.idListFetch
 import com.storyteller_f.a.backend.core.mapPagingResultNotNull
-import com.storyteller_f.a.backend.core.pagingNotNull
 import com.storyteller_f.a.backend.core.service.MemberDocument
 import com.storyteller_f.a.backend.core.service.MemberDocumentSearch
 import com.storyteller_f.a.backend.core.service.RoomDocument

@@ -206,27 +206,11 @@ suspend fun UserSessionManager.expectedCommunityRoomCount(
 suspend fun UserSessionManager.expectedCurrentUserRoomCount(
     expected: Int,
     word: String? = null,
-    joinStatusSearch: JoinStatusSearch = JoinStatusSearch.JOINED,
     nextRoomId: String? = null,
     size: Int = 10
 ) {
     val result = if (word != null) {
-        searchCurrentUserRooms(word, joinStatusSearch, size, nextRoomId)
-    } else {
-        getUserRooms(PaginationQuery(nextRoomId, size = size))
-    }
-    assertListSize(expected, result)
-}
-
-suspend fun UserSessionManager.expectedUserRoomCount(
-    expected: Int,
-    word: String? = null,
-    joinStatusSearch: JoinStatusSearch = JoinStatusSearch.UNSPECIFIED,
-    nextRoomId: String? = null,
-    size: Int = 10
-) {
-    val result = if (word != null) {
-        searchCurrentUserRooms(word, joinStatusSearch, size, nextRoomId)
+        searchCurrentUserRooms(word, size, nextRoomId)
     } else {
         getUserRooms(PaginationQuery(nextRoomId, size = size))
     }

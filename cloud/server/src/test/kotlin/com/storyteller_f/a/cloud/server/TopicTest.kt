@@ -26,7 +26,7 @@ import com.storyteller_f.a.client.core.getUserTopics
 import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.a.client.core.joinRoom
 import com.storyteller_f.a.client.core.pinTopic
-import com.storyteller_f.a.client.core.searchTopics
+import com.storyteller_f.a.client.core.searchCommunityTopics
 import com.storyteller_f.a.client.core.sendMessage
 import com.storyteller_f.a.client.core.unpinTopic
 import com.storyteller_f.a.client.core.upload
@@ -37,7 +37,6 @@ import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.obj.UpdateUserRead
 import com.storyteller_f.shared.type.ObjectType
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
-import io.ktor.client.request.get
 import io.ktor.http.ContentType
 import io.ktor.http.defaultForFileExtension
 import io.ktor.utils.io.streams.asInput
@@ -69,11 +68,12 @@ class TopicTest {
             val lastTopic = createTopic(ObjectType.COMMUNITY, communityId, "hello world").getOrThrow()
             createTopic(ObjectType.COMMUNITY, communityId, "sysroot").getOrThrow()
             val firstTopic = createTopic(ObjectType.COMMUNITY, communityId, "best world").getOrThrow()
-            val topics = searchTopics(1, listOf("world")).getOrThrow()
+            // 使用新的专门方法替换废弃的 searchTopics
+            val topics = searchCommunityTopics(communityId, 1, listOf("world")).getOrThrow()
             assertEquals(2, topics.pagination?.total)
             assertEquals(1, topics.data.size)
             assertEquals(firstTopic.id, topics.data.first().id)
-            val topics2 = searchTopics(1, listOf("world"), nextTopicId = topics.data.first().id.toString()).getOrThrow()
+            val topics2 = searchCommunityTopics(communityId, 1, listOf("world"), firstTopic.id.toString()).getOrThrow()
             assertEquals(lastTopic.id, topics2.data.first().id)
         }
     }
@@ -84,7 +84,8 @@ class TopicTest {
             val communityId = createCommunity(NewCommunity("aid", "name")).getOrThrow().id
             createTopic(ObjectType.COMMUNITY, communityId, "hello world").getOrThrow()
             createTopic(ObjectType.COMMUNITY, communityId, "best world").getOrThrow()
-            searchTopics(10, listOf("world")).getOrThrow().data.forEach {
+            // 使用新的专门方法替换废弃的 searchTopics
+            searchCommunityTopics(communityId, 10, listOf("world")).getOrThrow().data.forEach {
                 assertNotNull(it.extension?.authorInfo)
             }
             getCommunityTopics(
@@ -102,7 +103,9 @@ class TopicTest {
             val communityId = createCommunity(NewCommunity("aid", "name")).getOrThrow().id
             val topicId = createTopic(ObjectType.COMMUNITY, communityId, "hello world").getOrThrow().id
             createTopic(ObjectType.TOPIC, topicId, "best world").getOrThrow()
-            searchTopics(10, listOf("world")).getOrThrow().data.forEach {
+            // 使用新的专门方法替换废弃的 searchTopics
+            val data = searchCommunityTopics(communityId, 10, listOf("world")).getOrThrow().data
+            data.forEach {
                 assertNotNull(it.hasComment)
                 assertEquals(1, it.commentCount)
             }
@@ -252,7 +255,7 @@ class TopicTest {
             communityId to publicRoomId
         }.custom
         val receivedFrame = mutableListOf<RoomFrame>()
-        attachSession({ roomFrame, model, session ->
+        attachSession({ roomFrame, _, _ ->
             receivedFrame.add(roomFrame)
         }) {
             val roomInfo = getRoomInfo(publicRoomId).getOrThrow()
@@ -280,7 +283,7 @@ class TopicTest {
         }
         val privateRoomId = user1.custom
         val receivedFrame = mutableListOf<RoomFrame>()
-        loginSession(user2, { roomFrame, model, session ->
+        loginSession(user2, { roomFrame, _, _ ->
             receivedFrame.add(roomFrame)
         }) {
             joinRoom(privateRoomId).getOrThrow()
@@ -310,8 +313,7 @@ class TopicTest {
         loginSession(user1) {
             createTitle(NewTitle("join", TitleType.JOIN, user2.uid, privateRoomId, ObjectType.ROOM, ""))
         }
-        loginSession(user2, { roomFrame, model, session ->
-        }) {
+        loginSession(user2) {
             joinRoom(privateRoomId).getOrThrow()
         }
     }
@@ -366,7 +368,7 @@ class TopicTest {
     fun `test room last read`() {
         val receivedFrame = mutableListOf<RoomFrame>()
         test {
-            attachSession({ roomFrame, model, session ->
+            attachSession({ roomFrame, _, _ ->
                 receivedFrame.add(roomFrame)
             }) {
                 val roomInfo = createRoom(NewRoom("r1", "r1")).getOrThrow()

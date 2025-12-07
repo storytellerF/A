@@ -12,7 +12,9 @@ import com.storyteller_f.a.cloud.core.service.getTopicByAid
 import com.storyteller_f.a.cloud.core.service.getTopicsByParentId
 import com.storyteller_f.a.cloud.core.service.reactionList
 import com.storyteller_f.a.cloud.core.service.recommendTopics
-import com.storyteller_f.a.cloud.core.service.searchPublicTopics
+import com.storyteller_f.a.cloud.core.service.searchCommunityTopics
+import com.storyteller_f.a.cloud.core.service.searchRoomTopics
+import com.storyteller_f.a.cloud.core.service.searchUserTopics
 import com.storyteller_f.a.cloud.core.service.updateTopicPin
 import com.storyteller_f.a.cloud.server.auth.handleResult
 import com.storyteller_f.a.cloud.server.auth.usePrincipal
@@ -26,14 +28,6 @@ import com.storyteller_f.shared.type.ObjectType
 import io.ktor.server.routing.Route
 
 fun Route.bindTopicRoute(backend: Backend) {
-    CustomApi.Topics.search(handleResult()) {
-        usePrincipalOrNull { uid ->
-            it.pagination(IdentifiablePagingGenerator) { f ->
-                backend.searchPublicTopics(it, f, uid)
-            }
-        }
-    }
-
     CustomApi.Topics.recommend(handleResult()) {
         usePrincipalOrNull { uid ->
             it.pagination(IdentifiablePagingGenerator) { f ->
@@ -65,6 +59,34 @@ fun Route.bindTopicRoute(backend: Backend) {
             }
         }
     }
+
+    // 用户主题搜索路由
+    CustomApi.Topics.Users.Id.search(handleResult()) { q, p ->
+        usePrincipalOrNull { uid ->
+            q.pagination(IdentifiablePagingGenerator) { f ->
+                backend.searchUserTopics(p.id, q, f, uid)
+            }
+        }
+    }
+
+    // 房间主题搜索路由
+    CustomApi.Topics.Rooms.Id.search(handleResult()) { q, p ->
+        usePrincipalOrNull { uid ->
+            q.pagination(IdentifiablePagingGenerator) { f ->
+                backend.searchRoomTopics(p.id, q, f, uid)
+            }
+        }
+    }
+
+    // 社区主题搜索路由
+    CustomApi.Topics.Communities.Id.search(handleResult()) { q, p ->
+        usePrincipalOrNull { uid ->
+            q.pagination(IdentifiablePagingGenerator) { f ->
+                backend.searchCommunityTopics(p.id, q, f, uid)
+            }
+        }
+    }
+
     CustomApi.Topics.Id.Reactions.get(handleResult()) { q, p ->
         usePrincipalOrNull { uid ->
             q.pagination(ReactionPaginationGenerator(backend)) { fetch ->
@@ -95,8 +117,8 @@ fun Route.bindProtectedTopicRoute(backend: Backend) {
     }
     CustomApi.Topics.Id.Reactions.delete(handleResult()) { p, api ->
         usePrincipal { uid ->
-            val deleteReaction = api.receiveBody()
-            deleteReaction(deleteReaction, backend, uid, p)
+            val deleteReactionBody = api.receiveBody()
+            deleteReaction(deleteReactionBody, backend, uid, p)
         }
     }
 

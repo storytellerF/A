@@ -153,8 +153,6 @@ object CustomApi {
             val fillHasCommented: Boolean? = null
         ) : PageableQuery
 
-        val search = safeEndpointWithQuery<ServerResponse<TopicInfo>, TopicSearchQuery>("topics/search")
-
         @Serializable
         class RecommendQuery(
             val fillHasCommented: Boolean? = null,
@@ -164,6 +162,63 @@ object CustomApi {
         ) : PageableQuery
 
         val recommend = safeEndpointWithQuery<ServerResponse<TopicInfo>, RecommendQuery>("topics/recommend")
+
+        // 用户主题搜索端点
+        object Users {
+            object Id {
+                @Serializable
+                class UserTopicSearchQuery(
+                    val word: List<String>? = null,
+                    override val nextPageToken: String? = null,
+                    override val prePageToken: String? = null,
+                    override val size: Int = DEFAULT_PAGE_SIZE,
+                    val fillHasCommented: Boolean? = null
+                ) : PageableQuery
+
+                val search =
+                    safeEndpointWithQueryAndPath<ServerResponse<TopicInfo>, UserTopicSearchQuery, CommonPath>(
+                        "users/{id}/topics/search"
+                    )
+            }
+        }
+
+        // 房间主题搜索端点
+        object Rooms {
+            object Id {
+                @Serializable
+                class RoomTopicSearchQuery(
+                    val word: List<String>? = null,
+                    override val nextPageToken: String? = null,
+                    override val prePageToken: String? = null,
+                    override val size: Int = DEFAULT_PAGE_SIZE,
+                    val fillHasCommented: Boolean? = null
+                ) : PageableQuery
+
+                val search =
+                    safeEndpointWithQueryAndPath<ServerResponse<TopicInfo>, RoomTopicSearchQuery, CommonPath>(
+                        "rooms/{id}/topics/search"
+                    )
+            }
+        }
+
+        // 社区主题搜索端点
+        object Communities {
+            object Id {
+                @Serializable
+                class CommunityTopicSearchQuery(
+                    val word: List<String>? = null,
+                    override val nextPageToken: String? = null,
+                    override val prePageToken: String? = null,
+                    override val size: Int = DEFAULT_PAGE_SIZE,
+                    val fillHasCommented: Boolean? = null
+                ) : PageableQuery
+
+                val search =
+                    safeEndpointWithQueryAndPath<ServerResponse<TopicInfo>, CommunityTopicSearchQuery, CommonPath>(
+                        "communities/{id}/topics/search"
+                    )
+            }
+        }
 
         object Id {
             @Serializable
@@ -305,7 +360,6 @@ object CustomApi {
     }
 
     object Rooms {
-        
 
         object Id {
             @Serializable

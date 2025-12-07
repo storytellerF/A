@@ -583,6 +583,107 @@ suspend fun Backend.searchPublicTopics(
     }
 }
 
+/**
+ * 搜索用户主题
+ */
+suspend fun Backend.searchUserTopics(
+    userId: PrimaryKey,
+    search: CustomApi.Topics.Users.Id.UserTopicSearchQuery,
+    primaryKeyFetch: PrimaryKeyFetch,
+    uid: PrimaryKey?,
+): Result<PaginationResult<TopicInfo>?> {
+    if (search.fillHasCommented == true && uid == null) return Result.failure(UnauthorizedException())
+
+    val word = search.word
+    if (word != null && word.sumOf {
+            it.length
+        } > 20) {
+        return Result.failure(CustomBadRequestException("word too long"))
+    }
+
+    // 创建TopicDocumentSearch.Topics对象进行用户主题搜索
+    return topicSearchService.searchDocument(
+        TopicDocumentSearch.Topics(userId, word),
+        primaryKeyFetch
+    ).mapPagingResultNullable { list ->
+        processTopicsDocument(uid, list)
+    }
+}
+
+/**
+ * 搜索房间主题
+ */
+suspend fun Backend.searchRoomTopics(
+    roomId: PrimaryKey,
+    search: CustomApi.Topics.Rooms.Id.RoomTopicSearchQuery,
+    primaryKeyFetch: PrimaryKeyFetch,
+    uid: PrimaryKey?,
+): Result<PaginationResult<TopicInfo>?> {
+    if (search.fillHasCommented == true && uid == null) {
+        return Result.failure(
+            UnauthorizedException()
+        )
+    }
+    val word = search.word
+    if (word != null && word.sumOf {
+            it.length
+        } > 20) {
+        return Result.failure(CustomBadRequestException("word too long"))
+    }
+    return checkRootReadPermission(ObjectType.ROOM, roomId, uid).mapResultIfNotNull {
+        if (it.isPrivate) {
+            Result.failure(CustomBadRequestException("can't search in private room"))
+        } else {
+            Result.success(Unit)
+        }
+    }.mapResultIfNotNull {
+        // 创建TopicDocumentSearch.Topics对象进行房间主题搜索
+        topicSearchService.searchDocument(
+            TopicDocumentSearch.Topics(roomId, word),
+            primaryKeyFetch
+        )
+    }.mapPagingResultIfNotNullNullable { list ->
+        processTopicsDocument(uid, list)
+    }
+}
+
+/**
+ * 搜索社区主题
+ */
+suspend fun Backend.searchCommunityTopics(
+    communityId: PrimaryKey,
+    search: CustomApi.Topics.Communities.Id.CommunityTopicSearchQuery,
+    primaryKeyFetch: PrimaryKeyFetch,
+    uid: PrimaryKey?,
+): Result<PaginationResult<TopicInfo>?> {
+    if (search.fillHasCommented == true && uid == null) {
+        return Result.failure(
+            UnauthorizedException()
+        )
+    }
+    val word = search.word
+    if (word != null && word.sumOf {
+            it.length
+        } > 20) {
+        return Result.failure(CustomBadRequestException("word too long"))
+    }
+    return checkRootReadPermission(ObjectType.COMMUNITY, communityId, uid).mapResultIfNotNull {
+        if (it.isPrivate) {
+            Result.failure(CustomBadRequestException("can't search in private community"))
+        } else {
+            Result.success(Unit)
+        }
+    }.mapResultIfNotNull {
+        // 创建TopicDocumentSearch.Topics对象进行社区主题搜索
+        topicSearchService.searchDocument(
+            TopicDocumentSearch.Topics(communityId, word),
+            primaryKeyFetch
+        )
+    }.mapPagingResultIfNotNullNullable { list ->
+        processTopicsDocument(uid, list)
+    }
+}
+
 suspend fun Backend.processTopicFileObject(
     infos: List<TopicInfo>,
 ): Result<List<TopicInfo>?> {

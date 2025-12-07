@@ -24,7 +24,6 @@ import com.storyteller_f.shared.type.ObjectType
 import io.ktor.server.routing.*
 
 fun Route.bindRoomRoute(backend: Backend) {
-
     CustomApi.Rooms.Id.Members.get(handleResult()) { q, p ->
         usePrincipalOrNull { uid ->
             q.pagination(IdentifiablePagingGenerator) { f ->

@@ -19,7 +19,7 @@ import com.storyteller_f.a.client.core.getUserCommunities
 import com.storyteller_f.a.client.core.getUserJoinedCommunities
 import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.a.client.core.searchCommunityMembers
-import com.storyteller_f.a.client.core.searchTopics
+import com.storyteller_f.a.client.core.searchCommunityTopics
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.MemberPolicy
 import com.storyteller_f.shared.model.TitleType
@@ -74,9 +74,11 @@ class CommunityTest {
         attachSession {
             joinCommunity(communityId).getOrThrow()
             createTopic(ObjectType.COMMUNITY, communityId, "hello").getOrThrow()
-            assertListSize(1, searchTopics(10, parentId = communityId, parentType = ObjectType.COMMUNITY))
+            // 使用新的专门方法替换废弃的 searchTopics
+            assertListSize(1, searchCommunityTopics(communityId, 10))
             assertListSize(1, getCommunityTopics(communityId, paginationQuery = PaginationQuery(size = 10)))
-            val topicId = searchTopics(10, emptyList(), communityId, ObjectType.COMMUNITY)
+            // 使用新的专门方法替换废弃的 searchTopics
+            val topicId = searchCommunityTopics(communityId, 10, emptyList())
                 .getOrThrow().data.first().id
             val new = createTopic(ObjectType.TOPIC, topicId, "test").getOrThrow()
             assertEquals(ObjectType.COMMUNITY, new.rootType)
