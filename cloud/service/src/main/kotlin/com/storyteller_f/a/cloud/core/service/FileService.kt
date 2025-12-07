@@ -55,20 +55,15 @@ class PathResponse(val file: java.nio.file.Path)
 
 suspend fun Backend.getFileList(
     uid: PrimaryKey,
-    fileQuery: CustomApi.Files.FileQuery,
+    objectTuple: ObjectTuple,
     primaryKeyFetch: PrimaryKeyFetch
 ): Result<PaginationResult<FileInfo>?> {
-    if (fileQuery.objectType == ObjectType.TOPIC) {
+    if (objectTuple.objectType == ObjectType.TOPIC) {
         return Result.failure(CustomBadRequestException("can't get topic file record"))
     }
-    val parentType = fileQuery.objectType
-    val parentId = fileQuery.objectId
-    if (parentId == null || parentType == null) error("invalid query")
-    return checkRootWritePermission(
-        parentType,
-        parentId,
-        uid
-    ).mapResultIfNotNull {
+    val parentType = objectTuple.objectType
+    val parentId = objectTuple.objectId
+    return checkRootWritePermission(parentType, parentId, uid).mapResultIfNotNull {
         getFileInfoPaginationResult(parentId, primaryKeyFetch)
     }
 }
@@ -98,22 +93,18 @@ suspend fun Backend.getFileInfoByName(
 
 suspend fun Backend.searchFiles(
     uid: PrimaryKey,
-    query: CustomApi.Files.FileSearchQuery,
+    query: CustomApi.Files.ScopedFileSearchQuery,
+    objectTuple: ObjectTuple,
     primaryKeyFetch: PrimaryKeyFetch
 ): Result<PaginationResult<FileInfo>?> {
     val word = query.word
-    val objectId = query.objectId
-    val objectType = query.objectType
+    val objectId = objectTuple.objectId
+    val objectType = objectTuple.objectType
 
     // 如果指定了 objectId 和 objectType，需要检查权限
-    if (objectId != null && objectType != null) {
-        return checkRootWritePermission(objectType, objectId, uid).mapResultIfNotNull {
-            searchFilesByWord(word, objectId, primaryKeyFetch)
-        }
+    return checkRootWritePermission(objectType, objectId, uid).mapResultIfNotNull {
+        searchFilesByWord(word, objectId, primaryKeyFetch)
     }
-
-    // 否则只搜索用户自己的文件
-    return searchFilesByWord(word, uid, primaryKeyFetch)
 }
 
 suspend fun Backend.uncheckedSearchFiles(

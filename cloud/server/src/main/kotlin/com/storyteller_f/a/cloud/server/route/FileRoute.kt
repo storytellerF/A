@@ -55,17 +55,7 @@ fun Route.bindProtectedMediaRoute(backend: Backend) {
     CustomApi.Users.Id.Files.get(handleResult()) { query, path ->
         usePrincipal { uid ->
             query.pagination(IdentifiablePagingGenerator) { pagingFetch ->
-                backend.getFileList(
-                    uid,
-                    CustomApi.Files.FileQuery(
-                        path.id,
-                        ObjectType.USER,
-                        query.nextPageToken,
-                        query.size,
-                        query.prePageToken
-                    ),
-                    pagingFetch
-                )
+                backend.getFileList(uid, path.id ob ObjectType.USER, pagingFetch)
             }
         }
     }
@@ -75,14 +65,13 @@ fun Route.bindProtectedMediaRoute(backend: Backend) {
             query.pagination(IdentifiablePagingGenerator) { pagingFetch ->
                 backend.searchFiles(
                     uid,
-                    CustomApi.Files.FileSearchQuery(
+                    CustomApi.Files.ScopedFileSearchQuery(
                         query.word,
-                        path.id,
-                        ObjectType.USER,
                         query.nextPageToken,
                         query.size,
                         query.prePageToken
                     ),
+                    path.id ob ObjectType.USER,
                     pagingFetch
                 )
             }
@@ -92,17 +81,7 @@ fun Route.bindProtectedMediaRoute(backend: Backend) {
     CustomApi.Rooms.Id.Files.get(handleResult()) { query, path ->
         usePrincipal { uid ->
             query.pagination(IdentifiablePagingGenerator) { pagingFetch ->
-                backend.getFileList(
-                    uid,
-                    CustomApi.Files.FileQuery(
-                        path.id,
-                        ObjectType.ROOM,
-                        query.nextPageToken,
-                        query.size,
-                        query.prePageToken
-                    ),
-                    pagingFetch
-                )
+                backend.getFileList(uid, path.id ob ObjectType.ROOM, pagingFetch)
             }
         }
     }
@@ -112,14 +91,13 @@ fun Route.bindProtectedMediaRoute(backend: Backend) {
             query.pagination(IdentifiablePagingGenerator) { pagingFetch ->
                 backend.searchFiles(
                     uid,
-                    CustomApi.Files.FileSearchQuery(
+                    CustomApi.Files.ScopedFileSearchQuery(
                         query.word,
-                        path.id,
-                        ObjectType.ROOM,
                         query.nextPageToken,
                         query.size,
                         query.prePageToken
                     ),
+                    path.id ob ObjectType.ROOM,
                     pagingFetch
                 )
             }
@@ -129,17 +107,7 @@ fun Route.bindProtectedMediaRoute(backend: Backend) {
     CustomApi.Communities.Id.Files.get(handleResult()) { query, path ->
         usePrincipal { uid ->
             query.pagination(IdentifiablePagingGenerator) { pagingFetch ->
-                backend.getFileList(
-                    uid,
-                    CustomApi.Files.FileQuery(
-                        path.id,
-                        ObjectType.COMMUNITY,
-                        query.nextPageToken,
-                        query.size,
-                        query.prePageToken
-                    ),
-                    pagingFetch
-                )
+                backend.getFileList(uid, path.id ob ObjectType.COMMUNITY, pagingFetch)
             }
         }
     }
@@ -149,14 +117,13 @@ fun Route.bindProtectedMediaRoute(backend: Backend) {
             query.pagination(IdentifiablePagingGenerator) { pagingFetch ->
                 backend.searchFiles(
                     uid,
-                    CustomApi.Files.FileSearchQuery(
+                    CustomApi.Files.ScopedFileSearchQuery(
                         query.word,
-                        path.id,
-                        ObjectType.COMMUNITY,
                         query.nextPageToken,
                         query.size,
                         query.prePageToken
                     ),
+                    path.id ob ObjectType.COMMUNITY,
                     pagingFetch
                 )
             }

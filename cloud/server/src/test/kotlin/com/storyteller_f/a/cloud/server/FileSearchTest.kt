@@ -27,20 +27,26 @@ class FileSearchTest {
 
             // 搜索所有文件（不指定关键词）
             val allFiles = searchFiles(
-                CustomApi.Files.FileSearchQuery(word = null, objectId = it.uid, objectType = ObjectType.USER)
+                CustomApi.Files.ScopedFileSearchQuery(word = null),
+                it.uid,
+                ObjectType.USER
             ).getOrThrow().data
             assertEquals(3, allFiles.size)
 
             // 按名称搜索
             val testFiles = searchFiles(
-                CustomApi.Files.FileSearchQuery(word = "test", objectId = it.uid, objectType = ObjectType.USER)
+                CustomApi.Files.ScopedFileSearchQuery(word = "test"),
+                it.uid,
+                ObjectType.USER
             ).getOrThrow().data
             assertEquals(2, testFiles.size)
             assertTrue(testFiles.all { file -> file.name.contains("test") })
 
             // 搜索特定文件
             val docFiles = searchFiles(
-                CustomApi.Files.FileSearchQuery(word = "document", objectId = it.uid, objectType = ObjectType.USER)
+                CustomApi.Files.ScopedFileSearchQuery(word = "document"),
+                it.uid,
+                ObjectType.USER
             ).getOrThrow().data
             assertEquals(1, docFiles.size)
             assertEquals("document.txt", docFiles.first().name)
@@ -57,7 +63,11 @@ class FileSearchTest {
             upload(it.uid ob ObjectType.USER, getUploadDataFromText("user2 file", "user2.txt")).getOrThrow()
 
             // 搜索自己的文件，不应包含其他用户的文件
-            val myFiles = searchFiles(CustomApi.Files.FileSearchQuery(word = "user")).getOrThrow().data
+            val myFiles = searchFiles(
+                CustomApi.Files.ScopedFileSearchQuery(word = "user"),
+                it.uid,
+                ObjectType.USER
+            ).getOrThrow().data
 
             assertEquals(1, myFiles.size)
             assertEquals("user2.txt", myFiles.first().name)
@@ -87,7 +97,9 @@ class FileSearchTest {
             joinRoom(roomId).getOrThrow()
 
             val roomFiles = searchFiles(
-                CustomApi.Files.FileSearchQuery(word = "room", objectId = roomId, objectType = ObjectType.ROOM)
+                CustomApi.Files.ScopedFileSearchQuery(word = "room"),
+                roomId,
+                ObjectType.ROOM
             ).getOrThrow().data
 
             assertEquals(2, roomFiles.size)
@@ -111,7 +123,9 @@ class FileSearchTest {
         // 未加入房间的用户不应能搜索房间文件
         attachSession {
             val result = searchFiles(
-                CustomApi.Files.FileSearchQuery(word = "private", objectId = roomId, objectType = ObjectType.ROOM)
+                CustomApi.Files.ScopedFileSearchQuery(word = "private"),
+                roomId,
+                ObjectType.ROOM
             )
 
             assertTrue(result.isFailure)
@@ -127,7 +141,9 @@ class FileSearchTest {
 
             // 空关键词应返回所有文件
             val allFiles = searchFiles(
-                CustomApi.Files.FileSearchQuery(word = "", objectId = it.uid, objectType = ObjectType.USER)
+                CustomApi.Files.ScopedFileSearchQuery(word = ""),
+                it.uid,
+                ObjectType.USER
             ).getOrThrow().data
 
             assertEquals(3, allFiles.size)
@@ -141,11 +157,15 @@ class FileSearchTest {
 
             // 搜索应该不区分大小写
             val upperCase = searchFiles(
-                CustomApi.Files.FileSearchQuery(word = "TEST", objectId = it.uid, objectType = ObjectType.USER)
+                CustomApi.Files.ScopedFileSearchQuery(word = "TEST"),
+                it.uid,
+                ObjectType.USER
             ).getOrThrow().data
 
             val lowerCase = searchFiles(
-                CustomApi.Files.FileSearchQuery(word = "test", objectId = it.uid, objectType = ObjectType.USER)
+                CustomApi.Files.ScopedFileSearchQuery(word = "test"),
+                it.uid,
+                ObjectType.USER
             ).getOrThrow().data
 
             assertEquals(1, upperCase.size)
