@@ -1,5 +1,6 @@
 package com.storyteller_f.a.cloud.server
 
+import com.storyteller_f.a.api.SearchQuery
 import com.storyteller_f.a.client.core.searchFiles
 import com.storyteller_f.a.client.core.upload
 import com.storyteller_f.shared.obj.ob
@@ -21,20 +22,20 @@ class AdminFileTest {
         loginPanelSession(outer) {
             // 搜索所有文件
             val allFiles = searchFiles(
-                com.storyteller_f.a.api.AdminApi.Files.FileSearchQuery(word = null)
+                SearchQuery(word = null)
             ).getOrThrow().data
             assertEquals(3, allFiles.size)
 
             // 按名称搜索
             val testFiles = searchFiles(
-                com.storyteller_f.a.api.AdminApi.Files.FileSearchQuery(word = "test")
+                SearchQuery(word = "test")
             ).getOrThrow().data
             assertEquals(2, testFiles.size)
             kotlin.test.assertTrue(testFiles.all { it.name.contains("test") })
 
             // 搜索特定文件
             val docFiles = searchFiles(
-                com.storyteller_f.a.api.AdminApi.Files.FileSearchQuery(word = "document")
+                SearchQuery(word = "document")
             ).getOrThrow().data
             assertEquals(1, docFiles.size)
             assertEquals("document.txt", docFiles.first().name)
@@ -54,7 +55,7 @@ class AdminFileTest {
         loginPanelSession(outer) {
             // 管理员应该能搜索所有用户的文件
             val allUserFiles = searchFiles(
-                com.storyteller_f.a.api.AdminApi.Files.FileSearchQuery(word = "user")
+                SearchQuery(word = "user")
             ).getOrThrow().data
             assertEquals(2, allUserFiles.size)
 
@@ -75,7 +76,7 @@ class AdminFileTest {
         loginPanelSession(outer) {
             // 空关键词应返回所有文件
             val allFiles = searchFiles(
-                com.storyteller_f.a.api.AdminApi.Files.FileSearchQuery(word = "")
+                SearchQuery(word = "")
             ).getOrThrow().data
             assertEquals(2, allFiles.size)
         }

@@ -3,6 +3,7 @@ package com.storyteller_f.a.cloud.core.service
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.api.CommonPath
 import com.storyteller_f.a.api.CustomApi
+import com.storyteller_f.a.api.SearchQuery
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
@@ -93,7 +94,7 @@ suspend fun Backend.getFileInfoByName(
 
 suspend fun Backend.searchFiles(
     uid: PrimaryKey,
-    query: CustomApi.Files.ScopedFileSearchQuery,
+    query: SearchQuery,
     objectTuple: ObjectTuple,
     primaryKeyFetch: PrimaryKeyFetch
 ): Result<PaginationResult<FileInfo>?> {
@@ -108,7 +109,7 @@ suspend fun Backend.searchFiles(
 }
 
 suspend fun Backend.uncheckedSearchFiles(
-    query: com.storyteller_f.a.api.AdminApi.Files.FileSearchQuery,
+    query: SearchQuery,
     primaryKeyFetch: PrimaryKeyFetch
 ): Result<PaginationResult<FileInfo>?> {
     val word = query.word

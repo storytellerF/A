@@ -12,6 +12,7 @@ import com.storyteller_f.a.api.NewSubscription
 import com.storyteller_f.a.api.NewTitle
 import com.storyteller_f.a.api.NewTopic
 import com.storyteller_f.a.api.PaginationQuery
+import com.storyteller_f.a.api.SearchQuery
 import com.storyteller_f.a.api.SignInBody
 import com.storyteller_f.a.api.SignUpBody
 import com.storyteller_f.a.api.TopicQuery
@@ -191,7 +192,7 @@ suspend fun UserSessionManager.searchCommunityMembers(
     word: String?,
 ) = serviceCatching {
     CustomApi.Communities.Id.Members.get(
-        CustomApi.Communities.Id.Members.CommunityMemberQuery(word, nextCommunityId, size),
+        SearchQuery(word, nextCommunityId, size),
         CommonPath(communityId)
     )
 }
@@ -201,7 +202,7 @@ suspend fun UserSessionManager.searchAllMembers(
     size: Int,
     word: String?,
 ) = serviceCatching {
-    CustomApi.Users.search(CustomApi.Users.UserSearchQuery(word, nextUserId, size))
+    CustomApi.Users.search(SearchQuery(word, nextUserId, size))
 }
 
 suspend fun UserSessionManager.searchRoomMembers(
@@ -211,7 +212,7 @@ suspend fun UserSessionManager.searchRoomMembers(
     word: String?,
 ) = serviceCatching {
     CustomApi.Rooms.Id.Members.get(
-        CustomApi.Rooms.Id.Members.MemberQuery(word, nextCommunityId, size),
+        SearchQuery(word, nextCommunityId, size),
         CommonPath(roomId)
     )
 }
@@ -427,7 +428,7 @@ suspend fun UserSessionManager.getFileList(
 }
 
 suspend fun UserSessionManager.searchFiles(
-    query: CustomApi.Files.ScopedFileSearchQuery,
+    query: SearchQuery,
     objectId: PrimaryKey,
     objectType: ObjectType
 ) = serviceCatching {
