@@ -37,6 +37,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -67,7 +68,6 @@ import com.storyteller_f.a.app.start_sign_in
 import com.storyteller_f.a.app.start_sign_up
 import com.storyteller_f.a.app.utils.appPlatform
 import com.storyteller_f.a.client.core.getUserInfo
-import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.replaceCrlf
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.openFilePicker
@@ -316,9 +316,9 @@ fun SelectFile(isSignUp: Boolean) {
 
 @Composable
 fun InputPrivateKeyPage(isSignUp: Boolean) {
-    var privateKey by remember {
-        mutableStateOf("")
-    }
+    val viewModel = viewModel { InputPrivateKeyViewModel() }
+    val privateKey by viewModel.privateKey.collectAsState()
+    val address by viewModel.address.collectAsState()
     val scope = rememberCoroutineScope()
     val appNavFactory = LocalAppNavFactory.current
     val globalDialogController = LocalGlobalDialog.current
@@ -329,9 +329,9 @@ fun InputPrivateKeyPage(isSignUp: Boolean) {
     }
     CenterBox {
         Column(modifier = Modifier.padding(20.dp)) {
-            PrivateKeyInput(privateKey, {
-                privateKey = it
-            }, startSign)
+            PrivateKeyInput(privateKey, address, {
+                viewModel.updatePrivateKey(it)
+            })
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Button(startSign, modifier = Modifier.testTag("start_sign")) {
                     Text(
@@ -346,9 +346,7 @@ fun InputPrivateKeyPage(isSignUp: Boolean) {
                 }
                 if (isSignUp) {
                     Button({
-                        scope.launch {
-                            privateKey = getAlgo().generatePemKeyPair().getOrThrow().first
-                        }
+                        viewModel.autoGeneratePrivateKey()
                     }, modifier = Modifier.testTag("auto_generate")) {
                         Text(stringResource(Res.string.auto_generate))
                     }
