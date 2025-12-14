@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Casino
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FileOpen
 import androidx.compose.material.icons.filled.Menu
@@ -34,6 +35,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -51,6 +53,7 @@ import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.Toast
 import com.storyteller_f.a.app.core.components.pagingItems
 import com.storyteller_f.a.app.core.components.safeArea
+import com.storyteller_f.a.app.core.components.setText
 import com.storyteller_f.a.client.core.addUser
 import com.storyteller_f.a.panel.CustomPanelSessionManager
 import com.storyteller_f.a.panel.LocalPanelGlobalDialog
@@ -225,6 +228,15 @@ private fun AddUserProfilePage(
         }, label = {
             Text(stringResource(Res.string.aid))
         })
+        val clipboard = LocalClipboard.current
+        val scope = rememberCoroutineScope()
+        IconButton(onClick = {
+            scope.launch {
+                clipboard.setText(addUserViewModel.privateKey.value)
+            }
+        }) {
+            Icon(Icons.Default.ContentCopy, "copy")
+        }
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically

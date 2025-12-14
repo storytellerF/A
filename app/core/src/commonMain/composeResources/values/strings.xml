@@ -45,4 +45,8 @@
     <string name="cancel">Cancel</string>
     <string name="aid_label">aid: %1$s</string>
     <string name="ad_label">ad: %1$s</string>
+    <string name="edit_private_key">Edit Private Key</string>
+    <string name="copied">Copied</string>
+    <string name="generate">Generate</string>
+    <string name="confirm">Confirm</string>
 </resources>

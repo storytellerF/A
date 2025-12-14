@@ -4,7 +4,6 @@ import PanelFilePreviewPage
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilePresent
@@ -15,7 +14,6 @@ import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Title
 import androidx.compose.material.icons.filled.Topic
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
@@ -36,7 +34,6 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -62,7 +59,6 @@ import com.storyteller_f.a.app.core.components.GlobalDialogController
 import com.storyteller_f.a.app.core.components.GlobalDialogState
 import com.storyteller_f.a.app.core.components.GlobalTask
 import com.storyteller_f.a.app.core.components.GlobalTaskContext
-import com.storyteller_f.a.app.core.components.PrivateKeyInput
 import com.storyteller_f.a.app.core.components.SignInButton
 import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.app.core.components.safeArea
@@ -92,6 +88,7 @@ import com.storyteller_f.a.panel.pages.AllUsersPage
 import com.storyteller_f.a.panel.pages.CommunityDetailPage
 import com.storyteller_f.a.panel.pages.FileDetailPage
 import com.storyteller_f.a.panel.pages.OverviewPage
+import com.storyteller_f.a.panel.pages.PanelInputPage
 import com.storyteller_f.a.panel.pages.RoomDetailPage
 import com.storyteller_f.a.panel.pages.TitleDetailPage
 import com.storyteller_f.a.panel.pages.TopicDetailPage
@@ -453,43 +450,6 @@ fun PanelLoginPage(back: () -> Unit) {
                 }
                 composable("input") {
                     PanelInputPage(back)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun PanelInputPage(back: () -> Unit) {
-    val dialogController = LocalPanelGlobalDialog.current
-    CenterBox {
-        val scope = rememberCoroutineScope()
-        var privateKey by remember { mutableStateOf("") }
-        val startSign: () -> Unit = {
-            scope.launch {
-                dialogController.useResult {
-                    request {
-                        runCatching {
-                            getPanelAccountInfo(
-                                privateKey,
-                                false
-                            ) {
-                                historyFactory.addSession(it)
-                            }
-                        }
-                    }
-                }.onSuccess {
-                    back()
-                }
-            }
-        }
-        Column(modifier = Modifier.padding(20.dp)) {
-            PrivateKeyInput(privateKey, {
-                privateKey = it
-            }, startSign)
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Button(startSign) {
-                    Text(CoreStrings.start())
                 }
             }
         }
