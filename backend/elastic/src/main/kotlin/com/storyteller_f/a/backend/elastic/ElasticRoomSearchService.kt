@@ -1,20 +1,14 @@
 package com.storyteller_f.a.backend.elastic
 
-import co.elastic.clients.elasticsearch._types.SortOrder
-import co.elastic.clients.elasticsearch._types.query_dsl.Query
-import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders
 import co.elastic.clients.elasticsearch.core.SearchRequest
-import com.storyteller_f.a.backend.core.Cursor
 import com.storyteller_f.a.backend.core.ElasticConnection
 import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.PaginationResult
-import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.preprocessUserInputKeyword
 import com.storyteller_f.a.backend.core.service.RoomDocument
 import com.storyteller_f.a.backend.core.service.RoomDocumentSearch
 import com.storyteller_f.a.backend.core.service.RoomSearchService
 import com.storyteller_f.a.backend.core.service.RoomSearchServiceFactory
-import com.storyteller_f.shared.type.PrimaryKey
 import io.github.aakira.napier.Napier
 
 class ElasticRoomSearchService(connection: ElasticConnection) : Elastic(connection),
@@ -22,6 +16,7 @@ class ElasticRoomSearchService(connection: ElasticConnection) : Elastic(connecti
     companion object {
         const val INDEX_NAME = "rooms"
     }
+
     override suspend fun saveDocument(documents: List<RoomDocument>): Result<Unit> {
         return useElasticClient {
             saveDocumentList(connection, documents, INDEX_NAME)
@@ -35,27 +30,12 @@ class ElasticRoomSearchService(connection: ElasticConnection) : Elastic(connecti
     }
 
     override suspend fun searchDocument(
-        roomDocumentSearch: RoomDocumentSearch,
-        primaryKeyFetch: PrimaryKeyFetch?
+        roomDocumentSearch: RoomDocumentSearch
     ): Result<PaginationResult<RoomDocument>> {
-        val boolQuery = buildSearchQuery(roomDocumentSearch, primaryKeyFetch)
-
-        // 构建排序条件：按 ID 升序排序
-        val request = SearchRequest.of { s ->
-            s.index(INDEX_NAME) // 指定索引名称
-                .query(boolQuery)
-                .size(primaryKeyFetch?.size ?: 10)
-                .sort { sort ->
-                    sort.field { f ->
-                        val sortOrder = when {
-                            primaryKeyFetch == null || primaryKeyFetch.cursor == null -> null
-                            primaryKeyFetch.cursor is Cursor.AscCursor<PrimaryKey> -> SortOrder.Asc
-                            else -> null
-                        } ?: SortOrder.Desc
-                        f.field("id").order(sortOrder)
-                    }
-                }
+        if (roomDocumentSearch is RoomDocumentSearch.Keyword && roomDocumentSearch.words.isEmpty()) {
+            return Result.success(PaginationResult(emptyList(), 0))
         }
+        val request = buildSearchRequest(roomDocumentSearch)
         Napier.i {
             "elastic search query $request"
         }
@@ -64,31 +44,43 @@ class ElasticRoomSearchService(connection: ElasticConnection) : Elastic(connecti
         }
     }
 
-    private fun buildSearchQuery(
-        roomDocumentSearch: RoomDocumentSearch,
-        primaryKeyFetch: PrimaryKeyFetch?
-    ): Query {
-        return buildPrimaryKeyElasticSearchQuery(primaryKeyFetch) {
-            when (roomDocumentSearch) {
-                is RoomDocumentSearch.Keyword -> {
-                    preprocessUserInputKeyword(roomDocumentSearch.words)?.let { v ->
-                        add(QueryBuilders.bool { b ->
-                            b.should { s ->
-                                s.match {
-                                    it.field("name").query(v).boost(3f)
+    private fun buildSearchRequest(
+        roomDocumentSearch: RoomDocumentSearch
+    ): SearchRequest {
+        return SearchRequest.of { s ->
+            s.index(INDEX_NAME).apply {
+                when (roomDocumentSearch) {
+                    is RoomDocumentSearch.Keyword -> {
+                        val fetch = roomDocumentSearch.fetch
+                        from(fetch.cursor?.value ?: 0)
+                        size(fetch.size)
+                        val word = roomDocumentSearch.words
+                        query { q ->
+                            q.bool { b ->
+                                val keyword = preprocessUserInputKeyword(word)
+                                b.must { m ->
+                                    m.bool { nestedBool ->
+                                        nestedBool.should { s ->
+                                            s.match {
+                                                it.field("name").query(keyword).boost(3f)
+                                            }
+                                        }.should { s ->
+                                            s.match { p ->
+                                                p.field("aid").query(keyword).boost(3.0f)
+                                            }
+                                        }
+                                    }
                                 }
-                            }.should { s ->
-                                s.match { p ->
-                                    p.field("aid").query(v).boost(3.0f)
+                                // 添加对communityId的过滤
+                                roomDocumentSearch.communityId?.let { communityId ->
+                                    b.filter { f ->
+                                        f.term { t ->
+                                            t.field("communityId").value(communityId)
+                                        }
+                                    }
                                 }
                             }
-                        } to true)
-                    }
-                    // 添加对communityId的过滤
-                    roomDocumentSearch.communityId?.let { communityId ->
-                        add(QueryBuilders.term { t ->
-                            t.field("communityId").value(communityId)
-                        } to true)
+                        }
                     }
                 }
             }

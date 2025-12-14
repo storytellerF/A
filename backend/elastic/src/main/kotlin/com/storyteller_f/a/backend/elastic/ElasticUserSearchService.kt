@@ -1,20 +1,14 @@
 package com.storyteller_f.a.backend.elastic
 
-import co.elastic.clients.elasticsearch._types.SortOrder
-import co.elastic.clients.elasticsearch._types.query_dsl.Query
-import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders
 import co.elastic.clients.elasticsearch.core.SearchRequest
-import com.storyteller_f.a.backend.core.Cursor
 import com.storyteller_f.a.backend.core.ElasticConnection
 import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.PaginationResult
-import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.preprocessUserInputKeyword
 import com.storyteller_f.a.backend.core.service.UserDocument
 import com.storyteller_f.a.backend.core.service.UserDocumentSearch
 import com.storyteller_f.a.backend.core.service.UserSearchService
 import com.storyteller_f.a.backend.core.service.UserSearchServiceFactory
-import com.storyteller_f.shared.type.PrimaryKey
 import io.github.aakira.napier.Napier
 
 class ElasticUserSearchService(connection: ElasticConnection) : Elastic(connection),
@@ -35,27 +29,12 @@ class ElasticUserSearchService(connection: ElasticConnection) : Elastic(connecti
     }
 
     override suspend fun searchDocument(
-        userDocumentSearch: UserDocumentSearch,
-        primaryKeyFetch: PrimaryKeyFetch?
+        userDocumentSearch: UserDocumentSearch
     ): Result<PaginationResult<UserDocument>> {
-        val boolQuery = buildSearchQuery(userDocumentSearch, primaryKeyFetch)
-
-        // 构建排序条件：按 ID 升序排序
-        val request = SearchRequest.of { s ->
-            s.index(INDEX_NAME) // 指定索引名称
-                .query(boolQuery)
-                .size(primaryKeyFetch?.size ?: 10)
-                .sort { sort ->
-                    sort.field { f ->
-                        val sortOrder = when {
-                            primaryKeyFetch == null || primaryKeyFetch.cursor == null -> null
-                            primaryKeyFetch.cursor is Cursor.AscCursor<PrimaryKey> -> SortOrder.Asc
-                            else -> null
-                        } ?: SortOrder.Desc
-                        f.field("id").order(sortOrder)
-                    }
-                }
+        if (userDocumentSearch is UserDocumentSearch.Keyword && userDocumentSearch.word.isEmpty()) {
+            return Result.success(PaginationResult(emptyList(), 0))
         }
+        val request = buildSearchRequest(userDocumentSearch)
         Napier.i {
             "elastic search query $request"
         }
@@ -64,25 +43,31 @@ class ElasticUserSearchService(connection: ElasticConnection) : Elastic(connecti
         }
     }
 
-    private fun buildSearchQuery(
-        userDocumentSearch: UserDocumentSearch,
-        primaryKeyFetch: PrimaryKeyFetch?
-    ): Query {
-        return buildPrimaryKeyElasticSearchQuery(primaryKeyFetch) {
-            when (userDocumentSearch) {
-                is UserDocumentSearch.Keyword -> {
-                    preprocessUserInputKeyword(userDocumentSearch.word)?.let { v ->
-                        add(QueryBuilders.bool { b ->
-                            b.should { s ->
-                                s.matchPhrasePrefix {
-                                    it.field("nickname").query(v).boost(3f)
-                                }
-                            }.should { s ->
-                                s.match { p ->
-                                    p.field("aid").query(v).boost(3.0f)
+    private fun buildSearchRequest(
+        userDocumentSearch: UserDocumentSearch
+    ): SearchRequest {
+        return SearchRequest.of { s ->
+            s.index(INDEX_NAME).apply {
+                when (userDocumentSearch) {
+                    is UserDocumentSearch.Keyword -> {
+                        val fetch = userDocumentSearch.fetch
+                        from(fetch.cursor?.value ?: 0)
+                        size(fetch.size)
+                        val word = userDocumentSearch.word
+                        query { q ->
+                            q.bool { b ->
+                                val keyword = preprocessUserInputKeyword(word)
+                                b.should { s ->
+                                    s.matchPhrasePrefix {
+                                        it.field("nickname").query(keyword).boost(3f)
+                                    }
+                                }.should { s ->
+                                    s.match { p ->
+                                        p.field("aid").query(keyword).boost(3.0f)
+                                    }
                                 }
                             }
-                        } to true)
+                        }
                     }
                 }
             }

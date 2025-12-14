@@ -187,34 +187,48 @@ suspend fun UserSessionManager.searchCommunityRooms(
 
 suspend fun UserSessionManager.searchCommunityMembers(
     communityId: PrimaryKey,
-    nextCommunityId: String?,
+    nextToken: String?,
     size: Int,
-    word: String?,
+    word: String,
 ) = serviceCatching {
-    CustomApi.Communities.Id.Members.get(
-        SearchQuery(word, nextCommunityId, size),
-        CommonPath(communityId)
-    )
+    if (word.isBlank()) {
+        CustomApi.Communities.Id.Members.get(
+            PaginationQuery(nextToken, size = size),
+            CommonPath(communityId)
+        )
+    } else {
+        CustomApi.Communities.Id.Members.search(
+            SearchQuery(word, nextToken, size = size),
+            CommonPath(communityId)
+        )
+    }
 }
 
 suspend fun UserSessionManager.searchAllMembers(
     nextUserId: String?,
     size: Int,
-    word: String?,
+    word: String,
 ) = serviceCatching {
     CustomApi.Users.search(SearchQuery(word, nextUserId, size))
 }
 
 suspend fun UserSessionManager.searchRoomMembers(
     roomId: PrimaryKey,
-    nextCommunityId: String?,
+    nextToken: String?,
     size: Int,
-    word: String?,
+    word: String,
 ) = serviceCatching {
-    CustomApi.Rooms.Id.Members.get(
-        SearchQuery(word, nextCommunityId, size),
-        CommonPath(roomId)
-    )
+    if (word.isBlank()) {
+        CustomApi.Rooms.Id.Members.get(
+            PaginationQuery(nextToken, size = size),
+            CommonPath(roomId)
+        )
+    } else {
+        CustomApi.Rooms.Id.Members.search(
+            SearchQuery(word, nextToken, size = size),
+            CommonPath(roomId)
+        )
+    }
 }
 
 suspend fun UserSessionManager.getRecommendTopics(
@@ -313,7 +327,7 @@ suspend fun UserSessionManager.createTopicSnapshot(topicId: PrimaryKey) = servic
 suspend fun UserSessionManager.searchUserTopics(
     userId: PrimaryKey,
     size: Int,
-    word: List<String>? = null,
+    word: String,
     nextTopicId: String? = null,
     prePageToken: String? = null,
     fillHasCommented: Boolean? = null
@@ -336,7 +350,7 @@ suspend fun UserSessionManager.searchUserTopics(
 suspend fun UserSessionManager.searchRoomTopics(
     roomId: PrimaryKey,
     size: Int,
-    word: List<String>? = null,
+    word: String,
     nextTopicId: String? = null,
     prePageToken: String? = null,
     fillHasCommented: Boolean? = null
@@ -359,7 +373,7 @@ suspend fun UserSessionManager.searchRoomTopics(
 suspend fun UserSessionManager.searchCommunityTopics(
     communityId: PrimaryKey,
     size: Int,
-    word: List<String>? = null,
+    word: String,
     nextTopicId: String? = null,
     prePageToken: String? = null,
     fillHasCommented: Boolean? = null

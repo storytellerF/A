@@ -2,7 +2,6 @@ package com.storyteller_f.a.cloud.server.route
 
 import com.storyteller_f.a.api.CustomApi
 import com.storyteller_f.a.backend.core.Backend
-import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.cloud.core.service.addReaction
 import com.storyteller_f.a.cloud.core.service.createPlainTopic
 import com.storyteller_f.a.cloud.core.service.createTopicSnapshot
@@ -19,6 +18,7 @@ import com.storyteller_f.a.cloud.core.service.updateTopicPin
 import com.storyteller_f.a.cloud.server.auth.handleResult
 import com.storyteller_f.a.cloud.server.auth.usePrincipal
 import com.storyteller_f.a.cloud.server.auth.usePrincipalOrNull
+import com.storyteller_f.a.cloud.server.common.GeneralOffsetPagingGenerator
 import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.cloud.server.common.ReactionPaginationGenerator
 import com.storyteller_f.a.cloud.server.common.pagination
@@ -30,12 +30,8 @@ import io.ktor.server.routing.Route
 fun Route.bindTopicRoute(backend: Backend) {
     CustomApi.Topics.recommend(handleResult()) {
         usePrincipalOrNull { uid ->
-            it.pagination(IdentifiablePagingGenerator) { f ->
-                if (uid == null && it.fillHasCommented == true) {
-                    Result.failure(UnauthorizedException())
-                } else {
-                    backend.recommendTopics(uid, f)
-                }
+            it.pagination(GeneralOffsetPagingGenerator) { f ->
+                backend.recommendTopics(uid, f, it)
             }
         }
     }
@@ -63,7 +59,7 @@ fun Route.bindTopicRoute(backend: Backend) {
     // 用户主题搜索路由
     CustomApi.Topics.Users.Id.search(handleResult()) { q, p ->
         usePrincipalOrNull { uid ->
-            q.pagination(IdentifiablePagingGenerator) { f ->
+            q.pagination(GeneralOffsetPagingGenerator) { f ->
                 backend.searchUserTopics(p.id, q, f, uid)
             }
         }
@@ -72,7 +68,7 @@ fun Route.bindTopicRoute(backend: Backend) {
     // 房间主题搜索路由
     CustomApi.Topics.Rooms.Id.search(handleResult()) { q, p ->
         usePrincipalOrNull { uid ->
-            q.pagination(IdentifiablePagingGenerator) { f ->
+            q.pagination(GeneralOffsetPagingGenerator) { f ->
                 backend.searchRoomTopics(p.id, q, f, uid)
             }
         }
@@ -81,7 +77,7 @@ fun Route.bindTopicRoute(backend: Backend) {
     // 社区主题搜索路由
     CustomApi.Topics.Communities.Id.search(handleResult()) { q, p ->
         usePrincipalOrNull { uid ->
-            q.pagination(IdentifiablePagingGenerator) { f ->
+            q.pagination(GeneralOffsetPagingGenerator) { f ->
                 backend.searchCommunityTopics(p.id, q, f, uid)
             }
         }

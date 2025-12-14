@@ -12,6 +12,7 @@ import com.storyteller_f.a.backend.core.JoinSearch
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.ObjectFetch.IdFetch
 import com.storyteller_f.a.backend.core.ObjectListFetch
+import com.storyteller_f.a.backend.core.OffsetFetch
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.ROOM_NAME_LENGTH
@@ -288,12 +289,18 @@ suspend fun searchRoomMembers(
     p: CommonPath,
     uid: PrimaryKey?,
     q: SearchQuery,
-    f: PrimaryKeyFetch
-) = backend.checkRootReadPermission(ObjectType.ROOM, p.id, uid).mapResultIfNotNull { permission ->
-    if (permission.hasRead) {
-        backend.searchContainerMembers(p.id, q.word, f)
-    } else {
-        Result.failure(UnauthorizedException())
+    f: OffsetFetch
+): Result<PaginationResult<MemberInfo>?> {
+    val word = q.word.trim()
+    if (word.isBlank()) {
+        return Result.success(PaginationResult(emptyList(), 0))
+    }
+    return backend.checkRootReadPermission(ObjectType.ROOM, p.id, uid).mapResultIfNotNull { permission ->
+        if (permission.hasRead) {
+            backend.searchContainerMembers(p.id, word, f)
+        } else {
+            Result.failure(UnauthorizedException())
+        }
     }
 }
 
@@ -373,7 +380,7 @@ suspend fun Backend.getCommunityRooms(
 suspend fun Backend.searchCommunityRooms(
     uid: PrimaryKey?,
     communityId: PrimaryKey,
-    primaryKeyFetch: PrimaryKeyFetch,
+    primaryKeyFetch: OffsetFetch,
     query: CustomApi.Communities.Id.Rooms.CommunityRoomSearchQuery,
 ): Result<PaginationResult<RoomInfo>> {
     val word = query.word
@@ -384,8 +391,12 @@ suspend fun Backend.searchCommunityRooms(
         // word 不为空 && 搜索已加入的房间，使用 memberSearchService
         search is JoinSearch.Joined -> {
             memberSearchService.searchDocument(
-                MemberDocumentSearch.RoomMembers(uid = search.uid, objectName = word, communityId = communityId),
-                primaryKeyFetch
+                MemberDocumentSearch.RoomMembers(
+                    uid = search.uid,
+                    objectName = word,
+                    communityId = communityId,
+                    fetch = primaryKeyFetch
+                )
             ).mapPagingResultNotNull { searchResults ->
                 val roomIds = searchResults.map { it.objectId }
                 // 过滤出属于该社区的房间
@@ -394,10 +405,9 @@ suspend fun Backend.searchCommunityRooms(
         }
         // word 不为空 && 不是搜索已加入（Unspecified），使用 roomSearchService
         else -> {
-            val keyword = RoomDocumentSearch.Keyword(listOf(word), communityId)
+            val keyword = RoomDocumentSearch.Keyword(word, communityId, fetch = primaryKeyFetch)
             roomSearchService.searchDocument(
-                keyword,
-                primaryKeyFetch
+                keyword
             ).mapPagingResultNotNull { list ->
                 val roomIds = list.map { it.id }
                 // 过滤出属于该社区的房间
@@ -418,14 +428,13 @@ suspend fun Backend.searchCommunityRooms(
  */
 suspend fun Backend.searchCurrentUserRooms(
     uid: PrimaryKey,
-    primaryKeyFetch: PrimaryKeyFetch,
+    primaryKeyFetch: OffsetFetch,
     query: CustomApi.Users.JoinedRooms.UserRoomsSearchQuery,
 ): Result<PaginationResult<RoomInfo>?> {
     val word = query.word
     if (word.isBlank()) return Result.success(PaginationResult(emptyList(), 0))
     return memberSearchService.searchDocument(
-        MemberDocumentSearch.RoomMembers(uid = uid, objectName = word),
-        primaryKeyFetch
+        MemberDocumentSearch.RoomMembers(uid = uid, objectName = word, fetch = primaryKeyFetch)
     ).mapPagingResultNotNull { searchResults ->
         val roomIds = searchResults.map { it.objectId }
         database.room.getRawRooms(idListFetch(roomIds), uid)
@@ -434,7 +443,22 @@ suspend fun Backend.searchCurrentUserRooms(
     }
 }
 
-suspend fun Backend.getRoomMemberInfos(
+suspend fun Backend.uncheckedGetRoomMemberInfos(
     roomId: PrimaryKey,
     primaryKeyFetch: PrimaryKeyFetch
 ): Result<PaginationResult<MemberInfo>> = getContainerMemberInfos(roomId, primaryKeyFetch)
+
+suspend fun Backend.getRoomMemberInfos(
+    roomId: PrimaryKey,
+    uid: PrimaryKey?,
+    primaryKeyFetch: PrimaryKeyFetch
+): Result<PaginationResult<MemberInfo>?> {
+    // 检查权限
+    return checkRootReadPermission(ObjectType.ROOM, roomId, uid).mapResultIfNotNull { permission ->
+        if (permission.hasRead) {
+            uncheckedGetRoomMemberInfos(roomId, primaryKeyFetch)
+        } else {
+            Result.failure(UnauthorizedException())
+        }
+    }
+}

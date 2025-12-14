@@ -1,8 +1,8 @@
 package com.storyteller_f.a.backend.core.service
 
 import com.storyteller_f.a.backend.core.MergedEnv
+import com.storyteller_f.a.backend.core.OffsetFetch
 import com.storyteller_f.a.backend.core.PaginationResult
-import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.types.Community
 import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.type.PrimaryKey
@@ -21,7 +21,10 @@ data class CommunityDocument(
 }
 
 sealed interface CommunityDocumentSearch {
-    data class Keyword(val keyword: List<String>? = null) : CommunityDocumentSearch
+    data class Keyword(
+        val keyword: String,
+        val fetch: OffsetFetch
+    ) : CommunityDocumentSearch
 }
 
 interface CommunitySearchService {
@@ -30,8 +33,7 @@ interface CommunitySearchService {
     suspend fun clean(): Result<Unit>
 
     suspend fun searchDocument(
-        communityDocumentSearch: CommunityDocumentSearch = CommunityDocumentSearch.Keyword(),
-        primaryKeyFetch: PrimaryKeyFetch? = null
+        communityDocumentSearch: CommunityDocumentSearch
     ): Result<PaginationResult<CommunityDocument>>
 }
 

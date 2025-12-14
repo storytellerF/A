@@ -1,19 +1,14 @@
 package com.storyteller_f.a.backend.elastic
 
-import co.elastic.clients.elasticsearch._types.SortOrder
-import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders
 import co.elastic.clients.elasticsearch.core.SearchRequest
-import com.storyteller_f.a.backend.core.Cursor
 import com.storyteller_f.a.backend.core.ElasticConnection
 import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.PaginationResult
-import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.preprocessUserInputKeyword
 import com.storyteller_f.a.backend.core.service.FileDocument
 import com.storyteller_f.a.backend.core.service.FileDocumentSearch
 import com.storyteller_f.a.backend.core.service.FileSearchService
 import com.storyteller_f.a.backend.core.service.FileSearchServiceFactory
-import com.storyteller_f.shared.type.PrimaryKey
 import io.github.aakira.napier.Napier
 
 class ElasticFileSearchService(connection: ElasticConnection) : Elastic(connection),
@@ -35,26 +30,12 @@ class ElasticFileSearchService(connection: ElasticConnection) : Elastic(connecti
     }
 
     override suspend fun searchDocument(
-        fileDocumentSearch: FileDocumentSearch,
-        primaryKeyFetch: PrimaryKeyFetch?
+        fileDocumentSearch: FileDocumentSearch
     ): Result<PaginationResult<FileDocument>> {
-        val boolQuery = buildSearchQuery(fileDocumentSearch, primaryKeyFetch)
-
-        val request = SearchRequest.of { s ->
-            s.index(INDEX_NAME)
-                .query(boolQuery)
-                .size(primaryKeyFetch?.size ?: 10)
-                .sort { sort ->
-                    sort.field { f ->
-                        val sortOrder = when {
-                            primaryKeyFetch == null || primaryKeyFetch.cursor == null -> null
-                            primaryKeyFetch.cursor is Cursor.AscCursor<PrimaryKey> -> SortOrder.Asc
-                            else -> null
-                        } ?: SortOrder.Desc
-                        f.field("id").order(sortOrder)
-                    }
-                }
+        if (fileDocumentSearch is FileDocumentSearch.Keyword && fileDocumentSearch.word.isEmpty()) {
+            return Result.success(PaginationResult(emptyList(), 0))
         }
+        val request = buildSearchRequest(fileDocumentSearch)
         Napier.i {
             "elastic search file query $request"
         }
@@ -63,27 +44,34 @@ class ElasticFileSearchService(connection: ElasticConnection) : Elastic(connecti
         }
     }
 
-    private fun buildSearchQuery(
-        fileDocumentSearch: FileDocumentSearch,
-        primaryKeyFetch: PrimaryKeyFetch?
-    ) = buildPrimaryKeyElasticSearchQuery(primaryKeyFetch) {
-        when (fileDocumentSearch) {
-            is FileDocumentSearch.Keyword -> {
-                // 添加 ownerId 过滤
-                fileDocumentSearch.ownerId?.let { owner ->
-                    add(QueryBuilders.term { t ->
-                        t.field("ownerId").value(owner)
-                    } to true)
-                }
-                // 添加关键词搜索
-                preprocessUserInputKeyword(fileDocumentSearch.word)?.let { v ->
-                    add(QueryBuilders.bool { b ->
-                        b.should { s ->
-                            s.matchPhrasePrefix {
-                                it.field("name").query(v).boost(3f)
+    private fun buildSearchRequest(
+        fileDocumentSearch: FileDocumentSearch
+    ): SearchRequest = SearchRequest.of { s ->
+        s.index(INDEX_NAME).apply {
+            when (fileDocumentSearch) {
+                is FileDocumentSearch.Keyword -> {
+                    val fetch = fileDocumentSearch.fetch
+                    from(fetch.cursor?.value ?: 0)
+                    size(fetch.size)
+                    query { q ->
+                        q.bool { b ->
+                            // 添加 ownerId 过滤
+                            fileDocumentSearch.ownerId?.let { owner ->
+                                b.filter { f ->
+                                    f.term { t ->
+                                        t.field("ownerId").value(owner)
+                                    }
+                                }
+                            }
+                            // 添加关键词搜索
+                            val keyword = preprocessUserInputKeyword(fileDocumentSearch.word)
+                            b.must { s ->
+                                s.matchPhrasePrefix {
+                                    it.field("name").query(keyword).boost(3f)
+                                }
                             }
                         }
-                    } to true)
+                    }
                 }
             }
         }

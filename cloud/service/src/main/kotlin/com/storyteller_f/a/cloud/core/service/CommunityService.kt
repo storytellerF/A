@@ -9,6 +9,7 @@ import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.JoinSearch
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.ObjectListFetch
+import com.storyteller_f.a.backend.core.OffsetFetch
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.UnauthorizedException
@@ -115,23 +116,22 @@ suspend fun Backend.exitCommunity(
 suspend fun Backend.searchCommunities(
     uid: PrimaryKey?,
     search: CustomApi.Communities.CommunitySearchQuery,
-    primaryKeyFetch: PrimaryKeyFetch
+    primaryKeyFetch: OffsetFetch
 ): Result<PaginationResult<CommunityInfo>?> {
-    val word = search.word
+    val word = search.word.trim()
+    if (word.isBlank()) {
+        return Result.success(null)
+    }
     val joinSearch = if (search.target != null) {
         JoinStatusSearch.JOINED.toJoinSearch(search.target)
     } else {
         search.joinStatus.toJoinSearch(uid)
     }
-    if (word.isBlank()) {
-        return Result.success(null)
-    }
     return when {
         // word 不为空 && 搜索已加入的社区，使用 memberSearchService
         joinSearch is JoinSearch.Joined -> {
             memberSearchService.searchDocument(
-                MemberDocumentSearch.CommunityMembers(uid = joinSearch.uid, objectName = word),
-                primaryKeyFetch
+                MemberDocumentSearch.CommunityMembers(uid = joinSearch.uid, objectName = word, fetch = primaryKeyFetch)
             ).mapPagingResultNotNull { searchResults ->
                 val communityIds = searchResults
                     .map { it.objectId }
@@ -140,8 +140,7 @@ suspend fun Backend.searchCommunities(
         }
         // word 不为空 && 不是搜索已加入（Unspecified），使用 communitySearchService
         else -> communitySearchService.searchDocument(
-            CommunityDocumentSearch.Keyword(listOf(word)),
-            primaryKeyFetch
+            CommunityDocumentSearch.Keyword(word, fetch = primaryKeyFetch)
         ).mapPagingResultNotNull { list ->
             database.community.getRawCommunities(
                 ObjectListFetch.IdListFetch(list.map {
@@ -157,15 +156,14 @@ suspend fun Backend.searchCommunities(
 suspend fun Backend.searchUserJoinedCommunities(
     uid: PrimaryKey,
     search: CustomApi.Users.JoinedCommunities.UserCommunitiesSearchQuery,
-    primaryKeyFetch: PrimaryKeyFetch
+    primaryKeyFetch: OffsetFetch
 ): Result<PaginationResult<CommunityInfo>?> {
-    val word = search.word
+    val word = search.word.trim()
     if (word.isBlank()) {
         return Result.success(null)
     }
     return memberSearchService.searchDocument(
-        MemberDocumentSearch.CommunityMembers(uid = uid, objectName = word),
-        primaryKeyFetch
+        MemberDocumentSearch.CommunityMembers(uid = uid, objectName = word, fetch = primaryKeyFetch)
     ).mapPagingResultNotNull { searchResults ->
         val communityIds = searchResults
             .map { it.objectId }

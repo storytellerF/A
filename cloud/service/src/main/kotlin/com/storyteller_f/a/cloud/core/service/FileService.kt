@@ -7,6 +7,7 @@ import com.storyteller_f.a.api.SearchQuery
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
+import com.storyteller_f.a.backend.core.OffsetFetch
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.getImageDimension
@@ -96,9 +97,12 @@ suspend fun Backend.searchFiles(
     uid: PrimaryKey,
     query: SearchQuery,
     objectTuple: ObjectTuple,
-    primaryKeyFetch: PrimaryKeyFetch
+    primaryKeyFetch: OffsetFetch
 ): Result<PaginationResult<FileInfo>?> {
-    val word = query.word
+    val word = query.word.trim()
+    if (word.isBlank()) {
+        return Result.success(PaginationResult(emptyList(), 0))
+    }
     val objectId = objectTuple.objectId
     val objectType = objectTuple.objectType
 
@@ -110,12 +114,11 @@ suspend fun Backend.searchFiles(
 
 suspend fun Backend.uncheckedSearchFiles(
     query: SearchQuery,
-    primaryKeyFetch: PrimaryKeyFetch
+    primaryKeyFetch: OffsetFetch
 ): Result<PaginationResult<FileInfo>?> {
     val word = query.word
     return if (word.isNullOrBlank()) {
-        // 如果没有关键词，返回所有文件
-        getAllFileInfos(primaryKeyFetch)
+        Result.success(PaginationResult(emptyList(), 0))
     } else {
         // 使用 fileSearchService 搜索
         searchFilesByWord(word, null, primaryKeyFetch)
@@ -125,23 +128,18 @@ suspend fun Backend.uncheckedSearchFiles(
 private suspend fun Backend.searchFilesByWord(
     word: String?,
     ownerId: PrimaryKey?,
-    primaryKeyFetch: PrimaryKeyFetch
+    primaryKeyFetch: OffsetFetch
 ): Result<PaginationResult<FileInfo>?> {
     return if (word.isNullOrBlank()) {
-        // 如果没有关键词，从数据库直接查询
-        if (ownerId != null) {
-            getFileInfoPaginationResult(ownerId, primaryKeyFetch)
-        } else {
-            getAllFileInfos(primaryKeyFetch)
-        }
+        Result.success(PaginationResult(emptyList(), 0))
     } else {
         // 使用 fileSearchService 搜索
         val searchQuery = if (ownerId != null) {
-            FileDocumentSearch.Keyword(listOf(word), ownerId)
+            FileDocumentSearch.Keyword(word, ownerId, fetch = primaryKeyFetch)
         } else {
-            FileDocumentSearch.Keyword(listOf(word))
+            FileDocumentSearch.Keyword(word, fetch = primaryKeyFetch)
         }
-        fileSearchService.searchDocument(searchQuery, primaryKeyFetch).mapResultIfNotNull { (documents, total) ->
+        fileSearchService.searchDocument(searchQuery).mapResultIfNotNull { (documents, total) ->
             val fileIds = documents.map { it.id }
             if (fileIds.isEmpty()) {
                 Result.success(PaginationResult(emptyList(), total))

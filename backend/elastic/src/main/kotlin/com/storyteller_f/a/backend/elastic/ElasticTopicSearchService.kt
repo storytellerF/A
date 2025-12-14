@@ -2,13 +2,11 @@ package com.storyteller_f.a.backend.elastic
 
 import co.elastic.clients.elasticsearch._types.FieldValue
 import co.elastic.clients.elasticsearch._types.SortOrder
-import co.elastic.clients.elasticsearch._types.query_dsl.*
 import co.elastic.clients.elasticsearch.core.SearchRequest
-import com.storyteller_f.a.backend.core.Cursor
 import com.storyteller_f.a.backend.core.ElasticConnection
 import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.PaginationResult
-import com.storyteller_f.a.backend.core.PrimaryKeyFetch
+import com.storyteller_f.a.backend.core.preprocessUserInputKeyword
 import com.storyteller_f.a.backend.core.service.TopicDocument
 import com.storyteller_f.a.backend.core.service.TopicDocumentSearch
 import com.storyteller_f.a.backend.core.service.TopicSearchService
@@ -46,27 +44,18 @@ class ElasticTopicSearchService(connection: ElasticConnection) : Elastic(connect
     }
 
     override suspend fun searchDocument(
-        topicDocumentSearch: TopicDocumentSearch,
-        primaryKeyFetch: PrimaryKeyFetch?,
+        topicDocumentSearch: TopicDocumentSearch
     ): Result<PaginationResult<TopicDocument>> {
-        val boolQuery = buildSearchQuery(topicDocumentSearch, primaryKeyFetch)
-
-        // 构建排序条件：按 ID 升序排序
-        val request = SearchRequest.of { s ->
-            s.index(INDEX_NAME) // 指定索引名称
-                .query(boolQuery)
-                .size(primaryKeyFetch?.size ?: 10)
-                .sort { sort ->
-                    sort.field { f ->
-                        val sortOrder = when {
-                            primaryKeyFetch == null || primaryKeyFetch.cursor == null -> null
-                            primaryKeyFetch.cursor is Cursor.AscCursor<PrimaryKey> -> SortOrder.Asc
-                            else -> null
-                        } ?: SortOrder.Desc
-                        f.field("id").order(sortOrder)
-                    }
-                }
+        if (topicDocumentSearch is TopicDocumentSearch.AllCommunityRoot && topicDocumentSearch.word.isEmpty()) {
+            return Result.success(PaginationResult(emptyList(), 0))
         }
+        if (topicDocumentSearch is TopicDocumentSearch.Topics && topicDocumentSearch.word.isEmpty()) {
+            return Result.success(PaginationResult(emptyList(), 0))
+        }
+        if (topicDocumentSearch is TopicDocumentSearch.All && topicDocumentSearch.word.isEmpty()) {
+            return Result.success(PaginationResult(emptyList(), 0))
+        }
+        val request = buildSearchRequest(topicDocumentSearch)
         Napier.i {
             "elastic search query $request"
         }
@@ -75,54 +64,138 @@ class ElasticTopicSearchService(connection: ElasticConnection) : Elastic(connect
         }
     }
 
-    private fun buildSearchQuery(
-        topicDocumentSearch: TopicDocumentSearch,
-        primaryKeyFetch: PrimaryKeyFetch?,
-    ): Query {
-        return buildPrimaryKeyElasticSearchQuery(primaryKeyFetch) {
-            when (topicDocumentSearch) {
-                is TopicDocumentSearch.Recommend -> {
-                    addParentIdListTermSearch(topicDocumentSearch.communities)
-                    addTermQuery("author", topicDocumentSearch.uid)
-                }
+    private fun buildSearchRequest(
+        topicDocumentSearch: TopicDocumentSearch
+    ): SearchRequest {
+        return SearchRequest.of { s ->
+            s.index(INDEX_NAME).apply {
+                when (topicDocumentSearch) {
+                    is TopicDocumentSearch.Recommend -> {
+                        buildTopicRecommendSearchRequest(topicDocumentSearch)
+                    }
 
-                TopicDocumentSearch.RecommendNotLogin -> {
-                    addParentTypeTermSearch()
-                }
+                    is TopicDocumentSearch.RecommendNotLogin -> {
+                        buildTopicRecommendNotLoginSearchRequest(topicDocumentSearch)
+                    }
 
-                is TopicDocumentSearch.CommunityRoot -> {
-                    addMatchQuery(topicDocumentSearch.word, "content")
-                    addParentTypeTermSearch()
-                }
+                    is TopicDocumentSearch.AllCommunityRoot -> {
+                        buildCommunityRootSearchRequest(topicDocumentSearch)
+                    }
 
-                is TopicDocumentSearch.Topics -> {
-                    addTermQuery("parentId", topicDocumentSearch.parentId)
-                    addMatchQuery(topicDocumentSearch.word, "content")
-                }
+                    is TopicDocumentSearch.Topics -> {
+                        buildTopicSearchRequest(topicDocumentSearch)
+                    }
 
-                is TopicDocumentSearch.All -> {
-                    addMatchQuery(topicDocumentSearch.word, "content")
+                    is TopicDocumentSearch.All -> {
+                        buildAllTopicSearchRequest(topicDocumentSearch)
+                    }
                 }
             }
         }
     }
 
-    private fun MutableList<Pair<Query, Boolean>>.addParentIdListTermSearch(
-        longs: List<PrimaryKey>
-    ) {
-        add(TermsQuery.of {
-            it.field("parentId").terms { builder ->
-                builder.value(longs.map { id ->
-                    FieldValue.of(id)
-                })
+    private fun SearchRequest.Builder.buildAllTopicSearchRequest(topicDocumentSearch: TopicDocumentSearch.All) {
+        val fetch = topicDocumentSearch.fetch
+        from(fetch.cursor?.value ?: 0)
+        size(fetch.size)
+        val word = topicDocumentSearch.word
+        query { q ->
+            q.bool { b ->
+                b.must { s ->
+                    s.match { m ->
+                        m.field("content").query(preprocessUserInputKeyword(word))
+                    }
+                }
             }
-        }._toQuery() to true)
+        }
     }
 
-    private fun MutableList<Pair<Query, Boolean>>.addParentTypeTermSearch() {
-        add(TermQuery.of { t ->
-            t.field("parentType.keyword").value(ObjectType.COMMUNITY.name)
-        }._toQuery() to true)
+    private fun SearchRequest.Builder.buildTopicSearchRequest(topicDocumentSearch: TopicDocumentSearch.Topics) {
+        val fetch = topicDocumentSearch.fetch
+        from(fetch.cursor?.value ?: 0)
+        size(fetch.size)
+        val word = topicDocumentSearch.word
+        query { q ->
+            q.bool { b ->
+                b.filter { f ->
+                    f.term { t ->
+                        t.field("parentId").value(topicDocumentSearch.parentId)
+                    }
+                }
+                b.must { s ->
+                    s.match { m ->
+                        m.field("content").query(preprocessUserInputKeyword(word))
+                    }
+                }
+            }
+        }
+    }
+
+    private fun SearchRequest.Builder.buildCommunityRootSearchRequest(
+        topicDocumentSearch: TopicDocumentSearch.AllCommunityRoot
+    ) {
+        val fetch = topicDocumentSearch.fetch
+        from(fetch.cursor?.value ?: 0)
+        size(fetch.size)
+        val word = topicDocumentSearch.word
+        query { q ->
+            q.bool { b ->
+                b.filter { f ->
+                    f.term { t ->
+                        t.field("parentType.keyword").value(ObjectType.COMMUNITY.name)
+                    }
+                }
+                val keyword = preprocessUserInputKeyword(word)
+                b.must { s ->
+                    s.match { m ->
+                        m.field("content").query(keyword)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun SearchRequest.Builder.buildTopicRecommendNotLoginSearchRequest(
+        topicDocumentSearch: TopicDocumentSearch.RecommendNotLogin
+    ) {
+        val fetch = topicDocumentSearch.fetch
+        from(fetch.cursor?.value ?: 0)
+        size(fetch.size)
+        query { q ->
+            q.term { t ->
+                t.field("parentType.keyword").value(ObjectType.COMMUNITY.name)
+            }
+        }
+    }
+
+    private fun SearchRequest.Builder.buildTopicRecommendSearchRequest(
+        topicDocumentSearch: TopicDocumentSearch.Recommend
+    ) {
+        val fetch = topicDocumentSearch.fetch
+        from(fetch.cursor?.value ?: 0)
+        size(fetch.size)
+        query { q ->
+            q.bool { b ->
+                b.filter { f ->
+                    f.terms { t ->
+                        t.field("parentId").terms { builder ->
+                            builder.value(topicDocumentSearch.communities.map { id ->
+                                FieldValue.of(id)
+                            })
+                        }
+                    }
+                }.filter { f ->
+                    f.term { t ->
+                        t.field("author").value(topicDocumentSearch.uid)
+                    }
+                }
+            }
+        }
+        sort { sort ->
+            sort.field { f ->
+                f.field("id").order(SortOrder.Desc)
+            }
+        }
     }
 }
 

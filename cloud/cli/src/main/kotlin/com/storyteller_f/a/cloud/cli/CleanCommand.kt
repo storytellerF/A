@@ -40,17 +40,5 @@ class InitTableCommand : Subcommand("init", "init table data") {
 
 @OptIn(ExperimentalCli::class)
 class PrintCommand : Subcommand("print", "print") {
-    override fun execute() {
-        runBlocking {
-            val result = backend.topicSearchService.searchDocument().getOrThrow()
-            Napier.i {
-                "total ${result.total} ${result.list.size}"
-            }
-            result.list.forEach {
-                Napier.i {
-                    it.toString()
-                }
-            }
-        }
-    }
+    override fun execute() = Unit
 }

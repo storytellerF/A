@@ -21,17 +21,10 @@ class FileSearchTest {
     fun `test search files by name`() = test {
         attachSession {
             // 上传多个文件
-            upload(it.uid ob ObjectType.USER, getUploadDataFromText("file1", "test1.txt")).getOrThrow()
-            upload(it.uid ob ObjectType.USER, getUploadDataFromText("file2", "document.txt")).getOrThrow()
-            upload(it.uid ob ObjectType.USER, getUploadDataFromText("file3", "test2.txt")).getOrThrow()
-
-            // 搜索所有文件（不指定关键词）
-            val allFiles = searchFiles(
-                SearchQuery(word = null),
-                it.uid,
-                ObjectType.USER
-            ).getOrThrow().data
-            assertEquals(3, allFiles.size)
+            val tuple = it.uid ob ObjectType.USER
+            upload(tuple, getUploadDataFromText("file1", "test1.txt")).getOrThrow()
+            upload(tuple, getUploadDataFromText("file2", "document.txt")).getOrThrow()
+            upload(tuple, getUploadDataFromText("file3", "test2.txt")).getOrThrow()
 
             // 按名称搜索
             val testFiles = searchFiles(
@@ -133,20 +126,20 @@ class FileSearchTest {
     }
 
     @Test
-    fun `test search files with empty keyword returns all files`() = test {
+    fun `test search files with empty keyword returns empty`() = test {
         attachSession {
             upload(it.uid ob ObjectType.USER, getUploadDataFromText("content1", "file1.txt")).getOrThrow()
             upload(it.uid ob ObjectType.USER, getUploadDataFromText("content2", "file2.txt")).getOrThrow()
             upload(it.uid ob ObjectType.USER, getUploadDataFromText("content3", "file3.txt")).getOrThrow()
 
-            // 空关键词应返回所有文件
+            // 空关键词应返回空列表
             val allFiles = searchFiles(
                 SearchQuery(word = ""),
                 it.uid,
                 ObjectType.USER
             ).getOrThrow().data
 
-            assertEquals(3, allFiles.size)
+            assertEquals(0, allFiles.size)
         }
     }
 

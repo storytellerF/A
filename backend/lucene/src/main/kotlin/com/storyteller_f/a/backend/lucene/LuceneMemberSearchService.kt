@@ -1,9 +1,7 @@
 package com.storyteller_f.a.backend.lucene
 
-import com.storyteller_f.a.backend.core.Cursor
 import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.PaginationResult
-import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.preprocessUserInputKeyword
 import com.storyteller_f.a.backend.core.service.MemberDocument
 import com.storyteller_f.a.backend.core.service.MemberDocumentSearch
@@ -27,7 +25,6 @@ import org.apache.lucene.search.BooleanClause
 import org.apache.lucene.search.BooleanQuery
 import org.apache.lucene.search.Query
 import org.apache.lucene.search.Sort
-import org.apache.lucene.search.SortField
 import org.apache.lucene.search.TermQuery
 import java.nio.file.Path
 
@@ -100,29 +97,47 @@ class LuceneMemberSearchService(path: Path, isInMemory: Boolean = false) : Lucen
     }
 
     override suspend fun searchDocument(
-        memberDocumentSearch: MemberDocumentSearch,
-        primaryKeyFetch: PrimaryKeyFetch?
+        memberDocumentSearch: MemberDocumentSearch
     ): Result<PaginationResult<MemberDocument>> {
-        val combinedQuery = buildQuery(primaryKeyFetch, memberDocumentSearch)
-        val reverse = when {
-            primaryKeyFetch == null || primaryKeyFetch.cursor == null -> true
-            primaryKeyFetch.cursor is Cursor.DescCursor<PrimaryKey> -> true
-            else -> false
+        if (memberDocumentSearch is MemberDocumentSearch.Keyword && memberDocumentSearch.nickname.isEmpty()) {
+            return Result.success(PaginationResult(emptyList(), 0))
         }
-        val sortById = Sort(SortField("id2", SortField.Type.LONG, reverse))
+        if (memberDocumentSearch is MemberDocumentSearch.CommunityMembers &&
+            memberDocumentSearch.objectName.isBlank()
+        ) {
+            return Result.success(PaginationResult(emptyList(), 0))
+        }
+        if (memberDocumentSearch is MemberDocumentSearch.CommunityMembers &&
+            memberDocumentSearch.objectName.isBlank()) {
+            return Result.success(PaginationResult(emptyList(), 0))
+        }
+        val combinedQuery = buildQuery(memberDocumentSearch)
+
         Napier.i {
-            "lucene search member query $combinedQuery $sortById $reverse"
+            "lucene search member query $combinedQuery"
         }
         return useLucene {
-            searchDocumentList(combinedQuery, primaryKeyFetch, sortById, LuceneMemberDocument)
+            val (fetch, sort) = when (memberDocumentSearch) {
+                is MemberDocumentSearch.Keyword -> {
+                    memberDocumentSearch.fetch to Sort.RELEVANCE
+                }
+
+                is MemberDocumentSearch.CommunityMembers -> {
+                    memberDocumentSearch.fetch to Sort.RELEVANCE
+                }
+
+                is MemberDocumentSearch.RoomMembers -> {
+                    memberDocumentSearch.fetch to Sort.RELEVANCE
+                }
+            }
+            searchDocumentList(combinedQuery, fetch, sort, LuceneMemberDocument)
         }
     }
 
     private fun buildQuery(
-        primaryKeyFetch: PrimaryKeyFetch?,
         memberDocumentSearch: MemberDocumentSearch
     ): Query {
-        return buildPrimaryKeyLuceneSearchQuery(primaryKeyFetch) {
+        return BooleanQuery.Builder().apply {
             when (memberDocumentSearch) {
                 is MemberDocumentSearch.Keyword -> {
                     // 按 objectId 搜索
@@ -130,9 +145,8 @@ class LuceneMemberSearchService(path: Path, isInMemory: Boolean = false) : Lucen
                         add(LongPoint.newExactQuery("objectId", objId), BooleanClause.Occur.MUST)
                     }
                     // 按 nickname 搜索
-                    preprocessUserInputKeyword(memberDocumentSearch.nickname?.let { listOf(it) })?.let {
-                        add(MultiFieldQueryParser(arrayOf("nickname"), analyzer).parse(it), BooleanClause.Occur.MUST)
-                    }
+                    val keyword = preprocessUserInputKeyword(memberDocumentSearch.nickname)
+                    add(MultiFieldQueryParser(arrayOf("nickname"), analyzer).parse(keyword), BooleanClause.Occur.MUST)
                 }
 
                 is MemberDocumentSearch.CommunityMembers -> {
@@ -151,7 +165,7 @@ class LuceneMemberSearchService(path: Path, isInMemory: Boolean = false) : Lucen
                     }
                 }
             }
-        }
+        }.build()
     }
 
     private fun BooleanQuery.Builder.addUidQuery(uid: PrimaryKey) {
@@ -163,9 +177,8 @@ class LuceneMemberSearchService(path: Path, isInMemory: Boolean = false) : Lucen
     }
 
     private fun BooleanQuery.Builder.addObjectNameQuery(name: String) {
-        preprocessUserInputKeyword(listOf(name))?.let {
-            add(MultiFieldQueryParser(arrayOf("objectName"), analyzer).parse(it), BooleanClause.Occur.MUST)
-        }
+        val keyword = preprocessUserInputKeyword(name)
+        add(MultiFieldQueryParser(arrayOf("objectName"), analyzer).parse(keyword), BooleanClause.Occur.MUST)
     }
 }
 

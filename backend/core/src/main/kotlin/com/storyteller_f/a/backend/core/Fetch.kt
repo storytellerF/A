@@ -20,8 +20,9 @@ fun idFetch(id: PrimaryKey) = ObjectFetch.IdFetch(id)
 fun aidFetch(aid: String) = ObjectFetch.AidFetch(aid)
 
 sealed interface Cursor<T> {
-    data class AscCursor<T>(val value: T) : Cursor<T>
-    data class DescCursor<T>(val value: T) : Cursor<T>
+    val value: T
+    data class AscCursor<T>(override val value: T) : Cursor<T>
+    data class DescCursor<T>(override val value: T) : Cursor<T>
 }
 
 interface Fetch {
@@ -37,6 +38,8 @@ data class PrimaryKeyFetch(override val cursor: Cursor<PrimaryKey>?, override va
 
 data class ReactionFetch(override val cursor: Cursor<ReactionCursorKey>?, override val size: Int) :
     GenericFetch<ReactionCursorKey>
+
+data class OffsetFetch(override val cursor: Cursor<Int>?, override val size: Int) : GenericFetch<Int>
 
 fun<T> fixedSort(
     infos: List<T>,

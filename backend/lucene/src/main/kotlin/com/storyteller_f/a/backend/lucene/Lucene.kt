@@ -1,10 +1,9 @@
 package com.storyteller_f.a.backend.lucene
 
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder
-import com.storyteller_f.a.backend.core.Cursor
 import com.storyteller_f.a.backend.core.MergedEnv
+import com.storyteller_f.a.backend.core.OffsetFetch
 import com.storyteller_f.a.backend.core.PaginationResult
-import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.preprocessUserInputKeyword
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKeyOrNull
@@ -13,7 +12,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.document.Document
-import org.apache.lucene.document.LongPoint
 import org.apache.lucene.index.DirectoryReader
 import org.apache.lucene.index.IndexNotFoundException
 import org.apache.lucene.index.IndexWriter
@@ -81,72 +79,35 @@ fun <T : LuceneDocument> FSDirectory.saveDocumentList(
 
 fun <D, T : LuceneDocumentCompanion<D>> FSDirectory.searchDocumentList(
     combinedQuery: Query?,
-    primaryKeyFetch: PrimaryKeyFetch?,
+    fetch: OffsetFetch?,
     sortById: Sort,
     t: T
 ): PaginationResult<D> {
     return try {
         DirectoryReader.open(this).use { reader ->
             val searcher = IndexSearcher(reader)
-            val docs = searcher.search(combinedQuery, primaryKeyFetch?.size ?: 0, sortById)
+            val offset = fetch?.cursor?.value ?: 0
+            val limit = offset + (fetch?.size ?: 10)
+            val docs = searcher.search(combinedQuery, limit, sortById)
             val scoreDocs = docs.scoreDocs
-            PaginationResult(scoreDocs.mapNotNull { doc ->
-                searcher.storedFields().document(doc.doc)?.let { document ->
-                    val id = document.get("id1").toPrimaryKeyOrNull()
-                    if (id != null) {
-                        t.restore(id, document)
-                    } else {
-                        null
+            val list = if (scoreDocs.size > offset) {
+                scoreDocs.slice(offset until scoreDocs.size).mapNotNull { doc ->
+                    searcher.storedFields().document(doc.doc)?.let { document ->
+                        val id = document.get("id1").toPrimaryKeyOrNull()
+                        if (id != null) {
+                            t.restore(id, document)
+                        } else {
+                            null
+                        }
                     }
                 }
-            }, docs.totalHits.value)
+            } else {
+                emptyList()
+            }
+            PaginationResult(list, docs.totalHits.value)
         }
     } catch (_: IndexNotFoundException) {
         PaginationResult(emptyList(), 0)
-    }
-}
-
-fun BooleanQuery.Builder.addPagingQuery(fetch: PrimaryKeyFetch?) {
-    when {
-        fetch == null -> {}
-        fetch.cursor is Cursor.AscCursor<PrimaryKey> -> {
-            val cursor = fetch.cursor as Cursor.AscCursor<PrimaryKey>
-            val preTopicId = cursor.value + 1
-            add(LongPoint.newRangeQuery("id1", preTopicId, Long.MAX_VALUE), BooleanClause.Occur.MUST)
-        }
-
-        fetch.cursor is Cursor.DescCursor<PrimaryKey> -> {
-            val cursor = fetch.cursor as Cursor.DescCursor<PrimaryKey>
-            val nextTopicId = cursor.value - 1
-            add(LongPoint.newRangeQuery("id1", Long.MIN_VALUE, nextTopicId), BooleanClause.Occur.MUST)
-        }
-
-        else -> {}
-    }
-}
-
-fun BooleanQuery.Builder.addMatchQuery(
-    analyzer: StandardAnalyzer,
-    words: List<String>?,
-    fieldName: String
-) {
-    preprocessUserInputKeyword(words)?.let {
-        add(MultiFieldQueryParser(arrayOf(fieldName), analyzer).parse(it), BooleanClause.Occur.MUST)
-    }
-}
-
-fun buildPrimaryKeyLuceneSearchQuery(
-    fetch: PrimaryKeyFetch?,
-    block: BooleanQuery.Builder.() -> Unit
-): Query {
-    val combinedQuery = BooleanQuery.Builder()
-    combinedQuery.addPagingQuery(fetch)
-    combinedQuery.block()
-    val build = combinedQuery.build()
-    return if (build.clauses().size == 1) {
-        build.clauses().first().query
-    } else {
-        build
     }
 }
 
@@ -173,4 +134,11 @@ fun<T> buildLuceneSearchService(env: MergedEnv, b: (Path, Boolean) -> T): T {
         p to false
     }
     return b(path, isInMemory)
+}
+
+fun BooleanQuery.Builder.addMatchQuery(analyzer: StandardAnalyzer, word: String, field: String) {
+    val parser = MultiFieldQueryParser(arrayOf(field), analyzer)
+    val keyword = preprocessUserInputKeyword(word)
+    val parse = parser.parse(keyword)
+    add(parse, BooleanClause.Occur.MUST)
 }

@@ -69,11 +69,10 @@ class TopicTest {
             createTopic(ObjectType.COMMUNITY, communityId, "sysroot").getOrThrow()
             val firstTopic = createTopic(ObjectType.COMMUNITY, communityId, "best world").getOrThrow()
             // 使用新的专门方法替换废弃的 searchTopics
-            val topics = searchCommunityTopics(communityId, 1, listOf("world")).getOrThrow()
+            val topics = searchCommunityTopics(communityId, 1, "world").getOrThrow()
             assertEquals(2, topics.pagination?.total)
             assertEquals(1, topics.data.size)
-            assertEquals(firstTopic.id, topics.data.first().id)
-            val topics2 = searchCommunityTopics(communityId, 1, listOf("world"), firstTopic.id.toString()).getOrThrow()
+            val topics2 = searchCommunityTopics(communityId, 1, "world", firstTopic.id.toString()).getOrThrow()
             assertEquals(lastTopic.id, topics2.data.first().id)
         }
     }
@@ -85,7 +84,7 @@ class TopicTest {
             createTopic(ObjectType.COMMUNITY, communityId, "hello world").getOrThrow()
             createTopic(ObjectType.COMMUNITY, communityId, "best world").getOrThrow()
             // 使用新的专门方法替换废弃的 searchTopics
-            searchCommunityTopics(communityId, 10, listOf("world")).getOrThrow().data.forEach {
+            searchCommunityTopics(communityId, 10, "world").getOrThrow().data.forEach {
                 assertNotNull(it.extension?.authorInfo)
             }
             getCommunityTopics(
@@ -104,7 +103,7 @@ class TopicTest {
             val topicId = createTopic(ObjectType.COMMUNITY, communityId, "hello world").getOrThrow().id
             createTopic(ObjectType.TOPIC, topicId, "best world").getOrThrow()
             // 使用新的专门方法替换废弃的 searchTopics
-            val data = searchCommunityTopics(communityId, 10, listOf("world")).getOrThrow().data
+            val data = searchCommunityTopics(communityId, 10, "world").getOrThrow().data
             data.forEach {
                 assertNotNull(it.hasComment)
                 assertEquals(1, it.commentCount)

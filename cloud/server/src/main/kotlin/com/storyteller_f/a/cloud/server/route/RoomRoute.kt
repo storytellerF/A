@@ -6,6 +6,7 @@ import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.cloud.core.service.createRoom
 import com.storyteller_f.a.cloud.core.service.exitRoom
 import com.storyteller_f.a.cloud.core.service.getRoomInfo
+import com.storyteller_f.a.cloud.core.service.getRoomMemberInfos
 import com.storyteller_f.a.cloud.core.service.getRoomPubKeys
 import com.storyteller_f.a.cloud.core.service.getTopicsByParentId
 import com.storyteller_f.a.cloud.core.service.joinRoom
@@ -14,6 +15,7 @@ import com.storyteller_f.a.cloud.core.service.updateRoom
 import com.storyteller_f.a.cloud.server.auth.handleResult
 import com.storyteller_f.a.cloud.server.auth.usePrincipal
 import com.storyteller_f.a.cloud.server.auth.usePrincipalOrNull
+import com.storyteller_f.a.cloud.server.common.GeneralOffsetPagingGenerator
 import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.cloud.server.common.PrimaryKeyPagingGenerator
 import com.storyteller_f.a.cloud.server.common.pagination
@@ -21,12 +23,21 @@ import com.storyteller_f.endpoint4k.ktor.server.invoke
 import com.storyteller_f.endpoint4k.ktor.server.receiveBody
 import com.storyteller_f.shared.model.UserPubKeyInfo
 import com.storyteller_f.shared.type.ObjectType
-import io.ktor.server.routing.*
+import io.ktor.server.routing.Route
 
 fun Route.bindRoomRoute(backend: Backend) {
     CustomApi.Rooms.Id.Members.get(handleResult()) { q, p ->
         usePrincipalOrNull { uid ->
             q.pagination(IdentifiablePagingGenerator) { f ->
+                // 检查权限
+                backend.getRoomMemberInfos(p.id, uid, f)
+            }
+        }
+    }
+
+    CustomApi.Rooms.Id.Members.search(handleResult()) { q, p ->
+        usePrincipalOrNull { uid ->
+            q.pagination(GeneralOffsetPagingGenerator) { f ->
                 searchRoomMembers(backend, p, uid, q, f)
             }
         }

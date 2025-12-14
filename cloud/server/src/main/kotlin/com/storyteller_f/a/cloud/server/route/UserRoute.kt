@@ -26,6 +26,7 @@ import com.storyteller_f.a.cloud.core.service.updateUser
 import com.storyteller_f.a.cloud.server.auth.handleResult
 import com.storyteller_f.a.cloud.server.auth.usePrincipal
 import com.storyteller_f.a.cloud.server.auth.usePrincipalOrNull
+import com.storyteller_f.a.cloud.server.common.GeneralOffsetPagingGenerator
 import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.cloud.server.common.pagination
 import com.storyteller_f.endpoint4k.ktor.server.invoke
@@ -99,7 +100,7 @@ private fun Route.bindUserCommunitiesRoute(backend: Backend) {
     }
     CustomApi.Users.JoinedCommunities.search(handleResult()) { q ->
         usePrincipal { uid ->
-            q.pagination(IdentifiablePagingGenerator) { fetch ->
+            q.pagination(GeneralOffsetPagingGenerator) { fetch ->
                 backend.searchUserJoinedCommunities(uid, q, fetch)
             }
         }
@@ -113,7 +114,7 @@ private fun Route.bindUserCommunitiesRoute(backend: Backend) {
     }
     CustomApi.Users.JoinedRooms.search(handleResult()) { q ->
         usePrincipal { uid ->
-            q.pagination(IdentifiablePagingGenerator) { fetch ->
+            q.pagination(GeneralOffsetPagingGenerator) { fetch ->
                 backend.searchCurrentUserRooms(uid, fetch, q)
             }
         }
@@ -173,7 +174,7 @@ fun Route.bindUserRoute(backend: Backend) {
     }
 
     CustomApi.Users.search(handleResult()) {
-        it.pagination(IdentifiablePagingGenerator) { f ->
+        it.pagination(GeneralOffsetPagingGenerator) { f ->
             backend.searchUsers(it.word, f)
         }
     }

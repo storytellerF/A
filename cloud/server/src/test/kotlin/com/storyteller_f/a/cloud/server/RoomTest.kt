@@ -114,7 +114,7 @@ class RoomTest {
         }
         loginSession(secondTuple) {
             joinRoom(privateRoomId).getOrThrow()
-            assertListSize(2, searchRoomMembers(privateRoomId, null, 10, null))
+            assertListSize(2, searchRoomMembers(privateRoomId, null, 10, ""))
         }
     }
 

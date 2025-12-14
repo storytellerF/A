@@ -4,6 +4,7 @@ import com.storyteller_f.a.api.PageableQuery
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.Cursor
 import com.storyteller_f.a.backend.core.Fetch
+import com.storyteller_f.a.backend.core.OffsetFetch
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.ReactionFetch
@@ -23,7 +24,7 @@ import kotlin.reflect.KClass
 interface PagingGenerator<in T, F : Any> {
     fun parse(prePageToken: String?, nextPageToken: String?, size: Int): F
 
-    fun generate(list: List<T>, size: Int): Pair<String?, String?>
+    fun generate(list: List<T>, fetch: F): Pair<String?, String?>
 }
 
 abstract class PrimaryKeyPagingGenerator<T>(val block: (T) -> PrimaryKey) :
@@ -49,7 +50,8 @@ abstract class PrimaryKeyPagingGenerator<T>(val block: (T) -> PrimaryKey) :
         )
     }
 
-    override fun generate(list: List<T>, size: Int): Pair<String?, String?> {
+    override fun generate(list: List<T>, fetch: PrimaryKeyFetch): Pair<String?, String?> {
+        val size = fetch.size
         val next = if (size <= list.size) {
             block(list.last()).toString()
         } else {
@@ -71,6 +73,35 @@ fun <T> pagingGenerator(block: (T) -> PrimaryKey): PrimaryKeyPagingGenerator<T> 
     return object : PrimaryKeyPagingGenerator<T>(block) {}
 }
 
+abstract class OffsetPagingGenerator<T> : PagingGenerator<T, OffsetFetch> {
+    override fun parse(prePageToken: String?, nextPageToken: String?, size: Int): OffsetFetch {
+        val cursor = when {
+            !nextPageToken.isNullOrBlank() -> nextPageToken.toIntOrNull()?.let { Cursor.DescCursor(it) }
+            !prePageToken.isNullOrBlank() -> prePageToken.toIntOrNull()?.let { Cursor.AscCursor(it) }
+            else -> null
+        }
+        return OffsetFetch(cursor, size)
+    }
+
+    override fun generate(list: List<T>, fetch: OffsetFetch): Pair<String?, String?> {
+        val currentOffset = fetch.cursor?.value ?: 0
+        val size = fetch.size
+        val next = if (size <= list.size) {
+            (currentOffset + size).toString()
+        } else {
+            null
+        }
+        val pre = if (currentOffset > 0) {
+            (maxOf(0, currentOffset - size)).toString()
+        } else {
+            null
+        }
+        return pre to next
+    }
+}
+
+object GeneralOffsetPagingGenerator : OffsetPagingGenerator<Any>()
+
 suspend fun <T, F : Fetch> RoutingContext.pagination(
     generator: PagingGenerator<T, F>,
     block: suspend (F) -> Result<PaginationResult<T>?>
@@ -89,7 +120,7 @@ suspend fun <T, F : Fetch> RoutingContext.pagination(
         generator.parse(prePageToken, nextPageToken, size)
     }.mapResult { f ->
         block(f).mapCatchingNotNull { (list, count) ->
-            val (pre, next) = generator.generate(list, f.size)
+            val (pre, next) = generator.generate(list, f)
             ServerResponse(list, Pagination(next, pre, count))
         }
     }
@@ -113,7 +144,7 @@ suspend fun <T, F : Fetch> PageableQuery.pagination(
         generator.parse(prePageToken, nextPageToken, size)
     }.mapResult { f ->
         block(f).mapCatchingNotNull { (list, count) ->
-            val (pre, next) = generator.generate(list, f.size)
+            val (pre, next) = generator.generate(list, f)
             ServerResponse(list, Pagination(next, pre, count))
         }
     }
@@ -146,7 +177,8 @@ class ReactionPaginationGenerator(val backend: Backend) :
         )
     }
 
-    override fun generate(list: List<ReactionInfo>, size: Int): Pair<String?, String?> {
+    override fun generate(list: List<ReactionInfo>, fetch: ReactionFetch): Pair<String?, String?> {
+        val size = fetch.size
         val next = if (size <= list.size) {
             val last = list.last()
             commonJson.encodeToString(ReactionCursorKey(last.count, last.lastReactionId))

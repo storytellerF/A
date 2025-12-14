@@ -413,7 +413,7 @@ class AidRoomViewModel(
 class TopicSearchViewModel(
     sessionManager: UserSessionManager,
     modelStorage: ModelStorage,
-    word: List<String>,
+    word: String,
     parentId: PrimaryKey?,
     parentType: ObjectType?,
 ) :
