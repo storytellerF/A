@@ -208,14 +208,15 @@ class RoomCommunityInfoStorage(appDatabase: AppDatabase) : CommunityInfoStorage 
 }
 
 class RoomTopicInfoStorage(val appDatabase: AppDatabase) : TopicInfoStorage {
-    private suspend fun saveToDefaultCollections(item: TopicInfo): TopicEntity {
+    val impl = CommonStorageImpl(appDatabase)
+    private suspend fun saveToDefaultCollections(item: TopicInfo): CommonEntity {
         val data = commonJson.encodeToString(item)
-        val entity = TopicEntity(item.id, TopicCollection.Topics.getName(), data, item.isPin)
+        val entity = CommonEntity(item.id, TopicCollection.Topics.getName(), data)
         buildList {
             add(entity)
             item.aid?.let { add(entity.copy(id = it)) }
         }.forEach {
-            appDatabase.getTopicDao().insert(it)
+            appDatabase.getCommonDao().insert(it)
         }
         return entity
     }
@@ -231,7 +232,7 @@ class RoomTopicInfoStorage(val appDatabase: AppDatabase) : TopicInfoStorage {
         val commonEntity = saveToDefaultCollections(item)
         if (collection !is TopicCollection.Topics) {
             val entity = commonEntity.copy(collection = collection.getName())
-            appDatabase.getTopicDao().saveLast(entity)
+            impl.saveLast(entity)
         }
     }
 
@@ -242,34 +243,25 @@ class RoomTopicInfoStorage(val appDatabase: AppDatabase) : TopicInfoStorage {
         val commonEntity = saveToDefaultCollections(item)
         if (collection !is TopicCollection.Topics) {
             val entity = commonEntity.copy(collection = collection.getName())
-            appDatabase.getTopicDao().saveFirst(entity)
+            impl.saveFirst(entity)
         }
     }
 
     override fun observeData(
         collection: TopicCollection,
     ): PagingSource<Int, TopicInfo> {
-        val source = appDatabase.getTopicDao().getAsSource(collection.getName())
-        return WrappedPagingSource(source) { list ->
-            list.mapNotNull {
-                commonJson.safeDecodeFromStringOrNull(it.data)
-            }
-        }
+        return impl.observeData(collection.getName())
     }
 
     override fun observeDatum(key: String): Flow<TopicInfo?> {
-        val scope = TopicCollection.Topics.getName()
-        return appDatabase.getTopicDao().getAsFlow(scope, key).map {
-            it?.data?.let { string -> commonJson.safeDecodeFromStringOrNull(string) }
-        }
+        return impl.observeDatum(TopicCollection.Topics.getName(), key)
     }
 
     override suspend fun getDocument(
         collection: TopicCollection,
         key: String
     ): TopicInfo? {
-        val entity = appDatabase.getTopicDao().get(collection.getName(), key)
-        return entity?.data?.let { commonJson.safeDecodeFromStringOrNull(it) }
+        return impl.getDocument(collection.getName(), key)
     }
 
     override suspend fun delete(
@@ -280,7 +272,7 @@ class RoomTopicInfoStorage(val appDatabase: AppDatabase) : TopicInfoStorage {
     }
 
     override suspend fun clean(collection: TopicCollection) {
-        appDatabase.getTopicDao().clean(collection.getName())
+        impl.clean(collection.getName())
     }
 }
 

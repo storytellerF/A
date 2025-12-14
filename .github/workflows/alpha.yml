@@ -40,8 +40,8 @@ jobs:
 
       - name: Build alpha app
         run: |
-          ./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.link android
-          ./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.link android-panel
+          ./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.top android
+          ./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.top android-panel
 
       - uses: actions/upload-artifact@v4
         with:
@@ -71,8 +71,8 @@ jobs:
 
       - name: Build alpha deb
         run: |
-          ./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.link desktop-deb
-          ./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.link desktop-deb-panel
+          ./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.top desktop-deb
+          ./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.top desktop-deb-panel
 
       - uses: actions/upload-artifact@v4
         with:
@@ -102,8 +102,8 @@ jobs:
 
       - name: Build alpha msi
         run: |
-          & "C:\\Program Files\\Git\\bin\\bash.exe" -c "./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.link desktop-msi"
-          & "C:\\Program Files\\Git\\bin\\bash.exe" -c "./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.link desktop-msi-panel"
+          & "C:\\Program Files\\Git\\bin\\bash.exe" -c "./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.top desktop-msi"
+          & "C:\\Program Files\\Git\\bin\\bash.exe" -c "./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.top desktop-msi-panel"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -132,8 +132,8 @@ jobs:
 
       - name: Build alpha msi
         run: |
-          ./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.link desktop-dmg
-          ./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.link desktop-dmg-panel
+          ./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.top desktop-dmg
+          ./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.top desktop-dmg-panel
 
       - uses: actions/upload-artifact@v4
         with:

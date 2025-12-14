@@ -314,7 +314,7 @@ class TopicsViewModel(
     inlineCodeTextStyle: TextStyle,
     density: Density,
 ) : PagingViewModel<TopicInfo>() {
-    private val modelCollection = TopicCollection.TopicList(id)
+    private val modelCollection = TopicCollection.ChildTopicList(id)
 
     @OptIn(FlowPreview::class)
     override val flow: Flow<PagingData<TopicInfo>> = buildPager(
