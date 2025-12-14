@@ -19,7 +19,6 @@ import com.storyteller_f.a.cloud.core.service.getFileInfoById
 import com.storyteller_f.a.cloud.core.service.getFileInfoPaginationResult
 import com.storyteller_f.a.cloud.core.service.getOverview
 import com.storyteller_f.a.cloud.core.service.getRoomInfo
-import com.storyteller_f.a.cloud.core.service.getRoomMemberInfos
 import com.storyteller_f.a.cloud.core.service.getTitleInfo
 import com.storyteller_f.a.cloud.core.service.getUserById
 import com.storyteller_f.a.cloud.core.service.getUserCommentedTopics
@@ -33,10 +32,12 @@ import com.storyteller_f.a.cloud.core.service.getUserUploadRecords
 import com.storyteller_f.a.cloud.core.service.uncheckGetTopicById
 import com.storyteller_f.a.cloud.core.service.uncheckGetTopicsByParentId
 import com.storyteller_f.a.cloud.core.service.uncheckedGetFileRefsByFileId
+import com.storyteller_f.a.cloud.core.service.uncheckedGetRoomMemberInfos
 import com.storyteller_f.a.cloud.core.service.uncheckedSearchFiles
 import com.storyteller_f.a.cloud.server.auth.UserSession
 import com.storyteller_f.a.cloud.server.auth.getData
 import com.storyteller_f.a.cloud.server.auth.handleResult
+import com.storyteller_f.a.cloud.server.common.GeneralOffsetPagingGenerator
 import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.cloud.server.common.pagination
 import com.storyteller_f.endpoint4k.ktor.server.invoke
@@ -99,7 +100,7 @@ private fun Routing.bindAdminFileRoutes(backend: Backend) {
         }
     }
     AdminApi.Files.search(handleResult()) {
-        it.pagination(IdentifiablePagingGenerator) { fetch ->
+        it.pagination(GeneralOffsetPagingGenerator) { fetch ->
             backend.uncheckedSearchFiles(it, fetch)
         }
     }
@@ -145,7 +146,7 @@ private fun Routing.bindAdminRoomRoutes(backend: Backend) {
     }
     AdminApi.Rooms.Id.Members.get(handleResult()) { q, p ->
         q.pagination(IdentifiablePagingGenerator) { f ->
-            backend.getRoomMemberInfos(p.id, f)
+            backend.uncheckedGetRoomMemberInfos(p.id, f)
         }
     }
     AdminApi.Rooms.Id.Files.get(handleResult()) { q, p ->

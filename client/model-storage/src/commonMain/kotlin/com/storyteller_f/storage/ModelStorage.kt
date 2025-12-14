@@ -70,7 +70,7 @@ interface SingletonItemStorage<I : Any> {
 sealed interface TopicCollection {
     data object Topics : TopicCollection
     data class SearchTopic(
-        val word: List<String>,
+        val word: String,
         val parentId: PrimaryKey?,
     ) : TopicCollection
 

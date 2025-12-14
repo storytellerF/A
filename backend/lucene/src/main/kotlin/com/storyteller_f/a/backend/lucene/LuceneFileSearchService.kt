@@ -1,9 +1,7 @@
 package com.storyteller_f.a.backend.lucene
 
-import com.storyteller_f.a.backend.core.Cursor
 import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.PaginationResult
-import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.preprocessUserInputKeyword
 import com.storyteller_f.a.backend.core.service.FileDocument
 import com.storyteller_f.a.backend.core.service.FileDocumentSearch
@@ -22,7 +20,6 @@ import org.apache.lucene.search.BooleanQuery
 import org.apache.lucene.search.PrefixQuery
 import org.apache.lucene.search.Query
 import org.apache.lucene.search.Sort
-import org.apache.lucene.search.SortField
 import java.nio.file.Path
 
 data class LuceneFileDocument(val fileDocument: FileDocument) : LuceneDocument {
@@ -63,29 +60,33 @@ class LuceneFileSearchService(path: Path, isInMemory: Boolean = false) : Lucene(
     }
 
     override suspend fun searchDocument(
-        fileDocumentSearch: FileDocumentSearch,
-        primaryKeyFetch: PrimaryKeyFetch?
+        fileDocumentSearch: FileDocumentSearch
     ): Result<PaginationResult<FileDocument>> {
-        val combinedQuery = buildQuery(primaryKeyFetch, fileDocumentSearch)
-        val reverse = when {
-            primaryKeyFetch == null || primaryKeyFetch.cursor == null -> true
-            primaryKeyFetch.cursor is Cursor.DescCursor<PrimaryKey> -> true
-            else -> false
+        if (fileDocumentSearch is FileDocumentSearch.Keyword && fileDocumentSearch.word.isEmpty()) {
+            return Result.success(PaginationResult(emptyList(), 0))
         }
-        val sortById = Sort(SortField("id2", SortField.Type.LONG, reverse))
+        val combinedQuery = buildQuery(fileDocumentSearch)
         Napier.i {
-            "lucene search file query $combinedQuery $sortById $reverse"
+            "lucene search file query $combinedQuery"
         }
         return useLucene {
-            searchDocumentList(combinedQuery, primaryKeyFetch, sortById, LuceneFileDocument)
+            when (fileDocumentSearch) {
+                is FileDocumentSearch.Keyword -> {
+                    searchDocumentList(
+                        combinedQuery,
+                        fileDocumentSearch.fetch,
+                        Sort.RELEVANCE,
+                        LuceneFileDocument
+                    )
+                }
+            }
         }
     }
 
     private fun buildQuery(
-        primaryKeyFetch: PrimaryKeyFetch?,
         fileDocumentSearch: FileDocumentSearch
     ): Query {
-        return buildPrimaryKeyLuceneSearchQuery(primaryKeyFetch) {
+        return BooleanQuery.Builder().apply {
             when (fileDocumentSearch) {
                 is FileDocumentSearch.Keyword -> {
                     // 添加 ownerId 过滤
@@ -93,14 +94,13 @@ class LuceneFileSearchService(path: Path, isInMemory: Boolean = false) : Lucene(
                         add(LongField.newExactQuery("ownerId", owner), BooleanClause.Occur.MUST)
                     }
                     // 添加关键词搜索
-                    preprocessUserInputKeyword(fileDocumentSearch.word)?.let {
-                        add(BooleanQuery.Builder().apply {
-                            add(PrefixQuery(Term("name", it)), BooleanClause.Occur.SHOULD)
-                        }.build(), BooleanClause.Occur.MUST)
-                    }
+                    val keyword = preprocessUserInputKeyword(fileDocumentSearch.word)
+                    add(BooleanQuery.Builder().apply {
+                        add(PrefixQuery(Term("name", keyword)), BooleanClause.Occur.SHOULD)
+                    }.build(), BooleanClause.Occur.MUST)
                 }
             }
-        }
+        }.build()
     }
 }
 

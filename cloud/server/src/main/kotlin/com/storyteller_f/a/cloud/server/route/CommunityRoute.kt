@@ -6,6 +6,7 @@ import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.cloud.core.service.createCommunity
 import com.storyteller_f.a.cloud.core.service.exitCommunity
 import com.storyteller_f.a.cloud.core.service.getCommunity
+import com.storyteller_f.a.cloud.core.service.getCommunityMemberInfos
 import com.storyteller_f.a.cloud.core.service.getCommunityRooms
 import com.storyteller_f.a.cloud.core.service.getTopicsByParentId
 import com.storyteller_f.a.cloud.core.service.joinCommunity
@@ -16,9 +17,9 @@ import com.storyteller_f.a.cloud.core.service.updateCommunity
 import com.storyteller_f.a.cloud.server.auth.handleResult
 import com.storyteller_f.a.cloud.server.auth.usePrincipal
 import com.storyteller_f.a.cloud.server.auth.usePrincipalOrNull
+import com.storyteller_f.a.cloud.server.common.GeneralOffsetPagingGenerator
 import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.cloud.server.common.pagination
-import com.storyteller_f.a.cloud.server.common.pagingGenerator
 import com.storyteller_f.endpoint4k.ktor.server.invoke
 import com.storyteller_f.endpoint4k.ktor.server.receiveBody
 import com.storyteller_f.shared.type.ObjectType
@@ -27,16 +28,20 @@ import io.ktor.server.routing.Route
 fun Route.bindCommunityRoute(backend: Backend) {
     CustomApi.Communities.search(handleResult()) {
         usePrincipalOrNull { uid ->
-            it.pagination(IdentifiablePagingGenerator) { f ->
+            it.pagination(GeneralOffsetPagingGenerator) { f ->
                 backend.searchCommunities(uid, it, f)
             }
         }
     }
 
     CustomApi.Communities.Id.Members.get(handleResult()) { q, p ->
-        q.pagination(pagingGenerator {
-            it.id
-        }) { f ->
+        q.pagination(IdentifiablePagingGenerator) { f ->
+            backend.getCommunityMemberInfos(p.id, f)
+        }
+    }
+
+    CustomApi.Communities.Id.Members.search(handleResult()) { q, p ->
+        q.pagination(GeneralOffsetPagingGenerator) { f ->
             backend.searchContainerMembers(p.id, q.word, f)
         }
     }
@@ -69,7 +74,7 @@ fun Route.bindCommunityRoute(backend: Backend) {
 
     CustomApi.Communities.Id.Rooms.search(handleResult()) { q, p ->
         usePrincipalOrNull { uid ->
-            q.pagination(IdentifiablePagingGenerator) { f ->
+            q.pagination(GeneralOffsetPagingGenerator) { f ->
                 backend.searchCommunityRooms(uid, p.id, f, q)
             }
         }

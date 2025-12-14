@@ -1,6 +1,8 @@
 package com.storyteller_f.a.cloud.server
 
+import com.storyteller_f.a.api.PaginationQuery
 import com.storyteller_f.a.api.SearchQuery
+import com.storyteller_f.a.client.core.getAllFiles
 import com.storyteller_f.a.client.core.searchFiles
 import com.storyteller_f.a.client.core.upload
 import com.storyteller_f.shared.obj.ob
@@ -20,12 +22,6 @@ class AdminFileTest {
         }
 
         loginPanelSession(outer) {
-            // 搜索所有文件
-            val allFiles = searchFiles(
-                SearchQuery(word = null)
-            ).getOrThrow().data
-            assertEquals(3, allFiles.size)
-
             // 按名称搜索
             val testFiles = searchFiles(
                 SearchQuery(word = "test")
@@ -75,9 +71,7 @@ class AdminFileTest {
 
         loginPanelSession(outer) {
             // 空关键词应返回所有文件
-            val allFiles = searchFiles(
-                SearchQuery(word = "")
-            ).getOrThrow().data
+            val allFiles = getAllFiles(PaginationQuery()).getOrThrow().data
             assertEquals(2, allFiles.size)
         }
     }

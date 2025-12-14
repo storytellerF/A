@@ -21,6 +21,7 @@ import com.storyteller_f.a.cloud.core.service.tryUploadFiles
 import com.storyteller_f.a.cloud.core.service.uncheckedGetFileRefsByFileId
 import com.storyteller_f.a.cloud.server.auth.handleResult
 import com.storyteller_f.a.cloud.server.auth.usePrincipal
+import com.storyteller_f.a.cloud.server.common.GeneralOffsetPagingGenerator
 import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.cloud.server.common.pagination
 import com.storyteller_f.endpoint4k.ktor.server.invoke
@@ -115,7 +116,7 @@ private fun Route.bindUserCommunityRoute(backend: Backend) {
 
     CustomApi.Communities.Id.Files.search(handleResult()) { query, path ->
         usePrincipal { uid ->
-            query.pagination(IdentifiablePagingGenerator) { pagingFetch ->
+            query.pagination(GeneralOffsetPagingGenerator) { pagingFetch ->
                 backend.searchFiles(uid, query, path.id ob ObjectType.COMMUNITY, pagingFetch)
             }
         }
@@ -133,7 +134,7 @@ private fun Route.bindUserRoomRoute(backend: Backend) {
 
     CustomApi.Rooms.Id.Files.search(handleResult()) { query, path ->
         usePrincipal { uid ->
-            query.pagination(IdentifiablePagingGenerator) { pagingFetch ->
+            query.pagination(GeneralOffsetPagingGenerator) { pagingFetch ->
                 backend.searchFiles(uid, query, path.id ob ObjectType.ROOM, pagingFetch)
             }
         }
@@ -151,7 +152,7 @@ private fun Route.bindUserFileRoute(backend: Backend) {
 
     CustomApi.Users.Id.Files.search(handleResult()) { query, path ->
         usePrincipal { uid ->
-            query.pagination(IdentifiablePagingGenerator) { pagingFetch ->
+            query.pagination(GeneralOffsetPagingGenerator) { pagingFetch ->
                 backend.searchFiles(uid, query, path.id ob ObjectType.USER, pagingFetch)
             }
         }

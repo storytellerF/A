@@ -1,9 +1,7 @@
 package com.storyteller_f.a.backend.lucene
 
-import com.storyteller_f.a.backend.core.Cursor
 import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.PaginationResult
-import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.service.TopicDocument
 import com.storyteller_f.a.backend.core.service.TopicDocumentSearch
 import com.storyteller_f.a.backend.core.service.TopicSearchService
@@ -118,40 +116,63 @@ class LuceneTopicSearchService(path: Path, isInMemory: Boolean = false) :
     }
 
     override suspend fun searchDocument(
-        topicDocumentSearch: TopicDocumentSearch,
-        primaryKeyFetch: PrimaryKeyFetch?,
+        topicDocumentSearch: TopicDocumentSearch
     ): Result<PaginationResult<TopicDocument>> {
-        val combinedQuery = buildQuery(primaryKeyFetch, topicDocumentSearch)
-        val reverse = when {
-            primaryKeyFetch == null || primaryKeyFetch.cursor == null -> true
-            primaryKeyFetch.cursor is Cursor.DescCursor<PrimaryKey> -> true
-            else -> false
+        if (topicDocumentSearch is TopicDocumentSearch.AllCommunityRoot && topicDocumentSearch.word.isEmpty()) {
+            return Result.success(PaginationResult(emptyList(), 0))
         }
-        val sortById = Sort(SortField("id2", SortField.Type.LONG, reverse))
+        if (topicDocumentSearch is TopicDocumentSearch.Topics && topicDocumentSearch.word.isEmpty()) {
+            return Result.success(PaginationResult(emptyList(), 0))
+        }
+        if (topicDocumentSearch is TopicDocumentSearch.All && topicDocumentSearch.word.isEmpty()) {
+            return Result.success(PaginationResult(emptyList(), 0))
+        }
+
+        val combinedQuery = buildQuery(topicDocumentSearch)
         Napier.i {
-            "lucene search query $combinedQuery $sortById $reverse"
+            "lucene search query $combinedQuery"
         }
         return useLucene {
-            searchDocumentList(combinedQuery, primaryKeyFetch, sortById, LuceneTopicDocument)
+            val (fetch, sort) = when (topicDocumentSearch) {
+                is TopicDocumentSearch.Recommend -> topicDocumentSearch.fetch to Sort(
+                    SortField("id2", SortField.Type.LONG, true)
+                )
+
+                is TopicDocumentSearch.RecommendNotLogin -> topicDocumentSearch.fetch to Sort(
+                    SortField("id2", SortField.Type.LONG, true)
+                )
+
+                is TopicDocumentSearch.AllCommunityRoot -> {
+                    topicDocumentSearch.fetch to Sort.RELEVANCE
+                }
+
+                is TopicDocumentSearch.Topics -> {
+                    topicDocumentSearch.fetch to Sort.RELEVANCE
+                }
+
+                is TopicDocumentSearch.All -> {
+                    topicDocumentSearch.fetch to Sort.RELEVANCE
+                }
+            }
+            searchDocumentList(combinedQuery, fetch, sort, LuceneTopicDocument)
         }
     }
 
     private fun buildQuery(
-        fetch: PrimaryKeyFetch?,
         topicDocumentSearch: TopicDocumentSearch,
-    ): Query? {
-        return buildPrimaryKeyLuceneSearchQuery(fetch) {
+    ): Query {
+        return BooleanQuery.Builder().apply {
             when (topicDocumentSearch) {
                 is TopicDocumentSearch.Recommend -> {
                     addParentIdListQuery(topicDocumentSearch)
                     addLongQuery("author", topicDocumentSearch.uid)
                 }
 
-                TopicDocumentSearch.RecommendNotLogin -> {
+                is TopicDocumentSearch.RecommendNotLogin -> {
                     addParentTypeQuery()
                 }
 
-                is TopicDocumentSearch.CommunityRoot -> {
+                is TopicDocumentSearch.AllCommunityRoot -> {
                     addParentTypeQuery()
                     addMatchQuery(analyzer, topicDocumentSearch.word, "content")
                 }
@@ -165,7 +186,7 @@ class LuceneTopicSearchService(path: Path, isInMemory: Boolean = false) :
                     addMatchQuery(analyzer, topicDocumentSearch.word, "content")
                 }
             }
-        }
+        }.build()
     }
 
     private fun BooleanQuery.Builder.addParentIdListQuery(topicDocumentSearch: TopicDocumentSearch.Recommend) {

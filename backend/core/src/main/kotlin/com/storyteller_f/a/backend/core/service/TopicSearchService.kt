@@ -1,8 +1,8 @@
 package com.storyteller_f.a.backend.core.service
 
 import com.storyteller_f.a.backend.core.MergedEnv
+import com.storyteller_f.a.backend.core.OffsetFetch
 import com.storyteller_f.a.backend.core.PaginationResult
-import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.types.Topic
 import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.model.TopicContent
@@ -34,13 +34,13 @@ data class TopicDocument(
 }
 
 sealed interface TopicDocumentSearch {
-    data class Recommend(val uid: PrimaryKey, val communities: List<PrimaryKey>) :
+    data class Recommend(val uid: PrimaryKey, val communities: List<PrimaryKey>, val fetch: OffsetFetch) :
         TopicDocumentSearch
 
-    data class Topics(val parentId: PrimaryKey, val word: List<String>?) : TopicDocumentSearch
-    data object RecommendNotLogin : TopicDocumentSearch
-    data class All(val word: List<String>?) : TopicDocumentSearch
-    data class CommunityRoot(val word: List<String>?) : TopicDocumentSearch
+    data class Topics(val parentId: PrimaryKey, val word: String, val fetch: OffsetFetch) : TopicDocumentSearch
+    data class RecommendNotLogin(val fetch: OffsetFetch) : TopicDocumentSearch
+    data class All(val word: String, val fetch: OffsetFetch) : TopicDocumentSearch
+    data class AllCommunityRoot(val word: String, val fetch: OffsetFetch) : TopicDocumentSearch
 }
 
 interface TopicSearchService {
@@ -51,8 +51,7 @@ interface TopicSearchService {
     suspend fun clean(): Result<Unit>
 
     suspend fun searchDocument(
-        topicDocumentSearch: TopicDocumentSearch = TopicDocumentSearch.All(null),
-        primaryKeyFetch: PrimaryKeyFetch? = null
+        topicDocumentSearch: TopicDocumentSearch
     ): Result<PaginationResult<TopicDocument>>
 }
 

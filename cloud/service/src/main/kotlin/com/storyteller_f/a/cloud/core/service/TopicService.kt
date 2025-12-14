@@ -8,6 +8,7 @@ import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.ObjectListFetch
+import com.storyteller_f.a.backend.core.OffsetFetch
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.ReactionFetch
@@ -552,59 +553,28 @@ private suspend fun Backend.getRoomMapByTopics(topics: List<RawTopic>): Map<Prim
     }
 }
 
-suspend fun Backend.searchPublicTopics(
-    search: CustomApi.Topics.TopicSearchQuery,
-    primaryKeyFetch: PrimaryKeyFetch,
-    uid: PrimaryKey?,
-): Result<PaginationResult<TopicInfo>?> {
-    if (search.fillHasCommented == true && uid == null) return Result.failure(UnauthorizedException())
-    val word = search.word
-    if (word != null && word.sumOf {
-            it.length
-        } > 20) {
-        return Result.failure(CustomBadRequestException("word too long"))
-    }
-    val parentId = search.parentId
-    val parentType = search.parentType
-    return if (parentId != null && parentType != null) {
-        checkRootReadPermission(parentType, parentId, uid).mapResultIfNotNull {
-            if (it.isPrivate) {
-                Result.failure(CustomBadRequestException("can't search in private chat"))
-            } else {
-                Result.success(TopicDocumentSearch.Topics(parentId, word))
-            }
-        }
-    } else {
-        Result.success(TopicDocumentSearch.CommunityRoot(word))
-    }.mapResultIfNotNull { documentSearch ->
-        topicSearchService.searchDocument(documentSearch, primaryKeyFetch)
-    }.mapPagingResultIfNotNullNullable { list ->
-        processTopicsDocument(uid, list)
-    }
-}
-
 /**
  * 搜索用户主题
  */
 suspend fun Backend.searchUserTopics(
     userId: PrimaryKey,
     search: CustomApi.Topics.Users.Id.UserTopicSearchQuery,
-    primaryKeyFetch: PrimaryKeyFetch,
+    primaryKeyFetch: OffsetFetch,
     uid: PrimaryKey?,
 ): Result<PaginationResult<TopicInfo>?> {
     if (search.fillHasCommented == true && uid == null) return Result.failure(UnauthorizedException())
 
-    val word = search.word
-    if (word != null && word.sumOf {
-            it.length
-        } > 20) {
+    val word = search.word.trim()
+    if (word.isBlank()) {
+        return Result.success(PaginationResult(emptyList(), 0))
+    }
+    if (word.length > 20) {
         return Result.failure(CustomBadRequestException("word too long"))
     }
 
     // 创建TopicDocumentSearch.Topics对象进行用户主题搜索
     return topicSearchService.searchDocument(
-        TopicDocumentSearch.Topics(userId, word),
-        primaryKeyFetch
+        TopicDocumentSearch.Topics(userId, word, fetch = primaryKeyFetch)
     ).mapPagingResultNullable { list ->
         processTopicsDocument(uid, list)
     }
@@ -616,18 +586,17 @@ suspend fun Backend.searchUserTopics(
 suspend fun Backend.searchRoomTopics(
     roomId: PrimaryKey,
     search: CustomApi.Topics.Rooms.Id.RoomTopicSearchQuery,
-    primaryKeyFetch: PrimaryKeyFetch,
+    primaryKeyFetch: OffsetFetch,
     uid: PrimaryKey?,
 ): Result<PaginationResult<TopicInfo>?> {
     if (search.fillHasCommented == true && uid == null) {
-        return Result.failure(
-            UnauthorizedException()
-        )
+        return Result.failure(UnauthorizedException())
     }
-    val word = search.word
-    if (word != null && word.sumOf {
-            it.length
-        } > 20) {
+    val word = search.word.trim()
+    if (word.isBlank()) {
+        return Result.success(PaginationResult(emptyList(), 0))
+    }
+    if (word.length > 20) {
         return Result.failure(CustomBadRequestException("word too long"))
     }
     return checkRootReadPermission(ObjectType.ROOM, roomId, uid).mapResultIfNotNull {
@@ -639,8 +608,7 @@ suspend fun Backend.searchRoomTopics(
     }.mapResultIfNotNull {
         // 创建TopicDocumentSearch.Topics对象进行房间主题搜索
         topicSearchService.searchDocument(
-            TopicDocumentSearch.Topics(roomId, word),
-            primaryKeyFetch
+            TopicDocumentSearch.Topics(roomId, word, fetch = primaryKeyFetch)
         )
     }.mapPagingResultIfNotNullNullable { list ->
         processTopicsDocument(uid, list)
@@ -653,18 +621,17 @@ suspend fun Backend.searchRoomTopics(
 suspend fun Backend.searchCommunityTopics(
     communityId: PrimaryKey,
     search: CustomApi.Topics.Communities.Id.CommunityTopicSearchQuery,
-    primaryKeyFetch: PrimaryKeyFetch,
+    primaryKeyFetch: OffsetFetch,
     uid: PrimaryKey?,
 ): Result<PaginationResult<TopicInfo>?> {
     if (search.fillHasCommented == true && uid == null) {
-        return Result.failure(
-            UnauthorizedException()
-        )
+        return Result.failure(UnauthorizedException())
     }
-    val word = search.word
-    if (word != null && word.sumOf {
-            it.length
-        } > 20) {
+    val word = search.word.trim()
+    if (word.isBlank()) {
+        return Result.success(PaginationResult(emptyList(), 0))
+    }
+    if (word.length > 20) {
         return Result.failure(CustomBadRequestException("word too long"))
     }
     return checkRootReadPermission(ObjectType.COMMUNITY, communityId, uid).mapResultIfNotNull {
@@ -676,8 +643,7 @@ suspend fun Backend.searchCommunityTopics(
     }.mapResultIfNotNull {
         // 创建TopicDocumentSearch.Topics对象进行社区主题搜索
         topicSearchService.searchDocument(
-            TopicDocumentSearch.Topics(communityId, word),
-            primaryKeyFetch
+            TopicDocumentSearch.Topics(communityId, word, fetch = primaryKeyFetch)
         )
     }.mapPagingResultIfNotNullNullable { list ->
         processTopicsDocument(uid, list)
@@ -731,19 +697,21 @@ fun documentFileList(documentList: List<TopicInfo>): List<Pair<PrimaryKey, Strin
 
 suspend fun Backend.recommendTopics(
     uid: PrimaryKey?,
-    primaryKeyFetch: PrimaryKeyFetch,
+    primaryKeyFetch: OffsetFetch,
+    q: CustomApi.Topics.RecommendQuery
 ): Result<PaginationResult<TopicInfo>?> {
+    if (uid == null && q.fillHasCommented == true) {
+        return Result.failure(UnauthorizedException())
+    }
     return if (uid != null) {
         database.community.getJoinedCommunityIds(uid).mapResult {
             topicSearchService.searchDocument(
-                topicDocumentSearch = TopicDocumentSearch.Recommend(uid, it),
-                primaryKeyFetch = primaryKeyFetch
+                topicDocumentSearch = TopicDocumentSearch.Recommend(uid, it, fetch = primaryKeyFetch)
             )
         }
     } else {
         topicSearchService.searchDocument(
-            topicDocumentSearch = TopicDocumentSearch.RecommendNotLogin,
-            primaryKeyFetch = primaryKeyFetch
+            topicDocumentSearch = TopicDocumentSearch.RecommendNotLogin(fetch = primaryKeyFetch)
         )
     }.mapPagingResultNullable { list ->
         processTopicsDocument(uid, list)

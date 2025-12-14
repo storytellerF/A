@@ -1,8 +1,8 @@
 package com.storyteller_f.a.backend.core.service
 
 import com.storyteller_f.a.backend.core.MergedEnv
+import com.storyteller_f.a.backend.core.OffsetFetch
 import com.storyteller_f.a.backend.core.PaginationResult
-import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.type.PrimaryKey
@@ -18,7 +18,7 @@ data class UserDocument(override val id: PrimaryKey, val nickname: String, val a
 }
 
 sealed interface UserDocumentSearch {
-    data class Keyword(val word: List<String>? = null) : UserDocumentSearch
+    data class Keyword(val word: String, val fetch: OffsetFetch) : UserDocumentSearch
 }
 
 interface UserSearchService {
@@ -27,8 +27,7 @@ interface UserSearchService {
     suspend fun clean(): Result<Unit>
 
     suspend fun searchDocument(
-        userDocumentSearch: UserDocumentSearch = UserDocumentSearch.Keyword(),
-        primaryKeyFetch: PrimaryKeyFetch? = null
+        userDocumentSearch: UserDocumentSearch
     ): Result<PaginationResult<UserDocument>>
 }
 

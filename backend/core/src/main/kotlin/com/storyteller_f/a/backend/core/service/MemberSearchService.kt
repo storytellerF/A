@@ -1,8 +1,8 @@
 package com.storyteller_f.a.backend.core.service
 
 import com.storyteller_f.a.backend.core.MergedEnv
+import com.storyteller_f.a.backend.core.OffsetFetch
 import com.storyteller_f.a.backend.core.PaginationResult
-import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.ObjectType
@@ -42,18 +42,21 @@ data class MemberDocument(
 sealed interface MemberDocumentSearch {
     data class Keyword(
         val objectId: PrimaryKey? = null,
-        val nickname: String? = null
+        val nickname: String,
+        val fetch: OffsetFetch
     ) : MemberDocumentSearch
 
     data class CommunityMembers(
         val uid: PrimaryKey,
-        val objectName: String
+        val objectName: String,
+        val fetch: OffsetFetch
     ) : MemberDocumentSearch
 
     data class RoomMembers(
         val uid: PrimaryKey,
         val objectName: String,
-        val communityId: PrimaryKey? = null
+        val communityId: PrimaryKey? = null,
+        val fetch: OffsetFetch
     ) : MemberDocumentSearch
 }
 
@@ -65,8 +68,7 @@ interface MemberSearchService {
     suspend fun clean(): Result<Unit>
 
     suspend fun searchDocument(
-        memberDocumentSearch: MemberDocumentSearch = MemberDocumentSearch.Keyword(),
-        primaryKeyFetch: PrimaryKeyFetch? = null
+        memberDocumentSearch: MemberDocumentSearch
     ): Result<PaginationResult<MemberDocument>>
 }
 

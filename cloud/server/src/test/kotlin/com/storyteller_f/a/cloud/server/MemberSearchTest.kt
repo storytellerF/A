@@ -60,7 +60,7 @@ class MemberSearchTest {
 
         // 测试无关键字搜索 - 应该返回所有成员
         loginSession(thirdUser) {
-            val members = searchRoomMembers(privateRoomId, null, 10, null).getOrThrow()
+            val members = searchRoomMembers(privateRoomId, null, 10, "").getOrThrow()
             assertEquals(3, members.data.size, "Should have 3 members in private room without keyword search")
         }
     }
@@ -137,7 +137,7 @@ class MemberSearchTest {
 
         // 测试无关键字搜索 - 应该返回所有成员
         noneSession {
-            val members = searchRoomMembers(roomId, null, 10, null).getOrThrow()
+            val members = searchRoomMembers(roomId, null, 10, "").getOrThrow()
             assertEquals(3, members.data.size, "Should have 3 members without keyword search")
         }
     }
@@ -196,7 +196,7 @@ class MemberSearchTest {
 
         // 测试无关键字搜索 - 应该返回所有成员
         noneSession {
-            val members = searchCommunityMembers(communityId, null, 10, null).getOrThrow()
+            val members = searchCommunityMembers(communityId, null, 10, "").getOrThrow()
             assertEquals(3, members.data.size, "Should have 3 members without keyword search")
         }
     }

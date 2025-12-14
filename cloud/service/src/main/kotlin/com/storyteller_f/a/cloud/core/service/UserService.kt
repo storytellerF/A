@@ -9,6 +9,7 @@ import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.ObjectListFetch
+import com.storyteller_f.a.backend.core.OffsetFetch
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.USER_NICKNAME
@@ -346,23 +347,17 @@ suspend fun Backend.isKeyVerified(
  */
 suspend fun Backend.searchContainerMembers(
     objectId: PrimaryKey,
-    word: String?,
-    primaryKeyFetch: PrimaryKeyFetch,
+    word: String,
+    primaryKeyFetch: OffsetFetch,
 ): Result<PaginationResult<MemberInfo>> {
-    val result = if (word.isNullOrBlank()) {
-        // 无关键字，直接获取成员列表
-        database.container.getMemberWithUserPaginationResult(objectId, primaryKeyFetch)
-    } else {
-        // 有关键字，使用 MemberSearchService 搜索
-        memberSearchService.searchDocument(
-            MemberDocumentSearch.Keyword(objectId = objectId, nickname = word),
-            primaryKeyFetch
-        ).mapPagingResultNotNull { searchResults ->
-            // 从搜索结果中提取 uid 列表
-            val uidList = searchResults.map { it.uid }
-            // 获取 member 和 user 信息
-            database.container.getMemberWithUserByUids(objectId, uidList)
-        }
+    if (word.isBlank()) {
+        return Result.success(PaginationResult(emptyList(), 0))
+    }
+    val result = memberSearchService.searchDocument(
+        MemberDocumentSearch.Keyword(objectId = objectId, nickname = word, fetch = primaryKeyFetch)
+    ).mapPagingResultNotNull { searchResults ->
+        val uidList = searchResults.map { it.uid }
+        database.container.getMemberWithUserByUids(objectId, uidList)
     }
 
     return result.mapPagingResultNotNull { list ->
@@ -392,14 +387,13 @@ suspend fun Backend.searchContainerMembers(
  */
 suspend fun Backend.searchUsers(
     word: String?,
-    primaryKeyFetch: PrimaryKeyFetch,
+    primaryKeyFetch: OffsetFetch,
 ): Result<PaginationResult<UserInfo>?> {
     if (word.isNullOrBlank()) {
         return Result.success(null)
     }
     return userSearchService.searchDocument(
-        UserDocumentSearch.Keyword(listOf(word)),
-        primaryKeyFetch
+        UserDocumentSearch.Keyword(word, fetch = primaryKeyFetch)
     ).mapResult { (list, total) ->
         database.user.getRawUsers(ObjectListFetch.IdListFetch(list.map {
             it.id

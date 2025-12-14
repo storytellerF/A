@@ -64,7 +64,7 @@ class PaginationQuery(
 
 @Serializable
 class SearchQuery(
-    val word: String? = null,
+    val word: String,
     override val nextPageToken: String? = null,
     override val size: Int = DEFAULT_PAGE_SIZE,
     override val prePageToken: String? = null,
@@ -152,7 +152,7 @@ object CustomApi {
 
         @Serializable
         class TopicSearchQuery(
-            val word: List<String>? = null,
+            val word: String,
             val parentId: PrimaryKey? = null,
             val parentType: ObjectType? = null,
             override val nextPageToken: String? = null,
@@ -176,7 +176,7 @@ object CustomApi {
             object Id {
                 @Serializable
                 class UserTopicSearchQuery(
-                    val word: List<String>? = null,
+                    val word: String,
                     override val nextPageToken: String? = null,
                     override val prePageToken: String? = null,
                     override val size: Int = DEFAULT_PAGE_SIZE,
@@ -195,7 +195,7 @@ object CustomApi {
             object Id {
                 @Serializable
                 class RoomTopicSearchQuery(
-                    val word: List<String>? = null,
+                    val word: String,
                     override val nextPageToken: String? = null,
                     override val prePageToken: String? = null,
                     override val size: Int = DEFAULT_PAGE_SIZE,
@@ -214,7 +214,7 @@ object CustomApi {
             object Id {
                 @Serializable
                 class CommunityTopicSearchQuery(
-                    val word: List<String>? = null,
+                    val word: String,
                     override val nextPageToken: String? = null,
                     override val prePageToken: String? = null,
                     override val size: Int = DEFAULT_PAGE_SIZE,
@@ -307,8 +307,12 @@ object CustomApi {
 
             object Members {
                 val get =
-                    safeEndpointWithQueryAndPath<ServerResponse<MemberInfo>, SearchQuery, CommonPath>(
+                    safeEndpointWithQueryAndPath<ServerResponse<MemberInfo>, PaginationQuery, CommonPath>(
                         "communities/{id}/members"
+                    )
+                val search =
+                    safeEndpointWithQueryAndPath<ServerResponse<MemberInfo>, SearchQuery, CommonPath>(
+                        "communities/{id}/members/search"
                     )
                 val join = mutationEndpointWithPath<CommunityInfo, Unit, CommonPath>("communities/{id}/members")
                 val leave =
@@ -381,8 +385,12 @@ object CustomApi {
 
             object Members {
                 val get =
-                    safeEndpointWithQueryAndPath<ServerResponse<MemberInfo>, SearchQuery, CommonPath>(
+                    safeEndpointWithQueryAndPath<ServerResponse<MemberInfo>, PaginationQuery, CommonPath>(
                         "rooms/{id}/members"
+                    )
+                val search =
+                    safeEndpointWithQueryAndPath<ServerResponse<MemberInfo>, SearchQuery, CommonPath>(
+                        "rooms/{id}/members/search"
                     )
                 val join =
                     mutationEndpointWithPath<RoomInfo, Unit, CommonPath>(

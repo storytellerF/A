@@ -3,24 +3,15 @@ package com.storyteller_f.a.backend.elastic
 import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient
 import co.elastic.clients.elasticsearch._types.ElasticsearchException
 import co.elastic.clients.elasticsearch._types.Refresh
-import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery
-import co.elastic.clients.elasticsearch._types.query_dsl.MatchQuery
-import co.elastic.clients.elasticsearch._types.query_dsl.Query
-import co.elastic.clients.elasticsearch._types.query_dsl.RangeQuery
-import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery
 import co.elastic.clients.elasticsearch.core.SearchRequest
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation
 import co.elastic.clients.elasticsearch.core.bulk.IndexOperation
-import co.elastic.clients.json.JsonData
 import co.elastic.clients.json.jackson.JacksonJsonpMapper
 import co.elastic.clients.transport.TransportUtils
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import com.storyteller_f.a.backend.core.Cursor
 import com.storyteller_f.a.backend.core.ElasticConnection
 import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.PaginationResult
-import com.storyteller_f.a.backend.core.PrimaryKeyFetch
-import com.storyteller_f.a.backend.core.preprocessUserInputKeyword
 import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.recoverResult
@@ -174,82 +165,19 @@ suspend fun <T> ElasticsearchAsyncClient.searchDocumentList(
     return try {
         val response = search(request, clazz).await()
         val hits = response.hits()
-        val total = hits.total()
+        val total = hits.total()?.value()
+        Napier.i {
+            "size: ${hits.hits().size} maxScore: ${hits.maxScore()} total: $total"
+        }
         PaginationResult(hits.hits().mapNotNull {
             it.source()
-        }, total?.value() ?: 0)
+        }, total ?: 0)
     } catch (e: Exception) {
         Napier.e(e) {
             "elastic search failed"
         }
         PaginationResult(emptyList(), 0)
     }
-}
-
-fun buildPrimaryKeyElasticSearchQuery(
-    primaryKeyFetch: PrimaryKeyFetch?,
-    createTopicSearchQuery: MutableList<Pair<Query, Boolean>>.() -> Unit
-): Query {
-    val queryList = buildList {
-        when {
-            primaryKeyFetch == null -> {}
-            primaryKeyFetch.cursor is Cursor.AscCursor<PrimaryKey> -> {
-                add(RangeQuery.of { r ->
-                    r.untyped {
-                        val cursor = primaryKeyFetch.cursor as Cursor.AscCursor<PrimaryKey>
-                        it.field("id").gt(JsonData.of(cursor.value))
-                    }
-                }._toQuery() to true)
-            }
-
-            primaryKeyFetch.cursor is Cursor.DescCursor<PrimaryKey> -> {
-                add(RangeQuery.of { r ->
-                    r.untyped {
-                        val cursor = primaryKeyFetch.cursor as Cursor.DescCursor<PrimaryKey>
-                        it.field("id").lt(JsonData.of(cursor.value))
-                    }
-                }._toQuery() to true)
-            }
-        }
-
-        createTopicSearchQuery()
-    }
-
-    return if (queryList.size == 1) {
-        queryList.first().first
-    } else {
-        BoolQuery.of { b ->
-            queryList.forEach {
-                if (it.second) {
-                    b.must(it.first)
-                } else {
-                    b.mustNot(it.first)
-                }
-            }
-            b
-        }._toQuery()
-    }
-}
-
-fun MutableList<Pair<Query, Boolean>>.addMatchQuery(
-    words: List<String>?,
-    fieldName: String
-) {
-    preprocessUserInputKeyword(words)?.let {
-        add(MatchQuery.of { m ->
-            m.field(fieldName)
-                .query(it) // 多关键字匹配，忽略大小写
-        }._toQuery() to true)
-    }
-}
-
-fun MutableList<Pair<Query, Boolean>>.addTermQuery(
-    fieldName: String,
-    termValue: PrimaryKey
-) {
-    add(TermQuery.of { t ->
-        t.field(fieldName).value(termValue)
-    }._toQuery() to true)
 }
 
 fun <T> buildElasticSearchService(env: MergedEnv, b: (ElasticConnection) -> T): T {

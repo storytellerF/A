@@ -183,21 +183,21 @@ fun createUserTopicsViewModel(
 fun createTopicSearchViewModel(current: String) = customViewModel(
     listOf("topic", current)
 ) { sessionManager, databaseSource ->
-    TopicSearchViewModel(sessionManager, databaseSource, current.split(" "), null, null)
+    TopicSearchViewModel(sessionManager, databaseSource, current, null, null)
 }
 
 @Composable
 fun createTopicSearchInTopicViewModel(scope: SearchScope.TopicTopic, current: String,) = customViewModel(
     listOf("topic", scope.topicId, current)
 ) { sessionManager, databaseSource ->
-    TopicSearchViewModel(sessionManager, databaseSource, current.split(" "), scope.topicId, ObjectType.TOPIC)
+    TopicSearchViewModel(sessionManager, databaseSource, current, scope.topicId, ObjectType.TOPIC)
 }
 
 @Composable
 fun createTopicSearchInUserViewModel(scope: SearchScope.UserTopic, current: String,) = customViewModel(
     listOf("topic", scope.userId, current)
 ) { sessionManager, databaseSource ->
-    TopicSearchViewModel(sessionManager, databaseSource, current.split(" "), scope.userId, ObjectType.USER)
+    TopicSearchViewModel(sessionManager, databaseSource, current, scope.userId, ObjectType.USER)
 }
 
 @Composable
@@ -211,7 +211,7 @@ fun createMemberSearchViewModel(word: String) = customViewModel(
 fun createTopicSearchInCommunityViewModel(scope: SearchScope.CommunityTopic, current: String,) = customViewModel(
     listOf("topic", scope.communityId, current)
 ) { sessionManager, databaseSource ->
-    TopicSearchViewModel(sessionManager, databaseSource, current.split(" "), scope.communityId, ObjectType.COMMUNITY)
+    TopicSearchViewModel(sessionManager, databaseSource, current, scope.communityId, ObjectType.COMMUNITY)
 }
 
 @Composable
@@ -259,7 +259,7 @@ fun createTopicViewModel(topicAid: String): AidTopicViewModel {
 fun createTopicSearchInRoomViewModel(scope: SearchScope.RoomTopic, current: String,) = customViewModel(
     listOf("topic", scope.roomId, current)
 ) { sessionManager, databaseSource ->
-    TopicSearchViewModel(sessionManager, databaseSource, current.split(" "), scope.roomId, ObjectType.ROOM)
+    TopicSearchViewModel(sessionManager, databaseSource, current, scope.roomId, ObjectType.ROOM)
 }
 
 @Composable

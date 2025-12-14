@@ -1,8 +1,8 @@
 package com.storyteller_f.a.backend.core.service
 
 import com.storyteller_f.a.backend.core.MergedEnv
+import com.storyteller_f.a.backend.core.OffsetFetch
 import com.storyteller_f.a.backend.core.PaginationResult
-import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.types.Room
 import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.type.ObjectType
@@ -25,7 +25,11 @@ data class RoomDocument(
 }
 
 sealed interface RoomDocumentSearch {
-    data class Keyword(val words: List<String>? = null, val communityId: PrimaryKey? = null) : RoomDocumentSearch
+    data class Keyword(
+        val words: String,
+        val communityId: PrimaryKey? = null,
+        val fetch: OffsetFetch
+    ) : RoomDocumentSearch
 }
 
 interface RoomSearchService {
@@ -34,8 +38,7 @@ interface RoomSearchService {
     suspend fun clean(): Result<Unit>
 
     suspend fun searchDocument(
-        roomDocumentSearch: RoomDocumentSearch = RoomDocumentSearch.Keyword(),
-        primaryKeyFetch: PrimaryKeyFetch? = null
+        roomDocumentSearch: RoomDocumentSearch
     ): Result<PaginationResult<RoomDocument>>
 }
 

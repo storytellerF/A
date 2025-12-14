@@ -1,9 +1,7 @@
 package com.storyteller_f.a.backend.lucene
 
-import com.storyteller_f.a.backend.core.Cursor
 import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.PaginationResult
-import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.preprocessUserInputKeyword
 import com.storyteller_f.a.backend.core.service.RoomDocument
 import com.storyteller_f.a.backend.core.service.RoomDocumentSearch
@@ -21,7 +19,6 @@ import org.apache.lucene.search.BooleanClause
 import org.apache.lucene.search.BooleanQuery
 import org.apache.lucene.search.Query
 import org.apache.lucene.search.Sort
-import org.apache.lucene.search.SortField
 import java.nio.file.Path
 
 data class LuceneRoomDocument(val roomDocument: RoomDocument) :
@@ -69,44 +66,47 @@ class LuceneRoomSearchService(path: Path, isInMemory: Boolean = false) : Lucene(
     }
 
     override suspend fun searchDocument(
-        roomDocumentSearch: RoomDocumentSearch,
-        primaryKeyFetch: PrimaryKeyFetch?
+        roomDocumentSearch: RoomDocumentSearch
     ): Result<PaginationResult<RoomDocument>> {
-        val combinedQuery = buildQuery(primaryKeyFetch, roomDocumentSearch)
-        val reverse = when {
-            primaryKeyFetch == null || primaryKeyFetch.cursor == null -> true
-            primaryKeyFetch.cursor is Cursor.DescCursor<PrimaryKey> -> true
-            else -> false
+        if (roomDocumentSearch is RoomDocumentSearch.Keyword && roomDocumentSearch.words.isEmpty()) {
+            return Result.success(PaginationResult(emptyList(), 0))
         }
-        val sortById = Sort(SortField("id2", SortField.Type.LONG, reverse))
+        val combinedQuery = buildQuery(roomDocumentSearch)
         Napier.i {
-            "lucene search query $combinedQuery $sortById $reverse"
+            "lucene search query $combinedQuery"
         }
         return useLucene {
-            searchDocumentList(combinedQuery, primaryKeyFetch, sortById, LuceneRoomDocument)
+            when (roomDocumentSearch) {
+                is RoomDocumentSearch.Keyword -> {
+                    searchDocumentList(
+                        combinedQuery,
+                        roomDocumentSearch.fetch,
+                        Sort.RELEVANCE,
+                        LuceneRoomDocument
+                    )
+                }
+            }
         }
     }
 
     private fun buildQuery(
-        primaryKeyFetch: PrimaryKeyFetch?,
         roomDocumentSearch: RoomDocumentSearch
     ): Query {
-        return buildPrimaryKeyLuceneSearchQuery(primaryKeyFetch) {
+        return BooleanQuery.Builder().apply {
             when (roomDocumentSearch) {
                 is RoomDocumentSearch.Keyword -> {
-                    preprocessUserInputKeyword(roomDocumentSearch.words)?.let {
-                        add(BooleanQuery.Builder().apply {
-                            add(MultiFieldQueryParser(arrayOf("name"), analyzer).parse(it), BooleanClause.Occur.SHOULD)
-                            add(MultiFieldQueryParser(arrayOf("aid"), analyzer).parse(it), BooleanClause.Occur.SHOULD)
-                        }.build(), BooleanClause.Occur.MUST)
-                    }
+                    val keyword = preprocessUserInputKeyword(roomDocumentSearch.words)
+                    add(BooleanQuery.Builder().apply {
+                        add(MultiFieldQueryParser(arrayOf("name"), analyzer).parse(keyword), BooleanClause.Occur.SHOULD)
+                        add(MultiFieldQueryParser(arrayOf("aid"), analyzer).parse(keyword), BooleanClause.Occur.SHOULD)
+                    }.build(), BooleanClause.Occur.MUST)
                     // 添加对communityId的过滤
                     roomDocumentSearch.communityId?.let { communityId ->
                         add(LongField.newExactQuery("communityId", communityId), BooleanClause.Occur.MUST)
                     }
                 }
             }
-        }
+        }.build()
     }
 }
 

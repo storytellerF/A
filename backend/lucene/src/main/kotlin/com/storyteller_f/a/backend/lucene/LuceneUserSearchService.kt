@@ -1,9 +1,7 @@
 package com.storyteller_f.a.backend.lucene
 
-import com.storyteller_f.a.backend.core.Cursor
 import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.PaginationResult
-import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.preprocessUserInputKeyword
 import com.storyteller_f.a.backend.core.service.UserDocument
 import com.storyteller_f.a.backend.core.service.UserDocumentSearch
@@ -21,7 +19,6 @@ import org.apache.lucene.search.BooleanClause
 import org.apache.lucene.search.BooleanQuery
 import org.apache.lucene.search.Query
 import org.apache.lucene.search.Sort
-import org.apache.lucene.search.SortField
 import java.nio.file.Path
 
 data class LuceneUserDocument(val userDocument: UserDocument) :
@@ -63,43 +60,46 @@ class LuceneUserSearchService(path: Path, isInMemory: Boolean = false) : Lucene(
     }
 
     override suspend fun searchDocument(
-        userDocumentSearch: UserDocumentSearch,
-        primaryKeyFetch: PrimaryKeyFetch?
+        userDocumentSearch: UserDocumentSearch
     ): Result<PaginationResult<UserDocument>> {
-        val combinedQuery = buildQuery(primaryKeyFetch, userDocumentSearch)
-        val reverse = when {
-            primaryKeyFetch == null || primaryKeyFetch.cursor == null -> true
-            primaryKeyFetch.cursor is Cursor.DescCursor<PrimaryKey> -> true
-            else -> false
+        if (userDocumentSearch is UserDocumentSearch.Keyword && userDocumentSearch.word.isEmpty()) {
+            return Result.success(PaginationResult(emptyList(), 0))
         }
-        val sortById = Sort(SortField("id2", SortField.Type.LONG, reverse))
+        val combinedQuery = buildQuery(userDocumentSearch)
         Napier.i {
-            "lucene search query $combinedQuery $sortById $reverse"
+            "lucene search query $combinedQuery"
         }
         return useLucene {
-            searchDocumentList(combinedQuery, primaryKeyFetch, sortById, LuceneUserDocument)
+            when (userDocumentSearch) {
+                is UserDocumentSearch.Keyword -> {
+                    searchDocumentList(
+                        combinedQuery,
+                        userDocumentSearch.fetch,
+                        Sort.RELEVANCE,
+                        LuceneUserDocument
+                    )
+                }
+            }
         }
     }
 
     private fun buildQuery(
-        primaryKeyFetch: PrimaryKeyFetch?,
         userDocumentSearch: UserDocumentSearch
     ): Query {
-        return buildPrimaryKeyLuceneSearchQuery(primaryKeyFetch) {
+        return BooleanQuery.Builder().apply {
             when (userDocumentSearch) {
                 is UserDocumentSearch.Keyword -> {
-                    preprocessUserInputKeyword(userDocumentSearch.word)?.let {
-                        add(BooleanQuery.Builder().apply {
-                            add(
-                                MultiFieldQueryParser(arrayOf("nickname"), analyzer).parse(it),
-                                BooleanClause.Occur.SHOULD
-                            )
-                            add(MultiFieldQueryParser(arrayOf("aid"), analyzer).parse(it), BooleanClause.Occur.SHOULD)
-                        }.build(), BooleanClause.Occur.MUST)
-                    }
+                    val keyword = preprocessUserInputKeyword(userDocumentSearch.word)
+                    add(BooleanQuery.Builder().apply {
+                        add(
+                            MultiFieldQueryParser(arrayOf("nickname"), analyzer).parse(keyword),
+                            BooleanClause.Occur.SHOULD
+                        )
+                        add(MultiFieldQueryParser(arrayOf("aid"), analyzer).parse(keyword), BooleanClause.Occur.SHOULD)
+                    }.build(), BooleanClause.Occur.MUST)
                 }
             }
-        }
+        }.build()
     }
 }
 

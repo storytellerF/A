@@ -1,8 +1,8 @@
 package com.storyteller_f.a.backend.core.service
 
 import com.storyteller_f.a.backend.core.MergedEnv
+import com.storyteller_f.a.backend.core.OffsetFetch
 import com.storyteller_f.a.backend.core.PaginationResult
-import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.types.FileRecord
 import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.type.PrimaryKey
@@ -21,8 +21,9 @@ data class FileDocument(
 
 sealed interface FileDocumentSearch {
     data class Keyword(
-        val word: List<String>? = null,
-        val ownerId: PrimaryKey? = null
+        val word: String,
+        val ownerId: PrimaryKey? = null,
+        val fetch: OffsetFetch
     ) : FileDocumentSearch
 }
 
@@ -32,8 +33,7 @@ interface FileSearchService {
     suspend fun clean(): Result<Unit>
 
     suspend fun searchDocument(
-        fileDocumentSearch: FileDocumentSearch = FileDocumentSearch.Keyword(),
-        primaryKeyFetch: PrimaryKeyFetch? = null
+        fileDocumentSearch: FileDocumentSearch
     ): Result<PaginationResult<FileDocument>>
 }
 
