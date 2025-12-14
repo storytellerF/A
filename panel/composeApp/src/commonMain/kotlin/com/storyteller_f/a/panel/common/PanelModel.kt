@@ -572,7 +572,7 @@ class TopicTopicsViewModel(
     modelStorage: ModelStorage,
     topicId: PrimaryKey,
 ) : PagingViewModel<TopicInfo>() {
-    private val modelCollection = TopicCollection.TopicList(topicId)
+    private val modelCollection = TopicCollection.ChildTopicList(topicId)
 
     @OptIn(ExperimentalPagingApi::class)
     override val flow: Flow<PagingData<TopicInfo>> = buildPager(

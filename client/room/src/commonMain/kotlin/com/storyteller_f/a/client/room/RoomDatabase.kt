@@ -13,11 +13,10 @@ import androidx.room.RoomDatabase
 import androidx.room.RoomDatabaseConstructor
 import kotlinx.coroutines.flow.Flow
 
-@Database(entities = [CommonEntity::class, TopicEntity::class, UploadEntity::class, DownloadEntity::class], version = 2)
+@Database(entities = [CommonEntity::class, UploadEntity::class, DownloadEntity::class], version = 2)
 @ConstructedBy(AppDatabaseConstructor::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun getCommonDao(): CommonDao
-    abstract fun getTopicDao(): TopicDao
     abstract fun getUploadDao(): UploadDao
     abstract fun getDownloadDao(): DownloadDao
 }
@@ -72,7 +71,7 @@ interface CommonDao {
     }
 }
 
-@Entity(primaryKeys = ["collection", "id"], indices = [Index("collection", "seq", unique = true)])
+@Entity(primaryKeys = ["collection", "id"], indices = [Index("collection", "seq", unique = false)])
 data class CommonEntity(
     val id: String,
     val collection: String,
@@ -80,57 +79,6 @@ data class CommonEntity(
     val seq: Long = 0,
 ) {
     constructor(id: Long, collection: String, data: String, seq: Long = 0) : this(id.toString(), collection, data, seq)
-}
-
-@Dao
-interface TopicDao {
-    @Insert(onConflict = REPLACE)
-    suspend fun insert(item: TopicEntity)
-
-    @Query("select * from TopicEntity where collection = :collection order by isPinned desc, seq asc")
-    fun getAsSource(collection: String): PagingSource<Int, TopicEntity>
-
-    @Query("select * from TopicEntity where collection = :collection and id = :id")
-    fun getAsFlow(collection: String, id: String): Flow<TopicEntity?>
-
-    @Query("select * from TopicEntity where collection = :collection and id = :id")
-    suspend fun get(collection: String, id: String): TopicEntity?
-
-    @Query("delete from TopicEntity where collection = :collection")
-    suspend fun clean(collection: String)
-
-    @Query("select COALESCE(MAX(seq), -1) from TopicEntity where collection = :collection")
-    suspend fun getMaxSeq(collection: String): Long
-
-    @Query("select COALESCE(MIN(seq), 1) from TopicEntity where collection = :collection")
-    suspend fun getMinSeq(collection: String): Long
-
-    suspend fun saveLast(item: TopicEntity) {
-        val maxSeq = getMaxSeq(item.collection)
-        insert(item.copy(seq = maxSeq + 1))
-    }
-
-    suspend fun saveFirst(item: TopicEntity) {
-        val minSeq = getMinSeq(item.collection)
-        insert(item.copy(seq = minSeq - 1))
-    }
-}
-
-@Entity(primaryKeys = ["collection", "id"], indices = [Index("collection", "isPinned", "seq", unique = true)])
-data class TopicEntity(
-    val id: String,
-    val collection: String,
-    val data: String,
-    val isPinned: Boolean,
-    val seq: Long = 0,
-) {
-    constructor(
-        id: Long,
-        collection: String,
-        data: String,
-        isPinned: Boolean,
-        seq: Long = 0
-    ) : this(id.toString(), collection, data, isPinned, seq)
 }
 
 @Dao

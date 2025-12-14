@@ -32,10 +32,10 @@ if [ ! -f ~/.ssh/known_hosts ]; then
   touch ~/.ssh/known_hosts
 fi
 
-ssh-keyscan -H acommunity.link >> ~/.ssh/known_hosts
+ssh-keyscan -H acommunity.top >> ~/.ssh/known_hosts
 
 eval "$(ssh-agent)"
 
 ssh-add ./remote.pem
 
-./scripts/service-scripts/start-service-in-remote-by-jar.sh "$FLAVOR" local ubuntu@acommunity.link
+./scripts/service-scripts/start-service-in-remote-by-jar.sh "$FLAVOR" local ubuntu@acommunity.top

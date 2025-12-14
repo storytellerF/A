@@ -177,7 +177,7 @@ private suspend fun processRemoveReaction(
     listOf(
         TopicCollection.Topics,
         TopicCollection.Recommend,
-        TopicCollection.TopicList(event.topicInfo.parentId)
+        TopicCollection.ChildTopicList(event.topicInfo.parentId)
     ).forEach { collectionName ->
         database.topic.update(collectionName, event.topicInfo.id) { old ->
             val extension = old.extension ?: TopicInfo.Extension(UserInfo.EMPTY)
@@ -202,7 +202,7 @@ private suspend fun processOnAddReaction(
     listOf(
         TopicCollection.Topics,
         TopicCollection.Recommend,
-        TopicCollection.TopicList(event.topicInfo.parentId)
+        TopicCollection.ChildTopicList(event.topicInfo.parentId)
     ).forEach { collectionName ->
         database.topic.update(collectionName, event.info.objectId) { old ->
             val extension = old.extension ?: TopicInfo.Extension(UserInfo.EMPTY)

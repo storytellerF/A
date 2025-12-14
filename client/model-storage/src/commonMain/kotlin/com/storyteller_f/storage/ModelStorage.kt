@@ -75,7 +75,7 @@ sealed interface TopicCollection {
     ) : TopicCollection
 
     data object Recommend : TopicCollection
-    data class TopicList(val objectId: PrimaryKey) : TopicCollection
+    data class ChildTopicList(val objectId: PrimaryKey) : TopicCollection
     data class TopicComments(val objectId: PrimaryKey) : TopicCollection
     data class UserComments(val uid: PrimaryKey) : TopicCollection
     data object AllTopics : TopicCollection
@@ -202,7 +202,7 @@ fun UserReactionRecordCollection.getName(): String {
 fun TopicCollection.getName(): String {
     return when (this) {
         is TopicCollection.SearchTopic -> "topics_${word}_$parentId"
-        is TopicCollection.TopicList -> "topics_$objectId"
+        is TopicCollection.ChildTopicList -> "topics_$objectId"
         TopicCollection.Topics -> "topics"
         TopicCollection.Recommend -> "topics_recommend"
         TopicCollection.AllTopics -> "all_topics"
