@@ -117,7 +117,7 @@ class LuceneRoomSearchServiceFactory : RoomSearchServiceFactory {
 
     override fun build(env: MergedEnv): RoomSearchService {
         return buildLuceneSearchService(env) { path, isInMemory ->
-            LuceneRoomSearchService(path, isInMemory)
+            LuceneRoomSearchService(path.resolve("room"), isInMemory)
         }
     }
 }

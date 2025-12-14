@@ -189,7 +189,7 @@ class LuceneMemberSearchServiceFactory : MemberSearchServiceFactory {
 
     override fun build(env: MergedEnv): MemberSearchService {
         return buildLuceneSearchService(env) { path, isInMemory ->
-            LuceneMemberSearchService(path, isInMemory)
+            LuceneMemberSearchService(path.resolve("member"), isInMemory)
         }
     }
 }

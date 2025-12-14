@@ -110,7 +110,7 @@ class LuceneUserSearchServiceFactory : UserSearchServiceFactory {
 
     override fun build(env: MergedEnv): UserSearchService {
         return buildLuceneSearchService(env) { path, isInMemory ->
-            LuceneUserSearchService(path, isInMemory)
+            LuceneUserSearchService(path.resolve("user"), isInMemory)
         }
     }
 }

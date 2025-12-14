@@ -116,7 +116,7 @@ class LuceneCommunitySearchServiceFactory : CommunitySearchServiceFactory {
 
     override fun build(env: MergedEnv): CommunitySearchService {
         return buildLuceneSearchService(env) { path, isInMemory ->
-            LuceneCommunitySearchService(path, isInMemory)
+            LuceneCommunitySearchService(path.resolve("community"), isInMemory)
         }
     }
 }
