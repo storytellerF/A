@@ -219,7 +219,7 @@ class LuceneTopicSearchServiceFactory : TopicSearchServiceFactory {
 
     override fun build(env: MergedEnv): TopicSearchService {
         return buildLuceneSearchService(env) { path, isInMemory ->
-            LuceneTopicSearchService(path, isInMemory)
+            LuceneTopicSearchService(path.resolve("topic"), isInMemory)
         }
     }
 }

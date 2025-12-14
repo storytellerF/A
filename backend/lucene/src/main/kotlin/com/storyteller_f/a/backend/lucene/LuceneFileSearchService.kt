@@ -111,7 +111,7 @@ class LuceneFileSearchServiceFactory : FileSearchServiceFactory {
 
     override fun build(env: MergedEnv): FileSearchService {
         return buildLuceneSearchService(env) { path, isInMemory ->
-            LuceneFileSearchService(path, isInMemory)
+            LuceneFileSearchService(path.resolve("file"), isInMemory)
         }
     }
 }
