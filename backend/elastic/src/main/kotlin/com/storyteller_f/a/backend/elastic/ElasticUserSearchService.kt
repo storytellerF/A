@@ -57,15 +57,7 @@ class ElasticUserSearchService(connection: ElasticConnection) : Elastic(connecti
                         query { q ->
                             q.bool { b ->
                                 val keyword = preprocessUserInputKeyword(word)
-                                b.should { s ->
-                                    s.matchPhrasePrefix {
-                                        it.field("nickname").query(keyword).boost(3f)
-                                    }
-                                }.should { s ->
-                                    s.match { p ->
-                                        p.field("aid").query(keyword).boost(3.0f)
-                                    }
-                                }
+                                b.prioritizedFields(keyword, "aid", "nickname")
                             }
                         }
                     }

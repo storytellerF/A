@@ -278,7 +278,7 @@ suspend fun Backend.updateCommunity(
     uid: PrimaryKey
 ): Result<CommunityInfo?> {
     val newCommunity = old.copy(name = old.name?.trim(), icon = old.icon, poster = old.poster)
-    return checkRootAdminPermission(ObjectType.COMMUNITY, id, uid).mapResultIfNotNull {
+    return checkCommunityAdminPermission(id, uid).mapResultIfNotNull {
         checkBeforeUpdateCommunity(newCommunity)
     }.mapResultIfNotNull {
         database.community.updateCommunity(id, newCommunity).errorIfFalse {

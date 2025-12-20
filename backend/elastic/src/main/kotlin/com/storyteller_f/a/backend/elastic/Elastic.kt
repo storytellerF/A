@@ -3,6 +3,7 @@ package com.storyteller_f.a.backend.elastic
 import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient
 import co.elastic.clients.elasticsearch._types.ElasticsearchException
 import co.elastic.clients.elasticsearch._types.Refresh
+import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery
 import co.elastic.clients.elasticsearch.core.SearchRequest
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation
 import co.elastic.clients.elasticsearch.core.bulk.IndexOperation
@@ -187,4 +188,24 @@ fun <T> buildElasticSearchService(env: MergedEnv, b: (ElasticConnection) -> T): 
     val pass = env["ELASTIC_PASSWORD"] ?: throw Exception("ELASTIC_PASSWORD is empty")
     val connection = ElasticConnection(url, certFile, name, pass, env["BUILD_TYPE"] == "test")
     return b(connection)
+}
+
+fun BoolQuery.Builder.prioritizedFields(keyword: String, aidField: String, nameField: String): BoolQuery.Builder {
+    return should { s ->
+        s.matchPhrasePrefix {
+            it.field(aidField).query(keyword).boost(1000f)
+        }
+    }.should { s ->
+        s.matchPhrasePrefix {
+            it.field(nameField).query(keyword).boost(100f)
+        }
+    }.should { s ->
+        s.wildcard {
+            it.field(aidField).value("*$keyword*").boost(10f)
+        }
+    }.should { s ->
+        s.wildcard {
+            it.field(nameField).value("*$keyword*").boost(1f)
+        }
+    }
 }

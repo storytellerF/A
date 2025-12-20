@@ -208,7 +208,7 @@ suspend fun Backend.createRoom(
     }
     val communityId = newRoom.communityId
     return if (communityId != null) {
-        checkRootAdminPermission(ObjectType.COMMUNITY, communityId, uid).mapResultIfNotNull {
+        checkCommunityAdminPermission(communityId, uid).mapResultIfNotNull {
             UNIT_RESULT
         }
     } else {
@@ -247,7 +247,7 @@ suspend fun Backend.updateRoom(
     uid: PrimaryKey,
 ): Result<RoomInfo?> {
     val newUpdate = old.copy(name = old.name?.trim(), icon = old.icon)
-    return checkRootAdminPermission(ObjectType.ROOM, id, uid).mapResultIfNotNull {
+    return checkRoomAdminPermission(id, uid).mapResultIfNotNull {
         runCatching {
             checkRoomName(newUpdate).getOrThrow()
             checkRoomIcon(newUpdate).getOrThrow()
@@ -295,7 +295,7 @@ suspend fun searchRoomMembers(
     if (word.isBlank()) {
         return Result.success(PaginationResult(emptyList(), 0))
     }
-    return backend.checkRootReadPermission(ObjectType.ROOM, p.id, uid).mapResultIfNotNull { permission ->
+    return backend.checkRoomReadPermission(p.id, uid).mapResultIfNotNull { permission ->
         if (permission.hasRead) {
             backend.searchContainerMembers(p.id, word, f)
         } else {
@@ -454,7 +454,7 @@ suspend fun Backend.getRoomMemberInfos(
     primaryKeyFetch: PrimaryKeyFetch
 ): Result<PaginationResult<MemberInfo>?> {
     // 检查权限
-    return checkRootReadPermission(ObjectType.ROOM, roomId, uid).mapResultIfNotNull { permission ->
+    return checkRoomReadPermission(roomId, uid).mapResultIfNotNull { permission ->
         if (permission.hasRead) {
             uncheckedGetRoomMemberInfos(roomId, primaryKeyFetch)
         } else {

@@ -2,7 +2,6 @@ package com.storyteller_f.a.backend.lucene
 
 import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.PaginationResult
-import com.storyteller_f.a.backend.core.preprocessUserInputKeyword
 import com.storyteller_f.a.backend.core.service.CommunityDocument
 import com.storyteller_f.a.backend.core.service.CommunityDocumentSearch
 import com.storyteller_f.a.backend.core.service.CommunitySearchService
@@ -15,8 +14,6 @@ import org.apache.lucene.document.Field
 import org.apache.lucene.document.LongField
 import org.apache.lucene.document.NumericDocValuesField
 import org.apache.lucene.document.TextField
-import org.apache.lucene.queryparser.classic.MultiFieldQueryParser
-import org.apache.lucene.search.BooleanClause
 import org.apache.lucene.search.BooleanQuery
 import org.apache.lucene.search.Query
 import org.apache.lucene.search.Sort
@@ -98,11 +95,7 @@ class LuceneCommunitySearchService(
         return BooleanQuery.Builder().apply {
             when (communityDocumentSearch) {
                 is CommunityDocumentSearch.Keyword -> {
-                    val keyword = preprocessUserInputKeyword(communityDocumentSearch.keyword)
-                    add(BooleanQuery.Builder().apply {
-                        add(MultiFieldQueryParser(arrayOf("name"), analyzer).parse(keyword), BooleanClause.Occur.SHOULD)
-                        add(MultiFieldQueryParser(arrayOf("aid"), analyzer).parse(keyword), BooleanClause.Occur.SHOULD)
-                    }.build(), BooleanClause.Occur.MUST)
+                    addPrioritizedFieldsQuery(communityDocumentSearch.keyword, "aid", "name")
                 }
             }
         }.build()

@@ -101,9 +101,14 @@ class ElasticTopicSearchService(connection: ElasticConnection) : Elastic(connect
         val word = topicDocumentSearch.word
         query { q ->
             q.bool { b ->
-                b.must { s ->
-                    s.match { m ->
-                        m.field("content").query(preprocessUserInputKeyword(word))
+                val keyword = preprocessUserInputKeyword(word)
+                b.must { m ->
+                    m.bool { nested ->
+                        nested.should { s ->
+                            s.matchPhrasePrefix { it.field("content").query(keyword).boost(10f) }
+                        }.should { s ->
+                            s.wildcard { it.field("content").value("*$keyword*").boost(1f) }
+                        }
                     }
                 }
             }
@@ -122,9 +127,14 @@ class ElasticTopicSearchService(connection: ElasticConnection) : Elastic(connect
                         t.field("parentId").value(topicDocumentSearch.parentId)
                     }
                 }
+                val keyword = preprocessUserInputKeyword(word)
                 b.must { s ->
-                    s.match { m ->
-                        m.field("content").query(preprocessUserInputKeyword(word))
+                    s.bool { nested ->
+                        nested.should { s ->
+                            s.matchPhrasePrefix { it.field("content").query(keyword).boost(10f) }
+                        }.should { s ->
+                            s.wildcard { it.field("content").value("*$keyword*").boost(1f) }
+                        }
                     }
                 }
             }
@@ -147,8 +157,12 @@ class ElasticTopicSearchService(connection: ElasticConnection) : Elastic(connect
                 }
                 val keyword = preprocessUserInputKeyword(word)
                 b.must { s ->
-                    s.match { m ->
-                        m.field("content").query(keyword)
+                    s.bool { nested ->
+                        nested.should { s ->
+                            s.matchPhrasePrefix { it.field("content").query(keyword).boost(10f) }
+                        }.should { s ->
+                            s.wildcard { it.field("content").value("*$keyword*").boost(1f) }
+                        }
                     }
                 }
             }

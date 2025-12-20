@@ -129,10 +129,15 @@ class ElasticMemberSearchService(connection: ElasticConnection) : Elastic(connec
                         }
                     }
                 }
-                // 按房间名称前缀搜索
+                // 按房间名称搜索
                 b.must { s ->
-                    s.matchPhrasePrefix { p ->
-                        p.field("objectName").query(memberDocumentSearch.objectName).boost(2f)
+                    s.bool { nested ->
+                        val keyword = preprocessUserInputKeyword(memberDocumentSearch.objectName)
+                        nested.should { sho ->
+                            sho.matchPhrasePrefix { it.field("objectName").query(keyword).boost(10f) }
+                        }.should { sho ->
+                            sho.wildcard { it.field("objectName").value("*$keyword*").boost(1f) }
+                        }
                     }
                 }
             }
@@ -159,10 +164,15 @@ class ElasticMemberSearchService(connection: ElasticConnection) : Elastic(connec
                         t.field("objectType.keyword").value(ObjectType.COMMUNITY.name)
                     }
                 }
-                // 按社区名称前缀搜索
+                // 按社区名称搜索
                 b.must { s ->
-                    s.matchPhrasePrefix { p ->
-                        p.field("objectName").query(memberDocumentSearch.objectName).boost(2f)
+                    s.bool { nested ->
+                        val keyword = preprocessUserInputKeyword(memberDocumentSearch.objectName)
+                        nested.should { sho ->
+                            sho.matchPhrasePrefix { it.field("objectName").query(keyword).boost(10f) }
+                        }.should { sho ->
+                            sho.wildcard { it.field("objectName").value("*$keyword*").boost(1f) }
+                        }
                     }
                 }
             }
@@ -186,8 +196,12 @@ class ElasticMemberSearchService(connection: ElasticConnection) : Elastic(connec
                 // 按 nickname 搜索
                 val keyword = preprocessUserInputKeyword(memberDocumentSearch.nickname)
                 b.must { m ->
-                    m.multiMatch { mm ->
-                        mm.fields("nickname").query(keyword)
+                    m.bool { nested ->
+                        nested.should { sho ->
+                            sho.matchPhrasePrefix { it.field("nickname").query(keyword).boost(10f) }
+                        }.should { sho ->
+                            sho.wildcard { it.field("nickname").value("*$keyword*").boost(1f) }
+                        }
                     }
                 }
             }

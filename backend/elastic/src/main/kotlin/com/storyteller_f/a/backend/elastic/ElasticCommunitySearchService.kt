@@ -60,15 +60,7 @@ class ElasticCommunitySearchService(connection: ElasticConnection) :
                         query { q ->
                             q.bool { b ->
                                 val keyword = preprocessUserInputKeyword(word)
-                                b.should { s ->
-                                    s.match {
-                                        it.field("name").query(keyword).boost(3f)
-                                    }
-                                }.should { s ->
-                                    s.match { p ->
-                                        p.field("aid").query(keyword).boost(3.0f)
-                                    }
-                                }
+                                b.prioritizedFields(keyword, "aid", "name")
                             }
                         }
                     }

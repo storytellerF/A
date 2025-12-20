@@ -2,7 +2,6 @@ package com.storyteller_f.a.backend.lucene
 
 import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.PaginationResult
-import com.storyteller_f.a.backend.core.preprocessUserInputKeyword
 import com.storyteller_f.a.backend.core.service.MemberDocument
 import com.storyteller_f.a.backend.core.service.MemberDocumentSearch
 import com.storyteller_f.a.backend.core.service.MemberSearchService
@@ -20,7 +19,6 @@ import org.apache.lucene.document.TextField
 import org.apache.lucene.index.IndexWriter
 import org.apache.lucene.index.IndexWriterConfig
 import org.apache.lucene.index.Term
-import org.apache.lucene.queryparser.classic.MultiFieldQueryParser
 import org.apache.lucene.search.BooleanClause
 import org.apache.lucene.search.BooleanQuery
 import org.apache.lucene.search.Query
@@ -145,8 +143,7 @@ class LuceneMemberSearchService(path: Path, isInMemory: Boolean = false) : Lucen
                         add(LongPoint.newExactQuery("objectId", objId), BooleanClause.Occur.MUST)
                     }
                     // 按 nickname 搜索
-                    val keyword = preprocessUserInputKeyword(memberDocumentSearch.nickname)
-                    add(MultiFieldQueryParser(arrayOf("nickname"), analyzer).parse(keyword), BooleanClause.Occur.MUST)
+                    addPrefixAndInclusionQuery(memberDocumentSearch.nickname, "nickname")
                 }
 
                 is MemberDocumentSearch.CommunityMembers -> {
@@ -177,8 +174,7 @@ class LuceneMemberSearchService(path: Path, isInMemory: Boolean = false) : Lucen
     }
 
     private fun BooleanQuery.Builder.addObjectNameQuery(name: String) {
-        val keyword = preprocessUserInputKeyword(name)
-        add(MultiFieldQueryParser(arrayOf("objectName"), analyzer).parse(keyword), BooleanClause.Occur.MUST)
+        addPrefixAndInclusionQuery(name, "objectName")
     }
 }
 

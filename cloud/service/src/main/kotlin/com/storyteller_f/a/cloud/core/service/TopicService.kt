@@ -294,8 +294,7 @@ suspend fun Backend.createTopicSnapshot(
     uid: PrimaryKey,
     topicId: PrimaryKey,
 ): Result<FileInfo?> {
-    return checkRootReadPermission(
-        ObjectType.TOPIC,
+    return checkTopicReadPermission(
         topicId,
         uid
     ).mapResultIfNotNull { (hasRead, _, isPrivate) ->
@@ -402,8 +401,7 @@ suspend fun Backend.getTopic(
     fillHasCommented: Boolean?,
 ): Result<TopicInfo?> {
     if (uid == null && fillHasCommented == true) return Result.failure(UnauthorizedException())
-    return checkRootReadPermission(
-        ObjectType.TOPIC,
+    return checkTopicReadPermission(
         topicId,
         uid
     ).mapResultIfNotNull { permission ->
@@ -431,8 +429,7 @@ suspend fun Backend.getTopicByAid(
     if (uid == null && fillHasCommented == true) return Result.failure(UnauthorizedException())
     return database.getRawTopic(ObjectFetch.AidFetch(aid), uid)
         .mapResultIfNotNull { info ->
-            checkRootReadPermission(
-                ObjectType.TOPIC,
+            checkTopicReadPermission(
                 info.topic.id,
                 uid
             ).mapResultIfNotNull { (hasRead, hasJoined) ->
@@ -599,7 +596,7 @@ suspend fun Backend.searchRoomTopics(
     if (word.length > 20) {
         return Result.failure(CustomBadRequestException("word too long"))
     }
-    return checkRootReadPermission(ObjectType.ROOM, roomId, uid).mapResultIfNotNull {
+    return checkRoomReadPermission(roomId, uid).mapResultIfNotNull {
         if (it.isPrivate) {
             Result.failure(CustomBadRequestException("can't search in private room"))
         } else {
@@ -634,7 +631,7 @@ suspend fun Backend.searchCommunityTopics(
     if (word.length > 20) {
         return Result.failure(CustomBadRequestException("word too long"))
     }
-    return checkRootReadPermission(ObjectType.COMMUNITY, communityId, uid).mapResultIfNotNull {
+    return checkCommunityReadPermission(communityId, uid).mapResultIfNotNull {
         if (it.isPrivate) {
             Result.failure(CustomBadRequestException("can't search in private community"))
         } else {
@@ -745,7 +742,7 @@ suspend fun Backend.getTopicByIds(
     }
     try {
         ids.forEach {
-            val permission = checkRootReadPermission(ObjectType.TOPIC, it, uid).getOrThrow()
+            val permission = checkTopicReadPermission(it, uid).getOrThrow()
             if (permission == null || !permission.hasRead) {
                 return Result.failure(ForbiddenException("Permission Denied"))
             }
@@ -763,7 +760,7 @@ suspend fun Backend.updateTopicPin(
     uid: PrimaryKey,
     topicId: PrimaryKey,
     newValue: Boolean,
-) = checkRootAdminPermission(ObjectType.TOPIC, topicId, uid).mapResultIfNotNull {
+) = checkTopicAdminPermission(topicId, uid).mapResultIfNotNull {
     database.getRawTopic(ObjectFetch.IdFetch(topicId), uid)
 }.mapResultIfNotNull { rawTopic ->
     val topicInfo = rawTopic.toTopicInfo()
