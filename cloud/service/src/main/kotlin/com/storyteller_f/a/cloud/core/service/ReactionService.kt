@@ -24,7 +24,7 @@ suspend fun Backend.addReaction(
     userId: PrimaryKey,
     topicId: PrimaryKey,
     emojiText: String
-) = checkRootWritePermission(ObjectType.TOPIC, topicId, userId).mapResultIfNotNull {
+) = checkTopicWritePermission(topicId, userId).mapResultIfNotNull {
     database.reaction.getReactionInfo(userId, topicId, emojiText)
         .mapResult { oldReaction ->
             if (oldReaction != null && oldReaction.hasReacted) {

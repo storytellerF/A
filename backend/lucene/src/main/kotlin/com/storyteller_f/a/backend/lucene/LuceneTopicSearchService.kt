@@ -174,16 +174,16 @@ class LuceneTopicSearchService(path: Path, isInMemory: Boolean = false) :
 
                 is TopicDocumentSearch.AllCommunityRoot -> {
                     addParentTypeQuery()
-                    addMatchQuery(analyzer, topicDocumentSearch.word, "content")
+                    addPrefixAndInclusionQuery(topicDocumentSearch.word, "content")
                 }
 
                 is TopicDocumentSearch.Topics -> {
                     addMustLongQuery("parentId", topicDocumentSearch.parentId)
-                    addMatchQuery(analyzer, topicDocumentSearch.word, "content")
+                    addPrefixAndInclusionQuery(topicDocumentSearch.word, "content")
                 }
 
                 is TopicDocumentSearch.All -> {
-                    addMatchQuery(analyzer, topicDocumentSearch.word, "content")
+                    addPrefixAndInclusionQuery(topicDocumentSearch.word, "content")
                 }
             }
         }.build()

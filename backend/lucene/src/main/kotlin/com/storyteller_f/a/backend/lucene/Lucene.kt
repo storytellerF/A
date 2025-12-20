@@ -16,13 +16,17 @@ import org.apache.lucene.index.DirectoryReader
 import org.apache.lucene.index.IndexNotFoundException
 import org.apache.lucene.index.IndexWriter
 import org.apache.lucene.index.IndexWriterConfig
+import org.apache.lucene.index.Term
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser
 import org.apache.lucene.search.BooleanClause
 import org.apache.lucene.search.BooleanQuery
+import org.apache.lucene.search.BoostQuery
 import org.apache.lucene.search.IndexSearcher
 import org.apache.lucene.search.MatchAllDocsQuery
+import org.apache.lucene.search.PrefixQuery
 import org.apache.lucene.search.Query
 import org.apache.lucene.search.Sort
+import org.apache.lucene.search.WildcardQuery
 import org.apache.lucene.store.FSDirectory
 import org.apache.lucene.store.NIOFSDirectory
 import java.nio.file.Path
@@ -141,4 +145,39 @@ fun BooleanQuery.Builder.addMatchQuery(analyzer: StandardAnalyzer, word: String,
     val keyword = preprocessUserInputKeyword(word)
     val parse = parser.parse(keyword)
     add(parse, BooleanClause.Occur.MUST)
+}
+
+fun BooleanQuery.Builder.addPrefixAndInclusionQuery(word: String, field: String) {
+    val keyword = preprocessUserInputKeyword(word)
+    if (keyword.isBlank()) return
+
+    val prefixQuery = BoostQuery(PrefixQuery(Term(field, keyword)), 10.0f)
+    val inclusionQuery = BoostQuery(WildcardQuery(Term(field, "*$keyword*")), 1.0f)
+
+    add(
+        BooleanQuery.Builder().apply {
+            add(prefixQuery, BooleanClause.Occur.SHOULD)
+            add(inclusionQuery, BooleanClause.Occur.SHOULD)
+        }.build(),
+        BooleanClause.Occur.MUST
+    )
+}
+
+fun BooleanQuery.Builder.addPrioritizedFieldsQuery(word: String, aidField: String, nameField: String) {
+    val keyword = preprocessUserInputKeyword(word)
+    if (keyword.isBlank()) return
+
+    add(
+        BooleanQuery.Builder().apply {
+            // 1. aid 前缀匹配 (最高优先级)
+            add(BoostQuery(PrefixQuery(Term(aidField, keyword)), 1000f), BooleanClause.Occur.SHOULD)
+            // 2. name 前缀匹配
+            add(BoostQuery(PrefixQuery(Term(nameField, keyword)), 100f), BooleanClause.Occur.SHOULD)
+            // 3. aid 包含匹配
+            add(BoostQuery(WildcardQuery(Term(aidField, "*$keyword*")), 10f), BooleanClause.Occur.SHOULD)
+            // 4. name 包含匹配
+            add(BoostQuery(WildcardQuery(Term(nameField, "*$keyword*")), 1f), BooleanClause.Occur.SHOULD)
+        }.build(),
+        BooleanClause.Occur.MUST
+    )
 }

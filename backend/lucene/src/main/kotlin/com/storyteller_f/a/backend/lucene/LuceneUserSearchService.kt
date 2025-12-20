@@ -2,7 +2,6 @@ package com.storyteller_f.a.backend.lucene
 
 import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.PaginationResult
-import com.storyteller_f.a.backend.core.preprocessUserInputKeyword
 import com.storyteller_f.a.backend.core.service.UserDocument
 import com.storyteller_f.a.backend.core.service.UserDocumentSearch
 import com.storyteller_f.a.backend.core.service.UserSearchService
@@ -14,8 +13,6 @@ import org.apache.lucene.document.Field
 import org.apache.lucene.document.LongField
 import org.apache.lucene.document.NumericDocValuesField
 import org.apache.lucene.document.TextField
-import org.apache.lucene.queryparser.classic.MultiFieldQueryParser
-import org.apache.lucene.search.BooleanClause
 import org.apache.lucene.search.BooleanQuery
 import org.apache.lucene.search.Query
 import org.apache.lucene.search.Sort
@@ -89,14 +86,7 @@ class LuceneUserSearchService(path: Path, isInMemory: Boolean = false) : Lucene(
         return BooleanQuery.Builder().apply {
             when (userDocumentSearch) {
                 is UserDocumentSearch.Keyword -> {
-                    val keyword = preprocessUserInputKeyword(userDocumentSearch.word)
-                    add(BooleanQuery.Builder().apply {
-                        add(
-                            MultiFieldQueryParser(arrayOf("nickname"), analyzer).parse(keyword),
-                            BooleanClause.Occur.SHOULD
-                        )
-                        add(MultiFieldQueryParser(arrayOf("aid"), analyzer).parse(keyword), BooleanClause.Occur.SHOULD)
-                    }.build(), BooleanClause.Occur.MUST)
+                    addPrioritizedFieldsQuery(userDocumentSearch.word, "aid", "nickname")
                 }
             }
         }.build()

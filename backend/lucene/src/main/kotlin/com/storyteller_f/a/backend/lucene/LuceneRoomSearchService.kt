@@ -2,7 +2,6 @@ package com.storyteller_f.a.backend.lucene
 
 import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.PaginationResult
-import com.storyteller_f.a.backend.core.preprocessUserInputKeyword
 import com.storyteller_f.a.backend.core.service.RoomDocument
 import com.storyteller_f.a.backend.core.service.RoomDocumentSearch
 import com.storyteller_f.a.backend.core.service.RoomSearchService
@@ -14,7 +13,6 @@ import org.apache.lucene.document.Field
 import org.apache.lucene.document.LongField
 import org.apache.lucene.document.NumericDocValuesField
 import org.apache.lucene.document.TextField
-import org.apache.lucene.queryparser.classic.MultiFieldQueryParser
 import org.apache.lucene.search.BooleanClause
 import org.apache.lucene.search.BooleanQuery
 import org.apache.lucene.search.Query
@@ -95,11 +93,7 @@ class LuceneRoomSearchService(path: Path, isInMemory: Boolean = false) : Lucene(
         return BooleanQuery.Builder().apply {
             when (roomDocumentSearch) {
                 is RoomDocumentSearch.Keyword -> {
-                    val keyword = preprocessUserInputKeyword(roomDocumentSearch.words)
-                    add(BooleanQuery.Builder().apply {
-                        add(MultiFieldQueryParser(arrayOf("name"), analyzer).parse(keyword), BooleanClause.Occur.SHOULD)
-                        add(MultiFieldQueryParser(arrayOf("aid"), analyzer).parse(keyword), BooleanClause.Occur.SHOULD)
-                    }.build(), BooleanClause.Occur.MUST)
+                    addPrioritizedFieldsQuery(roomDocumentSearch.words, "aid", "name")
                     // 添加对communityId的过滤
                     roomDocumentSearch.communityId?.let { communityId ->
                         add(LongField.newExactQuery("communityId", communityId), BooleanClause.Occur.MUST)

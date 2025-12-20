@@ -45,41 +45,53 @@ data class RootAdminPermission(
     val rootId: PrimaryKey,
 )
 
+suspend fun Backend.checkTopicReadPermission(
+    topicId: PrimaryKey,
+    uid: PrimaryKey?,
+): Result<RootReadPermission?> =
+    database.topic.getTopicRootTuple(topicId).mapResultIfNotNull { (rootId, rootType) ->
+        checkRootReadPermission(rootType, rootId, uid)
+    }
+
+suspend fun Backend.checkRoomReadPermission(
+    roomId: PrimaryKey,
+    uid: PrimaryKey?,
+): Result<RootReadPermission?> =
+    database.room.getRoomCommunityId(roomId).mapResult { communityId ->
+        if (communityId == null && uid == null) {
+            Result.failure(UnauthorizedException())
+        } else {
+            database.container.isMemberJoined(roomId, uid).map { hasJoined ->
+                RootReadPermission(hasJoined || communityId != null, hasJoined, communityId == null)
+            }
+        }
+    }
+
+suspend fun Backend.checkCommunityReadPermission(
+    communityId: PrimaryKey,
+    uid: PrimaryKey?,
+): Result<RootReadPermission?> = database.community.getRawCommunity(IdFetch(communityId)).mapResultIfNotNull {
+    database.container.isMemberJoined(communityId, uid).map { hasJoined ->
+        RootReadPermission(true, hasJoined, false)
+    }
+}
+
+suspend fun Backend.checkUserReadPermission(
+    userId: PrimaryKey,
+): Result<RootReadPermission?> = database.user.getRawUser(IdFetch(userId)).mapIfNotNull {
+    RootReadPermission(hasRead = true, hasJoined = false, isPrivate = false)
+}
+
 suspend fun Backend.checkRootReadPermission(
     parentType: ObjectType,
     parentId: PrimaryKey,
     uid: PrimaryKey?,
 ): Result<RootReadPermission?> {
     return when (parentType) {
-        ObjectType.TOPIC -> {
-            database.topic.getTopicRootTuple(parentId).mapResultIfNotNull { (rootId, rootType) ->
-                checkRootReadPermission(rootType, rootId, uid)
-            }
-        }
-
-        ObjectType.ROOM -> {
-            database.room.getRoomCommunityId(parentId).mapResult { communityId ->
-                if (communityId == null && uid == null) {
-                    Result.failure(UnauthorizedException())
-                } else {
-                    database.container.isMemberJoined(parentId, uid).map { hasJoined ->
-                        RootReadPermission(hasJoined || communityId != null, hasJoined, communityId == null)
-                    }
-                }
-            }
-        }
-
-        ObjectType.COMMUNITY -> {
-            database.community.getRawCommunity(IdFetch(parentId)).mapResultIfNotNull {
-                database.container.isMemberJoined(parentId, uid).map { hasJoined ->
-                    RootReadPermission(true, hasJoined, false)
-                }
-            }
-        }
-
-        ObjectType.USER -> database.user.getRawUser(IdFetch(parentId)).mapIfNotNull {
-            RootReadPermission(hasRead = true, hasJoined = false, isPrivate = false)
-        }
+        ObjectType.TOPIC -> checkTopicReadPermission(parentId, uid)
+        ObjectType.ROOM -> checkRoomReadPermission(parentId, uid)
+        ObjectType.COMMUNITY -> checkCommunityReadPermission(parentId, uid)
+        ObjectType.USER -> checkUserReadPermission(parentId)
 
         ObjectType.TITLE -> Result.success(RootReadPermission(hasRead = true, hasJoined = false, isPrivate = false))
 
@@ -88,58 +100,111 @@ suspend fun Backend.checkRootReadPermission(
     }
 }
 
+suspend fun Backend.checkTopicWritePermission(
+    topicId: PrimaryKey,
+    uid: PrimaryKey,
+): Result<RootWritePermission?> = database.getRawTopic(IdFetch(topicId), null).mapResultIfNotNull { topicInfo ->
+    checkRootWritePermission(
+        topicInfo.topic.rootType,
+        topicInfo.topic.rootId,
+        uid
+    ).mapIfNotNull {
+        it.copy(level = topicInfo.topic.level)
+    }
+}
+
+suspend fun Backend.checkRoomWritePermission(
+    roomId: PrimaryKey,
+    uid: PrimaryKey,
+): Result<RootWritePermission?> = database.room.getRawRoom(IdFetch(roomId), true, uid).mapResultIfNotNull {
+    if (it.hasJoined) {
+        Result.success(RootWritePermission(ObjectType.ROOM, roomId))
+    } else {
+        Result.failure(ForbiddenException())
+    }
+}
+
+suspend fun Backend.checkCommunityWritePermission(
+    communityId: PrimaryKey,
+    uid: PrimaryKey,
+): Result<RootWritePermission?> =
+    database.community.getRawCommunity(IdFetch(communityId), true, uid).mapResultIfNotNull {
+        if (it.hasJoined) {
+            Result.success(RootWritePermission(ObjectType.COMMUNITY, communityId))
+        } else {
+            Result.failure(ForbiddenException())
+        }
+    }
+
+suspend fun Backend.checkUserWritePermission(
+    userId: PrimaryKey,
+    uid: PrimaryKey,
+): Result<RootWritePermission?> = if (uid == userId) {
+    database.user.getRawUser(IdFetch(userId)).mapIfNotNull {
+        RootWritePermission(ObjectType.USER, userId)
+    }
+} else {
+    Result.failure(ForbiddenException())
+}
+
 suspend fun Backend.checkRootWritePermission(
     parentType: ObjectType,
     parentId: PrimaryKey,
     uid: PrimaryKey,
 ): Result<RootWritePermission?> {
     return when (parentType) {
-        ObjectType.TOPIC -> {
-            database.getRawTopic(IdFetch(parentId), null).mapResultIfNotNull { topicInfo ->
-                checkRootWritePermission(
-                    topicInfo.topic.rootType,
-                    topicInfo.topic.rootId,
-                    uid
-                ).mapIfNotNull {
-                    it.copy(level = topicInfo.topic.level)
-                }
-            }
-        }
-
-        ObjectType.ROOM -> {
-            database.room.getRawRoom(IdFetch(parentId), true, uid).mapResultIfNotNull {
-                if (it.hasJoined) {
-                    Result.success(RootWritePermission(parentType, parentId))
-                } else {
-                    Result.failure(ForbiddenException())
-                }
-            }
-        }
-
-        ObjectType.COMMUNITY -> {
-            database.community.getRawCommunity(IdFetch(parentId), true, uid).mapResultIfNotNull {
-                if (it.hasJoined) {
-                    Result.success(RootWritePermission(parentType, parentId))
-                } else {
-                    Result.failure(ForbiddenException())
-                }
-            }
-        }
-
-        ObjectType.USER -> {
-            if (uid == parentId) {
-                database.user.getRawUser(IdFetch(parentId)).mapIfNotNull {
-                    RootWritePermission(parentType, parentId)
-                }
-            } else {
-                Result.failure(ForbiddenException())
-            }
-        }
+        ObjectType.TOPIC -> checkTopicWritePermission(parentId, uid)
+        ObjectType.ROOM -> checkRoomWritePermission(parentId, uid)
+        ObjectType.COMMUNITY -> checkCommunityWritePermission(parentId, uid)
+        ObjectType.USER -> checkUserWritePermission(parentId, uid)
 
         ObjectType.TITLE -> Result.failure(ForbiddenException())
         ObjectType.FILE -> Result.failure(ForbiddenException())
         ObjectType.PANEL_ACCOUNT -> Result.failure(ForbiddenException())
     }
+}
+
+suspend fun Backend.checkTopicAdminPermission(
+    topicId: PrimaryKey,
+    uid: PrimaryKey,
+): Result<RootAdminPermission?> = database.topic.getTopicRootTuple(topicId)
+    .mapResultIfNotNull { (rootId, rootType) ->
+        checkRootAdminPermission(rootType, rootId, uid)
+    }
+
+suspend fun Backend.checkRoomAdminPermission(
+    roomId: PrimaryKey,
+    uid: PrimaryKey,
+): Result<RootAdminPermission?> = database.room.getRawRoom(IdFetch(roomId), true, uid)
+    .mapResultIfNotNull {
+        if (it.room.creator == uid) {
+            Result.success(RootAdminPermission(ObjectType.ROOM, roomId))
+        } else {
+            Result.failure(ForbiddenException())
+        }
+    }
+
+suspend fun Backend.checkCommunityAdminPermission(
+    communityId: PrimaryKey,
+    uid: PrimaryKey,
+): Result<RootAdminPermission?> = database.community.getRawCommunity(IdFetch(communityId))
+    .mapResultIfNotNull {
+        if (it.community.owner == uid) {
+            Result.success(RootAdminPermission(ObjectType.COMMUNITY, communityId))
+        } else {
+            Result.failure(ForbiddenException())
+        }
+    }
+
+suspend fun Backend.checkUserAdminPermission(
+    userId: PrimaryKey,
+    uid: PrimaryKey,
+): Result<RootAdminPermission?> = if (userId == uid) {
+    database.user.getRawUser(IdFetch(userId)).mapIfNotNull {
+        RootAdminPermission(ObjectType.USER, userId)
+    }
+} else {
+    Result.failure(ForbiddenException())
 }
 
 suspend fun Backend.checkRootAdminPermission(
@@ -148,45 +213,10 @@ suspend fun Backend.checkRootAdminPermission(
     uid: PrimaryKey,
 ): Result<RootAdminPermission?> {
     return when (parentType) {
-        ObjectType.TOPIC -> {
-            database.topic.getTopicRootTuple(parentId)
-                .mapResultIfNotNull { (rootId, rootType) ->
-                    checkRootAdminPermission(rootType, rootId, uid)
-                }
-        }
-
-        ObjectType.ROOM -> {
-            database.room.getRawRoom(IdFetch(parentId), true, uid)
-                .mapResultIfNotNull {
-                    if (it.room.creator == uid) {
-                        Result.success(RootAdminPermission(parentType, parentId))
-                    } else {
-                        Result.failure(ForbiddenException())
-                    }
-                }
-        }
-
-        ObjectType.COMMUNITY -> {
-            database.community.getRawCommunity(IdFetch(parentId))
-                .mapResultIfNotNull {
-                    if (it.community.owner == uid) {
-                        Result.success(RootAdminPermission(parentType, parentId))
-                    } else {
-                        Result.failure(ForbiddenException())
-                    }
-                }
-        }
-
-        ObjectType.USER -> {
-            if (parentId == uid) {
-                database.user.getRawUser(IdFetch(parentId))
-                    .mapIfNotNull {
-                        RootAdminPermission(parentType, parentId)
-                    }
-            } else {
-                Result.failure(ForbiddenException())
-            }
-        }
+        ObjectType.TOPIC -> checkTopicAdminPermission(parentId, uid)
+        ObjectType.ROOM -> checkRoomAdminPermission(parentId, uid)
+        ObjectType.COMMUNITY -> checkCommunityAdminPermission(parentId, uid)
+        ObjectType.USER -> checkUserAdminPermission(parentId, uid)
 
         ObjectType.TITLE -> Result.success(RootAdminPermission(parentType, parentId))
         ObjectType.FILE -> Result.failure(ForbiddenException())

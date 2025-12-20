@@ -60,15 +60,7 @@ class ElasticRoomSearchService(connection: ElasticConnection) : Elastic(connecti
                                 val keyword = preprocessUserInputKeyword(word)
                                 b.must { m ->
                                     m.bool { nestedBool ->
-                                        nestedBool.should { s ->
-                                            s.match {
-                                                it.field("name").query(keyword).boost(3f)
-                                            }
-                                        }.should { s ->
-                                            s.match { p ->
-                                                p.field("aid").query(keyword).boost(3.0f)
-                                            }
-                                        }
+                                        nestedBool.prioritizedFields(keyword, "aid", "name")
                                     }
                                 }
                                 // 添加对communityId的过滤
