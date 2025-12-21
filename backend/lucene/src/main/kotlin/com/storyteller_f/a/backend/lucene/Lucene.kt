@@ -5,6 +5,7 @@ import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.OffsetFetch
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.preprocessUserInputKeyword
+import com.storyteller_f.a.backend.core.splitKeywords
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.toPrimaryKeyOrNull
 import io.github.aakira.napier.Napier
@@ -148,36 +149,72 @@ fun BooleanQuery.Builder.addMatchQuery(analyzer: StandardAnalyzer, word: String,
 }
 
 fun BooleanQuery.Builder.addPrefixAndInclusionQuery(word: String, field: String) {
-    val keyword = preprocessUserInputKeyword(word)
-    if (keyword.isBlank()) return
+    val keywords = splitKeywords(word)
+    if (keywords != null) {
+        // 多关键字模式：每个关键字都必须包含匹配（AND），靠前的关键字 boost 更高
+        keywords.forEachIndexed { index, keyword ->
+            val boost = (keywords.size - index).toFloat()
+            add(
+                BoostQuery(WildcardQuery(Term(field, "*$keyword*")), boost),
+                BooleanClause.Occur.MUST
+            )
+        }
+    } else {
+        // 单关键字模式：保持原有逻辑（前缀+包含）
+        val keyword = preprocessUserInputKeyword(word)
+        if (keyword.isBlank()) return
 
-    val prefixQuery = BoostQuery(PrefixQuery(Term(field, keyword)), 10.0f)
-    val inclusionQuery = BoostQuery(WildcardQuery(Term(field, "*$keyword*")), 1.0f)
+        val prefixQuery = BoostQuery(PrefixQuery(Term(field, keyword)), 10.0f)
+        val inclusionQuery = BoostQuery(WildcardQuery(Term(field, "*$keyword*")), 1.0f)
 
-    add(
-        BooleanQuery.Builder().apply {
-            add(prefixQuery, BooleanClause.Occur.SHOULD)
-            add(inclusionQuery, BooleanClause.Occur.SHOULD)
-        }.build(),
-        BooleanClause.Occur.MUST
-    )
+        add(
+            BooleanQuery.Builder().apply {
+                add(prefixQuery, BooleanClause.Occur.SHOULD)
+                add(inclusionQuery, BooleanClause.Occur.SHOULD)
+            }.build(),
+            BooleanClause.Occur.MUST
+        )
+    }
 }
 
 fun BooleanQuery.Builder.addPrioritizedFieldsQuery(word: String, aidField: String, nameField: String) {
-    val keyword = preprocessUserInputKeyword(word)
-    if (keyword.isBlank()) return
+    val keywords = splitKeywords(word)
+    if (keywords != null) {
+        // 多关键字模式：每个关键字都必须包含匹配，靠前的关键字 boost 更高
+        keywords.forEachIndexed { index, keyword ->
+            val positionBoost = (keywords.size - index).toFloat()
+            add(
+                BooleanQuery.Builder().apply {
+                    // 仅包含匹配，aid 优先于 name
+                    add(
+                        BoostQuery(WildcardQuery(Term(aidField, "*$keyword*")), positionBoost * 10f),
+                        BooleanClause.Occur.SHOULD
+                    )
+                    add(
+                        BoostQuery(WildcardQuery(Term(nameField, "*$keyword*")), positionBoost),
+                        BooleanClause.Occur.SHOULD
+                    )
+                }.build(),
+                BooleanClause.Occur.MUST
+            )
+        }
+    } else {
+        // 单关键字模式：保持原有逻辑
+        val keyword = preprocessUserInputKeyword(word)
+        if (keyword.isBlank()) return
 
-    add(
-        BooleanQuery.Builder().apply {
-            // 1. aid 前缀匹配 (最高优先级)
-            add(BoostQuery(PrefixQuery(Term(aidField, keyword)), 1000f), BooleanClause.Occur.SHOULD)
-            // 2. name 前缀匹配
-            add(BoostQuery(PrefixQuery(Term(nameField, keyword)), 100f), BooleanClause.Occur.SHOULD)
-            // 3. aid 包含匹配
-            add(BoostQuery(WildcardQuery(Term(aidField, "*$keyword*")), 10f), BooleanClause.Occur.SHOULD)
-            // 4. name 包含匹配
-            add(BoostQuery(WildcardQuery(Term(nameField, "*$keyword*")), 1f), BooleanClause.Occur.SHOULD)
-        }.build(),
-        BooleanClause.Occur.MUST
-    )
+        add(
+            BooleanQuery.Builder().apply {
+                // 1. aid 前缀匹配 (最高优先级)
+                add(BoostQuery(PrefixQuery(Term(aidField, keyword)), 1000f), BooleanClause.Occur.SHOULD)
+                // 2. name 前缀匹配
+                add(BoostQuery(PrefixQuery(Term(nameField, keyword)), 100f), BooleanClause.Occur.SHOULD)
+                // 3. aid 包含匹配
+                add(BoostQuery(WildcardQuery(Term(aidField, "*$keyword*")), 10f), BooleanClause.Occur.SHOULD)
+                // 4. name 包含匹配
+                add(BoostQuery(WildcardQuery(Term(nameField, "*$keyword*")), 1f), BooleanClause.Occur.SHOULD)
+            }.build(),
+            BooleanClause.Occur.MUST
+        )
+    }
 }
