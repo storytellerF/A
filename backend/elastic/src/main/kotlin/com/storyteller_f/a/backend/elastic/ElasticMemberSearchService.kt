@@ -130,16 +130,8 @@ class ElasticMemberSearchService(connection: ElasticConnection) : Elastic(connec
                     }
                 }
                 // 按房间名称搜索
-                b.must { s ->
-                    s.bool { nested ->
-                        val keyword = preprocessUserInputKeyword(memberDocumentSearch.objectName)
-                        nested.should { sho ->
-                            sho.matchPhrasePrefix { it.field("objectName").query(keyword).boost(10f) }
-                        }.should { sho ->
-                            sho.wildcard { it.field("objectName").value("*$keyword*").boost(1f) }
-                        }
-                    }
-                }
+                val keyword = preprocessUserInputKeyword(memberDocumentSearch.objectName)
+                b.prioritizedField(keyword, "objectName")
             }
         }
     }
@@ -165,16 +157,8 @@ class ElasticMemberSearchService(connection: ElasticConnection) : Elastic(connec
                     }
                 }
                 // 按社区名称搜索
-                b.must { s ->
-                    s.bool { nested ->
-                        val keyword = preprocessUserInputKeyword(memberDocumentSearch.objectName)
-                        nested.should { sho ->
-                            sho.matchPhrasePrefix { it.field("objectName").query(keyword).boost(10f) }
-                        }.should { sho ->
-                            sho.wildcard { it.field("objectName").value("*$keyword*").boost(1f) }
-                        }
-                    }
-                }
+                val keyword = preprocessUserInputKeyword(memberDocumentSearch.objectName)
+                b.prioritizedField(keyword, "objectName")
             }
         }
     }
@@ -195,15 +179,7 @@ class ElasticMemberSearchService(connection: ElasticConnection) : Elastic(connec
                 }
                 // 按 nickname 搜索
                 val keyword = preprocessUserInputKeyword(memberDocumentSearch.nickname)
-                b.must { m ->
-                    m.bool { nested ->
-                        nested.should { sho ->
-                            sho.matchPhrasePrefix { it.field("nickname").query(keyword).boost(10f) }
-                        }.should { sho ->
-                            sho.wildcard { it.field("nickname").value("*$keyword*").boost(1f) }
-                        }
-                    }
-                }
+                b.prioritizedField(keyword, "nickname")
             }
         }
     }

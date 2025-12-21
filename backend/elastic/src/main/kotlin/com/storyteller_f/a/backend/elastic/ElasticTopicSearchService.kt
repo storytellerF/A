@@ -102,15 +102,7 @@ class ElasticTopicSearchService(connection: ElasticConnection) : Elastic(connect
         query { q ->
             q.bool { b ->
                 val keyword = preprocessUserInputKeyword(word)
-                b.must { m ->
-                    m.bool { nested ->
-                        nested.should { s ->
-                            s.matchPhrasePrefix { it.field("content").query(keyword).boost(10f) }
-                        }.should { s ->
-                            s.wildcard { it.field("content").value("*$keyword*").boost(1f) }
-                        }
-                    }
-                }
+                b.prioritizedField(keyword, "content")
             }
         }
     }
@@ -128,15 +120,7 @@ class ElasticTopicSearchService(connection: ElasticConnection) : Elastic(connect
                     }
                 }
                 val keyword = preprocessUserInputKeyword(word)
-                b.must { s ->
-                    s.bool { nested ->
-                        nested.should { s ->
-                            s.matchPhrasePrefix { it.field("content").query(keyword).boost(10f) }
-                        }.should { s ->
-                            s.wildcard { it.field("content").value("*$keyword*").boost(1f) }
-                        }
-                    }
-                }
+                b.prioritizedField(keyword, "content")
             }
         }
     }
@@ -156,15 +140,7 @@ class ElasticTopicSearchService(connection: ElasticConnection) : Elastic(connect
                     }
                 }
                 val keyword = preprocessUserInputKeyword(word)
-                b.must { s ->
-                    s.bool { nested ->
-                        nested.should { s ->
-                            s.matchPhrasePrefix { it.field("content").query(keyword).boost(10f) }
-                        }.should { s ->
-                            s.wildcard { it.field("content").value("*$keyword*").boost(1f) }
-                        }
-                    }
-                }
+                b.prioritizedField(keyword, "content")
             }
         }
     }

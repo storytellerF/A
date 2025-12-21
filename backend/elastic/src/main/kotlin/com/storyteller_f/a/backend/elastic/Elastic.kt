@@ -13,6 +13,7 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.storyteller_f.a.backend.core.ElasticConnection
 import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.PaginationResult
+import com.storyteller_f.a.backend.core.splitKeywords
 import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.recoverResult
@@ -191,21 +192,53 @@ fun <T> buildElasticSearchService(env: MergedEnv, b: (ElasticConnection) -> T): 
 }
 
 fun BoolQuery.Builder.prioritizedFields(keyword: String, aidField: String, nameField: String): BoolQuery.Builder {
-    return should { s ->
-        s.matchPhrasePrefix {
-            it.field(aidField).query(keyword).boost(1000f)
+    val keywords = splitKeywords(keyword)
+    if (keywords != null) {
+        // 多关键字模式：仅包含匹配
+        keywords.forEachIndexed { index, kw ->
+            val positionBoost = (keywords.size - index).toFloat()
+            must { m ->
+                m.bool { innerBool ->
+                    innerBool
+                        .should { s -> s.wildcard { it.field(aidField).value("*$kw*").boost(positionBoost * 10f) } }
+                        .should { s -> s.wildcard { it.field(nameField).value("*$kw*").boost(positionBoost) } }
+                }
+            }
         }
-    }.should { s ->
-        s.matchPhrasePrefix {
-            it.field(nameField).query(keyword).boost(100f)
+        return this
+    } else {
+        // 单关键字模式：保持原有逻辑
+        // 设置 minimumShouldMatch(1) 确保至少一个 should 必须匹配（否则有 filter 时 should 变成可选的）
+        return should { s ->
+            s.matchPhrasePrefix { it.field(aidField).query(keyword).boost(1000f) }
+        }.should { s ->
+            s.matchPhrasePrefix { it.field(nameField).query(keyword).boost(100f) }
+        }.should { s ->
+            s.wildcard { it.field(aidField).value("*$keyword*").boost(10f) }
+        }.should { s ->
+            s.wildcard { it.field(nameField).value("*$keyword*").boost(1f) }
+        }.minimumShouldMatch("1")
+    }
+}
+
+fun BoolQuery.Builder.prioritizedField(keyword: String, field: String): BoolQuery.Builder {
+    val keywords = splitKeywords(keyword)
+    if (keywords != null) {
+        // 多关键字模式：仅包含匹配
+        keywords.forEachIndexed { index, kw ->
+            val positionBoost = (keywords.size - index).toFloat()
+            must { m ->
+                m.wildcard { it.field(field).value("*$kw*").boost(positionBoost) }
+            }
         }
-    }.should { s ->
-        s.wildcard {
-            it.field(aidField).value("*$keyword*").boost(10f)
-        }
-    }.should { s ->
-        s.wildcard {
-            it.field(nameField).value("*$keyword*").boost(1f)
-        }
+        return this
+    } else {
+        // 单关键字模式：前缀匹配 + 包含匹配
+        // 设置 minimumShouldMatch(1) 确保至少一个 should 必须匹配（否则有 filter 时 should 变成可选的）
+        return should { s ->
+            s.matchPhrasePrefix { it.field(field).query(keyword).boost(10f) }
+        }.should { s ->
+            s.wildcard { it.field(field).value("*$keyword*").boost(1f) }
+        }.minimumShouldMatch("1")
     }
 }

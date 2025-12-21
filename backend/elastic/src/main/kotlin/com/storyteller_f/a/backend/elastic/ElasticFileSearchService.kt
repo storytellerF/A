@@ -65,19 +65,7 @@ class ElasticFileSearchService(connection: ElasticConnection) : Elastic(connecti
                             }
                             // 添加关键词搜索
                             val keyword = preprocessUserInputKeyword(fileDocumentSearch.word)
-                            b.must { s ->
-                                s.bool { nested ->
-                                    nested.should { sho ->
-                                        sho.matchPhrasePrefix {
-                                            it.field("name").query(keyword).boost(10f)
-                                        }
-                                    }.should { sho ->
-                                        sho.wildcard {
-                                            it.field("name").value("*$keyword*").boost(1f)
-                                        }
-                                    }
-                                }
-                            }
+                            b.prioritizedField(keyword, "name")
                         }
                     }
                 }

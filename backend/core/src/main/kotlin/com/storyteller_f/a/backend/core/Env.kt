@@ -87,3 +87,15 @@ fun setLogPath(name: String = "A") {
 }
 
 fun preprocessUserInputKeyword(words: String): String = words.lowercase()
+
+/**
+ * 分割并预处理用户输入的关键字
+ * @return 返回关键字列表，如果不包含空格则返回 null 表示使用原有逻辑
+ */
+fun splitKeywords(words: String): List<String>? {
+    val trimmed = words.trim()
+    if (!trimmed.contains(" ")) return null
+    return trimmed.split("\\s+".toRegex())
+        .filter { it.isNotBlank() }
+        .map { preprocessUserInputKeyword(it) }
+}
