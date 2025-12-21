@@ -40,5 +40,4 @@ class KotbaseTest : UsingContextTest() {
             println("${it.hasPoster} ${it.id}")
         }
     }
-
 }

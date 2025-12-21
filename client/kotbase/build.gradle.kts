@@ -1,7 +1,6 @@
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
 import java.lang.Exception
 
 plugins {
@@ -125,8 +124,7 @@ val extractCouchbaseLibsTask = tasks.register("extractCouchbaseNativeLib") {
             if (jarFile.path.contains("couchbase-lite-java")) {
                 injected.operations.zipTree(jarFile).forEach { file ->
                     val match = if (osName.contains("mac")) {
-                        file.path.contains("macos") &&
-                                (file.path.contains("universal") || file.path.contains(arch))
+                        file.path.contains("macos") && (file.path.contains("universal") || file.path.contains(arch))
                     } else if (osName.contains("win")) {
                         file.path.contains("windows")
                     } else if (osName.contains("nux")) {

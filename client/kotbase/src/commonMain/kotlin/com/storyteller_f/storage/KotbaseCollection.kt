@@ -1,9 +1,10 @@
 package com.storyteller_f.storage
 
-import app.cash.paging.PagingSource
+import androidx.paging.PagingSource
+import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.type.PrimaryKey
-import io.github.aakira.napier.Napier
 import kotbase.*
+import kotbase.MutableDocument
 import kotbase.QueryBuilder.select
 import kotbase.ktx.*
 import kotbase.ktx.from
@@ -17,7 +18,6 @@ import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.files.SystemTemporaryDirectory
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
 import kotlin.reflect.KClass
 import kotbase.Collection as KotbaseCollection
@@ -51,6 +51,10 @@ suspend fun <T : Any> CustomKotbaseCollection<T>.update(id: PrimaryKey, block: (
 }
 
 fun <T : Any> CustomKotbaseCollection<T>.observeDatum(id: PrimaryKey): Flow<T?> {
+    return observeDatum(id.toString())
+}
+
+fun <T : Any> CustomKotbaseCollection<T>.observeDatum(id: String): Flow<T?> {
     return observeDatum {
         "id" equalTo id
     }
@@ -62,21 +66,18 @@ class CustomKotbaseCollection<T : Any>(
 ) {
     suspend fun saveDocument(id: String, t: T) {
         withContext(Dispatchers.IO) {
-            collection.save(MutableDocument(id, commonJson.encodeToString(serializer, t)))
+            val json = commonJson.encodeToString(serializer, t)
+            collection.save(MutableDocument(id).apply {
+                setJSON(json)
+            })
         }
     }
 
     fun observeDatum(function: WhereBuilder.() -> Expression): Flow<T?> {
-        return select(all()).from(collection).where(function).limit(1).queryChangeFlow(Dispatchers.IO).map {
-            if (it.error != null) {
-                Napier.e(throwable = it.error) {
-                    "get data failed from ${collection.name}"
-                }
-            }
-
-            it.results?.toObjects { jsonStr: String ->
+        return select(SelectResult.all()).from(collection).where(function).limit(1).asFlow().map { resultSet ->
+            resultSet.toObjects { jsonStr: String ->
                 commonJson.decodeFromString(serializer, jsonStr)
-            }?.firstOrNull()
+            }.firstOrNull()
         }
     }
 
@@ -117,7 +118,17 @@ class CustomKotbaseCollection<T : Any>(
         val mapper = { json: String ->
             commonJson.decodeFromString(serializer, json)
         }
-        return QueryPagingSource(Dispatchers.IO, select(all()), collection, mapper, queryProvider)
+        return QueryPagingSource(Dispatchers.IO, select(SelectResult.all()), collection, mapper, queryProvider)
+    }
+
+    suspend fun delete(id: String) {
+        deleteDocument(id)
+    }
+
+    suspend fun clean() {
+        withContext(Dispatchers.IO) {
+            collection.database.deleteCollection(collection.name, collection.scope.name)
+        }
     }
 }
 
