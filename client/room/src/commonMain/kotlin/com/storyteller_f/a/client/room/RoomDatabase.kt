@@ -54,6 +54,9 @@ interface CommonDao {
     @Query("delete from CommonEntity where collection = :collection")
     suspend fun clean(collection: String)
 
+    @Query("update CommonEntity set data = :data where collection = :collection and id = :id")
+    suspend fun updateData(collection: String, id: String, data: String)
+
     @Query("select COALESCE(MAX(seq), -1) from CommonEntity where collection = :collection")
     suspend fun getMaxSeq(collection: String): Long
 
@@ -101,6 +104,9 @@ interface UploadDao {
 
     @Query("delete from UploadEntity where collection = :collection")
     suspend fun clean(collection: String)
+
+    @Query("update UploadEntity set data = :data where collection = :collection and id = :id")
+    suspend fun updateData(collection: String, id: String, data: String)
 }
 
 @Entity(primaryKeys = ["collection", "id"], indices = [Index("collection", "pathHash", unique = true)])

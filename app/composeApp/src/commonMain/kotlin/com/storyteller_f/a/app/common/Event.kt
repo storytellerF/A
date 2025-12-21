@@ -53,27 +53,27 @@ suspend fun processEvent(database: ModelStorage, bus: MutableSharedFlow<Any>) {
 
             is OnRemoveReaction -> processRemoveReaction(database, event)
 
-            is OnCommunityJoined -> database.community.save(event.info)
+            is OnCommunityJoined -> database.community.saveToDefault(event.info)
 
             is OnCommunityExited -> database.community
-                .save(event.info)
+                .saveToDefault(event.info)
 
             is OnCommunityUpdated -> database.community
-                .save(event.info)
+                .saveToDefault(event.info)
 
             is OnTopicChanged -> processTopicChanged(event, database)
 
             is OnTopicCreated -> processTopicCreated(event, database)
 
-            is OnRoomJoined -> database.room.save(event.info)
+            is OnRoomJoined -> database.room.saveToDefault(event.info)
 
-            is OnRoomExited -> database.room.save(event.info)
+            is OnRoomExited -> database.room.saveToDefault(event.info)
 
-            is OnRoomUpdated -> database.room.save(event.info)
+            is OnRoomUpdated -> database.room.saveToDefault(event.info)
 
-            is OnRoomCreated -> database.room.save(event.info)
+            is OnRoomCreated -> database.room.saveToDefault(event.info)
 
-            is OnUserUpdated -> database.user.save(event.info)
+            is OnUserUpdated -> database.user.saveToDefault(event.info)
 
             is OnMediaUploaded -> processOnMediaUploaded(event, database)
 
@@ -93,7 +93,7 @@ private suspend fun processOnMediaUploaded(
     database: ModelStorage
 ) {
     event.fileInfos.forEach {
-        database.fileInfo.save(it)
+        database.fileInfo.saveToDefault(it)
     }
 }
 
@@ -152,7 +152,7 @@ private suspend fun processTopicCreated(
     database: ModelStorage,
 ) {
     val topicInfo = event.topicInfo
-    database.topic.save(topicInfo)
+    database.topic.saveToDefault(topicInfo)
 }
 
 private suspend fun processTopicChanged(
@@ -160,13 +160,13 @@ private suspend fun processTopicChanged(
     database: ModelStorage,
 ) {
     val topicInfo = event.topicInfo
-    database.topic.save(topicInfo)
+    database.topic.saveToDefault(topicInfo)
     if (database.topic.getDocument(
             TopicCollection.Recommend,
             event.topicInfo.id
         ) != null
     ) {
-        database.topic.save(topicInfo)
+        database.topic.saveToDefault(topicInfo)
     }
 }
 

@@ -246,7 +246,7 @@ class IdUserViewModel(
     override val handler: LoadingHandler<UserInfo> = CachedLoadingHandler(
         modelStorage.user.observeDatum(id),
         viewModelScope,
-        { modelStorage.user.save(it) }
+        { modelStorage.user.saveToDefault(it) }
     ) {
         sessionManager.getUserById(id)
     }
@@ -274,7 +274,7 @@ class IdCommunityViewModel(
     override val handler: LoadingHandler<CommunityInfo> = CachedLoadingHandler(
         modelStorage.community.observeDatum(id),
         viewModelScope,
-        { modelStorage.community.save(it) }
+        { modelStorage.community.saveToDefault(it) }
     ) {
         sessionManager.getCommunityById(id)
     }
@@ -288,7 +288,7 @@ class IdRoomViewModel(
     override val handler: LoadingHandler<RoomInfo> = CachedLoadingHandler(
         modelStorage.room.observeDatum(id),
         viewModelScope,
-        { modelStorage.room.save(it) }
+        { modelStorage.room.saveToDefault(it) }
     ) {
         sessionManager.getRoomById(id)
     }
@@ -302,7 +302,7 @@ class IdTopicViewModel(
     override val handler: LoadingHandler<TopicInfo> = CachedLoadingHandler(
         modelStorage.topic.observeDatum(id),
         viewModelScope,
-        { modelStorage.topic.save(it) }
+        { modelStorage.topic.saveToDefault(it) }
     ) {
         sessionManager.getTopicById(id)
     }
@@ -316,7 +316,7 @@ class IdFileViewModel(
     override val handler: LoadingHandler<FileInfo> = CachedLoadingHandler(
         modelStorage.fileInfo.observeDatum(id),
         viewModelScope,
-        { modelStorage.fileInfo.save(it) }
+        { modelStorage.fileInfo.saveToDefault(it) }
     ) {
         sessionManager.getFileById(id)
     }
@@ -348,7 +348,7 @@ class IdTitleViewModel(
     override val handler: LoadingHandler<TitleInfo> = CachedLoadingHandler(
         modelStorage.title.observeDatum(id),
         viewModelScope,
-        { modelStorage.title.save(it) }
+        { modelStorage.title.saveToDefault(it) }
     ) {
         sessionManager.getTitleById(id)
     }

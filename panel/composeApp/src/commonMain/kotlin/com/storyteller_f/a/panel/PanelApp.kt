@@ -36,7 +36,6 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -550,7 +549,7 @@ class PanelAccountInstance(scope: CoroutineScope) {
     ) {
         when (any) {
             is OnUserAdded -> {
-                storage.user.save(any.info)
+                storage.user.saveToDefault(any.info)
             }
         }
     }
