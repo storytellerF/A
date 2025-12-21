@@ -13,6 +13,7 @@ import com.storyteller_f.a.backend.core.service.TopicDocument
 import com.storyteller_f.a.backend.core.service.UploadPack
 import com.storyteller_f.a.backend.core.service.UserDocument
 import com.storyteller_f.a.backend.core.types.Community
+import com.storyteller_f.a.backend.core.types.FileRef
 import com.storyteller_f.a.backend.core.types.Member
 import com.storyteller_f.a.backend.core.types.PanelAccount
 import com.storyteller_f.a.backend.core.types.Room
@@ -289,16 +290,30 @@ class AddPreset : Subcommand("add", "add entry") {
         }
         val userMap = getRoomUserMap(presetRooms)
         val communityMap = getRoomCommunityMap(presetRooms)
+        val fileRefs = mutableListOf<FileRef>()
         val data = presetRooms.map {
             val id = SnowflakeFactory.nextId()
             val icon = it.icon
             val s = if (icon == null) {
                 null
             } else {
-                uploadFile(id, ObjectType.ROOM, parentDir, listOf(icon)).first().id
+                val fileInfo = uploadFile(id, ObjectType.ROOM, parentDir, listOf(icon)).first()
+                fileRefs.add(
+                    FileRef(
+                        id = SnowflakeFactory.nextId(),
+                        createdTime = now(),
+                        objectId = id,
+                        objectType = ObjectType.ROOM,
+                        author = userMap[it.admin]!!.id,
+                        mediaName = fileInfo.name,
+                        fileId = fileInfo.id,
+                    )
+                )
+                fileInfo.id
             }
             InsertRoomTuple(it, s, id, now())
         }
+        database.file.insertFileRefs(fileRefs).getOrThrow()
         val memberList = data.flatMap {
             (it.room.users.map { s ->
                 userMap[s]!!.id
@@ -386,8 +401,9 @@ class AddPreset : Subcommand("add", "add entry") {
         Napier.i {
             "users count ${presetValue.userData?.size}"
         }
-        val users = getUserData(userList, parentDir)
+        val (users, fileRefs) = getUserData(userList, parentDir)
         database.admin.batchAddUser(users)
+        database.file.insertFileRefs(fileRefs).getOrThrow()
         // 为每个创建的用户添加 user log
         users.forEach { user ->
             addUserLog(user.id, UserLogType.SIGN_UP, user.id ob ObjectType.USER).getOrThrow()
@@ -415,7 +431,7 @@ class AddPreset : Subcommand("add", "add entry") {
         Napier.i {
             "communities count ${presetValue.communityData?.size}"
         }
-        val data = getCommunityTuples(communityData, parentDir)
+        val (data, fileRefs) = getCommunityTuples(communityData, parentDir)
         val userMap = database.user.getRawUsers(AidListFetch(data.flatMap {
             it.community.users.orEmpty() + (it.community.admin ?: "System")
         }.distinct())).getOrThrow().associate {
@@ -452,6 +468,21 @@ class AddPreset : Subcommand("add", "add entry") {
         communitySearchService.saveDocument(communities.map {
             CommunityDocument.fromCommunity(it)
         }).getOrThrow()
+        
+        // Construct FileRefs here
+        val finalFileRefs = fileRefs.map { (fileInfo, communityId, adminAid) ->
+            FileRef(
+               id = SnowflakeFactory.nextId(),
+               createdTime = now(),
+               objectId = communityId,
+               objectType = ObjectType.COMMUNITY,
+               author = userMap[adminAid]!!.id,
+               mediaName = fileInfo.name,
+               fileId = fileInfo.id,
+           )
+        }
+        database.file.insertFileRefs(finalFileRefs).getOrThrow()
+
         // 为社区创建者添加 user log
         communities.forEach { community ->
             addUserLog(community.owner, UserLogType.CREATE, community.id ob ObjectType.COMMUNITY).getOrThrow()
@@ -466,21 +497,27 @@ class AddPreset : Subcommand("add", "add entry") {
     private suspend fun Backend.getCommunityTuples(
         communityData: List<PresetCommunity>,
         parentDir: File
-    ): List<InsertCommunityTuple> = communityData.map {
-        val id = SnowflakeFactory.nextId()
-        val icon = it.icon
-        val font = it.font
-        val iconMedia = if (icon == null) {
-            null
-        } else {
-            uploadFile(id, ObjectType.COMMUNITY, parentDir, listOf(icon)).first().id
+    ): Pair<List<InsertCommunityTuple>, List<Triple<FileInfo, PrimaryKey, String>>> {
+        val fileRefs = mutableListOf<Triple<FileInfo, PrimaryKey, String>>()
+        val tuples = communityData.map {
+            val id = SnowflakeFactory.nextId()
+            val icon = it.icon
+            val font = it.font
+            val iconMedia = if (icon == null) {
+                null
+            } else {
+                val uploadFile = uploadFile(id, ObjectType.COMMUNITY, parentDir, listOf(icon)).first()
+                fileRefs.add(Triple(uploadFile, id, it.getSafeAdmin()))
+                uploadFile.id
+            }
+            val fontMedia = if (font == null) {
+                null
+            } else {
+                backend.getFileInfoList(listOf("100/$font")).getOrThrow()?.firstOrNull()?.id
+            }
+            InsertCommunityTuple(it, iconMedia, id, fontMedia, now())
         }
-        val fontMedia = if (font == null) {
-            null
-        } else {
-            backend.getFileInfoList(listOf("100/$font")).getOrThrow()?.firstOrNull()?.id
-        }
-        InsertCommunityTuple(it, iconMedia, id, fontMedia, now())
+        return tuples to fileRefs
     }
 
     private suspend fun Backend.addMemberDocuments(
@@ -588,15 +625,28 @@ class AddPreset : Subcommand("add", "add entry") {
     private suspend fun Backend.getUserData(
         userList: List<PresetUser>,
         parentDir: File,
-    ): List<User> {
-        return userList.map {
+    ): Pair<List<User>, List<FileRef>> {
+        val fileRefs = mutableListOf<FileRef>()
+        val users = userList.map {
             val id = it.id ?: SnowflakeFactory.nextId()
             val (derPublicKey, ad) = getPubKeyAndAddress(parentDir, it.privateKey)
             val icon = it.icon
             val p = if (icon == null) {
                 null
             } else {
-                uploadFile(id, ObjectType.USER, parentDir, listOf(icon)).first().id
+                val uploadFile = uploadFile(id, ObjectType.USER, parentDir, listOf(icon)).first()
+                fileRefs.add(
+                    FileRef(
+                        id = SnowflakeFactory.nextId(),
+                        createdTime = now(),
+                        objectId = id,
+                        objectType = ObjectType.USER,
+                        author = id,
+                        mediaName = uploadFile.name,
+                        fileId = uploadFile.id,
+                    )
+                )
+                uploadFile.id
             }
             UserPresetTuple(it, p, derPublicKey, ad, id)
         }.map {
@@ -615,6 +665,7 @@ class AddPreset : Subcommand("add", "add entry") {
                 notificationId
             )
         }
+        return users to fileRefs
     }
 
     private suspend fun getPubKeyAndAddress(
@@ -710,7 +761,7 @@ class AddPreset : Subcommand("add", "add entry") {
             "medias/topics/$it"
         })
         val fileRefs = fileInfos.map { info ->
-            com.storyteller_f.a.backend.core.types.FileRef(
+            FileRef(
                 id = SnowflakeFactory.nextId(),
                 createdTime = now(),
                 objectId = topicId,
