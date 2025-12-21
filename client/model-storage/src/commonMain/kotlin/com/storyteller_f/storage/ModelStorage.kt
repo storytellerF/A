@@ -40,14 +40,14 @@ interface CollectionListStorage<C, I : Any> {
     suspend fun saveFirst(collection: C, item: I)
     fun observeData(collection: C): PagingSource<Int, I>
     suspend fun clean(collection: C)
-
     suspend fun getDocument(collection: C, id: PrimaryKey): I? = getDocument(collection, id.toString())
     suspend fun getDocument(collection: C, key: String): I?
+    suspend fun updateDocument(collection: C, item: I)
     suspend fun delete(collection: C, key: String)
 }
 
 interface CollectionListStorageWithDefault<C, I : Any> : CollectionListStorage<C, I> {
-    suspend fun save(item: I)
+    suspend fun saveToDefault(item: I)
     fun observeDatum(id: PrimaryKey): Flow<I?> = observeDatum(id.toString())
     fun observeDatum(key: String): Flow<I?>
 }
@@ -69,16 +69,11 @@ interface SingletonItemStorage<I : Any> {
 
 sealed interface TopicCollection {
     data object Topics : TopicCollection
-    data class SearchTopic(
-        val word: String,
-        val parentId: PrimaryKey?,
-    ) : TopicCollection
-
     data object Recommend : TopicCollection
-    data class ChildTopicList(val objectId: PrimaryKey) : TopicCollection
-    data class TopicComments(val objectId: PrimaryKey) : TopicCollection
-    data class UserComments(val uid: PrimaryKey) : TopicCollection
     data object AllTopics : TopicCollection
+    data class SearchTopic(val word: String, val parentId: PrimaryKey?) : TopicCollection
+    data class ChildTopicList(val objectId: PrimaryKey) : TopicCollection
+    data class UserComments(val uid: PrimaryKey) : TopicCollection
 }
 
 sealed interface TitleCollection {
@@ -206,7 +201,6 @@ fun TopicCollection.getName(): String {
         TopicCollection.Topics -> "topics"
         TopicCollection.Recommend -> "topics_recommend"
         TopicCollection.AllTopics -> "all_topics"
-        is TopicCollection.TopicComments -> "topic_comments_$objectId"
         is TopicCollection.UserComments -> "user_comments"
     }
 }
@@ -296,6 +290,7 @@ fun MemberCollection.getName(): String {
         } else {
             "community_members_${objectId}_$word"
         }
+
         is MemberCollection.RoomMembers -> if (word.isNullOrBlank()) {
             "room_members_$objectId"
         } else {
@@ -380,7 +375,7 @@ suspend fun TopicInfoStorage.update(
 ) {
     val document = getDocument(collection, id) ?: return
     val value = block(document)
-    save(value)
+    updateDocument(collection, value)
 }
 
 class WrappedPagingSource<K : Any, T : Any, M : Any>(

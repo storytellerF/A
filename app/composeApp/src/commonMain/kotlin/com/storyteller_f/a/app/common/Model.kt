@@ -148,7 +148,7 @@ class IdCommunityViewModel(
             modelStorage.community.observeDatum(communityId),
             viewModelScope,
             { t ->
-                modelStorage.community.save(t)
+                modelStorage.community.saveToDefault(t)
             }
         ) { sessionManager.getCommunityInfo(communityId) }
 }
@@ -164,7 +164,7 @@ class AidCommunityViewModel(
             modelStorage.community.observeDatum(aid),
             viewModelScope,
             { t ->
-                modelStorage.community.save(t)
+                modelStorage.community.saveToDefault(t)
             }
         ) { sessionManager.getCommunityInfoByAid(aid) }
 }
@@ -385,7 +385,7 @@ class IdRoomViewModel(
             modelStorage.room.observeDatum(communityId),
             viewModelScope,
             { t ->
-                modelStorage.room.save(t)
+                modelStorage.room.saveToDefault(t)
             }
         ) {
             sessionManager.getRoomInfo(communityId)
@@ -402,7 +402,7 @@ class AidRoomViewModel(
             modelStorage.room.observeDatum(aid),
             viewModelScope,
             { t ->
-                modelStorage.room.save(t)
+                modelStorage.room.saveToDefault(t)
             }
         ) {
             sessionManager.getRoomInfoByAid(aid)
@@ -416,8 +416,7 @@ class TopicSearchViewModel(
     word: String,
     parentId: PrimaryKey?,
     parentType: ObjectType?,
-) :
-    PagingViewModel<TopicInfo>() {
+) : PagingViewModel<TopicInfo>() {
     private val modelCollection = TopicCollection.SearchTopic(word, parentId)
 
     override val flow: Flow<PagingData<TopicInfo>> = buildPager(
@@ -503,7 +502,7 @@ class IdUserViewModel(
             modelStorage.user.observeDatum(id),
             viewModelScope,
             { t ->
-                modelStorage.user.save(t)
+                modelStorage.user.saveToDefault(t)
             }
         ) {
             sessionManager.getUserInfo(id)
@@ -520,7 +519,7 @@ class AidUserViewModel(
             modelStorage.user.observeDatum(aid),
             viewModelScope,
             { t ->
-                modelStorage.user.save(t)
+                modelStorage.user.saveToDefault(t)
             }
         ) {
             sessionManager.getUserInfoByAid(aid)
@@ -608,7 +607,7 @@ class IdTopicViewModel(
             modelStorage.topic.observeDatum(topicId),
             viewModelScope,
             { t ->
-                modelStorage.topic.save(t)
+                modelStorage.topic.saveToDefault(t)
             }
         ) {
             sessionManager.getTopicInfo(topicId).map { topicInfo ->
@@ -631,7 +630,7 @@ class AidTopicViewModel(
         modelStorage.topic.observeDatum(aid),
         viewModelScope,
         { t ->
-            modelStorage.topic.save(t)
+            modelStorage.topic.saveToDefault(t)
         }
     ) {
         sessionManager.getTopicInfoByAid(aid).map { topicInfo ->
@@ -1026,7 +1025,7 @@ class FileViewViewModel(
         modelStorage.fileInfo.observeDatum(fileId),
         viewModelScope,
         {
-            modelStorage.fileInfo.save(it)
+            modelStorage.fileInfo.saveToDefault(it)
         }
     ) {
         sessionManager.getFileInfo(fileId)

@@ -82,7 +82,7 @@ class RoomUserInfoStorage(appDatabase: AppDatabase) : UserInfoStorage {
         return entity
     }
 
-    override suspend fun save(item: UserInfo) {
+    override suspend fun saveToDefault(item: UserInfo) {
         saveToDefaultCollections(item)
     }
 
@@ -137,6 +137,11 @@ class RoomUserInfoStorage(appDatabase: AppDatabase) : UserInfoStorage {
     override suspend fun clean(collection: UserCollection) {
         impl.clean(collection.getName())
     }
+
+    override suspend fun updateDocument(collection: UserCollection, item: UserInfo) {
+        val data = commonJson.encodeToString(item)
+        impl.update(collection.getName(), item.id.toString(), data)
+    }
 }
 
 class RoomCommunityInfoStorage(appDatabase: AppDatabase) : CommunityInfoStorage {
@@ -154,7 +159,7 @@ class RoomCommunityInfoStorage(appDatabase: AppDatabase) : CommunityInfoStorage 
         return entity
     }
 
-    override suspend fun save(item: CommunityInfo) {
+    override suspend fun saveToDefault(item: CommunityInfo) {
         saveToDefaultCollections(item)
     }
 
@@ -205,6 +210,11 @@ class RoomCommunityInfoStorage(appDatabase: AppDatabase) : CommunityInfoStorage 
     override suspend fun clean(collection: CommunityCollection) {
         impl.clean(collection.getName())
     }
+
+    override suspend fun updateDocument(collection: CommunityCollection, item: CommunityInfo) {
+        val data = commonJson.encodeToString(item)
+        impl.update(collection.getName(), item.id.toString(), data)
+    }
 }
 
 class RoomTopicInfoStorage(val appDatabase: AppDatabase) : TopicInfoStorage {
@@ -221,7 +231,7 @@ class RoomTopicInfoStorage(val appDatabase: AppDatabase) : TopicInfoStorage {
         return entity
     }
 
-    override suspend fun save(item: TopicInfo) {
+    override suspend fun saveToDefault(item: TopicInfo) {
         saveToDefaultCollections(item)
     }
 
@@ -274,6 +284,11 @@ class RoomTopicInfoStorage(val appDatabase: AppDatabase) : TopicInfoStorage {
     override suspend fun clean(collection: TopicCollection) {
         impl.clean(collection.getName())
     }
+
+    override suspend fun updateDocument(collection: TopicCollection, item: TopicInfo) {
+        val data = commonJson.encodeToString(item)
+        impl.update(collection.getName(), item.id.toString(), data)
+    }
 }
 
 class RoomTitleInfoStorage(appDatabase: AppDatabase) : TitleInfoStorage {
@@ -288,7 +303,7 @@ class RoomTitleInfoStorage(appDatabase: AppDatabase) : TitleInfoStorage {
         return entity
     }
 
-    override suspend fun save(item: TitleInfo) {
+    override suspend fun saveToDefault(item: TitleInfo) {
         saveToCollections(item)
     }
 
@@ -341,6 +356,11 @@ class RoomTitleInfoStorage(appDatabase: AppDatabase) : TitleInfoStorage {
     ) {
         impl.delete(collection.getName(), key)
     }
+
+    override suspend fun updateDocument(collection: TitleCollection, item: TitleInfo) {
+        val data = commonJson.encodeToString(item)
+        impl.update(collection.getName(), item.id.toString(), data)
+    }
 }
 
 class CommonStorageImpl(val appDatabase: AppDatabase) {
@@ -392,6 +412,10 @@ class CommonStorageImpl(val appDatabase: AppDatabase) {
     suspend fun save(entity: CommonEntity) {
         appDatabase.getCommonDao().insert(entity)
     }
+
+    suspend fun update(collection: String, id: String, data: String) {
+        appDatabase.getCommonDao().updateData(collection, id, data)
+    }
 }
 
 class RoomRoomInfoStorage(appDatabase: AppDatabase) : RoomInfoStorage {
@@ -409,7 +433,7 @@ class RoomRoomInfoStorage(appDatabase: AppDatabase) : RoomInfoStorage {
         return entity
     }
 
-    override suspend fun save(
+    override suspend fun saveToDefault(
         item: RoomInfo
     ) {
         saveToDefaultCollections(item)
@@ -464,6 +488,11 @@ class RoomRoomInfoStorage(appDatabase: AppDatabase) : RoomInfoStorage {
     override suspend fun clean(collection: RoomCollection) {
         impl.clean(RoomCollection.Rooms.getName())
     }
+
+    override suspend fun updateDocument(collection: RoomCollection, item: RoomInfo) {
+        val data = commonJson.encodeToString(item)
+        impl.update(collection.getName(), item.id.toString(), data)
+    }
 }
 
 class RoomMemberInfoStorage(appDatabase: AppDatabase) : MemberInfoStorage {
@@ -500,6 +529,11 @@ class RoomMemberInfoStorage(appDatabase: AppDatabase) : MemberInfoStorage {
         key: String
     ) {
         impl.delete(collection.getName(), key)
+    }
+
+    override suspend fun updateDocument(collection: MemberCollection, item: MemberInfo) {
+        val data = commonJson.encodeToString<MemberInfo>(item)
+        impl.update(collection.getName(), item.id.toString(), data)
     }
 }
 
@@ -584,6 +618,12 @@ class RoomReactionInfoStorage(appDatabase: AppDatabase) : ReactionInfoStorage {
     ) {
         TODO("Not yet implemented")
     }
+
+    override suspend fun updateDocument(collection: ReactionCollection, item: ReactionInfo) {
+        val id = "${item.objectId}-${item.emoji}"
+        val data = commonJson.encodeToString(item)
+        impl.update(collection.getName(), id, data)
+    }
 }
 
 class RoomChildAccountStorage(appDatabase: AppDatabase) : ChildAccountStorage {
@@ -612,7 +652,7 @@ class RoomChildAccountStorage(appDatabase: AppDatabase) : ChildAccountStorage {
 
 class RoomFileInfoStorage(appDatabase: AppDatabase) : FileInfoStorage {
     val impl = CommonStorageImpl(appDatabase)
-    override suspend fun save(item: FileInfo) {
+    override suspend fun saveToDefault(item: FileInfo) {
         saveToDefaultCollection(item)
     }
 
@@ -657,6 +697,11 @@ class RoomFileInfoStorage(appDatabase: AppDatabase) : FileInfoStorage {
         key: String
     ) {
         impl.delete(collection.getName(), key)
+    }
+
+    override suspend fun updateDocument(collection: FileCollection, item: FileInfo) {
+        val data = commonJson.encodeToString(item)
+        impl.update(collection.getName(), item.id.toString(), data)
     }
 }
 
@@ -746,6 +791,11 @@ class RoomUploadInfoStorage(val appDatabase: AppDatabase) : UploadInfoStorage {
 
     override suspend fun clean(collection: UploadCollection) {
         appDatabase.getUploadDao().clean(collection.getName())
+    }
+
+    override suspend fun updateDocument(collection: UploadCollection, item: UploadInfo) {
+        val data = commonJson.encodeToString(item)
+        appDatabase.getUploadDao().updateData(collection.getName(), item.id.toString(), data)
     }
 
     override fun observeDatumByHash(
@@ -886,6 +936,11 @@ class RoomUserReactionRecordStorage(appDatabase: AppDatabase) : UserReactionReco
     ) {
         TODO("Not yet implemented")
     }
+
+    override suspend fun updateDocument(collection: UserReactionRecordCollection, item: ReactionRecordInfo) {
+        val data = commonJson.encodeToString(item)
+        impl.update(collection.getName(), item.id.toString(), data)
+    }
 }
 
 class RoomUserLogInfoStorage(appDatabase: AppDatabase) : UserLogInfoStorage {
@@ -919,6 +974,11 @@ class RoomUserLogInfoStorage(appDatabase: AppDatabase) : UserLogInfoStorage {
         key: String
     ) {
         TODO("Not yet implemented")
+    }
+
+    override suspend fun updateDocument(collection: UserLogCollection, item: UserLogInfo) {
+        val data = commonJson.encodeToString(item)
+        impl.update(collection.getName(), item.id.toString(), data)
     }
 }
 
@@ -954,6 +1014,11 @@ class RoomUploadRecordInfoStorage(appDatabase: AppDatabase) : UploadRecordInfoSt
     ) {
         TODO("Not yet implemented")
     }
+
+    override suspend fun updateDocument(collection: UploadRecordCollection, item: UploadRecordInfo) {
+        val data = commonJson.encodeToString(item)
+        impl.update(collection.getName(), item.id.toString(), data)
+    }
 }
 
 class RoomFileRefInfoStorage(appDatabase: AppDatabase) : FileRefInfoStorage {
@@ -987,6 +1052,11 @@ class RoomFileRefInfoStorage(appDatabase: AppDatabase) : FileRefInfoStorage {
         key: String
     ) {
         TODO("Not yet implemented")
+    }
+
+    override suspend fun updateDocument(collection: FileRefCollection, item: FileRefInfo) {
+        val data = commonJson.encodeToString(item)
+        impl.update(collection.getName(), item.id.toString(), data)
     }
 }
 
