@@ -1,3 +1,1 @@
-actual abstract class UsingContextTest {
-
-}
+actual abstract class UsingContextTest
