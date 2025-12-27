@@ -1,7 +1,7 @@
+import com.android.build.gradle.internal.tasks.factory.dependsOn
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import java.lang.Exception
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -18,11 +18,26 @@ kotlin {
             browser()
         }
     }
-
-    androidTarget {
+    android {
+        namespace = "com.storyteller_f.a.client.kotbase"
+        compileSdk = libs.versions.android.compileSdk.get().toInt()
+        minSdk = libs.versions.android.minSdk.get().toInt()
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_21)
         }
+        withHostTest {
+            isIncludeAndroidResources = true
+        }
+        withDeviceTest { }
+//        defaultConfig {
+//            consumerProguardFiles("consumer-rules.pro")
+//        }
+//        testOptions {
+//            unitTests.all {
+//                val dir = project.layout.buildDirectory.dir("native-libs/couchbase").get().asFile
+//                it.jvmArgs("-Djava.library.path=$dir")
+//            }
+//        }
     }
 
     if (buildIosTarget) {
@@ -54,11 +69,17 @@ kotlin {
             implementation(libs.couchbase.lite.ktx)
             implementation(libs.couchbase.lite.paging)
         }
-        androidUnitTest.dependencies {
-            implementation(libs.robolectric)
-        }
-        androidUnitTest {
+        getByName("androidHostTest") {
+            dependencies {
+                implementation(libs.robolectric)
+            }
             dependsOn(headlessTest)
+        }
+
+        getByName("androidDeviceTest") {
+            dependencies {
+                implementation(libs.androidx.ui.test.junit4.android)
+            }
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
@@ -74,36 +95,14 @@ kotlin {
 }
 
 dependencies {
-    androidTestImplementation(libs.androidx.ui.test.junit4.android)
-    debugImplementation(libs.androidx.ui.test.manifest)
+    androidRuntimeClasspath(libs.androidx.ui.test.manifest)
 }
 
-android {
-    namespace = "com.storyteller_f.a.client.kotbase"
-    compileSdk = libs.versions.android.compileSdk.get().toInt()
-    compileOptions {
-        val javaVersion = JavaVersion.forClassVersion(libs.versions.jdk.get().toInt())
-        sourceCompatibility = javaVersion
-        targetCompatibility = javaVersion
-    }
-    defaultConfig {
-        minSdk = libs.versions.android.minSdk.get().toInt()
-        consumerProguardFiles("consumer-rules.pro")
-    }
-    testOptions {
-        unitTests.all {
-            val dir = project.layout.buildDirectory.dir("native-libs/couchbase").get().asFile
-            it.jvmArgs("-Djava.library.path=$dir")
-        }
-        unitTests {
-            isIncludeAndroidResources = true
-        }
-    }
-}
 interface Injected {
     @get:Inject
     val operations: ArchiveOperations
 }
+
 val extractCouchbaseLibsTask = tasks.register("extractCouchbaseNativeLib") {
     group = "libs"
     val outputDir = layout.buildDirectory.dir("native-libs/couchbase")
@@ -142,5 +141,22 @@ val extractCouchbaseLibsTask = tasks.register("extractCouchbaseNativeLib") {
 }
 
 afterEvaluate {
-    tasks.getByName("testDebugUnitTest").dependsOn(extractCouchbaseLibsTask)
+    tasks.getByName("testAndroid").dependsOn(extractCouchbaseLibsTask)
+    listOf(
+        ":api:jar",
+        ":shared:jvmJar",
+        ":backend:core:jar",
+        ":backend:elastic:jar",
+        ":backend:exposed:jar",
+        ":backend:filesystem:jar",
+        ":backend:lucene:jar",
+        ":backend:minio:jar",
+        ":backend:redis:jar",
+        ":backend:simple:jar",
+        ":cloud:pdf:jar",
+        ":cloud:openpdf:jar",
+        ":cloud:service:jar"
+    ).forEach { path ->
+        extractCouchbaseLibsTask.dependsOn(path)
+    }
 }

@@ -13,14 +13,13 @@ import java.util.Properties
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.androidApplication)
+    alias(libs.plugins.androidLibrary)
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
 //    alias(libs.plugins.composeHotReload)
     alias(libs.plugins.serialization)
     alias(libs.plugins.easylauncher)
     alias(libs.plugins.buildconfig)
-    id("compose-app")
 }
 val buildIosTarget = project.findProperty("target.ios") == "true"
 val buildWasmTarget = project.findProperty("target.wasm") == "true"
@@ -28,10 +27,18 @@ val flavorStr = project.findProperty("server.flavor") as String
 val flavorId = CaseFormat.LOWER_HYPHEN.converterTo(CaseFormat.LOWER_UNDERSCORE).convert(flavorStr)!!
 val buildType = project.findProperty("server.buildType") as String
 kotlin {
-    androidTarget {
+    android {
+        namespace = "com.storyteller_f.a.panel"
+        compileSdk = libs.versions.android.compileSdk.get().toInt()
+        minSdk = libs.versions.android.minSdk.get().toInt()
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_21)
         }
+        androidResources {
+            enable = true
+        }
+        withHostTest { }
+        withDeviceTest { }
     }
     if (buildIosTarget) {
         listOf(
@@ -96,14 +103,16 @@ kotlin {
             }
             implementation(libs.okhttp)
         }
-        androidUnitTest.dependencies {
-            implementation(libs.robolectric)
-        }
-        androidUnitTest {
+        getByName("androidHostTest") {
+            dependencies {
+                implementation(libs.robolectric)
+            }
             dependsOn(headlessTest)
         }
-        androidInstrumentedTest.dependencies {
-            implementation(libs.leakcanary.android)
+        getByName("androidDeviceTest") {
+            dependencies {
+                implementation(libs.androidx.ui.test.junit4.android)
+            }
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -199,38 +208,9 @@ composeCompiler {
     stabilityConfigurationFiles.addAll(rootProject.layout.projectDirectory.file("stability_config.conf"))
 }
 
-android {
-    namespace = "com.storyteller_f.a.panel"
-
-    defaultConfig {
-        applicationId = "com.storyteller_f.a.panel.$flavorId"
-    }
-    buildTypes {
-        create("benchmark") {
-            initWith(buildTypes.getByName("release"))
-            signingConfig = signingConfigs.getByName("debug")
-            matchingFallbacks += listOf("release")
-            isDebuggable = false
-        }
-    }
-}
-
 dependencies {
-    debugImplementation(compose.uiTooling)
-    androidTestImplementation(libs.androidx.ui.test.junit4.android)
-    debugImplementation(libs.androidx.ui.test.manifest)
-}
-
-easylauncher {
-    iconNames.addAll("@mipmap/ic_launcher", "@mipmap/ic_launcher_round")
-    buildTypes {
-        register("debug") {
-            filters(chromeLike(label = flavorStr), greenRibbonFilter("debug"))
-        }
-        register("release") {
-            filters(chromeLike(label = flavorStr))
-        }
-    }
+    androidRuntimeClasspath(compose.uiTooling)
+    androidRuntimeClasspath(libs.androidx.ui.test.manifest)
 }
 
 compose.desktop {

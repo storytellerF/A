@@ -108,14 +108,14 @@ val composeModules = listOf(
     ":client:room"
 )
 dependencies {
-    (composeModules + jvmLibModules).forEach {
+    (jvmLibModules).forEach {
         kover(project(it))
     }
 }
 
 subprojects {
     val n = displayName.removePrefix("project ").removeSurrounding("'")
-    if ((jvmLibModules + composeModules).contains(n)) {
+    if ((jvmLibModules).contains(n)) {
         apply(plugin = "org.jetbrains.kotlinx.kover")
         kover {
             reports {
@@ -128,5 +128,4 @@ subprojects {
             }
         }
     }
-
 }

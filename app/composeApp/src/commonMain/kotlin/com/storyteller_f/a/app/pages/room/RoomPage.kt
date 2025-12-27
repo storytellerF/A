@@ -352,9 +352,7 @@ private fun RoomInputGroupInternal(
 }
 
 @Composable
-private fun RoomInputTopContent(
-    roomInfo: RoomInfo,
-) {
+private fun RoomInputTopContent(roomInfo: RoomInfo) {
     val keysViewModel = createRoomKeysViewModel(roomInfo.id, roomInfo)
     val keysData by keysViewModel.handler.data.collectAsState()
     val keysState by keysViewModel.handler.state.collectAsState()
@@ -605,7 +603,7 @@ fun RoomDialogInternal(roomInfo: RoomInfo, dismiss: () -> Unit) {
             RoomIcon(roomInfo, 50.dp, false, commonDialogController::update)
             Column {
                 Text(roomInfo.name)
-                Text(stringResource(Res.string.aid_display, roomInfo.aid.toString()))
+                Text(stringResource(Res.string.aid_display, roomInfo.aid))
             }
         }
 

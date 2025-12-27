@@ -28,7 +28,6 @@ import coil3.request.ImageRequest
 import coil3.toBitmap
 import com.storyteller_f.a.app.AppConfig
 import com.storyteller_f.a.app.BubbleActivity
-import com.storyteller_f.a.app.BuildConfig
 import com.storyteller_f.a.app.MainActivity
 import com.storyteller_f.a.app.R
 import com.storyteller_f.a.app.RTCActivity
@@ -54,7 +53,7 @@ actual val appPlatform: AppPlatform
         val activity = mainActivityRef?.get()
         val currentState = activity?.lifecycle?.currentState
         val isActive = currentState?.isAtLeast(Lifecycle.State.RESUMED) == true
-        return AppPlatform(true, isActive, BuildConfig.DEBUG)
+        return AppPlatform(true, isActive, AppConfig.DEBUG)
     }
 
 actual fun initEnvironment(context: Any) {
@@ -202,7 +201,7 @@ actual fun getDeepLinkHost(): String {
 }
 
 actual fun getDeepLinkScheme(): String {
-    return "${AppConfig.DEEP_LINK_SCHEME_PREFIX}${if (BuildConfig.DEBUG) "-debug" else ""}"
+    return "${AppConfig.DEEP_LINK_SCHEME_PREFIX}${if (AppConfig.DEBUG) "-debug" else ""}"
 }
 
 suspend fun getIconBitmapFromName(context: Context, name: String): Bitmap? {

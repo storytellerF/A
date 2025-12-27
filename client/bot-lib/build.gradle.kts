@@ -1,4 +1,3 @@
-import org.gradle.kotlin.dsl.kotlin
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -17,7 +16,10 @@ kotlin {
         }
     }
 
-    androidTarget {
+    android {
+        namespace = "com.storyteller_f.a.client.bot_lib"
+        compileSdk = libs.versions.android.compileSdk.get().toInt()
+        minSdk = libs.versions.android.minSdk.get().toInt()
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_21)
         }
@@ -40,18 +42,5 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
         }
-    }
-}
-
-android {
-    namespace = "com.storyteller_f.a.client.bot_lib"
-    compileSdk = libs.versions.android.compileSdk.get().toInt()
-    compileOptions {
-        val javaVersion = JavaVersion.forClassVersion(libs.versions.jdk.get().toInt())
-        sourceCompatibility = javaVersion
-        targetCompatibility = javaVersion
-    }
-    defaultConfig {
-        minSdk = libs.versions.android.minSdk.get().toInt()
     }
 }

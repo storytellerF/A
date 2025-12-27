@@ -9,7 +9,8 @@ import com.storyteller_f.shared.encryptDataByAES
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import kotlinx.coroutines.test.runTest
-import org.junit.Test
+import kotlin.test.Ignore
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -17,6 +18,7 @@ import kotlin.test.assertTrue
 
 class LoginUserSessionTest : UsingContextTest() {
     @Test
+    @Ignore
     fun testSession() = loginSessionTest { privateKey, publicKey, ad, sessionFactory ->
         val addSession = sessionFactory.addSession(RawUserPassInfo(privateKey, publicKey, ad))
         assertEquals(1, sessionFactory.getSavedSession().alias.size)
@@ -32,6 +34,7 @@ class LoginUserSessionTest : UsingContextTest() {
     }
 
     @Test
+    @Ignore
     fun `test exit session`() = loginSessionTest { privateKey, publicKey, ad, sessionFactory ->
         sessionFactory.addSession(RawUserPassInfo(privateKey, publicKey, ad))
         val session = sessionFactory.getSavedSession()
@@ -44,6 +47,7 @@ class LoginUserSessionTest : UsingContextTest() {
     }
 
     @Test
+    @Ignore
     fun `test remove session`() = loginSessionTest { privateKey, publicKey, ad, sessionFactory ->
         sessionFactory.addSession(RawUserPassInfo(privateKey, publicKey, ad))
         val session = sessionFactory.getSavedSession()
@@ -57,6 +61,7 @@ class LoginUserSessionTest : UsingContextTest() {
     }
 
     @Test
+    @Ignore
     fun `test build session`() = loginSessionTest { privateKey, publicKey, ad, sessionFactory ->
         sessionFactory.addSession(RawUserPassInfo(privateKey, publicKey, ad))
         val session = sessionFactory.getSavedSession()

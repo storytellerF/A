@@ -314,21 +314,7 @@ class AddPreset : Subcommand("add", "add entry") {
             InsertRoomTuple(it, s, id, now())
         }
         database.file.insertFileRefs(fileRefs).getOrThrow()
-        val memberList = data.flatMap {
-            (it.room.users.map { s ->
-                userMap[s]!!.id
-            } + userMap[it.room.admin]!!.id).distinct().map { uid ->
-                Member(
-                    SnowflakeFactory.nextId(),
-                    uid,
-                    it.id,
-                    ObjectType.ROOM,
-                    it.createdTime,
-                    MemberStatus.JOINED,
-                    it.createdTime
-                )
-            }
-        }
+        val memberList = getRoomMembers(data, userMap)
         val roomList = data.map {
             val presetRoom = it.room
             Room(
@@ -350,6 +336,28 @@ class AddPreset : Subcommand("add", "add entry") {
             addUserLog(member.uid, UserLogType.JOIN, member.objectId ob member.objectType).getOrThrow()
         }
         addMemberDocuments(memberList, userMap, roomMap = roomList.associateBy { it.id })
+    }
+
+    private suspend fun getRoomMembers(
+        data: List<InsertRoomTuple>,
+        userMap: Map<String?, User>
+    ): List<Member> {
+        val memberList = data.flatMap {
+            (it.room.users.map { s ->
+                userMap[s]!!.id
+            } + userMap[it.room.admin]!!.id).distinct().map { uid ->
+                Member(
+                    SnowflakeFactory.nextId(),
+                    uid,
+                    it.id,
+                    ObjectType.ROOM,
+                    it.createdTime,
+                    MemberStatus.JOINED,
+                    it.createdTime
+                )
+            }
+        }
+        return memberList
     }
 
     private suspend fun Backend.getRoomCommunityMap(l: List<PresetRoom>): Map<String, Community> =
@@ -449,6 +457,41 @@ class AddPreset : Subcommand("add", "add entry") {
                 fontId = it.font,
             )
         }
+        val memberList = getCommunityMembers(data, userMap)
+        database.admin.batchAddCommunities(communities, memberList)
+        communitySearchService.saveDocument(communities.map {
+            CommunityDocument.fromCommunity(it)
+        }).getOrThrow()
+
+        // Construct FileRefs here
+        val finalFileRefs = fileRefs.map { (fileInfo, communityId, adminAid) ->
+            FileRef(
+                id = SnowflakeFactory.nextId(),
+                createdTime = now(),
+                objectId = communityId,
+                objectType = ObjectType.COMMUNITY,
+                author = userMap[adminAid]!!.id,
+                mediaName = fileInfo.name,
+                fileId = fileInfo.id,
+            )
+        }
+        database.file.insertFileRefs(finalFileRefs).getOrThrow()
+
+        // 为社区创建者添加 user log
+        communities.forEach { community ->
+            addUserLog(community.owner, UserLogType.CREATE, community.id ob ObjectType.COMMUNITY).getOrThrow()
+        }
+        // 为加入的成员添加 user log
+        memberList.forEach { member ->
+            addUserLog(member.uid, UserLogType.JOIN, member.objectId ob member.objectType).getOrThrow()
+        }
+        addMemberDocuments(memberList, userMap, communityMap = communities.associateBy { it.id })
+    }
+
+    private suspend fun getCommunityMembers(
+        data: List<InsertCommunityTuple>,
+        userMap: Map<String?, User>
+    ): List<Member> {
         val memberList = data.flatMap {
             (it.community.users?.map { s ->
                 userMap[s]!!.id
@@ -464,34 +507,7 @@ class AddPreset : Subcommand("add", "add entry") {
                 )
             }
         }
-        database.admin.batchAddCommunities(communities, memberList)
-        communitySearchService.saveDocument(communities.map {
-            CommunityDocument.fromCommunity(it)
-        }).getOrThrow()
-        
-        // Construct FileRefs here
-        val finalFileRefs = fileRefs.map { (fileInfo, communityId, adminAid) ->
-            FileRef(
-               id = SnowflakeFactory.nextId(),
-               createdTime = now(),
-               objectId = communityId,
-               objectType = ObjectType.COMMUNITY,
-               author = userMap[adminAid]!!.id,
-               mediaName = fileInfo.name,
-               fileId = fileInfo.id,
-           )
-        }
-        database.file.insertFileRefs(finalFileRefs).getOrThrow()
-
-        // 为社区创建者添加 user log
-        communities.forEach { community ->
-            addUserLog(community.owner, UserLogType.CREATE, community.id ob ObjectType.COMMUNITY).getOrThrow()
-        }
-        // 为加入的成员添加 user log
-        memberList.forEach { member ->
-            addUserLog(member.uid, UserLogType.JOIN, member.objectId ob member.objectType).getOrThrow()
-        }
-        addMemberDocuments(memberList, userMap, communityMap = communities.associateBy { it.id })
+        return memberList
     }
 
     private suspend fun Backend.getCommunityTuples(
@@ -560,26 +576,7 @@ class AddPreset : Subcommand("add", "add entry") {
         }
         val tuples = getTopicTuples(list, parentDir, objectType, userMap, communityMap)
         database.admin.batchAddTopics(tuples, userMap, objectType).getOrThrow()
-        topicSearchService.saveDocument(
-            tuples.mapIndexed { index, topicTuple ->
-                val level = topicTuple.level
-                TopicDocument(
-                    topicTuple.id,
-                    topicTuple.content.decodeToString(),
-                    topicTuple.rootId,
-                    objectType.name,
-                    when (level) {
-                        0 -> topicTuple.rootId
-                        else -> tuples[index - topicTuple.topic.parent!!].id
-                    },
-                    when (level) {
-                        0 -> objectType
-                        else -> ObjectType.TOPIC
-                    }.name,
-                    userMap[topicTuple.topic.author]!!.id
-                )
-            }
-        ).getOrThrow()
+        topicSearchService.saveDocument(getDocumentsFromTuples(tuples, objectType, userMap)).getOrThrow()
         tuples.forEach { topicTuple ->
             uploadTopicMedias(parentDir, userMap, topicTuple.id, topicTuple.topic)
         }
@@ -589,6 +586,29 @@ class AddPreset : Subcommand("add", "add entry") {
             addUserLog(authorId, UserLogType.CREATE, tuple.id ob ObjectType.TOPIC).getOrThrow()
         }
         batchAddSubscriptions(tuples, userMap)
+    }
+
+    private fun getDocumentsFromTuples(
+        tuples: List<InsertTopicTuple>,
+        objectType: ObjectType,
+        userMap: Map<String, User>
+    ): List<TopicDocument> = tuples.mapIndexed { index, topicTuple ->
+        val level = topicTuple.level
+        TopicDocument(
+            topicTuple.id,
+            topicTuple.content.decodeToString(),
+            topicTuple.rootId,
+            objectType.name,
+            when (level) {
+                0 -> topicTuple.rootId
+                else -> tuples[index - topicTuple.topic.parent!!].id
+            },
+            when (level) {
+                0 -> objectType
+                else -> ObjectType.TOPIC
+            }.name,
+            userMap[topicTuple.topic.author]!!.id
+        )
     }
 
     private suspend fun getTopicTuples(

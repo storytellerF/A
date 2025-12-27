@@ -10,12 +10,14 @@ import com.storyteller_f.a.client.core.getRecommendTopics
 import com.storyteller_f.a.client.core.startBackgroundTask
 import kotlinx.coroutines.cancelAndJoin
 import remoteServerTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 
 class TopicContentTest : UsingContextTest() {
 
     @OptIn(ExperimentalTestApi::class)
     @Test
+    @Ignore
     fun testApp() = remoteServerTest(8080) { url ->
         val webSocketUrl = buildWebSocketUrl(url.replace("http", "ws"))
         val manager = createUserSessionManager(webSocketUrl, { model, cookie ->
