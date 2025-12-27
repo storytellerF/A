@@ -21,9 +21,15 @@ kotlin {
         }
     }
 
-    androidTarget {
+    androidLibrary {
+        namespace = "com.storyteller_f.a.shared"
+        compileSdk = libs.versions.android.compileSdk.get().toInt()
+        minSdk = libs.versions.android.minSdk.get().toInt()
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_21)
+        }
+        withHostTest {
+            isIncludeAndroidResources = true
         }
     }
 
@@ -60,10 +66,10 @@ kotlin {
             dependsOn(generalJvmMain)
             dependsOn(noSpecialJvmMain)
         }
-        androidUnitTest.dependencies {
-            implementation(libs.robolectric)
-        }
-        androidUnitTest {
+        getByName("androidHostTest") {
+            dependencies {
+                implementation(libs.robolectric)
+            }
             dependsOn(headlessTest)
         }
         commonMain.dependencies {
@@ -112,26 +118,5 @@ kotlin {
     }
     compilerOptions {
         freeCompilerArgs.addAll("-Xexpect-actual-classes", "-Xcontext-parameters")
-    }
-}
-
-android {
-    namespace = "com.storyteller_f.a.shared"
-    compileSdk = libs.versions.android.compileSdk.get().toInt()
-    compileOptions {
-        val javaVersion = JavaVersion.forClassVersion(libs.versions.jdk.get().toInt())
-        sourceCompatibility = javaVersion
-        targetCompatibility = javaVersion
-    }
-    defaultConfig {
-        minSdk = libs.versions.android.minSdk.get().toInt()
-    }
-    testOptions {
-        unitTests {
-            isIncludeAndroidResources = true
-            all {
-                it.systemProperty("robolectric.logging.enabled", true)
-            }
-        }
     }
 }

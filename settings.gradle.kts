@@ -50,8 +50,9 @@ dependencyResolutionManagement {
 include(":shared")
 
 include(":app:composeApp")
-include(":app:cliApp")
+//include(":app:cliApp")
 include(":app:core")
+include(":app:android")
 
 include(":dev:core")
 include(":dev:server")
@@ -66,6 +67,7 @@ include(":cloud:pdfbox")
 include(":cloud:openpdf")
 include(":cloud:pdf")
 include(":panel:composeApp")
+include(":panel:android")
 
 include(":backend:exposed")
 include(":backend:core")
@@ -79,7 +81,7 @@ include(":backend:minio")
 include(":client:core")
 include(":client:bot-lib")
 include(":client:model-storage")
-include(":client:kotbase")
+//include(":client:kotbase")
 include(":client:room")
 //include(":client:ascii-parser")
 

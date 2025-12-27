@@ -13,10 +13,17 @@ plugins {
 val buildIosTarget = project.findProperty("target.ios") == "true"
 val buildWasmTarget = project.findProperty("target.wasm") == "true"
 kotlin {
-    androidTarget {
+    android {
+        namespace = "com.storyteller_f.a.app.core"
+        compileSdk = libs.versions.android.compileSdk.get().toInt()
+        minSdk = libs.versions.android.minSdk.get().toInt()
+        androidResources {
+            enable = true
+        }
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_21)
         }
+        withHostTest { }
     }
 
     if (buildIosTarget) {
@@ -67,9 +74,12 @@ kotlin {
             implementation(libs.androidx.ui.tooling.preview)
             implementation(libs.okhttp)
         }
-        androidUnitTest.dependencies {
-            implementation(libs.robolectric)
+        getByName("androidHostTest") {
+            dependencies {
+                implementation(libs.robolectric)
+            }
         }
+
         commonMain.dependencies {
             implementation(compose.runtime)
             implementation(compose.foundation)
@@ -153,22 +163,8 @@ kotlin {
 }
 
 dependencies {
-    debugImplementation(compose.uiTooling)
-    androidTestImplementation(libs.androidx.ui.test.junit4.android)
-    debugImplementation(libs.androidx.ui.test.manifest)
-}
-
-android {
-    namespace = "com.storyteller_f.a.app.core"
-    compileSdk = libs.versions.android.compileSdk.get().toInt()
-    compileOptions {
-        val javaVersion = JavaVersion.forClassVersion(libs.versions.jdk.get().toInt())
-        sourceCompatibility = javaVersion
-        targetCompatibility = javaVersion
-    }
-    defaultConfig {
-        minSdk = libs.versions.android.minSdk.get().toInt()
-    }
+    androidRuntimeClasspath(compose.uiTooling)
+    androidRuntimeClasspath(libs.androidx.ui.test.manifest)
 }
 
 compose.resources {

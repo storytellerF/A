@@ -1,8 +1,8 @@
 [versions]
-aboutlibrariesComposeM3 = "13.1.0"
-aboutlibrariesCore = "13.1.0"
+aboutlibrariesComposeM3 = "13.2.1"
+aboutlibrariesCore = "13.2.1"
 accompanistPermissions = "0.37.3"
-agp = "8.13.1"
+agp = "8.13.2"
 android-compileSdk = "36"
 android-minSdk = "26"
 android-targetSdk = "36"
@@ -10,11 +10,11 @@ commonsImaging = "1.0.0-alpha6"
 javaClient = "10.0.0"
 kodio-core = "0.0.6"
 jdk = "65"
-androidx-activityCompose = "1.12.0"
-bcprovJdk18on = "1.82"
+androidx-activityCompose = "1.12.2"
+bcprovJdk18on = "1.83"
 buildconfig = "0.17.1"
 coil = "3.3.0"
-googleGenai = "1.28.0"
+googleGenai = "1.32.0"
 icu4j = "78.1"
 openpdf = "3.0.0"
 pdfcompare = "1.2.7"
@@ -31,65 +31,66 @@ connectivity = "2.3.0"
 coreSplashscreen = "1.2.0"
 couchbaseLite = "3.2.4-1.2.0"
 cryptographyCore = "0.5.0"
-composeHotReload = "1.0.0-rc02"
+composeHotReload = "1.0.0"
 datastorePreferencesCore = "1.2.0"
 desugar_jdk_libs = "2.1.5"
 detektVersion = "1.23.8"
 easylauncher = "6.4.1"
-elasticsearchJava = "9.2.1"
+elasticsearchJava = "9.2.3"
 emojiKt = "2.3.0"
-exposedVersion = "1.0.0-rc-3"
+exposedVersion = "1.0.0-rc-4"
 filekitCompose = "0.12.0"
 font-icon-core = "2.1.1"
-geoip2 = "5.0.0"
+geoip2 = "5.0.2"
 h2 = "1.0.0.RELEASE"
-haze = "1.7.0"
+haze = "1.7.1"
 highlights = "1.1.0"
-humanReadable = "1.12.1"
+humanReadable = "1.12.3"
 jacksonModuleKotlin = "2.20.1"
 javacvPlatform = "1.5.12"
-javet = "5.0.1"
+javet = "5.0.2"
 jlatexmath = "1.0.7"
 jlatexmathAndroid = "0.2.0"
 jlayer = "1.0.3"
 kfswatch = "1.4.0"
 kim = "0.26.2"
-kotlin = "2.2.21"
-kotlin_buildconfig = "6.0.1"
+kotlin = "2.3.0"
+kotlin_buildconfig = "6.0.7"
 kotlinxCli = "0.3.6"
 kotlinxCollectionsImmutable = "0.4.0"
 kotlinxCoroutinesSwing = "1.10.2"
 kotlinxDatetime = "0.7.1-0.6.x-compat"
 kotlinxSerializationJson = "1.9.0"
-kover = "0.9.3"
+kover = "0.9.4"
 kreds = "0.9.1"
 krop-ui = "0.2.0"
-ksp = "2.2.20-2.0.4"
-ktor = "3.3.2"
-kzip = "1.1.0"
+ksp = "2.3.4"
+ktor = "3.3.3"
+kzip = "1.1.1"
 leakcanaryAndroid = "2.14"
-lifecycleViewmodelCompose = "2.9.4"
+lifecycleViewmodelCompose = "2.9.6"
+lifecycle = "2.9.4"
 llama = "4.2.0"
-logback = "1.5.21"
+logback = "1.5.23"
 luceneCore = "10.3.2"
 m3uParser = "1.4.0"
 markdown = "0.7.3"
 material3WindowSizeClassMultiplatform = "0.5.0"
-media3Exoplayer = "1.8.0"
+media3Exoplayer = "1.9.0"
 memoryfilesystem = "2.8.2"
-micrometerRegistryPrometheus = "1.16.0"
+micrometerRegistryPrometheus = "1.16.1"
 minio = "8.6.0"
 mysqlConnectorJava = "8.0.33"
 newpipeextractorVersion = "v0.24.5"
 okhttp = "5.3.2"
-pagingCommon = "3.4.0-alpha04"
+pagingCommon = "3.4.0-beta01"
 sqlFormatter = "2.0.5"
 sqliteBundled = "2.6.2"
 tableM3 = "0.2.3"
 tasksGenai = "0.10.29"
-testContainer = "1.21.3"
+testContainer = "1.21.4"
 mosaicRuntime = "0.18.0"
-multiplatformMarkdownRenderer = "0.38.1"
+multiplatformMarkdownRenderer = "0.39.0"
 multiplatformSettingsNoArg = "1.3.0"
 napier = "2.7.1"
 navigationCompose = "2.9.1"
@@ -100,18 +101,18 @@ recordCore = "0.5.0"
 richeditorCompose = "1.0.0-rc13"
 robolectric = "4.16"
 tikaCore = "3.2.3"
-uiTestJunit4Android = "1.9.5"
-uiToolingPreview = "1.9.5"
+uiTestJunit4Android = "1.10.0"
+uiToolingPreview = "1.10.0"
 uriKmp = "0.0.21"
 urlbuilder = "2.0.9"
 vaviImageAvif = "0.0.7"
-vlcj = "4.11.0"
+vlcj = "4.12.1"
 webrtcKmp = "0.125.11"
 zoomimageComposeCoil3 = "1.4.0"
 junit = "1.3.0"
 espressoCore = "3.7.0"
-uiautomator = "2.2.0"
-benchmarkMacroJunit4 = "1.2.0-beta01"
+uiautomator = "2.3.0"
+benchmarkMacroJunit4 = "1.4.1"
 
 [libraries]
 aboutlibraries-compose-m3 = { module = "com.mikepenz:aboutlibraries-compose-m3", version.ref = "aboutlibrariesComposeM3" }
@@ -121,7 +122,7 @@ androidx-activity-compose = { module = "androidx.activity:activity-compose", ver
 androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
 androidx-datastore-preferences-core = { module = "androidx.datastore:datastore-preferences-core", version.ref = "datastorePreferencesCore" }
 androidx-lifecycle-viewmodel-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelCompose" }
-androidx-lifecycle-runtimeCompose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycleViewmodelCompose" }
+#androidx-lifecycle-runtimeCompose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycleViewmodelCompose" }
 androidx-media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "media3Exoplayer" }
 androidx-media3-exoplayer-dash = { module = "androidx.media3:media3-exoplayer-dash", version.ref = "media3Exoplayer" }
 androidx-media3-exoplayer-hls = { module = "androidx.media3:media3-exoplayer-hls", version.ref = "media3Exoplayer" }
@@ -257,8 +258,8 @@ ktor-server-websockets = { module = "io.ktor:ktor-server-websockets", version.re
 ktor-server-metrics-micrometer = { module = "io.ktor:ktor-server-metrics-micrometer", version.ref = "ktor" }
 ktor-server-partial-content = { module = "io.ktor:ktor-server-partial-content", version.ref = "ktor" }
 ktor-server-auto-head-response = { module = "io.ktor:ktor-server-auto-head-response", version.ref = "ktor" }
-lifecycle-process = { module = "androidx.lifecycle:lifecycle-process", version.ref = "lifecycleViewmodelCompose" }
-lifecycle-service = { module = "androidx.lifecycle:lifecycle-service", version.ref = "lifecycleViewmodelCompose" }
+lifecycle-process = { module = "androidx.lifecycle:lifecycle-process", version.ref = "lifecycle" }
+lifecycle-service = { module = "androidx.lifecycle:lifecycle-service", version.ref = "lifecycle" }
 logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 lucene-analysis-common = { module = "org.apache.lucene:lucene-analysis-common", version.ref = "luceneCore" }
 lucene-backward-codecs = { module = "org.apache.lucene:lucene-backward-codecs", version.ref = "luceneCore" }
@@ -302,7 +303,7 @@ androidx-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchm
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
-androidLibrary = { id = "com.android.library", version.ref = "agp" }
+androidLibrary = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
 buildconfig = { id = "com.codingfeline.buildkonfig", version.ref = "buildconfig" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 easylauncher = { id = "com.starter.easylauncher", version.ref = "easylauncher" }

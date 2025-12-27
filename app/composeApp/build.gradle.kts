@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.plugin.KotlinDependencyHandler
-import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSetTree
 import org.jetbrains.kotlin.gradle.targets.wasm.yarn.WasmYarnRootExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.io.FileInputStream
@@ -19,14 +18,13 @@ import java.util.Properties
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.androidApplication)
+    alias(libs.plugins.androidLibrary)
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.buildconfig)
     alias(libs.plugins.easylauncher)
     alias(libs.plugins.serialization)
     id("com.mikepenz.aboutlibraries.plugin")
-    id("compose-app")
 }
 
 val buildIosTarget = project.findProperty("target.ios") == "true"
@@ -36,12 +34,20 @@ val flavorId = CaseFormat.LOWER_HYPHEN.converterTo(CaseFormat.LOWER_UNDERSCORE).
 val buildType = project.findProperty("server.buildType") as String
 
 kotlin {
-    androidTarget {
+    android {
+        namespace = "com.storyteller_f.a.app"
+        compileSdk = libs.versions.android.compileSdk.get().toInt()
+        minSdk = libs.versions.android.minSdk.get().toInt()
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_21)
         }
-        @OptIn(ExperimentalKotlinGradlePluginApi::class)
-        instrumentedTestVariant.sourceSetTree.set(KotlinSourceSetTree.test)
+        androidResources {
+            enable = true
+        }
+        withHostTest { }
+        withDeviceTest { }
+//        @OptIn(ExperimentalKotlinGradlePluginApi::class)
+//        instrumentedTestVariant.sourceSetTree.set(KotlinSourceSetTree.test)
     }
 
     if (buildIosTarget) {
@@ -105,14 +111,16 @@ kotlin {
             }
             implementation(libs.okhttp)
         }
-        androidUnitTest.dependencies {
-            implementation(libs.robolectric)
-        }
-        androidUnitTest {
+        getByName("androidHostTest") {
+            dependencies {
+                implementation(libs.robolectric)
+            }
             dependsOn(headlessTest)
         }
-        androidInstrumentedTest.dependencies {
-            implementation(libs.leakcanary.android)
+        getByName("androidDeviceTest") {
+            dependencies {
+                implementation(libs.androidx.ui.test.junit4.android)
+            }
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -203,9 +211,8 @@ kotlin {
 }
 
 dependencies {
-    debugImplementation(compose.uiTooling)
-    androidTestImplementation(libs.androidx.ui.test.junit4.android)
-    debugImplementation(libs.androidx.ui.test.manifest)
+    androidRuntimeClasspath(compose.uiTooling)
+    androidRuntimeClasspath(libs.androidx.ui.test.manifest)
 }
 
 composeCompiler {
@@ -223,45 +230,6 @@ val deepLinkHost = (properties["SERVER_URL"] as? String)?.let {
     URI.create(it).host
 } ?: "storyteller_f.com"
 val deepLinkSchemePrefix = "a-$flavorStr"
-android {
-    namespace = "com.storyteller_f.a.app"
-
-    defaultConfig {
-        applicationId = "com.storyteller_f.a.app.$flavorId"
-    }
-    buildTypes {
-        debug {
-            manifestPlaceholders.putAll(mapOf(
-                "deepLinkScheme" to "$deepLinkSchemePrefix-debug",
-                "deepLinkHost" to deepLinkHost
-            ))
-        }
-        release {
-            manifestPlaceholders.putAll(mapOf(
-                "deepLinkScheme" to deepLinkSchemePrefix,
-                "deepLinkHost" to deepLinkHost
-            ))
-        }
-        create("benchmark") {
-            initWith(buildTypes.getByName("release"))
-            signingConfig = signingConfigs.getByName("debug")
-            matchingFallbacks += listOf("release")
-            isDebuggable = false
-        }
-    }
-}
-
-easylauncher {
-    iconNames.addAll("@mipmap/ic_launcher", "@mipmap/ic_launcher_round")
-    buildTypes {
-        register("debug") {
-            filters(chromeLike(label = flavorStr), greenRibbonFilter("debug"))
-        }
-        register("release") {
-            filters(chromeLike(label = flavorStr))
-        }
-    }
-}
 
 compose.desktop {
     application {
@@ -288,6 +256,7 @@ buildkonfig {
 
     val serverUrl = properties["SERVER_URL"] as? String
     val wsServerUrl = properties["WS_SERVER_URL"] as? String
+    val isDebug = (properties["app.DEBUG"] as? String) ?: "false"
     defaultConfigs {
         buildConfigField(STRING, "SERVER_URL", serverUrl ?: "", const = true)
         buildConfigField(STRING, "WS_SERVER_URL", wsServerUrl ?: "", const = true)
@@ -296,6 +265,7 @@ buildkonfig {
         buildConfigField(BOOLEAN, "ENABLE_LOGIN_CHECK", "false", const = true)
         buildConfigField(STRING, "DEEP_LINK_HOST", deepLinkHost, const = true)
         buildConfigField(STRING, "DEEP_LINK_SCHEME_PREFIX", "a-$flavorStr", const = true)
+        buildConfigField(BOOLEAN, "DEBUG", isDebug, const = true)
     }
 }
 

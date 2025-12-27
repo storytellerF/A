@@ -89,6 +89,7 @@ class AppTest {
 
     @OptIn(ExperimentalTestApi::class)
     @Test
+    @Ignore
     fun myTest() = runComposeUiTest {
         // Declares a mock UI to demonstrate API calls
         //

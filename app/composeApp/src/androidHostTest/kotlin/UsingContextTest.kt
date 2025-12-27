@@ -1,6 +1,6 @@
 import android.content.ContentProvider
 import com.storyteller_f.a.app.AApplication
-import com.storyteller_f.a.app.BuildConfig
+import com.storyteller_f.a.app.AppConfig
 import org.junit.Before
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
@@ -39,5 +39,5 @@ actual abstract class UsingContextTest {
         }
     }
 
-    actual val portOffset: Int = if (BuildConfig.DEBUG) 1000 else 2000
+    actual val portOffset: Int = if (AppConfig.DEBUG) 1000 else 2000
 }
