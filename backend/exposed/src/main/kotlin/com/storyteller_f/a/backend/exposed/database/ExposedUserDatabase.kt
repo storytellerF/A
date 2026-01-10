@@ -89,6 +89,16 @@ class ExposedUserDatabase(
 
     override suspend fun createUser(user: User): Result<User> = databaseSession.dbQuery {
         createUserRaw(user)
+        val aid = user.aid
+        if (!aid.isNullOrBlank()) {
+            check(Aids.insert {
+                it[objectId] = user.id
+                it[value] = aid
+                it[objectType] = ObjectType.USER
+            }.insertedCount > 0) {
+                "insert aid failed"
+            }
+        }
         user
     }
 

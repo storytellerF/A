@@ -53,7 +53,8 @@ suspend fun Backend.doIntroTask() {
 
 private suspend fun Backend.sendHelloTopic(rawUsers: List<RawUser>): Result<Unit> {
     return runCatching {
-        val adminAid = database.user.getRawUser(ObjectFetch.AidFetch("System")).getOrThrow()!!.user.id
+        val adminUserResult = database.user.getRawUser(ObjectFetch.AidFetch("System")).getOrThrow()
+        val adminAid = adminUserResult?.user?.id ?: throw Exception("System user not found")
         rawUsers.forEach {
             sendTopicToNotificationRoom(adminAid, it.user, "Hello, ${it.user.nickname}")
             database.admin.createTaskRecord(

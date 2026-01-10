@@ -3,6 +3,7 @@ package com.storyteller_f.a.cloud.server
 import com.github.vertical_blank.sqlformatter.SqlFormatter
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.loadAvif
+import com.storyteller_f.a.backend.core.readEnv
 import com.storyteller_f.a.client.core.PanelSessionManager
 import com.storyteller_f.a.client.core.RawUserPass
 import com.storyteller_f.a.client.core.UserSessionManager
@@ -401,4 +402,23 @@ suspend fun <R1, R2> ApplicationTestBuilder.loginPanelSession(
     block: suspend PanelSessionManager.(SessionTuple) -> R2
 ): SessionOuterTuple<R2> {
     return getPanelSession(tuple.privateKey, block, false)
+}
+
+suspend fun <R> ApplicationTestBuilder.withWorkerBackend(
+    block: suspend (com.storyteller_f.a.cloud.worker.WorkerBackend) -> R
+): R {
+    val backend = application.attributes[BackendKey]
+    val workerBackend = com.storyteller_f.a.cloud.worker.WorkerBackend(
+        backend.customConfig,
+        backend.topicSearchService,
+        backend.roomSearchService,
+        backend.communitySearchService,
+        backend.userSearchService,
+        backend.memberSearchService,
+        backend.fileSearchService,
+        backend.objectStorageService,
+        backend.nameService,
+        backend.database
+    )
+    return block(workerBackend)
 }

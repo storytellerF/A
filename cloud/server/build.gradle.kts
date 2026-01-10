@@ -62,6 +62,7 @@ dependencies {
     testImplementation(libs.pdfbox)
     testImplementation(libs.pdfcompare)
     testImplementation(libs.commons.imaging)
+    testImplementation(projects.cloud.worker)
 }
 
 tasks.test {
