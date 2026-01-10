@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Casino
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -32,6 +33,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.storyteller_f.a.app.core.CoreStrings
 import com.storyteller_f.a.app.core.Res
 import com.storyteller_f.a.app.core.cancel
 import com.storyteller_f.a.app.core.confirm
@@ -41,6 +43,10 @@ import com.storyteller_f.a.app.core.edit_private_key
 import com.storyteller_f.a.app.core.generate
 import com.storyteller_f.a.app.core.private_key
 import com.storyteller_f.shared.getAlgo
+import com.storyteller_f.shared.replaceCrlf
+import io.github.vinceglb.filekit.FileKit
+import io.github.vinceglb.filekit.dialogs.openFilePicker
+import io.github.vinceglb.filekit.readBytes
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
@@ -82,64 +88,84 @@ fun PrivateKeyInput(privateKey: String, address: String?, update: (String) -> Un
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PrivateKeyDialog(privateKey: String, onDismissRequest: () -> Unit, onConfirm: (String) -> Unit) {
+    BasicAlertDialog(onDismissRequest = onDismissRequest) {
+        DialogContainer {
+            PrivateKeyEditor(privateKey, onConfirm, onDismissRequest)
+        }
+    }
+}
+
+@Composable
+fun PrivateKeyEditor(privateKey: String, onConfirm: (String) -> Unit, onCancel: () -> Unit) {
     var currentKey by remember { mutableStateOf(privateKey) }
+    Column(
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Text(stringResource(Res.string.edit_private_key), style = MaterialTheme.typography.titleMedium)
+
+        PrivateKeyTools(currentKey) {
+            currentKey = it
+        }
+
+        OutlinedTextField(
+            value = currentKey,
+            onValueChange = { currentKey = it },
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text(stringResource(Res.string.private_key)) },
+            minLines = 3,
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TextButton(onCancel) {
+                Text(stringResource(Res.string.cancel))
+            }
+            TextButton(onClick = {
+                onConfirm(currentKey)
+            }) {
+                Text(stringResource(Res.string.confirm))
+            }
+        }
+    }
+}
+
+@Composable
+fun PrivateKeyTools(currentKey: String, onKeyChange: (String) -> Unit) {
     val clipboard = LocalClipboard.current
     val toast = LocalToaster.current
     val scope = rememberCoroutineScope()
-
-    BasicAlertDialog(onDismissRequest = onDismissRequest) {
-        DialogContainer {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                Text(stringResource(Res.string.edit_private_key), style = MaterialTheme.typography.titleMedium)
-
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    IconButton(onClick = {
-                        scope.launch {
-                            getAlgo().generatePemKeyPair().onSuccess {
-                                currentKey = it.first
-                            }
-                        }
-                    }) {
-                        Icon(Icons.Default.Casino, stringResource(Res.string.generate))
-                    }
-
-                    IconButton(onClick = {
-                        scope.launch {
-                            clipboard.setText(currentKey)
-                            toast.showMessage(getString(Res.string.copied))
-                        }
-                    }) {
-                        Icon(Icons.Default.ContentCopy, stringResource(Res.string.copy))
-                    }
-                }
-
-                OutlinedTextField(
-                    value = currentKey,
-                    onValueChange = { currentKey = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text(stringResource(Res.string.private_key)) },
-                    minLines = 3,
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    TextButton({
-                        onDismissRequest()
-                    }) {
-                        Text(stringResource(Res.string.cancel))
-                    }
-                    TextButton(onClick = {
-                        onConfirm(currentKey)
-                    }) {
-                        Text(stringResource(Res.string.confirm))
-                    }
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        IconButton(onClick = {
+            scope.launch {
+                getAlgo().generatePemKeyPair().onSuccess {
+                    onKeyChange(it.first)
                 }
             }
+        }) {
+            Icon(Icons.Default.Casino, stringResource(Res.string.generate))
+        }
+
+        IconButton(onClick = {
+            scope.launch {
+                clipboard.setText(currentKey)
+                toast.showMessage(getString(Res.string.copied))
+            }
+        }) {
+            Icon(Icons.Default.ContentCopy, stringResource(Res.string.copy))
+        }
+
+        IconButton(onClick = {
+            scope.launch {
+                val f = FileKit.openFilePicker()
+                if (f != null) {
+                    onKeyChange(String(f.readBytes()).replaceCrlf())
+                }
+            }
+        }) {
+            Icon(Icons.Default.Folder, CoreStrings.selectFile())
         }
     }
 }

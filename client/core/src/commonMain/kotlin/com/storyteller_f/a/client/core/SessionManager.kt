@@ -4,6 +4,7 @@ import com.storyteller_f.a.api.SignInBody
 import com.storyteller_f.a.api.SignUpBody
 import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.getAlgo
+import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.PanelAccountInfo
 import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.model.TopicContent
@@ -195,9 +196,10 @@ suspend fun PanelSessionManager.login() {
 
 suspend fun UserSessionManager.getUserInfo(
     pemPrivateKey: String,
+    algo: AlgoType,
     isSignUp: Boolean,
-    buildUserPass: suspend (RawUserPassInfo) -> UserPass
-) = signUpOrInFromPrivateKey(pemPrivateKey, {
+    buildUserPass: suspend (UserInfo, String, String, String, AlgoType) -> UserPass
+) = signUpOrInFromPrivateKey(pemPrivateKey, algo, {
     getData()
 }, buildUserPass) { publicKey, signature, address ->
     when {
@@ -208,9 +210,10 @@ suspend fun UserSessionManager.getUserInfo(
 
 suspend fun PanelSessionManager.getPanelAccountInfo(
     pemPrivateKey: String,
+    algo: AlgoType,
     isSignUp: Boolean,
-    buildUserPass: suspend (RawUserPassInfo) -> UserPass
-) = signUpOrInFromPrivateKey(pemPrivateKey, {
+    buildUserPass: suspend (PanelAccountInfo, String, String, String, AlgoType) -> UserPass
+) = signUpOrInFromPrivateKey(pemPrivateKey, algo, {
     getData()
 }, buildUserPass) { publicKey, signature, address ->
     when {
@@ -221,21 +224,32 @@ suspend fun PanelSessionManager.getPanelAccountInfo(
 
 suspend fun <U> SessionManager<U>.signUpOrInFromPrivateKey(
     pemPrivateKey: String,
+    algo: AlgoType,
     getData: suspend () -> Result<String>,
-    buildUserPass: suspend (RawUserPassInfo) -> UserPass,
+    buildUserPass: suspend (U, String, String, String, AlgoType) -> UserPass,
     getUserInfo: suspend (String, String, String) -> Result<U>
 ): U {
-    getAlgo().run {
+    getAlgo(algo).run {
         val publicKey = getDerPublicKeyFromPrivateKey(pemPrivateKey).getOrThrow()
         val data = getData().getOrThrow()
         val f = finalData(data)
-        val signature = signature(pemPrivateKey, f).getOrThrow()
+        val derPriKey = getDerPrivateKey(pemPrivateKey).getOrThrow()
+        val signature = signature(derPriKey, f).getOrThrow()
         val address = calcAddress(publicKey).getOrThrow()
         val userInfo = getUserInfo(publicKey, signature, address).getOrThrow()
         model.updateUser(userInfo)
         model.updateSignature(data, signature)
-        val userPassInfo = RawUserPassInfo(pemPrivateKey, publicKey, address)
-        model.updateState(ClientSessionState.Success(buildUserPass(userPassInfo)))
+        model.updateState(
+            ClientSessionState.Success(
+                buildUserPass(
+                    userInfo,
+                    derPriKey,
+                    publicKey,
+                    address,
+                    algo
+                )
+            )
+        )
         return userInfo
     }
 }

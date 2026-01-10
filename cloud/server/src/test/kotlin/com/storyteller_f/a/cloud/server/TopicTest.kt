@@ -26,6 +26,7 @@ import com.storyteller_f.a.client.core.getUserTopics
 import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.a.client.core.joinRoom
 import com.storyteller_f.a.client.core.pinTopic
+import com.storyteller_f.a.client.core.processEncryptedTopic
 import com.storyteller_f.a.client.core.searchCommunityTopics
 import com.storyteller_f.a.client.core.sendMessage
 import com.storyteller_f.a.client.core.unpinTopic
@@ -254,7 +255,7 @@ class TopicTest {
             communityId to publicRoomId
         }.custom
         val receivedFrame = mutableListOf<RoomFrame>()
-        attachSession({ roomFrame, _, _ ->
+        attachSession(onReceive = { roomFrame, _, _ ->
             receivedFrame.add(roomFrame)
         }) {
             val roomInfo = getRoomInfo(publicRoomId).getOrThrow()
@@ -276,7 +277,7 @@ class TopicTest {
     fun `test create topic in private room`() = test {
         val user2 = attachSession()
         val user1 = attachSession {
-            val id = createRoom(NewRoom("room2", "room2")).getOrThrow().id
+            val id = createRoom(NewRoom("room-create-topic", "room-create-topic")).getOrThrow().id
             createTitle(NewTitle("join", TitleType.JOIN, user2.uid, id, ObjectType.ROOM, ""))
             id
         }
@@ -299,7 +300,7 @@ class TopicTest {
     @Test
     fun `test private room join`() = test {
         val user1 = attachSession {
-            val id = createRoom(NewRoom("room2", "room2")).getOrThrow().id
+            val id = createRoom(NewRoom("room-private-join", "room-private-join")).getOrThrow().id
             id
         }
         val privateRoomId = user1.custom
@@ -367,7 +368,7 @@ class TopicTest {
     fun `test room last read`() {
         val receivedFrame = mutableListOf<RoomFrame>()
         test {
-            attachSession({ roomFrame, _, _ ->
+            attachSession(onReceive = { roomFrame, _, _ ->
                 receivedFrame.add(roomFrame)
             }) {
                 val roomInfo = createRoom(NewRoom("r1", "r1")).getOrThrow()
@@ -428,6 +429,42 @@ class TopicTest {
             val topic = createTopic(ObjectType.COMMUNITY, communityInfo.id, "hello").getOrThrow()
             val info = getCommunityInfo(communityInfo.id).getOrThrow()
             assertEquals(topic.id, info.latestTopic)
+        }
+    }
+
+    @Test
+    fun `test other user can decrypt`() = test {
+        listOf(
+            com.storyteller_f.shared.model.AlgoType.DILITHIUM,
+            com.storyteller_f.shared.model.AlgoType.P256
+        ).forEach { algo ->
+            val user2 = attachSession(algo = algo) {}
+            val user1 = attachSession(algo = algo) {
+                val id = createRoom(NewRoom("room2-${algo.name}", "room2-${algo.name}")).getOrThrow().id
+                createTitle(NewTitle("join", TitleType.JOIN, user2.uid, id, ObjectType.ROOM, ""))
+                id
+            }
+            val privateRoomId = user1.custom
+            val receivedFrame = mutableListOf<RoomFrame>()
+            loginSession(user2, onReceive = { roomFrame, _, _ ->
+                receivedFrame.add(roomFrame)
+            }, algo = algo) {
+                joinRoom(privateRoomId).getOrThrow()
+                val roomInfo2 = getRoomInfo(privateRoomId).getOrThrow()
+                val keys = getRoomMembersPublicKeys(privateRoomId, PaginationQuery(null, size = 10)).getOrThrow().data
+                createTopicInRoomAndWait(receivedFrame) {
+                    sendMessage(ObjectTuple(roomInfo2.id, ObjectType.ROOM), roomInfo2.isPrivate, "hello", keys)
+                }
+                val first = receivedFrame.first() as RoomFrame.NewTopicInfo
+                assertEquals(
+                    "hello",
+                    (processEncryptedTopic(
+                        listOf(first.topicInfo),
+                        this
+                    ).first().content as TopicContent.Plain).plain
+                )
+            }
+            receivedFrame.clear()
         }
     }
 }

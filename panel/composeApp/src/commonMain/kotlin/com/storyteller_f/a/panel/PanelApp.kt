@@ -72,7 +72,7 @@ import com.storyteller_f.a.client.core.PanelSessionModel
 import com.storyteller_f.a.client.core.createPanelSessionManager
 import com.storyteller_f.a.client.core.defaultClientConfigureForPanel
 import com.storyteller_f.a.client.core.getClient
-import com.storyteller_f.a.client.core.getPanelAccountInfo
+import com.storyteller_f.a.client.core.getPanelUserPass
 import com.storyteller_f.a.client.core.startBackgroundTask
 import com.storyteller_f.a.client.room.RoomModelStorage
 import com.storyteller_f.a.client.room.getRoomModelStorage
@@ -93,6 +93,7 @@ import com.storyteller_f.a.panel.pages.TitleDetailPage
 import com.storyteller_f.a.panel.pages.TopicDetailPage
 import com.storyteller_f.a.panel.pages.UserDetailPage
 import com.storyteller_f.a.panel.ui.theme.PanelTheme
+import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.replaceCrlf
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.openFilePicker
@@ -495,8 +496,9 @@ private suspend fun PanelGlobalDialogController.signInFromFile(
                 val f = FileKit.openFilePicker()
                 if (f != null) {
                     val privateKey = String(f.readBytes()).replaceCrlf()
-                    getPanelAccountInfo(
+                    getPanelUserPass(
                         privateKey,
+                        AlgoType.P256,
                         false
                     ) {
                         historyFactory.addSession(it)

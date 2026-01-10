@@ -80,6 +80,7 @@ data class UserPresetTuple(
     val publicKey: String,
     val address: String,
     val id: PrimaryKey,
+    val algoType: AlgoType
 )
 
 @Suppress("LargeClass")
@@ -127,7 +128,7 @@ class AddPreset : Subcommand("add", "add entry") {
         val accounts = presetValue.panelAccountData ?: return
         accounts.forEach {
             val id = SnowflakeFactory.nextId()
-            val (derPublicKey, ad) = getPubKeyAndAddress(parentDir, it.privateKey)
+            val (derPublicKey, ad) = getPubKeyAndAddress(parentDir, it.privateKey, AlgoType.P256)
             database.panelAccount.addPanelAccount(
                 PanelAccount(id, it.name, PassType.RAW, AlgoType.P256, derPublicKey, ad)
             ).getOrThrow()
@@ -290,30 +291,28 @@ class AddPreset : Subcommand("add", "add entry") {
         }
         val userMap = getRoomUserMap(presetRooms)
         val communityMap = getRoomCommunityMap(presetRooms)
-        val fileRefs = mutableListOf<FileRef>()
+        val fileRefs = mutableListOf<Triple<FileInfo, String, PrimaryKey>>()
         val data = presetRooms.map {
             val id = SnowflakeFactory.nextId()
             val icon = it.icon
             val s = if (icon == null) {
                 null
             } else {
-                val fileInfo = uploadFile(id, ObjectType.ROOM, parentDir, listOf(icon)).first()
-                fileRefs.add(
-                    FileRef(
-                        id = SnowflakeFactory.nextId(),
-                        createdTime = now(),
-                        objectId = id,
-                        objectType = ObjectType.ROOM,
-                        author = userMap[it.admin]!!.id,
-                        mediaName = fileInfo.name,
-                        fileId = fileInfo.id,
-                    )
-                )
-                fileInfo.id
+                uploadRoomIcon(id, parentDir, icon, fileRefs, it)
             }
             InsertRoomTuple(it, s, id, now())
         }
-        database.file.insertFileRefs(fileRefs).getOrThrow()
+        database.file.insertFileRefs(fileRefs.map { (fileInfo, admin, id) ->
+            FileRef(
+                id = SnowflakeFactory.nextId(),
+                createdTime = now(),
+                objectId = id,
+                objectType = ObjectType.ROOM,
+                author = userMap[admin]!!.id,
+                mediaName = fileInfo.name,
+                fileId = fileInfo.id,
+            )
+        }).getOrThrow()
         val memberList = getRoomMembers(data, userMap)
         val roomList = data.map {
             val presetRoom = it.room
@@ -409,9 +408,22 @@ class AddPreset : Subcommand("add", "add entry") {
         Napier.i {
             "users count ${presetValue.userData?.size}"
         }
-        val (users, fileRefs) = getUserData(userList, parentDir)
+        val (tuples, fileRefs) = getUserData(userList, parentDir)
+        val users = tuples.map {
+            getUserFromTuple(it)
+        }
         database.admin.batchAddUser(users)
-        database.file.insertFileRefs(fileRefs).getOrThrow()
+        database.file.insertFileRefs(fileRefs.map { (uploadFile, id) ->
+            FileRef(
+                id = SnowflakeFactory.nextId(),
+                createdTime = now(),
+                objectId = id,
+                objectType = ObjectType.USER,
+                author = id,
+                mediaName = uploadFile.name,
+                fileId = uploadFile.id,
+            )
+        }).getOrThrow()
         // 为每个创建的用户添加 user log
         users.forEach { user ->
             addUserLog(user.id, UserLogType.SIGN_UP, user.id ob ObjectType.USER).getOrThrow()
@@ -645,54 +657,29 @@ class AddPreset : Subcommand("add", "add entry") {
     private suspend fun Backend.getUserData(
         userList: List<PresetUser>,
         parentDir: File,
-    ): Pair<List<User>, List<FileRef>> {
-        val fileRefs = mutableListOf<FileRef>()
+    ): Pair<List<UserPresetTuple>, MutableList<Pair<FileInfo, PrimaryKey>>> {
+        val fileRefs = mutableListOf<Pair<FileInfo, PrimaryKey>>()
         val users = userList.map {
             val id = it.id ?: SnowflakeFactory.nextId()
-            val (derPublicKey, ad) = getPubKeyAndAddress(parentDir, it.privateKey)
+            val algoType = it.algoType?.let { value -> AlgoType.valueOf(value) } ?: AlgoType.P256
+            val (derPublicKey, ad) = getPubKeyAndAddress(parentDir, it.privateKey, algoType)
             val icon = it.icon
             val p = if (icon == null) {
                 null
             } else {
-                val uploadFile = uploadFile(id, ObjectType.USER, parentDir, listOf(icon)).first()
-                fileRefs.add(
-                    FileRef(
-                        id = SnowflakeFactory.nextId(),
-                        createdTime = now(),
-                        objectId = id,
-                        objectType = ObjectType.USER,
-                        author = id,
-                        mediaName = uploadFile.name,
-                        fileId = uploadFile.id,
-                    )
-                )
-                uploadFile.id
+                uploadUserIcon(id, parentDir, icon, fileRefs)
             }
-            UserPresetTuple(it, p, derPublicKey, ad, id)
-        }.map {
-            val notificationId = SnowflakeFactory.nextId()
-            User(
-                it.presetUser.aid,
-                it.publicKey,
-                it.address,
-                it.pic,
-                it.presetUser.name.takeIf { s -> s.isNotBlank() } ?: nameService.parse(it.id),
-                it.id,
-                now(),
-                0,
-                PassType.RAW,
-                AlgoType.P256,
-                notificationId
-            )
+            UserPresetTuple(it, p, derPublicKey, ad, id, algoType)
         }
         return users to fileRefs
     }
 
     private suspend fun getPubKeyAndAddress(
         parentDir: File,
-        privatePath: String
+        privatePath: String,
+        algoType: AlgoType
     ): Pair<String, String> {
-        return getAlgo().run {
+        return getAlgo(algoType).run {
             val derPublicKey =
                 getDerPublicKeyFromPrivateKey(
                     File(parentDir, privatePath).readText().replace("\r\n", "\n")
@@ -896,6 +883,57 @@ class AddPreset : Subcommand("add", "add entry") {
             presetTopic.content
         }
         return content
+    }
+
+    private suspend fun Backend.uploadUserIcon(
+        id: PrimaryKey,
+        parentDir: File,
+        icon: String,
+        fileRefs: MutableList<Pair<FileInfo, PrimaryKey>>
+    ): PrimaryKey {
+        val uploadFile = uploadFile(id, ObjectType.USER, parentDir, listOf(icon)).first()
+        fileRefs.add(uploadFile to id)
+        return uploadFile.id
+    }
+
+    private suspend fun Backend.uploadRoomIcon(
+        id: PrimaryKey,
+        parentDir: File,
+        icon: String,
+        fileRefs: MutableList<Triple<FileInfo, String, PrimaryKey>>,
+        room: PresetRoom
+    ): PrimaryKey {
+        val fileInfo = uploadFile(id, ObjectType.ROOM, parentDir, listOf(icon)).first()
+        fileRefs.add(Triple(fileInfo, room.admin, id))
+        return fileInfo.id
+    }
+
+    private suspend fun Backend.getUserFromTuple(tuple: UserPresetTuple): User {
+        val (encPubKey, encPrivKey) = if (tuple.algoType == AlgoType.DILITHIUM) {
+            val algo = getAlgo(tuple.algoType)
+            val (priKey, pubKey) = algo.generateEncryptionPemKeyPair().getOrThrow()
+            val derPriKey = algo.getDerPrivateKey(priKey).getOrThrow()
+            val derPubKey = algo.getDerPublicKeyFromPem(pubKey).getOrThrow()
+            derPubKey to derPriKey
+        } else {
+            null to null
+        }
+        val notificationId = SnowflakeFactory.nextId()
+        return User(
+            tuple.presetUser.aid,
+            encPubKey,
+            encPrivKey,
+            tuple.publicKey,
+            tuple.address,
+            tuple.pic,
+            tuple.presetUser.name.takeIf { s -> s.isNotBlank() } ?: nameService.parse(tuple.id),
+            tuple.id,
+            now(),
+            0,
+            PassType.RAW,
+            tuple.algoType,
+            notificationId
+        )
     }
 }
 

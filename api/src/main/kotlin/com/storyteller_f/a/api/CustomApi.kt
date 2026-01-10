@@ -9,6 +9,7 @@ import com.storyteller_f.endpoint4k.common.safeEndpoint
 import com.storyteller_f.endpoint4k.common.safeEndpointWithPath
 import com.storyteller_f.endpoint4k.common.safeEndpointWithQuery
 import com.storyteller_f.endpoint4k.common.safeEndpointWithQueryAndPath
+import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.ChildAccountInfo
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.FileInfo
@@ -133,10 +134,14 @@ class NewUser(
     val nickname: String? = null,
     val aid: String? = null,
     val publicKey: String,
+    val algoType: AlgoType = AlgoType.P256
 )
 
 @Serializable
-class SignUpBody(val publicKey: String, val signature: String)
+class SignUpBody(
+    val publicKey: String,
+    val signature: String,
+)
 
 @Serializable
 class SignInBody(val address: String, val signature: String)

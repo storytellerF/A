@@ -15,6 +15,8 @@ data class UserInfo(
     val aid: String?,
     val nickname: String,
     val avatar: FileInfo?,
+    val encryptionPublicKey: String? = null,
+    val encryptionPrivateKey: String? = null,
 ) : ModelObject {
     override val objectType: ObjectType
         get() = ObjectType.USER
@@ -62,7 +64,12 @@ data class UserLogInfo(
 }
 
 @Serializable
-data class UserPubKeyInfo(val id: PrimaryKey, val pubKey: String)
+data class UserPubKeyInfo(
+    val id: PrimaryKey,
+    val pubKey: String,
+    val algo: AlgoType = AlgoType.P256,
+    val encryptionPublicKey: String? = null
+)
 
 enum class AlgoType {
     P256,

@@ -20,6 +20,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -51,7 +52,6 @@ import com.storyteller_f.a.app.back_to_pre_page
 import com.storyteller_f.a.app.common.AppNavFactory
 import com.storyteller_f.a.app.common.SessionHistoryViewModel
 import com.storyteller_f.a.app.common.getLoginHistoryViewModel
-import com.storyteller_f.a.app.core.CoreStrings
 import com.storyteller_f.a.app.core.components.BaseSheet
 import com.storyteller_f.a.app.core.components.CenterBox
 import com.storyteller_f.a.app.core.components.PrivateKeyInput
@@ -67,11 +67,8 @@ import com.storyteller_f.a.app.sign_up
 import com.storyteller_f.a.app.start_sign_in
 import com.storyteller_f.a.app.start_sign_up
 import com.storyteller_f.a.app.utils.appPlatform
-import com.storyteller_f.a.client.core.getUserInfo
-import com.storyteller_f.shared.replaceCrlf
-import io.github.vinceglb.filekit.FileKit
-import io.github.vinceglb.filekit.dialogs.openFilePicker
-import io.github.vinceglb.filekit.readBytes
+import com.storyteller_f.a.app.utils.fetchAndSaveUserInfo
+import com.storyteller_f.shared.model.AlgoType
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -162,7 +159,7 @@ fun SelectSignInPage(loginNav: LoginNav) {
                 ) {
                     Text(stringResource(Res.string.private_key))
                 }
-                SelectFile(false)
+
                 SelectFromHistory()
             }
             Text(stringResource(Res.string.go_to_sign_up), modifier = Modifier.clickable {
@@ -281,7 +278,6 @@ fun SelectSignUpPage(loginNav: LoginNav) {
                 }, modifier = Modifier.testTag("private_key")) {
                     Text(stringResource(Res.string.private_key))
                 }
-                SelectFile(true)
             }
             Text(stringResource(Res.string.go_to_sign_in), modifier = Modifier.clickable {
                 loginNav.gotoLogin()
@@ -291,44 +287,33 @@ fun SelectSignUpPage(loginNav: LoginNav) {
 }
 
 @Composable
-fun SelectFile(isSignUp: Boolean) {
-    val scope = rememberCoroutineScope()
-    val appNavFactory = LocalAppNavFactory.current
-    val globalDialogController = LocalGlobalDialog.current
-    if (isSignUp) {
-        Button({
-            scope.launch {
-                startSignFromFile(appNavFactory, true, globalDialogController)
-            }
-        }) {
-            Text(CoreStrings.selectFile())
-        }
-    } else {
-        OutlinedButton({
-            scope.launch {
-                startSignFromFile(appNavFactory, false, globalDialogController)
-            }
-        }) {
-            Text(CoreStrings.selectFile())
-        }
-    }
-}
-
-@Composable
 fun InputPrivateKeyPage(isSignUp: Boolean) {
     val viewModel = viewModel { InputPrivateKeyViewModel() }
     val privateKey by viewModel.privateKey.collectAsState()
     val address by viewModel.address.collectAsState()
+    val algo by viewModel.algo.collectAsState()
     val scope = rememberCoroutineScope()
     val appNavFactory = LocalAppNavFactory.current
     val globalDialogController = LocalGlobalDialog.current
     val startSign: () -> Unit = {
         scope.launch {
-            globalDialogController.startSign(appNavFactory, privateKey, isSignUp)
+            globalDialogController.startSign(appNavFactory, privateKey, algo, isSignUp)
         }
     }
     CenterBox {
         Column(modifier = Modifier.padding(20.dp)) {
+            val validAlgos = AlgoType.entries
+            Row {
+                validAlgos.forEach {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        RadioButton(it == algo, {
+                            viewModel.updateAlgo(it)
+                        })
+                        Text(it.name)
+                    }
+                }
+            }
+
             PrivateKeyInput(privateKey, address, {
                 viewModel.updatePrivateKey(it)
             })
@@ -356,21 +341,10 @@ fun InputPrivateKeyPage(isSignUp: Boolean) {
     }
 }
 
-private suspend fun startSignFromFile(
-    appNav: AppNavFactory,
-    isSignUp: Boolean,
-    globalDialogController: AppGlobalDialogController,
-) {
-    val f = FileKit.openFilePicker()
-    if (f != null) {
-        val privateKey = String(f.readBytes()).replaceCrlf()
-        globalDialogController.startSign(appNav, privateKey, isSignUp)
-    }
-}
-
 private suspend fun AppGlobalDialogController.startSign(
     appNav: AppNavFactory,
     privateKey: String,
+    algo: AlgoType,
     isSignUp: Boolean,
 ) {
     if (privateKey.isBlank()) return
@@ -378,9 +352,11 @@ private suspend fun AppGlobalDialogController.startSign(
     useResult {
         request {
             Result.success(
-                getUserInfo(privateKey, isSignUp) { raw ->
-                    sessionHistoryManager.addSession(raw)
-                }
+                fetchAndSaveUserInfo(
+                    privateKey,
+                    algo,
+                    isSignUp
+                )
             )
         }
     }.onSuccess {

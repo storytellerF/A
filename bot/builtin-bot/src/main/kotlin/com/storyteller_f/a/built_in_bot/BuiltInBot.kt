@@ -15,9 +15,10 @@ import com.storyteller_f.a.client.core.defaultClientConfigure
 import com.storyteller_f.a.client.core.getClient
 import com.storyteller_f.a.client.core.getTopicList
 import com.storyteller_f.a.client.core.getUserCommunities
-import com.storyteller_f.a.client.core.getUserInfo
+import com.storyteller_f.a.client.core.getUserPass
 import com.storyteller_f.a.client.core.startBackgroundTask
 import com.storyteller_f.shared.loadCryptoLibIfNeed
+import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
@@ -67,7 +68,11 @@ fun main() {
             // 确保第一次登录成功
             while (isActive) {
                 try {
-                    sessionManager.getUserInfo(pemPrivateKey, false) {
+                    sessionManager.getUserPass(
+                        pemPrivateKey,
+                        AlgoType.P256,
+                        false
+                    ) {
                         RawUserPass(it)
                     }
                     break

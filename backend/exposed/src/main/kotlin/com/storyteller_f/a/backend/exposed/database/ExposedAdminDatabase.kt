@@ -21,6 +21,7 @@ import com.storyteller_f.a.backend.exposed.tables.addTaskRecord
 import com.storyteller_f.a.backend.exposed.tables.batchAddMembers
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.md5
 import com.storyteller_f.shared.utils.now
 import kotlinx.coroutines.flow.toList
 import org.jetbrains.exposed.v1.core.JoinType
@@ -37,10 +38,14 @@ class ExposedAdminDatabase(val databaseSession: ExposedDatabaseSession) : AdminD
                 this[Users.icon] = it.icon
                 this[Users.nickname] = it.nickname
                 this[Users.publicKey] = it.publicKey
+                this[Users.publicKeyMd5] = md5(it.publicKey)
                 this[Users.address] = it.address
+                this[Users.encryptionPublicKey] = it.encryptionPublicKey
+                this[Users.encryptionPrivateKey] = it.encryptionPrivateKey
                 this[Users.createdTime] = it.createdTime
                 this[Users.passType] = it.passType
                 this[Users.notificationId] = it.notificationId
+                this[Users.algoType] = it.algoType
             }
             Aids.batchInsert(users) {
                 this[Aids.value] = it.aid!!

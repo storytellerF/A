@@ -1,6 +1,7 @@
 package com.storyteller_f.a.backend.exposed.database
 
 import com.storyteller_f.a.backend.core.PanelAccountDatabase
+import com.storyteller_f.a.backend.core.UserAuthData
 import com.storyteller_f.a.backend.core.types.PanelAccount
 import com.storyteller_f.a.backend.core.types.RawPanelAccount
 import com.storyteller_f.a.backend.exposed.ExposedDatabaseSession
@@ -45,10 +46,12 @@ class ExposedPanelAccountDatabase(val databaseSession: ExposedDatabaseSession) :
         predicate: () -> Op<Boolean>,
     ) = databaseSession.dbSearch {
         search {
-            PanelAccounts.select(listOf(PanelAccounts.publicKey, PanelAccounts.id)).where(predicate)
+            PanelAccounts.select(
+                listOf(PanelAccounts.publicKey, PanelAccounts.id, PanelAccounts.algoType)
+            ).where(predicate)
         }
         first {
-            it[PanelAccounts.publicKey] to it[PanelAccounts.id]
+            UserAuthData(it[PanelAccounts.publicKey], it[PanelAccounts.id], it[PanelAccounts.algoType])
         }
     }
 

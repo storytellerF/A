@@ -146,16 +146,15 @@ class AdminTest {
 
     @Test
     fun `test add user`() = test {
-        val (privateKey, _) = getAlgo().run {
-            generatePemKeyPair().getOrThrow()
-        }
-        val publicKey = getAlgo().run {
-            getDerPublicKeyFromPrivateKey(privateKey).getOrThrow()
+        val (privateKey, publicKey) = getAlgo().run {
+            val privateKey = generatePemKeyPair().getOrThrow().first
+            val derPubKey = getDerPublicKeyFromPrivateKey(privateKey).getOrThrow()
+            privateKey to derPubKey
         }
         val userInfo = attachPanelSession {
             addUser(NewUser(publicKey = publicKey)).getOrThrow()
         }.custom
-        getAppSession(false, privateKey, { _, _, _ ->
+        getAppSession(false, privateKey, onReceive = { _, _, _ ->
         }) {
             val info = getUserInfo(it.uid).getOrThrow()
             assertEquals(info.id, userInfo.id)
@@ -426,7 +425,7 @@ class AdminTest {
     fun `admin get room topics`() = test {
         val outer = attachPanelSession()
         val receivedFrame = mutableListOf<RoomFrame>()
-        val roomId = attachSession({ frame, _, _ ->
+        val roomId = attachSession(onReceive = { frame, _, _ ->
             receivedFrame.add(frame)
         }) {
             val c = createCommunity(NewCommunity("c1", "c1")).getOrThrow()
@@ -476,7 +475,7 @@ class AdminTest {
     fun `admin get all topic types`() = test {
         val outer = attachPanelSession()
         val receivedFrame = mutableListOf<RoomFrame>()
-        attachSession({ frame, _, _ ->
+        attachSession(onReceive = { frame, _, _ ->
             receivedFrame.add(frame)
         }) {
             // Create user topic

@@ -262,6 +262,8 @@ suspend fun Backend.addChildAccount(uid: PrimaryKey): Result<ChildAccountInfo> {
                 val notificationId = SnowflakeFactory.nextId()
                 val user = User(
                     null,
+                    null,
+                    null,
                     publicKey,
                     address,
                     null,

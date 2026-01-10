@@ -1,5 +1,7 @@
+import com.storyteller_f.shared.AlgoDilithium
 import com.storyteller_f.shared.AlgoP256
 import com.storyteller_f.shared.decryptDataByAES
+import com.storyteller_f.shared.decryptMessage
 import com.storyteller_f.shared.encryptDataByAES
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.loadCryptoLibIfNeed
@@ -14,7 +16,6 @@ import javax.crypto.Cipher
 import javax.crypto.SecretKey
 import javax.crypto.spec.SecretKeySpec
 import kotlin.test.Test
-import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 
 class SignatureTest {
@@ -23,20 +24,38 @@ class SignatureTest {
     fun `test encrypt`() {
         runTest {
             loadCryptoLibIfNeed()
-            listOf(AlgoP256).forEach {
+            val algos = listOf(AlgoP256, AlgoDilithium)
+            algos.forEach {
                 println(it::class)
                 it.run {
                     val (encrypted, aesKeyBytes) = encryptDataByAES("hello").getOrThrow()
                     // 验证加密后的数据可以解密
                     assertEquals("hello", decryptDataByAES(encrypted, aesKeyBytes).getOrThrow())
-
                     val (pemPrivateKey, pemPublicKey) = generatePemKeyPair().getOrThrow()
                     val derPublicKey = getDerPublicKeyFromPem(pemPublicKey).getOrThrow()
-                    val derPrivateKey = getDerPrivateKey(pemPrivateKey).getOrThrow()
-                    val encryptedAesKey = kemEncrypt(derPublicKey, aesKeyBytes).getOrThrow()
-                    val decryptedAesKey = kemDecrypt(derPrivateKey, encryptedAesKey).getOrThrow()
+//                    val derPrivateKey = getDerPrivateKey(pemPrivateKey).getOrThrow()
+
+                    // Encryption Test using designated encryption keys
+                    val (encPriv, encPub) = generateEncryptionPemKeyPair().getOrThrow()
+                    val derEncPub = getDerPublicKeyFromPem(encPub).getOrThrow()
+                    val derEncPriv = getDerPrivateKey(encPriv).getOrThrow()
+
+                    val encryptedAesKey = kemEncrypt(derEncPub, aesKeyBytes).getOrThrow()
+                    val decryptedAesKey = kemDecrypt(derEncPriv, encryptedAesKey).getOrThrow()
                     // 验证解密后的AES密钥与原始AES密钥相同
-                    assertContentEquals(aesKeyBytes, decryptedAesKey)
+                    assertEquals(aesKeyBytes.toList(), decryptedAesKey.toList())
+
+                    // NEW: Verify decryptMessage directly
+                    val decryptedMessage = decryptMessage(derEncPriv, encrypted, encryptedAesKey).getOrThrow()
+                    assertEquals("hello", decryptedMessage)
+
+                    // Verify getDerPublicKeyFromPrivateKey implementation (using signing keys)
+                    val derivedPublicKey = getDerPublicKeyFromPrivateKey(pemPrivateKey).getOrThrow()
+                    assertEquals(
+                        derPublicKey,
+                        derivedPublicKey,
+                        "Derived public key should match generated public key"
+                    )
                 }
             }
         }

@@ -3,24 +3,34 @@ package com.storyteller_f.a.app.pages.user
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.storyteller_f.shared.getAlgo
+import com.storyteller_f.shared.model.AlgoType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class InputPrivateKeyViewModel : ViewModel() {
     val privateKey = MutableStateFlow("")
+    val algo = MutableStateFlow(AlgoType.P256)
 
-    val publicKey = privateKey.map {
-        getAlgo().run {
-            getDerPublicKeyFromPrivateKey(it).getOrNull()
+    val publicKey = privateKey.combine(algo) { privateKey, algo ->
+        if (privateKey.isEmpty()) {
+            null
+        } else {
+            getAlgo(algo).run {
+                getDerPublicKeyFromPrivateKey(privateKey).getOrNull()
+            }
         }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    val address = publicKey.map {
-        getAlgo().run {
-            it?.let { derPublicKeyStr -> calcAddress(derPublicKeyStr).getOrNull() }
+    val address = publicKey.combine(algo) { publicKey, algo ->
+        if (publicKey == null) {
+            null
+        } else {
+            getAlgo(algo).run {
+                calcAddress(publicKey).getOrNull()
+            }
         }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
@@ -28,9 +38,13 @@ class InputPrivateKeyViewModel : ViewModel() {
         this.privateKey.value = privateKey
     }
 
+    fun updateAlgo(algo: AlgoType) {
+        this.algo.value = algo
+    }
+
     fun autoGeneratePrivateKey() {
         viewModelScope.launch {
-            getAlgo().generatePemKeyPair().onSuccess { (privateKey, _) ->
+            getAlgo(algo.value).generatePemKeyPair().onSuccess { (privateKey, _) ->
                 updatePrivateKey(privateKey)
             }
         }

@@ -28,11 +28,11 @@ interface Algo {
     suspend fun verify(derPublicKey: String, derSignature: String, data: String): Result<Boolean>
 
     /**
-     * @param pemPrivateKey PEM format private key
+     * @param derPrivateKey Der format private key
      * @param data the data to sign
      * @return hex string
      */
-    suspend fun signature(pemPrivateKey: String, data: String): Result<String>
+    suspend fun signature(derPrivateKey: String, data: String): Result<String>
 
     /**
      * @param pemPrivateKey PEM format private key
@@ -47,16 +47,9 @@ interface Algo {
     suspend fun getPemPrivateKeyFromDer(derPrivateKey: String): Result<String>
 
     /**
-     * @param derPrivateKey hex string
-     * @param encrypted the encrypted message
-     * @param encryptedAesKey the encrypted AES key
-     * @return the decrypted message
-     */
-    suspend fun decryptMessage(derPrivateKey: String, encrypted: ByteArray, encryptedAesKey: ByteArray): Result<String>
-
-    /**
      * @param derPublicKeyStr hex string
      * @param aesKeyBytes the AES key to encrypt
+
      * @return the encrypted AES key
      */
     suspend fun kemEncrypt(derPublicKeyStr: String, aesKeyBytes: ByteArray): Result<ByteArray>
@@ -74,6 +67,12 @@ interface Algo {
     suspend fun getDerPublicKeyFromPem(pemPublicKeyStr: String): Result<String>
 
     /**
+     * @param derPublicKey hex 编码的der 格式的publicKey
+     * @return pem 格式的publicKey
+     */
+    suspend fun getPemPublicKeyFromDer(derPublicKey: String): Result<String>
+
+    /**
      * @param pemPrivateKeyStr PEM format private key
      * @return hex string
      */
@@ -81,7 +80,7 @@ interface Algo {
 
     /**
      * @param derPublicKeyStr hex string
-     * @return the address
+     * @return base64 格式的地址
      */
     suspend fun calcAddress(derPublicKeyStr: String): Result<String>
 
@@ -89,6 +88,8 @@ interface Algo {
      * @return pem string
      */
     suspend fun generatePemKeyPair(): Result<Pair<String, String>>
+
+    suspend fun generateEncryptionPemKeyPair(): Result<Pair<String, String>> = generatePemKeyPair()
 }
 
 object AlgoP256 : Algo {
@@ -105,10 +106,10 @@ object AlgoP256 : Algo {
         }
     }
 
-    override suspend fun signature(pemPrivateKey: String, data: String): Result<String> {
+    override suspend fun signature(derPrivateKey: String, data: String): Result<String> {
         return runCatching {
             val privateKey = CryptographyProvider.Default.get(ECDSA).privateKeyDecoder(EC.Curve.P256)
-                .decodeFromByteArray(EC.PrivateKey.Format.PEM, pemPrivateKey.encodeToByteArray())
+                .decodeFromByteArray(EC.PrivateKey.Format.DER, derPrivateKey.hexToByteArray())
             val signature = privateKey.signatureGenerator(SHA256, ECDSA.SignatureFormat.DER)
                 .generateSignature(data.encodeToByteArray())
             signature.toHexString()
@@ -130,21 +131,6 @@ object AlgoP256 : Algo {
                 .decodeFromByteArray(EC.PrivateKey.Format.DER, derPrivateKey.hexToByteArray())
                 .encodeToByteArray(EC.PrivateKey.Format.PEM)
                 .decodeToString()
-        }
-    }
-
-    override suspend fun decryptMessage(
-        derPrivateKey: String,
-        encrypted: ByteArray,
-        encryptedAesKey: ByteArray
-    ): Result<String> {
-        return kemDecrypt(derPrivateKey, encryptedAesKey).mapResult {
-            AlgoP256.runCatching {
-                val key = CryptographyProvider.Default.get(AES.CBC).keyDecoder()
-                    .decodeFromByteArray(AES.Key.Format.RAW, it)
-                val encryptedData = key.cipher(true).decrypt(encrypted)
-                encryptedData.decodeToString()
-            }
         }
     }
 
@@ -251,6 +237,14 @@ object AlgoP256 : Algo {
                 .encodeToByteArray(EC.PublicKey.Format.DER).toHexString()
         }
     }
+
+    override suspend fun getPemPublicKeyFromDer(derPublicKey: String): Result<String> {
+        return runCatching {
+            CryptographyProvider.Default.get(ECDSA).publicKeyDecoder(EC.Curve.P256)
+                .decodeFromByteArray(EC.PublicKey.Format.DER, derPublicKey.hexToByteArray())
+                .encodeToByteArray(EC.PublicKey.Format.PEM).decodeToString()
+        }
+    }
 }
 
 @OptIn(ExperimentalStdlibApi::class)
@@ -305,6 +299,28 @@ suspend fun buildEncryptedTopicContent(
 ): TopicContent.Encrypted {
     val (encrypted, aes) = encryptDataByAES(input).getOrThrow()
     return TopicContent.Encrypted(encrypted.toHexString(), keyData.associate {
-        it.id to getAlgo().kemEncrypt(it.pubKey, aes).getOrThrow().toHexString()
+        val key = if (it.algo == AlgoType.DILITHIUM) {
+            it.encryptionPublicKey ?: throw IllegalArgumentException("Dilithium user ${it.id} missing encryption key")
+        } else {
+            it.pubKey
+        }
+        val encryptedKey = getAlgo(it.algo).kemEncrypt(key, aes).getOrThrow().toHexString()
+        it.id to encryptedKey
     })
+}
+
+/**
+ * @param derPrivateKey hex string
+ * @param encrypted the encrypted message
+ * @param encryptedAesKey the encrypted AES key
+ * @return the decrypted message
+ */
+suspend fun Algo.decryptMessage(
+    derPrivateKey: String,
+    encrypted: ByteArray,
+    encryptedAesKey: ByteArray
+): Result<String> {
+    return kemDecrypt(derPrivateKey, encryptedAesKey).mapResult {
+        decryptDataByAES(encrypted, it)
+    }
 }
