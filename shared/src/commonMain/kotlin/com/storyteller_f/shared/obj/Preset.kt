@@ -25,9 +25,9 @@ data class PresetUser(
     val icon: String? = null,
     val name: String,
     val aid: String,
-    val tagline: String,
     val privateKey: String,
     val id: PrimaryKey? = null,
+    val algoType: String? = null,
 )
 
 @Serializable

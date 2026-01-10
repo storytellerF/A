@@ -89,12 +89,17 @@ class ExposedRoomDatabase(
         databaseSession.dbSearch {
             search {
                 Users.join(Members, JoinType.INNER, Users.id, Members.uid)
-                    .select(Users.id, Users.publicKey).where {
+                    .select(Users.id, Users.publicKey, Users.algoType, Users.encryptionPublicKey).where {
                         Members.objectId eq roomId
                     }.bindPaginationQuery(Users, primaryKeyFetch)
             }
             map {
-                UserPubKeyInfo(it[Users.id], it[Users.publicKey])
+                UserPubKeyInfo(
+                    it[Users.id],
+                    it[Users.publicKey],
+                    it[Users.algoType],
+                    it[Users.encryptionPublicKey]
+                )
             }
         },
         databaseSession.dbSearch {

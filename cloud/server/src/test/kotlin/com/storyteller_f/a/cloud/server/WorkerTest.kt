@@ -64,6 +64,8 @@ class WorkerTest {
 
             val systemUser = User(
                 aid = "System",
+                encryptionPublicKey = null,
+                encryptionPrivateKey = null,
                 publicKey = sysPubDer,
                 address = sysAddress,
                 icon = null,
@@ -125,6 +127,8 @@ class WorkerTest {
 
             val systemUser = User(
                 aid = "System",
+                encryptionPublicKey = null,
+                encryptionPrivateKey = null,
                 publicKey = sysPubDer,
                 address = sysAddress,
                 icon = null,

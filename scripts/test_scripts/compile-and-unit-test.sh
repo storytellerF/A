@@ -1,14 +1,21 @@
 #!/bin/sh
-
 echo "执行 detekt 静态分析"
 if ! ./scripts/tool_scripts/exec-until-success.sh ./gradlew detekt --no-daemon; then
     ./scripts/tool_scripts/show-notification.sh "Detekt 失败" "代码静态分析失败！请检查代码规范问题。" "false"
     exit 1
 fi
 
-./scripts/tool_scripts/kill-port.bat 8080
-./scripts/tool_scripts/kill-port.bat 9080
-./scripts/tool_scripts/kill-port.bat 10080
+# OS Detection
+if [ "$(uname)" = "Darwin" ] || [ "$(expr substr $(uname -s) 1 5)" = "Linux" ]; then
+    KILL_PORT_SCRIPT="./scripts/tool_scripts/kill-port.sh"
+else
+    KILL_PORT_SCRIPT="./scripts/tool_scripts/kill-port.bat"
+fi
+
+$KILL_PORT_SCRIPT 8080
+$KILL_PORT_SCRIPT 9080
+$KILL_PORT_SCRIPT 10080
+$KILL_PORT_SCRIPT 8811
 
 echo "清理测试缓存"
 if ! ./gradlew clean --no-daemon; then

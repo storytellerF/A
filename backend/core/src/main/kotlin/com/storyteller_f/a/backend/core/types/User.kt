@@ -8,6 +8,8 @@ import kotlinx.datetime.LocalDateTime
 
 class User(
     val aid: String?,
+    val encryptionPublicKey: String?,
+    val encryptionPrivateKey: String?,
     val publicKey: String,
     val address: String,
     val icon: PrimaryKey?,
@@ -23,7 +25,7 @@ class User(
 }
 
 fun User.toUserInfo(): UserInfo {
-    return UserInfo(id, address, aid, nickname, null)
+    return UserInfo(id, address, aid, nickname, null, encryptionPublicKey, encryptionPrivateKey)
 }
 
 data class RawUser(val user: User)

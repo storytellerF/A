@@ -94,7 +94,7 @@ object NewPipeDownloaderImpl : Downloader() {
             if (response.code == 429) {
                 throw ReCaptchaException("reCaptcha Challenge requested", url)
             }
-            val responseBodyToReturn = response.body?.use { body ->
+            val responseBodyToReturn = response.body.use { body ->
                 body.string()
             }
             val latestUrl = response.request.url.toString()

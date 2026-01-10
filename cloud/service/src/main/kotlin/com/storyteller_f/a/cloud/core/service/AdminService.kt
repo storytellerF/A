@@ -11,7 +11,6 @@ import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.PanelOverview
 import com.storyteller_f.shared.model.PassType
 import com.storyteller_f.shared.model.UserInfo
-import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.now
 
 suspend fun Backend.getOverview() = runCatching {
@@ -47,13 +46,29 @@ suspend fun Backend.addUser(newUser: NewUser): Result<UserInfo> {
     }.exceptionOrNull()?.let {
         return Result.failure(it)
     }
-    return getAlgo().calcAddress(newUser.publicKey).mapResult { address ->
+    return runCatching {
+        val (address, pemPubKey) = getAlgo(newUser.algoType).run {
+            val address = calcAddress(newUser.publicKey).getOrThrow()
+            address to newUser.publicKey
+        }
+        val (encPubKey, encPrivKey) = if (newUser.algoType == AlgoType.DILITHIUM) {
+            val algo = getAlgo(newUser.algoType)
+            val (priKey, pubKey) = algo.generateEncryptionPemKeyPair().getOrThrow()
+            val derPriKey = algo.getDerPrivateKey(priKey).getOrThrow()
+            val derPubKey = algo.getDerPublicKeyFromPem(pubKey).getOrThrow()
+            derPubKey to derPriKey
+        } else {
+            null to null
+        }
+
         val id = SnowflakeFactory.nextId()
         val notificationId = SnowflakeFactory.nextId()
         database.user.createUser(
             User(
                 newUser.aid,
-                newUser.publicKey,
+                encPubKey,
+                encPrivKey,
+                pemPubKey,
                 address,
                 null,
                 nickname ?: nameService.parse(id),
@@ -64,8 +79,6 @@ suspend fun Backend.addUser(newUser: NewUser): Result<UserInfo> {
                 AlgoType.P256,
                 notificationId
             )
-        )
-    }.map {
-        it.toUserInfo()
+        ).getOrThrow().toUserInfo()
     }
 }

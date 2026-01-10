@@ -24,7 +24,8 @@ class SignatureTest {
             presetValue.userData!!.forEach {
                 val privateKeyStr = File(jsonFile.parentFile, it.privateKey).readText().replace("\r\n", "\n")
                 getAlgo().run {
-                    val s = signature(privateKeyStr, data).getOrThrow()
+                    val derPriKey = getDerPrivateKey(privateKeyStr).getOrThrow()
+                    val s = signature(derPriKey, data).getOrThrow()
                     val derPublicKeyStr = getDerPublicKeyFromPrivateKey(privateKeyStr).getOrThrow()
                     assertTrue(verify(derPublicKeyStr, s, data).getOrThrow(), "check failed")
                 }

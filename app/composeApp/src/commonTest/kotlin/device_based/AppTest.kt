@@ -25,8 +25,9 @@ import com.storyteller_f.a.app.core.components.CenterBox
 import com.storyteller_f.a.app.utils.initEnvironment
 import com.storyteller_f.a.client.core.RawUserPass
 import com.storyteller_f.a.client.core.getClient
-import com.storyteller_f.a.client.core.getUserInfo
+import com.storyteller_f.a.client.core.getUserPass
 import com.storyteller_f.shared.getPlatform
+import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.setupKmpLogger
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.timeout
@@ -57,8 +58,9 @@ class AppTest {
                     LaunchedEffect(null) {
                         initEnvironment(current)
                         val privateKeyContent = map["p-system"]!!
-                        uiViewModel.mainInstance.sessionManager.getUserInfo(
+                        uiViewModel.mainInstance.sessionManager.getUserPass(
                             privateKeyContent,
+                            AlgoType.P256,
                             true
                         ) {
                             RawUserPass(it)

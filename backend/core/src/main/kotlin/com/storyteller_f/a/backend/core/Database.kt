@@ -29,6 +29,7 @@ import com.storyteller_f.a.backend.core.types.UserFavorite
 import com.storyteller_f.a.backend.core.types.UserLog
 import com.storyteller_f.a.backend.core.types.UserSubscription
 import com.storyteller_f.a.backend.core.types.UserTopicRead
+import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.NestedMemberInfo
 import com.storyteller_f.shared.model.PosterSearch
 import com.storyteller_f.shared.model.QuotaInfo
@@ -126,6 +127,8 @@ data class ContainerInfo(
     val memberCount: Long?,
     val latestTopicId: PrimaryKey?,
 )
+
+data class UserAuthData(val publicKey: String, val userId: PrimaryKey, val algoType: AlgoType)
 
 sealed interface JoinSearch {
     data class Joined(val uid: PrimaryKey) : JoinSearch
@@ -296,9 +299,9 @@ interface UserDatabase {
      * nickname 为null 或者空字符串时不更新，avatar 为null 时不更新,aid 为null 或者空字符串时不更新
      */
     suspend fun updateUserInfo(id: PrimaryKey, newUser: UpdateUserBody): Result<Boolean>
-    suspend fun getUserAuthDataById(id: PrimaryKey): Result<Pair<String, Long>?>
-    suspend fun getUserAuthDataByAid(aid: String): Result<Pair<String, Long>?>
-    suspend fun getUserAuthDataByAddress(address: String): Result<Pair<String, Long>?>
+    suspend fun getUserAuthDataById(id: PrimaryKey): Result<UserAuthData?>
+    suspend fun getUserAuthDataByAid(aid: String): Result<UserAuthData?>
+    suspend fun getUserAuthDataByAddress(address: String): Result<UserAuthData?>
     suspend fun getRawUsers(objectListFetch: ObjectListFetch): Result<List<RawUser>>
     suspend fun getUserAcgByIds(objectListFetch: ObjectListFetch): Result<List<Pair<Long, Long>>>
     suspend fun addReadLog(userTopicRead: UserTopicRead): Result<Unit>
@@ -621,13 +624,13 @@ interface AdminDatabase {
 interface PanelAccountDatabase {
     suspend fun getPanelAccount(id: PrimaryKey): Result<PanelAccount?>
     suspend fun addPanelAccount(panelAccount: PanelAccount): Result<Unit>
-    suspend fun getUserAuthDataById(id: PrimaryKey): Result<Pair<String, Long>?>
-    suspend fun getUserAuthDataByAddress(address: String): Result<Pair<String, Long>?>
+    suspend fun getUserAuthDataById(id: PrimaryKey): Result<UserAuthData?>
+    suspend fun getUserAuthDataByAddress(address: String): Result<UserAuthData?>
     suspend fun getRawUserAndPublicKeyByAddress(ad: String): Result<Pair<RawPanelAccount, String>?>
     suspend fun isUserNotExistsByPublicKey(pk: String): Result<Boolean>
 }
 
-const val PUBLIC_KEY_LENGTH = 512
+const val PUBLIC_KEY_LENGTH = 4096
 const val ADDRESS_LENGTH = 100
 const val USER_NICKNAME = 20
 const val COMMUNITY_NAME_LENGTH = 20

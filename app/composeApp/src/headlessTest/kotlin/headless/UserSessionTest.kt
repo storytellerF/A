@@ -81,8 +81,9 @@ fun loginSessionTest(block: suspend (String, String, String, SessionHistoryManag
         assertEquals(0, sessionFactory.getSavedSession().alias.size)
         getAlgo().run {
             val privateKey = generatePemKeyPair().getOrThrow().first
+            val derPrivateKey = getDerPrivateKey(privateKey).getOrThrow()
             val publicKey = getDerPublicKeyFromPrivateKey(privateKey).getOrThrow()
             val ad = calcAddress(publicKey).getOrThrow()
-            block(privateKey, publicKey, ad, sessionFactory)
+            block(derPrivateKey, publicKey, ad, sessionFactory)
         }
     }

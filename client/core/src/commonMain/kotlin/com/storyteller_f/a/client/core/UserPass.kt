@@ -1,7 +1,8 @@
 package com.storyteller_f.a.client.core
 
+import com.storyteller_f.shared.decryptMessage
 import com.storyteller_f.shared.getAlgo
-import com.storyteller_f.shared.utils.mapResult
+import com.storyteller_f.shared.model.AlgoType
 import kotlinx.serialization.Serializable
 
 interface UserPass {
@@ -21,29 +22,33 @@ sealed interface ClientSessionState {
 
 @Serializable
 data class RawUserPassInfo(
-    val pemPrivateKey: String,
+    val derPrivateKey: String,
     val derPublicKey: String,
     val address: String,
+    val algo: AlgoType = AlgoType.P256,
+    val encryptionDerPrivateKey: String? = null,
+    val encryptionDerPublicKey: String? = null,
 )
 
 data class RawUserPass(val rawUSerPass: RawUserPassInfo) : UserPass {
     override suspend fun signature(data: String): Result<String> {
-        return getAlgo().signature(rawUSerPass.pemPrivateKey, data)
+        return getAlgo(rawUSerPass.algo).signature(rawUSerPass.derPrivateKey, data)
     }
 
     override suspend fun verify(signature: String, data: String): Result<Boolean> {
-        return getAlgo().verify(rawUSerPass.derPublicKey, signature, data)
+        return getAlgo(rawUSerPass.algo).verify(rawUSerPass.derPublicKey, signature, data)
     }
 
     override suspend fun decrypt(encrypted: ByteArray, encryptedAesKey: ByteArray): Result<String> {
-        return getAlgo().run {
-            getDerPrivateKey(rawUSerPass.pemPrivateKey).mapResult { derPrivateKeyStr ->
-                decryptMessage(derPrivateKeyStr, encrypted, encryptedAesKey)
-            }
+        val (epk, algo) = if (rawUSerPass.algo == AlgoType.DILITHIUM && rawUSerPass.encryptionDerPrivateKey != null) {
+            rawUSerPass.encryptionDerPrivateKey to getAlgo(rawUSerPass.algo)
+        } else {
+            rawUSerPass.derPrivateKey to getAlgo(rawUSerPass.algo)
         }
+        return algo.decryptMessage(epk, encrypted, encryptedAesKey)
     }
 
     override suspend fun address(): Result<String> {
-        return getAlgo().calcAddress(rawUSerPass.derPublicKey)
+        return getAlgo(rawUSerPass.algo).calcAddress(rawUSerPass.derPublicKey)
     }
 }

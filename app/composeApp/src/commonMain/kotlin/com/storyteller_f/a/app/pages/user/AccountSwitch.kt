@@ -183,7 +183,7 @@ suspend fun AppGlobalDialogController.switchUser(
             val pemPrivateKey = getPemPrivateKeyFromDer(derPrivateKeyStr).getOrThrow()
             val publicKey = getDerPublicKeyFromPrivateKey(pemPrivateKey).getOrThrow()
             val address = calcAddress(publicKey).getOrThrow()
-            RawUserPass(RawUserPassInfo(pemPrivateKey, publicKey, address))
+            RawUserPass(RawUserPassInfo(derPrivateKeyStr, publicKey, address))
         }
     }.getOrNull()?.let {
         uiViewModel.childAccount.value = it

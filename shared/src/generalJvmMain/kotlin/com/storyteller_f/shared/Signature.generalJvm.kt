@@ -17,8 +17,6 @@ import org.bouncycastle.operator.ContentSigner
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
 import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider
 import org.bouncycastle.pqc.jcajce.spec.DilithiumParameterSpec
-import org.bouncycastle.util.encoders.Hex.decode
-import org.bouncycastle.util.encoders.Hex.toHexString
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -43,6 +41,9 @@ import javax.crypto.spec.SecretKeySpec
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
+/**
+ * @return hex 的der 格式的密钥
+ */
 @OptIn(ExperimentalStdlibApi::class)
 actual suspend fun getDerPublicKeyFromPrivateKeyP256(pemPrivateKeyStr: String): Result<String> {
     return CryptoJvm.readPrivateKeyFromPEMString(pemPrivateKeyStr).mapResult {
@@ -52,13 +53,17 @@ actual suspend fun getDerPublicKeyFromPrivateKeyP256(pemPrivateKeyStr: String): 
     }
 }
 
+/**
+ * @param derPublicKeyStr hex 的der 格式的密钥
+ * @return hex 格式的地址
+ */
 @OptIn(ExperimentalStdlibApi::class)
 actual suspend fun calcAddressP256(derPublicKeyStr: String): Result<String> {
     return runCatching {
-        val decode = decode(derPublicKeyStr)
+        val decode = derPublicKeyStr.hexToByteArray()
         val digest256 = Keccak.Digest256()
         val digest = digest256.digest(decode).takeLast(20).toByteArray()
-        toHexString(digest)
+        digest.toHexString()
     }
 }
 
@@ -155,6 +160,9 @@ object CryptoJvm {
         }
     }
 
+    /**
+     * @param derPrivateKeyStr hex 的der 格式的密钥
+     */
     @Suppress("DeprecatedProvider")
     @OptIn(ExperimentalStdlibApi::class)
     fun decrypt(
@@ -188,6 +196,9 @@ object CryptoJvm {
         }
     }
 
+    /**
+     * @param derPublicKeyStr hex 的der 格式的密钥
+     */
     @Suppress("DeprecatedProvider")
     @OptIn(ExperimentalStdlibApi::class)
     fun encryptAesKey(derPublicKeyStr: String, aesKey: ByteArray): Result<ByteArray> {
@@ -286,21 +297,13 @@ actual val AlgoDilithium: Algo = object : Algo {
     }
 
     override suspend fun signature(
-        pemPrivateKey: String,
+        derPrivateKey: String,
         data: String
     ): Result<String> {
         return runCatching {
-            val pemParser = PEMParser(StringReader(pemPrivateKey))
-            val converter = JcaPEMKeyConverter().setProvider("BCPQC")
-            val obj = pemParser.readObject()
-            pemParser.close()
-
-            val privateKey: PrivateKey = when (obj) {
-                is org.bouncycastle.openssl.PEMKeyPair -> converter.getPrivateKey(obj.privateKeyInfo)
-                is PrivateKeyInfo -> converter.getPrivateKey(obj)
-                else -> throw IllegalArgumentException("Unsupported PEM object: ${obj?.javaClass}")
-            }
-
+            val privateKeyBytes = derPrivateKey.hexToByteArray()
+            val keyFactory = KeyFactory.getInstance("Dilithium", "BCPQC")
+            val privateKey = keyFactory.generatePrivate(PKCS8EncodedKeySpec(privateKeyBytes))
             val signer = java.security.Signature.getInstance("Dilithium", "BCPQC")
             signer.initSign(privateKey, SecureRandom())
             signer.update(data.encodeToByteArray())
@@ -310,18 +313,14 @@ actual val AlgoDilithium: Algo = object : Algo {
 
     override suspend fun getDerPrivateKey(pemPrivateKey: String): Result<String> {
         return runCatching {
-            val pemParser = PEMParser(StringReader(pemPrivateKey))
-            val converter = JcaPEMKeyConverter().setProvider("BCPQC")
-            val obj = pemParser.readObject()
-            pemParser.close()
-
-            val privateKey: PrivateKey = when (obj) {
-                is org.bouncycastle.openssl.PEMKeyPair -> converter.getPrivateKey(obj.privateKeyInfo)
-                is PrivateKeyInfo -> converter.getPrivateKey(obj)
-                else -> throw IllegalArgumentException("Unsupported PEM object: ${obj?.javaClass}")
-            }
-
-            privateKey.encoded.toHexString()
+            val base64 = pemPrivateKey
+                .replace("-----BEGIN PRIVATE KEY-----", "")
+                .replace("-----END PRIVATE KEY-----", "")
+                .replace("\r", "")
+                .replace("\n", "")
+                .trim()
+            val der = Base64.decode(base64)
+            der.toHexString()
         }
     }
 
@@ -338,15 +337,6 @@ actual val AlgoDilithium: Algo = object : Algo {
         }
     }
 
-    override suspend fun decryptMessage(
-        derPrivateKey: String,
-        encrypted: ByteArray,
-        encryptedAesKey: ByteArray
-    ): Result<String> {
-        return runCatching {
-            throw UnsupportedOperationException("decryptMessage is not supported for Dilithium")
-        }
-    }
 
     override suspend fun kemEncrypt(
         derPublicKeyStr: String,
@@ -381,10 +371,10 @@ actual val AlgoDilithium: Algo = object : Algo {
 
     override suspend fun calcAddress(derPublicKeyStr: String): Result<String> {
         return runCatching {
-            val decode = decode(derPublicKeyStr)
+            val decode = derPublicKeyStr.hexToByteArray()
             val digest256 = Keccak.Digest256()
             val digest = digest256.digest(decode).takeLast(20).toByteArray()
-            toHexString(digest)
+            digest.toHexString()
         }
     }
 
@@ -426,8 +416,59 @@ actual val AlgoDilithium: Algo = object : Algo {
         }
     }
 
-    override suspend fun getDerPublicKeyFromPrivateKey(pemPrivateKeyStr: String): Result<String> {
-        TODO("Not yet implemented")
+    override suspend fun getPemPublicKeyFromDer(derPublicKey: String): Result<String> {
+        return runCatching {
+            val der = derPublicKey.hexToByteArray()
+            val base64 = Base64.encode(der).chunked(64).joinToString("\n")
+            buildString {
+                appendLine("-----BEGIN PUBLIC KEY-----")
+                appendLine(base64)
+                appendLine("-----END PUBLIC KEY-----")
+            }
+        }
     }
 
+    override suspend fun getDerPublicKeyFromPrivateKey(pemPrivateKeyStr: String): Result<String> {
+        return runCatching {
+            val base64 = pemPrivateKeyStr
+                .replace("-----BEGIN PRIVATE KEY-----", "")
+                .replace("-----END PRIVATE KEY-----", "")
+                .replace("\r", "")
+                .replace("\n", "")
+                .trim()
+            val privateKeyBytes = Base64.decode(base64)
+            val keyFactory = KeyFactory.getInstance("Dilithium", "BCPQC")
+            val privateKey = keyFactory.generatePrivate(PKCS8EncodedKeySpec(privateKeyBytes))
+
+            if (privateKey is org.bouncycastle.pqc.jcajce.provider.dilithium.BCDilithiumPrivateKey) {
+                privateKey.publicKey.encoded.toHexString()
+            } else {
+                throw IllegalArgumentException("Unsupported Private Key type: ${privateKey.javaClass}")
+            }
+        }
+    }
+
+    @OptIn(ExperimentalEncodingApi::class)
+    override suspend fun generateEncryptionPemKeyPair(): Result<Pair<String, String>> {
+        return runCatching {
+            val kpg = KeyPairGenerator.getInstance("Kyber", "BCPQC")
+            kpg.initialize(org.bouncycastle.pqc.jcajce.spec.KyberParameterSpec.kyber768, SecureRandom())
+            val kp = kpg.generateKeyPair()
+            val privDer = kp.private.encoded
+            val privB64 = Base64.encode(privDer).chunked(64).joinToString("\n")
+            val privatePem = buildString {
+                appendLine("-----BEGIN PRIVATE KEY-----")
+                appendLine(privB64)
+                appendLine("-----END PRIVATE KEY-----")
+            }
+            val pubDer = kp.public.encoded
+            val pubB64 = Base64.encode(pubDer).chunked(64).joinToString("\n")
+            val publicPem = buildString {
+                appendLine("-----BEGIN PUBLIC KEY-----")
+                appendLine(pubB64)
+                appendLine("-----END PUBLIC KEY-----")
+            }
+            privatePem to publicPem
+        }
+    }
 }

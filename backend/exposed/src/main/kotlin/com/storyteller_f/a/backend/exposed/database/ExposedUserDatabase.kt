@@ -3,6 +3,7 @@ package com.storyteller_f.a.backend.exposed.database
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
+import com.storyteller_f.a.backend.core.UserAuthData
 import com.storyteller_f.a.backend.core.UserDatabase
 import com.storyteller_f.a.backend.core.paginationFromResults
 import com.storyteller_f.a.backend.core.types.AssetTransaction
@@ -36,6 +37,7 @@ import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.md5
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.Op
 import org.jetbrains.exposed.v1.core.ResultRow
@@ -102,23 +104,29 @@ class ExposedUserDatabase(
         user
     }
 
-    private suspend fun createUserRaw(user: User) = check(Users.insert {
-        it[id] = user.id
-        it[publicKey] = user.publicKey
-        it[address] = user.address
-        it[nickname] = user.nickname
-        it[createdTime] = user.createdTime
-        it[notificationId] = user.notificationId
-        it[passType] = user.passType
-        it[algoType] = user.algoType
-    }.insertedCount > 0) {
-        "insert user failed"
+    private suspend fun createUserRaw(user: User) {
+        check(Users.insert {
+            it[id] = user.id
+            it[encryptionPublicKey] = user.encryptionPublicKey
+            it[encryptionPrivateKey] = user.encryptionPrivateKey
+            it[publicKey] = user.publicKey
+            it[publicKeyMd5] = md5(user.publicKey)
+            it[address] = user.address
+            it[nickname] = user.nickname
+            it[createdTime] = user.createdTime
+            it[notificationId] = user.notificationId
+            it[passType] = user.passType
+            it[algoType] = user.algoType
+        }.insertedCount > 0) {
+            "insert user failed"
+        }
     }
 
     override suspend fun isUserNotExistsByPublicKey(pk: String) = databaseSession.dbSearch {
         search {
+            val md5 = md5(pk)
             User.find {
-                Users.publicKey eq pk
+                (Users.publicKeyMd5 eq md5) and (Users.publicKey eq pk)
             }
         }
         isEmpty()
@@ -171,10 +179,10 @@ class ExposedUserDatabase(
         predicate: () -> Op<Boolean>,
     ) = databaseSession.dbSearch {
         search {
-            Users.select(listOf(Users.publicKey, Users.id)).where(predicate)
+            Users.select(listOf(Users.publicKey, Users.id, Users.algoType)).where(predicate)
         }
         first {
-            it[Users.publicKey] to it[Users.id]
+            UserAuthData(it[Users.publicKey], it[Users.id], it[Users.algoType])
         }
     }
 
@@ -183,7 +191,7 @@ class ExposedUserDatabase(
     }
 
     override suspend fun getUserAuthDataByAid(aid: String) = getUserByPredicate({
-        it[Users.publicKey] to it[Users.id]
+        UserAuthData(it[Users.publicKey], it[Users.id], it[Users.algoType])
     }) {
         where {
             Aids.value eq aid
@@ -364,6 +372,7 @@ class ExposedUserDatabase(
         check(ChildAccounts.insert {
             it[this.hostId] = hostId
             it[this.privateKey] = privateKey
+            it[this.primaryKeyMd5] = md5(privateKey)
             it[uid] = user.id
         }.insertedCount > 0) {
             "Insert alternate account failed"

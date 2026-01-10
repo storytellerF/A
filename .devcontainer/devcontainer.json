@@ -9,6 +9,10 @@
 		"ghcr.io/mikaello/devcontainer-features/kotlinc:1": {},
 		"ghcr.io/devcontainers/features/java": {
 			"version": "21"
+		},
+		"ghcr.io/CASL0/devcontainer-features/android-sdk:1": {
+			"platformsVersion": "36",
+			"buildToolsVersion": "35.0.0"
 		}
 	},
 	// Use this environment variable if you need to bind mount your local source code into a new container.

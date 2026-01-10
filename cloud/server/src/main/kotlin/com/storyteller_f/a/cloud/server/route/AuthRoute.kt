@@ -5,6 +5,7 @@ import com.storyteller_f.a.api.SignInBody
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.ObjectFetch
+import com.storyteller_f.a.backend.core.UserAuthData
 import com.storyteller_f.a.cloud.core.service.addChildAccount
 import com.storyteller_f.a.cloud.core.service.addUserLog
 import com.storyteller_f.a.cloud.core.service.getUserAlternateUserInfoList
@@ -100,7 +101,7 @@ fun RoutingContext.saveSuccessSessionOnFirst(id: PrimaryKey) {
 
 suspend fun Backend.getUserAuthData(
     credential: CustomCredential
-): Result<Pair<String, Long>?> {
+): Result<UserAuthData?> {
     val userDatabase = database.user
     return when (credential) {
         is CustomCredential.AidCredential -> userDatabase.getUserAuthDataByAid(credential.aid)
@@ -129,8 +130,8 @@ suspend fun ApplicationCall.checkApiRequest(
         }
 
         sig.isNotBlank() && session.data.isNotBlank() -> {
-            backend.getUserAuthData(credential).mapResultIfNotNull { (pubKey, id) ->
-                getAlgo().verify(
+            backend.getUserAuthData(credential).mapResultIfNotNull { (pubKey, id, algo) ->
+                getAlgo(algo).verify(
                     pubKey,
                     sig,
                     finalData(session.data)
@@ -149,7 +150,7 @@ suspend fun ApplicationCall.checkApiRequest(
 
 suspend fun Backend.getAdminAuthData(
     credential: CustomCredential
-): Result<Pair<String, Long>?> {
+): Result<UserAuthData?> {
     return when (credential) {
         is CustomCredential.IdCredential -> database.panelAccount.getUserAuthDataById(credential.id)
 
@@ -169,8 +170,8 @@ suspend fun ApplicationCall.checkAdminApiRequest(
     if (!sig.isNotBlank() || !session.data.isNotBlank()) {
         return Result.success(null)
     }
-    return backend.getAdminAuthData(credential).mapResultIfNotNull { (pubKey, id) ->
-        getAlgo().verify(
+    return backend.getAdminAuthData(credential).mapResultIfNotNull { (pubKey, id, algo) ->
+        getAlgo(algo).verify(
             pubKey,
             sig,
             finalData(session.data)

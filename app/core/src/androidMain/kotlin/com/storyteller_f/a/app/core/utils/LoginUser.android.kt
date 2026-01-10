@@ -25,7 +25,6 @@ import java.security.spec.PKCS8EncodedKeySpec
 import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
-import kotlin.io.encoding.Base64
 
 actual fun buildSessionHistoryFactory(settings: Settings): SessionHistoryManager {
     if (runCatching {
@@ -149,7 +148,7 @@ class AndroidKeyStoreSessionHistoryManager(val settings: Settings) : SessionHist
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
     override suspend fun addSession(session: RawUserPassInfo): UserPass {
         val current = "default"
-        importEcdsaPrivateKey(current, session.pemPrivateKey)
+        importEcdsaPrivateKey(current, session.derPrivateKey)
         settings.encodeValue(SessionHistory.serializer(), "session_history", SessionHistory(current))
         return AndroidKeyStoreUserPass(current)
     }
@@ -158,20 +157,14 @@ class AndroidKeyStoreSessionHistoryManager(val settings: Settings) : SessionHist
         return AndroidKeyStoreUserPass(alias)
     }
 
-    private suspend fun importEcdsaPrivateKey(alias: String, pemPrivateKey: String) {
+    private suspend fun importEcdsaPrivateKey(alias: String, derPrivateKey: String) {
         val keyStore = KeyStore.getInstance("AndroidKeyStore")
         keyStore.load(null)
         if (keyStore.containsAlias(alias)) {
             return
         }
-        // 移除 PEM 格式的头部和尾部
-        val privateKeyPem = pemPrivateKey
-            .replace("-----BEGIN PRIVATE KEY-----", "")
-            .replace("-----END PRIVATE KEY-----", "")
-            .replace("\\s".toRegex(), "") // 移除所有空白字符
-
         // 解码 Base64 编码的私钥
-        val privateKeyBytes = Base64.decode(privateKeyPem, 0, privateKeyPem.length)
+        val privateKeyBytes = derPrivateKey.encodeToByteArray()
 
         // 创建 PKCS8EncodedKeySpec
         val keySpec = PKCS8EncodedKeySpec(privateKeyBytes)
@@ -188,7 +181,7 @@ class AndroidKeyStoreSessionHistoryManager(val settings: Settings) : SessionHist
             .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
             .build()
 
-        val cert = CryptoJvm.generateCert(pemPrivateKey).getOrThrow()
+        val cert = CryptoJvm.generateCert(derPrivateKey).getOrThrow()
         // 将私钥导入 Keystore
         val privateKeyEntry = KeyStore.PrivateKeyEntry(privateKey, arrayOf(cert))
         keyStore.setEntry(alias, privateKeyEntry, protectionParams)

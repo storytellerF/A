@@ -24,6 +24,19 @@ kotlin {
     }
 }
 
+// configurations.all {
+//    resolutionStrategy {
+//        force(libs.bcprov.jdk18on)
+//        force(libs.bcpkix.jdk18on)
+//        dependencySubstitution {
+//             substitute(module("org.bouncycastle:bcprov-jdk15on")).using(module("org.bouncycastle:bcprov-jdk18on:1.83"))
+//             substitute(module("org.bouncycastle:bcpkix-jdk15on")).using(module("org.bouncycastle:bcpkix-jdk18on:1.83"))
+//             substitute(module("org.bouncycastle:bcprov-jdk15to18")).using(module("org.bouncycastle:bcprov-jdk18on:1.83"))
+//             substitute(module("org.bouncycastle:bcpkix-jdk15to18")).using(module("org.bouncycastle:bcpkix-jdk18on:1.83"))
+//        }
+//    }
+// }
+
 dependencies {
     implementation(libs.napier)
     implementation(libs.cryptography.provider.jdk)
@@ -59,8 +72,12 @@ dependencies {
     testImplementation(libs.sql.formatter)
     testImplementation(libs.javacv.platform)
     testImplementation(projects.cloud.pdfbox)
-    testImplementation(libs.pdfbox)
-    testImplementation(libs.pdfcompare)
+    testImplementation(libs.pdfbox) {
+//        exclude(group = "org.bouncycastle")
+    }
+    testImplementation(libs.pdfcompare) {
+//        exclude(group = "org.bouncycastle")
+    }
     testImplementation(libs.commons.imaging)
     testImplementation(projects.cloud.worker)
 }
@@ -68,6 +85,10 @@ dependencies {
 tasks.test {
     useJUnitPlatform()
     maxHeapSize = "3096m"
+    testLogging {
+        events("passed", "skipped", "failed")
+        showStandardStreams = true
+    }
 }
 
 val buildType = project.findProperty("server.buildType") as String
