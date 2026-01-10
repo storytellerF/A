@@ -110,6 +110,8 @@ import kotlin.jvm.optionals.getOrNull
 import kotlin.system.exitProcess
 import kotlin.time.Duration.Companion.seconds
 
+val BackendKey = io.ktor.util.AttributeKey<Backend>("Backend")
+
 fun main(args: Array<String>) {
     setLogPath()
     setupKmpLogger()
@@ -172,6 +174,7 @@ fun Application.module() {
     configurePlugin(reader, backend)
     configureAuth(backend)
     configureRoute(reader, backend)
+    attributes.put(BackendKey, backend)
 }
 
 private fun Application.configurePlugin(
