@@ -1,54 +1,81 @@
 @file:Suppress("SameParameterValue")
 
 import com.storyteller_f.a.app.dev.startServerByRun
+import com.storyteller_f.shared.getAlgo
 import io.appium.java_client.AppiumBy
 import io.appium.java_client.android.AndroidDriver
 import io.appium.java_client.android.options.UiAutomator2Options
 import io.appium.java_client.plugins.storage.StorageClient
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
+import org.junit.Rule
+import org.junit.rules.TestName
 import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.WebDriverWait
 import java.io.File
 import java.net.URI
 import java.time.Duration
+import java.util.Base64
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
 class AppiumTest {
+    @get:Rule
+    val name = TestName()
+
     @Test
-    fun `test sign up`() = runBlocking {
+    fun `test sign up`() = runTest {
+        runAppiumTest { driver ->
+            val privateKeyContent = generatePrivateKey()
+            clickElement(driver, """new UiSelector().description("avatar")""")
+            clickElement(driver, """new UiSelector().text("Sign in")""")
+            clickElement(driver, """new UiSelector().text("Go to sign up")""")
+            clickElement(driver, """new UiSelector().text("Private Key")""")
+            clickElement(driver, """new UiSelector().description("Edit Private Key")""")
+            inputElement(driver, """new UiSelector().className("android.widget.EditText")""", privateKeyContent)
+            clickElement(driver, """new UiSelector().text("Confirm")""")
+            clickElement(driver, """new UiSelector().text("Start sign up")""")
+            assertElementVisible(driver, """new UiSelector().description("avatar")""")
+        }
+    }
+
+    private suspend fun kotlinx.coroutines.CoroutineScope.runAppiumTest(block: suspend (AndroidDriver) -> Unit) {
         val processMate = startServerByRun("../..", 8811)
+        var driver: AndroidDriver? = null
         try {
             val url = "http://127.0.0.1:4723"
             val storageClient = StorageClient(URI(url).toURL())
             storageClient.reset()
             val file = File("../../app/android/build/outputs/apk/debug/android-universal-debug.apk")
-            val privateKeyContent = File("../../../AData/data/ecdsa/p-system")
-                .readText()
-                .replace("\r\n", "\n")
+
             println("apk path ${file.canonicalPath}")
             storageClient.add(file)
             val path = storageClient.list().first().path
             println("file upload to $path")
-            val options = UiAutomator2Options().setApp(path).setDeviceName("ATest")
+            val options = UiAutomator2Options().setApp(path).setDeviceName("device-test")
             val remoteAddress = URI(url).toURL()
-            val driver = AndroidDriver(remoteAddress, options)
-            try {
-                clickElement(driver, """new UiSelector().description("avatar")""")
-                clickElement(driver, """new UiSelector().text("Sign in")""")
-                clickElement(driver, """new UiSelector().text("Go to sign up")""")
-                clickElement(driver, """new UiSelector().text("Private Key")""")
-                clickElement(driver, """new UiSelector().description("Edit Private Key")""")
-                inputElement(driver, """new UiSelector().className("android.widget.EditText")""", privateKeyContent)
-                clickElement(driver, """new UiSelector().text("Confirm")""")
-                clickElement(driver, """new UiSelector().text("Start sign up")""")
-                assertElementVisible(driver, """new UiSelector().description("avatar")""")
-            } finally {
+            driver = AndroidDriver(remoteAddress, options)
+            driver.startRecordingScreen()
+            block(driver)
+        } finally {
+            if (driver != null) {
+                try {
+                    val content = driver.stopRecordingScreen()
+                    val decoded = Base64.getDecoder().decode(content)
+                    val dir = File("build/test/appium-records/${this@AppiumTest.javaClass.simpleName}")
+                    dir.mkdirs()
+                    val file = File(dir, "${name.methodName}.mp4")
+                    file.writeBytes(decoded)
+                } catch (e: Exception) {
+                    println(e)
+                }
                 driver.quit()
             }
-        } finally {
             processMate?.stop()
         }
+    }
+
+    private suspend fun generatePrivateKey(): String {
+        return getAlgo().generatePemKeyPair().getOrThrow().first
     }
 }
 
