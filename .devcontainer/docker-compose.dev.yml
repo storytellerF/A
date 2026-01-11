@@ -1,5 +1,5 @@
 services:
-  dev:
+  main:
     build:
       context: ../
       dockerfile: ./dev.Dockerfile
@@ -17,8 +17,9 @@ services:
       - ..:/workspace/A:cached
       - avd_data:/root/.android/avd
       - sdk_data:/opt/android/sdk
-      - gradle_data:/root/.gradle
-      - konan_data:/root/.konan
+      - ~/.gradle:/root/.gradle
+      - ~/.konan:/root/.konan
+      - ~/.m2:/root/.m2
       - /var/run/docker.sock:/var/run/docker.sock  # 宿主机 Docker 套接字
     shm_size: '2gb' # Allocate more shared memory
     privileged: true # Enable KVM acceleration
@@ -27,10 +28,4 @@ volumes:
   avd_data:
   sdk_data:
     name: sdk_data
-    external: true
-  gradle_data:
-    name: gradle_data
-    external: true
-  konan_data:
-    name: konan_data
     external: true
