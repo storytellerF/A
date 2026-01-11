@@ -1,8 +1,8 @@
 services:
-  test:
+  dev:
     build:
       context: ../
-      dockerfile: ./test.Dockerfile
+      dockerfile: ./dev.Dockerfile
       args:
         - OPENJDK_VERSION=21
     ports:
@@ -14,13 +14,12 @@ services:
       - VNC_PASSWD=password
       - TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal
     volumes:
+      - ..:/workspace/A:cached
       - avd_data:/root/.android/avd
-      - ./logs:/var/log/supervisor
       - sdk_data:/opt/android/sdk
       - gradle_data:/root/.gradle
+      - konan_data:/root/.konan
       - /var/run/docker.sock:/var/run/docker.sock  # 宿主机 Docker 套接字
-      - ./reports/cloud/service:/app/cloud/service/build/reports
-      - ./reports/cloud/server:/app/cloud/server/build/reports
     shm_size: '2gb' # Allocate more shared memory
     privileged: true # Enable KVM acceleration
 
@@ -31,4 +30,7 @@ volumes:
     external: true
   gradle_data:
     name: gradle_data
+    external: true
+  konan_data:
+    name: konan_data
     external: true
