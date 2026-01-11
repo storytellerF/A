@@ -5,7 +5,7 @@ URL=$2
 TARGET=$3
 BUILD_TYPE="prod"
 
-cat > "./$FLAVOR.env" <<EOF
+cat > "./deploy/${FLAVOR}.env" <<EOF
 SERVER_URL=https://${URL}
 WS_SERVER_URL=wss://${URL}
 EOF

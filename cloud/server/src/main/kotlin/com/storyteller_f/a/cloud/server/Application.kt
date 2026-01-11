@@ -275,7 +275,7 @@ private fun Application.buildBackend(): Backend {
     return buildBackendFromEnv(env)
 }
 
-private fun getFlavorFilePath() = File("../../${ServerConfig.FLAVOR}.env").canonicalPath
+private fun getFlavorFilePath() = File("../../deploy/${ServerConfig.FLAVOR}.env").canonicalPath
 
 private fun buildDatabaseReader() = DatabaseReader.Builder(
     ClassLoader.getSystemResourceAsStream("GeoLite2-Country.mmdb")

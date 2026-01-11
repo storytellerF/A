@@ -235,7 +235,7 @@ buildkonfig {
     packageName = "com.storyteller_f.a.panel"
     objectName = "PanelConfig"
     val properties = Properties().apply {
-        val file = layout.projectDirectory.file("../../$flavorStr.env").asFile
+        val file = layout.projectDirectory.file("../../deploy/$flavorStr.env").asFile
         if (file.exists()) {
             load(FileInputStream(file))
         }

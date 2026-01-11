@@ -25,7 +25,7 @@ dockerfile_output="${dockerfile_template}.patched"
 
 # 初始化两个空字符串来存储结果
 replace_string_1=""
-replace_string_2="COPY <<EOF ./\${FLAVOR}.env\n"
+replace_string_2="COPY <<EOF ./deploy/\${FLAVOR}.env\n"
 replace_string_3=""
 
 while IFS= read -r key; do

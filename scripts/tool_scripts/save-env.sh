@@ -1,5 +1,5 @@
 #!/bin/bash
-OUTPUT_FILE="$FLAVOR.env"
+OUTPUT_FILE="deploy/$FLAVOR.env"
 
 truncate -s 0 "$OUTPUT_FILE"
 
@@ -21,4 +21,4 @@ while IFS= read -r key; do
   fi
 done < "env.filter"
 
-echo "$FLAVOR.env 文件已生成。"
+echo "deploy/$FLAVOR.env 文件已生成。"

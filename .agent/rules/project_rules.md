@@ -7,7 +7,7 @@
 - 日志：使用 Napier（shared/app），在测试或调试场景按需初始化日志树
 - 静态检查：使用 Detekt 按 config/detekt/detekt.yml 运行，修复或抑制需给出理由
 - 覆盖率：Kover 可按需生成报告
-- 环境/密钥：app/composeApp 通过 BuildKonfig 从 {flavor}.env 注入；务必传入 -Pserver.flavor 与 -Pserver.buildType
+- 环境/密钥：app/composeApp 通过 BuildKonfig 从 deploy/{flavor}.env 注入；务必传入 -Pserver.flavor 与 -Pserver.buildType
 - 提交信息：使用动词开头的英文/中文短语，标注模块与范围（例如：client/core: add getAllUsers request）
 - 不能用中文做方法名
 - 使用表达式来取代var，例如：val x = if (a) b else c
@@ -80,7 +80,7 @@
 
 ## 与 AI 协作的额外规则
 - 仅在必要处最小改动，优先在 client/core 与 api 扩展，不随意改动公共模型
-- 不创建仓库外文件；敏感文件（*.env）已在 .aiexclude 中排除
+- 不创建仓库外文件；敏感文件（deploy/*.env）已在 .aiexclude 中排除
 - 涉及配置缓存的改动避免在 Gradle 配置期读取外部环境
 - 对已有测试保持兼容，如需更新，给出迁移理由与步骤
 

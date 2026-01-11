@@ -22,7 +22,7 @@ val flavorId = CaseFormat.LOWER_HYPHEN.converterTo(CaseFormat.LOWER_UNDERSCORE).
 val buildType = project.findProperty("server.buildType") as String
 
 val properties = Properties().apply {
-    val file = layout.projectDirectory.file("../../$flavorStr.env").asFile
+    val file = layout.projectDirectory.file("../../deploy/$flavorStr.env").asFile
     if (file.exists()) {
         load(FileInputStream(file))
     }

@@ -8,4 +8,4 @@ services:
         FLAVOR: ${FLAVOR}
     restart: unless-stopped
     env_file:
-      - ../../${FLAVOR}.env
+      - ../../deploy/${FLAVOR}.env
