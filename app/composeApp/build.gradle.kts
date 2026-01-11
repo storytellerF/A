@@ -22,7 +22,6 @@ plugins {
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.buildconfig)
-    alias(libs.plugins.easylauncher)
     alias(libs.plugins.serialization)
     id("com.mikepenz.aboutlibraries.plugin")
 }

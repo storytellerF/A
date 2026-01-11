@@ -77,6 +77,7 @@ dependencies {
 }
 
 easylauncher {
+    showWarnings.set(true)
     iconNames.addAll("@mipmap/ic_launcher", "@mipmap/ic_launcher_round")
     buildTypes {
         register("debug") {

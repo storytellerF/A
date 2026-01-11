@@ -18,7 +18,6 @@ plugins {
     alias(libs.plugins.compose.compiler)
 //    alias(libs.plugins.composeHotReload)
     alias(libs.plugins.serialization)
-    alias(libs.plugins.easylauncher)
     alias(libs.plugins.buildconfig)
 }
 val buildIosTarget = project.findProperty("target.ios") == "true"
