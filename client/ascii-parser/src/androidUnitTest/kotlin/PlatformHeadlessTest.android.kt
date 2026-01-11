@@ -5,7 +5,9 @@ import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [35])
-actual abstract class UsingContextTest {
+actual abstract class PlatformHeadlessTest {
     @Before
-    fun setup() = Unit
+    fun setup() {
+
+    }
 }

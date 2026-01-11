@@ -10,4 +10,5 @@ dependencies {
     implementation(kotlin("test"))
     implementation(libs.kotlinx.coroutines.core)
     testImplementation(libs.java.client)
+    implementation(project(":dev:core"))
 }

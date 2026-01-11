@@ -6,7 +6,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.use
 
-class ParseTest : UsingContextTest() {
+class ParseTest : PlatformHeadlessTest() {
     @Test
     fun `test parse ascii doc`() {
         val scriptDir = File("src/headlessTest/resources")

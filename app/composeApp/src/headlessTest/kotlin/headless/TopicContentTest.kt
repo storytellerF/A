@@ -1,6 +1,6 @@
 package headless
 
-import UsingContextTest
+import PlatformHeadlessTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import com.storyteller_f.a.api.PaginationQuery
 import com.storyteller_f.a.app.buildHttpClient
@@ -13,7 +13,7 @@ import remoteServerTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 
-class TopicContentTest : UsingContextTest() {
+class TopicContentTest : PlatformHeadlessTest() {
 
     @OptIn(ExperimentalTestApi::class)
     @Test

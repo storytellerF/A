@@ -39,12 +39,6 @@ fun main() {
     EngineMain.main(emptyArray())
 }
 
-private fun isNestedPath(): Boolean {
-    val currentPath = File("").canonicalPath
-    println("current path: $currentPath")
-    return currentPath.endsWith("dev\\server") || currentPath.endsWith("dev/server")
-}
-
 @Suppress("unused")
 fun Application.module() {
     val processMap = mutableMapOf<Int, ProcessMate?>()
@@ -74,7 +68,7 @@ fun Application.module() {
             call.handleStopRoute(processMap, processLock)
         }
         get("/ecdsa") {
-            val file = File(if (isNestedPath()) "../.." else "..", "AData/data/ecdsa")
+            val file = File("../..", "AData/data/ecdsa")
             println(file.canonicalPath)
             val map = file.listFiles()?.joinToString("\n") {
                 "${it.name}\t${it.readText().replace("\r\n", "\n").encodeBase64()}"
@@ -118,7 +112,7 @@ private suspend fun RoutingCall.handleStartRoute(
         respond(HttpStatusCode.BadRequest)
         return
     }
-    val isNested = isNestedPath()
+    val isNested = true
     val port = processLock.withLock {
         val port = findAvailablePort {
             !processMap.containsKey(it)
@@ -136,7 +130,7 @@ private suspend fun RoutingCall.handleStartRoute(
         return
     }
     if (name.startsWith("Android", true) &&
-        !forwardAllDevices(isNestedPath(), port.toString())
+        !forwardAllDevices(port.toString())
     ) {
         processLock.withLock {
             processMap.remove(port)
@@ -182,9 +176,9 @@ fun findAvailablePort(
     throw Exception("No available port found after $maxRetries retries")
 }
 
-private fun forwardAllDevices(isNested: Boolean, port: String): Boolean {
+private fun forwardAllDevices(port: String): Boolean {
     val forwardScriptPath = File(
-        if (isNested) "../.." else ".",
+        "../..",
         "scripts/android_scripts/forward-android-devices.sh"
     ).canonicalPath.replace("\\", "/")
     val process = ProcessBuilder(GIT_BASH, "-c", "$forwardScriptPath $port")
@@ -206,7 +200,7 @@ fun startListening(port: Int, previousDevices: MutableSet<String>): Job {
             if (currentDevices != previousDevices) {
                 currentDevices.forEach { device ->
                     if (device !in previousDevices) {
-                        val code = forwardAllDevices(isNestedPath(), port.toString())
+                        val code = forwardAllDevices(port.toString())
                         println("New device connected: $device result: $code")
                     }
                 }

@@ -3,7 +3,7 @@ import com.storyteller_f.shared.utils.safeFirstUnicode
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class ContentTest : UsingContextTest() {
+class ContentTest : PlatformHeadlessTest() {
     @Test
     fun `test check content`() {
         checkContent("a").getOrThrow()

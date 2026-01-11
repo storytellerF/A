@@ -51,6 +51,7 @@ fun stopServer(serverProcess: Process) {
 
 @OptIn(ExperimentalUuidApi::class)
 suspend fun CoroutineScope.startServerByRun(projectRoot: String, port: Int): ProcessMate? {
+    forceStop(port)
     val testEnvFile = File(projectRoot, "cloud/server/src/test/resources/.env")
     if (!testEnvFile.exists()) {
         println("${testEnvFile.canonicalPath} not exists")
