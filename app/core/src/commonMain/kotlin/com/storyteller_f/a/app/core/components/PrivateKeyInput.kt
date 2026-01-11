@@ -43,6 +43,7 @@ import com.storyteller_f.a.app.core.edit_private_key
 import com.storyteller_f.a.app.core.generate
 import com.storyteller_f.a.app.core.private_key
 import com.storyteller_f.shared.getAlgo
+import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.replaceCrlf
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.openFilePicker
@@ -53,7 +54,13 @@ import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PrivateKeyInput(privateKey: String, address: String?, update: (String) -> Unit) {
+fun PrivateKeyInput(
+    privateKey: String,
+    address: String?,
+    enableRandom: Boolean = true,
+    algo: AlgoType = AlgoType.P256,
+    update: (String) -> Unit
+) {
     var showDialog by remember { mutableStateOf(false) }
 
     Row(
@@ -64,21 +71,26 @@ fun PrivateKeyInput(privateKey: String, address: String?, update: (String) -> Un
         verticalAlignment = Alignment.CenterVertically
     ) {
         val shape = RoundedCornerShape(10.dp)
-        Text(
-            address ?: "",
+        Row(
             modifier = Modifier.weight(1f)
                 .border(1.dp, MaterialTheme.colorScheme.primaryContainer, shape)
-                .padding(8.dp)
-        )
-        IconButton({
-            showDialog = true
-        }) {
-            Icon(Icons.Default.Edit, stringResource(Res.string.edit_private_key))
+                .padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                address ?: "",
+                modifier = Modifier.weight(1f)
+            )
+            IconButton({
+                showDialog = true
+            }) {
+                Icon(Icons.Default.Edit, stringResource(Res.string.edit_private_key))
+            }
         }
     }
 
     if (showDialog) {
-        PrivateKeyDialog(privateKey, { showDialog = false }) {
+        PrivateKeyDialog(privateKey, enableRandom, algo, { showDialog = false }) {
             update(it)
             showDialog = false
         }
@@ -87,23 +99,35 @@ fun PrivateKeyInput(privateKey: String, address: String?, update: (String) -> Un
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PrivateKeyDialog(privateKey: String, onDismissRequest: () -> Unit, onConfirm: (String) -> Unit) {
+fun PrivateKeyDialog(
+    privateKey: String,
+    enableRandom: Boolean,
+    algo: AlgoType,
+    onDismissRequest: () -> Unit,
+    onConfirm: (String) -> Unit
+) {
     BasicAlertDialog(onDismissRequest = onDismissRequest) {
         DialogContainer {
-            PrivateKeyEditor(privateKey, onConfirm, onDismissRequest)
+            PrivateKeyEditor(privateKey, enableRandom, algo, onConfirm, onDismissRequest)
         }
     }
 }
 
 @Composable
-fun PrivateKeyEditor(privateKey: String, onConfirm: (String) -> Unit, onCancel: () -> Unit) {
+fun PrivateKeyEditor(
+    privateKey: String,
+    enableRandom: Boolean,
+    algo: AlgoType,
+    onConfirm: (String) -> Unit,
+    onCancel: () -> Unit
+) {
     var currentKey by remember { mutableStateOf(privateKey) }
     Column(
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Text(stringResource(Res.string.edit_private_key), style = MaterialTheme.typography.titleMedium)
 
-        PrivateKeyTools(currentKey) {
+        PrivateKeyTools(currentKey, enableRandom, algo) {
             currentKey = it
         }
 
@@ -113,6 +137,7 @@ fun PrivateKeyEditor(privateKey: String, onConfirm: (String) -> Unit, onCancel: 
             modifier = Modifier.fillMaxWidth(),
             label = { Text(stringResource(Res.string.private_key)) },
             minLines = 3,
+            maxLines = 5,
         )
 
         Row(
@@ -133,19 +158,21 @@ fun PrivateKeyEditor(privateKey: String, onConfirm: (String) -> Unit, onCancel: 
 }
 
 @Composable
-fun PrivateKeyTools(currentKey: String, onKeyChange: (String) -> Unit) {
+fun PrivateKeyTools(currentKey: String, enableRandom: Boolean, algo: AlgoType, onKeyChange: (String) -> Unit) {
     val clipboard = LocalClipboard.current
     val toast = LocalToaster.current
     val scope = rememberCoroutineScope()
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        IconButton(onClick = {
-            scope.launch {
-                getAlgo().generatePemKeyPair().onSuccess {
-                    onKeyChange(it.first)
+        if (enableRandom) {
+            IconButton(onClick = {
+                scope.launch {
+                    getAlgo(algo).generatePemKeyPair().onSuccess {
+                        onKeyChange(it.first)
+                    }
                 }
+            }) {
+                Icon(Icons.Default.Casino, stringResource(Res.string.generate))
             }
-        }) {
-            Icon(Icons.Default.Casino, stringResource(Res.string.generate))
         }
 
         IconButton(onClick = {

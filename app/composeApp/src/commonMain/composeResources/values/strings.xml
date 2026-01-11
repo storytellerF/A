@@ -20,7 +20,6 @@
     <string name="go_to_sign_in">Go to sign in</string>
     <string name="start_sign_up">Start sign up</string>
     <string name="start_sign_in">Start sign in</string>
-    <string name="auto_generate">Auto generate</string>
     <string name="sign_out_prompt">Are you sure to sign out?</string>
     <string name="permission_denied">Permission denied</string>
     <string name="edit">Edit</string>

@@ -217,6 +217,7 @@ private fun AddUserProfilePage(
     val nickname by addUserViewModel.nickname.collectAsState()
     val aid by addUserViewModel.aid.collectAsState()
     val address by addUserViewModel.address.collectAsState()
+    val privateKey by addUserViewModel.privateKey.collectAsState()
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         OutlinedTextField(nickname, {
             addUserViewModel.updateNickname(it)
@@ -232,43 +233,61 @@ private fun AddUserProfilePage(
         val scope = rememberCoroutineScope()
         IconButton(onClick = {
             scope.launch {
-                clipboard.setText(addUserViewModel.privateKey.value)
+                clipboard.setText(privateKey)
             }
         }) {
             Icon(Icons.Default.ContentCopy, "copy")
         }
+        AddressField(address, addUserNavigator)
+
+        AddUserDialogButtons(dismiss, addUserViewModel)
+    }
+}
+
+@Composable
+private fun AddUserDialogButtons(
+    dismiss: () -> Unit,
+    addUserViewModel: AddUserViewModel
+) {
+    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Button({
+            dismiss()
+        }) {
+            Text(CoreStrings.cancel())
+        }
+        val scope = rememberCoroutineScope()
+        val globalDialogController = LocalPanelGlobalDialog.current
+        val toast = LocalToaster.current
+        val requiredPrivateKeyMessage = stringResource(Res.string.private_key_required)
+        Button({
+            globalDialogController.addUser(scope, addUserViewModel, toast, dismiss, requiredPrivateKeyMessage)
+        }) {
+            Text(stringResource(Res.string.add))
+        }
+    }
+}
+
+@Composable
+private fun AddressField(address: String?, addUserNavigator: NavHostController) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        val shape = RoundedCornerShape(10.dp)
         Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.weight(1f)
+                .border(1.dp, MaterialTheme.colorScheme.primaryContainer, shape)
+                .padding(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            val shape = RoundedCornerShape(10.dp)
             Text(
                 address ?: "",
                 modifier = Modifier.weight(1f)
-                    .border(1.dp, MaterialTheme.colorScheme.primaryContainer, shape)
-                    .padding(8.dp)
             )
             IconButton({
                 addUserNavigator.navigate("private_key")
             }) {
                 Icon(Icons.Default.Edit, stringResource(Res.string.edit_private_key))
-            }
-        }
-
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Button({
-                dismiss()
-            }) {
-                Text(CoreStrings.cancel())
-            }
-            val scope = rememberCoroutineScope()
-            val globalDialogController = LocalPanelGlobalDialog.current
-            val toast = LocalToaster.current
-            val requiredPrivateKeyMessage = stringResource(Res.string.private_key_required)
-            Button({
-                globalDialogController.addUser(scope, addUserViewModel, toast, dismiss, requiredPrivateKeyMessage)
-            }) {
-                Text(stringResource(Res.string.add))
             }
         }
     }

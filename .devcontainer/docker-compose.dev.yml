@@ -17,6 +17,7 @@ services:
       - ..:/workspace/A:cached
       - avd_data:/root/.android/avd
       - sdk_data:/opt/android/sdk
+      - a-bashhistory:/commandhistory
       - ~/.gradle:/root/.gradle
       - ~/.konan:/root/.konan
       - ~/.m2:/root/.m2
@@ -26,6 +27,7 @@ services:
 
 volumes:
   avd_data:
+  a-bashhistory:
   sdk_data:
     name: sdk_data
     external: true

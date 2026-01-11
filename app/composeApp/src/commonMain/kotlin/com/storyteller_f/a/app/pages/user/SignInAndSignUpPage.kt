@@ -47,7 +47,6 @@ import com.storyteller_f.a.app.AppGlobalDialogController
 import com.storyteller_f.a.app.LocalAppNavFactory
 import com.storyteller_f.a.app.LocalGlobalDialog
 import com.storyteller_f.a.app.Res
-import com.storyteller_f.a.app.auto_generate
 import com.storyteller_f.a.app.back_to_pre_page
 import com.storyteller_f.a.app.common.AppNavFactory
 import com.storyteller_f.a.app.common.SessionHistoryViewModel
@@ -314,28 +313,19 @@ fun InputPrivateKeyPage(isSignUp: Boolean) {
                 }
             }
 
-            PrivateKeyInput(privateKey, address, {
+            PrivateKeyInput(privateKey, address, isSignUp, algo, {
                 viewModel.updatePrivateKey(it)
             })
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Button(startSign, modifier = Modifier.testTag("start_sign")) {
-                    Text(
-                        stringResource(
-                            if (isSignUp) {
-                                Res.string.start_sign_up
-                            } else {
-                                Res.string.start_sign_in
-                            }
-                        )
+            Button(startSign, modifier = Modifier.testTag("start_sign")) {
+                Text(
+                    stringResource(
+                        if (isSignUp) {
+                            Res.string.start_sign_up
+                        } else {
+                            Res.string.start_sign_in
+                        }
                     )
-                }
-                if (isSignUp) {
-                    Button({
-                        viewModel.autoGeneratePrivateKey()
-                    }, modifier = Modifier.testTag("auto_generate")) {
-                        Text(stringResource(Res.string.auto_generate))
-                    }
-                }
+                )
             }
         }
     }

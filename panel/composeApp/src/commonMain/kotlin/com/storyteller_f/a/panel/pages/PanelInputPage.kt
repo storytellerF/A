@@ -87,9 +87,10 @@ fun PanelInputPage(back: () -> Unit) {
         }
         Column(modifier = Modifier.padding(20.dp)) {
             PrivateKeyInput(
-                privateKey,
-                address,
-                {
+                privateKey = privateKey,
+                address = address,
+                enableRandom = false,
+                update = {
                     viewModel.updatePrivateKey(it)
                 }
             )

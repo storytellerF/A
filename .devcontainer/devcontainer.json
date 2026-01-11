@@ -5,7 +5,10 @@
 	"dockerComposeFile": "./docker-compose.dev.yml",
 	"service": "main",
 	"workspaceFolder": "/workspace/A",
-	"shutdownAction": "stopCompose"
+	"shutdownAction": "stopCompose",
+	"postCreateCommand": {
+		"Fix Volume Permissions": "chown -R $(whoami): /commandhistory"
+	}
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
