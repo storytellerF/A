@@ -41,7 +41,7 @@ fun main(args: Array<String>) {
     }
     loadAvif()
     SnowflakeFactory.setMachine(0)
-    val flavorFilePath = File("../../${BackendConfig.FLAVOR}.env").canonicalPath
+    val flavorFilePath = File("../../deploy/${BackendConfig.FLAVOR}.env").canonicalPath
     backend = buildBackendFromEnv(readEnv(flavorFilePath = flavorFilePath))
     val argParser = ArgParser("ACli")
     argParser.subcommands(AddPreset(), CleanCommand(), PrintCommand(), InitTableCommand())

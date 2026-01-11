@@ -17,4 +17,4 @@ else
     echo "没有找到 bot 容器"
 fi
 
-docker run -itd --env-file "./$FLAVOR.env" --name bot bot:latest
+docker run -itd --env-file "./deploy/$FLAVOR.env" --name bot bot:latest

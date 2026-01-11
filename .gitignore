@@ -18,9 +18,9 @@ captures
 !*.xcworkspace/contents.xcworkspacedata
 **/xcshareddata/WorkspaceSettings.xcsettings
 databases
-*.env
-!dev.win.env
-!dev.env
+deploy/*.env
+!deploy/dev.win.env
+!deploy/dev.env
 !cloud/server/src/test/resources/.env
 deploy/es_ca
 deploy/*_data

@@ -12,7 +12,7 @@ fi
 # 定义变量
 REPO="storytellerF/A" # 替换为你的仓库
 ENVIRONMENT="$FLAVOR" # 替换为你指定的环境
-ENV_FILE="$FLAVOR.env"
+ENV_FILE="deploy/$FLAVOR.env"
 
 # 检查 gh 命令是否存在
 if ! command -v gh &>/dev/null; then

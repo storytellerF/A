@@ -33,7 +33,7 @@ envAndArg() {
     echo $replace_string_1
 }
 saveEnvTofile() {
-    replace_string_2="COPY <<EOF ./\${FLAVOR}.env\n"
+    replace_string_2="COPY <<EOF ./deploy/\${FLAVOR}.env\n"
 
     while IFS= read -r key; do
         # 跳过空行
@@ -44,7 +44,7 @@ saveEnvTofile() {
     done < "koyeb-env.filter"
 
     # 完成 COPY 块的 EOF 部分
-    replace_string_2+="EOF\nRUN mkdir -p build/envs \&\& cp ./\${FLAVOR}.env ./build/envs/.env"
+    replace_string_2+="EOF\nRUN mkdir -p build/envs \&\& cp ./deploy/\${FLAVOR}.env ./build/envs/.env"
 
     echo $replace_string_2
 }

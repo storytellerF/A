@@ -14,7 +14,7 @@ if [ -z "$CUSTOM_COMMAND" ]; then
     CUSTOM_COMMAND="up -d --build"
 fi
 
-IFS=',' read -ra COMPOSE_FILE_LIST <<< "$(grep '^COMPOSE_FILE_LIST=' "$FLAVOR.env" | cut -d '=' -f2-)"
+IFS=',' read -ra COMPOSE_FILE_LIST <<< "$(grep '^COMPOSE_FILE_LIST=' "./deploy/$FLAVOR.env" | cut -d '=' -f2-)"
 echo "${COMPOSE_FILE_LIST[@]}"
 
 # 公共 compose 文件
@@ -43,7 +43,7 @@ else
   done
 fi
 
-CMD=("docker" "compose" "--env-file" "./${FLAVOR}.env" "${COMPOSE_FILES[@]}" "${custom_cmd_parts[@]}")
+CMD=("docker" "compose" "--env-file" "./deploy/${FLAVOR}.env" "${COMPOSE_FILES[@]}" "${custom_cmd_parts[@]}")
 
 echo "Executing: ${CMD[@]}"
 "${CMD[@]}"

@@ -37,7 +37,7 @@ fun main() {
     setLogPath()
     SnowflakeFactory.setMachine(1)
     setupKmpLogger()
-    val flavorFilePath = File("../../${BackendConfig.FLAVOR}.env").canonicalPath
+    val flavorFilePath = File("../../deploy/${BackendConfig.FLAVOR}.env").canonicalPath
     val env = readEnv(flavorFilePath = flavorFilePath)
     Napier.i {
         "start worker"
