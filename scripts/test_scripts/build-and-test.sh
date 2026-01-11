@@ -1,14 +1,6 @@
 #!/bin/sh
 set -e
 
-if [ -f /usr/local/bin/install-sdk.sh ]; then
-    echo "Found /usr/local/bin/install-sdk.sh, executing..."
-    /usr/local/bin/install-sdk.sh
-    echo "SDK setup finished."
-else
-    echo "/usr/local/bin/install-sdk.sh not found, skipping."
-fi
-
 # OS Detection
 if [ "$(uname)" = "Darwin" ] || [ "$(expr substr $(uname -s) 1 5)" = "Linux" ]; then
     KILL_PORT_SCRIPT="./scripts/tool_scripts/kill-port.sh"
@@ -85,8 +77,8 @@ shutdownServer() {
 
 setupAvd() {
     echo "Setting up Android Emulator..."
-    ./scripts/android_scripts/create-avd.sh ATest "system-images;android-35;google_apis_playstore;x86_64" "pixel"
-    ./scripts/android_scripts/start-avd.sh ATest
+    ./scripts/android_scripts/create-avd.sh device-test "system-images;android-35;google_apis;x86_64" "pixel"
+    ./scripts/android_scripts/start-avd.sh device-test
     ./scripts/android_scripts/forward-android-devices.sh 8811
 }
 

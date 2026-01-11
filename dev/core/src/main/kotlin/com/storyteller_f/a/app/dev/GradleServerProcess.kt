@@ -12,7 +12,7 @@ import kotlin.concurrent.thread
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-const val GIT_BASH = "C:/Program Files/Git/bin/bash.exe"
+
 
 fun isWin(): Boolean {
     val property = System.getProperty("os.name").orEmpty()
@@ -21,15 +21,11 @@ fun isWin(): Boolean {
 
 fun forceStop(port: Int) {
     println("forceStop $port ${File(".").canonicalPath}")
-    val process = if (isWin()) {
-        ProcessBuilder().command(File("../../scripts/tool_scripts/kill-port.bat").canonicalPath, port.toString())
-    } else {
-        ProcessBuilder().command(
-            "/bin/sh",
-            "-c",
-            $$""""pid=$(lsof -t -i :$$port) && kill -9 $pid""""
-        )
-    }.redirectErrorStream(true).start()
+    val extension = if (isWin()) "bat" else "sh"
+    val process = ProcessBuilder().command(
+        File("../../scripts/tool_scripts/kill-port.$extension").canonicalPath,
+        port.toString()
+    ).redirectErrorStream(true).start()
     val thread = thread {
         process.inputStream.bufferedReader().use {
             while (process.isAlive) {
@@ -40,8 +36,8 @@ fun forceStop(port: Int) {
     }
     val result = process.waitFor()
     thread.interrupt()
-    check(result == 0) {
-        "forceStop failed"
+    if (result != 0) {
+        println("forceStop failed $result")
     }
 }
 
@@ -57,7 +53,9 @@ suspend fun CoroutineScope.startServerByRun(projectRoot: String, port: Int): Pro
         println("${testEnvFile.canonicalPath} not exists")
         return null
     }
-    val serverProcess = ProcessBuilder(GIT_BASH, "-c", "cloud/server/build/install/server/bin/server")
+    val extension = if (isWin()) ".bat" else ""
+    val command = "cloud/server/build/install/server/bin/server$extension"
+    val serverProcess = ProcessBuilder(command)
         .redirectErrorStream(true)
         .directory(File(projectRoot))
         .bindGradleProcessEnv(testEnvFile, port)
@@ -83,7 +81,7 @@ private suspend fun CoroutineScope.waitRunServerProcess(serverProcess: Process):
             thread {
                 serverProcess.inputStream.bufferedReader().use {
                     while (serverProcess.isAlive && isActive) {
-                        val line = it.readLine() ?: break
+                        val line = runCatching { it.readLine() }.getOrNull() ?: break
                         println(line)
                         if (line.contains("Responding at")) {
                             task.complete(line)
