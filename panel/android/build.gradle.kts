@@ -4,7 +4,6 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.androidApplication)
-//    alias(libs.plugins.composeHotReload)
     alias(libs.plugins.serialization)
     alias(libs.plugins.easylauncher)
     id("compose-app")

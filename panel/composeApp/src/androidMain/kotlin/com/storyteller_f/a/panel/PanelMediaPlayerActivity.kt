@@ -19,7 +19,7 @@ class PanelMediaPlayerActivity : ComponentActivity() {
             val fileId = intent.getLongExtra("id", 0)
             if (fileId == 0L) {
                 CenterBox {
-                    Text(stringResource(R.string.invalid))
+                    Text("Invalid")
                 }
             } else {
                 CompositionLocalProvider(
