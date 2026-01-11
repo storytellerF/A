@@ -6,10 +6,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.test.runTest
 import kotlin.time.Duration.Companion.minutes
 
-expect abstract class UsingContextTest() {
+expect abstract class PlatformHeadlessTest() {
     val portOffset: Int
 }
-fun UsingContextTest.remoteServerTest(
+fun PlatformHeadlessTest.remoteServerTest(
     suggestPort: Int,
     block: suspend CoroutineScope.(String) -> Unit,
 ) = runTest(timeout = 10.minutes) {

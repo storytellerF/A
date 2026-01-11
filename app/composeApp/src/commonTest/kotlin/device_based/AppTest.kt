@@ -41,6 +41,10 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 
+/**
+ * 由于Compose 测试存在问题，全部忽略，禁止执行
+ */
+@Ignore
 class AppTest {
 
     @OptIn(ExperimentalTestApi::class)

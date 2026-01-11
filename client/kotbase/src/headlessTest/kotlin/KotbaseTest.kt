@@ -13,7 +13,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.time.ExperimentalTime
 
-class KotbaseTest : UsingContextTest() {
+class KotbaseTest : PlatformHeadlessTest() {
     @Test
     fun testSectionLoadParams() {
         val modelStorage = DocumentModelStorage(createKotbaseSource(null))
