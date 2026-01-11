@@ -20,7 +20,6 @@
     <string name="go_to_sign_in">前往登录</string>
     <string name="start_sign_up">开始注册</string>
     <string name="start_sign_in">开始登录</string>
-    <string name="auto_generate">自动生成</string>
     <string name="sign_out_prompt">确认退出登录？</string>
     <string name="permission_denied">权限被拒绝</string>
     <string name="edit">编辑</string>
