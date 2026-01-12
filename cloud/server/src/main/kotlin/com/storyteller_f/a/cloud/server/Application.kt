@@ -149,13 +149,13 @@ fun Application.module() {
         monitor.unsubscribe(ApplicationStopped) {}
     }
     val backend = try {
-        buildBackend()
-    } catch (e: Exception) {
-        Napier.e(e, tag = "module") {
-            "buildBackend failed"
+            buildBackend()
+        } catch (e: Exception) {
+            Napier.e(e, tag = "module") {
+                "buildBackend failed"
+            }
+            throw e
         }
-        throw e
-    }
     val reader = try {
         buildDatabaseReader()
     } catch (e: Exception) {
@@ -174,7 +174,6 @@ fun Application.module() {
     configurePlugin(reader, backend)
     configureAuth(backend)
     configureRoute(reader, backend)
-    attributes.put(BackendKey, backend)
 }
 
 private fun Application.configurePlugin(

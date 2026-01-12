@@ -15,6 +15,7 @@ services:
       - TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal
     volumes:
       - ..:/workspace/A:cached
+      - ../../AData:/workspace/AData
       - avd_data:/root/.android/avd
       - sdk_data:/opt/android/sdk
       - a-bashhistory:/commandhistory

@@ -2,7 +2,9 @@ package com.storyteller_f.a.cloud.server
 
 import com.github.vertical_blank.sqlformatter.SqlFormatter
 import com.perraco.utils.SnowflakeFactory
+import com.storyteller_f.a.backend.core.readEnv
 import com.storyteller_f.a.backend.core.loadAvif
+import com.storyteller_f.a.cloud.worker.buildBackendFromEnv
 import com.storyteller_f.a.client.core.PanelSessionManager
 import com.storyteller_f.a.client.core.RawUserPass
 import com.storyteller_f.a.client.core.UserSessionManager
@@ -28,6 +30,10 @@ import com.storyteller_f.shared.utils.md5
 import io.github.aakira.napier.Napier
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.server.config.MapApplicationConfig
+import com.storyteller_f.a.cloud.worker.WorkerBackend
+import io.ktor.client.HttpClient
+import io.ktor.client.HttpClientConfig
+import io.ktor.client.engine.HttpClientEngineConfig
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
 import kotlinx.coroutines.CancellationException
@@ -51,9 +57,22 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalUuidApi::class)
+
+class TestMate(
+    val applicationTestBuilder: ApplicationTestBuilder,
+    val workerBackend: WorkerBackend
+) {
+    val application get() = applicationTestBuilder.application
+    
+    fun createClient(block: HttpClientConfig<out HttpClientEngineConfig>.() -> Unit = {}): HttpClient {
+        return applicationTestBuilder.createClient(block)
+    }
+}
+
+@OptIn(ExperimentalUuidApi::class)
 fun test(
     overrideEnv: Map<String, String> = emptyMap(),
-    block: suspend ApplicationTestBuilder.() -> Unit
+    block: suspend TestMate.() -> Unit
 ) {
     val logPath = File("build/test/logs", Uuid.random().toHexString()).canonicalPath
     System.setProperty("LOG_PATH", logPath)
@@ -88,7 +107,7 @@ fun test(
 @OptIn(ExperimentalUuidApi::class)
 private fun startMemoryTest(
     overrideEnv: Map<String, String>,
-    block: suspend (ApplicationTestBuilder) -> Unit
+    block: suspend (TestMate) -> Unit
 ) {
     val h2File = File("./build/test/h2/${Uuid.random().toHexString()}")
     h2File.parentFile!!.let {
@@ -96,15 +115,20 @@ private fun startMemoryTest(
             throw Exception("mkdirs failed ${it.canonicalPath}")
         }
     }
-    val url = "r2dbc:h2:file:///${h2File.path.replace("\\", "/")}"
-    val env = mapOf("DATABASE_URI" to url, "DATABASE_DRIVER" to "h2") + overrideEnv
+    val url = "r2dbc:h2:mem:///${Uuid.random()}?DB_CLOSE_DELAY=-1"
+    val env = mapOf(
+        "DATABASE_URI" to url,
+        "DATABASE_DRIVER" to "h2",
+        "DATABASE_USER" to "sa",
+        "DATABASE_PASS" to ""
+    ) + overrideEnv
     doTest(env, block)
 }
 
 private fun startTestContainerTest(
     overrideEnv: Map<String, String>,
     @Suppress("SameParameterValue") databaseTypeIsMysql: Boolean,
-    block: suspend ApplicationTestBuilder.() -> Unit
+    block: suspend TestMate.() -> Unit
 ) {
     runBlocking {
         val env = mutableMapOf<String, String>()
@@ -187,7 +211,7 @@ private suspend fun useElasticTestContainer(
 
 private fun doTest(
     env: Map<String, String>,
-    block: suspend ApplicationTestBuilder.() -> Unit
+    block: suspend TestMate.() -> Unit
 ) {
     testApplication {
         environment {
@@ -197,21 +221,29 @@ private fun doTest(
                 }
             }
         }
-        application {
-            module()
-        }
+
         coroutineScope {
             val task = CompletableDeferred<Unit>()
             val port = env["port"]?.toIntOrNull()
+
+            val backend = buildBackendFromEnv(readEnv(env))
+            val workerBackend = backend as WorkerBackend
+
+            application {
+                attributes.put(BackendKey, workerBackend)
+                module()
+            }
+            val testMate = TestMate(this@testApplication, workerBackend)
+
             if (port != null) {
                 val job = launch(Dispatchers.IO) {
                     receiveExplainResult(task, port)
                 }
                 task.await()
-                block()
+                testMate.block()
                 job.cancel()
             } else {
-                block()
+                testMate.block()
             }
         }
     }
@@ -278,7 +310,7 @@ data class SessionOuterTuple<T>(
     val custom: T
 )
 
-suspend fun <R> ApplicationTestBuilder.attachSession(
+suspend fun <R> TestMate.attachSession(
     algo: AlgoType = AlgoType.P256,
     onReceive: suspend (RoomFrame, UserSessionModel, DefaultClientWebSocketSession) -> Unit = { _, _, _ -> },
     block: suspend UserSessionManager.(SessionTuple) -> R
@@ -287,11 +319,11 @@ suspend fun <R> ApplicationTestBuilder.attachSession(
     return getAppSession(true, priKey, algo, onReceive, block)
 }
 
-suspend fun ApplicationTestBuilder.attachSession(): SessionOuterTuple<Unit> {
+suspend fun TestMate.attachSession(): SessionOuterTuple<Unit> {
     return attachSession(onReceive = { _, _, _ -> }, block = {})
 }
 
-suspend fun <R> ApplicationTestBuilder.getAppSession(
+suspend fun <R> TestMate.getAppSession(
     isSignUp: Boolean,
     priKey: String,
     algo: AlgoType = AlgoType.P256,
@@ -317,7 +349,7 @@ suspend fun <R> ApplicationTestBuilder.getAppSession(
     }
 }
 
-suspend fun <R1, R2> ApplicationTestBuilder.loginSession(
+suspend fun <R1, R2> TestMate.loginSession(
     tuple: SessionOuterTuple<R1>,
     onReceive: suspend (RoomFrame, UserSessionModel, DefaultClientWebSocketSession) -> Unit = { _, _, _ -> },
     algo: AlgoType = AlgoType.P256,
@@ -326,7 +358,7 @@ suspend fun <R1, R2> ApplicationTestBuilder.loginSession(
     return getAppSession(false, tuple.privateKey, algo, onReceive = onReceive, block = block)
 }
 
-suspend fun <R2> ApplicationTestBuilder.noneSession(
+suspend fun <R2> TestMate.noneSession(
     block: suspend UserSessionManager.() -> R2
 ): R2 {
     return coroutineScope {
@@ -367,7 +399,7 @@ suspend fun UserSessionManager.waitAndSend(block: suspend DefaultClientWebSocket
     webSocketClient.useWebSocket(block)?.join()
 }
 
-suspend fun <R> ApplicationTestBuilder.attachPanelSession(
+suspend fun <R> TestMate.attachPanelSession(
     algo: AlgoType = AlgoType.P256,
     block: suspend PanelSessionManager.(SessionTuple) -> R
 ): SessionOuterTuple<R> {
@@ -375,11 +407,11 @@ suspend fun <R> ApplicationTestBuilder.attachPanelSession(
     return getPanelSession(priKey, algo, true, block)
 }
 
-suspend fun ApplicationTestBuilder.attachPanelSession(): SessionOuterTuple<Unit> {
+suspend fun TestMate.attachPanelSession(): SessionOuterTuple<Unit> {
     return attachPanelSession { }
 }
 
-private suspend fun <R> ApplicationTestBuilder.getPanelSession(
+private suspend fun <R> TestMate.getPanelSession(
     priKey: String,
     algo: AlgoType = AlgoType.P256,
     isSignUp: Boolean,
@@ -402,28 +434,15 @@ private suspend fun <R> ApplicationTestBuilder.getPanelSession(
     }
 }
 
-suspend fun <R1, R2> ApplicationTestBuilder.loginPanelSession(
+suspend fun <R1, R2> TestMate.loginPanelSession(
     tuple: SessionOuterTuple<R1>,
     block: suspend PanelSessionManager.(SessionTuple) -> R2
 ): SessionOuterTuple<R2> {
     return getPanelSession(tuple.privateKey, isSignUp = false, block = block)
 }
 
-suspend fun <R> ApplicationTestBuilder.withWorkerBackend(
-    block: suspend (com.storyteller_f.a.cloud.worker.WorkerBackend) -> R
+suspend fun <R> TestMate.withWorkerBackend(
+    block: suspend (WorkerBackend) -> R
 ): R {
-    val backend = application.attributes[BackendKey]
-    val workerBackend = com.storyteller_f.a.cloud.worker.WorkerBackend(
-        backend.customConfig,
-        backend.topicSearchService,
-        backend.roomSearchService,
-        backend.communitySearchService,
-        backend.userSearchService,
-        backend.memberSearchService,
-        backend.fileSearchService,
-        backend.objectStorageService,
-        backend.nameService,
-        backend.database
-    )
     return block(workerBackend)
 }
