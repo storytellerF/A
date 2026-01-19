@@ -21,7 +21,7 @@ databases
 deploy/*.env
 !deploy/dev.win.env
 !deploy/dev.env
-!cloud/server/src/test/resources/.env
+!cloud/server/src/test/resources/test.env
 deploy/es_ca
 deploy/*_data
 deploy/docker-images

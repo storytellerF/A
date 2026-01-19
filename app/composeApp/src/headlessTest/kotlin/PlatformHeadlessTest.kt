@@ -25,7 +25,11 @@ fun PlatformHeadlessTest.remoteServerTest(
     val port = suggestPort + portOffset
     println("port: $port, methodName: $methodName")
     forceStop(port)
-    val processMate = startServerByRun("../..", port) ?: throw Exception("start server failed")
+    val processMate = startServerByRun(
+        "../..",
+        port,
+        "./build/test/headless/sessions/${Uuid.random().toHexString()}"
+    ) ?: throw Exception("start server failed")
     try {
         block("http://localhost:$port")
         Napier.i {

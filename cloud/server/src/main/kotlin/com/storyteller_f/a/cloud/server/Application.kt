@@ -149,13 +149,13 @@ fun Application.module() {
         monitor.unsubscribe(ApplicationStopped) {}
     }
     val backend = try {
-            buildBackend()
-        } catch (e: Exception) {
-            Napier.e(e, tag = "module") {
-                "buildBackend failed"
-            }
-            throw e
+        buildBackend()
+    } catch (e: Exception) {
+        Napier.e(e, tag = "module") {
+            "buildBackend failed"
         }
+        throw e
+    }
     val reader = try {
         buildDatabaseReader()
     } catch (e: Exception) {
@@ -340,7 +340,9 @@ private fun processInitTaskIfNeed(env: MergedEnv) {
     val initScriptContent = env["INIT_SCRIPT"]
     val workingDir = env["INIT_WORKING_DIR"]
     if (initScriptContent.isNullOrBlank() || workingDir.isNullOrBlank()) {
-        println("init failure")
+        Napier.e(tag = "init") {
+            "init failure, initScriptContent=$initScriptContent, workingDir=$workingDir"
+        }
         exitProcess(1)
     }
     val scriptArray = initScriptContent.trim('\'').split(" ").map {
@@ -368,23 +370,19 @@ private suspend fun CoroutineScope.executeScriptInThread(
     Napier.i(tag = "init") {
         "script started"
     }
-    launch(Dispatchers.IO) {
+    launch {
         process.inputStream.bufferedReader().use {
-            while (process.isAlive && isActive) {
-                val line = it.readLine() ?: break
-                Napier.i(tag = "init") {
-                    line
-                }
+            while (isActive) {
+                val line = withContext(Dispatchers.IO) { it.readLine() } ?: break
+                println(line)
             }
         }
     }
-    launch(Dispatchers.IO) {
+    launch {
         process.errorStream.bufferedReader().use {
-            while (process.isAlive && isActive) {
-                val line = it.readLine() ?: break
-                Napier.e(tag = "init") {
-                    line
-                }
+            while (isActive) {
+                val line = withContext(Dispatchers.IO) { it.readLine() } ?: break
+                println(line)
             }
         }
     }

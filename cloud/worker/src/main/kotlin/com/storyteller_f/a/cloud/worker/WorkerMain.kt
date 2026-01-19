@@ -44,6 +44,9 @@ fun main() {
     }
     val backend = buildBackendFromEnv(env)
     runBlocking {
+        Napier.i {
+            "worker started"
+        }
         val jobs = listOf(launch {
             while (isActive) {
                 Napier.i(tag = "task") {

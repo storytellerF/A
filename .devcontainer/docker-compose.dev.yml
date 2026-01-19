@@ -3,8 +3,6 @@ services:
     build:
       context: ../
       dockerfile: ./dev.Dockerfile
-      args:
-        - OPENJDK_VERSION=21
     ports:
       - "6081:6080" # noVNC web interface
       - "5902:5901" # VNC direct connection
@@ -15,16 +13,18 @@ services:
       - TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal
     volumes:
       - ..:/workspace/A:cached
-      - ../../AData:/workspace/AData
-      - avd_data:/root/.android/avd
+      - ../../AData:/workspace/AData:cached
+      - /var/run/docker.sock:/var/run/docker.sock  # 宿主机 Docker 套接字
       - sdk_data:/opt/android/sdk
       - a-bashhistory:/commandhistory
-      - ~/.gradle:/root/.gradle
-      - ~/.konan:/root/.konan
-      - ~/.m2:/root/.m2
-      - /var/run/docker.sock:/var/run/docker.sock  # 宿主机 Docker 套接字
+      - avd_data:/home/ubuntu/.android/avd
+      - gradle_data:/home/ubuntu/.gradle
+      - konan_data:/home/ubuntu/.konan
+      - m2_data:/home/ubuntu/.m2
     shm_size: '2gb' # Allocate more shared memory
     privileged: true # Enable KVM acceleration
+    # devices:
+    #   - /dev/kvm
 
 volumes:
   avd_data:
@@ -32,3 +32,6 @@ volumes:
   sdk_data:
     name: sdk_data
     external: true
+  gradle_data:
+  konan_data:
+  m2_data:
