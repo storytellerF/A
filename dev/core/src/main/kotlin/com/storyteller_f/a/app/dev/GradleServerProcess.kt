@@ -3,16 +3,31 @@ package com.storyteller_f.a.app.dev
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.selects.select
+import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.concurrent.thread
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
-
+data class DatabaseConfig(
+    val uri: String,
+    val driver: String,
+    val user: String,
+    val password: String
+) {
+    companion object {
+        fun h2(sessionPath: String) = DatabaseConfig(
+            uri = "r2dbc:h2:file:///$sessionPath/h2",
+            driver = "h2",
+            user = "sa",
+            password = ""
+        )
+    }
+}
 
 fun isWin(): Boolean {
     val property = System.getProperty("os.name").orEmpty()
@@ -45,12 +60,16 @@ fun stopServer(serverProcess: Process) {
     serverProcess.destroy()
 }
 
-@OptIn(ExperimentalUuidApi::class)
-suspend fun CoroutineScope.startServerByRun(projectRoot: String, port: Int): ProcessMate? {
+suspend fun CoroutineScope.startServerByRun(
+    projectRoot: String,
+    port: Int,
+    sessionPath: String,
+    dbConfig: DatabaseConfig = DatabaseConfig.h2(sessionPath)
+): ProcessMate? {
     forceStop(port)
-    val testEnvFile = File(projectRoot, "cloud/server/src/test/resources/.env")
+    val testEnvFile = File(projectRoot, "cloud/server/src/test/resources/test.env")
     if (!testEnvFile.exists()) {
-        println("${testEnvFile.canonicalPath} not exists")
+        Napier.w { "${testEnvFile.canonicalPath} not exists" }
         return null
     }
     val extension = if (isWin()) ".bat" else ""
@@ -58,9 +77,33 @@ suspend fun CoroutineScope.startServerByRun(projectRoot: String, port: Int): Pro
     val serverProcess = ProcessBuilder(command)
         .redirectErrorStream(true)
         .directory(File(projectRoot))
-        .bindGradleProcessEnv(testEnvFile, port)
+        .bindGradleProcessEnv(testEnvFile, port, projectRoot, sessionPath, dbConfig)
         .start()
-    return waitRunServerProcess(serverProcess)
+    return waitRunProcess(serverProcess) {
+        it.contains("Responding at")
+    }
+}
+
+suspend fun CoroutineScope.startWorkerByRun(
+    projectRoot: String,
+    sessionPath: String,
+    dbConfig: DatabaseConfig = DatabaseConfig.h2(sessionPath)
+): ProcessMate? {
+    val testEnvFile = File(projectRoot, "cloud/server/src/test/resources/test.env")
+    if (!testEnvFile.exists()) {
+        Napier.w { "${testEnvFile.canonicalPath} not exists" }
+        return null
+    }
+    val extension = if (isWin()) ".bat" else ""
+    val command = "cloud/worker/build/install/worker/bin/worker$extension"
+    val process = ProcessBuilder(command)
+        .redirectErrorStream(true)
+        .directory(File(projectRoot))
+        .bindGradleProcessEnv(testEnvFile, 0, projectRoot, sessionPath, dbConfig)
+        .start()
+    return waitRunProcess(process) {
+        it.contains("worker started")
+    }
 }
 
 class ProcessMate(val process: Process, val job: Job) {
@@ -73,38 +116,63 @@ class ProcessMate(val process: Process, val job: Job) {
     }
 }
 
-private suspend fun CoroutineScope.waitRunServerProcess(serverProcess: Process): ProcessMate {
-    val task = CompletableDeferred<String>()
+private suspend fun CoroutineScope.waitRunProcess(
+    process: Process,
+    success: (String) -> Boolean
+): ProcessMate {
+    val task = CompletableDeferred<Unit>()
     val job = launch {
-        suspendCancellableCoroutine { continuation ->
-            // 进程停止还是会卡在readLine，需要使用thread 保证job 正常退出
-            thread {
-                serverProcess.inputStream.bufferedReader().use {
-                    while (serverProcess.isAlive && isActive) {
-                        val line = runCatching { it.readLine() }.getOrNull() ?: break
-                        println(line)
-                        if (line.contains("Responding at")) {
-                            task.complete(line)
-                        } else if (line.contains("Execution failed for task") ||
-                            line.contains("Exception in thread")
-                        ) {
-                            task.completeExceptionally(RuntimeException(line))
-                        }
+        process.inputStream.bufferedReader().use {
+            while (isActive) {
+                val line = withContext(Dispatchers.IO) {
+                    try {
+                        it.readLine()
+                    } catch (e: Exception) {
+                        Napier.w { "read line failed, may be process end: ${e.message}" }
+                        null
                     }
                 }
-                continuation.resumeWith(Result.success(Unit))
+                line ?: break
+                println(line)
+                if (success(line)) {
+                    task.complete(Unit)
+                }
             }
         }
     }
-    task.await()
+    // 等待task.await 和process 哪个先结束
+    val waitProcess = launch {
+        while (process.isAlive) {
+            delay(100)
+        }
+    }
+    val result = select {
+        task.onAwait {
+            true
+        }
+        waitProcess.onJoin {
+            false
+        }
+    }
+    if (!result) {
+        Napier.i {
+            "server start failed"
+        }
+        throw Exception("server start failed")
+    }
     Napier.i {
         "server started"
     }
-    return ProcessMate(serverProcess, job)
+    return ProcessMate(process, job)
 }
 
-@OptIn(ExperimentalUuidApi::class)
-private fun ProcessBuilder.bindGradleProcessEnv(envFile: File, port: Int): ProcessBuilder {
+private fun ProcessBuilder.bindGradleProcessEnv(
+    envFile: File,
+    port: Int,
+    projectRoot: String,
+    sessionPath: String,
+    dbConfig: DatabaseConfig
+): ProcessBuilder {
     val envList = envFile.readLines().filter {
         it.isNotBlank()
     }.map {
@@ -113,10 +181,26 @@ private fun ProcessBuilder.bindGradleProcessEnv(envFile: File, port: Int): Proce
             ""
         }
     }
-    val url = "r2dbc:h2:file:///./build/test/process/h2/${Uuid.random().toHexString()}"
     val environment = environment()
     environment.putAll(envList)
-    environment.putAll(mapOf("DATABASE_URI" to url, "DATABASE_DRIVER" to "h2", "BUILD_TYPE" to "dev-test"))
+    environment.putAll(
+        mapOf(
+            "DATABASE_URI" to dbConfig.uri,
+            "DATABASE_DRIVER" to dbConfig.driver,
+            "DATABASE_USER" to dbConfig.user,
+            "DATABASE_PASS" to dbConfig.password,
+            "BUILD_TYPE" to "dev-test"
+        )
+    )
+    environment["LUCENE_BASE_PATH"] = "$sessionPath/lucene"
     environment["SERVER_PORT"] = port.toString()
+    val canonicalProjectRoot = File(projectRoot).canonicalPath
+    val cliPath = File(projectRoot, "/cloud/cli/build/install/cli/bin/cli").canonicalPath
+    val presetDataPath = File(projectRoot, "../AData/data").canonicalPath
+    environment["INIT_ENABLE"] = "true"
+    environment["INIT_WORKING_DIR"] = canonicalProjectRoot
+    environment["INIT_SCRIPT"] = "./scripts/tool_scripts/flush-database.sh $cliPath $presetDataPath"
+    environment["LOG_PATH"] = "$sessionPath/logs"
+    environment["FILE_SYSTEM_MEDIA_PATH"] = "$sessionPath/files"
     return this
 }

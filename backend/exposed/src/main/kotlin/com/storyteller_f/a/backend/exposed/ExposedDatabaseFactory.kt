@@ -116,7 +116,7 @@ class ExposedDatabaseSession(val database: R2dbcDatabase, val port: Int?) {
     }
 
     suspend fun <T> dbQuery(block: suspend R2dbcTransaction.() -> T): Result<T> {
-        val anchor = Exception("dbQuery failed ${database.dialect.name}")
+        val anchor = Exception("dbQuery failed")
         return runCatching {
             withContext(Dispatchers.IO) {
                 suspendTransaction(db = database) {
@@ -133,7 +133,7 @@ class ExposedDatabaseSession(val database: R2dbcDatabase, val port: Int?) {
     suspend fun <R> dbSearch(
         block: DatabaseSearchConfig<R, Query>.() -> Unit,
     ): Result<R> {
-        val anchor = Exception("dbSearch failed ${database.dialect.name}")
+        val anchor = Exception("dbSearch failed")
         port?.let { explainQuery(it, block) }
         return runCatching {
             withContext(Dispatchers.IO) {

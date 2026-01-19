@@ -18,13 +18,14 @@ fun readEnv(envMap: Map<String, String>? = null, flavorFilePath: String? = null)
     buildList {
         addAll(
             listOfNotNull(
-                envMap, // 测试时手动传递
+                envMap, // 测试时通过config map手动传递
                 System.getenv(), // 正式部署
                 readResourceEnv(".env"), // 测试
             )
         )
         if (flavorFilePath != null) {
-            readFileEnv(flavorFilePath)?.let { add(it) } // 本地开发
+            // 本地开发，working dir 一般是./cloud/xxx，非本地环境一般无法访问
+            readFileEnv(flavorFilePath)?.let { add(it) }
         }
     }
 )
@@ -69,8 +70,13 @@ fun readFileEnv(path: String): Map<String, String>? {
     }
 }
 
-fun setLogPath(name: String = "A") {
+fun setLogPath() {
     if (System.getProperty("LOG_PATH") == null) {
+        val customLogPath = System.getenv("LOG_PATH")
+        if (!customLogPath.isNullOrBlank()) {
+            System.setProperty("LOG_PATH", File(customLogPath).canonicalPath)
+            return
+        }
         val osName = System.getProperty("os.name").lowercase(Locale.getDefault())
         val envOs = System.getenv("OSTYPE")?.lowercase(Locale.getDefault()) ?: ""
 
@@ -80,9 +86,9 @@ fun setLogPath(name: String = "A") {
         val logPath = if (isWindowsLike) {
             System.getProperty("java.io.tmpdir")
         } else {
-            "/var/log"
+            "~/log"
         }
-        System.setProperty("LOG_PATH", File(logPath, name).canonicalPath)
+        System.setProperty("LOG_PATH", File(logPath).canonicalPath)
     }
 }
 

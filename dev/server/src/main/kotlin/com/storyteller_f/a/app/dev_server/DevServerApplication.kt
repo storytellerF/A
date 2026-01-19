@@ -112,7 +112,6 @@ private suspend fun RoutingCall.handleStartRoute(
         respond(HttpStatusCode.BadRequest)
         return
     }
-    val isNested = true
     val port = processLock.withLock {
         val port = findAvailablePort {
             !processMap.containsKey(it)
@@ -120,7 +119,11 @@ private suspend fun RoutingCall.handleStartRoute(
         processMap[port] = null
         port
     }
-    val server = startServerByRun(if (isNested) "../.." else ".", port)
+    val server = startServerByRun(
+        "../..",
+        port,
+        "./build/test/headless/sessions/${Uuid.random().toHexString()}"
+    )
     if (server == null) {
         processLock.withLock {
             processMap.remove(port)

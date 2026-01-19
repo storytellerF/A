@@ -108,7 +108,7 @@ fi
 
 if [ "$RUN_APPIUM" = true ]; then
     echo "Preparing Server for Appium..."
-    ./gradlew cloud:server:installDist --no-daemon
+    ./gradlew cloud:server:installDist cloud:worker:installDist cloud:cli:installDist --no-daemon
     echo "Building Release APK..."
     ./gradlew app:android:assembleDebug --no-daemon
 fi
@@ -131,6 +131,7 @@ fi
 
 if [ "$RUN_APPIUM" = true ]; then
     echo "Running Appium Tests..."
+    ./gradlew :dev:appium:clean --no-daemon
     ./gradlew :dev:appium:test --no-daemon -Pappium=true $TEST_ARGS
 fi
 #./gradlew :composeApp:wasmJsTest

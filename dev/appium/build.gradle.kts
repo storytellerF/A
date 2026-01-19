@@ -13,4 +13,5 @@ dependencies {
     implementation(project(":dev:core"))
     implementation(project(":shared"))
     implementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.testcontainers.postgresql)
 }

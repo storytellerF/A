@@ -2,7 +2,6 @@
 
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.BOOLEAN
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING
-import com.google.common.base.CaseFormat
 import org.gradle.kotlin.dsl.support.uppercaseFirstChar
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.compose.internal.de.undercouch.gradle.tasks.download.Download
@@ -29,7 +28,6 @@ plugins {
 val buildIosTarget = project.findProperty("target.ios") == "true"
 val buildWasmTarget = project.findProperty("target.wasm") == "true"
 val flavorStr = project.findProperty("server.flavor") as String
-val flavorId = CaseFormat.LOWER_HYPHEN.converterTo(CaseFormat.LOWER_UNDERSCORE).convert(flavorStr)!!
 val buildType = project.findProperty("server.buildType") as String
 
 kotlin {
@@ -228,8 +226,6 @@ val properties = Properties().apply {
 val deepLinkHost = (properties["SERVER_URL"] as? String)?.let {
     URI.create(it).host
 } ?: "storyteller_f.com"
-val deepLinkSchemePrefix = "a-$flavorStr"
-
 compose.desktop {
     application {
         mainClass = "com.storyteller_f.a.app.JvmMainKt"
@@ -369,9 +365,6 @@ tasks.withType<Test> {
         "testDebugUnitTest", "testReleaseUnitTest", "jvmTest", "testBenchmarkUnitTest" -> {
             exclude("**/device_based/*")
         }
-    }
-    if (name == "testBenchmarkUnitTest") {
-        exclude("**/headless/*")
     }
 }
 
