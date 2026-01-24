@@ -30,9 +30,9 @@ case "$TARGET" in
     android)
         echo "Running Android-specific command..."
         # 在这里添加 Android 相关命令
-        ./gradlew app:composeApp:assembleRelease --no-daemon
+        ./gradlew app:android:assembleRelease --no-daemon
         mkdir -p "build/outputs/apk/release"
-        for f in app/composeApp/build/outputs/apk/release/*.apk; do
+        for f in app/android/build/outputs/apk/release/*.apk; do
             cp "$f" "build/outputs/apk/release/app-${FLAVOR}_$(basename "$f")"
         done
         ;;
@@ -57,9 +57,9 @@ case "$TARGET" in
     android-panel)
         echo "Running AndroidPanel-specific command..."
         # 在这里添加 AndroidPanel 相关命令
-        ./gradlew panel:composeApp:assembleRelease --no-daemon
+        ./gradlew panel:android:assembleRelease --no-daemon
         mkdir -p "build/outputs/apk/release"
-        for f in panel/composeApp/build/outputs/apk/release/*.apk; do
+        for f in panel/android/build/outputs/apk/release/*.apk; do
             cp "$f" "build/outputs/apk/release/panel-${FLAVOR}_$(basename "$f")"
         done
         ;;
