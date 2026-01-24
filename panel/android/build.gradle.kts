@@ -2,7 +2,6 @@ import com.google.common.base.CaseFormat
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.serialization)
     alias(libs.plugins.easylauncher)

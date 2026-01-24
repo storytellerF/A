@@ -108,12 +108,12 @@ private fun startMemoryTest(
     overrideEnv: Map<String, String>,
     block: suspend (TestMate) -> Unit
 ) {
-    val h2File = File("./build/test/h2/${Uuid.random().toHexString()}")
-    h2File.parentFile!!.let {
-        if (!it.exists() && !it.mkdirs()) {
-            throw Exception("mkdirs failed ${it.canonicalPath}")
-        }
-    }
+//    val h2File = File("./build/test/h2/${Uuid.random().toHexString()}")
+//    h2File.parentFile!!.let {
+//        if (!it.exists() && !it.mkdirs()) {
+//            throw Exception("mkdirs failed ${it.canonicalPath}")
+//        }
+//    }
     val url = "r2dbc:h2:mem:///${Uuid.random()}?DB_CLOSE_DELAY=-1"
     val env = mapOf(
         "DATABASE_URI" to url,
@@ -220,30 +220,26 @@ private fun doTest(
                 }
             }
         }
+        application {
+            module()
+        }
+        val port = env["port"]?.toIntOrNull()
 
-        coroutineScope {
-            val task = CompletableDeferred<Unit>()
-            val port = env["port"]?.toIntOrNull()
-
-            val backend = buildBackendFromEnv(readEnv(env))
-            val workerBackend = backend as WorkerBackend
-
-            application {
-                attributes.put(BackendKey, workerBackend)
-                module()
-            }
-            val testMate = TestMate(this@testApplication, workerBackend)
-
-            if (port != null) {
+        val backend = buildBackendFromEnv(readEnv(env))
+        val workerBackend = backend as WorkerBackend
+        val testMate = TestMate(this@testApplication, workerBackend)
+        if (port != null) {
+            coroutineScope {
+                val task = CompletableDeferred<Unit>()
                 val job = launch(Dispatchers.IO) {
                     receiveExplainResult(task, port)
                 }
                 task.await()
                 testMate.block()
                 job.cancel()
-            } else {
-                testMate.block()
             }
+        } else {
+            testMate.block()
         }
     }
 }

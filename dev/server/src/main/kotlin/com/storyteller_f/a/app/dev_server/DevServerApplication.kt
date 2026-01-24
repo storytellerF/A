@@ -1,8 +1,8 @@
 package com.storyteller_f.a.app.dev_server
 
-import com.storyteller_f.a.app.dev.GIT_BASH
 import com.storyteller_f.a.app.dev.ProcessMate
 import com.storyteller_f.a.app.dev.forceStop
+import com.storyteller_f.a.app.dev.isWin
 import com.storyteller_f.a.app.dev.startServerByRun
 import io.github.aakira.napier.Napier
 import io.ktor.http.HttpStatusCode
@@ -32,6 +32,8 @@ import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
 import java.net.ServerSocket
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 private val previousDevices = mutableSetOf<String>()
 fun main() {
@@ -102,6 +104,7 @@ private suspend fun RoutingCall.handleStopRoute(
     respond(HttpStatusCode.OK)
 }
 
+@OptIn(ExperimentalUuidApi::class)
 private suspend fun RoutingCall.handleStartRoute(
     processMap: MutableMap<Int, ProcessMate?>,
     processLock: Mutex,
@@ -179,13 +182,18 @@ fun findAvailablePort(
     throw Exception("No available port found after $maxRetries retries")
 }
 
+private const val GIT_BASH = "C:/Program Files/Git/bin/bash.exe"
+
 private fun forwardAllDevices(port: String): Boolean {
     val forwardScriptPath = File(
         "../..",
         "scripts/android_scripts/forward-android-devices.sh"
     ).canonicalPath.replace("\\", "/")
-    val process = ProcessBuilder(GIT_BASH, "-c", "$forwardScriptPath $port")
-        .redirectErrorStream(true)
+    val process = if (isWin()) {
+        ProcessBuilder(GIT_BASH, "-c", "$forwardScriptPath $port")
+    } else {
+        ProcessBuilder("sh", forwardScriptPath, port)
+    }.redirectErrorStream(true)
         .start()
     val message = process.inputReader().readText()
     println(message)

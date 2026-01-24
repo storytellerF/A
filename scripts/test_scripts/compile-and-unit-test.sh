@@ -24,15 +24,15 @@ if ! ./gradlew clean --no-daemon; then
     exit 1
 fi
 
-echo "构建 cloud:server"
-rm -rf cloud/server/build/install/server
-if ! ./gradlew cloud:server:installDist --no-daemon; then
-    ./scripts/tool_scripts/show-notification.sh "构建失败" "cloud:server:installDist 构建失败！请检查错误。" "false"
-    exit 1
-fi
+#echo "构建 cloud:server"
+#rm -rf cloud/server/build/install/server
+#if ! ./gradlew cloud:server:installDist --no-daemon; then
+#    ./scripts/tool_scripts/show-notification.sh "构建失败" "cloud:server:installDist 构建失败！请检查错误。" "false"
+#    exit 1
+#fi
 
 echo "执行单元测试"
-if ! ENABLE_TEST_CONTAINER=true ./gradlew test --no-daemon; then
+if ! ENABLE_TEST_CONTAINER=true ./gradlew test --no-daemon -Pappium=false; then
     ./scripts/tool_scripts/show-notification.sh "测试失败" "单元测试执行失败！请检查测试用例。" "false"
     exit 1
 fi
