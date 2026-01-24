@@ -20,7 +20,7 @@ fun readEnv(envMap: Map<String, String>? = null, flavorFilePath: String? = null)
             listOfNotNull(
                 envMap, // 测试时通过config map手动传递
                 System.getenv(), // 正式部署
-                readResourceEnv(".env"), // 测试
+                readResourceEnv("test.env"), // 测试
             )
         )
         if (flavorFilePath != null) {

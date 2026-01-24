@@ -8,7 +8,6 @@ import java.net.URI
 import java.util.Properties
 
 plugins {
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.easylauncher)
     alias(libs.plugins.serialization)
