@@ -58,6 +58,8 @@ import com.storyteller_f.a.app.add
 import com.storyteller_f.a.app.all_members
 import com.storyteller_f.a.app.common.AppNavFactory
 import com.storyteller_f.a.app.common.CommunityScreen
+import com.storyteller_f.a.app.core.components.FavoriteButton
+import com.storyteller_f.a.app.core.components.SubscriptionButton
 import com.storyteller_f.a.app.common.CommunityViewModel
 import com.storyteller_f.a.app.common.OnCommunityExited
 import com.storyteller_f.a.app.common.OnCommunityJoined
@@ -401,6 +403,8 @@ private fun CommunityMenus(
         val isCommunityPage by appNavFactory.hasRouteFlow<CommunityScreen>()
         if (isCommunityPage) {
             CommunityMemberStatusButton(communityInfo, globalDialogController, communityId)
+            FavoriteButton(communityInfo.favoriteId, communityInfo.tuple())
+            SubscriptionButton(communityInfo.subscriptionId, communityInfo.tuple())
             CommunityCreateButton(dismiss, appNavFactory, communityId)
             CommunityAdminButtons(communityInfo, dismiss, appNavFactory, communityId)
         }

@@ -82,6 +82,8 @@ import com.storyteller_f.a.app.common.createRoomKeysViewModel
 import com.storyteller_f.a.app.common.createRoomTopicsViewModel
 import com.storyteller_f.a.app.common.createRoomViewModel
 import com.storyteller_f.a.app.common.hasRouteFlow
+import com.storyteller_f.a.app.core.components.FavoriteButton
+import com.storyteller_f.a.app.core.components.SubscriptionButton
 import com.storyteller_f.a.app.core.components.ButtonNav
 import com.storyteller_f.a.app.core.components.CustomAlertDialog
 import com.storyteller_f.a.app.core.components.CustomAlertDialogController
@@ -628,6 +630,8 @@ private fun RoomDialogButtons(roomInfo: RoomInfo, dismiss: () -> Unit) {
         if (isRoomPage) {
             RoomAllMembers(roomInfo, dismiss, appNavFactory)
             RoomMemberStatus(roomInfo, globalDialogController)
+            FavoriteButton(roomInfo.favoriteId, roomInfo.tuple())
+            SubscriptionButton(roomInfo.subscriptionId, roomInfo.tuple())
             StartCallButton(roomInfo)
             if (roomInfo.isPrivate || roomInfo.creator == me?.id) {
                 RoomFileExplorerButton(roomInfo, dismiss, appNavFactory)

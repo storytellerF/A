@@ -84,7 +84,7 @@ fun <T : Table> T.emoji() = varchar("emoji", 20)
 
 class ExposedDatabase(val databaseSession: ExposedDatabaseSession) : CombinedDatabase {
     override val user: UserDatabase
-        get() = ExposedUserDatabase(databaseSession)
+        get() = ExposedUserDatabase(databaseSession, this)
     override val topic: TopicDatabase
         get() = ExposedTopicDatabase(databaseSession, this)
     override val title: TitleDatabase
@@ -96,7 +96,7 @@ class ExposedDatabase(val databaseSession: ExposedDatabaseSession) : CombinedDat
     override val file: FileDatabase
         get() = ExposedFileDatabase(databaseSession)
     override val container: ContainerDatabase
-        get() = ExposedContainerDatabase(databaseSession)
+        get() = ExposedContainerDatabase(databaseSession, this)
     override val admin: AdminDatabase
         get() = ExposedAdminDatabase(databaseSession)
     override val panelAccount: PanelAccountDatabase

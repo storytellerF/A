@@ -20,6 +20,8 @@ data class RoomInfo(
     val communityId: PrimaryKey? = null,
     val lastRead: PrimaryKey? = null,
     val latestTopic: PrimaryKey? = null,
+    val favoriteId: PrimaryKey? = null,
+    val subscriptionId: PrimaryKey? = null,
 ) : ModelObject {
     val isPrivate get() = communityId == null
     val isJoined get() = joinedTime != null

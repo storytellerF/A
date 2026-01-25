@@ -112,7 +112,9 @@ class ExposedCommunityDatabase(
                 containerInfo?.member,
                 containerInfo?.userTopicRead?.topicId,
                 containerInfo?.memberCount,
-                containerInfo?.latestTopicId
+                containerInfo?.latestTopicId,
+                containerInfo?.favoriteId,
+                containerInfo?.subscriptionId,
             )
         }
     }

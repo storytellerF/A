@@ -25,7 +25,26 @@ class User(
 }
 
 fun User.toUserInfo(): UserInfo {
-    return UserInfo(id, address, aid, nickname, null, encryptionPublicKey, encryptionPrivateKey)
+    return UserInfo(
+        id,
+        address,
+        aid,
+        nickname,
+        null,
+        encryptionPublicKey,
+        encryptionPrivateKey,
+        null,
+        null
+    )
 }
 
-data class RawUser(val user: User)
+data class RawUser(
+    val user: User,
+    val favoriteId: PrimaryKey? = null,
+    val subscriptionId: PrimaryKey? = null,
+)
+
+fun RawUser.toUserInfo() = user.toUserInfo().copy(
+    favoriteId = favoriteId,
+    subscriptionId = subscriptionId
+)

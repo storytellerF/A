@@ -1,7 +1,9 @@
 package com.storyteller_f.a.backend.exposed.database
 
+import com.storyteller_f.a.backend.core.CombinedDatabase
 import com.storyteller_f.a.backend.core.ContainerDatabase
 import com.storyteller_f.a.backend.core.ContainerInfo
+import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.paginationFromResults
 import com.storyteller_f.a.backend.core.types.Member
@@ -40,8 +42,10 @@ import org.jetbrains.exposed.v1.r2dbc.select
 import org.jetbrains.exposed.v1.r2dbc.selectAll
 import org.jetbrains.exposed.v1.r2dbc.update
 
-class ExposedContainerDatabase(val databaseSession: ExposedDatabaseSession) :
-    ContainerDatabase {
+class ExposedContainerDatabase(
+    val databaseSession: ExposedDatabaseSession,
+    val combinedDatabase: CombinedDatabase,
+) : ContainerDatabase {
     override suspend fun isMemberJoined(
         objectId: PrimaryKey,
         uid: PrimaryKey?,
@@ -164,8 +168,30 @@ class ExposedContainerDatabase(val databaseSession: ExposedDatabaseSession) :
                 Result.success(emptyMap())
             }.getOrThrow()
             val latestMap = getLatestTopicInContainer(parentIds, uid).getOrThrow()
+
+            val favoriteMap = if (uid != null && parentIds.isNotEmpty()) {
+                combinedDatabase.favorite.getHasFavorite(ObjectListFetch.IdListFetch(parentIds), uid)
+                    .getOrThrow().associateBy { it.objectId }
+            } else {
+                emptyMap()
+            }
+
+            val subscriptionMap = if (uid != null && parentIds.isNotEmpty()) {
+                combinedDatabase.subscription.getHasSubscription(ObjectListFetch.IdListFetch(parentIds), uid)
+                    .getOrThrow().associateBy { it.objectId }
+            } else {
+                emptyMap()
+            }
+
             parentIds.associateWith {
-                ContainerInfo(joinMap[it], readMap[it], memberCountMap[it], latestMap[it])
+                ContainerInfo(
+                    joinMap[it],
+                    readMap[it],
+                    memberCountMap[it],
+                    latestMap[it],
+                    favoriteMap[it]?.id,
+                    subscriptionMap[it]?.id
+                )
             }
         }
     }

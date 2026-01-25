@@ -17,6 +17,8 @@ data class UserInfo(
     val avatar: FileInfo?,
     val encryptionPublicKey: String? = null,
     val encryptionPrivateKey: String? = null,
+    val favoriteId: PrimaryKey? = null,
+    val subscriptionId: PrimaryKey? = null,
 ) : ModelObject {
     override val objectType: ObjectType
         get() = ObjectType.USER
