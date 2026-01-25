@@ -473,15 +473,6 @@ private fun PanelSelectLoginPage(navigator: NavHostController, back: () -> Unit)
                 }, shape = ButtonDefaults.outlinedShape) {
                     Text(stringResource(Res.string.input))
                 }
-                val scope = rememberCoroutineScope()
-                val globalDialogController = LocalPanelGlobalDialog.current
-                OutlinedButton({
-                    scope.launch {
-                        globalDialogController.signInFromFile(back)
-                    }
-                }) {
-                    Text(CoreStrings.selectFile())
-                }
             }
         }
     }
