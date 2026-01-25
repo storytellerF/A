@@ -98,9 +98,6 @@ import com.storyteller_f.shared.model.UserPubKeyInfo
 import com.storyteller_f.shared.model.UserSubscriptionInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.JoinStatusSearch
-import com.storyteller_f.storage.UserFavoriteCollection
-import com.storyteller_f.storage.UserSubscriptionCollection
-import com.storyteller_f.storage.getName
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.extractMarkdownHeadline
@@ -120,9 +117,9 @@ import com.storyteller_f.storage.TopicCollection
 import com.storyteller_f.storage.UploadCollection
 import com.storyteller_f.storage.UploadInfo
 import com.storyteller_f.storage.UserCollection
-import com.storyteller_f.storage.UserFavoriteStorage
+import com.storyteller_f.storage.UserFavoriteCollection
 import com.storyteller_f.storage.UserReactionRecordCollection
-import com.storyteller_f.storage.UserSubscriptionStorage
+import com.storyteller_f.storage.UserSubscriptionCollection
 import com.storyteller_f.storage.WrappedPagingSource
 import com.storyteller_f.storage.getName
 import kotlinx.coroutines.CoroutineScope

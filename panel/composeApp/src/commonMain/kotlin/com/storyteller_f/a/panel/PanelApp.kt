@@ -47,7 +47,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import com.storyteller_f.a.app.core.CoreStrings
 import com.storyteller_f.a.app.core.common.LocalClient
 import com.storyteller_f.a.app.core.components.CenterBox
 import com.storyteller_f.a.app.core.components.CustomGlobalDialogController
@@ -59,7 +58,6 @@ import com.storyteller_f.a.app.core.components.GlobalDialogState
 import com.storyteller_f.a.app.core.components.GlobalTask
 import com.storyteller_f.a.app.core.components.GlobalTaskContext
 import com.storyteller_f.a.app.core.components.SignInButton
-import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.app.core.components.safeArea
 import com.storyteller_f.a.app.core.utils.SessionHistoryManager
 import com.storyteller_f.a.app.core.utils.buildSessionHistoryFactory
@@ -72,7 +70,6 @@ import com.storyteller_f.a.client.core.PanelSessionModel
 import com.storyteller_f.a.client.core.createPanelSessionManager
 import com.storyteller_f.a.client.core.defaultClientConfigureForPanel
 import com.storyteller_f.a.client.core.getClient
-import com.storyteller_f.a.client.core.getPanelUserPass
 import com.storyteller_f.a.client.core.startBackgroundTask
 import com.storyteller_f.a.client.room.RoomModelStorage
 import com.storyteller_f.a.client.room.getRoomModelStorage
@@ -93,11 +90,6 @@ import com.storyteller_f.a.panel.pages.TitleDetailPage
 import com.storyteller_f.a.panel.pages.TopicDetailPage
 import com.storyteller_f.a.panel.pages.UserDetailPage
 import com.storyteller_f.a.panel.ui.theme.PanelTheme
-import com.storyteller_f.shared.model.AlgoType
-import com.storyteller_f.shared.replaceCrlf
-import io.github.vinceglb.filekit.FileKit
-import io.github.vinceglb.filekit.dialogs.openFilePicker
-import io.github.vinceglb.filekit.readBytes
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.cookies.CookiesStorage
 import kotlinx.collections.immutable.PersistentList
@@ -446,7 +438,7 @@ fun PanelLoginPage(back: () -> Unit) {
         Box(Modifier.safeArea(it, direction)) {
             NavHost(navigator, "select") {
                 composable("select") {
-                    PanelSelectLoginPage(navigator, back)
+                    PanelSelectLoginPage(navigator)
                 }
                 composable("input") {
                     PanelInputPage(back)
@@ -457,7 +449,7 @@ fun PanelLoginPage(back: () -> Unit) {
 }
 
 @Composable
-private fun PanelSelectLoginPage(navigator: NavHostController, back: () -> Unit) {
+private fun PanelSelectLoginPage(navigator: NavHostController) {
     CenterBox {
         Column(
             verticalArrangement = Arrangement.spacedBy(40.dp),
@@ -475,30 +467,6 @@ private fun PanelSelectLoginPage(navigator: NavHostController, back: () -> Unit)
                 }
             }
         }
-    }
-}
-
-private suspend fun PanelGlobalDialogController.signInFromFile(
-    back: () -> Unit
-) {
-    useResult {
-        request {
-            runCatching {
-                val f = FileKit.openFilePicker()
-                if (f != null) {
-                    val privateKey = String(f.readBytes()).replaceCrlf()
-                    getPanelUserPass(
-                        privateKey,
-                        AlgoType.P256,
-                        false
-                    ) {
-                        historyFactory.addSession(it)
-                    }
-                }
-            }
-        }
-    }.onSuccess {
-        back()
     }
 }
 
