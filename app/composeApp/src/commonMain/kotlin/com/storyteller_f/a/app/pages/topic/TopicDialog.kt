@@ -47,6 +47,8 @@ import com.storyteller_f.a.app.common.OnRemoveSubscription
 import com.storyteller_f.a.app.components.AppTopicContentView
 import com.storyteller_f.a.app.copy
 import com.storyteller_f.a.app.core.components.BaseSheet
+import com.storyteller_f.a.app.core.components.FavoriteButton
+import com.storyteller_f.a.app.core.components.SubscriptionButton
 import com.storyteller_f.a.app.core.components.ButtonNav
 import com.storyteller_f.a.app.core.components.DialogContainer
 import com.storyteller_f.a.app.core.components.ExceptionView
@@ -137,82 +139,11 @@ private fun TopicDialogMenuList(topicInfo: TopicInfo, dismissDialog: () -> Unit)
         SnapshotButton(topicInfo)
         TopicPinButton(topicInfo, dismissDialog)
         TranslateButton(content, topicInfo)
-        FavoriteButton(topicInfo)
-        SubscriptionButton(topicInfo)
+        FavoriteButton(topicInfo.favoriteId, topicInfo.tuple())
+        SubscriptionButton(topicInfo.subscriptionId, topicInfo.tuple())
     }
 }
 
-@Composable
-fun SubscriptionButton(topicInfo: TopicInfo) {
-    val dialogController = LocalGlobalTask.current
-    val scope = rememberCoroutineScope()
-    val subscriptionId = topicInfo.subscriptionId
-    val taskId = "subscription-${topicInfo.id}"
-    val state = dialogController.stateMap[taskId]
-    val icon = if (state is LoadingState.Loading) {
-        IconRes.Loading
-    } else if (subscriptionId != null) {
-        IconRes.Vector(Icons.Default.NotificationsActive)
-    } else {
-        IconRes.Vector(Icons.Default.NotificationsOff)
-    }
-    ButtonNav(icon, "Subscription") {
-        scope.launch {
-            dialogController.use(taskId) { state ->
-                state.use {
-                    request {
-                        if (subscriptionId != null) {
-                            removeSubscription(subscriptionId).onSuccess {
-                                emitEvent(OnRemoveSubscription(topicInfo.tuple()))
-                            }
-                        } else {
-                            addSubscription(
-                                NewSubscription(topicInfo.id, ObjectType.TOPIC)
-                            ).onSuccess {
-                                emitEvent(OnAddSubscription(it))
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun FavoriteButton(topicInfo: TopicInfo) {
-    val dialogController = LocalGlobalTask.current
-    val scope = rememberCoroutineScope()
-    val favoriteId = topicInfo.favoriteId
-    val taskId = "favorite-${topicInfo.id}"
-    val state = dialogController.stateMap[taskId]
-    val icon = if (state is LoadingState.Loading) {
-        IconRes.Loading
-    } else if (favoriteId != null) {
-        IconRes.Vector(Icons.Default.Favorite)
-    } else {
-        IconRes.Vector(Icons.Default.FavoriteBorder)
-    }
-    ButtonNav(icon, "Favorite") {
-        scope.launch {
-            dialogController.use(taskId) { state ->
-                state.use {
-                    request {
-                        if (favoriteId != null) {
-                            removeFavorite(favoriteId).onSuccess {
-                                emitEvent(OnRemoveFavorite(topicInfo.tuple()))
-                            }
-                        } else {
-                            addFavorite(NewFavorite(ObjectType.TOPIC, topicInfo.id)).onSuccess {
-                                emitEvent(OnAddFavorite(it))
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
 
 @Composable
 private fun CopyButton(content: TopicContent) {

@@ -1,5 +1,6 @@
 package com.storyteller_f.a.backend.exposed.database
 
+import com.storyteller_f.a.backend.core.CombinedDatabase
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
@@ -37,6 +38,9 @@ import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.mapIfNotNull
+import com.storyteller_f.shared.utils.mapResult
+import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.md5
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.Op
@@ -55,6 +59,7 @@ import org.jetbrains.exposed.v1.r2dbc.upsert
 
 class ExposedUserDatabase(
     private val databaseSession: ExposedDatabaseSession,
+    private val combinedDatabase: CombinedDatabase,
 ) : UserDatabase {
     override suspend fun getUserAid(id: PrimaryKey) = databaseSession.dbSearch {
         search {
@@ -69,13 +74,18 @@ class ExposedUserDatabase(
 
     override suspend fun getRawUser(
         objectFetch: ObjectFetch,
-    ) = getUserByPredicate(::mapUserInfo) {
+        uid: PrimaryKey?,
+    ) = getUserByPredicate(User::wrapRow) {
         where {
             when (objectFetch) {
                 is ObjectFetch.AidFetch -> Aids.value eq objectFetch.aid
                 is ObjectFetch.IdFetch -> Users.id eq objectFetch.id
             }
         }
+    }.mapResultIfNotNull { user ->
+        processUserToRawUser(uid, listOf(user))
+    }.mapIfNotNull {
+        it.first()
     }
 
     override suspend fun getRawUserAndPublicKeyByAddress(
@@ -202,7 +212,7 @@ class ExposedUserDatabase(
         Users.address eq address
     }
 
-    override suspend fun getRawUsers(objectListFetch: ObjectListFetch): Result<List<RawUser>> {
+    override suspend fun getRawUsers(objectListFetch: ObjectListFetch, uid: PrimaryKey?): Result<List<RawUser>> {
         if (objectListFetch is ObjectListFetch.AidListFetch && objectListFetch.aidList.isEmpty()) {
             return Result.success(emptyList())
         }
@@ -216,7 +226,9 @@ class ExposedUserDatabase(
                     is ObjectListFetch.IdListFetch -> Users.id inList objectListFetch.idList
                 }
             }
-        }, ::mapUserInfo)
+        }, User::wrapRow).mapResult {
+            processUserToRawUser(uid, it)
+        }
     }
 
     override suspend fun getUserAcgByIds(objectListFetch: ObjectListFetch) = getUserListByPredicate(
@@ -380,7 +392,9 @@ class ExposedUserDatabase(
     }
 
     override suspend fun getAllUsers(primaryKeyFetch: PrimaryKeyFetch) = paginationFromResults(
-        getUserListByPredicate({ bindPaginationQuery(Users, primaryKeyFetch) }, ::mapUserInfo),
+        getUserListByPredicate({ bindPaginationQuery(Users, primaryKeyFetch) }, User::wrapRow).mapResult {
+            processUserToRawUser(null, it)
+        },
         getUserCount()
     )
 
@@ -436,4 +450,34 @@ class ExposedUserDatabase(
                 count()
             }
         )
+
+    private suspend fun processUserToRawUser(
+        uid: PrimaryKey?,
+        users: List<User>
+    ): Result<List<RawUser>> = runCatching {
+        val userIds = users.map { it.id }
+        if (userIds.isEmpty()) return@runCatching emptyList()
+
+        val favoriteMap = if (uid != null) {
+            combinedDatabase.favorite.getHasFavorite(ObjectListFetch.IdListFetch(userIds), uid)
+                .getOrThrow().associateBy { it.objectId }
+        } else {
+            emptyMap()
+        }
+
+        val subscriptionMap = if (uid != null) {
+            combinedDatabase.subscription.getHasSubscription(ObjectListFetch.IdListFetch(userIds), uid)
+                .getOrThrow().associateBy { it.objectId }
+        } else {
+            emptyMap()
+        }
+
+        users.map {
+            RawUser(
+                it,
+                favoriteId = favoriteMap[it.id]?.id,
+                subscriptionId = subscriptionMap[it.id]?.id
+            )
+        }
+    }
 }

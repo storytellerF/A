@@ -66,7 +66,9 @@ import com.storyteller_f.a.app.core.components.CustomAlertDialogController
 import com.storyteller_f.a.app.core.components.CustomIcon
 import com.storyteller_f.a.app.core.components.DialogContainer
 import com.storyteller_f.a.app.core.components.IconRes
+import com.storyteller_f.a.app.core.components.FavoriteButton
 import com.storyteller_f.a.app.core.components.SignInButton
+import com.storyteller_f.a.app.core.components.SubscriptionButton
 import com.storyteller_f.a.app.core.components.UserIcon
 import com.storyteller_f.a.app.create
 import com.storyteller_f.a.app.disconnected
@@ -94,6 +96,8 @@ import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.UserOverview
 import dev.jordond.connectivity.Connectivity
 import dev.jordond.connectivity.compose.rememberConnectivityState
+import com.storyteller_f.shared.obj.ob
+import com.storyteller_f.shared.type.ObjectType
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -491,6 +495,10 @@ fun UserDialog(
         }) {
             DialogContainer {
                 UserCard(userInfo, dismiss)
+                if (userInfo != null) {
+                    FavoriteButton(userInfo.favoriteId, userInfo.tuple())
+                    SubscriptionButton(userInfo.subscriptionId, userInfo.tuple())
+                }
             }
         }
     }

@@ -1,0 +1,100 @@
+package com.storyteller_f.a.app.core.components
+
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.NotificationsOff
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
+import com.storyteller_f.a.api.NewFavorite
+import com.storyteller_f.a.api.NewSubscription
+import com.storyteller_f.a.app.LocalGlobalTask
+import com.storyteller_f.a.app.common.OnAddFavorite
+import com.storyteller_f.a.app.common.OnAddSubscription
+import com.storyteller_f.a.app.common.OnRemoveFavorite
+import com.storyteller_f.a.app.common.OnRemoveSubscription
+import com.storyteller_f.a.client.core.LoadingState
+import com.storyteller_f.a.client.core.addFavorite
+import com.storyteller_f.a.client.core.addSubscription
+import com.storyteller_f.a.client.core.removeFavorite
+import com.storyteller_f.a.client.core.removeSubscription
+import com.storyteller_f.shared.obj.ObjectTuple
+import com.storyteller_f.shared.type.PrimaryKey
+import kotlinx.coroutines.launch
+
+@Composable
+fun FavoriteButton(
+    favoriteId: PrimaryKey?,
+    infoTuple: ObjectTuple
+) {
+    val dialogController = LocalGlobalTask.current
+    val scope = rememberCoroutineScope()
+    val taskId = "favorite-${infoTuple.objectId}"
+    val state = dialogController.stateMap[taskId]
+    val icon = if (state is LoadingState.Loading) {
+        IconRes.Loading
+    } else if (favoriteId != null) {
+        IconRes.Vector(Icons.Default.Favorite)
+    } else {
+        IconRes.Vector(Icons.Default.FavoriteBorder)
+    }
+    ButtonNav(icon, "Favorite") {
+        scope.launch {
+            dialogController.use(taskId) { state ->
+                state.use {
+                    request {
+                        if (favoriteId != null) {
+                            removeFavorite(favoriteId).onSuccess {
+                                emitEvent(OnRemoveFavorite(infoTuple))
+                            }
+                        } else {
+                            addFavorite(NewFavorite(infoTuple.objectType, infoTuple.objectId)).onSuccess {
+                                emitEvent(OnAddFavorite(it))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SubscriptionButton(
+    subscriptionId: PrimaryKey?,
+    infoTuple: ObjectTuple
+) {
+    val dialogController = LocalGlobalTask.current
+    val scope = rememberCoroutineScope()
+    val taskId = "subscription-${infoTuple.objectId}"
+    val state = dialogController.stateMap[taskId]
+    val icon = if (state is LoadingState.Loading) {
+        IconRes.Loading
+    } else if (subscriptionId != null) {
+        IconRes.Vector(Icons.Default.NotificationsActive)
+    } else {
+        IconRes.Vector(Icons.Default.NotificationsOff)
+    }
+    ButtonNav(icon, "Subscription") {
+        scope.launch {
+            dialogController.use(taskId) { state ->
+                state.use {
+                    request {
+                        if (subscriptionId != null) {
+                            removeSubscription(subscriptionId).onSuccess {
+                                emitEvent(OnRemoveSubscription(infoTuple))
+                            }
+                        } else {
+                            addSubscription(
+                                NewSubscription(infoTuple.objectId, infoTuple.objectType)
+                            ).onSuccess {
+                                emitEvent(OnAddSubscription(it))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -148,6 +148,8 @@ class ExposedRoomDatabase(
                 containerInfo?.userTopicRead?.topicId,
                 containerInfo?.memberCount,
                 containerInfo?.latestTopicId,
+                containerInfo?.favoriteId,
+                containerInfo?.subscriptionId,
             )
         }
     }

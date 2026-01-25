@@ -126,6 +126,8 @@ data class ContainerInfo(
     val userTopicRead: UserTopicRead?,
     val memberCount: Long?,
     val latestTopicId: PrimaryKey?,
+    val favoriteId: PrimaryKey? = null,
+    val subscriptionId: PrimaryKey? = null,
 )
 
 data class UserAuthData(val publicKey: String, val userId: PrimaryKey, val algoType: AlgoType)
@@ -186,7 +188,7 @@ interface CombinedDatabase {
         val childAccountCount = user.getChildAccountCount(uid).getOrThrow()
         val reactionRecordCount = reaction.getUserReactionRecordCount(uid).getOrThrow()
         val commentCount = topic.getUserCommentCount(uid).getOrThrow()
-        val rawUser = user.getRawUser(ObjectFetch.IdFetch(uid)).getOrThrow() ?: error("user not found")
+        val rawUser = user.getRawUser(ObjectFetch.IdFetch(uid), uid).getOrThrow() ?: error("user not found")
         RawUserOverview(
             subscriptionCount,
             favoriteCount,
@@ -290,7 +292,7 @@ interface CombinedDatabase {
 
 interface UserDatabase {
     suspend fun getUserAid(id: PrimaryKey): Result<String?>
-    suspend fun getRawUser(objectFetch: ObjectFetch): Result<RawUser?>
+    suspend fun getRawUser(objectFetch: ObjectFetch, uid: PrimaryKey? = null): Result<RawUser?>
     suspend fun getRawUserAndPublicKeyByAddress(ad: String): Result<Pair<RawUser, String>?>
     suspend fun createUser(user: User): Result<User>
     suspend fun isUserNotExistsByPublicKey(pk: String): Result<Boolean>
@@ -302,7 +304,7 @@ interface UserDatabase {
     suspend fun getUserAuthDataById(id: PrimaryKey): Result<UserAuthData?>
     suspend fun getUserAuthDataByAid(aid: String): Result<UserAuthData?>
     suspend fun getUserAuthDataByAddress(address: String): Result<UserAuthData?>
-    suspend fun getRawUsers(objectListFetch: ObjectListFetch): Result<List<RawUser>>
+    suspend fun getRawUsers(objectListFetch: ObjectListFetch, uid: PrimaryKey? = null): Result<List<RawUser>>
     suspend fun getUserAcgByIds(objectListFetch: ObjectListFetch): Result<List<Pair<Long, Long>>>
     suspend fun addReadLog(userTopicRead: UserTopicRead): Result<Unit>
     suspend fun insertUserLog(log: UserLog): Result<Unit>

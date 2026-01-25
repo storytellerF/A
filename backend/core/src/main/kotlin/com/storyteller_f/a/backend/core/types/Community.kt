@@ -42,6 +42,8 @@ fun RawCommunity.toCommunityIfo(
     poster = poster,
     hasPoster = poster != null,
     font = font,
+    favoriteId = favoriteId,
+    subscriptionId = subscriptionId,
 )
 
 data class RawCommunity(
@@ -49,7 +51,9 @@ data class RawCommunity(
     val member: Member?,
     val lastRead: Long?,
     val memberCount: Long? = null,
-    val latestTopic: PrimaryKey? = null
+    val latestTopic: PrimaryKey? = null,
+    val favoriteId: PrimaryKey? = null,
+    val subscriptionId: PrimaryKey? = null,
 ) {
     val hasJoined = member != null
 }
