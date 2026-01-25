@@ -47,7 +47,7 @@ class PdfBox : PdfService {
         Document(50f, 50f, 50f, 50f).apply {
             val creatorId = if (creatorInfo.aid == null) creatorInfo.address else creatorInfo.aid
             val authorId = if (authorInfo.aid == null) authorInfo.address else authorInfo.aid
-            val font = loadSystemFont(pdDocument, content)!!
+            val font = loadSystemFont(pdDocument)
             add(Paragraph().apply {
                 addText("pub by $authorId", 14f, font)
             })
@@ -86,11 +86,10 @@ class PdfBox : PdfService {
 
 fun loadSystemFont(
     document: PDDocument,
-    content: String,
-): PDType0Font? {
-    val font = getFont(content)
+): PDType0Font {
+    val font = getFont()
     // 使用 PDFBox 加载字体
-    return PDType0Font.load(document, FontMappers.instance().getTrueTypeFont(font?.name, null).font, true)
+    return PDType0Font.load(document, FontMappers.instance().getTrueTypeFont(font.name, null).font, true)
 }
 
 data class PdfFontBundle(
@@ -100,8 +99,8 @@ data class PdfFontBundle(
     val boldItalic: PDFont
 )
 
-private fun loadFontBundle(document: PDDocument, content: String): PdfFontBundle {
-    val base = getFont(content)!!
+private fun loadFontBundle(document: PDDocument): PdfFontBundle {
+    val base = getFont()
     val env = java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment()
     val candidates = env.allFonts.filter { it.family == base.family }
     fun loadByName(f: java.awt.Font?): PDFont = PDType0Font.load(
@@ -138,7 +137,7 @@ class PdfBoxVisitor(
     val map: Map<String, File>,
     val document: Document
 ) : Visitor {
-    private val fontBundle: PdfFontBundle by lazy { loadFontBundle(document.pdDocument, content) }
+    private val fontBundle: PdfFontBundle by lazy { loadFontBundle(document.pdDocument) }
 
     @Suppress("CyclomaticComplexMethod", "LongMethod")
     override fun visitNode(node: ASTNode) {

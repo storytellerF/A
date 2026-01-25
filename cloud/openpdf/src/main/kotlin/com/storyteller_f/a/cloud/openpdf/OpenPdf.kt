@@ -46,7 +46,7 @@ class OpenPdf : PdfService {
     ): Result<Unit> {
         val saveToFile = snapshotGeneration.path
         return runCatching {
-            val fontName = getFont(content)!!.fontName
+            val fontName = getFont().fontName
             saveToFile.outputStream().use {
                 Document().apply {
                     PdfWriter.getInstance(this, it)
