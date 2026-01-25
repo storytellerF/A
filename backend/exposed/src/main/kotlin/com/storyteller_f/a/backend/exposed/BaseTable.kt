@@ -37,12 +37,12 @@ import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.type.MemberStatus
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.UploadRecordStatus
+import io.github.aakira.napier.Napier
 import io.r2dbc.spi.R2dbcDataIntegrityViolationException
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.datetime.datetime
 import org.jetbrains.exposed.v1.r2dbc.ExposedR2dbcException
 import java.sql.SQLIntegrityConstraintViolationException
-import io.github.aakira.napier.Napier
 
 abstract class BaseTable : Table() {
     val id = customPrimaryKey("id")

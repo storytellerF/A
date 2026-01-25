@@ -15,10 +15,10 @@ import com.storyteller_f.a.cloud.core.service.getAllTopics
 import com.storyteller_f.a.cloud.core.service.getAllUsers
 import com.storyteller_f.a.cloud.core.service.getCommunity
 import com.storyteller_f.a.cloud.core.service.getCommunityMemberInfos
+import com.storyteller_f.a.cloud.core.service.getFavorites
 import com.storyteller_f.a.cloud.core.service.getFileInfoById
 import com.storyteller_f.a.cloud.core.service.getFileInfoPaginationResult
 import com.storyteller_f.a.cloud.core.service.getOverview
-import com.storyteller_f.a.cloud.core.service.getFavorites
 import com.storyteller_f.a.cloud.core.service.getRoomInfo
 import com.storyteller_f.a.cloud.core.service.getTitleInfo
 import com.storyteller_f.a.cloud.core.service.getUserById
@@ -159,6 +159,12 @@ private fun Routing.bindAdminRoomRoutes(backend: Backend) {
 }
 
 private fun Routing.bindAdminUserRoutes(backend: Backend) {
+    bindAdminUserBasicRoutes(backend)
+    bindAdminUserRelationRoutes(backend)
+    bindAdminUserActivityRoutes(backend)
+}
+
+private fun Routing.bindAdminUserBasicRoutes(backend: Backend) {
     AdminApi.Users.get(handleResult()) {
         it.pagination(IdentifiablePagingGenerator) { fetch ->
             backend.getAllUsers(fetch)
@@ -170,6 +176,12 @@ private fun Routing.bindAdminUserRoutes(backend: Backend) {
     AdminApi.Users.Id.Overview.get(handleResult()) { p ->
         backend.getUserOverview(p.id)
     }
+    AdminApi.Users.add(handleResult()) { api ->
+        backend.addUser(api.receiveBody())
+    }
+}
+
+private fun Routing.bindAdminUserRelationRoutes(backend: Backend) {
     AdminApi.Users.Id.Communities.get(handleResult()) { q, p ->
         q.pagination(IdentifiablePagingGenerator) { f ->
             backend.getUserJoinedCommunities(null, p.id, f)
@@ -190,6 +202,9 @@ private fun Routing.bindAdminUserRoutes(backend: Backend) {
             backend.getFileInfoPaginationResult(p.id, f)
         }
     }
+}
+
+private fun Routing.bindAdminUserActivityRoutes(backend: Backend) {
     AdminApi.Users.Id.Logs.get(handleResult()) { q, p ->
         q.pagination(IdentifiablePagingGenerator) { f ->
             backend.getUserLogs(p.id, f)
@@ -219,9 +234,6 @@ private fun Routing.bindAdminUserRoutes(backend: Backend) {
         q.pagination(IdentifiablePagingGenerator) { f ->
             backend.getUserSubscriptions(p.id, f)
         }
-    }
-    AdminApi.Users.add(handleResult()) { api ->
-        backend.addUser(api.receiveBody())
     }
 }
 

@@ -702,6 +702,7 @@ class AdminTest {
             }
         }
     }
+
     @Test
     fun `admin get user favorites`() = test {
         val outer = attachPanelSession()

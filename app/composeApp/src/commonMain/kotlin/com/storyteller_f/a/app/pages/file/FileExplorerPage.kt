@@ -166,8 +166,14 @@ private fun FileExplorerCompatPageInternal(mediaTarget: ObjectTuple) {
                 pagerState.animateScrollToPage(navRoutes.indexOfFirst { it.path == path })
             }
         }
-    }) { paddingValues ->
-        FileExplorerPager(pagerState, mediaTarget, paddingValues)
+    }) {
+        Column {
+            CustomSearchBar(
+                scope = SearchScope.UploadedFiles(mediaTarget.objectId, mediaTarget.objectType),
+                leadingIcon = {}
+            )
+            FileExplorerPager(pagerState, mediaTarget, PaddingValues(0.dp))
+        }
     }
     QuotaSheet(showQuota, sheetState, { showQuota = false }, mediaTarget)
 }
@@ -213,7 +219,11 @@ private fun FileExplorerNonCompatPageInternal(mediaTarget: ObjectTuple) {
             CustomRailNav(current?.destination?.route, navRoutes) {
                 navigator.navigate(it, NavOptions.Builder().setLaunchSingleTop(true).build())
             }
-            Column(modifier = Modifier) {
+            Column(modifier = Modifier.weight(1f)) {
+                CustomSearchBar(
+                    scope = SearchScope.UploadedFiles(mediaTarget.objectId, mediaTarget.objectType),
+                    leadingIcon = {}
+                )
                 NavHost(navigator, "/uploaded") {
                     composable("/uploaded") {
                         UploadedPage(mediaTarget)
@@ -261,10 +271,6 @@ private fun UploadedPage(mediaTarget: ObjectTuple) {
     val vm = createMediaListViewModel(mediaTarget)
     val appNavFactory = LocalAppNavFactory.current
     Column(modifier = Modifier.fillMaxSize()) {
-        CustomSearchBar(
-            scope = SearchScope.UploadedFiles(mediaTarget.objectId, mediaTarget.objectType),
-            leadingIcon = {}
-        )
         StateView(vm, modifier = Modifier.fillMaxSize()) { pagingItems ->
             LazyColumn(contentPadding = PaddingValues(10.dp)) {
                 topPrepend(pagingItems.loadState)
