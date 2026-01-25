@@ -42,6 +42,7 @@ import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.datetime.datetime
 import org.jetbrains.exposed.v1.r2dbc.ExposedR2dbcException
 import java.sql.SQLIntegrityConstraintViolationException
+import io.github.aakira.napier.Napier
 
 abstract class BaseTable : Table() {
     val id = customPrimaryKey("id")
@@ -128,6 +129,9 @@ class ExposedDatabase(val databaseSession: ExposedDatabaseSession) : CombinedDat
 }
 
 fun buildExposedDatabase(databaseConnection: DatabaseConnection): ExposedDatabase {
+    Napier.i {
+        "buildExposedDatabase $databaseConnection"
+    }
     val database = ExposedDatabaseFactory.connect(databaseConnection)
     val databaseSession = ExposedDatabaseSession(database, null)
     return ExposedDatabase(databaseSession)

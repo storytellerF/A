@@ -39,9 +39,11 @@ import com.storyteller_f.a.panel.Res
 import com.storyteller_f.a.panel.common.createPanelJoinedCommunitiesViewModel
 import com.storyteller_f.a.panel.common.createPanelJoinedRoomsViewModel
 import com.storyteller_f.a.panel.common.createPanelUserCommentsViewModel
+import com.storyteller_f.a.panel.common.createPanelUserFavoritesViewModel
 import com.storyteller_f.a.panel.common.createPanelUserLogsViewModel
 import com.storyteller_f.a.panel.common.createPanelUserOverviewViewModel
 import com.storyteller_f.a.panel.common.createPanelUserReactionsViewModel
+import com.storyteller_f.a.panel.common.createPanelUserSubscriptionsViewModel
 import com.storyteller_f.a.panel.common.createPanelUserUploadRecordsViewModel
 import com.storyteller_f.a.panel.common.createPanelUserViewModel
 import com.storyteller_f.a.panel.components.InfoTable
@@ -54,7 +56,9 @@ import com.storyteller_f.a.panel.tab_joined_communities
 import com.storyteller_f.a.panel.tab_joined_rooms
 import com.storyteller_f.a.panel.tab_received_titles
 import com.storyteller_f.a.panel.tab_user_comments
+import com.storyteller_f.a.panel.tab_user_favorites
 import com.storyteller_f.a.panel.tab_user_reactions
+import com.storyteller_f.a.panel.tab_user_subscriptions
 import com.storyteller_f.a.panel.upload_records
 import com.storyteller_f.a.panel.user_detail_title
 import com.storyteller_f.a.panel.user_detail_title_with_info
@@ -129,7 +133,9 @@ private fun UserInfoTabs(uid: PrimaryKey) {
         stringResource(Res.string.tab_created_files),
         stringResource(Res.string.upload_records),
         stringResource(Res.string.tab_user_reactions),
-        stringResource(Res.string.tab_user_comments)
+        stringResource(Res.string.tab_user_comments),
+        stringResource(Res.string.tab_user_favorites),
+        stringResource(Res.string.tab_user_subscriptions)
     )
     val pagerState = rememberPagerState { tabs.size }
     val scope = rememberCoroutineScope()
@@ -152,7 +158,9 @@ private fun UserInfoTabs(uid: PrimaryKey) {
                 4 -> UserCreatedFilesSection(uid)
                 5 -> UserUploadRecordsSection(uid)
                 6 -> UserReactionsSection(uid)
-                else -> UserCommentsSection(uid)
+                7 -> UserCommentsSection(uid)
+                8 -> UserFavoritesSection(uid)
+                else -> UserSubscriptionsSection(uid)
             }
         }
     }
@@ -392,6 +400,74 @@ private fun UserCommentsSection(uid: PrimaryKey) {
                 if (info != null) {
                     val panelNav = LocalPanelNav.current
                     TopicCell(info, panelNav)
+                    HorizontalDivider()
+                } else {
+                    ListItem(headlineContent = { Text("") })
+                    HorizontalDivider()
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun UserFavoritesSection(uid: PrimaryKey) {
+    val vm = createPanelUserFavoritesViewModel(uid)
+    StateView(vm, modifier = Modifier.fillMaxSize()) { items ->
+        LazyColumn {
+            pagingItems(items, key = { it.id }) { index ->
+                val info = items[index]
+                if (info != null) {
+                    val panelNav = LocalPanelNav.current
+                    ListItem(
+                        headlineContent = { Text("Object ${info.objectId}") },
+                        supportingContent = { Text("Type: ${info.objectType} • Time: ${info.createdTime}") },
+                        modifier = Modifier.clickable {
+                            when (info.objectType) {
+                                ObjectType.USER -> panelNav.gotoUserDetail(info.objectId)
+                                ObjectType.COMMUNITY -> panelNav.gotoCommunityDetail(info.objectId)
+                                ObjectType.ROOM -> panelNav.gotoRoomDetail(info.objectId)
+                                ObjectType.TOPIC -> panelNav.gotoTopicDetail(info.objectId)
+                                ObjectType.TITLE -> panelNav.gotoTitleDetail(info.objectId)
+                                ObjectType.FILE -> panelNav.gotoFileDetail(info.objectId)
+                                else -> {}
+                            }
+                        }
+                    )
+                    HorizontalDivider()
+                } else {
+                    ListItem(headlineContent = { Text("") })
+                    HorizontalDivider()
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun UserSubscriptionsSection(uid: PrimaryKey) {
+    val vm = createPanelUserSubscriptionsViewModel(uid)
+    StateView(vm, modifier = Modifier.fillMaxSize()) { items ->
+        LazyColumn {
+            pagingItems(items, key = { it.id }) { index ->
+                val info = items[index]
+                if (info != null) {
+                    val panelNav = LocalPanelNav.current
+                    ListItem(
+                        headlineContent = { Text("Object ${info.objectId}") },
+                        supportingContent = { Text("Type: ${info.objectType} • Time: ${info.createdTime}") },
+                        modifier = Modifier.clickable {
+                            when (info.objectType) {
+                                ObjectType.USER -> panelNav.gotoUserDetail(info.objectId)
+                                ObjectType.COMMUNITY -> panelNav.gotoCommunityDetail(info.objectId)
+                                ObjectType.ROOM -> panelNav.gotoRoomDetail(info.objectId)
+                                ObjectType.TOPIC -> panelNav.gotoTopicDetail(info.objectId)
+                                ObjectType.TITLE -> panelNav.gotoTitleDetail(info.objectId)
+                                ObjectType.FILE -> panelNav.gotoFileDetail(info.objectId)
+                                else -> {}
+                            }
+                        }
+                    )
                     HorizontalDivider()
                 } else {
                     ListItem(headlineContent = { Text("") })

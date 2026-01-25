@@ -5,7 +5,7 @@
 	"dockerComposeFile": "./docker-compose.dev.yml",
 	"service": "main",
 	"workspaceFolder": "/workspace/A",
-	"shutdownAction": "stopCompose",
+	"shutdownAction": "none",
 	"postCreateCommand": {
 		"Fix Volume Permissions": "sudo chown -R $(whoami): /commandhistory",
 		"Fix Gradle Volume Permissions": "sudo chown -R $(whoami): /home/ubuntu/.gradle",

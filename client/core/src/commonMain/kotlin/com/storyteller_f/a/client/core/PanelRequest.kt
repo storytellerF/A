@@ -125,6 +125,14 @@ suspend fun PanelSessionManager.getUserComments(uid: PrimaryKey, query: Paginati
     AdminApi.Users.Id.Comments.get(query, CommonPath(uid))
 }
 
+suspend fun PanelSessionManager.getUserFavorites(uid: PrimaryKey, query: PaginationQuery) = serviceCatching {
+    AdminApi.Users.Id.Favorites.get(query, CommonPath(uid))
+}
+
+suspend fun PanelSessionManager.getUserSubscriptions(uid: PrimaryKey, query: PaginationQuery) = serviceCatching {
+    AdminApi.Users.Id.Subscriptions.get(query, CommonPath(uid))
+}
+
 // Detail fetch for other entities via CustomApi
 suspend fun PanelSessionManager.getCommunityById(id: PrimaryKey) = serviceCatching {
     AdminApi.Communities.Id.get(CommonPath(id))

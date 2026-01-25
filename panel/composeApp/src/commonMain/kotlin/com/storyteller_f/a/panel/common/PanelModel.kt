@@ -29,6 +29,7 @@ import com.storyteller_f.a.client.core.getTopicById
 import com.storyteller_f.a.client.core.getTopicTopics
 import com.storyteller_f.a.client.core.getUserById
 import com.storyteller_f.a.client.core.getUserComments
+import com.storyteller_f.a.client.core.getUserFavorites
 import com.storyteller_f.a.client.core.getUserFiles
 import com.storyteller_f.a.client.core.getUserJoinedCommunities
 import com.storyteller_f.a.client.core.getUserJoinedRooms
@@ -36,6 +37,7 @@ import com.storyteller_f.a.client.core.getUserLogs
 import com.storyteller_f.a.client.core.getUserOverview
 import com.storyteller_f.a.client.core.getUserReactions
 import com.storyteller_f.a.client.core.getUserReceivedTitles
+import com.storyteller_f.a.client.core.getUserSubscriptions
 import com.storyteller_f.a.client.core.getUserUploadRecords
 import com.storyteller_f.a.client.core.overview
 import com.storyteller_f.shared.getAlgo
@@ -53,6 +55,8 @@ import com.storyteller_f.shared.model.UploadRecordInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.UserLogInfo
 import com.storyteller_f.shared.model.UserOverview
+import com.storyteller_f.shared.model.UserFavoriteInfo
+import com.storyteller_f.shared.model.UserSubscriptionInfo
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.storage.CommunityCollection
@@ -62,7 +66,9 @@ import com.storyteller_f.storage.RoomCollection
 import com.storyteller_f.storage.TitleCollection
 import com.storyteller_f.storage.TopicCollection
 import com.storyteller_f.storage.UserCollection
+import com.storyteller_f.storage.UserFavoriteCollection
 import com.storyteller_f.storage.UserReactionRecordCollection
+import com.storyteller_f.storage.UserSubscriptionCollection
 import com.storyteller_f.storage.getName
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -510,6 +516,42 @@ class UserCommentsViewModel(
         modelStorage.topic
     ) { key, size ->
         sessionManager.getUserComments(uid, PaginationQuery(key, size = size))
+    }.flow.cachedIn(viewModelScope)
+}
+
+class UserFavoritesViewModel(
+    sessionManager: PanelSessionManager,
+    modelStorage: ModelStorage,
+    uid: PrimaryKey,
+) : PagingViewModel<UserFavoriteInfo>() {
+    private val modelCollection = UserFavoriteCollection.UserFavorites(uid)
+
+    @OptIn(ExperimentalPagingApi::class)
+    override val flow: Flow<PagingData<UserFavoriteInfo>> = buildPager(
+        modelCollection,
+        modelCollection.getName(),
+        modelStorage.remoteKey,
+        modelStorage.favorite
+    ) { key, size ->
+        sessionManager.getUserFavorites(uid, PaginationQuery(key, size = size))
+    }.flow.cachedIn(viewModelScope)
+}
+
+class UserSubscriptionsViewModel(
+    sessionManager: PanelSessionManager,
+    modelStorage: ModelStorage,
+    uid: PrimaryKey,
+) : PagingViewModel<UserSubscriptionInfo>() {
+    private val modelCollection = UserSubscriptionCollection.UserSubscriptions(uid)
+
+    @OptIn(ExperimentalPagingApi::class)
+    override val flow: Flow<PagingData<UserSubscriptionInfo>> = buildPager(
+        modelCollection,
+        modelCollection.getName(),
+        modelStorage.remoteKey,
+        modelStorage.subscription
+    ) { key, size ->
+        sessionManager.getUserSubscriptions(uid, PaginationQuery(key, size = size))
     }.flow.cachedIn(viewModelScope)
 }
 

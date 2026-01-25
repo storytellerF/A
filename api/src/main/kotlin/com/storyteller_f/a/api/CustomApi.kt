@@ -747,6 +747,22 @@ object AdminApi {
                     "/admin/users/{id}/comments"
                 )
             }
+
+            object Favorites {
+                val get = safeEndpointWithQueryAndPath<ServerResponse<UserFavoriteInfo>,
+                    PaginationQuery,
+                    CommonPath>(
+                    "/admin/users/{id}/favorites"
+                )
+            }
+
+            object Subscriptions {
+                val get = safeEndpointWithQueryAndPath<ServerResponse<UserSubscriptionInfo>,
+                    PaginationQuery,
+                    CommonPath>(
+                    "/admin/users/{id}/subscriptions"
+                )
+            }
         }
     }
 

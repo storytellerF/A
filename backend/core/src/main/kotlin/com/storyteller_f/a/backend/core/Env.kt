@@ -86,7 +86,8 @@ fun setLogPath() {
         val logPath = if (isWindowsLike) {
             System.getProperty("java.io.tmpdir")
         } else {
-            "~/log"
+            // 获取home 目录
+            System.getProperty("user.home") + "/log"
         }
         System.setProperty("LOG_PATH", File(logPath).canonicalPath)
     }

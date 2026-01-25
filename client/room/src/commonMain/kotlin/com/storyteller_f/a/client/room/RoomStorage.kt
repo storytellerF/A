@@ -51,6 +51,7 @@ import com.storyteller_f.storage.UploadInfoStorage
 import com.storyteller_f.storage.UploadRecordCollection
 import com.storyteller_f.storage.UploadRecordInfoStorage
 import com.storyteller_f.storage.UserCollection
+import com.storyteller_f.storage.UserFavoriteCollection
 import com.storyteller_f.storage.UserFavoriteStorage
 import com.storyteller_f.storage.UserInfoStorage
 import com.storyteller_f.storage.UserLogCollection
@@ -58,6 +59,7 @@ import com.storyteller_f.storage.UserLogInfoStorage
 import com.storyteller_f.storage.UserOverviewStorage
 import com.storyteller_f.storage.UserReactionRecordCollection
 import com.storyteller_f.storage.UserReactionRecordStorage
+import com.storyteller_f.storage.UserSubscriptionCollection
 import com.storyteller_f.storage.UserSubscriptionStorage
 import com.storyteller_f.storage.WrappedPagingSource
 import com.storyteller_f.storage.getName
@@ -837,60 +839,94 @@ class RoomUserOverviewStorage(appDatabase: AppDatabase) : UserOverviewStorage {
 class RoomUserFavoriteStorage(appDatabase: AppDatabase) : UserFavoriteStorage {
     val impl = CommonStorageImpl(appDatabase)
 
-    override suspend fun save(
-        item: UserFavoriteInfo
-    ) {
+    override suspend fun saveToDefault(item: UserFavoriteInfo) {
         val data = commonJson.encodeToString(item)
         impl.save(CommonEntity(item.id, UserFavoriteStorage.COLLECTION_NAME, data))
     }
 
-    override fun observeData(): PagingSource<Int, UserFavoriteInfo> {
-        return impl.observeData(UserFavoriteStorage.COLLECTION_NAME)
+    override suspend fun saveLast(collection: UserFavoriteCollection, item: UserFavoriteInfo) {
+        val data = commonJson.encodeToString(item)
+        impl.saveLast(CommonEntity(item.id, collection.getName(), data))
+    }
+
+    override suspend fun saveFirst(collection: UserFavoriteCollection, item: UserFavoriteInfo) {
+        val data = commonJson.encodeToString(item)
+        impl.saveFirst(CommonEntity(item.id, collection.getName(), data))
+    }
+
+    override fun observeData(collection: UserFavoriteCollection): PagingSource<Int, UserFavoriteInfo> {
+        return impl.observeData(collection.getName())
+    }
+
+    override suspend fun clean(collection: UserFavoriteCollection) {
+        impl.clean(collection.getName())
+    }
+
+    override suspend fun getDocument(
+        collection: UserFavoriteCollection,
+        key: String
+    ): UserFavoriteInfo? {
+        return impl.getDocument(collection.getName(), key)
     }
 
     override fun observeDatum(key: String): Flow<UserFavoriteInfo?> {
         return impl.observeDatum(UserFavoriteStorage.COLLECTION_NAME, key)
     }
 
-    override suspend fun getDocument(id: PrimaryKey): UserFavoriteInfo {
-        TODO("Not yet implemented")
+    override suspend fun updateDocument(collection: UserFavoriteCollection, item: UserFavoriteInfo) {
+        val data = commonJson.encodeToString(item)
+        impl.update(collection.getName(), item.id.toString(), data)
     }
 
-    override suspend fun getDocument(key: String): UserFavoriteInfo {
-        TODO("Not yet implemented")
-    }
-
-    override suspend fun clean() {
-        return impl.clean(UserFavoriteStorage.COLLECTION_NAME)
+    override suspend fun delete(collection: UserFavoriteCollection, key: String) {
+        impl.delete(collection.getName(), key)
     }
 }
 
 class RoomUserSubscriptionStorage(appDatabase: AppDatabase) : UserSubscriptionStorage {
     val impl = CommonStorageImpl(appDatabase)
 
-    override suspend fun save(item: UserSubscriptionInfo) {
+    override suspend fun saveToDefault(item: UserSubscriptionInfo) {
         val data = commonJson.encodeToString(item)
         impl.save(CommonEntity(item.id, UserSubscriptionStorage.COLLECTION_NAME, data))
     }
 
-    override fun observeData(): PagingSource<Int, UserSubscriptionInfo> {
-        return impl.observeData(UserSubscriptionStorage.COLLECTION_NAME)
+    override suspend fun saveLast(collection: UserSubscriptionCollection, item: UserSubscriptionInfo) {
+        val data = commonJson.encodeToString(item)
+        impl.saveLast(CommonEntity(item.id, collection.getName(), data))
+    }
+
+    override suspend fun saveFirst(collection: UserSubscriptionCollection, item: UserSubscriptionInfo) {
+        val data = commonJson.encodeToString(item)
+        impl.saveFirst(CommonEntity(item.id, collection.getName(), data))
+    }
+
+    override fun observeData(collection: UserSubscriptionCollection): PagingSource<Int, UserSubscriptionInfo> {
+        return impl.observeData(collection.getName())
+    }
+
+    override suspend fun clean(collection: UserSubscriptionCollection) {
+        impl.clean(collection.getName())
+    }
+
+    override suspend fun getDocument(
+        collection: UserSubscriptionCollection,
+        key: String
+    ): UserSubscriptionInfo? {
+        return impl.getDocument(collection.getName(), key)
     }
 
     override fun observeDatum(key: String): Flow<UserSubscriptionInfo?> {
         return impl.observeDatum(UserSubscriptionStorage.COLLECTION_NAME, key)
     }
 
-    override suspend fun getDocument(id: PrimaryKey): UserSubscriptionInfo {
-        TODO("Not yet implemented")
+    override suspend fun updateDocument(collection: UserSubscriptionCollection, item: UserSubscriptionInfo) {
+        val data = commonJson.encodeToString(item)
+        impl.update(collection.getName(), item.id.toString(), data)
     }
 
-    override suspend fun getDocument(key: String): UserSubscriptionInfo {
-        TODO("Not yet implemented")
-    }
-
-    override suspend fun clean() {
-        return impl.clean(UserSubscriptionStorage.COLLECTION_NAME)
+    override suspend fun delete(collection: UserSubscriptionCollection, key: String) {
+        impl.delete(collection.getName(), key)
     }
 }
 

@@ -4,7 +4,7 @@
 OS_NAME=$(uname | tr '[:upper:]' '[:lower:]')
 
 if [[ "$OS_NAME" == "linux" || "$OS_NAME" == "darwin" ]]; then
-    LOG_PATH="/var/logs"
+    LOG_PATH="/tmp/logs"
 elif [[ "$OS_NAME" == *"mingw"* || "$OS_NAME" == *"cygwin"* ]]; then
     # Windows 下 bash (Git Bash / Cygwin)
     LOG_PATH=$(java -XshowSettings:properties -version 2>&1 | grep 'java.io.tmpdir' | awk -F= '{gsub(/ /,"",$2); print $2}')

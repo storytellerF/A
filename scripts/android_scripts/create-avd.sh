@@ -29,25 +29,32 @@ if ! command_exists "$SDKMANAGER" || ! command_exists "$AVDMANAGER" || ! command
     exit 1
 fi
 
+# Check if the system image is installed
+if ! $SDKMANAGER --list_installed | grep -q "$SYSTEM_IMAGE"; then
+    echo "System image '$SYSTEM_IMAGE' is not installed. Downloading..."
+    SDKMANAGER_PATH=$(command -v "$SDKMANAGER")
+    if [[ $(stat -c '%U' "$SDKMANAGER_PATH") == "root" ]]; then
+        echo "Detected root ownership for sdkmanager. executing with sudo..."
+        if ! sudo "$SDKMANAGER_PATH" "$SYSTEM_IMAGE"; then
+            echo "Error: Failed to download system image. Please check your SDK Manager."
+            exit 1
+        fi
+    else
+        if ! "$SDKMANAGER" "$SYSTEM_IMAGE"; then
+            echo "Error: Failed to download system image. Please check your SDK Manager."
+            exit 1
+        fi
+    fi
+    echo "System image downloaded successfully."
+else
+    echo "System image is already installed. Skipping download."
+fi
+
 # Check if AVD already exists
 echo "Checking if AVD '$AVD_NAME' exists..."
 if $AVDMANAGER list avd | grep -q "$AVD_NAME"; then
     echo "AVD '$AVD_NAME' already exists. Skipping creation."
     exit 0
-fi
-
-echo "AVD '$AVD_NAME' does not exist. Checking system image..."
-
-# Check if the system image is installed
-if ! $SDKMANAGER --list | grep -q "$SYSTEM_IMAGE"; then
-    echo "System image '$SYSTEM_IMAGE' is not installed. Downloading..."
-    if $SDKMANAGER "$SYSTEM_IMAGE"; then
-        echo "Error: Failed to download system image. Please check your SDK Manager."
-        exit 1
-    fi
-    echo "System image downloaded successfully."
-else
-    echo "System image is already installed. Skipping download."
 fi
 
 # Create the new AVD
