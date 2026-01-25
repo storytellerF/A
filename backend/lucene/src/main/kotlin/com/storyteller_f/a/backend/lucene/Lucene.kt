@@ -35,6 +35,7 @@ import java.nio.file.Paths
 import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
 import kotlin.text.isNullOrBlank
+import java.io.File
 
 abstract class Lucene(private val path: Path, private val isInMemory: Boolean = false) {
     init {

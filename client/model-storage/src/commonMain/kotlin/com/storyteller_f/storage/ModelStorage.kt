@@ -145,6 +145,14 @@ sealed interface UserLogCollection {
     data class UserLogs(val uid: PrimaryKey) : UserLogCollection
 }
 
+sealed interface UserFavoriteCollection {
+    data class UserFavorites(val uid: PrimaryKey) : UserFavoriteCollection
+}
+
+sealed interface UserSubscriptionCollection {
+    data class UserSubscriptions(val uid: PrimaryKey) : UserSubscriptionCollection
+}
+
 sealed interface UploadRecordCollection {
     data class UserUploadRecords(val uid: PrimaryKey) : UploadRecordCollection
 }
@@ -224,6 +232,18 @@ fun TitleCollection.getName(): String {
 fun UserLogCollection.getName(): String {
     return when (this) {
         is UserLogCollection.UserLogs -> "user_logs_$uid"
+    }
+}
+
+fun UserFavoriteCollection.getName(): String {
+    return when (this) {
+        is UserFavoriteCollection.UserFavorites -> "user_favorites_$uid"
+    }
+}
+
+fun UserSubscriptionCollection.getName(): String {
+    return when (this) {
+        is UserSubscriptionCollection.UserSubscriptions -> "user_subscriptions_$uid"
     }
 }
 
@@ -333,13 +353,13 @@ interface UserOverviewStorage : SingletonItemStorage<UserOverview> {
     }
 }
 
-interface UserFavoriteStorage : GlobalListStorage<UserFavoriteInfo> {
+interface UserFavoriteStorage : CollectionListStorageWithDefault<UserFavoriteCollection, UserFavoriteInfo> {
     companion object {
         const val COLLECTION_NAME = "user-favorite"
     }
 }
 
-interface UserSubscriptionStorage : GlobalListStorage<UserSubscriptionInfo> {
+interface UserSubscriptionStorage : CollectionListStorageWithDefault<UserSubscriptionCollection, UserSubscriptionInfo> {
     companion object {
         const val COLLECTION_NAME = "user-subscription"
     }

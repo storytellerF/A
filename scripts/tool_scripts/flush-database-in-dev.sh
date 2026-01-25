@@ -5,7 +5,7 @@ if [ -z "$base" ]; then
   echo "Error: base parameter is not specified."
   exit 1
 fi
-FLAVOR=dev
+FLAVOR=dev.container
 # 检测操作系统
 if [[ "$(uname -s)" =~ MINGW|CYGWIN|MSYS ]]; then
   FLAVOR=dev.win

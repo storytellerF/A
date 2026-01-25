@@ -18,6 +18,7 @@ import com.storyteller_f.a.cloud.core.service.getCommunityMemberInfos
 import com.storyteller_f.a.cloud.core.service.getFileInfoById
 import com.storyteller_f.a.cloud.core.service.getFileInfoPaginationResult
 import com.storyteller_f.a.cloud.core.service.getOverview
+import com.storyteller_f.a.cloud.core.service.getFavorites
 import com.storyteller_f.a.cloud.core.service.getRoomInfo
 import com.storyteller_f.a.cloud.core.service.getTitleInfo
 import com.storyteller_f.a.cloud.core.service.getUserById
@@ -27,6 +28,7 @@ import com.storyteller_f.a.cloud.core.service.getUserJoinedRooms
 import com.storyteller_f.a.cloud.core.service.getUserLogs
 import com.storyteller_f.a.cloud.core.service.getUserOverview
 import com.storyteller_f.a.cloud.core.service.getUserReactions
+import com.storyteller_f.a.cloud.core.service.getUserSubscriptions
 import com.storyteller_f.a.cloud.core.service.getUserTitles
 import com.storyteller_f.a.cloud.core.service.getUserUploadRecords
 import com.storyteller_f.a.cloud.core.service.uncheckGetTopicById
@@ -206,6 +208,16 @@ private fun Routing.bindAdminUserRoutes(backend: Backend) {
     AdminApi.Users.Id.Comments.get(handleResult()) { q, p ->
         q.pagination(IdentifiablePagingGenerator) { f ->
             backend.getUserCommentedTopics(p.id, f)
+        }
+    }
+    AdminApi.Users.Id.Favorites.get(handleResult()) { q, p ->
+        q.pagination(IdentifiablePagingGenerator) { f ->
+            backend.getFavorites(p.id, f)
+        }
+    }
+    AdminApi.Users.Id.Subscriptions.get(handleResult()) { q, p ->
+        q.pagination(IdentifiablePagingGenerator) { f ->
+            backend.getUserSubscriptions(p.id, f)
         }
     }
     AdminApi.Users.add(handleResult()) { api ->

@@ -66,5 +66,7 @@
     <string name="tab_topics">Topics</string>
     <string name="tab_user_reactions">User reactions</string>
     <string name="tab_user_comments">User comments</string>
+    <string name="tab_user_favorites">Favorites</string>
+    <string name="tab_user_subscriptions">Subscriptions</string>
     <string name="tab_file_refs">File refs</string>
 </resources>

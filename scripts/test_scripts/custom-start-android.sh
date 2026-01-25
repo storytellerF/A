@@ -3,7 +3,7 @@ set -e
 
 # First, ensure the SDK is installed and ready.
 echo "Running SDK installation script..."
-/usr/local/bin/install-sdk.sh
+sudo ~/bin/install-sdk.sh
 echo "SDK setup finished."
 
 # Graceful shutdown
@@ -16,32 +16,12 @@ shutdown() {
     exit 0
 }
 
-AVD_NAME="android-35"
-SYS_IMG_PKG="system-images;android-35;google_apis;x86_64"
-BUILD_TOOLS_PKG="build-tools;35.0.0"
-PLATFORM_PKG="platforms;android-35"
+AVD_NAME="android-36"
+SYS_IMG_PKG="system-images;android-36;google_apis;x86_64"
+BUILD_TOOLS_PKG="build-tools;36.0.0"
+PLATFORM_PKG="platforms;android-36"
 
-if ! sdkmanager --sdk_root=${ANDROID_SDK_ROOT} --list_installed | grep -q "${SYS_IMG_PKG}"; then
-    echo "Installing system image (${SYS_IMG_PKG})..."
-    sdkmanager --sdk_root=${ANDROID_SDK_ROOT} "${SYS_IMG_PKG}"
-else
-    echo "System image (${SYS_IMG_PKG}) already installed."
-fi
-
-if ! sdkmanager --sdk_root=${ANDROID_SDK_ROOT} --list_installed | grep -q "${BUILD_TOOLS_PKG}"; then
-    echo "Installing build tools (${BUILD_TOOLS_PKG})..."
-    # 自动接受许可并安装
-   sdkmanager --sdk_root=${ANDROID_SDK_ROOT} "${BUILD_TOOLS_PKG}"
-else
-    echo "Build tools (${BUILD_TOOLS_PKG}) already installed."
-fi
-
-if ! sdkmanager --sdk_root=${ANDROID_SDK_ROOT} --list_installed | grep -q "${PLATFORM_PKG}"; then
-    echo "Installing platform (${PLATFORM_PKG})..."
-    sdkmanager --sdk_root=${ANDROID_SDK_ROOT} "${PLATFORM_PKG}"
-else
-    echo "Platform (${PLATFORM_PKG}) already installed."
-fi
+sudo ~/bin/install-default-components.sh "$SYS_IMG_PKG" "$BUILD_TOOLS_PKG" "$PLATFORM_PKG"
 
 # Check if AVD exists
 if ! avdmanager list avd | grep -q "Name: $AVD_NAME"; then

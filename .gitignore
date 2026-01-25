@@ -21,6 +21,7 @@ databases
 deploy/*.env
 !deploy/dev.win.env
 !deploy/dev.env
+!deploy/dev.container.env
 !cloud/server/src/test/resources/test.env
 deploy/es_ca
 deploy/*_data

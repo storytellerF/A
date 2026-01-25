@@ -143,6 +143,20 @@ fun createPanelUserCommentsViewModel(
 }
 
 @Composable
+fun createPanelUserFavoritesViewModel(
+    uid: PrimaryKey
+) = panelViewModel(keys = listOf("user-favorites", uid)) { sessionManager, modelStorage ->
+    UserFavoritesViewModel(sessionManager, modelStorage, uid)
+}
+
+@Composable
+fun createPanelUserSubscriptionsViewModel(
+    uid: PrimaryKey
+) = panelViewModel(keys = listOf("user-subscriptions", uid)) { sessionManager, modelStorage ->
+    UserSubscriptionsViewModel(sessionManager, modelStorage, uid)
+}
+
+@Composable
 fun createPanelCommunityViewModel(
     id: PrimaryKey
 ) = panelViewModel(keys = listOf("community", id)) { sessionManager, modelStorage ->

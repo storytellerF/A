@@ -98,6 +98,9 @@ import com.storyteller_f.shared.model.UserPubKeyInfo
 import com.storyteller_f.shared.model.UserSubscriptionInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.JoinStatusSearch
+import com.storyteller_f.storage.UserFavoriteCollection
+import com.storyteller_f.storage.UserSubscriptionCollection
+import com.storyteller_f.storage.getName
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.extractMarkdownHeadline
@@ -839,9 +842,12 @@ class SessionHistoryViewModel(val sessionManager: CustomUserSessionManager) :
 class FavoritesViewModel(sessionManager: UserSessionManager, modelStorage: ModelStorage) :
     PagingViewModel<UserFavoriteInfo>() {
 
+    private val collection = UserFavoriteCollection.UserFavorites(0)
+
     @OptIn(ExperimentalPagingApi::class)
     override val flow: Flow<PagingData<UserFavoriteInfo>> = buildPager(
-        UserFavoriteStorage.COLLECTION_NAME,
+        collection,
+        collection.getName(),
         modelStorage.remoteKey,
         modelStorage.favorite
     ) { key, size ->
@@ -857,9 +863,12 @@ class SubscriptionsViewModel(
     density: Density,
 ) : PagingViewModel<UserSubscriptionInfo>() {
 
+    private val collection = UserSubscriptionCollection.UserSubscriptions(0)
+
     @OptIn(ExperimentalPagingApi::class)
     override val flow: Flow<PagingData<UserSubscriptionInfo>> = buildPager(
-        UserSubscriptionStorage.COLLECTION_NAME,
+        collection,
+        collection.getName(),
         modelStorage.remoteKey,
         modelStorage.subscription,
         RegularPagingSource { key, size ->
@@ -867,7 +876,7 @@ class SubscriptionsViewModel(
         }
     ) {
         WrappedPagingSource(
-            CompatPagingSource(modelStorage.subscription.observeData(), IntKeyConverter)
+            CompatPagingSource(modelStorage.subscription.observeData(collection), IntKeyConverter)
         ) { list ->
             list.map { subscriptionInfo ->
                 val extensions = subscriptionInfo.extensions

@@ -77,7 +77,7 @@ shutdownServer() {
 
 setupAvd() {
     echo "Setting up Android Emulator..."
-    ./scripts/android_scripts/create-avd.sh device-test "system-images;android-35;google_apis;x86_64" "pixel"
+    ./scripts/android_scripts/create-avd.sh device-test "system-images;android-36;google_apis;x86_64" "pixel"
     ./scripts/android_scripts/start-avd.sh device-test
     ./scripts/android_scripts/forward-android-devices.sh 8811
 }

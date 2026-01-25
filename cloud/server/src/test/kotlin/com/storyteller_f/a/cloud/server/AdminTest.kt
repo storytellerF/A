@@ -6,7 +6,9 @@ import com.storyteller_f.a.api.NewRoom
 import com.storyteller_f.a.api.NewTitle
 import com.storyteller_f.a.api.NewUser
 import com.storyteller_f.a.api.PaginationQuery
+import com.storyteller_f.a.client.core.addFavorite
 import com.storyteller_f.a.client.core.addReaction
+import com.storyteller_f.a.client.core.addSubscription
 import com.storyteller_f.a.client.core.addUser
 import com.storyteller_f.a.client.core.createCommunity
 import com.storyteller_f.a.client.core.createRoom
@@ -27,6 +29,7 @@ import com.storyteller_f.a.client.core.getRoomMembersPublicKeys
 import com.storyteller_f.a.client.core.getTopicTopics
 import com.storyteller_f.a.client.core.getUserById
 import com.storyteller_f.a.client.core.getUserComments
+import com.storyteller_f.a.client.core.getUserFavorites
 import com.storyteller_f.a.client.core.getUserFiles
 import com.storyteller_f.a.client.core.getUserInfo
 import com.storyteller_f.a.client.core.getUserJoinedCommunities
@@ -35,6 +38,7 @@ import com.storyteller_f.a.client.core.getUserLogs
 import com.storyteller_f.a.client.core.getUserOverview
 import com.storyteller_f.a.client.core.getUserReactions
 import com.storyteller_f.a.client.core.getUserReceivedTitles
+import com.storyteller_f.a.client.core.getUserSubscriptions
 import com.storyteller_f.a.client.core.getUserUploadRecords
 import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.a.client.core.overview
@@ -696,6 +700,37 @@ class AdminTest {
                 assertEquals(ObjectType.TOPIC, ref.objectType)
                 assertEquals(fileId, ref.fileId) // 验证fileId字段
             }
+        }
+    }
+    @Test
+    fun `admin get user favorites`() = test {
+        val outer = attachPanelSession()
+        val userTuple = attachSession {
+            val topic = createTopic(ObjectType.USER, it.uid, "favorite topic").getOrThrow()
+            addFavorite(com.storyteller_f.a.api.NewFavorite(ObjectType.TOPIC, topic.id)).getOrThrow()
+        }.custom
+
+        loginPanelSession(outer) {
+            val favorites = getUserFavorites(userTuple.uid, PaginationQuery()).getOrThrow().data
+            assertEquals(1, favorites.size)
+            assertEquals(ObjectType.TOPIC, favorites[0].objectType)
+            assertEquals(userTuple.uid, favorites[0].uid)
+        }
+    }
+
+    @Test
+    fun `admin get user subscriptions`() = test {
+        val outer = attachPanelSession()
+        val userTuple = attachSession {
+            val topic = createTopic(ObjectType.USER, it.uid, "subscription topic").getOrThrow()
+            addSubscription(com.storyteller_f.a.api.NewSubscription(topic.id, ObjectType.TOPIC)).getOrThrow()
+        }.custom
+
+        loginPanelSession(outer) {
+            val subscriptions = getUserSubscriptions(userTuple.uid, PaginationQuery()).getOrThrow().data
+            assertEquals(1, subscriptions.size)
+            assertEquals(ObjectType.TOPIC, subscriptions[0].objectType)
+            assertEquals(userTuple.uid, subscriptions[0].uid)
         }
     }
 }
