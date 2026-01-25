@@ -35,11 +35,11 @@ interface PdfService {
     ): Result<Unit>
 }
 
-fun getFont(content: String): Font? {
+fun getFont(): Font {
     val graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment()
     return graphicsEnvironment.allFonts.firstOrNull {
-        it.canDisplayUpTo(content) == -1
-    }
+        it.family == "Noto Serif"
+    } ?: error("Noto Serif not found")
 }
 
 fun collectPlainText(node: ASTNode, content: String): String {
