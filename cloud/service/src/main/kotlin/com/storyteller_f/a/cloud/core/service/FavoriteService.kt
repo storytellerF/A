@@ -43,6 +43,13 @@ suspend fun Backend.deleteFavorite(uid: PrimaryKey, id: PrimaryKey) =
         }
     }
 
+suspend fun Backend.deleteFavoriteByObject(uid: PrimaryKey, objectId: PrimaryKey) =
+    database.favorite.getFavorite(uid, objectId).mapResultIfNotNull { userFavorite ->
+        database.favorite.removeFavorite(userFavorite.id).onSuccess {
+            addUserLog(uid, UserLogType.REMOVE_FAVORITE, userFavorite.objectTuple())
+        }
+    }
+
 suspend fun Backend.getFavorites(uid: PrimaryKey, fetch: PrimaryKeyFetch) =
     database.favorite.getUserFavorites(uid, fetch).mapPagingResultNotNull {
         processUserFavoriteToUserFavoriteInfo(uid, it)

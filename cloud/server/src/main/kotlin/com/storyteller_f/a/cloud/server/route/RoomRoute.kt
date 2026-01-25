@@ -23,7 +23,16 @@ import com.storyteller_f.endpoint4k.ktor.server.invoke
 import com.storyteller_f.endpoint4k.ktor.server.receiveBody
 import com.storyteller_f.shared.model.UserPubKeyInfo
 import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.a.cloud.core.service.addFavorite
+import com.storyteller_f.a.cloud.core.service.deleteFavorite
+import com.storyteller_f.a.cloud.core.service.addSubscription
+import com.storyteller_f.a.cloud.core.service.removeSubscription
+import com.storyteller_f.a.api.NewFavorite
+import com.storyteller_f.a.api.NewSubscription
 import io.ktor.server.routing.Route
+
+import com.storyteller_f.a.cloud.core.service.deleteFavoriteByObject
+import com.storyteller_f.a.cloud.core.service.removeSubscriptionByObject
 
 fun Route.bindRoomRoute(backend: Backend) {
     CustomApi.Rooms.Id.Members.get(handleResult()) { q, p ->
@@ -91,6 +100,27 @@ fun Route.bindProtectedRoomRoute(backend: Backend) {
         val newRoom = api.receiveBody()
         usePrincipal { uid ->
             backend.updateRoom(p.id, newRoom, uid)
+        }
+    }
+
+    CustomApi.Rooms.Id.Favorite.add(handleResult()) { p, _ ->
+        usePrincipal { uid ->
+            backend.addFavorite(uid, NewFavorite(ObjectType.ROOM, p.id)).map { }
+        }
+    }
+    CustomApi.Rooms.Id.Favorite.delete(handleResult()) { p, _ ->
+        usePrincipal { uid ->
+            backend.deleteFavoriteByObject(uid, p.id).map { }
+        }
+    }
+    CustomApi.Rooms.Id.Subscription.add(handleResult()) { p, _ ->
+        usePrincipal { uid ->
+            backend.addSubscription(uid, NewSubscription(p.id, ObjectType.ROOM)).map { }
+        }
+    }
+    CustomApi.Rooms.Id.Subscription.delete(handleResult()) { p, _ ->
+        usePrincipal { uid ->
+            backend.removeSubscriptionByObject(uid, p.id).map { }
         }
     }
 }

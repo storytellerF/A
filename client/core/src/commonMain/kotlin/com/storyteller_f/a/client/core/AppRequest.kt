@@ -695,34 +695,59 @@ suspend fun UserSessionManager.getChildAccounts(nextId: String?, size: Int) = se
 }
 
 suspend fun UserSessionManager.addFavorite(newFavorite: NewFavorite) = serviceCatching {
-    CustomApi.Favorites.add(newFavorite) {
-        contentType(ContentType.Application.Json)
+    val commonPath = CommonPath(newFavorite.objectId)
+    when (newFavorite.objectType) {
+        ObjectType.USER -> CustomApi.Users.Id.Favorite.add(commonPath, Unit) {}
+        ObjectType.TOPIC -> CustomApi.Topics.Id.Favorite.add(commonPath, Unit) {}
+        ObjectType.COMMUNITY -> CustomApi.Communities.Id.Favorite.add(commonPath, Unit) {}
+        ObjectType.ROOM -> CustomApi.Rooms.Id.Favorite.add(commonPath, Unit) {}
+        else -> throw IllegalArgumentException("Unsupported object type for favorite")
     }
 }
 
-suspend fun UserSessionManager.removeFavorite(favoriteId: PrimaryKey) = serviceCatching {
-    CustomApi.Favorites.delete(CommonPath(favoriteId), Unit) {
+suspend fun UserSessionManager.removeFavorite(objectId: PrimaryKey, objectType: ObjectType) = serviceCatching {
+    val commonPath = CommonPath(objectId)
+    when (objectType) {
+        ObjectType.USER -> CustomApi.Users.Id.Favorite.delete(commonPath, Unit) {}
+        ObjectType.TOPIC -> CustomApi.Topics.Id.Favorite.delete(commonPath, Unit) {}
+        ObjectType.COMMUNITY -> CustomApi.Communities.Id.Favorite.delete(commonPath, Unit) {}
+        ObjectType.ROOM -> CustomApi.Rooms.Id.Favorite.delete(commonPath, Unit) {}
+        else -> throw IllegalArgumentException("Unsupported object type for favorite")
     }
 }
 
 suspend fun UserSessionManager.getFavorites(paginationQuery: PaginationQuery) = serviceCatching {
-    CustomApi.Favorites.get(paginationQuery)
+    val uid = model.uid ?: throw IllegalStateException("not login")
+    CustomApi.Users.Id.Favorites.get(paginationQuery, CommonPath(uid))
 }
 
 suspend fun UserSessionManager.addSubscription(newFavorite: NewSubscription) = serviceCatching {
-    CustomApi.Subscriptions.add(newFavorite) {
-        contentType(ContentType.Application.Json)
+    val commonPath = CommonPath(newFavorite.objectId)
+    when (newFavorite.objectType) {
+        ObjectType.USER -> CustomApi.Users.Id.Subscription.add(commonPath, Unit) {}
+        ObjectType.TOPIC -> CustomApi.Topics.Id.Subscription.add(commonPath, Unit) {}
+        ObjectType.COMMUNITY -> CustomApi.Communities.Id.Subscription.add(commonPath, Unit) {}
+        ObjectType.ROOM -> CustomApi.Rooms.Id.Subscription.add(commonPath, Unit) {}
+        else -> throw IllegalArgumentException("Unsupported object type for subscription")
     }
 }
 
-suspend fun UserSessionManager.removeSubscription(favoriteId: PrimaryKey) = serviceCatching {
-    CustomApi.Subscriptions.delete(CommonPath(favoriteId), Unit) {
+suspend fun UserSessionManager.removeSubscription(objectId: PrimaryKey, objectType: ObjectType) =
+    serviceCatching {
+        val commonPath = CommonPath(objectId)
+        when (objectType) {
+            ObjectType.USER -> CustomApi.Users.Id.Subscription.delete(commonPath, Unit) {}
+            ObjectType.TOPIC -> CustomApi.Topics.Id.Subscription.delete(commonPath, Unit) {}
+            ObjectType.COMMUNITY -> CustomApi.Communities.Id.Subscription.delete(commonPath, Unit) {}
+            ObjectType.ROOM -> CustomApi.Rooms.Id.Subscription.delete(commonPath, Unit) {}
+            else -> throw IllegalArgumentException("Unsupported object type for subscription")
+        }
     }
-}
 
 suspend fun UserSessionManager.getSubscriptions(paginationQuery: PaginationQuery) =
     serviceCatching {
-        CustomApi.Subscriptions.get(paginationQuery)
+        val uid = model.uid ?: throw IllegalStateException("not login")
+        CustomApi.Users.Id.Subscriptions.get(paginationQuery, CommonPath(uid))
     }
 
 suspend fun UserSessionManager.getUserOverview() = serviceCatching {

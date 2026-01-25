@@ -46,6 +46,16 @@ suspend fun Backend.removeSubscription(
         }
     }
 
+suspend fun Backend.removeSubscriptionByObject(
+    uid: PrimaryKey,
+    objectId: PrimaryKey
+) = database.subscription.getSubscription(uid, objectId)
+    .mapResultIfNotNull { subscription ->
+        database.subscription.removeSubscription(subscription.id).onSuccess {
+            addUserLog(uid, UserLogType.REMOVE_SUBSCRIPTION, subscription.objectTuple())
+        }
+    }
+
 suspend fun Backend.getUserSubscriptions(
     uid: PrimaryKey,
     fetch: PrimaryKeyFetch

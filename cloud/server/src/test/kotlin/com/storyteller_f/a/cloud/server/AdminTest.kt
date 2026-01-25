@@ -706,32 +706,34 @@ class AdminTest {
     @Test
     fun `admin get user favorites`() = test {
         val outer = attachPanelSession()
-        val userTuple = attachSession {
+        val uid = attachSession {
             val topic = createTopic(ObjectType.USER, it.uid, "favorite topic").getOrThrow()
             addFavorite(com.storyteller_f.a.api.NewFavorite(ObjectType.TOPIC, topic.id)).getOrThrow()
+            it.uid
         }.custom
 
         loginPanelSession(outer) {
-            val favorites = getUserFavorites(userTuple.uid, PaginationQuery()).getOrThrow().data
+            val favorites = getUserFavorites(uid, PaginationQuery()).getOrThrow().data
             assertEquals(1, favorites.size)
             assertEquals(ObjectType.TOPIC, favorites[0].objectType)
-            assertEquals(userTuple.uid, favorites[0].uid)
+            assertEquals(uid, favorites[0].uid)
         }
     }
 
     @Test
     fun `admin get user subscriptions`() = test {
         val outer = attachPanelSession()
-        val userTuple = attachSession {
+        val uid = attachSession {
             val topic = createTopic(ObjectType.USER, it.uid, "subscription topic").getOrThrow()
             addSubscription(com.storyteller_f.a.api.NewSubscription(topic.id, ObjectType.TOPIC)).getOrThrow()
+            it.uid
         }.custom
 
         loginPanelSession(outer) {
-            val subscriptions = getUserSubscriptions(userTuple.uid, PaginationQuery()).getOrThrow().data
+            val subscriptions = getUserSubscriptions(uid, PaginationQuery()).getOrThrow().data
             assertEquals(1, subscriptions.size)
             assertEquals(ObjectType.TOPIC, subscriptions[0].objectType)
-            assertEquals(userTuple.uid, subscriptions[0].uid)
+            assertEquals(uid, subscriptions[0].uid)
         }
     }
 }

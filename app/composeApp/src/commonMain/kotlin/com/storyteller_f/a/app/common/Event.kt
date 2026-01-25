@@ -40,10 +40,10 @@ data class OnRoomUpdated(val info: RoomInfo)
 data class OnAddReaction(val info: ReactionInfo, val topicInfo: TopicInfo)
 data class OnRemoveReaction(val info: ReactionInfo, val topicInfo: TopicInfo)
 
-data class OnAddFavorite(val info: UserFavoriteInfo)
+data class OnAddFavorite(val objectTuple: ObjectTuple)
 data class OnRemoveFavorite(val objectTuple: ObjectTuple)
 
-data class OnAddSubscription(val info: UserSubscriptionInfo)
+data class OnAddSubscription(val objectTuple: ObjectTuple)
 data class OnRemoveSubscription(val objectTuple: ObjectTuple)
 
 suspend fun processEvent(database: ModelStorage, bus: MutableSharedFlow<Any>) {
@@ -101,9 +101,9 @@ private suspend fun processOnAddFavorite(
     event: OnAddFavorite,
     database: ModelStorage
 ) {
-    if (event.info.objectType == ObjectType.TOPIC) {
-        database.topic.update(TopicCollection.Topics, event.info.objectId) {
-            it.copy(favoriteId = event.info.id)
+    if (event.objectTuple.objectType == ObjectType.TOPIC) {
+        database.topic.update(TopicCollection.Topics, event.objectTuple.objectId) {
+            it.copy(favoriteId = -1)
         }
     }
 }
@@ -126,9 +126,9 @@ private suspend fun processOnAddSubscription(
     event: OnAddSubscription,
     database: ModelStorage
 ) {
-    if (event.info.objectType == ObjectType.TOPIC) {
-        database.topic.update(TopicCollection.Topics, event.info.objectId) {
-            it.copy(subscriptionId = event.info.id)
+    if (event.objectTuple.objectType == ObjectType.TOPIC) {
+        database.topic.update(TopicCollection.Topics, event.objectTuple.objectId) {
+            it.copy(subscriptionId = -1)
         }
     }
 }
