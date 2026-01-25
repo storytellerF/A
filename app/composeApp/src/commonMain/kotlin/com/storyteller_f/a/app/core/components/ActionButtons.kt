@@ -45,12 +45,12 @@ fun FavoriteButton(
                 state.use {
                     request {
                         if (favoriteId != null) {
-                            removeFavorite(favoriteId).onSuccess {
+                            removeFavorite(infoTuple.objectId, infoTuple.objectType).onSuccess {
                                 emitEvent(OnRemoveFavorite(infoTuple))
                             }
                         } else {
                             addFavorite(NewFavorite(infoTuple.objectType, infoTuple.objectId)).onSuccess {
-                                emitEvent(OnAddFavorite(it))
+                                emitEvent(OnAddFavorite(infoTuple))
                             }
                         }
                     }
@@ -82,14 +82,14 @@ fun SubscriptionButton(
                 state.use {
                     request {
                         if (subscriptionId != null) {
-                            removeSubscription(subscriptionId).onSuccess {
+                            removeSubscription(infoTuple.objectId, infoTuple.objectType).onSuccess {
                                 emitEvent(OnRemoveSubscription(infoTuple))
                             }
                         } else {
                             addSubscription(
                                 NewSubscription(infoTuple.objectId, infoTuple.objectType)
                             ).onSuccess {
-                                emitEvent(OnAddSubscription(it))
+                                emitEvent(OnAddSubscription(infoTuple))
                             }
                         }
                     }

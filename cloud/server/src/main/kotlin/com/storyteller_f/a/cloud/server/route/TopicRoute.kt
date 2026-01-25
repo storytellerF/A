@@ -25,7 +25,16 @@ import com.storyteller_f.a.cloud.server.common.pagination
 import com.storyteller_f.endpoint4k.ktor.server.invoke
 import com.storyteller_f.endpoint4k.ktor.server.receiveBody
 import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.a.cloud.core.service.addFavorite
+import com.storyteller_f.a.cloud.core.service.deleteFavorite
+import com.storyteller_f.a.cloud.core.service.addSubscription
+import com.storyteller_f.a.cloud.core.service.removeSubscription
+import com.storyteller_f.a.api.NewFavorite
+import com.storyteller_f.a.api.NewSubscription
 import io.ktor.server.routing.Route
+
+import com.storyteller_f.a.cloud.core.service.deleteFavoriteByObject
+import com.storyteller_f.a.cloud.core.service.removeSubscriptionByObject
 
 fun Route.bindTopicRoute(backend: Backend) {
     CustomApi.Topics.recommend(handleResult()) {
@@ -127,6 +136,27 @@ fun Route.bindProtectedTopicRoute(backend: Backend) {
     CustomApi.Topics.Id.unpin(handleResult()) { p, api ->
         usePrincipal { uid ->
             backend.updateTopicPin(uid, p.id, false)
+        }
+    }
+
+    CustomApi.Topics.Id.Favorite.add(handleResult()) { p, _ ->
+        usePrincipal { uid ->
+            backend.addFavorite(uid, NewFavorite(ObjectType.TOPIC, p.id)).map { }
+        }
+    }
+    CustomApi.Topics.Id.Favorite.delete(handleResult()) { p, _ ->
+        usePrincipal { uid ->
+            backend.deleteFavoriteByObject(uid, p.id).map { }
+        }
+    }
+    CustomApi.Topics.Id.Subscription.add(handleResult()) { p, _ ->
+        usePrincipal { uid ->
+            backend.addSubscription(uid, NewSubscription(p.id, ObjectType.TOPIC)).map { }
+        }
+    }
+    CustomApi.Topics.Id.Subscription.delete(handleResult()) { p, _ ->
+        usePrincipal { uid ->
+            backend.removeSubscriptionByObject(uid, p.id).map { }
         }
     }
 }

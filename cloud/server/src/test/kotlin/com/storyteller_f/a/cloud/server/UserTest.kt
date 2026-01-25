@@ -84,15 +84,13 @@ class UserTest {
         }
         attachSession {
             val topicId = outerTuple.custom.id
-            val userFavoriteInfo = addFavorite(NewFavorite(ObjectType.TOPIC, topicId)).getOrThrow()
-            assertEquals(topicId, userFavoriteInfo.objectId)
-            assertNotNull(userFavoriteInfo.extensions?.topicInfo)
+            addFavorite(NewFavorite(ObjectType.TOPIC, topicId)).getOrThrow()
             assertListTotalSize(1, getFavorites(PaginationQuery()))
 
             val topicInfo = getTopicInfo(topicId).getOrThrow()
             assertNotNull(topicInfo.favoriteId)
 
-            removeFavorite(userFavoriteInfo.id).getOrThrow()
+            removeFavorite(topicId, ObjectType.TOPIC).getOrThrow()
 
             assertListTotalSize(0, getFavorites(PaginationQuery()))
         }
@@ -105,15 +103,13 @@ class UserTest {
         }
         attachSession {
             val topicId = outerTuple.custom.id
-            val userSubscriptionInfo = addSubscription(NewSubscription(topicId, ObjectType.TOPIC)).getOrThrow()
-            assertEquals(topicId, userSubscriptionInfo.objectId)
-            assertNotNull(userSubscriptionInfo.extensions?.topicInfo)
+            addSubscription(NewSubscription(topicId, ObjectType.TOPIC)).getOrThrow()
             assertListTotalSize(1, getSubscriptions(PaginationQuery()))
 
             val topicInfo = getTopicInfo(topicId).getOrThrow()
             assertNotNull(topicInfo.subscriptionId)
 
-            removeSubscription(userSubscriptionInfo.id).getOrThrow()
+            removeSubscription(topicId, ObjectType.TOPIC).getOrThrow()
 
             assertListTotalSize(0, getSubscriptions(PaginationQuery()))
         }

@@ -23,6 +23,14 @@ import com.storyteller_f.a.cloud.server.common.pagination
 import com.storyteller_f.endpoint4k.ktor.server.invoke
 import com.storyteller_f.endpoint4k.ktor.server.receiveBody
 import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.a.cloud.core.service.addFavorite
+import com.storyteller_f.a.cloud.core.service.deleteFavorite
+import com.storyteller_f.a.cloud.core.service.addSubscription
+import com.storyteller_f.a.cloud.core.service.removeSubscription
+import com.storyteller_f.a.cloud.core.service.deleteFavoriteByObject
+import com.storyteller_f.a.cloud.core.service.removeSubscriptionByObject
+import com.storyteller_f.a.api.NewFavorite
+import com.storyteller_f.a.api.NewSubscription
 import io.ktor.server.routing.Route
 
 fun Route.bindCommunityRoute(backend: Backend) {
@@ -104,6 +112,27 @@ fun Route.bindProtectedCommunityRoute(backend: Backend) {
         val newCommunity = api.receiveBody()
         usePrincipal { uid ->
             backend.updateCommunity(p.id, newCommunity, uid)
+        }
+    }
+    
+    CustomApi.Communities.Id.Favorite.add(handleResult()) { p, _ ->
+        usePrincipal { uid ->
+            backend.addFavorite(uid, NewFavorite(ObjectType.COMMUNITY, p.id)).map { }
+        }
+    }
+    CustomApi.Communities.Id.Favorite.delete(handleResult()) { p, _ ->
+        usePrincipal { uid ->
+            backend.deleteFavoriteByObject(uid, p.id).map { }
+        }
+    }
+    CustomApi.Communities.Id.Subscription.add(handleResult()) { p, _ ->
+        usePrincipal { uid ->
+            backend.addSubscription(uid, NewSubscription(p.id, ObjectType.COMMUNITY)).map { }
+        }
+    }
+    CustomApi.Communities.Id.Subscription.delete(handleResult()) { p, _ ->
+        usePrincipal { uid ->
+            backend.removeSubscriptionByObject(uid, p.id).map { }
         }
     }
 }

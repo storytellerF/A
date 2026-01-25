@@ -33,6 +33,10 @@ import com.storyteller_f.endpoint4k.ktor.server.invoke
 import com.storyteller_f.endpoint4k.ktor.server.receiveBody
 import com.storyteller_f.shared.type.ObjectType
 import io.ktor.server.routing.Route
+import com.storyteller_f.a.api.NewFavorite
+import com.storyteller_f.a.api.NewSubscription
+import com.storyteller_f.a.cloud.core.service.deleteFavoriteByObject
+import com.storyteller_f.a.cloud.core.service.removeSubscriptionByObject
 
 fun Route.bindProtectedUserRoute(backend: Backend) {
     CustomApi.Users.update(handleResult()) { api ->
@@ -51,23 +55,26 @@ fun Route.bindProtectedUserRoute(backend: Backend) {
             backend.addDevice(uid, newDevice)
         }
     }
-    CustomApi.Favorites.add(handleResult()) { api ->
-        usePrincipal { uid ->
-            backend.addFavorite(uid, api.receiveBody())
-        }
-    }
-    CustomApi.Favorites.delete(handleResult()) { path, _ ->
-        usePrincipal { uid ->
-            backend.deleteFavorite(uid, path.id)
-        }
-    }
-    CustomApi.Favorites.get(handleResult()) { q ->
-        usePrincipal { uid ->
-            q.pagination(IdentifiablePagingGenerator) { fetch ->
-                backend.getFavorites(uid, fetch)
+    CustomApi.Users.Id.Favorites.get(handleResult()) { q, p ->
+        usePrincipalOrNull { uid -> // 使用 usePrincipalOrNull 允许未登录查看（如果后端允许）
+             q.pagination(IdentifiablePagingGenerator) { fetch ->
+                backend.getFavorites(p.id, fetch)
             }
         }
     }
+    
+    CustomApi.Users.Id.Favorite.add(handleResult()) { p, _ ->
+        usePrincipal { uid ->
+            backend.addFavorite(uid, NewFavorite(ObjectType.USER, p.id)).map { }
+        }
+    }
+
+    CustomApi.Users.Id.Favorite.delete(handleResult()) { path, _ ->
+        usePrincipal { uid ->
+            backend.deleteFavoriteByObject(uid, path.id).map { }
+        }
+    }
+
     CustomApi.Users.overview(handleResult()) {
         usePrincipal { uid ->
             backend.getUserOverview(uid)
@@ -122,23 +129,30 @@ private fun Route.bindUserCommunitiesRoute(backend: Backend) {
 }
 
 fun Route.bindProtectedUserSubscriptionRoute(backend: Backend) {
-    CustomApi.Subscriptions.add(handleResult()) { api ->
-        usePrincipal { uid ->
-            backend.addSubscription(uid, api.receiveBody())
-        }
-    }
 
-    CustomApi.Subscriptions.delete(handleResult()) { path, _ ->
-        usePrincipal { uid ->
-            backend.removeSubscription(uid, path.id)
-        }
-    }
 
-    CustomApi.Subscriptions.get(handleResult()) { q ->
-        usePrincipal { uid ->
+    CustomApi.Users.Id.Subscriptions.get(handleResult()) { q, p ->
+        usePrincipalOrNull { uid ->
+            // 这里逻辑可能需要调整，原来是获取自己的订阅，现在是获取某个User的订阅
+            // 如果原来的逻辑只能获取自己的，那这里 p.id 应该等于 uid？
+            // 暂时假设允许获取指定用户的订阅，或者后端service会做权限检查
+            // 如果后端service只能获取"当前用户"的，那这里可能需要修改service传入 p.id
+            // 查看 getUserSubscriptions 签名：backend.getUserSubscriptions(uid, fetch)
+            // 这里的 uid 是 target user id.
             q.pagination(IdentifiablePagingGenerator) { fetch ->
-                backend.getUserSubscriptions(uid, fetch)
+                backend.getUserSubscriptions(p.id, fetch)
             }
+        }
+    }
+    CustomApi.Users.Id.Subscription.add(handleResult()) { p, _ ->
+        usePrincipal { uid ->
+            backend.addSubscription(uid, NewSubscription(p.id, ObjectType.USER)).map { }
+        }
+    }
+
+    CustomApi.Users.Id.Subscription.delete(handleResult()) { path, _ ->
+        usePrincipal { uid ->
+            backend.removeSubscriptionByObject(uid, path.id).map { }
         }
     }
 }

@@ -233,6 +233,7 @@ object CustomApi {
             }
         }
 
+
         object Id {
             @Serializable
             class TopicIdQuery(val fillHasCommented: Boolean? = null)
@@ -265,6 +266,22 @@ object CustomApi {
                         "topics/{id}/reactions",
                         methodType = MutationMethodType.DELETE
                     )
+            }
+
+            object Favorite {
+                val add = mutationEndpointWithPath<Unit, Unit, CommonPath>("topics/{id}/favorite")
+                val delete = mutationEndpointWithPath<Unit, Unit, CommonPath>(
+                    "topics/{id}/favorite",
+                    methodType = MutationMethodType.DELETE
+                )
+            }
+
+            object Subscription {
+                val add = mutationEndpointWithPath<Unit, Unit, CommonPath>("topics/{id}/subscription")
+                val delete = mutationEndpointWithPath<Unit, Unit, CommonPath>(
+                    "topics/{id}/subscription",
+                    methodType = MutationMethodType.DELETE
+                )
             }
 
             val pin = mutationEndpointWithPath<TopicInfo, Unit, CommonPath>("topics/{id}/pin")
@@ -374,6 +391,22 @@ object CustomApi {
                     )
             }
 
+            object Favorite {
+                val add = mutationEndpointWithPath<Unit, Unit, CommonPath>("communities/{id}/favorite")
+                val delete = mutationEndpointWithPath<Unit, Unit, CommonPath>(
+                    "communities/{id}/favorite",
+                    methodType = MutationMethodType.DELETE
+                )
+            }
+
+            object Subscription {
+                val add = mutationEndpointWithPath<Unit, Unit, CommonPath>("communities/{id}/subscription")
+                val delete = mutationEndpointWithPath<Unit, Unit, CommonPath>(
+                    "communities/{id}/subscription",
+                    methodType = MutationMethodType.DELETE
+                )
+            }
+
             val update = mutationEndpointWithPath<CommunityInfo, UpdateCommunityBody, CommonPath>("communities/{id}")
         }
 
@@ -428,6 +461,22 @@ object CustomApi {
                     safeEndpointWithQueryAndPath<ServerResponse<FileInfo>, SearchQuery, CommonPath>(
                         "rooms/{id}/files/search"
                     )
+            }
+
+            object Favorite {
+                val add = mutationEndpointWithPath<Unit, Unit, CommonPath>("rooms/{id}/favorite")
+                val delete = mutationEndpointWithPath<Unit, Unit, CommonPath>(
+                    "rooms/{id}/favorite",
+                    methodType = MutationMethodType.DELETE
+                )
+            }
+
+            object Subscription {
+                val add = mutationEndpointWithPath<Unit, Unit, CommonPath>("rooms/{id}/subscription")
+                val delete = mutationEndpointWithPath<Unit, Unit, CommonPath>(
+                    "rooms/{id}/subscription",
+                    methodType = MutationMethodType.DELETE
+                )
             }
 
             val update = mutationEndpointWithPath<RoomInfo, UpdateRoomBody, CommonPath>("rooms/{id}/update")
@@ -492,6 +541,34 @@ object CustomApi {
 
                 val get =
                     safeEndpointWithQueryAndPath<ServerResponse<TitleInfo>, TitleQuery, CommonPath>("users/{id}/titles")
+            }
+
+            object Favorites {
+                val get = safeEndpointWithQueryAndPath<ServerResponse<UserFavoriteInfo>, PaginationQuery, CommonPath>(
+                    "users/{id}/favorites"
+                )
+            }
+
+            object Subscriptions {
+                val get = safeEndpointWithQueryAndPath<ServerResponse<UserSubscriptionInfo>, PaginationQuery, CommonPath>(
+                    "users/{id}/subscriptions"
+                )
+            }
+
+            object Favorite {
+                val add = mutationEndpointWithPath<Unit, Unit, CommonPath>("users/{id}/favorite")
+                val delete = mutationEndpointWithPath<Unit, Unit, CommonPath>(
+                    "users/{id}/favorite",
+                    methodType = MutationMethodType.DELETE
+                )
+            }
+
+            object Subscription {
+                val add = mutationEndpointWithPath<Unit, Unit, CommonPath>("users/{id}/subscription")
+                val delete = mutationEndpointWithPath<Unit, Unit, CommonPath>(
+                    "users/{id}/subscription",
+                    methodType = MutationMethodType.DELETE
+                )
             }
         }
 
@@ -657,17 +734,6 @@ object CustomApi {
         }
     }
 
-    object Subscriptions {
-        val add = mutationEndpoint<UserSubscriptionInfo, NewSubscription>("/subscriptions")
-        val delete = mutationEndpointWithPath<Unit, Unit, CommonPath>("/subscriptions/{id}")
-        val get = safeEndpointWithQuery<ServerResponse<UserSubscriptionInfo>, PaginationQuery>("/subscriptions")
-    }
-
-    object Favorites {
-        val add = mutationEndpoint<UserFavoriteInfo, NewFavorite>("/favorites")
-        val delete = mutationEndpointWithPath<Unit, Unit, CommonPath>("/favorites/{id}")
-        val get = safeEndpointWithQuery<ServerResponse<UserFavoriteInfo>, PaginationQuery>("/favorites")
-    }
 }
 
 object AdminApi {
