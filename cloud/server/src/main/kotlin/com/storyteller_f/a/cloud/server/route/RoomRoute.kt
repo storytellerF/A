@@ -1,15 +1,21 @@
 package com.storyteller_f.a.cloud.server.route
 
 import com.storyteller_f.a.api.CustomApi
+import com.storyteller_f.a.api.NewFavorite
+import com.storyteller_f.a.api.NewSubscription
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.ObjectFetch
+import com.storyteller_f.a.cloud.core.service.addFavorite
+import com.storyteller_f.a.cloud.core.service.addSubscription
 import com.storyteller_f.a.cloud.core.service.createRoom
+import com.storyteller_f.a.cloud.core.service.deleteFavoriteByObject
 import com.storyteller_f.a.cloud.core.service.exitRoom
 import com.storyteller_f.a.cloud.core.service.getRoomInfo
 import com.storyteller_f.a.cloud.core.service.getRoomMemberInfos
 import com.storyteller_f.a.cloud.core.service.getRoomPubKeys
 import com.storyteller_f.a.cloud.core.service.getTopicsByParentId
 import com.storyteller_f.a.cloud.core.service.joinRoom
+import com.storyteller_f.a.cloud.core.service.removeSubscriptionByObject
 import com.storyteller_f.a.cloud.core.service.searchRoomMembers
 import com.storyteller_f.a.cloud.core.service.updateRoom
 import com.storyteller_f.a.cloud.server.auth.handleResult
@@ -23,16 +29,7 @@ import com.storyteller_f.endpoint4k.ktor.server.invoke
 import com.storyteller_f.endpoint4k.ktor.server.receiveBody
 import com.storyteller_f.shared.model.UserPubKeyInfo
 import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.a.cloud.core.service.addFavorite
-import com.storyteller_f.a.cloud.core.service.deleteFavorite
-import com.storyteller_f.a.cloud.core.service.addSubscription
-import com.storyteller_f.a.cloud.core.service.removeSubscription
-import com.storyteller_f.a.api.NewFavorite
-import com.storyteller_f.a.api.NewSubscription
 import io.ktor.server.routing.Route
-
-import com.storyteller_f.a.cloud.core.service.deleteFavoriteByObject
-import com.storyteller_f.a.cloud.core.service.removeSubscriptionByObject
 
 fun Route.bindRoomRoute(backend: Backend) {
     CustomApi.Rooms.Id.Members.get(handleResult()) { q, p ->

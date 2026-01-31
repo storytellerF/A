@@ -189,20 +189,22 @@ private fun openPdfSnapshot(content: String, map: Map<String, File> = emptyMap()
             PdfGenerationSpec(LocalDateTime.parse("2023-01-01T00:00:00"), LocalDateTime.parse("2023-01-01T00:00:00"))
         ).getOrThrow()
         if (snapshotFile.exists()) {
-            // 支持通过环境变量刷新快照：UPDATE_SNAPSHOTS=1 覆盖现有快照
-            val updateSnapshots = System.getenv("UPDATE_SNAPSHOTS") == "1"
-            if (updateSnapshots) {
-                // 用本次生成的 actual 覆盖 baseline
-                if (actualFile.canonicalPath != snapshotFile.canonicalPath) {
-                    actualFile.copyTo(snapshotFile, overwrite = true)
-                }
-            }
             val result = PdfComparator<de.redsix.pdfcompare.CompareResultImpl>(
                 snapshotFile.absolutePath,
                 actualFile.absolutePath
             ).compare()
             // 可选：输出 diff 到目录（返回是否相等）
             result.writeTo(baseDir.resolve("$methodName-diff").path)
+
+            // 支持通过环境变量刷新快照：UPDATE_SNAPSHOTS=1 覆盖现有快照（仅当结果不同时）
+            val updateSnapshots = System.getenv("UPDATE_SNAPSHOTS") == "1"
+            if (updateSnapshots && !result.isEqual()) {
+                // 用本次生成的 actual 覆盖 baseline
+                if (actualFile.canonicalPath != snapshotFile.canonicalPath) {
+                    actualFile.copyTo(snapshotFile, overwrite = true)
+                }
+            }
+
             assertTrue(result.isEqual(), "$name PDF snapshot mismatch for $methodName")
         }
     }
