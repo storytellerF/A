@@ -1,13 +1,15 @@
 package com.storyteller_f.a.cloud.server.route
 
 import com.storyteller_f.a.api.CustomApi
+import com.storyteller_f.a.api.NewFavorite
+import com.storyteller_f.a.api.NewSubscription
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.cloud.core.service.addDevice
 import com.storyteller_f.a.cloud.core.service.addFavorite
 import com.storyteller_f.a.cloud.core.service.addReadLog
 import com.storyteller_f.a.cloud.core.service.addSubscription
-import com.storyteller_f.a.cloud.core.service.deleteFavorite
+import com.storyteller_f.a.cloud.core.service.deleteFavoriteByObject
 import com.storyteller_f.a.cloud.core.service.getFavorites
 import com.storyteller_f.a.cloud.core.service.getTopicsByParentId
 import com.storyteller_f.a.cloud.core.service.getUserCommentedTopics
@@ -18,7 +20,7 @@ import com.storyteller_f.a.cloud.core.service.getUserOverview
 import com.storyteller_f.a.cloud.core.service.getUserReactions
 import com.storyteller_f.a.cloud.core.service.getUserSubscriptions
 import com.storyteller_f.a.cloud.core.service.getUserTitles
-import com.storyteller_f.a.cloud.core.service.removeSubscription
+import com.storyteller_f.a.cloud.core.service.removeSubscriptionByObject
 import com.storyteller_f.a.cloud.core.service.searchCurrentUserRooms
 import com.storyteller_f.a.cloud.core.service.searchUserJoinedCommunities
 import com.storyteller_f.a.cloud.core.service.searchUsers
@@ -33,10 +35,6 @@ import com.storyteller_f.endpoint4k.ktor.server.invoke
 import com.storyteller_f.endpoint4k.ktor.server.receiveBody
 import com.storyteller_f.shared.type.ObjectType
 import io.ktor.server.routing.Route
-import com.storyteller_f.a.api.NewFavorite
-import com.storyteller_f.a.api.NewSubscription
-import com.storyteller_f.a.cloud.core.service.deleteFavoriteByObject
-import com.storyteller_f.a.cloud.core.service.removeSubscriptionByObject
 
 fun Route.bindProtectedUserRoute(backend: Backend) {
     CustomApi.Users.update(handleResult()) { api ->
@@ -57,12 +55,12 @@ fun Route.bindProtectedUserRoute(backend: Backend) {
     }
     CustomApi.Users.Id.Favorites.get(handleResult()) { q, p ->
         usePrincipalOrNull { uid -> // 使用 usePrincipalOrNull 允许未登录查看（如果后端允许）
-             q.pagination(IdentifiablePagingGenerator) { fetch ->
+            q.pagination(IdentifiablePagingGenerator) { fetch ->
                 backend.getFavorites(p.id, fetch)
             }
         }
     }
-    
+
     CustomApi.Users.Id.Favorite.add(handleResult()) { p, _ ->
         usePrincipal { uid ->
             backend.addFavorite(uid, NewFavorite(ObjectType.USER, p.id)).map { }
@@ -129,8 +127,6 @@ private fun Route.bindUserCommunitiesRoute(backend: Backend) {
 }
 
 fun Route.bindProtectedUserSubscriptionRoute(backend: Backend) {
-
-
     CustomApi.Users.Id.Subscriptions.get(handleResult()) { q, p ->
         usePrincipalOrNull { uid ->
             // 这里逻辑可能需要调整，原来是获取自己的订阅，现在是获取某个User的订阅

@@ -1,16 +1,22 @@
 package com.storyteller_f.a.cloud.server.route
 
 import com.storyteller_f.a.api.CustomApi
+import com.storyteller_f.a.api.NewFavorite
+import com.storyteller_f.a.api.NewSubscription
 import com.storyteller_f.a.backend.core.Backend
+import com.storyteller_f.a.cloud.core.service.addFavorite
 import com.storyteller_f.a.cloud.core.service.addReaction
+import com.storyteller_f.a.cloud.core.service.addSubscription
 import com.storyteller_f.a.cloud.core.service.createPlainTopic
 import com.storyteller_f.a.cloud.core.service.createTopicSnapshot
+import com.storyteller_f.a.cloud.core.service.deleteFavoriteByObject
 import com.storyteller_f.a.cloud.core.service.deleteReaction
 import com.storyteller_f.a.cloud.core.service.getTopic
 import com.storyteller_f.a.cloud.core.service.getTopicByAid
 import com.storyteller_f.a.cloud.core.service.getTopicsByParentId
 import com.storyteller_f.a.cloud.core.service.reactionList
 import com.storyteller_f.a.cloud.core.service.recommendTopics
+import com.storyteller_f.a.cloud.core.service.removeSubscriptionByObject
 import com.storyteller_f.a.cloud.core.service.searchCommunityTopics
 import com.storyteller_f.a.cloud.core.service.searchRoomTopics
 import com.storyteller_f.a.cloud.core.service.searchUserTopics
@@ -25,16 +31,7 @@ import com.storyteller_f.a.cloud.server.common.pagination
 import com.storyteller_f.endpoint4k.ktor.server.invoke
 import com.storyteller_f.endpoint4k.ktor.server.receiveBody
 import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.a.cloud.core.service.addFavorite
-import com.storyteller_f.a.cloud.core.service.deleteFavorite
-import com.storyteller_f.a.cloud.core.service.addSubscription
-import com.storyteller_f.a.cloud.core.service.removeSubscription
-import com.storyteller_f.a.api.NewFavorite
-import com.storyteller_f.a.api.NewSubscription
 import io.ktor.server.routing.Route
-
-import com.storyteller_f.a.cloud.core.service.deleteFavoriteByObject
-import com.storyteller_f.a.cloud.core.service.removeSubscriptionByObject
 
 fun Route.bindTopicRoute(backend: Backend) {
     CustomApi.Topics.recommend(handleResult()) {

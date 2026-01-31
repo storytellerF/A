@@ -267,7 +267,7 @@ class PdfBoxVisitor(
             }
 
             GFMElementTypes.TABLE -> {
-                // Tables are not easily supported in pdfbox-layout
+                addTable(node, content, fontBundle, document)
             }
         }
     }
@@ -377,6 +377,63 @@ class QuoteVisitor(private val content: String, val paragraph: TextFlow, val fon
             val value = node.getTextInNode(content).toString()
                 .trimMargin("> ").replace("\n", " ") + "\n\n"
             paragraph.addText(value, 14f, font.italic)
+        }
+    }
+}
+
+private const val TABLE_FONT_SIZE = 12f
+
+private fun addTable(node: ASTNode, content: String, fontBundle: PdfFontBundle, document: Document) {
+    val rows = mutableListOf<List<String>>()
+
+    node.acceptChildren(object : Visitor {
+        override fun visitNode(astNode: ASTNode) {
+            when (astNode.type) {
+                GFMElementTypes.HEADER -> {
+                    val cells = astNode.children
+                        .filter { it.type.name == "CELL" }
+                        .map { it.getTextInNode(content).toString().trim() }
+                    if (cells.isNotEmpty()) {
+                        rows.add(cells)
+                    }
+                }
+                GFMElementTypes.ROW -> {
+                    val cells = astNode.children
+                        .filter { it.type.name == "CELL" }
+                        .map { it.getTextInNode(content).toString().trim() }
+                    if (cells.isNotEmpty()) {
+                        rows.add(cells)
+                    }
+                }
+                else -> astNode.acceptChildren(this)
+            }
+        }
+    })
+
+    // Render table as formatted text rows
+    rows.forEachIndexed { index, cells ->
+        val isHeader = index == 0 && rows.size > 1
+        val rowText = cells.joinToString(" | ")
+        val paragraph = Paragraph()
+        val tf = TextFlow()
+        val font = if (isHeader) fontBundle.bold else fontBundle.plain
+        tf.addText(rowText, TABLE_FONT_SIZE, font)
+        paragraph.add(tf)
+
+        // Wrap in frame for visual distinction
+        val frame = Frame(paragraph)
+        frame.backgroundColor = if (isHeader) Color(230, 230, 230) else Color.WHITE
+        frame.setPadding(5f, 5f, 3f, 3f)
+        frame.setMargin(0f, 0f, 0f, 0f)
+        document.add(frame)
+
+        // Add separator line after header
+        if (isHeader) {
+            val separator = Paragraph()
+            val sepFlow = TextFlow()
+            sepFlow.addText("-".repeat(rowText.length.coerceAtMost(80)), TABLE_FONT_SIZE, fontBundle.plain)
+            separator.add(sepFlow)
+            document.add(separator)
         }
     }
 }
