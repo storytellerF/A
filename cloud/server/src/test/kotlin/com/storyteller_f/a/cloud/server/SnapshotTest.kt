@@ -19,13 +19,14 @@ class SnapshotTest {
 
     @Test
     fun `test generate signed pdf`() {
+        setLogPath()
         val password1 = "123456"
         val path1 = "build/test/keystore2.p12"
         CryptoJvm.createKeystore(password1.toCharArray(), path1)
         Security.addProvider(SecurityProvider.getProvider())
         listOf(
             OpenPdf(),
-//            PdfBox()
+            PdfBox()
         ).forEachIndexed { i, pdf ->
             val pdfFile = File("build/tmp/$i.pdf")
             val signedFile = File("build/tmp/$i.signed.pdf")

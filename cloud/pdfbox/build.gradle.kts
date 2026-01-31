@@ -23,4 +23,11 @@ dependencies {
     implementation(libs.pdfbox.layout)
     implementation(libs.pdfbox)
     implementation(libs.highlights)
+    implementation(libs.dss.pades)
+    implementation(libs.dss.token)
+    implementation(libs.dss.spi)
+    implementation(libs.dss.cms.`object`)
+    implementation(libs.dss.service)
+    implementation(libs.dss.utils.apache.commons)
+    implementation(libs.dss.pades.pdfbox)
 }
