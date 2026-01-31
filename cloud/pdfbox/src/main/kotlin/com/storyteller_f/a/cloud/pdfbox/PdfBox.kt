@@ -5,11 +5,15 @@ import com.storyteller_f.a.cloud.pdf.PdfService
 import com.storyteller_f.a.cloud.pdf.SnapshotGeneration
 import com.storyteller_f.a.cloud.pdf.collectPlainText
 import com.storyteller_f.a.cloud.pdf.getFont
+import com.storyteller_f.a.cloud.pdf.getMonoFont
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.utils.UNIT_RESULT
 import com.storyteller_f.shared.utils.astNode
 import com.storyteller_f.shared.utils.extractImageUrl
 import com.storyteller_f.shared.utils.readCodeFence
+import dev.snipme.highlights.Highlights
+import dev.snipme.highlights.model.ColorHighlight
+import dev.snipme.highlights.model.SyntaxThemes
 import org.apache.pdfbox.examples.signature.CreateSignature
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.pdmodel.font.FontMappers
@@ -23,11 +27,13 @@ import org.intellij.markdown.ast.accept
 import org.intellij.markdown.ast.acceptChildren
 import org.intellij.markdown.ast.getTextInNode
 import org.intellij.markdown.ast.visitors.Visitor
+import org.intellij.markdown.flavours.gfm.GFMElementTypes
 import rst.pdfbox.layout.elements.Document
 import rst.pdfbox.layout.elements.Frame
 import rst.pdfbox.layout.elements.ImageElement
 import rst.pdfbox.layout.elements.Paragraph
 import rst.pdfbox.layout.shape.RoundRect
+import rst.pdfbox.layout.text.StyledText
 import rst.pdfbox.layout.text.TextFlow
 import java.awt.Color
 import java.io.File
@@ -96,7 +102,7 @@ data class PdfFontBundle(
     val plain: PDFont,
     val bold: PDFont,
     val italic: PDFont,
-    val boldItalic: PDFont
+    val mono: PDFont
 )
 
 private fun loadFontBundle(document: PDDocument): PdfFontBundle {
@@ -115,10 +121,13 @@ private fun loadFontBundle(document: PDDocument): PdfFontBundle {
     val italic = candidates.firstOrNull {
         it.name.contains("Italic") && !it.name.contains("Bold")
     }
-    val boldItalic = candidates.firstOrNull {
-        it.name.contains("Bold") && it.name.contains("Italic")
-    }
-    return PdfFontBundle(loadByName(base), loadByName(bold), loadByName(italic), loadByName(boldItalic))
+    val mono = getMonoFont()
+    return PdfFontBundle(
+        loadByName(base),
+        loadByName(bold),
+        loadByName(italic),
+        loadByName(mono)
+    )
 }
 
 private fun headerFontSizeFor(type: IElementType): Float = when (type) {
@@ -197,7 +206,7 @@ class PdfBoxVisitor(
                 if (code.isNotBlank()) {
                     val codeParagraph = Paragraph().apply {
                         val tf = TextFlow()
-                        tf.addText(code, 12f, fontBundle.plain)
+                        addHighlightedCode(tf, code, fontBundle)
                         add(tf)
                     }
                     val frame = Frame(codeParagraph)
@@ -214,7 +223,7 @@ class PdfBoxVisitor(
                 if (code.isNotBlank()) {
                     val codeParagraph = Paragraph().apply {
                         val tf = TextFlow()
-                        tf.addText(code, 12f, fontBundle.plain)
+                        tf.addText(code, 12f, fontBundle.mono)
                         add(tf)
                     }
                     val frame = Frame(codeParagraph)
@@ -240,6 +249,68 @@ class PdfBoxVisitor(
                 val name = extractImageUrl(node, content)
                 document.add(ImageElement(map[name]!!.canonicalPath))
             }
+
+            MarkdownTokenTypes.HORIZONTAL_RULE -> {
+                document.add(
+                    Paragraph().apply {
+                        addText(
+                            "________________________________________________________________",
+                            12f,
+                            font
+                        )
+                    }
+                )
+            }
+
+            GFMElementTypes.STRIKETHROUGH -> {
+                // Not supported in TextFlow easily, render as text
+            }
+
+            GFMElementTypes.TABLE -> {
+                // Tables are not easily supported in pdfbox-layout
+            }
+        }
+    }
+}
+
+private const val CODE_FONT_SIZE = 12f
+
+private fun addHighlightedCode(tf: TextFlow, code: String, fontBundle: PdfFontBundle) {
+    val codeHighlights = Highlights.Builder()
+        .theme(SyntaxThemes.atom(darkMode = false))
+        .code(code)
+        .build()
+        .getHighlights()
+        .sortedBy { it.location.start }
+
+    if (codeHighlights.isEmpty()) {
+        tf.addText(code, CODE_FONT_SIZE, fontBundle.mono)
+        return
+    }
+
+    // Add text before first highlight
+    if (codeHighlights.first().location.start > 0) {
+        tf.addText(code.take(codeHighlights.first().location.start), CODE_FONT_SIZE, fontBundle.mono)
+    }
+
+    codeHighlights.forEachIndexed { i, highlight ->
+        val color = if (highlight is ColorHighlight) {
+            Color(highlight.rgb)
+        } else {
+            Color.BLACK
+        }
+        val endIndex = highlight.location.end
+        tf.add(StyledText(code.substring(highlight.location.start, endIndex), CODE_FONT_SIZE, fontBundle.mono, color))
+
+        // Add text between this highlight and next
+        if (i != codeHighlights.lastIndex) {
+            val nextStartIndex = codeHighlights[i + 1].location.start
+            if (nextStartIndex > endIndex) {
+                tf.addText(code.substring(endIndex, nextStartIndex), CODE_FONT_SIZE, fontBundle.mono)
+            }
+        } else if (endIndex < code.length) {
+            // Add remaining text after last highlight
+            tf.addText(code.substring(endIndex), CODE_FONT_SIZE, fontBundle.mono)
         }
     }
 }
@@ -262,7 +333,7 @@ private class ParagraphVisitor(
             MarkdownElementTypes.CODE_SPAN -> {
                 val raw = node.getTextInNode(content).toString()
                 val text = raw.replace("`", "").trim()
-                flow.addText(text, 14f, fontBundle.plain)
+                flow.addText(text, 12f, fontBundle.mono)
             }
 
             MarkdownTokenTypes.WHITE_SPACE -> flow.addText(" ", 14f, fontBundle.plain)
@@ -270,6 +341,12 @@ private class ParagraphVisitor(
             MarkdownElementTypes.INLINE_LINK,
             MarkdownElementTypes.FULL_REFERENCE_LINK,
             MarkdownElementTypes.SHORT_REFERENCE_LINK -> addLink(node)
+
+            GFMElementTypes.STRIKETHROUGH -> {
+                val text = node.getTextInNode(content).toString()
+                val actual = text.substring(2, text.length - 2)
+                flow.addText(actual, 14f, fontBundle.plain)
+            }
         }
     }
 
@@ -294,7 +371,6 @@ private class ParagraphVisitor(
 class QuoteVisitor(private val content: String, val paragraph: TextFlow, val font: PdfFontBundle) :
     Visitor {
     override fun visitNode(node: ASTNode) {
-        println("quota ${node.type}")
         if (node.type == MarkdownTokenTypes.BLOCK_QUOTE) {
             node.acceptChildren(this)
         } else if (node.type == MarkdownElementTypes.PARAGRAPH) {

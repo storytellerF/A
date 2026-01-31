@@ -35,18 +35,27 @@ interface PdfService {
     ): Result<Unit>
 }
 
+const val BASE_FONT_FAMILY = "Noto Serif"
+const val MONO_FONT_FAMILY = "Noto Sans Mono"
+
 fun getFont(): Font {
     val graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment()
     return graphicsEnvironment.allFonts.firstOrNull {
-        it.family == "Noto Serif"
-    } ?: error("Noto Serif not found")
+        it.family == BASE_FONT_FAMILY
+    } ?: error("$BASE_FONT_FAMILY not found")
+}
+
+fun getMonoFont(): Font {
+    val graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment()
+    return graphicsEnvironment.allFonts.firstOrNull {
+        it.family == MONO_FONT_FAMILY
+    } ?: error("$MONO_FONT_FAMILY not found")
 }
 
 fun collectPlainText(node: ASTNode, content: String): String {
     val sb = StringBuilder()
     node.acceptChildren(object : Visitor {
         override fun visitNode(node: ASTNode) {
-            println("plain text: ${node.type} ${node.getTextInNode(content)}")
             if (node.type == MarkdownTokenTypes.TEXT) {
                 sb.append(node.getTextInNode(content))
             } else {
