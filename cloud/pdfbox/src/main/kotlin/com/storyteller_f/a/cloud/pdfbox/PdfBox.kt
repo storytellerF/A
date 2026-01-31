@@ -14,7 +14,13 @@ import com.storyteller_f.shared.utils.readCodeFence
 import dev.snipme.highlights.Highlights
 import dev.snipme.highlights.model.ColorHighlight
 import dev.snipme.highlights.model.SyntaxThemes
-import org.apache.pdfbox.examples.signature.CreateSignature
+import eu.europa.esig.dss.enumerations.DigestAlgorithm
+import eu.europa.esig.dss.enumerations.SignatureLevel
+import eu.europa.esig.dss.model.FileDocument
+import eu.europa.esig.dss.pades.PAdESSignatureParameters
+import eu.europa.esig.dss.pades.signature.PAdESService
+import eu.europa.esig.dss.token.Pkcs12SignatureToken
+import eu.europa.esig.dss.spi.validation.CommonCertificateVerifier
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.pdmodel.font.FontMappers
 import org.apache.pdfbox.pdmodel.font.PDFont
@@ -73,15 +79,24 @@ class PdfBox : PdfService {
         when (snapshotGeneration) {
             is SnapshotGeneration.KeyStoreGeneration -> {
                 val password = snapshotGeneration.password
-                val store = KeyStore.getInstance("PKCS12").apply {
-                    load(FileInputStream(snapshotGeneration.keyStorePath), password.toCharArray())
+                val token = Pkcs12SignatureToken(
+                    FileInputStream(snapshotGeneration.keyStorePath),
+                    KeyStore.PasswordProtection(password.toCharArray())
+                )
+                val key = token.keys.first()
+                val parameters = PAdESSignatureParameters().apply {
+                    signingCertificate = key.certificate
+                    certificateChain = key.certificateChain.toList()
+                    signatureLevel = SignatureLevel.PAdES_BASELINE_B
+                    digestAlgorithm = DigestAlgorithm.SHA256
+                    bLevel().signingDate = java.util.Date(key.certificate.notBefore.time + 1000)
                 }
-                CreateSignature(store, password.toCharArray())
-                    .signDetached(
-                        saveToFile,
-                        snapshotGeneration.signedFile,
-                        "https://freetsa.org/tsr"
-                    )
+                val service = PAdESService(CommonCertificateVerifier())
+                val toSignDocument = FileDocument(saveToFile)
+                val toBeSigned = service.getDataToSign(toSignDocument, parameters)
+                val signatureValue = token.sign(toBeSigned, parameters.digestAlgorithm, key)
+                val signedDocument = service.signDocument(toSignDocument, parameters, signatureValue)
+                signedDocument.save(snapshotGeneration.signedFile.absolutePath)
             }
 
             is SnapshotGeneration.SimpleGeneration -> Unit
