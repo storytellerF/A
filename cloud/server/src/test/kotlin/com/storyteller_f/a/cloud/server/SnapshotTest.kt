@@ -126,6 +126,34 @@ class SnapshotTest {
         This is a [link text](https://example.com) in paragraph.
         """.trimIndent()
     )
+
+    @Test
+    fun `test generate horizontal rule`() = openPdfSnapshot(
+        """
+        First paragraph.
+
+        ---
+
+        Second paragraph after horizontal rule.
+        """.trimIndent()
+    )
+
+    @Test
+    fun `test generate table`() = openPdfSnapshot(
+        """
+        | Header 1 | Header 2 | Header 3 |
+        | --- | --- | --- |
+        | Cell 1 | Cell 2 | Cell 3 |
+        | Cell 4 | Cell 5 | Cell 6 |
+        """.trimIndent()
+    )
+
+    @Test
+    fun `test generate strikethrough`() = openPdfSnapshot(
+        """
+        This is ~~strikethrough~~ text in a paragraph.
+        """.trimIndent()
+    )
 }
 
 private fun openPdfSnapshot(content: String, map: Map<String, File> = emptyMap()) {

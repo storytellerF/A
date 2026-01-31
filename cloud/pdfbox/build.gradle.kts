@@ -22,4 +22,5 @@ dependencies {
     implementation(libs.markdown)
     implementation(libs.pdfbox.layout)
     implementation(libs.pdfbox)
+    implementation(libs.highlights)
 }
