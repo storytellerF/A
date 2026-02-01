@@ -107,8 +107,63 @@ class OpenPdf : PdfService {
                     close()
                 }
             }
+            when (snapshotGeneration) {
+                is SnapshotGeneration.KeyStoreGeneration -> {
+                    signPdfWithKeyStore(saveToFile, snapshotGeneration, pdfGenerationSpec)
+                }
+                is SnapshotGeneration.SimpleGeneration -> Unit
+            }
         }
     }
+}
+
+private fun signPdfWithKeyStore(
+    saveToFile: File,
+    snapshotGeneration: SnapshotGeneration.KeyStoreGeneration,
+    pdfGenerationSpec: PdfGenerationSpec
+) {
+    val ks = java.security.KeyStore.getInstance("PKCS12")
+    ks.load(
+        java.io.FileInputStream(snapshotGeneration.keyStorePath),
+        snapshotGeneration.password.toCharArray()
+    )
+    val alias = ks.aliases().nextElement()
+    val pk = ks.getKey(alias, snapshotGeneration.password.toCharArray()) as java.security.PrivateKey
+    val chain = ks.getCertificateChain(alias)
+
+    val reader = org.openpdf.text.pdf.PdfReader(saveToFile.inputStream())
+    val os = java.io.FileOutputStream(snapshotGeneration.signedFile)
+    val stamper = org.openpdf.text.pdf.PdfStamper.createSignature(reader, os, '\u0000'.toString())
+
+    // Insert a new blank page at the beginning for the signature
+    val pageSize = reader.getPageSize(1)
+    stamper.insertPage(1, pageSize)
+
+    val appearance = stamper.signatureAppearance
+    // Place signature in the center of the new first page
+    val sigWidth = 400f
+    val sigHeight = 120f
+    val sigX = (pageSize.width - sigWidth) / 2
+    val sigY = (pageSize.height - sigHeight) / 2
+    appearance.setVisibleSignature(
+        Rectangle(sigX, sigY, sigX + sigWidth, sigY + sigHeight),
+        1,
+        "sig"
+    )
+
+    // Use Layer2 to render a table-based signature instead of an image
+    val layer2 = appearance.getLayer(2)
+    val signatureInfo = com.storyteller_f.a.cloud.pdf.SignatureInfo(
+        signee = (chain[0] as java.security.cert.X509Certificate).subjectDN.name,
+        timestamp = pdfGenerationSpec.created.toString(),
+        hint = "Digitally Signed by OpenPDF"
+    )
+    buildSignatureTable(layer2, signatureInfo, appearance.rect)
+
+    appearance.setCrypto(pk, chain, null, org.openpdf.text.pdf.PdfSignatureAppearance.WINCER_SIGNED)
+    appearance.layer2Text = ""
+    appearance.layer4Text = ""
+    stamper.close()
 }
 
 class OpenPdfVisitor(
@@ -501,4 +556,168 @@ class QuoteVisitor(private val content: String, val paragraph: Paragraph, val fo
             paragraph.add(Chunk(content, font))
         }
     }
+}
+
+/**
+ * Builds a table-based visible signature directly onto the PDF using PdfContentByte.
+ * This renders a table with an icon column on the left, and labeled rows (Signee, Timestamp, Hint) on the right.
+ * Note: For PdfTemplate (layer 2), coordinates start from (0, 0), so we use rect only for dimensions.
+ */
+@Suppress("LongMethod")
+private fun buildSignatureTable(
+    cb: PdfContentByte,
+    signatureInfo: com.storyteller_f.a.cloud.pdf.SignatureInfo,
+    rect: Rectangle
+) {
+    // For PdfTemplate, coordinates start from (0, 0)
+    val left = 0f
+    val bottom = 0f
+    val width = rect.width
+    val height = rect.height
+
+    val iconWidth = width * 0.2f
+    val labelWidth = width * 0.2f
+    val rowHeight = height / 3f
+
+    val baseFont = org.openpdf.text.pdf.BaseFont.createFont(
+        org.openpdf.text.pdf.BaseFont.HELVETICA,
+        org.openpdf.text.pdf.BaseFont.CP1252,
+        org.openpdf.text.pdf.BaseFont.NOT_EMBEDDED
+    )
+    val boldFont = org.openpdf.text.pdf.BaseFont.createFont(
+        org.openpdf.text.pdf.BaseFont.HELVETICA_BOLD,
+        org.openpdf.text.pdf.BaseFont.CP1252,
+        org.openpdf.text.pdf.BaseFont.NOT_EMBEDDED
+    )
+
+    val fontSize = 8f
+
+    // Draw background
+    cb.saveState()
+    cb.setColorFill(Color.WHITE)
+    cb.rectangle(left, bottom, width, height)
+    cb.fill()
+    cb.restoreState()
+
+    // Draw outer border
+    cb.saveState()
+    cb.setColorStroke(Color.BLACK)
+    cb.setLineWidth(1f)
+    cb.rectangle(left, bottom, width, height)
+    cb.stroke()
+    cb.restoreState()
+
+    // Draw vertical line for icon column
+    cb.saveState()
+    cb.setColorStroke(Color.BLACK)
+    cb.setLineWidth(0.5f)
+    cb.moveTo(left + iconWidth, bottom)
+    cb.lineTo(left + iconWidth, bottom + height)
+    cb.stroke()
+    cb.restoreState()
+
+    // Draw vertical line between label and value
+    val labelDividerX = left + iconWidth + labelWidth
+    cb.saveState()
+    cb.setColorStroke(Color.BLACK)
+    cb.setLineWidth(0.5f)
+    cb.moveTo(labelDividerX, bottom)
+    cb.lineTo(labelDividerX, bottom + height)
+    cb.stroke()
+    cb.restoreState()
+
+    // Draw horizontal lines for rows
+    for (i in 1 until 3) {
+        val y = bottom + i * rowHeight
+        cb.saveState()
+        cb.setColorStroke(Color.BLACK)
+        cb.setLineWidth(0.5f)
+        cb.moveTo(left + iconWidth, y)
+        cb.lineTo(left + width, y)
+        cb.stroke()
+        cb.restoreState()
+    }
+
+    // Draw badge icon (simple checkmark badge)
+    val iconCenterX = left + iconWidth / 2
+    val iconCenterY = bottom + height / 2
+    val radius = (iconWidth.coerceAtMost(height) / 2f) * 0.6f
+    drawBadgeIcon(cb, iconCenterX, iconCenterY, radius)
+
+    // Draw row content
+    val rows = listOf(
+        "Signee" to signatureInfo.signee,
+        "Timestamp" to signatureInfo.timestamp,
+        "Hint" to signatureInfo.hint
+    )
+
+    rows.forEachIndexed { index, (label, value) ->
+        val rowY = bottom + height - (index + 1) * rowHeight + rowHeight / 2 - fontSize / 3
+
+        // Draw label (right-aligned in its column)
+        cb.beginText()
+        cb.setFontAndSize(boldFont, fontSize)
+        cb.setColorFill(Color.BLACK)
+        val labelTextWidth = boldFont.getWidthPoint(label, fontSize)
+        cb.setTextMatrix(labelDividerX - labelTextWidth - 3f, rowY)
+        cb.showText(label)
+        cb.endText()
+
+        // Draw value (left-aligned, truncated if needed)
+        cb.beginText()
+        cb.setFontAndSize(baseFont, fontSize)
+        cb.setColorFill(Color.BLACK)
+        cb.setTextMatrix(labelDividerX + 3f, rowY)
+        val maxValueWidth = width - iconWidth - labelWidth - 10f
+        val truncatedValue = truncateText(value, baseFont, fontSize, maxValueWidth)
+        cb.showText(truncatedValue)
+        cb.endText()
+    }
+}
+
+/**
+ * Draws a badge icon (starburst with checkmark) at the specified center position.
+ */
+private fun drawBadgeIcon(cb: PdfContentByte, cx: Float, cy: Float, radius: Float) {
+    cb.saveState()
+    cb.setColorStroke(Color.BLACK)
+    cb.setLineWidth(1.5f)
+
+    // Draw starburst
+    val numPoints = 16
+    for (i in 0 until numPoints * 2) {
+        val angle = Math.PI * i / numPoints
+        val r = if (i % 2 == 0) radius.toDouble() else radius * 0.85
+        val x = cx + r * Math.cos(angle)
+        val y = cy + r * Math.sin(angle)
+        if (i == 0) {
+            cb.moveTo(x.toFloat(), y.toFloat())
+        } else {
+            cb.lineTo(x.toFloat(), y.toFloat())
+        }
+    }
+    cb.closePath()
+    cb.stroke()
+
+    // Draw checkmark
+    cb.moveTo(cx - radius * 0.4f, cy)
+    cb.lineTo(cx - radius * 0.1f, cy - radius * 0.4f)
+    cb.lineTo(cx + radius * 0.5f, cy + radius * 0.4f)
+    cb.stroke()
+
+    cb.restoreState()
+}
+
+/**
+ * Truncates text to fit within the specified width, adding "..." if necessary.
+ */
+private fun truncateText(text: String, font: org.openpdf.text.pdf.BaseFont, fontSize: Float, maxWidth: Float): String {
+    if (font.getWidthPoint(text, fontSize) <= maxWidth) {
+        return text
+    }
+    var truncated = text
+    while (truncated.isNotEmpty() && font.getWidthPoint("$truncated...", fontSize) > maxWidth) {
+        truncated = truncated.dropLast(1)
+    }
+    return if (truncated.isEmpty()) "" else "$truncated..."
 }

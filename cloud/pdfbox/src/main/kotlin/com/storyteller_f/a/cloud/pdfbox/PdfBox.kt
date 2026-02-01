@@ -19,8 +19,8 @@ import eu.europa.esig.dss.enumerations.SignatureLevel
 import eu.europa.esig.dss.model.FileDocument
 import eu.europa.esig.dss.pades.PAdESSignatureParameters
 import eu.europa.esig.dss.pades.signature.PAdESService
-import eu.europa.esig.dss.token.Pkcs12SignatureToken
 import eu.europa.esig.dss.spi.validation.CommonCertificateVerifier
+import eu.europa.esig.dss.token.Pkcs12SignatureToken
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.pdmodel.font.FontMappers
 import org.apache.pdfbox.pdmodel.font.PDFont
@@ -78,30 +78,91 @@ class PdfBox : PdfService {
         }
         when (snapshotGeneration) {
             is SnapshotGeneration.KeyStoreGeneration -> {
-                val password = snapshotGeneration.password
-                val token = Pkcs12SignatureToken(
-                    FileInputStream(snapshotGeneration.keyStorePath),
-                    KeyStore.PasswordProtection(password.toCharArray())
-                )
-                val key = token.keys.first()
-                val parameters = PAdESSignatureParameters().apply {
-                    signingCertificate = key.certificate
-                    certificateChain = key.certificateChain.toList()
-                    signatureLevel = SignatureLevel.PAdES_BASELINE_B
-                    digestAlgorithm = DigestAlgorithm.SHA256
-                    bLevel().signingDate = java.util.Date(key.certificate.notBefore.time + 1000)
-                }
-                val service = PAdESService(CommonCertificateVerifier())
-                val toSignDocument = FileDocument(saveToFile)
-                val toBeSigned = service.getDataToSign(toSignDocument, parameters)
-                val signatureValue = token.sign(toBeSigned, parameters.digestAlgorithm, key)
-                val signedDocument = service.signDocument(toSignDocument, parameters, signatureValue)
-                signedDocument.save(snapshotGeneration.signedFile.absolutePath)
+                signPdfWithDss(saveToFile, snapshotGeneration, pdfGenerationSpec)
             }
 
             is SnapshotGeneration.SimpleGeneration -> Unit
         }
         return UNIT_RESULT
+    }
+}
+
+private fun signPdfWithDss(
+    saveToFile: File,
+    snapshotGeneration: SnapshotGeneration.KeyStoreGeneration,
+    pdfGenerationSpec: PdfGenerationSpec
+) {
+    // Create a copy with a blank page at the beginning for the signature
+    // This preserves the original file unchanged
+    val tempFileWithBlankPage = File.createTempFile("pdf_with_blank_page", ".pdf")
+    try {
+        insertBlankPageAtBeginning(saveToFile, tempFileWithBlankPage)
+
+        val password = snapshotGeneration.password
+        val token = Pkcs12SignatureToken(
+            FileInputStream(snapshotGeneration.keyStorePath),
+            KeyStore.PasswordProtection(password.toCharArray())
+        )
+        val key = token.keys.first()
+        val parameters = PAdESSignatureParameters().apply {
+            signingCertificate = key.certificate
+            certificateChain = key.certificateChain.toList()
+            signatureLevel = SignatureLevel.PAdES_BASELINE_B
+            digestAlgorithm = DigestAlgorithm.SHA256
+            bLevel().signingDate = java.util.Date(key.certificate.notBefore.time + 1000)
+            val imageParameters = eu.europa.esig.dss.pades.SignatureImageParameters()
+            val subjectName = key.certificate.certificate.subjectX500Principal.name
+            val imageBytes = com.storyteller_f.a.cloud.pdf.SignatureImageGenerator.generate(
+                subjectName,
+                pdfGenerationSpec.created.toString(),
+                "Digitally Signed by PdfBox"
+            )
+            imageParameters.image = eu.europa.esig.dss.model.InMemoryDocument(
+                imageBytes,
+                "signature.png",
+                eu.europa.esig.dss.enumerations.MimeTypeEnum.PNG
+            )
+            val fieldParameters = eu.europa.esig.dss.pades.SignatureFieldParameters().apply {
+                page = 1
+                // Center the signature on the new first page
+                // Image is 600x90, so we maintain similar aspect ratio
+                val sigWidth = 500f
+                val sigHeight = 75f
+                // A4 page size: 595 x 842 points
+                originX = (595f - sigWidth) / 2
+                originY = (842f - sigHeight) / 2
+                width = sigWidth
+                height = sigHeight
+            }
+            imageParameters.fieldParameters = fieldParameters
+            this.imageParameters = imageParameters
+        }
+        val service = PAdESService(CommonCertificateVerifier())
+        val toSignDocument = FileDocument(tempFileWithBlankPage)
+        val toBeSigned = service.getDataToSign(toSignDocument, parameters)
+        val signatureValue = token.sign(toBeSigned, parameters.digestAlgorithm, key)
+        val signedDocument = service.signDocument(toSignDocument, parameters, signatureValue)
+        signedDocument.save(snapshotGeneration.signedFile.absolutePath)
+    } finally {
+        tempFileWithBlankPage.delete()
+    }
+}
+
+/**
+ * Creates a copy of the source PDF with a new blank page inserted at the beginning.
+ * The new page will have the same size as the original first page (defaults to A4 if no pages exist).
+ * The original source file is not modified.
+ */
+private fun insertBlankPageAtBeginning(sourceFile: File, destinationFile: File) {
+    org.apache.pdfbox.Loader.loadPDF(sourceFile).use { document ->
+        val pageSize = if (document.numberOfPages > 0) {
+            document.getPage(0).mediaBox
+        } else {
+            org.apache.pdfbox.pdmodel.common.PDRectangle.A4
+        }
+        val blankPage = org.apache.pdfbox.pdmodel.PDPage(pageSize)
+        document.pages.insertBefore(blankPage, document.getPage(0))
+        document.save(destinationFile)
     }
 }
 
