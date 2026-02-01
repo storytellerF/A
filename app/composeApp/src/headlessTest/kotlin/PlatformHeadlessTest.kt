@@ -11,6 +11,7 @@ expect abstract class PlatformHeadlessTest() {
     val portOffset: Int
 }
 
+@OptIn(kotlin.uuid.ExperimentalUuidApi::class)
 fun PlatformHeadlessTest.remoteServerTest(
     suggestPort: Int,
     block: suspend CoroutineScope.(String) -> Unit,
@@ -27,15 +28,8 @@ fun PlatformHeadlessTest.remoteServerTest(
     val port = suggestPort + portOffset
     println("port: $port, methodName: $methodName")
     forceStop(port)
-    val processMate = startServerByRun(
-        "../..",
-        port,
-        "./build/test/headless/sessions/
-    $ {
-        @OptIn(kotlin.uuid.ExperimentalUuidApi::class)
-        Uuid.random().toHexString()
-    } "
-    ) ?: throw Exception("start server failed")
+    val sessionPath = "./build/test/headless/sessions/${Uuid.random().toHexString()}"
+    val processMate = startServerByRun("../..", port, sessionPath) ?: throw Exception("start server failed")
     try {
         block("http://localhost:$port")
         Napier.i {

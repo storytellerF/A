@@ -41,7 +41,9 @@ kotlin {
         androidResources {
             enable = true
         }
-        withHostTest { }
+        withHostTest {
+            isIncludeAndroidResources = true
+        }
         withDeviceTest { }
 //        @OptIn(ExperimentalKotlinGradlePluginApi::class)
 //        instrumentedTestVariant.sourceSetTree.set(KotlinSourceSetTree.test)
