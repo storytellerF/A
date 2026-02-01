@@ -37,12 +37,6 @@ kotlin {
                 file("consumer-rules.pro")
             }
         }
-//        testOptions {
-//            unitTests.all {
-//                val dir = project.layout.buildDirectory.dir("native-libs/couchbase").get().asFile
-//                it.jvmArgs("-Djava.library.path=$dir")
-//            }
-//        }
     }
 
     if (buildIosTarget) {
