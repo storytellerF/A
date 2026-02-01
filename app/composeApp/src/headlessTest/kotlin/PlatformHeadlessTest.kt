@@ -5,10 +5,12 @@ import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.test.runTest
 import kotlin.time.Duration.Companion.minutes
+import kotlin.uuid.Uuid
 
 expect abstract class PlatformHeadlessTest() {
     val portOffset: Int
 }
+
 fun PlatformHeadlessTest.remoteServerTest(
     suggestPort: Int,
     block: suspend CoroutineScope.(String) -> Unit,
@@ -28,7 +30,11 @@ fun PlatformHeadlessTest.remoteServerTest(
     val processMate = startServerByRun(
         "../..",
         port,
-        "./build/test/headless/sessions/${Uuid.random().toHexString()}"
+        "./build/test/headless/sessions/
+    $ {
+        @OptIn(kotlin.uuid.ExperimentalUuidApi::class)
+        Uuid.random().toHexString()
+    } "
     ) ?: throw Exception("start server failed")
     try {
         block("http://localhost:$port")

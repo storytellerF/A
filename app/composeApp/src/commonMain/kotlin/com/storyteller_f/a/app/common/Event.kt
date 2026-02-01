@@ -10,6 +10,7 @@ import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.storage.ModelStorage
+import com.storyteller_f.storage.RoomCollection
 import com.storyteller_f.storage.TopicCollection
 import com.storyteller_f.storage.update
 import kotlinx.collections.immutable.toImmutableList
@@ -67,9 +68,9 @@ suspend fun processEvent(database: ModelStorage, bus: MutableSharedFlow<Any>) {
 
             is OnRoomExited -> database.room.saveToDefault(event.info)
 
-            is OnRoomUpdated -> database.room.saveToDefault(event.info)
+            is OnRoomUpdated -> processRoomUpdated(event, database)
 
-            is OnRoomCreated -> database.room.saveToDefault(event.info)
+            is OnRoomCreated -> processRoomCreated(event, database)
 
             is OnUserUpdated -> database.user.saveToDefault(event.info)
 
@@ -151,6 +152,7 @@ private suspend fun processTopicCreated(
 ) {
     val topicInfo = event.topicInfo
     database.topic.saveToDefault(topicInfo)
+    database.topic.saveFirst(TopicCollection.ChildTopicList(topicInfo.parentId), topicInfo)
 }
 
 private suspend fun processTopicChanged(
@@ -164,7 +166,37 @@ private suspend fun processTopicChanged(
             event.topicInfo.id
         ) != null
     ) {
-        database.topic.saveToDefault(topicInfo)
+        database.topic.updateDocument(TopicCollection.Recommend, topicInfo)
+    }
+    database.topic.update(TopicCollection.ChildTopicList(topicInfo.parentId), topicInfo.id) {
+        topicInfo
+    }
+}
+
+private suspend fun processRoomUpdated(
+    event: OnRoomUpdated,
+    database: ModelStorage
+) {
+    val info = event.info
+    database.room.saveToDefault(info)
+    val communityId = info.communityId
+    if (communityId != null) {
+        val collection = RoomCollection.CommunityRooms(communityId)
+        if (database.room.getDocument(collection, info.id) != null) {
+            database.room.updateDocument(collection, info)
+        }
+    }
+}
+
+private suspend fun processRoomCreated(
+    event: OnRoomCreated,
+    database: ModelStorage
+) {
+    val info = event.info
+    database.room.saveToDefault(info)
+    val communityId = info.communityId
+    if (communityId != null) {
+        database.room.saveFirst(RoomCollection.CommunityRooms(communityId), info)
     }
 }
 
