@@ -20,10 +20,8 @@ import kotlin.test.assertTrue
  * 存在错误AndroidContextProvider ProviderInfo cannot be null.
  * 全部禁用
  */
-@Ignore
 class LoginUserSessionTest : PlatformHeadlessTest() {
     @Test
-    @Ignore
     fun testSession() = loginSessionTest { privateKey, publicKey, ad, sessionFactory ->
         val addSession = sessionFactory.addSession(RawUserPassInfo(privateKey, publicKey, ad))
         assertEquals(1, sessionFactory.getSavedSession().alias.size)
@@ -39,7 +37,6 @@ class LoginUserSessionTest : PlatformHeadlessTest() {
     }
 
     @Test
-    @Ignore
     fun `test exit session`() = loginSessionTest { privateKey, publicKey, ad, sessionFactory ->
         sessionFactory.addSession(RawUserPassInfo(privateKey, publicKey, ad))
         val session = sessionFactory.getSavedSession()
@@ -52,7 +49,6 @@ class LoginUserSessionTest : PlatformHeadlessTest() {
     }
 
     @Test
-    @Ignore
     fun `test remove session`() = loginSessionTest { privateKey, publicKey, ad, sessionFactory ->
         sessionFactory.addSession(RawUserPassInfo(privateKey, publicKey, ad))
         val session = sessionFactory.getSavedSession()
@@ -66,7 +62,6 @@ class LoginUserSessionTest : PlatformHeadlessTest() {
     }
 
     @Test
-    @Ignore
     fun `test build session`() = loginSessionTest { privateKey, publicKey, ad, sessionFactory ->
         sessionFactory.addSession(RawUserPassInfo(privateKey, publicKey, ad))
         val session = sessionFactory.getSavedSession()

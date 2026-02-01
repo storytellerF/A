@@ -1,4 +1,5 @@
 import android.content.ContentProvider
+import android.util.Log
 import com.storyteller_f.a.app.AApplication
 import com.storyteller_f.a.app.AppConfig
 import org.junit.Before
@@ -9,20 +10,21 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
-@Config(manifest = Config.NONE, sdk = [35])
+@Config(application = AApplication::class, manifest = Config.NONE, sdk = [35])
 actual abstract class PlatformHeadlessTest {
     @Before
     fun setup() {
-        RuntimeEnvironment.setApplicationSupplier {
-            AApplication()
-        }
+        System.setProperty("robolectric.logging.enabled", "true")
         setupAndroidContextProvider()
+        val application = RuntimeEnvironment.getApplication()
+        println("setup: $application")
     }
 
     // Configures Compose's AndroidContextProvider to access resources in tests.
     // See https://youtrack.jetbrains.com/issue/CMP-6612
     private fun setupAndroidContextProvider() {
         val type = findAndroidContextProvider() ?: return
+        println("setupAndroidContextProvider: $type")
         Robolectric.setupContentProvider(type)
     }
 

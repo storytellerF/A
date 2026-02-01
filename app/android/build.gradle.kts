@@ -11,7 +11,7 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.easylauncher)
     alias(libs.plugins.serialization)
-    id("compose-app")
+    id("compose-android")
 }
 
 val buildIosTarget = project.findProperty("target.ios") == "true"
