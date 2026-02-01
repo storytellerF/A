@@ -1,3 +1,5 @@
+@file:Suppress("UnstableApiUsage")
+
 import com.android.build.gradle.internal.tasks.factory.dependsOn
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
@@ -29,9 +31,12 @@ kotlin {
             isIncludeAndroidResources = true
         }
         withDeviceTest { }
-//        defaultConfig {
-//            consumerProguardFiles("consumer-rules.pro")
-//        }
+        optimization {
+            consumerKeepRules.apply {
+                publish = true
+                file("consumer-rules.pro")
+            }
+        }
 //        testOptions {
 //            unitTests.all {
 //                val dir = project.layout.buildDirectory.dir("native-libs/couchbase").get().asFile
@@ -159,4 +164,9 @@ afterEvaluate {
     ).forEach { path ->
         extractCouchbaseLibsTask.dependsOn(path)
     }
+}
+
+tasks.withType<Test>().configureEach {
+    val dir = project.layout.buildDirectory.dir("native-libs/couchbase").get().asFile
+    jvmArgs("-Djava.library.path=$dir")
 }

@@ -18,8 +18,8 @@ class KotbaseTest : PlatformHeadlessTest() {
     fun testSectionLoadParams() {
         val modelStorage = DocumentModelStorage(createKotbaseSource(null))
         runTest {
-            modelStorage.remoteKeyStorage.saveNextRemoteKey(RemoteKeys(TopicCollection.Recommend.getName(), "1"))
-            val remoteKeys = modelStorage.remoteKeyStorage.getNextRemoteKey(TopicCollection.Recommend.getName())
+            modelStorage.remoteKey.saveNextRemoteKey(RemoteKeys(TopicCollection.Recommend.getName(), "1"))
+            val remoteKeys = modelStorage.remoteKey.getNextRemoteKey(TopicCollection.Recommend.getName())
             assertEquals("1", remoteKeys?.key)
         }
     }
@@ -29,11 +29,11 @@ class KotbaseTest : PlatformHeadlessTest() {
     fun `test kotbase order`() = runTest {
         val collection = CommunityCollection.SearchCommunity(JoinStatusSearch.JOINED, "")
         val modelStorage = DocumentModelStorage(createKotbaseSource(null))
-        modelStorage.communityInfoStorage.save(collection, CommunityInfo.EMPTY.copy(hasPoster = true, id = 1))
-        modelStorage.communityInfoStorage.save(collection, CommunityInfo.EMPTY.copy(hasPoster = false, id = 2))
-        modelStorage.communityInfoStorage.save(collection, CommunityInfo.EMPTY.copy(hasPoster = true, id = 3))
-        modelStorage.communityInfoStorage.save(collection, CommunityInfo.EMPTY.copy(hasPoster = false, id = 4))
-        val observeData = modelStorage.communityInfoStorage.observeData(collection)
+        modelStorage.community.saveToDefault(CommunityInfo.EMPTY.copy(hasPoster = true, id = 1))
+        modelStorage.community.saveToDefault(CommunityInfo.EMPTY.copy(hasPoster = false, id = 2))
+        modelStorage.community.saveToDefault(CommunityInfo.EMPTY.copy(hasPoster = true, id = 3))
+        modelStorage.community.saveToDefault(CommunityInfo.EMPTY.copy(hasPoster = false, id = 4))
+        val observeData = modelStorage.community.observeData(collection)
         val loadResult = observeData.load(PagingSource.LoadParams.Refresh(null, 10, false))
         assertTrue(loadResult is PagingSource.LoadResult.Page)
         loadResult.data.forEach {
