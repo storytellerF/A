@@ -8,10 +8,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.NotificationsActive
-import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.CircularProgressIndicator
@@ -32,33 +28,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.unit.dp
-import com.storyteller_f.a.api.NewFavorite
-import com.storyteller_f.a.api.NewSubscription
 import com.storyteller_f.a.app.AppGlobalDialogController
 import com.storyteller_f.a.app.LocalAppNavFactory
 import com.storyteller_f.a.app.LocalGlobalDialog
-import com.storyteller_f.a.app.LocalGlobalTask
 import com.storyteller_f.a.app.LocalSessionManager
 import com.storyteller_f.a.app.Res
-import com.storyteller_f.a.app.common.OnAddFavorite
-import com.storyteller_f.a.app.common.OnAddSubscription
-import com.storyteller_f.a.app.common.OnRemoveFavorite
-import com.storyteller_f.a.app.common.OnRemoveSubscription
 import com.storyteller_f.a.app.components.AppTopicContentView
 import com.storyteller_f.a.app.copy
 import com.storyteller_f.a.app.core.components.BaseSheet
-import com.storyteller_f.a.app.core.components.FavoriteButton
-import com.storyteller_f.a.app.core.components.SubscriptionButton
 import com.storyteller_f.a.app.core.components.ButtonNav
 import com.storyteller_f.a.app.core.components.DialogContainer
 import com.storyteller_f.a.app.core.components.ExceptionView
-import com.storyteller_f.a.app.core.components.IconRes
+import com.storyteller_f.a.app.core.components.FavoriteButton
 import com.storyteller_f.a.app.core.components.LocalToaster
 import com.storyteller_f.a.app.core.components.SheetContainer
-import com.storyteller_f.a.app.core.components.emitEvent
+import com.storyteller_f.a.app.core.components.SubscriptionButton
 import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.app.core.components.setText
-import com.storyteller_f.a.app.core.components.use
 import com.storyteller_f.a.app.core.utils.getCurrentLanguage
 import com.storyteller_f.a.app.pages.community.CommunityRefCell
 import com.storyteller_f.a.app.pages.room.RoomRefCell
@@ -68,13 +54,8 @@ import com.storyteller_f.a.app.service.buildTranslatePrompt
 import com.storyteller_f.a.app.snapshot
 import com.storyteller_f.a.app.success
 import com.storyteller_f.a.app.ui.MaterialSymbolsOutlined
-import com.storyteller_f.a.client.core.LoadingState
-import com.storyteller_f.a.client.core.addFavorite
-import com.storyteller_f.a.client.core.addSubscription
 import com.storyteller_f.a.client.core.createTopicSnapshot
 import com.storyteller_f.a.client.core.pinTopic
-import com.storyteller_f.a.client.core.removeFavorite
-import com.storyteller_f.a.client.core.removeSubscription
 import com.storyteller_f.a.client.core.unpinTopic
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
@@ -143,7 +124,6 @@ private fun TopicDialogMenuList(topicInfo: TopicInfo, dismissDialog: () -> Unit)
         SubscriptionButton(topicInfo.subscriptionId, topicInfo.tuple())
     }
 }
-
 
 @Composable
 private fun CopyButton(content: TopicContent) {

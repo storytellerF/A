@@ -233,7 +233,6 @@ object CustomApi {
             }
         }
 
-
         object Id {
             @Serializable
             class TopicIdQuery(val fillHasCommented: Boolean? = null)
@@ -550,9 +549,10 @@ object CustomApi {
             }
 
             object Subscriptions {
-                val get = safeEndpointWithQueryAndPath<ServerResponse<UserSubscriptionInfo>, PaginationQuery, CommonPath>(
-                    "users/{id}/subscriptions"
-                )
+                val get =
+                    safeEndpointWithQueryAndPath<ServerResponse<UserSubscriptionInfo>, PaginationQuery, CommonPath>(
+                        "users/{id}/subscriptions"
+                    )
             }
 
             object Favorite {
@@ -733,7 +733,6 @@ object CustomApi {
             val add = mutationEndpoint<ChildAccountInfo, Unit>("/accounts/child-accounts")
         }
     }
-
 }
 
 object AdminApi {

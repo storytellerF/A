@@ -58,8 +58,6 @@ import com.storyteller_f.a.app.add
 import com.storyteller_f.a.app.all_members
 import com.storyteller_f.a.app.common.AppNavFactory
 import com.storyteller_f.a.app.common.CommunityScreen
-import com.storyteller_f.a.app.core.components.FavoriteButton
-import com.storyteller_f.a.app.core.components.SubscriptionButton
 import com.storyteller_f.a.app.common.CommunityViewModel
 import com.storyteller_f.a.app.common.OnCommunityExited
 import com.storyteller_f.a.app.common.OnCommunityJoined
@@ -76,8 +74,10 @@ import com.storyteller_f.a.app.core.components.CustomAlertDialogController
 import com.storyteller_f.a.app.core.components.CustomBottomNav
 import com.storyteller_f.a.app.core.components.CustomRailNav
 import com.storyteller_f.a.app.core.components.DialogContainer
+import com.storyteller_f.a.app.core.components.FavoriteButton
 import com.storyteller_f.a.app.core.components.IconRes
 import com.storyteller_f.a.app.core.components.NavRoute
+import com.storyteller_f.a.app.core.components.SubscriptionButton
 import com.storyteller_f.a.app.core.components.emitEvent
 import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.app.exit_community
