@@ -4,7 +4,7 @@ FROM android-in-docker:latest
 # RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 # RUN . ~/.cargo/env && cargo install tailspin
 USER root
-RUN apt update && apt install -y libavif-bin
+RUN apt update && apt install -y libavif-bin fonts-noto
 RUN groupadd -g 1001 docker \
     && usermod -aG docker ubuntu
 
