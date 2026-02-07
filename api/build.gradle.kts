@@ -1,22 +1,55 @@
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
-    alias(libs.plugins.kotlinJvm)
-    alias(libs.plugins.kotlinBuildConfig)
+    alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.androidLibrary)
     alias(libs.plugins.serialization)
 }
 
-group = "com.storyteller_f.a.api"
-version = "unspecified"
-
-dependencies {
-    implementation(libs.kotlinx.serialization.json)
-    implementation(projects.shared)
-    implementation(libs.endpoint4k.common)
-    testImplementation(kotlin("test"))
-}
-
-tasks.test {
-    useJUnitPlatform()
-}
+val buildIosTarget = project.findProperty("target.ios") == "true"
+val buildWasmTarget = project.findProperty("target.wasm") == "true"
 kotlin {
-    jvmToolchain(21)
+    if (buildWasmTarget) {
+        @OptIn(ExperimentalWasmDsl::class)
+        wasmJs {
+            browser()
+            compilerOptions {
+                freeCompilerArgs.add("-Xwasm-attach-js-exception")
+            }
+        }
+    }
+
+    androidLibrary {
+        namespace = "com.storyteller_f.a.shared"
+        compileSdk = libs.versions.android.compileSdk.get().toInt()
+        minSdk = libs.versions.android.minSdk.get().toInt()
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_21)
+        }
+    }
+
+    if (buildIosTarget) {
+        iosX64()
+        iosArm64()
+        iosSimulatorArm64()
+    }
+
+    jvm()
+
+    applyDefaultHierarchyTemplate()
+
+    sourceSets {
+        commonMain.dependencies {
+            implementation(libs.kotlinx.serialization.json)
+            implementation(projects.shared)
+            implementation(libs.endpoint4k.common)
+        }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+        }
+    }
+    compilerOptions {
+        freeCompilerArgs.addAll("-Xexpect-actual-classes", "-Xcontext-parameters")
+    }
 }
