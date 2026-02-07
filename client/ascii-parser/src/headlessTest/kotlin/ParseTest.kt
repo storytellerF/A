@@ -27,7 +27,8 @@ class ParseTest : PlatformHeadlessTest() {
                 <div class="paragraph">
                 <p>Hello, <em>Asciidoctor</em></p>
                 </div>
-            """.trimIndent(), result
+                """.trimIndent(),
+                result
             )
         }
     }

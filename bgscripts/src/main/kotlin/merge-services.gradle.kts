@@ -91,7 +91,7 @@ afterEvaluate {
         dependsOn(mergeServiceFiles)
     }
     listOf(
-        ":api:jar",
+        ":api:jvmJar",
         ":shared:jvmJar",
         ":backend:core:jar",
         ":backend:elastic:jar",

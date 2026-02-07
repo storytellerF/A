@@ -3,7 +3,6 @@
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -32,12 +31,12 @@ kotlin {
             isIncludeAndroidResources = true
         }
         withDeviceTest { }
-        optimization {
-            consumerKeepRules.apply {
-                publish = true
-                file("consumer-rules.pro")
-            }
-        }
+//        optimization {
+//            consumerKeepRules.apply {
+//                publish = true
+//                file("consumer-rules.pro")
+//            }
+//        }
     }
 
     if (buildIosTarget) {
