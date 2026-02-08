@@ -85,8 +85,10 @@ enum class PassType {
 @Serializable
 data class ChildAccountInfo(
     val hostId: PrimaryKey,
-    val privateKey: String,
-    val userInfo: UserInfo
+    val encryptedPrivateKey: String,
+    val encryptedAesKey: String,
+    val userInfo: UserInfo,
+    val algoType: AlgoType = AlgoType.P256
 ) : PrimaryKeyIdentifiable {
     override val id: PrimaryKey
         get() = userInfo.id

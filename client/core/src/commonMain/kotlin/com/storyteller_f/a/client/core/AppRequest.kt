@@ -18,6 +18,7 @@ import com.storyteller_f.a.api.SignUpBody
 import com.storyteller_f.a.api.TopicQuery
 import com.storyteller_f.endpoint4k.ktor.client.invoke
 import com.storyteller_f.shared.buildEncryptedTopicContent
+import com.storyteller_f.shared.model.ChildAccountInfo
 import com.storyteller_f.shared.model.PosterSearch
 import com.storyteller_f.shared.model.QuotaInfo
 import com.storyteller_f.shared.model.QuotaType
@@ -686,8 +687,14 @@ suspend fun UserSessionManager.extractAlbum(mediaId: PrimaryKey) = serviceCatchi
     CustomApi.Files.Id.extractAlbum(CommonPath(mediaId), Unit) {}
 }
 
-suspend fun UserSessionManager.addChildAccount() = serviceCatching {
-    CustomApi.Accounts.ChildAccounts.add(Unit) {}
+suspend fun UserSessionManager.addChildAccount(): Result<ChildAccountInfo> {
+    val userPass = model.currentUserPass ?: return Result.failure(IllegalStateException("User not authenticated"))
+    return serviceCatching {
+        val request = userPass.encryptChildAccount().getOrThrow()
+        CustomApi.Accounts.ChildAccounts.add(request) {
+            contentType(ContentType.Application.Json)
+        }
+    }
 }
 
 suspend fun UserSessionManager.getChildAccounts(nextId: String?, size: Int) = serviceCatching {

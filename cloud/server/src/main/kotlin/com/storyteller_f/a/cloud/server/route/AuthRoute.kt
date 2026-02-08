@@ -1,6 +1,7 @@
 package com.storyteller_f.a.cloud.server.route
 
 import com.storyteller_f.a.api.CustomApi
+import com.storyteller_f.a.api.CustomApi.Accounts.ChildAccounts.AddChildAccountRequest
 import com.storyteller_f.a.api.SignInBody
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.ForbiddenException
@@ -78,9 +79,16 @@ fun Route.bindAccountRoute() {
 }
 
 fun Route.bindProtectedAccountRoute(backend: Backend) {
-    CustomApi.Accounts.ChildAccounts.add(handleResult()) {
+    CustomApi.Accounts.ChildAccounts.add(handleResult()) { api ->
         usePrincipal { uid ->
-            backend.addChildAccount(uid)
+            val request: AddChildAccountRequest = api.receiveBody()
+            backend.addChildAccount(
+                uid,
+                request.encryptedPrivateKey,
+                request.encryptedAesKey,
+                request.derPublicKey,
+                request.algoType
+            )
         }
     }
     CustomApi.Accounts.ChildAccounts.get(handleResult()) { q ->

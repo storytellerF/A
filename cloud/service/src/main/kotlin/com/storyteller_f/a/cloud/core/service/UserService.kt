@@ -245,26 +245,28 @@ suspend fun Backend.addReadLog(uid: PrimaryKey, tuple: UpdateUserRead): Result<U
     }
 }
 
-suspend fun Backend.addChildAccount(uid: PrimaryKey): Result<ChildAccountInfo> {
+suspend fun Backend.addChildAccount(
+    uid: PrimaryKey,
+    encryptedPrivateKey: String,
+    encryptedAesKey: String,
+    derPublicKey: String,
+    algoType: AlgoType
+): Result<ChildAccountInfo> {
     return database.user.getRawChildAccount(uid).mapResult {
         if (it != null) {
             Result.failure(CustomBadRequestException("child account can't create child account"))
         } else {
             runCatching {
-                val (publicKey, address, derPrivateKey) = getAlgo().run {
-                    val pemPrivateKey = generatePemKeyPair().getOrThrow().first
-                    val publicKey = getDerPublicKeyFromPrivateKey(pemPrivateKey).getOrThrow()
-                    val derPrivateKey = getDerPrivateKey(pemPrivateKey).getOrThrow()
-                    val address = calcAddress(publicKey).getOrThrow()
-                    Triple(publicKey, address, derPrivateKey)
-                }
+                // Get user's public key based on algorithm type
+                // Generate new user account with the public key
+                val address = getAlgo(algoType).calcAddress(derPublicKey).getOrThrow()
                 val id = SnowflakeFactory.nextId()
                 val notificationId = SnowflakeFactory.nextId()
                 val user = User(
                     null,
                     null,
                     null,
-                    publicKey,
+                    derPublicKey,
                     address,
                     null,
                     nameService.parse(id),
@@ -272,11 +274,15 @@ suspend fun Backend.addChildAccount(uid: PrimaryKey): Result<ChildAccountInfo> {
                     now(),
                     0,
                     PassType.RAW,
-                    AlgoType.P256,
+                    algoType,
                     notificationId
                 )
-                database.user.createChildAccount(uid, derPrivateKey, user)
-                    .getOrThrow()
+                database.user.createChildAccount(
+                    uid,
+                    encryptedPrivateKey,
+                    encryptedAesKey,
+                    user
+                ).getOrThrow()
                 userSearchService.saveDocument(listOf(UserDocument.fromUser(user)))
                     .onFailure { throwable ->
                         Napier.e(throwable) {
@@ -284,7 +290,12 @@ suspend fun Backend.addChildAccount(uid: PrimaryKey): Result<ChildAccountInfo> {
                         }
                     }
                 addUserLog(uid, UserLogType.ADD_ALTERNATIVE_ACCOUNT, id ob ObjectType.USER)
-                ChildAccountInfo(uid, derPrivateKey, user.toUserInfo())
+                ChildAccountInfo(
+                    hostId = uid,
+                    encryptedPrivateKey = encryptedPrivateKey,
+                    encryptedAesKey = encryptedAesKey,
+                    userInfo = user.toUserInfo()
+                )
             }
         }
     }
@@ -323,7 +334,12 @@ suspend fun Backend.getUserAlternateUserInfoList(
             val map = userList.associateBy { it.id }
             results.mapNotNull {
                 map[it.rawUser.user.id]?.let { userInfo ->
-                    ChildAccountInfo(it.rawUser.user.id, it.childAccount.privateKey, userInfo)
+                    ChildAccountInfo(
+                        hostId = it.rawUser.user.id,
+                        encryptedPrivateKey = it.childAccount.encryptedPrivateKey,
+                        encryptedAesKey = it.childAccount.encryptedAesKey,
+                        userInfo = userInfo
+                    )
                 }
             }
         }

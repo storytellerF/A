@@ -376,14 +376,16 @@ class ExposedUserDatabase(
 
     override suspend fun createChildAccount(
         hostId: PrimaryKey,
-        privateKey: String,
+        encryptedPrivateKey: String,
+        encryptedAesKey: String,
         user: User
     ) = databaseSession.dbQuery {
         createUserRaw(user)
         check(ChildAccounts.insert {
             it[this.hostId] = hostId
-            it[this.privateKey] = privateKey
-            it[this.primaryKeyMd5] = md5(privateKey)
+            it[this.encryptedPrivateKey] = encryptedPrivateKey
+            it[this.encryptedAesKey] = encryptedAesKey
+            it[this.primaryKeyMd5] = md5(encryptedPrivateKey)
             it[uid] = user.id
         }.insertedCount > 0) {
             "Insert alternate account failed"
