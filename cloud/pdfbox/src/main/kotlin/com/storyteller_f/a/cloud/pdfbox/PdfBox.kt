@@ -185,18 +185,18 @@ private fun loadFontBundle(document: PDDocument): PdfFontBundle {
     val base = getFont()
     val env = java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment()
     val candidates = env.allFonts.filter { it.family == base.family }
-    fun loadByName(f: java.awt.Font?): PDFont = PDType0Font.load(
+    fun loadByName(f: java.awt.Font): PDFont = PDType0Font.load(
         document,
-        FontMappers.instance().getTrueTypeFont((f ?: base).name, null).font,
+        FontMappers.instance().getTrueTypeFont(f.name, null).font,
         true
     )
 
     val bold = candidates.firstOrNull {
         it.name.contains("Bold") && !it.name.contains("Italic")
-    }
+    } ?: throw Exception("bold font not found")
     val italic = candidates.firstOrNull {
         it.name.contains("Italic") && !it.name.contains("Bold")
-    }
+    } ?: throw Exception("italic font not found")
     val mono = getMonoFont()
     return PdfFontBundle(
         loadByName(base),
@@ -463,10 +463,10 @@ private fun addTable(node: ASTNode, content: String, fontBundle: PdfFontBundle, 
     val rows = mutableListOf<List<String>>()
 
     node.acceptChildren(object : Visitor {
-        override fun visitNode(astNode: ASTNode) {
-            when (astNode.type) {
+        override fun visitNode(node: ASTNode) {
+            when (node.type) {
                 GFMElementTypes.HEADER -> {
-                    val cells = astNode.children
+                    val cells = node.children
                         .filter { it.type.name == "CELL" }
                         .map { it.getTextInNode(content).toString().trim() }
                     if (cells.isNotEmpty()) {
@@ -474,14 +474,14 @@ private fun addTable(node: ASTNode, content: String, fontBundle: PdfFontBundle, 
                     }
                 }
                 GFMElementTypes.ROW -> {
-                    val cells = astNode.children
+                    val cells = node.children
                         .filter { it.type.name == "CELL" }
                         .map { it.getTextInNode(content).toString().trim() }
                     if (cells.isNotEmpty()) {
                         rows.add(cells)
                     }
                 }
-                else -> astNode.acceptChildren(this)
+                else -> node.acceptChildren(this)
             }
         }
     })

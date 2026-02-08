@@ -29,8 +29,8 @@ import coil3.toBitmap
 import com.storyteller_f.a.app.AppConfig
 import com.storyteller_f.a.app.BubbleActivity
 import com.storyteller_f.a.app.MainActivity
-import com.storyteller_f.a.app.R
 import com.storyteller_f.a.app.RTCActivity
+import com.storyteller_f.a.app.android_library.R
 import com.storyteller_f.a.app.common.getDeepLink
 import com.storyteller_f.a.app.core.components.mainActivityRef
 import com.storyteller_f.a.app.getClipFile

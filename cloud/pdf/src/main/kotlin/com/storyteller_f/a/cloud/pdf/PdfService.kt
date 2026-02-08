@@ -40,15 +40,19 @@ const val MONO_FONT_FAMILY = "Noto Sans Mono"
 
 fun getFont(): Font {
     val graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment()
-    return graphicsEnvironment.allFonts.firstOrNull {
+    return graphicsEnvironment.allFonts.filter {
         it.family == BASE_FONT_FAMILY
+    }.firstOrNull {
+        it.name == "$BASE_FONT_FAMILY Regular"
     } ?: error("$BASE_FONT_FAMILY not found")
 }
 
 fun getMonoFont(): Font {
     val graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment()
-    return graphicsEnvironment.allFonts.firstOrNull {
+    return graphicsEnvironment.allFonts.filter {
         it.family == MONO_FONT_FAMILY
+    }.firstOrNull {
+        it.name == "$MONO_FONT_FAMILY Regular"
     } ?: error("$MONO_FONT_FAMILY not found")
 }
 

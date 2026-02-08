@@ -8,6 +8,8 @@ import kotbase.MutableDocument
 import kotbase.QueryBuilder.select
 import kotbase.ktx.*
 import kotbase.ktx.from
+import kotbase.logging.ConsoleLogSink
+import kotbase.logging.LogSinks
 import kotbase.paging.QueryPagingSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -165,13 +167,13 @@ private fun createKotbase(): Database {
         SystemFileSystem.createDirectories(path)
     }
     val p = SystemFileSystem.resolve(path)
+    LogSinks.console = ConsoleLogSink(LogLevel.WARNING, LogDomain.ALL)
+    val configuration = DatabaseConfiguration()
+    configuration.directory = p.toString()
     return Database(
-        "a-db",
-        DatabaseConfigurationFactory.newConfig(p.toString())
-    ).apply {
-        Database.log.console.domains = LogDomain.ALL_DOMAINS
-        Database.log.console.level = LogLevel.WARNING
-    }
+        name = "a-db",
+        config = configuration
+    )
 }
 
 fun createKotbaseSource(scope: String?): KotbaseDocumentSource {

@@ -18,7 +18,6 @@ import io.ktor.server.routing.RoutingCall
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
-import io.ktor.util.encodeBase64
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
@@ -32,6 +31,7 @@ import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
 import java.net.ServerSocket
+import kotlin.io.encoding.Base64
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -73,7 +73,7 @@ fun Application.module() {
             val file = File("../..", "AData/data/ecdsa")
             println(file.canonicalPath)
             val map = file.listFiles()?.joinToString("\n") {
-                "${it.name}\t${it.readText().replace("\r\n", "\n").encodeBase64()}"
+                "${it.name}\t${Base64.encode(it.readText().replace("\r\n", "\n").encodeToByteArray())}"
             } ?: ""
             call.respondText(map)
         }

@@ -48,13 +48,13 @@ import kotlinx.io.Buffer
 import kotlinx.io.writeString
 import org.apache.pdfbox.Loader
 import org.apache.pdfbox.text.PDFTextStripper
-import org.junit.jupiter.api.assertNotNull
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid

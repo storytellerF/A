@@ -1,10 +1,8 @@
 package com.storyteller_f.a.app.pages.file
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -37,7 +35,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
@@ -55,6 +52,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.NavHost
@@ -79,9 +79,9 @@ import com.storyteller_f.a.app.core.components.BaseSheet
 import com.storyteller_f.a.app.core.components.CustomBottomNav
 import com.storyteller_f.a.app.core.components.CustomRailNav
 import com.storyteller_f.a.app.core.components.FileIcon
+import com.storyteller_f.a.app.core.components.InfoTable
 import com.storyteller_f.a.app.core.components.NavRoute
 import com.storyteller_f.a.app.core.components.SheetContainer
-import com.storyteller_f.a.app.core.components.SimpleMessageWithButton
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.bottomAppending
 import com.storyteller_f.a.app.core.components.catchingResult
@@ -108,13 +108,9 @@ import com.storyteller_f.storage.UploadInfo
 import com.storyteller_f.storage.UploadStatus
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.openFilePicker
-import io.github.windedge.table.DataTable
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.launch
 import nl.jacobras.humanreadable.HumanReadable
-import org.jetbrains.compose.ui.tooling.preview.Preview
-import org.jetbrains.compose.ui.tooling.preview.PreviewParameter
-import org.jetbrains.compose.ui.tooling.preview.PreviewParameterProvider
 import kotlin.math.pow
 import kotlin.math.round
 
@@ -140,6 +136,7 @@ private fun fileNavRoutes(mediaTarget: ObjectTuple): List<NavRoute> {
     return list
 }
 
+@Suppress("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FileExplorerCompatPageInternal(mediaTarget: ObjectTuple) {
@@ -196,6 +193,7 @@ private fun FileExplorerPager(
     }
 }
 
+@Suppress("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FileExplorerNonCompatPageInternal(mediaTarget: ObjectTuple) {
@@ -649,39 +647,18 @@ fun DownloadInfoTable(
 ) {
     val fileInfo = downloadInfo?.fileInfo
     val tableData = remember(downloadInfo, fileInfo) {
-        buildMap {
-            put("Path", downloadInfo?.path)
-            put("Size", fileInfo?.size?.let { HumanReadable.fileSize(it) })
-            put("Status", downloadInfo?.status?.name)
+        buildList {
+            downloadInfo?.path?.let { add("Path" to it) }
+            fileInfo?.size?.let { add("Size" to HumanReadable.fileSize(it)) }
+            downloadInfo?.status?.name?.let { add("Status" to it) }
             if (downloadInfo?.status == DownloadStatus.DOWNLOAD_FAILED) {
-                put("Error", downloadInfo.message)
+                downloadInfo.message.let { add("Error" to it) }
             }
-            put("Message", downloadInfo?.message)
-            put("Url", fileInfo?.url)
+            downloadInfo?.message?.let { add("Message" to it) }
+            fileInfo?.url?.let { add("Url" to it) }
         }
     }
-    DataTable(
-        {
-            headerBackground {
-                Box(modifier = Modifier.background(color = MaterialTheme.colorScheme.primaryContainer))
-            }
-            column { Text("Key", color = MaterialTheme.colorScheme.onPrimaryContainer) }
-            column { Text("Value", color = MaterialTheme.colorScheme.onPrimaryContainer) }
-        }
-    ) {
-        tableData.forEach { (key, value) ->
-            row(modifier = Modifier) {
-                cell {
-                    Text(key)
-                }
-                cell {
-                    value?.let {
-                        SimpleMessageWithButton(it, key)
-                    }
-                }
-            }
-        }
-    }
+    InfoTable(tableData)
 }
 
 fun Float.roundToDecimalPlaces(decimals: Int): Float {
@@ -939,38 +916,17 @@ private fun UploadInfoTitle(data: UploadInfo?) {
 @Composable
 private fun UploadInfoTable(uploadInfo: UploadInfo?) {
     val tableData = remember(uploadInfo) {
-        buildMap {
-            put("Path", uploadInfo?.path)
-            put("Hash", uploadInfo?.pathHash)
-            put("Size", uploadInfo?.total?.let { HumanReadable.fileSize(it) })
-            put("Status", uploadInfo?.status?.name)
-            put("Message", uploadInfo?.message)
-            put("Name", uploadInfo?.name)
-            put("ContentType", uploadInfo?.contentType)
+        buildList {
+            uploadInfo?.path?.let { add("Path" to it) }
+            uploadInfo?.pathHash?.let { add("Hash" to it) }
+            uploadInfo?.total?.let { add("Size" to HumanReadable.fileSize(it)) }
+            uploadInfo?.status?.name?.let { add("Status" to it) }
+            uploadInfo?.message?.let { add("Message" to it) }
+            uploadInfo?.name?.let { add("Name" to it) }
+            uploadInfo?.contentType?.let { add("ContentType" to it) }
         }
     }
-    DataTable(
-        {
-            headerBackground {
-                Box(modifier = Modifier.background(color = MaterialTheme.colorScheme.primaryContainer))
-            }
-            column { Text("Key", color = MaterialTheme.colorScheme.onPrimaryContainer) }
-            column { Text("Value", color = MaterialTheme.colorScheme.onPrimaryContainer) }
-        }
-    ) {
-        tableData.forEach { (key, value) ->
-            row(modifier = Modifier) {
-                cell {
-                    Text(key)
-                }
-                cell {
-                    value?.let {
-                        SimpleMessageWithButton(it, key)
-                    }
-                }
-            }
-        }
-    }
+    InfoTable(tableData)
 }
 
 fun UploadInfo?.getPercent(): String {

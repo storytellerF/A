@@ -20,8 +20,8 @@ kotlin {
         }
     }
 
-    androidLibrary {
-        namespace = "com.storyteller_f.a.shared"
+    android {
+        namespace = "com.storyteller_f.a.api"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
         compilerOptions {
