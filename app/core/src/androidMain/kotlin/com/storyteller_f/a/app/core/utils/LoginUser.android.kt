@@ -8,11 +8,13 @@ import com.russhwolf.settings.Settings
 import com.russhwolf.settings.SharedPreferencesSettings
 import com.russhwolf.settings.serialization.decodeValueOrNull
 import com.russhwolf.settings.serialization.encodeValue
+import com.storyteller_f.a.api.CustomApi
 import com.storyteller_f.a.client.core.RawUserPassInfo
 import com.storyteller_f.a.client.core.UserPass
 import com.storyteller_f.shared.CryptoJvm
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.getAppContextRefValue
+import com.storyteller_f.shared.model.AlgoType
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -130,6 +132,18 @@ data class AndroidKeyStoreUserPass(private val alias: String) : UserPass {
         val derPublicKeyStr = keyStore.getCertificate("default").publicKey.encoded.toHexString()
         println("public $derPublicKeyStr")
         return getAlgo().calcAddress(derPublicKeyStr)
+    }
+
+    override suspend fun decryptChildAccount(
+        encryptedPrivateKey: String,
+        encryptedAesKey: String,
+        childAlgoType: AlgoType
+    ): Result<String> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun encryptChildAccount(): Result<CustomApi.Accounts.ChildAccounts.AddChildAccountRequest> {
+        TODO("Not yet implemented")
     }
 }
 

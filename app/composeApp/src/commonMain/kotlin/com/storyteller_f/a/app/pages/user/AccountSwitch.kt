@@ -52,6 +52,8 @@ import com.storyteller_f.a.client.core.RawUserPass
 import com.storyteller_f.a.client.core.RawUserPassInfo
 import com.storyteller_f.a.client.core.addChildAccount
 import com.storyteller_f.shared.algoRunCatching
+import com.storyteller_f.shared.getAlgo
+import com.storyteller_f.shared.model.ChildAccountInfo
 import com.storyteller_f.shared.model.UserInfo
 import kotlinx.coroutines.launch
 
@@ -121,7 +123,7 @@ private fun AccountSwitchInternal(viewModel: ChildAccountsViewModel) {
                 childAccountInfo?.let {
                     ChildAccountCell(it.userInfo) {
                         scope.launch {
-                            globalDialogController.switchUser(childAccountInfo.privateKey, uiViewModel)
+                            globalDialogController.switchUser(it, uiViewModel)
                         }
                     }
                 }
@@ -175,15 +177,24 @@ fun isInChildAccount(): State<Boolean> {
 }
 
 suspend fun AppGlobalDialogController.switchUser(
-    derPrivateKeyStr: String,
+    childAccountInfo: ChildAccountInfo,
     uiViewModel: UIViewModel
 ) {
     useResult {
         algoRunCatching {
-            val pemPrivateKey = getPemPrivateKeyFromDer(derPrivateKeyStr).getOrThrow()
-            val publicKey = getDerPublicKeyFromPrivateKey(pemPrivateKey).getOrThrow()
-            val address = calcAddress(publicKey).getOrThrow()
-            RawUserPass(RawUserPassInfo(derPrivateKeyStr, publicKey, address))
+            val currentUserPass = uiViewModel.mainInstance.sessionManager.model.currentUserPass
+            val userPass = currentUserPass ?: throw Exception("user not login")
+            val decrypted = userPass.decryptChildAccount(
+                childAccountInfo.encryptedPrivateKey,
+                childAccountInfo.encryptedAesKey,
+                childAccountInfo.algoType
+            ).getOrThrow()
+            val algoImpl = getAlgo(childAccountInfo.algoType)
+            val pem = algoImpl.getPemPrivateKeyFromDer(decrypted).getOrThrow()
+            val publicKey = algoImpl.getDerPublicKeyFromPrivateKey(pem).getOrThrow()
+
+            val address = algoImpl.calcAddress(publicKey).getOrThrow()
+            RawUserPass(RawUserPassInfo(decrypted, publicKey, address, childAccountInfo.algoType))
         }
     }.getOrNull()?.let {
         uiViewModel.childAccount.value = it

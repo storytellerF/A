@@ -63,7 +63,8 @@ fun mapUserInfo(it: ResultRow): RawUser {
 object ChildAccounts : Table() {
     val uid = customPrimaryKey("uid")
     val hostId = customPrimaryKey("host_id")
-    val privateKey = text("private_key")
+    val encryptedPrivateKey = text("encrypted_private_key")
+    val encryptedAesKey = text("encrypted_aes_key")
     val primaryKeyMd5 = varchar("private_key_md5", 32).uniqueIndex()
     val remark = text("remark").nullable()
     override val primaryKey = PrimaryKey(uid)
@@ -75,6 +76,12 @@ object ChildAccounts : Table() {
 
 fun ChildAccount.Companion.wrapRow(row: ResultRow): ChildAccount {
     return with(ChildAccounts) {
-        ChildAccount(row[uid], row[privateKey], row[hostId], row[remark])
+        ChildAccount(
+            row[uid],
+            row[encryptedPrivateKey],
+            row[encryptedAesKey],
+            row[hostId],
+            row[remark]
+        )
     }
 }

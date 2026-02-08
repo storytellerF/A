@@ -728,9 +728,17 @@ object CustomApi {
                 override val prePageToken: String? = null,
             ) : PageableQuery
 
+            @Serializable
+            class AddChildAccountRequest(
+                val encryptedPrivateKey: String,
+                val encryptedAesKey: String,
+                val derPublicKey: String,
+                val algoType: AlgoType = AlgoType.P256
+            )
+
             val get =
                 safeEndpointWithQuery<ServerResponse<ChildAccountInfo>, ChildAccountQuery>("/accounts/child-accounts")
-            val add = mutationEndpoint<ChildAccountInfo, Unit>("/accounts/child-accounts")
+            val add = mutationEndpoint<ChildAccountInfo, AddChildAccountRequest>("/accounts/child-accounts")
         }
     }
 }

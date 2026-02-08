@@ -321,7 +321,12 @@ interface UserDatabase {
 
     suspend fun getRawChildAccount(uid: PrimaryKey): Result<ChildAccount?>
 
-    suspend fun createChildAccount(hostId: PrimaryKey, privateKey: String, user: User): Result<Unit>
+    suspend fun createChildAccount(
+        hostId: PrimaryKey,
+        encryptedPrivateKey: String,
+        encryptedAesKey: String,
+        user: User
+    ): Result<Unit>
 
     suspend fun getAllUsers(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<RawUser>>
     suspend fun getUserCount(): Result<Long>
