@@ -28,7 +28,6 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.now
 import io.github.aakira.napier.Napier
 import io.ktor.client.plugins.logging.LogLevel
-import io.ktor.util.decodeBase64String
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
@@ -39,6 +38,7 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
+import kotlin.io.encoding.Base64
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
@@ -52,7 +52,7 @@ fun main() {
     val base64BotPem = System.getenv("BOT_PEM") ?: throw Exception("BOT_PEM not exists")
     val httpUrl = System.getenv("SERVER_URL") ?: throw Exception("SERVER_URL not exists")
     val wsUrl = System.getenv("WS_SERVER_URL") ?: throw Exception("WS_SERVER_URL not exists")
-    val pemPrivateKey = base64BotPem.decodeBase64String()
+    val pemPrivateKey = Base64.decode(base64BotPem).decodeToString()
     val sessionManager =
         createUserSessionManager(buildWebSocketUrl(wsUrl), { model, cookieManager ->
             getClient {

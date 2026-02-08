@@ -33,7 +33,7 @@ class RTCService : LifecycleService() {
         val channel = "Upload"
         getOrCreateNotificationChannel(this, channel)
         val notification = NotificationCompat.Builder(this, channel)
-            .setSmallIcon(com.storyteller_f.a.app.R.drawable.baseline_video_call_24)
+            .setSmallIcon(com.storyteller_f.a.app.android_library.R.drawable.baseline_video_call_24)
             .setContentTitle("RTC")
             .setOngoing(true)
         startForeground(2, notification.build())

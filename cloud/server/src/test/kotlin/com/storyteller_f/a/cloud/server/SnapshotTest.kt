@@ -1,5 +1,6 @@
 package com.storyteller_f.a.cloud.server
 
+import com.storyteller_f.a.backend.core.loadAvif
 import com.storyteller_f.a.backend.core.setLogPath
 import com.storyteller_f.a.cloud.openpdf.OpenPdf
 import com.storyteller_f.a.cloud.pdf.PdfGenerationSpec
@@ -159,6 +160,7 @@ class SnapshotTest {
 
 private fun openPdfSnapshot(content: String, map: Map<String, File> = emptyMap()) {
     setLogPath()
+    loadAvif()
 
     // 从异常堆栈获取当前测试函数名
     val methodName = Exception().stackTrace.first {
@@ -195,7 +197,8 @@ private fun openPdfSnapshot(content: String, map: Map<String, File> = emptyMap()
                 actualFile.absolutePath
             ).compare()
             // 可选：输出 diff 到目录（返回是否相等）
-            result.writeTo(baseDir.resolve("$methodName-diff").path)
+            val diffFile = baseDir.resolve("$methodName-diff")
+            result.writeTo(diffFile.path)
 
             // 支持通过环境变量刷新快照：UPDATE_SNAPSHOTS=1 覆盖现有快照（仅当结果不同时）
             val updateSnapshots = System.getenv("UPDATE_SNAPSHOTS") == "1"
@@ -205,6 +208,9 @@ private fun openPdfSnapshot(content: String, map: Map<String, File> = emptyMap()
                     actualFile.copyTo(snapshotFile, overwrite = true)
                 }
             }
+
+            println(actualFile.canonicalPath)
+            println(diffFile.canonicalPath + ".pdf")
 
             assertTrue(result.isEqual(), "$name PDF snapshot mismatch for $methodName")
         }

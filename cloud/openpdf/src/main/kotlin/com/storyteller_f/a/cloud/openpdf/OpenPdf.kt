@@ -29,6 +29,7 @@ import org.openpdf.text.FontFactory
 import org.openpdf.text.Image
 import org.openpdf.text.Paragraph
 import org.openpdf.text.Rectangle
+import org.openpdf.text.pdf.BaseFont
 import org.openpdf.text.pdf.PdfContentByte
 import org.openpdf.text.pdf.PdfPCell
 import org.openpdf.text.pdf.PdfPCellEvent
@@ -115,6 +116,17 @@ class OpenPdf : PdfService {
             }
         }
     }
+    companion object {
+        init {
+            FontFactory.registerDirectories()
+            val userFontDir = File(System.getProperty("user.home"), "AppData/Local/Microsoft/Windows/Fonts")
+            if (userFontDir.exists()) {
+                FontFactory.registerDirectory(userFontDir.absolutePath)
+            }
+            FontFactory.defaultEmbedding = true
+            FontFactory.defaultEncoding = BaseFont.IDENTITY_H
+        }
+    }
 }
 
 private fun signPdfWithKeyStore(
@@ -154,7 +166,7 @@ private fun signPdfWithKeyStore(
     // Use Layer2 to render a table-based signature instead of an image
     val layer2 = appearance.getLayer(2)
     val signatureInfo = com.storyteller_f.a.cloud.pdf.SignatureInfo(
-        signee = (chain[0] as java.security.cert.X509Certificate).subjectDN.name,
+        signee = (chain[0] as java.security.cert.X509Certificate).subjectX500Principal.name,
         timestamp = pdfGenerationSpec.created.toString(),
         hint = "Digitally Signed by OpenPDF"
     )

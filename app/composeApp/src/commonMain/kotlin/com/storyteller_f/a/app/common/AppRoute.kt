@@ -23,6 +23,7 @@ import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 import com.mikepenz.aboutlibraries.ui.compose.m3.libraryColors
 import com.mikepenz.aboutlibraries.ui.compose.produceLibraries
 import com.storyteller_f.a.app.LocalUserInfo
+import com.storyteller_f.a.app.Res
 import com.storyteller_f.a.app.core.components.FileViewData
 import com.storyteller_f.a.app.pages.HomePage
 import com.storyteller_f.a.app.pages.PreferencePage
@@ -447,7 +448,7 @@ fun NavGraphBuilder.buildRootNav(
     buildFileExplorerScreen()
     composable<AboutScreen> {
         val libraries by produceLibraries {
-            io.github.windedge.table.res.Res.readBytes("files/aboutlibraries.json").decodeToString()
+            Res.readBytes("files/aboutlibraries.json").decodeToString()
         }
         Surface {
             LibrariesContainer(

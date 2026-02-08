@@ -23,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.api.NewCommunity
 import com.storyteller_f.a.app.LocalAppNavFactory
@@ -39,7 +40,6 @@ import com.storyteller_f.a.client.core.createCommunity
 import com.storyteller_f.shared.model.MemberPolicy
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 fun CommunityComposePage() {

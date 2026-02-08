@@ -697,10 +697,10 @@ suspend fun UserSessionManager.getChildAccounts(nextId: String?, size: Int) = se
 suspend fun UserSessionManager.addFavorite(newFavorite: NewFavorite) = serviceCatching {
     val commonPath = CommonPath(newFavorite.objectId)
     when (newFavorite.objectType) {
-        ObjectType.USER -> CustomApi.Users.Id.Favorite.add(commonPath, Unit) {}
-        ObjectType.TOPIC -> CustomApi.Topics.Id.Favorite.add(commonPath, Unit) {}
-        ObjectType.COMMUNITY -> CustomApi.Communities.Id.Favorite.add(commonPath, Unit) {}
-        ObjectType.ROOM -> CustomApi.Rooms.Id.Favorite.add(commonPath, Unit) {}
+        USER -> CustomApi.Users.Id.Favorite.add(commonPath, Unit) {}
+        TOPIC -> CustomApi.Topics.Id.Favorite.add(commonPath, Unit) {}
+        COMMUNITY -> CustomApi.Communities.Id.Favorite.add(commonPath, Unit) {}
+        ROOM -> CustomApi.Rooms.Id.Favorite.add(commonPath, Unit) {}
         else -> throw IllegalArgumentException("Unsupported object type for favorite")
     }
 }
@@ -708,10 +708,10 @@ suspend fun UserSessionManager.addFavorite(newFavorite: NewFavorite) = serviceCa
 suspend fun UserSessionManager.removeFavorite(objectId: PrimaryKey, objectType: ObjectType) = serviceCatching {
     val commonPath = CommonPath(objectId)
     when (objectType) {
-        ObjectType.USER -> CustomApi.Users.Id.Favorite.delete(commonPath, Unit) {}
-        ObjectType.TOPIC -> CustomApi.Topics.Id.Favorite.delete(commonPath, Unit) {}
-        ObjectType.COMMUNITY -> CustomApi.Communities.Id.Favorite.delete(commonPath, Unit) {}
-        ObjectType.ROOM -> CustomApi.Rooms.Id.Favorite.delete(commonPath, Unit) {}
+        USER -> CustomApi.Users.Id.Favorite.delete(commonPath, Unit) {}
+        TOPIC -> CustomApi.Topics.Id.Favorite.delete(commonPath, Unit) {}
+        COMMUNITY -> CustomApi.Communities.Id.Favorite.delete(commonPath, Unit) {}
+        ROOM -> CustomApi.Rooms.Id.Favorite.delete(commonPath, Unit) {}
         else -> throw IllegalArgumentException("Unsupported object type for favorite")
     }
 }
@@ -724,10 +724,10 @@ suspend fun UserSessionManager.getFavorites(paginationQuery: PaginationQuery) = 
 suspend fun UserSessionManager.addSubscription(newFavorite: NewSubscription) = serviceCatching {
     val commonPath = CommonPath(newFavorite.objectId)
     when (newFavorite.objectType) {
-        ObjectType.USER -> CustomApi.Users.Id.Subscription.add(commonPath, Unit) {}
-        ObjectType.TOPIC -> CustomApi.Topics.Id.Subscription.add(commonPath, Unit) {}
-        ObjectType.COMMUNITY -> CustomApi.Communities.Id.Subscription.add(commonPath, Unit) {}
-        ObjectType.ROOM -> CustomApi.Rooms.Id.Subscription.add(commonPath, Unit) {}
+        USER -> CustomApi.Users.Id.Subscription.add(commonPath, Unit) {}
+        TOPIC -> CustomApi.Topics.Id.Subscription.add(commonPath, Unit) {}
+        COMMUNITY -> CustomApi.Communities.Id.Subscription.add(commonPath, Unit) {}
+        ROOM -> CustomApi.Rooms.Id.Subscription.add(commonPath, Unit) {}
         else -> throw IllegalArgumentException("Unsupported object type for subscription")
     }
 }
@@ -736,10 +736,10 @@ suspend fun UserSessionManager.removeSubscription(objectId: PrimaryKey, objectTy
     serviceCatching {
         val commonPath = CommonPath(objectId)
         when (objectType) {
-            ObjectType.USER -> CustomApi.Users.Id.Subscription.delete(commonPath, Unit) {}
-            ObjectType.TOPIC -> CustomApi.Topics.Id.Subscription.delete(commonPath, Unit) {}
-            ObjectType.COMMUNITY -> CustomApi.Communities.Id.Subscription.delete(commonPath, Unit) {}
-            ObjectType.ROOM -> CustomApi.Rooms.Id.Subscription.delete(commonPath, Unit) {}
+            USER -> CustomApi.Users.Id.Subscription.delete(commonPath, Unit) {}
+            TOPIC -> CustomApi.Topics.Id.Subscription.delete(commonPath, Unit) {}
+            COMMUNITY -> CustomApi.Communities.Id.Subscription.delete(commonPath, Unit) {}
+            ROOM -> CustomApi.Rooms.Id.Subscription.delete(commonPath, Unit) {}
             else -> throw IllegalArgumentException("Unsupported object type for subscription")
         }
     }

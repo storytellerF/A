@@ -7,27 +7,32 @@ android-compileSdk = "36"
 android-minSdk = "26"
 android-targetSdk = "36"
 commonsImaging = "1.0.0-alpha6"
+componentsResources = "1.10.0"
+foundation = "1.10.0"
 javaClient = "10.0.0"
-kodio-core = "0.0.6"
+kodio-core = "0.1.1"
 jdk = "65"
-androidx-activityCompose = "1.12.2"
+androidx-activityCompose = "1.12.3"
 bcprovJdk18on = "1.83"
 buildconfig = "0.17.1"
 coil = "3.3.0"
-googleGenai = "1.32.0"
-icu4j = "78.1"
+googleGenai = "1.37.0"
+icu4j = "78.2"
+material = "1.10.0"
+material3 = "1.9.0"
+materialIconsExtended = "1.7.3"
 openpdf = "3.0.0"
-pdfcompare = "1.2.7"
+pdfcompare = "1.2.8"
 roomRuntime = "2.8.4"
 endpoint4k-common = "9a9a629cdd"
 commonsLogging = "1.3.5"
-compose-plugin = "1.9.3"
+compose-plugin = "1.10.0"
 composeNativeNotification = "0.2.0"
 composePdf = "1.2.0"
 composePreferences = "1.1.1"
 composeWebview = "0.33.6"
-connector = "3.1.2"
-connectivity = "2.3.0"
+connector = "3.2.0"
+connectivity = "2.4.0"
 coreSplashscreen = "1.2.0"
 couchbaseLite = "3.2.4-1.2.0"
 cryptographyCore = "0.5.0"
@@ -36,9 +41,9 @@ datastorePreferencesCore = "1.2.0"
 desugar_jdk_libs = "2.1.5"
 detektVersion = "1.23.8"
 easylauncher = "6.4.1"
-elasticsearchJava = "9.2.3"
+elasticsearchJava = "9.2.4"
 emojiKt = "2.3.0"
-exposedVersion = "1.0.0-rc-4"
+exposedVersion = "1.0.0"
 filekitCompose = "0.12.0"
 font-icon-core = "2.1.1"
 geoip2 = "5.0.2"
@@ -46,9 +51,9 @@ h2 = "1.0.0.RELEASE"
 haze = "1.7.1"
 highlights = "1.1.0"
 humanReadable = "1.12.3"
-jacksonModuleKotlin = "2.20.1"
+jacksonModuleKotlin = "2.21.0"
 javacvPlatform = "1.5.12"
-javet = "5.0.2"
+javet = "5.0.3"
 jlatexmath = "1.0.7"
 jlatexmathAndroid = "0.2.0"
 jlayer = "1.0.3"
@@ -60,37 +65,37 @@ kotlinxCli = "0.3.6"
 kotlinxCollectionsImmutable = "0.4.0"
 kotlinxCoroutinesSwing = "1.10.2"
 kotlinxDatetime = "0.7.1-0.6.x-compat"
-kotlinxSerializationJson = "1.9.0"
-kover = "0.9.4"
+kotlinxSerializationJson = "1.10.0"
+kover = "0.9.5"
 kreds = "0.9.1"
 krop-ui = "0.2.0"
 ksp = "2.3.4"
-ktor = "3.3.3"
+ktor = "3.4.0"
 kzip = "1.1.1"
 leakcanaryAndroid = "2.14"
 lifecycleViewmodelCompose = "2.9.6"
-lifecycle = "2.9.4"
+lifecycle = "2.10.0"
 llama = "4.2.0"
-logback = "1.5.23"
+logback = "1.5.27"
 luceneCore = "10.3.2"
 m3uParser = "1.4.0"
 markdown = "0.7.3"
 material3WindowSizeClassMultiplatform = "0.5.0"
-media3Exoplayer = "1.9.0"
+media3Exoplayer = "1.9.2"
 memoryfilesystem = "2.8.2"
-micrometerRegistryPrometheus = "1.16.1"
+micrometerRegistryPrometheus = "1.16.2"
 minio = "8.6.0"
 mysqlConnectorJava = "8.0.33"
 newpipeextractorVersion = "v0.24.5"
 okhttp = "5.3.2"
-pagingCommon = "3.4.0-beta01"
+pagingCommon = "3.4.0"
+runtime = "1.10.0"
 sqlFormatter = "2.0.5"
 sqliteBundled = "2.6.2"
-tableM3 = "0.2.3"
-tasksGenai = "0.10.29"
+tasksGenai = "0.10.32"
 testContainer = "1.21.4"
 mosaicRuntime = "0.18.0"
-multiplatformMarkdownRenderer = "0.39.0"
+multiplatformMarkdownRenderer = "0.39.2"
 multiplatformSettingsNoArg = "1.3.0"
 napier = "2.7.1"
 navigationCompose = "2.9.1"
@@ -99,10 +104,11 @@ pdfboxLayout = "3.0.0-rc.0"
 postgresql = "1.1.0.RELEASE"
 recordCore = "0.5.0"
 richeditorCompose = "1.0.0-rc13"
-robolectric = "4.16"
+robolectric = "4.16.1"
 tikaCore = "3.2.3"
-uiTestJunit4Android = "1.10.0"
-uiToolingPreview = "1.10.0"
+ui = "1.10.0"
+uiTestJunit4Android = "1.10.2"
+uiToolingPreview = "1.10.2"
 uriKmp = "0.0.21"
 urlbuilder = "2.0.9"
 vaviImageAvif = "0.0.7"
@@ -122,6 +128,7 @@ accompanist-permissions = { module = "com.google.accompanist:accompanist-permiss
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
 androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
 androidx-datastore-preferences-core = { module = "androidx.datastore:datastore-preferences-core", version.ref = "datastorePreferencesCore" }
+androidx-lifecycle-common = { module = "androidx.lifecycle:lifecycle-common", version.ref = "lifecycle" }
 androidx-lifecycle-viewmodel-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelCompose" }
 #androidx-lifecycle-runtimeCompose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycleViewmodelCompose" }
 androidx-media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "media3Exoplayer" }
@@ -145,12 +152,17 @@ coil-compose-core = { module = "io.coil-kt.coil3:coil-compose-core", version.ref
 coil-network-ktor = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
 coil-svg = { module = "io.coil-kt.coil3:coil-svg", version.ref = "coil" }
 commons-imaging = { module = "org.apache.commons:commons-imaging", version.ref = "commonsImaging" }
+components-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "componentsResources" }
+foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "foundation" }
 gradle = { module = "com.android.tools.build:gradle", version.ref = "agp" }
 java-client = { module = "io.appium:java-client", version.ref = "javaClient" }
 kodio-core = { module = "space.kodio:core", version.ref = "kodio-core" }
 couchbase-lite-paging = { module = "dev.kotbase:couchbase-lite-paging", version.ref = "couchbaseLite" }
 google-genai = { module = "com.google.genai:google-genai", version.ref = "googleGenai" }
 icu4j = { module = "com.ibm.icu:icu4j", version.ref = "icu4j" }
+material = { module = "org.jetbrains.compose.material:material", version.ref = "material" }
+material-icons-extended = { module = "org.jetbrains.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
+material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "material3" }
 openpdf = { module = "com.github.librepdf:openpdf", version.ref = "openpdf" }
 pdfcompare = { module = "de.redsix:pdfcompare", version.ref = "pdfcompare" }
 endpoint4k-common = { module = "com.github.storytellerF.endpoint4k:common", version.ref = "endpoint4k-common" }
@@ -201,8 +213,8 @@ memoryfilesystem = { module = "com.github.marschall:memoryfilesystem", version.r
 micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "micrometerRegistryPrometheus" }
 mysql-connector-java = { module = "mysql:mysql-connector-java", version.ref = "mysqlConnectorJava" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
+runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "runtime" }
 sql-formatter = { module = "com.github.vertical-blank:sql-formatter", version.ref = "sqlFormatter" }
-table-m3 = { module = "io.github.windedge.table:table-m3", version.ref = "tableM3" }
 tasks-genai = { module = "com.google.mediapipe:tasks-genai", version.ref = "tasksGenai" }
 testcontainers-elasticsearch = { module = "org.testcontainers:elasticsearch", version.ref = "testContainer" }
 elasticsearch-java = { module = "co.elastic.clients:elasticsearch-java", version.ref = "elasticsearchJava" }
@@ -291,6 +303,10 @@ testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.
 testcontainers-mysql = { module = "org.testcontainers:mysql", version.ref = "testContainer" }
 tika-core = { module = "org.apache.tika:tika-core", version.ref = "tikaCore" }
 krop-ui = { module = "com.attafitamim.krop:ui", version.ref = "krop-ui" }
+ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "ui" }
+ui-test = { module = "org.jetbrains.compose.ui:ui-test", version.ref = "ui" }
+ui-tooling = { module = "org.jetbrains.compose.ui:ui-tooling", version.ref = "ui" }
+ui-tooling-preview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "ui" }
 uri-kmp = { module = "com.eygraber:uri-kmp", version.ref = "uriKmp" }
 urlbuilder = { module = "io.mikael:urlbuilder", version.ref = "urlbuilder" }
 vavi-image-avif = { module = "com.github.umjammer:vavi-image-avif", version.ref = "vaviImageAvif" }

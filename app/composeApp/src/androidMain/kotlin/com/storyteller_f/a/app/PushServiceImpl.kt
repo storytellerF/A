@@ -40,7 +40,7 @@ class PushServiceImpl : PushService(), LifecycleOwner {
             ) == PackageManager.PERMISSION_GRANTED
         ) {
             val notification = NotificationCompat.Builder(this, channel)
-                .setSmallIcon(com.storyteller_f.a.app.R.drawable.ic_notify)
+                .setSmallIcon(com.storyteller_f.a.app.android_library.R.drawable.ic_notify)
                 .setContentTitle("New message")
             notificationManager.notify(notifyId.getAndIncrement(), notification.build())
         }

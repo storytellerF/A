@@ -12,7 +12,7 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
-import com.storyteller_f.a.app.R.drawable.baseline_upload_file_24
+import com.storyteller_f.a.app.android_library.R.drawable.baseline_upload_file_24
 import com.storyteller_f.a.app.common.Downloader
 import com.storyteller_f.a.app.common.DownloaderImpl
 import com.storyteller_f.a.app.common.SimpleTaskRegister

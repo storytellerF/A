@@ -101,7 +101,7 @@ fun ComponentActivity.initFromContext() {
             channelName = "Regular",
             channelDescription = "Regular",
             channelImportance = NotificationManager.IMPORTANCE_DEFAULT,
-            smallIcon = com.storyteller_f.a.app.R.drawable.ic_notify
+            smallIcon = com.storyteller_f.a.app.android_library.R.drawable.ic_notify
         )
     )
 }

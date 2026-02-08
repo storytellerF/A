@@ -27,7 +27,7 @@ val flavorId = CaseFormat.LOWER_HYPHEN.converterTo(CaseFormat.LOWER_UNDERSCORE).
 val buildType = project.findProperty("server.buildType") as String
 kotlin {
     android {
-        namespace = "com.storyteller_f.a.panel"
+        namespace = "com.storyteller_f.a.panel.android_library"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
         compilerOptions {
@@ -74,7 +74,6 @@ kotlin {
             dependsOn(commonTest.get())
         }
         androidMain.dependencies {
-            implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
 
             implementation(libs.jlatexmath.android)
@@ -114,14 +113,14 @@ kotlin {
             }
         }
         commonMain.dependencies {
-            implementation(compose.runtime)
-            implementation(compose.foundation)
-            implementation(compose.material)
-            implementation(compose.materialIconsExtended)
-            implementation(compose.material3)
-            implementation(compose.ui)
-            implementation(compose.components.resources)
-            implementation(compose.components.uiToolingPreview)
+            implementation(libs.runtime)
+            implementation(libs.foundation)
+            implementation(libs.material)
+            implementation(libs.material.icons.extended)
+            implementation(libs.material3)
+            implementation(libs.ui)
+            implementation(libs.components.resources)
+            implementation(libs.ui.tooling.preview)
             implementation(libs.navigation.compose)
 
             implementation(projects.shared)
@@ -161,7 +160,7 @@ kotlin {
             implementation(libs.krop.ui)
             implementation(libs.multiplatform.settings)
             implementation(libs.multiplatform.settings.serialization)
-            implementation(libs.table.m3)
+
             implementation(libs.compose.native.notification)
             implementation(libs.compose.preferences)
             implementation(libs.haze)
@@ -175,8 +174,7 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
 
-            @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
-            implementation(compose.uiTest)
+            implementation(libs.ui.test)
             implementation(projects.dev.core)
         }
         jvmMain.dependencies {
@@ -208,7 +206,7 @@ composeCompiler {
 }
 
 dependencies {
-    androidRuntimeClasspath(compose.uiTooling)
+    androidRuntimeClasspath(libs.ui.tooling)
     androidRuntimeClasspath(libs.androidx.ui.test.manifest)
 }
 
