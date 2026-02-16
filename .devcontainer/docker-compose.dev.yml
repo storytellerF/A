@@ -3,11 +3,14 @@ services:
     build:
       context: ../
       dockerfile: ./dev.Dockerfile
+      args:
+        - USER_NAME=${CONTAINER_USERNAME}
     ports:
       - "6081:6080" # noVNC web interface
       - "5902:5901" # VNC direct connection
       - "5556:5555" # ADB
       - "4724:4723" # Appium
+      - "4422:22"   # ssh
     environment:
       - VNC_PASSWD=password
       - TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal
@@ -15,12 +18,12 @@ services:
       - ..:/workspace/A:cached
       - ../../AData:/workspace/AData:cached
       - /var/run/docker.sock:/var/run/docker.sock  # 宿主机 Docker 套接字
-      - sdk_data:/opt/android/sdk
+      - sdk_data:/home/${CONTAINER_USERNAME}/Android/Sdk
       - a-bashhistory:/commandhistory
-      - avd_data:/home/ubuntu/.android/avd
-      - gradle_data:/home/ubuntu/.gradle
-      - konan_data:/home/ubuntu/.konan
-      - m2_data:/home/ubuntu/.m2
+      - avd_data:/home/${CONTAINER_USERNAME}/.android/avd
+      - gradle_data:/home/${CONTAINER_USERNAME}/.gradle
+      - konan_data:/home/${CONTAINER_USERNAME}/.konan
+      - m2_data:/home/${CONTAINER_USERNAME}/.m2
     shm_size: '2gb' # Allocate more shared memory
     privileged: true # Enable KVM acceleration
     # devices:
