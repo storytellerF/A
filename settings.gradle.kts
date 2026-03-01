@@ -1,11 +1,5 @@
 @file:Suppress("UnstableApiUsage")
 
-include(":panel:benchmark")
-
-
-include(":app:benchmark")
-
-
 val isAppiumTestEnable = providers.gradleProperty("appium").get() == "true"
 
 rootProject.name = "A"
@@ -44,6 +38,15 @@ dependencyResolutionManagement {
         maven("https://maven.pkg.jetbrains.space/public/p/ktor/eap")
         maven("https://jogamp.org/deployment/maven/")
         maven("https://jitpack.io")
+        maven {
+            name = "github"
+            url = uri("https://maven.pkg.github.com/storytellerF/endpoint4k")
+            credentials {
+                // 需要配置在~/.gradle/gradle.properties
+                username = providers.gradleProperty("gpr.user").get()
+                password = providers.gradleProperty("gpr.key").get()
+            }
+        }
     }
 }
 
@@ -90,3 +93,6 @@ include(":api")
 include(":bot:builtin-bot")
 
 includeBuild("bgscripts")
+
+include(":panel:benchmark")
+include(":app:benchmark")

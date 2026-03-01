@@ -64,7 +64,7 @@ fun FSDirectory.cleanAll(
     analyzer: StandardAnalyzer
 ) {
     IndexWriter(this, IndexWriterConfig(analyzer)).use { writer ->
-        writer.deleteDocuments(MatchAllDocsQuery())
+        writer.deleteDocuments(MatchAllDocsQuery.INSTANCE)
     }
 }
 

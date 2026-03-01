@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import coil3.annotation.ExperimentalCoilApi
 import coil3.compose.AsyncImagePainter
 import coil3.compose.LocalPlatformContext
 import coil3.compose.SubcomposeAsyncImage
@@ -60,13 +61,13 @@ fun ImageLoading() {
     }
 }
 
+@OptIn(ExperimentalCoilApi::class)
 @Composable
 fun globalLoader(url: String): ImageRequest {
     val client = LocalClient.current
     val platformContext = LocalPlatformContext.current
     return remember(url) {
-        val data = url
-        ImageRequest.Builder(platformContext).data(data).crossfade(true).fetcherFactory(
+        ImageRequest.Builder(platformContext).data(url).crossfade(true).fetcherFactory(
             KtorNetworkFetcherFactory(client)
         ).build()
     }
