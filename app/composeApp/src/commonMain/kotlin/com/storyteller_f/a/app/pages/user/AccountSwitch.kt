@@ -121,7 +121,7 @@ private fun AccountSwitchInternal(viewModel: ChildAccountsViewModel) {
             ) { index ->
                 val childAccountInfo = pagingItems[index]
                 childAccountInfo?.let {
-                    ChildAccountCell(it.userInfo) {
+                    ChildAccountCell(it) {
                         scope.launch {
                             globalDialogController.switchUser(it, uiViewModel)
                         }
@@ -134,7 +134,8 @@ private fun AccountSwitchInternal(viewModel: ChildAccountsViewModel) {
 
 @Preview
 @Composable
-fun ChildAccountCell(userInfo: UserInfo?, onClick: () -> Unit) {
+fun ChildAccountCell(childAccountInfo: ChildAccountInfo, onClick: () -> Unit) {
+    val userInfo = childAccountInfo.userInfo
     Row(
         modifier = Modifier.padding(8.dp).clickable(onClick = onClick),
         verticalAlignment = Alignment.CenterVertically,
@@ -144,16 +145,15 @@ fun ChildAccountCell(userInfo: UserInfo?, onClick: () -> Unit) {
             setClickEvent = false,
             avatarUrl = userInfo?.avatar?.url,
         ) {}
-        if (userInfo != null) {
-            Column {
-                Text(userInfo.nickname, style = MaterialTheme.typography.titleMedium)
-                val aid = userInfo.aid
-                if (aid != null) {
-                    Text(CoreStrings.aid(aid), style = MaterialTheme.typography.labelSmall)
-                } else {
-                    Text(CoreStrings.ad(userInfo.address), style = MaterialTheme.typography.labelSmall)
-                }
+        Column {
+            Text(userInfo.nickname, style = MaterialTheme.typography.titleMedium)
+            val aid = userInfo.aid
+            if (aid != null) {
+                Text(CoreStrings.aid(aid), style = MaterialTheme.typography.labelSmall)
+            } else {
+                Text(CoreStrings.ad(userInfo.address), style = MaterialTheme.typography.labelSmall)
             }
+            Text(childAccountInfo.algoType.name)
         }
         CustomIcon(Icons.AutoMirrored.Filled.Input)
     }
