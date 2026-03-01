@@ -28,7 +28,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.times
 import androidx.paging.compose.itemKey
 import com.storyteller_f.a.app.LocalAppNavFactory
 import com.storyteller_f.a.app.common.CommunityScreen
@@ -191,7 +190,7 @@ fun CommunityCell(
     onClick: ((CommunityInfo) -> Unit)? = null
 ) {
     val appNavFactory = LocalAppNavFactory.current
-    val isCommunityPage by appNavFactory.hasRouteFlow<CommunityScreen> {
+    val isCommunityPage = appNavFactory.hasRouteFlow<CommunityScreen> {
         it.communityId == communityInfo?.id
     }
     Row(

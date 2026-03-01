@@ -56,11 +56,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavOptions
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
+import androidx.navigation3.ui.NavDisplay
 import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.savedstate.serialization.SavedStateConfiguration
 import com.storyteller_f.a.app.LocalAppNavFactory
 import com.storyteller_f.a.app.LocalClientFileProvider
 import com.storyteller_f.a.app.LocalGlobalDialog
@@ -110,6 +114,10 @@ import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.openFilePicker
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
+import kotlinx.serialization.modules.subclass
 import nl.jacobras.humanreadable.HumanReadable
 import kotlin.math.pow
 import kotlin.math.round
@@ -193,50 +201,123 @@ private fun FileExplorerPager(
     }
 }
 
+@Serializable
+sealed interface FileExplorerRoute : NavKey {
+    @Serializable
+    data object Uploaded : FileExplorerRoute {
+        override fun toString(): String = "/uploaded"
+    }
+
+    @Serializable
+    data object UploadRecord : FileExplorerRoute {
+        override fun toString(): String = "/upload-record"
+    }
+
+    @Serializable
+    data object DownloadRecord : FileExplorerRoute {
+        override fun toString(): String = "/download-record"
+    }
+}
+
 @Suppress("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FileExplorerNonCompatPageInternal(mediaTarget: ObjectTuple) {
     val navRoutes = fileNavRoutes(mediaTarget)
-    val navigator = rememberNavController()
-    val current by navigator.currentBackStackEntryFlow.collectAsState(null)
-    var showQuota by remember { mutableStateOf(false) }
-    val sheetState = rememberModalBottomSheetState()
-    Scaffold(floatingActionButton = {
-        when (current?.destination?.route) {
-            "/uploaded" -> {
-                FileQuotaActionButton({ showQuota = true })
-            }
-
-            "/upload-record" -> {
-                UploadFileActionButton()
-            }
-        }
-    }) {
-        Row {
-            CustomRailNav(current?.destination?.route, navRoutes) {
-                navigator.navigate(it, NavOptions.Builder().setLaunchSingleTop(true).build())
-            }
-            Column(modifier = Modifier.weight(1f)) {
-                CustomSearchBar(
-                    scope = SearchScope.UploadedFiles(mediaTarget.objectId, mediaTarget.objectType),
-                    leadingIcon = {}
-                )
-                NavHost(navigator, "/uploaded") {
-                    composable("/uploaded") {
-                        UploadedPage(mediaTarget)
-                    }
-                    composable("/upload-record") {
-                        UploadRecordPage(mediaTarget)
-                    }
-                    composable("/download-record") {
-                        DownloadRecordPage()
-                    }
+    val config = remember {
+        SavedStateConfiguration {
+            serializersModule = SerializersModule {
+                polymorphic(NavKey::class) {
+                    subclass(FileExplorerRoute.Uploaded::class)
+                    subclass(FileExplorerRoute.UploadRecord::class)
+                    subclass(FileExplorerRoute.DownloadRecord::class)
                 }
             }
         }
     }
+    val backStack = rememberNavBackStack(config, FileExplorerRoute.Uploaded)
+    val current = backStack.last()
+    var showQuota by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState()
+    Scaffold(floatingActionButton = {
+        FileExplorerFab(current, showQuota = { showQuota = true })
+    }) {
+        Row {
+            FileExplorerRailNav(backStack, current, navRoutes)
+            FileExplorerNonCompatContent(mediaTarget, backStack)
+        }
+    }
     QuotaSheet(showQuota, sheetState, { showQuota = false }, mediaTarget)
+}
+
+@Composable
+private fun FileExplorerFab(current: NavKey, showQuota: () -> Unit) {
+    when (current) {
+        FileExplorerRoute.Uploaded -> {
+            FileQuotaActionButton(showQuota)
+        }
+
+        FileExplorerRoute.UploadRecord -> {
+            UploadFileActionButton()
+        }
+    }
+}
+
+@Composable
+private fun FileExplorerRailNav(
+    backStack: NavBackStack<NavKey>,
+    current: NavKey,
+    navRoutes: List<NavRoute>,
+) {
+    CustomRailNav(current.toString(), navRoutes) { path ->
+        val target = when (path) {
+            "/upload-record" -> FileExplorerRoute.UploadRecord
+            "/download-record" -> FileExplorerRoute.DownloadRecord
+            else -> FileExplorerRoute.Uploaded
+        }
+        if (backStack.last() != target) {
+            val i = backStack.indexOf(target)
+            if (i >= 0) {
+                repeat(backStack.size - i - 1) {
+                    backStack.removeLastOrNull()
+                }
+            } else {
+                backStack.add(target)
+            }
+        }
+    }
+}
+
+@Composable
+private fun FileExplorerNonCompatContent(
+    mediaTarget: ObjectTuple,
+    backStack: NavBackStack<NavKey>,
+) {
+    Column(modifier = Modifier.weight(1f)) {
+        CustomSearchBar(
+            scope = SearchScope.UploadedFiles(mediaTarget.objectId, mediaTarget.objectType),
+            leadingIcon = {}
+        )
+
+        NavDisplay(
+            backStack,
+            entryDecorators = listOf(
+                rememberSaveableStateHolderNavEntryDecorator(),
+                rememberViewModelStoreNavEntryDecorator()
+            ),
+            entryProvider = entryProvider {
+                entry<FileExplorerRoute.Uploaded> {
+                    UploadedPage(mediaTarget)
+                }
+                entry<FileExplorerRoute.UploadRecord> {
+                    UploadRecordPage(mediaTarget)
+                }
+                entry<FileExplorerRoute.DownloadRecord> {
+                    DownloadRecordPage()
+                }
+            }
+        )
+    }
 }
 
 @Composable

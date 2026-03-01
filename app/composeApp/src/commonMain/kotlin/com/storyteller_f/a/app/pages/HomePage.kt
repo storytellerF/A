@@ -46,11 +46,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
-import androidx.navigation.NavOptions
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
+import androidx.navigation3.ui.NavDisplay
+import androidx.savedstate.serialization.SavedStateConfiguration
 import com.storyteller_f.a.app.LocalAppNavFactory
 import com.storyteller_f.a.app.LocalUiViewModel
 import com.storyteller_f.a.app.Res
@@ -73,6 +76,10 @@ import com.storyteller_f.a.app.pages.topic.TopicList
 import com.storyteller_f.a.app.rooms
 import com.storyteller_f.a.app.world
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
+import kotlinx.serialization.modules.subclass
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -96,6 +103,7 @@ fun HomePage() {
     }
 }
 
+@Suppress("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 private fun HomeNonCompatPage(
     modifier: Modifier,
@@ -103,13 +111,56 @@ private fun HomeNonCompatPage(
 ) {
     Scaffold(modifier = modifier) {
         Row(Modifier) {
-            val navigator = rememberNavController()
-            val currentEntry by navigator.currentBackStackEntryFlow.collectAsState(null)
-            CustomRailNav(currentEntry?.destination?.route, homeNavRoutes) {
-                navigator.navigate(it, NavOptions.Builder().setLaunchSingleTop(true).build())
+            val config = remember {
+                SavedStateConfiguration {
+                    serializersModule = SerializersModule {
+                        polymorphic(NavKey::class) {
+                            subclass(HomeRoute.World::class)
+                            subclass(HomeRoute.Communities::class)
+                            subclass(HomeRoute.Rooms::class)
+                        }
+                    }
+                }
             }
-            HomeNavHost(navigator, modifier = Modifier.weight(1f))
+            val backStack = rememberNavBackStack(config, HomeRoute.World)
+            val currentEntry = backStack.last()
+            CustomRailNav(currentEntry.toString(), homeNavRoutes) { path ->
+                val targetRoute = when (path) {
+                    "/communities" -> HomeRoute.Communities
+                    "/rooms" -> HomeRoute.Rooms
+                    else -> HomeRoute.World
+                }
+                if (backStack.last() != targetRoute) {
+                    val i = backStack.indexOf(targetRoute)
+                    if (i >= 0) {
+                        repeat(backStack.size - i - 1) {
+                            backStack.removeLastOrNull()
+                        }
+                    } else {
+                        backStack.add(targetRoute)
+                    }
+                }
+            }
+            HomeNavDisplay(backStack, modifier = Modifier.weight(1f))
         }
+    }
+}
+
+@Serializable
+sealed interface HomeRoute : NavKey {
+    @Serializable
+    data object World : HomeRoute {
+        override fun toString(): String = "/world"
+    }
+
+    @Serializable
+    data object Communities : HomeRoute {
+        override fun toString(): String = "/communities"
+    }
+
+    @Serializable
+    data object Rooms : HomeRoute {
+        override fun toString(): String = "/rooms"
     }
 }
 
@@ -178,35 +229,43 @@ private fun ProjectIcon() {
 }
 
 @Composable
-private fun HomeNavHost(
-    navigator: NavHostController,
+private fun HomeNavDisplay(
+    backStack: NavBackStack<NavKey>,
     modifier: Modifier
 ) {
     Column(modifier = modifier) {
-        val scope = when (navigator.currentDestination?.route) {
-            "/communities" -> SearchScope.MyCommunity
-            "/rooms" -> SearchScope.MyRoom
+        val current = backStack.last()
+        val scope = when (current) {
+            HomeRoute.Communities -> SearchScope.MyCommunity
+            HomeRoute.Rooms -> SearchScope.MyRoom
             else -> SearchScope.World
         }
         CustomSearchBar(scope) {
             ProjectIcon()
         }
         Spacer(modifier = Modifier.height(10.dp))
-        NavHost(navigator, "/world") {
-            composable("/world") {
-                WorldPage()
-            }
-            composable("/communities") {
-                UserHost {
-                    MyCommunitiesPage()
+        NavDisplay(
+            backStack,
+            entryDecorators = listOf(
+                rememberSaveableStateHolderNavEntryDecorator(),
+                rememberViewModelStoreNavEntryDecorator()
+            ),
+            entryProvider = entryProvider {
+                entry<HomeRoute.World> {
+                    WorldPage()
+                }
+                entry<HomeRoute.Communities> {
+                    UserHost {
+                        MyCommunitiesPage()
+                    }
+                }
+                entry<HomeRoute.Rooms> {
+                    UserHost {
+                        MyRoomsPage()
+                    }
                 }
             }
-            composable("/rooms") {
-                UserHost {
-                    MyRoomsPage()
-                }
-            }
-        }
+        )
     }
 }
 

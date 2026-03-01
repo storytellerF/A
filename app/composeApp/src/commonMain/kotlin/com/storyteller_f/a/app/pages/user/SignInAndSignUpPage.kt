@@ -108,9 +108,7 @@ fun SignInAndSignUpPage() {
             }
         }
     }
-
     val backStack = rememberNavBackStack(config, SignIn)
-
     val nav = remember {
         buildSignInAndSignUpNav(backStack)
     }
@@ -126,46 +124,46 @@ fun SignInAndSignUpPage() {
                     Icon(Icons.AutoMirrored.Default.ArrowBack, stringResource(Res.string.back_to_pre_page))
                 }
             }
-            NavDisplay(
-                backStack,
-                entryDecorators = listOf(
-                    // Add the default decorators for managing scenes and saving state
-                    rememberSaveableStateHolderNavEntryDecorator(),
-                    // Then add the view model store decorator
-                    rememberViewModelStoreNavEntryDecorator()
-                ),
-                transitionSpec = {
-                    // Slide in from right when navigating forward
-                    slideInHorizontally(initialOffsetX = { it }) togetherWith
-                            slideOutHorizontally(targetOffsetX = { -it })
-                },
-                popTransitionSpec = {
-                    // Slide in from left when navigating back
-                    slideInHorizontally(initialOffsetX = { -it }) togetherWith
-                            slideOutHorizontally(targetOffsetX = { it })
-                },
-                predictivePopTransitionSpec = {
-                    // Slide in from left when navigating back
-                    slideInHorizontally(initialOffsetX = { -it }) togetherWith
-                            slideOutHorizontally(targetOffsetX = { it })
-                },
-                entryProvider = entryProvider {
-                    entry<SignIn> {
-                        SelectSignInPage(nav)
-                    }
-                    entry<SignUp> {
-                        SelectSignUpPage(nav)
-                    }
-                    entry<SignUpInput> {
-                        InputPrivateKeyPage(true)
-                    }
-                    entry<SignInInput> {
-                        InputPrivateKeyPage(false)
-                    }
-                }
-            )
+            SignInNavDisplay(backStack, nav)
         }
     }
+}
+
+@Composable
+private fun SignInNavDisplay(backStack: NavBackStack<NavKey>, nav: SignInAndSignUpNav) {
+    NavDisplay(
+        backStack,
+        entryDecorators = listOf(
+            rememberSaveableStateHolderNavEntryDecorator(),
+            rememberViewModelStoreNavEntryDecorator()
+        ),
+        transitionSpec = {
+            slideInHorizontally(initialOffsetX = { it }) togetherWith
+                slideOutHorizontally(targetOffsetX = { -it })
+        },
+        popTransitionSpec = {
+            slideInHorizontally(initialOffsetX = { -it }) togetherWith
+                slideOutHorizontally(targetOffsetX = { it })
+        },
+        predictivePopTransitionSpec = {
+            slideInHorizontally(initialOffsetX = { -it }) togetherWith
+                slideOutHorizontally(targetOffsetX = { it })
+        },
+        entryProvider = entryProvider {
+            entry<SignIn> {
+                SelectSignInPage(nav)
+            }
+            entry<SignUp> {
+                SelectSignUpPage(nav)
+            }
+            entry<SignUpInput> {
+                InputPrivateKeyPage(true)
+            }
+            entry<SignInInput> {
+                InputPrivateKeyPage(false)
+            }
+        }
+    )
 }
 
 private fun buildSignInAndSignUpNav(backStack: NavBackStack<NavKey>) = object : SignInAndSignUpNav {
