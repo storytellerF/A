@@ -1,3 +1,5 @@
+package com.storyteller_f.a.app.common
+
 import com.storyteller_f.a.app.pages.topic.TopicRoute
 import kotlin.test.Test
 import kotlin.test.assertEquals
