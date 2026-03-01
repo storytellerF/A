@@ -13,17 +13,17 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.ui.NavDisplay
+import androidx.savedstate.serialization.SavedStateConfiguration
 import com.storyteller_f.a.app.core.components.CenterBox
 import com.storyteller_f.a.app.core.components.SignInButton
 import com.storyteller_f.a.app.core.components.safeArea
@@ -54,6 +54,12 @@ import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
 import org.jetbrains.compose.resources.stringResource
+
+@Serializable
+data object LoginSelectScreen : NavKey
+
+@Serializable
+data object LoginInputScreen : NavKey
 
 @Serializable
 data class PanelUserDetailScreen(val uid: Long) : NavKey
@@ -318,24 +324,38 @@ private fun PanelHost(content: @Composable () -> Unit) {
 
 @Composable
 fun PanelLoginPage(back: () -> Unit) {
-    val navigator = rememberNavController()
+    val module = SerializersModule {
+        polymorphic(NavKey::class) {
+            subclass(LoginSelectScreen::class, LoginSelectScreen.serializer())
+            subclass(LoginInputScreen::class, LoginInputScreen.serializer())
+        }
+    }
+    val config = remember {
+        SavedStateConfiguration {
+            serializersModule = module
+        }
+    }
+    val backStack = rememberNavBackStack(config, LoginSelectScreen)
     Scaffold {
         val direction = LocalLayoutDirection.current
         Box(Modifier.safeArea(it, direction)) {
-            NavHost(navigator, "select") {
-                composable("select") {
-                    PanelSelectLoginPage(navigator)
+            NavDisplay(
+                backStack,
+                entryProvider = entryProvider {
+                    entry<LoginSelectScreen> {
+                        PanelSelectLoginPage { backStack.add(LoginInputScreen) }
+                    }
+                    entry<LoginInputScreen> {
+                        PanelInputPage(back)
+                    }
                 }
-                composable("input") {
-                    PanelInputPage(back)
-                }
-            }
+            )
         }
     }
 }
 
 @Composable
-private fun PanelSelectLoginPage(navigator: NavHostController) {
+private fun PanelSelectLoginPage(gotoInput: () -> Unit) {
     CenterBox {
         Column(
             verticalArrangement = Arrangement.spacedBy(40.dp),
@@ -346,9 +366,10 @@ private fun PanelSelectLoginPage(navigator: NavHostController) {
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                OutlinedButton({
-                    navigator.navigate("input")
-                }, shape = ButtonDefaults.outlinedShape) {
+                OutlinedButton(
+                    gotoInput,
+                    shape = ButtonDefaults.outlinedShape
+                ) {
                     Text(stringResource(Res.string.input))
                 }
             }
