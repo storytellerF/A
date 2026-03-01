@@ -55,8 +55,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavDestination.Companion.hasRoute
-import androidx.navigation.toRoute
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil3.compose.LocalPlatformContext
@@ -81,6 +79,7 @@ import com.storyteller_f.a.app.common.RoomScreen
 import com.storyteller_f.a.app.common.createRoomKeysViewModel
 import com.storyteller_f.a.app.common.createRoomTopicsViewModel
 import com.storyteller_f.a.app.common.createRoomViewModel
+import com.storyteller_f.a.app.common.hasRoute
 import com.storyteller_f.a.app.common.hasRouteFlow
 import com.storyteller_f.a.app.core.components.ButtonNav
 import com.storyteller_f.a.app.core.components.CustomAlertDialog
@@ -409,14 +408,11 @@ private fun checkRoomRouteAndAlert(
     startJoinRoom: () -> Unit,
 ) {
     val appNav = appNavFactory.newAppNav()
-    val current = appNav.currentDestination
-    if (current != null) {
-        val currentDestination = current.destination
-        if (currentDestination.hasRoute(RoomScreen::class)) {
-            if (current.toRoute<RoomScreen>().roomId == roomId) {
-                startJoinRoom()
-                return
-            }
+    if (appNav.hasRoute<RoomScreen>()) {
+        val navKey = appNav.backStack.last()
+        if (navKey is RoomScreen && navKey.roomId == roomId) {
+            startJoinRoom()
+            return
         }
     }
     appNav.gotoRoom(roomId, true)
@@ -626,7 +622,7 @@ private fun RoomDialogButtons(roomInfo: RoomInfo, dismiss: () -> Unit) {
     val me = LocalUserInfo.current
     val globalDialogController = LocalGlobalDialog.current
     Column {
-        val isRoomPage by appNavFactory.hasRouteFlow<RoomScreen>()
+        val isRoomPage = appNavFactory.hasRouteFlow<RoomScreen>()
         if (isRoomPage) {
             RoomAllMembers(roomInfo, dismiss, appNavFactory)
             RoomMemberStatus(roomInfo, globalDialogController)

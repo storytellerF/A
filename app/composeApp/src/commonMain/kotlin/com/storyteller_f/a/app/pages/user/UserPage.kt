@@ -20,13 +20,18 @@ import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.navigation.NavOptions
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
+import androidx.navigation3.ui.NavDisplay
+import androidx.savedstate.serialization.SavedStateConfiguration
 import com.storyteller_f.a.app.LocalAppNavFactory
 import com.storyteller_f.a.app.LocalUserInfo
 import com.storyteller_f.a.app.Res
@@ -53,6 +58,10 @@ import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
+import kotlinx.serialization.modules.subclass
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -79,6 +88,25 @@ private fun UserPageInternal(
     }
 }
 
+@Serializable
+sealed interface UserRoute : NavKey {
+    @Serializable
+    data object Topics : UserRoute {
+        override fun toString(): String = "/topics"
+    }
+
+    @Serializable
+    data object Communities : UserRoute {
+        override fun toString(): String = "/communities"
+    }
+
+    @Serializable
+    data object Titles : UserRoute {
+        override fun toString(): String = "/titles"
+    }
+}
+
+@Suppress("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 private fun UserNonCompatInternal(uid: PrimaryKey, user: UserInfo?) {
     val navRoutes =
@@ -87,46 +115,97 @@ private fun UserNonCompatInternal(uid: PrimaryKey, user: UserInfo?) {
             NavRoute("/communities", Icons.Default.ChatBubble, stringResource(Res.string.communities_title)),
             NavRoute("/titles", Icons.Default.Badge, stringResource(Res.string.titles))
         )
-    val navigator = rememberNavController()
-    val current by navigator.currentBackStackEntryFlow.collectAsState(null)
+    val config = remember {
+        SavedStateConfiguration {
+            serializersModule = SerializersModule {
+                polymorphic(NavKey::class) {
+                    subclass(UserRoute.Topics::class)
+                    subclass(UserRoute.Communities::class)
+                    subclass(UserRoute.Titles::class)
+                }
+            }
+        }
+    }
+    val backStack = rememberNavBackStack(config, UserRoute.Topics)
+    val current = backStack.last()
     Scaffold(modifier = Modifier.testTag("user-page")) {
         Row {
-            val currentEntry = current?.destination?.route
-            CustomRailNav(currentEntry, navRoutes) {
-                navigator.navigate(it, NavOptions.Builder().setLaunchSingleTop(true).build())
-            }
-            Column {
-                val searchScope = when (currentEntry) {
-                    "/topics" -> SearchScope.UserTopic(uid)
-                    "/titles" -> SearchScope.UserReceivedTitle(uid)
-                    else -> SearchScope.UserCommunities(uid)
-                }
-                val my = LocalUserInfo.current
-                CustomSearchBar(searchScope) {
-                    if (uid != my?.id) {
-                        UserIconWithDialog(user)
-                    }
-                }
+            val currentEntry = current.toString()
+            UserRailNav(backStack, current, navRoutes)
+            UserNonCompatContent(uid, user, currentEntry, backStack)
+        }
+    }
+}
 
-                NavHost(navigator, "/topics") {
-                    composable("/topics") {
-                        val topicsViewModel = createUserTopicsViewModel(uid)
-                        UserTopicList(topicsViewModel)
-                    }
-                    composable("/communities") {
-                        val communitiesViewModel = createTargetUserJoinedCommunitiesViewModel(uid)
-                        CommunityList(communitiesViewModel)
-                    }
-                    composable("/titles") {
-                        val titlesViewModel = createUserTitlesViewModel(uid, TitleSearchType.RECEIVER)
-                        TitleList(titlesViewModel)
-                    }
+@Composable
+private fun UserRailNav(
+    backStack: NavBackStack<NavKey>,
+    current: NavKey,
+    navRoutes: List<NavRoute>,
+) {
+    CustomRailNav(current.toString(), navRoutes) { path ->
+        val target = when (path) {
+            "/communities" -> UserRoute.Communities
+            "/titles" -> UserRoute.Titles
+            else -> UserRoute.Topics
+        }
+        if (backStack.last() != target) {
+            val i = backStack.indexOf(target)
+            if (i >= 0) {
+                repeat(backStack.size - i - 1) {
+                    backStack.removeLastOrNull()
                 }
+            } else {
+                backStack.add(target)
             }
         }
     }
 }
 
+@Composable
+private fun UserNonCompatContent(
+    uid: PrimaryKey,
+    user: UserInfo?,
+    currentEntry: String,
+    backStack: NavBackStack<NavKey>,
+) {
+    Column {
+        val searchScope = when (currentEntry) {
+            "/topics" -> SearchScope.UserTopic(uid)
+            "/titles" -> SearchScope.UserReceivedTitle(uid)
+            else -> SearchScope.UserCommunities(uid)
+        }
+        val my = LocalUserInfo.current
+        CustomSearchBar(searchScope) {
+            if (uid != my?.id) {
+                UserIconWithDialog(user)
+            }
+        }
+        NavDisplay(
+            backStack,
+            entryDecorators = listOf(
+                rememberSaveableStateHolderNavEntryDecorator(),
+                rememberViewModelStoreNavEntryDecorator()
+            ),
+            entryProvider = entryProvider {
+                entry<UserRoute.Topics> {
+                    val topicsViewModel = createUserTopicsViewModel(uid)
+                    UserTopicList(topicsViewModel)
+                }
+                entry<UserRoute.Communities> {
+                    val communitiesViewModel = createTargetUserJoinedCommunitiesViewModel(uid)
+                    CommunityList(communitiesViewModel)
+                }
+                entry<UserRoute.Titles> {
+                    val titlesViewModel = createUserTitlesViewModel(uid, TitleSearchType.RECEIVER)
+                    TitleList(titlesViewModel)
+                }
+            }
+        )
+    }
+}
+
+@Suppress("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 private fun UserCompatInternal(
     uid: PrimaryKey,

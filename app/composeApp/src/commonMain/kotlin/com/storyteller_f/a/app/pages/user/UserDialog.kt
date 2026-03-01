@@ -204,7 +204,7 @@ fun UserCard(
 @Composable
 fun UserCardContainer(userInfo: UserInfo?, dismiss: () -> Unit, content: @Composable () -> Unit) {
     val appNavFactory = LocalAppNavFactory.current
-    val isUserPage by appNavFactory.hasRouteFlow<UserScreen> {
+    val isUserPage = appNavFactory.hasRouteFlow<UserScreen> {
         it.uid == userInfo?.id
     }
     val shape = RoundedCornerShape(8.dp)

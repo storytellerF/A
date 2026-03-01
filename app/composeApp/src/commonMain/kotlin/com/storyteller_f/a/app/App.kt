@@ -2,6 +2,7 @@ package com.storyteller_f.a.app
 
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -11,15 +12,16 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavBackStackEntry
-import androidx.navigation.NavHostController
-import androidx.navigation.NavUri
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.rememberNavController
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
+import androidx.navigation3.ui.NavDisplay
+import androidx.savedstate.serialization.SavedStateConfiguration
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.compose.setSingletonImageLoaderFactory
@@ -39,9 +41,10 @@ import com.storyteller_f.a.app.common.OnTopicCreated
 import com.storyteller_f.a.app.common.RoomScreen
 import com.storyteller_f.a.app.common.TopicScreen
 import com.storyteller_f.a.app.common.Uploader
-import com.storyteller_f.a.app.common.buildRootNav
+import com.storyteller_f.a.app.common.appNavSerializersModule
 import com.storyteller_f.a.app.common.newAppNav
 import com.storyteller_f.a.app.common.processEvent
+import com.storyteller_f.a.app.common.rootEntryProvider
 import com.storyteller_f.a.app.common.toRoute
 import com.storyteller_f.a.app.core.common.LocalClient
 import com.storyteller_f.a.app.core.components.AudioViewFilled
@@ -191,16 +194,20 @@ fun App() {
 @Composable
 fun AppInternal(mediaPlaySession: MediaPlaySession?) {
     val isPip = rememberIsInPipMode()
-    val navigator = rememberNavController()
-    val scope = rememberCoroutineScope()
+    val config = remember {
+        SavedStateConfiguration {
+            serializersModule = appNavSerializersModule
+        }
+    }
+    val backStack = rememberNavBackStack(config, HomeScreen)
     val appNav = remember {
         object : AppNavFactory {
-            val appNav = newAppNav(navigator, scope)
+            val appNav = newAppNav(backStack)
             override fun newAppNav() = appNav
         }
     }
     if (!isPip || mediaPlaySession == null) {
-        MainAppPage(appNav, navigator)
+        MainAppPage(appNav, backStack)
     } else {
         val remoteMediaItem = mediaPlaySession.remoteMediaItem
         if (remoteMediaItem.contentType.startsWith("video")) {
@@ -214,13 +221,10 @@ fun AppInternal(mediaPlaySession: MediaPlaySession?) {
 @Composable
 private fun MainAppPage(
     appNav: AppNavFactory,
-    navigator: NavHostController
+    backStack: NavBackStack<NavKey>
 ) {
     DisposableEffect(Unit) {
-        // Sets up the listener to call `NavController.navigate()`
-        // for the composable that has a matching `navDeepLink` listed
-        ExternalUriHandler.listener = { uri ->
-            navigator.navigate(NavUri(uri))
+        ExternalUriHandler.listener = { _ ->
         }
         // Removes the listener when the composable is no longer active
         onDispose {
@@ -231,25 +235,23 @@ private fun MainAppPage(
         LocalAppNavFactory provides appNav,
     ) {
         ObserveMessage()
-        NavHost(navigator, startDestination = HomeScreen, enterTransition = {
-            slideInHorizontally {
-                it
-            }
-        }, exitTransition = {
-            slideOutHorizontally {
-                -it
-            }
-        }, popEnterTransition = {
-            slideInHorizontally {
-                -it
-            }
-        }, popExitTransition = {
-            slideOutHorizontally {
-                it
-            }
-        }) {
-            buildRootNav(navigator)
-        }
+        NavDisplay(
+            backStack,
+            entryDecorators = listOf(
+                rememberSaveableStateHolderNavEntryDecorator(),
+                rememberViewModelStoreNavEntryDecorator()
+            ),
+            transitionSpec = {
+                slideInHorizontally { it } togetherWith slideOutHorizontally { -it }
+            },
+            popTransitionSpec = {
+                slideInHorizontally { -it } togetherWith slideOutHorizontally { it }
+            },
+            predictivePopTransitionSpec = {
+                slideInHorizontally { -it } togetherWith slideOutHorizontally { it }
+            },
+            entryProvider = rootEntryProvider(appNav.newAppNav())
+        )
     }
 }
 
@@ -537,8 +539,8 @@ fun BubblePage(roomId: Long) {
 
 private fun createAppNavFactoryForBubble(): AppNavFactory = object : AppNavFactory {
     override fun newAppNav() = object : AppNav {
-        override val currentDestination: NavBackStackEntry? = null
-        override val currentDestinationFlow: StateFlow<NavBackStackEntry?> = MutableStateFlow(null)
+        override val backStack: NavBackStack<NavKey>
+            get() = TODO("Not yet implemented")
 
         override fun gotoSignIn() = Unit
 

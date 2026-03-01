@@ -44,10 +44,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavOptions
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
+import androidx.navigation3.ui.NavDisplay
+import androidx.savedstate.serialization.SavedStateConfiguration
 import com.storyteller_f.a.app.AppGlobalDialogController
 import com.storyteller_f.a.app.LocalAppNavFactory
 import com.storyteller_f.a.app.LocalClientFileProvider
@@ -100,6 +104,10 @@ import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
+import kotlinx.serialization.modules.subclass
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
@@ -147,6 +155,19 @@ fun getFontFamily(communityId: PrimaryKey): State<FontFamily?> {
     return downloadViewModel.fontFamily.collectAsState()
 }
 
+@Serializable
+sealed interface CommunityRoute : NavKey {
+    @Serializable
+    data object Topics : CommunityRoute {
+        override fun toString(): String = "/topics"
+    }
+
+    @Serializable
+    data object Rooms : CommunityRoute {
+        override fun toString(): String = "/rooms"
+    }
+}
+
 private fun buildSearchScope(
     pagerState: PagerState,
     communityId: PrimaryKey,
@@ -156,10 +177,10 @@ private fun buildSearchScope(
 }
 
 private fun buildSearchScope(
-    currentRoute: String?,
+    currentRoute: NavKey?,
     communityId: PrimaryKey,
 ) = when (currentRoute) {
-    "/topics" -> SearchScope.CommunityTopic(communityId)
+    CommunityRoute.Topics -> SearchScope.CommunityTopic(communityId)
 
     else -> SearchScope.CommunityRoom(communityId)
 }
@@ -173,50 +194,112 @@ private fun CommunityNonCompatPageInternal(
     val community by model.handler.data.collectAsState()
     val dialogShown by model.dialog.dialogShown.collectAsState()
     val navRoutes = communityNavRoutes()
-    val navigator = rememberNavController()
-    val current by navigator.currentBackStackEntryFlow.collectAsState(null)
-    val searchScope = buildSearchScope(current?.destination?.route, communityId)
+    val config = remember {
+        SavedStateConfiguration {
+            serializersModule = SerializersModule {
+                polymorphic(NavKey::class) {
+                    subclass(CommunityRoute.Topics::class)
+                    subclass(CommunityRoute.Rooms::class)
+                }
+            }
+        }
+    }
+    val backStack = rememberNavBackStack(config, CommunityRoute.Topics)
+    val current = backStack.last()
+    val searchScope = buildSearchScope(current, communityId)
     Scaffold { paddingValues ->
         Row(modifier = Modifier.padding(bottom = paddingValues.calculateBottomPadding())) {
-            CustomRailNav(current?.destination?.route, navRoutes) {
-                navigator.navigate(it, NavOptions.Builder().setLaunchSingleTop(true).build())
-            }
-            Column(
-                modifier = Modifier,
-            ) {
-                CustomSearchBar(searchScope) {
-                    var showDialog by remember {
-                        mutableStateOf(false)
-                    }
-                    LaunchedEffect(needShowDialog, dialogShown) {
-                        if (needShowDialog && !dialogShown) {
-                            model.dialog.markDialogShown()
-                            showDialog = true
-                        }
-                    }
-                    CommunityIconWithDialog(
-                        community,
-                        showDialog
-                    ) {
-                        showDialog = it
-                    }
-                }
+            CommunityRailNav(backStack, current, navRoutes)
+            CommunityNonCompatContent(
+                communityId,
+                needShowDialog,
+                dialogShown,
+                model,
+                community,
+                searchScope,
+                backStack
+            )
+        }
+    }
+}
 
-                NavHost(navigator, "/topics") {
-                    composable("/topics") {
-                        val viewModel = createCommunityTopicsViewModel(communityId)
-                        TopicList(viewModel)
-                    }
-                    composable("/rooms") {
-                        val viewModel = createCommunityRoomsViewModel(communityId)
-                        RoomList(viewModel)
-                    }
+@Composable
+private fun CommunityRailNav(
+    backStack: NavBackStack<NavKey>,
+    current: NavKey,
+    navRoutes: List<NavRoute>,
+) {
+    CustomRailNav(current.toString(), navRoutes) { path ->
+        val target = when (path) {
+            "/rooms" -> CommunityRoute.Rooms
+            else -> CommunityRoute.Topics
+        }
+        if (backStack.last() != target) {
+            val i = backStack.indexOf(target)
+            if (i >= 0) {
+                repeat(backStack.size - i - 1) {
+                    backStack.removeLastOrNull()
                 }
+            } else {
+                backStack.add(target)
             }
         }
     }
 }
 
+@Composable
+@Suppress("LongParameterList")
+private fun CommunityNonCompatContent(
+    communityId: PrimaryKey,
+    needShowDialog: Boolean,
+    dialogShown: Boolean,
+    model: CommunityViewModel,
+    community: CommunityInfo?,
+    searchScope: SearchScope,
+    backStack: NavBackStack<NavKey>,
+) {
+    Column(
+        modifier = Modifier,
+    ) {
+        CustomSearchBar(searchScope) {
+            var showDialog by remember {
+                mutableStateOf(false)
+            }
+            LaunchedEffect(needShowDialog, dialogShown) {
+                if (needShowDialog && !dialogShown) {
+                    model.dialog.markDialogShown()
+                    showDialog = true
+                }
+            }
+            CommunityIconWithDialog(
+                community,
+                showDialog
+            ) {
+                showDialog = it
+            }
+        }
+
+        NavDisplay(
+            backStack,
+            entryDecorators = listOf(
+                rememberSaveableStateHolderNavEntryDecorator(),
+                rememberViewModelStoreNavEntryDecorator()
+            ),
+            entryProvider = entryProvider {
+                entry<CommunityRoute.Topics> {
+                    val viewModel = createCommunityTopicsViewModel(communityId)
+                    TopicList(viewModel)
+                }
+                entry<CommunityRoute.Rooms> {
+                    val viewModel = createCommunityRoomsViewModel(communityId)
+                    RoomList(viewModel)
+                }
+            }
+        )
+    }
+}
+
+@Suppress("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 private fun CommunityCompatPageInternal(
     communityId: PrimaryKey,
@@ -400,7 +483,7 @@ private fun CommunityMenus(
             appNavFactory.newAppNav().gotoMemberPage(communityId, ObjectType.COMMUNITY)
         }
         val appNavFactory = LocalAppNavFactory.current
-        val isCommunityPage by appNavFactory.hasRouteFlow<CommunityScreen>()
+        val isCommunityPage = appNavFactory.hasRouteFlow<CommunityScreen>()
         if (isCommunityPage) {
             CommunityMemberStatusButton(communityInfo, globalDialogController, communityId)
             FavoriteButton(communityInfo.favoriteId, communityInfo.tuple())
