@@ -1,5 +1,8 @@
 package com.storyteller_f.a.app.pages.user
 
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -42,10 +45,14 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
+import androidx.navigation3.ui.NavDisplay
+import androidx.savedstate.serialization.SavedStateConfiguration
 import com.storyteller_f.a.app.AppGlobalDialogController
 import com.storyteller_f.a.app.LocalAppNavFactory
 import com.storyteller_f.a.app.LocalGlobalDialog
@@ -72,66 +79,141 @@ import com.storyteller_f.a.app.utils.appPlatform
 import com.storyteller_f.a.app.utils.fetchAndSaveUserInfo
 import com.storyteller_f.shared.model.AlgoType
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
 import org.jetbrains.compose.resources.stringResource
+
+@Serializable
+data object SignIn : NavKey
+
+@Serializable
+data object SignUp : NavKey
+
+@Serializable
+data object SignUpInput : NavKey
+
+@Serializable
+data object SignInInput : NavKey
 
 @Composable
 fun LoginPage() {
-    val navigator = rememberNavController()
+    val config = SavedStateConfiguration {
+        serializersModule = SerializersModule {
+            polymorphic(NavKey::class) {
+                subclass(SignIn::class, SignIn.serializer())
+                subclass(SignUp::class, SignUp.serializer())
+                subclass(SignUpInput::class, SignUpInput.serializer())
+                subclass(SignInInput::class, SignInInput.serializer())
+            }
+        }
+    }
+
+    val backStack = rememberNavBackStack(config, SignIn)
+
     val nav = remember {
-        buildLoginNav(navigator)
+        buildLoginNav(backStack)
     }
     val appNavFactory = LocalAppNavFactory.current
     Surface {
         Column {
             if (!appPlatform.hasNativeBack) {
                 IconButton({
-                    if (!navigator.popBackStack()) {
+                    if (backStack.size > 1) {
                         appNavFactory.newAppNav().back()
                     }
                 }) {
                     Icon(Icons.AutoMirrored.Default.ArrowBack, stringResource(Res.string.back_to_pre_page))
                 }
             }
-            NavHost(navigator, "/select_signIn") {
-                composable("/select_signIn") {
-                    SelectSignInPage(nav)
+            NavDisplay(
+                backStack,
+                entryDecorators = listOf(
+                    // Add the default decorators for managing scenes and saving state
+                    rememberSaveableStateHolderNavEntryDecorator(),
+                    // Then add the view model store decorator
+                    rememberViewModelStoreNavEntryDecorator()
+                ),
+                transitionSpec = {
+                    // Slide in from right when navigating forward
+                    slideInHorizontally(initialOffsetX = { it }) togetherWith
+                            slideOutHorizontally(targetOffsetX = { -it })
+                },
+                popTransitionSpec = {
+                    // Slide in from left when navigating back
+                    slideInHorizontally(initialOffsetX = { -it }) togetherWith
+                            slideOutHorizontally(targetOffsetX = { it })
+                },
+                predictivePopTransitionSpec = {
+                    // Slide in from left when navigating back
+                    slideInHorizontally(initialOffsetX = { -it }) togetherWith
+                            slideOutHorizontally(targetOffsetX = { it })
+                },
+                entryProvider = entryProvider {
+                    entry<SignIn> {
+                        SelectSignInPage(nav)
+                    }
+                    entry<SignUp> {
+                        SelectSignUpPage(nav)
+                    }
+                    entry<SignUpInput> {
+                        InputPrivateKeyPage(true)
+                    }
+                    entry<SignInInput> {
+                        InputPrivateKeyPage(false)
+                    }
                 }
-                composable("/select_signUp") {
-                    SelectSignUpPage(nav)
-                }
-                composable("/signUp_input_private_key") {
-                    InputPrivateKeyPage(true)
-                }
-                composable("/signIn_input_private_key") {
-                    InputPrivateKeyPage(false)
-                }
-            }
+            )
         }
     }
 }
 
-private fun buildLoginNav(navigator: NavHostController) = object : LoginNav {
+private fun buildLoginNav(backStack: NavBackStack<NavKey>) = object : LoginNav {
     override fun gotoPrivateKey(isSignUp: Boolean) {
         if (isSignUp) {
-            if (!navigator.popBackStack("/signUp_input_private_key", false)) {
-                navigator.navigate("/signUp_input_private_key")
+            val i = backStack.indexOf(SignUpInput)
+            if (i >= 0) {
+                repeat(backStack.size - i - 1) {
+                    backStack.removeLastOrNull()
+                }
+            }
+            if (backStack.last() !is SignUpInput) {
+                backStack.add(SignUpInput)
             }
         } else {
-            if (!navigator.popBackStack("/signIn_input_private_key", false)) {
-                navigator.navigate("/signIn_input_private_key")
+            val i = backStack.indexOf(SignInInput)
+            if (i >= 0) {
+                repeat(backStack.size - i - 1) {
+                    backStack.removeLastOrNull()
+                }
+            }
+            if (backStack.last() !is SignInInput) {
+                backStack.add(SignInInput)
             }
         }
     }
 
     override fun gotoSignUp() {
-        if (!navigator.popBackStack("/select_signUp", false)) {
-            navigator.navigate("/select_signUp")
+        val i = backStack.indexOf(SignUp)
+        if (i >= 0) {
+            repeat(backStack.size - i - 1) {
+                backStack.removeLastOrNull()
+            }
+        }
+        if (backStack.last() !is SignUp) {
+            backStack.add(SignUp)
         }
     }
 
     override fun gotoLogin() {
-        if (!navigator.popBackStack("/select_signIn", false)) {
-            navigator.navigate("/select_signIn")
+        val i = backStack.indexOf(SignIn)
+        if (i >= 0) {
+            repeat(backStack.size - i - 1) {
+                backStack.removeLastOrNull()
+            }
+        }
+        if (backStack.last() !is SignIn) {
+            backStack.add(SignIn)
         }
     }
 }
