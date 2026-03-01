@@ -97,7 +97,7 @@ data object SignUpInput : NavKey
 data object SignInInput : NavKey
 
 @Composable
-fun LoginPage() {
+fun SignInAndSignUpPage() {
     val config = SavedStateConfiguration {
         serializersModule = SerializersModule {
             polymorphic(NavKey::class) {
@@ -112,7 +112,7 @@ fun LoginPage() {
     val backStack = rememberNavBackStack(config, SignIn)
 
     val nav = remember {
-        buildLoginNav(backStack)
+        buildSignInAndSignUpNav(backStack)
     }
     val appNavFactory = LocalAppNavFactory.current
     Surface {
@@ -168,7 +168,7 @@ fun LoginPage() {
     }
 }
 
-private fun buildLoginNav(backStack: NavBackStack<NavKey>) = object : LoginNav {
+private fun buildSignInAndSignUpNav(backStack: NavBackStack<NavKey>) = object : SignInAndSignUpNav {
     override fun gotoPrivateKey(isSignUp: Boolean) {
         if (isSignUp) {
             val i = backStack.indexOf(SignUpInput)
@@ -205,7 +205,7 @@ private fun buildLoginNav(backStack: NavBackStack<NavKey>) = object : LoginNav {
         }
     }
 
-    override fun gotoLogin() {
+    override fun gotoSignIn() {
         val i = backStack.indexOf(SignIn)
         if (i >= 0) {
             repeat(backStack.size - i - 1) {
@@ -220,7 +220,7 @@ private fun buildLoginNav(backStack: NavBackStack<NavKey>) = object : LoginNav {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SelectSignInPage(loginNav: LoginNav) {
+fun SelectSignInPage(signInAndSignUpNav: SignInAndSignUpNav) {
     CenterBox {
         Column(
             verticalArrangement = Arrangement.spacedBy(40.dp),
@@ -233,7 +233,7 @@ fun SelectSignInPage(loginNav: LoginNav) {
             ) {
                 OutlinedButton(
                     {
-                        loginNav.gotoPrivateKey(false)
+                        signInAndSignUpNav.gotoPrivateKey(false)
                     },
                     shape = ButtonDefaults.outlinedShape,
                     modifier = Modifier.testTag("private_key")
@@ -244,7 +244,7 @@ fun SelectSignInPage(loginNav: LoginNav) {
                 SelectFromHistory()
             }
             Text(stringResource(Res.string.go_to_sign_up), modifier = Modifier.clickable {
-                loginNav.gotoSignUp()
+                signInAndSignUpNav.gotoSignUp()
             }.testTag("goto_sign_up"), textDecoration = TextDecoration.Underline)
         }
     }
@@ -343,7 +343,7 @@ private fun LoginHistoryCell(
 }
 
 @Composable
-fun SelectSignUpPage(loginNav: LoginNav) {
+fun SelectSignUpPage(signInAndSignUpNav: SignInAndSignUpNav) {
     CenterBox {
         Column(
             verticalArrangement = Arrangement.spacedBy(40.dp),
@@ -355,13 +355,13 @@ fun SelectSignUpPage(loginNav: LoginNav) {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Button({
-                    loginNav.gotoPrivateKey(true)
+                    signInAndSignUpNav.gotoPrivateKey(true)
                 }, modifier = Modifier.testTag("private_key")) {
                     Text(stringResource(Res.string.private_key))
                 }
             }
             Text(stringResource(Res.string.go_to_sign_in), modifier = Modifier.clickable {
-                loginNav.gotoLogin()
+                signInAndSignUpNav.gotoSignIn()
             }, textDecoration = TextDecoration.Underline)
         }
     }
@@ -378,7 +378,7 @@ fun InputPrivateKeyPage(isSignUp: Boolean) {
     val globalDialogController = LocalGlobalDialog.current
     val startSign: () -> Unit = {
         scope.launch {
-            globalDialogController.startSign(appNavFactory, privateKey, algo, isSignUp)
+            globalDialogController.performAuth(appNavFactory, privateKey, algo, isSignUp)
         }
     }
     CenterBox {
@@ -413,7 +413,7 @@ fun InputPrivateKeyPage(isSignUp: Boolean) {
     }
 }
 
-private suspend fun AppGlobalDialogController.startSign(
+private suspend fun AppGlobalDialogController.performAuth(
     appNav: AppNavFactory,
     privateKey: String,
     algo: AlgoType,
@@ -436,11 +436,11 @@ private suspend fun AppGlobalDialogController.startSign(
     }
 }
 
-interface LoginNav {
+interface SignInAndSignUpNav {
 
     fun gotoPrivateKey(isSignUp: Boolean)
 
     fun gotoSignUp()
 
-    fun gotoLogin()
+    fun gotoSignIn()
 }

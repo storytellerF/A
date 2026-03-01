@@ -142,7 +142,7 @@ fun ChildAccountCell(childAccountInfo: ChildAccountInfo, onClick: () -> Unit) {
     ) {
         UserIcon(
             setClickEvent = false,
-            avatarUrl = userInfo?.avatar?.url,
+            avatarUrl = userInfo.avatar?.url,
         ) {}
         Column {
             Text(userInfo.nickname, style = MaterialTheme.typography.titleMedium)

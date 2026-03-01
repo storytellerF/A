@@ -540,7 +540,7 @@ private fun createAppNavFactoryForBubble(): AppNavFactory = object : AppNavFacto
         override val currentDestination: NavBackStackEntry? = null
         override val currentDestinationFlow: StateFlow<NavBackStackEntry?> = MutableStateFlow(null)
 
-        override fun gotoLogin() = Unit
+        override fun gotoSignIn() = Unit
 
         override fun gotoRoom(roomId: PrimaryKey, showDialog: Boolean) = Unit
 
