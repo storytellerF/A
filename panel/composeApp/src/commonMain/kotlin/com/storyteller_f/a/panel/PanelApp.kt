@@ -1,9 +1,8 @@
 package com.storyteller_f.a.panel
 
-import PanelFilePreviewPage
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilePresent
@@ -14,7 +13,6 @@ import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Title
 import androidx.compose.material.icons.filled.Topic
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -24,31 +22,26 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.compositionLocalOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshots.SnapshotStateMap
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import androidx.navigation.toRoute
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
+import androidx.navigation3.ui.NavDisplay
+import androidx.savedstate.serialization.SavedStateConfiguration
 import com.storyteller_f.a.app.core.common.LocalClient
-import com.storyteller_f.a.app.core.components.CenterBox
 import com.storyteller_f.a.app.core.components.CustomGlobalDialogController
 import com.storyteller_f.a.app.core.components.CustomGlobalTask
 import com.storyteller_f.a.app.core.components.GlobalDialog
@@ -57,8 +50,6 @@ import com.storyteller_f.a.app.core.components.GlobalDialogController
 import com.storyteller_f.a.app.core.components.GlobalDialogState
 import com.storyteller_f.a.app.core.components.GlobalTask
 import com.storyteller_f.a.app.core.components.GlobalTaskContext
-import com.storyteller_f.a.app.core.components.SignInButton
-import com.storyteller_f.a.app.core.components.safeArea
 import com.storyteller_f.a.app.core.utils.SessionHistoryManager
 import com.storyteller_f.a.app.core.utils.buildSessionHistoryFactory
 import com.storyteller_f.a.app.core.utils.createSettings
@@ -74,21 +65,12 @@ import com.storyteller_f.a.client.core.startBackgroundTask
 import com.storyteller_f.a.client.room.RoomModelStorage
 import com.storyteller_f.a.client.room.getRoomModelStorage
 import com.storyteller_f.a.panel.common.OnUserAdded
-import com.storyteller_f.a.panel.pages.AllCommunitiesPage
-import com.storyteller_f.a.panel.pages.AllFilesPage
-import com.storyteller_f.a.panel.pages.AllPrivateRoomsPage
-import com.storyteller_f.a.panel.pages.AllPublicRoomsPage
-import com.storyteller_f.a.panel.pages.AllTitlesPage
-import com.storyteller_f.a.panel.pages.AllTopicsPage
-import com.storyteller_f.a.panel.pages.AllUsersPage
-import com.storyteller_f.a.panel.pages.CommunityDetailPage
-import com.storyteller_f.a.panel.pages.FileDetailPage
-import com.storyteller_f.a.panel.pages.OverviewPage
-import com.storyteller_f.a.panel.pages.PanelInputPage
-import com.storyteller_f.a.panel.pages.RoomDetailPage
-import com.storyteller_f.a.panel.pages.TitleDetailPage
-import com.storyteller_f.a.panel.pages.TopicDetailPage
-import com.storyteller_f.a.panel.pages.UserDetailPage
+import com.storyteller_f.a.panel.common.PanelNav
+import com.storyteller_f.a.panel.common.PanelNavFactory
+import com.storyteller_f.a.panel.common.PanelOverviewScreen
+import com.storyteller_f.a.panel.common.newPanelNav
+import com.storyteller_f.a.panel.common.panelNavSerializersModule
+import com.storyteller_f.a.panel.common.rootEntryProvider
 import com.storyteller_f.a.panel.ui.theme.PanelTheme
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.cookies.CookiesStorage
@@ -104,108 +86,10 @@ import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(DelicateCoroutinesApi::class)
 val panelAccountInstance = PanelAccountInstance(GlobalScope)
-
-interface PanelNav {
-    val drawerState: DrawerState
-    fun gotoLogin()
-    fun gotoOverview()
-    fun gotoAllUsers()
-    fun gotoUserDetail(uid: Long)
-    fun gotoAllCommunities()
-    fun gotoCommunityDetail(id: Long)
-    fun gotoAllPublicRooms()
-    fun gotoRoomDetail(id: Long)
-    fun gotoAllPrivateRooms()
-    fun gotoAllTopics()
-    fun gotoTopicDetail(id: Long)
-    fun gotoAllFiles()
-    fun gotoFileDetail(id: Long)
-    fun gotoAllTitles()
-    fun gotoTitleDetail(id: Long)
-    fun gotoFilePreview(id: Long, url: String, contentType: String, name: String)
-    fun open()
-}
-
-class Nav2PanelNav(
-    val navigator: NavHostController,
-    override val drawerState: DrawerState,
-    private val scope: CoroutineScope
-) : PanelNav {
-    override fun gotoLogin() {
-        navigator.navigate(PanelLoginScreen)
-    }
-
-    override fun gotoOverview() {
-        navigator.navigate(PanelOverviewScreen)
-    }
-
-    override fun gotoAllUsers() {
-        navigator.navigate(PanelAllUsersScreen)
-    }
-
-    override fun gotoUserDetail(uid: Long) {
-        navigator.navigate(PanelUserDetailScreen(uid))
-    }
-
-    override fun gotoAllCommunities() {
-        navigator.navigate(PanelAllCommunitiesScreen)
-    }
-
-    override fun gotoCommunityDetail(id: Long) {
-        navigator.navigate(PanelCommunityDetailScreen(id))
-    }
-
-    override fun gotoAllPublicRooms() {
-        navigator.navigate(PanelAllPublicRoomsScreen)
-    }
-
-    override fun gotoRoomDetail(id: Long) {
-        navigator.navigate(PanelRoomDetailScreen(id))
-    }
-
-    override fun gotoAllPrivateRooms() {
-        navigator.navigate(PanelAllPrivateRoomsScreen)
-    }
-
-    override fun gotoAllTopics() {
-        navigator.navigate(PanelAllTopicsScreen)
-    }
-
-    override fun gotoTopicDetail(id: Long) {
-        navigator.navigate(PanelTopicDetailScreen(id))
-    }
-
-    override fun gotoAllFiles() {
-        navigator.navigate(PanelAllFilesScreen)
-    }
-
-    override fun gotoFileDetail(id: Long) {
-        navigator.navigate(PanelFileDetailScreen(id))
-    }
-
-    override fun gotoAllTitles() {
-        navigator.navigate(PanelAllTitlesScreen)
-    }
-
-    override fun gotoTitleDetail(id: Long) {
-        navigator.navigate(PanelTitleDetailScreen(id))
-    }
-
-    override fun gotoFilePreview(id: Long, url: String, contentType: String, name: String) {
-        navigator.navigate(PanelFilePreviewScreen(id))
-    }
-
-    override fun open() {
-        scope.launch { drawerState.open() }
-    }
-}
-
-val LocalPanelNav = compositionLocalOf<PanelNav> { error("no nav") }
 
 typealias PanelGlobalDialogController = GlobalDialogController<GlobalDialogContext<CustomPanelSessionManager>>
 
@@ -250,16 +134,26 @@ val LocalPanelGlobalTask = compositionLocalOf<GlobalTask<CustomPanelSessionManag
 fun App() {
     val sessionManager = panelAccountInstance.sessionManager
     val client = sessionManager.client
-    val navigator = rememberNavController()
-    val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val config = remember {
+        SavedStateConfiguration {
+            serializersModule = panelNavSerializersModule
+        }
+    }
+    val backStack = rememberNavBackStack(config, PanelOverviewScreen)
+
     val scope = rememberCoroutineScope()
-    val nav = remember { Nav2PanelNav(navigator, drawerState, scope) }
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
     val controller = panelAccountInstance.controller
     val task = panelAccountInstance.task
-
+    val nav = remember {
+        object : PanelNavFactory {
+            val panelNav = newPanelNav(backStack, drawerState, scope)
+            override fun newPanelNav() = panelNav
+        }
+    }
     CompositionLocalProvider(
         LocalClient provides client,
-        LocalPanelNav provides nav,
+        LocalPanelNav provides nav.newPanelNav(),
         LocalPanelGlobalDialog provides controller,
         LocalPanelGlobalTask provides task
     ) {
@@ -268,10 +162,10 @@ fun App() {
             ModalNavigationDrawer(
                 drawerState = drawerState,
                 drawerContent = {
-                    PanelDrawer(scope, drawerState, nav)
+                    PanelDrawer(scope, drawerState, nav.newPanelNav())
                 }
             ) {
-                PanelAppNavHost(navigator, nav)
+                MainPanelPage(backStack, nav.newPanelNav())
             }
             GlobalDialog(controller)
         }
@@ -279,65 +173,34 @@ fun App() {
 }
 
 @Composable
-private fun PanelAppNavHost(
-    navigator: NavHostController,
-    nav: Nav2PanelNav
+private fun MainPanelPage(
+    backStack: NavBackStack<NavKey>,
+    nav: PanelNav
 ) {
-    NavHost(navigator, PanelOverviewScreen) {
-        composable<PanelLoginScreen> {
-            PanelLoginPage {
-                navigator.popBackStack()
-                nav.gotoOverview()
-            }
-        }
-        composable<PanelOverviewScreen> {
-            PanelHost {
-                OverviewPage()
-            }
-        }
-        composable<PanelAllUsersScreen> { AllUsersPage() }
-        composable<PanelUserDetailScreen> {
-            val screen = it.toRoute<PanelUserDetailScreen>()
-            UserDetailPage(screen.uid)
-        }
-        composable<PanelCommunityDetailScreen> {
-            val screen = it.toRoute<PanelCommunityDetailScreen>()
-            CommunityDetailPage(screen.id)
-        }
-        composable<PanelRoomDetailScreen> {
-            val screen = it.toRoute<PanelRoomDetailScreen>()
-            RoomDetailPage(screen.id)
-        }
-        composable<PanelTopicDetailScreen> {
-            val screen = it.toRoute<PanelTopicDetailScreen>()
-            TopicDetailPage(screen.id)
-        }
-        composable<PanelFileDetailScreen> {
-            val screen = it.toRoute<PanelFileDetailScreen>()
-            FileDetailPage(screen.id)
-        }
-        composable<PanelFilePreviewScreen> {
-            val screen = it.toRoute<PanelFilePreviewScreen>()
-            PanelFilePreviewPage(screen.id)
-        }
-        composable<PanelTitleDetailScreen> {
-            val screen = it.toRoute<PanelTitleDetailScreen>()
-            TitleDetailPage(screen.id)
-        }
-        composable<PanelAllCommunitiesScreen> { AllCommunitiesPage() }
-        composable<PanelAllPublicRoomsScreen> { AllPublicRoomsPage() }
-        composable<PanelAllPrivateRoomsScreen> { AllPrivateRoomsPage() }
-        composable<PanelAllTopicsScreen> { AllTopicsPage() }
-        composable<PanelAllFilesScreen> { AllFilesPage() }
-        composable<PanelAllTitlesScreen> { AllTitlesPage() }
-    }
+    NavDisplay(
+        backStack,
+        entryDecorators = listOf(
+            rememberSaveableStateHolderNavEntryDecorator(),
+            rememberViewModelStoreNavEntryDecorator()
+        ),
+        transitionSpec = {
+            slideInHorizontally { it } togetherWith slideOutHorizontally { -it }
+        },
+        popTransitionSpec = {
+            slideInHorizontally { -it } togetherWith slideOutHorizontally { it }
+        },
+        predictivePopTransitionSpec = {
+            slideInHorizontally { -it } togetherWith slideOutHorizontally { it }
+        },
+        entryProvider = rootEntryProvider(nav)
+    )
 }
 
 @Composable
 private fun PanelDrawer(
     scope: CoroutineScope,
     drawerState: DrawerState,
-    nav: Nav2PanelNav
+    nav: PanelNav
 ) {
     ModalDrawerSheet {
         DrawerHeader()
@@ -413,63 +276,6 @@ private fun onNavigate(
     navigate()
 }
 
-@Composable
-private fun PanelHost(content: @Composable () -> Unit) {
-    val panelNav = LocalPanelNav.current
-    val session = panelAccountInstance.sessionManager
-    val user by session.isAlreadySignIn.collectAsState()
-    if (user) {
-        content()
-    } else {
-        CenterBox {
-            SignInButton {
-                panelNav.gotoLogin()
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun PanelLoginPage(back: () -> Unit) {
-    val navigator = rememberNavController()
-    Scaffold {
-        val direction = LocalLayoutDirection.current
-        Box(Modifier.safeArea(it, direction)) {
-            NavHost(navigator, "select") {
-                composable("select") {
-                    PanelSelectLoginPage(navigator)
-                }
-                composable("input") {
-                    PanelInputPage(back)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun PanelSelectLoginPage(navigator: NavHostController) {
-    CenterBox {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(40.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(stringResource(Res.string.sign_in), style = MaterialTheme.typography.headlineMedium)
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                OutlinedButton({
-                    navigator.navigate("input")
-                }, shape = ButtonDefaults.outlinedShape) {
-                    Text(stringResource(Res.string.input))
-                }
-            }
-        }
-    }
-}
-
 class PanelAccountInstance(scope: CoroutineScope) {
     val sessionManager = createCustomPanelSessionManager("default") { model, cookieManager ->
         getClient {
@@ -533,51 +339,3 @@ fun createCustomPanelSessionManager(
     val historyFactory = buildSessionHistoryFactory(settings)
     return CustomPanelSessionManager(customSessionManager, historyFactory)
 }
-
-@Serializable
-data class PanelUserDetailScreen(val uid: Long)
-
-@Serializable
-data class PanelCommunityDetailScreen(val id: Long)
-
-@Serializable
-data class PanelRoomDetailScreen(val id: Long)
-
-@Serializable
-data class PanelTopicDetailScreen(val id: Long)
-
-@Serializable
-data class PanelFileDetailScreen(val id: Long)
-
-@Serializable
-data class PanelFilePreviewScreen(val id: Long)
-
-@Serializable
-data class PanelTitleDetailScreen(val id: Long)
-
-@Serializable
-object PanelLoginScreen
-
-@Serializable
-object PanelOverviewScreen
-
-@Serializable
-object PanelAllUsersScreen
-
-@Serializable
-object PanelAllCommunitiesScreen
-
-@Serializable
-object PanelAllPublicRoomsScreen
-
-@Serializable
-object PanelAllPrivateRoomsScreen
-
-@Serializable
-object PanelAllTopicsScreen
-
-@Serializable
-object PanelAllFilesScreen
-
-@Serializable
-object PanelAllTitlesScreen

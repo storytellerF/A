@@ -61,8 +61,8 @@ class MainActivity : ComponentActivity(), ClientFileServiceContainer {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
-        setupForSplash()
         FileKit.init(this)
         commonForActivity()
         initEnvironment(this)
@@ -77,10 +77,6 @@ class MainActivity : ComponentActivity(), ClientFileServiceContainer {
                 App()
             }
         }
-    }
-
-    private fun setupForSplash() {
-        installSplashScreen()
     }
 
     override fun onDestroy() {
