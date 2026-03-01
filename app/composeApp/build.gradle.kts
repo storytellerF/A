@@ -129,7 +129,6 @@ kotlin {
             implementation(libs.ui)
             implementation(libs.components.resources)
             implementation(libs.ui.tooling.preview)
-            implementation(libs.navigation.compose)
             implementation(libs.androidx.lifecycle.common)
             implementation(libs.jetbrains.navigation3.ui)
             implementation(libs.jetbrains.material3.adaptiveNavigation3)

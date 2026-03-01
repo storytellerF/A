@@ -39,10 +39,11 @@ import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.ui.NavDisplay
+import androidx.savedstate.serialization.SavedStateConfiguration
 import com.storyteller_f.a.api.NewUser
 import com.storyteller_f.a.app.core.CoreStrings
 import com.storyteller_f.a.app.core.components.DialogContainer
@@ -65,6 +66,7 @@ import com.storyteller_f.a.panel.aid
 import com.storyteller_f.a.panel.all_users
 import com.storyteller_f.a.panel.common.AddUserViewModel
 import com.storyteller_f.a.panel.common.AllUsersViewModel
+import com.storyteller_f.a.panel.common.LoginSelectScreen
 import com.storyteller_f.a.panel.common.OnUserAdded
 import com.storyteller_f.a.panel.common.createPanelAllUserViewModel
 import com.storyteller_f.a.panel.components.UserCell
@@ -79,7 +81,16 @@ import io.github.vinceglb.filekit.dialogs.openFilePicker
 import io.github.vinceglb.filekit.readBytes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
 import org.jetbrains.compose.resources.stringResource
+
+@Serializable
+private data object AddUserStartScreen : NavKey
+
+@Serializable
+private data object AddUserPrivateKeyScreen : NavKey
 
 @Composable
 fun AllUsersPage() {
@@ -155,23 +166,43 @@ fun AddUserInternal(dismiss: () -> Unit) {
     val addUserViewModel = viewModel {
         AddUserViewModel()
     }
-    DialogContainer {
-        val addUserNavigator = rememberNavController()
-        NavHost(addUserNavigator, "start") {
-            composable("start") {
-                AddUserProfilePage(addUserViewModel, addUserNavigator, dismiss)
-            }
-            composable("private_key") {
-                AddUserPrivateKeyPage(addUserViewModel, addUserNavigator)
-            }
+    val module = SerializersModule {
+        polymorphic(NavKey::class) {
+            subclass(AddUserStartScreen::class, AddUserStartScreen.serializer())
+            subclass(AddUserPrivateKeyScreen::class, AddUserPrivateKeyScreen.serializer())
         }
+    }
+    val config = remember {
+        SavedStateConfiguration {
+            serializersModule = module
+        }
+    }
+    DialogContainer {
+        val addUserBackStack = rememberNavBackStack(config, AddUserStartScreen)
+        NavDisplay(
+            addUserBackStack,
+            entryProvider = entryProvider {
+                entry<AddUserStartScreen> {
+                    AddUserProfilePage(
+                        addUserViewModel,
+                        { addUserBackStack.add(AddUserPrivateKeyScreen) },
+                        dismiss
+                    )
+                }
+                entry<AddUserPrivateKeyScreen> {
+                    AddUserPrivateKeyPage(addUserViewModel) {
+                        addUserBackStack.removeLastOrNull()
+                    }
+                }
+            }
+        )
     }
 }
 
 @Composable
 private fun AddUserPrivateKeyPage(
     addUserViewModel: AddUserViewModel,
-    addUserNavigator: NavHostController
+    goBack: () -> Unit
 ) {
     val privateKey by addUserViewModel.privateKey.collectAsState()
     val scope = rememberCoroutineScope()
@@ -200,9 +231,7 @@ private fun AddUserPrivateKeyPage(
         }, label = {
             Text(CoreStrings.privateKey())
         })
-        Button({
-            addUserNavigator.popBackStack()
-        }) {
+        Button(goBack) {
             Text(CoreStrings.ok())
         }
     }
@@ -211,7 +240,7 @@ private fun AddUserPrivateKeyPage(
 @Composable
 private fun AddUserProfilePage(
     addUserViewModel: AddUserViewModel,
-    addUserNavigator: NavHostController,
+    gotoPrivateKey: () -> Unit,
     dismiss: () -> Unit
 ) {
     val nickname by addUserViewModel.nickname.collectAsState()
@@ -238,7 +267,7 @@ private fun AddUserProfilePage(
         }) {
             Icon(Icons.Default.ContentCopy, "copy")
         }
-        AddressField(address, addUserNavigator)
+        AddressField(address, gotoPrivateKey)
 
         AddUserDialogButtons(dismiss, addUserViewModel)
     }
@@ -268,7 +297,7 @@ private fun AddUserDialogButtons(
 }
 
 @Composable
-private fun AddressField(address: String?, addUserNavigator: NavHostController) {
+private fun AddressField(address: String?, gotoPrivateKey: () -> Unit) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -284,9 +313,7 @@ private fun AddressField(address: String?, addUserNavigator: NavHostController) 
                 address ?: "",
                 modifier = Modifier.weight(1f)
             )
-            IconButton({
-                addUserNavigator.navigate("private_key")
-            }) {
+            IconButton(gotoPrivateKey) {
                 Icon(Icons.Default.Edit, stringResource(Res.string.edit_private_key))
             }
         }
