@@ -54,7 +54,6 @@ import com.storyteller_f.a.client.core.addChildAccount
 import com.storyteller_f.shared.algoRunCatching
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.ChildAccountInfo
-import com.storyteller_f.shared.model.UserInfo
 import kotlinx.coroutines.launch
 
 class AccountSwitcher(val state: MutableState<Boolean> = mutableStateOf(false)) {

@@ -1,7 +1,5 @@
 import android.content.ContentProvider
-import android.util.Log
 import com.storyteller_f.a.app.AApplication
-import com.storyteller_f.a.app.AppConfig
 import org.junit.Before
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
@@ -41,5 +39,4 @@ actual abstract class PlatformHeadlessTest {
         }
     }
 
-    actual val portOffset: Int = if (AppConfig.DEBUG) 1000 else 2000
 }
