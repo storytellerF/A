@@ -14,6 +14,7 @@ import com.storyteller_f.a.app.core.PlaybackService
 import com.storyteller_f.a.app.core.commonForActivity
 import com.storyteller_f.a.app.core.components.LocalMediaPlayerService
 import com.storyteller_f.a.app.core.components.bindActivity
+import com.storyteller_f.a.app.core.components.unbindActivity
 import com.storyteller_f.shared.isRunningOnRobolectric
 import io.github.aakira.napier.Napier
 import io.github.vinceglb.filekit.FileKit
@@ -54,15 +55,20 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
         installSplashScreen()
+        super.onCreate(savedInstanceState)
+        FileKit.init(this)
         commonForActivity()
         bindActivity(this)
-        FileKit.init(this)
         setContent {
             CompositionLocalProvider(LocalMediaPlayerService provides (application as PanelApplication).mediaPlayer) {
                 App()
             }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        unbindActivity()
     }
 }

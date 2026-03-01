@@ -67,7 +67,6 @@ kotlin {
             implementation(libs.accompanist.permissions)
 
             implementation(libs.github.newpipeextractor)
-            implementation(libs.androidx.core.splashscreen)
             implementation(libs.androidx.datastore.preferences.core)
 
             implementation(libs.androidx.ui.tooling.preview)

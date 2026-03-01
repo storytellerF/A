@@ -5,8 +5,8 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.storyteller_f.a.panel.PanelNav
 import com.storyteller_f.a.panel.Res
+import com.storyteller_f.a.panel.common.PanelNav
 import com.storyteller_f.a.panel.encrypted
 import com.storyteller_f.a.panel.interaction
 import com.storyteller_f.a.panel.pinned
