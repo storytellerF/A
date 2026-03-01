@@ -47,8 +47,6 @@ kotlin {
         val headlessTest by creating {
             dependsOn(commonTest.get())
         }
-        headlessTest.dependencies {
-        }
         val generalJvmMain by creating {
             dependencies {
                 implementation(libs.bcprov.jdk18on)

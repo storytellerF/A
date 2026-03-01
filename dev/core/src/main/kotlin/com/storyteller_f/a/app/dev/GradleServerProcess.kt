@@ -74,11 +74,13 @@ suspend fun CoroutineScope.startServerByRun(
     }
     val extension = if (isWin()) ".bat" else ""
     val command = "cloud/server/build/install/server/bin/server$extension"
-    val serverProcess = ProcessBuilder(command)
-        .redirectErrorStream(true)
-        .directory(File(projectRoot))
-        .bindGradleProcessEnv(testEnvFile, port, projectRoot, sessionPath, dbConfig)
-        .start()
+    val serverProcess = withContext(Dispatchers.IO) {
+        ProcessBuilder(command)
+            .redirectErrorStream(true)
+            .directory(File(projectRoot))
+            .bindGradleProcessEnv(testEnvFile, port, projectRoot, sessionPath, dbConfig)
+            .start()
+    }
     return waitRunProcess(serverProcess) {
         it.contains("Responding at")
     }
@@ -96,11 +98,13 @@ suspend fun CoroutineScope.startWorkerByRun(
     }
     val extension = if (isWin()) ".bat" else ""
     val command = "cloud/worker/build/install/worker/bin/worker$extension"
-    val process = ProcessBuilder(command)
-        .redirectErrorStream(true)
-        .directory(File(projectRoot))
-        .bindGradleProcessEnv(testEnvFile, 0, projectRoot, sessionPath, dbConfig)
-        .start()
+    val process = withContext(Dispatchers.IO) {
+        ProcessBuilder(command)
+            .redirectErrorStream(true)
+            .directory(File(projectRoot))
+            .bindGradleProcessEnv(testEnvFile, 0, projectRoot, sessionPath, dbConfig)
+            .start()
+    }
     return waitRunProcess(process) {
         it.contains("worker started")
     }

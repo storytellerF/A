@@ -184,7 +184,6 @@ kotlin {
             implementation(kotlin("test"))
 
             implementation(libs.ui.test)
-            implementation(projects.dev.core)
         }
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
