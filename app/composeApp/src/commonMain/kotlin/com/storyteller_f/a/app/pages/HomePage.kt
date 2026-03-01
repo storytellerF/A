@@ -241,7 +241,7 @@ private fun UserHost(content: @Composable () -> Unit) {
     } else {
         CenterBox {
             SignInButton {
-                appNavFactory.newAppNav().gotoLogin()
+                appNavFactory.newAppNav().gotoSignIn()
             }
         }
     }

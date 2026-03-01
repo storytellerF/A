@@ -3,6 +3,7 @@ package com.storyteller_f.a.app.core.utils
 import androidx.compose.ui.graphics.ImageBitmap
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
+import coil3.annotation.ExperimentalCoilApi
 import coil3.network.ktor3.KtorNetworkFetcherFactory
 import coil3.request.ImageRequest
 import com.storyteller_f.a.client.core.UserSessionManager
@@ -26,6 +27,7 @@ suspend fun getRemoteImageBitmap(
     return image?.coilImageToImageBitmap()
 }
 
+@OptIn(ExperimentalCoilApi::class)
 fun imageRequest(context: PlatformContext, client: HttpClient, info: FileInfo?) = ImageRequest.Builder(context)
     .fetcherFactory(KtorNetworkFetcherFactory(client))
     .data(info?.url)

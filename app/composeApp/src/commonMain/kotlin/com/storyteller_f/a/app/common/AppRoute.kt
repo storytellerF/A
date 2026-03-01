@@ -41,7 +41,7 @@ import com.storyteller_f.a.app.pages.topic.ReactionListPage
 import com.storyteller_f.a.app.pages.topic.TopicComposeData
 import com.storyteller_f.a.app.pages.topic.TopicComposePage
 import com.storyteller_f.a.app.pages.topic.TopicPage
-import com.storyteller_f.a.app.pages.user.LoginPage
+import com.storyteller_f.a.app.pages.user.SignInAndSignUpPage
 import com.storyteller_f.a.app.pages.user.MemberPage
 import com.storyteller_f.a.app.pages.user.UserCommentsPage
 import com.storyteller_f.a.app.pages.user.UserFavoritePage
@@ -215,7 +215,7 @@ interface AppNav {
         return currentDestination?.destination?.hasRoute(any) == true
     }
 
-    fun gotoLogin()
+    fun gotoSignIn()
 
     fun gotoRoom(roomId: PrimaryKey, showDialog: Boolean)
 
@@ -284,7 +284,7 @@ fun newAppNav(navigator: NavHostController, scope: CoroutineScope) = object : Ap
     override val currentDestinationFlow: StateFlow<NavBackStackEntry?>
         get() = navigator.currentBackStackEntryFlow.stateIn(scope, SharingStarted.Eagerly, null)
 
-    override fun gotoLogin() {
+    override fun gotoSignIn() {
         navigator.navigate(route = SignSessionScreen)
     }
 
@@ -478,7 +478,7 @@ private fun NavGraphBuilder.buildMainScreen() {
         HomePage()
     }
     composable<SignSessionScreen> {
-        LoginPage()
+        SignInAndSignUpPage()
     }
     composable<CommunityScreen> {
         val screen = it.toRoute<CommunityScreen>()

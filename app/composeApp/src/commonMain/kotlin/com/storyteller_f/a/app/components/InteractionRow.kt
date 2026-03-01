@@ -56,7 +56,7 @@ fun InteractionRowInternal(
                 if (userSessionManager.currentIsAlreadySignUp) {
                     startAddReaction()
                 } else {
-                    appNavFactory.newAppNav().gotoLogin()
+                    appNavFactory.newAppNav().gotoSignIn()
                 }
             }
         },

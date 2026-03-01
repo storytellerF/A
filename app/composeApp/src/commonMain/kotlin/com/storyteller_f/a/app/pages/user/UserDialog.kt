@@ -160,7 +160,7 @@ fun SignInBox(dismiss: () -> Unit) {
     ) {
         SignInButton {
             dismiss()
-            appNavFactory.newAppNav().gotoLogin()
+            appNavFactory.newAppNav().gotoSignIn()
         }
     }
 }
