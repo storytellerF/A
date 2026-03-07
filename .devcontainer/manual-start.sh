@@ -1,5 +1,10 @@
 #!/bin/sh
-docker compose -f ./docker-compose.dev.yml up -d --build
-
-echo "VNC URL: http://localhost:6081/vnc.html"
-echo "Appium URL: http://localhost:4724/inspector"
+if docker compose -f ./docker-compose.dev.yml up -d --build; then
+    echo "Docker compose started successfully."
+    echo "You can access the Android emulator via:"
+    echo "  - Web VNC: http://localhost:6080/vnc.html"
+    echo "  - VNC direct: localhost:5901"
+    echo "  - Appium: http://localhost:4723/inspector"
+else
+    echo "Failed to start docker compose."
+fi

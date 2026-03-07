@@ -2,7 +2,7 @@
 trigger: always_on
 ---
 
-# trae 项目开发规则（基于 AGENTS.md）
+# 项目开发规则
 
 ## 全局原则
 - 使用 JDK 21，全模块 Kotlin/JVM 目标版本为 21
@@ -19,6 +19,7 @@ trigger: always_on
 - 代码编辑之后不要用build 任务检查编译错误，要使用assemble 任务检查错误，如果要执行test 任务，单纯执行test 任务，不要执行detekt 任务
 - 不要在代码中使用 println 或 System.out.println
 - 编辑文件时需要注意不要改变当前文件的换行符
+- 添加依赖时通过github 或者对应仓库获取正确的group 和artifact，找不到依赖也禁止降低ban ben ha
 
 ## 模块职责概览
 - **api**: 定义 REST API 端点、查询/路径模型；包含管理员 AdminApi（/admin/*）
