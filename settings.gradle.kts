@@ -59,6 +59,7 @@ include(":app:android")
 
 include(":dev:core")
 include(":dev:server")
+include(":dev:cli")
 if (isAppiumTestEnable)
     include(":dev:appium")
 

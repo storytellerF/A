@@ -17,6 +17,7 @@ services:
     volumes:
       - ..:/workspace/A:cached
       - ../../AData:/workspace/AData:cached
+      - ./data/authorized_keys:${CONTAINER_HOME:-/home/debian}/.ssh/authorized_keys
       - /var/run/docker.sock:/var/run/docker.sock  # 宿主机 Docker 套接字
       - sdk_data:/home/${CONTAINER_USERNAME}/Android/Sdk
       - a-bashhistory:/commandhistory
@@ -25,9 +26,9 @@ services:
       - konan_data:/home/${CONTAINER_USERNAME}/.konan
       - m2_data:/home/${CONTAINER_USERNAME}/.m2
     shm_size: '2gb' # Allocate more shared memory
-    privileged: true # Enable KVM acceleration
-    # devices:
-    #   - /dev/kvm
+    # privileged: true # Enable KVM acceleration
+    devices:
+      - /dev/kvm
 
 volumes:
   avd_data:

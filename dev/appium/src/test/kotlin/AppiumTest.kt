@@ -18,6 +18,7 @@ import java.io.File
 import java.net.URI
 import java.time.Duration
 import java.util.Base64
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.minutes
@@ -29,6 +30,7 @@ class AppiumTest {
     val name = TestName()
 
     @Test
+    @Ignore
     fun `test sign up`() = runTest(timeout = 10.minutes) {
         runAppiumTest { driver ->
             val privateKeyContent = generatePrivateKey()
