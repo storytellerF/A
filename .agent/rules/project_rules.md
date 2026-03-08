@@ -76,12 +76,12 @@ trigger: always_on
     - 需要分页则使用 `Pager` + `PagingSource/RemoteMediator`
 
 ### C) 确保没有编译错误
-- 代码完成之后，运行`./gradlew assemble` 检查是否存在编译错误
-- 编译错误检查之后，运行`./scripts/tool_scripts/exec-until-success.sh ./gradlew detekt --no-daemon` 进行静态代码风格检查
+- 代码完成之后，运行`./gradlew assemble --console=plain` 检查是否存在编译错误
+- 编译错误检查之后，运行`./scripts/tool_scripts/exec-until-success.sh ./gradlew detekt --console=plain --no-daemon` 进行静态代码风格检查
   - 如果是windows 环境需要通过git bash 执行
 
 ### C) 测试
-- 对于受到影响的模块要进行代码单元测试工作`./gradlew module:test`
+- 对于受到影响的模块要进行代码单元测试工作`./gradlew module:test --console=plain`
 - 如果要进行插桩测试，不要执行AppTest，选择执行AppiumTest，通过`./scripts/test_scripts/build-and-test.sh --appium`，因为appium 测试需要一些准备工作
 
 ## 与 AI 协作的额外规则

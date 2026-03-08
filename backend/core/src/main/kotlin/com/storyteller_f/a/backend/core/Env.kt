@@ -74,7 +74,11 @@ fun setLogPath() {
     if (System.getProperty("LOG_PATH") == null) {
         val customLogPath = System.getenv("LOG_PATH")
         if (!customLogPath.isNullOrBlank()) {
-            System.setProperty("LOG_PATH", File(customLogPath).canonicalPath)
+            val s = File(customLogPath).canonicalPath
+            Napier.i {
+                "set log path: $s"
+            }
+            System.setProperty("LOG_PATH", s)
             return
         }
         val osName = System.getProperty("os.name").lowercase(Locale.getDefault())
@@ -89,7 +93,11 @@ fun setLogPath() {
             // 获取home 目录
             System.getProperty("user.home") + "/log"
         }
-        System.setProperty("LOG_PATH", File(logPath).canonicalPath)
+        val s = File(logPath).canonicalPath
+        Napier.i {
+            "set log path: $s"
+        }
+        System.setProperty("LOG_PATH", s)
     }
 }
 

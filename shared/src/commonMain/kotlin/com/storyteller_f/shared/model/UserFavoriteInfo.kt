@@ -17,7 +17,14 @@ data class UserFavoriteInfo(
     val extensions: Extensions? = null
 ) : PrimaryKeyIdentifiable {
     @Serializable
-    data class Extensions(val topicInfo: TopicInfo? = null)
+    data class Extensions(
+        val topicInfo: TopicInfo? = null,
+        val communityInfo: CommunityInfo? = null,
+        val roomInfo: RoomInfo? = null,
+        val userInfo: UserInfo? = null,
+        val titleInfo: TitleInfo? = null,
+        val fileInfo: FileInfo? = null,
+    )
 
     companion object {
         val EMPTY = UserFavoriteInfo(

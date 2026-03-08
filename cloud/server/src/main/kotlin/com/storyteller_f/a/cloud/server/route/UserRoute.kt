@@ -155,10 +155,14 @@ fun Route.bindProtectedUserSubscriptionRoute(backend: Backend) {
 
 fun Route.bindUserRoute(backend: Backend) {
     CustomApi.Users.Aid.get(handleResult()) { q ->
-        backend.getUserInfo(ObjectFetch.AidFetch(q.aid))
+        usePrincipalOrNull { uid ->
+            backend.getUserInfo(ObjectFetch.AidFetch(q.aid), uid)
+        }
     }
     CustomApi.Users.Id.get(handleResult()) {
-        backend.getUserInfo(ObjectFetch.IdFetch(it.id))
+        usePrincipalOrNull { uid ->
+            backend.getUserInfo(ObjectFetch.IdFetch(it.id), uid)
+        }
     }
 
     CustomApi.Users.Id.Topics.get(handleResult()) { q, p ->
@@ -183,9 +187,11 @@ fun Route.bindUserRoute(backend: Backend) {
         }
     }
 
-    CustomApi.Users.search(handleResult()) {
-        it.pagination(GeneralOffsetPagingGenerator) { f ->
-            backend.searchUsers(it.word, f)
+    CustomApi.Users.search(handleResult()) { q ->
+        usePrincipalOrNull { uid ->
+            q.pagination(GeneralOffsetPagingGenerator) { f ->
+                backend.searchUsers(q.word, uid, f)
+            }
         }
     }
 }
