@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Casino
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.FileOpen
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -59,6 +60,7 @@ fun PrivateKeyInput(
     address: String?,
     enableRandom: Boolean = true,
     algo: AlgoType = AlgoType.P256,
+    onAlgoChange: (AlgoType) -> Unit = {},
     update: (String) -> Unit
 ) {
     var showDialog by remember { mutableStateOf(false) }
@@ -90,7 +92,7 @@ fun PrivateKeyInput(
     }
 
     if (showDialog) {
-        PrivateKeyDialog(privateKey, enableRandom, algo, { showDialog = false }) {
+        PrivateKeyDialog(privateKey, enableRandom, algo, { showDialog = false }, onAlgoChange) {
             update(it)
             showDialog = false
         }
@@ -104,11 +106,12 @@ fun PrivateKeyDialog(
     enableRandom: Boolean,
     algo: AlgoType,
     onDismissRequest: () -> Unit,
+    onAlgoChange: (AlgoType) -> Unit,
     onConfirm: (String) -> Unit
 ) {
     BasicAlertDialog(onDismissRequest = onDismissRequest) {
         DialogContainer {
-            PrivateKeyEditor(privateKey, enableRandom, algo, onConfirm, onDismissRequest)
+            PrivateKeyEditor(privateKey, enableRandom, algo, onAlgoChange, onConfirm, onDismissRequest)
         }
     }
 }
@@ -118,6 +121,7 @@ fun PrivateKeyEditor(
     privateKey: String,
     enableRandom: Boolean,
     algo: AlgoType,
+    onAlgoChange: (AlgoType) -> Unit,
     onConfirm: (String) -> Unit,
     onCancel: () -> Unit
 ) {
@@ -126,6 +130,10 @@ fun PrivateKeyEditor(
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Text(stringResource(Res.string.edit_private_key), style = MaterialTheme.typography.titleMedium)
+
+        AlgoTypeSelector(algo) {
+            onAlgoChange(it)
+        }
 
         PrivateKeyTools(currentKey, enableRandom, algo) {
             currentKey = it
@@ -163,6 +171,16 @@ fun PrivateKeyTools(currentKey: String, enableRandom: Boolean, algo: AlgoType, o
     val toast = LocalToaster.current
     val scope = rememberCoroutineScope()
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        IconButton(onClick = {
+            scope.launch {
+                val f = FileKit.openFilePicker()
+                if (f != null) {
+                    onKeyChange(String(f.readBytes()).replaceCrlf())
+                }
+            }
+        }) {
+            Icon(Icons.Default.FileOpen, CoreStrings.selectFile())
+        }
         if (enableRandom) {
             IconButton(onClick = {
                 scope.launch {
@@ -182,17 +200,6 @@ fun PrivateKeyTools(currentKey: String, enableRandom: Boolean, algo: AlgoType, o
             }
         }) {
             Icon(Icons.Default.ContentCopy, stringResource(Res.string.copy))
-        }
-
-        IconButton(onClick = {
-            scope.launch {
-                val f = FileKit.openFilePicker()
-                if (f != null) {
-                    onKeyChange(String(f.readBytes()).replaceCrlf())
-                }
-            }
-        }) {
-            Icon(Icons.Default.Folder, CoreStrings.selectFile())
         }
     }
 }

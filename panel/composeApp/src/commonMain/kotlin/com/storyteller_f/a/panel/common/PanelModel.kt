@@ -41,6 +41,7 @@ import com.storyteller_f.a.client.core.getUserSubscriptions
 import com.storyteller_f.a.client.core.getUserUploadRecords
 import com.storyteller_f.a.client.core.overview
 import com.storyteller_f.shared.getAlgo
+import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.MemberInfo
@@ -73,6 +74,7 @@ import com.storyteller_f.storage.getName
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -213,14 +215,15 @@ class AddUserViewModel : ViewModel() {
     val privateKey = MutableStateFlow("")
     val nickname = MutableStateFlow("")
     val aid = MutableStateFlow("")
-    val publicKey = privateKey.map {
-        getAlgo().run {
-            getDerPublicKeyFromPrivateKey(it).getOrNull()
+    val algoType = MutableStateFlow(AlgoType.P256)
+    val publicKey = privateKey.combine(algoType) { pk, algo ->
+        getAlgo(algo).run {
+            getDerPublicKeyFromPrivateKey(pk).getOrNull()
         }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
-    val address = publicKey.map {
-        getAlgo().run {
-            it?.let { derPublicKeyStr -> calcAddress(derPublicKeyStr).getOrNull() }
+    val address = publicKey.combine(algoType) { pub, algo ->
+        getAlgo(algo).run {
+            pub?.let { derPublicKeyStr -> calcAddress(derPublicKeyStr).getOrNull() }
         }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
@@ -236,9 +239,13 @@ class AddUserViewModel : ViewModel() {
         this.privateKey.value = privateKey
     }
 
+    fun updateAlgoType(algoType: AlgoType) {
+        this.algoType.value = algoType
+    }
+
     fun autoGeneratePrivateKey() {
         viewModelScope.launch {
-            getAlgo().generatePemKeyPair().onSuccess { (privateKey, _) ->
+            getAlgo(algoType.value).generatePemKeyPair().onSuccess { (privateKey, _) ->
                 updatePrivateKey(privateKey)
             }
         }
