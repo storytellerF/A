@@ -31,6 +31,8 @@ data class FileInfo(
     val ownerType: ObjectType,
     val lastModified: LocalDateTime,
     val dimension: Dimension?,
+    val favoriteId: PrimaryKey? = null,
+    val subscriptionId: PrimaryKey? = null,
 ) : ModelObject {
     override val objectType: ObjectType
         get() = ObjectType.FILE

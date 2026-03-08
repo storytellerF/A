@@ -1,6 +1,6 @@
 package com.storyteller_f.a.app.pages.title
 
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Text
@@ -46,7 +46,7 @@ fun TitleList(titlesViewModel: TitlesViewModel) {
 
 @Composable
 fun TitleItem(titleInfo: TitleInfo) {
-    Row {
+    Column {
         Text(titleInfo.name)
 
         titleInfo.extension?.let {

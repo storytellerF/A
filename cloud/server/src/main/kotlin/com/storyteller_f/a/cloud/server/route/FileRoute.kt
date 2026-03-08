@@ -1,13 +1,18 @@
 package com.storyteller_f.a.cloud.server.route
 
 import com.storyteller_f.a.api.CustomApi
+import com.storyteller_f.a.api.NewFavorite
+import com.storyteller_f.a.api.NewSubscription
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.service.UploadPack
 import com.storyteller_f.a.cloud.core.service.RootWritePermission
 import com.storyteller_f.a.cloud.core.service.abortChunkUpload
+import com.storyteller_f.a.cloud.core.service.addFavorite
+import com.storyteller_f.a.cloud.core.service.addSubscription
 import com.storyteller_f.a.cloud.core.service.checkRootWritePermission
 import com.storyteller_f.a.cloud.core.service.completeChunkUpload
+import com.storyteller_f.a.cloud.core.service.deleteFavoriteByObject
 import com.storyteller_f.a.cloud.core.service.extractAlbum
 import com.storyteller_f.a.cloud.core.service.getChunkStatus
 import com.storyteller_f.a.cloud.core.service.getFileInfoByName
@@ -15,6 +20,7 @@ import com.storyteller_f.a.cloud.core.service.getFileList
 import com.storyteller_f.a.cloud.core.service.getQuotaInfo
 import com.storyteller_f.a.cloud.core.service.initChunkUpload
 import com.storyteller_f.a.cloud.core.service.newFileName
+import com.storyteller_f.a.cloud.core.service.removeSubscriptionByObject
 import com.storyteller_f.a.cloud.core.service.searchFiles
 import com.storyteller_f.a.cloud.core.service.tryCopyFile
 import com.storyteller_f.a.cloud.core.service.tryUploadFiles
@@ -101,6 +107,36 @@ fun Route.bindProtectedFileRoute(backend: Backend) {
             q.pagination(IdentifiablePagingGenerator) { f ->
                 backend.uncheckedGetFileRefsByFileId(p.id, f)
             }
+        }
+    }
+    bindFileFavoriteRoute(backend)
+    bindFileSubscriptionRoute(backend)
+}
+
+private fun Route.bindFileSubscriptionRoute(backend: Backend) {
+    CustomApi.Files.Id.Subscription.add(handleResult()) { p, _ ->
+        usePrincipal { uid ->
+            backend.addSubscription(uid, NewSubscription(p.id, ObjectType.FILE)).map { }
+        }
+    }
+
+    CustomApi.Files.Id.Subscription.delete(handleResult()) { p, _ ->
+        usePrincipal { uid ->
+            backend.removeSubscriptionByObject(uid, p.id).map { }
+        }
+    }
+}
+
+private fun Route.bindFileFavoriteRoute(backend: Backend) {
+    CustomApi.Files.Id.Favorite.add(handleResult()) { p, _ ->
+        usePrincipal { uid ->
+            backend.addFavorite(uid, NewFavorite(ObjectType.FILE, p.id)).map { }
+        }
+    }
+
+    CustomApi.Files.Id.Favorite.delete(handleResult()) { p, _ ->
+        usePrincipal { uid ->
+            backend.deleteFavoriteByObject(uid, p.id).map { }
         }
     }
 }

@@ -398,6 +398,56 @@ suspend fun TopicInfoStorage.update(
     updateDocument(collection, value)
 }
 
+suspend fun TitleInfoStorage.update(
+    collection: TitleCollection,
+    id: PrimaryKey,
+    block: (TitleInfo) -> TitleInfo
+) {
+    val document = getDocument(collection, id) ?: return
+    val value = block(document)
+    updateDocument(collection, value)
+}
+
+suspend fun RoomInfoStorage.update(
+    collection: RoomCollection,
+    id: PrimaryKey,
+    block: (RoomInfo) -> RoomInfo
+) {
+    val document = getDocument(collection, id) ?: return
+    val value = block(document)
+    updateDocument(collection, value)
+}
+
+suspend fun CommunityInfoStorage.update(
+    collection: CommunityCollection,
+    id: PrimaryKey,
+    block: (CommunityInfo) -> CommunityInfo
+) {
+    val document = getDocument(collection, id) ?: return
+    val value = block(document)
+    updateDocument(collection, value)
+}
+
+suspend fun FileInfoStorage.update(
+    collection: FileCollection,
+    id: PrimaryKey,
+    block: (FileInfo) -> FileInfo
+) {
+    val document = getDocument(collection, id) ?: return
+    val value = block(document)
+    updateDocument(collection, value)
+}
+
+suspend fun UserInfoStorage.update(
+    collection: UserCollection,
+    id: PrimaryKey,
+    block: (UserInfo) -> UserInfo
+) {
+    val document = getDocument(collection, id) ?: return
+    val value = block(document)
+    updateDocument(collection, value)
+}
+
 class WrappedPagingSource<K : Any, T : Any, M : Any>(
     val rawSource: PagingSource<K, T>,
     val process: suspend (List<T>) -> List<M>,

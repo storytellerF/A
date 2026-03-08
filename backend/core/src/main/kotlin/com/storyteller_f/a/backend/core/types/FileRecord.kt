@@ -24,6 +24,24 @@ data class FileRecord(
     companion object
 }
 
-fun FileRecord.toFileInfo(url: String, lastModified: LocalDateTime): FileInfo {
-    return FileInfo(id, url, fullName, contentType, size, name, owner, ownerType, lastModified, dimension)
+fun FileRecord.toFileInfo(
+    url: String,
+    lastModified: LocalDateTime,
+    favoriteId: PrimaryKey? = null,
+    subscriptionId: PrimaryKey? = null
+): FileInfo {
+    return FileInfo(
+        id,
+        url,
+        fullName,
+        contentType,
+        size,
+        name,
+        owner,
+        ownerType,
+        lastModified,
+        dimension,
+        favoriteId,
+        subscriptionId
+    )
 }

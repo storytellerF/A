@@ -9,9 +9,13 @@ import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.storage.CommunityCollection
+import com.storyteller_f.storage.FileCollection
 import com.storyteller_f.storage.ModelStorage
 import com.storyteller_f.storage.RoomCollection
+import com.storyteller_f.storage.TitleCollection
 import com.storyteller_f.storage.TopicCollection
+import com.storyteller_f.storage.UserCollection
 import com.storyteller_f.storage.update
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toPersistentList
@@ -100,10 +104,27 @@ private suspend fun processOnAddFavorite(
     event: OnAddFavorite,
     database: ModelStorage
 ) {
-    if (event.objectTuple.objectType == ObjectType.TOPIC) {
-        database.topic.update(TopicCollection.Topics, event.objectTuple.objectId) {
+    val objectId = event.objectTuple.objectId
+    when (event.objectTuple.objectType) {
+        ObjectType.TOPIC -> database.topic.update(TopicCollection.Topics, objectId) {
             it.copy(favoriteId = -1)
         }
+        ObjectType.ROOM -> database.room.update(RoomCollection.Rooms, objectId) {
+            it.copy(favoriteId = -1)
+        }
+        ObjectType.COMMUNITY -> database.community.update(CommunityCollection.Communities, objectId) {
+            it.copy(favoriteId = -1)
+        }
+        ObjectType.TITLE -> database.title.update(TitleCollection.Titles, objectId) {
+            it.copy(favoriteId = -1)
+        }
+        ObjectType.FILE -> database.fileInfo.update(FileCollection.Files, objectId) {
+            it.copy(favoriteId = -1)
+        }
+        ObjectType.USER -> database.user.update(UserCollection.Users, objectId) {
+            it.copy(favoriteId = -1)
+        }
+        else -> Unit
     }
 }
 
@@ -111,13 +132,27 @@ private suspend fun processOnRemoveFavorite(
     event: OnRemoveFavorite,
     database: ModelStorage
 ) {
-    if (event.objectTuple.objectType == ObjectType.TOPIC) {
-        database.topic.update(
-            TopicCollection.Topics,
-            event.objectTuple.objectId
-        ) {
+    val objectId = event.objectTuple.objectId
+    when (event.objectTuple.objectType) {
+        ObjectType.TOPIC -> database.topic.update(TopicCollection.Topics, objectId) {
             it.copy(favoriteId = null)
         }
+        ObjectType.ROOM -> database.room.update(RoomCollection.Rooms, objectId) {
+            it.copy(favoriteId = null)
+        }
+        ObjectType.COMMUNITY -> database.community.update(CommunityCollection.Communities, objectId) {
+            it.copy(favoriteId = null)
+        }
+        ObjectType.TITLE -> database.title.update(TitleCollection.Titles, objectId) {
+            it.copy(favoriteId = null)
+        }
+        ObjectType.FILE -> database.fileInfo.update(FileCollection.Files, objectId) {
+            it.copy(favoriteId = null)
+        }
+        ObjectType.USER -> database.user.update(UserCollection.Users, objectId) {
+            it.copy(favoriteId = null)
+        }
+        else -> Unit
     }
 }
 
@@ -125,10 +160,27 @@ private suspend fun processOnAddSubscription(
     event: OnAddSubscription,
     database: ModelStorage
 ) {
-    if (event.objectTuple.objectType == ObjectType.TOPIC) {
-        database.topic.update(TopicCollection.Topics, event.objectTuple.objectId) {
+    val objectId = event.objectTuple.objectId
+    when (event.objectTuple.objectType) {
+        ObjectType.TOPIC -> database.topic.update(TopicCollection.Topics, objectId) {
             it.copy(subscriptionId = -1)
         }
+        ObjectType.ROOM -> database.room.update(RoomCollection.Rooms, objectId) {
+            it.copy(subscriptionId = -1)
+        }
+        ObjectType.COMMUNITY -> database.community.update(CommunityCollection.Communities, objectId) {
+            it.copy(subscriptionId = -1)
+        }
+        ObjectType.TITLE -> database.title.update(TitleCollection.Titles, objectId) {
+            it.copy(subscriptionId = -1)
+        }
+        ObjectType.FILE -> database.fileInfo.update(FileCollection.Files, objectId) {
+            it.copy(subscriptionId = -1)
+        }
+        ObjectType.USER -> database.user.update(UserCollection.Users, objectId) {
+            it.copy(subscriptionId = -1)
+        }
+        else -> Unit
     }
 }
 
@@ -136,13 +188,27 @@ private suspend fun processOnRemoveSubscriptionEvent(
     event: OnRemoveSubscription,
     database: ModelStorage
 ) {
-    if (event.objectTuple.objectType == ObjectType.TOPIC) {
-        database.topic.update(
-            TopicCollection.Topics,
-            event.objectTuple.objectId
-        ) {
+    val objectId = event.objectTuple.objectId
+    when (event.objectTuple.objectType) {
+        ObjectType.TOPIC -> database.topic.update(TopicCollection.Topics, objectId) {
             it.copy(subscriptionId = null)
         }
+        ObjectType.ROOM -> database.room.update(RoomCollection.Rooms, objectId) {
+            it.copy(subscriptionId = null)
+        }
+        ObjectType.COMMUNITY -> database.community.update(CommunityCollection.Communities, objectId) {
+            it.copy(subscriptionId = null)
+        }
+        ObjectType.TITLE -> database.title.update(TitleCollection.Titles, objectId) {
+            it.copy(subscriptionId = null)
+        }
+        ObjectType.FILE -> database.fileInfo.update(FileCollection.Files, objectId) {
+            it.copy(subscriptionId = null)
+        }
+        ObjectType.USER -> database.user.update(UserCollection.Users, objectId) {
+            it.copy(subscriptionId = null)
+        }
+        else -> Unit
     }
 }
 

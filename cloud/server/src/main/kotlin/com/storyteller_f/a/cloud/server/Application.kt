@@ -111,8 +111,8 @@ import kotlin.system.exitProcess
 import kotlin.time.Duration.Companion.seconds
 
 fun main(args: Array<String>) {
-    setupKmpLogger()
     setLogPath()
+    setupKmpLogger()
     loadCryptoLibIfNeed()
     loadAvif()
     Napier.i {
