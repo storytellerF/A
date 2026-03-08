@@ -23,7 +23,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -381,21 +380,11 @@ fun InputPrivateKeyPage(isSignUp: Boolean) {
     }
     CenterBox {
         Column(modifier = Modifier.padding(20.dp)) {
-            val validAlgos = AlgoType.entries
-            Row {
-                validAlgos.forEach {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        RadioButton(it == algo, {
-                            viewModel.updateAlgo(it)
-                        })
-                        Text(it.name)
-                    }
-                }
-            }
-
             PrivateKeyInput(privateKey, address, isSignUp, algo, {
+                viewModel.updateAlgo(it)
+            }) {
                 viewModel.updatePrivateKey(it)
-            })
+            }
             Button(startSign, modifier = Modifier.testTag("start_sign")) {
                 Text(
                     stringResource(

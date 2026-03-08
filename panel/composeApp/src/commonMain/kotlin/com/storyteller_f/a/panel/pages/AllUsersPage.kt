@@ -46,6 +46,7 @@ import androidx.navigation3.ui.NavDisplay
 import androidx.savedstate.serialization.SavedStateConfiguration
 import com.storyteller_f.a.api.NewUser
 import com.storyteller_f.a.app.core.CoreStrings
+import com.storyteller_f.a.app.core.components.AlgoTypeSelector
 import com.storyteller_f.a.app.core.components.DialogContainer
 import com.storyteller_f.a.app.core.components.GlobalDialogContext
 import com.storyteller_f.a.app.core.components.GlobalDialogController
@@ -121,15 +122,15 @@ fun AllUsersPageInternal(viewModel: AllUsersViewModel) {
                 showDialog = false
             }
         }
-    ) {
+    ) { paddingValues ->
         val direction = LocalLayoutDirection.current
-        Box(Modifier.safeArea(it, direction)) {
+        Box(Modifier.safeArea(paddingValues, direction)) {
             StateView(viewModel) { items ->
                 LazyColumn {
                     pagingItems(items, key = {
                         it.id
                     }) {
-                        val info = items.get(it)
+                        val info = items[it]
                         UserCell(info) {
                             val uid = info?.id
                             if (uid != null) {
@@ -205,7 +206,11 @@ private fun AddUserPrivateKeyPage(
 ) {
     val privateKey by addUserViewModel.privateKey.collectAsState()
     val scope = rememberCoroutineScope()
+    val algoType by addUserViewModel.algoType.collectAsState()
     Column {
+        AlgoTypeSelector(algoType) {
+            addUserViewModel.updateAlgoType(it)
+        }
         Row {
             IconButton({
                 scope.launch {
@@ -223,13 +228,21 @@ private fun AddUserPrivateKeyPage(
             }) {
                 Icon(Icons.Default.Casino, stringResource(Res.string.random))
             }
+            val clipboard = LocalClipboard.current
+            IconButton({
+                scope.launch {
+                    clipboard.setText(privateKey)
+                }
+            }) {
+                Icon(Icons.Default.ContentCopy, "copy")
+            }
             Spacer(modifier = Modifier.weight(1f))
         }
         OutlinedTextField(privateKey, {
             addUserViewModel.updatePrivateKey(it)
         }, label = {
             Text(CoreStrings.privateKey())
-        })
+        }, minLines = 3, maxLines = 5)
         Button(goBack) {
             Text(CoreStrings.ok())
         }
@@ -245,7 +258,6 @@ private fun AddUserProfilePage(
     val nickname by addUserViewModel.nickname.collectAsState()
     val aid by addUserViewModel.aid.collectAsState()
     val address by addUserViewModel.address.collectAsState()
-    val privateKey by addUserViewModel.privateKey.collectAsState()
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         OutlinedTextField(nickname, {
             addUserViewModel.updateNickname(it)
@@ -257,15 +269,7 @@ private fun AddUserProfilePage(
         }, label = {
             Text(stringResource(Res.string.aid))
         })
-        val clipboard = LocalClipboard.current
-        val scope = rememberCoroutineScope()
-        IconButton(onClick = {
-            scope.launch {
-                clipboard.setText(privateKey)
-            }
-        }) {
-            Icon(Icons.Default.ContentCopy, "copy")
-        }
+
         AddressField(address, gotoPrivateKey)
 
         AddUserDialogButtons(dismiss, addUserViewModel)
@@ -333,7 +337,7 @@ private fun GlobalDialogController<GlobalDialogContext<CustomPanelSessionManager
         toast.showMessage(requiredPrivateKeyMessage)
         return
     }
-    val newUser = NewUser(nickname, aid, publicKey)
+    val newUser = NewUser(nickname, aid, publicKey, addUserViewModel.algoType.value)
     scope.launch {
         useResult {
             context.request { addUser(newUser) }.onSuccess {
