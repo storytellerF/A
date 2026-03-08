@@ -53,48 +53,74 @@ private suspend fun Backend.processTitleList(
     list: List<RawTitle>,
     uid: PrimaryKey?
 ): Result<List<TitleInfo>?> {
-    val uidList = list.flatMap {
-        val title = it.title
-        val listOf = listOf(title.receiver, title.creator)
-        if (title.scopeType == ObjectType.USER) {
-            listOf + title.scopeId
-        } else {
-            listOf
-        }
-    }.distinct()
-    val communityIdList = list.mapNotNull {
-        val title = it.title
-        if (title.scopeType == ObjectType.COMMUNITY) {
-            title.scopeId
-        } else {
-            null
-        }
-    }.distinct()
-    val roomIdList = list.mapNotNull {
-        val title = it.title
-        if (title.scopeType == ObjectType.ROOM) {
-            title.scopeId
-        } else {
-            null
-        }
-    }.distinct()
-    val topicIdList = list.flatMap {
-        val title = it.title
-        buildList {
-            if (title.scopeType == ObjectType.TOPIC) {
-                add(title.scopeId)
-            }
-            if (title.descriptionTopicId != 0L) {
-                add(title.descriptionTopicId)
-            }
-        }
-    }.distinct()
+    val titleIds = list.map { it.title.id }
+    val favoriteMap = if (uid != null && titleIds.isNotEmpty()) {
+        database.favorite.getHasFavorite(ObjectListFetch.IdListFetch(titleIds), uid)
+            .getOrNull()?.associateBy { it.objectId } ?: emptyMap()
+    } else {
+        emptyMap()
+    }
+    val subscriptionMap = if (uid != null && titleIds.isNotEmpty()) {
+        database.subscription.getHasSubscription(ObjectListFetch.IdListFetch(titleIds), uid)
+            .getOrNull()?.associateBy { it.objectId } ?: emptyMap()
+    } else {
+        emptyMap()
+    }
+    val listWithFavAndSub = list.map {
+        it.copy(
+            favoriteId = favoriteMap[it.title.id]?.id,
+            subscriptionId = subscriptionMap[it.title.id]?.id
+        )
+    }
+    val uidList = getUidList(list)
+    val communityIdList = getCommunityIdList(list)
+    val roomIdList = getRoomIdList(list)
+
     return getRelatedObject(uidList, communityIdList, roomIdList).mapResult {
+        val topicIdList = list.flatMap {
+            val title = it.title
+            buildList {
+                if (title.scopeType == ObjectType.TOPIC) {
+                    add(title.scopeId)
+                }
+                if (title.descriptionTopicId != 0L) {
+                    add(title.descriptionTopicId)
+                }
+            }
+        }.distinct()
         getTopicByIds(topicIdList, uid).mapIfNotNull { topicList ->
-            processTitleList(it.first.orEmpty(), it.third.orEmpty(), it.second.orEmpty(), list, topicList)
+            processTitleList(it.first.orEmpty(), it.third.orEmpty(), it.second.orEmpty(), listWithFavAndSub, topicList)
         }
     }
 }
+
+private fun getUidList(list: List<RawTitle>): List<PrimaryKey> = list.flatMap {
+    val title = it.title
+    val listOf = listOf(title.receiver, title.creator)
+    if (title.scopeType == ObjectType.USER) {
+        listOf + title.scopeId
+    } else {
+        listOf
+    }
+}.distinct()
+
+private fun getCommunityIdList(list: List<RawTitle>): List<Long> = list.mapNotNull {
+    val title = it.title
+    if (title.scopeType == ObjectType.COMMUNITY) {
+        title.scopeId
+    } else {
+        null
+    }
+}.distinct()
+
+private fun getRoomIdList(list: List<RawTitle>): List<Long> = list.mapNotNull {
+    val title = it.title
+    if (title.scopeType == ObjectType.ROOM) {
+        title.scopeId
+    } else {
+        null
+    }
+}.distinct()
 
 private suspend fun Backend.getRelatedObject(
     uidList: List<PrimaryKey>,
@@ -147,7 +173,7 @@ private fun processTitleList(
                 else -> null
             }
         )
-        title.toTitleInfo(extension)
+        title.toTitleInfo(extension, it.favoriteId, it.subscriptionId)
     }
 }
 

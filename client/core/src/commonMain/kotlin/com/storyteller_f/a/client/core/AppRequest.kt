@@ -708,6 +708,8 @@ suspend fun UserSessionManager.addFavorite(newFavorite: NewFavorite) = serviceCa
         TOPIC -> CustomApi.Topics.Id.Favorite.add(commonPath, Unit) {}
         COMMUNITY -> CustomApi.Communities.Id.Favorite.add(commonPath, Unit) {}
         ROOM -> CustomApi.Rooms.Id.Favorite.add(commonPath, Unit) {}
+        ObjectType.TITLE -> CustomApi.Titles.Id.Favorite.add(commonPath, Unit) {}
+        ObjectType.FILE -> CustomApi.Files.Id.Favorite.add(commonPath, Unit) {}
         else -> throw IllegalArgumentException("Unsupported object type for favorite")
     }
 }
@@ -719,6 +721,8 @@ suspend fun UserSessionManager.removeFavorite(objectId: PrimaryKey, objectType: 
         TOPIC -> CustomApi.Topics.Id.Favorite.delete(commonPath, Unit) {}
         COMMUNITY -> CustomApi.Communities.Id.Favorite.delete(commonPath, Unit) {}
         ROOM -> CustomApi.Rooms.Id.Favorite.delete(commonPath, Unit) {}
+        ObjectType.TITLE -> CustomApi.Titles.Id.Favorite.delete(commonPath, Unit) {}
+        ObjectType.FILE -> CustomApi.Files.Id.Favorite.delete(commonPath, Unit) {}
         else -> throw IllegalArgumentException("Unsupported object type for favorite")
     }
 }
@@ -735,6 +739,8 @@ suspend fun UserSessionManager.addSubscription(newFavorite: NewSubscription) = s
         TOPIC -> CustomApi.Topics.Id.Subscription.add(commonPath, Unit) {}
         COMMUNITY -> CustomApi.Communities.Id.Subscription.add(commonPath, Unit) {}
         ROOM -> CustomApi.Rooms.Id.Subscription.add(commonPath, Unit) {}
+        ObjectType.TITLE -> CustomApi.Titles.Id.Subscription.add(commonPath, Unit) {}
+        ObjectType.FILE -> CustomApi.Files.Id.Subscription.add(commonPath, Unit) {}
         else -> throw IllegalArgumentException("Unsupported object type for subscription")
     }
 }
@@ -747,6 +753,8 @@ suspend fun UserSessionManager.removeSubscription(objectId: PrimaryKey, objectTy
             TOPIC -> CustomApi.Topics.Id.Subscription.delete(commonPath, Unit) {}
             COMMUNITY -> CustomApi.Communities.Id.Subscription.delete(commonPath, Unit) {}
             ROOM -> CustomApi.Rooms.Id.Subscription.delete(commonPath, Unit) {}
+            ObjectType.TITLE -> CustomApi.Titles.Id.Subscription.delete(commonPath, Unit) {}
+            ObjectType.FILE -> CustomApi.Files.Id.Subscription.delete(commonPath, Unit) {}
             else -> throw IllegalArgumentException("Unsupported object type for subscription")
         }
     }

@@ -641,6 +641,22 @@ object CustomApi {
                         "files/{id}/refs"
                     )
             }
+
+            object Favorite {
+                val add = mutationEndpointWithPath<Unit, Unit, CommonPath>("files/{id}/favorite")
+                val delete = mutationEndpointWithPath<Unit, Unit, CommonPath>(
+                    "files/{id}/favorite",
+                    methodType = MutationMethodType.DELETE
+                )
+            }
+
+            object Subscription {
+                val add = mutationEndpointWithPath<Unit, Unit, CommonPath>("files/{id}/subscription")
+                val delete = mutationEndpointWithPath<Unit, Unit, CommonPath>(
+                    "files/{id}/subscription",
+                    methodType = MutationMethodType.DELETE
+                )
+            }
         }
 
         val upload = mutationEndpointWithQuery<ServerResponse<FileInfo>, Unit, ObjectTuple>("files/upload")
@@ -711,6 +727,24 @@ object CustomApi {
     }
 
     object Titles {
+        object Id {
+            object Favorite {
+                val add = mutationEndpointWithPath<Unit, Unit, CommonPath>("titles/{id}/favorite")
+                val delete = mutationEndpointWithPath<Unit, Unit, CommonPath>(
+                    "titles/{id}/favorite",
+                    methodType = MutationMethodType.DELETE
+                )
+            }
+
+            object Subscription {
+                val add = mutationEndpointWithPath<Unit, Unit, CommonPath>("titles/{id}/subscription")
+                val delete = mutationEndpointWithPath<Unit, Unit, CommonPath>(
+                    "titles/{id}/subscription",
+                    methodType = MutationMethodType.DELETE
+                )
+            }
+        }
+
         val add = mutationEndpoint<TitleInfo, NewTitle>("titles")
     }
 

@@ -1,21 +1,30 @@
 package com.storyteller_f.a.cloud.server
 
 import com.storyteller_f.a.api.NewCommunity
+import com.storyteller_f.a.api.NewFavorite
+import com.storyteller_f.a.api.NewSubscription
 import com.storyteller_f.a.api.PaginationQuery
 import com.storyteller_f.a.backend.core.getImageDimension
 import com.storyteller_f.a.client.core.UploadData
 import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.abortChunkUpload
+import com.storyteller_f.a.client.core.addFavorite
+import com.storyteller_f.a.client.core.addSubscription
 import com.storyteller_f.a.client.core.completeChunkUpload
 import com.storyteller_f.a.client.core.copy
 import com.storyteller_f.a.client.core.createCommunity
 import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.a.client.core.extractAlbum
 import com.storyteller_f.a.client.core.getChunkStatus
+import com.storyteller_f.a.client.core.getFavorites
+import com.storyteller_f.a.client.core.getFileInfo
 import com.storyteller_f.a.client.core.getFileList
 import com.storyteller_f.a.client.core.getFileRefs
 import com.storyteller_f.a.client.core.getQuotaInfo
+import com.storyteller_f.a.client.core.getSubscriptions
 import com.storyteller_f.a.client.core.initChunkUpload
+import com.storyteller_f.a.client.core.removeFavorite
+import com.storyteller_f.a.client.core.removeSubscription
 import com.storyteller_f.a.client.core.upload
 import com.storyteller_f.a.client.core.uploadChunk
 import com.storyteller_f.a.cloud.core.service.getCoverExtensionFromMimeType
@@ -359,6 +368,42 @@ class FileTest {
                 assertEquals(ObjectType.TOPIC, ref.objectType)
                 assertEquals(fileInfo.id, ref.fileId)
             }
+        }
+    }
+
+    @Test
+    fun `test add file favorite`() = test {
+        val firstTuple = attachSession {
+            upload(ObjectTuple(it.uid, ObjectType.USER), getUploadDataFromText("hello favorite")).getOrThrow()
+        }
+        attachSession {
+            val fileId = getFileList(it.uid, ObjectType.USER, null, 10).getOrThrow().data.first().id
+            addFavorite(NewFavorite(ObjectType.FILE, fileId)).getOrThrow()
+            assertListTotalSize(1, getFavorites(PaginationQuery()))
+
+            val fileInfo = getFileInfo(fileId).getOrThrow()
+            assertNotNull(fileInfo.favoriteId)
+
+            removeFavorite(fileId, ObjectType.FILE).getOrThrow()
+            assertListTotalSize(0, getFavorites(PaginationQuery()))
+        }
+    }
+
+    @Test
+    fun `test add file subscription`() = test {
+        val firstTuple = attachSession {
+            upload(ObjectTuple(it.uid, ObjectType.USER), getUploadDataFromText("hello subscription")).getOrThrow()
+        }
+        attachSession {
+            val fileId = getFileList(it.uid, ObjectType.USER, null, 10).getOrThrow().data.first().id
+            addSubscription(NewSubscription(fileId, ObjectType.FILE)).getOrThrow()
+            assertListTotalSize(1, getSubscriptions(PaginationQuery()))
+
+            val fileInfo = getFileInfo(fileId).getOrThrow()
+            assertNotNull(fileInfo.subscriptionId)
+
+            removeSubscription(fileId, ObjectType.FILE).getOrThrow()
+            assertListTotalSize(0, getSubscriptions(PaginationQuery()))
         }
     }
 }

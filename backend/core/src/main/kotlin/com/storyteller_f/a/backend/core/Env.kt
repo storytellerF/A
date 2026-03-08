@@ -75,9 +75,7 @@ fun setLogPath() {
         val customLogPath = System.getenv("LOG_PATH")
         if (!customLogPath.isNullOrBlank()) {
             val s = File(customLogPath).canonicalPath
-            Napier.i {
-                "set log path: $s"
-            }
+            println("set log path: $s")
             System.setProperty("LOG_PATH", s)
             return
         }
@@ -88,15 +86,13 @@ fun setLogPath() {
         val isWindowsLike = osName.contains("win") || envOs.contains("cygwin") || envOs.contains("mingw")
 
         val logPath = if (isWindowsLike) {
-            System.getProperty("java.io.tmpdir")
+            File(System.getProperty("java.io.tmpdir"), "log")
         } else {
             // 获取home 目录
-            System.getProperty("user.home") + "/log"
+            File(System.getProperty("user.home"), "/log")
         }
-        val s = File(logPath).canonicalPath
-        Napier.i {
-            "set log path: $s"
-        }
+        val s = logPath.canonicalPath
+        println("set log path: $s")
         System.setProperty("LOG_PATH", s)
     }
 }

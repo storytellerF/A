@@ -16,7 +16,9 @@ data class TitleInfo(
     val scopeType: ObjectType,
     val name: String,
     val descriptionTopicId: PrimaryKey,
-    val extension: Extension? = null
+    val extension: Extension? = null,
+    val favoriteId: PrimaryKey? = null,
+    val subscriptionId: PrimaryKey? = null,
 ) : ModelObject {
     override val objectType: ObjectType
         get() = ObjectType.TITLE

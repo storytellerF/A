@@ -87,7 +87,7 @@ suspend fun Backend.getFileInfoByName(
     ).mapResultIfNotNull { (_, rootId) ->
         database.file.getFileRecord(rootId, word)
     }.mapResultIfNotNull { fileRecord ->
-        processFileRecordToFileInfo(listOf(fileRecord))
+        processFileRecordToFileInfo(listOf(fileRecord), uid)
     }.mapIfNotNull {
         it.first()
     }
@@ -145,7 +145,7 @@ private suspend fun Backend.searchFilesByWord(
                 Result.success(PaginationResult(emptyList(), total))
             } else {
                 database.file.getFileRecordByIds(fileIds).mapResultIfNotNull { fileRecords ->
-                    processFileRecordToFileInfo(fileRecords)
+                    processFileRecordToFileInfo(fileRecords, ownerId)
                 }.mapIfNotNull { fileInfos ->
                     PaginationResult(fileInfos, total)
                 }
@@ -274,7 +274,7 @@ suspend fun Backend.getFileInfoPaginationResult(
     primaryKeyFetch: PrimaryKeyFetch,
 ): Result<PaginationResult<FileInfo>> = database.file.getFileRecordPaginationList(uid, primaryKeyFetch)
     .mapPagingResultNotNull { list ->
-        processFileRecordToFileInfo(list)
+        processFileRecordToFileInfo(list, uid)
     }
 
 suspend fun Backend.getAllFileInfos(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<FileInfo>> =
@@ -318,7 +318,7 @@ suspend fun Backend.tryCopyFile(p: CommonPath, uid: PrimaryKey): Result<ServerRe
             copyFile(fileRecord, uid)
         }
     }.mapResultIfNotNull {
-        processFileRecordToFileInfo(it)
+        processFileRecordToFileInfo(it, uid)
     }.mapIfNotNull {
         ServerResponse(it)
     }
@@ -362,7 +362,7 @@ suspend fun Backend.tryUploadFiles(
         }
     }
 }.mapResult {
-    processFileRecordToFileInfo(it)
+    processFileRecordToFileInfo(it, ownerId)
 }
 
 private suspend fun processContentTypeAndDimension(files: List<UploadPack>): List<ProcessedUploadPack> =
@@ -431,14 +431,35 @@ suspend fun Backend.getFileInfoList(names: List<String>): Result<List<FileInfo?>
 
 suspend fun Backend.processFileRecordToFileInfo(
     fileRecords: List<FileRecord>,
+    uid: PrimaryKey? = null
 ): Result<List<FileInfo>> {
+    val fileRecordIds = fileRecords.map { it.id }
+    val favoriteMap = if (uid != null && fileRecordIds.isNotEmpty()) {
+        database.favorite.getHasFavorite(
+            com.storyteller_f.a.backend.core.ObjectListFetch.IdListFetch(fileRecordIds),
+            uid
+        )
+            .getOrNull()?.associateBy { it.objectId } ?: emptyMap()
+    } else {
+        emptyMap()
+    }
+    val subscriptionMap = if (uid != null && fileRecordIds.isNotEmpty()) {
+        database.subscription.getHasSubscription(
+            com.storyteller_f.a.backend.core.ObjectListFetch.IdListFetch(
+                fileRecordIds
+            ), uid
+        )
+            .getOrNull()?.associateBy { it.objectId } ?: emptyMap()
+    } else {
+        emptyMap()
+    }
     return objectStorageService.get(A_FILE_DEFAULT_BUCKET, fileRecords.map {
         it.fullName
     }).map { mediaList ->
         val mediaRecordMap = mediaList.associateBy { it.fullName }
         fileRecords.map { media ->
             mediaRecordMap[media.fullName]!!.let {
-                media.toFileInfo(it.url, it.lastModified)
+                media.toFileInfo(it.url, it.lastModified, favoriteMap[media.id]?.id, subscriptionMap[media.id]?.id)
             }
         }
     }
@@ -524,7 +545,7 @@ suspend fun completeChunkUpload(
                 listOf(fileRecord)
             }
         }.mapResultIfNotNull {
-            backend.processFileRecordToFileInfo(it)
+            backend.processFileRecordToFileInfo(it, id)
         }.firstOrNull()
 }
 
