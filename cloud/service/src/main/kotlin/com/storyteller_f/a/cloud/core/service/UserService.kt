@@ -405,6 +405,7 @@ suspend fun Backend.searchContainerMembers(
  */
 suspend fun Backend.searchUsers(
     word: String?,
+    uid: PrimaryKey?,
     primaryKeyFetch: OffsetFetch,
 ): Result<PaginationResult<UserInfo>?> {
     if (word.isNullOrBlank()) {
@@ -415,7 +416,7 @@ suspend fun Backend.searchUsers(
     ).mapResult { (list, total) ->
         database.user.getRawUsers(ObjectListFetch.IdListFetch(list.map {
             it.id
-        })).mapResult {
+        }), uid).mapResult {
             processRawUserToUserInfo(it)
         }.pagingNotNull(total)
     }
@@ -429,7 +430,8 @@ suspend fun Backend.getUserInfoList(
 
 suspend fun Backend.getUserInfo(
     fetch: ObjectFetch,
-) = database.user.getRawUser(fetch).mapResultIfNotNull {
+    uid: PrimaryKey? = null
+) = database.user.getRawUser(fetch, uid).mapResultIfNotNull {
     processRawUserToUserInfo(listOf(it)).mapIfNotNull(List<UserInfo>::first)
 }
 
@@ -440,8 +442,8 @@ suspend fun Backend.processRawUserToUserInfo(
 }).mapResult { medias ->
     processFileRecordToFileInfo(medias).map { list ->
         val mediaInfoMap = list.associateBy { it.id }
-        rawResults.map { pair ->
-            pair.user.toUserInfo().copy(avatar = pair.user.icon?.let { mediaInfoMap[it] })
+        rawResults.map { rawUser ->
+            rawUser.toUserInfo(avatar = rawUser.user.icon?.let { mediaInfoMap[it] })
         }
     }
 }

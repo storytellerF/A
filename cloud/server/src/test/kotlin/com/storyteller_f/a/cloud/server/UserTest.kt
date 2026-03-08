@@ -1,15 +1,21 @@
 package com.storyteller_f.a.cloud.server
 
+import com.storyteller_f.a.api.NewCommunity
 import com.storyteller_f.a.api.NewFavorite
+import com.storyteller_f.a.api.NewRoom
 import com.storyteller_f.a.api.NewSubscription
 import com.storyteller_f.a.api.PaginationQuery
 import com.storyteller_f.a.client.core.UploadData
 import com.storyteller_f.a.client.core.addChildAccount
 import com.storyteller_f.a.client.core.addFavorite
 import com.storyteller_f.a.client.core.addSubscription
+import com.storyteller_f.a.client.core.createCommunity
+import com.storyteller_f.a.client.core.createRoom
 import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.a.client.core.getChildAccounts
+import com.storyteller_f.a.client.core.getCommunityInfo
 import com.storyteller_f.a.client.core.getFavorites
+import com.storyteller_f.a.client.core.getRoomInfo
 import com.storyteller_f.a.client.core.getSubscriptions
 import com.storyteller_f.a.client.core.getTopicInfo
 import com.storyteller_f.a.client.core.getUserInfo
@@ -111,6 +117,104 @@ class UserTest {
 
             removeSubscription(topicId, ObjectType.TOPIC).getOrThrow()
 
+            assertListTotalSize(0, getSubscriptions(PaginationQuery()))
+        }
+    }
+
+    @Test
+    fun `test add user favorite`() = test {
+        val targetUid = attachSession {}.uid
+        attachSession {
+            addFavorite(NewFavorite(ObjectType.USER, targetUid)).getOrThrow()
+            assertListTotalSize(1, getFavorites(PaginationQuery()))
+
+            val userInfo = getUserInfo(targetUid).getOrThrow()
+            assertNotNull(userInfo.favoriteId)
+
+            removeFavorite(targetUid, ObjectType.USER).getOrThrow()
+            assertListTotalSize(0, getFavorites(PaginationQuery()))
+        }
+    }
+
+    @Test
+    fun `test add community favorite`() = test {
+        val communityId = attachSession {
+            createCommunity(NewCommunity("test", "test")).getOrThrow().id
+        }.custom
+        attachSession {
+            addFavorite(NewFavorite(ObjectType.COMMUNITY, communityId)).getOrThrow()
+            assertListTotalSize(1, getFavorites(PaginationQuery()))
+
+            val communityInfo = getCommunityInfo(communityId).getOrThrow()
+            assertNotNull(communityInfo.favoriteId)
+
+            removeFavorite(communityId, ObjectType.COMMUNITY).getOrThrow()
+            assertListTotalSize(0, getFavorites(PaginationQuery()))
+        }
+    }
+
+    @Test
+    fun `test add room favorite`() = test {
+        val roomId = attachSession {
+            createRoom(NewRoom("test", "test")).getOrThrow().id
+        }.custom
+        attachSession {
+            addFavorite(NewFavorite(ObjectType.ROOM, roomId)).getOrThrow()
+            assertListTotalSize(1, getFavorites(PaginationQuery()))
+
+            val roomInfo = getRoomInfo(roomId).getOrThrow()
+            assertNotNull(roomInfo.favoriteId)
+
+            removeFavorite(roomId, ObjectType.ROOM).getOrThrow()
+            assertListTotalSize(0, getFavorites(PaginationQuery()))
+        }
+    }
+
+    @Test
+    fun `test add user subscription`() = test {
+        val targetUid = attachSession {}.uid
+        attachSession {
+            addSubscription(NewSubscription(targetUid, ObjectType.USER)).getOrThrow()
+            assertListTotalSize(1, getSubscriptions(PaginationQuery()))
+
+            val userInfo = getUserInfo(targetUid).getOrThrow()
+            assertNotNull(userInfo.subscriptionId)
+
+            removeSubscription(targetUid, ObjectType.USER).getOrThrow()
+            assertListTotalSize(0, getSubscriptions(PaginationQuery()))
+        }
+    }
+
+    @Test
+    fun `test add community subscription`() = test {
+        val communityId = attachSession {
+            createCommunity(NewCommunity("test", "test")).getOrThrow().id
+        }.custom
+        attachSession {
+            addSubscription(NewSubscription(communityId, ObjectType.COMMUNITY)).getOrThrow()
+            assertListTotalSize(1, getSubscriptions(PaginationQuery()))
+
+            val communityInfo = getCommunityInfo(communityId).getOrThrow()
+            assertNotNull(communityInfo.subscriptionId)
+
+            removeSubscription(communityId, ObjectType.COMMUNITY).getOrThrow()
+            assertListTotalSize(0, getSubscriptions(PaginationQuery()))
+        }
+    }
+
+    @Test
+    fun `test add room subscription`() = test {
+        val roomId = attachSession {
+            createRoom(NewRoom("test", "test")).getOrThrow().id
+        }.custom
+        attachSession {
+            addSubscription(NewSubscription(roomId, ObjectType.ROOM)).getOrThrow()
+            assertListTotalSize(1, getSubscriptions(PaginationQuery()))
+
+            val roomInfo = getRoomInfo(roomId).getOrThrow()
+            assertNotNull(roomInfo.subscriptionId)
+
+            removeSubscription(roomId, ObjectType.ROOM).getOrThrow()
             assertListTotalSize(0, getSubscriptions(PaginationQuery()))
         }
     }
