@@ -1,7 +1,7 @@
 @echo off
 if "%~1"=="" (
-    echo 用法: %~n0 port
-    echo 示例: %~n0 8080
+    echo Usage: %~n0 port
+    echo Example: %~n0 8080
     exit /b
 )
 
@@ -13,9 +13,9 @@ for /f "tokens=5" %%i in ('netstat -ano ^| findstr :%port%') do (
 )
 
 if not defined pid (
-    echo 端口 %port% 未被占用，跳过。
+    echo Port %port% is not in use, skipping.
     exit /b
 )
 
-echo 检测到 PID %pid% 占用端口 %port%，正在结束...
+echo Detected PID %pid% using port %port%, killing...
 taskkill /F /PID %pid%

@@ -37,8 +37,6 @@ kotlin {
 
     jvm()
 
-    applyDefaultHierarchyTemplate()
-
     sourceSets {
         commonMain.dependencies {
             implementation(libs.kotlinx.serialization.json)

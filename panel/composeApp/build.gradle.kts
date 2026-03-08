@@ -54,10 +54,10 @@ kotlin {
     jvm()
 
     if (buildWasmTarget) {
-        js {
-            browser()
-            binaries.executable()
-        }
+//        js {
+//            browser()
+//            binaries.executable()
+//        }
 
         @OptIn(ExperimentalWasmDsl::class)
         wasmJs {
@@ -145,7 +145,6 @@ kotlin {
             implementation(libs.kodio.core)
             // ui
             implementation(libs.material3.window.size)
-            implementation(libs.androidx.lifecycle.viewmodel.compose)
             implementation(libs.androidx.paging.common)
             implementation(libs.androidx.paging.compose)
             implementation(libs.bundles.coil)
