@@ -41,9 +41,6 @@ kotlin {
         }
     }
 
-    @OptIn(ExperimentalKotlinGradlePluginApi::class)
-    applyDefaultHierarchyTemplate()
-
     sourceSets {
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)

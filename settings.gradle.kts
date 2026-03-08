@@ -34,10 +34,6 @@ dependencyResolutionManagement {
                 includeGroupAndSubgroups("com.google")
             }
         }
-        mavenCentral()
-        maven("https://maven.pkg.jetbrains.space/public/p/ktor/eap")
-        maven("https://jogamp.org/deployment/maven/")
-        maven("https://jitpack.io")
         maven {
             name = "github"
             url = uri("https://maven.pkg.github.com/storytellerF/endpoint4k")
@@ -46,7 +42,14 @@ dependencyResolutionManagement {
                 username = providers.gradleProperty("gpr.user").get()
                 password = providers.gradleProperty("gpr.key").get()
             }
+            mavenContent {
+                includeGroupAndSubgroups("com.storytellerF.endpoint4k")
+            }
         }
+        mavenCentral()
+        maven("https://maven.pkg.jetbrains.space/public/p/ktor/eap")
+        maven("https://jogamp.org/deployment/maven/")
+        maven("https://jitpack.io")
     }
 }
 

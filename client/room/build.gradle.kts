@@ -37,9 +37,6 @@ kotlin {
 
     jvm()
 
-    @OptIn(ExperimentalKotlinGradlePluginApi::class)
-    applyDefaultHierarchyTemplate()
-
     sourceSets {
         commonMain.dependencies {
             implementation(libs.napier)

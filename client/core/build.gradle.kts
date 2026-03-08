@@ -34,9 +34,6 @@ kotlin {
 
     jvm()
 
-    @OptIn(ExperimentalKotlinGradlePluginApi::class)
-    applyDefaultHierarchyTemplate()
-
     sourceSets {
         androidMain.dependencies {
             implementation(libs.ktor.client.okhttp)

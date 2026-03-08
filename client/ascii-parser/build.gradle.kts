@@ -60,7 +60,6 @@ kotlin {
             implementation(libs.javet.node.android)
         }
         commonMain.dependencies {
-            compileOnly(libs.javet)
         }
         getByName("androidHostTest") {
             dependencies {
