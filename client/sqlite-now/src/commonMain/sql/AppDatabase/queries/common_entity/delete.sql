@@ -1,0 +1,2 @@
+DELETE FROM common_entity
+WHERE collection = :collection AND id = :id;

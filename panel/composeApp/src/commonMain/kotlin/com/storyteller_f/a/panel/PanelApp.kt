@@ -62,7 +62,6 @@ import com.storyteller_f.a.client.core.createPanelSessionManager
 import com.storyteller_f.a.client.core.defaultClientConfigureForPanel
 import com.storyteller_f.a.client.core.getClient
 import com.storyteller_f.a.client.core.startBackgroundTask
-import com.storyteller_f.a.client.room.RoomModelStorage
 import com.storyteller_f.a.client.room.getRoomModelStorage
 import com.storyteller_f.a.panel.common.OnUserAdded
 import com.storyteller_f.a.panel.common.PanelNav
@@ -72,6 +71,7 @@ import com.storyteller_f.a.panel.common.newPanelNav
 import com.storyteller_f.a.panel.common.panelNavSerializersModule
 import com.storyteller_f.a.panel.common.rootEntryProvider
 import com.storyteller_f.a.panel.ui.theme.PanelTheme
+import com.storyteller_f.storage.ModelStorage
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.cookies.CookiesStorage
 import kotlinx.collections.immutable.PersistentList
@@ -312,7 +312,7 @@ class PanelAccountInstance(scope: CoroutineScope) {
 
     private suspend fun processEvent(
         any: Any,
-        storage: RoomModelStorage
+        storage: ModelStorage
     ) {
         when (any) {
             is OnUserAdded -> {

@@ -106,7 +106,7 @@ show_status() {
     echo "Task completion status:"
     echo ""
 
-    local tasks=("fix-volume" "fix-gradle" "fix-android" "fix-konan" "fix-m2" "setup-git-lfs")
+    local tasks=("fix-volume" "fix-gradle" "fix-android" "fix-konan" "fix-m2" "fix-local" "fix-config" "fix-cache" "fix-gemini" "setup-git-lfs")
 
     for task in "${tasks[@]}"; do
         if is_completed "$task"; then
@@ -119,6 +119,54 @@ show_status() {
     echo "State file: $STATE_FILE"
 }
 
+fix_local() {
+    local task="fix-local"
+    if is_completed "$task"; then
+        echo "[$task] Already completed, skipping..."
+        return 0
+    fi
+    echo "Fixing Local Volume Permissions..."
+    sudo chown -R $(whoami): /home/$(whoami)/.local
+    mark_completed "$task"
+    echo "[$task] Completed"
+}
+
+fix_config() {
+    local task="fix-config"
+    if is_completed "$task"; then
+        echo "[$task] Already completed, skipping..."
+        return 0
+    fi
+    echo "Fixing Config Volume Permissions..."
+    sudo chown -R $(whoami): /home/$(whoami)/.config
+    mark_completed "$task"
+    echo "[$task] Completed"
+}
+
+fix_cache() {
+    local task="fix-cache"
+    if is_completed "$task"; then
+        echo "[$task] Already completed, skipping..."
+        return 0
+    fi
+    echo "Fixing Cache Volume Permissions..."
+    sudo chown -R $(whoami): /home/$(whoami)/.cache
+    mark_completed "$task"
+    echo "[$task] Completed"
+}
+
+fix_gemini() {
+    local task="fix-gemini"
+    if is_completed "$task"; then
+        echo "[$task] Already completed, skipping..."
+        return 0
+    fi
+    echo "Fixing Gemini Volume Permissions..."
+    sudo chown -R $(whoami): /home/$(whoami)/.gemini
+    mark_completed "$task"
+    echo "[$task] Completed"
+}
+
 # Execute all tasks
 all_tasks() {
     echo "Executing all pending tasks..."
@@ -127,10 +175,16 @@ all_tasks() {
     fix_android
     fix_konan
     fix_m2
+    fix_local
+    fix_config
+    fix_cache
+    fix_gemini
     setup_git_lfs
     echo ""
     show_status
 }
+
+cd /workspace/A
 
 # Main execution
 all_tasks

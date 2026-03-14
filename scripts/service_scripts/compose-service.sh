@@ -46,4 +46,6 @@ fi
 CMD=("docker" "compose" "--env-file" "./deploy/${FLAVOR}.env" "${COMPOSE_FILES[@]}" "${custom_cmd_parts[@]}")
 
 echo "Executing: ${CMD[@]}"
-"${CMD[@]}"
+# "${CMD[@]}"
+
+docker compose --env-file ./deploy/${FLAVOR}.env ${COMPOSE_FILES[@]} ${custom_cmd_parts[@]}

@@ -10,7 +10,6 @@ import com.storyteller_f.a.app.CustomUserSessionManager
 import com.storyteller_f.a.app.LocalUiViewModel
 import com.storyteller_f.a.app.core.components.buildByMarkdown
 import com.storyteller_f.a.app.pages.search.SearchScope
-import com.storyteller_f.a.client.room.RoomModelStorage
 import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TitleSearchType
@@ -480,7 +479,7 @@ inline fun <reified VM : ViewModel> customViewModel(
     keys: List<Comparable<*>?>?,
     sessionManager: CustomUserSessionManager,
     crossinline factory: (CustomUserSessionManager, ModelStorage) -> VM,
-    databaseSource: RoomModelStorage
+    databaseSource: ModelStorage
 ): VM {
     val address by sessionManager.address.collectAsState()
     SideEffect {
