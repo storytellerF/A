@@ -2,18 +2,15 @@
 // README at: https://github.com/devcontainers/templates/tree/main/src/docker-existing-dockerfile
 {
 	"name": "A Dev Container",
-	"dockerComposeFile": "./docker-compose.dev.yml",
+	"dockerComposeFile": [
+		"./docker-compose.dev.yml",
+		"../deploy/docker-compose/docker-compose.pg.yml",
+		"../deploy/docker-compose/docker-compose.minio.yml",
+		"../deploy/docker-compose/docker-compose.elastic.yml"
+	],
 	"service": "main",
 	"workspaceFolder": "/workspace/A",
 	"shutdownAction": "none",
-	"postCreateCommand": {
-		"Fix Volume Permissions": "sudo chown -R $(whoami): /commandhistory",
-		"Fix Gradle Volume Permissions": "sudo chown -R $(whoami): /home/ubuntu/.gradle",
-		"Fix Android Volume Permissions": "sudo chown -R $(whoami): /home/ubuntu/.android",
-		"Fix Konan Volume Permissions": "sudo chown -R $(whoami): /home/ubuntu/.konan",
-		"Fix M2 Volume Permissions": "sudo chown -R $(whoami): /home/ubuntu/.m2",
-		"Setup Git LFS": "sudo ./scripts/tool_scripts/install-lfs.sh"
-	},
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
@@ -23,5 +20,5 @@
 	// Configure tool-specific properties.
 	// "customizations": {},
 	// Uncomment to connect as an existing user other than the container default. More info: https://aka.ms/dev-containers-non-root.
-	"remoteUser": "ubuntu"
+	"remoteUser": "debian"
 }

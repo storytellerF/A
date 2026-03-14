@@ -3,7 +3,6 @@ package com.storyteller_f.a.app.common
 import com.storyteller_f.a.app.CustomUserSessionManager
 import com.storyteller_f.a.app.UIViewModel
 import com.storyteller_f.a.client.core.serviceCatching
-import com.storyteller_f.a.client.room.RoomModelStorage
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.now
@@ -153,7 +152,7 @@ class DownloaderImpl(
 
     @OptIn(ExperimentalTime::class)
     private suspend fun downloadIfNeed(
-        modelStorage: RoomModelStorage,
+        modelStorage: ModelStorage,
         fileInfo: FileInfo,
         path: Path,
         userSession: CustomUserSessionManager

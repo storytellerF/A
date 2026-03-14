@@ -1,0 +1,8 @@
+data
+es_ca
+*.env
+!dev.win.env
+!dev.env
+!dev.container.env
+/*_data
+docker-images

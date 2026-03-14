@@ -150,6 +150,7 @@ androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "
 
 androidx-sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "sqliteBundled" }
 
+sqlitenow-core = { module = "dev.goquick.sqlitenow:core", version = "0.5.4" }
 androidx-ui-test-junit4-android = { module = "androidx.compose.ui:ui-test-junit4-android", version.ref = "uiTestJunit4Android" }
 androidx-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest", version.ref = "uiTestJunit4Android" }
 androidx-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "uiToolingPreview" }
@@ -398,6 +399,7 @@ serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref 
 kotlinxRpc = { id = "org.jetbrains.kotlinx.rpc.plugin", version.ref = "kotlinx-rpc" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 room = { id = "androidx.room", version.ref = "roomRuntime" }
+sqlitenow = { id = "dev.goquick.sqlitenow", version = "0.5.4" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detektVersion" }
 aboutlibrary = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "aboutlibrariesCore" }
 composeHotReload = { id = "org.jetbrains.compose.hot-reload", version.ref = "composeHotReload" }

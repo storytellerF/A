@@ -159,8 +159,7 @@ class IntermediatePagingSource<Key : Any, T : Any>(
 
             is LoadParams.Refresh<*> -> LoadParams.Refresh(null, params.loadSize, params.placeholdersEnabled)
         }
-        val load = pagingSource.load(loadParams)
-        return when (load) {
+        return when (val load = pagingSource.load(loadParams)) {
             is LoadResult.Error<Key, T> -> LoadResult.Error(load.throwable)
             is LoadResult.Invalid<Key, T> -> LoadResult.Invalid()
             is LoadResult.Page<Key, T> -> {

@@ -5,12 +5,16 @@ if [ -z "$base" ]; then
   echo "Error: base parameter is not specified."
   exit 1
 fi
-FLAVOR=dev.container
+FLAVOR=dev
 # 检测操作系统
 if [[ "$(uname -s)" =~ MINGW|CYGWIN|MSYS ]]; then
   FLAVOR=dev.win
 fi
 
+# 如果存在A_DEV_CONTAINER 环境变量，使用dev.container
+if [ -n "$A_DEV_CONTAINER" ]; then
+  FLAVOR=dev.container
+fi
 
 cli_path=build/install/cli/bin/cli
 

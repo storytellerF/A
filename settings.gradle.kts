@@ -90,6 +90,7 @@ include(":client:bot-lib")
 include(":client:model-storage")
 include(":client:kotbase")
 include(":client:room")
+//include(":client:sqlite-now")
 include(":client:ascii-parser")
 
 include(":api")
