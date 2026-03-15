@@ -122,6 +122,7 @@ import com.storyteller_f.storage.UserReactionRecordCollection
 import com.storyteller_f.storage.UserSubscriptionCollection
 import com.storyteller_f.storage.WrappedPagingSource
 import com.storyteller_f.storage.getName
+import com.storyteller_f.storage.wrap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
@@ -182,8 +183,7 @@ class CommunitiesViewModel(
 
     override val flow = buildPager(
         modelCollection,
-        modelCollection.getName(),
-        modelStorage.remoteKey,
+        modelStorage.remoteKey.wrap(modelCollection.getName()),
         modelStorage.community,
         RegularPagingSource { key, size ->
             sessionManager.searchCommunity(size, joinStatusSearch, word, target, key, PosterSearch.UNSPECIFIED)
@@ -202,8 +202,7 @@ class UserJoinedCommunitiesViewModel(
 
     override val flow = buildPager(
         modelCollection,
-        modelCollection.getName(),
-        modelStorage.remoteKey,
+        modelStorage.remoteKey.wrap(modelCollection.getName()),
         modelStorage.community,
         RegularPagingSource { key, size ->
             if (target == null) {
@@ -225,8 +224,7 @@ class UserJoinedCommunitiesWithPosterViewModel(
 
     override val flow = buildPager(
         modelCollection,
-        modelCollection.getName(),
-        modelStorage.remoteKey,
+        modelStorage.remoteKey.wrap(modelCollection.getName()),
         modelStorage.community
     ) { key, size ->
         sessionManager.getUserCommunities(PaginationQuery(key, size = size))
@@ -244,8 +242,7 @@ class RoomsViewModel(
 
     override val flow: Flow<PagingData<RoomInfo>> = buildPager(
         modelCollection,
-        modelCollection.getName(),
-        modelStorage.remoteKey,
+        modelStorage.remoteKey.wrap(modelCollection.getName()),
         modelStorage.room
     ) { key, size ->
         sessionManager.searchCurrentUserRooms(word, size, key)
@@ -261,8 +258,7 @@ class UserJoinedRoomsViewModel(
 
     override val flow: Flow<PagingData<RoomInfo>> = buildPager(
         modelCollection,
-        modelCollection.getName(),
-        modelStorage.remoteKey,
+        modelStorage.remoteKey.wrap(modelCollection.getName()),
         modelStorage.room
     ) { key, size ->
         sessionManager.getUserRooms(PaginationQuery(key, size = size))
@@ -282,8 +278,7 @@ class WorldViewModel(
     @OptIn(FlowPreview::class)
     override val flow = buildPager(
         modelCollection,
-        modelCollection.getName(),
-        modelStorage.remoteKey,
+        modelStorage.remoteKey.wrap(modelCollection.getName()),
         modelStorage.topic,
         IntermediatePagingSource(
             SectionLoadParams::class,
@@ -319,8 +314,7 @@ class TopicsViewModel(
     @OptIn(FlowPreview::class)
     override val flow: Flow<PagingData<TopicInfo>> = buildPager(
         modelCollection,
-        modelCollection.getName(),
-        modelStorage.remoteKey,
+        modelStorage.remoteKey.wrap(modelCollection.getName()),
         modelStorage.topic,
         IntermediatePagingSource(
             SectionLoadParams::class,
@@ -421,8 +415,7 @@ class TopicSearchViewModel(
 
     override val flow: Flow<PagingData<TopicInfo>> = buildPager(
         modelCollection,
-        modelCollection.getName(),
-        modelStorage.remoteKey,
+        modelStorage.remoteKey.wrap(modelCollection.getName()),
         modelStorage.topic
     ) { key, size ->
         // 内联并确保调用正确的endpoint
@@ -452,8 +445,7 @@ class MediaListViewModel(
     @OptIn(ExperimentalPagingApi::class)
     override val flow: Flow<PagingData<FileInfo>> = buildPager(
         modelCollection,
-        modelCollection.getName(),
-        modelStorage.remoteKey,
+        modelStorage.remoteKey.wrap(modelCollection.getName()),
         modelStorage.fileInfo
     ) { key, size ->
         sessionManager.getFileList(objectId, objectType, key, size)
@@ -472,8 +464,7 @@ class FileSearchViewModel(
 
     override val flow: Flow<PagingData<FileInfo>> = buildPager(
         modelCollection,
-        modelCollection.getName(),
-        modelStorage.remoteKey,
+        modelStorage.remoteKey.wrap(modelCollection.getName()),
         modelStorage.fileInfo
     ) { key, size ->
         sessionManager.searchFiles(
@@ -542,8 +533,7 @@ class ContainerMemberViewModel(
 
     override val flow: Flow<PagingData<MemberInfo>> = buildPager(
         modelCollection,
-        modelCollection.getName(),
-        modelStorage.remoteKey,
+        modelStorage.remoteKey.wrap(modelCollection.getName()),
         modelStorage.member
     ) { key, size ->
         sessionManager.run {
@@ -566,8 +556,7 @@ class UserSearchViewModel(
 
     override val flow: Flow<PagingData<UserInfo>> = buildPager(
         modelCollection,
-        modelCollection.getName(),
-        modelStorage.remoteKey,
+        modelStorage.remoteKey.wrap(modelCollection.getName()),
         modelStorage.user
     ) { key, size ->
         sessionManager.searchAllMembers(key, size, word)
@@ -584,8 +573,7 @@ class ReactionsViewModel(
     @OptIn(ExperimentalPagingApi::class)
     override val flow = buildPager(
         modelCollection,
-        modelCollection.getName(),
-        modelStorage.remoteKey,
+        modelStorage.remoteKey.wrap(modelCollection.getName()),
         modelStorage.reaction
     ) { key, size ->
         sessionManager.getReactions(objectId, size, key)
@@ -683,8 +671,7 @@ class TitlesViewModel(
 
     override val flow: Flow<PagingData<TitleInfo>> = buildPager(
         modelCollection,
-        modelCollection.getName(),
-        modelStorage.remoteKey,
+        modelStorage.remoteKey.wrap(modelCollection.getName()),
         modelStorage.title
     ) { key, size ->
         sessionManager.userTitles(uid, size, searchType, key, status, type, scopeId)
@@ -804,8 +791,7 @@ class ChildAccountsViewModel(
 
     @OptIn(ExperimentalPagingApi::class)
     override val flow: Flow<PagingData<ChildAccountInfo>> = buildPager(
-        ChildAccountStorage.COLLECTION_NAME,
-        modelStorage.remoteKey,
+        modelStorage.remoteKey.wrap(ChildAccountStorage.COLLECTION_NAME),
         modelStorage.childAccount
     ) { key, size ->
         sessionManager.getChildAccounts(key, size)
@@ -844,8 +830,7 @@ class FavoritesViewModel(sessionManager: UserSessionManager, modelStorage: Model
     @OptIn(ExperimentalPagingApi::class)
     override val flow: Flow<PagingData<UserFavoriteInfo>> = buildPager(
         collection,
-        collection.getName(),
-        modelStorage.remoteKey,
+        modelStorage.remoteKey.wrap(collection.getName()),
         modelStorage.favorite
     ) { key, size ->
         sessionManager.getFavorites(PaginationQuery(key, size = size))
@@ -865,8 +850,7 @@ class SubscriptionsViewModel(
     @OptIn(ExperimentalPagingApi::class)
     override val flow: Flow<PagingData<UserSubscriptionInfo>> = buildPager(
         collection,
-        collection.getName(),
-        modelStorage.remoteKey,
+        modelStorage.remoteKey.wrap(collection.getName()),
         modelStorage.subscription,
         RegularPagingSource { key, size ->
             sessionManager.getSubscriptions(PaginationQuery(key, size = size))
@@ -901,8 +885,7 @@ class UserReactionRecordsViewModel(
     @OptIn(ExperimentalPagingApi::class)
     override val flow: Flow<PagingData<ReactionRecordInfo>> = buildPager(
         collection,
-        collection.getName(),
-        modelStorage.remoteKey,
+        modelStorage.remoteKey.wrap(collection.getName()),
         modelStorage.userReactionRecord,
         RegularPagingSource { key, size ->
             sessionManager.getReactionRecords(PaginationQuery(key, size = size))
@@ -923,8 +906,7 @@ class UserCommentsViewModel(
     @OptIn(ExperimentalPagingApi::class)
     override val flow: Flow<PagingData<TopicInfo>> = buildPager(
         collection,
-        collection.getName(),
-        modelStorage.remoteKey,
+        modelStorage.remoteKey.wrap(collection.getName()),
         modelStorage.topic,
         RegularPagingSource { key, size ->
             sessionManager.getComments(PaginationQuery(key, size = size))
@@ -967,8 +949,7 @@ class CommunityRoomsViewModel(
 
     override val flow: Flow<PagingData<RoomInfo>> = buildPager(
         modelCollection,
-        modelCollection.getName(),
-        modelStorage.remoteKey,
+        modelStorage.remoteKey.wrap(modelCollection.getName()),
         modelStorage.room
     ) { key, size ->
         sessionManager.getCommunityRooms(
@@ -989,8 +970,7 @@ class CommunityRoomSearchViewModel(
 
     override val flow: Flow<PagingData<RoomInfo>> = buildPager(
         modelCollection,
-        modelCollection.getName(),
-        modelStorage.remoteKey,
+        modelStorage.remoteKey.wrap(modelCollection.getName()),
         modelStorage.room
     ) { key, size ->
         sessionManager.searchCommunityRooms(
@@ -1013,8 +993,7 @@ class FileRefsViewModel(
 
     override val flow: Flow<PagingData<FileRefInfo>> = buildPager(
         modelCollection,
-        modelCollection.getName(),
-        modelStorage.remoteKey,
+        modelStorage.remoteKey.wrap(modelCollection.getName()),
         modelStorage.fileRef
     ) { key, size ->
         sessionManager.getFileRefs(fileId, PaginationQuery(key, size = size))

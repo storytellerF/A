@@ -12,7 +12,7 @@ import com.storyteller_f.shared.obj.Pagination
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.storage.CollectionListStorage
 import com.storyteller_f.storage.GlobalListStorage
-import com.storyteller_f.storage.RemoteKeyStorage
+import com.storyteller_f.storage.RemoteKeyStorageWrapper
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
 
@@ -139,14 +139,12 @@ class RegularPagingSource<DATUM : Any>(
 @OptIn(ExperimentalPagingApi::class)
 fun <C : Any, T : Any> buildPager(
     collection: C,
-    collectionName: String,
-    remoteKeyStorage: RemoteKeyStorage,
+    wrapper: RemoteKeyStorageWrapper,
     storage: CollectionListStorage<C, T>,
     service: suspend (String?, Int) -> Result<ServerResponse<T>>
 ): Pager<String, T> = buildPager(
     collection,
-    collectionName,
-    remoteKeyStorage,
+    wrapper,
     storage,
     RegularPagingSource(service)
 )
@@ -154,17 +152,12 @@ fun <C : Any, T : Any> buildPager(
 @OptIn(ExperimentalPagingApi::class)
 fun <C : Any, T : Any> buildPager(
     collection: C,
-    collectionName: String,
-    remoteKeyStorage: RemoteKeyStorage,
+    wrapper: RemoteKeyStorageWrapper,
     storage: CollectionListStorage<C, T>,
     source: PagingSource<String, T>
 ): Pager<String, T> = Pager(
     PagingConfig(pageSize = 20),
-    remoteMediator = CustomRemoteMediator(
-        collectionName,
-        remoteKeyStorage,
-        source,
-    ) { data, loadType ->
+    remoteMediator = CustomRemoteMediator(wrapper, source) { data, loadType ->
         if (loadType == LoadType.REFRESH) {
             storage.clean(collection)
         }
@@ -183,18 +176,13 @@ fun <C : Any, T : Any> buildPager(
 @OptIn(ExperimentalPagingApi::class)
 fun <C : Any, T : Any> buildPager(
     collection: C,
-    collectionName: String,
-    remoteKeyStorage: RemoteKeyStorage,
+    wrapper: RemoteKeyStorageWrapper,
     storage: CollectionListStorage<C, T>,
     networkSource: PagingSource<String, T>,
     localSourceFactory: () -> PagingSource<String, T>
 ): Pager<String, T> = Pager(
     PagingConfig(pageSize = 20),
-    remoteMediator = CustomRemoteMediator(
-        collectionName,
-        remoteKeyStorage,
-        networkSource,
-    ) { data, loadType ->
+    remoteMediator = CustomRemoteMediator(wrapper, networkSource) { data, loadType ->
         if (loadType == LoadType.REFRESH) {
             storage.clean(collection)
         }
@@ -211,29 +199,22 @@ fun <C : Any, T : Any> buildPager(
 
 @OptIn(ExperimentalPagingApi::class)
 fun <T : Any> buildPager(
-    collectionName: String,
-    remoteKeyStorage: RemoteKeyStorage,
+    wrapper: RemoteKeyStorageWrapper,
     storage: GlobalListStorage<T>,
     service: suspend (String?, Int) -> Result<ServerResponse<T>>
-): Pager<String, T> =
-    buildPager(collectionName, remoteKeyStorage, storage, RegularPagingSource(service)) {
-        CompatPagingSource(storage.observeData(), IntKeyConverter)
-    }
+): Pager<String, T> = buildPager(wrapper, storage, RegularPagingSource(service)) {
+    CompatPagingSource(storage.observeData(), IntKeyConverter)
+}
 
 @OptIn(ExperimentalPagingApi::class)
 fun <T : Any> buildPager(
-    collectionName: String,
-    remoteKeyStorage: RemoteKeyStorage,
+    wrapper: RemoteKeyStorageWrapper,
     storage: GlobalListStorage<T>,
     networkSource: PagingSource<String, T>,
     localSourceFactory: () -> PagingSource<String, T>
 ): Pager<String, T> = Pager(
     PagingConfig(pageSize = 20),
-    remoteMediator = CustomRemoteMediator(
-        collectionName,
-        remoteKeyStorage,
-        networkSource
-    ) { data, loadType ->
+    remoteMediator = CustomRemoteMediator(wrapper, networkSource) { data, loadType ->
         if (loadType == LoadType.REFRESH) {
             storage.clean()
         }

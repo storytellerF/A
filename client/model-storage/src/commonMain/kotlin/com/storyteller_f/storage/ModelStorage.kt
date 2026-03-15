@@ -388,6 +388,17 @@ interface RemoteKeyStorage {
     }
 }
 
+data class RemoteKeyStorageWrapper(val remoteKeyStorage: RemoteKeyStorage, val collectionName: String) {
+    suspend fun getPreRemoteKey() = remoteKeyStorage.getPreRemoteKey(collectionName)
+    suspend fun getNextRemoteKey() = remoteKeyStorage.getNextRemoteKey(collectionName)
+    suspend fun savePreRemoteKey(remoteKeys: RemoteKeys) = remoteKeyStorage.savePreRemoteKey(remoteKeys)
+    suspend fun saveNextRemoteKey(remoteKeys: RemoteKeys) = remoteKeyStorage.saveNextRemoteKey(remoteKeys)
+    suspend fun deletePreRemoteKey() = remoteKeyStorage.deletePreRemoteKey(collectionName)
+    suspend fun deleteNextRemoteKey() = remoteKeyStorage.deleteNextRemoteKey(collectionName)
+}
+
+fun RemoteKeyStorage.wrap(collectionName: String) = RemoteKeyStorageWrapper(this, collectionName)
+
 suspend fun TopicInfoStorage.update(
     collection: TopicCollection,
     id: PrimaryKey,

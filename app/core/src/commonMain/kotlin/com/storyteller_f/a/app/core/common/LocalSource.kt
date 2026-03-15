@@ -9,7 +9,7 @@ import com.storyteller_f.a.client.core.LoadingHandler
 import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.a.client.core.request
 import com.storyteller_f.shared.commonJson
-import com.storyteller_f.storage.RemoteKeyStorage
+import com.storyteller_f.storage.RemoteKeyStorageWrapper
 import com.storyteller_f.storage.RemoteKeys
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
@@ -52,8 +52,7 @@ class CachedLoadingHandler<T : Any>(
 @Suppress("unused")
 @OptIn(ExperimentalPagingApi::class)
 class CustomRemoteMediator<Datum : Any>(
-    private val collection: String,
-    private val remoteKeyStorage: RemoteKeyStorage,
+    private val wrapper: RemoteKeyStorageWrapper,
     private val networkService: PagingSource<String, Datum>,
     private val update: suspend (List<Datum>, LoadType) -> Unit,
 ) :
@@ -74,7 +73,7 @@ class CustomRemoteMediator<Datum : Any>(
             )
 
             LoadType.PREPEND -> {
-                val remoteKey = remoteKeyStorage.getPreRemoteKey(collection)?.key
+                val remoteKey = wrapper.getPreRemoteKey()?.key
                 PagingSource.LoadParams.Append(
                     remoteKey
                         ?: return MediatorResult.Success(endOfPaginationReached = true),
@@ -84,7 +83,7 @@ class CustomRemoteMediator<Datum : Any>(
             }
 
             LoadType.APPEND -> {
-                val remoteKey = remoteKeyStorage.getNextRemoteKey(collection)?.key
+                val remoteKey = wrapper.getNextRemoteKey()?.key
                 PagingSource.LoadParams.Append(
                     remoteKey
                         ?: return MediatorResult.Success(endOfPaginationReached = true),
@@ -119,8 +118,8 @@ class CustomRemoteMediator<Datum : Any>(
             val data = loadResult.data
             val nextKey = loadResult.nextKey
             val preKey = loadResult.prevKey
-            remoteKeyStorage.savePreRemoteKey(RemoteKeys(collection, preKey))
-            remoteKeyStorage.saveNextRemoteKey(RemoteKeys(collection, nextKey))
+            wrapper.savePreRemoteKey(RemoteKeys(wrapper.collectionName, preKey))
+            wrapper.saveNextRemoteKey(RemoteKeys(wrapper.collectionName, nextKey))
             update(data, loadType)
             Napier.v(tag = "pagination") {
                 "mediator success type: $loadType key: ${params.key}"
