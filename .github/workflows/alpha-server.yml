@@ -29,7 +29,7 @@ jobs:
       # runner's environment
       VARS_CONTEXT: ${{ toJson(vars) }}
       SECRETS_CONTEXT: ${{ toJson(secrets) }}
-      ORG_GRADLE_PROJECT_gpr_user: ${{ secrets.GPR_USER }}
+      ORG_GRADLE_PROJECT_gpr_user: ${{ github.actor }}
       ORG_GRADLE_PROJECT_gpr_key: ${{ secrets.GPR_KEY }}
     steps:
       - uses: actions/checkout@v4
