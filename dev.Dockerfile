@@ -5,6 +5,9 @@ ARG USER_NAME
 USER root
 RUN apt update && apt install -y --no-install-recommends --no-install-suggests libavif-bin
 
+RUN groupadd -g 1001 docker \
+    && usermod -aG docker $USER_NAME
+
 USER $USER_NAME
 WORKDIR /home/$USER_NAME
 
