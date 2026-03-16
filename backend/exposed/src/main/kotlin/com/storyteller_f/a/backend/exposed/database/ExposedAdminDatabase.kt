@@ -13,6 +13,7 @@ import com.storyteller_f.a.backend.exposed.tables.Aids
 import com.storyteller_f.a.backend.exposed.tables.Communities
 import com.storyteller_f.a.backend.exposed.tables.EncryptedKeys
 import com.storyteller_f.a.backend.exposed.tables.Members
+import com.storyteller_f.a.backend.exposed.tables.PanelLogs
 import com.storyteller_f.a.backend.exposed.tables.Rooms
 import com.storyteller_f.a.backend.exposed.tables.Topics
 import com.storyteller_f.a.backend.exposed.tables.UserSubscriptions
@@ -28,6 +29,7 @@ import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.statements.api.ExposedBlob
 import org.jetbrains.exposed.v1.r2dbc.batchInsert
+import org.jetbrains.exposed.v1.r2dbc.insert
 import org.jetbrains.exposed.v1.r2dbc.select
 
 class ExposedAdminDatabase(val databaseSession: ExposedDatabaseSession) : AdminDatabase {
@@ -140,6 +142,20 @@ class ExposedAdminDatabase(val databaseSession: ExposedDatabaseSession) : AdminD
                 this[UserSubscriptions.uid] = it.uid
                 this[UserSubscriptions.objectId] = it.objectId
                 this[UserSubscriptions.objectType] = it.objectType
+            }
+        }
+    }
+
+    override suspend fun insertPanelLog(log: com.storyteller_f.a.backend.core.types.PanelLog): Result<Unit> {
+        return databaseSession.dbQuery {
+            check(PanelLogs.insert {
+                it[id] = log.id
+                it[adminId] = log.adminId
+                it[targetUserId] = log.targetUserId
+                it[action] = log.action
+                it[createdTime] = log.createdTime
+            }.insertedCount > 0) {
+                "insert panel log failed"
             }
         }
     }

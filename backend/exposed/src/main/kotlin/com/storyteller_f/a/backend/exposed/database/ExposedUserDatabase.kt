@@ -141,6 +141,17 @@ class ExposedUserDatabase(
         isEmpty()
     }
 
+    override suspend fun updateUserStatus(
+        id: PrimaryKey,
+        status: com.storyteller_f.shared.type.UserStatus
+    ) = databaseSession.dbQuery {
+        Users.update({
+            Users.id eq id
+        }) {
+            it[this.status] = status
+        } > 0
+    }
+
     override suspend fun updateUserInfo(
         id: PrimaryKey,
         newUser: UpdateUserBody,

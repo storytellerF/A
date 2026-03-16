@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.People
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -33,9 +34,13 @@ import com.storyteller_f.a.app.core.components.FileIcon
 import com.storyteller_f.a.app.core.components.NavRoute
 import com.storyteller_f.a.app.core.components.RoomIcon
 import com.storyteller_f.a.app.core.components.StateView
+import com.storyteller_f.a.app.core.components.emitEvent
 import com.storyteller_f.a.app.core.components.pagingItems
+import com.storyteller_f.a.client.core.updateUserStatus
+import com.storyteller_f.a.panel.LocalPanelGlobalDialog
 import com.storyteller_f.a.panel.LocalPanelNav
 import com.storyteller_f.a.panel.Res
+import com.storyteller_f.a.panel.common.OnUserStatusUpdated
 import com.storyteller_f.a.panel.common.createPanelJoinedCommunitiesViewModel
 import com.storyteller_f.a.panel.common.createPanelJoinedRoomsViewModel
 import com.storyteller_f.a.panel.common.createPanelUserCommentsViewModel
@@ -64,8 +69,10 @@ import com.storyteller_f.a.panel.user_detail_title
 import com.storyteller_f.a.panel.user_detail_title_with_info
 import com.storyteller_f.a.panel.user_info
 import com.storyteller_f.a.panel.user_logs
+import com.storyteller_f.shared.obj.UpdateUserStatusBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.type.UserStatus
 import kotlinx.coroutines.launch
 import nl.jacobras.humanreadable.HumanReadable
 import org.jetbrains.compose.resources.stringResource
@@ -349,10 +356,13 @@ private fun UserLogsTab(uid: PrimaryKey) {
 @Composable
 private fun UserBasicInfoSection(uid: PrimaryKey) {
     val vm = createPanelUserOverviewViewModel(uid)
+    val dialogController = LocalPanelGlobalDialog.current
+    val scope = rememberCoroutineScope()
     StateView(vm.handler, modifier = Modifier.fillMaxSize()) { overview ->
         val items = buildList {
             add("id" to overview.userInfo.id.toString())
             add("nickname" to overview.userInfo.nickname)
+            add("status" to overview.userInfo.status.name)
             add("address" to overview.userInfo.address)
             add("aid" to overview.userInfo.aid.toString())
             add("favoriteCount" to overview.favoriteCount.toString())
@@ -362,7 +372,36 @@ private fun UserBasicInfoSection(uid: PrimaryKey) {
             add("commentCount" to overview.commentCount.toString())
             add("childAccountCount" to overview.childAccountCount.toString())
         }
-        InfoTable(items, Modifier.padding(16.dp))
+        Column {
+            InfoTable(items, Modifier.padding(16.dp).weight(1f))
+            Button(onClick = {
+                val newStatus = if (overview.userInfo.status == UserStatus.NORMAL) {
+                    UserStatus.READ_ONLY
+                } else {
+                    UserStatus.NORMAL
+                }
+                scope.launch {
+                    dialogController.useResult {
+                        context.request {
+                            updateUserStatus(
+                                uid,
+                                UpdateUserStatusBody(newStatus)
+                            )
+                        }
+                    }.onSuccess {
+                        dialogController.emitEvent(OnUserStatusUpdated(uid, newStatus))
+                    }
+                }
+            }, modifier = Modifier.padding(16.dp)) {
+                Text(
+                    if (overview.userInfo.status == UserStatus.NORMAL) {
+                        "Set to ReadOnly"
+                    } else {
+                        "Set to Normal"
+                    }
+                )
+            }
+        }
     }
 }
 

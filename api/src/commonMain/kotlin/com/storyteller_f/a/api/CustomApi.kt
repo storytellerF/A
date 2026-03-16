@@ -42,6 +42,7 @@ import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.obj.UpdateRoomBody
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.obj.UpdateUserRead
+import com.storyteller_f.shared.obj.UpdateUserStatusBody
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -787,6 +788,15 @@ object AdminApi {
 
             object Overview {
                 val get = safeEndpointWithPath<UserOverview, CommonPath>("/admin/users/{id}/overview")
+            }
+
+            object Status {
+                val update = mutationEndpointWithPath<
+                    Unit,
+                    UpdateUserStatusBody,
+                    CommonPath>(
+                    "/admin/users/{id}/status"
+                )
             }
 
             object Communities {

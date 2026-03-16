@@ -4,6 +4,7 @@ import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
 import com.storyteller_f.shared.type.MemberStatus
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.type.UserStatus
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
@@ -19,6 +20,7 @@ data class UserInfo(
     val encryptionPrivateKey: String? = null,
     val favoriteId: PrimaryKey? = null,
     val subscriptionId: PrimaryKey? = null,
+    val status: UserStatus = UserStatus.NORMAL,
 ) : ModelObject {
     override val objectType: ObjectType
         get() = ObjectType.USER

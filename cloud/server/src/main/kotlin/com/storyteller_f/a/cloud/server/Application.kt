@@ -498,7 +498,11 @@ fun Application.configureRoute(reader: DatabaseReader, backend: Backend) {
         }
         bindUnprotectedAccountRoute(backend)
         bindUnauthenticatedRoute(backend)
-        bindProtectedAdminRoute(backend)
+    }
+    routing {
+        authenticate("admin") {
+            bindProtectedAdminRoute(backend)
+        }
         bindUnauthenticatedPanelRoute(backend)
     }
 }

@@ -10,6 +10,4 @@ else
     export SYS_IMG_PKG="system-images;android-36;google_apis;arm64"
 fi
 
-./bin/action-after-create.sh
-
 ./bin/entrypoint.sh

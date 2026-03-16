@@ -24,7 +24,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock # 宿主机 Docker 套接字
       - avd_data:${CONTAINER_HOME}/.android/avd
       - sdk_data:${CONTAINER_HOME}/Android/Sdk
-      - a-bashhistory:/commandhistory
+      - bashhistory:${CONTAINER_HOME}/.android-in-docker/.bash_history
       - gradle_data:${CONTAINER_HOME}/.gradle
       - konan_data:${CONTAINER_HOME}/.konan
       - m2_data:${CONTAINER_HOME}/.m2
@@ -36,15 +36,16 @@ services:
       - antigravity_config:${CONTAINER_HOME}/.config/Antigravity
       - gemini_data:${CONTAINER_HOME}/.gemini
       - certs:${CONTAINER_HOME}/.certs
+      - antigravity_data:${CONTAINER_HOME}/.antigravity
     shm_size: '2gb' # Allocate more shared memory
-    privileged: true # Enable KVM acceleration
+    privileged: true # Enable KVM acceleration and more privileged
 
 volumes:
   avd_data:
   sdk_data:
     name: sdk_data
     external: true
-  a-bashhistory:
+  bashhistory:
   gradle_data:
   konan_data:
   m2_data:
@@ -55,3 +56,4 @@ volumes:
   google_local:
   antigravity_config:
   gemini_data:
+  antigravity_data:

@@ -9,6 +9,7 @@ import com.storyteller_f.a.backend.exposed.BaseTable
 import com.storyteller_f.a.backend.exposed.algoType
 import com.storyteller_f.a.backend.exposed.customPrimaryKey
 import com.storyteller_f.a.backend.exposed.passType
+import com.storyteller_f.shared.type.UserStatus
 import org.jetbrains.exposed.v1.core.*
 import org.jetbrains.exposed.v1.r2dbc.Query
 import org.jetbrains.exposed.v1.r2dbc.selectAll
@@ -30,6 +31,7 @@ object Users : BaseTable() {
     val passType = passType("pass_type")
     val algoType = algoType("algo_type")
     val notificationId = customPrimaryKey("notification_id")
+    val status = enumerationByName<UserStatus>("status", 20).default(UserStatus.NORMAL)
 }
 
 fun User.Companion.wrapRow(row: ResultRow): User {
@@ -48,6 +50,7 @@ fun User.Companion.wrapRow(row: ResultRow): User {
             row[passType],
             row[algoType],
             row[notificationId],
+            row[status],
         )
     }
 }

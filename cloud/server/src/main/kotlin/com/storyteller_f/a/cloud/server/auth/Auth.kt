@@ -5,6 +5,7 @@ import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.cloud.server.route.checkAdminApiRequest
 import com.storyteller_f.a.cloud.server.route.checkApiRequest
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.type.UserStatus
 import com.storyteller_f.shared.type.toPrimaryKey
 import com.storyteller_f.shared.utils.*
 import io.ktor.http.auth.*
@@ -196,6 +197,15 @@ fun Application.configureAuth(backend: Backend) {
                             credential != null -> call.checkApiRequest(backend, credential, session)
                             backend.customConfig.buildType == "prod" -> Result.success(null)
                             else -> backend.checkDevWsLink(call)
+                        }
+                    }
+                }.mapResultIfNotNull { principal ->
+                    val uid = principal.uid
+                    backend.database.user.getRawUser(ObjectFetch.IdFetch(uid)).mapResultIfNotNull {
+                        if (it.user.status == UserStatus.READ_ONLY) {
+                            Result.failure(Exception("User is ReadOnly"))
+                        } else {
+                            Result.success(principal)
                         }
                     }
                 }
