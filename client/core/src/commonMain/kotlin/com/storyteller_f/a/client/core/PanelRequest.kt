@@ -82,6 +82,15 @@ suspend fun PanelSessionManager.getUserById(uid: PrimaryKey) = serviceCatching {
     AdminApi.Users.Id.get(CommonPath(uid))
 }
 
+suspend fun PanelSessionManager.updateUserStatus(
+    uid: PrimaryKey,
+    body: com.storyteller_f.shared.obj.UpdateUserStatusBody
+) = serviceCatching {
+    AdminApi.Users.Id.Status.update(CommonPath(uid), body) {
+        contentType(ContentType.Application.Json)
+    }
+}
+
 suspend fun PanelSessionManager.getUserOverview(uid: PrimaryKey) = serviceCatching {
     AdminApi.Users.Id.Overview.get(CommonPath(uid))
 }

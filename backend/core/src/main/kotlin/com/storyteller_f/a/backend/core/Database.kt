@@ -296,6 +296,7 @@ interface UserDatabase {
     suspend fun getRawUserAndPublicKeyByAddress(ad: String): Result<Pair<RawUser, String>?>
     suspend fun createUser(user: User): Result<User>
     suspend fun isUserNotExistsByPublicKey(pk: String): Result<Boolean>
+    suspend fun updateUserStatus(id: PrimaryKey, status: com.storyteller_f.shared.type.UserStatus): Result<Boolean>
 
     /**
      * nickname 为null 或者空字符串时不更新，avatar 为null 时不更新,aid 为null 或者空字符串时不更新
@@ -626,6 +627,7 @@ interface AdminDatabase {
 
     suspend fun createTaskRecord(record: TaskRecord): Result<TaskRecord>
     suspend fun batchAddSubscription(list: List<UserSubscription>): Result<Unit>
+    suspend fun insertPanelLog(log: com.storyteller_f.a.backend.core.types.PanelLog): Result<Unit>
 }
 
 interface PanelAccountDatabase {

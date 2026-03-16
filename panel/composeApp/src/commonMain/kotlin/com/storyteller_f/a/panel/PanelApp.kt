@@ -64,6 +64,7 @@ import com.storyteller_f.a.client.core.getClient
 import com.storyteller_f.a.client.core.startBackgroundTask
 import com.storyteller_f.a.client.room.getRoomModelStorage
 import com.storyteller_f.a.panel.common.OnUserAdded
+import com.storyteller_f.a.panel.common.OnUserStatusUpdated
 import com.storyteller_f.a.panel.common.PanelNav
 import com.storyteller_f.a.panel.common.PanelNavFactory
 import com.storyteller_f.a.panel.common.PanelOverviewScreen
@@ -72,6 +73,8 @@ import com.storyteller_f.a.panel.common.panelNavSerializersModule
 import com.storyteller_f.a.panel.common.rootEntryProvider
 import com.storyteller_f.a.panel.ui.theme.PanelTheme
 import com.storyteller_f.storage.ModelStorage
+import com.storyteller_f.storage.UserCollection
+import com.storyteller_f.storage.update
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.cookies.CookiesStorage
 import kotlinx.collections.immutable.PersistentList
@@ -83,6 +86,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -317,6 +321,19 @@ class PanelAccountInstance(scope: CoroutineScope) {
         when (any) {
             is OnUserAdded -> {
                 storage.user.saveToDefault(any.info)
+            }
+            is OnUserStatusUpdated -> {
+                storage.user.update(UserCollection.Users, any.uid) {
+                    it.copy(status = any.status)
+                }
+                storage.user.update(UserCollection.AllUsers, any.uid) {
+                    it.copy(status = any.status)
+                }
+                val overview = storage.userOverview.observeDatum().firstOrNull()
+                if (overview != null && overview.userInfo.id == any.uid) {
+                    val updatedUser = overview.userInfo.copy(status = any.status)
+                    storage.userOverview.save(overview.copy(userInfo = updatedUser))
+                }
             }
         }
     }

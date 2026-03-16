@@ -4,6 +4,8 @@ import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.api.NewUser
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.CustomBadRequestException
+import com.storyteller_f.a.backend.core.UnauthorizedException
+import com.storyteller_f.a.backend.core.types.PanelLog
 import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.a.backend.core.types.toUserInfo
 import com.storyteller_f.shared.getAlgo
@@ -11,6 +13,7 @@ import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.PanelOverview
 import com.storyteller_f.shared.model.PassType
 import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.obj.UpdateUserStatusBody
 import com.storyteller_f.shared.utils.now
 
 suspend fun Backend.getOverview() = runCatching {
@@ -80,5 +83,25 @@ suspend fun Backend.addUser(newUser: NewUser): Result<UserInfo> {
                 notificationId
             )
         ).getOrThrow().toUserInfo()
+    }
+}
+
+suspend fun Backend.updateUserStatus(
+    uid: com.storyteller_f.shared.type.PrimaryKey,
+    body: UpdateUserStatusBody,
+    adminId: com.storyteller_f.shared.type.PrimaryKey?
+): Result<Unit> {
+    if (adminId == null) return Result.failure(UnauthorizedException())
+    return database.user.updateUserStatus(uid, body.status).map {
+        val logId = SnowflakeFactory.nextId()
+        database.admin.insertPanelLog(
+            PanelLog(
+                id = logId,
+                adminId = adminId,
+                targetUserId = uid,
+                action = "Update user status to ${body.status}",
+                createdTime = now()
+            )
+        )
     }
 }

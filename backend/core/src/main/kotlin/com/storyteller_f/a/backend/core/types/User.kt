@@ -5,6 +5,7 @@ import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.PassType
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.type.UserStatus
 import kotlinx.datetime.LocalDateTime
 
 class User(
@@ -21,6 +22,7 @@ class User(
     val passType: PassType,
     val algoType: AlgoType,
     val notificationId: PrimaryKey,
+    val status: UserStatus = UserStatus.NORMAL,
 ) {
     companion object
 }
@@ -35,7 +37,8 @@ fun User.toUserInfo(avatar: FileInfo? = null): UserInfo {
         encryptionPublicKey,
         encryptionPrivateKey,
         null,
-        null
+        null,
+        status,
     )
 }
 

@@ -11,6 +11,7 @@ import com.storyteller_f.a.backend.exposed.tables.FileRecords
 import com.storyteller_f.a.backend.exposed.tables.FileRefs
 import com.storyteller_f.a.backend.exposed.tables.Members
 import com.storyteller_f.a.backend.exposed.tables.PanelAccounts
+import com.storyteller_f.a.backend.exposed.tables.PanelLogs
 import com.storyteller_f.a.backend.exposed.tables.Quotas
 import com.storyteller_f.a.backend.exposed.tables.ReactionRecords
 import com.storyteller_f.a.backend.exposed.tables.Reactions
@@ -235,6 +236,7 @@ object ExposedDatabaseFactory {
         Titles,
         Topics,
         Users,
+        PanelLogs,
         UserLogs,
         UserDevices,
         UserTopicReads,

@@ -97,6 +97,7 @@ import com.storyteller_f.a.client.core.signOut
 import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.UserOverview
+import com.storyteller_f.shared.type.UserStatus
 import dev.jordond.connectivity.Connectivity
 import dev.jordond.connectivity.compose.rememberConnectivityState
 import io.github.aakira.napier.Napier
@@ -318,7 +319,20 @@ private fun UnboundSimpleUserCell(userInfo: UserInfo?) {
         ) {}
         if (userInfo != null) {
             Column {
-                Text(userInfo.nickname, style = MaterialTheme.typography.titleMedium)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(userInfo.nickname, style = MaterialTheme.typography.titleMedium)
+                    if (userInfo.status == UserStatus.READ_ONLY) {
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            "ReadOnly",
+                            style = MaterialTheme.typography.labelSmall,
+                            modifier = Modifier
+                                .background(MaterialTheme.colorScheme.errorContainer, RoundedCornerShape(4.dp))
+                                .padding(horizontal = 4.dp, vertical = 2.dp),
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                    }
+                }
                 val aid = userInfo.aid
                 if (aid != null) {
                     Text(CoreStrings.aid(aid), style = MaterialTheme.typography.labelSmall)
