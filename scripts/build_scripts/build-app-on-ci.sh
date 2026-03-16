@@ -1,5 +1,10 @@
 #!/bin/bash
 set -e
+
+mkdir -p ~/.gradle
+echo "gpr.user=$ORG_GRADLE_PROJECT_gpr_user" >> ~/.gradle/gradle.properties
+echo "gpr.key=$ORG_GRADLE_PROJECT_gpr_key" >> ~/.gradle/gradle.properties
+
 FLAVOR=$1
 URL=$2
 TARGET=$3
