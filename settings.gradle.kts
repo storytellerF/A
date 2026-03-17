@@ -56,7 +56,7 @@ dependencyResolutionManagement {
 include(":shared")
 
 include(":app:composeApp")
-//include(":app:cliApp")
+include(":app:cliApp")
 include(":app:core")
 include(":app:android")
 
