@@ -75,6 +75,7 @@ include(":cloud:openpdf")
 include(":cloud:pdf")
 include(":panel:composeApp")
 include(":panel:android")
+include(":panel:cliApp")
 
 include(":backend:exposed")
 include(":backend:core")
