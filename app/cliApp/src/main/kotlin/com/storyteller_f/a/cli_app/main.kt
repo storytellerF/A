@@ -15,22 +15,37 @@ import com.jakewharton.mosaic.ui.Color
 import com.jakewharton.mosaic.ui.Column
 import com.jakewharton.mosaic.ui.Text
 import com.jakewharton.mosaic.ui.TextStyle
+import com.storyteller_f.a.api.CustomApi
 import com.storyteller_f.a.api.PaginationQuery
 import com.storyteller_f.a.client.core.RawUserPass
 import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.createUserSessionManager
 import com.storyteller_f.a.client.core.defaultClientConfigure
+import com.storyteller_f.a.client.core.exitCommunity
+import com.storyteller_f.a.client.core.exitRoom
+import com.storyteller_f.a.client.core.getCommunityRooms
+import com.storyteller_f.a.client.core.getCommunityTopics
 import com.storyteller_f.a.client.core.getRecommendTopics
+import com.storyteller_f.a.client.core.getRoomMembersPublicKeys
+import com.storyteller_f.a.client.core.getRoomTopics
 import com.storyteller_f.a.client.core.getUserCommunities
 import com.storyteller_f.a.client.core.getUserPass
 import com.storyteller_f.a.client.core.getUserRooms
+import com.storyteller_f.a.client.core.joinCommunity
+import com.storyteller_f.a.client.core.joinRoom
+import com.storyteller_f.a.client.core.searchCommunityMembers
+import com.storyteller_f.a.client.core.searchRoomMembers
+import com.storyteller_f.a.client.core.sendMessage
 import com.storyteller_f.a.client.core.startBackgroundTask
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.CommunityInfo
+import com.storyteller_f.shared.model.MemberInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.obj.ObjectTuple
+import com.storyteller_f.shared.type.ObjectType
 import io.github.aakira.napier.Antilog
 import io.github.aakira.napier.LogLevel
 import io.github.aakira.napier.Napier
@@ -82,8 +97,10 @@ sealed class Screen {
     data class TopicDetail(val topic: TopicInfo) : Screen()
     data class CommunityList(val communities: List<CommunityInfo>) : Screen()
     data class CommunityDetail(val community: CommunityInfo) : Screen()
+    data class CommunityMemberList(val members: List<MemberInfo>) : Screen()
     data class RoomList(val rooms: List<RoomInfo>) : Screen()
     data class RoomDetail(val room: RoomInfo) : Screen()
+    data class RoomSendMessage(val room: RoomInfo) : Screen()
 }
 
 @Suppress("CyclomaticComplexMethod", "LongMethod")
@@ -172,7 +189,51 @@ suspend fun handleInput(
                 }
             }
         }
-        is Screen.CommunityDetail -> { setScreen(Screen.Main) }
+        is Screen.CommunityDetail -> {
+            when (line) {
+                "1" -> {
+                    sysLog("Fetching Community Topics...")
+                    sessionManager.getCommunityTopics(screen.community.id, null, PaginationQuery(size = 10)).fold(
+                        onSuccess = { setScreen(Screen.TopicList(it.data)) },
+                        onFailure = { sysLogError("Failed", it) }
+                    )
+                }
+                "2" -> {
+                    sysLog("Fetching Community Rooms...")
+                    sessionManager.getCommunityRooms(
+                        screen.community.id,
+                        CustomApi.Communities.Id.Rooms.CommunityRoomQuery(size = 10)
+                    ).fold(
+                        onSuccess = { setScreen(Screen.RoomList(it.data)) },
+                        onFailure = { sysLogError("Failed", it) }
+                    )
+                }
+                "3" -> {
+                    sysLog("Fetching Community Members...")
+                    sessionManager.searchCommunityMembers(screen.community.id, null, 10, "").fold(
+                        onSuccess = { setScreen(Screen.CommunityMemberList(it.data)) },
+                        onFailure = { sysLogError("Failed", it) }
+                    )
+                }
+                "4" -> {
+                    sysLog("Joining Community...")
+                    sessionManager.joinCommunity(screen.community.id).fold(
+                        onSuccess = { sysLog("Joined Community successfully") },
+                        onFailure = { sysLogError("Failed to join", it) }
+                    )
+                }
+                "5" -> {
+                    sysLog("Exiting Community...")
+                    sessionManager.exitCommunity(screen.community.id).fold(
+                        onSuccess = { sysLog("Exited Community successfully") },
+                        onFailure = { sysLogError("Failed to exit", it) }
+                    )
+                }
+                "" -> setScreen(Screen.Main)
+                else -> sysLog("Invalid Choice")
+            }
+        }
+        is Screen.CommunityMemberList -> { setScreen(Screen.Main) }
         is Screen.RoomList -> {
             if (line == "") {
                 setScreen(Screen.Main)
@@ -183,7 +244,69 @@ suspend fun handleInput(
                 }
             }
         }
-        is Screen.RoomDetail -> { setScreen(Screen.Main) }
+        is Screen.RoomDetail -> {
+            when (line) {
+                "1" -> {
+                    sysLog("Fetching Room Messages...")
+                    sessionManager.getRoomTopics(screen.room.id, null, PaginationQuery(size = 10)).fold(
+                        onSuccess = { setScreen(Screen.TopicList(it.data)) },
+                        onFailure = { sysLogError("Failed", it) }
+                    )
+                }
+                "2" -> {
+                    sysLog("Fetching Room Members...")
+                    sessionManager.searchRoomMembers(screen.room.id, null, 10, "").fold(
+                        onSuccess = { setScreen(Screen.CommunityMemberList(it.data)) },
+                        onFailure = { sysLogError("Failed", it) }
+                    )
+                }
+                "3" -> {
+                    sysLog("Joining Room...")
+                    sessionManager.joinRoom(screen.room.id).fold(
+                        onSuccess = { sysLog("Joined Room successfully") },
+                        onFailure = { sysLogError("Failed to join", it) }
+                    )
+                }
+                "4" -> {
+                    sysLog("Exiting Room...")
+                    sessionManager.exitRoom(screen.room.id).fold(
+                        onSuccess = { sysLog("Exited Room successfully") },
+                        onFailure = { sysLogError("Failed to exit", it) }
+                    )
+                }
+                "5" -> {
+                    setScreen(Screen.RoomSendMessage(screen.room))
+                }
+                "" -> setScreen(Screen.Main)
+                else -> sysLog("Invalid Choice")
+            }
+        }
+        is Screen.RoomSendMessage -> {
+            if (line.isEmpty()) {
+                setScreen(Screen.RoomDetail(screen.room))
+            } else {
+                sysLog("Sending Message to Room...")
+                val parentTarget = ObjectTuple(screen.room.id, ObjectType.ROOM)
+
+                var keyData: List<com.storyteller_f.shared.model.UserPubKeyInfo>? = null
+                if (screen.room.isPrivate) {
+                    val res = sessionManager.getRoomMembersPublicKeys(screen.room.id, PaginationQuery(size = 100))
+                    if (res.isSuccess) {
+                        keyData = res.getOrNull()?.data
+                    }
+                }
+
+                try {
+                    sessionManager.webSocketClient.useWebSocket {
+                        sendMessage(parentTarget, screen.room.isPrivate, line, keyData.orEmpty())
+                    }
+                    sysLog("Message Sent")
+                } catch (e: Exception) {
+                    sysLogError("Failed to send message", e)
+                }
+                setScreen(Screen.RoomDetail(screen.room))
+            }
+        }
     }
 }
 
@@ -234,7 +357,7 @@ fun App(sessionManager: UserSessionManager) {
                 Text("Enter Private Key: ")
             }
             is Screen.TopicList -> {
-                Text("Recommended Topics:")
+                Text("Topic/Message List:")
                 s.topics.forEachIndexed { i, t ->
                     val content = t.content
                     val title = if (content is TopicContent.Plain) content.plain else "Encrypted"
@@ -264,6 +387,20 @@ fun App(sessionManager: UserSessionManager) {
                 Text("Name: ${s.community.name}")
                 Text("Member Count: ${s.community.memberCount}")
                 Text("========================")
+                Text("1. View Topics")
+                Text("2. View Rooms")
+                Text("3. View Members")
+                Text("4. Join Community")
+                Text("5. Exit Community")
+                Text("")
+                Text("Enter choice (or hit enter to go back): ")
+            }
+            is Screen.CommunityMemberList -> {
+                Text("=== Community Members ===")
+                s.members.forEachIndexed { i, m ->
+                    Text("[$i] User ID: ${m.uid} - ${m.userInfo.nickname}")
+                }
+                Text("========================")
                 Text("Hit enter to go back.")
             }
             is Screen.RoomList -> {
@@ -279,7 +416,20 @@ fun App(sessionManager: UserSessionManager) {
                 Text("Name: ${s.room.name}")
                 Text("Member Count: ${s.room.memberCount}")
                 Text("===================")
-                Text("Hit enter to go back.")
+                Text("1. View Messages")
+                Text("2. View Members")
+                Text("3. Join Room")
+                Text("4. Exit Room")
+                Text("5. Send Message")
+                Text("")
+                Text("Enter choice (or hit enter to go back): ")
+            }
+            is Screen.RoomSendMessage -> {
+                Text("=== Send Message ===")
+                Text("Room: ${s.room.name}")
+                Text("Type your message and hit Enter.")
+                Text("Hit enter with empty input to go back.")
+                Text("Message: ")
             }
         }
 
