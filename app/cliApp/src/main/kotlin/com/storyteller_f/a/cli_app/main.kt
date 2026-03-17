@@ -33,6 +33,7 @@ import com.storyteller_f.a.client.core.getUserPass
 import com.storyteller_f.a.client.core.getUserRooms
 import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.a.client.core.joinRoom
+import com.storyteller_f.a.client.core.searchAllMembers
 import com.storyteller_f.a.client.core.searchCommunityMembers
 import com.storyteller_f.a.client.core.searchRoomMembers
 import com.storyteller_f.a.client.core.sendMessage
@@ -44,6 +45,7 @@ import com.storyteller_f.shared.model.MemberInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.ObjectType
 import io.github.aakira.napier.Antilog
@@ -97,7 +99,10 @@ sealed class Screen {
     data class TopicDetail(val topic: TopicInfo) : Screen()
     data class CommunityList(val communities: List<CommunityInfo>) : Screen()
     data class CommunityDetail(val community: CommunityInfo) : Screen()
-    data class CommunityMemberList(val members: List<MemberInfo>) : Screen()
+    data class CommunityMemberList(val members: List<MemberInfo>, val parent: Screen) : Screen()
+    data class RoomMemberList(val members: List<MemberInfo>, val parent: Screen) : Screen()
+    data class UserList(val users: List<UserInfo>) : Screen()
+    data class UserDetail(val user: UserInfo, val parent: Screen) : Screen()
     data class RoomList(val rooms: List<RoomInfo>) : Screen()
     data class RoomDetail(val room: RoomInfo) : Screen()
     data class RoomSendMessage(val room: RoomInfo) : Screen()
@@ -133,6 +138,13 @@ suspend fun handleInput(
                     sysLog("Fetching Joined Rooms...")
                     sessionManager.getUserRooms(PaginationQuery(size = 10)).fold(
                         onSuccess = { setScreen(Screen.RoomList(it.data)) },
+                        onFailure = { sysLogError("Failed", it) }
+                    )
+                }
+                "6" -> {
+                    sysLog("Fetching Member List...")
+                    sessionManager.searchAllMembers(null, 10, "").fold(
+                        onSuccess = { setScreen(Screen.UserList(it.data)) },
                         onFailure = { sysLogError("Failed", it) }
                     )
                 }
@@ -211,7 +223,7 @@ suspend fun handleInput(
                 "3" -> {
                     sysLog("Fetching Community Members...")
                     sessionManager.searchCommunityMembers(screen.community.id, null, 10, "").fold(
-                        onSuccess = { setScreen(Screen.CommunityMemberList(it.data)) },
+                        onSuccess = { setScreen(Screen.CommunityMemberList(it.data, screen)) },
                         onFailure = { sysLogError("Failed", it) }
                     )
                 }
@@ -233,7 +245,37 @@ suspend fun handleInput(
                 else -> sysLog("Invalid Choice")
             }
         }
-        is Screen.CommunityMemberList -> { setScreen(Screen.Main) }
+        is Screen.CommunityMemberList -> {
+            if (line == "") {
+                setScreen(screen.parent)
+            } else {
+                val idx = line.toIntOrNull()
+                if (idx != null && idx in screen.members.indices) {
+                    setScreen(Screen.UserDetail(screen.members[idx].userInfo, screen))
+                }
+            }
+        }
+        is Screen.RoomMemberList -> {
+            if (line == "") {
+                setScreen(screen.parent)
+            } else {
+                val idx = line.toIntOrNull()
+                if (idx != null && idx in screen.members.indices) {
+                    setScreen(Screen.UserDetail(screen.members[idx].userInfo, screen))
+                }
+            }
+        }
+        is Screen.UserList -> {
+            if (line == "") {
+                setScreen(Screen.Main)
+            } else {
+                val idx = line.toIntOrNull()
+                if (idx != null && idx in screen.users.indices) {
+                    setScreen(Screen.UserDetail(screen.users[idx], screen))
+                }
+            }
+        }
+        is Screen.UserDetail -> { setScreen(screen.parent) }
         is Screen.RoomList -> {
             if (line == "") {
                 setScreen(Screen.Main)
@@ -256,7 +298,7 @@ suspend fun handleInput(
                 "2" -> {
                     sysLog("Fetching Room Members...")
                     sessionManager.searchRoomMembers(screen.room.id, null, 10, "").fold(
-                        onSuccess = { setScreen(Screen.CommunityMemberList(it.data)) },
+                        onSuccess = { setScreen(Screen.RoomMemberList(it.data, screen)) },
                         onFailure = { sysLogError("Failed", it) }
                     )
                 }
@@ -347,6 +389,7 @@ fun App(sessionManager: UserSessionManager) {
                 Text("3. Recommend Topics")
                 Text("4. Joined Communities")
                 Text("5. Joined Rooms")
+                Text("6. Member List")
                 Text("0. Exit")
                 Text("\nChoice: ")
             }
@@ -401,6 +444,32 @@ fun App(sessionManager: UserSessionManager) {
                     Text("[$i] User ID: ${m.uid} - ${m.userInfo.nickname}")
                 }
                 Text("========================")
+                Text("\nEnter index to view user details (or hit enter to go back): ")
+            }
+            is Screen.RoomMemberList -> {
+                Text("=== Room Members ===")
+                s.members.forEachIndexed { i, m ->
+                    Text("[$i] User ID: ${m.uid} - ${m.userInfo.nickname}")
+                }
+                Text("==================")
+                Text("\nEnter index to view user details (or hit enter to go back): ")
+            }
+            is Screen.UserList -> {
+                Text("=== Member List ===")
+                s.users.forEachIndexed { i, u ->
+                    Text("[$i] User ID: ${u.id} - ${u.nickname}")
+                }
+                Text("===================")
+                Text("\nEnter index to view user details (or hit enter to go back): ")
+            }
+            is Screen.UserDetail -> {
+                Text("=== User Detail ===")
+                Text("ID: ${s.user.id}")
+                Text("Nickname: ${s.user.nickname}")
+                Text("Address: ${s.user.address}")
+                Text("Aid: ${s.user.aid ?: "None"}")
+                Text("Status: ${s.user.status}")
+                Text("===================")
                 Text("Hit enter to go back.")
             }
             is Screen.RoomList -> {
