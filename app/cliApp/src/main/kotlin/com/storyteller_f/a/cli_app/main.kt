@@ -22,7 +22,9 @@ import com.storyteller_f.a.api.PaginationQuery
 import com.storyteller_f.a.client.core.RawUserPass
 import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.addFavorite
+import com.storyteller_f.a.client.core.addReaction
 import com.storyteller_f.a.client.core.addSubscription
+import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.a.client.core.createUserSessionManager
 import com.storyteller_f.a.client.core.defaultClientConfigure
 import com.storyteller_f.a.client.core.exitCommunity
@@ -105,6 +107,8 @@ sealed class Screen {
     data object PromptLogin : Screen()
     data class TopicList(val topics: List<TopicInfo>) : Screen()
     data class TopicDetail(val topic: TopicInfo) : Screen()
+    data class TopicAddComment(val topic: TopicInfo) : Screen()
+    data class TopicAddReaction(val topic: TopicInfo) : Screen()
     data class CommunityList(val communities: List<CommunityInfo>) : Screen()
     data class CommunityDetail(val community: CommunityInfo) : Screen()
     data class CommunityMemberList(val members: List<MemberInfo>, val parent: Screen) : Screen()
@@ -230,8 +234,34 @@ suspend fun handleInput(
                         onFailure = { sysLogError("Failed to subscribe", it) }
                     )
                 }
+                "3" -> setScreen(Screen.TopicAddComment(screen.topic))
+                "4" -> setScreen(Screen.TopicAddReaction(screen.topic))
                 "" -> setScreen(Screen.Main)
                 else -> sysLog("Invalid Choice")
+            }
+        }
+        is Screen.TopicAddComment -> {
+            if (line.isEmpty()) {
+                setScreen(Screen.TopicDetail(screen.topic))
+            } else {
+                sysLog("Adding Comment...")
+                sessionManager.createTopic(ObjectType.TOPIC, screen.topic.id, line).fold(
+                    onSuccess = { sysLog("Comment added successfully") },
+                    onFailure = { sysLogError("Failed to add comment", it) }
+                )
+                setScreen(Screen.TopicDetail(screen.topic))
+            }
+        }
+        is Screen.TopicAddReaction -> {
+            if (line.isEmpty()) {
+                setScreen(Screen.TopicDetail(screen.topic))
+            } else {
+                sysLog("Adding Reaction...")
+                sessionManager.addReaction(screen.topic.id, line).fold(
+                    onSuccess = { sysLog("Reaction added successfully") },
+                    onFailure = { sysLogError("Failed to add reaction", it) }
+                )
+                setScreen(Screen.TopicDetail(screen.topic))
             }
         }
         is Screen.CommunityList -> {
@@ -500,8 +530,24 @@ fun App(sessionManager: UserSessionManager) {
                 Text("====================")
                 Text("1. Favorite Topic")
                 Text("2. Subscribe Topic")
+                Text("3. Add Comment")
+                Text("4. Add Reaction")
                 Text("")
                 Text("Hit enter to go back.")
+            }
+            is Screen.TopicAddComment -> {
+                Text("=== Add Comment ===")
+                Text("Topic: ${s.topic.id}")
+                Text("Type your comment and hit Enter.")
+                Text("Hit enter with empty input to go back.")
+                Text("Comment: ")
+            }
+            is Screen.TopicAddReaction -> {
+                Text("=== Add Reaction ===")
+                Text("Topic: ${s.topic.id}")
+                Text("Type your emoji and hit Enter.")
+                Text("Hit enter with empty input to go back.")
+                Text("Emoji: ")
             }
             is Screen.CommunityList -> {
                 Text("Joined Communities:")
