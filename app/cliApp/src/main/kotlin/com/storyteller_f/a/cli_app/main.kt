@@ -7,6 +7,8 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.jakewharton.mosaic.layout.onKeyEvent
+import com.jakewharton.mosaic.modifier.Modifier
 import com.jakewharton.mosaic.runMosaicBlocking
 import com.jakewharton.mosaic.text.SpanStyle
 import com.jakewharton.mosaic.text.buildAnnotatedString
@@ -63,12 +65,8 @@ import io.github.aakira.napier.LogLevel
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.withContext
-import java.util.Scanner
+import kotlinx.coroutines.channels.Channel
 
 private val LogGray = Color(160, 160, 160)
 private val TitleGreen = Color(100, 255, 100)
@@ -467,22 +465,28 @@ suspend fun handleInput(
 @Composable
 fun App(sessionManager: UserSessionManager) {
     var screen by remember { mutableStateOf<Screen>(Screen.Main) }
+    var inputBuffer by remember { mutableStateOf("") }
+    val submitChannel = remember { Channel<String>(Channel.UNLIMITED) }
 
     LaunchedEffect(Unit) {
-        withContext(Dispatchers.IO) {
-            val scanner = Scanner(System.`in`)
-            while (isActive) {
-                if (scanner.hasNextLine()) {
-                    val line = scanner.nextLine()
-                    handleInput(line, screen, { screen = it }, sessionManager)
-                } else {
-                    delay(100L)
-                }
-            }
+        for (line in submitChannel) {
+            handleInput(line, screen, { screen = it }, sessionManager)
         }
     }
 
-    Column {
+    Column(modifier = Modifier.onKeyEvent { event ->
+        if (event.key == "Enter") {
+            submitChannel.trySend(inputBuffer)
+            inputBuffer = ""
+        } else if (event.key == "Backspace") {
+            if (inputBuffer.isNotEmpty()) inputBuffer = inputBuffer.dropLast(1)
+        } else if (event.key == "Space") {
+            inputBuffer += " "
+        } else if (event.key.length == 1) {
+            inputBuffer += event.key
+        }
+        true
+    }) {
         Text(
             buildAnnotatedString {
                 withStyle(SpanStyle(color = TitleGreen, textStyle = TextStyle.Bold)) {
@@ -657,6 +661,14 @@ fun App(sessionManager: UserSessionManager) {
             }
         }
 
+        Text("")
+        Text(buildAnnotatedString {
+            withStyle(SpanStyle(color = TitleGreen)) {
+                append("> ")
+            }
+            append(inputBuffer)
+            append("\u2588")
+        })
         Text("")
         Text("--- Logs ---")
         logs.forEach { logText ->
