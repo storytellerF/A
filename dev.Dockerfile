@@ -3,7 +3,9 @@ FROM storytellerf/android-in-docker:latest-dev
 ARG USER_NAME
 
 USER root
-RUN apt update && apt install -y --no-install-recommends --no-install-suggests libavif-bin
+RUN apt update && apt install -y --no-install-recommends --no-install-suggests libavif-bin git-lfs
+
+RUN git lfs install
 
 RUN groupadd -g 1001 docker \
     && usermod -aG docker $USER_NAME
