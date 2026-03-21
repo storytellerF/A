@@ -95,7 +95,10 @@ suspend fun PanelSessionManager.getUserOverview(uid: PrimaryKey) = serviceCatchi
     AdminApi.Users.Id.Overview.get(CommonPath(uid))
 }
 
-suspend fun PanelSessionManager.getUserJoinedCommunities(uid: PrimaryKey, query: PaginationQuery) = serviceCatching {
+suspend fun PanelSessionManager.getUserJoinedCommunities(
+    uid: PrimaryKey,
+    query: com.storyteller_f.a.api.CustomApi.Users.JoinedCommunities.UserCommunitiesQuery
+) = serviceCatching {
     AdminApi.Users.Id.Communities.get(query, CommonPath(uid))
 }
 

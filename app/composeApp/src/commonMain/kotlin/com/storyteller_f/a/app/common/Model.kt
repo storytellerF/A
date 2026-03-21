@@ -206,9 +206,14 @@ class UserJoinedCommunitiesViewModel(
         modelStorage.community,
         RegularPagingSource { key, size ->
             if (target == null) {
-                sessionManager.getUserCommunities(PaginationQuery(key, size = size))
+                sessionManager.getUserCommunities(
+                    CustomApi.Users.JoinedCommunities.UserCommunitiesQuery(PosterSearch.UNSPECIFIED, key, size)
+                )
             } else {
-                sessionManager.getUserJoinedCommunities(target, PaginationQuery(key, size = size))
+                sessionManager.getUserJoinedCommunities(
+                    target,
+                    CustomApi.Users.JoinedCommunities.UserCommunitiesQuery(PosterSearch.UNSPECIFIED, key, size)
+                )
             }
         }
     ).flow.cachedIn(viewModelScope)
@@ -227,7 +232,9 @@ class UserJoinedCommunitiesWithPosterViewModel(
         modelStorage.remoteKey.wrap(modelCollection.getName()),
         modelStorage.community
     ) { key, size ->
-        sessionManager.getUserCommunities(PaginationQuery(key, size = size))
+        sessionManager.getUserCommunities(
+            CustomApi.Users.JoinedCommunities.UserCommunitiesQuery(PosterSearch.HAS_POSTER, key, size)
+        )
     }.flow.cachedIn(viewModelScope)
 }
 

@@ -289,9 +289,9 @@ suspend fun Backend.getUserUploadRecords(
     list.map { it.toUploadRecordInfo() }
 }
 
-suspend fun Backend.getFileInfoById(id: PrimaryKey): Result<FileInfo?> =
+suspend fun Backend.getFileInfoById(id: PrimaryKey, uid: PrimaryKey? = null): Result<FileInfo?> =
     database.file.getFileRecordByIds(listOf(id)).mapResultIfNotNull { list ->
-        processFileRecordToFileInfo(list)
+        processFileRecordToFileInfo(list, uid)
     }.mapIfNotNull { it.firstOrNull() }
 
 suspend fun Backend.tryCopyFile(p: CommonPath, uid: PrimaryKey): Result<ServerResponse<FileInfo>?> =

@@ -8,7 +8,5 @@ COPY ./scripts/test_scripts/disable-start-android.sh /usr/local/bin/start-androi
 RUN chmod +x /usr/local/bin/start-android.sh
 
 WORKDIR /app
-COPY . .
-RUN ./scripts/tool_scripts/shell-crlf.sh
 
 CMD ["./scripts/test_scripts/test-entry-in-docker.sh"]

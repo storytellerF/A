@@ -509,10 +509,12 @@ object CustomApi {
             }
 
             object Communities {
-                val get =
-                    safeEndpointWithQueryAndPath<ServerResponse<CommunityInfo>, PaginationQuery, CommonPath>(
-                        "users/{id}/communities"
-                    )
+                val get = safeEndpointWithQueryAndPath<
+                    ServerResponse<CommunityInfo>,
+                    CustomApi.Users.JoinedCommunities.UserCommunitiesQuery,
+                    CommonPath>(
+                    "users/{id}/communities"
+                )
             }
 
             object Files {
@@ -613,6 +615,14 @@ object CustomApi {
 
         object JoinedCommunities {
             @Serializable
+            class UserCommunitiesQuery(
+                val hasPoster: PosterSearch? = null,
+                override val nextPageToken: String? = null,
+                override val size: Int = DEFAULT_PAGE_SIZE,
+                override val prePageToken: String? = null,
+            ) : PageableQuery
+
+            @Serializable
             data class UserCommunitiesSearchQuery(
                 val word: String,
                 override val nextPageToken: String? = null,
@@ -620,7 +630,9 @@ object CustomApi {
                 override val prePageToken: String? = null,
             ) : PageableQuery
 
-            val get = safeEndpointWithQuery<ServerResponse<CommunityInfo>, PaginationQuery>("users/joined-communities")
+            val get = safeEndpointWithQuery<ServerResponse<CommunityInfo>, UserCommunitiesQuery>(
+                "users/joined-communities"
+            )
             val search =
                 safeEndpointWithQuery<ServerResponse<CommunityInfo>, UserCommunitiesSearchQuery>(
                     "users/joined-communities/search"
@@ -802,7 +814,7 @@ object AdminApi {
             object Communities {
                 val get = safeEndpointWithQueryAndPath<
                     ServerResponse<CommunityInfo>,
-                    PaginationQuery,
+                    CustomApi.Users.JoinedCommunities.UserCommunitiesQuery,
                     CommonPath>(
                     "/admin/users/{id}/communities"
                 )

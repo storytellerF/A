@@ -15,6 +15,7 @@ import com.storyteller_f.a.cloud.core.service.completeChunkUpload
 import com.storyteller_f.a.cloud.core.service.deleteFavoriteByObject
 import com.storyteller_f.a.cloud.core.service.extractAlbum
 import com.storyteller_f.a.cloud.core.service.getChunkStatus
+import com.storyteller_f.a.cloud.core.service.getFileInfoById
 import com.storyteller_f.a.cloud.core.service.getFileInfoByName
 import com.storyteller_f.a.cloud.core.service.getFileList
 import com.storyteller_f.a.cloud.core.service.getQuotaInfo
@@ -95,6 +96,12 @@ fun Route.bindProtectedFileRoute(backend: Backend) {
 
     // Chunked upload endpoints
     bindChunkRoute(backend, root)
+
+    CustomApi.Files.Id.get(handleResult()) { p ->
+        usePrincipal { uid ->
+            backend.getFileInfoById(p.id, uid)
+        }
+    }
 
     CustomApi.Files.Id.copy(handleResult()) { p, _ ->
         usePrincipal { uid ->

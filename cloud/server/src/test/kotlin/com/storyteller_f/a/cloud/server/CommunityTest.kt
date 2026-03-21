@@ -115,7 +115,7 @@ class CommunityTest {
             var sum = 0L
             while (true) {
                 val res = getUserCommunities(
-                    PaginationQuery(lastCommunityId, size = 3)
+                    CustomApi.Users.JoinedCommunities.UserCommunitiesQuery(nextPageToken = lastCommunityId, size = 3)
                 ).getOrThrow()
                 val pagination = res.pagination!!
                 lastCommunityId = pagination.nextPageToken
@@ -137,7 +137,10 @@ class CommunityTest {
             }
         }.uid
         noneSession {
-            val response = getUserJoinedCommunities(id, PaginationQuery(size = 10)).getOrThrow()
+            val response = getUserJoinedCommunities(
+                id,
+                CustomApi.Users.JoinedCommunities.UserCommunitiesQuery(size = 10)
+            ).getOrThrow()
             assertEquals(10, response.data.size)
             response.data.forEach {
                 assertFalse(it.isJoined)
@@ -145,12 +148,18 @@ class CommunityTest {
             }
         }
         attachSession {
-            val response = getUserJoinedCommunities(id, PaginationQuery(size = 10)).getOrThrow()
+            val response = getUserJoinedCommunities(
+                id,
+                CustomApi.Users.JoinedCommunities.UserCommunitiesQuery(size = 10)
+            ).getOrThrow()
             assertEquals(10, response.data.size)
             response.data.forEach {
                 joinCommunity(it.id).getOrThrow()
             }
-            val response2 = getUserJoinedCommunities(id, PaginationQuery(size = 10)).getOrThrow()
+            val response2 = getUserJoinedCommunities(
+                id,
+                CustomApi.Users.JoinedCommunities.UserCommunitiesQuery(size = 10)
+            ).getOrThrow()
             response2.data.forEach {
                 assertTrue(it.isJoined)
                 assertNotNull(it.extension?.targetMemberInfo)

@@ -151,7 +151,9 @@ private suspend fun processCommunityTask(
 ) {
     var next: String? = null
     while (true) {
-        val resp = sessionManager.getUserCommunities(PaginationQuery(nextPageToken = next)).getOrThrow()
+        val resp = sessionManager.getUserCommunities(
+            com.storyteller_f.a.api.CustomApi.Users.JoinedCommunities.UserCommunitiesQuery(nextPageToken = next)
+        ).getOrThrow()
         delay(1.seconds)
         resp.data.forEach { communityInfo ->
             extracted(communityInfo)

@@ -141,7 +141,7 @@ val extractCouchbaseLibsTask = tasks.register("extractCouchbaseNativeLib") {
 afterEvaluate {
     tasks.getByName("testAndroid").dependsOn(extractCouchbaseLibsTask)
     listOf(
-        ":api:jar",
+        ":api:jvmJar",
         ":shared:jvmJar",
         ":backend:core:jar",
         ":backend:elastic:jar",
@@ -153,7 +153,8 @@ afterEvaluate {
         ":backend:simple:jar",
         ":cloud:pdf:jar",
         ":cloud:openpdf:jar",
-        ":cloud:service:jar"
+        ":cloud:service:jar",
+        ":client:model-storage:jvmJar",
     ).forEach { path ->
         extractCouchbaseLibsTask.dependsOn(path)
     }

@@ -373,11 +373,13 @@ class FileTest {
 
     @Test
     fun `test add file favorite`() = test {
-        val firstTuple = attachSession {
-            upload(ObjectTuple(it.uid, ObjectType.USER), getUploadDataFromText("hello favorite")).getOrThrow()
-        }
         attachSession {
-            val fileId = getFileList(it.uid, ObjectType.USER, null, 10).getOrThrow().data.first().id
+            val response = upload(
+                ObjectTuple(it.uid, ObjectType.USER),
+                getUploadDataFromText("hello favorite")
+            ).getOrThrow()
+            val fileId = response.data.first().id
+
             addFavorite(NewFavorite(ObjectType.FILE, fileId)).getOrThrow()
             assertListTotalSize(1, getFavorites(PaginationQuery()))
 
@@ -391,11 +393,13 @@ class FileTest {
 
     @Test
     fun `test add file subscription`() = test {
-        val firstTuple = attachSession {
-            upload(ObjectTuple(it.uid, ObjectType.USER), getUploadDataFromText("hello subscription")).getOrThrow()
-        }
         attachSession {
-            val fileId = getFileList(it.uid, ObjectType.USER, null, 10).getOrThrow().data.first().id
+            val response = upload(
+                ObjectTuple(it.uid, ObjectType.USER),
+                getUploadDataFromText("hello subscription")
+            ).getOrThrow()
+            val fileId = response.data.first().id
+
             addSubscription(NewSubscription(fileId, ObjectType.FILE)).getOrThrow()
             assertListTotalSize(1, getSubscriptions(PaginationQuery()))
 

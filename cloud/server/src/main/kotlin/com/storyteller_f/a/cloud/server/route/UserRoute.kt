@@ -99,7 +99,7 @@ private fun Route.bindUserCommunitiesRoute(backend: Backend) {
     CustomApi.Users.JoinedCommunities.get(handleResult()) { q ->
         usePrincipal { uid ->
             q.pagination(IdentifiablePagingGenerator) { fetch ->
-                backend.getUserJoinedCommunities(uid, uid, fetch)
+                backend.getUserJoinedCommunities(uid, uid, fetch, q.hasPoster)
             }
         }
     }
@@ -176,7 +176,7 @@ fun Route.bindUserRoute(backend: Backend) {
     CustomApi.Users.Id.Communities.get(handleResult()) { q, p ->
         usePrincipalOrNull { uid ->
             q.pagination(IdentifiablePagingGenerator) { f ->
-                backend.getUserJoinedCommunities(uid, p.id, f)
+                backend.getUserJoinedCommunities(uid, p.id, f, q.hasPoster)
             }
         }
     }

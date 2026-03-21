@@ -272,7 +272,7 @@ class AdminTest {
             createCommunity(NewCommunity("c1", "c1")).getOrThrow()
         }.uid
         loginPanelSession(outer) {
-            assertListSize(1, getUserJoinedCommunities(uid, PaginationQuery()))
+            assertListSize(1, getUserJoinedCommunities(uid, CustomApi.Users.JoinedCommunities.UserCommunitiesQuery()))
         }
     }
 
