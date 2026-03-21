@@ -3,7 +3,8 @@ FROM storytellerf/android-in-docker:latest-dev
 ARG USER_NAME
 
 USER root
-RUN apt update && apt install -y --no-install-recommends --no-install-suggests libavif-bin git-lfs
+RUN apt update && apt install -y --no-install-recommends --no-install-suggests \
+    libavif-bin git-lfs fcitx fcitx-googlepinyin
 
 RUN git lfs install
 

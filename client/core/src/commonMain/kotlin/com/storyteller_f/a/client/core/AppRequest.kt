@@ -154,16 +154,16 @@ suspend fun UserSessionManager.searchCommunity(
 }
 
 suspend fun UserSessionManager.getUserCommunities(
-    paginationQuery: PaginationQuery,
+    query: CustomApi.Users.JoinedCommunities.UserCommunitiesQuery,
 ) = serviceCatching {
-    CustomApi.Users.JoinedCommunities.get(paginationQuery)
+    CustomApi.Users.JoinedCommunities.get(query)
 }
 
 suspend fun UserSessionManager.getUserJoinedCommunities(
     userId: PrimaryKey,
-    paginationQuery: PaginationQuery,
+    query: CustomApi.Users.JoinedCommunities.UserCommunitiesQuery,
 ) = serviceCatching {
-    CustomApi.Users.Id.Communities.get(paginationQuery, CommonPath(userId))
+    CustomApi.Users.Id.Communities.get(query, CommonPath(userId))
 }
 
 suspend fun UserSessionManager.getCommunityRooms(

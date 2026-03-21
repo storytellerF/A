@@ -378,10 +378,11 @@ suspend fun Backend.getAllCommunities(primaryKeyFetch: PrimaryKeyFetch) =
 suspend fun Backend.getUserJoinedCommunities(
     uid: PrimaryKey?,
     target: PrimaryKey,
-    primaryKeyFetch: PrimaryKeyFetch
+    primaryKeyFetch: PrimaryKeyFetch,
+    hasPosterSearch: PosterSearch? = null,
 ): Result<PaginationResult<CommunityInfo>?> {
     return database.community.getCommunityPaginationResult(
-        hasPosterSearch = PosterSearch.UNSPECIFIED,
+        hasPosterSearch = hasPosterSearch ?: PosterSearch.UNSPECIFIED,
         primaryKeyFetch = primaryKeyFetch,
         joinSearch = JoinSearch.Joined(target)
     ).mapPagingResultIfNotNullNullable {

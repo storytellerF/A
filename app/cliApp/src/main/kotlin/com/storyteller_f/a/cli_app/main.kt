@@ -141,7 +141,9 @@ suspend fun handleInput(
                 }
                 "4" -> {
                     sysLog("Fetching Joined Communities...")
-                    sessionManager.getUserCommunities(PaginationQuery(size = 10)).fold(
+                    sessionManager.getUserCommunities(
+                        CustomApi.Users.JoinedCommunities.UserCommunitiesQuery(size = 10)
+                    ).fold(
                         onSuccess = { setScreen(Screen.CommunityList(it.data)) },
                         onFailure = { sysLogError("Failed", it) }
                     )

@@ -376,7 +376,14 @@ class UserJoinedCommunitiesViewModel(
         modelStorage.remoteKey.wrap(modelCollection.getName()),
         modelStorage.community
     ) { key, size ->
-        sessionManager.getUserJoinedCommunities(uid, PaginationQuery(key, size = size))
+        sessionManager.getUserJoinedCommunities(
+            uid,
+            CustomApi.Users.JoinedCommunities.UserCommunitiesQuery(
+                com.storyteller_f.shared.model.PosterSearch.UNSPECIFIED,
+                key,
+                size = size
+            )
+        )
     }.flow.cachedIn(viewModelScope)
 }
 
