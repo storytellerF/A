@@ -142,7 +142,7 @@ private fun RowScope.StatCell(value: Long, iconRes: IconRes, onClick: () -> Unit
     Row(
         modifier = Modifier.weight(1f).clip(shape).clickable {
             onClick()
-        }.padding(16.dp),
+        }.padding(8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {
@@ -264,43 +264,47 @@ private fun UserOverviewRow(
 ) {
     val shape = RoundedCornerShape(10.dp)
     val appNav = LocalAppNavFactory.current
-    Row(
+    Column(
         modifier = Modifier.clip(shape)
-            .background(MaterialTheme.colorScheme.surfaceDim, shape),
-        verticalAlignment = Alignment.CenterVertically
+            .background(MaterialTheme.colorScheme.surfaceDim, shape)
     ) {
-        StatCell(
-            userOverview?.acg ?: 0,
-            if (isLoading) IconRes.Loading else IconRes.Vector(Icons.Default.AccountBalanceWallet)
-        ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            StatCell(
+                userOverview?.acg ?: 0,
+                if (isLoading) IconRes.Loading else IconRes.Vector(Icons.Default.AccountBalanceWallet)
+            ) {
+            }
+            StatCell(
+                userOverview?.favoriteCount ?: 0,
+                if (isLoading) IconRes.Loading else IconRes.Vector(Icons.Default.Favorite)
+            ) {
+                dismiss()
+                appNav.newAppNav().gotoFavoritePage()
+            }
+            StatCell(
+                userOverview?.subscriptionCount ?: 0,
+                if (isLoading) IconRes.Loading else IconRes.Vector(Icons.Default.NotificationsActive)
+            ) {
+                dismiss()
+                appNav.newAppNav().gotoSubscriptionPage()
+            }
         }
-        StatCell(
-            userOverview?.favoriteCount ?: 0,
-            if (isLoading) IconRes.Loading else IconRes.Vector(Icons.Default.Favorite)
-        ) {
-            dismiss()
-            appNav.newAppNav().gotoFavoritePage()
-        }
-        StatCell(
-            userOverview?.subscriptionCount ?: 0,
-            if (isLoading) IconRes.Loading else IconRes.Vector(Icons.Default.NotificationsActive)
-        ) {
-            dismiss()
-            appNav.newAppNav().gotoSubscriptionPage()
-        }
-        StatCell(
-            userOverview?.reactionRecordCount ?: 0,
-            if (isLoading) IconRes.Loading else IconRes.Vector(Icons.Default.ThumbUp)
-        ) {
-            dismiss()
-            appNav.newAppNav().gotoUserReactionRecordsPage()
-        }
-        StatCell(
-            userOverview?.commentCount ?: 0,
-            if (isLoading) IconRes.Loading else IconRes.Vector(Icons.Default.ChatBubble)
-        ) {
-            dismiss()
-            appNav.newAppNav().gotoUserCommentsPage()
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            StatCell(
+                userOverview?.reactionRecordCount ?: 0,
+                if (isLoading) IconRes.Loading else IconRes.Vector(Icons.Default.ThumbUp)
+            ) {
+                dismiss()
+                appNav.newAppNav().gotoUserReactionRecordsPage()
+            }
+            StatCell(
+                userOverview?.commentCount ?: 0,
+                if (isLoading) IconRes.Loading else IconRes.Vector(Icons.Default.ChatBubble)
+            ) {
+                dismiss()
+                appNav.newAppNav().gotoUserCommentsPage()
+            }
+            Spacer(modifier = Modifier.weight(1f))
         }
     }
 }
