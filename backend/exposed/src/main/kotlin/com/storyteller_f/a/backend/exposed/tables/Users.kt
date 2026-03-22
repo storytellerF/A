@@ -67,6 +67,7 @@ object ChildAccounts : Table() {
     val encryptedAesKey = text("encrypted_aes_key")
     val primaryKeyMd5 = varchar("private_key_md5", 32).uniqueIndex()
     val remark = text("remark").nullable()
+    val encryptedEncryptionPrivateKey = text("encrypted_encryption_private_key").nullable()
     override val primaryKey = PrimaryKey(uid)
 
     init {
@@ -81,7 +82,8 @@ fun ChildAccount.Companion.wrapRow(row: ResultRow): ChildAccount {
             row[encryptedPrivateKey],
             row[encryptedAesKey],
             row[hostId],
-            row[remark]
+            row[remark],
+            row[encryptedEncryptionPrivateKey]
         )
     }
 }

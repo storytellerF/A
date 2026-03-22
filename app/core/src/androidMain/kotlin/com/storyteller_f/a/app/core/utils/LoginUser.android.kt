@@ -137,12 +137,13 @@ data class AndroidKeyStoreUserPass(private val alias: String) : UserPass {
     override suspend fun decryptChildAccount(
         encryptedPrivateKey: String,
         encryptedAesKey: String,
-        childAlgoType: AlgoType
-    ): Result<String> {
+        childAlgoType: AlgoType,
+        encryptedEncryptionPrivateKey: String?
+    ): Result<Pair<String, String?>> {
         TODO("Not yet implemented")
     }
 
-    override suspend fun encryptChildAccount(): Result<CustomApi.Accounts.ChildAccounts.AddChildAccountRequest> {
+    override suspend fun encryptChildAccount(childAlgoType: AlgoType): Result<CustomApi.Accounts.ChildAccounts.AddChildAccountRequest> {
         TODO("Not yet implemented")
     }
 }

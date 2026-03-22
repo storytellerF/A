@@ -88,7 +88,8 @@ data class ChildAccountInfo(
     val encryptedPrivateKey: String,
     val encryptedAesKey: String,
     val userInfo: UserInfo,
-    val algoType: AlgoType = AlgoType.P256
+    val algoType: AlgoType = AlgoType.P256,
+    val encryptedEncryptionPrivateKey: String? = null
 ) : PrimaryKeyIdentifiable {
     override val id: PrimaryKey
         get() = userInfo.id

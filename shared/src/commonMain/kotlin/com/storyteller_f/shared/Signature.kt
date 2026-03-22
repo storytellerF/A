@@ -103,6 +103,8 @@ interface Type2Algo : EncryptionAlgo {
     suspend fun getDerEncryptionPublicKeyFromPemPrivateKey(pemPrivateKeyStr: String): Result<String>
 
     suspend fun getDerEncryptionPrivateKeyFromPemPrivateKey(pemPrivateKeyStr: String): Result<String>
+
+    suspend fun getPemEncryptionPrivateKeyFromDerPrivateKey(derPrivateKeyStr: String): Result<String>
 }
 
 object AlgoP256 : Algo {
@@ -270,6 +272,15 @@ suspend fun encryptDataByAES(data: String): Result<Pair<ByteArray, ByteArray>> {
         val encodedAesKey = key.encodeToByteArray(AES.Key.Format.RAW)
         val encryptedData = key.cipher(true).encrypt(data.encodeToByteArray())
         encryptedData to encodedAesKey
+    }
+}
+
+@OptIn(ExperimentalStdlibApi::class)
+suspend fun encryptDataByAES(data: String, aesKey: ByteArray): Result<ByteArray> {
+    return AlgoP256.runCatching {
+        val key = CryptographyProvider.Default.get(AES.CBC).keyDecoder()
+            .decodeFromByteArray(AES.Key.Format.RAW, aesKey)
+        key.cipher(true).encrypt(data.encodeToByteArray())
     }
 }
 

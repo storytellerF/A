@@ -507,5 +507,18 @@ actual val AlgoDilithium: Algo = object : Algo {
                 der.toHexString()
             }
         }
+
+        @OptIn(ExperimentalEncodingApi::class)
+        override suspend fun getPemEncryptionPrivateKeyFromDerPrivateKey(derPrivateKeyStr: String): Result<String> {
+            return runCatching {
+                val der = derPrivateKeyStr.hexToByteArray()
+                val base64 = Base64.encode(der).chunked(64).joinToString("\n")
+                buildString {
+                    appendLine("-----BEGIN PRIVATE KEY-----")
+                    appendLine(base64)
+                    appendLine("-----END PRIVATE KEY-----")
+                }
+            }
+        }
     }
 }

@@ -26,7 +26,9 @@ data class LuceneUserDocument(val userDocument: UserDocument) :
             add(LongField("id1", id, Field.Store.YES))
             add(NumericDocValuesField("id2", id))
             add(TextField("nickname", userDocument.nickname, Field.Store.YES))
-            add(TextField("aid", userDocument.aid, Field.Store.YES))
+            userDocument.aid?.let {
+                add(TextField("aid", it, Field.Store.YES))
+            }
         }
     }
 

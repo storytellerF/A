@@ -326,7 +326,8 @@ interface UserDatabase {
         hostId: PrimaryKey,
         encryptedPrivateKey: String,
         encryptedAesKey: String,
-        user: User
+        user: User,
+        encryptedEncryptionPrivateKey: String? = null
     ): Result<Unit>
 
     suspend fun getAllUsers(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<RawUser>>

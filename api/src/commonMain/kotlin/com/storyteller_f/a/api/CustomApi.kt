@@ -804,7 +804,9 @@ object CustomApi {
                 val encryptedPrivateKey: String,
                 val encryptedAesKey: String,
                 val derPublicKey: String,
-                val algoType: AlgoType = AlgoType.P256
+                val algoType: AlgoType = AlgoType.P256,
+                val encryptedEncryptionPrivateKey: String? = null,
+                val encryptionPublicKey: String? = null
             )
 
             val get =
