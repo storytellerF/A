@@ -474,7 +474,7 @@ class CustomUserSessionManager(
                 TODO("Not yet implemented")
             }
 
-            override suspend fun addSession(session: RawUserPassInfo): UserPass {
+            override suspend fun addSession(userPassInfo: RawUserPassInfo): UserPass {
                 TODO("Not yet implemented")
             }
 
@@ -482,7 +482,7 @@ class CustomUserSessionManager(
                 TODO("Not yet implemented")
             }
 
-            override fun removeSession(session: String) {
+            override fun removeSession(alias: String) {
                 TODO("Not yet implemented")
             }
 

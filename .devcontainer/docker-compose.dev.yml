@@ -22,7 +22,6 @@ services:
       - ../../AData:/workspace/AData:cached
       - ./data/authorized_keys:${CONTAINER_HOME}/.ssh/authorized_keys
       - ~/.gradle/gradle.properties:${CONTAINER_HOME}/.gradle/gradle.properties
-      - /var/run/docker.sock:/var/run/docker.sock # 宿主机 Docker 套接字
       - avd_data:${CONTAINER_HOME}/.android/avd
       - sdk_data:${CONTAINER_HOME}/Android/Sdk
       - bashhistory:${CONTAINER_HOME}/.android-in-docker/.bash_history

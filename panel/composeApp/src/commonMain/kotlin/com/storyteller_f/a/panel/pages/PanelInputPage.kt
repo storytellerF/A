@@ -19,10 +19,10 @@ import com.storyteller_f.a.app.core.CoreStrings
 import com.storyteller_f.a.app.core.components.CenterBox
 import com.storyteller_f.a.app.core.components.PrivateKeyInput
 import com.storyteller_f.a.app.core.components.request
+import com.storyteller_f.a.client.core.AuthKey
 import com.storyteller_f.a.client.core.getPanelUserPass
 import com.storyteller_f.a.panel.LocalPanelGlobalDialog
 import com.storyteller_f.shared.getAlgo
-import com.storyteller_f.shared.model.AlgoType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
@@ -71,9 +71,11 @@ fun PanelInputPage(back: () -> Unit) {
                 dialogController.useResult {
                     request {
                         runCatching {
+                            val algo = getAlgo()
+                            val derPriKey = algo.getDerPrivateKey(privateKey).getOrThrow()
+                            val derPubKey = algo.getDerPublicKeyFromPrivateKey(privateKey).getOrThrow()
                             getPanelUserPass(
-                                privateKey,
-                                AlgoType.P256,
+                                AuthKey.P256(privateKey, derPriKey, derPubKey),
                                 false
                             ) {
                                 historyFactory.addSession(it)
@@ -88,6 +90,7 @@ fun PanelInputPage(back: () -> Unit) {
         Column(modifier = Modifier.padding(20.dp)) {
             PrivateKeyInput(
                 privateKey = privateKey,
+                encryptionPrivateKey = null,
                 address = address,
                 enableRandom = false,
                 update = {

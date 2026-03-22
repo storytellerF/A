@@ -47,6 +47,7 @@ import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.UploadRecordStatus
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 const val DEFAULT_PAGE_SIZE = 10
@@ -131,17 +132,40 @@ class NewFavorite(val objectType: ObjectType, val objectId: PrimaryKey) {
 }
 
 @Serializable
+sealed class TransferAuthKey {
+    abstract val algo: AlgoType
+    abstract val derPublicKey: String
+
+    @Serializable
+    @SerialName("P256")
+    data class P256(
+        override val derPublicKey: String,
+    ) : TransferAuthKey() {
+        override val algo = AlgoType.P256
+    }
+
+    @Serializable
+    @SerialName("Dilithium")
+    data class Dilithium(
+        override val derPublicKey: String,
+        val derEncryptionPublicKey: String,
+    ) : TransferAuthKey() {
+        override val algo = AlgoType.DILITHIUM
+    }
+}
+
+@Serializable
 class NewUser(
     val nickname: String? = null,
     val aid: String? = null,
-    val publicKey: String,
-    val algoType: AlgoType = AlgoType.P256
+    val authKey: TransferAuthKey
 )
 
 @Serializable
 class SignUpBody(
     val publicKey: String,
     val signature: String,
+    val encryptionPublicKey: String? = null
 )
 
 @Serializable

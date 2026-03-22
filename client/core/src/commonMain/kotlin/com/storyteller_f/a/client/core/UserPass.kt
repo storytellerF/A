@@ -34,34 +34,33 @@ sealed interface ClientSessionState {
 
 @Serializable
 data class RawUserPassInfo(
-    val derPrivateKey: String,
-    val derPublicKey: String,
     val address: String,
-    val algo: AlgoType = AlgoType.P256,
-    val encryptionDerPrivateKey: String? = null,
-    val encryptionDerPublicKey: String? = null,
-)
+    val authKey: AuthKey,
+) {
+    val algo: AlgoType
+        get() = authKey.algo
+}
 
 data class RawUserPass(val rawUSerPass: RawUserPassInfo) : UserPass {
     override suspend fun signature(data: String): Result<String> {
-        return getAlgo(rawUSerPass.algo).signature(rawUSerPass.derPrivateKey, data)
+        return getAlgo(rawUSerPass.algo).signature(rawUSerPass.authKey.derPrivateKey, data)
     }
 
     override suspend fun verify(signature: String, data: String): Result<Boolean> {
-        return getAlgo(rawUSerPass.algo).verify(rawUSerPass.derPublicKey, signature, data)
+        return getAlgo(rawUSerPass.algo).verify(rawUSerPass.authKey.derPublicKey, signature, data)
     }
 
     override suspend fun decrypt(encrypted: ByteArray, encryptedAesKey: ByteArray): Result<String> {
-        val (epk, algo) = if (rawUSerPass.algo == AlgoType.DILITHIUM && rawUSerPass.encryptionDerPrivateKey != null) {
-            rawUSerPass.encryptionDerPrivateKey to getAlgo(rawUSerPass.algo)
+        val (epk, algo) = if (rawUSerPass.authKey is AuthKey.Dilithium) {
+            rawUSerPass.authKey.derEncryptionPrivateKey to getAlgo(rawUSerPass.algo)
         } else {
-            rawUSerPass.derPrivateKey to getAlgo(rawUSerPass.algo)
+            rawUSerPass.authKey.derPrivateKey to getAlgo(rawUSerPass.algo)
         }
         return algo.decryptMessage(epk, encrypted, encryptedAesKey)
     }
 
     override suspend fun address(): Result<String> {
-        return getAlgo(rawUSerPass.algo).calcAddress(rawUSerPass.derPublicKey)
+        return getAlgo(rawUSerPass.algo).calcAddress(rawUSerPass.authKey.derPublicKey)
     }
 
     @OptIn(ExperimentalEncodingApi::class)
@@ -71,16 +70,15 @@ data class RawUserPass(val rawUSerPass: RawUserPassInfo) : UserPass {
         childAlgoType: AlgoType
     ): Result<String> {
         // First decrypt the AES key using user's private key
-        val (epk, algo) = if (rawUSerPass.algo == AlgoType.DILITHIUM) {
-            rawUSerPass.encryptionDerPrivateKey ?: return Result.failure(Exception("encryption private key is null"))
-            rawUSerPass.encryptionDerPrivateKey to getAlgo(rawUSerPass.algo)
+        val (epk, algo) = if (rawUSerPass.authKey is AuthKey.Dilithium) {
+            rawUSerPass.authKey.derEncryptionPrivateKey to getAlgo(rawUSerPass.algo)
         } else {
-            rawUSerPass.derPrivateKey to getAlgo(rawUSerPass.algo)
+            rawUSerPass.authKey.derPrivateKey to getAlgo(rawUSerPass.algo)
         }
 
-        val aesKey = algo.kemDecrypt(epk, encryptedAesKey.hexToByteArray())
-        return aesKey.map {
-            return decryptDataByAES(encryptedPrivateKey.hexToByteArray(), it)
+        val aesKeyRes = algo.encryptionAlgo.kemDecrypt(epk, encryptedAesKey.hexToByteArray())
+        return aesKeyRes.mapCatching {
+            decryptDataByAES(encryptedPrivateKey.hexToByteArray(), it).getOrThrow()
         }
     }
 
@@ -97,16 +95,12 @@ data class RawUserPass(val rawUSerPass: RawUserPassInfo) : UserPass {
         val (encryptedPrivateKey, aesKey) = encryptDataByAES(derPrivateKey).getOrThrow()
 
         // Get user's public key for encryption
-        val userPublicKey = if (rawUSerPass.algo == AlgoType.DILITHIUM) {
-            rawUSerPass.encryptionDerPublicKey ?: return Result.failure(Exception("encryption public key is null"))
-            rawUSerPass.encryptionDerPublicKey
+        val authKey = rawUSerPass.authKey
+        val encryptedAesKey = if (authKey is AuthKey.Dilithium) {
+            algo.encryptionAlgo.kemEncrypt(authKey.derEncryptionPublicKey, aesKey)
         } else {
-            rawUSerPass.derPublicKey
+            algo.encryptionAlgo.kemEncrypt(rawUSerPass.authKey.derPublicKey, aesKey)
         }
-
-        // Encrypt AES key with user's public key (hybrid encryption)
-        val userAlgo = getAlgo(rawUSerPass.algo)
-        val encryptedAesKey = userAlgo.kemEncrypt(userPublicKey, aesKey)
 
         return encryptedAesKey.map {
             CustomApi.Accounts.ChildAccounts.AddChildAccountRequest(

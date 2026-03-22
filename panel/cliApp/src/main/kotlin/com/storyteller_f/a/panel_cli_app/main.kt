@@ -18,6 +18,7 @@ import com.jakewharton.mosaic.ui.Column
 import com.jakewharton.mosaic.ui.Text
 import com.jakewharton.mosaic.ui.TextStyle
 import com.storyteller_f.a.api.PaginationQuery
+import com.storyteller_f.a.client.core.AuthKey
 import com.storyteller_f.a.client.core.PanelSessionManager
 import com.storyteller_f.a.client.core.RawUserPass
 import com.storyteller_f.a.client.core.createPanelSessionManager
@@ -136,7 +137,13 @@ suspend fun handleInput(
             }
             if (pk.isNotEmpty()) {
                 try {
-                    val user = sessionManager.getPanelUserPass(pk, AlgoType.P256, true) { RawUserPass(it) }
+                    val algo = getAlgo(AlgoType.P256)
+                    val derPriKey = algo.getDerPrivateKey(pk).getOrThrow()
+                    val derPubKey = algo.getDerPublicKeyFromPrivateKey(pk).getOrThrow()
+                    val user = sessionManager.getPanelUserPass(
+                        AuthKey.P256(pk, derPriKey, derPubKey),
+                        true
+                    ) { RawUserPass(it) }
                     sysLog("Registered and Logged in as: ${user.name}")
                     setScreen(Screen.Main)
                 } catch (e: Exception) {
@@ -147,7 +154,13 @@ suspend fun handleInput(
         }
         is Screen.PromptLogin -> {
             try {
-                val user = sessionManager.getPanelUserPass(line, AlgoType.P256, false) { RawUserPass(it) }
+                val algo = getAlgo(AlgoType.P256)
+                val derPriKey = algo.getDerPrivateKey(line).getOrThrow()
+                val derPubKey = algo.getDerPublicKeyFromPrivateKey(line).getOrThrow()
+                val user = sessionManager.getPanelUserPass(
+                    AuthKey.P256(line, derPriKey, derPubKey),
+                    false
+                ) { RawUserPass(it) }
                 sysLog("Logged in as: ${user.name}")
                 setScreen(Screen.Main)
             } catch (e: Exception) {

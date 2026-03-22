@@ -11,7 +11,6 @@ import kotlinx.datetime.LocalDateTime
 class User(
     val aid: String?,
     val encryptionPublicKey: String?,
-    val encryptionPrivateKey: String?,
     val publicKey: String,
     val address: String,
     val icon: PrimaryKey?,
@@ -34,8 +33,6 @@ fun User.toUserInfo(avatar: FileInfo? = null): UserInfo {
         aid,
         nickname,
         avatar,
-        encryptionPublicKey,
-        encryptionPrivateKey,
         null,
         null,
         status,

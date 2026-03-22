@@ -5,22 +5,24 @@ import com.russhwolf.settings.Settings
 import com.russhwolf.settings.serialization.decodeValueOrNull
 import com.russhwolf.settings.serialization.encodeValue
 import com.russhwolf.settings.serialization.removeValue
+import com.storyteller_f.a.client.core.AuthKey
 import com.storyteller_f.a.client.core.ClientSessionState
 import com.storyteller_f.a.client.core.RawUserPass
 import com.storyteller_f.a.client.core.RawUserPassInfo
 import com.storyteller_f.a.client.core.SessionManager
 import com.storyteller_f.a.client.core.UserPass
+import com.storyteller_f.shared.model.AlgoType
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 
 interface SessionHistoryManager {
     fun getSavedSession(): SavedSession
 
-    suspend fun addSession(session: RawUserPassInfo): UserPass
+    suspend fun addSession(userPassInfo: RawUserPassInfo): UserPass
 
     fun buildSession(alias: String): UserPass?
 
-    fun removeSession(session: String)
+    fun removeSession(alias: String)
 
     fun exitSession(alias: String)
 
@@ -40,48 +42,56 @@ class DefaultSessionHistoryManager(val settings: Settings) : SessionHistoryManag
         val list = settings.keys.map {
             it.split(".")[0]
         }.distinct().filter {
-            it.startsWith("session_user")
+            it.startsWith(SESSION_USER_PREFIX)
         }.mapNotNull {
-            settings.decodeValueOrNull<RawUserPassInfo>(it)?.address
+            settings.decodeValueOrNull<ConvertedRawUserPassInfo>(it)?.address
         }
-        val history = settings.decodeValueOrNull<SessionHistory>("session_history")
+        val history = settings.decodeValueOrNull<SessionHistory>(SESSION_HISTORY)
         return SavedSession(list, history)
     }
 
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
-    override suspend fun addSession(session: RawUserPassInfo): UserPass {
-        val address = session.address
-        settings.encodeValue("session_user_$address", session)
-        settings.encodeValue("session_history", SessionHistory(address, address))
-        return RawUserPass(session)
+    override suspend fun addSession(userPassInfo: RawUserPassInfo): UserPass {
+        val address = userPassInfo.address
+        settings.encodeValue(getUserKey(address), userPassInfo.toConverted())
+        settings.encodeValue(SESSION_HISTORY, SessionHistory(address, address))
+        return RawUserPass(userPassInfo)
     }
 
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
     override fun buildSession(alias: String): UserPass? {
-        val rawUserPass = settings.decodeValueOrNull<RawUserPassInfo>("session_user_$alias") ?: return null
-        return RawUserPass(rawUserPass)
+        val rawUserPass = settings.decodeValueOrNull<ConvertedRawUserPassInfo>(getUserKey(alias)) ?: return null
+        return RawUserPass(rawUserPass.toRawUserPassInfo())
     }
 
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
-    override fun removeSession(session: String) {
-        settings.removeValue<RawUserPassInfo>("session_user_$session")
-        val sessionHistory = settings.decodeValueOrNull<SessionHistory>("session_history")
-        if (sessionHistory != null && sessionHistory.last == session) {
-            settings.removeValue<SessionHistory>("session_history")
+    override fun removeSession(alias: String) {
+        settings.removeValue<ConvertedRawUserPassInfo>(getUserKey(alias))
+        val sessionHistory = settings.decodeValueOrNull<SessionHistory>(SESSION_HISTORY)
+        if (sessionHistory != null && sessionHistory.last == alias) {
+            settings.removeValue<SessionHistory>(SESSION_HISTORY)
         }
     }
 
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
     override fun exitSession(alias: String) {
-        val sessionHistory = settings.decodeValueOrNull<SessionHistory>("session_history")
+        val sessionHistory = settings.decodeValueOrNull<SessionHistory>(SESSION_HISTORY)
         if (sessionHistory != null && sessionHistory.current == alias) {
-            settings.encodeValue("session_history", sessionHistory.copy(current = null))
+            settings.encodeValue(SESSION_HISTORY, sessionHistory.copy(current = null))
         }
     }
 
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
     override fun logSession(alias: String) {
-        settings.encodeValue("session_history", SessionHistory(alias, alias))
+        settings.encodeValue(SESSION_HISTORY, SessionHistory(alias, alias))
+    }
+
+    companion object {
+        const val SESSION_HISTORY = "session_history"
+        const val SESSION_USER_PREFIX = "S_U"
+        fun getUserKey(address: String): String {
+            return "${SESSION_USER_PREFIX}_$address"
+        }
     }
 }
 
@@ -103,5 +113,60 @@ fun <U> SessionManager<U>.restoreFromStorage(settings: Settings) {
         if (session != null) {
             model.updateState(ClientSessionState.Success(session))
         }
+    }
+}
+
+@Serializable
+data class ConvertedRawUserPassInfo(
+    val algo: AlgoType,
+    val address: String,
+    val pemPrivateKey: String,
+    val derPrivateKey: String,
+    val derPublicKey: String,
+    val pemEncryptionPrivateKey: String? = null,
+    val derEncryptionPrivateKey: String? = null,
+    val derEncryptionPublicKey: String? = null,
+) {
+    fun toRawUserPassInfo(): RawUserPassInfo {
+        val key = when (algo) {
+            AlgoType.P256 -> AuthKey.P256(
+                pemPrivateKey = pemPrivateKey,
+                derPrivateKey = derPrivateKey,
+                derPublicKey = derPublicKey,
+            )
+
+            AlgoType.DILITHIUM -> AuthKey.Dilithium(
+                pemPrivateKey = pemPrivateKey,
+                derPrivateKey = derPrivateKey,
+                derPublicKey = derPublicKey,
+                pemEncryptionPrivateKey = pemEncryptionPrivateKey!!,
+                derEncryptionPrivateKey = derEncryptionPrivateKey!!,
+                derEncryptionPublicKey = derEncryptionPublicKey!!,
+            )
+        }
+        return RawUserPassInfo(address, key)
+    }
+}
+
+fun RawUserPassInfo.toConverted(): ConvertedRawUserPassInfo {
+    return when (val key = authKey) {
+        is AuthKey.Dilithium -> ConvertedRawUserPassInfo(
+            algo = key.algo,
+            address = address,
+            pemPrivateKey = key.pemPrivateKey,
+            derPrivateKey = key.derPrivateKey,
+            derPublicKey = key.derPublicKey,
+            pemEncryptionPrivateKey = key.pemEncryptionPrivateKey,
+            derEncryptionPrivateKey = key.derEncryptionPrivateKey,
+            derEncryptionPublicKey = key.derEncryptionPublicKey,
+        )
+
+        is AuthKey.P256 -> ConvertedRawUserPassInfo(
+            algo = key.algo,
+            address = address,
+            pemPrivateKey = key.pemPrivateKey,
+            derPrivateKey = key.derPrivateKey,
+            derPublicKey = key.derPublicKey,
+        )
     }
 }

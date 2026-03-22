@@ -4,7 +4,6 @@ import com.storyteller_f.a.api.SignInBody
 import com.storyteller_f.a.api.SignUpBody
 import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.getAlgo
-import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.PanelAccountInfo
 import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.model.TopicContent
@@ -194,62 +193,63 @@ suspend fun PanelSessionManager.login() {
     }
 }
 
-suspend fun UserSessionManager.getUserInfo(
-    pemPrivateKey: String,
-    algo: AlgoType,
+suspend fun UserSessionManager.signInOrSignUpAndGetUserInfo(
+    authKey: AuthKey,
     isSignUp: Boolean,
-    buildUserPass: suspend (UserInfo, String, String, String, AlgoType) -> UserPass
-) = signUpOrInFromPrivateKey(pemPrivateKey, algo, {
+    buildUserPass: suspend (BuildPassParam<UserInfo>) -> UserPass
+) = signUpOrInFromPrivateKey(authKey, {
     getData()
-}, buildUserPass) { publicKey, signature, address ->
+}, buildUserPass) { param ->
+    val encryptionPublicKey = (param.authKey as? AuthKey.Dilithium)?.derEncryptionPublicKey
     when {
-        isSignUp -> signUp(SignUpBody(publicKey, signature))
-        else -> signIn(SignInBody(address, signature))
+        isSignUp -> signUp(SignUpBody(param.authKey.derPublicKey, param.signature, encryptionPublicKey))
+        else -> signIn(SignInBody(param.address, param.signature))
     }
 }
 
-suspend fun PanelSessionManager.getPanelAccountInfo(
-    pemPrivateKey: String,
-    algo: AlgoType,
+suspend fun PanelSessionManager.signOrSignUpAndGetPanelAccountInfo(
+    authKey: AuthKey,
     isSignUp: Boolean,
-    buildUserPass: suspend (PanelAccountInfo, String, String, String, AlgoType) -> UserPass
-) = signUpOrInFromPrivateKey(pemPrivateKey, algo, {
+    buildUserPass: suspend (BuildPassParam<PanelAccountInfo>) -> UserPass
+) = signUpOrInFromPrivateKey(authKey, {
     getData()
-}, buildUserPass) { publicKey, signature, address ->
+}, buildUserPass) { param ->
+    val encryptionPublicKey = (param.authKey as? AuthKey.Dilithium)?.derEncryptionPublicKey
     when {
-        isSignUp -> signUp(SignUpBody(publicKey, signature))
-        else -> signIn(SignInBody(address, signature))
+        isSignUp -> signUp(SignUpBody(param.authKey.derPublicKey, param.signature, encryptionPublicKey))
+        else -> signIn(SignInBody(param.address, param.signature))
     }
 }
+
+data class BuildPassParam<U>(
+    val userInfo: U,
+    val address: String,
+    val authKey: AuthKey
+)
+
+data class GetUserInfoParam(
+    val signature: String,
+    val address: String,
+    val authKey: AuthKey
+)
 
 suspend fun <U> SessionManager<U>.signUpOrInFromPrivateKey(
-    pemPrivateKey: String,
-    algo: AlgoType,
+    authKey: AuthKey,
     getData: suspend () -> Result<String>,
-    buildUserPass: suspend (U, String, String, String, AlgoType) -> UserPass,
-    getUserInfo: suspend (String, String, String) -> Result<U>
+    buildUserPass: suspend (BuildPassParam<U>) -> UserPass,
+    getUserInfo: suspend (GetUserInfoParam) -> Result<U>
 ): U {
-    getAlgo(algo).run {
-        val publicKey = getDerPublicKeyFromPrivateKey(pemPrivateKey).getOrThrow()
+    getAlgo(authKey.algo).run {
         val data = getData().getOrThrow()
         val f = finalData(data)
-        val derPriKey = getDerPrivateKey(pemPrivateKey).getOrThrow()
-        val signature = signature(derPriKey, f).getOrThrow()
-        val address = calcAddress(publicKey).getOrThrow()
-        val userInfo = getUserInfo(publicKey, signature, address).getOrThrow()
+
+        val signature = signature(authKey.derPrivateKey, f).getOrThrow()
+        val address = calcAddress(authKey.derPublicKey).getOrThrow()
+        val userInfo = getUserInfo(GetUserInfoParam(signature, address, authKey)).getOrThrow()
         model.updateUser(userInfo)
         model.updateSignature(data, signature)
-        model.updateState(
-            ClientSessionState.Success(
-                buildUserPass(
-                    userInfo,
-                    derPriKey,
-                    publicKey,
-                    address,
-                    algo
-                )
-            )
-        )
+        val userPass = buildUserPass(BuildPassParam(userInfo, address, authKey))
+        model.updateState(ClientSessionState.Success(userPass))
         return userInfo
     }
 }

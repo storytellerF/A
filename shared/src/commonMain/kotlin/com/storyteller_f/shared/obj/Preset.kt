@@ -28,6 +28,7 @@ data class PresetUser(
     val privateKey: String,
     val id: PrimaryKey? = null,
     val algoType: String? = null,
+    val encryptionPrivateKey: String? = null,
 )
 
 @Serializable

@@ -55,19 +55,15 @@ private suspend fun Backend.signUpInternal(
     val notificationId = SnowflakeFactory.nextId()
     val name = nameService.parse(newId)
 
-    val (encPubKey, encPrivKey) = if (algoType == AlgoType.DILITHIUM) {
-        val (priKey, pubKey) = algo.generateEncryptionPemKeyPair().getOrThrow()
-        val derPriKey = algo.getDerPrivateKey(priKey).getOrThrow()
-        val derPubKey = algo.getDerPublicKeyFromPem(pubKey).getOrThrow()
-        derPubKey to derPriKey
+    val encPubKey = if (algoType == AlgoType.DILITHIUM) {
+        pack.encryptionPublicKey
     } else {
-        null to null
+        null
     }
 
     val user = User(
         null,
         encPubKey,
-        encPrivKey,
         pack.publicKey,
         ad,
         null,

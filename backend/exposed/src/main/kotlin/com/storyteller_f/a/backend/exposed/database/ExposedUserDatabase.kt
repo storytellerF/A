@@ -117,7 +117,6 @@ class ExposedUserDatabase(
         check(Users.insert {
             it[id] = user.id
             it[encryptionPublicKey] = user.encryptionPublicKey
-            it[encryptionPrivateKey] = user.encryptionPrivateKey
             it[publicKey] = user.publicKey
             it[publicKeyMd5] = md5(user.publicKey)
             it[address] = user.address

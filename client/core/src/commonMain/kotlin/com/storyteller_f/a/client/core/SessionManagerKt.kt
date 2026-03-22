@@ -8,7 +8,6 @@ import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
-import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.PanelAccountInfo
 import com.storyteller_f.shared.model.UserInfo
 
@@ -70,40 +69,37 @@ suspend inline fun <R> PanelSessionManager.startBackgroundTask(block: PanelSessi
     return result
 }
 
+fun <U> getRawUserPassInfoFromAuthKey(
+    param: BuildPassParam<U>
+): RawUserPassInfo {
+    if (param.authKey is AuthKey.Dilithium) {
+        return RawUserPassInfo(
+            param.address,
+            param.authKey,
+        )
+    }
+    return RawUserPassInfo(
+        param.address,
+        param.authKey,
+    )
+}
+
 suspend fun UserSessionManager.getUserPass(
-    pemPrivateKey: String,
-    algo: AlgoType,
+    authKey: AuthKey,
     isSignUp: Boolean,
     buildUserPass: suspend (RawUserPassInfo) -> UserPass
 ) : UserInfo {
-    return getUserInfo(pemPrivateKey, algo, isSignUp) { userInfo, derPrivateKey, publicKey, address, algo ->
-        val raw = RawUserPassInfo(
-            derPrivateKey,
-            publicKey,
-            address,
-            algo,
-            userInfo.encryptionPrivateKey,
-            userInfo.encryptionPublicKey
-        )
-        buildUserPass(raw)
+    return signInOrSignUpAndGetUserInfo(authKey, isSignUp) { param ->
+        buildUserPass(getRawUserPassInfoFromAuthKey(param))
     }
 }
 
 suspend fun PanelSessionManager.getPanelUserPass(
-    pemPrivateKey: String,
-    algo: AlgoType,
+    authKey: AuthKey,
     isSignUp: Boolean,
     buildUserPass: suspend (RawUserPassInfo) -> UserPass
 ) : PanelAccountInfo {
-    return getPanelAccountInfo(pemPrivateKey, algo, isSignUp) { _, derPrivateKey, publicKey, address, algo ->
-        val raw = RawUserPassInfo(
-            derPrivateKey,
-            publicKey,
-            address,
-            algo,
-            null,
-            null
-        )
-        buildUserPass(raw)
+    return signOrSignUpAndGetPanelAccountInfo(authKey, isSignUp) { param ->
+        buildUserPass(getRawUserPassInfoFromAuthKey(param))
     }
 }

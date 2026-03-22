@@ -5,6 +5,7 @@ import com.google.genai.types.GenerateContentConfig
 import com.google.genai.types.GoogleSearch
 import com.google.genai.types.Tool
 import com.storyteller_f.a.api.PaginationQuery
+import com.storyteller_f.a.client.core.AuthKey
 import com.storyteller_f.a.client.core.RawUserPass
 import com.storyteller_f.a.client.core.SimpleUserSessionManager
 import com.storyteller_f.a.client.core.UserSessionManager
@@ -17,6 +18,7 @@ import com.storyteller_f.a.client.core.getTopicList
 import com.storyteller_f.a.client.core.getUserCommunities
 import com.storyteller_f.a.client.core.getUserPass
 import com.storyteller_f.a.client.core.startBackgroundTask
+import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.CommunityInfo
@@ -68,9 +70,11 @@ fun main() {
             // 确保第一次登录成功
             while (isActive) {
                 try {
+                    val algo = getAlgo(AlgoType.P256)
+                    val derPriKey = algo.getDerPrivateKey(pemPrivateKey).getOrThrow()
+                    val derPubKey = algo.getDerPublicKeyFromPrivateKey(pemPrivateKey).getOrThrow()
                     sessionManager.getUserPass(
-                        pemPrivateKey,
-                        AlgoType.P256,
+                        AuthKey.P256(pemPrivateKey, derPriKey, derPubKey),
                         false
                     ) {
                         RawUserPass(it)

@@ -395,10 +395,12 @@ private fun sendRoomTopic(
         }
         return
     }
-    wsClient.useWebSocket {
-        sendMessage(parentTarget, roomInfo.isPrivate, input, keyData.orEmpty())
-        delay(500)
-        scrollToNew()
+    scope.launch {
+        wsClient.useWebSocket {
+            sendMessage(parentTarget, roomInfo.isPrivate, input, keyData.orEmpty())
+            delay(500)
+            scrollToNew()
+        }
     }
 }
 

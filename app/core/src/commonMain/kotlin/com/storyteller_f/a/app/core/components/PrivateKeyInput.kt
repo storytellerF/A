@@ -56,11 +56,13 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun PrivateKeyInput(
     privateKey: String,
+    encryptionPrivateKey: String?,
     address: String?,
     enableRandom: Boolean = true,
     algo: AlgoType = AlgoType.P256,
     onAlgoChange: (AlgoType) -> Unit = {},
-    update: (String) -> Unit
+    update: (String) -> Unit,
+    updateEncryption: (String) -> Unit = {}
 ) {
     var showDialog by remember { mutableStateOf(false) }
 
@@ -91,8 +93,10 @@ fun PrivateKeyInput(
     }
 
     if (showDialog) {
-        PrivateKeyDialog(privateKey, enableRandom, algo, { showDialog = false }, onAlgoChange) {
+        PrivateKeyDialog(privateKey, encryptionPrivateKey, enableRandom, algo, { showDialog = false }, onAlgoChange, {
             update(it)
+        }) {
+            updateEncryption(it)
             showDialog = false
         }
     }
@@ -102,15 +106,26 @@ fun PrivateKeyInput(
 @Composable
 fun PrivateKeyDialog(
     privateKey: String,
+    encryptionPrivateKey: String?,
     enableRandom: Boolean,
     algo: AlgoType,
     onDismissRequest: () -> Unit,
     onAlgoChange: (AlgoType) -> Unit,
-    onConfirm: (String) -> Unit
+    onConfirmPrivateKey: (String) -> Unit,
+    onConfirmEncryptionPrivateKey: (String) -> Unit,
 ) {
     BasicAlertDialog(onDismissRequest = onDismissRequest) {
         DialogContainer {
-            PrivateKeyEditor(privateKey, enableRandom, algo, onAlgoChange, onConfirm, onDismissRequest)
+            PrivateKeyEditor(
+                privateKey,
+                encryptionPrivateKey,
+                enableRandom,
+                algo,
+                onAlgoChange,
+                onConfirmPrivateKey,
+                onConfirmEncryptionPrivateKey,
+                onDismissRequest
+            )
         }
     }
 }
@@ -118,13 +133,16 @@ fun PrivateKeyDialog(
 @Composable
 fun PrivateKeyEditor(
     privateKey: String,
+    encryptionPrivateKey: String?,
     enableRandom: Boolean,
     algo: AlgoType,
     onAlgoChange: (AlgoType) -> Unit,
-    onConfirm: (String) -> Unit,
+    onConfirmPrivateKey: (String) -> Unit,
+    onConfirmEncryptionPrivateKey: (String) -> Unit,
     onCancel: () -> Unit
 ) {
     var currentKey by remember { mutableStateOf(privateKey) }
+    var currentEncryptionKey by remember { mutableStateOf(encryptionPrivateKey ?: "") }
     Column(
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
@@ -147,6 +165,21 @@ fun PrivateKeyEditor(
             maxLines = 5,
         )
 
+        if (algo == AlgoType.DILITHIUM) {
+            PrivateKeyTools(currentEncryptionKey, enableRandom, algo) {
+                currentEncryptionKey = it
+            }
+
+            OutlinedTextField(
+                value = currentEncryptionKey,
+                onValueChange = { currentEncryptionKey = it },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Encryption Private Key") },
+                minLines = 3,
+                maxLines = 5,
+            )
+        }
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.End,
@@ -156,7 +189,12 @@ fun PrivateKeyEditor(
                 Text(stringResource(Res.string.cancel))
             }
             TextButton(onClick = {
-                onConfirm(currentKey)
+                onConfirmPrivateKey(currentKey)
+                if (algo == AlgoType.DILITHIUM) {
+                    onConfirmEncryptionPrivateKey(currentEncryptionKey)
+                } else {
+                    onConfirmEncryptionPrivateKey("")
+                }
             }) {
                 Text(stringResource(Res.string.confirm))
             }

@@ -368,6 +368,7 @@ fun SelectSignUpPage(signInAndSignUpNav: SignInAndSignUpNav) {
 fun InputPrivateKeyPage(isSignUp: Boolean) {
     val viewModel = viewModel { InputPrivateKeyViewModel() }
     val privateKey by viewModel.privateKey.collectAsState()
+    val encryptionPrivateKey by viewModel.encryptionPrivateKey.collectAsState()
     val address by viewModel.address.collectAsState()
     val algo by viewModel.algo.collectAsState()
     val scope = rememberCoroutineScope()
@@ -375,15 +376,17 @@ fun InputPrivateKeyPage(isSignUp: Boolean) {
     val globalDialogController = LocalGlobalDialog.current
     val startSign: () -> Unit = {
         scope.launch {
-            globalDialogController.performAuth(appNavFactory, privateKey, algo, isSignUp)
+            globalDialogController.performAuth(appNavFactory, privateKey, encryptionPrivateKey, algo, isSignUp)
         }
     }
     CenterBox {
         Column(modifier = Modifier.padding(20.dp)) {
-            PrivateKeyInput(privateKey, address, isSignUp, algo, {
+            PrivateKeyInput(privateKey, encryptionPrivateKey, address, isSignUp, algo, {
                 viewModel.updateAlgo(it)
-            }) {
+            }, {
                 viewModel.updatePrivateKey(it)
+            }) {
+                viewModel.updateEncryptionPrivateKey(it)
             }
             Button(startSign, modifier = Modifier.testTag("start_sign")) {
                 Text(
@@ -403,20 +406,15 @@ fun InputPrivateKeyPage(isSignUp: Boolean) {
 private suspend fun AppGlobalDialogController.performAuth(
     appNav: AppNavFactory,
     privateKey: String,
+    encryptionPrivateKey: String?,
     algo: AlgoType,
     isSignUp: Boolean,
 ) {
     if (privateKey.isBlank()) return
-
     useResult {
         request {
-            Result.success(
-                fetchAndSaveUserInfo(
-                    privateKey,
-                    algo,
-                    isSignUp
-                )
-            )
+            val userInfo = fetchAndSaveUserInfo(privateKey, encryptionPrivateKey, algo, isSignUp)
+            Result.success(userInfo)
         }
     }.onSuccess {
         appNav.newAppNav().gotoHome()

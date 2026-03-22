@@ -17,6 +17,7 @@
     <string name="add_user">Add user</string>
     <string name="random">Random</string>
     <string name="edit_private_key">Edit private key</string>
+    <string name="encryption_private_key">Encryption private key</string>
     <string name="private_key_required">Private key must be specified</string>
     <string name="room_public">Public</string>
     <string name="room_private">Private</string>

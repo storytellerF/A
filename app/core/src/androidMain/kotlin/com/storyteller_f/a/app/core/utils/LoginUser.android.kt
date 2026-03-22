@@ -160,9 +160,9 @@ class AndroidKeyStoreSessionHistoryManager(val settings: Settings) : SessionHist
     }
 
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
-    override suspend fun addSession(session: RawUserPassInfo): UserPass {
+    override suspend fun addSession(userPassInfo: RawUserPassInfo): UserPass {
         val current = "default"
-        importEcdsaPrivateKey(current, session.derPrivateKey)
+        importEcdsaPrivateKey(current, userPassInfo.authKey.derPrivateKey)
         settings.encodeValue(SessionHistory.serializer(), "session_history", SessionHistory(current))
         return AndroidKeyStoreUserPass(current)
     }
@@ -173,7 +173,9 @@ class AndroidKeyStoreSessionHistoryManager(val settings: Settings) : SessionHist
 
     private suspend fun importEcdsaPrivateKey(alias: String, derPrivateKey: String) {
         val keyStore = KeyStore.getInstance("AndroidKeyStore")
-        keyStore.load(null)
+        withContext(Dispatchers.IO) {
+            keyStore.load(null)
+        }
         if (keyStore.containsAlias(alias)) {
             return
         }
@@ -203,10 +205,10 @@ class AndroidKeyStoreSessionHistoryManager(val settings: Settings) : SessionHist
         println("ECDSA private key imported successfully with alias: $alias")
     }
 
-    override fun removeSession(session: String) {
+    override fun removeSession(alias: String) {
         val keyStore = KeyStore.getInstance("AndroidKeyStore")
         keyStore.load(null)
-        keyStore.deleteEntry(session)
+        keyStore.deleteEntry(alias)
     }
 
     override fun exitSession(alias: String) = Unit

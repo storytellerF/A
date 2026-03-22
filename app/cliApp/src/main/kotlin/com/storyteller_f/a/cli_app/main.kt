@@ -21,6 +21,7 @@ import com.storyteller_f.a.api.CustomApi
 import com.storyteller_f.a.api.NewFavorite
 import com.storyteller_f.a.api.NewSubscription
 import com.storyteller_f.a.api.PaginationQuery
+import com.storyteller_f.a.client.core.AuthKey
 import com.storyteller_f.a.client.core.RawUserPass
 import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.addFavorite
@@ -189,7 +190,13 @@ suspend fun handleInput(
             }
             if (pk.isNotEmpty()) {
                 try {
-                    val user = sessionManager.getUserPass(pk, AlgoType.P256, true) { RawUserPass(it) }
+                    val algo = getAlgo(AlgoType.P256)
+                    val derPriKey = algo.getDerPrivateKey(pk).getOrThrow()
+                    val derPubKey = algo.getDerPublicKeyFromPrivateKey(pk).getOrThrow()
+                    val user = sessionManager.getUserPass(
+                        AuthKey.P256(pk, derPriKey, derPubKey),
+                        true
+                    ) { RawUserPass(it) }
                     sysLog("Registered and Logged in as: ${user.id} - ${user.nickname}")
                     setScreen(Screen.Main)
                 } catch (e: Exception) {
@@ -200,7 +207,13 @@ suspend fun handleInput(
         }
         is Screen.PromptLogin -> {
             try {
-                val user = sessionManager.getUserPass(line, AlgoType.P256, false) { RawUserPass(it) }
+                val algo = getAlgo(AlgoType.P256)
+                val derPriKey = algo.getDerPrivateKey(line).getOrThrow()
+                val derPubKey = algo.getDerPublicKeyFromPrivateKey(line).getOrThrow()
+                val user = sessionManager.getUserPass(
+                    AuthKey.P256(line, derPriKey, derPubKey),
+                    false
+                ) { RawUserPass(it) }
                 sysLog("Logged in as: ${user.id} - ${user.nickname}")
                 setScreen(Screen.Main)
             } catch (e: Exception) {

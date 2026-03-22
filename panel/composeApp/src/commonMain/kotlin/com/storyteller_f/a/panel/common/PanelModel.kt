@@ -40,6 +40,7 @@ import com.storyteller_f.a.client.core.getUserReceivedTitles
 import com.storyteller_f.a.client.core.getUserSubscriptions
 import com.storyteller_f.a.client.core.getUserUploadRecords
 import com.storyteller_f.a.client.core.overview
+import com.storyteller_f.shared.Type2Algo
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.CommunityInfo
@@ -209,6 +210,12 @@ class AddUserViewModel : ViewModel() {
     val nickname = MutableStateFlow("")
     val aid = MutableStateFlow("")
     val algoType = MutableStateFlow(AlgoType.P256)
+    val encryptionPrivateKey = MutableStateFlow("")
+    val encryptionPublicKey = encryptionPrivateKey.combine(algoType) { pk, algo ->
+        if (algo != AlgoType.DILITHIUM || pk.isBlank()) return@combine null
+        val encryptionAlgo = getAlgo(algo).encryptionAlgo as? Type2Algo
+        encryptionAlgo?.getDerEncryptionPublicKeyFromPemPrivateKey(pk)?.getOrNull()
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
     val publicKey = privateKey.combine(algoType) { pk, algo ->
         getAlgo(algo).run {
             getDerPublicKeyFromPrivateKey(pk).getOrNull()
@@ -232,18 +239,31 @@ class AddUserViewModel : ViewModel() {
         this.privateKey.value = privateKey
     }
 
+    fun updateEncryptionPrivateKey(privateKey: String) {
+        this.encryptionPrivateKey.value = privateKey
+    }
+
     fun updateAlgoType(algoType: AlgoType) {
         this.algoType.value = algoType
+        if (algoType != AlgoType.DILITHIUM) {
+            encryptionPrivateKey.value = ""
+        }
     }
 
     fun autoGeneratePrivateKey() {
         viewModelScope.launch {
-            getAlgo(algoType.value).generatePemKeyPair().onSuccess { (privateKey, _) ->
+            val algo = getAlgo(algoType.value)
+            algo.generatePemKeyPair().onSuccess { (privateKey, _) ->
                 updatePrivateKey(privateKey)
+            }
+            val encryptionAlgo = algo.encryptionAlgo as Type2Algo
+            encryptionAlgo.generateEncryptionPemKeyPair().onSuccess { (pemPrivateKey, _) ->
+                updateEncryptionPrivateKey(pemPrivateKey)
             }
         }
     }
 }
+
 class IdUserViewModel(
     sessionManager: PanelSessionManager,
     modelStorage: ModelStorage,
@@ -410,10 +430,11 @@ class UserJoinedRoomsViewModel(
 
 class UserReceivedTitlesViewModel(
     private val sessionManager: PanelSessionManager,
-    private val modelStorage: ModelStorage,
+    modelStorage: ModelStorage,
     private val uid: PrimaryKey,
 ) : PagingViewModel<TitleInfo>() {
-    private val modelCollection = TitleCollection.SearchTitle(uid = uid, searchType = TitleSearchType.RECEIVER,)
+    private val modelCollection =
+        TitleCollection.SearchTitle(uid = uid, searchType = TitleSearchType.RECEIVER)
 
     @OptIn(ExperimentalPagingApi::class)
     override val flow: Flow<PagingData<TitleInfo>> = buildPager(
@@ -471,7 +492,8 @@ class UserUploadRecordsViewModel(
     modelStorage: ModelStorage,
     uid: PrimaryKey,
 ) : PagingViewModel<UploadRecordInfo>() {
-    private val modelCollection = com.storyteller_f.storage.UploadRecordCollection.UserUploadRecords(uid)
+    private val modelCollection =
+        com.storyteller_f.storage.UploadRecordCollection.UserUploadRecords(uid)
 
     @OptIn(ExperimentalPagingApi::class)
     override val flow: Flow<PagingData<UploadRecordInfo>> = buildPager(
@@ -556,7 +578,8 @@ class CommunityMembersViewModel(
     modelStorage: ModelStorage,
     communityId: PrimaryKey,
 ) : PagingViewModel<MemberInfo>() {
-    private val modelCollection = com.storyteller_f.storage.MemberCollection.CommunityMembers(communityId)
+    private val modelCollection =
+        com.storyteller_f.storage.MemberCollection.CommunityMembers(communityId)
 
     @OptIn(ExperimentalPagingApi::class)
     override val flow: Flow<PagingData<MemberInfo>> = buildPager(
@@ -615,6 +638,10 @@ class TopicTopicsViewModel(
         modelStorage.remoteKey.wrap(modelCollection.getName()),
         modelStorage.topic
     ) { key, size ->
-        sessionManager.getTopicTopics(topicId, TopicPinSearch.UNSPECIFIED, PaginationQuery(key, size = size))
+        sessionManager.getTopicTopics(
+            topicId,
+            TopicPinSearch.UNSPECIFIED,
+            PaginationQuery(key, size = size)
+        )
     }.flow.cachedIn(viewModelScope)
 }

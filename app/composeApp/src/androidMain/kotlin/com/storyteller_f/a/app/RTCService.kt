@@ -114,9 +114,11 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
 
     override fun startCall(roomId: PrimaryKey) {
         val session = uiViewModel.instance.value.sessionManager
-        session.proxy.webSocketClient.useWebSocket {
-            val f = RoomFrame.StartCall(roomId)
-            sendFrame(f)
+        lifecycle.coroutineScope.launch {
+            session.proxy.webSocketClient.useWebSocket {
+                val f = RoomFrame.StartCall(roomId)
+                sendFrame(f)
+            }
         }
         callingRoom.value = roomId
     }

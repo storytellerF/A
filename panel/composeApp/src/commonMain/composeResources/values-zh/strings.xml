@@ -17,6 +17,7 @@
     <string name="add_user">添加用户</string>
     <string name="random">随机</string>
     <string name="edit_private_key">编辑私钥</string>
+    <string name="encryption_private_key">加密私钥</string>
     <string name="private_key_required">必须指定私钥</string>
     <string name="room_public">公开</string>
     <string name="room_private">私有</string>
