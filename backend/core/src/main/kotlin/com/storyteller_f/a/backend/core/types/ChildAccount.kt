@@ -7,7 +7,8 @@ class ChildAccount(
     val encryptedPrivateKey: String,
     val encryptedAesKey: String,
     val hostId: PrimaryKey,
-    val remark: String?
+    val remark: String?,
+    val encryptedEncryptionPrivateKey: String? = null
 ) {
     companion object
 }

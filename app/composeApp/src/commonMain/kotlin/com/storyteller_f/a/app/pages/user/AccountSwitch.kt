@@ -51,6 +51,7 @@ import com.storyteller_f.a.app.core.components.pagingItems
 import com.storyteller_f.a.client.core.RawUserPass
 import com.storyteller_f.a.client.core.RawUserPassInfo
 import com.storyteller_f.a.client.core.addChildAccount
+import com.storyteller_f.shared.Type2Algo
 import com.storyteller_f.shared.algoRunCatching
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.ChildAccountInfo
@@ -131,7 +132,6 @@ private fun AccountSwitchInternal(viewModel: ChildAccountsViewModel) {
     }
 }
 
-@Preview
 @Composable
 fun ChildAccountCell(childAccountInfo: ChildAccountInfo, onClick: () -> Unit) {
     val userInfo = childAccountInfo.userInfo
@@ -183,10 +183,11 @@ suspend fun AppGlobalDialogController.switchUser(
         algoRunCatching {
             val currentUserPass = uiViewModel.mainInstance.sessionManager.model.currentUserPass
             val userPass = currentUserPass ?: throw Exception("user not login")
-            val decrypted = userPass.decryptChildAccount(
+            val (decrypted, decryptedEnc) = userPass.decryptChildAccount(
                 childAccountInfo.encryptedPrivateKey,
                 childAccountInfo.encryptedAesKey,
-                childAccountInfo.algoType
+                childAccountInfo.algoType,
+                childAccountInfo.encryptedEncryptionPrivateKey
             ).getOrThrow()
             val algoImpl = getAlgo(childAccountInfo.algoType)
             val pem = algoImpl.getPemPrivateKeyFromDer(decrypted).getOrThrow()
@@ -194,13 +195,21 @@ suspend fun AppGlobalDialogController.switchUser(
 
             val address = algoImpl.calcAddress(publicKey).getOrThrow()
             val authKey = if (childAccountInfo.algoType == com.storyteller_f.shared.model.AlgoType.DILITHIUM) {
+                if (decryptedEnc == null) {
+                    throw Exception("decryptedEnc is null")
+                }
+                val type2Algo = algoImpl.encryptionAlgo as Type2Algo
+                val pemPrivateKey =
+                    type2Algo.getPemEncryptionPrivateKeyFromDerPrivateKey(decryptedEnc)
+                        .getOrThrow()
+                val publicEnc = type2Algo.getDerEncryptionPublicKeyFromPemPrivateKey(pemPrivateKey).getOrThrow()
                 com.storyteller_f.a.client.core.AuthKey.Dilithium(
                     pemPrivateKey = pem,
                     derPrivateKey = decrypted,
                     derPublicKey = publicKey,
-                    pemEncryptionPrivateKey = "", // Not implemented for child accounts
-                    derEncryptionPrivateKey = "",
-                    derEncryptionPublicKey = ""
+                    pemEncryptionPrivateKey = pemPrivateKey, // Not implemented for child accounts
+                    derEncryptionPrivateKey = decryptedEnc,
+                    derEncryptionPublicKey = publicEnc
                 )
             } else {
                 com.storyteller_f.a.client.core.AuthKey.P256(

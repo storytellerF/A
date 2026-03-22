@@ -16,11 +16,13 @@ import com.storyteller_f.a.client.core.getChildAccounts
 import com.storyteller_f.a.client.core.getCommunityInfo
 import com.storyteller_f.a.client.core.getFavorites
 import com.storyteller_f.a.client.core.getRoomInfo
+import com.storyteller_f.a.client.core.getRoomMembersPublicKeys
 import com.storyteller_f.a.client.core.getSubscriptions
 import com.storyteller_f.a.client.core.getTopicInfo
 import com.storyteller_f.a.client.core.getUserInfo
 import com.storyteller_f.a.client.core.removeFavorite
 import com.storyteller_f.a.client.core.removeSubscription
+import com.storyteller_f.a.client.core.sendMessage
 import com.storyteller_f.a.client.core.updateUserInfo
 import com.storyteller_f.a.client.core.upload
 import com.storyteller_f.shared.obj.UpdateUserBody
@@ -74,13 +76,125 @@ class UserTest {
 
     @Test
     fun `test add alternative account`() = test {
-        attachSession {
-            val childAccountInfo = addChildAccount().getOrThrow()
-            assertEquals(it.uid, childAccountInfo.hostId)
-            val response = getChildAccounts(null, 10).getOrThrow()
-            assertEquals(1, response.pagination?.total)
-            assertEquals(childAccountInfo.id, response.data.first().id)
+        suspend fun TestMate.testChildAccount(
+            index: Int,
+            hostAlgo: com.storyteller_f.shared.model.AlgoType,
+            childAlgo: com.storyteller_f.shared.model.AlgoType
+        ) {
+            val outerTuple = attachSession(hostAlgo) {
+                val childAccountInfo = addChildAccount(childAlgo).getOrThrow()
+                assertEquals(it.uid, childAccountInfo.hostId)
+                val response = getChildAccounts(null, 10).getOrThrow()
+                assertEquals(1, response.pagination?.total)
+                assertEquals(childAccountInfo.id, response.data.first().id)
+                childAccountInfo
+            }
+
+            // Now log in as the child account
+            val childAccountInfo = outerTuple.custom
+            val hostAuthKey = outerTuple.authKey
+            val hostAddress = com.storyteller_f.shared.getAlgo(hostAlgo).calcAddress(
+                if (hostAuthKey is com.storyteller_f.a.client.core.AuthKey.Dilithium) {
+                    hostAuthKey.derPublicKey
+                } else {
+                    (hostAuthKey as com.storyteller_f.a.client.core.AuthKey.P256).derPublicKey
+                }
+            ).getOrThrow()
+
+            val hostUserPass = com.storyteller_f.a.client.core.RawUserPass(
+                com.storyteller_f.a.client.core.RawUserPassInfo(hostAddress, hostAuthKey)
+            )
+
+            val (decrypted, decryptedEnc) = hostUserPass.decryptChildAccount(
+                childAccountInfo.encryptedPrivateKey,
+                childAccountInfo.encryptedAesKey,
+                childAccountInfo.algoType,
+                childAccountInfo.encryptedEncryptionPrivateKey
+            ).getOrThrow()
+
+            val algoImpl = com.storyteller_f.shared.getAlgo(childAccountInfo.algoType)
+            val pem = algoImpl.getPemPrivateKeyFromDer(decrypted).getOrThrow()
+            val publicKey = algoImpl.getDerPublicKeyFromPrivateKey(pem).getOrThrow()
+            val childAuthKey = if (childAccountInfo.algoType == com.storyteller_f.shared.model.AlgoType.DILITHIUM) {
+                com.storyteller_f.a.client.core.AuthKey.Dilithium(
+                    pemPrivateKey = pem,
+                    derPrivateKey = decrypted,
+                    derPublicKey = publicKey,
+                    pemEncryptionPrivateKey = "",
+                    derEncryptionPrivateKey = decryptedEnc ?: "",
+                    derEncryptionPublicKey = ""
+                )
+            } else {
+                com.storyteller_f.a.client.core.AuthKey.P256(
+                    pemPrivateKey = pem,
+                    derPrivateKey = decrypted,
+                    derPublicKey = publicKey
+                )
+            }
+            val receivedFrame = mutableListOf<com.storyteller_f.shared.obj.RoomFrame>()
+            loginSession(SessionOuterTuple(childAuthKey, childAccountInfo.id, Unit), onReceive = { roomFrame, _, _ ->
+                receivedFrame.add(roomFrame)
+            }) {
+                // create topic in user
+                createTopic(ObjectType.USER, it.uid, "user topic $index").getOrThrow()
+
+                // create topic in community
+                val community = createCommunity(NewCommunity("test com $index", "test_com_$index")).getOrThrow()
+                createTopic(ObjectType.COMMUNITY, community.id, "community topic $index").getOrThrow()
+
+                // create topic in community room
+                val comRoomId = createRoom(
+                    NewRoom(name = "com room $index", aid = "test_com_room_$index", communityId = community.id)
+                ).getOrThrow().id
+                val roomInfo = getRoomInfo(comRoomId).getOrThrow()
+                val keys1 = getRoomMembersPublicKeys(
+                    comRoomId,
+                    com.storyteller_f.a.api.PaginationQuery(null, size = 10)
+                ).getOrThrow().data
+                createTopicInRoomAndWait(receivedFrame) {
+                    sendMessage(
+                        com.storyteller_f.shared.obj.ObjectTuple(roomInfo.id, ObjectType.ROOM),
+                        roomInfo.isPrivate,
+                        "com room topic $index",
+                        keys1
+                    )
+                }
+
+                // create topic in private room
+                val privateRoomId = createRoom(
+                    NewRoom(name = "prv room $index", aid = "test_prv_room_$index")
+                ).getOrThrow().id
+                val roomInfo2 = getRoomInfo(privateRoomId).getOrThrow()
+                val keys2 = getRoomMembersPublicKeys(
+                    privateRoomId,
+                    com.storyteller_f.a.api.PaginationQuery(null, size = 10)
+                ).getOrThrow().data
+                createTopicInRoomAndWait(receivedFrame) {
+                    sendMessage(
+                        com.storyteller_f.shared.obj.ObjectTuple(roomInfo2.id, ObjectType.ROOM),
+                        roomInfo2.isPrivate,
+                        "private room topic $index",
+                        keys2
+                    )
+                }
+            }
         }
+        testChildAccount(1, com.storyteller_f.shared.model.AlgoType.P256, com.storyteller_f.shared.model.AlgoType.P256)
+        testChildAccount(
+            2,
+            com.storyteller_f.shared.model.AlgoType.P256,
+            com.storyteller_f.shared.model.AlgoType.DILITHIUM
+        )
+        testChildAccount(
+            3,
+            com.storyteller_f.shared.model.AlgoType.DILITHIUM,
+            com.storyteller_f.shared.model.AlgoType.P256
+        )
+        testChildAccount(
+            4,
+            com.storyteller_f.shared.model.AlgoType.DILITHIUM,
+            com.storyteller_f.shared.model.AlgoType.DILITHIUM
+        )
     }
 
     @Test

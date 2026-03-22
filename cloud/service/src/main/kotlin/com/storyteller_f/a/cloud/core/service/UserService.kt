@@ -250,7 +250,9 @@ suspend fun Backend.addChildAccount(
     encryptedPrivateKey: String,
     encryptedAesKey: String,
     derPublicKey: String,
-    algoType: AlgoType
+    algoType: AlgoType,
+    encryptedEncryptionPrivateKey: String? = null,
+    encryptionPublicKey: String? = null
 ): Result<ChildAccountInfo> {
     return database.user.getRawChildAccount(uid).mapResult {
         if (it != null) {
@@ -264,7 +266,7 @@ suspend fun Backend.addChildAccount(
                 val notificationId = SnowflakeFactory.nextId()
                 val user = User(
                     null,
-                    null,
+                    encryptionPublicKey,
                     derPublicKey,
                     address,
                     null,
@@ -280,7 +282,8 @@ suspend fun Backend.addChildAccount(
                     uid,
                     encryptedPrivateKey,
                     encryptedAesKey,
-                    user
+                    user,
+                    encryptedEncryptionPrivateKey
                 ).getOrThrow()
                 userSearchService.saveDocument(listOf(UserDocument.fromUser(user)))
                     .onFailure { throwable ->
@@ -293,7 +296,9 @@ suspend fun Backend.addChildAccount(
                     hostId = uid,
                     encryptedPrivateKey = encryptedPrivateKey,
                     encryptedAesKey = encryptedAesKey,
-                    userInfo = user.toUserInfo()
+                    userInfo = user.toUserInfo(),
+                    algoType = algoType,
+                    encryptedEncryptionPrivateKey = encryptedEncryptionPrivateKey
                 )
             }
         }
@@ -337,7 +342,9 @@ suspend fun Backend.getUserAlternateUserInfoList(
                         hostId = it.rawUser.user.id,
                         encryptedPrivateKey = it.childAccount.encryptedPrivateKey,
                         encryptedAesKey = it.childAccount.encryptedAesKey,
-                        userInfo = userInfo
+                        userInfo = userInfo,
+                        algoType = it.rawUser.user.algoType,
+                        encryptedEncryptionPrivateKey = it.childAccount.encryptedEncryptionPrivateKey
                     )
                 }
             }

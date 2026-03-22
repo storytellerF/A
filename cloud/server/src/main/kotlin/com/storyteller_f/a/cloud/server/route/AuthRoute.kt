@@ -87,7 +87,9 @@ fun Route.bindProtectedAccountRoute(backend: Backend) {
                 request.encryptedPrivateKey,
                 request.encryptedAesKey,
                 request.derPublicKey,
-                request.algoType
+                request.algoType,
+                request.encryptedEncryptionPrivateKey,
+                request.encryptionPublicKey
             )
         }
     }

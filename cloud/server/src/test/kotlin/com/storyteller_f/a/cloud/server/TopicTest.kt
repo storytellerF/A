@@ -564,7 +564,7 @@ suspend fun UserSessionManager.createTopicInRoomAndWait(
     block: suspend DefaultClientWebSocketSession.() -> Unit
 ) {
     val old = receivedFrame.size
-    webSocketClient.useWebSocket(block)
+    webSocketClient.useWebSocket(block).getOrThrow()
     while (true) {
         if (receivedFrame.size == old + 1) {
             break

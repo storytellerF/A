@@ -388,7 +388,8 @@ class ExposedUserDatabase(
         hostId: PrimaryKey,
         encryptedPrivateKey: String,
         encryptedAesKey: String,
-        user: User
+        user: User,
+        encryptedEncryptionPrivateKey: String?
     ) = databaseSession.dbQuery {
         createUserRaw(user)
         check(ChildAccounts.insert {
@@ -396,6 +397,7 @@ class ExposedUserDatabase(
             it[this.encryptedPrivateKey] = encryptedPrivateKey
             it[this.encryptedAesKey] = encryptedAesKey
             it[this.primaryKeyMd5] = md5(encryptedPrivateKey)
+            it[this.encryptedEncryptionPrivateKey] = encryptedEncryptionPrivateKey
             it[uid] = user.id
         }.insertedCount > 0) {
             "Insert alternate account failed"

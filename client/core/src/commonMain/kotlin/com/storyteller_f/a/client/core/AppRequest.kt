@@ -687,10 +687,10 @@ suspend fun UserSessionManager.extractAlbum(mediaId: PrimaryKey) = serviceCatchi
     CustomApi.Files.Id.extractAlbum(CommonPath(mediaId), Unit) {}
 }
 
-suspend fun UserSessionManager.addChildAccount(): Result<ChildAccountInfo> {
+suspend fun UserSessionManager.addChildAccount(childAlgoType: com.storyteller_f.shared.model.AlgoType = com.storyteller_f.shared.model.AlgoType.P256): Result<ChildAccountInfo> {
     val userPass = model.currentUserPass ?: return Result.failure(IllegalStateException("User not authenticated"))
     return serviceCatching {
-        val request = userPass.encryptChildAccount().getOrThrow()
+        val request = userPass.encryptChildAccount(childAlgoType).getOrThrow()
         CustomApi.Accounts.ChildAccounts.add(request) {
             contentType(ContentType.Application.Json)
         }
