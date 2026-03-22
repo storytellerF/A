@@ -16,8 +16,6 @@ data class UserInfo(
     val aid: String?,
     val nickname: String,
     val avatar: FileInfo?,
-    val encryptionPublicKey: String? = null,
-    val encryptionPrivateKey: String? = null,
     val favoriteId: PrimaryKey? = null,
     val subscriptionId: PrimaryKey? = null,
     val status: UserStatus = UserStatus.NORMAL,

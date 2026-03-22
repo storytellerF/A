@@ -6,6 +6,7 @@ import com.storyteller_f.a.api.NewRoom
 import com.storyteller_f.a.api.NewTitle
 import com.storyteller_f.a.api.NewUser
 import com.storyteller_f.a.api.PaginationQuery
+import com.storyteller_f.a.api.TransferAuthKey
 import com.storyteller_f.a.client.core.addFavorite
 import com.storyteller_f.a.client.core.addReaction
 import com.storyteller_f.a.client.core.addSubscription
@@ -150,15 +151,20 @@ class AdminTest {
 
     @Test
     fun `test add user`() = test {
-        val (privateKey, publicKey) = getAlgo().run {
+        val (privateKey, derPrivateKey, publicKey) = getAlgo().run {
             val privateKey = generatePemKeyPair().getOrThrow().first
+            val derPriKey = getDerPrivateKey(privateKey).getOrThrow()
             val derPubKey = getDerPublicKeyFromPrivateKey(privateKey).getOrThrow()
-            privateKey to derPubKey
+            Triple(privateKey, derPriKey, derPubKey)
         }
         val userInfo = attachPanelSession {
-            addUser(NewUser(publicKey = publicKey)).getOrThrow()
+            addUser(NewUser(authKey = TransferAuthKey.P256(publicKey))).getOrThrow()
         }.custom
-        getAppSession(false, privateKey, onReceive = { _, _, _ ->
+        getAppSession(false, com.storyteller_f.a.client.core.AuthKey.P256(
+            privateKey,
+            derPrivateKey,
+            publicKey
+        ), onReceive = { _, _, _ ->
         }) {
             val info = getUserInfo(it.uid).getOrThrow()
             assertEquals(info.id, userInfo.id)

@@ -27,6 +27,7 @@ import com.storyteller_f.a.backend.core.types.toUserInfo
 import com.storyteller_f.a.cloud.core.service.addUserLog
 import com.storyteller_f.a.cloud.core.service.getFileInfoList
 import com.storyteller_f.a.cloud.core.service.tryUploadFiles
+import com.storyteller_f.shared.Type2Algo
 import com.storyteller_f.shared.encryptDataByAES
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.loadCryptoLibIfNeed
@@ -410,7 +411,7 @@ class AddPreset : Subcommand("add", "add entry") {
         }
         val (tuples, fileRefs) = getUserData(userList, parentDir)
         val users = tuples.map {
-            getUserFromTuple(it)
+            getUserFromTuple(it, parentDir)
         }
         database.admin.batchAddUser(users)
         database.file.insertFileRefs(fileRefs.map { (uploadFile, id) ->
@@ -804,7 +805,7 @@ class AddPreset : Subcommand("add", "add entry") {
             val id = it.id
             val aesBytes = it.aesKey
             roomMembers[topic.room]!!.map { (derPublicKey, uid) ->
-                Triple(id, getAlgo().kemEncrypt(derPublicKey, aesBytes).getOrThrow(), uid)
+                Triple(id, getAlgo().encryptionAlgo.kemEncrypt(derPublicKey, aesBytes).getOrThrow(), uid)
             }
         }
         val tuples = encryptedContents.mapIndexed { index, tuple ->
@@ -908,21 +909,23 @@ class AddPreset : Subcommand("add", "add entry") {
         return fileInfo.id
     }
 
-    private suspend fun Backend.getUserFromTuple(tuple: UserPresetTuple): User {
-        val (encPubKey, encPrivKey) = if (tuple.algoType == AlgoType.DILITHIUM) {
-            val algo = getAlgo(tuple.algoType)
-            val (priKey, pubKey) = algo.generateEncryptionPemKeyPair().getOrThrow()
-            val derPriKey = algo.getDerPrivateKey(priKey).getOrThrow()
-            val derPubKey = algo.getDerPublicKeyFromPem(pubKey).getOrThrow()
-            derPubKey to derPriKey
+    private suspend fun Backend.getUserFromTuple(tuple: UserPresetTuple, parentDir: File): User {
+        val encPubKey = if (tuple.algoType == AlgoType.DILITHIUM) {
+            val algo = getAlgo(tuple.algoType).encryptionAlgo as Type2Algo
+            val encryptionPrivateKey = tuple.presetUser.encryptionPrivateKey
+            val pemPrivateKey = if (encryptionPrivateKey != null) {
+                File(parentDir, encryptionPrivateKey).readText().replace("\r\n", "\n")
+            } else {
+                algo.generateEncryptionPemKeyPair().getOrThrow().first
+            }
+            algo.getDerEncryptionPublicKeyFromPemPrivateKey(pemPrivateKey).getOrThrow()
         } else {
-            null to null
+            null
         }
         val notificationId = SnowflakeFactory.nextId()
         return User(
             tuple.presetUser.aid,
             encPubKey,
-            encPrivKey,
             tuple.publicKey,
             tuple.address,
             tuple.pic,

@@ -43,7 +43,6 @@ class ExposedAdminDatabase(val databaseSession: ExposedDatabaseSession) : AdminD
                 this[Users.publicKeyMd5] = md5(it.publicKey)
                 this[Users.address] = it.address
                 this[Users.encryptionPublicKey] = it.encryptionPublicKey
-                this[Users.encryptionPrivateKey] = it.encryptionPrivateKey
                 this[Users.createdTime] = it.createdTime
                 this[Users.passType] = it.passType
                 this[Users.notificationId] = it.notificationId

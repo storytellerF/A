@@ -265,7 +265,6 @@ suspend fun Backend.addChildAccount(
                 val user = User(
                     null,
                     null,
-                    null,
                     derPublicKey,
                     address,
                     null,

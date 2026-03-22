@@ -1,6 +1,4 @@
 #!/bin/bash
-# Custom entrypoint script for executing various maintenance tasks
-# Task execution status is tracked in ~/.a/cmd
 
 set -e
 # check arch select SYS_IMG_PKG

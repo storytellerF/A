@@ -337,38 +337,6 @@ actual val AlgoDilithium: Algo = object : Algo {
         }
     }
 
-
-    override suspend fun kemEncrypt(
-        derPublicKeyStr: String,
-        aesKeyBytes: ByteArray
-    ): Result<ByteArray> {
-        return runCatching {
-            val publicKeyBytes = derPublicKeyStr.hexToByteArray()
-
-            val keyFactory = KeyFactory.getInstance("Kyber", "BCPQC")
-            val publicKey = keyFactory.generatePublic(X509EncodedKeySpec(publicKeyBytes))
-            val wrapCipher = Cipher.getInstance("Kyber", "BCPQC")
-            wrapCipher.init(Cipher.WRAP_MODE, publicKey)
-            wrapCipher.wrap(SecretKeySpec(aesKeyBytes, "AES"))
-        }
-    }
-
-    override suspend fun kemDecrypt(
-        derPrivateKeyStr: String,
-        encrypted: ByteArray
-    ): Result<ByteArray> {
-        return runCatching {
-            val privateKeyBytes = derPrivateKeyStr.hexToByteArray()
-            val keyFactory = KeyFactory.getInstance("Kyber", "BCPQC")
-            val privateKey = keyFactory.generatePrivate(PKCS8EncodedKeySpec(privateKeyBytes))
-
-            val unwrapCipher = Cipher.getInstance("Kyber", "BCPQC")
-            unwrapCipher.init(Cipher.UNWRAP_MODE, privateKey)
-            val aesKey = unwrapCipher.unwrap(encrypted, "AES", Cipher.SECRET_KEY) as javax.crypto.SecretKey
-            aesKey.encoded
-        }
-    }
-
     override suspend fun calcAddress(derPublicKeyStr: String): Result<String> {
         return runCatching {
             val decode = derPublicKeyStr.hexToByteArray()
@@ -448,27 +416,96 @@ actual val AlgoDilithium: Algo = object : Algo {
         }
     }
 
-    @OptIn(ExperimentalEncodingApi::class)
-    override suspend fun generateEncryptionPemKeyPair(): Result<Pair<String, String>> {
-        return runCatching {
-            val kpg = KeyPairGenerator.getInstance("Kyber", "BCPQC")
-            kpg.initialize(org.bouncycastle.pqc.jcajce.spec.KyberParameterSpec.kyber768, SecureRandom())
-            val kp = kpg.generateKeyPair()
-            val privDer = kp.private.encoded
-            val privB64 = Base64.encode(privDer).chunked(64).joinToString("\n")
-            val privatePem = buildString {
-                appendLine("-----BEGIN PRIVATE KEY-----")
-                appendLine(privB64)
-                appendLine("-----END PRIVATE KEY-----")
+    override val encryptionAlgo: EncryptionAlgo = object : Type2Algo {
+
+        override suspend fun kemEncrypt(
+            derPublicKeyStr: String,
+            aesKeyBytes: ByteArray
+        ): Result<ByteArray> {
+            return runCatching {
+                val publicKeyBytes = derPublicKeyStr.hexToByteArray()
+
+                val keyFactory = KeyFactory.getInstance("Kyber", "BCPQC")
+                val publicKey = keyFactory.generatePublic(X509EncodedKeySpec(publicKeyBytes))
+                val wrapCipher = Cipher.getInstance("Kyber", "BCPQC")
+                wrapCipher.init(Cipher.WRAP_MODE, publicKey)
+                wrapCipher.wrap(SecretKeySpec(aesKeyBytes, "AES"))
             }
-            val pubDer = kp.public.encoded
-            val pubB64 = Base64.encode(pubDer).chunked(64).joinToString("\n")
-            val publicPem = buildString {
-                appendLine("-----BEGIN PUBLIC KEY-----")
-                appendLine(pubB64)
-                appendLine("-----END PUBLIC KEY-----")
+        }
+
+        override suspend fun kemDecrypt(
+            derPrivateKeyStr: String,
+            encrypted: ByteArray
+        ): Result<ByteArray> {
+            return runCatching {
+                val privateKeyBytes = derPrivateKeyStr.hexToByteArray()
+                val keyFactory = KeyFactory.getInstance("Kyber", "BCPQC")
+                val privateKey = keyFactory.generatePrivate(PKCS8EncodedKeySpec(privateKeyBytes))
+
+                val unwrapCipher = Cipher.getInstance("Kyber", "BCPQC")
+                unwrapCipher.init(Cipher.UNWRAP_MODE, privateKey)
+                val aesKey = unwrapCipher.unwrap(encrypted, "AES", Cipher.SECRET_KEY) as javax.crypto.SecretKey
+                aesKey.encoded
             }
-            privatePem to publicPem
+        }
+
+
+        @OptIn(ExperimentalEncodingApi::class)
+        override suspend fun generateEncryptionPemKeyPair(): Result<Pair<String, String>> {
+            return runCatching {
+                val kpg = KeyPairGenerator.getInstance("Kyber", "BCPQC")
+                kpg.initialize(org.bouncycastle.pqc.jcajce.spec.KyberParameterSpec.kyber768, SecureRandom())
+                val kp = kpg.generateKeyPair()
+                val privDer = kp.private.encoded
+                val privB64 = Base64.encode(privDer).chunked(64).joinToString("\n")
+                val privatePem = buildString {
+                    appendLine("-----BEGIN PRIVATE KEY-----")
+                    appendLine(privB64)
+                    appendLine("-----END PRIVATE KEY-----")
+                }
+                val pubDer = kp.public.encoded
+                val pubB64 = Base64.encode(pubDer).chunked(64).joinToString("\n")
+                val publicPem = buildString {
+                    appendLine("-----BEGIN PUBLIC KEY-----")
+                    appendLine(pubB64)
+                    appendLine("-----END PUBLIC KEY-----")
+                }
+                privatePem to publicPem
+            }
+        }
+
+        override suspend fun getDerEncryptionPublicKeyFromPemPrivateKey(pemPrivateKeyStr: String): Result<String> {
+            return runCatching {
+                val base64 = pemPrivateKeyStr
+                    .replace("-----BEGIN PRIVATE KEY-----", "")
+                    .replace("-----END PRIVATE KEY-----", "")
+                    .replace("\r", "")
+                    .replace("\n", "")
+                    .trim()
+                val privateKeyBytes = Base64.decode(base64)
+                val keyFactory = KeyFactory.getInstance("Kyber", "BCPQC")
+                val privateKey = keyFactory.generatePrivate(PKCS8EncodedKeySpec(privateKeyBytes))
+
+                if (privateKey is org.bouncycastle.pqc.jcajce.provider.kyber.BCKyberPrivateKey) {
+                    privateKey.publicKey.encoded.toHexString()
+                } else {
+                    throw IllegalArgumentException("Unsupported Private Key type: ${privateKey.javaClass}")
+                }
+            }
+        }
+
+        @OptIn(ExperimentalEncodingApi::class)
+        override suspend fun getDerEncryptionPrivateKeyFromPemPrivateKey(pemPrivateKeyStr: String): Result<String> {
+            return runCatching {
+                val base64 = pemPrivateKeyStr
+                    .replace("-----BEGIN PRIVATE KEY-----", "")
+                    .replace("-----END PRIVATE KEY-----", "")
+                    .replace("\r", "")
+                    .replace("\n", "")
+                    .trim()
+                val der = Base64.decode(base64)
+                der.toHexString()
+            }
         }
     }
 }

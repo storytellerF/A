@@ -4,6 +4,7 @@ import PlatformHeadlessTest
 import com.storyteller_f.a.app.core.utils.SessionHistoryManager
 import com.storyteller_f.a.app.core.utils.buildSessionHistoryFactory
 import com.storyteller_f.a.app.core.utils.createSettings
+import com.storyteller_f.a.client.core.AuthKey
 import com.storyteller_f.a.client.core.RawUserPassInfo
 import com.storyteller_f.shared.encryptDataByAES
 import com.storyteller_f.shared.getAlgo
@@ -21,8 +22,8 @@ import kotlin.test.assertTrue
  */
 class LoginUserSessionTest : PlatformHeadlessTest() {
     @Test
-    fun testSession() = loginSessionTest { privateKey, publicKey, ad, sessionFactory ->
-        val addSession = sessionFactory.addSession(RawUserPassInfo(privateKey, publicKey, ad))
+    fun testSession() = loginSessionTest { ad, sessionFactory, authKey ->
+        val addSession = sessionFactory.addSession(RawUserPassInfo(ad, authKey))
         assertEquals(1, sessionFactory.getSavedSession().alias.size)
         // 签名/验证
         val signature = addSession.signature("test").getOrThrow()
@@ -30,14 +31,14 @@ class LoginUserSessionTest : PlatformHeadlessTest() {
         // 加密测试
         val encrypt = encryptDataByAES("hello").getOrThrow()
         getAlgo().run {
-            val encryptAesKey = kemEncrypt(publicKey, encrypt.second).getOrThrow()
+            val encryptAesKey = encryptionAlgo.kemEncrypt(authKey.derPublicKey, encrypt.second).getOrThrow()
             assertEquals("hello", addSession.decrypt(encrypt.first, encryptAesKey).getOrThrow())
         }
     }
 
     @Test
-    fun `test exit session`() = loginSessionTest { privateKey, publicKey, ad, sessionFactory ->
-        sessionFactory.addSession(RawUserPassInfo(privateKey, publicKey, ad))
+    fun `test exit session`() = loginSessionTest { ad, sessionFactory, authKey ->
+        sessionFactory.addSession(RawUserPassInfo(ad, authKey))
         val session = sessionFactory.getSavedSession()
         assertEquals(ad, session.history?.current)
         assertEquals(ad, session.history?.last)
@@ -48,8 +49,8 @@ class LoginUserSessionTest : PlatformHeadlessTest() {
     }
 
     @Test
-    fun `test remove session`() = loginSessionTest { privateKey, publicKey, ad, sessionFactory ->
-        sessionFactory.addSession(RawUserPassInfo(privateKey, publicKey, ad))
+    fun `test remove session`() = loginSessionTest { ad, sessionFactory, authKey ->
+        sessionFactory.addSession(RawUserPassInfo(ad, authKey))
         val session = sessionFactory.getSavedSession()
         assertEquals(ad, session.history?.current)
         assertEquals(ad, session.history?.last)
@@ -61,8 +62,8 @@ class LoginUserSessionTest : PlatformHeadlessTest() {
     }
 
     @Test
-    fun `test build session`() = loginSessionTest { privateKey, publicKey, ad, sessionFactory ->
-        sessionFactory.addSession(RawUserPassInfo(privateKey, publicKey, ad))
+    fun `test build session`() = loginSessionTest { ad, sessionFactory, authKey ->
+        sessionFactory.addSession(RawUserPassInfo(ad, authKey))
         val session = sessionFactory.getSavedSession()
         val alias = session.history?.last
         assertNotNull(alias)
@@ -71,7 +72,7 @@ class LoginUserSessionTest : PlatformHeadlessTest() {
     }
 }
 
-fun loginSessionTest(block: suspend (String, String, String, SessionHistoryManager) -> Unit) =
+fun loginSessionTest(block: suspend (String, SessionHistoryManager, AuthKey) -> Unit) =
     runTest {
         loadCryptoLibIfNeed()
         val settings = createSettings("settings-test")
@@ -83,6 +84,7 @@ fun loginSessionTest(block: suspend (String, String, String, SessionHistoryManag
             val derPrivateKey = getDerPrivateKey(privateKey).getOrThrow()
             val publicKey = getDerPublicKeyFromPrivateKey(privateKey).getOrThrow()
             val ad = calcAddress(publicKey).getOrThrow()
-            block(derPrivateKey, publicKey, ad, sessionFactory)
+            val authKey = AuthKey.P256(privateKey, derPrivateKey, publicKey)
+            block(ad, sessionFactory, authKey)
         }
     }

@@ -71,10 +71,12 @@ import com.storyteller_f.a.panel.common.OnUserAdded
 import com.storyteller_f.a.panel.common.createPanelAllUserViewModel
 import com.storyteller_f.a.panel.components.UserCell
 import com.storyteller_f.a.panel.edit_private_key
+import com.storyteller_f.a.panel.encryption_private_key
 import com.storyteller_f.a.panel.menu
 import com.storyteller_f.a.panel.nickname
 import com.storyteller_f.a.panel.private_key_required
 import com.storyteller_f.a.panel.random
+import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.replaceCrlf
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.openFilePicker
@@ -205,6 +207,7 @@ private fun AddUserPrivateKeyPage(
     goBack: () -> Unit
 ) {
     val privateKey by addUserViewModel.privateKey.collectAsState()
+    val encryptionPrivateKey by addUserViewModel.encryptionPrivateKey.collectAsState()
     val scope = rememberCoroutineScope()
     val algoType by addUserViewModel.algoType.collectAsState()
     Column {
@@ -243,6 +246,13 @@ private fun AddUserPrivateKeyPage(
         }, label = {
             Text(CoreStrings.privateKey())
         }, minLines = 3, maxLines = 5)
+        if (algoType == AlgoType.DILITHIUM) {
+            OutlinedTextField(encryptionPrivateKey, {
+                addUserViewModel.updateEncryptionPrivateKey(it)
+            }, label = {
+                Text(stringResource(Res.string.encryption_private_key))
+            }, minLines = 3, maxLines = 5)
+        }
         Button(goBack) {
             Text(CoreStrings.ok())
         }
@@ -337,7 +347,23 @@ private fun GlobalDialogController<GlobalDialogContext<CustomPanelSessionManager
         toast.showMessage(requiredPrivateKeyMessage)
         return
     }
-    val newUser = NewUser(nickname, aid, publicKey, addUserViewModel.algoType.value)
+    val algoType = addUserViewModel.algoType.value
+    val authKey = if (algoType == AlgoType.DILITHIUM) {
+        val encryptionPublicKey = addUserViewModel.encryptionPublicKey.value
+        if (encryptionPublicKey == null) {
+            toast.showMessage(requiredPrivateKeyMessage)
+            return
+        }
+        com.storyteller_f.a.api.TransferAuthKey.Dilithium(
+            derPublicKey = publicKey,
+            derEncryptionPublicKey = encryptionPublicKey
+        )
+    } else {
+        com.storyteller_f.a.api.TransferAuthKey.P256(
+            derPublicKey = publicKey
+        )
+    }
+    val newUser = NewUser(nickname, aid, authKey)
     scope.launch {
         useResult {
             context.request { addUser(newUser) }.onSuccess {

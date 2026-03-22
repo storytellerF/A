@@ -4,6 +4,7 @@ import com.github.vertical_blank.sqlformatter.SqlFormatter
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.loadAvif
 import com.storyteller_f.a.backend.core.readEnv
+import com.storyteller_f.a.client.core.AuthKey
 import com.storyteller_f.a.client.core.PanelSessionManager
 import com.storyteller_f.a.client.core.RawUserPass
 import com.storyteller_f.a.client.core.UserSessionManager
@@ -12,6 +13,7 @@ import com.storyteller_f.a.client.core.createPanelSessionManager
 import com.storyteller_f.a.client.core.createUserSessionManager
 import com.storyteller_f.a.client.core.defaultClientConfigure
 import com.storyteller_f.a.client.core.defaultClientConfigureForPanel
+import com.storyteller_f.a.client.core.getAuthKey
 import com.storyteller_f.a.client.core.getPanelUserPass
 import com.storyteller_f.a.client.core.getUserPass
 import com.storyteller_f.a.client.core.signOut
@@ -19,7 +21,6 @@ import com.storyteller_f.a.client.core.startBackgroundTask
 import com.storyteller_f.a.cloud.worker.WorkerBackend
 import com.storyteller_f.a.cloud.worker.buildBackendFromEnv
 import com.storyteller_f.shared.commonJson
-import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.obj.ExplainResult
@@ -295,12 +296,12 @@ fun saveDatabaseExplainResult(explainResult: ExplainResult) {
 }
 
 data class SessionTuple(
-    val privateKey: String,
+    val authKey: AuthKey,
     val uid: PrimaryKey
 )
 
 data class SessionOuterTuple<T>(
-    val privateKey: String,
+    val authKey: AuthKey,
     val uid: PrimaryKey,
     val custom: T
 )
@@ -310,8 +311,8 @@ suspend fun <R> TestMate.attachSession(
     onReceive: suspend (RoomFrame, UserSessionModel, DefaultClientWebSocketSession) -> Unit = { _, _, _ -> },
     block: suspend UserSessionManager.(SessionTuple) -> R
 ): SessionOuterTuple<R> {
-    val priKey = getAlgo(algo).generatePemKeyPair().getOrThrow().first
-    return getAppSession(true, priKey, algo, onReceive, block)
+    val authKey = getAuthKey(algo)
+    return getAppSession(true, authKey, onReceive, block)
 }
 
 suspend fun TestMate.attachSession(): SessionOuterTuple<Unit> {
@@ -320,8 +321,7 @@ suspend fun TestMate.attachSession(): SessionOuterTuple<Unit> {
 
 suspend fun <R> TestMate.getAppSession(
     isSignUp: Boolean,
-    priKey: String,
-    algo: AlgoType = AlgoType.P256,
+    authKey: AuthKey,
     onReceive: suspend (RoomFrame, UserSessionModel, DefaultClientWebSocketSession) -> Unit,
     block: suspend UserSessionManager.(SessionTuple) -> R,
 ): SessionOuterTuple<R> {
@@ -333,13 +333,13 @@ suspend fun <R> TestMate.getAppSession(
         }, onReceive)
         sessionManager.startBackgroundTask {
             val sessionModel = model
-            val userInfo = getUserPass(priKey, algo, isSignUp) {
+            val userInfo = getUserPass(authKey, isSignUp) {
                 RawUserPass(it)
             }
-            val custom = block(SessionTuple(priKey, userInfo.id))
+            val custom = block(SessionTuple(authKey, userInfo.id))
             signOut().getOrThrow()
             sessionModel.clear()
-            SessionOuterTuple(priKey, userInfo.id, custom)
+            SessionOuterTuple(authKey, userInfo.id, custom)
         }
     }
 }
@@ -347,10 +347,9 @@ suspend fun <R> TestMate.getAppSession(
 suspend fun <R1, R2> TestMate.loginSession(
     tuple: SessionOuterTuple<R1>,
     onReceive: suspend (RoomFrame, UserSessionModel, DefaultClientWebSocketSession) -> Unit = { _, _, _ -> },
-    algo: AlgoType = AlgoType.P256,
     block: suspend UserSessionManager.(SessionTuple) -> R2
 ): SessionOuterTuple<R2> {
-    return getAppSession(false, tuple.privateKey, algo, onReceive = onReceive, block = block)
+    return getAppSession(false, tuple.authKey, onReceive = onReceive, block = block)
 }
 
 suspend fun <R2> TestMate.noneSession(
@@ -382,7 +381,7 @@ fun extractTableNames(query: String): List<String> {
         .flatMap { it.groupValues.drop(1).filter { name -> name.isNotEmpty() } }.toList()
 }
 
-suspend fun UserSessionManager.waitAndSend(block: suspend DefaultClientWebSocketSession.() -> Unit) {
+suspend fun <T> UserSessionManager.waitAndSend(block: suspend DefaultClientWebSocketSession.() -> T): Result<T> {
     while (true) {
         if (webSocketClient.connectionHandler.data.value != null) {
             break
@@ -391,15 +390,15 @@ suspend fun UserSessionManager.waitAndSend(block: suspend DefaultClientWebSocket
             delay(100)
         }
     }
-    webSocketClient.useWebSocket(block)?.join()
+    return webSocketClient.useWebSocket(block)
 }
 
 suspend fun <R> TestMate.attachPanelSession(
     algo: AlgoType = AlgoType.P256,
     block: suspend PanelSessionManager.(SessionTuple) -> R
 ): SessionOuterTuple<R> {
-    val priKey = getAlgo().generatePemKeyPair().getOrThrow().first
-    return getPanelSession(priKey, algo, true, block)
+    val authKey = getAuthKey(algo)
+    return getPanelSession(authKey, true, block)
 }
 
 suspend fun TestMate.attachPanelSession(): SessionOuterTuple<Unit> {
@@ -407,8 +406,7 @@ suspend fun TestMate.attachPanelSession(): SessionOuterTuple<Unit> {
 }
 
 private suspend fun <R> TestMate.getPanelSession(
-    priKey: String,
-    algo: AlgoType = AlgoType.P256,
+    authKey: AuthKey,
     isSignUp: Boolean,
     block: suspend PanelSessionManager.(SessionTuple) -> R,
 ): SessionOuterTuple<R> {
@@ -419,13 +417,13 @@ private suspend fun <R> TestMate.getPanelSession(
             }
         })
         val sessionModel = sessionManager.model
-        val userInfo = sessionManager.getPanelUserPass(priKey, algo, isSignUp) {
+        val userInfo = sessionManager.getPanelUserPass(authKey, isSignUp) {
             RawUserPass(it)
         }
-        val custom = sessionManager.block(SessionTuple(priKey, userInfo.id))
+        val custom = sessionManager.block(SessionTuple(authKey, userInfo.id))
         sessionManager.signOut().getOrThrow()
         sessionModel.clear()
-        SessionOuterTuple(priKey, userInfo.id, custom)
+        SessionOuterTuple(authKey, userInfo.id, custom)
     }
 }
 
@@ -433,7 +431,7 @@ suspend fun <R1, R2> TestMate.loginPanelSession(
     tuple: SessionOuterTuple<R1>,
     block: suspend PanelSessionManager.(SessionTuple) -> R2
 ): SessionOuterTuple<R2> {
-    return getPanelSession(tuple.privateKey, isSignUp = false, block = block)
+    return getPanelSession(tuple.authKey, isSignUp = false, block = block)
 }
 
 suspend fun <R> TestMate.withWorkerBackend(

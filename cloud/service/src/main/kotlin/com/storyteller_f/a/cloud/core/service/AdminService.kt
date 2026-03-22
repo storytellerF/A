@@ -2,6 +2,7 @@ package com.storyteller_f.a.cloud.core.service
 
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.api.NewUser
+import com.storyteller_f.a.api.TransferAuthKey
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.UnauthorizedException
@@ -9,7 +10,6 @@ import com.storyteller_f.a.backend.core.types.PanelLog
 import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.a.backend.core.types.toUserInfo
 import com.storyteller_f.shared.getAlgo
-import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.PanelOverview
 import com.storyteller_f.shared.model.PassType
 import com.storyteller_f.shared.model.UserInfo
@@ -50,18 +50,15 @@ suspend fun Backend.addUser(newUser: NewUser): Result<UserInfo> {
         return Result.failure(it)
     }
     return runCatching {
-        val (address, pemPubKey) = getAlgo(newUser.algoType).run {
-            val address = calcAddress(newUser.publicKey).getOrThrow()
-            address to newUser.publicKey
+        val authKey = newUser.authKey
+        val algoType = authKey.algo
+        val (address, pemPubKey) = getAlgo(algoType).run {
+            val address = calcAddress(authKey.derPublicKey).getOrThrow()
+            address to authKey.derPublicKey
         }
-        val (encPubKey, encPrivKey) = if (newUser.algoType == AlgoType.DILITHIUM) {
-            val algo = getAlgo(newUser.algoType)
-            val (priKey, pubKey) = algo.generateEncryptionPemKeyPair().getOrThrow()
-            val derPriKey = algo.getDerPrivateKey(priKey).getOrThrow()
-            val derPubKey = algo.getDerPublicKeyFromPem(pubKey).getOrThrow()
-            derPubKey to derPriKey
-        } else {
-            null to null
+        val encPubKey = when (authKey) {
+            is TransferAuthKey.Dilithium -> authKey.derEncryptionPublicKey
+            is TransferAuthKey.P256 -> null
         }
 
         val id = SnowflakeFactory.nextId()
@@ -70,7 +67,6 @@ suspend fun Backend.addUser(newUser: NewUser): Result<UserInfo> {
             User(
                 newUser.aid,
                 encPubKey,
-                encPrivKey,
                 pemPubKey,
                 address,
                 null,
@@ -79,7 +75,7 @@ suspend fun Backend.addUser(newUser: NewUser): Result<UserInfo> {
                 now(),
                 0,
                 PassType.RAW,
-                AlgoType.P256,
+                algoType,
                 notificationId
             )
         ).getOrThrow().toUserInfo()

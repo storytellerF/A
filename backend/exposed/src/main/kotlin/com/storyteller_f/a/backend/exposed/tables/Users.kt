@@ -22,8 +22,6 @@ object Users : BaseTable() {
     // Public Key (Kyber-768) hex 编码的der 格式
     val encryptionPublicKey = text("encryption_public_key").nullable()
 
-    // Private Key (Kyber-768) hex 编码的der 格式
-    val encryptionPrivateKey = text("encryption_private_key").nullable()
     val address = varchar("address", ADDRESS_LENGTH).uniqueIndex()
     val icon = customPrimaryKey("icon").nullable()
     val nickname = varchar("nickname", USER_NICKNAME).index()
@@ -39,7 +37,6 @@ fun User.Companion.wrapRow(row: ResultRow): User {
         User(
             row[Aids.value],
             row[encryptionPublicKey],
-            row[encryptionPrivateKey],
             row[publicKey],
             row[address],
             row[icon],

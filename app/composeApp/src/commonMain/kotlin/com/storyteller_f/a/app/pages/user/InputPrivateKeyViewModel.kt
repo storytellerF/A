@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 
 class InputPrivateKeyViewModel : ViewModel() {
     val privateKey = MutableStateFlow("")
+    val encryptionPrivateKey = MutableStateFlow("")
     val algo = MutableStateFlow(AlgoType.P256)
 
     val publicKey = privateKey.combine(algo) { privateKey, algo ->
@@ -38,14 +39,25 @@ class InputPrivateKeyViewModel : ViewModel() {
         this.privateKey.value = privateKey
     }
 
+    fun updateEncryptionPrivateKey(encryptionPrivateKey: String) {
+        this.encryptionPrivateKey.value = encryptionPrivateKey
+    }
+
     fun updateAlgo(algo: AlgoType) {
         this.algo.value = algo
     }
 
     fun autoGeneratePrivateKey() {
         viewModelScope.launch {
-            getAlgo(algo.value).generatePemKeyPair().onSuccess { (privateKey, _) ->
+            val algo1 = getAlgo(algo.value)
+            algo1.generatePemKeyPair().onSuccess { (privateKey, _) ->
                 updatePrivateKey(privateKey)
+            }
+            if (algo.value == AlgoType.DILITHIUM) {
+                val algoImpl = algo1.encryptionAlgo as com.storyteller_f.shared.Type2Algo
+                algoImpl.generateEncryptionPemKeyPair().onSuccess { (encPrivateKey, _) ->
+                    updateEncryptionPrivateKey(encPrivateKey)
+                }
             }
         }
     }

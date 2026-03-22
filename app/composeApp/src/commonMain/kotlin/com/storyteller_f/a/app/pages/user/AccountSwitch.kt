@@ -193,7 +193,23 @@ suspend fun AppGlobalDialogController.switchUser(
             val publicKey = algoImpl.getDerPublicKeyFromPrivateKey(pem).getOrThrow()
 
             val address = algoImpl.calcAddress(publicKey).getOrThrow()
-            RawUserPass(RawUserPassInfo(decrypted, publicKey, address, childAccountInfo.algoType))
+            val authKey = if (childAccountInfo.algoType == com.storyteller_f.shared.model.AlgoType.DILITHIUM) {
+                com.storyteller_f.a.client.core.AuthKey.Dilithium(
+                    pemPrivateKey = pem,
+                    derPrivateKey = decrypted,
+                    derPublicKey = publicKey,
+                    pemEncryptionPrivateKey = "", // Not implemented for child accounts
+                    derEncryptionPrivateKey = "",
+                    derEncryptionPublicKey = ""
+                )
+            } else {
+                com.storyteller_f.a.client.core.AuthKey.P256(
+                    pemPrivateKey = pem,
+                    derPrivateKey = decrypted,
+                    derPublicKey = publicKey
+                )
+            }
+            RawUserPass(RawUserPassInfo(address, authKey))
         }
     }.getOrNull()?.let {
         uiViewModel.childAccount.value = it

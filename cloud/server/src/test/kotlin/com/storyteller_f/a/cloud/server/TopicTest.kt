@@ -448,7 +448,7 @@ class TopicTest {
             val receivedFrame = mutableListOf<RoomFrame>()
             loginSession(user2, onReceive = { roomFrame, _, _ ->
                 receivedFrame.add(roomFrame)
-            }, algo = algo) {
+            }) {
                 joinRoom(privateRoomId).getOrThrow()
                 val roomInfo2 = getRoomInfo(privateRoomId).getOrThrow()
                 val keys = getRoomMembersPublicKeys(privateRoomId, PaginationQuery(null, size = 10)).getOrThrow().data
@@ -465,6 +465,78 @@ class TopicTest {
                 )
             }
             receivedFrame.clear()
+        }
+    }
+
+    @Test
+    fun `test P256 and Dilithium users in community room`() = test {
+        val user1 = attachSession(algo = com.storyteller_f.shared.model.AlgoType.P256) {
+            val communityId = createCommunity(NewCommunity("p256-c", "p256-c")).getOrThrow().id
+            val roomId = createRoom(NewRoom("p256-r", "p256-r", communityId = communityId)).getOrThrow().id
+            communityId to roomId
+        }
+        val (communityId, publicRoomId) = user1.custom
+        val user2 = attachSession(algo = com.storyteller_f.shared.model.AlgoType.DILITHIUM) {
+            joinCommunity(communityId).getOrThrow()
+            joinRoom(publicRoomId).getOrThrow()
+        }
+        val receivedFrame1 = mutableListOf<RoomFrame>()
+        val receivedFrame2 = mutableListOf<RoomFrame>()
+
+        loginSession(user1, onReceive = { roomFrame, _, _ ->
+            receivedFrame1.add(roomFrame)
+        }) {
+            val roomInfo = getRoomInfo(publicRoomId).getOrThrow()
+            val keys = getRoomMembersPublicKeys(publicRoomId, PaginationQuery(null, size = 10)).getOrThrow().data
+            createTopicInRoomAndWait(receivedFrame1) {
+                sendMessage(ObjectTuple(roomInfo.id, ObjectType.ROOM), roomInfo.isPrivate, "hello from p256", keys)
+            }
+        }
+        loginSession(user2, onReceive = { roomFrame, _, _ ->
+            receivedFrame2.add(roomFrame)
+        }) {
+            val roomInfo = getRoomInfo(publicRoomId).getOrThrow()
+            val keys = getRoomMembersPublicKeys(publicRoomId, PaginationQuery(null, size = 10)).getOrThrow().data
+            createTopicInRoomAndWait(receivedFrame2) {
+                sendMessage(ObjectTuple(roomInfo.id, ObjectType.ROOM), roomInfo.isPrivate, "hello from dilithium", keys)
+            }
+        }
+    }
+
+    @Test
+    fun `test P256 and Dilithium users in private room`() = test {
+        val user2 = attachSession(algo = com.storyteller_f.shared.model.AlgoType.DILITHIUM) {}
+        val user1 = attachSession(algo = com.storyteller_f.shared.model.AlgoType.P256) {
+            val id = createRoom(NewRoom("p256-r-private", "p256-r-private")).getOrThrow().id
+            createTitle(NewTitle("join", TitleType.JOIN, user2.uid, id, ObjectType.ROOM, ""))
+            id
+        }
+        val privateRoomId = user1.custom
+
+        loginSession(user2) {
+            joinRoom(privateRoomId).getOrThrow()
+        }
+
+        val receivedFrame1 = mutableListOf<RoomFrame>()
+        val receivedFrame2 = mutableListOf<RoomFrame>()
+
+        loginSession(user1, onReceive = { roomFrame, _, _ ->
+            receivedFrame1.add(roomFrame)
+        }) {
+            val roomInfo = getRoomInfo(privateRoomId).getOrThrow()
+            val keys = getRoomMembersPublicKeys(privateRoomId, PaginationQuery(null, size = 10)).getOrThrow().data
+            createTopicInRoomAndWait(receivedFrame1) {
+                sendMessage(ObjectTuple(roomInfo.id, ObjectType.ROOM), roomInfo.isPrivate, "hello from p256", keys)
+            }
+        }
+        loginSession(user2, onReceive = { roomFrame, _, _ ->
+            receivedFrame2.add(roomFrame)
+        }) {
+            val roomInfo = getRoomInfo(privateRoomId).getOrThrow()
+            val keys = getRoomMembersPublicKeys(privateRoomId, PaginationQuery(null, size = 10)).getOrThrow().data
+            createTopicInRoomAndWait(receivedFrame2) {
+                sendMessage(ObjectTuple(roomInfo.id, ObjectType.ROOM), roomInfo.isPrivate, "hello from dilithium", keys)
+            }
         }
     }
 }
@@ -492,7 +564,7 @@ suspend fun UserSessionManager.createTopicInRoomAndWait(
     block: suspend DefaultClientWebSocketSession.() -> Unit
 ) {
     val old = receivedFrame.size
-    webSocketClient.useWebSocket(block)?.join()
+    webSocketClient.useWebSocket(block)
     while (true) {
         if (receivedFrame.size == old + 1) {
             break

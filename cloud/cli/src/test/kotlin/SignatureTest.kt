@@ -22,7 +22,8 @@ class SignatureTest {
         runTest {
             val data = "hello"
             presetValue.userData!!.forEach {
-                val privateKeyStr = File(jsonFile.parentFile, it.privateKey).readText().replace("\r\n", "\n")
+                val privateKeyStr =
+                    File(jsonFile.parentFile, it.privateKey).readText().replace("\r\n", "\n")
                 getAlgo().run {
                     val derPriKey = getDerPrivateKey(privateKeyStr).getOrThrow()
                     val s = signature(derPriKey, data).getOrThrow()
@@ -46,17 +47,14 @@ class SignatureTest {
         runTest {
             val data = "hello"
             presetValue.userData!!.forEach {
-                val privateKeyStr = File(jsonFile.parentFile, it.privateKey).readText().replaceCrlf()
+                val pemPrivateKey =
+                    File(jsonFile.parentFile, it.privateKey).readText().replaceCrlf()
                 getAlgo().run {
-                    val derPublicKeyStr = getDerPublicKeyFromPrivateKey(privateKeyStr).getOrThrow()
+                    val derPublicKeyStr = getDerPublicKeyFromPrivateKey(pemPrivateKey).getOrThrow()
                     val (encrypted, aes) = encryptDataByAES(data).getOrThrow()
-                    val encryptedAes = kemEncrypt(derPublicKeyStr, aes).getOrThrow()
-                    val decrypted =
-                        decryptMessage(
-                            getDerPrivateKey(privateKeyStr).getOrThrow(),
-                            encrypted,
-                            encryptedAes
-                        ).getOrThrow()
+                    val encryptedAes = encryptionAlgo.kemEncrypt(derPublicKeyStr, aes).getOrThrow()
+                    val derPrivateKey = getDerPrivateKey(pemPrivateKey).getOrThrow()
+                    val decrypted = decryptMessage(derPrivateKey, encrypted, encryptedAes).getOrThrow()
                     assertEquals(data, decrypted)
 
                     // 确保手动实现的算法和bc 提供的一致
@@ -65,11 +63,7 @@ class SignatureTest {
                     assertContentEquals(aes, aes1)
                     val encryptedAes1 = CryptoJvm.encryptAesKey(derPublicKeyStr, aes1).getOrThrow()
                     assertContentEquals(encryptedAes, encryptedAes1)
-                    val decrypted1 = CryptoJvm.decrypt(
-                        getDerPrivateKey(privateKeyStr).getOrThrow(),
-                        encrypted1,
-                        encryptedAes1
-                    ).getOrThrow()
+                    val decrypted1 = CryptoJvm.decrypt(derPrivateKey, encrypted1, encryptedAes1).getOrThrow()
                     assertEquals(decrypted, decrypted1)
                 }
             }

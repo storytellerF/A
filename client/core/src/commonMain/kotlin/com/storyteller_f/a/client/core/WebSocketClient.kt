@@ -12,7 +12,7 @@ interface WebSocketClient {
     val connectionHandler: LoadingHandler<DefaultClientWebSocketSession>
     val localState: StateFlow<LoadingState?>
     val frameFlow: SharedFlow<RoomFrame>
-    fun useWebSocket(block: suspend DefaultClientWebSocketSession.() -> Unit): Job?
+    suspend fun <T> useWebSocket(block: suspend DefaultClientWebSocketSession.() -> T): Result<T>
 }
 
 @OptIn(DelicateCoroutinesApi::class)
@@ -40,23 +40,23 @@ class WebSocketClientImpl(
         }
     }
 
-    override fun useWebSocket(block: suspend DefaultClientWebSocketSession.() -> Unit): Job? {
+    override suspend fun <T> useWebSocket(block: suspend DefaultClientWebSocketSession.() -> T): Result<T> {
         val old = connectionHandler.data.value
         return if (old != null && old.isActive) {
-            old.launch {
-                localState.value = LoadingState.Loading
-                localState.value = try {
-                    old.block()
-                    LoadingState.Done
-                } catch (e: Exception) {
-                    LoadingState.Error(e)
-                }
+            localState.value = LoadingState.Loading
+            try {
+                val r = old.block()
+                localState.value = LoadingState.Done
+                Result.success(r)
+            } catch (e: Exception) {
+                localState.value = LoadingState.Error(e)
+                Result.failure(e)
             }
         } else {
             Napier.i {
                 "useWebSocket failed"
             }
-            null
+            Result.failure(Exception("WebSocket not connected"))
         }
     }
 

@@ -237,7 +237,7 @@ suspend fun makeCallByOffer(
         val f = RoomFrame.SendOffer(CustomOffer(offer.sdp), roomId, targetUid)
         instance.sessionManager.webSocketClient.useWebSocket {
             sendFrame(f)
-        }?.join()
+        }
 
         signalingChannel.map {
             it as? RoomFrame.RespondAnswer
@@ -329,7 +329,7 @@ suspend fun makeCallByAnswer(
         val f = RoomFrame.SendAnswer(CustomAnswer(answer.sdp), roomId, targetUid)
         instance.sessionManager.webSocketClient.useWebSocket {
             sendFrame(f)
-        }?.join()
+        }
         signalingChannel.map {
             it as? RoomFrame.ReceiveCandidate
         }.filterNotNull().filter { frame ->

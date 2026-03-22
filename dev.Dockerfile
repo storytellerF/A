@@ -3,13 +3,10 @@ FROM storytellerf/android-in-docker:latest-dev
 ARG USER_NAME
 
 USER root
-RUN apt update && apt install -y --no-install-recommends --no-install-suggests \
+RUN apt update && DEBIAN_FRONTEND=nointeractive apt install -y \
     libavif-bin git-lfs fcitx fcitx-googlepinyin
 
 RUN git lfs install
-
-RUN groupadd -g 1001 docker \
-    && usermod -aG docker $USER_NAME
 
 USER $USER_NAME
 WORKDIR /home/$USER_NAME
