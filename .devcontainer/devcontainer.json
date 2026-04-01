@@ -3,11 +3,13 @@
 {
 	"name": "A Dev Container",
 	"dockerComposeFile": [
-		"./docker-compose.dev.yml",
-		"../deploy/docker-compose/docker-compose.pg.yml",
-		"../deploy/docker-compose/docker-compose.minio.yml",
-		"../deploy/docker-compose/docker-compose.elastic.yml"
+		"./docker-compose.yml"
 	],
+	"features": {
+		"ghcr.io/devcontainers/features/docker-in-docker:2": {
+			"moby": false
+		}
+	},
 	"service": "main",
 	"workspaceFolder": "/workspace/A",
 	"shutdownAction": "stopCompose",

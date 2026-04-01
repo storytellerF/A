@@ -6,25 +6,25 @@ services:
       args:
         - USER_NAME=${CONTAINER_USERNAME}
     ports:
-      - "6081:6080" # noVNC web interface
-      - "5902:5901" # VNC direct connection
-      - "5556:5555" # ADB
-      - "4724:4723" # Appium
-      - "4422:22" # ssh
+      - "6080" # noVNC web interface
+      - "5901" # VNC direct connection
+      - "5555" # ADB
+      - "4723" # Appium
+      - "22" # ssh
     environment:
       - VNC_PASSWD=password
-      - TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal
       - VNC_GEOMETRY=1920x1080
       - VNC_DEPTH=24
       - A_DEV_CONTAINER=true
     volumes:
       - ..:/workspace/A:cached
       - ../../AData:/workspace/AData:cached
+      - ./logs:${CONTAINER_HOME}/log/supervisor
       - ./data/authorized_keys:${CONTAINER_HOME}/.ssh/authorized_keys
-      - ~/.gradle/gradle.properties:${CONTAINER_HOME}/.gradle/gradle.properties
+      - ~/.gradle/gradle.properties:${CONTAINER_HOME}/gradle.properties
       - avd_data:${CONTAINER_HOME}/.android/avd
       - sdk_data:${CONTAINER_HOME}/Android/Sdk
-      - bashhistory:${CONTAINER_HOME}/.android-in-docker/.bash_history
+      - bash_history:${CONTAINER_HOME}/.android-in-docker/.bash_history
       - gradle_data:${CONTAINER_HOME}/.gradle
       - konan_data:${CONTAINER_HOME}/.konan
       - m2_data:${CONTAINER_HOME}/.m2
@@ -35,7 +35,6 @@ services:
       - google_local:${CONTAINER_HOME}/.local/share/Google
       - antigravity_config:${CONTAINER_HOME}/.config/Antigravity
       - gemini_data:${CONTAINER_HOME}/.gemini
-      - certs:${CONTAINER_HOME}/.certs
       - antigravity_data:${CONTAINER_HOME}/.antigravity
     shm_size: '2gb' # Allocate more shared memory
     privileged: true # Enable KVM acceleration and more privileged
@@ -45,7 +44,7 @@ volumes:
   sdk_data:
     name: sdk_data
     external: true
-  bashhistory:
+  bash_history:
   gradle_data:
   konan_data:
   m2_data:
