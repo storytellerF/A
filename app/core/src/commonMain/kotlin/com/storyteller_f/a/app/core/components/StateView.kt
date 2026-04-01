@@ -304,6 +304,7 @@ fun <T : Any> LazyListScope.pagingItems(
     lazyPagingItems: LazyPagingItems<T>,
     key: ((it: T) -> Any)? = null,
     contentType: (index: Int) -> Any? = { null },
+    listId: String? = null,
     itemContent: @Composable LazyItemScope.(index: Int) -> Unit,
 ) {
     val k = if (key != null) {
@@ -313,6 +314,10 @@ fun <T : Any> LazyListScope.pagingItems(
     } else {
         null
     }
+    val spacerId = if (listId != null) "spacer_$listId" else "spacer_placeholder"
+    item(spacerId) {
+        Spacer(modifier = Modifier.height(1.dp))
+    }
     items(lazyPagingItems.itemSnapshotList.size, k, contentType, itemContent)
 }
 
@@ -321,6 +326,7 @@ fun <T : Any> LazyGridScope.pagingItems(
     key: ((index: T) -> Any)? = null,
     span: (LazyGridItemSpanScope.(index: T) -> GridItemSpan)? = null,
     contentType: (index: T) -> Any? = { null },
+    listId: String? = null,
     itemContent: @Composable LazyGridItemScope.(index: Int) -> Unit,
 ) {
     val k = if (key != null) {
@@ -339,6 +345,12 @@ fun <T : Any> LazyGridScope.pagingItems(
         }
     } else {
         null
+    }
+    val spacerId = if (listId != null) "spacer_$listId" else "spacer_placeholder"
+    item(spacerId, span = {
+        GridItemSpan(maxLineSpan)
+    }) {
+        Spacer(modifier = Modifier.height(1.dp))
     }
     items(lazyPagingItems.itemCount, k, s, c, itemContent)
 }
