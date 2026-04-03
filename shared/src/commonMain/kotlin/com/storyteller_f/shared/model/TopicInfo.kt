@@ -2,6 +2,7 @@ package com.storyteller_f.shared.model
 
 import com.storyteller_f.shared.type.CustomImmutableList
 import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
+import com.storyteller_f.shared.type.ObjectStatus
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.now
@@ -32,7 +33,9 @@ data class TopicInfo(
     val lastRead: PrimaryKey? = null,
     val favoriteId: PrimaryKey? = null,
     val subscriptionId: PrimaryKey? = null,
+    val status: ObjectStatus = ObjectStatus.NORMAL,
 ) : ModelObject {
+    val readOnly get() = status == ObjectStatus.READ_ONLY
     override val objectType: ObjectType
         get() = ObjectType.TOPIC
 
@@ -54,7 +57,8 @@ data class TopicInfo(
             level = 0,
             isPin = false,
             lastModifiedTime = now(),
-            extension = Extension()
+            extension = Extension(),
+            status = ObjectStatus.NORMAL,
         )
     }
 

@@ -13,6 +13,7 @@ import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.PanelOverview
 import com.storyteller_f.shared.model.PassType
 import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.obj.UpdateObjectStatusBody
 import com.storyteller_f.shared.obj.UpdateUserStatusBody
 import com.storyteller_f.shared.utils.now
 
@@ -96,6 +97,106 @@ suspend fun Backend.updateUserStatus(
                 adminId = adminId,
                 targetUserId = uid,
                 action = "Update user status to ${body.status}",
+                createdTime = now()
+            )
+        )
+    }
+}
+
+suspend fun Backend.updateCommunityStatus(
+    id: com.storyteller_f.shared.type.PrimaryKey,
+    body: UpdateObjectStatusBody,
+    adminId: com.storyteller_f.shared.type.PrimaryKey?
+): Result<Unit> {
+    if (adminId == null) return Result.failure(UnauthorizedException())
+    return database.community.updateCommunityStatus(id, body.status).map {
+        val logId = SnowflakeFactory.nextId()
+        database.admin.insertPanelLog(
+            PanelLog(
+                id = logId,
+                adminId = adminId,
+                targetUserId = id,
+                action = "Update community status to ${body.status}",
+                createdTime = now()
+            )
+        )
+    }
+}
+
+suspend fun Backend.updateRoomStatus(
+    id: com.storyteller_f.shared.type.PrimaryKey,
+    body: UpdateObjectStatusBody,
+    adminId: com.storyteller_f.shared.type.PrimaryKey?
+): Result<Unit> {
+    if (adminId == null) return Result.failure(UnauthorizedException())
+    return database.room.updateRoomStatus(id, body.status).map {
+        val logId = SnowflakeFactory.nextId()
+        database.admin.insertPanelLog(
+            PanelLog(
+                id = logId,
+                adminId = adminId,
+                targetUserId = id,
+                action = "Update room status to ${body.status}",
+                createdTime = now()
+            )
+        )
+    }
+}
+
+suspend fun Backend.updateTopicStatus(
+    id: com.storyteller_f.shared.type.PrimaryKey,
+    body: UpdateObjectStatusBody,
+    adminId: com.storyteller_f.shared.type.PrimaryKey?
+): Result<Unit> {
+    if (adminId == null) return Result.failure(UnauthorizedException())
+    return database.topic.updateTopicStatus(id, body.status).map {
+        val logId = SnowflakeFactory.nextId()
+        database.admin.insertPanelLog(
+            PanelLog(
+                id = logId,
+                adminId = adminId,
+                targetUserId = id,
+                action = "Update topic status to ${body.status}",
+                createdTime = now()
+            )
+        )
+    }
+}
+
+suspend fun Backend.updateTitleStatus(
+    id: com.storyteller_f.shared.type.PrimaryKey,
+    body: UpdateObjectStatusBody,
+    adminId: com.storyteller_f.shared.type.PrimaryKey?
+): Result<Unit> {
+    if (adminId == null) return Result.failure(UnauthorizedException())
+    return database.title.updateTitleStatus(id, body.status).map {
+        val logId = SnowflakeFactory.nextId()
+        database.admin.insertPanelLog(
+            PanelLog(
+                id = logId,
+                adminId = adminId,
+                targetUserId = id,
+                action = "Update title status to ${body.status}",
+                createdTime = now()
+            )
+        )
+    }
+}
+
+suspend fun Backend.updateFileStatus(
+    id: com.storyteller_f.shared.type.PrimaryKey,
+    body: UpdateObjectStatusBody,
+    adminId: com.storyteller_f.shared.type.PrimaryKey?
+): Result<Unit> {
+    if (adminId == null) return Result.failure(UnauthorizedException())
+    return database.file.updateFileStatus(id, body.status).map {
+        val logId = SnowflakeFactory.nextId()
+        database.admin.insertPanelLog(
+            PanelLog(
+                id = logId,
+                adminId = adminId,
+                targetUserId = id,
+                action = "Update file status to ${body.status}",
                 createdTime = now()
             )
         )

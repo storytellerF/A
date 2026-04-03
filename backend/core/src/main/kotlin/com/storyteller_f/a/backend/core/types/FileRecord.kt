@@ -3,6 +3,7 @@ package com.storyteller_f.a.backend.core.types
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.type.ObjectStatus
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.datetime.LocalDateTime
 
@@ -17,8 +18,10 @@ data class FileRecord(
     val ownerType: ObjectType,
     val contentType: String,
     val size: Long,
-    val fullName: String
+    val fullName: String,
+    val status: ObjectStatus = ObjectStatus.NORMAL,
 ) {
+    val readOnly get() = status == ObjectStatus.READ_ONLY
     val dimension = Dimension(width, height)
 
     companion object
@@ -42,6 +45,7 @@ fun FileRecord.toFileInfo(
         lastModified,
         dimension,
         favoriteId,
-        subscriptionId
+        subscriptionId,
+        status,
     )
 }

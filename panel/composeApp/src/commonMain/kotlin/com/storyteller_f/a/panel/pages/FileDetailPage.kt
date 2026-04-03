@@ -36,10 +36,14 @@ import com.storyteller_f.a.app.core.components.CustomBottomNav
 import com.storyteller_f.a.app.core.components.NavRoute
 import com.storyteller_f.a.app.core.components.PdfView
 import com.storyteller_f.a.app.core.components.StateView
+import com.storyteller_f.a.app.core.components.emitEvent
 import com.storyteller_f.a.app.core.components.globalLoader
 import com.storyteller_f.a.app.core.components.pagingItems
+import com.storyteller_f.a.client.core.updateFileStatus
+import com.storyteller_f.a.panel.LocalPanelGlobalDialog
 import com.storyteller_f.a.panel.LocalPanelNav
 import com.storyteller_f.a.panel.Res
+import com.storyteller_f.a.panel.common.OnFileStatusUpdated
 import com.storyteller_f.a.panel.common.createPanelFileRefsViewModel
 import com.storyteller_f.a.panel.common.createPanelFileViewModel
 import com.storyteller_f.a.panel.components.InfoTable
@@ -52,6 +56,7 @@ import com.storyteller_f.a.panel.tab_basic_info_file
 import com.storyteller_f.a.panel.tab_file_refs
 import com.storyteller_f.a.panel.tab_info
 import com.storyteller_f.a.panel.tab_logs
+import com.storyteller_f.shared.obj.UpdateObjectStatusBody
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -136,6 +141,8 @@ private fun FileInfoTabs(id: PrimaryKey) {
 private fun FileBasicInfoSection(id: PrimaryKey) {
     val vm = createPanelFileViewModel(id)
     val nav = LocalPanelNav.current
+    val dialogController = LocalPanelGlobalDialog.current
+    val scope = rememberCoroutineScope()
     StateView(vm.handler, modifier = Modifier.fillMaxSize()) { info ->
         Column(Modifier.padding(16.dp)) {
             Box(modifier = Modifier.heightIn(max = 200.dp).padding(top = 16.dp)) {
@@ -163,20 +170,46 @@ private fun FileBasicInfoSection(id: PrimaryKey) {
             ) {
                 Text(stringResource(Res.string.fullscreen_preview))
             }
-            val items = buildList {
-                add("id" to info.id.toString())
-                add("name" to info.name)
-                add("fullName" to info.fullName)
-                add("url" to info.url)
-                add("contentType" to info.contentType)
-                add("size" to info.size.toString())
-                add("owner" to info.owner.toString())
-                add("ownerType" to info.ownerType.name)
-                add("lastModified" to info.lastModified.toString())
-                add("dimension" to (info.dimension?.let { "${it.width}x${it.height}" } ?: "null"))
+            InfoTable(fileBasicInfoItems(info))
+            FileReadOnlyToggleButton(info.readOnly) { newValue ->
+                scope.launch {
+                    dialogController.useResult {
+                        context.request {
+                            updateFileStatus(id, UpdateObjectStatusBody(newValue))
+                        }
+                    }.onSuccess {
+                        dialogController.emitEvent(OnFileStatusUpdated(id, newValue))
+                    }
+                }
             }
-            InfoTable(items)
         }
+    }
+}
+
+private fun fileBasicInfoItems(info: com.storyteller_f.shared.model.FileInfo): List<Pair<String, String>> = buildList {
+    add("id" to info.id.toString())
+    add("name" to info.name)
+    add("fullName" to info.fullName)
+    add("url" to info.url)
+    add("contentType" to info.contentType)
+    add("size" to info.size.toString())
+    add("owner" to info.owner.toString())
+    add("ownerType" to info.ownerType.name)
+    add("lastModified" to info.lastModified.toString())
+    add("dimension" to (info.dimension?.let { "${it.width}x${it.height}" } ?: "null"))
+    add("readOnly" to info.readOnly.toString())
+}
+
+@Composable
+private fun FileReadOnlyToggleButton(
+    readOnly: Boolean,
+    onToggle: (Boolean) -> Unit
+) {
+    Button(onClick = {
+        val newValue = !readOnly
+        onToggle(newValue)
+    }, modifier = Modifier.padding(top = 16.dp)) {
+        Text(if (readOnly) "Set to Writable" else "Set to ReadOnly")
     }
 }
 

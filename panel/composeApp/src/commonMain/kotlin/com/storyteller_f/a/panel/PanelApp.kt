@@ -63,6 +63,11 @@ import com.storyteller_f.a.client.core.defaultClientConfigureForPanel
 import com.storyteller_f.a.client.core.getClient
 import com.storyteller_f.a.client.core.startBackgroundTask
 import com.storyteller_f.a.client.room.getRoomModelStorage
+import com.storyteller_f.a.panel.common.OnCommunityStatusUpdated
+import com.storyteller_f.a.panel.common.OnFileStatusUpdated
+import com.storyteller_f.a.panel.common.OnRoomStatusUpdated
+import com.storyteller_f.a.panel.common.OnTitleStatusUpdated
+import com.storyteller_f.a.panel.common.OnTopicStatusUpdated
 import com.storyteller_f.a.panel.common.OnUserAdded
 import com.storyteller_f.a.panel.common.OnUserStatusUpdated
 import com.storyteller_f.a.panel.common.PanelNav
@@ -72,7 +77,12 @@ import com.storyteller_f.a.panel.common.newPanelNav
 import com.storyteller_f.a.panel.common.panelNavSerializersModule
 import com.storyteller_f.a.panel.common.rootEntryProvider
 import com.storyteller_f.a.panel.ui.theme.PanelTheme
+import com.storyteller_f.storage.CommunityCollection
+import com.storyteller_f.storage.FileCollection
 import com.storyteller_f.storage.ModelStorage
+import com.storyteller_f.storage.RoomCollection
+import com.storyteller_f.storage.TitleCollection
+import com.storyteller_f.storage.TopicCollection
 import com.storyteller_f.storage.UserCollection
 import com.storyteller_f.storage.update
 import io.ktor.client.HttpClient
@@ -322,19 +332,79 @@ class PanelAccountInstance(scope: CoroutineScope) {
             is OnUserAdded -> {
                 storage.user.saveToDefault(any.info)
             }
-            is OnUserStatusUpdated -> {
-                storage.user.update(UserCollection.Users, any.uid) {
-                    it.copy(status = any.status)
-                }
-                storage.user.update(UserCollection.AllUsers, any.uid) {
-                    it.copy(status = any.status)
-                }
-                val overview = storage.userOverview.observeDatum().firstOrNull()
-                if (overview != null && overview.userInfo.id == any.uid) {
-                    val updatedUser = overview.userInfo.copy(status = any.status)
-                    storage.userOverview.save(overview.copy(userInfo = updatedUser))
-                }
+            is OnUserStatusUpdated -> handleUserStatusUpdated(storage, any)
+            is OnCommunityStatusUpdated -> handleCommunityReadOnlyUpdated(storage, any)
+            is OnRoomStatusUpdated -> handleRoomReadOnlyUpdated(storage, any)
+            is OnTopicStatusUpdated -> handleTopicReadOnlyUpdated(storage, any)
+            is OnTitleStatusUpdated -> handleTitleReadOnlyUpdated(storage, any)
+            is OnFileStatusUpdated -> handleFileReadOnlyUpdated(storage, any)
+        }
+    }
+
+    private suspend fun handleUserStatusUpdated(storage: ModelStorage, event: OnUserStatusUpdated) {
+        storage.user.update(UserCollection.Users, event.uid) {
+            it.copy(status = event.status)
+        }
+        storage.user.update(UserCollection.AllUsers, event.uid) {
+            it.copy(status = event.status)
+        }
+        val overview = storage.userOverview.observeDatum().firstOrNull()
+        if (overview != null && overview.userInfo.id == event.uid) {
+            val updatedUser = overview.userInfo.copy(status = event.status)
+            storage.userOverview.save(overview.copy(userInfo = updatedUser))
+        }
+    }
+
+    private suspend fun handleCommunityReadOnlyUpdated(storage: ModelStorage, event: OnCommunityStatusUpdated) {
+        storage.community.update(CommunityCollection.AllCommunities, event.id) {
+            it.copy(readOnly = event.readOnly)
+        }
+        storage.community.getDocument(CommunityCollection.AllCommunities, event.id)?.let {
+            storage.community.saveToDefault(it.copy(readOnly = event.readOnly))
+        }
+    }
+
+    private suspend fun handleRoomReadOnlyUpdated(storage: ModelStorage, event: OnRoomStatusUpdated) {
+        storage.room.update(RoomCollection.AllRooms(false), event.id) {
+            it.copy(readOnly = event.readOnly)
+        }
+        storage.room.update(RoomCollection.AllRooms(true), event.id) {
+            it.copy(readOnly = event.readOnly)
+        }
+        val room = storage.room.getDocument(RoomCollection.AllRooms(false), event.id)
+            ?: storage.room.getDocument(RoomCollection.AllRooms(true), event.id)
+        if (room != null) {
+            storage.room.saveToDefault(room.copy(readOnly = event.readOnly))
+        }
+    }
+
+    private suspend fun handleTopicReadOnlyUpdated(storage: ModelStorage, event: OnTopicStatusUpdated) {
+        storage.topic.update(TopicCollection.AllTopics, event.id) {
+            it.copy(readOnly = event.readOnly)
+        }
+        storage.topic.getDocument(TopicCollection.AllTopics, event.id)?.let {
+            storage.topic.saveToDefault(it.copy(readOnly = event.readOnly))
+        }
+    }
+
+    private suspend fun handleTitleReadOnlyUpdated(storage: ModelStorage, event: OnTitleStatusUpdated) {
+        storage.title.update(TitleCollection.AllTitles, event.id) {
+            it.copy(readOnly = event.readOnly)
+        }
+        storage.title.getDocument(TitleCollection.AllTitles, event.id)?.let {
+            storage.title.saveToDefault(it.copy(readOnly = event.readOnly))
+        }
+    }
+
+    private suspend fun handleFileReadOnlyUpdated(storage: ModelStorage, event: OnFileStatusUpdated) {
+        storage.fileInfo.update(FileCollection.FileList(0), event.id) {
+            it.copy(readOnly = event.readOnly)
+        }
+        storage.fileInfo.getDocument(FileCollection.FileList(0), event.id)?.let {
+            storage.fileInfo.update(FileCollection.FileList(it.owner), event.id) { fileInfo ->
+                fileInfo.copy(readOnly = event.readOnly)
             }
+            storage.fileInfo.saveToDefault(it.copy(readOnly = event.readOnly))
         }
     }
 }

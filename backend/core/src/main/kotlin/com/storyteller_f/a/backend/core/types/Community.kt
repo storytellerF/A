@@ -4,6 +4,7 @@ import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.MemberPolicy
 import com.storyteller_f.shared.model.NestedMemberInfo
+import com.storyteller_f.shared.type.ObjectStatus
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.datetime.LocalDateTime
 
@@ -17,7 +18,9 @@ class Community(
     val iconId: PrimaryKey? = null,
     val posterId: PrimaryKey? = null,
     val fontId: PrimaryKey? = null,
+    val status: ObjectStatus = ObjectStatus.NORMAL,
 ) {
+    val readOnly get() = status == ObjectStatus.READ_ONLY
     companion object
 }
 
@@ -44,6 +47,7 @@ fun RawCommunity.toCommunityIfo(
     font = font,
     favoriteId = favoriteId,
     subscriptionId = subscriptionId,
+    status = community.status,
 )
 
 data class RawCommunity(

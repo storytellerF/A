@@ -10,6 +10,7 @@ import com.storyteller_f.a.api.SignUpBody
 import com.storyteller_f.a.api.TopicQuery
 import com.storyteller_f.endpoint4k.ktor.client.invoke
 import com.storyteller_f.shared.model.TopicPinSearch
+import com.storyteller_f.shared.obj.UpdateObjectStatusBody
 import com.storyteller_f.shared.type.PrimaryKey
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
@@ -150,12 +151,24 @@ suspend fun PanelSessionManager.getCommunityById(id: PrimaryKey) = serviceCatchi
     AdminApi.Communities.Id.get(CommonPath(id))
 }
 
+suspend fun PanelSessionManager.updateCommunityStatus(id: PrimaryKey, body: UpdateObjectStatusBody) = serviceCatching {
+    AdminApi.Communities.Id.Status.update(CommonPath(id), body) {
+        contentType(ContentType.Application.Json)
+    }
+}
+
 suspend fun PanelSessionManager.getCommunityMembers(communityId: PrimaryKey, query: PaginationQuery) = serviceCatching {
     AdminApi.Communities.Id.Members.get(query, CommonPath(communityId))
 }
 
 suspend fun PanelSessionManager.getRoomById(id: PrimaryKey) = serviceCatching {
     AdminApi.Rooms.Id.get(CommonPath(id))
+}
+
+suspend fun PanelSessionManager.updateRoomStatus(id: PrimaryKey, body: UpdateObjectStatusBody) = serviceCatching {
+    AdminApi.Rooms.Id.Status.update(CommonPath(id), body) {
+        contentType(ContentType.Application.Json)
+    }
 }
 
 suspend fun PanelSessionManager.getRoomMembers(roomId: PrimaryKey, query: PaginationQuery) = serviceCatching {
@@ -166,8 +179,20 @@ suspend fun PanelSessionManager.getTopicById(id: PrimaryKey) = serviceCatching {
     AdminApi.Topics.Id.get(CommonPath(id))
 }
 
+suspend fun PanelSessionManager.updateTopicStatus(id: PrimaryKey, body: UpdateObjectStatusBody) = serviceCatching {
+    AdminApi.Topics.Id.Status.update(CommonPath(id), body) {
+        contentType(ContentType.Application.Json)
+    }
+}
+
 suspend fun PanelSessionManager.getFileById(id: PrimaryKey) = serviceCatching {
     AdminApi.Files.Id.get(CommonPath(id))
+}
+
+suspend fun PanelSessionManager.updateFileStatus(id: PrimaryKey, body: UpdateObjectStatusBody) = serviceCatching {
+    AdminApi.Files.Id.Status.update(CommonPath(id), body) {
+        contentType(ContentType.Application.Json)
+    }
 }
 
 suspend fun PanelSessionManager.getFileRefs(id: PrimaryKey, query: PaginationQuery) = serviceCatching {
@@ -176,6 +201,12 @@ suspend fun PanelSessionManager.getFileRefs(id: PrimaryKey, query: PaginationQue
 
 suspend fun PanelSessionManager.getTitleById(id: PrimaryKey) = serviceCatching {
     AdminApi.Titles.Id.get(CommonPath(id))
+}
+
+suspend fun PanelSessionManager.updateTitleStatus(id: PrimaryKey, body: UpdateObjectStatusBody) = serviceCatching {
+    AdminApi.Titles.Id.Status.update(CommonPath(id), body) {
+        contentType(ContentType.Application.Json)
+    }
 }
 
 suspend fun PanelSessionManager.getTopicTopics(

@@ -32,9 +32,10 @@ import com.storyteller_f.shared.model.MemberPolicy
 import com.storyteller_f.shared.model.PassType
 import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.model.TaskRecordType
-import com.storyteller_f.shared.model.TitleStatus
+import com.storyteller_f.shared.model.TitleWorkStatus
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.type.MemberStatus
+import com.storyteller_f.shared.type.ObjectStatus
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.UploadRecordStatus
 import io.github.aakira.napier.Napier
@@ -66,13 +67,14 @@ fun Throwable.isDup(): Boolean {
 fun Table.customPrimaryKey(name: String) = long(name)
 
 fun Table.objectType(name: String) = enumerationByName<ObjectType>(name, 20)
+fun Table.objectStatus(name: String) = enumerationByName<ObjectStatus>(name, 20).default(ObjectStatus.NORMAL)
 fun Table.memberStatus(name: String) = enumerationByName<MemberStatus>(name, 20)
 
 fun Table.algoType(name: String) = enumerationByName<AlgoType>(name, 20).default(AlgoType.P256)
 fun Table.passType(name: String) = enumerationByName<PassType>(name, 20).default(PassType.RAW)
 fun Table.titleType(name: String) = enumerationByName<TitleType>(name, 10)
 
-fun Table.titleStatus(name: String) = enumerationByName<TitleStatus>(name, 10)
+fun Table.titleStatus(name: String) = enumerationByName<TitleWorkStatus>(name, 10)
 fun Table.assetType(name: String) = enumerationByName<AssetType>(name, 20)
 fun Table.quotaType(name: String) = enumerationByName<QuotaType>(name, 20)
 

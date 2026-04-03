@@ -26,7 +26,7 @@ import com.storyteller_f.shared.model.ReactionRecordInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TitleSearchType
-import com.storyteller_f.shared.model.TitleStatus
+import com.storyteller_f.shared.model.TitleWorkStatus
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.TopicPinSearch
@@ -39,6 +39,7 @@ import com.storyteller_f.shared.model.UserSubscriptionInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.ServerResponse
 import com.storyteller_f.shared.obj.UpdateCommunityBody
+import com.storyteller_f.shared.obj.UpdateObjectStatusBody
 import com.storyteller_f.shared.obj.UpdateRoomBody
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.obj.UpdateUserRead
@@ -559,7 +560,7 @@ object CustomApi {
                     val searchType: TitleSearchType,
                     val type: TitleType? = null,
                     val scopeId: PrimaryKey? = null,
-                    val status: TitleStatus? = null,
+                    val titleStatus: TitleWorkStatus? = null,
                     override val nextPageToken: String? = null,
                     override val size: Int = DEFAULT_PAGE_SIZE,
                     override val prePageToken: String? = null,
@@ -933,6 +934,12 @@ object AdminApi {
         object Id {
             val get = safeEndpointWithPath<CommunityInfo, CommonPath>("/admin/communities/{id}")
 
+            object Status {
+                val update = mutationEndpointWithPath<Unit, UpdateObjectStatusBody, CommonPath>(
+                    "/admin/communities/{id}/status"
+                )
+            }
+
             object Members {
                 val get = safeEndpointWithQueryAndPath<
                     ServerResponse<MemberInfo>,
@@ -950,6 +957,12 @@ object AdminApi {
 
         object Id {
             val get = safeEndpointWithPath<RoomInfo, CommonPath>("/admin/rooms/{id}")
+
+            object Status {
+                val update = mutationEndpointWithPath<Unit, UpdateObjectStatusBody, CommonPath>(
+                    "/admin/rooms/{id}/status"
+                )
+            }
 
             object Members {
                 val get = safeEndpointWithQueryAndPath<
@@ -977,6 +990,12 @@ object AdminApi {
         object Id {
             val get = safeEndpointWithPath<TopicInfo, CommonPath>("/admin/topics/{id}")
 
+            object Status {
+                val update = mutationEndpointWithPath<Unit, UpdateObjectStatusBody, CommonPath>(
+                    "/admin/topics/{id}/status"
+                )
+            }
+
             object Topics {
                 val get =
                     safeEndpointWithQueryAndPath<ServerResponse<TopicInfo>, TopicQuery, CommonPath>(
@@ -991,6 +1010,12 @@ object AdminApi {
 
         object Id {
             val get = safeEndpointWithPath<TitleInfo, CommonPath>("/admin/titles/{id}")
+
+            object Status {
+                val update = mutationEndpointWithPath<Unit, UpdateObjectStatusBody, CommonPath>(
+                    "/admin/titles/{id}/status"
+                )
+            }
         }
     }
 
@@ -1001,6 +1026,12 @@ object AdminApi {
 
         object Id {
             val get = safeEndpointWithPath<FileInfo, CommonPath>("/admin/files/{id}")
+
+            object Status {
+                val update = mutationEndpointWithPath<Unit, UpdateObjectStatusBody, CommonPath>(
+                    "/admin/files/{id}/status"
+                )
+            }
 
             object Refs {
                 val get =

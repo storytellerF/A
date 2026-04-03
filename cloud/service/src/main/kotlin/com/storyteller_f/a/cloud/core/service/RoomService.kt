@@ -253,6 +253,8 @@ suspend fun Backend.updateRoom(
             checkRoomIcon(newUpdate).getOrThrow()
         }
     }.mapResultIfNotNull {
+        checkObjectWritable(ObjectType.ROOM, id)
+    }.mapResultIfNotNull {
         database.room.updateRoom(id, newUpdate)
     }.mapResultIfNotNull {
         getRoomInfo(IdFetch(id), uid, true)

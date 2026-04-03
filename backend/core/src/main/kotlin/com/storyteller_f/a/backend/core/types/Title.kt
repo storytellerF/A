@@ -1,9 +1,10 @@
 package com.storyteller_f.a.backend.core.types
 
 import com.storyteller_f.shared.model.TitleInfo
-import com.storyteller_f.shared.model.TitleStatus
+import com.storyteller_f.shared.model.TitleWorkStatus
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.type.ObjectStatus
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.datetime.LocalDateTime
 
@@ -16,9 +17,11 @@ class Title(
     val type: TitleType,
     val scopeId: PrimaryKey,
     val scopeType: ObjectType,
-    val status: TitleStatus,
+    val titleStatus: TitleWorkStatus,
     val descriptionTopicId: PrimaryKey,
+    val status: ObjectStatus = ObjectStatus.NORMAL,
 ) {
+    val readOnly get() = status == ObjectStatus.READ_ONLY
     companion object
 }
 
@@ -39,7 +42,8 @@ fun Title.toTitleInfo(
         descriptionTopicId,
         extensions,
         favoriteId,
-        subscriptionId
+        subscriptionId,
+        status,
     )
 }
 

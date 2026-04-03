@@ -20,15 +20,17 @@ import com.storyteller_f.shared.utils.now
 suspend fun Backend.addSubscription(
     uid: PrimaryKey,
     newSubscription: NewSubscription
-) = addIfNotExists({
-    database.subscription.getSubscription(uid, newSubscription.objectId)
-}, {
-    val id = SnowflakeFactory.nextId()
-    val userSubscription = UserSubscription(id, uid, newSubscription.objectId, newSubscription.objectType, now())
-    database.subscription.addSubscription(userSubscription).onSuccess {
-        addUserLog(uid, UserLogType.ADD_SUBSCRIPTION, newSubscription.tuple())
-    }
-}).mapResultIfNotNull {
+) = checkObjectWritable(newSubscription.objectType, newSubscription.objectId).mapResultIfNotNull {
+    addIfNotExists({
+        database.subscription.getSubscription(uid, newSubscription.objectId)
+    }, {
+        val id = SnowflakeFactory.nextId()
+        val userSubscription = UserSubscription(id, uid, newSubscription.objectId, newSubscription.objectType, now())
+        database.subscription.addSubscription(userSubscription).onSuccess {
+            addUserLog(uid, UserLogType.ADD_SUBSCRIPTION, newSubscription.tuple())
+        }
+    })
+}.mapResultIfNotNull {
     processUserSubscriptionToUserSubscriptionInfo(uid, listOf(it))
 }.firstOrNull()
 
@@ -38,8 +40,10 @@ suspend fun Backend.removeSubscription(
 ) = database.subscription.getSubscription(subscriptionId)
     .mapResultIfNotNull { subscription ->
         if (subscription.uid == uid) {
-            database.subscription.removeSubscription(subscriptionId).onSuccess {
-                addUserLog(uid, UserLogType.REMOVE_SUBSCRIPTION, subscription.objectTuple())
+            checkObjectWritable(subscription.objectType, subscription.objectId).mapResultIfNotNull {
+                database.subscription.removeSubscription(subscriptionId).onSuccess {
+                    addUserLog(uid, UserLogType.REMOVE_SUBSCRIPTION, subscription.objectTuple())
+                }
             }
         } else {
             Result.failure(ForbiddenException("No permission to remove this subscription"))
@@ -51,8 +55,10 @@ suspend fun Backend.removeSubscriptionByObject(
     objectId: PrimaryKey
 ) = database.subscription.getSubscription(uid, objectId)
     .mapResultIfNotNull { subscription ->
-        database.subscription.removeSubscription(subscription.id).onSuccess {
-            addUserLog(uid, UserLogType.REMOVE_SUBSCRIPTION, subscription.objectTuple())
+        checkObjectWritable(subscription.objectType, subscription.objectId).mapResultIfNotNull {
+            database.subscription.removeSubscription(subscription.id).onSuccess {
+                addUserLog(uid, UserLogType.REMOVE_SUBSCRIPTION, subscription.objectTuple())
+            }
         }
     }
 

@@ -143,7 +143,9 @@ data class AndroidKeyStoreUserPass(private val alias: String) : UserPass {
         TODO("Not yet implemented")
     }
 
-    override suspend fun encryptChildAccount(childAlgoType: AlgoType): Result<CustomApi.Accounts.ChildAccounts.AddChildAccountRequest> {
+    override suspend fun encryptChildAccount(
+        childAlgoType: AlgoType
+    ): Result<CustomApi.Accounts.ChildAccounts.AddChildAccountRequest> {
         TODO("Not yet implemented")
     }
 }

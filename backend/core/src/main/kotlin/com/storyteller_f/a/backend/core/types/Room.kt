@@ -5,6 +5,7 @@ import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.type.MemberStatus
 import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.type.ObjectStatus
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.now
 import kotlinx.datetime.LocalDateTime
@@ -17,7 +18,9 @@ class Room(
     val creator: PrimaryKey,
     val icon: PrimaryKey? = null,
     val communityId: PrimaryKey? = null,
+    val status: ObjectStatus = ObjectStatus.NORMAL,
 ) {
+    val readOnly get() = status == ObjectStatus.READ_ONLY
     companion object
 }
 
@@ -48,6 +51,7 @@ fun RawRoom.toRoomInfo(icon: FileInfo? = null): RoomInfo {
         latestTopic = latestTopic,
         favoriteId = favoriteId,
         subscriptionId = subscriptionId,
+        status = room.status,
     )
 }
 

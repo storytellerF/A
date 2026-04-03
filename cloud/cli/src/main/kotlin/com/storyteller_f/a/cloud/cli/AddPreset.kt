@@ -35,7 +35,7 @@ import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.MemberPolicy
 import com.storyteller_f.shared.model.PassType
-import com.storyteller_f.shared.model.TitleStatus
+import com.storyteller_f.shared.model.TitleWorkStatus
 import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.obj.PresetCommunity
 import com.storyteller_f.shared.obj.PresetRoom
@@ -205,7 +205,7 @@ class AddPreset : Subcommand("add", "add entry") {
             }
             val title = Title(
                 titleId, now(), it.name, creatorUid, receiverUid, it.type, scopeId, it.scopeType,
-                TitleStatus.OK, topicId
+                TitleWorkStatus.OK, topicId
             )
             val topic = Topic(
                 topicId,

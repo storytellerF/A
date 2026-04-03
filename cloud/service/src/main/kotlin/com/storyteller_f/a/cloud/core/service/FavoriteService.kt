@@ -22,13 +22,15 @@ import com.storyteller_f.shared.utils.now
 suspend fun Backend.addFavorite(
     uid: PrimaryKey,
     newFavorite: NewFavorite
-) = addIfNotExists({
-    database.favorite.getFavorite(uid, newFavorite.objectId)
-}) {
-    val id = SnowflakeFactory.nextId()
-    val userFavorite = UserFavorite(id, uid, newFavorite.objectId, newFavorite.objectType, now())
-    database.favorite.addFavorite(userFavorite).onSuccess {
-        addUserLog(uid, UserLogType.ADD_FAVORITE, newFavorite.tuple())
+) = checkObjectWritable(newFavorite.objectType, newFavorite.objectId).mapResultIfNotNull {
+    addIfNotExists({
+        database.favorite.getFavorite(uid, newFavorite.objectId)
+    }) {
+        val id = SnowflakeFactory.nextId()
+        val userFavorite = UserFavorite(id, uid, newFavorite.objectId, newFavorite.objectType, now())
+        database.favorite.addFavorite(userFavorite).onSuccess {
+            addUserLog(uid, UserLogType.ADD_FAVORITE, newFavorite.tuple())
+        }
     }
 }.mapResultIfNotNull {
     processUserFavoriteToUserFavoriteInfo(uid, listOf(it))
@@ -37,8 +39,10 @@ suspend fun Backend.addFavorite(
 suspend fun Backend.deleteFavorite(uid: PrimaryKey, id: PrimaryKey) =
     database.favorite.getFavorite(id).mapResultIfNotNull { userFavorite ->
         if (userFavorite.uid == uid) {
-            database.favorite.removeFavorite(id).onSuccess {
-                addUserLog(uid, UserLogType.REMOVE_FAVORITE, userFavorite.objectTuple())
+            checkObjectWritable(userFavorite.objectType, userFavorite.objectId).mapResultIfNotNull {
+                database.favorite.removeFavorite(id).onSuccess {
+                    addUserLog(uid, UserLogType.REMOVE_FAVORITE, userFavorite.objectTuple())
+                }
             }
         } else {
             Result.failure(ForbiddenException())
@@ -47,8 +51,10 @@ suspend fun Backend.deleteFavorite(uid: PrimaryKey, id: PrimaryKey) =
 
 suspend fun Backend.deleteFavoriteByObject(uid: PrimaryKey, objectId: PrimaryKey) =
     database.favorite.getFavorite(uid, objectId).mapResultIfNotNull { userFavorite ->
-        database.favorite.removeFavorite(userFavorite.id).onSuccess {
-            addUserLog(uid, UserLogType.REMOVE_FAVORITE, userFavorite.objectTuple())
+        checkObjectWritable(userFavorite.objectType, userFavorite.objectId).mapResultIfNotNull {
+            database.favorite.removeFavorite(userFavorite.id).onSuccess {
+                addUserLog(uid, UserLogType.REMOVE_FAVORITE, userFavorite.objectTuple())
+            }
         }
     }
 

@@ -20,6 +20,7 @@ import com.storyteller_f.a.backend.exposed.tables.UploadRecords
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.QuotaInfo
 import com.storyteller_f.shared.model.QuotaType
+import com.storyteller_f.shared.type.ObjectStatus
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.UploadRecordStatus
@@ -138,6 +139,7 @@ class ExposedFileDatabase(val databaseSession: ExposedDatabaseSession) : FileDat
             this[FileRecords.contentType] = e.contentType
             this[FileRecords.size] = e.size
             this[FileRecords.fullName] = e.fullName
+            this[FileRecords.status] = e.status
         }.size == fileRecordList.size) {
             "insert file record failed"
         }
@@ -213,6 +215,7 @@ class ExposedFileDatabase(val databaseSession: ExposedDatabaseSession) : FileDat
                 this[FileRecords.contentType] = e.contentType
                 this[FileRecords.size] = e.size
                 this[FileRecords.fullName] = e.fullName
+                this[FileRecords.status] = e.status
             }.size == fileRecordList.size) {
                 "insert file record failed"
             }
@@ -235,6 +238,12 @@ class ExposedFileDatabase(val databaseSession: ExposedDatabaseSession) : FileDat
         firstNotNull {
             it[sumColumn] ?: 0
         }
+    }
+
+    override suspend fun updateFileStatus(id: PrimaryKey, status: ObjectStatus) = databaseSession.dbQuery {
+        FileRecords.update({ FileRecords.id eq id }) {
+            it[FileRecords.status] = status
+        } > 0
     }
 
     override suspend fun getUploadRecordPaginationList(

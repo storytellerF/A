@@ -24,6 +24,7 @@ import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.PosterSearch
 import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.type.MemberStatus
+import com.storyteller_f.shared.type.ObjectStatus
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapIfNotNull
@@ -206,6 +207,12 @@ class ExposedCommunityDatabase(
         } else {
             true
         }
+    }
+
+    override suspend fun updateCommunityStatus(id: PrimaryKey, status: ObjectStatus) = databaseSession.dbQuery {
+        Communities.update({ Communities.id eq id }) {
+            it[Communities.status] = status
+        } > 0
     }
 
     override suspend fun getCommunityCount() = databaseSession.dbSearch {

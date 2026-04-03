@@ -3,6 +3,7 @@ package com.storyteller_f.a.backend.core.types
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.type.ObjectStatus
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.datetime.LocalDateTime
 
@@ -21,7 +22,9 @@ class Topic(
     val isPin: Boolean = false,
     val lastModifiedTime: LocalDateTime? = null,
     val aid: String? = null,
+    val status: ObjectStatus = ObjectStatus.NORMAL,
 ) {
+    val readOnly get() = status == ObjectStatus.READ_ONLY
     companion object
 }
 
@@ -59,4 +62,5 @@ fun RawTopic.toTopicInfo(extensions: TopicInfo.Extension? = null) = TopicInfo(
     lastRead = lastRead,
     favoriteId = favoriteId,
     subscriptionId = subscriptionId,
+    status = topic.status,
 )
