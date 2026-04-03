@@ -9,6 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Title
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -27,12 +28,17 @@ import com.storyteller_f.a.app.core.components.CenterBox
 import com.storyteller_f.a.app.core.components.CustomBottomNav
 import com.storyteller_f.a.app.core.components.NavRoute
 import com.storyteller_f.a.app.core.components.StateView
+import com.storyteller_f.a.app.core.components.emitEvent
+import com.storyteller_f.a.client.core.updateTitleStatus
+import com.storyteller_f.a.panel.LocalPanelGlobalDialog
 import com.storyteller_f.a.panel.Res
+import com.storyteller_f.a.panel.common.OnTitleStatusUpdated
 import com.storyteller_f.a.panel.common.createPanelTitleViewModel
 import com.storyteller_f.a.panel.components.InfoTable
 import com.storyteller_f.a.panel.tab_basic_info
 import com.storyteller_f.a.panel.title_detail_title
 import com.storyteller_f.a.panel.title_detail_title_with_info
+import com.storyteller_f.shared.obj.UpdateObjectStatusBody
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -111,6 +117,8 @@ private fun TitleInfoTabs(id: PrimaryKey) {
 @Composable
 private fun TitleBasicInfoSection(id: PrimaryKey) {
     val vm = createPanelTitleViewModel(id)
+    val dialogController = LocalPanelGlobalDialog.current
+    val scope = rememberCoroutineScope()
     StateView(vm.handler, modifier = Modifier.fillMaxSize()) { info ->
         val items = buildList {
             add("id" to info.id.toString())
@@ -122,8 +130,25 @@ private fun TitleBasicInfoSection(id: PrimaryKey) {
             add("scopeId" to info.scopeId.toString())
             add("scopeType" to info.scopeType.name)
             add("descriptionTopicId" to info.descriptionTopicId.toString())
+            add("readOnly" to info.readOnly.toString())
         }
-        InfoTable(items, Modifier.padding(16.dp))
+        Column {
+            InfoTable(items, Modifier.padding(16.dp).weight(1f))
+            Button(onClick = {
+                val newValue = !info.readOnly
+                scope.launch {
+                    dialogController.useResult {
+                        context.request {
+                            updateTitleStatus(id, UpdateObjectStatusBody(newValue))
+                        }
+                    }.onSuccess {
+                        dialogController.emitEvent(OnTitleStatusUpdated(id, newValue))
+                    }
+                }
+            }, modifier = Modifier.padding(16.dp)) {
+                Text(if (info.readOnly) "Set to Writable" else "Set to ReadOnly")
+            }
+        }
     }
 }
 

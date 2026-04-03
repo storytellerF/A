@@ -3,6 +3,7 @@ package com.storyteller_f.a.backend.exposed.tables
 import com.storyteller_f.a.backend.core.types.Title
 import com.storyteller_f.a.backend.exposed.BaseTable
 import com.storyteller_f.a.backend.exposed.customPrimaryKey
+import com.storyteller_f.a.backend.exposed.objectStatus
 import com.storyteller_f.a.backend.exposed.objectType
 import com.storyteller_f.a.backend.exposed.titleStatus
 import com.storyteller_f.a.backend.exposed.titleType
@@ -14,15 +15,16 @@ object Titles : BaseTable() {
     val type = titleType("type").index()
     val scopeId = customPrimaryKey("scope_id").index()
     val scopeType = objectType("scope_type")
-    val status = titleStatus("title_status")
+    val titleStatus = titleStatus("title_status")
+    val status = objectStatus("status")
     val name = varchar("name", 20).index()
     val descriptionTopicId = customPrimaryKey("description_topic_id")
 
     init {
         index("creator", false, creator, type, scopeId)
         index("receiver", false, receiver, type, scopeId)
-        index("creator-status", false, creator, status, type, scopeId)
-        index("receiver-status", false, receiver, status, type, scopeId)
+        index("creator-status", false, creator, titleStatus, type, scopeId)
+        index("receiver-status", false, receiver, titleStatus, type, scopeId)
     }
 }
 
@@ -36,7 +38,8 @@ fun Title.Companion.wrapRow(row: ResultRow): Title {
         row[Titles.type],
         row[Titles.scopeId],
         row[Titles.scopeType],
-        row[Titles.status],
-        row[Titles.descriptionTopicId]
+        row[Titles.titleStatus],
+        row[Titles.descriptionTopicId],
+        row[Titles.status]
     )
 }

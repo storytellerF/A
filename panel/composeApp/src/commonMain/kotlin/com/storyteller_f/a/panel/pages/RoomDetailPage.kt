@@ -12,6 +12,7 @@ import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.filled.FilePresent
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.People
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -32,9 +33,13 @@ import com.storyteller_f.a.app.core.components.CenterBox
 import com.storyteller_f.a.app.core.components.CustomBottomNav
 import com.storyteller_f.a.app.core.components.NavRoute
 import com.storyteller_f.a.app.core.components.StateView
+import com.storyteller_f.a.app.core.components.emitEvent
 import com.storyteller_f.a.app.core.components.pagingItems
+import com.storyteller_f.a.client.core.updateRoomStatus
+import com.storyteller_f.a.panel.LocalPanelGlobalDialog
 import com.storyteller_f.a.panel.LocalPanelNav
 import com.storyteller_f.a.panel.Res
+import com.storyteller_f.a.panel.common.OnRoomStatusUpdated
 import com.storyteller_f.a.panel.common.createPanelRoomFilesViewModel
 import com.storyteller_f.a.panel.common.createPanelRoomMembersViewModel
 import com.storyteller_f.a.panel.common.createPanelRoomViewModel
@@ -44,6 +49,7 @@ import com.storyteller_f.a.panel.room_detail_title_with_info
 import com.storyteller_f.a.panel.tab_basic_info
 import com.storyteller_f.a.panel.tab_files
 import com.storyteller_f.a.panel.tab_members
+import com.storyteller_f.shared.obj.UpdateObjectStatusBody
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -134,6 +140,8 @@ private fun RoomInfoTabs(id: PrimaryKey) {
 @Composable
 private fun RoomBasicInfoSection(id: PrimaryKey) {
     val vm = createPanelRoomViewModel(id)
+    val dialogController = LocalPanelGlobalDialog.current
+    val scope = rememberCoroutineScope()
     StateView(vm.handler, modifier = Modifier.fillMaxSize()) { info ->
         val items = buildList {
             add("id" to info.id.toString())
@@ -149,8 +157,25 @@ private fun RoomBasicInfoSection(id: PrimaryKey) {
             add("isPrivate" to info.isPrivate.toString())
             add("isJoined" to info.isJoined.toString())
             add("hasUnread" to info.hasUnread.toString())
+            add("readOnly" to info.readOnly.toString())
         }
-        InfoTable(items, Modifier.padding(16.dp))
+        Column {
+            InfoTable(items, Modifier.padding(16.dp).weight(1f))
+            Button(onClick = {
+                val newValue = !info.readOnly
+                scope.launch {
+                    dialogController.useResult {
+                        context.request {
+                            updateRoomStatus(id, UpdateObjectStatusBody(newValue))
+                        }
+                    }.onSuccess {
+                        dialogController.emitEvent(OnRoomStatusUpdated(id, newValue))
+                    }
+                }
+            }, modifier = Modifier.padding(16.dp)) {
+                Text(if (info.readOnly) "Set to Writable" else "Set to ReadOnly")
+            }
+        }
     }
 }
 

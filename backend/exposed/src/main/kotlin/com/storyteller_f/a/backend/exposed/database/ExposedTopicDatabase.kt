@@ -23,6 +23,7 @@ import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicPinSearch
 import com.storyteller_f.shared.obj.ObjectTuple
+import com.storyteller_f.shared.type.ObjectStatus
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.associateByPair
@@ -172,7 +173,7 @@ class ExposedTopicDatabase(
         combinedDatabase.file.insertFileRefs(fileRefs).getOrThrow()
     }
 
-    override suspend fun updateTopicStatus(
+    override suspend fun updateTopicPinned(
         topicId: PrimaryKey,
         newValue: Boolean,
     ) = databaseSession.dbQuery {
@@ -180,6 +181,14 @@ class ExposedTopicDatabase(
             Topics.id eq topicId
         }) {
             it[Topics.pinned] = newValue
+        } > 0
+    }
+
+    override suspend fun updateTopicStatus(topicId: PrimaryKey, status: ObjectStatus) = databaseSession.dbQuery {
+        Topics.update({
+            Topics.id eq topicId
+        }) {
+            it[Topics.status] = status
         } > 0
     }
 
@@ -307,6 +316,7 @@ class ExposedTopicDatabase(
             it[Titles.scopeType] = title.scopeType
             it[Titles.status] = title.status
             it[Titles.descriptionTopicId] = title.descriptionTopicId
+            it[Titles.titleStatus] = title.titleStatus
         }.insertedCount > 0) {
             "insert title failed"
         }
@@ -330,6 +340,7 @@ private suspend fun Topic.Companion.new(info: Topic) = check(Topics.insert {
     it[content] = ExposedBlob(info.content)
     it[isEncrypted] = info.isEncrypted
     it[level] = info.level
+    it[status] = info.status
 }.insertedCount > 0) {
     "insert topic failed"
 }

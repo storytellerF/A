@@ -1,6 +1,7 @@
 package com.storyteller_f.shared.model
 
 import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.type.ObjectStatus
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.now
 import io.github.aakira.napier.Napier
@@ -33,7 +34,9 @@ data class FileInfo(
     val dimension: Dimension?,
     val favoriteId: PrimaryKey? = null,
     val subscriptionId: PrimaryKey? = null,
+    val status: ObjectStatus = ObjectStatus.NORMAL,
 ) : ModelObject {
+    val readOnly get() = status == ObjectStatus.READ_ONLY
     override val objectType: ObjectType
         get() = ObjectType.FILE
 

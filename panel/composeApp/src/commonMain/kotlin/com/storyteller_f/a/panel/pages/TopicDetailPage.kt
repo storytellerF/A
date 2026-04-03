@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Topic
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -29,9 +30,13 @@ import com.storyteller_f.a.app.core.components.CenterBox
 import com.storyteller_f.a.app.core.components.CustomBottomNav
 import com.storyteller_f.a.app.core.components.NavRoute
 import com.storyteller_f.a.app.core.components.StateView
+import com.storyteller_f.a.app.core.components.emitEvent
 import com.storyteller_f.a.app.core.components.pagingItems
+import com.storyteller_f.a.client.core.updateTopicStatus
+import com.storyteller_f.a.panel.LocalPanelGlobalDialog
 import com.storyteller_f.a.panel.LocalPanelNav
 import com.storyteller_f.a.panel.Res
+import com.storyteller_f.a.panel.common.OnTopicStatusUpdated
 import com.storyteller_f.a.panel.common.PanelNav
 import com.storyteller_f.a.panel.common.createPanelTopicTopicsViewModel
 import com.storyteller_f.a.panel.common.createPanelTopicViewModel
@@ -45,6 +50,7 @@ import com.storyteller_f.a.panel.tab_topics
 import com.storyteller_f.a.panel.topic_detail_title_with_info
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.obj.UpdateObjectStatusBody
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -119,6 +125,8 @@ private fun TopicInfoTabs(id: PrimaryKey) {
 @Composable
 private fun TopicBasicInfoSection(id: PrimaryKey) {
     val vm = createPanelTopicViewModel(id)
+    val dialogController = LocalPanelGlobalDialog.current
+    val scope = rememberCoroutineScope()
     StateView(vm.handler, modifier = Modifier.fillMaxSize()) { info ->
         val items = buildList {
             add("id" to info.id.toString())
@@ -136,8 +144,25 @@ private fun TopicBasicInfoSection(id: PrimaryKey) {
             add("isPin" to info.isPin.toString())
             add("lastModifiedTime" to (info.lastModifiedTime?.toString() ?: "null"))
             add("aid" to (info.aid ?: "null"))
+            add("readOnly" to info.readOnly.toString())
         }
-        InfoTable(items, Modifier.padding(16.dp))
+        Column {
+            InfoTable(items, Modifier.padding(16.dp).weight(1f))
+            Button(onClick = {
+                val newValue = !info.readOnly
+                scope.launch {
+                    dialogController.useResult {
+                        context.request {
+                            updateTopicStatus(id, UpdateObjectStatusBody(newValue))
+                        }
+                    }.onSuccess {
+                        dialogController.emitEvent(OnTopicStatusUpdated(id, newValue))
+                    }
+                }
+            }, modifier = Modifier.padding(16.dp)) {
+                Text(if (info.readOnly) "Set to Writable" else "Set to ReadOnly")
+            }
+        }
     }
 }
 

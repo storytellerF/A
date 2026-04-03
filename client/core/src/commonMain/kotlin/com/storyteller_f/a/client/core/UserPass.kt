@@ -25,7 +25,9 @@ interface UserPass {
         encryptedEncryptionPrivateKey: String? = null
     ): Result<Pair<String, String?>>
 
-    suspend fun encryptChildAccount(childAlgoType: AlgoType): Result<CustomApi.Accounts.ChildAccounts.AddChildAccountRequest>
+    suspend fun encryptChildAccount(
+        childAlgoType: AlgoType
+    ): Result<CustomApi.Accounts.ChildAccounts.AddChildAccountRequest>
 }
 
 sealed interface ClientSessionState {

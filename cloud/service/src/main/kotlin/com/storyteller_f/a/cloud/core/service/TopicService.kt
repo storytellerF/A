@@ -760,14 +760,16 @@ suspend fun Backend.updateTopicPin(
     uid: PrimaryKey,
     topicId: PrimaryKey,
     newValue: Boolean,
-) = checkTopicAdminPermission(topicId, uid).mapResultIfNotNull {
+) = checkObjectWritable(ObjectType.TOPIC, topicId).mapResultIfNotNull {
+    checkTopicAdminPermission(topicId, uid)
+}.mapResultIfNotNull {
     database.getRawTopic(ObjectFetch.IdFetch(topicId), uid)
 }.mapResultIfNotNull { rawTopic ->
     val topicInfo = rawTopic.toTopicInfo()
     if (rawTopic.topic.isPin == newValue) {
         Result.success(topicInfo)
     } else {
-        database.topic.updateTopicStatus(topicId, newValue).map { isSuccess ->
+        database.topic.updateTopicPinned(topicId, newValue).map { isSuccess ->
             if (isSuccess) {
                 topicInfo.copy(isPin = newValue)
             } else {

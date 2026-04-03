@@ -4,6 +4,7 @@ import com.storyteller_f.a.backend.core.types.Topic
 import com.storyteller_f.a.backend.exposed.BaseTable
 import com.storyteller_f.a.backend.exposed.customPrimaryKey
 import com.storyteller_f.a.backend.exposed.objectType
+import com.storyteller_f.a.backend.exposed.objectStatus
 import com.storyteller_f.shared.utils.*
 import org.jetbrains.exposed.v1.core.*
 import org.jetbrains.exposed.v1.datetime.datetime
@@ -15,6 +16,7 @@ object Topics : BaseTable() {
     val rootId = customPrimaryKey("root_id").index()
     val rootType = objectType("root_type")
     val pinned = bool("pinned").default(false)
+    val status = objectStatus("status")
     val lastModifiedTime = datetime("last_modified_time").nullable()
     val content = blob("content")
     val isEncrypted = bool("is_encrypted")
@@ -41,6 +43,7 @@ fun Topic.Companion.wrapRow(row: ResultRow): Topic {
             row[pinned],
             row[lastModifiedTime],
             row.getOrNull(Aids.value),
+            row[status],
         )
     }
 }

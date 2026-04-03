@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -31,9 +32,13 @@ import com.storyteller_f.a.app.core.components.CenterBox
 import com.storyteller_f.a.app.core.components.CustomBottomNav
 import com.storyteller_f.a.app.core.components.NavRoute
 import com.storyteller_f.a.app.core.components.StateView
+import com.storyteller_f.a.app.core.components.emitEvent
 import com.storyteller_f.a.app.core.components.pagingItems
+import com.storyteller_f.a.client.core.updateCommunityStatus
+import com.storyteller_f.a.panel.LocalPanelGlobalDialog
 import com.storyteller_f.a.panel.LocalPanelNav
 import com.storyteller_f.a.panel.Res
+import com.storyteller_f.a.panel.common.OnCommunityStatusUpdated
 import com.storyteller_f.a.panel.common.createPanelCommunityMembersViewModel
 import com.storyteller_f.a.panel.common.createPanelCommunityViewModel
 import com.storyteller_f.a.panel.community_detail_title
@@ -41,6 +46,7 @@ import com.storyteller_f.a.panel.community_detail_title_with_info
 import com.storyteller_f.a.panel.components.InfoTable
 import com.storyteller_f.a.panel.tab_basic_info
 import com.storyteller_f.a.panel.tab_members
+import com.storyteller_f.shared.obj.UpdateObjectStatusBody
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -124,6 +130,8 @@ private fun CommunityInfoTabs(id: PrimaryKey) {
 @Composable
 private fun CommunityBasicInfoSection(id: PrimaryKey) {
     val vm = createPanelCommunityViewModel(id)
+    val dialogController = LocalPanelGlobalDialog.current
+    val scope = rememberCoroutineScope()
     StateView(vm.handler, modifier = Modifier.fillMaxSize()) { info ->
         val items = buildList {
             add("id" to info.id.toString())
@@ -138,8 +146,25 @@ private fun CommunityBasicInfoSection(id: PrimaryKey) {
             add("latestTopic" to (info.latestTopic?.toString() ?: "null"))
             add("hasPoster" to info.hasPoster.toString())
             add("font" to (info.font?.name ?: "null"))
+            add("readOnly" to info.readOnly.toString())
         }
-        InfoTable(items, Modifier.padding(16.dp))
+        Column {
+            InfoTable(items, Modifier.padding(16.dp).weight(1f))
+            Button(onClick = {
+                val newValue = !info.readOnly
+                scope.launch {
+                    dialogController.useResult {
+                        context.request {
+                            updateCommunityStatus(id, UpdateObjectStatusBody(newValue))
+                        }
+                    }.onSuccess {
+                        dialogController.emitEvent(OnCommunityStatusUpdated(id, newValue))
+                    }
+                }
+            }, modifier = Modifier.padding(16.dp)) {
+                Text(if (info.readOnly) "Set to Writable" else "Set to ReadOnly")
+            }
+        }
     }
 }
 

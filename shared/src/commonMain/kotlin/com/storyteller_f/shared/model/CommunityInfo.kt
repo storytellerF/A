@@ -1,6 +1,7 @@
 package com.storyteller_f.shared.model
 
 import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
+import com.storyteller_f.shared.type.ObjectStatus
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.now
@@ -26,7 +27,9 @@ data class CommunityInfo(
     val font: FileInfo? = null,
     val favoriteId: PrimaryKey? = null,
     val subscriptionId: PrimaryKey? = null,
+    val status: ObjectStatus = ObjectStatus.NORMAL,
 ) : ModelObject {
+    val readOnly get() = status == ObjectStatus.READ_ONLY
     val isJoined = member != null
     override val objectType: ObjectType
         get() = ObjectType.COMMUNITY

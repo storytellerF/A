@@ -24,7 +24,7 @@ import com.storyteller_f.shared.model.QuotaInfo
 import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TitleSearchType
-import com.storyteller_f.shared.model.TitleStatus
+import com.storyteller_f.shared.model.TitleWorkStatus
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicPinSearch
@@ -595,7 +595,7 @@ suspend fun UserSessionManager.userTitles(
     size: Int,
     searchType: TitleSearchType,
     nextId: String? = null,
-    status: TitleStatus? = null,
+    status: TitleWorkStatus? = null,
     type: TitleType? = null,
     scopeId: PrimaryKey? = null,
 ): Result<ServerResponse<TitleInfo>> = serviceCatching {
@@ -687,7 +687,9 @@ suspend fun UserSessionManager.extractAlbum(mediaId: PrimaryKey) = serviceCatchi
     CustomApi.Files.Id.extractAlbum(CommonPath(mediaId), Unit) {}
 }
 
-suspend fun UserSessionManager.addChildAccount(childAlgoType: com.storyteller_f.shared.model.AlgoType = com.storyteller_f.shared.model.AlgoType.P256): Result<ChildAccountInfo> {
+suspend fun UserSessionManager.addChildAccount(
+    childAlgoType: com.storyteller_f.shared.model.AlgoType = com.storyteller_f.shared.model.AlgoType.P256
+): Result<ChildAccountInfo> {
     val userPass = model.currentUserPass ?: return Result.failure(IllegalStateException("User not authenticated"))
     return serviceCatching {
         val request = userPass.encryptChildAccount(childAlgoType).getOrThrow()

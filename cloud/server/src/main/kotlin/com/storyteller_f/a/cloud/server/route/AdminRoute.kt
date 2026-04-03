@@ -36,6 +36,11 @@ import com.storyteller_f.a.cloud.core.service.uncheckGetTopicsByParentId
 import com.storyteller_f.a.cloud.core.service.uncheckedGetFileRefsByFileId
 import com.storyteller_f.a.cloud.core.service.uncheckedGetRoomMemberInfos
 import com.storyteller_f.a.cloud.core.service.uncheckedSearchFiles
+import com.storyteller_f.a.cloud.core.service.updateCommunityStatus
+import com.storyteller_f.a.cloud.core.service.updateFileStatus
+import com.storyteller_f.a.cloud.core.service.updateRoomStatus
+import com.storyteller_f.a.cloud.core.service.updateTitleStatus
+import com.storyteller_f.a.cloud.core.service.updateTopicStatus
 import com.storyteller_f.a.cloud.core.service.updateUserStatus
 import com.storyteller_f.a.cloud.server.auth.UserSession
 import com.storyteller_f.a.cloud.server.auth.getData
@@ -77,6 +82,11 @@ private fun Route.bindAdminTitleRoutes(backend: Backend) {
     AdminApi.Titles.Id.get(handleResult()) { p ->
         backend.getTitleInfo(p.id)
     }
+    AdminApi.Titles.Id.Status.update(handleResult()) { p, api ->
+        usePrincipal { uid ->
+            backend.updateTitleStatus(p.id, api.receiveBody(), uid)
+        }
+    }
 }
 
 private fun Route.bindAdminCommunityRoutes(backend: Backend) {
@@ -87,6 +97,11 @@ private fun Route.bindAdminCommunityRoutes(backend: Backend) {
     }
     AdminApi.Communities.Id.get(handleResult()) { p ->
         backend.getCommunity(ObjectFetch.IdFetch(p.id), null, null)
+    }
+    AdminApi.Communities.Id.Status.update(handleResult()) { p, api ->
+        usePrincipal { uid ->
+            backend.updateCommunityStatus(p.id, api.receiveBody(), uid)
+        }
     }
     AdminApi.Communities.Id.Members.get(handleResult()) { q, p ->
         q.pagination(IdentifiablePagingGenerator) { f ->
@@ -109,6 +124,11 @@ private fun Route.bindAdminFileRoutes(backend: Backend) {
     AdminApi.Files.Id.get(handleResult()) { p ->
         backend.getFileInfoById(p.id)
     }
+    AdminApi.Files.Id.Status.update(handleResult()) { p, api ->
+        usePrincipal { uid ->
+            backend.updateFileStatus(p.id, api.receiveBody(), uid)
+        }
+    }
     AdminApi.Files.Id.Refs.get(handleResult()) { q, p ->
         q.pagination(IdentifiablePagingGenerator) { f ->
             backend.uncheckedGetFileRefsByFileId(p.id, f)
@@ -124,6 +144,11 @@ private fun Route.bindAdminTopicRoutes(backend: Backend) {
     }
     AdminApi.Topics.Id.get(handleResult()) { p ->
         backend.uncheckGetTopicById(p.id, null)
+    }
+    AdminApi.Topics.Id.Status.update(handleResult()) { p, api ->
+        usePrincipal { uid ->
+            backend.updateTopicStatus(p.id, api.receiveBody(), uid)
+        }
     }
     AdminApi.Topics.Id.Topics.get(handleResult()) { q, p ->
         q.pagination(IdentifiablePagingGenerator) { f ->
@@ -145,6 +170,11 @@ private fun Route.bindAdminRoomRoutes(backend: Backend) {
     }
     AdminApi.Rooms.Id.get(handleResult()) { p ->
         backend.getRoomInfo(ObjectFetch.IdFetch(p.id), null, null)
+    }
+    AdminApi.Rooms.Id.Status.update(handleResult()) { p, api ->
+        usePrincipal { uid ->
+            backend.updateRoomStatus(p.id, api.receiveBody(), uid)
+        }
     }
     AdminApi.Rooms.Id.Members.get(handleResult()) { q, p ->
         q.pagination(IdentifiablePagingGenerator) { f ->

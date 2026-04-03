@@ -104,12 +104,16 @@ suspend fun Backend.checkTopicWritePermission(
     topicId: PrimaryKey,
     uid: PrimaryKey,
 ): Result<RootWritePermission?> = database.getRawTopic(IdFetch(topicId), null).mapResultIfNotNull { topicInfo ->
-    checkRootWritePermission(
-        topicInfo.topic.rootType,
-        topicInfo.topic.rootId,
-        uid
-    ).mapIfNotNull {
-        it.copy(level = topicInfo.topic.level)
+    if (topicInfo.topic.readOnly) {
+        Result.failure(ForbiddenException("topic is read only"))
+    } else {
+        checkRootWritePermission(
+            topicInfo.topic.rootType,
+            topicInfo.topic.rootId,
+            uid
+        ).mapIfNotNull {
+            it.copy(level = topicInfo.topic.level)
+        }
     }
 }
 
@@ -117,7 +121,9 @@ suspend fun Backend.checkRoomWritePermission(
     roomId: PrimaryKey,
     uid: PrimaryKey,
 ): Result<RootWritePermission?> = database.room.getRawRoom(IdFetch(roomId), true, uid).mapResultIfNotNull {
-    if (it.hasJoined) {
+    if (it.room.readOnly) {
+        Result.failure(ForbiddenException("room is read only"))
+    } else if (it.hasJoined) {
         Result.success(RootWritePermission(ObjectType.ROOM, roomId))
     } else {
         Result.failure(ForbiddenException())
@@ -129,7 +135,9 @@ suspend fun Backend.checkCommunityWritePermission(
     uid: PrimaryKey,
 ): Result<RootWritePermission?> =
     database.community.getRawCommunity(IdFetch(communityId), true, uid).mapResultIfNotNull {
-        if (it.hasJoined) {
+        if (it.community.readOnly) {
+            Result.failure(ForbiddenException("community is read only"))
+        } else if (it.hasJoined) {
             Result.success(RootWritePermission(ObjectType.COMMUNITY, communityId))
         } else {
             Result.failure(ForbiddenException())
@@ -167,17 +175,22 @@ suspend fun Backend.checkRootWritePermission(
 suspend fun Backend.checkTopicAdminPermission(
     topicId: PrimaryKey,
     uid: PrimaryKey,
-): Result<RootAdminPermission?> = database.topic.getTopicRootTuple(topicId)
-    .mapResultIfNotNull { (rootId, rootType) ->
-        checkRootAdminPermission(rootType, rootId, uid)
+): Result<RootAdminPermission?> = database.getRawTopic(IdFetch(topicId), null).mapResultIfNotNull { topicInfo ->
+    if (topicInfo.topic.readOnly) {
+        Result.failure(ForbiddenException("topic is read only"))
+    } else {
+        checkRootAdminPermission(topicInfo.topic.rootType, topicInfo.topic.rootId, uid)
     }
+}
 
 suspend fun Backend.checkRoomAdminPermission(
     roomId: PrimaryKey,
     uid: PrimaryKey,
 ): Result<RootAdminPermission?> = database.room.getRawRoom(IdFetch(roomId), true, uid)
     .mapResultIfNotNull {
-        if (it.room.creator == uid) {
+        if (it.room.readOnly) {
+            Result.failure(ForbiddenException("room is read only"))
+        } else if (it.room.creator == uid) {
             Result.success(RootAdminPermission(ObjectType.ROOM, roomId))
         } else {
             Result.failure(ForbiddenException())
@@ -189,7 +202,9 @@ suspend fun Backend.checkCommunityAdminPermission(
     uid: PrimaryKey,
 ): Result<RootAdminPermission?> = database.community.getRawCommunity(IdFetch(communityId))
     .mapResultIfNotNull {
-        if (it.community.owner == uid) {
+        if (it.community.readOnly) {
+            Result.failure(ForbiddenException("community is read only"))
+        } else if (it.community.owner == uid) {
             Result.success(RootAdminPermission(ObjectType.COMMUNITY, communityId))
         } else {
             Result.failure(ForbiddenException())
@@ -222,6 +237,44 @@ suspend fun Backend.checkRootAdminPermission(
         ObjectType.FILE -> Result.failure(ForbiddenException())
         ObjectType.PANEL_ACCOUNT -> Result.failure(ForbiddenException())
     }
+}
+
+suspend fun Backend.checkObjectWritable(
+    objectType: ObjectType,
+    objectId: PrimaryKey,
+): Result<Unit> = when (objectType) {
+    ObjectType.COMMUNITY -> database.community.getRawCommunity(IdFetch(objectId)).mapResult {
+        val community = it ?: return@mapResult Result.success(Unit)
+        if (community.community.readOnly) {
+            Result.failure(
+                ForbiddenException("community is read only")
+            )
+        } else {
+            Result.success(Unit)
+        }
+    }
+
+    ObjectType.ROOM -> database.room.getRawRoom(IdFetch(objectId)).mapResult {
+        val room = it ?: return@mapResult Result.success(Unit)
+        if (room.room.readOnly) Result.failure(ForbiddenException("room is read only")) else Result.success(Unit)
+    }
+
+    ObjectType.TOPIC -> database.topic.getTopic(IdFetch(objectId)).mapResult {
+        val topic = it ?: return@mapResult Result.success(Unit)
+        if (topic.readOnly) Result.failure(ForbiddenException("topic is read only")) else Result.success(Unit)
+    }
+
+    ObjectType.TITLE -> database.title.getTitle(objectId).mapResult {
+        val title = it ?: return@mapResult Result.success(Unit)
+        if (title.title.readOnly) Result.failure(ForbiddenException("title is read only")) else Result.success(Unit)
+    }
+
+    ObjectType.FILE -> database.file.getFileRecordByIds(listOf(objectId)).mapResult {
+        val fileRecord = it.firstOrNull() ?: return@mapResult Result.success(Unit)
+        if (fileRecord.readOnly) Result.failure(ForbiddenException("file is read only")) else Result.success(Unit)
+    }
+
+    ObjectType.USER, ObjectType.PANEL_ACCOUNT -> Result.success(Unit)
 }
 
 /**

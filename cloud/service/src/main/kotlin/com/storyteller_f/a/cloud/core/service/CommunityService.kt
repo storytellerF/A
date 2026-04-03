@@ -281,6 +281,8 @@ suspend fun Backend.updateCommunity(
     return checkCommunityAdminPermission(id, uid).mapResultIfNotNull {
         checkBeforeUpdateCommunity(newCommunity)
     }.mapResultIfNotNull {
+        checkObjectWritable(ObjectType.COMMUNITY, id)
+    }.mapResultIfNotNull {
         database.community.updateCommunity(id, newCommunity).errorIfFalse {
             CustomBadRequestException("update failed")
         }

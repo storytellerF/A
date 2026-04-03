@@ -24,7 +24,9 @@ suspend fun Backend.addReaction(
     userId: PrimaryKey,
     topicId: PrimaryKey,
     emojiText: String
-) = checkTopicWritePermission(topicId, userId).mapResultIfNotNull {
+) = checkObjectWritable(ObjectType.TOPIC, topicId).mapResultIfNotNull {
+    checkTopicWritePermission(topicId, userId)
+}.mapResultIfNotNull {
     database.reaction.getReactionInfo(userId, topicId, emojiText)
         .mapResult { oldReaction ->
             if (oldReaction != null && oldReaction.hasReacted) {
@@ -86,11 +88,13 @@ suspend fun deleteReaction(
 ): Result<ReactionInfo?> {
     val emoji = deleteReaction.emoji
     return if (isEmoji(emoji)) {
-        backend.database.reaction.deleteReaction(uid, emoji, p.id).mapResult {
-            if (it) {
-                backend.database.reaction.statsReactionRecord(p.id, emoji, ObjectType.TOPIC)
-            } else {
-                UNIT_RESULT
+        backend.checkObjectWritable(ObjectType.TOPIC, p.id).mapResultIfNotNull {
+            backend.database.reaction.deleteReaction(uid, emoji, p.id).mapResult {
+                if (it) {
+                    backend.database.reaction.statsReactionRecord(p.id, emoji, ObjectType.TOPIC)
+                } else {
+                    UNIT_RESULT
+                }
             }
         }
     } else {

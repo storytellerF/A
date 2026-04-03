@@ -49,6 +49,7 @@ import com.storyteller_f.shared.obj.PresetTopic
 import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.obj.UpdateRoomBody
 import com.storyteller_f.shared.obj.UpdateUserBody
+import com.storyteller_f.shared.type.ObjectStatus
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.associateByPair
@@ -344,7 +345,8 @@ interface TopicDatabase {
     suspend fun saveEncryptedTopic(topic: Topic, content: TopicContent.Encrypted): Result<Unit>
     suspend fun savePlainTopic(topic: Topic, content: TopicContent.Plain, fileRefs: List<FileRef>): Result<Unit>
 
-    suspend fun updateTopicStatus(topicId: PrimaryKey, newValue: Boolean): Result<Boolean>
+    suspend fun updateTopicPinned(topicId: PrimaryKey, newValue: Boolean): Result<Boolean>
+    suspend fun updateTopicStatus(topicId: PrimaryKey, status: ObjectStatus): Result<Boolean>
     suspend fun getTopicList(primaryKeyFetch: PrimaryKeyFetch): Result<List<Topic>>
     suspend fun getTopicCommentCount(topicIdList: List<PrimaryKey>,): Result<List<Pair<Long, Long>>>
 
@@ -458,6 +460,7 @@ interface TitleDatabase {
     suspend fun getAllRawTitles(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<RawTitle>>
     suspend fun getTitleCount(): Result<Long>
     suspend fun getTitle(id: PrimaryKey): Result<RawTitle?>
+    suspend fun updateTitleStatus(id: PrimaryKey, status: ObjectStatus): Result<Boolean>
 }
 
 interface CommunityDatabase {
@@ -482,6 +485,7 @@ interface CommunityDatabase {
      * name 为null 或者空字符串时不更新，icon，poster 为null时不更新
      */
     suspend fun updateCommunity(id: PrimaryKey, body: UpdateCommunityBody): Result<Boolean>
+    suspend fun updateCommunityStatus(id: PrimaryKey, status: ObjectStatus): Result<Boolean>
     suspend fun getCommunityCount(): Result<Long>
 }
 
@@ -511,6 +515,7 @@ interface RoomDatabase {
 
     suspend fun getRoomList(objectListFetch: ObjectListFetch): Result<List<Room>>
     suspend fun updateRoom(id: PrimaryKey, body: UpdateRoomBody): Result<Boolean>
+    suspend fun updateRoomStatus(id: PrimaryKey, status: ObjectStatus): Result<Boolean>
     suspend fun getPrivateRoomCount(): Result<Long>
     suspend fun getPublicRoomCount(): Result<Long>
     suspend fun getPrivateRoomPaginationResult(
@@ -553,6 +558,7 @@ interface FileDatabase {
 
     suspend fun getFileCount(): Result<Long>
     suspend fun getFileVolume(): Result<Long>
+    suspend fun updateFileStatus(id: PrimaryKey, status: ObjectStatus): Result<Boolean>
 
     suspend fun getUploadRecordPaginationList(
         uid: PrimaryKey,

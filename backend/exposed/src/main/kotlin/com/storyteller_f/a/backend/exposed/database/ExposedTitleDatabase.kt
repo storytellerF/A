@@ -13,11 +13,13 @@ import com.storyteller_f.a.backend.exposed.tables.Titles
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleType
+import com.storyteller_f.shared.type.ObjectStatus
 import com.storyteller_f.shared.type.PrimaryKey
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.r2dbc.Query
 import org.jetbrains.exposed.v1.r2dbc.andWhere
 import org.jetbrains.exposed.v1.r2dbc.selectAll
+import org.jetbrains.exposed.v1.r2dbc.update
 
 class ExposedTitleDatabase(val exposedDatabaseSession: ExposedDatabaseSession) : TitleDatabase {
     override suspend fun getTitlePaginationResult(
@@ -80,6 +82,12 @@ class ExposedTitleDatabase(val exposedDatabaseSession: ExposedDatabaseSession) :
             }
         }.getOrThrow()
         list.firstOrNull()?.let { RawTitle(it) }
+    }
+
+    override suspend fun updateTitleStatus(id: PrimaryKey, status: ObjectStatus) = exposedDatabaseSession.dbQuery {
+        Titles.update({ Titles.id eq id }) {
+            it[Titles.status] = status
+        } > 0
     }
 
     private suspend fun getTitleListByPredicate(

@@ -2,6 +2,7 @@ package com.storyteller_f.shared.model
 
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.type.ObjectStatus
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
 
@@ -19,7 +20,9 @@ data class TitleInfo(
     val extension: Extension? = null,
     val favoriteId: PrimaryKey? = null,
     val subscriptionId: PrimaryKey? = null,
+    val status: ObjectStatus = ObjectStatus.NORMAL,
 ) : ModelObject {
+    val readOnly get() = status == ObjectStatus.READ_ONLY
     override val objectType: ObjectType
         get() = ObjectType.TITLE
 
@@ -40,7 +43,7 @@ enum class TitleType {
     JOIN,
 }
 
-enum class TitleStatus {
+enum class TitleWorkStatus {
     OK,
     EXPIRED
 }

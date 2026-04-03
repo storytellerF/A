@@ -4,6 +4,7 @@ import com.storyteller_f.a.backend.core.types.FileRecord
 import com.storyteller_f.a.backend.exposed.BaseTable
 import com.storyteller_f.a.backend.exposed.customPrimaryKey
 import com.storyteller_f.a.backend.exposed.objectType
+import com.storyteller_f.a.backend.exposed.objectStatus
 import org.jetbrains.exposed.v1.core.*
 
 object FileRecords : BaseTable() {
@@ -16,6 +17,7 @@ object FileRecords : BaseTable() {
     val ownerType = objectType("owner_type")
     val contentType = varchar("content_type", 50)
     val size = long("size")
+    val status = objectStatus("status")
 
     init {
         index("files-main", true, owner, name)
@@ -38,7 +40,8 @@ fun FileRecord.Companion.wrapRow(resultRow: ResultRow): FileRecord {
             resultRow[ownerType],
             resultRow[contentType],
             resultRow[size],
-            resultRow[fullName]
+            resultRow[fullName],
+            resultRow[status]
         )
     }
 }

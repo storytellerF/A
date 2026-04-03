@@ -156,7 +156,9 @@ private suspend fun Backend.searchFilesByWord(
 
 @OptIn(ExperimentalUuidApi::class)
 suspend fun Backend.extractAlbum(fileRecordId: PrimaryKey, root: File, uid: PrimaryKey) =
-    database.file.getFileRecordByIds(listOf(fileRecordId))
+    checkObjectWritable(ObjectType.FILE, fileRecordId).mapResultIfNotNull {
+        database.file.getFileRecordByIds(listOf(fileRecordId))
+    }
         .mapResultIfNotNull { fileRecords ->
             val fileRecord = fileRecords.first()
             if (fileRecord.owner != uid) {
@@ -295,17 +297,18 @@ suspend fun Backend.getFileInfoById(id: PrimaryKey, uid: PrimaryKey? = null): Re
     }.mapIfNotNull { it.firstOrNull() }
 
 suspend fun Backend.tryCopyFile(p: CommonPath, uid: PrimaryKey): Result<ServerResponse<FileInfo>?> =
-    database.file.getFileRecordByIds(listOf(p.id)).firstOrNull().mapResultIfNotNull { fileRecord ->
-        checkRootReadPermission(
-            fileRecord.ownerType,
-            fileRecord.owner,
-            uid
-        ).mapResultIfNotNull { permission ->
-            if (permission.hasRead) {
-                // 检查重复媒体
-                Result.success(fileRecord)
-            } else {
-                Result.failure(ForbiddenException())
+    checkObjectWritable(ObjectType.FILE, p.id).mapResultIfNotNull {
+        database.file.getFileRecordByIds(listOf(p.id)).firstOrNull().mapResultIfNotNull { fileRecord ->
+            checkRootReadPermission(
+                fileRecord.ownerType,
+                fileRecord.owner,
+                uid
+            ).mapResultIfNotNull { permission ->
+                if (permission.hasRead) {
+                    Result.success(fileRecord)
+                } else {
+                    Result.failure(ForbiddenException())
+                }
             }
         }
     }.mapResultIfNotNull { fileRecord ->

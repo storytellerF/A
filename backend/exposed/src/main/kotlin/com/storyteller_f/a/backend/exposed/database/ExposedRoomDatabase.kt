@@ -26,6 +26,7 @@ import com.storyteller_f.a.backend.exposed.tables.findRoomById
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.UserPubKeyInfo
 import com.storyteller_f.shared.obj.UpdateRoomBody
+import com.storyteller_f.shared.type.ObjectStatus
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapIfNotNull
@@ -232,6 +233,12 @@ class ExposedRoomDatabase(
         }).all {
             it()
         }
+    }
+
+    override suspend fun updateRoomStatus(id: PrimaryKey, status: ObjectStatus) = databaseSession.dbQuery {
+        Rooms.update({ Rooms.id eq id }) {
+            it[Rooms.status] = status
+        } > 0
     }
 
     override suspend fun getPrivateRoomCount() = databaseSession.dbSearch {
