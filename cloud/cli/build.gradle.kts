@@ -19,6 +19,8 @@ dependencies {
     implementation(projects.cloud.service)
     implementation(libs.napier)
     implementation(libs.kotlinx.cli)
+    implementation(libs.jackson.module.kotlin)
+    implementation(libs.jackson.dataformat.yaml)
     implementation(libs.cryptography.provider.jdk)
     implementation(libs.tika.core)
     implementation(libs.bundles.ktor.server.client)

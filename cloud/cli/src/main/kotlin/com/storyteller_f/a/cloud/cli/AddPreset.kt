@@ -1,5 +1,9 @@
 package com.storyteller_f.a.cloud.cli
 
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.InsertCommunityTuple
@@ -63,9 +67,16 @@ import kotlinx.cli.Subcommand
 import kotlinx.coroutines.runBlocking
 import kotlinx.io.readByteArray
 import kotlinx.serialization.json.Json
+import java.io.BufferedInputStream
+import java.io.BufferedOutputStream
 import java.io.File
 import java.io.RandomAccessFile
+import java.nio.file.FileSystems
+import java.nio.file.Paths
 import java.security.MessageDigest
+import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
+import java.util.zip.ZipOutputStream
 import kotlin.system.exitProcess
 
 class EncryptedTopicTuple(
@@ -83,6 +94,17 @@ data class UserPresetTuple(
     val id: PrimaryKey,
     val algoType: AlgoType
 )
+
+internal data class DownloadConfig(
+    val name: String,
+    val link: String,
+    val hash: String,
+    val excludeArchiveEntries: List<String> = emptyList(),
+)
+
+private val yamlMapper: ObjectMapper = ObjectMapper(YAMLFactory())
+    .registerKotlinModule()
+    .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
 @Suppress("LargeClass")
 @OptIn(ExperimentalCli::class)
@@ -254,36 +276,7 @@ class AddPreset : Subcommand("add", "add entry") {
         p: String,
         parentDir: File?,
         client: HttpClient
-    ): File? = if (p.endsWith("download")) {
-        val path = File(parentDir, p)
-        val lines = path.readLines()
-        if (lines.size >= 3) {
-            val name = lines.first()
-            val link = lines[1]
-            val hash = lines[2]
-            val realPath = File(parentDir, "download/$name")
-            if (realPath.exists()) {
-                if (hash.startsWith("sha256:")) {
-                    val calculatedSha = sha256File(realPath)
-                    val hashValue = hash.removePrefix("sha256:")
-                    Napier.i {
-                        "calculated $name sha $calculatedSha, real $hashValue"
-                    }
-                    if (calculatedSha != hashValue) {
-                        downloadWithResume(link, realPath, client)
-                    }
-                }
-            } else {
-                downloadWithResume(link, realPath, client)
-            }
-
-            realPath
-        } else {
-            null
-        }
-    } else {
-        File(parentDir, p)
-    }
+    ): File? = downloadPresetFileIfNeed(p, parentDir, client)
 
     private suspend fun Backend.addRooms(presetValue: PresetValue, parentDir: File) {
         val presetRooms = presetValue.roomData ?: return
@@ -954,7 +947,9 @@ suspend fun downloadWithResume(
     }
 
     val status = response.status.value
-    println("HTTP status: $status")
+    Napier.i {
+        "download status $status"
+    }
 
     val body = response.bodyAsChannel()
 
@@ -972,9 +967,126 @@ suspend fun downloadWithResume(
     }
 }
 
+internal fun isDownloadConfigPath(path: String): Boolean {
+    return path.endsWith("download") || path.endsWith(".download.yaml") || path.endsWith(".download.yml")
+}
+
+internal fun parseDownloadConfig(path: File): DownloadConfig? {
+    val text = path.readText()
+    return runCatching {
+        yamlMapper.readValue(text, DownloadConfig::class.java)
+    }.getOrElse {
+        val lines = text.lineSequence().map { it.trim() }.filter { it.isNotEmpty() }.toList()
+        if (lines.size >= 3) {
+            DownloadConfig(name = lines[0], link = lines[1], hash = lines[2])
+        } else {
+            null
+        }
+    }
+}
+
+internal suspend fun downloadPresetFileIfNeed(
+    path: String,
+    parentDir: File?,
+    client: HttpClient
+): File? = if (isDownloadConfigPath(path)) {
+    val configFile = File(parentDir, path)
+    val config = parseDownloadConfig(configFile)
+    if (config != null) {
+        val realPath = File(parentDir, "download/${config.name}")
+        if (realPath.exists()) {
+            if (config.hash.startsWith("sha256:")) {
+                val calculatedSha = sha256File(realPath)
+                val hashValue = config.hash.removePrefix("sha256:")
+                Napier.i {
+                    "calculated ${config.name} sha $calculatedSha, real $hashValue"
+                }
+                if (calculatedSha != hashValue) {
+                    downloadWithResume(config.link, realPath, client)
+                }
+            }
+        } else {
+            downloadWithResume(config.link, realPath, client)
+        }
+
+        repackArchiveWithExclusionsInPlace(realPath, config.excludeArchiveEntries)
+    } else {
+        null
+    }
+} else {
+    File(parentDir, path)
+}
+
+private fun shouldExcludeEntry(relativePath: String, excludeGlobs: List<String>): Boolean {
+    val normalized = relativePath.replace('\\', '/')
+    return excludeGlobs.any { pattern ->
+        val matcher = FileSystems.getDefault().getPathMatcher("glob:${pattern.trim()}")
+        matcher.matches(Paths.get(normalized))
+    }
+}
+
+private fun unzipToDirectory(zipFile: File, outputDir: File) {
+    ZipInputStream(BufferedInputStream(zipFile.inputStream())).use { zis ->
+        while (true) {
+            val entry = zis.nextEntry ?: break
+            val target = File(outputDir, entry.name)
+            if (entry.isDirectory) {
+                target.mkdirs()
+            } else {
+                target.parentFile?.mkdirs()
+                BufferedOutputStream(target.outputStream()).use { output ->
+                    zis.copyTo(output)
+                }
+            }
+            zis.closeEntry()
+        }
+    }
+}
+
+private fun zipDirectoryWithFilter(sourceDir: File, targetZip: File, excludeGlobs: List<String>) {
+    ZipOutputStream(BufferedOutputStream(targetZip.outputStream())).use { zos ->
+        sourceDir.walkTopDown().filter { it.isFile }.forEach { file ->
+            val relative = sourceDir.toPath().relativize(file.toPath()).toString().replace('\\', '/')
+            if (shouldExcludeEntry(relative, excludeGlobs)) {
+                return@forEach
+            }
+            zos.putNextEntry(ZipEntry(relative))
+            BufferedInputStream(file.inputStream()).use { input ->
+                input.copyTo(zos)
+            }
+            zos.closeEntry()
+        }
+    }
+}
+
+internal fun repackArchiveWithExclusionsInPlace(zipFile: File, excludeGlobs: List<String>): File {
+    if (excludeGlobs.isEmpty() || !zipFile.name.endsWith(".zip", ignoreCase = true)) {
+        return zipFile
+    }
+    val parent = zipFile.parentFile ?: return zipFile
+    val extractDir = File(parent, ".${zipFile.name}.extract-${System.currentTimeMillis()}")
+    val tempZip = File(parent, ".${zipFile.name}.filtered.tmp")
+    try {
+        unzipToDirectory(zipFile, extractDir)
+        zipDirectoryWithFilter(extractDir, tempZip, excludeGlobs)
+        if (!zipFile.delete()) {
+            throw IllegalStateException("failed to delete original archive ${zipFile.absolutePath}")
+        }
+        if (!tempZip.renameTo(zipFile)) {
+            throw IllegalStateException("failed to replace archive ${zipFile.absolutePath}")
+        }
+        return zipFile
+    } finally {
+        extractDir.deleteRecursively()
+        if (tempZip.exists()) {
+            tempZip.delete()
+        }
+    }
+}
+
 fun sha256File(file: File): String {
     val digest = MessageDigest.getInstance("SHA-256")
-    file.inputStream().use { fis ->
+    BufferedInputStream(file.inputStream()).use { fis ->
         val buffer = ByteArray(8192)
         var read = fis.read(buffer)
         while (read != -1) {
