@@ -52,6 +52,7 @@ haze = "1.7.2"
 highlights = "1.1.0"
 humanReadable = "1.12.3"
 jacksonModuleKotlin = "2.21.1"
+jacksonDataformatYaml = "2.21.1"
 javacvPlatform = "1.5.13"
 javet = "5.0.5"
 jlatexmath = "1.0.7"
@@ -266,6 +267,7 @@ h2 = { module = "io.r2dbc:r2dbc-h2", version.ref = "h2" }
 highlights = { module = "dev.snipme:highlights", version.ref = "highlights" }
 human-readable = { module = "nl.jacobras:Human-Readable", version.ref = "humanReadable" }
 jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jacksonModuleKotlin" }
+jackson-dataformat-yaml = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml", version.ref = "jacksonDataformatYaml" }
 
 jlatexmath = { module = "org.scilab.forge:jlatexmath", version.ref = "jlatexmath" }
 jlatexmath-android = { module = "ru.noties:jlatexmath-android", version.ref = "jlatexmathAndroid" }
