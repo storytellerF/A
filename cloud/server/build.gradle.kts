@@ -80,6 +80,7 @@ dependencies {
     }
     testImplementation(libs.commons.imaging)
     testImplementation(projects.cloud.worker)
+    testImplementation(projects.cloud.cli)
 }
 
 tasks.test {

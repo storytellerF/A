@@ -128,21 +128,25 @@ class AddPreset : Subcommand("add", "add entry") {
 
         val parentDir = jsonFile.parentFile.canonicalFile
         runBlocking {
-            when (val type = presetValue.type) {
-                "community" -> connected.addCommunities(presetValue, parentDir)
-                "user" -> connected.addUsers(presetValue, parentDir)
-                "topic" -> connected.addTopics(presetValue, parentDir)
-                "room" -> connected.addRooms(presetValue, parentDir)
-                "file" -> connected.addFiles(presetValue, parentDir)
-                "title" -> connected.addTitles(presetValue)
-                "panelAccount" -> connected.addPanels(presetValue, parentDir)
-                else -> {
-                    println("unrecognized type $type")
-                    exitProcess(2)
-                }
-            }
+            connected.applyPresetByValue(presetValue, parentDir)
             Napier.i {
                 "add done ${jsonFile.canonicalPath}"
+            }
+        }
+    }
+
+    suspend fun Backend.applyPresetByValue(presetValue: PresetValue, parentDir: File) {
+        when (val type = presetValue.type) {
+            "community" -> addCommunities(presetValue, parentDir)
+            "user" -> addUsers(presetValue, parentDir)
+            "topic" -> addTopics(presetValue, parentDir)
+            "room" -> addRooms(presetValue, parentDir)
+            "file" -> addFiles(presetValue, parentDir)
+            "title" -> addTitles(presetValue)
+            "panelAccount" -> addPanels(presetValue, parentDir)
+            else -> {
+                Napier.e { "unrecognized type $type" }
+                exitProcess(2)
             }
         }
     }
@@ -930,6 +934,12 @@ class AddPreset : Subcommand("add", "add entry") {
             tuple.algoType,
             notificationId
         )
+    }
+}
+
+suspend fun Backend.applyPreset(presetValue: PresetValue, parentDir: File) {
+    AddPreset().run {
+        applyPresetByValue(presetValue, parentDir)
     }
 }
 
