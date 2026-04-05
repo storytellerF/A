@@ -11,7 +11,6 @@ import com.storyteller_f.a.app.core.startPlayMedia
 import com.storyteller_f.shared.appContextRef
 import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.loadCryptoLibIfNeed
-import com.storyteller_f.shared.setupKmpLogger
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import org.schabi.newpipe.NewPipeDownloaderImpl
@@ -32,7 +31,7 @@ class AApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        setupKmpLogger()
+        setupAppLogger(this)
         StrictMode.setVmPolicy(
             StrictMode.VmPolicy.Builder(StrictMode.getVmPolicy())
                 .detectLeakedClosableObjects()

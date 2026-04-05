@@ -45,15 +45,26 @@ if [ "$RUN_ALL" = true ]; then
 fi
 
 shutdownEmu() {
-    echo "Shutting down emulator gracefully..."
-    adb emu kill || true
-    echo "Emulator shut down."
+#    echo "Shutting down emulator gracefully..."
+#    adb emu kill || true
+#    echo "Emulator shut down."
+  echo "Emulator shutdown skipped (not implemented)"
 }
 
 setupAvd() {
     echo "Setting up Android Emulator..."
     ./scripts/android_scripts/create-avd.sh device-test "system-images;android-36;google_apis;x86_64" "pixel"
     ./scripts/android_scripts/start-avd.sh device-test
+}
+
+copyAppiumLogsToBuild() {
+  src_dir="dev/appium/build/test/appium-logs"
+  dest_dir="build/test/appium-logs"
+  if [ -d "$src_dir" ]; then
+    mkdir -p "$dest_dir"
+    cp -R "$src_dir"/. "$dest_dir"/
+    echo "Copied Appium logs to $dest_dir"
+  fi
 }
 
 cleanup() {
@@ -94,7 +105,12 @@ fi
 if [ "$RUN_APPIUM" = true ]; then
     echo "Running Appium Tests..."
     ./gradlew :dev:appium:clean --no-daemon $GRADLE_CONSOLE_ARGS
-    ./gradlew :dev:appium:test --no-daemon -Pappium=true $TEST_ARGS $GRADLE_CONSOLE_ARGS
+  appium_exit=0
+  ./gradlew :dev:appium:test --no-daemon -Pappium=true $TEST_ARGS $GRADLE_CONSOLE_ARGS || appium_exit=$?
+  copyAppiumLogsToBuild
+  if [ "$appium_exit" -ne 0 ]; then
+    exit "$appium_exit"
+  fi
 fi
 #./gradlew :composeApp:wasmJsTest
 #./gradlew :composeApp:iosSimulatorArm64Test

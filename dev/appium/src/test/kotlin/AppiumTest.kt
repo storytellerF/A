@@ -25,6 +25,26 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
+private const val appLogFileName = "appium-app.log"
+private val applicationIdRegex = Regex("\"applicationId\"\\s*:\\s*\"([^\"]+)\"")
+private val appLogLookupScript = """
+    for path in \
+        ./files/logs/$appLogFileName \
+        files/logs/$appLogFileName \
+        /data/user/0/${'$'}0/files/logs/$appLogFileName \
+        /data/data/${'$'}0/files/logs/$appLogFileName
+    do
+        if [ -f "${'$'}path" ]; then
+            cat "${'$'}path"
+            exit 0
+        fi
+    done
+    echo "log file not found for package: ${'$'}0" 1>&2
+    pwd 1>&2
+    find . -maxdepth 4 -name "$appLogFileName" 2>/dev/null 1>&2
+    exit 1
+""".trimIndent()
+
 class AppiumTest {
     @get:Rule
     val name = TestName()
@@ -108,6 +128,7 @@ class AppiumTest {
                                 } catch (e: Exception) {
                                     println(e)
                                 }
+                                copyAppLogToBuild(name.methodName)
                                 driver.quit()
                             }
                         }
@@ -191,6 +212,50 @@ private fun bindAndroidReverse(hostPort: Int, devicePort: Int) {
             "Failed to execute forward-android-devices.sh"
         }
     }
+}
+
+private fun copyAppLogToBuild(testName: String) {
+    val outputDir = File("build/test/appium-logs/AppiumTest")
+    outputDir.mkdirs()
+    val outputFile = File(outputDir, "$testName.log")
+    val packageName = resolveAppPackageName()
+    val process = ProcessBuilder(
+        "adb",
+        "exec-out",
+        "run-as",
+        packageName,
+        "sh",
+        "-c",
+        appLogLookupScript,
+        packageName
+    )
+        .redirectErrorStream(true)
+        .start()
+    val output = process.inputStream.readBytes()
+    val exitCode = process.waitFor()
+    if (exitCode == 0) {
+        outputFile.writeBytes(output)
+    } else {
+        outputFile.writeBytes(output)
+    }
+}
+
+private fun resolveAppPackageName(): String {
+    val metadataCandidates = sequenceOf(
+        File("../../app/android/build/outputs/apk/debug/output-metadata.json"),
+        File("app/android/build/outputs/apk/debug/output-metadata.json")
+    )
+    val metadataFile = metadataCandidates.firstOrNull { it.exists() }
+    if (metadataFile != null) {
+        val content = metadataFile.readText()
+        val applicationId = applicationIdRegex.find(content)?.groupValues?.getOrNull(1)
+        if (!applicationId.isNullOrBlank()) {
+            return applicationId
+        }
+    }
+
+    val flavor = parseEnvFile(File("../../gradle.properties"))["server.flavor"].orEmpty().ifBlank { "dev" }
+    return "com.storyteller_f.a.app.${flavor.replace('-', '_')}.debug"
 }
 
 private fun assertElementVisible(driver: AndroidDriver, selector: String) {
