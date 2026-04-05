@@ -106,6 +106,34 @@ class AppiumTest {
         }
     }
 
+    @Test
+    fun `test publish topic in user space`() = runTest(timeout = 10.minutes) {
+        loadCryptoLibIfNeed()
+        var injectedSession: InjectedSession? = null
+        val topicContent = "appium-user-space-topic-${System.currentTimeMillis()}"
+        runAppiumTest(
+            launchInstalledApp = true,
+            beforeDriverLaunch = { hostServerPort, packageName ->
+                val injected = createPreRegisteredSession(hostServerPort)
+                injectedSession = injected
+                val sessionJson = buildInjectedSessionJson(injected)
+                pushInjectedSessionToPrivateDir(packageName, sessionJson)
+            }
+        ) { driver ->
+            val session = checkNotNull(injectedSession) { "Injected session should be initialized" }
+            clickElement(driver, """new UiSelector().description("avatar")""")
+            clickElement(driver, """new UiSelector().text("ad: ${session.address}")""")
+            clickElement(driver, """new UiSelector().description("add topic")""")
+            inputElement(
+                driver,
+                """new UiSelector().className("android.widget.EditText")""",
+                topicContent
+            )
+            clickElement(driver, """new UiSelector().description("submit")""")
+            assertElementVisible(driver, """new UiSelector().text("$topicContent")""")
+        }
+    }
+
     @OptIn(ExperimentalUuidApi::class)
     private suspend fun runAppiumTest(
         launchInstalledApp: Boolean = false,
