@@ -10,3 +10,7 @@ actual fun buildSessionHistoryFactory(settings: Settings): SessionHistoryManager
 actual fun createSettings(name: String): Settings {
     return PreferencesSettings.Factory().create(name)
 }
+
+actual fun readInjectedSessionFromPrivateStorageOrNull(): ConvertedRawUserPassInfo? {
+    return null
+}

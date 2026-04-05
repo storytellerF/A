@@ -12,6 +12,7 @@ import com.storyteller_f.a.client.core.RawUserPassInfo
 import com.storyteller_f.a.client.core.SessionManager
 import com.storyteller_f.a.client.core.UserPass
 import com.storyteller_f.shared.model.AlgoType
+import io.github.aakira.napier.Napier
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 
@@ -104,6 +105,8 @@ expect fun buildSessionHistoryFactory(settings: Settings): SessionHistoryManager
 
 expect fun createSettings(name: String = "a-default"): Settings
 
+expect fun readInjectedSessionFromPrivateStorageOrNull(): ConvertedRawUserPassInfo?
+
 fun <U> SessionManager<U>.restoreFromStorage(settings: Settings) {
     val sessionFactory = buildSessionHistoryFactory(settings)
     val (alias, history) = sessionFactory.getSavedSession()
@@ -112,8 +115,15 @@ fun <U> SessionManager<U>.restoreFromStorage(settings: Settings) {
         val session = sessionFactory.buildSession(current)
         if (session != null) {
             model.updateState(ClientSessionState.Success(session))
+            return
         }
     }
+
+    Napier.d("No valid session found in storage, trying to read injected session")
+    val injected = readInjectedSessionFromPrivateStorageOrNull() ?: return
+    Napier.d("Found injected session, restoring...")
+    val userPass = RawUserPass(injected.toRawUserPassInfo())
+    model.updateState(ClientSessionState.Success(userPass))
 }
 
 @Serializable
