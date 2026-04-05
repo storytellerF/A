@@ -48,8 +48,6 @@ volumes:
     external: true
   bash_history:
   gradle_data:
-    name: gradle_data
-    external: true
   konan_data:
   m2_data:
   chrome_cache:
