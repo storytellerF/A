@@ -9,16 +9,17 @@ NC='\033[0m'          # 无色 (reset)
 
 # 检查是否提供了端口参数
 if [ -z "$1" ]; then
-  echo -e "${RED}❌ Please provide a port number.${NC}"
+  echo -e "${RED}❌ Please provide a device port number.${NC}"
   exit 1
 fi
 
-PORT=$1
+DEVICE_PORT=$1
+HOST_PORT=${2:-$DEVICE_PORT}
 
 # 遍历所有已连接的设备并设置端口转发
 for device in $(adb devices | grep -w 'device' | cut -f1); do
-  echo -e "${CYAN}🔗 Setting up port forwarding for device ${YELLOW}$device${NC} on port ${GREEN}$PORT${NC}"
-  adb -s "$device" reverse tcp:"$PORT" tcp:"$PORT"
+  echo -e "${CYAN}🔗 Setting up port forwarding for device ${YELLOW}$device${NC}: device ${GREEN}$DEVICE_PORT${NC} -> host ${GREEN}$HOST_PORT${NC}"
+  adb -s "$device" reverse tcp:"$DEVICE_PORT" tcp:"$HOST_PORT"
 done
 
-echo -e "${GREEN}✅ Port forwarding setup complete on port $PORT!${NC}"
+echo -e "${GREEN}✅ Port forwarding setup complete: device $DEVICE_PORT -> host $HOST_PORT!${NC}"

@@ -14,7 +14,7 @@ import com.storyteller_f.shared.model.ReactionRecordInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TitleSearchType
-import com.storyteller_f.shared.model.TitleStatus
+import com.storyteller_f.shared.model.TitleWorkStatus
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UploadRecordInfo
@@ -81,7 +81,7 @@ sealed interface TitleCollection {
     data class SearchTitle(
         val uid: PrimaryKey,
         val searchType: TitleSearchType,
-        val status: TitleStatus? = null,
+        val status: TitleWorkStatus? = null,
         val type: TitleType? = null,
         val scopeId: PrimaryKey? = null,
     ) : TitleCollection

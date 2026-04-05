@@ -2,9 +2,10 @@ services:
   main:
     build:
       context: ..
-      dockerfile: ./dev.Dockerfile
+      dockerfile: .devcontainer/dev.Dockerfile
       args:
         - USER_NAME=${CONTAINER_USERNAME}
+        - USE_CN_MIRROR=true
     ports:
       - "6080" # noVNC web interface
       - "5901" # VNC direct connection
@@ -21,10 +22,9 @@ services:
       - ../../AData:/workspace/AData:cached
       - ./logs:${CONTAINER_HOME}/log/supervisor
       - ./data/authorized_keys:${CONTAINER_HOME}/.ssh/authorized_keys
-      - ~/.gradle/gradle.properties:${CONTAINER_HOME}/gradle.properties
       - avd_data:${CONTAINER_HOME}/.android/avd
       - sdk_data:${CONTAINER_HOME}/Android/Sdk
-      - bash_history:${CONTAINER_HOME}/.android-in-docker/.bash_history
+      - bash_history:${CONTAINER_HOME}/.desktop-in-docker/.bash_history
       - gradle_data:${CONTAINER_HOME}/.gradle
       - konan_data:${CONTAINER_HOME}/.konan
       - m2_data:${CONTAINER_HOME}/.m2
@@ -33,11 +33,13 @@ services:
       - google_cache:${CONTAINER_HOME}/.cache/Google
       - google_config:${CONTAINER_HOME}/.config/Google
       - google_local:${CONTAINER_HOME}/.local/share/Google
-      - antigravity_config:${CONTAINER_HOME}/.config/Antigravity
-      - gemini_data:${CONTAINER_HOME}/.gemini
-      - antigravity_data:${CONTAINER_HOME}/.antigravity
+      - vscode_data:${CONTAINER_HOME}/.vscode
+      - vscode_config:${CONTAINER_HOME}/.config/Code
     shm_size: '2gb' # Allocate more shared memory
-    privileged: true # Enable KVM acceleration and more privileged
+    devices:
+      - /dev/kvm
+    security_opt:
+      - seccomp:unconfined
 
 volumes:
   avd_data:
@@ -46,6 +48,8 @@ volumes:
     external: true
   bash_history:
   gradle_data:
+    name: gradle_data
+    external: true
   konan_data:
   m2_data:
   chrome_cache:
@@ -53,6 +57,5 @@ volumes:
   google_cache:
   google_config:
   google_local:
-  antigravity_config:
-  gemini_data:
-  antigravity_data:
+  vscode_data:
+  vscode_config:

@@ -86,7 +86,7 @@ import com.storyteller_f.shared.model.ReactionRecordInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TitleSearchType
-import com.storyteller_f.shared.model.TitleStatus
+import com.storyteller_f.shared.model.TitleWorkStatus
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
@@ -670,7 +670,7 @@ class TitlesViewModel(
     modelStorage: ModelStorage,
     uid: PrimaryKey,
     searchType: TitleSearchType,
-    status: TitleStatus? = null,
+    status: TitleWorkStatus? = null,
     type: TitleType? = null,
     scopeId: PrimaryKey? = null,
 ) : PagingViewModel<TitleInfo>() {
