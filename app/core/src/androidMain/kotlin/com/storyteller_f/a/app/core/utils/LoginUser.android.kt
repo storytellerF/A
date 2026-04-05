@@ -19,6 +19,8 @@ import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.json.Json
+import java.io.BufferedInputStream
 import java.security.KeyFactory
 import java.security.KeyStore
 import java.security.PrivateKey
@@ -27,6 +29,8 @@ import java.security.spec.PKCS8EncodedKeySpec
 import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
+
+private val injectedSessionJson = Json { ignoreUnknownKeys = true }
 
 actual fun buildSessionHistoryFactory(settings: Settings): SessionHistoryManager {
     if (runCatching {
@@ -222,4 +226,25 @@ class AndroidKeyStoreSessionHistoryManager(val settings: Settings) : SessionHist
 actual fun createSettings(name: String): Settings {
     val context = getAppContextRefValue()!!
     return SharedPreferencesSettings(context.getSharedPreferences(name, Context.MODE_PRIVATE))
+}
+
+actual fun readInjectedSessionFromPrivateStorageOrNull(): ConvertedRawUserPassInfo? {
+    val context = getAppContextRefValue() ?: return null
+    val injectedFile = context.filesDir
+        .resolve("appium-session")
+        .resolve("session.json")
+    if (!injectedFile.exists()) {
+        Napier.d("Injected session file does not exist: ${injectedFile.absolutePath}")
+        return null
+    }
+
+    return runCatching {
+        val content = BufferedInputStream(injectedFile.inputStream()).use { it.readBytes().decodeToString() }
+        injectedSessionJson.decodeFromString(ConvertedRawUserPassInfo.serializer(), content)
+    }.getOrElse { throwable ->
+        throw IllegalStateException(
+            "Injected session file exists but cannot be loaded: ${injectedFile.absolutePath}",
+            throwable
+        )
+    }
 }

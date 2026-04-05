@@ -1,0 +1,18 @@
+<configuration>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <target>System.out</target>
+        <encoder>
+            <pattern>%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="STDOUT" />
+    </root>
+
+    <!-- Keep Appium test logs readable by muting noisy Testcontainers/docker-java debug traffic. -->
+    <logger name="org.testcontainers" level="INFO" />
+    <logger name="tc" level="INFO" />
+    <logger name="com.github.dockerjava" level="INFO" />
+    <logger name="com.github.dockerjava.zerodep.shaded.org.apache.hc.client5.http.wire" level="INFO" />
+</configuration>

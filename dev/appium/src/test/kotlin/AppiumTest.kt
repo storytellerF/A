@@ -1,11 +1,16 @@
 @file:Suppress("SameParameterValue")
 
 import com.storyteller_f.shared.getAlgo
+import com.storyteller_f.shared.finalData
+import com.storyteller_f.shared.loadCryptoLibIfNeed
 import io.appium.java_client.AppiumBy
 import io.appium.java_client.android.AndroidDriver
 import io.appium.java_client.android.options.UiAutomator2Options
 import io.appium.java_client.plugins.storage.StorageClient
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import org.junit.Rule
 import org.junit.rules.TestName
 import org.openqa.selenium.support.ui.ExpectedConditions
@@ -17,6 +22,11 @@ import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.utility.DockerImageName
 import java.io.File
 import java.net.URI
+import java.net.CookieManager
+import java.net.CookiePolicy
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
 import java.time.Duration
 import java.util.Base64
 import kotlin.test.Test
@@ -26,6 +36,10 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 private const val appLogFileName = "appium-app.log"
+private const val injectedSessionTempPath = "/data/local/tmp/appium-session-session.json"
+private const val injectedSessionDir = "files/appium-session"
+private const val injectedSessionFile = "files/appium-session/session.json"
+private const val mainActivityClassName = "com.storyteller_f.a.app.MainActivity"
 private val applicationIdRegex = Regex("\"applicationId\"\\s*:\\s*\"([^\"]+)\"")
 private val appLogLookupScript = """
     for path in \
@@ -49,6 +63,13 @@ class AppiumTest {
     @get:Rule
     val name = TestName()
 
+    private val cookieManager = CookieManager().apply {
+        setCookiePolicy(CookiePolicy.ACCEPT_ALL)
+    }
+    private val apiHttpClient: HttpClient = HttpClient.newBuilder()
+        .cookieHandler(cookieManager)
+        .build()
+
     @Test
     fun `test sign up`() = runTest(timeout = 10.minutes) {
         runAppiumTest { driver ->
@@ -69,8 +90,28 @@ class AppiumTest {
         }
     }
 
+    @Test
+    fun `test sign in by injected private session`() = runTest(timeout = 10.minutes) {
+        loadCryptoLibIfNeed()
+        runAppiumTest(
+            launchInstalledApp = true,
+            beforeDriverLaunch = { hostServerPort, packageName ->
+                val injected = createPreRegisteredSession(hostServerPort)
+                val sessionJson = buildInjectedSessionJson(injected)
+                pushInjectedSessionToPrivateDir(packageName, sessionJson)
+            }
+        ) { driver ->
+            clickElement(driver, """new UiSelector().description("avatar")""")
+            assertElementNotVisible(driver, """new UiSelector().text("Sign in")""")
+        }
+    }
+
     @OptIn(ExperimentalUuidApi::class)
-    private suspend fun runAppiumTest(block: suspend (AndroidDriver) -> Unit) {
+    private suspend fun runAppiumTest(
+        launchInstalledApp: Boolean = false,
+        beforeDriverLaunch: suspend (hostServerPort: Int, packageName: String) -> Unit = { _, _ -> },
+        block: suspend (AndroidDriver) -> Unit
+    ) {
         val sessionId = Uuid.random().toHexString()
         val hostSessionPath = File("build/test/appium/sessions", sessionId).canonicalPath
         prepareSessionDirectories(hostSessionPath)
@@ -103,15 +144,24 @@ class AppiumTest {
                         var driver: AndroidDriver? = null
                         try {
                             val url = "http://127.0.0.1:4723"
-                            val storageClient = StorageClient(URI(url).toURL())
-                            storageClient.reset()
                             val file = File("../../app/android/build/outputs/apk/debug/android-universal-debug.apk")
-
-                            println("apk path ${file.canonicalPath}")
-                            storageClient.add(file)
-                            val path = storageClient.list().first().path
-                            println("file upload to $path")
-                            val options = UiAutomator2Options().setApp(path).setDeviceName("device-test")
+                            val packageName = resolveAppPackageName()
+                            val options = if (launchInstalledApp) {
+                                installAppForPrivateInjection(file, packageName)
+                                clearAppData(packageName)
+                                beforeDriverLaunch(hostServerPort, packageName)
+                                UiAutomator2Options()
+                                    .setDeviceName("device-test")
+                                    .setAppPackage(packageName)
+                                    .setAppActivity(mainActivityClassName)
+                                    .setNoReset(true)
+                            } else {
+                                val storageClient = StorageClient(URI(url).toURL())
+                                storageClient.reset()
+                                storageClient.add(file)
+                                val path = storageClient.list().first().path
+                                UiAutomator2Options().setApp(path).setDeviceName("device-test")
+                            }
                             val remoteAddress = URI(url).toURL()
                             driver = AndroidDriver(remoteAddress, options)
                             driver.startRecordingScreen()
@@ -141,7 +191,80 @@ class AppiumTest {
     private suspend fun generatePrivateKey(): String {
         return getAlgo().generatePemKeyPair().getOrThrow().first
     }
+
+    private suspend fun createPreRegisteredSession(hostServerPort: Int): InjectedSession {
+        val algo = getAlgo()
+        val (pemPrivateKey, _) = algo.generatePemKeyPair().getOrThrow()
+        val derPrivateKey = algo.getDerPrivateKey(pemPrivateKey).getOrThrow()
+        val derPublicKey = algo.getDerPublicKeyFromPrivateKey(pemPrivateKey).getOrThrow()
+        val address = algo.calcAddress(derPublicKey).getOrThrow()
+        val data = getSignData(hostServerPort)
+        val signature = algo.signature(derPrivateKey, finalData(data)).getOrThrow()
+        signUpByApi(hostServerPort, derPublicKey, signature)
+        return InjectedSession(
+            address = address,
+            pemPrivateKey = pemPrivateKey,
+            derPrivateKey = derPrivateKey,
+            derPublicKey = derPublicKey,
+        )
+    }
+
+    private fun getSignData(hostServerPort: Int): String {
+        val request = HttpRequest.newBuilder()
+            .uri(URI("http://127.0.0.1:$hostServerPort/accounts/get-data"))
+            .GET()
+            .build()
+        val response = apiHttpClient.send(request, HttpResponse.BodyHandlers.ofString())
+        check(response.statusCode() in 200..299) {
+            "Failed to get sign data, status=${response.statusCode()}, body=${response.body()}"
+        }
+        return response.body()
+    }
+
+    private fun signUpByApi(hostServerPort: Int, derPublicKey: String, signature: String) {
+        val body = buildJsonObject {
+            put("publicKey", derPublicKey)
+            put("signature", signature)
+        }.toString()
+        val request = HttpRequest.newBuilder()
+            .uri(URI("http://127.0.0.1:$hostServerPort/accounts/sign-up"))
+            .header("Content-Type", "application/json")
+            .POST(HttpRequest.BodyPublishers.ofString(body))
+            .build()
+        val response = apiHttpClient.send(request, HttpResponse.BodyHandlers.ofString())
+        check(response.statusCode() in 200..299) {
+            "Failed to sign up by api, status=${response.statusCode()}, body=${response.body()}"
+        }
+    }
+
+    private fun buildInjectedSessionJson(session: InjectedSession): String {
+        return buildJsonObject {
+            put("algo", "P256")
+            put("address", session.address)
+            put("pemPrivateKey", session.pemPrivateKey)
+            put("derPrivateKey", session.derPrivateKey)
+            put("derPublicKey", session.derPublicKey)
+        }.toString()
+    }
+
+    private fun pushInjectedSessionToPrivateDir(packageName: String, content: String) {
+        val file = File("build/test/appium/tmp/injected-session-${name.methodName}.json")
+        file.parentFile?.mkdirs()
+        file.writeText(content)
+        runAdbCommand("push", file.canonicalPath, injectedSessionTempPath)
+        runAdbCommand("shell", "run-as", packageName, "mkdir", "-p", injectedSessionDir)
+        runAdbCommand("shell", "run-as", packageName, "cp", injectedSessionTempPath, injectedSessionFile)
+        // 确保成功推送到目标位置
+        runAdbCommand("shell", "run-as", packageName, "cat", injectedSessionFile)
+    }
 }
+
+private data class InjectedSession(
+    val address: String,
+    val pemPrivateKey: String,
+    val derPrivateKey: String,
+    val derPublicKey: String,
+)
 
 private fun prepareSessionDirectories(sessionPath: String) {
     val sessionDir = File(sessionPath)
@@ -149,6 +272,30 @@ private fun prepareSessionDirectories(sessionPath: String) {
     File(sessionDir, "logs").mkdirs()
     File(sessionDir, "lucene").mkdirs()
     File(sessionDir, "files").mkdirs()
+}
+
+private fun installAppForPrivateInjection(apkFile: File, packageName: String) {
+    val installResult = runAdbCommandAllowFailure("install", "-r", apkFile.canonicalPath)
+    if (installResult.exitCode == 0) {
+        println("App installed successfully: ${apkFile.canonicalPath}")
+        return
+    }
+
+    if (isInstallFailedBySignatureMismatch(installResult.output)) {
+        println("Signature mismatch detected, uninstalling existing app and retrying installation")
+        runAdbCommand("uninstall", packageName)
+        runAdbCommand("install", "-r", apkFile.canonicalPath)
+        println("App installed successfully after resolving signature mismatch: ${apkFile.canonicalPath}")
+        return
+    }
+
+    error(
+        "adb install failed (install -r ${apkFile.canonicalPath}): ${installResult.output.ifBlank { "exitCode=${installResult.exitCode}" }}"
+    )
+}
+
+private fun clearAppData(packageName: String) {
+    runAdbCommand("shell", "pm", "clear", packageName)
 }
 
 private fun buildContainerEnv(
@@ -240,6 +387,43 @@ private fun copyAppLogToBuild(testName: String) {
     }
 }
 
+private fun runAdbCommand(vararg args: String) {
+    val process = ProcessBuilder(listOf("adb") + args)
+        .redirectErrorStream(true)
+        .start()
+    val exitCode = process.waitFor()
+    val output = process.inputStream.bufferedReader().use { it.readText().trim() }
+    check(exitCode == 0) {
+        if (output.isNotEmpty()) {
+            "adb command failed (${args.joinToString(" ")}): $output"
+        } else {
+            "adb command failed (${args.joinToString(" ")})"
+        }
+    }
+    println("execute [${args.joinToString(" ")}] success")
+}
+
+private data class AdbCommandResult(
+    val exitCode: Int,
+    val output: String,
+)
+
+private fun runAdbCommandAllowFailure(vararg args: String): AdbCommandResult {
+    val process = ProcessBuilder(listOf("adb") + args)
+        .redirectErrorStream(true)
+        .start()
+    val output = process.inputStream.bufferedReader().use { it.readText().trim() }
+    val exitCode = process.waitFor()
+    return AdbCommandResult(exitCode = exitCode, output = output)
+}
+
+private fun isInstallFailedBySignatureMismatch(output: String): Boolean {
+    val normalizedOutput = output.lowercase()
+    return "install_failed_update_incompatible" in normalizedOutput ||
+        "signatures do not match" in normalizedOutput ||
+        "install_parse_failed_inconsistent_certificates" in normalizedOutput
+}
+
 private fun resolveAppPackageName(): String {
     val metadataCandidates = sequenceOf(
         File("../../app/android/build/outputs/apk/debug/output-metadata.json"),
@@ -262,6 +446,17 @@ private fun assertElementVisible(driver: AndroidDriver, selector: String) {
     val wait = WebDriverWait(driver, Duration.ofSeconds(100))
     val element = wait.until(ExpectedConditions.presenceOfElementLocated(AppiumBy.androidUIAutomator(selector)))
     assertTrue(element.isDisplayed)
+}
+
+private fun assertElementNotVisible(
+    driver: AndroidDriver,
+    selector: String,
+    seconds: Long = 5,
+) {
+    val locator = AppiumBy.androidUIAutomator(selector)
+    WebDriverWait(driver, Duration.ofSeconds(seconds)).until {
+        driver.findElements(locator).isEmpty()
+    }
 }
 
 private fun clickElement(

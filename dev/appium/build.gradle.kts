@@ -9,6 +9,7 @@ kotlin {
 dependencies {
     implementation(kotlin("test"))
     implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.serialization.json)
     testImplementation(libs.java.client)
     implementation(project(":dev:core"))
     implementation(project(":shared"))
