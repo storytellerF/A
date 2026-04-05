@@ -1,16 +1,8 @@
 #!/bin/sh
 set -e
 
-# OS Detection
-if [ "$(uname)" = "Darwin" ] || [ "$(expr substr $(uname -s) 1 5)" = "Linux" ]; then
-    KILL_PORT_SCRIPT="./scripts/tool_scripts/kill-port.sh"
-else
-    KILL_PORT_SCRIPT="./scripts/tool_scripts/kill-port.bat"
-fi
-
 # Parsing Arguments
 RUN_UNIT=false
-RUN_UI=false
 RUN_ANDROID=false
 RUN_DESKTOP=false
 RUN_APPIUM=false
@@ -23,7 +15,6 @@ while [ "$#" -gt 0 ]; do
   case "$1" in
     --all) RUN_ALL=true; shift ;;
     --unit) RUN_UNIT=true; shift ;;
-    --ui) RUN_UI=true; shift ;;
     --android) RUN_ANDROID=true; shift ;;
     --desktop) RUN_DESKTOP=true; shift ;;
     --appium) RUN_APPIUM=true; shift ;;
@@ -48,21 +39,9 @@ done
 # Default behavior: Run all if no specific filters provided
 if [ "$RUN_ALL" = true ]; then
   RUN_UNIT=true
-  RUN_UI=true
   RUN_ANDROID=true
   RUN_DESKTOP=true
   RUN_APPIUM=true
-fi
-
-# If --ui specified but no platform, default to both
-if [ "$RUN_UI" = true ] && [ "$RUN_ANDROID" = false ] && [ "$RUN_DESKTOP" = false ]; then
-  RUN_ANDROID=true
-  RUN_DESKTOP=true
-fi
-
-# If platform specified, imply UI tests for that platform
-if [ "$RUN_ANDROID" = true ] || [ "$RUN_DESKTOP" = true ]; then
-  RUN_UI=true
 fi
 
 shutdownEmu() {
@@ -71,26 +50,15 @@ shutdownEmu() {
     echo "Emulator shut down."
 }
 
-shutdownServer() {
-    echo "Shutting down server gracefully..."
-    pid=$(lsof -t -i :8888) && kill -9 "$pid"
-    echo "Server shut down."
-}
-
 setupAvd() {
     echo "Setting up Android Emulator..."
     ./scripts/android_scripts/create-avd.sh device-test "system-images;android-36;google_apis;x86_64" "pixel"
     ./scripts/android_scripts/start-avd.sh device-test
-    ./scripts/android_scripts/forward-android-devices.sh 8811
 }
 
 cleanup() {
     # Only run cleanup for things we started
     ([ "$RUN_ANDROID" = true ] || [ "$RUN_APPIUM" = true ]) && shutdownEmu
-    [ "$RUN_UI" = true ] && shutdownServer
-    if [ "$RUN_APPIUM" = true ]; then
-        $KILL_PORT_SCRIPT 8811
-    fi
 }
 trap cleanup EXIT
 
@@ -100,17 +68,9 @@ if [ "$RUN_UNIT" = true ]; then
     ./gradlew test $TEST_ARGS --no-daemon $GRADLE_CONSOLE_ARGS
 fi
 
-# UI/Integration Tests Environment Setup
-if [ "$RUN_UI" = true ]; then
-    # Android 插桩测试在手机上执行，需要通过特殊服务器创建隔离的测试服务器，暂时用不到
-    echo "Setting up Test Server..."
-    ./gradlew cloud:server:installDist --no-daemon $GRADLE_CONSOLE_ARGS
-    ./scripts/test_scripts/start-test-server.sh
-fi
-
 if [ "$RUN_APPIUM" = true ]; then
-    echo "Preparing Server for Appium..."
-    ./gradlew cloud:server:installDist cloud:worker:installDist cloud:cli:installDist --no-daemon $GRADLE_CONSOLE_ARGS
+    echo "Preparing server/worker images for Appium Testcontainers..."
+    ./scripts/build_scripts/build-server-worker-images.sh dev prod host
     echo "Building Release APK..."
     ./gradlew app:android:assembleDebug --no-daemon $GRADLE_CONSOLE_ARGS
 fi

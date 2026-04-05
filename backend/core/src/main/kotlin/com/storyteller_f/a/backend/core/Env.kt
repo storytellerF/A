@@ -89,7 +89,7 @@ fun setLogPath() {
             File(System.getProperty("java.io.tmpdir"), "log")
         } else {
             // 获取home 目录
-            File(System.getProperty("user.home"), "/log")
+            File(System.getProperty("user.home"), "log")
         }
         val s = logPath.canonicalPath
         println("set log path: $s")
