@@ -32,8 +32,8 @@ import com.storyteller_f.shared.model.MemberPolicy
 import com.storyteller_f.shared.model.PassType
 import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.model.TaskRecordType
-import com.storyteller_f.shared.model.TitleWorkStatus
 import com.storyteller_f.shared.model.TitleType
+import com.storyteller_f.shared.model.TitleWorkStatus
 import com.storyteller_f.shared.type.MemberStatus
 import com.storyteller_f.shared.type.ObjectStatus
 import com.storyteller_f.shared.type.ObjectType

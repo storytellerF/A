@@ -3,8 +3,8 @@ package com.storyteller_f.a.backend.exposed.tables
 import com.storyteller_f.a.backend.core.types.FileRecord
 import com.storyteller_f.a.backend.exposed.BaseTable
 import com.storyteller_f.a.backend.exposed.customPrimaryKey
-import com.storyteller_f.a.backend.exposed.objectType
 import com.storyteller_f.a.backend.exposed.objectStatus
+import com.storyteller_f.a.backend.exposed.objectType
 import org.jetbrains.exposed.v1.core.*
 
 object FileRecords : BaseTable() {

@@ -1,10 +1,10 @@
 package com.storyteller_f.a.backend.core.types
 
 import com.storyteller_f.shared.model.TitleInfo
-import com.storyteller_f.shared.model.TitleWorkStatus
 import com.storyteller_f.shared.model.TitleType
-import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.model.TitleWorkStatus
 import com.storyteller_f.shared.type.ObjectStatus
+import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.datetime.LocalDateTime
 

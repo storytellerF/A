@@ -3,8 +3,8 @@ package com.storyteller_f.a.backend.exposed.tables
 import com.storyteller_f.a.backend.core.types.Topic
 import com.storyteller_f.a.backend.exposed.BaseTable
 import com.storyteller_f.a.backend.exposed.customPrimaryKey
-import com.storyteller_f.a.backend.exposed.objectType
 import com.storyteller_f.a.backend.exposed.objectStatus
+import com.storyteller_f.a.backend.exposed.objectType
 import com.storyteller_f.shared.utils.*
 import org.jetbrains.exposed.v1.core.*
 import org.jetbrains.exposed.v1.datetime.datetime

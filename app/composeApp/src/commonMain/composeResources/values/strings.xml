@@ -112,6 +112,7 @@
     
     <!-- FileCell strings -->
     <string name="image_dimension">w%1$d·h%2$d</string>
+    <string name="image_requires_crop_hint">Requires cropping before use</string>
     <string name="view">View</string>
     <string name="copy_name">Copy name</string>
     <string name="audio_content_description">audio</string>

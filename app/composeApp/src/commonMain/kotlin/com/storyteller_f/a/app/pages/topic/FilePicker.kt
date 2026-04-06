@@ -69,6 +69,7 @@ import com.storyteller_f.a.app.utils.ClientFile
 import com.storyteller_f.a.app.utils.Recorder
 import com.storyteller_f.a.client.core.UploadData
 import com.storyteller_f.a.client.core.upload
+import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.utils.generateImageMarkdownContent
@@ -99,6 +100,7 @@ fun FilePicker(
     sheetState: SheetState,
     mediaTarget: ObjectTuple,
     support: List<String> = listOf("files", "audio recorder"),
+    requiredDimension: Dimension? = null,
     onClickItems: (List<FileInfo>) -> Unit,
     hideSheet: () -> Unit,
 ) {
@@ -133,7 +135,7 @@ fun FilePicker(
         }
         HorizontalPager(pagerState, modifier = Modifier.height(300.dp)) {
             if (tabs[it].second == "files") {
-                FileListView(mediaTarget, onClickItems)
+                FileListView(mediaTarget, requiredDimension, onClickItems)
             } else {
                 AudioRecorder(mediaTarget, onClickItems)
             }
@@ -216,6 +218,7 @@ private fun BoxScope.RecorderButton(
 @Composable
 private fun FileListView(
     mediaTarget: ObjectTuple,
+    requiredDimension: Dimension?,
     onClickItem: (List<FileInfo>) -> Unit,
 ) {
     val viewModel = createMediaListViewModel(mediaTarget)
@@ -241,7 +244,7 @@ private fun FileListView(
                     it.id
                 }) {
                     val item = pagingItems[it]
-                    FileCell(item, onClickItem)
+                    FileCell(item, requiredDimension, onClickItem)
 
                     HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
                 }

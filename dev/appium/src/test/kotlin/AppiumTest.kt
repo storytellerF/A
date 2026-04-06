@@ -1,7 +1,5 @@
 @file:Suppress("SameParameterValue")
 
-import com.storyteller_f.shared.getAlgo
-import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.a.api.NewCommunity
 import com.storyteller_f.a.api.NewRoom
 import com.storyteller_f.a.client.core.AuthKey
@@ -12,12 +10,16 @@ import com.storyteller_f.a.client.core.createCommunity
 import com.storyteller_f.a.client.core.createRoom
 import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.a.client.core.createUserSessionManager
-import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.a.client.core.defaultClientConfigure
 import com.storyteller_f.a.client.core.getAuthKey
 import com.storyteller_f.a.client.core.getClient
 import com.storyteller_f.a.client.core.getTopicInfo
 import com.storyteller_f.a.client.core.getUserPass
+import com.storyteller_f.a.client.core.joinCommunity
+import com.storyteller_f.shared.getAlgo
+import com.storyteller_f.shared.loadCryptoLibIfNeed
+import com.storyteller_f.shared.model.AlgoType
+import com.storyteller_f.shared.type.ObjectType
 import io.appium.java_client.AppiumBy
 import io.appium.java_client.android.AndroidDriver
 import io.appium.java_client.android.options.UiAutomator2Options
@@ -44,8 +46,6 @@ import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.minutes
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
-import com.storyteller_f.shared.model.AlgoType
-import com.storyteller_f.shared.type.ObjectType
 
 private const val appLogFileName = "appium-app.log"
 private const val appLogDeviceTempPath = "/data/local/tmp/appium-app.log"
@@ -763,8 +763,8 @@ private fun runAdbCommandAllowFailure(vararg args: String): AdbCommandResult {
 private fun isInstallFailedBySignatureMismatch(output: String): Boolean {
     val normalizedOutput = output.lowercase()
     return "install_failed_update_incompatible" in normalizedOutput ||
-            "signatures do not match" in normalizedOutput ||
-            "install_parse_failed_inconsistent_certificates" in normalizedOutput
+        "signatures do not match" in normalizedOutput ||
+        "install_parse_failed_inconsistent_certificates" in normalizedOutput
 }
 
 private fun resolveAppPackageName(): String {
