@@ -27,6 +27,7 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import kotlinx.datetime.LocalDateTime
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
@@ -185,6 +186,37 @@ class CommunityTest {
         }
         loginSession(secondTuple) {
             joinCommunity(communityId).getOrThrow()
+        }
+    }
+
+    @Test
+    fun `test expired community invite title cannot join`() = test {
+        val firstTuple = attachSession {
+            createCommunityForTest("name-expired", "c-expired", memberPolicy = MemberPolicy.INVITE_ONLY)
+        }
+        val communityId = firstTuple.custom.id
+        val secondTuple = attachSession {
+            assertFails {
+                joinCommunity(communityId).getOrThrow()
+            }
+        }
+        loginSession(firstTuple) {
+            createTitle(
+                NewTitle(
+                    "join-expired",
+                    TitleType.JOIN,
+                    secondTuple.uid,
+                    communityId,
+                    ObjectType.COMMUNITY,
+                    "join",
+                    LocalDateTime.parse("2000-01-01T00:00:00")
+                )
+            ).getOrThrow()
+        }
+        loginSession(secondTuple) {
+            assertFails {
+                joinCommunity(communityId).getOrThrow()
+            }
         }
     }
 

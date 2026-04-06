@@ -357,54 +357,54 @@ class PanelAccountInstance(scope: CoroutineScope) {
 
     private suspend fun handleCommunityReadOnlyUpdated(storage: ModelStorage, event: OnCommunityStatusUpdated) {
         storage.community.update(CommunityCollection.AllCommunities, event.id) {
-            it.copy(readOnly = event.readOnly)
+            it.copy(status = event.status)
         }
         storage.community.getDocument(CommunityCollection.AllCommunities, event.id)?.let {
-            storage.community.saveToDefault(it.copy(readOnly = event.readOnly))
+            storage.community.saveToDefault(it.copy(status = event.status))
         }
     }
 
     private suspend fun handleRoomReadOnlyUpdated(storage: ModelStorage, event: OnRoomStatusUpdated) {
         storage.room.update(RoomCollection.AllRooms(false), event.id) {
-            it.copy(readOnly = event.readOnly)
+            it.copy(status = event.status)
         }
         storage.room.update(RoomCollection.AllRooms(true), event.id) {
-            it.copy(readOnly = event.readOnly)
+            it.copy(status = event.status)
         }
         val room = storage.room.getDocument(RoomCollection.AllRooms(false), event.id)
             ?: storage.room.getDocument(RoomCollection.AllRooms(true), event.id)
         if (room != null) {
-            storage.room.saveToDefault(room.copy(readOnly = event.readOnly))
+            storage.room.saveToDefault(room.copy(status = event.status))
         }
     }
 
     private suspend fun handleTopicReadOnlyUpdated(storage: ModelStorage, event: OnTopicStatusUpdated) {
         storage.topic.update(TopicCollection.AllTopics, event.id) {
-            it.copy(readOnly = event.readOnly)
+            it.copy(status = event.status)
         }
         storage.topic.getDocument(TopicCollection.AllTopics, event.id)?.let {
-            storage.topic.saveToDefault(it.copy(readOnly = event.readOnly))
+            storage.topic.saveToDefault(it.copy(status = event.status))
         }
     }
 
     private suspend fun handleTitleReadOnlyUpdated(storage: ModelStorage, event: OnTitleStatusUpdated) {
         storage.title.update(TitleCollection.AllTitles, event.id) {
-            it.copy(readOnly = event.readOnly)
+            it.copy(status = event.status)
         }
         storage.title.getDocument(TitleCollection.AllTitles, event.id)?.let {
-            storage.title.saveToDefault(it.copy(readOnly = event.readOnly))
+            storage.title.saveToDefault(it.copy(status = event.status))
         }
     }
 
     private suspend fun handleFileReadOnlyUpdated(storage: ModelStorage, event: OnFileStatusUpdated) {
         storage.fileInfo.update(FileCollection.FileList(0), event.id) {
-            it.copy(readOnly = event.readOnly)
+            it.copy(status = event.status)
         }
         storage.fileInfo.getDocument(FileCollection.FileList(0), event.id)?.let {
             storage.fileInfo.update(FileCollection.FileList(it.owner), event.id) { fileInfo ->
-                fileInfo.copy(readOnly = event.readOnly)
+                fileInfo.copy(status = event.status)
             }
-            storage.fileInfo.saveToDefault(it.copy(readOnly = event.readOnly))
+            storage.fileInfo.saveToDefault(it.copy(status = event.status))
         }
     }
 }

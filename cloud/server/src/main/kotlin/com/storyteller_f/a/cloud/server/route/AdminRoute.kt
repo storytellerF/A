@@ -229,7 +229,7 @@ private fun Route.bindAdminUserRelationRoutes(backend: Backend) {
     }
     AdminApi.Users.Id.Titles.get(handleResult()) { q, p ->
         q.pagination(IdentifiablePagingGenerator) { f ->
-            backend.getUserTitles(p.id, q.searchType, q.type, q.scopeId, f)
+            backend.getUserTitles(p.id, q.searchType, q.type, q.scopeId, q.titleStatus, f)
         }
     }
     AdminApi.Users.Id.Files.get(handleResult()) { q, p ->

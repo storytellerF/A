@@ -32,6 +32,7 @@ import com.storyteller_f.shared.model.MemberInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleType
+import com.storyteller_f.shared.model.TitleWorkStatus
 import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.obj.UpdateRoomBody
 import com.storyteller_f.shared.obj.ob
@@ -147,7 +148,8 @@ suspend fun Backend.getJoinTitleByScope(
     uid,
     TitleSearchType.RECEIVER,
     TitleType.JOIN,
-    scopeId
+    scopeId,
+    TitleWorkStatus.OK
 ).mapResult {
     if (it.list.isNotEmpty()) {
         UNIT_RESULT

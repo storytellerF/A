@@ -50,6 +50,7 @@ import com.storyteller_f.a.panel.tab_basic_info
 import com.storyteller_f.a.panel.tab_files
 import com.storyteller_f.a.panel.tab_members
 import com.storyteller_f.shared.obj.UpdateObjectStatusBody
+import com.storyteller_f.shared.type.ObjectStatus
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -162,14 +163,14 @@ private fun RoomBasicInfoSection(id: PrimaryKey) {
         Column {
             InfoTable(items, Modifier.padding(16.dp).weight(1f))
             Button(onClick = {
-                val newValue = !info.readOnly
+                val newStatus = if (info.readOnly) ObjectStatus.NORMAL else ObjectStatus.READ_ONLY
                 scope.launch {
                     dialogController.useResult {
                         context.request {
-                            updateRoomStatus(id, UpdateObjectStatusBody(newValue))
+                            updateRoomStatus(id, UpdateObjectStatusBody(newStatus))
                         }
                     }.onSuccess {
-                        dialogController.emitEvent(OnRoomStatusUpdated(id, newValue))
+                        dialogController.emitEvent(OnRoomStatusUpdated(id, newStatus))
                     }
                 }
             }, modifier = Modifier.padding(16.dp)) {

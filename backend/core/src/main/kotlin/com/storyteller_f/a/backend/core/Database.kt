@@ -39,6 +39,7 @@ import com.storyteller_f.shared.model.ReactionRecordInfo
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleType
+import com.storyteller_f.shared.model.TitleWorkStatus
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicPinSearch
 import com.storyteller_f.shared.model.UserPubKeyInfo
@@ -455,6 +456,7 @@ interface TitleDatabase {
         searchType: TitleSearchType,
         type: TitleType? = null,
         scopeId: PrimaryKey? = null,
+        titleStatus: TitleWorkStatus? = null,
     ): Result<PaginationResult<RawTitle>>
 
     suspend fun getAllRawTitles(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<RawTitle>>

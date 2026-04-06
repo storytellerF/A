@@ -13,9 +13,17 @@ import com.storyteller_f.a.backend.exposed.tables.Titles
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleType
+import com.storyteller_f.shared.model.TitleWorkStatus
 import com.storyteller_f.shared.type.ObjectStatus
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.now
+import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.greater
+import org.jetbrains.exposed.v1.core.isNotNull
+import org.jetbrains.exposed.v1.core.isNull
+import org.jetbrains.exposed.v1.core.lessEq
+import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.r2dbc.Query
 import org.jetbrains.exposed.v1.r2dbc.andWhere
 import org.jetbrains.exposed.v1.r2dbc.selectAll
@@ -27,14 +35,15 @@ class ExposedTitleDatabase(val exposedDatabaseSession: ExposedDatabaseSession) :
         uid: PrimaryKey,
         searchType: TitleSearchType,
         type: TitleType?,
-        scopeId: PrimaryKey?
+        scopeId: PrimaryKey?,
+        titleStatus: TitleWorkStatus?
     ) = paginationFromResults(
         getTitleListByPredicate {
-            buildTitleSearchQuery(searchType, uid, type, scopeId)
+            buildTitleSearchQuery(searchType, uid, type, scopeId, titleStatus)
                 .bindPaginationQuery(Titles, primaryKeyFetch)
         },
         getTitleCountByPredicate {
-            buildTitleSearchQuery(searchType, uid, type, scopeId)
+            buildTitleSearchQuery(searchType, uid, type, scopeId, titleStatus)
         }
     )
 
@@ -42,7 +51,8 @@ class ExposedTitleDatabase(val exposedDatabaseSession: ExposedDatabaseSession) :
         searchType: TitleSearchType,
         uid: PrimaryKey,
         type: TitleType?,
-        scopeId: PrimaryKey?
+        scopeId: PrimaryKey?,
+        titleStatus: TitleWorkStatus?
     ): Query {
         val rows = where {
             when (searchType) {
@@ -58,6 +68,23 @@ class ExposedTitleDatabase(val exposedDatabaseSession: ExposedDatabaseSession) :
         if (scopeId != null) {
             rows.andWhere {
                 Titles.scopeId eq scopeId
+            }
+        }
+        if (titleStatus != null) {
+            val currentTime = now()
+            rows.andWhere {
+                when (titleStatus) {
+                    TitleWorkStatus.OK -> {
+                        (Titles.titleStatus eq TitleWorkStatus.OK) and
+                            (Titles.expiresAt.isNull().or(Titles.expiresAt greater currentTime))
+                    }
+
+                    TitleWorkStatus.EXPIRED -> {
+                        (Titles.titleStatus eq TitleWorkStatus.EXPIRED).or(
+                            Titles.expiresAt.isNotNull() and (Titles.expiresAt lessEq currentTime)
+                        )
+                    }
+                }
             }
         }
         return rows

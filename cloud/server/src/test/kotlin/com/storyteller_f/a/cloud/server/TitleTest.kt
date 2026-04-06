@@ -16,9 +16,12 @@ import com.storyteller_f.a.client.core.removeSubscription
 import com.storyteller_f.a.client.core.userTitles
 import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleType
+import com.storyteller_f.shared.model.TitleWorkStatus
 import com.storyteller_f.shared.type.ObjectType
+import kotlinx.datetime.LocalDateTime
 import kotlin.test.Test
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 class TitleTest {
     @Test
@@ -33,6 +36,49 @@ class TitleTest {
             assertListSize(1, userTitles(it.uid, 10, TitleSearchType.CREATOR))
             assertListSize(1, userTitles(it.uid, 10, TitleSearchType.CREATOR, scopeId = cId))
             assertListSize(1, userTitles(it.uid, 10, TitleSearchType.CREATOR, type = TitleType.REGULAR, scopeId = cId))
+        }
+    }
+
+    @Test
+    fun `test title expired filter`() = test {
+        attachSession {
+            val c = createCommunity(NewCommunity("c-expired", "c-expired")).getOrThrow()
+            val cId = c.id
+            createTitle(
+                NewTitle(
+                    "active-title",
+                    TitleType.REGULAR,
+                    it.uid,
+                    cId,
+                    ObjectType.COMMUNITY,
+                    "active",
+                    LocalDateTime.parse("2099-01-01T00:00:00")
+                )
+            ).getOrThrow()
+            createTitle(
+                NewTitle(
+                    "expired-title",
+                    TitleType.REGULAR,
+                    it.uid,
+                    cId,
+                    ObjectType.COMMUNITY,
+                    "expired",
+                    LocalDateTime.parse("2000-01-01T00:00:00")
+                )
+            ).getOrThrow()
+
+            val okTitles = userTitles(it.uid, 10, TitleSearchType.RECEIVER, status = TitleWorkStatus.OK)
+                .getOrThrow().data
+            assertTrue(okTitles.any { title ->
+                title.name == "active-title" && title.titleStatus == TitleWorkStatus.OK
+            })
+            assertTrue(okTitles.none { title -> title.name == "expired-title" })
+
+            val expiredTitles = userTitles(it.uid, 10, TitleSearchType.RECEIVER, status = TitleWorkStatus.EXPIRED)
+                .getOrThrow().data
+            assertTrue(expiredTitles.any { title ->
+                title.name == "expired-title" && title.titleStatus == TitleWorkStatus.EXPIRED
+            })
         }
     }
 

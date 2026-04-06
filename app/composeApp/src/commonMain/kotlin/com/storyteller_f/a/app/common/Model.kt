@@ -133,6 +133,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDateTime
 
 abstract class CommunityViewModel :
     SimpleViewModel<CommunityInfo>() {
@@ -1033,6 +1034,7 @@ class TitleComposeViewModel : ViewModel() {
     val titleType = MutableStateFlow(TitleType.REGULAR)
     val receiver = MutableStateFlow<PrimaryKey?>(null)
     val content = MutableStateFlow("")
+    val expiresAtText = MutableStateFlow("")
 
     fun setName(value: String) {
         name.value = value
@@ -1056,6 +1058,10 @@ class TitleComposeViewModel : ViewModel() {
 
     fun setContent(value: String) {
         content.value = value
+    }
+
+    fun setExpiresAtText(value: String) {
+        expiresAtText.value = value
     }
 
     fun setShowSheetType(value: TitleComposeSheetType) {
@@ -1088,10 +1094,28 @@ class TitleComposeViewModel : ViewModel() {
         val t = titleType.value
         val r = receiver.value
         val s = titleScope.value
-        return if (r != null && s != null) {
-            Result.success(NewTitle(name.value, t, r, s.objectId, s.objectType, content.value))
+        val expiresAt = expiresAtText.value.trim()
+        val parsedExpiresAt = if (expiresAt.isEmpty()) {
+            Result.success(null)
         } else {
-            Result.failure(IllegalStateException("titleType/receiver/titleScope must not be null"))
+            runCatching {
+                LocalDateTime.parse(expiresAt)
+            }.mapError {
+                IllegalArgumentException("Invalid expiresAt format, use yyyy-MM-ddTHH:mm:ss")
+            }
+        }
+        return parsedExpiresAt.mapCatching { expiresAtValue ->
+            check(r != null && s != null) {
+                "titleType/receiver/titleScope must not be null"
+            }
+            NewTitle(name.value, t, r, s.objectId, s.objectType, content.value, expiresAtValue)
         }
     }
+}
+
+private inline fun <T> Result<T>.mapError(transform: (Throwable) -> Throwable): Result<T> {
+    return fold(
+        onSuccess = { Result.success(it) },
+        onFailure = { Result.failure(transform(it)) }
+    )
 }

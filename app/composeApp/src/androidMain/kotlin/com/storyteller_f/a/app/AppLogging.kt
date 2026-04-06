@@ -23,11 +23,11 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
-private const val logDirName = "logs"
-private const val logFileName = "appium-app.log"
-private const val defaultTag = "Napier"
-private const val flushIntervalMillis = 1000L
-private const val maxBatchSize = 50
+private const val LOG_DIR_NAME = "logs"
+private const val LOG_FILE_NAME = "appium-app.log"
+private const val DEFAULT_TAG = "Napier"
+private const val FLUSH_INTERVAL_MILLIS = 1000L
+private const val MAX_BATCH_SIZE = 50
 
 fun setupAppLogger(application: Application) {
     val logFile = ensureAppLogFile(application)
@@ -37,7 +37,7 @@ fun setupAppLogger(application: Application) {
 }
 
 private fun ensureAppLogFile(application: Application): File {
-    return File(application.filesDir, "$logDirName/$logFileName").apply {
+    return File(application.filesDir, "$LOG_DIR_NAME/$LOG_FILE_NAME").apply {
         parentFile?.mkdirs()
         if (!exists()) {
             createNewFile()
@@ -46,7 +46,7 @@ private fun ensureAppLogFile(application: Application): File {
 }
 
 private fun writeBootstrapLog(logFile: File) {
-    val message = "${System.currentTimeMillis()} INFO [$defaultTag] logger initialized\n"
+    val message = "${System.currentTimeMillis()} INFO [$DEFAULT_TAG] logger initialized\n"
     runCatching {
         BufferedWriter(
             OutputStreamWriter(
@@ -71,14 +71,14 @@ private class AppAntilog(
     init {
         scope.launch {
             while (isActive) {
-                delay(flushIntervalMillis)
+                delay(FLUSH_INTERVAL_MILLIS)
                 requestFlush()
             }
         }
     }
 
     override fun performLog(priority: LogLevel, tag: String?, throwable: Throwable?, message: String?) {
-        val actualTag = tag?.takeIf { it.isNotBlank() } ?: defaultTag
+        val actualTag = tag?.takeIf { it.isNotBlank() } ?: DEFAULT_TAG
         val logcatMessage = when {
             message == null -> throwable?.stackTraceToString().orEmpty()
             throwable != null -> "$message\n${throwable.stackTraceToString()}"
@@ -111,7 +111,7 @@ private class AppAntilog(
         }
         pendingLogs.add(renderedMessage)
         val currentCount = pendingCount.incrementAndGet()
-        if (currentCount >= maxBatchSize) {
+        if (currentCount >= MAX_BATCH_SIZE) {
             requestFlush()
         }
     }
@@ -139,8 +139,8 @@ private class AppAntilog(
     }
 
     private fun drainBatch(): List<String> {
-        val batch = ArrayList<String>(maxBatchSize)
-        while (batch.size < maxBatchSize) {
+        val batch = ArrayList<String>(MAX_BATCH_SIZE)
+        while (batch.size < MAX_BATCH_SIZE) {
             val message = pendingLogs.poll() ?: break
             batch += message
         }
