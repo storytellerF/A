@@ -13,8 +13,8 @@ import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TitleSearchType
-import com.storyteller_f.shared.model.TitleWorkStatus
 import com.storyteller_f.shared.model.TitleType
+import com.storyteller_f.shared.model.TitleWorkStatus
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType

@@ -138,6 +138,7 @@ fun ObjectSettingDialog(
         sheetState,
         mediaTarget,
         listOf("files"),
+        requiredDimension = Dimension(ratio.x, ratio.y),
         { mediaList ->
             processSelectedMedia(
                 mediaList,

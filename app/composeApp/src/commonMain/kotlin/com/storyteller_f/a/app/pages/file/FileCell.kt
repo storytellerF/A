@@ -38,9 +38,12 @@ import com.storyteller_f.a.app.core.components.setText
 import com.storyteller_f.a.app.file_content_description
 import com.storyteller_f.a.app.file_refs
 import com.storyteller_f.a.app.image_dimension
+import com.storyteller_f.a.app.image_requires_crop_hint
 import com.storyteller_f.a.app.video_content_description
 import com.storyteller_f.a.app.view
+import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.FileInfo
+import com.storyteller_f.shared.model.checkMediaFileDimensionRatioMatch
 import com.storyteller_f.shared.utils.formatTime
 import kotlinx.coroutines.launch
 import nl.jacobras.humanreadable.HumanReadable
@@ -51,7 +54,8 @@ import kotlin.time.ExperimentalTime
 @Composable
 fun FileCell(
     fileInfo: FileInfo?,
-    clickItem: (List<FileInfo>) -> Unit
+    requiredDimension: Dimension? = null,
+    clickItem: (List<FileInfo>) -> Unit,
 ) {
     if (fileInfo != null) {
         var expanded by remember { mutableStateOf(false) }
@@ -78,6 +82,13 @@ fun FileCell(
                             stringResource(Res.string.image_dimension, it.width, it.height),
                             style = MaterialTheme.typography.labelSmall
                         )
+                        if (requiredDimension != null && !checkMediaFileDimensionRatioMatch(it, requiredDimension)) {
+                            Text(
+                                stringResource(Res.string.image_requires_crop_hint),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
                     }
                 }
             }

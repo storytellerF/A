@@ -1,8 +1,8 @@
 package com.storyteller_f.shared.model
 
+import com.storyteller_f.shared.type.ObjectStatus
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.type.ObjectStatus
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
 
