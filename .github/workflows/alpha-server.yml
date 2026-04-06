@@ -22,7 +22,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    environment: mini
+    environment: alpha
     env:
       # this will take the entire vars context configured in the repository > environments
       # setting and convert it to JSON so we can automatically assign all the values to the
@@ -47,5 +47,5 @@ jobs:
           key: docker-${{ runner.os }}-${{ hashFiles('Dockerfile', 'docker-image-in-test') }}
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      - name: Build mini service
-        run: ./scripts/build_scripts/build-service-on-ci.sh
+      - name: Start service
+        run: ./scripts/service_scripts/start-service-on-ci.sh

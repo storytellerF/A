@@ -17,12 +17,12 @@ echo "$SECRETS_CONTEXT" | jq -r 'to_entries | .[] | "\(.key)=\(.value)"' | while
 done
 
 if [ "$(uname)" = "Darwin" ]; then
-  echo "$REMOTE_ENCODED_CERT" | base64 --decode -o remote.pem
+  echo "$SSH_KEY" | base64 --decode -o ~/.ssh/id_ed25519
 else
-  echo "$REMOTE_ENCODED_CERT" | base64 --decode > remote.pem
+  echo "$SSH_KEY" | base64 --decode > ~/.ssh/id_ed25519
 fi
 
-chmod 600 ./remote.pem
+chmod 600 ~/.ssh/id_ed25519
 
 echo "prepare connect remote"
 # 检查 known_hosts 文件是否存在
@@ -33,10 +33,10 @@ if [ ! -f ~/.ssh/known_hosts ]; then
   touch ~/.ssh/known_hosts
 fi
 
-ssh-keyscan -H acommunity.top >> ~/.ssh/known_hosts
+ssh-keyscan -H $SSH_URI >> ~/.ssh/known_hosts
 
-eval "$(ssh-agent)"
+# eval "$(ssh-agent)"
 
-ssh-add ./remote.pem
+# ssh-add ~/.ssh/remote.pem
 
-./scripts/service-scripts/start-service-in-remote-by-jar.sh "$FLAVOR" local ubuntu@acommunity.top
+./scripts/service-scripts/start-service-in-remote-by-image.sh "$FLAVOR" local ubuntu@$SSH_URI
