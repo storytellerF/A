@@ -35,6 +35,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.LocalDateTime
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
@@ -115,6 +116,38 @@ class RoomTest {
         loginSession(secondTuple) {
             joinRoom(privateRoomId).getOrThrow()
             assertListSize(2, searchRoomMembers(privateRoomId, null, 10, ""))
+        }
+    }
+
+    @Test
+    fun `test expired private room join title cannot join`() = test {
+        val user1 = attachSession {
+            createPrivateRoomForTest().id
+        }
+        val privateRoomId = user1.custom
+
+        val user2 = attachSession {
+            assertFails {
+                joinRoom(privateRoomId).getOrThrow()
+            }
+        }
+        loginSession(user1) {
+            createTitle(
+                NewTitle(
+                    "join-expired",
+                    TitleType.JOIN,
+                    user2.uid,
+                    privateRoomId,
+                    ObjectType.ROOM,
+                    "expired invite",
+                    LocalDateTime.parse("2000-01-01T00:00:00")
+                )
+            ).getOrThrow()
+        }
+        loginSession(user2) {
+            assertFails {
+                joinRoom(privateRoomId).getOrThrow()
+            }
         }
     }
 

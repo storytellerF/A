@@ -24,10 +24,11 @@ fi
 
 chmod 600 ./remote.pem
 
-echo "prepare connect remote $(date)"
+echo "prepare connect remote"
 # 检查 known_hosts 文件是否存在
 if [ ! -f ~/.ssh/known_hosts ]; then
   # 如果文件不存在，创建空的 known_hosts 文件
+  echo "Creating ~/.ssh/known_hosts file..."
   mkdir -p ~/.ssh
   touch ~/.ssh/known_hosts
 fi

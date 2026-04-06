@@ -13,6 +13,7 @@ import com.storyteller_f.a.backend.core.types.Member
 import com.storyteller_f.a.backend.core.types.RawTitle
 import com.storyteller_f.a.backend.core.types.Title
 import com.storyteller_f.a.backend.core.types.Topic
+import com.storyteller_f.a.backend.core.types.isExpired
 import com.storyteller_f.a.backend.core.types.toTitleInfo
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.RoomInfo
@@ -38,13 +39,15 @@ suspend fun Backend.getUserTitles(
     searchType: TitleSearchType,
     type: TitleType? = null,
     scopeId: PrimaryKey? = null,
+    titleStatus: TitleWorkStatus? = null,
     fetch: PrimaryKeyFetch
 ) = database.title.getTitlePaginationResult(
     fetch,
     uid,
     searchType,
     type,
-    scopeId
+    scopeId,
+    titleStatus
 ).mapPagingResultIfNotNullNullable { list ->
     processTitleList(list, uid)
 }
@@ -150,6 +153,7 @@ private fun processTitleList(
     val communityMap = communityList.associateBy { it.id }
     val roomMap = roomList.associateBy { it.id }
     val topicMap = topicList.associateBy { it.id }
+    val currentTime = now()
     return list.map {
         val title = it.title
         val extension = TitleInfo.Extension(
@@ -173,7 +177,7 @@ private fun processTitleList(
                 else -> null
             }
         )
-        title.toTitleInfo(extension, it.favoriteId, it.subscriptionId)
+        title.toTitleInfo(extension, it.favoriteId, it.subscriptionId, currentTime)
     }
 }
 
@@ -218,7 +222,7 @@ suspend fun Backend.createTitle(
 }
 
 private suspend fun Backend.inviteMemberIfNeed(title: Title) {
-    if (title.type == TitleType.JOIN) {
+    if (title.type == TitleType.JOIN && !title.isExpired()) {
         val memberId = SnowflakeFactory.nextId()
         val invitedTime = now()
         database.container.addMember(
@@ -256,7 +260,8 @@ private suspend fun toTitle(
         newTitle.scopeId,
         newTitle.scopeType,
         TitleWorkStatus.OK,
-        descriptionTopicId
+        descriptionTopicId,
+        newTitle.expiresAt
     )
 }
 

@@ -61,7 +61,8 @@ suspend fun Backend.joinCommunity(
     uid: PrimaryKey,
     communityId: PrimaryKey
 ) = getCommunity(ObjectFetch.IdFetch(communityId), uid, true).mapResultIfNotNull { community ->
-    if (community.member != null) {
+    val joinedMember = community.member?.takeIf { it.status == MemberStatus.JOINED }
+    if (joinedMember != null) {
         Result.success(community)
     } else {
         if (community.memberPolicy == MemberPolicy.INVITE_ONLY) {
@@ -69,7 +70,9 @@ suspend fun Backend.joinCommunity(
         } else {
             UNIT_RESULT
         }.mapResult {
-            joinCommunity(uid, communityId, community)
+            database.container.getMember(communityId, uid).mapResult { member ->
+                joinCommunity(uid, communityId, community, member)
+            }
         }
     }
 }
@@ -77,14 +80,40 @@ suspend fun Backend.joinCommunity(
 private suspend fun Backend.joinCommunity(
     uid: PrimaryKey,
     communityId: PrimaryKey,
-    communityInfo: CommunityInfo
+    communityInfo: CommunityInfo,
+    currentMember: Member?
 ): Result<CommunityInfo?> {
     val time = now()
-    val memberId = SnowflakeFactory.nextId()
-    val member = Member(memberId, uid, communityId, ObjectType.COMMUNITY, time, MemberStatus.JOINED, time)
-    return database.container.addMember(member).onSuccess {
+    val member = if (currentMember == null) {
+        Member(
+            SnowflakeFactory.nextId(),
+            uid,
+            communityId,
+            ObjectType.COMMUNITY,
+            time,
+            MemberStatus.JOINED,
+            time
+        )
+    } else {
+        Member(
+            currentMember.id,
+            currentMember.uid,
+            currentMember.objectId,
+            currentMember.objectType,
+            time,
+            MemberStatus.JOINED,
+            time,
+            currentMember.invitedTime
+        )
+    }
+    val joinResult = if (currentMember == null) {
+        database.container.addMember(member)
+    } else {
+        database.container.updateMemberStatus(member)
+    }
+    return joinResult.onSuccess {
         addUserLog(uid, UserLogType.JOIN, communityId ob ObjectType.COMMUNITY)
-        saveMemberDocument(uid, memberId, communityId, communityInfo.name)
+        saveMemberDocument(uid, member.id, communityId, communityInfo.name)
     }.mapResult {
         Result.success(communityInfo.copy(member = member.toNestedMemberInfo()))
     }.recoverIfDup(database::isDup) {

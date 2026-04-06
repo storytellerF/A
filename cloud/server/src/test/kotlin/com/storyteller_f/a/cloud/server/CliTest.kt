@@ -50,8 +50,8 @@ private suspend fun generateP256KeyMaterial(): P256KeyMaterial {
 
 private fun preparePresetDir(testName: String): File {
     val dir = File("build/test/cli/$testName").canonicalFile
-    if (!dir.exists() && !dir.mkdirs()) {
-        throw IllegalStateException("failed to create preset dir: ${dir.canonicalPath}")
+    check(dir.exists() || dir.mkdirs()) {
+        "failed to create preset dir: ${dir.canonicalPath}"
     }
     return dir
 }
@@ -157,6 +157,7 @@ class CliTest {
         assertEquals(userAid, userTuple.custom.aid)
     }
 
+    @Suppress("LongMethod")
     @Test
     fun `cli apply community and room presets visible to admin`() = test {
         ensureSystemUser(this)
@@ -238,6 +239,7 @@ class CliTest {
         }
     }
 
+    @Suppress("LongMethod")
     @Test
     fun `cli apply topic and title presets reflected in overview`() = test {
         ensureSystemUser(this)

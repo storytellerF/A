@@ -20,9 +20,12 @@ data class TitleInfo(
     val extension: Extension? = null,
     val favoriteId: PrimaryKey? = null,
     val subscriptionId: PrimaryKey? = null,
+    val titleStatus: TitleWorkStatus = TitleWorkStatus.OK,
+    val expiresAt: LocalDateTime? = null,
     val status: ObjectStatus = ObjectStatus.NORMAL,
 ) : ModelObject {
     val readOnly get() = status == ObjectStatus.READ_ONLY
+    val expired get() = titleStatus == TitleWorkStatus.EXPIRED
     override val objectType: ObjectType
         get() = ObjectType.TITLE
 

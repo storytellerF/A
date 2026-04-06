@@ -231,7 +231,7 @@ class AddPreset : Subcommand("add", "add entry") {
             }
             val title = Title(
                 titleId, now(), it.name, creatorUid, receiverUid, it.type, scopeId, it.scopeType,
-                TitleWorkStatus.OK, topicId
+                TitleWorkStatus.OK, topicId, null
             )
             val topic = Topic(
                 topicId,
@@ -1079,11 +1079,11 @@ internal fun repackArchiveWithExclusionsInPlace(zipFile: File, excludeGlobs: Lis
     try {
         unzipToDirectory(zipFile, extractDir)
         zipDirectoryWithFilter(extractDir, tempZip, excludeGlobs)
-        if (!zipFile.delete()) {
-            throw IllegalStateException("failed to delete original archive ${zipFile.absolutePath}")
+        check(zipFile.delete()) {
+            "failed to delete original archive ${zipFile.absolutePath}"
         }
-        if (!tempZip.renameTo(zipFile)) {
-            throw IllegalStateException("failed to replace archive ${zipFile.absolutePath}")
+        check(tempZip.renameTo(zipFile)) {
+            "failed to replace archive ${zipFile.absolutePath}"
         }
         return zipFile
     } finally {

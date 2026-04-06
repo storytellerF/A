@@ -48,6 +48,7 @@ import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.UploadRecordStatus
+import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -118,6 +119,7 @@ class NewTitle(
     val scopeId: PrimaryKey,
     val scopeType: ObjectType,
     val description: String,
+    val expiresAt: LocalDateTime? = null,
 )
 
 @Serializable

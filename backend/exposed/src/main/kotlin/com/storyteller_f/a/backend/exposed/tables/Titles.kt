@@ -8,6 +8,7 @@ import com.storyteller_f.a.backend.exposed.objectType
 import com.storyteller_f.a.backend.exposed.titleStatus
 import com.storyteller_f.a.backend.exposed.titleType
 import org.jetbrains.exposed.v1.core.*
+import org.jetbrains.exposed.v1.datetime.datetime
 
 object Titles : BaseTable() {
     val creator = customPrimaryKey("creator").index()
@@ -16,6 +17,7 @@ object Titles : BaseTable() {
     val scopeId = customPrimaryKey("scope_id").index()
     val scopeType = objectType("scope_type")
     val titleStatus = titleStatus("title_status")
+    val expiresAt = datetime("expires_at").nullable()
     val status = objectStatus("status")
     val name = varchar("name", 20).index()
     val descriptionTopicId = customPrimaryKey("description_topic_id")
@@ -40,6 +42,7 @@ fun Title.Companion.wrapRow(row: ResultRow): Title {
         row[Titles.scopeType],
         row[Titles.titleStatus],
         row[Titles.descriptionTopicId],
+        row[Titles.expiresAt],
         row[Titles.status]
     )
 }

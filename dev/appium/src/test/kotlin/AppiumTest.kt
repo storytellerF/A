@@ -47,13 +47,12 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-private const val appLogFileName = "appium-app.log"
-private const val appLogDeviceTempPath = "/data/local/tmp/appium-app.log"
-private const val injectedSessionTempPath = "/data/local/tmp/appium-session-session.json"
-private const val injectedSessionDir = "files/appium-session"
-private const val injectedSessionFile = "files/appium-session/session.json"
-private const val mainActivityClassName = "com.storyteller_f.a.app.MainActivity"
-private val applicationIdRegex = Regex("\"applicationId\"\\s*:\\s*\"([^\"]+)\"")
+private const val APP_LOG_FILE_NAME = "appium-app.log"
+private const val INJECTED_SESSION_TEMP_PATH = "/data/local/tmp/appium-session-session.json"
+private const val INJECTED_SESSION_DIR = "files/appium-session"
+private const val INJECTED_SESSION_FILE = "files/appium-session/session.json"
+private const val MAIN_ACTIVITY_CLASS_NAME = "com.storyteller_f.a.app.MainActivity"
+private val APPLICATION_ID_REGEX = Regex("\"applicationId\"\\s*:\\s*\"([^\"]+)\"")
 
 class AppiumTest {
     @get:Rule
@@ -209,6 +208,7 @@ class AppiumTest {
         }
     }
 
+    @Suppress("LongMethod")
     @Test
     fun `test community room join and posting flows`() = runTest(timeout = 10.minutes) {
         loadCryptoLibIfNeed()
@@ -390,7 +390,7 @@ class AppiumTest {
                 val options = UiAutomator2Options()
                     .setDeviceName("device-test")
                     .setAppPackage(packageName)
-                    .setAppActivity(mainActivityClassName)
+                    .setAppActivity(MAIN_ACTIVITY_CLASS_NAME)
                     .setNoReset(true)
                 driver = AndroidDriver(remoteAddress, options)
                 driver.startRecordingScreen()
@@ -566,18 +566,18 @@ class AppiumTest {
         val file = File("build/test/appium/tmp/injected-session-${name.methodName}.json")
         file.parentFile?.mkdirs()
         file.writeText(content)
-        runAdbCommand("push", file.canonicalPath, injectedSessionTempPath)
-        runAdbCommand("shell", "run-as", packageName, "mkdir", "-p", injectedSessionDir)
+        runAdbCommand("push", file.canonicalPath, INJECTED_SESSION_TEMP_PATH)
+        runAdbCommand("shell", "run-as", packageName, "mkdir", "-p", INJECTED_SESSION_DIR)
         runAdbCommand(
             "shell",
             "run-as",
             packageName,
             "cp",
-            injectedSessionTempPath,
-            injectedSessionFile
+            INJECTED_SESSION_TEMP_PATH,
+            INJECTED_SESSION_FILE
         )
         // 确保成功推送到目标位置
-        runAdbCommand("shell", "run-as", packageName, "cat", injectedSessionFile)
+        runAdbCommand("shell", "run-as", packageName, "cat", INJECTED_SESSION_FILE)
     }
 }
 
@@ -637,7 +637,8 @@ private fun installAppForPrivateInjection(apkFile: File, packageName: String) {
     }
 
     error(
-        "adb install failed (install -r ${apkFile.canonicalPath}): ${installResult.output.ifBlank { "exitCode=${installResult.exitCode}" }}"
+        "adb install failed (install -r ${apkFile.canonicalPath}): " +
+            installResult.output.ifBlank { "exitCode=${installResult.exitCode}" }
     )
 }
 
@@ -718,7 +719,7 @@ private fun copyAppLogToBuild(testName: String) {
         "run-as",
         packageName,
         "cat",
-        "files/logs/$appLogFileName"
+        "files/logs/$APP_LOG_FILE_NAME"
     )
     if (logResult.exitCode == 0 && logResult.output.isNotBlank()) {
         outputFile.writeText(logResult.output)
@@ -775,7 +776,7 @@ private fun resolveAppPackageName(): String {
     val metadataFile = metadataCandidates.firstOrNull { it.exists() }
     if (metadataFile != null) {
         val content = metadataFile.readText()
-        val applicationId = applicationIdRegex.find(content)?.groupValues?.getOrNull(1)
+        val applicationId = APPLICATION_ID_REGEX.find(content)?.groupValues?.getOrNull(1)
         if (!applicationId.isNullOrBlank()) {
             return applicationId
         }

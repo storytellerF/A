@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Diversity1
 import androidx.compose.material.icons.filled.Diversity3
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Topic
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -36,6 +37,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -91,7 +93,9 @@ import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.now
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDateTime
 
 @Composable
 fun TitleComposePage() {
@@ -189,8 +193,196 @@ fun TitleComposeInternalEdit(
 
         ReceiverEditor(shape, vm::openReceiverSheet, receiver)
 
+        ExpireTimeEditor(vm)
+
         DescriptionEditor(vm)
     }
+}
+
+@Composable
+private fun ExpireTimeEditor(vm: TitleComposeViewModel) {
+    val expiresAtText by vm.expiresAtText.collectAsState()
+    var showExpireDialog by remember { mutableStateOf(false) }
+    val expireShape = RoundedCornerShape(12.dp)
+    Column(
+        modifier = Modifier.clip(expireShape)
+            .background(MaterialTheme.colorScheme.primaryContainer, expireShape)
+            .padding(10.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Expire Time (UTC)", modifier = Modifier.weight(1f))
+            IconButton({ showExpireDialog = true }) {
+                Icon(Icons.Default.Edit, "edit expire time")
+            }
+        }
+        ExpireTimePickerDialog(
+            show = showExpireDialog,
+            init = expiresAtText,
+            dismiss = { showExpireDialog = false },
+            onConfirm = { newValue ->
+                vm.setExpiresAtText(newValue)
+                showExpireDialog = false
+            },
+            onClear = {
+                vm.setExpiresAtText("")
+                showExpireDialog = false
+            }
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        if (expiresAtText.isBlank()) {
+            Text("Permanent", fontStyle = FontStyle.Italic, fontSize = 10.sp)
+        } else {
+            Text(expiresAtText, fontSize = 12.sp)
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        Text("Pick a UTC date and time, or clear it for permanent", fontSize = 10.sp)
+    }
+}
+
+@Suppress("LongMethod")
+@Composable
+private fun ExpireTimePickerDialog(
+    show: Boolean,
+    init: String,
+    dismiss: () -> Unit,
+    onConfirm: (String) -> Unit,
+    onClear: () -> Unit
+) {
+    if (!show) {
+        return
+    }
+    val initialValue = remember(show, init) {
+        runCatching {
+            LocalDateTime.parse(init)
+        }.getOrElse {
+            now()
+        }
+    }
+    var year by remember(show, init) { mutableStateOf(initialValue.year.toString()) }
+    var month by remember(show, init) { mutableStateOf(initialValue.monthNumber.toString()) }
+    var day by remember(show, init) { mutableStateOf(initialValue.dayOfMonth.toString()) }
+    var hour by remember(show, init) { mutableStateOf(initialValue.hour.toString()) }
+    var minute by remember(show, init) { mutableStateOf(initialValue.minute.toString()) }
+    var second by remember(show, init) { mutableStateOf(initialValue.second.toString()) }
+    var errorMessage by remember(show, init) { mutableStateOf<String?>(null) }
+
+    AlertDialog(
+        onDismissRequest = dismiss,
+        confirmButton = {
+            TextButton(onClick = {
+                val candidate = buildExpireTimeText(year, month, day, hour, minute, second)
+                runCatching {
+                    LocalDateTime.parse(candidate)
+                }.onSuccess {
+                    onConfirm(candidate)
+                }.onFailure {
+                    errorMessage = "Invalid date/time"
+                }
+            }) {
+                Text("Confirm")
+            }
+        },
+        dismissButton = {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = onClear) {
+                    Text("Clear")
+                }
+                TextButton(onClick = dismiss) {
+                    Text("Cancel")
+                }
+            }
+        },
+        text = {
+            ExpireTimeInputFields(
+                year = year,
+                onYearChange = { year = it },
+                month = month,
+                onMonthChange = { month = it },
+                day = day,
+                onDayChange = { day = it },
+                hour = hour,
+                onHourChange = { hour = it },
+                minute = minute,
+                onMinuteChange = { minute = it },
+                second = second,
+                onSecondChange = { second = it },
+                errorMessage = errorMessage
+            )
+        }
+    )
+}
+
+@Composable
+private fun ExpireTimeInputFields(
+    year: String,
+    onYearChange: (String) -> Unit,
+    month: String,
+    onMonthChange: (String) -> Unit,
+    day: String,
+    onDayChange: (String) -> Unit,
+    hour: String,
+    onHourChange: (String) -> Unit,
+    minute: String,
+    onMinuteChange: (String) -> Unit,
+    second: String,
+    onSecondChange: (String) -> Unit,
+    errorMessage: String?
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("Pick expiration date and time (UTC)")
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            DateTimeNumberField("Year", year, 4, Modifier.weight(1.4f), onYearChange)
+            DateTimeNumberField("Month", month, 2, Modifier.weight(1f), onMonthChange)
+            DateTimeNumberField("Day", day, 2, Modifier.weight(1f), onDayChange)
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            DateTimeNumberField("Hour", hour, 2, Modifier.weight(1f), onHourChange)
+            DateTimeNumberField("Minute", minute, 2, Modifier.weight(1f), onMinuteChange)
+            DateTimeNumberField("Second", second, 2, Modifier.weight(1f), onSecondChange)
+        }
+        errorMessage?.let {
+            Text(it, color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
+        }
+    }
+}
+
+@Composable
+private fun DateTimeNumberField(
+    label: String,
+    value: String,
+    maxLength: Int,
+    modifier: Modifier = Modifier,
+    onValueChange: (String) -> Unit
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = {
+            onValueChange(it.filter(Char::isDigit).take(maxLength))
+        },
+        label = {
+            Text(label)
+        },
+        modifier = modifier,
+        singleLine = true
+    )
+}
+
+private fun buildExpireTimeText(
+    year: String,
+    month: String,
+    day: String,
+    hour: String,
+    minute: String,
+    second: String
+): String {
+    val safeYear = year.padStart(4, '0')
+    val safeMonth = month.padStart(2, '0')
+    val safeDay = day.padStart(2, '0')
+    val safeHour = hour.padStart(2, '0')
+    val safeMinute = minute.padStart(2, '0')
+    val safeSecond = second.padStart(2, '0')
+    return "$safeYear-$safeMonth-$safeDay" +
+        "T$safeHour:$safeMinute:$safeSecond"
 }
 
 @Composable

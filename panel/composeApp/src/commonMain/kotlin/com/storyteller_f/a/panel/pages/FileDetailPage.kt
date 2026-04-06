@@ -57,6 +57,7 @@ import com.storyteller_f.a.panel.tab_file_refs
 import com.storyteller_f.a.panel.tab_info
 import com.storyteller_f.a.panel.tab_logs
 import com.storyteller_f.shared.obj.UpdateObjectStatusBody
+import com.storyteller_f.shared.type.ObjectStatus
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -172,13 +173,14 @@ private fun FileBasicInfoSection(id: PrimaryKey) {
             }
             InfoTable(fileBasicInfoItems(info))
             FileReadOnlyToggleButton(info.readOnly) { newValue ->
+                val newStatus = if (newValue) ObjectStatus.READ_ONLY else ObjectStatus.NORMAL
                 scope.launch {
                     dialogController.useResult {
                         context.request {
-                            updateFileStatus(id, UpdateObjectStatusBody(newValue))
+                            updateFileStatus(id, UpdateObjectStatusBody(newStatus))
                         }
                     }.onSuccess {
-                        dialogController.emitEvent(OnFileStatusUpdated(id, newValue))
+                        dialogController.emitEvent(OnFileStatusUpdated(id, newStatus))
                     }
                 }
             }

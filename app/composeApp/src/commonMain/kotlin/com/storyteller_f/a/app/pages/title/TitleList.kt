@@ -17,6 +17,7 @@ import com.storyteller_f.a.app.pages.room.RoomIconWithDialog
 import com.storyteller_f.a.app.pages.user.UserIconWithDialog
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TitleType
+import com.storyteller_f.shared.model.TitleWorkStatus
 import com.storyteller_f.shared.type.ObjectType
 
 @Composable
@@ -48,6 +49,15 @@ fun TitleList(titlesViewModel: TitlesViewModel) {
 fun TitleItem(titleInfo: TitleInfo) {
     Column {
         Text(titleInfo.name)
+        Text(
+            when (titleInfo.titleStatus) {
+                TitleWorkStatus.OK -> {
+                    titleInfo.expiresAt?.let { expiresAt -> "expires: $expiresAt" } ?: "expires: permanent"
+                }
+
+                TitleWorkStatus.EXPIRED -> "status: expired"
+            }
+        )
 
         titleInfo.extension?.let {
             UserIconWithDialog(it.creatorInfo)

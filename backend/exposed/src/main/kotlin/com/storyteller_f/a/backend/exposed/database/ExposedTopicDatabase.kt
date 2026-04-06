@@ -317,6 +317,7 @@ class ExposedTopicDatabase(
             it[Titles.status] = title.status
             it[Titles.descriptionTopicId] = title.descriptionTopicId
             it[Titles.titleStatus] = title.titleStatus
+            it[Titles.expiresAt] = title.expiresAt
         }.insertedCount > 0) {
             "insert title failed"
         }
