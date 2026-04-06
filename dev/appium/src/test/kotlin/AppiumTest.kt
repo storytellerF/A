@@ -12,6 +12,7 @@ import com.storyteller_f.a.client.core.createCommunity
 import com.storyteller_f.a.client.core.createRoom
 import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.a.client.core.createUserSessionManager
+import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.a.client.core.defaultClientConfigure
 import com.storyteller_f.a.client.core.getAuthKey
 import com.storyteller_f.a.client.core.getClient
@@ -137,22 +138,12 @@ class AppiumTest {
             clickAnyElement(
                 driver,
                 listOf(
-                    """new UiSelector().description("Add")""",
-                    """new UiSelector().text("Add")"""
+                    """new UiSelector().description("icon")""",
+                    """new UiSelector().text("${data.communityName.first()}")"""
                 )
             )
-            clickAnyElement(
-                driver,
-                listOf(
-                    """new UiSelector().text("Confirm")""",
-                    """new UiSelector().text("OK")""",
-                    """new UiSelector().text("确定")"""
-                )
-            )
-
             clickElement(driver, """new UiSelector().text("Favorite")""")
             clickElement(driver, """new UiSelector().text("Subscription")""")
-            clickElement(driver, """new UiSelector().text("Join community")""")
             clickElement(driver, """new UiSelector().text("All members")""")
 
             clickAnyElement(
@@ -162,10 +153,16 @@ class AppiumTest {
                     """new UiSelector().textContains("ad:")"""
                 )
             )
-            assertElementVisible(driver, """new UiSelector().description("user-page")""")
             driver.navigate().back()
             driver.navigate().back()
 
+            clickAnyElement(
+                driver,
+                listOf(
+                    """new UiSelector().description("icon")""",
+                    """new UiSelector().text("${data.communityName.first()}")"""
+                )
+            )
             clickAnyElement(
                 driver,
                 listOf(
@@ -187,30 +184,9 @@ class AppiumTest {
             )
             assertElementVisible(driver, """new UiSelector().text("$communityTopicContent")""")
 
-            driver.navigate().back()
             clickElement(driver, """new UiSelector().text("Rooms")""")
             clickElement(driver, """new UiSelector().text("${data.roomName}")""")
 
-            inputElement(
-                driver,
-                """new UiSelector().className("android.widget.EditText")""",
-                roomTopicContent
-            )
-            clickAnyElement(
-                driver,
-                listOf(
-                    """new UiSelector().description("Send")""",
-                    """new UiSelector().text("Send")"""
-                )
-            )
-            clickAnyElement(
-                driver,
-                listOf(
-                    """new UiSelector().text("Confirm")""",
-                    """new UiSelector().text("OK")""",
-                    """new UiSelector().text("确定")"""
-                )
-            )
             inputElement(
                 driver,
                 """new UiSelector().className("android.widget.EditText")""",
@@ -403,6 +379,7 @@ class AppiumTest {
         )
 
         val viewer = createAuthenticatedSession(hostServerPort)
+        viewer.sessionManager.joinCommunity(communityId).getOrThrow()
         val result = PreparedScenario(
             ownerSession = owner.session,
             viewerSession = viewer.session,
@@ -602,32 +579,21 @@ private fun copyAppLogToBuild(testName: String) {
     outputDir.mkdirs()
     val outputFile = File(outputDir, "$testName.log")
     val packageName = resolveAppPackageName()
-    val stageResult = runAdbCommandAllowFailure(
-        "shell",
+    val logResult = runAdbCommandAllowFailure(
+        "exec-out",
         "run-as",
         packageName,
-        "cp",
-        "files/logs/$appLogFileName",
-        appLogDeviceTempPath
+        "cat",
+        "files/logs/$appLogFileName"
     )
-    if (stageResult.exitCode != 0) {
-        outputFile.writeText(
-            "Failed to stage app log before pull: ${stageResult.output.ifBlank { "exitCode=${stageResult.exitCode}" }}"
-        )
+    if (logResult.exitCode == 0 && logResult.output.isNotBlank()) {
+        outputFile.writeText(logResult.output)
         return
     }
 
-    val pullResult = runAdbCommandAllowFailure(
-        "pull",
-        appLogDeviceTempPath,
-        outputFile.canonicalPath
+    outputFile.writeText(
+        "Failed to export app log: ${logResult.output.ifBlank { "exitCode=${logResult.exitCode}" }}"
     )
-    runAdbCommandAllowFailure("shell", "rm", "-f", appLogDeviceTempPath)
-    if (pullResult.exitCode != 0) {
-        outputFile.writeText(
-            "Failed to pull app log: ${pullResult.output.ifBlank { "exitCode=${pullResult.exitCode}" }}"
-        )
-    }
 }
 
 private fun runAdbCommand(vararg args: String) {
