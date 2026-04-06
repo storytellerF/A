@@ -14,22 +14,6 @@ import java.io.File
 import java.util.concurrent.CountDownLatch
 import kotlin.concurrent.thread
 
-data class DatabaseConfig(
-    val uri: String,
-    val driver: String,
-    val user: String,
-    val password: String
-) {
-    companion object {
-        fun h2(sessionPath: String) = DatabaseConfig(
-            uri = "r2dbc:h2:file:///$sessionPath/h2",
-            driver = "h2",
-            user = "sa",
-            password = ""
-        )
-    }
-}
-
 fun isWin(): Boolean {
     val property = System.getProperty("os.name").orEmpty()
     return property.lowercase().contains("win")
@@ -59,56 +43,6 @@ fun forceStop(port: Int) {
 
 fun stopServer(serverProcess: Process) {
     serverProcess.destroy()
-}
-
-suspend fun CoroutineScope.startServerByRun(
-    projectRoot: String,
-    port: Int,
-    sessionPath: String,
-    dbConfig: DatabaseConfig = DatabaseConfig.h2(sessionPath)
-): ProcessMate? {
-    forceStop(port)
-    val testEnvFile = File(projectRoot, "cloud/server/src/test/resources/test.env")
-    if (!testEnvFile.exists()) {
-        Napier.w { "${testEnvFile.canonicalPath} not exists" }
-        return null
-    }
-    val extension = if (isWin()) ".bat" else ""
-    val command = "cloud/server/build/install/server/bin/server$extension"
-    val serverProcess = withContext(Dispatchers.IO) {
-        ProcessBuilder(command)
-            .redirectErrorStream(true)
-            .directory(File(projectRoot))
-            .bindGradleProcessEnv(testEnvFile, port, projectRoot, sessionPath, dbConfig)
-            .start()
-    }
-    return waitRunProcess(serverProcess) {
-        it.contains("Responding at")
-    }
-}
-
-suspend fun CoroutineScope.startWorkerByRun(
-    projectRoot: String,
-    sessionPath: String,
-    dbConfig: DatabaseConfig = DatabaseConfig.h2(sessionPath)
-): ProcessMate? {
-    val testEnvFile = File(projectRoot, "cloud/server/src/test/resources/test.env")
-    if (!testEnvFile.exists()) {
-        Napier.w { "${testEnvFile.canonicalPath} not exists" }
-        return null
-    }
-    val extension = if (isWin()) ".bat" else ""
-    val command = "cloud/worker/build/install/worker/bin/worker$extension"
-    val process = withContext(Dispatchers.IO) {
-        ProcessBuilder(command)
-            .redirectErrorStream(true)
-            .directory(File(projectRoot))
-            .bindGradleProcessEnv(testEnvFile, 0, projectRoot, sessionPath, dbConfig)
-            .start()
-    }
-    return waitRunProcess(process) {
-        it.contains("worker started")
-    }
 }
 
 suspend fun CoroutineScope.startCloudServerByGradle(
@@ -255,43 +189,4 @@ fun waitThreadRunProcess(
         return null
     }
     return process
-}
-
-private fun ProcessBuilder.bindGradleProcessEnv(
-    envFile: File,
-    port: Int,
-    projectRoot: String,
-    sessionPath: String,
-    dbConfig: DatabaseConfig
-): ProcessBuilder {
-    val envList = envFile.readLines().filter {
-        it.isNotBlank()
-    }.map {
-        val list = it.split("=", limit = 2)
-        list[0] to list.getOrElse(1) {
-            ""
-        }
-    }
-    val environment = environment()
-    environment.putAll(envList)
-    environment.putAll(
-        mapOf(
-            "DATABASE_URI" to dbConfig.uri,
-            "DATABASE_DRIVER" to dbConfig.driver,
-            "DATABASE_USER" to dbConfig.user,
-            "DATABASE_PASS" to dbConfig.password,
-            "BUILD_TYPE" to "dev-test"
-        )
-    )
-    environment["LUCENE_BASE_PATH"] = "$sessionPath/lucene"
-    environment["SERVER_PORT"] = port.toString()
-    val canonicalProjectRoot = File(projectRoot).canonicalPath
-    val cliPath = File(projectRoot, "/cloud/cli/build/install/cli/bin/cli").canonicalPath
-    val presetDataPath = File(projectRoot, "../AData/data").canonicalPath
-    environment["INIT_ENABLE"] = "true"
-    environment["INIT_WORKING_DIR"] = canonicalProjectRoot
-    environment["INIT_SCRIPT"] = "./scripts/tool_scripts/flush-database.sh $cliPath $presetDataPath"
-    environment["LOG_PATH"] = "$sessionPath/logs"
-    environment["FILE_SYSTEM_MEDIA_PATH"] = "$sessionPath/files"
-    return this
 }
