@@ -157,6 +157,59 @@ class AppiumTest {
     }
 
     @Test
+    fun `test subscribe topic from community page`() = runTest(timeout = 10.minutes) {
+        loadCryptoLibIfNeed()
+        val now = System.currentTimeMillis()
+        val topicContent = "appium-subscription-topic-$now"
+        runType1Test(
+            beforeDriverLaunch = { hostServerPort, packageName ->
+                val owner = createAuthenticatedSession(hostServerPort)
+                val aidSuffix = (now % 1_000_000).toString().padStart(6, '0')
+                val communityName = "community-$aidSuffix"
+                val communityAid = "sc$aidSuffix"
+                val communityId = createCommunityByApi(
+                    owner.sessionManager,
+                    communityName,
+                    communityAid
+                )
+                val topicId = createTopicByApi(
+                    owner.sessionManager,
+                    ObjectType.COMMUNITY,
+                    communityId,
+                    topicContent
+                )
+                val viewer = createAuthenticatedSession(hostServerPort)
+                viewer.sessionManager.joinCommunity(communityId).getOrThrow()
+                val sessionJson = buildInjectedSessionJson(viewer.session)
+                pushInjectedSessionToPrivateDir(packageName, sessionJson)
+                owner.sessionManager.client.close()
+                SubscriptionTopicScenario(viewer, topicId, communityName)
+            }
+        ) { driver, data ->
+            try {
+                clickElement(driver, """new UiSelector().text("Communities")""")
+                clickElement(driver, """new UiSelector().text("${data.communityName}")""")
+
+                clickAnyElement(
+                    driver,
+                    listOf(
+                        """new UiSelector().text("$topicContent")""",
+                        """new UiSelector().textContains("appium-subscription-topic")"""
+                    )
+                )
+                clickElement(driver, """new UiSelector().description("topic")""")
+                clickElement(driver, """new UiSelector().text("Subscription")""")
+                waitUntilTopicSubscribed(data.authenticated.sessionManager, data.topicId)
+
+                driver.navigate().back()
+                assertElementVisible(driver, """new UiSelector().description("topic")""")
+            } finally {
+                data.authenticated.sessionManager.client.close()
+            }
+        }
+    }
+
+    @Test
     fun `test community room join and posting flows`() = runTest(timeout = 10.minutes) {
         loadCryptoLibIfNeed()
         val now = System.currentTimeMillis()
@@ -447,6 +500,22 @@ class AppiumTest {
         error("Topic not marked as favorite: $topicId")
     }
 
+    private suspend fun waitUntilTopicSubscribed(
+        sessionManager: UserSessionManager,
+        topicId: Long,
+        timeoutMillis: Long = Duration.ofSeconds(30).toMillis(),
+    ) {
+        val deadline = System.currentTimeMillis() + timeoutMillis
+        while (System.currentTimeMillis() < deadline) {
+            val topicInfo = sessionManager.getTopicInfo(topicId).getOrThrow()
+            if (topicInfo.subscriptionId != null) {
+                return
+            }
+            delay(500)
+        }
+        error("Topic not marked as subscribed: $topicId")
+    }
+
     private fun createApiSessionManager(hostServerPort: Int) = createUserSessionManager(
         buildWebSocketUrl("ws://127.0.0.1:$hostServerPort"),
         { model, cookieStorage ->
@@ -527,6 +596,12 @@ private data class AuthenticatedSession(
 private data class FavoriteTopicScenario(
     val authenticated: AuthenticatedSession,
     val topicId: Long,
+)
+
+private data class SubscriptionTopicScenario(
+    val authenticated: AuthenticatedSession,
+    val topicId: Long,
+    val communityName: String,
 )
 
 private data class PreparedScenario(
