@@ -16,11 +16,13 @@ import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.a.client.core.defaultClientConfigure
 import com.storyteller_f.a.client.core.getAuthKey
 import com.storyteller_f.a.client.core.getClient
+import com.storyteller_f.a.client.core.getTopicInfo
 import com.storyteller_f.a.client.core.getUserPass
 import io.appium.java_client.AppiumBy
 import io.appium.java_client.android.AndroidDriver
 import io.appium.java_client.android.options.UiAutomator2Options
 import io.appium.java_client.plugins.storage.StorageClient
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -115,6 +117,42 @@ class AppiumTest {
             )
             clickElement(driver, """new UiSelector().description("submit")""")
             assertElementVisible(driver, """new UiSelector().text("$topicContent")""")
+        }
+    }
+
+    @Test
+    fun `test favorite topic from topic page`() = runTest(timeout = 10.minutes) {
+        loadCryptoLibIfNeed()
+        val topicContent = "appium-favorite-topic-${System.currentTimeMillis()}"
+        runType1Test(
+            beforeDriverLaunch = { hostServerPort, packageName ->
+                val authenticated = createAuthenticatedSession(hostServerPort)
+                val topicId = createTopicByApi(
+                    authenticated.sessionManager,
+                    ObjectType.USER,
+                    authenticated.sessionManager.model.uid ?: error("not login"),
+                    topicContent
+                )
+                val sessionJson = buildInjectedSessionJson(authenticated.session)
+                pushInjectedSessionToPrivateDir(packageName, sessionJson)
+                FavoriteTopicScenario(authenticated, topicId)
+            }
+        ) { driver, data ->
+            try {
+                clickElement(driver, """new UiSelector().description("avatar")""")
+                clickElement(driver, """new UiSelector().text("ad: ${data.authenticated.session.address}")""")
+                assertElementVisible(driver, """new UiSelector().text("$topicContent")""")
+
+                clickElement(driver, """new UiSelector().text("$topicContent")""")
+                clickElement(driver, """new UiSelector().description("topic")""")
+                clickElement(driver, """new UiSelector().text("Favorite")""")
+                waitUntilTopicFavorited(data.authenticated.sessionManager, data.topicId)
+
+                driver.navigate().back()
+                assertElementVisible(driver, """new UiSelector().description("topic")""")
+            } finally {
+                data.authenticated.sessionManager.client.close()
+            }
         }
     }
 
@@ -393,6 +431,22 @@ class AppiumTest {
         return result
     }
 
+    private suspend fun waitUntilTopicFavorited(
+        sessionManager: UserSessionManager,
+        topicId: Long,
+        timeoutMillis: Long = Duration.ofSeconds(30).toMillis(),
+    ) {
+        val deadline = System.currentTimeMillis() + timeoutMillis
+        while (System.currentTimeMillis() < deadline) {
+            val topicInfo = sessionManager.getTopicInfo(topicId).getOrThrow()
+            if (topicInfo.favoriteId != null) {
+                return
+            }
+            delay(500)
+        }
+        error("Topic not marked as favorite: $topicId")
+    }
+
     private fun createApiSessionManager(hostServerPort: Int) = createUserSessionManager(
         buildWebSocketUrl("ws://127.0.0.1:$hostServerPort"),
         { model, cookieStorage ->
@@ -468,6 +522,11 @@ private data class InjectedSession(
 private data class AuthenticatedSession(
     val session: InjectedSession,
     val sessionManager: UserSessionManager,
+)
+
+private data class FavoriteTopicScenario(
+    val authenticated: AuthenticatedSession,
+    val topicId: Long,
 )
 
 private data class PreparedScenario(
