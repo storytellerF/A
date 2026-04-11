@@ -248,6 +248,55 @@ class RoomTest {
         stopRtcCall(thirdUser, roomId)
         assertRtcUserCleanup(roomId, thirdUser.uid)
     }
+
+    @Test
+    fun `test rtc mute state sync`() = test {
+        rtcSession.clear()
+        val firstUser = attachSession()
+        val secondUser = attachSession {
+            val roomInfo = createRoom(NewRoom("test-rtc-mute", "rtc-mute")).getOrThrow()
+            createJoinRoomTitleForTest(roomInfo.id, firstUser.uid)
+            roomInfo
+        }
+        loginSession(firstUser) {
+            joinRoom(secondUser.custom.id).getOrThrow()
+        }
+
+        val roomId = secondUser.custom.id
+        val list = CopyOnWriteArrayList<RoomFrame>()
+        coroutineScope {
+            launch {
+                loginSession(secondUser, { frame, _, session ->
+                    list.add(frame)
+                    processRTCMessage(frame, session)
+                }) {
+                    waitAndSend {
+                        sendFrame(RoomFrame.StartCall(roomId))
+                    }
+                    waitRTCAnswer(list)
+                    waitAndSend {
+                        sendFrame(RoomFrame.UpdateCallMediaState(roomId, audioMuted = true, videoMuted = false))
+                    }
+                    waitForRtcFrame(list) { frame ->
+                        frame is RoomFrame.PeerMediaState && frame.uid == secondUser.uid && frame.audioMuted
+                    }
+                }
+            }
+            launch {
+                loginSession(firstUser, { frame, _, session ->
+                    list.add(frame)
+                    processRTCMessage(frame, session)
+                }) {
+                    waitAndSend {
+                        sendFrame(RoomFrame.StartCall(roomId))
+                    }
+                    waitForRtcFrame(list) { frame ->
+                        frame is RoomFrame.PeerMediaState && frame.uid == secondUser.uid && frame.audioMuted
+                    }
+                }
+            }
+        }
+    }
 }
 
 private suspend fun TestMate.runRtcCalls(
@@ -383,16 +432,26 @@ suspend fun waitRTCAnswer(list: MutableList<RoomFrame>) {
 }
 
 suspend fun waitRTCAnswerCount(list: MutableList<RoomFrame>, expectedCount: Int) {
+    waitForRtcFrame(list) {
+        list.count { frame -> frame is RoomFrame.RespondAnswer } >= expectedCount
+    }
+}
+
+suspend fun waitForRtcFrame(
+    list: MutableList<RoomFrame>,
+    predicate: (RoomFrame) -> Boolean,
+) {
     var i = 0
     while (i < 10) {
         i++
-        if (list.count { it is RoomFrame.RespondAnswer } >= expectedCount) {
+        if (list.any(predicate)) {
             break
         }
         withContext(Dispatchers.IO) {
             delay(1000)
         }
     }
+    assertTrue(list.any(predicate))
 }
 
 suspend fun processRTCMessage(frame: RoomFrame, session: DefaultClientWebSocketSession) {

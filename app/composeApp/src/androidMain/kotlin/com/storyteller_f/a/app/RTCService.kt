@@ -11,6 +11,7 @@ import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.coroutineScope
 import com.shepeliev.webrtckmp.AudioTrack
 import com.shepeliev.webrtckmp.MediaStream
+import com.shepeliev.webrtckmp.MediaStreamTrackKind
 import com.shepeliev.webrtckmp.VideoTrack
 import com.shepeliev.webrtckmp.videoTracks
 import com.storyteller_f.a.client.core.sendFrame
@@ -50,17 +51,23 @@ data class RemotePeerState(
     val uid: PrimaryKey,
     val audioTrack: AudioTrack? = null,
     val videoTrack: VideoTrack? = null,
+    val audioMuted: Boolean = false,
+    val videoMuted: Boolean = false,
 )
 
 interface RTCHandle {
     val stream: StateFlow<MediaStream?>
     val callingRoom: StateFlow<PrimaryKey?>
     val remotePeers: StateFlow<Map<PrimaryKey, RemotePeerState>>
+    val localAudioMuted: StateFlow<Boolean>
+    val localVideoMuted: StateFlow<Boolean>
     var job: Job?
     fun startCall(roomId: PrimaryKey)
     fun setLocalStream(stream: MediaStream)
     fun releaseStream()
     fun switchCamera()
+    fun toggleAudioMuted()
+    fun toggleVideoMuted()
     fun hangup()
 }
 
@@ -69,6 +76,8 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
     override val callingRoom = MutableStateFlow<PrimaryKey?>(null)
     override var stream = MutableStateFlow<MediaStream?>(null)
     override val remotePeers = MutableStateFlow<Map<PrimaryKey, RemotePeerState>>(emptyMap())
+    override val localAudioMuted = MutableStateFlow(false)
+    override val localVideoMuted = MutableStateFlow(false)
     override var job: Job? = null
     private val peerJobs = mutableMapOf<PrimaryKey, Job>()
 
@@ -92,6 +101,10 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
                         processPeerLeft(frame)
                     }
 
+                    is RoomFrame.PeerMediaState -> {
+                        processPeerMediaState(frame)
+                    }
+
                     else -> {}
                 }
             }
@@ -100,6 +113,8 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
 
     override fun setLocalStream(stream: MediaStream) {
         this.stream.value = stream
+        applyLocalTrackState()
+        sendCurrentMediaState()
     }
 
     override fun releaseStream() {
@@ -112,6 +127,18 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
         lifecycle.coroutineScope.launch {
             mediaStream.videoTracks.firstOrNull()?.switchCamera()
         }
+    }
+
+    override fun toggleAudioMuted() {
+        localAudioMuted.value = !localAudioMuted.value
+        applyLocalTrackState()
+        sendCurrentMediaState()
+    }
+
+    override fun toggleVideoMuted() {
+        localVideoMuted.value = !localVideoMuted.value
+        applyLocalTrackState()
+        sendCurrentMediaState()
     }
 
     override fun hangup() {
@@ -142,6 +169,13 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
             session.proxy.webSocketClient.useWebSocket {
                 val f = RoomFrame.StartCall(roomId)
                 sendFrame(f)
+                sendFrame(
+                    RoomFrame.UpdateCallMediaState(
+                        roomId = roomId,
+                        audioMuted = localAudioMuted.value,
+                        videoMuted = localVideoMuted.value,
+                    )
+                )
             }
         }
         callingRoom.value = roomId
@@ -237,6 +271,50 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
         removeRemotePeer(frame.uid)
     }
 
+    private fun processPeerMediaState(frame: RoomFrame.PeerMediaState) {
+        if (callingRoom.value != frame.roomId) {
+            return
+        }
+        val updated = remotePeers.value.toMutableMap()
+        val current = updated[frame.uid] ?: RemotePeerState(uid = frame.uid)
+        updated[frame.uid] = current.copy(
+            audioMuted = frame.audioMuted,
+            videoMuted = frame.videoMuted,
+        )
+        remotePeers.value = updated
+    }
+
+    private fun applyLocalTrackState() {
+        val mediaStream = stream.value ?: return
+        mediaStream.tracks.forEach { track ->
+            when (track.kind) {
+                MediaStreamTrackKind.Audio -> {
+                    (track as AudioTrack).enabled = !localAudioMuted.value
+                }
+
+                MediaStreamTrackKind.Video -> {
+                    (track as VideoTrack).enabled = !localVideoMuted.value
+                }
+            }
+        }
+    }
+
+    private fun sendCurrentMediaState() {
+        val roomId = callingRoom.value ?: return
+        val session = uiViewModel.instance.value.sessionManager
+        lifecycle.coroutineScope.launch {
+            session.proxy.webSocketClient.useWebSocket {
+                sendFrame(
+                    RoomFrame.UpdateCallMediaState(
+                        roomId = roomId,
+                        audioMuted = localAudioMuted.value,
+                        videoMuted = localVideoMuted.value,
+                    )
+                )
+            }
+        }
+    }
+
     private fun removeRemotePeer(uid: PrimaryKey) {
         remotePeers.value = remotePeers.value.toMutableMap().apply {
             remove(uid)
@@ -264,4 +342,6 @@ interface RTCContainer {
     val streamFlow: StateFlow<MediaStream?>
     val callingRoomFlow: StateFlow<Long?>
     val remotePeers: StateFlow<List<RemotePeerState>>
+    val localAudioMutedFlow: StateFlow<Boolean>
+    val localVideoMutedFlow: StateFlow<Boolean>
 }

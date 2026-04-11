@@ -24,12 +24,18 @@ class RtcFrame(
 
 class RtcUser(val uid: PrimaryKey, val session: DefaultWebSocketServerSession)
 
+data class RtcMediaState(
+    val audioMuted: Boolean = false,
+    val videoMuted: Boolean = false,
+)
+
 data class RtcSession(
     val roomId: PrimaryKey,
     val uidList: MutableList<RtcUser> = mutableListOf(),
     val socketMap: MutableMap<PrimaryKey, DefaultWebSocketServerSession> = mutableMapOf(),
     val offerList: MutableMap<PrimaryKey, MutableMap<PrimaryKey, CustomOffer>> = mutableMapOf(),
     val answerList: MutableMap<PrimaryKey, MutableMap<PrimaryKey, CustomAnswer>> = mutableMapOf(),
+    val mediaStateMap: MutableMap<PrimaryKey, RtcMediaState> = mutableMapOf(),
 )
 
 val rtcSession = mutableMapOf<PrimaryKey, RtcSession>()
@@ -72,6 +78,31 @@ private suspend fun notifyPeerLeft(
     }
 }
 
+private suspend fun syncRtcMediaState(
+    session: RtcSession,
+    uid: PrimaryKey,
+    socket: DefaultWebSocketServerSession,
+) {
+    session.mediaStateMap.filterKeys {
+        it != uid
+    }.forEach { (peerUid, state) ->
+        runCatching {
+            socket.sendFrame(
+                RoomFrame.PeerMediaState(
+                    uid = peerUid,
+                    roomId = session.roomId,
+                    audioMuted = state.audioMuted,
+                    videoMuted = state.videoMuted,
+                )
+            )
+        }.onFailure { e ->
+            Napier.e(e) {
+                "sync PeerMediaState"
+            }
+        }
+    }
+}
+
 private fun cleanupRtcUser(
     session: RtcSession,
     uid: PrimaryKey,
@@ -82,6 +113,7 @@ private fun cleanupRtcUser(
     session.socketMap.remove(uid)
     session.offerList.remove(uid)
     session.answerList.remove(uid)
+    session.mediaStateMap.remove(uid)
     session.offerList.values.forEach {
         it.remove(uid)
     }
@@ -114,6 +146,8 @@ private suspend fun processStartCall(
             cleanupRtcUser(list, uid)
             list.uidList.add(RtcUser(uid, session))
             list.socketMap[uid] = session
+            list.mediaStateMap[uid] = RtcMediaState()
+            syncRtcMediaState(list, uid, session)
         }
     }.onFailure {
         session.sendFrame(RoomFrame.Error(it.message.toString()))
@@ -154,6 +188,33 @@ private suspend fun processSendOffer(
         session.offerList.getOrPut(uid) {
             mutableMapOf()
         }[frame.targetUid] = offer
+    }
+}
+
+private suspend fun processUpdateCallMediaState(
+    frame: RoomFrame.UpdateCallMediaState,
+    uid: PrimaryKey,
+) {
+    val session = rtcSession[frame.roomId] ?: return
+    if (session.uidList.none { it.uid == uid }) {
+        return
+    }
+    val state = RtcMediaState(
+        audioMuted = frame.audioMuted,
+        videoMuted = frame.videoMuted,
+    )
+    session.mediaStateMap[uid] = state
+    session.socketMap.filterKeys {
+        it != uid
+    }.values.forEach { socket ->
+        socket.sendFrame(
+            RoomFrame.PeerMediaState(
+                uid = uid,
+                roomId = frame.roomId,
+                audioMuted = frame.audioMuted,
+                videoMuted = frame.videoMuted,
+            )
+        )
     }
 }
 
@@ -258,6 +319,10 @@ suspend fun listenerRtcChannel(backend: Backend) {
 
                 is RoomFrame.SendCandidate -> {
                     processSendCandidate(frame, uid)
+                }
+
+                is RoomFrame.UpdateCallMediaState -> {
+                    processUpdateCallMediaState(frame, uid)
                 }
 
                 else -> {
