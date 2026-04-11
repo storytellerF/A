@@ -4,7 +4,7 @@ import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.datetime.LocalDateTime
 
 enum class TaskRecordType {
-    TOPIC_ACG, INTRO, SUBSCRIPTION
+    TOPIC_ACG, INTRO, SUBSCRIPTION, TITLE
 }
 
 class TaskRecordInfo(
