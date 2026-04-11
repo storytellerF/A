@@ -1,6 +1,6 @@
 FROM eclipse-temurin:21-alpine AS builder
 
-RUN apk add bash curl dos2unix
+RUN apk add bash curl
 
 WORKDIR /app
 COPY . .
@@ -14,8 +14,6 @@ ARG BUILD_TYPE
 ARG FLAVOR
 ARG BUILD_ON
 #endif
-
-RUN ./scripts/tool_scripts/shell-crlf.sh
 
 RUN ./scripts/download_scripts/download-preset-data.sh
 

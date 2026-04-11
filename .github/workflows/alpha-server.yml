@@ -49,4 +49,4 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Start service
-        run: ./scripts/service_scripts/start-service-on-ci.sh
+        run: ./scripts/service_scripts/start-service-on-ci.sh alpha

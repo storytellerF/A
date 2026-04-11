@@ -4,21 +4,16 @@ set -e
 
 FLAVOR=$1
 BUILD_TYPE=$2
-BUILD_ON=$3
 
-if [ -z "$FLAVOR" ] || [ -z "$BUILD_TYPE" ] || [ -z "$BUILD_ON" ]; then
-  echo "Usage: $0 <FLAVOR> <BUILD_TYPE> <BUILD_ON>"
-  echo "Example: $0 dev prod local"
+if [ -z "$FLAVOR" ] || [ -z "$BUILD_TYPE" ]; then
+  echo "Usage: $0 <FLAVOR> <BUILD_TYPE>"
+  echo "Example: $0 dev prod"
   exit 1
 fi
 
-if [ "$BUILD_ON" = "host" ]; then
-  echo "BUILD_ON=host, preparing host artifacts first"
-  mkdir -p deploy/build
-  ./scripts/tool_scripts/modify-flavor.sh "$FLAVOR" "$BUILD_TYPE"
-  ./scripts/build_scripts/build-cloud.sh
-  ./scripts/build_scripts/build-worker.sh
-fi
+mkdir -p deploy/build
+./scripts/build_scripts/build-cloud.sh "$FLAVOR" prod
+./scripts/build_scripts/build-worker.sh "$FLAVOR" prod
 
 echo "Building server image: a-server:latest"
 docker build --platform linux/amd64 \

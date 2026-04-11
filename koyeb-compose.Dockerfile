@@ -12,8 +12,6 @@ WORKDIR /app
 COPY deploy .
 ENV HOST_TYPE=local
 
-RUN ./scripts/tool_scripts/shell-crlf.sh
-
 RUN ./scripts/download_scripts/manual-download-docker-image.sh
 
 
