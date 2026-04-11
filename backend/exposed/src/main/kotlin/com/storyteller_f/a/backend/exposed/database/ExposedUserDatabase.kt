@@ -373,6 +373,17 @@ class ExposedUserDatabase(
         count()
     }
 
+    override suspend fun getChildAccountIds(hostId: PrimaryKey) = databaseSession.dbSearch {
+        search {
+            ChildAccounts.select(ChildAccounts.uid).where {
+                ChildAccounts.hostId eq hostId
+            }
+        }
+        map {
+            it[ChildAccounts.uid]
+        }
+    }
+
     override suspend fun getRawChildAccount(uid: PrimaryKey) = databaseSession.dbSearch {
         search {
             ChildAccounts.selectAll().where {

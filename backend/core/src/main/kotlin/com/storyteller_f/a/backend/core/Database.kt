@@ -190,6 +190,12 @@ interface CombinedDatabase {
         val childAccountCount = user.getChildAccountCount(uid).getOrThrow()
         val reactionRecordCount = reaction.getUserReactionRecordCount(uid).getOrThrow()
         val commentCount = topic.getUserCommentCount(uid).getOrThrow()
+        val childAccountIds = user.getChildAccountIds(uid).getOrThrow()
+        val hasUnreadChildRoomMessage = if (childAccountIds.isEmpty()) {
+            false
+        } else {
+            container.getUsersHasUnreadRoomMap(childAccountIds).getOrThrow().values.any { it }
+        }
         val rawUser = user.getRawUser(ObjectFetch.IdFetch(uid), uid).getOrThrow() ?: error("user not found")
         RawUserOverview(
             subscriptionCount,
@@ -198,6 +204,7 @@ interface CombinedDatabase {
             childAccountCount,
             reactionRecordCount,
             commentCount,
+            hasUnreadChildRoomMessage,
             rawUser
         )
     }
@@ -323,6 +330,7 @@ interface UserDatabase {
     ): Result<PaginationResult<RawChildAccount>>
 
     suspend fun getRawChildAccount(uid: PrimaryKey): Result<ChildAccount?>
+    suspend fun getChildAccountIds(hostId: PrimaryKey): Result<List<PrimaryKey>>
 
     suspend fun createChildAccount(
         hostId: PrimaryKey,
@@ -587,6 +595,7 @@ interface ContainerDatabase {
     suspend fun getContainerInfo(parentIds: List<PrimaryKey>, uid: PrimaryKey?,): Result<Map<PrimaryKey, ContainerInfo>>
 
     suspend fun getTopicReadList(parentIds: List<PrimaryKey>, uid: PrimaryKey): Result<List<UserTopicRead>>
+    suspend fun getUsersHasUnreadRoomMap(uidList: List<PrimaryKey>): Result<Map<PrimaryKey, Boolean>>
 
     suspend fun getMemberPaginationResult(
         objectId: PrimaryKey?,

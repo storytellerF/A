@@ -7,5 +7,6 @@ data class RawUserOverview(
     val childAccountCount: Long,
     val reactionRecordCount: Long,
     val commentCount: Long,
+    val hasUnreadChildRoomMessage: Boolean,
     val rawUser: RawUser
 )

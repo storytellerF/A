@@ -36,6 +36,7 @@ data class UserOverview(
     val childAccountCount: Long,
     val reactionRecordCount: Long,
     val commentCount: Long,
+    val hasUnreadChildRoomMessage: Boolean = false,
     val userInfo: UserInfo
 )
 
@@ -89,7 +90,8 @@ data class ChildAccountInfo(
     val encryptedAesKey: String,
     val userInfo: UserInfo,
     val algoType: AlgoType = AlgoType.P256,
-    val encryptedEncryptionPrivateKey: String? = null
+    val encryptedEncryptionPrivateKey: String? = null,
+    val hasUnreadRoomMessage: Boolean = false,
 ) : PrimaryKeyIdentifiable {
     override val id: PrimaryKey
         get() = userInfo.id

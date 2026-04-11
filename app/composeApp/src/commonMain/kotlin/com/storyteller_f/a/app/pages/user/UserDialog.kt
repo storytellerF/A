@@ -25,6 +25,8 @@ import androidx.compose.material.icons.filled.SignalCellularAlt
 import androidx.compose.material.icons.filled.SwitchAccount
 import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material.icons.filled.Wifi
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
@@ -43,6 +45,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
@@ -362,7 +365,10 @@ fun AccountSwitchButton(dismiss: () -> Unit, overviewHandler: LoadingHandler<Use
         if (isLoading) IconRes.Loading else IconRes.Vector(Icons.Default.SwitchAccount),
         stringResource(Res.string.switch_account),
         {
-            ButtonBadgeSuffix(userOverview?.childAccountCount ?: 0)
+            ButtonBadgeSuffix(
+                number = userOverview?.childAccountCount ?: 0,
+                hasUnread = userOverview?.hasUnreadChildRoomMessage == true,
+            )
         }
     ) {
         dismiss()
@@ -371,14 +377,20 @@ fun AccountSwitchButton(dismiss: () -> Unit, overviewHandler: LoadingHandler<Use
 }
 
 @Composable
-fun ButtonBadgeSuffix(number: Long) {
+fun ButtonBadgeSuffix(number: Long, hasUnread: Boolean = false) {
     val shape = RoundedCornerShape(8.dp)
-    Text(
-        number.toString(),
-        modifier = Modifier.clip(shape)
-            .background(MaterialTheme.colorScheme.primaryContainer, shape)
-            .padding(horizontal = 8.dp, vertical = 4.dp)
-    )
+    BadgedBox(badge = {
+        if (hasUnread) {
+            Badge(containerColor = Color.Red)
+        }
+    }) {
+        Text(
+            number.toString(),
+            modifier = Modifier.clip(shape)
+                .background(MaterialTheme.colorScheme.primaryContainer, shape)
+                .padding(horizontal = 8.dp, vertical = 4.dp)
+        )
+    }
 }
 
 @Composable

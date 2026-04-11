@@ -25,6 +25,8 @@ import com.storyteller_f.a.backend.exposed.tables.mapUserInfo
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.NestedMemberInfo
 import com.storyteller_f.shared.model.QuotaType
+import com.storyteller_f.shared.type.MemberStatus
+import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.associateByPair
 import org.jetbrains.exposed.v1.core.JoinType
@@ -32,8 +34,12 @@ import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.countDistinct
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.core.isNotNull
+import org.jetbrains.exposed.v1.core.isNull
+import org.jetbrains.exposed.v1.core.less
 import org.jetbrains.exposed.v1.core.like
 import org.jetbrains.exposed.v1.core.max
+import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.r2dbc.Query
 import org.jetbrains.exposed.v1.r2dbc.andWhere
 import org.jetbrains.exposed.v1.r2dbc.deleteWhere
@@ -206,6 +212,39 @@ class ExposedContainerDatabase(
             }
         }
         map(UserTopicRead::wrapRow)
+    }
+
+    override suspend fun getUsersHasUnreadRoomMap(uidList: List<PrimaryKey>): Result<Map<PrimaryKey, Boolean>> {
+        if (uidList.isEmpty()) {
+            return Result.success(emptyMap())
+        }
+        return databaseSession.dbSearch {
+            search {
+                Members
+                    .join(Topics, JoinType.INNER, Members.objectId, Topics.parentId) {
+                        Topics.parentType eq ObjectType.ROOM
+                    }
+                    .join(UserTopicReads, JoinType.LEFT, Members.objectId, UserTopicReads.objectId) {
+                        (UserTopicReads.uid eq Members.uid) and (UserTopicReads.objectType eq ObjectType.ROOM)
+                    }
+                    .select(Members.uid)
+                    .where {
+                        (Members.uid inList uidList) and
+                            (Members.objectType eq ObjectType.ROOM) and
+                            (Members.status eq MemberStatus.JOINED) and
+                            Members.joinedTime.isNotNull() and
+                            (UserTopicReads.topicId.isNull() or (UserTopicReads.topicId less Topics.id))
+                    }
+            }
+            map {
+                it[Members.uid]
+            }
+        }.map { unreadUidList ->
+            val unreadUidSet = unreadUidList.toSet()
+            uidList.associateWith { uid ->
+                uid in unreadUidSet
+            }
+        }
     }
 
     override suspend fun getMemberPaginationResult(

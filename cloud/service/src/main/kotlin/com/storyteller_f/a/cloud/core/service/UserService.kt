@@ -335,16 +335,18 @@ suspend fun Backend.getUserAlternateUserInfoList(
         processRawUserToUserInfo(results.map {
             it.rawUser
         }).map { userList ->
-            val map = userList.associateBy { it.id }
+            val userInfoMap = userList.associateBy { it.id }
+            val unreadRoomMap = database.container.getUsersHasUnreadRoomMap(userInfoMap.keys.toList()).getOrThrow()
             results.mapNotNull {
-                map[it.rawUser.user.id]?.let { userInfo ->
+                userInfoMap[it.rawUser.user.id]?.let { userInfo ->
                     ChildAccountInfo(
                         hostId = it.rawUser.user.id,
                         encryptedPrivateKey = it.childAccount.encryptedPrivateKey,
                         encryptedAesKey = it.childAccount.encryptedAesKey,
                         userInfo = userInfo,
                         algoType = it.rawUser.user.algoType,
-                        encryptedEncryptionPrivateKey = it.childAccount.encryptedEncryptionPrivateKey
+                        encryptedEncryptionPrivateKey = it.childAccount.encryptedEncryptionPrivateKey,
+                        hasUnreadRoomMessage = unreadRoomMap[userInfo.id] == true,
                     )
                 }
             }
@@ -468,6 +470,7 @@ suspend fun Backend.processRawUserOverviewToUserOverview(raw: RawUserOverview): 
             raw.childAccountCount,
             raw.reactionRecordCount,
             raw.commentCount,
+            raw.hasUnreadChildRoomMessage,
             userInfo
         )
     }
