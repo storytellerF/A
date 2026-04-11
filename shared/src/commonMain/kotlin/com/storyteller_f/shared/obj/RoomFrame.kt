@@ -67,7 +67,7 @@ sealed interface RoomFrame {
     data class RespondAnswer(
         val answer: CustomAnswer,
         val roomId: PrimaryKey,
-        val targetUid: PrimaryKey
+        val uid: PrimaryKey
     ) : RoomFrame
 
     @Serializable

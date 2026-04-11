@@ -46,11 +46,16 @@ class RTCService : LifecycleService() {
     }
 }
 
+data class RemotePeerState(
+    val uid: PrimaryKey,
+    val audioTrack: AudioTrack? = null,
+    val videoTrack: VideoTrack? = null,
+)
+
 interface RTCHandle {
     val stream: StateFlow<MediaStream?>
     val callingRoom: StateFlow<PrimaryKey?>
-    val remoteAudioStream: StateFlow<AudioTrack?>
-    val remoteVideoStream: StateFlow<VideoTrack?>
+    val remotePeers: StateFlow<Map<PrimaryKey, RemotePeerState>>
     var job: Job?
     fun startCall(roomId: PrimaryKey)
     fun setLocalStream(stream: MediaStream)
@@ -63,9 +68,9 @@ interface RTCHandle {
 class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) : RTCHandle {
     override val callingRoom = MutableStateFlow<PrimaryKey?>(null)
     override var stream = MutableStateFlow<MediaStream?>(null)
-    override val remoteAudioStream = MutableStateFlow<AudioTrack?>(null)
-    override val remoteVideoStream = MutableStateFlow<VideoTrack?>(null)
+    override val remotePeers = MutableStateFlow<Map<PrimaryKey, RemotePeerState>>(emptyMap())
     override var job: Job? = null
+    private val peerJobs = mutableMapOf<PrimaryKey, Job>()
 
     init {
         lifecycle.coroutineScope.launch {
@@ -106,13 +111,28 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
     }
 
     override fun hangup() {
+        val roomId = callingRoom.value
+        peerJobs.values.toList().forEach {
+            it.cancel()
+        }
+        peerJobs.clear()
         job?.cancel()
+        remotePeers.value = emptyMap()
         callingRoom.value = null
-        remoteVideoStream.value = null
-        remoteAudioStream.value = null
+        if (roomId != null) {
+            val session = uiViewModel.instance.value.sessionManager
+            lifecycle.coroutineScope.launch {
+                session.proxy.webSocketClient.useWebSocket {
+                    sendFrame(RoomFrame.StopCall(roomId))
+                }
+            }
+        }
     }
 
     override fun startCall(roomId: PrimaryKey) {
+        if (callingRoom.value == roomId) {
+            return
+        }
         val session = uiViewModel.instance.value.sessionManager
         lifecycle.coroutineScope.launch {
             session.proxy.webSocketClient.useWebSocket {
@@ -127,17 +147,30 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
         frame: RoomFrame.CreateAnswer,
         instance: AccountInstance,
     ) {
+        if (callingRoom.value != frame.roomId) {
+            return
+        }
+        if (peerJobs[frame.targetUid]?.isActive == true) {
+            return
+        }
         val localStream = stream.value ?: return
         val signalingChannel = instance.sessionManager.webSocketClient.frameFlow
-        job = lifecycle.coroutineScope.launch {
+        val targetUid = frame.targetUid
+        val currentJob = lifecycle.coroutineScope.launch {
             makeCallByAnswer(
                 frame,
                 localStream,
-                ::setRemoteVideoTrack,
-                ::setRemoteAudioTrack,
-                signalingChannel,
-                instance
+                onRemoteVideoTrack = { setRemoteVideoTrack(targetUid, it) },
+                onRemoteAudioTrack = { setRemoteAudioTrack(targetUid, it) },
+                signalingChannel = signalingChannel,
+                instance = instance,
             )
+        }
+        peerJobs[targetUid] = currentJob
+        job = currentJob
+        currentJob.invokeOnCompletion {
+            peerJobs.remove(targetUid)
+            removeRemotePeer(targetUid)
         }
     }
 
@@ -145,32 +178,57 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
         frame: RoomFrame.CreateOffer,
         instance: AccountInstance
     ) {
+        if (callingRoom.value != frame.roomId) {
+            return
+        }
+        if (peerJobs[frame.targetUid]?.isActive == true) {
+            return
+        }
         val localStream = stream.value ?: return
         val signalingChannel = instance.sessionManager.webSocketClient.frameFlow
-        job = lifecycle.coroutineScope.launch {
+        val targetUid = frame.targetUid
+        val currentJob = lifecycle.coroutineScope.launch {
             makeCallByOffer(
                 frame,
                 localStream,
-                ::setRemoteVideoTrack,
-                ::setRemoteAudioTrack,
-                signalingChannel,
-                instance
+                onRemoteVideoTrack = { setRemoteVideoTrack(targetUid, it) },
+                onRemoteAudioTrack = { setRemoteAudioTrack(targetUid, it) },
+                signalingChannel = signalingChannel,
+                instance = instance,
             )
         }
+        peerJobs[targetUid] = currentJob
+        job = currentJob
+        currentJob.invokeOnCompletion {
+            peerJobs.remove(targetUid)
+            removeRemotePeer(targetUid)
+        }
     }
 
-    private fun setRemoteAudioTrack(audioTrack: AudioTrack) {
+    private fun setRemoteAudioTrack(uid: PrimaryKey, audioTrack: AudioTrack) {
         Napier.i {
-            "setRemoteAudioTrack"
+            "setRemoteAudioTrack $uid"
         }
-        remoteAudioStream.value = audioTrack
+        val updated = remotePeers.value.toMutableMap()
+        val current = updated[uid] ?: RemotePeerState(uid = uid)
+        updated[uid] = current.copy(audioTrack = audioTrack)
+        remotePeers.value = updated
     }
 
-    private fun setRemoteVideoTrack(videoTrack: VideoTrack) {
+    private fun setRemoteVideoTrack(uid: PrimaryKey, videoTrack: VideoTrack) {
         Napier.i {
-            "setRemoteVideoTrack"
+            "setRemoteVideoTrack $uid"
         }
-        remoteVideoStream.value = videoTrack
+        val updated = remotePeers.value.toMutableMap()
+        val current = updated[uid] ?: RemotePeerState(uid = uid)
+        updated[uid] = current.copy(videoTrack = videoTrack)
+        remotePeers.value = updated
+    }
+
+    private fun removeRemotePeer(uid: PrimaryKey) {
+        remotePeers.value = remotePeers.value.toMutableMap().apply {
+            remove(uid)
+        }
     }
 }
 
@@ -193,5 +251,5 @@ interface RTCContainer {
     val binder: MutableStateFlow<RTCHandle?>
     val streamFlow: StateFlow<MediaStream?>
     val callingRoomFlow: StateFlow<Long?>
-    val remoteStream: StateFlow<Pair<AudioTrack?, VideoTrack?>?>
+    val remotePeers: StateFlow<List<RemotePeerState>>
 }

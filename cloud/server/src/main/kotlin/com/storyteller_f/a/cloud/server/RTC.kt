@@ -45,12 +45,27 @@ private fun processStopCall(
 ) {
     val roomId = frame.roomId
     val session = rtcSession[roomId] ?: return
+    cleanupRtcUser(session, uid)
+    if (session.uidList.isEmpty()) {
+        rtcSession.remove(roomId)
+    }
+}
+
+private fun cleanupRtcUser(
+    session: RtcSession,
+    uid: PrimaryKey,
+) {
     session.uidList.removeIf {
         it.uid == uid
     }
     session.socketMap.remove(uid)
-    if (session.uidList.isEmpty()) {
-        rtcSession.remove(roomId)
+    session.offerList.remove(uid)
+    session.answerList.remove(uid)
+    session.offerList.values.forEach {
+        it.remove(uid)
+    }
+    session.answerList.values.forEach {
+        it.remove(uid)
     }
 }
 
@@ -75,7 +90,7 @@ private suspend fun processStartCall(
             val list = rtcSession.getOrPut(roomId) {
                 RtcSession(roomId)
             }
-            if (list.uidList.size < 2 && list.uidList.firstOrNull {
+            if (list.uidList.firstOrNull {
                     it.uid == uid
                 } == null) {
                 list.uidList.add(RtcUser(uid, session))
@@ -97,10 +112,10 @@ private suspend fun processSendAnswer(
     val answer = frame.answer
     val session = rtcSession[frame.roomId]
     if (session != null) {
-        session.socketMap[frame.targetUid]?.sendFrame(RoomFrame.RespondAnswer(answer, frame.roomId, frame.targetUid))
-        session.answerList[uid]?.let {
-            it[frame.targetUid] = answer
-        }
+        session.socketMap[frame.targetUid]?.sendFrame(RoomFrame.RespondAnswer(answer, frame.roomId, uid))
+        session.answerList.getOrPut(frame.targetUid) {
+            mutableMapOf()
+        }[uid] = answer
     }
 }
 
@@ -118,9 +133,9 @@ private suspend fun processSendOffer(
     }
     if (session != null) {
         session.socketMap[frame.targetUid]?.sendFrame(RoomFrame.CreateAnswer(uid, offer, frame.roomId))
-        session.offerList[uid]?.let {
-            it[frame.targetUid] = offer
-        }
+        session.offerList.getOrPut(uid) {
+            mutableMapOf()
+        }[frame.targetUid] = offer
     }
 }
 
