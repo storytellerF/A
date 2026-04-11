@@ -80,6 +80,16 @@ class RTCActivity : ComponentActivity(), RTCContainer {
         it.values.sortedBy(RemotePeerState::uid)
     }.stateIn(lifecycleScope, SharingStarted.Lazily, emptyList())
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override val localAudioMutedFlow: StateFlow<Boolean> = binder.filterNotNull().flatMapLatest {
+        it.localAudioMuted
+    }.stateIn(lifecycleScope, SharingStarted.Lazily, false)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override val localVideoMutedFlow: StateFlow<Boolean> = binder.filterNotNull().flatMapLatest {
+        it.localVideoMuted
+    }.stateIn(lifecycleScope, SharingStarted.Lazily, false)
+
     val roomId = MutableStateFlow<PrimaryKey?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -111,6 +121,8 @@ fun WebRTCPage(rtcContainer: RTCContainer, roomId: PrimaryKey) {
     val scope = rememberCoroutineScope()
     val localStream by rtcContainer.streamFlow.collectAsState()
     val callingRoom by rtcContainer.callingRoomFlow.collectAsState()
+    val localAudioMuted by rtcContainer.localAudioMutedFlow.collectAsState()
+    val localVideoMuted by rtcContainer.localVideoMutedFlow.collectAsState()
 
     Scaffold { padding ->
         Column(
@@ -121,7 +133,9 @@ fun WebRTCPage(rtcContainer: RTCContainer, roomId: PrimaryKey) {
         ) {
             val localVideoTrack = localStream?.videoTracks?.firstOrNull()
 
-            localVideoTrack?.let {
+            localVideoTrack?.takeIf {
+                !localVideoMuted
+            }?.let {
                 Video(videoTrack = it, modifier = Modifier.weight(1f).fillMaxWidth(),)
             } ?: Box(
                 modifier = Modifier
@@ -129,7 +143,7 @@ fun WebRTCPage(rtcContainer: RTCContainer, roomId: PrimaryKey) {
                     .fillMaxWidth(),
                 contentAlignment = Alignment.Center,
             ) {
-                Text("Local video")
+                Text(if (localVideoMuted) "Local camera off" else "Local video")
             }
             RemoteStreamView(rtcContainer)
 
@@ -160,6 +174,17 @@ fun WebRTCPage(rtcContainer: RTCContainer, roomId: PrimaryKey) {
                 } else {
                     HangupButton {
                         rtcContainer.binder.value?.hangup()
+                    }
+                }
+            }
+
+            if (localStream != null) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    AudioToggleButton(localAudioMuted) {
+                        rtcContainer.binder.value?.toggleAudioMuted()
+                    }
+                    VideoToggleButton(localVideoMuted) {
+                        rtcContainer.binder.value?.toggleVideoMuted()
                     }
                 }
             }
@@ -202,13 +227,18 @@ private fun ColumnScope.RemoteStreamView(rtcContainer: RTCContainer) {
                             .fillMaxHeight(),
                         contentAlignment = Alignment.Center,
                     ) {
-                        peer.videoTrack?.let {
+                        peer.videoTrack?.takeIf {
+                            !peer.videoMuted
+                        }?.let {
                             Video(
                                 videoTrack = it,
                                 audioTrack = peer.audioTrack,
                                 modifier = Modifier.fillMaxSize(),
                             )
-                        } ?: Text("Remote video")
+                        } ?: Text(if (peer.videoMuted) "Camera off" else "Remote video")
+                        if (peer.audioMuted) {
+                            Text("Muted")
+                        }
                     }
                 }
                 repeat(2 - rowPeers.size) {
@@ -522,6 +552,20 @@ private fun HangupButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
 private fun SwitchCameraButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
     Button(onClick = onClick, modifier = modifier) {
         Text("Switch Camera")
+    }
+}
+
+@Composable
+private fun AudioToggleButton(isMuted: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Button(onClick = onClick, modifier = modifier) {
+        Text(if (isMuted) "Unmute" else "Mute")
+    }
+}
+
+@Composable
+private fun VideoToggleButton(isMuted: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Button(onClick = onClick, modifier = modifier) {
+        Text(if (isMuted) "Show Video" else "Hide Video")
     }
 }
 

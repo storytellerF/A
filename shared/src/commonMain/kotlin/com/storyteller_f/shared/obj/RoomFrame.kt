@@ -39,6 +39,23 @@ sealed interface RoomFrame {
     data class PeerLeft(val uid: PrimaryKey, val roomId: PrimaryKey) : RoomFrame
 
     @Serializable
+    @SerialName("update-call-media-state")
+    data class UpdateCallMediaState(
+        val roomId: PrimaryKey,
+        val audioMuted: Boolean,
+        val videoMuted: Boolean,
+    ) : RoomFrame
+
+    @Serializable
+    @SerialName("peer-media-state")
+    data class PeerMediaState(
+        val uid: PrimaryKey,
+        val roomId: PrimaryKey,
+        val audioMuted: Boolean,
+        val videoMuted: Boolean,
+    ) : RoomFrame
+
+    @Serializable
     @SerialName("create-offer")
     data class CreateOffer(val targetUid: PrimaryKey, val roomId: PrimaryKey) : RoomFrame
 
