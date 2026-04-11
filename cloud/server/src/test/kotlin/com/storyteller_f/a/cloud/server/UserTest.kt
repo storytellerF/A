@@ -20,6 +20,7 @@ import com.storyteller_f.a.client.core.getRoomMembersPublicKeys
 import com.storyteller_f.a.client.core.getSubscriptions
 import com.storyteller_f.a.client.core.getTopicInfo
 import com.storyteller_f.a.client.core.getUserInfo
+import com.storyteller_f.a.client.core.getUserOverview
 import com.storyteller_f.a.client.core.removeFavorite
 import com.storyteller_f.a.client.core.removeSubscription
 import com.storyteller_f.a.client.core.sendMessage
@@ -32,8 +33,10 @@ import io.ktor.http.ContentType
 import kotlinx.io.Buffer
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class UserTest {
     @Test
@@ -105,6 +108,8 @@ class UserTest {
             val response = getChildAccounts(null, 10).getOrThrow()
             assertEquals(1, response.pagination?.total)
             assertEquals(childAccountInfo.id, response.data.first().id)
+            assertFalse(response.data.first().hasUnreadRoomMessage)
+            assertFalse(getUserOverview().getOrThrow().hasUnreadChildRoomMessage)
             childAccountInfo
         }
 
@@ -134,6 +139,12 @@ class UserTest {
                 communityId = null,
                 receivedFrame = receivedFrame
             )
+        }
+
+        loginSession(SessionOuterTuple(outerTuple.authKey, outerTuple.uid, Unit)) {
+            val response = getChildAccounts(null, 10).getOrThrow()
+            assertTrue(response.data.first().hasUnreadRoomMessage)
+            assertTrue(getUserOverview().getOrThrow().hasUnreadChildRoomMessage)
         }
     }
 
