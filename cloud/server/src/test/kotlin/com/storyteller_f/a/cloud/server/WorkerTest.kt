@@ -2,10 +2,14 @@ package com.storyteller_f.a.cloud.server
 
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.types.User
+import com.storyteller_f.a.api.NewCommunity
+import com.storyteller_f.a.client.core.createCommunity
 import com.storyteller_f.a.client.core.createTopic
+import com.storyteller_f.a.client.core.createTitle
 import com.storyteller_f.a.cloud.worker.doAcgTask
 import com.storyteller_f.a.cloud.worker.doIntroTask
 import com.storyteller_f.a.cloud.worker.doSubscriptionTask
+import com.storyteller_f.a.cloud.worker.doTitleTask
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.PassType
 import com.storyteller_f.shared.model.TaskRecordType
@@ -109,16 +113,26 @@ class WorkerTest {
     }
 
     @Test
-    fun `test all worker tasks run without error`() = test {
-        // 创建测试数据（这会初始化 Backend）
+    fun `test title task sends notification`() = test {
+        // 创建用户和 title
         attachSession {
-            val community = createCommunityForTest("test community", "tc1")
-            createTopic(ObjectType.COMMUNITY, community.id, "Test topic").getOrThrow()
+            val c = createCommunity(com.storyteller_f.a.api.NewCommunity("test community", "tc1")).getOrThrow()
+            val cId = c.id
+            
+            // 创建 title
+            createTitle(com.storyteller_f.a.api.NewTitle(
+                "Test Title",
+                com.storyteller_f.shared.model.TitleType.REGULAR,
+                it.uid,
+                cId,
+                ObjectType.COMMUNITY,
+                "Test title description"
+            )).getOrThrow()
         }
 
-        // 依次执行所有 worker 任务
+        // 执行 title 任务
         withWorkerBackend { backend ->
-            // 创建 System 用户（为 IntroTask 准备）
+            // 创建 System 用户（为 title 任务准备）
             val algo = com.storyteller_f.shared.getAlgo()
             val (_, sysPubPem) = algo.generatePemKeyPair().getOrThrow()
             val sysPubDer = algo.getDerPublicKeyFromPem(sysPubPem).getOrThrow()
@@ -131,7 +145,61 @@ class WorkerTest {
                 address = sysAddress,
                 icon = null,
                 nickname = "System",
-                id = SnowflakeFactory.nextId(),
+                id = 1L, // System user ID should be 1
+                createdTime = now(),
+                acgAmount = 0L,
+                passType = PassType.RAW,
+                algoType = AlgoType.P256,
+                notificationId = SnowflakeFactory.nextId()
+            )
+            backend.database.user.createUser(systemUser).getOrThrow()
+
+            // 执行 title 任务
+            backend.doTitleTask()
+
+            // 验证任务记录是否存在
+            val taskRecord = backend.database.user.getLatestTaskRecord(TaskRecordType.TITLE).getOrThrow()
+            
+            // 任务记录应该存在
+            assertNotNull(taskRecord, "Title task record should exist after running doTitleTask")
+        }
+    }
+
+    @Test
+    fun `test all worker tasks run without error`() = test {
+        // 创建测试数据（这会初始化 Backend）
+        attachSession {
+            val c = createCommunity(com.storyteller_f.a.api.NewCommunity("test community", "tc1")).getOrThrow()
+            val cId = c.id
+            createTopic(ObjectType.COMMUNITY, cId, "Test topic").getOrThrow()
+            
+            // 创建 title
+            createTitle(com.storyteller_f.a.api.NewTitle(
+                "Test Title",
+                com.storyteller_f.shared.model.TitleType.REGULAR,
+                it.uid,
+                cId,
+                ObjectType.COMMUNITY,
+                "Test title description"
+            )).getOrThrow()
+        }
+
+        // 依次执行所有 worker 任务
+        withWorkerBackend { backend ->
+            // 创建 System 用户（为 IntroTask 和 TitleTask 准备）
+            val algo = com.storyteller_f.shared.getAlgo()
+            val (_, sysPubPem) = algo.generatePemKeyPair().getOrThrow()
+            val sysPubDer = algo.getDerPublicKeyFromPem(sysPubPem).getOrThrow()
+            val sysAddress = algo.calcAddress(sysPubDer).getOrThrow()
+
+            val systemUser = User(
+                aid = "System",
+                encryptionPublicKey = null,
+                publicKey = sysPubDer,
+                address = sysAddress,
+                icon = null,
+                nickname = "System",
+                id = 1L, // System user ID should be 1
                 createdTime = now(),
                 acgAmount = 0L,
                 passType = PassType.RAW,
@@ -148,6 +216,9 @@ class WorkerTest {
 
             // 执行 Subscription 任务
             backend.doSubscriptionTask()
+
+            // 执行 Title 任务
+            backend.doTitleTask()
 
             // 验证所有任务都能正常完成
             assertTrue(true, "All worker tasks should complete without error")

@@ -68,6 +68,13 @@ fun main() {
                 }
                 backend.doSubscriptionTask()
             }
+        }, launch {
+            while (isActive) {
+                Napier.i(tag = "task") {
+                    "execute title task at ${now()}"
+                }
+                backend.doTitleTask()
+            }
         })
         // 注册 JVM 关闭钩子，捕获 SIGINT / SIGTERM
         Runtime.getRuntime().addShutdownHook(Thread {

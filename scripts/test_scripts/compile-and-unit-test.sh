@@ -19,7 +19,7 @@ else
 fi
 
 echo "清理测试缓存"
-if ! ./gradlew clean --no-daemon; then
+if ! ./gradlew clean --no-daemon -Pappium=false; then
     ./scripts/tool_scripts/show-notification.sh "清理失败" "clean 执行失败！" "false"
     exit 1
 fi
