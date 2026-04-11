@@ -18,7 +18,14 @@ actual fun buildGPT(): GPT {
     return LlamaGPT()
 }
 
+actual fun getGPTModelDirectory(): Path {
+    val userHome = System.getProperty("user.home")
+    return Path(File(userHome, ".storyteller_f_a/llm").absolutePath)
+}
+
 class LlamaGPT : GPT {
+    override val supportList: List<String> = listOf("gguf")
+
     override fun generate(
         path: String,
         prompt: String,
@@ -74,7 +81,6 @@ class LlamaGPT : GPT {
     }
 
     override fun models(scope: CoroutineScope): Flow<List<GPTModel>> {
-        val userHome = System.getProperty("user.home")
-        return observeModels(scope, Path(File(userHome, "llm").absolutePath), listOf("gguf"))
+        return observeModels(scope, getGPTModelDirectory(), supportList)
     }
 }

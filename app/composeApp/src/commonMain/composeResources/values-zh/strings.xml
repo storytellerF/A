@@ -54,6 +54,10 @@
     <string name="file_explorer">文件管理器</string>
     <string name="file_refs">文件引用</string>
     <string name="image_requires_crop_hint">该文件需裁切后才能使用</string>
+    <string name="translate_model">翻译模型</string>
+    <string name="current_selected">当前选择 %1$s</string>
+    <string name="try_button">试用</string>
+    <string name="import_llm">导入</string>
     <string name="home_start_destination">打开 App 默认定位</string>
     <string name="home_start_destination_world">原来的首页</string>
     <string name="home_start_destination_communities">加入的社区</string>
