@@ -1,6 +1,7 @@
 name: Alpha Server CI
 
 on:
+  workflow_dispatch:
   push:
     branches: [ "alpha" ]
     paths:

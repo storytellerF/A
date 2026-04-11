@@ -26,7 +26,6 @@ fi
 
 chmod 600 ~/.ssh/id_ed25519
 
-echo "prepare connect remote"
 # 检查 known_hosts 文件是否存在
 if [ ! -f ~/.ssh/known_hosts ]; then
   # 如果文件不存在，创建空的 known_hosts 文件
@@ -35,7 +34,11 @@ if [ ! -f ~/.ssh/known_hosts ]; then
   touch ~/.ssh/known_hosts
 fi
 
-ssh-keyscan -H $SSH_URI >> ~/.ssh/known_hosts
+# Extract host and port from SSH_URI
+SSH_HOST=$(echo "$SSH_URI" | sed 's|ssh://||' | cut -d':' -f1)
+SSH_PORT=$(echo "$SSH_URI" | sed 's|ssh://||' | cut -d':' -f2)
+
+ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts
 
 # eval "$(ssh-agent)"
 
