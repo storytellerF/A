@@ -88,6 +88,10 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
                         processCreateAnswer(frame, instance)
                     }
 
+                    is RoomFrame.PeerLeft -> {
+                        processPeerLeft(frame)
+                    }
+
                     else -> {}
                 }
             }
@@ -223,6 +227,14 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
         val current = updated[uid] ?: RemotePeerState(uid = uid)
         updated[uid] = current.copy(videoTrack = videoTrack)
         remotePeers.value = updated
+    }
+
+    private fun processPeerLeft(frame: RoomFrame.PeerLeft) {
+        if (callingRoom.value != frame.roomId) {
+            return
+        }
+        peerJobs.remove(frame.uid)?.cancel()
+        removeRemotePeer(frame.uid)
     }
 
     private fun removeRemotePeer(uid: PrimaryKey) {

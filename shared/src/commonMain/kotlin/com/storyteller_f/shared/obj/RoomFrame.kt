@@ -35,6 +35,10 @@ sealed interface RoomFrame {
     data class StopCall(val roomId: PrimaryKey) : RoomFrame
 
     @Serializable
+    @SerialName("peer-left")
+    data class PeerLeft(val uid: PrimaryKey, val roomId: PrimaryKey) : RoomFrame
+
+    @Serializable
     @SerialName("create-offer")
     data class CreateOffer(val targetUid: PrimaryKey, val roomId: PrimaryKey) : RoomFrame
 
