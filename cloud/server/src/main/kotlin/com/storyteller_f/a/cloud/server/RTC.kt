@@ -39,15 +39,36 @@ val rtcChannel = Channel<RtcFrame> {
 /**
  * 结束会话
  */
-private fun processStopCall(
+private suspend fun processStopCall(
     frame: RoomFrame.StopCall,
     uid: PrimaryKey,
 ) {
     val roomId = frame.roomId
     val session = rtcSession[roomId] ?: return
+    if (session.uidList.none { it.uid == uid }) {
+        return
+    }
+    notifyPeerLeft(session, uid)
     cleanupRtcUser(session, uid)
     if (session.uidList.isEmpty()) {
         rtcSession.remove(roomId)
+    }
+}
+
+private suspend fun notifyPeerLeft(
+    session: RtcSession,
+    uid: PrimaryKey,
+) {
+    session.socketMap.filterKeys {
+        it != uid
+    }.values.forEach { socket ->
+        runCatching {
+            socket.sendFrame(RoomFrame.PeerLeft(uid, session.roomId))
+        }.onFailure { e ->
+            Napier.e(e) {
+                "send PeerLeft"
+            }
+        }
     }
 }
 
@@ -90,12 +111,9 @@ private suspend fun processStartCall(
             val list = rtcSession.getOrPut(roomId) {
                 RtcSession(roomId)
             }
-            if (list.uidList.firstOrNull {
-                    it.uid == uid
-                } == null) {
-                list.uidList.add(RtcUser(uid, session))
-                list.socketMap[uid] = session
-            }
+            cleanupRtcUser(list, uid)
+            list.uidList.add(RtcUser(uid, session))
+            list.socketMap[uid] = session
         }
     }.onFailure {
         session.sendFrame(RoomFrame.Error(it.message.toString()))
@@ -141,6 +159,7 @@ private suspend fun processSendOffer(
 
 suspend fun listenerRoomRTC() {
     while (true) {
+        cleanupInactiveRtcUsers()
         rtcSession.forEach { (roomId, it) ->
             it.uidList.forEachIndexed { frontUserIndex, frontRtcUser ->
                 val frontSocket = frontRtcUser.session
@@ -154,6 +173,23 @@ suspend fun listenerRoomRTC() {
             delay(1000)
         }
     }
+}
+
+private suspend fun cleanupInactiveRtcUsers() {
+    val emptyRooms = mutableListOf<PrimaryKey>()
+    rtcSession.values.forEach { session ->
+        val inactiveUids = session.uidList.filterNot {
+            it.session.isActive
+        }.map(RtcUser::uid)
+        inactiveUids.forEach { uid ->
+            notifyPeerLeft(session, uid)
+            cleanupRtcUser(session, uid)
+        }
+        if (session.uidList.isEmpty()) {
+            emptyRooms.add(session.roomId)
+        }
+    }
+    emptyRooms.forEach(rtcSession::remove)
 }
 
 private suspend fun processRTCSession(
