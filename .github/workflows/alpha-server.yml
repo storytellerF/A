@@ -1,4 +1,4 @@
-name: Mini Server CI
+name: Alpha Server CI
 
 on:
   push:
@@ -7,10 +7,10 @@ on:
       - '.github/workflows/alpha-server.yml'
       - 'backend/**'
       - 'cli/**'
-      - 'crypto-jvm/**'
-      - 'deploy/**'
+      - 'api/**'
       - 'scripts/**'
-      - 'server/**'
+      - 'cloud/**'
+      - 'bgscripts/**'
       - 'shared/**'
       - 'gradle/**'
       - '*.kts'

@@ -16,6 +16,8 @@ echo "$SECRETS_CONTEXT" | jq -r 'to_entries | .[] | "\(.key)=\(.value)"' | while
     export "$key"="$value"
 done
 
+mkdir -p ~/.ssh
+
 if [ "$(uname)" = "Darwin" ]; then
   echo "$SSH_KEY" | base64 --decode -o ~/.ssh/id_ed25519
 else
@@ -40,3 +42,5 @@ ssh-keyscan -H $SSH_URI >> ~/.ssh/known_hosts
 # ssh-add ~/.ssh/remote.pem
 
 ./scripts/service-scripts/start-service-in-remote-by-image.sh "$FLAVOR" local ubuntu@$SSH_URI
+
+rm -rf ~/.ssh
