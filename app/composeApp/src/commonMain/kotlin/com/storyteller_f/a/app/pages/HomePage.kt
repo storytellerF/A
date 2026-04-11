@@ -67,6 +67,9 @@ import com.storyteller_f.a.app.core.components.NavRoute
 import com.storyteller_f.a.app.core.components.SignInButton
 import com.storyteller_f.a.app.design_spec
 import com.storyteller_f.a.app.download_latest_app
+import com.storyteller_f.a.app.home_start_destination_communities
+import com.storyteller_f.a.app.home_start_destination_rooms
+import com.storyteller_f.a.app.home_start_destination_world
 import com.storyteller_f.a.app.open_source_libraries
 import com.storyteller_f.a.app.pages.community.MyCommunitiesPage
 import com.storyteller_f.a.app.pages.room.MyRoomsPage
@@ -75,6 +78,8 @@ import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.a.app.pages.topic.TopicList
 import com.storyteller_f.a.app.rooms
 import com.storyteller_f.a.app.world
+import com.strabled.composepreferences.getPreference
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.SerializersModule
@@ -86,19 +91,23 @@ import org.jetbrains.compose.resources.stringResource
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class, ExperimentalFoundationApi::class)
 fun HomePage() {
     val size = calculateWindowSizeClass()
+    val homeStartDestinationFlow: StateFlow<String> by getPreference(HOME_START_DESTINATION_PREFERENCE_KEY)
+    val homeStartDestination by homeStartDestinationFlow.collectAsState()
+    val defaultHomeRoute = homeRouteFromPreference(homeStartDestination)
+    val defaultHomePage = homePageFromPreference(homeStartDestination)
     val homeNavRoutes = listOf(
-        NavRoute("/world", Icons.Default.Public, stringResource(Res.string.world)),
-        NavRoute("/communities", Icons.Default.Diversity3, stringResource(Res.string.communities)),
-        NavRoute("/rooms", Icons.Default.ChatBubble, stringResource(Res.string.rooms)),
+        NavRoute(HOME_START_DESTINATION_WORLD, Icons.Default.Public, stringResource(Res.string.world)),
+        NavRoute(HOME_START_DESTINATION_COMMUNITIES, Icons.Default.Diversity3, stringResource(Res.string.communities)),
+        NavRoute(HOME_START_DESTINATION_ROOMS, Icons.Default.ChatBubble, stringResource(Res.string.rooms)),
     )
     val modifier = Modifier.testTag("home")
     when (size.widthSizeClass) {
         WindowWidthSizeClass.Compact -> {
-            HomeCompatPage(homeNavRoutes, modifier)
+            HomeCompatPage(homeNavRoutes, modifier, defaultHomePage)
         }
 
         else -> {
-            HomeNonCompatPage(modifier, homeNavRoutes)
+            HomeNonCompatPage(modifier, homeNavRoutes, defaultHomeRoute)
         }
     }
 }
@@ -107,7 +116,8 @@ fun HomePage() {
 @Composable
 private fun HomeNonCompatPage(
     modifier: Modifier,
-    homeNavRoutes: List<NavRoute>
+    homeNavRoutes: List<NavRoute>,
+    defaultHomeRoute: HomeRoute,
 ) {
     Scaffold(modifier = modifier) {
         Row(Modifier) {
@@ -122,12 +132,12 @@ private fun HomeNonCompatPage(
                     }
                 }
             }
-            val backStack = rememberNavBackStack(config, HomeRoute.World)
+            val backStack = rememberNavBackStack(config, defaultHomeRoute)
             val currentEntry = backStack.last()
             CustomRailNav(currentEntry.toString(), homeNavRoutes) { path ->
                 val targetRoute = when (path) {
-                    "/communities" -> HomeRoute.Communities
-                    "/rooms" -> HomeRoute.Rooms
+                    HOME_START_DESTINATION_COMMUNITIES -> HomeRoute.Communities
+                    HOME_START_DESTINATION_ROOMS -> HomeRoute.Rooms
                     else -> HomeRoute.World
                 }
                 if (backStack.last() != targetRoute) {
@@ -150,26 +160,51 @@ private fun HomeNonCompatPage(
 sealed interface HomeRoute : NavKey {
     @Serializable
     data object World : HomeRoute {
-        override fun toString(): String = "/world"
+        override fun toString(): String = HOME_START_DESTINATION_WORLD
     }
 
     @Serializable
     data object Communities : HomeRoute {
-        override fun toString(): String = "/communities"
+        override fun toString(): String = HOME_START_DESTINATION_COMMUNITIES
     }
 
     @Serializable
     data object Rooms : HomeRoute {
-        override fun toString(): String = "/rooms"
+        override fun toString(): String = HOME_START_DESTINATION_ROOMS
     }
+}
+
+internal const val HOME_START_DESTINATION_PREFERENCE_KEY = "home_start_destination"
+internal const val HOME_START_DESTINATION_WORLD = "/world"
+internal const val HOME_START_DESTINATION_COMMUNITIES = "/communities"
+internal const val HOME_START_DESTINATION_ROOMS = "/rooms"
+
+internal fun homeRouteFromPreference(value: String?): HomeRoute = when (value) {
+    HOME_START_DESTINATION_COMMUNITIES -> HomeRoute.Communities
+    HOME_START_DESTINATION_ROOMS -> HomeRoute.Rooms
+    else -> HomeRoute.World
+}
+
+internal fun homePageFromPreference(value: String?): Int = when (value) {
+    HOME_START_DESTINATION_COMMUNITIES -> 1
+    HOME_START_DESTINATION_ROOMS -> 2
+    else -> 0
+}
+
+@Composable
+internal fun homeStartDestinationLabel(value: String?): String = when (value) {
+    HOME_START_DESTINATION_COMMUNITIES -> stringResource(Res.string.home_start_destination_communities)
+    HOME_START_DESTINATION_ROOMS -> stringResource(Res.string.home_start_destination_rooms)
+    else -> stringResource(Res.string.home_start_destination_world)
 }
 
 @Composable
 private fun HomeCompatPage(
     homeNavRoutes: List<NavRoute>,
-    modifier: Modifier
+    modifier: Modifier,
+    defaultHomePage: Int,
 ) {
-    val pagerState = rememberPagerState {
+    val pagerState = rememberPagerState(initialPage = defaultHomePage) {
         3
     }
     Scaffold(bottomBar = {

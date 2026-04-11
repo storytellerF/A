@@ -68,6 +68,8 @@ import com.storyteller_f.a.app.core.utils.SessionHistoryManager
 import com.storyteller_f.a.app.core.utils.buildSessionHistoryFactory
 import com.storyteller_f.a.app.core.utils.createSettings
 import com.storyteller_f.a.app.core.utils.restoreFromStorage
+import com.storyteller_f.a.app.pages.HOME_START_DESTINATION_PREFERENCE_KEY
+import com.storyteller_f.a.app.pages.HOME_START_DESTINATION_WORLD
 import com.storyteller_f.a.app.pages.file.FileExplorerPage
 import com.storyteller_f.a.app.pages.file.FileViewPage
 import com.storyteller_f.a.app.pages.room.RoomPage
@@ -282,6 +284,7 @@ fun CommonEntry(content: @Composable () -> Unit) {
                 ProvideDataStoreManager(dataStoreManager) {
                     setPreferences {
                         "gpt_model" defaultValue ""
+                        HOME_START_DESTINATION_PREFERENCE_KEY defaultValue HOME_START_DESTINATION_WORLD
                     }
                     content()
                     AccountSwitch()
