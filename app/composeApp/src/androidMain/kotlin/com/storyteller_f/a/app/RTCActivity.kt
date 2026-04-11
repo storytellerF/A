@@ -47,7 +47,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
@@ -75,14 +74,11 @@ class RTCActivity : ComponentActivity(), RTCContainer {
     }.stateIn(lifecycleScope, SharingStarted.Lazily, null)
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override val remoteStream: StateFlow<Pair<AudioTrack?, VideoTrack?>?> =
-        combine(binder.filterNotNull().flatMapLatest {
-            it.remoteAudioStream
-        }, binder.filterNotNull().flatMapLatest {
-            it.remoteVideoStream
-        }) { audioTrack, videoTrack ->
-            Pair(audioTrack, videoTrack)
-        }.stateIn(lifecycleScope, SharingStarted.Lazily, null)
+    override val remotePeers: StateFlow<List<RemotePeerState>> = binder.filterNotNull().flatMapLatest {
+        it.remotePeers
+    }.map {
+        it.values.sortedBy(RemotePeerState::uid)
+    }.stateIn(lifecycleScope, SharingStarted.Lazily, emptyList())
 
     val roomId = MutableStateFlow<PrimaryKey?>(null)
 
@@ -173,16 +169,57 @@ fun WebRTCPage(rtcContainer: RTCContainer, roomId: PrimaryKey) {
 
 @Composable
 private fun ColumnScope.RemoteStreamView(rtcContainer: RTCContainer) {
-    val remoteStream by rtcContainer.remoteStream.collectAsState()
-    remoteStream?.second?.let {
-        Video(videoTrack = it, audioTrack = remoteStream?.first, modifier = Modifier.weight(1f).fillMaxWidth(),)
-    } ?: Box(
+    val remotePeers by rtcContainer.remotePeers.collectAsState()
+    if (remotePeers.isEmpty()) {
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text("Remote video")
+        }
+        return
+    }
+
+    Column(
         modifier = Modifier
             .weight(1f)
             .fillMaxWidth(),
-        contentAlignment = Alignment.Center,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text("Remote video")
+        remotePeers.take(4).chunked(2).forEach { rowPeers ->
+            Row(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                rowPeers.forEach { peer ->
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        peer.videoTrack?.let {
+                            Video(
+                                videoTrack = it,
+                                audioTrack = peer.audioTrack,
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                        } ?: Text("Remote video")
+                    }
+                }
+                repeat(2 - rowPeers.size) {
+                    Spacer(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight(),
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -241,9 +278,11 @@ suspend fun makeCallByOffer(
 
         signalingChannel.map {
             it as? RoomFrame.RespondAnswer
-        }.filterNotNull().onEach {
+        }.filterNotNull().filter {
+            it.roomId == roomId && it.uid == targetUid
+        }.onEach {
             Napier.i {
-                "respond answer ${pc.signalingState}"
+                "respond answer ${pc.signalingState} from ${it.uid}"
             }
             if (pc.signalingState == SignalingState.HaveLocalOffer) {
                 val answer = SessionDescription(SessionDescriptionType.Answer, it.answer.sdp)

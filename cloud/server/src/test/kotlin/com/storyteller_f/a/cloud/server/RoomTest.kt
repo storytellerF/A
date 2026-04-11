@@ -36,9 +36,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDateTime
+import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
+import kotlin.test.assertTrue
 
 class RoomTest {
     @Test
@@ -192,7 +194,7 @@ class RoomTest {
         loginSession(firstUser) {
             joinRoom(secondUser.custom.id).getOrThrow()
         }
-        val list = mutableListOf<RoomFrame>()
+        val list = CopyOnWriteArrayList<RoomFrame>()
         coroutineScope {
             launch {
                 loginSession(secondUser, { frame, _, session ->
@@ -218,6 +220,84 @@ class RoomTest {
             }
         }
     }
+
+    @Test
+    fun `test rtc multi user`() = test {
+        rtcSession.clear()
+        val firstUser = attachSession()
+        val thirdUser = attachSession()
+        val secondUser = attachSession {
+            val roomInfo = createRoom(NewRoom("test-rtc-multi", "rtc-multi")).getOrThrow()
+            createJoinRoomTitleForTest(roomInfo.id, firstUser.uid)
+            createJoinRoomTitleForTest(roomInfo.id, thirdUser.uid)
+            roomInfo
+        }
+        loginSession(firstUser) {
+            joinRoom(secondUser.custom.id).getOrThrow()
+        }
+        loginSession(thirdUser) {
+            joinRoom(secondUser.custom.id).getOrThrow()
+        }
+
+        val roomId = secondUser.custom.id
+        val list = runRtcCalls(roomId, secondUser, firstUser, thirdUser)
+
+        assertTrue(list.count { it is RoomFrame.CreateAnswer } >= 3)
+        assertTrue(list.count { it is RoomFrame.RespondAnswer } >= 3)
+
+        stopRtcCall(thirdUser, roomId)
+        assertRtcUserCleanup(roomId, thirdUser.uid)
+    }
+}
+
+private suspend fun TestMate.runRtcCalls(
+    roomId: PrimaryKey,
+    vararg users: SessionOuterTuple<*>,
+): CopyOnWriteArrayList<RoomFrame> {
+    val list = CopyOnWriteArrayList<RoomFrame>()
+    coroutineScope {
+        users.forEach { tuple ->
+            launch {
+                loginSession(tuple, { frame, _, session ->
+                    list.add(frame)
+                    processRTCMessage(frame, session)
+                }) {
+                    waitAndSend {
+                        sendFrame(RoomFrame.StartCall(roomId))
+                    }
+                    waitRTCAnswerCount(list, 3)
+                }
+            }
+        }
+    }
+    return list
+}
+
+private suspend fun TestMate.stopRtcCall(
+    tuple: SessionOuterTuple<*>,
+    roomId: PrimaryKey,
+) {
+    loginSession(tuple) {
+        waitAndSend {
+            sendFrame(RoomFrame.StopCall(roomId))
+        }
+    }
+    withContext(Dispatchers.IO) {
+        delay(200)
+    }
+}
+
+private fun assertRtcUserCleanup(
+    roomId: PrimaryKey,
+    uid: PrimaryKey,
+) {
+    val session = rtcSession[roomId]
+    assertEquals(2, session?.uidList?.size)
+    assertTrue(session?.socketMap?.containsKey(uid) == false)
+    assertTrue(session?.offerList?.containsKey(uid) == false)
+    assertTrue(session?.offerList?.values?.none { it.containsKey(uid) } == true)
+    assertTrue(session?.answerList?.containsKey(uid) == false)
+    assertTrue(session?.answerList?.values?.none { it.containsKey(uid) } == true)
 }
 
 suspend fun UserSessionManager.createPrivateRoomForTest(): RoomInfo = createRoom(NewRoom("name", "r3")).getOrThrow()
@@ -299,12 +379,14 @@ suspend fun UserSessionManager.createJoinRoomTitleForTest(
 ).getOrThrow()
 
 suspend fun waitRTCAnswer(list: MutableList<RoomFrame>) {
+    waitRTCAnswerCount(list, 1)
+}
+
+suspend fun waitRTCAnswerCount(list: MutableList<RoomFrame>, expectedCount: Int) {
     var i = 0
     while (i < 10) {
         i++
-        if (list.firstOrNull {
-                it is RoomFrame.RespondAnswer
-            } != null) {
+        if (list.count { it is RoomFrame.RespondAnswer } >= expectedCount) {
             break
         }
         withContext(Dispatchers.IO) {
