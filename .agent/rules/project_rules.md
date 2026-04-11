@@ -89,6 +89,7 @@ trigger: always_on
 - 不创建仓库外文件；敏感文件（deploy/*.env）已在 .aiexclude 中排除
 - 涉及配置缓存的改动避免在 Gradle 配置期读取外部环境
 - 对已有测试保持兼容，如需更新，给出迁移理由与步骤
+- 编写代码或者扫描项目获取到的知识保存到project.md 中，对于project.md 中过时或者错误知识也可以进行编辑
 
 ## 故障排查速查
 - 网络异常: 查看 client/core/*Request.kt 的 serviceCatching 日志与 AdminApi/CustomApi 路由

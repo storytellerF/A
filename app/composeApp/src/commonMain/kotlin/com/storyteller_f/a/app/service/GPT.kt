@@ -4,6 +4,9 @@ import com.ashampoo.kim.common.exists
 import io.github.irgaly.kfswatch.KfsDirectoryWatcher
 import io.github.irgaly.kfswatch.KfsDirectoryWatcherEvent
 import io.github.irgaly.kfswatch.KfsEvent
+import io.github.vinceglb.filekit.PlatformFile
+import io.github.vinceglb.filekit.copyTo
+import io.github.vinceglb.filekit.name
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
@@ -21,12 +24,32 @@ class GPTOutput(val text: String)
 class GPTModel(val key: String, val value: String)
 
 interface GPT {
+    val supportList: List<String>
+
     fun generate(path: String, prompt: String, stopWord: String): Result<Flow<GPTOutput>>
 
     fun models(scope: CoroutineScope): Flow<List<GPTModel>>
+
+    suspend fun importModel(file: PlatformFile): Result<GPTModel> {
+        return runCatching {
+            val name = file.name
+            require(supportList.any { name.endsWith(it, ignoreCase = true) }) {
+                "unsupported model file: $name"
+            }
+            val directory = getGPTModelDirectory()
+            if (!SystemFileSystem.exists(directory)) {
+                SystemFileSystem.createDirectories(directory)
+            }
+            val target = Path(directory, name)
+            file.copyTo(io.github.vinceglb.filekit.PlatformFile(target))
+            GPTModel(target.name, target.toString())
+        }
+    }
 }
 
 class NoOpGPT : GPT {
+    override val supportList: List<String> = emptyList()
+
     override fun generate(path: String, prompt: String, stopWord: String): Result<Flow<GPTOutput>> {
         return Result.failure(Exception("unsupported"))
     }
@@ -37,6 +60,8 @@ class NoOpGPT : GPT {
 }
 
 expect fun buildGPT(): GPT
+
+expect fun getGPTModelDirectory(): Path
 
 fun buildTranslatePrompt(content: String, target: String, current: String): Pair<String, String> {
     return buildString {
@@ -66,6 +91,9 @@ fun observeModels(
     path: Path,
     supportList: List<String>
 ): Flow<List<GPTModel>> {
+    if (!SystemFileSystem.exists(path)) {
+        SystemFileSystem.createDirectories(path)
+    }
     val watcher = KfsDirectoryWatcher(scope)
     scope.launch {
         watcher.add(path.toString())

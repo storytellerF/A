@@ -61,6 +61,7 @@
     <string name="translate_model">Translate Model</string>
     <string name="current_selected">current selected %1$s</string>
     <string name="try_button">Try</string>
+    <string name="import_llm">Import</string>
     <string name="home_start_destination">Open app to</string>
     <string name="home_start_destination_world">Original home</string>
     <string name="home_start_destination_communities">Joined communities</string>

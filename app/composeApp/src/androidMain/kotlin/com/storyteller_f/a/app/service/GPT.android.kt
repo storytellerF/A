@@ -15,7 +15,21 @@ actual fun buildGPT(): GPT {
     return AndroidEdgeGPT()
 }
 
+actual fun getGPTModelDirectory(): Path {
+    val context = getAppContextRefValue() ?: error("context is nil")
+    return Path(context.filesDir.resolve("llm").absolutePath)
+}
+
 class AndroidEdgeGPT : GPT {
+    override val supportList: List<String> by lazy {
+        val (instance, method) = getLlamaBuildMethod()
+        if (instance != null && method != null) {
+            listOf("gguf", "task", "tflite")
+        } else {
+            listOf("task", "tflite")
+        }
+    }
+
     override fun generate(path: String, prompt: String, stopWord: String): Result<Flow<GPTOutput>> {
         return runCatching {
             val file = File(path)
@@ -85,12 +99,6 @@ class AndroidEdgeGPT : GPT {
     }
 
     override fun models(scope: CoroutineScope): Flow<List<GPTModel>> {
-        val (instance, method) = getLlamaBuildMethod()
-        val supportList = if (instance != null && method != null) {
-            listOf("gguf", "task", "tflite")
-        } else {
-            listOf("task", "tflite")
-        }
-        return observeModels(scope, Path("/data/local/tmp/llm"), supportList)
+        return observeModels(scope, getGPTModelDirectory(), supportList)
     }
 }

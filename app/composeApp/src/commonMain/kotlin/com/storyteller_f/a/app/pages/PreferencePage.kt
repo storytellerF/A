@@ -1,5 +1,7 @@
 package com.storyteller_f.a.app.pages
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -12,9 +14,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.unit.dp
+import com.storyteller_f.a.app.LocalGlobalDialog
 import com.storyteller_f.a.app.Res
 import com.storyteller_f.a.app.core.components.CustomIcon
 import com.storyteller_f.a.app.core.components.IconRes
+import com.storyteller_f.a.app.core.components.LocalToaster
+import com.storyteller_f.a.app.core.components.catchingResult
 import com.storyteller_f.a.app.current_selected
 import com.storyteller_f.a.app.home_start_destination
 import com.storyteller_f.a.app.home_start_destination_communities
@@ -22,6 +28,7 @@ import com.storyteller_f.a.app.home_start_destination_rooms
 import com.storyteller_f.a.app.home_start_destination_world
 import com.storyteller_f.a.app.pages.topic.TopicTranslateSheet
 import com.storyteller_f.a.app.service.buildGPT
+import com.storyteller_f.a.app.service.getGPTModelDirectory
 import com.storyteller_f.a.app.translate_model
 import com.storyteller_f.a.app.try_button
 import com.storyteller_f.a.app.ui.MaterialSymbolsOutlined
@@ -31,6 +38,9 @@ import com.strabled.composepreferences.PreferenceScreen
 import com.strabled.composepreferences.PreferenceTheme
 import com.strabled.composepreferences.getPreference
 import com.strabled.composepreferences.preferences.BottomSheetListPreference
+import io.github.vinceglb.filekit.FileKit
+import io.github.vinceglb.filekit.dialogs.openFilePicker
+import io.github.vinceglb.filekit.name
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -70,12 +80,17 @@ private fun HomeStartDestinationPreferenceItem() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TranslateModelPreferenceItem() {
+    val gpt = remember {
+        buildGPT()
+    }
     var showSheet by remember {
         mutableStateOf(false)
     }
     val sheetState = rememberModalBottomSheetState()
     val scope = rememberCoroutineScope()
-    val models by buildGPT().models(scope).collectAsState(emptyList())
+    val toast = LocalToaster.current
+    val globalDialogController = LocalGlobalDialog.current
+    val models by gpt.models(scope).collectAsState(emptyList())
     BottomSheetListPreference(
         getPreference("gpt_model"),
         title = stringResource(Res.string.translate_model),
@@ -83,19 +98,34 @@ private fun TranslateModelPreferenceItem() {
             it.value to it.key
         },
         summary = {
-            if (!it.isNullOrBlank()) {
-                Text(stringResource(Res.string.current_selected, it))
+            val path = if (it.isNullOrBlank()) {
+                getGPTModelDirectory().toString()
+            } else {
+                it
             }
+            Text(stringResource(Res.string.current_selected, path))
         },
         leadingIcon = {
             CustomIcon(IconRes.Font(MaterialSymbolsOutlined.Translate))
         },
         useSelectedInSummary = true,
         trailingContent = {
-            Button({
-                showSheet = true
-            }) {
-                Text(stringResource(Res.string.try_button))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button({
+                    globalDialogController.catchingResult(scope) {
+                        FileKit.openFilePicker()?.let { file ->
+                            gpt.importModel(file).getOrThrow()
+                            toast.showMessage("${file.name} imported")
+                        }
+                    }
+                }) {
+                    Text("Import")
+                }
+                Button({
+                    showSheet = true
+                }) {
+                    Text(stringResource(Res.string.try_button))
+                }
             }
         }
     )
