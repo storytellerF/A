@@ -22,19 +22,29 @@ fi
 # 检查是否有未推送的提交
 REMOTE_BRANCH=$(git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null || echo "")
 if [ -z "$REMOTE_BRANCH" ]; then
-    echo -e "${YELLOW}警告：当前分支没有设置上游分支，将重写所有提交历史${NC}"
-    # 默认为重写所有历史
-    BASE_COMMIT=""
-else
-    # 获取远程分支的最新提交
-    git fetch --quiet
-    BASE_COMMIT=$(git merge-base HEAD "$REMOTE_BRANCH")
-    if [ "$BASE_COMMIT" = "$(git rev-parse HEAD)" ]; then
-        echo -e "${GREEN}信息：没有未推送的提交${NC}"
-        exit 0
-    fi
-    echo -e "${GREEN}信息：将重写从 $BASE_COMMIT 到当前 HEAD 的提交历史${NC}"
+    echo -e "${RED}错误：当前分支没有设置上游分支，无法获取未提交的 commit 数量${NC}"
+    exit 1
 fi
+
+# 获取远程分支的最新提交
+git fetch --quiet
+BASE_COMMIT=$(git merge-base HEAD "$REMOTE_BRANCH")
+
+# 计算未推送的 commit 数量
+UNPUSHED_COMMITS=$(git log --oneline $BASE_COMMIT..HEAD | wc -l)
+if [ "$UNPUSHED_COMMITS" -eq 0 ]; then
+    echo -e "${GREEN}信息：没有未推送的提交${NC}"
+    exit 0
+fi
+
+# 检查是否有未暂存的更改
+if git status --porcelain | grep -q "^[A-Z]"; then
+    echo -e "${RED}错误：当前工作目录有未暂存的更改，请先提交或 stash 这些更改${NC}"
+    exit 1
+fi
+
+echo -e "${GREEN}信息：发现 $UNPUSHED_COMMITS 个未推送的提交，将重写从 $BASE_COMMIT 到当前 HEAD 的提交历史${NC}"
+
 
 # 初始化时间戳文件，设置为当前时间
 echo $(date +%s) > "$TIMESTAMP_FILE"
@@ -57,13 +67,8 @@ FILTER_CMD='
 '
 
 # 使用 git filter-branch 重写历史
-if [ -z "$BASE_COMMIT" ]; then
-    # 重写所有历史
-    git filter-branch -f --env-filter "$FILTER_CMD" -- --all
-else
-    # 重写从 BASE_COMMIT 到当前 HEAD 的历史
-    git filter-branch -f --env-filter "$FILTER_CMD" $BASE_COMMIT..HEAD
-fi
+# 只重写从 BASE_COMMIT 到当前 HEAD 的历史（未推送的提交）
+git filter-branch -f --env-filter "$FILTER_CMD" $BASE_COMMIT..HEAD
 
 # 清理临时文件
 rm -f "$TIMESTAMP_FILE"
