@@ -8,7 +8,6 @@ on:
       - 'app/**'
       - 'shared/**'
       - 'scripts/build_scripts/build-app-on-ci.sh'
-      - 'scripts/tool_scripts/modify-flavor.sh'
       - 'gradle/**'
       - 'client/**'
       - 'api/**'

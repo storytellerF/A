@@ -10,11 +10,9 @@ ARG BUILD_TYPE
 ARG FLAVOR
 ARG BUILD_ON
 
-RUN ./scripts/tool_scripts/shell-crlf.sh
-
 RUN --mount=type=cache,target=/root/.gradle \
-    ./scripts/build_scripts/build-on-condition.sh ${FLAVOR} ${BUILD_TYPE} ${BUILD_ON} \
-    "./scripts/build_scripts/build-bot.sh"
+    ./scripts/build_scripts/build-on-condition.sh "$BUILD_ON" \
+    "./scripts/build_scripts/build-bot.sh $FLAVOR $BUILD_TYPE"
 
 RUN mkdir -p ./bot/builtin-bot/build/decompressed && \
     tar -xf ./deploy/build/builtin-bot.tar -C ./bot/builtin-bot/build/decompressed

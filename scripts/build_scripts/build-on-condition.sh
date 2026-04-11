@@ -1,14 +1,8 @@
 #!/bin/sh
 set -e
-FLAVOR=$1
-BUILD_TYPE=$2
-BUILD_ON=$3
-BUILD_COMMAND=$4
+BUILD_ON=$1
+BUILD_COMMAND=$2
 
-if [ -z "$FLAVOR" ] || [ -z "$BUILD_TYPE" ]; then
-  echo "FLAVOR and BUILD_TYPE must be set"
-  exit 1
-fi
 if [ -z "$HOST_TYPE" ] || [ -z "$BUILD_ON" ]; then
   echo "Error: HOST_TYPE and BUILD_ON must be set."
   exit 1
@@ -22,6 +16,4 @@ else
 fi
 
 mkdir -p deploy/build
-./scripts/tool_scripts/modify-flavor.sh "$FLAVOR" "$BUILD_TYPE"
-
 $BUILD_COMMAND

@@ -81,7 +81,7 @@ fi
 
 if [ "$RUN_APPIUM" = true ]; then
     echo "Preparing server/worker images for Appium Testcontainers..."
-    ./scripts/build_scripts/build-server-worker-images.sh dev prod host
+    ./scripts/build_scripts/build-server-worker-images.sh dev prod
     echo "Building Release APK..."
     ./gradlew app:android:assembleDebug --no-daemon $GRADLE_CONSOLE_ARGS
 fi

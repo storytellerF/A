@@ -18,16 +18,14 @@ fi
 
 cli_path=build/install/cli/bin/cli
 
-./scripts/tool_scripts/modify-flavor.sh "$FLAVOR" dev
-
 # 执行 Gradle 构建并捕获退出码
-if ! ./gradlew cloud:cli:installDist; then
+if ! ./gradlew cloud:cli:installDist -Pserver.flavor=dev -Pserver.buildType=dev; then
   echo "Gradle build failed"
   ./scripts/tool_scripts/show-notification.sh "构建失败" "cloud:cli:installDist 构建过程中出现错误" "false"
   exit 1
 fi
 
-source ./scripts/tool_scripts/set-log-path.sh
+. ./scripts/tool_scripts/set-log-path.sh
 cd cloud/cli
 
 # 执行数据库刷新并捕获退出码
