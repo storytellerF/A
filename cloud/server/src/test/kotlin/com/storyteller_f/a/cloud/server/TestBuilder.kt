@@ -25,7 +25,7 @@ import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.obj.ExplainResult
 import com.storyteller_f.shared.obj.RoomFrame
-import com.storyteller_f.shared.obj.ServerResponse
+import com.storyteller_f.shared.obj.ListResponse
 import com.storyteller_f.shared.setupKmpLogger
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.md5
@@ -368,11 +368,11 @@ suspend fun <R2> TestMate.noneSession(
     }
 }
 
-fun <T> assertListSize(count: Int, result: Result<ServerResponse<T>>) {
+fun <T> assertListSize(count: Int, result: Result<ListResponse<T>>) {
     assertEquals(count, result.getOrThrow().data.size)
 }
 
-fun <T> assertListTotalSize(count: Int, result: Result<ServerResponse<T>>) {
+fun <T> assertListTotalSize(count: Int, result: Result<ListResponse<T>>) {
     assertEquals(count.toLong(), result.getOrThrow().pagination?.total)
 }
 
