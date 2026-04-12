@@ -1,5 +1,6 @@
 package com.storyteller_f.a.cloud.cli
 
+import com.storyteller_f.a.backend.core.setLogPath
 import com.sun.net.httpserver.HttpServer
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
@@ -19,6 +20,7 @@ import kotlin.test.assertTrue
 class AddPresetTest {
     @Test
     fun `parse yaml download config with archive excludes`() {
+        setLogPath()
         val tempDir = createTempDirectory(prefix = "addpreset-yaml-").toFile()
         try {
             val configFile = File(tempDir, "sample.download.yaml")
@@ -46,6 +48,7 @@ class AddPresetTest {
 
     @Test
     fun `fallback to legacy 3-line download config`() {
+        setLogPath()
         val tempDir = createTempDirectory(prefix = "addpreset-legacy-").toFile()
         try {
             val configFile = File(tempDir, "legacy.download")
@@ -70,6 +73,7 @@ class AddPresetTest {
 
     @Test
     fun `repack zip excludes matched entries`() {
+        setLogPath()
         val tempDir = createTempDirectory(prefix = "addpreset-repack-").toFile()
         try {
             val zipFile = File(tempDir, "bundle.zip")
@@ -102,6 +106,7 @@ class AddPresetTest {
 
     @Test
     fun `download yaml config end to end repacks archive before returning`() = runTest {
+        setLogPath()
         val tempDir = createTempDirectory(prefix = "addpreset-e2e-").toFile()
         val sourceZip = File(tempDir, "source.zip")
         writeZip(
@@ -157,6 +162,7 @@ class AddPresetTest {
 
     @Test
     fun `recognize download config path variants`() {
+        setLogPath()
         assertTrue(isDownloadConfigPath("a/b/xxx.download"))
         assertTrue(isDownloadConfigPath("a/b/xxx.download.yaml"))
         assertTrue(isDownloadConfigPath("a/b/xxx.download.yml"))
@@ -164,6 +170,7 @@ class AddPresetTest {
     }
 
     private fun writeZip(target: File, contentByPath: Map<String, String>) {
+        setLogPath()
         target.parentFile?.mkdirs()
         ZipOutputStream(target.outputStream().buffered()).use { out ->
             contentByPath.forEach { (path, content) ->

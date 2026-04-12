@@ -1,5 +1,6 @@
 package com.storyteller_f.a.cloud.server.route
 
+import com.storyteller_f.a.api.ChildAccountInfoListResponse
 import com.storyteller_f.a.api.CustomApi
 import com.storyteller_f.a.api.CustomApi.Accounts.ChildAccounts.AddChildAccountRequest
 import com.storyteller_f.a.api.SignInBody
@@ -95,7 +96,9 @@ fun Route.bindProtectedAccountRoute(backend: Backend) {
     }
     CustomApi.Accounts.ChildAccounts.get(handleResult()) { q ->
         usePrincipal { uid ->
-            q.pagination(IdentifiablePagingGenerator) {
+            q.pagination(IdentifiablePagingGenerator, { l, p ->
+                ChildAccountInfoListResponse(l, p)
+            }) {
                 backend.getUserAlternateUserInfoList(uid, it)
             }
         }

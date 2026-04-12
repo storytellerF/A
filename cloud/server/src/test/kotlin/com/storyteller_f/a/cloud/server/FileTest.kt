@@ -82,7 +82,7 @@ class FileTest {
         }
         attachSession {
             val response = copy(firstTuple.custom.id).getOrThrow()
-            assertEquals("${it.uid}/hello.txt", response.data.first().fullName)
+            assertEquals("${it.uid}/hello.txt", response.fullName)
             assertListSize(1, getFileList(it.uid, ObjectType.USER, null, 10))
             val quotaInfo = getQuotaInfo(ObjectTuple(it.uid, ObjectType.USER)).getOrThrow()
             assertEquals(firstTuple.custom.size, quotaInfo.used)

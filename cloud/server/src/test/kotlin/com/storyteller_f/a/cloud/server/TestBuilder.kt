@@ -24,8 +24,8 @@ import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.obj.ExplainResult
-import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.obj.ListResponse
+import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.setupKmpLogger
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.md5
@@ -47,7 +47,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
 import org.testcontainers.containers.MinIOContainer
-import org.testcontainers.containers.MySQLContainer
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.elasticsearch.ElasticsearchContainer
 import java.io.File
@@ -91,13 +90,14 @@ fun test(
     Napier.i {
         "start test `$methodName`"
     }
-    startMemoryTest(
-        overrideEnv + mapOf("SERVER_URL" to "http://localhost", "METHOD_NAME" to methodName),
-        block
-    )
     if (System.getenv("ENABLE_TEST_CONTAINER") == "true") {
         System.setProperty("api.version", "1.44")
-        startTestContainerTest(overrideEnv + mapOf("METHOD_NAME" to methodName), false, block)
+        startTestContainerTest(overrideEnv + mapOf("METHOD_NAME" to methodName), block)
+    } else {
+        startMemoryTest(
+            overrideEnv + mapOf("SERVER_URL" to "http://localhost", "METHOD_NAME" to methodName),
+            block
+        )
     }
     Napier.i {
         "test done `$methodName`"
@@ -128,14 +128,13 @@ private fun startMemoryTest(
 
 private fun startTestContainerTest(
     overrideEnv: Map<String, String>,
-    @Suppress("SameParameterValue") databaseTypeIsMysql: Boolean,
     block: suspend TestMate.() -> Unit
 ) {
     runBlocking {
         val env = mutableMapOf<String, String>()
         useElasticTestContainer(env) {
             useMinioTestContainer(env) {
-                useDatabaseContainer(databaseTypeIsMysql, env) {
+                useDatabaseContainer(env) {
                     doTest(env + overrideEnv, block)
                 }
             }
@@ -144,37 +143,20 @@ private fun startTestContainerTest(
 }
 
 private suspend fun useDatabaseContainer(
-    databaseTypeIsMysql: Boolean,
     env: MutableMap<String, String>,
     block: suspend () -> Unit
 ) {
-    if (databaseTypeIsMysql) {
-        MySQLContainer("mysql:8.0").withUrlParam("characterEncoding", "utf8")
-            .withUrlParam("useUnicode", "true")
-            .withUrlParam("connectionCollation", "utf8mb4_unicode_ci")
-            .use { mySQLContainer ->
-                mySQLContainer.start()
-                println("jdbc: ${mySQLContainer.jdbcUrl}")
-                env["DATABASE_URI"] = mySQLContainer.jdbcUrl
-                env["DATABASE_DRIVER"] = mySQLContainer.driverClassName
-                env["DATABASE_USER"] = mySQLContainer.username
-                env["DATABASE_PASS"] = mySQLContainer.password
-                env["DATABASE_DB"] = mySQLContainer.databaseName
-                block()
-            }
-    } else {
-        PostgreSQLContainer(
-            "pgvector/pgvector:pg16"
-        ).use { postgreSQLContainer ->
-            postgreSQLContainer.start()
-            Napier.i("jdbc: ${postgreSQLContainer.jdbcUrl}")
-            env["DATABASE_URI"] = postgreSQLContainer.jdbcUrl.replace("jdbc", "r2dbc")
-            env["DATABASE_DRIVER"] = "postgresql"
-            env["DATABASE_USER"] = postgreSQLContainer.username
-            env["DATABASE_PASS"] = postgreSQLContainer.password
-            env["DATABASE_DB"] = postgreSQLContainer.databaseName
-            block()
-        }
+    PostgreSQLContainer(
+        "pgvector/pgvector:pg16"
+    ).use { postgreSQLContainer ->
+        postgreSQLContainer.start()
+        Napier.i("jdbc: ${postgreSQLContainer.jdbcUrl}")
+        env["DATABASE_URI"] = postgreSQLContainer.jdbcUrl.replace("jdbc", "r2dbc")
+        env["DATABASE_DRIVER"] = "postgresql"
+        env["DATABASE_USER"] = postgreSQLContainer.username
+        env["DATABASE_PASS"] = postgreSQLContainer.password
+        env["DATABASE_DB"] = postgreSQLContainer.databaseName
+        block()
     }
 }
 

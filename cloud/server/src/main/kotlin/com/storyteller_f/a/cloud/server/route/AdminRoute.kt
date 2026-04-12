@@ -1,6 +1,19 @@
 package com.storyteller_f.a.cloud.server.route
 
 import com.storyteller_f.a.api.AdminApi
+import com.storyteller_f.a.api.CommunityInfoListResponse
+import com.storyteller_f.a.api.FileInfoListResponse
+import com.storyteller_f.a.api.FileRefInfoListResponse
+import com.storyteller_f.a.api.MemberInfoListResponse
+import com.storyteller_f.a.api.ReactionRecordInfoListResponse
+import com.storyteller_f.a.api.RoomInfoListResponse
+import com.storyteller_f.a.api.TitleInfoListResponse
+import com.storyteller_f.a.api.TopicInfoListResponse
+import com.storyteller_f.a.api.UploadRecordInfoListResponse
+import com.storyteller_f.a.api.UserFavoriteInfoListResponse
+import com.storyteller_f.a.api.UserInfoListResponse
+import com.storyteller_f.a.api.UserLogInfoListResponse
+import com.storyteller_f.a.api.UserSubscriptionInfoListResponse
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.cloud.core.service.addUser
@@ -75,7 +88,9 @@ fun Route.bindProtectedAdminRoute(backend: Backend) {
 
 private fun Route.bindAdminTitleRoutes(backend: Backend) {
     AdminApi.Titles.get(handleResult()) {
-        it.pagination(IdentifiablePagingGenerator) { fetch ->
+        it.pagination(IdentifiablePagingGenerator, { l, p ->
+            TitleInfoListResponse(l, p)
+        }) { fetch ->
             backend.getAllTitles(fetch)
         }
     }
@@ -91,7 +106,9 @@ private fun Route.bindAdminTitleRoutes(backend: Backend) {
 
 private fun Route.bindAdminCommunityRoutes(backend: Backend) {
     AdminApi.Communities.get(handleResult()) {
-        it.pagination(IdentifiablePagingGenerator) { fetch ->
+        it.pagination(IdentifiablePagingGenerator, { l, p ->
+            CommunityInfoListResponse(l, p)
+        }) { fetch ->
             backend.getAllCommunities(fetch)
         }
     }
@@ -104,7 +121,9 @@ private fun Route.bindAdminCommunityRoutes(backend: Backend) {
         }
     }
     AdminApi.Communities.Id.Members.get(handleResult()) { q, p ->
-        q.pagination(IdentifiablePagingGenerator) { f ->
+        q.pagination(IdentifiablePagingGenerator, { l, p ->
+            MemberInfoListResponse(l, p)
+        }) { f ->
             backend.getCommunityMemberInfos(p.id, f)
         }
     }
@@ -112,12 +131,16 @@ private fun Route.bindAdminCommunityRoutes(backend: Backend) {
 
 private fun Route.bindAdminFileRoutes(backend: Backend) {
     AdminApi.Files.get(handleResult()) {
-        it.pagination(IdentifiablePagingGenerator) { fetch ->
+        it.pagination(IdentifiablePagingGenerator, { l, p ->
+            FileInfoListResponse(l, p)
+        }) { fetch ->
             backend.getAllFileInfos(fetch)
         }
     }
     AdminApi.Files.search(handleResult()) {
-        it.pagination(GeneralOffsetPagingGenerator) { fetch ->
+        it.pagination(GeneralOffsetPagingGenerator, { l, p ->
+            FileInfoListResponse(l, p)
+        }) { fetch ->
             backend.uncheckedSearchFiles(it, fetch)
         }
     }
@@ -130,7 +153,9 @@ private fun Route.bindAdminFileRoutes(backend: Backend) {
         }
     }
     AdminApi.Files.Id.Refs.get(handleResult()) { q, p ->
-        q.pagination(IdentifiablePagingGenerator) { f ->
+        q.pagination(IdentifiablePagingGenerator, { l, p ->
+            FileRefInfoListResponse(l, p)
+        }) { f ->
             backend.uncheckedGetFileRefsByFileId(p.id, f)
         }
     }
@@ -138,7 +163,9 @@ private fun Route.bindAdminFileRoutes(backend: Backend) {
 
 private fun Route.bindAdminTopicRoutes(backend: Backend) {
     AdminApi.Topics.get(handleResult()) {
-        it.pagination(IdentifiablePagingGenerator) { fetch ->
+        it.pagination(IdentifiablePagingGenerator, { l, p ->
+            TopicInfoListResponse(l, p)
+        }) { fetch ->
             backend.getAllTopics(fetch)
         }
     }
@@ -151,7 +178,9 @@ private fun Route.bindAdminTopicRoutes(backend: Backend) {
         }
     }
     AdminApi.Topics.Id.Topics.get(handleResult()) { q, p ->
-        q.pagination(IdentifiablePagingGenerator) { f ->
+        q.pagination(IdentifiablePagingGenerator, { l, p ->
+            TopicInfoListResponse(l, p)
+        }) { f ->
             backend.uncheckGetTopicsByParentId(null, p.id, f, q.pinType)
         }
     }
@@ -159,12 +188,16 @@ private fun Route.bindAdminTopicRoutes(backend: Backend) {
 
 private fun Route.bindAdminRoomRoutes(backend: Backend) {
     AdminApi.Rooms.getPublic(handleResult()) {
-        it.pagination(IdentifiablePagingGenerator) { fetch ->
+        it.pagination(IdentifiablePagingGenerator, { l, p ->
+            RoomInfoListResponse(l, p)
+        }) { fetch ->
             backend.getAllPublicRooms(fetch)
         }
     }
     AdminApi.Rooms.getPrivate(handleResult()) {
-        it.pagination(IdentifiablePagingGenerator) { fetch ->
+        it.pagination(IdentifiablePagingGenerator, { l, p ->
+            RoomInfoListResponse(l, p)
+        }) { fetch ->
             backend.getAllPrivateRooms(fetch)
         }
     }
@@ -177,12 +210,16 @@ private fun Route.bindAdminRoomRoutes(backend: Backend) {
         }
     }
     AdminApi.Rooms.Id.Members.get(handleResult()) { q, p ->
-        q.pagination(IdentifiablePagingGenerator) { f ->
+        q.pagination(IdentifiablePagingGenerator, { l, p ->
+            MemberInfoListResponse(l, p)
+        }) { f ->
             backend.uncheckedGetRoomMemberInfos(p.id, f)
         }
     }
     AdminApi.Rooms.Id.Files.get(handleResult()) { q, p ->
-        q.pagination(IdentifiablePagingGenerator) { f ->
+        q.pagination(IdentifiablePagingGenerator, { l, p ->
+            FileInfoListResponse(l, p)
+        }) { f ->
             backend.getFileInfoPaginationResult(p.id, f)
         }
     }
@@ -196,7 +233,9 @@ private fun Route.bindAdminUserRoutes(backend: Backend) {
 
 private fun Route.bindAdminUserBasicRoutes(backend: Backend) {
     AdminApi.Users.get(handleResult()) {
-        it.pagination(IdentifiablePagingGenerator) { fetch ->
+        it.pagination(IdentifiablePagingGenerator, { l, p ->
+            UserInfoListResponse(l, p)
+        }) { fetch ->
             backend.getAllUsers(fetch)
         }
     }
@@ -218,22 +257,30 @@ private fun Route.bindAdminUserBasicRoutes(backend: Backend) {
 
 private fun Route.bindAdminUserRelationRoutes(backend: Backend) {
     AdminApi.Users.Id.Communities.get(handleResult()) { q, p ->
-        q.pagination(IdentifiablePagingGenerator) { f ->
+        q.pagination(IdentifiablePagingGenerator, { l, p ->
+            CommunityInfoListResponse(l, p)
+        }) { f ->
             backend.getUserJoinedCommunities(null, p.id, f)
         }
     }
     AdminApi.Users.Id.Rooms.get(handleResult()) { q, p ->
-        q.pagination(IdentifiablePagingGenerator) { f ->
+        q.pagination(IdentifiablePagingGenerator, { l, p ->
+            RoomInfoListResponse(l, p)
+        }) { f ->
             backend.getUserJoinedRooms(p.id, f)
         }
     }
     AdminApi.Users.Id.Titles.get(handleResult()) { q, p ->
-        q.pagination(IdentifiablePagingGenerator) { f ->
+        q.pagination(IdentifiablePagingGenerator, { l, p ->
+            TitleInfoListResponse(l, p)
+        }) { f ->
             backend.getUserTitles(p.id, q.searchType, q.type, q.scopeId, q.titleStatus, f)
         }
     }
     AdminApi.Users.Id.Files.get(handleResult()) { q, p ->
-        q.pagination(IdentifiablePagingGenerator) { f ->
+        q.pagination(IdentifiablePagingGenerator, { l, p ->
+            FileInfoListResponse(l, p)
+        }) { f ->
             backend.getFileInfoPaginationResult(p.id, f)
         }
     }
@@ -241,32 +288,44 @@ private fun Route.bindAdminUserRelationRoutes(backend: Backend) {
 
 private fun Route.bindAdminUserActivityRoutes(backend: Backend) {
     AdminApi.Users.Id.Logs.get(handleResult()) { q, p ->
-        q.pagination(IdentifiablePagingGenerator) { f ->
+        q.pagination(IdentifiablePagingGenerator, { l, p ->
+            UserLogInfoListResponse(l, p)
+        }) { f ->
             backend.getUserLogs(p.id, f)
         }
     }
     AdminApi.Users.Id.UploadRecords.get(handleResult()) { q, p ->
-        q.pagination(IdentifiablePagingGenerator) { f ->
+        q.pagination(IdentifiablePagingGenerator, { l, p ->
+            UploadRecordInfoListResponse(l, p)
+        }) { f ->
             backend.getUserUploadRecords(p.id, f)
         }
     }
     AdminApi.Users.Id.Reactions.get(handleResult()) { q, p ->
-        q.pagination(IdentifiablePagingGenerator) { f ->
+        q.pagination(IdentifiablePagingGenerator, { l, p ->
+            ReactionRecordInfoListResponse(l, p)
+        }) { f ->
             backend.getUserReactions(p.id, f)
         }
     }
     AdminApi.Users.Id.Comments.get(handleResult()) { q, p ->
-        q.pagination(IdentifiablePagingGenerator) { f ->
+        q.pagination(IdentifiablePagingGenerator, { l, p ->
+            TopicInfoListResponse(l, p)
+        }) { f ->
             backend.getUserCommentedTopics(p.id, f)
         }
     }
     AdminApi.Users.Id.Favorites.get(handleResult()) { q, p ->
-        q.pagination(IdentifiablePagingGenerator) { f ->
+        q.pagination(IdentifiablePagingGenerator, { l, p ->
+            UserFavoriteInfoListResponse(l, p)
+        }) { f ->
             backend.getFavorites(p.id, f)
         }
     }
     AdminApi.Users.Id.Subscriptions.get(handleResult()) { q, p ->
-        q.pagination(IdentifiablePagingGenerator) { f ->
+        q.pagination(IdentifiablePagingGenerator, { l, p ->
+            UserSubscriptionInfoListResponse(l, p)
+        }) { f ->
             backend.getUserSubscriptions(p.id, f)
         }
     }

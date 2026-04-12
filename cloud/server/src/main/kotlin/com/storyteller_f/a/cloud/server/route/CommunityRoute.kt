@@ -1,8 +1,12 @@
 package com.storyteller_f.a.cloud.server.route
 
+import com.storyteller_f.a.api.CommunityInfoListResponse
 import com.storyteller_f.a.api.CustomApi
+import com.storyteller_f.a.api.MemberInfoListResponse
 import com.storyteller_f.a.api.NewFavorite
 import com.storyteller_f.a.api.NewSubscription
+import com.storyteller_f.a.api.RoomInfoListResponse
+import com.storyteller_f.a.api.TopicInfoListResponse
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.cloud.core.service.addFavorite
@@ -34,28 +38,22 @@ import io.ktor.server.routing.Route
 fun Route.bindCommunityRoute(backend: Backend) {
     CustomApi.Communities.search(handleResult()) {
         usePrincipalOrNull { uid ->
-            it.pagination(GeneralOffsetPagingGenerator) { f ->
+            it.pagination(GeneralOffsetPagingGenerator, { l, p ->
+                CommunityInfoListResponse(l, p)
+            }) { f ->
                 backend.searchCommunities(uid, it, f)
             }
         }
     }
 
-    CustomApi.Communities.Id.Members.get(handleResult()) { q, p ->
-        q.pagination(IdentifiablePagingGenerator) { f ->
-            backend.getCommunityMemberInfos(p.id, f)
-        }
-    }
+    bindCommunityMemberRoute(backend)
 
-    CustomApi.Communities.Id.Members.search(handleResult()) { q, p ->
-        q.pagination(GeneralOffsetPagingGenerator) { f ->
-            backend.searchContainerMembers(p.id, q.word, f)
-        }
-    }
     CustomApi.Communities.Id.get(handleResult()) { q, p ->
         usePrincipalOrNull { uid ->
             backend.getCommunity(ObjectFetch.IdFetch(p.id), uid, q.fillJoinInfo)
         }
     }
+
     CustomApi.Communities.Aid.get(handleResult()) {
         usePrincipalOrNull { uid ->
             backend.getCommunity(ObjectFetch.AidFetch(it.aid), uid, it.fillJoinInfo)
@@ -64,7 +62,9 @@ fun Route.bindCommunityRoute(backend: Backend) {
 
     CustomApi.Communities.Id.Topics.get(handleResult()) { q, p ->
         usePrincipalOrNull { uid ->
-            q.pagination(IdentifiablePagingGenerator) { f ->
+            q.pagination(IdentifiablePagingGenerator, { l, p ->
+                TopicInfoListResponse(l, p)
+            }) { f ->
                 backend.getTopicsByParentId(p.id, ObjectType.COMMUNITY, uid, q.fillHasCommented, f, q.pinType)
             }
         }
@@ -72,7 +72,9 @@ fun Route.bindCommunityRoute(backend: Backend) {
 
     CustomApi.Communities.Id.Rooms.get(handleResult()) { q, p ->
         usePrincipalOrNull {
-            q.pagination(IdentifiablePagingGenerator) { f ->
+            q.pagination(IdentifiablePagingGenerator, { l, p ->
+                RoomInfoListResponse(l, p)
+            }) { f ->
                 backend.getCommunityRooms(p.id, f, it, q.joinStatus)
             }
         }
@@ -80,21 +82,41 @@ fun Route.bindCommunityRoute(backend: Backend) {
 
     CustomApi.Communities.Id.Rooms.search(handleResult()) { q, p ->
         usePrincipalOrNull { uid ->
-            q.pagination(GeneralOffsetPagingGenerator) { f ->
+            q.pagination(GeneralOffsetPagingGenerator, { l, p ->
+                RoomInfoListResponse(l, p)
+            }) { f ->
                 backend.searchCommunityRooms(uid, p.id, f, q)
             }
         }
     }
 }
 
+private fun Route.bindCommunityMemberRoute(backend: Backend) {
+    CustomApi.Communities.Id.Members.get(handleResult()) { q, p ->
+        q.pagination(IdentifiablePagingGenerator, { l, p ->
+            MemberInfoListResponse(l, p)
+        }) { f ->
+            backend.getCommunityMemberInfos(p.id, f)
+        }
+    }
+
+    CustomApi.Communities.Id.Members.search(handleResult()) { q, p ->
+        q.pagination(GeneralOffsetPagingGenerator, { l, p ->
+            MemberInfoListResponse(l, p)
+        }) { f ->
+            backend.searchContainerMembers(p.id, q.word, f)
+        }
+    }
+}
+
 fun Route.bindProtectedCommunityRoute(backend: Backend) {
-    CustomApi.Communities.Id.Members.join(handleResult()) { p, api ->
+    CustomApi.Communities.Id.Members.join(handleResult()) { p, _ ->
         usePrincipal { uid ->
             backend.joinCommunity(uid, p.id)
         }
     }
 
-    CustomApi.Communities.Id.Members.leave(handleResult()) { p, api ->
+    CustomApi.Communities.Id.Members.leave(handleResult()) { p, _ ->
         usePrincipal { uid ->
             backend.exitCommunity(p.id, uid)
         }

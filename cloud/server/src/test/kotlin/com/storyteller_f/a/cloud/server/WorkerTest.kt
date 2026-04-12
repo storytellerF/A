@@ -1,11 +1,11 @@
 package com.storyteller_f.a.cloud.server
 
 import com.perraco.utils.SnowflakeFactory
-import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.a.api.NewCommunity
+import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.a.client.core.createCommunity
-import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.a.client.core.createTitle
+import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.a.cloud.worker.doAcgTask
 import com.storyteller_f.a.cloud.worker.doIntroTask
 import com.storyteller_f.a.cloud.worker.doSubscriptionTask
@@ -118,7 +118,7 @@ class WorkerTest {
         attachSession {
             val c = createCommunity(com.storyteller_f.a.api.NewCommunity("test community", "tc1")).getOrThrow()
             val cId = c.id
-            
+
             // 创建 title
             createTitle(com.storyteller_f.a.api.NewTitle(
                 "Test Title",
@@ -159,7 +159,7 @@ class WorkerTest {
 
             // 验证任务记录是否存在
             val taskRecord = backend.database.user.getLatestTaskRecord(TaskRecordType.TITLE).getOrThrow()
-            
+
             // 任务记录应该存在
             assertNotNull(taskRecord, "Title task record should exist after running doTitleTask")
         }
@@ -172,7 +172,7 @@ class WorkerTest {
             val c = createCommunity(com.storyteller_f.a.api.NewCommunity("test community", "tc1")).getOrThrow()
             val cId = c.id
             createTopic(ObjectType.COMMUNITY, cId, "Test topic").getOrThrow()
-            
+
             // 创建 title
             createTitle(com.storyteller_f.a.api.NewTitle(
                 "Test Title",

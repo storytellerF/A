@@ -96,6 +96,7 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.now
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.number
 
 @Composable
 fun TitleComposePage() {
@@ -259,8 +260,8 @@ private fun ExpireTimePickerDialog(
         }
     }
     var year by remember(show, init) { mutableStateOf(initialValue.year.toString()) }
-    var month by remember(show, init) { mutableStateOf(initialValue.monthNumber.toString()) }
-    var day by remember(show, init) { mutableStateOf(initialValue.dayOfMonth.toString()) }
+    var month by remember(show, init) { mutableStateOf(initialValue.month.number.toString()) }
+    var day by remember(show, init) { mutableStateOf(initialValue.day.toString()) }
     var hour by remember(show, init) { mutableStateOf(initialValue.hour.toString()) }
     var minute by remember(show, init) { mutableStateOf(initialValue.minute.toString()) }
     var second by remember(show, init) { mutableStateOf(initialValue.second.toString()) }

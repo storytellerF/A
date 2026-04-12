@@ -3,6 +3,8 @@ package com.storyteller_f.a.cloud.server.route
 import com.storyteller_f.a.api.CustomApi
 import com.storyteller_f.a.api.NewFavorite
 import com.storyteller_f.a.api.NewSubscription
+import com.storyteller_f.a.api.ReactionInfoListResponse
+import com.storyteller_f.a.api.TopicInfoListResponse
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.cloud.core.service.addFavorite
 import com.storyteller_f.a.cloud.core.service.addReaction
@@ -36,7 +38,9 @@ import io.ktor.server.routing.Route
 fun Route.bindTopicRoute(backend: Backend) {
     CustomApi.Topics.recommend(handleResult()) {
         usePrincipalOrNull { uid ->
-            it.pagination(GeneralOffsetPagingGenerator) { f ->
+            it.pagination(GeneralOffsetPagingGenerator, { l, p ->
+                TopicInfoListResponse(l, p)
+            }) { f ->
                 backend.recommendTopics(uid, f, it)
             }
         }
@@ -54,10 +58,23 @@ fun Route.bindTopicRoute(backend: Backend) {
         }
     }
 
+    bindSearchTopicRoute(backend)
+}
+
+private fun Route.bindSearchTopicRoute(backend: Backend) {
     CustomApi.Topics.Id.Topics.get(handleResult()) { q, p ->
         usePrincipalOrNull { uid ->
-            q.pagination(IdentifiablePagingGenerator) { f ->
-                backend.getTopicsByParentId(p.id, ObjectType.TOPIC, uid, q.fillHasCommented, f, q.pinType)
+            q.pagination(IdentifiablePagingGenerator, { l, p ->
+                TopicInfoListResponse(l, p)
+            }) { f ->
+                backend.getTopicsByParentId(
+                    p.id,
+                    ObjectType.TOPIC,
+                    uid,
+                    q.fillHasCommented,
+                    f,
+                    q.pinType
+                )
             }
         }
     }
@@ -65,7 +82,9 @@ fun Route.bindTopicRoute(backend: Backend) {
     // 用户主题搜索路由
     CustomApi.Topics.Users.Id.search(handleResult()) { q, p ->
         usePrincipalOrNull { uid ->
-            q.pagination(GeneralOffsetPagingGenerator) { f ->
+            q.pagination(GeneralOffsetPagingGenerator, { l, p ->
+                TopicInfoListResponse(l, p)
+            }) { f ->
                 backend.searchUserTopics(p.id, q, f, uid)
             }
         }
@@ -74,7 +93,9 @@ fun Route.bindTopicRoute(backend: Backend) {
     // 房间主题搜索路由
     CustomApi.Topics.Rooms.Id.search(handleResult()) { q, p ->
         usePrincipalOrNull { uid ->
-            q.pagination(GeneralOffsetPagingGenerator) { f ->
+            q.pagination(GeneralOffsetPagingGenerator, { l, p ->
+                TopicInfoListResponse(l, p)
+            }) { f ->
                 backend.searchRoomTopics(p.id, q, f, uid)
             }
         }
@@ -83,7 +104,9 @@ fun Route.bindTopicRoute(backend: Backend) {
     // 社区主题搜索路由
     CustomApi.Topics.Communities.Id.search(handleResult()) { q, p ->
         usePrincipalOrNull { uid ->
-            q.pagination(GeneralOffsetPagingGenerator) { f ->
+            q.pagination(GeneralOffsetPagingGenerator, { l, p ->
+                TopicInfoListResponse(l, p)
+            }) { f ->
                 backend.searchCommunityTopics(p.id, q, f, uid)
             }
         }
@@ -91,7 +114,9 @@ fun Route.bindTopicRoute(backend: Backend) {
 
     CustomApi.Topics.Id.Reactions.get(handleResult()) { q, p ->
         usePrincipalOrNull { uid ->
-            q.pagination(ReactionPaginationGenerator(backend)) { fetch ->
+            q.pagination(ReactionPaginationGenerator(backend), { l, p ->
+                ReactionInfoListResponse(l, p)
+            }) { fetch ->
                 backend.reactionList(p.id, uid, q.fillHasReacted, fetch)
             }
         }

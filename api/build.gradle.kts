@@ -43,6 +43,7 @@ kotlin {
             implementation(libs.kotlinx.datetime)
             implementation(projects.shared)
             implementation(libs.endpoint4k.common)
+            implementation(libs.kotlinx.collections.immutable)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

@@ -1,11 +1,15 @@
 package com.storyteller_f.a.api
 
-import com.storyteller_f.endpoint4k.common.mutationEndpoint
-import com.storyteller_f.endpoint4k.common.mutationEndpointWithPath
-import com.storyteller_f.endpoint4k.common.safeEndpoint
-import com.storyteller_f.endpoint4k.common.safeEndpointWithPath
-import com.storyteller_f.endpoint4k.common.safeEndpointWithQuery
-import com.storyteller_f.endpoint4k.common.safeEndpointWithQueryAndPath
+import com.storyteller_f.endpoint4k.common.body
+import com.storyteller_f.endpoint4k.common.mutationEndpointBuilder
+import com.storyteller_f.endpoint4k.common.mutationEndpointWithPathBuilder
+import com.storyteller_f.endpoint4k.common.path
+import com.storyteller_f.endpoint4k.common.query
+import com.storyteller_f.endpoint4k.common.resp
+import com.storyteller_f.endpoint4k.common.safeEndpointBuilder
+import com.storyteller_f.endpoint4k.common.safeEndpointWithPathBuilder
+import com.storyteller_f.endpoint4k.common.safeEndpointWithQueryAndPathBuilder
+import com.storyteller_f.endpoint4k.common.safeEndpointWithQueryBuilder
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.FileRefInfo
@@ -22,231 +26,393 @@ import com.storyteller_f.shared.model.UserLogInfo
 import com.storyteller_f.shared.model.UserOverview
 import com.storyteller_f.shared.model.UserSubscriptionInfo
 import com.storyteller_f.shared.obj.ListResponse
+import com.storyteller_f.shared.obj.Pagination
 import com.storyteller_f.shared.obj.UpdateObjectStatusBody
 import com.storyteller_f.shared.obj.UpdateUserStatusBody
+import com.storyteller_f.shared.type.CustomImmutableList
+import kotlinx.serialization.Serializable
 
+@Serializable
+data class UserInfoListResponse(
+    override val data: CustomImmutableList<UserInfo>,
+    override val pagination: Pagination<String>? = null
+) :
+    ListResponse<UserInfo>
+
+@Serializable
+data class CommunityInfoListResponse(
+    override val data: CustomImmutableList<CommunityInfo>,
+    override val pagination: Pagination<String>? = null
+) :
+    ListResponse<CommunityInfo>
+
+@Serializable
+data class RoomInfoListResponse(
+    override val data: CustomImmutableList<RoomInfo>,
+    override val pagination: Pagination<String>? = null
+) :
+    ListResponse<RoomInfo>
+
+@Serializable
+data class TitleInfoListResponse(
+    override val data: CustomImmutableList<TitleInfo>,
+    override val pagination: Pagination<String>? = null
+) :
+    ListResponse<TitleInfo>
+
+@Serializable
+data class FileInfoListResponse(
+    override val data: CustomImmutableList<FileInfo>,
+    override val pagination: Pagination<String>? = null
+) :
+    ListResponse<FileInfo>
+
+@Serializable
+data class UserLogInfoListResponse(
+    override val data: CustomImmutableList<UserLogInfo>,
+    override val pagination: Pagination<String>? = null
+) :
+    ListResponse<UserLogInfo>
+
+@Serializable
+data class UploadRecordInfoListResponse(
+    override val data: CustomImmutableList<com.storyteller_f.shared.model.UploadRecordInfo>,
+    override val pagination: Pagination<String>? = null
+) :
+    ListResponse<com.storyteller_f.shared.model.UploadRecordInfo>
+
+@Serializable
+data class ReactionRecordInfoListResponse(
+    override val data: CustomImmutableList<ReactionRecordInfo>,
+    override val pagination: Pagination<String>? = null
+) :
+    ListResponse<ReactionRecordInfo>
+
+@Serializable
+data class TopicInfoListResponse(
+    override val data: CustomImmutableList<TopicInfo>,
+    override val pagination: Pagination<String>? = null
+) :
+    ListResponse<TopicInfo>
+
+@Serializable
+data class UserFavoriteInfoListResponse(
+    override val data: CustomImmutableList<UserFavoriteInfo>,
+    override val pagination: Pagination<String>? = null
+) :
+    ListResponse<UserFavoriteInfo>
+
+@Serializable
+data class UserSubscriptionInfoListResponse(
+    override val data: CustomImmutableList<UserSubscriptionInfo>,
+    override val pagination: Pagination<String>? = null
+) :
+    ListResponse<UserSubscriptionInfo>
+
+@Serializable
+data class MemberInfoListResponse(
+    override val data: CustomImmutableList<MemberInfo>,
+    override val pagination: Pagination<String>? = null
+) :
+    ListResponse<MemberInfo>
+
+@Serializable
+data class FileRefInfoListResponse(
+    override val data: CustomImmutableList<FileRefInfo>,
+    override val pagination: Pagination<String>? = null
+) :
+    ListResponse<FileRefInfo>
 
 object AdminApi {
     object Users {
-        val get = safeEndpointWithQuery<ListResponse<UserInfo>, PaginationQuery>("/admin/users")
-        val add = mutationEndpoint<UserInfo, NewUser>("/admin/users")
+        val get = safeEndpointWithQueryBuilder("/admin/users") {
+            resp(UserInfoListResponse::class)
+            query(PaginationQuery::class)
+        }
+        val add = mutationEndpointBuilder("/admin/users") {
+            resp(UserInfo::class)
+            body(NewUser::class)
+        }
 
         object Id {
-            val get = safeEndpointWithPath<UserInfo, CommonPath>("/admin/users/{id}")
+            val get = safeEndpointWithPathBuilder("/admin/users/{id}") {
+                resp(UserInfo::class)
+                path(CommonPath::class)
+            }
 
             object Overview {
-                val get = safeEndpointWithPath<UserOverview, CommonPath>("/admin/users/{id}/overview")
+                val get = safeEndpointWithPathBuilder("/admin/users/{id}/overview") {
+                    resp(UserOverview::class)
+                    path(CommonPath::class)
+                }
             }
 
             object Status {
-                val update = mutationEndpointWithPath<
-                        Unit,
-                        UpdateUserStatusBody,
-                        CommonPath>(
-                    "/admin/users/{id}/status"
-                )
+                val update = mutationEndpointWithPathBuilder("/admin/users/{id}/status") {
+                    resp(Unit::class)
+                    body(UpdateUserStatusBody::class)
+                    path(CommonPath::class)
+                }
             }
 
             object Communities {
-                val get = safeEndpointWithQueryAndPath<
-                        ListResponse<CommunityInfo>,
-                        CustomApi.Users.JoinedCommunities.UserCommunitiesQuery,
-                        CommonPath>(
-                    "/admin/users/{id}/communities"
-                )
+                val get = safeEndpointWithQueryAndPathBuilder("/admin/users/{id}/communities") {
+                    resp(CommunityInfoListResponse::class)
+                    query(CustomApi.Users.JoinedCommunities.UserCommunitiesQuery::class)
+                    path(CommonPath::class)
+                }
             }
 
             object Rooms {
-                val get = safeEndpointWithQueryAndPath<
-                        ListResponse<RoomInfo>,
-                        PaginationQuery,
-                        CommonPath>(
-                    "/admin/users/{id}/rooms"
-                )
+                val get = safeEndpointWithQueryAndPathBuilder("/admin/users/{id}/rooms") {
+                    resp(RoomInfoListResponse::class)
+                    query(PaginationQuery::class)
+                    path(CommonPath::class)
+                }
             }
 
             object Titles {
-                val get = safeEndpointWithQueryAndPath<
-                        ListResponse<TitleInfo>,
-                        CustomApi.Users.Id.Titles.TitleQuery,
-                        CommonPath>(
-                    "/admin/users/{id}/titles"
-                )
+                val get = safeEndpointWithQueryAndPathBuilder("/admin/users/{id}/titles") {
+                    resp(TitleInfoListResponse::class)
+                    query(CustomApi.Users.Id.Titles.TitleQuery::class)
+                    path(CommonPath::class)
+                }
             }
 
             object Files {
                 val get =
-                    safeEndpointWithQueryAndPath<ListResponse<FileInfo>, PaginationQuery, CommonPath>(
-                        "/admin/users/{id}/files"
-                    )
+                    safeEndpointWithQueryAndPathBuilder("/admin/users/{id}/files") {
+                        resp(FileInfoListResponse::class)
+                        query(PaginationQuery::class)
+                        path(CommonPath::class)
+                    }
             }
 
             object Logs {
-                val get = safeEndpointWithQueryAndPath<ListResponse<UserLogInfo>,
-                        PaginationQuery,
-                        CommonPath>(
-                    "/admin/users/{id}/logs"
-                )
+                val get = safeEndpointWithQueryAndPathBuilder("/admin/users/{id}/logs") {
+                    resp(UserLogInfoListResponse::class)
+                    query(PaginationQuery::class)
+                    path(CommonPath::class)
+                }
             }
 
             object UploadRecords {
-                val get = safeEndpointWithQueryAndPath<ListResponse<com.storyteller_f.shared.model.UploadRecordInfo>,
-                        PaginationQuery,
-                        CommonPath>(
-                    "/admin/users/{id}/upload-records"
-                )
+                val get = safeEndpointWithQueryAndPathBuilder("/admin/users/{id}/upload-records") {
+                    resp(UploadRecordInfoListResponse::class)
+                    query(PaginationQuery::class)
+                    path(CommonPath::class)
+                }
             }
 
             object Reactions {
-                val get = safeEndpointWithQueryAndPath<ListResponse<ReactionRecordInfo>,
-                        PaginationQuery,
-                        CommonPath>(
-                    "/admin/users/{id}/reactions"
-                )
+                val get = safeEndpointWithQueryAndPathBuilder("/admin/users/{id}/reactions") {
+                    resp(ReactionRecordInfoListResponse::class)
+                    query(PaginationQuery::class)
+                    path(CommonPath::class)
+                }
             }
 
             object Comments {
-                val get = safeEndpointWithQueryAndPath<ListResponse<TopicInfo>,
-                        PaginationQuery,
-                        CommonPath>(
-                    "/admin/users/{id}/comments"
-                )
+                val get = safeEndpointWithQueryAndPathBuilder("/admin/users/{id}/comments") {
+                    resp(TopicInfoListResponse::class)
+                    query(PaginationQuery::class)
+                    path(CommonPath::class)
+                }
             }
 
             object Favorites {
-                val get = safeEndpointWithQueryAndPath<ListResponse<UserFavoriteInfo>,
-                        PaginationQuery,
-                        CommonPath>(
-                    "/admin/users/{id}/favorites"
-                )
+                val get = safeEndpointWithQueryAndPathBuilder("/admin/users/{id}/favorites") {
+                    resp(UserFavoriteInfoListResponse::class)
+                    query(PaginationQuery::class)
+                    path(CommonPath::class)
+                }
             }
 
             object Subscriptions {
-                val get = safeEndpointWithQueryAndPath<ListResponse<UserSubscriptionInfo>,
-                        PaginationQuery,
-                        CommonPath>(
-                    "/admin/users/{id}/subscriptions"
-                )
+                val get = safeEndpointWithQueryAndPathBuilder("/admin/users/{id}/subscriptions") {
+                    resp(UserSubscriptionInfoListResponse::class)
+                    query(PaginationQuery::class)
+                    path(CommonPath::class)
+                }
             }
         }
     }
 
-    val signIn = mutationEndpoint<PanelAccountInfo, SignInBody>("/admin/sign-in")
-    val signOut = mutationEndpoint<Unit, Unit>("/admin/sign-out")
-    val signUp = mutationEndpoint<PanelAccountInfo, SignUpBody>("/admin/sign-up")
-    val getData = safeEndpoint<String>("/admin/get-data")
-    val overview = safeEndpoint<PanelOverview>("/admin/overview")
+    val signIn = mutationEndpointBuilder("/admin/sign-in") {
+        resp(PanelAccountInfo::class)
+        body(SignInBody::class)
+    }
+    val signOut = mutationEndpointBuilder("/admin/sign-out") {
+        resp(Unit::class)
+        body(Unit::class)
+    }
+    val signUp = mutationEndpointBuilder("/admin/sign-up") {
+        resp(PanelAccountInfo::class)
+        body(SignUpBody::class)
+    }
+    val getData = safeEndpointBuilder("/admin/get-data") {
+        resp(String::class)
+    }
+    val overview = safeEndpointBuilder("/admin/overview") {
+        resp(PanelOverview::class)
+    }
 
     object Communities {
-        val get = safeEndpointWithQuery<ListResponse<CommunityInfo>, PaginationQuery>("/admin/communities")
+        val get = safeEndpointWithQueryBuilder("/admin/communities") {
+            resp(CommunityInfoListResponse::class)
+            query(PaginationQuery::class)
+        }
 
         object Id {
-            val get = safeEndpointWithPath<CommunityInfo, CommonPath>("/admin/communities/{id}")
+            val get = safeEndpointWithPathBuilder("/admin/communities/{id}") {
+                resp(CommunityInfo::class)
+                path(CommonPath::class)
+            }
 
             object Status {
-                val update = mutationEndpointWithPath<Unit, UpdateObjectStatusBody, CommonPath>(
-                    "/admin/communities/{id}/status"
-                )
+                val update = mutationEndpointWithPathBuilder("/admin/communities/{id}/status") {
+                    resp(Unit::class)
+                    body(UpdateObjectStatusBody::class)
+                    path(CommonPath::class)
+                }
             }
 
             object Members {
-                val get = safeEndpointWithQueryAndPath<
-                        ListResponse<MemberInfo>,
-                        PaginationQuery,
-                        CommonPath>(
-                    "/admin/communities/{id}/members"
-                )
+                val get = safeEndpointWithQueryAndPathBuilder("/admin/communities/{id}/members") {
+                    resp(MemberInfoListResponse::class)
+                    query(PaginationQuery::class)
+                    path(CommonPath::class)
+                }
             }
         }
     }
 
     object Rooms {
-        val getPublic = safeEndpointWithQuery<ListResponse<RoomInfo>, PaginationQuery>("/admin/rooms/public")
-        val getPrivate = safeEndpointWithQuery<ListResponse<RoomInfo>, PaginationQuery>("/admin/rooms/private")
+        val getPublic = safeEndpointWithQueryBuilder("/admin/rooms/public") {
+            resp(RoomInfoListResponse::class)
+            query(PaginationQuery::class)
+        }
+        val getPrivate = safeEndpointWithQueryBuilder("/admin/rooms/private") {
+            resp(RoomInfoListResponse::class)
+            query(PaginationQuery::class)
+        }
 
         object Id {
-            val get = safeEndpointWithPath<RoomInfo, CommonPath>("/admin/rooms/{id}")
+            val get = safeEndpointWithPathBuilder("/admin/rooms/{id}") {
+                resp(RoomInfo::class)
+                path(CommonPath::class)
+            }
 
             object Status {
-                val update = mutationEndpointWithPath<Unit, UpdateObjectStatusBody, CommonPath>(
-                    "/admin/rooms/{id}/status"
-                )
+                val update = mutationEndpointWithPathBuilder("/admin/rooms/{id}/status") {
+                    resp(Unit::class)
+                    body(UpdateObjectStatusBody::class)
+                    path(CommonPath::class)
+                }
             }
 
             object Members {
-                val get = safeEndpointWithQueryAndPath<
-                        ListResponse<MemberInfo>,
-                        PaginationQuery,
-                        CommonPath>(
-                    "/admin/rooms/{id}/members"
-                )
+                val get = safeEndpointWithQueryAndPathBuilder("/admin/rooms/{id}/members") {
+                    resp(MemberInfoListResponse::class)
+                    query(PaginationQuery::class)
+                    path(CommonPath::class)
+                }
             }
 
             object Files {
-                val get = safeEndpointWithQueryAndPath<
-                        ListResponse<FileInfo>,
-                        PaginationQuery,
-                        CommonPath>(
-                    "/admin/rooms/{id}/files"
-                )
+                val get = safeEndpointWithQueryAndPathBuilder("/admin/rooms/{id}/files") {
+                    resp(FileInfoListResponse::class)
+                    query(PaginationQuery::class)
+                    path(CommonPath::class)
+                }
             }
         }
     }
 
     object Topics {
-        val get = safeEndpointWithQuery<ListResponse<TopicInfo>, PaginationQuery>("/admin/topics")
+        val get = safeEndpointWithQueryBuilder("/admin/topics") {
+            resp(TopicInfoListResponse::class)
+            query(PaginationQuery::class)
+        }
 
         object Id {
-            val get = safeEndpointWithPath<TopicInfo, CommonPath>("/admin/topics/{id}")
+            val get = safeEndpointWithPathBuilder("/admin/topics/{id}") {
+                resp(TopicInfo::class)
+                path(CommonPath::class)
+            }
 
             object Status {
-                val update = mutationEndpointWithPath<Unit, UpdateObjectStatusBody, CommonPath>(
-                    "/admin/topics/{id}/status"
-                )
+                val update = mutationEndpointWithPathBuilder("/admin/topics/{id}/status") {
+                    resp(Unit::class)
+                    body(UpdateObjectStatusBody::class)
+                    path(CommonPath::class)
+                }
             }
 
             object Topics {
                 val get =
-                    safeEndpointWithQueryAndPath<ListResponse<TopicInfo>, TopicQuery, CommonPath>(
-                        "/admin/topics/{id}/topics"
-                    )
+                    safeEndpointWithQueryAndPathBuilder("/admin/topics/{id}/topics") {
+                        resp(TopicInfoListResponse::class)
+                        query(TopicQuery::class)
+                        path(CommonPath::class)
+                    }
             }
         }
     }
 
     object Titles {
-        val get = safeEndpointWithQuery<ListResponse<TitleInfo>, PaginationQuery>("/admin/titles")
+        val get = safeEndpointWithQueryBuilder("/admin/titles") {
+            resp(TitleInfoListResponse::class)
+            query(PaginationQuery::class)
+        }
 
         object Id {
-            val get = safeEndpointWithPath<TitleInfo, CommonPath>("/admin/titles/{id}")
+            val get = safeEndpointWithPathBuilder("/admin/titles/{id}") {
+                resp(TitleInfo::class)
+                path(CommonPath::class)
+            }
 
             object Status {
-                val update = mutationEndpointWithPath<Unit, UpdateObjectStatusBody, CommonPath>(
-                    "/admin/titles/{id}/status"
-                )
+                val update = mutationEndpointWithPathBuilder("/admin/titles/{id}/status") {
+                    path(CommonPath::class)
+                    body(UpdateObjectStatusBody::class)
+                }
             }
         }
     }
 
     object Files {
-        val get = safeEndpointWithQuery<ListResponse<FileInfo>, PaginationQuery>("/admin/files")
+        val get = safeEndpointWithQueryBuilder("/admin/files") {
+            resp(FileInfoListResponse::class)
+            query(PaginationQuery::class)
+        }
 
-        val search = safeEndpointWithQuery<ListResponse<FileInfo>, SearchQuery>("/admin/files/search")
+        val search = safeEndpointWithQueryBuilder("/admin/files/search") {
+            resp(FileInfoListResponse::class)
+            query(SearchQuery::class)
+        }
 
         object Id {
-            val get = safeEndpointWithPath<FileInfo, CommonPath>("/admin/files/{id}")
+            val get = safeEndpointWithPathBuilder("/admin/files/{id}") {
+                resp(FileInfo::class)
+                path(CommonPath::class)
+            }
 
             object Status {
-                val update = mutationEndpointWithPath<Unit, UpdateObjectStatusBody, CommonPath>(
-                    "/admin/files/{id}/status"
-                )
+                val update = mutationEndpointWithPathBuilder("/admin/files/{id}/status") {
+                    resp(Unit::class)
+                    body(UpdateObjectStatusBody::class)
+                    path(CommonPath::class)
+                }
             }
 
             object Refs {
                 val get =
-                    safeEndpointWithQueryAndPath<ListResponse<FileRefInfo>, PaginationQuery, CommonPath>(
-                        "/admin/files/{id}/refs"
-                    )
+                    safeEndpointWithQueryAndPathBuilder("/admin/files/{id}/refs") {
+                        resp(FileRefInfoListResponse::class)
+                        query(PaginationQuery::class)
+                        path(CommonPath::class)
+                    }
             }
         }
     }

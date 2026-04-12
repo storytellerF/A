@@ -185,11 +185,17 @@ suspend fun <T> ElasticsearchAsyncClient.searchDocumentList(
 fun <T> buildElasticSearchService(env: MergedEnv, b: (ElasticConnection) -> T): T {
     val certFile = env["ELASTIC_CERT_FILE"] ?: throw Exception("ELASTIC_CERT_FILE is empty")
     // need replace home dir
-    val safeCertFile = if (certFile.startsWith("~")) {
-        val homeDir = System.getProperty("user.home")
-        File(certFile.replace("~", homeDir)).canonicalPath
-    } else {
-        File(certFile).canonicalPath
+    val safeCertFile = when {
+        certFile.isBlank() -> {
+            ""
+        }
+        certFile.startsWith("~") -> {
+            val homeDir = System.getProperty("user.home")
+            File(certFile.replace("~", homeDir)).canonicalPath
+        }
+        else -> {
+            File(certFile).canonicalPath
+        }
     }
 
     val url = env["ELASTIC_URL"] ?: throw Exception("ELASTIC_URL is empty")

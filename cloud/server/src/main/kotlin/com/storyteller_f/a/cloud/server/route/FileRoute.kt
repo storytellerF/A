@@ -1,6 +1,8 @@
 package com.storyteller_f.a.cloud.server.route
 
 import com.storyteller_f.a.api.CustomApi
+import com.storyteller_f.a.api.FileInfoListResponse
+import com.storyteller_f.a.api.FileRefInfoListResponse
 import com.storyteller_f.a.api.NewFavorite
 import com.storyteller_f.a.api.NewSubscription
 import com.storyteller_f.a.backend.core.Backend
@@ -36,7 +38,6 @@ import com.storyteller_f.endpoint4k.ktor.server.receiveBody
 import com.storyteller_f.shared.model.A_FILE_DEFAULT_BUCKET
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.obj.ObjectTuple
-import com.storyteller_f.shared.obj.ListResponse
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -55,6 +56,7 @@ import io.ktor.util.cio.writeChannel
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.copyAndClose
 import io.ktor.utils.io.readBuffer
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.coroutineScope
 import java.io.File
 import kotlin.uuid.ExperimentalUuidApi
@@ -111,7 +113,9 @@ fun Route.bindProtectedFileRoute(backend: Backend) {
 
     CustomApi.Files.Id.Refs.get(handleResult()) { q, p ->
         usePrincipal { _ ->
-            q.pagination(IdentifiablePagingGenerator) { f ->
+            q.pagination(IdentifiablePagingGenerator, { l, p ->
+                FileRefInfoListResponse(l, p)
+            }) { f ->
                 backend.uncheckedGetFileRefsByFileId(p.id, f)
             }
         }
@@ -151,7 +155,9 @@ private fun Route.bindFileFavoriteRoute(backend: Backend) {
 private fun Route.bindUserCommunityRoute(backend: Backend) {
     CustomApi.Communities.Id.Files.get(handleResult()) { query, path ->
         usePrincipal { uid ->
-            query.pagination(IdentifiablePagingGenerator) { pagingFetch ->
+            query.pagination(IdentifiablePagingGenerator, { l, p ->
+                FileInfoListResponse(l, p)
+            }) { pagingFetch ->
                 backend.getFileList(uid, path.id ob ObjectType.COMMUNITY, pagingFetch)
             }
         }
@@ -159,7 +165,9 @@ private fun Route.bindUserCommunityRoute(backend: Backend) {
 
     CustomApi.Communities.Id.Files.search(handleResult()) { query, path ->
         usePrincipal { uid ->
-            query.pagination(GeneralOffsetPagingGenerator) { pagingFetch ->
+            query.pagination(GeneralOffsetPagingGenerator, { l, p ->
+                FileInfoListResponse(l, p)
+            }) { pagingFetch ->
                 backend.searchFiles(uid, query, path.id ob ObjectType.COMMUNITY, pagingFetch)
             }
         }
@@ -169,7 +177,9 @@ private fun Route.bindUserCommunityRoute(backend: Backend) {
 private fun Route.bindUserRoomRoute(backend: Backend) {
     CustomApi.Rooms.Id.Files.get(handleResult()) { query, path ->
         usePrincipal { uid ->
-            query.pagination(IdentifiablePagingGenerator) { pagingFetch ->
+            query.pagination(IdentifiablePagingGenerator, { l, p ->
+                FileInfoListResponse(l, p)
+            }) { pagingFetch ->
                 backend.getFileList(uid, path.id ob ObjectType.ROOM, pagingFetch)
             }
         }
@@ -177,7 +187,9 @@ private fun Route.bindUserRoomRoute(backend: Backend) {
 
     CustomApi.Rooms.Id.Files.search(handleResult()) { query, path ->
         usePrincipal { uid ->
-            query.pagination(GeneralOffsetPagingGenerator) { pagingFetch ->
+            query.pagination(GeneralOffsetPagingGenerator, { l, p ->
+                FileInfoListResponse(l, p)
+            }) { pagingFetch ->
                 backend.searchFiles(uid, query, path.id ob ObjectType.ROOM, pagingFetch)
             }
         }
@@ -187,7 +199,9 @@ private fun Route.bindUserRoomRoute(backend: Backend) {
 private fun Route.bindUserFileRoute(backend: Backend) {
     CustomApi.Users.Id.Files.get(handleResult()) { query, path ->
         usePrincipal { uid ->
-            query.pagination(IdentifiablePagingGenerator) { pagingFetch ->
+            query.pagination(IdentifiablePagingGenerator, { l, p ->
+                FileInfoListResponse(l, p)
+            }) { pagingFetch ->
                 backend.getFileList(uid, path.id ob ObjectType.USER, pagingFetch)
             }
         }
@@ -195,7 +209,9 @@ private fun Route.bindUserFileRoute(backend: Backend) {
 
     CustomApi.Users.Id.Files.search(handleResult()) { query, path ->
         usePrincipal { uid ->
-            query.pagination(GeneralOffsetPagingGenerator) { pagingFetch ->
+            query.pagination(GeneralOffsetPagingGenerator, { l, p ->
+                FileInfoListResponse(l, p)
+            }) { pagingFetch ->
                 backend.searchFiles(uid, query, path.id ob ObjectType.USER, pagingFetch)
             }
         }
@@ -267,14 +283,14 @@ suspend fun RoutingContext.uploadMedia(
 
 private suspend fun RoutingContext.processFormData(
     block: suspend (PartData) -> List<FileInfo>
-): Result<ListResponse<FileInfo>?> = try {
+) = try {
     val result = mutableListOf<FileInfo>()
     coroutineScope {
         call.receiveMultipart(1024 * 1024 * 100).forEachPart { part ->
             result.addAll(block(part))
         }
     }
-    Result.success(ListResponse(result))
+    Result.success(FileInfoListResponse(result.toImmutableList()))
 } catch (e: Exception) {
     Result.failure(e)
 }

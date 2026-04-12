@@ -31,7 +31,6 @@ import com.storyteller_f.shared.model.A_FILE_DEFAULT_BUCKET
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.obj.ObjectTuple
-import com.storyteller_f.shared.obj.ListResponse
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -117,7 +116,7 @@ suspend fun Backend.uncheckedSearchFiles(
     primaryKeyFetch: OffsetFetch
 ): Result<PaginationResult<FileInfo>?> {
     val word = query.word
-    return if (word.isNullOrBlank()) {
+    return if (word.isBlank()) {
         Result.success(PaginationResult(emptyList(), 0))
     } else {
         // 使用 fileSearchService 搜索
@@ -158,39 +157,38 @@ private suspend fun Backend.searchFilesByWord(
 suspend fun Backend.extractAlbum(fileRecordId: PrimaryKey, root: File, uid: PrimaryKey) =
     checkObjectWritable(ObjectType.FILE, fileRecordId).mapResultIfNotNull {
         database.file.getFileRecordByIds(listOf(fileRecordId))
-    }
-        .mapResultIfNotNull { fileRecords ->
-            val fileRecord = fileRecords.first()
-            if (fileRecord.owner != uid) {
-                throw ForbiddenException("no permission")
-            }
-            if (fileRecord.contentType.startsWith("audio")) {
-                Result.success(fileRecord)
-            } else {
-                Result.failure(CustomBadRequestException("not an audio file"))
-            }
-        }.mapResultIfNotNull { fileRecord ->
-            objectStorageService.getInputStream(A_FILE_DEFAULT_BUCKET, fileRecord.fullName)
-                .mapResult { input ->
-                    extractAlbumFromStream(input.buffered(), root, fileRecord)
-                }.mapResultIfNotNull { (file, contentType) ->
-                    val name = newCoverFileName(fileRecord.name, contentType)
-                    tryUploadFiles(
-                        fileRecord.owner,
-                        fileRecord.ownerType,
-                        listOf(
-                            UploadPack(
-                                file,
-                                name,
-                                fileRecord.size,
-                                "${fileRecord.owner}/$name"
-                            )
+    }.mapResultIfNotNull { fileRecords ->
+        val fileRecord = fileRecords.first()
+        if (fileRecord.owner != uid) {
+            throw ForbiddenException("no permission")
+        }
+        if (fileRecord.contentType.startsWith("audio")) {
+            Result.success(fileRecord)
+        } else {
+            Result.failure(CustomBadRequestException("not an audio file"))
+        }
+    }.mapResultIfNotNull { fileRecord ->
+        objectStorageService.getInputStream(A_FILE_DEFAULT_BUCKET, fileRecord.fullName)
+            .mapResult { input ->
+                extractAlbumFromStream(input.buffered(), root, fileRecord)
+            }.mapResultIfNotNull { (file, contentType) ->
+                val name = newCoverFileName(fileRecord.name, contentType)
+                tryUploadFiles(
+                    fileRecord.owner,
+                    fileRecord.ownerType,
+                    listOf(
+                        UploadPack(
+                            file,
+                            name,
+                            fileRecord.size,
+                            "${fileRecord.owner}/$name"
                         )
                     )
-                }
-        }.mapIfNotNull {
-            ListResponse(it)
-        }
+                )
+            }
+    }.mapIfNotNull {
+        it.firstOrNull()
+    }
 
 @OptIn(ExperimentalUuidApi::class)
 private suspend fun extractAlbumFromStream(
@@ -296,7 +294,7 @@ suspend fun Backend.getFileInfoById(id: PrimaryKey, uid: PrimaryKey? = null): Re
         processFileRecordToFileInfo(list, uid)
     }.mapIfNotNull { it.firstOrNull() }
 
-suspend fun Backend.tryCopyFile(p: CommonPath, uid: PrimaryKey): Result<ListResponse<FileInfo>?> =
+suspend fun Backend.tryCopyFile(p: CommonPath, uid: PrimaryKey) =
     checkObjectWritable(ObjectType.FILE, p.id).mapResultIfNotNull {
         database.file.getFileRecordByIds(listOf(p.id)).firstOrNull().mapResultIfNotNull { fileRecord ->
             checkRootReadPermission(
@@ -323,7 +321,7 @@ suspend fun Backend.tryCopyFile(p: CommonPath, uid: PrimaryKey): Result<ListResp
     }.mapResultIfNotNull {
         processFileRecordToFileInfo(it, uid)
     }.mapIfNotNull {
-        ListResponse(it)
+        it.firstOrNull()
     }
 
 private suspend fun Backend.copyFile(

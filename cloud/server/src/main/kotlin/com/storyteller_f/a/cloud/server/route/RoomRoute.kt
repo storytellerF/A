@@ -1,8 +1,11 @@
 package com.storyteller_f.a.cloud.server.route
 
 import com.storyteller_f.a.api.CustomApi
+import com.storyteller_f.a.api.MemberInfoListResponse
 import com.storyteller_f.a.api.NewFavorite
 import com.storyteller_f.a.api.NewSubscription
+import com.storyteller_f.a.api.TopicInfoListResponse
+import com.storyteller_f.a.api.UserPubKeyInfoListResponse
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.cloud.core.service.addFavorite
@@ -34,7 +37,9 @@ import io.ktor.server.routing.Route
 fun Route.bindRoomRoute(backend: Backend) {
     CustomApi.Rooms.Id.Members.get(handleResult()) { q, p ->
         usePrincipalOrNull { uid ->
-            q.pagination(IdentifiablePagingGenerator) { f ->
+            q.pagination(IdentifiablePagingGenerator, { l, p ->
+                MemberInfoListResponse(l, p)
+            }) { f ->
                 // 检查权限
                 backend.getRoomMemberInfos(p.id, uid, f)
             }
@@ -43,7 +48,9 @@ fun Route.bindRoomRoute(backend: Backend) {
 
     CustomApi.Rooms.Id.Members.search(handleResult()) { q, p ->
         usePrincipalOrNull { uid ->
-            q.pagination(GeneralOffsetPagingGenerator) { f ->
+            q.pagination(GeneralOffsetPagingGenerator, { l, p ->
+                MemberInfoListResponse(l, p)
+            }) { f ->
                 searchRoomMembers(backend, p, uid, q, f)
             }
         }
@@ -62,7 +69,9 @@ fun Route.bindRoomRoute(backend: Backend) {
 
     CustomApi.Rooms.Id.Topics.get(handleResult()) { q, p ->
         usePrincipalOrNull { uid ->
-            q.pagination(IdentifiablePagingGenerator) { f ->
+            q.pagination(IdentifiablePagingGenerator, { l, p ->
+                TopicInfoListResponse(l, p)
+            }) { f ->
                 backend.getTopicsByParentId(p.id, ObjectType.ROOM, uid, q.fillHasCommented, f, q.pinType)
             }
         }
@@ -82,7 +91,9 @@ fun Route.bindProtectedRoomRoute(backend: Backend) {
     }
     CustomApi.Rooms.Id.Members.publicKeys(handleResult()) { q, p ->
         usePrincipal { uid ->
-            pagination(object : PrimaryKeyPagingGenerator<UserPubKeyInfo>(UserPubKeyInfo::id) {}) { f ->
+            q.pagination(object : PrimaryKeyPagingGenerator<UserPubKeyInfo>(UserPubKeyInfo::id) {}, { l, p ->
+                UserPubKeyInfoListResponse(l, p)
+            }) { f ->
                 backend.getRoomPubKeys(p.id, uid, f)
             }
         }
