@@ -1,5 +1,5 @@
 services:
-  main:
+  a-dev-main:
     build:
       context: ..
       dockerfile: .devcontainer/dev.Dockerfile
@@ -57,3 +57,8 @@ volumes:
   google_local:
   vscode_data:
   vscode_config:
+
+networks:
+  my-dev-network:
+    name: my-dev-network
+    external: true

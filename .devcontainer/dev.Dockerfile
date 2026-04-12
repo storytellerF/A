@@ -5,7 +5,7 @@ ARG USE_CN_MIRROR
 
 USER root
 RUN apt update && DEBIAN_FRONTEND=nointeractive apt install -y \
-    libavif-bin git-lfs
+    libavif-bin git-lfs jq
 
 RUN git lfs install
 
