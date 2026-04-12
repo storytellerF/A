@@ -36,7 +36,7 @@ import com.storyteller_f.endpoint4k.ktor.server.receiveBody
 import com.storyteller_f.shared.model.A_FILE_DEFAULT_BUCKET
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.obj.ObjectTuple
-import com.storyteller_f.shared.obj.ServerResponse
+import com.storyteller_f.shared.obj.ListResponse
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -267,14 +267,14 @@ suspend fun RoutingContext.uploadMedia(
 
 private suspend fun RoutingContext.processFormData(
     block: suspend (PartData) -> List<FileInfo>
-): Result<ServerResponse<FileInfo>?> = try {
+): Result<ListResponse<FileInfo>?> = try {
     val result = mutableListOf<FileInfo>()
     coroutineScope {
         call.receiveMultipart(1024 * 1024 * 100).forEachPart { part ->
             result.addAll(block(part))
         }
     }
-    Result.success(ServerResponse(result))
+    Result.success(ListResponse(result))
 } catch (e: Exception) {
     Result.failure(e)
 }

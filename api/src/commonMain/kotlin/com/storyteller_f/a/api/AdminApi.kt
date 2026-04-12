@@ -21,14 +21,14 @@ import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.UserLogInfo
 import com.storyteller_f.shared.model.UserOverview
 import com.storyteller_f.shared.model.UserSubscriptionInfo
-import com.storyteller_f.shared.obj.ServerResponse
+import com.storyteller_f.shared.obj.ListResponse
 import com.storyteller_f.shared.obj.UpdateObjectStatusBody
 import com.storyteller_f.shared.obj.UpdateUserStatusBody
 
 
 object AdminApi {
     object Users {
-        val get = safeEndpointWithQuery<ServerResponse<UserInfo>, PaginationQuery>("/admin/users")
+        val get = safeEndpointWithQuery<ListResponse<UserInfo>, PaginationQuery>("/admin/users")
         val add = mutationEndpoint<UserInfo, NewUser>("/admin/users")
 
         object Id {
@@ -49,7 +49,7 @@ object AdminApi {
 
             object Communities {
                 val get = safeEndpointWithQueryAndPath<
-                        ServerResponse<CommunityInfo>,
+                        ListResponse<CommunityInfo>,
                         CustomApi.Users.JoinedCommunities.UserCommunitiesQuery,
                         CommonPath>(
                     "/admin/users/{id}/communities"
@@ -58,7 +58,7 @@ object AdminApi {
 
             object Rooms {
                 val get = safeEndpointWithQueryAndPath<
-                        ServerResponse<RoomInfo>,
+                        ListResponse<RoomInfo>,
                         PaginationQuery,
                         CommonPath>(
                     "/admin/users/{id}/rooms"
@@ -67,7 +67,7 @@ object AdminApi {
 
             object Titles {
                 val get = safeEndpointWithQueryAndPath<
-                        ServerResponse<TitleInfo>,
+                        ListResponse<TitleInfo>,
                         CustomApi.Users.Id.Titles.TitleQuery,
                         CommonPath>(
                     "/admin/users/{id}/titles"
@@ -76,13 +76,13 @@ object AdminApi {
 
             object Files {
                 val get =
-                    safeEndpointWithQueryAndPath<ServerResponse<FileInfo>, PaginationQuery, CommonPath>(
+                    safeEndpointWithQueryAndPath<ListResponse<FileInfo>, PaginationQuery, CommonPath>(
                         "/admin/users/{id}/files"
                     )
             }
 
             object Logs {
-                val get = safeEndpointWithQueryAndPath<ServerResponse<UserLogInfo>,
+                val get = safeEndpointWithQueryAndPath<ListResponse<UserLogInfo>,
                         PaginationQuery,
                         CommonPath>(
                     "/admin/users/{id}/logs"
@@ -90,7 +90,7 @@ object AdminApi {
             }
 
             object UploadRecords {
-                val get = safeEndpointWithQueryAndPath<ServerResponse<com.storyteller_f.shared.model.UploadRecordInfo>,
+                val get = safeEndpointWithQueryAndPath<ListResponse<com.storyteller_f.shared.model.UploadRecordInfo>,
                         PaginationQuery,
                         CommonPath>(
                     "/admin/users/{id}/upload-records"
@@ -98,7 +98,7 @@ object AdminApi {
             }
 
             object Reactions {
-                val get = safeEndpointWithQueryAndPath<ServerResponse<ReactionRecordInfo>,
+                val get = safeEndpointWithQueryAndPath<ListResponse<ReactionRecordInfo>,
                         PaginationQuery,
                         CommonPath>(
                     "/admin/users/{id}/reactions"
@@ -106,7 +106,7 @@ object AdminApi {
             }
 
             object Comments {
-                val get = safeEndpointWithQueryAndPath<ServerResponse<TopicInfo>,
+                val get = safeEndpointWithQueryAndPath<ListResponse<TopicInfo>,
                         PaginationQuery,
                         CommonPath>(
                     "/admin/users/{id}/comments"
@@ -114,7 +114,7 @@ object AdminApi {
             }
 
             object Favorites {
-                val get = safeEndpointWithQueryAndPath<ServerResponse<UserFavoriteInfo>,
+                val get = safeEndpointWithQueryAndPath<ListResponse<UserFavoriteInfo>,
                         PaginationQuery,
                         CommonPath>(
                     "/admin/users/{id}/favorites"
@@ -122,7 +122,7 @@ object AdminApi {
             }
 
             object Subscriptions {
-                val get = safeEndpointWithQueryAndPath<ServerResponse<UserSubscriptionInfo>,
+                val get = safeEndpointWithQueryAndPath<ListResponse<UserSubscriptionInfo>,
                         PaginationQuery,
                         CommonPath>(
                     "/admin/users/{id}/subscriptions"
@@ -138,7 +138,7 @@ object AdminApi {
     val overview = safeEndpoint<PanelOverview>("/admin/overview")
 
     object Communities {
-        val get = safeEndpointWithQuery<ServerResponse<CommunityInfo>, PaginationQuery>("/admin/communities")
+        val get = safeEndpointWithQuery<ListResponse<CommunityInfo>, PaginationQuery>("/admin/communities")
 
         object Id {
             val get = safeEndpointWithPath<CommunityInfo, CommonPath>("/admin/communities/{id}")
@@ -151,7 +151,7 @@ object AdminApi {
 
             object Members {
                 val get = safeEndpointWithQueryAndPath<
-                        ServerResponse<MemberInfo>,
+                        ListResponse<MemberInfo>,
                         PaginationQuery,
                         CommonPath>(
                     "/admin/communities/{id}/members"
@@ -161,8 +161,8 @@ object AdminApi {
     }
 
     object Rooms {
-        val getPublic = safeEndpointWithQuery<ServerResponse<RoomInfo>, PaginationQuery>("/admin/rooms/public")
-        val getPrivate = safeEndpointWithQuery<ServerResponse<RoomInfo>, PaginationQuery>("/admin/rooms/private")
+        val getPublic = safeEndpointWithQuery<ListResponse<RoomInfo>, PaginationQuery>("/admin/rooms/public")
+        val getPrivate = safeEndpointWithQuery<ListResponse<RoomInfo>, PaginationQuery>("/admin/rooms/private")
 
         object Id {
             val get = safeEndpointWithPath<RoomInfo, CommonPath>("/admin/rooms/{id}")
@@ -175,7 +175,7 @@ object AdminApi {
 
             object Members {
                 val get = safeEndpointWithQueryAndPath<
-                        ServerResponse<MemberInfo>,
+                        ListResponse<MemberInfo>,
                         PaginationQuery,
                         CommonPath>(
                     "/admin/rooms/{id}/members"
@@ -184,7 +184,7 @@ object AdminApi {
 
             object Files {
                 val get = safeEndpointWithQueryAndPath<
-                        ServerResponse<FileInfo>,
+                        ListResponse<FileInfo>,
                         PaginationQuery,
                         CommonPath>(
                     "/admin/rooms/{id}/files"
@@ -194,7 +194,7 @@ object AdminApi {
     }
 
     object Topics {
-        val get = safeEndpointWithQuery<ServerResponse<TopicInfo>, PaginationQuery>("/admin/topics")
+        val get = safeEndpointWithQuery<ListResponse<TopicInfo>, PaginationQuery>("/admin/topics")
 
         object Id {
             val get = safeEndpointWithPath<TopicInfo, CommonPath>("/admin/topics/{id}")
@@ -207,7 +207,7 @@ object AdminApi {
 
             object Topics {
                 val get =
-                    safeEndpointWithQueryAndPath<ServerResponse<TopicInfo>, TopicQuery, CommonPath>(
+                    safeEndpointWithQueryAndPath<ListResponse<TopicInfo>, TopicQuery, CommonPath>(
                         "/admin/topics/{id}/topics"
                     )
             }
@@ -215,7 +215,7 @@ object AdminApi {
     }
 
     object Titles {
-        val get = safeEndpointWithQuery<ServerResponse<TitleInfo>, PaginationQuery>("/admin/titles")
+        val get = safeEndpointWithQuery<ListResponse<TitleInfo>, PaginationQuery>("/admin/titles")
 
         object Id {
             val get = safeEndpointWithPath<TitleInfo, CommonPath>("/admin/titles/{id}")
@@ -229,9 +229,9 @@ object AdminApi {
     }
 
     object Files {
-        val get = safeEndpointWithQuery<ServerResponse<FileInfo>, PaginationQuery>("/admin/files")
+        val get = safeEndpointWithQuery<ListResponse<FileInfo>, PaginationQuery>("/admin/files")
 
-        val search = safeEndpointWithQuery<ServerResponse<FileInfo>, SearchQuery>("/admin/files/search")
+        val search = safeEndpointWithQuery<ListResponse<FileInfo>, SearchQuery>("/admin/files/search")
 
         object Id {
             val get = safeEndpointWithPath<FileInfo, CommonPath>("/admin/files/{id}")
@@ -244,7 +244,7 @@ object AdminApi {
 
             object Refs {
                 val get =
-                    safeEndpointWithQueryAndPath<ServerResponse<FileRefInfo>, PaginationQuery, CommonPath>(
+                    safeEndpointWithQueryAndPath<ListResponse<FileRefInfo>, PaginationQuery, CommonPath>(
                         "/admin/files/{id}/refs"
                     )
             }

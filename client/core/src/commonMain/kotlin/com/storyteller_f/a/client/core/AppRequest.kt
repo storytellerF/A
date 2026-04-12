@@ -32,7 +32,7 @@ import com.storyteller_f.shared.model.UserPubKeyInfo
 import com.storyteller_f.shared.obj.NewRoomTopic
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.RoomFrame
-import com.storyteller_f.shared.obj.ServerResponse
+import com.storyteller_f.shared.obj.ListResponse
 import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.obj.UpdateRoomBody
 import com.storyteller_f.shared.obj.UpdateUserBody
@@ -598,7 +598,7 @@ suspend fun UserSessionManager.userTitles(
     status: TitleWorkStatus? = null,
     type: TitleType? = null,
     scopeId: PrimaryKey? = null,
-): Result<ServerResponse<TitleInfo>> = serviceCatching {
+): Result<ListResponse<TitleInfo>> = serviceCatching {
     CustomApi.Users.Id.Titles.get(
         CustomApi.Users.Id.Titles.TitleQuery(searchType, type, scopeId, status, nextId, size),
         CommonPath(uid)

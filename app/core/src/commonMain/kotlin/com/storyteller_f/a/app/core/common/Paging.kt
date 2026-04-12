@@ -9,7 +9,7 @@ import androidx.paging.PagingData
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.storyteller_f.shared.obj.Pagination
-import com.storyteller_f.shared.obj.ServerResponse
+import com.storyteller_f.shared.obj.ListResponse
 import com.storyteller_f.storage.CollectionListStorage
 import com.storyteller_f.storage.GlobalListStorage
 import com.storyteller_f.storage.RemoteKeyStorageWrapper
@@ -115,7 +115,7 @@ class SectionPagingSource<DATUM : Any>(
 }
 
 class RegularPagingSource<DATUM : Any>(
-    val service: suspend (String?, Int) -> Result<ServerResponse<DATUM>>
+    val service: suspend (String?, Int) -> Result<ListResponse<DATUM>>
 ) : PagingSource<String, DATUM>() {
     override suspend fun load(params: LoadParams<String>): LoadResult<String, DATUM> {
         return service(params.key, params.loadSize).map {
@@ -141,7 +141,7 @@ fun <C : Any, T : Any> buildPager(
     collection: C,
     wrapper: RemoteKeyStorageWrapper,
     storage: CollectionListStorage<C, T>,
-    service: suspend (String?, Int) -> Result<ServerResponse<T>>
+    service: suspend (String?, Int) -> Result<ListResponse<T>>
 ): Pager<String, T> = buildPager(
     collection,
     wrapper,
@@ -201,7 +201,7 @@ fun <C : Any, T : Any> buildPager(
 fun <T : Any> buildPager(
     wrapper: RemoteKeyStorageWrapper,
     storage: GlobalListStorage<T>,
-    service: suspend (String?, Int) -> Result<ServerResponse<T>>
+    service: suspend (String?, Int) -> Result<ListResponse<T>>
 ): Pager<String, T> = buildPager(wrapper, storage, RegularPagingSource(service)) {
     CompatPagingSource(storage.observeData(), IntKeyConverter)
 }

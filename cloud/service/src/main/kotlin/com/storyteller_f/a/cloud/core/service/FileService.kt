@@ -31,7 +31,7 @@ import com.storyteller_f.shared.model.A_FILE_DEFAULT_BUCKET
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.obj.ObjectTuple
-import com.storyteller_f.shared.obj.ServerResponse
+import com.storyteller_f.shared.obj.ListResponse
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -189,7 +189,7 @@ suspend fun Backend.extractAlbum(fileRecordId: PrimaryKey, root: File, uid: Prim
                     )
                 }
         }.mapIfNotNull {
-            ServerResponse(it)
+            ListResponse(it)
         }
 
 @OptIn(ExperimentalUuidApi::class)
@@ -296,7 +296,7 @@ suspend fun Backend.getFileInfoById(id: PrimaryKey, uid: PrimaryKey? = null): Re
         processFileRecordToFileInfo(list, uid)
     }.mapIfNotNull { it.firstOrNull() }
 
-suspend fun Backend.tryCopyFile(p: CommonPath, uid: PrimaryKey): Result<ServerResponse<FileInfo>?> =
+suspend fun Backend.tryCopyFile(p: CommonPath, uid: PrimaryKey): Result<ListResponse<FileInfo>?> =
     checkObjectWritable(ObjectType.FILE, p.id).mapResultIfNotNull {
         database.file.getFileRecordByIds(listOf(p.id)).firstOrNull().mapResultIfNotNull { fileRecord ->
             checkRootReadPermission(
@@ -323,7 +323,7 @@ suspend fun Backend.tryCopyFile(p: CommonPath, uid: PrimaryKey): Result<ServerRe
     }.mapResultIfNotNull {
         processFileRecordToFileInfo(it, uid)
     }.mapIfNotNull {
-        ServerResponse(it)
+        ListResponse(it)
     }
 
 private suspend fun Backend.copyFile(

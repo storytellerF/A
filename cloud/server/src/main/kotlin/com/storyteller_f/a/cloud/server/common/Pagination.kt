@@ -13,7 +13,7 @@ import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.obj.Pagination
 import com.storyteller_f.shared.obj.ReactionCursorKey
-import com.storyteller_f.shared.obj.ServerResponse
+import com.storyteller_f.shared.obj.ListResponse
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapCatchingNotNull
 import com.storyteller_f.shared.utils.mapResult
@@ -105,7 +105,7 @@ object GeneralOffsetPagingGenerator : OffsetPagingGenerator<Any>()
 suspend fun <T, F : Fetch> RoutingContext.pagination(
     generator: PagingGenerator<T, F>,
     block: suspend (F) -> Result<PaginationResult<T>?>
-): Result<ServerResponse<T>?> {
+): Result<ListResponse<T>?> {
     return runCatching {
         val size = call.queryParameters.getOrFailCompact<Int>("size")
         require(size > 0) {
@@ -121,7 +121,7 @@ suspend fun <T, F : Fetch> RoutingContext.pagination(
     }.mapResult { f ->
         block(f).mapCatchingNotNull { (list, count) ->
             val (pre, next) = generator.generate(list, f)
-            ServerResponse(list, Pagination(next, pre, count))
+            ListResponse(list, Pagination(next, pre, count))
         }
     }
 }
@@ -129,7 +129,7 @@ suspend fun <T, F : Fetch> RoutingContext.pagination(
 suspend fun <T, F : Fetch> PageableQuery.pagination(
     generator: PagingGenerator<T, F>,
     block: suspend (F) -> Result<PaginationResult<T>?>
-): Result<ServerResponse<T>?> {
+): Result<ListResponse<T>?> {
     return runCatching {
         val size = size
         require(size > 0) {
@@ -145,7 +145,7 @@ suspend fun <T, F : Fetch> PageableQuery.pagination(
     }.mapResult { f ->
         block(f).mapCatchingNotNull { (list, count) ->
             val (pre, next) = generator.generate(list, f)
-            ServerResponse(list, Pagination(next, pre, count))
+            ListResponse(list, Pagination(next, pre, count))
         }
     }
 }

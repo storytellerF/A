@@ -15,9 +15,6 @@ import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.FileRefInfo
 import com.storyteller_f.shared.model.MemberInfo
-import com.storyteller_f.shared.model.MemberPolicy
-import com.storyteller_f.shared.model.PanelAccountInfo
-import com.storyteller_f.shared.model.PanelOverview
 import com.storyteller_f.shared.model.PosterSearch
 import com.storyteller_f.shared.model.QuotaInfo
 import com.storyteller_f.shared.model.QuotaType
@@ -29,27 +26,21 @@ import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.model.TitleWorkStatus
 import com.storyteller_f.shared.model.TopicInfo
-import com.storyteller_f.shared.model.TopicPinSearch
 import com.storyteller_f.shared.model.UserFavoriteInfo
 import com.storyteller_f.shared.model.UserInfo
-import com.storyteller_f.shared.model.UserLogInfo
 import com.storyteller_f.shared.model.UserOverview
 import com.storyteller_f.shared.model.UserPubKeyInfo
 import com.storyteller_f.shared.model.UserSubscriptionInfo
 import com.storyteller_f.shared.obj.ObjectTuple
-import com.storyteller_f.shared.obj.ServerResponse
+import com.storyteller_f.shared.obj.ListResponse
 import com.storyteller_f.shared.obj.UpdateCommunityBody
-import com.storyteller_f.shared.obj.UpdateObjectStatusBody
 import com.storyteller_f.shared.obj.UpdateRoomBody
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.obj.UpdateUserRead
-import com.storyteller_f.shared.obj.UpdateUserStatusBody
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.UploadRecordStatus
-import kotlinx.datetime.LocalDateTime
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 const val DEFAULT_PAGE_SIZE = 10
@@ -82,7 +73,7 @@ object CustomApi {
             override val prePageToken: String? = null,
         ) : PageableQuery
 
-        val recommend = safeEndpointWithQuery<ServerResponse<TopicInfo>, RecommendQuery>("topics/recommend")
+        val recommend = safeEndpointWithQuery<ListResponse<TopicInfo>, RecommendQuery>("topics/recommend")
 
         // 用户主题搜索端点
         object Users {
@@ -97,7 +88,7 @@ object CustomApi {
                 ) : PageableQuery
 
                 val search =
-                    safeEndpointWithQueryAndPath<ServerResponse<TopicInfo>, UserTopicSearchQuery, CommonPath>(
+                    safeEndpointWithQueryAndPath<ListResponse<TopicInfo>, UserTopicSearchQuery, CommonPath>(
                         "users/{id}/topics/search"
                     )
             }
@@ -116,7 +107,7 @@ object CustomApi {
                 ) : PageableQuery
 
                 val search =
-                    safeEndpointWithQueryAndPath<ServerResponse<TopicInfo>, RoomTopicSearchQuery, CommonPath>(
+                    safeEndpointWithQueryAndPath<ListResponse<TopicInfo>, RoomTopicSearchQuery, CommonPath>(
                         "rooms/{id}/topics/search"
                     )
             }
@@ -135,7 +126,7 @@ object CustomApi {
                 ) : PageableQuery
 
                 val search =
-                    safeEndpointWithQueryAndPath<ServerResponse<TopicInfo>, CommunityTopicSearchQuery, CommonPath>(
+                    safeEndpointWithQueryAndPath<ListResponse<TopicInfo>, CommunityTopicSearchQuery, CommonPath>(
                         "communities/{id}/topics/search"
                     )
             }
@@ -149,7 +140,7 @@ object CustomApi {
 
             object Topics {
                 val get =
-                    safeEndpointWithQueryAndPath<ServerResponse<TopicInfo>, TopicQuery, CommonPath>(
+                    safeEndpointWithQueryAndPath<ListResponse<TopicInfo>, TopicQuery, CommonPath>(
                         "topics/{id}/topics"
                     )
             }
@@ -164,7 +155,7 @@ object CustomApi {
                 ) : PageableQuery
 
                 val get =
-                    safeEndpointWithQueryAndPath<ServerResponse<ReactionInfo>, ReactionQuery, CommonPath>(
+                    safeEndpointWithQueryAndPath<ListResponse<ReactionInfo>, ReactionQuery, CommonPath>(
                         "topics/{id}/reactions"
                     )
                 val add = mutationEndpointWithPath<ReactionInfo, NewReaction, CommonPath>("topics/{id}/reactions")
@@ -219,7 +210,7 @@ object CustomApi {
             override val prePageToken: String? = null,
         ) : PageableQuery
 
-        val search = safeEndpointWithQuery<ServerResponse<CommunityInfo>, CommunitySearchQuery>("communities/search")
+        val search = safeEndpointWithQuery<ListResponse<CommunityInfo>, CommunitySearchQuery>("communities/search")
 
         object Aid {
             @Serializable
@@ -236,11 +227,11 @@ object CustomApi {
 
             object Members {
                 val get =
-                    safeEndpointWithQueryAndPath<ServerResponse<MemberInfo>, PaginationQuery, CommonPath>(
+                    safeEndpointWithQueryAndPath<ListResponse<MemberInfo>, PaginationQuery, CommonPath>(
                         "communities/{id}/members"
                     )
                 val search =
-                    safeEndpointWithQueryAndPath<ServerResponse<MemberInfo>, SearchQuery, CommonPath>(
+                    safeEndpointWithQueryAndPath<ListResponse<MemberInfo>, SearchQuery, CommonPath>(
                         "communities/{id}/members/search"
                     )
                 val join = mutationEndpointWithPath<CommunityInfo, Unit, CommonPath>("communities/{id}/members")
@@ -253,19 +244,19 @@ object CustomApi {
 
             object Topics {
                 val get =
-                    safeEndpointWithQueryAndPath<ServerResponse<TopicInfo>, TopicQuery, CommonPath>(
+                    safeEndpointWithQueryAndPath<ListResponse<TopicInfo>, TopicQuery, CommonPath>(
                         "communities/{id}/topics"
                     )
             }
 
             object Files {
                 val get =
-                    safeEndpointWithQueryAndPath<ServerResponse<FileInfo>, PaginationQuery, CommonPath>(
+                    safeEndpointWithQueryAndPath<ListResponse<FileInfo>, PaginationQuery, CommonPath>(
                         "communities/{id}/files"
                     )
 
                 val search =
-                    safeEndpointWithQueryAndPath<ServerResponse<FileInfo>, SearchQuery, CommonPath>(
+                    safeEndpointWithQueryAndPath<ListResponse<FileInfo>, SearchQuery, CommonPath>(
                         "communities/{id}/files/search"
                     )
             }
@@ -289,11 +280,11 @@ object CustomApi {
                 ) : PageableQuery
 
                 val get =
-                    safeEndpointWithQueryAndPath<ServerResponse<RoomInfo>, CommunityRoomQuery, CommonPath>(
+                    safeEndpointWithQueryAndPath<ListResponse<RoomInfo>, CommunityRoomQuery, CommonPath>(
                         "communities/{id}/rooms"
                     )
                 val search =
-                    safeEndpointWithQueryAndPath<ServerResponse<RoomInfo>, CommunityRoomSearchQuery, CommonPath>(
+                    safeEndpointWithQueryAndPath<ListResponse<RoomInfo>, CommunityRoomSearchQuery, CommonPath>(
                         "communities/{id}/rooms/search"
                     )
             }
@@ -330,11 +321,11 @@ object CustomApi {
 
             object Members {
                 val get =
-                    safeEndpointWithQueryAndPath<ServerResponse<MemberInfo>, PaginationQuery, CommonPath>(
+                    safeEndpointWithQueryAndPath<ListResponse<MemberInfo>, PaginationQuery, CommonPath>(
                         "rooms/{id}/members"
                     )
                 val search =
-                    safeEndpointWithQueryAndPath<ServerResponse<MemberInfo>, SearchQuery, CommonPath>(
+                    safeEndpointWithQueryAndPath<ListResponse<MemberInfo>, SearchQuery, CommonPath>(
                         "rooms/{id}/members/search"
                     )
                 val join =
@@ -348,24 +339,24 @@ object CustomApi {
                         methodType = MutationMethodType.DELETE
                     )
                 val publicKeys =
-                    safeEndpointWithQueryAndPath<ServerResponse<UserPubKeyInfo>, PaginationQuery, CommonPath>(
+                    safeEndpointWithQueryAndPath<ListResponse<UserPubKeyInfo>, PaginationQuery, CommonPath>(
                         "rooms/{id}/public-keys"
                     )
             }
 
             object Topics {
                 val get =
-                    safeEndpointWithQueryAndPath<ServerResponse<TopicInfo>, TopicQuery, CommonPath>("rooms/{id}/topics")
+                    safeEndpointWithQueryAndPath<ListResponse<TopicInfo>, TopicQuery, CommonPath>("rooms/{id}/topics")
             }
 
             object Files {
                 val get =
-                    safeEndpointWithQueryAndPath<ServerResponse<FileInfo>, PaginationQuery, CommonPath>(
+                    safeEndpointWithQueryAndPath<ListResponse<FileInfo>, PaginationQuery, CommonPath>(
                         "rooms/{id}/files"
                     )
 
                 val search =
-                    safeEndpointWithQueryAndPath<ServerResponse<FileInfo>, SearchQuery, CommonPath>(
+                    safeEndpointWithQueryAndPath<ListResponse<FileInfo>, SearchQuery, CommonPath>(
                         "rooms/{id}/files/search"
                     )
             }
@@ -412,12 +403,12 @@ object CustomApi {
 
             object Topics {
                 val get =
-                    safeEndpointWithQueryAndPath<ServerResponse<TopicInfo>, TopicQuery, CommonPath>("users/{id}/topics")
+                    safeEndpointWithQueryAndPath<ListResponse<TopicInfo>, TopicQuery, CommonPath>("users/{id}/topics")
             }
 
             object Communities {
                 val get = safeEndpointWithQueryAndPath<
-                    ServerResponse<CommunityInfo>,
+                    ListResponse<CommunityInfo>,
                     CustomApi.Users.JoinedCommunities.UserCommunitiesQuery,
                     CommonPath>(
                     "users/{id}/communities"
@@ -426,12 +417,12 @@ object CustomApi {
 
             object Files {
                 val get =
-                    safeEndpointWithQueryAndPath<ServerResponse<FileInfo>, PaginationQuery, CommonPath>(
+                    safeEndpointWithQueryAndPath<ListResponse<FileInfo>, PaginationQuery, CommonPath>(
                         "users/{id}/files"
                     )
 
                 val search =
-                    safeEndpointWithQueryAndPath<ServerResponse<FileInfo>, SearchQuery, CommonPath>(
+                    safeEndpointWithQueryAndPath<ListResponse<FileInfo>, SearchQuery, CommonPath>(
                         "users/{id}/files/search"
                     )
             }
@@ -449,18 +440,18 @@ object CustomApi {
                 ) : PageableQuery
 
                 val get =
-                    safeEndpointWithQueryAndPath<ServerResponse<TitleInfo>, TitleQuery, CommonPath>("users/{id}/titles")
+                    safeEndpointWithQueryAndPath<ListResponse<TitleInfo>, TitleQuery, CommonPath>("users/{id}/titles")
             }
 
             object Favorites {
-                val get = safeEndpointWithQueryAndPath<ServerResponse<UserFavoriteInfo>, PaginationQuery, CommonPath>(
+                val get = safeEndpointWithQueryAndPath<ListResponse<UserFavoriteInfo>, PaginationQuery, CommonPath>(
                     "users/{id}/favorites"
                 )
             }
 
             object Subscriptions {
                 val get =
-                    safeEndpointWithQueryAndPath<ServerResponse<UserSubscriptionInfo>, PaginationQuery, CommonPath>(
+                    safeEndpointWithQueryAndPath<ListResponse<UserSubscriptionInfo>, PaginationQuery, CommonPath>(
                         "users/{id}/subscriptions"
                     )
             }
@@ -482,7 +473,7 @@ object CustomApi {
             }
         }
 
-        val search = safeEndpointWithQuery<ServerResponse<UserInfo>, SearchQuery>("users/search")
+        val search = safeEndpointWithQuery<ListResponse<UserInfo>, SearchQuery>("users/search")
 
         val update = mutationEndpoint<UserInfo, UpdateUserBody>("users/update")
         val overview = safeEndpoint<UserOverview>("users/overview")
@@ -496,13 +487,13 @@ object CustomApi {
         }
 
         object ReactionRecords {
-            val get = safeEndpointWithQuery<ServerResponse<ReactionRecordInfo>, PaginationQuery>(
+            val get = safeEndpointWithQuery<ListResponse<ReactionRecordInfo>, PaginationQuery>(
                 "users/reaction-records"
             )
         }
 
         object Comments {
-            val get = safeEndpointWithQuery<ServerResponse<TopicInfo>, PaginationQuery>("users/comments")
+            val get = safeEndpointWithQuery<ListResponse<TopicInfo>, PaginationQuery>("users/comments")
         }
 
         object JoinedRooms {
@@ -514,10 +505,10 @@ object CustomApi {
                 override val prePageToken: String? = null,
             ) : PageableQuery
 
-            val get = safeEndpointWithQuery<ServerResponse<RoomInfo>, PaginationQuery>("users/joined-rooms")
+            val get = safeEndpointWithQuery<ListResponse<RoomInfo>, PaginationQuery>("users/joined-rooms")
 
             val search =
-                safeEndpointWithQuery<ServerResponse<RoomInfo>, UserRoomsSearchQuery>("users/joined-rooms/search")
+                safeEndpointWithQuery<ListResponse<RoomInfo>, UserRoomsSearchQuery>("users/joined-rooms/search")
         }
 
         object JoinedCommunities {
@@ -537,11 +528,11 @@ object CustomApi {
                 override val prePageToken: String? = null,
             ) : PageableQuery
 
-            val get = safeEndpointWithQuery<ServerResponse<CommunityInfo>, UserCommunitiesQuery>(
+            val get = safeEndpointWithQuery<ListResponse<CommunityInfo>, UserCommunitiesQuery>(
                 "users/joined-communities"
             )
             val search =
-                safeEndpointWithQuery<ServerResponse<CommunityInfo>, UserCommunitiesSearchQuery>(
+                safeEndpointWithQuery<ListResponse<CommunityInfo>, UserCommunitiesSearchQuery>(
                     "users/joined-communities/search"
                 )
         }
@@ -550,14 +541,14 @@ object CustomApi {
     object Files {
 
         object Id {
-            val copy = mutationEndpointWithPath<ServerResponse<FileInfo>, Unit, CommonPath>("files/{id}/copy")
+            val copy = mutationEndpointWithPath<ListResponse<FileInfo>, Unit, CommonPath>("files/{id}/copy")
             val get = safeEndpointWithPath<FileInfo, CommonPath>("files/{id}")
             val extractAlbum =
-                mutationEndpointWithPath<ServerResponse<FileInfo>, Unit, CommonPath>("files/{id}/extract-album")
+                mutationEndpointWithPath<ListResponse<FileInfo>, Unit, CommonPath>("files/{id}/extract-album")
 
             object Refs {
                 val get =
-                    safeEndpointWithQueryAndPath<ServerResponse<FileRefInfo>, PaginationQuery, CommonPath>(
+                    safeEndpointWithQueryAndPath<ListResponse<FileRefInfo>, PaginationQuery, CommonPath>(
                         "files/{id}/refs"
                     )
             }
@@ -579,7 +570,7 @@ object CustomApi {
             }
         }
 
-        val upload = mutationEndpointWithQuery<ServerResponse<FileInfo>, Unit, ObjectTuple>("files/upload")
+        val upload = mutationEndpointWithQuery<ListResponse<FileInfo>, Unit, ObjectTuple>("files/upload")
 
         @Serializable
         class MediaSearchQuery(
@@ -693,7 +684,7 @@ object CustomApi {
             )
 
             val get =
-                safeEndpointWithQuery<ServerResponse<ChildAccountInfo>, ChildAccountQuery>("/accounts/child-accounts")
+                safeEndpointWithQuery<ListResponse<ChildAccountInfo>, ChildAccountQuery>("/accounts/child-accounts")
             val add = mutationEndpoint<ChildAccountInfo, AddChildAccountRequest>("/accounts/child-accounts")
         }
     }
