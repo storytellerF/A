@@ -24,7 +24,7 @@ materialIconsExtended = "1.7.3"
 openpdf = "3.0.2"
 pdfcompare = "1.2.8"
 roomRuntime = "2.8.4"
-endpoint4k-common = "1.1.0"
+endpoint4k-common = "1.0.0-SNAPSHOT"
 commonsLogging = "1.3.5"
 compose-plugin = "1.10.2"
 composeNativeNotification = "0.2.0"
@@ -181,9 +181,9 @@ material3 = { module = "org.jetbrains.compose.material3:material3", version.ref 
 openpdf = { module = "com.github.librepdf:openpdf", version.ref = "openpdf" }
 pdfcompare = { module = "de.redsix:pdfcompare", version.ref = "pdfcompare" }
 
-endpoint4k-common = { module = "com.storytellerF.endpoint4k:common", version.ref = "endpoint4k-common" }
-endpoint4k-ktor-client = { module = "com.storytellerF.endpoint4k:ktor-client", version.ref = "endpoint4k-common" }
-endpoint4k-ktor-server = { module = "com.storytellerF.endpoint4k:ktor-server", version.ref = "endpoint4k-common" }
+endpoint4k-common = { module = "com.storyteller_f.endpoint4k:common", version.ref = "endpoint4k-common" }
+endpoint4k-ktor-client = { module = "com.storyteller_f.endpoint4k:ktor-client", version.ref = "endpoint4k-common" }
+endpoint4k-ktor-server = { module = "com.storyteller_f.endpoint4k:ktor-server", version.ref = "endpoint4k-common" }
 
 commons-logging = { module = "commons-logging:commons-logging", version.ref = "commonsLogging" }
 compose-native-notification = { module = "io.github.kdroidfilter:compose-native-notification", version.ref = "composeNativeNotification" }
