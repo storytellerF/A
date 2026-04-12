@@ -11,7 +11,6 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-
 interface PageableQuery {
     val size: Int
     val nextPageToken: String?

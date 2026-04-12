@@ -11,14 +11,15 @@ import com.storyteller_f.a.backend.core.ReactionFetch
 import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.model.ReactionInfo
+import com.storyteller_f.shared.obj.ListResponse
 import com.storyteller_f.shared.obj.Pagination
 import com.storyteller_f.shared.obj.ReactionCursorKey
-import com.storyteller_f.shared.obj.ListResponse
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapCatchingNotNull
 import com.storyteller_f.shared.utils.mapResult
-import io.ktor.server.routing.RoutingContext
 import io.ktor.util.converters.DefaultConversionService
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 import kotlin.reflect.KClass
 
 interface PagingGenerator<in T, F : Any> {
@@ -102,34 +103,11 @@ abstract class OffsetPagingGenerator<T> : PagingGenerator<T, OffsetFetch> {
 
 object GeneralOffsetPagingGenerator : OffsetPagingGenerator<Any>()
 
-suspend fun <T, F : Fetch> RoutingContext.pagination(
+suspend fun <T, F : Fetch, Response : ListResponse<T>> PageableQuery.pagination(
     generator: PagingGenerator<T, F>,
+    responseBuilder: (ImmutableList<T>, Pagination<String>) -> Response,
     block: suspend (F) -> Result<PaginationResult<T>?>
-): Result<ListResponse<T>?> {
-    return runCatching {
-        val size = call.queryParameters.getOrFailCompact<Int>("size")
-        require(size > 0) {
-            "Invalid query size"
-        }
-        val nextPageToken = call.queryParameters["nextPageToken"]
-        val prePageToken = call.queryParameters["prePageToken"]
-
-        require(nextPageToken.isNullOrBlank() || prePageToken.isNullOrBlank()) {
-            "Invalid query"
-        }
-        generator.parse(prePageToken, nextPageToken, size)
-    }.mapResult { f ->
-        block(f).mapCatchingNotNull { (list, count) ->
-            val (pre, next) = generator.generate(list, f)
-            ListResponse(list, Pagination(next, pre, count))
-        }
-    }
-}
-
-suspend fun <T, F : Fetch> PageableQuery.pagination(
-    generator: PagingGenerator<T, F>,
-    block: suspend (F) -> Result<PaginationResult<T>?>
-): Result<ListResponse<T>?> {
+): Result<Response?> {
     return runCatching {
         val size = size
         require(size > 0) {
@@ -145,7 +123,7 @@ suspend fun <T, F : Fetch> PageableQuery.pagination(
     }.mapResult { f ->
         block(f).mapCatchingNotNull { (list, count) ->
             val (pre, next) = generator.generate(list, f)
-            ListResponse(list, Pagination(next, pre, count))
+            responseBuilder(list.toImmutableList(), Pagination(next, pre, count))
         }
     }
 }

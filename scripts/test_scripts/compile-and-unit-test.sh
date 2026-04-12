@@ -32,6 +32,10 @@ fi
 #fi
 
 echo "执行单元测试"
+if ! ENABLE_TEST_CONTAINER=false ./gradlew test --no-daemon -Pappium=false; then
+    ./scripts/tool_scripts/show-notification.sh "测试失败" "单元测试执行失败！请检查测试用例。" "false"
+    exit 1
+fi
 if ! ENABLE_TEST_CONTAINER=true ./gradlew test --no-daemon -Pappium=false; then
     ./scripts/tool_scripts/show-notification.sh "测试失败" "单元测试执行失败！请检查测试用例。" "false"
     exit 1

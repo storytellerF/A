@@ -8,8 +8,8 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import com.storyteller_f.shared.obj.Pagination
 import com.storyteller_f.shared.obj.ListResponse
+import com.storyteller_f.shared.obj.Pagination
 import com.storyteller_f.storage.CollectionListStorage
 import com.storyteller_f.storage.GlobalListStorage
 import com.storyteller_f.storage.RemoteKeyStorageWrapper
@@ -136,6 +136,9 @@ class RegularPagingSource<DATUM : Any>(
     }
 }
 
+/**
+ * Result 的范型为out，说明这是一个生产者，只有在传入端需要明确指定类型
+ */
 @OptIn(ExperimentalPagingApi::class)
 fun <C : Any, T : Any> buildPager(
     collection: C,

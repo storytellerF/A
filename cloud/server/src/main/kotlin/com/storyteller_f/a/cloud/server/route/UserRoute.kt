@@ -1,8 +1,16 @@
 package com.storyteller_f.a.cloud.server.route
 
+import com.storyteller_f.a.api.CommunityInfoListResponse
 import com.storyteller_f.a.api.CustomApi
 import com.storyteller_f.a.api.NewFavorite
 import com.storyteller_f.a.api.NewSubscription
+import com.storyteller_f.a.api.ReactionRecordInfoListResponse
+import com.storyteller_f.a.api.RoomInfoListResponse
+import com.storyteller_f.a.api.TitleInfoListResponse
+import com.storyteller_f.a.api.TopicInfoListResponse
+import com.storyteller_f.a.api.UserFavoriteInfoListResponse
+import com.storyteller_f.a.api.UserInfoListResponse
+import com.storyteller_f.a.api.UserSubscriptionInfoListResponse
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.cloud.core.service.addDevice
@@ -53,19 +61,7 @@ fun Route.bindProtectedUserRoute(backend: Backend) {
             backend.addDevice(uid, newDevice)
         }
     }
-    CustomApi.Users.Id.Favorites.get(handleResult()) { q, p ->
-        usePrincipalOrNull { uid -> // 使用 usePrincipalOrNull 允许未登录查看（如果后端允许）
-            q.pagination(IdentifiablePagingGenerator) { fetch ->
-                backend.getFavorites(p.id, fetch)
-            }
-        }
-    }
-
-    CustomApi.Users.Id.Favorite.add(handleResult()) { p, _ ->
-        usePrincipal { uid ->
-            backend.addFavorite(uid, NewFavorite(ObjectType.USER, p.id)).map { }
-        }
-    }
+    bindUserFavoriteRoute(backend)
 
     CustomApi.Users.Id.Favorite.delete(handleResult()) { path, _ ->
         usePrincipal { uid ->
@@ -80,14 +76,18 @@ fun Route.bindProtectedUserRoute(backend: Backend) {
     }
     CustomApi.Users.ReactionRecords.get(handleResult()) { q ->
         usePrincipal { uid ->
-            q.pagination(IdentifiablePagingGenerator) { fetch ->
+            q.pagination(IdentifiablePagingGenerator, { l, p ->
+                ReactionRecordInfoListResponse(l, p)
+            }) { fetch ->
                 backend.getUserReactions(uid, fetch)
             }
         }
     }
     CustomApi.Users.Comments.get(handleResult()) { q ->
         usePrincipal { uid ->
-            q.pagination(IdentifiablePagingGenerator) { fetch ->
+            q.pagination(IdentifiablePagingGenerator, { l, p ->
+                TopicInfoListResponse(l, p)
+            }) { fetch ->
                 backend.getUserCommentedTopics(uid, fetch)
             }
         }
@@ -95,31 +95,57 @@ fun Route.bindProtectedUserRoute(backend: Backend) {
     bindUserCommunitiesRoute(backend)
 }
 
+private fun Route.bindUserFavoriteRoute(backend: Backend) {
+    CustomApi.Users.Id.Favorites.get(handleResult()) { q, p ->
+        usePrincipal {
+            q.pagination(IdentifiablePagingGenerator, { l, p ->
+                UserFavoriteInfoListResponse(l, p)
+            }) { fetch ->
+                backend.getFavorites(p.id, fetch)
+            }
+        }
+    }
+
+    CustomApi.Users.Id.Favorite.add(handleResult()) { p, _ ->
+        usePrincipal { uid ->
+            backend.addFavorite(uid, NewFavorite(ObjectType.USER, p.id)).map { }
+        }
+    }
+}
+
 private fun Route.bindUserCommunitiesRoute(backend: Backend) {
     CustomApi.Users.JoinedCommunities.get(handleResult()) { q ->
         usePrincipal { uid ->
-            q.pagination(IdentifiablePagingGenerator) { fetch ->
+            q.pagination(IdentifiablePagingGenerator, { l, p ->
+                CommunityInfoListResponse(l, p)
+            }) { fetch ->
                 backend.getUserJoinedCommunities(uid, uid, fetch, q.hasPoster)
             }
         }
     }
     CustomApi.Users.JoinedCommunities.search(handleResult()) { q ->
         usePrincipal { uid ->
-            q.pagination(GeneralOffsetPagingGenerator) { fetch ->
+            q.pagination(GeneralOffsetPagingGenerator, { l, p ->
+                CommunityInfoListResponse(l, p)
+            }) { fetch ->
                 backend.searchUserJoinedCommunities(uid, q, fetch)
             }
         }
     }
     CustomApi.Users.JoinedRooms.get(handleResult()) { q ->
         usePrincipal { uid ->
-            q.pagination(IdentifiablePagingGenerator) { fetch ->
+            q.pagination(IdentifiablePagingGenerator, { l, p ->
+                RoomInfoListResponse(l, p)
+            }) { fetch ->
                 backend.getUserJoinedRooms(uid, fetch)
             }
         }
     }
     CustomApi.Users.JoinedRooms.search(handleResult()) { q ->
         usePrincipal { uid ->
-            q.pagination(GeneralOffsetPagingGenerator) { fetch ->
+            q.pagination(GeneralOffsetPagingGenerator, { l, p ->
+                RoomInfoListResponse(l, p)
+            }) { fetch ->
                 backend.searchCurrentUserRooms(uid, fetch, q)
             }
         }
@@ -128,14 +154,10 @@ private fun Route.bindUserCommunitiesRoute(backend: Backend) {
 
 fun Route.bindProtectedUserSubscriptionRoute(backend: Backend) {
     CustomApi.Users.Id.Subscriptions.get(handleResult()) { q, p ->
-        usePrincipalOrNull { uid ->
-            // 这里逻辑可能需要调整，原来是获取自己的订阅，现在是获取某个User的订阅
-            // 如果原来的逻辑只能获取自己的，那这里 p.id 应该等于 uid？
-            // 暂时假设允许获取指定用户的订阅，或者后端service会做权限检查
-            // 如果后端service只能获取"当前用户"的，那这里可能需要修改service传入 p.id
-            // 查看 getUserSubscriptions 签名：backend.getUserSubscriptions(uid, fetch)
-            // 这里的 uid 是 target user id.
-            q.pagination(IdentifiablePagingGenerator) { fetch ->
+        usePrincipal {
+            q.pagination(IdentifiablePagingGenerator, { l, p ->
+                UserSubscriptionInfoListResponse(l, p)
+            }) { fetch ->
                 backend.getUserSubscriptions(p.id, fetch)
             }
         }
@@ -167,7 +189,9 @@ fun Route.bindUserRoute(backend: Backend) {
 
     CustomApi.Users.Id.Topics.get(handleResult()) { q, p ->
         usePrincipalOrNull { uid ->
-            q.pagination(IdentifiablePagingGenerator) { f ->
+            q.pagination(IdentifiablePagingGenerator, { l, p ->
+                TopicInfoListResponse(l, p)
+            }) { f ->
                 backend.getTopicsByParentId(p.id, ObjectType.USER, uid, q.fillHasCommented, f, q.pinType)
             }
         }
@@ -175,21 +199,27 @@ fun Route.bindUserRoute(backend: Backend) {
 
     CustomApi.Users.Id.Communities.get(handleResult()) { q, p ->
         usePrincipalOrNull { uid ->
-            q.pagination(IdentifiablePagingGenerator) { f ->
+            q.pagination(IdentifiablePagingGenerator, { l, p ->
+                CommunityInfoListResponse(l, p)
+            }) { f ->
                 backend.getUserJoinedCommunities(uid, p.id, f, q.hasPoster)
             }
         }
     }
 
     CustomApi.Users.Id.Titles.get(handleResult()) { q, p ->
-        q.pagination(IdentifiablePagingGenerator) { f ->
+        q.pagination(IdentifiablePagingGenerator, { l, p ->
+            TitleInfoListResponse(l, p)
+        }) { f ->
             backend.getUserTitles(p.id, q.searchType, q.type, q.scopeId, q.titleStatus, f)
         }
     }
 
     CustomApi.Users.search(handleResult()) { q ->
         usePrincipalOrNull { uid ->
-            q.pagination(GeneralOffsetPagingGenerator) { f ->
+            q.pagination(GeneralOffsetPagingGenerator, { l, p ->
+                UserInfoListResponse(l, p)
+            }) { f ->
                 backend.searchUsers(q.word, uid, f)
             }
         }
