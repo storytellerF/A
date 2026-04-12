@@ -51,6 +51,7 @@ host_part=$(echo "$SSH_URI" | sed 's|ssh://||' | cut -d'@' -f2)
 SSH_HOST=$(echo "$host_part" | cut -d':' -f1)
 SSH_PORT=$(echo "$host_part" | cut -d':' -f2)
 
+log "Add SSH key to known_hosts"
 ssh-keyscan -p "$SSH_PORT" -T 3600 -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null
 
 # 如果 ssh config 不包含 default 主机，则创建它
@@ -61,6 +62,8 @@ if ! grep -q "Host default" ~/.ssh/config 2>/dev/null; then
   echo "  Port $SSH_PORT" >> ~/.ssh/config
   echo "  User $SSH_USER" >> ~/.ssh/config
   echo "  IdentityFile ~/.ssh/id_ed25519" >> ~/.ssh/config
+else
+  log "ssh config already exists"
 fi
 
 export HOST_TYPE=local
