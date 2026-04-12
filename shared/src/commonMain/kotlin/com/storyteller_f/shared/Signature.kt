@@ -12,6 +12,7 @@ import dev.whyoleg.cryptography.algorithms.ECDH
 import dev.whyoleg.cryptography.algorithms.ECDSA
 import dev.whyoleg.cryptography.algorithms.HKDF
 import dev.whyoleg.cryptography.algorithms.HMAC
+import dev.whyoleg.cryptography.algorithms.RIPEMD160
 import dev.whyoleg.cryptography.algorithms.SHA256
 
 fun finalData(data: String, salt: String = "a"): String {
@@ -154,7 +155,7 @@ object AlgoP256 : Algo {
     }
 
     override suspend fun calcAddress(derPublicKeyStr: String): Result<String> {
-        return calcAddressP256(derPublicKeyStr)
+        return calcAddressSHA256AndRipemd160(derPublicKeyStr)
     }
 
     @OptIn(kotlin.io.encoding.ExperimentalEncodingApi::class)
@@ -311,8 +312,19 @@ suspend fun <T> algoRunCatching(
 }
 
 expect suspend fun getDerPublicKeyFromPrivateKeyP256(pemPrivateKeyStr: String): Result<String>
-expect suspend fun calcAddressP256(derPublicKeyStr: String): Result<String>
 expect fun loadCryptoLibIfNeed()
+
+@OptIn(ExperimentalStdlibApi::class, dev.whyoleg.cryptography.DelicateCryptographyApi::class)
+suspend fun calcAddressSHA256AndRipemd160(derPublicKeyStr: String): Result<String> {
+    return runCatching {
+        val decode = derPublicKeyStr.hexToByteArray()
+        // 先计算SHA256
+        val sha256Digest = CryptographyProvider.Default.get(SHA256).hasher().hash(decode)
+        // 再计算RIPEMD160
+        val ripemd160Digest = CryptographyProvider.Default.get(RIPEMD160).hasher().hash(sha256Digest)
+        ripemd160Digest.toHexString()
+    }
+}
 
 expect val AlgoDilithium: Algo
 

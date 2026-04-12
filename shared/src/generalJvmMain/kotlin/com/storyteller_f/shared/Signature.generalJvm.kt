@@ -6,7 +6,6 @@ import org.bouncycastle.asn1.x500.X500Name
 import org.bouncycastle.cert.X509v3CertificateBuilder
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder
-import org.bouncycastle.jcajce.provider.digest.Keccak
 import org.bouncycastle.jce.interfaces.ECPrivateKey
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.jce.spec.ECPrivateKeySpec
@@ -50,20 +49,6 @@ actual suspend fun getDerPublicKeyFromPrivateKeyP256(pemPrivateKeyStr: String): 
         CryptoJvm.getPublicKeyFromPrivateKey(it).map { pubKey ->
             pubKey.encoded.toHexString()
         }
-    }
-}
-
-/**
- * @param derPublicKeyStr hex 的der 格式的密钥
- * @return hex 格式的地址
- */
-@OptIn(ExperimentalStdlibApi::class)
-actual suspend fun calcAddressP256(derPublicKeyStr: String): Result<String> {
-    return runCatching {
-        val decode = derPublicKeyStr.hexToByteArray()
-        val digest256 = Keccak.Digest256()
-        val digest = digest256.digest(decode).takeLast(20).toByteArray()
-        digest.toHexString()
     }
 }
 
@@ -338,12 +323,7 @@ actual val AlgoDilithium: Algo = object : Algo {
     }
 
     override suspend fun calcAddress(derPublicKeyStr: String): Result<String> {
-        return runCatching {
-            val decode = derPublicKeyStr.hexToByteArray()
-            val digest256 = Keccak.Digest256()
-            val digest = digest256.digest(decode).takeLast(20).toByteArray()
-            digest.toHexString()
-        }
+        return calcAddressSHA256AndRipemd160(derPublicKeyStr)
     }
 
     @OptIn(ExperimentalEncodingApi::class)
