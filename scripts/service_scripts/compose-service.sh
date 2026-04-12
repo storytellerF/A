@@ -32,7 +32,7 @@ if [ "$USE_PREBUILD" = "true" ]; then
     COMPOSE_FILES+=("-f" "./deploy/docker-compose/docker-compose.prebuild.yml")
 else
   for p in "${COMPOSE_FILE_LIST[@]}"; do
-      if [[ "$p" == "server" ]]; then
+      if [[ "$p" == "server" ]] || [[ "$p" == "worker" ]]; then
           if [ -z "$BUILD_ON" ]; then
               echo "BUILD_ON must be set."
               exit 1

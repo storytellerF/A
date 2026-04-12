@@ -6,6 +6,7 @@ services:
       args:
         BUILD_TYPE: ${BUILD_TYPE}
         FLAVOR: ${FLAVOR}
+        BUILD_ON: ${BUILD_ON}
     restart: unless-stopped
     env_file:
       - ../../deploy/${FLAVOR}.env
