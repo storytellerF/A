@@ -5,7 +5,7 @@
 	"dockerComposeFile": [
 		"./docker-compose.yml"
 	],
-	"service": "a-dev-main",
+	"service": "main",
 	"workspaceFolder": "/workspace/A",
 	"shutdownAction": "stopCompose",
 	// Features to add to the dev container. More info: https://containers.dev/features.
