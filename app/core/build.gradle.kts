@@ -93,7 +93,6 @@ kotlin {
             implementation(libs.napier)
             implementation(libs.kotlinx.datetime)
             implementation(libs.bundles.ktor.client)
-            implementation(libs.tasks.genai)
             // ui
             implementation(libs.material3.window.size)
             implementation(libs.androidx.lifecycle.viewmodel.compose)
@@ -142,7 +141,6 @@ kotlin {
             implementation(libs.jlatexmath)
             implementation(libs.vlcj)
             implementation(libs.jlayer)
-            implementation(libs.llama)
             implementation(libs.androidx.datastore.preferences.core)
             implementation(libs.connectivity.http)
             implementation(libs.connectivity.compose.http)

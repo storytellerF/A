@@ -104,6 +104,8 @@ kotlin {
             implementation(libs.androidx.core.splashscreen)
             implementation(libs.androidx.datastore.preferences.core)
 
+            implementation(libs.litertlm.android)
+
             implementation(libs.connector) {
                 exclude(group = "com.google.protobuf", module = "protobuf-java")
             }
@@ -145,7 +147,6 @@ kotlin {
             implementation(libs.napier)
             implementation(libs.kotlinx.datetime)
             implementation(libs.bundles.ktor.client)
-            implementation(libs.tasks.genai)
             implementation(libs.kim)
             implementation(libs.uri.kmp)
             implementation(libs.m3u.parser)
@@ -193,11 +194,12 @@ kotlin {
             implementation(libs.jlatexmath)
             implementation(libs.vlcj)
             implementation(libs.jlayer)
-            implementation(libs.llama)
             implementation(libs.androidx.datastore.preferences.core)
             implementation(libs.connectivity.http)
             implementation(libs.connectivity.compose.http)
             implementation(libs.tika.core)
+
+            implementation(libs.litertlm.jvm)
         }
         jvmTest {
             dependsOn(headlessTest)

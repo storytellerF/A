@@ -107,7 +107,7 @@ include(":api")
 
 include(":bot:builtin-bot")
 
-includeBuild("bgscripts")
-
 include(":panel:benchmark")
 include(":app:benchmark")
+
+includeBuild("bgscripts")

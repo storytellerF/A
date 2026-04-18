@@ -42,6 +42,7 @@ import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.openFilePicker
 import io.github.vinceglb.filekit.name
 import org.jetbrains.compose.resources.stringResource
+import java.io.File
 
 @Composable
 fun PreferencePage() {
@@ -98,12 +99,12 @@ private fun TranslateModelPreferenceItem() {
             it.value to it.key
         },
         summary = {
-            val path = if (it.isNullOrBlank()) {
+            if (it.isNullOrBlank()) {
                 getGPTModelDirectory().toString()
+                Text("support ${gpt.supportList}")
             } else {
-                it
+                Text(stringResource(Res.string.current_selected, File(it).name))
             }
-            Text(stringResource(Res.string.current_selected, path))
         },
         leadingIcon = {
             CustomIcon(IconRes.Font(MaterialSymbolsOutlined.Translate))
@@ -133,7 +134,16 @@ private fun TranslateModelPreferenceItem() {
     TopicTranslateSheet(
         showSheet,
         sheetState,
-        TopicInfo.EMPTY.copy(content = TopicContent.Plain("hello"))
+        TopicInfo.EMPTY.copy(content = TopicContent.Plain("""Jonas, a 12-year-old boy, lives in 
+            |a community isolated from all except a few similar towns, 
+            |where everyone has an assigned role. 
+            |With the annual Ceremony of Twelve upcoming, 
+            |he is nervous, for there he will be assigned his life's work. 
+            |He seeks reassurance from his father, 
+            |a Nurturer (who cares for the infants in the Community) and his mother, 
+            |a high-ranking official in the Department of Justice. 
+            |He is told by his parents that the Elders, 
+            |who assign the children their careers, are always right. """.trimMargin()))
     ) {
         showSheet = false
     }

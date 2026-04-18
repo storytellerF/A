@@ -77,7 +77,6 @@ kzip = "1.1.1"
 leakcanaryAndroid = "2.14"
 lifecycleViewmodelCompose = "2.10.0"
 lifecycle = "2.10.0"
-llama = "4.2.0"
 logback = "1.5.32"
 luceneCore = "10.4.0"
 m3uParser = "1.4.0"
@@ -94,7 +93,7 @@ pagingCommon = "3.4.2"
 runtime = "1.10.3"
 sqlFormatter = "2.0.5"
 sqliteBundled = "2.6.2"
-tasksGenai = "0.10.32"
+litertlmAndroid = "latest.release"
 testContainer = "1.21.4"
 mosaicRuntime = "0.18.0"
 multiplatformMarkdownRenderer = "0.40.2"
@@ -235,14 +234,14 @@ kfswatch = { module = "io.github.irgaly.kfswatch:kfswatch", version.ref = "kfswa
 kreds = { module = "io.github.crackthecodeabhi:kreds", version.ref = "kreds" }
 kzip = { module = "de.jonasbroeckmann.kzip:kzip", version.ref = "kzip" }
 leakcanary-android = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanaryAndroid" }
-llama = { module = "de.kherud:llama", version.ref = "llama" }
 memoryfilesystem = { module = "com.github.marschall:memoryfilesystem", version.ref = "memoryfilesystem" }
 micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "micrometerRegistryPrometheus" }
 mysql-connector-java = { module = "mysql:mysql-connector-java", version.ref = "mysqlConnectorJava" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "runtime" }
 sql-formatter = { module = "com.github.vertical-blank:sql-formatter", version.ref = "sqlFormatter" }
-tasks-genai = { module = "com.google.mediapipe:tasks-genai", version.ref = "tasksGenai" }
+litertlm-android = { module = "com.google.ai.edge.litertlm:litertlm-android", version.ref = "litertlmAndroid" }
+litertlm-jvm = { module = "com.google.ai.edge.litertlm:litertlm-jvm", version.ref = "litertlmAndroid" }
 testcontainers-elasticsearch = { module = "org.testcontainers:elasticsearch", version.ref = "testContainer" }
 elasticsearch-java = { module = "co.elastic.clients:elasticsearch-java", version.ref = "elasticsearchJava" }
 emoji-compose-m3 = { module = "org.kodein.emoji:emoji-compose-m3", version.ref = "emojiKt" }
