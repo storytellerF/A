@@ -5,18 +5,6 @@ if [ -z "$base" ]; then
   echo "Error: base parameter is not specified."
   exit 1
 fi
-FLAVOR=dev
-# 检测操作系统
-if [[ "$(uname -s)" =~ MINGW|CYGWIN|MSYS ]]; then
-  FLAVOR=dev.win
-fi
-
-# 如果存在A_DEV_CONTAINER 环境变量，使用dev.container
-if [ -n "$A_DEV_CONTAINER" ]; then
-  FLAVOR=dev.container
-fi
-
-cli_path=build/install/cli/bin/cli
 
 # 执行 Gradle 构建并捕获退出码
 if ! ./gradlew cloud:cli:installDist -Pserver.flavor=dev -Pserver.buildType=dev; then
@@ -26,8 +14,21 @@ if ! ./gradlew cloud:cli:installDist -Pserver.flavor=dev -Pserver.buildType=dev;
 fi
 
 . ./scripts/tool_scripts/set-log-path.sh
-cd cloud/cli
 
+# 读取dev.env 文件并导出环境变量
+if [ -f "deploy/dev.env" ]; then
+  echo "Loading environment variables from deploy/dev.env"
+  while IFS='=' read -r key value; do
+    # 跳过注释和空行
+    [[ "$key" =~ ^#.*$ || -z "$key" ]] && continue
+    export "$key=$value"
+  done < deploy/dev.env
+else
+  echo "Warning: dev.env file not found. Skipping environment variable setup."
+fi
+
+cd cloud/cli
+cli_path=build/install/cli/bin/cli
 # 执行数据库刷新并捕获退出码
 if ../../scripts/tool_scripts/flush-database.sh $cli_path "../../$base"; then
   echo "Database flush completed successfully"

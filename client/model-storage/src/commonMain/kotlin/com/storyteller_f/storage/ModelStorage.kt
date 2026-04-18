@@ -58,8 +58,6 @@ interface GlobalListStorage<I : Any> {
     suspend fun clean()
     fun observeDatum(id: PrimaryKey): Flow<I?> = observeDatum(id.toString())
     fun observeDatum(key: String): Flow<I?>
-    suspend fun getDocument(id: PrimaryKey): I? = getDocument(id.toString())
-    suspend fun getDocument(key: String): I?
 }
 
 interface SingletonItemStorage<I : Any> {
@@ -329,8 +327,12 @@ interface ChildAccountStorage : GlobalListStorage<ChildAccountInfo> {
 
 interface FileInfoStorage : CollectionListStorageWithDefault<FileCollection, FileInfo>
 
-interface DownloadInfoStorage : GlobalListStorage<DownloadInfo> {
+interface DownloadInfoStorage {
+    suspend fun save(item: DownloadInfo)
+    fun observeData(): PagingSource<Int, DownloadInfo>
+    suspend fun clean()
     suspend fun getDocumentByFileId(fileId: PrimaryKey): DownloadInfo?
+    fun observeDocumentByFileId(fileId: PrimaryKey): Flow<DownloadInfo?>
 
     companion object {
         const val COLLECTION_NAME = "download"

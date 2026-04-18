@@ -169,7 +169,13 @@ class DownloaderImpl(
                 fileInfo.size
             )
             modelStorage.download.save(new)
+            Napier.i(tag = "download") {
+                "add new document"
+            }
         } else if (document.status != DownloadStatus.NOT_DOWNLOADED) {
+            Napier.i(tag = "download") {
+                "current download status ${document.status}"
+            }
             return
         }
         download(userSession, modelStorage, fileInfo.id)
@@ -192,9 +198,12 @@ class DownloaderImpl(
         modelStorage: ModelStorage,
         id: PrimaryKey,
     ) {
-        val downloadInfo = modelStorage.download.getDocument(id) ?: return
-        Napier.w(tag = "download") {
-            "no downloadInfo"
+        val downloadInfo = modelStorage.download.getDocumentByFileId(id)
+        if (downloadInfo == null) {
+            Napier.w(tag = "download") {
+                "no downloadInfo"
+            }
+            return
         }
         if (downloadInfo.status == DownloadStatus.PROCESSED) return
         val path = Path(downloadInfo.path)
@@ -329,7 +338,7 @@ class DownloaderImpl(
         id: PrimaryKey,
         block: (DownloadInfo) -> DownloadInfo
     ) {
-        val uploadInfo = modelStorage.download.getDocument(id) ?: return
+        val uploadInfo = modelStorage.download.getDocumentByFileId(id) ?: return
         modelStorage.download.save(block(uploadInfo))
     }
 }

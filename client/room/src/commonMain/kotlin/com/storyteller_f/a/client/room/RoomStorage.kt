@@ -647,9 +647,6 @@ class RoomChildAccountStorage(appDatabase: AppDatabase) : ChildAccountStorage {
         return impl.observeDatum(ChildAccountStorage.COLLECTION_NAME, key)
     }
 
-    override suspend fun getDocument(key: String): ChildAccountInfo {
-        TODO("Not yet implemented")
-    }
 }
 
 class RoomFileInfoStorage(appDatabase: AppDatabase) : FileInfoStorage {
@@ -727,17 +724,10 @@ class RoomDownloadInfoStorage(val appDatabase: AppDatabase) : DownloadInfoStorag
             }
     }
 
-    override fun observeDatum(key: String): Flow<DownloadInfo?> {
+    override fun observeDocumentByFileId(fileId: PrimaryKey): Flow<DownloadInfo?> {
         return appDatabase.getDownloadDao()
-            .getByIdAsFlow(DownloadInfoStorage.COLLECTION_NAME, key).map {
+            .getByFileIdAsFlow(DownloadInfoStorage.COLLECTION_NAME, fileId).map {
                 it?.data?.let { string -> commonJson.safeDecodeFromStringOrNull(string) }
-            }
-    }
-
-    override suspend fun getDocument(key: String): DownloadInfo? {
-        return appDatabase.getDownloadDao().getById(DownloadInfoStorage.COLLECTION_NAME, key)
-            ?.let {
-                commonJson.safeDecodeFromStringOrNull(it.data)
             }
     }
 
