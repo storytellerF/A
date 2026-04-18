@@ -214,6 +214,14 @@ private fun AddUserPrivateKeyPage(
         AlgoTypeSelector(algoType) {
             addUserViewModel.updateAlgoType(it)
         }
+        // 警告提示紧跟算法选择器显示
+        if (algoType == AlgoType.P256) {
+            Text(
+                "P256 算法不够安全，可能面临未来被解密的风险",
+                color = androidx.compose.ui.graphics.Color.Red,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+        }
         Row {
             IconButton({
                 scope.launch {
