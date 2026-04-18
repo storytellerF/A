@@ -1,16 +1,15 @@
 package com.storyteller_f.a.app.service
 
-import de.kherud.llama.InferenceParameters
-import de.kherud.llama.LlamaModel
-import de.kherud.llama.ModelParameters
-import de.kherud.llama.args.MiroStat
+import com.google.ai.edge.litertlm.Backend.GPU
+import com.google.ai.edge.litertlm.Engine
+import com.google.ai.edge.litertlm.EngineConfig
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.withContext
 import kotlinx.io.files.Path
 import java.io.File
 
@@ -26,58 +25,41 @@ actual fun getGPTModelDirectory(): Path {
 class LlamaGPT : GPT {
     override val supportList: List<String> = listOf("gguf")
 
-    override fun generate(
+    override suspend fun generate(
         path: String,
         prompt: String,
-        stopWord: String
     ): Result<Flow<GPTOutput>> {
+        val file = File(path)
+        if (!file.exists()) {
+            return Result.failure(Exception("modal not exists"))
+        }
+        val userHome = System.getProperty("user.home")
+        val engineConfig = EngineConfig(
+            modelPath = path,
+            backend = GPU(),
+            cacheDir = File(userHome, ".storyteller_f_a/llm-cache").absolutePath
+        )
+        val engine = Engine(engineConfig)
         return runCatching {
-            buildLlampCpp(path, prompt, stopWord)
-        }
-    }
-
-    fun buildLlampCpp(
-        path: String,
-        prompt: String,
-        stopWord: String
-    ): Flow<GPTOutput> {
-        val modelParams = ModelParameters()
-            .setModel(path)
-            .setGpuLayers(43)
-        val model = LlamaModel(modelParams)
-        Napier.i(tag = "gpt") {
-            "load $path done"
-        }
-        val inferParams = InferenceParameters(prompt)
-            .setTemperature(0.7f)
-            .setPenalizeNl(true)
-            .setMiroStat(MiroStat.V2)
-            .setStopStrings(stopWord)
-        val iterator = model.generate(inferParams).iterator()
-        return callbackFlow {
-            while (true) {
-                if (iterator.hasNext()) {
-                    val n = iterator.next()
-                    Napier.i(tag = "gpt") {
-                        "send ${n.text}"
-                    }
-                    send(GPTOutput(n.text))
-                } else {
-                    Napier.i(tag = "gpt") {
-                        "close"
-                    }
-                    close()
-                    break
-                }
+            withContext(Dispatchers.IO) {
+                engine.initialize()
             }
-            awaitClose {
+            Napier.i(tag = "gpt") {
+                "engine initialized"
+            }
+            val conversation = engine.createConversation()
+            conversation.sendMessageAsync(prompt).map {
+                Napier.d(tag = "gpt") {
+                    "gpt output ${it.contents}"
+                }
+                GPTOutput(it.contents.contents.joinToString())
+            }.onCompletion {
+                engine.close()
                 Napier.i(tag = "gpt") {
-                    "release model"
+                    "engine closed"
                 }
-                iterator.cancel()
-                model.close()
             }
-        }.flowOn(Dispatchers.IO)
+        }
     }
 
     override fun models(scope: CoroutineScope): Flow<List<GPTModel>> {

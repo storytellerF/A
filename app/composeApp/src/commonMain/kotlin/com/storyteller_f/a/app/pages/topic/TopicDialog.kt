@@ -3,9 +3,15 @@ package com.storyteller_f.a.app.pages.topic
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.PictureAsPdf
@@ -25,6 +31,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.unit.dp
@@ -63,12 +70,10 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.formatTime
 import com.strabled.composepreferences.getPreference
 import io.github.aakira.napier.Napier
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.ExperimentalTime
@@ -218,7 +223,7 @@ suspend fun AppGlobalDialogController.pinOrUnpinTopic(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, InternalComposeUiApi::class)
 @Composable
 fun TopicTranslateSheet(
     showSheet: Boolean,
@@ -231,25 +236,22 @@ fun TopicTranslateSheet(
             val preferenceData: StateFlow<String> by getPreference("gpt_model")
             val currentModel by preferenceData.collectAsState()
             val content = topicInfo.content
-            Box(modifier = Modifier.height(200.dp).padding(horizontal = 20.dp).fillMaxWidth()) {
+            Box(modifier = Modifier.height(200.dp).padding(horizontal = 20.dp).padding(bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()).fillMaxWidth()) {
                 if (content is TopicContent.Plain) {
+                    // TODO 转成ViewModel
                     val result by produceState<Result<Flow<GPTOutput>>?>(
                         null,
                         content,
                         currentModel
                     ) {
-                        value = withContext(Dispatchers.IO) {
-                            val (prompt, stopWord) = buildTranslatePrompt(
-                                content.plain,
-                                getCurrentLanguage(),
-                                currentModel
-                            )
-                            Napier.i(tag = "gpt") {
-                                "prompt $prompt"
-                            }
-                            buildGPT()
-                                .generate(currentModel, prompt, stopWord)
+                        val prompt = buildTranslatePrompt(
+                            content.plain,
+                            getCurrentLanguage()
+                        )
+                        Napier.i(tag = "gpt") {
+                            "prompt $prompt"
                         }
+                        value = buildGPT().generate(currentModel, prompt)
                     }
                     TopicTranslateSheetInternal(result, topicInfo, content)
                 } else {
@@ -292,12 +294,14 @@ private fun BoxScope.TopicTranslateSheetInternal(
                     job.cancel()
                 }
             }
-            AppTopicContentView(topicInfo.copy(content = content.copy(plain = output)))
+            val scrollState = rememberScrollState()
+            Column(modifier = Modifier.verticalScroll(scrollState).fillMaxSize()) {
+                AppTopicContentView(topicInfo.copy(content = content.copy(plain = output)))
+            }
         }
 
-        else ->
-            result.exceptionOrNull()?.let {
-                ExceptionView(it, modifier = Modifier.align(Alignment.Center))
-            }
+        else -> result.exceptionOrNull()?.let {
+            ExceptionView(it, modifier = Modifier.align(Alignment.Center))
+        }
     }
 }
