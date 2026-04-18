@@ -35,7 +35,7 @@ import com.storyteller_f.shared.type.ObjectType
 import io.ktor.server.routing.Route
 
 fun Route.bindRoomRoute(backend: Backend) {
-    CustomApi.Rooms.Id.Members.get(handleResult()) { q, p ->
+    CustomApi.Rooms.Id.Members.get(handleResult(backend)) { q, p ->
         usePrincipalOrNull { uid ->
             q.pagination(IdentifiablePagingGenerator, { l, p ->
                 MemberInfoListResponse(l, p)
@@ -46,7 +46,7 @@ fun Route.bindRoomRoute(backend: Backend) {
         }
     }
 
-    CustomApi.Rooms.Id.Members.search(handleResult()) { q, p ->
+    CustomApi.Rooms.Id.Members.search(handleResult(backend)) { q, p ->
         usePrincipalOrNull { uid ->
             q.pagination(GeneralOffsetPagingGenerator, { l, p ->
                 MemberInfoListResponse(l, p)
@@ -55,19 +55,19 @@ fun Route.bindRoomRoute(backend: Backend) {
             }
         }
     }
-    CustomApi.Rooms.Aid.get(handleResult()) {
+    CustomApi.Rooms.Aid.get(handleResult(backend)) {
         usePrincipalOrNull { uid ->
             backend.getRoomInfo(ObjectFetch.AidFetch(it.aid), uid, it.fillJoinInfo)
         }
     }
 
-    CustomApi.Rooms.Id.get(handleResult()) { q, p ->
+    CustomApi.Rooms.Id.get(handleResult(backend)) { q, p ->
         usePrincipalOrNull { uid ->
             backend.getRoomInfo(ObjectFetch.IdFetch(p.id), uid, q.fillJoinInfo)
         }
     }
 
-    CustomApi.Rooms.Id.Topics.get(handleResult()) { q, p ->
+    CustomApi.Rooms.Id.Topics.get(handleResult(backend)) { q, p ->
         usePrincipalOrNull { uid ->
             q.pagination(IdentifiablePagingGenerator, { l, p ->
                 TopicInfoListResponse(l, p)
@@ -79,17 +79,17 @@ fun Route.bindRoomRoute(backend: Backend) {
 }
 
 fun Route.bindProtectedRoomRoute(backend: Backend) {
-    CustomApi.Rooms.Id.Members.join(handleResult()) { p, api ->
+    CustomApi.Rooms.Id.Members.join(handleResult(backend)) { p, api ->
         usePrincipal { uid ->
             backend.joinRoom(p.id, uid)
         }
     }
-    CustomApi.Rooms.Id.Members.leave(handleResult()) { p, api ->
+    CustomApi.Rooms.Id.Members.leave(handleResult(backend)) { p, api ->
         usePrincipal { uid ->
             backend.exitRoom(p.id, uid)
         }
     }
-    CustomApi.Rooms.Id.Members.publicKeys(handleResult()) { q, p ->
+    CustomApi.Rooms.Id.Members.publicKeys(handleResult(backend)) { q, p ->
         usePrincipal { uid ->
             q.pagination(object : PrimaryKeyPagingGenerator<UserPubKeyInfo>(UserPubKeyInfo::id) {}, { l, p ->
                 UserPubKeyInfoListResponse(l, p)
@@ -98,35 +98,35 @@ fun Route.bindProtectedRoomRoute(backend: Backend) {
             }
         }
     }
-    CustomApi.Rooms.add(handleResult()) { api ->
+    CustomApi.Rooms.add(handleResult(backend)) { api ->
         val newRoom = api.receiveBody()
         usePrincipal { uid ->
             backend.createRoom(newRoom, uid)
         }
     }
-    CustomApi.Rooms.Id.update(handleResult()) { p, api ->
+    CustomApi.Rooms.Id.update(handleResult(backend)) { p, api ->
         val newRoom = api.receiveBody()
         usePrincipal { uid ->
             backend.updateRoom(p.id, newRoom, uid)
         }
     }
 
-    CustomApi.Rooms.Id.Favorite.add(handleResult()) { p, _ ->
+    CustomApi.Rooms.Id.Favorite.add(handleResult(backend)) { p, _ ->
         usePrincipal { uid ->
             backend.addFavorite(uid, NewFavorite(ObjectType.ROOM, p.id)).map { }
         }
     }
-    CustomApi.Rooms.Id.Favorite.delete(handleResult()) { p, _ ->
+    CustomApi.Rooms.Id.Favorite.delete(handleResult(backend)) { p, _ ->
         usePrincipal { uid ->
             backend.deleteFavoriteByObject(uid, p.id).map { }
         }
     }
-    CustomApi.Rooms.Id.Subscription.add(handleResult()) { p, _ ->
+    CustomApi.Rooms.Id.Subscription.add(handleResult(backend)) { p, _ ->
         usePrincipal { uid ->
             backend.addSubscription(uid, NewSubscription(p.id, ObjectType.ROOM)).map { }
         }
     }
-    CustomApi.Rooms.Id.Subscription.delete(handleResult()) { p, _ ->
+    CustomApi.Rooms.Id.Subscription.delete(handleResult(backend)) { p, _ ->
         usePrincipal { uid ->
             backend.removeSubscriptionByObject(uid, p.id).map { }
         }

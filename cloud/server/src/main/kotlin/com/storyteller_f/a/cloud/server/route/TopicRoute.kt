@@ -36,7 +36,7 @@ import com.storyteller_f.shared.type.ObjectType
 import io.ktor.server.routing.Route
 
 fun Route.bindTopicRoute(backend: Backend) {
-    CustomApi.Topics.recommend(handleResult()) {
+    CustomApi.Topics.recommend(handleResult(backend)) {
         usePrincipalOrNull { uid ->
             it.pagination(GeneralOffsetPagingGenerator, { l, p ->
                 TopicInfoListResponse(l, p)
@@ -46,13 +46,13 @@ fun Route.bindTopicRoute(backend: Backend) {
         }
     }
 
-    CustomApi.Topics.Id.get(handleResult()) { q, p ->
+    CustomApi.Topics.Id.get(handleResult(backend)) { q, p ->
         usePrincipalOrNull { uid ->
             backend.getTopic(p.id, uid, q.fillHasCommented)
         }
     }
 
-    CustomApi.Topics.Aid.get(handleResult()) {
+    CustomApi.Topics.Aid.get(handleResult(backend)) {
         usePrincipalOrNull { uid ->
             backend.getTopicByAid(it.aid, uid, it.fillHasCommented)
         }
@@ -62,7 +62,7 @@ fun Route.bindTopicRoute(backend: Backend) {
 }
 
 private fun Route.bindSearchTopicRoute(backend: Backend) {
-    CustomApi.Topics.Id.Topics.get(handleResult()) { q, p ->
+    CustomApi.Topics.Id.Topics.get(handleResult(backend)) { q, p ->
         usePrincipalOrNull { uid ->
             q.pagination(IdentifiablePagingGenerator, { l, p ->
                 TopicInfoListResponse(l, p)
@@ -80,7 +80,7 @@ private fun Route.bindSearchTopicRoute(backend: Backend) {
     }
 
     // 用户主题搜索路由
-    CustomApi.Topics.Users.Id.search(handleResult()) { q, p ->
+    CustomApi.Topics.Users.Id.search(handleResult(backend)) { q, p ->
         usePrincipalOrNull { uid ->
             q.pagination(GeneralOffsetPagingGenerator, { l, p ->
                 TopicInfoListResponse(l, p)
@@ -91,7 +91,7 @@ private fun Route.bindSearchTopicRoute(backend: Backend) {
     }
 
     // 房间主题搜索路由
-    CustomApi.Topics.Rooms.Id.search(handleResult()) { q, p ->
+    CustomApi.Topics.Rooms.Id.search(handleResult(backend)) { q, p ->
         usePrincipalOrNull { uid ->
             q.pagination(GeneralOffsetPagingGenerator, { l, p ->
                 TopicInfoListResponse(l, p)
@@ -102,7 +102,7 @@ private fun Route.bindSearchTopicRoute(backend: Backend) {
     }
 
     // 社区主题搜索路由
-    CustomApi.Topics.Communities.Id.search(handleResult()) { q, p ->
+    CustomApi.Topics.Communities.Id.search(handleResult(backend)) { q, p ->
         usePrincipalOrNull { uid ->
             q.pagination(GeneralOffsetPagingGenerator, { l, p ->
                 TopicInfoListResponse(l, p)
@@ -112,7 +112,7 @@ private fun Route.bindSearchTopicRoute(backend: Backend) {
         }
     }
 
-    CustomApi.Topics.Id.Reactions.get(handleResult()) { q, p ->
+    CustomApi.Topics.Id.Reactions.get(handleResult(backend)) { q, p ->
         usePrincipalOrNull { uid ->
             q.pagination(ReactionPaginationGenerator(backend), { l, p ->
                 ReactionInfoListResponse(l, p)
@@ -124,59 +124,59 @@ private fun Route.bindSearchTopicRoute(backend: Backend) {
 }
 
 fun Route.bindProtectedTopicRoute(backend: Backend) {
-    CustomApi.Topics.Id.createSnapshot(handleResult()) { p, api ->
+    CustomApi.Topics.Id.createSnapshot(handleResult(backend)) { p, api ->
         usePrincipal { uid ->
             backend.createTopicSnapshot(uid, p.id)
         }
     }
 
-    CustomApi.Topics.add(handleResult()) { api ->
+    CustomApi.Topics.add(handleResult(backend)) { api ->
         usePrincipal { uid ->
             backend.createPlainTopic(uid, api.receiveBody())
         }
     }
 
-    CustomApi.Topics.Id.Reactions.add(handleResult()) { p, api ->
+    CustomApi.Topics.Id.Reactions.add(handleResult(backend)) { p, api ->
         usePrincipal { uid ->
             val emoji = api.receiveBody().emoji
             addReaction(emoji, backend, uid, p)
         }
     }
-    CustomApi.Topics.Id.Reactions.delete(handleResult()) { p, api ->
+    CustomApi.Topics.Id.Reactions.delete(handleResult(backend)) { p, api ->
         usePrincipal { uid ->
             val deleteReactionBody = api.receiveBody()
             deleteReaction(deleteReactionBody, backend, uid, p)
         }
     }
 
-    CustomApi.Topics.Id.pin(handleResult()) { p, api ->
+    CustomApi.Topics.Id.pin(handleResult(backend)) { p, api ->
         usePrincipal { uid ->
             backend.updateTopicPin(uid, p.id, true)
         }
     }
 
-    CustomApi.Topics.Id.unpin(handleResult()) { p, api ->
+    CustomApi.Topics.Id.unpin(handleResult(backend)) { p, api ->
         usePrincipal { uid ->
             backend.updateTopicPin(uid, p.id, false)
         }
     }
 
-    CustomApi.Topics.Id.Favorite.add(handleResult()) { p, _ ->
+    CustomApi.Topics.Id.Favorite.add(handleResult(backend)) { p, _ ->
         usePrincipal { uid ->
             backend.addFavorite(uid, NewFavorite(ObjectType.TOPIC, p.id)).map { }
         }
     }
-    CustomApi.Topics.Id.Favorite.delete(handleResult()) { p, _ ->
+    CustomApi.Topics.Id.Favorite.delete(handleResult(backend)) { p, _ ->
         usePrincipal { uid ->
             backend.deleteFavoriteByObject(uid, p.id).map { }
         }
     }
-    CustomApi.Topics.Id.Subscription.add(handleResult()) { p, _ ->
+    CustomApi.Topics.Id.Subscription.add(handleResult(backend)) { p, _ ->
         usePrincipal { uid ->
             backend.addSubscription(uid, NewSubscription(p.id, ObjectType.TOPIC)).map { }
         }
     }
-    CustomApi.Topics.Id.Subscription.delete(handleResult()) { p, _ ->
+    CustomApi.Topics.Id.Subscription.delete(handleResult(backend)) { p, _ ->
         usePrincipal { uid ->
             backend.removeSubscriptionByObject(uid, p.id).map { }
         }

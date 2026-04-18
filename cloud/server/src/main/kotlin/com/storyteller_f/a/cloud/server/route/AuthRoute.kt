@@ -13,7 +13,6 @@ import com.storyteller_f.a.cloud.core.service.addUserLog
 import com.storyteller_f.a.cloud.core.service.getUserAlternateUserInfoList
 import com.storyteller_f.a.cloud.core.service.signIn
 import com.storyteller_f.a.cloud.core.service.signUp
-import com.storyteller_f.a.cloud.server.ServerConfig
 import com.storyteller_f.a.cloud.server.auth.CustomCredential
 import com.storyteller_f.a.cloud.server.auth.CustomPrincipal
 import com.storyteller_f.a.cloud.server.auth.UserSession
@@ -46,10 +45,10 @@ import io.ktor.server.sessions.sessions
 fun Route.bindUnprotectedAccountRoute(
     backend: Backend
 ) {
-    CustomApi.Accounts.getData(handleResult()) {
+    CustomApi.Accounts.getData(handleResult(backend)) {
         Result.success(call.getData())
     }
-    CustomApi.Accounts.signUp(handleResult()) { api ->
+    CustomApi.Accounts.signUp(handleResult(backend)) { api ->
         if (backend.customConfig.buildType == "prod") {
             Result.failure(Exception("not support"))
         } else {
@@ -63,15 +62,15 @@ fun Route.bindUnprotectedAccountRoute(
         }
     }
 
-    CustomApi.Accounts.signIn(handleResult()) { api ->
+    CustomApi.Accounts.signIn(handleResult(backend)) { api ->
         backend.signIn(call.getData(), api.receiveBody<UserInfo, SignInBody>()).onSuccess {
             saveSuccessSessionOnFirst(it.id)
         }
     }
 }
 
-fun Route.bindAccountRoute() {
-    CustomApi.Accounts.signOut(handleResult()) {
+fun Route.bindAccountRoute(backend: Backend) {
+    CustomApi.Accounts.signOut(handleResult(backend)) {
         usePrincipalOrNull {
             call.sessions.clear(UserSession::class)
             UNIT_RESULT
@@ -80,7 +79,7 @@ fun Route.bindAccountRoute() {
 }
 
 fun Route.bindProtectedAccountRoute(backend: Backend) {
-    CustomApi.Accounts.ChildAccounts.add(handleResult()) { api ->
+    CustomApi.Accounts.ChildAccounts.add(handleResult(backend)) { api ->
         usePrincipal { uid ->
             val request: AddChildAccountRequest = api.receiveBody()
             backend.addChildAccount(
@@ -94,7 +93,7 @@ fun Route.bindProtectedAccountRoute(backend: Backend) {
             )
         }
     }
-    CustomApi.Accounts.ChildAccounts.get(handleResult()) { q ->
+    CustomApi.Accounts.ChildAccounts.get(handleResult(backend)) { q ->
         usePrincipal { uid ->
             q.pagination(IdentifiablePagingGenerator, { l, p ->
                 ChildAccountInfoListResponse(l, p)
@@ -132,9 +131,10 @@ suspend fun ApplicationCall.checkApiRequest(
 ): Result<CustomPrincipal?> {
     if (session.label != "user") return Result.success(null)
     val sig = credential.sig
-    @Suppress("SimplifyBooleanWithConstants", "KotlinConstantConditions")
     return when {
-        !ServerConfig.IS_PROD && credential is CustomCredential.IdCredential && sig == credential.id.toString() -> {
+        backend.customConfig.buildType != "prod" &&
+            credential is CustomCredential.IdCredential &&
+            sig == credential.id.toString() -> {
             val id = credential.id
             backend.database.user.getRawUser(ObjectFetch.IdFetch(id)).mapIfNotNull {
                 saveSuccessSession(session, id)

@@ -15,17 +15,7 @@ fi
 
 . ./scripts/tool_scripts/set-log-path.sh
 
-# 读取dev.env 文件并导出环境变量
-if [ -f "deploy/dev.env" ]; then
-  echo "Loading environment variables from deploy/dev.env"
-  while IFS='=' read -r key value; do
-    # 跳过注释和空行
-    [[ "$key" =~ ^#.*$ || -z "$key" ]] && continue
-    export "$key=$value"
-  done < deploy/dev.env
-else
-  echo "Warning: dev.env file not found. Skipping environment variable setup."
-fi
+. ./scripts/tool_scripts/export-env.sh
 
 cd cloud/cli
 cli_path=build/install/cli/bin/cli

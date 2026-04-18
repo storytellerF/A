@@ -36,7 +36,7 @@ import com.storyteller_f.shared.type.ObjectType
 import io.ktor.server.routing.Route
 
 fun Route.bindCommunityRoute(backend: Backend) {
-    CustomApi.Communities.search(handleResult()) {
+    CustomApi.Communities.search(handleResult(backend)) {
         usePrincipalOrNull { uid ->
             it.pagination(GeneralOffsetPagingGenerator, { l, p ->
                 CommunityInfoListResponse(l, p)
@@ -48,19 +48,19 @@ fun Route.bindCommunityRoute(backend: Backend) {
 
     bindCommunityMemberRoute(backend)
 
-    CustomApi.Communities.Id.get(handleResult()) { q, p ->
+    CustomApi.Communities.Id.get(handleResult(backend)) { q, p ->
         usePrincipalOrNull { uid ->
             backend.getCommunity(ObjectFetch.IdFetch(p.id), uid, q.fillJoinInfo)
         }
     }
 
-    CustomApi.Communities.Aid.get(handleResult()) {
+    CustomApi.Communities.Aid.get(handleResult(backend)) {
         usePrincipalOrNull { uid ->
             backend.getCommunity(ObjectFetch.AidFetch(it.aid), uid, it.fillJoinInfo)
         }
     }
 
-    CustomApi.Communities.Id.Topics.get(handleResult()) { q, p ->
+    CustomApi.Communities.Id.Topics.get(handleResult(backend)) { q, p ->
         usePrincipalOrNull { uid ->
             q.pagination(IdentifiablePagingGenerator, { l, p ->
                 TopicInfoListResponse(l, p)
@@ -70,7 +70,7 @@ fun Route.bindCommunityRoute(backend: Backend) {
         }
     }
 
-    CustomApi.Communities.Id.Rooms.get(handleResult()) { q, p ->
+    CustomApi.Communities.Id.Rooms.get(handleResult(backend)) { q, p ->
         usePrincipalOrNull {
             q.pagination(IdentifiablePagingGenerator, { l, p ->
                 RoomInfoListResponse(l, p)
@@ -80,7 +80,7 @@ fun Route.bindCommunityRoute(backend: Backend) {
         }
     }
 
-    CustomApi.Communities.Id.Rooms.search(handleResult()) { q, p ->
+    CustomApi.Communities.Id.Rooms.search(handleResult(backend)) { q, p ->
         usePrincipalOrNull { uid ->
             q.pagination(GeneralOffsetPagingGenerator, { l, p ->
                 RoomInfoListResponse(l, p)
@@ -92,7 +92,7 @@ fun Route.bindCommunityRoute(backend: Backend) {
 }
 
 private fun Route.bindCommunityMemberRoute(backend: Backend) {
-    CustomApi.Communities.Id.Members.get(handleResult()) { q, p ->
+    CustomApi.Communities.Id.Members.get(handleResult(backend)) { q, p ->
         q.pagination(IdentifiablePagingGenerator, { l, p ->
             MemberInfoListResponse(l, p)
         }) { f ->
@@ -100,7 +100,7 @@ private fun Route.bindCommunityMemberRoute(backend: Backend) {
         }
     }
 
-    CustomApi.Communities.Id.Members.search(handleResult()) { q, p ->
+    CustomApi.Communities.Id.Members.search(handleResult(backend)) { q, p ->
         q.pagination(GeneralOffsetPagingGenerator, { l, p ->
             MemberInfoListResponse(l, p)
         }) { f ->
@@ -110,47 +110,47 @@ private fun Route.bindCommunityMemberRoute(backend: Backend) {
 }
 
 fun Route.bindProtectedCommunityRoute(backend: Backend) {
-    CustomApi.Communities.Id.Members.join(handleResult()) { p, _ ->
+    CustomApi.Communities.Id.Members.join(handleResult(backend)) { p, _ ->
         usePrincipal { uid ->
             backend.joinCommunity(uid, p.id)
         }
     }
 
-    CustomApi.Communities.Id.Members.leave(handleResult()) { p, _ ->
+    CustomApi.Communities.Id.Members.leave(handleResult(backend)) { p, _ ->
         usePrincipal { uid ->
             backend.exitCommunity(p.id, uid)
         }
     }
-    CustomApi.Communities.add(handleResult()) { api ->
+    CustomApi.Communities.add(handleResult(backend)) { api ->
         val newCommunity = api.receiveBody()
         usePrincipal { uid ->
             backend.createCommunity(newCommunity, uid)
         }
     }
 
-    CustomApi.Communities.Id.update(handleResult()) { p, api ->
+    CustomApi.Communities.Id.update(handleResult(backend)) { p, api ->
         val newCommunity = api.receiveBody()
         usePrincipal { uid ->
             backend.updateCommunity(p.id, newCommunity, uid)
         }
     }
 
-    CustomApi.Communities.Id.Favorite.add(handleResult()) { p, _ ->
+    CustomApi.Communities.Id.Favorite.add(handleResult(backend)) { p, _ ->
         usePrincipal { uid ->
             backend.addFavorite(uid, NewFavorite(ObjectType.COMMUNITY, p.id)).map { }
         }
     }
-    CustomApi.Communities.Id.Favorite.delete(handleResult()) { p, _ ->
+    CustomApi.Communities.Id.Favorite.delete(handleResult(backend)) { p, _ ->
         usePrincipal { uid ->
             backend.deleteFavoriteByObject(uid, p.id).map { }
         }
     }
-    CustomApi.Communities.Id.Subscription.add(handleResult()) { p, _ ->
+    CustomApi.Communities.Id.Subscription.add(handleResult(backend)) { p, _ ->
         usePrincipal { uid ->
             backend.addSubscription(uid, NewSubscription(p.id, ObjectType.COMMUNITY)).map { }
         }
     }
-    CustomApi.Communities.Id.Subscription.delete(handleResult()) { p, _ ->
+    CustomApi.Communities.Id.Subscription.delete(handleResult(backend)) { p, _ ->
         usePrincipal { uid ->
             backend.removeSubscriptionByObject(uid, p.id).map { }
         }

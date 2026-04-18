@@ -45,17 +45,17 @@ import com.storyteller_f.shared.type.ObjectType
 import io.ktor.server.routing.Route
 
 fun Route.bindProtectedUserRoute(backend: Backend) {
-    CustomApi.Users.update(handleResult()) { api ->
+    CustomApi.Users.update(handleResult(backend)) { api ->
         usePrincipal { uid ->
             backend.updateUser(uid, api.receiveBody())
         }
     }
-    CustomApi.Users.Read.add(handleResult()) { api ->
+    CustomApi.Users.Read.add(handleResult(backend)) { api ->
         usePrincipal { uid ->
             backend.addReadLog(uid, api.receiveBody())
         }
     }
-    CustomApi.Users.Devices.add(handleResult()) { api ->
+    CustomApi.Users.Devices.add(handleResult(backend)) { api ->
         usePrincipal { uid ->
             val newDevice = api.receiveBody()
             backend.addDevice(uid, newDevice)
@@ -63,18 +63,18 @@ fun Route.bindProtectedUserRoute(backend: Backend) {
     }
     bindUserFavoriteRoute(backend)
 
-    CustomApi.Users.Id.Favorite.delete(handleResult()) { path, _ ->
+    CustomApi.Users.Id.Favorite.delete(handleResult(backend)) { path, _ ->
         usePrincipal { uid ->
             backend.deleteFavoriteByObject(uid, path.id).map { }
         }
     }
 
-    CustomApi.Users.overview(handleResult()) {
+    CustomApi.Users.overview(handleResult(backend)) {
         usePrincipal { uid ->
             backend.getUserOverview(uid)
         }
     }
-    CustomApi.Users.ReactionRecords.get(handleResult()) { q ->
+    CustomApi.Users.ReactionRecords.get(handleResult(backend)) { q ->
         usePrincipal { uid ->
             q.pagination(IdentifiablePagingGenerator, { l, p ->
                 ReactionRecordInfoListResponse(l, p)
@@ -83,7 +83,7 @@ fun Route.bindProtectedUserRoute(backend: Backend) {
             }
         }
     }
-    CustomApi.Users.Comments.get(handleResult()) { q ->
+    CustomApi.Users.Comments.get(handleResult(backend)) { q ->
         usePrincipal { uid ->
             q.pagination(IdentifiablePagingGenerator, { l, p ->
                 TopicInfoListResponse(l, p)
@@ -96,7 +96,7 @@ fun Route.bindProtectedUserRoute(backend: Backend) {
 }
 
 private fun Route.bindUserFavoriteRoute(backend: Backend) {
-    CustomApi.Users.Id.Favorites.get(handleResult()) { q, p ->
+    CustomApi.Users.Id.Favorites.get(handleResult(backend)) { q, p ->
         usePrincipal {
             q.pagination(IdentifiablePagingGenerator, { l, p ->
                 UserFavoriteInfoListResponse(l, p)
@@ -106,7 +106,7 @@ private fun Route.bindUserFavoriteRoute(backend: Backend) {
         }
     }
 
-    CustomApi.Users.Id.Favorite.add(handleResult()) { p, _ ->
+    CustomApi.Users.Id.Favorite.add(handleResult(backend)) { p, _ ->
         usePrincipal { uid ->
             backend.addFavorite(uid, NewFavorite(ObjectType.USER, p.id)).map { }
         }
@@ -114,7 +114,7 @@ private fun Route.bindUserFavoriteRoute(backend: Backend) {
 }
 
 private fun Route.bindUserCommunitiesRoute(backend: Backend) {
-    CustomApi.Users.JoinedCommunities.get(handleResult()) { q ->
+    CustomApi.Users.JoinedCommunities.get(handleResult(backend)) { q ->
         usePrincipal { uid ->
             q.pagination(IdentifiablePagingGenerator, { l, p ->
                 CommunityInfoListResponse(l, p)
@@ -123,7 +123,7 @@ private fun Route.bindUserCommunitiesRoute(backend: Backend) {
             }
         }
     }
-    CustomApi.Users.JoinedCommunities.search(handleResult()) { q ->
+    CustomApi.Users.JoinedCommunities.search(handleResult(backend)) { q ->
         usePrincipal { uid ->
             q.pagination(GeneralOffsetPagingGenerator, { l, p ->
                 CommunityInfoListResponse(l, p)
@@ -132,7 +132,7 @@ private fun Route.bindUserCommunitiesRoute(backend: Backend) {
             }
         }
     }
-    CustomApi.Users.JoinedRooms.get(handleResult()) { q ->
+    CustomApi.Users.JoinedRooms.get(handleResult(backend)) { q ->
         usePrincipal { uid ->
             q.pagination(IdentifiablePagingGenerator, { l, p ->
                 RoomInfoListResponse(l, p)
@@ -141,7 +141,7 @@ private fun Route.bindUserCommunitiesRoute(backend: Backend) {
             }
         }
     }
-    CustomApi.Users.JoinedRooms.search(handleResult()) { q ->
+    CustomApi.Users.JoinedRooms.search(handleResult(backend)) { q ->
         usePrincipal { uid ->
             q.pagination(GeneralOffsetPagingGenerator, { l, p ->
                 RoomInfoListResponse(l, p)
@@ -153,7 +153,7 @@ private fun Route.bindUserCommunitiesRoute(backend: Backend) {
 }
 
 fun Route.bindProtectedUserSubscriptionRoute(backend: Backend) {
-    CustomApi.Users.Id.Subscriptions.get(handleResult()) { q, p ->
+    CustomApi.Users.Id.Subscriptions.get(handleResult(backend)) { q, p ->
         usePrincipal {
             q.pagination(IdentifiablePagingGenerator, { l, p ->
                 UserSubscriptionInfoListResponse(l, p)
@@ -162,13 +162,13 @@ fun Route.bindProtectedUserSubscriptionRoute(backend: Backend) {
             }
         }
     }
-    CustomApi.Users.Id.Subscription.add(handleResult()) { p, _ ->
+    CustomApi.Users.Id.Subscription.add(handleResult(backend)) { p, _ ->
         usePrincipal { uid ->
             backend.addSubscription(uid, NewSubscription(p.id, ObjectType.USER)).map { }
         }
     }
 
-    CustomApi.Users.Id.Subscription.delete(handleResult()) { path, _ ->
+    CustomApi.Users.Id.Subscription.delete(handleResult(backend)) { path, _ ->
         usePrincipal { uid ->
             backend.removeSubscriptionByObject(uid, path.id).map { }
         }
@@ -176,18 +176,18 @@ fun Route.bindProtectedUserSubscriptionRoute(backend: Backend) {
 }
 
 fun Route.bindUserRoute(backend: Backend) {
-    CustomApi.Users.Aid.get(handleResult()) { q ->
+    CustomApi.Users.Aid.get(handleResult(backend)) { q ->
         usePrincipalOrNull { uid ->
             backend.getUserInfo(ObjectFetch.AidFetch(q.aid), uid)
         }
     }
-    CustomApi.Users.Id.get(handleResult()) {
+    CustomApi.Users.Id.get(handleResult(backend)) {
         usePrincipalOrNull { uid ->
             backend.getUserInfo(ObjectFetch.IdFetch(it.id), uid)
         }
     }
 
-    CustomApi.Users.Id.Topics.get(handleResult()) { q, p ->
+    CustomApi.Users.Id.Topics.get(handleResult(backend)) { q, p ->
         usePrincipalOrNull { uid ->
             q.pagination(IdentifiablePagingGenerator, { l, p ->
                 TopicInfoListResponse(l, p)
@@ -197,7 +197,7 @@ fun Route.bindUserRoute(backend: Backend) {
         }
     }
 
-    CustomApi.Users.Id.Communities.get(handleResult()) { q, p ->
+    CustomApi.Users.Id.Communities.get(handleResult(backend)) { q, p ->
         usePrincipalOrNull { uid ->
             q.pagination(IdentifiablePagingGenerator, { l, p ->
                 CommunityInfoListResponse(l, p)
@@ -207,7 +207,7 @@ fun Route.bindUserRoute(backend: Backend) {
         }
     }
 
-    CustomApi.Users.Id.Titles.get(handleResult()) { q, p ->
+    CustomApi.Users.Id.Titles.get(handleResult(backend)) { q, p ->
         q.pagination(IdentifiablePagingGenerator, { l, p ->
             TitleInfoListResponse(l, p)
         }) { f ->
@@ -215,7 +215,7 @@ fun Route.bindUserRoute(backend: Backend) {
         }
     }
 
-    CustomApi.Users.search(handleResult()) { q ->
+    CustomApi.Users.search(handleResult(backend)) { q ->
         usePrincipalOrNull { uid ->
             q.pagination(GeneralOffsetPagingGenerator, { l, p ->
                 UserInfoListResponse(l, p)

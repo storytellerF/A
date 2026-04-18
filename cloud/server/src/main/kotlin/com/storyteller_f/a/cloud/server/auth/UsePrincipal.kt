@@ -1,11 +1,11 @@
 package com.storyteller_f.a.cloud.server.auth
 
+import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.cloud.core.service.FileResponse
 import com.storyteller_f.a.cloud.core.service.PathResponse
-import com.storyteller_f.a.cloud.server.ServerConfig
 import com.storyteller_f.endpoint4k.ktor.server.handleCaughtException
 import com.storyteller_f.shared.type.PrimaryKey
 import io.ktor.http.ContentDisposition
@@ -43,6 +43,7 @@ inline fun <reified R : Any> RoutingContext.usePrincipal(
 }
 
 suspend inline fun <reified R : Any> RoutingContext.callRespond(
+    backend: Backend,
     block: () -> Result<R?>?,
 ) {
     try {
@@ -51,7 +52,7 @@ suspend inline fun <reified R : Any> RoutingContext.callRespond(
             call.respond(HttpStatusCode.NotFound)
             return
         }
-        handleResultInternal(result)
+        handleResultInternal(result, backend.customConfig.buildType)
     } catch (e: Exception) {
         handleCaughtException(e)
     }
@@ -61,7 +62,7 @@ inline fun <reified R : Any> RoutingContext.usePrincipalOrNull(
     block: (uid: PrimaryKey?) -> Result<R?>?,
 ) = block(call.principal<CustomPrincipal>()?.uid)
 
-suspend fun RoutingContext.respondError(e: Throwable) {
+suspend fun RoutingContext.respondError(e: Throwable, buildType: String) {
     when (e) {
         is ForbiddenException -> {
             call.respond(HttpStatusCode.Forbidden, e.message.toString())
@@ -82,7 +83,7 @@ suspend fun RoutingContext.respondError(e: Throwable) {
         else -> {
             call.respond(
                 HttpStatusCode.InternalServerError,
-                if (ServerConfig.IS_PROD) "" else (e.message ?: e.toString())
+                if (buildType == "prod") "" else (e.message ?: e.toString())
             )
         }
     }
@@ -97,13 +98,13 @@ inline fun <reified R : Any> DefaultWebSocketServerSession.usePrincipal(block: (
     }
 }
 
-inline fun <reified R> handleResult(): suspend RoutingContext.(it: Result<R>) -> Unit {
+inline fun <reified R> handleResult(backend: Backend): suspend RoutingContext.(it: Result<R>) -> Unit {
     return { result ->
-        handleResultInternal(result)
+        handleResultInternal(result, backend.customConfig.buildType)
     }
 }
 
-suspend inline fun <reified R> RoutingContext.handleResultInternal(it: Result<R>) {
+suspend inline fun <reified R> RoutingContext.handleResultInternal(it: Result<R>, buildType: String) {
     it.onSuccess {
         when (it) {
             null -> call.respond(HttpStatusCode.NotFound)
@@ -131,7 +132,7 @@ suspend inline fun <reified R> RoutingContext.handleResultInternal(it: Result<R>
             else -> call.respond(it)
         }
     }.onFailure { throwable ->
-        respondError(throwable)
+        respondError(throwable, buildType)
         if (throwable !is UnauthorizedException) {
             Sentry.withIsolationScope { scope ->
                 scope.request = Request().apply {

@@ -38,10 +38,3 @@ application {
     mainClass = "com.storyteller_f.a.cloud.cli.CliMainKt"
     applicationDefaultJvmArgs = listOf("--add-modules", "jdk.incubator.vector")
 }
-
-val flavor = project.findProperty("server.flavor").toString()
-
-buildConfig {
-    className = "BackendConfig"
-    buildConfigField<String>("FLAVOR", flavor)
-}

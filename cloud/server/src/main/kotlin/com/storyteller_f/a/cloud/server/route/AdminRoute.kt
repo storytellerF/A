@@ -77,27 +77,27 @@ fun Route.bindProtectedAdminRoute(backend: Backend) {
     bindAdminTopicRoutes(backend)
     bindAdminTitleRoutes(backend)
     bindAdminFileRoutes(backend)
-    AdminApi.signOut(handleResult()) {
+    AdminApi.signOut(handleResult(backend)) {
         call.sessions.clear(UserSession::class)
         UNIT_RESULT
     }
-    AdminApi.overview(handleResult()) {
+    AdminApi.overview(handleResult(backend)) {
         backend.getOverview()
     }
 }
 
 private fun Route.bindAdminTitleRoutes(backend: Backend) {
-    AdminApi.Titles.get(handleResult()) {
+    AdminApi.Titles.get(handleResult(backend)) {
         it.pagination(IdentifiablePagingGenerator, { l, p ->
             TitleInfoListResponse(l, p)
         }) { fetch ->
             backend.getAllTitles(fetch)
         }
     }
-    AdminApi.Titles.Id.get(handleResult()) { p ->
+    AdminApi.Titles.Id.get(handleResult(backend)) { p ->
         backend.getTitleInfo(p.id)
     }
-    AdminApi.Titles.Id.Status.update(handleResult()) { p, api ->
+    AdminApi.Titles.Id.Status.update(handleResult(backend)) { p, api ->
         usePrincipal { uid ->
             backend.updateTitleStatus(p.id, api.receiveBody(), uid)
         }
@@ -105,22 +105,22 @@ private fun Route.bindAdminTitleRoutes(backend: Backend) {
 }
 
 private fun Route.bindAdminCommunityRoutes(backend: Backend) {
-    AdminApi.Communities.get(handleResult()) {
+    AdminApi.Communities.get(handleResult(backend)) {
         it.pagination(IdentifiablePagingGenerator, { l, p ->
             CommunityInfoListResponse(l, p)
         }) { fetch ->
             backend.getAllCommunities(fetch)
         }
     }
-    AdminApi.Communities.Id.get(handleResult()) { p ->
+    AdminApi.Communities.Id.get(handleResult(backend)) { p ->
         backend.getCommunity(ObjectFetch.IdFetch(p.id), null, null)
     }
-    AdminApi.Communities.Id.Status.update(handleResult()) { p, api ->
+    AdminApi.Communities.Id.Status.update(handleResult(backend)) { p, api ->
         usePrincipal { uid ->
             backend.updateCommunityStatus(p.id, api.receiveBody(), uid)
         }
     }
-    AdminApi.Communities.Id.Members.get(handleResult()) { q, p ->
+    AdminApi.Communities.Id.Members.get(handleResult(backend)) { q, p ->
         q.pagination(IdentifiablePagingGenerator, { l, p ->
             MemberInfoListResponse(l, p)
         }) { f ->
@@ -130,29 +130,29 @@ private fun Route.bindAdminCommunityRoutes(backend: Backend) {
 }
 
 private fun Route.bindAdminFileRoutes(backend: Backend) {
-    AdminApi.Files.get(handleResult()) {
+    AdminApi.Files.get(handleResult(backend)) {
         it.pagination(IdentifiablePagingGenerator, { l, p ->
             FileInfoListResponse(l, p)
         }) { fetch ->
             backend.getAllFileInfos(fetch)
         }
     }
-    AdminApi.Files.search(handleResult()) {
+    AdminApi.Files.search(handleResult(backend)) {
         it.pagination(GeneralOffsetPagingGenerator, { l, p ->
             FileInfoListResponse(l, p)
         }) { fetch ->
             backend.uncheckedSearchFiles(it, fetch)
         }
     }
-    AdminApi.Files.Id.get(handleResult()) { p ->
+    AdminApi.Files.Id.get(handleResult(backend)) { p ->
         backend.getFileInfoById(p.id)
     }
-    AdminApi.Files.Id.Status.update(handleResult()) { p, api ->
+    AdminApi.Files.Id.Status.update(handleResult(backend)) { p, api ->
         usePrincipal { uid ->
             backend.updateFileStatus(p.id, api.receiveBody(), uid)
         }
     }
-    AdminApi.Files.Id.Refs.get(handleResult()) { q, p ->
+    AdminApi.Files.Id.Refs.get(handleResult(backend)) { q, p ->
         q.pagination(IdentifiablePagingGenerator, { l, p ->
             FileRefInfoListResponse(l, p)
         }) { f ->
@@ -162,22 +162,22 @@ private fun Route.bindAdminFileRoutes(backend: Backend) {
 }
 
 private fun Route.bindAdminTopicRoutes(backend: Backend) {
-    AdminApi.Topics.get(handleResult()) {
+    AdminApi.Topics.get(handleResult(backend)) {
         it.pagination(IdentifiablePagingGenerator, { l, p ->
             TopicInfoListResponse(l, p)
         }) { fetch ->
             backend.getAllTopics(fetch)
         }
     }
-    AdminApi.Topics.Id.get(handleResult()) { p ->
+    AdminApi.Topics.Id.get(handleResult(backend)) { p ->
         backend.uncheckGetTopicById(p.id, null)
     }
-    AdminApi.Topics.Id.Status.update(handleResult()) { p, api ->
+    AdminApi.Topics.Id.Status.update(handleResult(backend)) { p, api ->
         usePrincipal { uid ->
             backend.updateTopicStatus(p.id, api.receiveBody(), uid)
         }
     }
-    AdminApi.Topics.Id.Topics.get(handleResult()) { q, p ->
+    AdminApi.Topics.Id.Topics.get(handleResult(backend)) { q, p ->
         q.pagination(IdentifiablePagingGenerator, { l, p ->
             TopicInfoListResponse(l, p)
         }) { f ->
@@ -187,36 +187,36 @@ private fun Route.bindAdminTopicRoutes(backend: Backend) {
 }
 
 private fun Route.bindAdminRoomRoutes(backend: Backend) {
-    AdminApi.Rooms.getPublic(handleResult()) {
+    AdminApi.Rooms.getPublic(handleResult(backend)) {
         it.pagination(IdentifiablePagingGenerator, { l, p ->
             RoomInfoListResponse(l, p)
         }) { fetch ->
             backend.getAllPublicRooms(fetch)
         }
     }
-    AdminApi.Rooms.getPrivate(handleResult()) {
+    AdminApi.Rooms.getPrivate(handleResult(backend)) {
         it.pagination(IdentifiablePagingGenerator, { l, p ->
             RoomInfoListResponse(l, p)
         }) { fetch ->
             backend.getAllPrivateRooms(fetch)
         }
     }
-    AdminApi.Rooms.Id.get(handleResult()) { p ->
+    AdminApi.Rooms.Id.get(handleResult(backend)) { p ->
         backend.getRoomInfo(ObjectFetch.IdFetch(p.id), null, null)
     }
-    AdminApi.Rooms.Id.Status.update(handleResult()) { p, api ->
+    AdminApi.Rooms.Id.Status.update(handleResult(backend)) { p, api ->
         usePrincipal { uid ->
             backend.updateRoomStatus(p.id, api.receiveBody(), uid)
         }
     }
-    AdminApi.Rooms.Id.Members.get(handleResult()) { q, p ->
+    AdminApi.Rooms.Id.Members.get(handleResult(backend)) { q, p ->
         q.pagination(IdentifiablePagingGenerator, { l, p ->
             MemberInfoListResponse(l, p)
         }) { f ->
             backend.uncheckedGetRoomMemberInfos(p.id, f)
         }
     }
-    AdminApi.Rooms.Id.Files.get(handleResult()) { q, p ->
+    AdminApi.Rooms.Id.Files.get(handleResult(backend)) { q, p ->
         q.pagination(IdentifiablePagingGenerator, { l, p ->
             FileInfoListResponse(l, p)
         }) { f ->
@@ -232,23 +232,23 @@ private fun Route.bindAdminUserRoutes(backend: Backend) {
 }
 
 private fun Route.bindAdminUserBasicRoutes(backend: Backend) {
-    AdminApi.Users.get(handleResult()) {
+    AdminApi.Users.get(handleResult(backend)) {
         it.pagination(IdentifiablePagingGenerator, { l, p ->
             UserInfoListResponse(l, p)
         }) { fetch ->
             backend.getAllUsers(fetch)
         }
     }
-    AdminApi.Users.Id.get(handleResult()) { p ->
+    AdminApi.Users.Id.get(handleResult(backend)) { p ->
         backend.getUserById(p.id)
     }
-    AdminApi.Users.Id.Overview.get(handleResult()) { p ->
+    AdminApi.Users.Id.Overview.get(handleResult(backend)) { p ->
         backend.getUserOverview(p.id)
     }
-    AdminApi.Users.add(handleResult()) { api ->
+    AdminApi.Users.add(handleResult(backend)) { api ->
         backend.addUser(api.receiveBody())
     }
-    AdminApi.Users.Id.Status.update(handleResult()) { p, api ->
+    AdminApi.Users.Id.Status.update(handleResult(backend)) { p, api ->
         usePrincipal { uid ->
             backend.updateUserStatus(p.id, api.receiveBody(), uid)
         }
@@ -256,28 +256,28 @@ private fun Route.bindAdminUserBasicRoutes(backend: Backend) {
 }
 
 private fun Route.bindAdminUserRelationRoutes(backend: Backend) {
-    AdminApi.Users.Id.Communities.get(handleResult()) { q, p ->
+    AdminApi.Users.Id.Communities.get(handleResult(backend)) { q, p ->
         q.pagination(IdentifiablePagingGenerator, { l, p ->
             CommunityInfoListResponse(l, p)
         }) { f ->
             backend.getUserJoinedCommunities(null, p.id, f)
         }
     }
-    AdminApi.Users.Id.Rooms.get(handleResult()) { q, p ->
+    AdminApi.Users.Id.Rooms.get(handleResult(backend)) { q, p ->
         q.pagination(IdentifiablePagingGenerator, { l, p ->
             RoomInfoListResponse(l, p)
         }) { f ->
             backend.getUserJoinedRooms(p.id, f)
         }
     }
-    AdminApi.Users.Id.Titles.get(handleResult()) { q, p ->
+    AdminApi.Users.Id.Titles.get(handleResult(backend)) { q, p ->
         q.pagination(IdentifiablePagingGenerator, { l, p ->
             TitleInfoListResponse(l, p)
         }) { f ->
             backend.getUserTitles(p.id, q.searchType, q.type, q.scopeId, q.titleStatus, f)
         }
     }
-    AdminApi.Users.Id.Files.get(handleResult()) { q, p ->
+    AdminApi.Users.Id.Files.get(handleResult(backend)) { q, p ->
         q.pagination(IdentifiablePagingGenerator, { l, p ->
             FileInfoListResponse(l, p)
         }) { f ->
@@ -287,42 +287,42 @@ private fun Route.bindAdminUserRelationRoutes(backend: Backend) {
 }
 
 private fun Route.bindAdminUserActivityRoutes(backend: Backend) {
-    AdminApi.Users.Id.Logs.get(handleResult()) { q, p ->
+    AdminApi.Users.Id.Logs.get(handleResult(backend)) { q, p ->
         q.pagination(IdentifiablePagingGenerator, { l, p ->
             UserLogInfoListResponse(l, p)
         }) { f ->
             backend.getUserLogs(p.id, f)
         }
     }
-    AdminApi.Users.Id.UploadRecords.get(handleResult()) { q, p ->
+    AdminApi.Users.Id.UploadRecords.get(handleResult(backend)) { q, p ->
         q.pagination(IdentifiablePagingGenerator, { l, p ->
             UploadRecordInfoListResponse(l, p)
         }) { f ->
             backend.getUserUploadRecords(p.id, f)
         }
     }
-    AdminApi.Users.Id.Reactions.get(handleResult()) { q, p ->
+    AdminApi.Users.Id.Reactions.get(handleResult(backend)) { q, p ->
         q.pagination(IdentifiablePagingGenerator, { l, p ->
             ReactionRecordInfoListResponse(l, p)
         }) { f ->
             backend.getUserReactions(p.id, f)
         }
     }
-    AdminApi.Users.Id.Comments.get(handleResult()) { q, p ->
+    AdminApi.Users.Id.Comments.get(handleResult(backend)) { q, p ->
         q.pagination(IdentifiablePagingGenerator, { l, p ->
             TopicInfoListResponse(l, p)
         }) { f ->
             backend.getUserCommentedTopics(p.id, f)
         }
     }
-    AdminApi.Users.Id.Favorites.get(handleResult()) { q, p ->
+    AdminApi.Users.Id.Favorites.get(handleResult(backend)) { q, p ->
         q.pagination(IdentifiablePagingGenerator, { l, p ->
             UserFavoriteInfoListResponse(l, p)
         }) { f ->
             backend.getFavorites(p.id, f)
         }
     }
-    AdminApi.Users.Id.Subscriptions.get(handleResult()) { q, p ->
+    AdminApi.Users.Id.Subscriptions.get(handleResult(backend)) { q, p ->
         q.pagination(IdentifiablePagingGenerator, { l, p ->
             UserSubscriptionInfoListResponse(l, p)
         }) { f ->
@@ -332,15 +332,15 @@ private fun Route.bindAdminUserActivityRoutes(backend: Backend) {
 }
 
 fun Routing.bindUnauthenticatedPanelRoute(backend: Backend) {
-    AdminApi.signIn.invoke(handleResult()) { api ->
+    AdminApi.signIn.invoke(handleResult(backend)) { api ->
         backend.adminSignIn(call.getData(), api.receiveBody()).onSuccess {
             saveSuccessSessionOnFirst(it.id)
         }
     }
-    AdminApi.signUp.invoke(handleResult()) {
+    AdminApi.signUp.invoke(handleResult(backend)) {
         backend.adminSignUp(call.getData(), it.receiveBody())
     }
-    AdminApi.getData.invoke(handleResult()) {
+    AdminApi.getData.invoke(handleResult(backend)) {
         Result.success(call.getData())
     }
 }

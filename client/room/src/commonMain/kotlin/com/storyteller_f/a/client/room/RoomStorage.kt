@@ -646,7 +646,6 @@ class RoomChildAccountStorage(appDatabase: AppDatabase) : ChildAccountStorage {
     override fun observeDatum(key: String): Flow<ChildAccountInfo?> {
         return impl.observeDatum(ChildAccountStorage.COLLECTION_NAME, key)
     }
-
 }
 
 class RoomFileInfoStorage(appDatabase: AppDatabase) : FileInfoStorage {

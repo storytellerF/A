@@ -17,32 +17,32 @@ import com.storyteller_f.shared.type.ObjectType
 import io.ktor.server.routing.Route
 
 fun Route.bindProtectedTitleRoute(backend: Backend) {
-    CustomApi.Titles.add(handleResult()) {
+    CustomApi.Titles.add(handleResult(backend)) {
         usePrincipal { uid ->
             val title = it.receiveBody()
             createTitle(title, backend, uid)
         }
     }
 
-    CustomApi.Titles.Id.Favorite.add(handleResult()) { p, _ ->
+    CustomApi.Titles.Id.Favorite.add(handleResult(backend)) { p, _ ->
         usePrincipal { uid ->
             backend.addFavorite(uid, NewFavorite(ObjectType.TITLE, p.id)).map { }
         }
     }
 
-    CustomApi.Titles.Id.Favorite.delete(handleResult()) { p, _ ->
+    CustomApi.Titles.Id.Favorite.delete(handleResult(backend)) { p, _ ->
         usePrincipal { uid ->
             backend.deleteFavoriteByObject(uid, p.id).map { }
         }
     }
 
-    CustomApi.Titles.Id.Subscription.add(handleResult()) { p, _ ->
+    CustomApi.Titles.Id.Subscription.add(handleResult(backend)) { p, _ ->
         usePrincipal { uid ->
             backend.addSubscription(uid, NewSubscription(p.id, ObjectType.TITLE)).map { }
         }
     }
 
-    CustomApi.Titles.Id.Subscription.delete(handleResult()) { p, _ ->
+    CustomApi.Titles.Id.Subscription.delete(handleResult(backend)) { p, _ ->
         usePrincipal { uid ->
             backend.removeSubscriptionByObject(uid, p.id).map { }
         }

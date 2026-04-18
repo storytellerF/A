@@ -14,7 +14,7 @@ class MergedEnv(val list: List<Map<String, String>>) {
     }
 }
 
-fun readEnv(envMap: Map<String, String>? = null, flavorFilePath: String? = null) = MergedEnv(
+fun readEnv(envMap: Map<String, String>? = null) = MergedEnv(
     buildList {
         addAll(
             listOfNotNull(
@@ -23,10 +23,6 @@ fun readEnv(envMap: Map<String, String>? = null, flavorFilePath: String? = null)
                 readResourceEnv("test.env"), // 测试
             )
         )
-        if (flavorFilePath != null) {
-            // 本地开发，working dir 一般是./cloud/xxx，非本地环境一般无法访问
-            readFileEnv(flavorFilePath)?.let { add(it) }
-        }
     }
 )
 
