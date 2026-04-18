@@ -33,6 +33,7 @@ dependencyResolutionManagement {
                 excludeGroup("com.github.umjammer")
                 excludeGroup("com.github.cghislai")
                 excludeGroup("com.github.teamnewpipe.NewPipeExtractor")
+                excludeGroup("com.github.TeamNewPipe")
             }
         }
         google {

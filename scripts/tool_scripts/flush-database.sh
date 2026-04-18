@@ -1,6 +1,8 @@
 #!/bin/sh
 
-. ./scripts/tool_scripts/terminal-log.sh
+# 获取当前脚本所在目录的绝对路径
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+. "$SCRIPT_DIR/terminal-log.sh"
 
 set -e
 cli_path=$1

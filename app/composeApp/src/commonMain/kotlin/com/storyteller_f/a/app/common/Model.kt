@@ -763,7 +763,7 @@ class DownloadViewModel(
     modelStorage: ModelStorage,
     fileId: PrimaryKey?,
 ) : ViewModel() {
-    val data = fileId?.let { modelStorage.download.observeDatum(it) } ?: MutableStateFlow(null)
+    val data = fileId?.let { modelStorage.download.observeDocumentByFileId(it) } ?: MutableStateFlow(null)
 
     val fontFamily = data.distinctUntilChanged { t1, t2 ->
         t1?.status == t2?.status
