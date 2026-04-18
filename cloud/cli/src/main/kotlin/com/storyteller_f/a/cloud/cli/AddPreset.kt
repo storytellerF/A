@@ -100,6 +100,7 @@ internal data class DownloadConfig(
     val link: String,
     val hash: String,
     val excludeArchiveEntries: List<String> = emptyList(),
+    val includeArchiveEntries: List<String> = emptyList()
 )
 
 private val yamlMapper: ObjectMapper = ObjectMapper(YAMLFactory())
@@ -1019,7 +1020,7 @@ internal suspend fun downloadPresetFileIfNeed(
             downloadWithResume(config.link, realPath, client)
         }
 
-        repackArchiveWithExclusionsInPlace(realPath, config.excludeArchiveEntries)
+        repackArchiveWithExclusionsAndInclusionsInPlace(realPath, config.excludeArchiveEntries, config.includeArchiveEntries)
     } else {
         null
     }
@@ -1028,8 +1029,18 @@ internal suspend fun downloadPresetFileIfNeed(
 }
 
 private fun shouldExcludeEntry(relativePath: String, excludeGlobs: List<String>): Boolean {
+    if (excludeGlobs.isEmpty()) return false
     val normalized = relativePath.replace('\\', '/')
     return excludeGlobs.any { pattern ->
+        val matcher = FileSystems.getDefault().getPathMatcher("glob:${pattern.trim()}")
+        matcher.matches(Paths.get(normalized))
+    }
+}
+
+private fun shouldIncludeEntry(relativePath: String, includeGlobs: List<String>): Boolean {
+    if (includeGlobs.isEmpty()) return true
+    val normalized = relativePath.replace('\\', '/')
+    return includeGlobs.any { pattern ->
         val matcher = FileSystems.getDefault().getPathMatcher("glob:${pattern.trim()}")
         matcher.matches(Paths.get(normalized))
     }
@@ -1053,11 +1064,14 @@ private fun unzipToDirectory(zipFile: File, outputDir: File) {
     }
 }
 
-private fun zipDirectoryWithFilter(sourceDir: File, targetZip: File, excludeGlobs: List<String>) {
+private fun zipDirectoryWithFilter(sourceDir: File, targetZip: File, excludeGlobs: List<String>, includeGlobs: List<String>) {
     ZipOutputStream(BufferedOutputStream(targetZip.outputStream())).use { zos ->
         sourceDir.walkTopDown().filter { it.isFile }.forEach { file ->
             val relative = sourceDir.toPath().relativize(file.toPath()).toString().replace('\\', '/')
             if (shouldExcludeEntry(relative, excludeGlobs)) {
+                return@forEach
+            }
+            if (!shouldIncludeEntry(relative, includeGlobs)) {
                 return@forEach
             }
             zos.putNextEntry(ZipEntry(relative))
@@ -1069,8 +1083,8 @@ private fun zipDirectoryWithFilter(sourceDir: File, targetZip: File, excludeGlob
     }
 }
 
-internal fun repackArchiveWithExclusionsInPlace(zipFile: File, excludeGlobs: List<String>): File {
-    if (excludeGlobs.isEmpty() || !zipFile.name.endsWith(".zip", ignoreCase = true)) {
+internal fun repackArchiveWithExclusionsAndInclusionsInPlace(zipFile: File, excludeGlobs: List<String>, includeGlobs: List<String>): File {
+    if ((excludeGlobs.isEmpty() && includeGlobs.isEmpty()) || !zipFile.name.endsWith(".zip", ignoreCase = true)) {
         return zipFile
     }
     val parent = zipFile.parentFile ?: return zipFile
@@ -1078,7 +1092,7 @@ internal fun repackArchiveWithExclusionsInPlace(zipFile: File, excludeGlobs: Lis
     val tempZip = File(parent, ".${zipFile.name}.filtered.tmp")
     try {
         unzipToDirectory(zipFile, extractDir)
-        zipDirectoryWithFilter(extractDir, tempZip, excludeGlobs)
+        zipDirectoryWithFilter(extractDir, tempZip, excludeGlobs, includeGlobs)
         check(zipFile.delete()) {
             "failed to delete original archive ${zipFile.absolutePath}"
         }

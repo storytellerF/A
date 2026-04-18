@@ -66,13 +66,13 @@ fun Route.bindProtectedFileRoute(backend: Backend) {
     bindUserRoomRoute(backend)
     bindUserCommunityRoute(backend)
 
-    CustomApi.Files.getByName(handleResult()) {
+    CustomApi.Files.getByName(handleResult(backend)) {
         usePrincipal { uid ->
             backend.getFileInfoByName(uid, it.objectId ob it.objectType, it.name)
         }
     }
 
-    CustomApi.Files.quota(handleResult()) {
+    CustomApi.Files.quota(handleResult(backend)) {
         usePrincipal { _ ->
             backend.getQuotaInfo(it.quotaType, ObjectTuple(it.objectId, it.objectType))
         }
@@ -84,13 +84,13 @@ fun Route.bindProtectedFileRoute(backend: Backend) {
         error("create a-temp failed")
     }
 
-    CustomApi.Files.Id.extractAlbum(handleResult()) { p, _ ->
+    CustomApi.Files.Id.extractAlbum(handleResult(backend)) { p, _ ->
         usePrincipal { uid ->
             backend.extractAlbum(p.id, root, uid)
         }
     }
 
-    CustomApi.Files.upload(handleResult()) { q, _ ->
+    CustomApi.Files.upload(handleResult(backend)) { q, _ ->
         usePrincipal { uid ->
             uploadMedia(backend, uid, root, q)
         }
@@ -99,19 +99,19 @@ fun Route.bindProtectedFileRoute(backend: Backend) {
     // Chunked upload endpoints
     bindChunkRoute(backend, root)
 
-    CustomApi.Files.Id.get(handleResult()) { p ->
+    CustomApi.Files.Id.get(handleResult(backend)) { p ->
         usePrincipal { uid ->
             backend.getFileInfoById(p.id, uid)
         }
     }
 
-    CustomApi.Files.Id.copy(handleResult()) { p, _ ->
+    CustomApi.Files.Id.copy(handleResult(backend)) { p, _ ->
         usePrincipal { uid ->
             backend.tryCopyFile(p, uid)
         }
     }
 
-    CustomApi.Files.Id.Refs.get(handleResult()) { q, p ->
+    CustomApi.Files.Id.Refs.get(handleResult(backend)) { q, p ->
         usePrincipal { _ ->
             q.pagination(IdentifiablePagingGenerator, { l, p ->
                 FileRefInfoListResponse(l, p)
@@ -125,13 +125,13 @@ fun Route.bindProtectedFileRoute(backend: Backend) {
 }
 
 private fun Route.bindFileSubscriptionRoute(backend: Backend) {
-    CustomApi.Files.Id.Subscription.add(handleResult()) { p, _ ->
+    CustomApi.Files.Id.Subscription.add(handleResult(backend)) { p, _ ->
         usePrincipal { uid ->
             backend.addSubscription(uid, NewSubscription(p.id, ObjectType.FILE)).map { }
         }
     }
 
-    CustomApi.Files.Id.Subscription.delete(handleResult()) { p, _ ->
+    CustomApi.Files.Id.Subscription.delete(handleResult(backend)) { p, _ ->
         usePrincipal { uid ->
             backend.removeSubscriptionByObject(uid, p.id).map { }
         }
@@ -139,13 +139,13 @@ private fun Route.bindFileSubscriptionRoute(backend: Backend) {
 }
 
 private fun Route.bindFileFavoriteRoute(backend: Backend) {
-    CustomApi.Files.Id.Favorite.add(handleResult()) { p, _ ->
+    CustomApi.Files.Id.Favorite.add(handleResult(backend)) { p, _ ->
         usePrincipal { uid ->
             backend.addFavorite(uid, NewFavorite(ObjectType.FILE, p.id)).map { }
         }
     }
 
-    CustomApi.Files.Id.Favorite.delete(handleResult()) { p, _ ->
+    CustomApi.Files.Id.Favorite.delete(handleResult(backend)) { p, _ ->
         usePrincipal { uid ->
             backend.deleteFavoriteByObject(uid, p.id).map { }
         }
@@ -153,7 +153,7 @@ private fun Route.bindFileFavoriteRoute(backend: Backend) {
 }
 
 private fun Route.bindUserCommunityRoute(backend: Backend) {
-    CustomApi.Communities.Id.Files.get(handleResult()) { query, path ->
+    CustomApi.Communities.Id.Files.get(handleResult(backend)) { query, path ->
         usePrincipal { uid ->
             query.pagination(IdentifiablePagingGenerator, { l, p ->
                 FileInfoListResponse(l, p)
@@ -163,7 +163,7 @@ private fun Route.bindUserCommunityRoute(backend: Backend) {
         }
     }
 
-    CustomApi.Communities.Id.Files.search(handleResult()) { query, path ->
+    CustomApi.Communities.Id.Files.search(handleResult(backend)) { query, path ->
         usePrincipal { uid ->
             query.pagination(GeneralOffsetPagingGenerator, { l, p ->
                 FileInfoListResponse(l, p)
@@ -175,7 +175,7 @@ private fun Route.bindUserCommunityRoute(backend: Backend) {
 }
 
 private fun Route.bindUserRoomRoute(backend: Backend) {
-    CustomApi.Rooms.Id.Files.get(handleResult()) { query, path ->
+    CustomApi.Rooms.Id.Files.get(handleResult(backend)) { query, path ->
         usePrincipal { uid ->
             query.pagination(IdentifiablePagingGenerator, { l, p ->
                 FileInfoListResponse(l, p)
@@ -185,7 +185,7 @@ private fun Route.bindUserRoomRoute(backend: Backend) {
         }
     }
 
-    CustomApi.Rooms.Id.Files.search(handleResult()) { query, path ->
+    CustomApi.Rooms.Id.Files.search(handleResult(backend)) { query, path ->
         usePrincipal { uid ->
             query.pagination(GeneralOffsetPagingGenerator, { l, p ->
                 FileInfoListResponse(l, p)
@@ -197,7 +197,7 @@ private fun Route.bindUserRoomRoute(backend: Backend) {
 }
 
 private fun Route.bindUserFileRoute(backend: Backend) {
-    CustomApi.Users.Id.Files.get(handleResult()) { query, path ->
+    CustomApi.Users.Id.Files.get(handleResult(backend)) { query, path ->
         usePrincipal { uid ->
             query.pagination(IdentifiablePagingGenerator, { l, p ->
                 FileInfoListResponse(l, p)
@@ -207,7 +207,7 @@ private fun Route.bindUserFileRoute(backend: Backend) {
         }
     }
 
-    CustomApi.Users.Id.Files.search(handleResult()) { query, path ->
+    CustomApi.Users.Id.Files.search(handleResult(backend)) { query, path ->
         usePrincipal { uid ->
             query.pagination(GeneralOffsetPagingGenerator, { l, p ->
                 FileInfoListResponse(l, p)
@@ -219,31 +219,31 @@ private fun Route.bindUserFileRoute(backend: Backend) {
 }
 
 private fun Route.bindChunkRoute(backend: Backend, root: File) {
-    CustomApi.Files.Chunks.init(handleResult()) { api ->
+    CustomApi.Files.Chunks.init(handleResult(backend)) { api ->
         usePrincipal { uid ->
             initChunkUpload(backend, uid, api.receiveBody())
         }
     }
 
-    CustomApi.Files.Chunks.upload(handleResult()) { q, p, _ ->
+    CustomApi.Files.Chunks.upload(handleResult(backend)) { q, p, _ ->
         usePrincipal { _ ->
             uploadChunkFromChannel(backend, root, p, q) { call.receiveChannel() }
         }
     }
 
-    CustomApi.Files.Chunks.complete(handleResult()) { path, _ ->
+    CustomApi.Files.Chunks.complete(handleResult(backend)) { path, _ ->
         usePrincipal { uid ->
             completeChunkUpload(backend, uid, path)
         }
     }
 
-    CustomApi.Files.Chunks.abort(handleResult()) { path, _ ->
+    CustomApi.Files.Chunks.abort(handleResult(backend)) { path, _ ->
         usePrincipal { _ ->
             abortChunkUpload(backend, path)
         }
     }
 
-    CustomApi.Files.Chunks.status(handleResult()) { path ->
+    CustomApi.Files.Chunks.status(handleResult(backend)) { path ->
         usePrincipal { _ ->
             getChunkStatus(backend, path)
         }

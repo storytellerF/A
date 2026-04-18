@@ -17,14 +17,14 @@ fun Routing.bindUnauthenticatedRoute(backend: Backend) {
     }
 
     get("/a_file/{path...}") {
-        callRespond {
+        callRespond(backend) {
             checkParameter<List<String>, PathResponse>("path") { paths ->
                 getFileSystemDownloadUrl(backend, paths)
             }
         }
     }
 
-    CustomApi.Root.get(handleResult()) {
+    CustomApi.Root.get(handleResult(backend)) {
         Result.success("${backend.customConfig.flavor} ${backend.customConfig.buildType}")
     }
 }

@@ -31,18 +31,15 @@ import io.github.aakira.napier.Napier
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import java.io.File
 
 fun main() {
     setLogPath()
     setupKmpLogger()
     SnowflakeFactory.setMachine(1)
-    val flavorFilePath = File("../../deploy/${BackendConfig.FLAVOR}.env").canonicalPath
-    val env = readEnv(flavorFilePath = flavorFilePath)
     Napier.i {
         "start worker"
     }
-    val backend = buildBackendFromEnv(env)
+    val backend = buildBackendFromEnv(readEnv())
     runBlocking {
         Napier.i {
             "worker started"

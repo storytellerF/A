@@ -87,9 +87,10 @@ class AddPresetTest {
                 )
             )
 
-            repackArchiveWithExclusionsInPlace(
+            repackArchiveWithExclusionsAndInclusionsInPlace(
                 zipFile,
-                listOf("**/*.md", "nested/**")
+                listOf("**/*.md", "nested/**"),
+                emptyList()
             )
 
             ZipFile(zipFile).use { zip ->
@@ -98,6 +99,44 @@ class AddPresetTest {
                 assertTrue("images/logo.png" in names)
                 assertFalse("docs/readme.md" in names)
                 assertFalse("nested/secret.txt" in names)
+            }
+        } finally {
+            tempDir.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun `repack zip with includeArchiveEntries only keeps included files after exclude`() {
+        setLogPath()
+        val tempDir = createTempDirectory(prefix = "addpreset-include-").toFile()
+        try {
+            val zipFile = File(tempDir, "bundle.zip")
+            writeZip(
+                zipFile,
+                mapOf(
+                    "keep.txt" to "keep",
+                    "docs/readme.md" to "remove-md",
+                    "nested/secret.txt" to "remove-folder",
+                    "images/logo.png" to "keep-image",
+                    "images/other.jpg" to "other-image",
+                )
+            )
+
+            val exclude = listOf("**/*.md", "nested/**")
+            val include = listOf("keep.txt", "images/logo.png")
+            repackArchiveWithExclusionsAndInclusionsInPlace(
+                zipFile,
+                exclude,
+                include
+            )
+
+            ZipFile(zipFile).use { zip ->
+                val names = zip.entries().asSequence().map { it.name }.toSet()
+                assertTrue("keep.txt" in names)
+                assertTrue("images/logo.png" in names)
+                assertFalse("docs/readme.md" in names)
+                assertFalse("nested/secret.txt" in names)
+                assertFalse("images/other.jpg" in names)
             }
         } finally {
             tempDir.deleteRecursively()

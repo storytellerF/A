@@ -120,7 +120,7 @@ fun main(args: Array<String>) {
     }
     SnowflakeFactory.setMachine(0)
 
-    val map = readEnv(flavorFilePath = getFlavorFilePath())
+    val map = readEnv()
     processInitTaskIfNeed(map)
     val serverPort = map["SERVER_PORT"]?.toInt() ?: 80
     val extraArgs = arrayOf("-port=$serverPort")
@@ -261,7 +261,7 @@ private fun Application.buildBackend(): Backend {
             it.key to v
         }
     }.associate { it }
-    val env = readEnv(injectedEnv, getFlavorFilePath())
+    val env = readEnv(injectedEnv)
     Napier.i {
         if (env["BUILD_TYPE"] == "test") {
             "start server in `${env["METHOD_NAME"]}`"
@@ -271,8 +271,6 @@ private fun Application.buildBackend(): Backend {
     }
     return buildBackendFromEnv(env)
 }
-
-private fun getFlavorFilePath() = File("../../deploy/${ServerConfig.FLAVOR}.env").canonicalPath
 
 private fun buildDatabaseReader() = DatabaseReader.Builder(
     ClassLoader.getSystemResourceAsStream("GeoLite2-Country.mmdb")
@@ -490,7 +488,7 @@ fun Application.configureRoute(reader: DatabaseReader, backend: Backend) {
             bindProtectedAccountRoute(backend)
         }
         authenticate("user", optional = true) {
-            bindAccountRoute()
+            bindAccountRoute(backend)
             bindRoomRoute(backend)
             bindTopicRoute(backend)
             bindCommunityRoute(backend)

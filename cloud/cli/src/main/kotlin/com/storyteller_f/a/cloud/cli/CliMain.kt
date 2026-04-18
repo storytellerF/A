@@ -29,7 +29,6 @@ import com.storyteller_f.shared.setupKmpLogger
 import io.github.aakira.napier.Napier
 import kotlinx.cli.ArgParser
 import kotlinx.cli.ExperimentalCli
-import java.io.File
 
 lateinit var backend: Backend
 
@@ -41,8 +40,7 @@ fun main(args: Array<String>) {
     }
     loadAvif()
     SnowflakeFactory.setMachine(0)
-    val flavorFilePath = File("../../deploy/${BackendConfig.FLAVOR}.env").canonicalPath
-    backend = buildBackendFromEnv(readEnv(flavorFilePath = flavorFilePath))
+    backend = buildBackendFromEnv(readEnv())
     val argParser = ArgParser("ACli")
     argParser.subcommands(AddPreset(), CleanCommand(), PrintCommand(), InitTableCommand())
     argParser.parse(args)
