@@ -151,3 +151,12 @@ class TopicQuery(
         paginationQuery.size
     )
 }
+
+@Serializable
+class PanelLogsQuery(
+    val targetId: PrimaryKey,
+    val objectType: ObjectType,
+    override val nextPageToken: String? = null,
+    override val prePageToken: String? = null,
+    override val size: Int = DEFAULT_PAGE_SIZE,
+) : PageableQuery

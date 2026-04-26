@@ -5,16 +5,21 @@ import com.storyteller_f.a.api.NewUser
 import com.storyteller_f.a.api.TransferAuthKey
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.CustomBadRequestException
+import com.storyteller_f.a.backend.core.PaginationResult
+import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.backend.core.types.PanelLog
 import com.storyteller_f.a.backend.core.types.User
+import com.storyteller_f.a.backend.core.types.toPanelLogInfo
 import com.storyteller_f.a.backend.core.types.toUserInfo
 import com.storyteller_f.shared.getAlgo
+import com.storyteller_f.shared.model.PanelLogInfo
 import com.storyteller_f.shared.model.PanelOverview
 import com.storyteller_f.shared.model.PassType
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.UpdateObjectStatusBody
 import com.storyteller_f.shared.obj.UpdateUserStatusBody
+import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.now
 
 suspend fun Backend.getOverview() = runCatching {
@@ -95,7 +100,8 @@ suspend fun Backend.updateUserStatus(
             PanelLog(
                 id = logId,
                 adminId = adminId,
-                targetUserId = uid,
+                targetId = uid,
+                objectType = ObjectType.USER,
                 action = "Update user status to ${body.status}",
                 createdTime = now()
             )
@@ -115,7 +121,8 @@ suspend fun Backend.updateCommunityStatus(
             PanelLog(
                 id = logId,
                 adminId = adminId,
-                targetUserId = id,
+                targetId = id,
+                objectType = ObjectType.COMMUNITY,
                 action = "Update community status to ${body.status}",
                 createdTime = now()
             )
@@ -135,7 +142,8 @@ suspend fun Backend.updateRoomStatus(
             PanelLog(
                 id = logId,
                 adminId = adminId,
-                targetUserId = id,
+                targetId = id,
+                objectType = ObjectType.ROOM,
                 action = "Update room status to ${body.status}",
                 createdTime = now()
             )
@@ -155,7 +163,8 @@ suspend fun Backend.updateTopicStatus(
             PanelLog(
                 id = logId,
                 adminId = adminId,
-                targetUserId = id,
+                targetId = id,
+                objectType = ObjectType.TOPIC,
                 action = "Update topic status to ${body.status}",
                 createdTime = now()
             )
@@ -175,7 +184,8 @@ suspend fun Backend.updateTitleStatus(
             PanelLog(
                 id = logId,
                 adminId = adminId,
-                targetUserId = id,
+                targetId = id,
+                objectType = ObjectType.TITLE,
                 action = "Update title status to ${body.status}",
                 createdTime = now()
             )
@@ -195,10 +205,21 @@ suspend fun Backend.updateFileStatus(
             PanelLog(
                 id = logId,
                 adminId = adminId,
-                targetUserId = id,
+                targetId = id,
+                objectType = ObjectType.FILE,
                 action = "Update file status to ${body.status}",
                 createdTime = now()
             )
         )
+    }
+}
+
+suspend fun Backend.getPanelLogs(
+    targetId: com.storyteller_f.shared.type.PrimaryKey,
+    objectType: ObjectType,
+    fetch: PrimaryKeyFetch
+): Result<PaginationResult<PanelLogInfo>> {
+    return database.admin.getPanelLogs(targetId, objectType, fetch).map { result ->
+        PaginationResult(result.list.map { it.toPanelLogInfo() }, result.total)
     }
 }

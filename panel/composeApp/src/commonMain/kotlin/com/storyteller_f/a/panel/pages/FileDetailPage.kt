@@ -31,7 +31,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.github.panpf.zoomimage.CoilZoomAsyncImage
-import com.storyteller_f.a.app.core.components.CenterBox
 import com.storyteller_f.a.app.core.components.CustomBottomNav
 import com.storyteller_f.a.app.core.components.NavRoute
 import com.storyteller_f.a.app.core.components.PdfView
@@ -46,11 +45,13 @@ import com.storyteller_f.a.panel.Res
 import com.storyteller_f.a.panel.common.OnFileStatusUpdated
 import com.storyteller_f.a.panel.common.createPanelFileRefsViewModel
 import com.storyteller_f.a.panel.common.createPanelFileViewModel
+import com.storyteller_f.a.panel.common.createPanelLogsViewModel
 import com.storyteller_f.a.panel.components.InfoTable
 import com.storyteller_f.a.panel.file_can_preview
 import com.storyteller_f.a.panel.file_detail_title
 import com.storyteller_f.a.panel.file_detail_title_with_info
 import com.storyteller_f.a.panel.fullscreen_preview
+import com.storyteller_f.a.panel.log_supporting
 import com.storyteller_f.a.panel.preview_image
 import com.storyteller_f.a.panel.tab_basic_info_file
 import com.storyteller_f.a.panel.tab_file_refs
@@ -58,6 +59,7 @@ import com.storyteller_f.a.panel.tab_info
 import com.storyteller_f.a.panel.tab_logs
 import com.storyteller_f.shared.obj.UpdateObjectStatusBody
 import com.storyteller_f.shared.type.ObjectStatus
+import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -82,7 +84,7 @@ fun FileDetailPage(id: PrimaryKey) {
             HorizontalPager(pagerState) { pageIndex ->
                 when (pageIndex) {
                     0 -> FileInfoTabs(id)
-                    else -> FileLogsTab()
+                    else -> FileLogsTab(id)
                 }
             }
         }
@@ -216,9 +218,33 @@ private fun FileReadOnlyToggleButton(
 }
 
 @Composable
-private fun FileLogsTab() {
-    CenterBox {
-        Text("None")
+private fun FileLogsTab(id: PrimaryKey) {
+    val vm = createPanelLogsViewModel(id, ObjectType.FILE)
+    StateView(vm, modifier = Modifier.fillMaxSize()) { items ->
+        LazyColumn {
+            pagingItems(items, key = { it.id }) { index ->
+                val info = items[index]
+                if (info != null) {
+                    ListItem(
+                        headlineContent = { Text(info.action) },
+                        supportingContent = {
+                            Text(
+                                stringResource(
+                                    Res.string.log_supporting,
+                                    info.objectType,
+                                    info.adminId.toString(),
+                                    info.createdTime.toString()
+                                )
+                            )
+                        }
+                    )
+                    HorizontalDivider()
+                } else {
+                    ListItem(headlineContent = { Text("") })
+                    HorizontalDivider()
+                }
+            }
+        }
     }
 }
 

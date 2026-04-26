@@ -843,3 +843,31 @@ class SqliteNowFileRefInfoStorage(db: AppDatabase) : FileRefInfoStorage {
     )
     override suspend fun delete(collection: FileRefCollection, key: String) = storage.delete(collection.getName(), key)
 }
+
+class SqliteNowPanelLogInfoStorage(db: AppDatabase) : PanelLogInfoStorage {
+    private val storage = CommonStorageImpl(db)
+    override suspend fun saveLast(collection: PanelLogCollection, item: PanelLogInfo) = storage.saveLast(
+        collection.getName(),
+        item.id.toString(),
+        com.storyteller_f.shared.commonJson.encodeToString(item)
+    )
+    override suspend fun saveFirst(collection: PanelLogCollection, item: PanelLogInfo) = storage.saveFirst(
+        collection.getName(),
+        item.id.toString(),
+        com.storyteller_f.shared.commonJson.encodeToString(item)
+    )
+    override fun observeData(collection: PanelLogCollection): PagingSource<Int, PanelLogInfo> = storage.observeData(
+        collection.getName()
+    )
+    override suspend fun clean(collection: PanelLogCollection) = storage.clean(collection.getName())
+    override suspend fun getDocument(collection: PanelLogCollection, key: String): PanelLogInfo? = storage.getDocument(
+        collection.getName(),
+        key
+    )
+    override suspend fun updateDocument(collection: PanelLogCollection, item: PanelLogInfo) = storage.update(
+        collection.getName(),
+        item.id.toString(),
+        com.storyteller_f.shared.commonJson.encodeToString(item)
+    )
+    override suspend fun delete(collection: PanelLogCollection, key: String) = storage.delete(collection.getName(), key)
+}

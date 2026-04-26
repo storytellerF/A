@@ -15,6 +15,7 @@ import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.FileRefInfo
 import com.storyteller_f.shared.model.MemberInfo
 import com.storyteller_f.shared.model.PanelAccountInfo
+import com.storyteller_f.shared.model.PanelLogInfo
 import com.storyteller_f.shared.model.PanelOverview
 import com.storyteller_f.shared.model.ReactionRecordInfo
 import com.storyteller_f.shared.model.RoomInfo
@@ -122,6 +123,13 @@ data class FileRefInfoListResponse(
     override val pagination: Pagination<String>? = null
 ) :
     ListResponse<FileRefInfo>
+
+@Serializable
+data class PanelLogInfoListResponse(
+    override val data: CustomImmutableList<PanelLogInfo>,
+    override val pagination: Pagination<String>? = null
+) :
+    ListResponse<PanelLogInfo>
 
 object AdminApi {
     object Users {
@@ -255,6 +263,13 @@ object AdminApi {
     }
     val overview = safeEndpointBuilder("/admin/overview") {
         resp(PanelOverview::class)
+    }
+
+    object PanelLogs {
+        val get = safeEndpointWithQueryBuilder("/admin/panel-logs") {
+            resp(PanelLogInfoListResponse::class)
+            query(PanelLogsQuery::class)
+        }
     }
 
     object Communities {

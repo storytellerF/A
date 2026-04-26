@@ -878,6 +878,40 @@ class FileRefInfoDocumentStorage(val kotbaseDocumentSource: KotbaseDocumentSourc
     }
 }
 
+class PanelLogInfoDocumentStorage(val kotbaseDocumentSource: KotbaseDocumentSource) : PanelLogInfoStorage {
+    override suspend fun saveLast(collection: PanelLogCollection, item: PanelLogInfo) {
+        saveFirst(collection, item)
+    }
+
+    override suspend fun saveFirst(collection: PanelLogCollection, item: PanelLogInfo) {
+        kotbaseDocumentSource.getCollection<PanelLogInfo>(collection.getName())
+            .save(item.id, item)
+    }
+
+    override fun observeData(collection: PanelLogCollection): PagingSource<Int, PanelLogInfo> {
+        return kotbaseDocumentSource.getCollection<PanelLogInfo>(collection.getName())
+            .getSource {
+                orderBy {
+                    "id".descending()
+                }
+            }
+    }
+
+    override suspend fun clean(collection: PanelLogCollection) = Unit
+
+    override suspend fun getDocument(collection: PanelLogCollection, key: String): PanelLogInfo? {
+        return kotbaseDocumentSource.getCollection<PanelLogInfo>(collection.getName()).getDocument(key)
+    }
+
+    override suspend fun updateDocument(collection: PanelLogCollection, item: PanelLogInfo) {
+        kotbaseDocumentSource.getCollection<PanelLogInfo>(collection.getName()).save(item.id, item)
+    }
+
+    override suspend fun delete(collection: PanelLogCollection, key: String) {
+        kotbaseDocumentSource.getCollection<PanelLogInfo>(collection.getName()).delete(key)
+    }
+}
+
 class OverviewDocumentStorage(val kotbaseDocumentSource: KotbaseDocumentSource) : OverviewStorage {
     override suspend fun save(item: PanelOverview) {
         kotbaseDocumentSource.getCollection<PanelOverview>(OverviewStorage.COLLECTION_NAME).save("singleton", item)
@@ -923,6 +957,7 @@ class DocumentModelStorage(source: KotbaseDocumentSource) : ModelStorage {
     override val userLog: UserLogInfoStorage = UserLogInfoDocumentStorage(source)
     override val uploadRecord: UploadRecordInfoStorage = UploadRecordInfoDocumentStorage(source)
     override val fileRef: FileRefInfoStorage = FileRefInfoDocumentStorage(source)
+    override val panelLog: PanelLogInfoStorage = PanelLogInfoDocumentStorage(source)
 }
 
 fun From.whereIf(block: WhereBuilder.() -> Expression?): OrderByRouter {

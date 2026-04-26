@@ -2,6 +2,8 @@ package com.storyteller_f.a.backend.exposed.database
 
 import com.storyteller_f.a.backend.core.AdminDatabase
 import com.storyteller_f.a.backend.core.InsertTopicTuple
+import com.storyteller_f.a.backend.core.PrimaryKeyFetch
+import com.storyteller_f.a.backend.core.paginationFromResults
 import com.storyteller_f.a.backend.core.types.Community
 import com.storyteller_f.a.backend.core.types.Member
 import com.storyteller_f.a.backend.core.types.Room
@@ -9,6 +11,9 @@ import com.storyteller_f.a.backend.core.types.TaskRecord
 import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.a.backend.core.types.UserSubscription
 import com.storyteller_f.a.backend.exposed.ExposedDatabaseSession
+import com.storyteller_f.a.backend.exposed.count
+import com.storyteller_f.a.backend.exposed.map
+import com.storyteller_f.a.backend.exposed.query.bindPaginationQuery
 import com.storyteller_f.a.backend.exposed.tables.Aids
 import com.storyteller_f.a.backend.exposed.tables.Communities
 import com.storyteller_f.a.backend.exposed.tables.EncryptedKeys
@@ -20,6 +25,7 @@ import com.storyteller_f.a.backend.exposed.tables.UserSubscriptions
 import com.storyteller_f.a.backend.exposed.tables.Users
 import com.storyteller_f.a.backend.exposed.tables.addTaskRecord
 import com.storyteller_f.a.backend.exposed.tables.batchAddMembers
+import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.md5
@@ -28,11 +34,15 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.core.JoinType
+import org.jetbrains.exposed.v1.core.SortOrder
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.statements.api.ExposedBlob
 import org.jetbrains.exposed.v1.r2dbc.batchInsert
 import org.jetbrains.exposed.v1.r2dbc.insert
 import org.jetbrains.exposed.v1.r2dbc.select
+import org.jetbrains.exposed.v1.r2dbc.selectAll
 
 class ExposedAdminDatabase(val databaseSession: ExposedDatabaseSession) : AdminDatabase {
 
@@ -157,7 +167,8 @@ class ExposedAdminDatabase(val databaseSession: ExposedDatabaseSession) : AdminD
             check(PanelLogs.insert {
                 it[id] = log.id
                 it[adminId] = log.adminId
-                it[targetUserId] = log.targetUserId
+                it[targetId] = log.targetId
+                it[objectType] = log.objectType
                 it[action] = log.action
                 it[createdTime] = log.createdTime
             }.insertedCount > 0) {
@@ -165,6 +176,29 @@ class ExposedAdminDatabase(val databaseSession: ExposedDatabaseSession) : AdminD
             }
         }
     }
+
+    override suspend fun getPanelLogs(
+        targetId: PrimaryKey,
+        objectType: ObjectType,
+        fetch: PrimaryKeyFetch
+    ) = paginationFromResults(
+        databaseSession.dbSearch {
+            search {
+                PanelLogs.selectAll().where {
+                    PanelLogs.targetId eq targetId and (PanelLogs.objectType eq objectType)
+                }.orderBy(PanelLogs.id, SortOrder.DESC).bindPaginationQuery(PanelLogs, fetch)
+            }
+            map(com.storyteller_f.a.backend.core.types.PanelLog::wrapRow)
+        },
+        databaseSession.dbSearch {
+            search {
+                PanelLogs.select(PanelLogs.id).where {
+                    PanelLogs.targetId eq targetId and (PanelLogs.objectType eq objectType)
+                }
+            }
+            count()
+        }
+    )
 
     private suspend fun insertTopics(
         topicTuples: List<InsertTopicTuple>,

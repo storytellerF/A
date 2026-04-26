@@ -29,7 +29,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.storyteller_f.a.app.core.components.CenterBox
 import com.storyteller_f.a.app.core.components.CustomBottomNav
 import com.storyteller_f.a.app.core.components.NavRoute
 import com.storyteller_f.a.app.core.components.StateView
@@ -40,10 +39,12 @@ import com.storyteller_f.a.panel.LocalPanelGlobalDialog
 import com.storyteller_f.a.panel.LocalPanelNav
 import com.storyteller_f.a.panel.Res
 import com.storyteller_f.a.panel.common.OnRoomStatusUpdated
+import com.storyteller_f.a.panel.common.createPanelLogsViewModel
 import com.storyteller_f.a.panel.common.createPanelRoomFilesViewModel
 import com.storyteller_f.a.panel.common.createPanelRoomMembersViewModel
 import com.storyteller_f.a.panel.common.createPanelRoomViewModel
 import com.storyteller_f.a.panel.components.InfoTable
+import com.storyteller_f.a.panel.log_supporting
 import com.storyteller_f.a.panel.room_detail_title
 import com.storyteller_f.a.panel.room_detail_title_with_info
 import com.storyteller_f.a.panel.tab_basic_info
@@ -51,6 +52,7 @@ import com.storyteller_f.a.panel.tab_files
 import com.storyteller_f.a.panel.tab_members
 import com.storyteller_f.shared.obj.UpdateObjectStatusBody
 import com.storyteller_f.shared.type.ObjectStatus
+import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -77,7 +79,7 @@ fun RoomDetailPage(id: PrimaryKey) {
             HorizontalPager(pagerState) { pageIndex ->
                 when (pageIndex) {
                     0 -> RoomInfoTabs(id)
-                    else -> RoomLogsTab()
+                    else -> RoomLogsTab(id)
                 }
             }
         }
@@ -181,9 +183,33 @@ private fun RoomBasicInfoSection(id: PrimaryKey) {
 }
 
 @Composable
-private fun RoomLogsTab() {
-    CenterBox {
-        Text("None")
+private fun RoomLogsTab(id: PrimaryKey) {
+    val vm = createPanelLogsViewModel(id, ObjectType.ROOM)
+    StateView(vm, modifier = Modifier.fillMaxSize()) { items ->
+        LazyColumn {
+            pagingItems(items, key = { it.id }) { index ->
+                val info = items[index]
+                if (info != null) {
+                    ListItem(
+                        headlineContent = { Text(info.action) },
+                        supportingContent = {
+                            Text(
+                                stringResource(
+                                    Res.string.log_supporting,
+                                    info.objectType,
+                                    info.adminId.toString(),
+                                    info.createdTime.toString()
+                                )
+                            )
+                        }
+                    )
+                    HorizontalDivider()
+                } else {
+                    ListItem(headlineContent = { Text("") })
+                    HorizontalDivider()
+                }
+            }
+        }
     }
 }
 

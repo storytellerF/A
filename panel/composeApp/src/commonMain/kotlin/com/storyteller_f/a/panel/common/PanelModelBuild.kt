@@ -225,3 +225,11 @@ fun createPanelTopicTopicsViewModel(
 ) = panelViewModel(keys = listOf("topic-topics", id)) { sessionManager, modelStorage ->
     TopicTopicsViewModel(sessionManager, modelStorage, id)
 }
+
+@Composable
+fun createPanelLogsViewModel(
+    targetId: PrimaryKey,
+    objectType: com.storyteller_f.shared.type.ObjectType
+) = panelViewModel(keys = listOf("panel-logs", targetId, objectType)) { sessionManager, modelStorage ->
+    PanelLogsViewModel(sessionManager, modelStorage, targetId, objectType)
+}
