@@ -66,6 +66,7 @@ data class ChildAccountInfoListResponse(
     ListResponse<ChildAccountInfo>
 
 const val DEFAULT_PAGE_SIZE = 10
+const val MAX_PAGE_SIZE = 100
 
 object CustomApi {
     object Topics {

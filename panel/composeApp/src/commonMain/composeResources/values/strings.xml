@@ -32,7 +32,7 @@
     <string name="overview_public_room_count">%1$d public rooms</string>
     <string name="overview_file_count">%1$d files</string>
     <string name="users_suffix"><big>%1$d</big> users</string>
-    <string name="log_supporting">Object: %1$s(%2$s) • Time: %3$s</string>
+    <string name="log_supporting">Type: %1$s | Target: %2$s | Admin: %3$s | Time: %4$s</string>
     <string name="aid_label">AID: %1$s</string>
     <string name="user_info">User info</string>
     <string name="user_logs">User logs</string>

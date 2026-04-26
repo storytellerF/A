@@ -4,13 +4,26 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.Text
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.storyteller_f.a.app.core.components.StateView
+import com.storyteller_f.a.app.core.components.pagingItems
 import com.storyteller_f.a.client.core.PanelSessionManager
+import com.storyteller_f.a.panel.Res
+import com.storyteller_f.a.panel.log_supporting
 import com.storyteller_f.a.panel.panelAccountInstance
+import com.storyteller_f.shared.model.PanelLogInfo
+import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.storage.ModelStorage
 import io.github.aakira.napier.Napier
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun createPanelAllUserViewModel() = panelViewModel { sessionManager, modelStorage ->
@@ -232,4 +245,41 @@ fun createPanelLogsViewModel(
     objectType: com.storyteller_f.shared.type.ObjectType
 ) = panelViewModel(keys = listOf("panel-logs", targetId, objectType)) { sessionManager, modelStorage ->
     PanelLogsViewModel(sessionManager, modelStorage, targetId, objectType)
+}
+
+@Composable
+fun PanelLogsTab(targetId: PrimaryKey, objectType: ObjectType) {
+    val vm = createPanelLogsViewModel(targetId, objectType)
+    StateView(vm, modifier = Modifier.fillMaxSize()) { items ->
+        LazyColumn {
+            pagingItems(items, key = { it?.id ?: -1 }) { index ->
+                val info = items[index]
+                if (info != null) {
+                    PanelLogItem(info)
+                } else {
+                    ListItem(headlineContent = { Text("") })
+                    HorizontalDivider()
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PanelLogItem(info: PanelLogInfo) {
+    ListItem(
+        headlineContent = { Text(info.action) },
+        supportingContent = {
+            Text(
+                stringResource(
+                    Res.string.log_supporting,
+                    info.objectType,
+                    info.targetId.toString(),
+                    info.adminId.toString(),
+                    info.createdTime.toString()
+                )
+            )
+        }
+    )
+    HorizontalDivider()
 }

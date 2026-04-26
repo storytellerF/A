@@ -37,13 +37,12 @@ import com.storyteller_f.a.panel.LocalPanelNav
 import com.storyteller_f.a.panel.Res
 import com.storyteller_f.a.panel.common.OnTopicStatusUpdated
 import com.storyteller_f.a.panel.common.PanelNav
-import com.storyteller_f.a.panel.common.createPanelLogsViewModel
+import com.storyteller_f.a.panel.common.PanelLogsTab
 import com.storyteller_f.a.panel.common.createPanelTopicTopicsViewModel
 import com.storyteller_f.a.panel.common.createPanelTopicViewModel
 import com.storyteller_f.a.panel.components.InfoTable
 import com.storyteller_f.a.panel.encrypted
 import com.storyteller_f.a.panel.interaction
-import com.storyteller_f.a.panel.log_supporting
 import com.storyteller_f.a.panel.pinned
 import com.storyteller_f.a.panel.tab_basic_info
 import com.storyteller_f.a.panel.tab_logs
@@ -171,33 +170,7 @@ private fun TopicBasicInfoSection(id: PrimaryKey) {
 
 @Composable
 private fun TopicLogsTab(id: PrimaryKey) {
-    val vm = createPanelLogsViewModel(id, ObjectType.TOPIC)
-    StateView(vm, modifier = Modifier.fillMaxSize()) { items ->
-        LazyColumn {
-            pagingItems(items, key = { it.id }) { index ->
-                val info = items[index]
-                if (info != null) {
-                    ListItem(
-                        headlineContent = { Text(info.action) },
-                        supportingContent = {
-                            Text(
-                                stringResource(
-                                    Res.string.log_supporting,
-                                    info.objectType,
-                                    info.adminId.toString(),
-                                    info.createdTime.toString()
-                                )
-                            )
-                        }
-                    )
-                    HorizontalDivider()
-                } else {
-                    ListItem(headlineContent = { Text("") })
-                    HorizontalDivider()
-                }
-            }
-        }
-    }
+    PanelLogsTab(id, ObjectType.TOPIC)
 }
 
 @Composable
