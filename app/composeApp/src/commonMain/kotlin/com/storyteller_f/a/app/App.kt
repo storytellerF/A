@@ -575,6 +575,10 @@ private fun createAppNavFactoryForBubble(): AppNavFactory = object : AppNavFacto
 
         override fun gotoTitleCompose() = Unit
 
+        override fun gotoCommunityTitleCompose(communityId: PrimaryKey) = Unit
+
+        override fun gotoRoomTitleCompose(roomId: PrimaryKey) = Unit
+
         override fun gotoCommunityCompose() = Unit
 
         override fun gotoRoomCompose() = Unit

@@ -62,7 +62,11 @@ fun MemberPage(objectId: PrimaryKey, objectType: ObjectType) {
 
                 Row {
                     FilledIconButton({
-                        appNav.newAppNav().gotoTitleCompose()
+                        when (objectType) {
+                            ObjectType.COMMUNITY -> appNav.newAppNav().gotoCommunityTitleCompose(objectId)
+                            ObjectType.ROOM -> appNav.newAppNav().gotoRoomTitleCompose(objectId)
+                            else -> appNav.newAppNav().gotoTitleCompose()
+                        }
                     }) {
                         Icon(Icons.Default.Add, "add member")
                     }

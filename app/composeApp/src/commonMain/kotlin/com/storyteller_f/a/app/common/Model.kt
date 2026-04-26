@@ -1027,14 +1027,21 @@ class FileViewViewModel(
 
 enum class TitleComposeSheetType { NONE, SCOPE, RECEIVER }
 
-class TitleComposeViewModel : ViewModel() {
+class TitleComposeViewModel(
+    initialScope: ObjectTuple? = null,
+    initialType: TitleType? = null,
+    lockScope: Boolean = false,
+    lockType: Boolean = false
+) : ViewModel() {
     val name = MutableStateFlow("")
     val showSheetType = MutableStateFlow(TitleComposeSheetType.NONE)
-    val titleScope = MutableStateFlow<ObjectTuple?>(null)
-    val titleType = MutableStateFlow(TitleType.REGULAR)
+    val titleScope = MutableStateFlow<ObjectTuple?>(initialScope)
+    val titleType = MutableStateFlow(initialType ?: TitleType.REGULAR)
     val receiver = MutableStateFlow<PrimaryKey?>(null)
     val content = MutableStateFlow("")
     val expiresAtText = MutableStateFlow("")
+    val isScopeLocked = MutableStateFlow(lockScope)
+    val isTypeLocked = MutableStateFlow(lockType)
 
     fun setName(value: String) {
         name.value = value
