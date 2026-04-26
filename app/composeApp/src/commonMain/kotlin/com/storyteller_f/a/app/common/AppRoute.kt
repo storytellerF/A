@@ -30,6 +30,8 @@ import com.storyteller_f.a.app.pages.room.RoomComposePage
 import com.storyteller_f.a.app.pages.room.RoomPage
 import com.storyteller_f.a.app.pages.room.RoomSettingPage
 import com.storyteller_f.a.app.pages.title.TitleComposePage
+import com.storyteller_f.a.app.pages.title.CommunityTitleComposePage
+import com.storyteller_f.a.app.pages.title.RoomTitleComposePage
 import com.storyteller_f.a.app.pages.topic.ReactionListPage
 import com.storyteller_f.a.app.pages.topic.TopicComposeData
 import com.storyteller_f.a.app.pages.topic.TopicComposePage
@@ -139,6 +141,12 @@ data class FileInfoScreen(val fileId: PrimaryKey) : NavKey
 data object TitleComposeScreen : NavKey
 
 @Serializable
+data class CommunityTitleComposeScreen(val communityId: PrimaryKey) : NavKey
+
+@Serializable
+data class RoomTitleComposeScreen(val roomId: PrimaryKey) : NavKey
+
+@Serializable
 data object CommunityComposeScreen : NavKey
 
 @Serializable
@@ -210,6 +218,8 @@ val appNavSerializersModule = SerializersModule {
         subclass(LocalImageScreen::class)
         subclass(FileInfoScreen::class)
         subclass(TitleComposeScreen::class)
+        subclass(CommunityTitleComposeScreen::class)
+        subclass(RoomTitleComposeScreen::class)
         subclass(CommunityComposeScreen::class)
         subclass(RoomComposeScreen::class)
         subclass(CommunitySettingScreen::class)
@@ -265,6 +275,10 @@ interface AppNav {
     fun gotoLocalImage(url: String)
 
     fun gotoTitleCompose()
+
+    fun gotoCommunityTitleCompose(communityId: PrimaryKey)
+
+    fun gotoRoomTitleCompose(roomId: PrimaryKey)
 
     fun gotoCommunityCompose()
 
@@ -415,6 +429,14 @@ fun newAppNav(backStack: NavBackStack<NavKey>) = object : AppNav {
 
     override fun gotoTitleCompose() {
         backStack.add(TitleComposeScreen)
+    }
+
+    override fun gotoCommunityTitleCompose(communityId: PrimaryKey) {
+        backStack.add(CommunityTitleComposeScreen(communityId))
+    }
+
+    override fun gotoRoomTitleCompose(roomId: PrimaryKey) {
+        backStack.add(RoomTitleComposeScreen(roomId))
     }
 
     override fun gotoCommunityCompose() {
@@ -583,6 +605,12 @@ private fun EntryProviderScope<NavKey>.handleSettingsScreen() {
 private fun EntryProviderScope<NavKey>.handleComposeScreen(nav: AppNav) {
     entry<TitleComposeScreen> {
         TitleComposePage()
+    }
+    entry<CommunityTitleComposeScreen> {
+        CommunityTitleComposePage(it.communityId)
+    }
+    entry<RoomTitleComposeScreen> {
+        RoomTitleComposePage(it.roomId)
     }
     entry<CommunityComposeScreen> {
         CommunityComposePage()

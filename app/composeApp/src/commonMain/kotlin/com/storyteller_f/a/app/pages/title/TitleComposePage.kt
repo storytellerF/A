@@ -127,7 +127,7 @@ fun TitleComposeInternal() {
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-private fun TitleComposeSheet(vm: TitleComposeViewModel) {
+internal fun TitleComposeSheet(vm: TitleComposeViewModel) {
     val sheetState = rememberModalBottomSheetState()
 
     val isSheetVisible by vm.isSheetVisibleFlow.collectAsState()
@@ -178,6 +178,8 @@ fun TitleComposeInternalEdit(
     val titleType by vm.titleType.collectAsState()
     val titleScope by vm.titleScope.collectAsState()
     val receiver by vm.receiver.collectAsState()
+    val isScopeLocked by vm.isScopeLocked.collectAsState()
+    val isTypeLocked by vm.isTypeLocked.collectAsState()
     Column(
         modifier = Modifier.width(300.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -187,10 +189,10 @@ fun TitleComposeInternalEdit(
             Text("name")
         }, modifier = Modifier.fillMaxWidth())
 
-        TitleTypeSelector(titleType, vm::setTitleType)
+        TitleTypeSelector(titleType, vm::setTitleType, readOnly = isTypeLocked)
 
         val shape = RoundedCornerShape(10.dp)
-        TitleScopeEditor(shape, vm::openScopeSheet, titleScope, vm::clearTitleScope)
+        TitleScopeEditor(shape, vm::openScopeSheet, titleScope, vm::clearTitleScope, readOnly = isScopeLocked)
 
         ReceiverEditor(shape, vm::openReceiverSheet, receiver)
 
@@ -447,22 +449,26 @@ private fun TitleScopeEditor(
     shape: RoundedCornerShape,
     showScopeSheet: () -> Unit,
     titleScope: ObjectTuple?,
-    updateTitleScope: () -> Unit
+    updateTitleScope: () -> Unit,
+    readOnly: Boolean = false
 ) {
     Row(
-        modifier = Modifier.height(90.dp).fillMaxWidth().clip(shape).clickable {
-            showScopeSheet()
-        }.background(MaterialTheme.colorScheme.primaryContainer, shape)
+        modifier = Modifier
+            .height(90.dp)
+            .fillMaxWidth()
+            .clip(shape)
+            .then(if (readOnly) Modifier else Modifier.clickable { showScopeSheet() })
+            .background(MaterialTheme.colorScheme.primaryContainer, shape)
             .padding(8.dp)
     ) {
         if (titleScope != null) {
             when (titleScope.objectType) {
                 ObjectType.COMMUNITY -> CommunityRefCell(titleScope.objectId) {
-                    updateTitleScope()
+                    if (!readOnly) updateTitleScope()
                 }
 
                 ObjectType.ROOM -> RoomRefCell(titleScope.objectId) {
-                    updateTitleScope()
+                    if (!readOnly) updateTitleScope()
                 }
 
                 ObjectType.TOPIC -> TODO()
@@ -484,43 +490,55 @@ private fun TitleScopeEditor(
 @OptIn(ExperimentalMaterial3Api::class)
 private fun TitleTypeSelector(
     titleType: TitleType,
-    updateTitleType: (TitleType) -> Unit
+    updateTitleType: (TitleType) -> Unit,
+    readOnly: Boolean = false
 ) {
     var expanded by remember {
         mutableStateOf(false)
     }
-    ExposedDropdownMenuBox(expanded, {
-        expanded = true
-    }, modifier = Modifier) {
+    if (readOnly) {
         TextField(
-            // The `menuAnchor` modifier must be passed to the text field to handle
-            // expanding/collapsing the menu on click. A read-only text field has
-            // the anchor type `PrimaryNotEditable`.
             titleType.name,
-            {
-            },
-            modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                .fillMaxWidth(),
+            {},
+            modifier = Modifier.fillMaxWidth(),
             readOnly = true,
             label = { Text("Title Type") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             colors = ExposedDropdownMenuDefaults.textFieldColors(),
         )
-        ExposedDropdownMenu(expanded, {
-            expanded = false
+    } else {
+        ExposedDropdownMenuBox(expanded, {
+            expanded = true
         }, modifier = Modifier) {
-            DropdownMenuItem({
-                Text("Regular")
-            }, {
+            TextField(
+                // The `menuAnchor` modifier must be passed to the text field to handle
+                // expanding/collapsing the menu on click. A read-only text field has
+                // the anchor type `PrimaryNotEditable`.
+                titleType.name,
+                {
+                },
+                modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                    .fillMaxWidth(),
+                readOnly = true,
+                label = { Text("Title Type") },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                colors = ExposedDropdownMenuDefaults.textFieldColors(),
+            )
+            ExposedDropdownMenu(expanded, {
                 expanded = false
-                updateTitleType(TitleType.REGULAR)
-            })
-            DropdownMenuItem({
-                Text("Join")
-            }, {
-                expanded = false
-                updateTitleType(TitleType.JOIN)
-            })
+            }, modifier = Modifier) {
+                DropdownMenuItem({
+                    Text("Regular")
+                }, {
+                    expanded = false
+                    updateTitleType(TitleType.REGULAR)
+                })
+                DropdownMenuItem({
+                    Text("Join")
+                }, {
+                    expanded = false
+                    updateTitleType(TitleType.JOIN)
+                })
+            }
         }
     }
 }

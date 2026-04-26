@@ -441,9 +441,14 @@ fun getUserOverviewViewModel() =
     }
 
 @Composable
-fun createTitleComposeViewModel(): TitleComposeViewModel =
+fun createTitleComposeViewModel(
+    initialScope: ObjectTuple? = null,
+    initialType: TitleType? = null,
+    lockScope: Boolean = false,
+    lockType: Boolean = false
+): TitleComposeViewModel =
     customViewModel(listOf("title-compose")) { _, _ ->
-        TitleComposeViewModel()
+        TitleComposeViewModel(initialScope, initialType, lockScope, lockType)
     }
 
 @Composable
