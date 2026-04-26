@@ -159,4 +159,10 @@ class PanelLogsQuery(
     override val nextPageToken: String? = null,
     override val prePageToken: String? = null,
     override val size: Int = DEFAULT_PAGE_SIZE,
-) : PageableQuery
+) : PageableQuery {
+    init {
+        require(size in 1..MAX_PAGE_SIZE) {
+            "Page size must be between 1 and $MAX_PAGE_SIZE"
+        }
+    }
+}

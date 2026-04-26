@@ -27,6 +27,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.core.components.CustomBottomNav
 import com.storyteller_f.a.app.core.components.NavRoute
@@ -38,13 +39,12 @@ import com.storyteller_f.a.panel.LocalPanelGlobalDialog
 import com.storyteller_f.a.panel.LocalPanelNav
 import com.storyteller_f.a.panel.Res
 import com.storyteller_f.a.panel.common.OnCommunityStatusUpdated
+import com.storyteller_f.a.panel.common.PanelLogsTab
 import com.storyteller_f.a.panel.common.createPanelCommunityMembersViewModel
 import com.storyteller_f.a.panel.common.createPanelCommunityViewModel
-import com.storyteller_f.a.panel.common.createPanelLogsViewModel
 import com.storyteller_f.a.panel.community_detail_title
 import com.storyteller_f.a.panel.community_detail_title_with_info
 import com.storyteller_f.a.panel.components.InfoTable
-import com.storyteller_f.a.panel.log_supporting
 import com.storyteller_f.a.panel.tab_basic_info
 import com.storyteller_f.a.panel.tab_members
 import com.storyteller_f.shared.obj.UpdateObjectStatusBody
@@ -54,7 +54,6 @@ import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import org.jetbrains.compose.resources.stringResource
 
 private val compactJson = Json { prettyPrint = false }
 
@@ -182,33 +181,7 @@ private fun CommunityBasicInfoSection(id: PrimaryKey) {
 
 @Composable
 private fun CommunityLogsTab(id: PrimaryKey) {
-    val vm = createPanelLogsViewModel(id, ObjectType.COMMUNITY)
-    StateView(vm, modifier = Modifier.fillMaxSize()) { items ->
-        LazyColumn {
-            pagingItems(items, key = { it.id }) { index ->
-                val info = items[index]
-                if (info != null) {
-                    ListItem(
-                        headlineContent = { Text(info.action) },
-                        supportingContent = {
-                            Text(
-                                stringResource(
-                                    Res.string.log_supporting,
-                                    info.objectType,
-                                    info.adminId.toString(),
-                                    info.createdTime.toString()
-                                )
-                            )
-                        }
-                    )
-                    HorizontalDivider()
-                } else {
-                    ListItem(headlineContent = { Text("") })
-                    HorizontalDivider()
-                }
-            }
-        }
-    }
+    PanelLogsTab(id, ObjectType.COMMUNITY)
 }
 
 @Composable

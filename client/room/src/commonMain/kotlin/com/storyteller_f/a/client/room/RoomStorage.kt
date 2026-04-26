@@ -1089,7 +1089,7 @@ class RoomFileRefInfoStorage(appDatabase: AppDatabase) : FileRefInfoStorage {
 }
 
 class RoomPanelLogInfoStorage(appDatabase: AppDatabase) : PanelLogInfoStorage {
-    val impl = CommonStorageImpl(appDatabase)
+    private val impl = CommonStorageImpl(appDatabase)
 
     override suspend fun saveFirst(collection: PanelLogCollection, item: PanelLogInfo) {
         impl.saveFirst(CommonEntity(item.id, collection.getName(), commonJson.encodeToString(item)))
@@ -1110,15 +1110,15 @@ class RoomPanelLogInfoStorage(appDatabase: AppDatabase) : PanelLogInfoStorage {
     override suspend fun getDocument(
         collection: PanelLogCollection,
         key: String
-    ): PanelLogInfo {
-        TODO("Not yet implemented")
+    ): PanelLogInfo? {
+        TODO("Not yet implemented - this method is not used in current implementation")
     }
 
     override suspend fun delete(
         collection: PanelLogCollection,
         key: String
     ) {
-        TODO("Not yet implemented")
+        TODO("Not yet implemented - this method is not used in current implementation")
     }
 
     override suspend fun updateDocument(collection: PanelLogCollection, item: PanelLogInfo) {
