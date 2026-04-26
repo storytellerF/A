@@ -1,5 +1,6 @@
 package com.storyteller_f.a.app.core.components.block
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
@@ -15,6 +16,7 @@ sealed interface ContentBlock {
      * 段落块 - 普通文本内容
      */
     @Serializable
+    @SerialName("paragraph")
     data class Paragraph(
         override val id: String,
         val content: String,
@@ -27,6 +29,7 @@ sealed interface ContentBlock {
      * 列表项 - 有序/无序列表
      */
     @Serializable
+    @SerialName("list_item")
     data class ListItem(
         override val id: String,
         val content: String,
@@ -40,6 +43,7 @@ sealed interface ContentBlock {
      * 引用块 - BlockQuote
      */
     @Serializable
+    @SerialName("quote")
     data class Quote(
         override val id: String,
         val content: String
@@ -51,6 +55,7 @@ sealed interface ContentBlock {
      * 代码块 - CodeFence
      */
     @Serializable
+    @SerialName("code")
     data class CodeBlock(
         override val id: String,
         val content: String,
@@ -63,6 +68,7 @@ sealed interface ContentBlock {
      * 图片块
      */
     @Serializable
+    @SerialName("image")
     data class ImageBlock(
         override val id: String,
         val name: String,
@@ -77,6 +83,7 @@ sealed interface ContentBlock {
      * 对象嵌入块 - 用于嵌入视频、音频等多媒体对象
      */
     @Serializable
+    @SerialName("object")
     data class ObjectBlock(
         override val id: String,
         val name: String = "",
@@ -94,6 +101,7 @@ sealed interface ContentBlock {
      * 用于引用其他用户、社区、房间、帖子等
      */
     @Serializable
+    @SerialName("ref")
     data class RefBlock(
         override val id: String,
         val refPath: String // 如 /user/123, /community/456
@@ -105,6 +113,7 @@ sealed interface ContentBlock {
      * 数学公式块
      */
     @Serializable
+    @SerialName("math")
     data class MathBlock(
         override val id: String,
         val content: String,
@@ -117,6 +126,7 @@ sealed interface ContentBlock {
      * 分割线
      */
     @Serializable
+    @SerialName("divider")
     data class Divider(
         override val id: String
     ) : ContentBlock {

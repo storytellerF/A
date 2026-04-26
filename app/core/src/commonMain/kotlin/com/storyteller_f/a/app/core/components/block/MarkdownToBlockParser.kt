@@ -146,8 +146,8 @@ private fun extractListItemText(listItemNode: ASTNode, content: String): String 
 
 private fun parseQuote(node: ASTNode, content: String): ContentBlock.Quote {
     val text = node.getTextInNode(content).trim().toString()
-    // 移除开头的 > 符号
-    val contentText = text.replace(Regex("^>\\s*"), "")
+    // 使用多行模式移除所有行首的 > 符号
+    val contentText = text.replace(Regex("(?m)^>\\s*"), "")
     return ContentBlock.Quote(
         id = generateBlockId(),
         content = contentText
@@ -155,7 +155,8 @@ private fun parseQuote(node: ASTNode, content: String): ContentBlock.Quote {
 }
 
 private fun parseCodeFence(node: ASTNode, content: String): ContentBlock {
-    val lang = getLang(node, content).lowercase()
+    // getLang 在没有语言时可能返回 "null" 字符串，需要处理
+    val lang = getLang(node, content).lowercase().takeIf { it.isNotBlank() && it != "null" } ?: ""
     val codeContent = readCodeFence(node, content).trim()
 
     return when {

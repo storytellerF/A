@@ -69,6 +69,7 @@ import com.storyteller_f.a.app.components.AppTopicContentView
 import com.storyteller_f.a.app.core.components.CustomAlertDialog
 import com.storyteller_f.a.app.core.components.block.BlockEditor
 import com.storyteller_f.a.app.core.components.block.BlockToolbar
+import com.storyteller_f.a.app.core.components.block.rememberBlockEditorState
 import com.storyteller_f.a.app.core.components.emitEvent
 import com.storyteller_f.a.app.core.components.rememberAlertDialogController
 import com.storyteller_f.a.app.core.components.request
@@ -461,17 +462,20 @@ fun BlockEditTopicPage(
     data: TopicComposeData,
     updateInput: (String) -> Unit
 ) {
+    // 提升状态，使 BlockToolbar 和 BlockEditor 共享 blocks 列表
+    val editorState = rememberBlockEditorState(initialMarkdown = input)
+
     Column(modifier = Modifier.navigationBarsPadding()) {
-        // Block 工具栏
+        // Block 工具栏 - 现在可以正常工作了
         BlockToolbar(
             onInsertBlock = { block ->
-                // 工具栏插入的块会通过 BlockEditor 内部状态处理
+                editorState.appendBlock(block)
             }
         )
 
         // Block 编辑器
         BlockEditor(
-            initialMarkdown = input,
+            blocks = editorState.blocks,
             onMarkdownChange = { newMarkdown ->
                 Napier.i {
                     "block editor markdown $newMarkdown"
