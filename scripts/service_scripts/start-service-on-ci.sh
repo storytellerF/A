@@ -1,8 +1,8 @@
 #!/bin/bash
 
-. ./scripts/tool_scripts/terminal-log.sh
+set -eo pipefail
 
-set -e
+. ./scripts/tool_scripts/terminal-log.sh
 
 FLAVOR=$1
 
@@ -11,19 +11,17 @@ if [ -z "$FLAVOR" ]; then
   exit 1
 fi
 
-echo "$VARS_CONTEXT" | jq -r 'to_entries | .[] | "\(.key)=\(.value)"' | while IFS= read -r line; do
-    # Ignore empty lines and comments
-    [[ -z "$line" || "$line" =~ ^# ]] && continue
-    IFS='=' read -r key value <<< "$line"
-    export "$key"="$value"
-done
-
 echo "$SECRETS_CONTEXT" | jq -r 'to_entries | .[] | "\(.key)=\(.value)"' | while IFS= read -r line; do
     # Ignore empty lines and comments
     [[ -z "$line" || "$line" =~ ^# ]] && continue
     IFS='=' read -r key value <<< "$line"
-    export "$key"="$value"
-done
+    echo "export $key=$value"
+done > ./secrets_env.sh
+
+# 然后在 shell 中执行：
+. ./secrets_env.sh
+
+rm ./secrets_env.sh
 
 mkdir -p ~/.ssh
 
@@ -67,5 +65,4 @@ else
 fi
 
 export HOST_TYPE=local
-# ./scripts/service_scripts/start-service-in-remote-by-image.sh "$FLAVOR" local
-ssh default "cd Projects/AData && git pull && cd ../A && git stash && git fetch && git reset --hard origin/alpha && tmux new-session -d -s A './scripts/service_scripts/start-service-in-local.sh $FLAVOR'"
+ssh default "cd Projects/AData && git pull && cd ../A && git stash && git fetch && git reset --hard origin/alpha && ./scripts/service_scripts/start-service-in-remote.sh $FLAVOR"
