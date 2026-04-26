@@ -3,6 +3,7 @@ package com.storyteller_f.a.panel.pages
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
@@ -11,8 +12,10 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Title
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
@@ -24,22 +27,25 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.storyteller_f.a.app.core.components.CenterBox
 import com.storyteller_f.a.app.core.components.CustomBottomNav
 import com.storyteller_f.a.app.core.components.NavRoute
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.emitEvent
+import com.storyteller_f.a.app.core.components.pagingItems
 import com.storyteller_f.a.client.core.updateTitleStatus
 import com.storyteller_f.a.panel.LocalPanelGlobalDialog
 import com.storyteller_f.a.panel.Res
 import com.storyteller_f.a.panel.common.OnTitleStatusUpdated
+import com.storyteller_f.a.panel.common.createPanelLogsViewModel
 import com.storyteller_f.a.panel.common.createPanelTitleViewModel
 import com.storyteller_f.a.panel.components.InfoTable
+import com.storyteller_f.a.panel.log_supporting
 import com.storyteller_f.a.panel.tab_basic_info
 import com.storyteller_f.a.panel.title_detail_title
 import com.storyteller_f.a.panel.title_detail_title_with_info
 import com.storyteller_f.shared.obj.UpdateObjectStatusBody
 import com.storyteller_f.shared.type.ObjectStatus
+import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -64,7 +70,7 @@ fun TitleDetailPage(id: PrimaryKey) {
             HorizontalPager(pagerState) { pageIndex ->
                 when (pageIndex) {
                     0 -> TitleInfoTabs(id)
-                    else -> TitleLogsTab()
+                    else -> TitleLogsTab(id)
                 }
             }
         }
@@ -154,8 +160,32 @@ private fun TitleBasicInfoSection(id: PrimaryKey) {
 }
 
 @Composable
-private fun TitleLogsTab() {
-    CenterBox {
-        Text("None")
+private fun TitleLogsTab(id: PrimaryKey) {
+    val vm = createPanelLogsViewModel(id, ObjectType.TITLE)
+    StateView(vm, modifier = Modifier.fillMaxSize()) { items ->
+        LazyColumn {
+            pagingItems(items, key = { it.id }) { index ->
+                val info = items[index]
+                if (info != null) {
+                    ListItem(
+                        headlineContent = { Text(info.action) },
+                        supportingContent = {
+                            Text(
+                                stringResource(
+                                    Res.string.log_supporting,
+                                    info.objectType,
+                                    info.adminId.toString(),
+                                    info.createdTime.toString()
+                                )
+                            )
+                        }
+                    )
+                    HorizontalDivider()
+                } else {
+                    ListItem(headlineContent = { Text("") })
+                    HorizontalDivider()
+                }
+            }
+        }
     }
 }

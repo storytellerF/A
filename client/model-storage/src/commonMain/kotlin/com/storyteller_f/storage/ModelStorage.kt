@@ -7,6 +7,7 @@ import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.FileRefInfo
 import com.storyteller_f.shared.model.MemberInfo
+import com.storyteller_f.shared.model.PanelLogInfo
 import com.storyteller_f.shared.model.PanelOverview
 import com.storyteller_f.shared.model.PosterSearch
 import com.storyteller_f.shared.model.ReactionInfo
@@ -159,6 +160,13 @@ sealed interface FileRefCollection {
     data class FileRefs(val fileId: PrimaryKey) : FileRefCollection
 }
 
+sealed interface PanelLogCollection {
+    data class PanelLogs(
+        val targetId: PrimaryKey,
+        val objectType: com.storyteller_f.shared.type.ObjectType
+    ) : PanelLogCollection
+}
+
 fun FileCollection.getName(): String {
     return when (this) {
         FileCollection.Files -> "files"
@@ -257,6 +265,12 @@ fun FileRefCollection.getName(): String {
     }
 }
 
+fun PanelLogCollection.getName(): String {
+    return when (this) {
+        is PanelLogCollection.PanelLogs -> "panel_logs_${targetId}_$objectType"
+    }
+}
+
 @Serializable
 data class RemoteKeys(val collectionName: String, val key: String?)
 
@@ -281,6 +295,7 @@ interface ModelStorage {
     val userLog: UserLogInfoStorage
     val uploadRecord: UploadRecordInfoStorage
     val fileRef: FileRefInfoStorage
+    val panelLog: PanelLogInfoStorage
 }
 
 interface UserInfoStorage : CollectionListStorageWithDefault<UserCollection, UserInfo>
@@ -374,6 +389,8 @@ interface UserLogInfoStorage : CollectionListStorage<UserLogCollection, UserLogI
 interface UploadRecordInfoStorage : CollectionListStorage<UploadRecordCollection, UploadRecordInfo>
 
 interface FileRefInfoStorage : CollectionListStorage<FileRefCollection, FileRefInfo>
+
+interface PanelLogInfoStorage : CollectionListStorage<PanelLogCollection, PanelLogInfo>
 
 interface RemoteKeyStorage {
     suspend fun getPreRemoteKey(collection: String): RemoteKeys?

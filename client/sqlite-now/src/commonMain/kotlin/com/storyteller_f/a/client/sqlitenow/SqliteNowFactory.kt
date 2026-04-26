@@ -26,6 +26,7 @@ class SqliteNowModelStorage(val appDatabase: AppDatabase) : ModelStorage {
     override val userLog: UserLogInfoStorage = SqliteNowUserLogInfoStorage(appDatabase)
     override val uploadRecord: UploadRecordInfoStorage = SqliteNowUploadRecordInfoStorage(appDatabase)
     override val fileRef: FileRefInfoStorage = SqliteNowFileRefInfoStorage(appDatabase)
+    override val panelLog: PanelLogInfoStorage = SqliteNowPanelLogInfoStorage(appDatabase)
 }
 
 fun getSqliteNowModelStorage(name: String): SqliteNowModelStorage {

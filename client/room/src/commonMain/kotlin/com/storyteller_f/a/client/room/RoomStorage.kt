@@ -7,6 +7,7 @@ import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.FileRefInfo
 import com.storyteller_f.shared.model.MemberInfo
+import com.storyteller_f.shared.model.PanelLogInfo
 import com.storyteller_f.shared.model.PanelOverview
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.ReactionRecordInfo
@@ -33,6 +34,8 @@ import com.storyteller_f.storage.MemberCollection
 import com.storyteller_f.storage.MemberInfoStorage
 import com.storyteller_f.storage.ModelStorage
 import com.storyteller_f.storage.OverviewStorage
+import com.storyteller_f.storage.PanelLogCollection
+import com.storyteller_f.storage.PanelLogInfoStorage
 import com.storyteller_f.storage.ReactionCollection
 import com.storyteller_f.storage.ReactionInfoStorage
 import com.storyteller_f.storage.RemoteKeyStorage
@@ -1085,6 +1088,45 @@ class RoomFileRefInfoStorage(appDatabase: AppDatabase) : FileRefInfoStorage {
     }
 }
 
+class RoomPanelLogInfoStorage(appDatabase: AppDatabase) : PanelLogInfoStorage {
+    val impl = CommonStorageImpl(appDatabase)
+
+    override suspend fun saveFirst(collection: PanelLogCollection, item: PanelLogInfo) {
+        impl.saveFirst(CommonEntity(item.id, collection.getName(), commonJson.encodeToString(item)))
+    }
+
+    override suspend fun saveLast(collection: PanelLogCollection, item: PanelLogInfo) {
+        impl.saveLast(CommonEntity(item.id, collection.getName(), commonJson.encodeToString(item)))
+    }
+
+    override fun observeData(collection: PanelLogCollection): PagingSource<Int, PanelLogInfo> {
+        return impl.observeData(collection.getName())
+    }
+
+    override suspend fun clean(collection: PanelLogCollection) {
+        impl.clean(collection.getName())
+    }
+
+    override suspend fun getDocument(
+        collection: PanelLogCollection,
+        key: String
+    ): PanelLogInfo {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun delete(
+        collection: PanelLogCollection,
+        key: String
+    ) {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun updateDocument(collection: PanelLogCollection, item: PanelLogInfo) {
+        val data = commonJson.encodeToString(item)
+        impl.update(collection.getName(), item.id.toString(), data)
+    }
+}
+
 class RoomModelStorage(appDatabase: AppDatabase) : ModelStorage {
     override val user: UserInfoStorage = RoomUserInfoStorage(appDatabase)
     override val community: CommunityInfoStorage = RoomCommunityInfoStorage(appDatabase)
@@ -1104,6 +1146,7 @@ class RoomModelStorage(appDatabase: AppDatabase) : ModelStorage {
     override val subscription: UserSubscriptionStorage = RoomUserSubscriptionStorage(appDatabase)
     override val userReactionRecord: UserReactionRecordStorage = RoomUserReactionRecordStorage(appDatabase)
     override val userLog: UserLogInfoStorage = RoomUserLogInfoStorage(appDatabase)
+    override val panelLog: PanelLogInfoStorage = RoomPanelLogInfoStorage(appDatabase)
     override val uploadRecord: UploadRecordInfoStorage = RoomUploadRecordInfoStorage(appDatabase)
     override val fileRef: FileRefInfoStorage = RoomFileRefInfoStorage(appDatabase)
 }

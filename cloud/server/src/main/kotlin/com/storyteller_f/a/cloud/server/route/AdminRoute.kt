@@ -5,6 +5,7 @@ import com.storyteller_f.a.api.CommunityInfoListResponse
 import com.storyteller_f.a.api.FileInfoListResponse
 import com.storyteller_f.a.api.FileRefInfoListResponse
 import com.storyteller_f.a.api.MemberInfoListResponse
+import com.storyteller_f.a.api.PanelLogInfoListResponse
 import com.storyteller_f.a.api.ReactionRecordInfoListResponse
 import com.storyteller_f.a.api.RoomInfoListResponse
 import com.storyteller_f.a.api.TitleInfoListResponse
@@ -32,6 +33,7 @@ import com.storyteller_f.a.cloud.core.service.getFavorites
 import com.storyteller_f.a.cloud.core.service.getFileInfoById
 import com.storyteller_f.a.cloud.core.service.getFileInfoPaginationResult
 import com.storyteller_f.a.cloud.core.service.getOverview
+import com.storyteller_f.a.cloud.core.service.getPanelLogs
 import com.storyteller_f.a.cloud.core.service.getRoomInfo
 import com.storyteller_f.a.cloud.core.service.getTitleInfo
 import com.storyteller_f.a.cloud.core.service.getUserById
@@ -77,6 +79,7 @@ fun Route.bindProtectedAdminRoute(backend: Backend) {
     bindAdminTopicRoutes(backend)
     bindAdminTitleRoutes(backend)
     bindAdminFileRoutes(backend)
+    bindAdminPanelLogRoutes(backend)
     AdminApi.signOut(handleResult(backend)) {
         call.sessions.clear(UserSession::class)
         UNIT_RESULT
@@ -327,6 +330,16 @@ private fun Route.bindAdminUserActivityRoutes(backend: Backend) {
             UserSubscriptionInfoListResponse(l, p)
         }) { f ->
             backend.getUserSubscriptions(p.id, f)
+        }
+    }
+}
+
+private fun Route.bindAdminPanelLogRoutes(backend: Backend) {
+    AdminApi.PanelLogs.get(handleResult(backend)) { q ->
+        q.pagination(IdentifiablePagingGenerator, { l, p ->
+            PanelLogInfoListResponse(l, p)
+        }) { f ->
+            backend.getPanelLogs(q.targetId, q.objectType, f)
         }
     }
 }

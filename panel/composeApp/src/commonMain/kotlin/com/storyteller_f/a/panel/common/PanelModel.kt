@@ -21,6 +21,7 @@ import com.storyteller_f.a.client.core.getCommunityById
 import com.storyteller_f.a.client.core.getCommunityMembers
 import com.storyteller_f.a.client.core.getFileById
 import com.storyteller_f.a.client.core.getFileRefs
+import com.storyteller_f.a.client.core.getPanelLogs
 import com.storyteller_f.a.client.core.getRoomById
 import com.storyteller_f.a.client.core.getRoomFiles
 import com.storyteller_f.a.client.core.getRoomMembers
@@ -46,6 +47,7 @@ import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.MemberInfo
+import com.storyteller_f.shared.model.PanelLogInfo
 import com.storyteller_f.shared.model.PanelOverview
 import com.storyteller_f.shared.model.ReactionRecordInfo
 import com.storyteller_f.shared.model.RoomInfo
@@ -643,5 +645,23 @@ class TopicTopicsViewModel(
             TopicPinSearch.UNSPECIFIED,
             PaginationQuery(key, size = size)
         )
+    }.flow.cachedIn(viewModelScope)
+}
+
+class PanelLogsViewModel(
+    sessionManager: PanelSessionManager,
+    modelStorage: ModelStorage,
+    targetId: PrimaryKey,
+    objectType: com.storyteller_f.shared.type.ObjectType,
+) : PagingViewModel<PanelLogInfo>() {
+    private val modelCollection = com.storyteller_f.storage.PanelLogCollection.PanelLogs(targetId, objectType)
+
+    @OptIn(ExperimentalPagingApi::class)
+    override val flow: Flow<PagingData<PanelLogInfo>> = buildPager(
+        modelCollection,
+        modelStorage.remoteKey.wrap(modelCollection.getName()),
+        modelStorage.panelLog
+    ) { key, size ->
+        sessionManager.getPanelLogs(targetId, objectType, PaginationQuery(key, size = size))
     }.flow.cachedIn(viewModelScope)
 }
