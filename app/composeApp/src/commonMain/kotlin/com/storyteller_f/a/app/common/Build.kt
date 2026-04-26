@@ -8,7 +8,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.storyteller_f.a.app.CustomUserSessionManager
 import com.storyteller_f.a.app.LocalUiViewModel
-import com.storyteller_f.a.app.core.components.buildByMarkdown
 import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.model.RoomInfo
@@ -121,39 +120,29 @@ fun createRoomViewModel(roomAid: String) = customViewModel(
 
 @Composable
 fun createRoomTopicsViewModel(roomId: PrimaryKey): TopicsViewModel {
-    return buildByMarkdown { typography, density ->
-        customViewModel(
-            listOf("room-topics", roomId)
-        ) { sessionManager, databaseSource ->
-            TopicsViewModel(
-                sessionManager,
-                databaseSource,
-                roomId,
-                ObjectType.ROOM,
-                typography.code,
-                typography.inlineCode,
-                density
-            )
-        }
+    return customViewModel(
+        listOf("room-topics", roomId)
+    ) { sessionManager, databaseSource ->
+        TopicsViewModel(
+            sessionManager,
+            databaseSource,
+            roomId,
+            ObjectType.ROOM,
+        )
     }
 }
 
 @Composable
 fun createCommunityTopicsViewModel(communityId: PrimaryKey): TopicsViewModel {
-    return buildByMarkdown { typography, density ->
-        customViewModel(
-            listOf("community-topics", communityId)
-        ) { sessionManager, databaseSource ->
-            TopicsViewModel(
-                sessionManager,
-                databaseSource,
-                communityId,
-                ObjectType.COMMUNITY,
-                typography.code,
-                typography.inlineCode,
-                density
-            )
-        }
+    return customViewModel(
+        listOf("community-topics", communityId)
+    ) { sessionManager, databaseSource ->
+        TopicsViewModel(
+            sessionManager,
+            databaseSource,
+            communityId,
+            ObjectType.COMMUNITY,
+        )
     }
 }
 
@@ -161,20 +150,15 @@ fun createCommunityTopicsViewModel(communityId: PrimaryKey): TopicsViewModel {
 fun createUserTopicsViewModel(
     uid: PrimaryKey,
 ): TopicsViewModel {
-    return buildByMarkdown { typography, density ->
-        customViewModel(
-            listOf("user-topics", uid)
-        ) { sessionManager, databaseSource ->
-            TopicsViewModel(
-                sessionManager,
-                databaseSource,
-                uid,
-                ObjectType.USER,
-                typography.code,
-                typography.inlineCode,
-                density
-            )
-        }
+    return customViewModel(
+        listOf("user-topics", uid)
+    ) { sessionManager, databaseSource ->
+        TopicsViewModel(
+            sessionManager,
+            databaseSource,
+            uid,
+            ObjectType.USER,
+        )
     }
 }
 
@@ -215,42 +199,33 @@ fun createTopicSearchInCommunityViewModel(scope: SearchScope.CommunityTopic, cur
 
 @Composable
 fun createTopicViewModel(topicId: PrimaryKey): IdTopicViewModel {
-    return buildByMarkdown { typography, density ->
-        customViewModel(
-            listOf("topic", topicId)
-        ) { sessionManager, databaseSource ->
-            IdTopicViewModel(sessionManager, databaseSource, topicId, typography.code, typography.inlineCode, density)
-        }
+    return customViewModel(
+        listOf("topic", topicId)
+    ) { sessionManager, databaseSource ->
+        IdTopicViewModel(sessionManager, databaseSource, topicId)
     }
 }
 
 @Composable
 fun createTopicsInTopicViewModel(topicId: PrimaryKey): TopicsViewModel {
-    return buildByMarkdown { typography, density ->
-        customViewModel(
-            listOf("topic-topics", topicId)
-        ) { sessionManager, databaseSource ->
-            TopicsViewModel(
-                sessionManager,
-                databaseSource,
-                topicId,
-                ObjectType.TOPIC,
-                typography.code,
-                typography.inlineCode,
-                density
-            )
-        }
+    return customViewModel(
+        listOf("topic-topics", topicId)
+    ) { sessionManager, databaseSource ->
+        TopicsViewModel(
+            sessionManager,
+            databaseSource,
+            topicId,
+            ObjectType.TOPIC,
+        )
     }
 }
 
 @Composable
 fun createTopicViewModel(topicAid: String): AidTopicViewModel {
-    return buildByMarkdown { typography, density ->
-        customViewModel(
-            listOf("topic", topicAid)
-        ) { sessionManager, databaseSource ->
-            AidTopicViewModel(sessionManager, databaseSource, topicAid, typography.code, typography.inlineCode, density)
-        }
+    return customViewModel(
+        listOf("topic", topicAid)
+    ) { sessionManager, databaseSource ->
+        AidTopicViewModel(sessionManager, databaseSource, topicAid)
     }
 }
 
@@ -314,12 +289,10 @@ fun createUserViewModel(userId: PrimaryKey) =
 
 @Composable
 fun createWorldViewModel(): WorldViewModel {
-    return buildByMarkdown { typography, density ->
-        customViewModel(
-            listOf("world")
-        ) { sessionManager, databaseSource ->
-            WorldViewModel(sessionManager, databaseSource, typography.code, typography.inlineCode, density)
-        }
+    return customViewModel(
+        listOf("world")
+    ) { sessionManager, databaseSource ->
+        WorldViewModel(sessionManager, databaseSource)
     }
 }
 
@@ -411,10 +384,8 @@ fun getFavoriteViewModel() = customViewModel(listOf("favorite")) { sessionManage
 
 @Composable
 fun getSubscriptionViewModel(): SubscriptionsViewModel {
-    return buildByMarkdown { typography, density ->
-        customViewModel(listOf("subscription")) { sessionManager, modelStorage ->
-            SubscriptionsViewModel(sessionManager, modelStorage, typography.code, typography.inlineCode, density)
-        }
+    return customViewModel(listOf("subscription")) { sessionManager, modelStorage ->
+        SubscriptionsViewModel(sessionManager, modelStorage)
     }
 }
 
@@ -427,10 +398,8 @@ fun getUserReactionRecordsViewModel() = customViewModel(
 
 @Composable
 fun getUserCommentsViewModel(): UserCommentsViewModel {
-    return buildByMarkdown { typography, density ->
-        customViewModel(listOf("user-comments")) { sessionManager, modelStorage ->
-            UserCommentsViewModel(sessionManager, modelStorage, typography.code, typography.inlineCode, density)
-        }
+    return customViewModel(listOf("user-comments")) { sessionManager, modelStorage ->
+        UserCommentsViewModel(sessionManager, modelStorage)
     }
 }
 

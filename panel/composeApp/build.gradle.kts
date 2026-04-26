@@ -76,10 +76,6 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)
 
-            implementation(libs.jlatexmath.android)
-            implementation(libs.jlatexmath.android.font.cyrillic)
-            implementation(libs.jlatexmath.android.font.greek)
-
             implementation(libs.androidx.media3.exoplayer)
             implementation(libs.androidx.media3.exoplayer.dash)
             implementation(libs.androidx.media3.exoplayer.hls)
@@ -181,7 +177,6 @@ kotlin {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
 
-            implementation(libs.jlatexmath)
             implementation(libs.vlcj)
             implementation(libs.jlayer)
             implementation(libs.androidx.datastore.preferences.core)

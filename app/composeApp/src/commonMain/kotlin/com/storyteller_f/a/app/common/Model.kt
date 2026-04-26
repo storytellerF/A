@@ -26,7 +26,6 @@ import com.storyteller_f.a.app.core.common.SectionPagingSource
 import com.storyteller_f.a.app.core.common.SimpleViewModel
 import com.storyteller_f.a.app.core.common.buildPager
 import com.storyteller_f.a.app.core.components.DialogSaveState
-import com.storyteller_f.a.app.core.components.generateMathIfNeed
 import com.storyteller_f.a.app.core.utils.SavedSession
 import com.storyteller_f.a.app.core.utils.loadFontFromLocal
 import com.storyteller_f.a.client.core.ClientSessionState
@@ -277,9 +276,6 @@ class UserJoinedRoomsViewModel(
 class WorldViewModel(
     val sessionManager: UserSessionManager,
     modelStorage: ModelStorage,
-    codeTextStyle: TextStyle,
-    inlineCodeTextStyle: TextStyle,
-    density: Density,
 ) : PagingViewModel<TopicInfo>() {
     private val modelCollection = TopicCollection.Recommend
 
@@ -300,8 +296,6 @@ class WorldViewModel(
         )
     ).flow.map { pagingData ->
         pagingData.map {
-            generateMathIfNeed(it, codeTextStyle, inlineCodeTextStyle, density)
-        }.map {
             extractHeadlineIfPlain(it)
         }
     }.cachedIn(viewModelScope)
@@ -313,9 +307,6 @@ class TopicsViewModel(
     modelStorage: ModelStorage,
     id: PrimaryKey,
     type: ObjectType,
-    codeTextStyle: TextStyle,
-    inlineCodeTextStyle: TextStyle,
-    density: Density,
 ) : PagingViewModel<TopicInfo>() {
     private val modelCollection = TopicCollection.ChildTopicList(id)
 
@@ -351,9 +342,7 @@ class TopicsViewModel(
         WrappedPagingSource(
             CompatPagingSource(modelStorage.topic.observeData(modelCollection), IntKeyConverter)
         ) { topicInfos ->
-            processEncryptedTopic(topicInfos, sessionManager).map {
-                generateMathIfNeed(it, codeTextStyle, inlineCodeTextStyle, density)
-            }.map { topicInfo ->
+            processEncryptedTopic(topicInfos, sessionManager).map { topicInfo ->
                 extractHeadlineIfPlain(topicInfo)
             }
         }
@@ -594,9 +583,6 @@ class IdTopicViewModel(
     sessionManager: UserSessionManager,
     modelStorage: ModelStorage,
     topicId: PrimaryKey,
-    codeTextStyle: TextStyle,
-    inlineCodeTextStyle: TextStyle,
-    density: Density
 ) : TopicViewModel() {
     override val handler: LoadingHandler<TopicInfo> =
         CachedLoadingHandler(
@@ -607,9 +593,7 @@ class IdTopicViewModel(
             }
         ) {
             sessionManager.getTopicInfo(topicId).map { topicInfo ->
-                processEncryptedTopic(listOf(topicInfo), sessionManager).map {
-                    generateMathIfNeed(it, codeTextStyle, inlineCodeTextStyle, density)
-                }.first()
+                processEncryptedTopic(listOf(topicInfo), sessionManager).first()
             }
         }
 }
@@ -618,9 +602,6 @@ class AidTopicViewModel(
     sessionManager: UserSessionManager,
     modelStorage: ModelStorage,
     aid: String,
-    codeTextStyle: TextStyle,
-    inlineCodeTextStyle: TextStyle,
-    density: Density
 ) : TopicViewModel() {
     override val handler: LoadingHandler<TopicInfo> = CachedLoadingHandler(
         modelStorage.topic.observeDatum(aid),
@@ -630,9 +611,7 @@ class AidTopicViewModel(
         }
     ) {
         sessionManager.getTopicInfoByAid(aid).map { topicInfo ->
-            processEncryptedTopic(listOf(topicInfo), sessionManager).map {
-                generateMathIfNeed(it, codeTextStyle, inlineCodeTextStyle, density)
-            }.first()
+            processEncryptedTopic(listOf(topicInfo), sessionManager).first()
         }
     }
 }
@@ -848,9 +827,6 @@ class FavoritesViewModel(sessionManager: UserSessionManager, modelStorage: Model
 class SubscriptionsViewModel(
     sessionManager: UserSessionManager,
     modelStorage: ModelStorage,
-    textStyle: TextStyle,
-    inlineCodeTextStyle: TextStyle,
-    density: Density,
 ) : PagingViewModel<UserSubscriptionInfo>() {
 
     private val collection = UserSubscriptionCollection.UserSubscriptions(0)
@@ -871,9 +847,7 @@ class SubscriptionsViewModel(
                 val extensions = subscriptionInfo.extensions
                 val topicInfo = extensions?.topicInfo
                 if (topicInfo != null) {
-                    val newTopic = processEncryptedTopic(listOf(topicInfo), sessionManager).map {
-                        generateMathIfNeed(it, textStyle, inlineCodeTextStyle, density)
-                    }.first()
+                    val newTopic = processEncryptedTopic(listOf(topicInfo), sessionManager).first()
                     subscriptionInfo.copy(extensions = extensions.copy(topicInfo = newTopic))
                 } else {
                     subscriptionInfo
@@ -904,9 +878,6 @@ class UserReactionRecordsViewModel(
 class UserCommentsViewModel(
     sessionManager: UserSessionManager,
     modelStorage: ModelStorage,
-    textStyle: TextStyle,
-    inlineCodeTextStyle: TextStyle,
-    density: Density,
 ) : PagingViewModel<TopicInfo>() {
 
     val collection = TopicCollection.UserComments(0)
@@ -923,9 +894,7 @@ class UserCommentsViewModel(
         WrappedPagingSource(
             CompatPagingSource(modelStorage.topic.observeData(collection), IntKeyConverter)
         ) { list ->
-            processEncryptedTopic(list, sessionManager).map {
-                generateMathIfNeed(it, textStyle, inlineCodeTextStyle, density)
-            }
+            processEncryptedTopic(list, sessionManager)
         }
     }.flow.cachedIn(viewModelScope)
 }
