@@ -70,6 +70,10 @@ sealed class SettingOption(open val value: String?) {
     data class Icon(override val value: String?) : SettingOption(value)
     data class Poster(override val value: String?) : SettingOption(value)
     data class RoomIcon(override val value: String?, val roomId: PrimaryKey?) : SettingOption(value)
+    data class ContentFont(override val value: String?) : SettingOption(value)
+    data class CodeFont(override val value: String?) : SettingOption(value)
+    data class FallbackFont(override val value: String?) : SettingOption(value)
+    data class JsonPreview(override val value: String?) : SettingOption(value)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

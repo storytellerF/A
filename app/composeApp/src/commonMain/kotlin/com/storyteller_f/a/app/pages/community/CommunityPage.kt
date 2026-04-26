@@ -33,7 +33,6 @@ import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -131,28 +130,49 @@ fun CommunityPage(
 
 @Composable
 fun getCommunityFont(communityId: PrimaryKey): Typography {
-    val fontFamily by getFontFamily(communityId)
+    val fontSettings = getFontSettings(communityId)
     val typography = MaterialTheme.typography
+    val defaultFont = fontSettings.contentFontFamily ?: fontSettings.fallbackFontFamily
     return typography.copy(
-        bodyLarge = typography.bodyLarge.copy(fontFamily = fontFamily ?: typography.bodyLarge.fontFamily),
-        bodyMedium = typography.bodyMedium.copy(fontFamily = fontFamily ?: typography.bodyMedium.fontFamily),
-        bodySmall = typography.bodySmall.copy(fontFamily = fontFamily ?: typography.bodySmall.fontFamily)
+        bodyLarge = typography.bodyLarge.copy(fontFamily = defaultFont ?: typography.bodyLarge.fontFamily),
+        bodyMedium = typography.bodyMedium.copy(fontFamily = defaultFont ?: typography.bodyMedium.fontFamily),
+        bodySmall = typography.bodySmall.copy(fontFamily = defaultFont ?: typography.bodySmall.fontFamily)
     )
 }
 
+data class CommunityFontSettings(
+    val contentFontFamily: FontFamily? = null,
+    val codeFontFamily: FontFamily? = null,
+    val fallbackFontFamily: FontFamily? = null,
+)
+
 @Composable
-fun getFontFamily(communityId: PrimaryKey): State<FontFamily?> {
+fun getFontSettings(communityId: PrimaryKey): CommunityFontSettings {
     val model = createCommunityViewModel(communityId)
     val community by model.handler.data.collectAsState()
-    val fileInfo = community?.font
-    val downloadViewModel = getDownloadViewModel(fileInfo?.id)
+    val fontSettings = community?.fontSettings
+    val contentDownloadViewModel = fontSettings?.settings?.contentFontId?.let { getDownloadViewModel(it) }
+    val codeDownloadViewModel = fontSettings?.settings?.codeFontId?.let { getDownloadViewModel(it) }
+    val fallbackDownloadViewModel = fontSettings?.settings?.fallbackFontId?.let { getDownloadViewModel(it) }
     val provider = LocalClientFileProvider.current
-    LaunchedEffect(fileInfo) {
-        if (fileInfo != null) {
-            provider.getDownloader()?.download(fileInfo)
+
+    LaunchedEffect(fontSettings) {
+        fontSettings?.settings?.contentFontId?.let { id ->
+            fontSettings.contentFont?.let { provider.getDownloader()?.download(it) }
+        }
+        fontSettings?.settings?.codeFontId?.let { id ->
+            fontSettings.codeFont?.let { provider.getDownloader()?.download(it) }
+        }
+        fontSettings?.settings?.fallbackFontId?.let { id ->
+            fontSettings.fallbackFont?.let { provider.getDownloader()?.download(it) }
         }
     }
-    return downloadViewModel.fontFamily.collectAsState()
+
+    return CommunityFontSettings(
+        contentFontFamily = contentDownloadViewModel?.fontFamily?.collectAsState()?.value,
+        codeFontFamily = codeDownloadViewModel?.fontFamily?.collectAsState()?.value,
+        fallbackFontFamily = fallbackDownloadViewModel?.fontFamily?.collectAsState()?.value,
+    )
 }
 
 @Serializable
@@ -456,7 +476,13 @@ fun CommunityDialogInternal(communityInfo: CommunityInfo, dismiss: () -> Unit) {
                 Text(communityInfo.name)
             }
         }
-        communityInfo.font?.let {
+        communityInfo.fontSettings?.contentFont?.let {
+            FontView(it)
+        }
+        communityInfo.fontSettings?.codeFont?.let {
+            FontView(it)
+        }
+        communityInfo.fontSettings?.fallbackFont?.let {
             FontView(it)
         }
         CommunityMenus(communityId, communityInfo, dismiss)

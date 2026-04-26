@@ -21,7 +21,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.AppGlobalDialogController
+import com.storyteller_f.a.app.LocalAppNavFactory
 import com.storyteller_f.a.app.LocalGlobalDialog
+import com.storyteller_f.a.app.Res
 import com.storyteller_f.a.app.common.OnCommunityUpdated
 import com.storyteller_f.a.app.common.createCommunityViewModel
 import com.storyteller_f.a.app.components.SettingOptionResettableView
@@ -30,6 +32,7 @@ import com.storyteller_f.a.app.core.components.CommunityPoster
 import com.storyteller_f.a.app.core.components.LocalToaster
 import com.storyteller_f.a.app.core.components.emitEvent
 import com.storyteller_f.a.app.core.components.request
+import com.storyteller_f.a.app.font_settings
 import com.storyteller_f.a.app.pages.user.ObjectSettingDialog
 import com.storyteller_f.a.app.pages.user.SettingOption
 import com.storyteller_f.a.client.core.updateCommunityInfo
@@ -37,6 +40,7 @@ import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -87,6 +91,7 @@ fun CommunitySettingPage(communityId: PrimaryKey) {
     }
 }
 
+@Suppress("LongMethod")
 @Composable
 private fun CommunitySettingInternal(
     values: PaddingValues,
@@ -96,6 +101,7 @@ private fun CommunitySettingInternal(
     val toasterState = LocalToaster.current
     val scope = rememberCoroutineScope()
     val globalDialogController = LocalGlobalDialog.current
+    val appNavFactory = LocalAppNavFactory.current
     Column(modifier = Modifier.padding(horizontal = 20.dp).padding(values)) {
         SettingOptionResettableView(
             "Icon",
@@ -147,6 +153,11 @@ private fun CommunitySettingInternal(
         }, {
             Text(aid)
         })
+        SettingOptionView(stringResource(Res.string.font_settings), {
+            appNavFactory.newAppNav().gotoFontSettingsPage(communityInfo.id)
+        }) {
+            Text("Content / Code / Fallback", textDecoration = TextDecoration.Underline)
+        }
     }
 }
 

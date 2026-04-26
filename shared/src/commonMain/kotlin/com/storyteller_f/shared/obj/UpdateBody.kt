@@ -1,5 +1,6 @@
 package com.storyteller_f.shared.obj
 
+import com.storyteller_f.shared.model.FontSettings
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.serialization.Serializable
 
@@ -10,7 +11,12 @@ data class UpdateUserBody(val nickname: String? = null, val avatar: PrimaryKey? 
 data class UpdateUserRead(val objectTuple: ObjectTuple, val topicId: PrimaryKey)
 
 @Serializable
-data class UpdateCommunityBody(val name: String? = null, val icon: PrimaryKey? = null, val poster: PrimaryKey? = null)
+data class UpdateCommunityBody(
+    val name: String? = null,
+    val icon: PrimaryKey? = null,
+    val poster: PrimaryKey? = null,
+    val fontSettings: FontSettings? = null,
+)
 
 @Serializable
 data class UpdateRoomBody(val name: String? = null, val icon: PrimaryKey? = null)

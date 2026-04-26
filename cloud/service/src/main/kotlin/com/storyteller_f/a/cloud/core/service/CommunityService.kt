@@ -28,6 +28,7 @@ import com.storyteller_f.a.backend.core.types.toMemberInfo
 import com.storyteller_f.a.backend.core.types.toNestedMemberInfo
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.Dimension
+import com.storyteller_f.shared.model.FontSettingsWithInfo
 import com.storyteller_f.shared.model.MemberInfo
 import com.storyteller_f.shared.model.MemberPolicy
 import com.storyteller_f.shared.model.PosterSearch
@@ -306,7 +307,12 @@ suspend fun Backend.updateCommunity(
     old: UpdateCommunityBody,
     uid: PrimaryKey
 ): Result<CommunityInfo?> {
-    val newCommunity = old.copy(name = old.name?.trim(), icon = old.icon, poster = old.poster)
+    val newCommunity = old.copy(
+        name = old.name?.trim(),
+        icon = old.icon,
+        poster = old.poster,
+        fontSettings = old.fontSettings,
+    )
     return checkCommunityAdminPermission(id, uid).mapResultIfNotNull {
         checkBeforeUpdateCommunity(newCommunity)
     }.mapResultIfNotNull {
@@ -329,10 +335,30 @@ private suspend fun Backend.checkBeforeUpdateCommunity(
         checkCommunityNameForUpdate(newCommunity).getOrThrow()
         checkCommunityIconForUpdate(newCommunity).getOrThrow()
         checkCommunityPosterForUpdate(newCommunity).getOrThrow()
+        checkCommunityFontSettingsForUpdate(newCommunity).getOrThrow()
     }.exceptionOrNull()?.let {
         return Result.failure(it)
     }
     return UNIT_RESULT
+}
+
+private suspend fun Backend.checkCommunityFontSettingsForUpdate(newCommunity: UpdateCommunityBody): Result<Unit> {
+    val fontSettings = newCommunity.fontSettings ?: return UNIT_RESULT
+    val fontIds = listOfNotNull(
+        fontSettings.contentFontId,
+        fontSettings.codeFontId,
+        fontSettings.fallbackFontId,
+    )
+    if (fontIds.isEmpty()) return UNIT_RESULT
+    return database.file.getFileRecordByIds(fontIds).mapResult { files ->
+        val foundIds = files.map { it.id }.toSet()
+        val missingId = fontIds.firstOrNull { it !in foundIds }
+        if (missingId != null) {
+            Result.failure<Unit>(CustomBadRequestException("font file not found: $missingId"))
+        } else {
+            UNIT_RESULT
+        }
+    }
 }
 
 private suspend fun Backend.checkCommunityPosterForUpdate(newCommunity: UpdateCommunityBody): Result<Unit> =
@@ -376,15 +402,26 @@ suspend fun Backend.processRawCommunityToCommunityInfo(
     list: List<RawCommunity>,
 ): Result<List<CommunityInfo>?> {
     return database.file.getFileRecordByIds(list.flatMap { (community) ->
-        listOf(community.iconId, community.posterId, community.fontId)
+        community.fontSettings?.let { fs ->
+            listOfNotNull(fs.contentFontId, fs.codeFontId, fs.fallbackFontId)
+        }.orEmpty() + listOf(community.iconId, community.posterId)
     }.filterNotNull()).mapResultIfNotNull { medias ->
         processFileRecordToFileInfo(medias).map { mediaList ->
             val map = mediaList.associateBy { it.id }
             list.map { rawResult ->
+                val fs = rawResult.community.fontSettings
+                val fontSettingsWithInfo = fs?.let {
+                    FontSettingsWithInfo(
+                        settings = it,
+                        contentFont = it.contentFontId?.let { id -> map[id] },
+                        codeFont = it.codeFontId?.let { id -> map[id] },
+                        fallbackFont = it.fallbackFontId?.let { id -> map[id] },
+                    )
+                }
                 rawResult.toCommunityIfo(
                     rawResult.community.iconId?.let { map[it] },
                     rawResult.community.posterId?.let { map[it] },
-                    rawResult.community.fontId?.let { map[it] }
+                    fontSettingsWithInfo,
                 )
             }
         }

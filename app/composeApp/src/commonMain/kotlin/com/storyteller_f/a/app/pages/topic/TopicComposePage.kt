@@ -72,8 +72,7 @@ import com.storyteller_f.a.app.core.components.rememberAlertDialogController
 import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.app.core.components.safeArea
 import com.storyteller_f.a.app.edit
-import com.storyteller_f.a.app.pages.community.getCommunityFont
-import com.storyteller_f.a.app.pages.community.getFontFamily
+import com.storyteller_f.a.app.pages.community.getFontSettings
 import com.storyteller_f.a.app.pages.room.RoomSendButton
 import com.storyteller_f.a.app.preview
 import com.storyteller_f.a.app.raw
@@ -165,7 +164,14 @@ fun TopicComposePage(
 @Composable
 private fun getCommunityTypography(data: TopicComposeData): Typography? =
     (data as? TopicComposeData.PublicRoom)?.communityId?.let {
-        getCommunityFont(it)
+        val fontSettings = getFontSettings(it)
+        val typography = MaterialTheme.typography
+        val defaultFont = fontSettings.contentFontFamily ?: fontSettings.fallbackFontFamily
+        typography.copy(
+            bodyLarge = typography.bodyLarge.copy(fontFamily = defaultFont ?: typography.bodyLarge.fontFamily),
+            bodyMedium = typography.bodyMedium.copy(fontFamily = defaultFont ?: typography.bodyMedium.fontFamily),
+            bodySmall = typography.bodySmall.copy(fontFamily = defaultFont ?: typography.bodySmall.fontFamily)
+        )
     }
 
 @Composable
@@ -445,6 +451,7 @@ fun EditTopicPage(input: String, data: TopicComposeData, updateInput: (String) -
 @Composable
 private fun getFontFamily(data: TopicComposeData): FontFamily? {
     return (data as? TopicComposeData.PublicRoom)?.communityId?.let {
-        getFontFamily(it).value
+        val fontSettings = getFontSettings(it)
+        fontSettings.codeFontFamily ?: fontSettings.contentFontFamily
     }
 }

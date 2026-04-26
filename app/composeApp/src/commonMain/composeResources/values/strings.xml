@@ -129,4 +129,5 @@
     <string name="name">name</string>
     <string name="aid">aid</string>
     <string name="member_join_policy">Member join policy</string>
+    <string name="font_settings">Font Settings</string>
 </resources>

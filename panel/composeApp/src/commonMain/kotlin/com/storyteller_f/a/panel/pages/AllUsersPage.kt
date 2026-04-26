@@ -201,6 +201,7 @@ fun AddUserInternal(dismiss: () -> Unit) {
     }
 }
 
+@Suppress("LongMethod")
 @Composable
 private fun AddUserPrivateKeyPage(
     addUserViewModel: AddUserViewModel,

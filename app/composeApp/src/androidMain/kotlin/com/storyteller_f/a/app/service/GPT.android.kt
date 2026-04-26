@@ -1,8 +1,8 @@
 package com.storyteller_f.a.app.service
 
+import com.google.ai.edge.litertlm.Backend.GPU
 import com.google.ai.edge.litertlm.Engine
 import com.google.ai.edge.litertlm.EngineConfig
-import com.google.ai.edge.litertlm.Backend.GPU
 import com.storyteller_f.shared.getAppContextRefValue
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
@@ -27,8 +27,8 @@ class AndroidEdgeGPT : GPT {
     override val supportList: List<String> = listOf("litertlm")
 
     override suspend fun generate(path: String, prompt: String): Result<Flow<GPTOutput>> {
-        val application = getAppContextRefValue() ?:
-            return Result.failure(UnsupportedOperationException())
+        val application = getAppContextRefValue()
+            ?: return Result.failure(UnsupportedOperationException())
         val file = File(path)
         if (!file.exists()) {
             return Result.failure(Exception("modal not exists"))

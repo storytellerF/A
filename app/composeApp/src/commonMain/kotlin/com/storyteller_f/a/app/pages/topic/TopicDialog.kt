@@ -236,7 +236,15 @@ fun TopicTranslateSheet(
             val preferenceData: StateFlow<String> by getPreference("gpt_model")
             val currentModel by preferenceData.collectAsState()
             val content = topicInfo.content
-            Box(modifier = Modifier.height(200.dp).padding(horizontal = 20.dp).padding(bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()).fillMaxWidth()) {
+            Box(
+                modifier = Modifier.height(
+                    200.dp
+                ).padding(
+                    horizontal = 20.dp
+                ).padding(
+                    bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                ).fillMaxWidth()
+            ) {
                 if (content is TopicContent.Plain) {
                     // TODO 转成ViewModel
                     val result by produceState<Result<Flow<GPTOutput>>?>(

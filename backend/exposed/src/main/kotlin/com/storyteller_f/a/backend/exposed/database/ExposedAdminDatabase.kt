@@ -25,6 +25,8 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.md5
 import com.storyteller_f.shared.utils.now
 import kotlinx.coroutines.flow.toList
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.statements.api.ExposedBlob
@@ -33,6 +35,9 @@ import org.jetbrains.exposed.v1.r2dbc.insert
 import org.jetbrains.exposed.v1.r2dbc.select
 
 class ExposedAdminDatabase(val databaseSession: ExposedDatabaseSession) : AdminDatabase {
+
+    private val json = Json { ignoreUnknownKeys = true }
+
     override suspend fun batchAddUser(users: List<User>) {
         databaseSession.dbQuery {
             Users.batchInsert(users) {
@@ -64,7 +69,9 @@ class ExposedAdminDatabase(val databaseSession: ExposedDatabaseSession) : AdminD
                 this[Communities.name] = it.name
                 this[Communities.icon] = it.iconId
                 this[Communities.owner] = it.owner
-                this[Communities.fontId] = it.fontId
+                it.fontSettings?.let { fs ->
+                    this[Communities.fontSettings] = json.encodeToString(fs)
+                }
                 this[Communities.memberPolicy] = it.memberPolicy
             }
             Aids.batchInsert(communities) {

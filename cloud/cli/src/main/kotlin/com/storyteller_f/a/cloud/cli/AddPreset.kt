@@ -37,6 +37,7 @@ import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.FileInfo
+import com.storyteller_f.shared.model.FontSettings
 import com.storyteller_f.shared.model.MemberPolicy
 import com.storyteller_f.shared.model.PassType
 import com.storyteller_f.shared.model.TitleWorkStatus
@@ -465,7 +466,7 @@ class AddPreset : Subcommand("add", "add entry") {
                 userMap[it.community.getSafeAdmin()]!!.id,
                 MemberPolicy.OPEN,
                 it.icon,
-                fontId = it.font,
+                fontSettings = it.fontSettings,
             )
         }
         val memberList = getCommunityMembers(data, userMap)
@@ -537,12 +538,13 @@ class AddPreset : Subcommand("add", "add entry") {
                 fileRefs.add(Triple(uploadFile, id, it.getSafeAdmin()))
                 uploadFile.id
             }
-            val fontMedia = if (font == null) {
+            val fontSettings = if (font == null) {
                 null
             } else {
-                backend.getFileInfoList(listOf("100/$font")).getOrThrow()?.firstOrNull()?.id
+                val fontMediaId = backend.getFileInfoList(listOf("100/$font")).getOrThrow()?.firstOrNull()?.id
+                fontMediaId?.let { fontId -> FontSettings(contentFontId = fontId) }
             }
-            InsertCommunityTuple(it, iconMedia, id, fontMedia, now())
+            InsertCommunityTuple(it, iconMedia, id, fontSettings, now())
         }
         return tuples to fileRefs
     }
@@ -1020,7 +1022,11 @@ internal suspend fun downloadPresetFileIfNeed(
             downloadWithResume(config.link, realPath, client)
         }
 
-        repackArchiveWithExclusionsAndInclusionsInPlace(realPath, config.excludeArchiveEntries, config.includeArchiveEntries)
+        repackArchiveWithExclusionsAndInclusionsInPlace(
+            realPath,
+            config.excludeArchiveEntries,
+            config.includeArchiveEntries
+        )
     } else {
         null
     }
@@ -1064,7 +1070,12 @@ private fun unzipToDirectory(zipFile: File, outputDir: File) {
     }
 }
 
-private fun zipDirectoryWithFilter(sourceDir: File, targetZip: File, excludeGlobs: List<String>, includeGlobs: List<String>) {
+private fun zipDirectoryWithFilter(
+    sourceDir: File,
+    targetZip: File,
+    excludeGlobs: List<String>,
+    includeGlobs: List<String>
+) {
     ZipOutputStream(BufferedOutputStream(targetZip.outputStream())).use { zos ->
         sourceDir.walkTopDown().filter { it.isFile }.forEach { file ->
             val relative = sourceDir.toPath().relativize(file.toPath()).toString().replace('\\', '/')
@@ -1083,7 +1094,11 @@ private fun zipDirectoryWithFilter(sourceDir: File, targetZip: File, excludeGlob
     }
 }
 
-internal fun repackArchiveWithExclusionsAndInclusionsInPlace(zipFile: File, excludeGlobs: List<String>, includeGlobs: List<String>): File {
+internal fun repackArchiveWithExclusionsAndInclusionsInPlace(
+    zipFile: File,
+    excludeGlobs: List<String>,
+    includeGlobs: List<String>
+): File {
     if ((excludeGlobs.isEmpty() && includeGlobs.isEmpty()) || !zipFile.name.endsWith(".zip", ignoreCase = true)) {
         return zipFile
     }

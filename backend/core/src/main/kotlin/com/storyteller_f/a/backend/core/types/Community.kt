@@ -2,6 +2,8 @@ package com.storyteller_f.a.backend.core.types
 
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.FileInfo
+import com.storyteller_f.shared.model.FontSettings
+import com.storyteller_f.shared.model.FontSettingsWithInfo
 import com.storyteller_f.shared.model.MemberPolicy
 import com.storyteller_f.shared.model.NestedMemberInfo
 import com.storyteller_f.shared.type.ObjectStatus
@@ -17,7 +19,7 @@ class Community(
     val memberPolicy: MemberPolicy,
     val iconId: PrimaryKey? = null,
     val posterId: PrimaryKey? = null,
-    val fontId: PrimaryKey? = null,
+    val fontSettings: FontSettings? = null,
     val status: ObjectStatus = ObjectStatus.NORMAL,
 ) {
     val readOnly get() = status == ObjectStatus.READ_ONLY
@@ -27,7 +29,7 @@ class Community(
 fun RawCommunity.toCommunityIfo(
     icon: FileInfo? = null,
     poster: FileInfo? = null,
-    font: FileInfo? = null,
+    fontSettingsWithInfo: FontSettingsWithInfo? = null,
 ) = CommunityInfo(
     community.id,
     community.aid,
@@ -44,7 +46,7 @@ fun RawCommunity.toCommunityIfo(
     icon = icon,
     poster = poster,
     hasPoster = poster != null,
-    font = font,
+    fontSettings = fontSettingsWithInfo,
     favoriteId = favoriteId,
     subscriptionId = subscriptionId,
     status = community.status,

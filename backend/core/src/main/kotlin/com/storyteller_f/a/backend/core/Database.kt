@@ -30,6 +30,7 @@ import com.storyteller_f.a.backend.core.types.UserLog
 import com.storyteller_f.a.backend.core.types.UserSubscription
 import com.storyteller_f.a.backend.core.types.UserTopicRead
 import com.storyteller_f.shared.model.AlgoType
+import com.storyteller_f.shared.model.FontSettings
 import com.storyteller_f.shared.model.NestedMemberInfo
 import com.storyteller_f.shared.model.PosterSearch
 import com.storyteller_f.shared.model.QuotaInfo
@@ -153,7 +154,7 @@ class InsertCommunityTuple(
     val community: PresetCommunity,
     val icon: PrimaryKey?,
     val id: PrimaryKey,
-    val font: PrimaryKey?,
+    val fontSettings: FontSettings?,
     val createdTime: LocalDateTime
 )
 
