@@ -2,6 +2,8 @@ package com.storyteller_f.a.app.pages.title
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
+import com.storyteller_f.a.api.NewTitle
+import com.storyteller_f.a.app.AppGlobalDialogController
 import com.storyteller_f.a.app.LocalAppNavFactory
 import com.storyteller_f.a.app.LocalGlobalDialog
 import com.storyteller_f.a.app.LocalUserInfo
@@ -10,12 +12,10 @@ import com.storyteller_f.a.app.common.createTitleComposeViewModel
 import com.storyteller_f.a.app.core.components.emitEvent
 import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.client.core.createTitle
+import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.a.app.AppGlobalDialogController
-import com.storyteller_f.shared.model.TitleInfo
-import com.storyteller_f.a.api.NewTitle
 import kotlinx.coroutines.launch
 
 @Composable

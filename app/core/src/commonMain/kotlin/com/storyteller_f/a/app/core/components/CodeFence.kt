@@ -2,9 +2,9 @@ package com.storyteller_f.a.app.core.components
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import com.eygraber.uri.Uri
 import com.hrm.latex.renderer.Latex
 import com.hrm.latex.renderer.model.LatexConfig
-import com.eygraber.uri.Uri
 import com.mikepenz.markdown.compose.LocalMarkdownTypography
 import com.mikepenz.markdown.compose.components.MarkdownComponentModel
 import com.mikepenz.markdown.compose.elements.highlightedCodeFence
