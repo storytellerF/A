@@ -78,6 +78,7 @@ private fun HomeStartDestinationPreferenceItem() {
     )
 }
 
+@Suppress("LongMethod")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TranslateModelPreferenceItem() {

@@ -22,6 +22,7 @@ import com.storyteller_f.a.app.pages.PreferencePage
 import com.storyteller_f.a.app.pages.community.CommunityComposePage
 import com.storyteller_f.a.app.pages.community.CommunityPage
 import com.storyteller_f.a.app.pages.community.CommunitySettingPage
+import com.storyteller_f.a.app.pages.community.FontSettingsPage
 import com.storyteller_f.a.app.pages.file.FileExplorerPage
 import com.storyteller_f.a.app.pages.file.FileRefsPage
 import com.storyteller_f.a.app.pages.file.FileViewPage
@@ -147,6 +148,9 @@ data object RoomComposeScreen : NavKey
 data class CommunitySettingScreen(val communityId: PrimaryKey) : NavKey
 
 @Serializable
+data class FontSettingsScreen(val communityId: PrimaryKey) : NavKey
+
+@Serializable
 data class RoomSettingScreen(val roomId: PrimaryKey) : NavKey
 
 @Serializable
@@ -209,6 +213,7 @@ val appNavSerializersModule = SerializersModule {
         subclass(CommunityComposeScreen::class)
         subclass(RoomComposeScreen::class)
         subclass(CommunitySettingScreen::class)
+        subclass(FontSettingsScreen::class)
         subclass(RoomSettingScreen::class)
         subclass(ReactionListScreen::class)
         subclass(FavoriteScreen::class)
@@ -266,6 +271,8 @@ interface AppNav {
     fun gotoRoomCompose()
 
     fun gotoSettingPage(objectId: PrimaryKey, objectType: ObjectType)
+
+    fun gotoFontSettingsPage(communityId: PrimaryKey)
 
     fun gotoReactionListPage(topicId: PrimaryKey)
 
@@ -426,6 +433,10 @@ fun newAppNav(backStack: NavBackStack<NavKey>) = object : AppNav {
         }
     }
 
+    override fun gotoFontSettingsPage(communityId: PrimaryKey) {
+        backStack.add(FontSettingsScreen(communityId))
+    }
+
     override fun gotoReactionListPage(topicId: PrimaryKey) {
         backStack.add(ReactionListScreen(topicId))
     }
@@ -560,6 +571,9 @@ private fun EntryProviderScope<NavKey>.handleSettingsScreen() {
     }
     entry<CommunitySettingScreen> {
         CommunitySettingPage(it.communityId)
+    }
+    entry<FontSettingsScreen> {
+        FontSettingsPage(it.communityId)
     }
     entry<RoomSettingScreen> {
         RoomSettingPage(it.roomId)

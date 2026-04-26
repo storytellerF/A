@@ -13,8 +13,8 @@ import com.storyteller_f.shared.utils.recoverResult
 import io.github.aakira.napier.Napier
 import io.mikael.urlbuilder.UrlBuilder
 import io.minio.*
+import io.minio.Http.Method
 import io.minio.errors.ErrorResponseException
-import io.minio.http.Method
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.toKotlinLocalDateTime
@@ -88,7 +88,7 @@ class MinIoObjectStorageService(
                         .`object`(it.newFullName)
                         .metadataDirective(Directive.COPY)
                         .taggingDirective(Directive.COPY)
-                        .source(CopySource.builder().bucket(bucketName).`object`(it.originFullName).build())
+                        .source(SourceObject.builder().bucket(bucketName).`object`(it.originFullName).build())
                         .build()
                 ).`object`()
             }
@@ -166,7 +166,7 @@ class MinIoObjectStorageService(
                 makeBucket(MakeBucketArgs.builder().bucket(bucketName).build())
             }
             val sources = sourceFullNames.map {
-                ComposeSource.builder()
+                SourceObject.builder()
                     .bucket(bucketName)
                     .`object`(it)
                     .build()

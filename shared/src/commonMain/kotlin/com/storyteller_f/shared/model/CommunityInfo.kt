@@ -9,6 +9,14 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
 
 @Serializable
+data class FontSettingsWithInfo(
+    val settings: FontSettings,
+    val contentFont: FileInfo? = null,
+    val codeFont: FileInfo? = null,
+    val fallbackFont: FileInfo? = null,
+)
+
+@Serializable
 data class CommunityInfo(
     override val id: PrimaryKey,
     val aid: String,
@@ -24,7 +32,7 @@ data class CommunityInfo(
     val lastRead: PrimaryKey? = null,
     val latestTopic: PrimaryKey? = null,
     val hasPoster: Boolean = poster != null,
-    val font: FileInfo? = null,
+    val fontSettings: FontSettingsWithInfo? = null,
     val favoriteId: PrimaryKey? = null,
     val subscriptionId: PrimaryKey? = null,
     val status: ObjectStatus = ObjectStatus.NORMAL,

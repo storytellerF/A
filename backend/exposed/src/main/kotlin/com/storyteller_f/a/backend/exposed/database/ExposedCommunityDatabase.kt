@@ -30,6 +30,8 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.eq
@@ -47,6 +49,8 @@ class ExposedCommunityDatabase(
     val databaseSession: ExposedDatabaseSession,
     val containerDatabase: ContainerDatabase
 ) : CommunityDatabase {
+
+    private val json = Json { ignoreUnknownKeys = true }
 
     override suspend fun getRawCommunity(
         objectFetch: ObjectFetch,
@@ -128,6 +132,9 @@ class ExposedCommunityDatabase(
                 it[Communities.owner] = community.owner
                 it[Communities.createdTime] = community.createdTime
                 it[Communities.memberPolicy] = community.memberPolicy
+                community.fontSettings?.let { fs ->
+                    it[Communities.fontSettings] = json.encodeToString(fs)
+                }
             }.insertedCount > 0) {
                 "insert community failed"
             }
@@ -190,7 +197,8 @@ class ExposedCommunityDatabase(
         val newIcon = body.icon
         val newName = body.name
         val newPoster = body.poster
-        if (!newName.isNullOrBlank() || newIcon != null || newPoster != null) {
+        val newFontSettings = body.fontSettings
+        if (!newName.isNullOrBlank() || newIcon != null || newPoster != null || newFontSettings != null) {
             Communities.update({
                 Communities.id eq id
             }) {
@@ -202,6 +210,9 @@ class ExposedCommunityDatabase(
                 }
                 if (newPoster != null) {
                     it[Communities.poster] = newPoster
+                }
+                if (newFontSettings != null) {
+                    it[Communities.fontSettings] = json.encodeToString(newFontSettings)
                 }
             } > 0
         } else {

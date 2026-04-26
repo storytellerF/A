@@ -130,6 +130,7 @@ fun PrivateKeyDialog(
     }
 }
 
+@Suppress("LongMethod")
 @Composable
 fun PrivateKeyEditor(
     privateKey: String,
@@ -159,7 +160,7 @@ fun PrivateKeyEditor(
                 color = androidx.compose.ui.graphics.Color.Red,
                 modifier = Modifier.padding(top = 8.dp)
             )
-        }        
+        }
 
         PrivateKeyTools(currentKey, enableRandom, algo) {
             currentKey = it

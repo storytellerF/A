@@ -50,6 +50,8 @@ import com.storyteller_f.shared.obj.UpdateObjectStatusBody
 import com.storyteller_f.shared.type.ObjectStatus
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -146,7 +148,12 @@ private fun CommunityBasicInfoSection(id: PrimaryKey) {
             add("poster" to (info.poster?.name ?: "null"))
             add("latestTopic" to (info.latestTopic?.toString() ?: "null"))
             add("hasPoster" to info.hasPoster.toString())
-            add("font" to (info.font?.name ?: "null"))
+            add("fontSettings" to (info.fontSettings?.let {
+                Json { prettyPrint = false }.encodeToString(
+                    com.storyteller_f.shared.model.FontSettings.serializer(),
+                    it.settings
+                )
+            } ?: "null"))
             add("readOnly" to info.readOnly.toString())
         }
         Column {

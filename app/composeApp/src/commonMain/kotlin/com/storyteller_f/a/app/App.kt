@@ -581,6 +581,8 @@ private fun createAppNavFactoryForBubble(): AppNavFactory = object : AppNavFacto
 
         override fun gotoSettingPage(objectId: PrimaryKey, objectType: ObjectType) = Unit
 
+        override fun gotoFontSettingsPage(communityId: PrimaryKey) = Unit
+
         override fun gotoReactionListPage(topicId: PrimaryKey) = Unit
 
         override fun gotoFavoritePage() = Unit

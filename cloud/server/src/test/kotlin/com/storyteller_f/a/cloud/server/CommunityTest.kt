@@ -19,7 +19,9 @@ import com.storyteller_f.a.client.core.getUserCommunities
 import com.storyteller_f.a.client.core.getUserJoinedCommunities
 import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.a.client.core.searchCommunityTopics
+import com.storyteller_f.a.client.core.updateCommunityInfo
 import com.storyteller_f.shared.model.CommunityInfo
+import com.storyteller_f.shared.model.FontSettings
 import com.storyteller_f.shared.model.MemberPolicy
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.type.ObjectType
@@ -230,6 +232,24 @@ class CommunityTest {
             // 测试获取社区中的所有房间
             val rooms = getCommunityRooms(communityId, CustomApi.Communities.Id.Rooms.CommunityRoomQuery())
             assertListSize(0, rooms)
+        }
+    }
+
+    @Test
+    fun `test update community font settings`() = test {
+        val firstTuple = attachSession {
+            createCommunityForTest().id
+        }
+        val communityId = firstTuple.custom
+        loginSession(firstTuple) {
+            // Test setting empty font settings
+            val fontSettings = FontSettings()
+            val updatedInfo = updateCommunityInfo(
+                communityId,
+                com.storyteller_f.shared.obj.UpdateCommunityBody(fontSettings = fontSettings)
+            ).getOrThrow()
+            assertNotNull(updatedInfo.fontSettings)
+            assertEquals(fontSettings, updatedInfo.fontSettings!!.settings)
         }
     }
 }
