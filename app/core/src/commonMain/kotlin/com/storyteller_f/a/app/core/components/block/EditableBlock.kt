@@ -1,0 +1,576 @@
+package com.storyteller_f.a.app.core.components.block
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DragIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+
+/**
+ * 可编辑的 Block 组件
+ * 每个 Block 在聚焦时显示为编辑模式，失焦时显示为渲染后的预览
+ */
+@Composable
+fun EditableBlock(
+    block: ContentBlock,
+    isFocused: Boolean,
+    onContentChange: (String) -> Unit,
+    onFocusChange: (Boolean) -> Unit,
+    onDelete: () -> Unit,
+    onAddBlockBefore: () -> Unit,
+    onAddBlockAfter: () -> Unit,
+    onChangeBlockType: (ContentBlock) -> Unit
+) {
+    var showTypeMenu by remember { mutableStateOf(false) }
+
+    Surface(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column {
+            // Block 操作行
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // 添加按钮
+                IconButton(
+                    onClick = { onAddBlockBefore() },
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(Icons.Default.Add, "Add block before", modifier = Modifier.size(16.dp))
+                }
+
+                // 拖拽图标
+                Icon(
+                    Icons.Default.DragIndicator,
+                    "Drag to reorder",
+                    modifier = Modifier.size(20.dp)
+                )
+
+                // 编辑/预览区域
+                Box(modifier = Modifier.weight(1f)) {
+                    when (block) {
+                        is ContentBlock.Paragraph -> EditableParagraphBlock(
+                            block = block,
+                            isFocused = isFocused,
+                            onContentChange = onContentChange,
+                            onFocusChange = onFocusChange
+                        )
+
+                        is ContentBlock.ListItem -> EditableListItemBlock(
+                            block = block,
+                            isFocused = isFocused,
+                            onContentChange = onContentChange,
+                            onFocusChange = onFocusChange
+                        )
+
+                        is ContentBlock.Quote -> EditableQuoteBlock(
+                            block = block,
+                            isFocused = isFocused,
+                            onContentChange = onContentChange,
+                            onFocusChange = onFocusChange
+                        )
+
+                        is ContentBlock.CodeBlock -> EditableCodeBlock(
+                            block = block,
+                            isFocused = isFocused,
+                            onContentChange = onContentChange,
+                            onFocusChange = onFocusChange
+                        )
+
+                        is ContentBlock.ImageBlock -> EditableImageBlock(
+                            block = block,
+                            isFocused = isFocused
+                        )
+
+                        is ContentBlock.ObjectBlock -> EditableObjectBlock(
+                            block = block,
+                            isFocused = isFocused
+                        )
+
+                        is ContentBlock.RefBlock -> EditableRefBlock(
+                            block = block,
+                            isFocused = isFocused
+                        )
+
+                        is ContentBlock.MathBlock -> EditableMathBlock(
+                            block = block,
+                            isFocused = isFocused,
+                            onContentChange = onContentChange,
+                            onFocusChange = onFocusChange
+                        )
+
+                        is ContentBlock.Divider -> DividerBlock()
+                    }
+                }
+
+                // 删除按钮
+                IconButton(onClick = { showTypeMenu = true }) {
+                    Icon(Icons.Default.Delete, "Delete or change type", modifier = Modifier.size(16.dp))
+                }
+
+                DropdownMenu(
+                    expanded = showTypeMenu,
+                    onDismissRequest = { showTypeMenu = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Delete") },
+                        onClick = {
+                            onDelete()
+                            showTypeMenu = false
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("To Paragraph") },
+                        onClick = {
+                            onChangeBlockType(
+                                ContentBlock.Paragraph(
+                                    id = block.id,
+                                    content = getBlockText(block)
+                                )
+                            )
+                            showTypeMenu = false
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("To Heading 1") },
+                        onClick = {
+                            onChangeBlockType(
+                                ContentBlock.Paragraph(
+                                    id = block.id,
+                                    content = getBlockText(block),
+                                    level = 1
+                                )
+                            )
+                            showTypeMenu = false
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("To Heading 2") },
+                        onClick = {
+                            onChangeBlockType(
+                                ContentBlock.Paragraph(
+                                    id = block.id,
+                                    content = getBlockText(block),
+                                    level = 2
+                                )
+                            )
+                            showTypeMenu = false
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("To Code Block") },
+                        onClick = {
+                            onChangeBlockType(
+                                ContentBlock.CodeBlock(
+                                    id = block.id,
+                                    content = getBlockText(block)
+                                )
+                            )
+                            showTypeMenu = false
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+private fun getBlockText(block: ContentBlock): String {
+    return when (block) {
+        is ContentBlock.Paragraph -> block.content
+        is ContentBlock.ListItem -> block.content
+        is ContentBlock.Quote -> block.content
+        is ContentBlock.CodeBlock -> block.content
+        is ContentBlock.ImageBlock -> block.alt
+        is ContentBlock.ObjectBlock -> block.title ?: block.name
+        is ContentBlock.RefBlock -> block.refPath
+        is ContentBlock.MathBlock -> block.content
+        is ContentBlock.Divider -> ""
+    }
+}
+
+/**
+ * 可编辑的段落块
+ */
+@Composable
+fun EditableParagraphBlock(
+    block: ContentBlock.Paragraph,
+    isFocused: Boolean,
+    onContentChange: (String) -> Unit,
+    onFocusChange: (Boolean) -> Unit
+) {
+    val textStyle = when (block.level) {
+        1 -> MaterialTheme.typography.headlineLarge
+        2 -> MaterialTheme.typography.headlineMedium
+        3 -> MaterialTheme.typography.headlineSmall
+        4 -> MaterialTheme.typography.titleLarge
+        5 -> MaterialTheme.typography.titleMedium
+        6 -> MaterialTheme.typography.titleSmall
+        else -> MaterialTheme.typography.bodyLarge
+    }
+
+    if (isFocused) {
+        BasicTextField(
+            value = block.content,
+            onValueChange = onContentChange,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
+            textStyle = textStyle.copy(color = LocalContentColor.current),
+            decorationBox = { innerTextField ->
+                Box(modifier = Modifier.padding(vertical = 4.dp)) {
+                    if (block.content.isEmpty()) {
+                        Text(
+                            "Type '/' for commands...",
+                            style = textStyle.copy(color = LocalContentColor.current.copy(alpha = 0.5f))
+                        )
+                    }
+                    innerTextField()
+                }
+            }
+        )
+    } else {
+        Text(
+            text = block.content,
+            style = textStyle,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onFocusChange(true) }
+                .padding(vertical = 4.dp)
+        )
+    }
+}
+
+/**
+ * 可编辑的列表项
+ */
+@Composable
+fun EditableListItemBlock(
+    block: ContentBlock.ListItem,
+    isFocused: Boolean,
+    onContentChange: (String) -> Unit,
+    onFocusChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+        verticalAlignment = Alignment.Top
+    ) {
+        Text(
+            text = if (block.ordered) "1." else "•",
+            modifier = Modifier.padding(end = 8.dp)
+        )
+
+        if (isFocused) {
+            BasicTextField(
+                value = block.content,
+                onValueChange = onContentChange,
+                modifier = Modifier.weight(1f),
+                textStyle = LocalTextStyle.current.copy(color = LocalContentColor.current),
+                decorationBox = { innerTextField ->
+                    if (block.content.isEmpty()) {
+                        Text("List item...", style = LocalTextStyle.current.copy(color = LocalContentColor.current.copy(alpha = 0.5f)))
+                    }
+                    innerTextField()
+                }
+            )
+        } else {
+            Text(
+                text = block.content,
+                modifier = Modifier.weight(1f).clickable { onFocusChange(true) }
+            )
+        }
+    }
+}
+
+/**
+ * 可编辑的引用块
+ */
+@Composable
+fun EditableQuoteBlock(
+    block: ContentBlock.Quote,
+    isFocused: Boolean,
+    onContentChange: (String) -> Unit,
+    onFocusChange: (Boolean) -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(
+                width = 3.dp,
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                shape = MaterialTheme.shapes.small
+            )
+            .padding(horizontal = 12.dp, vertical = 8.dp)
+    ) {
+        if (isFocused) {
+            BasicTextField(
+                value = block.content,
+                onValueChange = onContentChange,
+                modifier = Modifier.fillMaxWidth(),
+                textStyle = LocalTextStyle.current.copy(
+                    color = LocalContentColor.current,
+                    fontStyle = FontStyle.Italic
+                ),
+                decorationBox = { innerTextField ->
+                    if (block.content.isEmpty()) {
+                        Text("Quote...", style = LocalTextStyle.current.copy(color = LocalContentColor.current.copy(alpha = 0.5f)))
+                    }
+                    innerTextField()
+                }
+            )
+        } else {
+            Text(
+                text = block.content,
+                style = LocalTextStyle.current.copy(
+                    fontStyle = FontStyle.Italic,
+                    color = LocalContentColor.current.copy(alpha = 0.8f)
+                ),
+                modifier = Modifier.clickable { onFocusChange(true) }
+            )
+        }
+    }
+}
+
+/**
+ * 可编辑的代码块
+ */
+@Composable
+fun EditableCodeBlock(
+    block: ContentBlock.CodeBlock,
+    isFocused: Boolean,
+    onContentChange: (String) -> Unit,
+    onFocusChange: (Boolean) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                shape = MaterialTheme.shapes.small
+            )
+            .padding(12.dp)
+    ) {
+        // 语言显示
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = block.language.ifBlank { "plain text" },
+                style = MaterialTheme.typography.labelSmall,
+                color = LocalContentColor.current.copy(alpha = 0.6f)
+            )
+        }
+
+        if (isFocused) {
+            BasicTextField(
+                value = block.content,
+                onValueChange = onContentChange,
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                textStyle = LocalTextStyle.current.copy(
+                    fontFamily = FontFamily.Monospace,
+                    color = LocalContentColor.current
+                ),
+                decorationBox = { innerTextField ->
+                    if (block.content.isEmpty()) {
+                        Text("Enter code...", style = LocalTextStyle.current.copy(color = LocalContentColor.current.copy(alpha = 0.5f)))
+                    }
+                    innerTextField()
+                }
+            )
+        } else {
+            Text(
+                text = block.content,
+                style = LocalTextStyle.current.copy(
+                    fontFamily = FontFamily.Monospace,
+                    color = LocalContentColor.current
+                ),
+                modifier = Modifier.clickable { onFocusChange(true) }
+            )
+        }
+    }
+}
+
+/**
+ * 可编辑的图片块
+ */
+@Composable
+fun EditableImageBlock(
+    block: ContentBlock.ImageBlock,
+    isFocused: Boolean
+) {
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+        Text(
+            text = "Image: ${block.name.ifBlank { "No image selected" }}",
+            style = MaterialTheme.typography.bodyMedium
+        )
+        if (isFocused) {
+            Text(
+                text = "Click to select image (TODO: integrate with FilePicker)",
+                style = MaterialTheme.typography.labelSmall,
+                color = LocalContentColor.current.copy(alpha = 0.5f)
+            )
+        }
+    }
+}
+
+/**
+ * 可编辑的对象嵌入块
+ */
+@Composable
+fun EditableObjectBlock(
+    block: ContentBlock.ObjectBlock,
+    isFocused: Boolean
+) {
+    val name = block.contentType?.let { ct ->
+        when (ct) {
+            "youtube" -> "YouTube Video"
+            "soundcloud" -> "SoundCloud Audio"
+            "m3u8" -> "M3U8 Stream"
+            else -> ct
+        }
+    } ?: "Embedded Object"
+
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+        Text(
+            text = "$name: ${block.title ?: block.name}",
+            style = MaterialTheme.typography.bodyMedium
+        )
+        if (isFocused) {
+            Text(
+                text = "Click to edit object (TODO: integrate with media picker)",
+                style = MaterialTheme.typography.labelSmall,
+                color = LocalContentColor.current.copy(alpha = 0.5f)
+            )
+        }
+    }
+}
+
+/**
+ * 可编辑的引用块 (CSA)
+ */
+@Composable
+fun EditableRefBlock(
+    block: ContentBlock.RefBlock,
+    isFocused: Boolean
+) {
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+        Text(
+            text = "Reference: ${block.refPath}",
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+                    shape = MaterialTheme.shapes.small
+                )
+                .padding(8.dp)
+        )
+    }
+}
+
+/**
+ * 可编辑的数学公式块
+ */
+@Composable
+fun EditableMathBlock(
+    block: ContentBlock.MathBlock,
+    isFocused: Boolean,
+    onContentChange: (String) -> Unit,
+    onFocusChange: (Boolean) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f),
+                shape = MaterialTheme.shapes.small
+            )
+            .padding(12.dp)
+    ) {
+        Text(
+            text = "Math Formula",
+            style = MaterialTheme.typography.labelSmall,
+            color = LocalContentColor.current.copy(alpha = 0.6f)
+        )
+
+        if (isFocused) {
+            BasicTextField(
+                value = block.content,
+                onValueChange = onContentChange,
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                textStyle = LocalTextStyle.current.copy(
+                    fontFamily = FontFamily.Monospace,
+                    color = LocalContentColor.current
+                ),
+                decorationBox = { innerTextField ->
+                    if (block.content.isEmpty()) {
+                        Text("Enter LaTeX...", style = LocalTextStyle.current.copy(color = LocalContentColor.current.copy(alpha = 0.5f)))
+                    }
+                    innerTextField()
+                }
+            )
+        } else {
+            Text(
+                text = block.content,
+                style = LocalTextStyle.current.copy(
+                    fontFamily = FontFamily.Monospace,
+                    color = LocalContentColor.current
+                ),
+                modifier = Modifier.clickable { onFocusChange(true) }
+            )
+        }
+    }
+}
+
+/**
+ * 分割线块
+ */
+@Composable
+fun DividerBlock() {
+    Spacer(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+            .background(
+                color = LocalContentColor.current.copy(alpha = 0.2f),
+                shape = MaterialTheme.shapes.extraSmall
+            )
+            .width(100.dp)
+            .padding(horizontal = 16.dp, vertical = 1.dp)
+    )
+}
