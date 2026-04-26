@@ -2,8 +2,8 @@ package com.storyteller_f.a.app.core.components
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.graphics.toArgb
-import coil3.compose.AsyncImage
+import com.hrm.latex.renderer.Latex
+import com.hrm.latex.renderer.model.LatexConfig
 import com.eygraber.uri.Uri
 import com.mikepenz.markdown.compose.LocalMarkdownTypography
 import com.mikepenz.markdown.compose.components.MarkdownComponentModel
@@ -142,11 +142,12 @@ private fun LatexBlock(
 ) {
     val typography = LocalMarkdownTypography.current
     val textStyle = typography.code
-    val path = getTexPath(
-        readCodeFence(modal.node, modal.content),
-        textStyle.background.toArgb(),
-        textStyle.color.toArgb(),
-        textUnitToPx(textStyle.fontSize)
+    Latex(
+        latex = readCodeFence(modal.node, modal.content),
+        config = LatexConfig(
+            fontSize = textStyle.fontSize,
+            color = textStyle.color,
+            darkColor = textStyle.color
+        )
     )
-    AsyncImage(model = path.toString(), contentDescription = "math")
 }

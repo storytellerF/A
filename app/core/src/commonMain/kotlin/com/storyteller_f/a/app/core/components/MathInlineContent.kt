@@ -5,7 +5,6 @@ import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.AnnotatedString
@@ -19,7 +18,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.times
-import com.ashampoo.kim.Kim
+import com.hrm.latex.renderer.Latex
+import com.hrm.latex.renderer.model.LatexConfig
 import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
 import com.mikepenz.markdown.model.ImageTransformer
@@ -30,29 +30,12 @@ import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
-import com.storyteller_f.shared.utils.extractMath
 import com.storyteller_f.shared.utils.readInlineMath
-import io.github.aakira.napier.Napier
 import kotlinx.collections.immutable.ImmutableMap
-import kotlinx.io.buffered
-import kotlinx.io.files.SystemFileSystem
-import kotlinx.io.readByteArray
 import org.intellij.markdown.IElementType
 import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.flavours.gfm.GFMElementTypes
-import kotlin.use
-
-fun mathContent(child: ASTNode, content: String, style: TextStyle, density: Density): Pair<String, String> {
-    val tex = readInlineMath(child, content)
-    val size = textUnitToPx(style.fontSize, density)
-    val backgroundColor = style.background.toArgb()
-    val textColor = style.color.toArgb()
-    val path = getTexPath(tex, backgroundColor, textColor, size)
-    val id = "math${child.startOffset}-${child.endOffset}"
-    val uri = "file://$path"
-    return Pair(id, uri)
-}
 
 fun ASTNode.findChildOfTypeRecursive(type: IElementType): ASTNode? {
     children.forEach {
@@ -68,7 +51,7 @@ fun ASTNode.findChildOfTypeRecursive(type: IElementType): ASTNode? {
     return null
 }
 
-fun imageInlineContent(
+fun mathImageInlineContent(
     uri: String,
     mediaMap: ImmutableMap<String, Dimension?>,
     maxWidth: Dp,
@@ -102,37 +85,9 @@ fun generateMathIfNeed(
     inlineCodeTextStyle: TextStyle,
     density: Density
 ): TopicInfo {
-    Napier.i {
-        "generateMathIfNeed $info"
-    }
-    val content = info.content
-    if (content !is TopicContent.Plain) {
-        return info
-    }
-    val mathContexts = extractMath(content.plain)
-    Napier.i {
-        "mathContexts $mathContexts"
-    }
-    val fileInfos = mathContexts.mapNotNull { mathContext ->
-        val style = if (mathContext.isInline) inlineCodeTextStyle else textStyle
-        generateLatexImage(style, density, mathContext).getOrNull()?.let { path ->
-            val filePath = path.toString()
-            val dimension = SystemFileSystem.source(path).buffered().use {
-                Kim.readMetadata(it.readByteArray())?.imageSize
-            }?.let {
-                val widthPx = it.width
-                val heightPx = it.height
-                Dimension(widthPx, heightPx)
-            }
-            FileInfo.EMPTY.copy(
-                url = filePath,
-                fullName = filePath,
-                name = "file://$filePath",
-                dimension = dimension
-            )
-        }
-    }
-    return info.copy(content = TopicContent.Plain(content.plain, content.fileInfos + fileInfos,))
+    // No longer pre-renders LaTeX to PNG images.
+    // Math is now rendered directly via Compose Latex component at render time.
+    return info
 }
 
 @Composable
@@ -140,6 +95,21 @@ fun customMarkdownTypography(colors: MarkdownColors): MarkdownTypography = markd
     code = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace, color = colors.text),
     inlineCode = MaterialTheme.typography.bodyLarge.copy(fontFamily = FontFamily.Monospace, color = colors.text)
 )
+
+@Composable
+fun LatexInlineContent(
+    tex: String,
+    style: TextStyle
+) {
+    Latex(
+        latex = tex,
+        config = LatexConfig(
+            fontSize = style.fontSize,
+            color = style.color,
+            darkColor = style.color
+        )
+    )
+}
 
 fun AnnotatedString.Builder.imageAnnotator(
     child: ASTNode,
@@ -158,7 +128,7 @@ fun AnnotatedString.Builder.imageAnnotator(
         val name = child.findChildOfTypeRecursive(MarkdownElementTypes.LINK_DESTINATION)
             ?.getUnescapedTextInNode(content)
         if (name != null) {
-            inlineContentMap[id] = imageInlineContent(
+            inlineContentMap[id] = mathImageInlineContent(
                 uri = name,
                 mediaMap = dimensionMap,
                 maxWidth = maxWidth,
@@ -174,27 +144,40 @@ fun AnnotatedString.Builder.imageAnnotator(
     }
 
     GFMElementTypes.INLINE_MATH, GFMElementTypes.BLOCK_MATH -> {
+        val tex = readInlineMath(child, content)
+        val id = "math${child.startOffset}-${child.endOffset}"
         val style =
             if (child.type == GFMElementTypes.INLINE_MATH) {
-                typography.inlineCode.copy(background = colors.inlineCodeBackground,)
+                typography.inlineCode.copy(background = colors.inlineCodeBackground)
             } else {
                 typography.code
             }
-        val (id, uri) = mathContent(child, content, style, density)
-        inlineContentMap[id] = imageInlineContent(
-            uri = uri,
-            mediaMap = dimensionMap,
-            maxWidth = maxWidth,
-            density = density,
-            isEmbed = isEmbed,
-            transformer = imageTransformer
-        )
+
+        // Estimate placeholder size based on font metrics
+        val fontSizePx = with(density) { style.fontSize.toPx() }
+        val lineHeight = fontSizePx * 1.5f
+        val estimatedWidth = if (child.type == GFMElementTypes.INLINE_MATH) {
+            fontSizePx * (1 + tex.length * 0.6f) // rough width estimate
+        } else {
+            with(density) { maxWidth.toPx() }
+        }
+
+        inlineContentMap[id] = InlineTextContent(
+            Placeholder(
+                width = (estimatedWidth / density.density).sp,
+                height = (lineHeight / density.density).sp,
+                placeholderVerticalAlign = PlaceholderVerticalAlign.TextCenter
+            )
+        ) {
+            LatexInlineContent(tex, style)
+        }
+
         if (child.type == GFMElementTypes.INLINE_MATH) {
-            appendInlineContent(id, uri)
+            appendInlineContent(id, tex)
         } else {
             val paragraphStyle = ParagraphStyle()
             pushStyle(paragraphStyle)
-            appendInlineContent(id, uri)
+            appendInlineContent(id, tex)
             pop()
         }
         true

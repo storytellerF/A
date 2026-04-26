@@ -55,8 +55,7 @@ jacksonModuleKotlin = "2.21.2"
 jacksonDataformatYaml = "2.21.2"
 javacvPlatform = "1.5.13"
 javet = "5.0.5"
-jlatexmath = "1.0.7"
-jlatexmathAndroid = "0.2.0"
+latex = "1.3.0"
 jlayer = "1.0.3"
 kfswatch = "1.4.0"
 kim = "0.26.2"
@@ -268,10 +267,9 @@ human-readable = { module = "nl.jacobras:Human-Readable", version.ref = "humanRe
 jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jacksonModuleKotlin" }
 jackson-dataformat-yaml = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml", version.ref = "jacksonDataformatYaml" }
 
-jlatexmath = { module = "org.scilab.forge:jlatexmath", version.ref = "jlatexmath" }
-jlatexmath-android = { module = "ru.noties:jlatexmath-android", version.ref = "jlatexmathAndroid" }
-jlatexmath-android-font-cyrillic = { module = "ru.noties:jlatexmath-android-font-cyrillic", version.ref = "jlatexmathAndroid" }
-jlatexmath-android-font-greek = { module = "ru.noties:jlatexmath-android-font-greek", version.ref = "jlatexmathAndroid" }
+latex-base = { module = "io.github.huarangmeng:latex-base", version.ref = "latex" }
+latex-parser = { module = "io.github.huarangmeng:latex-parser", version.ref = "latex" }
+latex-renderer = { module = "io.github.huarangmeng:latex-renderer", version.ref = "latex" }
 
 jlayer = { module = "com.github.umjammer:jlayer", version.ref = "jlayer" }
 kim = { module = "com.ashampoo:kim", version.ref = "kim" }
