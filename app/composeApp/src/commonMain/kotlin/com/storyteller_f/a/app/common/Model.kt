@@ -1,7 +1,5 @@
 package com.storyteller_f.a.app.common
 
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.unit.Density
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.ExperimentalPagingApi
