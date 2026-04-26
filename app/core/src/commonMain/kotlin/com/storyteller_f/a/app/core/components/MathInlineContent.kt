@@ -1,10 +1,15 @@
 package com.storyteller_f.a.app.core.components
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.AnnotatedString
@@ -27,9 +32,6 @@ import com.mikepenz.markdown.model.MarkdownColors
 import com.mikepenz.markdown.model.MarkdownTypography
 import com.mikepenz.markdown.utils.getUnescapedTextInNode
 import com.storyteller_f.shared.model.Dimension
-import com.storyteller_f.shared.model.FileInfo
-import com.storyteller_f.shared.model.TopicContent
-import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.utils.readInlineMath
 import kotlinx.collections.immutable.ImmutableMap
 import org.intellij.markdown.IElementType
@@ -51,7 +53,7 @@ fun ASTNode.findChildOfTypeRecursive(type: IElementType): ASTNode? {
     return null
 }
 
-fun mathImageInlineContent(
+fun imageInlineContent(
     uri: String,
     mediaMap: ImmutableMap<String, Dimension?>,
     maxWidth: Dp,
@@ -79,17 +81,6 @@ fun mathImageInlineContent(
     }
 }
 
-fun generateMathIfNeed(
-    info: TopicInfo,
-    textStyle: TextStyle,
-    inlineCodeTextStyle: TextStyle,
-    density: Density
-): TopicInfo {
-    // No longer pre-renders LaTeX to PNG images.
-    // Math is now rendered directly via Compose Latex component at render time.
-    return info
-}
-
 @Composable
 fun customMarkdownTypography(colors: MarkdownColors): MarkdownTypography = markdownTypography(
     code = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace, color = colors.text),
@@ -99,16 +90,21 @@ fun customMarkdownTypography(colors: MarkdownColors): MarkdownTypography = markd
 @Composable
 fun LatexInlineContent(
     tex: String,
-    style: TextStyle
+    style: TextStyle,
+    backgroundColor: Color? = null
 ) {
-    Latex(
+    val content = Latex(
         latex = tex,
         config = LatexConfig(
             fontSize = style.fontSize,
             color = style.color,
-            darkColor = style.color
         )
     )
+    if (backgroundColor != null) {
+        Box(modifier = Modifier.background(backgroundColor)) { content }
+    } else {
+        content
+    }
 }
 
 fun AnnotatedString.Builder.imageAnnotator(
@@ -128,7 +124,7 @@ fun AnnotatedString.Builder.imageAnnotator(
         val name = child.findChildOfTypeRecursive(MarkdownElementTypes.LINK_DESTINATION)
             ?.getUnescapedTextInNode(content)
         if (name != null) {
-            inlineContentMap[id] = mathImageInlineContent(
+            inlineContentMap[id] = imageInlineContent(
                 uri = name,
                 mediaMap = dimensionMap,
                 maxWidth = maxWidth,
@@ -157,10 +153,12 @@ fun AnnotatedString.Builder.imageAnnotator(
         val fontSizePx = with(density) { style.fontSize.toPx() }
         val lineHeight = fontSizePx * 1.5f
         val estimatedWidth = if (child.type == GFMElementTypes.INLINE_MATH) {
-            fontSizePx * (1 + tex.length * 0.6f) // rough width estimate
+            fontSizePx * (1 + tex.length * 0.8f) // conservative width estimate
         } else {
             with(density) { maxWidth.toPx() }
         }
+
+        val bgColor = style.background.takeIf { it.toArgb() != 0 }
 
         inlineContentMap[id] = InlineTextContent(
             Placeholder(
@@ -169,7 +167,7 @@ fun AnnotatedString.Builder.imageAnnotator(
                 placeholderVerticalAlign = PlaceholderVerticalAlign.TextCenter
             )
         ) {
-            LatexInlineContent(tex, style)
+            LatexInlineContent(tex, style, bgColor)
         }
 
         if (child.type == GFMElementTypes.INLINE_MATH) {
@@ -186,18 +184,4 @@ fun AnnotatedString.Builder.imageAnnotator(
     else -> {
         false
     }
-}
-
-@Composable
-fun <T> buildByMarkdown(block: @Composable (typography: MarkdownTypography, density: Density) -> T): T {
-    val colors = markdownColor()
-    val typography = customMarkdownTypography(colors)
-    val density = LocalDensity.current
-    return block(
-        markdownTypography(
-            code = typography.code,
-            inlineCode = typography.inlineCode.copy(background = colors.inlineCodeBackground)
-        ),
-        density
-    )
 }

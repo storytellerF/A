@@ -126,7 +126,6 @@ kotlin {
             implementation(libs.kfswatch)
 
             implementation(libs.latex.base)
-            implementation(libs.latex.parser)
             implementation(libs.latex.renderer)
         }
         commonTest.dependencies {

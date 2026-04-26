@@ -147,7 +147,6 @@ private fun LatexBlock(
         config = LatexConfig(
             fontSize = textStyle.fontSize,
             color = textStyle.color,
-            darkColor = textStyle.color
         )
     )
 }
