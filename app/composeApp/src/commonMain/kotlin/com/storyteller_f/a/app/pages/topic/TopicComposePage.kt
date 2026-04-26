@@ -67,6 +67,8 @@ import com.storyteller_f.a.app.common.createRoomViewModel
 import com.storyteller_f.a.app.common.getMarkdownMediasViewModel
 import com.storyteller_f.a.app.components.AppTopicContentView
 import com.storyteller_f.a.app.core.components.CustomAlertDialog
+import com.storyteller_f.a.app.core.components.block.BlockEditor
+import com.storyteller_f.a.app.core.components.block.BlockToolbar
 import com.storyteller_f.a.app.core.components.emitEvent
 import com.storyteller_f.a.app.core.components.rememberAlertDialogController
 import com.storyteller_f.a.app.core.components.request
@@ -228,13 +230,14 @@ private fun TopicComposeInternal(
     updateInput: (String) -> Unit
 ) {
     val pagerState = rememberPagerState {
-        3
+        4
     }
     val state = rememberRichTextState()
     val tabs = listOf(
         stringResource(Res.string.edit),
         stringResource(Res.string.preview),
-        stringResource(Res.string.raw)
+        stringResource(Res.string.raw),
+        "Block"
     )
     val selected = pagerState.currentPage
     val coroutineScope = rememberCoroutineScope()
@@ -254,13 +257,14 @@ private fun TopicComposeInternal(
         when (index) {
             0 -> RichEditTopicPage(input, state, data, updateInput)
             1 -> PreviewTopicPage(input, mediaTarget)
-            else -> EditTopicPage(input, data) {
+            2 -> EditTopicPage(input, data) {
                 Napier.i {
                     "markdown update1 $it"
                 }
                 updateInput(it)
                 state.setMarkdown(it)
             }
+            3 -> BlockEditTopicPage(input, data, updateInput)
         }
     }
 }
@@ -444,6 +448,37 @@ fun EditTopicPage(input: String, data: TopicComposeData, updateInput: (String) -
             updateInput,
             modifier = Modifier.fillMaxSize().padding(20.dp),
             textStyle = textStyle.merge(color = LocalContentColor.current, fontFamily = fontFamily)
+        )
+    }
+}
+
+/**
+ * Block 编辑模式页面
+ */
+@Composable
+fun BlockEditTopicPage(
+    input: String,
+    data: TopicComposeData,
+    updateInput: (String) -> Unit
+) {
+    Column(modifier = Modifier.navigationBarsPadding()) {
+        // Block 工具栏
+        BlockToolbar(
+            onInsertBlock = { block ->
+                // 工具栏插入的块会通过 BlockEditor 内部状态处理
+            }
+        )
+
+        // Block 编辑器
+        BlockEditor(
+            initialMarkdown = input,
+            onMarkdownChange = { newMarkdown ->
+                Napier.i {
+                    "block editor markdown $newMarkdown"
+                }
+                updateInput(newMarkdown)
+            },
+            modifier = Modifier.weight(1f)
         )
     }
 }
