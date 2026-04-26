@@ -36,8 +36,8 @@ import com.storyteller_f.a.panel.LocalPanelGlobalDialog
 import com.storyteller_f.a.panel.LocalPanelNav
 import com.storyteller_f.a.panel.Res
 import com.storyteller_f.a.panel.common.OnTopicStatusUpdated
-import com.storyteller_f.a.panel.common.PanelNav
 import com.storyteller_f.a.panel.common.PanelLogsTab
+import com.storyteller_f.a.panel.common.PanelNav
 import com.storyteller_f.a.panel.common.createPanelTopicTopicsViewModel
 import com.storyteller_f.a.panel.common.createPanelTopicViewModel
 import com.storyteller_f.a.panel.components.InfoTable

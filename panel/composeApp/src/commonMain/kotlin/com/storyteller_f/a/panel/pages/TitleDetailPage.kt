@@ -3,7 +3,6 @@ package com.storyteller_f.a.panel.pages
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
@@ -12,10 +11,8 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Title
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
@@ -31,7 +28,6 @@ import com.storyteller_f.a.app.core.components.CustomBottomNav
 import com.storyteller_f.a.app.core.components.NavRoute
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.emitEvent
-import com.storyteller_f.a.app.core.components.pagingItems
 import com.storyteller_f.a.client.core.updateTitleStatus
 import com.storyteller_f.a.panel.LocalPanelGlobalDialog
 import com.storyteller_f.a.panel.Res

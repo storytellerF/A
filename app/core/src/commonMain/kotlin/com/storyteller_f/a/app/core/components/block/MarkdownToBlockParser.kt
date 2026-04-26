@@ -138,8 +138,8 @@ private fun extractListItemText(listItemNode: ASTNode, content: String): String 
     // 第一个子节点通常是列表标记，跳过它
     val textNodes = children.filter {
         it.type != MarkdownTokenTypes.LIST_BULLET &&
-                it.type != MarkdownTokenTypes.LIST_NUMBER &&
-                it.type != MarkdownTokenTypes.WHITE_SPACE
+            it.type != MarkdownTokenTypes.LIST_NUMBER &&
+            it.type != MarkdownTokenTypes.WHITE_SPACE
     }
     return textNodes.joinToString("") { it.getTextInNode(content).toString() }.trim()
 }

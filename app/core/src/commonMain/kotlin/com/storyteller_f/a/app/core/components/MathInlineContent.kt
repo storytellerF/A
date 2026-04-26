@@ -10,7 +10,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.ParagraphStyle
@@ -25,7 +24,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.times
 import com.hrm.latex.renderer.Latex
 import com.hrm.latex.renderer.model.LatexConfig
-import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
 import com.mikepenz.markdown.model.ImageTransformer
 import com.mikepenz.markdown.model.MarkdownColors

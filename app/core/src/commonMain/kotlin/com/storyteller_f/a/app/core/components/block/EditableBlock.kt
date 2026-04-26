@@ -32,10 +32,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 
 /**
  * 可编辑的 Block 组件
@@ -301,7 +300,10 @@ fun EditableListItemBlock(
                 textStyle = LocalTextStyle.current.copy(color = LocalContentColor.current),
                 decorationBox = { innerTextField ->
                     if (block.content.isEmpty()) {
-                        Text("List item...", style = LocalTextStyle.current.copy(color = LocalContentColor.current.copy(alpha = 0.5f)))
+                        Text(
+                            "List item...",
+                            style = LocalTextStyle.current.copy(color = LocalContentColor.current.copy(alpha = 0.5f))
+                        )
                     }
                     innerTextField()
                 }
@@ -346,7 +348,10 @@ fun EditableQuoteBlock(
                 ),
                 decorationBox = { innerTextField ->
                     if (block.content.isEmpty()) {
-                        Text("Quote...", style = LocalTextStyle.current.copy(color = LocalContentColor.current.copy(alpha = 0.5f)))
+                        Text(
+                            "Quote...",
+                            style = LocalTextStyle.current.copy(color = LocalContentColor.current.copy(alpha = 0.5f))
+                        )
                     }
                     innerTextField()
                 }
@@ -406,7 +411,10 @@ fun EditableCodeBlock(
                 ),
                 decorationBox = { innerTextField ->
                     if (block.content.isEmpty()) {
-                        Text("Enter code...", style = LocalTextStyle.current.copy(color = LocalContentColor.current.copy(alpha = 0.5f)))
+                        Text(
+                            "Enter code...",
+                            style = LocalTextStyle.current.copy(color = LocalContentColor.current.copy(alpha = 0.5f))
+                        )
                     }
                     innerTextField()
                 }
@@ -538,7 +546,10 @@ fun EditableMathBlock(
                 ),
                 decorationBox = { innerTextField ->
                     if (block.content.isEmpty()) {
-                        Text("Enter LaTeX...", style = LocalTextStyle.current.copy(color = LocalContentColor.current.copy(alpha = 0.5f)))
+                        Text(
+                            "Enter LaTeX...",
+                            style = LocalTextStyle.current.copy(color = LocalContentColor.current.copy(alpha = 0.5f))
+                        )
                     }
                     innerTextField()
                 }

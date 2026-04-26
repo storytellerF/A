@@ -12,7 +12,6 @@ import androidx.compose.material.icons.filled.FormatListNumbered
 import androidx.compose.material.icons.filled.FormatQuote
 import androidx.compose.material.icons.filled.HorizontalRule
 import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Note
 import androidx.compose.material.icons.filled.Title
 import androidx.compose.material3.DropdownMenu

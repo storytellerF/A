@@ -49,12 +49,12 @@ import com.storyteller_f.a.panel.room_detail_title_with_info
 import com.storyteller_f.a.panel.tab_basic_info
 import com.storyteller_f.a.panel.tab_files
 import com.storyteller_f.a.panel.tab_members
-import org.jetbrains.compose.resources.stringResource
 import com.storyteller_f.shared.obj.UpdateObjectStatusBody
 import com.storyteller_f.shared.type.ObjectStatus
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
