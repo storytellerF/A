@@ -440,4 +440,119 @@ Some text
         assertEquals(0, block.level)
         assertTrue(block.id.startsWith("block_"))
     }
+
+    // ========== 边界情况测试 ==========
+
+    @Test
+    fun `test parse invalid object block falls back to code block`() {
+        val markdown = """
+            ```object
+            not valid json
+            ```
+        """.trimIndent()
+        val blocks = parseMarkdownToBlocks(markdown)
+        assertEquals(1, blocks.size)
+        // 无效 JSON 应该降级为 CodeBlock
+        assertTrue(blocks[0] is ContentBlock.CodeBlock)
+        assertEquals("object", (blocks[0] as ContentBlock.CodeBlock).language)
+    }
+
+    @Test
+    fun `test parse paragraph with special characters`() {
+        val markdown = "Text with # hash and > quote and * asterisk"
+        val blocks = parseMarkdownToBlocks(markdown)
+        assertEquals(1, blocks.size)
+        val paragraph = blocks[0] as ContentBlock.Paragraph
+        assertEquals("Text with # hash and > quote and * asterisk", paragraph.content)
+    }
+
+    @Test
+    fun `test parse markdown with extra blank lines`() {
+        val markdown = """
+            # Title
+
+
+            Some text
+
+
+            - Item 1
+
+            - Item 2
+        """.trimIndent()
+        val blocks = parseMarkdownToBlocks(markdown)
+        // 应该忽略多余的空行
+        assertTrue(blocks.size >= 3)
+    }
+
+    @Test
+    fun `test generate quote with multiple lines`() {
+        val blocks = listOf(
+            ContentBlock.Quote(
+                id = "test-id",
+                content = "line 1\nline 2\nline 3"
+            )
+        )
+        val markdown = generateMarkdownFromBlocks(blocks)
+        assertEquals("> line 1\n> line 2\n> line 3", markdown)
+    }
+
+    @Test
+    fun `test generate quote with empty content`() {
+        val blocks = listOf(
+            ContentBlock.Quote(
+                id = "test-id",
+                content = ""
+            )
+        )
+        val markdown = generateMarkdownFromBlocks(blocks)
+        // 空内容的 quote 会生成一个空行
+        assertTrue(markdown.isEmpty() || markdown == "> ")
+    }
+
+    @Test
+    fun `test generate image markdown with all fields`() {
+        val blocks = listOf(
+            ContentBlock.ImageBlock(
+                id = "test-id",
+                name = "photo.jpg",
+                url = "https://example.com/photo.jpg",
+                alt = "A photo",
+                title = "Photo Title"
+            )
+        )
+        val markdown = generateMarkdownFromBlocks(blocks)
+        assertEquals("![A photo](https://example.com/photo.jpg \"Photo Title\")", markdown)
+    }
+
+    @Test
+    fun `test generate image markdown with minimal fields`() {
+        val blocks = listOf(
+            ContentBlock.ImageBlock(
+                id = "test-id",
+                name = "photo.jpg",
+                url = "",
+                alt = "",
+                title = ""
+            )
+        )
+        val markdown = generateMarkdownFromBlocks(blocks)
+        assertEquals("![photo.jpg](photo.jpg)", markdown)
+    }
+
+    @Test
+    fun `test parse and regenerate heading levels`() {
+        for (level in 1..6) {
+            val hashes = "#".repeat(level)
+            val markdown = "$hashes Heading $level"
+            val blocks = parseMarkdownToBlocks(markdown)
+            assertEquals(1, blocks.size)
+            val heading = blocks[0] as ContentBlock.Paragraph
+            assertEquals(level, heading.level)
+            assertEquals("Heading $level", heading.content)
+
+            // 验证生成
+            val regenerated = generateMarkdownFromBlocks(blocks)
+            assertEquals(markdown, regenerated)
+        }
+    }
 }

@@ -7,11 +7,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -19,6 +17,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DragIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
@@ -562,15 +561,9 @@ fun EditableMathBlock(
  */
 @Composable
 fun DividerBlock() {
-    Spacer(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp)
-            .background(
-                color = LocalContentColor.current.copy(alpha = 0.2f),
-                shape = MaterialTheme.shapes.extraSmall
-            )
-            .width(100.dp)
-            .padding(horizontal = 16.dp, vertical = 1.dp)
+    HorizontalDivider(
+        modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp),
+        thickness = 1.dp,
+        color = LocalContentColor.current.copy(alpha = 0.2f)
     )
 }

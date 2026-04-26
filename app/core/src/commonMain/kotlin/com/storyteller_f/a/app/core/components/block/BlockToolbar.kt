@@ -7,17 +7,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Code
-import androidx.compose.material.icons.filled.FormatBold
-import androidx.compose.material.icons.filled.FormatItalic
 import androidx.compose.material.icons.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.FormatListNumbered
 import androidx.compose.material.icons.filled.FormatQuote
 import androidx.compose.material.icons.filled.HorizontalRule
 import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.Link
-import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Note
+import androidx.compose.material.icons.filled.Title
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -56,7 +53,7 @@ fun BlockToolbar(
                 )
             )
         }) {
-            Icon(Icons.Default.FormatBold, "Heading", modifier = Modifier.size(20.dp))
+            Icon(Icons.Default.Title, "Heading", modifier = Modifier.size(20.dp))
         }
 
         IconButton(onClick = {
