@@ -23,7 +23,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.LocalAppNavFactory
 import com.storyteller_f.a.app.LocalGlobalDialog
@@ -186,14 +185,13 @@ private fun FontSettingsInternal(
 
         // Preview JSON
         SettingOptionView("Preview JSON", {
-            showDialog(SettingOption.JsonPreview(null))
+            // JSON is already shown inline below
         }) {
             Text(
                 Json { prettyPrint = true }.encodeToString(FontSettings.serializer(), fontSettings),
                 style = MaterialTheme.typography.bodySmall.copy(
                     fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
                 ),
-                textDecoration = TextDecoration.Underline
             )
         }
     }

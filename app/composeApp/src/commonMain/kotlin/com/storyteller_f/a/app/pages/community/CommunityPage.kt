@@ -151,27 +151,21 @@ fun getFontSettings(communityId: PrimaryKey): CommunityFontSettings {
     val model = createCommunityViewModel(communityId)
     val community by model.handler.data.collectAsState()
     val fontSettings = community?.fontSettings
-    val contentDownloadViewModel = fontSettings?.settings?.contentFontId?.let { getDownloadViewModel(it) }
-    val codeDownloadViewModel = fontSettings?.settings?.codeFontId?.let { getDownloadViewModel(it) }
-    val fallbackDownloadViewModel = fontSettings?.settings?.fallbackFontId?.let { getDownloadViewModel(it) }
+    val contentDownloadViewModel = getDownloadViewModel(fontSettings?.settings?.contentFontId)
+    val codeDownloadViewModel = getDownloadViewModel(fontSettings?.settings?.codeFontId)
+    val fallbackDownloadViewModel = getDownloadViewModel(fontSettings?.settings?.fallbackFontId)
     val provider = LocalClientFileProvider.current
 
     LaunchedEffect(fontSettings) {
-        fontSettings?.settings?.contentFontId?.let { id ->
-            fontSettings.contentFont?.let { provider.getDownloader()?.download(it) }
-        }
-        fontSettings?.settings?.codeFontId?.let { id ->
-            fontSettings.codeFont?.let { provider.getDownloader()?.download(it) }
-        }
-        fontSettings?.settings?.fallbackFontId?.let { id ->
-            fontSettings.fallbackFont?.let { provider.getDownloader()?.download(it) }
-        }
+        fontSettings?.contentFont?.let { provider.getDownloader()?.download(it) }
+        fontSettings?.codeFont?.let { provider.getDownloader()?.download(it) }
+        fontSettings?.fallbackFont?.let { provider.getDownloader()?.download(it) }
     }
 
     return CommunityFontSettings(
-        contentFontFamily = contentDownloadViewModel?.fontFamily?.collectAsState()?.value,
-        codeFontFamily = codeDownloadViewModel?.fontFamily?.collectAsState()?.value,
-        fallbackFontFamily = fallbackDownloadViewModel?.fontFamily?.collectAsState()?.value,
+        contentFontFamily = contentDownloadViewModel.fontFamily.collectAsState().value,
+        codeFontFamily = codeDownloadViewModel.fontFamily.collectAsState().value,
+        fallbackFontFamily = fallbackDownloadViewModel.fontFamily.collectAsState().value,
     )
 }
 

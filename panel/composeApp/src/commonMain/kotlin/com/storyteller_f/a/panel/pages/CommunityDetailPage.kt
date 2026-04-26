@@ -54,6 +54,8 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.compose.resources.stringResource
 
+private val compactJson = Json { prettyPrint = false }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CommunityDetailPage(id: PrimaryKey) {
@@ -149,7 +151,7 @@ private fun CommunityBasicInfoSection(id: PrimaryKey) {
             add("latestTopic" to (info.latestTopic?.toString() ?: "null"))
             add("hasPoster" to info.hasPoster.toString())
             add("fontSettings" to (info.fontSettings?.let {
-                Json { prettyPrint = false }.encodeToString(
+                compactJson.encodeToString(
                     com.storyteller_f.shared.model.FontSettings.serializer(),
                     it.settings
                 )

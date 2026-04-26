@@ -137,6 +137,9 @@ fun ObjectSettingDialog(
     val globalDialogController = LocalGlobalDialog.current
     val alertDialogController = rememberAlertDialogController()
     val showSheet = showFilePicker(currentOption)
+    val isFontOption = currentOption is SettingOption.ContentFont ||
+        currentOption is SettingOption.CodeFont ||
+        currentOption is SettingOption.FallbackFont
     FilePicker(
         showSheet,
         sheetState,
@@ -144,17 +147,21 @@ fun ObjectSettingDialog(
         listOf("files"),
         requiredDimension = Dimension(ratio.x, ratio.y),
         { mediaList ->
-            processSelectedMedia(
-                mediaList,
-                scope,
-                context,
-                imageCropper,
-                ratio,
-                mediaTarget,
-                globalDialogController,
-                alertDialogController,
-                onInputMedia
-            )
+            if (isFontOption) {
+                onInputMedia(mediaList.first())
+            } else {
+                processSelectedMedia(
+                    mediaList,
+                    scope,
+                    context,
+                    imageCropper,
+                    ratio,
+                    mediaTarget,
+                    globalDialogController,
+                    alertDialogController,
+                    onInputMedia
+                )
+            }
         }
     ) {
         closeDialog()
@@ -192,7 +199,10 @@ private fun getRatio(currentOption: SettingOption?): AspectRatio {
 
 private fun showFilePicker(currentOption: SettingOption?): Boolean = currentOption is SettingOption.Icon ||
     currentOption is SettingOption.Poster ||
-    currentOption is SettingOption.RoomIcon
+    currentOption is SettingOption.RoomIcon ||
+    currentOption is SettingOption.ContentFont ||
+    currentOption is SettingOption.CodeFont ||
+    currentOption is SettingOption.FallbackFont
 
 private fun processSelectedMedia(
     mediaList: List<FileInfo>,
