@@ -286,7 +286,11 @@ object ExposedDatabaseFactory {
             "migration"
         }
         suspendTransaction(database) {
-            MigrationUtils.statementsRequiredForDatabaseMigration(*tables)
+            val statements = MigrationUtils.statementsRequiredForDatabaseMigration(*tables)
+            statements.forEach {
+                Napier.i(tag = "database") { "migration: $it" }
+                exec(it)
+            }
         }
     }
 }

@@ -356,7 +356,14 @@ private suspend fun Backend.checkCommunityFontSettingsForUpdate(newCommunity: Up
         if (missingId != null) {
             Result.failure<Unit>(CustomBadRequestException("font file not found: $missingId"))
         } else {
-            UNIT_RESULT
+            val invalidFile = files.firstOrNull {
+                !it.contentType.startsWith("font/") && !it.contentType.startsWith("application/font-")
+            }
+            if (invalidFile != null) {
+                Result.failure<Unit>(CustomBadRequestException("invalid font content type: ${invalidFile.contentType}"))
+            } else {
+                UNIT_RESULT
+            }
         }
     }
 }

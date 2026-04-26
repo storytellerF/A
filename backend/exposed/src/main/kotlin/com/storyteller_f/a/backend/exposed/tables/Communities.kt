@@ -7,6 +7,7 @@ import com.storyteller_f.a.backend.exposed.customPrimaryKey
 import com.storyteller_f.a.backend.exposed.memberPolicy
 import com.storyteller_f.a.backend.exposed.objectStatus
 import com.storyteller_f.shared.model.FontSettings
+import io.github.aakira.napier.Napier
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.core.*
 
@@ -26,7 +27,9 @@ fun Community.Companion.wrapRow(row: ResultRow): Community {
     return with(Communities) {
         val fontSettingsJson = row[fontSettings]
         val fontSettings = fontSettingsJson?.let {
-            runCatching { json.decodeFromString<FontSettings>(it) }.getOrNull()
+            runCatching { json.decodeFromString<FontSettings>(it) }
+                .onFailure { Napier.e("Failed to parse font_settings", it) }
+                .getOrNull()
         }
         Community(
             row[id],
