@@ -4,7 +4,7 @@ plugins {
     alias(libs.plugins.serialization)
     application
     alias(libs.plugins.kotlinBuildConfig)
-    id("io.sentry.jvm.gradle") version ("5.8.0")
+    id("io.sentry.jvm.gradle")
     id("cloud")
     id("merge-services")
 }

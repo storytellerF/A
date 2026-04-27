@@ -2,7 +2,6 @@ plugins {
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.serialization)
     alias(libs.plugins.kotlinBuildConfig)
-    id("io.sentry.jvm.gradle") version ("5.8.0")
     id("me.champeau.jmh") version "0.7.3"
 }
 
@@ -44,11 +43,6 @@ dependencies {
 
 tasks.withType<Test> {
     jvmArgs = listOf("--add-modules", "jdk.incubator.vector")
-}
-
-sentry {
-    org = "acommunity"
-    projectName = "kotlin"
 }
 
 jmh {

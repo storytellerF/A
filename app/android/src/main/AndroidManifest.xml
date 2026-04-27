@@ -13,6 +13,10 @@
         android:supportsRtl="true"
         android:theme="@style/App"
         tools:targetApi="33">
+        <meta-data
+            android:name="io.sentry.dsn"
+            android:value="https://d1145359e7a8e7211b47201d1fe666fd@o4509602256650240.ingest.de.sentry.io/4511292670935120"
+        />
         <profileable
             android:shell="true"
             tools:targetApi="29" />

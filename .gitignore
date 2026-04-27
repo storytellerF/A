@@ -32,3 +32,5 @@ dev/reports
 *.hprof
 *.ttf
 download
+# Sentry Config File
+sentry.properties
