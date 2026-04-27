@@ -12,6 +12,7 @@ plugins {
     alias(libs.plugins.easylauncher)
     alias(libs.plugins.serialization)
     id("compose-android")
+    id("io.sentry.android.gradle")
 }
 
 val buildIosTarget = project.findProperty("target.ios") == "true"
@@ -86,4 +87,13 @@ easylauncher {
             filters(chromeLike(label = flavorStr))
         }
     }
+}
+
+sentry {
+    org.set("acommunity")
+    projectName.set("android")
+
+    // this will upload your source code to Sentry to show it as part of the stack traces
+    // disable if you don't want to expose your sources
+    includeSourceContext.set(false)
 }

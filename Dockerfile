@@ -25,7 +25,7 @@ RUN mkdir -p ./deploy/build/decompressed && \
 
 FROM eclipse-temurin:21-alpine
 
-RUN apk add libavif-dev
+RUN apk add libavif-dev font-noto-all
 
 WORKDIR /app
 

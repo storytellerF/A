@@ -20,6 +20,7 @@ plugins {
     id("nl.littlerobots.version-catalog-update") version "1.0.1"
     alias(libs.plugins.android.test) apply false
     alias(libs.plugins.kotlinxRpc) apply false
+    id("io.sentry.android.gradle") version "6.5.0" apply false
 }
 
 val detektReportMergeSarif by tasks.registering(ReportMergeTask::class) {
