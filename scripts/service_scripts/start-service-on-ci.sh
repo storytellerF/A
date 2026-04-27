@@ -64,5 +64,5 @@ else
   log "ssh config already exists"
 fi
 
-export HOST_TYPE=local
+log "Start service by ssh"
 ssh default "cd Projects/AData && git pull && cd ../A && git stash && git fetch && git reset --hard origin/alpha && ./scripts/service_scripts/start-service-in-remote.sh $FLAVOR"
