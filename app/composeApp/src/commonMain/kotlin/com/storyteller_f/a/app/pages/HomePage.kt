@@ -58,6 +58,7 @@ import com.storyteller_f.a.app.LocalAppNavFactory
 import com.storyteller_f.a.app.LocalUiViewModel
 import com.storyteller_f.a.app.Res
 import com.storyteller_f.a.app.common.createWorldViewModel
+import com.storyteller_f.a.app.common.getUnreadRoomsStateViewModel
 import com.storyteller_f.a.app.communities
 import com.storyteller_f.a.app.core.components.ButtonNav
 import com.storyteller_f.a.app.core.components.CenterBox
@@ -119,6 +120,8 @@ private fun HomeNonCompatPage(
     homeNavRoutes: List<NavRoute>,
     defaultHomeRoute: HomeRoute,
 ) {
+    val unreadRoomsViewModel = getUnreadRoomsStateViewModel()
+    val hasUnread by unreadRoomsViewModel.handler.data.collectAsState()
     Scaffold(modifier = modifier) {
         Row(Modifier) {
             val config = remember {
@@ -134,7 +137,11 @@ private fun HomeNonCompatPage(
             }
             val backStack = rememberNavBackStack(config, defaultHomeRoute)
             val currentEntry = backStack.last()
-            CustomRailNav(currentEntry.toString(), homeNavRoutes) { path ->
+            CustomRailNav(
+                currentEntry = currentEntry.toString(),
+                navRoutes = homeNavRoutes,
+                unreadRoomsBadge = hasUnread ?: false
+            ) { path ->
                 val targetRoute = when (path) {
                     HOME_START_DESTINATION_COMMUNITIES -> HomeRoute.Communities
                     HOME_START_DESTINATION_ROOMS -> HomeRoute.Rooms
@@ -207,9 +214,15 @@ private fun HomeCompatPage(
     val pagerState = rememberPagerState(initialPage = defaultHomePage) {
         3
     }
+    val unreadRoomsViewModel = getUnreadRoomsStateViewModel()
+    val hasUnread by unreadRoomsViewModel.handler.data.collectAsState()
     Scaffold(bottomBar = {
         val scope = rememberCoroutineScope()
-        CustomBottomNav(homeNavRoutes[pagerState.currentPage].path, homeNavRoutes) { path ->
+        CustomBottomNav(
+            path = homeNavRoutes[pagerState.currentPage].path,
+            navRoutes = homeNavRoutes,
+            unreadRoomsBadge = hasUnread ?: false
+        ) { path ->
             scope.launch {
                 pagerState.animateScrollToPage(homeNavRoutes.indexOfFirst {
                     it.path == path

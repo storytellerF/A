@@ -8,6 +8,7 @@ import com.storyteller_f.a.api.PaginationQuery
 import com.storyteller_f.a.client.core.UploadData
 import com.storyteller_f.a.client.core.addChildAccount
 import com.storyteller_f.a.client.core.addFavorite
+import com.storyteller_f.a.client.core.addReadLog
 import com.storyteller_f.a.client.core.addSubscription
 import com.storyteller_f.a.client.core.createCommunity
 import com.storyteller_f.a.client.core.createRoom
@@ -21,12 +22,16 @@ import com.storyteller_f.a.client.core.getSubscriptions
 import com.storyteller_f.a.client.core.getTopicInfo
 import com.storyteller_f.a.client.core.getUserInfo
 import com.storyteller_f.a.client.core.getUserOverview
+import com.storyteller_f.a.client.core.hasUnreadRooms
 import com.storyteller_f.a.client.core.removeFavorite
 import com.storyteller_f.a.client.core.removeSubscription
 import com.storyteller_f.a.client.core.sendMessage
 import com.storyteller_f.a.client.core.updateUserInfo
 import com.storyteller_f.a.client.core.upload
+import com.storyteller_f.shared.obj.ObjectTuple
+import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.obj.UpdateUserBody
+import com.storyteller_f.shared.obj.UpdateUserRead
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import io.ktor.http.ContentType
@@ -350,6 +355,31 @@ class UserTest {
 
             removeSubscription(roomId, ObjectType.ROOM).getOrThrow()
             assertListTotalSize(0, getSubscriptions(PaginationQuery()))
+        }
+    }
+
+    @Test
+    fun `test has unread rooms`() = test {
+        val receivedFrame = mutableListOf<RoomFrame>()
+        attachSession(onReceive = { roomFrame, _, _ ->
+            receivedFrame.add(roomFrame)
+        }) {
+            val roomInfo = createRoom(NewRoom("test", "test")).getOrThrow()
+            val keys = getRoomMembersPublicKeys(roomInfo.id, PaginationQuery(null, size = 10)).getOrThrow().data
+            createTopicInRoomAndWait(receivedFrame) {
+                sendMessage(roomInfo.tuple(), true, "hello", keys)
+            }
+            val topicId = (receivedFrame.first() as RoomFrame.NewTopicInfo).topicInfo.id
+
+            val response = hasUnreadRooms().getOrThrow()
+            assertTrue(response.hasUnread)
+            assertTrue(response.unreadCount > 0)
+
+            addReadLog(UpdateUserRead(ObjectTuple(roomInfo.id, ObjectType.ROOM), topicId)).getOrThrow()
+
+            val responseAfterRead = hasUnreadRooms().getOrThrow()
+            assertFalse(responseAfterRead.hasUnread)
+            assertEquals(0, responseAfterRead.unreadCount)
         }
     }
 }

@@ -28,6 +28,7 @@ import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.model.TitleWorkStatus
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicPinSearch
+import com.storyteller_f.shared.model.UnreadRoomsResponse
 import com.storyteller_f.shared.model.UserPubKeyInfo
 import com.storyteller_f.shared.obj.ListResponse
 import com.storyteller_f.shared.obj.NewRoomTopic
@@ -780,4 +781,8 @@ suspend fun UserSessionManager.getQuotaInfo(
 
 suspend fun UserSessionManager.getFileInfo(fileId: PrimaryKey) = serviceCatching {
     CustomApi.Files.Id.get(CommonPath(fileId))
+}
+
+suspend fun UserSessionManager.hasUnreadRooms(): Result<UnreadRoomsResponse> = serviceCatching {
+    CustomApi.Users.Unread.hasUnreadRooms()
 }

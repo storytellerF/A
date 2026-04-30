@@ -33,6 +33,7 @@ import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.MemberInfo
 import com.storyteller_f.shared.model.PassType
 import com.storyteller_f.shared.model.ReactionRecordInfo
+import com.storyteller_f.shared.model.UnreadRoomsResponse
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.UserLogInfo
 import com.storyteller_f.shared.model.UserLogType
@@ -549,4 +550,9 @@ suspend fun Backend.getUserCommentedTopics(
     processRawTopicToTopicInfo(list.map { topic ->
         database.processTopicToRawTopic(uid, listOf(topic)).getOrThrow().first()
     }, uid, false).paging(total)
+}
+
+suspend fun Backend.hasUnreadRooms(uid: PrimaryKey): Result<UnreadRoomsResponse> {
+    val unreadCount = database.container.getUserUnreadRoomCount(uid).getOrThrow()
+    return Result.success(UnreadRoomsResponse(hasUnread = unreadCount > 0, unreadCount = unreadCount))
 }

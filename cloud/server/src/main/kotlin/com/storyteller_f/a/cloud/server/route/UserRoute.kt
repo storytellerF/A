@@ -28,6 +28,7 @@ import com.storyteller_f.a.cloud.core.service.getUserOverview
 import com.storyteller_f.a.cloud.core.service.getUserReactions
 import com.storyteller_f.a.cloud.core.service.getUserSubscriptions
 import com.storyteller_f.a.cloud.core.service.getUserTitles
+import com.storyteller_f.a.cloud.core.service.hasUnreadRooms
 import com.storyteller_f.a.cloud.core.service.removeSubscriptionByObject
 import com.storyteller_f.a.cloud.core.service.searchCurrentUserRooms
 import com.storyteller_f.a.cloud.core.service.searchUserJoinedCommunities
@@ -90,6 +91,11 @@ fun Route.bindProtectedUserRoute(backend: Backend) {
             }) { fetch ->
                 backend.getUserCommentedTopics(uid, fetch)
             }
+        }
+    }
+    CustomApi.Users.Unread.hasUnreadRooms(handleResult(backend)) {
+        usePrincipal { uid ->
+            backend.hasUnreadRooms(uid)
         }
     }
     bindUserCommunitiesRoute(backend)

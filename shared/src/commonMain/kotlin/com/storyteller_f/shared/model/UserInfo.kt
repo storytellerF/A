@@ -40,6 +40,12 @@ data class UserOverview(
     val userInfo: UserInfo
 )
 
+@Serializable
+data class UnreadRoomsResponse(
+    val hasUnread: Boolean,
+    val unreadCount: Int = 0
+)
+
 enum class UserLogType {
     SIGN_IN, SIGN_UP, CREATE, DELETE, UPDATE, JOIN, EXIT,
     ADD_ALTERNATIVE_ACCOUNT, REMOVE_ALTERNATIVE_ACCOUNT,

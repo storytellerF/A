@@ -1,6 +1,8 @@
 package com.storyteller_f.a.app.core.components
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -15,21 +17,32 @@ import androidx.compose.ui.unit.dp
 
 class NavRoute(val path: String, val icon: ImageVector, val label: String)
 
+internal const val HOME_START_DESTINATION_ROOMS = "/rooms"
+
 @Composable
 fun CustomRailNav(
     currentEntry: String?,
     navRoutes: List<NavRoute>,
+    unreadRoomsBadge: Boolean = false,
     navigate: (String) -> Unit = {}
 ) {
     NavigationRail(modifier = Modifier.padding(horizontal = 8.dp)) {
-        navRoutes.forEach {
-            NavigationRailItem(currentEntry == it.path, {
-                navigate(it.path)
-            }, icon = {
-                Icon(imageVector = it.icon, contentDescription = it.label)
-            }, label = {
-                Text(it.label)
-            })
+        navRoutes.forEach { route ->
+            val showBadge = route.path == HOME_START_DESTINATION_ROOMS && unreadRoomsBadge
+            NavigationRailItem(
+                selected = currentEntry == route.path,
+                onClick = { navigate(route.path) },
+                icon = {
+                    if (showBadge) {
+                        BadgedBox(badge = { Badge { } }) {
+                            Icon(imageVector = route.icon, contentDescription = route.label)
+                        }
+                    } else {
+                        Icon(imageVector = route.icon, contentDescription = route.label)
+                    }
+                },
+                label = { Text(route.label) }
+            )
         }
     }
 }
@@ -38,17 +51,27 @@ fun CustomRailNav(
 fun CustomBottomNav(
     path: String,
     navRoutes: List<NavRoute>,
+    unreadRoomsBadge: Boolean = false,
     navigate: (String) -> Unit = { }
 ) {
     NavigationBar {
-        navRoutes.forEach {
-            NavigationBarItem(path == it.path, {
-                navigate(it.path)
-            }, {
-                Icon(imageVector = it.icon, it.label)
-            }, label = {
-                Text(it.label)
-            }, modifier = Modifier.testTag(it.label))
+        navRoutes.forEach { route ->
+            val showBadge = route.path == HOME_START_DESTINATION_ROOMS && unreadRoomsBadge
+            NavigationBarItem(
+                selected = path == route.path,
+                onClick = { navigate(route.path) },
+                icon = {
+                    if (showBadge) {
+                        BadgedBox(badge = { Badge { } }) {
+                            Icon(imageVector = route.icon, contentDescription = route.label)
+                        }
+                    } else {
+                        Icon(imageVector = route.icon, contentDescription = route.label)
+                    }
+                },
+                label = { Text(route.label) },
+                modifier = Modifier.testTag(route.label)
+            )
         }
     }
 }
