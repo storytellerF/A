@@ -14,7 +14,7 @@ services:
       - "22" # ssh
     environment:
       - VNC_PASSWD=${VNC_PASSWD}
-      - VNC_GEOMETRY=1920x1080
+      - VNC_GEOMETRY=1440x900
       - VNC_DEPTH=24
       - A_DEV_CONTAINER=true
     volumes:
