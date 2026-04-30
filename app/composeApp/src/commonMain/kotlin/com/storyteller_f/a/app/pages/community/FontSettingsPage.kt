@@ -38,13 +38,13 @@ import com.storyteller_f.a.app.font_settings
 import com.storyteller_f.a.app.pages.user.ObjectSettingDialog
 import com.storyteller_f.a.app.pages.user.SettingOption
 import com.storyteller_f.a.client.core.updateCommunityInfo
+import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.FontSettings
 import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -188,7 +188,7 @@ private fun FontSettingsInternal(
             // JSON is already shown inline below
         }) {
             Text(
-                Json { prettyPrint = true }.encodeToString(FontSettings.serializer(), fontSettings),
+                commonJson.encodeToString(FontSettings.serializer(), fontSettings),
                 style = MaterialTheme.typography.bodySmall.copy(
                     fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
                 ),

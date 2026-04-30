@@ -28,10 +28,10 @@ import androidx.compose.ui.unit.dp
  */
 @Composable
 fun BlockEditor(
+    modifier: Modifier = Modifier,
     blocks: SnapshotStateList<ContentBlock>,
     initialMarkdown: String = "",
-    onMarkdownChange: (String) -> Unit,
-    modifier: Modifier = Modifier
+    onMarkdownChange: (String) -> Unit
 ) {
     // 如果 blocks 为空，解析初始 Markdown
     LaunchedEffect(Unit) {
@@ -44,18 +44,18 @@ fun BlockEditor(
     var focusedBlockId by remember { mutableStateOf<String?>(null) }
 
     // 当 Blocks 变化时，生成 Markdown 并回调
-    val markdown by derivedStateOf {
-        generateMarkdownFromBlocks(blocks.toList())
+    val markdown by remember {
+        derivedStateOf {
+            generateMarkdownFromBlocks(blocks.toList())
+        }
     }
 
     LaunchedEffect(markdown) {
         onMarkdownChange(markdown)
     }
 
-    val listState = rememberLazyListState()
-
     LazyColumn(
-        state = listState,
+        state = rememberLazyListState(),
         modifier = modifier.fillMaxSize().padding(horizontal = 20.dp)
     ) {
         items(blocks, key = { it.id }) { block ->
@@ -63,40 +63,19 @@ fun BlockEditor(
                 block = block,
                 isFocused = block.id == focusedBlockId,
                 onContentChange = { newContent ->
-                    val index = blocks.indexOfFirst { it.id == block.id }
-                    if (index >= 0) {
-                        blocks[index] = updateBlockContent(blocks[index], newContent)
-                    }
+                    updateBlockContent(blocks, block, newContent)
                 },
                 onFocusChange = { focused ->
                     focusedBlockId = if (focused) block.id else null
                 },
                 onDelete = {
-                    val index = blocks.indexOfFirst { it.id == block.id }
-                    if (index >= 0) {
-                        blocks.removeAt(index)
-                        if (blocks.isEmpty()) {
-                            blocks.add(createEmptyParagraphBlock())
-                        }
-                    }
+                    removeBlock(blocks, block)
                 },
                 onAddBlockBefore = {
-                    val index = blocks.indexOfFirst { it.id == block.id }
-                    val newBlock = createEmptyParagraphBlock()
-                    blocks.add(index, newBlock)
-                    focusedBlockId = newBlock.id
-                },
-                onAddBlockAfter = {
-                    val index = blocks.indexOfFirst { it.id == block.id }
-                    val newBlock = createEmptyParagraphBlock()
-                    blocks.add(index + 1, newBlock)
-                    focusedBlockId = newBlock.id
+                    focusedBlockId = addBlock(blocks, block)
                 },
                 onChangeBlockType = { newBlock ->
-                    val index = blocks.indexOfFirst { it.id == block.id }
-                    if (index >= 0) {
-                        blocks[index] = newBlock
-                    }
+                    changeBlockType(blocks, block, newBlock)
                 }
             )
         }
@@ -105,6 +84,52 @@ fun BlockEditor(
         item {
             androidx.compose.foundation.layout.Spacer(modifier = Modifier.padding(100.dp))
         }
+    }
+}
+
+private fun addBlock(
+    blocks: SnapshotStateList<ContentBlock>,
+    block: ContentBlock
+): String {
+    val index = blocks.indexOfFirst { it.id == block.id }
+    val newBlock = createEmptyParagraphBlock()
+    blocks.add(index, newBlock)
+    val id = newBlock.id
+    return id
+}
+
+private fun changeBlockType(
+    blocks: SnapshotStateList<ContentBlock>,
+    block: ContentBlock,
+    newBlock: ContentBlock
+) {
+    val index = blocks.indexOfFirst { it.id == block.id }
+    if (index >= 0) {
+        blocks[index] = newBlock
+    }
+}
+
+private fun removeBlock(
+    blocks: SnapshotStateList<ContentBlock>,
+    block: ContentBlock
+) {
+    val index = blocks.indexOfFirst { it.id == block.id }
+    if (index >= 0) {
+        blocks.removeAt(index)
+        if (blocks.isEmpty()) {
+            blocks.add(createEmptyParagraphBlock())
+        }
+    }
+}
+
+private fun updateBlockContent(
+    blocks: SnapshotStateList<ContentBlock>,
+    block: ContentBlock,
+    newContent: String
+) {
+    val index = blocks.indexOfFirst { it.id == block.id }
+    if (index >= 0) {
+        blocks[index] = updateBlockContent(blocks[index], newContent)
     }
 }
 

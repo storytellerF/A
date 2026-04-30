@@ -198,7 +198,7 @@ private fun parseObjectBlock(jsonContent: String): ContentBlock {
             title = obj.title,
             isPlaylist = obj.isPlayList
         )
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         // JSON 解析失败，降级为代码块
         ContentBlock.CodeBlock(
             id = generateBlockId(),

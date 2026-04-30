@@ -138,48 +138,60 @@ fun AnnotatedString.Builder.imageAnnotator(
     }
 
     GFMElementTypes.INLINE_MATH, GFMElementTypes.BLOCK_MATH -> {
-        val tex = readInlineMath(child, content)
-        val id = "math${child.startOffset}-${child.endOffset}"
-        val style =
-            if (child.type == GFMElementTypes.INLINE_MATH) {
-                typography.inlineCode.copy(background = colors.inlineCodeBackground)
-            } else {
-                typography.code
-            }
-
-        // Estimate placeholder size based on font metrics
-        val fontSizePx = with(density) { style.fontSize.toPx() }
-        val lineHeight = fontSizePx * 1.5f
-        val estimatedWidth = if (child.type == GFMElementTypes.INLINE_MATH) {
-            fontSizePx * (1 + tex.length * 0.8f) // conservative width estimate
-        } else {
-            with(density) { maxWidth.toPx() }
-        }
-
-        val bgColor = style.background.takeIf { it.toArgb() != 0 }
-
-        inlineContentMap[id] = InlineTextContent(
-            Placeholder(
-                width = (estimatedWidth / density.density).sp,
-                height = (lineHeight / density.density).sp,
-                placeholderVerticalAlign = PlaceholderVerticalAlign.TextCenter
-            )
-        ) {
-            LatexInlineContent(tex, style, bgColor)
-        }
-
-        if (child.type == GFMElementTypes.INLINE_MATH) {
-            appendInlineContent(id, tex)
-        } else {
-            val paragraphStyle = ParagraphStyle()
-            pushStyle(paragraphStyle)
-            appendInlineContent(id, tex)
-            pop()
-        }
+        addMathContent(child, content, typography, colors, density, maxWidth, inlineContentMap)
         true
     }
 
     else -> {
         false
+    }
+}
+
+private fun AnnotatedString.Builder.addMathContent(
+    child: ASTNode,
+    content: String,
+    typography: MarkdownTypography,
+    colors: MarkdownColors,
+    density: Density,
+    maxWidth: Dp,
+    inlineContentMap: MutableMap<String, InlineTextContent>
+) {
+    val tex = readInlineMath(child, content)
+    val id = "math${child.startOffset}-${child.endOffset}"
+    val style =
+        if (child.type == GFMElementTypes.INLINE_MATH) {
+            typography.inlineCode.copy(background = colors.inlineCodeBackground)
+        } else {
+            typography.code
+        }
+
+    // Estimate placeholder size based on font metrics
+    val fontSizePx = with(density) { style.fontSize.toPx() }
+    val lineHeight = fontSizePx * 1.5f
+    val estimatedWidth = if (child.type == GFMElementTypes.INLINE_MATH) {
+        fontSizePx * (1 + tex.length * 0.8f) // conservative width estimate
+    } else {
+        with(density) { maxWidth.toPx() }
+    }
+
+    val bgColor = style.background.takeIf { it.toArgb() != 0 }
+
+    inlineContentMap[id] = InlineTextContent(
+        Placeholder(
+            width = (estimatedWidth / density.density).sp,
+            height = (lineHeight / density.density).sp,
+            placeholderVerticalAlign = PlaceholderVerticalAlign.TextCenter
+        )
+    ) {
+        LatexInlineContent(tex, style, bgColor)
+    }
+
+    if (child.type == GFMElementTypes.INLINE_MATH) {
+        appendInlineContent(id, tex)
+    } else {
+        val paragraphStyle = ParagraphStyle()
+        pushStyle(paragraphStyle)
+        appendInlineContent(id, tex)
+        pop()
     }
 }

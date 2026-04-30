@@ -265,7 +265,7 @@ private fun TopicComposeInternal(
                 updateInput(it)
                 state.setMarkdown(it)
             }
-            3 -> BlockEditTopicPage(input, data, updateInput)
+            3 -> BlockEditTopicPage(input, updateInput)
         }
     }
 }
@@ -459,7 +459,6 @@ fun EditTopicPage(input: String, data: TopicComposeData, updateInput: (String) -
 @Composable
 fun BlockEditTopicPage(
     input: String,
-    data: TopicComposeData,
     updateInput: (String) -> Unit
 ) {
     // 提升状态，使 BlockToolbar 和 BlockEditor 共享 blocks 列表
@@ -475,15 +474,14 @@ fun BlockEditTopicPage(
 
         // Block 编辑器
         BlockEditor(
-            blocks = editorState.blocks,
-            onMarkdownChange = { newMarkdown ->
-                Napier.i {
-                    "block editor markdown $newMarkdown"
-                }
-                updateInput(newMarkdown)
-            },
-            modifier = Modifier.weight(1f)
-        )
+            modifier = Modifier.weight(1f),
+            blocks = editorState.blocks
+        ) { newMarkdown ->
+            Napier.i {
+                "block editor markdown $newMarkdown"
+            }
+            updateInput(newMarkdown)
+        }
     }
 }
 
