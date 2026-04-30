@@ -41,6 +41,7 @@ import com.storyteller_f.a.panel.LocalPanelGlobalDialog
 import com.storyteller_f.a.panel.LocalPanelNav
 import com.storyteller_f.a.panel.Res
 import com.storyteller_f.a.panel.common.OnUserStatusUpdated
+import com.storyteller_f.a.panel.common.PanelLogsTab
 import com.storyteller_f.a.panel.common.createPanelJoinedCommunitiesViewModel
 import com.storyteller_f.a.panel.common.createPanelJoinedRoomsViewModel
 import com.storyteller_f.a.panel.common.createPanelUserCommentsViewModel
@@ -69,6 +70,7 @@ import com.storyteller_f.a.panel.user_detail_title
 import com.storyteller_f.a.panel.user_detail_title_with_info
 import com.storyteller_f.a.panel.user_info
 import com.storyteller_f.a.panel.user_logs
+import com.storyteller_f.a.panel.tab_logs
 import com.storyteller_f.shared.obj.UpdateUserStatusBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -80,12 +82,13 @@ import org.jetbrains.compose.resources.stringResource
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserDetailPage(uid: PrimaryKey) {
-    val pagerState = rememberPagerState { 2 }
+    val pagerState = rememberPagerState { 3 }
     val scope = rememberCoroutineScope()
     Scaffold(topBar = { UserTopBar(uid) }, bottomBar = {
         val navRoutes = listOf(
             NavRoute("/info", Icons.Default.People, stringResource(Res.string.user_info)),
             NavRoute("/logs", Icons.AutoMirrored.Filled.Article, stringResource(Res.string.user_logs)),
+            NavRoute("/panel-logs", Icons.AutoMirrored.Filled.Article, stringResource(Res.string.tab_logs)),
         )
         CustomBottomNav(navRoutes[pagerState.currentPage].path, navRoutes) { path ->
             scope.launch {
@@ -97,7 +100,8 @@ fun UserDetailPage(uid: PrimaryKey) {
             HorizontalPager(pagerState) { pageIndex ->
                 when (pageIndex) {
                     0 -> UserInfoTabs(uid)
-                    else -> UserLogsTab(uid)
+                    1 -> UserLogsTab(uid)
+                    else -> UserPanelLogsTab(uid)
                 }
             }
         }
@@ -351,6 +355,11 @@ private fun UserLogsTab(uid: PrimaryKey) {
             }
         }
     }
+}
+
+@Composable
+private fun UserPanelLogsTab(uid: PrimaryKey) {
+    PanelLogsTab(uid, ObjectType.USER)
 }
 
 @Composable
