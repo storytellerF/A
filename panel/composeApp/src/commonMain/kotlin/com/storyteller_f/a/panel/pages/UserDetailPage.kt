@@ -60,6 +60,7 @@ import com.storyteller_f.a.panel.tab_basic_info
 import com.storyteller_f.a.panel.tab_created_files
 import com.storyteller_f.a.panel.tab_joined_communities
 import com.storyteller_f.a.panel.tab_joined_rooms
+import com.storyteller_f.a.panel.tab_logs
 import com.storyteller_f.a.panel.tab_received_titles
 import com.storyteller_f.a.panel.tab_user_comments
 import com.storyteller_f.a.panel.tab_user_favorites
@@ -70,7 +71,6 @@ import com.storyteller_f.a.panel.user_detail_title
 import com.storyteller_f.a.panel.user_detail_title_with_info
 import com.storyteller_f.a.panel.user_info
 import com.storyteller_f.a.panel.user_logs
-import com.storyteller_f.a.panel.tab_logs
 import com.storyteller_f.shared.obj.UpdateUserStatusBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
