@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
+import androidx.compose.material.icons.automirrored.filled.Note
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.FormatListNumbered
@@ -26,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.storyteller_f.shared.model.FileInfo
 
 /**
  * Block 工具栏
@@ -43,148 +46,193 @@ fun BlockToolbar(
         modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
         // 文本格式按钮
-        IconButton(onClick = {
-            onInsertBlock(
-                ContentBlock.Paragraph(
-                    id = generateBlockId(),
-                    content = "",
-                    level = 1
-                )
-            )
-        }) {
-            Icon(Icons.Default.Title, "Heading", modifier = Modifier.size(20.dp))
-        }
+        TextAddButton(onInsertBlock)
 
-        IconButton(onClick = {
-            onInsertBlock(
-                ContentBlock.ListItem(
-                    id = generateBlockId(),
-                    content = "",
-                    ordered = false
-                )
-            )
-        }) {
-            Icon(Icons.Default.FormatListBulleted, "Bullet List", modifier = Modifier.size(20.dp))
-        }
+        ListAddButton(onInsertBlock)
 
-        IconButton(onClick = {
-            onInsertBlock(
-                ContentBlock.ListItem(
-                    id = generateBlockId(),
-                    content = "",
-                    ordered = true
-                )
-            )
-        }) {
-            Icon(Icons.Default.FormatListNumbered, "Numbered List", modifier = Modifier.size(20.dp))
-        }
+        NumberListAddButton(onInsertBlock)
 
-        IconButton(onClick = {
-            onInsertBlock(
-                ContentBlock.Quote(
-                    id = generateBlockId(),
-                    content = ""
-                )
-            )
-        }) {
-            Icon(Icons.Default.FormatQuote, "Quote", modifier = Modifier.size(20.dp))
-        }
+        QuotaAddButton(onInsertBlock)
 
-        IconButton(onClick = {
-            onInsertBlock(
-                ContentBlock.CodeBlock(
-                    id = generateBlockId(),
-                    content = "",
-                    language = ""
-                )
-            )
-        }) {
-            Icon(Icons.Default.Code, "Code Block", modifier = Modifier.size(20.dp))
-        }
+        CodeBlockAddButton(onInsertBlock)
 
-        IconButton(onClick = {
-            onInsertBlock(
-                ContentBlock.MathBlock(
-                    id = generateBlockId(),
-                    content = "",
-                    inline = false
-                )
-            )
-        }) {
-            Icon(Icons.Default.Note, "Math Formula", modifier = Modifier.size(20.dp))
-        }
+        MathAddButton(onInsertBlock)
 
-        IconButton(onClick = {
-            onInsertBlock(
-                ContentBlock.Divider(id = generateBlockId())
-            )
-        }) {
-            Icon(Icons.Default.HorizontalRule, "Divider", modifier = Modifier.size(20.dp))
-        }
+        DividerAddButton(onInsertBlock)
 
         // 媒体插入菜单
         IconButton(onClick = { showAddMenu = true }) {
             Icon(Icons.Default.Image, "Insert media", modifier = Modifier.size(20.dp))
         }
 
-        DropdownMenu(
-            expanded = showAddMenu,
-            onDismissRequest = { showAddMenu = false }
-        ) {
-            DropdownMenuItem(
-                text = { Text("Image") },
-                onClick = {
-                    onInsertBlock(
-                        ContentBlock.ImageBlock(
-                            id = generateBlockId(),
-                            name = "",
-                            url = "",
-                            alt = ""
-                        )
-                    )
-                    showAddMenu = false
-                }
-            )
-            DropdownMenuItem(
-                text = { Text("Video (YouTube)") },
-                onClick = {
-                    onInsertBlock(
-                        ContentBlock.ObjectBlock(
-                            id = generateBlockId(),
-                            contentType = com.storyteller_f.shared.model.FileInfo.YOUTUBE_MIMETYPE,
-                            url = "https://www.youtube.com/watch?v=",
-                            title = ""
-                        )
-                    )
-                    showAddMenu = false
-                }
-            )
-            DropdownMenuItem(
-                text = { Text("Audio (SoundCloud)") },
-                onClick = {
-                    onInsertBlock(
-                        ContentBlock.ObjectBlock(
-                            id = generateBlockId(),
-                            contentType = com.storyteller_f.shared.model.FileInfo.SOUND_CLOUD_MIME_TYPE,
-                            url = "https://soundcloud.com/",
-                            title = ""
-                        )
-                    )
-                    showAddMenu = false
-                }
-            )
-            DropdownMenuItem(
-                text = { Text("Reference (CSA)") },
-                onClick = {
-                    onInsertBlock(
-                        ContentBlock.RefBlock(
-                            id = generateBlockId(),
-                            refPath = "/topic/"
-                        )
-                    )
-                    showAddMenu = false
-                }
-            )
+        BlockToolBarMenu(showAddMenu, onInsertBlock) {
+            showAddMenu = it
         }
+    }
+}
+
+@Composable
+private fun DividerAddButton(onInsertBlock: (ContentBlock) -> Unit) {
+    IconButton(onClick = {
+        onInsertBlock(
+            ContentBlock.Divider(id = generateBlockId())
+        )
+    }) {
+        Icon(Icons.Default.HorizontalRule, "Divider", modifier = Modifier.size(20.dp))
+    }
+}
+
+@Composable
+private fun MathAddButton(onInsertBlock: (ContentBlock) -> Unit) {
+    IconButton(onClick = {
+        onInsertBlock(
+            ContentBlock.MathBlock(
+                id = generateBlockId(),
+                content = "",
+                inline = false
+            )
+        )
+    }) {
+        Icon(Icons.AutoMirrored.Filled.Note, "Math Formula", modifier = Modifier.size(20.dp))
+    }
+}
+
+@Composable
+private fun CodeBlockAddButton(onInsertBlock: (ContentBlock) -> Unit) {
+    IconButton(onClick = {
+        onInsertBlock(
+            ContentBlock.CodeBlock(
+                id = generateBlockId(),
+                content = "",
+                language = ""
+            )
+        )
+    }) {
+        Icon(Icons.Default.Code, "Code Block", modifier = Modifier.size(20.dp))
+    }
+}
+
+@Composable
+private fun QuotaAddButton(onInsertBlock: (ContentBlock) -> Unit) {
+    IconButton(onClick = {
+        onInsertBlock(
+            ContentBlock.Quote(
+                id = generateBlockId(),
+                content = ""
+            )
+        )
+    }) {
+        Icon(Icons.Default.FormatQuote, "Quote", modifier = Modifier.size(20.dp))
+    }
+}
+
+@Composable
+private fun NumberListAddButton(onInsertBlock: (ContentBlock) -> Unit) {
+    IconButton(onClick = {
+        onInsertBlock(
+            ContentBlock.ListItem(
+                id = generateBlockId(),
+                content = "",
+                ordered = true
+            )
+        )
+    }) {
+        Icon(Icons.Default.FormatListNumbered, "Numbered List", modifier = Modifier.size(20.dp))
+    }
+}
+
+@Composable
+private fun ListAddButton(onInsertBlock: (ContentBlock) -> Unit) {
+    IconButton(onClick = {
+        onInsertBlock(
+            ContentBlock.ListItem(
+                id = generateBlockId(),
+                content = "",
+                ordered = false
+            )
+        )
+    }) {
+        Icon(
+            Icons.AutoMirrored.Filled.FormatListBulleted,
+            "Bullet List",
+            modifier = Modifier.size(20.dp)
+        )
+    }
+}
+
+@Composable
+private fun TextAddButton(onInsertBlock: (ContentBlock) -> Unit) {
+    IconButton(onClick = {
+        onInsertBlock(
+            ContentBlock.Paragraph(
+                id = generateBlockId(),
+                content = "",
+                level = 1
+            )
+        )
+    }) {
+        Icon(Icons.Default.Title, "Heading", modifier = Modifier.size(20.dp))
+    }
+}
+
+@Composable
+private fun BlockToolBarMenu(
+    showAddMenu: Boolean,
+    onInsertBlock: (ContentBlock) -> Unit,
+    update: (Boolean) -> Unit
+) {
+    DropdownMenu(
+        expanded = showAddMenu,
+        onDismissRequest = { update(false) }
+    ) {
+        DropdownMenuItem(
+            text = { Text("Image") },
+            onClick = {
+                onInsertBlock(
+                    ContentBlock.ImageBlock(id = generateBlockId(), name = "", url = "", alt = "")
+                )
+                update(false)
+            }
+        )
+        DropdownMenuItem(
+            text = { Text("Video (YouTube)") },
+            onClick = {
+                onInsertBlock(
+                    ContentBlock.ObjectBlock(
+                        id = generateBlockId(),
+                        contentType = FileInfo.YOUTUBE_MIMETYPE,
+                        url = "https://www.youtube.com/watch?v=",
+                        title = ""
+                    )
+                )
+                update(false)
+            }
+        )
+        DropdownMenuItem(
+            text = { Text("Audio (SoundCloud)") },
+            onClick = {
+                onInsertBlock(
+                    ContentBlock.ObjectBlock(
+                        id = generateBlockId(),
+                        contentType = FileInfo.SOUND_CLOUD_MIME_TYPE,
+                        url = "https://soundcloud.com/",
+                        title = ""
+                    )
+                )
+                update(false)
+            }
+        )
+        DropdownMenuItem(
+            text = { Text("Reference (CSA)") },
+            onClick = {
+                onInsertBlock(
+                    ContentBlock.RefBlock(
+                        id = generateBlockId(),
+                        refPath = "/topic/"
+                    )
+                )
+                update(false)
+            }
+        )
     }
 }

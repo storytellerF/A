@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -48,7 +49,6 @@ fun EditableBlock(
     onFocusChange: (Boolean) -> Unit,
     onDelete: () -> Unit,
     onAddBlockBefore: () -> Unit,
-    onAddBlockAfter: () -> Unit,
     onChangeBlockType: (ContentBlock) -> Unit
 ) {
     var showTypeMenu by remember { mutableStateOf(false) }
@@ -79,130 +79,138 @@ fun EditableBlock(
                 )
 
                 // 编辑/预览区域
-                Box(modifier = Modifier.weight(1f)) {
-                    when (block) {
-                        is ContentBlock.Paragraph -> EditableParagraphBlock(
-                            block = block,
-                            isFocused = isFocused,
-                            onContentChange = onContentChange,
-                            onFocusChange = onFocusChange
-                        )
-
-                        is ContentBlock.ListItem -> EditableListItemBlock(
-                            block = block,
-                            isFocused = isFocused,
-                            onContentChange = onContentChange,
-                            onFocusChange = onFocusChange
-                        )
-
-                        is ContentBlock.Quote -> EditableQuoteBlock(
-                            block = block,
-                            isFocused = isFocused,
-                            onContentChange = onContentChange,
-                            onFocusChange = onFocusChange
-                        )
-
-                        is ContentBlock.CodeBlock -> EditableCodeBlock(
-                            block = block,
-                            isFocused = isFocused,
-                            onContentChange = onContentChange,
-                            onFocusChange = onFocusChange
-                        )
-
-                        is ContentBlock.ImageBlock -> EditableImageBlock(
-                            block = block,
-                            isFocused = isFocused
-                        )
-
-                        is ContentBlock.ObjectBlock -> EditableObjectBlock(
-                            block = block,
-                            isFocused = isFocused
-                        )
-
-                        is ContentBlock.RefBlock -> EditableRefBlock(
-                            block = block,
-                            isFocused = isFocused
-                        )
-
-                        is ContentBlock.MathBlock -> EditableMathBlock(
-                            block = block,
-                            isFocused = isFocused,
-                            onContentChange = onContentChange,
-                            onFocusChange = onFocusChange
-                        )
-
-                        is ContentBlock.Divider -> DividerBlock()
-                    }
-                }
+                BlockPreview(block, isFocused, onContentChange, onFocusChange)
 
                 // 删除按钮
                 IconButton(onClick = { showTypeMenu = true }) {
                     Icon(Icons.Default.Delete, "Delete or change type", modifier = Modifier.size(16.dp))
                 }
 
-                DropdownMenu(
-                    expanded = showTypeMenu,
-                    onDismissRequest = { showTypeMenu = false }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text("Delete") },
-                        onClick = {
-                            onDelete()
-                            showTypeMenu = false
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("To Paragraph") },
-                        onClick = {
-                            onChangeBlockType(
-                                ContentBlock.Paragraph(
-                                    id = block.id,
-                                    content = getBlockText(block)
-                                )
-                            )
-                            showTypeMenu = false
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("To Heading 1") },
-                        onClick = {
-                            onChangeBlockType(
-                                ContentBlock.Paragraph(
-                                    id = block.id,
-                                    content = getBlockText(block),
-                                    level = 1
-                                )
-                            )
-                            showTypeMenu = false
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("To Heading 2") },
-                        onClick = {
-                            onChangeBlockType(
-                                ContentBlock.Paragraph(
-                                    id = block.id,
-                                    content = getBlockText(block),
-                                    level = 2
-                                )
-                            )
-                            showTypeMenu = false
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("To Code Block") },
-                        onClick = {
-                            onChangeBlockType(
-                                ContentBlock.CodeBlock(
-                                    id = block.id,
-                                    content = getBlockText(block)
-                                )
-                            )
-                            showTypeMenu = false
-                        }
-                    )
+                BlockMenu(showTypeMenu, onDelete, onChangeBlockType, block) {
+                    showTypeMenu = it
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun BlockMenu(
+    showTypeMenu: Boolean,
+    onDelete: () -> Unit,
+    onChangeBlockType: (ContentBlock) -> Unit,
+    block: ContentBlock,
+    update: (Boolean) -> Unit
+) {
+    DropdownMenu(
+        expanded = showTypeMenu,
+        onDismissRequest = { update(false) }
+    ) {
+        DropdownMenuItem(
+            text = { Text("Delete") },
+            onClick = {
+                onDelete()
+                update(false)
+            }
+        )
+        DropdownMenuItem(
+            text = { Text("To Paragraph") },
+            onClick = {
+                onChangeBlockType(
+                    ContentBlock.Paragraph(id = block.id, content = getBlockText(block))
+                )
+                update(false)
+            }
+        )
+        DropdownMenuItem(
+            text = { Text("To Heading 1") },
+            onClick = {
+                onChangeBlockType(
+                    ContentBlock.Paragraph(id = block.id, content = getBlockText(block), level = 1)
+                )
+                update(false)
+            }
+        )
+        DropdownMenuItem(
+            text = { Text("To Heading 2") },
+            onClick = {
+                onChangeBlockType(
+                    ContentBlock.Paragraph(id = block.id, content = getBlockText(block), level = 2)
+                )
+                update(false)
+            }
+        )
+        DropdownMenuItem(
+            text = { Text("To Code Block") },
+            onClick = {
+                onChangeBlockType(
+                    ContentBlock.CodeBlock(id = block.id, content = getBlockText(block))
+                )
+                update(false)
+            }
+        )
+    }
+}
+
+@Composable
+private fun RowScope.BlockPreview(
+    block: ContentBlock,
+    isFocused: Boolean,
+    onContentChange: (String) -> Unit,
+    onFocusChange: (Boolean) -> Unit
+) {
+    Box(modifier = Modifier.weight(1f)) {
+        when (block) {
+            is ContentBlock.Paragraph -> EditableParagraphBlock(
+                block = block,
+                isFocused = isFocused,
+                onContentChange = onContentChange,
+                onFocusChange = onFocusChange
+            )
+
+            is ContentBlock.ListItem -> EditableListItemBlock(
+                block = block,
+                isFocused = isFocused,
+                onContentChange = onContentChange,
+                onFocusChange = onFocusChange
+            )
+
+            is ContentBlock.Quote -> EditableQuoteBlock(
+                block = block,
+                isFocused = isFocused,
+                onContentChange = onContentChange,
+                onFocusChange = onFocusChange
+            )
+
+            is ContentBlock.CodeBlock -> EditableCodeBlock(
+                block = block,
+                isFocused = isFocused,
+                onContentChange = onContentChange,
+                onFocusChange = onFocusChange
+            )
+
+            is ContentBlock.ImageBlock -> EditableImageBlock(
+                block = block,
+                isFocused = isFocused
+            )
+
+            is ContentBlock.ObjectBlock -> EditableObjectBlock(
+                block = block,
+                isFocused = isFocused
+            )
+
+            is ContentBlock.RefBlock -> EditableRefBlock(
+                block = block
+            )
+
+            is ContentBlock.MathBlock -> EditableMathBlock(
+                block = block,
+                isFocused = isFocused,
+                onContentChange = onContentChange,
+                onFocusChange = onFocusChange
+            )
+
+            is ContentBlock.Divider -> DividerBlock()
         }
     }
 }
@@ -492,8 +500,7 @@ fun EditableObjectBlock(
  */
 @Composable
 fun EditableRefBlock(
-    block: ContentBlock.RefBlock,
-    isFocused: Boolean
+    block: ContentBlock.RefBlock
 ) {
     Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
         Text(
