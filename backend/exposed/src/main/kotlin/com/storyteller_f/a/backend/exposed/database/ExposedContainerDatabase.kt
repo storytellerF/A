@@ -270,7 +270,7 @@ class ExposedContainerDatabase(
                 it[Members.objectId]
             }
         }.map { unreadRoomIds ->
-            unreadRoomIds.size
+            unreadRoomIds.distinct().size
         }
     }
 
