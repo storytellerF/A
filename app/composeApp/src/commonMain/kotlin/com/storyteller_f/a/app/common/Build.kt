@@ -410,6 +410,12 @@ fun getUserOverviewViewModel() =
     }
 
 @Composable
+fun getUnreadRoomsStateViewModel(): UnreadRoomsStateViewModel =
+    customViewModel(listOf("unread-rooms-state")) { sessionManager, _ ->
+        UnreadRoomsStateViewModel(sessionManager)
+    }
+
+@Composable
 fun createTitleComposeViewModel(
     initialScope: ObjectTuple? = null,
     initialType: TitleType? = null,

@@ -597,6 +597,7 @@ interface ContainerDatabase {
 
     suspend fun getTopicReadList(parentIds: List<PrimaryKey>, uid: PrimaryKey): Result<List<UserTopicRead>>
     suspend fun getUsersHasUnreadRoomMap(uidList: List<PrimaryKey>): Result<Map<PrimaryKey, Boolean>>
+    suspend fun getUserUnreadRoomCount(uid: PrimaryKey): Result<Int>
 
     suspend fun getMemberPaginationResult(
         objectId: PrimaryKey?,

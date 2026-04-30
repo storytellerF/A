@@ -58,6 +58,7 @@ import com.storyteller_f.a.client.core.getUserInfoByAid
 import com.storyteller_f.a.client.core.getUserJoinedCommunities
 import com.storyteller_f.a.client.core.getUserOverview
 import com.storyteller_f.a.client.core.getUserRooms
+import com.storyteller_f.a.client.core.hasUnreadRooms
 import com.storyteller_f.a.client.core.processEncryptedTopic
 import com.storyteller_f.a.client.core.searchAllMembers
 import com.storyteller_f.a.client.core.searchCommunity
@@ -910,6 +911,18 @@ class UserOverviewViewModel(sessionManager: UserSessionManager, modelStorage: Mo
             sessionManager.getUserOverview()
         } else {
             Result.failure(IllegalStateException("not logged in"))
+        }
+    }
+}
+
+class UnreadRoomsStateViewModel(
+    private val sessionManager: UserSessionManager,
+) : SimpleViewModel<Boolean>() {
+    override val handler: LoadingHandler<Boolean> = SimpleLoadingHandler(viewModelScope) {
+        if (sessionManager.model.state.value is ClientSessionState.Success) {
+            sessionManager.hasUnreadRooms().map { it.hasUnread }
+        } else {
+            Result.success(false)
         }
     }
 }

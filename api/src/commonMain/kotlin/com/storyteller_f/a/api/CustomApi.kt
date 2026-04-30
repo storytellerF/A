@@ -27,6 +27,7 @@ import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.model.TitleWorkStatus
 import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.UnreadRoomsResponse
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.UserOverview
 import com.storyteller_f.shared.model.UserPubKeyInfo
@@ -766,6 +767,12 @@ object CustomApi {
                     resp(CommunityInfoListResponse::class)
                     query(UserCommunitiesSearchQuery::class)
                 }
+        }
+
+        object Unread {
+            val hasUnreadRooms = safeEndpointBuilder("users/unread/rooms") {
+                resp(UnreadRoomsResponse::class)
+            }
         }
     }
 
