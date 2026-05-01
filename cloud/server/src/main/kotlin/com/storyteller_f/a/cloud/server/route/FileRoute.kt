@@ -255,28 +255,31 @@ suspend fun RoutingContext.uploadMedia(
     backend: Backend,
     id: PrimaryKey,
     root: File,
-    objectTuple: ObjectTuple,
-) = if (objectTuple.objectType == ObjectType.TOPIC) {
-    Result.failure(CustomBadRequestException("can't upload to topic"))
-} else {
-    val parentType = objectTuple.objectType
-    val parentId = objectTuple.objectId
-    backend.checkRootWritePermission(parentType, parentId, id).mapResultIfNotNull {
-        processFormData { part ->
-            val fileInfos = when (part) {
-                is PartData.FileItem -> {
-                    val fileName = part.originalFileName as String
-                    backend.uploadFilesFromChannel(root, it, fileName) {
-                        part.provider()
+    query: CustomApi.Files.UploadQuery,
+) = run {
+    val objectTuple = ObjectTuple(query.objectId, query.objectType)
+    if (objectTuple.objectType == ObjectType.TOPIC) {
+        Result.failure(CustomBadRequestException("can't upload to topic"))
+    } else {
+        val parentType = objectTuple.objectType
+        val parentId = objectTuple.objectId
+        backend.checkRootWritePermission(parentType, parentId, id).mapResultIfNotNull {
+            processFormData { part ->
+                val fileInfos = when (part) {
+                    is PartData.FileItem -> {
+                        val fileName = part.originalFileName as String
+                        backend.uploadFilesFromChannel(root, it, fileName, query.sha256) {
+                            part.provider()
+                        }
+                    }
+
+                    else -> {
+                        emptyList()
                     }
                 }
-
-                else -> {
-                    emptyList()
-                }
+                part.dispose()
+                fileInfos
             }
-            part.dispose()
-            fileInfos
         }
     }
 }
@@ -299,12 +302,17 @@ private suspend fun Backend.uploadFilesFromChannel(
     root: File,
     permission: RootWritePermission,
     fileName: String,
+    expectedSha256: String,
     provider: () -> ByteReadChannel
 ): List<FileInfo> {
     val newSavedName = newFileName(fileName)
     val file = File(root, "$newSavedName.tmp")
     provider().copyAndClose(file.writeChannel())
     return try {
+        val actual = sha256(file.readChannel().readBuffer())
+        if (actual != expectedSha256) {
+            throw CustomBadRequestException("file hash mismatch")
+        }
         tryUploadFiles(
             permission.rootId,
             permission.rootType,

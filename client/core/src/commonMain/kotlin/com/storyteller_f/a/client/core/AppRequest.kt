@@ -481,9 +481,10 @@ class UploadData(
 suspend fun UserSessionManager.upload(
     objectTuple: ObjectTuple,
     data: UploadData,
+    sha256: String,
     onUpload: suspend (Long, Long?) -> Unit = { _, _ -> },
 ) = serviceCatching {
-    CustomApi.Files.upload(objectTuple, Unit) {
+    CustomApi.Files.upload(CustomApi.Files.UploadQuery(objectTuple.objectId, objectTuple.objectType, sha256), Unit) {
         setBody(
             MultiPartFormDataContent(
                 formData {
@@ -508,7 +509,8 @@ suspend fun UserSessionManager.initChunkUpload(
     name: String,
     size: Long,
     contentType: ContentType,
-    chunkSize: Long
+    chunkSize: Long,
+    sha256: String,
 ) = serviceCatching {
     CustomApi.Files.Chunks.init(
         CustomApi.Files.Chunks.InitBody(
@@ -517,7 +519,8 @@ suspend fun UserSessionManager.initChunkUpload(
             name,
             size,
             contentType.contentType,
-            chunkSize
+            chunkSize,
+            sha256,
         )
     ) {
         contentType(ContentType.Application.Json)

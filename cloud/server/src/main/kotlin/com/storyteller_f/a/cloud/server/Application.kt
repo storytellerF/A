@@ -163,6 +163,9 @@ fun Application.module() {
         throw e
     }
     runBlocking {
+        if (backend.customConfig.buildType != "test") {
+            backend.database.migration()
+        }
         if (backend.customConfig.buildType == "test") {
             backend.database.init()
         }

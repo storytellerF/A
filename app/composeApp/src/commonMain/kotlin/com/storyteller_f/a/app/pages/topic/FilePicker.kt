@@ -75,6 +75,7 @@ import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.utils.generateImageMarkdownContent
 import com.storyteller_f.shared.utils.generateObjectMarkdownContent
 import com.storyteller_f.shared.utils.mapIfNotNull
+import com.storyteller_f.shared.utils.sha256
 import io.github.aakira.napier.Napier
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.PlatformFile
@@ -261,13 +262,20 @@ suspend fun AppGlobalDialogController.selectFileAndUpload(
     useResult {
         val f = FileKit.openFilePicker()
         if (f != null) {
+            val uploadData = getUploadDataFromPlatformFile(f)
+            val fileSha256 = f.source().buffered().use {
+                sha256(it)
+            }
             upload(
                 mediaTarget,
-                getUploadDataFromPlatformFile(f)
+                uploadData,
+                fileSha256,
             ) { p, t ->
                 emitProgress {
                     GlobalDialogState.Loading(progress = GlobalDialogStateProgress(p, t))
                 }
+            }.map {
+                it as List<FileInfo>?
             }
         } else {
             Result.success(null)
@@ -305,10 +313,14 @@ suspend fun AppGlobalDialogController.uploadPath(
     mediaTarget: ObjectTuple,
 ): Result<List<FileInfo>?> {
     val meta = SystemFileSystem.metadataOrNull(path) ?: return Result.success(null)
+    val fileSha256 = SystemFileSystem.source(path).buffered().use {
+        sha256(it)
+    }
     return useResult {
         upload(
             mediaTarget,
-            getUploadDataFromPath(meta, path)
+            getUploadDataFromPath(meta, path),
+            fileSha256
         ) { p, t ->
             emitProgress {
                 GlobalDialogState.Loading(progress = GlobalDialogStateProgress(p, t))
@@ -320,13 +332,14 @@ suspend fun AppGlobalDialogController.uploadPath(
 suspend fun AppGlobalDialogController.upload(
     mediaTarget: ObjectTuple,
     uploadData: UploadData,
-    onUpload: (Long, Long?) -> Unit = { _, _ -> },
+    sha256: String,
+    onUpload: suspend (Long, Long?) -> Unit = { _, _ -> },
 ): Result<List<FileInfo>> {
     if (uploadData.size > 100 * 1024 * 1024) {
         return Result.failure(Exception("file size is too large"))
     }
 
-    return request { upload(mediaTarget, uploadData, onUpload) }.map {
+    return request { this.upload(mediaTarget, uploadData, sha256, onUpload) }.map {
         it.data
     }.onSuccess {
         emitEvent(OnMediaUploaded(it))
