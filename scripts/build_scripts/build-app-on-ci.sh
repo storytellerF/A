@@ -19,8 +19,6 @@ echo "$SECRETS_CONTEXT" | jq -r 'to_entries | .[] | "\(.key)=\(.value)"' | while
     # Ignore empty lines and comments
     [[ -z "$line" || "$line" =~ ^# ]] && continue
     IFS='=' read -r key value <<< "$line"
-    # Check if key starts with "storyteller_f" (case-insensitive)
-    [[ ! "$key" =~ ^[Ss][Tt][Oo][Rr][Yy][Tt][Ee][Ll][Ll][Ee][Rr]_[Ff] ]] && continue
 
     echo "export $key=$value"
 done > ./secrets_env.sh
