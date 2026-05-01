@@ -37,6 +37,7 @@ import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.obj.UpdateUserRead
 import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.utils.sha256
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.http.ContentType
 import io.ktor.http.defaultForFileExtension
@@ -558,6 +559,16 @@ fun getUploadDataFromText(string: String, fileName: String = "hello.txt") = Uplo
         writeString(string)
     }
 }
+
+suspend fun UploadData.calcSha256(): String {
+    return sha256(block())
+}
+
+suspend fun UserSessionManager.upload(
+    objectTuple: ObjectTuple,
+    data: UploadData,
+    onUpload: suspend (Long, Long?) -> Unit = { _, _ -> },
+) = upload(objectTuple, data, data.calcSha256(), onUpload)
 
 suspend fun UserSessionManager.createTopicInRoomAndWait(
     receivedFrame: MutableList<RoomFrame>,

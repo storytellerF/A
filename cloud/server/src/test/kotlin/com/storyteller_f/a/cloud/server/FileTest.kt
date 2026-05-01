@@ -181,6 +181,11 @@ class FileTest {
             val name = "chunked.bin" // 保持长度 < 60，避免保存名被改写
             val totalSize = 6_000_000L // 5.72Mib
             val chunkSize = 5_242_880L // 5Mib
+            val fileSha256 = sha256(Buffer().apply {
+                for (i in 0 until totalSize) {
+                    writeByte((i % 256).toByte())
+                }
+            }.peek())
 
             // 初始化分块上传，拿到 recordId
             val init = initChunkUpload(
@@ -188,7 +193,8 @@ class FileTest {
                 name,
                 totalSize,
                 ContentType.Application.OctetStream,
-                chunkSize
+                chunkSize,
+                fileSha256,
             ).getOrThrow()
             val recordId = init.recordId
 
@@ -231,13 +237,19 @@ class FileTest {
             val name = "to-abort.bin"
             val totalSize = 180_500L
             val chunkSize = 64_000L
+            val fileSha256 = sha256(Buffer().apply {
+                for (i in 0 until totalSize) {
+                    writeByte((i % 256).toByte())
+                }
+            }.peek())
 
             val init = initChunkUpload(
                 tuple,
                 name,
                 totalSize,
                 ContentType.Application.OctetStream,
-                chunkSize
+                chunkSize,
+                fileSha256,
             ).getOrThrow()
             val recordId = init.recordId
 
@@ -271,13 +283,19 @@ class FileTest {
             val name = "bad-hash.bin"
             val totalSize = 10_000L
             val chunkSize = 1_000L
+            val fileSha256 = sha256(Buffer().apply {
+                for (i in 0 until totalSize) {
+                    writeByte((i % 256).toByte())
+                }
+            }.peek())
 
             val init = initChunkUpload(
                 tuple,
                 name,
                 totalSize,
                 ContentType.Application.OctetStream,
-                chunkSize
+                chunkSize,
+                fileSha256,
             ).getOrThrow()
             val recordId = init.recordId
 
@@ -293,6 +311,63 @@ class FileTest {
             // 状态查询不应包含该分片索引
             val status = getChunkStatus(recordId).getOrThrow()
             assertTrue(status.uploaded.isEmpty())
+        }
+    }
+
+    @Test
+    fun `file sha256 mismatch is rejected for direct upload`() = test {
+        attachSession {
+            val tuple = ObjectTuple(it.uid, ObjectType.USER)
+            val data = getUploadDataFromText("hello", "mismatch.txt")
+            val wrongSha256 = "0".repeat(64)
+            val r = upload(tuple, data, wrongSha256)
+            assertTrue(r.isFailure)
+            assertEquals(0, getFileList(it.uid, ObjectType.USER, null, 10).getOrThrow().data.size)
+        }
+    }
+
+    @Test
+    fun `file sha256 mismatch makes chunk complete fail and marks record failed`() = test {
+        attachSession {
+            val tuple = ObjectTuple(it.uid, ObjectType.USER)
+            val name = "bad-file-hash.bin"
+            val totalSize = 300_000L
+            val chunkSize = 64_000L
+            val wrongSha256 = "0".repeat(64)
+
+            val init = initChunkUpload(
+                tuple,
+                name,
+                totalSize,
+                ContentType.Application.OctetStream,
+                chunkSize,
+                wrongSha256,
+            ).getOrThrow()
+            val recordId = init.recordId
+
+            val chunkCount = ceil(totalSize / chunkSize.toDouble()).toInt()
+            for (index in 0 until chunkCount) {
+                val start = index * chunkSize
+                val endExclusive = minOf(start + chunkSize, totalSize)
+                val buf = Buffer().apply {
+                    for (i in start until endExclusive) {
+                        writeByte((i % 256).toByte())
+                    }
+                }
+                val hash = sha256(buf.peek())
+                uploadChunk(recordId, index, buf, hash).getOrThrow()
+            }
+
+            val result = completeChunkUpload(recordId)
+            assertTrue(result.isFailure)
+
+            val status = getChunkStatus(recordId).getOrThrow()
+            assertEquals(UploadRecordStatus.FAILED, status.status)
+            assertTrue(status.uploaded.isEmpty())
+
+            val quotaAfter = getQuotaInfo(tuple).getOrThrow()
+            assertEquals(null, quotaAfter.lockId)
+            assertEquals(0, getFileList(it.uid, ObjectType.USER, null, 10).getOrThrow().data.size)
         }
     }
 

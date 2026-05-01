@@ -15,6 +15,7 @@ object UploadRecords : BaseTable() {
     val progress = long("progress")
     val name = varchar("name", 100)
     val chunkSize = long("chunk_size")
+    val sha256 = varchar("sha256", 64).nullable()
 }
 
 fun UploadRecord.Companion.wrapRow(resultRow: ResultRow): UploadRecord {
@@ -28,7 +29,8 @@ fun UploadRecord.Companion.wrapRow(resultRow: ResultRow): UploadRecord {
             resultRow[total],
             resultRow[progress],
             resultRow[name],
-            resultRow[chunkSize]
+            resultRow[chunkSize],
+            resultRow[sha256],
         )
     }
 }

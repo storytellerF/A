@@ -157,6 +157,7 @@ class ExposedFileDatabase(val databaseSession: ExposedDatabaseSession) : FileDat
                 it[UploadRecords.progress] = record.progress
                 it[UploadRecords.name] = record.name
                 it[UploadRecords.chunkSize] = record.chunkSize
+                it[UploadRecords.sha256] = record.sha256
             }.insertedCount > 0) {
                 "insert upload record failed"
             }

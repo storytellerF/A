@@ -16,5 +16,6 @@ data class UploadRecordInfo(
     val total: Long,
     val progress: Long,
     val name: String,
-    val chunkSize: Long
+    val chunkSize: Long,
+    val sha256: String? = null,
 ) : PrimaryKeyIdentifiable

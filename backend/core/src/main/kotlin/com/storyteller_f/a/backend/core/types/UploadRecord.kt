@@ -15,11 +15,12 @@ data class UploadRecord(
     val total: Long,
     val progress: Long,
     val name: String,
-    val chunkSize: Long
+    val chunkSize: Long,
+    val sha256: String?,
 ) {
     companion object
 }
 
 fun UploadRecord.toUploadRecordInfo(): UploadRecordInfo {
-    return UploadRecordInfo(id, createdTime, objectId, objectType, status, total, progress, name, chunkSize)
+    return UploadRecordInfo(id, createdTime, objectId, objectType, status, total, progress, name, chunkSize, sha256)
 }

@@ -13,7 +13,7 @@ import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import io.ktor.http.ContentType
-import io.ktor.utils.io.streams.asInput
+import kotlinx.io.Buffer
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -84,13 +84,13 @@ class CommunitySearchTest {
             out.parentFile?.mkdirs()
             javax.imageio.ImageIO.write(image, "jpg", out)
             javax.imageio.ImageIO.write(image, "jpg", buf)
-            val inputBytes = java.io.ByteArrayInputStream(buf.toByteArray())
+            val bytes = buf.toByteArray()
             val fileInfo = upload(it.uid ob ObjectType.USER, UploadData(
                 buf.size().toLong(),
                 "cover.jpg",
                 ContentType.Image.JPEG
             ) {
-                inputBytes.asInput()
+                Buffer().apply { write(bytes) }
             }).getOrThrow().data.first()
 
             updateCommunityInfo(community2.id, UpdateCommunityBody(poster = fileInfo.id)).getOrThrow()

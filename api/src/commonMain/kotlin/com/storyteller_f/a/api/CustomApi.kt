@@ -32,7 +32,6 @@ import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.UserOverview
 import com.storyteller_f.shared.model.UserPubKeyInfo
 import com.storyteller_f.shared.obj.ListResponse
-import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.Pagination
 import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.obj.UpdateRoomBody
@@ -836,10 +835,17 @@ object CustomApi {
             }
         }
 
+        @Serializable
+        class UploadQuery(
+            val objectId: PrimaryKey,
+            val objectType: ObjectType,
+            val sha256: String,
+        )
+
         val upload = mutationEndpointWithQueryBuilder("files/upload") {
             resp(FileInfoListResponse::class)
             body(Unit::class)
-            query(ObjectTuple::class)
+            query(UploadQuery::class)
         }
 
         @Serializable
@@ -874,7 +880,8 @@ object CustomApi {
                 val name: String,
                 val size: Long,
                 val contentType: String,
-                val chunkSize: Long
+                val chunkSize: Long,
+                val sha256: String,
             )
 
             @Serializable

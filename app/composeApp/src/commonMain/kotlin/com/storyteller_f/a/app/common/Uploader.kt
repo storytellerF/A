@@ -171,13 +171,17 @@ class UploaderImpl(
         }
         val objectTuple = myUid ob ObjectType.USER
         val chunkThreshold = uploadInfo.chunkSize
+        val fileSha256 = clientFile.source().use {
+            sha256(it)
+        }
         if (clientFile.size > chunkThreshold) {
-            uploadChunked(userSession, objectTuple, clientFile, modelStorage, uploadInfo)
+            uploadChunked(userSession, objectTuple, clientFile, modelStorage, uploadInfo, fileSha256)
             return
         }
         userSession.upload(
             objectTuple,
-            clientFile.getUploadDataFromClipFile()
+            clientFile.getUploadDataFromClipFile(),
+            fileSha256
         ) { p, _ ->
             updateUploadInfo(modelStorage, collection, pathHash) {
                 it.copy(progress = p)
@@ -199,10 +203,11 @@ class UploaderImpl(
         clipFile: ClientFile,
         modelStorage: ModelStorage,
         uploadInfo: UploadInfo,
+        fileSha256: String,
     ) {
         val collection = UploadCollection.fromInfo(uploadInfo)
         val pathHash = uploadInfo.pathHash
-        getUploadId(modelStorage, userSession, objectTuple, clipFile, uploadInfo).mapResult {
+        getUploadId(modelStorage, userSession, objectTuple, clipFile, uploadInfo, fileSha256).mapResult {
             userSession.getChunkStatus(it)
         }.mapResult {
             uploadChunkedFiles(userSession, it.id, clipFile, modelStorage, uploadInfo, it)
@@ -224,14 +229,15 @@ class UploaderImpl(
         userSession: CustomUserSessionManager,
         objectTuple: ObjectTuple,
         clipFile: ClientFile,
-        uploadInfo: UploadInfo
+        uploadInfo: UploadInfo,
+        fileSha256: String,
     ): Result<PrimaryKey> {
         val collection = UploadCollection.fromInfo(uploadInfo)
         val pathHash = uploadInfo.pathHash
         val existingRecordId = modelStorage.upload.getDocument(collection, pathHash)?.recordId
         return Result.success(existingRecordId).mapResult {
             if (it == null) {
-                getUploadRecordId(userSession, objectTuple, clipFile, modelStorage, uploadInfo)
+                getUploadRecordId(userSession, objectTuple, clipFile, modelStorage, uploadInfo, fileSha256)
             } else {
                 Result.success(it)
             }
@@ -305,6 +311,7 @@ class UploaderImpl(
         clipFile: ClientFile,
         modelStorage: ModelStorage,
         uploadInfo: UploadInfo,
+        fileSha256: String,
     ): Result<PrimaryKey> {
         val chunkSize = uploadInfo.chunkSize
         val pathHash = uploadInfo.pathHash
@@ -314,7 +321,8 @@ class UploaderImpl(
             clipFile.name,
             clipFile.size,
             clipFile.contentType,
-            chunkSize
+            chunkSize,
+            fileSha256
         ).onSuccess { initResponse ->
             updateUploadInfo(modelStorage, collection, pathHash) {
                 it.copy(recordId = initResponse.recordId, chunkSize = initResponse.chunkSize)

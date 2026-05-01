@@ -40,9 +40,12 @@ import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
+import com.storyteller_f.shared.utils.sha256
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.io.asSource
+import kotlinx.io.buffered
 import org.apache.tika.mime.MimeTypes
 import java.io.BufferedInputStream
 import java.io.File
@@ -484,7 +487,8 @@ suspend fun initChunkUpload(
                 body.size,
                 0,
                 body.name,
-                body.chunkSize
+                body.chunkSize,
+                body.sha256,
             )
         )
     }.mapIfNotNull {
@@ -501,26 +505,53 @@ suspend fun completeChunkUpload(
     // 读取上传记录以获取所有者信息
     val record = backend.database.file.getUploadRecord(recordId).getOrThrow()
         ?: throw CustomBadRequestException("upload record not found")
+    val expectedSha256 = record.sha256 ?: throw CustomBadRequestException("file sha256 missing")
     val tuple = ObjectTuple(record.objectId, record.objectType)
     return backend.checkRootWritePermission(tuple.objectType, tuple.objectId, id)
         .mapResultIfNotNull {
+            var targetFullName: String? = null
             runCatching {
                 val name = record.name
                 val totalSize = record.total
+                val expectedChunkCount = ((totalSize + record.chunkSize - 1) / record.chunkSize).toInt()
                 val newSavedName = newFileName(name)
                 // 使用对象存储 compose 在默认桶直接合并到最终路径
                 val chunkRecords = backend.objectStorageService.list(
                     A_FILE_DEFAULT_BUCKET,
                     "chunks/$recordId/"
                 ).getOrThrow()
-                val sortedSources = chunkRecords.sortedBy { r ->
-                    r.fullName.substringAfter("chunk_").toIntOrNull() ?: 0
-                }.map { it.fullName }
-                val targetFullName = "${tuple.objectId}/$newSavedName"
+                val chunkMap = chunkRecords.mapNotNull { r ->
+                    val index = r.fullName.substringAfter("chunk_").toIntOrNull()
+                    if (index == null) {
+                        null
+                    } else {
+                        index to r.fullName
+                    }
+                }.toMap()
+                if (chunkMap.size != expectedChunkCount) {
+                    throw CustomBadRequestException("chunk missing")
+                }
+                val sortedSources = (0 until expectedChunkCount).map { index ->
+                    chunkMap[index] ?: throw CustomBadRequestException("chunk missing")
+                }
+                targetFullName = "${tuple.objectId}/$newSavedName"
                 // 合并到最终对象
-                backend.objectStorageService.compose(A_FILE_DEFAULT_BUCKET, targetFullName, sortedSources).getOrThrow()
+                backend.objectStorageService.compose(
+                    A_FILE_DEFAULT_BUCKET,
+                    targetFullName!!,
+                    sortedSources
+                ).getOrThrow()
+                val actualSha256 = backend.objectStorageService.getInputStream(
+                    A_FILE_DEFAULT_BUCKET,
+                    targetFullName!!
+                ).getOrThrow().use { input ->
+                    sha256(input.asSource().buffered())
+                }
+                if (actualSha256 != expectedSha256) {
+                    throw CustomBadRequestException("file hash mismatch")
+                }
                 val fileRecord = backend.buildFileRecordFromComposedObject(
-                    targetFullName,
+                    targetFullName!!,
                     newSavedName,
                     tuple,
                     totalSize
@@ -544,7 +575,37 @@ suspend fun completeChunkUpload(
                 // 清理分片与元数据
                 cleanChunk(backend, sortedSources, recordId)
                 listOf(fileRecord)
-            }
+            }.fold(
+                onSuccess = { fileRecords ->
+                    Result.success(fileRecords)
+                },
+                onFailure = { error ->
+                    runCatching {
+                        val quotaInfo = backend.getQuotaInfo(QuotaType.FILE, tuple).getOrThrow()
+                        backend.database.file.updateUploadRecordStatus(
+                            quotaInfo,
+                            record.copy(status = UploadRecordStatus.FAILED),
+                            emptyList(),
+                        ).getOrThrow()
+                    }
+                    runCatching {
+                        val target = targetFullName
+                        if (target != null) {
+                            backend.objectStorageService.delete(A_FILE_DEFAULT_BUCKET, listOf(target)).getOrThrow()
+                        }
+                    }
+                    runCatching {
+                        val sessionObjects = backend.objectStorageService.list(
+                            A_FILE_DEFAULT_BUCKET,
+                            "chunks/$recordId/"
+                        ).getOrThrow().map { it.fullName }
+                        if (sessionObjects.isNotEmpty()) {
+                            backend.objectStorageService.delete(A_FILE_DEFAULT_BUCKET, sessionObjects).getOrThrow()
+                        }
+                    }
+                    Result.failure(error)
+                }
+            )
         }.mapResultIfNotNull {
             backend.processFileRecordToFileInfo(it, id)
         }.firstOrNull()
