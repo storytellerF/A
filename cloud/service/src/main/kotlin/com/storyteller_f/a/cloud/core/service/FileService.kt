@@ -17,6 +17,7 @@ import com.storyteller_f.a.backend.core.mapPagingResultNotNull
 import com.storyteller_f.a.backend.core.service.CopyPack
 import com.storyteller_f.a.backend.core.service.FileDocument
 import com.storyteller_f.a.backend.core.service.FileDocumentSearch
+import com.storyteller_f.a.backend.core.service.PresignContext
 import com.storyteller_f.a.backend.core.service.ProcessedUploadPack
 import com.storyteller_f.a.backend.core.service.UploadPack
 import com.storyteller_f.a.backend.core.types.FileRecord
@@ -63,7 +64,8 @@ class PathResponse(val file: Path)
 suspend fun Backend.getFileList(
     uid: PrimaryKey,
     objectTuple: ObjectTuple,
-    primaryKeyFetch: PrimaryKeyFetch
+    primaryKeyFetch: PrimaryKeyFetch,
+    clientIp: String? = null
 ): Result<PaginationResult<FileInfo>?> {
     if (objectTuple.objectType == ObjectType.TOPIC) {
         return Result.failure(CustomBadRequestException("can't get topic file record"))
@@ -71,7 +73,7 @@ suspend fun Backend.getFileList(
     val parentType = objectTuple.objectType
     val parentId = objectTuple.objectId
     return checkRootWritePermission(parentType, parentId, uid).mapResultIfNotNull {
-        getFileInfoPaginationResult(parentId, primaryKeyFetch)
+        getFileInfoPaginationResult(parentId, primaryKeyFetch, clientIp)
     }
 }
 
@@ -79,6 +81,7 @@ suspend fun Backend.getFileInfoByName(
     uid: PrimaryKey,
     objectTuple: ObjectTuple,
     word: String,
+    clientIp: String? = null,
 ): Result<FileInfo?> {
     if (objectTuple.objectType == ObjectType.TOPIC) {
         return Result.failure(CustomBadRequestException("can't get topic file record"))
@@ -92,7 +95,7 @@ suspend fun Backend.getFileInfoByName(
     ).mapResultIfNotNull { (_, rootId) ->
         database.file.getFileRecord(rootId, word)
     }.mapResultIfNotNull { fileRecord ->
-        processFileRecordToFileInfo(listOf(fileRecord), uid)
+        processFileRecordToFileInfo(listOf(fileRecord), uid, clientIp)
     }.mapIfNotNull {
         it.first()
     }
@@ -102,7 +105,8 @@ suspend fun Backend.searchFiles(
     uid: PrimaryKey,
     query: SearchQuery,
     objectTuple: ObjectTuple,
-    primaryKeyFetch: OffsetFetch
+    primaryKeyFetch: OffsetFetch,
+    clientIp: String? = null
 ): Result<PaginationResult<FileInfo>?> {
     val word = query.word.trim()
     if (word.isBlank()) {
@@ -113,7 +117,7 @@ suspend fun Backend.searchFiles(
 
     // 如果指定了 objectId 和 objectType，需要检查权限
     return checkRootWritePermission(objectType, objectId, uid).mapResultIfNotNull {
-        searchFilesByWord(word, objectId, primaryKeyFetch)
+        searchFilesByWord(word, objectId, primaryKeyFetch, clientIp)
     }
 }
 
@@ -133,7 +137,8 @@ suspend fun Backend.uncheckedSearchFiles(
 private suspend fun Backend.searchFilesByWord(
     word: String?,
     ownerId: PrimaryKey?,
-    primaryKeyFetch: OffsetFetch
+    primaryKeyFetch: OffsetFetch,
+    clientIp: String? = null
 ): Result<PaginationResult<FileInfo>?> {
     return if (word.isNullOrBlank()) {
         Result.success(PaginationResult(emptyList(), 0))
@@ -150,7 +155,7 @@ private suspend fun Backend.searchFilesByWord(
                 Result.success(PaginationResult(emptyList(), total))
             } else {
                 database.file.getFileRecordByIds(fileIds).mapResultIfNotNull { fileRecords ->
-                    processFileRecordToFileInfo(fileRecords, ownerId)
+                    processFileRecordToFileInfo(fileRecords, ownerId, clientIp)
                 }.mapIfNotNull { fileInfos ->
                     PaginationResult(fileInfos, total)
                 }
@@ -279,9 +284,10 @@ suspend fun getFileSystemDownloadUrl(
 suspend fun Backend.getFileInfoPaginationResult(
     uid: PrimaryKey,
     primaryKeyFetch: PrimaryKeyFetch,
+    clientIp: String? = null,
 ): Result<PaginationResult<FileInfo>> = database.file.getFileRecordPaginationList(uid, primaryKeyFetch)
     .mapPagingResultNotNull { list ->
-        processFileRecordToFileInfo(list, uid)
+        processFileRecordToFileInfo(list, uid, clientIp)
     }
 
 suspend fun Backend.getAllFileInfos(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<FileInfo>> =
@@ -296,12 +302,20 @@ suspend fun Backend.getUserUploadRecords(
     list.map { it.toUploadRecordInfo() }
 }
 
-suspend fun Backend.getFileInfoById(id: PrimaryKey, uid: PrimaryKey? = null): Result<FileInfo?> =
+suspend fun Backend.getFileInfoById(
+    id: PrimaryKey,
+    uid: PrimaryKey? = null,
+    clientIp: String? = null
+): Result<FileInfo?> =
     database.file.getFileRecordByIds(listOf(id)).mapResultIfNotNull { list ->
-        processFileRecordToFileInfo(list, uid)
+        processFileRecordToFileInfo(list, uid, clientIp)
     }.mapIfNotNull { it.firstOrNull() }
 
-suspend fun Backend.tryCopyFile(p: CommonPath, uid: PrimaryKey) =
+suspend fun Backend.tryCopyFile(
+    p: CommonPath,
+    uid: PrimaryKey,
+    clientIp: String? = null
+) =
     checkObjectWritable(ObjectType.FILE, p.id).mapResultIfNotNull {
         database.file.getFileRecordByIds(listOf(p.id)).firstOrNull().mapResultIfNotNull { fileRecord ->
             checkRootReadPermission(
@@ -326,7 +340,7 @@ suspend fun Backend.tryCopyFile(p: CommonPath, uid: PrimaryKey) =
             copyFile(fileRecord, uid)
         }
     }.mapResultIfNotNull {
-        processFileRecordToFileInfo(it, uid)
+        processFileRecordToFileInfo(it, uid, clientIp)
     }.mapIfNotNull {
         it.firstOrNull()
     }
@@ -355,7 +369,8 @@ private suspend fun Backend.copyFile(
 suspend fun Backend.tryUploadFiles(
     ownerId: PrimaryKey,
     ownerType: ObjectType,
-    files: List<UploadPack>
+    files: List<UploadPack>,
+    clientIp: String? = null
 ) = lockQuotaInfo(ownerId ob ownerType, QuotaType.FILE, files.sumOf {
     it.size
 }, Uuid.random().toHexString()) {
@@ -370,7 +385,7 @@ suspend fun Backend.tryUploadFiles(
         }
     }
 }.mapResult {
-    processFileRecordToFileInfo(it, ownerId)
+    processFileRecordToFileInfo(it, ownerId, clientIp)
 }
 
 private suspend fun processContentTypeAndDimension(files: List<UploadPack>): List<ProcessedUploadPack> =
@@ -452,7 +467,8 @@ suspend fun Backend.getFileInfoList(names: List<String>): Result<List<FileInfo?>
 
 suspend fun Backend.processFileRecordToFileInfo(
     fileRecords: List<FileRecord>,
-    uid: PrimaryKey? = null
+    uid: PrimaryKey? = null,
+    clientIp: String? = null
 ): Result<List<FileInfo>> {
     val fileRecordIds = fileRecords.map { it.id }
     val favoriteMap = if (uid != null && fileRecordIds.isNotEmpty()) {
@@ -467,9 +483,11 @@ suspend fun Backend.processFileRecordToFileInfo(
     } else {
         emptyMap()
     }
-    return objectStorageService.get(A_FILE_DEFAULT_BUCKET, fileRecords.map {
-        it.fullName
-    }).map { mediaList ->
+    return objectStorageService.getWithPresignContext(
+        A_FILE_DEFAULT_BUCKET,
+        fileRecords.map { it.fullName },
+        PresignContext(uid?.toString(), clientIp)
+    ).map { mediaList ->
         val mediaRecordMap = mediaList.associateBy { it.fullName }
         fileRecords.mapNotNull { media ->
             mediaRecordMap[media.fullName]?.let {
@@ -509,7 +527,8 @@ suspend fun initChunkUpload(
 suspend fun completeChunkUpload(
     backend: Backend,
     id: PrimaryKey,
-    path: CommonPath
+    path: CommonPath,
+    clientIp: String? = null
 ): Result<FileInfo?> {
     val recordId = path.id
     // 读取上传记录以获取所有者信息
@@ -612,7 +631,7 @@ suspend fun completeChunkUpload(
                 }
             )
         }.mapResultIfNotNull {
-            backend.processFileRecordToFileInfo(it, id)
+            backend.processFileRecordToFileInfo(it, id, clientIp)
         }.firstOrNull()
 }
 

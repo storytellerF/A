@@ -8,6 +8,7 @@ import com.storyteller_f.a.backend.core.service.ObjectStorageRecord
 import com.storyteller_f.a.backend.core.service.ObjectStorageService
 import com.storyteller_f.a.backend.core.service.ObjectStorageServiceFactory
 import com.storyteller_f.a.backend.core.service.ObjectStorageWriteRecord
+import com.storyteller_f.a.backend.core.service.PresignContext
 import com.storyteller_f.a.backend.core.service.UploadPack
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.recoverResult
@@ -111,29 +112,15 @@ class MinIoObjectStorageService(
         bucketName: String,
         names: List<String>
     ): Result<List<ObjectStorageRecord>> {
-        return useMinIoClient(connection) {
-            names.mapNotNull {
-                try {
-                    val url = cache.get(it) {
-                        val minioObjectUrl = getMinioObjectUrl(bucketName, it)
-                        if (minioHost.isNullOrBlank()) {
-                            minioObjectUrl
-                        } else {
-                            replaceUrl(minioHost, minioObjectUrl)
-                        }
-                    }
-                    val statObject = statObject(StatObjectArgs.builder().bucket(bucketName).`object`(it).build())
-                    val lastModified = statObject.lastModified().toLocalDateTime().toKotlinLocalDateTime()
-                    ObjectStorageRecord(url, lastModified, it)
-                } catch (e: ErrorResponseException) {
-                    if (e.errorResponse().code() == "NoSuchKey") {
-                        null
-                    } else {
-                        throw e
-                    }
-                }
-            }
-        }
+        return getInternal(bucketName, names, null)
+    }
+
+    override suspend fun getWithPresignContext(
+        bucketName: String,
+        names: List<String>,
+        presignContext: PresignContext?
+    ): Result<List<ObjectStorageRecord>> {
+        return getInternal(bucketName, names, presignContext)
     }
 
     override suspend fun upload(
@@ -195,6 +182,43 @@ class MinIoObjectStorageService(
             }
         }
     }
+
+    private suspend fun getInternal(
+        bucketName: String,
+        names: List<String>,
+        presignContext: PresignContext?
+    ): Result<List<ObjectStorageRecord>> {
+        val hasContext = presignContext?.uid.isNullOrBlank().not() || presignContext?.ip.isNullOrBlank().not()
+        return useMinIoClient(connection) {
+            names.mapNotNull { objName ->
+                try {
+                    val minioObjectUrl = if (hasContext) {
+                        cache.get(presignContext.ip + presignContext.uid + objName) {
+                            getMinioObjectUrl(bucketName, objName, presignContext)
+                        }
+                    } else {
+                        cache.get(objName) {
+                            getMinioObjectUrl(bucketName, objName, null)
+                        }
+                    }
+                    val url = if (minioHost.isNullOrBlank()) {
+                        minioObjectUrl
+                    } else {
+                        replaceUrl(minioHost, minioObjectUrl)
+                    }
+                    val statObject = statObject(StatObjectArgs.builder().bucket(bucketName).`object`(objName).build())
+                    val lastModified = statObject.lastModified().toLocalDateTime().toKotlinLocalDateTime()
+                    ObjectStorageRecord(url, lastModified, objName)
+                } catch (e: ErrorResponseException) {
+                    if (e.errorResponse().code() == "NoSuchKey") {
+                        null
+                    } else {
+                        throw e
+                    }
+                }
+            }
+        }
+    }
 }
 
 fun replaceUrl(minioHost: String, minioObjectUrl: String?): String {
@@ -238,15 +262,26 @@ private fun MinioClient.removeAllObject(bucketName: String) {
 }
 
 @OptIn(ExperimentalTime::class)
-private fun MinioClient.getMinioObjectUrl(bucketName: String, objName: String) =
-    getPresignedObjectUrl(
-        GetPresignedObjectUrlArgs.builder()
-            .method(Method.GET)
-            .bucket(bucketName)
-            .`object`(objName)
-            .expiry(7, TimeUnit.DAYS)
-            .build()
-    )
+private fun MinioClient.getMinioObjectUrl(
+    bucketName: String,
+    objName: String,
+    presignContext: PresignContext?
+) = getPresignedObjectUrl(
+    GetPresignedObjectUrlArgs.builder()
+        .method(Method.GET)
+        .bucket(bucketName)
+        .`object`(objName)
+        .extraQueryParams(
+            buildMap {
+                val uid = presignContext?.uid?.takeIf { it.isNotBlank() }
+                val ip = presignContext?.ip?.takeIf { it.isNotBlank() }
+                if (uid != null) put("a_uid", uid)
+                if (ip != null) put("a_ip", ip)
+            }
+        )
+        .expiry(7, TimeUnit.DAYS)
+        .build()
+)
 
 class MinioObjectStorageServiceFactory : ObjectStorageServiceFactory {
     override fun match(env: MergedEnv): Boolean {
