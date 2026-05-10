@@ -17,6 +17,11 @@ data class ObjectStorageWriteRecord(
     val checksumSha256: String?,
 )
 
+data class PresignContext(
+    val uid: String?,
+    val ip: String?,
+)
+
 data class UploadPack(
     val file: File,
     val name: String,
@@ -40,6 +45,12 @@ interface ObjectStorageService {
      * @param names 完整的name
      */
     suspend fun get(bucketName: String, names: List<String>): Result<List<ObjectStorageRecord>>
+
+    suspend fun getWithPresignContext(
+        bucketName: String,
+        names: List<String>,
+        presignContext: PresignContext?
+    ): Result<List<ObjectStorageRecord>> = get(bucketName, names)
 
     suspend fun clean(bucketName: String): Result<Unit>
 

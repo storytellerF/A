@@ -32,6 +32,7 @@ import com.storyteller_f.a.cloud.server.auth.handleResult
 import com.storyteller_f.a.cloud.server.auth.usePrincipal
 import com.storyteller_f.a.cloud.server.common.GeneralOffsetPagingGenerator
 import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
+import com.storyteller_f.a.cloud.server.common.clientIp
 import com.storyteller_f.a.cloud.server.common.pagination
 import com.storyteller_f.endpoint4k.ktor.server.invoke
 import com.storyteller_f.endpoint4k.ktor.server.receiveBody
@@ -67,8 +68,9 @@ fun Route.bindProtectedFileRoute(backend: Backend) {
     bindUserCommunityRoute(backend)
 
     CustomApi.Files.getByName(handleResult(backend)) {
+        val ip = call.clientIp()
         usePrincipal { uid ->
-            backend.getFileInfoByName(uid, it.objectId ob it.objectType, it.name)
+            backend.getFileInfoByName(uid, it.objectId ob it.objectType, it.name, ip)
         }
     }
 
@@ -100,14 +102,16 @@ fun Route.bindProtectedFileRoute(backend: Backend) {
     bindChunkRoute(backend, root)
 
     CustomApi.Files.Id.get(handleResult(backend)) { p ->
+        val ip = call.clientIp()
         usePrincipal { uid ->
-            backend.getFileInfoById(p.id, uid)
+            backend.getFileInfoById(p.id, uid, ip)
         }
     }
 
     CustomApi.Files.Id.copy(handleResult(backend)) { p, _ ->
+        val ip = call.clientIp()
         usePrincipal { uid ->
-            backend.tryCopyFile(p, uid)
+            backend.tryCopyFile(p, uid, ip)
         }
     }
 
@@ -154,21 +158,23 @@ private fun Route.bindFileFavoriteRoute(backend: Backend) {
 
 private fun Route.bindUserCommunityRoute(backend: Backend) {
     CustomApi.Communities.Id.Files.get(handleResult(backend)) { query, path ->
+        val ip = call.clientIp()
         usePrincipal { uid ->
             query.pagination(IdentifiablePagingGenerator, { l, p ->
                 FileInfoListResponse(l, p)
             }) { pagingFetch ->
-                backend.getFileList(uid, path.id ob ObjectType.COMMUNITY, pagingFetch)
+                backend.getFileList(uid, path.id ob ObjectType.COMMUNITY, pagingFetch, ip)
             }
         }
     }
 
     CustomApi.Communities.Id.Files.search(handleResult(backend)) { query, path ->
+        val ip = call.clientIp()
         usePrincipal { uid ->
             query.pagination(GeneralOffsetPagingGenerator, { l, p ->
                 FileInfoListResponse(l, p)
             }) { pagingFetch ->
-                backend.searchFiles(uid, query, path.id ob ObjectType.COMMUNITY, pagingFetch)
+                backend.searchFiles(uid, query, path.id ob ObjectType.COMMUNITY, pagingFetch, ip)
             }
         }
     }
@@ -176,21 +182,23 @@ private fun Route.bindUserCommunityRoute(backend: Backend) {
 
 private fun Route.bindUserRoomRoute(backend: Backend) {
     CustomApi.Rooms.Id.Files.get(handleResult(backend)) { query, path ->
+        val ip = call.clientIp()
         usePrincipal { uid ->
             query.pagination(IdentifiablePagingGenerator, { l, p ->
                 FileInfoListResponse(l, p)
             }) { pagingFetch ->
-                backend.getFileList(uid, path.id ob ObjectType.ROOM, pagingFetch)
+                backend.getFileList(uid, path.id ob ObjectType.ROOM, pagingFetch, ip)
             }
         }
     }
 
     CustomApi.Rooms.Id.Files.search(handleResult(backend)) { query, path ->
+        val ip = call.clientIp()
         usePrincipal { uid ->
             query.pagination(GeneralOffsetPagingGenerator, { l, p ->
                 FileInfoListResponse(l, p)
             }) { pagingFetch ->
-                backend.searchFiles(uid, query, path.id ob ObjectType.ROOM, pagingFetch)
+                backend.searchFiles(uid, query, path.id ob ObjectType.ROOM, pagingFetch, ip)
             }
         }
     }
@@ -198,21 +206,23 @@ private fun Route.bindUserRoomRoute(backend: Backend) {
 
 private fun Route.bindUserFileRoute(backend: Backend) {
     CustomApi.Users.Id.Files.get(handleResult(backend)) { query, path ->
+        val ip = call.clientIp()
         usePrincipal { uid ->
             query.pagination(IdentifiablePagingGenerator, { l, p ->
                 FileInfoListResponse(l, p)
             }) { pagingFetch ->
-                backend.getFileList(uid, path.id ob ObjectType.USER, pagingFetch)
+                backend.getFileList(uid, path.id ob ObjectType.USER, pagingFetch, ip)
             }
         }
     }
 
     CustomApi.Users.Id.Files.search(handleResult(backend)) { query, path ->
+        val ip = call.clientIp()
         usePrincipal { uid ->
             query.pagination(GeneralOffsetPagingGenerator, { l, p ->
                 FileInfoListResponse(l, p)
             }) { pagingFetch ->
-                backend.searchFiles(uid, query, path.id ob ObjectType.USER, pagingFetch)
+                backend.searchFiles(uid, query, path.id ob ObjectType.USER, pagingFetch, ip)
             }
         }
     }
@@ -232,8 +242,9 @@ private fun Route.bindChunkRoute(backend: Backend, root: File) {
     }
 
     CustomApi.Files.Chunks.complete(handleResult(backend)) { path, _ ->
+        val ip = call.clientIp()
         usePrincipal { uid ->
-            completeChunkUpload(backend, uid, path)
+            completeChunkUpload(backend, uid, path, ip)
         }
     }
 
@@ -257,6 +268,7 @@ suspend fun RoutingContext.uploadMedia(
     root: File,
     query: CustomApi.Files.UploadQuery,
 ): Result<FileInfoListResponse?> {
+    val ip = call.clientIp()
     val objectTuple = ObjectTuple(query.objectId, query.objectType)
     if (objectTuple.objectType == ObjectType.TOPIC) {
         return Result.failure(CustomBadRequestException("can't upload to topic"))
@@ -268,7 +280,7 @@ suspend fun RoutingContext.uploadMedia(
             val fileInfos = when (part) {
                 is PartData.FileItem -> {
                     val fileName = part.originalFileName as String
-                    backend.uploadFilesFromChannel(root, it, fileName, query.sha256) {
+                    backend.uploadFilesFromChannel(root, it, fileName, query.sha256, ip) {
                         part.provider()
                     }
                 }
@@ -302,6 +314,7 @@ private suspend fun Backend.uploadFilesFromChannel(
     permission: RootWritePermission,
     fileName: String,
     expectedSha256: String,
+    clientIp: String?,
     provider: () -> ByteReadChannel
 ): List<FileInfo> {
     val newSavedName = newFileName(fileName)
@@ -323,7 +336,8 @@ private suspend fun Backend.uploadFilesFromChannel(
                     "${permission.rootId}/$newSavedName",
                     expectedSha256,
                 ),
-            )
+            ),
+            clientIp,
         ).getOrThrow()
     } finally {
         file.delete()
