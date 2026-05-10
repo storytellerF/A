@@ -929,10 +929,11 @@ private fun UploadStatusButton(file: UploadInfo?) {
     }
 }
 
-fun ClientFile.getUploadDataFromClipFile() = UploadData(
+fun ClientFile.getUploadDataFromClipFile(sha256: String) = UploadData(
     size,
     name,
-    contentType
+    contentType,
+    sha256,
 ) {
     source()
 }

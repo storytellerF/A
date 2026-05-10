@@ -137,6 +137,9 @@ class UploaderImpl(
             }
             return
         }
+        val fileSha256 = clipFile.source().use {
+            sha256(it)
+        }
         val id = now().toInstant(
             TimeZone.UTC
         ).toEpochMilliseconds()
@@ -145,6 +148,7 @@ class UploaderImpl(
             objectId = myUid,
             pathHash = pathHash,
             path = clipFile.path,
+            sha256 = fileSha256,
             total = clipFile.size,
             status = UploadStatus.UPLOADING,
             name = clipFile.name,
@@ -171,17 +175,14 @@ class UploaderImpl(
         }
         val objectTuple = myUid ob ObjectType.USER
         val chunkThreshold = uploadInfo.chunkSize
-        val fileSha256 = clientFile.source().use {
-            sha256(it)
-        }
+        val fileSha256 = uploadInfo.sha256
         if (clientFile.size > chunkThreshold) {
             uploadChunked(userSession, objectTuple, clientFile, modelStorage, uploadInfo, fileSha256)
             return
         }
         userSession.upload(
             objectTuple,
-            clientFile.getUploadDataFromClipFile(),
-            fileSha256
+            clientFile.getUploadDataFromClipFile(fileSha256),
         ) { p, _ ->
             updateUploadInfo(modelStorage, collection, pathHash) {
                 it.copy(progress = p)

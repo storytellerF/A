@@ -19,6 +19,7 @@ data class FileRecord(
     val contentType: String,
     val size: Long,
     val fullName: String,
+    val sha256: String,
     val status: ObjectStatus = ObjectStatus.NORMAL,
 ) {
     val readOnly get() = status == ObjectStatus.READ_ONLY

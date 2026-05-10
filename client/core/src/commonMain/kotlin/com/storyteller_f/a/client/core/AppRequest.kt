@@ -475,16 +475,23 @@ class UploadData(
     val size: Long,
     val name: String,
     val contentType: ContentType,
+    val sha256: String,
     val block: () -> Input
 )
 
 suspend fun UserSessionManager.upload(
     objectTuple: ObjectTuple,
     data: UploadData,
-    sha256: String,
     onUpload: suspend (Long, Long?) -> Unit = { _, _ -> },
 ) = serviceCatching {
-    CustomApi.Files.upload(CustomApi.Files.UploadQuery(objectTuple.objectId, objectTuple.objectType, sha256), Unit) {
+    CustomApi.Files.upload(
+        CustomApi.Files.UploadQuery(
+            objectTuple.objectId,
+            objectTuple.objectType,
+            data.sha256
+        ),
+        Unit
+    ) {
         setBody(
             MultiPartFormDataContent(
                 formData {

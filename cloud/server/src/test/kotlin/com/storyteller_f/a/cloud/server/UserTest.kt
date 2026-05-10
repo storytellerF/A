@@ -34,6 +34,7 @@ import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.obj.UpdateUserRead
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.utils.sha256
 import io.ktor.http.ContentType
 import kotlinx.io.Buffer
 import kotlin.test.Test
@@ -384,10 +385,15 @@ class UserTest {
     }
 }
 
-fun getUploadDataFromBytes(bytes: ByteArray) = UploadData(
+suspend fun getUploadDataFromBytes(bytes: ByteArray) = UploadData(
     bytes.size.toLong(),
     "avatar1.png",
-    ContentType.parse("image/png")
+    ContentType.parse("image/png"),
+    sha256(
+        Buffer().apply {
+            write(bytes)
+        }.peek()
+    ),
 ) {
     Buffer().apply {
         write(bytes)

@@ -320,7 +320,14 @@ class FileTest {
             val tuple = ObjectTuple(it.uid, ObjectType.USER)
             val data = getUploadDataFromText("hello", "mismatch.txt")
             val wrongSha256 = "0".repeat(64)
-            val r = upload(tuple, data, wrongSha256)
+            val wrongData = UploadData(
+                data.size,
+                data.name,
+                data.contentType,
+                wrongSha256,
+                data.block
+            )
+            val r = upload(tuple, wrongData)
             assertTrue(r.isFailure)
             assertEquals(0, getFileList(it.uid, ObjectType.USER, null, 10).getOrThrow().data.size)
         }
@@ -500,13 +507,18 @@ suspend fun UserSessionManager.downloadFile(
     tmpFile.writeBytes(bytes)
 }
 
-private fun getUploadDataFromResources(name: String): UploadData {
+private suspend fun getUploadDataFromResources(name: String): UploadData {
     val inputStream = ClassLoader.getSystemResourceAsStream(name)!!
     val bytes = inputStream.readBytes()
     val data = UploadData(
         bytes.size.toLong(),
         name,
-        ContentType.defaultForFileExtension("flac")
+        ContentType.defaultForFileExtension("flac"),
+        sha256(
+            Buffer().apply {
+                write(bytes)
+            }.peek()
+        ),
     ) {
         Buffer().apply {
             write(bytes)

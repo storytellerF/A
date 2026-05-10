@@ -139,6 +139,7 @@ class ExposedFileDatabase(val databaseSession: ExposedDatabaseSession) : FileDat
             this[FileRecords.contentType] = e.contentType
             this[FileRecords.size] = e.size
             this[FileRecords.fullName] = e.fullName
+            this[FileRecords.sha256] = e.sha256
             this[FileRecords.status] = e.status
         }.size == fileRecordList.size) {
             "insert file record failed"
@@ -216,6 +217,7 @@ class ExposedFileDatabase(val databaseSession: ExposedDatabaseSession) : FileDat
                 this[FileRecords.contentType] = e.contentType
                 this[FileRecords.size] = e.size
                 this[FileRecords.fullName] = e.fullName
+                this[FileRecords.sha256] = e.sha256
                 this[FileRecords.status] = e.status
             }.size == fileRecordList.size) {
                 "insert file record failed"

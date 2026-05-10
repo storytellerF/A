@@ -256,30 +256,29 @@ suspend fun RoutingContext.uploadMedia(
     id: PrimaryKey,
     root: File,
     query: CustomApi.Files.UploadQuery,
-) = run {
+): Result<FileInfoListResponse?> {
     val objectTuple = ObjectTuple(query.objectId, query.objectType)
     if (objectTuple.objectType == ObjectType.TOPIC) {
-        Result.failure(CustomBadRequestException("can't upload to topic"))
-    } else {
-        val parentType = objectTuple.objectType
-        val parentId = objectTuple.objectId
-        backend.checkRootWritePermission(parentType, parentId, id).mapResultIfNotNull {
-            processFormData { part ->
-                val fileInfos = when (part) {
-                    is PartData.FileItem -> {
-                        val fileName = part.originalFileName as String
-                        backend.uploadFilesFromChannel(root, it, fileName, query.sha256) {
-                            part.provider()
-                        }
-                    }
-
-                    else -> {
-                        emptyList()
+        return Result.failure(CustomBadRequestException("can't upload to topic"))
+    }
+    val parentType = objectTuple.objectType
+    val parentId = objectTuple.objectId
+    return backend.checkRootWritePermission(parentType, parentId, id).mapResultIfNotNull {
+        processFormData { part ->
+            val fileInfos = when (part) {
+                is PartData.FileItem -> {
+                    val fileName = part.originalFileName as String
+                    backend.uploadFilesFromChannel(root, it, fileName, query.sha256) {
+                        part.provider()
                     }
                 }
-                part.dispose()
-                fileInfos
+
+                else -> {
+                    emptyList()
+                }
             }
+            part.dispose()
+            fileInfos
         }
     }
 }
@@ -321,7 +320,8 @@ private suspend fun Backend.uploadFilesFromChannel(
                     file,
                     newSavedName,
                     file.length(),
-                    "${permission.rootId}/$newSavedName"
+                    "${permission.rootId}/$newSavedName",
+                    expectedSha256,
                 ),
             )
         ).getOrThrow()
@@ -356,7 +356,8 @@ suspend fun uploadChunkFromChannel(
                         chunkTmp,
                         "chunk_${path.index}",
                         chunkTmp.length(),
-                        "chunks/${path.id}/chunk_${path.index}"
+                        "chunks/${path.id}/chunk_${path.index}",
+                        expected,
                     )
                 )
             ).getOrThrow()

@@ -872,7 +872,7 @@ class AddPreset : Subcommand("add", "add entry") {
             p.map {
                 val path = File(parentDir, it)
                 val name = path.name
-                UploadPack(path, name, path.length(), "$id/$name")
+                UploadPack(path, name, path.length(), "$id/$name", sha256File(path))
             }
         ).getOrThrow()
     }

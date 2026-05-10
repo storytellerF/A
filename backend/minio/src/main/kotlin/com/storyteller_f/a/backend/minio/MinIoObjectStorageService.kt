@@ -7,6 +7,7 @@ import com.storyteller_f.a.backend.core.service.CopyPack
 import com.storyteller_f.a.backend.core.service.ObjectStorageRecord
 import com.storyteller_f.a.backend.core.service.ObjectStorageService
 import com.storyteller_f.a.backend.core.service.ObjectStorageServiceFactory
+import com.storyteller_f.a.backend.core.service.ObjectStorageWriteRecord
 import com.storyteller_f.a.backend.core.service.UploadPack
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.recoverResult
@@ -138,21 +139,21 @@ class MinIoObjectStorageService(
     override suspend fun upload(
         bucketName: String,
         uploadPacks: List<UploadPack>,
-    ): Result<List<ObjectStorageRecord>> {
+    ): Result<List<ObjectStorageWriteRecord>> {
         return useMinIoClient(connection) {
             if (!bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
                 makeBucket(MakeBucketArgs.builder().bucket(bucketName).build())
             }
-            val names = uploadPacks.map {
-                uploadObject(
+            uploadPacks.map { uploadPack ->
+                val resp = uploadObject(
                     UploadObjectArgs.builder()
                         .bucket(bucketName)
-                        .`object`(it.fullName)
-                        .filename(it.file.absolutePath)
+                        .`object`(uploadPack.fullName)
+                        .filename(uploadPack.file.absolutePath)
                         .build()
-                ).`object`()
+                )
+                ObjectStorageWriteRecord(resp.`object`(), resp.checksumSHA256())
             }
-            get(bucketName, names).getOrThrow()
         }
     }
 
@@ -160,7 +161,7 @@ class MinIoObjectStorageService(
         bucketName: String,
         targetFullName: String,
         sourceFullNames: List<String>
-    ): Result<ObjectStorageRecord> {
+    ): Result<ObjectStorageWriteRecord> {
         return useMinIoClient(connection) {
             if (!bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
                 makeBucket(MakeBucketArgs.builder().bucket(bucketName).build())
@@ -171,14 +172,14 @@ class MinIoObjectStorageService(
                     .`object`(it)
                     .build()
             }
-            composeObject(
+            val resp = composeObject(
                 ComposeObjectArgs.builder()
                     .bucket(bucketName)
                     .`object`(targetFullName)
                     .sources(sources)
                     .build()
             )
-            get(bucketName, listOf(targetFullName)).getOrThrow().first()
+            ObjectStorageWriteRecord(targetFullName, resp.checksumSHA256())
         }
     }
 
