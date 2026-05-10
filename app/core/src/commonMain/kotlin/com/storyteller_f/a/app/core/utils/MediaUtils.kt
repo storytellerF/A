@@ -35,7 +35,8 @@ suspend fun parseM3UPlayList(remoteMediaItem: RemoteMediaItem, client: HttpClien
 
 fun getUploadDataFromPath(
     meta: FileMetadata,
-    path: Path
-) = UploadData(meta.size, path.name, ContentType.defaultForFileExtension(path.toString())) {
+    path: Path,
+    sha256: String,
+) = UploadData(meta.size, path.name, ContentType.defaultForFileExtension(path.toString()), sha256) {
     SystemFileSystem.source(path).buffered()
 }

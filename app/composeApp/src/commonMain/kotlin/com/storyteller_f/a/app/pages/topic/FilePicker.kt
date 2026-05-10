@@ -262,14 +262,13 @@ suspend fun AppGlobalDialogController.selectFileAndUpload(
     useResult {
         val f = FileKit.openFilePicker()
         if (f != null) {
-            val uploadData = getUploadDataFromPlatformFile(f)
             val fileSha256 = f.source().buffered().use {
                 sha256(it)
             }
+            val uploadData = getUploadDataFromPlatformFile(f, fileSha256)
             upload(
                 mediaTarget,
                 uploadData,
-                fileSha256,
             ) { p, t ->
                 emitProgress {
                     GlobalDialogState.Loading(progress = GlobalDialogStateProgress(p, t))
@@ -285,10 +284,14 @@ suspend fun AppGlobalDialogController.selectFileAndUpload(
     }
 }
 
-private fun getUploadDataFromPlatformFile(f: PlatformFile) = UploadData(
+private fun getUploadDataFromPlatformFile(
+    f: PlatformFile,
+    sha256: String,
+) = UploadData(
     f.size(),
     f.name,
-    ContentType.defaultForFileExtension(f.extension)
+    ContentType.defaultForFileExtension(f.extension),
+    sha256,
 ) {
     f.source().buffered()
 }
@@ -319,8 +322,7 @@ suspend fun AppGlobalDialogController.uploadPath(
     return useResult {
         upload(
             mediaTarget,
-            getUploadDataFromPath(meta, path),
-            fileSha256
+            getUploadDataFromPath(meta, path, fileSha256),
         ) { p, t ->
             emitProgress {
                 GlobalDialogState.Loading(progress = GlobalDialogStateProgress(p, t))
@@ -332,14 +334,13 @@ suspend fun AppGlobalDialogController.uploadPath(
 suspend fun AppGlobalDialogController.upload(
     mediaTarget: ObjectTuple,
     uploadData: UploadData,
-    sha256: String,
     onUpload: suspend (Long, Long?) -> Unit = { _, _ -> },
 ): Result<List<FileInfo>> {
     if (uploadData.size > 100 * 1024 * 1024) {
         return Result.failure(Exception("file size is too large"))
     }
 
-    return request { this.upload(mediaTarget, uploadData, sha256, onUpload) }.map {
+    return request { this.upload(mediaTarget, uploadData, onUpload) }.map {
         it.data
     }.onSuccess {
         emitEvent(OnMediaUploaded(it))

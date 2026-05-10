@@ -6,6 +6,7 @@ import com.storyteller_f.a.backend.core.service.CopyPack
 import com.storyteller_f.a.backend.core.service.ObjectStorageRecord
 import com.storyteller_f.a.backend.core.service.ObjectStorageService
 import com.storyteller_f.a.backend.core.service.ObjectStorageServiceFactory
+import com.storyteller_f.a.backend.core.service.ObjectStorageWriteRecord
 import com.storyteller_f.a.backend.core.service.UploadPack
 import com.storyteller_f.shared.model.A_FILE_DEFAULT_BUCKET
 import com.storyteller_f.shared.utils.mapResult
@@ -21,6 +22,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
+import java.security.MessageDigest
+import java.util.Base64
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.copyTo
@@ -53,17 +56,14 @@ class FileSystemObjectStorageService(private val url: String, base: Path) : Obje
     override suspend fun upload(
         bucketName: String,
         uploadPacks: List<UploadPack>,
-    ): Result<List<ObjectStorageRecord>> {
+    ): Result<List<ObjectStorageWriteRecord>> {
         return useFileSystem {
             val bucketPath = base.resolve(bucketName)
             uploadPacks.map { uploadPack ->
                 val target = bucketPath.resolve(uploadPack.fullName).createParentDirectories()
                 Files.copy(uploadPack.file.toPath(), target, StandardCopyOption.REPLACE_EXISTING)
+                ObjectStorageWriteRecord(uploadPack.fullName, checksumSha256Base64(target))
             }
-        }.mapResult {
-            get(bucketName, uploadPacks.map {
-                it.fullName
-            })
         }
     }
 
@@ -160,7 +160,7 @@ class FileSystemObjectStorageService(private val url: String, base: Path) : Obje
         bucketName: String,
         targetFullName: String,
         sourceFullNames: List<String>
-    ): Result<ObjectStorageRecord> {
+    ): Result<ObjectStorageWriteRecord> {
         return useFileSystem {
             val bucketPath = base.resolve(bucketName)
             val target = bucketPath.resolve(targetFullName).createParentDirectories()
@@ -173,7 +173,7 @@ class FileSystemObjectStorageService(private val url: String, base: Path) : Obje
                     }
                 }
             }
-            get(bucketName, listOf(targetFullName)).getOrThrow().first()
+            ObjectStorageWriteRecord(targetFullName, checksumSha256Base64(target))
         }
     }
 
@@ -195,6 +195,21 @@ class FileSystemObjectStorageService(private val url: String, base: Path) : Obje
             runCatching {
                 block()
             }
+        }
+    }
+
+    private suspend fun checksumSha256Base64(path: Path): String {
+        return withContext(Dispatchers.IO) {
+            val digest = MessageDigest.getInstance("SHA-256")
+            Files.newInputStream(path).buffered().use { input ->
+                val buf = ByteArray(DEFAULT_BUFFER_SIZE)
+                while (true) {
+                    val read = input.read(buf)
+                    if (read <= 0) break
+                    digest.update(buf, 0, read)
+                }
+            }
+            Base64.getEncoder().encodeToString(digest.digest())
         }
     }
 

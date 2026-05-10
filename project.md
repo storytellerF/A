@@ -3,9 +3,8 @@
 ## 上传（files）
 
 - API 类型：Ktor HTTP 路由，端点定义在 api 模块的 CustomApi。
-- 非分片上传：`POST files/upload`（multipart），服务端先写入本地临时目录 `$HOME/a-temp`，再通过 ObjectStorageService 上传到对象存储并写入 FileRecord。
-- 分片上传：`POST files/chunk/init` → `POST files/chunk/{id}/{index}/upload?hash=...`（每片 sha256 校验）→ `POST files/chunk/{id}/complete`（对象存储侧 compose 合并，写入 FileRecord，清理 chunks）。
+- 非分片上传：`POST files/upload`（multipart），服务端先写入本地临时文件并校验请求参数 sha256；随后上传到对象存储并使用对象存储返回的 checksumSha256 做判断；FileRecord.sha256 按请求参数保存。
+- 分片上传：`POST files/chunk/init` → `POST files/chunk/{id}/{index}/upload?hash=...`（每片 sha256 校验）→ `POST files/chunk/{id}/complete`（对象存储 compose 合并，并用 compose 返回的 checksumSha256 与 init 记录的 sha256 比对；写入 FileRecord 并清理 chunks）。
 - 存储实现：统一走 ObjectStorageService。
   - `MEDIA_SERVICE=minio`：MinIO/S3 兼容对象存储（支持 compose）。
   - `MEDIA_SERVICE=filesystem`：落本地文件系统（或内存 FS），并通过 `GET /a_file/{path...}` 提供读取。
-

@@ -51,9 +51,12 @@ import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
+import com.storyteller_f.shared.utils.sha256
 import com.storyteller_f.shared.utils.trimMarkdownUnusedContent
 import io.github.aakira.napier.Napier
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.io.asSource
+import kotlinx.io.buffered
 import java.io.File
 import java.util.ServiceLoader
 import kotlin.uuid.ExperimentalUuidApi
@@ -337,7 +340,15 @@ private suspend fun Backend.createTopicSnapshot(
             tryUploadFiles(
                 uid,
                 ObjectType.USER,
-                listOf(UploadPack(pdfFile, "$topicId.pdf", pdfFile.length(), "$uid/$topicId.pdf"))
+                listOf(
+                    UploadPack(
+                        pdfFile,
+                        "$topicId.pdf",
+                        pdfFile.length(),
+                        "$uid/$topicId.pdf",
+                        sha256(pdfFile.inputStream().buffered().asSource().buffered()),
+                    )
+                )
             )
         }.firstOrNull()
     } finally {

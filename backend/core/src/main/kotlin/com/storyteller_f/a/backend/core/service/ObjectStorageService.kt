@@ -6,13 +6,23 @@ import kotlinx.datetime.LocalDateTime
 import java.io.File
 import java.io.InputStream
 
-data class ObjectStorageRecord(val url: String, val lastModified: LocalDateTime, val fullName: String)
+data class ObjectStorageRecord(
+    val url: String,
+    val lastModified: LocalDateTime,
+    val fullName: String,
+)
+
+data class ObjectStorageWriteRecord(
+    val fullName: String,
+    val checksumSha256: String?,
+)
 
 data class UploadPack(
     val file: File,
     val name: String,
     val size: Long,
-    val fullName: String
+    val fullName: String,
+    val sha256: String,
 )
 
 data class ProcessedUploadPack(
@@ -24,7 +34,7 @@ data class ProcessedUploadPack(
 data class CopyPack(val originFullName: String, val newFullName: String)
 
 interface ObjectStorageService {
-    suspend fun upload(bucketName: String, uploadPacks: List<UploadPack>): Result<List<ObjectStorageRecord>>
+    suspend fun upload(bucketName: String, uploadPacks: List<UploadPack>): Result<List<ObjectStorageWriteRecord>>
 
     /**
      * @param names 完整的name
@@ -49,7 +59,7 @@ interface ObjectStorageService {
         bucketName: String,
         targetFullName: String,
         sourceFullNames: List<String>
-    ): Result<ObjectStorageRecord>
+    ): Result<ObjectStorageWriteRecord>
 
     /**
      * 删除 bucket 下的多个对象。

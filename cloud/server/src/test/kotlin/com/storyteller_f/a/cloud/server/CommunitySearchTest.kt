@@ -12,6 +12,7 @@ import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.utils.sha256
 import io.ktor.http.ContentType
 import kotlinx.io.Buffer
 import kotlin.test.Test
@@ -88,7 +89,10 @@ class CommunitySearchTest {
             val fileInfo = upload(it.uid ob ObjectType.USER, UploadData(
                 buf.size().toLong(),
                 "cover.jpg",
-                ContentType.Image.JPEG
+                ContentType.Image.JPEG,
+                sha256(
+                    Buffer().apply { write(bytes) }.peek()
+                ),
             ) {
                 Buffer().apply { write(bytes) }
             }).getOrThrow().data.first()

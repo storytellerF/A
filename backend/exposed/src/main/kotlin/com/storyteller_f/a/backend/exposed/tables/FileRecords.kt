@@ -10,6 +10,7 @@ import org.jetbrains.exposed.v1.core.*
 object FileRecords : BaseTable() {
     val name = varchar("name", 200)
     val fullName = varchar("full_name", 200).index()
+    val sha256 = varchar("sha256", 64)
     val duration = long("duration")
     val width = integer("width")
     val height = integer("height")
@@ -41,6 +42,7 @@ fun FileRecord.Companion.wrapRow(resultRow: ResultRow): FileRecord {
             resultRow[contentType],
             resultRow[size],
             resultRow[fullName],
+            resultRow[sha256],
             resultRow[status]
         )
     }

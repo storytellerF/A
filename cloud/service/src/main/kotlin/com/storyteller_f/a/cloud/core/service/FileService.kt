@@ -7,6 +7,7 @@ import com.storyteller_f.a.api.SearchQuery
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
+import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.OffsetFetch
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
@@ -49,13 +50,15 @@ import kotlinx.io.buffered
 import org.apache.tika.mime.MimeTypes
 import java.io.BufferedInputStream
 import java.io.File
+import java.nio.file.Path
+import java.util.Base64
 import kotlin.io.path.exists
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 class FileResponse(val file: File)
 
-class PathResponse(val file: java.nio.file.Path)
+class PathResponse(val file: Path)
 
 suspend fun Backend.getFileList(
     uid: PrimaryKey,
@@ -184,7 +187,8 @@ suspend fun Backend.extractAlbum(fileRecordId: PrimaryKey, root: File, uid: Prim
                             file,
                             name,
                             fileRecord.size,
-                            "${fileRecord.owner}/$name"
+                            "${fileRecord.owner}/$name",
+                            sha256(file.inputStream().buffered().asSource().buffered()),
                         )
                     )
                 )
@@ -383,7 +387,7 @@ private suspend fun processContentTypeAndDimension(files: List<UploadPack>): Lis
     }
 
 @OptIn(ExperimentalUuidApi::class)
-private fun removeExifIfImage(
+private suspend fun removeExifIfImage(
     uploadPacks: List<ProcessedUploadPack>,
     f: MutableList<File>
 ): List<ProcessedUploadPack> = uploadPacks.map {
@@ -391,7 +395,8 @@ private fun removeExifIfImage(
         val target = File(System.getProperty("java.io.tmpdir"), Uuid.random().toHexString() + it.pack.name)
         cleanImageMeta(it.pack.file, target.outputStream().buffered(), it.contentType)
         f.add(target)
-        it.copy(pack = it.pack.copy(file = target))
+        val newSha256 = sha256(target.inputStream().buffered().asSource().buffered())
+        it.copy(pack = it.pack.copy(file = target, sha256 = newSha256))
     } else {
         it
     }
@@ -400,12 +405,13 @@ private fun removeExifIfImage(
 private suspend fun Backend.uploadFilesToStorage(
     ownerId: PrimaryKey,
     ownerType: ObjectType,
-    uploadPacks: List<ProcessedUploadPack>
+    uploadPacks: List<ProcessedUploadPack>,
 ): Result<List<FileRecord>> {
     val data = uploadPacks.map { p ->
         val uploadPack = p.pack
         val nextId = SnowflakeFactory.nextId()
         val dimension = p.dimension
+        val savedSha256 = p.pack.sha256
         FileRecord(
             nextId,
             now(),
@@ -417,13 +423,24 @@ private suspend fun Backend.uploadFilesToStorage(
             ownerType,
             p.contentType,
             uploadPack.size,
-            uploadPack.fullName
+            uploadPack.fullName,
+            savedSha256,
         )
     }
-    return objectStorageService.upload(A_FILE_DEFAULT_BUCKET, uploadPacks.map {
-        it.pack
-    }).map {
-        data
+    return objectStorageService.upload(
+        A_FILE_DEFAULT_BUCKET,
+        uploadPacks.map { it.pack }
+    ).mapResult { uploaded ->
+        val map = uploaded.associateBy { it.fullName }
+        data.forEach { record ->
+            val checksum = map[record.fullName]?.checksumSha256 ?: throw CustomBadRequestException("file hash mismatch")
+            val checksumHex = checksumSha256Base64ToHex(checksum)
+            val uploadedSha256 = record.sha256
+            if (checksumHex != uploadedSha256) {
+                throw CustomBadRequestException("file hash mismatch")
+            }
+        }
+        Result.success(data)
     }
 }
 
@@ -439,20 +456,13 @@ suspend fun Backend.processFileRecordToFileInfo(
 ): Result<List<FileInfo>> {
     val fileRecordIds = fileRecords.map { it.id }
     val favoriteMap = if (uid != null && fileRecordIds.isNotEmpty()) {
-        database.favorite.getHasFavorite(
-            com.storyteller_f.a.backend.core.ObjectListFetch.IdListFetch(fileRecordIds),
-            uid
-        )
+        database.favorite.getHasFavorite(ObjectListFetch.IdListFetch(fileRecordIds), uid)
             .getOrNull()?.associateBy { it.objectId } ?: emptyMap()
     } else {
         emptyMap()
     }
     val subscriptionMap = if (uid != null && fileRecordIds.isNotEmpty()) {
-        database.subscription.getHasSubscription(
-            com.storyteller_f.a.backend.core.ObjectListFetch.IdListFetch(
-                fileRecordIds
-            ), uid
-        )
+        database.subscription.getHasSubscription(ObjectListFetch.IdListFetch(fileRecordIds), uid)
             .getOrNull()?.associateBy { it.objectId } ?: emptyMap()
     } else {
         emptyMap()
@@ -461,8 +471,8 @@ suspend fun Backend.processFileRecordToFileInfo(
         it.fullName
     }).map { mediaList ->
         val mediaRecordMap = mediaList.associateBy { it.fullName }
-        fileRecords.map { media ->
-            mediaRecordMap[media.fullName]!!.let {
+        fileRecords.mapNotNull { media ->
+            mediaRecordMap[media.fullName]?.let {
                 media.toFileInfo(it.url, it.lastModified, favoriteMap[media.id]?.id, subscriptionMap[media.id]?.id)
             }
         }
@@ -509,12 +519,12 @@ suspend fun completeChunkUpload(
     val tuple = ObjectTuple(record.objectId, record.objectType)
     return backend.checkRootWritePermission(tuple.objectType, tuple.objectId, id)
         .mapResultIfNotNull {
-            var targetFullName: String? = null
+            val name = record.name
+            val totalSize = record.total
+            val expectedChunkCount = ((totalSize + record.chunkSize - 1) / record.chunkSize).toInt()
+            val newSavedName = newFileName(name)
+            val targetFullName = "${tuple.objectId}/$newSavedName"
             runCatching {
-                val name = record.name
-                val totalSize = record.total
-                val expectedChunkCount = ((totalSize + record.chunkSize - 1) / record.chunkSize).toInt()
-                val newSavedName = newFileName(name)
                 // 使用对象存储 compose 在默认桶直接合并到最终路径
                 val chunkRecords = backend.objectStorageService.list(
                     A_FILE_DEFAULT_BUCKET,
@@ -534,27 +544,23 @@ suspend fun completeChunkUpload(
                 val sortedSources = (0 until expectedChunkCount).map { index ->
                     chunkMap[index] ?: throw CustomBadRequestException("chunk missing")
                 }
-                targetFullName = "${tuple.objectId}/$newSavedName"
                 // 合并到最终对象
-                backend.objectStorageService.compose(
+                val composed = backend.objectStorageService.compose(
                     A_FILE_DEFAULT_BUCKET,
-                    targetFullName!!,
+                    targetFullName,
                     sortedSources
                 ).getOrThrow()
-                val actualSha256 = backend.objectStorageService.getInputStream(
-                    A_FILE_DEFAULT_BUCKET,
-                    targetFullName!!
-                ).getOrThrow().use { input ->
-                    sha256(input.asSource().buffered())
-                }
-                if (actualSha256 != expectedSha256) {
+                val checksumSha256 = composed.checksumSha256 ?: throw CustomBadRequestException("file hash mismatch")
+                val checksumHex = checksumSha256Base64ToHex(checksumSha256)
+                if (checksumHex != expectedSha256) {
                     throw CustomBadRequestException("file hash mismatch")
                 }
                 val fileRecord = backend.buildFileRecordFromComposedObject(
-                    targetFullName!!,
+                    targetFullName,
                     newSavedName,
                     tuple,
-                    totalSize
+                    totalSize,
+                    expectedSha256,
                 )
                 // 完成后释放上传锁并更新配额使用量
                 val quotaInfo = backend.getQuotaInfo(QuotaType.FILE, tuple).getOrThrow()
@@ -589,10 +595,9 @@ suspend fun completeChunkUpload(
                         ).getOrThrow()
                     }
                     runCatching {
-                        val target = targetFullName
-                        if (target != null) {
-                            backend.objectStorageService.delete(A_FILE_DEFAULT_BUCKET, listOf(target)).getOrThrow()
-                        }
+                        backend.objectStorageService.delete(A_FILE_DEFAULT_BUCKET, listOf(
+                            targetFullName
+                        )).getOrThrow()
                     }
                     runCatching {
                         val sessionObjects = backend.objectStorageService.list(
@@ -615,7 +620,8 @@ private suspend fun Backend.buildFileRecordFromComposedObject(
     targetFullName: String,
     newSavedName: String,
     tuple: ObjectTuple,
-    totalSize: Long
+    totalSize: Long,
+    sha256: String,
 ): FileRecord {
     // 内容类型与尺寸检测
     val contentType = objectStorageService.getInputStream(
@@ -645,7 +651,15 @@ private suspend fun Backend.buildFileRecordFromComposedObject(
         contentType = contentType,
         size = totalSize,
         fullName = targetFullName,
+        sha256 = sha256,
     )
+}
+
+private fun checksumSha256Base64ToHex(checksumSha256: String): String {
+    val bytes = Base64.getDecoder().decode(checksumSha256)
+    return bytes.joinToString("") { b ->
+        (b.toInt() and 0xff).toString(16).padStart(2, '0')
+    }
 }
 
 private suspend fun cleanChunk(

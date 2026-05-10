@@ -542,18 +542,28 @@ class TopicTest {
     }
 }
 
-private fun getUploadDataFromStream(size: Long, tmpFile: File) = UploadData(
+private suspend fun getUploadDataFromStream(size: Long, tmpFile: File) = UploadData(
     size,
     "avatar1.png",
-    ContentType.defaultForFileExtension("png")
+    ContentType.defaultForFileExtension("png"),
+    sha256(
+        Buffer().apply {
+            write(tmpFile.readBytes())
+        }.peek()
+    ),
 ) {
     tmpFile.inputStream().asInput()
 }
 
-fun getUploadDataFromText(string: String, fileName: String = "hello.txt") = UploadData(
+suspend fun getUploadDataFromText(string: String, fileName: String = "hello.txt") = UploadData(
     string.length.toLong(),
     fileName,
-    ContentType.defaultForFileExtension("txt")
+    ContentType.defaultForFileExtension("txt"),
+    sha256(
+        Buffer().apply {
+            writeString(string)
+        }.peek()
+    ),
 ) {
     Buffer().apply {
         writeString(string)
@@ -568,7 +578,7 @@ suspend fun UserSessionManager.upload(
     objectTuple: ObjectTuple,
     data: UploadData,
     onUpload: suspend (Long, Long?) -> Unit = { _, _ -> },
-) = upload(objectTuple, data, data.calcSha256(), onUpload)
+) = upload(objectTuple, data, onUpload)
 
 suspend fun UserSessionManager.createTopicInRoomAndWait(
     receivedFrame: MutableList<RoomFrame>,
