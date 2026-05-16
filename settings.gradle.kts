@@ -8,7 +8,6 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 pluginManagement {
     repositories {
         mavenLocal()
-        maven("https://mirrors.tencent.com/nexus/repository/maven-public/")
         google {
             mavenContent {
                 includeGroupAndSubgroups("androidx")
@@ -28,14 +27,6 @@ plugins {
 dependencyResolutionManagement {
     repositories {
         mavenLocal()
-        maven("https://mirrors.tencent.com/nexus/repository/maven-public/") {
-            content {
-                excludeGroup("com.github.umjammer")
-                excludeGroup("com.github.cghislai")
-                excludeGroup("com.github.teamnewpipe.NewPipeExtractor")
-                excludeGroup("com.github.TeamNewPipe")
-            }
-        }
         google {
             mavenContent {
                 includeGroupAndSubgroups("androidx")
