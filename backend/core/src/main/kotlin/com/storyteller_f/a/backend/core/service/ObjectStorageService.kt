@@ -14,7 +14,6 @@ data class ObjectStorageRecord(
 
 data class ObjectStorageWriteRecord(
     val fullName: String,
-    val checksumSha256: String?,
 )
 
 data class PresignContext(

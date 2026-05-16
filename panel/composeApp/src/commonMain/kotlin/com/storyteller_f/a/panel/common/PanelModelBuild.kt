@@ -252,7 +252,7 @@ fun PanelLogsTab(targetId: PrimaryKey, objectType: ObjectType) {
     val vm = createPanelLogsViewModel(targetId, objectType)
     StateView(vm, modifier = Modifier.fillMaxSize()) { items ->
         LazyColumn {
-            pagingItems(items, key = { it?.id ?: -1 }) { index ->
+            pagingItems(items, key = { it.id }) { index ->
                 val info = items[index]
                 if (info != null) {
                     PanelLogItem(info)
