@@ -135,47 +135,53 @@ private fun signPdfWithKeyStore(
     pdfGenerationSpec: PdfGenerationSpec
 ) {
     val ks = java.security.KeyStore.getInstance("PKCS12")
-    ks.load(
-        java.io.FileInputStream(snapshotGeneration.keyStorePath),
-        snapshotGeneration.password.toCharArray()
-    )
+    java.io.FileInputStream(snapshotGeneration.keyStorePath).use { input ->
+        ks.load(input, snapshotGeneration.password.toCharArray())
+    }
     val alias = ks.aliases().nextElement()
     val pk = ks.getKey(alias, snapshotGeneration.password.toCharArray()) as java.security.PrivateKey
     val chain = ks.getCertificateChain(alias)
 
-    val reader = org.openpdf.text.pdf.PdfReader(saveToFile.inputStream())
-    val os = java.io.FileOutputStream(snapshotGeneration.signedFile)
-    val stamper = org.openpdf.text.pdf.PdfStamper.createSignature(reader, os, '\u0000'.toString())
+    saveToFile.inputStream().use { input ->
+        val reader = org.openpdf.text.pdf.PdfReader(input)
+        try {
+            java.io.FileOutputStream(snapshotGeneration.signedFile).use { output ->
+                val stamper = org.openpdf.text.pdf.PdfStamper.createSignature(reader, output, '\u0000'.toString())
 
-    // Insert a new blank page at the beginning for the signature
-    val pageSize = reader.getPageSize(1)
-    stamper.insertPage(1, pageSize)
+                // Insert a new blank page at the beginning for the signature
+                val pageSize = reader.getPageSize(1)
+                stamper.insertPage(1, pageSize)
 
-    val appearance = stamper.signatureAppearance
-    // Place signature in the center of the new first page
-    val sigWidth = 400f
-    val sigHeight = 120f
-    val sigX = (pageSize.width - sigWidth) / 2
-    val sigY = (pageSize.height - sigHeight) / 2
-    appearance.setVisibleSignature(
-        Rectangle(sigX, sigY, sigX + sigWidth, sigY + sigHeight),
-        1,
-        "sig"
-    )
+                val appearance = stamper.signatureAppearance
+                // Place signature in the center of the new first page
+                val sigWidth = 400f
+                val sigHeight = 120f
+                val sigX = (pageSize.width - sigWidth) / 2
+                val sigY = (pageSize.height - sigHeight) / 2
+                appearance.setVisibleSignature(
+                    Rectangle(sigX, sigY, sigX + sigWidth, sigY + sigHeight),
+                    1,
+                    "sig"
+                )
 
-    // Use Layer2 to render a table-based signature instead of an image
-    val layer2 = appearance.getLayer(2)
-    val signatureInfo = com.storyteller_f.a.cloud.pdf.SignatureInfo(
-        signee = (chain[0] as java.security.cert.X509Certificate).subjectX500Principal.name,
-        timestamp = pdfGenerationSpec.created.toString(),
-        hint = "Digitally Signed by OpenPDF"
-    )
-    buildSignatureTable(layer2, signatureInfo, appearance.rect)
+                // Use Layer2 to render a table-based signature instead of an image
+                val layer2 = appearance.getLayer(2)
+                val signatureInfo = com.storyteller_f.a.cloud.pdf.SignatureInfo(
+                    signee = (chain[0] as java.security.cert.X509Certificate).subjectX500Principal.name,
+                    timestamp = pdfGenerationSpec.created.toString(),
+                    hint = "Digitally Signed by OpenPDF"
+                )
+                buildSignatureTable(layer2, signatureInfo, appearance.rect)
 
-    appearance.setCrypto(pk, chain, null, org.openpdf.text.pdf.PdfSignatureAppearance.WINCER_SIGNED)
-    appearance.layer2Text = ""
-    appearance.layer4Text = ""
-    stamper.close()
+                appearance.setCrypto(pk, chain, null, org.openpdf.text.pdf.PdfSignatureAppearance.WINCER_SIGNED)
+                appearance.layer2Text = ""
+                appearance.layer4Text = ""
+                stamper.close()
+            }
+        } finally {
+            reader.close()
+        }
+    }
 }
 
 class OpenPdfVisitor(

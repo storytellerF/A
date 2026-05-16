@@ -29,30 +29,30 @@ fun <T> BufferedInputStream.readFlacAlbumFromAudioStream(saveAlbum: (ByteArray, 
             }
             if (count != blockLength) return null
 
-            val dataInput = pictureData.inputStream().buffered()
+            return pictureData.inputStream().buffered().use { dataInput ->
+                fun readInt(): Int = (dataInput.read() shl 24) or (dataInput.read() shl 16) or
+                    (dataInput.read() shl 8) or dataInput.read()
 
-            fun readInt(): Int = (dataInput.read() shl 24) or (dataInput.read() shl 16) or
-                (dataInput.read() shl 8) or dataInput.read()
+                readInt() // picture type
+                val mimeLength = readInt()
+                val mimeBytes = ByteArray(mimeLength)
+                dataInput.read(mimeBytes)
+                val mimeType = String(mimeBytes)
 
-            readInt() // picture type
-            val mimeLength = readInt()
-            val mimeBytes = ByteArray(mimeLength)
-            dataInput.read(mimeBytes)
-            val mimeType = String(mimeBytes)
+                val descLength = readInt()
+                dataInput.skip(descLength.toLong())
 
-            val descLength = readInt()
-            dataInput.skip(descLength.toLong())
+                readInt() // width
+                readInt() // height
+                readInt() // color depth
+                readInt() // indexed colors
 
-            readInt() // width
-            readInt() // height
-            readInt() // color depth
-            readInt() // indexed colors
+                val picDataLength = readInt()
+                val realImage = ByteArray(picDataLength)
+                dataInput.read(realImage)
 
-            val picDataLength = readInt()
-            val realImage = ByteArray(picDataLength)
-            dataInput.read(realImage)
-
-            return saveAlbum(realImage, mimeType) to mimeType
+                saveAlbum(realImage, mimeType) to mimeType
+            }
         } else {
             skip(blockLength.toLong())
         }

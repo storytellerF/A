@@ -13,9 +13,7 @@ fun cleanImageMeta(input: File, output: BufferedOutputStream, mimeType: String) 
     when (mimeType.lowercase()) {
         "image/jpeg", "image/jpg" -> {
             Napier.i("🧹 清除 $mimeType 元数据...", tag = "ImageUtil")
-            BufferedOutputStream(output).use { os ->
-                ExifRewriter().removeExifMetadata(input, os)
-            }
+            ExifRewriter().removeExifMetadata(input, output)
         }
 
         "image/png", "image/bmp", "image/gif", "image/webp" -> {
@@ -32,9 +30,7 @@ fun cleanImageMeta(input: File, output: BufferedOutputStream, mimeType: String) 
 
         else -> {
             Napier.i("⚠️ 暂不支持该格式（$mimeType），仅复制文件。", tag = "ImageUtil")
-            output.use {
-                copyFile(input, it)
-            }
+            copyFile(input, output)
         }
     }
 }

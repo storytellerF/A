@@ -192,7 +192,9 @@ suspend fun Backend.extractAlbum(fileRecordId: PrimaryKey, root: File, uid: Prim
                             name,
                             fileRecord.size,
                             "${fileRecord.owner}/$name",
-                            sha256(file.inputStream().buffered().asSource().buffered()),
+                            file.inputStream().buffered().use { input ->
+                                sha256(input.asSource().buffered())
+                            },
                         )
                     )
                 )
@@ -407,9 +409,13 @@ private suspend fun removeExifIfImage(
 ): List<ProcessedUploadPack> = uploadPacks.map {
     if (it.contentType.startsWith("image")) {
         val target = File(System.getProperty("java.io.tmpdir"), Uuid.random().toHexString() + it.pack.name)
-        cleanImageMeta(it.pack.file, target.outputStream().buffered(), it.contentType)
+        target.outputStream().buffered().use { output ->
+            cleanImageMeta(it.pack.file, output, it.contentType)
+        }
         f.add(target)
-        val newSha256 = sha256(target.inputStream().buffered().asSource().buffered())
+        val newSha256 = target.inputStream().buffered().use { input ->
+            sha256(input.asSource().buffered())
+        }
         it.copy(pack = it.pack.copy(file = target, sha256 = newSha256))
     } else {
         it

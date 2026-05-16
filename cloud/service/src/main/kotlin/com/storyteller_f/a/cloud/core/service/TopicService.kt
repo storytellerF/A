@@ -346,7 +346,9 @@ private suspend fun Backend.createTopicSnapshot(
                         "$topicId.pdf",
                         pdfFile.length(),
                         "$uid/$topicId.pdf",
-                        sha256(pdfFile.inputStream().buffered().asSource().buffered()),
+                        pdfFile.inputStream().buffered().use { input ->
+                            sha256(input.asSource().buffered())
+                        },
                     )
                 )
             )
