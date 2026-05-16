@@ -52,7 +52,6 @@ import org.apache.tika.mime.MimeTypes
 import java.io.BufferedInputStream
 import java.io.File
 import java.nio.file.Path
-import java.util.Base64
 import kotlin.io.path.exists
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -448,11 +447,8 @@ private suspend fun Backend.uploadFilesToStorage(
     ).mapResult { uploaded ->
         val map = uploaded.associateBy { it.fullName }
         data.forEach { record ->
-            val checksum = map[record.fullName]?.checksumSha256 ?: throw CustomBadRequestException("file hash mismatch")
-            val checksumHex = checksumSha256Base64ToHex(checksum)
-            val uploadedSha256 = record.sha256
-            if (checksumHex != uploadedSha256) {
-                throw CustomBadRequestException("file hash mismatch")
+            if (map[record.fullName] == null) {
+                throw CustomBadRequestException("file upload failed")
             }
         }
         Result.success(data)
@@ -564,16 +560,11 @@ suspend fun completeChunkUpload(
                     chunkMap[index] ?: throw CustomBadRequestException("chunk missing")
                 }
                 // 合并到最终对象
-                val composed = backend.objectStorageService.compose(
+                backend.objectStorageService.compose(
                     A_FILE_DEFAULT_BUCKET,
                     targetFullName,
                     sortedSources
                 ).getOrThrow()
-                val checksumSha256 = composed.checksumSha256 ?: throw CustomBadRequestException("file hash mismatch")
-                val checksumHex = checksumSha256Base64ToHex(checksumSha256)
-                if (checksumHex != expectedSha256) {
-                    throw CustomBadRequestException("file hash mismatch")
-                }
                 val fileRecord = backend.buildFileRecordFromComposedObject(
                     targetFullName,
                     newSavedName,
@@ -672,13 +663,6 @@ private suspend fun Backend.buildFileRecordFromComposedObject(
         fullName = targetFullName,
         sha256 = sha256,
     )
-}
-
-private fun checksumSha256Base64ToHex(checksumSha256: String): String {
-    val bytes = Base64.getDecoder().decode(checksumSha256)
-    return bytes.joinToString("") { b ->
-        (b.toInt() and 0xff).toString(16).padStart(2, '0')
-    }
 }
 
 private suspend fun cleanChunk(

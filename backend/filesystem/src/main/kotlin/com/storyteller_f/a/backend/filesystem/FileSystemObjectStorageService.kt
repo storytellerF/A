@@ -22,8 +22,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
-import java.security.MessageDigest
-import java.util.Base64
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.copyTo
@@ -62,7 +60,7 @@ class FileSystemObjectStorageService(private val url: String, base: Path) : Obje
             uploadPacks.map { uploadPack ->
                 val target = bucketPath.resolve(uploadPack.fullName).createParentDirectories()
                 Files.copy(uploadPack.file.toPath(), target, StandardCopyOption.REPLACE_EXISTING)
-                ObjectStorageWriteRecord(uploadPack.fullName, checksumSha256Base64(target))
+                ObjectStorageWriteRecord(uploadPack.fullName)
             }
         }
     }
@@ -173,7 +171,7 @@ class FileSystemObjectStorageService(private val url: String, base: Path) : Obje
                     }
                 }
             }
-            ObjectStorageWriteRecord(targetFullName, checksumSha256Base64(target))
+            ObjectStorageWriteRecord(targetFullName)
         }
     }
 
@@ -195,21 +193,6 @@ class FileSystemObjectStorageService(private val url: String, base: Path) : Obje
             runCatching {
                 block()
             }
-        }
-    }
-
-    private suspend fun checksumSha256Base64(path: Path): String {
-        return withContext(Dispatchers.IO) {
-            val digest = MessageDigest.getInstance("SHA-256")
-            Files.newInputStream(path).buffered().use { input ->
-                val buf = ByteArray(DEFAULT_BUFFER_SIZE)
-                while (true) {
-                    val read = input.read(buf)
-                    if (read <= 0) break
-                    digest.update(buf, 0, read)
-                }
-            }
-            Base64.getEncoder().encodeToString(digest.digest())
         }
     }
 

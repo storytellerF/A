@@ -139,7 +139,7 @@ class MinIoObjectStorageService(
                         .filename(uploadPack.file.absolutePath)
                         .build()
                 )
-                ObjectStorageWriteRecord(resp.`object`(), resp.checksumSHA256())
+                ObjectStorageWriteRecord(resp.`object`())
             }
         }
     }
@@ -159,14 +159,14 @@ class MinIoObjectStorageService(
                     .`object`(it)
                     .build()
             }
-            val resp = composeObject(
+            composeObject(
                 ComposeObjectArgs.builder()
                     .bucket(bucketName)
                     .`object`(targetFullName)
                     .sources(sources)
                     .build()
             )
-            ObjectStorageWriteRecord(targetFullName, resp.checksumSHA256())
+            ObjectStorageWriteRecord(targetFullName)
         }
     }
 

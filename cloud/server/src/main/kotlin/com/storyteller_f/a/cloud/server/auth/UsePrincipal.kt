@@ -145,6 +145,6 @@ suspend inline fun <reified R> RoutingContext.handleResultInternal(it: Result<R>
                 Sentry.captureException(throwable)
             }
         }
-        call.application.log.error("Occur server exception $", throwable)
+        call.application.log.error("Occur server exception", throwable)
     }
 }
