@@ -20,12 +20,14 @@ import com.storyteller_f.a.backend.exposed.tables.EncryptedKeys
 import com.storyteller_f.a.backend.exposed.tables.Members
 import com.storyteller_f.a.backend.exposed.tables.PanelLogs
 import com.storyteller_f.a.backend.exposed.tables.Rooms
+import com.storyteller_f.a.backend.exposed.tables.TaskRecords
 import com.storyteller_f.a.backend.exposed.tables.Topics
 import com.storyteller_f.a.backend.exposed.tables.UserSubscriptions
 import com.storyteller_f.a.backend.exposed.tables.Users
 import com.storyteller_f.a.backend.exposed.tables.addTaskRecord
 import com.storyteller_f.a.backend.exposed.tables.batchAddMembers
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
+import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.md5
@@ -149,6 +151,33 @@ class ExposedAdminDatabase(val databaseSession: ExposedDatabaseSession) : AdminD
         addTaskRecord(record)
         record
     }
+
+    override suspend fun getTaskRecords(
+        type: TaskRecordType?,
+        fetch: PrimaryKeyFetch
+    ) = paginationFromResults(
+        databaseSession.dbSearch {
+            search {
+                val query = type?.let { taskRecordType ->
+                    TaskRecords.selectAll().where {
+                        TaskRecords.type eq taskRecordType
+                    }
+                } ?: TaskRecords.selectAll()
+                query.orderBy(TaskRecords.id, SortOrder.DESC).bindPaginationQuery(TaskRecords, fetch)
+            }
+            map(TaskRecord::wrapRow)
+        },
+        databaseSession.dbSearch {
+            search {
+                type?.let { taskRecordType ->
+                    TaskRecords.select(TaskRecords.id).where {
+                        TaskRecords.type eq taskRecordType
+                    }
+                } ?: TaskRecords.select(TaskRecords.id)
+            }
+            count()
+        }
+    )
 
     override suspend fun batchAddSubscription(list: List<UserSubscription>): Result<Unit> {
         return databaseSession.dbQuery {

@@ -19,6 +19,7 @@ import com.storyteller_f.a.panel.Res
 import com.storyteller_f.a.panel.log_supporting
 import com.storyteller_f.a.panel.panelAccountInstance
 import com.storyteller_f.shared.model.PanelLogInfo
+import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.storage.ModelStorage
@@ -245,6 +246,13 @@ fun createPanelLogsViewModel(
     objectType: com.storyteller_f.shared.type.ObjectType
 ) = panelViewModel(keys = listOf("panel-logs", targetId, objectType)) { sessionManager, modelStorage ->
     PanelLogsViewModel(sessionManager, modelStorage, targetId, objectType)
+}
+
+@Composable
+fun createPanelTaskRecordsViewModel(
+    type: TaskRecordType?
+) = panelViewModel(keys = listOf("task-records", type)) { sessionManager, modelStorage ->
+    TaskRecordsViewModel(sessionManager, modelStorage, type)
 }
 
 @Composable

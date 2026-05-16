@@ -8,8 +8,10 @@ import com.storyteller_f.a.api.PanelLogsQuery
 import com.storyteller_f.a.api.SearchQuery
 import com.storyteller_f.a.api.SignInBody
 import com.storyteller_f.a.api.SignUpBody
+import com.storyteller_f.a.api.TaskRecordsQuery
 import com.storyteller_f.a.api.TopicQuery
 import com.storyteller_f.endpoint4k.ktor.client.invoke
+import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.model.TopicPinSearch
 import com.storyteller_f.shared.obj.UpdateObjectStatusBody
 import com.storyteller_f.shared.type.ObjectType
@@ -134,6 +136,13 @@ suspend fun PanelSessionManager.getPanelLogs(
     query: PaginationQuery
 ) = serviceCatching {
     AdminApi.PanelLogs.get(PanelLogsQuery(targetId, objectType, query.nextPageToken, query.prePageToken, query.size))
+}
+
+suspend fun PanelSessionManager.getTaskRecords(
+    type: TaskRecordType?,
+    query: PaginationQuery
+) = serviceCatching {
+    AdminApi.TaskRecords.get(TaskRecordsQuery(type, query.nextPageToken, query.prePageToken, query.size))
 }
 
 suspend fun PanelSessionManager.getUserUploadRecords(uid: PrimaryKey, query: PaginationQuery) = serviceCatching {

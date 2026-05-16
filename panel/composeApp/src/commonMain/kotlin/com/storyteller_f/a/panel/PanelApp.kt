@@ -5,6 +5,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.FilePresent
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Home
@@ -257,6 +258,11 @@ private fun PanelDrawer(
             Icons.Default.Title,
             stringResource(Res.string.all_titles),
             onNavigate(scope, drawerState) { nav.gotoAllTitles() }
+        )
+        DrawerNavItem(
+            Icons.Default.Build,
+            stringResource(Res.string.worker_records),
+            onNavigate(scope, drawerState) { nav.gotoTaskRecords() }
         )
     }
 }

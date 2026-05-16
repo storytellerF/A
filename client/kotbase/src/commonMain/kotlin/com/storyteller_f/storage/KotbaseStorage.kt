@@ -6,10 +6,12 @@ import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.FileRefInfo
 import com.storyteller_f.shared.model.MemberInfo
+import com.storyteller_f.shared.model.PanelLogInfo
 import com.storyteller_f.shared.model.PanelOverview
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.ReactionRecordInfo
 import com.storyteller_f.shared.model.RoomInfo
+import com.storyteller_f.shared.model.TaskRecordInfo
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UploadRecordInfo
@@ -912,6 +914,40 @@ class PanelLogInfoDocumentStorage(val kotbaseDocumentSource: KotbaseDocumentSour
     }
 }
 
+class TaskRecordInfoDocumentStorage(val kotbaseDocumentSource: KotbaseDocumentSource) : TaskRecordInfoStorage {
+    override suspend fun saveLast(collection: TaskRecordCollection, item: TaskRecordInfo) {
+        saveFirst(collection, item)
+    }
+
+    override suspend fun saveFirst(collection: TaskRecordCollection, item: TaskRecordInfo) {
+        kotbaseDocumentSource.getCollection<TaskRecordInfo>(collection.getName())
+            .save(item.id, item)
+    }
+
+    override fun observeData(collection: TaskRecordCollection): PagingSource<Int, TaskRecordInfo> {
+        return kotbaseDocumentSource.getCollection<TaskRecordInfo>(collection.getName())
+            .getSource {
+                orderBy {
+                    "id".descending()
+                }
+            }
+    }
+
+    override suspend fun clean(collection: TaskRecordCollection) = Unit
+
+    override suspend fun getDocument(collection: TaskRecordCollection, key: String): TaskRecordInfo? {
+        return kotbaseDocumentSource.getCollection<TaskRecordInfo>(collection.getName()).getDocument(key)
+    }
+
+    override suspend fun updateDocument(collection: TaskRecordCollection, item: TaskRecordInfo) {
+        kotbaseDocumentSource.getCollection<TaskRecordInfo>(collection.getName()).save(item.id, item)
+    }
+
+    override suspend fun delete(collection: TaskRecordCollection, key: String) {
+        kotbaseDocumentSource.getCollection<TaskRecordInfo>(collection.getName()).delete(key)
+    }
+}
+
 class OverviewDocumentStorage(val kotbaseDocumentSource: KotbaseDocumentSource) : OverviewStorage {
     override suspend fun save(item: PanelOverview) {
         kotbaseDocumentSource.getCollection<PanelOverview>(OverviewStorage.COLLECTION_NAME).save("singleton", item)
@@ -958,6 +994,7 @@ class DocumentModelStorage(source: KotbaseDocumentSource) : ModelStorage {
     override val uploadRecord: UploadRecordInfoStorage = UploadRecordInfoDocumentStorage(source)
     override val fileRef: FileRefInfoStorage = FileRefInfoDocumentStorage(source)
     override val panelLog: PanelLogInfoStorage = PanelLogInfoDocumentStorage(source)
+    override val taskRecord: TaskRecordInfoStorage = TaskRecordInfoDocumentStorage(source)
 }
 
 fun From.whereIf(block: WhereBuilder.() -> Expression?): OrderByRouter {

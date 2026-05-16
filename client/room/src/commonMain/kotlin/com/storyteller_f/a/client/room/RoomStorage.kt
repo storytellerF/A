@@ -12,6 +12,7 @@ import com.storyteller_f.shared.model.PanelOverview
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.ReactionRecordInfo
 import com.storyteller_f.shared.model.RoomInfo
+import com.storyteller_f.shared.model.TaskRecordInfo
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UploadRecordInfo
@@ -44,6 +45,8 @@ import com.storyteller_f.storage.RemoteKeyStorage.Companion.PRE_COLLECTION
 import com.storyteller_f.storage.RemoteKeys
 import com.storyteller_f.storage.RoomCollection
 import com.storyteller_f.storage.RoomInfoStorage
+import com.storyteller_f.storage.TaskRecordCollection
+import com.storyteller_f.storage.TaskRecordInfoStorage
 import com.storyteller_f.storage.TitleCollection
 import com.storyteller_f.storage.TitleInfoStorage
 import com.storyteller_f.storage.TopicCollection
@@ -1127,6 +1130,45 @@ class RoomPanelLogInfoStorage(appDatabase: AppDatabase) : PanelLogInfoStorage {
     }
 }
 
+class RoomTaskRecordInfoStorage(appDatabase: AppDatabase) : TaskRecordInfoStorage {
+    private val impl = CommonStorageImpl(appDatabase)
+
+    override suspend fun saveFirst(collection: TaskRecordCollection, item: TaskRecordInfo) {
+        impl.saveFirst(CommonEntity(item.id, collection.getName(), commonJson.encodeToString(item)))
+    }
+
+    override suspend fun saveLast(collection: TaskRecordCollection, item: TaskRecordInfo) {
+        impl.saveLast(CommonEntity(item.id, collection.getName(), commonJson.encodeToString(item)))
+    }
+
+    override fun observeData(collection: TaskRecordCollection): PagingSource<Int, TaskRecordInfo> {
+        return impl.observeData(collection.getName())
+    }
+
+    override suspend fun clean(collection: TaskRecordCollection) {
+        impl.clean(collection.getName())
+    }
+
+    override suspend fun getDocument(
+        collection: TaskRecordCollection,
+        key: String
+    ): TaskRecordInfo? {
+        TODO("Not yet implemented - this method is not used in current implementation")
+    }
+
+    override suspend fun delete(
+        collection: TaskRecordCollection,
+        key: String
+    ) {
+        TODO("Not yet implemented - this method is not used in current implementation")
+    }
+
+    override suspend fun updateDocument(collection: TaskRecordCollection, item: TaskRecordInfo) {
+        val data = commonJson.encodeToString(item)
+        impl.update(collection.getName(), item.id.toString(), data)
+    }
+}
+
 class RoomModelStorage(appDatabase: AppDatabase) : ModelStorage {
     override val user: UserInfoStorage = RoomUserInfoStorage(appDatabase)
     override val community: CommunityInfoStorage = RoomCommunityInfoStorage(appDatabase)
@@ -1149,6 +1191,7 @@ class RoomModelStorage(appDatabase: AppDatabase) : ModelStorage {
     override val panelLog: PanelLogInfoStorage = RoomPanelLogInfoStorage(appDatabase)
     override val uploadRecord: UploadRecordInfoStorage = RoomUploadRecordInfoStorage(appDatabase)
     override val fileRef: FileRefInfoStorage = RoomFileRefInfoStorage(appDatabase)
+    override val taskRecord: TaskRecordInfoStorage = RoomTaskRecordInfoStorage(appDatabase)
 }
 
 fun getRoomModelStorage(name: String) = RoomModelStorage(getRoomDatabase(name))

@@ -646,6 +646,11 @@ interface AdminDatabase {
     ): Result<Unit>
 
     suspend fun createTaskRecord(record: TaskRecord): Result<TaskRecord>
+    suspend fun getTaskRecords(
+        type: TaskRecordType?,
+        fetch: PrimaryKeyFetch
+    ): Result<PaginationResult<TaskRecord>>
+
     suspend fun batchAddSubscription(list: List<UserSubscription>): Result<Unit>
     suspend fun insertPanelLog(log: com.storyteller_f.a.backend.core.types.PanelLog): Result<Unit>
     suspend fun getPanelLogs(

@@ -8,6 +8,7 @@ import com.storyteller_f.a.api.MemberInfoListResponse
 import com.storyteller_f.a.api.PanelLogInfoListResponse
 import com.storyteller_f.a.api.ReactionRecordInfoListResponse
 import com.storyteller_f.a.api.RoomInfoListResponse
+import com.storyteller_f.a.api.TaskRecordInfoListResponse
 import com.storyteller_f.a.api.TitleInfoListResponse
 import com.storyteller_f.a.api.TopicInfoListResponse
 import com.storyteller_f.a.api.UploadRecordInfoListResponse
@@ -35,6 +36,7 @@ import com.storyteller_f.a.cloud.core.service.getFileInfoPaginationResult
 import com.storyteller_f.a.cloud.core.service.getOverview
 import com.storyteller_f.a.cloud.core.service.getPanelLogs
 import com.storyteller_f.a.cloud.core.service.getRoomInfo
+import com.storyteller_f.a.cloud.core.service.getTaskRecords
 import com.storyteller_f.a.cloud.core.service.getTitleInfo
 import com.storyteller_f.a.cloud.core.service.getUserById
 import com.storyteller_f.a.cloud.core.service.getUserCommentedTopics
@@ -80,6 +82,7 @@ fun Route.bindProtectedAdminRoute(backend: Backend) {
     bindAdminTitleRoutes(backend)
     bindAdminFileRoutes(backend)
     bindAdminPanelLogRoutes(backend)
+    bindAdminTaskRecordRoutes(backend)
     AdminApi.signOut(handleResult(backend)) {
         call.sessions.clear(UserSession::class)
         UNIT_RESULT
@@ -340,6 +343,16 @@ private fun Route.bindAdminPanelLogRoutes(backend: Backend) {
             PanelLogInfoListResponse(l, p)
         }) { f ->
             backend.getPanelLogs(q.targetId, q.objectType, f)
+        }
+    }
+}
+
+private fun Route.bindAdminTaskRecordRoutes(backend: Backend) {
+    AdminApi.TaskRecords.get(handleResult(backend)) { q ->
+        q.pagination(IdentifiablePagingGenerator, { l, p ->
+            TaskRecordInfoListResponse(l, p)
+        }) { f ->
+            backend.getTaskRecords(q.type, f)
         }
     }
 }

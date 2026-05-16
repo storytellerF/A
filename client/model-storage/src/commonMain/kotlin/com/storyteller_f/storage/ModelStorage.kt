@@ -13,6 +13,8 @@ import com.storyteller_f.shared.model.PosterSearch
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.ReactionRecordInfo
 import com.storyteller_f.shared.model.RoomInfo
+import com.storyteller_f.shared.model.TaskRecordInfo
+import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleType
@@ -167,6 +169,10 @@ sealed interface PanelLogCollection {
     ) : PanelLogCollection
 }
 
+sealed interface TaskRecordCollection {
+    data class TaskRecords(val type: TaskRecordType?) : TaskRecordCollection
+}
+
 fun FileCollection.getName(): String {
     return when (this) {
         FileCollection.Files -> "files"
@@ -271,6 +277,12 @@ fun PanelLogCollection.getName(): String {
     }
 }
 
+fun TaskRecordCollection.getName(): String {
+    return when (this) {
+        is TaskRecordCollection.TaskRecords -> "task_records_${type ?: "all"}"
+    }
+}
+
 @Serializable
 data class RemoteKeys(val collectionName: String, val key: String?)
 
@@ -296,6 +308,7 @@ interface ModelStorage {
     val uploadRecord: UploadRecordInfoStorage
     val fileRef: FileRefInfoStorage
     val panelLog: PanelLogInfoStorage
+    val taskRecord: TaskRecordInfoStorage
 }
 
 interface UserInfoStorage : CollectionListStorageWithDefault<UserCollection, UserInfo>
@@ -391,6 +404,8 @@ interface UploadRecordInfoStorage : CollectionListStorage<UploadRecordCollection
 interface FileRefInfoStorage : CollectionListStorage<FileRefCollection, FileRefInfo>
 
 interface PanelLogInfoStorage : CollectionListStorage<PanelLogCollection, PanelLogInfo>
+
+interface TaskRecordInfoStorage : CollectionListStorage<TaskRecordCollection, TaskRecordInfo>
 
 interface RemoteKeyStorage {
     suspend fun getPreRemoteKey(collection: String): RemoteKeys?
