@@ -8,3 +8,8 @@
 - 存储实现：统一走 ObjectStorageService。
   - `MEDIA_SERVICE=minio`：MinIO/S3 兼容对象存储（支持 compose）。
   - `MEDIA_SERVICE=filesystem`：落本地文件系统（或内存 FS），并通过 `GET /a_file/{path...}` 提供读取。
+
+## 资源管理
+
+- 新建 `InputStream`/`OutputStream` 并交给函数消费时，调用处用 `use {}` 明确关闭；例如计算 `sha256` 时先 `inputStream().buffered().use { input -> sha256(input.asSource().buffered()) }`。
+- 工具函数如果接收调用方创建的流，不在函数内部关闭；调用方创建流时用 `use {}` 包住函数调用。

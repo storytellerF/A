@@ -99,50 +99,52 @@ private fun signPdfWithDss(
         insertBlankPageAtBeginning(saveToFile, tempFileWithBlankPage)
 
         val password = snapshotGeneration.password
-        val token = Pkcs12SignatureToken(
-            FileInputStream(snapshotGeneration.keyStorePath),
-            KeyStore.PasswordProtection(password.toCharArray())
-        )
-        val key = token.keys.first()
-        val parameters = PAdESSignatureParameters().apply {
-            signingCertificate = key.certificate
-            certificateChain = key.certificateChain.toList()
-            signatureLevel = SignatureLevel.PAdES_BASELINE_B
-            digestAlgorithm = DigestAlgorithm.SHA256
-            bLevel().signingDate = java.util.Date(key.certificate.notBefore.time + 1000)
-            val imageParameters = eu.europa.esig.dss.pades.SignatureImageParameters()
-            val subjectName = key.certificate.certificate.subjectX500Principal.name
-            val imageBytes = com.storyteller_f.a.cloud.pdf.SignatureImageGenerator.generate(
-                subjectName,
-                pdfGenerationSpec.created.toString(),
-                "Digitally Signed by PdfBox"
+        FileInputStream(snapshotGeneration.keyStorePath).use { keyStoreInput ->
+            val token = Pkcs12SignatureToken(
+                keyStoreInput,
+                KeyStore.PasswordProtection(password.toCharArray())
             )
-            imageParameters.image = eu.europa.esig.dss.model.InMemoryDocument(
-                imageBytes,
-                "signature.png",
-                eu.europa.esig.dss.enumerations.MimeTypeEnum.PNG
-            )
-            val fieldParameters = eu.europa.esig.dss.pades.SignatureFieldParameters().apply {
-                page = 1
-                // Center the signature on the new first page
-                // Image is 600x90, so we maintain similar aspect ratio
-                val sigWidth = 500f
-                val sigHeight = 75f
-                // A4 page size: 595 x 842 points
-                originX = (595f - sigWidth) / 2
-                originY = (842f - sigHeight) / 2
-                width = sigWidth
-                height = sigHeight
+            val key = token.keys.first()
+            val parameters = PAdESSignatureParameters().apply {
+                signingCertificate = key.certificate
+                certificateChain = key.certificateChain.toList()
+                signatureLevel = SignatureLevel.PAdES_BASELINE_B
+                digestAlgorithm = DigestAlgorithm.SHA256
+                bLevel().signingDate = java.util.Date(key.certificate.notBefore.time + 1000)
+                val imageParameters = eu.europa.esig.dss.pades.SignatureImageParameters()
+                val subjectName = key.certificate.certificate.subjectX500Principal.name
+                val imageBytes = com.storyteller_f.a.cloud.pdf.SignatureImageGenerator.generate(
+                    subjectName,
+                    pdfGenerationSpec.created.toString(),
+                    "Digitally Signed by PdfBox"
+                )
+                imageParameters.image = eu.europa.esig.dss.model.InMemoryDocument(
+                    imageBytes,
+                    "signature.png",
+                    eu.europa.esig.dss.enumerations.MimeTypeEnum.PNG
+                )
+                val fieldParameters = eu.europa.esig.dss.pades.SignatureFieldParameters().apply {
+                    page = 1
+                    // Center the signature on the new first page
+                    // Image is 600x90, so we maintain similar aspect ratio
+                    val sigWidth = 500f
+                    val sigHeight = 75f
+                    // A4 page size: 595 x 842 points
+                    originX = (595f - sigWidth) / 2
+                    originY = (842f - sigHeight) / 2
+                    width = sigWidth
+                    height = sigHeight
+                }
+                imageParameters.fieldParameters = fieldParameters
+                this.imageParameters = imageParameters
             }
-            imageParameters.fieldParameters = fieldParameters
-            this.imageParameters = imageParameters
+            val service = PAdESService(CommonCertificateVerifier())
+            val toSignDocument = FileDocument(tempFileWithBlankPage)
+            val toBeSigned = service.getDataToSign(toSignDocument, parameters)
+            val signatureValue = token.sign(toBeSigned, parameters.digestAlgorithm, key)
+            val signedDocument = service.signDocument(toSignDocument, parameters, signatureValue)
+            signedDocument.save(snapshotGeneration.signedFile.absolutePath)
         }
-        val service = PAdESService(CommonCertificateVerifier())
-        val toSignDocument = FileDocument(tempFileWithBlankPage)
-        val toBeSigned = service.getDataToSign(toSignDocument, parameters)
-        val signatureValue = token.sign(toBeSigned, parameters.digestAlgorithm, key)
-        val signedDocument = service.signDocument(toSignDocument, parameters, signatureValue)
-        signedDocument.save(snapshotGeneration.signedFile.absolutePath)
     } finally {
         tempFileWithBlankPage.delete()
     }

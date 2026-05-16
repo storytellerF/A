@@ -229,7 +229,9 @@ buildkonfig {
     val properties = Properties().apply {
         val file = layout.projectDirectory.file("../../deploy/$flavorStr.env").asFile
         if (file.exists()) {
-            load(FileInputStream(file))
+            FileInputStream(file).use {
+                load(it)
+            }
         }
     }
     val serverUrl = properties["SERVER_URL"] as? String
