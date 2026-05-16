@@ -13,3 +13,8 @@
 
 - 新建 `InputStream`/`OutputStream` 并交给函数消费时，调用处用 `use {}` 明确关闭；例如计算 `sha256` 时先 `inputStream().buffered().use { input -> sha256(input.asSource().buffered()) }`。
 - 工具函数如果接收调用方创建的流，不在函数内部关闭；调用方创建流时用 `use {}` 包住函数调用。
+
+## Panel / Worker
+
+- Worker 执行记录存储在后端 `TaskRecords` 表，记录类型是 `TaskRecordType`，`processedId` 指向该任务处理到的业务对象。
+- Panel 通过 `/admin/task-records` 分页查询 worker 执行记录；支持按任务类型筛选，未传类型时返回全部记录。

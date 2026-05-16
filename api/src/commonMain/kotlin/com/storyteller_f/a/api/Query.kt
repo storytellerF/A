@@ -2,6 +2,7 @@ package com.storyteller_f.a.api
 
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.MemberPolicy
+import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.model.TopicPinSearch
 import com.storyteller_f.shared.obj.ObjectTuple
@@ -156,6 +157,20 @@ class TopicQuery(
 class PanelLogsQuery(
     val targetId: PrimaryKey,
     val objectType: ObjectType,
+    override val nextPageToken: String? = null,
+    override val prePageToken: String? = null,
+    override val size: Int = DEFAULT_PAGE_SIZE,
+) : PageableQuery {
+    init {
+        require(size in 1..MAX_PAGE_SIZE) {
+            "Page size must be between 1 and $MAX_PAGE_SIZE"
+        }
+    }
+}
+
+@Serializable
+class TaskRecordsQuery(
+    val type: TaskRecordType? = null,
     override val nextPageToken: String? = null,
     override val prePageToken: String? = null,
     override val size: Int = DEFAULT_PAGE_SIZE,

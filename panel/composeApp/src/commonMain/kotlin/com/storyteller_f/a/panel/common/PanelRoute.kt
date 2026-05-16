@@ -42,6 +42,7 @@ import com.storyteller_f.a.panel.pages.FileDetailPage
 import com.storyteller_f.a.panel.pages.OverviewPage
 import com.storyteller_f.a.panel.pages.PanelInputPage
 import com.storyteller_f.a.panel.pages.RoomDetailPage
+import com.storyteller_f.a.panel.pages.TaskRecordsPage
 import com.storyteller_f.a.panel.pages.TitleDetailPage
 import com.storyteller_f.a.panel.pages.TopicDetailPage
 import com.storyteller_f.a.panel.pages.UserDetailPage
@@ -109,6 +110,9 @@ data object PanelAllFilesScreen : NavKey
 @Serializable
 data object PanelAllTitlesScreen : NavKey
 
+@Serializable
+data object PanelTaskRecordsScreen : NavKey
+
 val panelNavSerializersModule = SerializersModule {
     polymorphic(NavKey::class) {
         subclass(PanelUserDetailScreen::class)
@@ -127,6 +131,7 @@ val panelNavSerializersModule = SerializersModule {
         subclass(PanelAllTopicsScreen::class)
         subclass(PanelAllFilesScreen::class)
         subclass(PanelAllTitlesScreen::class)
+        subclass(PanelTaskRecordsScreen::class)
     }
 }
 
@@ -149,6 +154,7 @@ interface PanelNav {
     fun gotoFileDetail(id: Long)
     fun gotoAllTitles()
     fun gotoTitleDetail(id: Long)
+    fun gotoTaskRecords()
     fun gotoFilePreview(id: Long, url: String, contentType: String, name: String)
     fun back()
     fun open()
@@ -232,6 +238,10 @@ fun newPanelNav(backStack: NavBackStack<NavKey>, drawerState: DrawerState, scope
         backStack.add(PanelTitleDetailScreen(id))
     }
 
+    override fun gotoTaskRecords() {
+        backStack.add(PanelTaskRecordsScreen)
+    }
+
     override fun gotoFilePreview(id: Long, url: String, contentType: String, name: String) {
         backStack.add(PanelFilePreviewScreen(id))
     }
@@ -297,6 +307,9 @@ fun rootEntryProvider(nav: PanelNav) = entryProvider {
     }
     entry<PanelTitleDetailScreen> {
         TitleDetailPage(it.id)
+    }
+    entry<PanelTaskRecordsScreen> {
+        TaskRecordsPage()
     }
     entry<PanelFilePreviewScreen> {
         PanelFilePreviewPage(it.id)

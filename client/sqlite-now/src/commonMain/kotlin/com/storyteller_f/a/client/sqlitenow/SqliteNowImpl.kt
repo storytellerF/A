@@ -9,10 +9,12 @@ import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.FileRefInfo
 import com.storyteller_f.shared.model.MemberInfo
+import com.storyteller_f.shared.model.PanelLogInfo
 import com.storyteller_f.shared.model.PanelOverview
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.ReactionRecordInfo
 import com.storyteller_f.shared.model.RoomInfo
+import com.storyteller_f.shared.model.TaskRecordInfo
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UploadRecordInfo
@@ -34,12 +36,16 @@ import com.storyteller_f.storage.FileRefInfoStorage
 import com.storyteller_f.storage.MemberCollection
 import com.storyteller_f.storage.MemberInfoStorage
 import com.storyteller_f.storage.OverviewStorage
+import com.storyteller_f.storage.PanelLogCollection
+import com.storyteller_f.storage.PanelLogInfoStorage
 import com.storyteller_f.storage.ReactionCollection
 import com.storyteller_f.storage.ReactionInfoStorage
 import com.storyteller_f.storage.RemoteKeyStorage
 import com.storyteller_f.storage.RemoteKeys
 import com.storyteller_f.storage.RoomCollection
 import com.storyteller_f.storage.RoomInfoStorage
+import com.storyteller_f.storage.TaskRecordCollection
+import com.storyteller_f.storage.TaskRecordInfoStorage
 import com.storyteller_f.storage.TitleCollection
 import com.storyteller_f.storage.TitleInfoStorage
 import com.storyteller_f.storage.TopicCollection
@@ -870,4 +876,32 @@ class SqliteNowPanelLogInfoStorage(db: AppDatabase) : PanelLogInfoStorage {
         com.storyteller_f.shared.commonJson.encodeToString(item)
     )
     override suspend fun delete(collection: PanelLogCollection, key: String) = storage.delete(collection.getName(), key)
+}
+
+class SqliteNowTaskRecordInfoStorage(db: AppDatabase) : TaskRecordInfoStorage {
+    private val storage = CommonStorageImpl(db)
+    override suspend fun saveLast(collection: TaskRecordCollection, item: TaskRecordInfo) = storage.saveLast(
+        collection.getName(),
+        item.id.toString(),
+        com.storyteller_f.shared.commonJson.encodeToString(item)
+    )
+    override suspend fun saveFirst(collection: TaskRecordCollection, item: TaskRecordInfo) = storage.saveFirst(
+        collection.getName(),
+        item.id.toString(),
+        com.storyteller_f.shared.commonJson.encodeToString(item)
+    )
+    override fun observeData(collection: TaskRecordCollection): PagingSource<Int, TaskRecordInfo> = storage.observeData(
+        collection.getName()
+    )
+    override suspend fun clean(collection: TaskRecordCollection) = storage.clean(collection.getName())
+    override suspend fun getDocument(collection: TaskRecordCollection, key: String): TaskRecordInfo? = storage.getDocument(
+        collection.getName(),
+        key
+    )
+    override suspend fun updateDocument(collection: TaskRecordCollection, item: TaskRecordInfo) = storage.update(
+        collection.getName(),
+        item.id.toString(),
+        com.storyteller_f.shared.commonJson.encodeToString(item)
+    )
+    override suspend fun delete(collection: TaskRecordCollection, key: String) = storage.delete(collection.getName(), key)
 }

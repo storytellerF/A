@@ -19,6 +19,7 @@ import com.storyteller_f.shared.model.PanelLogInfo
 import com.storyteller_f.shared.model.PanelOverview
 import com.storyteller_f.shared.model.ReactionRecordInfo
 import com.storyteller_f.shared.model.RoomInfo
+import com.storyteller_f.shared.model.TaskRecordInfo
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserFavoriteInfo
@@ -130,6 +131,13 @@ data class PanelLogInfoListResponse(
     override val pagination: Pagination<String>? = null
 ) :
     ListResponse<PanelLogInfo>
+
+@Serializable
+data class TaskRecordInfoListResponse(
+    override val data: CustomImmutableList<TaskRecordInfo>,
+    override val pagination: Pagination<String>? = null
+) :
+    ListResponse<TaskRecordInfo>
 
 object AdminApi {
     object Users {
@@ -269,6 +277,13 @@ object AdminApi {
         val get = safeEndpointWithQueryBuilder("/admin/panel-logs") {
             resp(PanelLogInfoListResponse::class)
             query(PanelLogsQuery::class)
+        }
+    }
+
+    object TaskRecords {
+        val get = safeEndpointWithQueryBuilder("/admin/task-records") {
+            resp(TaskRecordInfoListResponse::class)
+            query(TaskRecordsQuery::class)
         }
     }
 

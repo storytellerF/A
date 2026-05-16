@@ -11,11 +11,14 @@ import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.backend.core.types.PanelLog
 import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.a.backend.core.types.toPanelLogInfo
+import com.storyteller_f.a.backend.core.types.toTaskRecordInfo
 import com.storyteller_f.a.backend.core.types.toUserInfo
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.PanelLogInfo
 import com.storyteller_f.shared.model.PanelOverview
 import com.storyteller_f.shared.model.PassType
+import com.storyteller_f.shared.model.TaskRecordInfo
+import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.UpdateObjectStatusBody
 import com.storyteller_f.shared.obj.UpdateUserStatusBody
@@ -221,5 +224,14 @@ suspend fun Backend.getPanelLogs(
 ): Result<PaginationResult<PanelLogInfo>> {
     return database.admin.getPanelLogs(targetId, objectType, fetch).map { result ->
         PaginationResult(result.list.map { it.toPanelLogInfo() }, result.total)
+    }
+}
+
+suspend fun Backend.getTaskRecords(
+    type: TaskRecordType?,
+    fetch: PrimaryKeyFetch
+): Result<PaginationResult<TaskRecordInfo>> {
+    return database.admin.getTaskRecords(type, fetch).map { result ->
+        PaginationResult(result.list.map { it.toTaskRecordInfo() }, result.total)
     }
 }

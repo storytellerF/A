@@ -2,6 +2,7 @@
     <string name="input">Input</string>
     <string name="all_topics">All topics</string>
     <string name="all_titles">All titles</string>
+    <string name="worker_records">Worker records</string>
     <string name="all_public_rooms">All public rooms</string>
     <string name="all_private_rooms">All private rooms</string>
     <string name="all_files">All files</string>
@@ -70,4 +71,5 @@
     <string name="tab_user_favorites">Favorites</string>
     <string name="tab_user_subscriptions">Subscriptions</string>
     <string name="tab_file_refs">File refs</string>
+    <string name="task_record_supporting">Processed: %1$s | Record: %2$s | Time: %3$s</string>
 </resources>
