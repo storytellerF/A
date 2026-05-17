@@ -7,7 +7,14 @@ if [ "$#" -eq 2 ]; then
     export PRESET_ENCRYPTED_PASSWORD="$2"
 fi
 
-if [ -z "$PRESET_ENCRYPTED_URI" ] || [ -z "$PRESET_ENCRYPTED_PASSWORD" ]; then
+if [ -z "$PRESET_ENCRYPTED_URI" ]; then
+    echo "PRESET_ENCRYPTED_URI is not set"
+    echo "skip download preset data"
+    exit 0
+fi
+
+if [ -z "$PRESET_ENCRYPTED_PASSWORD" ]; then
+    echo "PRESET_ENCRYPTED_PASSWORD is not set"
     echo "skip download preset data"
     exit 0
 fi

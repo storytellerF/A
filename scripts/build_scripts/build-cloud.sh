@@ -3,8 +3,13 @@ set -e
 
 FLAVOR=$1
 BUILD_TYPE=$2
-if [ -z "$FLAVOR" ] || [ -z "$BUILD_TYPE" ]; then
-  echo "FLAVOR and BUILD_TYPE must be set"
+if [ -z "$FLAVOR" ]; then
+  echo "FLAVOR must be set"
+  exit 1
+fi
+
+if [ -z "$BUILD_TYPE" ]; then
+  echo "BUILD_TYPE must be set"
   exit 1
 fi
 

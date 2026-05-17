@@ -4,8 +4,24 @@ set -e
 
 FLAVOR=$1
 BUILD_TYPE=$2
+BUILD_ON=$3
 
-if [ -z "$FLAVOR" ] || [ -z "$BUILD_TYPE" ]; then
+if [ -z "$FLAVOR" ]; then
+  echo "FLAVOR must be set"
+  echo "Usage: $0 <FLAVOR> <BUILD_TYPE>"
+  echo "Example: $0 dev prod"
+  exit 1
+fi
+
+if [ -z "$BUILD_TYPE" ]; then
+  echo "BUILD_TYPE must be set"
+  echo "Usage: $0 <FLAVOR> <BUILD_TYPE>"
+  echo "Example: $0 dev prod"
+  exit 1
+fi
+
+if [ -z "$BUILD_ON" ]; then
+  echo "BUILD_ON must be set"
   echo "Usage: $0 <FLAVOR> <BUILD_TYPE>"
   echo "Example: $0 dev prod"
   exit 1

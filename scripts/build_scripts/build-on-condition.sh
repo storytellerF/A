@@ -3,8 +3,13 @@ set -e
 BUILD_ON=$1
 BUILD_COMMAND=$2
 
-if [ -z "$HOST_TYPE" ] || [ -z "$BUILD_ON" ]; then
-  echo "Error: HOST_TYPE and BUILD_ON must be set."
+if [ -z "$HOST_TYPE" ]; then
+  echo "Error: HOST_TYPE must be set."
+  exit 1
+fi
+
+if [ -z "$BUILD_ON" ]; then
+  echo "Error: BUILD_ON must be set."
   exit 1
 fi
 
