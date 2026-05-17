@@ -16,10 +16,12 @@ import com.storyteller_f.storage.FileRefInfoStorage
 import com.storyteller_f.storage.MemberInfoStorage
 import com.storyteller_f.storage.ModelStorage
 import com.storyteller_f.storage.OverviewStorage
+import com.storyteller_f.storage.PanelLogInfoStorage
 import com.storyteller_f.storage.ReactionInfoStorage
 import com.storyteller_f.storage.RemoteKeyStorage
 import com.storyteller_f.storage.RoomCollection
 import com.storyteller_f.storage.RoomInfoStorage
+import com.storyteller_f.storage.TaskRecordInfoStorage
 import com.storyteller_f.storage.TitleInfoStorage
 import com.storyteller_f.storage.TopicCollection
 import com.storyteller_f.storage.TopicInfoStorage
@@ -238,4 +240,6 @@ class FakeModelStorage(
     override val userLog: UserLogInfoStorage get() = TODO()
     override val uploadRecord: UploadRecordInfoStorage get() = TODO()
     override val fileRef: FileRefInfoStorage get() = TODO()
+    override val panelLog: PanelLogInfoStorage get() = TODO()
+    override val taskRecord: TaskRecordInfoStorage get() = TODO()
 }

@@ -22,3 +22,4 @@
 ## Topic Compose / Block 编辑
 
 - `TopicComposePage` 不再暴露整页 `RichEditTopicPage`；富文本编辑只作为 Block 编辑器中 `ContentBlock.Paragraph` 的编辑能力使用。
+- Compose Multiplatform UI 测试在 desktop/JVM 目标使用 `androidx.compose.ui.test.runComposeUiTest`（v1 API）；当前 `v2.runComposeUiTest` 的 Skiko desktop 实现会抛 NotImplemented。测试依赖已在 `app/composeApp` 和 `app/core` 的 `commonTest` 配置为 `libs.ui.test`；Block 编辑器相关 UI 测试优先放在 `app/composeApp/src/headlessTest/kotlin`。

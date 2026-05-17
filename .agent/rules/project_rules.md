@@ -19,7 +19,7 @@ trigger: always_on
 - 代码编辑之后不要用build 任务检查编译错误，要使用assemble 任务检查错误，如果要执行test 任务，单纯执行test 任务，不要执行detekt 任务
 - 不要在代码中使用 println 或 System.out.println
 - 编辑文件时需要注意不要改变当前文件的换行符
-- 添加依赖时通过github 或者对应仓库获取正确的group 和artifact，找不到依赖也禁止降低ban ben ha
+- 添加依赖时通过github 或者对应仓库获取正确的group 和artifact，找不到依赖也禁止降低版本
 
 ## 模块职责概览
 - **api**: 定义 REST API 端点、查询/路径模型；包含管理员 AdminApi（/admin/*）
@@ -38,7 +38,7 @@ trigger: always_on
 - **架构**: UI → SessionManager 扩展请求 → api endpoint；可选落地本地存储与分页
 - **分页**: 游标统一保存到 RemoteKeyStorage（PRE_COLLECTION/NEXT_COLLECTION）
 - **日志**: 对外网络请求使用 serviceCatching 打点；避免在热路径打印大量日志
-- **测试**: 优先将测试写在 src/headlessTest/kotlin
+- **测试**: 尽可能的编写测试，对于client 端并且是无ui 写到src/headlessTest/kotlin 中，如果是compose 正常按照https://kotlinlang.org/docs/multiplatform/compose-test.html 编写测试，如果是端到端测试写道appium 模块中
 
 ## 新增功能指南
 
@@ -90,6 +90,7 @@ trigger: always_on
 - 涉及配置缓存的改动避免在 Gradle 配置期读取外部环境
 - 对已有测试保持兼容，如需更新，给出迁移理由与步骤
 - 编写代码或者扫描项目获取到的知识保存到project.md 中，对于project.md 中过时或者错误知识也可以进行编辑
+- 编写代码或者扫描项目获取到的rule 相关的可以编辑到本文档
 
 ## 故障排查速查
 - 网络异常: 查看 client/core/*Request.kt 的 serviceCatching 日志与 AdminApi/CustomApi 路由
