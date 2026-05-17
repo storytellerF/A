@@ -14,34 +14,34 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.LocalAppNavFactory
-import com.storyteller_f.a.app.common.RoomViewModel
-import com.storyteller_f.a.app.common.createRoomViewModel
+import com.storyteller_f.a.app.LocalRefCellHandlerProvider
 import com.storyteller_f.a.app.core.components.RefCellStateView
+import com.storyteller_f.a.client.core.LoadingHandler
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.type.PrimaryKey
 
 @Composable
 fun RoomRefCell(roomId: PrimaryKey, onClick: ((RoomInfo) -> Unit)? = null) {
-    val viewModel = createRoomViewModel(roomId)
-    RoomRefCellInternal(viewModel, onClick)
+    val handler = LocalRefCellHandlerProvider.current.roomHandler(roomId)
+    RoomRefCellInternal(handler, onClick)
 }
 
 @Composable
 fun RoomRefCell(roomAid: String, onClick: ((RoomInfo) -> Unit)? = null) {
-    val viewModel = createRoomViewModel(roomAid)
-    RoomRefCellInternal(viewModel, onClick)
+    val handler = LocalRefCellHandlerProvider.current.roomHandler(roomAid)
+    RoomRefCellInternal(handler, onClick)
 }
 
 @Composable
 private fun RoomRefCellInternal(
-    viewModel: RoomViewModel,
+    handler: LoadingHandler<RoomInfo>,
     onClick: ((RoomInfo) -> Unit)? = null
 ) {
-    val roomInfo by viewModel.handler.data.collectAsState()
+    val roomInfo by handler.data.collectAsState()
     val appNavFactory = LocalAppNavFactory.current
     val shape = RoundedCornerShape(10.dp)
     RefCellStateView(
-        viewModel.handler,
+        handler,
         modifier = Modifier
             .fillMaxWidth()
             .height(65.dp)

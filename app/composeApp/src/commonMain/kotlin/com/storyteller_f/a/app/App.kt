@@ -277,7 +277,8 @@ fun CommonEntry(content: @Composable () -> Unit) {
             LocalToaster provides Sonner(toasterState),
             LocalGlobalDialog provides instance.controller,
             LocalGlobalTask provides instance.task,
-            LocalUserInfo provides user
+            LocalUserInfo provides user,
+            LocalRefCellHandlerProvider provides DefaultRefCellHandlerProvider
         ) {
             ProvideFontIcon {
                 val dataStoreManager = createCustomDataStoreManager()

@@ -14,10 +14,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.LocalAppNavFactory
-import com.storyteller_f.a.app.common.TopicViewModel
-import com.storyteller_f.a.app.common.createTopicViewModel
+import com.storyteller_f.a.app.LocalRefCellHandlerProvider
 import com.storyteller_f.a.app.core.components.RefCellStateView
 import com.storyteller_f.a.app.pages.user.UserIconWithDialog
+import com.storyteller_f.a.client.core.LoadingHandler
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.type.PrimaryKey
@@ -25,25 +25,23 @@ import com.storyteller_f.shared.utils.extractMarkdownHeadline
 
 @Composable
 fun TopicRefCell(topicId: PrimaryKey) {
-    val viewModel = createTopicViewModel(topicId)
-
-    TopicRefCellInternal(viewModel)
+    val handler = LocalRefCellHandlerProvider.current.topicHandler(topicId)
+    TopicRefCellInternal(handler)
 }
 
 @Composable
 fun TopicRefCell(topicAid: String) {
-    val viewModel = createTopicViewModel(topicAid)
-
-    TopicRefCellInternal(viewModel)
+    val handler = LocalRefCellHandlerProvider.current.topicHandler(topicAid)
+    TopicRefCellInternal(handler)
 }
 
 @Composable
-fun TopicRefCellInternal(viewModel: TopicViewModel) {
-    val topicInfo by viewModel.handler.data.collectAsState()
+fun TopicRefCellInternal(handler: LoadingHandler<TopicInfo>) {
+    val topicInfo by handler.data.collectAsState()
     val appNavFactory = LocalAppNavFactory.current
     val shape = RoundedCornerShape(4.dp)
     RefCellStateView(
-        viewModel.handler,
+        handler,
         modifier = Modifier
             .fillMaxWidth()
             .height(120.dp)
