@@ -8,8 +8,13 @@ set -e
 cli_path=$1
 base=$2
 
-if [ -z "$base" ] || [ -z "$cli_path" ]; then
-  echo "Error: base and cli_path parameter is not specified."
+if [ -z "$base" ]; then
+  echo "Error: base parameter is not specified."
+  exit 1
+fi
+
+if [ -z "$cli_path" ]; then
+  echo "Error: cli_path parameter is not specified."
   exit 1
 fi
 

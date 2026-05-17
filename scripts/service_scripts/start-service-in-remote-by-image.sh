@@ -12,8 +12,13 @@ fi
 FLAVOR=$1
 BUILD_ON=$2
 
-if [ -z "$FLAVOR" ] || [ -z "$BUILD_ON" ]; then
-  log "FLAVOR and BUILD_ON must be set"
+if [ -z "$FLAVOR" ]; then
+  log "FLAVOR must be set"
+  exit 1
+fi
+
+if [ -z "$BUILD_ON" ]; then
+  log "BUILD_ON must be set"
   exit 1
 fi
 
