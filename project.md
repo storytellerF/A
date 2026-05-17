@@ -31,3 +31,9 @@
 ## Media Player
 
 - 媒体播放列表不在点击播放时解析；播放器 UI 通过 `LocalMediaPlayListHandlerProvider` 获取 `LoadingHandler<List<ConstPlayItem>>`，加载完成后再调用 `MediaPlayerService.start`。
+
+## Gradle 工具脚本
+
+- `scripts/build_scripts/gradle-prune-implementations.sh` 通过 `./gradlew projects` 获取当前构建实际包含的模块，只处理这些模块的 `build.gradle.kts`，避免误删未 include 模块的依赖。
+- prune 检查默认运行 `assemble`（可用 `GRADLE_PRUNE_TASK` 覆盖），脚本参数会继续传给 Gradle，例如 `-Pserver.flavor=...`。
+- 每个候选 implementation 会在“已确认可删”的累计状态上继续验证；失败时只回滚当前候选，避免最终删除未被组合验证过的依赖。
