@@ -13,17 +13,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.LocalAppNavFactory
-import com.storyteller_f.a.app.common.UserViewModel
-import com.storyteller_f.a.app.common.createUserViewModel
+import com.storyteller_f.a.app.LocalRefCellHandlerProvider
 import com.storyteller_f.a.app.core.components.RefCellStateView
+import com.storyteller_f.a.client.core.LoadingHandler
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.PrimaryKey
 
 @Composable
 fun UserRefCell(userId: PrimaryKey, onClick: ((UserInfo) -> Unit)? = null) {
     val appNavFactory = LocalAppNavFactory.current
-    val viewModel = createUserViewModel(userId)
-    UserRefCellInternal(viewModel) {
+    val handler = LocalRefCellHandlerProvider.current.userHandler(userId)
+    UserRefCellInternal(handler) {
         onClick?.invoke(it) ?: appNavFactory.newAppNav().gotoUser(it.id)
     }
 }
@@ -31,22 +31,22 @@ fun UserRefCell(userId: PrimaryKey, onClick: ((UserInfo) -> Unit)? = null) {
 @Composable
 fun UserRefCell(userAid: String, onClick: ((UserInfo) -> Unit)? = null) {
     val appNavFactory = LocalAppNavFactory.current
-    val viewModel = createUserViewModel(userAid)
-    UserRefCellInternal(viewModel) {
+    val handler = LocalRefCellHandlerProvider.current.userHandler(userAid)
+    UserRefCellInternal(handler) {
         onClick?.invoke(it) ?: appNavFactory.newAppNav().gotoUser(it.id)
     }
 }
 
 @Composable
 private fun UserRefCellInternal(
-    viewModel: UserViewModel,
+    handler: LoadingHandler<UserInfo>,
     onClick: ((UserInfo) -> Unit)? = null
 ) {
-    val userInfo by viewModel.handler.data.collectAsState()
+    val userInfo by handler.data.collectAsState()
     val shape = RoundedCornerShape(10.dp)
     val appNavFactory = LocalAppNavFactory.current
     RefCellStateView(
-        viewModel.handler,
+        handler,
         modifier = Modifier
             .fillMaxWidth()
             .height(56.dp)
@@ -54,7 +54,7 @@ private fun UserRefCellInternal(
             .clip(shape)
             .clickable {
                 userInfo?.let {
-                    onClick ?: appNavFactory.newAppNav().gotoUser(it.id)
+                    onClick?.invoke(it) ?: appNavFactory.newAppNav().gotoUser(it.id)
                 }
             }
     ) { info ->

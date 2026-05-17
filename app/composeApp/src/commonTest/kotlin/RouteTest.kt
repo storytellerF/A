@@ -9,7 +9,7 @@ class RouteTest {
     fun testRouteMatch() {
         val string = "/room/a/test"
 
-        val result = TopicRoute.Companion.parseRefUri(string)
+        val result = TopicRoute.parseRefUri(string)
         assertNotNull(result.first)
         assertEquals("test", result.second["aid"])
     }

@@ -14,34 +14,34 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.LocalAppNavFactory
-import com.storyteller_f.a.app.common.CommunityViewModel
-import com.storyteller_f.a.app.common.createCommunityViewModel
+import com.storyteller_f.a.app.LocalRefCellHandlerProvider
 import com.storyteller_f.a.app.core.components.RefCellStateView
+import com.storyteller_f.a.client.core.LoadingHandler
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.type.PrimaryKey
 
 @Composable
 fun CommunityRefCell(communityId: PrimaryKey, onClick: ((CommunityInfo) -> Unit)? = null) {
-    val viewModel = createCommunityViewModel(communityId)
-    CommunityRefCellInternal(viewModel, onClick)
+    val handler = LocalRefCellHandlerProvider.current.communityHandler(communityId)
+    CommunityRefCellInternal(handler, onClick)
 }
 
 @Composable
 fun CommunityRefCell(communityAid: String, onClick: ((CommunityInfo) -> Unit)? = null) {
-    val viewModel = createCommunityViewModel(communityAid)
-    CommunityRefCellInternal(viewModel, onClick)
+    val handler = LocalRefCellHandlerProvider.current.communityHandler(communityAid)
+    CommunityRefCellInternal(handler, onClick)
 }
 
 @Composable
 private fun CommunityRefCellInternal(
-    viewModel: CommunityViewModel,
+    handler: LoadingHandler<CommunityInfo>,
     onClick: ((CommunityInfo) -> Unit)? = null
 ) {
-    val communityInfo by viewModel.handler.data.collectAsState()
+    val communityInfo by handler.data.collectAsState()
     val shape = RoundedCornerShape(10.dp)
     val appNavFactory = LocalAppNavFactory.current
     RefCellStateView(
-        viewModel.handler,
+        handler,
         modifier = Modifier
             .fillMaxWidth()
             .height(70.dp)
