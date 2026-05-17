@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.storyteller_f.a.client.core.LoadingHandler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.serialization.Serializable
 import kotlin.uuid.ExperimentalUuidApi
@@ -61,12 +62,25 @@ val LocalMediaPlayerService = compositionLocalOf<MediaPlayerService> {
     error("LocalMediaPlayerComponent not provided")
 }
 
+interface MediaPlayListHandlerProvider {
+    @Composable
+    fun playListHandler(remoteMediaItem: RemoteMediaItem): LoadingHandler<List<ConstPlayItem>>
+}
+
+val LocalMediaPlayListHandlerProvider = compositionLocalOf<MediaPlayListHandlerProvider> {
+    error("LocalMediaPlayListHandlerProvider must be provided")
+}
+
 expect abstract class MediaPlayerService {
     abstract val enablePip: Boolean
     val state: MutableStateFlow<MediaPlaySession?>
 
     abstract fun fullscreen(remoteMediaItem: RemoteMediaItem)
-    abstract suspend fun start(remoteMediaItem: RemoteMediaItem, localMediaPlaySession: LocalMediaPlaySession)
+    abstract suspend fun start(
+        remoteMediaItem: RemoteMediaItem,
+        localMediaPlaySession: LocalMediaPlaySession,
+        playList: List<ConstPlayItem>
+    )
 }
 
 @Composable

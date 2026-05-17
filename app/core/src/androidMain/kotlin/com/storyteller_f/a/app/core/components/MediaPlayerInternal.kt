@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.TapAndPlay
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -39,6 +40,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
 import androidx.media3.session.MediaController
 import coil3.compose.AsyncImage
+import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.shared.model.FileInfo
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
@@ -192,6 +194,9 @@ fun BoxScope.PlayerWaiting(
     localMediaPlaySession: LocalMediaPlaySession,
     remoteMediaItem: RemoteMediaItem
 ) {
+    val playListHandler = LocalMediaPlayListHandlerProvider.current.playListHandler(remoteMediaItem)
+    val playList by playListHandler.data.collectAsState()
+    val loadingState by playListHandler.state.collectAsState()
     val coverMediaInfo = remoteMediaItem.cover
     if (coverMediaInfo != null) {
         val request = imageRequestInMarkdown(coverMediaInfo)
@@ -199,14 +204,18 @@ fun BoxScope.PlayerWaiting(
     } else {
         Box(modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainerHigh).fillMaxSize())
     }
+    PlayerWaitingState(loadingState, playListHandler::refresh)
     val mediaPlayerService = LocalMediaPlayerService.current
     val scope = rememberCoroutineScope()
-    IconButton({
-        scope.launch {
-            mediaPlayerService.start(remoteMediaItem, localMediaPlaySession)
+    val availablePlayList = playList.orEmpty()
+    if (loadingState !is LoadingState.Error && loadingState != LoadingState.Loading) {
+        IconButton({
+            scope.launch {
+                mediaPlayerService.start(remoteMediaItem, localMediaPlaySession, availablePlayList)
+            }
+        }, modifier = Modifier.align(Alignment.Center), enabled = availablePlayList.isNotEmpty()) {
+            Icon(Icons.Default.PlayArrow, "play")
         }
-    }, modifier = Modifier.align(Alignment.Center)) {
-        Icon(Icons.Default.PlayArrow, "play")
     }
     if (remoteMediaItem.contentType == FileInfo.M3U8_MIMETYPE ||
         remoteMediaItem.contentType == FileInfo.YOUTUBE_MIMETYPE
@@ -226,6 +235,31 @@ fun BoxScope.PlayerWaiting(
                 .padding(10.dp),
             maxLines = 2
         )
+    }
+}
+
+@Composable
+private fun BoxScope.PlayerWaitingState(
+    loadingState: LoadingState?,
+    refresh: () -> Unit
+) {
+    when (loadingState) {
+        is LoadingState.Error -> {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                ExceptionCell(loadingState.e, refresh)
+            }
+        }
+
+        LoadingState.Loading -> {
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+        }
+
+        else -> Unit
     }
 }
 

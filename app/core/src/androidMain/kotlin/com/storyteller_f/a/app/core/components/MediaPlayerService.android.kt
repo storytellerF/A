@@ -3,11 +3,9 @@ package com.storyteller_f.a.app.core.components
 import android.content.Context
 import android.content.Intent
 import androidx.media3.session.MediaController
-import com.storyteller_f.a.app.core.utils.parseM3UPlayList
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.utils.UNIT_RESULT
 import io.github.aakira.napier.Napier
-import io.ktor.client.HttpClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.sync.Mutex
@@ -90,28 +88,25 @@ actual abstract class MediaPlayerService {
     }
 
     actual abstract fun fullscreen(remoteMediaItem: RemoteMediaItem)
-    actual abstract suspend fun start(remoteMediaItem: RemoteMediaItem, localMediaPlaySession: LocalMediaPlaySession)
+    actual abstract suspend fun start(
+        remoteMediaItem: RemoteMediaItem,
+        localMediaPlaySession: LocalMediaPlaySession,
+        playList: List<ConstPlayItem>
+    )
 
     actual abstract val enablePip: Boolean
 }
 
 @OptIn(ExperimentalUuidApi::class)
 suspend fun MediaPlayerService.startPlay(
-    contentType: String,
     remoteMediaItem: RemoteMediaItem,
-    context: Context,
-    localMediaPlaySession: LocalMediaPlaySession
+    localMediaPlaySession: LocalMediaPlaySession,
+    playList: List<ConstPlayItem>
 ): Result<Unit> {
-    val playList = when (contentType) {
-        FileInfo.M3U8_MIMETYPE -> parseM3UPlayList(remoteMediaItem, HttpClient { })
-        FileInfo.YOUTUBE_MIMETYPE, FileInfo.SOUND_CLOUD_MIME_TYPE -> getPlaylistFromNewPipe(remoteMediaItem, context)
-
-        else -> listOf(ConstPlayItem(remoteMediaItem.url, title = remoteMediaItem.url))
-    }
     return if (playList.isNotEmpty()) {
         val newSession = MediaPlaySession(remoteMediaItem, playList, listOf(localMediaPlaySession.uuid), null)
         get(newSession) { player, s ->
-            player.playNewMedia(s.playList, contentType)
+            player.playNewMedia(s.playList, remoteMediaItem.contentType)
         }
         UNIT_RESULT
     } else {

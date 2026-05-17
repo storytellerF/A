@@ -3,6 +3,7 @@ package com.storyteller_f.a.panel
 import android.app.Application
 import android.content.Intent
 import android.os.StrictMode
+import com.storyteller_f.a.app.core.components.ConstPlayItem
 import com.storyteller_f.a.app.core.components.LocalMediaPlaySession
 import com.storyteller_f.a.app.core.components.MediaPlayerService
 import com.storyteller_f.a.app.core.components.RemoteMediaItem
@@ -41,11 +42,11 @@ private fun buildPanelMediaPlayer(): MediaPlayerService = object : MediaPlayerSe
 
     override suspend fun start(
         remoteMediaItem: RemoteMediaItem,
-        localMediaPlaySession: LocalMediaPlaySession
+        localMediaPlaySession: LocalMediaPlaySession,
+        playList: List<ConstPlayItem>
     ) {
-        val context = mainActivityRef?.get() ?: return
         val instance = panelAccountInstance
-        instance.controller.startPlayMedia(remoteMediaItem, localMediaPlaySession, this, context)
+        instance.controller.startPlayMedia(remoteMediaItem, localMediaPlaySession, this, playList)
     }
 
     override val enablePip: Boolean
