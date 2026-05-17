@@ -7,6 +7,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.CompositionLocalProvider
 import com.storyteller_f.a.app.core.commonForActivity
 import com.storyteller_f.a.app.core.components.CenterBox
+import com.storyteller_f.a.app.core.components.DefaultMediaPlayListHandlerProvider
+import com.storyteller_f.a.app.core.components.LocalMediaPlayListHandlerProvider
 import com.storyteller_f.a.app.core.components.LocalMediaPlayerService
 import com.storyteller_f.a.app.core.components.RemoteMediaItem
 import com.storyteller_f.shared.commonJson
@@ -25,6 +27,7 @@ class MediaPlayerActivity : ComponentActivity() {
                 val remoteMediaItem = commonJson.decodeFromString<RemoteMediaItem>(json)
                 CompositionLocalProvider(
                     LocalUiViewModel provides uiViewModel,
+                    LocalMediaPlayListHandlerProvider provides DefaultMediaPlayListHandlerProvider,
                     LocalMediaPlayerService provides (application as AApplication).mediaPlayer
                 ) {
                     MediaPlayerPage(remoteMediaItem)

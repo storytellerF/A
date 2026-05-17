@@ -12,6 +12,8 @@ import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.MoreExecutors
 import com.storyteller_f.a.app.core.PlaybackService
 import com.storyteller_f.a.app.core.commonForActivity
+import com.storyteller_f.a.app.core.components.DefaultMediaPlayListHandlerProvider
+import com.storyteller_f.a.app.core.components.LocalMediaPlayListHandlerProvider
 import com.storyteller_f.a.app.core.components.LocalMediaPlayerService
 import com.storyteller_f.a.app.core.components.bindActivity
 import com.storyteller_f.a.app.core.components.unbindActivity
@@ -61,7 +63,10 @@ class MainActivity : ComponentActivity() {
         commonForActivity()
         bindActivity(this)
         setContent {
-            CompositionLocalProvider(LocalMediaPlayerService provides (application as PanelApplication).mediaPlayer) {
+            CompositionLocalProvider(
+                LocalMediaPlayListHandlerProvider provides DefaultMediaPlayListHandlerProvider,
+                LocalMediaPlayerService provides (application as PanelApplication).mediaPlayer
+            ) {
                 App()
             }
         }

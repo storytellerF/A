@@ -27,3 +27,7 @@
 ## RefCell
 
 - `TopicRefCell`、`RoomRefCell`、`CommunityRefCell`、`UserRefCell` 不直接创建 ViewModel；通过 `LocalRefCellHandlerProvider` 获取 `LoadingHandler`，默认 provider 再适配现有 `create*ViewModel` 工厂。
+
+## Media Player
+
+- 媒体播放列表不在点击播放时解析；播放器 UI 通过 `LocalMediaPlayListHandlerProvider` 获取 `LoadingHandler<List<ConstPlayItem>>`，加载完成后再调用 `MediaPlayerService.start`。

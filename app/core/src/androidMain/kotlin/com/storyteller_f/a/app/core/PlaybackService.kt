@@ -1,6 +1,5 @@
 package com.storyteller_f.a.app.core
 
-import android.content.Context
 import android.content.Intent
 import androidx.annotation.OptIn
 import androidx.media3.common.Player.COMMAND_SEEK_TO_NEXT
@@ -11,6 +10,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import com.storyteller_f.a.app.core.components.ConstPlayItem
 import com.storyteller_f.a.app.core.components.GlobalDialogController
 import com.storyteller_f.a.app.core.components.LocalMediaPlaySession
 import com.storyteller_f.a.app.core.components.MediaPlayerService
@@ -85,10 +85,9 @@ suspend fun<C> GlobalDialogController<C>.startPlayMedia(
     remoteMediaItem: RemoteMediaItem,
     localMediaPlaySession: LocalMediaPlaySession,
     mediaPlayerService: MediaPlayerService,
-    context: Context
+    playList: List<ConstPlayItem>
 ) {
-    val contentType = remoteMediaItem.contentType
     useResult {
-        mediaPlayerService.startPlay(contentType, remoteMediaItem, context, localMediaPlaySession)
+        mediaPlayerService.startPlay(remoteMediaItem, localMediaPlaySession, playList)
     }
 }

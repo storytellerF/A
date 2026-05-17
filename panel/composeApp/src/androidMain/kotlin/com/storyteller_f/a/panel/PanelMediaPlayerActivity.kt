@@ -8,6 +8,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.CompositionLocalProvider
 import com.storyteller_f.a.app.core.commonForActivity
 import com.storyteller_f.a.app.core.components.CenterBox
+import com.storyteller_f.a.app.core.components.DefaultMediaPlayListHandlerProvider
+import com.storyteller_f.a.app.core.components.LocalMediaPlayListHandlerProvider
 import com.storyteller_f.a.app.core.components.LocalMediaPlayerService
 
 class PanelMediaPlayerActivity : ComponentActivity() {
@@ -22,6 +24,7 @@ class PanelMediaPlayerActivity : ComponentActivity() {
                 }
             } else {
                 CompositionLocalProvider(
+                    LocalMediaPlayListHandlerProvider provides DefaultMediaPlayListHandlerProvider,
                     LocalMediaPlayerService provides (application as PanelApplication).mediaPlayer
                 ) {
                     PanelFilePreviewPage(fileId)
