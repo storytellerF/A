@@ -76,14 +76,14 @@ trap cleanup EXIT
 # Unit Tests
 if [ "$RUN_UNIT" = true ]; then
     echo "Running Unit Tests..."
-    ./gradlew test $TEST_ARGS --no-daemon $GRADLE_CONSOLE_ARGS
+    ./gradlew test $TEST_ARGS $GRADLE_CONSOLE_ARGS
 fi
 
 if [ "$RUN_APPIUM" = true ]; then
     echo "Preparing server/worker images for Appium Testcontainers..."
-    ./scripts/build_scripts/build-server-worker-images.sh dev prod
+    ./scripts/build_scripts/build-server-worker-images.sh dev prod host
     echo "Building Release APK..."
-    ./gradlew app:android:assembleDebug --no-daemon $GRADLE_CONSOLE_ARGS
+    ./gradlew app:android:assembleDebug $GRADLE_CONSOLE_ARGS
 fi
 
 if [ "$RUN_ANDROID" = true ] || [ "$RUN_APPIUM" = true ]; then
@@ -93,24 +93,25 @@ fi
 # Running android Tests
 if [ "$RUN_ANDROID" = true ]; then
     echo "Running Android Connected Tests..."
-    ./gradlew ${MODULE}:connectedAndroidTest --no-daemon $TEST_ARGS $GRADLE_CONSOLE_ARGS
+    ./gradlew ${MODULE}:connectedAndroidTest $TEST_ARGS $GRADLE_CONSOLE_ARGS
 fi
 
 # Running desktop Tests
 if [ "$RUN_DESKTOP" = true ]; then
     echo "Running Desktop Tests..."
-    ./gradlew ${MODULE}:desktopTest --no-daemon $TEST_ARGS $GRADLE_CONSOLE_ARGS
+    ./gradlew ${MODULE}:desktopTest $TEST_ARGS $GRADLE_CONSOLE_ARGS
 fi
 
 if [ "$RUN_APPIUM" = true ]; then
     echo "Running Appium Tests..."
-    ./gradlew :dev:appium:clean --no-daemon $GRADLE_CONSOLE_ARGS
-  appium_exit=0
-  ./gradlew :dev:appium:test --no-daemon -Pappium=true $TEST_ARGS $GRADLE_CONSOLE_ARGS || appium_exit=$?
-  copyAppiumLogsToBuild
-  if [ "$appium_exit" -ne 0 ]; then
-    exit "$appium_exit"
-  fi
+    sudo rm -rf ./dev/appium/build/test/appium/sessions
+    ./gradlew :dev:appium:clean -Pappium=true $GRADLE_CONSOLE_ARGS
+    appium_exit=0
+    ./gradlew :dev:appium:test -Pappium=true $TEST_ARGS $GRADLE_CONSOLE_ARGS || appium_exit=$?
+    copyAppiumLogsToBuild
+    if [ "$appium_exit" -ne 0 ]; then
+      exit "$appium_exit"
+    fi
 fi
 #./gradlew :composeApp:wasmJsTest
 #./gradlew :composeApp:iosSimulatorArm64Test

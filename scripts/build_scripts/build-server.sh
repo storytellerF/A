@@ -14,5 +14,5 @@ if [ -z "$BUILD_TYPE" ]; then
 fi
 
 mkdir -p deploy/build
-./gradlew cloud:server:distTar cloud:server:distZip --no-daemon -Pserver.flavor=$FLAVOR -Pserver.buildType=$BUILD_TYPE
+./gradlew cloud:server:distTar cloud:server:distZip -Pserver.flavor=$FLAVOR -Pserver.buildType=$BUILD_TYPE
 cp cloud/server/build/distributions/* deploy/build
