@@ -18,3 +18,7 @@
 
 - Worker 执行记录存储在后端 `TaskRecords` 表，记录类型是 `TaskRecordType`，`processedId` 指向该任务处理到的业务对象。
 - Panel 通过 `/admin/task-records` 分页查询 worker 执行记录；支持按任务类型筛选，未传类型时返回全部记录。
+
+## Topic Compose / Block 编辑
+
+- `TopicComposePage` 不再暴露整页 `RichEditTopicPage`；富文本编辑只作为 Block 编辑器中 `ContentBlock.Paragraph` 的编辑能力使用。

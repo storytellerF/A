@@ -6,36 +6,55 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DragIndicator
+import androidx.compose.material.icons.filled.FormatBold
+import androidx.compose.material.icons.filled.FormatItalic
+import androidx.compose.material.icons.filled.FormatListNumbered
+import androidx.compose.material.icons.filled.FormatStrikethrough
+import androidx.compose.material.icons.filled.FormatUnderlined
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import com.mohamedrejeb.richeditor.model.RichTextState
+import com.mohamedrejeb.richeditor.model.rememberRichTextState
+import com.mohamedrejeb.richeditor.ui.BasicRichTextEditor
 
 /**
  * 可编辑的 Block 组件
@@ -250,25 +269,7 @@ fun EditableParagraphBlock(
     }
 
     if (isFocused) {
-        BasicTextField(
-            value = block.content,
-            onValueChange = onContentChange,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp),
-            textStyle = textStyle.copy(color = LocalContentColor.current),
-            decorationBox = { innerTextField ->
-                Box(modifier = Modifier.padding(vertical = 4.dp)) {
-                    if (block.content.isEmpty()) {
-                        Text(
-                            "Type '/' for commands...",
-                            style = textStyle.copy(color = LocalContentColor.current.copy(alpha = 0.5f))
-                        )
-                    }
-                    innerTextField()
-                }
-            }
-        )
+        RichEditableParagraphBlock(block, textStyle, onContentChange)
     } else {
         Text(
             text = block.content,
@@ -279,6 +280,97 @@ fun EditableParagraphBlock(
                 .padding(vertical = 4.dp)
         )
     }
+}
+
+@Composable
+private fun RichEditableParagraphBlock(
+    block: ContentBlock.Paragraph,
+    textStyle: androidx.compose.ui.text.TextStyle,
+    onContentChange: (String) -> Unit
+) {
+    val state = rememberRichTextState()
+
+    LaunchedEffect(block.id) {
+        state.setMarkdown(block.content)
+    }
+    LaunchedEffect(block.content) {
+        val markdown = state.toMarkdown().normalizeParagraphMarkdown()
+        if (markdown != block.content) {
+            state.setMarkdown(block.content)
+        }
+    }
+    LaunchedEffect(state.annotatedString) {
+        val markdown = state.toMarkdown().normalizeParagraphMarkdown()
+        if (markdown != block.content) {
+            onContentChange(markdown)
+        }
+    }
+
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+        ParagraphRichTextToolbar(state)
+        Box(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+            if (block.content.isEmpty()) {
+                Text(
+                    "Type '/' for commands...",
+                    style = textStyle.copy(color = LocalContentColor.current.copy(alpha = 0.5f))
+                )
+            }
+            BasicRichTextEditor(
+                state = state,
+                modifier = Modifier.fillMaxWidth(),
+                textStyle = textStyle.copy(color = LocalContentColor.current)
+            )
+        }
+    }
+}
+
+@Composable
+@OptIn(ExperimentalLayoutApi::class)
+private fun ParagraphRichTextToolbar(state: RichTextState) {
+    val currentSpanStyle = state.currentSpanStyle
+    FlowRow {
+        IconToggleButton(currentSpanStyle.fontWeight == FontWeight.Bold, {
+            state.toggleSpanStyle(SpanStyle(fontWeight = FontWeight.Bold))
+        }) {
+            Icon(Icons.Default.FormatBold, "Toggle bold")
+        }
+        IconToggleButton(currentSpanStyle.fontStyle == FontStyle.Italic, {
+            state.toggleSpanStyle(SpanStyle(fontStyle = FontStyle.Italic))
+        }) {
+            Icon(Icons.Default.FormatItalic, "Toggle italic")
+        }
+        IconToggleButton(currentSpanStyle.textDecoration == TextDecoration.Underline, {
+            state.toggleSpanStyle(SpanStyle(textDecoration = TextDecoration.Underline))
+        }) {
+            Icon(Icons.Default.FormatUnderlined, "Toggle underline")
+        }
+        IconToggleButton(currentSpanStyle.textDecoration == TextDecoration.LineThrough, {
+            state.toggleSpanStyle(SpanStyle(textDecoration = TextDecoration.LineThrough))
+        }) {
+            Icon(Icons.Default.FormatStrikethrough, "Toggle strikethrough")
+        }
+        VerticalDivider(modifier = Modifier.height(20.dp).align(Alignment.CenterVertically))
+        IconToggleButton(state.isOrderedList, {
+            state.toggleOrderedList()
+        }) {
+            Icon(Icons.Default.FormatListNumbered, "Toggle ordered list")
+        }
+        IconToggleButton(state.isUnorderedList, {
+            state.toggleUnorderedList()
+        }) {
+            Icon(Icons.AutoMirrored.Filled.FormatListBulleted, "Toggle unordered list")
+        }
+        VerticalDivider(modifier = Modifier.height(20.dp).align(Alignment.CenterVertically))
+        IconToggleButton(state.isCodeSpan, {
+            state.toggleCodeSpan()
+        }) {
+            Icon(Icons.Default.Code, "Toggle code span")
+        }
+    }
+}
+
+private fun String.normalizeParagraphMarkdown(): String {
+    return trimEnd('\r', '\n')
 }
 
 /**
