@@ -151,7 +151,11 @@ class BlockEditorState(
      * 在末尾添加一个 Block
      */
     fun appendBlock(block: ContentBlock) {
-        blocks.add(block)
+        if (blocks.singleOrNull()?.isEmptyParagraph() == true) {
+            blocks[0] = block
+        } else {
+            blocks.add(block)
+        }
     }
 
     /**
@@ -163,6 +167,10 @@ class BlockEditorState(
             blocks[index] = newBlock
         }
     }
+}
+
+private fun ContentBlock.isEmptyParagraph(): Boolean {
+    return this is ContentBlock.Paragraph && content.isEmpty() && level == 0
 }
 
 /**
