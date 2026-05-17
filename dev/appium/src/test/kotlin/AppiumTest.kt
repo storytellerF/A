@@ -684,22 +684,28 @@ private fun parseEnvFile(file: File): Map<String, String> {
 }
 
 private fun bindAndroidReverse(hostPort: Int, devicePort: Int) {
+    println("bind android reverse $hostPort $devicePort")
     val script = sequenceOf(
         File("scripts/android_scripts/forward-android-devices.sh"),
         File("../../scripts/android_scripts/forward-android-devices.sh")
     ).firstOrNull { it.exists() }
         ?: error("forward-android-devices.sh not found")
 
-    val process = ProcessBuilder(
+    val processBuilder = ProcessBuilder(
         "sh",
         script.canonicalPath,
         devicePort.toString(),
         hostPort.toString()
     )
         .redirectErrorStream(true)
-        .start()
-    val output = process.inputStream.bufferedReader().use { it.readText().trim() }
+    val home = System.getProperty("user.home")
+    val environment = processBuilder.environment()
+    val old = environment.getOrDefault("PATH", "")
+    if (!old.contains("platform-tools"))
+        environment["PATH"] = "$old:$home/Android/Sdk/platform-tools"
+    val process = processBuilder.start()
     val exitCode = process.waitFor()
+    val output = process.inputStream.bufferedReader().use { it.readText().trim() }
     check(exitCode == 0) {
         if (output.isNotEmpty()) {
             "Failed to execute forward-android-devices.sh: $output"
@@ -753,11 +759,16 @@ private data class AdbCommandResult(
 )
 
 private fun runAdbCommandAllowFailure(vararg args: String): AdbCommandResult {
-    val process = ProcessBuilder(listOf("adb") + args)
+    val processBuilder = ProcessBuilder(listOf("sh", "-c", "adb") + args)
         .redirectErrorStream(true)
-        .start()
-    val output = process.inputStream.bufferedReader().use { it.readText().trim() }
+    val home = System.getProperty("user.home")
+    val environment = processBuilder.environment()
+    val old = environment.getOrDefault("PATH", "")
+    if (!old.contains("platform-tools"))
+        environment["PATH"] = "$old:$home/Android/Sdk/platform-tools"
+    val process = processBuilder.start()
     val exitCode = process.waitFor()
+    val output = process.inputStream.bufferedReader().use { it.readText().trim() }
     return AdbCommandResult(exitCode = exitCode, output = output)
 }
 
@@ -791,7 +802,7 @@ private fun assertElementVisible(driver: AndroidDriver, selector: String) {
     val wait = WebDriverWait(driver, Duration.ofSeconds(100))
     val element =
         wait.until(ExpectedConditions.presenceOfElementLocated(AppiumBy.androidUIAutomator(selector)))
-    assertTrue(element.isDisplayed)
+    assertTrue(element!!.isDisplayed)
 }
 
 private fun assertElementNotVisible(

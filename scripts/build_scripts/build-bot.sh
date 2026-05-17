@@ -15,5 +15,5 @@ if [ -z "$BUILD_TYPE" ]; then
 fi
 
 mkdir -p deploy/build
-./gradlew bot:builtin-bot:distZip bot:builtin-bot:distTar --no-daemon -Dflavor="$FLAVOR" -DbuildType="$BUILD_TYPE"
+./gradlew bot:builtin-bot:distZip bot:builtin-bot:distTar -Dflavor="$FLAVOR" -DbuildType="$BUILD_TYPE"
 cp bot/builtin-bot/build/distributions/* deploy/build

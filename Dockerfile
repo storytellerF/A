@@ -15,7 +15,7 @@ ARG FLAVOR
 ARG BUILD_ON
 #endif
 
-RUN ./scripts/download_scripts/download-preset-data.sh
+#if($koyeb) RUN ./scripts/download_scripts/download-preset-data.sh
 
 RUN --mount=type=cache,target=/root/.gradle ./scripts/build_scripts/build-cloud-on-condition.sh ${FLAVOR} ${BUILD_TYPE} ${BUILD_ON}
 

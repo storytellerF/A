@@ -6,7 +6,7 @@ if ! ./gradlew assemble; then
 fi
 
 echo "执行 detekt 静态分析"
-if ! ./scripts/tool_scripts/exec-until-success.sh ./gradlew detekt --no-daemon; then
+if ! ./scripts/tool_scripts/exec-until-success.sh ./gradlew detekt; then
     ./scripts/tool_scripts/show-notification.sh "Detekt 失败" "代码静态分析失败！请检查代码规范问题。" "false"
     exit 1
 fi
@@ -19,24 +19,24 @@ else
 fi
 
 echo "清理测试缓存"
-if ! ./gradlew clean --no-daemon -Pappium=false; then
+if ! ./gradlew clean -Pappium=false; then
     ./scripts/tool_scripts/show-notification.sh "清理失败" "clean 执行失败！" "false"
     exit 1
 fi
 
 #echo "构建 cloud:server"
 #rm -rf cloud/server/build/install/server
-#if ! ./gradlew cloud:server:installDist --no-daemon; then
+#if ! ./gradlew cloud:server:installDist; then
 #    ./scripts/tool_scripts/show-notification.sh "构建失败" "cloud:server:installDist 构建失败！请检查错误。" "false"
 #    exit 1
 #fi
 
 echo "执行单元测试"
-if ! ENABLE_TEST_CONTAINER=false ./gradlew test --no-daemon -Pappium=false; then
+if ! ENABLE_TEST_CONTAINER=false ./gradlew test -Pappium=false; then
     ./scripts/tool_scripts/show-notification.sh "测试失败" "单元测试执行失败！请检查测试用例。" "false"
     exit 1
 fi
-if ! ENABLE_TEST_CONTAINER=true ./gradlew test --no-daemon -Pappium=false; then
+if ! ENABLE_TEST_CONTAINER=true ./gradlew test -Pappium=false; then
     ./scripts/tool_scripts/show-notification.sh "测试失败" "单元测试执行失败！请检查测试用例。" "false"
     exit 1
 fi
