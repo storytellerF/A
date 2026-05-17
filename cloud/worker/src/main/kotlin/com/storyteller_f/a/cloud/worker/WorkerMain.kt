@@ -25,6 +25,7 @@ import com.storyteller_f.a.backend.core.service.TopicSearchService
 import com.storyteller_f.a.backend.core.service.UserSearchService
 import com.storyteller_f.a.backend.core.setLogPath
 import com.storyteller_f.a.backend.exposed.buildExposedDatabase
+import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.setupKmpLogger
 import com.storyteller_f.shared.utils.now
 import io.github.aakira.napier.Napier
@@ -35,6 +36,7 @@ import kotlinx.coroutines.runBlocking
 fun main() {
     setLogPath()
     setupKmpLogger()
+    loadCryptoLibIfNeed()
     SnowflakeFactory.setMachine(1)
     Napier.i {
         "start worker"
