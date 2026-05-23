@@ -9,6 +9,7 @@ import com.storyteller_f.a.app.core.components.MediaPlayerService
 import com.storyteller_f.a.app.core.components.RemoteMediaItem
 import com.storyteller_f.a.app.core.components.mainActivityRef
 import com.storyteller_f.a.app.core.startPlayMedia
+import com.storyteller_f.a.app.utils.appPlatformImpl
 import com.storyteller_f.shared.appContextRef
 import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.loadCryptoLibIfNeed
@@ -29,6 +30,7 @@ class AApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        appPlatformImpl = AndroidAppPlatformImpl
         setupAppLogger(this)
         StrictMode.setVmPolicy(
             StrictMode.VmPolicy.Builder(StrictMode.getVmPolicy())

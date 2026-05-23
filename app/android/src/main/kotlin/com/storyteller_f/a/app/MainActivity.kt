@@ -60,7 +60,6 @@ class MainActivity : ComponentActivity(), ClientFileServiceContainer {
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
-        appPlatformImpl = AndroidAppPlatformImpl
         FileKit.init(this)
         commonForActivity()
         initEnvironment(this)

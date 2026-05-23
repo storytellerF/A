@@ -209,7 +209,7 @@ fun AppInternal(mediaPlaySession: MediaPlaySession?) {
         }
     }
     if (!isPip || mediaPlaySession == null) {
-        MainAppPage(appNav, backStack)
+        MainPage(appNav, backStack)
     } else {
         val remoteMediaItem = mediaPlaySession.remoteMediaItem
         if (remoteMediaItem.contentType.startsWith("video")) {
@@ -221,7 +221,7 @@ fun AppInternal(mediaPlaySession: MediaPlaySession?) {
 }
 
 @Composable
-private fun MainAppPage(
+private fun MainPage(
     appNav: AppNavFactory,
     backStack: NavBackStack<NavKey>
 ) {
@@ -398,7 +398,8 @@ private fun ObserveMessage() {
         sessionManager.webSocketClient.frameFlow.collect { frame ->
             if (frame is RoomFrame.NewTopicInfo) {
                 val plainFrame = if (frame.topicInfo.content is TopicContent.Encrypted) {
-                    val topicInfo = processEncryptedTopic(listOf(frame.topicInfo), sessionManager).first()
+                    val topicInfo =
+                        processEncryptedTopic(listOf(frame.topicInfo), sessionManager).first()
                     RoomFrame.NewTopicInfo(topicInfo)
                 } else {
                     frame
@@ -605,8 +606,9 @@ private fun createAppNavFactoryForBubble(): AppNavFactory = object : AppNavFacto
 
 @Composable
 fun UploadPage() {
-    val userInfo = LocalUserInfo.current ?: return
     CommonEntry {
-        FileExplorerPage(mediaTarget = userInfo.id ob ObjectType.USER)
+        val userInfo = LocalUserInfo.current
+        if (userInfo != null)
+            FileExplorerPage(mediaTarget = userInfo.id ob ObjectType.USER)
     }
 }
