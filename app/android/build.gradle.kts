@@ -94,6 +94,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.napier)
     implementation(libs.webrtc.kmp)
+    implementation(libs.github.newpipeextractor)
     implementation(libs.connector) {
         exclude(group = "com.google.protobuf", module = "protobuf-java")
     }
