@@ -21,10 +21,7 @@ import org.schabi.newpipe.extractor.localization.ContentCountry
 import org.schabi.newpipe.extractor.localization.Localization
 import java.lang.ref.WeakReference
 
-@OptIn(DelicateCoroutinesApi::class)
-val uiViewModel by lazy {
-    UIViewModel(GlobalScope, AppConfig.WS_SERVER_URL, AppConfig.SERVER_URL)
-}
+
 
 class AApplication : Application() {
     @OptIn(DelicateCoroutinesApi::class)
@@ -56,7 +53,7 @@ class AApplication : Application() {
 private fun buildMediaPlayer(): MediaPlayerService = object : MediaPlayerService() {
     override fun fullscreen(remoteMediaItem: RemoteMediaItem) {
         val context = mainActivityRef?.get() ?: return
-        context.startActivity(Intent().setClassName(context, MEDIA_PLAYER_ACTIVITY_CLASS_NAME).apply {
+        context.startActivity(Intent(context, MediaPlayerActivity::class.java).apply {
 //                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 //                addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
             putExtra("json", commonJson.encodeToString<RemoteMediaItem>(remoteMediaItem))
