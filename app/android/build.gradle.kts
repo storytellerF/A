@@ -9,6 +9,7 @@ import java.util.Properties
 
 plugins {
     alias(libs.plugins.androidApplication)
+    alias(libs.plugins.compose.compiler)
     alias(libs.plugins.easylauncher)
     alias(libs.plugins.serialization)
     id("compose-android")
@@ -63,6 +64,9 @@ android {
             isDebuggable = false
         }
     }
+    lint {
+        disable.add("Instantiatable")
+    }
 }
 
 kotlin {
@@ -75,6 +79,20 @@ kotlin {
 dependencies {
     implementation(projects.app.core)
     implementation(projects.app.composeApp)
+    implementation(projects.shared)
+    implementation(libs.runtime)
+    implementation(libs.foundation)
+    implementation(libs.material3)
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.core.splashscreen)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.media3.session)
+    implementation(libs.bundles.filekit)
+    implementation(libs.kotlinx.collections.immutable)
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.napier)
+    implementation(libs.webrtc.kmp)
     debugImplementation(libs.leakcanary.android)
 }
 

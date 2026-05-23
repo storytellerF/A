@@ -6,10 +6,7 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.Bundle
 import android.provider.Settings
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
@@ -21,18 +18,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.edit
-import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.lifecycleScope
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.shepeliev.webrtckmp.*
 import com.storyteller_f.a.app.core.CoreStrings
-import com.storyteller_f.a.app.core.commonForActivity
-import com.storyteller_f.a.app.ui.theme.AppTheme
 import com.storyteller_f.a.client.core.sendFrame
 import com.storyteller_f.shared.obj.CustomAnswer
 import com.storyteller_f.shared.obj.CustomCandidate
@@ -43,77 +35,16 @@ import io.github.aakira.napier.Napier
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.webrtc.RendererCommon
 import org.webrtc.SurfaceViewRenderer
 import org.webrtc.VideoSink
-import java.lang.ref.WeakReference
-
-class RTCActivity : ComponentActivity(), RTCContainer {
-    override var binder = MutableStateFlow<RTCHandle?>(null)
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    override val streamFlow = binder.filterNotNull().flatMapLatest {
-        it.stream
-    }.stateIn(lifecycleScope, SharingStarted.Lazily, null)
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    override val callingRoomFlow: StateFlow<Long?> = binder.filterNotNull().flatMapLatest {
-        it.callingRoom
-    }.stateIn(lifecycleScope, SharingStarted.Lazily, null)
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    override val remotePeers: StateFlow<List<RemotePeerState>> = binder.filterNotNull().flatMapLatest {
-        it.remotePeers
-    }.map {
-        it.values.sortedBy(RemotePeerState::uid)
-    }.stateIn(lifecycleScope, SharingStarted.Lazily, emptyList())
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    override val localAudioMutedFlow: StateFlow<Boolean> = binder.filterNotNull().flatMapLatest {
-        it.localAudioMuted
-    }.stateIn(lifecycleScope, SharingStarted.Lazily, false)
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    override val localVideoMutedFlow: StateFlow<Boolean> = binder.filterNotNull().flatMapLatest {
-        it.localVideoMuted
-    }.stateIn(lifecycleScope, SharingStarted.Lazily, false)
-
-    val roomId = MutableStateFlow<PrimaryKey?>(null)
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        commonForActivity()
-        val roomId = intent.getLongExtra("roomId", 0)
-        this.roomId.value = roomId
-        val intent1 = Intent(this, RTCService::class.java)
-        val connection = RTCServiceConnection(WeakReference(this))
-        bindService(intent1, connection, BIND_AUTO_CREATE)
-        lifecycle.addObserver(object : DefaultLifecycleObserver {
-            override fun onDestroy(owner: LifecycleOwner) {
-                super.onDestroy(owner)
-                unbindService(connection)
-            }
-        })
-        setContent {
-            AppTheme(dynamicColor = true) {
-                val roomId by this.roomId.collectAsState()
-                roomId?.let { WebRTCPage(this, it) }
-            }
-        }
-    }
-}
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @Composable

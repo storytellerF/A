@@ -32,6 +32,11 @@
 
 - 媒体播放列表不在点击播放时解析；播放器 UI 通过 `LocalMediaPlayListHandlerProvider` 获取 `LoadingHandler<List<ConstPlayItem>>`，加载完成后再调用 `MediaPlayerService.start`。
 
+## Android App
+
+- `app/android` 是应用壳模块，承载 `MainActivity`、`UploadActivity`、`MediaPlayerActivity`、`BubbleActivity`、`RTCActivity` 和 manifest 入口；`app/composeApp` 保留可复用 Compose UI、actual 实现、服务与 Android helper。
+- `app/composeApp` 不能编译期依赖 `app/android`。需要从 composeApp 内启动应用 Activity 时，使用稳定的显式 class name 常量创建 `Intent` 或 `ComponentName`。
+
 ## Gradle 工具脚本
 
 - `scripts/build_scripts/gradle-prune-implementations.sh` 通过 `./gradlew projects` 获取当前构建实际包含的模块，只处理这些模块的 `build.gradle.kts`，避免误删未 include 模块的依赖。
