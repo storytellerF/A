@@ -163,13 +163,11 @@ fun Application.module() {
         throw e
     }
     runBlocking {
-        if (backend.customConfig.buildType != "test") {
-            backend.database.migration()
-        }
         if (backend.customConfig.buildType == "test") {
             backend.database.init()
+        } else {
+            backend.database.migration()
         }
-        backend.database.init()
     }
     startNewMessageTask(backend)
     configurePlugin(reader, backend)

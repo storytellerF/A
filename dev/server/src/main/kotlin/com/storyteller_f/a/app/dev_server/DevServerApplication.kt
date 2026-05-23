@@ -2,6 +2,7 @@ package com.storyteller_f.a.app.dev_server
 
 import com.storyteller_f.a.app.dev.DevControlService
 import com.storyteller_f.a.app.dev.ProcessMate
+import com.storyteller_f.a.app.dev.ServiceStatus
 import com.storyteller_f.a.app.dev.forceStop
 import com.storyteller_f.a.app.dev.startCloudServerByGradle
 import com.storyteller_f.a.app.dev.startCloudWorkerByGradle
@@ -80,6 +81,14 @@ class DevControlServiceImpl(
             exitProcess(0)
         }
         return "Shutting down dev server"
+    }
+
+    override suspend fun getStatus(): ServiceStatus {
+        return processLock.withLock {
+            val serverRunning = specialProcessMap["cloud-server"] != null
+            val workerRunning = specialProcessMap["cloud-worker"] != null
+            ServiceStatus(serverRunning, workerRunning)
+        }
     }
 }
 

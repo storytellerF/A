@@ -14,4 +14,5 @@ dependencies {
     implementation(libs.napier)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.rpc.core)
+    implementation(libs.kotlinx.serialization.json)
 }

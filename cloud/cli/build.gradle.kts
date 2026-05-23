@@ -1,6 +1,6 @@
 plugins {
-    alias(libs.plugins.kotlinJvm)
     application
+    alias(libs.plugins.kotlinJvm)
     id("cloud")
     id("merge-services")
     alias(libs.plugins.kotlinBuildConfig)
