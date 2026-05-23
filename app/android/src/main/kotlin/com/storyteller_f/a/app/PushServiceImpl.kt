@@ -1,17 +1,13 @@
 package com.storyteller_f.a.app
 
 import android.Manifest
-import android.content.Context
 import android.content.pm.PackageManager
 import androidx.core.app.ActivityCompat
-import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.coroutineScope
-import com.storyteller_f.a.app.utils.notifyId
 import com.storyteller_f.a.client.core.addDevice
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.launch
@@ -85,28 +81,4 @@ class PushServiceImpl : PushService(), LifecycleOwner {
 
     override val lifecycle: Lifecycle
         get() = registry
-}
-
-fun getOrCreateNotificationChannel(
-    context: Context,
-    channel: String
-): NotificationManagerCompat {
-    val notificationManager = NotificationManagerCompat.from(context)
-    val notificationChannel = notificationManager.getNotificationChannel(channel)
-    if (notificationChannel == null) {
-        notificationManager.deleteNotificationChannel(channel)
-    }
-    val channelBuilder = NotificationChannelCompat.Builder(channel, NotificationManagerCompat.IMPORTANCE_LOW)
-        .setSound(null, null)
-        .setVibrationEnabled(true)
-    if (channel == "Regular") {
-        channelBuilder.setName("Regular")
-        channelBuilder.setDescription("Regular")
-    } else {
-        channelBuilder.setName("Upload")
-        channelBuilder.setDescription("Upload")
-    }
-
-    notificationManager.createNotificationChannel(channelBuilder.build())
-    return notificationManager
 }

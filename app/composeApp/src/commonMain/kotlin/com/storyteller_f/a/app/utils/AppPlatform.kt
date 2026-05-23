@@ -22,13 +22,18 @@ interface ClientFile {
 
 class AppPlatform(val hasNativeBack: Boolean, val isActive: Boolean = true, val debug: Boolean)
 
+interface AppPlatformImpl {
+    fun startCall(roomId: PrimaryKey)
+    suspend fun notifyNotification(room: RoomInfo, bitmap: ImageBitmap?)
+}
+
+lateinit var appPlatformImpl: AppPlatformImpl
+
 expect val appPlatform: AppPlatform
 
 expect fun initEnvironment(context: Any)
 
 expect fun getClientFile(path: String): ClientFile?
-
-expect fun startCall(roomId: PrimaryKey)
 
 expect fun createConnectivity(): Connectivity
 
@@ -36,8 +41,6 @@ expect fun createConnectivity(): Connectivity
 expect fun createCustomDataStoreManager(): DataStoreManager
 
 expect fun unregisterPushService()
-
-expect suspend fun notifyNotification(room: RoomInfo, bitmap: ImageBitmap?)
 
 expect fun getDeepLinkHost(): String
 

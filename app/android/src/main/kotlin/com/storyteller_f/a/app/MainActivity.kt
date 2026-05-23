@@ -16,6 +16,7 @@ import com.storyteller_f.a.app.core.components.DefaultMediaPlayListHandlerProvid
 import com.storyteller_f.a.app.core.components.LocalMediaPlayListHandlerProvider
 import com.storyteller_f.a.app.core.components.LocalMediaPlayerService
 import com.storyteller_f.a.app.core.components.unbindActivity
+import com.storyteller_f.a.app.utils.appPlatformImpl
 import com.storyteller_f.a.app.utils.initEnvironment
 import com.storyteller_f.shared.isRunningOnRobolectric
 import io.github.aakira.napier.Napier
@@ -59,6 +60,7 @@ class MainActivity : ComponentActivity(), ClientFileServiceContainer {
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
+        appPlatformImpl = AndroidAppPlatformImpl
         FileKit.init(this)
         commonForActivity()
         initEnvironment(this)
