@@ -80,6 +80,7 @@ dependencies {
     implementation(projects.app.core)
     implementation(projects.app.composeApp)
     implementation(projects.shared)
+    implementation(projects.client.core)
     implementation(libs.runtime)
     implementation(libs.foundation)
     implementation(libs.material3)
@@ -93,6 +94,9 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.napier)
     implementation(libs.webrtc.kmp)
+    implementation(libs.connector) {
+        exclude(group = "com.google.protobuf", module = "protobuf-java")
+    }
     debugImplementation(libs.leakcanary.android)
 }
 

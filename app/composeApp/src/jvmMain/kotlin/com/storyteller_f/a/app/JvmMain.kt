@@ -11,7 +11,12 @@ import com.storyteller_f.a.app.common.ExternalUriHandler
 import com.storyteller_f.a.app.common.SimpleTaskRegister
 import com.storyteller_f.a.app.common.Uploader
 import com.storyteller_f.a.app.common.UploaderImpl
+import com.storyteller_f.a.app.utils.AppPlatformImpl
+import com.storyteller_f.a.app.utils.appPlatformImpl
+import com.storyteller_f.shared.model.RoomInfo
+import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.loadCryptoLibIfNeed
+import androidx.compose.ui.graphics.ImageBitmap
 import com.storyteller_f.shared.setupKmpLogger
 import com.storyteller_f.shared.utils.safeMessage
 import io.github.aakira.napier.Napier
@@ -37,8 +42,14 @@ val uiViewModel by lazy {
     )
 }
 
+object JvmAppPlatformImpl : AppPlatformImpl {
+    override fun startCall(roomId: PrimaryKey) = Unit
+    override suspend fun notifyNotification(room: RoomInfo, bitmap: ImageBitmap?) = Unit
+}
+
 @OptIn(DelicateCoroutinesApi::class)
 fun main(args: Array<String>) {
+    appPlatformImpl = JvmAppPlatformImpl
     setupKmpLogger()
     initForJvmMain(args)
     loadCryptoLibIfNeed()

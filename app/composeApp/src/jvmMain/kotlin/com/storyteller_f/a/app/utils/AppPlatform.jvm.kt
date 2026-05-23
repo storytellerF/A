@@ -42,8 +42,6 @@ actual fun getClientFile(path: String): ClientFile? {
     return RegularClientFile(file)
 }
 
-actual fun startCall(roomId: PrimaryKey) = Unit
-
 class RegularClientFile(val file: File) : ClientFile {
     override val name: String = file.name
     override val contentType: ContentType = ContentType.parse(tika.detect(file))
@@ -79,7 +77,6 @@ actual fun createCustomDataStoreManager(): DataStoreManager {
 
 actual fun unregisterPushService() = Unit
 
-actual suspend fun notifyNotification(room: RoomInfo, bitmap: ImageBitmap?) = Unit
 actual fun getDeepLinkHost(): String {
     return AppConfig.DEEP_LINK_HOST
 }

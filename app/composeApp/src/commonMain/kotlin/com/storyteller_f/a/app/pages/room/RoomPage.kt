@@ -122,8 +122,7 @@ import com.storyteller_f.a.app.send
 import com.storyteller_f.a.app.settings_title
 import com.storyteller_f.a.app.start_call
 import com.storyteller_f.a.app.success
-import com.storyteller_f.a.app.utils.notifyNotification
-import com.storyteller_f.a.app.utils.startCall
+import com.storyteller_f.a.app.utils.appPlatformImpl
 import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.a.client.core.WebSocketClient
 import com.storyteller_f.a.client.core.addReadLog
@@ -721,7 +720,7 @@ private fun StartCallButton(
     val scope = rememberCoroutineScope()
 
     ButtonNav(Icons.Default.Call, stringResource(Res.string.start_call)) {
-        startCall(roomInfo.id)
+        appPlatformImpl.startCall(roomInfo.id)
     }
     if (getPlatform().name.contains("android", ignoreCase = true)) {
         val context = LocalPlatformContext.current
@@ -729,7 +728,7 @@ private fun StartCallButton(
             scope.launch {
                 val bitmap = roomInfo.icon?.let { getRemoteImageBitmap(sessionManager, context, it) }
                     ?.getOrNull()
-                notifyNotification(roomInfo, bitmap)
+                appPlatformImpl.notifyNotification(roomInfo, bitmap)
             }
         }
     }
