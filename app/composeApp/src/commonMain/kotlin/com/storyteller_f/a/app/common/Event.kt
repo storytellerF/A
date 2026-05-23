@@ -97,6 +97,8 @@ private suspend fun processOnMediaUploaded(
 ) {
     event.fileInfos.forEach {
         database.fileInfo.saveToDefault(it)
+        // 同时保存到对应的 FileList 集合中
+        database.fileInfo.saveFirst(FileCollection.FileList(it.owner), it)
     }
 }
 
