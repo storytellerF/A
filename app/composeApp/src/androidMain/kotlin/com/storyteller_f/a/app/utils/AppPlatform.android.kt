@@ -27,9 +27,9 @@ import coil3.SingletonImageLoader
 import coil3.request.ImageRequest
 import coil3.toBitmap
 import com.storyteller_f.a.app.AppConfig
-import com.storyteller_f.a.app.BubbleActivity
-import com.storyteller_f.a.app.MainActivity
-import com.storyteller_f.a.app.RTCActivity
+import com.storyteller_f.a.app.BUBBLE_ACTIVITY_CLASS_NAME
+import com.storyteller_f.a.app.MAIN_ACTIVITY_CLASS_NAME
+import com.storyteller_f.a.app.RTC_ACTIVITY_CLASS_NAME
 import com.storyteller_f.a.app.android_library.R
 import com.storyteller_f.a.app.common.getDeepLink
 import com.storyteller_f.a.app.core.components.mainActivityRef
@@ -74,7 +74,7 @@ actual fun getClientFile(path: String): ClientFile? {
 
 actual fun startCall(roomId: PrimaryKey) {
     val application = getAppContextRefValue() ?: return
-    val intent = Intent(application, RTCActivity::class.java).apply {
+    val intent = Intent().setClassName(application, RTC_ACTIVITY_CLASS_NAME).apply {
         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
     }
@@ -145,7 +145,7 @@ private fun getBubbleNotificationBuilder(
     val bubbleIntent = PendingIntent.getActivity(
         context,
         1,
-        Intent(context, BubbleActivity::class.java)
+        Intent().setClassName(context, BUBBLE_ACTIVITY_CLASS_NAME)
             .putExtra("roomId", room.id),
         flagUpdateCurrent(true)
     )
@@ -162,7 +162,7 @@ private fun getBubbleNotificationBuilder(
             PendingIntent.getActivity(
                 context,
                 3,
-                Intent(context, MainActivity::class.java)
+                Intent().setClassName(context, MAIN_ACTIVITY_CLASS_NAME)
                     .setAction(Intent.ACTION_VIEW).setData(getDeepLink("/room/${room.id}").toUri()),
                 flagUpdateCurrent(true)
             ),
@@ -183,9 +183,9 @@ private fun createShortcut(
     val builder = ShortcutInfoCompat.Builder(context, shortcutId)
         .setLocusId(LocusIdCompat(shortcutId))
         .setCategories(setOf(category))
-        .setActivity(ComponentName(context, MainActivity::class.java))
+        .setActivity(ComponentName(context, MAIN_ACTIVITY_CLASS_NAME))
         .setIntent(
-            Intent(context, MainActivity::class.java)
+            Intent().setClassName(context, MAIN_ACTIVITY_CLASS_NAME)
                 .setAction(Intent.ACTION_VIEW)
                 .setData(getDeepLink("/room/${room.id}").toUri())
         )

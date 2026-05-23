@@ -12,6 +12,7 @@ import com.storyteller_f.a.app.core.components.CenterBox
 
 class BubbleActivity : ComponentActivity() {
     val roomId = mutableLongStateOf(0L)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val roomId = intent.getLongExtra("roomId", 0)

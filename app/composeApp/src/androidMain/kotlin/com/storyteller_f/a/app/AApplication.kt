@@ -56,7 +56,7 @@ class AApplication : Application() {
 private fun buildMediaPlayer(): MediaPlayerService = object : MediaPlayerService() {
     override fun fullscreen(remoteMediaItem: RemoteMediaItem) {
         val context = mainActivityRef?.get() ?: return
-        context.startActivity(Intent(context, MediaPlayerActivity::class.java).apply {
+        context.startActivity(Intent().setClassName(context, MEDIA_PLAYER_ACTIVITY_CLASS_NAME).apply {
 //                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 //                addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
             putExtra("json", commonJson.encodeToString<RemoteMediaItem>(remoteMediaItem))
