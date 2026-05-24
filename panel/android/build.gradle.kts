@@ -27,6 +27,9 @@ android {
             isDebuggable = false
         }
     }
+    lint {
+        disable.add("Instantiatable")
+    }
 }
 
 kotlin {
