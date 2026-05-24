@@ -10,8 +10,6 @@ import java.awt.Button
 import java.awt.Dialog
 import java.awt.Frame
 import java.awt.TextArea
-import java.awt.Toolkit
-import kotlin.math.ceil
 import kotlin.system.exitProcess
 
 fun main() {
@@ -48,14 +46,4 @@ private fun initForJvmMain() {
             isVisible = true
         }
     }
-
-    val dpi: Int = Toolkit.getDefaultToolkit().screenResolution
-    val uiScale = ceil(dpi.toFloat() / 100)
-    println("Screen DPI: $dpi $uiScale")
-    println(System.getProperty("sun.java2d.uiScale.enabled"))
-    println(System.getProperty("sun.java2d.uiScale"))
-//    System.setProperty("sun.java2d.uiScale.enabled", "true")
-//    System.setProperty("sun.java2d.uiScale", "$uiScale")
-//    UIManager.put("swing.boldMetal", "false")
-//    System.setProperty("awt.useSystemAAFontSettings", "on")
 }

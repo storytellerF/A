@@ -1,9 +1,9 @@
 package com.storyteller_f.a.app
 
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
-import com.kdroid.composenotification.builder.AppConfig
 import com.kdroid.composenotification.builder.NotificationInitializer
 import com.storyteller_f.a.app.common.Downloader
 import com.storyteller_f.a.app.common.DownloaderImpl
@@ -13,32 +13,29 @@ import com.storyteller_f.a.app.common.Uploader
 import com.storyteller_f.a.app.common.UploaderImpl
 import com.storyteller_f.a.app.utils.AppPlatformImpl
 import com.storyteller_f.a.app.utils.appPlatformImpl
-import com.storyteller_f.shared.model.RoomInfo
-import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.loadCryptoLibIfNeed
-import androidx.compose.ui.graphics.ImageBitmap
+import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.setupKmpLogger
+import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.safeMessage
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
-import org.jetbrains.compose.resources.stringResource
 import java.awt.BorderLayout
 import java.awt.Button
 import java.awt.Desktop
 import java.awt.Dialog
 import java.awt.Frame
 import java.awt.TextArea
-import java.awt.Toolkit
-import kotlin.math.ceil
 import kotlin.system.exitProcess
+import com.kdroid.composenotification.builder.AppConfig as NotificationAppConfig
 
 @OptIn(DelicateCoroutinesApi::class)
 val uiViewModel by lazy {
     UIViewModel(
         GlobalScope,
-        com.storyteller_f.a.app.AppConfig.WS_SERVER_URL,
-        com.storyteller_f.a.app.AppConfig.SERVER_URL
+        getDesktopWsServerUrl(),
+        getDesktopServerUrl()
     )
 }
 
@@ -62,7 +59,7 @@ fun main(args: Array<String>) {
     application {
         Window(
             onCloseRequest = ::exitApplication,
-            title = stringResource(Res.string.app_name),
+            title = "A",
         ) {
             CompositionLocalProvider(
                 LocalClientFileProvider provides provider,
@@ -104,15 +101,5 @@ private fun initForJvmMain(args: Array<String>) {
         }
     }
 
-    val dpi: Int = Toolkit.getDefaultToolkit().screenResolution
-    val uiScale = ceil(dpi.toFloat() / 100)
-    println("Screen DPI: $dpi $uiScale")
-    println(System.getProperty("sun.java2d.uiScale.enabled"))
-    println(System.getProperty("sun.java2d.uiScale"))
-//    System.setProperty("sun.java2d.uiScale.enabled", "true")
-//    System.setProperty("sun.java2d.uiScale", "$uiScale")
-//    UIManager.put("swing.boldMetal", "false")
-//    System.setProperty("awt.useSystemAAFontSettings", "on")
-
-    NotificationInitializer.configure(AppConfig(appName = "A"))
+    NotificationInitializer.configure(NotificationAppConfig(appName = "A"))
 }

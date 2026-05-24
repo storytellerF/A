@@ -1,11 +1,8 @@
 package com.storyteller_f.a.app.utils
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.storyteller_f.a.app.AppConfig
-import com.storyteller_f.shared.model.RoomInfo
-import com.storyteller_f.shared.type.PrimaryKey
 import com.strabled.composepreferences.utilis.DataStoreManager
 import dev.jordond.connectivity.Connectivity
 import io.github.aakira.napier.Napier

@@ -1,7 +1,6 @@
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.BOOLEAN
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING
 import com.google.common.base.CaseFormat
-import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -174,9 +173,6 @@ kotlin {
             implementation(projects.dev.core)
         }
         jvmMain.dependencies {
-            implementation(compose.desktop.currentOs)
-            implementation(libs.kotlinx.coroutines.swing)
-
             implementation(libs.vlcj)
             implementation(libs.jlayer)
             implementation(libs.androidx.datastore.preferences.core)
@@ -202,25 +198,6 @@ composeCompiler {
 dependencies {
     androidRuntimeClasspath(libs.ui.tooling)
     androidRuntimeClasspath(libs.androidx.ui.test.manifest)
-}
-
-compose.desktop {
-    application {
-        mainClass = "com.storyteller_f.a.panel.PanelMainKt"
-
-        nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "com.storyteller_f.a.panel"
-            packageVersion = "1.0.0"
-        }
-        buildTypes.release.proguard {
-            version.set("7.5.0")
-            isEnabled = false
-            obfuscate = true
-            optimize = true
-            configurationFiles.from("proguard-rules-desktop.pro")
-        }
-    }
 }
 
 buildkonfig {
