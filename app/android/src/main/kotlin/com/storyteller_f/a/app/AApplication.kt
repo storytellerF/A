@@ -14,15 +14,12 @@ import com.storyteller_f.shared.appContextRef
 import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
 import org.schabi.newpipe.NewPipeDownloaderImpl
 import org.schabi.newpipe.ReCaptchaActivity
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.localization.ContentCountry
 import org.schabi.newpipe.extractor.localization.Localization
 import java.lang.ref.WeakReference
-
-
 
 class AApplication : Application() {
     @OptIn(DelicateCoroutinesApi::class)

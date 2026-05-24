@@ -41,7 +41,7 @@ dependencies {
     implementation(projects.panel.composeApp)
     implementation(projects.shared)
     implementation(projects.client.core)
-    
+
     // 新增依赖 - 从 composeApp/androidMain 复制
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.media3.exoplayer)
@@ -62,7 +62,7 @@ dependencies {
         exclude(group = "com.google.protobuf", module = "protobuf-java")
     }
     implementation(libs.okhttp)
-    
+
     // 新增依赖 - 从 app/android 复制
     implementation(libs.runtime)
     implementation(libs.foundation)
@@ -73,7 +73,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.napier)
-    
+
     androidTestImplementation(libs.androidx.ui.test.junit4.android)
     debugImplementation(libs.androidx.ui.test.manifest)
 }

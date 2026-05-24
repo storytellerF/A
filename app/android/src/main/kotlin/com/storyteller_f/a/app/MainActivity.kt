@@ -16,7 +16,6 @@ import com.storyteller_f.a.app.core.components.DefaultMediaPlayListHandlerProvid
 import com.storyteller_f.a.app.core.components.LocalMediaPlayListHandlerProvider
 import com.storyteller_f.a.app.core.components.LocalMediaPlayerService
 import com.storyteller_f.a.app.core.components.unbindActivity
-import com.storyteller_f.a.app.utils.appPlatformImpl
 import com.storyteller_f.a.app.utils.initEnvironment
 import com.storyteller_f.shared.isRunningOnRobolectric
 import io.github.aakira.napier.Napier
