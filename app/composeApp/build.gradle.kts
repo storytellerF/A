@@ -3,7 +3,6 @@
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.BOOLEAN
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING
 import org.gradle.kotlin.dsl.support.uppercaseFirstChar
-import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.compose.internal.de.undercouch.gradle.tasks.download.Download
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
@@ -187,9 +186,6 @@ kotlin {
             implementation(libs.ui.test)
         }
         jvmMain.dependencies {
-            implementation(compose.desktop.currentOs)
-            implementation(libs.kotlinx.coroutines.swing)
-
             implementation(libs.vlcj)
             implementation(libs.jlayer)
             implementation(libs.androidx.datastore.preferences.core)
@@ -229,24 +225,6 @@ val properties = Properties().apply {
 val deepLinkHost = (properties["SERVER_URL"] as? String)?.let {
     URI.create(it).host
 } ?: "storyteller_f.com"
-compose.desktop {
-    application {
-        mainClass = "com.storyteller_f.a.app.JvmMainKt"
-
-        nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "com.storyteller_f.a.app"
-            packageVersion = "1.0.0"
-        }
-        buildTypes.release.proguard {
-            version.set("7.5.0")
-            isEnabled = false
-            obfuscate = true
-            optimize = true
-            configurationFiles.from("proguard-rules-desktop.pro")
-        }
-    }
-}
 
 buildkonfig {
     packageName = "com.storyteller_f.a.app"
