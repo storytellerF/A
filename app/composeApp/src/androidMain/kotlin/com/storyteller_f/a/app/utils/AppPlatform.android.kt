@@ -2,8 +2,9 @@ package com.storyteller_f.a.app.utils
 
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.Lifecycle
+import androidx.core.net.toUri
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.lifecycle.Lifecycle
 import com.storyteller_f.a.app.AppConfig
 import com.storyteller_f.a.app.core.components.mainActivityRef
 import com.storyteller_f.a.app.getClipFile
@@ -13,7 +14,6 @@ import com.strabled.composepreferences.utilis.DataStoreManager
 import dev.jordond.connectivity.Connectivity
 import okio.Path.Companion.toOkioPath
 import org.unifiedpush.android.connector.UnifiedPush
-import androidx.core.net.toUri
 
 actual val appPlatform: AppPlatform
     get() {

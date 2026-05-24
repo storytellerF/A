@@ -24,7 +24,12 @@ fun main(args: Array<String>) {
     val parser = ArgParser("dev-cli")
     val start by parser.option(ArgType.String, "start", "s", "Enable target (m/main, s/server, w/worker)")
     val stop by parser.option(ArgType.String, "stop", "t", "Stop target (m/main, s/server, w/worker)")
-    val status by parser.option(ArgType.Boolean, "status", "st", "Check status of dev server and services").default(false)
+    val status by parser.option(
+        ArgType.Boolean,
+        "status",
+        "st",
+        "Check status of dev server and services"
+    ).default(false)
     val log by parser.option(ArgType.String, "log", "l", "Tail log file for target (s/server, w/worker)")
 
     parser.parse(args)
@@ -50,10 +55,13 @@ fun main(args: Array<String>) {
         return
     }
 
+    executeServiceCommand(target, isStart)
+}
+
+private fun executeServiceCommand(target: String, isStart: Boolean) {
     val client = HttpClient(OkHttp) {
         installKrpc()
     }
-
     runBlocking {
         try {
             val rpcClient = client.rpc {
@@ -135,11 +143,9 @@ fun printStatus(status: ServiceStatus) {
 }
 
 fun isPortInUse(port: Int): Boolean {
-    return try {
+    return runCatching {
         Socket("localhost", port).use { true }
-    } catch (e: ConnectException) {
-        false
-    } catch (e: Exception) {
+    }.getOrElse {
         false
     }
 }

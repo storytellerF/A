@@ -608,7 +608,8 @@ private fun createAppNavFactoryForBubble(): AppNavFactory = object : AppNavFacto
 fun UploadPage() {
     CommonEntry {
         val userInfo = LocalUserInfo.current
-        if (userInfo != null)
+        if (userInfo != null) {
             FileExplorerPage(mediaTarget = userInfo.id ob ObjectType.USER)
+        }
     }
 }

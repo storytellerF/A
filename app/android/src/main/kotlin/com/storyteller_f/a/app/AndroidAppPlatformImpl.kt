@@ -68,7 +68,8 @@ object AndroidAppPlatformImpl : AppPlatformImpl {
             val shortcutId = "room_${room.id}"
             createShortcut(context, shortcutId, person, room, iconCompat)
 
-            val notification = getBubbleNotificationBuilder(context, user, channel, shortcutId, person, room, iconCompat)
+            val notification =
+                getBubbleNotificationBuilder(context, user, channel, shortcutId, person, room, iconCompat)
             managerCompat.notify(notifyId.getAndIncrement(), notification.build())
         }
     }
