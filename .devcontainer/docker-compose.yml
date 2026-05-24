@@ -34,7 +34,6 @@ services:
     shm_size: '2gb' # Allocate more shared memory
     devices:
       - /dev/kvm
-    privileged: true
 
 volumes:
   avd_data:
