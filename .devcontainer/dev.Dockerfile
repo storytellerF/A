@@ -1,4 +1,4 @@
-FROM storytellerf/android-in-docker:mate-cn-dev-latest
+FROM storytellerf/android-in-docker:ubuntu-mate-cn-dev-latest
 
 ARG USER_NAME
 
@@ -10,8 +10,3 @@ RUN git lfs install
 
 USER $USER_NAME
 WORKDIR /home/$USER_NAME
-
-COPY --chown=$USER_NAME:$USER_NAME ./scripts/test_scripts/custom-entrypoint.sh ./bin/custom-entrypoint.sh
-RUN chmod +x ./bin/custom-entrypoint.sh
-
-ENTRYPOINT ["sh", "-c", "$HOME/bin/custom-entrypoint.sh"]
