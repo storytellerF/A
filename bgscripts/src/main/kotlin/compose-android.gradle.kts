@@ -86,13 +86,16 @@ android {
     }
     buildFeatures {
         buildConfig = true
+        compose = true
     }
-    dependencies {
-        coreLibraryDesugaring(libs.desugar.jdk.libs)
-    }
+
     lint {
         disable.addAll(arrayOf("RememberReturnType", "UnusedMaterial3ScaffoldPaddingParameter"))
     }
+}
+
+dependencies {
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
 }
 
 fun getenv(key: String): String? {
