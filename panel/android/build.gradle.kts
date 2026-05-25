@@ -3,8 +3,10 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.androidApplication)
+    alias(libs.plugins.compose.compiler)
     alias(libs.plugins.serialization)
     alias(libs.plugins.easylauncher)
+    alias(libs.plugins.screenshot)
     id("compose-android")
 }
 val buildIosTarget = project.findProperty("target.ios") == "true"
@@ -15,6 +17,7 @@ val buildType = project.findProperty("server.buildType") as String
 
 android {
     namespace = "com.storyteller_f.a.panel"
+    experimentalProperties["android.experimental.enableScreenshotTest"] = true
 
     defaultConfig {
         applicationId = "com.storyteller_f.a.panel.$flavorId"
@@ -79,6 +82,17 @@ dependencies {
 
     androidTestImplementation(libs.androidx.ui.test.junit4.android)
     debugImplementation(libs.androidx.ui.test.manifest)
+    screenshotTestImplementation(projects.app.core)
+    screenshotTestImplementation(projects.panel.composeApp)
+    screenshotTestImplementation(projects.shared)
+    screenshotTestImplementation(projects.client.core)
+    screenshotTestImplementation(libs.kotlinx.datetime)
+    screenshotTestImplementation(libs.runtime)
+    screenshotTestImplementation(libs.foundation)
+    screenshotTestImplementation(libs.material3)
+    screenshotTestImplementation(libs.screenshot.validation.api)
+    screenshotTestImplementation(libs.androidx.ui.tooling)
+    screenshotTestImplementation(libs.jetbrains.navigation3.ui)
 }
 
 easylauncher {

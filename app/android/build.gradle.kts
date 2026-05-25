@@ -11,6 +11,7 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.easylauncher)
+    alias(libs.plugins.screenshot)
     alias(libs.plugins.serialization)
     id("compose-android")
     id("io.sentry.android.gradle")
@@ -36,6 +37,7 @@ val deepLinkHost = (properties["SERVER_URL"] as? String)?.let {
 val deepLinkSchemePrefix = "a-$flavorStr"
 android {
     namespace = "com.storyteller_f.a.app"
+    experimentalProperties["android.experimental.enableScreenshotTest"] = true
 
     defaultConfig {
         applicationId = "com.storyteller_f.a.app.$flavorId"
@@ -99,6 +101,19 @@ dependencies {
         exclude(group = "com.google.protobuf", module = "protobuf-java")
     }
     debugImplementation(libs.leakcanary.android)
+    screenshotTestImplementation(projects.app.core)
+    screenshotTestImplementation(projects.app.composeApp)
+    screenshotTestImplementation(projects.shared)
+    screenshotTestImplementation(projects.client.core)
+    screenshotTestImplementation(projects.client.modelStorage)
+    screenshotTestImplementation(libs.kotlinx.datetime)
+    screenshotTestImplementation(libs.runtime)
+    screenshotTestImplementation(libs.foundation)
+    screenshotTestImplementation(libs.material3)
+    screenshotTestImplementation(libs.screenshot.validation.api)
+    screenshotTestImplementation(libs.androidx.ui.tooling)
+    screenshotTestImplementation(libs.jetbrains.navigation3.ui)
+    screenshotTestImplementation(libs.material.icons.extended)
 }
 
 easylauncher {
