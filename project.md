@@ -40,6 +40,10 @@
 - `panel/desktopApp` 是 Panel 桌面 JVM 应用壳模块，承载 Compose Desktop `main` 与 `compose.desktop` 打包配置；`panel/composeApp` 保留共享 UI 和 JVM actual 实现。
 - `app/android` 和 `panel/android` 入口类继承 `ComponentActivity`，媒体服务继承 Media3 `MediaSessionService`；release lint 对这些 Kotlin/Compose/Media3 组件存在 `Instantiatable` 误报，两个应用壳模块均禁用该 lint 检查。
 
+## Appium
+
+- `dev/appium` 通过 `-Pappium=true` 才会被 include；测试脚本运行 Appium 前需要同时构建 `app:android:assembleDebug` 和 `panel:android:assembleDebug`，panel 的启动入口是 `com.storyteller_f.a.panel.MainActivity`。
+
 ## Gradle 工具脚本
 
 - `scripts/build_scripts/gradle-prune-implementations.sh` 通过 `./gradlew projects` 获取当前构建实际包含的模块，只处理这些模块的 `build.gradle.kts`，避免误删未 include 模块的依赖。

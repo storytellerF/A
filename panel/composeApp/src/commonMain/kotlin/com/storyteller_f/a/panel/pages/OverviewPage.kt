@@ -34,6 +34,7 @@ import com.storyteller_f.a.panel.LocalPanelNav
 import com.storyteller_f.a.panel.Res
 import com.storyteller_f.a.panel.common.OverviewViewModel
 import com.storyteller_f.a.panel.common.createPanelOverviewViewModel
+import com.storyteller_f.a.panel.menu
 import com.storyteller_f.a.panel.overview
 import com.storyteller_f.a.panel.overview_community_count
 import com.storyteller_f.a.panel.overview_file_count
@@ -64,7 +65,7 @@ fun OverviewPageInternal(viewModel: OverviewViewModel) {
                 },
                 navigationIcon = {
                     IconButton({ panelNav.open() }) {
-                        Icon(Icons.Default.Menu, null)
+                        Icon(Icons.Default.Menu, stringResource(Res.string.menu))
                     }
                 }
             )

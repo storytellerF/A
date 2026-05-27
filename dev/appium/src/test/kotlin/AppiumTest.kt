@@ -3,16 +3,20 @@
 import com.storyteller_f.a.api.NewCommunity
 import com.storyteller_f.a.api.NewRoom
 import com.storyteller_f.a.client.core.AuthKey
+import com.storyteller_f.a.client.core.PanelSessionManager
 import com.storyteller_f.a.client.core.RawUserPass
 import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.buildWebSocketUrl
 import com.storyteller_f.a.client.core.createCommunity
+import com.storyteller_f.a.client.core.createPanelSessionManager
 import com.storyteller_f.a.client.core.createRoom
 import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.a.client.core.createUserSessionManager
 import com.storyteller_f.a.client.core.defaultClientConfigure
+import com.storyteller_f.a.client.core.defaultClientConfigureForPanel
 import com.storyteller_f.a.client.core.getAuthKey
 import com.storyteller_f.a.client.core.getClient
+import com.storyteller_f.a.client.core.getPanelUserPass
 import com.storyteller_f.a.client.core.getTopicInfo
 import com.storyteller_f.a.client.core.getUserPass
 import com.storyteller_f.a.client.core.joinCommunity
@@ -51,8 +55,21 @@ private const val APP_LOG_FILE_NAME = "appium-app.log"
 private const val INJECTED_SESSION_TEMP_PATH = "/data/local/tmp/appium-session-session.json"
 private const val INJECTED_SESSION_DIR = "files/appium-session"
 private const val INJECTED_SESSION_FILE = "files/appium-session/session.json"
-private const val MAIN_ACTIVITY_CLASS_NAME = "com.storyteller_f.a.app.MainActivity"
+private const val APP_MAIN_ACTIVITY_CLASS_NAME = "com.storyteller_f.a.app.MainActivity"
+private const val PANEL_MAIN_ACTIVITY_CLASS_NAME = "com.storyteller_f.a.panel.MainActivity"
 private val APPLICATION_ID_REGEX = Regex("\"applicationId\"\\s*:\\s*\"([^\"]+)\"")
+
+private val appUnderTest = AppUnderTest(
+    apkFile = File("../../app/android/build/outputs/apk/debug/android-universal-debug.apk"),
+    packageName = ::resolveAppPackageName,
+    mainActivityClassName = APP_MAIN_ACTIVITY_CLASS_NAME,
+)
+
+private val panelUnderTest = AppUnderTest(
+    apkFile = File("../../panel/android/build/outputs/apk/debug/android-universal-debug.apk"),
+    packageName = ::resolvePanelPackageName,
+    mainActivityClassName = PANEL_MAIN_ACTIVITY_CLASS_NAME,
+)
 
 class AppiumTest {
     @get:Rule
@@ -91,6 +108,25 @@ class AppiumTest {
         ) { driver, _ ->
             clickElement(driver, """new UiSelector().description("avatar")""")
             assertElementNotVisible(driver, """new UiSelector().text("Sign in")""")
+        }
+    }
+
+    @Test
+    fun `test panel sign in by injected private session`() = runTest(timeout = 10.minutes) {
+        loadCryptoLibIfNeed()
+        runType1Test(
+            app = panelUnderTest,
+            beforeDriverLaunch = { hostServerPort, packageName ->
+                val injected = createPreRegisteredPanelSession(hostServerPort)
+                val sessionJson = buildInjectedSessionJson(injected)
+                pushInjectedSessionToPrivateDir(packageName, sessionJson)
+                injected
+            }
+        ) { driver, _ ->
+            assertElementVisible(driver, """new UiSelector().text("Overview")""")
+            clickElement(driver, """new UiSelector().description("Menu")""")
+            clickElement(driver, """new UiSelector().text("All users")""")
+            assertElementVisible(driver, """new UiSelector().text("All users")""")
         }
     }
 
@@ -340,11 +376,9 @@ class AppiumTest {
             try {
                 val url = "http://127.0.0.1:4723"
                 val remoteAddress = URI(url).toURL()
-                val file =
-                    File("../../app/android/build/outputs/apk/debug/android-universal-debug.apk")
                 val storageClient = StorageClient(URI(url).toURL())
                 storageClient.reset()
-                storageClient.add(file)
+                storageClient.add(appUnderTest.apkFile)
                 val path = storageClient.list().first().path
                 val options = UiAutomator2Options().setApp(path).setDeviceName("device-test")
 
@@ -364,7 +398,7 @@ class AppiumTest {
                     } catch (e: Exception) {
                         println(e)
                     }
-                    copyAppLogToBuild(name.methodName)
+                    copyAppLogToBuild(name.methodName, appUnderTest.packageName())
                     driver.quit()
                 }
             }
@@ -372,25 +406,24 @@ class AppiumTest {
     }
 
     private suspend fun <T> runType1Test(
+        app: AppUnderTest = appUnderTest,
         beforeDriverLaunch: suspend (Int, String) -> T,
         block: suspend (AndroidDriver, T) -> Unit
     ) {
         runAppiumTest {
             var driver: AndroidDriver? = null
+            val packageName = app.packageName()
             try {
                 val url = "http://127.0.0.1:4723"
                 val remoteAddress = URI(url).toURL()
-                val file =
-                    File("../../app/android/build/outputs/apk/debug/android-universal-debug.apk")
-                val packageName = resolveAppPackageName()
 
-                installAppForPrivateInjection(file, packageName)
+                installAppForPrivateInjection(app.apkFile, packageName)
                 clearAppData(packageName)
                 val session = beforeDriverLaunch(it, packageName)
                 val options = UiAutomator2Options()
                     .setDeviceName("device-test")
                     .setAppPackage(packageName)
-                    .setAppActivity(MAIN_ACTIVITY_CLASS_NAME)
+                    .setAppActivity(app.mainActivityClassName)
                     .setNoReset(true)
                 driver = AndroidDriver(remoteAddress, options)
                 driver.startRecordingScreen()
@@ -408,7 +441,7 @@ class AppiumTest {
                     } catch (e: Exception) {
                         println(e)
                     }
-                    copyAppLogToBuild(name.methodName)
+                    copyAppLogToBuild(name.methodName, packageName)
                     driver.quit()
                 }
             }
@@ -428,6 +461,24 @@ class AppiumTest {
         val manager = createApiSessionManager(hostServerPort)
         val authKey = getAuthKey(AlgoType.P256, pemPrivateKey)
         manager.getUserPass(authKey, true) { RawUserPass(it) }
+        manager.client.close()
+        return InjectedSession(
+            address = address,
+            pemPrivateKey = pemPrivateKey,
+            derPrivateKey = derPrivateKey,
+            derPublicKey = derPublicKey,
+        )
+    }
+
+    private suspend fun createPreRegisteredPanelSession(hostServerPort: Int): InjectedSession {
+        val algo = getAlgo()
+        val (pemPrivateKey, _) = algo.generatePemKeyPair().getOrThrow()
+        val derPrivateKey = algo.getDerPrivateKey(pemPrivateKey).getOrThrow()
+        val derPublicKey = algo.getDerPublicKeyFromPrivateKey(pemPrivateKey).getOrThrow()
+        val address = algo.calcAddress(derPublicKey).getOrThrow()
+        val manager = createPanelApiSessionManager(hostServerPort)
+        val authKey = getAuthKey(AlgoType.P256, pemPrivateKey)
+        manager.getPanelUserPass(authKey, true) { RawUserPass(it) }
         manager.client.close()
         return InjectedSession(
             address = address,
@@ -530,6 +581,18 @@ class AppiumTest {
         onReceiveFrame = { _, _, _ -> }
     )
 
+    private fun createPanelApiSessionManager(hostServerPort: Int): PanelSessionManager = createPanelSessionManager(
+        { model, cookieStorage ->
+            getClient {
+                defaultClientConfigureForPanel(
+                    cookiesStorage = cookieStorage,
+                    manager = model,
+                    httpUrl = "http://127.0.0.1:$hostServerPort",
+                )
+            }
+        },
+    )
+
     private suspend fun createCommunityByApi(
         manager: UserSessionManager,
         name: String,
@@ -611,6 +674,12 @@ private data class PreparedScenario(
     val roomId: Long,
     val communityName: String,
     val roomName: String,
+)
+
+private data class AppUnderTest(
+    val apkFile: File,
+    val packageName: () -> String,
+    val mainActivityClassName: String,
 )
 
 private fun prepareSessionDirectories(sessionPath: String) {
@@ -715,11 +784,10 @@ private fun bindAndroidReverse(hostPort: Int, devicePort: Int) {
     }
 }
 
-private fun copyAppLogToBuild(testName: String) {
+private fun copyAppLogToBuild(testName: String, packageName: String) {
     val outputDir = File("build/test/appium-logs/AppiumTest")
     outputDir.mkdirs()
     val outputFile = File(outputDir, "$testName.log")
-    val packageName = resolveAppPackageName()
     val logResult = runAdbCommandAllowFailure(
         "exec-out",
         "run-as",
@@ -779,11 +847,26 @@ private fun isInstallFailedBySignatureMismatch(output: String): Boolean {
         "install_parse_failed_inconsistent_certificates" in normalizedOutput
 }
 
-private fun resolveAppPackageName(): String {
-    val metadataCandidates = sequenceOf(
+private fun resolveAppPackageName(): String = resolvePackageName(
+    metadataCandidates = sequenceOf(
         File("../../app/android/build/outputs/apk/debug/output-metadata.json"),
-        File("app/android/build/outputs/apk/debug/output-metadata.json")
-    )
+        File("app/android/build/outputs/apk/debug/output-metadata.json"),
+    ),
+    fallbackApplicationIdPrefix = "com.storyteller_f.a.app",
+)
+
+private fun resolvePanelPackageName(): String = resolvePackageName(
+    metadataCandidates = sequenceOf(
+        File("../../panel/android/build/outputs/apk/debug/output-metadata.json"),
+        File("panel/android/build/outputs/apk/debug/output-metadata.json"),
+    ),
+    fallbackApplicationIdPrefix = "com.storyteller_f.a.panel",
+)
+
+private fun resolvePackageName(
+    metadataCandidates: Sequence<File>,
+    fallbackApplicationIdPrefix: String,
+): String {
     val metadataFile = metadataCandidates.firstOrNull { it.exists() }
     if (metadataFile != null) {
         val content = metadataFile.readText()
@@ -795,7 +878,7 @@ private fun resolveAppPackageName(): String {
 
     val flavor =
         parseEnvFile(File("../../gradle.properties"))["server.flavor"].orEmpty().ifBlank { "dev" }
-    return "com.storyteller_f.a.app.${flavor.replace('-', '_')}.debug"
+    return "$fallbackApplicationIdPrefix.${flavor.replace('-', '_')}.debug"
 }
 
 private fun assertElementVisible(driver: AndroidDriver, selector: String) {
