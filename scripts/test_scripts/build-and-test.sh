@@ -84,6 +84,7 @@ if [ "$RUN_APPIUM" = true ]; then
     ./scripts/build_scripts/build-server-worker-images.sh dev prod host
     echo "Building Release APK..."
     ./gradlew app:android:assembleDebug $GRADLE_CONSOLE_ARGS
+    ./gradlew panel:android:assembleDebug $GRADLE_CONSOLE_ARGS
 fi
 
 if [ "$RUN_ANDROID" = true ] || [ "$RUN_APPIUM" = true ]; then
