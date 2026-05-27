@@ -39,21 +39,21 @@ case "$TARGET" in
         ;;
     desktop-msi)
         echo "Running DesktopMsi-specific command..."
-        ./gradlew app:composeApp:packageReleaseMsi -Pserver.flavor="$FLAVOR" -Pserver.buildType="$BUILD_TYPE"
+        ./gradlew app:desktopApp:packageReleaseMsi -Pserver.flavor="$FLAVOR" -Pserver.buildType="$BUILD_TYPE"
         mkdir -p "build/outputs/pkg/release"
-        mv app/composeApp/build/compose/binaries/main-release/msi/*.msi "build/outputs/pkg/release/app-$FLAVOR.msi"
+        mv app/desktopApp/build/compose/binaries/main-release/msi/*.msi "build/outputs/pkg/release/app-$FLAVOR.msi"
         ;;
     desktop-deb)
         echo "Running DesktopDeb-specific command..."
-        ./gradlew app:composeApp:packageReleaseDeb -Pserver.flavor="$FLAVOR" -Pserver.buildType="$BUILD_TYPE"
+        ./gradlew app:desktopApp:packageReleaseDeb -Pserver.flavor="$FLAVOR" -Pserver.buildType="$BUILD_TYPE"
         mkdir -p "build/outputs/pkg/release"
-        mv app/composeApp/build/compose/binaries/main-release/deb/*.deb "build/outputs/pkg/release/app-$FLAVOR.deb"
+        mv app/desktopApp/build/compose/binaries/main-release/deb/*.deb "build/outputs/pkg/release/app-$FLAVOR.deb"
         ;;
     desktop-dmg)
         echo "Running DesktopDmg-specific command..."
-        ./gradlew app:composeApp:packageReleaseDmg -Pserver.flavor="$FLAVOR" -Pserver.buildType="$BUILD_TYPE"
+        ./gradlew app:desktopApp:packageReleaseDmg -Pserver.flavor="$FLAVOR" -Pserver.buildType="$BUILD_TYPE"
         mkdir -p "build/outputs/pkg/release"
-        mv app/composeApp/build/compose/binaries/main-release/dmg/*.dmg "build/outputs/pkg/release/app-$FLAVOR.dmg"
+        mv app/desktopApp/build/compose/binaries/main-release/dmg/*.dmg "build/outputs/pkg/release/app-$FLAVOR.dmg"
         ;;
     android-panel)
         echo "Running AndroidPanel-specific command..."
@@ -66,21 +66,21 @@ case "$TARGET" in
         ;;
     desktop-msi-panel)
         echo "Running DesktopMsiPanel-specific command..."
-        ./gradlew panel:composeApp:packageReleaseMsi -Pserver.flavor="$FLAVOR" -Pserver.buildType="$BUILD_TYPE"
+        ./gradlew panel:desktopApp:packageReleaseMsi -Pserver.flavor="$FLAVOR" -Pserver.buildType="$BUILD_TYPE"
         mkdir -p "build/outputs/pkg/release"
-        mv panel/composeApp/build/compose/binaries/main-release/msi/*.msi "build/outputs/pkg/release/panel-$FLAVOR-panel.msi"
+        mv panel/desktopApp/build/compose/binaries/main-release/msi/*.msi "build/outputs/pkg/release/panel-$FLAVOR-panel.msi"
         ;;
     desktop-deb-panel)
         echo "Running DesktopDebPanel-specific command..."
-        ./gradlew panel:composeApp:packageReleaseDeb -Pserver.flavor="$FLAVOR" -Pserver.buildType="$BUILD_TYPE"
+        ./gradlew panel:desktopApp:packageReleaseDeb -Pserver.flavor="$FLAVOR" -Pserver.buildType="$BUILD_TYPE"
         mkdir -p "build/outputs/pkg/release"
-        mv panel/composeApp/build/compose/binaries/main-release/deb/*.deb "build/outputs/pkg/release/panel-$FLAVOR-panel.deb"
+        mv panel/desktopApp/build/compose/binaries/main-release/deb/*.deb "build/outputs/pkg/release/panel-$FLAVOR-panel.deb"
         ;;
     desktop-dmg-panel)
         echo "Running DesktopDmgPanel-specific command..."
-        ./gradlew panel:composeApp:packageReleaseDmg -Pserver.flavor="$FLAVOR" -Pserver.buildType="$BUILD_TYPE"
+        ./gradlew panel:desktopApp:packageReleaseDmg -Pserver.flavor="$FLAVOR" -Pserver.buildType="$BUILD_TYPE"
         mkdir -p "build/outputs/pkg/release"
-        mv panel/composeApp/build/compose/binaries/main-release/dmg/*.dmg "build/outputs/pkg/release/panel-$FLAVOR-panel.dmg"
+        mv panel/desktopApp/build/compose/binaries/main-release/dmg/*.dmg "build/outputs/pkg/release/panel-$FLAVOR-panel.dmg"
         ;;
     *)
         echo "Invalid target: $TARGET. Use 'android' or 'desktop-*'."
