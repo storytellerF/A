@@ -1,4 +1,4 @@
-FROM storytellerf/android-in-docker:ubuntu-mate-cn-dev-latest
+FROM storytellerf/android-in-docker:cn-dev-latest
 
 ARG USER_NAME
 
