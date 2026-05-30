@@ -16,6 +16,7 @@ kotlin {
 
 dependencies {
     implementation(projects.app.composeApp)
+    implementation(projects.app.core)
     implementation(projects.shared)
 
     implementation(compose.desktop.currentOs)
@@ -44,7 +45,7 @@ compose.desktop {
             isEnabled = false
             obfuscate = true
             optimize = true
-            configurationFiles.from(project(":app:composeApp").file("proguard-rules-desktop.pro"))
+            configurationFiles.from(file("proguard-rules-desktop.pro"))
         }
     }
 }

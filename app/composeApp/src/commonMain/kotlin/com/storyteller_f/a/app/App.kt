@@ -105,6 +105,10 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.strabled.composepreferences.ProvideDataStoreManager
 import com.strabled.composepreferences.setPreferences
+import dev.tclement.fonticons.LocalIconFont
+import dev.tclement.fonticons.LocalIconSize
+import dev.tclement.fonticons.LocalIconTintProvider
+import dev.tclement.fonticons.LocalIconWeight
 import dev.tclement.fonticons.ProvideIconParameters
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
@@ -364,14 +368,14 @@ class UIViewModel(viewModelScope: CoroutineScope, wsServerUrl: String, httpUrl: 
 
 @Composable
 fun ProvideFontIcon(block: @Composable () -> Unit) {
-    ProvideIconParameters(
-        iconFont = MaterialSymbolsOutlined.rememberIconFont(),
-        size = 20.dp,
-        tintProvider = LocalContentColor,
-        weight = FontWeight.Normal
-    ) {
-        block()
-    }
+    CompositionLocalProvider(
+        LocalIconFont provides MaterialSymbolsOutlined.rememberIconFont(),
+        LocalIconSize provides 20.dp,
+        LocalIconTintProvider provides LocalContentColor,
+        LocalIconWeight provides FontWeight.Normal,
+        content = {
+            block()
+        })
 }
 
 fun buildHttpClient(

@@ -6,11 +6,15 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import dev.tclement.fonticons.FontIcon
-import dev.tclement.fonticons.ProvideIconParameters
+import dev.tclement.fonticons.LocalIconFont
+import dev.tclement.fonticons.LocalIconSize
+import dev.tclement.fonticons.LocalIconTintProvider
+import dev.tclement.fonticons.LocalIconWeight
 
 sealed interface IconRes {
     data class Vector(val vector: ImageVector, val description: String = "") : IconRes
@@ -31,12 +35,18 @@ fun Modifier.clickableIfNotNull(onClick: (() -> Unit)?): Modifier {
 fun CustomIcon(icon: IconRes, onClick: (() -> Unit)? = null) {
     when (icon) {
         is IconRes.Font -> {
-            ProvideIconParameters(
-                size = 20.dp,
-                tintProvider = LocalContentColor
-            ) {
-                FontIcon(icon.char, icon.description, modifier = Modifier.clickableIfNotNull(onClick).size(20.dp))
-            }
+            CompositionLocalProvider(
+                LocalIconFont provides LocalIconFont.current,
+                LocalIconSize provides 20.dp,
+                LocalIconTintProvider provides LocalContentColor,
+                LocalIconWeight provides LocalIconWeight.current,
+                content = {
+                    FontIcon(
+                        icon.char,
+                        icon.description,
+                        modifier = Modifier.clickableIfNotNull(onClick).size(20.dp)
+                    )
+                })
         }
 
         is IconRes.Vector -> {

@@ -42,7 +42,7 @@ compose.desktop {
             isEnabled = false
             obfuscate = true
             optimize = true
-            configurationFiles.from(project(":panel:composeApp").file("proguard-rules-desktop.pro"))
+            configurationFiles.from(file("proguard-rules-desktop.pro"))
         }
     }
 }

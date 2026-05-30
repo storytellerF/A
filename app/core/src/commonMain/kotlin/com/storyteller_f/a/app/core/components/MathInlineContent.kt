@@ -91,17 +91,18 @@ fun LatexInlineContent(
     style: TextStyle,
     backgroundColor: Color? = null
 ) {
-    val content = Latex(
-        latex = tex,
-        config = LatexConfig(
-            fontSize = style.fontSize,
-            color = style.color,
-        )
-    )
     if (backgroundColor != null) {
-        Box(modifier = Modifier.background(backgroundColor)) { content }
+        Box(modifier = Modifier.background(backgroundColor)) {
+            Latex(
+                latex = tex,
+                config = LatexConfig(fontSize = style.fontSize)
+            )
+        }
     } else {
-        content
+        Latex(
+            latex = tex,
+            config = LatexConfig(fontSize = style.fontSize)
+        )
     }
 }
 

@@ -31,6 +31,7 @@
 ## Media Player
 
 - 媒体播放列表不在点击播放时解析；播放器 UI 通过 `LocalMediaPlayListHandlerProvider` 获取 `LoadingHandler<List<ConstPlayItem>>`，加载完成后再调用 `MediaPlayerService.start`。
+- `app/desktopApp` 入口也需要注入 `LocalMediaPlayerService`；common `App()` 启动时会读取该 CompositionLocal。
 
 ## Android App
 
