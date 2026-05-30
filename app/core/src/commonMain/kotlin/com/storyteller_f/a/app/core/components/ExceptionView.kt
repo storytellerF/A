@@ -10,6 +10,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.mohamedrejeb.richeditor.annotation.ExperimentalRichTextApi
 import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import com.mohamedrejeb.richeditor.ui.material3.RichText
 import com.storyteller_f.a.app.core.Res
@@ -21,6 +22,7 @@ import org.jetbrains.compose.resources.stringResource
 
 fun ServerErrorException.isHtmlContent(): Boolean = text.startsWith("<html") || text.startsWith("<!DOCTYPE html")
 
+@OptIn(ExperimentalRichTextApi::class)
 @Composable
 fun ExceptionView(throwable: Throwable, modifier: Modifier = Modifier) {
     when (throwable) {

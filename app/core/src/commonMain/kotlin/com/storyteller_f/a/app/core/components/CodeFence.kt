@@ -144,9 +144,6 @@ private fun LatexBlock(
     val textStyle = typography.code
     Latex(
         latex = readCodeFence(modal.node, modal.content),
-        config = LatexConfig(
-            fontSize = textStyle.fontSize,
-            color = textStyle.color,
-        )
+        config = LatexConfig(fontSize = textStyle.fontSize)
     )
 }
