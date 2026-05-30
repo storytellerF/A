@@ -18,7 +18,6 @@ services:
       - A_DEV_CONTAINER=true
     volumes:
       - ..:/workspace/A:cached
-      - ../../AData:/workspace/AData:cached
       - ./logs:${CONTAINER_HOME}/log/supervisor
       - ./data/authorized_keys:${CONTAINER_HOME}/.ssh/authorized_keys
       - avd_data:${CONTAINER_HOME}/.android/avd

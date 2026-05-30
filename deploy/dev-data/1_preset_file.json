@@ -1,0 +1,12 @@
+{
+    "type": "file",
+    "fileData": [
+        {
+            "owner": "FontProvider",
+            "paths": [
+                "medias/files/MapleMono-NF-CN-unhinted.download.yaml",
+                "medias/files/Noto.download.yaml"
+            ]
+        }
+    ]
+}

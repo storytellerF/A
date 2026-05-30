@@ -1,0 +1,23 @@
+{
+    "type": "title",
+    "titleData": [
+        {
+            "creator": "System",
+            "uid": "robot1",
+            "name": "默认机器人",
+            "description": "自动评论，自动发帖",
+            "type": "REGULAR",
+            "scope": "robot1",
+            "scopeType": "USER"
+        },
+        {
+            "creator": "System",
+            "uid": "robot2",
+            "name": "默认机器人",
+            "description": "自动评论，自动发帖",
+            "type": "REGULAR",
+            "scope": "robot2",
+            "scopeType": "USER"
+        }
+    ]
+}
