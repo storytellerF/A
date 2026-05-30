@@ -9,6 +9,7 @@ import com.storyteller_f.shared.loadCryptoLibIfNeed
 import kotlinx.coroutines.test.runTest
 import org.bouncycastle.pqc.jcajce.spec.DilithiumParameterSpec
 import org.bouncycastle.pqc.jcajce.spec.KyberParameterSpec
+import java.io.File
 import java.security.KeyPair
 import java.security.KeyPairGenerator
 import java.security.SecureRandom
@@ -124,13 +125,14 @@ class SignatureTest {
     }
 
     @Test
-    fun generateEncryptionKey() {
-        runTest {
-            loadCryptoLibIfNeed()
-            val (private, public) = (AlgoDilithium.encryptionAlgo as Type2Algo).generateEncryptionPemKeyPair()
-                .getOrThrow()
-            println("private $private")
-            println("public $public")
-        }
+    fun generateEncryptionKey() = runTest {
+        loadCryptoLibIfNeed()
+        val generatePemKeyPair = AlgoDilithium.generatePemKeyPair().getOrThrow()
+        println(generatePemKeyPair.first)
+        val (private, public) = (AlgoDilithium.encryptionAlgo as Type2Algo).generateEncryptionPemKeyPair()
+            .getOrThrow()
+        println("private $private")
+        File("/home/kx/Projects/AData/data/secrets/p-font-provider").writeText(generatePemKeyPair.first)
+        File("/home/kx/Projects/AData/data/secrets/ep-font-provider").writeText(private)
     }
 }

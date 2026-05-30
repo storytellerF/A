@@ -1,0 +1,9 @@
+{
+    "type": "panelAccount",
+    "panelAccountData": [
+        {
+            "name": "Panel 1",
+            "privateKey": "secrets/p-system"
+        }
+    ]
+}

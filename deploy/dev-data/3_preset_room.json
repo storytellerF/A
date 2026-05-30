@@ -1,0 +1,48 @@
+{
+  "type": "room",
+  "roomData": [
+    {
+      "name": "Rust 语言",
+      "community": "code",
+      "users": [
+        "robot1",
+        "robot2",
+        "user2",
+        "user1"
+      ],
+      "id": "RustLanguage",
+      "admin": "System"
+    },
+    {
+      "name": "拉寡",
+      "users": [
+        "robot1",
+        "robot2",
+        "user2"
+      ],
+      "id": "chat",
+      "admin": "System"
+    },
+    {
+      "name": "AI 技术交流",
+      "community": "computer",
+      "users": [
+        "robot1",
+        "user2"
+      ],
+      "id": "AITech",
+      "admin": "System"
+    },
+    {
+      "name": "健身交流",
+      "users": [
+        "user1",
+        "user2",
+        "user3",
+        "System"
+      ],
+      "id": "lifestyle",
+      "admin": "user1"
+    }
+  ]
+}

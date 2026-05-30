@@ -1,0 +1,49 @@
+{
+  "type": "user",
+  "userData": [
+    {
+      "name": "System",
+      "aid": "System",
+      "icon": "medias/users/robot1.png",
+      "privateKey": "secrets/p-system",
+      "id": 1
+    },
+    {
+      "name": "FontProvider",
+      "aid": "FontProvider",
+      "privateKey": "secrets/p-font-provider",
+      "id": 100
+    },
+    {
+      "name": "人机一号",
+      "aid": "robot1",
+      "icon": "medias/users/robot1.png",
+      "privateKey": "secrets/p-robot1"
+    },
+    {
+      "name": "人机二号",
+      "aid": "robot2",
+      "icon": "medias/users/robot2.png",
+      "privateKey": "secrets/p-robot2"
+    },
+    {
+      "name": "User1",
+      "aid": "user1",
+      "privateKey": "secrets/p-user1",
+      "icon": "medias/users/user1.jpg"
+    },
+    {
+      "name": "User2",
+      "aid": "user2",
+      "icon": "medias/users/user2.jpg",
+      "privateKey": "secrets/p-user2"
+    },
+    {
+      "name": "User3",
+      "aid": "user3",
+      "privateKey": "secrets/p-user3",
+      "encryptionPrivateKey": "secrets/ep-user3",
+      "algoType": "DILITHIUM"
+    }
+  ]
+}
