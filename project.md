@@ -56,3 +56,7 @@
 - 用户登录原本是 `/accounts/sign-in` 一步私钥签名；开启 TOTP 后，该接口返回 `SignInResponse.RequiresTotp` 并把 Ktor session 标记为 `UserSession.TwoFactorPending`，客户端再调用 `/accounts/sign-in/totp` 完成登录。
 - 用户 2FA 设置走受保护的 `CustomApi.Users.TwoFactor` 接口；后端数据保存在 `UserTwoFactors` 表，迁移由 Exposed `MigrationUtils.statementsRequiredForDatabaseMigration` 自动补表。
 - TOTP 后端实现放在 `cloud/service`，使用 JDK `SecureRandom`、Base32 和 `HmacSHA1` 自行实现 RFC 6238，生成标准 `otpauth://totp/...` URI 供 Google Authenticator 等客户端导入。
+
+## Server 配置
+
+- 用户注册开关由服务端环境变量 `ENABLE_SIGN_UP` 控制；未配置时默认开启，只有显式设置为 `false` 才会拒绝 `/accounts/sign-up`。

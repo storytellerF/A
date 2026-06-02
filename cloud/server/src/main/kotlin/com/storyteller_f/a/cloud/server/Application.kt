@@ -411,6 +411,7 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
 
     val buildType = env["BUILD_TYPE"] ?: "prod"
     val flavor = env["FLAVOR"] ?: throw Exception("FLAVOR is empty")
+    val enableSignUp = env["ENABLE_SIGN_UP"]?.toBoolean() ?: true
 
     val topicSearchService = buildTopicSearchService(env)
     val userSearchService = buildUserSearchService(env)
@@ -431,7 +432,7 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
         } else {
             null
         }
-    val customConfig = CustomConfig(buildType, flavor, snapshotKeyStore)
+    val customConfig = CustomConfig(buildType, flavor, snapshotKeyStore, enableSignUp)
 
     return ServerBackend(
         customConfig,

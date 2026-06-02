@@ -6,4 +6,5 @@ class CustomConfig(
     val buildType: String,
     val flavor: String,
     val snapshotKeyStore: CustomKeyStore?,
+    val enableSignUp: Boolean = true,
 )
