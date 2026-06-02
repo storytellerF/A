@@ -50,3 +50,9 @@
 - `scripts/build_scripts/gradle-prune-implementations.sh` 通过 `./gradlew projects` 获取当前构建实际包含的模块，只处理这些模块的 `build.gradle.kts`，避免误删未 include 模块的依赖。
 - prune 检查默认运行 `assemble`（可用 `GRADLE_PRUNE_TASK` 覆盖），脚本参数会继续传给 Gradle，例如 `-Pserver.flavor=...`。
 - 每个候选 implementation 会在“已确认可删”的累计状态上继续验证；失败时只回滚当前候选，避免最终删除未被组合验证过的依赖。
+
+## 账号 2FA
+
+- 用户登录原本是 `/accounts/sign-in` 一步私钥签名；开启 TOTP 后，该接口返回 `SignInResponse.RequiresTotp` 并把 Ktor session 标记为 `UserSession.TwoFactorPending`，客户端再调用 `/accounts/sign-in/totp` 完成登录。
+- 用户 2FA 设置走受保护的 `CustomApi.Users.TwoFactor` 接口；后端数据保存在 `UserTwoFactors` 表，迁移由 Exposed `MigrationUtils.statementsRequiredForDatabaseMigration` 自动补表。
+- TOTP 后端实现放在 `cloud/service`，使用 JDK `SecureRandom`、Base32 和 `HmacSHA1` 自行实现 RFC 6238，生成标准 `otpauth://totp/...` URI 供 Google Authenticator 等客户端导入。

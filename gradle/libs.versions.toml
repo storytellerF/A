@@ -23,6 +23,7 @@ material3 = "1.9.0"
 materialIconsExtended = "1.7.3"
 openpdf = "3.0.5"
 pdfcompare = "1.2.8"
+qrose = "1.1.2"
 roomRuntime = "2.8.4"
 endpoint4k-common = "1.0.0-SNAPSHOT"
 commonsLogging = "1.3.6"
@@ -181,6 +182,7 @@ material3 = { module = "org.jetbrains.compose.material3:material3", version.ref 
 
 openpdf = { module = "com.github.librepdf:openpdf", version.ref = "openpdf" }
 pdfcompare = { module = "de.redsix:pdfcompare", version.ref = "pdfcompare" }
+qrose = { module = "io.github.alexzhirkevich:qrose", version.ref = "qrose" }
 
 endpoint4k-common = { module = "com.storyteller_f.endpoint4k:common", version.ref = "endpoint4k-common" }
 endpoint4k-ktor-client = { module = "com.storyteller_f.endpoint4k:ktor-client", version.ref = "endpoint4k-common" }

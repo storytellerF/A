@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.kdroid.composenotification.builder.getNotificationProvider
 import com.storyteller_f.a.api.SignInBody
+import com.storyteller_f.a.api.SignInResponse
 import com.storyteller_f.a.app.AppGlobalDialogController
 import com.storyteller_f.a.app.CustomUserSessionManager
 import com.storyteller_f.a.app.LocalAccountSwitcher
@@ -489,9 +490,14 @@ fun refreshMyInfo(my: UserInfo?, sessionManager: UserSessionManager) {
                     val data = sessionManager.getData().getOrThrow()
                     val address = value.userPass.address().getOrThrow()
                     val signature = value.userPass.signature(finalData(data)).getOrThrow()
-                    val userInfo = sessionManager.signIn(SignInBody(address, signature)).getOrThrow()
-                    sessionModel.updateUser(userInfo)
-                    sessionModel.updateSignature(data, signature)
+                    when (val response = sessionManager.signIn(SignInBody(address, signature)).getOrThrow()) {
+                        is SignInResponse.Success -> {
+                            sessionModel.updateUser(response.userInfo)
+                            sessionModel.updateSignature(data, signature)
+                        }
+
+                        SignInResponse.RequiresTotp -> Unit
+                    }
                 }
             } else {
                 val aid = my.aid

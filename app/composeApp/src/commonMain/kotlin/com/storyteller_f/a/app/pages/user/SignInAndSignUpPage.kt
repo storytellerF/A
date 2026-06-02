@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -23,6 +24,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -75,7 +77,10 @@ import com.storyteller_f.a.app.sign_up
 import com.storyteller_f.a.app.start_sign_in
 import com.storyteller_f.a.app.start_sign_up
 import com.storyteller_f.a.app.utils.appPlatform
-import com.storyteller_f.a.app.utils.fetchAndSaveUserInfo
+import com.storyteller_f.a.app.utils.completeTotpSignIn
+import com.storyteller_f.a.app.utils.startAuth
+import com.storyteller_f.a.client.core.PendingTotpSignIn
+import com.storyteller_f.a.client.core.UserAuthResult
 import com.storyteller_f.shared.model.AlgoType
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -374,9 +379,19 @@ fun InputPrivateKeyPage(isSignUp: Boolean) {
     val scope = rememberCoroutineScope()
     val appNavFactory = LocalAppNavFactory.current
     val globalDialogController = LocalGlobalDialog.current
+    var pendingTotp by remember { mutableStateOf<PendingTotpSignIn?>(null) }
     val startSign: () -> Unit = {
         scope.launch {
-            globalDialogController.performAuth(appNavFactory, privateKey, encryptionPrivateKey, algo, isSignUp)
+            val pending = globalDialogController.performAuth(
+                appNavFactory,
+                privateKey,
+                encryptionPrivateKey,
+                algo,
+                isSignUp
+            )
+            if (pending != null) {
+                pendingTotp = pending
+            }
         }
     }
     CenterBox {
@@ -401,6 +416,33 @@ fun InputPrivateKeyPage(isSignUp: Boolean) {
             }
         }
     }
+    TotpSignInDialog(pendingTotp, {
+        pendingTotp = null
+    }) { pending, code ->
+        scope.completePendingTotpSignIn(globalDialogController, appNavFactory, pending, code) {
+            pendingTotp = null
+        }
+    }
+}
+
+private fun kotlinx.coroutines.CoroutineScope.completePendingTotpSignIn(
+    globalDialogController: AppGlobalDialogController,
+    appNavFactory: AppNavFactory,
+    pending: PendingTotpSignIn,
+    code: String,
+    onSuccess: () -> Unit,
+) {
+    launch {
+        globalDialogController.useResult {
+            request {
+                completeTotpSignIn(pending, code)
+                Result.success(Unit)
+            }
+        }.onSuccess {
+            onSuccess()
+            appNavFactory.newAppNav().gotoHome()
+        }
+    }
 }
 
 private suspend fun AppGlobalDialogController.performAuth(
@@ -409,15 +451,55 @@ private suspend fun AppGlobalDialogController.performAuth(
     encryptionPrivateKey: String?,
     algo: AlgoType,
     isSignUp: Boolean,
-) {
-    if (privateKey.isBlank()) return
-    useResult {
+): PendingTotpSignIn? {
+    if (privateKey.isBlank()) return null
+    return useResult {
         request {
-            val userInfo = fetchAndSaveUserInfo(privateKey, encryptionPrivateKey, algo, isSignUp)
-            Result.success(userInfo)
+            when (val result = context.sessionManager.startAuth(privateKey, encryptionPrivateKey, algo, isSignUp)) {
+                is UserAuthResult.Success -> Result.success<AuthResult>(AuthResult.Success)
+                is UserAuthResult.RequiresTotp -> Result.success(AuthResult.RequiresTotp(result.pending))
+            }
         }
-    }.onSuccess {
-        appNav.newAppNav().gotoHome()
+    }.map { result ->
+        when (result) {
+            AuthResult.Success -> {
+                appNav.newAppNav().gotoHome()
+                null
+            }
+
+            is AuthResult.RequiresTotp -> result.pending
+        }
+    }.getOrNull()
+}
+
+private sealed class AuthResult {
+    data object Success : AuthResult()
+    data class RequiresTotp(val pending: PendingTotpSignIn) : AuthResult()
+}
+
+@Composable
+private fun TotpSignInDialog(
+    pending: PendingTotpSignIn?,
+    onDismiss: () -> Unit,
+    onConfirm: (PendingTotpSignIn, String) -> Unit,
+) {
+    var code by remember(pending) { mutableStateOf("") }
+    if (pending != null) {
+        AlertDialog(onDismiss, {
+            Button({
+                onConfirm(pending, code)
+            }) {
+                Text("OK")
+            }
+        }, title = {
+            Text("Two-factor authentication")
+        }, text = {
+            OutlinedTextField(code, {
+                code = it
+            }, label = {
+                Text("TOTP code")
+            })
+        })
     }
 }
 

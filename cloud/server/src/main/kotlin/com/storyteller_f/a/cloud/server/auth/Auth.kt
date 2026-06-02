@@ -119,6 +119,19 @@ fun ApplicationCall.saveSuccessSession(
     sessions.set<UserSession>(UserSession.Success(session.data, session.remote, id, session.label))
 }
 
+fun ApplicationCall.saveTwoFactorPendingSession(
+    session: UserSession.Pending,
+    id: PrimaryKey
+) {
+    sessions.set<UserSession>(UserSession.TwoFactorPending(session.data, session.remote, id, session.label))
+}
+
+fun ApplicationCall.saveSuccessSession(
+    session: UserSession.TwoFactorPending
+) {
+    sessions.set<UserSession>(UserSession.Success(session.data, session.remote, session.id, session.label))
+}
+
 private suspend fun Backend.checkDevWsLink(call: ApplicationCall): Result<CustomPrincipal?> {
     val did = call.request.queryParameters["did"]
     return if (did?.all { it.isDigit() } == true) {
@@ -145,6 +158,16 @@ fun ApplicationCall.getSession(): UserSession {
         }
 
         is UserSession.Pending -> {
+            if (remote == session.remote) {
+                session
+            } else {
+                val value = createPendingSession(remote)
+                sessions.set<UserSession>(value)
+                value
+            }
+        }
+
+        is UserSession.TwoFactorPending -> {
             if (remote == session.remote) {
                 session
             } else {
@@ -182,6 +205,7 @@ fun ApplicationCall.getRateLimitKey(): Comparable<*> {
     if (request.uri == "/metrics") return "metrics"
     return when (val session = getSession()) {
         is UserSession.Success -> session.id
+        is UserSession.TwoFactorPending -> session.id
         is UserSession.Pending -> session.remote
     }
 }
@@ -192,6 +216,7 @@ fun Application.configureAuth(backend: Backend) {
             validate { session, call, credential ->
                 when (session) {
                     is UserSession.Success -> Result.success(CustomPrincipal(session.id))
+                    is UserSession.TwoFactorPending -> Result.success(null)
                     is UserSession.Pending -> {
                         when {
                             credential != null -> call.checkApiRequest(backend, credential, session)
@@ -218,6 +243,7 @@ fun Application.configureAuth(backend: Backend) {
             validate { session, call, credential ->
                 when (session) {
                     is UserSession.Success -> Result.success(CustomPrincipal(session.id))
+                    is UserSession.TwoFactorPending -> Result.success(null)
                     is UserSession.Pending -> {
                         if (credential != null) {
                             call.checkAdminApiRequest(backend, credential, session)

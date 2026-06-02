@@ -5,6 +5,7 @@ import com.storyteller_f.shared.model.MemberPolicy
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.model.TopicPinSearch
+import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -131,6 +132,20 @@ class SignUpBody(
 
 @Serializable
 class SignInBody(val address: String, val signature: String)
+
+@Serializable
+sealed class SignInResponse {
+    @Serializable
+    @SerialName("success")
+    data class Success(val userInfo: UserInfo) : SignInResponse()
+
+    @Serializable
+    @SerialName("requires_totp")
+    data object RequiresTotp : SignInResponse()
+}
+
+@Serializable
+class TotpCodeBody(val code: String)
 
 @Serializable
 class TopicQuery(

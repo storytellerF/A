@@ -29,6 +29,7 @@ import com.storyteller_f.a.backend.core.types.UserFavorite
 import com.storyteller_f.a.backend.core.types.UserLog
 import com.storyteller_f.a.backend.core.types.UserSubscription
 import com.storyteller_f.a.backend.core.types.UserTopicRead
+import com.storyteller_f.a.backend.core.types.UserTwoFactor
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.FontSettings
 import com.storyteller_f.shared.model.NestedMemberInfo
@@ -347,6 +348,11 @@ interface UserDatabase {
     suspend fun getUserLogs(uid: PrimaryKey, fetch: PrimaryKeyFetch): Result<PaginationResult<UserLog>>
 
     suspend fun getChildAccountCount(hostId: PrimaryKey): Result<Long>
+
+    suspend fun getUserTwoFactor(uid: PrimaryKey): Result<UserTwoFactor?>
+    suspend fun upsertUserTwoFactor(twoFactor: UserTwoFactor): Result<Unit>
+    suspend fun disableUserTwoFactor(uid: PrimaryKey): Result<Unit>
+    suspend fun updateRecoveryCodeHashes(uid: PrimaryKey, hashes: List<String>): Result<Unit>
 }
 
 interface TopicDatabase {

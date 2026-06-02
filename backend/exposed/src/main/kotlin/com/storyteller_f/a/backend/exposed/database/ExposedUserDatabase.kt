@@ -16,6 +16,7 @@ import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.a.backend.core.types.UserDevice
 import com.storyteller_f.a.backend.core.types.UserLog
 import com.storyteller_f.a.backend.core.types.UserTopicRead
+import com.storyteller_f.a.backend.core.types.UserTwoFactor
 import com.storyteller_f.a.backend.exposed.ExposedDatabaseSession
 import com.storyteller_f.a.backend.exposed.count
 import com.storyteller_f.a.backend.exposed.first
@@ -29,8 +30,10 @@ import com.storyteller_f.a.backend.exposed.tables.TaskRecords
 import com.storyteller_f.a.backend.exposed.tables.UserDevices
 import com.storyteller_f.a.backend.exposed.tables.UserLogs
 import com.storyteller_f.a.backend.exposed.tables.UserTopicReads
+import com.storyteller_f.a.backend.exposed.tables.UserTwoFactors
 import com.storyteller_f.a.backend.exposed.tables.Users
 import com.storyteller_f.a.backend.exposed.tables.addTaskRecord
+import com.storyteller_f.a.backend.exposed.tables.encodeRecoveryCodeHashes
 import com.storyteller_f.a.backend.exposed.tables.find
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.TaskRecordType
@@ -474,6 +477,53 @@ class ExposedUserDatabase(
                 count()
             }
         )
+
+    override suspend fun getUserTwoFactor(uid: PrimaryKey) = databaseSession.dbSearch {
+        search {
+            UserTwoFactors.selectAll().where {
+                UserTwoFactors.uid eq uid
+            }
+        }
+        first(UserTwoFactor::wrapRow)
+    }
+
+    override suspend fun upsertUserTwoFactor(twoFactor: UserTwoFactor) = databaseSession.dbQuery {
+        check(UserTwoFactors.upsert(UserTwoFactors.uid, onUpdate = {
+            it[UserTwoFactors.enabled] = twoFactor.enabled
+            it[UserTwoFactors.type] = twoFactor.type
+            it[UserTwoFactors.totpSecret] = twoFactor.totpSecret
+            it[UserTwoFactors.recoveryCodeHashes] = encodeRecoveryCodeHashes(twoFactor.recoveryCodeHashes)
+            it[UserTwoFactors.updatedAt] = twoFactor.updatedAt
+        }) {
+            it[uid] = twoFactor.uid
+            it[enabled] = twoFactor.enabled
+            it[type] = twoFactor.type
+            it[totpSecret] = twoFactor.totpSecret
+            it[recoveryCodeHashes] = encodeRecoveryCodeHashes(twoFactor.recoveryCodeHashes)
+            it[updatedAt] = twoFactor.updatedAt
+            it[createdTime] = twoFactor.updatedAt
+        }.insertedCount > 0) {
+            "upsert user two factor failed"
+        }
+    }
+
+    override suspend fun disableUserTwoFactor(uid: PrimaryKey) = databaseSession.dbQuery {
+        UserTwoFactors.update({
+            UserTwoFactors.uid eq uid
+        }) {
+            it[enabled] = false
+        }
+        Unit
+    }
+
+    override suspend fun updateRecoveryCodeHashes(uid: PrimaryKey, hashes: List<String>) = databaseSession.dbQuery {
+        UserTwoFactors.update({
+            UserTwoFactors.uid eq uid
+        }) {
+            it[recoveryCodeHashes] = encodeRecoveryCodeHashes(hashes)
+        }
+        Unit
+    }
 
     private suspend fun processUserToRawUser(
         uid: PrimaryKey?,

@@ -163,6 +163,7 @@ kotlin {
             implementation(libs.aboutlibraries.compose.m3)
             implementation(libs.zoomimage.compose.coil3)
             implementation(libs.fonticons.core)
+            implementation(libs.qrose)
             implementation(libs.krop.ui)
             implementation(libs.multiplatform.settings)
             implementation(libs.multiplatform.settings.serialization)

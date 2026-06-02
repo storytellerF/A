@@ -1,23 +1,32 @@
 package com.storyteller_f.a.app.pages.user
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetState
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import coil3.PlatformContext
@@ -45,14 +54,22 @@ import com.storyteller_f.a.app.core.components.LocalToaster
 import com.storyteller_f.a.app.core.components.emitEvent
 import com.storyteller_f.a.app.core.components.rememberAlertDialogController
 import com.storyteller_f.a.app.core.components.request
+import com.storyteller_f.a.app.core.components.setText
 import com.storyteller_f.a.app.core.utils.ImageFormat
 import com.storyteller_f.a.app.core.utils.getRemoteImageBitmap
 import com.storyteller_f.a.app.core.utils.saveImageBitmap
 import com.storyteller_f.a.app.pages.topic.FilePicker
 import com.storyteller_f.a.app.pages.topic.uploadPath
+import com.storyteller_f.a.client.core.disableTwoFactor
+import com.storyteller_f.a.client.core.enableTotp
+import com.storyteller_f.a.client.core.generateRecoveryCodes
+import com.storyteller_f.a.client.core.getTwoFactorSettings
+import com.storyteller_f.a.client.core.setupTotp
 import com.storyteller_f.a.client.core.updateUserInfo
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.FileInfo
+import com.storyteller_f.shared.model.TotpSetupInfo
+import com.storyteller_f.shared.model.TwoFactorSettingsInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.checkMediaFileDimensionRatioMatch
 import com.storyteller_f.shared.obj.ObjectTuple
@@ -61,6 +78,10 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
+import io.github.alexzhirkevich.qrose.rememberQrCodePainter
+import io.github.vinceglb.filekit.FileKit
+import io.github.vinceglb.filekit.dialogs.openFileSaver
+import io.github.vinceglb.filekit.write
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -82,6 +103,9 @@ fun UserSettingPage() {
     var currentOption by remember {
         mutableStateOf<SettingOption?>(null)
     }
+    var showTwoFactor by remember {
+        mutableStateOf(false)
+    }
     val sheetState = rememberModalBottomSheetState()
     val my = LocalUserInfo.current ?: return
     val showDialog = { option: SettingOption ->
@@ -92,7 +116,14 @@ fun UserSettingPage() {
     }
     val globalDialogController = LocalGlobalDialog.current
     Scaffold { padding ->
-        UserSettingInternal(padding, showDialog, my)
+        UserSettingInternal(padding, showDialog, {
+            showTwoFactor = true
+        }, my)
+        if (showTwoFactor) {
+            TwoFactorDialog {
+                showTwoFactor = false
+            }
+        }
         val scope = rememberCoroutineScope()
         ObjectSettingDialog(closeDialog, currentOption, sheetState, {
             scope.launch {
@@ -285,6 +316,7 @@ private suspend fun AppGlobalDialogController.cropImage(
 private fun UserSettingInternal(
     values: PaddingValues,
     showDialog: (SettingOption) -> Unit,
+    showTwoFactor: () -> Unit,
     m: UserInfo,
 ) {
     val toasterState = LocalToaster.current
@@ -331,6 +363,227 @@ private fun UserSettingInternal(
                 Text(aid)
             }
         })
+        SettingOptionView("2FA", showTwoFactor) {
+            Text("Two-factor authentication", textDecoration = TextDecoration.Underline)
+        }
+    }
+}
+
+@Composable
+private fun TwoFactorDialog(dismiss: () -> Unit) {
+    val globalDialogController = LocalGlobalDialog.current
+    val toaster = LocalToaster.current
+    val clipboard = LocalClipboard.current
+    val scope = rememberCoroutineScope()
+    var settings by remember { mutableStateOf<TwoFactorSettingsInfo?>(null) }
+    var setupInfo by remember { mutableStateOf<TotpSetupInfo?>(null) }
+    var code by remember { mutableStateOf("") }
+
+    LoadTwoFactorSettings(globalDialogController) { settings = it }
+    val actions = scope.rememberTwoFactorActions(
+        globalDialogController,
+        toaster,
+        clipboard,
+        code,
+        { settings = it },
+        { setupInfo = it },
+        { code = it },
+    )
+
+    AlertDialog(dismiss, {
+        Button(dismiss) {
+            Text(CoreStrings.ok())
+        }
+    }, title = {
+        Text("Two-factor authentication")
+    }, text = {
+        TwoFactorDialogContent(
+            settings,
+            setupInfo,
+            code,
+            { code = it },
+            actions.setupTotp,
+            actions.disableTwoFactor,
+            actions.copyUri,
+            actions.enableTotp,
+            actions.downloadRecoveryCodes,
+        )
+    })
+}
+
+@Composable
+private fun LoadTwoFactorSettings(
+    globalDialogController: AppGlobalDialogController,
+    onSuccess: (TwoFactorSettingsInfo) -> Unit,
+) {
+    LaunchedEffect(Unit) {
+        globalDialogController.useResult {
+            request {
+                getTwoFactorSettings()
+            }
+        }.onSuccess(onSuccess)
+    }
+}
+
+private data class TwoFactorActions(
+    val setupTotp: () -> Unit,
+    val disableTwoFactor: () -> Unit,
+    val copyUri: (String) -> Unit,
+    val enableTotp: () -> Unit,
+    val downloadRecoveryCodes: () -> Unit,
+)
+
+private fun kotlinx.coroutines.CoroutineScope.rememberTwoFactorActions(
+    globalDialogController: AppGlobalDialogController,
+    toaster: com.storyteller_f.a.app.core.components.Toast,
+    clipboard: androidx.compose.ui.platform.Clipboard,
+    code: String,
+    setSettings: (TwoFactorSettingsInfo) -> Unit,
+    setSetupInfo: (TotpSetupInfo?) -> Unit,
+    setCode: (String) -> Unit,
+) = TwoFactorActions(
+    setupTotp = {
+        setupTotp(globalDialogController) { setSetupInfo(it) }
+    },
+    disableTwoFactor = {
+        disableTwoFactor(globalDialogController) {
+            setSettings(it)
+            setSetupInfo(null)
+            setCode("")
+        }
+    },
+    copyUri = { uri ->
+        launch {
+            clipboard.setText(uri)
+            toaster.showMessage("copied")
+        }
+    },
+    enableTotp = {
+        enableTotp(globalDialogController, code) {
+            setSettings(it)
+            setSetupInfo(null)
+            setCode("")
+        }
+    },
+    downloadRecoveryCodes = {
+        downloadRecoveryCodes(globalDialogController)
+    },
+)
+
+@Composable
+private fun TwoFactorDialogContent(
+    settings: TwoFactorSettingsInfo?,
+    setupInfo: TotpSetupInfo?,
+    code: String,
+    onCodeChange: (String) -> Unit,
+    onSetup: () -> Unit,
+    onDisable: () -> Unit,
+    onCopyUri: (String) -> Unit,
+    onEnable: () -> Unit,
+    onDownloadCodes: () -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        val enabled = settings?.enabled == true
+        TwoFactorSwitchRow(enabled, onSetup, onDisable)
+        setupInfo?.let {
+            TotpSetupView(it, code, onCodeChange, onCopyUri, onEnable)
+        }
+        if (enabled) {
+            Button(onDownloadCodes) {
+                Text("Download recovery codes")
+            }
+        }
+    }
+}
+
+@Composable
+private fun TwoFactorSwitchRow(enabled: Boolean, onSetup: () -> Unit, onDisable: () -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(if (enabled) "Enabled" else "Disabled", modifier = Modifier.weight(1f))
+        Switch(enabled, { checked ->
+            if (checked) {
+                onSetup()
+            } else {
+                onDisable()
+            }
+        })
+    }
+}
+
+@Composable
+private fun ColumnScope.TotpSetupView(
+    info: TotpSetupInfo,
+    code: String,
+    onCodeChange: (String) -> Unit,
+    onCopyUri: (String) -> Unit,
+    onEnable: () -> Unit,
+) {
+    Image(
+        rememberQrCodePainter(info.otpauthUri),
+        "TOTP QR code",
+        modifier = Modifier.size(220.dp).align(Alignment.CenterHorizontally)
+    )
+    Text("Secret: ${info.secret}")
+    Button({
+        onCopyUri(info.otpauthUri)
+    }) {
+        Text("Copy URI")
+    }
+    OutlinedTextField(code, onCodeChange, label = {
+        Text("TOTP code")
+    })
+    Button(onEnable) {
+        Text("Enable")
+    }
+}
+
+private fun kotlinx.coroutines.CoroutineScope.setupTotp(
+    globalDialogController: AppGlobalDialogController,
+    onSuccess: (TotpSetupInfo) -> Unit,
+) {
+    launch {
+        globalDialogController.useResult {
+            request { setupTotp() }
+        }.onSuccess(onSuccess)
+    }
+}
+
+private fun kotlinx.coroutines.CoroutineScope.disableTwoFactor(
+    globalDialogController: AppGlobalDialogController,
+    onSuccess: (TwoFactorSettingsInfo) -> Unit,
+) {
+    launch {
+        globalDialogController.useResult {
+            request { disableTwoFactor() }
+        }.onSuccess(onSuccess)
+    }
+}
+
+private fun kotlinx.coroutines.CoroutineScope.enableTotp(
+    globalDialogController: AppGlobalDialogController,
+    code: String,
+    onSuccess: (TwoFactorSettingsInfo) -> Unit,
+) {
+    launch {
+        globalDialogController.useResult {
+            request { enableTotp(code) }
+        }.onSuccess(onSuccess)
+    }
+}
+
+private fun kotlinx.coroutines.CoroutineScope.downloadRecoveryCodes(
+    globalDialogController: AppGlobalDialogController,
+) {
+    launch {
+        globalDialogController.useResult {
+            request { generateRecoveryCodes() }
+        }.onSuccess { response ->
+            val text = response.recoveryCodes.joinToString("\n")
+            val file = FileKit.openFileSaver("recovery-codes", "txt", setOf("txt"))
+            if (file != null) {
+                file.write(text.encodeToByteArray())
+            }
+        }
     }
 }
 
