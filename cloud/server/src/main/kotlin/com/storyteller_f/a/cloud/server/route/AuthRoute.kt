@@ -54,7 +54,7 @@ fun Route.bindUnprotectedAccountRoute(
         Result.success(call.getData())
     }
     CustomApi.Accounts.signUp(handleResult(backend)) { api ->
-        if (backend.customConfig.buildType == "prod") {
+        if (!backend.customConfig.enableSignUp) {
             Result.failure(Exception("not support"))
         } else {
             val data = call.getData()
