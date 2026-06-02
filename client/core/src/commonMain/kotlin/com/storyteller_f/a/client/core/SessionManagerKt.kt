@@ -89,7 +89,15 @@ suspend fun UserSessionManager.getUserPass(
     isSignUp: Boolean,
     buildUserPass: suspend (RawUserPassInfo) -> UserPass
 ) : UserInfo {
-    return signInOrSignUpAndGetUserInfo(authKey, isSignUp) { param ->
+    return getUserPassResult(authKey, isSignUp, buildUserPass).userInfo
+}
+
+suspend fun UserSessionManager.getUserPassResult(
+    authKey: AuthKey,
+    isSignUp: Boolean,
+    buildUserPass: suspend (RawUserPassInfo) -> UserPass
+): SignResult<UserInfo> {
+    return signInOrSignUpAndGetUserInfoResult(authKey, isSignUp) { param ->
         buildUserPass(getRawUserPassInfoFromAuthKey(param))
     }
 }

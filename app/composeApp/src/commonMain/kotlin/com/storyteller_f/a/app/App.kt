@@ -109,7 +109,6 @@ import dev.tclement.fonticons.LocalIconFont
 import dev.tclement.fonticons.LocalIconSize
 import dev.tclement.fonticons.LocalIconTintProvider
 import dev.tclement.fonticons.LocalIconWeight
-import dev.tclement.fonticons.ProvideIconParameters
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.cookies.CookiesStorage
@@ -375,7 +374,8 @@ fun ProvideFontIcon(block: @Composable () -> Unit) {
         LocalIconWeight provides FontWeight.Normal,
         content = {
             block()
-        })
+        }
+    )
 }
 
 fun buildHttpClient(

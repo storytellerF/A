@@ -8,6 +8,7 @@ import com.storyteller_f.a.api.ReactionRecordInfoListResponse
 import com.storyteller_f.a.api.RoomInfoListResponse
 import com.storyteller_f.a.api.TitleInfoListResponse
 import com.storyteller_f.a.api.TopicInfoListResponse
+import com.storyteller_f.a.api.TotpCodeBody
 import com.storyteller_f.a.api.UserFavoriteInfoListResponse
 import com.storyteller_f.a.api.UserInfoListResponse
 import com.storyteller_f.a.api.UserSubscriptionInfoListResponse
@@ -18,8 +19,12 @@ import com.storyteller_f.a.cloud.core.service.addFavorite
 import com.storyteller_f.a.cloud.core.service.addReadLog
 import com.storyteller_f.a.cloud.core.service.addSubscription
 import com.storyteller_f.a.cloud.core.service.deleteFavoriteByObject
+import com.storyteller_f.a.cloud.core.service.disableTwoFactor
+import com.storyteller_f.a.cloud.core.service.enableTotp
+import com.storyteller_f.a.cloud.core.service.generateRecoveryCodes
 import com.storyteller_f.a.cloud.core.service.getFavorites
 import com.storyteller_f.a.cloud.core.service.getTopicsByParentId
+import com.storyteller_f.a.cloud.core.service.getTwoFactorSettings
 import com.storyteller_f.a.cloud.core.service.getUserCommentedTopics
 import com.storyteller_f.a.cloud.core.service.getUserInfo
 import com.storyteller_f.a.cloud.core.service.getUserJoinedCommunities
@@ -33,6 +38,7 @@ import com.storyteller_f.a.cloud.core.service.removeSubscriptionByObject
 import com.storyteller_f.a.cloud.core.service.searchCurrentUserRooms
 import com.storyteller_f.a.cloud.core.service.searchUserJoinedCommunities
 import com.storyteller_f.a.cloud.core.service.searchUsers
+import com.storyteller_f.a.cloud.core.service.setupTotp
 import com.storyteller_f.a.cloud.core.service.updateUser
 import com.storyteller_f.a.cloud.server.auth.handleResult
 import com.storyteller_f.a.cloud.server.auth.usePrincipal
@@ -46,9 +52,42 @@ import com.storyteller_f.shared.type.ObjectType
 import io.ktor.server.routing.Route
 
 fun Route.bindProtectedUserRoute(backend: Backend) {
+    bindProtectedUserAccountRoute(backend)
+    bindUserFavoriteRoute(backend)
+    bindProtectedUserActivityRoute(backend)
+    bindUserCommunitiesRoute(backend)
+}
+
+private fun Route.bindProtectedUserAccountRoute(backend: Backend) {
     CustomApi.Users.update(handleResult(backend)) { api ->
         usePrincipal { uid ->
             backend.updateUser(uid, api.receiveBody())
+        }
+    }
+    CustomApi.Users.TwoFactor.get(handleResult(backend)) {
+        usePrincipal { uid ->
+            backend.getTwoFactorSettings(uid)
+        }
+    }
+    CustomApi.Users.TwoFactor.Totp.setup(handleResult(backend)) {
+        usePrincipal { uid ->
+            backend.setupTotp(uid)
+        }
+    }
+    CustomApi.Users.TwoFactor.Totp.enable(handleResult(backend)) { api ->
+        usePrincipal { uid ->
+            val body: TotpCodeBody = api.receiveBody()
+            backend.enableTotp(uid, body.code)
+        }
+    }
+    CustomApi.Users.TwoFactor.disable(handleResult(backend)) {
+        usePrincipal { uid ->
+            backend.disableTwoFactor(uid)
+        }
+    }
+    CustomApi.Users.TwoFactor.recoveryCodes(handleResult(backend)) {
+        usePrincipal { uid ->
+            backend.generateRecoveryCodes(uid)
         }
     }
     CustomApi.Users.Read.add(handleResult(backend)) { api ->
@@ -62,8 +101,9 @@ fun Route.bindProtectedUserRoute(backend: Backend) {
             backend.addDevice(uid, newDevice)
         }
     }
-    bindUserFavoriteRoute(backend)
+}
 
+private fun Route.bindProtectedUserActivityRoute(backend: Backend) {
     CustomApi.Users.Id.Favorite.delete(handleResult(backend)) { path, _ ->
         usePrincipal { uid ->
             backend.deleteFavoriteByObject(uid, path.id).map { }
@@ -98,7 +138,6 @@ fun Route.bindProtectedUserRoute(backend: Backend) {
             backend.hasUnreadRooms(uid)
         }
     }
-    bindUserCommunitiesRoute(backend)
 }
 
 private fun Route.bindUserFavoriteRoute(backend: Backend) {

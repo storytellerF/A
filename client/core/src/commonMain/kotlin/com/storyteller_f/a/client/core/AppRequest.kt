@@ -16,6 +16,7 @@ import com.storyteller_f.a.api.SearchQuery
 import com.storyteller_f.a.api.SignInBody
 import com.storyteller_f.a.api.SignUpBody
 import com.storyteller_f.a.api.TopicQuery
+import com.storyteller_f.a.api.TotpCodeBody
 import com.storyteller_f.endpoint4k.ktor.client.invoke
 import com.storyteller_f.shared.buildEncryptedTopicContent
 import com.storyteller_f.shared.model.ChildAccountInfo
@@ -314,6 +315,12 @@ suspend fun UserSessionManager.signIn(body: SignInBody) = serviceCatching {
     }
 }
 
+suspend fun UserSessionManager.signInTotp(code: String) = serviceCatching {
+    CustomApi.Accounts.signInTotp(TotpCodeBody(code)) {
+        contentType(ContentType.Application.Json)
+    }
+}
+
 suspend fun UserSessionManager.getData() = serviceCatching {
     CustomApi.Accounts.getData()
 }
@@ -426,6 +433,34 @@ suspend fun UserSessionManager.getReactions(
 
 suspend fun UserSessionManager.signOut() = serviceCatching {
     CustomApi.Accounts.signOut(Unit) {}
+}
+
+suspend fun UserSessionManager.getTwoFactorSettings() = serviceCatching {
+    CustomApi.Users.TwoFactor.get()
+}
+
+suspend fun UserSessionManager.setupTotp() = serviceCatching {
+    CustomApi.Users.TwoFactor.Totp.setup(Unit) {
+        contentType(ContentType.Application.Json)
+    }
+}
+
+suspend fun UserSessionManager.enableTotp(code: String) = serviceCatching {
+    CustomApi.Users.TwoFactor.Totp.enable(TotpCodeBody(code)) {
+        contentType(ContentType.Application.Json)
+    }
+}
+
+suspend fun UserSessionManager.disableTwoFactor() = serviceCatching {
+    CustomApi.Users.TwoFactor.disable(Unit) {
+        contentType(ContentType.Application.Json)
+    }
+}
+
+suspend fun UserSessionManager.generateRecoveryCodes() = serviceCatching {
+    CustomApi.Users.TwoFactor.recoveryCodes(Unit) {
+        contentType(ContentType.Application.Json)
+    }
 }
 
 suspend fun UserSessionManager.getFileList(

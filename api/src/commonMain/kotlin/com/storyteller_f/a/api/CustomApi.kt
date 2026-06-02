@@ -21,12 +21,15 @@ import com.storyteller_f.shared.model.PosterSearch
 import com.storyteller_f.shared.model.QuotaInfo
 import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.model.ReactionInfo
+import com.storyteller_f.shared.model.RecoveryCodesResponse
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.model.TitleWorkStatus
 import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.TotpSetupInfo
+import com.storyteller_f.shared.model.TwoFactorSettingsInfo
 import com.storyteller_f.shared.model.UnreadRoomsResponse
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.UserOverview
@@ -687,6 +690,33 @@ object CustomApi {
             resp(UserInfo::class)
             body(UpdateUserBody::class)
         }
+
+        object TwoFactor {
+            val get = safeEndpointBuilder("users/two-factor") {
+                resp(TwoFactorSettingsInfo::class)
+            }
+
+            object Totp {
+                val setup = mutationEndpointBuilder("users/two-factor/totp/setup") {
+                    resp(TotpSetupInfo::class)
+                    body(Unit::class)
+                }
+                val enable = mutationEndpointBuilder("users/two-factor/totp/enable") {
+                    resp(TwoFactorSettingsInfo::class)
+                    body(TotpCodeBody::class)
+                }
+            }
+
+            val disable = mutationEndpointBuilder("users/two-factor/disable") {
+                resp(TwoFactorSettingsInfo::class)
+                body(Unit::class)
+            }
+            val recoveryCodes = mutationEndpointBuilder("users/two-factor/recovery-codes") {
+                resp(RecoveryCodesResponse::class)
+                body(Unit::class)
+            }
+        }
+
         val overview = safeEndpointBuilder("users/overview") {
             resp(UserOverview::class)
         }
@@ -982,8 +1012,12 @@ object CustomApi {
 
     object Accounts {
         val signIn = mutationEndpointBuilder("/accounts/sign-in") {
-            resp(UserInfo::class)
+            resp(SignInResponse::class)
             body(SignInBody::class)
+        }
+        val signInTotp = mutationEndpointBuilder("/accounts/sign-in/totp") {
+            resp(UserInfo::class)
+            body(TotpCodeBody::class)
         }
         val signOut = mutationEndpointBuilder("/accounts/sign-out") {
             resp(Unit::class)

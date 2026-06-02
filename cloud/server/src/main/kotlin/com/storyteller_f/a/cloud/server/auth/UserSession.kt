@@ -17,6 +17,15 @@ sealed interface UserSession {
     ) : UserSession
 
     @Serializable
+    @SerialName("two_factor_pending")
+    data class TwoFactorPending(
+        override val data: String,
+        val remote: String,
+        val id: PrimaryKey,
+        val label: String,
+    ) : UserSession
+
+    @Serializable
     @SerialName("success")
     data class Success(
         override val data: String,

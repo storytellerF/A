@@ -26,6 +26,7 @@ import com.storyteller_f.a.backend.exposed.tables.UserFavorites
 import com.storyteller_f.a.backend.exposed.tables.UserLogs
 import com.storyteller_f.a.backend.exposed.tables.UserSubscriptions
 import com.storyteller_f.a.backend.exposed.tables.UserTopicReads
+import com.storyteller_f.a.backend.exposed.tables.UserTwoFactors
 import com.storyteller_f.a.backend.exposed.tables.Users
 import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.obj.ExplainResult
@@ -240,6 +241,7 @@ object ExposedDatabaseFactory {
         UserLogs,
         UserDevices,
         UserTopicReads,
+        UserTwoFactors,
         UserFavorites,
         UserSubscriptions,
         SubscriptionSentLogs,

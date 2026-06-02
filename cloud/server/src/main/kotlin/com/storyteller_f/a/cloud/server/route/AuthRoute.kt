@@ -3,16 +3,20 @@ package com.storyteller_f.a.cloud.server.route
 import com.storyteller_f.a.api.ChildAccountInfoListResponse
 import com.storyteller_f.a.api.CustomApi
 import com.storyteller_f.a.api.CustomApi.Accounts.ChildAccounts.AddChildAccountRequest
-import com.storyteller_f.a.api.SignInBody
+import com.storyteller_f.a.api.TotpCodeBody
 import com.storyteller_f.a.backend.core.Backend
+import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.UserAuthData
 import com.storyteller_f.a.cloud.core.service.addChildAccount
 import com.storyteller_f.a.cloud.core.service.addUserLog
 import com.storyteller_f.a.cloud.core.service.getUserAlternateUserInfoList
+import com.storyteller_f.a.cloud.core.service.getUserInfo
+import com.storyteller_f.a.cloud.core.service.isTwoFactorEnabled
 import com.storyteller_f.a.cloud.core.service.signIn
 import com.storyteller_f.a.cloud.core.service.signUp
+import com.storyteller_f.a.cloud.core.service.verifyUserTotp
 import com.storyteller_f.a.cloud.server.auth.CustomCredential
 import com.storyteller_f.a.cloud.server.auth.CustomPrincipal
 import com.storyteller_f.a.cloud.server.auth.UserSession
@@ -20,6 +24,7 @@ import com.storyteller_f.a.cloud.server.auth.getData
 import com.storyteller_f.a.cloud.server.auth.getSession
 import com.storyteller_f.a.cloud.server.auth.handleResult
 import com.storyteller_f.a.cloud.server.auth.saveSuccessSession
+import com.storyteller_f.a.cloud.server.auth.saveTwoFactorPendingSession
 import com.storyteller_f.a.cloud.server.auth.usePrincipal
 import com.storyteller_f.a.cloud.server.auth.usePrincipalOrNull
 import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
@@ -28,13 +33,13 @@ import com.storyteller_f.endpoint4k.ktor.server.invoke
 import com.storyteller_f.endpoint4k.ktor.server.receiveBody
 import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.getAlgo
-import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.UNIT_RESULT
 import com.storyteller_f.shared.utils.mapIfNotNull
+import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.routing.Route
@@ -63,8 +68,35 @@ fun Route.bindUnprotectedAccountRoute(
     }
 
     CustomApi.Accounts.signIn(handleResult(backend)) { api ->
-        backend.signIn(call.getData(), api.receiveBody<UserInfo, SignInBody>()).onSuccess {
-            saveSuccessSessionOnFirst(it.id)
+        backend.signIn(call.getData(), api.receiveBody()).map { signIn ->
+            when (signIn) {
+                is com.storyteller_f.a.cloud.core.service.SignInServiceResponse.Success -> {
+                    saveSuccessSessionOnFirst(signIn.uid)
+                }
+
+                is com.storyteller_f.a.cloud.core.service.SignInServiceResponse.RequiresTotp -> {
+                    saveTwoFactorPendingSession(signIn.uid)
+                }
+            }
+            signIn.response
+        }
+    }
+    CustomApi.Accounts.signInTotp(handleResult(backend)) { api ->
+        val body: TotpCodeBody = api.receiveBody()
+        when (val session = call.getSession()) {
+            is UserSession.TwoFactorPending -> {
+                backend.verifyUserTotp(session.id, body.code).mapResult { verified ->
+                    if (verified) {
+                        backend.addUserLog(session.id, UserLogType.SIGN_IN, session.id ob ObjectType.USER)
+                        call.saveSuccessSession(session)
+                        backend.getUserInfo(ObjectFetch.IdFetch(session.id))
+                    } else {
+                        Result.failure(CustomBadRequestException("invalid totp code"))
+                    }
+                }
+            }
+
+            else -> Result.failure(ForbiddenException())
         }
     }
 }
@@ -111,6 +143,13 @@ fun RoutingContext.saveSuccessSessionOnFirst(id: PrimaryKey) {
     }
 }
 
+fun RoutingContext.saveTwoFactorPendingSession(id: PrimaryKey) {
+    val session = call.getSession()
+    if (session is UserSession.Pending) {
+        call.saveTwoFactorPendingSession(session, id)
+    }
+}
+
 suspend fun Backend.getUserAuthData(
     credential: CustomCredential
 ): Result<UserAuthData?> {
@@ -148,9 +187,19 @@ suspend fun ApplicationCall.checkApiRequest(
                     pubKey,
                     sig,
                     finalData(session.data)
-                ).mapIfNotNull {
-                    saveSuccessSession(session, id)
-                    CustomPrincipal(id)
+                ).mapResult { isVerified ->
+                    if (!isVerified) {
+                        Result.success(null)
+                    } else {
+                        backend.isTwoFactorEnabled(id).map {
+                            if (it) {
+                                null
+                            } else {
+                                saveSuccessSession(session, id)
+                                CustomPrincipal(id)
+                            }
+                        }
+                    }
                 }
             }
         }

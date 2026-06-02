@@ -2,6 +2,7 @@ package com.storyteller_f.a.cloud.core.service
 
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.api.SignInBody
+import com.storyteller_f.a.api.SignInResponse
 import com.storyteller_f.a.api.SignUpBody
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.CustomBadRequestException
@@ -18,6 +19,7 @@ import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.errorIfFalse
 import com.storyteller_f.shared.utils.filterNotNull
 import com.storyteller_f.shared.utils.mapResult
@@ -81,7 +83,7 @@ private suspend fun Backend.signUpInternal(
 suspend fun Backend.signIn(
     data: String,
     pack: SignInBody
-): Result<UserInfo> {
+): Result<SignInServiceResponse> {
     val f = finalData(data)
     return database.user.getRawUserAndPublicKeyByAddress(pack.address)
         .filterNotNull {
@@ -96,11 +98,31 @@ suspend fun Backend.signIn(
             }
         }.mapResult { rawUser ->
             val id = rawUser.user.id
-            addUserLog(id, UserLogType.SIGN_IN, id ob ObjectType.USER)
-            processRawUserToUserInfo(listOf(rawUser))
-        }.map {
-            it.first()
+            isTwoFactorEnabled(id).mapResult { enabled ->
+                if (enabled) {
+                    Result.success(SignInServiceResponse.RequiresTotp(id))
+                } else {
+                    addUserLog(id, UserLogType.SIGN_IN, id ob ObjectType.USER)
+                    processRawUserToUserInfo(listOf(rawUser)).map {
+                        SignInServiceResponse.Success(it.first())
+                    }
+                }
+            }
         }
+}
+
+sealed class SignInServiceResponse {
+    abstract val uid: PrimaryKey
+    abstract val response: SignInResponse
+
+    data class Success(val userInfo: UserInfo) : SignInServiceResponse() {
+        override val uid = userInfo.id
+        override val response = SignInResponse.Success(userInfo)
+    }
+
+    data class RequiresTotp(override val uid: PrimaryKey) : SignInServiceResponse() {
+        override val response = SignInResponse.RequiresTotp
+    }
 }
 
 suspend fun Backend.adminSignIn(data: String, pack: SignInBody): Result<PanelAccountInfo> {

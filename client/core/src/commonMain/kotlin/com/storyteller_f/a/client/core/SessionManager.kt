@@ -1,6 +1,7 @@
 package com.storyteller_f.a.client.core
 
 import com.storyteller_f.a.api.SignInBody
+import com.storyteller_f.a.api.SignInResponse
 import com.storyteller_f.a.api.SignUpBody
 import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.getAlgo
@@ -169,7 +170,10 @@ suspend fun UserSessionManager.login() {
             val data = getData().getOrThrow()
             val address = userPass.address().getOrThrow()
             val signature = userPass.signature(finalData(data)).getOrThrow()
-            val userInfo = signIn(SignInBody(address, signature)).getOrThrow()
+            val userInfo = when (val response = signIn(SignInBody(address, signature)).getOrThrow()) {
+                is SignInResponse.Success -> response.userInfo
+                SignInResponse.RequiresTotp -> error("totp required")
+            }
             model.updateSignature(data, signature)
             userInfo
         }
@@ -197,13 +201,49 @@ suspend fun UserSessionManager.signInOrSignUpAndGetUserInfo(
     authKey: AuthKey,
     isSignUp: Boolean,
     buildUserPass: suspend (BuildPassParam<UserInfo>) -> UserPass
-) = signUpOrInFromPrivateKey(authKey, {
+) = signInOrSignUpAndGetUserInfoResult(authKey, isSignUp, buildUserPass).userInfo
+
+suspend fun UserSessionManager.signInOrSignUpAndGetUserInfoResult(
+    authKey: AuthKey,
+    isSignUp: Boolean,
+    buildUserPass: suspend (BuildPassParam<UserInfo>) -> UserPass
+): SignResult<UserInfo> {
+    return when (val result = startUserAuth(authKey, isSignUp, buildUserPass)) {
+        is UserAuthResult.Success -> result.signResult
+        is UserAuthResult.RequiresTotp -> error("totp required")
+    }
+}
+
+suspend fun UserSessionManager.startUserAuth(
+    authKey: AuthKey,
+    isSignUp: Boolean,
+    buildUserPass: suspend (BuildPassParam<UserInfo>) -> UserPass
+): UserAuthResult = prepareSignInFromPrivateKey(authKey, {
     getData()
-}, buildUserPass) { param ->
+}) { param ->
     val encryptionPublicKey = (param.authKey as? AuthKey.Dilithium)?.derEncryptionPublicKey
-    when {
-        isSignUp -> signUp(SignUpBody(param.authKey.derPublicKey, param.signature, encryptionPublicKey))
-        else -> signIn(SignInBody(param.address, param.signature))
+    if (isSignUp) {
+        val userInfo = signUp(SignUpBody(param.authKey.derPublicKey, param.signature, encryptionPublicKey)).getOrThrow()
+        UserAuthResult.Success(
+            completeSignIn(param.authKey, param.data, param.signature, param.address, userInfo, buildUserPass)
+        )
+    } else {
+        when (val response = signIn(SignInBody(param.address, param.signature)).getOrThrow()) {
+            is SignInResponse.Success -> UserAuthResult.Success(
+                completeSignIn(
+                    param.authKey,
+                    param.data,
+                    param.signature,
+                    param.address,
+                    response.userInfo,
+                    buildUserPass
+                )
+            )
+
+            SignInResponse.RequiresTotp -> UserAuthResult.RequiresTotp(
+                PendingTotpSignIn(param.authKey, param.data, param.signature, param.address)
+            )
+        }
     }
 }
 
@@ -233,26 +273,84 @@ data class GetUserInfoParam(
     val authKey: AuthKey
 )
 
+data class PreparedSignInParam(
+    val signature: String,
+    val address: String,
+    val authKey: AuthKey,
+    val data: String,
+)
+
+sealed class UserAuthResult {
+    data class Success(val signResult: SignResult<UserInfo>) : UserAuthResult()
+    data class RequiresTotp(val pending: PendingTotpSignIn) : UserAuthResult()
+}
+
+data class PendingTotpSignIn(
+    val authKey: AuthKey,
+    val data: String,
+    val signature: String,
+    val address: String,
+)
+
 suspend fun <U> SessionManager<U>.signUpOrInFromPrivateKey(
     authKey: AuthKey,
     getData: suspend () -> Result<String>,
     buildUserPass: suspend (BuildPassParam<U>) -> UserPass,
     getUserInfo: suspend (GetUserInfoParam) -> Result<U>
 ): U {
+    return signUpOrInFromPrivateKeyResult(authKey, getData, buildUserPass, getUserInfo).userInfo
+}
+
+suspend fun <U> SessionManager<U>.signUpOrInFromPrivateKeyResult(
+    authKey: AuthKey,
+    getData: suspend () -> Result<String>,
+    buildUserPass: suspend (BuildPassParam<U>) -> UserPass,
+    getUserInfo: suspend (GetUserInfoParam) -> Result<U>
+): SignResult<U> {
+    return prepareSignInFromPrivateKey(authKey, getData) { param ->
+        val userInfo = getUserInfo(GetUserInfoParam(param.signature, param.address, param.authKey)).getOrThrow()
+        completeSignIn(authKey, param.data, param.signature, param.address, userInfo, buildUserPass)
+    }
+}
+
+suspend fun <U, R> SessionManager<U>.prepareSignInFromPrivateKey(
+    authKey: AuthKey,
+    getData: suspend () -> Result<String>,
+    block: suspend (PreparedSignInParam) -> R
+): R {
     getAlgo(authKey.algo).run {
         val data = getData().getOrThrow()
         val f = finalData(data)
 
         val signature = signature(authKey.derPrivateKey, f).getOrThrow()
         val address = calcAddress(authKey.derPublicKey).getOrThrow()
-        val userInfo = getUserInfo(GetUserInfoParam(signature, address, authKey)).getOrThrow()
-        model.updateUser(userInfo)
-        model.updateSignature(data, signature)
-        val userPass = buildUserPass(BuildPassParam(userInfo, address, authKey))
-        model.updateState(ClientSessionState.Success(userPass))
-        return userInfo
+        return block(PreparedSignInParam(signature, address, authKey, data))
     }
 }
+
+suspend fun <U> SessionManager<U>.completeSignIn(
+    authKey: AuthKey,
+    data: String,
+    signature: String,
+    address: String,
+    userInfo: U,
+    buildUserPass: suspend (BuildPassParam<U>) -> UserPass,
+): SignResult<U> {
+    model.updateUser(userInfo)
+    model.updateSignature(data, signature)
+    val userPass = buildUserPass(BuildPassParam(userInfo, address, authKey))
+    model.updateState(ClientSessionState.Success(userPass))
+    return SignResult(userInfo, userPass, data, signature, address, authKey)
+}
+
+data class SignResult<U>(
+    val userInfo: U,
+    val userPass: UserPass,
+    val data: String,
+    val signature: String,
+    val address: String,
+    val authKey: AuthKey,
+)
 
 @OptIn(ExperimentalStdlibApi::class)
 suspend fun processEncryptedTopic(

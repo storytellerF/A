@@ -46,7 +46,8 @@ fun CustomIcon(icon: IconRes, onClick: (() -> Unit)? = null) {
                         icon.description,
                         modifier = Modifier.clickableIfNotNull(onClick).size(20.dp)
                     )
-                })
+                }
+            )
         }
 
         is IconRes.Vector -> {

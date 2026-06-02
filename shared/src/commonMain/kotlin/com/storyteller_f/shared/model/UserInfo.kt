@@ -90,6 +90,29 @@ enum class PassType {
 }
 
 @Serializable
+enum class TwoFactorType {
+    TOTP
+}
+
+@Serializable
+data class TwoFactorSettingsInfo(
+    val enabled: Boolean,
+    val type: TwoFactorType? = null,
+)
+
+@Serializable
+data class TotpSetupInfo(
+    val secret: String,
+    val otpauthUri: String,
+    val recoveryCodes: List<String>,
+)
+
+@Serializable
+data class RecoveryCodesResponse(
+    val recoveryCodes: List<String>,
+)
+
+@Serializable
 data class ChildAccountInfo(
     val hostId: PrimaryKey,
     val encryptedPrivateKey: String,
