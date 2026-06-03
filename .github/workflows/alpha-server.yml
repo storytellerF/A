@@ -48,5 +48,7 @@ jobs:
           key: docker-${{ runner.os }}-${{ hashFiles('Dockerfile', 'docker-image-in-test') }}
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+      - name: Run backend tests
+        run: ENABLE_TEST_CONTAINER=true ./gradlew :backend:minio:test :cloud:cli:test :cloud:service:test :cloud:server:test --console=plain
       - name: Start service
         run: ./scripts/service_scripts/start-service-on-ci.sh alpha
