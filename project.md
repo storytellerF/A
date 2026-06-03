@@ -60,3 +60,7 @@
 ## Server 配置
 
 - 用户注册开关由服务端环境变量 `ENABLE_SIGN_UP` 控制；未配置时默认开启，只有显式设置为 `false` 才会拒绝 `/accounts/sign-up`。
+
+## CI
+
+- `Alpha Server CI` 在启动远端 alpha 服务前执行后端/服务端测试：`:backend:minio:test`、`:cloud:cli:test`、`:cloud:service:test`、`:cloud:server:test`，并启用 `ENABLE_TEST_CONTAINER=true` 覆盖 Testcontainers 路径。
