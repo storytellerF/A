@@ -82,6 +82,12 @@ dependencies {
 
     androidTestImplementation(libs.androidx.ui.test.junit4.android)
     debugImplementation(libs.androidx.ui.test.manifest)
+    testImplementation("junit:junit:4.13.2")
+    testImplementation(libs.bundles.ktor.client)
+    testImplementation(kotlin("test"))
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.multiplatform.settings)
+    testImplementation(libs.robolectric)
     screenshotTestImplementation(projects.app.core)
     screenshotTestImplementation(projects.panel.composeApp)
     screenshotTestImplementation(projects.shared)
