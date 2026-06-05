@@ -101,6 +101,12 @@ dependencies {
         exclude(group = "com.google.protobuf", module = "protobuf-java")
     }
     debugImplementation(libs.leakcanary.android)
+    testImplementation("junit:junit:4.13.2")
+    testImplementation(libs.bundles.ktor.client)
+    testImplementation(kotlin("test"))
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.multiplatform.settings)
+    testImplementation(libs.robolectric)
     screenshotTestImplementation(projects.app.core)
     screenshotTestImplementation(projects.app.composeApp)
     screenshotTestImplementation(projects.shared)
