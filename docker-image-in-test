@@ -1,0 +1,4 @@
+docker.elastic.co/elasticsearch/elasticsearch:8.17.0
+minio/minio:RELEASE.2024-12-18T13-15-44Z
+pgvector/pgvector:pg16
+testcontainers/ryuk:0.12.0
