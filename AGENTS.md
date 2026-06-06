@@ -1,1 +1,0 @@
-查看.agent/rules/project_rules.md
