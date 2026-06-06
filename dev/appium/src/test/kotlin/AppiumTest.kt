@@ -380,7 +380,7 @@ class AppiumTest {
                 storageClient.reset()
                 storageClient.add(appUnderTest.apkFile)
                 val path = storageClient.list().first().path
-                val options = UiAutomator2Options().setApp(path).setDeviceName("device-test")
+                val options = UiAutomator2Options().setApp(path)
 
                 driver = AndroidDriver(remoteAddress, options)
                 driver.startRecordingScreen()
@@ -421,7 +421,6 @@ class AppiumTest {
                 clearAppData(packageName)
                 val session = beforeDriverLaunch(it, packageName)
                 val options = UiAutomator2Options()
-                    .setDeviceName("device-test")
                     .setAppPackage(packageName)
                     .setAppActivity(app.mainActivityClassName)
                     .setNoReset(true)

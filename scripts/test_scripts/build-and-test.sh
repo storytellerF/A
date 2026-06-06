@@ -44,17 +44,28 @@ if [ "$RUN_ALL" = true ]; then
   RUN_APPIUM=true
 fi
 
-shutdownEmu() {
-#    echo "Shutting down emulator gracefully..."
-#    adb emu kill || true
-#    echo "Emulator shut down."
-  echo "Emulator shutdown skipped (not implemented)"
-}
+checkEmulatorReady() {
+    if ! command -v adb >/dev/null 2>&1; then
+        echo "adb is not available. Start a booted Android emulator before running Android/Appium tests."
+        exit 1
+    fi
 
-setupAvd() {
-    echo "Setting up Android Emulator..."
-    ./scripts/android_scripts/create-avd.sh device-test "system-images;android-36;google_apis;x86_64" "pixel"
-    ./scripts/android_scripts/start-avd.sh device-test
+    emulator_serials=$(adb devices | awk '/^emulator-[0-9]+[[:space:]]+device$/ { print $1 }')
+    if [ -z "$emulator_serials" ]; then
+        echo "No running Android emulator found. Start and fully boot an emulator before running Android/Appium tests."
+        exit 1
+    fi
+
+    for emulator_serial in $emulator_serials; do
+        boot_completed=$(adb -s "$emulator_serial" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')
+        if [ "$boot_completed" = "1" ]; then
+            echo "Android emulator is ready: $emulator_serial"
+            return 0
+        fi
+    done
+
+    echo "Android emulator is running but has not completed boot. Wait until sys.boot_completed=1 before running Android/Appium tests."
+    exit 1
 }
 
 copyAppiumLogsToBuild() {
@@ -66,12 +77,6 @@ copyAppiumLogsToBuild() {
     echo "Copied Appium logs to $dest_dir"
   fi
 }
-
-cleanup() {
-    # Only run cleanup for things we started
-    ([ "$RUN_ANDROID" = true ] || [ "$RUN_APPIUM" = true ]) && shutdownEmu
-}
-trap cleanup EXIT
 
 # Unit Tests
 if [ "$RUN_UNIT" = true ]; then
@@ -88,7 +93,7 @@ if [ "$RUN_APPIUM" = true ]; then
 fi
 
 if [ "$RUN_ANDROID" = true ] || [ "$RUN_APPIUM" = true ]; then
-    setupAvd
+    checkEmulatorReady
 fi
 
 # Running android Tests
