@@ -20,5 +20,6 @@ fun PanelAccount.toPanelAccountInfo() = PanelAccountInfo(id, name)
 
 class RawPanelAccount(
     val id: PrimaryKey,
-    val name: String
+    val name: String,
+    val algoType: AlgoType,
 )

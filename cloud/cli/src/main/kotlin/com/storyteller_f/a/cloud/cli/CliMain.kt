@@ -32,6 +32,13 @@ import kotlinx.cli.ExperimentalCli
 
 lateinit var backend: Backend
 
+fun requireBackend(): Backend {
+    if (!::backend.isInitialized) {
+        backend = buildBackendFromEnv(readEnv())
+    }
+    return backend
+}
+
 @OptIn(ExperimentalCli::class)
 fun main(args: Array<String>) {
     setupKmpLogger()
@@ -40,9 +47,8 @@ fun main(args: Array<String>) {
     }
     loadAvif()
     SnowflakeFactory.setMachine(0)
-    backend = buildBackendFromEnv(readEnv())
     val argParser = ArgParser("ACli")
-    argParser.subcommands(AddPreset(), CleanCommand(), PrintCommand(), InitTableCommand())
+    argParser.subcommands(AddPreset(), CleanCommand(), PrintCommand(), InitTableCommand(), GeneratePresetKeysCommand())
     argParser.parse(args)
 }
 

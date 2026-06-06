@@ -62,6 +62,11 @@
 
 - 用户注册开关由服务端环境变量 `ENABLE_SIGN_UP` 控制；未配置时默认开启，只有显式设置为 `false` 才会拒绝 `/accounts/sign-up`。
 
+## Cloud CLI
+
+- `:cloud:cli` 的 `generate-preset-keys` 子命令会为 dev-data 预置账号生成 Dilithium 签名私钥 `p-*` 和 Kyber 加密私钥 `ep-*`，默认定位到项目根的 `deploy/dev-data/secrets`；从 Gradle `:cloud:cli:run` 执行时会向上查找 `deploy/dev-data/0_preset_user.json` 来避免写到模块目录。
+- `deploy/dev-data/0_preset_user.json` 中的 System、FontProvider、robot1、robot2、user1、user2、user3 预置账号使用 `algoType: DILITHIUM`，并分别引用对应 `encryptionPrivateKey`。
+
 ## CI
 
 - `Alpha Server CI` 在启动远端 alpha 服务前执行后端/服务端测试：`:backend:minio:test`、`:cloud:cli:test`、`:cloud:service:test`、`:cloud:server:test`，并启用 `ENABLE_TEST_CONTAINER=true` 覆盖 Testcontainers 路径。

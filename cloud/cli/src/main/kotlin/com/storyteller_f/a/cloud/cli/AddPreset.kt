@@ -121,7 +121,7 @@ class AddPreset : Subcommand("add", "add entry") {
             exitProcess(1)
         }
         loadCryptoLibIfNeed()
-        val connected = backend
+        val connected = requireBackend()
         val jsonFile = File(jsonFilePath)
 
         val presetValue = Json {
@@ -157,9 +157,10 @@ class AddPreset : Subcommand("add", "add entry") {
         val accounts = presetValue.panelAccountData ?: return
         accounts.forEach {
             val id = SnowflakeFactory.nextId()
-            val (derPublicKey, ad) = getPubKeyAndAddress(parentDir, it.privateKey, AlgoType.P256)
+            val algoType = it.algoType?.let { value -> AlgoType.valueOf(value) } ?: AlgoType.P256
+            val (derPublicKey, ad) = getPubKeyAndAddress(parentDir, it.privateKey, algoType)
             database.panelAccount.addPanelAccount(
-                PanelAccount(id, it.name, PassType.RAW, AlgoType.P256, derPublicKey, ad)
+                PanelAccount(id, it.name, PassType.RAW, algoType, derPublicKey, ad)
             ).getOrThrow()
         }
     }
