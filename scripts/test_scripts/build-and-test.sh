@@ -70,7 +70,14 @@ checkEmulatorReady() {
         exit 1
     fi
 
-    emulator_serials=$(adb devices | awk '/^emulator-[0-9]+[[:space:]]+device$/ { print $1 }')
+    emulator_serials=""
+    for device_serial in $(adb devices | awk 'NR > 1 && $2 == "device" { print $1 }'); do
+        is_emulator=$(adb -s "$device_serial" shell getprop ro.kernel.qemu 2>/dev/null | tr -d '\r')
+        if [ "$is_emulator" = "1" ]; then
+            emulator_serials="${emulator_serials}${emulator_serials:+ }$device_serial"
+        fi
+    done
+
     if [ -z "$emulator_serials" ]; then
         echo "No running Android emulator found. Start and fully boot an emulator before running Android/Appium tests."
         exit 1

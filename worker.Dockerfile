@@ -21,10 +21,17 @@ FROM eclipse-temurin:21-alpine
 
 RUN apk add libavif-dev
 
+ARG APP_UID=10001
+ARG APP_GID=10001
+RUN addgroup -S -g "$APP_GID" app && \
+    adduser -S -D -h /home/app -u "$APP_UID" -G app app
+ENV HOME=/home/app
+
 WORKDIR /app
 
-COPY --from=builder /app/cloud/worker/build/decompressed/worker .
+COPY --from=builder --chown=app:app /app/cloud/worker/build/decompressed/worker .
+
+USER app:app
 
 ENTRYPOINT ["sh", "./bin/worker"]
 # ENTRYPOINT ["sh", "-c", "while true; do sleep 3600; done"]
-
