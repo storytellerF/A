@@ -75,7 +75,7 @@ class ExposedPanelAccountDatabase(val databaseSession: ExposedDatabaseSession) :
         }
         first {
             val value = PanelAccount.wrapRow(it)
-            Pair(RawPanelAccount(value.id, value.name), value.publicKey)
+            Pair(RawPanelAccount(value.id, value.name, value.algoType), value.publicKey)
         }
     }
 

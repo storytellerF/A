@@ -10,15 +10,16 @@ import kotlinx.coroutines.runBlocking
 class CleanCommand : Subcommand("clean", "clean all data") {
     override fun execute() {
         runBlocking {
-            backend.database.clean()
+            val connected = requireBackend()
+            connected.database.clean()
             Napier.i {
                 "database tables delete done"
             }
-            backend.objectStorageService.clean(A_FILE_DEFAULT_BUCKET).getOrThrow()
-            backend.topicSearchService.clean().getOrThrow()
-            backend.userSearchService.clean().getOrThrow()
-            backend.roomSearchService.clean().getOrThrow()
-            backend.communitySearchService.clean().getOrThrow()
+            connected.objectStorageService.clean(A_FILE_DEFAULT_BUCKET).getOrThrow()
+            connected.topicSearchService.clean().getOrThrow()
+            connected.userSearchService.clean().getOrThrow()
+            connected.roomSearchService.clean().getOrThrow()
+            connected.communitySearchService.clean().getOrThrow()
         }
         Napier.i {
             "clean done"
@@ -30,7 +31,7 @@ class CleanCommand : Subcommand("clean", "clean all data") {
 class InitTableCommand : Subcommand("init", "init table data") {
     override fun execute() {
         runBlocking {
-            backend.database.init()
+            requireBackend().database.init()
         }
         Napier.i {
             "init done"

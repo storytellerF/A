@@ -131,7 +131,7 @@ suspend fun Backend.adminSignIn(data: String, pack: SignInBody): Result<PanelAcc
         .filterNotNull {
             CustomBadRequestException("user not found")
         }.mapResult { (rawPanelAccount, publicKey) ->
-            getAlgo().verify(publicKey, pack.signature, f).mapResult { isVerified ->
+            getAlgo(rawPanelAccount.algoType).verify(publicKey, pack.signature, f).mapResult { isVerified ->
                 if (isVerified) {
                     Result.success(rawPanelAccount)
                 } else {
