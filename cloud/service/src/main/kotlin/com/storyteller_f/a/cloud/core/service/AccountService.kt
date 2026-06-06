@@ -149,7 +149,7 @@ suspend fun Backend.adminSignUp(
     pack: SignUpBody
 ): Result<PanelAccountInfo> {
     val f = finalData(data)
-    return getAlgo().run {
+    return getAlgo(AlgoType.P256).run {
         verify(pack.publicKey, pack.signature, f).errorIfFalse {
             CustomBadRequestException("Verify failed")
         }.mapResult {

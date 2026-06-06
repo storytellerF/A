@@ -135,6 +135,13 @@ data class ContainerInfo(
 )
 
 data class UserAuthData(val publicKey: String, val userId: PrimaryKey, val algoType: AlgoType)
+data class MemberAuthData(
+    val publicKey: String,
+    val encryptionPublicKey: String?,
+    val userId: PrimaryKey,
+    val roomAid: String,
+    val algoType: AlgoType,
+)
 
 sealed interface JoinSearch {
     data class Joined(val uid: PrimaryKey) : JoinSearch
@@ -642,7 +649,7 @@ interface AdminDatabase {
 
     suspend fun batchAddRooms(roomList: List<Room>, membersList: List<Member>)
 
-    suspend fun getAllMembers(distinct: List<String>): Result<List<Triple<String, Long, String>>>
+    suspend fun getAllMembers(distinct: List<String>): Result<List<MemberAuthData>>
     suspend fun batchAddEncryptTopicKeys(encryptedKeys: List<Triple<PrimaryKey, ByteArray, Long>>): Result<Unit>
 
     suspend fun batchAddTopics(

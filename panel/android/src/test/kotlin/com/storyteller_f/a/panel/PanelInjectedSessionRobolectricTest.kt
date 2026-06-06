@@ -7,6 +7,7 @@ import com.storyteller_f.a.client.core.ClientSessionState
 import com.storyteller_f.a.client.core.createPanelSessionManager
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.loadCryptoLibIfNeed
+import com.storyteller_f.shared.model.AlgoType
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.test.runTest
 import java.io.BufferedOutputStream
@@ -46,7 +47,7 @@ class PanelInjectedSessionRobolectricTest {
     }
 
     private suspend fun createInjectedSessionJson(): InjectedSessionJson {
-        val algo = getAlgo()
+        val algo = getAlgo(AlgoType.P256)
         val pemPrivateKey = algo.generatePemKeyPair().getOrThrow().first
         val derPrivateKey = algo.getDerPrivateKey(pemPrivateKey).getOrThrow()
         val derPublicKey = algo.getDerPublicKeyFromPrivateKey(pemPrivateKey).getOrThrow()

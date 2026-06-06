@@ -23,6 +23,7 @@ import com.storyteller_f.a.client.core.AuthKey
 import com.storyteller_f.a.client.core.getPanelUserPass
 import com.storyteller_f.a.panel.LocalPanelGlobalDialog
 import com.storyteller_f.shared.getAlgo
+import com.storyteller_f.shared.model.AlgoType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
@@ -33,13 +34,13 @@ class PanelInputViewModel : ViewModel() {
     val privateKey = MutableStateFlow("")
 
     val publicKey = privateKey.map {
-        getAlgo().run {
+        getAlgo(AlgoType.P256).run {
             getDerPublicKeyFromPrivateKey(it).getOrNull()
         }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     val address = publicKey.map {
-        getAlgo().run {
+        getAlgo(AlgoType.P256).run {
             it?.let { derPublicKeyStr -> calcAddress(derPublicKeyStr).getOrNull() }
         }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
@@ -50,7 +51,7 @@ class PanelInputViewModel : ViewModel() {
 
     fun autoGeneratePrivateKey() {
         viewModelScope.launch {
-            getAlgo().generatePemKeyPair().onSuccess { (privateKey, _) ->
+            getAlgo(AlgoType.P256).generatePemKeyPair().onSuccess { (privateKey, _) ->
                 updatePrivateKey(privateKey)
             }
         }
@@ -71,7 +72,7 @@ fun PanelInputPage(back: () -> Unit) {
                 dialogController.useResult {
                     request {
                         runCatching {
-                            val algo = getAlgo()
+                            val algo = getAlgo(AlgoType.P256)
                             val derPriKey = algo.getDerPrivateKey(privateKey).getOrThrow()
                             val derPubKey = algo.getDerPublicKeyFromPrivateKey(privateKey).getOrThrow()
                             getPanelUserPass(

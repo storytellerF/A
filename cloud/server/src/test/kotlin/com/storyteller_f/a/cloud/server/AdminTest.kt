@@ -46,6 +46,7 @@ import com.storyteller_f.a.client.core.overview
 import com.storyteller_f.a.client.core.sendMessage
 import com.storyteller_f.a.client.core.upload
 import com.storyteller_f.shared.getAlgo
+import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TopicPinSearch
 import com.storyteller_f.shared.obj.ObjectTuple
@@ -151,7 +152,7 @@ class AdminTest {
 
     @Test
     fun `test add user`() = test {
-        val (privateKey, derPrivateKey, publicKey) = getAlgo().run {
+        val (privateKey, derPrivateKey, publicKey) = getAlgo(AlgoType.P256).run {
             val privateKey = generatePemKeyPair().getOrThrow().first
             val derPriKey = getDerPrivateKey(privateKey).getOrThrow()
             val derPubKey = getDerPublicKeyFromPrivateKey(privateKey).getOrThrow()

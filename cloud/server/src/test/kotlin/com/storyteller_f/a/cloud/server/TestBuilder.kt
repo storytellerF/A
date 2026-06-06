@@ -426,6 +426,5 @@ suspend fun <R> TestMate.withWorkerBackend(
 suspend fun <R> TestMate.withCliBackend(
     block: suspend (WorkerBackend) -> R
 ): R {
-    com.storyteller_f.a.cloud.cli.backend = workerBackend
     return block(workerBackend)
 }

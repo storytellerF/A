@@ -2,6 +2,7 @@ package com.storyteller_f.a.backend.exposed.database
 
 import com.storyteller_f.a.backend.core.AdminDatabase
 import com.storyteller_f.a.backend.core.InsertTopicTuple
+import com.storyteller_f.a.backend.core.MemberAuthData
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.paginationFromResults
 import com.storyteller_f.a.backend.core.types.Community
@@ -123,7 +124,13 @@ class ExposedAdminDatabase(val databaseSession: ExposedDatabaseSession) : AdminD
             .where {
                 Aids.value inList distinct
             }.toList().map {
-                Triple(it[Users.publicKey], it[Users.id], it[Aids.value])
+                MemberAuthData(
+                    it[Users.publicKey],
+                    it[Users.encryptionPublicKey],
+                    it[Users.id],
+                    it[Aids.value],
+                    it[Users.algoType],
+                )
             }
     }
 

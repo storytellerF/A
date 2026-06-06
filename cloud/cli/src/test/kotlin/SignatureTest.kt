@@ -1,4 +1,5 @@
 import com.storyteller_f.shared.*
+import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.obj.PresetValue
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
@@ -24,7 +25,7 @@ class SignatureTest {
             presetValue.userData!!.forEach {
                 val privateKeyStr =
                     File(jsonFile.parentFile, it.privateKey).readText().replace("\r\n", "\n")
-                getAlgo().run {
+                getAlgo(AlgoType.P256).run {
                     val derPriKey = getDerPrivateKey(privateKeyStr).getOrThrow()
                     val s = signature(derPriKey, data).getOrThrow()
                     val derPublicKeyStr = getDerPublicKeyFromPrivateKey(privateKeyStr).getOrThrow()
@@ -49,7 +50,7 @@ class SignatureTest {
             presetValue.userData!!.forEach {
                 val pemPrivateKey =
                     File(jsonFile.parentFile, it.privateKey).readText().replaceCrlf()
-                getAlgo().run {
+                getAlgo(AlgoType.P256).run {
                     val derPublicKeyStr = getDerPublicKeyFromPrivateKey(pemPrivateKey).getOrThrow()
                     val (encrypted, aes) = encryptDataByAES(data).getOrThrow()
                     val encryptedAes = encryptionAlgo.kemEncrypt(derPublicKeyStr, aes).getOrThrow()
