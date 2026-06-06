@@ -30,14 +30,7 @@ import io.github.aakira.napier.Napier
 import kotlinx.cli.ArgParser
 import kotlinx.cli.ExperimentalCli
 
-lateinit var backend: Backend
-
-fun requireBackend(): Backend {
-    if (!::backend.isInitialized) {
-        backend = buildBackendFromEnv(readEnv())
-    }
-    return backend
-}
+fun requireBackend(): Backend = buildBackendFromEnv(readEnv())
 
 @OptIn(ExperimentalCli::class)
 fun main(args: Array<String>) {

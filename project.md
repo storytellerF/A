@@ -64,6 +64,7 @@
 
 ## Cloud CLI
 
+- `cloud/cli` 命令不要使用顶层 `backend` 全局变量；需要后端实例时，在命令执行处直接调用 `requireBackend()` 构建。
 - `:cloud:cli` 的 `generate-preset-keys` 子命令会为 dev-data 预置账号生成 Dilithium 签名私钥 `p-*` 和 Kyber 加密私钥 `ep-*`，默认定位到项目根的 `deploy/dev-data/secrets`；从 Gradle `:cloud:cli:run` 执行时会向上查找 `deploy/dev-data/0_preset_user.json` 来避免写到模块目录。
 - `deploy/dev-data/0_preset_user.json` 中的 System、FontProvider、robot1、robot2、user1、user2、user3 预置账号使用 `algoType: DILITHIUM`，并分别引用对应 `encryptionPrivateKey`。
 

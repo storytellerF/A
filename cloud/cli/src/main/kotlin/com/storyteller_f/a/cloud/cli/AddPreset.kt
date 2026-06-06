@@ -542,7 +542,7 @@ class AddPreset : Subcommand("add", "add entry") {
             val fontSettings = if (font == null) {
                 null
             } else {
-                val fontMediaId = backend.getFileInfoList(listOf("100/$font")).getOrThrow()?.firstOrNull()?.id
+                val fontMediaId = getFileInfoList(listOf("100/$font")).getOrThrow()?.firstOrNull()?.id
                 fontMediaId?.let { fontId -> FontSettings(contentFontId = fontId) }
             }
             InsertCommunityTuple(it, iconMedia, id, fontSettings, now())
