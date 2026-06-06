@@ -448,11 +448,11 @@ class AppiumTest {
     }
 
     private suspend fun generatePrivateKey(): String {
-        return getAlgo().generatePemKeyPair().getOrThrow().first
+        return getAlgo(AlgoType.P256).generatePemKeyPair().getOrThrow().first
     }
 
     private suspend fun createPreRegisteredSession(hostServerPort: Int): InjectedSession {
-        val algo = getAlgo()
+        val algo = getAlgo(AlgoType.P256)
         val (pemPrivateKey, _) = algo.generatePemKeyPair().getOrThrow()
         val derPrivateKey = algo.getDerPrivateKey(pemPrivateKey).getOrThrow()
         val derPublicKey = algo.getDerPublicKeyFromPrivateKey(pemPrivateKey).getOrThrow()
@@ -470,7 +470,7 @@ class AppiumTest {
     }
 
     private suspend fun createPreRegisteredPanelSession(hostServerPort: Int): InjectedSession {
-        val algo = getAlgo()
+        val algo = getAlgo(AlgoType.P256)
         val (pemPrivateKey, _) = algo.generatePemKeyPair().getOrThrow()
         val derPrivateKey = algo.getDerPrivateKey(pemPrivateKey).getOrThrow()
         val derPublicKey = algo.getDerPublicKeyFromPrivateKey(pemPrivateKey).getOrThrow()

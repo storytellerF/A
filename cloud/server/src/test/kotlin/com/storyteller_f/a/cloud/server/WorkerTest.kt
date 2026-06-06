@@ -61,7 +61,7 @@ class WorkerTest {
         // 创建 System 用户并执行 Intro 任务
         withWorkerBackend { backend ->
             // 创建 System 用户
-            val algo = com.storyteller_f.shared.getAlgo()
+            val algo = com.storyteller_f.shared.getAlgo(AlgoType.P256)
             val (_, sysPubPem) = algo.generatePemKeyPair().getOrThrow()
             val sysPubDer = algo.getDerPublicKeyFromPem(sysPubPem).getOrThrow()
             val sysAddress = algo.calcAddress(sysPubDer).getOrThrow()
@@ -133,7 +133,7 @@ class WorkerTest {
         // 执行 title 任务
         withWorkerBackend { backend ->
             // 创建 System 用户（为 title 任务准备）
-            val algo = com.storyteller_f.shared.getAlgo()
+            val algo = com.storyteller_f.shared.getAlgo(AlgoType.P256)
             val (_, sysPubPem) = algo.generatePemKeyPair().getOrThrow()
             val sysPubDer = algo.getDerPublicKeyFromPem(sysPubPem).getOrThrow()
             val sysAddress = algo.calcAddress(sysPubDer).getOrThrow()
@@ -187,7 +187,7 @@ class WorkerTest {
         // 依次执行所有 worker 任务
         withWorkerBackend { backend ->
             // 创建 System 用户（为 IntroTask 和 TitleTask 准备）
-            val algo = com.storyteller_f.shared.getAlgo()
+            val algo = com.storyteller_f.shared.getAlgo(AlgoType.P256)
             val (_, sysPubPem) = algo.generatePemKeyPair().getOrThrow()
             val sysPubDer = algo.getDerPublicKeyFromPem(sysPubPem).getOrThrow()
             val sysAddress = algo.calcAddress(sysPubDer).getOrThrow()

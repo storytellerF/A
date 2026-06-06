@@ -6,6 +6,7 @@ import com.storyteller_f.shared.decryptMessage
 import com.storyteller_f.shared.encryptDataByAES
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.loadCryptoLibIfNeed
+import com.storyteller_f.shared.model.AlgoType
 import kotlinx.coroutines.test.runTest
 import org.bouncycastle.pqc.jcajce.spec.DilithiumParameterSpec
 import org.bouncycastle.pqc.jcajce.spec.KyberParameterSpec
@@ -63,7 +64,7 @@ class SignatureTest {
     @Test
     fun `test address`() = runTest {
         loadCryptoLibIfNeed()
-        getAlgo().run {
+        getAlgo(AlgoType.P256).run {
             val (_, publicPem) = generatePemKeyPair().getOrThrow()
             val derPublic = getDerPublicKeyFromPem(publicPem).getOrThrow()
             println(calcAddress(derPublic).getOrThrow())

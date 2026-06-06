@@ -295,7 +295,7 @@ suspend fun decryptDataByAES(encrypted: ByteArray, aesKey: ByteArray): Result<St
     }
 }
 
-fun getAlgo(algo: AlgoType = AlgoType.P256): Algo {
+fun getAlgo(algo: AlgoType): Algo {
     return when (algo) {
         AlgoType.P256 -> AlgoP256
         AlgoType.DILITHIUM -> AlgoDilithium

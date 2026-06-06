@@ -135,7 +135,7 @@ data class AndroidKeyStoreUserPass(private val alias: String) : UserPass {
 
         val derPublicKeyStr = keyStore.getCertificate("default").publicKey.encoded.toHexString()
         println("public $derPublicKeyStr")
-        return getAlgo().calcAddress(derPublicKeyStr)
+        return getAlgo(AlgoType.P256).calcAddress(derPublicKeyStr)
     }
 
     override suspend fun decryptChildAccount(

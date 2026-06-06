@@ -792,9 +792,7 @@ class AddPreset : Subcommand("add", "add entry") {
         val roomAids = topicList.mapNotNull {
             it.room
         }.distinct()
-        val roomMembers = database.admin.getAllMembers(roomAids).getOrThrow().groupBy {
-            it.third
-        }
+        val roomMembers = database.admin.getAllMembers(roomAids).getOrThrow().groupBy { it.roomAid }
         val encryptedContents = topicList.map {
             val (encryptedContent, aesBytes) = encryptDataByAES(
                 getTopicContent(it, parentDir)
@@ -805,8 +803,19 @@ class AddPreset : Subcommand("add", "add entry") {
             val topic = it.presetTopic
             val id = it.id
             val aesBytes = it.aesKey
-            roomMembers[topic.room]!!.map { (derPublicKey, uid) ->
-                Triple(id, getAlgo().encryptionAlgo.kemEncrypt(derPublicKey, aesBytes).getOrThrow(), uid)
+            roomMembers[topic.room]!!.map { member ->
+                val derPublicKey = if (member.algoType == AlgoType.DILITHIUM) {
+                    requireNotNull(member.encryptionPublicKey) {
+                        "Missing encryption public key for ${member.userId}"
+                    }
+                } else {
+                    member.publicKey
+                }
+                Triple(
+                    id,
+                    getAlgo(member.algoType).encryptionAlgo.kemEncrypt(derPublicKey, aesBytes).getOrThrow(),
+                    member.userId
+                )
             }
         }
         val tuples = encryptedContents.mapIndexed { index, tuple ->

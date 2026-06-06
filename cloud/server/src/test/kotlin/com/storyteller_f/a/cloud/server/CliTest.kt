@@ -40,7 +40,7 @@ private data class P256KeyMaterial(
 )
 
 private suspend fun generateP256KeyMaterial(): P256KeyMaterial {
-    val algo = getAlgo()
+    val algo = getAlgo(AlgoType.P256)
     val (privatePem, _) = algo.generatePemKeyPair().getOrThrow()
     val derPrivate = algo.getDerPrivateKey(privatePem).getOrThrow()
     val derPublic = algo.getDerPublicKeyFromPrivateKey(privatePem).getOrThrow()
@@ -63,7 +63,7 @@ private suspend fun ensureSystemUser(testMate: TestMate) {
         if (existing.isNotEmpty()) {
             return@withCliBackend
         }
-        val algo = getAlgo()
+        val algo = getAlgo(AlgoType.P256)
         val (_, sysPubPem) = algo.generatePemKeyPair().getOrThrow()
         val sysPubDer = algo.getDerPublicKeyFromPem(sysPubPem).getOrThrow()
         val sysAddress = algo.calcAddress(sysPubDer).getOrThrow()
