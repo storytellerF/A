@@ -69,7 +69,7 @@ dependencies {
     }
     implementation(libs.okhttp)
 
-    // 新增依赖 - 从 app/android 复制
+    // 新增依赖 - 从 app/androidApp 复制
     implementation(libs.runtime)
     implementation(libs.foundation)
     implementation(libs.material3)

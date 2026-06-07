@@ -35,16 +35,16 @@
 
 ## Android App
 
-- `app/android` 是应用壳模块，承载 `MainActivity`、`UploadActivity`、`MediaPlayerActivity`、`BubbleActivity`、`RTCActivity` 和 manifest 入口；`app/composeApp` 保留可复用 Compose UI、actual 实现、服务与 Android helper。
-- `app/composeApp` 不能编译期依赖 `app/android`。需要从 composeApp 内启动应用 Activity 时，使用稳定的显式 class name 常量创建 `Intent` 或 `ComponentName`。
+- `app/androidApp` 是应用壳模块，承载 `MainActivity`、`UploadActivity`、`MediaPlayerActivity`、`BubbleActivity`、`RTCActivity` 和 manifest 入口；`app/composeApp` 保留可复用 Compose UI、actual 实现、服务与 Android helper。
+- `app/composeApp` 不能编译期依赖 `app/androidApp`。需要从 composeApp 内启动应用 Activity 时，使用稳定的显式 class name 常量创建 `Intent` 或 `ComponentName`。
 - `app/desktopApp` 是桌面 JVM 应用壳模块，承载 Compose Desktop `main` 与 `compose.desktop` 打包配置；`app/composeApp` 保留共享 UI 和 JVM actual 实现。
 - `panel/desktopApp` 是 Panel 桌面 JVM 应用壳模块，承载 Compose Desktop `main` 与 `compose.desktop` 打包配置；`panel/composeApp` 保留共享 UI 和 JVM actual 实现。
-- `app/android` 和 `panel/android` 入口类继承 `ComponentActivity`，媒体服务继承 Media3 `MediaSessionService`；release lint 对这些 Kotlin/Compose/Media3 组件存在 `Instantiatable` 误报，两个应用壳模块均禁用该 lint 检查。
+- `app/androidApp` 和 `panel/androidApp` 入口类继承 `ComponentActivity`，媒体服务继承 Media3 `MediaSessionService`；release lint 对这些 Kotlin/Compose/Media3 组件存在 `Instantiatable` 误报，两个应用壳模块均禁用该 lint 检查。
 
 ## Appium
 
-- `dev/appium` 通过 `-Pappium=true` 才会被 include；测试脚本运行 Appium 前需要同时构建 `app:android:assembleDebug` 和 `panel:android:assembleDebug`，panel 的启动入口是 `com.storyteller_f.a.panel.MainActivity`。
-- `app/android` 和 `panel/android` 可用 Robolectric 覆盖部分 Appium 前置/启动逻辑；例如把同格式 session JSON 写入 `filesDir/appium-session/session.json` 后调用 `restoreFromStorage`，可验证“注入私有 session 后恢复登录态”的非设备部分。
+- `dev/appium` 通过 `-Pappium=true` 才会被 include；测试脚本运行 Appium 前需要同时构建 `app:androidApp:assembleDebug` 和 `panel:androidApp:assembleDebug`，panel 的启动入口是 `com.storyteller_f.a.panel.MainActivity`。
+- `app/androidApp` 和 `panel/androidApp` 可用 Robolectric 覆盖部分 Appium 前置/启动逻辑；例如把同格式 session JSON 写入 `filesDir/appium-session/session.json` 后调用 `restoreFromStorage`，可验证“注入私有 session 后恢复登录态”的非设备部分。
 
 ## Gradle 工具脚本
 

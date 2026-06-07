@@ -104,7 +104,7 @@ A 是一个基于 Kotlin Multiplatform 的多平台应用程序框架，支持 A
 ./gradlew :cloud:server:build
 
 # 构建 Android 应用
-./gradlew :app:android:assembleDebug
+./gradlew :app:androidApp:assembleDebug
 
 # 构建 Desktop 应用
 ./gradlew :app:desktopApp:packageDistributionForCurrentOS
@@ -164,7 +164,7 @@ gpr.key=<GitHub personal access token>
 ./gradlew build -Pappium=true
 
 # 需要同时构建两个 APK
-./gradlew :app:android:assembleDebug :panel:android:assembleDebug
+./gradlew :app:androidApp:assembleDebug :panel:androidApp:assembleDebug
 ```
 
 ## CI/CD
@@ -187,7 +187,7 @@ ENABLE_TEST_CONTAINER=true ./gradlew test
 - 不直接创建 ViewModel，使用依赖注入方式
 
 ### Android 模块划分
-- `app/android` - 应用壳模块，包含 Activity 和 Manifest
+- `app/androidApp` - 应用壳模块，包含 Activity 和 Manifest
 - `app/composeApp` - 共享 Compose UI 和 actual 实现
 - composeApp 不能编译期依赖 android 模块，使用显式 Intent 启动 Activity
 

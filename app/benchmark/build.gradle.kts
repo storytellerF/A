@@ -28,7 +28,7 @@ android {
         }
     }
 
-    targetProjectPath = ":app:android"
+    targetProjectPath = ":app:androidApp"
     experimentalProperties["android.experimental.self-instrumenting"] = true
     compileOptions {
         val javaVersion = JavaVersion.forClassVersion(libs.versions.jdk.get().toInt())

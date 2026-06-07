@@ -66,13 +66,13 @@ private const val PANEL_MAIN_ACTIVITY_CLASS_NAME = "com.storyteller_f.a.panel.Ma
 private val APPLICATION_ID_REGEX = Regex("\"applicationId\"\\s*:\\s*\"([^\"]+)\"")
 
 private val appUnderTest = AppUnderTest(
-    apkFile = File("../../app/android/build/outputs/apk/debug/android-universal-debug.apk"),
+    apkFile = File("../../app/androidApp/build/outputs/apk/debug/android-universal-debug.apk"),
     packageName = ::resolveAppPackageName,
     mainActivityClassName = APP_MAIN_ACTIVITY_CLASS_NAME,
 )
 
 private val panelUnderTest = AppUnderTest(
-    apkFile = File("../../panel/android/build/outputs/apk/debug/android-universal-debug.apk"),
+    apkFile = File("../../panel/androidApp/build/outputs/apk/debug/android-universal-debug.apk"),
     packageName = ::resolvePanelPackageName,
     mainActivityClassName = PANEL_MAIN_ACTIVITY_CLASS_NAME,
 )
@@ -900,16 +900,16 @@ private fun isInstallFailedBySignatureMismatch(output: String): Boolean {
 
 private fun resolveAppPackageName(): String = resolvePackageName(
     metadataCandidates = sequenceOf(
-        File("../../app/android/build/outputs/apk/debug/output-metadata.json"),
-        File("app/android/build/outputs/apk/debug/output-metadata.json"),
+        File("../../app/androidApp/build/outputs/apk/debug/output-metadata.json"),
+        File("app/androidApp/build/outputs/apk/debug/output-metadata.json"),
     ),
     fallbackApplicationIdPrefix = "com.storyteller_f.a.app",
 )
 
 private fun resolvePanelPackageName(): String = resolvePackageName(
     metadataCandidates = sequenceOf(
-        File("../../panel/android/build/outputs/apk/debug/output-metadata.json"),
-        File("panel/android/build/outputs/apk/debug/output-metadata.json"),
+        File("../../panel/androidApp/build/outputs/apk/debug/output-metadata.json"),
+        File("panel/androidApp/build/outputs/apk/debug/output-metadata.json"),
     ),
     fallbackApplicationIdPrefix = "com.storyteller_f.a.panel",
 )
