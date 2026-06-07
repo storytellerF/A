@@ -885,13 +885,9 @@ private fun runAdbCommandAllowFailure(vararg args: String): AdbCommandResult {
 }
 
 private fun adbProcessBuilder(args: List<String>): ProcessBuilder {
-    val processBuilder = ProcessBuilder(listOf("adb") + args)
-        .redirectErrorStream(true)
     val home = System.getProperty("user.home")
-    val environment = processBuilder.environment()
-    val old = environment.getOrDefault("PATH", "")
-    if (!old.contains("platform-tools"))
-        environment["PATH"] = "$old:$home/Android/Sdk/platform-tools"
+    val processBuilder = ProcessBuilder(listOf("$home/Android/Sdk/platform-tools/adb") + args)
+        .redirectErrorStream(true)
     return processBuilder
 }
 

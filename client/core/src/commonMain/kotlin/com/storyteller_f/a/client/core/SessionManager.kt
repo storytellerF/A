@@ -19,8 +19,10 @@ import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
 import io.ktor.client.plugins.cookies.CookiesStorage
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.client.plugins.websocket.webSocketSession
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.withContext
 import kotlin.time.ExperimentalTime
 
 interface SessionModel<U> {
@@ -167,15 +169,17 @@ suspend fun UserSessionManager.login() {
         userHandler.done(it)
     }) {
         runCatching {
-            val data = getData().getOrThrow()
-            val address = userPass.address().getOrThrow()
-            val signature = userPass.signature(finalData(data)).getOrThrow()
-            val userInfo = when (val response = signIn(SignInBody(address, signature)).getOrThrow()) {
-                is SignInResponse.Success -> response.userInfo
-                SignInResponse.RequiresTotp -> error("totp required")
+            withContext(NonCancellable) {
+                val data = getData().getOrThrow()
+                val address = userPass.address().getOrThrow()
+                val signature = userPass.signature(finalData(data)).getOrThrow()
+                val userInfo = when (val response = signIn(SignInBody(address, signature)).getOrThrow()) {
+                    is SignInResponse.Success -> response.userInfo
+                    SignInResponse.RequiresTotp -> error("totp required")
+                }
+                model.updateSignature(data, signature)
+                userInfo
             }
-            model.updateSignature(data, signature)
-            userInfo
         }
     }
 }
@@ -187,12 +191,14 @@ suspend fun PanelSessionManager.login() {
         userHandler.done(it)
     }) {
         runCatching {
-            val data = getData().getOrThrow()
-            val address = userPass.address().getOrThrow()
-            val signature = userPass.signature(finalData(data)).getOrThrow()
-            val userInfo = signIn(SignInBody(address, signature)).getOrThrow()
-            model.updateSignature(data, signature)
-            userInfo
+            withContext(NonCancellable) {
+                val data = getData().getOrThrow()
+                val address = userPass.address().getOrThrow()
+                val signature = userPass.signature(finalData(data)).getOrThrow()
+                val userInfo = signIn(SignInBody(address, signature)).getOrThrow()
+                model.updateSignature(data, signature)
+                userInfo
+            }
         }
     }
 }

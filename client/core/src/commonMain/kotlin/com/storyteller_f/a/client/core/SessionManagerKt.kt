@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import com.storyteller_f.shared.model.PanelAccountInfo
 import com.storyteller_f.shared.model.UserInfo
+import io.github.aakira.napier.Napier
 
 context(c: CoroutineScope)
 fun UserSessionManager.startBackgroundTask(): List<Job> {
@@ -18,6 +19,9 @@ fun UserSessionManager.startBackgroundTask(): List<Job> {
         combine(model.state, model.userHandler.data) { t1, t2 ->
             t1 to t2
         }.distinctUntilChanged().collect { (state, userInfo) ->
+            Napier.i(tag = "UserSessionManager") {
+                "background task state=${state::class.simpleName} hasUser=${userInfo != null}"
+            }
             if (state is ClientSessionState.Success && userInfo == null) {
                 login()
             }
