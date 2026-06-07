@@ -16,6 +16,7 @@ import com.storyteller_f.a.client.core.defaultClientConfigureForPanel
 import com.storyteller_f.a.client.core.getAuthKey
 import com.storyteller_f.a.client.core.getPanelUserPass
 import com.storyteller_f.a.client.core.getUserPass
+import com.storyteller_f.a.client.core.onBackgroundTask
 import com.storyteller_f.a.client.core.signOut
 import com.storyteller_f.a.client.core.startBackgroundTask
 import com.storyteller_f.a.cloud.worker.WorkerBackend
@@ -314,7 +315,7 @@ suspend fun <R> TestMate.getAppSession(
                 defaultClientConfigure(cookiesStorage, model)
             }
         }, onReceive)
-        sessionManager.startBackgroundTask {
+        sessionManager.onBackgroundTask {
             val sessionModel = model
             val userInfo = getUserPass(authKey, isSignUp) {
                 RawUserPass(it)
@@ -344,7 +345,7 @@ suspend fun <R2> TestMate.noneSession(
                 defaultClientConfigure(cookiesStorage, model)
             }
         }) { _, _, _ -> }
-        sessionManager.startBackgroundTask {
+        sessionManager.onBackgroundTask {
             block()
         }
     }
