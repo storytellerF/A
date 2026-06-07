@@ -55,12 +55,31 @@ showNotification() {
     fi
 }
 
-checkEmulatorReady() {
-    if ! command -v adb >/dev/null 2>&1; then
-        echo "adb is not available. Start a booted Android emulator before running Android/Appium tests."
-        exit 1
+isVmwareEnvironment() {
+    if command -v systemd-detect-virt >/dev/null 2>&1 && systemd-detect-virt --quiet --vm && [ "$(systemd-detect-virt 2>/dev/null)" = "vmware" ]; then
+        return 0
     fi
 
+    if [ -r /sys/class/dmi/id/product_name ] && grep -qi 'vmware' /sys/class/dmi/id/product_name; then
+        return 0
+    fi
+
+    return 1
+}
+
+vmwareHostIp() {
+    if ! command -v ip >/dev/null 2>&1; then
+        return 1
+    fi
+
+    local_ip=$(ip -4 route get 1.1.1.1 2>/dev/null | awk '{ for (i = 1; i <= NF; i++) if ($i == "src") { print $(i + 1); exit } }')
+    [ -z "$local_ip" ] && local_ip=$(ip -4 addr show scope global 2>/dev/null | awk '/inet / { sub(/\/.*/, "", $2); print $2; exit }')
+    [ -z "$local_ip" ] && return 1
+
+    echo "$local_ip" | awk -F. 'NF == 4 { print $1 "." $2 "." $3 ".1" }'
+}
+
+findEmulatorSerials() {
     emulator_serials=""
     for device_serial in $(adb devices | awk 'NR > 1 && $2 == "device" { print $1 }'); do
         is_emulator=$(adb -s "$device_serial" shell getprop ro.kernel.qemu 2>/dev/null | tr -d '\r')
@@ -68,10 +87,52 @@ checkEmulatorReady() {
             emulator_serials="${emulator_serials}${emulator_serials:+ }$device_serial"
         fi
     done
+    echo "$emulator_serials"
+}
+
+tryConnectHostEmulator() {
+    host=$(vmwareHostIp)
+    if [ -z "$host" ]; then
+        echo "VMware environment detected, but failed to derive host IP from local IPv4 address."
+        return 1
+    fi
+
+    echo "No local Android emulator found. VMware environment detected; trying host emulator via adb connect $host..."
+
+    for port in 5555 5557 5559 5561 5563 5565; do
+        target="$host:$port"
+        connect_output=$(adb connect "$target" 2>&1 || true)
+        echo "adb connect $target: $connect_output"
+
+        emulator_serials=$(findEmulatorSerials)
+        if [ -n "$emulator_serials" ]; then
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+checkEmulatorReady() {
+    if ! command -v adb >/dev/null 2>&1; then
+        echo "adb is not available. Start a booted Android emulator before running Android/Appium tests."
+        exit 1
+    fi
+
+    emulator_serials=$(findEmulatorSerials)
 
     if [ -z "$emulator_serials" ]; then
-        echo "No running Android emulator found. Start and fully boot an emulator before running Android/Appium tests."
-        exit 1
+        if isVmwareEnvironment && tryConnectHostEmulator; then
+            emulator_serials=$(findEmulatorSerials)
+        fi
+
+        if [ -z "$emulator_serials" ]; then
+            echo "No running Android emulator found. Start and fully boot an emulator before running Android/Appium tests."
+            if isVmwareEnvironment; then
+                echo "VMware environment detected, but no host emulator accepted adb connections."
+            fi
+            exit 1
+        fi
     fi
 
     for emulator_serial in $emulator_serials; do
