@@ -1,6 +1,4 @@
-@file:Suppress("DEPRECATION")
-
-package com.storyteller_f.a.app.pages.topic
+package device_based
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.ComposeUiTest
@@ -11,6 +9,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.runComposeUiTest
+import com.storyteller_f.a.app.pages.topic.BlockEditTopicPage
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -101,7 +100,10 @@ class TopicComposePageBlockEditorTest {
             latestMarkdown == "# Title\n\n> Quote\n\n``` kotlin\nprintln(1)\n```\n\n```math\nx^2\n```"
         }
 
-        assertEquals("# Title\n\n> Quote\n\n``` kotlin\nprintln(1)\n```\n\n```math\nx^2\n```", latestMarkdown)
+        assertEquals(
+            "# Title\n\n> Quote\n\n``` kotlin\nprintln(1)\n```\n\n```math\nx^2\n```",
+            latestMarkdown
+        )
     }
 
     @Test

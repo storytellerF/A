@@ -85,13 +85,28 @@ subprojects {
             tasks.withType<Detekt>().map { it.sarifReportFile })
     }
 }
-val jvmLibModules = listOf(
+val koverIncludedProjects = listOf(
+    ":shared",
+    ":app:composeApp",
+    ":app:cliApp",
+    ":app:core",
+    ":app:android",
+    ":app:desktopApp",
+    ":dev:core",
+    ":dev:server",
+    ":dev:cli",
     ":cloud:service",
     ":cloud:server",
+    ":cloud:cli",
+    ":cloud:worker",
     ":cloud:pdf",
     ":cloud:pdfbox",
     ":cloud:openpdf",
     ":api",
+    ":panel:composeApp",
+    ":panel:android",
+    ":panel:cliApp",
+    ":panel:desktopApp",
     ":backend:core",
     ":backend:exposed",
     ":backend:simple",
@@ -100,23 +115,25 @@ val jvmLibModules = listOf(
     ":backend:lucene",
     ":backend:filesystem",
     ":backend:elastic",
-)
-val composeModules = listOf(
-    ":shared",
-    ":app:composeApp",
     ":client:core",
+    ":client:bot-lib",
     ":client:model-storage",
-    ":client:room"
-)
+    ":client:room",
+    ":client:ascii-parser",
+    ":bot:builtin-bot",
+) + if (providers.gradleProperty("appium").orNull == "true") {
+    listOf(":dev:appium")
+} else {
+    emptyList()
+}
 dependencies {
-    (jvmLibModules).forEach {
-        kover(project(it))
+    koverIncludedProjects.mapNotNull { findProject(it) }.forEach {
+        kover(it)
     }
 }
 
 subprojects {
-    val n = displayName.removePrefix("project ").removeSurrounding("'")
-    if ((jvmLibModules).contains(n)) {
+    if (path in koverIncludedProjects) {
         apply(plugin = "org.jetbrains.kotlinx.kover")
         kover {
             reports {
