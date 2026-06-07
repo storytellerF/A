@@ -355,14 +355,6 @@ class UIViewModel(viewModelScope: CoroutineScope, wsServerUrl: String, httpUrl: 
             }
         } ?: mainInstance
     }.stateIn(viewModelScope, SharingStarted.Eagerly, mainInstance)
-
-    init {
-        viewModelScope.launch {
-            instance.collectLatest {
-                it.sessionManager.proxy.startBackgroundTask().joinAll()
-            }
-        }
-    }
 }
 
 @Composable
