@@ -27,8 +27,8 @@ FROM eclipse-temurin:21-alpine
 
 RUN apk add libavif-dev font-noto-all
 
-ARG APP_UID=10001
-ARG APP_GID=10001
+ARG APP_UID=1000
+ARG APP_GID=1000
 RUN addgroup -S -g "$APP_GID" app && \
     adduser -S -D -h /home/app -u "$APP_UID" -G app app
 ENV HOME=/home/app

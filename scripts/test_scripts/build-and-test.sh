@@ -171,7 +171,7 @@ fi
 
 if [ "$RUN_APPIUM" = true ]; then
     echo "Running Appium Tests..."
-    sudo rm -rf ./dev/appium/build/test/appium/sessions
+    rm -rf ./dev/appium/build/test/appium/sessions
     ./gradlew :dev:appium:clean -Pappium=true $GRADLE_CONSOLE_ARGS
     appium_exit=0
     ./gradlew :dev:appium:test -Pappium=true $TEST_ARGS $GRADLE_CONSOLE_ARGS || appium_exit=$?

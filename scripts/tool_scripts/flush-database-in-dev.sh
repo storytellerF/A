@@ -1,10 +1,6 @@
 #!/bin/bash
 set -e
-base=$1
-if [ -z "$base" ]; then
-  echo "Error: base parameter is not specified."
-  exit 1
-fi
+base=./deploy/dev-data
 
 # 执行 Gradle 构建并捕获退出码
 if ! ./gradlew cloud:cli:installDist -Pserver.flavor=dev -Pserver.buildType=dev; then

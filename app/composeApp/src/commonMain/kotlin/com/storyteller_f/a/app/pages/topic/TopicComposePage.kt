@@ -52,6 +52,7 @@ import com.storyteller_f.a.app.core.components.emitEvent
 import com.storyteller_f.a.app.core.components.rememberAlertDialogController
 import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.app.core.components.safeArea
+import com.storyteller_f.a.app.input_is_empty
 import com.storyteller_f.a.app.pages.community.getFontSettings
 import com.storyteller_f.a.app.pages.room.RoomSendButton
 import com.storyteller_f.a.app.preview
@@ -327,7 +328,16 @@ fun EditTopicPage(input: String, data: TopicComposeData, updateInput: (String) -
             input,
             updateInput,
             modifier = Modifier.fillMaxSize().padding(20.dp),
-            textStyle = textStyle.merge(color = LocalContentColor.current, fontFamily = fontFamily)
+            textStyle = textStyle.merge(color = LocalContentColor.current, fontFamily = fontFamily),
+            decorationBox = { innerTextField ->
+                if (input.isEmpty()) {
+                    Text(
+                        stringResource(Res.string.input_is_empty),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                innerTextField()
+            }
         )
     }
 }

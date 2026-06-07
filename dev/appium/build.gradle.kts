@@ -18,6 +18,9 @@ dependencies {
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.websockets)
     implementation(libs.ktor.client.auth)
-    implementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.testcontainers.postgresql)
+}
+
+tasks.test {
+    maxParallelForks = 1
 }
