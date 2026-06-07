@@ -252,89 +252,66 @@ class AppiumTest {
         }
     }
 
-    @Suppress("LongMethod")
     @Test
-    fun `test community room join and posting flows`() = runAppiumBlockingTest {
-        loadCryptoLibIfNeed()
-        val now = System.currentTimeMillis()
-        val communityTopicContent = "appium-community-topic-$now"
-        val roomTopicContent = "appium-room-topic-$now"
-        runType1Test(
-            beforeDriverLaunch = { hostServerPort, packageName ->
-                val prepared = prepareJoinAndPostingScenario(
-                    hostServerPort = hostServerPort,
-                    now = now,
-                    communityTopicContent = communityTopicContent,
-                    roomTopicContent = roomTopicContent,
-                )
-                val sessionJson = buildInjectedSessionJson(prepared.viewerSession)
-                pushInjectedSessionToPrivateDir(packageName, sessionJson)
-                prepared
-            }
-        ) { driver, data ->
-            clickElement(driver, """new UiSelector().text("Communities")""")
-            clickElement(driver, """new UiSelector().text("${data.communityName}")""")
+    fun `test community profile actions from joined community`() = runPreparedCommunityRoomScenario { driver, data, _, _ ->
+        openPreparedCommunity(driver, data)
+        openCommunityDialog(driver, data)
 
-            clickAnyElement(
-                driver,
-                listOf(
-                    """new UiSelector().description("icon")""",
-                    """new UiSelector().text("${data.communityName.first()}")"""
-                )
-            )
-            clickElement(driver, """new UiSelector().text("Favorite")""")
-            clickElement(driver, """new UiSelector().text("Subscription")""")
-            clickElement(driver, """new UiSelector().text("All members")""")
+        clickElement(driver, """new UiSelector().text("Favorite")""")
+        clickElement(driver, """new UiSelector().text("Subscription")""")
+        clickElement(driver, """new UiSelector().text("All members")""")
 
-            clickAnyElement(
-                driver,
-                listOf(
-                    """new UiSelector().textContains("${data.ownerSession.address}")""",
-                    """new UiSelector().textContains("ad:")"""
-                )
+        clickAnyElement(
+            driver,
+            listOf(
+                """new UiSelector().textContains("${data.ownerSession.address}")""",
+                """new UiSelector().textContains("ad:")"""
             )
-            driver.navigate().back()
-            driver.navigate().back()
-            clickAnyElement(
-                driver,
-                listOf(
-                    """new UiSelector().description("icon")""",
-                    """new UiSelector().text("${data.communityName.first()}")"""
-                )
-            )
-            clickElement(driver, """new UiSelector().text("Add")""")
-            saveDebugSnapshot(driver, "community-after-add")
-            clickElement(driver, """new UiSelector().text("Raw")""")
-            inputElement(
-                driver,
-                """new UiSelector().className("android.widget.EditText")""",
-                communityTopicContent
-            )
-            clickAnyElement(
-                driver,
-                listOf(
-                    """new UiSelector().description("submit")""",
-                    """new UiSelector().description("Send")"""
-                )
-            )
-            assertElementVisible(driver, """new UiSelector().text("$communityTopicContent")""")
+        )
+    }
 
-            clickElement(driver, """new UiSelector().text("Rooms")""")
-            clickElement(driver, """new UiSelector().text("${data.roomName}")""")
-            inputElement(
-                driver,
-                """new UiSelector().className("android.widget.EditText")""",
-                roomTopicContent
+    @Test
+    fun `test publish topic in joined community`() = runPreparedCommunityRoomScenario { driver, data, communityTopicContent, _ ->
+        openPreparedCommunity(driver, data)
+        openCommunityDialog(driver, data)
+
+        clickElement(driver, """new UiSelector().text("Add")""")
+        saveDebugSnapshot(driver, "community-after-add")
+        clickElement(driver, """new UiSelector().text("Raw")""")
+        inputElement(
+            driver,
+            """new UiSelector().className("android.widget.EditText")""",
+            communityTopicContent
+        )
+        clickAnyElement(
+            driver,
+            listOf(
+                """new UiSelector().description("submit")""",
+                """new UiSelector().description("Send")"""
             )
-            clickAnyElement(
-                driver,
-                listOf(
-                    """new UiSelector().description("Send")""",
-                    """new UiSelector().text("Send")"""
-                )
+        )
+        assertElementVisible(driver, """new UiSelector().text("$communityTopicContent")""")
+    }
+
+    @Test
+    fun `test publish topic in community room`() = runPreparedCommunityRoomScenario { driver, data, _, roomTopicContent ->
+        openPreparedCommunity(driver, data)
+
+        clickElement(driver, """new UiSelector().text("Rooms")""")
+        clickElement(driver, """new UiSelector().text("${data.roomName}")""")
+        inputElement(
+            driver,
+            """new UiSelector().className("android.widget.EditText")""",
+            roomTopicContent
+        )
+        clickAnyElement(
+            driver,
+            listOf(
+                """new UiSelector().description("Send")""",
+                """new UiSelector().text("Send")"""
             )
-            assertElementVisible(driver, """new UiSelector().text("$roomTopicContent")""")
-        }
+        )
+        assertElementVisible(driver, """new UiSelector().text("$roomTopicContent")""")
     }
 
     private fun runAppiumBlockingTest(block: suspend () -> Unit) = runBlocking {
@@ -470,6 +447,43 @@ class AppiumTest {
         }
     }
 
+    private fun runPreparedCommunityRoomScenario(
+        block: suspend (AndroidDriver, PreparedScenario, String, String) -> Unit
+    ) = runAppiumBlockingTest {
+        loadCryptoLibIfNeed()
+        val now = System.currentTimeMillis()
+        val communityTopicContent = "appium-community-topic-$now"
+        val roomTopicContent = "appium-room-topic-$now"
+        runType1Test(
+            beforeDriverLaunch = { hostServerPort, packageName ->
+                val prepared = prepareJoinAndPostingScenario(
+                    hostServerPort = hostServerPort,
+                    now = now,
+                )
+                val sessionJson = buildInjectedSessionJson(prepared.viewerSession)
+                pushInjectedSessionToPrivateDir(packageName, sessionJson)
+                prepared
+            }
+        ) { driver, data ->
+            block(driver, data, communityTopicContent, roomTopicContent)
+        }
+    }
+
+    private fun openPreparedCommunity(driver: AndroidDriver, data: PreparedScenario) {
+        clickElement(driver, """new UiSelector().text("Communities")""")
+        clickElement(driver, """new UiSelector().text("${data.communityName}")""")
+    }
+
+    private fun openCommunityDialog(driver: AndroidDriver, data: PreparedScenario) {
+        clickAnyElement(
+            driver,
+            listOf(
+                """new UiSelector().description("icon")""",
+                """new UiSelector().text("${data.communityName.first()}")"""
+            )
+        )
+    }
+
     private suspend fun generatePrivateKey(): String {
         return getAlgo(AlgoType.P256).generatePemKeyPair().getOrThrow().first
     }
@@ -525,8 +539,6 @@ class AppiumTest {
     private suspend fun prepareJoinAndPostingScenario(
         hostServerPort: Int,
         now: Long,
-        communityTopicContent: String,
-        roomTopicContent: String,
     ): PreparedScenario {
         val owner = createAuthenticatedSession(hostServerPort)
         val aidSuffix = (now % 1_000_000).toString().padStart(6, '0')

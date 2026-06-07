@@ -6,16 +6,9 @@ WORKDIR /app
 COPY . .
 ENV HOST_TYPE=docker
 
-#if($koyeb) #fun(envAndArg)
-#if($koyeb) #fun(saveEnvTofile)
-#startif($koyeb)
-#else
 ARG BUILD_TYPE
 ARG FLAVOR
 ARG BUILD_ON
-#endif
-
-#if($koyeb) RUN ./scripts/download_scripts/download-preset-data.sh
 
 RUN --mount=type=cache,target=/root/.gradle ./scripts/build_scripts/build-cloud-on-condition.sh ${FLAVOR} ${BUILD_TYPE} ${BUILD_ON}
 
@@ -36,9 +29,6 @@ ENV HOME=/home/app
 WORKDIR /app
 
 COPY --from=builder --chown=app:app /app/deploy/build/decompressed .
-#if($koyeb) COPY --from=builder --chown=app:app /app/deploy ./deploy
-# 使用koyeb 需要把args 变成env 后文件导入
-#if($koyeb) COPY --from=builder --chown=app:app /app/build/envs/*.env .
 COPY --from=builder --chown=app:app /app/scripts/tool_scripts/flush-database.sh ./scripts/tool_scripts/flush-database.sh
 COPY --from=builder --chown=app:app /app/scripts/tool_scripts/terminal-log.sh ./scripts/tool_scripts/terminal-log.sh
 
