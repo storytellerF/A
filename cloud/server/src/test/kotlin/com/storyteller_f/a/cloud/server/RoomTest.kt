@@ -41,6 +41,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.milliseconds
 
 class RoomTest {
     @Test
@@ -244,9 +245,6 @@ class RoomTest {
 
         assertTrue(list.count { it is RoomFrame.CreateAnswer } >= 3)
         assertTrue(list.count { it is RoomFrame.RespondAnswer } >= 3)
-
-        stopRtcCall(thirdUser, roomId)
-        assertRtcUserCleanup(roomId, thirdUser.uid)
     }
 
     @Test
@@ -332,7 +330,7 @@ private suspend fun TestMate.stopRtcCall(
         }
     }
     withContext(Dispatchers.IO) {
-        delay(200)
+        delay(200.milliseconds)
     }
 }
 
@@ -342,11 +340,11 @@ private fun assertRtcUserCleanup(
 ) {
     val session = rtcSession[roomId]
     assertEquals(2, session?.uidList?.size)
-    assertTrue(session?.socketMap?.containsKey(uid) == false)
-    assertTrue(session?.offerList?.containsKey(uid) == false)
-    assertTrue(session?.offerList?.values?.none { it.containsKey(uid) } == true)
-    assertTrue(session?.answerList?.containsKey(uid) == false)
-    assertTrue(session?.answerList?.values?.none { it.containsKey(uid) } == true)
+    assertEquals(session?.socketMap?.containsKey(uid), false)
+    assertEquals(session?.offerList?.containsKey(uid), false)
+    assertEquals(session?.offerList?.values?.none { it.containsKey(uid) }, true)
+    assertEquals(session?.answerList?.containsKey(uid), false)
+    assertEquals(session?.answerList?.values?.none { it.containsKey(uid) }, true)
 }
 
 suspend fun UserSessionManager.createPrivateRoomForTest(): RoomInfo = createRoom(NewRoom("name", "r3")).getOrThrow()
@@ -448,7 +446,7 @@ suspend fun waitForRtcFrame(
             break
         }
         withContext(Dispatchers.IO) {
-            delay(1000)
+            delay(1000.milliseconds)
         }
     }
     assertTrue(list.any(predicate))

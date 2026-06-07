@@ -18,7 +18,7 @@ fun UserSessionManager.startBackgroundTask(): List<Job> {
     val model = model
     val loginRequests = Channel<Unit>(Channel.CONFLATED)
     val loginWorker = c.launch {
-        for (ignored in loginRequests) {
+        for (i in loginRequests) {
             if (model.state.value is ClientSessionState.Success && model.userHandler.data.value == null) {
                 login()
             }

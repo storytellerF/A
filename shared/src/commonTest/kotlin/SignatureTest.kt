@@ -125,15 +125,4 @@ class SignatureTest {
         println("密钥协商成功: $match")
     }
 
-    @Test
-    fun generateEncryptionKey() = runTest {
-        loadCryptoLibIfNeed()
-        val generatePemKeyPair = AlgoDilithium.generatePemKeyPair().getOrThrow()
-        println(generatePemKeyPair.first)
-        val (private, public) = (AlgoDilithium.encryptionAlgo as Type2Algo).generateEncryptionPemKeyPair()
-            .getOrThrow()
-        println("private $private")
-        File("/home/kx/Projects/AData/data/secrets/p-font-provider").writeText(generatePemKeyPair.first)
-        File("/home/kx/Projects/AData/data/secrets/ep-font-provider").writeText(private)
-    }
 }

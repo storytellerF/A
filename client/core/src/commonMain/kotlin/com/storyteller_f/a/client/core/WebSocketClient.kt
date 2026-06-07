@@ -8,6 +8,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.flow.*
+import kotlin.time.Duration.Companion.milliseconds
 
 interface WebSocketClient {
     val connectionHandler: LoadingHandler<DefaultClientWebSocketSession>
@@ -41,7 +42,7 @@ class WebSocketClientImpl(
                             connectionJob = launch {
                                 while (isActive && canConnectWebSocket(userInfo)) {
                                     connectWebSocketIfNeed(userInfo)
-                                    delay(5000)
+                                    delay(5000.milliseconds)
                                 }
                             }
                         }

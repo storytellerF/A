@@ -1,20 +1,22 @@
 import android.content.ContentProvider
-import com.storyteller_f.a.app.AApplication
+import com.storyteller_f.shared.appContextRef
 import org.junit.Before
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
+import java.lang.ref.WeakReference
 
 @RunWith(RobolectricTestRunner::class)
-@Config(application = AApplication::class, manifest = Config.NONE, sdk = [35])
+@Config(manifest = Config.NONE, sdk = [35])
 actual abstract class PlatformHeadlessTest {
     @Before
     fun setup() {
         System.setProperty("robolectric.logging.enabled", "true")
         setupAndroidContextProvider()
         val application = RuntimeEnvironment.getApplication()
+        appContextRef = WeakReference(application)
         println("setup: $application")
     }
 
