@@ -61,6 +61,7 @@ import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsChannel
+import io.ktor.http.HttpHeaders
 import io.ktor.utils.io.readRemaining
 import kotlinx.cli.ArgType
 import kotlinx.cli.ExperimentalCli
@@ -107,6 +108,10 @@ internal data class DownloadConfig(
 private val yamlMapper: ObjectMapper = ObjectMapper(YAMLFactory())
     .registerKotlinModule()
     .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+
+private const val DOWNLOAD_PROGRESS_LOG_INTERVAL_MS = 1_000L
+private const val DOWNLOAD_PROGRESS_PERCENT_STEP = 5
+private const val HTTP_STATUS_PARTIAL_CONTENT = 206
 
 @Suppress("LargeClass")
 @OptIn(ExperimentalCli::class)
@@ -975,19 +980,64 @@ suspend fun downloadWithResume(
     }
 
     val body = response.bodyAsChannel()
+    val contentLength = response.headers[HttpHeaders.ContentLength]?.toLongOrNull()
+    val totalSize = contentLength?.let {
+        if (status == HTTP_STATUS_PARTIAL_CONTENT) downloadedSize + it else it
+    }
+    var currentSize = downloadedSize
+    var lastProgressLogTime = 0L
+    var lastProgressLogPercent = -DOWNLOAD_PROGRESS_PERCENT_STEP
+
+    fun logProgress(force: Boolean = false) {
+        val now = System.currentTimeMillis()
+        val percent = totalSize?.takeIf { it > 0 }?.let { ((currentSize * 100) / it).toInt() }
+        val percentProgressed = percent != null && percent >= lastProgressLogPercent + DOWNLOAD_PROGRESS_PERCENT_STEP
+        if (!force && now - lastProgressLogTime < DOWNLOAD_PROGRESS_LOG_INTERVAL_MS && !percentProgressed) return
+
+        Napier.i {
+            buildString {
+                append("download progress ")
+                append(formatDownloadSize(currentSize))
+                if (totalSize != null) {
+                    append("/")
+                    append(formatDownloadSize(totalSize))
+                }
+                if (percent != null) {
+                    append(" (")
+                    append(percent.coerceAtMost(100))
+                    append("%)")
+                }
+            }
+        }
+        lastProgressLogTime = now
+        if (percent != null) {
+            lastProgressLogPercent = percent
+        }
+    }
 
     file.parentFile!!.mkdirs()
 
     RandomAccessFile(file, "rw").use { raf ->
         raf.seek(downloadedSize)
+        logProgress(force = true)
         while (!body.isClosedForRead) {
             val packet = body.readRemaining(DEFAULT_BUFFER_SIZE.toLong())
             while (!packet.exhausted()) {
                 val bytes = packet.readByteArray()
                 raf.write(bytes)
+                currentSize += bytes.size
+                logProgress()
             }
         }
+        logProgress(force = true)
     }
+}
+
+private fun formatDownloadSize(size: Long): String = when {
+    size < 1024L -> "${size}B"
+    size < 1024L * 1024L -> "${size / 1024L}KiB"
+    size < 1024L * 1024L * 1024L -> "${size / (1024L * 1024L)}MiB"
+    else -> "${size / (1024L * 1024L * 1024L)}GiB"
 }
 
 internal fun isDownloadConfigPath(path: String): Boolean {
