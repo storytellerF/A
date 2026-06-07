@@ -1,4 +1,4 @@
 #!/bin/sh
 
-./gradlew app:android:installRelease -Pserver.flavor=alpha -Pserver.buildType=prod
-./gradlew panel:android:installRelease -Pserver.flavor=alpha -Pserver.buildType=prod
+./gradlew app:androidApp:installRelease -Pserver.flavor=alpha -Pserver.buildType=prod
+./gradlew panel:androidApp:installRelease -Pserver.flavor=alpha -Pserver.buildType=prod

@@ -185,8 +185,8 @@ if [ "$EXEC_MODE" = "prepare" ] || [ "$EXEC_MODE" = "both" ]; then
         echo "Preparing server/worker images for Appium Testcontainers..."
         ./scripts/build_scripts/build-server-worker-images.sh dev prod host
         echo "Building Release APK..."
-        ./gradlew app:android:assembleDebug $GRADLE_CONSOLE_ARGS
-        ./gradlew panel:android:assembleDebug $GRADLE_CONSOLE_ARGS
+        ./gradlew app:androidApp:assembleDebug $GRADLE_CONSOLE_ARGS
+        ./gradlew panel:androidApp:assembleDebug $GRADLE_CONSOLE_ARGS
     fi
 
     # Check emulator readiness (for Android and Appium tests)
