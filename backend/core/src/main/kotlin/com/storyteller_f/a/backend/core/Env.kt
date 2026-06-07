@@ -12,6 +12,12 @@ class MergedEnv(val list: List<Map<String, String>>) {
             map[key]
         }
     }
+
+    fun getAll(key: String): String {
+        return list.joinToString {
+            it[key] ?: "empty"
+        }
+    }
 }
 
 fun readEnv(envMap: Map<String, String>? = null) = MergedEnv(

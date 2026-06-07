@@ -405,7 +405,7 @@ class ServerBackend(
 ) : Backend
 
 fun buildBackendFromEnv(env: MergedEnv): Backend {
-    Napier.i("load env: ${env["COMPOSE_PROJECT_NAME"]}")
+    Napier.i("load env: ${env.getAll("COMPOSE_PROJECT_NAME")}")
 
     val databaseConnection = databaseConnection(env)
 

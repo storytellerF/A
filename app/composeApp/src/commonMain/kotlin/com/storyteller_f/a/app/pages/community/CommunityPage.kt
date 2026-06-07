@@ -22,7 +22,6 @@ import androidx.compose.material.icons.filled.Title
 import androidx.compose.material.icons.filled.Topic
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -57,7 +56,6 @@ import com.storyteller_f.a.app.LocalClientFileProvider
 import com.storyteller_f.a.app.LocalGlobalDialog
 import com.storyteller_f.a.app.LocalUserInfo
 import com.storyteller_f.a.app.Res
-import com.storyteller_f.a.app.add
 import com.storyteller_f.a.app.all_members
 import com.storyteller_f.a.app.common.AppNavFactory
 import com.storyteller_f.a.app.common.CommunityScreen
@@ -73,7 +71,6 @@ import com.storyteller_f.a.app.components.FontView
 import com.storyteller_f.a.app.core.components.ButtonNav
 import com.storyteller_f.a.app.core.components.CommunityIcon
 import com.storyteller_f.a.app.core.components.CustomAlertDialog
-import com.storyteller_f.a.app.core.components.CustomAlertDialogController
 import com.storyteller_f.a.app.core.components.CustomBottomNav
 import com.storyteller_f.a.app.core.components.CustomRailNav
 import com.storyteller_f.a.app.core.components.DialogContainer
@@ -85,14 +82,12 @@ import com.storyteller_f.a.app.core.components.emitEvent
 import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.app.exit_community
 import com.storyteller_f.a.app.join_community
-import com.storyteller_f.a.app.join_community_prompt
 import com.storyteller_f.a.app.pages.room.RoomList
 import com.storyteller_f.a.app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.a.app.pages.topic.TopicComposeData
 import com.storyteller_f.a.app.pages.topic.TopicList
 import com.storyteller_f.a.app.pages.user.ButtonBadgeSuffix
-import com.storyteller_f.a.app.permission_denied
 import com.storyteller_f.a.app.rooms
 import com.storyteller_f.a.app.topics
 import com.storyteller_f.a.app.ui.theme.AppTheme
@@ -330,11 +325,7 @@ private fun CommunityCompatPageInternal(
     var showDialog by remember {
         mutableStateOf(false)
     }
-    Scaffold(floatingActionButton = {
-        CommunityFloatingButton(community, communityId) {
-            showDialog = true
-        }
-    }, bottomBar = {
+    Scaffold(bottomBar = {
         CommunityBottomNav(navRoutes, pagerState)
     }) {
         Column(modifier = Modifier.padding(bottom = it.calculateBottomPadding())) {
@@ -356,34 +347,6 @@ private fun CommunityCompatPageInternal(
             CommunityPageInternal(pagerState, communityId)
         }
     }
-}
-
-@Composable
-private fun CommunityFloatingButton(
-    community: CommunityInfo?,
-    communityId: PrimaryKey,
-    onClickOk: () -> Unit,
-) {
-    val appNavFactory = LocalAppNavFactory.current
-    val alertDialogState = remember {
-        CustomAlertDialogController()
-    }
-    val title = stringResource(Res.string.permission_denied)
-    val message = stringResource(Res.string.join_community_prompt)
-    FloatingActionButton(onClick = {
-        if (community?.isJoined == true) {
-            appNavFactory.newAppNav().gotoTopicCompose(
-                TopicComposeData.Community(communityId, communityId ob ObjectType.COMMUNITY)
-            )
-        } else {
-            alertDialogState.showMessage(title, message)
-        }
-    }) {
-        Icon(Icons.Default.Add, contentDescription = stringResource(Res.string.add))
-    }
-    CustomAlertDialog(alertDialogState, {
-        alertDialogState.close()
-    }, onClickOk)
 }
 
 @Composable

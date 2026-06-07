@@ -83,6 +83,7 @@ trigger: always_on
 ### C) 测试
 - 对于受到影响的模块要进行代码单元测试工作`./gradlew module:test --console=plain`
 - 如果要进行插桩测试，不要执行AppTest，选择执行AppiumTest，通过`./scripts/test_scripts/build-and-test.sh --appium --console=plain` 执行，因为appium 测试需要一些准备工作，包括编译server 和worker 的镜像，构建最新的app 安装包
+- 测试的目的是发现问题，如果发现了问题应该全力修复，而不是在测试用例上绕过去
 
 ## 与 AI 协作的额外规则
 - 仅在必要处最小改动，优先在 client/core 与 api 扩展，不随意改动公共模型
