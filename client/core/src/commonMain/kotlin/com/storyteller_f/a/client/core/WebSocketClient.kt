@@ -5,6 +5,7 @@ import com.storyteller_f.shared.obj.RoomFrame
 import io.github.aakira.napier.Napier
 import io.ktor.client.plugins.websocket.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.flow.*
 
@@ -26,16 +27,42 @@ class WebSocketClientImpl(
     override val frameFlow = MutableSharedFlow<RoomFrame>()
 
     suspend fun connectWebSocket() {
-        combine(sessionModel.state, sessionModel.userHandler.data) { t1, t2 ->
-            t1 to t2
-        }.distinctUntilChanged().collect { (state, userInfo) ->
-            if (state is ClientSessionState.Success && userInfo != null) {
-                while (true) {
-                    connectWebSocketIfNeed(userInfo)
-                    delay(5000)
+        coroutineScope {
+            val requests = Channel<UserInfo?>(Channel.CONFLATED)
+            val connector = launch {
+                var connectionJob: Job? = null
+                try {
+                    for (userInfo in requests) {
+                        connectionJob?.cancelAndJoin()
+                        connectionJob = null
+                        if (userInfo == null) {
+                            connectionHandler.data.value?.cancel()
+                        } else {
+                            connectionJob = launch {
+                                while (isActive && canConnectWebSocket(userInfo)) {
+                                    connectWebSocketIfNeed(userInfo)
+                                    delay(5000)
+                                }
+                            }
+                        }
+                    }
+                } finally {
+                    connectionJob?.cancelAndJoin()
                 }
-            } else {
-                connectionHandler.data.value?.cancel()
+            }
+            try {
+                combine(sessionModel.state, sessionModel.userHandler.data) { t1, t2 ->
+                    t1 to t2
+                }.distinctUntilChanged().collect { (state, userInfo) ->
+                    if (state is ClientSessionState.Success && userInfo != null) {
+                        requests.trySend(userInfo)
+                    } else {
+                        requests.trySend(null)
+                    }
+                }
+            } finally {
+                requests.close()
+                connector.cancelAndJoin()
             }
         }
     }
@@ -90,6 +117,11 @@ class WebSocketClientImpl(
                 "error"
             }
         }
+    }
+
+    private fun canConnectWebSocket(userInfo: UserInfo): Boolean {
+        return sessionModel.state.value is ClientSessionState.Success &&
+                sessionModel.userHandler.data.value == userInfo
     }
 
     private fun startListenerWebSocket(session: DefaultClientWebSocketSession, userInfo: UserInfo) {
