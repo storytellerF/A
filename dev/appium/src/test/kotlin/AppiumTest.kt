@@ -32,7 +32,13 @@ import io.appium.java_client.plugins.storage.StorageClient
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import org.junit.Rule
 import org.junit.rules.TestName
@@ -64,16 +70,15 @@ private const val INJECTED_SESSION_FILE = "files/appium-session/session.json"
 private const val CLI_READY_PORT = 8081
 private const val APP_MAIN_ACTIVITY_CLASS_NAME = "com.storyteller_f.a.app.MainActivity"
 private const val PANEL_MAIN_ACTIVITY_CLASS_NAME = "com.storyteller_f.a.panel.MainActivity"
-private val APPLICATION_ID_REGEX = Regex("\"applicationId\"\\s*:\\s*\"([^\"]+)\"")
 
 private val appUnderTest = AppUnderTest(
-    apkFile = File("../../app/androidApp/build/outputs/apk/debug/android-universal-debug.apk"),
+    apkFile = ::resolveAppApkFile,
     packageName = ::resolveAppPackageName,
     mainActivityClassName = APP_MAIN_ACTIVITY_CLASS_NAME,
 )
 
 private val panelUnderTest = AppUnderTest(
-    apkFile = File("../../panel/androidApp/build/outputs/apk/debug/android-universal-debug.apk"),
+    apkFile = ::resolvePanelApkFile,
     packageName = ::resolvePanelPackageName,
     mainActivityClassName = PANEL_MAIN_ACTIVITY_CLASS_NAME,
 )
@@ -408,7 +413,7 @@ class AppiumTest {
                 val remoteAddress = URI(url).toURL()
                 val storageClient = StorageClient(URI(url).toURL())
                 storageClient.reset()
-                storageClient.add(appUnderTest.apkFile)
+                storageClient.add(appUnderTest.apkFile())
                 val path = storageClient.list().first().path
                 val options = UiAutomator2Options().setApp(path)
 
@@ -447,7 +452,7 @@ class AppiumTest {
                 val url = "http://127.0.0.1:4723"
                 val remoteAddress = URI(url).toURL()
 
-                installAppForPrivateInjection(app.apkFile, packageName)
+                installAppForPrivateInjection(app.apkFile(), packageName)
                 clearAppData(packageName)
                 val session = beforeDriverLaunch(it, packageName)
                 val options = UiAutomator2Options()
@@ -804,7 +809,7 @@ private data class PreparedScenario(
 )
 
 private data class AppUnderTest(
-    val apkFile: File,
+    val apkFile: () -> File,
     val packageName: () -> String,
     val mainActivityClassName: String,
 )
@@ -972,21 +977,42 @@ private fun isInstallFailedBySignatureMismatch(output: String): Boolean {
         "install_parse_failed_inconsistent_certificates" in normalizedOutput
 }
 
+private fun resolveAppApkFile(): File = resolveUniversalApkFile(appMetadataCandidates())
+
+private fun resolvePanelApkFile(): File = resolveUniversalApkFile(panelMetadataCandidates())
+
 private fun resolveAppPackageName(): String = resolvePackageName(
-    metadataCandidates = sequenceOf(
-        File("../../app/androidApp/build/outputs/apk/debug/output-metadata.json"),
-        File("app/androidApp/build/outputs/apk/debug/output-metadata.json"),
-    ),
+    metadataCandidates = appMetadataCandidates(),
     fallbackApplicationIdPrefix = "com.storyteller_f.a.app",
 )
 
 private fun resolvePanelPackageName(): String = resolvePackageName(
-    metadataCandidates = sequenceOf(
-        File("../../panel/androidApp/build/outputs/apk/debug/output-metadata.json"),
-        File("panel/androidApp/build/outputs/apk/debug/output-metadata.json"),
-    ),
+    metadataCandidates = panelMetadataCandidates(),
     fallbackApplicationIdPrefix = "com.storyteller_f.a.panel",
 )
+
+private fun appMetadataCandidates(): Sequence<File> = sequenceOf(
+    File("../../app/androidApp/build/outputs/apk/debug/output-metadata.json"),
+    File("app/androidApp/build/outputs/apk/debug/output-metadata.json"),
+)
+
+private fun panelMetadataCandidates(): Sequence<File> = sequenceOf(
+    File("../../panel/androidApp/build/outputs/apk/debug/output-metadata.json"),
+    File("panel/androidApp/build/outputs/apk/debug/output-metadata.json"),
+)
+
+private fun resolveUniversalApkFile(metadataCandidates: Sequence<File>): File {
+    val metadataFile = findMetadataFile(metadataCandidates)
+    val metadata = readApkMetadata(metadataFile)
+    val outputFile = metadata["elements"]?.jsonArray
+        ?.map { it.jsonObject }
+        ?.firstOrNull { it.stringValue("type") == "UNIVERSAL" }
+        ?.stringValue("outputFile")
+        ?: error("No UNIVERSAL APK entry found in ${metadataFile.canonicalPath}")
+    return File(metadataFile.parentFile, outputFile).also {
+        check(it.exists()) { "APK file declared by ${metadataFile.canonicalPath} does not exist: ${it.canonicalPath}" }
+    }
+}
 
 private fun resolvePackageName(
     metadataCandidates: Sequence<File>,
@@ -994,8 +1020,7 @@ private fun resolvePackageName(
 ): String {
     val metadataFile = metadataCandidates.firstOrNull { it.exists() }
     if (metadataFile != null) {
-        val content = metadataFile.readText()
-        val applicationId = APPLICATION_ID_REGEX.find(content)?.groupValues?.getOrNull(1)
+        val applicationId = readApkMetadata(metadataFile).stringValue("applicationId")
         if (!applicationId.isNullOrBlank()) {
             return applicationId
         }
@@ -1004,6 +1029,19 @@ private fun resolvePackageName(
     val flavor =
         parseEnvFile(File("../../gradle.properties"))["server.flavor"].orEmpty().ifBlank { "dev" }
     return "$fallbackApplicationIdPrefix.${flavor.replace('-', '_')}.debug"
+}
+
+private fun findMetadataFile(metadataCandidates: Sequence<File>): File {
+    return metadataCandidates.firstOrNull { it.exists() }
+        ?: error("No APK output metadata file found in ${metadataCandidates.joinToString { it.path }}")
+}
+
+private fun readApkMetadata(metadataFile: File): JsonObject {
+    return Json.parseToJsonElement(metadataFile.readText()).jsonObject
+}
+
+private fun JsonObject.stringValue(name: String): String? {
+    return this[name]?.jsonPrimitive?.contentOrNull
 }
 
 private fun assertElementVisible(driver: AndroidDriver, selector: String) {
