@@ -1,0 +1,21 @@
+services:
+  cli:
+    build:
+      context: ../../
+      dockerfile: cli.Dockerfile
+      args:
+        BUILD_TYPE: ${BUILD_TYPE}
+        FLAVOR: ${FLAVOR}
+        BUILD_ON: ${BUILD_ON}
+    env_file:
+      - ../../deploy/${FLAVOR}.env
+    environment:
+      CLI_READY_PORT: ${CLI_READY_PORT:-8081}
+      CLI_INIT_ENABLE: ${CLI_INIT_ENABLE:-false}
+    volumes:
+      - ${PRESET_PATH}:/app/deploy/preset_data
+    healthcheck:
+      test: [ "CMD-SHELL", "printf 'GET / HTTP/1.1\\r\\nHost: localhost\\r\\n\\r\\n' | nc -w 2 localhost $${CLI_READY_PORT:-8081} | grep -q OK" ]
+      interval: 2s
+      timeout: 2s
+      retries: 60

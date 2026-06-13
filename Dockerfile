@@ -10,10 +10,11 @@ ARG BUILD_TYPE
 ARG FLAVOR
 ARG BUILD_ON
 
-RUN --mount=type=cache,target=/root/.gradle ./scripts/build_scripts/build-cloud-on-condition.sh ${FLAVOR} ${BUILD_TYPE} ${BUILD_ON}
+RUN --mount=type=cache,target=/root/.gradle \
+    ./scripts/build_scripts/build-on-condition.sh "$BUILD_ON" \
+    "./scripts/build_scripts/build-server.sh $FLAVOR $BUILD_TYPE"
 
 RUN mkdir -p ./deploy/build/decompressed && \
-    tar -xf ./deploy/build/cli.tar --strip-components=1 -C ./deploy/build/decompressed && \
     tar -xf ./deploy/build/server.tar --strip-components=1 -C ./deploy/build/decompressed
 
 FROM eclipse-temurin:21-alpine
@@ -31,9 +32,6 @@ USER app:app
 WORKDIR /app
 
 COPY --from=builder --chown=app:app /app/deploy/build/decompressed .
-COPY --from=builder --chown=app:app /app/scripts/docker/server-entrypoint.sh ./scripts/docker/server-entrypoint.sh
-COPY --from=builder --chown=app:app /app/scripts/tool_scripts/flush-database.sh ./scripts/tool_scripts/flush-database.sh
-COPY --from=builder --chown=app:app /app/scripts/tool_scripts/terminal-log.sh ./scripts/tool_scripts/terminal-log.sh
 
-ENTRYPOINT ["sh", "./scripts/docker/server-entrypoint.sh"]
+ENTRYPOINT ["sh", "./bin/server"]
 #ENTRYPOINT ["sh", "-c", "while true; do sleep 3600; done"]

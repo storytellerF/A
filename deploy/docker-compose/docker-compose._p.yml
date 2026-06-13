@@ -1,8 +1,0 @@
-services:
-  server:
-    depends_on:
-      pg:
-        condition: service_healthy
-    volumes:
-      - ../lucene_data:/app/deploy/lucene_data
-      - ../a_file_data:/app/deploy/a_file_data

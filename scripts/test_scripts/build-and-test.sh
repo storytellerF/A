@@ -6,6 +6,7 @@ RUN_ANDROID=false
 RUN_DESKTOP=false
 RUN_APPIUM=false
 RUN_COMPILE_UNIT=false
+RUN_COMPOSE=false
 MODULE="app:composeApp"
 TEST_ARGS=""
 GRADLE_CONSOLE_ARGS=""
@@ -18,6 +19,7 @@ while [ "$#" -gt 0 ]; do
     --android) RUN_ANDROID=true; shift ;;
     --desktop) RUN_DESKTOP=true; shift ;;
     --appium) RUN_APPIUM=true; shift ;;
+    --compose) RUN_COMPOSE=true; shift ;;
     --compile-and-unit|--compile-and-unit-test|--compile_and_unit_test) RUN_COMPILE_UNIT=true; shift ;;
     --plain) GRADLE_CONSOLE_ARGS="--console=plain"; shift ;;
     --prepare) EXEC_MODE="prepare"; shift ;;
@@ -44,6 +46,7 @@ if [ "$RUN_ALL" = true ]; then
   RUN_DESKTOP=true
   RUN_APPIUM=true
   RUN_COMPILE_UNIT=true
+  RUN_COMPOSE=true
 fi
 
 showNotification() {
@@ -203,6 +206,12 @@ fi
 
 # ========== Run Phase ==========
 if [ "$EXEC_MODE" = "run" ] || [ "$EXEC_MODE" = "both" ]; then
+    # Compose service script tests
+    if [ "$RUN_COMPOSE" = true ]; then
+        echo "Running compose service script tests..."
+        ./scripts/test_scripts/compose-service-test.sh
+    fi
+
     # Compile and Unit Tests - Run phase
     if [ "$RUN_COMPILE_UNIT" = true ]; then
         echo "Running unit tests without Testcontainers..."
