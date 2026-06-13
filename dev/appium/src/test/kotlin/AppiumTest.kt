@@ -61,6 +61,7 @@ private const val APP_LOG_FILE_NAME = "appium-app.log"
 private const val INJECTED_SESSION_TEMP_PATH = "/data/local/tmp/appium-session-session.json"
 private const val INJECTED_SESSION_DIR = "files/appium-session"
 private const val INJECTED_SESSION_FILE = "files/appium-session/session.json"
+private const val CLI_READY_PORT = 8081
 private const val APP_MAIN_ACTIVITY_CLASS_NAME = "com.storyteller_f.a.app.MainActivity"
 private const val PANEL_MAIN_ACTIVITY_CLASS_NAME = "com.storyteller_f.a.panel.MainActivity"
 private val APPLICATION_ID_REGEX = Regex("\"applicationId\"\\s*:\\s*\"([^\"]+)\"")
@@ -99,6 +100,27 @@ class AppiumTest {
             clickElement(driver, """new UiSelector().text("Confirm")""")
             clickElement(driver, """new UiSelector().text("Start sign up")""")
             assertElementVisible(driver, """new UiSelector().description("avatar")""")
+        }
+    }
+
+    @Test
+    fun `test sign in as system user`() = runAppiumBlockingTest {
+        runType2Test { driver ->
+            val privateKeyContent = readAppiumSystemPrivateKey()
+            clickElement(driver, """new UiSelector().description("avatar")""")
+            clickElement(driver, """new UiSelector().text("Sign in")""")
+            clickElement(driver, """new UiSelector().text("Private Key")""")
+            clickElement(driver, """new UiSelector().description("Edit Private Key")""")
+            inputElement(
+                driver,
+                """new UiSelector().className("android.widget.EditText")""",
+                privateKeyContent
+            )
+            clickElement(driver, """new UiSelector().text("Confirm")""")
+            clickElement(driver, """new UiSelector().text("Start sign in")""")
+            clickElement(driver, """new UiSelector().description("avatar")""")
+            assertElementNotVisible(driver, """new UiSelector().text("Sign in")""")
+            assertElementVisible(driver, """new UiSelector().text("System")""")
         }
     }
 
@@ -336,8 +358,16 @@ class AppiumTest {
             }.use { container ->
                 container.start()
                 val commonEnv = buildContainerEnv(containerDataPath, container)
+                val cliLogger = LoggerFactory.getLogger("appium-test-cli")
                 val serverLogger = LoggerFactory.getLogger("appium-test-server")
                 val workerLogger = LoggerFactory.getLogger("appium-test-worker")
+                runCliInitContainer(
+                    network = network,
+                    commonEnv = commonEnv,
+                    hostSessionPath = hostSessionPath,
+                    containerDataPath = containerDataPath,
+                    cliLogger = cliLogger,
+                )
                 GenericContainer(DockerImageName.parse("a-server:latest")).apply {
                     withNetwork(network)
                     withEnv(commonEnv)
@@ -695,6 +725,50 @@ class AppiumTest {
         // 确保成功推送到目标位置
         runAdbCommand("shell", "run-as", packageName, "cat", INJECTED_SESSION_FILE)
     }
+}
+
+private fun runCliInitContainer(
+    network: Network,
+    commonEnv: Map<String, String>,
+    hostSessionPath: String,
+    containerDataPath: String,
+    cliLogger: org.slf4j.Logger,
+) {
+    val presetPath = resolveAppiumPresetPath()
+    GenericContainer(DockerImageName.parse("a-cli:latest")).apply {
+        withNetwork(network)
+        withEnv(
+            commonEnv + mapOf(
+                "CLI_INIT_ENABLE" to "true",
+                "CLI_READY_PORT" to CLI_READY_PORT.toString(),
+            )
+        )
+        withFileSystemBind(hostSessionPath, containerDataPath, BindMode.READ_WRITE)
+        withFileSystemBind(presetPath.canonicalPath, "/app/deploy/preset_data", BindMode.READ_ONLY)
+        withExposedPorts(CLI_READY_PORT)
+        waitingFor(
+            Wait.forHttp("/")
+                .forPort(CLI_READY_PORT)
+                .forStatusCode(200)
+                .withStartupTimeout(Duration.ofSeconds(90))
+        )
+        withLogConsumer(Slf4jLogConsumer(cliLogger))
+        withStartupAttempts(3)
+    }.use { cliContainer ->
+        cliContainer.start()
+    }
+}
+
+private fun resolveAppiumPresetPath(): File {
+    return sequenceOf(
+        File("src/test/resources/preset"),
+        File("dev/appium/src/test/resources/preset"),
+    ).firstOrNull { File(it, "0_preset_user.json").exists() }
+        ?: error("Appium preset data directory not found")
+}
+
+private fun readAppiumSystemPrivateKey(): String {
+    return File(resolveAppiumPresetPath(), "secrets/p-system").readText().replace("\r\n", "\n")
 }
 
 private data class InjectedSession(
