@@ -48,4 +48,13 @@ docker build --platform linux/amd64 \
   -t a-worker:latest \
   .
 
-echo "Done. Built images: a-server:latest and a-worker:latest"
+echo "Building cli image: a-cli:latest"
+docker build --platform linux/amd64 \
+  -f cli.Dockerfile \
+  --build-arg BUILD_TYPE="$BUILD_TYPE" \
+  --build-arg FLAVOR="$FLAVOR" \
+  --build-arg BUILD_ON="$BUILD_ON" \
+  -t a-cli:latest \
+  .
+
+echo "Done. Built images: a-server:latest, a-worker:latest and a-cli:latest"
