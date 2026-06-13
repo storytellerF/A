@@ -20,6 +20,9 @@
     <string name="go_to_sign_in">Go to sign in</string>
     <string name="start_sign_up">Start sign up</string>
     <string name="start_sign_in">Start sign in</string>
+    <string name="sign_in_subtitle">Access your account with a saved session or your private key.</string>
+    <string name="sign_up_subtitle">Create a new account identity from a private key.</string>
+    <string name="auth_private_key_subtitle">Review the account address, edit the key if needed, then continue.</string>
     <string name="sign_out_prompt">Are you sure to sign out?</string>
     <string name="permission_denied">Permission denied</string>
     <string name="edit">Edit</string>
