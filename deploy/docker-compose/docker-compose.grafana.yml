@@ -35,7 +35,7 @@ services:
     image: grafana/promtail:2.9.0
     restart: unless-stopped
     volumes:
-      - ${LOG_PATH}A:/var/log/A
+      - ${LOG_PATH}/A:/var/log/A
       - ../promtail-config.yaml:/etc/promtail/config.yaml
     command: -config.file=/etc/promtail/config.yaml
 

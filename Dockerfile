@@ -26,13 +26,13 @@ RUN addgroup -S -g "$APP_GID" app && \
     adduser -S -D -h /home/app -u "$APP_UID" -G app app
 ENV HOME=/home/app
 
+USER app:app
+
 WORKDIR /app
 
 COPY --from=builder --chown=app:app /app/deploy/build/decompressed .
 COPY --from=builder --chown=app:app /app/scripts/tool_scripts/flush-database.sh ./scripts/tool_scripts/flush-database.sh
 COPY --from=builder --chown=app:app /app/scripts/tool_scripts/terminal-log.sh ./scripts/tool_scripts/terminal-log.sh
-
-USER app:app
 
 ENTRYPOINT ["sh", "./bin/server"]
 #ENTRYPOINT ["sh", "-c", "while true; do sleep 3600; done"]
