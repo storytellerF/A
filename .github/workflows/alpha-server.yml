@@ -45,13 +45,17 @@ jobs:
           cache: gradle
       - name: Update Docker images used in tests
         run: ./scripts/docker_image_scripts/update-docker-image-in-test.sh
+
       - name: Cache Docker images.
         uses: ScribeMD/docker-cache@0.5.0
         with:
           key: docker-${{ runner.os }}-${{ hashFiles('Dockerfile', 'docker-image-in-test', 'scripts/docker_image_scripts/update-docker-image-in-test.sh') }}
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+
       - name: Run backend tests
-        run: ENABLE_TEST_CONTAINER=true ./gradlew :backend:minio:test :cloud:cli:test :cloud:service:test :cloud:server:test --console=plain
+        run: ./scripts/test_scripts/test-cloud-in-ci.sh
+
       - name: Start service
         run: ./scripts/service_scripts/start-service-on-ci.sh alpha
