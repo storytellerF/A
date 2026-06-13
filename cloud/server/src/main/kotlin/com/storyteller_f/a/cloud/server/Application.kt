@@ -94,12 +94,7 @@ import io.ktor.utils.io.ByteWriteChannel
 import io.ktor.utils.io.InternalAPI
 import io.ktor.utils.io.close
 import io.sentry.Sentry
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import org.slf4j.event.Level
 import java.io.File
@@ -107,7 +102,6 @@ import java.io.OutputStreamWriter
 import java.net.InetAddress
 import java.security.SecureRandom
 import kotlin.jvm.optionals.getOrNull
-import kotlin.system.exitProcess
 import kotlin.time.Duration.Companion.seconds
 
 fun main(args: Array<String>) {
@@ -121,7 +115,6 @@ fun main(args: Array<String>) {
     SnowflakeFactory.setMachine(0)
 
     val map = readEnv()
-    processInitTaskIfNeed(map)
     val serverPort = map["SERVER_PORT"]?.toInt() ?: 80
     val extraArgs = arrayOf("-port=$serverPort")
     if (map["BUILD_TYPE"] == "prod") {
@@ -329,65 +322,6 @@ fun ApplicationCall.remoteIp(
         }
     } else {
         listOf(remoteAddress to country.country().isoCode())
-    }
-}
-
-private fun processInitTaskIfNeed(env: MergedEnv) {
-    if (!env["INIT_ENABLE"].toBoolean()) return
-    val initScriptContent = env["INIT_SCRIPT"]
-    val workingDir = env["INIT_WORKING_DIR"]
-    if (initScriptContent.isNullOrBlank() || workingDir.isNullOrBlank()) {
-        Napier.e(tag = "init") {
-            "init failure, initScriptContent=$initScriptContent, workingDir=$workingDir"
-        }
-        exitProcess(1)
-    }
-    val scriptArray = initScriptContent.trim('\'').split(" ").map {
-        if (it.startsWith("~")) {
-            val home = System.getProperty("user.home")
-            home + it.substring(1)
-        } else {
-            it
-        }
-    }
-    val file = File(workingDir.trim('\''))
-    Napier.i(tag = "init") {
-        "scripts: ${scriptArray.joinToString(" ")}. working dir: ${file.canonicalPath}"
-    }
-    runBlocking {
-        executeScriptInThread(scriptArray, file)
-    }
-}
-
-private suspend fun CoroutineScope.executeScriptInThread(
-    scriptArray: List<String>,
-    file: File,
-) {
-    val process = ProcessBuilder(scriptArray).directory(file).start()
-    Napier.i(tag = "init") {
-        "script started"
-    }
-    launch {
-        process.inputStream.bufferedReader().use {
-            while (isActive) {
-                val line = withContext(Dispatchers.IO) { it.readLine() } ?: break
-                println(line)
-            }
-        }
-    }
-    launch {
-        process.errorStream.bufferedReader().use {
-            while (isActive) {
-                val line = withContext(Dispatchers.IO) { it.readLine() } ?: break
-                println(line)
-            }
-        }
-    }
-    val exitValue = withContext(Dispatchers.IO) {
-        process.waitFor()
-    }
-    check(exitValue == 0) {
-        "script failed $exitValue"
     }
 }
 

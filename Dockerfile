@@ -31,8 +31,9 @@ USER app:app
 WORKDIR /app
 
 COPY --from=builder --chown=app:app /app/deploy/build/decompressed .
+COPY --from=builder --chown=app:app /app/scripts/docker/server-entrypoint.sh ./scripts/docker/server-entrypoint.sh
 COPY --from=builder --chown=app:app /app/scripts/tool_scripts/flush-database.sh ./scripts/tool_scripts/flush-database.sh
 COPY --from=builder --chown=app:app /app/scripts/tool_scripts/terminal-log.sh ./scripts/tool_scripts/terminal-log.sh
 
-ENTRYPOINT ["sh", "./bin/server"]
+ENTRYPOINT ["sh", "./scripts/docker/server-entrypoint.sh"]
 #ENTRYPOINT ["sh", "-c", "while true; do sleep 3600; done"]
