@@ -1082,16 +1082,32 @@ internal suspend fun downloadPresetFileIfNeed(
             downloadWithResume(config.link, realPath, client)
         }
 
-        repackArchiveWithExclusionsAndInclusionsInPlace(
-            realPath,
-            config.excludeArchiveEntries,
-            config.includeArchiveEntries
-        )
+        createProcessedPresetFileIfNeeded(realPath, config)
     } else {
         null
     }
 } else {
     File(parentDir, path)
+}
+
+private fun createProcessedPresetFileIfNeeded(
+    downloadedFile: File,
+    config: DownloadConfig
+): File {
+    if (config.excludeArchiveEntries.isEmpty() && config.includeArchiveEntries.isEmpty()) {
+        return downloadedFile
+    }
+    if (!downloadedFile.name.endsWith(".zip", ignoreCase = true)) {
+        return downloadedFile
+    }
+    val processedFile = File(downloadedFile.parentFile, "processed/${config.name}")
+    processedFile.parentFile?.mkdirs()
+    downloadedFile.copyTo(processedFile, overwrite = true)
+    return repackArchiveWithExclusionsAndInclusionsInPlace(
+        processedFile,
+        config.excludeArchiveEntries,
+        config.includeArchiveEntries
+    )
 }
 
 private fun shouldExcludeEntry(relativePath: String, excludeGlobs: List<String>): Boolean {

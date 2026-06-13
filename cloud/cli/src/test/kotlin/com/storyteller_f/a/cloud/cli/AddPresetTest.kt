@@ -7,6 +7,7 @@ import io.ktor.client.engine.okhttp.OkHttp
 import kotlinx.coroutines.test.runTest
 import java.io.File
 import java.net.InetSocketAddress
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
@@ -144,7 +145,7 @@ class AddPresetTest {
     }
 
     @Test
-    fun `download yaml config end to end repacks archive before returning`() = runTest {
+    fun `download yaml config keeps downloaded file and returns processed archive`() = runTest {
         setLogPath()
         val tempDir = createTempDirectory(prefix = "addpreset-e2e-").toFile()
         val sourceZip = File(tempDir, "source.zip")
@@ -158,8 +159,10 @@ class AddPresetTest {
         )
         val hash = sha256File(sourceZip)
         val server = HttpServer.create(InetSocketAddress(0), 0)
+        val requestCount = AtomicInteger()
         try {
             server.createContext("/bundle.zip") { exchange ->
+                requestCount.incrementAndGet()
                 val body = sourceZip.readBytes()
                 exchange.sendResponseHeaders(200, body.size.toLong())
                 exchange.responseBody.use { output ->
@@ -183,8 +186,13 @@ class AddPresetTest {
             HttpClient(OkHttp).use { client ->
                 val downloaded = downloadPresetFileIfNeed(configFile.name, tempDir, client)
                 assertNotNull(downloaded)
-                assertEquals(File(tempDir, "download/bundle.zip").canonicalPath, downloaded.canonicalPath)
+                assertEquals(File(tempDir, "download/processed/bundle.zip").canonicalPath, downloaded.canonicalPath)
                 assertTrue(downloaded.exists())
+                assertEquals(1, requestCount.get())
+
+                val originalDownload = File(tempDir, "download/bundle.zip")
+                assertTrue(originalDownload.exists())
+                assertEquals(hash, sha256File(originalDownload))
 
                 ZipFile(downloaded).use { zip ->
                     val names = zip.entries().asSequence().map { it.name }.toSet()
@@ -192,6 +200,18 @@ class AddPresetTest {
                     assertFalse("docs/readme.md" in names)
                     assertFalse("nested/secret.txt" in names)
                 }
+
+                ZipFile(originalDownload).use { zip ->
+                    val names = zip.entries().asSequence().map { it.name }.toSet()
+                    assertTrue("keep.txt" in names)
+                    assertTrue("docs/readme.md" in names)
+                    assertTrue("nested/secret.txt" in names)
+                }
+
+                val secondResult = downloadPresetFileIfNeed(configFile.name, tempDir, client)
+                assertNotNull(secondResult)
+                assertEquals(downloaded.canonicalPath, secondResult.canonicalPath)
+                assertEquals(1, requestCount.get())
             }
         } finally {
             server.stop(0)
