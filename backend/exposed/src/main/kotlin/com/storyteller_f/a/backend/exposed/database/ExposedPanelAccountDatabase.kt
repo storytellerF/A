@@ -10,6 +10,7 @@ import com.storyteller_f.a.backend.exposed.isEmpty
 import com.storyteller_f.a.backend.exposed.tables.PanelAccounts
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.md5
 import com.storyteller_f.shared.utils.now
 import org.jetbrains.exposed.v1.core.Op
 import org.jetbrains.exposed.v1.core.eq
@@ -36,6 +37,7 @@ class ExposedPanelAccountDatabase(val databaseSession: ExposedDatabaseSession) :
             it[passType] = panelAccount.passType
             it[algoType] = panelAccount.algoType
             it[publicKey] = panelAccount.publicKey
+            it[publicKeyMd5] = md5(panelAccount.publicKey)
             it[address] = panelAccount.address
         }.insertedCount > 0) {
             "Failed to add panel account"
@@ -81,8 +83,9 @@ class ExposedPanelAccountDatabase(val databaseSession: ExposedDatabaseSession) :
 
     override suspend fun isUserNotExistsByPublicKey(pk: String) = databaseSession.dbSearch {
         search {
+            val publicKeyMd5 = md5(pk)
             PanelAccounts.selectAll().where {
-                PanelAccounts.publicKey eq pk
+                PanelAccounts.publicKeyMd5 eq publicKeyMd5
             }
         }
         isEmpty()
