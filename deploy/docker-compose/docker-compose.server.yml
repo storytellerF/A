@@ -11,3 +11,18 @@ services:
       - ../../deploy/${FLAVOR}.env
     ports:
       - ${SERVER_EXPOSE_PORT}:${SERVER_PORT}
+    volumes:
+      - ${PRESET_PATH}:/app/deploy/preset_data
+  ws:
+    build:
+      context: ../../
+      dockerfile: ws.Dockerfile
+      args:
+        BUILD_TYPE: ${BUILD_TYPE}
+        FLAVOR: ${FLAVOR}
+        BUILD_ON: ${BUILD_ON}
+    restart: unless-stopped
+    env_file:
+      - ../../deploy/${FLAVOR}.env
+    ports:
+      - ${WS_SERVER_EXPOSE_PORT:-8813}:${WS_SERVER_PORT}

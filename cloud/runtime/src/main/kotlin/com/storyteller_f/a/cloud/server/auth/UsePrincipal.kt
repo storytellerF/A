@@ -26,8 +26,6 @@ import io.ktor.server.response.respondPath
 import io.ktor.server.routing.RoutingContext
 import io.ktor.server.websocket.DefaultWebSocketServerSession
 import io.ktor.util.toMap
-import io.sentry.Sentry
-import io.sentry.protocol.Request
 import kotlin.io.path.name
 
 inline fun <reified R : Any> omitPrincipal(block: () -> Result<R?>) = block()
@@ -133,18 +131,6 @@ suspend inline fun <reified R> RoutingContext.handleResultInternal(it: Result<R>
         }
     }.onFailure { throwable ->
         respondError(throwable, buildType)
-        if (throwable !is UnauthorizedException) {
-            Sentry.withIsolationScope { scope ->
-                scope.request = Request().apply {
-                    url = call.request.uri
-                    headers = call.request.headers.toMap().mapValues {
-                        it.value.joinToString(",")
-                    }
-                    queryString = call.request.queryString()
-                }
-                Sentry.captureException(throwable)
-            }
-        }
         call.application.log.error("Occur server exception", throwable)
     }
 }

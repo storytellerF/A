@@ -2,3 +2,6 @@ services:
   server:
     image: a-server:latest
     build: !reset null
+  ws:
+    image: a-ws:latest
+    build: !reset null

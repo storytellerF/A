@@ -14,6 +14,5 @@ if [ -z "$BUILD_TYPE" ]; then
 fi
 
 mkdir -p deploy/build
-./scripts/build_scripts/build-server.sh "$FLAVOR" "$BUILD_TYPE"
-./scripts/build_scripts/build-ws.sh "$FLAVOR" "$BUILD_TYPE"
-./scripts/build_scripts/build-cli.sh "$FLAVOR" "$BUILD_TYPE"
+./gradlew cloud:ws:distTar cloud:ws:distZip -Pserver.flavor=$FLAVOR -Pserver.buildType=$BUILD_TYPE
+cp cloud/ws/build/distributions/* deploy/build

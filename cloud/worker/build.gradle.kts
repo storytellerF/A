@@ -14,6 +14,7 @@ dependencies {
     implementation(projects.backend.core)
     implementation(projects.backend.exposed)
     implementation(projects.cloud.service)
+    implementation(projects.cloud.wsApi)
     implementation(projects.shared)
     implementation(libs.kotlinx.datetime)
     implementation(libs.kotlinx.coroutines.core)
@@ -22,6 +23,10 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+}
+
+tasks.named("mergeServiceFiles") {
+    dependsOn(":cloud:ws-api:jar")
 }
 kotlin {
     jvmToolchain(21)

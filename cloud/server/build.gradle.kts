@@ -44,6 +44,8 @@ dependencies {
     implementation(projects.api)
     implementation(projects.cloud.pdf)
     implementation(projects.cloud.openpdf)
+    implementation(projects.cloud.runtime)
+    implementation(projects.cloud.wsApi)
     implementation(libs.endpoint4k.common)
     implementation(libs.endpoint4k.ktor.server)
     implementation(projects.backend.core)
@@ -81,6 +83,7 @@ dependencies {
     testImplementation(libs.commons.imaging)
     testImplementation(projects.cloud.worker)
     testImplementation(projects.cloud.cli)
+    testImplementation(projects.cloud.ws)
 }
 
 tasks.test {
@@ -90,6 +93,10 @@ tasks.test {
         events("passed", "skipped", "failed")
         showStandardStreams = true
     }
+}
+
+tasks.named("mergeServiceFiles") {
+    dependsOn(":cloud:ws-api:jar")
 }
 
 sentry {

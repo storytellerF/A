@@ -1,9 +1,10 @@
-package com.storyteller_f.a.cloud.server
+package com.storyteller_f.a.cloud.ws
 
 import com.maxmind.geoip2.DatabaseReader
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.cloud.core.service.addUserLog
 import com.storyteller_f.a.cloud.core.service.createTopicAtRoom
+import com.storyteller_f.a.cloud.server.remoteIp
 import com.storyteller_f.a.cloud.server.auth.usePrincipal
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.UserLogType
@@ -178,37 +179,45 @@ private suspend fun dispatchNewMessage(
     httpClient: HttpClient,
 ): Nothing {
     sharedFlow.collect { frame ->
-        backend.database.container.getJoinedUserList(frame.topicInfo.rootId)
-            .mapResult { list ->
-                val memberJoins = list.filter {
-                    it.uid != frame.topicInfo.author
-                }
-                val dispatchers = memberJoins.mapNotNull {
-                    userWebSocketSessionMap[it.uid]
-                }.flatten().map {
-                    WebsocketDispatcher(it)
-                }
-                backend.database.user.getUserDevices(memberJoins.map {
-                    it.uid
-                }).map { list ->
-                    list.map {
-                        ExternalDispatcher(httpClient, it.endpointUrl)
-                    } + dispatchers
-                }
-            }.onSuccess {
-                it.forEach { dispatcher ->
-                    dispatcher.dispatch(frame).onFailure { throwable ->
-                        Napier.e(throwable = throwable) {
-                            "send topic to room members failed: ${throwable.message}"
-                        }
+        dispatchNewMessageFrame(backend, httpClient, frame)
+    }
+}
+
+suspend fun dispatchNewMessageFrame(
+    backend: Backend,
+    httpClient: HttpClient,
+    frame: RoomFrame.NewTopicInfo,
+) {
+    backend.database.container.getJoinedUserList(frame.topicInfo.rootId)
+        .mapResult { list ->
+            val memberJoins = list.filter {
+                it.uid != frame.topicInfo.author
+            }
+            val dispatchers = memberJoins.mapNotNull {
+                userWebSocketSessionMap[it.uid]
+            }.flatten().map {
+                WebsocketDispatcher(it)
+            }
+            backend.database.user.getUserDevices(memberJoins.map {
+                it.uid
+            }).map { list ->
+                list.map {
+                    ExternalDispatcher(httpClient, it.endpointUrl)
+                } + dispatchers
+            }
+        }.onSuccess {
+            it.forEach { dispatcher ->
+                dispatcher.dispatch(frame).onFailure { throwable ->
+                    Napier.e(throwable = throwable) {
+                        "send topic to room members failed: ${throwable.message}"
                     }
                 }
-            }.onFailure {
-                Napier.e(throwable = it) {
-                    "send topic to room members failed: ${it.message}"
-                }
             }
-    }
+        }.onFailure {
+            Napier.e(throwable = it) {
+                "send topic to room members failed: ${it.message}"
+            }
+        }
 }
 
 fun Application.startNewMessageTask(backend: Backend) {

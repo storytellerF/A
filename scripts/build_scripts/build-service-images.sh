@@ -57,4 +57,13 @@ docker build --platform linux/amd64 \
   -t a-cli:latest \
   .
 
-echo "Done. Built images: a-server:latest, a-worker:latest and a-cli:latest"
+echo "Building ws image: a-ws:latest"
+docker build --platform linux/amd64 \
+  -f ws.Dockerfile \
+  --build-arg BUILD_TYPE="$BUILD_TYPE" \
+  --build-arg FLAVOR="$FLAVOR" \
+  --build-arg BUILD_ON="$BUILD_ON" \
+  -t a-ws:latest \
+  .
+
+echo "Done. Built images: a-server:latest, a-worker:latest, a-cli:latest and a-ws:latest"

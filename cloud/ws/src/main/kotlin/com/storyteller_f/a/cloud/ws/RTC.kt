@@ -1,4 +1,4 @@
-package com.storyteller_f.a.cloud.server
+package com.storyteller_f.a.cloud.ws
 
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.cloud.core.service.checkRootReadPermission
