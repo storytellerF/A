@@ -25,6 +25,7 @@ import com.storyteller_f.a.backend.core.service.TopicSearchService
 import com.storyteller_f.a.backend.core.service.UserSearchService
 import com.storyteller_f.a.backend.core.setLogPath
 import com.storyteller_f.a.backend.exposed.buildExposedDatabase
+import com.storyteller_f.a.cloud.ws.api.GlobalWsEventPublisher
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.setupKmpLogger
 import com.storyteller_f.shared.utils.now
@@ -41,7 +42,9 @@ fun main() {
     Napier.i {
         "start worker"
     }
-    val backend = buildBackendFromEnv(readEnv())
+    val env = readEnv()
+    GlobalWsEventPublisher.configure(env["WS_RPC_URL"])
+    val backend = buildBackendFromEnv(env)
     runBlocking {
         Napier.i {
             "worker started"

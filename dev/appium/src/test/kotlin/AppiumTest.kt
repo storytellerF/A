@@ -133,8 +133,8 @@ class AppiumTest {
     fun `test sign in by injected private session`() = runAppiumBlockingTest {
         loadCryptoLibIfNeed()
         runType1Test(
-            beforeDriverLaunch = { hostServerPort, packageName ->
-                val injected = createPreRegisteredSession(hostServerPort)
+            beforeDriverLaunch = { ports, packageName ->
+                val injected = createPreRegisteredSession(ports)
                 val sessionJson = buildInjectedSessionJson(injected)
                 pushInjectedSessionToPrivateDir(packageName, sessionJson)
                 injected
@@ -150,8 +150,8 @@ class AppiumTest {
         loadCryptoLibIfNeed()
         runType1Test(
             app = panelUnderTest,
-            beforeDriverLaunch = { hostServerPort, packageName ->
-                val injected = createPreRegisteredPanelSession(hostServerPort)
+            beforeDriverLaunch = { ports, packageName ->
+                val injected = createPreRegisteredPanelSession(ports)
                 val sessionJson = buildInjectedSessionJson(injected)
                 pushInjectedSessionToPrivateDir(packageName, sessionJson)
                 injected
@@ -169,8 +169,8 @@ class AppiumTest {
         loadCryptoLibIfNeed()
         val topicContent = "appium-user-space-topic-${System.currentTimeMillis()}"
         runType1Test(
-            beforeDriverLaunch = { hostServerPort, packageName ->
-                val injected = createPreRegisteredSession(hostServerPort)
+            beforeDriverLaunch = { ports, packageName ->
+                val injected = createPreRegisteredSession(ports)
                 val sessionJson = buildInjectedSessionJson(injected)
                 pushInjectedSessionToPrivateDir(packageName, sessionJson)
                 injected
@@ -195,8 +195,8 @@ class AppiumTest {
         loadCryptoLibIfNeed()
         val topicContent = "appium-favorite-topic-${System.currentTimeMillis()}"
         runType1Test(
-            beforeDriverLaunch = { hostServerPort, packageName ->
-                val authenticated = createAuthenticatedSession(hostServerPort)
+            beforeDriverLaunch = { ports, packageName ->
+                val authenticated = createAuthenticatedSession(ports)
                 val topicId = createTopicByApi(
                     authenticated.sessionManager,
                     ObjectType.USER,
@@ -232,8 +232,8 @@ class AppiumTest {
         val now = System.currentTimeMillis()
         val topicContent = "appium-subscription-topic-$now"
         runType1Test(
-            beforeDriverLaunch = { hostServerPort, packageName ->
-                val owner = createAuthenticatedSession(hostServerPort)
+            beforeDriverLaunch = { ports, packageName ->
+                val owner = createAuthenticatedSession(ports)
                 val aidSuffix = (now % 1_000_000).toString().padStart(6, '0')
                 val communityName = "community-$aidSuffix"
                 val communityAid = "sc$aidSuffix"
@@ -248,7 +248,7 @@ class AppiumTest {
                     communityId,
                     topicContent
                 )
-                val viewer = createAuthenticatedSession(hostServerPort)
+                val viewer = createAuthenticatedSession(ports)
                 viewer.sessionManager.joinCommunity(communityId).getOrThrow()
                 val sessionJson = buildInjectedSessionJson(viewer.session)
                 pushInjectedSessionToPrivateDir(packageName, sessionJson)
@@ -257,8 +257,7 @@ class AppiumTest {
             }
         ) { driver, data ->
             try {
-                clickElement(driver, """new UiSelector().text("Communities")""")
-                clickElement(driver, """new UiSelector().text("${data.communityName}")""")
+                openCommunityFromCommunitiesTab(driver, data.communityName)
 
                 clickAnyElement(
                     driver,
@@ -349,7 +348,7 @@ class AppiumTest {
 
     @OptIn(ExperimentalUuidApi::class)
     private suspend fun runAppiumTest(
-        block: suspend (Int) -> Unit
+        block: suspend (AppiumPorts) -> Unit
     ) {
         val sessionId = Uuid.random().toHexString()
         val hostSessionPath = File("build/test/appium/sessions", sessionId).canonicalPath
@@ -357,48 +356,39 @@ class AppiumTest {
         val containerDataPath = "/appium-session"
         System.setProperty("api.version", "1.44")
         Network.newNetwork().use { network ->
-            PostgreSQLContainer("pgvector/pgvector:pg16").apply {
-                withNetwork(network)
-                withNetworkAliases("appium-postgres")
-            }.use { container ->
-                container.start()
-                val commonEnv = buildContainerEnv(containerDataPath, container)
-                val cliLogger = LoggerFactory.getLogger("appium-test-cli")
-                val serverLogger = LoggerFactory.getLogger("appium-test-server")
-                val workerLogger = LoggerFactory.getLogger("appium-test-worker")
-                runCliInitContainer(
+            useDatabaseContainer(network) { databaseContainer ->
+                val commonEnv = buildContainerEnv(containerDataPath, databaseContainer)
+                useCliInitContainer(
                     network = network,
                     commonEnv = commonEnv,
                     hostSessionPath = hostSessionPath,
                     containerDataPath = containerDataPath,
-                    cliLogger = cliLogger,
-                )
-                GenericContainer(DockerImageName.parse("a-server:latest")).apply {
-                    withNetwork(network)
-                    withEnv(commonEnv)
-                    withFileSystemBind(hostSessionPath, containerDataPath, BindMode.READ_WRITE)
-                    withExposedPorts(8811)
-                    waitingFor(
-                        Wait.forHttp("/metrics")
-                            .forPort(8811)
-                            .forStatusCode(200)
-                            .withStartupTimeout(Duration.ofSeconds(90))
-                    )
-                    withLogConsumer(Slf4jLogConsumer(serverLogger))
-                    withStartupAttempts(3)
-                }.use { serverContainer ->
-                    serverContainer.start()
-                    val hostServerPort = serverContainer.getMappedPort(8811)
-                    bindAndroidReverse(hostPort = hostServerPort, devicePort = 8811)
-                    GenericContainer(DockerImageName.parse("a-worker:latest")).apply {
-                        withNetwork(network)
-                        withEnv(commonEnv)
-                        withFileSystemBind(hostSessionPath, containerDataPath, BindMode.READ_WRITE)
-                        withLogConsumer(Slf4jLogConsumer(workerLogger))
-                        withStartupAttempts(3)
-                    }.use { workerContainer ->
-                        workerContainer.start()
-                        block(hostServerPort)
+                ) {
+                    useWsContainer(
+                        network = network,
+                        commonEnv = commonEnv,
+                        hostSessionPath = hostSessionPath,
+                        containerDataPath = containerDataPath,
+                    ) { wsContainer ->
+                        val hostWsPort = wsContainer.getMappedPort(8813)
+                        bindAndroidReverse(hostPort = hostWsPort, devicePort = 8813)
+                        useServerContainer(
+                            network = network,
+                            commonEnv = commonEnv,
+                            hostSessionPath = hostSessionPath,
+                            containerDataPath = containerDataPath,
+                        ) { serverContainer ->
+                            val hostServerPort = serverContainer.getMappedPort(8811)
+                            bindAndroidReverse(hostPort = hostServerPort, devicePort = 8811)
+                            useWorkerContainer(
+                                network = network,
+                                commonEnv = commonEnv,
+                                hostSessionPath = hostSessionPath,
+                                containerDataPath = containerDataPath,
+                            ) {
+                                block(AppiumPorts(server = hostServerPort, ws = hostWsPort))
+                            }
+                        }
                     }
                 }
             }
@@ -442,7 +432,7 @@ class AppiumTest {
 
     private suspend fun <T> runType1Test(
         app: AppUnderTest = appUnderTest,
-        beforeDriverLaunch: suspend (Int, String) -> T,
+        beforeDriverLaunch: suspend (AppiumPorts, String) -> T,
         block: suspend (AndroidDriver, T) -> Unit
     ) {
         runAppiumTest {
@@ -490,9 +480,9 @@ class AppiumTest {
         val communityTopicContent = "appium-community-topic-$now"
         val roomTopicContent = "appium-room-topic-$now"
         runType1Test(
-            beforeDriverLaunch = { hostServerPort, packageName ->
+            beforeDriverLaunch = { ports, packageName ->
                 val prepared = prepareJoinAndPostingScenario(
-                    hostServerPort = hostServerPort,
+                    ports = ports,
                     now = now,
                 )
                 val sessionJson = buildInjectedSessionJson(prepared.viewerSession)
@@ -505,8 +495,18 @@ class AppiumTest {
     }
 
     private fun openPreparedCommunity(driver: AndroidDriver, data: PreparedScenario) {
+        openCommunityFromCommunitiesTab(driver, data.communityName)
+    }
+
+    private fun openCommunityFromCommunitiesTab(driver: AndroidDriver, communityName: String) {
         clickElement(driver, """new UiSelector().text("Communities")""")
-        clickElement(driver, """new UiSelector().text("${data.communityName}")""")
+        clickAnyElement(
+            driver,
+            listOf(
+                """new UiSelector().text("$communityName")""",
+                """new UiSelector().textContains("$communityName")"""
+            )
+        )
     }
 
     private fun openCommunityDialog(driver: AndroidDriver, data: PreparedScenario) {
@@ -523,13 +523,13 @@ class AppiumTest {
         return getAlgo(AlgoType.P256).generatePemKeyPair().getOrThrow().first
     }
 
-    private suspend fun createPreRegisteredSession(hostServerPort: Int): InjectedSession {
+    private suspend fun createPreRegisteredSession(ports: AppiumPorts): InjectedSession {
         val algo = getAlgo(AlgoType.P256)
         val (pemPrivateKey, _) = algo.generatePemKeyPair().getOrThrow()
         val derPrivateKey = algo.getDerPrivateKey(pemPrivateKey).getOrThrow()
         val derPublicKey = algo.getDerPublicKeyFromPrivateKey(pemPrivateKey).getOrThrow()
         val address = algo.calcAddress(derPublicKey).getOrThrow()
-        val manager = createApiSessionManager(hostServerPort)
+        val manager = createApiSessionManager(ports)
         val authKey = getAuthKey(AlgoType.P256, pemPrivateKey)
         manager.getUserPass(authKey, true) { RawUserPass(it) }
         manager.client.close()
@@ -541,13 +541,13 @@ class AppiumTest {
         )
     }
 
-    private suspend fun createPreRegisteredPanelSession(hostServerPort: Int): InjectedSession {
+    private suspend fun createPreRegisteredPanelSession(ports: AppiumPorts): InjectedSession {
         val algo = getAlgo(AlgoType.P256)
         val (pemPrivateKey, _) = algo.generatePemKeyPair().getOrThrow()
         val derPrivateKey = algo.getDerPrivateKey(pemPrivateKey).getOrThrow()
         val derPublicKey = algo.getDerPublicKeyFromPrivateKey(pemPrivateKey).getOrThrow()
         val address = algo.calcAddress(derPublicKey).getOrThrow()
-        val manager = createPanelApiSessionManager(hostServerPort)
+        val manager = createPanelApiSessionManager(ports)
         val authKey = getAuthKey(AlgoType.P256, pemPrivateKey)
         manager.getPanelUserPass(authKey, true) { RawUserPass(it) }
         manager.client.close()
@@ -559,9 +559,9 @@ class AppiumTest {
         )
     }
 
-    private suspend fun createAuthenticatedSession(hostServerPort: Int): AuthenticatedSession {
-        val session = createPreRegisteredSession(hostServerPort)
-        val manager = createApiSessionManager(hostServerPort)
+    private suspend fun createAuthenticatedSession(ports: AppiumPorts): AuthenticatedSession {
+        val session = createPreRegisteredSession(ports)
+        val manager = createApiSessionManager(ports)
         val authKey = AuthKey.P256(
             pemPrivateKey = session.pemPrivateKey,
             derPrivateKey = session.derPrivateKey,
@@ -572,10 +572,10 @@ class AppiumTest {
     }
 
     private suspend fun prepareJoinAndPostingScenario(
-        hostServerPort: Int,
+        ports: AppiumPorts,
         now: Long,
     ): PreparedScenario {
-        val owner = createAuthenticatedSession(hostServerPort)
+        val owner = createAuthenticatedSession(ports)
         val aidSuffix = (now % 1_000_000).toString().padStart(6, '0')
         val communityName = "community-$aidSuffix"
         val roomName = "room-$aidSuffix"
@@ -591,7 +591,7 @@ class AppiumTest {
             ownerCommunityTopic
         )
 
-        val viewer = createAuthenticatedSession(hostServerPort)
+        val viewer = createAuthenticatedSession(ports)
         viewer.sessionManager.joinCommunity(communityId).getOrThrow()
         waitUntilCommunityJoined(viewer.sessionManager, communityId)
         val result = PreparedScenario(
@@ -655,27 +655,27 @@ class AppiumTest {
         error("Community not visible in joined communities: $communityId")
     }
 
-    private fun createApiSessionManager(hostServerPort: Int) = createUserSessionManager(
-        buildWebSocketUrl("ws://127.0.0.1:$hostServerPort"),
+    private fun createApiSessionManager(ports: AppiumPorts) = createUserSessionManager(
+        buildWebSocketUrl("ws://127.0.0.1:${ports.ws}"),
         { model, cookieStorage ->
             getClient {
                 defaultClientConfigure(
                     cookiesStorage = cookieStorage,
                     manager = model,
-                    httpUrl = "http://127.0.0.1:$hostServerPort",
+                    httpUrl = "http://127.0.0.1:${ports.server}",
                 )
             }
         },
         onReceiveFrame = { _, _, _ -> }
     )
 
-    private fun createPanelApiSessionManager(hostServerPort: Int): PanelSessionManager = createPanelSessionManager(
+    private fun createPanelApiSessionManager(ports: AppiumPorts): PanelSessionManager = createPanelSessionManager(
         { model, cookieStorage ->
             getClient {
                 defaultClientConfigureForPanel(
                     cookiesStorage = cookieStorage,
                     manager = model,
-                    httpUrl = "http://127.0.0.1:$hostServerPort",
+                    httpUrl = "http://127.0.0.1:${ports.server}",
                 )
             }
         },
@@ -732,12 +732,25 @@ class AppiumTest {
     }
 }
 
-private fun runCliInitContainer(
+private suspend fun useDatabaseContainer(
+    network: Network,
+    block: suspend (PostgreSQLContainer<*>) -> Unit
+) {
+    PostgreSQLContainer("pgvector/pgvector:pg16").apply {
+        withNetwork(network)
+        withNetworkAliases("appium-postgres")
+    }.use { container ->
+        container.start()
+        block(container)
+    }
+}
+
+private suspend fun useCliInitContainer(
     network: Network,
     commonEnv: Map<String, String>,
     hostSessionPath: String,
     containerDataPath: String,
-    cliLogger: org.slf4j.Logger,
+    block: suspend () -> Unit
 ) {
     val presetPath = resolveAppiumPresetPath()
     GenericContainer(DockerImageName.parse("a-cli:latest")).apply {
@@ -757,10 +770,78 @@ private fun runCliInitContainer(
                 .forStatusCode(200)
                 .withStartupTimeout(Duration.ofSeconds(90))
         )
-        withLogConsumer(Slf4jLogConsumer(cliLogger))
+        withLogConsumer(Slf4jLogConsumer(LoggerFactory.getLogger("appium-test-cli")))
         withStartupAttempts(3)
     }.use { cliContainer ->
         cliContainer.start()
+        block()
+    }
+}
+
+private suspend fun useWsContainer(
+    network: Network,
+    commonEnv: Map<String, String>,
+    hostSessionPath: String,
+    containerDataPath: String,
+    block: suspend (GenericContainer<*>) -> Unit
+) {
+    GenericContainer(DockerImageName.parse("a-ws:latest")).apply {
+        withNetwork(network)
+        withNetworkAliases("appium-ws")
+        withEnv(commonEnv)
+        withFileSystemBind(hostSessionPath, containerDataPath, BindMode.READ_WRITE)
+        withExposedPorts(8813)
+        waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(90)))
+        withLogConsumer(Slf4jLogConsumer(LoggerFactory.getLogger("appium-test-ws")))
+        withStartupAttempts(3)
+    }.use { wsContainer ->
+        wsContainer.start()
+        block(wsContainer)
+    }
+}
+
+private suspend fun useServerContainer(
+    network: Network,
+    commonEnv: Map<String, String>,
+    hostSessionPath: String,
+    containerDataPath: String,
+    block: suspend (GenericContainer<*>) -> Unit
+) {
+    GenericContainer(DockerImageName.parse("a-server:latest")).apply {
+        withNetwork(network)
+        withEnv(commonEnv)
+        withFileSystemBind(hostSessionPath, containerDataPath, BindMode.READ_WRITE)
+        withExposedPorts(8811)
+        waitingFor(
+            Wait.forHttp("/metrics")
+                .forPort(8811)
+                .forStatusCode(200)
+                .withStartupTimeout(Duration.ofSeconds(90))
+        )
+        withLogConsumer(Slf4jLogConsumer(LoggerFactory.getLogger("appium-test-server")))
+        withStartupAttempts(3)
+    }.use { serverContainer ->
+        serverContainer.start()
+        block(serverContainer)
+    }
+}
+
+private suspend fun useWorkerContainer(
+    network: Network,
+    commonEnv: Map<String, String>,
+    hostSessionPath: String,
+    containerDataPath: String,
+    block: suspend (GenericContainer<*>) -> Unit
+) {
+    GenericContainer(DockerImageName.parse("a-worker:latest")).apply {
+        withNetwork(network)
+        withEnv(commonEnv)
+        withFileSystemBind(hostSessionPath, containerDataPath, BindMode.READ_WRITE)
+        withLogConsumer(Slf4jLogConsumer(LoggerFactory.getLogger("appium-test-worker")))
+        withStartupAttempts(3)
+    }.use { workerContainer ->
+        workerContainer.start()
+        block(workerContainer)
     }
 }
 
@@ -781,6 +862,11 @@ private data class InjectedSession(
     val pemPrivateKey: String,
     val derPrivateKey: String,
     val derPublicKey: String,
+)
+
+private data class AppiumPorts(
+    val server: Int,
+    val ws: Int,
 )
 
 private data class AuthenticatedSession(
@@ -857,8 +943,11 @@ private fun buildContainerEnv(
         "BUILD_TYPE" to "test",
         "FLAVOR" to "dev",
         "SERVER_PORT" to "8811",
+        "WS_SERVER_PORT" to "8813",
         "SERVER_URL" to "http://10.0.2.2:8811",
-        "WS_SERVER_URL" to "ws://10.0.2.2:8811",
+        "WS_SERVER_URL" to "ws://10.0.2.2:8813",
+        "WS_RPC_URL" to "ws://appium-ws:8813/rpc",
+        "SESSION_SECRET" to "appium-session-secret",
         "DATABASE_URI" to databaseUri,
         "DATABASE_DRIVER" to "postgresql",
         "DATABASE_USER" to postgresContainer.username,

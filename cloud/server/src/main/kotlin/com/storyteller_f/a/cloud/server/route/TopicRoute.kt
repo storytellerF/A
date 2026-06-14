@@ -26,14 +26,17 @@ import com.storyteller_f.a.cloud.core.service.updateTopicPin
 import com.storyteller_f.a.cloud.server.auth.handleResult
 import com.storyteller_f.a.cloud.server.auth.usePrincipal
 import com.storyteller_f.a.cloud.server.auth.usePrincipalOrNull
+import com.storyteller_f.a.cloud.ws.api.GlobalWsEventPublisher
 import com.storyteller_f.a.cloud.server.common.GeneralOffsetPagingGenerator
 import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.cloud.server.common.ReactionPaginationGenerator
 import com.storyteller_f.a.cloud.server.common.pagination
 import com.storyteller_f.endpoint4k.ktor.server.invoke
 import com.storyteller_f.endpoint4k.ktor.server.receiveBody
+import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
 import io.ktor.server.routing.Route
+import kotlinx.coroutines.launch
 
 fun Route.bindTopicRoute(backend: Backend) {
     CustomApi.Topics.recommend(handleResult(backend)) {
@@ -132,7 +135,13 @@ fun Route.bindProtectedTopicRoute(backend: Backend) {
 
     CustomApi.Topics.add(handleResult(backend)) { api ->
         usePrincipal { uid ->
-            backend.createPlainTopic(uid, api.receiveBody())
+            backend.createPlainTopic(uid, api.receiveBody()).also { result ->
+                result.getOrNull()?.let {
+                    call.application.launch {
+                        GlobalWsEventPublisher.publishNewTopic(RoomFrame.NewTopicInfo(it))
+                    }
+                }
+            }
         }
     }
 

@@ -1,9 +1,12 @@
 package com.storyteller_f.a.cloud.server.auth
 
 import com.storyteller_f.a.backend.core.Backend
+import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.ObjectFetch
-import com.storyteller_f.a.cloud.server.route.checkAdminApiRequest
-import com.storyteller_f.a.cloud.server.route.checkApiRequest
+import com.storyteller_f.a.backend.core.UserAuthData
+import com.storyteller_f.a.cloud.core.service.isTwoFactorEnabled
+import com.storyteller_f.shared.finalData
+import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.UserStatus
 import com.storyteller_f.shared.type.toPrimaryKey
@@ -256,6 +259,100 @@ fun Application.configureAuth(backend: Backend) {
             challenge { _, call ->
                 call.respondUnauthorizedResponse()
             }
+        }
+    }
+}
+
+suspend fun Backend.getUserAuthData(
+    credential: CustomCredential
+): Result<UserAuthData?> {
+    val userDatabase = database.user
+    return when (credential) {
+        is CustomCredential.AidCredential -> userDatabase.getUserAuthDataByAid(credential.aid)
+
+        is CustomCredential.IdCredential -> userDatabase.getUserAuthDataById(credential.id)
+
+        is CustomCredential.AddressCredential -> userDatabase.getUserAuthDataByAddress(credential.ad)
+    }
+}
+
+suspend fun ApplicationCall.checkApiRequest(
+    backend: Backend,
+    credential: CustomCredential,
+    session: UserSession.Pending
+): Result<CustomPrincipal?> {
+    if (session.label != "user") return Result.success(null)
+    val sig = credential.sig
+    return when {
+        backend.customConfig.buildType != "prod" &&
+            credential is CustomCredential.IdCredential &&
+            sig == credential.id.toString() -> {
+            val id = credential.id
+            backend.database.user.getRawUser(ObjectFetch.IdFetch(id)).mapIfNotNull {
+                saveSuccessSession(session, id)
+                CustomPrincipal(id)
+            }
+        }
+
+        sig.isNotBlank() && session.data.isNotBlank() -> {
+            backend.getUserAuthData(credential).mapResultIfNotNull { (pubKey, id, algo) ->
+                getAlgo(algo).verify(
+                    pubKey,
+                    sig,
+                    finalData(session.data)
+                ).mapResult { isVerified ->
+                    if (!isVerified) {
+                        Result.success(null)
+                    } else {
+                        backend.isTwoFactorEnabled(id).map {
+                            if (it) {
+                                null
+                            } else {
+                                saveSuccessSession(session, id)
+                                CustomPrincipal(id)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        else -> {
+            Result.success(null)
+        }
+    }
+}
+
+suspend fun Backend.getAdminAuthData(
+    credential: CustomCredential
+): Result<UserAuthData?> {
+    return when (credential) {
+        is CustomCredential.IdCredential -> database.panelAccount.getUserAuthDataById(credential.id)
+
+        is CustomCredential.AddressCredential -> database.panelAccount.getUserAuthDataByAddress(credential.ad)
+
+        else -> Result.failure(ForbiddenException())
+    }
+}
+
+suspend fun ApplicationCall.checkAdminApiRequest(
+    backend: Backend,
+    credential: CustomCredential,
+    session: UserSession.Pending
+): Result<CustomPrincipal?> {
+    if (session.label != "panel") return Result.success(null)
+    val sig = credential.sig
+    if (!sig.isNotBlank() || !session.data.isNotBlank()) {
+        return Result.success(null)
+    }
+    return backend.getAdminAuthData(credential).mapResultIfNotNull { (pubKey, id, algo) ->
+        getAlgo(algo).verify(
+            pubKey,
+            sig,
+            finalData(session.data)
+        ).mapIfNotNull {
+            saveSuccessSession(session, id)
+            CustomPrincipal(id)
         }
     }
 }

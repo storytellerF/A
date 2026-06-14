@@ -29,9 +29,9 @@ import com.storyteller_f.a.backend.core.service.TopicSearchService
 import com.storyteller_f.a.backend.core.service.UserSearchService
 import com.storyteller_f.a.backend.core.setLogPath
 import com.storyteller_f.a.backend.exposed.buildExposedDatabase
-import com.storyteller_f.a.cloud.server.auth.UserSession
 import com.storyteller_f.a.cloud.server.auth.configureAuth
 import com.storyteller_f.a.cloud.server.auth.getRateLimitKey
+import com.storyteller_f.a.cloud.server.auth.setupUserSessions
 import com.storyteller_f.a.cloud.server.route.bindAccountRoute
 import com.storyteller_f.a.cloud.server.route.bindCommunityRoute
 import com.storyteller_f.a.cloud.server.route.bindProtectedAccountRoute
@@ -49,6 +49,7 @@ import com.storyteller_f.a.cloud.server.route.bindUnauthenticatedPanelRoute
 import com.storyteller_f.a.cloud.server.route.bindUnauthenticatedRoute
 import com.storyteller_f.a.cloud.server.route.bindUnprotectedAccountRoute
 import com.storyteller_f.a.cloud.server.route.bindUserRoute
+import com.storyteller_f.a.cloud.ws.api.GlobalWsEventPublisher
 import com.storyteller_f.shared.CryptoJvm
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.setupKmpLogger
@@ -56,7 +57,6 @@ import io.github.aakira.napier.Napier
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
-import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
@@ -71,7 +71,6 @@ import io.ktor.server.plugins.callid.callIdMdc
 import io.ktor.server.plugins.callid.generate
 import io.ktor.server.plugins.calllogging.CallLogging
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.server.plugins.origin
 import io.ktor.server.plugins.partialcontent.PartialContent
 import io.ktor.server.plugins.ratelimit.RateLimit
 import io.ktor.server.request.header
@@ -80,14 +79,7 @@ import io.ktor.server.request.queryString
 import io.ktor.server.request.uri
 import io.ktor.server.response.respond
 import io.ktor.server.routing.routing
-import io.ktor.server.sessions.SessionTransportTransformerEncrypt
 import io.ktor.server.sessions.Sessions
-import io.ktor.server.sessions.SessionsConfig
-import io.ktor.server.sessions.cookie
-import io.ktor.server.websocket.WebSockets
-import io.ktor.server.websocket.pingPeriod
-import io.ktor.server.websocket.timeout
-import io.ktor.server.websocket.webSocket
 import io.ktor.util.toMap
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.ByteWriteChannel
@@ -95,13 +87,9 @@ import io.ktor.utils.io.InternalAPI
 import io.ktor.utils.io.close
 import io.sentry.Sentry
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.json.Json
 import org.slf4j.event.Level
 import java.io.File
 import java.io.OutputStreamWriter
-import java.net.InetAddress
-import java.security.SecureRandom
-import kotlin.jvm.optionals.getOrNull
 import kotlin.time.Duration.Companion.seconds
 
 fun main(args: Array<String>) {
@@ -162,7 +150,7 @@ fun Application.module() {
             backend.database.migration()
         }
     }
-    startNewMessageTask(backend)
+    GlobalWsEventPublisher.configure(readInjectedEnv()["WS_RPC_URL"])
     configurePlugin(reader, backend)
     configureAuth(backend)
     configureRoute(reader, backend)
@@ -172,6 +160,7 @@ private fun Application.configurePlugin(
     reader: DatabaseReader,
     backend: Backend,
 ) {
+    val env = readEnv(readInjectedEnv())
     install(ContentNegotiation) {
         json()
     }
@@ -189,11 +178,8 @@ private fun Application.configurePlugin(
         header(HttpHeaders.XRequestId)
         generate()
     }
-    install(WebSockets) {
-        setupWebSockets()
-    }
     install(Sessions) {
-        setupSessions()
+        setupUserSessions(env)
     }
     if (backend.customConfig.buildType == "prod") {
         setupRateLimit()
@@ -205,14 +191,6 @@ private fun Application.configurePlugin(
         excludePaths = setOf("/metrics")
     }
     configureMonitor()
-}
-
-private fun WebSockets.WebSocketOptions.setupWebSockets() {
-    pingPeriod = 15.seconds
-    timeout = 15.seconds
-    maxFrameSize = Long.MAX_VALUE
-    masking = false
-    contentConverter = KotlinxWebsocketSerializationConverter(Json)
 }
 
 private fun Application.setupRateLimit() {
@@ -232,29 +210,8 @@ private fun Application.setupRateLimit() {
     }
 }
 
-private fun SessionsConfig.setupSessions() {
-    val secureRandom = SecureRandom()
-    val secretEncryptKey = ByteArray(16).apply {
-        secureRandom.nextBytes(this)
-    }
-    val secretSignKey = ByteArray(14).apply {
-        secureRandom.nextBytes(this)
-    }
-
-    cookie<UserSession>("user_session") {
-        cookie.path = "/"
-        cookie.maxAgeInSeconds = 3600
-
-        transform(SessionTransportTransformerEncrypt(secretEncryptKey, secretSignKey))
-    }
-}
-
 private fun Application.buildBackend(): Backend {
-    val injectedEnv = engine.environment.config.toMap().mapNotNull {
-        (it.value as? String)?.let { v ->
-            it.key to v
-        }
-    }.associate { it }
+    val injectedEnv = readInjectedEnv()
     val env = readEnv(injectedEnv)
     Napier.i {
         if (env["BUILD_TYPE"] == "test") {
@@ -265,6 +222,12 @@ private fun Application.buildBackend(): Backend {
     }
     return buildBackendFromEnv(env)
 }
+
+private fun Application.readInjectedEnv() = engine.environment.config.toMap().mapNotNull {
+        (it.value as? String)?.let { v ->
+            it.key to v
+        }
+    }.associate { it }
 
 private fun buildDatabaseReader() = DatabaseReader.Builder(
     ClassLoader.getSystemResourceAsStream("GeoLite2-Country.mmdb")
@@ -301,27 +264,6 @@ val RegionBlocker = createApplicationPlugin(name = "RegionBlocker", ::RegionBloc
         if (codes.any { it in deny }) {
             call.respond(HttpStatusCode(451, "Unavailable For Legal Reasons"))
         }
-    }
-}
-
-fun ApplicationCall.remoteIp(
-    reader: DatabaseReader,
-): List<Pair<String, String?>> {
-    val remoteAddress = request.origin.remoteAddress
-    val country = reader.tryCountry(InetAddress.getByName(remoteAddress)).getOrNull()
-    return if (country == null) {
-        request.header("X-Forwarded-For")?.split(", ").orEmpty().mapNotNull {
-            val c = reader.tryCountry(InetAddress.getByName(it)).getOrNull()
-            if (c != null) {
-                it to c.country().isoCode()
-            } else {
-                null
-            }
-        }.ifEmpty {
-            listOf("127.0.0.1" to null)
-        }
-    } else {
-        listOf(remoteAddress to country.country().isoCode())
     }
 }
 
@@ -416,9 +358,6 @@ fun Application.configureRoute(reader: DatabaseReader, backend: Backend) {
             bindProtectedCommunityRoute(backend)
             bindProtectedUserRoute(backend)
             bindProtectedUserSubscriptionRoute(backend)
-            webSocket("/link") {
-                webSocketContent(reader, backend)
-            }
             bindProtectedFileRoute(backend)
             bindProtectedTitleRoute(backend)
             bindProtectedAccountRoute(backend)

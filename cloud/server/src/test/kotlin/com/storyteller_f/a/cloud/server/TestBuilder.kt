@@ -19,6 +19,7 @@ import com.storyteller_f.a.client.core.getUserPass
 import com.storyteller_f.a.client.core.onBackgroundTask
 import com.storyteller_f.a.client.core.signOut
 import com.storyteller_f.a.client.core.startBackgroundTask
+import com.storyteller_f.a.cloud.ws.module as wsModule
 import com.storyteller_f.a.cloud.worker.WorkerBackend
 import com.storyteller_f.a.cloud.worker.buildBackendFromEnv
 import com.storyteller_f.shared.commonJson
@@ -57,6 +58,9 @@ import kotlin.test.assertEquals
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
+private const val TEST_WS_URL = "ws://localhost/link"
+private const val TEST_SESSION_SECRET = "test-session-secret"
+
 @OptIn(ExperimentalUuidApi::class)
 class TestMate(
     val applicationTestBuilder: ApplicationTestBuilder,
@@ -93,10 +97,17 @@ fun test(
     }
     if (System.getenv("ENABLE_TEST_CONTAINER") == "true") {
         System.setProperty("api.version", "1.44")
-        startTestContainerTest(overrideEnv + mapOf("METHOD_NAME" to methodName), block)
+        startTestContainerTest(
+            mapOf("SESSION_SECRET" to TEST_SESSION_SECRET, "METHOD_NAME" to methodName) + overrideEnv,
+            block
+        )
     } else {
         startMemoryTest(
-            overrideEnv + mapOf("SERVER_URL" to "http://localhost", "METHOD_NAME" to methodName),
+            mapOf(
+                "SESSION_SECRET" to TEST_SESSION_SECRET,
+                "SERVER_URL" to "http://localhost",
+                "METHOD_NAME" to methodName,
+            ) + overrideEnv,
             block
         )
     }
@@ -208,6 +219,11 @@ private fun doTest(
         application {
             module()
         }
+        externalServices {
+            hosts("ws://localhost") {
+                wsModule()
+            }
+        }
         val port = env["port"]?.toIntOrNull()
 
         val backend = buildBackendFromEnv(readEnv(env))
@@ -310,7 +326,7 @@ suspend fun <R> TestMate.getAppSession(
     block: suspend UserSessionManager.(SessionTuple) -> R,
 ): SessionOuterTuple<R> {
     return coroutineScope {
-        val sessionManager = createUserSessionManager("link", { model, cookiesStorage ->
+        val sessionManager = createUserSessionManager(TEST_WS_URL, { model, cookiesStorage ->
             createClient {
                 defaultClientConfigure(cookiesStorage, model)
             }
@@ -340,7 +356,7 @@ suspend fun <R2> TestMate.noneSession(
     block: suspend UserSessionManager.() -> R2
 ): R2 {
     return coroutineScope {
-        val sessionManager = createUserSessionManager("link", { model, cookiesStorage ->
+        val sessionManager = createUserSessionManager(TEST_WS_URL, { model, cookiesStorage ->
             createClient {
                 defaultClientConfigure(cookiesStorage, model)
             }

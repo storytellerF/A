@@ -12,9 +12,11 @@ import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.a.backend.core.types.buildMemberForNotificationRoom
 import com.storyteller_f.a.backend.core.types.buildUserNotificationRoom
 import com.storyteller_f.a.cloud.core.service.createTopicAtRoom
+import com.storyteller_f.a.cloud.ws.api.GlobalWsEventPublisher
 import com.storyteller_f.shared.buildEncryptedTopicContent
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.obj.NewRoomTopic
+import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
@@ -91,5 +93,7 @@ suspend fun Backend.sedTopicAtRoom(
         PrimaryKeyFetch(null, 10)
     ).getOrThrow().list
     val encrypted = buildEncryptedTopicContent(content, userPubKeyInfos)
-    createTopicAtRoom(NewRoomTopic(ObjectType.ROOM, roomId, encrypted), uid).getOrThrow()
+    createTopicAtRoom(NewRoomTopic(ObjectType.ROOM, roomId, encrypted), uid).getOrThrow()?.let {
+        GlobalWsEventPublisher.publishNewTopic(RoomFrame.NewTopicInfo(it))
+    }
 }
