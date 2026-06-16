@@ -6,13 +6,11 @@ WORKDIR /app
 COPY . .
 ENV HOST_TYPE=docker
 
-ARG BUILD_TYPE
-ARG FLAVOR
 ARG BUILD_ON
 
 RUN --mount=type=cache,target=/root/.gradle \
     ./scripts/build_scripts/build-on-condition.sh "$BUILD_ON" \
-    "./scripts/build_scripts/build-ws.sh $FLAVOR $BUILD_TYPE"
+    "./scripts/build_scripts/build-ws.sh"
 
 RUN mkdir -p ./cloud/ws/build/decompressed && \
     tar -xf ./deploy/build/ws.tar -C ./cloud/ws/build/decompressed

@@ -69,7 +69,7 @@ fun <T : Any> StateView(
         }
     }
     Box(modifier = modifier.pullRefresh(refreshState)) {
-        if (pagingItems.itemSnapshotList.isNotEmpty()) {
+        if (pagingItems.itemCount > 0) {
             content(pagingItems)
             StateViewTopIndicator(pagingItems, pullRefreshing)
         } else {
@@ -318,7 +318,7 @@ fun <T : Any> LazyListScope.pagingItems(
     item(spacerId) {
         Spacer(modifier = Modifier.height(1.dp))
     }
-    items(lazyPagingItems.itemSnapshotList.size, k, contentType, itemContent)
+    items(lazyPagingItems.itemCount, k, contentType, itemContent)
 }
 
 fun <T : Any> LazyGridScope.pagingItems(

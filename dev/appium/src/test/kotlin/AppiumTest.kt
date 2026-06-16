@@ -28,7 +28,6 @@ import com.storyteller_f.shared.type.ObjectType
 import io.appium.java_client.AppiumBy
 import io.appium.java_client.android.AndroidDriver
 import io.appium.java_client.android.options.UiAutomator2Options
-import io.appium.java_client.plugins.storage.StorageClient
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -36,16 +35,15 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import org.junit.Rule
 import org.junit.rules.TestName
-import org.slf4j.LoggerFactory
 import org.openqa.selenium.OutputType
 import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.WebDriverWait
+import org.slf4j.LoggerFactory
 import org.testcontainers.containers.BindMode
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.Network
@@ -59,6 +57,7 @@ import java.time.Duration
 import java.util.Base64
 import kotlin.test.Test
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -70,19 +69,23 @@ private const val INJECTED_SESSION_FILE = "files/appium-session/session.json"
 private const val CLI_READY_PORT = 8081
 private const val APP_MAIN_ACTIVITY_CLASS_NAME = "com.storyteller_f.a.app.MainActivity"
 private const val PANEL_MAIN_ACTIVITY_CLASS_NAME = "com.storyteller_f.a.panel.MainActivity"
+private const val ADB_REVERSE_WAIT_TIMEOUT_MILLIS = 30_000L
+private const val ADB_REVERSE_POLL_INTERVAL_MILLIS = 500L
 
 private val appUnderTest = AppUnderTest(
-    apkFile = ::resolveAppApkFile,
-    packageName = ::resolveAppPackageName,
+    packageName = resolveAppPackageName(),
     mainActivityClassName = APP_MAIN_ACTIVITY_CLASS_NAME,
 )
 
 private val panelUnderTest = AppUnderTest(
-    apkFile = ::resolvePanelApkFile,
-    packageName = ::resolvePanelPackageName,
+    packageName = resolvePanelPackageName(),
     mainActivityClassName = PANEL_MAIN_ACTIVITY_CLASS_NAME,
 )
 
+/**
+ * 禁止等待设备上线，如果设备不存在就任由其失败。
+ * 禁止直接通过gradle 启动测试，必须使用 build-and-test.sh --appium 启动，build-and-test.sh 中会尝试连接模拟器
+ */
 class AppiumTest {
     @get:Rule
     val name = TestName()
@@ -210,7 +213,11 @@ class AppiumTest {
         ) { driver, data ->
             try {
                 clickElement(driver, """new UiSelector().description("avatar")""")
-                clickElement(driver, """new UiSelector().text("ad: ${data.authenticated.session.address}")""")
+                assertElementVisible(
+                    driver,
+                    """new UiSelector().text("ad: ${data.authenticated.session.address}")"""
+                )
+                clickElement(driver, """new UiSelector().resourceIdMatches(".*user-dialog-cell")""")
                 assertElementVisible(driver, """new UiSelector().text("$topicContent")""")
 
                 clickElement(driver, """new UiSelector().text("$topicContent")""")
@@ -259,12 +266,9 @@ class AppiumTest {
             try {
                 openCommunityFromCommunitiesTab(driver, data.communityName)
 
-                clickAnyElement(
+                clickElement(
                     driver,
-                    listOf(
-                        """new UiSelector().text("$topicContent")""",
-                        """new UiSelector().textContains("appium-subscription-topic")"""
-                    )
+                    """new UiSelector().text("$topicContent")""",
                 )
                 clickElement(driver, """new UiSelector().description("topic")""")
                 clickElement(driver, """new UiSelector().text("Subscription")""")
@@ -279,25 +283,30 @@ class AppiumTest {
     }
 
     @Test
-    fun `test community profile actions from joined community`() = runPreparedCommunityRoomScenario { driver, data, _, _ ->
-        openPreparedCommunity(driver, data)
-        openCommunityDialog(driver, data)
+    fun `test community profile actions from joined community`() =
+        runPreparedCommunityRoomScenario {
+                driver,
+                data,
+            ->
+            openPreparedCommunity(driver, data)
+            openCommunityDialog(driver, data)
 
-        clickElement(driver, """new UiSelector().text("Favorite")""")
-        clickElement(driver, """new UiSelector().text("Subscription")""")
-        clickElement(driver, """new UiSelector().text("All members")""")
+            clickElement(driver, """new UiSelector().text("Favorite")""")
+            clickElement(driver, """new UiSelector().text("Subscription")""")
+            clickElement(driver, """new UiSelector().text("All members")""")
 
-        clickAnyElement(
-            driver,
-            listOf(
+            clickElement(
+                driver,
                 """new UiSelector().textContains("${data.ownerSession.address}")""",
-                """new UiSelector().textContains("ad:")"""
             )
-        )
-    }
+        }
 
     @Test
-    fun `test publish topic in joined community`() = runPreparedCommunityRoomScenario { driver, data, communityTopicContent, _ ->
+    fun `test publish topic in joined community`() = runPreparedCommunityRoomScenario {
+            driver,
+            data,
+        ->
+        val communityTopicContent = "appium-community-topic-${System.currentTimeMillis()}"
         openPreparedCommunity(driver, data)
         openCommunityDialog(driver, data)
 
@@ -309,18 +318,19 @@ class AppiumTest {
             """new UiSelector().className("android.widget.EditText")""",
             communityTopicContent
         )
-        clickAnyElement(
+        clickElement(
             driver,
-            listOf(
-                """new UiSelector().description("submit")""",
-                """new UiSelector().description("Send")"""
-            )
+            """new UiSelector().description("submit")""",
         )
         assertElementVisible(driver, """new UiSelector().text("$communityTopicContent")""")
     }
 
     @Test
-    fun `test publish topic in community room`() = runPreparedCommunityRoomScenario { driver, data, _, roomTopicContent ->
+    fun `test publish topic in community room`() = runPreparedCommunityRoomScenario {
+            driver,
+            data,
+        ->
+        val roomTopicContent = "appium-room-topic-${System.currentTimeMillis()}"
         openPreparedCommunity(driver, data)
 
         clickElement(driver, """new UiSelector().text("Rooms")""")
@@ -330,12 +340,9 @@ class AppiumTest {
             """new UiSelector().className("android.widget.EditText")""",
             roomTopicContent
         )
-        clickAnyElement(
+        clickElement(
             driver,
-            listOf(
-                """new UiSelector().description("Send")""",
-                """new UiSelector().text("Send")"""
-            )
+            """new UiSelector().description("Send")""",
         )
         assertElementVisible(driver, """new UiSelector().text("$roomTopicContent")""")
     }
@@ -395,39 +402,15 @@ class AppiumTest {
         }
     }
 
-    private suspend fun runType2Test(block: suspend (AndroidDriver) -> Unit) {
-        runAppiumTest {
-            var driver: AndroidDriver? = null
-            try {
-                val url = "http://127.0.0.1:4723"
-                val remoteAddress = URI(url).toURL()
-                val storageClient = StorageClient(URI(url).toURL())
-                storageClient.reset()
-                storageClient.add(appUnderTest.apkFile())
-                val path = storageClient.list().first().path
-                val options = UiAutomator2Options().setApp(path)
+    private suspend fun runType2Test(
+        app: AppUnderTest = appUnderTest,
+        block: suspend (AndroidDriver) -> Unit
+    ) {
+        runType1Test(app, { _, _ ->
 
-                driver = AndroidDriver(remoteAddress, options)
-                driver.startRecordingScreen()
-                block(driver)
-            } finally {
-                if (driver != null) {
-                    try {
-                        val content = driver.stopRecordingScreen()
-                        val decoded = Base64.getDecoder().decode(content)
-                        val dir =
-                            File("build/test/appium-records/${this@AppiumTest.javaClass.simpleName}")
-                        dir.mkdirs()
-                        val file = File(dir, "${name.methodName}.mp4")
-                        file.writeBytes(decoded)
-                    } catch (e: Exception) {
-                        println(e)
-                    }
-                    copyAppLogToBuild(name.methodName, appUnderTest.packageName())
-                    driver.quit()
-                }
-            }
-        }
+        }, { driver, _ ->
+            block(driver)
+        })
     }
 
     private suspend fun <T> runType1Test(
@@ -437,12 +420,11 @@ class AppiumTest {
     ) {
         runAppiumTest {
             var driver: AndroidDriver? = null
-            val packageName = app.packageName()
+            val packageName = app.packageName
             try {
                 val url = "http://127.0.0.1:4723"
                 val remoteAddress = URI(url).toURL()
 
-                installAppForPrivateInjection(app.apkFile(), packageName)
                 clearAppData(packageName)
                 val session = beforeDriverLaunch(it, packageName)
                 val options = UiAutomator2Options()
@@ -473,12 +455,11 @@ class AppiumTest {
     }
 
     private fun runPreparedCommunityRoomScenario(
-        block: suspend (AndroidDriver, PreparedScenario, String, String) -> Unit
+        block: suspend (AndroidDriver, PreparedScenario) -> Unit
     ) = runAppiumBlockingTest {
         loadCryptoLibIfNeed()
         val now = System.currentTimeMillis()
-        val communityTopicContent = "appium-community-topic-$now"
-        val roomTopicContent = "appium-room-topic-$now"
+
         runType1Test(
             beforeDriverLaunch = { ports, packageName ->
                 val prepared = prepareJoinAndPostingScenario(
@@ -490,7 +471,7 @@ class AppiumTest {
                 prepared
             }
         ) { driver, data ->
-            block(driver, data, communityTopicContent, roomTopicContent)
+            block(driver, data)
         }
     }
 
@@ -500,22 +481,16 @@ class AppiumTest {
 
     private fun openCommunityFromCommunitiesTab(driver: AndroidDriver, communityName: String) {
         clickElement(driver, """new UiSelector().text("Communities")""")
-        clickAnyElement(
+        clickElement(
             driver,
-            listOf(
-                """new UiSelector().text("$communityName")""",
-                """new UiSelector().textContains("$communityName")"""
-            )
+            """new UiSelector().text("$communityName")""",
         )
     }
 
     private fun openCommunityDialog(driver: AndroidDriver, data: PreparedScenario) {
-        clickAnyElement(
+        clickElement(
             driver,
-            listOf(
-                """new UiSelector().description("icon")""",
-                """new UiSelector().text("${data.communityName.first()}")"""
-            )
+            """new UiSelector().text("${data.communityName.first()}")"""
         )
     }
 
@@ -607,102 +582,6 @@ class AppiumTest {
         return result
     }
 
-    private suspend fun waitUntilTopicFavorited(
-        sessionManager: UserSessionManager,
-        topicId: Long,
-        timeoutMillis: Long = Duration.ofSeconds(30).toMillis(),
-    ) {
-        val deadline = System.currentTimeMillis() + timeoutMillis
-        while (System.currentTimeMillis() < deadline) {
-            val topicInfo = sessionManager.getTopicInfo(topicId).getOrThrow()
-            if (topicInfo.favoriteId != null) {
-                return
-            }
-            delay(500)
-        }
-        error("Topic not marked as favorite: $topicId")
-    }
-
-    private suspend fun waitUntilTopicSubscribed(
-        sessionManager: UserSessionManager,
-        topicId: Long,
-        timeoutMillis: Long = Duration.ofSeconds(30).toMillis(),
-    ) {
-        val deadline = System.currentTimeMillis() + timeoutMillis
-        while (System.currentTimeMillis() < deadline) {
-            val topicInfo = sessionManager.getTopicInfo(topicId).getOrThrow()
-            if (topicInfo.subscriptionId != null) {
-                return
-            }
-            delay(500)
-        }
-        error("Topic not marked as subscribed: $topicId")
-    }
-
-    private suspend fun waitUntilCommunityJoined(
-        sessionManager: UserSessionManager,
-        communityId: Long,
-        timeoutMillis: Long = Duration.ofSeconds(30).toMillis(),
-    ) {
-        val deadline = System.currentTimeMillis() + timeoutMillis
-        while (System.currentTimeMillis() < deadline) {
-            val community = sessionManager.getCommunityInfo(communityId).getOrThrow()
-            if (community.isJoined) {
-                return
-            }
-            delay(500)
-        }
-        error("Community not visible in joined communities: $communityId")
-    }
-
-    private fun createApiSessionManager(ports: AppiumPorts) = createUserSessionManager(
-        buildWebSocketUrl("ws://127.0.0.1:${ports.ws}"),
-        { model, cookieStorage ->
-            getClient {
-                defaultClientConfigure(
-                    cookiesStorage = cookieStorage,
-                    manager = model,
-                    httpUrl = "http://127.0.0.1:${ports.server}",
-                )
-            }
-        },
-        onReceiveFrame = { _, _, _ -> }
-    )
-
-    private fun createPanelApiSessionManager(ports: AppiumPorts): PanelSessionManager = createPanelSessionManager(
-        { model, cookieStorage ->
-            getClient {
-                defaultClientConfigureForPanel(
-                    cookiesStorage = cookieStorage,
-                    manager = model,
-                    httpUrl = "http://127.0.0.1:${ports.server}",
-                )
-            }
-        },
-    )
-
-    private suspend fun createCommunityByApi(
-        manager: UserSessionManager,
-        name: String,
-        aid: String
-    ): Long {
-        return manager.createCommunity(NewCommunity(name, aid)).getOrThrow().id
-    }
-
-    private suspend fun createRoomByApi(
-        manager: UserSessionManager,
-        name: String,
-        aid: String,
-        communityId: Long,
-    ): Long = manager.createRoom(NewRoom(name, aid, communityId = communityId)).getOrThrow().id
-
-    private suspend fun createTopicByApi(
-        manager: UserSessionManager,
-        parentType: ObjectType,
-        parentId: Long,
-        content: String,
-    ): Long = manager.createTopic(parentType, parentId, content).getOrThrow().id
-
     private fun buildInjectedSessionJson(session: InjectedSession): String {
         return buildJsonObject {
             put("algo", "P256")
@@ -731,6 +610,101 @@ class AppiumTest {
         runAdbCommand("shell", "run-as", packageName, "cat", INJECTED_SESSION_FILE)
     }
 }
+
+private suspend fun waitUntilTopicFavorited(
+    sessionManager: UserSessionManager,
+    topicId: Long,
+    timeoutMillis: Long = Duration.ofSeconds(30).toMillis(),
+) {
+    val deadline = System.currentTimeMillis() + timeoutMillis
+    while (System.currentTimeMillis() < deadline) {
+        val topicInfo = sessionManager.getTopicInfo(topicId).getOrThrow()
+        if (topicInfo.favoriteId != null) {
+            return
+        }
+        delay(500.milliseconds)
+    }
+    error("Topic not marked as favorite: $topicId")
+}
+
+private suspend fun waitUntilTopicSubscribed(
+    sessionManager: UserSessionManager,
+    topicId: Long,
+    timeoutMillis: Long = Duration.ofSeconds(30).toMillis(),
+) {
+    val deadline = System.currentTimeMillis() + timeoutMillis
+    while (System.currentTimeMillis() < deadline) {
+        val topicInfo = sessionManager.getTopicInfo(topicId).getOrThrow()
+        if (topicInfo.subscriptionId != null) {
+            return
+        }
+        delay(500.milliseconds)
+    }
+    error("Topic not marked as subscribed: $topicId")
+}
+
+private suspend fun waitUntilCommunityJoined(
+    sessionManager: UserSessionManager,
+    communityId: Long,
+    timeoutMillis: Long = Duration.ofSeconds(30).toMillis(),
+) {
+    val deadline = System.currentTimeMillis() + timeoutMillis
+    while (System.currentTimeMillis() < deadline) {
+        val community = sessionManager.getCommunityInfo(communityId).getOrThrow()
+        if (community.isJoined) {
+            return
+        }
+        delay(500.milliseconds)
+    }
+    error("Community not visible in joined communities: $communityId")
+}
+
+private fun createApiSessionManager(ports: AppiumPorts) = createUserSessionManager(
+    buildWebSocketUrl("ws://127.0.0.1:${ports.ws}"),
+    { model, cookieStorage ->
+        getClient {
+            defaultClientConfigure(
+                cookiesStorage = cookieStorage,
+                manager = model,
+                httpUrl = "http://127.0.0.1:${ports.server}",
+            )
+        }
+    },
+    onReceiveFrame = { _, _, _ -> }
+)
+
+private fun createPanelApiSessionManager(ports: AppiumPorts): PanelSessionManager =
+    createPanelSessionManager { model, cookieStorage ->
+        getClient {
+            defaultClientConfigureForPanel(
+                cookiesStorage = cookieStorage,
+                manager = model,
+                httpUrl = "http://127.0.0.1:${ports.server}",
+            )
+        }
+    }
+
+private suspend fun createCommunityByApi(
+    manager: UserSessionManager,
+    name: String,
+    aid: String
+): Long {
+    return manager.createCommunity(NewCommunity(name, aid)).getOrThrow().id
+}
+
+private suspend fun createRoomByApi(
+    manager: UserSessionManager,
+    name: String,
+    aid: String,
+    communityId: Long,
+): Long = manager.createRoom(NewRoom(name, aid, communityId = communityId)).getOrThrow().id
+
+private suspend fun createTopicByApi(
+    manager: UserSessionManager,
+    parentType: ObjectType,
+    parentId: Long,
+    content: String,
+): Long = manager.createTopic(parentType, parentId, content).getOrThrow().id
 
 private suspend fun useDatabaseContainer(
     network: Network,
@@ -895,8 +869,7 @@ private data class PreparedScenario(
 )
 
 private data class AppUnderTest(
-    val apkFile: () -> File,
-    val packageName: () -> String,
+    val packageName: String,
     val mainActivityClassName: String,
 )
 
@@ -906,27 +879,6 @@ private fun prepareSessionDirectories(sessionPath: String) {
     File(sessionDir, "logs").mkdirs()
     File(sessionDir, "lucene").mkdirs()
     File(sessionDir, "files").mkdirs()
-}
-
-private fun installAppForPrivateInjection(apkFile: File, packageName: String) {
-    val installResult = runAdbCommandAllowFailure("install", "-r", apkFile.canonicalPath)
-    if (installResult.exitCode == 0) {
-        println("App installed successfully: ${apkFile.canonicalPath}")
-        return
-    }
-
-    if (isInstallFailedBySignatureMismatch(installResult.output)) {
-        println("Signature mismatch detected, uninstalling existing app and retrying installation")
-        runAdbCommand("uninstall", packageName)
-        runAdbCommand("install", "-r", apkFile.canonicalPath)
-        println("App installed successfully after resolving signature mismatch: ${apkFile.canonicalPath}")
-        return
-    }
-
-    error(
-        "adb install failed (install -r ${apkFile.canonicalPath}): " +
-            installResult.output.ifBlank { "exitCode=${installResult.exitCode}" }
-    )
 }
 
 private fun clearAppData(packageName: String) {
@@ -975,34 +927,41 @@ private fun parseEnvFile(file: File): Map<String, String> {
 
 private fun bindAndroidReverse(hostPort: Int, devicePort: Int) {
     println("bind android reverse $hostPort $devicePort")
-    val script = sequenceOf(
-        File("scripts/android_scripts/forward-android-devices.sh"),
-        File("../../scripts/android_scripts/forward-android-devices.sh")
-    ).firstOrNull { it.exists() }
-        ?: error("forward-android-devices.sh not found")
-
-    val processBuilder = ProcessBuilder(
-        "sh",
-        script.canonicalPath,
-        devicePort.toString(),
-        hostPort.toString()
-    )
-        .redirectErrorStream(true)
-    val home = System.getProperty("user.home")
-    val environment = processBuilder.environment()
-    val old = environment.getOrDefault("PATH", "")
-    if (!old.contains("platform-tools"))
-        environment["PATH"] = "$old:$home/Android/Sdk/platform-tools"
-    val process = processBuilder.start()
-    val exitCode = process.waitFor()
-    val output = process.inputStream.bufferedReader().use { it.readText().trim() }
-    check(exitCode == 0) {
-        if (output.isNotEmpty()) {
-            "Failed to execute forward-android-devices.sh: $output"
-        } else {
-            "Failed to execute forward-android-devices.sh"
+    val devices = runAdbCommandAllowFailure("devices").connectedDeviceSerials()
+    check(devices.isNotEmpty()) { "No Android device available for adb reverse" }
+    devices.forEach { device ->
+        val result = runAdbCommandAllowFailure(
+            "-s", device, "reverse", "tcp:$devicePort", "tcp:$hostPort"
+        )
+        check(result.exitCode == 0) {
+            "Failed to bind android reverse for $device tcp:$devicePort -> tcp:$hostPort: " +
+                    result.output.ifBlank { "exitCode=${result.exitCode}" }
         }
+        waitForAndroidReverse(device, devicePort)
     }
+}
+
+private fun waitForAndroidReverse(device: String, devicePort: Int) {
+    val result = runAdbCommandAllowFailure(
+        "-s",
+        device,
+        "shell",
+        "nc",
+        "-z",
+        "127.0.0.1",
+        devicePort.toString()
+
+    )
+    if (result.exitCode == 0) {
+        println("android reverse $device tcp:$devicePort is reachable")
+        return
+    }
+
+    val reverseList = runAdbCommandAllowFailure("-s", device, "reverse", "--list").output
+    error(
+        "android reverse $device tcp:$devicePort is not reachable. " +
+                "adb reverse --list: ${reverseList.ifBlank { "<empty>" }}"
+    )
 }
 
 private fun copyAppLogToBuild(testName: String, packageName: String) {
@@ -1026,6 +985,25 @@ private fun copyAppLogToBuild(testName: String, packageName: String) {
     )
 }
 
+private data class AdbCommandResult(
+    val exitCode: Int,
+    val output: String,
+)
+
+private fun adbProcessBuilder(args: List<String>): ProcessBuilder {
+    val home = System.getProperty("user.home")
+    val processBuilder = ProcessBuilder(listOf("$home/Android/Sdk/platform-tools/adb") + args)
+        .redirectErrorStream(true)
+    return processBuilder
+}
+
+private fun runAdbCommandAllowFailure(vararg args: String): AdbCommandResult {
+    val process = adbProcessBuilder(args).start()
+    val exitCode = process.waitFor()
+    val output = process.inputStream.bufferedReader().use { it.readText().trim() }
+    return AdbCommandResult(exitCode = exitCode, output = output)
+}
+
 private fun runAdbCommand(vararg args: String) {
     val process = adbProcessBuilder(args.toList()).start()
     val exitCode = process.waitFor()
@@ -1040,44 +1018,21 @@ private fun runAdbCommand(vararg args: String) {
     println("execute [${args.joinToString(" ")}] success")
 }
 
-private data class AdbCommandResult(
-    val exitCode: Int,
-    val output: String,
-)
-
-private fun runAdbCommandAllowFailure(vararg args: String): AdbCommandResult {
-    val process = adbProcessBuilder(args.toList()).start()
-    val exitCode = process.waitFor()
-    val output = process.inputStream.bufferedReader().use { it.readText().trim() }
-    return AdbCommandResult(exitCode = exitCode, output = output)
+private fun AdbCommandResult.connectedDeviceSerials(): List<String> {
+    return output.lineSequence()
+        .drop(1)
+        .map { it.trim().split(Regex("\\s+")) }
+        .filter { it.size >= 2 && it[1] == "device" }
+        .map { it[0] }
+        .toList()
 }
-
-private fun adbProcessBuilder(args: List<String>): ProcessBuilder {
-    val home = System.getProperty("user.home")
-    val processBuilder = ProcessBuilder(listOf("$home/Android/Sdk/platform-tools/adb") + args)
-        .redirectErrorStream(true)
-    return processBuilder
-}
-
-private fun isInstallFailedBySignatureMismatch(output: String): Boolean {
-    val normalizedOutput = output.lowercase()
-    return "install_failed_update_incompatible" in normalizedOutput ||
-        "signatures do not match" in normalizedOutput ||
-        "install_parse_failed_inconsistent_certificates" in normalizedOutput
-}
-
-private fun resolveAppApkFile(): File = resolveUniversalApkFile(appMetadataCandidates())
-
-private fun resolvePanelApkFile(): File = resolveUniversalApkFile(panelMetadataCandidates())
 
 private fun resolveAppPackageName(): String = resolvePackageName(
     metadataCandidates = appMetadataCandidates(),
-    fallbackApplicationIdPrefix = "com.storyteller_f.a.app",
 )
 
 private fun resolvePanelPackageName(): String = resolvePackageName(
     metadataCandidates = panelMetadataCandidates(),
-    fallbackApplicationIdPrefix = "com.storyteller_f.a.panel",
 )
 
 private fun appMetadataCandidates(): Sequence<File> = sequenceOf(
@@ -1090,39 +1045,16 @@ private fun panelMetadataCandidates(): Sequence<File> = sequenceOf(
     File("panel/androidApp/build/outputs/apk/debug/output-metadata.json"),
 )
 
-private fun resolveUniversalApkFile(metadataCandidates: Sequence<File>): File {
-    val metadataFile = findMetadataFile(metadataCandidates)
-    val metadata = readApkMetadata(metadataFile)
-    val outputFile = metadata["elements"]?.jsonArray
-        ?.map { it.jsonObject }
-        ?.firstOrNull { it.stringValue("type") == "UNIVERSAL" }
-        ?.stringValue("outputFile")
-        ?: error("No UNIVERSAL APK entry found in ${metadataFile.canonicalPath}")
-    return File(metadataFile.parentFile, outputFile).also {
-        check(it.exists()) { "APK file declared by ${metadataFile.canonicalPath} does not exist: ${it.canonicalPath}" }
-    }
-}
-
 private fun resolvePackageName(
     metadataCandidates: Sequence<File>,
-    fallbackApplicationIdPrefix: String,
 ): String {
     val metadataFile = metadataCandidates.firstOrNull { it.exists() }
-    if (metadataFile != null) {
-        val applicationId = readApkMetadata(metadataFile).stringValue("applicationId")
-        if (!applicationId.isNullOrBlank()) {
-            return applicationId
-        }
+    if (metadataFile == null) throw Exception("no metadata file")
+    val applicationId = readApkMetadata(metadataFile).stringValue("applicationId")
+    if (applicationId.isNullOrBlank()) {
+        throw Exception("read applicationId failed")
     }
-
-    val flavor =
-        parseEnvFile(File("../../gradle.properties"))["server.flavor"].orEmpty().ifBlank { "dev" }
-    return "$fallbackApplicationIdPrefix.${flavor.replace('-', '_')}.debug"
-}
-
-private fun findMetadataFile(metadataCandidates: Sequence<File>): File {
-    return metadataCandidates.firstOrNull { it.exists() }
-        ?: error("No APK output metadata file found in ${metadataCandidates.joinToString { it.path }}")
+    return applicationId
 }
 
 private fun readApkMetadata(metadataFile: File): JsonObject {
@@ -1134,10 +1066,23 @@ private fun JsonObject.stringValue(name: String): String? {
 }
 
 private fun assertElementVisible(driver: AndroidDriver, selector: String) {
-    val wait = WebDriverWait(driver, Duration.ofSeconds(100))
-    val element =
-        wait.until(ExpectedConditions.presenceOfElementLocated(AppiumBy.androidUIAutomator(selector)))
-    assertTrue(element!!.isDisplayed)
+    try {
+        val wait = WebDriverWait(driver, Duration.ofSeconds(100))
+        val element =
+            wait.until(
+                ExpectedConditions.presenceOfElementLocated(
+                    AppiumBy.androidUIAutomator(
+                        selector
+                    )
+                )
+            )
+        assertTrue(element.isDisplayed)
+    } catch (e: Throwable) {
+        runCatching {
+            saveDebugSnapshot(driver, "assert-visible-failed-${System.currentTimeMillis()}")
+        }
+        throw e
+    }
 }
 
 private fun assertElementNotVisible(
@@ -1145,10 +1090,18 @@ private fun assertElementNotVisible(
     selector: String,
     seconds: Long = 5,
 ) {
-    val locator = AppiumBy.androidUIAutomator(selector)
-    WebDriverWait(driver, Duration.ofSeconds(seconds)).until {
-        driver.findElements(locator).isEmpty()
+    try {
+        val locator = AppiumBy.androidUIAutomator(selector)
+        WebDriverWait(driver, Duration.ofSeconds(seconds)).until {
+            driver.findElements(locator).isEmpty()
+        }
+    } catch (e: Throwable) {
+        runCatching {
+            saveDebugSnapshot(driver, "click-failed-${System.currentTimeMillis()}")
+        }
+        throw e
     }
+
 }
 
 private fun clickElement(
@@ -1156,14 +1109,21 @@ private fun clickElement(
     selector: String,
     seconds: Long = 100
 ) {
-    val locator = AppiumBy.androidUIAutomator(selector)
-    if (seconds > 0) {
-        WebDriverWait(
-            driver,
-            Duration.ofSeconds(seconds)
-        ).until(ExpectedConditions.presenceOfElementLocated(locator))
+    try {
+        val locator = AppiumBy.androidUIAutomator(selector)
+        if (seconds > 0) {
+            WebDriverWait(
+                driver,
+                Duration.ofSeconds(seconds)
+            ).until(ExpectedConditions.presenceOfElementLocated(locator))
+        }
+        driver.findElement(locator).click()
+    } catch (e: Throwable) {
+        runCatching {
+            saveDebugSnapshot(driver, "click-failed-${System.currentTimeMillis()}")
+        }
+        throw e
     }
-    driver.findElement(locator).click()
 }
 
 private fun inputElement(
@@ -1172,41 +1132,22 @@ private fun inputElement(
     input: String,
     seconds: Long = 100
 ) {
-    val locator = AppiumBy.androidUIAutomator(selector)
-    if (seconds > 0) {
-        WebDriverWait(
-            driver,
-            Duration.ofSeconds(seconds)
-        ).until(ExpectedConditions.presenceOfElementLocated(locator))
-    }
-    driver.findElement(locator).sendKeys(input)
-}
-
-private fun clickAnyElement(
-    driver: AndroidDriver,
-    selectors: List<String>,
-    seconds: Long = 100,
-) {
-    val deadline = System.currentTimeMillis() + Duration.ofSeconds(seconds).toMillis()
-    var lastError: Throwable? = null
-    while (System.currentTimeMillis() < deadline) {
-        selectors.forEach { selector ->
-            try {
-                val locator = AppiumBy.androidUIAutomator(selector)
-                val elements = driver.findElements(locator)
-                if (elements.isNotEmpty()) {
-                    elements.first().click()
-                    return
-                }
-            } catch (e: Throwable) {
-                lastError = e
-            }
+    try {
+        val locator = AppiumBy.androidUIAutomator(selector)
+        if (seconds > 0) {
+            WebDriverWait(
+                driver,
+                Duration.ofSeconds(seconds)
+            ).until(ExpectedConditions.presenceOfElementLocated(locator))
         }
+        driver.findElement(locator).sendKeys(input)
+    } catch (e: Throwable) {
+        runCatching {
+            saveDebugSnapshot(driver, "click-failed-${System.currentTimeMillis()}")
+        }
+        throw e
     }
-    throw IllegalStateException(
-        "Unable to click any selector: ${selectors.joinToString()}",
-        lastError
-    )
+
 }
 
 private fun saveDebugSnapshot(driver: AndroidDriver, name: String) {

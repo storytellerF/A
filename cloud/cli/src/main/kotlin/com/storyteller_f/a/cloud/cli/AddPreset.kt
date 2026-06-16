@@ -9,6 +9,7 @@ import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.InsertCommunityTuple
 import com.storyteller_f.a.backend.core.InsertRoomTuple
 import com.storyteller_f.a.backend.core.InsertTopicTuple
+import com.storyteller_f.a.backend.core.MemberAuthData
 import com.storyteller_f.a.backend.core.ObjectListFetch.AidListFetch
 import com.storyteller_f.a.backend.core.service.CommunityDocument
 import com.storyteller_f.a.backend.core.service.MemberDocument
@@ -87,6 +88,46 @@ class EncryptedTopicTuple(
     val id: PrimaryKey,
     val presetTopic: PresetTopic,
 )
+
+private class DownloadProgress(
+    private val totalSize: Long?,
+    private var currentSize: Long,
+) {
+    private var lastLogTime = 0L
+    private var lastLogPercent = -DOWNLOAD_PROGRESS_PERCENT_STEP
+
+    fun add(bytes: Int) {
+        currentSize += bytes
+        log()
+    }
+
+    fun log(force: Boolean = false) {
+        val now = System.currentTimeMillis()
+        val percent = totalSize?.takeIf { it > 0 }?.let { ((currentSize * 100) / it).toInt() }
+        val percentProgressed = percent != null && percent >= lastLogPercent + DOWNLOAD_PROGRESS_PERCENT_STEP
+        if (!force && now - lastLogTime < DOWNLOAD_PROGRESS_LOG_INTERVAL_MS && !percentProgressed) return
+
+        Napier.i {
+            buildString {
+                append("download progress ")
+                append(formatDownloadSize(currentSize))
+                if (totalSize != null) {
+                    append("/")
+                    append(formatDownloadSize(totalSize))
+                }
+                if (percent != null) {
+                    append(" (")
+                    append(percent.coerceAtMost(100))
+                    append("%)")
+                }
+            }
+        }
+        lastLogTime = now
+        if (percent != null) {
+            lastLogPercent = percent
+        }
+    }
+}
 
 data class UserPresetTuple(
     val presetUser: PresetUser,
@@ -798,46 +839,81 @@ class AddPreset : Subcommand("add", "add entry") {
             it.room
         }.distinct()
         val roomMembers = database.admin.getAllMembers(roomAids).getOrThrow().groupBy { it.roomAid }
-        val encryptedContents = topicList.map {
-            val (encryptedContent, aesBytes) = encryptDataByAES(
-                getTopicContent(it, parentDir)
-            ).getOrThrow()
-            EncryptedTopicTuple(encryptedContent, aesBytes, SnowflakeFactory.nextId(), it)
-        }
-        val encryptedKeys = encryptedContents.flatMap {
-            val topic = it.presetTopic
-            val id = it.id
-            val aesBytes = it.aesKey
-            roomMembers[topic.room]!!.map { member ->
-                val derPublicKey = if (member.algoType == AlgoType.DILITHIUM) {
-                    requireNotNull(member.encryptionPublicKey) {
-                        "Missing encryption public key for ${member.userId}"
-                    }
-                } else {
-                    member.publicKey
-                }
-                Triple(
-                    id,
-                    getAlgo(member.algoType).encryptionAlgo.kemEncrypt(derPublicKey, aesBytes).getOrThrow(),
-                    member.userId
-                )
-            }
-        }
-        val tuples = encryptedContents.mapIndexed { index, tuple ->
-            val id = tuple.id
-            val level = tuple.presetTopic.level
-            val parent = tuple.presetTopic.parent
-            val content = tuple.encryptedContent
-            val rootId = roomMap[tuple.presetTopic.room]!!.id
-            val level1 = if (parent == null || parent == 0 || level == null || level == 0) {
-                0
-            } else {
-                level
-            }
-            InsertTopicTuple(tuple.presetTopic, index, level1, id, content, true, rootId)
-        }
+        val encryptedContents = buildEncryptedTopicContents(topicList, parentDir)
+        val encryptedKeys = buildEncryptedTopicKeys(encryptedContents, roomMembers)
+        val tuples = buildEncryptedTopicTuples(encryptedContents, roomMap)
         database.admin.batchAddTopics(tuples, userMap, ObjectType.ROOM).getOrThrow()
         database.admin.batchAddEncryptTopicKeys(encryptedKeys).getOrThrow()
+        uploadEncryptedTopicMedias(tuples, roomMap, parentDir)
+        // 为 topic 作者添加 user log
+        tuples.forEach { tuple ->
+            val authorId = userMap[tuple.topic.author]!!.id
+            addUserLog(authorId, UserLogType.CREATE, tuple.id ob ObjectType.TOPIC).getOrThrow()
+        }
+        batchAddSubscriptions(tuples, userMap)
+    }
+
+    private suspend fun buildEncryptedTopicContents(
+        topicList: List<PresetTopic>,
+        parentDir: File
+    ): List<EncryptedTopicTuple> = topicList.map {
+        val (encryptedContent, aesBytes) = encryptDataByAES(
+            getTopicContent(it, parentDir)
+        ).getOrThrow()
+        EncryptedTopicTuple(encryptedContent, aesBytes, SnowflakeFactory.nextId(), it)
+    }
+
+    private suspend fun buildEncryptedTopicKeys(
+        encryptedContents: List<EncryptedTopicTuple>,
+        roomMembers: Map<String, List<MemberAuthData>>
+    ) = encryptedContents.flatMap {
+        roomMembers[it.presetTopic.room]!!.map { member ->
+            Triple(
+                it.id,
+                encryptTopicKeyForMember(member, it.aesKey),
+                member.userId
+            )
+        }
+    }
+
+    private suspend fun encryptTopicKeyForMember(member: MemberAuthData, aesBytes: ByteArray): ByteArray {
+        val derPublicKey = if (member.algoType == AlgoType.DILITHIUM) {
+            requireNotNull(member.encryptionPublicKey) {
+                "Missing encryption public key for ${member.userId}"
+            }
+        } else {
+            member.publicKey
+        }
+        return getAlgo(member.algoType).encryptionAlgo.kemEncrypt(derPublicKey, aesBytes).getOrThrow()
+    }
+
+    private fun buildEncryptedTopicTuples(
+        encryptedContents: List<EncryptedTopicTuple>,
+        roomMap: Map<String, Room>
+    ) = encryptedContents.mapIndexed { index, tuple ->
+        val level = tuple.presetTopic.level
+        val parent = tuple.presetTopic.parent
+        val level1 = if (parent == null || parent == 0 || level == null || level == 0) {
+            0
+        } else {
+            level
+        }
+        InsertTopicTuple(
+            tuple.presetTopic,
+            index,
+            level1,
+            tuple.id,
+            tuple.encryptedContent,
+            true,
+            roomMap[tuple.presetTopic.room]!!.id
+        )
+    }
+
+    private suspend fun Backend.uploadEncryptedTopicMedias(
+        tuples: List<InsertTopicTuple>,
+        roomMap: Map<String, Room>,
+        parentDir: File
+    ) {
         tuples.forEach { topicTuple ->
             val room = roomMap[topicTuple.topic.room]
             if (room != null) {
@@ -852,12 +928,6 @@ class AddPreset : Subcommand("add", "add entry") {
                 )
             }
         }
-        // 为 topic 作者添加 user log
-        tuples.forEach { tuple ->
-            val authorId = userMap[tuple.topic.author]!!.id
-            addUserLog(authorId, UserLogType.CREATE, tuple.id ob ObjectType.TOPIC).getOrThrow()
-        }
-        batchAddSubscriptions(tuples, userMap)
     }
 
     private suspend fun Backend.batchAddSubscriptions(
@@ -984,52 +1054,22 @@ suspend fun downloadWithResume(
     val totalSize = contentLength?.let {
         if (status == HTTP_STATUS_PARTIAL_CONTENT) downloadedSize + it else it
     }
-    var currentSize = downloadedSize
-    var lastProgressLogTime = 0L
-    var lastProgressLogPercent = -DOWNLOAD_PROGRESS_PERCENT_STEP
-
-    fun logProgress(force: Boolean = false) {
-        val now = System.currentTimeMillis()
-        val percent = totalSize?.takeIf { it > 0 }?.let { ((currentSize * 100) / it).toInt() }
-        val percentProgressed = percent != null && percent >= lastProgressLogPercent + DOWNLOAD_PROGRESS_PERCENT_STEP
-        if (!force && now - lastProgressLogTime < DOWNLOAD_PROGRESS_LOG_INTERVAL_MS && !percentProgressed) return
-
-        Napier.i {
-            buildString {
-                append("download progress ")
-                append(formatDownloadSize(currentSize))
-                if (totalSize != null) {
-                    append("/")
-                    append(formatDownloadSize(totalSize))
-                }
-                if (percent != null) {
-                    append(" (")
-                    append(percent.coerceAtMost(100))
-                    append("%)")
-                }
-            }
-        }
-        lastProgressLogTime = now
-        if (percent != null) {
-            lastProgressLogPercent = percent
-        }
-    }
+    val progress = DownloadProgress(totalSize, downloadedSize)
 
     file.parentFile!!.mkdirs()
 
     RandomAccessFile(file, "rw").use { raf ->
         raf.seek(downloadedSize)
-        logProgress(force = true)
+        progress.log(force = true)
         while (!body.isClosedForRead) {
             val packet = body.readRemaining(DEFAULT_BUFFER_SIZE.toLong())
             while (!packet.exhausted()) {
                 val bytes = packet.readByteArray()
                 raf.write(bytes)
-                currentSize += bytes.size
-                logProgress()
+                progress.add(bytes.size)
             }
         }
-        logProgress(force = true)
+        progress.log(force = true)
     }
 }
 

@@ -78,6 +78,14 @@ class MarkdownTest {
     }
 
     @Test
+    fun `test trim keeps plain text`() {
+        assertEquals(
+            "appium-favorite-topic-1781614397799",
+            trimMarkdownUnusedContent("appium-favorite-topic-1781614397799")
+        )
+    }
+
+    @Test
     fun `test filter code fence unused content`() {
         val markdownText = """
         hello

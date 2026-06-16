@@ -19,7 +19,6 @@ import com.storyteller_f.a.client.core.getUserPass
 import com.storyteller_f.a.client.core.onBackgroundTask
 import com.storyteller_f.a.client.core.signOut
 import com.storyteller_f.a.client.core.startBackgroundTask
-import com.storyteller_f.a.cloud.ws.module as wsModule
 import com.storyteller_f.a.cloud.worker.WorkerBackend
 import com.storyteller_f.a.cloud.worker.buildBackendFromEnv
 import com.storyteller_f.shared.commonJson
@@ -42,6 +41,8 @@ import io.ktor.server.testing.testApplication
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -55,18 +56,27 @@ import java.io.File
 import java.net.ServerSocket
 import java.net.SocketTimeoutException
 import kotlin.test.assertEquals
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
+import com.storyteller_f.a.cloud.ws.module as wsModule
 
 private const val TEST_WS_URL = "ws://localhost/link"
 private const val TEST_SESSION_SECRET = "test-session-secret"
+
+private typealias TestRoomReceiver = suspend (
+    RoomFrame,
+    UserSessionModel,
+    DefaultClientWebSocketSession
+) -> Unit
+
+private val NOOP_ON_RECEIVE: TestRoomReceiver = { _, _, _ -> }
 
 @OptIn(ExperimentalUuidApi::class)
 class TestMate(
     val applicationTestBuilder: ApplicationTestBuilder,
     val workerBackend: WorkerBackend
 ) {
-    val application get() = applicationTestBuilder.application
 
     fun createClient(block: HttpClientConfig<out HttpClientEngineConfig>.() -> Unit = {}): HttpClient {
         return applicationTestBuilder.createClient(block)
@@ -249,32 +259,34 @@ private suspend fun receiveExplainResult(
     task: CompletableDeferred<Unit>,
     port: Int,
 ) {
-    ServerSocket(port).apply {
-        soTimeout = 1000
-    }.use { serverSocket ->
-        task.complete(Unit)
-        while (true) {
-            try {
-                yield()
-                serverSocket.accept().use { socket ->
-                    socket.getInputStream().bufferedReader().use {
-                        val explainResult = commonJson.decodeFromString<ExplainResult>(it.readText())
-                        saveDatabaseExplainResult(explainResult)
+    withContext(Dispatchers.IO) {
+        ServerSocket(port).apply {
+            soTimeout = 1000
+        }.use { serverSocket ->
+            task.complete(Unit)
+            while (true) {
+                try {
+                    yield()
+                    serverSocket.accept().use { socket ->
+                        socket.getInputStream().bufferedReader().use {
+                            val explainResult = commonJson.decodeFromString<ExplainResult>(it.readText())
+                            saveDatabaseExplainResult(explainResult)
+                        }
                     }
+                } catch (_: SocketTimeoutException) {
+                    break
+                } catch (_: CancellationException) {
+                    break
+                } catch (e: Exception) {
+                    Napier.e(throwable = e) {
+                        "server socket error"
+                    }
+                    break
                 }
-            } catch (_: SocketTimeoutException) {
-                break
-            } catch (_: CancellationException) {
-                break
-            } catch (e: Exception) {
-                Napier.e(throwable = e) {
-                    "server socket error"
-                }
-                break
             }
-        }
-        Napier.i {
-            "server socket done"
+            Napier.i {
+                "server socket done"
+            }
         }
     }
 }
@@ -308,7 +320,7 @@ data class SessionOuterTuple<T>(
 
 suspend fun <R> TestMate.attachSession(
     algo: AlgoType = AlgoType.P256,
-    onReceive: suspend (RoomFrame, UserSessionModel, DefaultClientWebSocketSession) -> Unit = { _, _, _ -> },
+    onReceive: suspend (RoomFrame, UserSessionModel, DefaultClientWebSocketSession) -> Unit = NOOP_ON_RECEIVE,
     block: suspend UserSessionManager.(SessionTuple) -> R
 ): SessionOuterTuple<R> {
     val authKey = getAuthKey(algo)
@@ -316,7 +328,7 @@ suspend fun <R> TestMate.attachSession(
 }
 
 suspend fun TestMate.attachSession(): SessionOuterTuple<Unit> {
-    return attachSession(onReceive = { _, _, _ -> }, block = {})
+    return attachSession(onReceive = NOOP_ON_RECEIVE, block = {})
 }
 
 suspend fun <R> TestMate.getAppSession(
@@ -331,22 +343,32 @@ suspend fun <R> TestMate.getAppSession(
                 defaultClientConfigure(cookiesStorage, model)
             }
         }, onReceive)
-        sessionManager.onBackgroundTask {
-            val sessionModel = model
-            val userInfo = getUserPass(authKey, isSignUp) {
+        val jobs = sessionManager.startBackgroundTask()
+
+        try {
+            val sessionModel = sessionManager.model
+            val userInfo = sessionManager.getUserPass(authKey, isSignUp) {
                 RawUserPass(it)
             }
-            val custom = block(SessionTuple(authKey, userInfo.id))
-            signOut().getOrThrow()
+            val custom = sessionManager.block(SessionTuple(authKey, userInfo.id))
+            jobs.forEach {
+                it.cancelAndJoin()
+            }
+            sessionManager.signOut().getOrThrow()
             sessionModel.clear()
             SessionOuterTuple(authKey, userInfo.id, custom)
+        } finally {
+            sessionManager.client.coroutineContext[Job]?.cancelAndJoin()
+            jobs.forEach {
+                it.cancelAndJoin()
+            }
         }
     }
 }
 
 suspend fun <R1, R2> TestMate.loginSession(
     tuple: SessionOuterTuple<R1>,
-    onReceive: suspend (RoomFrame, UserSessionModel, DefaultClientWebSocketSession) -> Unit = { _, _, _ -> },
+    onReceive: suspend (RoomFrame, UserSessionModel, DefaultClientWebSocketSession) -> Unit = NOOP_ON_RECEIVE,
     block: suspend UserSessionManager.(SessionTuple) -> R2
 ): SessionOuterTuple<R2> {
     return getAppSession(false, tuple.authKey, onReceive = onReceive, block = block)
@@ -387,7 +409,7 @@ suspend fun <T> UserSessionManager.waitAndSend(block: suspend DefaultClientWebSo
             break
         }
         withContext(Dispatchers.IO) {
-            delay(100)
+            delay(100.milliseconds)
         }
     }
     return webSocketClient.useWebSocket(block)
@@ -411,11 +433,11 @@ private suspend fun <R> TestMate.getPanelSession(
     block: suspend PanelSessionManager.(SessionTuple) -> R,
 ): SessionOuterTuple<R> {
     return coroutineScope {
-        val sessionManager = createPanelSessionManager({ model, cookiesStorage ->
+        val sessionManager = createPanelSessionManager { model, cookiesStorage ->
             createClient {
                 defaultClientConfigureForPanel(cookiesStorage, model)
             }
-        })
+        }
         val sessionModel = sessionManager.model
         val userInfo = sessionManager.getPanelUserPass(authKey, isSignUp) {
             RawUserPass(it)

@@ -106,7 +106,7 @@ fun MemberList(memberViewModel: ContainerMemberViewModel, onClick: ((UserInfo) -
                     onClick?.invoke(it) ?: appNavFactory.newAppNav().gotoUser(it.id)
                 })
                 Spacer(modifier = Modifier.height(20.dp))
-                if (index != items.itemSnapshotList.size - 1) {
+                if (index != items.itemCount - 1) {
                     HorizontalDivider()
                 }
             }
@@ -131,7 +131,7 @@ fun MemberList(memberViewModel: UserSearchViewModel, onClick: ((UserInfo) -> Uni
                     onClick?.invoke(it) ?: appNavFactory.newAppNav().gotoUser(it.id)
                 })
                 Spacer(modifier = Modifier.height(20.dp))
-                if (index != items.itemSnapshotList.size - 1) {
+                if (index != items.itemCount - 1) {
                     HorizontalDivider()
                 }
             }

@@ -4,20 +4,13 @@
 
 set -e
 
-FLAVOR=$1
-
-if [ -z "$FLAVOR" ]; then
-  log "FLAVOR must be set"
-  exit 1
-fi
-
 execute_ssh() {
   ssh default "$1"
   sleep 2
 }
 
 # 定义要保存的文件名
-FILE="build/images/$FLAVOR.image.tar"
+FILE="build/images/A.image.tar"
 mkdir -p build/images
 IMAGE_NAME="a-server:latest"
 
@@ -40,8 +33,8 @@ fi
 execute_ssh "mkdir -p a-server"
 execute_ssh "mkdir -p /tmp/A"
 
-TARGET="./a-server/$FLAVOR.image.tar.bz2"
-TARGET2="/tmp/A/$FLAVOR.image.tar.bz2"
+TARGET="./a-server/A.image.tar.bz2"
+TARGET2="/tmp/A/A.image.tar.bz2"
 md=$(md5sum "$FILE" | awk '{print $1}')
 mdRemote=$(execute_ssh "md5sum "$TARGET" | awk '{print \$1}'")
 log "local: $md remote: $mdRemote"

@@ -6,13 +6,11 @@ WORKDIR /app
 COPY . .
 ENV HOST_TYPE=docker
 
-ARG BUILD_TYPE
-ARG FLAVOR
 ARG BUILD_ON
 
 RUN --mount=type=cache,target=/root/.gradle \
     ./scripts/build_scripts/build-on-condition.sh "$BUILD_ON" \
-    "./scripts/build_scripts/build-cli.sh $FLAVOR $BUILD_TYPE"
+    "./scripts/build_scripts/build-cli.sh"
 
 RUN mkdir -p ./deploy/build/decompressed && \
     tar -xf ./deploy/build/cli.tar --strip-components=1 -C ./deploy/build/decompressed

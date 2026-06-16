@@ -30,7 +30,7 @@ fun TitleList(titlesViewModel: TitlesViewModel) {
         ) {
             topPrepend(pagingItems.loadState)
             items(
-                count = pagingItems.itemSnapshotList.size,
+                count = pagingItems.itemCount,
                 key = pagingItems.itemKey {
                     it.id.toString()
                 },

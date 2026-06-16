@@ -3,6 +3,8 @@ package com.storyteller_f.a.app
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -13,6 +15,8 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -103,6 +107,7 @@ import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.storage.ModelStorage
 import com.strabled.composepreferences.ProvideDataStoreManager
 import com.strabled.composepreferences.setPreferences
 import dev.tclement.fonticons.LocalIconFont
@@ -126,7 +131,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -290,8 +294,10 @@ fun CommonEntry(content: @Composable () -> Unit) {
                         "gpt_model" defaultValue ""
                         HOME_START_DESTINATION_PREFERENCE_KEY defaultValue HOME_START_DESTINATION_WORLD
                     }
-                    content()
-                    AccountSwitch()
+                    Box(Modifier.fillMaxSize()) {
+                        content()
+                        AccountSwitch()
+                    }
                 }
             }
         }
@@ -314,16 +320,25 @@ class AccountInstance(scope: CoroutineScope, name: String, wsServerUrl: String, 
     val task = CustomGlobalTask(scope, GlobalTaskContext(events, sessionManager))
     val controller = CustomGlobalDialogController(GlobalDialogContext(events, sessionManager))
     val guestDatabase = getRoomModelStorage("guest")
-    val database = sessionManager.model.state.distinctUntilChangedBy {
-        it
-    }.map {
-        if (it is ClientSessionState.Success) {
-            val address = it.userPass.address().getOrThrow()
-            getRoomModelStorage(address)
+    private val databases = mutableMapOf<String, ModelStorage>("guest" to guestDatabase)
+    private fun databaseForAddress(address: String?): ModelStorage =
+        address?.let {
+            databases.getOrPut(it) {
+                getRoomModelStorage(it)
+            }
+        } ?: guestDatabase
+
+    private suspend fun databaseFor(state: ClientSessionState): ModelStorage =
+        if (state is ClientSessionState.Success) {
+            val address = state.userPass.address().getOrThrow()
+            databaseForAddress(address)
         } else {
             guestDatabase
         }
-    }.stateIn(scope, SharingStarted.Eagerly, guestDatabase)
+
+    val database = sessionManager.model.state.distinctUntilChangedBy {
+        it
+    }.map(::databaseFor).stateIn(scope, SharingStarted.Eagerly, databaseForAddress(sessionManager.address.value))
 
     init {
         scope.launch {

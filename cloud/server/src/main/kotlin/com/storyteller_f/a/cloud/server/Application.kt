@@ -153,7 +153,7 @@ fun Application.module() {
     GlobalWsEventPublisher.configure(readInjectedEnv()["WS_RPC_URL"])
     configurePlugin(reader, backend)
     configureAuth(backend)
-    configureRoute(reader, backend)
+    configureRoute(backend)
 }
 
 private fun Application.configurePlugin(
@@ -224,10 +224,10 @@ private fun Application.buildBackend(): Backend {
 }
 
 private fun Application.readInjectedEnv() = engine.environment.config.toMap().mapNotNull {
-        (it.value as? String)?.let { v ->
-            it.key to v
-        }
-    }.associate { it }
+    (it.value as? String)?.let { v ->
+        it.key to v
+    }
+}.associate { it }
 
 private fun buildDatabaseReader() = DatabaseReader.Builder(
     ClassLoader.getSystemResourceAsStream("GeoLite2-Country.mmdb")
@@ -350,7 +350,7 @@ suspend fun ByteReadChannel.copyWithLimitAndClose(channel: ByteWriteChannel, lim
     return result
 }
 
-fun Application.configureRoute(reader: DatabaseReader, backend: Backend) {
+fun Application.configureRoute(backend: Backend) {
     routing {
         authenticate("user") {
             bindProtectedRoomRoute(backend)

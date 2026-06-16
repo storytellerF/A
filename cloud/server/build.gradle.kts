@@ -17,6 +17,36 @@ application {
     applicationDefaultJvmArgs = listOf("--add-modules", "jdk.incubator.vector")
 }
 
+
+val copyAppiumDockerDistribution by tasks.registering(Copy::class) {
+    group = "appium"
+    description = "Copies the server distribution used by the Appium Docker image."
+    dependsOn(tasks.named("distTar"), tasks.named("distZip"))
+    from(layout.buildDirectory.dir("distributions")) {
+        include("server.tar", "server.zip")
+    }
+    into(rootProject.layout.projectDirectory.dir("deploy/build"))
+}
+
+tasks.register<Exec>("buildAppiumDockerImage") {
+    group = "appium"
+    description = "Builds the a-server Docker image used by Appium tests."
+    dependsOn(copyAppiumDockerDistribution)
+    workingDir = rootProject.layout.projectDirectory.asFile
+    commandLine(
+        "docker",
+        "build",
+        "-f",
+        "Dockerfile",
+        "--build-arg",
+        "BUILD_ON=host",
+        "-t",
+        "a-server:latest",
+        ".",
+    )
+    outputs.upToDateWhen { false }
+}
+
 kotlin {
     jvmToolchain(21)
     compilerOptions {

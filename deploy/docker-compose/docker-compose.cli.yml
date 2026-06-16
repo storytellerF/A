@@ -4,8 +4,6 @@ services:
       context: ../../
       dockerfile: cli.Dockerfile
       args:
-        BUILD_TYPE: ${BUILD_TYPE}
-        FLAVOR: ${FLAVOR}
         BUILD_ON: ${BUILD_ON}
     env_file:
       - ../../deploy/${FLAVOR}.env

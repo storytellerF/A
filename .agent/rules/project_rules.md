@@ -20,6 +20,7 @@ trigger: always_on
 - 不要在代码中使用 println 或 System.out.println
 - 编辑文件时需要注意不要改变当前文件的换行符
 - 添加依赖时通过github 或者对应仓库获取正确的group 和artifact，找不到依赖也禁止降低版本
+- 一个文件代码超过1000 行需要拆分复杂部分代码到其他文件
 
 ## 模块职责概览
 - **api**: 定义 REST API 端点、查询/路径模型；包含管理员 AdminApi（/admin/*）

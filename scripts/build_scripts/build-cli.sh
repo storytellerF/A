@@ -1,9 +1,6 @@
 #!/bin/sh
 set -e
 
-FLAVOR=$1
-BUILD_TYPE=$2
-
 mkdir -p deploy/build
-./gradlew cloud:cli:distZip cloud:cli:distTar -Dflavor="$FLAVOR" -DbuildType="$BUILD_TYPE"
+./gradlew cloud:cli:distZip cloud:cli:distTar
 cp cloud/cli/build/distributions/* deploy/build
