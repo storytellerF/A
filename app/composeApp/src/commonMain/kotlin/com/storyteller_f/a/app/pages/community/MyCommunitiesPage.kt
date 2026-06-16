@@ -121,7 +121,7 @@ fun CommunityList(
         ) {
             topPrepend(items.loadState)
             items(
-                count = items.itemSnapshotList.size,
+                count = items.itemCount,
                 key = items.itemKey {
                     it.id.toString()
                 },

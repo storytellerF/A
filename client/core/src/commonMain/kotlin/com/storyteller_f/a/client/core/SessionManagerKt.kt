@@ -44,17 +44,19 @@ fun UserSessionManager.startBackgroundTask(): List<Job> {
     val webSocketConnector = c.launch {
         webSocketClient.connectWebSocket()
     }
-    return listOf(loginObserver, loginWorker, addressUpdater, webSocketConnector)
+    return mutableListOf(loginObserver, loginWorker, addressUpdater, webSocketConnector)
 }
 
 context(c: CoroutineScope)
 suspend inline fun <R> UserSessionManager.onBackgroundTask(block: UserSessionManager.() -> R): R {
     val jobs = startBackgroundTask()
-    val result = block()
-    jobs.forEach {
-        it.cancelAndJoin()
+    try {
+        return block()
+    } finally {
+        jobs.forEach {
+            it.cancelAndJoin()
+        }
     }
-    return result
 }
 
 context(c: CoroutineScope)
@@ -88,11 +90,13 @@ fun PanelSessionManager.startBackgroundTask(): List<Job> {
 context(c: CoroutineScope)
 suspend inline fun <R> PanelSessionManager.onBackgroundTask(block: PanelSessionManager.() -> R): R {
     val jobs = startBackgroundTask()
-    val result = block()
-    jobs.forEach {
-        it.cancelAndJoin()
+    try {
+        return block()
+    } finally {
+        jobs.forEach {
+            it.cancelAndJoin()
+        }
     }
-    return result
 }
 
 fun <U> getRawUserPassInfoFromAuthKey(

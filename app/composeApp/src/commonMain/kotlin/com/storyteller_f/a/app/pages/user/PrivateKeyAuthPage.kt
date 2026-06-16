@@ -65,6 +65,34 @@ fun PrivateKeyAuthPage(isSignUp: Boolean) {
         }
     }
 
+    PrivateKeyAuthContent(
+        isSignUp = isSignUp,
+        privateKey = privateKey,
+        encryptionPrivateKey = encryptionPrivateKey,
+        address = address,
+        algo = algo,
+        startSign = startSign,
+        viewModel = viewModel,
+    )
+    TotpSignInDialog(pendingTotp, {
+        pendingTotp = null
+    }) { pending, code ->
+        scope.completePendingTotpSignIn(globalDialogController, appNavFactory, pending, code) {
+            pendingTotp = null
+        }
+    }
+}
+
+@Composable
+private fun PrivateKeyAuthContent(
+    isSignUp: Boolean,
+    privateKey: String,
+    encryptionPrivateKey: String?,
+    address: String?,
+    algo: AlgoType,
+    startSign: () -> Unit,
+    viewModel: InputPrivateKeyViewModel,
+) {
     AuthPageChrome(
         title = stringResource(if (isSignUp) Res.string.sign_up else Res.string.sign_in),
         subtitle = stringResource(Res.string.auth_private_key_subtitle),
@@ -86,23 +114,8 @@ fun PrivateKeyAuthPage(isSignUp: Boolean) {
                 modifier = Modifier.fillMaxWidth().testTag("start_sign"),
                 shape = ButtonDefaults.shape
             ) {
-                Text(
-                    stringResource(
-                        if (isSignUp) {
-                            Res.string.start_sign_up
-                        } else {
-                            Res.string.start_sign_in
-                        }
-                    )
-                )
+                Text(stringResource(if (isSignUp) Res.string.start_sign_up else Res.string.start_sign_in))
             }
-        }
-    }
-    TotpSignInDialog(pendingTotp, {
-        pendingTotp = null
-    }) { pending, code ->
-        scope.completePendingTotpSignIn(globalDialogController, appNavFactory, pending, code) {
-            pendingTotp = null
         }
     }
 }

@@ -20,7 +20,7 @@ while [ "$#" -gt 0 ]; do
     --desktop) RUN_DESKTOP=true; shift ;;
     --appium) RUN_APPIUM=true; shift ;;
     --compose) RUN_COMPOSE=true; shift ;;
-    --compile-and-unit|--compile-and-unit-test|--compile_and_unit_test) RUN_COMPILE_UNIT=true; shift ;;
+    --unit) RUN_COMPILE_UNIT=true; shift ;;
     --plain) GRADLE_CONSOLE_ARGS="--console=plain"; shift ;;
     --prepare) EXEC_MODE="prepare"; shift ;;
     --run) EXEC_MODE="run"; shift ;;
@@ -150,108 +150,71 @@ checkEmulatorReady() {
     exit 1
 }
 
-copyAppiumLogsToBuild() {
-  src_dir="dev/appium/build/test/appium-logs"
-  dest_dir="build/test/appium-logs"
-  if [ -d "$src_dir" ]; then
-    mkdir -p "$dest_dir"
-    cp -R "$src_dir"/. "$dest_dir"/
-    echo "Copied Appium logs to $dest_dir"
-  fi
-}
-
-# ========== Prepare Phase ==========
-if [ "$EXEC_MODE" = "prepare" ] || [ "$EXEC_MODE" = "both" ]; then
-    # Compile and Unit Tests - Prepare phase
-    if [ "$RUN_COMPILE_UNIT" = true ]; then
-        echo "Running compile checks..."
-        if ! ./gradlew assemble $GRADLE_CONSOLE_ARGS; then
-            showNotification "编译失败" "请检查编译错误" "false"
-            exit 1
-        fi
-
-        echo "Running detekt..."
-        if ! ./scripts/tool_scripts/exec-until-success.sh ./gradlew detekt $GRADLE_CONSOLE_ARGS; then
-            showNotification "Detekt 失败" "代码静态分析失败！请检查代码规范问题。" "false"
-            exit 1
-        fi
-
-        echo "Cleaning test cache..."
-        if ! ./gradlew clean -Pappium=false $GRADLE_CONSOLE_ARGS; then
-            showNotification "清理失败" "clean 执行失败！" "false"
-            exit 1
-        fi
-    fi
-
-    # Appium - Prepare phase: build images and APKs
-    if [ "$RUN_APPIUM" = true ]; then
-        echo "Preparing service images for Appium Testcontainers..."
-        ./scripts/build_scripts/build-service-images.sh dev prod host
-        echo "Building Release APK..."
-        ./gradlew app:androidApp:assembleDebug $GRADLE_CONSOLE_ARGS
-        ./gradlew panel:androidApp:assembleDebug $GRADLE_CONSOLE_ARGS
-    fi
-
-    # Check emulator readiness (for Android and Appium tests)
-    if [ "$RUN_ANDROID" = true ] || [ "$RUN_APPIUM" = true ]; then
-        checkEmulatorReady
-    fi
-
-    # If only prepare mode, exit here
-    if [ "$EXEC_MODE" = "prepare" ]; then
-        echo "Prepare phase completed successfully."
-        exit 0
-    fi
+# Check emulator readiness (for Android and Appium tests)
+if [ "$RUN_ANDROID" = true ] || [ "$RUN_APPIUM" = true ]; then
+    checkEmulatorReady
 fi
 
-# ========== Run Phase ==========
-if [ "$EXEC_MODE" = "run" ] || [ "$EXEC_MODE" = "both" ]; then
-    # Compose service script tests
-    if [ "$RUN_COMPOSE" = true ]; then
-        echo "Running compose service script tests..."
-        ./scripts/test_scripts/compose-service-test.sh
+if [ "$RUN_COMPILE_UNIT" = true ]; then
+    echo "Running compile checks..."
+    if ! ./gradlew assemble $GRADLE_CONSOLE_ARGS; then
+        showNotification "编译失败" "请检查编译错误" "false"
+        exit 1
     fi
 
-    # Compile and Unit Tests - Run phase
-    if [ "$RUN_COMPILE_UNIT" = true ]; then
-        echo "Running unit tests without Testcontainers..."
-        if ! ENABLE_TEST_CONTAINER=false ./gradlew test -Pappium=false $TEST_ARGS $GRADLE_CONSOLE_ARGS; then
-            showNotification "测试失败" "单元测试执行失败！请检查测试用例。" "false"
-            exit 1
-        fi
-
-        echo "Running unit tests with Testcontainers..."
-        if ! ENABLE_TEST_CONTAINER=true ./gradlew test -Pappium=false $TEST_ARGS $GRADLE_CONSOLE_ARGS; then
-            showNotification "测试失败" "单元测试执行失败！请检查测试用例。" "false"
-            exit 1
-        fi
-
-        showNotification "任务完成" "编译和单元测试已完成！" "true"
+    echo "Running detekt..."
+    if ! ./scripts/tool_scripts/exec-until-success.sh ./gradlew detekt $GRADLE_CONSOLE_ARGS; then
+        showNotification "Detekt 失败" "代码静态分析失败！请检查代码规范问题。" "false"
+        exit 1
     fi
 
-    # Running android Tests
-    if [ "$RUN_ANDROID" = true ]; then
-        echo "Running Android Connected Tests..."
-        ./gradlew ${MODULE}:connectedAndroidTest $TEST_ARGS $GRADLE_CONSOLE_ARGS
+    echo "Cleaning test cache..."
+    if ! ./gradlew clean -Pappium=false $GRADLE_CONSOLE_ARGS; then
+        showNotification "清理失败" "clean 执行失败！" "false"
+        exit 1
     fi
 
-    # Running desktop Tests
-    if [ "$RUN_DESKTOP" = true ]; then
-        echo "Running Desktop Tests..."
-        ./gradlew ${MODULE}:desktopTest $TEST_ARGS $GRADLE_CONSOLE_ARGS
+    echo "Running unit tests without Testcontainers..."
+    if ! ENABLE_TEST_CONTAINER=false ./gradlew test -Pappium=false $TEST_ARGS $GRADLE_CONSOLE_ARGS; then
+        showNotification "测试失败" "单元测试执行失败！请检查测试用例。" "false"
+        exit 1
     fi
 
-    # Running Appium Tests
-    if [ "$RUN_APPIUM" = true ]; then
-        echo "Running Appium Tests..."
-        rm -rf ./dev/appium/build/test/appium/sessions
-        ./gradlew :dev:appium:clean -Pappium=true $GRADLE_CONSOLE_ARGS
-        appium_exit=0
-        ./gradlew :dev:appium:test -Pappium=true $TEST_ARGS $GRADLE_CONSOLE_ARGS || appium_exit=$?
-        copyAppiumLogsToBuild
-        if [ "$appium_exit" -ne 0 ]; then
-          exit "$appium_exit"
-        fi
+    echo "Running unit tests with Testcontainers..."
+    if ! ENABLE_TEST_CONTAINER=true ./gradlew test -Pappium=false $TEST_ARGS $GRADLE_CONSOLE_ARGS; then
+        showNotification "测试失败" "单元测试执行失败！请检查测试用例。" "false"
+        exit 1
+    fi
+
+    showNotification "任务完成" "编译和单元测试已完成！" "true"
+fi
+
+if [ "$RUN_COMPOSE" = true ]; then
+    echo "Running compose service script tests..."
+    ./scripts/test_scripts/compose-service-test.sh
+fi
+
+# Running android Tests
+if [ "$RUN_ANDROID" = true ]; then
+    echo "Running Android Connected Tests..."
+    ./gradlew ${MODULE}:connectedAndroidTest $TEST_ARGS $GRADLE_CONSOLE_ARGS
+fi
+
+# Running desktop Tests
+if [ "$RUN_DESKTOP" = true ]; then
+    echo "Running Desktop Tests..."
+    ./gradlew ${MODULE}:desktopTest $TEST_ARGS $GRADLE_CONSOLE_ARGS
+fi
+
+# Running Appium Tests
+if [ "$RUN_APPIUM" = true ]; then
+    echo "Running Appium Tests..."
+    rm -rf ./dev/appium/build/test/appium/sessions
+    ./gradlew :dev:appium:clean -Pappium=true $GRADLE_CONSOLE_ARGS
+    appium_exit=0
+    ./gradlew :dev:appium:test -Pappium=true $TEST_ARGS $GRADLE_CONSOLE_ARGS || appium_exit=$?
+    if [ "$appium_exit" -ne 0 ]; then
+        exit "$appium_exit"
     fi
 fi
 #./gradlew :composeApp:wasmJsTest

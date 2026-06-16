@@ -6,12 +6,7 @@ if [ -z "$REMOTE_URI" ]; then
   exit 1
 fi
 
-if [ -z "$FLAVOR" ] ; then
-  echo "FLAVOR must be set"
-  exit 1
-fi
-
-ssh "$REMOTE_URI" "mkdir -p a-server/$FLAVOR"
+ssh "$REMOTE_URI" "mkdir -p a-server/A"
 sleep 2
 
 # 定义文件数组
@@ -20,7 +15,7 @@ SERVER_JAR_FILES=(
 )
 
 SERVER_JAR_TARGETS=(
-  "./a-server/$FLAVOR/server-all.jar"
+  "./a-server/A/server-all.jar"
 )
 
 # 检查数组长度是否一致

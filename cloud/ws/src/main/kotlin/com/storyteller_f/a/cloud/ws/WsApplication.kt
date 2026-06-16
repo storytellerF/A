@@ -36,7 +36,6 @@ import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.setupKmpLogger
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
@@ -70,6 +69,7 @@ import kotlinx.serialization.json.Json
 import org.slf4j.event.Level
 import java.io.OutputStreamWriter
 import kotlin.time.Duration.Companion.seconds
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
 
 fun main(args: Array<String>) {
     setLogPath()
@@ -196,10 +196,10 @@ private fun Application.buildWsBackend(): Backend {
 }
 
 private fun Application.readInjectedEnv() = engine.environment.config.toMap().mapNotNull {
-        (it.value as? String)?.let { v ->
-            it.key to v
-        }
-    }.associate { it }
+    (it.value as? String)?.let { v ->
+        it.key to v
+    }
+}.associate { it }
 
 private fun buildDatabaseReader() = DatabaseReader.Builder(
     ClassLoader.getSystemResourceAsStream("GeoLite2-Country.mmdb")

@@ -226,7 +226,7 @@ private fun ColumnScope.TopicPageContent(
                 subTopics[subTopicIndex]?.let { it1 ->
                     TopicCell(it1)
                 }
-                if (subTopics.itemSnapshotList.size - 1 != subTopicIndex) {
+                if (subTopics.itemCount - 1 != subTopicIndex) {
                     HorizontalDivider()
                 }
             }

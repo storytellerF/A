@@ -6,13 +6,11 @@ WORKDIR /app
 COPY . .
 ENV HOST_TYPE=docker
 
-ARG BUILD_TYPE
-ARG FLAVOR
 ARG BUILD_ON
 
 RUN --mount=type=cache,target=/root/.gradle \
     ./scripts/build_scripts/build-on-condition.sh "$BUILD_ON" \
-    "./scripts/build_scripts/build-worker.sh $FLAVOR $BUILD_TYPE"
+    "./scripts/build_scripts/build-worker.sh"
 
 RUN mkdir -p ./cloud/worker/build/decompressed && \
     tar -xf ./deploy/build/worker.tar -C ./cloud/worker/build/decompressed

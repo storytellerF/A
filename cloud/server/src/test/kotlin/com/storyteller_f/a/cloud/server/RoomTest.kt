@@ -321,33 +321,6 @@ private suspend fun TestMate.runRtcCalls(
     return list
 }
 
-private suspend fun TestMate.stopRtcCall(
-    tuple: SessionOuterTuple<*>,
-    roomId: PrimaryKey,
-) {
-    loginSession(tuple) {
-        waitAndSend {
-            sendFrame(RoomFrame.StopCall(roomId))
-        }
-    }
-    withContext(Dispatchers.IO) {
-        delay(200.milliseconds)
-    }
-}
-
-private fun assertRtcUserCleanup(
-    roomId: PrimaryKey,
-    uid: PrimaryKey,
-) {
-    val session = rtcSession[roomId]
-    assertEquals(2, session?.uidList?.size)
-    assertEquals(session?.socketMap?.containsKey(uid), false)
-    assertEquals(session?.offerList?.containsKey(uid), false)
-    assertEquals(session?.offerList?.values?.none { it.containsKey(uid) }, true)
-    assertEquals(session?.answerList?.containsKey(uid), false)
-    assertEquals(session?.answerList?.values?.none { it.containsKey(uid) }, true)
-}
-
 suspend fun UserSessionManager.createPrivateRoomForTest(): RoomInfo = createRoom(NewRoom("name", "r3")).getOrThrow()
 
 suspend fun UserSessionManager.createPublicRoomForTest(

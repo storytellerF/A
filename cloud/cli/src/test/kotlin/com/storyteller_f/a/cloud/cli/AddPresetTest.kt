@@ -148,40 +148,15 @@ class AddPresetTest {
     fun `download yaml config keeps downloaded file and returns processed archive`() = runTest {
         setLogPath()
         val tempDir = createTempDirectory(prefix = "addpreset-e2e-").toFile()
-        val sourceZip = File(tempDir, "source.zip")
-        writeZip(
-            sourceZip,
-            mapOf(
-                "keep.txt" to "keep",
-                "docs/readme.md" to "remove",
-                "nested/secret.txt" to "remove-folder",
-            )
-        )
+        val sourceZip = writeDownloadSourceZip(tempDir)
         val hash = sha256File(sourceZip)
         val server = HttpServer.create(InetSocketAddress(0), 0)
         val requestCount = AtomicInteger()
         try {
-            server.createContext("/bundle.zip") { exchange ->
-                requestCount.incrementAndGet()
-                val body = sourceZip.readBytes()
-                exchange.sendResponseHeaders(200, body.size.toLong())
-                exchange.responseBody.use { output ->
-                    output.write(body)
-                }
-            }
+            server.createBundleContext(sourceZip, requestCount)
             server.start()
 
-            val configFile = File(tempDir, "bundle.download.yaml")
-            configFile.writeText(
-                """
-                name: bundle.zip
-                link: http://127.0.0.1:${server.address.port}/bundle.zip
-                hash: sha256:$hash
-                excludeArchiveEntries:
-                  - "**/*.md"
-                  - "nested/**"
-                """.trimIndent()
-            )
+            val configFile = writeDownloadConfig(tempDir, server.address.port, hash)
 
             HttpClient(OkHttp).use { client ->
                 val downloaded = downloadPresetFileIfNeed(configFile.name, tempDir, client)
@@ -191,22 +166,7 @@ class AddPresetTest {
                 assertEquals(1, requestCount.get())
 
                 val originalDownload = File(tempDir, "download/bundle.zip")
-                assertTrue(originalDownload.exists())
-                assertEquals(hash, sha256File(originalDownload))
-
-                ZipFile(downloaded).use { zip ->
-                    val names = zip.entries().asSequence().map { it.name }.toSet()
-                    assertTrue("keep.txt" in names)
-                    assertFalse("docs/readme.md" in names)
-                    assertFalse("nested/secret.txt" in names)
-                }
-
-                ZipFile(originalDownload).use { zip ->
-                    val names = zip.entries().asSequence().map { it.name }.toSet()
-                    assertTrue("keep.txt" in names)
-                    assertTrue("docs/readme.md" in names)
-                    assertTrue("nested/secret.txt" in names)
-                }
+                assertDownloadedArchives(downloaded, originalDownload, hash)
 
                 val secondResult = downloadPresetFileIfNeed(configFile.name, tempDir, client)
                 assertNotNull(secondResult)
@@ -237,6 +197,65 @@ class AddPresetTest {
                 out.write(content.toByteArray())
                 out.closeEntry()
             }
+        }
+    }
+
+    private fun writeDownloadSourceZip(tempDir: File): File {
+        val sourceZip = File(tempDir, "source.zip")
+        writeZip(
+            sourceZip,
+            mapOf(
+                "keep.txt" to "keep",
+                "docs/readme.md" to "remove",
+                "nested/secret.txt" to "remove-folder",
+            )
+        )
+        return sourceZip
+    }
+
+    private fun HttpServer.createBundleContext(sourceZip: File, requestCount: AtomicInteger) {
+        createContext("/bundle.zip") { exchange ->
+            requestCount.incrementAndGet()
+            val body = sourceZip.readBytes()
+            exchange.sendResponseHeaders(200, body.size.toLong())
+            exchange.responseBody.use { output ->
+                output.write(body)
+            }
+        }
+    }
+
+    private fun writeDownloadConfig(tempDir: File, port: Int, hash: String): File {
+        val configFile = File(tempDir, "bundle.download.yaml")
+        configFile.writeText(
+            """
+            name: bundle.zip
+            link: http://127.0.0.1:$port/bundle.zip
+            hash: sha256:$hash
+            excludeArchiveEntries:
+              - "**/*.md"
+              - "nested/**"
+            """.trimIndent()
+        )
+        return configFile
+    }
+
+    private fun assertDownloadedArchives(downloaded: File, originalDownload: File, hash: String) {
+        assertTrue(originalDownload.exists())
+        assertEquals(hash, sha256File(originalDownload))
+        assertZipEntries(downloaded, removed = setOf("docs/readme.md", "nested/secret.txt"))
+        assertZipEntries(originalDownload, kept = setOf("docs/readme.md", "nested/secret.txt"))
+    }
+
+    private fun assertZipEntries(
+        file: File,
+        kept: Set<String> = emptySet(),
+        removed: Set<String> = emptySet()
+    ) {
+        ZipFile(file).use { zip ->
+            val names = zip.entries().asSequence().map { it.name }.toSet()
+            assertTrue("keep.txt" in names)
+            kept.forEach { assertTrue(it in names) }
+            removed.forEach { assertFalse(it in names) }
         }
     }
 }

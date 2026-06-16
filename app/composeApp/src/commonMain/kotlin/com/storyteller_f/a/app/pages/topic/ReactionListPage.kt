@@ -31,7 +31,7 @@ fun ReactionListPage(topicId: PrimaryKey) {
                 contentPadding = PaddingValues(20.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                items(pagingItems.itemSnapshotList.size, pagingItems.itemKey {
+                items(pagingItems.itemCount, pagingItems.itemKey {
                     it.emoji
                 }) {
                     val info = pagingItems[it]

@@ -122,7 +122,7 @@ class WebSocketClientImpl(
 
     private fun canConnectWebSocket(userInfo: UserInfo): Boolean {
         return sessionModel.state.value is ClientSessionState.Success &&
-                sessionModel.userHandler.data.value == userInfo
+            sessionModel.userHandler.data.value == userInfo
     }
 
     private fun startListenerWebSocket(session: DefaultClientWebSocketSession, userInfo: UserInfo) {

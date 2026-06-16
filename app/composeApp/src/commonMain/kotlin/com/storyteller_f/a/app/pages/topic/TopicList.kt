@@ -54,7 +54,7 @@ fun CommonTopicList(
             pagingItems(items, {
                 it.id
             }) {
-                block(it, items[it], items.itemSnapshotList.size)
+                block(it, items[it], items.itemCount)
             }
             bottomAppending(items.loadState)
         }
@@ -78,7 +78,7 @@ fun RoomTopicList(
             pagingItems(items, {
                 it.id
             }) { index ->
-                val next = if (index + 1 < items.itemSnapshotList.size) {
+                val next = if (index + 1 < items.itemCount) {
                     items[index + 1]
                 } else {
                     null

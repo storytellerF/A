@@ -26,11 +26,11 @@ import com.storyteller_f.a.cloud.core.service.updateTopicPin
 import com.storyteller_f.a.cloud.server.auth.handleResult
 import com.storyteller_f.a.cloud.server.auth.usePrincipal
 import com.storyteller_f.a.cloud.server.auth.usePrincipalOrNull
-import com.storyteller_f.a.cloud.ws.api.GlobalWsEventPublisher
 import com.storyteller_f.a.cloud.server.common.GeneralOffsetPagingGenerator
 import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.cloud.server.common.ReactionPaginationGenerator
 import com.storyteller_f.a.cloud.server.common.pagination
+import com.storyteller_f.a.cloud.ws.api.GlobalWsEventPublisher
 import com.storyteller_f.endpoint4k.ktor.server.invoke
 import com.storyteller_f.endpoint4k.ktor.server.receiveBody
 import com.storyteller_f.shared.obj.RoomFrame
@@ -144,7 +144,13 @@ fun Route.bindProtectedTopicRoute(backend: Backend) {
             }
         }
     }
+    bindProtectedTopicReactionRoute(backend)
+    bindProtectedTopicPinRoute(backend)
+    bindProtectedTopicFavoriteRoute(backend)
+    bindProtectedTopicSubscriptionRoute(backend)
+}
 
+private fun Route.bindProtectedTopicReactionRoute(backend: Backend) {
     CustomApi.Topics.Id.Reactions.add(handleResult(backend)) { p, api ->
         usePrincipal { uid ->
             val emoji = api.receiveBody().emoji
@@ -157,7 +163,9 @@ fun Route.bindProtectedTopicRoute(backend: Backend) {
             deleteReaction(deleteReactionBody, backend, uid, p)
         }
     }
+}
 
+private fun Route.bindProtectedTopicPinRoute(backend: Backend) {
     CustomApi.Topics.Id.pin(handleResult(backend)) { p, api ->
         usePrincipal { uid ->
             backend.updateTopicPin(uid, p.id, true)
@@ -169,7 +177,9 @@ fun Route.bindProtectedTopicRoute(backend: Backend) {
             backend.updateTopicPin(uid, p.id, false)
         }
     }
+}
 
+private fun Route.bindProtectedTopicFavoriteRoute(backend: Backend) {
     CustomApi.Topics.Id.Favorite.add(handleResult(backend)) { p, _ ->
         usePrincipal { uid ->
             backend.addFavorite(uid, NewFavorite(ObjectType.TOPIC, p.id)).map { }
@@ -180,6 +190,9 @@ fun Route.bindProtectedTopicRoute(backend: Backend) {
             backend.deleteFavoriteByObject(uid, p.id).map { }
         }
     }
+}
+
+private fun Route.bindProtectedTopicSubscriptionRoute(backend: Backend) {
     CustomApi.Topics.Id.Subscription.add(handleResult(backend)) { p, _ ->
         usePrincipal { uid ->
             backend.addSubscription(uid, NewSubscription(p.id, ObjectType.TOPIC)).map { }

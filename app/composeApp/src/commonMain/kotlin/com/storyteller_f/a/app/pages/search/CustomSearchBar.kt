@@ -39,6 +39,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.LocalAppNavFactory
 import com.storyteller_f.a.app.LocalSessionManager
@@ -195,7 +197,11 @@ private fun CustomSearchBarInternal(
 private fun SelfIcon(onClickCreate: () -> Unit) {
     val myInfo = LocalUserInfo.current
     val userOverviewViewModel = getUserOverviewViewModel()
-    Box(modifier = Modifier.testTag("me")) {
+    Box(
+        modifier = Modifier
+            .testTag("me")
+            .semantics { contentDescription = "avatar" }
+    ) {
         SelfUserIconWithDialog(myInfo, overviewHandler = userOverviewViewModel.handler, onClickCreate = onClickCreate)
     }
 }

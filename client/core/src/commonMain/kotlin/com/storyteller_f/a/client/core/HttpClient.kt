@@ -1,14 +1,11 @@
 package com.storyteller_f.a.client.core
 
-import com.storyteller_f.shared.finalData
-import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.HttpResponseValidator
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.ResponseException
-import io.ktor.client.plugins.auth.Auth
 import io.ktor.client.plugins.callid.CallId
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.cookies.CookiesStorage
@@ -18,7 +15,6 @@ import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.plugins.websocket.pingInterval
-import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.header
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
@@ -47,11 +43,9 @@ fun HttpClientConfig<*>.defaultClientConfigure(
     logLevel: LogLevel = LogLevel.HEADERS,
 ) {
     expectSuccess = true
-    install(Auth) {
-        custom {
-            configClientAuth(manager) { u, l ->
-                addRequestHeadersFromInfo(u, l)
-            }
+    install(SingleFlightCustomAuthPlugin) {
+        configClientAuth(manager) { u, l ->
+            addRequestHeadersFromInfo(u, l)
         }
     }
     install(HttpTimeout) {
@@ -109,11 +103,9 @@ fun HttpClientConfig<*>.defaultClientConfigureForPanel(
     logLevel: LogLevel = LogLevel.HEADERS,
 ) {
     expectSuccess = true
-    install(Auth) {
-        custom {
-            configClientAuth(manager) { u, l ->
-                addRequestHeadersFromInfo(u, l)
-            }
+    install(SingleFlightCustomAuthPlugin) {
+        configClientAuth(manager) { u, l ->
+            addRequestHeadersFromInfo(u, l)
         }
     }
     install(HttpTimeout) {
@@ -155,45 +147,6 @@ fun HttpClientConfig<*>.defaultClientConfigureForPanel(
                 val exceptionResponseText = exceptionResponse.bodyAsText()
                 throw ServerErrorException(exceptionResponse.status, exceptionResponseText, exception)
             }
-        }
-    }
-}
-
-private fun <U> CustomClientAuthProvider.CustomAuthConfig.configClientAuth(
-    manager: SessionModel<U>,
-    addRequestHeader: HttpRequestBuilder.(U, String) -> Unit
-) {
-    addRequestHeaders { data, request ->
-        Napier.v("addRequestHeaders data: $data url: ${request.url}", tag = "ClientAuth")
-        if (data == manager.dataAndSignature?.first) {
-            request.addRequestHeaders(manager, addRequestHeader)
-        }
-    }
-    updateDataIfNeed { data ->
-        val localData = manager.dataAndSignature?.first
-        Napier.v("updateDataIfNeed new: $data old: $localData", tag = "ClientAuth")
-        if (data != localData) {
-            manager.updateSignature(data, null)
-        }
-    }
-    refreshSignature {
-        val session = manager.currentUserPass
-        val data = manager.dataAndSignature?.first
-        Napier.v("refreshSignature $data", tag = "ClientAuth")
-        if (session == null || data == null) {
-            false
-        } else {
-            runCatching {
-                manager.updateSignature(data, session.signature(finalData(data)).getOrThrow())
-            }.fold({
-                Napier.v(tag = "ClientAuth") {
-                    "refreshSignature success"
-                }
-                true
-            }, {
-                Napier.e("refreshSignature failed", it, tag = "ClientAuth")
-                false
-            })
         }
     }
 }

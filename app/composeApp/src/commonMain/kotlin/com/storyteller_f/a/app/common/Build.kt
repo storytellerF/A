@@ -462,14 +462,15 @@ inline fun <reified VM : ViewModel> customViewModel(
     databaseSource: ModelStorage
 ): VM {
     val address by sessionManager.address.collectAsState()
+    val databaseKey = System.identityHashCode(databaseSource)
     SideEffect {
         Napier.i {
-            "viewModel $address ${VM::class.simpleName}$keys composable"
+            "viewModel $address $databaseKey ${VM::class.simpleName}$keys composable"
         }
     }
-    return viewModel(key = "$address:${keys?.joinToString()}") {
+    return viewModel(key = "$address:$databaseKey:${keys?.joinToString()}") {
         Napier.i {
-            "viewModel $address ${VM::class.simpleName}$keys build"
+            "viewModel $address $databaseKey ${VM::class.simpleName}$keys build"
         }
         factory(sessionManager, databaseSource)
     }

@@ -439,7 +439,7 @@ private fun UploadRecordPage(mediaTarget: ObjectTuple) {
             pagingItems(items, key = { it.id }) {
                 val file = items[it]
                 UploadItem(file)
-                if (it != items.itemSnapshotList.size - 1) {
+                if (it != items.itemCount - 1) {
                     HorizontalDivider()
                 }
             }
@@ -458,7 +458,7 @@ private fun DownloadRecordPage() {
     ) {
         pagingItems(items, key = { it.fileInfo.id }) {
             DownloadRecordItem(items[it])
-            if (it != items.itemSnapshotList.size - 1) {
+            if (it != items.itemCount - 1) {
                 HorizontalDivider()
             }
         }

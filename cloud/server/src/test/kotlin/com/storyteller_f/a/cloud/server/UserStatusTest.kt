@@ -14,7 +14,7 @@ import kotlin.test.assertNotNull
 class UserStatusTest {
 
     @Test
-    fun `test ReadOnly user cannot create topic`() = test {
+    fun `test ReadOnly user cannot create topic`() = test(mapOf("DISABLE_TEST_WS" to "true")) {
         val adminTuple = attachPanelSession()
         val userTuple = attachSession {
             // As NORMAL (default), creation should work

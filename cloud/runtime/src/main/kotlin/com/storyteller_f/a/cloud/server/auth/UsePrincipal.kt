@@ -17,15 +17,12 @@ import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.plugins.ContentTransformationException
 import io.ktor.server.plugins.MissingRequestParameterException
 import io.ktor.server.plugins.ParameterConversionException
-import io.ktor.server.request.queryString
-import io.ktor.server.request.uri
 import io.ktor.server.response.header
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondFile
 import io.ktor.server.response.respondPath
 import io.ktor.server.routing.RoutingContext
 import io.ktor.server.websocket.DefaultWebSocketServerSession
-import io.ktor.util.toMap
 import kotlin.io.path.name
 
 inline fun <reified R : Any> omitPrincipal(block: () -> Result<R?>) = block()
