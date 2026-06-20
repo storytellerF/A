@@ -89,7 +89,9 @@ import com.storyteller_f.a.client.core.UserPass
 import com.storyteller_f.a.client.core.UserSessionModel
 import com.storyteller_f.a.client.core.createSimpleUserSessionManager
 import com.storyteller_f.a.client.core.defaultClientConfigure
+import com.storyteller_f.a.client.core.buildWebSocketUrl
 import com.storyteller_f.a.client.core.getClient
+import com.storyteller_f.a.client.core.login
 import com.storyteller_f.a.client.core.processEncryptedTopic
 import com.storyteller_f.a.client.core.startBackgroundTask
 import com.storyteller_f.a.client.room.getRoomModelStorage
@@ -310,7 +312,7 @@ sealed interface IAccountInstance {
         override val passHolder: ConstPassHolder = ConstPassHolder(null)
         val events = MutableSharedFlow<Any>()
         override val sessionManager = createSimpleUserSessionManager(
-            wsServerUrl,
+            buildWebSocketUrl(wsServerUrl),
             AcceptAllCookiesStorage(),
             passHolder,
             { m, c ->
@@ -350,7 +352,7 @@ sealed interface IAccountInstance {
     ) : IAccountInstance {
         private val events = MutableSharedFlow<Any>()
         override val sessionManager =
-            createSimpleUserSessionManager(wsServerUrl, cookieManager, passHolder, { m, c ->
+            createSimpleUserSessionManager(buildWebSocketUrl(wsServerUrl), cookieManager, passHolder, { m, c ->
                 buildHttpClient(httpUrl, c, m, passHolder)
             }) { frame, _, _ ->
                 if (frame is RoomFrame.NewTopicInfo) {
@@ -372,6 +374,11 @@ sealed interface IAccountInstance {
         init {
             scope.launch {
                 processEvent(database, events)
+            }
+            scope.launch {
+                if (passHolder.currentUserPass != null && sessionManager.model.userHandler.data.value == null) {
+                    sessionManager.login()
+                }
             }
             scope.launch {
                 val jobs = sessionManager.startBackgroundTask()
@@ -396,7 +403,7 @@ sealed interface IAccountInstance {
     ) : IAccountInstance {
         val events = MutableSharedFlow<Any>()
         override val sessionManager = createSimpleUserSessionManager(
-            wsServerUrl,
+            buildWebSocketUrl(wsServerUrl),
             AcceptAllCookiesStorage(),
             passHolder,
             { m, c ->
@@ -427,6 +434,11 @@ sealed interface IAccountInstance {
         init {
             scope.launch {
                 processEvent(database, events)
+            }
+            scope.launch {
+                if (passHolder.currentUserPass != null && sessionManager.model.userHandler.data.value == null) {
+                    sessionManager.login()
+                }
             }
             scope.launch {
                 val jobs = sessionManager.startBackgroundTask()

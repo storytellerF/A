@@ -14,11 +14,11 @@ import com.storyteller_f.a.client.core.defaultClientConfigure
 import com.storyteller_f.a.client.core.defaultClientConfigureForPanel
 import com.storyteller_f.a.client.core.getAuthKey
 import com.storyteller_f.a.client.core.getClient
-import com.storyteller_f.a.client.core.getCommunityInfo
 import com.storyteller_f.a.client.core.getTopicInfo
 import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.a.client.core.panelSignUp
 import com.storyteller_f.a.client.core.userSignIn
+import com.storyteller_f.a.client.core.userSignUp
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.model.AlgoType
@@ -214,7 +214,7 @@ class AppiumTest {
                     driver,
                     """new UiSelector().text("ad: ${data.authenticated.session.address}")"""
                 )
-                clickElement(driver, """new UiSelector().resourceIdMatches(".*user-dialog-cell")""")
+                clickElement(driver, """new UiSelector().description("user-dialog-cell")""")
                 assertElementVisible(driver, """new UiSelector().text("$topicContent")""")
 
                 clickElement(driver, """new UiSelector().text("$topicContent")""")
@@ -417,6 +417,7 @@ class AppiumTest {
         runAppiumTest {
             var driver: AndroidDriver? = null
             val packageName = app.packageName
+            var testFailed = false
             try {
                 val url = "http://127.0.0.1:4723"
                 val remoteAddress = URI(url).toURL()
@@ -430,6 +431,9 @@ class AppiumTest {
                 driver = AndroidDriver(remoteAddress, options)
                 driver.startRecordingScreen()
                 block(driver, session)
+            } catch (e: Throwable) {
+                testFailed = true
+                throw e
             } finally {
                 if (driver != null) {
                     try {
@@ -444,6 +448,9 @@ class AppiumTest {
                         println(e)
                     }
                     copyAppLogToBuild(name.methodName, packageName)
+                    if (testFailed) {
+                        collectBugreport(name.methodName)
+                    }
                     driver.quit()
                 }
             }
@@ -503,7 +510,7 @@ class AppiumTest {
         val passHolder = SimplePassHolder()
         val manager = createApiSessionManager(ports, passHolder)
         val authKey = getAuthKey(AlgoType.P256, pemPrivateKey)
-        manager.userSignIn(authKey, passHolder)
+        manager.userSignUp(authKey, passHolder)
         manager.client.close()
         return InjectedSession(
             address = address,
@@ -567,7 +574,6 @@ class AppiumTest {
 
         val viewer = createAuthenticatedSession(ports)
         viewer.sessionManager.joinCommunity(communityId).getOrThrow()
-        waitUntilCommunityJoined(viewer.sessionManager, communityId)
         val result = PreparedScenario(
             ownerSession = owner.session,
             viewerSession = viewer.session,
@@ -642,21 +648,6 @@ private suspend fun waitUntilTopicSubscribed(
     error("Topic not marked as subscribed: $topicId")
 }
 
-private suspend fun waitUntilCommunityJoined(
-    sessionManager: UserSessionManager,
-    communityId: Long,
-    timeoutMillis: Long = Duration.ofSeconds(30).toMillis(),
-) {
-    val deadline = System.currentTimeMillis() + timeoutMillis
-    while (System.currentTimeMillis() < deadline) {
-        val community = sessionManager.getCommunityInfo(communityId).getOrThrow()
-        if (community.isJoined) {
-            return
-        }
-        delay(500.milliseconds)
-    }
-    error("Community not visible in joined communities: $communityId")
-}
 
 private fun createApiSessionManager(ports: AppiumPorts, passHolder: SimplePassHolder) = createSimpleUserSessionManager(
     buildWebSocketUrl("ws://127.0.0.1:${ports.ws}"),
@@ -975,20 +966,36 @@ private fun copyAppLogToBuild(testName: String, packageName: String) {
     outputDir.mkdirs()
     val outputFile = File(outputDir, "$testName.log")
     val logResult = runAdbCommandAllowFailure(
-        "exec-out",
-        "run-as",
-        packageName,
-        "cat",
-        "files/logs/$APP_LOG_FILE_NAME"
+        "exec-out", "run-as", packageName, "cat", "files/logs/$APP_LOG_FILE_NAME"
     )
     if (logResult.exitCode == 0 && logResult.output.isNotBlank()) {
         outputFile.writeText(logResult.output)
-        return
+    } else {
+        outputFile.writeText(
+            "Failed to export app log: ${logResult.output.ifBlank { "exitCode=${logResult.exitCode}" }}"
+        )
     }
+    copyAnrTracesToBuild(testName, packageName)
+}
 
-    outputFile.writeText(
-        "Failed to export app log: ${logResult.output.ifBlank { "exitCode=${logResult.exitCode}" }}"
+private fun collectBugreport(testName: String) {
+    val outputDir = File("build/test/appium-logs/AppiumTest")
+    outputDir.mkdirs()
+    val outputFile = File(outputDir, "$testName.bugreport.zip")
+    val result = runAdbCommandAllowFailure("bugreport", outputFile.canonicalPath)
+    if (result.exitCode != 0) {
+        println("Failed to collect bugreport: ${result.output.ifBlank { "exitCode=${result.exitCode}" }}")
+    }
+}
+
+private fun copyAnrTracesToBuild(testName: String, packageName: String) {
+    val outputDir = File("build/test/appium-logs/AppiumTest")
+    val anrResult = runAdbCommandAllowFailure(
+        "shell", "dumpsys", "activity", "exit-info", packageName
     )
+    if (anrResult.exitCode == 0 && anrResult.output.isNotBlank()) {
+        File(outputDir, "$testName.exit-info.txt").writeText(anrResult.output)
+    }
 }
 
 private data class AdbCommandResult(
@@ -1005,15 +1012,15 @@ private fun adbProcessBuilder(args: List<String>): ProcessBuilder {
 
 private fun runAdbCommandAllowFailure(vararg args: String): AdbCommandResult {
     val process = adbProcessBuilder(args.toList()).start()
-    val exitCode = process.waitFor()
     val output = process.inputStream.bufferedReader().use { it.readText().trim() }
+    val exitCode = process.waitFor()
     return AdbCommandResult(exitCode = exitCode, output = output)
 }
 
 private fun runAdbCommand(vararg args: String) {
     val process = adbProcessBuilder(args.toList()).start()
-    val exitCode = process.waitFor()
     val output = process.inputStream.bufferedReader().use { it.readText().trim() }
+    val exitCode = process.waitFor()
     check(exitCode == 0) {
         if (output.isNotEmpty()) {
             "adb command failed (${args.joinToString(" ")}): $output"
@@ -1071,9 +1078,11 @@ private fun JsonObject.stringValue(name: String): String? {
     return this[name]?.jsonPrimitive?.contentOrNull
 }
 
+private const val UI_WAIT_SECONDS = 15L
+
 private fun assertElementVisible(driver: AndroidDriver, selector: String) {
     try {
-        val wait = WebDriverWait(driver, Duration.ofSeconds(100))
+        val wait = WebDriverWait(driver, Duration.ofSeconds(UI_WAIT_SECONDS))
         val element =
             wait.until(
                 ExpectedConditions.presenceOfElementLocated(
@@ -1112,7 +1121,7 @@ private fun assertElementNotVisible(
 private fun clickElement(
     driver: AndroidDriver,
     selector: String,
-    seconds: Long = 100
+    seconds: Long = UI_WAIT_SECONDS
 ) {
     try {
         val locator = AppiumBy.androidUIAutomator(selector)
@@ -1135,7 +1144,7 @@ private fun inputElement(
     driver: AndroidDriver,
     selector: String,
     input: String,
-    seconds: Long = 100
+    seconds: Long = UI_WAIT_SECONDS
 ) {
     try {
         val locator = AppiumBy.androidUIAutomator(selector)

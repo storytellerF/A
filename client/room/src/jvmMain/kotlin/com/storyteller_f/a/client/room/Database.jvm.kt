@@ -13,7 +13,7 @@ actual fun getRoomDatabase(scope: String): AppDatabase {
         .fallbackToDestructiveMigrationOnDowngrade(true)
         .fallbackToDestructiveMigration(true)
         .fallbackToDestructiveMigrationFrom(true)
-        .setDriver(BundledSQLiteDriver())
+        .setDriver(LoggingSQLiteDriver(BundledSQLiteDriver()))
         .setQueryCoroutineContext(Dispatchers.IO)
         .build()
 }
