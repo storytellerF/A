@@ -43,6 +43,7 @@ import com.storyteller_f.a.app.pages.topic.UserTopicCellInternal
 import com.storyteller_f.a.app.pages.user.UserFavoriteCell
 import com.storyteller_f.a.app.pages.user.UserSubscriptionCell
 import com.storyteller_f.a.app.ui.theme.AppTheme
+import com.storyteller_f.a.client.core.SimpleUserSessionManager
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
@@ -366,9 +367,9 @@ private fun sampleUpload() = UploadInfo.EMPTY.copy(
 
 private object PreviewGlobalDialog : AppGlobalDialogController {
     override val state: MutableState<PersistentList<GlobalDialogState>> = mutableStateOf(persistentListOf())
-    override val context = GlobalDialogContext(MutableSharedFlow(), CustomUserSessionManager.EMPTY)
+    override val context = GlobalDialogContext(MutableSharedFlow(), SimpleUserSessionManager.EMPTY)
 
-    override suspend fun <T> useResult(block: suspend GlobalDialogController<GlobalDialogContext<CustomUserSessionManager>>.() -> Result<T>): Result<T> {
+    override suspend fun <T> useResult(block: suspend GlobalDialogController<GlobalDialogContext<SimpleUserSessionManager>>.() -> Result<T>): Result<T> {
         return block()
     }
 

@@ -9,7 +9,6 @@ import com.storyteller_f.a.client.core.AuthKey
 import com.storyteller_f.a.client.core.ClientSessionState
 import com.storyteller_f.a.client.core.RawUserPass
 import com.storyteller_f.a.client.core.RawUserPassInfo
-import com.storyteller_f.a.client.core.SessionManager
 import com.storyteller_f.a.client.core.UserPass
 import com.storyteller_f.shared.model.AlgoType
 import io.github.aakira.napier.Napier
@@ -107,23 +106,22 @@ expect fun createSettings(name: String = "a-default"): Settings
 
 expect fun readInjectedSessionFromPrivateStorageOrNull(): ConvertedRawUserPassInfo?
 
-fun <U> SessionManager<U>.restoreFromStorage(settings: Settings) {
+fun restoreFromStorage(settings: Settings): ClientSessionState? {
     val sessionFactory = buildSessionHistoryFactory(settings)
     val (alias, history) = sessionFactory.getSavedSession()
     val current = history?.current
     if (current != null && alias.contains(current)) {
         val session = sessionFactory.buildSession(current)
         if (session != null) {
-            model.updateState(ClientSessionState.Success(session))
-            return
+            return ClientSessionState.Success(session)
         }
     }
 
     Napier.d("No valid session found in storage, trying to read injected session")
-    val injected = readInjectedSessionFromPrivateStorageOrNull() ?: return
+    val injected = readInjectedSessionFromPrivateStorageOrNull() ?: return null
     Napier.d("Found injected session, restoring...")
     val userPass = RawUserPass(injected.toRawUserPassInfo())
-    model.updateState(ClientSessionState.Success(userPass))
+    return ClientSessionState.Success(userPass)
 }
 
 @Serializable

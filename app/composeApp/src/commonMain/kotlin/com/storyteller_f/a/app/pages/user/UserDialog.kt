@@ -57,12 +57,13 @@ import com.kdroid.composenotification.builder.getNotificationProvider
 import com.storyteller_f.a.api.SignInBody
 import com.storyteller_f.a.api.SignInResponse
 import com.storyteller_f.a.app.AppGlobalDialogController
-import com.storyteller_f.a.app.CustomUserSessionManager
 import com.storyteller_f.a.app.LocalAccountSwitcher
 import com.storyteller_f.a.app.LocalAppNavFactory
 import com.storyteller_f.a.app.LocalGlobalDialog
 import com.storyteller_f.a.app.LocalSessionManager
+import com.storyteller_f.a.app.LocalUiViewModel
 import com.storyteller_f.a.app.Res
+import com.storyteller_f.a.app.UIViewModel
 import com.storyteller_f.a.app.common.UserScreen
 import com.storyteller_f.a.app.common.hasRouteFlow
 import com.storyteller_f.a.app.connected
@@ -77,6 +78,7 @@ import com.storyteller_f.a.app.core.components.IconRes
 import com.storyteller_f.a.app.core.components.SignInButton
 import com.storyteller_f.a.app.core.components.SubscriptionButton
 import com.storyteller_f.a.app.core.components.UserIcon
+import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.app.create
 import com.storyteller_f.a.app.disconnected
 import com.storyteller_f.a.app.file_explorer
@@ -89,7 +91,6 @@ import com.storyteller_f.a.app.switch_account
 import com.storyteller_f.a.app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.utils.createConnectivity
 import com.storyteller_f.a.app.utils.unregisterPushService
-import com.storyteller_f.a.client.core.ClientSessionState
 import com.storyteller_f.a.client.core.LoadingHandler
 import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.a.client.core.UserSessionManager
@@ -119,8 +120,8 @@ private fun SelfDialogInternal(
     clickCreate: () -> Unit,
     overviewHandler: LoadingHandler<UserOverview>
 ) {
-    val sessionManager = LocalSessionManager.current
-    val isAlreadySignIn by sessionManager.isAlreadySignIn.collectAsState()
+    val instance by LocalUiViewModel.current.instance.collectAsState()
+    val isAlreadySignIn = instance.isAlreadySign
     DialogContainer {
         if (isAlreadySignIn) {
             SelfUserDetailCard(userInfo, dismiss, overviewHandler, clickCreate)
@@ -335,7 +336,10 @@ private fun UnboundSimpleUserCell(userInfo: UserInfo?) {
                             "ReadOnly",
                             style = MaterialTheme.typography.labelSmall,
                             modifier = Modifier
-                                .background(MaterialTheme.colorScheme.errorContainer, RoundedCornerShape(4.dp))
+                                .background(
+                                    MaterialTheme.colorScheme.errorContainer,
+                                    RoundedCornerShape(4.dp)
+                                )
                                 .padding(horizontal = 4.dp, vertical = 2.dp),
                             color = MaterialTheme.colorScheme.onErrorContainer
                         )
@@ -345,7 +349,10 @@ private fun UnboundSimpleUserCell(userInfo: UserInfo?) {
                 if (aid != null) {
                     Text(CoreStrings.aid(aid), style = MaterialTheme.typography.labelSmall)
                 } else {
-                    Text(CoreStrings.ad(userInfo.address), style = MaterialTheme.typography.labelSmall)
+                    Text(
+                        CoreStrings.ad(userInfo.address),
+                        style = MaterialTheme.typography.labelSmall
+                    )
                 }
             }
         }
@@ -397,8 +404,7 @@ fun ButtonBadgeSuffix(number: Long, hasUnread: Boolean = false) {
 @Composable
 fun SignOutButton(controller: CustomAlertDialogController) {
     val title = stringResource(Res.string.sign_out_prompt)
-    val isInChildAccount by isInChildAccount()
-    if (!isInChildAccount) {
+    if (!isInChildAccount()) {
         ButtonNav(Icons.AutoMirrored.Default.Logout, stringResource(Res.string.sign_out)) {
             controller.showTitle(title)
         }
@@ -444,7 +450,10 @@ fun ConnectionButton() {
         }
 
         else -> {
-            ButtonNav(MaterialSymbolsOutlined.SignalDisconnected, stringResource(Res.string.disconnected))
+            ButtonNav(
+                MaterialSymbolsOutlined.SignalDisconnected,
+                stringResource(Res.string.disconnected)
+            )
         }
     }
 }
@@ -467,15 +476,18 @@ fun FileExplorerButton(dismiss: () -> Unit) {
     }
 }
 
-suspend fun signOut(
-    sessionManager: CustomUserSessionManager,
-    globalDialogController: AppGlobalDialogController,
+suspend fun AppGlobalDialogController.signOut(
+    uiViewModel: UIViewModel,
 ) {
-    globalDialogController.useResult {
-        sessionManager.signOut()
+    val address = uiViewModel.instance.value.address
+    useResult {
+        request {
+            signOut()
+        }
     }.onSuccess {
-        sessionManager.clearSession()
+        uiViewModel.historyManager.exitSession(address)
         unregisterPushService()
+        uiViewModel.logout()
     }
 }
 
@@ -485,19 +497,18 @@ fun refreshMyInfo(my: UserInfo?, sessionManager: UserSessionManager) {
         try {
             val sessionModel = sessionManager.model
             if (my == null) {
-                val value = sessionModel.state.value
-                if (value is ClientSessionState.Success) {
-                    val data = sessionManager.getData().getOrThrow()
-                    val address = value.userPass.address().getOrThrow()
-                    val signature = value.userPass.signature(finalData(data)).getOrThrow()
-                    when (val response = sessionManager.signIn(SignInBody(address, signature)).getOrThrow()) {
-                        is SignInResponse.Success -> {
-                            sessionModel.updateUser(response.userInfo)
-                            sessionModel.updateSignature(data, signature)
-                        }
-
-                        SignInResponse.RequiresTotp -> Unit
+                val userPass = sessionManager.passHolder.currentUserPass ?: return@launch
+                val data = sessionManager.getData().getOrThrow()
+                val address = userPass.address().getOrThrow()
+                val signature = userPass.signature(finalData(data)).getOrThrow()
+                when (val response =
+                    sessionManager.signIn(SignInBody(address, signature)).getOrThrow()) {
+                    is SignInResponse.Success -> {
+                        sessionModel.updateUser(response.userInfo)
+                        sessionModel.updateSignature(data, signature)
                     }
+
+                    SignInResponse.RequiresTotp -> Unit
                 }
             } else {
                 val aid = my.aid
@@ -561,11 +572,12 @@ fun SelfDialog(
             SelfDialogInternal(signOutController, userInfo, dismiss, clickCreate, overviewHandler)
             val scope = rememberCoroutineScope()
             val globalDialogController = LocalGlobalDialog.current
+            val uIViewModel = LocalUiViewModel.current
             CustomAlertDialog(signOutController, {
                 signOutController.close()
             }) {
                 scope.launch {
-                    signOut(sessionManager, globalDialogController)
+                    globalDialogController.signOut(uIViewModel)
                 }
             }
         }

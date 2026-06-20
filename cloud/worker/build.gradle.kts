@@ -37,7 +37,6 @@ application {
     applicationDefaultJvmArgs = listOf("--add-modules", "jdk.incubator.vector")
 }
 
-
 val copyAppiumDockerDistribution by tasks.registering(Copy::class) {
     group = "appium"
     description = "Copies the worker distribution used by the Appium Docker image."

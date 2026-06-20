@@ -4,11 +4,9 @@ import android.content.Context
 import com.russhwolf.settings.SharedPreferencesSettings
 import com.storyteller_f.a.app.core.utils.restoreFromStorage
 import com.storyteller_f.a.client.core.ClientSessionState
-import com.storyteller_f.a.client.core.createUserSessionManager
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.model.AlgoType
-import io.ktor.client.HttpClient
 import kotlinx.coroutines.test.runTest
 import java.io.BufferedOutputStream
 import kotlin.test.assertEquals
@@ -35,18 +33,11 @@ class MainActivityInjectedSessionRobolectricTest {
         val injectedSession = createInjectedSessionJson()
         writeInjectedSession(injectedSession.json)
 
-        val sessionManager = createUserSessionManager(
-            webSocketUrl = "ws://127.0.0.1/link",
-            createClient = { _, _ -> HttpClient {} },
-            onReceiveFrame = { _, _, _ -> }
-        )
         val settings = SharedPreferencesSettings(
             application.getSharedPreferences(TEST_SETTINGS_NAME, Context.MODE_PRIVATE)
         )
-
-        sessionManager.restoreFromStorage(settings)
-
-        val state = assertIs<ClientSessionState.Success>(sessionManager.model.state.value)
+        val state1 = restoreFromStorage(settings)
+        val state = assertIs<ClientSessionState.Success>(state1)
         assertEquals(injectedSession.address, state.userPass.address().getOrThrow())
     }
 

@@ -5,17 +5,12 @@ import io.github.aakira.napier.Napier
 import io.ktor.client.call.HttpClientCall
 import io.ktor.client.plugins.api.Send
 import io.ktor.client.plugins.api.createClientPlugin
-import io.ktor.client.plugins.isSaved
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.util.AttributeKey
-import io.ktor.utils.io.cancel
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CompletableJob
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -102,25 +97,6 @@ private suspend fun Send.Sender.executeWithCustomAuth(
     return proceed(request)
 }
 
-@OptIn(io.ktor.utils.io.InternalAPI::class)
-private suspend fun HttpResponse.release(cause: Throwable?) {
-    val job = coroutineContext[Job] as? CompletableJob ?: return
-    job.apply {
-        when (cause) {
-            null -> complete()
-            is CancellationException -> cancel(cause)
-            else -> cancel(CancellationException("Exception occurred during request execution", cause))
-        }
-        if (!isSaved) {
-            try {
-                rawContent.cancel()
-            } catch (_: Throwable) {
-            }
-        }
-        join()
-    }
-}
-
 private fun HttpResponse.customChallengeData(): String? {
     val headerValues = headers.getAll(HttpHeaders.WWWAuthenticate).orEmpty()
     return headerValues.firstNotNullOfOrNull { header ->
@@ -170,13 +146,14 @@ private class AuthRefreshGate {
 
 fun <U> SingleFlightCustomAuthConfig.configClientAuth(
     manager: SessionModel<U>,
+    passHolder: PassHolder,
     addRequestHeader: HttpRequestBuilder.(U, String) -> Unit
 ) {
     addRequestHeaders { request ->
-        request.addRequestHeaders(manager, addRequestHeader)
+        request.addRequestHeaders(manager, passHolder, addRequestHeader)
     }
     refreshSignature { data ->
-        val session = manager.currentUserPass
+        val session = passHolder.currentUserPass
         Napier.v("refreshSignature $data", tag = "ClientAuth")
         if (session == null) {
             false

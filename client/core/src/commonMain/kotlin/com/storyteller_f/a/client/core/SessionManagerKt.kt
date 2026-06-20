@@ -2,53 +2,27 @@
 
 package com.storyteller_f.a.client.core
 
+import com.storyteller_f.a.api.SignInBody
+import com.storyteller_f.a.api.SignInResponse
+import com.storyteller_f.a.api.SignUpBody
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import com.storyteller_f.shared.model.PanelAccountInfo
 import com.storyteller_f.shared.model.UserInfo
-import io.github.aakira.napier.Napier
+import com.storyteller_f.shared.utils.mapResult
 
 context(c: CoroutineScope)
-fun UserSessionManager.startBackgroundTask(): List<Job> {
-    val model = model
-    val loginRequests = Channel<Unit>(Channel.CONFLATED)
-    val loginWorker = c.launch {
-        for (i in loginRequests) {
-            if (model.state.value is ClientSessionState.Success && model.userHandler.data.value == null) {
-                login()
-            }
-        }
-    }
-    val loginObserver = c.launch {
-        combine(model.state, model.userHandler.data) { t1, t2 ->
-            t1 to t2
-        }.distinctUntilChanged().collect { (state, userInfo) ->
-            Napier.i(tag = "UserSessionManager") {
-                "background task state=${state::class.simpleName} hasUser=${userInfo != null}"
-            }
-            if (state is ClientSessionState.Success && userInfo == null) {
-                loginRequests.trySend(Unit)
-            }
-        }
-    }
-    val addressUpdater = c.launch {
-        model.state.collect {
-            updateAddress(it)
-        }
-    }
+fun SimpleUserSessionManager.startBackgroundTask(): List<Job> {
     val webSocketConnector = c.launch {
         webSocketClient.connectWebSocket()
     }
-    return mutableListOf(loginObserver, loginWorker, addressUpdater, webSocketConnector)
+    return listOf(webSocketConnector)
 }
 
 context(c: CoroutineScope)
-suspend inline fun <R> UserSessionManager.onBackgroundTask(block: UserSessionManager.() -> R): R {
+suspend inline fun <R> SimpleUserSessionManager.onBackgroundTask(block: UserSessionManager.() -> R): R {
     val jobs = startBackgroundTask()
     try {
         return block()
@@ -59,85 +33,95 @@ suspend inline fun <R> UserSessionManager.onBackgroundTask(block: UserSessionMan
     }
 }
 
-context(c: CoroutineScope)
-fun PanelSessionManager.startBackgroundTask(): List<Job> {
-    val model = model
-    val loginRequests = Channel<Unit>(Channel.CONFLATED)
-    val loginWorker = c.launch {
-        for (ignored in loginRequests) {
-            if (model.state.value is ClientSessionState.Success && model.userHandler.data.value == null) {
-                login()
-            }
-        }
-    }
-    val loginObserver = c.launch {
-        combine(model.state, model.userHandler.data) { t1, t2 ->
-            t1 to t2
-        }.distinctUntilChanged().collect { (state, userInfo) ->
-            if (state is ClientSessionState.Success && userInfo == null) {
-                loginRequests.trySend(Unit)
-            }
-        }
-    }
-    val addressUpdater = c.launch {
-        model.state.collect {
-            updateAddress(it)
-        }
-    }
-    return listOf(loginObserver, loginWorker, addressUpdater)
-}
-
-context(c: CoroutineScope)
-suspend inline fun <R> PanelSessionManager.onBackgroundTask(block: PanelSessionManager.() -> R): R {
-    val jobs = startBackgroundTask()
-    try {
-        return block()
-    } finally {
-        jobs.forEach {
-            it.cancelAndJoin()
-        }
-    }
-}
-
-fun <U> getRawUserPassInfoFromAuthKey(
-    param: BuildPassParam<U>
-): RawUserPassInfo {
-    if (param.authKey is AuthKey.Dilithium) {
-        return RawUserPassInfo(
-            param.address,
-            param.authKey,
-        )
-    }
-    return RawUserPassInfo(
-        param.address,
-        param.authKey,
-    )
-}
-
-suspend fun UserSessionManager.getUserPass(
-    authKey: AuthKey,
-    isSignUp: Boolean,
-    buildUserPass: suspend (RawUserPassInfo) -> UserPass
-) : UserInfo {
-    return getUserPassResult(authKey, isSignUp, buildUserPass).userInfo
-}
-
-suspend fun UserSessionManager.getUserPassResult(
-    authKey: AuthKey,
-    isSignUp: Boolean,
-    buildUserPass: suspend (RawUserPassInfo) -> UserPass
+suspend fun UserSessionManager.getUserSignInPass(
+    authKey: AuthKey
 ): SignResult<UserInfo> {
-    return signInOrSignUpAndGetUserInfoResult(authKey, isSignUp) { param ->
-        buildUserPass(getRawUserPassInfoFromAuthKey(param))
-    }
+    return prepareSignInFromPrivateKey(authKey) {
+        getData()
+    }.mapResult { param ->
+        signIn(SignInBody(param.address, param.signature)).map { signIn ->
+            when (signIn) {
+                is SignInResponse.Success -> {
+                    SignResult(
+                        signIn.userInfo,
+                        param.data,
+                        param.signature,
+                        param.address,
+                        param.authKey
+                    )
+                }
+
+                SignInResponse.RequiresTotp -> error("totp required")
+            }
+        }
+    }.getOrThrow()
 }
 
-suspend fun PanelSessionManager.getPanelUserPass(
-    authKey: AuthKey,
-    isSignUp: Boolean,
-    buildUserPass: suspend (RawUserPassInfo) -> UserPass
-) : PanelAccountInfo {
-    return signOrSignUpAndGetPanelAccountInfo(authKey, isSignUp) { param ->
-        buildUserPass(getRawUserPassInfoFromAuthKey(param))
-    }
+suspend fun UserSessionManager.getUserSignUpPass(
+    authKey: AuthKey
+): SignResult<UserInfo> {
+    return prepareSignInFromPrivateKey(authKey) {
+        getData()
+    }.mapResult { param ->
+        val encryptionPublicKey = (param.authKey as? AuthKey.Dilithium)?.derEncryptionPublicKey
+        signUp(
+            SignUpBody(
+                param.authKey.derPublicKey,
+                param.signature,
+                encryptionPublicKey
+            )
+        ).map { userInfo ->
+
+            SignResult(
+                userInfo,
+                param.data,
+                param.signature,
+                param.address,
+                param.authKey
+            )
+        }
+    }.getOrThrow()
+}
+
+suspend fun PanelSessionManager.getPanelUserSignUpPass(
+    authKey: AuthKey
+): SignResult<PanelAccountInfo> {
+    return prepareSignInFromPrivateKey(authKey, {
+        getData()
+    }).mapResult { param ->
+        val encryptionPublicKey1 = (param.authKey as? AuthKey.Dilithium)?.derEncryptionPublicKey
+        signUp(
+            SignUpBody(
+                param.authKey.derPublicKey,
+                param.signature,
+                encryptionPublicKey1
+            )
+        ).map {
+            SignResult(
+                it,
+                param.data,
+                param.signature,
+                param.address,
+                authKey
+            )
+        }
+    }.getOrThrow()
+}
+
+suspend fun PanelSessionManager.getPanelUserSignInPass(
+    authKey: AuthKey
+): SignResult<PanelAccountInfo> {
+    return prepareSignInFromPrivateKey(authKey, {
+        getData()
+    }).mapResult { param ->
+        signIn(SignInBody(param.address, param.signature)).map {
+            SignResult(
+                it,
+                 param.data,
+                param.signature,
+                param.address,
+                authKey
+            )
+        }
+    }.getOrThrow()
 }

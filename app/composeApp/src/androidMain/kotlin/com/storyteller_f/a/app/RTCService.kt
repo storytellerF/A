@@ -83,9 +83,10 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
 
     init {
         lifecycle.coroutineScope.launch {
-            combine(callingRoom, uiViewModel.instance, uiViewModel.instance.flatMapLatest {
+            val flow = uiViewModel.instance.flatMapLatest {
                 it.sessionManager.webSocketClient.frameFlow
-            }) { r, i, f ->
+            }
+            combine(callingRoom, uiViewModel.instance, flow) { r, i, f ->
                 Triple(r, i, f)
             }.collectLatest { (room, instance, frame) ->
                 when (frame) {
@@ -153,7 +154,7 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
         if (roomId != null) {
             val session = uiViewModel.instance.value.sessionManager
             lifecycle.coroutineScope.launch {
-                session.proxy.webSocketClient.useWebSocket {
+                session.webSocketClient.useWebSocket {
                     sendFrame(RoomFrame.StopCall(roomId))
                 }
             }
@@ -166,7 +167,7 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
         }
         val session = uiViewModel.instance.value.sessionManager
         lifecycle.coroutineScope.launch {
-            session.proxy.webSocketClient.useWebSocket {
+            session.webSocketClient.useWebSocket {
                 val f = RoomFrame.StartCall(roomId)
                 sendFrame(f)
                 sendFrame(
@@ -183,7 +184,7 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
 
     private fun processCreateAnswer(
         frame: RoomFrame.CreateAnswer,
-        instance: AccountInstance,
+        instance: IAccountInstance,
     ) {
         if (callingRoom.value != frame.roomId) {
             return
@@ -214,7 +215,7 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
 
     private fun processCreateOffer(
         frame: RoomFrame.CreateOffer,
-        instance: AccountInstance
+        instance: IAccountInstance
     ) {
         if (callingRoom.value != frame.roomId) {
             return
@@ -303,7 +304,7 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
         val roomId = callingRoom.value ?: return
         val session = uiViewModel.instance.value.sessionManager
         lifecycle.coroutineScope.launch {
-            session.proxy.webSocketClient.useWebSocket {
+            session.webSocketClient.useWebSocket {
                 sendFrame(
                     RoomFrame.UpdateCallMediaState(
                         roomId = roomId,

@@ -21,6 +21,7 @@ trigger: always_on
 - 编辑文件时需要注意不要改变当前文件的换行符
 - 添加依赖时通过github 或者对应仓库获取正确的group 和artifact，找不到依赖也禁止降低版本
 - 一个文件代码超过1000 行需要拆分复杂部分代码到其他文件
+- 遇到问题找本质原因，避免无意义的fallback和检查。
 
 ## 模块职责概览
 - **api**: 定义 REST API 端点、查询/路径模型；包含管理员 AdminApi（/admin/*）
@@ -83,8 +84,9 @@ trigger: always_on
 
 ### C) 测试
 - 对于受到影响的模块要进行代码单元测试工作`./gradlew module:test --console=plain`
-- 执行AppiumTest 时先执行`./scripts/test_scripts/build-and-test.sh --appium --prepare --console=plain` 做一些准备工作，包括编译server 和worker 的镜像，构建最新的app 安装包，然后执行`./scripts/test_scripts/build-and-test.sh --appium --run --console=plain`，如果不提供--prepare 和--run 的话所有步骤一次执行
-- 测试的目的是发现问题，如果发现了问题应该全力修复，而不是在测试用例上绕过去
+- 执行完整的普通单元测试使用`./scripts/test_scripts/build-and-test.sh --unit --console=plain`。
+- 执行端到端测试使用`./scripts/test_scripts/build-and-test.sh --appium --console=plain`。
+- 测试的目的是发现问题，如果发现了问题应该全力修复，而不是在测试用例上绕过去。
 - 除非有前后依赖关系，否则不要把多余的测试步骤加到一个测试用例里面
 - 重复性的测试步骤可以提取成单独的方法
 - appium 测试需要真是设备或者模拟器，无法并行

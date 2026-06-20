@@ -20,15 +20,15 @@ import com.jakewharton.mosaic.ui.TextStyle
 import com.storyteller_f.a.api.PaginationQuery
 import com.storyteller_f.a.client.core.AuthKey
 import com.storyteller_f.a.client.core.PanelSessionManager
-import com.storyteller_f.a.client.core.RawUserPass
-import com.storyteller_f.a.client.core.createPanelSessionManager
+import com.storyteller_f.a.client.core.SimplePassHolder
+import com.storyteller_f.a.client.core.createSimplePanelSessionManager
 import com.storyteller_f.a.client.core.defaultClientConfigureForPanel
 import com.storyteller_f.a.client.core.getAllCommunities
 import com.storyteller_f.a.client.core.getAllPublicRooms
 import com.storyteller_f.a.client.core.getAllUsers
-import com.storyteller_f.a.client.core.getPanelUserPass
 import com.storyteller_f.a.client.core.overview
-import com.storyteller_f.a.client.core.startBackgroundTask
+import com.storyteller_f.a.client.core.panelSignIn
+import com.storyteller_f.a.client.core.panelSignUp
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.CommunityInfo
@@ -40,7 +40,7 @@ import io.github.aakira.napier.LogLevel
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
-import kotlinx.coroutines.cancel
+import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
 import kotlinx.coroutines.channels.Channel
 
 private val LogGray = Color(160, 160, 160)
@@ -89,7 +89,8 @@ suspend fun handleInput(
     line: String,
     screen: Screen,
     setScreen: (Screen) -> Unit,
-    sessionManager: PanelSessionManager
+    sessionManager: PanelSessionManager,
+    passHolder: SimplePassHolder
 ) {
     when (screen) {
         is Screen.Main -> {
@@ -140,10 +141,10 @@ suspend fun handleInput(
                     val algo = getAlgo(AlgoType.P256)
                     val derPriKey = algo.getDerPrivateKey(pk).getOrThrow()
                     val derPubKey = algo.getDerPublicKeyFromPrivateKey(pk).getOrThrow()
-                    val user = sessionManager.getPanelUserPass(
+                    val user = sessionManager.panelSignUp(
                         AuthKey.P256(pk, derPriKey, derPubKey),
-                        true
-                    ) { RawUserPass(it) }
+                        passHolder
+                    )
                     sysLog("Registered and Logged in as: ${user.name}")
                     setScreen(Screen.Main)
                 } catch (e: Exception) {
@@ -157,10 +158,10 @@ suspend fun handleInput(
                 val algo = getAlgo(AlgoType.P256)
                 val derPriKey = algo.getDerPrivateKey(line).getOrThrow()
                 val derPubKey = algo.getDerPublicKeyFromPrivateKey(line).getOrThrow()
-                val user = sessionManager.getPanelUserPass(
+                val user = sessionManager.panelSignIn(
                     AuthKey.P256(line, derPriKey, derPubKey),
-                    false
-                ) { RawUserPass(it) }
+                    passHolder
+                )
                 sysLog("Logged in as: ${user.name}")
                 setScreen(Screen.Main)
             } catch (e: Exception) {
@@ -193,14 +194,14 @@ suspend fun handleInput(
 
 @Suppress("ComplexMethod", "LongMethod")
 @Composable
-fun App(sessionManager: PanelSessionManager) {
+fun App(sessionManager: PanelSessionManager, passHolder: SimplePassHolder) {
     var screen by remember { mutableStateOf<Screen>(Screen.Main) }
     var inputBuffer by remember { mutableStateOf("") }
     val submitChannel = remember { Channel<String>(Channel.UNLIMITED) }
 
     LaunchedEffect(Unit) {
         for (line in submitChannel) {
-            handleInput(line, screen, { screen = it }, sessionManager)
+            handleInput(line, screen, { screen = it }, sessionManager, passHolder)
         }
     }
 
@@ -305,24 +306,25 @@ fun App(sessionManager: PanelSessionManager) {
     }
 }
 
-fun main() = kotlinx.coroutines.runBlocking {
-    Napier.base(ConsoleAntilog())
+fun main() {
+    kotlinx.coroutines.runBlocking {
+        Napier.base(ConsoleAntilog())
 
-    val httpUrl = "http://127.0.0.1:8080"
+        val httpUrl = "http://127.0.0.1:8080"
 
-    val sessionManager = createPanelSessionManager { model, cookieManager ->
-        HttpClient(OkHttp) {
-            defaultClientConfigureForPanel(cookieManager, manager = model, httpUrl = httpUrl)
+        val passHolder = SimplePassHolder()
+
+        val sessionManager = createSimplePanelSessionManager(
+            passHolder,
+            AcceptAllCookiesStorage()
+        ) { model, cookieManager ->
+            HttpClient(OkHttp) {
+                defaultClientConfigureForPanel(cookieManager, model, passHolder, httpUrl)
+            }
+        }
+
+        runMosaicBlocking {
+            App(sessionManager, passHolder)
         }
     }
-
-    val jobs = run {
-        sessionManager.startBackgroundTask()
-    }
-
-    runMosaicBlocking {
-        App(sessionManager)
-    }
-
-    jobs.forEach { it.cancel() }
 }

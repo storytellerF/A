@@ -168,11 +168,12 @@ if [ "$RUN_COMPILE_UNIT" = true ]; then
         exit 1
     fi
 
-    echo "Cleaning test cache..."
-    if ! ./gradlew clean -Pappium=false $GRADLE_CONSOLE_ARGS; then
-        showNotification "清理失败" "clean 执行失败！" "false"
-        exit 1
-    fi
+#    echo "Cleaning test cache..."
+#    if ! ./gradlew clean -Pappium=false $GRADLE_CONSOLE_ARGS; then
+#        showNotification "清理失败" "clean 执行失败！" "false"
+#        exit 1
+#    fi
+    rm -rf cloud/server/build/test/session
 
     echo "Running unit tests without Testcontainers..."
     if ! ENABLE_TEST_CONTAINER=false ./gradlew test -Pappium=false $TEST_ARGS $GRADLE_CONSOLE_ARGS; then
@@ -210,7 +211,7 @@ fi
 if [ "$RUN_APPIUM" = true ]; then
     echo "Running Appium Tests..."
     rm -rf ./dev/appium/build/test/appium/sessions
-    ./gradlew :dev:appium:clean -Pappium=true $GRADLE_CONSOLE_ARGS
+#    ./gradlew :dev:appium:clean -Pappium=true $GRADLE_CONSOLE_ARGS
     appium_exit=0
     ./gradlew :dev:appium:test -Pappium=true $TEST_ARGS $GRADLE_CONSOLE_ARGS || appium_exit=$?
     if [ "$appium_exit" -ne 0 ]; then

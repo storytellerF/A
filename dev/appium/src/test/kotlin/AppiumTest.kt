@@ -1,26 +1,24 @@
-@file:Suppress("SameParameterValue")
-
 import com.storyteller_f.a.api.NewCommunity
 import com.storyteller_f.a.api.NewRoom
 import com.storyteller_f.a.client.core.AuthKey
 import com.storyteller_f.a.client.core.PanelSessionManager
-import com.storyteller_f.a.client.core.RawUserPass
+import com.storyteller_f.a.client.core.SimplePassHolder
 import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.buildWebSocketUrl
 import com.storyteller_f.a.client.core.createCommunity
-import com.storyteller_f.a.client.core.createPanelSessionManager
 import com.storyteller_f.a.client.core.createRoom
+import com.storyteller_f.a.client.core.createSimplePanelSessionManager
+import com.storyteller_f.a.client.core.createSimpleUserSessionManager
 import com.storyteller_f.a.client.core.createTopic
-import com.storyteller_f.a.client.core.createUserSessionManager
 import com.storyteller_f.a.client.core.defaultClientConfigure
 import com.storyteller_f.a.client.core.defaultClientConfigureForPanel
 import com.storyteller_f.a.client.core.getAuthKey
 import com.storyteller_f.a.client.core.getClient
 import com.storyteller_f.a.client.core.getCommunityInfo
-import com.storyteller_f.a.client.core.getPanelUserPass
 import com.storyteller_f.a.client.core.getTopicInfo
-import com.storyteller_f.a.client.core.getUserPass
 import com.storyteller_f.a.client.core.joinCommunity
+import com.storyteller_f.a.client.core.panelSignUp
+import com.storyteller_f.a.client.core.userSignIn
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.model.AlgoType
@@ -28,6 +26,7 @@ import com.storyteller_f.shared.type.ObjectType
 import io.appium.java_client.AppiumBy
 import io.appium.java_client.android.AndroidDriver
 import io.appium.java_client.android.options.UiAutomator2Options
+import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -69,8 +68,6 @@ private const val INJECTED_SESSION_FILE = "files/appium-session/session.json"
 private const val CLI_READY_PORT = 8081
 private const val APP_MAIN_ACTIVITY_CLASS_NAME = "com.storyteller_f.a.app.MainActivity"
 private const val PANEL_MAIN_ACTIVITY_CLASS_NAME = "com.storyteller_f.a.panel.MainActivity"
-private const val ADB_REVERSE_WAIT_TIMEOUT_MILLIS = 30_000L
-private const val ADB_REVERSE_POLL_INTERVAL_MILLIS = 500L
 
 private val appUnderTest = AppUnderTest(
     packageName = resolveAppPackageName(),
@@ -407,7 +404,6 @@ class AppiumTest {
         block: suspend (AndroidDriver) -> Unit
     ) {
         runType1Test(app, { _, _ ->
-
         }, { driver, _ ->
             block(driver)
         })
@@ -504,9 +500,10 @@ class AppiumTest {
         val derPrivateKey = algo.getDerPrivateKey(pemPrivateKey).getOrThrow()
         val derPublicKey = algo.getDerPublicKeyFromPrivateKey(pemPrivateKey).getOrThrow()
         val address = algo.calcAddress(derPublicKey).getOrThrow()
-        val manager = createApiSessionManager(ports)
+        val passHolder = SimplePassHolder()
+        val manager = createApiSessionManager(ports, passHolder)
         val authKey = getAuthKey(AlgoType.P256, pemPrivateKey)
-        manager.getUserPass(authKey, true) { RawUserPass(it) }
+        manager.userSignIn(authKey, passHolder)
         manager.client.close()
         return InjectedSession(
             address = address,
@@ -522,9 +519,10 @@ class AppiumTest {
         val derPrivateKey = algo.getDerPrivateKey(pemPrivateKey).getOrThrow()
         val derPublicKey = algo.getDerPublicKeyFromPrivateKey(pemPrivateKey).getOrThrow()
         val address = algo.calcAddress(derPublicKey).getOrThrow()
-        val manager = createPanelApiSessionManager(ports)
+        val passHolder = SimplePassHolder()
+        val manager = createPanelApiSessionManager(ports, passHolder)
         val authKey = getAuthKey(AlgoType.P256, pemPrivateKey)
-        manager.getPanelUserPass(authKey, true) { RawUserPass(it) }
+        manager.panelSignUp(authKey, passHolder)
         manager.client.close()
         return InjectedSession(
             address = address,
@@ -536,13 +534,14 @@ class AppiumTest {
 
     private suspend fun createAuthenticatedSession(ports: AppiumPorts): AuthenticatedSession {
         val session = createPreRegisteredSession(ports)
-        val manager = createApiSessionManager(ports)
+        val passHolder = SimplePassHolder()
+        val manager = createApiSessionManager(ports, passHolder)
         val authKey = AuthKey.P256(
             pemPrivateKey = session.pemPrivateKey,
             derPrivateKey = session.derPrivateKey,
             derPublicKey = session.derPublicKey,
         )
-        manager.getUserPass(authKey, false) { RawUserPass(it) }
+        manager.userSignIn(authKey, passHolder)
         return AuthenticatedSession(session, manager)
     }
 
@@ -659,27 +658,30 @@ private suspend fun waitUntilCommunityJoined(
     error("Community not visible in joined communities: $communityId")
 }
 
-private fun createApiSessionManager(ports: AppiumPorts) = createUserSessionManager(
+private fun createApiSessionManager(ports: AppiumPorts, passHolder: SimplePassHolder) = createSimpleUserSessionManager(
     buildWebSocketUrl("ws://127.0.0.1:${ports.ws}"),
+    AcceptAllCookiesStorage(),
+    passHolder,
     { model, cookieStorage ->
         getClient {
             defaultClientConfigure(
-                cookiesStorage = cookieStorage,
-                manager = model,
-                httpUrl = "http://127.0.0.1:${ports.server}",
+                cookieStorage,
+                model,
+                passHolder,
+                "http://127.0.0.1:${ports.server}"
             )
         }
-    },
-    onReceiveFrame = { _, _, _ -> }
-)
+    }
+) { _, _, _ -> }
 
-private fun createPanelApiSessionManager(ports: AppiumPorts): PanelSessionManager =
-    createPanelSessionManager { model, cookieStorage ->
+private fun createPanelApiSessionManager(ports: AppiumPorts, passHolder: SimplePassHolder): PanelSessionManager =
+    createSimplePanelSessionManager(passHolder, AcceptAllCookiesStorage()) { model, cookieStorage ->
         getClient {
             defaultClientConfigureForPanel(
-                cookiesStorage = cookieStorage,
-                manager = model,
-                httpUrl = "http://127.0.0.1:${ports.server}",
+                cookieStorage,
+                model,
+                passHolder,
+                "http://127.0.0.1:${ports.server}",
             )
         }
     }
@@ -931,11 +933,15 @@ private fun bindAndroidReverse(hostPort: Int, devicePort: Int) {
     check(devices.isNotEmpty()) { "No Android device available for adb reverse" }
     devices.forEach { device ->
         val result = runAdbCommandAllowFailure(
-            "-s", device, "reverse", "tcp:$devicePort", "tcp:$hostPort"
+            "-s",
+            device,
+            "reverse",
+            "tcp:$devicePort",
+            "tcp:$hostPort"
         )
         check(result.exitCode == 0) {
             "Failed to bind android reverse for $device tcp:$devicePort -> tcp:$hostPort: " +
-                    result.output.ifBlank { "exitCode=${result.exitCode}" }
+                result.output.ifBlank { "exitCode=${result.exitCode}" }
         }
         waitForAndroidReverse(device, devicePort)
     }
@@ -960,7 +966,7 @@ private fun waitForAndroidReverse(device: String, devicePort: Int) {
     val reverseList = runAdbCommandAllowFailure("-s", device, "reverse", "--list").output
     error(
         "android reverse $device tcp:$devicePort is not reachable. " +
-                "adb reverse --list: ${reverseList.ifBlank { "<empty>" }}"
+            "adb reverse --list: ${reverseList.ifBlank { "<empty>" }}"
     )
 }
 
@@ -998,7 +1004,7 @@ private fun adbProcessBuilder(args: List<String>): ProcessBuilder {
 }
 
 private fun runAdbCommandAllowFailure(vararg args: String): AdbCommandResult {
-    val process = adbProcessBuilder(args).start()
+    val process = adbProcessBuilder(args.toList()).start()
     val exitCode = process.waitFor()
     val output = process.inputStream.bufferedReader().use { it.readText().trim() }
     return AdbCommandResult(exitCode = exitCode, output = output)
@@ -1101,7 +1107,6 @@ private fun assertElementNotVisible(
         }
         throw e
     }
-
 }
 
 private fun clickElement(
@@ -1147,7 +1152,6 @@ private fun inputElement(
         }
         throw e
     }
-
 }
 
 private fun saveDebugSnapshot(driver: AndroidDriver, name: String) {

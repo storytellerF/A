@@ -142,4 +142,10 @@ sentry {
     // this will upload your source code to Sentry to show it as part of the stack traces
     // disable if you don't want to expose your sources
     includeSourceContext.set(false)
+    includeNativeSources.set(false)
+    includeProguardMapping.set(false)
+    includeDependenciesReport.set(false)
+    autoUploadNativeSymbols.set(false)
+    autoUploadProguardMapping.set(false)
+    autoUploadSourceContext.set(false)
 }

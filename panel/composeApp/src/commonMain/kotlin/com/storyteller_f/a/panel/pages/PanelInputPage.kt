@@ -20,8 +20,10 @@ import com.storyteller_f.a.app.core.components.CenterBox
 import com.storyteller_f.a.app.core.components.PrivateKeyInput
 import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.client.core.AuthKey
-import com.storyteller_f.a.client.core.getPanelUserPass
+import com.storyteller_f.a.client.core.RawUserPassInfo
+import com.storyteller_f.a.client.core.getPanelUserSignInPass
 import com.storyteller_f.a.panel.LocalPanelGlobalDialog
+import com.storyteller_f.a.panel.panelUiViewModel
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.AlgoType
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -74,16 +76,21 @@ fun PanelInputPage(back: () -> Unit) {
                         runCatching {
                             val algo = getAlgo(AlgoType.P256)
                             val derPriKey = algo.getDerPrivateKey(privateKey).getOrThrow()
-                            val derPubKey = algo.getDerPublicKeyFromPrivateKey(privateKey).getOrThrow()
-                            getPanelUserPass(
+                            val derPubKey =
+                                algo.getDerPublicKeyFromPrivateKey(privateKey).getOrThrow()
+                            val signResult = getPanelUserSignInPass(
                                 AuthKey.P256(privateKey, derPriKey, derPubKey),
-                                false
-                            ) {
-                                historyFactory.addSession(it)
-                            }
+                            )
+                            signResult to historyFactory.addSession(
+                                RawUserPassInfo(
+                                    signResult.address,
+                                    signResult.authKey,
+                                )
+                            )
                         }
                     }
-                }.onSuccess {
+                }.onSuccess { (it, pass) ->
+                    panelUiViewModel.login(it, pass)
                     back()
                 }
             }

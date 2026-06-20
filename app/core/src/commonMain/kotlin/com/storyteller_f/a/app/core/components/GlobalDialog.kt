@@ -54,10 +54,10 @@ private val mutex = Mutex()
 
 data class GlobalDialogStateProgress(val value: Long, val total: Long?)
 
-interface GlobalDialogController<out C> {
+interface GlobalDialogController<C> {
     val state: MutableState<PersistentList<GlobalDialogState>>
 
-    suspend fun <T> useResult(block: suspend GlobalDialogController<C>.() -> Result<T>,): Result<T>
+    suspend fun <T> useResult(block: suspend GlobalDialogController<C>.() -> Result<T>): Result<T>
 
     fun emitProgress(block: (GlobalDialogState.Loading) -> GlobalDialogState.Loading)
 
@@ -125,7 +125,7 @@ class NestedGlobalDialogController<C>(
 
 class CustomGlobalDialogContent(val content: @Composable () -> Unit)
 
-class GlobalDialogContext<out C>(val events: MutableSharedFlow<Any>, val sessionManager: C) {
+class GlobalDialogContext<C>(val events: MutableSharedFlow<Any>, val sessionManager: C) {
     suspend fun emitEvent(any: Any) {
         events.emit(any)
     }

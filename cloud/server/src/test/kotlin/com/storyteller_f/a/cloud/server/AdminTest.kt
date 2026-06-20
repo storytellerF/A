@@ -161,7 +161,7 @@ class AdminTest {
         val userInfo = attachPanelSession {
             addUser(NewUser(authKey = TransferAuthKey.P256(publicKey))).getOrThrow()
         }.custom
-        getAppSession(false, com.storyteller_f.a.client.core.AuthKey.P256(
+        getAppSignInSession(com.storyteller_f.a.client.core.AuthKey.P256(
             privateKey,
             derPrivateKey,
             publicKey

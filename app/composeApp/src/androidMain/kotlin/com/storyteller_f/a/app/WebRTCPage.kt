@@ -7,11 +7,27 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -23,7 +39,26 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
-import com.shepeliev.webrtckmp.*
+import com.shepeliev.webrtckmp.AudioTrack
+import com.shepeliev.webrtckmp.IceCandidate
+import com.shepeliev.webrtckmp.IceServer
+import com.shepeliev.webrtckmp.MediaDevices
+import com.shepeliev.webrtckmp.MediaStream
+import com.shepeliev.webrtckmp.MediaStreamTrackKind
+import com.shepeliev.webrtckmp.OfferAnswerOptions
+import com.shepeliev.webrtckmp.PeerConnection
+import com.shepeliev.webrtckmp.RtcConfiguration
+import com.shepeliev.webrtckmp.SessionDescription
+import com.shepeliev.webrtckmp.SessionDescriptionType
+import com.shepeliev.webrtckmp.SignalingState
+import com.shepeliev.webrtckmp.VideoTrack
+import com.shepeliev.webrtckmp.WebRtc
+import com.shepeliev.webrtckmp.onConnectionStateChange
+import com.shepeliev.webrtckmp.onIceCandidate
+import com.shepeliev.webrtckmp.onIceConnectionStateChange
+import com.shepeliev.webrtckmp.onSignalingStateChange
+import com.shepeliev.webrtckmp.onTrack
+import com.shepeliev.webrtckmp.videoTracks
 import com.storyteller_f.a.app.core.CoreStrings
 import com.storyteller_f.a.client.core.sendFrame
 import com.storyteller_f.shared.obj.CustomAnswer
@@ -37,9 +72,8 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.webrtc.RendererCommon
@@ -67,7 +101,7 @@ fun WebRTCPage(rtcContainer: RTCContainer, roomId: PrimaryKey) {
             localVideoTrack?.takeIf {
                 !localVideoMuted
             }?.let {
-                Video(videoTrack = it, modifier = Modifier.weight(1f).fillMaxWidth(),)
+                Video(videoTrack = it, modifier = Modifier.weight(1f).fillMaxWidth())
             } ?: Box(
                 modifier = Modifier
                     .weight(1f)
@@ -190,7 +224,7 @@ suspend fun makeCallByOffer(
     onRemoteVideoTrack: (VideoTrack) -> Unit,
     onRemoteAudioTrack: (AudioTrack) -> Unit = {},
     signalingChannel: SharedFlow<RoomFrame>,
-    instance: AccountInstance,
+    instance: IAccountInstance,
 ) {
     val roomId = createOffer.roomId
     val targetUid = createOffer.targetUid
@@ -228,7 +262,12 @@ suspend fun makeCallByOffer(
             .launchIn(this)
 
         // 创建 Offer
-        val offer = pc.createOffer(OfferAnswerOptions(offerToReceiveVideo = true, offerToReceiveAudio = true))
+        val offer = pc.createOffer(
+            OfferAnswerOptions(
+                offerToReceiveVideo = true,
+                offerToReceiveAudio = true
+            )
+        )
         pc.setLocalDescription(offer)
 
         // 通过信令发送给 Callee
@@ -237,9 +276,9 @@ suspend fun makeCallByOffer(
             sendFrame(f)
         }
 
-        signalingChannel.map {
+        signalingChannel.mapNotNull {
             it as? RoomFrame.RespondAnswer
-        }.filterNotNull().filter {
+        }.filter {
             it.roomId == roomId && it.uid == targetUid
         }.onEach {
             Napier.i {
@@ -251,13 +290,19 @@ suspend fun makeCallByOffer(
             }
         }.launchIn(this)
 
-        signalingChannel.map {
+        signalingChannel.mapNotNull {
             it as? RoomFrame.ReceiveCandidate
-        }.filterNotNull().filter {
+        }.filter {
             it.roomId == roomId && it.uid == targetUid
         }.onEach {
             val candidate = it.candidate
-            pc.addIceCandidate(IceCandidate(candidate.sdpMid, candidate.sdpMLineIndex, candidate.candidate))
+            pc.addIceCandidate(
+                IceCandidate(
+                    candidate.sdpMid,
+                    candidate.sdpMLineIndex,
+                    candidate.candidate
+                )
+            )
         }.launchIn(this)
         try {
             awaitCancellation()
@@ -274,7 +319,7 @@ suspend fun makeCallByAnswer(
     onRemoteVideoTrack: (VideoTrack) -> Unit,
     onRemoteAudioTrack: (AudioTrack) -> Unit = {},
     signalingChannel: SharedFlow<RoomFrame>,
-    instance: AccountInstance,
+    instance: IAccountInstance,
 ) {
     val roomId = createAnswer.roomId
     val targetUid = createAnswer.targetUid
@@ -287,7 +332,6 @@ suspend fun makeCallByAnswer(
         pc.onIceCandidate
             .onEach { candidate ->
                 Napier.d(tag = "web_rtc") { "Callee onIceCandidate: $candidate" }
-                candidate
                 instance.sessionManager.webSocketClient.useWebSocket {
                     val customCandidate = CustomCandidate(
                         candidate.sdpMid,
@@ -330,9 +374,9 @@ suspend fun makeCallByAnswer(
         instance.sessionManager.webSocketClient.useWebSocket {
             sendFrame(f)
         }
-        signalingChannel.map {
+        signalingChannel.mapNotNull {
             it as? RoomFrame.ReceiveCandidate
-        }.filterNotNull().filter { frame ->
+        }.filter { frame ->
             (frame.roomId == roomId && frame.uid == targetUid)
         }.onEach { frame ->
             val native = frame.candidate
@@ -487,14 +531,22 @@ private fun SwitchCameraButton(modifier: Modifier = Modifier, onClick: () -> Uni
 }
 
 @Composable
-private fun AudioToggleButton(isMuted: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
+private fun AudioToggleButton(
+    isMuted: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
     Button(onClick = onClick, modifier = modifier) {
         Text(if (isMuted) "Unmute" else "Mute")
     }
 }
 
 @Composable
-private fun VideoToggleButton(isMuted: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
+private fun VideoToggleButton(
+    isMuted: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
     Button(onClick = onClick, modifier = modifier) {
         Text(if (isMuted) "Show Video" else "Hide Video")
     }

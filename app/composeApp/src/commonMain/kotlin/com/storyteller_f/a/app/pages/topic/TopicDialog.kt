@@ -36,9 +36,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.AppGlobalDialogController
+import com.storyteller_f.a.app.IAccountInstance
 import com.storyteller_f.a.app.LocalAppNavFactory
 import com.storyteller_f.a.app.LocalGlobalDialog
-import com.storyteller_f.a.app.LocalSessionManager
+import com.storyteller_f.a.app.LocalUiViewModel
 import com.storyteller_f.a.app.Res
 import com.storyteller_f.a.app.components.AppTopicContentView
 import com.storyteller_f.a.app.copy
@@ -154,8 +155,8 @@ private fun CopyButton(content: TopicContent) {
 private fun SnapshotButton(topicInfo: TopicInfo) {
     val toast = LocalToaster.current
     val scope = rememberCoroutineScope()
-    val userSessionManager = LocalSessionManager.current
-    val alreadyLoginIn by userSessionManager.isAlreadySignIn.collectAsState()
+    val instance by LocalUiViewModel.current.instance.collectAsState()
+    val alreadyLoginIn = instance !is IAccountInstance.None
     if (!alreadyLoginIn) return
     val globalDialogController = LocalGlobalDialog.current
     ButtonNav(

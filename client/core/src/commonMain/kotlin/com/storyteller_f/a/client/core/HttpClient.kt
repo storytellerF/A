@@ -39,12 +39,13 @@ expect fun getClient(block: HttpClientConfig<*>.() -> Unit): HttpClient
 fun HttpClientConfig<*>.defaultClientConfigure(
     cookiesStorage: CookiesStorage,
     manager: UserSessionModel,
+    passHolder: PassHolder,
     httpUrl: String? = null,
     logLevel: LogLevel = LogLevel.HEADERS,
 ) {
     expectSuccess = true
     install(SingleFlightCustomAuthPlugin) {
-        configClientAuth(manager) { u, l ->
+        configClientAuth(manager, passHolder) { u, l ->
             addRequestHeadersFromInfo(u, l)
         }
     }
@@ -99,12 +100,13 @@ fun HttpClientConfig<*>.defaultClientConfigure(
 fun HttpClientConfig<*>.defaultClientConfigureForPanel(
     cookiesStorage: CookiesStorage,
     manager: PanelSessionModel,
+    passHolder: PassHolder,
     httpUrl: String? = null,
     logLevel: LogLevel = LogLevel.HEADERS,
 ) {
     expectSuccess = true
     install(SingleFlightCustomAuthPlugin) {
-        configClientAuth(manager) { u, l ->
+        configClientAuth(manager, passHolder) { u, l ->
             addRequestHeadersFromInfo(u, l)
         }
     }

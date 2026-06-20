@@ -101,10 +101,10 @@ private fun SignInNavDisplay(backStack: NavBackStack<NavKey>, nav: SignInAndSign
                 SignUpPage(nav)
             }
             entry<SignUpInput> {
-                PrivateKeyAuthPage(true)
+                PrivateKeyAuthSignUpPage()
             }
             entry<SignInInput> {
-                PrivateKeyAuthPage(false)
+                PrivateKeyAuthSignInPage()
             }
         }
     )
