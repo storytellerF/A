@@ -92,7 +92,6 @@ import com.storyteller_f.storage.update
 import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -127,11 +126,16 @@ val LocalPanelGlobalTask =
         error("LocalPanelGlobalTask must be provided")
     }
 
-val panelUiViewModel = PanelUIViewModel(GlobalScope, PanelConfig.SERVER_URL)
+val LocalPanelUiViewModel =
+    compositionLocalOf<PanelUIViewModel> {
+        error("LocalPanelUiViewModel must be provided")
+    }
+
+fun createPanelUIViewModel() = PanelUIViewModel(kotlinx.coroutines.GlobalScope, PanelConfig.SERVER_URL)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun App() {
+fun App(panelUiViewModel: PanelUIViewModel) {
     val panelAccountInstance by panelUiViewModel.instance.collectAsState()
     val sessionManager = panelAccountInstance.sessionManager
     val client = sessionManager.client
@@ -153,6 +157,7 @@ fun App() {
         }
     }
     CompositionLocalProvider(
+        LocalPanelUiViewModel provides panelUiViewModel,
         LocalClient provides client,
         LocalPanelNav provides nav.newPanelNav(),
         LocalPanelGlobalDialog provides controller,

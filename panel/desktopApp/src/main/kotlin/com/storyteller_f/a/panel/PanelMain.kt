@@ -16,12 +16,13 @@ fun main() {
     setupKmpLogger()
     initForJvmMain()
     loadCryptoLibIfNeed()
+    val panelUiViewModel = createPanelUIViewModel()
     application {
         Window(
             onCloseRequest = ::exitApplication,
             title = "Panel",
         ) {
-            App()
+            App(panelUiViewModel)
         }
     }
 }

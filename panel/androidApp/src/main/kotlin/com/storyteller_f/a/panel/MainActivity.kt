@@ -67,7 +67,7 @@ class MainActivity : ComponentActivity() {
                 LocalMediaPlayListHandlerProvider provides DefaultMediaPlayListHandlerProvider,
                 LocalMediaPlayerService provides (application as PanelApplication).mediaPlayer
             ) {
-                App()
+                App((application as PanelApplication).panelUiViewModel)
             }
         }
     }
