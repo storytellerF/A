@@ -1,15 +1,12 @@
 package com.storyteller_f.a.client.room
 
 import android.content.Context
-import androidx.room.ExperimentalRoomApi
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.storyteller_f.shared.getAppContextRefValue
-import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 
-@OptIn(ExperimentalRoomApi::class)
 actual fun getRoomDatabase(scope: String): AppDatabase {
     val ctx = getAppContextRefValue()!!
     val builder = getDatabaseBuilder(ctx, scope)
@@ -17,14 +14,7 @@ actual fun getRoomDatabase(scope: String): AppDatabase {
         .fallbackToDestructiveMigrationOnDowngrade(true)
         .fallbackToDestructiveMigration(true)
         .fallbackToDestructiveMigrationFrom(true)
-        .setDriver(BundledSQLiteDriver())
-        .setQueryCallback(Dispatchers.IO) { sqlQuery, bindArgs ->
-            Napier.d(tag = "RoomQuery") {
-                "$sqlQuery ${bindArgs.joinToString()}"
-            }
-        }
-//        .setAutoCloseTimeout(1, TimeUnit.HOURS)
-//        .setDriver(AndroidSQLiteDriver())
+        .setDriver(LoggingSQLiteDriver(BundledSQLiteDriver()))
         .setQueryCoroutineContext(Dispatchers.IO)
         .build()
 }

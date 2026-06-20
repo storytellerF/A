@@ -48,6 +48,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
@@ -217,6 +219,7 @@ fun UserCardContainer(userInfo: UserInfo?, dismiss: () -> Unit, content: @Compos
     val cellClickable = !isUserPage
     val modifier = Modifier.fillMaxWidth()
         .testTag("user-dialog-cell")
+        .semantics { contentDescription = "user-dialog-cell" }
         .clip(shape)
         .background(MaterialTheme.colorScheme.surfaceDim, shape)
         .clickable(userInfo != null && cellClickable) {

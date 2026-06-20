@@ -5,35 +5,32 @@ import android.util.Log
 import io.github.aakira.napier.Antilog
 import io.github.aakira.napier.LogLevel
 import io.github.aakira.napier.Napier
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
-import java.io.BufferedOutputStream
-import java.io.BufferedWriter
 import java.io.File
 import java.io.FileOutputStream
 import java.io.OutputStreamWriter
 import java.nio.charset.StandardCharsets
 import java.text.SimpleDateFormat
 import java.util.Locale
-import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
 
 private const val LOG_DIR_NAME = "logs"
 private const val LOG_FILE_NAME = "appium-app.log"
 private const val DEFAULT_TAG = "Napier"
-private const val FLUSH_INTERVAL_MILLIS = 1000L
-private const val MAX_BATCH_SIZE = 50
 
 fun setupAppLogger(application: Application) {
     val logFile = ensureAppLogFile(application)
-    writeBootstrapLog(logFile)
     Napier.takeLogarithm()
     Napier.base(AppAntilog(logFile))
+    installCrashHandler(logFile)
+}
+
+private fun installCrashHandler(logFile: File) {
+    val original = Thread.getDefaultUncaughtExceptionHandler()
+    Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+        Napier.e(tag = "FATAL", throwable = throwable) {
+            "Uncaught exception on thread ${thread.name}"
+        }
+        original?.uncaughtException(thread, throwable)
+    }
 }
 
 private fun ensureAppLogFile(application: Application): File {
@@ -45,37 +42,10 @@ private fun ensureAppLogFile(application: Application): File {
     }
 }
 
-private fun writeBootstrapLog(logFile: File) {
-    val message = "${System.currentTimeMillis()} INFO [$DEFAULT_TAG] logger initialized\n"
-    runCatching {
-        BufferedWriter(
-            OutputStreamWriter(
-                BufferedOutputStream(FileOutputStream(logFile, true)),
-                StandardCharsets.UTF_8
-            )
-        ).use { writer ->
-            writer.append(message)
-        }
-    }
-}
-
 private class AppAntilog(
     private val logFile: File
 ) : Antilog() {
     private val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US)
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private val pendingLogs = ConcurrentLinkedQueue<String>()
-    private val pendingCount = AtomicInteger(0)
-    private val flushRunning = AtomicBoolean(false)
-
-    init {
-        scope.launch {
-            while (isActive) {
-                delay(FLUSH_INTERVAL_MILLIS)
-                requestFlush()
-            }
-        }
-    }
 
     override fun performLog(priority: LogLevel, tag: String?, throwable: Throwable?, message: String?) {
         val actualTag = tag?.takeIf { it.isNotBlank() } ?: DEFAULT_TAG
@@ -109,57 +79,14 @@ private class AppAntilog(
         if (renderedMessage.isBlank()) {
             return
         }
-        pendingLogs.add(renderedMessage)
-        val currentCount = pendingCount.incrementAndGet()
-        if (currentCount >= MAX_BATCH_SIZE) {
-            requestFlush()
-        }
+        writeLog(renderedMessage)
     }
 
-    private fun requestFlush() {
-        if (!flushRunning.compareAndSet(false, true)) {
-            return
-        }
-        scope.launch {
-            try {
-                while (true) {
-                    val batch = drainBatch()
-                    if (batch.isEmpty()) {
-                        break
-                    }
-                    writeBatch(batch)
-                }
-            } finally {
-                flushRunning.set(false)
-                if (pendingCount.get() > 0) {
-                    requestFlush()
-                }
-            }
-        }
-    }
-
-    private fun drainBatch(): List<String> {
-        val batch = ArrayList<String>(MAX_BATCH_SIZE)
-        while (batch.size < MAX_BATCH_SIZE) {
-            val message = pendingLogs.poll() ?: break
-            batch += message
-        }
-        if (batch.isNotEmpty()) {
-            pendingCount.addAndGet(-batch.size)
-        }
-        return batch
-    }
-
-    private fun writeBatch(batch: List<String>) {
-        val content = batch.joinToString(separator = "\n", postfix = "\n")
+    private fun writeLog(message: String) {
         try {
-            BufferedWriter(
-                OutputStreamWriter(
-                    BufferedOutputStream(FileOutputStream(logFile, true)),
-                    StandardCharsets.UTF_8
-                )
-            ).use { writer ->
-                writer.append(content)
+            OutputStreamWriter(FileOutputStream(logFile, true), StandardCharsets.UTF_8).use { writer ->
+                writer.append(message)
+                writer.append('\n')
             }
         } catch (e: Exception) {
             Log.e("AppAntilog", "Write log failed", e)
