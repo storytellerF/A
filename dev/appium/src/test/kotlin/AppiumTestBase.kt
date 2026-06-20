@@ -1,33 +1,23 @@
-import com.storyteller_f.a.api.NewCommunity
-import com.storyteller_f.a.api.NewRoom
 import com.storyteller_f.a.client.core.AuthKey
 import com.storyteller_f.a.client.core.PanelSessionManager
 import com.storyteller_f.a.client.core.SimplePassHolder
 import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.buildWebSocketUrl
-import com.storyteller_f.a.client.core.createCommunity
-import com.storyteller_f.a.client.core.createRoom
 import com.storyteller_f.a.client.core.createSimplePanelSessionManager
 import com.storyteller_f.a.client.core.createSimpleUserSessionManager
-import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.a.client.core.defaultClientConfigure
 import com.storyteller_f.a.client.core.defaultClientConfigureForPanel
 import com.storyteller_f.a.client.core.getAuthKey
 import com.storyteller_f.a.client.core.getClient
-import com.storyteller_f.a.client.core.getTopicInfo
-import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.a.client.core.panelSignUp
 import com.storyteller_f.a.client.core.userSignIn
 import com.storyteller_f.a.client.core.userSignUp
 import com.storyteller_f.shared.getAlgo
-import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.model.AlgoType
-import com.storyteller_f.shared.type.ObjectType
 import io.appium.java_client.AppiumBy
 import io.appium.java_client.android.AndroidDriver
 import io.appium.java_client.android.options.UiAutomator2Options
 import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
@@ -54,304 +44,42 @@ import java.io.File
 import java.net.URI
 import java.time.Duration
 import java.util.Base64
-import kotlin.test.Test
 import kotlin.test.assertTrue
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-private const val APP_LOG_FILE_NAME = "appium-app.log"
-private const val INJECTED_SESSION_TEMP_PATH = "/data/local/tmp/appium-session-session.json"
-private const val INJECTED_SESSION_DIR = "files/appium-session"
-private const val INJECTED_SESSION_FILE = "files/appium-session/session.json"
-private const val CLI_READY_PORT = 8081
-private const val APP_MAIN_ACTIVITY_CLASS_NAME = "com.storyteller_f.a.app.MainActivity"
-private const val PANEL_MAIN_ACTIVITY_CLASS_NAME = "com.storyteller_f.a.panel.MainActivity"
+internal const val APP_LOG_FILE_NAME = "appium-app.log"
+internal const val INJECTED_SESSION_TEMP_PATH = "/data/local/tmp/appium-session-session.json"
+internal const val INJECTED_SESSION_DIR = "files/appium-session"
+internal const val INJECTED_SESSION_FILE = "files/appium-session/session.json"
+internal const val CLI_READY_PORT = 8081
+internal const val APP_MAIN_ACTIVITY_CLASS_NAME = "com.storyteller_f.a.app.MainActivity"
+internal const val PANEL_MAIN_ACTIVITY_CLASS_NAME = "com.storyteller_f.a.panel.MainActivity"
+internal const val UI_WAIT_SECONDS = 15L
 
-private val appUnderTest = AppUnderTest(
+internal val appUnderTest = AppUnderTest(
     packageName = resolveAppPackageName(),
     mainActivityClassName = APP_MAIN_ACTIVITY_CLASS_NAME,
 )
 
-private val panelUnderTest = AppUnderTest(
+internal val panelUnderTest = AppUnderTest(
     packageName = resolvePanelPackageName(),
     mainActivityClassName = PANEL_MAIN_ACTIVITY_CLASS_NAME,
 )
 
-/**
- * 禁止等待设备上线，如果设备不存在就任由其失败。
- * 禁止直接通过gradle 启动测试，必须使用 build-and-test.sh --appium 启动，build-and-test.sh 中会尝试连接模拟器
- */
-class AppiumTest {
+abstract class AppiumTestBase {
     @get:Rule
     val name = TestName()
 
-    @Test
-    fun `test sign up`() = runAppiumBlockingTest {
-        runType2Test { driver ->
-            val privateKeyContent = generatePrivateKey()
-            clickElement(driver, """new UiSelector().description("avatar")""")
-            clickElement(driver, """new UiSelector().text("Sign in")""")
-            clickElement(driver, """new UiSelector().text("Go to sign up")""")
-            assertElementVisible(driver, """new UiSelector().text("Sign up")""")
-            clickElement(driver, """new UiSelector().text("Private Key")""")
-            clickElement(driver, """new UiSelector().description("Edit Private Key")""")
-            inputElement(
-                driver,
-                """new UiSelector().className("android.widget.EditText")""",
-                privateKeyContent
-            )
-            clickElement(driver, """new UiSelector().text("Confirm")""")
-            clickElement(driver, """new UiSelector().text("Start sign up")""")
-            assertElementVisible(driver, """new UiSelector().description("avatar")""")
-        }
-    }
-
-    @Test
-    fun `test sign in as system user`() = runAppiumBlockingTest {
-        runType2Test { driver ->
-            val privateKeyContent = readAppiumSystemPrivateKey()
-            clickElement(driver, """new UiSelector().description("avatar")""")
-            clickElement(driver, """new UiSelector().text("Sign in")""")
-            clickElement(driver, """new UiSelector().text("Private Key")""")
-            clickElement(driver, """new UiSelector().description("Edit Private Key")""")
-            inputElement(
-                driver,
-                """new UiSelector().className("android.widget.EditText")""",
-                privateKeyContent
-            )
-            clickElement(driver, """new UiSelector().text("Confirm")""")
-            clickElement(driver, """new UiSelector().text("Start sign in")""")
-            clickElement(driver, """new UiSelector().description("avatar")""")
-            assertElementNotVisible(driver, """new UiSelector().text("Sign in")""")
-            assertElementVisible(driver, """new UiSelector().text("System")""")
-        }
-    }
-
-    @Test
-    fun `test sign in by injected private session`() = runAppiumBlockingTest {
-        loadCryptoLibIfNeed()
-        runType1Test(
-            beforeDriverLaunch = { ports, packageName ->
-                val injected = createPreRegisteredSession(ports)
-                val sessionJson = buildInjectedSessionJson(injected)
-                pushInjectedSessionToPrivateDir(packageName, sessionJson)
-                injected
-            }
-        ) { driver, _ ->
-            clickElement(driver, """new UiSelector().description("avatar")""")
-            assertElementNotVisible(driver, """new UiSelector().text("Sign in")""")
-        }
-    }
-
-    @Test
-    fun `test panel sign in by injected private session`() = runAppiumBlockingTest {
-        loadCryptoLibIfNeed()
-        runType1Test(
-            app = panelUnderTest,
-            beforeDriverLaunch = { ports, packageName ->
-                val injected = createPreRegisteredPanelSession(ports)
-                val sessionJson = buildInjectedSessionJson(injected)
-                pushInjectedSessionToPrivateDir(packageName, sessionJson)
-                injected
-            }
-        ) { driver, _ ->
-            assertElementVisible(driver, """new UiSelector().text("Overview")""")
-            clickElement(driver, """new UiSelector().description("Menu")""")
-            clickElement(driver, """new UiSelector().text("All users")""")
-            assertElementVisible(driver, """new UiSelector().text("All users")""")
-        }
-    }
-
-    @Test
-    fun `test publish topic in user space`() = runAppiumBlockingTest {
-        loadCryptoLibIfNeed()
-        val topicContent = "appium-user-space-topic-${System.currentTimeMillis()}"
-        runType1Test(
-            beforeDriverLaunch = { ports, packageName ->
-                val injected = createPreRegisteredSession(ports)
-                val sessionJson = buildInjectedSessionJson(injected)
-                pushInjectedSessionToPrivateDir(packageName, sessionJson)
-                injected
-            }
-        ) { driver, injectedSession ->
-            clickElement(driver, """new UiSelector().description("avatar")""")
-            clickElement(driver, """new UiSelector().text("ad: ${injectedSession.address}")""")
-            clickElement(driver, """new UiSelector().description("add topic")""")
-            clickElement(driver, """new UiSelector().text("Raw")""")
-            inputElement(
-                driver,
-                """new UiSelector().className("android.widget.EditText")""",
-                topicContent
-            )
-            clickElement(driver, """new UiSelector().description("submit")""")
-            assertElementVisible(driver, """new UiSelector().text("$topicContent")""")
-        }
-    }
-
-    @Test
-    fun `test favorite topic from topic page`() = runAppiumBlockingTest {
-        loadCryptoLibIfNeed()
-        val topicContent = "appium-favorite-topic-${System.currentTimeMillis()}"
-        runType1Test(
-            beforeDriverLaunch = { ports, packageName ->
-                val authenticated = createAuthenticatedSession(ports)
-                val topicId = createTopicByApi(
-                    authenticated.sessionManager,
-                    ObjectType.USER,
-                    authenticated.sessionManager.model.uid ?: error("not login"),
-                    topicContent
-                )
-                val sessionJson = buildInjectedSessionJson(authenticated.session)
-                pushInjectedSessionToPrivateDir(packageName, sessionJson)
-                FavoriteTopicScenario(authenticated, topicId)
-            }
-        ) { driver, data ->
-            try {
-                clickElement(driver, """new UiSelector().description("avatar")""")
-                assertElementVisible(
-                    driver,
-                    """new UiSelector().text("ad: ${data.authenticated.session.address}")"""
-                )
-                clickElement(driver, """new UiSelector().description("user-dialog-cell")""")
-                assertElementVisible(driver, """new UiSelector().text("$topicContent")""")
-
-                clickElement(driver, """new UiSelector().text("$topicContent")""")
-                clickElement(driver, """new UiSelector().description("topic")""")
-                clickElement(driver, """new UiSelector().text("Favorite")""")
-                waitUntilTopicFavorited(data.authenticated.sessionManager, data.topicId)
-
-                driver.navigate().back()
-                assertElementVisible(driver, """new UiSelector().description("topic")""")
-            } finally {
-                data.authenticated.sessionManager.client.close()
-            }
-        }
-    }
-
-    @Test
-    fun `test subscribe topic from community page`() = runAppiumBlockingTest {
-        loadCryptoLibIfNeed()
-        val now = System.currentTimeMillis()
-        val topicContent = "appium-subscription-topic-$now"
-        runType1Test(
-            beforeDriverLaunch = { ports, packageName ->
-                val owner = createAuthenticatedSession(ports)
-                val aidSuffix = (now % 1_000_000).toString().padStart(6, '0')
-                val communityName = "community-$aidSuffix"
-                val communityAid = "sc$aidSuffix"
-                val communityId = createCommunityByApi(
-                    owner.sessionManager,
-                    communityName,
-                    communityAid
-                )
-                val topicId = createTopicByApi(
-                    owner.sessionManager,
-                    ObjectType.COMMUNITY,
-                    communityId,
-                    topicContent
-                )
-                val viewer = createAuthenticatedSession(ports)
-                viewer.sessionManager.joinCommunity(communityId).getOrThrow()
-                val sessionJson = buildInjectedSessionJson(viewer.session)
-                pushInjectedSessionToPrivateDir(packageName, sessionJson)
-                owner.sessionManager.client.close()
-                SubscriptionTopicScenario(viewer, topicId, communityName)
-            }
-        ) { driver, data ->
-            try {
-                openCommunityFromCommunitiesTab(driver, data.communityName)
-
-                clickElement(
-                    driver,
-                    """new UiSelector().text("$topicContent")""",
-                )
-                clickElement(driver, """new UiSelector().description("topic")""")
-                clickElement(driver, """new UiSelector().text("Subscription")""")
-                waitUntilTopicSubscribed(data.authenticated.sessionManager, data.topicId)
-
-                driver.navigate().back()
-                assertElementVisible(driver, """new UiSelector().description("topic")""")
-            } finally {
-                data.authenticated.sessionManager.client.close()
-            }
-        }
-    }
-
-    @Test
-    fun `test community profile actions from joined community`() =
-        runPreparedCommunityRoomScenario {
-                driver,
-                data,
-            ->
-            openPreparedCommunity(driver, data)
-            openCommunityDialog(driver, data)
-
-            clickElement(driver, """new UiSelector().text("Favorite")""")
-            clickElement(driver, """new UiSelector().text("Subscription")""")
-            clickElement(driver, """new UiSelector().text("All members")""")
-
-            clickElement(
-                driver,
-                """new UiSelector().textContains("${data.ownerSession.address}")""",
-            )
-        }
-
-    @Test
-    fun `test publish topic in joined community`() = runPreparedCommunityRoomScenario {
-            driver,
-            data,
-        ->
-        val communityTopicContent = "appium-community-topic-${System.currentTimeMillis()}"
-        openPreparedCommunity(driver, data)
-        openCommunityDialog(driver, data)
-
-        clickElement(driver, """new UiSelector().text("Add")""")
-        saveDebugSnapshot(driver, "community-after-add")
-        clickElement(driver, """new UiSelector().text("Raw")""")
-        inputElement(
-            driver,
-            """new UiSelector().className("android.widget.EditText")""",
-            communityTopicContent
-        )
-        clickElement(
-            driver,
-            """new UiSelector().description("submit")""",
-        )
-        assertElementVisible(driver, """new UiSelector().text("$communityTopicContent")""")
-    }
-
-    @Test
-    fun `test publish topic in community room`() = runPreparedCommunityRoomScenario {
-            driver,
-            data,
-        ->
-        val roomTopicContent = "appium-room-topic-${System.currentTimeMillis()}"
-        openPreparedCommunity(driver, data)
-
-        clickElement(driver, """new UiSelector().text("Rooms")""")
-        clickElement(driver, """new UiSelector().text("${data.roomName}")""")
-        inputElement(
-            driver,
-            """new UiSelector().className("android.widget.EditText")""",
-            roomTopicContent
-        )
-        clickElement(
-            driver,
-            """new UiSelector().description("Send")""",
-        )
-        assertElementVisible(driver, """new UiSelector().text("$roomTopicContent")""")
-    }
-
-    private fun runAppiumBlockingTest(block: suspend () -> Unit) = runBlocking {
+    protected fun runAppiumBlockingTest(block: suspend () -> Unit) = runBlocking {
         withTimeout(10.minutes) {
             block()
         }
     }
 
     @OptIn(ExperimentalUuidApi::class)
-    private suspend fun runAppiumTest(
+    protected suspend fun runAppiumTest(
         block: suspend (AppiumPorts) -> Unit
     ) {
         val sessionId = Uuid.random().toHexString()
@@ -399,7 +127,7 @@ class AppiumTest {
         }
     }
 
-    private suspend fun runType2Test(
+    protected suspend fun runType2Test(
         app: AppUnderTest = appUnderTest,
         block: suspend (AndroidDriver) -> Unit
     ) {
@@ -409,7 +137,7 @@ class AppiumTest {
         })
     }
 
-    private suspend fun <T> runType1Test(
+    protected suspend fun <T> runType1Test(
         app: AppUnderTest = appUnderTest,
         beforeDriverLaunch: suspend (AppiumPorts, String) -> T,
         block: suspend (AndroidDriver, T) -> Unit
@@ -440,7 +168,7 @@ class AppiumTest {
                         val content = driver.stopRecordingScreen()
                         val decoded = Base64.getDecoder().decode(content)
                         val dir =
-                            File("build/test/appium-records/${this@AppiumTest.javaClass.simpleName}")
+                            File("build/test/appium-records/${this.javaClass.simpleName}")
                         dir.mkdirs()
                         val file = File(dir, "${name.methodName}.mp4")
                         file.writeBytes(decoded)
@@ -457,51 +185,11 @@ class AppiumTest {
         }
     }
 
-    private fun runPreparedCommunityRoomScenario(
-        block: suspend (AndroidDriver, PreparedScenario) -> Unit
-    ) = runAppiumBlockingTest {
-        loadCryptoLibIfNeed()
-        val now = System.currentTimeMillis()
-
-        runType1Test(
-            beforeDriverLaunch = { ports, packageName ->
-                val prepared = prepareJoinAndPostingScenario(
-                    ports = ports,
-                    now = now,
-                )
-                val sessionJson = buildInjectedSessionJson(prepared.viewerSession)
-                pushInjectedSessionToPrivateDir(packageName, sessionJson)
-                prepared
-            }
-        ) { driver, data ->
-            block(driver, data)
-        }
-    }
-
-    private fun openPreparedCommunity(driver: AndroidDriver, data: PreparedScenario) {
-        openCommunityFromCommunitiesTab(driver, data.communityName)
-    }
-
-    private fun openCommunityFromCommunitiesTab(driver: AndroidDriver, communityName: String) {
-        clickElement(driver, """new UiSelector().text("Communities")""")
-        clickElement(
-            driver,
-            """new UiSelector().text("$communityName")""",
-        )
-    }
-
-    private fun openCommunityDialog(driver: AndroidDriver, data: PreparedScenario) {
-        clickElement(
-            driver,
-            """new UiSelector().text("${data.communityName.first()}")"""
-        )
-    }
-
-    private suspend fun generatePrivateKey(): String {
+    protected suspend fun generatePrivateKey(): String {
         return getAlgo(AlgoType.P256).generatePemKeyPair().getOrThrow().first
     }
 
-    private suspend fun createPreRegisteredSession(ports: AppiumPorts): InjectedSession {
+    protected suspend fun createPreRegisteredSession(ports: AppiumPorts): InjectedSession {
         val algo = getAlgo(AlgoType.P256)
         val (pemPrivateKey, _) = algo.generatePemKeyPair().getOrThrow()
         val derPrivateKey = algo.getDerPrivateKey(pemPrivateKey).getOrThrow()
@@ -520,7 +208,7 @@ class AppiumTest {
         )
     }
 
-    private suspend fun createPreRegisteredPanelSession(ports: AppiumPorts): InjectedSession {
+    protected suspend fun createPreRegisteredPanelSession(ports: AppiumPorts): InjectedSession {
         val algo = getAlgo(AlgoType.P256)
         val (pemPrivateKey, _) = algo.generatePemKeyPair().getOrThrow()
         val derPrivateKey = algo.getDerPrivateKey(pemPrivateKey).getOrThrow()
@@ -539,7 +227,7 @@ class AppiumTest {
         )
     }
 
-    private suspend fun createAuthenticatedSession(ports: AppiumPorts): AuthenticatedSession {
+    protected suspend fun createAuthenticatedSession(ports: AppiumPorts): AuthenticatedSession {
         val session = createPreRegisteredSession(ports)
         val passHolder = SimplePassHolder()
         val manager = createApiSessionManager(ports, passHolder)
@@ -552,42 +240,7 @@ class AppiumTest {
         return AuthenticatedSession(session, manager)
     }
 
-    private suspend fun prepareJoinAndPostingScenario(
-        ports: AppiumPorts,
-        now: Long,
-    ): PreparedScenario {
-        val owner = createAuthenticatedSession(ports)
-        val aidSuffix = (now % 1_000_000).toString().padStart(6, '0')
-        val communityName = "community-$aidSuffix"
-        val roomName = "room-$aidSuffix"
-        val communityAid = "c$aidSuffix"
-        val roomAid = "r$aidSuffix"
-        val ownerCommunityTopic = "appium-owner-community-topic-$now"
-        val communityId = createCommunityByApi(owner.sessionManager, communityName, communityAid)
-        val roomId = createRoomByApi(owner.sessionManager, roomName, roomAid, communityId)
-        createTopicByApi(
-            owner.sessionManager,
-            ObjectType.COMMUNITY,
-            communityId,
-            ownerCommunityTopic
-        )
-
-        val viewer = createAuthenticatedSession(ports)
-        viewer.sessionManager.joinCommunity(communityId).getOrThrow()
-        val result = PreparedScenario(
-            ownerSession = owner.session,
-            viewerSession = viewer.session,
-            communityId = communityId,
-            roomId = roomId,
-            communityName = communityName,
-            roomName = roomName,
-        )
-        owner.sessionManager.client.close()
-        viewer.sessionManager.client.close()
-        return result
-    }
-
-    private fun buildInjectedSessionJson(session: InjectedSession): String {
+    protected fun buildInjectedSessionJson(session: InjectedSession): String {
         return buildJsonObject {
             put("algo", "P256")
             put("address", session.address)
@@ -597,7 +250,7 @@ class AppiumTest {
         }.toString()
     }
 
-    private fun pushInjectedSessionToPrivateDir(packageName: String, content: String) {
+    protected fun pushInjectedSessionToPrivateDir(packageName: String, content: String) {
         val file = File("build/test/appium/tmp/injected-session-${name.methodName}.json")
         file.parentFile?.mkdirs()
         file.writeText(content)
@@ -611,45 +264,38 @@ class AppiumTest {
             INJECTED_SESSION_TEMP_PATH,
             INJECTED_SESSION_FILE
         )
-        // 确保成功推送到目标位置
         runAdbCommand("shell", "run-as", packageName, "cat", INJECTED_SESSION_FILE)
     }
 }
 
-private suspend fun waitUntilTopicFavorited(
-    sessionManager: UserSessionManager,
-    topicId: Long,
-    timeoutMillis: Long = Duration.ofSeconds(30).toMillis(),
-) {
-    val deadline = System.currentTimeMillis() + timeoutMillis
-    while (System.currentTimeMillis() < deadline) {
-        val topicInfo = sessionManager.getTopicInfo(topicId).getOrThrow()
-        if (topicInfo.favoriteId != null) {
-            return
-        }
-        delay(500.milliseconds)
-    }
-    error("Topic not marked as favorite: $topicId")
-}
+internal data class InjectedSession(
+    val address: String,
+    val pemPrivateKey: String,
+    val derPrivateKey: String,
+    val derPublicKey: String,
+)
 
-private suspend fun waitUntilTopicSubscribed(
-    sessionManager: UserSessionManager,
-    topicId: Long,
-    timeoutMillis: Long = Duration.ofSeconds(30).toMillis(),
-) {
-    val deadline = System.currentTimeMillis() + timeoutMillis
-    while (System.currentTimeMillis() < deadline) {
-        val topicInfo = sessionManager.getTopicInfo(topicId).getOrThrow()
-        if (topicInfo.subscriptionId != null) {
-            return
-        }
-        delay(500.milliseconds)
-    }
-    error("Topic not marked as subscribed: $topicId")
-}
+internal data class AppiumPorts(
+    val server: Int,
+    val ws: Int,
+)
 
+internal data class AuthenticatedSession(
+    val session: InjectedSession,
+    val sessionManager: UserSessionManager,
+)
 
-private fun createApiSessionManager(ports: AppiumPorts, passHolder: SimplePassHolder) = createSimpleUserSessionManager(
+internal data class AppUnderTest(
+    val packageName: String,
+    val mainActivityClassName: String,
+)
+
+private data class AdbCommandResult(
+    val exitCode: Int,
+    val output: String,
+)
+
+internal fun createApiSessionManager(ports: AppiumPorts, passHolder: SimplePassHolder) = createSimpleUserSessionManager(
     buildWebSocketUrl("ws://127.0.0.1:${ports.ws}"),
     AcceptAllCookiesStorage(),
     passHolder,
@@ -665,7 +311,7 @@ private fun createApiSessionManager(ports: AppiumPorts, passHolder: SimplePassHo
     }
 ) { _, _, _ -> }
 
-private fun createPanelApiSessionManager(ports: AppiumPorts, passHolder: SimplePassHolder): PanelSessionManager =
+internal fun createPanelApiSessionManager(ports: AppiumPorts, passHolder: SimplePassHolder): PanelSessionManager =
     createSimplePanelSessionManager(passHolder, AcceptAllCookiesStorage()) { model, cookieStorage ->
         getClient {
             defaultClientConfigureForPanel(
@@ -677,29 +323,7 @@ private fun createPanelApiSessionManager(ports: AppiumPorts, passHolder: SimpleP
         }
     }
 
-private suspend fun createCommunityByApi(
-    manager: UserSessionManager,
-    name: String,
-    aid: String
-): Long {
-    return manager.createCommunity(NewCommunity(name, aid)).getOrThrow().id
-}
-
-private suspend fun createRoomByApi(
-    manager: UserSessionManager,
-    name: String,
-    aid: String,
-    communityId: Long,
-): Long = manager.createRoom(NewRoom(name, aid, communityId = communityId)).getOrThrow().id
-
-private suspend fun createTopicByApi(
-    manager: UserSessionManager,
-    parentType: ObjectType,
-    parentId: Long,
-    content: String,
-): Long = manager.createTopic(parentType, parentId, content).getOrThrow().id
-
-private suspend fun useDatabaseContainer(
+internal suspend fun useDatabaseContainer(
     network: Network,
     block: suspend (PostgreSQLContainer<*>) -> Unit
 ) {
@@ -712,7 +336,7 @@ private suspend fun useDatabaseContainer(
     }
 }
 
-private suspend fun useCliInitContainer(
+internal suspend fun useCliInitContainer(
     network: Network,
     commonEnv: Map<String, String>,
     hostSessionPath: String,
@@ -745,7 +369,7 @@ private suspend fun useCliInitContainer(
     }
 }
 
-private suspend fun useWsContainer(
+internal suspend fun useWsContainer(
     network: Network,
     commonEnv: Map<String, String>,
     hostSessionPath: String,
@@ -767,7 +391,7 @@ private suspend fun useWsContainer(
     }
 }
 
-private suspend fun useServerContainer(
+internal suspend fun useServerContainer(
     network: Network,
     commonEnv: Map<String, String>,
     hostSessionPath: String,
@@ -793,7 +417,7 @@ private suspend fun useServerContainer(
     }
 }
 
-private suspend fun useWorkerContainer(
+internal suspend fun useWorkerContainer(
     network: Network,
     commonEnv: Map<String, String>,
     hostSessionPath: String,
@@ -812,7 +436,7 @@ private suspend fun useWorkerContainer(
     }
 }
 
-private fun resolveAppiumPresetPath(): File {
+internal fun resolveAppiumPresetPath(): File {
     return sequenceOf(
         File("src/test/resources/preset"),
         File("dev/appium/src/test/resources/preset"),
@@ -820,53 +444,11 @@ private fun resolveAppiumPresetPath(): File {
         ?: error("Appium preset data directory not found")
 }
 
-private fun readAppiumSystemPrivateKey(): String {
+internal fun readAppiumSystemPrivateKey(): String {
     return File(resolveAppiumPresetPath(), "secrets/p-system").readText().replace("\r\n", "\n")
 }
 
-private data class InjectedSession(
-    val address: String,
-    val pemPrivateKey: String,
-    val derPrivateKey: String,
-    val derPublicKey: String,
-)
-
-private data class AppiumPorts(
-    val server: Int,
-    val ws: Int,
-)
-
-private data class AuthenticatedSession(
-    val session: InjectedSession,
-    val sessionManager: UserSessionManager,
-)
-
-private data class FavoriteTopicScenario(
-    val authenticated: AuthenticatedSession,
-    val topicId: Long,
-)
-
-private data class SubscriptionTopicScenario(
-    val authenticated: AuthenticatedSession,
-    val topicId: Long,
-    val communityName: String,
-)
-
-private data class PreparedScenario(
-    val ownerSession: InjectedSession,
-    val viewerSession: InjectedSession,
-    val communityId: Long,
-    val roomId: Long,
-    val communityName: String,
-    val roomName: String,
-)
-
-private data class AppUnderTest(
-    val packageName: String,
-    val mainActivityClassName: String,
-)
-
-private fun prepareSessionDirectories(sessionPath: String) {
+internal fun prepareSessionDirectories(sessionPath: String) {
     val sessionDir = File(sessionPath)
     sessionDir.mkdirs()
     File(sessionDir, "logs").mkdirs()
@@ -874,11 +456,11 @@ private fun prepareSessionDirectories(sessionPath: String) {
     File(sessionDir, "files").mkdirs()
 }
 
-private fun clearAppData(packageName: String) {
+internal fun clearAppData(packageName: String) {
     runAdbCommand("shell", "pm", "clear", packageName)
 }
 
-private fun buildContainerEnv(
+internal fun buildContainerEnv(
     containerDataPath: String,
     postgresContainer: PostgreSQLContainer<*>
 ): Map<String, String> {
@@ -904,7 +486,7 @@ private fun buildContainerEnv(
     )
 }
 
-private fun parseEnvFile(file: File): Map<String, String> {
+internal fun parseEnvFile(file: File): Map<String, String> {
     if (!file.exists()) return emptyMap()
     return file.readLines().asSequence()
         .map { it.trim() }
@@ -918,7 +500,7 @@ private fun parseEnvFile(file: File): Map<String, String> {
         .toMap()
 }
 
-private fun bindAndroidReverse(hostPort: Int, devicePort: Int) {
+internal fun bindAndroidReverse(hostPort: Int, devicePort: Int) {
     println("bind android reverse $hostPort $devicePort")
     val devices = runAdbCommandAllowFailure("devices").connectedDeviceSerials()
     check(devices.isNotEmpty()) { "No Android device available for adb reverse" }
@@ -961,7 +543,7 @@ private fun waitForAndroidReverse(device: String, devicePort: Int) {
     )
 }
 
-private fun copyAppLogToBuild(testName: String, packageName: String) {
+internal fun copyAppLogToBuild(testName: String, packageName: String) {
     val outputDir = File("build/test/appium-logs/AppiumTest")
     outputDir.mkdirs()
     val outputFile = File(outputDir, "$testName.log")
@@ -978,7 +560,7 @@ private fun copyAppLogToBuild(testName: String, packageName: String) {
     copyAnrTracesToBuild(testName, packageName)
 }
 
-private fun collectBugreport(testName: String) {
+internal fun collectBugreport(testName: String) {
     val outputDir = File("build/test/appium-logs/AppiumTest")
     outputDir.mkdirs()
     val outputFile = File(outputDir, "$testName.bugreport.zip")
@@ -998,11 +580,6 @@ private fun copyAnrTracesToBuild(testName: String, packageName: String) {
     }
 }
 
-private data class AdbCommandResult(
-    val exitCode: Int,
-    val output: String,
-)
-
 private fun adbProcessBuilder(args: List<String>): ProcessBuilder {
     val home = System.getProperty("user.home")
     val processBuilder = ProcessBuilder(listOf("$home/Android/Sdk/platform-tools/adb") + args)
@@ -1017,7 +594,7 @@ private fun runAdbCommandAllowFailure(vararg args: String): AdbCommandResult {
     return AdbCommandResult(exitCode = exitCode, output = output)
 }
 
-private fun runAdbCommand(vararg args: String) {
+internal fun runAdbCommand(vararg args: String) {
     val process = adbProcessBuilder(args.toList()).start()
     val output = process.inputStream.bufferedReader().use { it.readText().trim() }
     val exitCode = process.waitFor()
@@ -1040,11 +617,11 @@ private fun AdbCommandResult.connectedDeviceSerials(): List<String> {
         .toList()
 }
 
-private fun resolveAppPackageName(): String = resolvePackageName(
+internal fun resolveAppPackageName(): String = resolvePackageName(
     metadataCandidates = appMetadataCandidates(),
 )
 
-private fun resolvePanelPackageName(): String = resolvePackageName(
+internal fun resolvePanelPackageName(): String = resolvePackageName(
     metadataCandidates = panelMetadataCandidates(),
 )
 
@@ -1078,9 +655,7 @@ private fun JsonObject.stringValue(name: String): String? {
     return this[name]?.jsonPrimitive?.contentOrNull
 }
 
-private const val UI_WAIT_SECONDS = 15L
-
-private fun assertElementVisible(driver: AndroidDriver, selector: String) {
+internal fun assertElementVisible(driver: AndroidDriver, selector: String) {
     try {
         val wait = WebDriverWait(driver, Duration.ofSeconds(UI_WAIT_SECONDS))
         val element =
@@ -1100,7 +675,7 @@ private fun assertElementVisible(driver: AndroidDriver, selector: String) {
     }
 }
 
-private fun assertElementNotVisible(
+internal fun assertElementNotVisible(
     driver: AndroidDriver,
     selector: String,
     seconds: Long = 5,
@@ -1118,7 +693,7 @@ private fun assertElementNotVisible(
     }
 }
 
-private fun clickElement(
+internal fun clickElement(
     driver: AndroidDriver,
     selector: String,
     seconds: Long = UI_WAIT_SECONDS
@@ -1140,7 +715,7 @@ private fun clickElement(
     }
 }
 
-private fun inputElement(
+internal fun inputElement(
     driver: AndroidDriver,
     selector: String,
     input: String,
@@ -1163,7 +738,7 @@ private fun inputElement(
     }
 }
 
-private fun saveDebugSnapshot(driver: AndroidDriver, name: String) {
+internal fun saveDebugSnapshot(driver: AndroidDriver, name: String) {
     val outputDir = File("build/test/appium-debug/AppiumTest")
     outputDir.mkdirs()
     val safeName = name.replace(Regex("[^a-zA-Z0-9._-]"), "_")
