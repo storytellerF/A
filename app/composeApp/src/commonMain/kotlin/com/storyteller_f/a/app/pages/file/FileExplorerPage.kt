@@ -734,7 +734,7 @@ fun DownloadInfoTable(
             fileInfo?.size?.let { add("Size" to HumanReadable.fileSize(it)) }
             downloadInfo?.status?.name?.let { add("Status" to it) }
             if (downloadInfo?.status == DownloadStatus.DOWNLOAD_FAILED) {
-                downloadInfo.message.let { add("Error" to it) }
+                add("Error" to downloadInfo.message)
             }
             downloadInfo?.message?.let { add("Message" to it) }
             fileInfo?.url?.let { add("Url" to it) }
@@ -865,7 +865,7 @@ fun CancelUploadButton(uploadInfo: UploadInfo, updateDropdown: (Boolean) -> Unit
     val globalDialogController = LocalGlobalDialog.current
     val current = LocalUiViewModel.current
     val state by current.instance.collectAsState()
-    val modelStorage by state.database.collectAsState()
+    val modelStorage = state.database
     val myUid = state.sessionManager.model.uid ?: return
     DropdownMenuItem(
         text = { Text("Abort Upload") },

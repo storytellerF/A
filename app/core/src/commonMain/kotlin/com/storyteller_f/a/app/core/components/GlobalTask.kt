@@ -13,10 +13,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-interface GlobalTask<out C> {
+interface GlobalTask<C> {
     val stateMap: SnapshotStateMap<String, LoadingState?>
 
-    val context: GlobalTaskContext<C>
+    val context: C
 
     fun use(key: String, block: suspend GlobalTask<C>.(MutableStateFlow<LoadingState?>) -> Unit)
 
@@ -25,7 +25,7 @@ interface GlobalTask<out C> {
 
 class CustomGlobalTask<C>(
     val scope: CoroutineScope,
-    override val context: GlobalTaskContext<C>
+    override val context: C
 ) : GlobalTask<C> {
     val mutex = Mutex()
     override val stateMap = mutableStateMapOf<String, LoadingState?>()
@@ -41,7 +41,7 @@ class CustomGlobalTask<C>(
 
     private suspend fun useInternal(
         key: String,
-        block: suspend GlobalTask<C>.(MutableStateFlow<LoadingState?>) -> Unit
+        block: suspend CustomGlobalTask<C>.(MutableStateFlow<LoadingState?>) -> Unit
     ) {
         val newFlow = mutex.withLock {
             if (stateMap.contains(key)) {
@@ -88,7 +88,7 @@ suspend inline fun <T> MutableStateFlow<LoadingState?>.use(block: suspend () -> 
     return block()
 }
 
-class GlobalTaskContext<out C>(val events: MutableSharedFlow<Any>, val sessionManager: C) {
+class GlobalTaskContext<C>(val events: MutableSharedFlow<Any>, val sessionManager: C) {
     suspend fun emitEvent(any: Any) {
         events.emit(any)
     }
@@ -101,10 +101,12 @@ class GlobalTaskContext<out C>(val events: MutableSharedFlow<Any>, val sessionMa
 /**
  * 便捷方法：从 GlobalTask 触发事件或发起请求（与 GlobalDialogController 的扩展一致）。
  */
-suspend inline fun <T, R> GlobalTask<T>.request(noinline block: suspend T.() -> Result<R>): Result<R> {
+suspend inline fun <T, R> GlobalTask<GlobalTaskContext<T>>.request(
+    noinline block: suspend T.() -> Result<R>
+): Result<R> {
     return context.request(block)
 }
 
-suspend inline fun <T> GlobalTask<T>.emitEvent(event: Any) {
+suspend inline fun <T> GlobalTask<GlobalTaskContext<T>>.emitEvent(event: Any) {
     context.emitEvent(event)
 }

@@ -16,7 +16,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -67,8 +66,6 @@ import com.storyteller_f.a.app.core.components.RemoteMediaItem
 import com.storyteller_f.a.app.core.components.Sonner
 import com.storyteller_f.a.app.core.components.VideoViewFilled
 import com.storyteller_f.a.app.core.components.rememberIsInPipMode
-import com.storyteller_f.a.app.core.utils.SavedSession
-import com.storyteller_f.a.app.core.utils.SessionHistoryManager
 import com.storyteller_f.a.app.core.utils.buildSessionHistoryFactory
 import com.storyteller_f.a.app.core.utils.createSettings
 import com.storyteller_f.a.app.core.utils.restoreFromStorage
@@ -85,14 +82,12 @@ import com.storyteller_f.a.app.ui.theme.AppTheme
 import com.storyteller_f.a.app.utils.appPlatform
 import com.storyteller_f.a.app.utils.createCustomDataStoreManager
 import com.storyteller_f.a.client.core.ClientSessionState
-import com.storyteller_f.a.client.core.RawUserPassInfo
-import com.storyteller_f.a.client.core.SessionModel
+import com.storyteller_f.a.client.core.ConstPassHolder
+import com.storyteller_f.a.client.core.RawUserPass
+import com.storyteller_f.a.client.core.SimpleUserSessionManager
 import com.storyteller_f.a.client.core.UserPass
-import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.UserSessionModel
-import com.storyteller_f.a.client.core.WebSocketClientImpl
-import com.storyteller_f.a.client.core.buildWebSocketUrl
-import com.storyteller_f.a.client.core.createUserSessionManager
+import com.storyteller_f.a.client.core.createSimpleUserSessionManager
 import com.storyteller_f.a.client.core.defaultClientConfigure
 import com.storyteller_f.a.client.core.getClient
 import com.storyteller_f.a.client.core.processEncryptedTopic
@@ -116,8 +111,8 @@ import dev.tclement.fonticons.LocalIconTintProvider
 import dev.tclement.fonticons.LocalIconWeight
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
 import io.ktor.client.plugins.cookies.CookiesStorage
-import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -125,12 +120,6 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChangedBy
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -161,8 +150,8 @@ val LocalAppNavFactory = compositionLocalOf {
     AppNavFactory.EMPTY
 }
 
-val LocalSessionManager = compositionLocalOf {
-    CustomUserSessionManager.EMPTY
+val LocalSessionManager = compositionLocalOf<SimpleUserSessionManager> {
+    error("LocalSessionManager must be provided")
 }
 
 val LocalUserInfo = compositionLocalOf<UserInfo?> {
@@ -181,13 +170,15 @@ val LocalClientFileProvider = compositionLocalOf {
 val LocalUiViewModel = compositionLocalOf<UIViewModel> {
     error("LocalUiViewModel must be provided")
 }
-typealias AppGlobalDialogController = GlobalDialogController<GlobalDialogContext<CustomUserSessionManager>>
+typealias AppGlobalDialogController = GlobalDialogController<GlobalDialogContext<SimpleUserSessionManager>>
 
 val LocalGlobalDialog = compositionLocalOf<AppGlobalDialogController> {
     error("LocalGlobalDialog must be provided")
 }
 
-val LocalGlobalTask = compositionLocalOf<GlobalTask<CustomUserSessionManager>> {
+typealias AppGlobalTask = GlobalTask<GlobalTaskContext<SimpleUserSessionManager>>
+
+val LocalGlobalTask = compositionLocalOf<AppGlobalTask> {
     error("LocalGlobalTask must be provided")
 }
 
@@ -304,72 +295,218 @@ fun CommonEntry(content: @Composable () -> Unit) {
     }
 }
 
-class AccountInstance(scope: CoroutineScope, name: String, wsServerUrl: String, httpUrl: String) {
-    val events = MutableSharedFlow<Any>()
-    val sessionManager = createCustomUserSessionManager(
-        name,
-        buildWebSocketUrl(wsServerUrl),
-        { model, cookieManager ->
-            buildHttpClient(httpUrl, cookieManager, model)
+sealed interface IAccountInstance {
+    val database: ModelStorage
+    val sessionManager: SimpleUserSessionManager
+    val task: CustomGlobalTask<GlobalTaskContext<SimpleUserSessionManager>>
+    val controller: CustomGlobalDialogController<GlobalDialogContext<SimpleUserSessionManager>>
+    val address: String
+
+    val passHolder: ConstPassHolder
+
+    val isAlreadySign get() = passHolder.currentUserPass != null
+
+    class None(scope: CoroutineScope, httpUrl: String, wsServerUrl: String) : IAccountInstance {
+        override val passHolder: ConstPassHolder = ConstPassHolder(null)
+        val events = MutableSharedFlow<Any>()
+        override val sessionManager = createSimpleUserSessionManager(
+            wsServerUrl,
+            AcceptAllCookiesStorage(),
+            passHolder,
+            { m, c ->
+                buildHttpClient(
+                    httpUrl,
+                    c,
+                    m,
+                    passHolder
+                )
+            }
+        ) { frame, _, _ ->
+            if (frame is RoomFrame.NewTopicInfo) {
+                events.emit(OnTopicCreated(frame.topicInfo))
+            }
         }
-    ) { frame, _, _ ->
-        if (frame is RoomFrame.NewTopicInfo) {
-            events.emit(OnTopicCreated(frame.topicInfo))
+        override val database = getRoomModelStorage("guest")
+        override val task = CustomGlobalTask(
+            scope,
+            GlobalTaskContext(events, sessionManager)
+        )
+        override val controller = CustomGlobalDialogController(
+            GlobalDialogContext(
+                events,
+                sessionManager
+            )
+        )
+        override val address: String = "guest"
+    }
+
+    class Regular(
+        scope: CoroutineScope,
+        override val address: String,
+        httpUrl: String,
+        wsServerUrl: String,
+        cookieManager: AcceptAllCookiesStorage,
+        override val passHolder: ConstPassHolder
+    ) : IAccountInstance {
+        private val events = MutableSharedFlow<Any>()
+        override val sessionManager =
+            createSimpleUserSessionManager(wsServerUrl, cookieManager, passHolder, { m, c ->
+                buildHttpClient(httpUrl, c, m, passHolder)
+            }) { frame, _, _ ->
+                if (frame is RoomFrame.NewTopicInfo) {
+                    events.emit(OnTopicCreated(frame.topicInfo))
+                }
+            }
+        override val database = getRoomModelStorage(address)
+        override val task = CustomGlobalTask(
+            scope,
+            GlobalTaskContext(events, sessionManager)
+        )
+        override val controller = CustomGlobalDialogController(
+            GlobalDialogContext(
+                events,
+                sessionManager
+            )
+        )
+
+        init {
+            scope.launch {
+                processEvent(database, events)
+            }
+            scope.launch {
+                val jobs = sessionManager.startBackgroundTask()
+                try {
+                    awaitCancellation()
+                } finally {
+                    jobs.forEach {
+                        it.cancelAndJoin()
+                    }
+                }
+            }
         }
     }
-    val task = CustomGlobalTask(scope, GlobalTaskContext(events, sessionManager))
-    val controller = CustomGlobalDialogController(GlobalDialogContext(events, sessionManager))
-    val guestDatabase = getRoomModelStorage("guest")
-    private val databases = mutableMapOf<String, ModelStorage>("guest" to guestDatabase)
-    private fun databaseForAddress(address: String?): ModelStorage =
-        address?.let {
-            databases.getOrPut(it) {
-                getRoomModelStorage(it)
+
+    class Child(
+        scope: CoroutineScope,
+        override val address: String,
+        httpUrl: String,
+        wsServerUrl: String,
+        val main: Regular,
+        override val passHolder: ConstPassHolder
+    ) : IAccountInstance {
+        val events = MutableSharedFlow<Any>()
+        override val sessionManager = createSimpleUserSessionManager(
+            wsServerUrl,
+            AcceptAllCookiesStorage(),
+            passHolder,
+            { m, c ->
+                buildHttpClient(
+                    httpUrl,
+                    c,
+                    m,
+                    passHolder
+                )
             }
-        } ?: guestDatabase
-
-    private suspend fun databaseFor(state: ClientSessionState): ModelStorage =
-        if (state is ClientSessionState.Success) {
-            val address = state.userPass.address().getOrThrow()
-            databaseForAddress(address)
-        } else {
-            guestDatabase
-        }
-
-    val database = sessionManager.model.state.distinctUntilChangedBy {
-        it
-    }.map(::databaseFor).stateIn(scope, SharingStarted.Eagerly, databaseForAddress(sessionManager.address.value))
-
-    init {
-        scope.launch {
-            database.collectLatest {
-                processEvent(it, events)
+        ) { frame, _, _ ->
+            if (frame is RoomFrame.NewTopicInfo) {
+                events.emit(OnTopicCreated(frame.topicInfo))
             }
         }
-        scope.launch {
-            val jobs = sessionManager.proxy.startBackgroundTask()
-            try {
-                awaitCancellation()
-            } finally {
-                jobs.forEach {
-                    it.cancelAndJoin()
+        override val database = getRoomModelStorage(address)
+        override val task = CustomGlobalTask(
+            scope,
+            GlobalTaskContext(events, sessionManager)
+        )
+        override val controller = CustomGlobalDialogController(
+            GlobalDialogContext(
+                events,
+                sessionManager
+            )
+        )
+
+        init {
+            scope.launch {
+                processEvent(database, events)
+            }
+            scope.launch {
+                val jobs = sessionManager.startBackgroundTask()
+                try {
+                    awaitCancellation()
+                } finally {
+                    jobs.forEach {
+                        it.cancelAndJoin()
+                    }
                 }
             }
         }
     }
 }
 
-class UIViewModel(viewModelScope: CoroutineScope, wsServerUrl: String, httpUrl: String) {
-    val mainInstance = AccountInstance(viewModelScope, "main", wsServerUrl, httpUrl)
+class UIViewModel(
+    val viewModelScope: CoroutineScope,
+    val wsServerUrl: String,
+    val httpUrl: String
+) {
+    val instance: MutableStateFlow<IAccountInstance>
+    val settings = createSettings("main")
+    val historyManager = buildSessionHistoryFactory(settings)
 
-    val childAccount = MutableStateFlow<UserPass?>(null)
-    val instance = childAccount.map {
-        it?.address()?.getOrNull()?.let { address ->
-            AccountInstance(viewModelScope, address, wsServerUrl, httpUrl).apply {
-                sessionManager.model.updateState(ClientSessionState.Success(it))
+    init {
+        val value = IAccountInstance.None(viewModelScope, httpUrl, wsServerUrl)
+        instance = MutableStateFlow(value)
+        val settings = createSettings("main")
+        val state = restoreFromStorage(settings)
+        if (state is ClientSessionState.Success) {
+            viewModelScope.launch {
+                val address = state.userPass.address().getOrNull() ?: return@launch
+                val regular = IAccountInstance.Regular(
+                    viewModelScope,
+                    address,
+                    httpUrl,
+                    wsServerUrl,
+                    AcceptAllCookiesStorage(),
+                    ConstPassHolder(state.userPass)
+                )
+                instance.value = regular
             }
-        } ?: mainInstance
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, mainInstance)
+        }
+    }
+
+    fun logout() {
+        instance.value = IAccountInstance.None(viewModelScope, httpUrl, wsServerUrl)
+    }
+
+    fun switchUser(main: IAccountInstance.Regular, rawUserPass: RawUserPass) {
+        instance.value = IAccountInstance.Child(
+            viewModelScope, rawUserPass.rawUSerPass.address, httpUrl, wsServerUrl, main,
+            ConstPassHolder(rawUserPass)
+        )
+    }
+
+    fun login(
+        address: String,
+        data: String,
+        signature: String,
+        userPass: UserPass,
+        userInfo: UserInfo? = null
+    ) {
+        val cookieManager = instance.value.sessionManager.cookieManager
+        instance.value = IAccountInstance.Regular(
+            viewModelScope, address, httpUrl, wsServerUrl, cookieManager,
+            ConstPassHolder(userPass)
+        ).apply {
+            sessionManager.model.updateSignature(data, signature)
+            userInfo?.let { sessionManager.model.updateUser(it) }
+        }
+    }
+
+    fun switchToMain() {
+        val old = instance.value
+        if (old !is IAccountInstance.Child) {
+            return
+        }
+        instance.value = old.main
+    }
 }
 
 @Composable
@@ -389,11 +526,12 @@ fun buildHttpClient(
     httpUrl: String,
     cookieManager: CookiesStorage,
     model: UserSessionModel,
+    passHolder: ConstPassHolder,
 ): HttpClient = if (httpUrl.isEmpty()) {
     HttpClient { }
 } else {
     getClient {
-        defaultClientConfigure(cookieManager, manager = model, httpUrl = httpUrl)
+        defaultClientConfigure(cookieManager, model, passHolder, httpUrl)
     }
 }
 
@@ -464,72 +602,6 @@ private suspend fun sendTopicNotification(
         ) {
         }
     }
-}
-
-class CustomUserSessionManager(
-    val proxy: UserSessionManager,
-    val sessionHistoryManager: SessionHistoryManager,
-) : UserSessionManager by proxy {
-    companion object {
-        val EMPTY = CustomUserSessionManager(object : UserSessionManager {
-            override val webSocketClient: WebSocketClientImpl
-                get() = TODO("Not yet implemented")
-            override val client: HttpClient
-                get() = TODO("Not yet implemented")
-            override val model: SessionModel<UserInfo>
-                get() = TODO("Not yet implemented")
-            override val isAlreadySignIn: StateFlow<Boolean> = MutableStateFlow(true)
-            override val address: StateFlow<String?>
-                get() = TODO("Not yet implemented")
-
-            override suspend fun updateAddress(clientSessionState: ClientSessionState) {
-                TODO("Not yet implemented")
-            }
-        }, object : SessionHistoryManager {
-            override fun getSavedSession(): SavedSession {
-                TODO("Not yet implemented")
-            }
-
-            override suspend fun addSession(userPassInfo: RawUserPassInfo): UserPass {
-                TODO("Not yet implemented")
-            }
-
-            override fun buildSession(alias: String): UserPass {
-                TODO("Not yet implemented")
-            }
-
-            override fun removeSession(alias: String) {
-                TODO("Not yet implemented")
-            }
-
-            override fun exitSession(alias: String) {
-                TODO("Not yet implemented")
-            }
-
-            override fun logSession(alias: String) {
-                TODO("Not yet implemented")
-            }
-        })
-    }
-
-    fun clearSession() {
-        val alias = address.value ?: return
-        sessionHistoryManager.exitSession(alias)
-        model.clear()
-    }
-}
-
-fun createCustomUserSessionManager(
-    settingsName: String,
-    webSocketUrl: String,
-    createClient: (UserSessionModel, CookiesStorage) -> HttpClient,
-    onReceiveFrame: suspend (RoomFrame, UserSessionModel, DefaultClientWebSocketSession) -> Unit,
-): CustomUserSessionManager {
-    val settings = createSettings(settingsName)
-    val historyManager = buildSessionHistoryFactory(settings)
-    val customSessionManager = createUserSessionManager(webSocketUrl, createClient, onReceiveFrame)
-    customSessionManager.restoreFromStorage(settings)
-    return CustomUserSessionManager(customSessionManager, historyManager)
 }
 
 @Composable

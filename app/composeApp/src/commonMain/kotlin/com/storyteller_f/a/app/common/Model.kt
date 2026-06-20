@@ -12,7 +12,7 @@ import com.storyteller_f.a.api.CustomApi
 import com.storyteller_f.a.api.NewTitle
 import com.storyteller_f.a.api.PaginationQuery
 import com.storyteller_f.a.api.SearchQuery
-import com.storyteller_f.a.app.CustomUserSessionManager
+import com.storyteller_f.a.app.UIViewModel
 import com.storyteller_f.a.app.core.common.CachedLoadingHandler
 import com.storyteller_f.a.app.core.common.CompatPagingSource
 import com.storyteller_f.a.app.core.common.IntKeyConverter
@@ -26,7 +26,6 @@ import com.storyteller_f.a.app.core.common.buildPager
 import com.storyteller_f.a.app.core.components.DialogSaveState
 import com.storyteller_f.a.app.core.utils.SavedSession
 import com.storyteller_f.a.app.core.utils.loadFontFromLocal
-import com.storyteller_f.a.client.core.ClientSessionState
 import com.storyteller_f.a.client.core.LoadingHandler
 import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.a.client.core.SimpleLoadingHandler
@@ -784,27 +783,19 @@ class ChildAccountsViewModel(
     }.flow.cachedIn(viewModelScope)
 }
 
-class SessionHistoryViewModel(val sessionManager: CustomUserSessionManager) :
+class SessionHistoryViewModel(uIViewModel: UIViewModel) :
     SimpleViewModel<SavedSession>() {
 
-    val manager = sessionManager.sessionHistoryManager
+    val manager = uIViewModel.historyManager
 
-    override val handler: LoadingHandler<SavedSession>
-        get() = SimpleLoadingHandler(viewModelScope) {
-            runCatching {
-                manager.getSavedSession()
-            }
+    override val handler: LoadingHandler<SavedSession> = SimpleLoadingHandler(viewModelScope) {
+        runCatching {
+            manager.getSavedSession()
         }
+    }
 
     fun deleteSession(alias: String) {
         manager.removeSession(alias)
-    }
-
-    fun getSession(alias: String): Boolean {
-        val userPass = manager.buildSession(alias) ?: return false
-        sessionManager.model.updateState(ClientSessionState.Success(userPass))
-        manager.logSession(alias)
-        return true
     }
 }
 
@@ -907,7 +898,7 @@ class UserOverviewViewModel(sessionManager: UserSessionManager, modelStorage: Mo
             modelStorage.userOverview.save(it)
         }
     ) {
-        if (sessionManager.model.state.value is ClientSessionState.Success) {
+        if (sessionManager.currentIsAlreadySignUp) {
             sessionManager.getUserOverview()
         } else {
             Result.failure(IllegalStateException("not logged in"))
@@ -919,7 +910,7 @@ class UnreadRoomsStateViewModel(
     private val sessionManager: UserSessionManager,
 ) : SimpleViewModel<Boolean>() {
     override val handler: LoadingHandler<Boolean> = SimpleLoadingHandler(viewModelScope) {
-        if (sessionManager.model.state.value is ClientSessionState.Success) {
+        if (sessionManager.currentIsAlreadySignUp) {
             sessionManager.hasUnreadRooms().map { it.hasUnread }
         } else {
             Result.success(false)

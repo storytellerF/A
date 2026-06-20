@@ -19,7 +19,8 @@ interface WebSocketClient {
 
 @OptIn(DelicateCoroutinesApi::class)
 class WebSocketClientImpl(
-    val sessionModel: UserSessionModel,
+    val sessionModel: SessionModel<UserInfo>,
+    val passHolder: PassHolder,
     val buildConnection: suspend (UserInfo, String) -> DefaultClientWebSocketSession,
     val onMessage: suspend (RoomFrame, DefaultClientWebSocketSession) -> Unit,
 ) : WebSocketClient {
@@ -37,7 +38,7 @@ class WebSocketClientImpl(
                         connectionJob?.cancelAndJoin()
                         connectionJob = null
                         if (userInfo == null) {
-                            connectionHandler.data.value?.cancel()
+                            connectionHandler.data.value?.cancel(CancellationException("User sign out"))
                         } else {
                             connectionJob = launch {
                                 while (isActive && canConnectWebSocket(userInfo)) {
@@ -52,10 +53,8 @@ class WebSocketClientImpl(
                 }
             }
             try {
-                combine(sessionModel.state, sessionModel.userHandler.data) { t1, t2 ->
-                    t1 to t2
-                }.distinctUntilChanged().collect { (state, userInfo) ->
-                    if (state is ClientSessionState.Success && userInfo != null) {
+                sessionModel.userHandler.data.collect { userInfo ->
+                    if (userInfo != null) {
                         requests.trySend(userInfo)
                     } else {
                         requests.trySend(null)
@@ -121,7 +120,7 @@ class WebSocketClientImpl(
     }
 
     private fun canConnectWebSocket(userInfo: UserInfo): Boolean {
-        return sessionModel.state.value is ClientSessionState.Success &&
+        return passHolder.currentUserPass != null &&
             sessionModel.userHandler.data.value == userInfo
     }
 
@@ -137,8 +136,12 @@ class WebSocketClientImpl(
                     frameFlow.emit(frame)
                 } catch (e: Exception) {
                     if (e is ClosedReceiveChannelException) {
-                        Napier.e {
+                        Napier.e(tag = "ClientWebSocket") {
                             "WebSocket closed ${userInfo.id}"
+                        }
+                    } else if (e is CancellationException) {
+                        Napier.i(tag = "ClientWebSocket") {
+                            "WebSocket cancel: ${e.message}"
                         }
                     } else {
                         Napier.e(e, tag = "ClientWebSocket") {

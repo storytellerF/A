@@ -2,7 +2,6 @@ package com.storyteller_f.a.client.core
 
 import com.storyteller_f.a.api.SignInBody
 import com.storyteller_f.a.api.SignInResponse
-import com.storyteller_f.a.api.SignUpBody
 import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.PanelAccountInfo
@@ -20,24 +19,41 @@ import io.ktor.client.plugins.cookies.CookiesStorage
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.client.plugins.websocket.webSocketSession
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlin.time.ExperimentalTime
+
+sealed interface ClientSessionState {
+    data object None : ClientSessionState
+    data class Success(val userPass: UserPass) : ClientSessionState
+}
+
+interface PassHolder {
+    val currentUserPass: UserPass?
+}
 
 interface SessionModel<U> {
     val uid: PrimaryKey?
     val dataAndSignature: Pair<String, String?>?
-    val currentUserPass: UserPass?
-    val state: StateFlow<ClientSessionState>
     val userHandler: FixedLoadingHandler<U?>
     fun updateSignature(data: String, signature: String?)
     fun generateData(): String
     fun clear()
-    fun updateState(newState: ClientSessionState)
     fun updateUser(u: U)
 }
 
+class SimplePassHolder : PassHolder {
+    val state = MutableStateFlow<ClientSessionState>(ClientSessionState.None)
+
+    override val currentUserPass: UserPass?
+        get() = (state.value as? ClientSessionState.Success)?.userPass
+
+    fun updateState(newState: ClientSessionState) {
+        state.value = newState
+    }
+}
+
+class ConstPassHolder(override val currentUserPass: UserPass?) : PassHolder
+
 class SimpleSessionModel<U : PrimaryKeyIdentifiable> : SessionModel<U> {
-    override val state = MutableStateFlow<ClientSessionState>(ClientSessionState.None)
 
     // 用于header 和server 协商被签名的数据
     private var currentStamp = 0L
@@ -46,8 +62,7 @@ class SimpleSessionModel<U : PrimaryKeyIdentifiable> : SessionModel<U> {
 
     // currentData 是本地使用的，但是还是需要依据server 的为准
     override var dataAndSignature: Pair<String, String?>? = null
-    override val currentUserPass: UserPass?
-        get() = (state.value as? ClientSessionState.Success)?.userPass
+
     override val userHandler = FixedLoadingHandler<U?>()
 
     @OptIn(ExperimentalTime::class)
@@ -70,12 +85,7 @@ class SimpleSessionModel<U : PrimaryKeyIdentifiable> : SessionModel<U> {
         userHandler.done(u)
     }
 
-    override fun updateState(newState: ClientSessionState) {
-        state.value = newState
-    }
-
     override fun clear() {
-        state.value = ClientSessionState.None
         userHandler.done(null)
         dataAndSignature = null
     }
@@ -90,15 +100,15 @@ class PanelSessionModel(val simpleSessionModel: SimpleSessionModel<PanelAccountI
 interface SessionManager<U> {
     val client: HttpClient
     val model: SessionModel<U>
-    val isAlreadySignIn: StateFlow<Boolean>
-    val address: StateFlow<String?>
 
-    val currentIsAlreadySignUp: Boolean get() = isAlreadySignIn.value
+    val passHolder: PassHolder
 
-    suspend fun updateAddress(clientSessionState: ClientSessionState)
+    val currentIsAlreadySignUp get() = passHolder.currentUserPass != null
 }
 
-interface UserSessionManager : SessionManager<UserInfo> {
+interface IUserSessionManager : SessionManager<UserInfo>
+
+interface UserSessionManager : IUserSessionManager {
     val webSocketClient: WebSocketClientImpl
 }
 
@@ -106,40 +116,31 @@ class SimpleUserSessionManager(
     override val client: HttpClient,
     override val webSocketClient: WebSocketClientImpl,
     override val model: SessionModel<UserInfo>,
-) : UserSessionManager {
-    override val isAlreadySignIn = MutableStateFlow(false)
-    override val address = MutableStateFlow<String?>(null)
-    override suspend fun updateAddress(clientSessionState: ClientSessionState) {
-        address.value = (clientSessionState as? ClientSessionState.Success)?.userPass?.address()?.getOrNull()
-        isAlreadySignIn.value = clientSessionState is ClientSessionState.Success
-    }
-}
+    val cookieManager: AcceptAllCookiesStorage,
+    override val passHolder: PassHolder,
+) : UserSessionManager
 
 interface PanelSessionManager : SessionManager<PanelAccountInfo>
 
 class SimplePanelSessionManager(
     override val client: HttpClient,
-    override val model: SessionModel<PanelAccountInfo>
-) : PanelSessionManager {
-    override val isAlreadySignIn = MutableStateFlow(false)
-    override val address = MutableStateFlow<String?>(null)
+    override val model: SessionModel<PanelAccountInfo>,
+    val cookieManager: AcceptAllCookiesStorage,
+    override val passHolder: PassHolder,
+) : PanelSessionManager
 
-    override suspend fun updateAddress(clientSessionState: ClientSessionState) {
-        address.value = (clientSessionState as? ClientSessionState.Success)?.userPass?.address()?.getOrNull()
-        isAlreadySignIn.value = clientSessionState is ClientSessionState.Success
-    }
-}
-
-fun createUserSessionManager(
+fun createSimpleUserSessionManager(
     webSocketUrl: String,
+    cookieManager: AcceptAllCookiesStorage = AcceptAllCookiesStorage(),
+    passHolder: PassHolder,
     createClient: (UserSessionModel, CookiesStorage) -> HttpClient,
     onReceiveFrame: suspend (RoomFrame, UserSessionModel, DefaultClientWebSocketSession) -> Unit,
 ): SimpleUserSessionManager {
-    val cookieManager = AcceptAllCookiesStorage()
     val model = UserSessionModel()
     val client = createClient(model, cookieManager)
     val webSocketClient = WebSocketClientImpl(
         model,
+        passHolder,
         { userInfo, sig ->
             client.webSocketSession(webSocketUrl) {
                 addRequestHeadersFromInfo(userInfo, sig)
@@ -148,20 +149,21 @@ fun createUserSessionManager(
     ) { frame, session ->
         onReceiveFrame(frame, model, session)
     }
-    return SimpleUserSessionManager(client, webSocketClient, model)
+    return SimpleUserSessionManager(client, webSocketClient, model, cookieManager, passHolder)
 }
 
-fun createPanelSessionManager(
+fun createSimplePanelSessionManager(
+    passHolder: PassHolder,
+    cookieManager: AcceptAllCookiesStorage = AcceptAllCookiesStorage(),
     createClient: (PanelSessionModel, CookiesStorage) -> HttpClient,
 ): SimplePanelSessionManager {
-    val cookieManager = AcceptAllCookiesStorage()
     val model = PanelSessionModel()
     val client = createClient(model, cookieManager)
-    return SimplePanelSessionManager(client, model)
+    return SimplePanelSessionManager(client, model, cookieManager, passHolder)
 }
 
 suspend fun UserSessionManager.login() {
-    val userPass = model.currentUserPass ?: return
+    val userPass = passHolder.currentUserPass ?: return
     val userHandler = model.userHandler
     userHandler.request({
         userHandler.done(it)
@@ -170,10 +172,11 @@ suspend fun UserSessionManager.login() {
             val data = getData().getOrThrow()
             val address = userPass.address().getOrThrow()
             val signature = userPass.signature(finalData(data)).getOrThrow()
-            val userInfo = when (val response = signIn(SignInBody(address, signature)).getOrThrow()) {
-                is SignInResponse.Success -> response.userInfo
-                SignInResponse.RequiresTotp -> error("totp required")
-            }
+            val userInfo =
+                when (val response = signIn(SignInBody(address, signature)).getOrThrow()) {
+                    is SignInResponse.Success -> response.userInfo
+                    SignInResponse.RequiresTotp -> error("totp required")
+                }
             model.updateSignature(data, signature)
             userInfo
         }
@@ -181,7 +184,7 @@ suspend fun UserSessionManager.login() {
 }
 
 suspend fun PanelSessionManager.login() {
-    val userPass = model.currentUserPass ?: return
+    val userPass = passHolder.currentUserPass ?: return
     val userHandler = model.userHandler
     userHandler.request({
         userHandler.done(it)
@@ -197,82 +200,6 @@ suspend fun PanelSessionManager.login() {
     }
 }
 
-suspend fun UserSessionManager.signInOrSignUpAndGetUserInfo(
-    authKey: AuthKey,
-    isSignUp: Boolean,
-    buildUserPass: suspend (BuildPassParam<UserInfo>) -> UserPass
-) = signInOrSignUpAndGetUserInfoResult(authKey, isSignUp, buildUserPass).userInfo
-
-suspend fun UserSessionManager.signInOrSignUpAndGetUserInfoResult(
-    authKey: AuthKey,
-    isSignUp: Boolean,
-    buildUserPass: suspend (BuildPassParam<UserInfo>) -> UserPass
-): SignResult<UserInfo> {
-    return when (val result = startUserAuth(authKey, isSignUp, buildUserPass)) {
-        is UserAuthResult.Success -> result.signResult
-        is UserAuthResult.RequiresTotp -> error("totp required")
-    }
-}
-
-suspend fun UserSessionManager.startUserAuth(
-    authKey: AuthKey,
-    isSignUp: Boolean,
-    buildUserPass: suspend (BuildPassParam<UserInfo>) -> UserPass
-): UserAuthResult = prepareSignInFromPrivateKey(authKey, {
-    getData()
-}) { param ->
-    val encryptionPublicKey = (param.authKey as? AuthKey.Dilithium)?.derEncryptionPublicKey
-    if (isSignUp) {
-        val userInfo = signUp(SignUpBody(param.authKey.derPublicKey, param.signature, encryptionPublicKey)).getOrThrow()
-        UserAuthResult.Success(
-            completeSignIn(param.authKey, param.data, param.signature, param.address, userInfo, buildUserPass)
-        )
-    } else {
-        when (val response = signIn(SignInBody(param.address, param.signature)).getOrThrow()) {
-            is SignInResponse.Success -> UserAuthResult.Success(
-                completeSignIn(
-                    param.authKey,
-                    param.data,
-                    param.signature,
-                    param.address,
-                    response.userInfo,
-                    buildUserPass
-                )
-            )
-
-            SignInResponse.RequiresTotp -> UserAuthResult.RequiresTotp(
-                PendingTotpSignIn(param.authKey, param.data, param.signature, param.address)
-            )
-        }
-    }
-}
-
-suspend fun PanelSessionManager.signOrSignUpAndGetPanelAccountInfo(
-    authKey: AuthKey,
-    isSignUp: Boolean,
-    buildUserPass: suspend (BuildPassParam<PanelAccountInfo>) -> UserPass
-) = signUpOrInFromPrivateKey(authKey, {
-    getData()
-}, buildUserPass) { param ->
-    val encryptionPublicKey = (param.authKey as? AuthKey.Dilithium)?.derEncryptionPublicKey
-    when {
-        isSignUp -> signUp(SignUpBody(param.authKey.derPublicKey, param.signature, encryptionPublicKey))
-        else -> signIn(SignInBody(param.address, param.signature))
-    }
-}
-
-data class BuildPassParam<U>(
-    val userInfo: U,
-    val address: String,
-    val authKey: AuthKey
-)
-
-data class GetUserInfoParam(
-    val signature: String,
-    val address: String,
-    val authKey: AuthKey
-)
-
 data class PreparedSignInParam(
     val signature: String,
     val address: String,
@@ -281,7 +208,7 @@ data class PreparedSignInParam(
 )
 
 sealed class UserAuthResult {
-    data class Success(val signResult: SignResult<UserInfo>) : UserAuthResult()
+    data class Success(val signResult: SignResult<UserInfo>, val userPass: UserPass) : UserAuthResult()
     data class RequiresTotp(val pending: PendingTotpSignIn) : UserAuthResult()
 }
 
@@ -292,65 +219,95 @@ data class PendingTotpSignIn(
     val address: String,
 )
 
-suspend fun <U> SessionManager<U>.signUpOrInFromPrivateKey(
+suspend fun prepareSignInFromPrivateKey(
     authKey: AuthKey,
     getData: suspend () -> Result<String>,
-    buildUserPass: suspend (BuildPassParam<U>) -> UserPass,
-    getUserInfo: suspend (GetUserInfoParam) -> Result<U>
-): U {
-    return signUpOrInFromPrivateKeyResult(authKey, getData, buildUserPass, getUserInfo).userInfo
-}
-
-suspend fun <U> SessionManager<U>.signUpOrInFromPrivateKeyResult(
-    authKey: AuthKey,
-    getData: suspend () -> Result<String>,
-    buildUserPass: suspend (BuildPassParam<U>) -> UserPass,
-    getUserInfo: suspend (GetUserInfoParam) -> Result<U>
-): SignResult<U> {
-    return prepareSignInFromPrivateKey(authKey, getData) { param ->
-        val userInfo = getUserInfo(GetUserInfoParam(param.signature, param.address, param.authKey)).getOrThrow()
-        completeSignIn(authKey, param.data, param.signature, param.address, userInfo, buildUserPass)
-    }
-}
-
-suspend fun <U, R> SessionManager<U>.prepareSignInFromPrivateKey(
-    authKey: AuthKey,
-    getData: suspend () -> Result<String>,
-    block: suspend (PreparedSignInParam) -> R
-): R {
-    getAlgo(authKey.algo).run {
+): Result<PreparedSignInParam> {
+    return getAlgo(authKey.algo).runCatching {
         val data = getData().getOrThrow()
         val f = finalData(data)
 
         val signature = signature(authKey.derPrivateKey, f).getOrThrow()
         val address = calcAddress(authKey.derPublicKey).getOrThrow()
-        return block(PreparedSignInParam(signature, address, authKey, data))
+        PreparedSignInParam(signature, address, authKey, data)
     }
-}
-
-suspend fun <U> SessionManager<U>.completeSignIn(
-    authKey: AuthKey,
-    data: String,
-    signature: String,
-    address: String,
-    userInfo: U,
-    buildUserPass: suspend (BuildPassParam<U>) -> UserPass,
-): SignResult<U> {
-    model.updateUser(userInfo)
-    model.updateSignature(data, signature)
-    val userPass = buildUserPass(BuildPassParam(userInfo, address, authKey))
-    model.updateState(ClientSessionState.Success(userPass))
-    return SignResult(userInfo, userPass, data, signature, address, authKey)
 }
 
 data class SignResult<U>(
     val userInfo: U,
-    val userPass: UserPass,
     val data: String,
     val signature: String,
     val address: String,
     val authKey: AuthKey,
 )
+
+suspend fun UserSessionManager.userSignUp(
+    authKey: AuthKey,
+    passHolder: SimplePassHolder
+): UserInfo {
+    val signResult = getUserSignUpPass(authKey)
+    val userPass = RawUserPass(
+        RawUserPassInfo(
+            signResult.address,
+            signResult.authKey,
+        )
+    )
+    model.updateUser(signResult.userInfo)
+    model.updateSignature(signResult.data, signResult.signature)
+    passHolder.updateState(ClientSessionState.Success(userPass))
+    return signResult.userInfo
+}
+
+suspend fun UserSessionManager.userSignIn(
+    authKey: AuthKey,
+    passHolder: SimplePassHolder
+): UserInfo {
+    val signResult = getUserSignInPass(authKey)
+    val userPass = RawUserPass(
+        RawUserPassInfo(
+            signResult.address,
+            signResult.authKey,
+        )
+    )
+    model.updateUser(signResult.userInfo)
+    model.updateSignature(signResult.data, signResult.signature)
+    passHolder.updateState(ClientSessionState.Success(userPass))
+    return signResult.userInfo
+}
+
+suspend fun PanelSessionManager.panelSignUp(
+    authKey: AuthKey,
+    passHolder: SimplePassHolder
+): PanelAccountInfo {
+    val signResult = getPanelUserSignUpPass(authKey)
+    val userPass = RawUserPass(
+        RawUserPassInfo(
+            signResult.address,
+            signResult.authKey,
+        )
+    )
+    model.updateUser(signResult.userInfo)
+    model.updateSignature(signResult.data, signResult.signature)
+    passHolder.updateState(ClientSessionState.Success(userPass))
+    return signResult.userInfo
+}
+
+suspend fun PanelSessionManager.panelSignIn(
+    authKey: AuthKey,
+    passHolder: SimplePassHolder
+): PanelAccountInfo {
+    val signResult = getPanelUserSignInPass(authKey)
+    val userPass = RawUserPass(
+        RawUserPassInfo(
+            signResult.address,
+            signResult.authKey,
+        )
+    )
+    model.updateUser(signResult.userInfo)
+    model.updateSignature(signResult.data, signResult.signature)
+    passHolder.updateState(ClientSessionState.Success(userPass))
+    return signResult.userInfo
+}
 
 @OptIn(ExperimentalStdlibApi::class)
 suspend fun processEncryptedTopic(
@@ -359,7 +316,7 @@ suspend fun processEncryptedTopic(
 ): List<TopicInfo> {
     val model = manager.model
     val uid = model.uid
-    val key = model.currentUserPass
+    val key = manager.passHolder.currentUserPass
     return topicInfos.map { topicInfo ->
         val content = topicInfo.content
         if (content !is TopicContent.Encrypted) {

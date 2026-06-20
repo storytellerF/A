@@ -45,7 +45,7 @@ private fun buildPanelMediaPlayer(): MediaPlayerService = object : MediaPlayerSe
         localMediaPlaySession: LocalMediaPlaySession,
         playList: List<ConstPlayItem>
     ) {
-        val instance = panelAccountInstance
+        val instance = panelUiViewModel.instance.value
         instance.controller.startPlayMedia(remoteMediaItem, localMediaPlaySession, this, playList)
     }
 

@@ -22,13 +22,13 @@ import com.storyteller_f.a.api.NewFavorite
 import com.storyteller_f.a.api.NewSubscription
 import com.storyteller_f.a.api.PaginationQuery
 import com.storyteller_f.a.client.core.AuthKey
-import com.storyteller_f.a.client.core.RawUserPass
+import com.storyteller_f.a.client.core.SimplePassHolder
 import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.addFavorite
 import com.storyteller_f.a.client.core.addReaction
 import com.storyteller_f.a.client.core.addSubscription
+import com.storyteller_f.a.client.core.createSimpleUserSessionManager
 import com.storyteller_f.a.client.core.createTopic
-import com.storyteller_f.a.client.core.createUserSessionManager
 import com.storyteller_f.a.client.core.defaultClientConfigure
 import com.storyteller_f.a.client.core.exitCommunity
 import com.storyteller_f.a.client.core.exitRoom
@@ -40,15 +40,16 @@ import com.storyteller_f.a.client.core.getRoomMembersPublicKeys
 import com.storyteller_f.a.client.core.getRoomTopics
 import com.storyteller_f.a.client.core.getSubscriptions
 import com.storyteller_f.a.client.core.getUserCommunities
-import com.storyteller_f.a.client.core.getUserPass
 import com.storyteller_f.a.client.core.getUserRooms
 import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.a.client.core.joinRoom
+import com.storyteller_f.a.client.core.onBackgroundTask
 import com.storyteller_f.a.client.core.searchAllMembers
 import com.storyteller_f.a.client.core.searchCommunityMembers
 import com.storyteller_f.a.client.core.searchRoomMembers
 import com.storyteller_f.a.client.core.sendMessage
-import com.storyteller_f.a.client.core.startBackgroundTask
+import com.storyteller_f.a.client.core.userSignIn
+import com.storyteller_f.a.client.core.userSignUp
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.CommunityInfo
@@ -66,7 +67,7 @@ import io.github.aakira.napier.LogLevel
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
-import kotlinx.coroutines.cancel
+import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
 import kotlinx.coroutines.channels.Channel
 
 private val LogGray = Color(160, 160, 160)
@@ -75,7 +76,12 @@ private val TitleGreen = Color(100, 255, 100)
 val logs = mutableStateListOf<String>()
 
 class ConsoleAntilog : Antilog() {
-    override fun performLog(priority: LogLevel, tag: String?, throwable: Throwable?, message: String?) {
+    override fun performLog(
+        priority: LogLevel,
+        tag: String?,
+        throwable: Throwable?,
+        message: String?
+    ) {
         if (message != null) {
             val prefix = tag?.let { "[$it] " } ?: ""
             logs.add("$priority $prefix$message")
@@ -126,7 +132,8 @@ suspend fun handleInput(
     line: String,
     screen: Screen,
     setScreen: (Screen) -> Unit,
-    sessionManager: UserSessionManager
+    sessionManager: UserSessionManager,
+    passHolder: SimplePassHolder
 ) {
     when (screen) {
         is Screen.Main -> {
@@ -140,6 +147,7 @@ suspend fun handleInput(
                         onFailure = { sysLogError("Failed", it) }
                     )
                 }
+
                 "4" -> {
                     sysLog("Fetching Joined Communities...")
                     sessionManager.getUserCommunities(
@@ -149,6 +157,7 @@ suspend fun handleInput(
                         onFailure = { sysLogError("Failed", it) }
                     )
                 }
+
                 "5" -> {
                     sysLog("Fetching Joined Rooms...")
                     sessionManager.getUserRooms(PaginationQuery(size = 10)).fold(
@@ -156,6 +165,7 @@ suspend fun handleInput(
                         onFailure = { sysLogError("Failed", it) }
                     )
                 }
+
                 "6" -> {
                     sysLog("Fetching Member List...")
                     sessionManager.searchAllMembers(null, 10, "").fold(
@@ -163,6 +173,7 @@ suspend fun handleInput(
                         onFailure = { sysLogError("Failed", it) }
                     )
                 }
+
                 "7" -> {
                     sysLog("Fetching Favorites...")
                     sessionManager.getFavorites(PaginationQuery(size = 10)).fold(
@@ -170,6 +181,7 @@ suspend fun handleInput(
                         onFailure = { sysLogError("Failed", it) }
                     )
                 }
+
                 "8" -> {
                     sysLog("Fetching Subscriptions...")
                     sessionManager.getSubscriptions(PaginationQuery(size = 10)).fold(
@@ -177,10 +189,12 @@ suspend fun handleInput(
                         onFailure = { sysLogError("Failed", it) }
                     )
                 }
+
                 "0" -> kotlin.system.exitProcess(0)
                 else -> sysLog("Invalid Choice")
             }
         }
+
         is Screen.PromptRegister -> {
             var pk = line
             if (pk.isEmpty()) {
@@ -193,10 +207,8 @@ suspend fun handleInput(
                     val algo = getAlgo(AlgoType.P256)
                     val derPriKey = algo.getDerPrivateKey(pk).getOrThrow()
                     val derPubKey = algo.getDerPublicKeyFromPrivateKey(pk).getOrThrow()
-                    val user = sessionManager.getUserPass(
-                        AuthKey.P256(pk, derPriKey, derPubKey),
-                        true
-                    ) { RawUserPass(it) }
+                    val authKey = AuthKey.P256(pk, derPriKey, derPubKey)
+                    val user = sessionManager.userSignUp(authKey, passHolder)
                     sysLog("Registered and Logged in as: ${user.id} - ${user.nickname}")
                     setScreen(Screen.Main)
                 } catch (e: Exception) {
@@ -205,15 +217,14 @@ suspend fun handleInput(
                 }
             }
         }
+
         is Screen.PromptLogin -> {
             try {
                 val algo = getAlgo(AlgoType.P256)
                 val derPriKey = algo.getDerPrivateKey(line).getOrThrow()
                 val derPubKey = algo.getDerPublicKeyFromPrivateKey(line).getOrThrow()
-                val user = sessionManager.getUserPass(
-                    AuthKey.P256(line, derPriKey, derPubKey),
-                    false
-                ) { RawUserPass(it) }
+                val authKey = AuthKey.P256(line, derPriKey, derPubKey)
+                val user = sessionManager.userSignIn(authKey, passHolder)
                 sysLog("Logged in as: ${user.id} - ${user.nickname}")
                 setScreen(Screen.Main)
             } catch (e: Exception) {
@@ -221,6 +232,7 @@ suspend fun handleInput(
                 setScreen(Screen.Main)
             }
         }
+
         is Screen.TopicList -> {
             if (line == "") {
                 setScreen(Screen.Main)
@@ -231,6 +243,7 @@ suspend fun handleInput(
                 }
             }
         }
+
         is Screen.TopicDetail -> {
             when (line) {
                 "1" -> {
@@ -240,19 +253,27 @@ suspend fun handleInput(
                         onFailure = { sysLogError("Failed to favorite", it) }
                     )
                 }
+
                 "2" -> {
                     sysLog("Subscribing Topic...")
-                    sessionManager.addSubscription(NewSubscription(screen.topic.id, ObjectType.TOPIC)).fold(
+                    sessionManager.addSubscription(
+                        NewSubscription(
+                            screen.topic.id,
+                            ObjectType.TOPIC
+                        )
+                    ).fold(
                         onSuccess = { sysLog("Subscribed successfully") },
                         onFailure = { sysLogError("Failed to subscribe", it) }
                     )
                 }
+
                 "3" -> setScreen(Screen.TopicAddComment(screen.topic))
                 "4" -> setScreen(Screen.TopicAddReaction(screen.topic))
                 "" -> setScreen(Screen.Main)
                 else -> sysLog("Invalid Choice")
             }
         }
+
         is Screen.TopicAddComment -> {
             if (line.isEmpty()) {
                 setScreen(Screen.TopicDetail(screen.topic))
@@ -265,6 +286,7 @@ suspend fun handleInput(
                 setScreen(Screen.TopicDetail(screen.topic))
             }
         }
+
         is Screen.TopicAddReaction -> {
             if (line.isEmpty()) {
                 setScreen(Screen.TopicDetail(screen.topic))
@@ -277,6 +299,7 @@ suspend fun handleInput(
                 setScreen(Screen.TopicDetail(screen.topic))
             }
         }
+
         is Screen.CommunityList -> {
             if (line == "") {
                 setScreen(Screen.Main)
@@ -287,15 +310,21 @@ suspend fun handleInput(
                 }
             }
         }
+
         is Screen.CommunityDetail -> {
             when (line) {
                 "1" -> {
                     sysLog("Fetching Community Topics...")
-                    sessionManager.getCommunityTopics(screen.community.id, null, PaginationQuery(size = 10)).fold(
+                    sessionManager.getCommunityTopics(
+                        screen.community.id,
+                        null,
+                        PaginationQuery(size = 10)
+                    ).fold(
                         onSuccess = { setScreen(Screen.TopicList(it.data)) },
                         onFailure = { sysLogError("Failed", it) }
                     )
                 }
+
                 "2" -> {
                     sysLog("Fetching Community Rooms...")
                     sessionManager.getCommunityRooms(
@@ -306,6 +335,7 @@ suspend fun handleInput(
                         onFailure = { sysLogError("Failed", it) }
                     )
                 }
+
                 "3" -> {
                     sysLog("Fetching Community Members...")
                     sessionManager.searchCommunityMembers(screen.community.id, null, 10, "").fold(
@@ -313,6 +343,7 @@ suspend fun handleInput(
                         onFailure = { sysLogError("Failed", it) }
                     )
                 }
+
                 "4" -> {
                     sysLog("Joining Community...")
                     sessionManager.joinCommunity(screen.community.id).fold(
@@ -320,6 +351,7 @@ suspend fun handleInput(
                         onFailure = { sysLogError("Failed to join", it) }
                     )
                 }
+
                 "5" -> {
                     sysLog("Exiting Community...")
                     sessionManager.exitCommunity(screen.community.id).fold(
@@ -327,24 +359,38 @@ suspend fun handleInput(
                         onFailure = { sysLogError("Failed to exit", it) }
                     )
                 }
+
                 "6" -> {
                     sysLog("Favoriting Community...")
-                    sessionManager.addFavorite(NewFavorite(ObjectType.COMMUNITY, screen.community.id)).fold(
+                    sessionManager.addFavorite(
+                        NewFavorite(
+                            ObjectType.COMMUNITY,
+                            screen.community.id
+                        )
+                    ).fold(
                         onSuccess = { sysLog("Favorited successfully") },
                         onFailure = { sysLogError("Failed to favorite", it) }
                     )
                 }
+
                 "7" -> {
                     sysLog("Subscribing Community...")
-                    sessionManager.addSubscription(NewSubscription(screen.community.id, ObjectType.COMMUNITY)).fold(
+                    sessionManager.addSubscription(
+                        NewSubscription(
+                            screen.community.id,
+                            ObjectType.COMMUNITY
+                        )
+                    ).fold(
                         onSuccess = { sysLog("Subscribed successfully") },
                         onFailure = { sysLogError("Failed to subscribe", it) }
                     )
                 }
+
                 "" -> setScreen(Screen.Main)
                 else -> sysLog("Invalid Choice")
             }
         }
+
         is Screen.CommunityMemberList -> {
             if (line == "") {
                 setScreen(screen.parent)
@@ -355,6 +401,7 @@ suspend fun handleInput(
                 }
             }
         }
+
         is Screen.RoomMemberList -> {
             if (line == "") {
                 setScreen(screen.parent)
@@ -365,6 +412,7 @@ suspend fun handleInput(
                 }
             }
         }
+
         is Screen.UserList -> {
             if (line == "") {
                 setScreen(Screen.Main)
@@ -375,7 +423,11 @@ suspend fun handleInput(
                 }
             }
         }
-        is Screen.UserDetail -> { setScreen(screen.parent) }
+
+        is Screen.UserDetail -> {
+            setScreen(screen.parent)
+        }
+
         is Screen.RoomList -> {
             if (line == "") {
                 setScreen(Screen.Main)
@@ -386,15 +438,18 @@ suspend fun handleInput(
                 }
             }
         }
+
         is Screen.RoomDetail -> {
             when (line) {
                 "1" -> {
                     sysLog("Fetching Room Messages...")
-                    sessionManager.getRoomTopics(screen.room.id, null, PaginationQuery(size = 10)).fold(
-                        onSuccess = { setScreen(Screen.TopicList(it.data)) },
-                        onFailure = { sysLogError("Failed", it) }
-                    )
+                    sessionManager.getRoomTopics(screen.room.id, null, PaginationQuery(size = 10))
+                        .fold(
+                            onSuccess = { setScreen(Screen.TopicList(it.data)) },
+                            onFailure = { sysLogError("Failed", it) }
+                        )
                 }
+
                 "2" -> {
                     sysLog("Fetching Room Members...")
                     sessionManager.searchRoomMembers(screen.room.id, null, 10, "").fold(
@@ -402,6 +457,7 @@ suspend fun handleInput(
                         onFailure = { sysLogError("Failed", it) }
                     )
                 }
+
                 "3" -> {
                     sysLog("Joining Room...")
                     sessionManager.joinRoom(screen.room.id).fold(
@@ -409,6 +465,7 @@ suspend fun handleInput(
                         onFailure = { sysLogError("Failed to join", it) }
                     )
                 }
+
                 "4" -> {
                     sysLog("Exiting Room...")
                     sessionManager.exitRoom(screen.room.id).fold(
@@ -416,9 +473,11 @@ suspend fun handleInput(
                         onFailure = { sysLogError("Failed to exit", it) }
                     )
                 }
+
                 "5" -> {
                     setScreen(Screen.RoomSendMessage(screen.room))
                 }
+
                 "6" -> {
                     sysLog("Favoriting Room...")
                     sessionManager.addFavorite(NewFavorite(ObjectType.ROOM, screen.room.id)).fold(
@@ -426,27 +485,33 @@ suspend fun handleInput(
                         onFailure = { sysLogError("Failed to favorite", it) }
                     )
                 }
+
                 "7" -> {
                     sysLog("Subscribing Room...")
-                    sessionManager.addSubscription(NewSubscription(screen.room.id, ObjectType.ROOM)).fold(
-                        onSuccess = { sysLog("Subscribed successfully") },
-                        onFailure = { sysLogError("Failed to subscribe", it) }
-                    )
+                    sessionManager.addSubscription(NewSubscription(screen.room.id, ObjectType.ROOM))
+                        .fold(
+                            onSuccess = { sysLog("Subscribed successfully") },
+                            onFailure = { sysLogError("Failed to subscribe", it) }
+                        )
                 }
+
                 "" -> setScreen(Screen.Main)
                 else -> sysLog("Invalid Choice")
             }
         }
+
         is Screen.FavoriteList -> {
             if (line == "") {
                 setScreen(Screen.Main)
             }
         }
+
         is Screen.SubscriptionList -> {
             if (line == "") {
                 setScreen(Screen.Main)
             }
         }
+
         is Screen.RoomSendMessage -> {
             if (line.isEmpty()) {
                 setScreen(Screen.RoomDetail(screen.room))
@@ -456,7 +521,10 @@ suspend fun handleInput(
 
                 var keyData: List<com.storyteller_f.shared.model.UserPubKeyInfo>? = null
                 if (screen.room.isPrivate) {
-                    val res = sessionManager.getRoomMembersPublicKeys(screen.room.id, PaginationQuery(size = 100))
+                    val res = sessionManager.getRoomMembersPublicKeys(
+                        screen.room.id,
+                        PaginationQuery(size = 100)
+                    )
                     if (res.isSuccess) {
                         keyData = res.getOrNull()?.data
                     }
@@ -478,14 +546,14 @@ suspend fun handleInput(
 
 @Suppress("ComplexMethod", "LongMethod")
 @Composable
-fun App(sessionManager: UserSessionManager) {
+fun App(sessionManager: UserSessionManager, passHolder: SimplePassHolder) {
     var screen by remember { mutableStateOf<Screen>(Screen.Main) }
     var inputBuffer by remember { mutableStateOf("") }
     val submitChannel = remember { Channel<String>(Channel.UNLIMITED) }
 
     LaunchedEffect(Unit) {
         for (line in submitChannel) {
-            handleInput(line, screen, { screen = it }, sessionManager)
+            handleInput(line, screen, { screen = it }, sessionManager, passHolder)
         }
     }
 
@@ -525,12 +593,15 @@ fun App(sessionManager: UserSessionManager) {
                 Text("0. Exit")
                 Text("\nChoice: ")
             }
+
             is Screen.PromptRegister -> {
                 Text("Enter Private Key (leave empty for auto-generate): ")
             }
+
             is Screen.PromptLogin -> {
                 Text("Enter Private Key: ")
             }
+
             is Screen.TopicList -> {
                 Text("Topic/Message List:")
                 s.topics.forEachIndexed { i, t ->
@@ -540,6 +611,7 @@ fun App(sessionManager: UserSessionManager) {
                 }
                 Text("\nEnter index to view details (or hit enter to go back): ")
             }
+
             is Screen.TopicDetail -> {
                 Text("=== Topic Detail ===")
                 Text("ID: ${s.topic.id}")
@@ -554,6 +626,7 @@ fun App(sessionManager: UserSessionManager) {
                 Text("")
                 Text("Hit enter to go back.")
             }
+
             is Screen.TopicAddComment -> {
                 Text("=== Add Comment ===")
                 Text("Topic: ${s.topic.id}")
@@ -561,6 +634,7 @@ fun App(sessionManager: UserSessionManager) {
                 Text("Hit enter with empty input to go back.")
                 Text("Comment: ")
             }
+
             is Screen.TopicAddReaction -> {
                 Text("=== Add Reaction ===")
                 Text("Topic: ${s.topic.id}")
@@ -568,6 +642,7 @@ fun App(sessionManager: UserSessionManager) {
                 Text("Hit enter with empty input to go back.")
                 Text("Emoji: ")
             }
+
             is Screen.CommunityList -> {
                 Text("Joined Communities:")
                 s.communities.forEachIndexed { i, c ->
@@ -575,6 +650,7 @@ fun App(sessionManager: UserSessionManager) {
                 }
                 Text("\nEnter index to view details (or hit enter to go back): ")
             }
+
             is Screen.CommunityDetail -> {
                 Text("=== Community Detail ===")
                 Text("ID: ${s.community.id}")
@@ -591,6 +667,7 @@ fun App(sessionManager: UserSessionManager) {
                 Text("")
                 Text("Enter choice (or hit enter to go back): ")
             }
+
             is Screen.CommunityMemberList -> {
                 Text("=== Community Members ===")
                 s.members.forEachIndexed { i, m ->
@@ -599,6 +676,7 @@ fun App(sessionManager: UserSessionManager) {
                 Text("========================")
                 Text("\nEnter index to view user details (or hit enter to go back): ")
             }
+
             is Screen.RoomMemberList -> {
                 Text("=== Room Members ===")
                 s.members.forEachIndexed { i, m ->
@@ -607,6 +685,7 @@ fun App(sessionManager: UserSessionManager) {
                 Text("==================")
                 Text("\nEnter index to view user details (or hit enter to go back): ")
             }
+
             is Screen.UserList -> {
                 Text("=== Member List ===")
                 s.users.forEachIndexed { i, u ->
@@ -615,6 +694,7 @@ fun App(sessionManager: UserSessionManager) {
                 Text("===================")
                 Text("\nEnter index to view user details (or hit enter to go back): ")
             }
+
             is Screen.UserDetail -> {
                 Text("=== User Detail ===")
                 Text("ID: ${s.user.id}")
@@ -625,6 +705,7 @@ fun App(sessionManager: UserSessionManager) {
                 Text("===================")
                 Text("Hit enter to go back.")
             }
+
             is Screen.RoomList -> {
                 Text("Joined Rooms:")
                 s.rooms.forEachIndexed { i, r ->
@@ -632,6 +713,7 @@ fun App(sessionManager: UserSessionManager) {
                 }
                 Text("\nEnter index to view details (or hit enter to go back): ")
             }
+
             is Screen.RoomDetail -> {
                 Text("=== Room Detail ===")
                 Text("ID: ${s.room.id}")
@@ -648,6 +730,7 @@ fun App(sessionManager: UserSessionManager) {
                 Text("")
                 Text("Enter choice (or hit enter to go back): ")
             }
+
             is Screen.FavoriteList -> {
                 Text("=== Favorites ===")
                 s.favorites.forEachIndexed { i, f ->
@@ -659,6 +742,7 @@ fun App(sessionManager: UserSessionManager) {
                 }
                 Text("\nHit enter to go back: ")
             }
+
             is Screen.SubscriptionList -> {
                 Text("=== Subscriptions ===")
                 s.subscriptions.forEachIndexed { i, sub ->
@@ -667,6 +751,7 @@ fun App(sessionManager: UserSessionManager) {
                 }
                 Text("\nHit enter to go back: ")
             }
+
             is Screen.RoomSendMessage -> {
                 Text("=== Send Message ===")
                 Text("Room: ${s.room.name}")
@@ -698,25 +783,34 @@ fun App(sessionManager: UserSessionManager) {
     }
 }
 
-fun main() = kotlinx.coroutines.runBlocking {
-    Napier.base(ConsoleAntilog())
+fun main() {
+    kotlinx.coroutines.runBlocking {
+        Napier.base(ConsoleAntilog())
 
-    val wsUrl = "ws://127.0.0.1:8080"
-    val httpUrl = "http://127.0.0.1:8080"
+        val wsUrl = "ws://127.0.0.1:8080"
+        val httpUrl = "http://127.0.0.1:8080"
 
-    val sessionManager = createUserSessionManager(wsUrl, { model, cookieManager ->
-        HttpClient(OkHttp) {
-            defaultClientConfigure(cookieManager, manager = model, httpUrl = httpUrl)
+        val passHolder = SimplePassHolder()
+        val sessionManager = createSimpleUserSessionManager(
+            wsUrl,
+            AcceptAllCookiesStorage(),
+            passHolder,
+            { model, cookieManager ->
+                HttpClient(OkHttp) {
+                    defaultClientConfigure(
+                        cookieManager,
+                        model,
+                        passHolder,
+                        httpUrl
+                    )
+                }
+            }
+        ) { _, _, _ -> }
+
+        sessionManager.onBackgroundTask {
+            runMosaicBlocking {
+                App(sessionManager, passHolder)
+            }
         }
-    }, { _, _, _ -> })
-
-    val jobs = run {
-        sessionManager.startBackgroundTask()
     }
-
-    runMosaicBlocking {
-        App(sessionManager)
-    }
-
-    jobs.forEach { it.cancel() }
 }

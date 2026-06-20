@@ -43,6 +43,8 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.LocalAppNavFactory
+import com.storyteller_f.a.app.LocalGlobalDialog
+import com.storyteller_f.a.app.LocalUiViewModel
 import com.storyteller_f.a.app.Res
 import com.storyteller_f.a.app.common.SessionHistoryViewModel
 import com.storyteller_f.a.app.common.getLoginHistoryViewModel
@@ -106,6 +108,7 @@ private fun SelectFromHistoryInternal(viewModel: SessionHistoryViewModel) {
         Icon(Icons.Default.History, contentDescription = null)
         Text(stringResource(Res.string.last_used), modifier = Modifier.padding(start = 8.dp))
     }
+    val uIViewModel = LocalUiViewModel.current
     BaseSheet(showSheet, sheetState, {
         showSheet = false
     }) {
@@ -113,12 +116,19 @@ private fun SelectFromHistoryInternal(viewModel: SessionHistoryViewModel) {
         val last = data?.history?.last
         val scope = rememberCoroutineScope()
         val appNavFactory = LocalAppNavFactory.current
+        val globalDialogController = LocalGlobalDialog.current
         StateView(viewModel.handler, modifier = Modifier.height(260.dp)) {
             LazyColumn {
                 items(it.alias) { alias ->
                     LoginHistoryCell(alias, last, {
                         scope.launch {
-                            if (viewModel.getSession(alias)) {
+                            val userPass = uIViewModel.historyManager.buildSession(alias) ?: return@launch
+                            globalDialogController.useResult {
+                                userPass.address().map { address ->
+                                    uIViewModel.login(address, "", "", userPass)
+                                }
+                            }.onSuccess {
+                                uIViewModel.historyManager.logSession(alias)
                                 showSheet = false
                                 appNavFactory.newAppNav().gotoHome()
                             }

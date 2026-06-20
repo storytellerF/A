@@ -5,25 +5,29 @@ import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.loadAvif
 import com.storyteller_f.a.backend.core.readEnv
 import com.storyteller_f.a.client.core.AuthKey
+import com.storyteller_f.a.client.core.ConstPassHolder
 import com.storyteller_f.a.client.core.PanelSessionManager
-import com.storyteller_f.a.client.core.RawUserPass
+import com.storyteller_f.a.client.core.SimplePassHolder
 import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.UserSessionModel
-import com.storyteller_f.a.client.core.createPanelSessionManager
-import com.storyteller_f.a.client.core.createUserSessionManager
+import com.storyteller_f.a.client.core.createSimplePanelSessionManager
+import com.storyteller_f.a.client.core.createSimpleUserSessionManager
 import com.storyteller_f.a.client.core.defaultClientConfigure
 import com.storyteller_f.a.client.core.defaultClientConfigureForPanel
 import com.storyteller_f.a.client.core.getAuthKey
-import com.storyteller_f.a.client.core.getPanelUserPass
-import com.storyteller_f.a.client.core.getUserPass
 import com.storyteller_f.a.client.core.onBackgroundTask
+import com.storyteller_f.a.client.core.panelSignIn
+import com.storyteller_f.a.client.core.panelSignUp
 import com.storyteller_f.a.client.core.signOut
-import com.storyteller_f.a.client.core.startBackgroundTask
+import com.storyteller_f.a.client.core.userSignIn
+import com.storyteller_f.a.client.core.userSignUp
 import com.storyteller_f.a.cloud.worker.WorkerBackend
 import com.storyteller_f.a.cloud.worker.buildBackendFromEnv
 import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.model.AlgoType
+import com.storyteller_f.shared.model.PanelAccountInfo
+import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.ExplainResult
 import com.storyteller_f.shared.obj.ListResponse
 import com.storyteller_f.shared.obj.RoomFrame
@@ -34,6 +38,7 @@ import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.HttpClientEngineConfig
+import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.server.config.MapApplicationConfig
 import io.ktor.server.testing.ApplicationTestBuilder
@@ -88,7 +93,8 @@ fun test(
     overrideEnv: Map<String, String> = emptyMap(),
     block: suspend TestMate.() -> Unit
 ) {
-    val logPath = File("build/test/logs", Uuid.random().toHexString()).canonicalPath
+    val uuid = Uuid.random().toHexString()
+    val logPath = File("build/test/session/$uuid/logs").canonicalPath
     System.setProperty("LOG_PATH", logPath)
     setupKmpLogger()
     SnowflakeFactory.setMachine(0)
@@ -103,16 +109,21 @@ fun test(
     }
     val methodName = traceElements[methodNameIndex + 1].methodName
     Napier.i {
-        "start test `$methodName`"
+        "start test `$methodName` $uuid"
     }
     if (System.getenv("ENABLE_TEST_CONTAINER") == "true") {
         System.setProperty("api.version", "1.44")
         startTestContainerTest(
-            mapOf("SESSION_SECRET" to TEST_SESSION_SECRET, "METHOD_NAME" to methodName) + overrideEnv,
+            uuid,
+            mapOf(
+                "SESSION_SECRET" to TEST_SESSION_SECRET,
+                "METHOD_NAME" to methodName
+            ) + overrideEnv,
             block
         )
     } else {
         startMemoryTest(
+            uuid,
             mapOf(
                 "SESSION_SECRET" to TEST_SESSION_SECRET,
                 "SERVER_URL" to "http://localhost",
@@ -128,10 +139,11 @@ fun test(
 
 @OptIn(ExperimentalUuidApi::class)
 private fun startMemoryTest(
+    uuid: String,
     overrideEnv: Map<String, String>,
     block: suspend (TestMate) -> Unit
 ) {
-    val h2File = File("./build/test/h2/${Uuid.random().toHexString()}")
+    val h2File = File("./build/test/session/$uuid/h2/default")
     h2File.parentFile!!.let {
         if (!it.exists() && !it.mkdirs()) {
             throw Exception("mkdirs failed ${it.canonicalPath}")
@@ -145,10 +157,11 @@ private fun startMemoryTest(
         "DATABASE_USER" to "sa",
         "DATABASE_PASS" to ""
     ) + overrideEnv
-    doTest(env, block)
+    doTest(uuid, env, block)
 }
 
 private fun startTestContainerTest(
+    uuid: String,
     overrideEnv: Map<String, String>,
     block: suspend TestMate.() -> Unit
 ) {
@@ -157,7 +170,7 @@ private fun startTestContainerTest(
         useElasticTestContainer(env) {
             useMinioTestContainer(env) {
                 useDatabaseContainer(env) {
-                    doTest(env + overrideEnv, block)
+                    doTest(uuid, env + overrideEnv, block)
                 }
             }
         }
@@ -215,6 +228,7 @@ private suspend fun useElasticTestContainer(
 }
 
 private fun doTest(
+    uuid: String,
     env: Map<String, String>,
     block: suspend TestMate.() -> Unit
 ) {
@@ -243,7 +257,7 @@ private fun doTest(
             coroutineScope {
                 val task = CompletableDeferred<Unit>()
                 val job = launch(Dispatchers.IO) {
-                    receiveExplainResult(task, port)
+                    receiveExplainResult(task, port, uuid)
                 }
                 task.await()
                 testMate.block()
@@ -258,6 +272,7 @@ private fun doTest(
 private suspend fun receiveExplainResult(
     task: CompletableDeferred<Unit>,
     port: Int,
+    uuid: String,
 ) {
     withContext(Dispatchers.IO) {
         ServerSocket(port).apply {
@@ -269,8 +284,9 @@ private suspend fun receiveExplainResult(
                     yield()
                     serverSocket.accept().use { socket ->
                         socket.getInputStream().bufferedReader().use {
-                            val explainResult = commonJson.decodeFromString<ExplainResult>(it.readText())
-                            saveDatabaseExplainResult(explainResult)
+                            val explainResult =
+                                commonJson.decodeFromString<ExplainResult>(it.readText())
+                            saveDatabaseExplainResult(explainResult, uuid)
                         }
                     }
                 } catch (_: SocketTimeoutException) {
@@ -291,10 +307,12 @@ private suspend fun receiveExplainResult(
     }
 }
 
-fun saveDatabaseExplainResult(explainResult: ExplainResult) {
+fun saveDatabaseExplainResult(explainResult: ExplainResult, uuid: String) {
     val (dialect, statements, result, stackTraceString) = explainResult
     val file = File(
-        "./build/test/$dialect/${extractTableNames(statements).joinToString("/")}/${md5(statements)}.explain"
+        "./build/test/session/$uuid/$dialect/${extractTableNames(
+            statements
+        ).joinToString("/")}/${md5(statements)}.explain"
     )
     file.parentFile!!.let {
         if (!it.exists() && !it.mkdirs()) {
@@ -324,7 +342,7 @@ suspend fun <R> TestMate.attachSession(
     block: suspend UserSessionManager.(SessionTuple) -> R
 ): SessionOuterTuple<R> {
     val authKey = getAuthKey(algo)
-    return getAppSession(true, authKey, onReceive, block)
+    return getAppSignUpSession(authKey, onReceive, block)
 }
 
 suspend fun TestMate.attachSession(): SessionOuterTuple<Unit> {
@@ -332,37 +350,56 @@ suspend fun TestMate.attachSession(): SessionOuterTuple<Unit> {
 }
 
 suspend fun <R> TestMate.getAppSession(
-    isSignUp: Boolean,
+    authKey: AuthKey,
+    onReceive: suspend (RoomFrame, UserSessionModel, DefaultClientWebSocketSession) -> Unit,
+    block: suspend UserSessionManager.(SessionTuple) -> R,
+    getUserInfo: suspend UserSessionManager.(SimplePassHolder) -> UserInfo
+): SessionOuterTuple<R> {
+    return coroutineScope {
+        val passHolder = SimplePassHolder()
+        val sessionManager = createSimpleUserSessionManager(
+            TEST_WS_URL,
+            AcceptAllCookiesStorage(),
+            passHolder,
+            { model, cookiesStorage ->
+                createClient {
+                    defaultClientConfigure(cookiesStorage, model, passHolder)
+                }
+            },
+            onReceive
+        )
+        sessionManager.onBackgroundTask {
+            try {
+                val sessionModel = sessionManager.model
+                val userInfo = sessionManager.getUserInfo(passHolder)
+                val custom = sessionManager.block(SessionTuple(authKey, userInfo.id))
+                sessionManager.signOut().getOrThrow()
+                sessionModel.clear()
+                SessionOuterTuple(authKey, userInfo.id, custom)
+            } finally {
+                sessionManager.client.coroutineContext[Job]?.cancelAndJoin()
+            }
+        }
+    }
+}
+
+suspend fun <R> TestMate.getAppSignUpSession(
     authKey: AuthKey,
     onReceive: suspend (RoomFrame, UserSessionModel, DefaultClientWebSocketSession) -> Unit,
     block: suspend UserSessionManager.(SessionTuple) -> R,
 ): SessionOuterTuple<R> {
-    return coroutineScope {
-        val sessionManager = createUserSessionManager(TEST_WS_URL, { model, cookiesStorage ->
-            createClient {
-                defaultClientConfigure(cookiesStorage, model)
-            }
-        }, onReceive)
-        val jobs = sessionManager.startBackgroundTask()
+    return getAppSession(authKey, onReceive, block) {
+        this.userSignUp(authKey, it)
+    }
+}
 
-        try {
-            val sessionModel = sessionManager.model
-            val userInfo = sessionManager.getUserPass(authKey, isSignUp) {
-                RawUserPass(it)
-            }
-            val custom = sessionManager.block(SessionTuple(authKey, userInfo.id))
-            jobs.forEach {
-                it.cancelAndJoin()
-            }
-            sessionManager.signOut().getOrThrow()
-            sessionModel.clear()
-            SessionOuterTuple(authKey, userInfo.id, custom)
-        } finally {
-            sessionManager.client.coroutineContext[Job]?.cancelAndJoin()
-            jobs.forEach {
-                it.cancelAndJoin()
-            }
-        }
+suspend fun <R> TestMate.getAppSignInSession(
+    authKey: AuthKey,
+    onReceive: suspend (RoomFrame, UserSessionModel, DefaultClientWebSocketSession) -> Unit,
+    block: suspend UserSessionManager.(SessionTuple) -> R,
+): SessionOuterTuple<R> {
+    return getAppSession(authKey, onReceive, block) {
+        this.userSignIn(authKey, it)
     }
 }
 
@@ -371,18 +408,24 @@ suspend fun <R1, R2> TestMate.loginSession(
     onReceive: suspend (RoomFrame, UserSessionModel, DefaultClientWebSocketSession) -> Unit = NOOP_ON_RECEIVE,
     block: suspend UserSessionManager.(SessionTuple) -> R2
 ): SessionOuterTuple<R2> {
-    return getAppSession(false, tuple.authKey, onReceive = onReceive, block = block)
+    return getAppSignInSession(tuple.authKey, onReceive = onReceive, block = block)
 }
 
 suspend fun <R2> TestMate.noneSession(
     block: suspend UserSessionManager.() -> R2
 ): R2 {
     return coroutineScope {
-        val sessionManager = createUserSessionManager(TEST_WS_URL, { model, cookiesStorage ->
-            createClient {
-                defaultClientConfigure(cookiesStorage, model)
+        val passHolder = ConstPassHolder(null)
+        val sessionManager = createSimpleUserSessionManager(
+            TEST_WS_URL,
+            AcceptAllCookiesStorage(),
+            passHolder,
+            { model, cookiesStorage ->
+                createClient {
+                    defaultClientConfigure(cookiesStorage, model, passHolder)
+                }
             }
-        }) { _, _, _ -> }
+        ) { _, _, _ -> }
         sessionManager.onBackgroundTask {
             block()
         }
@@ -420,7 +463,9 @@ suspend fun <R> TestMate.attachPanelSession(
     block: suspend PanelSessionManager.(SessionTuple) -> R
 ): SessionOuterTuple<R> {
     val authKey = getAuthKey(algo)
-    return getPanelSession(authKey, true, block)
+    return getPanelSession(authKey, block) {
+        this.panelSignUp(authKey, it)
+    }
 }
 
 suspend fun TestMate.attachPanelSession(): SessionOuterTuple<Unit> {
@@ -429,19 +474,18 @@ suspend fun TestMate.attachPanelSession(): SessionOuterTuple<Unit> {
 
 private suspend fun <R> TestMate.getPanelSession(
     authKey: AuthKey,
-    isSignUp: Boolean,
     block: suspend PanelSessionManager.(SessionTuple) -> R,
+    getUserInfo: suspend PanelSessionManager.(SimplePassHolder) -> PanelAccountInfo,
 ): SessionOuterTuple<R> {
     return coroutineScope {
-        val sessionManager = createPanelSessionManager { model, cookiesStorage ->
+        val passHolder = SimplePassHolder()
+        val sessionManager = createSimplePanelSessionManager(passHolder) { model, cookiesStorage ->
             createClient {
-                defaultClientConfigureForPanel(cookiesStorage, model)
+                defaultClientConfigureForPanel(cookiesStorage, model, passHolder)
             }
         }
         val sessionModel = sessionManager.model
-        val userInfo = sessionManager.getPanelUserPass(authKey, isSignUp) {
-            RawUserPass(it)
-        }
+        val userInfo = getUserInfo(sessionManager, passHolder)
         val custom = sessionManager.block(SessionTuple(authKey, userInfo.id))
         sessionManager.signOut().getOrThrow()
         sessionModel.clear()
@@ -453,7 +497,9 @@ suspend fun <R1, R2> TestMate.loginPanelSession(
     tuple: SessionOuterTuple<R1>,
     block: suspend PanelSessionManager.(SessionTuple) -> R2
 ): SessionOuterTuple<R2> {
-    return getPanelSession(tuple.authKey, isSignUp = false, block = block)
+    return getPanelSession(tuple.authKey, block = block) {
+        this.panelSignIn(tuple.authKey, it)
+    }
 }
 
 suspend fun <R> TestMate.withWorkerBackend(

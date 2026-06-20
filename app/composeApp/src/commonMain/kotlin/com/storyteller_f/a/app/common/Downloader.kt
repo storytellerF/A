@@ -1,7 +1,7 @@
 package com.storyteller_f.a.app.common
 
-import com.storyteller_f.a.app.CustomUserSessionManager
 import com.storyteller_f.a.app.UIViewModel
+import com.storyteller_f.a.client.core.SimpleUserSessionManager
 import com.storyteller_f.a.client.core.serviceCatching
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.type.PrimaryKey
@@ -110,7 +110,7 @@ class DownloaderImpl(
         }
         path.parent?.let { SystemFileSystem.createDirectories(it) }
         val instance = uiViewModel.instance.value
-        val modelStorage = instance.database.value
+        val modelStorage = instance.database
         val userSession = instance.sessionManager
         register.lockTask(fileInfo.id.toString()) {
             try {
@@ -128,7 +128,7 @@ class DownloaderImpl(
             "resume download $id"
         }
         val instance = uiViewModel.instance.value
-        val modelStorage = instance.database.value
+        val modelStorage = instance.database
         val userSession = instance.sessionManager
         register.lockTask(id.toString()) {
             try {
@@ -146,7 +146,7 @@ class DownloaderImpl(
             "pause download $id"
         }
         val instance = uiViewModel.instance.value
-        val modelStorage = instance.database.value
+        val modelStorage = instance.database
         pauseIfNeed(id, modelStorage)
     }
 
@@ -155,7 +155,7 @@ class DownloaderImpl(
         modelStorage: ModelStorage,
         fileInfo: FileInfo,
         path: Path,
-        userSession: CustomUserSessionManager
+        userSession: SimpleUserSessionManager
     ) {
         val document = modelStorage.download.getDocumentByFileId(fileInfo.id)
         if (document == null) {
@@ -194,7 +194,7 @@ class DownloaderImpl(
     }
 
     private suspend fun download(
-        userSession: CustomUserSessionManager,
+        userSession: SimpleUserSessionManager,
         modelStorage: ModelStorage,
         id: PrimaryKey,
     ) {
@@ -256,7 +256,7 @@ class DownloaderImpl(
         downloadInfo: DownloadInfo,
         modelStorage: ModelStorage,
         id: PrimaryKey,
-        userSession: CustomUserSessionManager,
+        userSession: SimpleUserSessionManager,
         fileInfo: FileInfo,
         path: Path
     ): Boolean {

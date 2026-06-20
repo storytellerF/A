@@ -1,11 +1,11 @@
 package com.storyteller_f.a.app.common
 
 import com.storyteller_f.a.api.CustomApi
-import com.storyteller_f.a.app.CustomUserSessionManager
 import com.storyteller_f.a.app.UIViewModel
 import com.storyteller_f.a.app.pages.file.getUploadDataFromClipFile
 import com.storyteller_f.a.app.utils.ClientFile
 import com.storyteller_f.a.app.utils.getClientFile
+import com.storyteller_f.a.client.core.SimpleUserSessionManager
 import com.storyteller_f.a.client.core.completeChunkUpload
 import com.storyteller_f.a.client.core.getChunkStatus
 import com.storyteller_f.a.client.core.initChunkUpload
@@ -55,7 +55,7 @@ class UploaderImpl(
         }
         val instance = uiViewModel.instance.value
         val myUid = instance.sessionManager.model.uid ?: return
-        val modelStorage = instance.database.value
+        val modelStorage = instance.database
         val userSession = instance.sessionManager
         clipData.forEach {
             taskRegister.lockTask(md5(it.path)) {
@@ -76,7 +76,7 @@ class UploaderImpl(
         }
         val instance = uiViewModel.instance.value
         val myUid = instance.sessionManager.model.uid ?: return
-        val modelStorage = instance.database.value
+        val modelStorage = instance.database
         val userSession = instance.sessionManager
         taskRegister.lockTask(pathHash) {
             try {
@@ -95,7 +95,7 @@ class UploaderImpl(
         }
         val instance = uiViewModel.instance.value
         val myUid = instance.sessionManager.model.uid ?: return
-        val modelStorage = instance.database.value
+        val modelStorage = instance.database
         taskRegister.stop(pathHash) {
             updateUploadInfo(modelStorage, UploadCollection(myUid), pathHash) {
                 it.copy(status = UploadStatus.PAUSED)
@@ -107,7 +107,7 @@ class UploaderImpl(
         modelStorage: ModelStorage,
         myUid: PrimaryKey,
         pathHash: String,
-        userSession: CustomUserSessionManager,
+        userSession: SimpleUserSessionManager,
         collection: UploadCollection
     ) {
         val uploadInfo = modelStorage.upload.getDocument(collection, pathHash)
@@ -123,7 +123,7 @@ class UploaderImpl(
 
     @OptIn(ExperimentalTime::class)
     private suspend fun uploadIfNeed(
-        userSession: CustomUserSessionManager,
+        userSession: SimpleUserSessionManager,
         myUid: PrimaryKey,
         clipFile: ClientFile,
         modelStorage: ModelStorage,
@@ -160,7 +160,7 @@ class UploaderImpl(
     }
 
     private suspend fun upload(
-        userSession: CustomUserSessionManager,
+        userSession: SimpleUserSessionManager,
         myUid: PrimaryKey,
         clientFile: ClientFile,
         modelStorage: ModelStorage,
@@ -199,7 +199,7 @@ class UploaderImpl(
     }
 
     private suspend fun uploadChunked(
-        userSession: CustomUserSessionManager,
+        userSession: SimpleUserSessionManager,
         objectTuple: ObjectTuple,
         clipFile: ClientFile,
         modelStorage: ModelStorage,
@@ -227,7 +227,7 @@ class UploaderImpl(
 
     private suspend fun getUploadId(
         modelStorage: ModelStorage,
-        userSession: CustomUserSessionManager,
+        userSession: SimpleUserSessionManager,
         objectTuple: ObjectTuple,
         clipFile: ClientFile,
         uploadInfo: UploadInfo,
@@ -246,7 +246,7 @@ class UploaderImpl(
     }
 
     private suspend fun uploadChunkedFiles(
-        userSession: CustomUserSessionManager,
+        userSession: SimpleUserSessionManager,
         uploadRecordId: PrimaryKey,
         clipFile: ClientFile,
         modelStorage: ModelStorage,
@@ -307,7 +307,7 @@ class UploaderImpl(
     }
 
     private suspend fun getUploadRecordId(
-        userSession: CustomUserSessionManager,
+        userSession: SimpleUserSessionManager,
         objectTuple: ObjectTuple,
         clipFile: ClientFile,
         modelStorage: ModelStorage,

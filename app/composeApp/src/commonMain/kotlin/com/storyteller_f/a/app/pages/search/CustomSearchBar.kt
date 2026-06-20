@@ -42,8 +42,9 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.storyteller_f.a.app.IAccountInstance
 import com.storyteller_f.a.app.LocalAppNavFactory
-import com.storyteller_f.a.app.LocalSessionManager
+import com.storyteller_f.a.app.LocalUiViewModel
 import com.storyteller_f.a.app.LocalUserInfo
 import com.storyteller_f.a.app.Res
 import com.storyteller_f.a.app.common.FileSearchViewModel
@@ -373,8 +374,8 @@ private fun MyRoomSearchContent(current: String) {
             mutableStateOf(JoinStatusSearch.JOINED)
         }
 
-        val userSessionManager = LocalSessionManager.current
-        val isAlreadySignUp by userSessionManager.isAlreadySignIn.collectAsState()
+        val instance by LocalUiViewModel.current.instance.collectAsState()
+        val isAlreadySignUp = instance !is IAccountInstance.None
         val finalOption = if (isAlreadySignUp) currentOption else JoinStatusSearch.UNSPECIFIED
         if (isAlreadySignUp) {
             val options = listOf(JoinStatusSearch.JOINED, JoinStatusSearch.UNSPECIFIED)
@@ -411,8 +412,8 @@ private fun MyCommunitySearchContent(query: String) {
         var currentOption by remember {
             mutableStateOf(JoinStatusSearch.JOINED)
         }
-        val userSessionManager = LocalSessionManager.current
-        val isAlreadySignUp by userSessionManager.isAlreadySignIn.collectAsState()
+        val instance by LocalUiViewModel.current.instance.collectAsState()
+        val isAlreadySignUp = instance !is IAccountInstance.None
         val finalOption = if (isAlreadySignUp) currentOption else JoinStatusSearch.UNSPECIFIED
         if (isAlreadySignUp) {
             val options = listOf(JoinStatusSearch.JOINED, JoinStatusSearch.UNSPECIFIED)

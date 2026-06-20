@@ -59,6 +59,7 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil3.compose.LocalPlatformContext
 import com.storyteller_f.a.app.AppGlobalDialogController
+import com.storyteller_f.a.app.IAccountInstance
 import com.storyteller_f.a.app.LocalAppNavFactory
 import com.storyteller_f.a.app.LocalGlobalDialog
 import com.storyteller_f.a.app.LocalSessionManager
@@ -542,9 +543,10 @@ private fun InputGroupSuffix(
     gotoCompose: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
-    val userSessionManager = LocalSessionManager.current
+    val uIViewModel = LocalUiViewModel.current
+    val instance by uIViewModel.instance.collectAsState()
     val alertDialogController = rememberAlertDialogController()
-    val alreadySignIn by userSessionManager.isAlreadySignIn.collectAsState(false)
+    val alreadySignIn = instance !is IAccountInstance.None
     var showSheet by remember {
         mutableStateOf(false)
     }

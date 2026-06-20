@@ -16,16 +16,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.storyteller_f.a.app.CustomUserSessionManager
 import com.storyteller_f.a.app.LocalGlobalTask
 import com.storyteller_f.a.app.common.OnAddReaction
 import com.storyteller_f.a.app.common.OnRemoveReaction
 import com.storyteller_f.a.app.core.components.BaseSheet
 import com.storyteller_f.a.app.core.components.GlobalTask
+import com.storyteller_f.a.app.core.components.GlobalTaskContext
 import com.storyteller_f.a.app.core.components.SheetContainer
 import com.storyteller_f.a.app.core.components.emitEvent
 import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.app.core.components.use
+import com.storyteller_f.a.client.core.SimpleUserSessionManager
 import com.storyteller_f.a.client.core.addReaction
 import com.storyteller_f.a.client.core.deleteReaction
 import com.storyteller_f.shared.model.ReactionInfo
@@ -132,7 +133,7 @@ private fun EmojiItem(
     }
 }
 
-suspend fun GlobalTask<CustomUserSessionManager>.addReaction(
+suspend fun GlobalTask<GlobalTaskContext<SimpleUserSessionManager>>.addReaction(
     topic: TopicInfo,
     emojiText: String,
 ): Result<ReactionInfo> {
@@ -156,7 +157,7 @@ suspend fun GlobalTask<CustomUserSessionManager>.addReaction(
     }
 }
 
-suspend fun GlobalTask<CustomUserSessionManager>.deleteReaction(
+suspend fun GlobalTask<GlobalTaskContext<SimpleUserSessionManager>>.deleteReaction(
     topic: TopicInfo,
     emojiText: String,
     existing: ReactionInfo,

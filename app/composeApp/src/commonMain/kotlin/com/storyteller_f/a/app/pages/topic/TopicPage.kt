@@ -42,7 +42,6 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.storyteller_f.a.app.CustomUserSessionManager
 import com.storyteller_f.a.app.LocalAppNavFactory
 import com.storyteller_f.a.app.LocalGlobalTask
 import com.storyteller_f.a.app.LocalUserInfo
@@ -58,6 +57,7 @@ import com.storyteller_f.a.app.components.InteractionRow
 import com.storyteller_f.a.app.core.components.CustomAlertDialog
 import com.storyteller_f.a.app.core.components.CustomAlertDialogController
 import com.storyteller_f.a.app.core.components.GlobalTask
+import com.storyteller_f.a.app.core.components.GlobalTaskContext
 import com.storyteller_f.a.app.core.components.LayoutDefaults
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.bottomAppending
@@ -74,6 +74,7 @@ import com.storyteller_f.a.app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.a.app.pages.user.UserIconWithDialog
 import com.storyteller_f.a.client.core.LoadingState
+import com.storyteller_f.a.client.core.SimpleUserSessionManager
 import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.ObjectTuple
@@ -83,6 +84,7 @@ import com.storyteller_f.shared.utils.checkContent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -179,7 +181,7 @@ private fun TopicPageInternal(
         topicInfo?.let {
             TopicPageInputGroup(it, snackBarHostState) {
                 scope.launch {
-                    delay(200)
+                    delay(200.milliseconds)
                     lazyListState.animateScrollToItem(1)
                 }
             }
@@ -354,7 +356,7 @@ private fun sendTopicInTopicPage(
     input: String,
     scope: CoroutineScope,
     snackBarHostState: SnackbarHostState,
-    globalTask: GlobalTask<CustomUserSessionManager>,
+    globalTask: GlobalTask<GlobalTaskContext<SimpleUserSessionManager>>,
     key: String,
     topic: TopicInfo,
     updateInput: (String) -> Unit,

@@ -23,21 +23,18 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.storyteller_f.a.app.AppGlobalDialogController
+import com.storyteller_f.a.app.IAccountInstance
 import com.storyteller_f.a.app.LocalAccountSwitcher
 import com.storyteller_f.a.app.LocalGlobalDialog
 import com.storyteller_f.a.app.LocalUiViewModel
@@ -84,16 +81,20 @@ fun AccountSwitch() {
 
 @Composable
 private fun AccountSwitchInternal(viewModel: ChildAccountsViewModel) {
-    val isInChildAccount by isInChildAccount()
+    val isInChildAccount = isInChildAccount()
     val uiViewModel = LocalUiViewModel.current
-    val mainSessionManager = uiViewModel.mainInstance.sessionManager
+    val mainInstance = when (val instance = uiViewModel.instance.value) {
+        is IAccountInstance.Child -> instance.main
+        is IAccountInstance.None -> return
+        is IAccountInstance.Regular -> instance
+    }
+    val mainSessionManager = mainInstance.sessionManager
     val globalDialogController = LocalGlobalDialog.current
     val scope = rememberCoroutineScope()
     Row(modifier = Modifier.padding(horizontal = 10.dp)) {
         if (isInChildAccount) {
             FilledIconButton({
-                val rawUserPass = mainSessionManager.model.currentUserPass as? RawUserPass
-                uiViewModel.childAccount.value = rawUserPass
+                uiViewModel.switchToMain()
             }) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, "Switch to main account")
             }
@@ -171,29 +172,24 @@ fun ChildAccountCell(childAccountInfo: ChildAccountInfo, onClick: () -> Unit) {
 }
 
 @Composable
-fun isInChildAccount(): State<Boolean> {
-    val inspectionMode = LocalInspectionMode.current
-    if (inspectionMode) {
-        return remember {
-            mutableStateOf(false)
-        }
-    }
+fun isInChildAccount(): Boolean {
     val uiViewModel = LocalUiViewModel.current
-    val childAccount by uiViewModel.childAccount.collectAsState()
-    return remember {
-        derivedStateOf {
-            childAccount != null
-        }
-    }
+    val instance by uiViewModel.instance.collectAsState()
+    return instance is IAccountInstance.Child
 }
 
 suspend fun AppGlobalDialogController.switchUser(
     childAccountInfo: ChildAccountInfo,
     uiViewModel: UIViewModel
 ) {
+    val mainInstance = when (val instance = uiViewModel.instance.value) {
+        is IAccountInstance.Child -> instance.main
+        is IAccountInstance.None -> return
+        is IAccountInstance.Regular -> instance
+    }
     useResult {
         algoRunCatching {
-            val currentUserPass = uiViewModel.mainInstance.sessionManager.model.currentUserPass
+            val currentUserPass = mainInstance.sessionManager.passHolder.currentUserPass
             val userPass = currentUserPass ?: throw Exception("user not login")
             val (decrypted, decryptedEnc) = userPass.decryptChildAccount(
                 childAccountInfo.encryptedPrivateKey,
@@ -233,6 +229,6 @@ suspend fun AppGlobalDialogController.switchUser(
             RawUserPass(RawUserPassInfo(address, authKey))
         }
     }.getOrNull()?.let {
-        uiViewModel.childAccount.value = it
+        uiViewModel.switchUser(mainInstance, it)
     }
 }

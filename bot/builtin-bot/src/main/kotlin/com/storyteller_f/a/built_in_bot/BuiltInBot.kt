@@ -6,18 +6,17 @@ import com.google.genai.types.GoogleSearch
 import com.google.genai.types.Tool
 import com.storyteller_f.a.api.PaginationQuery
 import com.storyteller_f.a.client.core.AuthKey
-import com.storyteller_f.a.client.core.RawUserPass
+import com.storyteller_f.a.client.core.SimplePassHolder
 import com.storyteller_f.a.client.core.SimpleUserSessionManager
 import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.buildWebSocketUrl
+import com.storyteller_f.a.client.core.createSimpleUserSessionManager
 import com.storyteller_f.a.client.core.createTopic
-import com.storyteller_f.a.client.core.createUserSessionManager
 import com.storyteller_f.a.client.core.defaultClientConfigure
 import com.storyteller_f.a.client.core.getClient
 import com.storyteller_f.a.client.core.getTopicList
 import com.storyteller_f.a.client.core.getUserCommunities
-import com.storyteller_f.a.client.core.getUserPass
-import com.storyteller_f.a.client.core.startBackgroundTask
+import com.storyteller_f.a.client.core.userSignIn
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.model.AlgoType
@@ -29,9 +28,9 @@ import com.storyteller_f.shared.setupKmpLogger
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.now
 import io.github.aakira.napier.Napier
+import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
 import io.ktor.client.plugins.logging.LogLevel
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -55,12 +54,18 @@ fun main() {
     val httpUrl = System.getenv("SERVER_URL") ?: throw Exception("SERVER_URL not exists")
     val wsUrl = System.getenv("WS_SERVER_URL") ?: throw Exception("WS_SERVER_URL not exists")
     val pemPrivateKey = Base64.decode(base64BotPem).decodeToString()
+    val passHolder = SimplePassHolder()
     val sessionManager =
-        createUserSessionManager(buildWebSocketUrl(wsUrl), { model, cookieManager ->
-            getClient {
-                defaultClientConfigure(cookieManager, manager = model, httpUrl = httpUrl, logLevel = LogLevel.INFO)
+        createSimpleUserSessionManager(
+            buildWebSocketUrl(wsUrl),
+            AcceptAllCookiesStorage(),
+            passHolder,
+            { model, cookieManager ->
+                getClient {
+                    defaultClientConfigure(cookieManager, model, passHolder, httpUrl, LogLevel.INFO)
+                }
             }
-        }) { r, t, _ ->
+        ) { r, t, _ ->
         }
     val commentPrompt = readResource("comment.prompt")
     val newsPrompt = readResource("news.prompt")
@@ -73,12 +78,8 @@ fun main() {
                     val algo = getAlgo(AlgoType.P256)
                     val derPriKey = algo.getDerPrivateKey(pemPrivateKey).getOrThrow()
                     val derPubKey = algo.getDerPublicKeyFromPrivateKey(pemPrivateKey).getOrThrow()
-                    sessionManager.getUserPass(
-                        AuthKey.P256(pemPrivateKey, derPriKey, derPubKey),
-                        false
-                    ) {
-                        RawUserPass(it)
-                    }
+                    val authKey = AuthKey.P256(pemPrivateKey, derPriKey, derPubKey)
+                    sessionManager.userSignIn(authKey, passHolder)
                     break
                 } catch (e: Exception) {
                     Napier.e(e) {
@@ -105,7 +106,6 @@ private suspend fun CoroutineScope.processJob(
     commentPrompt: String,
     newsPrompt: String
 ) {
-    val jobs = sessionManager.startBackgroundTask()
     val job1 = launch {
         loop(1.minutes) {
             processCommunityTask(sessionManager) { communityInfo ->
@@ -122,9 +122,6 @@ private suspend fun CoroutineScope.processJob(
     }
     job1.join()
     job2.join()
-    jobs.forEach {
-        it.cancelAndJoin()
-    }
 }
 
 private suspend fun CoroutineScope.loop(duration: Duration, block: suspend () -> Unit) {

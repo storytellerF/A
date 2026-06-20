@@ -15,6 +15,7 @@ dependencies {
     implementation(project(":client:core"))
     implementation(project(":shared"))
     implementation(libs.ktor.client.core)
+    testImplementation(libs.java.client)
     testImplementation(libs.testcontainers.postgresql)
 }
 

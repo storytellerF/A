@@ -19,10 +19,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.storyteller_f.a.api.SignInBody
+import com.storyteller_f.a.api.SignInResponse
+import com.storyteller_f.a.api.SignUpBody
 import com.storyteller_f.a.app.AppGlobalDialogController
 import com.storyteller_f.a.app.LocalAppNavFactory
 import com.storyteller_f.a.app.LocalGlobalDialog
+import com.storyteller_f.a.app.LocalUiViewModel
 import com.storyteller_f.a.app.Res
+import com.storyteller_f.a.app.UIViewModel
 import com.storyteller_f.a.app.auth_private_key_subtitle
 import com.storyteller_f.a.app.common.AppNavFactory
 import com.storyteller_f.a.app.core.components.PrivateKeyInput
@@ -31,17 +36,59 @@ import com.storyteller_f.a.app.sign_in
 import com.storyteller_f.a.app.sign_up
 import com.storyteller_f.a.app.start_sign_in
 import com.storyteller_f.a.app.start_sign_up
-import com.storyteller_f.a.app.utils.completeTotpSignIn
-import com.storyteller_f.a.app.utils.startAuth
+import com.storyteller_f.a.client.core.AuthKey
 import com.storyteller_f.a.client.core.PendingTotpSignIn
+import com.storyteller_f.a.client.core.RawUserPassInfo
+import com.storyteller_f.a.client.core.SignResult
 import com.storyteller_f.a.client.core.UserAuthResult
+import com.storyteller_f.a.client.core.getAuthKey
+import com.storyteller_f.a.client.core.getData
+import com.storyteller_f.a.client.core.prepareSignInFromPrivateKey
+import com.storyteller_f.a.client.core.signIn
+import com.storyteller_f.a.client.core.signInTotp
+import com.storyteller_f.a.client.core.signUp
 import com.storyteller_f.shared.model.AlgoType
+import com.storyteller_f.shared.utils.mapResult
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun PrivateKeyAuthPage(isSignUp: Boolean) {
+fun PrivateKeyAuthSignUpPage() {
     val viewModel = viewModel { InputPrivateKeyViewModel() }
+    val privateKey by viewModel.privateKey.collectAsState()
+    val uIViewModel = LocalUiViewModel.current
+    val encryptionPrivateKey by viewModel.encryptionPrivateKey.collectAsState()
+    val address by viewModel.address.collectAsState()
+    val algo by viewModel.algo.collectAsState()
+    val scope = rememberCoroutineScope()
+    val appNavFactory = LocalAppNavFactory.current
+    val globalDialogController = LocalGlobalDialog.current
+
+    PrivateKeyAuthContent(
+        isSignUp = true,
+        privateKey = privateKey,
+        encryptionPrivateKey = encryptionPrivateKey,
+        address = address,
+        algo = algo,
+        startSign = {
+            scope.launch {
+                globalDialogController.performSignUpAuth(
+                    appNavFactory,
+                    privateKey,
+                    encryptionPrivateKey,
+                    algo,
+                    uIViewModel
+                )
+            }
+        },
+        viewModel = viewModel,
+    )
+}
+
+@Composable
+fun PrivateKeyAuthSignInPage() {
+    val viewModel = viewModel { InputPrivateKeyViewModel() }
+    val uIViewModel = LocalUiViewModel.current
     val privateKey by viewModel.privateKey.collectAsState()
     val encryptionPrivateKey by viewModel.encryptionPrivateKey.collectAsState()
     val address by viewModel.address.collectAsState()
@@ -50,34 +97,33 @@ fun PrivateKeyAuthPage(isSignUp: Boolean) {
     val appNavFactory = LocalAppNavFactory.current
     val globalDialogController = LocalGlobalDialog.current
     var pendingTotp by remember { mutableStateOf<PendingTotpSignIn?>(null) }
-    val startSign: () -> Unit = {
-        scope.launch {
-            val pending = globalDialogController.performAuth(
-                appNavFactory,
-                privateKey,
-                encryptionPrivateKey,
-                algo,
-                isSignUp
-            )
-            if (pending != null) {
-                pendingTotp = pending
-            }
-        }
-    }
 
     PrivateKeyAuthContent(
-        isSignUp = isSignUp,
+        isSignUp = false,
         privateKey = privateKey,
         encryptionPrivateKey = encryptionPrivateKey,
         address = address,
         algo = algo,
-        startSign = startSign,
+        startSign = {
+            scope.launch {
+                val pending = globalDialogController.performSignInAuth(
+                    appNavFactory,
+                    privateKey,
+                    encryptionPrivateKey,
+                    algo,
+                    uIViewModel
+                )
+                if (pending != null) {
+                    pendingTotp = pending
+                }
+            }
+        },
         viewModel = viewModel,
     )
     TotpSignInDialog(pendingTotp, {
         pendingTotp = null
     }) { pending, code ->
-        scope.completePendingTotpSignIn(globalDialogController, appNavFactory, pending, code) {
+        scope.completePendingTotpSignIn(globalDialogController, appNavFactory, pending, code, uIViewModel) {
             pendingTotp = null
         }
     }
@@ -125,51 +171,164 @@ private fun kotlinx.coroutines.CoroutineScope.completePendingTotpSignIn(
     appNavFactory: AppNavFactory,
     pending: PendingTotpSignIn,
     code: String,
+    uiViewModel: UIViewModel,
     onSuccess: () -> Unit,
 ) {
     launch {
         globalDialogController.useResult {
             request {
-                completeTotpSignIn(pending, code)
-                Result.success(Unit)
+                val userInfo = signInTotp(code).getOrThrow()
+                val userPass = uiViewModel.historyManager.addSession(
+                    RawUserPassInfo(
+                        pending.address,
+                        pending.authKey,
+                    )
+                )
+                Result.success(
+                    SignResult(
+                        userInfo,
+                        pending.data,
+                        pending.signature,
+                        pending.address,
+                        pending.authKey
+                    ) to userPass
+                )
             }
-        }.onSuccess {
+        }.onSuccess { (it, userPass) ->
             onSuccess()
+            uiViewModel.login(
+                it.address,
+                it.data,
+                it.signature,
+                userPass,
+                it.userInfo
+            )
             appNavFactory.newAppNav().gotoHome()
         }
     }
 }
 
-private suspend fun AppGlobalDialogController.performAuth(
+private suspend fun AppGlobalDialogController.performSignInAuth(
     appNav: AppNavFactory,
     privateKey: String,
     encryptionPrivateKey: String?,
     algo: AlgoType,
-    isSignUp: Boolean,
+    uiViewModel: UIViewModel,
 ): PendingTotpSignIn? {
     if (privateKey.isBlank()) return null
     return useResult {
+        val sessionManager = context.sessionManager
         request {
-            when (val result = context.sessionManager.startAuth(privateKey, encryptionPrivateKey, algo, isSignUp)) {
-                is UserAuthResult.Success -> Result.success<AuthResult>(AuthResult.Success)
-                is UserAuthResult.RequiresTotp -> Result.success(AuthResult.RequiresTotp(result.pending))
+            val authKey = getAuthKey(algo, privateKey, encryptionPrivateKey)
+            prepareSignInFromPrivateKey(authKey) {
+                sessionManager.getData()
+            }.mapResult { param ->
+                sessionManager.signIn(SignInBody(param.address, param.signature))
+                    .map { response ->
+                        when (response) {
+                            is SignInResponse.Success -> {
+                                val userPassInfo = RawUserPassInfo(
+                                    param.address,
+                                    param.authKey,
+                                )
+                                val userPass =
+                                    uiViewModel.historyManager.addSession(userPassInfo)
+                                val signResult = SignResult(
+                                    response.userInfo,
+                                    param.data,
+                                    param.signature,
+                                    param.address,
+                                    param.authKey
+                                )
+                                UserAuthResult.Success(signResult, userPass)
+                            }
+
+                            SignInResponse.RequiresTotp -> UserAuthResult.RequiresTotp(
+                                PendingTotpSignIn(
+                                    param.authKey,
+                                    param.data,
+                                    param.signature,
+                                    param.address
+                                )
+                            )
+                        }
+                    }
             }
         }
     }.map { result ->
         when (result) {
-            AuthResult.Success -> {
+            is UserAuthResult.Success -> {
+                val signResult = result.signResult
+                uiViewModel.login(
+                    signResult.address,
+                    signResult.data,
+                    signResult.signature,
+                    result.userPass,
+                    signResult.userInfo
+                )
                 appNav.newAppNav().gotoHome()
                 null
             }
 
-            is AuthResult.RequiresTotp -> result.pending
+            is UserAuthResult.RequiresTotp -> result.pending
         }
     }.getOrNull()
 }
 
-private sealed class AuthResult {
-    data object Success : AuthResult()
-    data class RequiresTotp(val pending: PendingTotpSignIn) : AuthResult()
+private suspend fun AppGlobalDialogController.performSignUpAuth(
+    appNav: AppNavFactory,
+    privateKey: String,
+    encryptionPrivateKey: String?,
+    algo: AlgoType,
+    uiViewModel: UIViewModel,
+) {
+    if (privateKey.isBlank()) return
+    useResult {
+        val sessionManager = context.sessionManager
+        request {
+            val authKey = getAuthKey(
+                algo,
+                privateKey,
+                encryptionPrivateKey
+            )
+            prepareSignInFromPrivateKey(authKey) {
+                sessionManager.getData()
+            }.mapResult { param ->
+                val encryptionPublicKey =
+                    (param.authKey as? AuthKey.Dilithium)?.derEncryptionPublicKey
+                sessionManager.signUp(
+                    SignUpBody(
+                        param.authKey.derPublicKey,
+                        param.signature,
+                        encryptionPublicKey
+                    )
+                ).map { userInfo ->
+                    val userPass = uiViewModel.historyManager.addSession(
+                        RawUserPassInfo(
+                            param.address,
+                            param.authKey,
+                        )
+                    )
+                    SignResult(
+                        userInfo,
+                        param.data,
+                        param.signature,
+                        param.address,
+                        param.authKey
+                    ) to userPass
+                }
+            }
+        }
+    }.onSuccess { (it, userPass) ->
+        uiViewModel.login(
+            it.address,
+            it.data,
+            it.signature,
+            userPass,
+            it.userInfo
+        )
+        appNav.newAppNav().gotoHome()
+    }
 }
 
 @Composable

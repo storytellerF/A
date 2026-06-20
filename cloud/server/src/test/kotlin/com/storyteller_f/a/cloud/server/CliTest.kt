@@ -147,8 +147,7 @@ class CliTest {
             userKeys.derPublic
         )
 
-        val userTuple = getAppSession(
-            isSignUp = false,
+        val userTuple = getAppSignInSession(
             authKey = userAuthKey,
             onReceive = { _, _, _ -> }
         ) {

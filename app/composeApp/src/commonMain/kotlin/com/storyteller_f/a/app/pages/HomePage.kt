@@ -54,6 +54,7 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import androidx.savedstate.serialization.SavedStateConfiguration
+import com.storyteller_f.a.app.IAccountInstance
 import com.storyteller_f.a.app.LocalAppNavFactory
 import com.storyteller_f.a.app.LocalUiViewModel
 import com.storyteller_f.a.app.Res
@@ -340,10 +341,9 @@ private fun HomePager(
 @Composable
 private fun UserHost(content: @Composable () -> Unit) {
     val uiViewModel = LocalUiViewModel.current
-    val session = uiViewModel.mainInstance.sessionManager
+    val session by uiViewModel.instance.collectAsState()
     val appNavFactory = LocalAppNavFactory.current
-    val user by session.isAlreadySignIn.collectAsState()
-    if (user) {
+    if (session !is IAccountInstance.None) {
         content()
     } else {
         CenterBox {

@@ -30,11 +30,6 @@ interface UserPass {
     ): Result<CustomApi.Accounts.ChildAccounts.AddChildAccountRequest>
 }
 
-sealed interface ClientSessionState {
-    data object None : ClientSessionState
-    data class Success(val userPass: UserPass) : ClientSessionState
-}
-
 @Serializable
 data class RawUserPassInfo(
     val address: String,
@@ -82,7 +77,8 @@ data class RawUserPass(val rawUSerPass: RawUserPassInfo) : UserPass {
 
         val aesKeyRes = algo.encryptionAlgo.kemDecrypt(epk, encryptedAesKey.hexToByteArray())
         return aesKeyRes.mapCatching {
-            val decryptedPrivateKey = decryptDataByAES(encryptedPrivateKey.hexToByteArray(), it).getOrThrow()
+            val decryptedPrivateKey =
+                decryptDataByAES(encryptedPrivateKey.hexToByteArray(), it).getOrThrow()
             val decryptedEncryptionPrivateKey = encryptedEncryptionPrivateKey?.let { enc ->
                 decryptDataByAES(enc.hexToByteArray(), it).getOrThrow()
             }
