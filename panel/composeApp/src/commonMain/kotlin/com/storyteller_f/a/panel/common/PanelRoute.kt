@@ -46,7 +46,7 @@ import com.storyteller_f.a.panel.pages.TaskRecordsPage
 import com.storyteller_f.a.panel.pages.TitleDetailPage
 import com.storyteller_f.a.panel.pages.TopicDetailPage
 import com.storyteller_f.a.panel.pages.UserDetailPage
-import com.storyteller_f.a.panel.panelUiViewModel
+import com.storyteller_f.a.panel.LocalPanelUiViewModel
 import com.storyteller_f.a.panel.sign_in
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -320,7 +320,7 @@ fun rootEntryProvider(nav: PanelNav) = entryProvider {
 @Composable
 private fun PanelHost(content: @Composable () -> Unit) {
     val panelNav = LocalPanelNav.current
-    val instance by panelUiViewModel.instance.collectAsState()
+    val instance by LocalPanelUiViewModel.current.instance.collectAsState()
     val isAlreadySign = instance.isAlreadySign
     Scaffold {
         if (isAlreadySign) {

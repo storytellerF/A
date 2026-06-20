@@ -23,7 +23,7 @@ import com.storyteller_f.a.client.core.AuthKey
 import com.storyteller_f.a.client.core.RawUserPassInfo
 import com.storyteller_f.a.client.core.getPanelUserSignInPass
 import com.storyteller_f.a.panel.LocalPanelGlobalDialog
-import com.storyteller_f.a.panel.panelUiViewModel
+import com.storyteller_f.a.panel.LocalPanelUiViewModel
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.AlgoType
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -64,6 +64,7 @@ class PanelInputViewModel : ViewModel() {
 fun PanelInputPage(back: () -> Unit) {
     val viewModel: PanelInputViewModel = viewModel()
     val dialogController = LocalPanelGlobalDialog.current
+    val panelUiViewModel = LocalPanelUiViewModel.current
     CenterBox {
         val scope = rememberCoroutineScope()
         val privateKey by viewModel.privateKey.collectAsState()

@@ -17,7 +17,7 @@ import com.storyteller_f.a.app.core.components.pagingItems
 import com.storyteller_f.a.client.core.PanelSessionManager
 import com.storyteller_f.a.panel.Res
 import com.storyteller_f.a.panel.log_supporting
-import com.storyteller_f.a.panel.panelUiViewModel
+import com.storyteller_f.a.panel.LocalPanelUiViewModel
 import com.storyteller_f.shared.model.PanelLogInfo
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.type.ObjectType
@@ -71,7 +71,7 @@ inline fun <reified VM : ViewModel> panelViewModel(
     keys: List<Comparable<*>?>? = null,
     crossinline factory: (PanelSessionManager, ModelStorage) -> VM
 ): VM {
-    val instance by panelUiViewModel.instance.collectAsState()
+    val instance by LocalPanelUiViewModel.current.instance.collectAsState()
     val sessionManager = instance.sessionManager
     val modelStorage = instance.database
     SideEffect {

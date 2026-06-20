@@ -15,7 +15,8 @@ import com.storyteller_f.shared.setupKmpLogger
 import java.lang.ref.WeakReference
 
 class PanelApplication : Application() {
-    val mediaPlayer = buildPanelMediaPlayer()
+    val panelUiViewModel = createPanelUIViewModel()
+    val mediaPlayer = buildPanelMediaPlayer(panelUiViewModel)
 
     override fun onCreate() {
         super.onCreate()
@@ -30,7 +31,7 @@ class PanelApplication : Application() {
     }
 }
 
-private fun buildPanelMediaPlayer(): MediaPlayerService = object : MediaPlayerService() {
+private fun buildPanelMediaPlayer(panelUiViewModel: PanelUIViewModel): MediaPlayerService = object : MediaPlayerService() {
     override fun fullscreen(remoteMediaItem: RemoteMediaItem) {
         val context = mainActivityRef?.get() ?: return
         context.startActivity(Intent(context, PanelMediaPlayerActivity::class.java).apply {

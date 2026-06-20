@@ -5,7 +5,8 @@ import androidx.compose.ui.window.ComposeViewport
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
+    val panelUiViewModel = createPanelUIViewModel()
     ComposeViewport {
-        App()
+        App(panelUiViewModel)
     }
 }
