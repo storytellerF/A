@@ -111,53 +111,18 @@ fun test(
     Napier.i {
         "start test `$methodName` $uuid"
     }
-    if (System.getenv("ENABLE_TEST_CONTAINER") == "true") {
-        System.setProperty("api.version", "1.44")
-        startTestContainerTest(
-            uuid,
-            mapOf(
-                "SESSION_SECRET" to TEST_SESSION_SECRET,
-                "METHOD_NAME" to methodName
-            ) + overrideEnv,
-            block
-        )
-    } else {
-        startMemoryTest(
-            uuid,
-            mapOf(
-                "SESSION_SECRET" to TEST_SESSION_SECRET,
-                "SERVER_URL" to "http://localhost",
-                "METHOD_NAME" to methodName,
-            ) + overrideEnv,
-            block
-        )
-    }
+    System.setProperty("api.version", "1.44")
+    startTestContainerTest(
+        uuid,
+        mapOf(
+            "SESSION_SECRET" to TEST_SESSION_SECRET,
+            "METHOD_NAME" to methodName
+        ) + overrideEnv,
+        block
+    )
     Napier.i {
         "test done `$methodName`"
     }
-}
-
-@OptIn(ExperimentalUuidApi::class)
-private fun startMemoryTest(
-    uuid: String,
-    overrideEnv: Map<String, String>,
-    block: suspend (TestMate) -> Unit
-) {
-    val h2File = File("./build/test/session/$uuid/h2/default")
-    h2File.parentFile!!.let {
-        if (!it.exists() && !it.mkdirs()) {
-            throw Exception("mkdirs failed ${it.canonicalPath}")
-        }
-    }
-    val url = "r2dbc:h2:file:///${h2File.path.replace("\\", "/")}"
-//    val url = "r2dbc:h2:mem:///${Uuid.random()}?DB_CLOSE_DELAY=-1"
-    val env = mapOf(
-        "DATABASE_URI" to url,
-        "DATABASE_DRIVER" to "h2",
-        "DATABASE_USER" to "sa",
-        "DATABASE_PASS" to ""
-    ) + overrideEnv
-    doTest(uuid, env, block)
 }
 
 private fun startTestContainerTest(

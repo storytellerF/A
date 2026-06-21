@@ -37,7 +37,6 @@ dependencies {
 
     testImplementation(libs.commons.logging)
     testImplementation(kotlin("test"))
-    testImplementation(libs.testcontainers.elasticsearch)
     implementation(libs.commons.imaging)
 }
 

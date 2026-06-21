@@ -12,6 +12,16 @@ dependencies {
     implementation(projects.shared)
     implementation(libs.kotlinx.datetime)
     testImplementation(kotlin("test"))
+    testImplementation(projects.backend.elastic)
+    testImplementation(projects.backend.lucene)
+    testImplementation(projects.backend.minio)
+    testImplementation(projects.backend.filesystem)
+    testImplementation(projects.backend.exposed)
+    testImplementation(libs.testcontainers.elasticsearch)
+    testImplementation(libs.testcontainers.minio)
+    testImplementation(libs.testcontainers.postgresql)
+    testImplementation(libs.h2)
+    testImplementation(libs.postgresql)
     runtimeOnly(libs.vavi.image.avif)
 }
 
