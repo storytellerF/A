@@ -15,8 +15,8 @@ import com.storyteller_f.shared.setupKmpLogger
 import java.lang.ref.WeakReference
 
 class PanelApplication : Application() {
-    val panelUiViewModel = createPanelUIViewModel()
-    val mediaPlayer = buildPanelMediaPlayer(panelUiViewModel)
+    val panelUiViewModel by lazy { createPanelUIViewModel() }
+    val mediaPlayer by lazy { buildPanelMediaPlayer(panelUiViewModel) }
 
     override fun onCreate() {
         super.onCreate()
@@ -31,25 +31,26 @@ class PanelApplication : Application() {
     }
 }
 
-private fun buildPanelMediaPlayer(panelUiViewModel: PanelUIViewModel): MediaPlayerService = object : MediaPlayerService() {
-    override fun fullscreen(remoteMediaItem: RemoteMediaItem) {
-        val context = mainActivityRef?.get() ?: return
-        context.startActivity(Intent(context, PanelMediaPlayerActivity::class.java).apply {
+private fun buildPanelMediaPlayer(panelUiViewModel: PanelUIViewModel): MediaPlayerService =
+    object : MediaPlayerService() {
+        override fun fullscreen(remoteMediaItem: RemoteMediaItem) {
+            val context = mainActivityRef?.get() ?: return
+            context.startActivity(Intent(context, PanelMediaPlayerActivity::class.java).apply {
 //                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 //                addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
-            putExtra("id", remoteMediaItem.id)
-        })
-    }
+                putExtra("id", remoteMediaItem.id)
+            })
+        }
 
-    override suspend fun start(
-        remoteMediaItem: RemoteMediaItem,
-        localMediaPlaySession: LocalMediaPlaySession,
-        playList: List<ConstPlayItem>
-    ) {
-        val instance = panelUiViewModel.instance.value
-        instance.controller.startPlayMedia(remoteMediaItem, localMediaPlaySession, this, playList)
-    }
+        override suspend fun start(
+            remoteMediaItem: RemoteMediaItem,
+            localMediaPlaySession: LocalMediaPlaySession,
+            playList: List<ConstPlayItem>
+        ) {
+            val instance = panelUiViewModel.instance.value
+            instance.controller.startPlayMedia(remoteMediaItem, localMediaPlaySession, this, playList)
+        }
 
-    override val enablePip: Boolean
-        get() = false
-}
+        override val enablePip: Boolean
+            get() = false
+    }

@@ -24,6 +24,7 @@ class PanelMediaPlayerActivity : ComponentActivity() {
                 }
             } else {
                 CompositionLocalProvider(
+                    LocalPanelUiViewModel provides (application as PanelApplication).panelUiViewModel,
                     LocalMediaPlayListHandlerProvider provides DefaultMediaPlayListHandlerProvider,
                     LocalMediaPlayerService provides (application as PanelApplication).mediaPlayer
                 ) {

@@ -1,5 +1,6 @@
 package com.storyteller_f.a.panel
 
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import com.storyteller_f.shared.loadCryptoLibIfNeed
@@ -22,7 +23,9 @@ fun main() {
             onCloseRequest = ::exitApplication,
             title = "Panel",
         ) {
-            App(panelUiViewModel)
+            CompositionLocalProvider(LocalPanelUiViewModel provides panelUiViewModel) {
+                App()
+            }
         }
     }
 }

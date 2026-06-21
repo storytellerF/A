@@ -33,6 +33,7 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
@@ -127,7 +128,7 @@ val LocalPanelGlobalTask =
     }
 
 val LocalPanelUiViewModel =
-    compositionLocalOf<PanelUIViewModel> {
+    staticCompositionLocalOf<PanelUIViewModel> {
         error("LocalPanelUiViewModel must be provided")
     }
 
@@ -135,7 +136,8 @@ fun createPanelUIViewModel() = PanelUIViewModel(kotlinx.coroutines.GlobalScope, 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun App(panelUiViewModel: PanelUIViewModel) {
+fun App() {
+    val panelUiViewModel = LocalPanelUiViewModel.current
     val panelAccountInstance by panelUiViewModel.instance.collectAsState()
     val sessionManager = panelAccountInstance.sessionManager
     val client = sessionManager.client
@@ -157,7 +159,6 @@ fun App(panelUiViewModel: PanelUIViewModel) {
         }
     }
     CompositionLocalProvider(
-        LocalPanelUiViewModel provides panelUiViewModel,
         LocalClient provides client,
         LocalPanelNav provides nav.newPanelNav(),
         LocalPanelGlobalDialog provides controller,

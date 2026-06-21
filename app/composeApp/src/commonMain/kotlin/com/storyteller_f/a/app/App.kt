@@ -14,6 +14,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -87,9 +88,9 @@ import com.storyteller_f.a.client.core.RawUserPass
 import com.storyteller_f.a.client.core.SimpleUserSessionManager
 import com.storyteller_f.a.client.core.UserPass
 import com.storyteller_f.a.client.core.UserSessionModel
+import com.storyteller_f.a.client.core.buildWebSocketUrl
 import com.storyteller_f.a.client.core.createSimpleUserSessionManager
 import com.storyteller_f.a.client.core.defaultClientConfigure
-import com.storyteller_f.a.client.core.buildWebSocketUrl
 import com.storyteller_f.a.client.core.getClient
 import com.storyteller_f.a.client.core.login
 import com.storyteller_f.a.client.core.processEncryptedTopic
@@ -169,7 +170,7 @@ val LocalClientFileProvider = compositionLocalOf {
 }
 
 @OptIn(DelicateCoroutinesApi::class)
-val LocalUiViewModel = compositionLocalOf<UIViewModel> {
+val LocalUiViewModel = staticCompositionLocalOf<UIViewModel> {
     error("LocalUiViewModel must be provided")
 }
 typealias AppGlobalDialogController = GlobalDialogController<GlobalDialogContext<SimpleUserSessionManager>>
