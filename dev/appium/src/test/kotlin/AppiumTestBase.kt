@@ -548,7 +548,11 @@ internal fun copyAppLogToBuild(testName: String, packageName: String) {
     outputDir.mkdirs()
     val outputFile = File(outputDir, "$testName.log")
     val logResult = runAdbCommandAllowFailure(
-        "exec-out", "run-as", packageName, "cat", "files/logs/$APP_LOG_FILE_NAME"
+        "exec-out",
+        "run-as",
+        packageName,
+        "cat",
+        "files/logs/$APP_LOG_FILE_NAME"
     )
     if (logResult.exitCode == 0 && logResult.output.isNotBlank()) {
         outputFile.writeText(logResult.output)
@@ -573,7 +577,11 @@ internal fun collectBugreport(testName: String) {
 private fun copyAnrTracesToBuild(testName: String, packageName: String) {
     val outputDir = File("build/test/appium-logs/AppiumTest")
     val anrResult = runAdbCommandAllowFailure(
-        "shell", "dumpsys", "activity", "exit-info", packageName
+        "shell",
+        "dumpsys",
+        "activity",
+        "exit-info",
+        packageName
     )
     if (anrResult.exitCode == 0 && anrResult.output.isNotBlank()) {
         File(outputDir, "$testName.exit-info.txt").writeText(anrResult.output)

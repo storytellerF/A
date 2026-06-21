@@ -15,9 +15,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.core.components.pagingItems
 import com.storyteller_f.a.client.core.PanelSessionManager
+import com.storyteller_f.a.panel.LocalPanelUiViewModel
 import com.storyteller_f.a.panel.Res
 import com.storyteller_f.a.panel.log_supporting
-import com.storyteller_f.a.panel.LocalPanelUiViewModel
 import com.storyteller_f.shared.model.PanelLogInfo
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.type.ObjectType

@@ -126,6 +126,7 @@ tasks.test {
 
 tasks.named("mergeServiceFiles") {
     dependsOn(":cloud:ws-api:jar")
+    dependsOn(":cloud:runtime:jar")
 }
 
 sentry {

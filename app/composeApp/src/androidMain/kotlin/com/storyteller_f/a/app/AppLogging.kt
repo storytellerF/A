@@ -20,10 +20,10 @@ fun setupAppLogger(application: Application) {
     val logFile = ensureAppLogFile(application)
     Napier.takeLogarithm()
     Napier.base(AppAntilog(logFile))
-    installCrashHandler(logFile)
+    installCrashHandler()
 }
 
-private fun installCrashHandler(logFile: File) {
+private fun installCrashHandler() {
     val original = Thread.getDefaultUncaughtExceptionHandler()
     Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
         Napier.e(tag = "FATAL", throwable = throwable) {

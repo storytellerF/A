@@ -64,10 +64,11 @@ class MainActivity : ComponentActivity() {
         bindActivity(this)
         setContent {
             CompositionLocalProvider(
+                LocalPanelUiViewModel provides (application as PanelApplication).panelUiViewModel,
                 LocalMediaPlayListHandlerProvider provides DefaultMediaPlayListHandlerProvider,
                 LocalMediaPlayerService provides (application as PanelApplication).mediaPlayer
             ) {
-                App((application as PanelApplication).panelUiViewModel)
+                App()
             }
         }
     }
