@@ -64,8 +64,6 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 class FileTest {
     @Test
@@ -139,20 +137,13 @@ class FileTest {
         assertEquals(0.999999, mssim.get(2), 0.00001)
     }
 
-    @OptIn(ExperimentalUuidApi::class)
     @Test
-    fun `test audio album`() {
-        val path = "build/test/a_file/${Uuid.random().toHexString()}"
-        File(path).parentFile!!.deleteRecursively()
-        test(
-            mapOf("FILE_SYSTEM_MEDIA_PATH" to path)
-        ) {
-            attachSession {
-                val name = "I_Do_not_Wanna_Live_Forever.flac"
-                val data = getUploadDataFromResources(name)
-                val response = upload(it.uid ob ObjectType.USER, data).getOrThrow()
-                extractAlbum(response.data.first().id).getOrThrow()
-            }
+    fun `test audio album`() = test {
+        attachSession {
+            val name = "I_Do_not_Wanna_Live_Forever.flac"
+            val data = getUploadDataFromResources(name)
+            val response = upload(it.uid ob ObjectType.USER, data).getOrThrow()
+            extractAlbum(response.data.first().id).getOrThrow()
         }
     }
 

@@ -16,3 +16,9 @@ data class DatabaseConnection(
     val user: String,
     val password: String
 )
+
+object ContainerImages {
+    const val ELASTICSEARCH = "docker.elastic.co/elasticsearch/elasticsearch:8.17.0"
+    const val MINIO = "minio/minio:RELEASE.2024-12-18T13-15-44Z"
+    const val POSTGRESQL = "pgvector/pgvector:pg16"
+}
