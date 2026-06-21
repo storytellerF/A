@@ -88,6 +88,7 @@ trigger: always_on
     * 执行完整的普通单元测试使用`./scripts/test_scripts/build-and-test.sh --unit --console=plain` (不包含依赖设备的compose 和appium 测试)
     * 执行端到端appium 测试使用`./scripts/test_scripts/build-and-test.sh --appium --console=plain`
     * 如果是compose common 中在device_based 中的测试需要使用真实设备`./gradlew :module:connectedAndroidTest` 或者`./gradlew :module:jvmTest`
+    * 如果是compose ui 改动需要执行`./gradlew validateDebugScreenshotTest` 进行snapshot 测试
 - 测试的目的是发现问题，如果发现了问题应该全力修复，而不是在测试用例上绕过去。
 - 除非有前后依赖关系，否则不要把多余的测试步骤加到一个测试用例里面
 - 重复性的测试步骤可以提取成单独的方法
