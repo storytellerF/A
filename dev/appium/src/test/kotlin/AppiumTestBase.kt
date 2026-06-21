@@ -268,24 +268,24 @@ abstract class AppiumTestBase {
     }
 }
 
-internal data class InjectedSession(
+data class InjectedSession(
     val address: String,
     val pemPrivateKey: String,
     val derPrivateKey: String,
     val derPublicKey: String,
 )
 
-internal data class AppiumPorts(
+data class AppiumPorts(
     val server: Int,
     val ws: Int,
 )
 
-internal data class AuthenticatedSession(
+data class AuthenticatedSession(
     val session: InjectedSession,
     val sessionManager: UserSessionManager,
 )
 
-internal data class AppUnderTest(
+data class AppUnderTest(
     val packageName: String,
     val mainActivityClassName: String,
 )

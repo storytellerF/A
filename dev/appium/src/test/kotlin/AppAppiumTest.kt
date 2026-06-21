@@ -6,7 +6,7 @@ import com.storyteller_f.a.client.core.createRoom
 import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.a.client.core.getTopicInfo
 import com.storyteller_f.a.client.core.joinCommunity
-import com.storyteller_f.a.shared.loadCryptoLibIfNeed
+import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.type.ObjectType
 import io.appium.java_client.android.AndroidDriver
 import kotlinx.coroutines.delay
