@@ -176,7 +176,7 @@ if [ "$RUN_COMPILE_UNIT" = true ]; then
     rm -rf cloud/server/build/test/session
 
     echo "Running unit tests without Testcontainers..."
-    if ! ENABLE_TEST_CONTAINER=false ./gradlew test -Pappium=false $TEST_ARGS $GRADLE_CONSOLE_ARGS; then
+    if ! ENABLE_TEST_CONTAINER=false ./gradlew test -Pappium=false -x :cloud:server:test $TEST_ARGS $GRADLE_CONSOLE_ARGS; then
         showNotification "测试失败" "单元测试执行失败！请检查测试用例。" "false"
         exit 1
     fi

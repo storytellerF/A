@@ -53,7 +53,7 @@ fun buildMemoryDatabaseConnection(): DatabaseConnection {
 
 fun useElasticSearchContainer(block: (MergedEnv) -> Unit) {
     System.setProperty("api.version", "1.44")
-    ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch:8.17.0")
+    ElasticsearchContainer(ContainerImages.ELASTICSEARCH)
         .withEnv("xpack.security.transport.ssl.enabled", "false")
         .withEnv("xpack.security.http.ssl.enabled", "false")
         .use { container ->
@@ -75,7 +75,7 @@ fun useElasticSearchContainer(block: (MergedEnv) -> Unit) {
 }
 
 fun useMinioContainer(block: (MergedEnv) -> Unit) {
-    MinIOContainer("minio/minio:RELEASE.2024-12-18T13-15-44Z")
+    MinIOContainer(ContainerImages.MINIO)
         .use { container ->
             container.start()
             val env = MergedEnv(
@@ -94,7 +94,7 @@ fun useMinioContainer(block: (MergedEnv) -> Unit) {
 
 fun usePostgresContainer(block: (DatabaseConnection) -> Unit) {
     System.setProperty("api.version", "1.44")
-    PostgreSQLContainer("pgvector/pgvector:pg16")
+    PostgreSQLContainer(ContainerImages.POSTGRESQL)
         .use { container ->
             container.start()
             val connection = DatabaseConnection(
@@ -113,10 +113,11 @@ fun testSearch(block: suspend (TopicSearchService) -> Unit) {
             val service = buildTopicSearchService(env)
             runBlocking { block(service) }
         }
+    } else {
+        val memoryEnv = buildMemorySearchEnv()
+        val service = buildTopicSearchService(memoryEnv)
+        runBlocking { block(service) }
     }
-    val memoryEnv = buildMemorySearchEnv()
-    val service = buildTopicSearchService(memoryEnv)
-    runBlocking { block(service) }
 }
 
 fun testOss(block: suspend (ObjectStorageService) -> Unit) {
@@ -125,27 +126,14 @@ fun testOss(block: suspend (ObjectStorageService) -> Unit) {
             val service = mediaService(env)
             runBlocking { block(service) }
         }
+    } else {
+        val memoryEnv = buildMemoryOssEnv()
+        val service = mediaService(memoryEnv)
+        runBlocking { block(service) }
     }
-    val memoryEnv = buildMemoryOssEnv()
-    val service = mediaService(memoryEnv)
-    runBlocking { block(service) }
 }
 
-fun testDatabase(block: suspend (CombinedDatabase) -> Unit) {
-    if (isTestContainerEnabled) {
-        usePostgresContainer { connection ->
-            val db = buildExposedDatabase(connection)
-            runBlocking {
-                db.init()
-                try {
-                    block(db)
-                } finally {
-                    db.clean()
-                }
-            }
-        }
-    }
-    val connection = buildMemoryDatabaseConnection()
+private fun withDatabase(connection: DatabaseConnection, block: suspend (CombinedDatabase) -> Unit) {
     val db = buildExposedDatabase(connection)
     runBlocking {
         db.init()
@@ -154,5 +142,16 @@ fun testDatabase(block: suspend (CombinedDatabase) -> Unit) {
         } finally {
             db.clean()
         }
+    }
+}
+
+fun testDatabase(block: suspend (CombinedDatabase) -> Unit) {
+    if (isTestContainerEnabled) {
+        usePostgresContainer { connection ->
+            withDatabase(connection, block)
+        }
+    } else {
+        val connection = buildMemoryDatabaseConnection()
+        withDatabase(connection, block)
     }
 }

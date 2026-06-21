@@ -2,6 +2,7 @@ package com.storyteller_f.a.cloud.server
 
 import com.github.vertical_blank.sqlformatter.SqlFormatter
 import com.perraco.utils.SnowflakeFactory
+import com.storyteller_f.a.backend.core.ContainerImages
 import com.storyteller_f.a.backend.core.loadAvif
 import com.storyteller_f.a.backend.core.readEnv
 import com.storyteller_f.a.client.core.AuthKey
@@ -147,7 +148,7 @@ private suspend fun useDatabaseContainer(
     block: suspend () -> Unit
 ) {
     PostgreSQLContainer(
-        "pgvector/pgvector:pg16"
+        ContainerImages.POSTGRESQL
     ).use { postgreSQLContainer ->
         postgreSQLContainer.start()
         Napier.i("jdbc: ${postgreSQLContainer.jdbcUrl}")
@@ -164,7 +165,7 @@ private suspend fun useMinioTestContainer(
     env: MutableMap<String, String>,
     block: suspend () -> Unit
 ) {
-    MinIOContainer("minio/minio:RELEASE.2024-12-18T13-15-44Z")
+    MinIOContainer(ContainerImages.MINIO)
         .use { minioContainer ->
             minioContainer.start()
             env["MEDIA_SERVICE"] = "minio"
@@ -180,7 +181,7 @@ private suspend fun useElasticTestContainer(
     block: suspend () -> Unit
 ) {
     ElasticsearchContainer(
-        "docker.elastic.co/elasticsearch/elasticsearch:8.17.0"
+        ContainerImages.ELASTICSEARCH
     ).withEnv("xpack.security.transport.ssl.enabled", "false")
         .withEnv("xpack.security.http.ssl.enabled", "false").use { elasticClient ->
             elasticClient.start()
