@@ -16,11 +16,11 @@ plugins {
     alias(libs.plugins.room) apply false
     alias(libs.plugins.kover)
     alias(libs.plugins.detekt)
-    id("com.github.ben-manes.versions") version "0.54.0"
-    id("nl.littlerobots.version-catalog-update") version "1.1.0"
+    alias(libs.plugins.benManesVersions)
+    alias(libs.plugins.versionCatalogUpdate)
     alias(libs.plugins.android.test) apply false
     alias(libs.plugins.kotlinxRpc) apply false
-    id("io.sentry.android.gradle") version "6.12.0" apply false
+    alias(libs.plugins.sentryAndroidGradle) apply false
 }
 
 val detektReportMergeSarif by tasks.registering(ReportMergeTask::class) {

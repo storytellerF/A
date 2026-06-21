@@ -8,6 +8,7 @@ android-minSdk = "33"
 android-targetSdk = "37"
 androidx-activityCompose = "1.13.0"
 bcprovJdk18on = "1.84"
+benManesVersions = "0.54.0"
 benchmarkMacroJunit4 = "1.4.1"
 buildconfig = "0.21.2"
 coil = "3.5.0"
@@ -110,6 +111,7 @@ robolectric = "4.16.1"
 roomRuntime = "2.8.4"
 runtime = "1.11.1"
 screenshot = "0.0.1-alpha15"
+sentryAndroidGradle = "6.12.0"
 sqlFormatter = "2.0.5"
 sqliteBundled = "2.6.2"
 testContainer = "1.21.4"
@@ -121,6 +123,7 @@ uiautomator = "2.3.0"
 uriKmp = "0.0.21"
 urlbuilder = "2.0.9"
 vaviImageAvif = "0.0.7"
+versionCatalogUpdate = "1.1.0"
 vlcj = "4.12.1"
 webrtcKmp = "0.125.11"
 zoomimageComposeCoil3 = "1.4.0"
@@ -347,6 +350,7 @@ zoomimage-compose-coil3 = { module = "io.github.panpf.zoomimage:zoomimage-compos
 aboutlibrary = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "aboutlibrariesCore" }
 android-test = { id = "com.android.test", version.ref = "agp" }
 androidApplication = { id = "com.android.application", version.ref = "agp" }
+benManesVersions = { id = "com.github.ben-manes.versions", version.ref = "benManesVersions" }
 androidLibrary = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
 buildconfig = { id = "com.codingfeline.buildkonfig", version.ref = "buildconfig" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
@@ -363,8 +367,10 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 ktor = { id = "io.ktor.plugin", version.ref = "ktor" }
 room = { id = "androidx.room", version.ref = "roomRuntime" }
 screenshot = { id = "com.android.compose.screenshot", version.ref = "screenshot" }
+sentryAndroidGradle = { id = "io.sentry.android.gradle", version.ref = "sentryAndroidGradle" }
 serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 sqlitenow = "dev.goquick.sqlitenow:0.5.4"
+versionCatalogUpdate = { id = "nl.littlerobots.version-catalog-update", version.ref = "versionCatalogUpdate" }
 
 [bundles]
 coil = [
