@@ -1,4 +1,5 @@
 import com.storyteller_f.a.client.core.ClientSessionState
+import com.storyteller_f.a.client.core.SimplePassHolder
 import com.storyteller_f.a.client.core.SingleFlightCustomAuthPlugin
 import com.storyteller_f.a.client.core.UserPass
 import com.storyteller_f.a.client.core.UserSessionModel
@@ -13,8 +14,8 @@ import io.ktor.client.engine.mock.respond
 import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
 import io.ktor.client.plugins.cookies.HttpCookies
 import io.ktor.client.request.HttpRequestData
+import io.ktor.client.request.HttpResponseData
 import io.ktor.client.request.get
-import io.ktor.client.statement.HttpResponseData
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
@@ -39,11 +40,13 @@ class Test {
         var initial401Count = 0
         val retryCookies = mutableListOf<String?>()
         val userPass = CountingUserPass(initialResponsesReleased)
-        val manager = UserSessionModel().also {
-            it.updateUser(UserInfo.EMPTY)
+        val passHolder = SimplePassHolder().also {
             it.updateState(ClientSessionState.Success(userPass))
         }
-        val client = buildSingleFlightTestClient(manager) { request ->
+        val manager = UserSessionModel().also {
+            it.updateUser(UserInfo.EMPTY)
+        }
+        val client = buildSingleFlightTestClient(manager, passHolder) { request ->
             handleSingleFlightRequest(request, lock, retryCookies) {
                 initial401Count += 1
                 if (initial401Count == 3) {
@@ -66,10 +69,11 @@ class Test {
 
     private fun buildSingleFlightTestClient(
         manager: UserSessionModel,
+        passHolder: SimplePassHolder,
         handler: suspend MockRequestHandleScope.(HttpRequestData) -> HttpResponseData
     ) = HttpClient(MockEngine) {
         install(SingleFlightCustomAuthPlugin) {
-            configClientAuth(manager) { u, l ->
+            configClientAuth(manager, passHolder) { u, l ->
                 addRequestHeadersFromInfo(u, l)
             }
         }
@@ -89,7 +93,7 @@ class Test {
     ): HttpResponseData {
         val auth = request.headers[HttpHeaders.Authorization]
         return if (auth == null) {
-            lock.withLock(onInitial401)
+            lock.withLock { onInitial401() }
             respond(
                 content = "unauthorized",
                 status = HttpStatusCode.Unauthorized,

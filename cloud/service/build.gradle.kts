@@ -38,6 +38,7 @@ dependencies {
     testImplementation(libs.commons.logging)
     testImplementation(kotlin("test"))
     implementation(libs.commons.imaging)
+    jmhImplementation(libs.testcontainers.elasticsearch)
 }
 
 tasks.withType<Test> {
