@@ -11,9 +11,6 @@ import java.io.File
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-val isTestContainerEnabled: Boolean
-    get() = System.getenv("ENABLE_TEST_CONTAINER") == "true"
-
 fun buildMemorySearchEnv(): MergedEnv {
     return MergedEnv(
         listOf(
@@ -107,28 +104,28 @@ fun usePostgresContainer(block: (DatabaseConnection) -> Unit) {
         }
 }
 
-fun testSearch(block: suspend (TopicSearchService) -> Unit) {
-    if (isTestContainerEnabled) {
-        useElasticSearchContainer { env ->
-            val service = buildTopicSearchService(env)
-            runBlocking { block(service) }
-        }
-    } else {
-        val memoryEnv = buildMemorySearchEnv()
-        val service = buildTopicSearchService(memoryEnv)
+fun testSearchMemory(block: suspend (TopicSearchService) -> Unit) {
+    val env = buildMemorySearchEnv()
+    val service = buildTopicSearchService(env)
+    runBlocking { block(service) }
+}
+
+fun testSearchContainer(block: suspend (TopicSearchService) -> Unit) {
+    useElasticSearchContainer { env ->
+        val service = buildTopicSearchService(env)
         runBlocking { block(service) }
     }
 }
 
-fun testOss(block: suspend (ObjectStorageService) -> Unit) {
-    if (isTestContainerEnabled) {
-        useMinioContainer { env ->
-            val service = mediaService(env)
-            runBlocking { block(service) }
-        }
-    } else {
-        val memoryEnv = buildMemoryOssEnv()
-        val service = mediaService(memoryEnv)
+fun testOssMemory(block: suspend (ObjectStorageService) -> Unit) {
+    val env = buildMemoryOssEnv()
+    val service = mediaService(env)
+    runBlocking { block(service) }
+}
+
+fun testOssContainer(block: suspend (ObjectStorageService) -> Unit) {
+    useMinioContainer { env ->
+        val service = mediaService(env)
         runBlocking { block(service) }
     }
 }
@@ -145,13 +142,13 @@ private fun withDatabase(connection: DatabaseConnection, block: suspend (Combine
     }
 }
 
-fun testDatabase(block: suspend (CombinedDatabase) -> Unit) {
-    if (isTestContainerEnabled) {
-        usePostgresContainer { connection ->
-            withDatabase(connection, block)
-        }
-    } else {
-        val connection = buildMemoryDatabaseConnection()
+fun testDatabaseMemory(block: suspend (CombinedDatabase) -> Unit) {
+    val connection = buildMemoryDatabaseConnection()
+    withDatabase(connection, block)
+}
+
+fun testDatabaseContainer(block: suspend (CombinedDatabase) -> Unit) {
+    usePostgresContainer { connection ->
         withDatabase(connection, block)
     }
 }
