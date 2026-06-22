@@ -44,8 +44,7 @@ class DatabaseTest {
         return user
     }
 
-    @Test
-    fun `test create and get user`() = testDatabase { db ->
+    private val createAndGetUser: suspend (CombinedDatabase) -> Unit = { db ->
         val user = createTestUser(db)
 
         val rawUser = db.user.getRawUser(ObjectFetch.IdFetch(user.id)).getOrThrow()
@@ -55,14 +54,12 @@ class DatabaseTest {
         assertEquals(user.address, rawUser.user.address)
     }
 
-    @Test
-    fun `test user not exists returns null`() = testDatabase { db ->
+    private val userNotExistsReturnsNull: suspend (CombinedDatabase) -> Unit = { db ->
         val rawUser = db.user.getRawUser(ObjectFetch.IdFetch(999999)).getOrThrow()
         assertNull(rawUser)
     }
 
-    @Test
-    fun `test create community with member`() = testDatabase { db ->
+    private val createCommunityWithMember: suspend (CombinedDatabase) -> Unit = { db ->
         val user = createTestUser(db)
         val communityId = SnowflakeFactory.nextId()
         val memberId = SnowflakeFactory.nextId()
@@ -81,8 +78,7 @@ class DatabaseTest {
         assertEquals("TestCommunity", rawCommunity.community.name)
     }
 
-    @Test
-    fun `test create room`() = testDatabase { db ->
+    private val createRoom: suspend (CombinedDatabase) -> Unit = { db ->
         val user = createTestUser(db)
         val roomId = SnowflakeFactory.nextId()
         val memberId = SnowflakeFactory.nextId()
@@ -109,10 +105,39 @@ class DatabaseTest {
         assertEquals("TestRoom", rawRoom.room.name)
     }
 
-    @Test
-    fun `test database init and clean`() = testDatabase { db ->
+    private val databaseInitAndClean: suspend (CombinedDatabase) -> Unit = { db ->
         val user = createTestUser(db)
         val rawUser = db.user.getRawUser(ObjectFetch.IdFetch(user.id)).getOrThrow()
         assertNotNull(rawUser)
     }
+
+    @Test
+    fun `test create and get user memory`() = testDatabaseMemory(createAndGetUser)
+
+    @Test
+    fun `test create and get user container`() = testDatabaseContainer(createAndGetUser)
+
+    @Test
+    fun `test user not exists returns null memory`() = testDatabaseMemory(userNotExistsReturnsNull)
+
+    @Test
+    fun `test user not exists returns null container`() = testDatabaseContainer(userNotExistsReturnsNull)
+
+    @Test
+    fun `test create community with member memory`() = testDatabaseMemory(createCommunityWithMember)
+
+    @Test
+    fun `test create community with member container`() = testDatabaseContainer(createCommunityWithMember)
+
+    @Test
+    fun `test create room memory`() = testDatabaseMemory(createRoom)
+
+    @Test
+    fun `test create room container`() = testDatabaseContainer(createRoom)
+
+    @Test
+    fun `test database init and clean memory`() = testDatabaseMemory(databaseInitAndClean)
+
+    @Test
+    fun `test database init and clean container`() = testDatabaseContainer(databaseInitAndClean)
 }
