@@ -1,6 +1,7 @@
 package com.storyteller_f.a.backend.core
 
 import com.storyteller_f.a.backend.core.service.CopyPack
+import com.storyteller_f.a.backend.core.service.ObjectStorageService
 import com.storyteller_f.a.backend.core.service.UploadPack
 import com.storyteller_f.shared.model.A_FILE_DEFAULT_BUCKET
 import java.io.File
@@ -24,8 +25,7 @@ class ObjectStorageServiceTest {
         )
     }
 
-    @Test
-    fun `test upload and get`() = testOss { service ->
+    private val uploadAndGet: suspend (ObjectStorageService) -> Unit = { service ->
         val pack = createTempUploadPack("file1.txt", "hello world")
         val writeResult = service.upload(A_FILE_DEFAULT_BUCKET, listOf(pack)).getOrThrow()
         assertEquals(1, writeResult.size)
@@ -36,8 +36,7 @@ class ObjectStorageServiceTest {
         assertEquals("test/file1.txt", getResult[0].fullName)
     }
 
-    @Test
-    fun `test upload and list`() = testOss { service ->
+    private val uploadAndList: suspend (ObjectStorageService) -> Unit = { service ->
         val pack1 = createTempUploadPack("list1.txt", "content1")
         val pack2 = createTempUploadPack("list2.txt", "content2")
         service.upload(A_FILE_DEFAULT_BUCKET, listOf(pack1, pack2)).getOrThrow()
@@ -46,8 +45,7 @@ class ObjectStorageServiceTest {
         assertTrue(listResult.size >= 2)
     }
 
-    @Test
-    fun `test upload and get input stream`() = testOss { service ->
+    private val uploadAndGetInputStream: suspend (ObjectStorageService) -> Unit = { service ->
         val content = "stream content test"
         val pack = createTempUploadPack("stream.txt", content)
         service.upload(A_FILE_DEFAULT_BUCKET, listOf(pack)).getOrThrow()
@@ -57,8 +55,7 @@ class ObjectStorageServiceTest {
         assertEquals(content, readContent)
     }
 
-    @Test
-    fun `test copy`() = testOss { service ->
+    private val copy: suspend (ObjectStorageService) -> Unit = { service ->
         val pack = createTempUploadPack("origin.txt", "copy me")
         service.upload(A_FILE_DEFAULT_BUCKET, listOf(pack)).getOrThrow()
 
@@ -72,8 +69,7 @@ class ObjectStorageServiceTest {
         assertEquals(1, getResult.size)
     }
 
-    @Test
-    fun `test delete`() = testOss { service ->
+    private val delete: suspend (ObjectStorageService) -> Unit = { service ->
         val pack = createTempUploadPack("to-delete.txt", "delete me")
         service.upload(A_FILE_DEFAULT_BUCKET, listOf(pack)).getOrThrow()
 
@@ -83,8 +79,7 @@ class ObjectStorageServiceTest {
         assertTrue(getResult.isEmpty())
     }
 
-    @Test
-    fun `test clean`() = testOss { service ->
+    private val clean: suspend (ObjectStorageService) -> Unit = { service ->
         val pack = createTempUploadPack("clean-me.txt", "to be cleaned")
         service.upload(A_FILE_DEFAULT_BUCKET, listOf(pack)).getOrThrow()
 
@@ -93,4 +88,40 @@ class ObjectStorageServiceTest {
         val getResult = service.get(A_FILE_DEFAULT_BUCKET, listOf("test/clean-me.txt")).getOrThrow()
         assertTrue(getResult.isEmpty())
     }
+
+    @Test
+    fun `test upload and get memory`() = testOssMemory(uploadAndGet)
+
+    @Test
+    fun `test upload and get container`() = testOssContainer(uploadAndGet)
+
+    @Test
+    fun `test upload and list memory`() = testOssMemory(uploadAndList)
+
+    @Test
+    fun `test upload and list container`() = testOssContainer(uploadAndList)
+
+    @Test
+    fun `test upload and get input stream memory`() = testOssMemory(uploadAndGetInputStream)
+
+    @Test
+    fun `test upload and get input stream container`() = testOssContainer(uploadAndGetInputStream)
+
+    @Test
+    fun `test copy memory`() = testOssMemory(copy)
+
+    @Test
+    fun `test copy container`() = testOssContainer(copy)
+
+    @Test
+    fun `test delete memory`() = testOssMemory(delete)
+
+    @Test
+    fun `test delete container`() = testOssContainer(delete)
+
+    @Test
+    fun `test clean memory`() = testOssMemory(clean)
+
+    @Test
+    fun `test clean container`() = testOssContainer(clean)
 }

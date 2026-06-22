@@ -156,34 +156,17 @@ if [ "$RUN_ANDROID" = true ] || [ "$RUN_APPIUM" = true ]; then
 fi
 
 if [ "$RUN_COMPILE_UNIT" = true ]; then
-    echo "Running compile checks..."
-    if ! ./gradlew assemble $GRADLE_CONSOLE_ARGS; then
-        showNotification "编译失败" "请检查编译错误" "false"
-        exit 1
-    fi
-
     echo "Running detekt..."
     if ! ./scripts/tool_scripts/exec-until-success.sh ./gradlew detekt $GRADLE_CONSOLE_ARGS; then
         showNotification "Detekt 失败" "代码静态分析失败！请检查代码规范问题。" "false"
         exit 1
     fi
 
-#    echo "Cleaning test cache..."
-#    if ! ./gradlew clean -Pappium=false $GRADLE_CONSOLE_ARGS; then
-#        showNotification "清理失败" "clean 执行失败！" "false"
-#        exit 1
-#    fi
     rm -rf cloud/server/build/test/session
 
-    echo "Running unit tests without Testcontainers..."
-    if ! ENABLE_TEST_CONTAINER=false ./gradlew test -Pappium=false -x :cloud:server:test $TEST_ARGS $GRADLE_CONSOLE_ARGS; then
-        showNotification "测试失败" "单元测试执行失败！请检查测试用例。" "false"
-        exit 1
-    fi
-
-    echo "Running unit tests with Testcontainers..."
-    if ! ENABLE_TEST_CONTAINER=true ./gradlew test -Pappium=false $TEST_ARGS $GRADLE_CONSOLE_ARGS; then
-        showNotification "测试失败" "单元测试执行失败！请检查测试用例。" "false"
+    echo "Running check..."
+    if ! ./gradlew check -Pappium=false $TEST_ARGS $GRADLE_CONSOLE_ARGS; then
+        showNotification "测试失败" "编译或测试执行失败！请检查错误。" "false"
         exit 1
     fi
 

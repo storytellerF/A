@@ -2,14 +2,14 @@ package com.storyteller_f.a.backend.core
 
 import com.storyteller_f.a.backend.core.service.TopicDocument
 import com.storyteller_f.a.backend.core.service.TopicDocumentSearch
+import com.storyteller_f.a.backend.core.service.TopicSearchService
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class SearchServiceTest {
 
-    @Test
-    fun `test save and get documents`() = testSearch { service ->
+    private val saveAndGetDocuments: suspend (TopicSearchService) -> Unit = { service ->
         val docs = listOf(
             TopicDocument(1, "hello world", 1, "ROOM", 1, "ROOM", 100),
             TopicDocument(2, "kotlin test", 1, "ROOM", 1, "ROOM", 100)
@@ -22,8 +22,7 @@ class SearchServiceTest {
         assertEquals("kotlin test", result[1]?.content)
     }
 
-    @Test
-    fun `test save multi document`() = testSearch { service ->
+    private val saveMultiDocument: suspend (TopicSearchService) -> Unit = { service ->
         service.saveDocument(
             listOf(
                 TopicDocument(0, "test", 0, "ROOM", 0, "ROOM", 0),
@@ -32,8 +31,7 @@ class SearchServiceTest {
         ).getOrThrow()
     }
 
-    @Test
-    fun `test search documents`() = testSearch { service ->
+    private val searchDocuments: suspend (TopicSearchService) -> Unit = { service ->
         val docs = listOf(
             TopicDocument(10, "apple banana cherry", 1, "ROOM", 1, "ROOM", 100),
             TopicDocument(11, "banana orange grape", 1, "ROOM", 1, "ROOM", 101),
@@ -48,8 +46,7 @@ class SearchServiceTest {
         assertTrue(searchResult.list.all { it.content.contains("banana") })
     }
 
-    @Test
-    fun `test clean documents`() = testSearch { service ->
+    private val cleanDocuments: suspend (TopicSearchService) -> Unit = { service ->
         service.saveDocument(
             listOf(TopicDocument(20, "to be cleaned", 1, "ROOM", 1, "ROOM", 100))
         ).getOrThrow()
@@ -59,4 +56,28 @@ class SearchServiceTest {
         val result = service.getDocuments(listOf(20)).getOrThrow()
         assertTrue(result.all { it == null })
     }
+
+    @Test
+    fun `test save and get documents memory`() = testSearchMemory(saveAndGetDocuments)
+
+    @Test
+    fun `test save and get documents container`() = testSearchContainer(saveAndGetDocuments)
+
+    @Test
+    fun `test save multi document memory`() = testSearchMemory(saveMultiDocument)
+
+    @Test
+    fun `test save multi document container`() = testSearchContainer(saveMultiDocument)
+
+    @Test
+    fun `test search documents memory`() = testSearchMemory(searchDocuments)
+
+    @Test
+    fun `test search documents container`() = testSearchContainer(searchDocuments)
+
+    @Test
+    fun `test clean documents memory`() = testSearchMemory(cleanDocuments)
+
+    @Test
+    fun `test clean documents container`() = testSearchContainer(cleanDocuments)
 }
