@@ -141,12 +141,12 @@ private fun Route.bindProtectedUserActivityRoute(backend: Backend) {
 }
 
 private fun Route.bindUserFavoriteRoute(backend: Backend) {
-    CustomApi.Users.Id.Favorites.get(handleResult(backend)) { q, p ->
-        usePrincipal {
+    CustomApi.Users.Favorites.get(handleResult(backend)) { q ->
+        usePrincipal { uid ->
             q.pagination(IdentifiablePagingGenerator, { l, p ->
                 UserFavoriteInfoListResponse(l, p)
             }) { fetch ->
-                backend.getFavorites(p.id, fetch)
+                backend.getFavorites(uid, fetch)
             }
         }
     }
@@ -198,12 +198,12 @@ private fun Route.bindUserCommunitiesRoute(backend: Backend) {
 }
 
 fun Route.bindProtectedUserSubscriptionRoute(backend: Backend) {
-    CustomApi.Users.Id.Subscriptions.get(handleResult(backend)) { q, p ->
-        usePrincipal {
+    CustomApi.Users.Subscriptions.get(handleResult(backend)) { q ->
+        usePrincipal { uid ->
             q.pagination(IdentifiablePagingGenerator, { l, p ->
                 UserSubscriptionInfoListResponse(l, p)
             }) { fetch ->
-                backend.getUserSubscriptions(p.id, fetch)
+                backend.getUserSubscriptions(uid, fetch)
             }
         }
     }

@@ -776,8 +776,7 @@ suspend fun UserSessionManager.removeFavorite(objectId: PrimaryKey, objectType: 
 }
 
 suspend fun UserSessionManager.getFavorites(paginationQuery: PaginationQuery) = serviceCatching {
-    val uid = model.uid ?: error("not login")
-    CustomApi.Users.Id.Favorites.get(paginationQuery, CommonPath(uid))
+    CustomApi.Users.Favorites.get(paginationQuery)
 }
 
 suspend fun UserSessionManager.addSubscription(newFavorite: NewSubscription) = serviceCatching {
@@ -809,8 +808,7 @@ suspend fun UserSessionManager.removeSubscription(objectId: PrimaryKey, objectTy
 
 suspend fun UserSessionManager.getSubscriptions(paginationQuery: PaginationQuery) =
     serviceCatching {
-        val uid = model.uid ?: error("not login")
-        CustomApi.Users.Id.Subscriptions.get(paginationQuery, CommonPath(uid))
+        CustomApi.Users.Subscriptions.get(paginationQuery)
     }
 
 suspend fun UserSessionManager.getUserOverview() = serviceCatching {
