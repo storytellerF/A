@@ -631,23 +631,6 @@ object CustomApi {
                     }
             }
 
-            object Favorites {
-                val get = safeEndpointWithQueryAndPathBuilder("users/{id}/favorites") {
-                    resp(UserFavoriteInfoListResponse::class)
-                    query(PaginationQuery::class)
-                    path(CommonPath::class)
-                }
-            }
-
-            object Subscriptions {
-                val get =
-                    safeEndpointWithQueryAndPathBuilder("users/{id}/subscriptions") {
-                        resp(UserSubscriptionInfoListResponse::class)
-                        query(PaginationQuery::class)
-                        path(CommonPath::class)
-                    }
-            }
-
             object Favorite {
                 val add = mutationEndpointWithPathBuilder("users/{id}/favorite") {
                     resp(Unit::class)
@@ -796,6 +779,20 @@ object CustomApi {
                     resp(CommunityInfoListResponse::class)
                     query(UserCommunitiesSearchQuery::class)
                 }
+        }
+
+        object Favorites {
+            val get = safeEndpointWithQueryBuilder("users/favorites") {
+                resp(UserFavoriteInfoListResponse::class)
+                query(PaginationQuery::class)
+            }
+        }
+
+        object Subscriptions {
+            val get = safeEndpointWithQueryBuilder("users/subscriptions") {
+                resp(UserSubscriptionInfoListResponse::class)
+                query(PaginationQuery::class)
+            }
         }
 
         object Unread {
