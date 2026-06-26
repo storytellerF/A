@@ -158,7 +158,6 @@ kotlin {
             implementation(libs.highlights)
             implementation(libs.richeditor.compose)
             implementation(libs.bundles.filekit)
-            implementation(libs.compose.pdf)
             implementation(libs.aboutlibraries.core)
             implementation(libs.aboutlibraries.compose.m3)
             implementation(libs.zoomimage.compose.coil3)
