@@ -1,8 +1,8 @@
 package com.storyteller_f.a.client.room
 
 import android.content.Context
-import androidx.room.Room
-import androidx.room.RoomDatabase
+import androidx.room3.Room
+import androidx.room3.RoomDatabase
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.storyteller_f.shared.getAppContextRefValue
 import kotlinx.coroutines.Dispatchers

@@ -6,7 +6,7 @@ plugins {
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.serialization)
     id("com.google.devtools.ksp")
-    id("androidx.room")
+    id("androidx.room3")
 }
 
 val buildIosTarget = project.findProperty("target.ios") == "true"
@@ -46,7 +46,24 @@ kotlin {
 
             implementation(libs.androidx.room.runtime)
             implementation(libs.androidx.room.paging)
-            implementation(libs.androidx.sqlite.bundled)
+        }
+        // jvm 与 android 共享：BundledSQLiteDriver 及其日志包装器（这些在 wasm 上不可用，
+        // 因为 sqlite-web 把 SQLiteDriver 的 open/prepare/step 变成了 suspend）。
+        val jvmAndroidMain by creating {
+            dependsOn(commonMain.get())
+            dependencies {
+                implementation(libs.androidx.sqlite.bundled)
+            }
+        }
+        jvmMain.get().dependsOn(jvmAndroidMain)
+        androidMain.get().dependsOn(jvmAndroidMain)
+        if (buildWasmTarget) {
+            val wasmJsMain by getting {
+                dependencies {
+                    implementation(libs.androidx.sqlite.web)
+                    implementation(libs.kotlinx.browser)
+                }
+            }
         }
     }
     compilerOptions {
@@ -55,11 +72,20 @@ kotlin {
 }
 
 dependencies {
-    add("kspCommonMainMetadata", "androidx.room:room-compiler:2.7.2")
-    add("kspJvm", "androidx.room:room-compiler:2.7.2")
-    add("kspAndroid", "androidx.room:room-compiler:2.7.2")
+    val roomCompiler = libs.androidx.room.compiler.get()
+    add("kspCommonMainMetadata", roomCompiler)
+    add("kspJvm", roomCompiler)
+    add("kspAndroid", roomCompiler)
+    if (buildWasmTarget) {
+        add("kspWasmJs", roomCompiler)
+    }
+    if (buildIosTarget) {
+        add("kspIosX64", roomCompiler)
+        add("kspIosArm64", roomCompiler)
+        add("kspIosSimulatorArm64", roomCompiler)
+    }
 }
 
-room {
+room3 {
     schemaDirectory("$projectDir/schemas")
 }
