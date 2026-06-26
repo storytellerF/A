@@ -119,7 +119,6 @@ kotlin {
 
             implementation(libs.kim)
             implementation(libs.uri.kmp)
-            implementation(libs.m3u.parser)
             implementation(libs.human.readable)
             implementation(libs.kfswatch)
 
@@ -142,11 +141,13 @@ kotlin {
             implementation(libs.connectivity.compose.http)
             implementation(libs.tika.core)
         }
-        // jvm 与 android 共享 compose-pdf 的 PdfView actual（wasm 上无对应 Compose PDF 库）
+        // jvm 与 android 共享：compose-pdf 的 PdfView actual、m3u-parser 的播放列表解析
+        // （wasm 上均无对应库）
         val jvmAndroidMain by creating {
             dependsOn(commonMain.get())
             dependencies {
                 implementation(libs.compose.pdf)
+                implementation(libs.m3u.parser)
             }
         }
         jvmMain.get().dependsOn(jvmAndroidMain)
