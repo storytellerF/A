@@ -1,0 +1,11 @@
+{
+  "name": "sqlite-web-worker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "worker.js",
+  "description": "Web Worker implementing the androidx.sqlite WebWorkerSQLiteDriver protocol on top of @sqlite.org/sqlite-wasm with OPFS persistence.",
+  "dependencies": {
+    "@sqlite.org/sqlite-wasm": "3.53.0-build1"
+  }
+}

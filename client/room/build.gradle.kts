@@ -62,6 +62,8 @@ kotlin {
                 dependencies {
                     implementation(libs.androidx.sqlite.web)
                     implementation(libs.kotlinx.browser)
+                    // 本地 worker 包：实现 WebWorkerSQLiteDriver 协议（@sqlite.org/sqlite-wasm + OPFS）
+                    implementation(npm("sqlite-web-worker", project.file("sqlite-web-worker")))
                 }
             }
         }
