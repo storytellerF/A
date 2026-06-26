@@ -160,7 +160,6 @@ kotlin {
             implementation(libs.compose.preferences)
             implementation(libs.haze)
             implementation(libs.haze.materials)
-            implementation(libs.kzip)
             implementation(libs.emoji.kt)
             implementation(libs.emoji.compose.m3)
             implementation(libs.connectivity.compose)

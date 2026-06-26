@@ -73,7 +73,7 @@ kreds = "0.9.1"
 krop-ui = "0.2.0"
 ksp = "2.3.9"
 ktor = "3.5.0"
-kzip = "1.1.1"
+kmpZip = "0.12.1"
 latex = "1.4.7"
 leakcanaryAndroid = "2.14"
 lifecycle = "2.11.0"
@@ -287,7 +287,8 @@ ktor-server-rate-limit = { module = "io.ktor:ktor-server-rate-limit", version.re
 ktor-server-sessions = { module = "io.ktor:ktor-server-sessions", version.ref = "ktor" }
 ktor-server-test-host = { module = "io.ktor:ktor-server-test-host", version.ref = "ktor" }
 ktor-server-websockets = { module = "io.ktor:ktor-server-websockets", version.ref = "ktor" }
-kzip = { module = "de.jonasbroeckmann.kzip:kzip", version.ref = "kzip" }
+kmp-zip = { module = "no.synth:kmp-zip", version.ref = "kmpZip" }
+kmp-zip-kotlinx = { module = "no.synth:kmp-zip-kotlinx", version.ref = "kmpZip" }
 latex-base = { module = "io.github.huarangmeng:latex-base", version.ref = "latex" }
 latex-parser = { module = "io.github.huarangmeng:latex-parser", version.ref = "latex" }
 latex-renderer = { module = "io.github.huarangmeng:latex-renderer", version.ref = "latex" }
