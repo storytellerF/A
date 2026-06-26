@@ -100,7 +100,6 @@ kotlin {
             implementation(libs.highlights)
             implementation(libs.richeditor.compose)
             implementation(libs.bundles.filekit)
-            implementation(libs.compose.pdf)
             implementation(libs.aboutlibraries.core)
             implementation(libs.aboutlibraries.compose.m3)
             implementation(libs.zoomimage.compose.coil3)
@@ -143,6 +142,15 @@ kotlin {
             implementation(libs.connectivity.compose.http)
             implementation(libs.tika.core)
         }
+        // jvm 与 android 共享 compose-pdf 的 PdfView actual（wasm 上无对应 Compose PDF 库）
+        val jvmAndroidMain by creating {
+            dependsOn(commonMain.get())
+            dependencies {
+                implementation(libs.compose.pdf)
+            }
+        }
+        jvmMain.get().dependsOn(jvmAndroidMain)
+        androidMain.get().dependsOn(jvmAndroidMain)
     }
     compilerOptions {
         freeCompilerArgs.addAll("-Xexpect-actual-classes")

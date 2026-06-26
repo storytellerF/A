@@ -7,36 +7,27 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.PictureAsPdf
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.shared.model.FileInfo
-import dev.zt64.compose.pdf.RemotePdfState
-import dev.zt64.compose.pdf.component.PdfPage
 import kotlinx.coroutines.launch
-import java.net.URI
 
 @Composable
 fun PdfViewBlock(fileInfo: FileInfo, onClick: (FileInfo) -> Unit) {
@@ -86,17 +77,7 @@ fun PdfViewBlock(fileInfo: FileInfo, onClick: (FileInfo) -> Unit) {
     }
 }
 
+// 渲染远程 PDF。jvm/android 用 compose-pdf；wasm 无对应 Compose PDF 库，
+// 仅提供「在浏览器打开」按钮（见各平台 actual）。
 @Composable
-fun PdfView(url: String, modifier: Modifier) {
-    val errorIndicator = rememberVectorPainter(Icons.Default.Error)
-    val refreshIndicator = rememberVectorPainter(Icons.Default.Refresh)
-    val state = remember(url, errorIndicator, refreshIndicator) {
-        RemotePdfState(URI.create(url).toURL(), errorIndicator, refreshIndicator)
-    }
-    HorizontalPager(
-        state = rememberPagerState { state.pageCount },
-        modifier = modifier
-    ) { i ->
-        PdfPage(state = state, index = i)
-    }
-}
+expect fun PdfView(url: String, modifier: Modifier)
