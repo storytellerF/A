@@ -248,7 +248,7 @@ fun trimMarkdownUnusedContent(markdownText: String): String {
                     }
                 } else {
                     val value = node.getTextInNode(markdownText)
-                    println("else ${value.chars().toArray().joinToString(",")}")
+                    println("else ${value.map { it.code }.joinToString(",")}")
                     append(value)
                 }
             }

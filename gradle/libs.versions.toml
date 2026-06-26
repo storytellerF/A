@@ -62,6 +62,7 @@ kodio-core = "0.1.5"
 kotlin = "2.4.0"
 kotlin_buildconfig = "6.0.10"
 kotlinx-rpc = "0.10.2"
+kotlinxBrowser = "0.5.0"
 kotlinxCli = "0.3.6"
 kotlinxCollectionsImmutable = "0.5.0"
 kotlinxCoroutinesSwing = "1.11.0"
@@ -108,12 +109,12 @@ qrose = "1.1.2"
 recordCore = "0.5.0"
 richeditorCompose = "1.0.0-rc14"
 robolectric = "4.16.1"
-roomRuntime = "2.8.4"
+roomRuntime = "3.0.0-rc01"
 runtime = "1.11.1"
 screenshot = "0.0.1-alpha15"
 sentryAndroidGradle = "6.12.0"
 sqlFormatter = "2.0.5"
-sqliteBundled = "2.6.2"
+sqliteBundled = "2.7.0-rc01"
 testContainer = "1.21.4"
 tikaCore = "3.3.1"
 ui = "1.11.1"
@@ -149,9 +150,11 @@ androidx-media3-session = { module = "androidx.media3:media3-session", version.r
 androidx-media3-ui = { module = "androidx.media3:media3-ui", version.ref = "media3Exoplayer" }
 androidx-paging-common = { module = "androidx.paging:paging-common", version.ref = "pagingCommon" }
 androidx-paging-compose = { module = "androidx.paging:paging-compose", version.ref = "pagingCommon" }
-androidx-room-paging = { module = "androidx.room:room-paging", version.ref = "roomRuntime" }
-androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomRuntime" }
+androidx-room-paging = { module = "androidx.room3:room3-paging", version.ref = "roomRuntime" }
+androidx-room-runtime = { module = "androidx.room3:room3-runtime", version.ref = "roomRuntime" }
+androidx-room-compiler = { module = "androidx.room3:room3-compiler", version.ref = "roomRuntime" }
 androidx-sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "sqliteBundled" }
+androidx-sqlite-web = { module = "androidx.sqlite:sqlite-web", version.ref = "sqliteBundled" }
 androidx-ui-test-junit4-android = { module = "androidx.compose.ui:ui-test-junit4-android", version.ref = "uiTestJunit4Android" }
 androidx-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest", version.ref = "uiTestJunit4Android" }
 androidx-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "uiToolingPreview" }
@@ -245,6 +248,7 @@ jlayer = { module = "com.github.umjammer:jlayer", version.ref = "jlayer" }
 kfswatch = { module = "io.github.irgaly.kfswatch:kfswatch", version.ref = "kfswatch" }
 kim = { module = "com.ashampoo:kim", version.ref = "kim" }
 kodio-core = { module = "space.kodio:core", version.ref = "kodio-core" }
+kotlinx-browser = { module = "org.jetbrains.kotlinx:kotlinx-browser", version.ref = "kotlinxBrowser" }
 kotlinx-cli = { module = "org.jetbrains.kotlinx:kotlinx-cli", version.ref = "kotlinxCli" }
 kotlinx-collections-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "kotlinxCollectionsImmutable" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutinesSwing" }
@@ -365,7 +369,7 @@ kotlinxRpc = { id = "org.jetbrains.kotlinx.rpc.plugin", version.ref = "kotlinx-r
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 ktor = { id = "io.ktor.plugin", version.ref = "ktor" }
-room = { id = "androidx.room", version.ref = "roomRuntime" }
+room = { id = "androidx.room3", version.ref = "roomRuntime" }
 screenshot = { id = "com.android.compose.screenshot", version.ref = "screenshot" }
 sentryAndroidGradle = { id = "io.sentry.android.gradle", version.ref = "sentryAndroidGradle" }
 serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
