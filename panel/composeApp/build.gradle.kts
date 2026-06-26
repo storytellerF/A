@@ -133,7 +133,6 @@ kotlin {
             implementation(libs.bundles.ktor.client)
             implementation(libs.kim)
             implementation(libs.uri.kmp)
-            implementation(libs.m3u.parser)
             implementation(libs.human.readable)
             implementation(libs.kfswatch)
             implementation(libs.kodio.core)
