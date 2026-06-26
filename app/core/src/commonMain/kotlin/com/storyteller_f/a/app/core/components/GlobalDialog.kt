@@ -101,7 +101,7 @@ class NestedGlobalDialogController<C>(
         if (stack.size != level) {
             return Result.failure(Exception("level mismatch"))
         }
-        state.value = stack.add(GlobalDialogState.Loading())
+        state.value = stack.adding(GlobalDialogState.Loading())
         val nestedGlobalDialogController = NestedGlobalDialogController(customGlobalDialogController, level + 1)
         try {
             return nestedGlobalDialogController.block()
@@ -119,7 +119,7 @@ class NestedGlobalDialogController<C>(
         if (last !is GlobalDialogState.Loading) {
             return
         }
-        state.value = value.set(level - 1, block(last))
+        state.value = value.replacingAt(level - 1, block(last))
     }
 }
 

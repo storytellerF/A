@@ -40,7 +40,7 @@ val sharedFlow = messageResponseFlow.asSharedFlow()
 val userWebSocketSessionMap = mutableMapOf<PrimaryKey, PersistentList<DefaultWebSocketServerSession>>()
 
 suspend fun DefaultWebSocketServerSession.useWebSocket(uid: PrimaryKey, block: suspend () -> Unit) {
-    userWebSocketSessionMap[uid] = userWebSocketSessionMap.getOrDefault(uid, persistentListOf()).add(this)
+    userWebSocketSessionMap[uid] = userWebSocketSessionMap.getOrDefault(uid, persistentListOf()).adding(this)
     try {
         block()
     } finally {

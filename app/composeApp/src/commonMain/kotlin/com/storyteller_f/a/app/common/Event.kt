@@ -310,7 +310,7 @@ private suspend fun processOnAddReaction(
             }
             val newReactions = if (existing == null) {
                 val info = event.info
-                oldReactions.toPersistentList().add(info)
+                oldReactions.toPersistentList().adding(info)
             } else {
                 oldReactions.map { info ->
                     if (info.emoji == event.info.emoji) {
