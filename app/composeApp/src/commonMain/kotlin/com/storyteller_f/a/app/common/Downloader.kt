@@ -10,9 +10,7 @@ import com.storyteller_f.shared.utils.nowInstance
 import com.storyteller_f.storage.DownloadInfo
 import com.storyteller_f.storage.DownloadStatus
 import com.storyteller_f.storage.ModelStorage
-import de.jonasbroeckmann.kzip.Zip
-import de.jonasbroeckmann.kzip.extractTo
-import de.jonasbroeckmann.kzip.open
+import no.synth.kmpzip.kotlinx.unzipFrom
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -237,9 +235,10 @@ class DownloaderImpl(
         id: PrimaryKey
     ): Boolean {
         try {
-            Zip.open(path).use { zip ->
-                zip.extractTo(Path(path.parent!!, "${path.name}.extracted"))
-            }
+            SystemFileSystem.unzipFrom(
+                archive = path,
+                target = Path(path.parent!!, "${path.name}.extracted"),
+            )
         } catch (e: Exception) {
             updateDownloadInfo(modelStorage, id) {
                 it.copy(status = DownloadStatus.PROCESS_FAILED, message = e.message.toString())
