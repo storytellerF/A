@@ -50,7 +50,7 @@ kotlin {
         }
     }
     compilerOptions {
-        freeCompilerArgs.addAll("-Xcontext-parameters", "-Xexpect-actual-classes")
+        freeCompilerArgs.addAll("-Xexpect-actual-classes")
     }
 }
 

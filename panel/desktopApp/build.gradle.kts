@@ -10,7 +10,6 @@ plugins {
 kotlin {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_21)
-        freeCompilerArgs.addAll("-Xcontext-parameters")
     }
 }
 
