@@ -20,8 +20,7 @@ fun getDatabaseBuilder(scope: String): RoomDatabase.Builder<AppDatabase> {
     return Room.databaseBuilder<AppDatabase>(name = "$scope.db")
 }
 
-// The worker that implements the WebWorkerSQLiteDriver protocol is provided as an
-// NPM package and resolved relative to the bundled module. Actually wiring the worker
-// (npm dependency + OPFS) is out of scope for this compile check.
+// 由本地 npm 包 sqlite-web-worker 提供，实现 WebWorkerSQLiteDriver 协议（SQLite WASM + OPFS）。
+// worker 是 ES module，需以 { type: "module" } 创建；URL 由 webpack 解析并单独打包。
 private fun createWorker(): Worker =
-    js("""new Worker(new URL("sqlite-web-worker/worker.js", import.meta.url))""")
+    js("""new Worker(new URL("sqlite-web-worker/worker.js", import.meta.url), { type: "module" })""")
