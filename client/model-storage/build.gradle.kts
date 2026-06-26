@@ -41,7 +41,4 @@ kotlin {
             implementation(libs.androidx.paging.common)
         }
     }
-    compilerOptions {
-        freeCompilerArgs.add("-Xcontext-parameters")
-    }
 }

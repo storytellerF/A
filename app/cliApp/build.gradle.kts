@@ -24,8 +24,3 @@ dependencies {
 tasks.withType<JavaExec> {
     standardInput = System.`in`
 }
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-    compilerOptions {
-        freeCompilerArgs.add("-Xcontext-parameters")
-    }
-}
