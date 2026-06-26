@@ -1,20 +1,23 @@
 package com.storyteller_f.a.client.room
 
 import androidx.paging.PagingSource
-import androidx.room.ConstructedBy
-import androidx.room.Dao
-import androidx.room.Database
-import androidx.room.Entity
-import androidx.room.Index
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy.Companion.REPLACE
-import androidx.room.Query
-import androidx.room.RoomDatabase
-import androidx.room.RoomDatabaseConstructor
+import androidx.room3.ConstructedBy
+import androidx.room3.Dao
+import androidx.room3.DaoReturnTypeConverters
+import androidx.room3.Database
+import androidx.room3.Entity
+import androidx.room3.Index
+import androidx.room3.Insert
+import androidx.room3.OnConflictStrategy.Companion.REPLACE
+import androidx.room3.Query
+import androidx.room3.RoomDatabase
+import androidx.room3.RoomDatabaseConstructor
+import androidx.room3.paging.PagingSourceDaoReturnTypeConverter
 import kotlinx.coroutines.flow.Flow
 
 @Database(entities = [CommonEntity::class, UploadEntity::class, DownloadEntity::class], version = 2)
 @ConstructedBy(AppDatabaseConstructor::class)
+@DaoReturnTypeConverters(PagingSourceDaoReturnTypeConverter::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun getCommonDao(): CommonDao
     abstract fun getUploadDao(): UploadDao
