@@ -67,7 +67,7 @@ suspend fun <R, U> SessionManager<U>.serviceCatching(block: suspend HttpClient.(
         val value = client.block()
         Result.success(value)
     } catch (e: Throwable) {
-        point.initCause(e)
+        point.addSuppressed(e)
         Napier.e(point) {
             "serviceCatching"
         }

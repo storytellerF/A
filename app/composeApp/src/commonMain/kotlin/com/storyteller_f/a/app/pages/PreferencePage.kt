@@ -42,7 +42,6 @@ import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.openFilePicker
 import io.github.vinceglb.filekit.name
 import org.jetbrains.compose.resources.stringResource
-import java.io.File
 
 @Composable
 fun PreferencePage() {
@@ -104,7 +103,7 @@ private fun TranslateModelPreferenceItem() {
                 getGPTModelDirectory().toString()
                 Text("support ${gpt.supportList}")
             } else {
-                Text(stringResource(Res.string.current_selected, File(it).name))
+                Text(stringResource(Res.string.current_selected, it.substringAfterLast('/').substringAfterLast('\\')))
             }
         },
         leadingIcon = {

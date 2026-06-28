@@ -153,7 +153,7 @@ enum class BlockType {
 /**
  * 生成唯一 Block ID
  */
-fun generateBlockId(): String = "block_${java.util.UUID.randomUUID().toString().take(8)}"
+fun generateBlockId(): String = "block_${kotlin.uuid.Uuid.random().toString().take(8)}"
 
 /**
  * 创建默认的空段落块
