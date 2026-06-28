@@ -222,7 +222,7 @@ fun PrivateKeyTools(currentKey: String, enableRandom: Boolean, algo: AlgoType, o
             scope.launch {
                 val f = FileKit.openFilePicker()
                 if (f != null) {
-                    onKeyChange(String(f.readBytes()).replaceCrlf())
+                    onKeyChange(f.readBytes().decodeToString().replaceCrlf())
                 }
             }
         }) {

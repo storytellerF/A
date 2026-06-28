@@ -1,12 +1,13 @@
 package com.storyteller_f.a.app.service
 
-import com.ashampoo.kim.common.exists
 import io.github.irgaly.kfswatch.KfsDirectoryWatcher
 import io.github.irgaly.kfswatch.KfsDirectoryWatcherEvent
 import io.github.irgaly.kfswatch.KfsEvent
 import io.github.vinceglb.filekit.PlatformFile
-import io.github.vinceglb.filekit.copyTo
 import io.github.vinceglb.filekit.name
+import io.github.vinceglb.filekit.readBytes
+import kotlinx.io.buffered
+import kotlinx.io.write
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
@@ -41,7 +42,7 @@ interface GPT {
                 SystemFileSystem.createDirectories(directory)
             }
             val target = Path(directory, name)
-            file.copyTo(PlatformFile(target))
+            SystemFileSystem.sink(target).buffered().use { it.write(file.readBytes()) }
             GPTModel(target.name, target.toString())
         }
     }
@@ -108,7 +109,7 @@ private fun filterModels(
     path: Path,
     supportList: List<String>
 ): List<Path> {
-    if (!(path.exists())) return emptyList()
+    if (!SystemFileSystem.exists(path)) return emptyList()
     return SystemFileSystem.list(path).filter { child ->
         supportList.any {
             child.name.endsWith(it)

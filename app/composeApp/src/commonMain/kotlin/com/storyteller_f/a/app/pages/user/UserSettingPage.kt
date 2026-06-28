@@ -79,9 +79,7 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import io.github.alexzhirkevich.qrose.rememberQrCodePainter
-import io.github.vinceglb.filekit.FileKit
-import io.github.vinceglb.filekit.dialogs.openFileSaver
-import io.github.vinceglb.filekit.write
+import com.storyteller_f.a.app.utils.saveTextToFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -579,10 +577,7 @@ private fun kotlinx.coroutines.CoroutineScope.downloadRecoveryCodes(
             request { generateRecoveryCodes() }
         }.onSuccess { response ->
             val text = response.recoveryCodes.joinToString("\n")
-            val file = FileKit.openFileSaver("recovery-codes", "txt", setOf("txt"))
-            if (file != null) {
-                file.write(text.encodeToByteArray())
-            }
+            saveTextToFile("recovery-codes", "txt", setOf("txt"), text)
         }
     }
 }

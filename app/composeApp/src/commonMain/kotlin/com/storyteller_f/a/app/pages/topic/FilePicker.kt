@@ -79,15 +79,15 @@ import com.storyteller_f.shared.utils.sha256
 import io.github.aakira.napier.Napier
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.PlatformFile
-import io.github.vinceglb.filekit.absolutePath
 import io.github.vinceglb.filekit.dialogs.openFilePicker
 import io.github.vinceglb.filekit.extension
 import io.github.vinceglb.filekit.name
+import io.github.vinceglb.filekit.readBytes
 import io.github.vinceglb.filekit.size
-import io.github.vinceglb.filekit.source
 import io.ktor.http.ContentType
 import io.ktor.http.defaultForFileExtension
 import kotlinx.coroutines.launch
+import kotlinx.io.Buffer
 import kotlinx.io.Source
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
@@ -262,10 +262,9 @@ suspend fun AppGlobalDialogController.selectFileAndUpload(
     useResult {
         val f = FileKit.openFilePicker()
         if (f != null) {
-            val fileSha256 = f.source().buffered().use {
-                sha256(it)
-            }
-            val uploadData = getUploadDataFromPlatformFile(f, fileSha256)
+            val bytes = f.readBytes()
+            val fileSha256 = Buffer().also { it.write(bytes) }.use { sha256(it) }
+            val uploadData = getUploadDataFromPlatformFile(f, fileSha256, bytes)
             upload(
                 mediaTarget,
                 uploadData,
@@ -287,27 +286,30 @@ suspend fun AppGlobalDialogController.selectFileAndUpload(
 private fun getUploadDataFromPlatformFile(
     f: PlatformFile,
     sha256: String,
+    bytes: ByteArray,
 ) = UploadData(
     f.size(),
     f.name,
     ContentType.defaultForFileExtension(f.extension),
     sha256,
 ) {
-    f.source().buffered()
+    Buffer().also { it.write(bytes) }
 }
 
-class PlatformClientFile(val platformFile: PlatformFile) : ClientFile {
-    override val name: String
-        get() = platformFile.name
-    override val contentType: ContentType
-        get() = ContentType.defaultForFileExtension(platformFile.extension)
-    override val size: Long
-        get() = platformFile.size()
-    override val path: String
-        get() = platformFile.absolutePath()
+class PlatformClientFile private constructor(
+    val platformFile: PlatformFile,
+    private val bytes: ByteArray,
+) : ClientFile {
+    override val name: String get() = platformFile.name
+    override val contentType: ContentType get() = ContentType.defaultForFileExtension(platformFile.extension)
+    override val size: Long get() = platformFile.size()
+    override val path: String get() = platformFile.name
 
-    override fun source(): Source {
-        return platformFile.source().buffered()
+    override fun source(): Source = Buffer().also { it.write(bytes) }
+
+    companion object {
+        suspend operator fun invoke(platformFile: PlatformFile) =
+            PlatformClientFile(platformFile, platformFile.readBytes())
     }
 }
 
