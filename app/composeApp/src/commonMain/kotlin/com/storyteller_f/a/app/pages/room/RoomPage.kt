@@ -362,7 +362,7 @@ private fun RoomInputTopContent(roomInfo: RoomInfo) {
             when (val ks = keysState) {
                 LoadingState.Done -> Text(stringResource(Res.string.check_mark))
                 is LoadingState.Error -> Text(
-                    ks.e.localizedMessage?.take(10) ?: stringResource(Res.string.exclamation_mark)
+                    ks.e.message?.take(10) ?: stringResource(Res.string.exclamation_mark)
                 )
 
                 else -> CircularProgressIndicator(modifier = Modifier.size(10.dp), strokeWidth = 2.dp)

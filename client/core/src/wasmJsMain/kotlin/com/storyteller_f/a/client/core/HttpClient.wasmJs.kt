@@ -1,4 +1,4 @@
-package com.storyteller_f.a.client_lib
+package com.storyteller_f.a.client.core
 
 import io.ktor.client.*
 
