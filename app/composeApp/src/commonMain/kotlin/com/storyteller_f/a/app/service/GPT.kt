@@ -6,8 +6,6 @@ import io.github.irgaly.kfswatch.KfsEvent
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.name
 import io.github.vinceglb.filekit.readBytes
-import kotlinx.io.buffered
-import kotlinx.io.write
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
@@ -17,8 +15,10 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
+import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
+import kotlinx.io.write
 
 class GPTOutput(val text: String)
 
