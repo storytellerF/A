@@ -36,6 +36,8 @@ kotlin {
 
     jvm()
 
+    applyDefaultHierarchyTemplate()
+
     sourceSets {
         commonMain.dependencies {
             implementation(libs.napier)
@@ -58,11 +60,10 @@ kotlin {
         jvmMain.get().dependsOn(jvmAndroidMain)
         androidMain.get().dependsOn(jvmAndroidMain)
         if (buildWasmTarget) {
-            val wasmJsMain by getting {
+            getByName("wasmJsMain") {
                 dependencies {
                     implementation(libs.androidx.sqlite.web)
                     implementation(libs.kotlinx.browser)
-                    // 本地 worker 包：实现 WebWorkerSQLiteDriver 协议（@sqlite.org/sqlite-wasm + OPFS）
                     implementation(npm("sqlite-web-worker", project.file("sqlite-web-worker")))
                 }
             }
