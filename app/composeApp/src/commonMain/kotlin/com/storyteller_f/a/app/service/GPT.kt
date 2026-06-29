@@ -3,9 +3,11 @@ package com.storyteller_f.a.app.service
 import io.github.irgaly.kfswatch.KfsDirectoryWatcher
 import io.github.irgaly.kfswatch.KfsDirectoryWatcherEvent
 import io.github.irgaly.kfswatch.KfsEvent
+import com.storyteller_f.a.app.core.utils.safeSink
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.name
 import io.github.vinceglb.filekit.readBytes
+import io.github.vinceglb.filekit.size
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
@@ -19,6 +21,8 @@ import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.write
+
+private const val MAX_IMPORT_SIZE = 500L * 1024 * 1024
 
 class GPTOutput(val text: String)
 
@@ -37,12 +41,11 @@ interface GPT {
             require(supportList.any { name.endsWith(it, ignoreCase = true) }) {
                 "unsupported model file: $name"
             }
-            val directory = getGPTModelDirectory()
-            if (!SystemFileSystem.exists(directory)) {
-                SystemFileSystem.createDirectories(directory)
+            require(file.size() <= MAX_IMPORT_SIZE) {
+                "model file too large: ${file.size()} bytes"
             }
-            val target = Path(directory, name)
-            SystemFileSystem.sink(target).buffered().use { it.write(file.readBytes()) }
+            val target = Path(getGPTModelDirectory(), name)
+            target.safeSink().buffered().use { it.write(file.readBytes()) }
             GPTModel(target.name, target.toString())
         }
     }

@@ -34,7 +34,7 @@ import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.withTimeout
 import kotlinx.datetime.LocalDateTime
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.test.Test
@@ -413,12 +413,12 @@ suspend fun waitForRtcFrame(
     list: MutableList<RoomFrame>,
     predicate: (RoomFrame) -> Boolean,
 ) {
-    val found = withTimeoutOrNull(30.seconds) {
+    withTimeout(30.seconds) {
         while (!list.any(predicate)) {
             delay(200.milliseconds)
         }
     }
-    assertTrue(found != null, "RTC frame not received within 30s, received: $list")
+    assertTrue(list.any(predicate), "RTC frame not received within 30s, received: $list")
 }
 
 suspend fun processRTCMessage(frame: RoomFrame, session: DefaultClientWebSocketSession) {
