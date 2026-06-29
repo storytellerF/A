@@ -10,7 +10,6 @@ import com.storyteller_f.shared.utils.nowInstance
 import com.storyteller_f.storage.DownloadInfo
 import com.storyteller_f.storage.DownloadStatus
 import com.storyteller_f.storage.ModelStorage
-import no.synth.kmpzip.kotlinx.unzipFrom
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -33,6 +32,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.files.SystemTemporaryDirectory
+import no.synth.kmpzip.kotlinx.unzipFrom
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.ExperimentalTime
 

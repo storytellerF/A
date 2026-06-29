@@ -10,6 +10,7 @@ actual fun checkContent(text: String): Result<Unit> =
         Result.failure(IllegalArgumentException("invalid content"))
     }
 
+@Suppress("UnusedParameter")
 private fun checkContentRaw(text: String): Boolean =
     js("/^[\\p{L}\\p{N}\\p{P}\\p{Z}\\p{S}\\s\\p{Emoji_Presentation}]+$/gu.test(text)")
 

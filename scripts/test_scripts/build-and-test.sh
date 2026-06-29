@@ -155,13 +155,13 @@ if [ "$RUN_ANDROID" = true ] || [ "$RUN_APPIUM" = true ]; then
     checkEmulatorReady
 fi
 
-if [ "$RUN_COMPILE_UNIT" = true ]; then
-    echo "Running detekt..."
-    if ! ./scripts/tool_scripts/exec-until-success.sh ./gradlew detekt $GRADLE_CONSOLE_ARGS; then
-        showNotification "Detekt 失败" "代码静态分析失败！请检查代码规范问题。" "false"
-        exit 1
-    fi
+echo "Running detekt..."
+if ! ./scripts/tool_scripts/exec-until-success.sh ./gradlew detekt $GRADLE_CONSOLE_ARGS; then
+    showNotification "Detekt 失败" "代码静态分析失败！请检查代码规范问题。" "false"
+    exit 1
+fi
 
+if [ "$RUN_COMPILE_UNIT" = true ]; then
     rm -rf cloud/server/build/test/session
 
     echo "Running check..."

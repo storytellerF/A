@@ -60,6 +60,7 @@ import com.storyteller_f.a.app.core.utils.getRemoteImageBitmap
 import com.storyteller_f.a.app.core.utils.saveImageBitmap
 import com.storyteller_f.a.app.pages.topic.FilePicker
 import com.storyteller_f.a.app.pages.topic.uploadPath
+import com.storyteller_f.a.app.utils.saveTextToFile
 import com.storyteller_f.a.client.core.disableTwoFactor
 import com.storyteller_f.a.client.core.enableTotp
 import com.storyteller_f.a.client.core.generateRecoveryCodes
@@ -79,7 +80,6 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import io.github.alexzhirkevich.qrose.rememberQrCodePainter
-import com.storyteller_f.a.app.utils.saveTextToFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
