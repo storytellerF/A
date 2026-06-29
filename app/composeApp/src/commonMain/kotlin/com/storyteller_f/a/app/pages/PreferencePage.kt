@@ -41,6 +41,7 @@ import com.strabled.composepreferences.preferences.BottomSheetListPreference
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.openFilePicker
 import io.github.vinceglb.filekit.name
+import kotlinx.io.files.Path
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -103,7 +104,7 @@ private fun TranslateModelPreferenceItem() {
                 getGPTModelDirectory().toString()
                 Text("support ${gpt.supportList}")
             } else {
-                Text(stringResource(Res.string.current_selected, it.substringAfterLast('/').substringAfterLast('\\')))
+                Text(stringResource(Res.string.current_selected, Path(it).name))
             }
         },
         leadingIcon = {

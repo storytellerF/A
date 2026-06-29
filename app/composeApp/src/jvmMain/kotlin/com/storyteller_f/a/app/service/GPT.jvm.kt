@@ -4,6 +4,8 @@ import com.google.ai.edge.litertlm.Backend.GPU
 import com.google.ai.edge.litertlm.Engine
 import com.google.ai.edge.litertlm.EngineConfig
 import io.github.aakira.napier.Napier
+import io.github.vinceglb.filekit.PlatformFile
+import io.github.vinceglb.filekit.utils.toFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -14,7 +16,7 @@ import kotlinx.io.files.Path
 import java.io.File
 
 actual fun buildGPT(): GPT {
-    return LlamaGPT()
+    return JvmEdgeGPT()
 }
 
 actual fun getGPTModelDirectory(): Path {
@@ -22,8 +24,24 @@ actual fun getGPTModelDirectory(): Path {
     return Path(File(userHome, ".storyteller_f_a/llm").absolutePath)
 }
 
-class LlamaGPT : GPT {
-    override val supportList: List<String> = listOf("gguf")
+class JvmEdgeGPT : GPT {
+    override val supportList: List<String> = listOf("litertlm")
+
+    override suspend fun importModel(file: PlatformFile): Result<GPTModel> {
+        return runCatching {
+            val name = file.file.name
+            require(supportList.any { name.endsWith(it, ignoreCase = true) }) {
+                "unsupported model file: $name"
+            }
+            val target = Path(getGPTModelDirectory(), name)
+            withContext(Dispatchers.IO) {
+                val targetFile = target.toFile()
+                targetFile.parentFile?.mkdirs()
+                file.file.copyTo(targetFile, overwrite = true)
+            }
+            GPTModel(target.name, target.toString())
+        }
+    }
 
     override suspend fun generate(
         path: String,
