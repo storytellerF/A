@@ -82,12 +82,14 @@ import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.dialogs.openFilePicker
 import io.github.vinceglb.filekit.extension
 import io.github.vinceglb.filekit.name
+import io.github.vinceglb.filekit.path
 import io.github.vinceglb.filekit.readBytes
 import io.github.vinceglb.filekit.size
 import io.ktor.http.ContentType
 import io.ktor.http.defaultForFileExtension
 import kotlinx.coroutines.launch
 import kotlinx.io.Buffer
+import kotlinx.io.RawSource
 import kotlinx.io.Source
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
@@ -303,14 +305,26 @@ class PlatformClientFile private constructor(
     override val name: String get() = platformFile.name
     override val contentType: ContentType get() = ContentType.defaultForFileExtension(platformFile.extension)
     override val size: Long get() = platformFile.size()
-    override val path: String get() = platformFile.name
+    override val path: String get() = platformFile.path
 
-    override fun source(): Source = Buffer().also { it.write(bytes) }
+    override fun source(): Source = ByteArrayRawSource(bytes).buffered()
 
     companion object {
         suspend operator fun invoke(platformFile: PlatformFile) =
             PlatformClientFile(platformFile, platformFile.readBytes())
     }
+}
+
+private class ByteArrayRawSource(private val bytes: ByteArray) : RawSource {
+    private var offset = 0
+    override fun readAtMostTo(sink: Buffer, byteCount: Long): Long {
+        if (offset >= bytes.size) return -1L
+        val count = minOf(byteCount, (bytes.size - offset).toLong()).toInt()
+        sink.write(bytes, offset, offset + count)
+        offset += count
+        return count.toLong()
+    }
+    override fun close() {}
 }
 
 suspend fun AppGlobalDialogController.uploadPath(
