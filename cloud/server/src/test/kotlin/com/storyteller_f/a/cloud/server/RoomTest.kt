@@ -31,11 +31,10 @@ import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.datetime.LocalDateTime
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.test.Test
@@ -43,6 +42,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class RoomTest {
     @Test
@@ -413,17 +413,12 @@ suspend fun waitForRtcFrame(
     list: MutableList<RoomFrame>,
     predicate: (RoomFrame) -> Boolean,
 ) {
-    var i = 0
-    while (i < 10) {
-        i++
-        if (list.any(predicate)) {
-            break
-        }
-        withContext(Dispatchers.IO) {
-            delay(1000.milliseconds)
+    val found = withTimeoutOrNull(30.seconds) {
+        while (!list.any(predicate)) {
+            delay(200.milliseconds)
         }
     }
-    assertTrue(list.any(predicate))
+    assertTrue(found != null, "RTC frame not received within 30s, received: $list")
 }
 
 suspend fun processRTCMessage(frame: RoomFrame, session: DefaultClientWebSocketSession) {
