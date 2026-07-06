@@ -27,7 +27,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
@@ -92,6 +91,7 @@ import com.storyteller_f.storage.UserCollection
 import com.storyteller_f.storage.update
 import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
 import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -104,8 +104,7 @@ typealias PanelGlobalDialogController = GlobalDialogController<GlobalDialogConte
 
 val LocalPanelGlobalDialog = compositionLocalOf<PanelGlobalDialogController> {
     object : PanelGlobalDialogController {
-        override val state: MutableState<PersistentList<GlobalDialogState>>
-            get() = TODO("Not yet implemented")
+        override val state: MutableStateFlow<PersistentList<GlobalDialogState>> = MutableStateFlow(persistentListOf())
 
         override suspend fun <T> useResult(
             block: suspend PanelGlobalDialogController.() -> Result<T>

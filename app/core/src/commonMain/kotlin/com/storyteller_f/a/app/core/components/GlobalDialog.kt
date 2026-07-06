@@ -17,10 +17,8 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -32,6 +30,7 @@ import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -55,7 +54,7 @@ private val mutex = Mutex()
 data class GlobalDialogStateProgress(val value: Long, val total: Long?)
 
 interface GlobalDialogController<C> {
-    val state: MutableState<PersistentList<GlobalDialogState>>
+    val state: MutableStateFlow<PersistentList<GlobalDialogState>>
 
     suspend fun <T> useResult(block: suspend GlobalDialogController<C>.() -> Result<T>): Result<T>
 
@@ -65,7 +64,7 @@ interface GlobalDialogController<C> {
 
     companion object {
         val EMPTY = object : GlobalDialogController<Unit> {
-            override val state: MutableState<PersistentList<GlobalDialogState>>
+            override val state: MutableStateFlow<PersistentList<GlobalDialogState>>
                 get() = TODO("Not yet implemented")
 
             override suspend fun <T> useResult(block: suspend GlobalDialogController<Unit>.() -> Result<T>): Result<T> {
@@ -87,7 +86,7 @@ class NestedGlobalDialogController<C>(
     val customGlobalDialogController: CustomGlobalDialogController<C>,
     val level: Int
 ) : GlobalDialogController<C> {
-    override val state: MutableState<PersistentList<GlobalDialogState>>
+    override val state: MutableStateFlow<PersistentList<GlobalDialogState>>
         get() = customGlobalDialogController.state
     override val context: C
         get() = customGlobalDialogController.context
@@ -137,7 +136,7 @@ class GlobalDialogContext<C>(val events: MutableSharedFlow<Any>, val sessionMana
 
 class CustomGlobalDialogController<C>(
     override val context: C,
-    override val state: MutableState<PersistentList<GlobalDialogState>> = mutableStateOf(persistentListOf())
+    override val state: MutableStateFlow<PersistentList<GlobalDialogState>> = MutableStateFlow(persistentListOf())
 ) : GlobalDialogController<C> {
 
     @OptIn(ExperimentalUuidApi::class)
@@ -174,11 +173,11 @@ class CustomGlobalDialogController<C>(
 
 @Composable
 fun <C> GlobalDialog(state: GlobalDialogController<C>) {
-    var message by state.state
+    val message by state.state.collectAsState()
     val dialogState = message.lastOrNull()
     dialogState?.let {
         GlobalDialogInternal(it) {
-            message = persistentListOf()
+            state.state.value = persistentListOf()
         }
     }
 }
