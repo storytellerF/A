@@ -19,6 +19,10 @@ class DesktopAppTestDriver(private val driver: AppiumDriver) : AppTestDriver {
         waitAndClick(By.xpath("//*[contains(@value,'$text') or contains(@name,'$text')]"))
     }
 
+    override suspend fun clickByDescriptionContaining(description: String) {
+        waitAndClick(By.xpath("//*[contains(@name,'$description')]"))
+    }
+
     private fun waitAndClick(locator: By) {
         WebDriverWait(driver, Duration.ofSeconds(UI_WAIT_SECONDS))
             .until(ExpectedConditions.presenceOfElementLocated(locator))

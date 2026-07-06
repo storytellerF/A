@@ -11,11 +11,11 @@ class AndroidAppTestDriver(private val driver: AndroidDriver) : AppTestDriver {
     }
 
     override suspend fun clickByTextContaining(text: String) {
-        runCatching {
-            clickElement(driver, """new UiSelector().textContains("$text")""", seconds = 5)
-        }.getOrElse {
-            clickElement(driver, """new UiSelector().descriptionContains("$text")""")
-        }
+        clickElement(driver, """new UiSelector().textContains("$text")""")
+    }
+
+    override suspend fun clickByDescriptionContaining(description: String) {
+        clickElement(driver, """new UiSelector().descriptionContains("$description")""")
     }
 
     override suspend fun inputText(text: String) {

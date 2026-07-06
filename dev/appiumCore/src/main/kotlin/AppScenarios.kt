@@ -30,7 +30,7 @@ suspend fun scenarioVerifyInjectedSessionLoaded(driver: AppTestDriver) {
 
 suspend fun scenarioPublishTopicInUserSpace(driver: AppTestDriver, address: String, topicContent: String) {
     driver.clickByDescription("avatar")
-    driver.clickByTextContaining("user-dialog-cell")
+    driver.clickByDescriptionContaining("user-dialog-cell")
     driver.clickByDescription("avatar")
     driver.clickByDescription("create")
     driver.clickByText("Raw")
