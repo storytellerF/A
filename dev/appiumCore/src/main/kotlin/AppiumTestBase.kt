@@ -49,21 +49,21 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-internal const val APP_LOG_FILE_NAME = "appium-app.log"
-internal const val INJECTED_SESSION_TEMP_PATH = "/data/local/tmp/appium-session-session.json"
-internal const val INJECTED_SESSION_DIR = "files/appium-session"
-internal const val INJECTED_SESSION_FILE = "files/appium-session/session.json"
-internal const val CLI_READY_PORT = 8081
-internal const val APP_MAIN_ACTIVITY_CLASS_NAME = "com.storyteller_f.a.app.MainActivity"
-internal const val PANEL_MAIN_ACTIVITY_CLASS_NAME = "com.storyteller_f.a.panel.MainActivity"
-internal const val UI_WAIT_SECONDS = 15L
+const val APP_LOG_FILE_NAME = "appium-app.log"
+const val INJECTED_SESSION_TEMP_PATH = "/data/local/tmp/appium-session-session.json"
+const val INJECTED_SESSION_DIR = "files/appium-session"
+const val INJECTED_SESSION_FILE = "files/appium-session/session.json"
+const val CLI_READY_PORT = 8081
+const val APP_MAIN_ACTIVITY_CLASS_NAME = "com.storyteller_f.a.app.MainActivity"
+const val PANEL_MAIN_ACTIVITY_CLASS_NAME = "com.storyteller_f.a.panel.MainActivity"
+const val UI_WAIT_SECONDS = 15L
 
-internal val appUnderTest = AppUnderTest(
+val appUnderTest = AppUnderTest(
     packageName = resolveAppPackageName(),
     mainActivityClassName = APP_MAIN_ACTIVITY_CLASS_NAME,
 )
 
-internal val panelUnderTest = AppUnderTest(
+val panelUnderTest = AppUnderTest(
     packageName = resolvePanelPackageName(),
     mainActivityClassName = PANEL_MAIN_ACTIVITY_CLASS_NAME,
 )
@@ -295,7 +295,7 @@ private data class AdbCommandResult(
     val output: String,
 )
 
-internal fun createApiSessionManager(ports: AppiumPorts, passHolder: SimplePassHolder) = createSimpleUserSessionManager(
+fun createApiSessionManager(ports: AppiumPorts, passHolder: SimplePassHolder) = createSimpleUserSessionManager(
     buildWebSocketUrl("ws://127.0.0.1:${ports.ws}"),
     AcceptAllCookiesStorage(),
     passHolder,
@@ -311,7 +311,7 @@ internal fun createApiSessionManager(ports: AppiumPorts, passHolder: SimplePassH
     }
 ) { _, _, _ -> }
 
-internal fun createPanelApiSessionManager(ports: AppiumPorts, passHolder: SimplePassHolder): PanelSessionManager =
+fun createPanelApiSessionManager(ports: AppiumPorts, passHolder: SimplePassHolder): PanelSessionManager =
     createSimplePanelSessionManager(passHolder, AcceptAllCookiesStorage()) { model, cookieStorage ->
         getClient {
             defaultClientConfigureForPanel(
@@ -323,7 +323,7 @@ internal fun createPanelApiSessionManager(ports: AppiumPorts, passHolder: Simple
         }
     }
 
-internal suspend fun useDatabaseContainer(
+suspend fun useDatabaseContainer(
     network: Network,
     block: suspend (PostgreSQLContainer<*>) -> Unit
 ) {
@@ -336,7 +336,7 @@ internal suspend fun useDatabaseContainer(
     }
 }
 
-internal suspend fun useCliInitContainer(
+suspend fun useCliInitContainer(
     network: Network,
     commonEnv: Map<String, String>,
     hostSessionPath: String,
@@ -369,7 +369,7 @@ internal suspend fun useCliInitContainer(
     }
 }
 
-internal suspend fun useWsContainer(
+suspend fun useWsContainer(
     network: Network,
     commonEnv: Map<String, String>,
     hostSessionPath: String,
@@ -391,7 +391,7 @@ internal suspend fun useWsContainer(
     }
 }
 
-internal suspend fun useServerContainer(
+suspend fun useServerContainer(
     network: Network,
     commonEnv: Map<String, String>,
     hostSessionPath: String,
@@ -417,7 +417,7 @@ internal suspend fun useServerContainer(
     }
 }
 
-internal suspend fun useWorkerContainer(
+suspend fun useWorkerContainer(
     network: Network,
     commonEnv: Map<String, String>,
     hostSessionPath: String,
@@ -436,19 +436,20 @@ internal suspend fun useWorkerContainer(
     }
 }
 
-internal fun resolveAppiumPresetPath(): File {
+fun resolveAppiumPresetPath(): File {
     return sequenceOf(
         File("src/test/resources/preset"),
-        File("dev/appium/src/test/resources/preset"),
+        File("../../dev/appiumCore/src/main/resources/preset"),
+        File("dev/appiumCore/src/main/resources/preset"),
     ).firstOrNull { File(it, "0_preset_user.json").exists() }
         ?: error("Appium preset data directory not found")
 }
 
-internal fun readAppiumSystemPrivateKey(): String {
+fun readAppiumSystemPrivateKey(): String {
     return File(resolveAppiumPresetPath(), "secrets/p-system").readText().replace("\r\n", "\n")
 }
 
-internal fun prepareSessionDirectories(sessionPath: String) {
+fun prepareSessionDirectories(sessionPath: String) {
     val sessionDir = File(sessionPath)
     sessionDir.mkdirs()
     File(sessionDir, "logs").mkdirs()
@@ -456,11 +457,11 @@ internal fun prepareSessionDirectories(sessionPath: String) {
     File(sessionDir, "files").mkdirs()
 }
 
-internal fun clearAppData(packageName: String) {
+fun clearAppData(packageName: String) {
     runAdbCommand("shell", "pm", "clear", packageName)
 }
 
-internal fun buildContainerEnv(
+fun buildContainerEnv(
     containerDataPath: String,
     postgresContainer: PostgreSQLContainer<*>
 ): Map<String, String> {
@@ -486,7 +487,7 @@ internal fun buildContainerEnv(
     )
 }
 
-internal fun parseEnvFile(file: File): Map<String, String> {
+fun parseEnvFile(file: File): Map<String, String> {
     if (!file.exists()) return emptyMap()
     return file.readLines().asSequence()
         .map { it.trim() }
@@ -500,7 +501,7 @@ internal fun parseEnvFile(file: File): Map<String, String> {
         .toMap()
 }
 
-internal fun bindAndroidReverse(hostPort: Int, devicePort: Int) {
+fun bindAndroidReverse(hostPort: Int, devicePort: Int) {
     println("bind android reverse $hostPort $devicePort")
     val devices = runAdbCommandAllowFailure("devices").connectedDeviceSerials()
     check(devices.isNotEmpty()) { "No Android device available for adb reverse" }
@@ -543,7 +544,7 @@ private fun waitForAndroidReverse(device: String, devicePort: Int) {
     )
 }
 
-internal fun copyAppLogToBuild(testName: String, packageName: String) {
+fun copyAppLogToBuild(testName: String, packageName: String) {
     val outputDir = File("build/test/appium-logs/AppiumTest")
     outputDir.mkdirs()
     val outputFile = File(outputDir, "$testName.log")
@@ -564,7 +565,7 @@ internal fun copyAppLogToBuild(testName: String, packageName: String) {
     copyAnrTracesToBuild(testName, packageName)
 }
 
-internal fun collectBugreport(testName: String) {
+fun collectBugreport(testName: String) {
     val outputDir = File("build/test/appium-logs/AppiumTest")
     outputDir.mkdirs()
     val outputFile = File(outputDir, "$testName.bugreport.zip")
@@ -602,7 +603,7 @@ private fun runAdbCommandAllowFailure(vararg args: String): AdbCommandResult {
     return AdbCommandResult(exitCode = exitCode, output = output)
 }
 
-internal fun runAdbCommand(vararg args: String) {
+fun runAdbCommand(vararg args: String) {
     val process = adbProcessBuilder(args.toList()).start()
     val output = process.inputStream.bufferedReader().use { it.readText().trim() }
     val exitCode = process.waitFor()
@@ -625,11 +626,11 @@ private fun AdbCommandResult.connectedDeviceSerials(): List<String> {
         .toList()
 }
 
-internal fun resolveAppPackageName(): String = resolvePackageName(
+fun resolveAppPackageName(): String = resolvePackageName(
     metadataCandidates = appMetadataCandidates(),
 )
 
-internal fun resolvePanelPackageName(): String = resolvePackageName(
+fun resolvePanelPackageName(): String = resolvePackageName(
     metadataCandidates = panelMetadataCandidates(),
 )
 
@@ -663,7 +664,7 @@ private fun JsonObject.stringValue(name: String): String? {
     return this[name]?.jsonPrimitive?.contentOrNull
 }
 
-internal fun assertElementVisible(driver: AndroidDriver, selector: String) {
+fun assertElementVisible(driver: AndroidDriver, selector: String) {
     try {
         val wait = WebDriverWait(driver, Duration.ofSeconds(UI_WAIT_SECONDS))
         val element =
@@ -683,7 +684,7 @@ internal fun assertElementVisible(driver: AndroidDriver, selector: String) {
     }
 }
 
-internal fun assertElementNotVisible(
+fun assertElementNotVisible(
     driver: AndroidDriver,
     selector: String,
     seconds: Long = 5,
@@ -701,7 +702,7 @@ internal fun assertElementNotVisible(
     }
 }
 
-internal fun clickElement(
+fun clickElement(
     driver: AndroidDriver,
     selector: String,
     seconds: Long = UI_WAIT_SECONDS
@@ -723,7 +724,7 @@ internal fun clickElement(
     }
 }
 
-internal fun inputElement(
+fun inputElement(
     driver: AndroidDriver,
     selector: String,
     input: String,
@@ -746,7 +747,7 @@ internal fun inputElement(
     }
 }
 
-internal fun saveDebugSnapshot(driver: AndroidDriver, name: String) {
+fun saveDebugSnapshot(driver: AndroidDriver, name: String) {
     val outputDir = File("build/test/appium-debug/AppiumTest")
     outputDir.mkdirs()
     val safeName = name.replace(Regex("[^a-zA-Z0-9._-]"), "_")

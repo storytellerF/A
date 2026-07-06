@@ -102,18 +102,12 @@ tryConnectHostEmulator() {
 
     echo "No local Android emulator found. VMware environment detected; trying host emulator via adb connect $host..."
 
-    for port in 5555 5557 5559 5561 5563 5565; do
-        target="$host:$port"
-        connect_output=$(adb connect "$target" 2>&1 || true)
-        echo "adb connect $target: $connect_output"
+    target="$host:5555"
+    connect_output=$(adb connect "$target" 2>&1 || true)
+    echo "adb connect $target: $connect_output"
 
-        emulator_serials=$(findEmulatorSerials)
-        if [ -n "$emulator_serials" ]; then
-            return 0
-        fi
-    done
-
-    return 1
+    emulator_serials=$(findEmulatorSerials)
+    [ -n "$emulator_serials" ]
 }
 
 checkEmulatorReady() {
@@ -193,10 +187,17 @@ fi
 # Running Appium Tests
 if [ "$RUN_APPIUM" = true ]; then
     echo "Running Appium Tests..."
-    rm -rf ./dev/appium/build/test/appium/sessions
-#    ./gradlew :dev:appium:clean -Pappium=true $GRADLE_CONSOLE_ARGS
+    rm -rf ./app/androidAppium/build/test/appium/sessions
+    rm -rf ./app/desktopAppium/build/test/appium/sessions
+    rm -rf ./panel/androidAppium/build/test/appium/sessions
+    rm -rf ./panel/desktopAppium/build/test/appium/sessions
     appium_exit=0
-    ./gradlew :dev:appium:test -Pappium=true $TEST_ARGS $GRADLE_CONSOLE_ARGS || appium_exit=$?
+    ./gradlew \
+        :app:androidAppium:test \
+        :app:desktopAppium:test \
+        :panel:androidAppium:test \
+        :panel:desktopAppium:test \
+        -Pappium=true $TEST_ARGS $GRADLE_CONSOLE_ARGS || appium_exit=$?
     if [ "$appium_exit" -ne 0 ]; then
         exit "$appium_exit"
     fi
