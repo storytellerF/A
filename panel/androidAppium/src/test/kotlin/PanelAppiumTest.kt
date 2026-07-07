@@ -15,10 +15,7 @@ class PanelAppiumTest : AppiumTestBase() {
                 injected
             }
         ) { driver, _ ->
-            assertElementVisible(driver, """new UiSelector().text("Overview")""")
-            clickElement(driver, """new UiSelector().description("Menu")""")
-            clickElement(driver, """new UiSelector().text("All users")""")
-            assertElementVisible(driver, """new UiSelector().text("All users")""")
+            scenarioOpenAllUsersFromOverview(AndroidAppTestDriver(driver))
         }
     }
 }
