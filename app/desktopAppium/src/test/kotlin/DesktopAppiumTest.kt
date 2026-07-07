@@ -37,4 +37,30 @@ class DesktopAppiumTest : DesktopAppiumTestBase() {
             scenarioPublishTopicInUserSpace(DesktopAppTestDriver(driver), injected.address, topicContent)
         }
     }
+
+    @Test
+    fun `test subscribe topic from community page`() = runAppiumBlockingTest {
+        loadCryptoLibIfNeed()
+        val now = System.currentTimeMillis()
+        val topicContent = "appium-desktop-subscription-topic-$now"
+        runDesktopType1Test(
+            beforeLaunch = { ports, sessionFilePath ->
+                val scenario = prepareSubscriptionTopicScenario(now, topicContent) {
+                    createAuthenticatedSession(ports)
+                }
+                writeSessionFile(sessionFilePath, buildInjectedSessionJson(scenario.authenticated.session))
+                scenario
+            }
+        ) { driver, data ->
+            try {
+                val appDriver = DesktopAppTestDriver(driver)
+                scenarioSubscribeTopic(appDriver, data.communityName, topicContent)
+                waitUntilTopicSubscribed(data.authenticated.sessionManager, data.topicId)
+                appDriver.navigateBack()
+                appDriver.assertVisible(description = "topic")
+            } finally {
+                data.authenticated.sessionManager.client.close()
+            }
+        }
+    }
 }

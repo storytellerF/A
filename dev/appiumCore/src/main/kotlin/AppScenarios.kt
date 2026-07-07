@@ -58,7 +58,7 @@ suspend fun scenarioSubscribeTopic(driver: AppTestDriver, communityName: String,
     scenarioOpenCommunity(driver, communityName)
     driver.clickByText(topicContent)
     driver.clickByDescription("topic")
-    driver.clickByText("Subscription")
+    driver.clickByDescriptionContaining("subscribe-action")
 }
 
 suspend fun scenarioCommunityProfileActions(

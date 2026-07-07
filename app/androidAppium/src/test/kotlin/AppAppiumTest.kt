@@ -94,16 +94,11 @@ class AppAppiumTest : AppiumTestBase() {
         val topicContent = "appium-subscription-topic-$now"
         runType1Test(
             beforeDriverLaunch = { ports, packageName ->
-                val owner = createAuthenticatedSession(ports)
-                val aidSuffix = (now % 1_000_000).toString().padStart(6, '0')
-                val communityName = "community-$aidSuffix"
-                val communityId = createCommunityByApi(owner.sessionManager, communityName, "sc$aidSuffix")
-                val topicId = createTopicByApi(owner.sessionManager, ObjectType.COMMUNITY, communityId, topicContent)
-                val viewer = createAuthenticatedSession(ports)
-                viewer.sessionManager.joinCommunity(communityId).getOrThrow()
-                pushInjectedSessionToPrivateDir(packageName, buildInjectedSessionJson(viewer.session))
-                owner.sessionManager.client.close()
-                SubscriptionTopicScenario(viewer, topicId, communityName)
+                val scenario = prepareSubscriptionTopicScenario(now, topicContent) {
+                    createAuthenticatedSession(ports)
+                }
+                pushInjectedSessionToPrivateDir(packageName, buildInjectedSessionJson(scenario.authenticated.session))
+                scenario
             }
         ) { driver, data ->
             try {
@@ -182,19 +177,6 @@ private suspend fun waitUntilTopicFavorited(
     error("Topic not marked as favorite: $topicId")
 }
 
-private suspend fun waitUntilTopicSubscribed(
-    sessionManager: UserSessionManager,
-    topicId: Long,
-    timeoutMillis: Long = java.time.Duration.ofSeconds(30).toMillis(),
-) {
-    val deadline = System.currentTimeMillis() + timeoutMillis
-    while (System.currentTimeMillis() < deadline) {
-        if (sessionManager.getTopicInfo(topicId).getOrThrow().subscriptionId != null) return
-        delay(500.milliseconds)
-    }
-    error("Topic not marked as subscribed: $topicId")
-}
-
 private suspend fun createCommunityByApi(manager: UserSessionManager, name: String, aid: String): Long =
     manager.createCommunity(NewCommunity(name, aid)).getOrThrow().id
 
@@ -213,12 +195,6 @@ private suspend fun createTopicByApi(
 ): Long = manager.createTopic(parentType, parentId, content).getOrThrow().id
 
 private data class FavoriteTopicScenario(val authenticated: AuthenticatedSession, val topicId: Long)
-
-private data class SubscriptionTopicScenario(
-    val authenticated: AuthenticatedSession,
-    val topicId: Long,
-    val communityName: String,
-)
 
 private data class PreparedScenario(
     val ownerSession: InjectedSession,

@@ -13,16 +13,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun ButtonNav(icon: ImageVector, title: String, onClick: () -> Unit = {}) {
-    ButtonNav(IconRes.Vector(icon), title, onClick = onClick)
+fun ButtonNav(icon: ImageVector, title: String, semanticDescription: String? = null, onClick: () -> Unit = {}) {
+    ButtonNav(IconRes.Vector(icon), title, semanticDescription = semanticDescription, onClick = onClick)
 }
 
 @Composable
-fun ButtonNav(icon: Char, title: String, onClick: () -> Unit = {}) {
-    ButtonNav(IconRes.Font(icon), title, onClick = onClick)
+fun ButtonNav(icon: Char, title: String, semanticDescription: String? = null, onClick: () -> Unit = {}) {
+    ButtonNav(IconRes.Font(icon), title, semanticDescription = semanticDescription, onClick = onClick)
 }
 
 @Composable
@@ -30,13 +32,17 @@ fun ButtonNav(
     icon: IconRes,
     title: String,
     suffix: @Composable () -> Unit = {},
+    semanticDescription: String? = null,
     onClick: () -> Unit = {}
 ) {
     val shape = RoundedCornerShape(8.dp)
+    val semanticsModifier = semanticDescription?.let {
+        Modifier.semantics { contentDescription = it }
+    } ?: Modifier
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.fillMaxWidth().clip(shape).clickable {
+        modifier = Modifier.fillMaxWidth().then(semanticsModifier).clip(shape).clickable {
             onClick()
         }.padding(horizontal = 8.dp, vertical = 12.dp)
     ) {

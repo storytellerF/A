@@ -131,6 +131,9 @@ class LinuxDriver extends BaseDriver {
       }
       this.log.warn(`AT-SPI click failed for "${name}": ${result.error || 'unknown error'}`);
     }
+    // xdotool is a last-resort fallback. For Compose popup/scroll descendants AT-SPI may expose
+    // DESKTOP_COORDS with an ancestor offset applied twice, so this coordinate can miss the real row.
+    // Tests should prefer semantic descriptions or nodes with AT-SPI click actions.
     this.log.info(`Clicking at (${cx}, ${cy})`);
     this._xdotool('mousemove', '--sync', cx, cy);
     this._xdotool('click', 1);

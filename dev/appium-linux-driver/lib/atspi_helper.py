@@ -36,6 +36,10 @@ def node_to_dict(node, depth=0, max_depth=20):
         desc = node.description or ""
         try:
             component = node.queryComponent()
+            # Compose popup/scroll descendants can report DESKTOP_COORDS with an ancestor offset applied twice.
+            # Example: a "Subscription" menu row was exposed around (448,594) here, while the in-process
+            # Java accessibility dump placed the same row around (200,424) inside the window. Coordinate
+            # fallback clicks derived from these bounds can land below the real clickable row.
             bbox = component.getExtents(pyatspi.DESKTOP_COORDS)
             bounds = {"x": bbox.x, "y": bbox.y, "w": bbox.width, "h": bbox.height}
         except Exception:
@@ -121,6 +125,8 @@ def wait_for_elements(app_pid, strategy, selector, timeout=15):
 def get_center(node):
     try:
         component = node.queryComponent()
+        # See node_to_dict: DESKTOP_COORDS is only a fallback coordinate source for Appium.
+        # Prefer AT-SPI actions or stable semantic selectors when a Compose node exposes them.
         bbox = component.getExtents(pyatspi.DESKTOP_COORDS)
         return bbox.x + bbox.width // 2, bbox.y + bbox.height // 2
     except Exception:

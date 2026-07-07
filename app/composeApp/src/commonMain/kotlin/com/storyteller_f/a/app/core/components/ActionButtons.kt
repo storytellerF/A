@@ -76,7 +76,7 @@ fun SubscriptionButton(
     } else {
         IconRes.Vector(Icons.Default.NotificationsOff)
     }
-    ButtonNav(icon, "Subscription") {
+    ButtonNav(icon, "Subscription", semanticDescription = "subscribe-action") {
         scope.launch {
             dialogController.use(taskId) { state ->
                 state.use {
