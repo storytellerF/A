@@ -23,6 +23,11 @@ suspend fun scenarioSignIn(driver: AppTestDriver, privateKey: String) {
     driver.assertNotVisible("Sign in")
 }
 
+suspend fun scenarioSignInAsSystemUser(driver: AppTestDriver, privateKey: String) {
+    scenarioSignIn(driver, privateKey)
+    driver.assertNotVisible("Sign in")
+}
+
 suspend fun scenarioVerifyInjectedSessionLoaded(driver: AppTestDriver) {
     driver.clickByDescription("avatar")
     driver.assertNotVisible("Sign in")
@@ -41,12 +46,11 @@ suspend fun scenarioPublishTopicInUserSpace(driver: AppTestDriver, address: Stri
 
 suspend fun scenarioFavoriteTopic(driver: AppTestDriver, address: String, topicContent: String) {
     driver.clickByDescription("avatar")
-    driver.assertVisible(text = "ad: $address")
-    driver.clickByDescription("user-dialog-cell")
+    driver.clickByDescriptionContaining("user-dialog-cell")
     driver.assertVisible(text = topicContent)
     driver.clickByText(topicContent)
     driver.clickByDescription("topic")
-    driver.clickByText("Favorite")
+    driver.clickByDescriptionContaining("favorite-action")
 }
 
 suspend fun scenarioOpenCommunity(driver: AppTestDriver, communityName: String) {
@@ -68,9 +72,9 @@ suspend fun scenarioCommunityProfileActions(
 ) {
     scenarioOpenCommunity(driver, communityName)
     driver.clickByText(communityName.first().toString())
-    driver.clickByText("Favorite")
-    driver.clickByText("Subscription")
-    driver.clickByText("All members")
+    driver.clickByDescriptionContaining("favorite-action")
+    driver.clickByDescriptionContaining("subscribe-action")
+    driver.clickByDescriptionContaining("all-members-action")
     driver.clickByTextContaining(ownerAddress)
 }
 
@@ -81,7 +85,7 @@ suspend fun scenarioPublishTopicInCommunity(
 ) {
     scenarioOpenCommunity(driver, communityName)
     driver.clickByText(communityName.first().toString())
-    driver.clickByText("Add")
+    driver.clickByDescriptionContaining("community-add-topic-action")
     driver.saveSnapshot("community-after-add")
     driver.clickByText("Raw")
     driver.inputText(topicContent)
@@ -97,7 +101,7 @@ suspend fun scenarioPublishTopicInRoom(
 ) {
     scenarioOpenCommunity(driver, communityName)
     driver.clickByText("Rooms")
-    driver.clickByText(roomName)
+    driver.clickByTextContaining(roomName)
     driver.inputText(topicContent)
     driver.clickByDescription("Send")
     driver.assertVisible(text = topicContent)

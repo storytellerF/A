@@ -39,7 +39,7 @@ fun FavoriteButton(
     } else {
         IconRes.Vector(Icons.Default.FavoriteBorder)
     }
-    ButtonNav(icon, "Favorite") {
+    ButtonNav(icon, "Favorite", semanticDescription = "favorite-action") {
         scope.launch {
             dialogController.use(taskId) { state ->
                 state.use {

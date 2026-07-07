@@ -1,5 +1,8 @@
 import com.storyteller_f.a.api.NewCommunity
+import com.storyteller_f.a.api.NewRoom
+import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.createCommunity
+import com.storyteller_f.a.client.core.createRoom
 import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.a.client.core.getTopicInfo
 import com.storyteller_f.a.client.core.joinCommunity
@@ -12,6 +15,36 @@ data class SubscriptionTopicScenario(
     val topicId: Long,
     val communityName: String,
 )
+
+data class FavoriteTopicScenario(val authenticated: AuthenticatedSession, val topicId: Long)
+
+data class PreparedCommunityRoomScenario(
+    val ownerSession: InjectedSession,
+    val viewerSession: InjectedSession,
+    val communityId: Long,
+    val roomId: Long,
+    val communityName: String,
+    val roomName: String,
+)
+
+suspend fun prepareFavoriteTopicScenario(
+    topicContent: String,
+    createAuthenticatedSession: suspend () -> AuthenticatedSession,
+): FavoriteTopicScenario {
+    val authenticated = createAuthenticatedSession()
+    try {
+        val topicId = createTopicByApi(
+            authenticated.sessionManager,
+            ObjectType.USER,
+            authenticated.sessionManager.model.uid ?: error("not login"),
+            topicContent
+        )
+        return FavoriteTopicScenario(authenticated, topicId)
+    } catch (throwable: Throwable) {
+        authenticated.sessionManager.client.close()
+        throw throwable
+    }
+}
 
 suspend fun prepareSubscriptionTopicScenario(
     now: Long,
@@ -42,8 +75,46 @@ suspend fun prepareSubscriptionTopicScenario(
     }
 }
 
+suspend fun prepareCommunityRoomScenario(
+    now: Long,
+    createAuthenticatedSession: suspend () -> AuthenticatedSession,
+): PreparedCommunityRoomScenario {
+    val owner = createAuthenticatedSession()
+    var viewer: AuthenticatedSession? = null
+    try {
+        val aidSuffix = (now % 1_000_000).toString().padStart(6, '0')
+        val communityName = "community-$aidSuffix"
+        val roomName = "room-$aidSuffix"
+        val communityId = createCommunityByApi(owner.sessionManager, communityName, "c$aidSuffix")
+        val roomId = createRoomByApi(owner.sessionManager, roomName, "r$aidSuffix", communityId)
+        createTopicByApi(owner.sessionManager, ObjectType.COMMUNITY, communityId, "appium-owner-community-topic-$now")
+        viewer = createAuthenticatedSession()
+        viewer.sessionManager.joinCommunity(communityId).getOrThrow()
+        return PreparedCommunityRoomScenario(owner.session, viewer.session, communityId, roomId, communityName, roomName)
+    } catch (throwable: Throwable) {
+        viewer?.sessionManager?.client?.close()
+        throw throwable
+    } finally {
+        owner.sessionManager.client.close()
+        viewer?.sessionManager?.client?.close()
+    }
+}
+
+suspend fun waitUntilTopicFavorited(
+    sessionManager: UserSessionManager,
+    topicId: Long,
+    timeoutMillis: Long = java.time.Duration.ofSeconds(30).toMillis(),
+) {
+    val deadline = System.currentTimeMillis() + timeoutMillis
+    while (System.currentTimeMillis() < deadline) {
+        if (sessionManager.getTopicInfo(topicId).getOrThrow().favoriteId != null) return
+        delay(500.milliseconds)
+    }
+    error("Topic not marked as favorite: $topicId")
+}
+
 suspend fun waitUntilTopicSubscribed(
-    sessionManager: com.storyteller_f.a.client.core.UserSessionManager,
+    sessionManager: UserSessionManager,
     topicId: Long,
     timeoutMillis: Long = java.time.Duration.ofSeconds(30).toMillis(),
 ) {
@@ -54,3 +125,20 @@ suspend fun waitUntilTopicSubscribed(
     }
     error("Topic not marked as subscribed: $topicId")
 }
+
+private suspend fun createCommunityByApi(manager: UserSessionManager, name: String, aid: String): Long =
+    manager.createCommunity(NewCommunity(name, aid)).getOrThrow().id
+
+private suspend fun createRoomByApi(
+    manager: UserSessionManager,
+    name: String,
+    aid: String,
+    communityId: Long,
+): Long = manager.createRoom(NewRoom(name, aid, communityId = communityId)).getOrThrow().id
+
+private suspend fun createTopicByApi(
+    manager: UserSessionManager,
+    parentType: ObjectType,
+    parentId: Long,
+    content: String,
+): Long = manager.createTopic(parentType, parentId, content).getOrThrow().id

@@ -1,16 +1,5 @@
-import com.storyteller_f.a.api.NewCommunity
-import com.storyteller_f.a.api.NewRoom
-import com.storyteller_f.a.client.core.UserSessionManager
-import com.storyteller_f.a.client.core.createCommunity
-import com.storyteller_f.a.client.core.createRoom
-import com.storyteller_f.a.client.core.createTopic
-import com.storyteller_f.a.client.core.getTopicInfo
-import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.shared.loadCryptoLibIfNeed
-import com.storyteller_f.shared.type.ObjectType
-import kotlinx.coroutines.delay
 import kotlin.test.Test
-import kotlin.time.Duration.Companion.milliseconds
 
 class AppAppiumTest : AppiumTestBase() {
 
@@ -24,9 +13,7 @@ class AppAppiumTest : AppiumTestBase() {
     @Test
     fun `test sign in as system user`() = runAppiumBlockingTest {
         runType2Test { driver ->
-            val appDriver = AndroidAppTestDriver(driver)
-            scenarioSignIn(appDriver, readAppiumSystemPrivateKey())
-            appDriver.assertVisible(text = "System")
+            scenarioSignInAsSystemUser(AndroidAppTestDriver(driver), readAppiumSystemPrivateKey())
         }
     }
 
@@ -64,15 +51,11 @@ class AppAppiumTest : AppiumTestBase() {
         val topicContent = "appium-favorite-topic-${System.currentTimeMillis()}"
         runType1Test(
             beforeDriverLaunch = { ports, packageName ->
-                val authenticated = createAuthenticatedSession(ports)
-                val topicId = createTopicByApi(
-                    authenticated.sessionManager,
-                    ObjectType.USER,
-                    authenticated.sessionManager.model.uid ?: error("not login"),
-                    topicContent
-                )
-                pushInjectedSessionToPrivateDir(packageName, buildInjectedSessionJson(authenticated.session))
-                FavoriteTopicScenario(authenticated, topicId)
+                val scenario = prepareFavoriteTopicScenario(topicContent) {
+                    createAuthenticatedSession(ports)
+                }
+                pushInjectedSessionToPrivateDir(packageName, buildInjectedSessionJson(scenario.authenticated.session))
+                scenario
             }
         ) { driver, data ->
             try {
@@ -132,13 +115,15 @@ class AppAppiumTest : AppiumTestBase() {
     }
 
     private fun runPreparedCommunityRoomScenario(
-        block: suspend (AppTestDriver, PreparedScenario) -> Unit,
+        block: suspend (AppTestDriver, PreparedCommunityRoomScenario) -> Unit,
     ) = runAppiumBlockingTest {
         loadCryptoLibIfNeed()
         val now = System.currentTimeMillis()
         runType1Test(
             beforeDriverLaunch = { ports, packageName ->
-                val prepared = prepareJoinAndPostingScenario(ports, now)
+                val prepared = prepareCommunityRoomScenario(now) {
+                    createAuthenticatedSession(ports)
+                }
                 pushInjectedSessionToPrivateDir(packageName, buildInjectedSessionJson(prepared.viewerSession))
                 prepared
             }
@@ -146,61 +131,4 @@ class AppAppiumTest : AppiumTestBase() {
             block(AndroidAppTestDriver(driver), data)
         }
     }
-
-    private suspend fun prepareJoinAndPostingScenario(ports: AppiumPorts, now: Long): PreparedScenario {
-        val owner = createAuthenticatedSession(ports)
-        val aidSuffix = (now % 1_000_000).toString().padStart(6, '0')
-        val communityName = "community-$aidSuffix"
-        val roomName = "room-$aidSuffix"
-        val communityId = createCommunityByApi(owner.sessionManager, communityName, "c$aidSuffix")
-        val roomId = createRoomByApi(owner.sessionManager, roomName, "r$aidSuffix", communityId)
-        createTopicByApi(owner.sessionManager, ObjectType.COMMUNITY, communityId, "appium-owner-community-topic-$now")
-        val viewer = createAuthenticatedSession(ports)
-        viewer.sessionManager.joinCommunity(communityId).getOrThrow()
-        val result = PreparedScenario(owner.session, viewer.session, communityId, roomId, communityName, roomName)
-        owner.sessionManager.client.close()
-        viewer.sessionManager.client.close()
-        return result
-    }
 }
-
-private suspend fun waitUntilTopicFavorited(
-    sessionManager: UserSessionManager,
-    topicId: Long,
-    timeoutMillis: Long = java.time.Duration.ofSeconds(30).toMillis(),
-) {
-    val deadline = System.currentTimeMillis() + timeoutMillis
-    while (System.currentTimeMillis() < deadline) {
-        if (sessionManager.getTopicInfo(topicId).getOrThrow().favoriteId != null) return
-        delay(500.milliseconds)
-    }
-    error("Topic not marked as favorite: $topicId")
-}
-
-private suspend fun createCommunityByApi(manager: UserSessionManager, name: String, aid: String): Long =
-    manager.createCommunity(NewCommunity(name, aid)).getOrThrow().id
-
-private suspend fun createRoomByApi(
-    manager: UserSessionManager,
-    name: String,
-    aid: String,
-    communityId: Long,
-): Long = manager.createRoom(NewRoom(name, aid, communityId = communityId)).getOrThrow().id
-
-private suspend fun createTopicByApi(
-    manager: UserSessionManager,
-    parentType: ObjectType,
-    parentId: Long,
-    content: String,
-): Long = manager.createTopic(parentType, parentId, content).getOrThrow().id
-
-private data class FavoriteTopicScenario(val authenticated: AuthenticatedSession, val topicId: Long)
-
-private data class PreparedScenario(
-    val ownerSession: InjectedSession,
-    val viewerSession: InjectedSession,
-    val communityId: Long,
-    val roomId: Long,
-    val communityName: String,
-    val roomName: String,
-)
