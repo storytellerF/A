@@ -47,10 +47,16 @@ abstract class DesktopAppiumTestBase {
     ) {
         runDesktopContainerTest { ports ->
             val sessionFile = File("build/test/appium/tmp/desktop-session-${name.methodName}.json")
+            val runtimeDir = File("build/test/appium/tmp/desktop-runtime-${name.methodName}")
+            val logDir = File("build/test/appium-logs/DesktopAppiumTest").also { it.mkdirs() }
+            val appLogFile = File(logDir, "${safeName(name.methodName)}.desktop.log")
+            runtimeDir.deleteRecursively()
+            runtimeDir.mkdirs()
             sessionFile.parentFile?.mkdirs()
+            appLogFile.delete()
 
             val setup = beforeLaunch(ports, sessionFile.canonicalPath)
-            val launchScript = buildLaunchScript(ports, sessionFile, resolveDesktopRuntimeClasspath())
+            val launchScript = buildLaunchScript(ports, sessionFile, runtimeDir, appLogFile, resolveDesktopRuntimeClasspath())
 
             var driver: AppiumDriver? = null
             try {
@@ -63,12 +69,13 @@ abstract class DesktopAppiumTestBase {
                 driver = AppiumDriver(URI("http://127.0.0.1:4723").toURL(), caps)
                 block(driver, setup)
             } catch (throwable: Throwable) {
-                DesktopAccessibilityDump.dumpOnFailure(name.methodName, sessionFile, driver, throwable)
+                DesktopAccessibilityDump.dumpOnFailure(name.methodName, sessionFile, driver, throwable, logDir, appLogFile)
                 throw throwable
             } finally {
                 driver?.quit()
                 launchScript.delete()
                 sessionFile.delete()
+                runtimeDir.deleteRecursively()
             }
         }
     }
@@ -149,27 +156,43 @@ abstract class DesktopAppiumTestBase {
         ?.takeIf { it.isNotEmpty() }
         ?: error("Desktop runtime classpath not found. Run :app:desktopApp:writeAppiumRuntimeClasspath first.")
 
-    private fun buildLaunchScript(ports: AppiumPorts, sessionFile: File, runtimeClasspath: String): File {
+    private fun buildLaunchScript(
+        ports: AppiumPorts,
+        sessionFile: File,
+        runtimeDir: File,
+        appLogFile: File,
+        runtimeClasspath: String
+    ): File {
         val javaExec = System.getenv("APP_DESKTOP_TEST_JAVA") ?: "java"
         val atspiClasspath = listOf(runtimeClasspath, "/usr/share/java/java-atk-wrapper.jar")
             .joinToString(File.pathSeparator)
+        val prefsDir = runtimeDir.resolve("prefs").also { it.mkdirs() }
+        val tmpDir = runtimeDir.resolve("tmp").also { it.mkdirs() }
         val scriptDir = File("build/test/appium/tmp").also { it.mkdirs() }
         val script = File.createTempFile("desktop-appium-", ".sh", scriptDir)
         script.writeText(
             """
             #!/bin/bash
+            mkdir -p "${appLogFile.parentFile.canonicalPath}"
             exec "$javaExec" \
               "-Dappium.server.url=http://127.0.0.1:${ports.server}" \
               "-Dappium.ws.url=ws://127.0.0.1:${ports.ws}" \
               "-Dappium.session.file=${sessionFile.canonicalPath}" \
+              "-Djava.util.prefs.userRoot=${prefsDir.canonicalPath}" \
+              "-Djava.io.tmpdir=${tmpDir.canonicalPath}" \
+              "-XX:ErrorFile=${appLogFile.parentFile.canonicalPath}/hs_err_pid%p.log" \
               "-Djavax.accessibility.assistive_technologies=org.GNOME.Accessibility.AtkWrapper" \
               "-cp" "$atspiClasspath" \
-              com.storyteller_f.a.app.JvmMainKt
+              com.storyteller_f.a.app.JvmMainKt \
+              >> "${appLogFile.canonicalPath}" 2>&1
             """.trimIndent()
         )
         script.setExecutable(true)
         return script
     }
+
+    private fun safeName(value: String): String =
+        value.replace(Regex("[^a-zA-Z0-9._-]"), "_")
 }
 
 private fun createDesktopApiSessionManager(ports: AppiumPorts, passHolder: SimplePassHolder): UserSessionManager =

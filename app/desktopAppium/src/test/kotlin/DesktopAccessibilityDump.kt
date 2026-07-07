@@ -8,6 +8,8 @@ object DesktopAccessibilityDump {
         sessionFile: File,
         driver: AppiumDriver?,
         throwable: Throwable,
+        logDir: File,
+        appLogFile: File,
     ) {
         val outputDir = File("build/test/appium-debug/DesktopAppiumTest", safeName(testName))
             .resolve(Instant.now().toString().replace(Regex("[^a-zA-Z0-9._-]"), "_"))
@@ -24,6 +26,7 @@ object DesktopAccessibilityDump {
 
         dumpPageSource(driver, outputDir)
         dumpAwtAccessibilityTree(sessionFile, outputDir)
+        copyDesktopLogs(logDir, appLogFile, outputDir)
     }
 
     private fun dumpPageSource(driver: AppiumDriver?, outputDir: File) {
@@ -77,6 +80,28 @@ object DesktopAccessibilityDump {
             Thread.sleep(100)
         }
         error("Timed out waiting for AWT accessibility dump: ${output.canonicalPath}")
+    }
+
+    private fun copyDesktopLogs(logDir: File, appLogFile: File, outputDir: File) {
+        if (appLogFile.isFile) {
+            appLogFile.copyTo(File(outputDir, appLogFile.name), overwrite = true)
+        } else {
+            File(outputDir, "desktop-log.error.txt")
+                .writeText("Desktop app log not found: ${appLogFile.canonicalPath}\n")
+        }
+
+        logDir.listFiles()
+            .orEmpty()
+            .filter { file ->
+                file.isFile && (
+                    file.name.startsWith("hs_err_pid") ||
+                        file.name.startsWith("replay_pid") ||
+                        file.extension == "mdmp"
+                    )
+            }
+            .forEach { file ->
+                file.copyTo(File(outputDir, file.name), overwrite = true)
+            }
     }
 
     private fun safeName(value: String): String =
