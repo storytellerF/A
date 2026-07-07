@@ -193,7 +193,7 @@ private fun PanelNavigationDrawer(
 ) {
     val windowSizeClass = calculateWindowSizeClass()
     val usePermanentDrawer = getPlatform().usePermanentPanelNavigationDrawer &&
-        windowSizeClass.widthSizeClass == WindowWidthSizeClass.Expanded
+        windowSizeClass.widthSizeClass != WindowWidthSizeClass.Compact
     if (usePermanentDrawer) {
         PermanentNavigationDrawer(
             drawerContent = { drawerContent(true) },
