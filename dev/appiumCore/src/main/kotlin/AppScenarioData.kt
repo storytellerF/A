@@ -14,9 +14,14 @@ data class SubscriptionTopicScenario(
     val authenticated: AuthenticatedSession,
     val topicId: Long,
     val communityName: String,
+    val topicContent: String,
 )
 
-data class FavoriteTopicScenario(val authenticated: AuthenticatedSession, val topicId: Long)
+data class FavoriteTopicScenario(
+    val authenticated: AuthenticatedSession,
+    val topicId: Long,
+    val topicContent: String,
+)
 
 data class PreparedCommunityRoomScenario(
     val ownerSession: InjectedSession,
@@ -28,9 +33,9 @@ data class PreparedCommunityRoomScenario(
 )
 
 suspend fun prepareFavoriteTopicScenario(
-    topicContent: String,
     createAuthenticatedSession: suspend () -> AuthenticatedSession,
 ): FavoriteTopicScenario {
+    val topicContent = "appium-favorite-topic-${System.currentTimeMillis()}"
     val authenticated = createAuthenticatedSession()
     try {
         val topicId = createTopicByApi(
@@ -39,7 +44,7 @@ suspend fun prepareFavoriteTopicScenario(
             authenticated.sessionManager.model.uid ?: error("not login"),
             topicContent
         )
-        return FavoriteTopicScenario(authenticated, topicId)
+        return FavoriteTopicScenario(authenticated, topicId, topicContent)
     } catch (throwable: Throwable) {
         authenticated.sessionManager.client.close()
         throw throwable
@@ -47,10 +52,10 @@ suspend fun prepareFavoriteTopicScenario(
 }
 
 suspend fun prepareSubscriptionTopicScenario(
-    now: Long,
-    topicContent: String,
     createAuthenticatedSession: suspend () -> AuthenticatedSession,
 ): SubscriptionTopicScenario {
+    val now = System.currentTimeMillis()
+    val topicContent = "appium-subscription-topic-$now"
     val owner = createAuthenticatedSession()
     var viewer: AuthenticatedSession? = null
     try {
@@ -66,7 +71,7 @@ suspend fun prepareSubscriptionTopicScenario(
         ).getOrThrow().id
         viewer = createAuthenticatedSession()
         viewer.sessionManager.joinCommunity(communityId).getOrThrow()
-        return SubscriptionTopicScenario(viewer, topicId, communityName)
+        return SubscriptionTopicScenario(viewer, topicId, communityName, topicContent)
     } catch (throwable: Throwable) {
         viewer?.sessionManager?.client?.close()
         throw throwable
@@ -76,9 +81,9 @@ suspend fun prepareSubscriptionTopicScenario(
 }
 
 suspend fun prepareCommunityRoomScenario(
-    now: Long,
     createAuthenticatedSession: suspend () -> AuthenticatedSession,
 ): PreparedCommunityRoomScenario {
+    val now = System.currentTimeMillis()
     val owner = createAuthenticatedSession()
     var viewer: AuthenticatedSession? = null
     try {

@@ -1,4 +1,5 @@
-suspend fun scenarioSignUp(driver: AppTestDriver, privateKey: String) {
+suspend fun scenarioSignUp(driver: AppTestDriver) {
+    val privateKey = generateAppiumPrivateKey()
     driver.clickByDescription("avatar")
     driver.clickByText("Sign in")
     driver.clickByText("Go to sign up")
@@ -33,7 +34,8 @@ suspend fun scenarioVerifyInjectedSessionLoaded(driver: AppTestDriver) {
     driver.assertNotVisible("Sign in")
 }
 
-suspend fun scenarioPublishTopicInUserSpace(driver: AppTestDriver, address: String, topicContent: String) {
+suspend fun scenarioPublishTopicInUserSpace(driver: AppTestDriver, address: String) {
+    val topicContent = "appium-user-space-topic-${System.currentTimeMillis()}"
     driver.clickByDescription("avatar")
     driver.clickByDescriptionContaining("user-dialog-cell")
     driver.clickByDescription("avatar")
@@ -81,8 +83,8 @@ suspend fun scenarioCommunityProfileActions(
 suspend fun scenarioPublishTopicInCommunity(
     driver: AppTestDriver,
     communityName: String,
-    topicContent: String,
 ) {
+    val topicContent = "appium-community-topic-${System.currentTimeMillis()}"
     scenarioOpenCommunity(driver, communityName)
     driver.clickByText(communityName.first().toString())
     driver.clickByDescriptionContaining("community-add-topic-action")
@@ -97,8 +99,8 @@ suspend fun scenarioPublishTopicInRoom(
     driver: AppTestDriver,
     communityName: String,
     roomName: String,
-    topicContent: String,
 ) {
+    val topicContent = "appium-room-topic-${System.currentTimeMillis()}"
     scenarioOpenCommunity(driver, communityName)
     driver.clickByText("Rooms")
     driver.clickByTextContaining(roomName)

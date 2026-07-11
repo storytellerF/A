@@ -2,8 +2,10 @@ import io.appium.java_client.AppiumDriver
 import java.io.File
 import java.time.Instant
 
-object DesktopAccessibilityDump {
+object DesktopAppiumFailureDumper {
     fun dumpOnFailure(
+        suiteName: String,
+        appLabel: String,
         testName: String,
         sessionFile: File,
         driver: AppiumDriver?,
@@ -11,7 +13,7 @@ object DesktopAccessibilityDump {
         logDir: File,
         appLogFile: File,
     ) {
-        val outputDir = File("build/test/appium-debug/DesktopAppiumTest", safeName(testName))
+        val outputDir = File("build/test/appium-debug/$suiteName", safeName(testName))
             .resolve(Instant.now().toString().replace(Regex("[^a-zA-Z0-9._-]"), "_"))
         outputDir.mkdirs()
 
@@ -25,8 +27,8 @@ object DesktopAccessibilityDump {
         )
 
         dumpPageSource(driver, outputDir)
-        dumpAwtAccessibilityTree(sessionFile, outputDir)
-        copyDesktopLogs(logDir, appLogFile, outputDir)
+        dumpAwtAccessibilityTree(appLabel, sessionFile, outputDir)
+        copyDesktopLogs(appLabel, logDir, appLogFile, outputDir)
     }
 
     private fun dumpPageSource(driver: AppiumDriver?, outputDir: File) {
@@ -38,11 +40,11 @@ object DesktopAccessibilityDump {
         }
     }
 
-    private fun dumpAwtAccessibilityTree(sessionFile: File, outputDir: File) {
+    private fun dumpAwtAccessibilityTree(appLabel: String, sessionFile: File, outputDir: File) {
         val pid = findDesktopAppPid(sessionFile)
         if (pid == null) {
             File(outputDir, "awt-accessibility-tree.error.txt")
-                .writeText("Desktop app process not found for session file: ${sessionFile.canonicalPath}\n")
+                .writeText("$appLabel process not found for session file: ${sessionFile.canonicalPath}\n")
             return
         }
 
@@ -82,12 +84,12 @@ object DesktopAccessibilityDump {
         error("Timed out waiting for AWT accessibility dump: ${output.canonicalPath}")
     }
 
-    private fun copyDesktopLogs(logDir: File, appLogFile: File, outputDir: File) {
+    private fun copyDesktopLogs(appLabel: String, logDir: File, appLogFile: File, outputDir: File) {
         if (appLogFile.isFile) {
             appLogFile.copyTo(File(outputDir, appLogFile.name), overwrite = true)
         } else {
             File(outputDir, "desktop-log.error.txt")
-                .writeText("Desktop app log not found: ${appLogFile.canonicalPath}\n")
+                .writeText("$appLabel log not found: ${appLogFile.canonicalPath}\n")
         }
 
         logDir.listFiles()

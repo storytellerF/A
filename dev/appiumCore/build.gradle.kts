@@ -19,3 +19,7 @@ dependencies {
     api(libs.java.client)
     api(libs.testcontainers.postgresql)
 }
+
+tasks.withType<JavaCompile>().configureEach {
+    options.compilerArgs.addAll(listOf("--add-modules", "jdk.attach"))
+}

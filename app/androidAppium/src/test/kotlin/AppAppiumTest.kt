@@ -6,7 +6,7 @@ class AppAppiumTest : AppiumTestBase() {
     @Test
     fun `test sign up`() = runAppiumBlockingTest {
         runType2Test { driver ->
-            scenarioSignUp(AndroidAppTestDriver(driver), generatePrivateKey())
+            scenarioSignUp(AndroidAppTestDriver(driver))
         }
     }
 
@@ -33,7 +33,6 @@ class AppAppiumTest : AppiumTestBase() {
     @Test
     fun `test publish topic in user space`() = runAppiumBlockingTest {
         loadCryptoLibIfNeed()
-        val topicContent = "appium-user-space-topic-${System.currentTimeMillis()}"
         runType1Test(
             beforeDriverLaunch = { ports, packageName ->
                 val injected = createPreRegisteredSession(ports)
@@ -41,17 +40,16 @@ class AppAppiumTest : AppiumTestBase() {
                 injected
             }
         ) { driver, injectedSession ->
-            scenarioPublishTopicInUserSpace(AndroidAppTestDriver(driver), injectedSession.address, topicContent)
+            scenarioPublishTopicInUserSpace(AndroidAppTestDriver(driver), injectedSession.address)
         }
     }
 
     @Test
     fun `test favorite topic from topic page`() = runAppiumBlockingTest {
         loadCryptoLibIfNeed()
-        val topicContent = "appium-favorite-topic-${System.currentTimeMillis()}"
         runType1Test(
             beforeDriverLaunch = { ports, packageName ->
-                val scenario = prepareFavoriteTopicScenario(topicContent) {
+                val scenario = prepareFavoriteTopicScenario {
                     createAuthenticatedSession(ports)
                 }
                 pushInjectedSessionToPrivateDir(packageName, buildInjectedSessionJson(scenario.authenticated.session))
@@ -60,7 +58,7 @@ class AppAppiumTest : AppiumTestBase() {
         ) { driver, data ->
             try {
                 val appDriver = AndroidAppTestDriver(driver)
-                scenarioFavoriteTopic(appDriver, data.authenticated.session.address, topicContent)
+                scenarioFavoriteTopic(appDriver, data.authenticated.session.address, data.topicContent)
                 waitUntilTopicFavorited(data.authenticated.sessionManager, data.topicId)
                 appDriver.navigateBack()
                 appDriver.assertVisible(description = "topic")
@@ -73,11 +71,9 @@ class AppAppiumTest : AppiumTestBase() {
     @Test
     fun `test subscribe topic from community page`() = runAppiumBlockingTest {
         loadCryptoLibIfNeed()
-        val now = System.currentTimeMillis()
-        val topicContent = "appium-subscription-topic-$now"
         runType1Test(
             beforeDriverLaunch = { ports, packageName ->
-                val scenario = prepareSubscriptionTopicScenario(now, topicContent) {
+                val scenario = prepareSubscriptionTopicScenario {
                     createAuthenticatedSession(ports)
                 }
                 pushInjectedSessionToPrivateDir(packageName, buildInjectedSessionJson(scenario.authenticated.session))
@@ -86,7 +82,7 @@ class AppAppiumTest : AppiumTestBase() {
         ) { driver, data ->
             try {
                 val appDriver = AndroidAppTestDriver(driver)
-                scenarioSubscribeTopic(appDriver, data.communityName, topicContent)
+                scenarioSubscribeTopic(appDriver, data.communityName, data.topicContent)
                 waitUntilTopicSubscribed(data.authenticated.sessionManager, data.topicId)
                 appDriver.navigateBack()
                 appDriver.assertVisible(description = "topic")
@@ -104,24 +100,21 @@ class AppAppiumTest : AppiumTestBase() {
 
     @Test
     fun `test publish topic in joined community`() = runPreparedCommunityRoomScenario { appDriver, data ->
-        val topicContent = "appium-community-topic-${System.currentTimeMillis()}"
-        scenarioPublishTopicInCommunity(appDriver, data.communityName, topicContent)
+        scenarioPublishTopicInCommunity(appDriver, data.communityName)
     }
 
     @Test
     fun `test publish topic in community room`() = runPreparedCommunityRoomScenario { appDriver, data ->
-        val topicContent = "appium-room-topic-${System.currentTimeMillis()}"
-        scenarioPublishTopicInRoom(appDriver, data.communityName, data.roomName, topicContent)
+        scenarioPublishTopicInRoom(appDriver, data.communityName, data.roomName)
     }
 
     private fun runPreparedCommunityRoomScenario(
         block: suspend (AppTestDriver, PreparedCommunityRoomScenario) -> Unit,
     ) = runAppiumBlockingTest {
         loadCryptoLibIfNeed()
-        val now = System.currentTimeMillis()
         runType1Test(
             beforeDriverLaunch = { ports, packageName ->
-                val prepared = prepareCommunityRoomScenario(now) {
+                val prepared = prepareCommunityRoomScenario {
                     createAuthenticatedSession(ports)
                 }
                 pushInjectedSessionToPrivateDir(packageName, buildInjectedSessionJson(prepared.viewerSession))

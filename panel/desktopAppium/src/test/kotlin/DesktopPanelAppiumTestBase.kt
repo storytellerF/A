@@ -1,17 +1,12 @@
 import com.storyteller_f.a.client.core.SimplePassHolder
 import com.storyteller_f.a.client.core.createSimplePanelSessionManager
 import com.storyteller_f.a.client.core.defaultClientConfigureForPanel
-import com.storyteller_f.a.client.core.getAuthKey
 import com.storyteller_f.a.client.core.getClient
 import com.storyteller_f.a.client.core.panelSignUp
-import com.storyteller_f.shared.getAlgo
-import com.storyteller_f.shared.model.AlgoType
 import io.appium.java_client.AppiumDriver
 import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 import org.junit.Rule
 import org.junit.rules.TestName
 import org.openqa.selenium.remote.DesiredCapabilities
@@ -61,7 +56,16 @@ abstract class DesktopPanelAppiumTestBase {
                 driver = AppiumDriver(URI("http://127.0.0.1:4723").toURL(), caps)
                 block(driver, setup)
             } catch (throwable: Throwable) {
-                DesktopAccessibilityDump.dumpOnFailure(name.methodName, sessionFile, driver, throwable, logDir, appLogFile)
+                DesktopAppiumFailureDumper.dumpOnFailure(
+                    suiteName = "DesktopPanelAppiumTest",
+                    appLabel = "Desktop panel app",
+                    testName = name.methodName,
+                    sessionFile = sessionFile,
+                    driver = driver,
+                    throwable = throwable,
+                    logDir = logDir,
+                    appLogFile = appLogFile,
+                )
                 throw throwable
             } finally {
                 driver?.quit()
@@ -101,35 +105,24 @@ abstract class DesktopPanelAppiumTestBase {
         File(path).also { it.parentFile?.mkdirs() }.writeText(sessionJson)
     }
 
-    protected fun buildInjectedSessionJson(session: InjectedSession): String =
-        buildJsonObject {
-            put("algo", "P256")
-            put("address", session.address)
-            put("pemPrivateKey", session.pemPrivateKey)
-            put("derPrivateKey", session.derPrivateKey)
-            put("derPublicKey", session.derPublicKey)
-        }.toString()
-
     protected suspend fun createPreRegisteredPanelSession(ports: AppiumPorts): InjectedSession {
-        val algo = getAlgo(AlgoType.P256)
-        val (pemPrivateKey, _) = algo.generatePemKeyPair().getOrThrow()
-        val derPrivateKey = algo.getDerPrivateKey(pemPrivateKey).getOrThrow()
-        val derPublicKey = algo.getDerPublicKeyFromPrivateKey(pemPrivateKey).getOrThrow()
-        val address = algo.calcAddress(derPublicKey).getOrThrow()
-        val passHolder = SimplePassHolder()
-        val manager = createSimplePanelSessionManager(passHolder, AcceptAllCookiesStorage()) { model, cookieStorage ->
-            getClient {
-                defaultClientConfigureForPanel(
-                    cookieStorage,
-                    model,
-                    passHolder,
-                    "http://127.0.0.1:${ports.server}",
-                )
+        return createPreRegisteredInjectedSession { authKey, passHolder ->
+            val manager = createSimplePanelSessionManager(passHolder, AcceptAllCookiesStorage()) { model, cookieStorage ->
+                getClient {
+                    defaultClientConfigureForPanel(
+                        cookieStorage,
+                        model,
+                        passHolder,
+                        "http://127.0.0.1:${ports.server}",
+                    )
+                }
+            }
+            try {
+                manager.panelSignUp(authKey, passHolder)
+            } finally {
+                manager.client.close()
             }
         }
-        manager.panelSignUp(getAuthKey(AlgoType.P256, pemPrivateKey), passHolder)
-        manager.client.close()
-        return InjectedSession(address, pemPrivateKey, derPrivateKey, derPublicKey)
     }
 
     private fun resolvePanelRuntimeClasspath(): String = sequenceOf(

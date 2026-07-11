@@ -4,18 +4,13 @@ import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.buildWebSocketUrl
 import com.storyteller_f.a.client.core.createSimpleUserSessionManager
 import com.storyteller_f.a.client.core.defaultClientConfigure
-import com.storyteller_f.a.client.core.getAuthKey
 import com.storyteller_f.a.client.core.getClient
 import com.storyteller_f.a.client.core.userSignIn
 import com.storyteller_f.a.client.core.userSignUp
-import com.storyteller_f.shared.getAlgo
-import com.storyteller_f.shared.model.AlgoType
 import io.appium.java_client.AppiumDriver
 import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 import org.junit.Rule
 import org.junit.rules.TestName
 import org.openqa.selenium.remote.DesiredCapabilities
@@ -69,7 +64,16 @@ abstract class DesktopAppiumTestBase {
                 driver = AppiumDriver(URI("http://127.0.0.1:4723").toURL(), caps)
                 block(driver, setup)
             } catch (throwable: Throwable) {
-                DesktopAccessibilityDump.dumpOnFailure(name.methodName, sessionFile, driver, throwable, logDir, appLogFile)
+                DesktopAppiumFailureDumper.dumpOnFailure(
+                    suiteName = "DesktopAppiumTest",
+                    appLabel = "Desktop app",
+                    testName = name.methodName,
+                    sessionFile = sessionFile,
+                    driver = driver,
+                    throwable = throwable,
+                    logDir = logDir,
+                    appLogFile = appLogFile,
+                )
                 throw throwable
             } finally {
                 driver?.quit()
@@ -109,31 +113,15 @@ abstract class DesktopAppiumTestBase {
         File(path).also { it.parentFile?.mkdirs() }.writeText(sessionJson)
     }
 
-    protected fun buildInjectedSessionJson(session: InjectedSession): String {
-        println("APP_DESKTOP_SESSION_INJECT address=${session.address.take(8)}")
-        return buildJsonObject {
-            put("algo", "P256")
-            put("address", session.address)
-            put("pemPrivateKey", session.pemPrivateKey)
-            put("derPrivateKey", session.derPrivateKey)
-            put("derPublicKey", session.derPublicKey)
-        }.toString()
-    }
-
-    protected suspend fun generatePrivateKey(): String =
-        getAlgo(AlgoType.P256).generatePemKeyPair().getOrThrow().first
-
     protected suspend fun createPreRegisteredSession(ports: AppiumPorts): InjectedSession {
-        val algo = getAlgo(AlgoType.P256)
-        val (pemPrivateKey, _) = algo.generatePemKeyPair().getOrThrow()
-        val derPrivateKey = algo.getDerPrivateKey(pemPrivateKey).getOrThrow()
-        val derPublicKey = algo.getDerPublicKeyFromPrivateKey(pemPrivateKey).getOrThrow()
-        val address = algo.calcAddress(derPublicKey).getOrThrow()
-        val passHolder = SimplePassHolder()
-        val manager = createDesktopApiSessionManager(ports, passHolder)
-        manager.userSignUp(getAuthKey(AlgoType.P256, pemPrivateKey), passHolder)
-        manager.client.close()
-        return InjectedSession(address, pemPrivateKey, derPrivateKey, derPublicKey)
+        return createPreRegisteredInjectedSession { authKey, passHolder ->
+            val manager = createDesktopApiSessionManager(ports, passHolder)
+            try {
+                manager.userSignUp(authKey, passHolder)
+            } finally {
+                manager.client.close()
+            }
+        }
     }
 
     protected suspend fun createAuthenticatedSession(ports: AppiumPorts): AuthenticatedSession {

@@ -7,13 +7,10 @@ import com.storyteller_f.a.client.core.createSimplePanelSessionManager
 import com.storyteller_f.a.client.core.createSimpleUserSessionManager
 import com.storyteller_f.a.client.core.defaultClientConfigure
 import com.storyteller_f.a.client.core.defaultClientConfigureForPanel
-import com.storyteller_f.a.client.core.getAuthKey
 import com.storyteller_f.a.client.core.getClient
 import com.storyteller_f.a.client.core.panelSignUp
 import com.storyteller_f.a.client.core.userSignIn
 import com.storyteller_f.a.client.core.userSignUp
-import com.storyteller_f.shared.getAlgo
-import com.storyteller_f.shared.model.AlgoType
 import io.appium.java_client.AppiumBy
 import io.appium.java_client.android.AndroidDriver
 import io.appium.java_client.android.options.UiAutomator2Options
@@ -22,11 +19,9 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import kotlinx.serialization.json.put
 import org.junit.Rule
 import org.junit.rules.TestName
 import org.openqa.selenium.OutputType
@@ -185,46 +180,26 @@ abstract class AppiumTestBase {
         }
     }
 
-    protected suspend fun generatePrivateKey(): String {
-        return getAlgo(AlgoType.P256).generatePemKeyPair().getOrThrow().first
-    }
-
     protected suspend fun createPreRegisteredSession(ports: AppiumPorts): InjectedSession {
-        val algo = getAlgo(AlgoType.P256)
-        val (pemPrivateKey, _) = algo.generatePemKeyPair().getOrThrow()
-        val derPrivateKey = algo.getDerPrivateKey(pemPrivateKey).getOrThrow()
-        val derPublicKey = algo.getDerPublicKeyFromPrivateKey(pemPrivateKey).getOrThrow()
-        val address = algo.calcAddress(derPublicKey).getOrThrow()
-        val passHolder = SimplePassHolder()
-        val manager = createApiSessionManager(ports, passHolder)
-        val authKey = getAuthKey(AlgoType.P256, pemPrivateKey)
-        manager.userSignUp(authKey, passHolder)
-        manager.client.close()
-        return InjectedSession(
-            address = address,
-            pemPrivateKey = pemPrivateKey,
-            derPrivateKey = derPrivateKey,
-            derPublicKey = derPublicKey,
-        )
+        return createPreRegisteredInjectedSession { authKey, passHolder ->
+            val manager = createApiSessionManager(ports, passHolder)
+            try {
+                manager.userSignUp(authKey, passHolder)
+            } finally {
+                manager.client.close()
+            }
+        }
     }
 
     protected suspend fun createPreRegisteredPanelSession(ports: AppiumPorts): InjectedSession {
-        val algo = getAlgo(AlgoType.P256)
-        val (pemPrivateKey, _) = algo.generatePemKeyPair().getOrThrow()
-        val derPrivateKey = algo.getDerPrivateKey(pemPrivateKey).getOrThrow()
-        val derPublicKey = algo.getDerPublicKeyFromPrivateKey(pemPrivateKey).getOrThrow()
-        val address = algo.calcAddress(derPublicKey).getOrThrow()
-        val passHolder = SimplePassHolder()
-        val manager = createPanelApiSessionManager(ports, passHolder)
-        val authKey = getAuthKey(AlgoType.P256, pemPrivateKey)
-        manager.panelSignUp(authKey, passHolder)
-        manager.client.close()
-        return InjectedSession(
-            address = address,
-            pemPrivateKey = pemPrivateKey,
-            derPrivateKey = derPrivateKey,
-            derPublicKey = derPublicKey,
-        )
+        return createPreRegisteredInjectedSession { authKey, passHolder ->
+            val manager = createPanelApiSessionManager(ports, passHolder)
+            try {
+                manager.panelSignUp(authKey, passHolder)
+            } finally {
+                manager.client.close()
+            }
+        }
     }
 
     protected suspend fun createAuthenticatedSession(ports: AppiumPorts): AuthenticatedSession {
@@ -238,16 +213,6 @@ abstract class AppiumTestBase {
         )
         manager.userSignIn(authKey, passHolder)
         return AuthenticatedSession(session, manager)
-    }
-
-    protected fun buildInjectedSessionJson(session: InjectedSession): String {
-        return buildJsonObject {
-            put("algo", "P256")
-            put("address", session.address)
-            put("pemPrivateKey", session.pemPrivateKey)
-            put("derPrivateKey", session.derPrivateKey)
-            put("derPublicKey", session.derPublicKey)
-        }.toString()
     }
 
     protected fun pushInjectedSessionToPrivateDir(packageName: String, content: String) {
