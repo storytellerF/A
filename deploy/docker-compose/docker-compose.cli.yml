@@ -17,3 +17,4 @@ services:
       interval: 2s
       timeout: 2s
       retries: 60
+      start_period: 2m
