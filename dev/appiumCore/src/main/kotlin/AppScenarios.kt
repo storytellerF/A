@@ -3,13 +3,13 @@ suspend fun scenarioSignUp(driver: AppTestDriver) {
     driver.clickByDescription("avatar")
     driver.clickByText("Sign in")
     driver.clickByText("Go to sign up")
-    driver.assertVisible(text = "Sign up")
+    driver.assertVisibleByText("Sign up")
     driver.clickByText("Private Key")
     driver.clickByDescription("Edit Private Key")
     driver.inputText(privateKey)
     driver.clickByText("Confirm")
     driver.clickByText("Start sign up")
-    driver.assertVisible(description = "avatar")
+    driver.assertVisibleByDescription("avatar")
 }
 
 suspend fun scenarioSignIn(driver: AppTestDriver, privateKey: String) {
@@ -21,17 +21,17 @@ suspend fun scenarioSignIn(driver: AppTestDriver, privateKey: String) {
     driver.clickByText("Confirm")
     driver.clickByText("Start sign in")
     driver.clickByDescription("avatar")
-    driver.assertNotVisible("Sign in")
+    driver.assertNotVisibleByText("Sign in")
 }
 
 suspend fun scenarioSignInAsSystemUser(driver: AppTestDriver, privateKey: String) {
     scenarioSignIn(driver, privateKey)
-    driver.assertNotVisible("Sign in")
+    driver.assertNotVisibleByText("Sign in")
 }
 
 suspend fun scenarioVerifyInjectedSessionLoaded(driver: AppTestDriver) {
     driver.clickByDescription("avatar")
-    driver.assertNotVisible("Sign in")
+    driver.assertNotVisibleByText("Sign in")
 }
 
 suspend fun scenarioPublishTopicInUserSpace(driver: AppTestDriver, address: String) {
@@ -43,13 +43,13 @@ suspend fun scenarioPublishTopicInUserSpace(driver: AppTestDriver, address: Stri
     driver.clickByText("Raw")
     driver.inputText(topicContent)
     driver.clickByDescription("submit")
-    driver.assertVisible(text = topicContent)
+    driver.assertVisibleByText(topicContent)
 }
 
 suspend fun scenarioFavoriteTopic(driver: AppTestDriver, address: String, topicContent: String) {
     driver.clickByDescription("avatar")
     driver.clickByDescriptionContaining("user-dialog-cell")
-    driver.assertVisible(text = topicContent)
+    driver.assertVisibleByText(topicContent)
     driver.clickByText(topicContent)
     driver.clickByDescription("topic")
     driver.clickByDescriptionContaining("favorite-action")
@@ -92,7 +92,7 @@ suspend fun scenarioPublishTopicInCommunity(
     driver.clickByText("Raw")
     driver.inputText(topicContent)
     driver.clickByDescription("submit")
-    driver.assertVisible(text = topicContent)
+    driver.assertVisibleByText(topicContent)
 }
 
 suspend fun scenarioPublishTopicInRoom(
@@ -106,5 +106,5 @@ suspend fun scenarioPublishTopicInRoom(
     driver.clickByTextContaining(roomName)
     driver.inputText(topicContent)
     driver.clickByDescription("Send")
-    driver.assertVisible(text = topicContent)
+    driver.assertVisibleByText(topicContent)
 }

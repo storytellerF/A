@@ -6,6 +6,7 @@ import com.storyteller_f.a.client.core.createRoom
 import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.a.client.core.getTopicInfo
 import com.storyteller_f.a.client.core.joinCommunity
+import com.storyteller_f.a.dev.appium.InjectedSession
 import com.storyteller_f.shared.type.ObjectType
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds

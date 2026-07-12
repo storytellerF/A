@@ -5,6 +5,7 @@ plugins {
 val accessibilityDumpAgentJar by tasks.registering(Jar::class) {
     archiveFileName.set("desktop-panel-accessibility-dump-agent.jar")
     destinationDirectory.set(layout.buildDirectory.dir("appium/agent"))
+    dependsOn(":dev:appiumCore:compileJava")
     manifest {
         attributes(
             "Agent-Class" to "DesktopAccessibilityDumpAgent",
@@ -12,7 +13,7 @@ val accessibilityDumpAgentJar by tasks.registering(Jar::class) {
             "Can-Retransform-Classes" to "false",
         )
     }
-    from(tasks.named("compileTestJava")) {
+    from(project(":dev:appiumCore").layout.buildDirectory.dir("classes/java/main")) {
         include("DesktopAccessibilityDumpAgent*.class")
     }
 }

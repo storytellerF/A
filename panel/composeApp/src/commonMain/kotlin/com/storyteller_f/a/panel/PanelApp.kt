@@ -192,10 +192,7 @@ private fun PanelNavigationDrawer(
     content: @Composable () -> Unit
 ) {
     val windowSizeClass = calculateWindowSizeClass()
-    // Desktop used to force PermanentNavigationDrawer, but compact test windows can crash in that layout.
-    // Keep the drawer choice tied to the real window width, not only the platform.
-    val usePermanentDrawer = getPlatform().usePermanentPanelNavigationDrawer &&
-        windowSizeClass.widthSizeClass != WindowWidthSizeClass.Compact
+    val usePermanentDrawer = windowSizeClass.widthSizeClass != WindowWidthSizeClass.Compact
     if (usePermanentDrawer) {
         PermanentNavigationDrawer(
             drawerContent = { drawerContent(true) },

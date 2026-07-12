@@ -106,6 +106,7 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.multiplatform.settings)
     testImplementation(libs.robolectric)
+    testImplementation(project(":dev:appiumCore"))
     screenshotTestImplementation(projects.app.core)
     screenshotTestImplementation(projects.app.composeApp)
     screenshotTestImplementation(projects.shared)

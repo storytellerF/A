@@ -1,12 +1,13 @@
-import com.storyteller_f.a.client.core.AuthKey
 import com.storyteller_f.a.client.core.SimplePassHolder
 import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.buildWebSocketUrl
 import com.storyteller_f.a.client.core.createSimpleUserSessionManager
 import com.storyteller_f.a.client.core.defaultClientConfigure
 import com.storyteller_f.a.client.core.getClient
-import com.storyteller_f.a.client.core.userSignIn
 import com.storyteller_f.a.client.core.userSignUp
+import com.storyteller_f.a.dev.appium.InjectedSession
+import com.storyteller_f.a.dev.appium.createUnsignedInjectedSession
+import com.storyteller_f.a.dev.appium.toAuthKey
 import io.appium.java_client.AppiumDriver
 import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
 import kotlinx.coroutines.runBlocking
@@ -125,13 +126,10 @@ abstract class DesktopAppiumTestBase {
     }
 
     protected suspend fun createAuthenticatedSession(ports: AppiumPorts): AuthenticatedSession {
-        val session = createPreRegisteredSession(ports)
+        val session = createUnsignedInjectedSession()
         val passHolder = SimplePassHolder()
         val manager = createDesktopApiSessionManager(ports, passHolder)
-        manager.userSignIn(
-            AuthKey.P256(session.pemPrivateKey, session.derPrivateKey, session.derPublicKey),
-            passHolder
-        )
+        manager.userSignUp(session.toAuthKey(), passHolder)
         return AuthenticatedSession(session, manager)
     }
 

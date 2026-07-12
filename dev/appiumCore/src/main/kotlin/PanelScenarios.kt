@@ -1,6 +1,6 @@
 suspend fun scenarioOpenAllUsersFromOverview(driver: AppTestDriver) {
-    driver.assertVisible(text = "Overview")
+    driver.assertVisibleByText("Overview")
     driver.clickByDescription("Menu")
     driver.clickByText("All users")
-    driver.assertVisible(text = "All users")
+    driver.assertVisibleByText("All users")
 }

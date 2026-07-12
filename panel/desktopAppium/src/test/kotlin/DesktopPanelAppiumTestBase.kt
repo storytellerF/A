@@ -1,10 +1,4 @@
-import com.storyteller_f.a.client.core.SimplePassHolder
-import com.storyteller_f.a.client.core.createSimplePanelSessionManager
-import com.storyteller_f.a.client.core.defaultClientConfigureForPanel
-import com.storyteller_f.a.client.core.getClient
-import com.storyteller_f.a.client.core.panelSignUp
 import io.appium.java_client.AppiumDriver
-import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.junit.Rule
@@ -103,26 +97,6 @@ abstract class DesktopPanelAppiumTestBase {
 
     protected fun writeSessionFile(path: String, sessionJson: String) {
         File(path).also { it.parentFile?.mkdirs() }.writeText(sessionJson)
-    }
-
-    protected suspend fun createPreRegisteredPanelSession(ports: AppiumPorts): InjectedSession {
-        return createPreRegisteredInjectedSession { authKey, passHolder ->
-            val manager = createSimplePanelSessionManager(passHolder, AcceptAllCookiesStorage()) { model, cookieStorage ->
-                getClient {
-                    defaultClientConfigureForPanel(
-                        cookieStorage,
-                        model,
-                        passHolder,
-                        "http://127.0.0.1:${ports.server}",
-                    )
-                }
-            }
-            try {
-                manager.panelSignUp(authKey, passHolder)
-            } finally {
-                manager.client.close()
-            }
-        }
     }
 
     private fun resolvePanelRuntimeClasspath(): String = sequenceOf(

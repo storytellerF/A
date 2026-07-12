@@ -1,3 +1,4 @@
+import com.storyteller_f.a.dev.appium.buildInjectedSessionJson
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import kotlin.test.Test
 

@@ -37,18 +37,28 @@ class DesktopAppTestDriver(private val driver: AppiumDriver) : AppTestDriver {
         element.sendKeys(text)
     }
 
-    override suspend fun assertVisible(description: String?, text: String?) {
-        val locator = when {
-            description != null -> By.xpath("//*[@name='$description']")
-            text != null -> By.xpath("//*[@value='$text' or @name='$text']")
-            else -> error("description or text must be provided")
-        }
-        val wait = WebDriverWait(driver, Duration.ofSeconds(UI_WAIT_SECONDS))
-        wait.until(ExpectedConditions.presenceOfElementLocated(locator))
+    override suspend fun assertVisibleByDescription(description: String) {
+        assertVisible(By.xpath("//*[@name='$description']"))
     }
 
-    override suspend fun assertNotVisible(text: String, timeoutSeconds: Long) {
-        val locator = By.xpath("//*[@value='$text' or @name='$text']")
+    override suspend fun assertVisibleByText(text: String) {
+        assertVisible(By.xpath("//*[@value='$text' or @name='$text']"))
+    }
+
+    private fun assertVisible(locator: By) {
+        WebDriverWait(driver, Duration.ofSeconds(UI_WAIT_SECONDS))
+            .until(ExpectedConditions.presenceOfElementLocated(locator))
+    }
+
+    override suspend fun assertNotVisibleByDescription(description: String, timeoutSeconds: Long) {
+        assertNotVisible(By.xpath("//*[@name='$description']"), timeoutSeconds)
+    }
+
+    override suspend fun assertNotVisibleByText(text: String, timeoutSeconds: Long) {
+        assertNotVisible(By.xpath("//*[@value='$text' or @name='$text']"), timeoutSeconds)
+    }
+
+    private fun assertNotVisible(locator: By, timeoutSeconds: Long) {
         WebDriverWait(driver, Duration.ofSeconds(timeoutSeconds)).until {
             driver.findElements(locator).isEmpty()
         }

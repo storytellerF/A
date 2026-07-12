@@ -4,11 +4,12 @@ import android.content.Context
 import com.russhwolf.settings.SharedPreferencesSettings
 import com.storyteller_f.a.app.core.utils.restoreFromStorage
 import com.storyteller_f.a.client.core.ClientSessionState
-import com.storyteller_f.shared.getAlgo
+import com.storyteller_f.a.dev.appium.PRIVATE_STORAGE_INJECTED_SESSION_DIR
+import com.storyteller_f.a.dev.appium.buildInjectedSessionJson
+import com.storyteller_f.a.dev.appium.createUnsignedInjectedSession
+import com.storyteller_f.a.dev.appium.writeInjectedSessionFile
 import com.storyteller_f.shared.loadCryptoLibIfNeed
-import com.storyteller_f.shared.model.AlgoType
 import kotlinx.coroutines.test.runTest
-import java.io.BufferedOutputStream
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 
@@ -20,7 +21,7 @@ class MainActivityInjectedSessionRobolectricTest {
 
     @org.junit.Before
     fun setup() {
-        application.filesDir.resolve(INJECTED_SESSION_DIR).deleteRecursively()
+        application.filesDir.resolve(PRIVATE_STORAGE_INJECTED_SESSION_DIR).deleteRecursively()
         application.getSharedPreferences(TEST_SETTINGS_NAME, Context.MODE_PRIVATE)
             .edit()
             .clear()
@@ -30,8 +31,8 @@ class MainActivityInjectedSessionRobolectricTest {
     @org.junit.Test
     fun restoresInjectedPrivateSessionWithoutAppium() = runTest {
         loadCryptoLibIfNeed()
-        val injectedSession = createInjectedSessionJson()
-        writeInjectedSession(injectedSession.json)
+        val injectedSession = createUnsignedInjectedSession()
+        writeInjectedSessionFile(application.filesDir, buildInjectedSessionJson(injectedSession))
 
         val settings = SharedPreferencesSettings(
             application.getSharedPreferences(TEST_SETTINGS_NAME, Context.MODE_PRIVATE)
@@ -41,58 +42,7 @@ class MainActivityInjectedSessionRobolectricTest {
         assertEquals(injectedSession.address, state.userPass.address().getOrThrow())
     }
 
-    private suspend fun createInjectedSessionJson(): InjectedSessionJson {
-        val algo = getAlgo(AlgoType.P256)
-        val pemPrivateKey = algo.generatePemKeyPair().getOrThrow().first
-        val derPrivateKey = algo.getDerPrivateKey(pemPrivateKey).getOrThrow()
-        val derPublicKey = algo.getDerPublicKeyFromPrivateKey(pemPrivateKey).getOrThrow()
-        val address = algo.calcAddress(derPublicKey).getOrThrow()
-        val json = """
-            {
-              "algo": "P256",
-              "address": "$address",
-              "pemPrivateKey": ${pemPrivateKey.jsonString()},
-              "derPrivateKey": "$derPrivateKey",
-              "derPublicKey": "$derPublicKey"
-            }
-        """.trimIndent()
-        return InjectedSessionJson(address, json)
-    }
-
-    private fun writeInjectedSession(json: String) {
-        val sessionFile = application.filesDir
-            .resolve(INJECTED_SESSION_DIR)
-            .resolve(INJECTED_SESSION_FILE)
-        sessionFile.parentFile?.mkdirs()
-        BufferedOutputStream(sessionFile.outputStream()).use { output ->
-            output.write(json.encodeToByteArray())
-        }
-    }
-
-    private fun String.jsonString(): String {
-        val escaped = buildString {
-            this@jsonString.forEach { char ->
-                when (char) {
-                    '\\' -> append("\\\\")
-                    '"' -> append("\\\"")
-                    '\n' -> append("\\n")
-                    '\r' -> append("\\r")
-                    '\t' -> append("\\t")
-                    else -> append(char)
-                }
-            }
-        }
-        return "\"$escaped\""
-    }
-
-    private data class InjectedSessionJson(
-        val address: String,
-        val json: String,
-    )
-
     private companion object {
-        const val INJECTED_SESSION_DIR = "appium-session"
-        const val INJECTED_SESSION_FILE = "session.json"
         const val TEST_SETTINGS_NAME = "robolectric-injected-session-test"
     }
 }

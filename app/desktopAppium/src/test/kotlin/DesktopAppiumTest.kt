@@ -1,3 +1,4 @@
+import com.storyteller_f.a.dev.appium.buildInjectedSessionJson
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import kotlin.test.Test
 
@@ -61,7 +62,7 @@ class DesktopAppiumTest : DesktopAppiumTestBase() {
                 scenarioFavoriteTopic(appDriver, data.authenticated.session.address, data.topicContent)
                 waitUntilTopicFavorited(data.authenticated.sessionManager, data.topicId)
                 appDriver.navigateBack()
-                appDriver.assertVisible(description = "topic")
+                appDriver.assertVisibleByDescription("topic")
             } finally {
                 data.authenticated.sessionManager.client.close()
             }
@@ -85,7 +86,7 @@ class DesktopAppiumTest : DesktopAppiumTestBase() {
                 scenarioSubscribeTopic(appDriver, data.communityName, data.topicContent)
                 waitUntilTopicSubscribed(data.authenticated.sessionManager, data.topicId)
                 appDriver.navigateBack()
-                appDriver.assertVisible(description = "topic")
+                appDriver.assertVisibleByDescription("topic")
             } finally {
                 data.authenticated.sessionManager.client.close()
             }

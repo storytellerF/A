@@ -1,4 +1,3 @@
-import com.storyteller_f.a.client.core.AuthKey
 import com.storyteller_f.a.client.core.PanelSessionManager
 import com.storyteller_f.a.client.core.SimplePassHolder
 import com.storyteller_f.a.client.core.UserSessionManager
@@ -8,9 +7,10 @@ import com.storyteller_f.a.client.core.createSimpleUserSessionManager
 import com.storyteller_f.a.client.core.defaultClientConfigure
 import com.storyteller_f.a.client.core.defaultClientConfigureForPanel
 import com.storyteller_f.a.client.core.getClient
-import com.storyteller_f.a.client.core.panelSignUp
-import com.storyteller_f.a.client.core.userSignIn
 import com.storyteller_f.a.client.core.userSignUp
+import com.storyteller_f.a.dev.appium.InjectedSession
+import com.storyteller_f.a.dev.appium.createUnsignedInjectedSession
+import com.storyteller_f.a.dev.appium.toAuthKey
 import io.appium.java_client.AppiumBy
 import io.appium.java_client.android.AndroidDriver
 import io.appium.java_client.android.options.UiAutomator2Options
@@ -191,27 +191,11 @@ abstract class AppiumTestBase {
         }
     }
 
-    protected suspend fun createPreRegisteredPanelSession(ports: AppiumPorts): InjectedSession {
-        return createPreRegisteredInjectedSession { authKey, passHolder ->
-            val manager = createPanelApiSessionManager(ports, passHolder)
-            try {
-                manager.panelSignUp(authKey, passHolder)
-            } finally {
-                manager.client.close()
-            }
-        }
-    }
-
     protected suspend fun createAuthenticatedSession(ports: AppiumPorts): AuthenticatedSession {
-        val session = createPreRegisteredSession(ports)
+        val session = createUnsignedInjectedSession()
         val passHolder = SimplePassHolder()
         val manager = createApiSessionManager(ports, passHolder)
-        val authKey = AuthKey.P256(
-            pemPrivateKey = session.pemPrivateKey,
-            derPrivateKey = session.derPrivateKey,
-            derPublicKey = session.derPublicKey,
-        )
-        manager.userSignIn(authKey, passHolder)
+        manager.userSignUp(session.toAuthKey(), passHolder)
         return AuthenticatedSession(session, manager)
     }
 
@@ -232,13 +216,6 @@ abstract class AppiumTestBase {
         runAdbCommand("shell", "run-as", packageName, "cat", INJECTED_SESSION_FILE)
     }
 }
-
-data class InjectedSession(
-    val address: String,
-    val pemPrivateKey: String,
-    val derPrivateKey: String,
-    val derPublicKey: String,
-)
 
 data class AppiumPorts(
     val server: Int,

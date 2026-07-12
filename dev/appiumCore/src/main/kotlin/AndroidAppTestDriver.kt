@@ -22,16 +22,19 @@ class AndroidAppTestDriver(private val driver: AndroidDriver) : AppTestDriver {
         inputElement(driver, """new UiSelector().className("android.widget.EditText")""", text)
     }
 
-    override suspend fun assertVisible(description: String?, text: String?) {
-        val selector = when {
-            description != null -> """new UiSelector().description("$description")"""
-            text != null -> """new UiSelector().text("$text")"""
-            else -> error("description or text must be provided")
-        }
-        assertElementVisible(driver, selector)
+    override suspend fun assertVisibleByDescription(description: String) {
+        assertElementVisible(driver, """new UiSelector().description("$description")""")
     }
 
-    override suspend fun assertNotVisible(text: String, timeoutSeconds: Long) {
+    override suspend fun assertVisibleByText(text: String) {
+        assertElementVisible(driver, """new UiSelector().text("$text")""")
+    }
+
+    override suspend fun assertNotVisibleByDescription(description: String, timeoutSeconds: Long) {
+        assertElementNotVisible(driver, """new UiSelector().description("$description")""", timeoutSeconds)
+    }
+
+    override suspend fun assertNotVisibleByText(text: String, timeoutSeconds: Long) {
         assertElementNotVisible(driver, """new UiSelector().text("$text")""", timeoutSeconds)
     }
 
