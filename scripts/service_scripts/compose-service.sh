@@ -66,12 +66,10 @@ for profile in "${COMPOSE_FILE_LIST[@]}"; do
     fi
 done
 
-GENERATED_COMPOSE_FILE=$(mktemp "./deploy/docker-compose/docker-compose.generated.XXXXXX.yml")
+GENERATED_COMPOSE_FILE="./deploy/docker-compose/docker-compose.generated-patch.yml"
 cleanup_generated_compose_file() {
     rm -f "$GENERATED_COMPOSE_FILE"
 }
-trap cleanup_generated_compose_file EXIT
-
 {
     if ! has_profile bunker && ! has_profile cli && ! has_profile server && ! has_profile worker; then
         echo "services: {}"
@@ -136,6 +134,15 @@ trap cleanup_generated_compose_file EXIT
             else
                 echo "    # no generated dependencies"
             fi
+            echo "    volumes:"
+            if has_profile elastic; then
+                echo "      - certs:/app/deploy/es_ca"
+            else
+                echo "      - ../lucene_data:/app/deploy/lucene_data"
+            fi
+            if ! has_profile minio; then
+                echo "      - ../a_file_data:/app/deploy/a_file_data"
+            fi
             emit_bunker_network_if_needed
         fi
         for service in server worker; do
@@ -173,16 +180,14 @@ trap cleanup_generated_compose_file EXIT
                     fi
                 fi
                 emit_bunker_network_if_needed
-                if [[ "$service" == "server" ]]; then
-                    echo "    volumes:"
-                    if has_profile elastic; then
-                        echo "      - certs:/app/deploy/es_ca"
-                    else
-                        echo "      - ../lucene_data:/app/deploy/lucene_data"
-                    fi
-                    if ! has_profile minio; then
-                        echo "      - ../a_file_data:/app/deploy/a_file_data"
-                    fi
+                echo "    volumes:"
+                if has_profile elastic; then
+                    echo "      - certs:/app/deploy/es_ca"
+                else
+                    echo "      - ../lucene_data:/app/deploy/lucene_data"
+                fi
+                if ! has_profile minio; then
+                    echo "      - ../a_file_data:/app/deploy/a_file_data"
                 fi
             fi
         done
