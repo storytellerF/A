@@ -55,6 +55,13 @@ suspend fun scenarioFavoriteTopic(driver: AppTestDriver, address: String, topicC
     driver.clickByDescriptionContaining("favorite-action")
 }
 
+suspend fun scenarioFavoritePreparedTopic(driver: AppTestDriver, data: FavoriteTopicScenario) {
+    scenarioFavoriteTopic(driver, data.authenticated.session.address, data.topicContent)
+    waitUntilTopicFavorited(data.authenticated.sessionManager, data.topicId)
+    driver.navigateBack()
+    driver.assertVisibleByDescription("topic")
+}
+
 suspend fun scenarioOpenCommunity(driver: AppTestDriver, communityName: String) {
     driver.clickByText("Communities")
     driver.clickByText(communityName)
@@ -65,6 +72,13 @@ suspend fun scenarioSubscribeTopic(driver: AppTestDriver, communityName: String,
     driver.clickByText(topicContent)
     driver.clickByDescription("topic")
     driver.clickByDescriptionContaining("subscribe-action")
+}
+
+suspend fun scenarioSubscribePreparedTopic(driver: AppTestDriver, data: SubscriptionTopicScenario) {
+    scenarioSubscribeTopic(driver, data.communityName, data.topicContent)
+    waitUntilTopicSubscribed(data.authenticated.sessionManager, data.topicId)
+    driver.navigateBack()
+    driver.assertVisibleByDescription("topic")
 }
 
 suspend fun scenarioCommunityProfileActions(

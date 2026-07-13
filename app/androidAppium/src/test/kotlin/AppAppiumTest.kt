@@ -59,10 +59,7 @@ class AppAppiumTest : AppiumTestBase() {
         ) { driver, data ->
             try {
                 val appDriver = AndroidAppTestDriver(driver)
-                scenarioFavoriteTopic(appDriver, data.authenticated.session.address, data.topicContent)
-                waitUntilTopicFavorited(data.authenticated.sessionManager, data.topicId)
-                appDriver.navigateBack()
-                appDriver.assertVisibleByDescription("topic")
+                scenarioFavoritePreparedTopic(appDriver, data)
             } finally {
                 data.authenticated.sessionManager.client.close()
             }
@@ -83,10 +80,7 @@ class AppAppiumTest : AppiumTestBase() {
         ) { driver, data ->
             try {
                 val appDriver = AndroidAppTestDriver(driver)
-                scenarioSubscribeTopic(appDriver, data.communityName, data.topicContent)
-                waitUntilTopicSubscribed(data.authenticated.sessionManager, data.topicId)
-                appDriver.navigateBack()
-                appDriver.assertVisibleByDescription("topic")
+                scenarioSubscribePreparedTopic(appDriver, data)
             } finally {
                 data.authenticated.sessionManager.client.close()
             }
