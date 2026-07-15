@@ -2,18 +2,25 @@ import com.storyteller_f.a.dev.appium.buildInjectedSessionJson
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import kotlin.test.Test
 
+private const val APP_MAIN_ACTIVITY_CLASS_NAME = "com.storyteller_f.a.app.MainActivity"
+
+private val appUnderTest = AppUnderTest(
+    packageName = resolveAppPackageName(),
+    mainActivityClassName = APP_MAIN_ACTIVITY_CLASS_NAME,
+)
+
 class AppAppiumTest : AppiumTestBase() {
 
     @Test
     fun `test sign up`() = runAppiumBlockingTest {
-        runType2Test { driver ->
+        runAndroidAppiumTest(appUnderTest) { driver ->
             scenarioSignUp(AndroidAppTestDriver(driver))
         }
     }
 
     @Test
     fun `test sign in as system user`() = runAppiumBlockingTest {
-        runType2Test { driver ->
+        runAndroidAppiumTest(appUnderTest) { driver ->
             scenarioSignInAsSystemUser(AndroidAppTestDriver(driver), readAppiumSystemPrivateKey())
         }
     }
@@ -21,7 +28,8 @@ class AppAppiumTest : AppiumTestBase() {
     @Test
     fun `test sign in by injected private session`() = runAppiumBlockingTest {
         loadCryptoLibIfNeed()
-        runType1Test(
+        runAndroidAppiumTestWithSetup(
+            app = appUnderTest,
             beforeDriverLaunch = { ports, packageName ->
                 val injected = createPreRegisteredSession(ports)
                 pushInjectedSessionToPrivateDir(packageName, buildInjectedSessionJson(injected))
@@ -34,7 +42,8 @@ class AppAppiumTest : AppiumTestBase() {
     @Test
     fun `test publish topic in user space`() = runAppiumBlockingTest {
         loadCryptoLibIfNeed()
-        runType1Test(
+        runAndroidAppiumTestWithSetup(
+            app = appUnderTest,
             beforeDriverLaunch = { ports, packageName ->
                 val injected = createPreRegisteredSession(ports)
                 pushInjectedSessionToPrivateDir(packageName, buildInjectedSessionJson(injected))
@@ -48,7 +57,8 @@ class AppAppiumTest : AppiumTestBase() {
     @Test
     fun `test favorite topic from topic page`() = runAppiumBlockingTest {
         loadCryptoLibIfNeed()
-        runType1Test(
+        runAndroidAppiumTestWithSetup(
+            app = appUnderTest,
             beforeDriverLaunch = { ports, packageName ->
                 val scenario = prepareFavoriteTopicScenario {
                     createAuthenticatedSession(ports)
@@ -69,7 +79,8 @@ class AppAppiumTest : AppiumTestBase() {
     @Test
     fun `test subscribe topic from community page`() = runAppiumBlockingTest {
         loadCryptoLibIfNeed()
-        runType1Test(
+        runAndroidAppiumTestWithSetup(
+            app = appUnderTest,
             beforeDriverLaunch = { ports, packageName ->
                 val scenario = prepareSubscriptionTopicScenario {
                     createAuthenticatedSession(ports)
@@ -107,7 +118,8 @@ class AppAppiumTest : AppiumTestBase() {
         block: suspend (AppTestDriver, PreparedCommunityRoomScenario) -> Unit,
     ) = runAppiumBlockingTest {
         loadCryptoLibIfNeed()
-        runType1Test(
+        runAndroidAppiumTestWithSetup(
+            app = appUnderTest,
             beforeDriverLaunch = { ports, packageName ->
                 val prepared = prepareCommunityRoomScenario {
                     createAuthenticatedSession(ports)

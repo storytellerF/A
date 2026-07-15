@@ -6,14 +6,14 @@ class DesktopAppiumTest : DesktopAppiumTestBase() {
 
     @Test
     fun `test sign up`() = runAppiumBlockingTest {
-        runDesktopType2Test { driver ->
+        runDesktopAppiumTest { driver ->
             scenarioSignUp(DesktopAppTestDriver(driver))
         }
     }
 
     @Test
     fun `test sign in as system user`() = runAppiumBlockingTest {
-        runDesktopType2Test { driver ->
+        runDesktopAppiumTest { driver ->
             scenarioSignInAsSystemUser(DesktopAppTestDriver(driver), readAppiumSystemPrivateKey())
         }
     }
@@ -21,7 +21,7 @@ class DesktopAppiumTest : DesktopAppiumTestBase() {
     @Test
     fun `test sign in by injected session`() = runAppiumBlockingTest {
         loadCryptoLibIfNeed()
-        runDesktopType1Test(
+        runDesktopAppiumTestWithSetup(
             beforeLaunch = { ports, sessionFilePath ->
                 val injected = createPreRegisteredSession(ports)
                 writeSessionFile(sessionFilePath, buildInjectedSessionJson(injected))
@@ -34,7 +34,7 @@ class DesktopAppiumTest : DesktopAppiumTestBase() {
     @Test
     fun `test publish topic in user space`() = runAppiumBlockingTest {
         loadCryptoLibIfNeed()
-        runDesktopType1Test(
+        runDesktopAppiumTestWithSetup(
             beforeLaunch = { ports, sessionFilePath ->
                 val injected = createPreRegisteredSession(ports)
                 writeSessionFile(sessionFilePath, buildInjectedSessionJson(injected))
@@ -48,7 +48,7 @@ class DesktopAppiumTest : DesktopAppiumTestBase() {
     @Test
     fun `test favorite topic from topic page`() = runAppiumBlockingTest {
         loadCryptoLibIfNeed()
-        runDesktopType1Test(
+        runDesktopAppiumTestWithSetup(
             beforeLaunch = { ports, sessionFilePath ->
                 val scenario = prepareFavoriteTopicScenario {
                     createAuthenticatedSession(ports)
@@ -69,7 +69,7 @@ class DesktopAppiumTest : DesktopAppiumTestBase() {
     @Test
     fun `test subscribe topic from community page`() = runAppiumBlockingTest {
         loadCryptoLibIfNeed()
-        runDesktopType1Test(
+        runDesktopAppiumTestWithSetup(
             beforeLaunch = { ports, sessionFilePath ->
                 val scenario = prepareSubscriptionTopicScenario {
                     createAuthenticatedSession(ports)
@@ -107,7 +107,7 @@ class DesktopAppiumTest : DesktopAppiumTestBase() {
         block: suspend (AppTestDriver, PreparedCommunityRoomScenario) -> Unit,
     ) = runAppiumBlockingTest {
         loadCryptoLibIfNeed()
-        runDesktopType1Test(
+        runDesktopAppiumTestWithSetup(
             beforeLaunch = { ports, sessionFilePath ->
                 val prepared = prepareCommunityRoomScenario {
                     createAuthenticatedSession(ports)

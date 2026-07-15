@@ -7,7 +7,7 @@ class PanelDesktopAppiumTest : DesktopPanelAppiumTestBase() {
     @Test
     fun `test panel sign in by injected private session`() = runAppiumBlockingTest {
         loadCryptoLibIfNeed()
-        runDesktopPanelType1Test(
+        runDesktopPanelAppiumTestWithSetup(
             beforeLaunch = { ports, sessionFilePath ->
                 val injected = createPreRegisteredPanelSession(ports)
                 writeSessionFile(sessionFilePath, buildInjectedSessionJson(injected))

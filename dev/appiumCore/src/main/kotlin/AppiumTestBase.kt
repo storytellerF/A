@@ -49,19 +49,7 @@ const val INJECTED_SESSION_TEMP_PATH = "/data/local/tmp/appium-session-session.j
 const val INJECTED_SESSION_DIR = "files/appium-session"
 const val INJECTED_SESSION_FILE = "files/appium-session/session.json"
 const val CLI_READY_PORT = 8081
-const val APP_MAIN_ACTIVITY_CLASS_NAME = "com.storyteller_f.a.app.MainActivity"
-const val PANEL_MAIN_ACTIVITY_CLASS_NAME = "com.storyteller_f.a.panel.MainActivity"
 const val UI_WAIT_SECONDS = 15L
-
-val appUnderTest = AppUnderTest(
-    packageName = resolveAppPackageName(),
-    mainActivityClassName = APP_MAIN_ACTIVITY_CLASS_NAME,
-)
-
-val panelUnderTest = AppUnderTest(
-    packageName = resolvePanelPackageName(),
-    mainActivityClassName = PANEL_MAIN_ACTIVITY_CLASS_NAME,
-)
 
 abstract class AppiumTestBase {
     @get:Rule
@@ -122,18 +110,18 @@ abstract class AppiumTestBase {
         }
     }
 
-    protected suspend fun runType2Test(
-        app: AppUnderTest = appUnderTest,
+    protected suspend fun runAndroidAppiumTest(
+        app: AppUnderTest,
         block: suspend (AndroidDriver) -> Unit
     ) {
-        runType1Test(app, { _, _ ->
+        runAndroidAppiumTestWithSetup(app, { _, _ ->
         }, { driver, _ ->
             block(driver)
         })
     }
 
-    protected suspend fun <T> runType1Test(
-        app: AppUnderTest = appUnderTest,
+    protected suspend fun <T> runAndroidAppiumTestWithSetup(
+        app: AppUnderTest,
         beforeDriverLaunch: suspend (AppiumPorts, String) -> T,
         block: suspend (AndroidDriver, T) -> Unit
     ) {
