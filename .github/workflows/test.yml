@@ -26,9 +26,6 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
-    env:
-      ORG_GRADLE_PROJECT_gpr_user: ${{ github.actor }}
-      ORG_GRADLE_PROJECT_gpr_key: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
         with:

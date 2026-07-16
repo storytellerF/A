@@ -33,8 +33,6 @@ jobs:
       # runner's environment
       VARS_CONTEXT: ${{ toJson(vars) }}
       SECRETS_CONTEXT: ${{ toJson(secrets) }}
-      ORG_GRADLE_PROJECT_gpr_user: ${{ github.actor }}
-      ORG_GRADLE_PROJECT_gpr_key: ${{ secrets.GITHUB_TOKEN }}
       PACKAGE_PLATFORM: android
     steps:
       - uses: actions/checkout@v4
@@ -77,8 +75,6 @@ jobs:
       # runner's environment
       VARS_CONTEXT: ${{ toJson(vars) }}
       SECRETS_CONTEXT: ${{ toJson(secrets) }}
-      ORG_GRADLE_PROJECT_gpr_user: ${{ github.actor }}
-      ORG_GRADLE_PROJECT_gpr_key: ${{ secrets.GITHUB_TOKEN }}
       PACKAGE_PLATFORM: desktop-deb
     steps:
       - uses: actions/checkout@v4
@@ -121,8 +117,6 @@ jobs:
       # runner's environment
       VARS_CONTEXT: ${{ toJson(vars) }}
       SECRETS_CONTEXT: ${{ toJson(secrets) }}
-      ORG_GRADLE_PROJECT_gpr_user: ${{ github.actor }}
-      ORG_GRADLE_PROJECT_gpr_key: ${{ secrets.GITHUB_TOKEN }}
       PACKAGE_PLATFORM: desktop-msi
     steps:
       - uses: actions/checkout@v4
@@ -164,8 +158,6 @@ jobs:
       # runner's environment
       VARS_CONTEXT: ${{ toJson(vars) }}
       SECRETS_CONTEXT: ${{ toJson(secrets) }}
-      ORG_GRADLE_PROJECT_gpr_user: ${{ github.actor }}
-      ORG_GRADLE_PROJECT_gpr_key: ${{ secrets.GITHUB_TOKEN }}
       PACKAGE_PLATFORM: desktop-dmg
     steps:
       - uses: actions/checkout@v4
@@ -208,8 +200,6 @@ jobs:
       # runner's environment
       VARS_CONTEXT: ${{ toJson(vars) }}
       SECRETS_CONTEXT: ${{ toJson(secrets) }}
-      ORG_GRADLE_PROJECT_gpr_user: ${{ github.actor }}
-      ORG_GRADLE_PROJECT_gpr_key: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
         with:
