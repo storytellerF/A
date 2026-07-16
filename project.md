@@ -37,6 +37,7 @@
 
 - `app/androidApp` 是应用壳模块，承载 `MainActivity`、`UploadActivity`、`MediaPlayerActivity`、`BubbleActivity`、`RTCActivity` 和 manifest 入口；`app/composeApp` 保留可复用 Compose UI、actual 实现、服务与 Android helper。
 - `app/composeApp` 不能编译期依赖 `app/androidApp`。需要从 composeApp 内启动应用 Activity 时，使用稳定的显式 class name 常量创建 `Intent` 或 `ComponentName`。
+- Android WebRTC 通话信令由 `RTCService` 的主 websocket frame collector 统一分发；peer 内部不要再 collect `frameFlow` 等待 answer，单次 answer 使用 `CompletableDeferred`，连续 candidate 使用 peer 信令对象上的 Flow 触发。
 - `app/desktopApp` 是桌面 JVM 应用壳模块，承载 Compose Desktop `main` 与 `compose.desktop` 打包配置；`app/composeApp` 保留共享 UI 和 JVM actual 实现。
 - `panel/desktopApp` 是 Panel 桌面 JVM 应用壳模块，承载 Compose Desktop `main` 与 `compose.desktop` 打包配置；`panel/composeApp` 保留共享 UI 和 JVM actual 实现。
 - `app/androidApp` 和 `panel/androidApp` 入口类继承 `ComponentActivity`，媒体服务继承 Media3 `MediaSessionService`；release lint 对这些 Kotlin/Compose/Media3 组件存在 `Instantiatable` 误报，两个应用壳模块均禁用该 lint 检查。
