@@ -34,7 +34,7 @@ suspend fun scenarioVerifyInjectedSessionLoaded(driver: AppTestDriver) {
     driver.assertNotVisibleByText("Sign in")
 }
 
-suspend fun scenarioPublishTopicInUserSpace(driver: AppTestDriver, address: String) {
+suspend fun scenarioPublishTopicInUserSpace(driver: AppTestDriver) {
     val topicContent = "appium-user-space-topic-${System.currentTimeMillis()}"
     driver.clickByDescription("avatar")
     driver.clickByDescriptionContaining("user-dialog-cell")
@@ -46,7 +46,7 @@ suspend fun scenarioPublishTopicInUserSpace(driver: AppTestDriver, address: Stri
     driver.assertVisibleByText(topicContent)
 }
 
-suspend fun scenarioFavoriteTopic(driver: AppTestDriver, address: String, topicContent: String) {
+suspend fun scenarioFavoriteTopic(driver: AppTestDriver, topicContent: String) {
     driver.clickByDescription("avatar")
     driver.clickByDescriptionContaining("user-dialog-cell")
     driver.assertVisibleByText(topicContent)
@@ -56,7 +56,7 @@ suspend fun scenarioFavoriteTopic(driver: AppTestDriver, address: String, topicC
 }
 
 suspend fun scenarioFavoritePreparedTopic(driver: AppTestDriver, data: FavoriteTopicScenario) {
-    scenarioFavoriteTopic(driver, data.authenticated.session.address, data.topicContent)
+    scenarioFavoriteTopic(driver, data.topicContent)
     waitUntilTopicFavorited(data.authenticated.sessionManager, data.topicId)
     driver.navigateBack()
     driver.assertVisibleByDescription("topic")
