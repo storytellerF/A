@@ -12,10 +12,8 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -55,6 +53,7 @@ import com.storyteller_f.storage.UploadStatus
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.datetime.LocalDateTime
 
 @PreviewTest
@@ -366,7 +365,7 @@ private fun sampleUpload() = UploadInfo.EMPTY.copy(
 )
 
 private object PreviewGlobalDialog : AppGlobalDialogController {
-    override val state: MutableState<PersistentList<GlobalDialogState>> = mutableStateOf(persistentListOf())
+    override val state: MutableStateFlow<PersistentList<GlobalDialogState>> = MutableStateFlow(persistentListOf())
     override val context = GlobalDialogContext(MutableSharedFlow(), SimpleUserSessionManager.EMPTY)
 
     override suspend fun <T> useResult(block: suspend GlobalDialogController<GlobalDialogContext<SimpleUserSessionManager>>.() -> Result<T>): Result<T> {

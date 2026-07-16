@@ -78,6 +78,7 @@ import com.storyteller_f.a.app.pages.community.CommunityList
 import com.storyteller_f.a.app.pages.file.FileCell
 import com.storyteller_f.a.app.pages.room.RoomList
 import com.storyteller_f.a.app.pages.title.ComposeMenu
+import com.storyteller_f.a.app.pages.topic.TopicComposeData
 import com.storyteller_f.a.app.pages.topic.TopicList
 import com.storyteller_f.a.app.pages.user.MemberList
 import com.storyteller_f.a.app.pages.user.SelfUserIconWithDialog
@@ -86,6 +87,7 @@ import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.obj.ob
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
@@ -130,7 +132,13 @@ fun CustomSearchBar(scope: SearchScope, leadingIcon: @Composable () -> Unit) {
     }, active, {
         active = it
     }, leadingIcon) {
-        showSheet = true
+        when (scope) {
+            is SearchScope.UserTopic -> appNavFactory.newAppNav().gotoTopicCompose(
+                TopicComposeData.User(scope.userId, scope.userId ob ObjectType.USER)
+            )
+
+            else -> showSheet = true
+        }
     }
     val sheetState = rememberModalBottomSheetState()
     ComposeMenu(showSheet, sheetState, {
@@ -140,7 +148,22 @@ fun CustomSearchBar(scope: SearchScope, leadingIcon: @Composable () -> Unit) {
         when (it) {
             ObjectType.COMMUNITY -> appNavFactory.newAppNav().gotoCommunityCompose()
             ObjectType.ROOM -> appNavFactory.newAppNav().gotoRoomCompose()
-            ObjectType.TOPIC -> TODO()
+            ObjectType.TOPIC -> when (scope) {
+                is SearchScope.CommunityTopic -> appNavFactory.newAppNav().gotoTopicCompose(
+                    TopicComposeData.Community(scope.communityId, scope.communityId ob ObjectType.COMMUNITY)
+                )
+
+                is SearchScope.RoomTopic -> appNavFactory.newAppNav().gotoTopicCompose(
+                    TopicComposeData.PrivateRoom(scope.roomId, scope.roomId ob ObjectType.ROOM)
+                )
+
+                is SearchScope.UserTopic -> appNavFactory.newAppNav().gotoTopicCompose(
+                    TopicComposeData.User(scope.userId, scope.userId ob ObjectType.USER)
+                )
+
+                else -> Unit
+            }
+
             ObjectType.USER -> TODO()
             ObjectType.TITLE -> appNavFactory.newAppNav().gotoTitleCompose()
             ObjectType.FILE -> TODO()

@@ -1,0 +1,20 @@
+{
+  "name": "appium-linux-compose-driver",
+  "version": "0.1.0",
+  "description": "Appium driver for Linux desktop apps (Compose Desktop / AT-SPI2)",
+  "main": "lib/driver.js",
+  "keywords": ["appium", "appium-driver"],
+  "license": "MIT",
+  "appium": {
+    "driverName": "linux",
+    "automationName": "linux",
+    "platformNames": ["linux"],
+    "mainClass": "LinuxDriver"
+  },
+  "peerDependencies": {
+    "appium": "^2.0.0 || ^3.0.0"
+  },
+  "dependencies": {
+    "@appium/base-driver": "*"
+  }
+}

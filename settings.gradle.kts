@@ -64,8 +64,13 @@ include(":app:desktopApp")
 include(":dev:core")
 include(":dev:server")
 include(":dev:cli")
-if (isAppiumTestEnable)
-    include(":dev:appium")
+if (isAppiumTestEnable) {
+    include(":dev:appiumCore")
+    include(":app:androidAppium")
+    include(":app:desktopAppium")
+    include(":panel:androidAppium")
+    include(":panel:desktopAppium")
+}
 
 include(":cloud:server")
 include(":cloud:runtime")

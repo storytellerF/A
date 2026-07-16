@@ -43,7 +43,7 @@
 
 ## Appium
 
-- `dev/appium` 通过 `-Pappium=true` 才会被 include；测试脚本运行 Appium 前需要同时构建 `app:androidApp:assembleDebug` 和 `panel:androidApp:assembleDebug`，panel 的启动入口是 `com.storyteller_f.a.panel.MainActivity`。
+- Appium 测试通过 `-Pappium=true` 才会被 include；共享测试基础设施在 `dev/appiumCore`，产品/平台入口拆分为 `app/androidAppium`、`app/desktopAppium`、`panel/androidAppium`、`panel/desktopAppium`。
 - `app/androidApp` 和 `panel/androidApp` 可用 Robolectric 覆盖部分 Appium 前置/启动逻辑；例如把同格式 session JSON 写入 `filesDir/appium-session/session.json` 后调用 `restoreFromStorage`，可验证“注入私有 session 后恢复登录态”的非设备部分。
 
 ## Gradle 工具脚本

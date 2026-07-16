@@ -107,21 +107,34 @@ expect fun createSettings(name: String = "a-default"): Settings
 expect fun readInjectedSessionFromPrivateStorageOrNull(): ConvertedRawUserPassInfo?
 
 fun restoreFromStorage(settings: Settings): ClientSessionState? {
+    val injected = readInjectedSessionFromPrivateStorageOrNull()
+    if (injected != null) {
+        Napier.d("Found injected session, restoring...")
+        System.err.println("APP_DESKTOP_SESSION_RESTORE source=injected address=${injected.address.shortForLog()}")
+        val userPass = RawUserPass(injected.toRawUserPassInfo())
+        return ClientSessionState.Success(userPass)
+    }
+
     val sessionFactory = buildSessionHistoryFactory(settings)
     val (alias, history) = sessionFactory.getSavedSession()
     val current = history?.current
+    System.err.println(
+        "APP_DESKTOP_SESSION_RESTORE storage current=${current.shortForLog()} aliases=${alias.map { it.shortForLog() }}"
+    )
     if (current != null && alias.contains(current)) {
         val session = sessionFactory.buildSession(current)
         if (session != null) {
+            System.err.println("APP_DESKTOP_SESSION_RESTORE source=storage address=${current.shortForLog()}")
             return ClientSessionState.Success(session)
         }
     }
 
     Napier.d("No valid session found in storage, trying to read injected session")
-    val injected = readInjectedSessionFromPrivateStorageOrNull() ?: return null
-    Napier.d("Found injected session, restoring...")
-    val userPass = RawUserPass(injected.toRawUserPassInfo())
-    return ClientSessionState.Success(userPass)
+    return null
+}
+
+private fun String?.shortForLog(): String {
+    return this?.take(8) ?: "null"
 }
 
 @Serializable
