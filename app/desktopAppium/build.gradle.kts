@@ -23,7 +23,10 @@ tasks.test {
         ":app:desktopApp:writeAppiumRuntimeClasspath",
         accessibilityDumpAgentJar,
     )
-    systemProperty("desktop.accessibility.dump.agent", accessibilityDumpAgentJar.flatMap { it.archiveFile }.get().asFile.canonicalPath)
+    systemProperty(
+        "desktop.accessibility.dump.agent",
+        accessibilityDumpAgentJar.flatMap { it.archiveFile }.get().asFile.canonicalPath
+    )
     jvmArgs("--add-modules", "jdk.attach")
     maxParallelForks = 1
 }

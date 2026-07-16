@@ -1,9 +1,9 @@
 package com.storyteller_f.a.app.service
 
+import com.storyteller_f.a.app.core.utils.safeSink
 import io.github.irgaly.kfswatch.KfsDirectoryWatcher
 import io.github.irgaly.kfswatch.KfsDirectoryWatcherEvent
 import io.github.irgaly.kfswatch.KfsEvent
-import com.storyteller_f.a.app.core.utils.safeSink
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.name
 import io.github.vinceglb.filekit.readBytes

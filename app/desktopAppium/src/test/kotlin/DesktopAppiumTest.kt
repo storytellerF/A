@@ -41,7 +41,7 @@ class DesktopAppiumTest : DesktopAppiumTestBase() {
                 injected
             }
         ) { driver, injected ->
-            scenarioPublishTopicInUserSpace(DesktopAppTestDriver(driver), injected.address)
+            scenarioPublishTopicInUserSpace(DesktopAppTestDriver(driver))
         }
     }
 

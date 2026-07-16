@@ -57,7 +57,6 @@ abstract class DesktopAppiumTestBase {
         manager.userSignUp(session.toAuthKey(), passHolder)
         return AuthenticatedSession(session, manager)
     }
-
 }
 
 private fun createDesktopApiSessionManager(ports: AppiumPorts, passHolder: SimplePassHolder): UserSessionManager =

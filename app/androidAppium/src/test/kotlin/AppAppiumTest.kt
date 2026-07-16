@@ -50,7 +50,7 @@ class AppAppiumTest : AppiumTestBase() {
                 injected
             }
         ) { driver, injectedSession ->
-            scenarioPublishTopicInUserSpace(AndroidAppTestDriver(driver), injectedSession.address)
+            scenarioPublishTopicInUserSpace(AndroidAppTestDriver(driver))
         }
     }
 
