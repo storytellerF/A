@@ -1,24 +1,205 @@
-name: Android CI
+name: Release
 
 on:
+  workflow_dispatch:
   push:
-    branches: [ "alpha" ]
+    branches: [ "main" ]
     paths:
-      - '.github/workflows/alpha.yml'
+      - '.github/workflows/release.yml'
       - 'app/**'
       - 'shared/**'
-      - 'scripts/build_scripts/build-app-on-ci.sh'
+      - 'scripts/**'
       - 'gradle/**'
       - 'client/**'
       - 'api/**'
       - 'panel/**'
+      - 'backend/**'
+      - 'cloud/**'
       - 'bgscripts/**'
+      - '*.kts'
+      - 'Dockerfile'
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   build-android:
+    runs-on: ubuntu-latest
+    environment: alpha
+    env:
+      # this will take the entire vars context configured in the repository > environments
+      # setting and convert it to JSON so we can automatically assign all the values to the
+      # runner's environment
+      VARS_CONTEXT: ${{ toJson(vars) }}
+      SECRETS_CONTEXT: ${{ toJson(secrets) }}
+      ORG_GRADLE_PROJECT_gpr_user: ${{ github.actor }}
+      ORG_GRADLE_PROJECT_gpr_key: ${{ secrets.GITHUB_TOKEN }}
+      PACKAGE_PLATFORM: android
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          lfs: true
+      - name: set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ env.PACKAGE_PLATFORM }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/**', 'bgscripts/**') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-${{ env.PACKAGE_PLATFORM }}-
+
+      - name: Build alpha app
+        run: |
+          ./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.top android
+          ./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.top android-panel
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Signed A android Bundle
+          path: |
+            build/outputs/apk/release/
+            build/outputs/pkg/release/
+
+  build-desktop-deb:
+    runs-on: ubuntu-latest
+    env:
+      # this will take the entire vars context configured in the repository > environments
+      # setting and convert it to JSON so we can automatically assign all the values to the
+      # runner's environment
+      VARS_CONTEXT: ${{ toJson(vars) }}
+      SECRETS_CONTEXT: ${{ toJson(secrets) }}
+      ORG_GRADLE_PROJECT_gpr_user: ${{ github.actor }}
+      ORG_GRADLE_PROJECT_gpr_key: ${{ secrets.GITHUB_TOKEN }}
+      PACKAGE_PLATFORM: desktop-deb
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          lfs: true
+      - name: set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ env.PACKAGE_PLATFORM }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/**', 'bgscripts/**') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-${{ env.PACKAGE_PLATFORM }}-
+
+      - name: Build alpha deb
+        run: |
+          ./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.top desktop-deb
+          ./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.top desktop-deb-panel
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Signed A deb Bundle
+          path: |
+            build/outputs/apk/release/
+            build/outputs/pkg/release/
+
+  build-desktop-msi:
+    runs-on: windows-latest
+    env:
+      # this will take the entire vars context configured in the repository > environments
+      # setting and convert it to JSON so we can automatically assign all the values to the
+      # runner's environment
+      VARS_CONTEXT: ${{ toJson(vars) }}
+      SECRETS_CONTEXT: ${{ toJson(secrets) }}
+      ORG_GRADLE_PROJECT_gpr_user: ${{ github.actor }}
+      ORG_GRADLE_PROJECT_gpr_key: ${{ secrets.GITHUB_TOKEN }}
+      PACKAGE_PLATFORM: desktop-msi
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          lfs: true
+      - name: set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ env.PACKAGE_PLATFORM }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/**', 'bgscripts/**') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-${{ env.PACKAGE_PLATFORM }}-
+
+      - name: Build alpha msi
+        run: |
+          & "C:\\Program Files\\Git\\bin\\bash.exe" -c "./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.top desktop-msi"
+          & "C:\\Program Files\\Git\\bin\\bash.exe" -c "./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.top desktop-msi-panel"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Signed A msi Bundle
+          path: |
+            build/outputs/pkg/release/
+
+  build-desktop-dmg:
+    runs-on: macos-latest
+    env:
+      # this will take the entire vars context configured in the repository > environments
+      # setting and convert it to JSON so we can automatically assign all the values to the
+      # runner's environment
+      VARS_CONTEXT: ${{ toJson(vars) }}
+      SECRETS_CONTEXT: ${{ toJson(secrets) }}
+      ORG_GRADLE_PROJECT_gpr_user: ${{ github.actor }}
+      ORG_GRADLE_PROJECT_gpr_key: ${{ secrets.GITHUB_TOKEN }}
+      PACKAGE_PLATFORM: desktop-dmg
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          lfs: true
+      - name: set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ env.PACKAGE_PLATFORM }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/**', 'bgscripts/**') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-${{ env.PACKAGE_PLATFORM }}-
+
+      - name: Build alpha dmg
+        run: |
+          ./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.top desktop-dmg
+          ./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.top desktop-dmg-panel
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Signed A dmg Bundle
+          path: |
+            build/outputs/pkg/release/
+
+  release-server:
     runs-on: ubuntu-latest
     environment: alpha
     env:
@@ -41,111 +222,5 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      - name: Build alpha app
-        run: |
-          ./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.top android
-          ./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.top android-panel
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: Signed A android Bundle
-          path: |
-            build/outputs/apk/release/
-            build/outputs/pkg/release/
-  build-desktop-deb:
-    runs-on: ubuntu-latest
-    env:
-      # this will take the entire vars context configured in the repository > environments
-      # setting and convert it to JSON so we can automatically assign all the values to the
-      # runner's environment
-      VARS_CONTEXT: ${{ toJson(vars) }}
-      SECRETS_CONTEXT: ${{ toJson(secrets) }}
-      ORG_GRADLE_PROJECT_gpr_user: ${{ github.actor }}
-      ORG_GRADLE_PROJECT_gpr_key: ${{ secrets.GITHUB_TOKEN }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: 'recursive'
-          lfs: true
-      - name: set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: gradle
-
-      - name: Build alpha deb
-        run: |
-          ./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.top desktop-deb
-          ./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.top desktop-deb-panel
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: Signed A deb Bundle
-          path: |
-            build/outputs/apk/release/
-            build/outputs/pkg/release/
-  build-desktop-msi:
-    runs-on: windows-latest
-    env:
-      # this will take the entire vars context configured in the repository > environments
-      # setting and convert it to JSON so we can automatically assign all the values to the
-      # runner's environment
-      VARS_CONTEXT: ${{ toJson(vars) }}
-      SECRETS_CONTEXT: ${{ toJson(secrets) }}
-      ORG_GRADLE_PROJECT_gpr_user: ${{ github.actor }}
-      ORG_GRADLE_PROJECT_gpr_key: ${{ secrets.GITHUB_TOKEN }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: 'recursive'
-          lfs: true
-      - name: set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: gradle
-
-      - name: Build alpha msi
-        run: |
-          & "C:\\Program Files\\Git\\bin\\bash.exe" -c "./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.top desktop-msi"
-          & "C:\\Program Files\\Git\\bin\\bash.exe" -c "./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.top desktop-msi-panel"
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: Signed A msi Bundle
-          path: |
-            build/outputs/pkg/release/
-  build-desktop-dmg:
-    runs-on: macos-latest
-    env:
-      # this will take the entire vars context configured in the repository > environments
-      # setting and convert it to JSON so we can automatically assign all the values to the
-      # runner's environment
-      VARS_CONTEXT: ${{ toJson(vars) }}
-      SECRETS_CONTEXT: ${{ toJson(secrets) }}
-      ORG_GRADLE_PROJECT_gpr_user: ${{ github.actor }}
-      ORG_GRADLE_PROJECT_gpr_key: ${{ secrets.GITHUB_TOKEN }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: 'recursive'
-          lfs: true
-      - name: set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: gradle
-
-      - name: Build alpha msi
-        run: |
-          ./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.top desktop-dmg
-          ./scripts/build_scripts/build-app-on-ci.sh alpha api.acommunity.top desktop-dmg-panel
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: Signed A dmg Bundle
-          path: |
-            build/outputs/pkg/release/
+      - name: Start service
+        run: ./scripts/service_scripts/start-service-on-ci.sh alpha
