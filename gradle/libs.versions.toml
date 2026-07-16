@@ -35,7 +35,7 @@ dss = "6.4"
 easylauncher = "6.4.1"
 elasticsearchJava = "9.4.2"
 emojiKt = "2.4.0"
-endpoint4k-common = "1.0.0-SNAPSHOT"
+endpoint4k-common = "0.0.1-alpha2"
 espressoCore = "3.7.0"
 exposedVersion = "1.3.0"
 filekitCompose = "0.14.2"
@@ -202,9 +202,9 @@ dss-utils-apache-commons = { module = "eu.europa.ec.joinup.sd-dss:dss-utils-apac
 elasticsearch-java = { module = "co.elastic.clients:elasticsearch-java", version.ref = "elasticsearchJava" }
 emoji-compose-m3 = { module = "org.kodein.emoji:emoji-compose-m3", version.ref = "emojiKt" }
 emoji-kt = { module = "org.kodein.emoji:emoji-kt", version.ref = "emojiKt" }
-endpoint4k-common = { module = "com.storyteller_f.endpoint4k:common", version.ref = "endpoint4k-common" }
-endpoint4k-ktor-client = { module = "com.storyteller_f.endpoint4k:ktor-client", version.ref = "endpoint4k-common" }
-endpoint4k-ktor-server = { module = "com.storyteller_f.endpoint4k:ktor-server", version.ref = "endpoint4k-common" }
+endpoint4k-common = { module = "io.github.storytellerf:endpoint4k-common", version.ref = "endpoint4k-common" }
+endpoint4k-ktor-client = { module = "io.github.storytellerf:endpoint4k-ktor-client", version.ref = "endpoint4k-common" }
+endpoint4k-ktor-server = { module = "io.github.storytellerf:endpoint4k-ktor-server", version.ref = "endpoint4k-common" }
 exposed-core = { module = "org.jetbrains.exposed:exposed-core", version.ref = "exposedVersion" }
 exposed-crypt = { module = "org.jetbrains.exposed:exposed-crypt", version.ref = "exposedVersion" }
 exposed-dao = { module = "org.jetbrains.exposed:exposed-dao", version.ref = "exposedVersion" }
