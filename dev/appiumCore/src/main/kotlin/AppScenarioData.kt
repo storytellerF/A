@@ -96,7 +96,14 @@ suspend fun prepareCommunityRoomScenario(
         createTopicByApi(owner.sessionManager, ObjectType.COMMUNITY, communityId, "appium-owner-community-topic-$now")
         viewer = createAuthenticatedSession()
         viewer.sessionManager.joinCommunity(communityId).getOrThrow()
-        return PreparedCommunityRoomScenario(owner.session, viewer.session, communityId, roomId, communityName, roomName)
+        return PreparedCommunityRoomScenario(
+            owner.session,
+            viewer.session,
+            communityId,
+            roomId,
+            communityName,
+            roomName,
+        )
     } catch (throwable: Throwable) {
         viewer?.sessionManager?.client?.close()
         throw throwable

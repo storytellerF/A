@@ -84,10 +84,10 @@ import com.storyteller_f.a.app.pages.user.MemberList
 import com.storyteller_f.a.app.pages.user.SelfUserIconWithDialog
 import com.storyteller_f.a.app.utils.appPlatform
 import com.storyteller_f.shared.model.FileInfo
+import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.obj.ob
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 

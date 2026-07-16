@@ -324,7 +324,7 @@ private class ByteArrayRawSource(private val bytes: ByteArray) : RawSource {
         offset += count
         return count.toLong()
     }
-    override fun close() {}
+    override fun close() = Unit
 }
 
 suspend fun AppGlobalDialogController.uploadPath(
