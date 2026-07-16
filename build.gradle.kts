@@ -122,7 +122,13 @@ val koverIncludedProjects = listOf(
     ":client:ascii-parser",
     ":bot:builtin-bot",
 ) + if (providers.gradleProperty("appium").orNull == "true") {
-    listOf(":dev:appium")
+    listOf(
+        ":dev:appiumCore",
+        ":app:androidAppium",
+        ":app:desktopAppium",
+        ":panel:androidAppium",
+        ":panel:desktopAppium",
+    )
 } else {
     emptyList()
 }

@@ -17,7 +17,8 @@ fun main() {
     setupKmpLogger()
     initForJvmMain()
     loadCryptoLibIfNeed()
-    val panelUiViewModel = createPanelUIViewModel()
+    @Suppress("OPT_IN_USAGE")
+    val panelUiViewModel = PanelUIViewModel(kotlinx.coroutines.GlobalScope, getDesktopPanelServerUrl())
     application {
         Window(
             onCloseRequest = ::exitApplication,

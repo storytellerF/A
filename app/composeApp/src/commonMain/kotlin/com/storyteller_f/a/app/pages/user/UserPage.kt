@@ -6,13 +6,10 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.Diversity3
 import androidx.compose.material.icons.filled.Topic
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
@@ -35,7 +32,6 @@ import androidx.savedstate.serialization.SavedStateConfiguration
 import com.storyteller_f.a.app.LocalAppNavFactory
 import com.storyteller_f.a.app.LocalUserInfo
 import com.storyteller_f.a.app.Res
-import com.storyteller_f.a.app.add_topic
 import com.storyteller_f.a.app.common.IdUserViewModel
 import com.storyteller_f.a.app.common.createTargetUserJoinedCommunitiesViewModel
 import com.storyteller_f.a.app.common.createUserTitlesViewModel
@@ -49,7 +45,6 @@ import com.storyteller_f.a.app.pages.community.CommunityList
 import com.storyteller_f.a.app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.a.app.pages.title.TitleList
-import com.storyteller_f.a.app.pages.topic.TopicComposeData
 import com.storyteller_f.a.app.pages.topic.UserTopicList
 import com.storyteller_f.a.app.rooms
 import com.storyteller_f.a.app.titles
@@ -213,9 +208,7 @@ private fun UserCompatInternal(
     my: UserInfo?,
     pagerState: PagerState,
 ) {
-    Scaffold(floatingActionButton = {
-        UserComposeButton(user, my)
-    }, bottomBar = {
+    Scaffold(bottomBar = {
         UserPageBottomNavBar(pagerState)
     }, modifier = Modifier.testTag("user-page")) {
         Column {
@@ -242,21 +235,6 @@ private fun UserCompatInternal(
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun UserComposeButton(
-    user: UserInfo?,
-    my: UserInfo?,
-) {
-    val appNavFactory = LocalAppNavFactory.current
-    if (user != null && my?.id == user.id) {
-        FloatingActionButton({
-            appNavFactory.newAppNav().gotoTopicCompose(TopicComposeData.User(user.id, user.tuple()))
-        }) {
-            Icon(Icons.Default.Add, stringResource(Res.string.add_topic))
         }
     }
 }

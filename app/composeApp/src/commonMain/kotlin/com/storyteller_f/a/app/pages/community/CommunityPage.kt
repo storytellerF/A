@@ -458,7 +458,8 @@ private fun CommunityMenus(
             stringResource(Res.string.all_members),
             {
                 ButtonBadgeSuffix(communityInfo.memberCount)
-            }
+            },
+            semanticDescription = "all-members-action"
         ) {
             dismiss()
             appNavFactory.newAppNav().gotoMemberPage(communityId, ObjectType.COMMUNITY)
@@ -507,7 +508,7 @@ private fun CommunityCreateButton(
     appNavFactory: AppNavFactory,
     communityId: PrimaryKey
 ) {
-    ButtonNav(Icons.Default.Add, "Add") {
+    ButtonNav(Icons.Default.Add, "Add", semanticDescription = "community-add-topic-action") {
         dismiss()
         appNavFactory.newAppNav().gotoTopicCompose(
             TopicComposeData.Community(communityId, communityId ob ObjectType.COMMUNITY)

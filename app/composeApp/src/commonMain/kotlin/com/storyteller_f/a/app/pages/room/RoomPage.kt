@@ -678,7 +678,8 @@ private fun RoomAllMembers(
         stringResource(Res.string.all_members),
         {
             ButtonBadgeSuffix(roomInfo.memberCount)
-        }
+        },
+        semanticDescription = "all-members-action"
     ) {
         dismiss()
         appNavFactory.newAppNav().gotoMemberPage(roomInfo.id, ObjectType.ROOM)

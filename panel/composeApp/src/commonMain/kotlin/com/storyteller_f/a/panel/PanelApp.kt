@@ -3,6 +3,7 @@ package com.storyteller_f.a.panel
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
@@ -23,11 +24,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.PermanentDrawerSheet
+import androidx.compose.material3.PermanentNavigationDrawer
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
+import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
+import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
@@ -92,6 +97,7 @@ import com.storyteller_f.storage.UserCollection
 import com.storyteller_f.storage.update
 import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
 import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -104,8 +110,7 @@ typealias PanelGlobalDialogController = GlobalDialogController<GlobalDialogConte
 
 val LocalPanelGlobalDialog = compositionLocalOf<PanelGlobalDialogController> {
     object : PanelGlobalDialogController {
-        override val state: MutableState<PersistentList<GlobalDialogState>>
-            get() = TODO("Not yet implemented")
+        override val state: MutableStateFlow<PersistentList<GlobalDialogState>> = MutableStateFlow(persistentListOf())
 
         override suspend fun <T> useResult(
             block: suspend PanelGlobalDialogController.() -> Result<T>
@@ -166,16 +171,39 @@ fun App() {
     ) {
         PanelTheme {
             val scope = rememberCoroutineScope()
-            ModalNavigationDrawer(
+            PanelNavigationDrawer(
                 drawerState = drawerState,
-                drawerContent = {
-                    PanelDrawer(scope, drawerState, nav.newPanelNav())
+                drawerContent = { permanent ->
+                    PanelDrawer(scope, drawerState, nav.newPanelNav(), permanent)
                 }
             ) {
                 MainPanelPage(backStack, nav.newPanelNav())
             }
             GlobalDialog(controller)
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3WindowSizeClassApi::class)
+@Composable
+private fun PanelNavigationDrawer(
+    drawerState: DrawerState,
+    drawerContent: @Composable (permanent: Boolean) -> Unit,
+    content: @Composable () -> Unit
+) {
+    val windowSizeClass = calculateWindowSizeClass()
+    val usePermanentDrawer = windowSizeClass.widthSizeClass != WindowWidthSizeClass.Compact
+    if (usePermanentDrawer) {
+        PermanentNavigationDrawer(
+            drawerContent = { drawerContent(true) },
+            content = content
+        )
+    } else {
+        ModalNavigationDrawer(
+            drawerState = drawerState,
+            drawerContent = { drawerContent(false) },
+            content = content
+        )
     }
 }
 
@@ -207,9 +235,10 @@ private fun MainPanelPage(
 private fun PanelDrawer(
     scope: CoroutineScope,
     drawerState: DrawerState,
-    nav: PanelNav
+    nav: PanelNav,
+    permanent: Boolean
 ) {
-    ModalDrawerSheet {
+    val content: @Composable ColumnScope.() -> Unit = {
         DrawerHeader()
         DrawerNavItem(
             Icons.Default.Home,
@@ -256,6 +285,11 @@ private fun PanelDrawer(
             stringResource(Res.string.worker_records),
             onNavigate(scope, drawerState) { nav.gotoTaskRecords() }
         )
+    }
+    if (permanent) {
+        PermanentDrawerSheet(content = content)
+    } else {
+        ModalDrawerSheet(content = content)
     }
 }
 
