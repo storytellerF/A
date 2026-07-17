@@ -49,9 +49,6 @@ include(":app:core")
 include(":app:androidApp")
 include(":app:desktopApp")
 
-include(":dev:core")
-include(":dev:server")
-include(":dev:cli")
 if (isAppiumTestEnable) {
     include(":dev:appiumCore")
     include(":app:androidAppium")
