@@ -1,73 +1,74 @@
 # project
 
-## 上传（files）
+## Uploads (files)
 
-- API 类型：Ktor HTTP 路由，端点定义在 api 模块的 CustomApi。
-- 非分片上传：`POST files/upload`（multipart），服务端先写入本地临时文件并校验请求参数 sha256；随后上传到对象存储并确认返回对象名；FileRecord.sha256 按请求参数保存。
-- 分片上传：`POST files/chunk/init` → `POST files/chunk/{id}/{index}/upload?hash=...`（每片 sha256 校验）→ `POST files/chunk/{id}/complete`（对象存储 compose 合并；写入 FileRecord 并清理 chunks）。
-- 存储实现：统一走 ObjectStorageService。
-  - `MEDIA_SERVICE=minio`：MinIO/S3 兼容对象存储（支持 compose）。
-  - `MEDIA_SERVICE=filesystem`：落本地文件系统（或内存 FS），并通过 `GET /a_file/{path...}` 提供读取。
+- API type: Ktor HTTP routes. Endpoint definitions live in `CustomApi` in the `api` module.
+- Non-chunked upload: `POST files/upload` (multipart). The server first writes to a local temporary file and validates the request `sha256`; it then uploads to object storage, confirms the returned object name, and stores `FileRecord.sha256` from the request parameter.
+- Chunked upload: `POST files/chunk/init` -> `POST files/chunk/{id}/{index}/upload?hash=...` (per-chunk sha256 validation) -> `POST files/chunk/{id}/complete` (object storage compose merge, then write `FileRecord` and clean up chunks).
+- Storage implementation: all upload paths go through `ObjectStorageService`.
+  - `MEDIA_SERVICE=minio`: MinIO/S3-compatible object storage, with compose support.
+  - `MEDIA_SERVICE=filesystem`: write to local filesystem, or in-memory FS, and serve reads through `GET /a_file/{path...}`.
 
-## 资源管理
+## Resource Management
 
-- 新建 `InputStream`/`OutputStream` 并交给函数消费时，调用处用 `use {}` 明确关闭；例如计算 `sha256` 时先 `inputStream().buffered().use { input -> sha256(input.asSource().buffered()) }`。
-- 工具函数如果接收调用方创建的流，不在函数内部关闭；调用方创建流时用 `use {}` 包住函数调用。
+- When creating an `InputStream`/`OutputStream` and passing it to a consuming function, callers should close it explicitly with `use {}`. For example, when computing `sha256`, use `inputStream().buffered().use { input -> sha256(input.asSource().buffered()) }`.
+- Utility functions that receive caller-created streams should not close them internally. The caller should wrap the function call in `use {}` when creating the stream.
 
 ## Panel / Worker
 
-- Worker 执行记录存储在后端 `TaskRecords` 表，记录类型是 `TaskRecordType`，`processedId` 指向该任务处理到的业务对象。
-- Panel 通过 `/admin/task-records` 分页查询 worker 执行记录；支持按任务类型筛选，未传类型时返回全部记录。
+- Worker execution records are stored in the backend `TaskRecords` table. The record type is `TaskRecordType`, and `processedId` points to the business object processed by the task.
+- Panel queries worker execution records through paginated `/admin/task-records`; it supports filtering by task type, and returns all records when no type is provided.
 
-## Topic Compose / Block 编辑
+## Topic Compose / Block Editing
 
-- `TopicComposePage` 不再暴露整页 `RichEditTopicPage`；富文本编辑只作为 Block 编辑器中 `ContentBlock.Paragraph` 的编辑能力使用。
-- Compose Multiplatform UI 测试在 desktop/JVM 目标使用 `androidx.compose.ui.test.runComposeUiTest`（v1 API）；当前 `v2.runComposeUiTest` 的 Skiko desktop 实现会抛 NotImplemented。测试依赖已在 `app/composeApp` 和 `app/core` 的 `commonTest` 配置为 `libs.ui.test`；Block 编辑器相关 UI 测试优先放在 `app/composeApp/src/headlessTest/kotlin`。
+- `TopicComposePage` no longer exposes the full-page `RichEditTopicPage`; rich text editing is only used as the editing capability for `ContentBlock.Paragraph` inside the block editor.
+- Compose Multiplatform UI tests on the desktop/JVM target use `androidx.compose.ui.test.runComposeUiTest` (v1 API). The current Skiko desktop implementation of `v2.runComposeUiTest` throws `NotImplemented`. Test dependencies are configured as `libs.ui.test` in `commonTest` for `app/composeApp` and `app/core`; Block editor UI tests should preferably live under `app/composeApp/src/headlessTest/kotlin`.
 
 ## RefCell
 
-- `TopicRefCell`、`RoomRefCell`、`CommunityRefCell`、`UserRefCell` 不直接创建 ViewModel；通过 `LocalRefCellHandlerProvider` 获取 `LoadingHandler`，默认 provider 再适配现有 `create*ViewModel` 工厂。
+- `TopicRefCell`, `RoomRefCell`, `CommunityRefCell`, and `UserRefCell` do not create ViewModels directly. They obtain a `LoadingHandler` through `LocalRefCellHandlerProvider`; the default provider adapts the existing `create*ViewModel` factories.
 
 ## Media Player
 
-- 媒体播放列表不在点击播放时解析；播放器 UI 通过 `LocalMediaPlayListHandlerProvider` 获取 `LoadingHandler<List<ConstPlayItem>>`，加载完成后再调用 `MediaPlayerService.start`。
-- `app/desktopApp` 入口也需要注入 `LocalMediaPlayerService`；common `App()` 启动时会读取该 CompositionLocal。
+- Media playlists are not resolved on click. The player UI obtains a `LoadingHandler<List<ConstPlayItem>>` through `LocalMediaPlayListHandlerProvider`, and calls `MediaPlayerService.start` after loading completes.
+- The `app/desktopApp` entry point also needs to inject `LocalMediaPlayerService`; common `App()` reads this CompositionLocal at startup.
 
 ## Android App
 
-- `app/androidApp` 是应用壳模块，承载 `MainActivity`、`UploadActivity`、`MediaPlayerActivity`、`BubbleActivity`、`RTCActivity` 和 manifest 入口；`app/composeApp` 保留可复用 Compose UI、actual 实现、服务与 Android helper。
-- `app/composeApp` 不能编译期依赖 `app/androidApp`。需要从 composeApp 内启动应用 Activity 时，使用稳定的显式 class name 常量创建 `Intent` 或 `ComponentName`。
-- `app/desktopApp` 是桌面 JVM 应用壳模块，承载 Compose Desktop `main` 与 `compose.desktop` 打包配置；`app/composeApp` 保留共享 UI 和 JVM actual 实现。
-- `panel/desktopApp` 是 Panel 桌面 JVM 应用壳模块，承载 Compose Desktop `main` 与 `compose.desktop` 打包配置；`panel/composeApp` 保留共享 UI 和 JVM actual 实现。
-- `app/androidApp` 和 `panel/androidApp` 入口类继承 `ComponentActivity`，媒体服务继承 Media3 `MediaSessionService`；release lint 对这些 Kotlin/Compose/Media3 组件存在 `Instantiatable` 误报，两个应用壳模块均禁用该 lint 检查。
+- `app/androidApp` is the app shell module. It contains `MainActivity`, `UploadActivity`, `MediaPlayerActivity`, `BubbleActivity`, `RTCActivity`, and manifest entries. `app/composeApp` keeps reusable Compose UI, actual implementations, services, and Android helpers.
+- `app/composeApp` must not depend on `app/androidApp` at compile time. When composeApp needs to start an app Activity, use a stable explicit class-name constant to create an `Intent` or `ComponentName`.
+- Android WebRTC call signaling is centrally dispatched by `RTCService`'s main websocket frame collector. Peer code should not collect `frameFlow` to wait for answer; one-shot answers use `CompletableDeferred`, and repeated candidates are triggered through the Flow exposed by the peer signaling object.
+- `app/desktopApp` is the Desktop JVM app shell module. It contains the Compose Desktop `main` entry point and `compose.desktop` packaging configuration. `app/composeApp` keeps shared UI and JVM actual implementations.
+- `panel/desktopApp` is the Panel Desktop JVM app shell module. It contains the Compose Desktop `main` entry point and `compose.desktop` packaging configuration. `panel/composeApp` keeps shared UI and JVM actual implementations.
+- `app/androidApp` and `panel/androidApp` entry classes extend `ComponentActivity`, and media services extend Media3 `MediaSessionService`. Release lint has false-positive `Instantiatable` reports for these Kotlin/Compose/Media3 components, so both app shell modules disable that lint check.
 
 ## Appium
 
-- Appium 测试通过 `-Pappium=true` 才会被 include；共享测试基础设施在 `dev/appiumCore`，产品/平台入口拆分为 `app/androidAppium`、`app/desktopAppium`、`panel/androidAppium`、`panel/desktopAppium`。
-- `app/androidApp` 和 `panel/androidApp` 可用 Robolectric 覆盖部分 Appium 前置/启动逻辑；例如把同格式 session JSON 写入 `filesDir/appium-session/session.json` 后调用 `restoreFromStorage`，可验证“注入私有 session 后恢复登录态”的非设备部分。
+- Appium tests are included only when `-Pappium=true` is passed. Shared test infrastructure lives in `dev/appiumCore`, and product/platform entry modules are split into `app/androidAppium`, `app/desktopAppium`, `panel/androidAppium`, and `panel/desktopAppium`.
+- `app/androidApp` and `panel/androidApp` can use Robolectric to cover part of the Appium setup and launch flow. For example, writing a session JSON with the same format to `filesDir/appium-session/session.json` and calling `restoreFromStorage` can verify the non-device part of restoring login state from an injected private session.
 
-## Gradle 工具脚本
+## Gradle Tool Scripts
 
-- `scripts/build_scripts/gradle-prune-implementations.sh` 通过 `./gradlew projects` 获取当前构建实际包含的模块，只处理这些模块的 `build.gradle.kts`，避免误删未 include 模块的依赖。
-- prune 检查默认运行 `assemble`（可用 `GRADLE_PRUNE_TASK` 覆盖），脚本参数会继续传给 Gradle，例如 `-Pserver.flavor=...`。
-- 每个候选 implementation 会在“已确认可删”的累计状态上继续验证；失败时只回滚当前候选，避免最终删除未被组合验证过的依赖。
+- `scripts/build_scripts/gradle-prune-implementations.sh` uses `./gradlew projects` to discover the modules actually included in the current build. It only processes those modules' `build.gradle.kts` files, avoiding accidental dependency removal from modules that are not included.
+- The prune check runs `assemble` by default, which can be overridden with `GRADLE_PRUNE_TASK`. Script arguments are forwarded to Gradle, for example `-Pserver.flavor=...`.
+- Each candidate `implementation` is verified on top of the cumulative "confirmed removable" state. On failure, only the current candidate is rolled back, preventing final deletion of dependencies that were never validated in combination.
 
-## 账号 2FA
+## Account 2FA
 
-- 用户登录原本是 `/accounts/sign-in` 一步私钥签名；开启 TOTP 后，该接口返回 `SignInResponse.RequiresTotp` 并把 Ktor session 标记为 `UserSession.TwoFactorPending`，客户端再调用 `/accounts/sign-in/totp` 完成登录。
-- 用户 2FA 设置走受保护的 `CustomApi.Users.TwoFactor` 接口；后端数据保存在 `UserTwoFactors` 表，迁移由 Exposed `MigrationUtils.statementsRequiredForDatabaseMigration` 自动补表。
-- TOTP 后端实现放在 `cloud/service`，使用 JDK `SecureRandom`、Base32 和 `HmacSHA1` 自行实现 RFC 6238，生成标准 `otpauth://totp/...` URI 供 Google Authenticator 等客户端导入。
+- User sign-in used to be a single private-key signature step through `/accounts/sign-in`. After TOTP is enabled, that endpoint returns `SignInResponse.RequiresTotp` and marks the Ktor session as `UserSession.TwoFactorPending`; the client then calls `/accounts/sign-in/totp` to complete sign-in.
+- User 2FA settings use the protected `CustomApi.Users.TwoFactor` API. Backend data is stored in the `UserTwoFactors` table, and Exposed `MigrationUtils.statementsRequiredForDatabaseMigration` automatically adds the table.
+- The TOTP backend implementation lives in `cloud/service`. It uses JDK `SecureRandom`, Base32, and `HmacSHA1` to implement RFC 6238 directly, and generates standard `otpauth://totp/...` URIs for Google Authenticator and similar clients.
 
-## Server 配置
+## Server Configuration
 
-- 用户注册开关由服务端环境变量 `ENABLE_SIGN_UP` 控制；未配置时默认开启，只有显式设置为 `false` 才会拒绝 `/accounts/sign-up`。
+- User sign-up is controlled by the server environment variable `ENABLE_SIGN_UP`. It defaults to enabled when unset, and only rejects `/accounts/sign-up` when explicitly set to `false`.
 
 ## Cloud CLI
 
-- `cloud/cli` 命令不要使用顶层 `backend` 全局变量；需要后端实例时，在命令执行处直接调用 `requireBackend()` 构建。
-- `:cloud:cli` 的 `generate-preset-keys` 子命令会为 dev-data 预置账号生成 Dilithium 签名私钥 `p-*` 和 Kyber 加密私钥 `ep-*`，默认定位到项目根的 `deploy/dev-data/secrets`；从 Gradle `:cloud:cli:run` 执行时会向上查找 `deploy/dev-data/0_preset_user.json` 来避免写到模块目录。
-- `deploy/dev-data/0_preset_user.json` 中的 System、FontProvider、robot1、robot2、user1、user2、user3 预置账号使用 `algoType: DILITHIUM`，并分别引用对应 `encryptionPrivateKey`。
+- `cloud/cli` commands should not use the top-level global `backend` variable. When a backend instance is needed, call `requireBackend()` directly at command execution time.
+- The `:cloud:cli` `generate-preset-keys` subcommand generates Dilithium signing private keys (`p-*`) and Kyber encryption private keys (`ep-*`) for dev-data preset accounts. By default it targets `deploy/dev-data/secrets` under the project root; when run through Gradle `:cloud:cli:run`, it searches upward for `deploy/dev-data/0_preset_user.json` to avoid writing into the module directory.
+- In `deploy/dev-data/0_preset_user.json`, the System, FontProvider, robot1, robot2, user1, user2, and user3 preset accounts use `algoType: DILITHIUM` and reference their corresponding `encryptionPrivateKey`.
 
 ## CI
 
-- `Alpha Server CI` 在启动远端 alpha 服务前执行后端/服务端测试：`:backend:minio:test`、`:cloud:cli:test`、`:cloud:service:test`、`:cloud:server:test`，并启用 `ENABLE_TEST_CONTAINER=true` 覆盖 Testcontainers 路径。
+- `Alpha Server CI` runs backend/server tests before starting the remote alpha service: `:backend:minio:test`, `:cloud:cli:test`, `:cloud:service:test`, and `:cloud:server:test`. It also enables `ENABLE_TEST_CONTAINER=true` to override the Testcontainers path.

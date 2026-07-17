@@ -70,10 +70,7 @@ import io.github.aakira.napier.Napier
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.webrtc.RendererCommon
@@ -223,7 +220,7 @@ suspend fun makeCallByOffer(
     localStream: MediaStream,
     onRemoteVideoTrack: (VideoTrack) -> Unit,
     onRemoteAudioTrack: (AudioTrack) -> Unit = {},
-    signalingChannel: SharedFlow<RoomFrame>,
+    signaling: PeerSignaling,
     instance: IAccountInstance,
 ) {
     val roomId = createOffer.roomId
@@ -276,34 +273,19 @@ suspend fun makeCallByOffer(
             sendFrame(f)
         }
 
-        signalingChannel.mapNotNull {
-            it as? RoomFrame.RespondAnswer
-        }.filter {
-            it.roomId == roomId && it.uid == targetUid
-        }.onEach {
-            Napier.i {
-                "respond answer ${pc.signalingState} from ${it.uid}"
+        val answerFrame = signaling.answer.await()
+        Napier.i {
+            "respond answer ${pc.signalingState} from ${answerFrame.uid}"
+        }
+        if (pc.signalingState == SignalingState.HaveLocalOffer) {
+            val answer = SessionDescription(SessionDescriptionType.Answer, answerFrame.answer.sdp)
+            pc.setRemoteDescription(answer)
+        }
+        signaling.candidates
+            .onEach { frame ->
+                pc.addCustomIceCandidate(frame.candidate)
             }
-            if (pc.signalingState == SignalingState.HaveLocalOffer) {
-                val answer = SessionDescription(SessionDescriptionType.Answer, it.answer.sdp)
-                pc.setRemoteDescription(answer)
-            }
-        }.launchIn(this)
-
-        signalingChannel.mapNotNull {
-            it as? RoomFrame.ReceiveCandidate
-        }.filter {
-            it.roomId == roomId && it.uid == targetUid
-        }.onEach {
-            val candidate = it.candidate
-            pc.addIceCandidate(
-                IceCandidate(
-                    candidate.sdpMid,
-                    candidate.sdpMLineIndex,
-                    candidate.candidate
-                )
-            )
-        }.launchIn(this)
+            .launchIn(this)
         try {
             awaitCancellation()
         } finally {
@@ -318,7 +300,7 @@ suspend fun makeCallByAnswer(
     localStream: MediaStream,
     onRemoteVideoTrack: (VideoTrack) -> Unit,
     onRemoteAudioTrack: (AudioTrack) -> Unit = {},
-    signalingChannel: SharedFlow<RoomFrame>,
+    signaling: PeerSignaling,
     instance: IAccountInstance,
 ) {
     val roomId = createAnswer.roomId
@@ -374,15 +356,11 @@ suspend fun makeCallByAnswer(
         instance.sessionManager.webSocketClient.useWebSocket {
             sendFrame(f)
         }
-        signalingChannel.mapNotNull {
-            it as? RoomFrame.ReceiveCandidate
-        }.filter { frame ->
-            (frame.roomId == roomId && frame.uid == targetUid)
-        }.onEach { frame ->
-            val native = frame.candidate
-            val candidate = IceCandidate(native.sdpMid, native.sdpMLineIndex, native.candidate)
-            pc.addIceCandidate(candidate)
-        }.launchIn(this)
+        signaling.candidates
+            .onEach { frame ->
+                pc.addCustomIceCandidate(frame.candidate)
+            }
+            .launchIn(this)
         try {
             awaitCancellation()
         } finally {
@@ -390,6 +368,16 @@ suspend fun makeCallByAnswer(
             pc.close()
         }
     }
+}
+
+private suspend fun PeerConnection.addCustomIceCandidate(candidate: CustomCandidate) {
+    addIceCandidate(
+        IceCandidate(
+            candidate.sdpMid,
+            candidate.sdpMLineIndex,
+            candidate.candidate
+        )
+    )
 }
 
 private fun createRTCPeerConnection(): PeerConnection {
