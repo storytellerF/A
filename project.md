@@ -73,3 +73,11 @@
 
 - `Alpha Server CI` runs backend/server tests before starting the remote alpha service: `:backend:minio:test`, `:cloud:cli:test`, `:cloud:service:test`, and `:cloud:server:test`. It also enables `ENABLE_TEST_CONTAINER=true` to override the Testcontainers path.
 - Test and release workflows use the same explicit Gradle dependency cache namespace: `gradle-${{ runner.os }}-release-*`. Keep the cache path limited to `~/.gradle/caches` and `~/.gradle/wrapper` so pull-request tests can restore the default-branch release cache without mixing OS-specific entries. Release jobs that share the same runner OS should run through `needs` dependencies instead of saving the same cache key concurrently. During cache key migrations, keep older runner-scoped prefixes in `restore-keys` until the new default-branch cache has been written.
+
+## Wasm
+
+- Wasm targets are opt-in through `-Ptarget.wasm=true`; the default in `gradle.properties` is `target.wasm=false`.
+- `:app:composeApp` and `:panel:composeApp` define executable `wasmJs` browser targets. Shared modules such as `shared`, `api`, `client:core`, `client:model-storage`, `client:room`, `client:bot-lib`, and `client:ascii-parser` also define wasm targets when the property is enabled.
+- `dev/core`, `dev/cli`, and `dev/server` were removed from the included build. Do not add dependencies on `projects.dev.core`, `:dev:cli`, or `:dev:server`.
+- Runtime support is incomplete even after that configuration issue: wasm cryptography in `shared/src/wasmJsMain/.../Signature.wasmJs.kt` is still a stub, app image save/conversion, clipboard write, media playback, local client file access, text file save, and GPT are no-op or unsupported wasm actuals.
+- Room wasm uses `androidx.sqlite:sqlite-web` with a local `sqlite-web-worker` npm package and OPFS. Both dev and production hosting need COOP/COEP headers for cross-origin isolation, otherwise OPFS/SharedArrayBuffer will fail in browsers.

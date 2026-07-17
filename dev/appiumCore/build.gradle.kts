@@ -12,7 +12,6 @@ dependencies {
     api(libs.kotlinx.coroutines.core)
     api(libs.kotlinx.serialization.json)
     api(project(":api"))
-    api(project(":dev:core"))
     api(project(":client:core"))
     api(project(":shared"))
     api(libs.ktor.client.core)
