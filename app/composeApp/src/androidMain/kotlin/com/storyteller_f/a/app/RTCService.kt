@@ -18,9 +18,13 @@ import com.storyteller_f.a.client.core.sendFrame
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.PrimaryKey
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
@@ -80,6 +84,7 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
     override val localVideoMuted = MutableStateFlow(false)
     override var job: Job? = null
     private val peerJobs = mutableMapOf<PrimaryKey, Job>()
+    private val peerSignals = mutableMapOf<PrimaryKey, PeerSignaling>()
 
     init {
         lifecycle.coroutineScope.launch {
@@ -104,6 +109,14 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
 
                     is RoomFrame.PeerMediaState -> {
                         processPeerMediaState(frame)
+                    }
+
+                    is RoomFrame.RespondAnswer -> {
+                        processRespondAnswer(frame)
+                    }
+
+                    is RoomFrame.ReceiveCandidate -> {
+                        processReceiveCandidate(frame)
                     }
 
                     else -> {}
@@ -148,6 +161,8 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
             it.cancel()
         }
         peerJobs.clear()
+        peerSignals.values.forEach { it.cancel() }
+        peerSignals.clear()
         job?.cancel()
         remotePeers.value = emptyMap()
         callingRoom.value = null
@@ -193,15 +208,15 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
             return
         }
         val localStream = stream.value ?: return
-        val signalingChannel = instance.sessionManager.webSocketClient.frameFlow
         val targetUid = frame.targetUid
+        val signaling = peerSignals.getOrPut(targetUid) { PeerSignaling() }
         val currentJob = lifecycle.coroutineScope.launch {
             makeCallByAnswer(
                 frame,
                 localStream,
                 onRemoteVideoTrack = { setRemoteVideoTrack(targetUid, it) },
                 onRemoteAudioTrack = { setRemoteAudioTrack(targetUid, it) },
-                signalingChannel = signalingChannel,
+                signaling = signaling,
                 instance = instance,
             )
         }
@@ -209,6 +224,7 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
         job = currentJob
         currentJob.invokeOnCompletion {
             peerJobs.remove(targetUid)
+            peerSignals.remove(targetUid)?.cancel()
             removeRemotePeer(targetUid)
         }
     }
@@ -224,15 +240,15 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
             return
         }
         val localStream = stream.value ?: return
-        val signalingChannel = instance.sessionManager.webSocketClient.frameFlow
         val targetUid = frame.targetUid
+        val signaling = peerSignals.getOrPut(targetUid) { PeerSignaling() }
         val currentJob = lifecycle.coroutineScope.launch {
             makeCallByOffer(
                 frame,
                 localStream,
                 onRemoteVideoTrack = { setRemoteVideoTrack(targetUid, it) },
                 onRemoteAudioTrack = { setRemoteAudioTrack(targetUid, it) },
-                signalingChannel = signalingChannel,
+                signaling = signaling,
                 instance = instance,
             )
         }
@@ -240,6 +256,7 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
         job = currentJob
         currentJob.invokeOnCompletion {
             peerJobs.remove(targetUid)
+            peerSignals.remove(targetUid)?.cancel()
             removeRemotePeer(targetUid)
         }
     }
@@ -269,7 +286,22 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
             return
         }
         peerJobs.remove(frame.uid)?.cancel()
+        peerSignals.remove(frame.uid)?.cancel()
         removeRemotePeer(frame.uid)
+    }
+
+    private fun processRespondAnswer(frame: RoomFrame.RespondAnswer) {
+        if (callingRoom.value != frame.roomId) {
+            return
+        }
+        peerSignals.getOrPut(frame.uid) { PeerSignaling() }.receiveAnswer(frame)
+    }
+
+    private fun processReceiveCandidate(frame: RoomFrame.ReceiveCandidate) {
+        if (callingRoom.value != frame.roomId) {
+            return
+        }
+        peerSignals.getOrPut(frame.uid) { PeerSignaling() }.receiveCandidate(frame)
     }
 
     private fun processPeerMediaState(frame: RoomFrame.PeerMediaState) {
@@ -320,6 +352,28 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
         remotePeers.value = remotePeers.value.toMutableMap().apply {
             remove(uid)
         }
+    }
+}
+
+class PeerSignaling {
+    val answer = CompletableDeferred<RoomFrame.RespondAnswer>()
+    private val candidateEvents = MutableSharedFlow<RoomFrame.ReceiveCandidate>(
+        replay = 1,
+        extraBufferCapacity = 16,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    )
+    val candidates: SharedFlow<RoomFrame.ReceiveCandidate> = candidateEvents
+
+    fun receiveAnswer(frame: RoomFrame.RespondAnswer) {
+        answer.complete(frame)
+    }
+
+    fun receiveCandidate(frame: RoomFrame.ReceiveCandidate) {
+        candidateEvents.tryEmit(frame)
+    }
+
+    fun cancel() {
+        answer.cancel()
     }
 }
 
