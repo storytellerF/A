@@ -33,7 +33,6 @@ jobs:
       # runner's environment
       VARS_CONTEXT: ${{ toJson(vars) }}
       SECRETS_CONTEXT: ${{ toJson(secrets) }}
-      PACKAGE_PLATFORM: android
     steps:
       - uses: actions/checkout@v4
         with:
@@ -51,9 +50,10 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ env.PACKAGE_PLATFORM }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/**', 'bgscripts/**') }}
+          key: gradle-${{ runner.os }}-release-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/**', 'bgscripts/**') }}
           restore-keys: |
-            gradle-${{ runner.os }}-${{ env.PACKAGE_PLATFORM }}-
+            gradle-${{ runner.os }}-release-
+            gradle-${{ runner.os }}-
 
       - name: Build alpha app
         run: |
@@ -68,6 +68,7 @@ jobs:
             build/outputs/pkg/release/
 
   build-desktop-deb:
+    needs: build-android
     runs-on: ubuntu-latest
     env:
       # this will take the entire vars context configured in the repository > environments
@@ -75,7 +76,6 @@ jobs:
       # runner's environment
       VARS_CONTEXT: ${{ toJson(vars) }}
       SECRETS_CONTEXT: ${{ toJson(secrets) }}
-      PACKAGE_PLATFORM: desktop-deb
     steps:
       - uses: actions/checkout@v4
         with:
@@ -93,9 +93,10 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ env.PACKAGE_PLATFORM }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/**', 'bgscripts/**') }}
+          key: gradle-${{ runner.os }}-release-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/**', 'bgscripts/**') }}
           restore-keys: |
-            gradle-${{ runner.os }}-${{ env.PACKAGE_PLATFORM }}-
+            gradle-${{ runner.os }}-release-
+            gradle-${{ runner.os }}-
 
       - name: Build alpha deb
         run: |
@@ -117,7 +118,6 @@ jobs:
       # runner's environment
       VARS_CONTEXT: ${{ toJson(vars) }}
       SECRETS_CONTEXT: ${{ toJson(secrets) }}
-      PACKAGE_PLATFORM: desktop-msi
     steps:
       - uses: actions/checkout@v4
         with:
@@ -135,9 +135,10 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ env.PACKAGE_PLATFORM }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/**', 'bgscripts/**') }}
+          key: gradle-${{ runner.os }}-release-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/**', 'bgscripts/**') }}
           restore-keys: |
-            gradle-${{ runner.os }}-${{ env.PACKAGE_PLATFORM }}-
+            gradle-${{ runner.os }}-release-
+            gradle-${{ runner.os }}-
 
       - name: Build alpha msi
         run: |
@@ -158,7 +159,6 @@ jobs:
       # runner's environment
       VARS_CONTEXT: ${{ toJson(vars) }}
       SECRETS_CONTEXT: ${{ toJson(secrets) }}
-      PACKAGE_PLATFORM: desktop-dmg
     steps:
       - uses: actions/checkout@v4
         with:
@@ -176,9 +176,10 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ env.PACKAGE_PLATFORM }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/**', 'bgscripts/**') }}
+          key: gradle-${{ runner.os }}-release-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/**', 'bgscripts/**') }}
           restore-keys: |
-            gradle-${{ runner.os }}-${{ env.PACKAGE_PLATFORM }}-
+            gradle-${{ runner.os }}-release-
+            gradle-${{ runner.os }}-
 
       - name: Build alpha dmg
         run: |
@@ -192,6 +193,7 @@ jobs:
             build/outputs/pkg/release/
 
   release-server:
+    needs: build-desktop-deb
     runs-on: ubuntu-latest
     environment: alpha
     env:
@@ -210,7 +212,17 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-          cache: gradle
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-release-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/**', 'bgscripts/**') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-release-
+            gradle-${{ runner.os }}-
 
       - name: Start service
         run: ./scripts/service_scripts/start-service-on-ci.sh alpha
