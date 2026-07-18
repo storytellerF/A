@@ -1,7 +1,5 @@
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.plugin.KotlinHierarchyTemplate
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -13,18 +11,7 @@ plugins {
 
 val buildIosTarget = project.findProperty("target.ios") == "true"
 val buildWasmTarget = project.findProperty("target.wasm") == "true"
-@OptIn(ExperimentalKotlinGradlePluginApi::class)
 kotlin {
-    applyHierarchyTemplate(KotlinHierarchyTemplate.default) {
-        common {
-            group("jvmAndroid") {
-                withCompilations {
-                    it.target.name == "android" || it.target.name == "jvm"
-                }
-            }
-        }
-    }
-
     android {
         namespace = "com.storyteller_f.a.app.core"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
@@ -154,12 +141,17 @@ kotlin {
             implementation(libs.connectivity.compose.http)
             implementation(libs.tika.core)
         }
-        getByName("jvmAndroidMain") {
+        // jvm 与 android 共享：compose-pdf 的 PdfView actual、m3u-parser 的播放列表解析
+        // （wasm 上均无对应库）
+        val jvmAndroidMain by creating {
+            dependsOn(commonMain.get())
             dependencies {
                 implementation(libs.compose.pdf)
                 implementation(libs.m3u.parser)
             }
         }
+        jvmMain.get().dependsOn(jvmAndroidMain)
+        androidMain.get().dependsOn(jvmAndroidMain)
     }
     compilerOptions {
         freeCompilerArgs.addAll("-Xexpect-actual-classes")
