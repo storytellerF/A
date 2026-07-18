@@ -41,28 +41,34 @@ kotlin {
     }
 
     sourceSets {
-        androidMain.dependencies {
-            implementation(libs.androidx.activity.compose)
+        androidMain {
+            kotlin.srcDir("src/jvmAndroidMain/kotlin")
+            dependencies {
+                implementation(libs.androidx.activity.compose)
 
-            implementation(libs.androidx.media3.exoplayer)
-            implementation(libs.androidx.media3.exoplayer.dash)
-            implementation(libs.androidx.media3.exoplayer.hls)
-            implementation(libs.androidx.media3.ui)
-            implementation(libs.androidx.media3.session)
-            implementation(libs.lifecycle.service)
+                implementation(libs.androidx.media3.exoplayer)
+                implementation(libs.androidx.media3.exoplayer.dash)
+                implementation(libs.androidx.media3.exoplayer.hls)
+                implementation(libs.androidx.media3.ui)
+                implementation(libs.androidx.media3.session)
+                implementation(libs.lifecycle.service)
 
-            implementation(libs.record.core)
-            implementation(libs.compose.webview)
-            implementation(libs.connectivity.device)
-            implementation(libs.connectivity.compose.device)
-            implementation(libs.webrtc.kmp)
-            implementation(libs.accompanist.permissions)
+                implementation(libs.record.core)
+                implementation(libs.compose.webview)
+                implementation(libs.connectivity.device)
+                implementation(libs.connectivity.compose.device)
+                implementation(libs.webrtc.kmp)
+                implementation(libs.accompanist.permissions)
 
-            implementation(libs.github.newpipeextractor)
-            implementation(libs.androidx.datastore.preferences.core)
+                implementation(libs.github.newpipeextractor)
+                implementation(libs.androidx.datastore.preferences.core)
 
-            implementation(libs.androidx.ui.tooling.preview)
-            implementation(libs.okhttp)
+                implementation(libs.androidx.ui.tooling.preview)
+                implementation(libs.okhttp)
+
+                implementation(libs.compose.pdf)
+                implementation(libs.m3u.parser)
+            }
         }
         getByName("androidHostTest") {
             dependencies {
@@ -130,28 +136,23 @@ kotlin {
 
             implementation(libs.ui.test)
         }
-        jvmMain.dependencies {
-            implementation(compose.desktop.currentOs)
-            implementation(libs.kotlinx.coroutines.swing)
-
-            implementation(libs.vlcj)
-            implementation(libs.jlayer)
-            implementation(libs.androidx.datastore.preferences.core)
-            implementation(libs.connectivity.http)
-            implementation(libs.connectivity.compose.http)
-            implementation(libs.tika.core)
-        }
-        // jvm 与 android 共享：compose-pdf 的 PdfView actual、m3u-parser 的播放列表解析
-        // （wasm 上均无对应库）
-        val jvmAndroidMain by creating {
-            dependsOn(commonMain.get())
+        jvmMain {
+            kotlin.srcDir("src/jvmAndroidMain/kotlin")
             dependencies {
+                implementation(compose.desktop.currentOs)
+                implementation(libs.kotlinx.coroutines.swing)
+
+                implementation(libs.vlcj)
+                implementation(libs.jlayer)
+                implementation(libs.androidx.datastore.preferences.core)
+                implementation(libs.connectivity.http)
+                implementation(libs.connectivity.compose.http)
+                implementation(libs.tika.core)
+
                 implementation(libs.compose.pdf)
                 implementation(libs.m3u.parser)
             }
         }
-        jvmMain.get().dependsOn(jvmAndroidMain)
-        androidMain.get().dependsOn(jvmAndroidMain)
     }
     compilerOptions {
         freeCompilerArgs.addAll("-Xexpect-actual-classes")
