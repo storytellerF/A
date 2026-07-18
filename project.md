@@ -52,6 +52,7 @@
 - `scripts/build_scripts/gradle-prune-implementations.sh` uses `./gradlew projects` to discover the modules actually included in the current build. It only processes those modules' `build.gradle.kts` files, avoiding accidental dependency removal from modules that are not included.
 - The prune check runs `assemble` by default, which can be overridden with `GRADLE_PRUNE_TASK`. Script arguments are forwarded to Gradle, for example `-Pserver.flavor=...`.
 - Each candidate `implementation` is verified on top of the cumulative "confirmed removable" state. On failure, only the current candidate is rolled back, preventing final deletion of dependencies that were never validated in combination.
+- KMP modules that add custom intermediate source sets generally call `applyDefaultHierarchyTemplate()` after target declarations and before `sourceSets {}`. Examples include `shared`, `client:room`, `client:sqlite-now`, `client:kotbase`, `client:ascii-parser`, `app:core`, `app:composeApp`, and `panel:composeApp`; custom sets such as `jvmAndroidMain`, `noJvmMain`, or `headlessTest` are then attached with explicit `dependsOn` edges.
 
 ## Account 2FA
 

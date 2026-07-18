@@ -16,12 +16,10 @@ trigger: always_on
 - 不能用中文做方法名
 - 使用表达式来取代var，例如：val x = if (a) b else c
 - 不要使用裸的 InputStream/OutputStream，而要使用 BufferedInputStream/BufferedOutputStream
-- 代码编辑之后不要用build 任务检查编译错误，要使用assemble 任务检查错误，如果要执行test 任务，单纯执行test 任务，不要执行detekt 任务
 - 不要在代码中使用 println 或 System.out.println
 - 编辑文件时需要注意不要改变当前文件的换行符
 - 添加依赖时通过github 或者对应仓库获取正确的group 和artifact，找不到依赖也禁止降低版本
-- 一个文件代码超过1000 行需要拆分复杂部分代码到其他文件
-- 遇到问题找本质原因，避免无意义的fallback和检查。
+- 一个文件代码超过1000 行需要按照功能拆分代码到其他文件
 
 ## 模块职责概览
 - **api**: 定义 REST API 端点、查询/路径模型；包含管理员 AdminApi（/admin/*）
@@ -42,42 +40,7 @@ trigger: always_on
 - **日志**: 对外网络请求使用 serviceCatching 打点；避免在热路径打印大量日志
 - **测试**: 尽可能的编写测试，对于client 端并且是无ui 写到src/headlessTest/kotlin 中，如果是compose 正常按照https://kotlinlang.org/docs/multiplatform/compose-test.html 编写测试，如果是端到端测试写道appium 模块中
 
-## 新增功能指南
-
-### A) 新增后端 API 功能
-1. **定义 API 接口 (`api`)**
-    - 位置: `api/src/main/kotlin/com/storyteller_f/a/api/CustomApi.kt` (或 `AdminApi.kt`)
-    - 步骤: 定义 `safeApi` 或 `mutationApi`，并为请求/响应创建数据类
-
-2. **定义和实现数据库操作 (`backend/core` & `backend/exposed`)**
-    - 接口 (DAO in `backend/core`): 在 `backend/core/src/.../Database.kt` 下
-    - 表定义 (Table in `backend/exposed`): 在 `backend/exposed/src/.../table/` 包下
-    - 实现 (DAO Impl in `backend/exposed`): 在 `backend/exposed/src/.../database` 包下
-
-3. **实现服务逻辑 (`cloud/service`)**
-    - 位置: 在 `cloud/service/src/...` 下创建或修改服务类
-
-4. **编写测试**
-    - 位置: 在`cloud/server/src/test/` 包下
-
-### B) 客户端接入已有 API
-1. **同步 API 端点定义 (`api`)**
-    - 确认 `api` 模块中已包含需要接入的 API 定义
-
-2. **新增客户端请求 (`client/core`)**
-    - 用户端: 在 `client/core/AppRequest.kt` 添加 `UserSessionManager` 的扩展函数
-    - 面板端: 在 `client/core/PanelRequest.kt` 添加 `PanelSessionManager` 的扩展函数
-    - 实现: 统一调用 `serviceCatching { CustomApi.* 或 AdminApi.*.invoke(...) }` 返回 `Result<T>`
-
-3. **扩展/接入本地存储 (可选)**
-    - 抽象: 在 `client/model-storage` 定义新的 `*Storage` 接口
-    - 实现: 在 `client/room` 新增 `*RoomStorage` 实现
-
-4. **UI 接入**
-    - 在 `ViewModel` 中通过对应 `SessionManager` 调用请求函数
-    - 需要分页则使用 `Pager` + `PagingSource/RemoteMediator`
-
-### C) 确保没有编译错误
+## 确保没有编译错误
 - 代码完成之后，运行`./gradlew assemble --console=plain` 检查是否存在编译错误
 - 编译错误检查之后，运行`./scripts/tool_scripts/exec-until-success.sh ./gradlew detekt --console=plain` 进行静态代码风格检查
   - 如果是windows 环境需要通过git bash 执行
@@ -92,7 +55,7 @@ trigger: always_on
 - 测试的目的是发现问题，如果发现了问题应该全力修复，而不是在测试用例上绕过去。
 - 除非有前后依赖关系，否则不要把多余的测试步骤加到一个测试用例里面
 - 重复性的测试步骤可以提取成单独的方法
-- appium 测试需要真是设备或者模拟器，无法并行
+- appium 测试需要真实设备或者模拟器，无法并行
 
 ## 与 AI 协作的额外规则
 - 仅在必要处最小改动，优先在 client/core 与 api 扩展，不随意改动公共模型
@@ -106,13 +69,3 @@ trigger: always_on
 - 网络异常: 查看 client/core/*Request.kt 的 serviceCatching 日志与 AdminApi/CustomApi 路由
 - 分页异常: 检查 RemoteKeyStorage/RemoteKeyRoomStorage 的保存与读取
 - 数据未落地: 检查 *RoomStorage.save/observeData 实现与 commonJson 序列化
-
-## 命名/路径参考
-* Admin API 示例: `AdminApi.Users.get.invoke(PaginationQuery(...))`
-* 用户 API 示例: `CustomApi.Rooms.Id.get(query, CommonPath(id))`
-* 存储集合: `UserCollection/TopicCollection/TitleCollection/RoomCollection/CommunityCollection/ReactionCollection/UploadCollection/MediasCollection`
-* model 命名
-    - 表名：复数形式，比如Users
-    - 表中记录对应的模型类名：单数形式，比如User
-    - 表中记录以及其他补充信息：Raw加上记录名，比如RawUser
-    - 返回给客户端的模型类名：单数形式，比如UserInfo
