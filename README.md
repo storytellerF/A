@@ -14,7 +14,6 @@ A is a Kotlin Multiplatform application framework that targets Android, Desktop,
 - **Networking framework**: Ktor (JetBrains)
 - **Database / storage**: Exposed ORM, Redis, MinIO, Lucene, Elasticsearch, Filesystem
 - **PDF processing**: Apache PDFBox, OpenPDF
-- **Code quality**: Detekt static analysis, Kover coverage reports
 
 ## Project Structure
 
@@ -22,24 +21,27 @@ A is a Kotlin Multiplatform application framework that targets Android, Desktop,
 
 - **App module** (`app/`) - Android/Desktop/CLI client applications
   - `composeApp` - Shared Compose Multiplatform UI
-  - `android` - Android app shell
+  - `androidApp` - Android app shell
   - `desktopApp` - Desktop app entry point
   - `cliApp` - Command-line app
   - `core` - Core business logic
 
 - **Cloud module** (`cloud/`) - Cloud server side
   - `server` - Ktor HTTP server
+  - `runtime` - Runtime bootstrap and shared runtime utilities
+  - `ws` / `ws-api` - WebSocket service and API support
   - `service` - Cloud services and TOTP implementation
   - `worker` - Background task processing
-  - `pdf/pdfbox/openpdf` - PDF processing services
+  - `pdf` / `pdfbox` / `openpdf` - PDF processing services
   - `cli` - Cloud administration CLI
 
 - **Backend module** (`backend/`) - Data storage layer
+  - `core` - Backend storage interfaces and shared backend models
   - `exposed` - SQL database ORM
   - `redis` - Redis cache
   - `minio` - S3-compatible object storage
   - `lucene` / `elastic` - Search engines
-  - `filesystem` - Filesystem storage
+  - `filesystem` / `simple` - Filesystem and simple storage implementations
 
 - **Client module** (`client/`) - Client libraries
   - `core` - Client core
@@ -50,16 +52,12 @@ A is a Kotlin Multiplatform application framework that targets Android, Desktop,
 
 - **Panel module** (`panel/`) - Administration panel
   - `composeApp` - Administration UI
-  - `android` / `desktopApp` / `cliApp` - Multiplatform entry points
+  - `androidApp` / `desktopApp` / `cliApp` - Multiplatform entry points
+  - `benchmark` - Android benchmark module
 
 - **API module** (`api/`) - API definitions and service routes
 
 - **Bot module** (`bot/`) - Built-in bot features
-
-- **Dev module** (`dev/`) - Development and test tools
-  - `server` - Development server
-  - `cli` - Development tools
-  - `appium` - Optional Appium automation tests
 
 ## Key Features
 
@@ -98,28 +96,22 @@ A is a Kotlin Multiplatform application framework that targets Android, Desktop,
 ### Requirements
 
 - Java 21 (Eclipse Temurin)
-- Gradle 8.x
+- The included Gradle wrapper (`./gradlew`)
 
 ### Build Commands
 
 ```bash
-# Build all modules
-./gradlew build
+# Assemble included modules
+./gradlew assemble
 
 # Build the Cloud server
-./gradlew :cloud:server:build
+./gradlew :cloud:server:assemble
 
 # Build the Android app
 ./gradlew :app:androidApp:assembleDebug
 
 # Build the Desktop app
 ./gradlew :app:desktopApp:packageDistributionForCurrentOS
-
-# Run tests
-./gradlew test
-
-# Run tests for specific modules
-./gradlew :cloud:service:test :backend:minio:test
 ```
 
 ### Docker Deployment
@@ -161,31 +153,6 @@ gpr.key=<GitHub personal access token>
 
 # Specify the build flavor
 ./scripts/build_scripts/gradle-prune-implementations.sh -Pserver.flavor=alpha
-```
-
-### Appium Tests
-
-```bash
-# Enable Appium test modules
-./gradlew build -Pappium=true
-
-# Build both APKs when required
-./gradlew :app:androidApp:assembleDebug :panel:androidApp:assembleDebug
-```
-
-## CI/CD
-
-Alpha Server CI runs the following tests before starting the remote service:
-
-- `:backend:minio:test`
-- `:cloud:cli:test`
-- `:cloud:service:test`
-- `:cloud:server:test`
-
-Enable the Testcontainers path override:
-
-```bash
-ENABLE_TEST_CONTAINER=true ./gradlew test
 ```
 
 ## Architecture Notes
