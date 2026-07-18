@@ -72,7 +72,7 @@
 ## CI
 
 - `Alpha Server CI` runs backend/server tests before starting the remote alpha service: `:backend:minio:test`, `:cloud:cli:test`, `:cloud:service:test`, and `:cloud:server:test`. It also enables `ENABLE_TEST_CONTAINER=true` to override the Testcontainers path.
-- Test and release workflows use the same explicit Gradle dependency cache namespace: `gradle-${{ runner.os }}-release-*`. Keep the cache path limited to `~/.gradle/caches` and `~/.gradle/wrapper` so pull-request tests can restore the default-branch release cache without mixing OS-specific entries. Release jobs that share the same runner OS should run through `needs` dependencies instead of saving the same cache key concurrently. During cache key migrations, keep older runner-scoped prefixes in `restore-keys` until the new default-branch cache has been written.
+- Test and release workflows use `gradle/actions/setup-gradle@v4` instead of a hand-written `actions/cache` Gradle User Home cache. PR test jobs should set `cache-read-only: true`; release/main jobs should keep the default write behavior and `cache-cleanup: on-success` so PR checks can restore default-branch Gradle cache without trying to save large merge-ref caches.
 
 ## Wasm
 

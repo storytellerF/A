@@ -44,16 +44,10 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Cache Gradle
-        uses: actions/cache@v4
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
         with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-release-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/**', 'bgscripts/**') }}
-          restore-keys: |
-            gradle-${{ runner.os }}-release-
-            gradle-${{ runner.os }}-
+          cache-cleanup: on-success
 
       - name: Build alpha app
         run: |
@@ -87,16 +81,10 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Cache Gradle
-        uses: actions/cache@v4
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
         with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-release-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/**', 'bgscripts/**') }}
-          restore-keys: |
-            gradle-${{ runner.os }}-release-
-            gradle-${{ runner.os }}-
+          cache-cleanup: on-success
 
       - name: Build alpha deb
         run: |
@@ -129,16 +117,10 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Cache Gradle
-        uses: actions/cache@v4
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
         with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-release-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/**', 'bgscripts/**') }}
-          restore-keys: |
-            gradle-${{ runner.os }}-release-
-            gradle-${{ runner.os }}-
+          cache-cleanup: on-success
 
       - name: Build alpha msi
         run: |
@@ -170,16 +152,10 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Cache Gradle
-        uses: actions/cache@v4
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
         with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-release-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/**', 'bgscripts/**') }}
-          restore-keys: |
-            gradle-${{ runner.os }}-release-
-            gradle-${{ runner.os }}-
+          cache-cleanup: on-success
 
       - name: Build alpha dmg
         run: |
@@ -213,16 +189,10 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Cache Gradle
-        uses: actions/cache@v4
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
         with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-release-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/**', 'bgscripts/**') }}
-          restore-keys: |
-            gradle-${{ runner.os }}-release-
-            gradle-${{ runner.os }}-
+          cache-cleanup: on-success
 
       - name: Start service
         run: ./scripts/service_scripts/start-service-on-ci.sh alpha
