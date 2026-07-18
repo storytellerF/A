@@ -23,6 +23,37 @@ plugins {
     alias(libs.plugins.sentryAndroidGradle) apply false
 }
 
+fun isNoReleaseCompileTask(taskName: String): Boolean {
+    val isKsp = taskName.startsWith("ksp")
+    val isKotlinOrJavaCompile = taskName.startsWith("compile") && listOf(
+        "Kotlin",
+        "Java",
+        "JavaWithJavac",
+        "KotlinJvm",
+        "KotlinMetadata",
+        "Main",
+    ).any { suffix ->
+        taskName.endsWith(suffix)
+    }
+    val isExcludedVariant = listOf("Release", "Benchmark", "Test", "Jmh").any { variant ->
+        taskName.contains(variant)
+    }
+    return (isKsp || isKotlinOrJavaCompile) && !isExcludedVariant
+}
+
+val compileAllNoRelease by tasks.registering {
+    group = "verification"
+    description = "Compile all included modules without Android release or benchmark variants."
+}
+
+subprojects {
+    compileAllNoRelease.configure {
+        dependsOn(tasks.matching { task ->
+            isNoReleaseCompileTask(task.name)
+        })
+    }
+}
+
 val detektReportMergeSarif by tasks.registering(ReportMergeTask::class) {
     output = layout.buildDirectory.file("reports/detekt/merge.sarif")
 }
