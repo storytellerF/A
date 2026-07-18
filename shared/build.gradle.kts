@@ -47,7 +47,7 @@ kotlin {
         val headlessTest by creating {
             dependsOn(commonTest.get())
         }
-        val generalJvmMain by creating {
+        val jvmAndroidMain by creating {
             dependencies {
                 implementation(libs.bcprov.jdk18on)
                 implementation(libs.bcpkix.jdk18on)
@@ -61,7 +61,7 @@ kotlin {
             implementation(libs.cryptography.provider.jdk)
         }
         androidMain {
-            dependsOn(generalJvmMain)
+            dependsOn(jvmAndroidMain)
             dependsOn(noJvmMain)
         }
         getByName("androidHostTest") {
@@ -88,7 +88,7 @@ kotlin {
             implementation(libs.icu4j)
         }
         jvmMain {
-            dependsOn(generalJvmMain)
+            dependsOn(jvmAndroidMain)
         }
         jvmTest {
             dependsOn(headlessTest)
