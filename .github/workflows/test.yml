@@ -43,7 +43,7 @@ jobs:
           cache-cleanup: on-success
 
       - name: Compile
-        run: ./gradlew assemble --console=plain
+        run: ./gradlew compileAllNoRelease --console=plain
 
       - name: Static check
         run: ./scripts/tool_scripts/exec-until-success.sh ./gradlew detekt --console=plain
