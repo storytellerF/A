@@ -1,5 +1,7 @@
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.plugin.KotlinHierarchyTemplate
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -11,7 +13,18 @@ plugins {
 
 val buildIosTarget = project.findProperty("target.ios") == "true"
 val buildWasmTarget = project.findProperty("target.wasm") == "true"
+@OptIn(ExperimentalKotlinGradlePluginApi::class)
 kotlin {
+    applyHierarchyTemplate(KotlinHierarchyTemplate.default) {
+        common {
+            group("jvmAndroid") {
+                withCompilations {
+                    it.target.name == "android" || it.target.name == "jvm"
+                }
+            }
+        }
+    }
+
     android {
         namespace = "com.storyteller_f.a.app.core"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
@@ -41,34 +54,28 @@ kotlin {
     }
 
     sourceSets {
-        androidMain {
-            kotlin.srcDir("src/jvmAndroidMain/kotlin")
-            dependencies {
-                implementation(libs.androidx.activity.compose)
+        androidMain.dependencies {
+            implementation(libs.androidx.activity.compose)
 
-                implementation(libs.androidx.media3.exoplayer)
-                implementation(libs.androidx.media3.exoplayer.dash)
-                implementation(libs.androidx.media3.exoplayer.hls)
-                implementation(libs.androidx.media3.ui)
-                implementation(libs.androidx.media3.session)
-                implementation(libs.lifecycle.service)
+            implementation(libs.androidx.media3.exoplayer)
+            implementation(libs.androidx.media3.exoplayer.dash)
+            implementation(libs.androidx.media3.exoplayer.hls)
+            implementation(libs.androidx.media3.ui)
+            implementation(libs.androidx.media3.session)
+            implementation(libs.lifecycle.service)
 
-                implementation(libs.record.core)
-                implementation(libs.compose.webview)
-                implementation(libs.connectivity.device)
-                implementation(libs.connectivity.compose.device)
-                implementation(libs.webrtc.kmp)
-                implementation(libs.accompanist.permissions)
+            implementation(libs.record.core)
+            implementation(libs.compose.webview)
+            implementation(libs.connectivity.device)
+            implementation(libs.connectivity.compose.device)
+            implementation(libs.webrtc.kmp)
+            implementation(libs.accompanist.permissions)
 
-                implementation(libs.github.newpipeextractor)
-                implementation(libs.androidx.datastore.preferences.core)
+            implementation(libs.github.newpipeextractor)
+            implementation(libs.androidx.datastore.preferences.core)
 
-                implementation(libs.androidx.ui.tooling.preview)
-                implementation(libs.okhttp)
-
-                implementation(libs.compose.pdf)
-                implementation(libs.m3u.parser)
-            }
+            implementation(libs.androidx.ui.tooling.preview)
+            implementation(libs.okhttp)
         }
         getByName("androidHostTest") {
             dependencies {
@@ -136,19 +143,19 @@ kotlin {
 
             implementation(libs.ui.test)
         }
-        jvmMain {
-            kotlin.srcDir("src/jvmAndroidMain/kotlin")
+        jvmMain.dependencies {
+            implementation(compose.desktop.currentOs)
+            implementation(libs.kotlinx.coroutines.swing)
+
+            implementation(libs.vlcj)
+            implementation(libs.jlayer)
+            implementation(libs.androidx.datastore.preferences.core)
+            implementation(libs.connectivity.http)
+            implementation(libs.connectivity.compose.http)
+            implementation(libs.tika.core)
+        }
+        getByName("jvmAndroidMain") {
             dependencies {
-                implementation(compose.desktop.currentOs)
-                implementation(libs.kotlinx.coroutines.swing)
-
-                implementation(libs.vlcj)
-                implementation(libs.jlayer)
-                implementation(libs.androidx.datastore.preferences.core)
-                implementation(libs.connectivity.http)
-                implementation(libs.connectivity.compose.http)
-                implementation(libs.tika.core)
-
                 implementation(libs.compose.pdf)
                 implementation(libs.m3u.parser)
             }
