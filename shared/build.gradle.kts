@@ -54,7 +54,7 @@ kotlin {
             }
             dependsOn(commonMain.get())
         }
-        val noSpecialJvmMain by creating {
+        val noJvmMain by creating {
             dependsOn(commonMain.get())
         }
         androidMain.dependencies {
@@ -62,7 +62,7 @@ kotlin {
         }
         androidMain {
             dependsOn(generalJvmMain)
-            dependsOn(noSpecialJvmMain)
+            dependsOn(noJvmMain)
         }
         getByName("androidHostTest") {
             dependencies {
@@ -98,7 +98,7 @@ kotlin {
                 implementation(libs.cryptography.provider.openssl3.prebuilt)
             }
             iosMain {
-                dependsOn(noSpecialJvmMain)
+                dependsOn(noJvmMain)
             }
         }
         if (buildWasmTarget) {
@@ -110,7 +110,7 @@ kotlin {
                 implementation(npm("@noble/curves", "1.0.0"))
             }
             wasmJsMain {
-                dependsOn(noSpecialJvmMain)
+                dependsOn(noJvmMain)
             }
         }
     }
