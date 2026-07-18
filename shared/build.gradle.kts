@@ -47,22 +47,22 @@ kotlin {
         val headlessTest by creating {
             dependsOn(commonTest.get())
         }
-        val generalJvmMain by creating {
+        val jvmAndroidMain by creating {
             dependencies {
                 implementation(libs.bcprov.jdk18on)
                 implementation(libs.bcpkix.jdk18on)
             }
             dependsOn(commonMain.get())
         }
-        val noSpecialJvmMain by creating {
+        val noJvmMain by creating {
             dependsOn(commonMain.get())
         }
         androidMain.dependencies {
             implementation(libs.cryptography.provider.jdk)
         }
         androidMain {
-            dependsOn(generalJvmMain)
-            dependsOn(noSpecialJvmMain)
+            dependsOn(jvmAndroidMain)
+            dependsOn(noJvmMain)
         }
         getByName("androidHostTest") {
             dependencies {
@@ -88,7 +88,7 @@ kotlin {
             implementation(libs.icu4j)
         }
         jvmMain {
-            dependsOn(generalJvmMain)
+            dependsOn(jvmAndroidMain)
         }
         jvmTest {
             dependsOn(headlessTest)
@@ -98,7 +98,7 @@ kotlin {
                 implementation(libs.cryptography.provider.openssl3.prebuilt)
             }
             iosMain {
-                dependsOn(noSpecialJvmMain)
+                dependsOn(noJvmMain)
             }
         }
         if (buildWasmTarget) {
@@ -110,7 +110,7 @@ kotlin {
                 implementation(npm("@noble/curves", "1.0.0"))
             }
             wasmJsMain {
-                dependsOn(noSpecialJvmMain)
+                dependsOn(noJvmMain)
             }
         }
     }
