@@ -13,7 +13,7 @@ object DesktopAppiumFailureDumper {
         logDir: File,
         appLogFile: File,
     ) {
-        val outputDir = File("build/test/appium-debug/$suiteName", safeName(testName))
+        val outputDir = File("build/test/appium-debug/$suiteName", DesktopAppiumHelper.safeName(testName))
             .resolve(Instant.now().toString().replace(Regex("[^a-zA-Z0-9._-]"), "_"))
         outputDir.mkdirs()
 
@@ -105,7 +105,4 @@ object DesktopAppiumFailureDumper {
                 file.copyTo(File(outputDir, file.name), overwrite = true)
             }
     }
-
-    private fun safeName(value: String): String =
-        value.replace(Regex("[^a-zA-Z0-9._-]"), "_")
 }

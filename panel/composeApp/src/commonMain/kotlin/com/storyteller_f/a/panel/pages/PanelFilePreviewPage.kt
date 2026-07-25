@@ -3,12 +3,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.storyteller_f.a.app.core.components.AudioViewFullScreen
-import com.storyteller_f.a.app.core.components.CenterBox
-import com.storyteller_f.a.app.core.components.PdfView
-import com.storyteller_f.a.app.core.components.RemoteMediaItem
-import com.storyteller_f.a.app.core.components.StateView
-import com.storyteller_f.a.app.core.components.VideoViewFullScreen
+import com.storyteller_f.a.client.compose_core.components.AudioViewFullScreen
+import com.storyteller_f.a.client.compose_core.components.CenterBox
+import com.storyteller_f.a.client.compose_core.components.PdfView
+import com.storyteller_f.a.client.compose_core.components.RemoteMediaItem
+import com.storyteller_f.a.client.compose_core.components.StateView
+import com.storyteller_f.a.client.compose_core.components.VideoViewFullScreen
 import com.storyteller_f.a.panel.Res
 import com.storyteller_f.a.panel.common.createPanelFileViewModel
 import com.storyteller_f.a.panel.unsupported_content_type
@@ -48,7 +48,7 @@ fun PanelFilePreviewPage(id: Long) {
 
                 contentType.startsWith("image") -> {
                     com.github.panpf.zoomimage.CoilZoomAsyncImage(
-                        model = com.storyteller_f.a.app.core.components.globalLoader(url),
+                        model = com.storyteller_f.a.client.compose_core.components.globalLoader(url),
                         contentDescription = stringResource(Res.string.view_image),
                         modifier = Modifier.fillMaxSize(),
                     )

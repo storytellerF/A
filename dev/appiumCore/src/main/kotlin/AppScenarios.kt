@@ -1,5 +1,8 @@
+import com.storyteller_f.shared.getAlgo
+import com.storyteller_f.shared.model.AlgoType
+
 suspend fun scenarioSignUp(driver: AppTestDriver) {
-    val privateKey = generateAppiumPrivateKey()
+    val privateKey = getAlgo(AlgoType.P256).generatePemKeyPair().getOrThrow().first
     driver.clickByDescription("avatar")
     driver.clickByText("Sign in")
     driver.clickByText("Go to sign up")
@@ -53,6 +56,15 @@ suspend fun scenarioFavoriteTopic(driver: AppTestDriver, topicContent: String) {
     driver.clickByText(topicContent)
     driver.clickByDescription("topic")
     driver.clickByDescriptionContaining("favorite-action")
+}
+
+suspend fun scenarioOpenAsciidocPreview(driver: AppTestDriver, topicMarker: String) {
+    driver.clickByDescription("avatar")
+    driver.clickByDescriptionContaining("user-dialog-cell")
+    driver.assertVisibleByText(topicMarker)
+    driver.clickByText(topicMarker)
+    driver.assertVisibleByDescription("asciidoc")
+    driver.clickByDescription("open")
 }
 
 suspend fun scenarioFavoritePreparedTopic(driver: AppTestDriver, data: FavoriteTopicScenario) {

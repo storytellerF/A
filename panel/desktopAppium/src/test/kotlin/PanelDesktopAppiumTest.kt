@@ -1,20 +1,10 @@
-import com.storyteller_f.a.dev.appium.buildInjectedSessionJson
-import com.storyteller_f.shared.loadCryptoLibIfNeed
 import kotlin.test.Test
 
-class PanelDesktopAppiumTest : DesktopPanelAppiumTestBase() {
+class PanelDesktopAppiumTest : AppiumTestBase() {
+    private val targetHelper = PanelAppiumHelper()
+    private val platformHelper = DesktopAppiumHelper()
 
     @Test
-    fun `test panel sign in by injected private session`() = runAppiumBlockingTest {
-        loadCryptoLibIfNeed()
-        runDesktopPanelAppiumTestWithSetup(
-            beforeLaunch = { ports, sessionFilePath ->
-                val injected = createPreRegisteredPanelSession(ports)
-                writeSessionFile(sessionFilePath, buildInjectedSessionJson(injected))
-                injected
-            }
-        ) { driver, _ ->
-            scenarioOpenAllUsersFromOverview(DesktopAppTestDriver(driver))
-        }
-    }
+    fun `test panel sign in by injected private session`() =
+        testPanelInjectedSessionByHelper(name.methodName, targetHelper, platformHelper)
 }

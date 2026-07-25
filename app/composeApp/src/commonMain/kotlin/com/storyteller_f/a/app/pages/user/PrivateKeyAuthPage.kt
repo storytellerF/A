@@ -30,12 +30,12 @@ import com.storyteller_f.a.app.Res
 import com.storyteller_f.a.app.UIViewModel
 import com.storyteller_f.a.app.auth_private_key_subtitle
 import com.storyteller_f.a.app.common.AppNavFactory
-import com.storyteller_f.a.app.core.components.PrivateKeyInput
-import com.storyteller_f.a.app.core.components.request
 import com.storyteller_f.a.app.sign_in
 import com.storyteller_f.a.app.sign_up
 import com.storyteller_f.a.app.start_sign_in
 import com.storyteller_f.a.app.start_sign_up
+import com.storyteller_f.a.client.compose_core.components.PrivateKeyInput
+import com.storyteller_f.a.client.compose_core.components.request
 import com.storyteller_f.a.client.core.AuthKey
 import com.storyteller_f.a.client.core.PendingTotpSignIn
 import com.storyteller_f.a.client.core.RawUserPassInfo

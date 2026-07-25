@@ -8,7 +8,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
-import com.storyteller_f.a.app.core.components.CenterBox
+import com.storyteller_f.a.client.compose_core.components.CenterBox
 
 class BubbleActivity : ComponentActivity() {
     val roomId = mutableLongStateOf(0L)

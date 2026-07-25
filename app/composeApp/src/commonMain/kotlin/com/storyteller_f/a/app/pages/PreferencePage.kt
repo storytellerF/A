@@ -17,10 +17,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.LocalGlobalDialog
 import com.storyteller_f.a.app.Res
-import com.storyteller_f.a.app.core.components.CustomIcon
-import com.storyteller_f.a.app.core.components.IconRes
-import com.storyteller_f.a.app.core.components.LocalToaster
-import com.storyteller_f.a.app.core.components.catchingResult
 import com.storyteller_f.a.app.current_selected
 import com.storyteller_f.a.app.home_start_destination
 import com.storyteller_f.a.app.home_start_destination_communities
@@ -32,6 +28,10 @@ import com.storyteller_f.a.app.service.getGPTModelDirectory
 import com.storyteller_f.a.app.translate_model
 import com.storyteller_f.a.app.try_button
 import com.storyteller_f.a.app.ui.MaterialSymbolsOutlined
+import com.storyteller_f.a.client.compose_core.components.CustomIcon
+import com.storyteller_f.a.client.compose_core.components.IconRes
+import com.storyteller_f.a.client.compose_core.components.LocalToaster
+import com.storyteller_f.a.client.compose_core.components.catchingResult
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.strabled.composepreferences.PreferenceScreen

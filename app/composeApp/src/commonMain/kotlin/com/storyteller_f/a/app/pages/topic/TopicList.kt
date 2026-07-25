@@ -12,11 +12,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
 import com.storyteller_f.a.app.common.TopicsViewModel
-import com.storyteller_f.a.app.core.common.PagingViewModel
-import com.storyteller_f.a.app.core.components.StateView
-import com.storyteller_f.a.app.core.components.bottomAppending
-import com.storyteller_f.a.app.core.components.pagingItems
-import com.storyteller_f.a.app.core.components.topPrepend
+import com.storyteller_f.a.client.compose_core.common.PagingViewModel
+import com.storyteller_f.a.client.compose_core.components.StateView
+import com.storyteller_f.a.client.compose_core.components.bottomAppending
+import com.storyteller_f.a.client.compose_core.components.pagingItems
+import com.storyteller_f.a.client.compose_core.components.topPrepend
 import com.storyteller_f.shared.model.TopicInfo
 
 @Composable

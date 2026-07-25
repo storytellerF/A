@@ -37,7 +37,7 @@
             android:windowSoftInputMode="adjustResize" />
 
         <service
-            android:name="com.storyteller_f.a.app.core.PlaybackService"
+            android:name="com.storyteller_f.a.client.compose_core.PlaybackService"
             android:exported="true"
             android:foregroundServiceType="mediaPlayback">
             <intent-filter>

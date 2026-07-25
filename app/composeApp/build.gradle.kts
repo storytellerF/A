@@ -89,7 +89,6 @@ kotlin {
             implementation(libs.androidx.media3.session)
             implementation(libs.lifecycle.service)
 
-            implementation(libs.compose.webview)
             implementation(libs.connectivity.device)
             implementation(libs.connectivity.compose.device)
             implementation(libs.webrtc.kmp)
@@ -136,7 +135,7 @@ kotlin {
             implementation(projects.api)
             implementation(projects.client.modelStorage)
             implementation(projects.client.room)
-            implementation(projects.app.core)
+            implementation(projects.client.composeCore)
 
             // no ui
             implementation(libs.napier)

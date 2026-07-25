@@ -1,6 +1,6 @@
 package com.storyteller_f.a.app.service
 
-import com.storyteller_f.a.app.core.utils.safeSink
+import com.storyteller_f.a.client.compose_core.utils.safeSink
 import io.github.irgaly.kfswatch.KfsDirectoryWatcher
 import io.github.irgaly.kfswatch.KfsDirectoryWatcherEvent
 import io.github.irgaly.kfswatch.KfsEvent

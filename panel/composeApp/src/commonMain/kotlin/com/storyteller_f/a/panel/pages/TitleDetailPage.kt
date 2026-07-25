@@ -24,10 +24,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.storyteller_f.a.app.core.components.CustomBottomNav
-import com.storyteller_f.a.app.core.components.NavRoute
-import com.storyteller_f.a.app.core.components.StateView
-import com.storyteller_f.a.app.core.components.emitEvent
+import com.storyteller_f.a.client.compose_core.components.CustomBottomNav
+import com.storyteller_f.a.client.compose_core.components.NavRoute
+import com.storyteller_f.a.client.compose_core.components.StateView
+import com.storyteller_f.a.client.compose_core.components.emitEvent
 import com.storyteller_f.a.client.core.updateTitleStatus
 import com.storyteller_f.a.panel.LocalPanelGlobalDialog
 import com.storyteller_f.a.panel.Res

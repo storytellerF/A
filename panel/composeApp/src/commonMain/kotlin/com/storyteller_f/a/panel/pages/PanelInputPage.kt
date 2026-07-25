@@ -15,10 +15,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.storyteller_f.a.app.core.CoreStrings
-import com.storyteller_f.a.app.core.components.CenterBox
-import com.storyteller_f.a.app.core.components.PrivateKeyInput
-import com.storyteller_f.a.app.core.components.request
+import com.storyteller_f.a.client.compose_core.CoreStrings
+import com.storyteller_f.a.client.compose_core.components.CenterBox
+import com.storyteller_f.a.client.compose_core.components.PrivateKeyInput
+import com.storyteller_f.a.client.compose_core.components.request
 import com.storyteller_f.a.client.core.AuthKey
 import com.storyteller_f.a.client.core.RawUserPassInfo
 import com.storyteller_f.a.client.core.getPanelUserSignInPass

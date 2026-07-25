@@ -16,7 +16,7 @@ kotlin {
 
 dependencies {
     implementation(projects.app.composeApp)
-    implementation(projects.app.core)
+    implementation(projects.client.composeCore)
     implementation(projects.shared)
 
     implementation(compose.desktop.currentOs)
@@ -48,4 +48,11 @@ compose.desktop {
             configurationFiles.from(file("proguard-rules-desktop.pro"))
         }
     }
+}
+
+tasks.withType<JavaExec>().configureEach {
+    jvmArgs(
+        "--add-opens=java.desktop/sun.awt=ALL-UNNAMED",
+        "--add-opens=java.desktop/java.awt.peer=ALL-UNNAMED",
+    )
 }

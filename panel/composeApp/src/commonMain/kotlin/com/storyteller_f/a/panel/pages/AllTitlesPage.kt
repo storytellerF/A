@@ -19,9 +19,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
-import com.storyteller_f.a.app.core.components.StateView
-import com.storyteller_f.a.app.core.components.pagingItems
-import com.storyteller_f.a.app.core.components.safeArea
+import com.storyteller_f.a.client.compose_core.components.StateView
+import com.storyteller_f.a.client.compose_core.components.pagingItems
+import com.storyteller_f.a.client.compose_core.components.safeArea
 import com.storyteller_f.a.panel.LocalPanelNav
 import com.storyteller_f.a.panel.Res
 import com.storyteller_f.a.panel.all_titles

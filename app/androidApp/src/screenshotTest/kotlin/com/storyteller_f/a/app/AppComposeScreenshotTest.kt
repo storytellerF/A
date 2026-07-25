@@ -21,16 +21,16 @@ import com.android.tools.screenshot.PreviewTest
 import com.storyteller_f.a.app.components.InteractionRowInternal
 import com.storyteller_f.a.app.components.SettingOptionResettableView
 import com.storyteller_f.a.app.components.SettingOptionView
-import com.storyteller_f.a.app.core.components.ButtonNav
-import com.storyteller_f.a.app.core.components.GlobalDialogContext
-import com.storyteller_f.a.app.core.components.GlobalDialogController
-import com.storyteller_f.a.app.core.components.GlobalDialogState
-import com.storyteller_f.a.app.core.components.InfoTable
-import com.storyteller_f.a.app.core.components.MediaObjectBlock
-import com.storyteller_f.a.app.core.components.Pill
-import com.storyteller_f.a.app.core.components.PrivateKeyEditor
-import com.storyteller_f.a.app.core.components.SheetContainer
-import com.storyteller_f.a.app.core.components.SignInButton
+import com.storyteller_f.a.client.compose_core.components.ButtonNav
+import com.storyteller_f.a.client.compose_core.components.GlobalDialogContext
+import com.storyteller_f.a.client.compose_core.components.GlobalDialogController
+import com.storyteller_f.a.client.compose_core.components.GlobalDialogState
+import com.storyteller_f.a.client.compose_core.components.InfoTable
+import com.storyteller_f.a.client.compose_core.components.MediaObjectBlock
+import com.storyteller_f.a.client.compose_core.components.Pill
+import com.storyteller_f.a.client.compose_core.components.PrivateKeyEditor
+import com.storyteller_f.a.client.compose_core.components.SheetContainer
+import com.storyteller_f.a.client.compose_core.components.SignInButton
 import com.storyteller_f.a.app.pages.file.FixedProgress
 import com.storyteller_f.a.app.pages.file.UploadItem
 import com.storyteller_f.a.app.pages.room.PrimaryRoomCell
@@ -116,7 +116,7 @@ fun InfoTableScreenshot() {
                 listOf(
                     "Name" to "Snapshot fixture",
                     "Status" to "Ready",
-                    "Scope" to "app/core"
+                    "Scope" to "client/composeCore"
                 )
             )
         }

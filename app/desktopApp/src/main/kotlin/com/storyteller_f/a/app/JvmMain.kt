@@ -1,6 +1,7 @@
 package com.storyteller_f.a.app
 
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
@@ -11,28 +12,32 @@ import com.storyteller_f.a.app.common.ExternalUriHandler
 import com.storyteller_f.a.app.common.SimpleTaskRegister
 import com.storyteller_f.a.app.common.Uploader
 import com.storyteller_f.a.app.common.UploaderImpl
-import com.storyteller_f.a.app.core.components.ConstPlayItem
-import com.storyteller_f.a.app.core.components.LocalMediaPlaySession
-import com.storyteller_f.a.app.core.components.LocalMediaPlayerService
-import com.storyteller_f.a.app.core.components.MediaPlaySession
-import com.storyteller_f.a.app.core.components.MediaPlayerService
-import com.storyteller_f.a.app.core.components.RemoteMediaItem
 import com.storyteller_f.a.app.utils.AppPlatformImpl
 import com.storyteller_f.a.app.utils.appPlatformImpl
+import com.storyteller_f.a.client.compose_core.components.ConstPlayItem
+import com.storyteller_f.a.client.compose_core.components.LocalMediaPlaySession
+import com.storyteller_f.a.client.compose_core.components.LocalMediaPlayerService
+import com.storyteller_f.a.client.compose_core.components.MediaPlaySession
+import com.storyteller_f.a.client.compose_core.components.MediaPlayerService
+import com.storyteller_f.a.client.compose_core.components.RemoteMediaItem
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.setupKmpLogger
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.safeMessage
+import dev.datlag.kcef.KCEF
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
 import java.awt.Button
 import java.awt.Desktop
 import java.awt.Dialog
 import java.awt.Frame
 import java.awt.TextArea
+import java.io.File
 import kotlin.system.exitProcess
 import kotlin.uuid.ExperimentalUuidApi
 import com.kdroid.composenotification.builder.AppConfig as NotificationAppConfig
@@ -85,6 +90,18 @@ fun main(args: Array<String>) {
         override suspend fun getUploader(): Uploader = UploaderImpl(uiViewModel, taskRegister)
     }
     application {
+        LaunchedEffect(Unit) {
+            withContext(Dispatchers.IO) {
+                KCEF.init(
+                    builder = {
+                        val installationDirectory = File(System.getProperty("java.io.tmpdir"), "kcef")
+                        installDir(installationDirectory)
+                        settings { cachePath = File(installationDirectory, "cache").absolutePath }
+                    },
+                    onError = { error -> Napier.e(error) { "Failed to initialize in-app WebView" } },
+                )
+            }
+        }
         Window(
             onCloseRequest = ::exitApplication,
             title = "A",

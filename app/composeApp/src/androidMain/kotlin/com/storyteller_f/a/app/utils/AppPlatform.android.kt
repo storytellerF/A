@@ -6,9 +6,9 @@ import androidx.core.net.toUri
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.Lifecycle
 import com.storyteller_f.a.app.AppConfig
-import com.storyteller_f.a.app.core.components.mainActivityRef
 import com.storyteller_f.a.app.getClipFile
 import com.storyteller_f.a.app.initFromContext
+import com.storyteller_f.a.client.compose_core.components.mainActivityRef
 import com.storyteller_f.shared.getAppContextRefValue
 import com.strabled.composepreferences.utilis.DataStoreManager
 import dev.jordond.connectivity.Connectivity

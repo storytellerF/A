@@ -24,9 +24,9 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import androidx.savedstate.serialization.SavedStateConfiguration
-import com.storyteller_f.a.app.core.components.CenterBox
-import com.storyteller_f.a.app.core.components.SignInButton
-import com.storyteller_f.a.app.core.components.safeArea
+import com.storyteller_f.a.client.compose_core.components.CenterBox
+import com.storyteller_f.a.client.compose_core.components.SignInButton
+import com.storyteller_f.a.client.compose_core.components.safeArea
 import com.storyteller_f.a.panel.LocalPanelNav
 import com.storyteller_f.a.panel.LocalPanelUiViewModel
 import com.storyteller_f.a.panel.Res
