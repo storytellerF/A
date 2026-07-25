@@ -51,6 +51,7 @@ import com.storyteller_f.a.app.service.buildTranslatePrompt
 import com.storyteller_f.a.app.snapshot
 import com.storyteller_f.a.app.success
 import com.storyteller_f.a.app.ui.MaterialSymbolsOutlined
+import com.storyteller_f.a.app.utils.rememberStringPreference
 import com.storyteller_f.a.client.compose_core.components.BaseSheet
 import com.storyteller_f.a.client.compose_core.components.ButtonNav
 import com.storyteller_f.a.client.compose_core.components.DialogContainer
@@ -69,10 +70,8 @@ import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.formatTime
-import com.strabled.composepreferences.getPreference
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
@@ -95,7 +94,7 @@ fun TopicDialog(topicInfo: TopicInfo?, showDialog: Boolean, dismiss: () -> Unit)
 @Composable
 fun TopicDialogInternal(topicInfo: TopicInfo, dismissDialog: () -> Unit) {
     val appNavFactory = LocalAppNavFactory.current
-    DialogContainer {
+    DialogContainer(onDismissRequest = dismissDialog) {
         Text("pub: ${topicInfo.createdTime.formatTime()}")
 
         when (topicInfo.rootType) {
@@ -234,8 +233,7 @@ fun TopicTranslateSheet(
 ) {
     BaseSheet(showSheet, sheetState, hideSheet) {
         SheetContainer {
-            val preferenceData: StateFlow<String> by getPreference("gpt_model")
-            val currentModel by preferenceData.collectAsState()
+            val currentModel by rememberStringPreference("gpt_model", "")
             val content = topicInfo.content
             Box(
                 modifier = Modifier.height(

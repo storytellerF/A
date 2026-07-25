@@ -13,9 +13,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 
 @Composable
 fun ButtonNav(icon: ImageVector, title: String, semanticDescription: String? = null, onClick: () -> Unit = {}) {
@@ -36,9 +35,11 @@ fun ButtonNav(
     onClick: () -> Unit = {}
 ) {
     val shape = RoundedCornerShape(8.dp)
-    val semanticsModifier = semanticDescription?.let {
-        Modifier.semantics { contentDescription = it }
-    } ?: Modifier
+    val semanticsModifier = Modifier.appiumSemantics(
+        description = semanticDescription,
+        text = title,
+        onClick = onClick,
+    )
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),

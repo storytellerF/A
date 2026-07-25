@@ -1,10 +1,13 @@
 package com.storyteller_f.a.app.pages
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -14,9 +17,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.LocalGlobalDialog
 import com.storyteller_f.a.app.Res
+import com.storyteller_f.a.app.components.StringListPreference
 import com.storyteller_f.a.app.current_selected
 import com.storyteller_f.a.app.home_start_destination
 import com.storyteller_f.a.app.home_start_destination_communities
@@ -34,10 +39,6 @@ import com.storyteller_f.a.client.compose_core.components.LocalToaster
 import com.storyteller_f.a.client.compose_core.components.catchingResult
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
-import com.strabled.composepreferences.PreferenceScreen
-import com.strabled.composepreferences.PreferenceTheme
-import com.strabled.composepreferences.getPreference
-import com.strabled.composepreferences.preferences.BottomSheetListPreference
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.openFilePicker
 import io.github.vinceglb.filekit.name
@@ -46,22 +47,19 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun PreferencePage() {
-    PreferenceScreen(
-        theme = PreferenceTheme.colorScheme.copy(trailingContentColor = MaterialTheme.colorScheme.onPrimary)
+    Column(
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState())
     ) {
-        preferenceItem {
-            HomeStartDestinationPreferenceItem()
-        }
-        preferenceItem {
-            TranslateModelPreferenceItem()
-        }
+        HomeStartDestinationPreferenceItem()
+        TranslateModelPreferenceItem()
     }
 }
 
 @Composable
 private fun HomeStartDestinationPreferenceItem() {
-    BottomSheetListPreference(
-        getPreference(HOME_START_DESTINATION_PREFERENCE_KEY),
+    StringListPreference(
+        key = HOME_START_DESTINATION_PREFERENCE_KEY,
+        defaultValue = HOME_START_DESTINATION_WORLD,
         title = stringResource(Res.string.home_start_destination),
         items = mapOf(
             stringResource(Res.string.home_start_destination_world) to HOME_START_DESTINATION_WORLD,
@@ -74,7 +72,6 @@ private fun HomeStartDestinationPreferenceItem() {
         leadingIcon = {
             CustomIcon(IconRes.Font(MaterialSymbolsOutlined.Home))
         },
-        useSelectedInSummary = true,
     )
 }
 
@@ -93,8 +90,9 @@ private fun TranslateModelPreferenceItem() {
     val toast = LocalToaster.current
     val globalDialogController = LocalGlobalDialog.current
     val models by gpt.models(scope).collectAsState(emptyList())
-    BottomSheetListPreference(
-        getPreference("gpt_model"),
+    StringListPreference(
+        key = "gpt_model",
+        defaultValue = "",
         title = stringResource(Res.string.translate_model),
         items = models.associate {
             it.value to it.key
@@ -110,7 +108,6 @@ private fun TranslateModelPreferenceItem() {
         leadingIcon = {
             CustomIcon(IconRes.Font(MaterialSymbolsOutlined.Translate))
         },
-        useSelectedInSummary = true,
         trailingContent = {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button({

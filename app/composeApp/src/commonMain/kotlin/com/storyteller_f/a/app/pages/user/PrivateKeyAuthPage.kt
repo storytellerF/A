@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -16,7 +17,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.storyteller_f.a.api.SignInBody
@@ -36,6 +36,7 @@ import com.storyteller_f.a.app.start_sign_in
 import com.storyteller_f.a.app.start_sign_up
 import com.storyteller_f.a.client.compose_core.components.PrivateKeyInput
 import com.storyteller_f.a.client.compose_core.components.request
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.a.client.core.AuthKey
 import com.storyteller_f.a.client.core.PendingTotpSignIn
 import com.storyteller_f.a.client.core.RawUserPassInfo
@@ -139,6 +140,7 @@ private fun PrivateKeyAuthContent(
     startSign: () -> Unit,
     viewModel: InputPrivateKeyViewModel,
 ) {
+    val privateKeyError by viewModel.privateKeyError.collectAsState()
     AuthPageChrome(
         title = stringResource(if (isSignUp) Res.string.sign_up else Res.string.sign_in),
         subtitle = stringResource(Res.string.auth_private_key_subtitle),
@@ -155,9 +157,22 @@ private fun PrivateKeyAuthContent(
             }) {
                 viewModel.updateEncryptionPrivateKey(it)
             }
+            privateKeyError?.let { error ->
+                Text(
+                    text = error,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.appiumSemantics(
+                        description = "private key error",
+                        text = error,
+                    ),
+                )
+            }
             Button(
                 onClick = startSign,
-                modifier = Modifier.fillMaxWidth().testTag("start_sign"),
+                modifier = Modifier.fillMaxWidth().appiumSemantics(
+                    testTag = "start_sign",
+                    text = stringResource(if (isSignUp) Res.string.start_sign_up else Res.string.start_sign_in),
+                ),
                 shape = ButtonDefaults.shape
             ) {
                 Text(stringResource(if (isSignUp) Res.string.start_sign_up else Res.string.start_sign_in))

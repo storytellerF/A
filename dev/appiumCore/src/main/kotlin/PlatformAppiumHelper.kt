@@ -280,7 +280,7 @@ class DesktopAppiumHelper : PlatformAppiumHelper() {
         browserCapture: DesktopBrowserCapture?,
         block: suspend (AppiumDriver, T) -> Unit,
     ) {
-        runDesktopTestEnvironment { ports ->
+        runAppiumTestEnvironment { ports ->
             val sessionFile = File("build/test/appium/tmp/desktop-session-$testName.json")
             val runtimeDir = File("build/test/appium/tmp/desktop-runtime-$testName")
             val logDir = File("build/test/appium-logs/${config.suiteName}").also { it.mkdirs() }
@@ -328,31 +328,6 @@ class DesktopAppiumHelper : PlatformAppiumHelper() {
                 launchScript.delete()
                 sessionFile.delete()
                 runtimeDir.deleteRecursively()
-            }
-        }
-    }
-
-    @OptIn(ExperimentalUuidApi::class)
-    private suspend fun runDesktopTestEnvironment(block: suspend (AppiumPorts) -> Unit) {
-        val sessionId = Uuid.random().toHexString()
-        val hostSessionPath = File("build/test/appium/sessions", sessionId).canonicalPath
-        prepareSessionDirectories(hostSessionPath)
-        val containerDataPath = "/appium-session"
-        System.setProperty("api.version", "1.44")
-        Network.newNetwork().use { network ->
-            useDatabaseContainer(network) { database ->
-                val environment = buildContainerEnv(containerDataPath, database)
-                useCliInitContainer(network, environment, hostSessionPath, containerDataPath) {
-                    useWsContainer(network, environment, hostSessionPath, containerDataPath) { ws ->
-                        val wsPort = ws.getMappedPort(8813)
-                        useServerContainer(network, environment, hostSessionPath, containerDataPath) { server ->
-                            val serverPort = server.getMappedPort(8811)
-                            useWorkerContainer(network, environment, hostSessionPath, containerDataPath) {
-                                block(AppiumPorts(server = serverPort, ws = wsPort))
-                            }
-                        }
-                    }
-                }
             }
         }
     }

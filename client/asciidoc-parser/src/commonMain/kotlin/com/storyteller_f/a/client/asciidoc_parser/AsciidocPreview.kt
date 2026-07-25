@@ -1,11 +1,7 @@
 package com.storyteller_f.a.client.asciidoc_parser
 
-private const val ASCIIDOCTOR_SCRIPT_PATH = "files/asciidoctor.min.js"
-
 suspend fun buildAsciidocPreviewHtml(source: String): String {
-    val asciidoctorScript = Res.readBytes(ASCIIDOCTOR_SCRIPT_PATH)
-        .decodeToString()
-    val documentHtml = convertAsciidoc(source, asciidoctorScript)
+    val documentHtml = convertAsciidoc(source)
     return """
         <!doctype html>
         <html lang="en">
@@ -40,7 +36,7 @@ suspend fun buildAsciidocPreviewHtml(source: String): String {
     """.trimIndent()
 }
 
-expect suspend fun convertAsciidoc(source: String, asciidoctorScript: String): String
+expect suspend fun convertAsciidoc(source: String): String
 
 internal fun String.toJsStringLiteral(): String = buildString {
     append('"')

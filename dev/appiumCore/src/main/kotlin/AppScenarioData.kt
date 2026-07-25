@@ -6,6 +6,7 @@ import com.storyteller_f.a.client.core.createRoom
 import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.a.client.core.getTopicInfo
 import com.storyteller_f.a.client.core.joinCommunity
+import com.storyteller_f.a.client.core.joinRoom
 import com.storyteller_f.shared.type.ObjectType
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
@@ -133,6 +134,7 @@ suspend fun prepareCommunityRoomScenario(
         createTopicByApi(owner.sessionManager, ObjectType.COMMUNITY, communityId, "appium-owner-community-topic-$now")
         viewer = createAuthenticatedSession()
         viewer.sessionManager.joinCommunity(communityId).getOrThrow()
+        viewer.sessionManager.joinRoom(roomId).getOrThrow()
         return PreparedCommunityRoomScenario(
             owner.session,
             viewer.session,

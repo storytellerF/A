@@ -36,7 +36,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -56,6 +55,7 @@ import com.storyteller_f.a.app.sign_in
 import com.storyteller_f.a.app.sign_in_subtitle
 import com.storyteller_f.a.client.compose_core.components.BaseSheet
 import com.storyteller_f.a.client.compose_core.components.StateView
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
@@ -67,7 +67,10 @@ fun SignInPage(signInAndSignUpNav: SignInAndSignUpNav) {
         footer = {
             TextButton(
                 onClick = { signInAndSignUpNav.gotoSignUp() },
-                modifier = Modifier.testTag("goto_sign_up")
+                modifier = Modifier.appiumSemantics(
+                    testTag = "goto_sign_up",
+                    text = stringResource(Res.string.go_to_sign_up)
+                )
             ) {
                 Text(stringResource(Res.string.go_to_sign_up))
             }
@@ -76,7 +79,10 @@ fun SignInPage(signInAndSignUpNav: SignInAndSignUpNav) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             FilledTonalButton(
                 onClick = { signInAndSignUpNav.gotoPrivateKey(false) },
-                modifier = Modifier.fillMaxWidth().testTag("private_key"),
+                modifier = Modifier.fillMaxWidth().appiumSemantics(
+                    testTag = "private_key",
+                    text = stringResource(Res.string.private_key),
+                ),
                 shape = ButtonDefaults.filledTonalShape
             ) {
                 Icon(Icons.Default.VpnKey, contentDescription = null)

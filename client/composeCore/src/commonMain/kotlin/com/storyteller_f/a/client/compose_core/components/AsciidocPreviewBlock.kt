@@ -37,6 +37,7 @@ import com.mikepenz.markdown.compose.components.MarkdownComponentModel
 import com.multiplatform.webview.web.WebView
 import com.multiplatform.webview.web.rememberWebViewStateWithHTMLData
 import com.storyteller_f.a.client.asciidoc_parser.buildAsciidocPreviewHtml
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.shared.utils.readCodeFence
 import kotlinx.coroutines.launch
 
@@ -46,17 +47,35 @@ fun AsciidocPreviewBlock(modal: MarkdownComponentModel) {
         readCodeFence(modal.node, modal.content)
     }
     val scope = rememberCoroutineScope()
-    val toasterState = LocalToaster.current
     var previewHtml by remember { mutableStateOf<String?>(null) }
     fun openPreview() {
         scope.launch {
             previewHtml = buildAsciidocPreviewHtml(source)
         }
     }
+    AsciidocPreviewCard(source, ::openPreview)
+    previewHtml?.let { preview ->
+        val previewTitle = source.lineSequence()
+            .firstOrNull { it.startsWith("= ") }
+            ?.removePrefix("= ")
+            .orEmpty()
+        AsciidocPreviewDialog(
+            preview,
+            previewTitle,
+            onDismissRequest = { previewHtml = null },
+        )
+    }
+}
+
+@Composable
+private fun AsciidocPreviewCard(source: String, openPreview: () -> Unit) {
+    val scope = rememberCoroutineScope()
+    val toasterState = LocalToaster.current
     val shape = RoundedCornerShape(20.dp)
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .appiumSemantics(description = "asciidoc", onClick = openPreview)
             .clip(shape)
             .background(MaterialTheme.colorScheme.surfaceContainer, shape)
             .clickable { openPreview() }
@@ -70,7 +89,13 @@ fun AsciidocPreviewBlock(modal: MarkdownComponentModel) {
                 overflow = TextOverflow.MiddleEllipsis,
                 modifier = Modifier.weight(1f).padding(horizontal = 12.dp)
             )
-            IconButton({ openPreview() }) {
+            IconButton(
+                onClick = openPreview,
+                modifier = Modifier.appiumSemantics(
+                    description = "open",
+                    onClick = openPreview,
+                ),
+            ) {
                 Icon(Icons.Default.Visibility, "open")
             }
         }
@@ -93,18 +118,24 @@ fun AsciidocPreviewBlock(modal: MarkdownComponentModel) {
             )
         }
     }
-    previewHtml?.let { preview ->
-        AsciidocPreviewDialog(preview, onDismissRequest = { previewHtml = null })
-    }
 }
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
-private fun AsciidocPreviewDialog(html: String, onDismissRequest: () -> Unit) {
+private fun AsciidocPreviewDialog(
+    html: String,
+    previewTitle: String,
+    onDismissRequest: () -> Unit,
+) {
     val state = rememberWebViewStateWithHTMLData(data = html, mimeType = "text/html")
     state.webSettings.isJavaScriptEnabled = true
     BasicAlertDialog(onDismissRequest = onDismissRequest) {
-        Surface(modifier = Modifier.fillMaxWidth().fillMaxSize()) {
+        Surface(
+            modifier = Modifier.fillMaxWidth().fillMaxSize().appiumSemantics(
+                description = "asciidoc-preview",
+                text = previewTitle,
+            ),
+        ) {
             Scaffold(
                 topBar = {
                     TopAppBar(

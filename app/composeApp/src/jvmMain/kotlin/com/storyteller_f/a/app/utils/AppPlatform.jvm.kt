@@ -1,9 +1,9 @@
 package com.storyteller_f.a.app.utils
 
-import androidx.compose.runtime.Composable
+import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.Preferences
 import com.storyteller_f.a.app.AppConfig
-import com.strabled.composepreferences.utilis.DataStoreManager
 import dev.jordond.connectivity.Connectivity
 import io.github.aakira.napier.Napier
 import io.github.vinceglb.filekit.utils.toFile
@@ -50,27 +50,22 @@ class RegularClientFile(val file: File) : ClientFile {
     }
 }
 
-private val store by lazy {
-    DataStoreManager(
-        PreferenceDataStoreFactory.createWithPath(
-            produceFile = {
-                val pb = Path(SystemTemporaryDirectory, "com.storyteller_f.a.app.main.preferences_pb")
-                val file = pb.toFile()
-                if (!file.exists() && !file.createNewFile()) {
-                    Napier.e {
-                        "$file create failed"
-                    }
+private val appPreferencesDataStore by lazy {
+    PreferenceDataStoreFactory.createWithPath(
+        produceFile = {
+            val pb = Path(SystemTemporaryDirectory, "com.storyteller_f.a.app.main.preferences_pb")
+            val file = pb.toFile()
+            if (!file.exists() && !file.createNewFile()) {
+                Napier.e {
+                    "$file create failed"
                 }
-                file.toOkioPath()
             }
-        )
+            file.toOkioPath()
+        }
     )
 }
 
-@Composable
-actual fun createCustomDataStoreManager(): DataStoreManager {
-    return store
-}
+internal actual fun createAppPreferencesDataStore(): DataStore<Preferences> = appPreferencesDataStore
 
 actual fun unregisterPushService() = Unit
 

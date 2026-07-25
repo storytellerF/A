@@ -1,6 +1,9 @@
 package com.storyteller_f.shared
 
 import com.storyteller_f.shared.utils.mapResult
+import dev.whyoleg.cryptography.CryptographyProvider
+import dev.whyoleg.cryptography.DelicateCryptographyApi
+import dev.whyoleg.cryptography.algorithms.RIPEMD160
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo
 import org.bouncycastle.asn1.x500.X500Name
 import org.bouncycastle.cert.X509v3CertificateBuilder
@@ -15,7 +18,24 @@ import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter
 import org.bouncycastle.operator.ContentSigner
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
 import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider
-import org.bouncycastle.pqc.jcajce.spec.DilithiumParameterSpec
+import org.bouncycastle.jcajce.interfaces.MLDSAPrivateKey
+import org.bouncycastle.jcajce.interfaces.MLDSAPublicKey
+import org.bouncycastle.jcajce.interfaces.MLKEMPrivateKey
+import org.bouncycastle.jcajce.interfaces.MLKEMPublicKey
+import org.bouncycastle.jcajce.spec.MLDSAParameterSpec
+import org.bouncycastle.jcajce.spec.MLDSAPrivateKeySpec
+import org.bouncycastle.jcajce.spec.MLDSAPublicKeySpec
+import org.bouncycastle.jcajce.spec.MLKEMParameterSpec
+import org.bouncycastle.jcajce.spec.MLKEMPrivateKeySpec
+import org.bouncycastle.pqc.crypto.mlkem.MLKEMExtractor
+import org.bouncycastle.pqc.crypto.mlkem.MLKEMGenerator
+import org.bouncycastle.pqc.crypto.mlkem.MLKEMParameters
+import org.bouncycastle.pqc.crypto.mlkem.MLKEMPrivateKeyParameters
+import org.bouncycastle.pqc.crypto.mlkem.MLKEMPublicKeyParameters
+import org.bouncycastle.pqc.crypto.mldsa.MLDSAParameters
+import org.bouncycastle.pqc.crypto.mldsa.MLDSAPrivateKeyParameters
+import org.bouncycastle.pqc.crypto.mldsa.MLDSAPublicKeyParameters
+import org.bouncycastle.pqc.crypto.mldsa.MLDSASigner
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -40,6 +60,11 @@ import javax.crypto.spec.SecretKeySpec
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
+private infix fun ByteArray.xor(other: ByteArray): ByteArray {
+    require(size == other.size) { "ML-KEM shared secret must match AES key size" }
+    return ByteArray(size) { index -> (this[index].toInt() xor other[index].toInt()).toByte() }
+}
+
 /**
  * @return hex 的der 格式的密钥
  */
@@ -51,6 +76,16 @@ actual suspend fun getDerPublicKeyFromPrivateKeyP256(pemPrivateKeyStr: String): 
         }
     }
 }
+
+actual suspend fun getDerPrivateKeyP256(pemPrivateKeyStr: String): Result<String> {
+    return CryptoJvm.readPrivateKeyFromPEMString(pemPrivateKeyStr).map { privateKey ->
+        privateKey.encoded.toHexString()
+    }
+}
+
+@OptIn(DelicateCryptographyApi::class)
+actual suspend fun ripemd160Platform(data: ByteArray): ByteArray =
+    CryptographyProvider.Default.get(RIPEMD160).hasher().hash(data)
 
 object CryptoJvm {
 
@@ -270,14 +305,10 @@ actual val AlgoDilithium: Algo = object : Algo {
         data: String
     ): Result<Boolean> {
         return runCatching {
-            val publicKeyBytes = derPublicKey.hexToByteArray()
-            val keyFactory = KeyFactory.getInstance("Dilithium", "BCPQC")
-            val publicKey = keyFactory.generatePublic(X509EncodedKeySpec(publicKeyBytes))
-
-            val signature = java.security.Signature.getInstance("Dilithium", "BCPQC")
-            signature.initVerify(publicKey)
-            signature.update(data.encodeToByteArray())
-            signature.verify(derSignature.hexToByteArray())
+            MLDSASigner().apply {
+                init(false, MLDSAPublicKeyParameters(MLDSAParameters.ml_dsa_65, derPublicKey.hexToByteArray()))
+                update(data.encodeToByteArray(), 0, data.encodeToByteArray().size)
+            }.verifySignature(derSignature.hexToByteArray())
         }
     }
 
@@ -286,13 +317,10 @@ actual val AlgoDilithium: Algo = object : Algo {
         data: String
     ): Result<String> {
         return runCatching {
-            val privateKeyBytes = derPrivateKey.hexToByteArray()
-            val keyFactory = KeyFactory.getInstance("Dilithium", "BCPQC")
-            val privateKey = keyFactory.generatePrivate(PKCS8EncodedKeySpec(privateKeyBytes))
-            val signer = java.security.Signature.getInstance("Dilithium", "BCPQC")
-            signer.initSign(privateKey, SecureRandom())
-            signer.update(data.encodeToByteArray())
-            signer.sign().toHexString()
+            MLDSASigner().apply {
+                init(true, MLDSAPrivateKeyParameters(MLDSAParameters.ml_dsa_65, derPrivateKey.hexToByteArray()))
+                update(data.encodeToByteArray(), 0, data.encodeToByteArray().size)
+            }.generateSignature().toHexString()
         }
     }
 
@@ -329,17 +357,17 @@ actual val AlgoDilithium: Algo = object : Algo {
     @OptIn(ExperimentalEncodingApi::class)
     override suspend fun generatePemKeyPair(): Result<Pair<String, String>> {
         return runCatching {
-            val kpg = KeyPairGenerator.getInstance("Dilithium", "BCPQC")
-            kpg.initialize(DilithiumParameterSpec.dilithium3, SecureRandom())
+            val kpg = KeyPairGenerator.getInstance("ML-DSA", "BC")
+            kpg.initialize(MLDSAParameterSpec.ml_dsa_65, SecureRandom())
             val kp = kpg.generateKeyPair()
-            val privDer = kp.private.encoded
+            val privDer = (kp.private as MLDSAPrivateKey).privateData
             val privB64 = Base64.encode(privDer).chunked(64).joinToString("\n")
             val privatePem = buildString {
                 appendLine("-----BEGIN PRIVATE KEY-----")
                 appendLine(privB64)
                 appendLine("-----END PRIVATE KEY-----")
             }
-            val pubDer = kp.public.encoded
+            val pubDer = (kp.public as MLDSAPublicKey).publicData
             val pubB64 = Base64.encode(pubDer).chunked(64).joinToString("\n")
             val publicPem = buildString {
                 appendLine("-----BEGIN PUBLIC KEY-----")
@@ -385,14 +413,9 @@ actual val AlgoDilithium: Algo = object : Algo {
                 .replace("\n", "")
                 .trim()
             val privateKeyBytes = Base64.decode(base64)
-            val keyFactory = KeyFactory.getInstance("Dilithium", "BCPQC")
-            val privateKey = keyFactory.generatePrivate(PKCS8EncodedKeySpec(privateKeyBytes))
-
-            if (privateKey is org.bouncycastle.pqc.jcajce.provider.dilithium.BCDilithiumPrivateKey) {
-                privateKey.publicKey.encoded.toHexString()
-            } else {
-                throw IllegalArgumentException("Unsupported Private Key type: ${privateKey.javaClass}")
-            }
+            MLDSAPrivateKeyParameters(MLDSAParameters.ml_dsa_65, privateKeyBytes)
+                .publicKey
+                .toHexString()
         }
     }
 
@@ -403,13 +426,12 @@ actual val AlgoDilithium: Algo = object : Algo {
             aesKeyBytes: ByteArray
         ): Result<ByteArray> {
             return runCatching {
-                val publicKeyBytes = derPublicKeyStr.hexToByteArray()
-
-                val keyFactory = KeyFactory.getInstance("Kyber", "BCPQC")
-                val publicKey = keyFactory.generatePublic(X509EncodedKeySpec(publicKeyBytes))
-                val wrapCipher = Cipher.getInstance("Kyber", "BCPQC")
-                wrapCipher.init(Cipher.WRAP_MODE, publicKey)
-                wrapCipher.wrap(SecretKeySpec(aesKeyBytes, "AES"))
+                val publicKey = MLKEMPublicKeyParameters(
+                    MLKEMParameters.ml_kem_768,
+                    derPublicKeyStr.hexToByteArray()
+                )
+                val secret = MLKEMGenerator(SecureRandom()).generateEncapsulated(publicKey)
+                secret.encapsulation + (aesKeyBytes xor secret.secret)
             }
         }
 
@@ -418,14 +440,14 @@ actual val AlgoDilithium: Algo = object : Algo {
             encrypted: ByteArray
         ): Result<ByteArray> {
             return runCatching {
-                val privateKeyBytes = derPrivateKeyStr.hexToByteArray()
-                val keyFactory = KeyFactory.getInstance("Kyber", "BCPQC")
-                val privateKey = keyFactory.generatePrivate(PKCS8EncodedKeySpec(privateKeyBytes))
-
-                val unwrapCipher = Cipher.getInstance("Kyber", "BCPQC")
-                unwrapCipher.init(Cipher.UNWRAP_MODE, privateKey)
-                val aesKey = unwrapCipher.unwrap(encrypted, "AES", Cipher.SECRET_KEY) as javax.crypto.SecretKey
-                aesKey.encoded
+                require(encrypted.size > 32) { "invalid ML-KEM ciphertext" }
+                val cipherText = encrypted.copyOfRange(0, encrypted.size - 32)
+                val encryptedAesKey = encrypted.copyOfRange(encrypted.size - 32, encrypted.size)
+                val privateKey = MLKEMPrivateKeyParameters(
+                    MLKEMParameters.ml_kem_768,
+                    derPrivateKeyStr.hexToByteArray()
+                )
+                encryptedAesKey xor MLKEMExtractor(privateKey).extractSecret(cipherText)
             }
         }
 
@@ -433,17 +455,17 @@ actual val AlgoDilithium: Algo = object : Algo {
         @OptIn(ExperimentalEncodingApi::class)
         override suspend fun generateEncryptionPemKeyPair(): Result<Pair<String, String>> {
             return runCatching {
-                val kpg = KeyPairGenerator.getInstance("Kyber", "BCPQC")
-                kpg.initialize(org.bouncycastle.pqc.jcajce.spec.KyberParameterSpec.kyber768, SecureRandom())
+                val kpg = KeyPairGenerator.getInstance("ML-KEM", "BC")
+                kpg.initialize(MLKEMParameterSpec.ml_kem_768, SecureRandom())
                 val kp = kpg.generateKeyPair()
-                val privDer = kp.private.encoded
+                val privDer = (kp.private as MLKEMPrivateKey).privateData
                 val privB64 = Base64.encode(privDer).chunked(64).joinToString("\n")
                 val privatePem = buildString {
                     appendLine("-----BEGIN PRIVATE KEY-----")
                     appendLine(privB64)
                     appendLine("-----END PRIVATE KEY-----")
                 }
-                val pubDer = kp.public.encoded
+                val pubDer = (kp.public as MLKEMPublicKey).publicData
                 val pubB64 = Base64.encode(pubDer).chunked(64).joinToString("\n")
                 val publicPem = buildString {
                     appendLine("-----BEGIN PUBLIC KEY-----")
@@ -463,11 +485,13 @@ actual val AlgoDilithium: Algo = object : Algo {
                     .replace("\n", "")
                     .trim()
                 val privateKeyBytes = Base64.decode(base64)
-                val keyFactory = KeyFactory.getInstance("Kyber", "BCPQC")
-                val privateKey = keyFactory.generatePrivate(PKCS8EncodedKeySpec(privateKeyBytes))
+                val keyFactory = KeyFactory.getInstance("ML-KEM", "BC")
+                val privateKey = keyFactory.generatePrivate(
+                    MLKEMPrivateKeySpec(MLKEMParameterSpec.ml_kem_768, privateKeyBytes)
+                )
 
-                if (privateKey is org.bouncycastle.pqc.jcajce.provider.kyber.BCKyberPrivateKey) {
-                    privateKey.publicKey.encoded.toHexString()
+                if (privateKey is MLKEMPrivateKey) {
+                    privateKey.publicKey.publicData.toHexString()
                 } else {
                     throw IllegalArgumentException("Unsupported Private Key type: ${privateKey.javaClass}")
                 }

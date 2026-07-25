@@ -2,6 +2,9 @@ package com.storyteller_f.a.client.compose_core.utils
 
 import com.russhwolf.settings.Settings
 import com.russhwolf.settings.StorageSettings
+import kotlinx.browser.localStorage
+import kotlinx.browser.window
+import kotlinx.serialization.json.Json
 
 actual fun buildSessionHistoryFactory(settings: Settings): SessionHistoryManager {
     return DefaultSessionHistoryManager(settings)
@@ -11,7 +14,12 @@ actual fun createSettings(name: String): Settings {
     return PrefixedSettings(StorageSettings(), name)
 }
 
-actual fun readInjectedSessionFromPrivateStorageOrNull(): ConvertedRawUserPassInfo? = null
+actual fun readInjectedSessionFromPrivateStorageOrNull(): ConvertedRawUserPassInfo? {
+    val serializedSession = localStorage.getItem(APPIUM_INJECTED_SESSION_KEY) ?: return null
+    val query = window.location.search
+    if (!query.contains("appium=true")) return null
+    return Json.decodeFromString(ConvertedRawUserPassInfo.serializer(), serializedSession)
+}
 
 private class PrefixedSettings(private val delegate: Settings, prefix: String) : Settings {
     private val keyPrefix = "$prefix."
@@ -43,3 +51,5 @@ private class PrefixedSettings(private val delegate: Settings, prefix: String) :
     override fun getBoolean(key: String, defaultValue: Boolean): Boolean = delegate.getBoolean(key.k(), defaultValue)
     override fun getBooleanOrNull(key: String): Boolean? = delegate.getBooleanOrNull(key.k())
 }
+
+private const val APPIUM_INJECTED_SESSION_KEY = "appium.injected_session"

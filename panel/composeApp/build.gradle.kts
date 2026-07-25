@@ -152,8 +152,6 @@ kotlin {
             implementation(libs.multiplatform.settings)
             implementation(libs.multiplatform.settings.serialization)
 
-            implementation(libs.compose.native.notification)
-            implementation(libs.compose.preferences)
             implementation(libs.haze)
             implementation(libs.haze.materials)
             implementation(libs.emoji.kt)
