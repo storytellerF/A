@@ -46,10 +46,6 @@ import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.schabi.newpipe.extractor.StreamingService
-import org.schabi.newpipe.extractor.playlist.PlaylistInfo
-import org.schabi.newpipe.extractor.stream.StreamInfo
-import org.schabi.newpipe.extractor.stream.StreamType
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -260,63 +256,6 @@ private fun BoxScope.PlayerWaitingState(
         }
 
         else -> Unit
-    }
-}
-
-fun getPlayListInList(
-    s: StreamingService,
-    remoteMediaItem: RemoteMediaItem,
-    supportStreamType: List<StreamType>
-): List<ConstPlayItem> {
-    val playlistInfo = PlaylistInfo.getInfo(s, remoteMediaItem.url)
-    return buildList {
-        addAll(playlistInfo.relatedItems.take(1).flatMap {
-            if (supportStreamType.contains(it.streamType)) {
-                getPlayItemFromStreamInfo(StreamInfo.getInfo(s, it.url))
-            } else {
-                emptyList()
-            }
-        })
-        while (playlistInfo.hasNextPage() && playlistInfo.nextPage.id == playlistInfo.id) {
-            val itemsPage = PlaylistInfo.getMoreItems(s, remoteMediaItem.url, playlistInfo.nextPage)
-            if (itemsPage.errors.isNotEmpty()) {
-                itemsPage.errors.forEach {
-                    Napier.e(it) {
-                        "parse youtube"
-                    }
-                }
-            }
-            addAll(itemsPage.items.take(1).flatMap {
-                getPlayItemFromStreamInfo(StreamInfo.getInfo(s, it.url))
-            })
-            playlistInfo.nextPage = itemsPage.nextPage
-        }
-    }
-}
-
-fun getPlayItemFromStreamInfo(info: StreamInfo): List<ConstPlayItem> {
-    return when (val streamType = info.streamType) {
-        StreamType.VIDEO_STREAM -> {
-            val firstOrNull = info.videoStreams.firstOrNull()
-            firstOrNull?.let { it1 ->
-                ConstPlayItem(it1.content, info.thumbnails.firstOrNull()?.url, info.name)
-            }
-                ?.let {
-                    listOf(it)
-                } ?: emptyList()
-        }
-
-        StreamType.AUDIO_STREAM -> {
-            val firstOrNull = info.audioStreams.firstOrNull()
-            firstOrNull?.let { it1 ->
-                ConstPlayItem(it1.content, info.thumbnails.firstOrNull()?.url, info.name)
-            }
-                ?.let {
-                    listOf(it)
-                } ?: emptyList()
-        }
-
-        else -> throw Exception("unsupported type $streamType")
     }
 }
 

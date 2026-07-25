@@ -14,11 +14,6 @@ import com.storyteller_f.shared.appContextRef
 import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import kotlinx.coroutines.DelicateCoroutinesApi
-import org.schabi.newpipe.NewPipeDownloaderImpl
-import org.schabi.newpipe.ReCaptchaActivity
-import org.schabi.newpipe.extractor.NewPipe
-import org.schabi.newpipe.extractor.localization.ContentCountry
-import org.schabi.newpipe.extractor.localization.Localization
 import java.lang.ref.WeakReference
 
 class AApplication : Application() {
@@ -37,15 +32,6 @@ class AApplication : Application() {
 
         appContextRef = WeakReference(this)
         loadCryptoLibIfNeed()
-        setCookiesToDownloader(NewPipeDownloaderImpl)
-        NewPipe.init(NewPipeDownloaderImpl, Localization.DEFAULT, ContentCountry.DEFAULT)
-    }
-
-    private fun setCookiesToDownloader(downloader: NewPipeDownloaderImpl) {
-        val prefs = getSharedPreferences("global", MODE_PRIVATE)
-        val string = prefs.getString("recaptcha_cookies_key", null) ?: return
-        downloader.setCookie(ReCaptchaActivity.RECAPTCHA_COOKIES_KEY, string)
-        downloader.updateYoutubeRestrictedModeCookies(this)
     }
 }
 

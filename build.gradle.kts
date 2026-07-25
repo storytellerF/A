@@ -41,7 +41,7 @@ fun isNoReleaseCompileTask(taskName: String): Boolean {
     return (isKsp || isKotlinOrJavaCompile) && !isExcludedVariant
 }
 
-val compileAllNoRelease by tasks.registering {
+val compileAllNoRelease = tasks.register("compileAllNoRelease") {
     group = "verification"
     description = "Compile all included modules without Android release or benchmark variants."
 }
@@ -54,7 +54,7 @@ subprojects {
     }
 }
 
-val detektReportMergeSarif by tasks.registering(ReportMergeTask::class) {
+val detektReportMergeSarif = tasks.register<ReportMergeTask>("detektReportMergeSarif") {
     output = layout.buildDirectory.file("reports/detekt/merge.sarif")
 }
 subprojects {
@@ -161,8 +161,8 @@ val koverIncludedProjects = listOf(
     emptyList()
 }
 dependencies {
-    koverIncludedProjects.mapNotNull { findProject(it) }.forEach {
-        kover(it)
+    koverIncludedProjects.forEach { projectPath ->
+        kover(project(projectPath))
     }
 }
 

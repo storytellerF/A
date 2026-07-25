@@ -1,5 +1,9 @@
 # project
 
+## Gradle Version Catalog
+
+- Versions in `gradle/libs.versions.toml` that are consumed directly by build scripts rather than a library or plugin `version.ref` must include `# @keep this version`, so catalog cleanup does not remove them. Current examples are Android SDK levels and `jdk`.
+
 ## Uploads (files)
 
 - API type: Ktor HTTP routes. Endpoint definitions live in `CustomApi` in the `api` module.

@@ -76,7 +76,7 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     sourceSets {
-        val headlessTest by creating {
+        val headlessTest = create("headlessTest") {
             dependsOn(commonTest.get())
         }
         androidMain.dependencies {
@@ -94,7 +94,6 @@ kotlin {
             implementation(libs.webrtc.kmp)
             implementation(libs.accompanist.permissions)
 
-            implementation(libs.github.newpipeextractor)
             implementation(libs.androidx.core.splashscreen)
             implementation(libs.androidx.datastore.preferences.core)
 
@@ -375,7 +374,7 @@ private fun KotlinDependencyHandler.implementation(
 }
 
 // Should be run at least once before running the app
-val downloadFonts by tasks.registering(Download::class) {
+val downloadFonts = tasks.register<Download>("downloadFonts") {
     fun ms(name: String) =
         "https://github.com/google/material-design-icons/raw/${
             "master"

@@ -1,25 +1,11 @@
 package com.storyteller_f.a.client.compose_core.components
 
-import android.content.Context
-import android.content.Intent
 import androidx.media3.session.MediaController
-import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.utils.UNIT_RESULT
 import io.github.aakira.napier.Napier
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
-import org.schabi.newpipe.ReCaptchaActivity
-import org.schabi.newpipe.extractor.NewPipe
-import org.schabi.newpipe.extractor.StreamingService.LinkType.CHANNEL
-import org.schabi.newpipe.extractor.StreamingService.LinkType.NONE
-import org.schabi.newpipe.extractor.StreamingService.LinkType.PLAYLIST
-import org.schabi.newpipe.extractor.StreamingService.LinkType.STREAM
-import org.schabi.newpipe.extractor.exceptions.ReCaptchaException
-import org.schabi.newpipe.extractor.stream.StreamInfo
-import org.schabi.newpipe.extractor.stream.StreamType
 import kotlin.uuid.ExperimentalUuidApi
 
 @OptIn(ExperimentalUuidApi::class)
@@ -111,40 +97,5 @@ suspend fun MediaPlayerService.startPlay(
         UNIT_RESULT
     } else {
         Result.failure(Exception("can't play"))
-    }
-}
-
-suspend fun getPlaylistFromNewPipe(
-    remoteMediaItem: RemoteMediaItem,
-    context: Context
-): List<ConstPlayItem> {
-    val s = NewPipe.getServiceByUrl(remoteMediaItem.url)
-    val name = when (remoteMediaItem.contentType) {
-        FileInfo.YOUTUBE_MIMETYPE -> "YouTube"
-        FileInfo.SOUND_CLOUD_MIME_TYPE -> "SoundCloud"
-        else -> null
-    } ?: return emptyList()
-    if (s.serviceInfo.name != name) {
-        return emptyList()
-    }
-    val supportStreamType = if (remoteMediaItem.contentType.startsWith("video/")) {
-        listOf(StreamType.VIDEO_STREAM)
-    } else {
-        listOf(StreamType.AUDIO_STREAM)
-    }
-    try {
-        return withContext(Dispatchers.IO) {
-            val type = s.getLinkTypeByUrl(remoteMediaItem.url)
-            when (type) {
-                null, NONE, CHANNEL -> emptyList()
-                STREAM -> getPlayItemFromStreamInfo(StreamInfo.getInfo(s, remoteMediaItem.url))
-                PLAYLIST -> getPlayListInList(s, remoteMediaItem, supportStreamType)
-            }
-        }
-    } catch (e: ReCaptchaException) {
-        context.startActivity(Intent(context, ReCaptchaActivity::class.java).apply {
-            putExtra(ReCaptchaActivity.RECAPTCHA_URL_EXTRA, e.url)
-        })
-        return emptyList()
     }
 }

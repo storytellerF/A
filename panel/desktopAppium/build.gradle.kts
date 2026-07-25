@@ -11,7 +11,7 @@ kotlin {
 
 dependencies {
     testImplementation(kotlin("test"))
-    testImplementation(project(":dev:appiumCore"))
+    testImplementation(projects.dev.appiumCore)
 }
 
 tasks.test {
