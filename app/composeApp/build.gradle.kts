@@ -89,7 +89,6 @@ kotlin {
             implementation(libs.androidx.media3.session)
             implementation(libs.lifecycle.service)
 
-            implementation(libs.compose.webview)
             implementation(libs.connectivity.device)
             implementation(libs.connectivity.compose.device)
             implementation(libs.webrtc.kmp)

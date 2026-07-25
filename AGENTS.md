@@ -54,6 +54,7 @@
 - Do not add extra test steps into a test case unless there is an actual dependency between the steps.
 - Extract repeated test steps into helper methods.
 - Appium tests require a real device or emulator and cannot run in parallel.
+- Appium tests compose a target helper (`AppAppiumHelper` or `PanelAppiumHelper`) with a platform helper (`AndroidAppiumHelper` or `DesktopAppiumHelper`). Keep concrete test methods as calls to shared `test*ByHelper` functions; target helpers create sessions and platform helpers own launch, cleanup, and log collection.
 
 ## Additional AI Collaboration Rules
 - Make the smallest necessary changes. Prefer extending `client/core` and `api`; do not casually change public models.

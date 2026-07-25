@@ -56,7 +56,6 @@ kotlin {
             implementation(libs.lifecycle.service)
 
             implementation(libs.record.core)
-            implementation(libs.compose.webview)
             implementation(libs.connectivity.device)
             implementation(libs.connectivity.compose.device)
             implementation(libs.webrtc.kmp)
@@ -75,6 +74,7 @@ kotlin {
         }
 
         commonMain.dependencies {
+            api(libs.compose.webview.multiplatform)
             implementation(libs.runtime)
             implementation(libs.foundation)
             implementation(libs.material)

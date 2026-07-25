@@ -46,7 +46,8 @@
 
 - Appium tests are included only when `-Pappium=true` is passed. Shared test infrastructure lives in `dev/appiumCore`, and product/platform entry modules are split into `app/androidAppium`, `app/desktopAppium`, `panel/androidAppium`, and `panel/desktopAppium`.
 - `app/androidApp` and `panel/androidApp` can use Robolectric to cover part of the Appium setup and launch flow. For example, writing a session JSON with the same format to `filesDir/appium-session/session.json` and calling `restoreFromStorage` can verify the non-device part of restoring login state from an injected private session.
-- The AsciiDoc preview Appium scenario uses a standard `asciidoc` code fence. Android verifies generated cache HTML and that an external browser becomes foreground; Desktop captures the `xdg-open` file URI and verifies the generated HTML includes the source.
+- The AsciiDoc preview Appium scenario uses a standard `asciidoc` code fence. Android and Desktop verify that the generated preview opens inside the app instead of launching an external browser.
+- Appium tests combine target helpers (`AppAppiumHelper` or `PanelAppiumHelper`) with platform helpers (`AndroidAppiumHelper` or `DesktopAppiumHelper`). Target helpers provide package/runtime configuration and create the appropriate session manager; platform helpers own app launch, session injection, cleanup, diagnostics, and driver wrapping. Concrete tests delegate to shared `test*ByHelper` functions.
 
 ## Gradle Tool Scripts
 

@@ -1,5 +1,8 @@
+import com.storyteller_f.shared.getAlgo
+import com.storyteller_f.shared.model.AlgoType
+
 suspend fun scenarioSignUp(driver: AppTestDriver) {
-    val privateKey = generateAppiumPrivateKey()
+    val privateKey = getAlgo(AlgoType.P256).generatePemKeyPair().getOrThrow().first
     driver.clickByDescription("avatar")
     driver.clickByText("Sign in")
     driver.clickByText("Go to sign up")

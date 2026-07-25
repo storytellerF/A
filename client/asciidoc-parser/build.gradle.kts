@@ -7,6 +7,8 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.jetbrainsCompose)
+    alias(libs.plugins.compose.compiler)
     alias(libs.plugins.serialization)
 }
 
@@ -24,6 +26,9 @@ kotlin {
         namespace = "com.storyteller_f.a.client.asciidoc_parser"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
+        androidResources {
+            enable = true
+        }
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_21)
         }
@@ -60,6 +65,9 @@ kotlin {
             implementation(libs.javet.node.android)
         }
         commonMain.dependencies {
+            implementation(libs.runtime)
+            implementation(libs.components.resources)
+            implementation(libs.kotlinx.coroutines.core)
         }
         getByName("androidHostTest") {
             dependencies {
@@ -91,6 +99,14 @@ kotlin {
             implementation(libs.javet.node.macos.x86.x4)
             implementation(libs.javet.node.windows.x86.x4)
         }
+        val jvmAndroidMain by creating {
+            dependsOn(commonMain.get())
+            dependencies {
+                compileOnly(libs.javet)
+            }
+        }
+        jvmMain.get().dependsOn(jvmAndroidMain)
+        androidMain.get().dependsOn(jvmAndroidMain)
         jvmTest {
             dependsOn(headlessTest)
         }
@@ -106,4 +122,10 @@ kotlin {
 
 dependencies {
     androidRuntimeClasspath(libs.androidx.ui.test.manifest)
+}
+
+compose.resources {
+    publicResClass = false
+    packageOfResClass = "com.storyteller_f.a.client.asciidoc_parser"
+    generateResClass = auto
 }

@@ -1,171 +1,45 @@
-import com.storyteller_f.shared.loadCryptoLibIfNeed
-import io.appium.java_client.AppiumDriver
 import kotlin.test.Test
 
-class DesktopAppiumTest : DesktopAppiumTestBase() {
+class DesktopAppiumTest : AppiumTestBase() {
+    private val targetHelper = AppAppiumHelper()
+    private val platformHelper = DesktopAppiumHelper()
 
     @Test
-    fun `test sign up`() = runAppiumBlockingTest {
-        runConfiguredDesktopAppiumTestWithSetup(
-            testName = name.methodName,
-            config = appDesktopRuntimeConfig,
-            beforeLaunch = { _: AppiumPorts, _: String -> },
-        ) { driver: AppiumDriver, _: Unit ->
-            scenarioSignUp(DesktopAppTestDriver(driver))
-        }
-    }
+    fun `test sign up`() = testSignUpByHelper(name.methodName, targetHelper, platformHelper)
 
     @Test
-    fun `test sign in as system user`() = runAppiumBlockingTest {
-        runConfiguredDesktopAppiumTestWithSetup(
-            testName = name.methodName,
-            config = appDesktopRuntimeConfig,
-            beforeLaunch = { _: AppiumPorts, _: String -> },
-        ) { driver: AppiumDriver, _: Unit ->
-            scenarioSignInAsSystemUser(DesktopAppTestDriver(driver), readAppiumSystemPrivateKey())
-        }
-    }
+    fun `test sign in as system user`() =
+        testSignInAsSystemUserByHelper(name.methodName, targetHelper, platformHelper)
 
     @Test
-    fun `test sign in by injected session`() = runAppiumBlockingTest {
-        loadCryptoLibIfNeed()
-        runConfiguredDesktopAppiumTestWithSetup(
-            testName = name.methodName,
-            config = appDesktopRuntimeConfig,
-            beforeLaunch = { ports: AppiumPorts, sessionFilePath: String ->
-                val injected = createPreRegisteredSession(ports)
-                writeSessionFile(sessionFilePath, buildInjectedSessionJson(injected))
-            },
-        ) { driver: AppiumDriver, _: Unit ->
-            scenarioVerifyInjectedSessionLoaded(DesktopAppTestDriver(driver))
-        }
-    }
+    fun `test sign in by injected session`() =
+        testInjectedSessionByHelper(name.methodName, targetHelper, platformHelper)
 
     @Test
-    fun `test publish topic in user space`() = runAppiumBlockingTest {
-        loadCryptoLibIfNeed()
-        runConfiguredDesktopAppiumTestWithSetup(
-            testName = name.methodName,
-            config = appDesktopRuntimeConfig,
-            beforeLaunch = { ports: AppiumPorts, sessionFilePath: String ->
-                val injected = createPreRegisteredSession(ports)
-                writeSessionFile(sessionFilePath, buildInjectedSessionJson(injected))
-                injected
-            },
-        ) { driver: AppiumDriver, injected: InjectedSession ->
-            scenarioPublishTopicInUserSpace(DesktopAppTestDriver(driver))
-        }
-    }
+    fun `test publish topic in user space`() =
+        testPublishTopicInUserSpaceByHelper(name.methodName, targetHelper, platformHelper)
 
     @Test
-    fun `test favorite topic from topic page`() = runAppiumBlockingTest {
-        loadCryptoLibIfNeed()
-        runConfiguredDesktopAppiumTestWithSetup(
-            testName = name.methodName,
-            config = appDesktopRuntimeConfig,
-            beforeLaunch = { ports: AppiumPorts, sessionFilePath: String ->
-                val scenario = prepareFavoriteTopicScenario {
-                    createAuthenticatedSession(ports)
-                }
-                writeSessionFile(
-                    sessionFilePath,
-                    buildInjectedSessionJson(scenario.authenticated.session)
-                )
-                scenario
-            },
-        ) { driver: AppiumDriver, data: FavoriteTopicScenario ->
-            try {
-                val appDriver = DesktopAppTestDriver(driver)
-                scenarioFavoritePreparedTopic(appDriver, data)
-            } finally {
-                data.authenticated.sessionManager.client.close()
-            }
-        }
-    }
+    fun `test favorite topic from topic page`() =
+        testFavoriteTopicByHelper(name.methodName, targetHelper, platformHelper)
 
     @Test
-    fun `test opens asciidoc preview in browser`() = runAppiumBlockingTest {
-        loadCryptoLibIfNeed()
-        val browserCapture = DesktopBrowserCapture.create(name.methodName)
-        runConfiguredDesktopAppiumTestWithSetup(
-            testName = name.methodName,
-            config = appDesktopRuntimeConfig,
-            beforeLaunch = { ports: AppiumPorts, sessionFilePath: String ->
-                val scenario = prepareAsciidocPreviewScenario {
-                    createAuthenticatedSession(ports)
-                }
-                writeSessionFile(sessionFilePath, buildInjectedSessionJson(scenario.authenticated.session))
-                scenario
-            },
-            browserCapture = browserCapture,
-        ) { driver: AppiumDriver, data: AsciidocPreviewScenario ->
-            try {
-                scenarioOpenAsciidocPreview(DesktopAppTestDriver(driver), data.topicMarker)
-                browserCapture.assertOpenedAsciidocPreview(data.asciidocSource)
-            } finally {
-                data.authenticated.sessionManager.client.close()
-            }
-        }
-    }
+    fun `test opens asciidoc preview`() =
+        testOpenAsciidocPreviewByHelper(name.methodName, targetHelper, platformHelper)
 
     @Test
-    fun `test subscribe topic from community page`() = runAppiumBlockingTest {
-        loadCryptoLibIfNeed()
-        runConfiguredDesktopAppiumTestWithSetup(
-            testName = name.methodName,
-            config = appDesktopRuntimeConfig,
-            beforeLaunch = { ports: AppiumPorts, sessionFilePath: String ->
-                val scenario = prepareSubscriptionTopicScenario {
-                    createAuthenticatedSession(ports)
-                }
-                writeSessionFile(
-                    sessionFilePath,
-                    buildInjectedSessionJson(scenario.authenticated.session)
-                )
-                scenario
-            },
-        ) { driver: AppiumDriver, data: SubscriptionTopicScenario ->
-            try {
-                val appDriver = DesktopAppTestDriver(driver)
-                scenarioSubscribePreparedTopic(appDriver, data)
-            } finally {
-                data.authenticated.sessionManager.client.close()
-            }
-        }
-    }
+    fun `test subscribe topic from community page`() =
+        testSubscribeTopicByHelper(name.methodName, targetHelper, platformHelper)
 
     @Test
     fun `test community profile actions from joined community`() =
-        runPreparedCommunityRoomScenario { appDriver, data ->
-            scenarioCommunityProfileActions(appDriver, data.communityName, data.ownerSession.address)
-        }
+        testCommunityProfileActionsByHelper(name.methodName, targetHelper, platformHelper)
 
     @Test
-    fun `test publish topic in joined community`() = runPreparedCommunityRoomScenario { appDriver, data ->
-        scenarioPublishTopicInCommunity(appDriver, data.communityName)
-    }
+    fun `test publish topic in joined community`() =
+        testPublishTopicInCommunityByHelper(name.methodName, targetHelper, platformHelper)
 
     @Test
-    fun `test publish topic in community room`() = runPreparedCommunityRoomScenario { appDriver, data ->
-        scenarioPublishTopicInRoom(appDriver, data.communityName, data.roomName)
-    }
-
-    private fun runPreparedCommunityRoomScenario(
-        block: suspend (AppTestDriver, PreparedCommunityRoomScenario) -> Unit,
-    ) = runAppiumBlockingTest {
-        loadCryptoLibIfNeed()
-        runConfiguredDesktopAppiumTestWithSetup(
-            testName = name.methodName,
-            config = appDesktopRuntimeConfig,
-            beforeLaunch = { ports: AppiumPorts, sessionFilePath: String ->
-                val prepared = prepareCommunityRoomScenario {
-                    createAuthenticatedSession(ports)
-                }
-                writeSessionFile(sessionFilePath, buildInjectedSessionJson(prepared.viewerSession))
-                prepared
-            },
-        ) { driver: AppiumDriver, data: PreparedCommunityRoomScenario ->
-            block(DesktopAppTestDriver(driver), data)
-        }
-    }
+    fun `test publish topic in community room`() =
+        testPublishTopicInCommunityRoomByHelper(name.methodName, targetHelper, platformHelper)
 }

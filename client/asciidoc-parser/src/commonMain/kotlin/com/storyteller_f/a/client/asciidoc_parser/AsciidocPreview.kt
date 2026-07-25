@@ -1,10 +1,11 @@
 package com.storyteller_f.a.client.asciidoc_parser
 
-private const val ASCIIDOCTOR_JS_URL =
-    "https://cdn.jsdelivr.net/npm/@asciidoctor/core@3.0.4/dist/browser/asciidoctor.min.js"
+private const val ASCIIDOCTOR_SCRIPT_PATH = "files/asciidoctor.min.js"
 
-fun buildAsciidocPreviewHtml(source: String): String {
-    val sourceLiteral = source.toJsStringLiteral()
+suspend fun buildAsciidocPreviewHtml(source: String): String {
+    val asciidoctorScript = Res.readBytes(ASCIIDOCTOR_SCRIPT_PATH)
+        .decodeToString()
+    val documentHtml = convertAsciidoc(source, asciidoctorScript)
     return """
         <!doctype html>
         <html lang="en">
@@ -12,7 +13,6 @@ fun buildAsciidocPreviewHtml(source: String): String {
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1">
           <title>AsciiDoc Preview</title>
-          <script src="$ASCIIDOCTOR_JS_URL"></script>
           <style>
             :root {
               color-scheme: light dark;
@@ -31,58 +31,18 @@ fun buildAsciidocPreviewHtml(source: String): String {
               border-radius: 8px;
               background: color-mix(in srgb, CanvasText 8%, Canvas);
             }
-            #error {
-              color: #b00020;
-              white-space: pre-wrap;
-            }
           </style>
         </head>
         <body>
-          <main id="preview"></main>
-          <pre id="fallback"></pre>
-          <pre id="error" hidden></pre>
-          <script>
-            const source = $sourceLiteral;
-            document.getElementById('fallback').textContent = source;
-            try {
-              const asciidoctor = Asciidoctor();
-              document.getElementById('preview').innerHTML = asciidoctor.convert(source, { safe: 'safe' });
-              document.getElementById('fallback').hidden = true;
-            } catch (error) {
-              const errorNode = document.getElementById('error');
-              errorNode.hidden = false;
-              errorNode.textContent = error instanceof Error ? error.message : String(error);
-            }
-          </script>
+          <main id="preview">$documentHtml</main>
         </body>
         </html>
     """.trimIndent()
 }
 
-fun buildAsciidocPreviewDataUri(html: String): String {
-    val encoded = html.encodeToByteArray().joinToString("") { byte ->
-        val value = byte.toInt() and 0xFF
-        val char = value.toChar()
-        if (char.isUriUnreserved()) {
-            char.toString()
-        } else {
-            "%${value.toString(16).uppercase().padStart(2, '0')}"
-        }
-    }
-    return "data:text/html;charset=utf-8,$encoded"
-}
+expect suspend fun convertAsciidoc(source: String, asciidoctorScript: String): String
 
-private fun Char.isUriUnreserved(): Boolean {
-    return this in 'A'..'Z' ||
-        this in 'a'..'z' ||
-        this in '0'..'9' ||
-        this == '-' ||
-        this == '.' ||
-        this == '_' ||
-        this == '~'
-}
-
-private fun String.toJsStringLiteral(): String = buildString {
+internal fun String.toJsStringLiteral(): String = buildString {
     append('"')
     for (char in this@toJsStringLiteral) {
         when (char) {

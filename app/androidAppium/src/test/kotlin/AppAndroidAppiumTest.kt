@@ -1,158 +1,45 @@
-import com.storyteller_f.shared.loadCryptoLibIfNeed
 import kotlin.test.Test
 
-private const val APP_MAIN_ACTIVITY_CLASS_NAME = "com.storyteller_f.a.app.MainActivity"
-
-private val appUnderTest = AppUnderTest(
-    packageName = resolveAppPackageName(),
-    mainActivityClassName = APP_MAIN_ACTIVITY_CLASS_NAME,
-)
-
-class AppAndroidAppiumTest : AndroidAppiumTestBase() {
+class AppAndroidAppiumTest : AppiumTestBase() {
+    private val targetHelper = AppAppiumHelper()
+    private val platformHelper = AndroidAppiumHelper()
 
     @Test
-    fun `test sign up`() = runAppiumBlockingTest {
-        runAndroidAppiumTestWithSetup(appUnderTest, { _, _ ->
-        }, { driver, _ ->
-            scenarioSignUp(AndroidAppTestDriver(driver))
-        })
-    }
+    fun `test sign up`() = testSignUpByHelper(name.methodName, targetHelper, platformHelper)
 
     @Test
-    fun `test sign in as system user`() = runAppiumBlockingTest {
-        runAndroidAppiumTestWithSetup(appUnderTest, { _, _ ->
-        }, { driver, _ ->
-            scenarioSignInAsSystemUser(AndroidAppTestDriver(driver), readAppiumSystemPrivateKey())
-        })
-    }
+    fun `test sign in as system user`() =
+        testSignInAsSystemUserByHelper(name.methodName, targetHelper, platformHelper)
 
     @Test
-    fun `test sign in by injected private session`() = runAppiumBlockingTest {
-        loadCryptoLibIfNeed()
-        runAndroidAppiumTestWithSetup(
-            app = appUnderTest,
-            beforeDriverLaunch = { ports, packageName ->
-                val injected = createPreRegisteredSession(ports)
-                pushInjectedSessionToPrivateDir(packageName, buildInjectedSessionJson(injected))
-            }
-        ) { driver, _ ->
-            scenarioVerifyInjectedSessionLoaded(AndroidAppTestDriver(driver))
-        }
-    }
+    fun `test sign in by injected private session`() =
+        testInjectedSessionByHelper(name.methodName, targetHelper, platformHelper)
 
     @Test
-    fun `test publish topic in user space`() = runAppiumBlockingTest {
-        loadCryptoLibIfNeed()
-        runAndroidAppiumTestWithSetup(
-            app = appUnderTest,
-            beforeDriverLaunch = { ports, packageName ->
-                val injected = createPreRegisteredSession(ports)
-                pushInjectedSessionToPrivateDir(packageName, buildInjectedSessionJson(injected))
-                injected
-            }
-        ) { driver, injectedSession ->
-            scenarioPublishTopicInUserSpace(AndroidAppTestDriver(driver))
-        }
-    }
+    fun `test publish topic in user space`() =
+        testPublishTopicInUserSpaceByHelper(name.methodName, targetHelper, platformHelper)
 
     @Test
-    fun `test favorite topic from topic page`() = runAppiumBlockingTest {
-        loadCryptoLibIfNeed()
-        runAndroidAppiumTestWithSetup(
-            app = appUnderTest,
-            beforeDriverLaunch = { ports, packageName ->
-                val scenario = prepareFavoriteTopicScenario {
-                    createAuthenticatedSession(ports)
-                }
-                pushInjectedSessionToPrivateDir(packageName, buildInjectedSessionJson(scenario.authenticated.session))
-                scenario
-            }
-        ) { driver, data ->
-            try {
-                val appDriver = AndroidAppTestDriver(driver)
-                scenarioFavoritePreparedTopic(appDriver, data)
-            } finally {
-                data.authenticated.sessionManager.client.close()
-            }
-        }
-    }
+    fun `test favorite topic from topic page`() =
+        testFavoriteTopicByHelper(name.methodName, targetHelper, platformHelper)
 
     @Test
-    fun `test opens asciidoc preview in browser`() = runAppiumBlockingTest {
-        loadCryptoLibIfNeed()
-        runAndroidAppiumTestWithSetup(
-            app = appUnderTest,
-            beforeDriverLaunch = { ports, packageName ->
-                val scenario = prepareAsciidocPreviewScenario {
-                    createAuthenticatedSession(ports)
-                }
-                pushInjectedSessionToPrivateDir(packageName, buildInjectedSessionJson(scenario.authenticated.session))
-                scenario
-            },
-        ) { driver, data ->
-            try {
-                val appDriver = AndroidAppTestDriver(driver)
-                scenarioOpenAsciidocPreview(appDriver, data.topicMarker)
-                appDriver.assertAsciidocPreviewOpened(appUnderTest.packageName, data.asciidocSource)
-            } finally {
-                data.authenticated.sessionManager.client.close()
-            }
-        }
-    }
+    fun `test opens asciidoc preview`() =
+        testOpenAsciidocPreviewByHelper(name.methodName, targetHelper, platformHelper)
 
     @Test
-    fun `test subscribe topic from community page`() = runAppiumBlockingTest {
-        loadCryptoLibIfNeed()
-        runAndroidAppiumTestWithSetup(
-            app = appUnderTest,
-            beforeDriverLaunch = { ports, packageName ->
-                val scenario = prepareSubscriptionTopicScenario {
-                    createAuthenticatedSession(ports)
-                }
-                pushInjectedSessionToPrivateDir(packageName, buildInjectedSessionJson(scenario.authenticated.session))
-                scenario
-            }
-        ) { driver, data ->
-            try {
-                val appDriver = AndroidAppTestDriver(driver)
-                scenarioSubscribePreparedTopic(appDriver, data)
-            } finally {
-                data.authenticated.sessionManager.client.close()
-            }
-        }
-    }
+    fun `test subscribe topic from community page`() =
+        testSubscribeTopicByHelper(name.methodName, targetHelper, platformHelper)
 
     @Test
     fun `test community profile actions from joined community`() =
-        runPreparedCommunityRoomScenario { appDriver, data ->
-            scenarioCommunityProfileActions(appDriver, data.communityName, data.ownerSession.address)
-        }
+        testCommunityProfileActionsByHelper(name.methodName, targetHelper, platformHelper)
 
     @Test
-    fun `test publish topic in joined community`() = runPreparedCommunityRoomScenario { appDriver, data ->
-        scenarioPublishTopicInCommunity(appDriver, data.communityName)
-    }
+    fun `test publish topic in joined community`() =
+        testPublishTopicInCommunityByHelper(name.methodName, targetHelper, platformHelper)
 
     @Test
-    fun `test publish topic in community room`() = runPreparedCommunityRoomScenario { appDriver, data ->
-        scenarioPublishTopicInRoom(appDriver, data.communityName, data.roomName)
-    }
-
-    private fun runPreparedCommunityRoomScenario(
-        block: suspend (AppTestDriver, PreparedCommunityRoomScenario) -> Unit,
-    ) = runAppiumBlockingTest {
-        loadCryptoLibIfNeed()
-        runAndroidAppiumTestWithSetup(
-            app = appUnderTest,
-            beforeDriverLaunch = { ports, packageName ->
-                val prepared = prepareCommunityRoomScenario {
-                    createAuthenticatedSession(ports)
-                }
-                pushInjectedSessionToPrivateDir(packageName, buildInjectedSessionJson(prepared.viewerSession))
-                prepared
-            }
-        ) { driver, data ->
-            block(AndroidAppTestDriver(driver), data)
-        }
-    }
+    fun `test publish topic in community room`() =
+        testPublishTopicInCommunityRoomByHelper(name.methodName, targetHelper, platformHelper)
 }

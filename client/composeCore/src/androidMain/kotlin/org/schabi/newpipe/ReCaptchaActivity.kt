@@ -12,8 +12,13 @@ import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.*
 import androidx.compose.ui.Modifier
 import androidx.core.content.edit
-import com.kevinnzou.web.*
+import com.multiplatform.webview.web.AccompanistWebViewClient
+import com.multiplatform.webview.web.PlatformWebViewParams
+import com.multiplatform.webview.web.WebViewNavigator
+import com.multiplatform.webview.web.rememberWebViewNavigator
+import com.multiplatform.webview.web.rememberWebViewState
 import org.schabi.newpipe.extractor.utils.Utils
+import com.multiplatform.webview.web.WebView as ComposeWebView
 
 class ReCaptchaActivity : ComponentActivity() {
     private var foundCookies = ""
@@ -41,23 +46,28 @@ class ReCaptchaActivity : ComponentActivity() {
                     }
                 })
             }) { paddingValues ->
-                WebView(state, onCreated = { it.settings.javaScriptEnabled = true }, client = object :
-                    AccompanistWebViewClient() {
-                    override fun shouldOverrideUrlLoading(
-                        view: WebView,
-                        request: WebResourceRequest
-                    ): Boolean {
-                        Log.d(TAG, "shouldOverrideUrlLoading: url=" + request.url.toString())
+                ComposeWebView(
+                    state = state,
+                    onCreated = { webView: WebView -> webView.settings.javaScriptEnabled = true },
+                    platformWebViewParams = PlatformWebViewParams(client = object : AccompanistWebViewClient() {
+                        override fun shouldOverrideUrlLoading(
+                            view: WebView?,
+                            request: WebResourceRequest?,
+                        ): Boolean {
+                            Log.d(TAG, "shouldOverrideUrlLoading: url=${request?.url}")
 
-                        handleCookiesFromUrl(request.url.toString())
-                        return false
-                    }
+                            handleCookiesFromUrl(request?.url?.toString())
+                            return false
+                        }
 
-                    override fun onPageFinished(view: WebView, url: String?) {
-                        super.onPageFinished(view, url)
-                        handleCookiesFromUrl(url)
-                    }
-                }, navigator = navigator, modifier = Modifier.padding(paddingValues))
+                        override fun onPageFinished(view: WebView, url: String?) {
+                            super.onPageFinished(view, url)
+                            handleCookiesFromUrl(url)
+                        }
+                    }),
+                    navigator = navigator,
+                    modifier = Modifier.padding(paddingValues),
+                )
             }
         }
         CookieManager.getInstance().removeAllCookies(null)
