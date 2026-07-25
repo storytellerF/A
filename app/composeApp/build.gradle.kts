@@ -136,7 +136,7 @@ kotlin {
             implementation(projects.api)
             implementation(projects.client.modelStorage)
             implementation(projects.client.room)
-            implementation(projects.app.core)
+            implementation(projects.client.composeCore)
 
             // no ui
             implementation(libs.napier)

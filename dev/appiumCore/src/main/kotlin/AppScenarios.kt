@@ -55,6 +55,15 @@ suspend fun scenarioFavoriteTopic(driver: AppTestDriver, topicContent: String) {
     driver.clickByDescriptionContaining("favorite-action")
 }
 
+suspend fun scenarioOpenAsciidocPreview(driver: AppTestDriver, topicMarker: String) {
+    driver.clickByDescription("avatar")
+    driver.clickByDescriptionContaining("user-dialog-cell")
+    driver.assertVisibleByText(topicMarker)
+    driver.clickByText(topicMarker)
+    driver.assertVisibleByDescription("asciidoc")
+    driver.clickByDescription("open")
+}
+
 suspend fun scenarioFavoritePreparedTopic(driver: AppTestDriver, data: FavoriteTopicScenario) {
     scenarioFavoriteTopic(driver, data.topicContent)
     waitUntilTopicFavorited(data.authenticated.sessionManager, data.topicId)

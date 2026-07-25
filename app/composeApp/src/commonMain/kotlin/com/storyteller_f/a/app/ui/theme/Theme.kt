@@ -5,7 +5,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
-import com.storyteller_f.a.app.core.utils.getAppDynamicColorScheme
+import com.storyteller_f.a.client.compose_core.utils.getAppDynamicColorScheme
 
 private val lightScheme = lightColorScheme(
     primary = primaryLight,

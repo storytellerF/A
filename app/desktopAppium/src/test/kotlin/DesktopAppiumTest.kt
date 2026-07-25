@@ -1,19 +1,27 @@
-import com.storyteller_f.a.dev.appium.buildInjectedSessionJson
 import com.storyteller_f.shared.loadCryptoLibIfNeed
+import io.appium.java_client.AppiumDriver
 import kotlin.test.Test
 
 class DesktopAppiumTest : DesktopAppiumTestBase() {
 
     @Test
     fun `test sign up`() = runAppiumBlockingTest {
-        runDesktopAppiumTest { driver ->
+        runConfiguredDesktopAppiumTestWithSetup(
+            testName = name.methodName,
+            config = appDesktopRuntimeConfig,
+            beforeLaunch = { _: AppiumPorts, _: String -> },
+        ) { driver: AppiumDriver, _: Unit ->
             scenarioSignUp(DesktopAppTestDriver(driver))
         }
     }
 
     @Test
     fun `test sign in as system user`() = runAppiumBlockingTest {
-        runDesktopAppiumTest { driver ->
+        runConfiguredDesktopAppiumTestWithSetup(
+            testName = name.methodName,
+            config = appDesktopRuntimeConfig,
+            beforeLaunch = { _: AppiumPorts, _: String -> },
+        ) { driver: AppiumDriver, _: Unit ->
             scenarioSignInAsSystemUser(DesktopAppTestDriver(driver), readAppiumSystemPrivateKey())
         }
     }
@@ -21,12 +29,14 @@ class DesktopAppiumTest : DesktopAppiumTestBase() {
     @Test
     fun `test sign in by injected session`() = runAppiumBlockingTest {
         loadCryptoLibIfNeed()
-        runDesktopAppiumTestWithSetup(
-            beforeLaunch = { ports, sessionFilePath ->
+        runConfiguredDesktopAppiumTestWithSetup(
+            testName = name.methodName,
+            config = appDesktopRuntimeConfig,
+            beforeLaunch = { ports: AppiumPorts, sessionFilePath: String ->
                 val injected = createPreRegisteredSession(ports)
                 writeSessionFile(sessionFilePath, buildInjectedSessionJson(injected))
-            }
-        ) { driver, _ ->
+            },
+        ) { driver: AppiumDriver, _: Unit ->
             scenarioVerifyInjectedSessionLoaded(DesktopAppTestDriver(driver))
         }
     }
@@ -34,13 +44,15 @@ class DesktopAppiumTest : DesktopAppiumTestBase() {
     @Test
     fun `test publish topic in user space`() = runAppiumBlockingTest {
         loadCryptoLibIfNeed()
-        runDesktopAppiumTestWithSetup(
-            beforeLaunch = { ports, sessionFilePath ->
+        runConfiguredDesktopAppiumTestWithSetup(
+            testName = name.methodName,
+            config = appDesktopRuntimeConfig,
+            beforeLaunch = { ports: AppiumPorts, sessionFilePath: String ->
                 val injected = createPreRegisteredSession(ports)
                 writeSessionFile(sessionFilePath, buildInjectedSessionJson(injected))
                 injected
-            }
-        ) { driver, injected ->
+            },
+        ) { driver: AppiumDriver, injected: InjectedSession ->
             scenarioPublishTopicInUserSpace(DesktopAppTestDriver(driver))
         }
     }
@@ -48,15 +60,20 @@ class DesktopAppiumTest : DesktopAppiumTestBase() {
     @Test
     fun `test favorite topic from topic page`() = runAppiumBlockingTest {
         loadCryptoLibIfNeed()
-        runDesktopAppiumTestWithSetup(
-            beforeLaunch = { ports, sessionFilePath ->
+        runConfiguredDesktopAppiumTestWithSetup(
+            testName = name.methodName,
+            config = appDesktopRuntimeConfig,
+            beforeLaunch = { ports: AppiumPorts, sessionFilePath: String ->
                 val scenario = prepareFavoriteTopicScenario {
                     createAuthenticatedSession(ports)
                 }
-                writeSessionFile(sessionFilePath, buildInjectedSessionJson(scenario.authenticated.session))
+                writeSessionFile(
+                    sessionFilePath,
+                    buildInjectedSessionJson(scenario.authenticated.session)
+                )
                 scenario
-            }
-        ) { driver, data ->
+            },
+        ) { driver: AppiumDriver, data: FavoriteTopicScenario ->
             try {
                 val appDriver = DesktopAppTestDriver(driver)
                 scenarioFavoritePreparedTopic(appDriver, data)
@@ -67,17 +84,47 @@ class DesktopAppiumTest : DesktopAppiumTestBase() {
     }
 
     @Test
-    fun `test subscribe topic from community page`() = runAppiumBlockingTest {
+    fun `test opens asciidoc preview in browser`() = runAppiumBlockingTest {
         loadCryptoLibIfNeed()
-        runDesktopAppiumTestWithSetup(
-            beforeLaunch = { ports, sessionFilePath ->
-                val scenario = prepareSubscriptionTopicScenario {
+        val browserCapture = DesktopBrowserCapture.create(name.methodName)
+        runConfiguredDesktopAppiumTestWithSetup(
+            testName = name.methodName,
+            config = appDesktopRuntimeConfig,
+            beforeLaunch = { ports: AppiumPorts, sessionFilePath: String ->
+                val scenario = prepareAsciidocPreviewScenario {
                     createAuthenticatedSession(ports)
                 }
                 writeSessionFile(sessionFilePath, buildInjectedSessionJson(scenario.authenticated.session))
                 scenario
+            },
+            browserCapture = browserCapture,
+        ) { driver: AppiumDriver, data: AsciidocPreviewScenario ->
+            try {
+                scenarioOpenAsciidocPreview(DesktopAppTestDriver(driver), data.topicMarker)
+                browserCapture.assertOpenedAsciidocPreview(data.asciidocSource)
+            } finally {
+                data.authenticated.sessionManager.client.close()
             }
-        ) { driver, data ->
+        }
+    }
+
+    @Test
+    fun `test subscribe topic from community page`() = runAppiumBlockingTest {
+        loadCryptoLibIfNeed()
+        runConfiguredDesktopAppiumTestWithSetup(
+            testName = name.methodName,
+            config = appDesktopRuntimeConfig,
+            beforeLaunch = { ports: AppiumPorts, sessionFilePath: String ->
+                val scenario = prepareSubscriptionTopicScenario {
+                    createAuthenticatedSession(ports)
+                }
+                writeSessionFile(
+                    sessionFilePath,
+                    buildInjectedSessionJson(scenario.authenticated.session)
+                )
+                scenario
+            },
+        ) { driver: AppiumDriver, data: SubscriptionTopicScenario ->
             try {
                 val appDriver = DesktopAppTestDriver(driver)
                 scenarioSubscribePreparedTopic(appDriver, data)
@@ -107,15 +154,17 @@ class DesktopAppiumTest : DesktopAppiumTestBase() {
         block: suspend (AppTestDriver, PreparedCommunityRoomScenario) -> Unit,
     ) = runAppiumBlockingTest {
         loadCryptoLibIfNeed()
-        runDesktopAppiumTestWithSetup(
-            beforeLaunch = { ports, sessionFilePath ->
+        runConfiguredDesktopAppiumTestWithSetup(
+            testName = name.methodName,
+            config = appDesktopRuntimeConfig,
+            beforeLaunch = { ports: AppiumPorts, sessionFilePath: String ->
                 val prepared = prepareCommunityRoomScenario {
                     createAuthenticatedSession(ports)
                 }
                 writeSessionFile(sessionFilePath, buildInjectedSessionJson(prepared.viewerSession))
                 prepared
-            }
-        ) { driver, data ->
+            },
+        ) { driver: AppiumDriver, data: PreparedCommunityRoomScenario ->
             block(DesktopAppTestDriver(driver), data)
         }
     }

@@ -56,6 +56,7 @@ suspend fun <T> runConfiguredDesktopAppiumTestWithSetup(
     testName: String,
     config: DesktopAppiumRuntimeConfig,
     beforeLaunch: suspend (ports: AppiumPorts, sessionFilePath: String) -> T,
+    browserCapture: DesktopBrowserCapture? = null,
     block: suspend (AppiumDriver, T) -> Unit,
 ) {
     runDesktopContainerTest { ports ->
@@ -76,6 +77,7 @@ suspend fun <T> runConfiguredDesktopAppiumTestWithSetup(
             appLogFile = appLogFile,
             runtimeClasspath = resolveDesktopRuntimeClasspath(config),
             config = config,
+            browserCapture = browserCapture,
         )
 
         var driver: AppiumDriver? = null
@@ -152,6 +154,7 @@ private fun buildDesktopAppiumLaunchScript(
     appLogFile: File,
     runtimeClasspath: String,
     config: DesktopAppiumRuntimeConfig,
+    browserCapture: DesktopBrowserCapture?,
 ): File {
     val javaExec = System.getenv("APP_DESKTOP_TEST_JAVA") ?: "java"
     val atspiClasspath = listOf(runtimeClasspath, "/usr/share/java/java-atk-wrapper.jar")
@@ -177,10 +180,17 @@ private fun buildDesktopAppiumLaunchScript(
     val argumentLines = arguments.joinToString(" \\\n") {
         "              \"${it.escapeForDoubleQuotedShell()}\""
     }
+    val browserEnvironment = browserCapture?.let {
+        """
+        export BROWSER="${it.command.canonicalPath.escapeForDoubleQuotedShell()}"
+        export PATH="${it.command.parentFile.canonicalPath.escapeForDoubleQuotedShell()}:${'$'}PATH"
+        """.trimIndent()
+    }.orEmpty()
     script.writeText(
         """
         #!/bin/bash
         mkdir -p "${appLogFile.parentFile.canonicalPath}"
+        $browserEnvironment
         exec "$javaExec" \
 $argumentLines \
           >> "${appLogFile.canonicalPath}" 2>&1

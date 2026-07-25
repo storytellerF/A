@@ -120,7 +120,7 @@ val koverIncludedProjects = listOf(
     ":shared",
     ":app:composeApp",
     ":app:cliApp",
-    ":app:core",
+    ":client:composeCore",
     ":app:androidApp",
     ":app:desktopApp",
     ":cloud:service",
@@ -147,7 +147,7 @@ val koverIncludedProjects = listOf(
     ":client:bot-lib",
     ":client:model-storage",
     ":client:room",
-    ":client:ascii-parser",
+    ":client:asciidoc-parser",
     ":bot:builtin-bot",
 ) + if (providers.gradleProperty("appium").orNull == "true") {
     listOf(

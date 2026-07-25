@@ -1,7 +1,3 @@
----
-trigger: always_on
----
-
 # Project Development Rules
 
 ## Global Principles
@@ -22,6 +18,8 @@ trigger: always_on
 ## Module Responsibilities
 - **api**: Defines REST API endpoints, query/path models, and the admin `AdminApi` (`/admin/*`).
 - **client/core**: Session management and request wrappers using unified `serviceCatching`.
+- **client/composeCore**: Shared Compose UI components, media helpers, cross-platform UI utilities, and related actual implementations.
+- **client/asciidoc-parser**: AsciiDoc preview HTML generation used by markdown rendering.
 - **client/model-storage**: Abstract storage interfaces and collection identifiers.
 - **client/room**: Room-based storage implementation and aggregation entry points.
 - **shared**: Cross-platform business models and utilities.

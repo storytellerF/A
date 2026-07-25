@@ -1,6 +1,45 @@
 import io.appium.java_client.android.AndroidDriver
+import kotlinx.coroutines.delay
+import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.milliseconds
 
 class AndroidAppTestDriver(private val driver: AndroidDriver) : AppTestDriver {
+
+    suspend fun assertAsciidocPreviewOpened(appPackageName: String, expectedSource: String) {
+        val sourceLines = expectedSource.lineSequence().filter(String::isNotBlank).toList()
+        var previewHtml = ""
+        var previewPollCount = 0
+        while (previewPollCount < 30) {
+            previewHtml = runCatching {
+                runAdbCommand(
+                    "shell",
+                    "run-as",
+                    appPackageName,
+                    "sh",
+                    "-c",
+                    "cat cache/asciidoc-previews/*.html",
+                )
+            }.getOrDefault("")
+            if (sourceLines.all(previewHtml::contains)) break
+            previewPollCount += 1
+            delay(500.milliseconds)
+        }
+        sourceLines.forEach { sourceLine ->
+            assertTrue(previewHtml.contains(sourceLine), "AsciiDoc preview HTML was not generated")
+        }
+        var browserPackage = appPackageName
+        var browserPollCount = 0
+        while (browserPollCount < 30) {
+            browserPackage = driver.currentPackage ?: appPackageName
+            if (browserPackage != appPackageName) break
+            browserPollCount += 1
+            delay(500.milliseconds)
+        }
+        assertTrue(
+            browserPackage != appPackageName,
+            "Expected an external browser, but the foreground package is $browserPackage",
+        )
+    }
 
     override suspend fun clickByDescription(description: String) {
         clickElement(driver, """new UiSelector().description("$description")""")

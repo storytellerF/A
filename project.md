@@ -22,7 +22,7 @@
 ## Topic Compose / Block Editing
 
 - `TopicComposePage` no longer exposes the full-page `RichEditTopicPage`; rich text editing is only used as the editing capability for `ContentBlock.Paragraph` inside the block editor.
-- Compose Multiplatform UI tests on the desktop/JVM target use `androidx.compose.ui.test.runComposeUiTest` (v1 API). The current Skiko desktop implementation of `v2.runComposeUiTest` throws `NotImplemented`. Test dependencies are configured as `libs.ui.test` in `commonTest` for `app/composeApp` and `app/core`; Block editor UI tests should preferably live under `app/composeApp/src/headlessTest/kotlin`.
+- Compose Multiplatform UI tests on the desktop/JVM target use `androidx.compose.ui.test.runComposeUiTest` (v1 API). The current Skiko desktop implementation of `v2.runComposeUiTest` throws `NotImplemented`. Test dependencies are configured as `libs.ui.test` in `commonTest` for `app/composeApp` and `client/composeCore`; Block editor UI tests should preferably live under `app/composeApp/src/headlessTest/kotlin`.
 
 ## RefCell
 
@@ -46,13 +46,14 @@
 
 - Appium tests are included only when `-Pappium=true` is passed. Shared test infrastructure lives in `dev/appiumCore`, and product/platform entry modules are split into `app/androidAppium`, `app/desktopAppium`, `panel/androidAppium`, and `panel/desktopAppium`.
 - `app/androidApp` and `panel/androidApp` can use Robolectric to cover part of the Appium setup and launch flow. For example, writing a session JSON with the same format to `filesDir/appium-session/session.json` and calling `restoreFromStorage` can verify the non-device part of restoring login state from an injected private session.
+- The AsciiDoc preview Appium scenario uses a standard `asciidoc` code fence. Android verifies generated cache HTML and that an external browser becomes foreground; Desktop captures the `xdg-open` file URI and verifies the generated HTML includes the source.
 
 ## Gradle Tool Scripts
 
 - `scripts/build_scripts/gradle-prune-implementations.sh` uses `./gradlew projects` to discover the modules actually included in the current build. It only processes those modules' `build.gradle.kts` files, avoiding accidental dependency removal from modules that are not included.
 - The prune check runs `assemble` by default, which can be overridden with `GRADLE_PRUNE_TASK`. Script arguments are forwarded to Gradle, for example `-Pserver.flavor=...`.
 - Each candidate `implementation` is verified on top of the cumulative "confirmed removable" state. On failure, only the current candidate is rolled back, preventing final deletion of dependencies that were never validated in combination.
-- KMP modules that add custom intermediate source sets generally call `applyDefaultHierarchyTemplate()` after target declarations and before `sourceSets {}`. Examples include `shared`, `client:room`, `client:sqlite-now`, `client:kotbase`, `client:ascii-parser`, `app:core`, `app:composeApp`, and `panel:composeApp`; custom sets such as `jvmAndroidMain`, `noJvmMain`, or `headlessTest` are then attached with explicit `dependsOn` edges.
+- KMP modules that add custom intermediate source sets generally call `applyDefaultHierarchyTemplate()` after target declarations and before `sourceSets {}`. Examples include `shared`, `client:room`, `client:sqlite-now`, `client:kotbase`, `client:composeCore`, `app:composeApp`, and `panel:composeApp`; custom sets such as `jvmAndroidMain`, `noJvmMain`, or `headlessTest` are then attached with explicit `dependsOn` edges.
 
 ## Account 2FA
 
@@ -75,12 +76,12 @@
 - `Alpha Server CI` runs backend/server tests before starting the remote alpha service: `:backend:minio:test`, `:cloud:cli:test`, `:cloud:service:test`, and `:cloud:server:test`. It also enables `ENABLE_TEST_CONTAINER=true` to override the Testcontainers path.
 - Test and release workflows use `gradle/actions/setup-gradle@v4` instead of a hand-written `actions/cache` Gradle User Home cache. PR test jobs should set `cache-read-only: true`; release/main jobs should keep the default write behavior and `cache-cleanup: on-success` so PR checks can restore default-branch Gradle cache without trying to save large merge-ref caches.
 - PR compile checks run `./gradlew compileAllNoRelease --console=plain`, a root aggregation task that compiles included modules while excluding Android release and benchmark variants.
-- `app/core` shares JVM/Android actual sources through a custom `jvmAndroidMain` source set with explicit `dependsOn` edges from `jvmMain` and `androidMain`; this keeps the shared `compose-pdf` and `m3u-parser` actual implementations out of wasm.
+- `client/composeCore` shares JVM/Android actual sources through a custom `jvmAndroidMain` source set with explicit `dependsOn` edges from `jvmMain` and `androidMain`; this keeps the shared `compose-pdf` and `m3u-parser` actual implementations out of wasm.
 
 ## Wasm
 
 - Wasm targets are opt-in through `-Ptarget.wasm=true`; the default in `gradle.properties` is `target.wasm=false`.
-- `:app:composeApp` and `:panel:composeApp` define executable `wasmJs` browser targets. Shared modules such as `shared`, `api`, `client:core`, `client:model-storage`, `client:room`, `client:bot-lib`, and `client:ascii-parser` also define wasm targets when the property is enabled.
+- `:app:composeApp` and `:panel:composeApp` define executable `wasmJs` browser targets. Shared modules such as `shared`, `api`, `client:core`, `client:model-storage`, `client:room`, `client:bot-lib`, and `client:asciidoc-parser` also define wasm targets when the property is enabled.
 - `dev/core`, `dev/cli`, and `dev/server` were removed from the included build. Do not add dependencies on `projects.dev.core`, `:dev:cli`, or `:dev:server`.
 - Runtime support is incomplete even after that configuration issue: wasm cryptography in `shared/src/wasmJsMain/.../Signature.wasmJs.kt` is still a stub, app image save/conversion, clipboard write, media playback, local client file access, text file save, and GPT are no-op or unsupported wasm actuals.
 - Room wasm uses `androidx.sqlite:sqlite-web` with a local `sqlite-web-worker` npm package and OPFS. Both dev and production hosting need COOP/COEP headers for cross-origin isolation, otherwise OPFS/SharedArrayBuffer will fail in browsers.

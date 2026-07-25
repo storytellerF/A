@@ -1,9 +1,6 @@
 import com.storyteller_f.a.client.core.AuthKey
 import com.storyteller_f.a.client.core.SimplePassHolder
 import com.storyteller_f.a.client.core.panelSignUp
-import com.storyteller_f.a.dev.appium.InjectedSession
-import com.storyteller_f.a.dev.appium.createUnsignedInjectedSession
-import com.storyteller_f.a.dev.appium.toAuthKey
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.AlgoType
 

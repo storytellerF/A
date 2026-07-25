@@ -9,8 +9,8 @@ import com.storyteller_f.a.app.LocalGlobalDialog
 import com.storyteller_f.a.app.LocalUserInfo
 import com.storyteller_f.a.app.common.OnTitleCreated
 import com.storyteller_f.a.app.common.createTitleComposeViewModel
-import com.storyteller_f.a.app.core.components.emitEvent
-import com.storyteller_f.a.app.core.components.request
+import com.storyteller_f.a.client.compose_core.components.emitEvent
+import com.storyteller_f.a.client.compose_core.components.request
 import com.storyteller_f.a.client.core.createTitle
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.obj.ob

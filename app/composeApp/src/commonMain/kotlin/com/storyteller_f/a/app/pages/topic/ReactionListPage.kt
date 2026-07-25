@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.paging.compose.itemKey
 import com.storyteller_f.a.app.common.createReactionsViewModel
-import com.storyteller_f.a.app.core.components.StateView
+import com.storyteller_f.a.client.compose_core.components.StateView
 import com.storyteller_f.shared.type.PrimaryKey
 
 @Composable

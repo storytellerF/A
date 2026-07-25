@@ -14,9 +14,9 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.common.UserReactionRecordsViewModel
 import com.storyteller_f.a.app.common.getUserReactionRecordsViewModel
-import com.storyteller_f.a.app.core.components.StateView
-import com.storyteller_f.a.app.core.components.pagingItems
-import com.storyteller_f.a.app.core.components.safeArea
+import com.storyteller_f.a.client.compose_core.components.StateView
+import com.storyteller_f.a.client.compose_core.components.pagingItems
+import com.storyteller_f.a.client.compose_core.components.safeArea
 import com.storyteller_f.shared.model.ReactionRecordInfo
 
 @Composable

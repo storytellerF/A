@@ -42,7 +42,7 @@ kotlin {
 }
 
 dependencies {
-    implementation(projects.app.core)
+    implementation(projects.client.composeCore)
     implementation(projects.panel.composeApp)
     implementation(projects.shared)
     implementation(projects.client.core)
@@ -87,7 +87,7 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.multiplatform.settings)
     testImplementation(libs.robolectric)
-    screenshotTestImplementation(projects.app.core)
+    screenshotTestImplementation(projects.client.composeCore)
     screenshotTestImplementation(projects.panel.composeApp)
     screenshotTestImplementation(projects.shared)
     screenshotTestImplementation(projects.client.core)

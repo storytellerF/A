@@ -24,7 +24,6 @@ A is a Kotlin Multiplatform application framework that targets Android, Desktop,
   - `androidApp` - Android app shell
   - `desktopApp` - Desktop app entry point
   - `cliApp` - Command-line app
-  - `core` - Core business logic
 
 - **Cloud module** (`cloud/`) - Cloud server side
   - `server` - Ktor HTTP server
@@ -45,10 +44,11 @@ A is a Kotlin Multiplatform application framework that targets Android, Desktop,
 
 - **Client module** (`client/`) - Client libraries
   - `core` - Client core
+  - `composeCore` - Shared Compose UI components, media helpers, and cross-platform UI utilities
   - `bot-lib` - Bot library
   - `room` - Room features
   - `model-storage` - Model storage
-  - `ascii-parser` - ASCII parser
+  - `asciidoc-parser` - AsciiDoc parser
 
 - **Panel module** (`panel/`) - Administration panel
   - `composeApp` - Administration UI

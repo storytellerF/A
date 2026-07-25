@@ -59,7 +59,7 @@ import com.shepeliev.webrtckmp.onIceConnectionStateChange
 import com.shepeliev.webrtckmp.onSignalingStateChange
 import com.shepeliev.webrtckmp.onTrack
 import com.shepeliev.webrtckmp.videoTracks
-import com.storyteller_f.a.app.core.CoreStrings
+import com.storyteller_f.a.client.compose_core.CoreStrings
 import com.storyteller_f.a.client.core.sendFrame
 import com.storyteller_f.shared.obj.CustomAnswer
 import com.storyteller_f.shared.obj.CustomCandidate

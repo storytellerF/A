@@ -16,7 +16,7 @@ kotlin {
 
 dependencies {
     implementation(projects.app.composeApp)
-    implementation(projects.app.core)
+    implementation(projects.client.composeCore)
     implementation(projects.shared)
 
     implementation(compose.desktop.currentOs)
