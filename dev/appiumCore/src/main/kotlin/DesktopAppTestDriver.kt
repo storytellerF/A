@@ -7,6 +7,10 @@ import java.time.Duration
 
 class DesktopAppTestDriver(private val driver: AppiumDriver) : AppTestDriver {
 
+    suspend fun assertAsciidocPreviewOpened() {
+        assertVisibleByDescription("close preview")
+    }
+
     override suspend fun clickByDescription(description: String) {
         waitAndClick(By.xpath("//*[@name='$description']"))
     }

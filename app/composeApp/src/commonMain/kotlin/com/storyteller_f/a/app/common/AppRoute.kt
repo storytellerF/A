@@ -16,7 +16,6 @@ import com.mikepenz.aboutlibraries.ui.compose.m3.libraryColors
 import com.mikepenz.aboutlibraries.ui.compose.produceLibraries
 import com.storyteller_f.a.app.LocalUserInfo
 import com.storyteller_f.a.app.Res
-import com.storyteller_f.a.app.core.components.FileViewData
 import com.storyteller_f.a.app.pages.HomePage
 import com.storyteller_f.a.app.pages.PreferencePage
 import com.storyteller_f.a.app.pages.community.CommunityComposePage
@@ -46,6 +45,7 @@ import com.storyteller_f.a.app.pages.user.UserSettingPage
 import com.storyteller_f.a.app.pages.user.UserSubscriptionPage
 import com.storyteller_f.a.app.utils.getDeepLinkHost
 import com.storyteller_f.a.app.utils.getDeepLinkScheme
+import com.storyteller_f.a.client.compose_core.components.FileViewData
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.ob

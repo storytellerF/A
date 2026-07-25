@@ -33,15 +33,15 @@ import com.storyteller_f.a.app.LocalAppNavFactory
 import com.storyteller_f.a.app.common.IdCommunityViewModel
 import com.storyteller_f.a.app.common.createCommunityViewModel
 import com.storyteller_f.a.app.common.createJoinedRoomsViewModel
-import com.storyteller_f.a.app.core.common.PagingViewModel
-import com.storyteller_f.a.app.core.components.LayoutDefaults
-import com.storyteller_f.a.app.core.components.RoomIcon
-import com.storyteller_f.a.app.core.components.StateView
-import com.storyteller_f.a.app.core.components.bottomAppending
-import com.storyteller_f.a.app.core.components.pagingItems
-import com.storyteller_f.a.app.core.components.rememberCommonDialogController
-import com.storyteller_f.a.app.core.components.topPrepend
 import com.storyteller_f.a.app.pages.community.CommunityIconWithDialog
+import com.storyteller_f.a.client.compose_core.common.PagingViewModel
+import com.storyteller_f.a.client.compose_core.components.LayoutDefaults
+import com.storyteller_f.a.client.compose_core.components.RoomIcon
+import com.storyteller_f.a.client.compose_core.components.StateView
+import com.storyteller_f.a.client.compose_core.components.bottomAppending
+import com.storyteller_f.a.client.compose_core.components.pagingItems
+import com.storyteller_f.a.client.compose_core.components.rememberCommonDialogController
+import com.storyteller_f.a.client.compose_core.components.topPrepend
 import com.storyteller_f.shared.model.RoomInfo
 
 @Composable

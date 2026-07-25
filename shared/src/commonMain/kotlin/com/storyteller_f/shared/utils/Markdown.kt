@@ -235,6 +235,10 @@ fun trimMarkdownUnusedContent(markdownText: String): String {
                             appendLine(it)
                             append("```")
                         }
+                    } else if (lang == "asciidoc") {
+                        appendLine("```asciidoc")
+                        appendLine(content.trimEnd())
+                        append("```")
                     } else {
                         append(content)
                     }

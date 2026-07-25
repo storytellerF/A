@@ -4,10 +4,10 @@ import androidx.lifecycle.*
 import androidx.paging.*
 import com.storyteller_f.a.api.CustomApi
 import com.storyteller_f.a.api.PaginationQuery
-import com.storyteller_f.a.app.core.common.CachedLoadingHandler
-import com.storyteller_f.a.app.core.common.PagingViewModel
-import com.storyteller_f.a.app.core.common.SimpleViewModel
-import com.storyteller_f.a.app.core.common.buildPager
+import com.storyteller_f.a.client.compose_core.common.CachedLoadingHandler
+import com.storyteller_f.a.client.compose_core.common.PagingViewModel
+import com.storyteller_f.a.client.compose_core.common.SimpleViewModel
+import com.storyteller_f.a.client.compose_core.common.buildPager
 import com.storyteller_f.a.client.core.LoadingHandler
 import com.storyteller_f.a.client.core.PanelSessionManager
 import com.storyteller_f.a.client.core.getAllCommunities

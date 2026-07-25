@@ -45,7 +45,6 @@ include(":shared")
 
 include(":app:composeApp")
 include(":app:cliApp")
-include(":app:core")
 include(":app:androidApp")
 include(":app:desktopApp")
 
@@ -83,11 +82,12 @@ include(":backend:minio")
 
 include(":client:core")
 include(":client:bot-lib")
+include(":client:composeCore")
 include(":client:model-storage")
 //include(":client:kotbase")
 include(":client:room")
 //include(":client:sqlite-now")
-include(":client:ascii-parser")
+include(":client:asciidoc-parser")
 
 include(":api")
 

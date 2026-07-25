@@ -5,7 +5,7 @@ import android.content.Context
 import androidx.activity.ComponentActivity
 import com.kdroid.composenotification.builder.AndroidChannelConfig
 import com.kdroid.composenotification.builder.NotificationInitializer.notificationInitializer
-import com.storyteller_f.a.app.core.components.bindActivity
+import com.storyteller_f.a.client.compose_core.components.bindActivity
 import io.github.aakira.napier.Napier
 import org.unifiedpush.android.connector.UnifiedPush
 

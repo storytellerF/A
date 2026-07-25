@@ -17,7 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.storyteller_f.a.app.core.components.SimpleMessageWithButton
+import com.storyteller_f.a.client.compose_core.components.SimpleMessageWithButton
 
 /**
  * 通用信息表格组件，用于以表格形式展示对象的所有属性

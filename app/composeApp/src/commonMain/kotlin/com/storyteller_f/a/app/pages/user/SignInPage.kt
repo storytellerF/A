@@ -48,14 +48,14 @@ import com.storyteller_f.a.app.LocalUiViewModel
 import com.storyteller_f.a.app.Res
 import com.storyteller_f.a.app.common.SessionHistoryViewModel
 import com.storyteller_f.a.app.common.getLoginHistoryViewModel
-import com.storyteller_f.a.app.core.components.BaseSheet
-import com.storyteller_f.a.app.core.components.StateView
 import com.storyteller_f.a.app.delete
 import com.storyteller_f.a.app.go_to_sign_up
 import com.storyteller_f.a.app.last_used
 import com.storyteller_f.a.app.private_key
 import com.storyteller_f.a.app.sign_in
 import com.storyteller_f.a.app.sign_in_subtitle
+import com.storyteller_f.a.client.compose_core.components.BaseSheet
+import com.storyteller_f.a.client.compose_core.components.StateView
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 

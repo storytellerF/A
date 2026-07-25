@@ -9,8 +9,8 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
-import com.storyteller_f.a.app.core.commonForActivity
 import com.storyteller_f.a.app.ui.theme.AppTheme
+import com.storyteller_f.a.client.compose_core.commonForActivity
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow

@@ -118,4 +118,15 @@ class MarkdownTest {
             message
         )
     }
+
+    @Test
+    fun `test preserve asciidoc fence language`() {
+        val markdownText = """
+            ```asciidoc
+            = AsciiDoc Preview
+            ```
+        """.trimIndent()
+
+        assertEquals(markdownText, trimMarkdownUnusedContent(markdownText))
+    }
 }

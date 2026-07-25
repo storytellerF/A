@@ -8,7 +8,7 @@ echo "🔍 开始查找未使用的文案..."
 # 定义资源文件路径
 RESOURCES_DIRS=(
     "app/composeApp/src/commonMain/composeResources"
-    "app/core/src/commonMain/composeResources"
+    "client/composeCore/src/commonMain/composeResources"
     "panel/composeApp/src/commonMain/composeResources"
 )
 

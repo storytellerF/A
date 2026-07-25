@@ -1,4 +1,4 @@
-package com.storyteller_f.a.app.core.components
+package com.storyteller_f.a.client.compose_core.components
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite

@@ -1,9 +1,9 @@
 package headless
 
 import PlatformHeadlessTest
-import com.storyteller_f.a.app.core.utils.SessionHistoryManager
-import com.storyteller_f.a.app.core.utils.buildSessionHistoryFactory
-import com.storyteller_f.a.app.core.utils.createSettings
+import com.storyteller_f.a.client.compose_core.utils.SessionHistoryManager
+import com.storyteller_f.a.client.compose_core.utils.buildSessionHistoryFactory
+import com.storyteller_f.a.client.compose_core.utils.createSettings
 import com.storyteller_f.a.client.core.AuthKey
 import com.storyteller_f.a.client.core.RawUserPassInfo
 import com.storyteller_f.shared.encryptDataByAES

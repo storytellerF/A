@@ -12,8 +12,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.storyteller_f.a.app.core.components.StateView
-import com.storyteller_f.a.app.core.components.pagingItems
+import com.storyteller_f.a.client.compose_core.components.StateView
+import com.storyteller_f.a.client.compose_core.components.pagingItems
 import com.storyteller_f.a.client.core.PanelSessionManager
 import com.storyteller_f.a.panel.LocalPanelUiViewModel
 import com.storyteller_f.a.panel.Res

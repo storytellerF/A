@@ -20,9 +20,9 @@ import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.common.SubscriptionsViewModel
 import com.storyteller_f.a.app.common.getSubscriptionViewModel
-import com.storyteller_f.a.app.core.components.StateView
-import com.storyteller_f.a.app.core.components.pagingItems
 import com.storyteller_f.a.app.pages.topic.TopicCell
+import com.storyteller_f.a.client.compose_core.components.StateView
+import com.storyteller_f.a.client.compose_core.components.pagingItems
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserFavoriteInfo

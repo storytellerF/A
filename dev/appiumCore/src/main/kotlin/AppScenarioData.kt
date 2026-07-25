@@ -6,7 +6,6 @@ import com.storyteller_f.a.client.core.createRoom
 import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.a.client.core.getTopicInfo
 import com.storyteller_f.a.client.core.joinCommunity
-import com.storyteller_f.a.dev.appium.InjectedSession
 import com.storyteller_f.shared.type.ObjectType
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
@@ -22,6 +21,12 @@ data class FavoriteTopicScenario(
     val authenticated: AuthenticatedSession,
     val topicId: Long,
     val topicContent: String,
+)
+
+data class AsciidocPreviewScenario(
+    val authenticated: AuthenticatedSession,
+    val topicMarker: String,
+    val asciidocSource: String,
 )
 
 data class PreparedCommunityRoomScenario(
@@ -46,6 +51,38 @@ suspend fun prepareFavoriteTopicScenario(
             topicContent
         )
         return FavoriteTopicScenario(authenticated, topicId, topicContent)
+    } catch (throwable: Throwable) {
+        authenticated.sessionManager.client.close()
+        throw throwable
+    }
+}
+
+suspend fun prepareAsciidocPreviewScenario(
+    createAuthenticatedSession: suspend () -> AuthenticatedSession,
+): AsciidocPreviewScenario {
+    val now = System.currentTimeMillis()
+    val topicMarker = "appium-asciidoc-preview-$now"
+    val asciidocSource = """
+        = Appium AsciiDoc Preview
+
+        $topicMarker
+    """.trimIndent()
+    val topicContent = listOf(
+        topicMarker,
+        "",
+        "```asciidoc",
+        asciidocSource,
+        "```",
+    ).joinToString("\n")
+    val authenticated = createAuthenticatedSession()
+    try {
+        createTopicByApi(
+            authenticated.sessionManager,
+            ObjectType.USER,
+            authenticated.sessionManager.model.uid ?: error("not login"),
+            topicContent,
+        )
+        return AsciidocPreviewScenario(authenticated, topicMarker, asciidocSource)
     } catch (throwable: Throwable) {
         authenticated.sessionManager.client.close()
         throw throwable

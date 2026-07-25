@@ -62,10 +62,6 @@ import com.storyteller_f.a.app.common.createTopicSearchInTopicViewModel
 import com.storyteller_f.a.app.common.createTopicSearchInUserViewModel
 import com.storyteller_f.a.app.common.createTopicSearchViewModel
 import com.storyteller_f.a.app.common.getUserOverviewViewModel
-import com.storyteller_f.a.app.core.components.StateView
-import com.storyteller_f.a.app.core.components.bottomAppending
-import com.storyteller_f.a.app.core.components.pagingItems
-import com.storyteller_f.a.app.core.components.topPrepend
 import com.storyteller_f.a.app.input_search_community
 import com.storyteller_f.a.app.input_search_files
 import com.storyteller_f.a.app.input_search_members
@@ -83,6 +79,10 @@ import com.storyteller_f.a.app.pages.topic.TopicList
 import com.storyteller_f.a.app.pages.user.MemberList
 import com.storyteller_f.a.app.pages.user.SelfUserIconWithDialog
 import com.storyteller_f.a.app.utils.appPlatform
+import com.storyteller_f.a.client.compose_core.components.StateView
+import com.storyteller_f.a.client.compose_core.components.bottomAppending
+import com.storyteller_f.a.client.compose_core.components.pagingItems
+import com.storyteller_f.a.client.compose_core.components.topPrepend
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.JoinStatusSearch
