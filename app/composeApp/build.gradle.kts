@@ -243,7 +243,11 @@ val properties = Properties().apply {
         }
     }
 }
-val deepLinkHost = (properties["SERVER_URL"] as? String)?.let {
+val serverUrl = providers.gradleProperty("app.server.url").orNull
+    ?: properties["SERVER_URL"] as? String
+val wsServerUrl = providers.gradleProperty("app.ws.server.url").orNull
+    ?: properties["WS_SERVER_URL"] as? String
+val deepLinkHost = serverUrl?.let {
     URI.create(it).host
 } ?: "storyteller_f.com"
 
@@ -251,8 +255,6 @@ buildkonfig {
     packageName = "com.storyteller_f.a.app"
     objectName = "AppConfig"
 
-    val serverUrl = properties["SERVER_URL"] as? String
-    val wsServerUrl = properties["WS_SERVER_URL"] as? String
     val isDebug = (properties["app.DEBUG"] as? String) ?: "false"
     defaultConfigs {
         buildConfigField(STRING, "SERVER_URL", serverUrl ?: "", const = true)

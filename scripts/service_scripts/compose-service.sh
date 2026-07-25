@@ -66,10 +66,31 @@ for profile in "${COMPOSE_FILE_LIST[@]}"; do
     fi
 done
 
+if has_profile sample; then
+    if ! "${BUILD_SERVER_SCRIPT:-./scripts/build_scripts/build-server.sh}" || \
+        ! "${BUILD_WS_SCRIPT:-./scripts/build_scripts/build-ws.sh}" || \
+        ! "${BUILD_CLI_SCRIPT:-./scripts/build_scripts/build-cli.sh}"; then
+        echo "Failed to build the sample server services on the host."
+        exit 1
+    fi
+    SERVER_URL=$(grep '^SERVER_URL=' "./deploy/$FLAVOR.env" | cut -d '=' -f2-)
+    WS_SERVER_URL=$(grep '^WS_SERVER_URL=' "./deploy/$FLAVOR.env" | cut -d '=' -f2-)
+    if [ -z "$SERVER_URL" ] || [ -z "$WS_SERVER_URL" ]; then
+        echo "SERVER_URL and WS_SERVER_URL must be set for the sample profile."
+        exit 1
+    fi
+    if ! "${GRADLEW:-./gradlew}" :app:composeApp:wasmJsBrowserDistribution \
+        -Ptarget.wasm=true \
+        -Pserver.flavor="$FLAVOR" \
+        -Pserver.buildType="$(grep '^BUILD_TYPE=' "./deploy/$FLAVOR.env" | cut -d '=' -f2-)" \
+        -Papp.server.url="$SERVER_URL" \
+        -Papp.ws.server.url="$WS_SERVER_URL"; then
+        echo "Failed to build the Wasm distribution for the sample profile."
+        exit 1
+    fi
+fi
+
 GENERATED_COMPOSE_FILE="./deploy/docker-compose/docker-compose.generated-patch.yml"
-cleanup_generated_compose_file() {
-    rm -f "$GENERATED_COMPOSE_FILE"
-}
 {
     if ! has_profile bunker && ! has_profile cli && ! has_profile server && ! has_profile worker; then
         echo "services: {}"
@@ -145,8 +166,8 @@ cleanup_generated_compose_file() {
             fi
             emit_bunker_network_if_needed
         fi
-        for service in server worker; do
-            if has_profile "$service"; then
+        for service in server worker ws; do
+            if has_profile "$service" || { [[ "$service" == "ws" ]] && has_profile server; }; then
                 echo "  $service:"
                 if has_profile cli; then
                     echo "    depends_on:"
@@ -208,6 +229,7 @@ if [ "$USE_PREBUILD" = "true" ]; then
     COMPOSE_FILES+=("-f" "./deploy/docker-compose/docker-compose.prebuild.yml")
 else
   if [[ "$NEEDS_BUILD_ON" == "true" ]]; then
+      BUILD_ON=${BUILD_ON:-$(grep '^BUILD_ON=' "./deploy/$FLAVOR.env" | cut -d '=' -f2-)}
       if [ -z "$BUILD_ON" ]; then
           echo "BUILD_ON must be set."
           exit 1

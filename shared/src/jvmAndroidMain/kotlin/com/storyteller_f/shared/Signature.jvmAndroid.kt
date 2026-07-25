@@ -485,16 +485,9 @@ actual val AlgoDilithium: Algo = object : Algo {
                     .replace("\n", "")
                     .trim()
                 val privateKeyBytes = Base64.decode(base64)
-                val keyFactory = KeyFactory.getInstance("ML-KEM", "BC")
-                val privateKey = keyFactory.generatePrivate(
-                    MLKEMPrivateKeySpec(MLKEMParameterSpec.ml_kem_768, privateKeyBytes)
-                )
-
-                if (privateKey is MLKEMPrivateKey) {
-                    privateKey.publicKey.publicData.toHexString()
-                } else {
-                    throw IllegalArgumentException("Unsupported Private Key type: ${privateKey.javaClass}")
-                }
+                MLKEMPrivateKeyParameters(MLKEMParameters.ml_kem_768, privateKeyBytes)
+                    .publicKey
+                    .toHexString()
             }
         }
 
