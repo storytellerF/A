@@ -69,7 +69,7 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     sourceSets {
-        val headlessTest by creating {
+        val headlessTest = create("headlessTest") {
             dependsOn(commonTest.get())
         }
         androidMain.dependencies {
@@ -87,7 +87,6 @@ kotlin {
             implementation(libs.webrtc.kmp)
             implementation(libs.accompanist.permissions)
 
-            implementation(libs.github.newpipeextractor)
             implementation(libs.androidx.core.splashscreen)
             implementation(libs.androidx.datastore.preferences.core)
             implementation(libs.connector) {

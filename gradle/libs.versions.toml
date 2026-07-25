@@ -1,29 +1,29 @@
 [versions]
-aboutlibrariesComposeM3 = "15.0.0"
-aboutlibrariesCore = "15.0.0"
+aboutlibrariesComposeM3 = "15.0.4"
+aboutlibrariesCore = "15.0.4"
 accompanistPermissions = "0.37.3"
-agp = "9.2.1"
-android-compileSdk = "37"
-android-minSdk = "33"
-android-targetSdk = "37"
+agp = "9.3.1"
+android-compileSdk = "37" # @keep this version
+android-minSdk = "33" # @keep this version
+android-targetSdk = "37" # @keep this version
 androidx-activityCompose = "1.13.0"
-bcprovJdk18on = "1.84"
+bcprovJdk18on = "1.85"
 benManesVersions = "0.54.0"
 benchmarkMacroJunit4 = "1.4.1"
-buildconfig = "0.21.2"
+buildconfig = "0.22.0"
 coil = "3.5.0"
 commonsImaging = "1.0.0-alpha6"
 commonsLogging = "1.4.0"
 componentsResources = "1.11.1"
 compose-multiplatform-adaptive = "1.3.0-beta02"
-compose-multiplatform-lifecycle = "2.10.0"
+compose-multiplatform-lifecycle = "2.11.0"
 compose-plugin = "1.11.1"
-composeHotReload = "1.1.1"
+composeHotReload = "1.2.0"
 composeNativeNotification = "0.2.0"
-composePdf = "1.2.0"
+composePdf = "2.0.0"
 composePreferences = "1.1.1"
 composeWebviewMultiplatform = "2.0.3"
-connectivity = "2.4.1"
+connectivity = "2.5.0"
 connector = "3.3.3"
 coreSplashscreen = "1.2.0"
 couchbaseLite = "3.2.4-1.2.0"
@@ -33,56 +33,56 @@ desugar_jdk_libs = "2.1.5"
 detektVersion = "1.23.8"
 dss = "6.4"
 easylauncher = "6.4.1"
-elasticsearchJava = "9.4.2"
-emojiKt = "2.4.0"
+elasticsearchJava = "9.4.4"
+emojiKt = "2.5.0"
 endpoint4k-common = "0.0.1-alpha2"
 espressoCore = "3.7.0"
-exposedVersion = "1.3.0"
+exposedVersion = "1.3.1"
 filekitCompose = "0.14.2"
 font-icon-core = "2.2.0"
 foundation = "1.11.1"
-geoip2 = "5.1.0"
-googleGenai = "1.59.0"
-h2 = "1.0.0.RELEASE"
+geoip2 = "5.2.0"
+googleGenai = "1.63.0"
+h2 = "1.1.0.RELEASE"
 haze = "1.7.2"
 highlights = "1.1.0"
-humanReadable = "1.12.3"
+humanReadable = "1.13.1"
 icu4j = "78.3"
-jacksonDataformatYaml = "2.22.0"
-jacksonModuleKotlin = "2.22.0"
+jacksonDataformatYaml = "2.22.1"
+jacksonModuleKotlin = "2.22.1"
 javaClient = "10.1.1"
 javacvPlatform = "1.5.13"
-javet = "5.0.8"
-jdk = "65"
+javet = "5.0.9"
+jdk = "65" # @keep this version
 jlayer = "1.0.3"
 junit = "1.3.0"
 kfswatch = "1.4.0"
 kim = "0.26.2"
-kodio-core = "0.1.5"
-kotlin = "2.4.0"
+kmpZip = "0.13.0"
+kodio-core = "0.2.0"
+kotlin = "2.4.10"
 kotlin_buildconfig = "6.0.10"
-kotlinx-rpc = "0.10.2"
+kotlinx-rpc = "0.10.3"
 kotlinxBrowser = "0.5.0"
 kotlinxCli = "0.3.6"
-kotlinxCollectionsImmutable = "0.5.0"
+kotlinxCollectionsImmutable = "0.5.1"
 kotlinxCoroutinesSwing = "1.11.0"
-kotlinxDatetime = "0.7.1-0.6.x-compat"
+kotlinxDatetime = "0.8.0"
 kotlinxSerializationJson = "1.11.0"
-kover = "0.9.8"
+kover = "0.9.9"
 kreds = "0.9.1"
 krop-ui = "0.2.0"
-ksp = "2.3.9"
-ktor = "3.5.0"
-kmpZip = "0.12.1"
+ksp = "2.3.10"
+ktor = "3.5.1"
 latex = "1.4.7"
 leakcanaryAndroid = "2.14"
 lifecycle = "2.11.0"
-lifecycleViewmodelCompose = "2.10.0"
-litertlmAndroid = "latest.release"
-logback = "1.5.34"
-luceneCore = "10.4.0"
+lifecycleViewmodelCompose = "2.11.0"
+litertlmAndroid = "0.14.0"
+logback = "1.6.0"
+luceneCore = "10.5.0"
 m3uParser = "1.4.0"
-markdown = "0.7.5"
+markdown = "0.7.7"
 material = "1.11.1"
 material3 = "1.9.0"
 material3WindowSizeClassMultiplatform = "0.5.0"
@@ -93,41 +93,42 @@ micrometerRegistryPrometheus = "1.17.0"
 minio = "9.0.3"
 mosaicRuntime = "0.18.0"
 multiplatform-nav3-ui = "1.1.1"
-multiplatformMarkdownRenderer = "0.42.0"
+multiplatformMarkdownRenderer = "0.43.0"
 multiplatformSettingsNoArg = "1.3.0"
 mysqlConnectorJava = "8.0.33"
 napier = "2.7.1"
-newpipeextractorVersion = "v0.24.5"
 okhttp = "5.4.0"
 openpdf = "3.0.5"
 pagingCommon = "3.5.0"
-pdfbox = "3.0.7"
+pdfbox = "3.0.8"
 pdfboxLayout = "3.0.0-rc.0"
-pdfcompare = "1.2.8"
-postgresql = "1.1.0.RELEASE"
+pdfcompare = "1.2.9"
+postgresql = "1.1.2.RELEASE"
 qrose = "1.1.2"
 recordCore = "0.5.0"
-richeditorCompose = "1.0.0-rc14"
+richeditorCompose = "1.0.0"
 robolectric = "4.16.1"
-roomRuntime = "3.0.0-rc01"
+roomRuntime = "3.0.0"
 runtime = "1.11.1"
 screenshot = "0.0.1-alpha15"
-sentryAndroidGradle = "6.12.0"
+sentryAndroidGradle = "6.16.0"
+sonner = "0.4.0"
 sqlFormatter = "2.0.5"
-sqliteBundled = "2.7.0-rc01"
+sqlitenow = "0.15.0"
+sqliteBundled = "2.7.0"
 testContainer = "1.21.4"
-tikaCore = "3.3.1"
+tikaCore = "3.3.2"
 ui = "1.11.1"
-uiTestJunit4Android = "1.11.3"
-uiToolingPreview = "1.11.3"
-uiautomator = "2.3.0"
+uiTestJunit4Android = "1.11.4"
+uiToolingPreview = "1.11.4"
+uiautomator = "2.4.0"
 uriKmp = "0.0.21"
 urlbuilder = "2.0.9"
 vaviImageAvif = "0.0.7"
 versionCatalogUpdate = "1.1.0"
 vlcj = "4.12.1"
 webrtcKmp = "0.125.11"
-zoomimageComposeCoil3 = "1.4.0"
+zoomimageComposeCoil3 = "1.6.0"
 
 [libraries]
 aboutlibraries-compose-m3 = { module = "com.mikepenz:aboutlibraries-compose-m3", version.ref = "aboutlibrariesComposeM3" }
@@ -150,9 +151,9 @@ androidx-media3-session = { module = "androidx.media3:media3-session", version.r
 androidx-media3-ui = { module = "androidx.media3:media3-ui", version.ref = "media3Exoplayer" }
 androidx-paging-common = { module = "androidx.paging:paging-common", version.ref = "pagingCommon" }
 androidx-paging-compose = { module = "androidx.paging:paging-compose", version.ref = "pagingCommon" }
+androidx-room-compiler = { module = "androidx.room3:room3-compiler", version.ref = "roomRuntime" }
 androidx-room-paging = { module = "androidx.room3:room3-paging", version.ref = "roomRuntime" }
 androidx-room-runtime = { module = "androidx.room3:room3-runtime", version.ref = "roomRuntime" }
-androidx-room-compiler = { module = "androidx.room3:room3-compiler", version.ref = "roomRuntime" }
 androidx-sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "sqliteBundled" }
 androidx-sqlite-web = { module = "androidx.sqlite:sqlite-web", version.ref = "sqliteBundled" }
 androidx-ui-test-junit4-android = { module = "androidx.compose.ui:ui-test-junit4-android", version.ref = "uiTestJunit4Android" }
@@ -221,7 +222,6 @@ filekit-dialogs-compose = { module = "io.github.vinceglb:filekit-dialogs-compose
 fonticons-core = { module = "dev.tclement.fonticons:core", version.ref = "font-icon-core" }
 foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "foundation" }
 geoip2 = { module = "com.maxmind.geoip2:geoip2", version.ref = "geoip2" }
-github-newpipeextractor = { module = "com.github.teamnewpipe.NewPipeExtractor:NewPipeExtractor", version.ref = "newpipeextractorVersion" }
 google-genai = { module = "com.google.genai:google-genai", version.ref = "googleGenai" }
 gradle = { module = "com.android.tools.build:gradle", version.ref = "agp" }
 h2 = { module = "io.r2dbc:r2dbc-h2", version.ref = "h2" }
@@ -247,6 +247,8 @@ jetbrains-navigation3-ui = { module = "org.jetbrains.androidx.navigation3:naviga
 jlayer = { module = "com.github.umjammer:jlayer", version.ref = "jlayer" }
 kfswatch = { module = "io.github.irgaly.kfswatch:kfswatch", version.ref = "kfswatch" }
 kim = { module = "com.ashampoo:kim", version.ref = "kim" }
+kmp-zip = { module = "no.synth:kmp-zip", version.ref = "kmpZip" }
+kmp-zip-kotlinx = { module = "no.synth:kmp-zip-kotlinx", version.ref = "kmpZip" }
 kodio-core = { module = "space.kodio:core", version.ref = "kodio-core" }
 kotlinx-browser = { module = "org.jetbrains.kotlinx:kotlinx-browser", version.ref = "kotlinxBrowser" }
 kotlinx-cli = { module = "org.jetbrains.kotlinx:kotlinx-cli", version.ref = "kotlinxCli" }
@@ -287,8 +289,6 @@ ktor-server-rate-limit = { module = "io.ktor:ktor-server-rate-limit", version.re
 ktor-server-sessions = { module = "io.ktor:ktor-server-sessions", version.ref = "ktor" }
 ktor-server-test-host = { module = "io.ktor:ktor-server-test-host", version.ref = "ktor" }
 ktor-server-websockets = { module = "io.ktor:ktor-server-websockets", version.ref = "ktor" }
-kmp-zip = { module = "no.synth:kmp-zip", version.ref = "kmpZip" }
-kmp-zip-kotlinx = { module = "no.synth:kmp-zip-kotlinx", version.ref = "kmpZip" }
 latex-base = { module = "io.github.huarangmeng:latex-base", version.ref = "latex" }
 latex-parser = { module = "io.github.huarangmeng:latex-parser", version.ref = "latex" }
 latex-renderer = { module = "io.github.huarangmeng:latex-renderer", version.ref = "latex" }
@@ -332,9 +332,9 @@ richeditor-compose = { module = "com.mohamedrejeb.richeditor:richeditor-compose"
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "runtime" }
 screenshot-validation-api = { module = "com.android.tools.screenshot:screenshot-validation-api", version.ref = "screenshot" }
-sonner = "io.github.dokar3:sonner:0.3.9"
+sonner = { module = "io.github.dokar3:sonner", version.ref = "sonner" }
 sql-formatter = { module = "com.github.vertical-blank:sql-formatter", version.ref = "sqlFormatter" }
-sqlitenow-core = "dev.goquick.sqlitenow:core:0.5.4"
+sqlitenow-core = { module = "dev.goquick.sqlitenow:core", version.ref = "sqlitenow" }
 testcontainers-elasticsearch = { module = "org.testcontainers:elasticsearch", version.ref = "testContainer" }
 testcontainers-minio = { module = "org.testcontainers:minio", version.ref = "testContainer" }
 testcontainers-mysql = { module = "org.testcontainers:mysql", version.ref = "testContainer" }
@@ -355,8 +355,8 @@ zoomimage-compose-coil3 = { module = "io.github.panpf.zoomimage:zoomimage-compos
 aboutlibrary = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "aboutlibrariesCore" }
 android-test = { id = "com.android.test", version.ref = "agp" }
 androidApplication = { id = "com.android.application", version.ref = "agp" }
-benManesVersions = { id = "com.github.ben-manes.versions", version.ref = "benManesVersions" }
 androidLibrary = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
+benManesVersions = { id = "com.github.ben-manes.versions", version.ref = "benManesVersions" }
 buildconfig = { id = "com.codingfeline.buildkonfig", version.ref = "buildconfig" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 composeHotReload = { id = "org.jetbrains.compose.hot-reload", version.ref = "composeHotReload" }
@@ -374,7 +374,7 @@ room = { id = "androidx.room3", version.ref = "roomRuntime" }
 screenshot = { id = "com.android.compose.screenshot", version.ref = "screenshot" }
 sentryAndroidGradle = { id = "io.sentry.android.gradle", version.ref = "sentryAndroidGradle" }
 serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
-sqlitenow = "dev.goquick.sqlitenow:0.5.4"
+sqlitenow = { id = "dev.goquick.sqlitenow", version.ref = "sqlitenow" }
 versionCatalogUpdate = { id = "nl.littlerobots.version-catalog-update", version.ref = "versionCatalogUpdate" }
 
 [bundles]

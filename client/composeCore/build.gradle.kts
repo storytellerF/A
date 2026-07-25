@@ -61,7 +61,6 @@ kotlin {
             implementation(libs.webrtc.kmp)
             implementation(libs.accompanist.permissions)
 
-            implementation(libs.github.newpipeextractor)
             implementation(libs.androidx.datastore.preferences.core)
 
             implementation(libs.androidx.ui.tooling.preview)
@@ -155,7 +154,7 @@ kotlin {
         }
         // jvm 与 android 共享：compose-pdf 的 PdfView actual、m3u-parser 的播放列表解析
         // （wasm 上均无对应库）
-        val jvmAndroidMain by creating {
+        val jvmAndroidMain = create("jvmAndroidMain") {
             dependsOn(commonMain.get())
             dependencies {
                 implementation(libs.compose.pdf)
