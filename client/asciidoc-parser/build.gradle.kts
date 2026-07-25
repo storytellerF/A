@@ -56,7 +56,7 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     sourceSets {
-        val headlessTest by creating {
+        val headlessTest = create("headlessTest") {
             dependsOn(commonTest.get())
         }
         headlessTest.dependencies {
@@ -99,7 +99,7 @@ kotlin {
             implementation(libs.javet.node.macos.x86.x4)
             implementation(libs.javet.node.windows.x86.x4)
         }
-        val jvmAndroidMain by creating {
+        val jvmAndroidMain = create("jvmAndroidMain") {
             dependsOn(commonMain.get())
             dependencies {
                 compileOnly(libs.javet)

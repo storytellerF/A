@@ -44,17 +44,17 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     sourceSets {
-        val headlessTest by creating {
+        val headlessTest = create("headlessTest") {
             dependsOn(commonTest.get())
         }
-        val jvmAndroidMain by creating {
+        val jvmAndroidMain = create("jvmAndroidMain") {
             dependencies {
                 implementation(libs.bcprov.jdk18on)
                 implementation(libs.bcpkix.jdk18on)
             }
             dependsOn(commonMain.get())
         }
-        val noJvmMain by creating {
+        val noJvmMain = create("noJvmMain") {
             dependsOn(commonMain.get())
         }
         androidMain.dependencies {

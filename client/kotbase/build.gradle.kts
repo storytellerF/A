@@ -50,7 +50,7 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     sourceSets {
-        val headlessTest by creating {
+        val headlessTest = create("headlessTest") {
             dependsOn(commonTest.get())
         }
         headlessTest.dependencies {
