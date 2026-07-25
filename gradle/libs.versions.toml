@@ -112,7 +112,9 @@ roomRuntime = "3.0.0"
 runtime = "1.11.1"
 screenshot = "0.0.1-alpha15"
 sentryAndroidGradle = "6.16.0"
+sonner = "0.4.0"
 sqlFormatter = "2.0.5"
+sqlitenow = "0.15.0"
 sqliteBundled = "2.7.0"
 testContainer = "1.21.4"
 tikaCore = "3.3.2"
@@ -330,9 +332,9 @@ richeditor-compose = { module = "com.mohamedrejeb.richeditor:richeditor-compose"
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "runtime" }
 screenshot-validation-api = { module = "com.android.tools.screenshot:screenshot-validation-api", version.ref = "screenshot" }
-sonner = "io.github.dokar3:sonner:0.4.0"
+sonner = { module = "io.github.dokar3:sonner", version.ref = "sonner" }
 sql-formatter = { module = "com.github.vertical-blank:sql-formatter", version.ref = "sqlFormatter" }
-sqlitenow-core = "dev.goquick.sqlitenow:core:0.15.0"
+sqlitenow-core = { module = "dev.goquick.sqlitenow:core", version.ref = "sqlitenow" }
 testcontainers-elasticsearch = { module = "org.testcontainers:elasticsearch", version.ref = "testContainer" }
 testcontainers-minio = { module = "org.testcontainers:minio", version.ref = "testContainer" }
 testcontainers-mysql = { module = "org.testcontainers:mysql", version.ref = "testContainer" }
@@ -372,7 +374,7 @@ room = { id = "androidx.room3", version.ref = "roomRuntime" }
 screenshot = { id = "com.android.compose.screenshot", version.ref = "screenshot" }
 sentryAndroidGradle = { id = "io.sentry.android.gradle", version.ref = "sentryAndroidGradle" }
 serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
-sqlitenow = "dev.goquick.sqlitenow:0.15.0"
+sqlitenow = { id = "dev.goquick.sqlitenow", version.ref = "sqlitenow" }
 versionCatalogUpdate = { id = "nl.littlerobots.version-catalog-update", version.ref = "versionCatalogUpdate" }
 
 [bundles]
