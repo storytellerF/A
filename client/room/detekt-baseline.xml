@@ -1,0 +1,55 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ClassSignature:RoomDatabase.kt:CommonEntity</ID>
+    <ID>ClassSignature:RoomDatabase.kt:DownloadEntity</ID>
+    <ID>ClassSignature:RoomDatabase.kt:UploadEntity</ID>
+    <ID>FunctionExpressionBody:Database.wasmJs.kt:{ return Room.databaseBuilder&lt;AppDatabase&gt;(name = "$scope.db") }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RemoteKeyRoomStorage${ return appDatabase.getCommonDao().get(NEXT_COLLECTION, collection)?.let { commonJson.safeDecodeFromStringOrNull(it.data) } }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RemoteKeyRoomStorage${ return appDatabase.getCommonDao().get(PRE_COLLECTION, collection)?.let { commonJson.safeDecodeFromStringOrNull(it.data) } }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomChildAccountStorage${ return impl.observeData(ChildAccountStorage.COLLECTION_NAME) }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomChildAccountStorage${ return impl.observeDatum(ChildAccountStorage.COLLECTION_NAME, key) }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomCommunityInfoStorage${ return impl.getDocument(collection.getName(), key) }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomCommunityInfoStorage${ return impl.observeData(collection.getName()) }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomDownloadInfoStorage${ return WrappedPagingSource( appDatabase.getDownloadDao().getAsSource(DownloadInfoStorage.COLLECTION_NAME) ) { entities -&gt; entities.mapNotNull { commonJson.safeDecodeFromStringOrNull(it.data) } } }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomDownloadInfoStorage${ return appDatabase.getDownloadDao() .getByFileIdAsFlow(DownloadInfoStorage.COLLECTION_NAME, fileId).map { it?.data?.let { string -&gt; commonJson.safeDecodeFromStringOrNull(string) } } }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomDownloadInfoStorage${ return appDatabase.getDownloadDao().getByFileId(DownloadInfoStorage.COLLECTION_NAME, fileId) ?.let { commonJson.safeDecodeFromStringOrNull(it.data) } }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomFileInfoStorage${ return impl.getDocument(collection.getName(), key) }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomFileInfoStorage${ return impl.observeData(collection.getName()) }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomFileInfoStorage${ return impl.observeDatum(FileCollection.Files.getName(), key) }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomFileRefInfoStorage${ return impl.observeData(collection.getName()) }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomMemberInfoStorage${ return impl.getDocument(collection.getName(), key) }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomMemberInfoStorage${ return impl.observeData(collection.getName()) }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomOverviewStorage${ return impl.observeDatum(OverviewStorage.COLLECTION_NAME, "overview") }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomPanelLogInfoStorage${ return impl.observeData(collection.getName()) }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomReactionInfoStorage${ return impl.observeData(collection.getName()) }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomRoomInfoStorage${ return impl.getDocument(collection.getName(), key) }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomRoomInfoStorage${ return impl.observeData(collection.getName()) }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomRoomInfoStorage${ return impl.observeDatum(RoomCollection.Rooms.getName(), key) }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomTaskRecordInfoStorage${ return impl.observeData(collection.getName()) }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomTitleInfoStorage${ return impl.getDocument(collection.getName(), key) }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomTitleInfoStorage${ return impl.observeData(collection.getName()) }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomTitleInfoStorage${ return impl.observeDatum(TitleCollection.Titles.getName(), key) }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomTopicInfoStorage${ return impl.getDocument(collection.getName(), key) }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomTopicInfoStorage${ return impl.observeData(collection.getName()) }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomTopicInfoStorage${ return impl.observeDatum(TopicCollection.Topics.getName(), key) }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomUploadInfoStorage${ return WrappedPagingSource( appDatabase.getUploadDao().getAsSource(collection.getName()) ) { entities -&gt; entities.mapNotNull { commonJson.safeDecodeFromStringOrNull(it.data) } } }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomUploadInfoStorage${ return appDatabase.getUploadDao().get(collection.getName(), key)?.let { commonJson.safeDecodeFromStringOrNull(it.data) } }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomUploadInfoStorage${ return appDatabase.getUploadDao().getAsFlow(collection.getName(), pathHash).map { it?.data?.let { string -&gt; commonJson.safeDecodeFromStringOrNull(string) } } }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomUploadRecordInfoStorage${ return impl.observeData(collection.getName()) }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomUserFavoriteStorage${ return impl.getDocument(collection.getName(), key) }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomUserFavoriteStorage${ return impl.observeData(collection.getName()) }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomUserFavoriteStorage${ return impl.observeDatum(UserFavoriteStorage.COLLECTION_NAME, key) }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomUserInfoStorage${ return impl.getDocument(collection.getName(), key) }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomUserInfoStorage${ return impl.observeData(collection.getName()) }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomUserInfoStorage${ return impl.observeDatum(UserCollection.Users.getName(), key) }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomUserLogInfoStorage${ return impl.observeData(collection.getName()) }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomUserOverviewStorage${ return impl.observeDatum(UserOverviewStorage.COLLECTION_NAME, "overview") }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomUserReactionRecordStorage${ return impl.clean(collection.getName()) }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomUserReactionRecordStorage${ return impl.observeData(collection.getName()) }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomUserSubscriptionStorage${ return impl.getDocument(collection.getName(), key) }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomUserSubscriptionStorage${ return impl.observeData(collection.getName()) }</ID>
+    <ID>FunctionExpressionBody:RoomStorage.kt:RoomUserSubscriptionStorage${ return impl.observeDatum(UserSubscriptionStorage.COLLECTION_NAME, key) }</ID>
+  </CurrentIssues>
+</SmellBaseline>

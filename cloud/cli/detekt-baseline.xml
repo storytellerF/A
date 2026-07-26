@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>BlankLineBetweenWhenConditions:AddPreset.kt:AddPreset$when (it.scopeType) { ObjectType.USER -&gt; { userMap[it.scope]!!.id } ObjectType.COMMUNITY -&gt; { communityMap[it.scope]!!.id } ObjectType.ROOM -&gt; roomMap[it.scope]!!.id else -&gt; throw Exception("not support") }</ID>
+    <ID>BlankLineBetweenWhenConditions:AddPreset.kt:AddPreset$when (val type = presetValue.type) { "community" -&gt; addCommunities(presetValue, parentDir) "user" -&gt; addUsers(presetValue, parentDir) "topic" -&gt; addTopics(presetValue, parentDir) "room" -&gt; addRooms(presetValue, parentDir) "file" -&gt; addFiles(presetValue, parentDir) "title" -&gt; addTitles(presetValue) "panelAccount" -&gt; addPanels(presetValue, parentDir) else -&gt; { Napier.e { "unrecognized type $type" } exitProcess(2) } }</ID>
+    <ID>ClassSignature:AddPreset.kt:DownloadProgress</ID>
+    <ID>ClassSignature:GeneratePresetKeysCommand.kt:GeneratePresetKeysCommand : Subcommand</ID>
+    <ID>FunctionExpressionBody:AddPreset.kt:AddPreset${ return getAlgo(algoType).run { val derPublicKey = getDerPublicKeyFromPrivateKey( File(parentDir, privatePath).readText().replace("\r\n", "\n") ).getOrThrow() val ad = calcAddress(derPublicKey).getOrThrow() Pair(derPublicKey, ad) } }</ID>
+    <ID>FunctionExpressionBody:AddPreset.kt:{ return path.endsWith("download") || path.endsWith(".download.yaml") || path.endsWith(".download.yml") }</ID>
+  </CurrentIssues>
+</SmellBaseline>

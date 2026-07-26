@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>BlankLineBetweenWhenConditions:SubscriptionTask.kt:when (topic.parentType) { ObjectType.TOPIC -&gt; generateTopicSubscriptionContentForTopic(topic.id, topicParentId) ObjectType.ROOM -&gt; generateTopicSubscriptionContentForRoom(topic.id, topicParentId) ObjectType.COMMUNITY -&gt; generateTopicSubscriptionContentForCommunity(topic.id, topicParentId) ObjectType.USER -&gt; generateTopicSubscriptionContentForUser(topic.id, topicParentId) else -&gt; null }</ID>
+    <ID>FunctionExpressionBody:IntroTask.kt:{ return runCatching { val adminUserResult = database.user.getRawUser(ObjectFetch.AidFetch("System")).getOrThrow() val adminAid = adminUserResult?.user?.id ?: throw Exception("System user not found") rawUsers.forEach { sendTopicToNotificationRoom(adminAid, it.user, "Hello, ${it.user.nickname}") database.admin.createTaskRecord( TaskRecord(SnowflakeFactory.nextId(), now(), TaskRecordType.INTRO, it.user.id) ) Napier.i(tag = "intro") { "send hello success" } } } }</ID>
+    <ID>FunctionExpressionBody:TitleTask.kt:{ return buildString { appendLine("You received a new title!") appendLine("Title: ${title.name}") appendLine("From: System") appendLine("Created: ${title.createdTime}") if (title.expiresAt != null) { appendLine("Expires: ${title.expiresAt}") } } }</ID>
+  </CurrentIssues>
+</SmellBaseline>

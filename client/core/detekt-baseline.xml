@@ -1,0 +1,35 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>BlankLineBetweenWhenConditions:WebSocketClient.kt:WebSocketClientImpl$when (connectionHandler.state.value) { is LoadingState.Loading -&gt; return is LoadingState.Done -&gt; { val oldSession = connectionHandler.data.value if (oldSession?.isActive == true) return } else -&gt; {} }</ID>
+    <ID>ClassSignature:LoadingState.kt:SimpleLoadingHandler&lt;T&gt; : LoadingHandler</ID>
+    <ID>ClassSignature:SessionManager.kt:PendingTotpSignIn</ID>
+    <ID>ClassSignature:SessionManager.kt:PreparedSignInParam</ID>
+    <ID>ClassSignature:Test.kt:CountingUserPass : UserPass</ID>
+    <ID>ClassSignature:UserPass.kt:RawUserPassInfo</ID>
+    <ID>FunctionExpressionBody:AppRequest.kt:{ return serviceCatching { CustomApi.Users.Read.add(info) { contentType(ContentType.Application.Json) } } }</ID>
+    <ID>FunctionExpressionBody:CustomSlf4jLogger.kt:CustomLoggerFactory${ return CustomSlf4jLogger(name ?: "Default") }</ID>
+    <ID>FunctionExpressionBody:CustomSlf4jLogger.kt:CustomSLF4JServiceProvider${ return "2.0.0" }</ID>
+    <ID>FunctionExpressionBody:CustomSlf4jLogger.kt:CustomSLF4JServiceProvider${ return BasicMDCAdapter() }</ID>
+    <ID>FunctionExpressionBody:CustomSlf4jLogger.kt:CustomSLF4JServiceProvider${ return BasicMarkerFactory() }</ID>
+    <ID>FunctionExpressionBody:CustomSlf4jLogger.kt:CustomSLF4JServiceProvider${ return CustomLoggerFactory() }</ID>
+    <ID>FunctionExpressionBody:CustomSlf4jLogger.kt:CustomSlf4jLogger${ return false }</ID>
+    <ID>FunctionExpressionBody:CustomSlf4jLogger.kt:CustomSlf4jLogger${ return null }</ID>
+    <ID>FunctionExpressionBody:CustomSlf4jLogger.kt:CustomSlf4jLogger${ return true }</ID>
+    <ID>FunctionExpressionBody:HttpClient.ios.kt:{ return HttpClient(Darwin) { install(ContentNegotiation) { json() } block() } }</ID>
+    <ID>FunctionExpressionBody:HttpClient.wasmJs.kt:{ return HttpClient { block() } }</ID>
+    <ID>FunctionExpressionBody:SessionManager.kt:{ return getAlgo(authKey.algo).runCatching { val data = getData().getOrThrow() val f = finalData(data) val signature = signature(authKey.derPrivateKey, f).getOrThrow() val address = calcAddress(authKey.derPublicKey).getOrThrow() PreparedSignInParam(signature, address, authKey, data) } }</ID>
+    <ID>FunctionExpressionBody:SessionManagerKt.kt:{ return prepareSignInFromPrivateKey(authKey) { getData() }.mapResult { param -&gt; signIn(SignInBody(param.address, param.signature)).map { signIn -&gt; when (signIn) { is SignInResponse.Success -&gt; { SignResult( signIn.userInfo, param.data, param.signature, param.address, param.authKey ) } SignInResponse.RequiresTotp -&gt; error("totp required") } } }.getOrThrow() }</ID>
+    <ID>FunctionExpressionBody:SessionManagerKt.kt:{ return prepareSignInFromPrivateKey(authKey) { getData() }.mapResult { param -&gt; val encryptionPublicKey = (param.authKey as? AuthKey.Dilithium)?.derEncryptionPublicKey signUp( SignUpBody( param.authKey.derPublicKey, param.signature, encryptionPublicKey ) ).map { userInfo -&gt; SignResult( userInfo, param.data, param.signature, param.address, param.authKey ) } }.getOrThrow() }</ID>
+    <ID>FunctionExpressionBody:SessionManagerKt.kt:{ return prepareSignInFromPrivateKey(authKey, { getData() }).mapResult { param -&gt; signIn(SignInBody(param.address, param.signature)).map { SignResult( it, param.data, param.signature, param.address, authKey ) } }.getOrThrow() }</ID>
+    <ID>FunctionExpressionBody:SessionManagerKt.kt:{ return prepareSignInFromPrivateKey(authKey, { getData() }).mapResult { param -&gt; val encryptionPublicKey1 = (param.authKey as? AuthKey.Dilithium)?.derEncryptionPublicKey signUp( SignUpBody( param.authKey.derPublicKey, param.signature, encryptionPublicKey1 ) ).map { SignResult( it, param.data, param.signature, param.address, authKey ) } }.getOrThrow() }</ID>
+    <ID>FunctionExpressionBody:UserPass.kt:RawUserPass${ return getAlgo(rawUSerPass.algo).calcAddress(rawUSerPass.authKey.derPublicKey) }</ID>
+    <ID>FunctionExpressionBody:UserPass.kt:RawUserPass${ return getAlgo(rawUSerPass.algo).signature(rawUSerPass.authKey.derPrivateKey, data) }</ID>
+    <ID>FunctionExpressionBody:UserPass.kt:RawUserPass${ return getAlgo(rawUSerPass.algo).verify(rawUSerPass.authKey.derPublicKey, signature, data) }</ID>
+    <ID>FunctionExpressionBody:UserPass.kt:RawUserPass${ return runCatching { // Generate new key pair for child account val algo = getAlgo(childAlgoType) val (pemPrivateKey, pemPublicKey) = algo.generatePemKeyPair().getOrThrow() val derPrivateKey = algo.getDerPrivateKey(pemPrivateKey).getOrThrow() val derPublicKey = algo.getDerPublicKeyFromPem(pemPublicKey).getOrThrow() val (derEncryptionPrivateKey, derEncryptionPublicKey) = if (childAlgoType == AlgoType.DILITHIUM) { val encAlgo = (algo.encryptionAlgo as com.storyteller_f.shared.Type2Algo) val (encPriv, _) = encAlgo.generateEncryptionPemKeyPair().getOrThrow() encAlgo.getDerEncryptionPrivateKeyFromPemPrivateKey(encPriv).getOrThrow() to encAlgo.getDerEncryptionPublicKeyFromPemPrivateKey(encPriv).getOrThrow() } else { null to null } // Encrypt the child's private key with AES val (encryptedPrivateKey, aesKey) = encryptDataByAES(derPrivateKey).getOrThrow() val encryptedEncryptionPrivateKey = derEncryptionPrivateKey?.let { encryptDataByAES(it, aesKey).getOrThrow().toHexString() } // Get user's public key for encryption val authKey = rawUSerPass.authKey val parentAlgo = getAlgo(authKey.algo) val encryptedAesKey = if (authKey is AuthKey.Dilithium) { parentAlgo.encryptionAlgo.kemEncrypt(authKey.derEncryptionPublicKey, aesKey) } else { parentAlgo.encryptionAlgo.kemEncrypt(authKey.derPublicKey, aesKey) }.getOrThrow() CustomApi.Accounts.ChildAccounts.AddChildAccountRequest( encryptedPrivateKey = encryptedPrivateKey.toHexString(), encryptedAesKey = encryptedAesKey.toHexString(), derPublicKey = derPublicKey, algoType = childAlgoType, encryptedEncryptionPrivateKey = encryptedEncryptionPrivateKey, encryptionPublicKey = derEncryptionPublicKey ) } }</ID>
+    <ID>FunctionExpressionBody:WebSocketClient.kt:WebSocketClientImpl${ return passHolder.currentUserPass != null &amp;&amp; sessionModel.userHandler.data.value == userInfo }</ID>
+    <ID>ImportOrdering:SessionManagerKt.kt:import com.storyteller_f.a.api.SignInBody import com.storyteller_f.a.api.SignInResponse import com.storyteller_f.a.api.SignUpBody import kotlinx.coroutines.CoroutineScope import kotlinx.coroutines.Job import kotlinx.coroutines.cancelAndJoin import kotlinx.coroutines.launch import com.storyteller_f.shared.model.PanelAccountInfo import com.storyteller_f.shared.model.UserInfo import com.storyteller_f.shared.utils.mapResult</ID>
+    <ID>Indentation:SessionManagerKt.kt: </ID>
+  </CurrentIssues>
+</SmellBaseline>

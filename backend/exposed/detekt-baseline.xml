@@ -1,0 +1,48 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ClassSignature:ExposedCommunityDatabase.kt:ExposedCommunityDatabase : CommunityDatabase</ID>
+    <ID>ClassSignature:ExposedContainerDatabase.kt:ExposedContainerDatabase : ContainerDatabase</ID>
+    <ID>ClassSignature:ExposedFavoriteDatabase.kt:ExposedFavoriteDatabase : FavoriteDatabase</ID>
+    <ID>ClassSignature:ExposedPanelAccountDatabase.kt:ExposedPanelAccountDatabase : PanelAccountDatabase</ID>
+    <ID>ClassSignature:ExposedReactionDatabase.kt:ExposedReactionDatabase : ReactionDatabase</ID>
+    <ID>ClassSignature:ExposedRoomDatabase.kt:ExposedRoomDatabase : RoomDatabase</ID>
+    <ID>ClassSignature:ExposedSubscriptionDatabase.kt:ExposedSubscriptionDatabase : SubscriptionDatabase</ID>
+    <ID>ClassSignature:ExposedTopicDatabase.kt:ExposedTopicDatabase : TopicDatabase</ID>
+    <ID>FunctionExpressionBody:Assets.kt:{ return with(AssetTransactions) { AssetTransaction(row[id], row[uid], row[createdTime], row[type], row[before], row[after]) } }</ID>
+    <ID>FunctionExpressionBody:BaseTable.kt:ExposedDatabase${ return throwable.cause?.isDup() ?: false }</ID>
+    <ID>FunctionExpressionBody:Communities.kt:{ return with(Communities) { val fontSettingsJson = row[fontSettings] val fontSettings = fontSettingsJson?.let { runCatching { json.decodeFromString&lt;FontSettings&gt;(it) } .onFailure { Napier.e("Failed to parse font_settings", it) } .getOrNull() } Community( row[id], row[createdTime], row[Aids.value], row[name], row[owner], row[memberPolicy], row[icon], row[poster], fontSettings, row[status], ) } }</ID>
+    <ID>FunctionExpressionBody:EncryptedKeys.kt:{ return with(EncryptedKeys) { EncryptedKey(row[topicId], row[uid], row[encryptedAes].bytes) } }</ID>
+    <ID>FunctionExpressionBody:ExposedAdminDatabase.kt:ExposedAdminDatabase${ return databaseSession.dbQuery { EncryptedKeys.batchInsert(encryptedKeys) { (topicId, b, uid) -&gt; this[EncryptedKeys.topicId] = topicId this[EncryptedKeys.encryptedAes] = ExposedBlob(b) this[EncryptedKeys.uid] = uid } } }</ID>
+    <ID>FunctionExpressionBody:ExposedAdminDatabase.kt:ExposedAdminDatabase${ return databaseSession.dbQuery { UserSubscriptions.batchInsert(list) { this[UserSubscriptions.id] = it.id this[UserSubscriptions.createdTime] = it.createdTime this[UserSubscriptions.uid] = it.uid this[UserSubscriptions.objectId] = it.objectId this[UserSubscriptions.objectType] = it.objectType } } }</ID>
+    <ID>FunctionExpressionBody:ExposedAdminDatabase.kt:ExposedAdminDatabase${ return databaseSession.dbQuery { check(PanelLogs.insert { it[id] = log.id it[adminId] = log.adminId it[targetId] = log.targetId it[objectType] = log.objectType it[action] = log.action it[createdTime] = log.createdTime }.insertedCount &gt; 0) { "insert panel log failed" } } }</ID>
+    <ID>FunctionExpressionBody:ExposedCommunityDatabase.kt:ExposedCommunityDatabase${ return when (hasPosterSearch) { PosterSearch.HAS_POSTER -&gt; andWhere { Communities.poster.isNotNull() } PosterSearch.NO_POSTER -&gt; andWhere { Communities.poster.isNull() } else -&gt; { orderBy(Communities.poster.isNull(), SortOrder.ASC) } } }</ID>
+    <ID>FunctionExpressionBody:ExposedContainerDatabase.kt:ExposedContainerDatabase${ return databaseSession.dbSearch { search { Members .join(Topics, JoinType.INNER, Members.objectId, Topics.parentId) { Topics.parentType eq ObjectType.ROOM } .join(UserTopicReads, JoinType.LEFT, Members.objectId, UserTopicReads.objectId) { (UserTopicReads.uid eq Members.uid) and (UserTopicReads.objectType eq ObjectType.ROOM) } .select(Members.objectId) .where { (Members.uid eq uid) and (Members.objectType eq ObjectType.ROOM) and (Members.status eq MemberStatus.JOINED) and Members.joinedTime.isNotNull() and (UserTopicReads.topicId.isNull() or (UserTopicReads.topicId less Topics.id)) } } map { it[Members.objectId] } }.map { unreadRoomIds -&gt; unreadRoomIds.distinct().size } }</ID>
+    <ID>FunctionExpressionBody:FileRecords.kt:{ return with(FileRecords) { FileRecord( resultRow[id], resultRow[createdTime], resultRow[name], resultRow[duration], resultRow[width], resultRow[height], resultRow[owner], resultRow[ownerType], resultRow[contentType], resultRow[size], resultRow[fullName], resultRow[sha256], resultRow[status] ) } }</ID>
+    <ID>FunctionExpressionBody:FileRefs.kt:{ return with(FileRefs) { FileRef( resultRow[id], resultRow[createdTime], resultRow[objectId], resultRow[objectType], resultRow[author], resultRow[mediaName], resultRow[fileId], ) } }</ID>
+    <ID>FunctionExpressionBody:Members.kt:{ return with(Members) { Member( row[id], row[uid], row[objectId], row[objectType], row[createdTime], row[status], row[joinedTime], row[invitedTime] ) } }</ID>
+    <ID>FunctionExpressionBody:PanelAccounts.kt:{ return PanelAccount( resultRow[PanelAccounts.id], resultRow[PanelAccounts.name], resultRow[PanelAccounts.passType], resultRow[PanelAccounts.algoType], resultRow[PanelAccounts.publicKey], resultRow[PanelAccounts.address], ) }</ID>
+    <ID>FunctionExpressionBody:PanelLogs.kt:{ return with(PanelLogs) { PanelLog( row[id], row[adminId], row[targetId], row[objectType], row[action], row[createdTime] ) } }</ID>
+    <ID>FunctionExpressionBody:Quotas.kt:{ return Quota( resultRow[Quotas.ownerId], resultRow[Quotas.ownerType], resultRow[Quotas.total], resultRow[Quotas.used], resultRow[Quotas.quotaType], resultRow[Quotas.lockId] ) }</ID>
+    <ID>FunctionExpressionBody:ReactionRecords.kt:{ return with(ReactionRecords) { ReactionRecord( resultRow[uid], resultRow[objectId], resultRow[objectType], resultRow[emoji], resultRow[id], resultRow[createdTime] ) } }</ID>
+    <ID>FunctionExpressionBody:ReactionRecords.kt:{ return with(Reactions) { Reaction( resultRow[objectId], resultRow[objectType], resultRow[emoji], resultRow[count], resultRow[lastReactionId] ) } }</ID>
+    <ID>FunctionExpressionBody:Rooms.kt:{ return with(Rooms) { Room( row[id], row[createdTime], row[Aids.value], row[name], row[creator], row[icon], row[communityId], row[status] ) } }</ID>
+    <ID>FunctionExpressionBody:TaskRecords.kt:{ return with(TaskRecords) { TaskRecord(resultRow[id], resultRow[createdTime], resultRow[type], resultRow[processedId]) } }</ID>
+    <ID>FunctionExpressionBody:Titles.kt:{ return Title( row[Titles.id], row[Titles.createdTime], row[Titles.name], row[Titles.creator], row[Titles.receiver], row[Titles.type], row[Titles.scopeId], row[Titles.scopeType], row[Titles.titleStatus], row[Titles.descriptionTopicId], row[Titles.expiresAt], row[Titles.status] ) }</ID>
+    <ID>FunctionExpressionBody:Topics.kt:{ return with(Topics) { Topic( row[id], row[createdTime], row[author], row[parentId], row[parentType], row[rootId], row[rootType], row[content].bytes, row[isEncrypted], row[level], row[pinned], row[lastModifiedTime], row.getOrNull(Aids.value), row[status], ) } }</ID>
+    <ID>FunctionExpressionBody:UploadRecords.kt:{ return with(UploadRecords) { UploadRecord( resultRow[id], resultRow[createdTime], resultRow[objectId], resultRow[objectType], resultRow[status], resultRow[total], resultRow[progress], resultRow[name], resultRow[chunkSize], resultRow[sha256], ) } }</ID>
+    <ID>FunctionExpressionBody:UserDevices.kt:{ return with(UserDevices) { UserDevice(row[uid], row[endpointUrl]) } }</ID>
+    <ID>FunctionExpressionBody:UserFavorites.kt:{ return UserFavorite( resultRow[UserFavorites.id], resultRow[UserFavorites.uid], resultRow[UserFavorites.objectId], resultRow[UserFavorites.objectType], resultRow[UserFavorites.createdTime], ) }</ID>
+    <ID>FunctionExpressionBody:UserLogs.kt:{ return with(UserLogs) { UserLog( resultRow[id], resultRow[createdTime], resultRow[uid], resultRow[type], resultRow[objectId], resultRow[objectType] ) } }</ID>
+    <ID>FunctionExpressionBody:UserSubscriptions.kt:{ return SubscriptionSentLog( resultRow[SubscriptionSentLogs.id], resultRow[SubscriptionSentLogs.uid], resultRow[SubscriptionSentLogs.objectId], resultRow[SubscriptionSentLogs.objectType], resultRow[SubscriptionSentLogs.subscriptionId], resultRow[SubscriptionSentLogs.createdTime], ) }</ID>
+    <ID>FunctionExpressionBody:UserSubscriptions.kt:{ return UserSubscription( resultRow[UserSubscriptions.id], resultRow[UserSubscriptions.uid], resultRow[UserSubscriptions.objectId], resultRow[UserSubscriptions.objectType], resultRow[UserSubscriptions.createdTime], ) }</ID>
+    <ID>FunctionExpressionBody:UserTopicReads.kt:{ return with(UserTopicReads) { UserTopicRead( resultRow[uid], resultRow[updatedAt], resultRow[objectId], resultRow[objectType], resultRow[topicId] ) } }</ID>
+    <ID>FunctionExpressionBody:UserTwoFactors.kt:{ return json.encodeToString(recoveryCodeHashesSerializer, hashes) }</ID>
+    <ID>FunctionExpressionBody:UserTwoFactors.kt:{ return with(UserTwoFactors) { UserTwoFactor( row[uid], row[enabled], row[type], row[totpSecret], json.decodeFromString(recoveryCodeHashesSerializer, row[recoveryCodeHashes]), row[updatedAt], ) } }</ID>
+    <ID>FunctionExpressionBody:Users.kt:{ return RawUser(User.wrapRow(it)) }</ID>
+    <ID>FunctionExpressionBody:Users.kt:{ return Users.selectAll().where(function) }</ID>
+    <ID>FunctionExpressionBody:Users.kt:{ return with(ChildAccounts) { ChildAccount( row[uid], row[encryptedPrivateKey], row[encryptedAesKey], row[hostId], row[remark], row[encryptedEncryptionPrivateKey] ) } }</ID>
+    <ID>FunctionExpressionBody:Users.kt:{ return with(Users) { User( row[Aids.value], row[encryptionPublicKey], row[publicKey], row[address], row[icon], row[nickname], row[id], row[createdTime], row[acgAmount], row[passType], row[algoType], row[notificationId], row[status], ) } }</ID>
+  </CurrentIssues>
+</SmellBaseline>

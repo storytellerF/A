@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>FunctionExpressionBody:RedisCacheService.kt:RedisCacheService${ return useRedis(endpoint) { val cache = get(key) if (cache == null) { val new = block() set(key, new) new } else { cache } } }</ID>
+    <ID>FunctionExpressionBody:RedisCacheService.kt:RedisCacheServiceFactory${ return !env["CACHE_SERVICE"].isNullOrBlank() }</ID>
+    <ID>FunctionExpressionBody:RedisCacheService.kt:{ return newClient(Endpoint.from(endpoint)).use { it.block() } }</ID>
+  </CurrentIssues>
+</SmellBaseline>

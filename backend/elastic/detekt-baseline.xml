@@ -1,0 +1,43 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>BlankLineBetweenWhenConditions:Elastic.kt:when { certFile.isBlank() -&gt; { "" } certFile.startsWith("~") -&gt; { val homeDir = System.getProperty("user.home") File(certFile.replace("~", homeDir)).canonicalPath } else -&gt; { File(certFile).canonicalPath } }</ID>
+    <ID>ClassSignature:ElasticCommunitySearchService.kt:ElasticCommunitySearchService : ElasticCommunitySearchService</ID>
+    <ID>ClassSignature:ElasticFileSearchService.kt:ElasticFileSearchService : ElasticFileSearchService</ID>
+    <ID>ClassSignature:ElasticMemberSearchService.kt:ElasticMemberSearchService : ElasticMemberSearchService</ID>
+    <ID>ClassSignature:ElasticRoomSearchService.kt:ElasticRoomSearchService : ElasticRoomSearchService</ID>
+    <ID>ClassSignature:ElasticTopicSearchService.kt:ElasticTopicSearchService : ElasticTopicSearchService</ID>
+    <ID>ClassSignature:ElasticUserSearchService.kt:ElasticUserSearchService : ElasticUserSearchService</ID>
+    <ID>FunctionExpressionBody:Elastic.kt:{ return if (idList.size == 1) { idList.map { id -&gt; get({ it.index(indexName).id(id.toString()) }, clazz).await().source() } } else { mget({ builder -&gt; builder.index(indexName).ids(idList.map { it.toString() }) }, clazz).await().docs().map { it.result().source() } } }</ID>
+    <ID>FunctionExpressionBody:Elastic.kt:{ return try { val response = search(request, clazz).await() val hits = response.hits() val total = hits.total()?.value() Napier.i { "size: ${hits.hits().size} maxScore: ${hits.maxScore()} total: $total" } PaginationResult(hits.hits().mapNotNull { it.source() }, total ?: 0) } catch (e: Exception) { Napier.e(e) { "elastic search failed" } PaginationResult(emptyList(), 0) } }</ID>
+    <ID>FunctionExpressionBody:ElasticCommunitySearchService.kt:ElasticCommunitySearchService${ return SearchRequest.of { s -&gt; s.index(INDEX_NAME).apply { when (communityDocumentSearch) { is CommunityDocumentSearch.Keyword -&gt; { val fetch = communityDocumentSearch.fetch from(fetch.cursor?.value ?: 0) size(fetch.size) val word = communityDocumentSearch.keyword query { q -&gt; q.bool { b -&gt; val keyword = preprocessUserInputKeyword(word) b.prioritizedFields(keyword, "aid", "name") } } } } } } }</ID>
+    <ID>FunctionExpressionBody:ElasticCommunitySearchService.kt:ElasticCommunitySearchService${ return useElasticClient { cleanAll(INDEX_NAME) } }</ID>
+    <ID>FunctionExpressionBody:ElasticCommunitySearchService.kt:ElasticCommunitySearchServiceFactory${ return buildElasticSearchService(env) { ElasticCommunitySearchService(it) } }</ID>
+    <ID>FunctionExpressionBody:ElasticCommunitySearchService.kt:ElasticCommunitySearchServiceFactory${ return env["SEARCH_SERVICE"] == "elastic" }</ID>
+    <ID>FunctionExpressionBody:ElasticFileSearchService.kt:ElasticFileSearchService${ return useElasticClient { cleanAll(INDEX_NAME) } }</ID>
+    <ID>FunctionExpressionBody:ElasticFileSearchService.kt:ElasticFileSearchService${ return useElasticClient { saveDocumentList(connection, documents, INDEX_NAME) } }</ID>
+    <ID>FunctionExpressionBody:ElasticFileSearchService.kt:ElasticFileSearchServiceFactory${ return buildElasticSearchService(env) { ElasticFileSearchService(it) } }</ID>
+    <ID>FunctionExpressionBody:ElasticFileSearchService.kt:ElasticFileSearchServiceFactory${ return env["SEARCH_SERVICE"] == "elastic" }</ID>
+    <ID>FunctionExpressionBody:ElasticMemberSearchService.kt:ElasticMemberSearchService${ return SearchRequest.of { s -&gt; s.index(INDEX_NAME).apply { when (memberDocumentSearch) { is MemberDocumentSearch.Keyword -&gt; { buildMemberSearchRequest(memberDocumentSearch) } is MemberDocumentSearch.CommunityMembers -&gt; { buildCommunityMemberSearchRequest(memberDocumentSearch) } is MemberDocumentSearch.RoomMembers -&gt; { buildRoomMemberSearchRequest(memberDocumentSearch) } } } } }</ID>
+    <ID>FunctionExpressionBody:ElasticMemberSearchService.kt:ElasticMemberSearchService${ return useElasticClient { cleanAll(INDEX_NAME) } }</ID>
+    <ID>FunctionExpressionBody:ElasticMemberSearchService.kt:ElasticMemberSearchService${ return useElasticClient { saveDocumentList(connection, documents, INDEX_NAME) } }</ID>
+    <ID>FunctionExpressionBody:ElasticMemberSearchService.kt:ElasticMemberSearchService${ return useElasticClient { val query = QueryBuilders.bool { b -&gt; b.must { m -&gt; m.term { t -&gt; t.field("uid").value(uid.toString()) } }.must { m -&gt; m.term { t -&gt; t.field("objectId").value(objectId.toString()) } } } val response = deleteByQuery { d -&gt; d.index(INDEX_NAME).query(query).refresh(connection.refresh) }.await() Napier.d { "elastic delete member document: query=$query, deleted=${response.deleted()}" } } }</ID>
+    <ID>FunctionExpressionBody:ElasticMemberSearchService.kt:ElasticMemberSearchServiceFactory${ return buildElasticSearchService(env) { ElasticMemberSearchService(it) } }</ID>
+    <ID>FunctionExpressionBody:ElasticMemberSearchService.kt:ElasticMemberSearchServiceFactory${ return env["SEARCH_SERVICE"] == "elastic" }</ID>
+    <ID>FunctionExpressionBody:ElasticRoomSearchService.kt:ElasticRoomSearchService${ return SearchRequest.of { s -&gt; s.index(INDEX_NAME).apply { when (roomDocumentSearch) { is RoomDocumentSearch.Keyword -&gt; { val fetch = roomDocumentSearch.fetch from(fetch.cursor?.value ?: 0) size(fetch.size) val word = roomDocumentSearch.words query { q -&gt; q.bool { b -&gt; val keyword = preprocessUserInputKeyword(word) b.must { m -&gt; m.bool { nestedBool -&gt; nestedBool.prioritizedFields(keyword, "aid", "name") } } // 添加对communityId的过滤 roomDocumentSearch.communityId?.let { communityId -&gt; b.filter { f -&gt; f.term { t -&gt; t.field("communityId").value(communityId) } } } } } } } } } }</ID>
+    <ID>FunctionExpressionBody:ElasticRoomSearchService.kt:ElasticRoomSearchService${ return useElasticClient { cleanAll(INDEX_NAME) } }</ID>
+    <ID>FunctionExpressionBody:ElasticRoomSearchService.kt:ElasticRoomSearchService${ return useElasticClient { saveDocumentList(connection, documents, INDEX_NAME) } }</ID>
+    <ID>FunctionExpressionBody:ElasticRoomSearchService.kt:ElasticRoomSearchServiceFactory${ return buildElasticSearchService(env) { ElasticRoomSearchService(it) } }</ID>
+    <ID>FunctionExpressionBody:ElasticRoomSearchService.kt:ElasticRoomSearchServiceFactory${ return env["SEARCH_SERVICE"] == "elastic" }</ID>
+    <ID>FunctionExpressionBody:ElasticTopicSearchService.kt:ElasticTopicSearchService${ return SearchRequest.of { s -&gt; s.index(INDEX_NAME).apply { when (topicDocumentSearch) { is TopicDocumentSearch.Recommend -&gt; { buildTopicRecommendSearchRequest(topicDocumentSearch) } is TopicDocumentSearch.RecommendNotLogin -&gt; { buildTopicRecommendNotLoginSearchRequest(topicDocumentSearch) } is TopicDocumentSearch.AllCommunityRoot -&gt; { buildCommunityRootSearchRequest(topicDocumentSearch) } is TopicDocumentSearch.Topics -&gt; { buildTopicSearchRequest(topicDocumentSearch) } is TopicDocumentSearch.All -&gt; { buildAllTopicSearchRequest(topicDocumentSearch) } } } } }</ID>
+    <ID>FunctionExpressionBody:ElasticTopicSearchService.kt:ElasticTopicSearchService${ return useElasticClient { cleanAll(INDEX_NAME) } }</ID>
+    <ID>FunctionExpressionBody:ElasticTopicSearchService.kt:ElasticTopicSearchServiceFactory${ return buildElasticSearchService(env) { ElasticTopicSearchService(it) } }</ID>
+    <ID>FunctionExpressionBody:ElasticTopicSearchService.kt:ElasticTopicSearchServiceFactory${ return env["SEARCH_SERVICE"] == "elastic" }</ID>
+    <ID>FunctionExpressionBody:ElasticUserSearchService.kt:ElasticUserSearchService${ return SearchRequest.of { s -&gt; s.index(INDEX_NAME).apply { when (userDocumentSearch) { is UserDocumentSearch.Keyword -&gt; { val fetch = userDocumentSearch.fetch from(fetch.cursor?.value ?: 0) size(fetch.size) val word = userDocumentSearch.word query { q -&gt; q.bool { b -&gt; val keyword = preprocessUserInputKeyword(word) b.prioritizedFields(keyword, "aid", "nickname") } } } } } } }</ID>
+    <ID>FunctionExpressionBody:ElasticUserSearchService.kt:ElasticUserSearchService${ return useElasticClient { cleanAll(INDEX_NAME) } }</ID>
+    <ID>FunctionExpressionBody:ElasticUserSearchService.kt:ElasticUserSearchService${ return useElasticClient { saveDocumentList(connection, documents, INDEX_NAME) } }</ID>
+    <ID>FunctionExpressionBody:ElasticUserSearchService.kt:ElasticUserSearchServiceFactory${ return buildElasticSearchService(env) { ElasticUserSearchService(it) } }</ID>
+    <ID>FunctionExpressionBody:ElasticUserSearchService.kt:ElasticUserSearchServiceFactory${ return env["SEARCH_SERVICE"] == "elastic" }</ID>
+  </CurrentIssues>
+</SmellBaseline>

@@ -1,0 +1,14 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ClassSignature:SimpleCacheService.kt:SimpleCacheService&lt;K, V&gt; : CacheService</ID>
+    <ID>FunctionExpressionBody:NativeLockService.kt:NativeLockServiceFactory${ return NativeLockService() }</ID>
+    <ID>FunctionExpressionBody:NativeLockService.kt:NativeLockServiceFactory${ return true }</ID>
+    <ID>FunctionExpressionBody:SimpleCacheService.kt:SimpleCacheServiceFactory${ return SimpleCacheService(7.days) }</ID>
+    <ID>FunctionExpressionBody:SimpleCacheService.kt:SimpleCacheServiceFactory${ return true }</ID>
+    <ID>FunctionExpressionBody:SimpleNameService.kt:SimpleNameService${ return numberToCustomCharset(id) }</ID>
+    <ID>FunctionExpressionBody:SimpleNameService.kt:SimpleNameServiceFactory${ return SimpleNameService() }</ID>
+    <ID>FunctionExpressionBody:SimpleNameService.kt:SimpleNameServiceFactory${ return true }</ID>
+  </CurrentIssues>
+</SmellBaseline>

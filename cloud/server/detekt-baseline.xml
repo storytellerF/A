@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ClassSignature:Pagination.kt:PrimaryKeyPagingGenerator&lt;T&gt; : PagingGenerator</ID>
+    <ID>ClassSignature:Pagination.kt:ReactionPaginationGenerator : PagingGenerator</ID>
+    <ID>ClassSignature:TestBuilder.kt:SessionOuterTuple&lt;T&gt;</ID>
+    <ID>ClassSignature:TestBuilder.kt:SessionTuple</ID>
+    <ID>ClassSignature:TestBuilder.kt:TestMate</ID>
+    <ID>FunctionExpressionBody:Pagination.kt:PrimaryKeyPagingGenerator${ return PrimaryKeyFetch( when { !nextPageToken.isNullOrBlank() -&gt; getPageToken( PrimaryKey::class, nextPageToken )?.let { Cursor.DescCursor(it) } !prePageToken.isNullOrBlank() -&gt; getPageToken( PrimaryKey::class, prePageToken )?.let { Cursor.AscCursor(it) } else -&gt; null }, size ) }</ID>
+    <ID>FunctionExpressionBody:Pagination.kt:ReactionPaginationGenerator${ return ReactionFetch( when { !nextPageToken.isNullOrBlank() -&gt; Cursor.DescCursor( commonJson.decodeFromString&lt;ReactionCursorKey&gt;(nextPageToken) ) !prePageToken.isNullOrBlank() -&gt; Cursor.AscCursor( commonJson.decodeFromString&lt;ReactionCursorKey&gt;(prePageToken) ) else -&gt; null }, size ) }</ID>
+    <ID>FunctionExpressionBody:Pagination.kt:{ return object : PrimaryKeyPagingGenerator&lt;T&gt;(block) {} }</ID>
+    <ID>FunctionExpressionBody:Pagination.kt:{ return runCatching { val size = size require(size &gt; 0) { "Invalid query size" } val nextPageToken = nextPageToken val prePageToken = prePageToken require(nextPageToken.isNullOrBlank() || prePageToken.isNullOrBlank()) { "Invalid query" } generator.parse(prePageToken, nextPageToken, size) }.mapResult { f -&gt; block(f).mapCatchingNotNull { (list, count) -&gt; val (pre, next) = generator.generate(list, f) responseBuilder(list.toImmutableList(), Pagination(next, pre, count)) } } }</ID>
+    <ID>FunctionExpressionBody:Route.kt:{ return call.parameters.checkParameter&lt;R, T&gt;(name, block) }</ID>
+    <ID>FunctionExpressionBody:TestBuilder.kt:TestMate${ return applicationTestBuilder.createClient(block) }</ID>
+    <ID>FunctionExpressionBody:TestBuilder.kt:{ return attachPanelSession { } }</ID>
+    <ID>FunctionExpressionBody:TestBuilder.kt:{ return attachSession(onReceive = NOOP_ON_RECEIVE, block = {}) }</ID>
+    <ID>FunctionExpressionBody:TestBuilder.kt:{ return block(workerBackend) }</ID>
+    <ID>FunctionExpressionBody:TestBuilder.kt:{ return coroutineScope { val passHolder = ConstPassHolder(null) val sessionManager = createSimpleUserSessionManager( TEST_WS_URL, AcceptAllCookiesStorage(), passHolder, { model, cookiesStorage -&gt; createClient { defaultClientConfigure(cookiesStorage, model, passHolder) } } ) { _, _, _ -&gt; } sessionManager.onBackgroundTask { block() } } }</ID>
+    <ID>FunctionExpressionBody:TestBuilder.kt:{ return coroutineScope { val passHolder = SimplePassHolder() val sessionManager = createSimplePanelSessionManager(passHolder) { model, cookiesStorage -&gt; createClient { defaultClientConfigureForPanel(cookiesStorage, model, passHolder) } } val sessionModel = sessionManager.model val userInfo = getUserInfo(sessionManager, passHolder) val custom = sessionManager.block(SessionTuple(authKey, userInfo.id)) sessionManager.signOut().getOrThrow() sessionModel.clear() SessionOuterTuple(authKey, userInfo.id, custom) } }</ID>
+    <ID>FunctionExpressionBody:TestBuilder.kt:{ return coroutineScope { val passHolder = SimplePassHolder() val sessionManager = createSimpleUserSessionManager( TEST_WS_URL, AcceptAllCookiesStorage(), passHolder, { model, cookiesStorage -&gt; createClient { defaultClientConfigure(cookiesStorage, model, passHolder) } }, onReceive ) sessionManager.onBackgroundTask { try { val sessionModel = sessionManager.model val userInfo = sessionManager.getUserInfo(passHolder) val custom = sessionManager.block(SessionTuple(authKey, userInfo.id)) sessionManager.signOut().getOrThrow() sessionModel.clear() SessionOuterTuple(authKey, userInfo.id, custom) } finally { sessionManager.client.coroutineContext[Job]?.cancelAndJoin() } } } }</ID>
+    <ID>FunctionExpressionBody:TestBuilder.kt:{ return getAppSession(authKey, onReceive, block) { this.userSignIn(authKey, it) } }</ID>
+    <ID>FunctionExpressionBody:TestBuilder.kt:{ return getAppSession(authKey, onReceive, block) { this.userSignUp(authKey, it) } }</ID>
+    <ID>FunctionExpressionBody:TestBuilder.kt:{ return getAppSignInSession(tuple.authKey, onReceive = onReceive, block = block) }</ID>
+    <ID>FunctionExpressionBody:TestBuilder.kt:{ return getPanelSession(tuple.authKey, block = block) { this.panelSignIn(tuple.authKey, it) } }</ID>
+    <ID>FunctionExpressionBody:TopicTest.kt:{ return sha256(block()) }</ID>
+  </CurrentIssues>
+</SmellBaseline>

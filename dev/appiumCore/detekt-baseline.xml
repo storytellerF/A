@@ -1,0 +1,17 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ClassSignature:AndroidAppTestDriver.kt:AndroidAppTestDriver : AppTestDriver</ID>
+    <ID>ClassSignature:AndroidAppiumTestBase.kt:AppUnderTest</ID>
+    <ID>ClassSignature:AndroidAppiumTestBase.kt:AppiumPorts</ID>
+    <ID>ClassSignature:AndroidAppiumTestBase.kt:AuthenticatedSession</ID>
+    <ID>ClassSignature:AppScenarioData.kt:FavoriteTopicScenario</ID>
+    <ID>ClassSignature:DesktopBrowserCapture.kt:DesktopBrowserCapture</ID>
+    <ID>ClassSignature:PlatformAppiumHelper.kt:AndroidAppiumHelper$AdbCommandResult</ID>
+    <ID>ClassSignature:PlatformAppiumHelper.kt:AndroidAppiumTestScope : AppiumTestScope</ID>
+    <ID>ClassSignature:PlatformAppiumHelper.kt:AppiumTestSetup&lt;T&gt;</ID>
+    <ID>ClassSignature:WasmAppiumHelper.kt:WasmAppiumTestScope : AppiumTestScope</ID>
+    <ID>ClassSignature:WasmDistributionServer.kt:WasmDistributionServer : AutoCloseable</ID>
+  </CurrentIssues>
+</SmellBaseline>

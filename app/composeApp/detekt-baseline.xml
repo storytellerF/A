@@ -1,0 +1,128 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ArgumentListWrapping:App.kt:UIViewModel$( viewModelScope, address, httpUrl, wsServerUrl, cookieManager, ConstPassHolder(userPass) )</ID>
+    <ID>ArgumentListWrapping:App.kt:UIViewModel$( viewModelScope, rawUserPass.rawUSerPass.address, httpUrl, wsServerUrl, main, ConstPassHolder(rawUserPass) )</ID>
+    <ID>BlankLineBetweenWhenConditions:CommunityPage.kt:when (currentRoute) { CommunityRoute.Topics -&gt; SearchScope.CommunityTopic(communityId) else -&gt; SearchScope.CommunityRoom(communityId) }</ID>
+    <ID>BlankLineBetweenWhenConditions:CommunityPage.kt:when (size.widthSizeClass) { WindowWidthSizeClass.Compact -&gt; CommunityCompatPageInternal(communityId, showDialog, model) else -&gt; CommunityNonCompatPageInternal(communityId, showDialog, model) }</ID>
+    <ID>BlankLineBetweenWhenConditions:CustomSearchBar.kt:when (it) { ObjectType.COMMUNITY -&gt; appNavFactory.newAppNav().gotoCommunityCompose() ObjectType.ROOM -&gt; appNavFactory.newAppNav().gotoRoomCompose() ObjectType.TOPIC -&gt; when (scope) { is SearchScope.CommunityTopic -&gt; appNavFactory.newAppNav().gotoTopicCompose( TopicComposeData.Community(scope.communityId, scope.communityId ob ObjectType.COMMUNITY) ) is SearchScope.RoomTopic -&gt; appNavFactory.newAppNav().gotoTopicCompose( TopicComposeData.PrivateRoom(scope.roomId, scope.roomId ob ObjectType.ROOM) ) is SearchScope.UserTopic -&gt; appNavFactory.newAppNav().gotoTopicCompose( TopicComposeData.User(scope.userId, scope.userId ob ObjectType.USER) ) else -&gt; Unit } ObjectType.USER -&gt; TODO() ObjectType.TITLE -&gt; appNavFactory.newAppNav().gotoTitleCompose() ObjectType.FILE -&gt; TODO() ObjectType.PANEL_ACCOUNT -&gt; TODO() }</ID>
+    <ID>BlankLineBetweenWhenConditions:Event.kt:when (event.objectTuple.objectType) { ObjectType.TOPIC -&gt; database.topic.update(TopicCollection.Topics, objectId) { it.copy(favoriteId = -1) } ObjectType.ROOM -&gt; database.room.update(RoomCollection.Rooms, objectId) { it.copy(favoriteId = -1) } ObjectType.COMMUNITY -&gt; database.community.update(CommunityCollection.Communities, objectId) { it.copy(favoriteId = -1) } ObjectType.TITLE -&gt; database.title.update(TitleCollection.Titles, objectId) { it.copy(favoriteId = -1) } ObjectType.FILE -&gt; database.fileInfo.update(FileCollection.Files, objectId) { it.copy(favoriteId = -1) } ObjectType.USER -&gt; database.user.update(UserCollection.Users, objectId) { it.copy(favoriteId = -1) } else -&gt; Unit }</ID>
+    <ID>BlankLineBetweenWhenConditions:Event.kt:when (event.objectTuple.objectType) { ObjectType.TOPIC -&gt; database.topic.update(TopicCollection.Topics, objectId) { it.copy(favoriteId = null) } ObjectType.ROOM -&gt; database.room.update(RoomCollection.Rooms, objectId) { it.copy(favoriteId = null) } ObjectType.COMMUNITY -&gt; database.community.update(CommunityCollection.Communities, objectId) { it.copy(favoriteId = null) } ObjectType.TITLE -&gt; database.title.update(TitleCollection.Titles, objectId) { it.copy(favoriteId = null) } ObjectType.FILE -&gt; database.fileInfo.update(FileCollection.Files, objectId) { it.copy(favoriteId = null) } ObjectType.USER -&gt; database.user.update(UserCollection.Users, objectId) { it.copy(favoriteId = null) } else -&gt; Unit }</ID>
+    <ID>BlankLineBetweenWhenConditions:Event.kt:when (event.objectTuple.objectType) { ObjectType.TOPIC -&gt; database.topic.update(TopicCollection.Topics, objectId) { it.copy(subscriptionId = -1) } ObjectType.ROOM -&gt; database.room.update(RoomCollection.Rooms, objectId) { it.copy(subscriptionId = -1) } ObjectType.COMMUNITY -&gt; database.community.update(CommunityCollection.Communities, objectId) { it.copy(subscriptionId = -1) } ObjectType.TITLE -&gt; database.title.update(TitleCollection.Titles, objectId) { it.copy(subscriptionId = -1) } ObjectType.FILE -&gt; database.fileInfo.update(FileCollection.Files, objectId) { it.copy(subscriptionId = -1) } ObjectType.USER -&gt; database.user.update(UserCollection.Users, objectId) { it.copy(subscriptionId = -1) } else -&gt; Unit }</ID>
+    <ID>BlankLineBetweenWhenConditions:Event.kt:when (event.objectTuple.objectType) { ObjectType.TOPIC -&gt; database.topic.update(TopicCollection.Topics, objectId) { it.copy(subscriptionId = null) } ObjectType.ROOM -&gt; database.room.update(RoomCollection.Rooms, objectId) { it.copy(subscriptionId = null) } ObjectType.COMMUNITY -&gt; database.community.update(CommunityCollection.Communities, objectId) { it.copy(subscriptionId = null) } ObjectType.TITLE -&gt; database.title.update(TitleCollection.Titles, objectId) { it.copy(subscriptionId = null) } ObjectType.FILE -&gt; database.fileInfo.update(FileCollection.Files, objectId) { it.copy(subscriptionId = null) } ObjectType.USER -&gt; database.user.update(UserCollection.Users, objectId) { it.copy(subscriptionId = null) } else -&gt; Unit }</ID>
+    <ID>BlankLineBetweenWhenConditions:FileRefsPage.kt:when (ref.objectType) { ObjectType.COMMUNITY -&gt; appNavFactory.newAppNav() .gotoCommunity(ref.objectId, false) ObjectType.ROOM -&gt; appNavFactory.newAppNav() .gotoRoom(ref.objectId, false) ObjectType.TOPIC -&gt; appNavFactory.newAppNav() .gotoTopic(ref.objectId) ObjectType.USER -&gt; appNavFactory.newAppNav() .gotoUser(ref.objectId) else -&gt; {} }</ID>
+    <ID>BlankLineBetweenWhenConditions:HomePage.kt:when (it) { 0 -&gt; WorldPage() 1 -&gt; UserHost { MyCommunitiesPage() } else -&gt; UserHost { MyRoomsPage() } }</ID>
+    <ID>BlankLineBetweenWhenConditions:MemberPage.kt:when (objectType) { ObjectType.COMMUNITY -&gt; SearchScope.CommunityMember(objectId) else -&gt; SearchScope.RoomMember(objectId) }</ID>
+    <ID>BlankLineBetweenWhenConditions:MyCommunitiesPage.kt:when { customBackground -&gt; Modifier.appiumSemantics( text = communityInfo?.name, onClick = openCommunity ) else -&gt; { val shape = RoundedCornerShape(10.dp) Modifier .fillMaxWidth() .background(MaterialTheme.colorScheme.secondaryContainer, shape) .clip(shape) .clickable(!isCommunityPage) { openCommunity?.invoke() } .padding(10.dp) .appiumSemantics( text = communityInfo?.name, onClick = openCommunity.takeUnless { isCommunityPage } ) } }</ID>
+    <ID>BlankLineBetweenWhenConditions:RoomPage.kt:when (val ks = keysState) { LoadingState.Done -&gt; Text(stringResource(Res.string.check_mark)) is LoadingState.Error -&gt; Text( ks.e.message?.take(10) ?: stringResource(Res.string.exclamation_mark) ) else -&gt; CircularProgressIndicator(modifier = Modifier.size(10.dp), strokeWidth = 2.dp) }</ID>
+    <ID>BlankLineBetweenWhenConditions:TitleComposePage.kt:when (currentType) { ObjectType.COMMUNITY -&gt; { val communitiesViewModel = createSearchCommunitiesViewModel(JoinStatusSearch.JOINED, input) CommunityList(communitiesViewModel, onClickCommunity) } ObjectType.ROOM -&gt; { val roomsViewModel = createRoomSearchViewModel(JoinStatusSearch.JOINED, input) RoomList(roomsViewModel, onClickRoom) } ObjectType.TOPIC -&gt; TODO() ObjectType.USER -&gt; { val membersViewModel = createMemberSearchViewModel(input) MemberList(membersViewModel, onClickUser) } ObjectType.TITLE -&gt; TODO() ObjectType.FILE -&gt; TODO() ObjectType.PANEL_ACCOUNT -&gt; TODO() }</ID>
+    <ID>BlankLineBetweenWhenConditions:TitleComposePage.kt:when (titleScope.objectType) { ObjectType.COMMUNITY -&gt; CommunityRefCell(titleScope.objectId) { if (!readOnly) updateTitleScope() } ObjectType.ROOM -&gt; RoomRefCell(titleScope.objectId) { if (!readOnly) updateTitleScope() } ObjectType.TOPIC -&gt; TODO() ObjectType.USER -&gt; UserRefCell(titleScope.objectId) ObjectType.TITLE -&gt; TODO() ObjectType.FILE -&gt; TODO() ObjectType.PANEL_ACCOUNT -&gt; TODO() }</ID>
+    <ID>BlankLineBetweenWhenConditions:TopicComposePage.kt:when (index) { 0 -&gt; PreviewTopicPage(input, mediaTarget) 1 -&gt; EditTopicPage(input, data) { Napier.i { "markdown update1 $it" } updateInput(it) } 2 -&gt; BlockEditTopicPage(input, updateInput) }</ID>
+    <ID>BlankLineBetweenWhenConditions:UserSettingPage.kt:when (showInputDialog) { is SettingOption.Name -&gt; UpdateUserBody(nickname = string) is SettingOption.Aid -&gt; UpdateUserBody(aid = string) else -&gt; null }</ID>
+    <ID>ClassSignature:App.kt:UIViewModel</ID>
+    <ID>ClassSignature:AppLogging.kt:AppAntilog : Antilog</ID>
+    <ID>ClassSignature:AppPlatform.kt:AppPlatform</ID>
+    <ID>ClassSignature:AppPreferencesTest.kt:FakePreferencesDataStore : DataStore</ID>
+    <ID>ClassSignature:AppRoute.kt:TopicComposePrivateRoomScreen : NavKey</ID>
+    <ID>ClassSignature:AppRoute.kt:TopicComposePrivateRoomTopicScreen : NavKey</ID>
+    <ID>ClassSignature:AppRoute.kt:TopicComposePublicRoomScreen : NavKey</ID>
+    <ID>ClassSignature:AppRoute.kt:TopicComposeUserScreen : NavKey</ID>
+    <ID>ClassSignature:AppRoute.kt:TopicComposeUserTopicScreen : NavKey</ID>
+    <ID>ClassSignature:CommunityComposePage.kt:MemberJoinPolicy</ID>
+    <ID>ClassSignature:Downloader.kt:DownloaderImpl : Downloader</ID>
+    <ID>ClassSignature:EventTest.kt:FakeRoomStorage : FakeCollectionListStorageRoomInfoStorage</ID>
+    <ID>ClassSignature:EventTest.kt:FakeTopicStorage : FakeCollectionListStorageTopicInfoStorage</ID>
+    <ID>ClassSignature:EventTest.kt:FakeUserStorage : FakeCollectionListStorageUserInfoStorage</ID>
+    <ID>ClassSignature:FilePicker.kt:PlatformClientFile : ClientFile</ID>
+    <ID>ClassSignature:FileService.kt:FileBinder : BinderDownloaderUploader</ID>
+    <ID>ClassSignature:FileService.kt:FileConnection : ServiceConnection</ID>
+    <ID>ClassSignature:Model.kt:AidCommunityViewModel : CommunityViewModel</ID>
+    <ID>ClassSignature:Model.kt:AidRoomViewModel : RoomViewModel</ID>
+    <ID>ClassSignature:Model.kt:AidTopicViewModel : TopicViewModel</ID>
+    <ID>ClassSignature:Model.kt:AidUserViewModel : UserViewModel</ID>
+    <ID>ClassSignature:Model.kt:ChildAccountsViewModel : PagingViewModel</ID>
+    <ID>ClassSignature:Model.kt:CommunityViewModel : SimpleViewModel</ID>
+    <ID>ClassSignature:Model.kt:DownloadListViewModel : PagingViewModel</ID>
+    <ID>ClassSignature:Model.kt:DownloadViewModel : ViewModel</ID>
+    <ID>ClassSignature:Model.kt:FileRefsViewModel : PagingViewModel</ID>
+    <ID>ClassSignature:Model.kt:FileViewViewModel : SimpleViewModel</ID>
+    <ID>ClassSignature:Model.kt:IdCommunityViewModel : CommunityViewModel</ID>
+    <ID>ClassSignature:Model.kt:IdRoomViewModel : RoomViewModel</ID>
+    <ID>ClassSignature:Model.kt:IdTopicViewModel : TopicViewModel</ID>
+    <ID>ClassSignature:Model.kt:IdUserViewModel : UserViewModel</ID>
+    <ID>ClassSignature:Model.kt:MarkdownMediasViewModel : SimpleViewModel</ID>
+    <ID>ClassSignature:Model.kt:MediaListViewModel : PagingViewModel</ID>
+    <ID>ClassSignature:Model.kt:ReactionsViewModel : PagingViewModel</ID>
+    <ID>ClassSignature:Model.kt:RoomKeysViewModel : SimpleViewModel</ID>
+    <ID>ClassSignature:Model.kt:RoomViewModel : SimpleViewModel</ID>
+    <ID>ClassSignature:Model.kt:SessionHistoryViewModel : SimpleViewModel</ID>
+    <ID>ClassSignature:Model.kt:SubscriptionsViewModel : PagingViewModel</ID>
+    <ID>ClassSignature:Model.kt:UnreadRoomsStateViewModel : SimpleViewModel</ID>
+    <ID>ClassSignature:Model.kt:UploadDetailViewModel : ViewModel</ID>
+    <ID>ClassSignature:Model.kt:UploadHandler</ID>
+    <ID>ClassSignature:Model.kt:UploadViewModel : PagingViewModel</ID>
+    <ID>ClassSignature:Model.kt:UserCommentsViewModel : PagingViewModel</ID>
+    <ID>ClassSignature:Model.kt:UserJoinedCommunitiesWithPosterViewModel : PagingViewModel</ID>
+    <ID>ClassSignature:Model.kt:UserJoinedRoomsViewModel : PagingViewModel</ID>
+    <ID>ClassSignature:Model.kt:UserReactionRecordsViewModel : PagingViewModel</ID>
+    <ID>ClassSignature:Model.kt:UserSearchViewModel : PagingViewModel</ID>
+    <ID>ClassSignature:Model.kt:UserViewModel : SimpleViewModel</ID>
+    <ID>ClassSignature:Model.kt:WorldViewModel : PagingViewModel</ID>
+    <ID>ClassSignature:RTCService.kt:RTCBinder : BinderRTCHandle</ID>
+    <ID>ClassSignature:RefRoute.kt:TopicRoute</ID>
+    <ID>ClassSignature:Theme.kt:ColorFamily</ID>
+    <ID>ClassSignature:TopicComposePage.kt:TopicComposeData$Community : TopicComposeData</ID>
+    <ID>ClassSignature:TopicComposePage.kt:TopicComposeData$PrivateRoom : TopicComposeData</ID>
+    <ID>ClassSignature:TopicComposePage.kt:TopicComposeData$PublicRoom : TopicComposeData</ID>
+    <ID>ClassSignature:TopicComposePage.kt:TopicComposeData$User : TopicComposeData</ID>
+    <ID>ClassSignature:Uploader.kt:UploaderImpl : Uploader</ID>
+    <ID>FunctionExpressionBody:AppLogging.kt:{ return File(application.filesDir, "$LOG_DIR_NAME/$LOG_FILE_NAME").apply { parentFile?.mkdirs() if (!exists()) { createNewFile() } } }</ID>
+    <ID>FunctionExpressionBody:AppLogging.kt:{ return when (this) { LogLevel.VERBOSE -&gt; Log.VERBOSE LogLevel.DEBUG -&gt; Log.DEBUG LogLevel.INFO -&gt; Log.INFO LogLevel.WARNING -&gt; Log.WARN LogLevel.ERROR -&gt; Log.ERROR LogLevel.ASSERT -&gt; Log.ASSERT } }</ID>
+    <ID>FunctionExpressionBody:AppPlatform.android.kt:{ return "${AppConfig.DEEP_LINK_SCHEME_PREFIX}${if (AppConfig.DEBUG) "-debug" else ""}" }</ID>
+    <ID>FunctionExpressionBody:AppPlatform.android.kt:{ return AppConfig.DEEP_LINK_HOST }</ID>
+    <ID>FunctionExpressionBody:AppPlatform.android.kt:{ return Connectivity { autoStart = true } }</ID>
+    <ID>FunctionExpressionBody:AppPlatform.android.kt:{ return getClipFile(getAppContextRefValue()!!, path.toUri()) }</ID>
+    <ID>FunctionExpressionBody:AppPlatform.jvm.kt:RegularClientFile${ return file.inputStream().asSource().buffered() }</ID>
+    <ID>FunctionExpressionBody:AppPlatform.jvm.kt:{ return AppConfig.DEEP_LINK_HOST }</ID>
+    <ID>FunctionExpressionBody:AppPlatform.jvm.kt:{ return AppConfig.DEEP_LINK_SCHEME_PREFIX }</ID>
+    <ID>FunctionExpressionBody:AppPlatform.jvm.kt:{ return Connectivity { autoStart = true urls("cloudflare.com") port = 80 pollingIntervalMs = 10.minutes timeoutMs = 5.seconds } }</ID>
+    <ID>FunctionExpressionBody:AppPlatform.wasmJs.kt:{ return Connectivity(ConnectivityProvider(flowOf(Connectivity.Status.Connected(metered = false)))) }</ID>
+    <ID>FunctionExpressionBody:AppPreferencesTest.kt:FakePreferencesDataStore${ return transform(state.value).also { updatedValue -&gt; state.value = updatedValue } }</ID>
+    <ID>FunctionExpressionBody:AppRoute.kt:{ return "${getDeepLinkScheme()}://${getDeepLinkHost()}$path" }</ID>
+    <ID>FunctionExpressionBody:AppRoute.kt:{ return backStack.last() is T }</ID>
+    <ID>FunctionExpressionBody:Build.kt:{ return customViewModel( listOf("community-topics", communityId) ) { sessionManager, databaseSource -&gt; TopicsViewModel( sessionManager, databaseSource, communityId, ObjectType.COMMUNITY, ) } }</ID>
+    <ID>FunctionExpressionBody:Build.kt:{ return customViewModel( listOf("reactions", objectId) ) { sessionManager, databaseSource -&gt; ReactionsViewModel(sessionManager, objectId, databaseSource) } }</ID>
+    <ID>FunctionExpressionBody:Build.kt:{ return customViewModel( listOf("room-topics", roomId) ) { sessionManager, databaseSource -&gt; TopicsViewModel( sessionManager, databaseSource, roomId, ObjectType.ROOM, ) } }</ID>
+    <ID>FunctionExpressionBody:Build.kt:{ return customViewModel( listOf("topic", topicAid) ) { sessionManager, databaseSource -&gt; AidTopicViewModel(sessionManager, databaseSource, topicAid) } }</ID>
+    <ID>FunctionExpressionBody:Build.kt:{ return customViewModel( listOf("topic", topicId) ) { sessionManager, databaseSource -&gt; IdTopicViewModel(sessionManager, databaseSource, topicId) } }</ID>
+    <ID>FunctionExpressionBody:Build.kt:{ return customViewModel( listOf("topic-topics", topicId) ) { sessionManager, databaseSource -&gt; TopicsViewModel( sessionManager, databaseSource, topicId, ObjectType.TOPIC, ) } }</ID>
+    <ID>FunctionExpressionBody:Build.kt:{ return customViewModel( listOf("user-topics", uid) ) { sessionManager, databaseSource -&gt; TopicsViewModel( sessionManager, databaseSource, uid, ObjectType.USER, ) } }</ID>
+    <ID>FunctionExpressionBody:Build.kt:{ return customViewModel( listOf("world") ) { sessionManager, databaseSource -&gt; WorldViewModel(sessionManager, databaseSource) } }</ID>
+    <ID>FunctionExpressionBody:Build.kt:{ return customViewModel(listOf("subscription")) { sessionManager, modelStorage -&gt; SubscriptionsViewModel(sessionManager, modelStorage) } }</ID>
+    <ID>FunctionExpressionBody:Build.kt:{ return customViewModel(listOf("user-comments")) { sessionManager, modelStorage -&gt; UserCommentsViewModel(sessionManager, modelStorage) } }</ID>
+    <ID>FunctionExpressionBody:CommunityComposePage.kt:{ return listOf( MemberJoinPolicy("Open", MemberPolicy.OPEN, "Anyone can join this community"), MemberJoinPolicy("Invite Only", MemberPolicy.INVITE_ONLY, "Only invite members can join this community") ) }</ID>
+    <ID>FunctionExpressionBody:CommunityPage.kt:{ return listOf( NavRoute("/topics", Icons.Default.Topic, stringResource(Res.string.topics)), NavRoute("/rooms", Icons.Default.ChatBubble, stringResource(Res.string.rooms)) ) }</ID>
+    <ID>FunctionExpressionBody:CommunityTitleComposePage.kt:{ return request { createTitle(newTitle) }.onSuccess { title -&gt; emitEvent(OnTitleCreated(title)) } }</ID>
+    <ID>FunctionExpressionBody:GPT.android.kt:AndroidEdgeGPT${ return observeModels(scope, getGPTModelDirectory(), supportList) }</ID>
+    <ID>FunctionExpressionBody:GPT.android.kt:{ return AndroidEdgeGPT() }</ID>
+    <ID>FunctionExpressionBody:GPT.jvm.kt:JvmEdgeGPT${ return observeModels(scope, getGPTModelDirectory(), supportList) }</ID>
+    <ID>FunctionExpressionBody:GPT.jvm.kt:JvmEdgeGPT${ return runCatching { val name = file.file.name require(supportList.any { name.endsWith(it, ignoreCase = true) }) { "unsupported model file: $name" } val target = Path(getGPTModelDirectory(), name) withContext(Dispatchers.IO) { val targetFile = target.toFile() targetFile.parentFile?.mkdirs() file.file.copyTo(targetFile, overwrite = true) } GPTModel(target.name, target.toString()) } }</ID>
+    <ID>FunctionExpressionBody:GPT.jvm.kt:{ return JvmEdgeGPT() }</ID>
+    <ID>FunctionExpressionBody:GPT.kt:GPT${ return runCatching { val name = file.name require(supportList.any { name.endsWith(it, ignoreCase = true) }) { "unsupported model file: $name" } require(file.size() &lt;= MAX_IMPORT_SIZE) { "model file too large: ${file.size()} bytes" } val target = Path(getGPTModelDirectory(), name) target.safeSink().buffered().use { it.write(file.readBytes()) } GPTModel(target.name, target.toString()) } }</ID>
+    <ID>FunctionExpressionBody:GPT.kt:NoOpGPT${ return Result.failure(Exception("unsupported")) }</ID>
+    <ID>FunctionExpressionBody:GPT.kt:NoOpGPT${ return emptyFlow() }</ID>
+    <ID>FunctionExpressionBody:GPT.kt:{ return buildString { append( """ 你是一个专业的技术文档翻译助手。请将以下 Markdown 文档内容翻译为【$target】，要求如下： 1. **保留所有 Markdown 格式**（如 `#` 标题、`**加粗**`、`-` 列表、`&gt; 引用`、```代码块``` 等）； 2. **不要翻译代码内容、链接地址和文件路径**； 3. **保留原文的结构与层级**； 4. 翻译时注意准确性和语义自然性，特别是专业术语； 5. 返回结果仅包含翻译后的 Markdown，不要添加额外解释； Markdown 内容如下： """.trimIndent() ) appendLine(content) } }</ID>
+    <ID>FunctionExpressionBody:Model.kt:{ return fold( onSuccess = { Result.success(it) }, onFailure = { Result.failure(transform(it)) } ) }</ID>
+    <ID>FunctionExpressionBody:RoomTitleComposePage.kt:{ return request { createTitle(newTitle) }.onSuccess { title -&gt; emitEvent(OnTitleCreated(title)) } }</ID>
+    <ID>FunctionExpressionBody:TitleComposePage.kt:{ return request { createTitle(newTitle) }.onSuccess { title -&gt; emitEvent(OnTitleCreated(title)) } }</ID>
+    <ID>FunctionExpressionBody:TopicComposePage.kt:TopicComposeData.Community${ return null }</ID>
+    <ID>FunctionExpressionBody:TopicComposePage.kt:TopicComposeData.Community${ return objectTuple }</ID>
+    <ID>FunctionExpressionBody:TopicComposePage.kt:TopicComposeData.PrivateRoom${ return roomId ob ObjectType.ROOM }</ID>
+    <ID>FunctionExpressionBody:TopicComposePage.kt:TopicComposeData.PublicRoom${ return null }</ID>
+    <ID>FunctionExpressionBody:TopicComposePage.kt:TopicComposeData.User${ return null }</ID>
+    <ID>FunctionExpressionBody:TopicComposePage.kt:{ return (data as? TopicComposeData.PublicRoom)?.communityId?.let { val fontSettings = getFontSettings(it) fontSettings.codeFontFamily ?: fontSettings.contentFontFamily } }</ID>
+    <ID>FunctionExpressionBody:TopicDialog.kt:{ return useResult { if (topicInfo.isPin) { request { unpinTopic(topicInfo.id) } } else { request { pinTopic(topicInfo.id) } } } }</ID>
+    <ID>FunctionExpressionBody:Uploader.kt:UploaderImpl${ return runCatching { val collection = UploadCollection.fromInfo(uploadInfo) val pathHash = uploadInfo.pathHash val chunkSize = uploadInfo.chunkSize val uploadedIndices = status.uploaded.toSet() val totalSent = uploadedIndices.sumOf { idx -&gt; val chunkCount = ((clipFile.size + chunkSize - 1) / chunkSize).toInt() val isLast = idx == chunkCount - 1 if (isLast) { clipFile.size - chunkSize * (chunkCount - 1) } else { chunkSize } } updateUploadInfo(modelStorage, collection, pathHash) { it.copy(progress = totalSent) } var index = 0 var currentSent = totalSent clipFile.source().use { raw -&gt; while (true) { val buf = Buffer() var count = 0L while (count &lt; chunkSize) { val read = raw.readAtMostTo(buf, minOf(1024, chunkSize - count)) if (read == -1L) break count += read } Napier.i(tag = "upload") { "upload chunk $index, size $count" } if (count == 0L) break // skip already uploaded chunks by index if (!uploadedIndices.contains(index)) { val hash = sha256(buf.peek()) userSession.uploadChunk(uploadRecordId, index, buf, hash) { p, _ -&gt; updateUploadInfo(modelStorage, collection, pathHash) { it.copy(progress = currentSent + p) } }.getOrThrow() currentSent += count updateUploadInfo(modelStorage, collection, pathHash) { it.copy(progress = currentSent) } } index++ } } uploadRecordId } }</ID>
+  </CurrentIssues>
+</SmellBaseline>

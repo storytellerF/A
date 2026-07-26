@@ -81,7 +81,10 @@ subprojects {
         // Can lead to speedups in larger projects. `false` by default.
         parallel = true
 
-        autoCorrect = true
+        autoCorrect = false
+
+        // Keep existing violations separate from violations introduced by new code.
+        baseline = layout.projectDirectory.file("detekt-baseline.xml")
 
         // Android: Don't create tasks for the specified build types (e.g. "release")
         ignoredBuildTypes = listOf("release")
@@ -100,6 +103,7 @@ subprojects {
     }
 
     tasks.withType<Detekt>().configureEach {
+        exclude("**/build/**")
         reports {
             checkstyle.required = true
             html.required = true

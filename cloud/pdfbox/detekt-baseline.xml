@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>BlankLineBetweenWhenConditions:PdfBox.kt:&lt;no name provided&gt;$when (node.type) { GFMElementTypes.HEADER -&gt; { val cells = node.children .filter { it.type.name == "CELL" } .map { it.getTextInNode(content).toString().trim() } if (cells.isNotEmpty()) { rows.add(cells) } } GFMElementTypes.ROW -&gt; { val cells = node.children .filter { it.type.name == "CELL" } .map { it.getTextInNode(content).toString().trim() } if (cells.isNotEmpty()) { rows.add(cells) } } else -&gt; node.acceptChildren(this) }</ID>
+    <ID>BlankLineBetweenWhenConditions:PdfBox.kt:ParagraphVisitor$when (node.type) { MarkdownTokenTypes.TEXT -&gt; { val text = node.getTextInNode(content).toString() flow.addText(text, 14f, fontBundle.plain) } MarkdownElementTypes.EMPH -&gt; addStyledBlock(node, fontBundle.italic, 1) MarkdownElementTypes.STRONG -&gt; addStyledBlock(node, fontBundle.bold, 2) MarkdownElementTypes.CODE_SPAN -&gt; { val raw = node.getTextInNode(content).toString() val text = raw.replace("`", "").trim() flow.addText(text, 12f, fontBundle.mono) } MarkdownTokenTypes.WHITE_SPACE -&gt; flow.addText(" ", 14f, fontBundle.plain) MarkdownElementTypes.INLINE_LINK, MarkdownElementTypes.FULL_REFERENCE_LINK, MarkdownElementTypes.SHORT_REFERENCE_LINK -&gt; addLink(node) GFMElementTypes.STRIKETHROUGH -&gt; { val text = node.getTextInNode(content).toString() val actual = text.substring(2, text.length - 2) flow.addText(actual, 14f, fontBundle.plain) } }</ID>
+    <ID>ClassSignature:PdfBox.kt:PdfBoxVisitor : Visitor</ID>
+    <ID>ClassSignature:PdfBox.kt:PdfFontBundle</ID>
+    <ID>ClassSignature:PdfBox.kt:QuoteVisitor : Visitor</ID>
+  </CurrentIssues>
+</SmellBaseline>

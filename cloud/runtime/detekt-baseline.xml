@@ -1,0 +1,20 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>BlankLineBetweenWhenConditions:Auth.kt:when (credential) { is CustomCredential.AidCredential -&gt; userDatabase.getUserAuthDataByAid(credential.aid) is CustomCredential.IdCredential -&gt; userDatabase.getUserAuthDataById(credential.id) is CustomCredential.AddressCredential -&gt; userDatabase.getUserAuthDataByAddress(credential.ad) }</ID>
+    <ID>BlankLineBetweenWhenConditions:Auth.kt:when (credential) { is CustomCredential.IdCredential -&gt; database.panelAccount.getUserAuthDataById(credential.id) is CustomCredential.AddressCredential -&gt; database.panelAccount.getUserAuthDataByAddress(credential.ad) else -&gt; Result.failure(ForbiddenException()) }</ID>
+    <ID>BlankLineBetweenWhenConditions:Auth.kt:when (session) { is UserSession.Success -&gt; Result.success(CustomPrincipal(session.id)) is UserSession.TwoFactorPending -&gt; Result.success(null) is UserSession.Pending -&gt; { if (credential != null) { call.checkAdminApiRequest(backend, credential, session) } else { Result.success(null) } } }</ID>
+    <ID>BlankLineBetweenWhenConditions:Auth.kt:when (session) { is UserSession.Success -&gt; Result.success(CustomPrincipal(session.id)) is UserSession.TwoFactorPending -&gt; Result.success(null) is UserSession.Pending -&gt; { when { credential != null -&gt; call.checkApiRequest(backend, credential, session) backend.customConfig.buildType == "prod" -&gt; Result.success(null) else -&gt; backend.checkDevWsLink(call) } } }</ID>
+    <ID>BlankLineBetweenWhenConditions:UsePrincipal.kt:when (it) { null -&gt; call.respond(HttpStatusCode.NotFound) is FileResponse -&gt; { call.response.header( HttpHeaders.ContentDisposition, ContentDisposition.Attachment.withParameter( ContentDisposition.Parameters.FileName, it.file.name ).toString() ) call.respondFile(it.file) } is PathResponse -&gt; { call.response.header( HttpHeaders.ContentDisposition, ContentDisposition.Attachment.withParameter(ContentDisposition.Parameters.FileName, it.file.name) .toString() ) call.respondPath(it.file) } is Unit -&gt; call.respond(HttpStatusCode.OK) else -&gt; call.respond(it) }</ID>
+    <ID>ClassSignature:SessionCookie.kt:SessionKeys</ID>
+    <ID>ClassSignature:UserSession.kt:UserSession$Pending : UserSession</ID>
+    <ID>ClassSignature:UserSession.kt:UserSession$Success : UserSession</ID>
+    <ID>ClassSignature:UserSession.kt:UserSession$TwoFactorPending : UserSession</ID>
+    <ID>FunctionExpressionBody:Auth.kt:{ return getSession().data }</ID>
+    <ID>FunctionExpressionBody:Auth.kt:{ return when (credential) { is CustomCredential.IdCredential -&gt; database.panelAccount.getUserAuthDataById(credential.id) is CustomCredential.AddressCredential -&gt; database.panelAccount.getUserAuthDataByAddress(credential.ad) else -&gt; Result.failure(ForbiddenException()) } }</ID>
+    <ID>FunctionExpressionBody:SessionCookie.kt:{ return MessageDigest.getInstance("SHA-256").digest(value.toByteArray(Charsets.UTF_8)) }</ID>
+    <ID>FunctionExpressionBody:SessionCookie.kt:{ return SessionKeys( encryptKey = sha256("encrypt:$secret").copyOf(16), signKey = sha256("sign:$secret"), ) }</ID>
+    <ID>FunctionExpressionBody:UsePrincipal.kt:{ return { result -&gt; handleResultInternal(result, backend.customConfig.buildType) } }</ID>
+  </CurrentIssues>
+</SmellBaseline>

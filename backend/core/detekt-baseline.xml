@@ -1,0 +1,54 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>BlankLineBetweenWhenConditions:Backend.kt:when { osName.contains("mac", true) -&gt; System.setProperty("jna.library.path", "/opt/homebrew/lib") osName.contains("win", true) -&gt; { // val vcpkgRoot = System.getenv("VCPKG_ROOT") // if (vcpkgRoot.isNullOrBlank()) { System.setProperty("jna.library.path", "C:\\msys64\\ucrt64\\bin") // } else { // System.setProperty("jna.library.path", "${vcpkgRoot}\\packages\\libavif_x64-windows\\bin") // } } else -&gt; System.setProperty("jna.library.path", "/usr/local/lib") }</ID>
+    <ID>ClassSignature:CacheService.kt:WrapCacheService&lt;K, V : Any&gt; : CacheService</ID>
+    <ID>ClassSignature:CommunitySearchService.kt:CommunityDocument : PrimaryKeyIdentifiable</ID>
+    <ID>ClassSignature:CommunitySearchService.kt:CommunityDocumentSearch$Keyword : CommunityDocumentSearch</ID>
+    <ID>ClassSignature:Connection.kt:DatabaseConnection</ID>
+    <ID>ClassSignature:Database.kt:InsertRoomTuple</ID>
+    <ID>ClassSignature:FileSearchService.kt:FileDocument : PrimaryKeyIdentifiable</ID>
+    <ID>ClassSignature:FileSearchService.kt:FileDocumentSearch$Keyword : FileDocumentSearch</ID>
+    <ID>ClassSignature:MemberSearchService.kt:MemberDocumentSearch$CommunityMembers : MemberDocumentSearch</ID>
+    <ID>ClassSignature:MemberSearchService.kt:MemberDocumentSearch$Keyword : MemberDocumentSearch</ID>
+    <ID>ClassSignature:ObjectStorageService.kt:ObjectStorageRecord</ID>
+    <ID>ClassSignature:ObjectStorageService.kt:ObjectStorageWriteRecord</ID>
+    <ID>ClassSignature:ObjectStorageService.kt:PresignContext</ID>
+    <ID>ClassSignature:ObjectStorageService.kt:ProcessedUploadPack</ID>
+    <ID>ClassSignature:ObjectStorageService.kt:UploadPack</ID>
+    <ID>ClassSignature:PanelAccount.kt:RawPanelAccount</ID>
+    <ID>ClassSignature:RoomSearchService.kt:RoomDocument : PrimaryKeyIdentifiable</ID>
+    <ID>ClassSignature:RoomSearchService.kt:RoomDocumentSearch$Keyword : RoomDocumentSearch</ID>
+    <ID>ClassSignature:Title.kt:RawTitle</ID>
+    <ID>ClassSignature:User.kt:RawUser</ID>
+    <ID>FunctionExpressionBody:Backend.kt:{ return get().mapResult { if (it != null) { Result.success(it) } else { add().recoverIfDup(database::isDup) { get() } } } }</ID>
+    <ID>FunctionExpressionBody:Backend.kt:{ return withContext(Dispatchers.IO) { inputStreamProducer().use { val factory = XMLInputFactory.newInstance() val reader = factory.createXMLStreamReader(it) try { if (reader.hasNext()) { val event = reader.next() if (event == XMLStreamConstants.START_ELEMENT &amp;&amp; "svg".equals( reader.localName, true ) ) { val viewBox: String? = reader.getAttributeValue(null, "viewBox") val height: String? = reader.getAttributeValue(null, "height") val width: String? = reader.getAttributeValue(null, "width") getSvgDimension(viewBox, width to height) } else { null } } else { null } } finally { reader.close() } } } }</ID>
+    <ID>FunctionExpressionBody:CommunitySearchService.kt:CommunityDocument.Companion${ return CommunityDocument(community.id, community.name, community.aid, community.owner) }</ID>
+    <ID>FunctionExpressionBody:ComponentTestHelper.kt:{ return MergedEnv( listOf( mapOf( "MEDIA_SERVICE" to "filesystem", "FILE_SYSTEM_MEDIA_PATH" to "", "SERVER_URL" to "http://localhost" ) ) ) }</ID>
+    <ID>FunctionExpressionBody:ComponentTestHelper.kt:{ return MergedEnv( listOf( mapOf( "SEARCH_SERVICE" to "lucene", "LUCENE_BASE_PATH" to "", "BUILD_TYPE" to "test" ) ) ) }</ID>
+    <ID>FunctionExpressionBody:Database.kt:CombinedDatabase${ return topic.getAllTopicPagination(primaryKeyFetch).mapResult { processTopicToRawTopic(null, it.list).pagingNotNull(it.total) } }</ID>
+    <ID>FunctionExpressionBody:Env.kt:MergedEnv${ return list.firstNotNullOfOrNull { map -&gt; map[key] } }</ID>
+    <ID>FunctionExpressionBody:Env.kt:MergedEnv${ return list.joinToString { it[key] ?: "empty" } }</ID>
+    <ID>FunctionExpressionBody:FileRecord.kt:{ return FileInfo( id, url, fullName, contentType, size, name, owner, ownerType, lastModified, dimension, favoriteId, subscriptionId, status, ) }</ID>
+    <ID>FunctionExpressionBody:FileSearchService.kt:FileDocument.Companion${ return FileDocument(fileRecord.id, fileRecord.name, fileRecord.owner) }</ID>
+    <ID>FunctionExpressionBody:MemberSearchService.kt:MemberDocument.Companion${ return MemberDocument( id = id, uid = userInfo.id, objectId = objectId, objectType = objectType, nickname = userInfo.nickname, objectName = objectName, communityId = communityId ) }</ID>
+    <ID>FunctionExpressionBody:PanelLog.kt:{ return PanelLogInfo(id, adminId, targetId, objectType, action, createdTime) }</ID>
+    <ID>FunctionExpressionBody:Quota.kt:{ return QuotaInfo(ownerId, ownerType, quotaType, total, used, lockId) }</ID>
+    <ID>FunctionExpressionBody:Room.kt:{ return RoomInfo( room.id, room.createdTime, room.name, room.aid, room.creator, memberCount ?: 0, icon = icon, joinedTime = joinedTime, communityId = room.communityId, lastRead = lastRead, latestTopic = latestTopic, favoriteId = favoriteId, subscriptionId = subscriptionId, status = room.status, ) }</ID>
+    <ID>FunctionExpressionBody:RoomSearchService.kt:RoomDocument.Companion${ return RoomDocument(room.id, room.name, room.aid, room.communityId) }</ID>
+    <ID>FunctionExpressionBody:SnowflakeFactory.kt:SnowflakeFactory${ return lock.withLock { nextIdInternal() } }</ID>
+    <ID>FunctionExpressionBody:TaskRecord.kt:{ return TaskRecordInfo(id, createdTime, processedId, type) }</ID>
+    <ID>FunctionExpressionBody:Title.kt:{ return TitleInfo( id = id, createdTime = createdTime, type = type, creator = creator, receiver = receiver, scopeId = scopeId, scopeType = scopeType, name = name, descriptionTopicId = descriptionTopicId, extension = extensions, favoriteId = favoriteId, subscriptionId = subscriptionId, titleStatus = effectiveTitleStatus(currentTime), expiresAt = expiresAt, status = status, ) }</ID>
+    <ID>FunctionExpressionBody:Title.kt:{ return if (isExpired(currentTime)) { TitleWorkStatus.EXPIRED } else { TitleWorkStatus.OK } }</ID>
+    <ID>FunctionExpressionBody:Title.kt:{ return titleStatus == TitleWorkStatus.EXPIRED || (expiresAt?.let { it &lt;= currentTime } == true) }</ID>
+    <ID>FunctionExpressionBody:TopicSearchService.kt:TopicDocument.Companion${ return TopicDocument( id = topic.id, content = content.plain, rootId = topic.rootId, rootType = topic.rootType.name, parentId = topic.parentId, parentType = topic.parentType.name, author = topic.author ) }</ID>
+    <ID>FunctionExpressionBody:UploadRecord.kt:{ return UploadRecordInfo(id, createdTime, objectId, objectType, status, total, progress, name, chunkSize, sha256) }</ID>
+    <ID>FunctionExpressionBody:User.kt:{ return UserInfo( id, address, aid, nickname, avatar, null, null, status, ) }</ID>
+    <ID>FunctionExpressionBody:UserFavorite.kt:UserFavorite${ return ObjectTuple(objectId, objectType) }</ID>
+    <ID>FunctionExpressionBody:UserFavorite.kt:{ return UserFavoriteInfo(id, uid, objectId, objectType, createdTime) }</ID>
+    <ID>FunctionExpressionBody:UserSearchService.kt:UserDocument.Companion${ return UserDocument(user.id, user.nickname, user.aid) }</ID>
+    <ID>FunctionExpressionBody:UserSubscription.kt:{ return UserSubscriptionInfo(id, uid, objectId, objectType, createdTime) }</ID>
+    <ID>FunctionExpressionBody:UserTwoFactor.kt:{ return TwoFactorSettingsInfo( enabled = this?.enabled == true, type = this?.type?.takeIf { enabled }, ) }</ID>
+  </CurrentIssues>
+</SmellBaseline>

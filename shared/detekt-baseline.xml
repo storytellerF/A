@@ -1,0 +1,75 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>BlankLineBetweenWhenConditions:Markdown.kt:&lt;no name provided&gt;$when { type == MarkdownElementTypes.MARKDOWN_FILE -&gt; captureContent = true type == MarkdownElementTypes.ATX_1 -&gt; { // Extract the first level header content headline = node.getTextInNode(markdownText).trim().take(50) } type == MarkdownElementTypes.PARAGRAPH -&gt; { if (captureContent) { val content = node.getTextInNode(markdownText).trim() if (content.isNotEmpty()) { paragraphs.appendLine(content) } } } typeList.any { type.name == it.name } -&gt; { // Stop capturing when encountering the first second-level header captureContent = false } }</ID>
+    <ID>BlankLineBetweenWhenConditions:Markdown.kt:&lt;no name provided&gt;$when { type == MarkdownElementTypes.MARKDOWN_FILE -&gt; captureContent = true type == MarkdownElementTypes.PARAGRAPH -&gt; { if (captureContent) { val content = node.getTextInNode(markdownText).trim() if (content.isNotEmpty()) { if (children.size == 1 &amp;&amp; children.first().type == MarkdownElementTypes.IMAGE) { paragraphs.appendLine(content) } else { paragraphs.appendLine(content.take(200)) } captureContent = false } } } typeList.any { it.name == type.name } -&gt; { if (paragraphs.length &lt;= 100) { val content = node.getTextInNode(markdownText).trim() paragraphs.appendLine(content) } captureContent = false } }</ID>
+    <ID>ClassSignature:CustomImmutableList.kt:ImmutableMapSerializer&lt;K, V&gt; : KSerializer</ID>
+    <ID>ClassSignature:Preset.kt:PresetFile</ID>
+    <ID>ClassSignature:RoomFrame.kt:CustomCandidate</ID>
+    <ID>ClassSignature:RoomFrame.kt:NewRoomTopic</ID>
+    <ID>ClassSignature:RoomFrame.kt:RoomFrame$CreateAnswer : RoomFrame</ID>
+    <ID>ClassSignature:RoomFrame.kt:RoomFrame$ReceiveCandidate : RoomFrame</ID>
+    <ID>ClassSignature:RoomFrame.kt:RoomFrame$RespondAnswer : RoomFrame</ID>
+    <ID>ClassSignature:RoomFrame.kt:RoomFrame$SendAnswer : RoomFrame</ID>
+    <ID>ClassSignature:RoomFrame.kt:RoomFrame$SendCandidate : RoomFrame</ID>
+    <ID>ClassSignature:RoomFrame.kt:RoomFrame$SendOffer : RoomFrame</ID>
+    <ID>ClassSignature:RoomFrame.kt:RoomFrame$UpdateCallMediaState : RoomFrame</ID>
+    <ID>ClassSignature:SnowflakeData.kt:SnowflakeData</ID>
+    <ID>ClassSignature:TopicInfo.kt:TopicContent$Encrypted : TopicContent</ID>
+    <ID>ClassSignature:TopicInfo.kt:TopicContent$Extracted : TopicContent</ID>
+    <ID>ClassSignature:TopicInfo.kt:TopicContent$Plain : TopicContent</ID>
+    <ID>ClassSignature:UpdateObjectStatusBody.kt:UpdateObjectStatusBody</ID>
+    <ID>ClassSignature:UpdateReadOnlyBody.kt:UpdateReadOnlyBody</ID>
+    <ID>ClassSignature:UpdateUserStatusBody.kt:UpdateUserStatusBody</ID>
+    <ID>ClassSignature:UserInfo.kt:RecoveryCodesResponse</ID>
+    <ID>ClassSignature:UserInfo.kt:TotpSetupInfo</ID>
+    <ID>ClassSignature:UserInfo.kt:TwoFactorSettingsInfo</ID>
+    <ID>ClassSignature:UserInfo.kt:UnreadRoomsResponse</ID>
+    <ID>EmptyKotlinFile:p256.kt:com.storyteller_f.shared.curves.p256.kt</ID>
+    <ID>FunctionExpressionBody:CustomImmutableList.kt:ImmutableListSerializer${ return listSerializer.deserialize(decoder).toImmutableList() }</ID>
+    <ID>FunctionExpressionBody:CustomImmutableList.kt:ImmutableMapSerializer${ return mapSerializer.deserialize(decoder).toImmutableMap() }</ID>
+    <ID>FunctionExpressionBody:Hash.kt:{ return CryptographyProvider.Default.get(SHA256).hasher().hash(source).toHexString() }</ID>
+    <ID>FunctionExpressionBody:Hash.kt:{ return md5Platform(input.encodeToByteArray()).toHexString() }</ID>
+    <ID>FunctionExpressionBody:List.kt:{ return associate { it } }</ID>
+    <ID>FunctionExpressionBody:List.kt:{ return groupBy { it.first }.mapValues { it.value.map { p -&gt; p.second } } }</ID>
+    <ID>FunctionExpressionBody:Markdown.kt:{ return listOf( MarkdownElementTypes.MARKDOWN_FILE, MarkdownElementTypes.UNORDERED_LIST, MarkdownElementTypes.ORDERED_LIST, MarkdownElementTypes.LIST_ITEM, MarkdownElementTypes.BLOCK_QUOTE, MarkdownElementTypes.CODE_FENCE, MarkdownElementTypes.CODE_BLOCK, MarkdownElementTypes.CODE_SPAN, MarkdownElementTypes.HTML_BLOCK, MarkdownElementTypes.PARAGRAPH, MarkdownElementTypes.EMPH, MarkdownElementTypes.STRONG, MarkdownElementTypes.LINK_DEFINITION, MarkdownElementTypes.LINK_LABEL, MarkdownElementTypes.LINK_DESTINATION, MarkdownElementTypes.LINK_TITLE, MarkdownElementTypes.LINK_TEXT, MarkdownElementTypes.INLINE_LINK, MarkdownElementTypes.FULL_REFERENCE_LINK, MarkdownElementTypes.SHORT_REFERENCE_LINK, MarkdownElementTypes.IMAGE, MarkdownElementTypes.AUTOLINK, MarkdownElementTypes.SETEXT_1, MarkdownElementTypes.SETEXT_2, MarkdownElementTypes.ATX_1, MarkdownElementTypes.ATX_2, MarkdownElementTypes.ATX_3, MarkdownElementTypes.ATX_4, MarkdownElementTypes.ATX_5, MarkdownElementTypes.ATX_6, ) }</ID>
+    <ID>FunctionExpressionBody:ObjectTuple.kt:{ return ObjectTuple(this, type) }</ID>
+    <ID>FunctionExpressionBody:Platform.android.kt:{ return appContextRef.get() }</ID>
+    <ID>FunctionExpressionBody:Preset.kt:PresetCommunity${ return admin ?: "System" }</ID>
+    <ID>FunctionExpressionBody:Result.kt:{ return if (isSuccess) { this } else { Result.failure(block(exceptionOrNull()!!)) } }</ID>
+    <ID>FunctionExpressionBody:Result.kt:{ return if (isSuccess) { this } else { block(exceptionOrNull()!!) } }</ID>
+    <ID>FunctionExpressionBody:Result.kt:{ return if (isSuccess) { try { block(getOrThrow()) } catch (e: Throwable) { Result.failure(e) } } else { Result.failure(exceptionOrNull()!!) } }</ID>
+    <ID>FunctionExpressionBody:Result.kt:{ return if (isSuccess) { val t = getOrNull() if (t == null) { Result.failure(block()) } else { Result.success(t) } } else { Result.failure(exceptionOrNull()!!) } }</ID>
+    <ID>FunctionExpressionBody:Result.kt:{ return map { it?.firstOrNull() } }</ID>
+    <ID>FunctionExpressionBody:Result.kt:{ return map { value -&gt; if (value == null) { null } else { block(value) } } }</ID>
+    <ID>FunctionExpressionBody:Result.kt:{ return map { } }</ID>
+    <ID>FunctionExpressionBody:Result.kt:{ return mapCatching { value -&gt; if (value == null) { null } else { block(value) } } }</ID>
+    <ID>FunctionExpressionBody:Result.kt:{ return mapResult { if (it) { UNIT_RESULT } else { Result.failure(error()) } } }</ID>
+    <ID>FunctionExpressionBody:Result.kt:{ return mapResult { t -&gt; if (t == null) { Result.success(null) } else { block(t) } } }</ID>
+    <ID>FunctionExpressionBody:Result.kt:{ return recoverResult { e -&gt; if (isDup(e)) { block() } else { Result.failure(e) } } }</ID>
+    <ID>FunctionExpressionBody:Signature.kt:AlgoP256${ return calcAddressSHA256AndRipemd160(derPublicKeyStr) }</ID>
+    <ID>FunctionExpressionBody:Signature.kt:AlgoP256${ return getDerPrivateKeyP256(pemPrivateKey) }</ID>
+    <ID>FunctionExpressionBody:Signature.kt:AlgoP256${ return getDerPublicKeyFromPrivateKeyP256(pemPrivateKeyStr) }</ID>
+    <ID>FunctionExpressionBody:Signature.kt:AlgoP256${ return runCatching { CryptographyProvider.Default.get(ECDSA).privateKeyDecoder(EC.Curve.P256) .decodeFromByteArray(EC.PrivateKey.Format.DER, derPrivateKey.hexToByteArray()) .encodeToByteArray(EC.PrivateKey.Format.PEM) .decodeToString() } }</ID>
+    <ID>FunctionExpressionBody:Signature.kt:AlgoP256${ return runCatching { CryptographyProvider.Default.get(ECDSA).publicKeyDecoder(EC.Curve.P256) .decodeFromByteArray(EC.PublicKey.Format.DER, derPublicKey.hexToByteArray()) .encodeToByteArray(EC.PublicKey.Format.PEM).decodeToString() } }</ID>
+    <ID>FunctionExpressionBody:Signature.kt:AlgoP256${ return runCatching { CryptographyProvider.Default.get(ECDSA).publicKeyDecoder(EC.Curve.P256) .decodeFromByteArray(EC.PublicKey.Format.PEM, pemPublicKeyStr.encodeToByteArray()) .encodeToByteArray(EC.PublicKey.Format.DER).toHexString() } }</ID>
+    <ID>FunctionExpressionBody:Signature.kt:AlgoP256${ return runCatching { val keyPair = CryptographyProvider.Default.get(ECDSA).keyPairGenerator(EC.Curve.P256) .generateKey() val privatePem = keyPair.privateKey .encodeToByteArray(EC.PrivateKey.Format.PEM) .decodeToString() val publicPem = keyPair.publicKey .encodeToByteArray(EC.PublicKey.Format.PEM) .decodeToString() privatePem to publicPem } }</ID>
+    <ID>FunctionExpressionBody:Signature.kt:AlgoP256${ return runCatching { val privateKey = CryptographyProvider.Default.get(ECDSA).privateKeyDecoder(EC.Curve.P256) .decodeFromByteArray(EC.PrivateKey.Format.DER, derPrivateKey.hexToByteArray()) val signature = privateKey.signatureGenerator(SHA256, ECDSA.SignatureFormat.DER) .generateSignature(data.encodeToByteArray()) signature.toHexString() } }</ID>
+    <ID>FunctionExpressionBody:Signature.kt:AlgoP256${ return runCatching { val publicKey = CryptographyProvider.Default.get(ECDSA).publicKeyDecoder(EC.Curve.P256) .decodeFromByteArray(EC.PublicKey.Format.DER, derPublicKey.hexToByteArray()) publicKey.signatureVerifier(SHA256, ECDSA.SignatureFormat.DER) .tryVerifySignature(data.encodeToByteArray(), derSignature.hexToByteArray()) } }</ID>
+    <ID>FunctionExpressionBody:Signature.kt:AlgoP256.&lt;no name provided&gt;${ return runCatching { val publicKeyContent = encrypted.copyOfRange(0, 65) val publicKey = CryptographyProvider.Default.get(ECDH).publicKeyDecoder(EC.Curve.P256) .decodeFromByteArray(EC.PublicKey.Format.RAW, publicKeyContent) val shared = CryptographyProvider.Default.get(ECDH).privateKeyDecoder(EC.Curve.P256) .decodeFromByteArray(EC.PrivateKey.Format.DER, derPrivateKeyStr.hexToByteArray()) .sharedSecretGenerator().generateSharedSecretToByteArray(publicKey) val derivedKey = CryptographyProvider.Default.get(HKDF) .secretDerivation(SHA256, 512.bits, null, "ecies".encodeToByteArray()) .deriveSecretToByteArray(shared) val aesKey = derivedKey.copyOfRange(0, 32) val macKey = derivedKey.copyOfRange(32, 64) val noMacResult = encrypted.copyOfRange(0, encrypted.size - 32) val macResult = encrypted.copyOfRange(encrypted.size - 32, encrypted.size) if (!CryptographyProvider.Default.get(HMAC).keyDecoder(SHA256) .decodeFromByteArray(HMAC.Key.Format.RAW, macKey) .signatureVerifier().tryVerifySignature(noMacResult, macResult) ) { throw Exception("hmac verify failed") } val encryptedContent = encrypted.copyOfRange(65, encrypted.size - 32) CryptographyProvider.Default.get(AES.GCM) .keyDecoder() .decodeFromByteArray(AES.Key.Format.RAW, aesKey) .cipher() .decrypt(encryptedContent) } }</ID>
+    <ID>FunctionExpressionBody:Signature.kt:AlgoP256.&lt;no name provided&gt;${ return runCatching { val tempKeyPair = CryptographyProvider.Default.get(ECDH).keyPairGenerator(EC.Curve.P256).generateKey() val publicKey = CryptographyProvider.Default.get(ECDH).publicKeyDecoder(EC.Curve.P256) .decodeFromByteArray(EC.PublicKey.Format.DER, derPublicKeyStr.hexToByteArray()) val shared = tempKeyPair.privateKey.sharedSecretGenerator() .generateSharedSecretToByteArray(publicKey) val derivedKeys = CryptographyProvider.Default.get(HKDF) .secretDerivation(SHA256, 512.bits, null, "ecies".encodeToByteArray()) .deriveSecretToByteArray(shared) val aesKey = derivedKeys.copyOfRange(0, 32) val macKey = derivedKeys.copyOfRange(32, 64) val encrypted = CryptographyProvider.Default.get(AES.GCM) .keyDecoder() .decodeFromByteArray(AES.Key.Format.RAW, aesKey) .cipher() .encrypt(aesKeyBytes) val concat = tempKeyPair.publicKey.encodeToByteArray(EC.PublicKey.Format.RAW) + encrypted val signature = CryptographyProvider.Default.get(HMAC).keyDecoder(SHA256) .decodeFromByteArray(HMAC.Key.Format.RAW, macKey) .signatureGenerator() .generateSignature(concat) concat + signature } }</ID>
+    <ID>FunctionExpressionBody:Signature.kt:{ return (data + salt).toCharArray().sorted().joinToString("") }</ID>
+    <ID>FunctionExpressionBody:Signature.kt:{ return AlgoP256.runCatching { val key = CryptographyProvider.Default.get(AES.CBC).keyDecoder() .decodeFromByteArray(AES.Key.Format.RAW, aesKey) key.cipher(true).encrypt(data.encodeToByteArray()) } }</ID>
+    <ID>FunctionExpressionBody:Signature.kt:{ return AlgoP256.runCatching { val key = CryptographyProvider.Default.get(AES.CBC).keyDecoder() .decodeFromByteArray(AES.Key.Format.RAW, aesKey) val encryptedData = key.cipher(true).decrypt(encrypted) encryptedData.decodeToString() } }</ID>
+    <ID>FunctionExpressionBody:Signature.kt:{ return AlgoP256.runCatching { val key = CryptographyProvider.Default.get(AES.CBC).keyGenerator(256.bits).generateKey() val encodedAesKey = key.encodeToByteArray(AES.Key.Format.RAW) val encryptedData = key.cipher(true).encrypt(data.encodeToByteArray()) encryptedData to encodedAesKey } }</ID>
+    <ID>FunctionExpressionBody:Signature.kt:{ return encryptionAlgo.kemDecrypt(derPrivateKey, encryptedAesKey).mapResult { decryptDataByAES(encrypted, it) } }</ID>
+    <ID>FunctionExpressionBody:Signature.kt:{ return replace("\r\n", "\n") }</ID>
+    <ID>FunctionExpressionBody:Signature.kt:{ return runCatching { getAlgo(algo).block() } }</ID>
+    <ID>FunctionExpressionBody:Signature.kt:{ return runCatching { val decode = derPublicKeyStr.hexToByteArray() // 先计算SHA256 val sha256Digest = CryptographyProvider.Default.get(SHA256).hasher().hash(decode) // 再计算RIPEMD160 val ripemd160Digest = ripemd160Platform(sha256Digest) ripemd160Digest.toHexString() } }</ID>
+    <ID>FunctionExpressionBody:Signature.kt:{ return when (algo) { AlgoType.P256 -&gt; AlgoP256 AlgoType.DILITHIUM -&gt; AlgoDilithium } }</ID>
+    <ID>FunctionExpressionBody:Time.kt:{ return Clock.System.now().toLocalDateTime(TimeZone.UTC) }</ID>
+    <ID>MixedConditionOperators:RoomInfo.kt:RoomInfo$lastRead != null &amp;&amp; lastRead &lt; latestTopic</ID>
+    <ID>NoEmptyFile:p256.kt:com.storyteller_f.shared.curves.p256.kt</ID>
+  </CurrentIssues>
+</SmellBaseline>

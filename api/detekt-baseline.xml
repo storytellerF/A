@@ -1,0 +1,35 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ClassSignature:AdminApi.kt:CommunityInfoListResponse : ListResponse</ID>
+    <ID>ClassSignature:AdminApi.kt:FileInfoListResponse : ListResponse</ID>
+    <ID>ClassSignature:AdminApi.kt:FileRefInfoListResponse : ListResponse</ID>
+    <ID>ClassSignature:AdminApi.kt:MemberInfoListResponse : ListResponse</ID>
+    <ID>ClassSignature:AdminApi.kt:PanelLogInfoListResponse : ListResponse</ID>
+    <ID>ClassSignature:AdminApi.kt:ReactionRecordInfoListResponse : ListResponse</ID>
+    <ID>ClassSignature:AdminApi.kt:RoomInfoListResponse : ListResponse</ID>
+    <ID>ClassSignature:AdminApi.kt:TaskRecordInfoListResponse : ListResponse</ID>
+    <ID>ClassSignature:AdminApi.kt:TitleInfoListResponse : ListResponse</ID>
+    <ID>ClassSignature:AdminApi.kt:TopicInfoListResponse : ListResponse</ID>
+    <ID>ClassSignature:AdminApi.kt:UploadRecordInfoListResponse : ListResponse</ID>
+    <ID>ClassSignature:AdminApi.kt:UserFavoriteInfoListResponse : ListResponse</ID>
+    <ID>ClassSignature:AdminApi.kt:UserInfoListResponse : ListResponse</ID>
+    <ID>ClassSignature:AdminApi.kt:UserLogInfoListResponse : ListResponse</ID>
+    <ID>ClassSignature:AdminApi.kt:UserSubscriptionInfoListResponse : ListResponse</ID>
+    <ID>ClassSignature:CustomApi.kt:ChildAccountInfoListResponse : ListResponse</ID>
+    <ID>ClassSignature:CustomApi.kt:CustomApi.Files$MediaSearchQuery</ID>
+    <ID>ClassSignature:CustomApi.kt:CustomApi.Files$UploadQuery</ID>
+    <ID>ClassSignature:CustomApi.kt:CustomApi.Files.Chunks$InitResponse</ID>
+    <ID>ClassSignature:CustomApi.kt:CustomApi.Files.Chunks$UploadPath</ID>
+    <ID>ClassSignature:CustomApi.kt:ReactionInfoListResponse : ListResponse</ID>
+    <ID>ClassSignature:CustomApi.kt:UserPubKeyInfoListResponse : ListResponse</ID>
+    <ID>ClassSignature:Query.kt:NewRoom</ID>
+    <ID>ClassSignature:Query.kt:NewSubscription</ID>
+    <ID>ClassSignature:Query.kt:NewUser</ID>
+    <ID>ClassSignature:Query.kt:SignUpBody</ID>
+    <ID>ClassSignature:Query.kt:TransferAuthKey$Dilithium : TransferAuthKey</ID>
+    <ID>ClassSignature:Query.kt:TransferAuthKey$P256 : TransferAuthKey</ID>
+    <ID>FunctionExpressionBody:Query.kt:NewFavorite${ return ObjectTuple(objectId, objectType) }</ID>
+  </CurrentIssues>
+</SmellBaseline>

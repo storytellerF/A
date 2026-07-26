@@ -1,0 +1,49 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ArgumentListWrapping:PanelApp.kt:PanelUIViewModel$( viewModelScope, it.address, httpUrl, ConstPassHolder(pass), old )</ID>
+    <ID>BlankLineBetweenWhenConditions:FileDetailPage.kt:when (ref?.objectType) { com.storyteller_f.shared.type.ObjectType.COMMUNITY -&gt; nav.gotoCommunityDetail(ref.objectId) com.storyteller_f.shared.type.ObjectType.ROOM -&gt; nav.gotoRoomDetail(ref.objectId) com.storyteller_f.shared.type.ObjectType.TOPIC -&gt; nav.gotoTopicDetail(ref.objectId) com.storyteller_f.shared.type.ObjectType.USER -&gt; nav.gotoUserDetail(ref.objectId) else -&gt; {} }</ID>
+    <ID>BlankLineBetweenWhenConditions:FileDetailPage.kt:when { info.contentType.startsWith("image") -&gt; { CoilZoomAsyncImage( model = globalLoader(info.url), contentDescription = stringResource(Res.string.preview_image), modifier = Modifier.fillMaxSize() ) } info.contentType == com.storyteller_f.shared.model.FileInfo.PDF_CONTENT_TYPE -&gt; { PdfView(info.url, Modifier.fillMaxSize()) } info.contentType.startsWith("video") || info.contentType.startsWith("audio") -&gt; { Text(stringResource(Res.string.file_can_preview)) } }</ID>
+    <ID>BlankLineBetweenWhenConditions:PanelApp.kt:IPanelAccountInstance.Regular$when (any) { is OnUserAdded -&gt; { storage.user.saveToDefault(any.info) } is OnUserStatusUpdated -&gt; handleUserStatusUpdated(storage, any) is OnCommunityStatusUpdated -&gt; handleCommunityReadOnlyUpdated(storage, any) is OnRoomStatusUpdated -&gt; handleRoomReadOnlyUpdated(storage, any) is OnTopicStatusUpdated -&gt; handleTopicReadOnlyUpdated(storage, any) is OnTitleStatusUpdated -&gt; handleTitleReadOnlyUpdated(storage, any) is OnFileStatusUpdated -&gt; handleFileReadOnlyUpdated(storage, any) }</ID>
+    <ID>BlankLineBetweenWhenConditions:TaskRecordsPage.kt:when (info.type) { TaskRecordType.INTRO -&gt; nav.gotoUserDetail(info.processedId) TaskRecordType.TITLE -&gt; nav.gotoTitleDetail(info.processedId) TaskRecordType.SUBSCRIPTION, TaskRecordType.TOPIC_ACG -&gt; nav.gotoTopicDetail(info.processedId) }</ID>
+    <ID>ClassSignature:PanelApp.kt:CustomPanelSessionManager : PanelSessionManager</ID>
+    <ID>ClassSignature:PanelModel.kt:AllCommunitiesViewModel : PagingViewModel</ID>
+    <ID>ClassSignature:PanelModel.kt:AllFilesViewModel : PagingViewModel</ID>
+    <ID>ClassSignature:PanelModel.kt:AllPrivateRoomsViewModel : PagingViewModel</ID>
+    <ID>ClassSignature:PanelModel.kt:AllPublicRoomsViewModel : PagingViewModel</ID>
+    <ID>ClassSignature:PanelModel.kt:AllTitlesViewModel : PagingViewModel</ID>
+    <ID>ClassSignature:PanelModel.kt:AllTopicsViewModel : PagingViewModel</ID>
+    <ID>ClassSignature:PanelModel.kt:AllUsersViewModel : PagingViewModel</ID>
+    <ID>ClassSignature:PanelModel.kt:FileRefsViewModel : PagingViewModel</ID>
+    <ID>ClassSignature:PanelModel.kt:IdCommunityViewModel : SimpleViewModel</ID>
+    <ID>ClassSignature:PanelModel.kt:IdFileViewModel : SimpleViewModel</ID>
+    <ID>ClassSignature:PanelModel.kt:IdRoomViewModel : SimpleViewModel</ID>
+    <ID>ClassSignature:PanelModel.kt:IdTitleViewModel : SimpleViewModel</ID>
+    <ID>ClassSignature:PanelModel.kt:IdTopicViewModel : SimpleViewModel</ID>
+    <ID>ClassSignature:PanelModel.kt:IdUserOverviewViewModel : SimpleViewModel</ID>
+    <ID>ClassSignature:PanelModel.kt:IdUserViewModel : SimpleViewModel</ID>
+    <ID>ClassSignature:PanelModel.kt:RoomFilesViewModel : PagingViewModel</ID>
+    <ID>ClassSignature:PanelModel.kt:RoomMembersViewModel : PagingViewModel</ID>
+    <ID>ClassSignature:PanelModel.kt:TaskRecordsViewModel : PagingViewModel</ID>
+    <ID>ClassSignature:PanelModel.kt:TopicTopicsViewModel : PagingViewModel</ID>
+    <ID>ClassSignature:PanelModel.kt:UserCommentsViewModel : PagingViewModel</ID>
+    <ID>ClassSignature:PanelModel.kt:UserFavoritesViewModel : PagingViewModel</ID>
+    <ID>ClassSignature:PanelModel.kt:UserFilesViewModel : PagingViewModel</ID>
+    <ID>ClassSignature:PanelModel.kt:UserJoinedRoomsViewModel : PagingViewModel</ID>
+    <ID>ClassSignature:PanelModel.kt:UserLogsViewModel : PagingViewModel</ID>
+    <ID>ClassSignature:PanelModel.kt:UserReactionsViewModel : PagingViewModel</ID>
+    <ID>ClassSignature:PanelModel.kt:UserSubscriptionsViewModel : PagingViewModel</ID>
+    <ID>ClassSignature:PanelModel.kt:UserUploadRecordsViewModel : PagingViewModel</ID>
+    <ID>ClassSignature:Theme.kt:ColorFamily</ID>
+    <ID>FunctionExpressionBody:Greeting.kt:Greeting${ return "Hello, ${platform.name}!" }</ID>
+    <ID>FunctionLiteral:AllFilesPage.kt:&lt;anonymous&gt;</ID>
+    <ID>FunctionLiteral:AllPrivateRoomsPage.kt:&lt;anonymous&gt;</ID>
+    <ID>FunctionLiteral:AllTitlesPage.kt:&lt;anonymous&gt;</ID>
+    <ID>FunctionLiteral:AllTopicsPage.kt:&lt;anonymous&gt;</ID>
+    <ID>StatementWrapping:AllFilesPage.kt:TopAppBar( title = { Text(stringResource(Res.string.all_files)) }, navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } } )</ID>
+    <ID>StatementWrapping:AllPrivateRoomsPage.kt:TopAppBar( title = { Text(stringResource(Res.string.all_private_rooms)) }, navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } } )</ID>
+    <ID>StatementWrapping:AllTitlesPage.kt:TopAppBar( title = { Text(stringResource(Res.string.all_titles)) }, navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } } )</ID>
+    <ID>StatementWrapping:AllTopicsPage.kt:TopAppBar( title = { Text(stringResource(Res.string.all_topics)) }, navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } } )</ID>
+  </CurrentIssues>
+</SmellBaseline>

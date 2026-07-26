@@ -1,0 +1,30 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>BlankLineBetweenWhenConditions:ModelStorage.kt:WrappedPagingSource$when (val result = rawSource.load(params)) { is LoadResult.Page&lt;K, T&gt; -&gt; LoadResult.Page(process(result.data), result.prevKey, result.nextKey) is LoadResult.Error&lt;K, T&gt; -&gt; LoadResult.Error(result.throwable) is LoadResult.Invalid&lt;K, T&gt; -&gt; LoadResult.Invalid() }</ID>
+    <ID>BlankLineBetweenWhenConditions:ModelStorage.kt:when (this) { RoomCollection.Rooms -&gt; "rooms" is RoomCollection.SearchRoom -&gt; "rooms_${word}_${joinStatusSearch}_$communityId" is RoomCollection.AllRooms -&gt; "all_rooms_$isPrivate" // 添加社区房间相关的名称生成 is RoomCollection.CommunityRooms -&gt; "community_rooms_$communityId" is RoomCollection.CommunityRoomSearch -&gt; "community_rooms_${communityId}_$word" }</ID>
+    <ID>ClassSignature:ModelStorage.kt:CommunityInfoStorage : CollectionListStorageWithDefault</ID>
+    <ID>ClassSignature:ModelStorage.kt:PanelLogCollection$PanelLogs : PanelLogCollection</ID>
+    <ID>ClassSignature:ModelStorage.kt:RoomCollection$SearchRoom : RoomCollection</ID>
+    <ID>ClassSignature:ModelStorage.kt:WrappedPagingSource&lt;K : Any, T : Any, M : Any&gt; : PagingSource</ID>
+    <ID>FunctionExpressionBody:ModelStorage.kt:WrappedPagingSource${ return null }</ID>
+    <ID>FunctionExpressionBody:ModelStorage.kt:WrappedPagingSource${ return when (val result = rawSource.load(params)) { is LoadResult.Page&lt;K, T&gt; -&gt; LoadResult.Page(process(result.data), result.prevKey, result.nextKey) is LoadResult.Error&lt;K, T&gt; -&gt; LoadResult.Error(result.throwable) is LoadResult.Invalid&lt;K, T&gt; -&gt; LoadResult.Invalid() } }</ID>
+    <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { CommunityCollection.Communities -&gt; "communities" is CommunityCollection.SearchCommunity -&gt; "communities_${word}_${target}_${joinStatusSearch}_$hasPointer" CommunityCollection.AllCommunities -&gt; "all_communities" } }</ID>
+    <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { FileCollection.Files -&gt; "files" is FileCollection.FileList -&gt; "files_$objectId" is FileCollection.FileSearch -&gt; "files_${objectId}_$word" } }</ID>
+    <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { ReactionCollection.Reactions -&gt; "reactions" is ReactionCollection.ReactionList -&gt; "reactions_$objectId" } }</ID>
+    <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { RoomCollection.Rooms -&gt; "rooms" is RoomCollection.SearchRoom -&gt; "rooms_${word}_${joinStatusSearch}_$communityId" is RoomCollection.AllRooms -&gt; "all_rooms_$isPrivate" // 添加社区房间相关的名称生成 is RoomCollection.CommunityRooms -&gt; "community_rooms_$communityId" is RoomCollection.CommunityRoomSearch -&gt; "community_rooms_${communityId}_$word" } }</ID>
+    <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { is FileRefCollection.FileRefs -&gt; "file_refs_$fileId" } }</ID>
+    <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { is MemberCollection.CommunityMembers -&gt; if (word.isNullOrBlank()) { "community_members_$objectId" } else { "community_members_${objectId}_$word" } is MemberCollection.RoomMembers -&gt; if (word.isNullOrBlank()) { "room_members_$objectId" } else { "room_members_${objectId}_$word" } } }</ID>
+    <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { is PanelLogCollection.PanelLogs -&gt; "panel_logs_${targetId}_$objectType" } }</ID>
+    <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { is TaskRecordCollection.TaskRecords -&gt; "task_records_${type ?: "all"}" } }</ID>
+    <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { is TitleCollection.SearchTitle -&gt; "titles_${uid}_${searchType}_${status}_${type}_$scopeId" TitleCollection.Titles -&gt; "title" TitleCollection.AllTitles -&gt; "all_titles" } }</ID>
+    <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { is TopicCollection.SearchTopic -&gt; "topics_${word}_$parentId" is TopicCollection.ChildTopicList -&gt; "topics_$objectId" TopicCollection.Topics -&gt; "topics" TopicCollection.Recommend -&gt; "topics_recommend" TopicCollection.AllTopics -&gt; "all_topics" is TopicCollection.UserComments -&gt; "user_comments" } }</ID>
+    <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { is UploadRecordCollection.UserUploadRecords -&gt; "upload_records_$uid" } }</ID>
+    <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { is UserCollection.SearchUser -&gt; "users_$word" UserCollection.Users -&gt; "users" is UserCollection.Members -&gt; "members_${objectId}_$word" UserCollection.AllUsers -&gt; "all_users" } }</ID>
+    <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { is UserFavoriteCollection.UserFavorites -&gt; "user_favorites_$uid" } }</ID>
+    <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { is UserLogCollection.UserLogs -&gt; "user_logs_$uid" } }</ID>
+    <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { is UserReactionRecordCollection.UserReactionRecords -&gt; "user_reaction_records_$uid" } }</ID>
+    <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { is UserSubscriptionCollection.UserSubscriptions -&gt; "user_subscriptions_$uid" } }</ID>
+  </CurrentIssues>
+</SmellBaseline>
