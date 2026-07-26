@@ -1,5 +1,8 @@
 package com.storyteller_f.a.panel
 
+import androidx.compose.material3.adaptive.Posture
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import com.storyteller_f.a.panel.common.PanelAllCommunitiesScreen
@@ -84,6 +87,28 @@ class ComposeAppCommonTest {
             ),
             backStack,
         )
+    }
+
+    @Test
+    fun listDetailDirectiveUsesPostDrawerContentWidth() {
+        val directive =
+            calculatePanelPaneDirective(
+                contentSize = DpSize(600.dp, 900.dp),
+                windowPosture = Posture(),
+            )
+
+        assertEquals(1, directive.maxHorizontalPartitions)
+    }
+
+    @Test
+    fun expandedContentWidthEnablesListDetailPane() {
+        val directive =
+            calculatePanelPaneDirective(
+                contentSize = DpSize(840.dp, 900.dp),
+                windowPosture = Posture(),
+            )
+
+        assertEquals(2, directive.maxHorizontalPartitions)
     }
 }
 

@@ -5,7 +5,9 @@ package com.storyteller_f.a.panel
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
@@ -29,6 +31,11 @@ import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.PermanentDrawerSheet
 import androidx.compose.material3.PermanentNavigationDrawer
 import androidx.compose.material3.Text
+import androidx.compose.material3.adaptive.Posture
+import androidx.compose.material3.adaptive.WindowAdaptiveInfo
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
+import androidx.compose.material3.adaptive.layout.PaneScaffoldDirective
+import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
 import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
@@ -44,6 +51,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
@@ -52,6 +60,8 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import androidx.savedstate.serialization.SavedStateConfiguration
+import androidx.window.core.layout.WindowSizeClass
+import androidx.window.core.layout.computeWindowSizeClass
 import com.storyteller_f.a.client.compose_core.common.LocalClient
 import com.storyteller_f.a.client.compose_core.components.CustomGlobalDialogController
 import com.storyteller_f.a.client.compose_core.components.CustomGlobalTask
@@ -213,27 +223,48 @@ private fun PanelNavigationDrawer(
 
 @Composable
 private fun mainPanelPage(backStack: NavBackStack<NavKey>, nav: PanelNav) {
-    val listDetailSceneStrategy = rememberListDetailSceneStrategy<NavKey>()
-    NavDisplay(
-        backStack = backStack,
-        entryDecorators =
-        listOf(
-            rememberSaveableStateHolderNavEntryDecorator(),
-            rememberViewModelStoreNavEntryDecorator(),
-        ),
-        sceneStrategies = listOf(listDetailSceneStrategy),
-        transitionSpec = {
-            slideInHorizontally { it } togetherWith slideOutHorizontally { -it }
-        },
-        popTransitionSpec = {
-            slideInHorizontally { -it } togetherWith slideOutHorizontally { it }
-        },
-        predictivePopTransitionSpec = {
-            slideInHorizontally { -it } togetherWith slideOutHorizontally { it }
-        },
-        entryProvider = rootEntryProvider(nav),
-    )
+    val windowPosture = currentWindowAdaptiveInfoV2().windowPosture
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val contentSize = DpSize(maxWidth, maxHeight)
+        val directive =
+            remember(contentSize, windowPosture) {
+                calculatePanelPaneDirective(contentSize, windowPosture)
+            }
+        val listDetailSceneStrategy =
+            rememberListDetailSceneStrategy<NavKey>(directive = directive)
+        NavDisplay(
+            backStack = backStack,
+            entryDecorators =
+            listOf(
+                rememberSaveableStateHolderNavEntryDecorator(),
+                rememberViewModelStoreNavEntryDecorator(),
+            ),
+            sceneStrategies = listOf(listDetailSceneStrategy),
+            transitionSpec = {
+                slideInHorizontally { it } togetherWith slideOutHorizontally { -it }
+            },
+            popTransitionSpec = {
+                slideInHorizontally { -it } togetherWith slideOutHorizontally { it }
+            },
+            predictivePopTransitionSpec = {
+                slideInHorizontally { -it } togetherWith slideOutHorizontally { it }
+            },
+            entryProvider = rootEntryProvider(nav),
+        )
+    }
 }
+
+internal fun calculatePanelPaneDirective(contentSize: DpSize, windowPosture: Posture): PaneScaffoldDirective =
+    calculatePaneScaffoldDirective(
+        WindowAdaptiveInfo(
+            windowSizeClass =
+            WindowSizeClass.BREAKPOINTS_V2.computeWindowSizeClass(
+                widthDp = contentSize.width.value,
+                heightDp = contentSize.height.value,
+            ),
+            windowPosture = windowPosture,
+        ),
+    )
 
 @Composable
 private fun PanelDrawer(
