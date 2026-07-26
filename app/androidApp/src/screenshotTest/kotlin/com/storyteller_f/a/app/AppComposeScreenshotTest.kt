@@ -305,9 +305,8 @@ private fun PaddedPreview(content: @Composable () -> Unit) {
 
 @Composable
 private fun ScreenshotAppTheme(content: @Composable () -> Unit) {
-    val context: PreviewContext = PreviewContextImpl
     AppTheme(dynamicColor = false) {
-        CompositionLocalProvider(LocalGlobalDialog provides context.globalDialog) {
+        CompositionLocalProvider(LocalGlobalDialog provides PreviewGlobalDialog) {
             Surface(modifier = Modifier.fillMaxWidth()) {
                 content()
             }
@@ -360,14 +359,6 @@ private fun sampleUpload() = UploadInfo.EMPTY.copy(
     name = "story.txt",
     contentType = "text/plain",
 )
-
-private interface PreviewContext {
-    val globalDialog: AppGlobalDialogController
-}
-
-private object PreviewContextImpl : PreviewContext {
-    override val globalDialog: AppGlobalDialogController = PreviewGlobalDialog
-}
 
 private object PreviewGlobalDialog : AppGlobalDialogController {
     override val state: MutableStateFlow<PersistentList<GlobalDialogState>> = MutableStateFlow(persistentListOf())
