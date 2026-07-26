@@ -7,5 +7,6 @@
     <ID>ClassSignature:PdfBox.kt:PdfBoxVisitor : Visitor</ID>
     <ID>ClassSignature:PdfBox.kt:PdfFontBundle</ID>
     <ID>ClassSignature:PdfBox.kt:QuoteVisitor : Visitor</ID>
+    <ID>PackageNaming:PdfBox.kt:package com.storyteller_f.a.cloud.pdfbox</ID>
   </CurrentIssues>
 </SmellBaseline>

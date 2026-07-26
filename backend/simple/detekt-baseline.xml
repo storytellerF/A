@@ -10,5 +10,8 @@
     <ID>FunctionExpressionBody:SimpleNameService.kt:SimpleNameService${ return numberToCustomCharset(id) }</ID>
     <ID>FunctionExpressionBody:SimpleNameService.kt:SimpleNameServiceFactory${ return SimpleNameService() }</ID>
     <ID>FunctionExpressionBody:SimpleNameService.kt:SimpleNameServiceFactory${ return true }</ID>
+    <ID>PackageNaming:NativeLockService.kt:package com.storyteller_f.a.backend.simple</ID>
+    <ID>PackageNaming:SimpleCacheService.kt:package com.storyteller_f.a.backend.simple</ID>
+    <ID>PackageNaming:SimpleNameService.kt:package com.storyteller_f.a.backend.simple</ID>
   </CurrentIssues>
 </SmellBaseline>

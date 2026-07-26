@@ -39,5 +39,12 @@
     <ID>FunctionExpressionBody:ElasticUserSearchService.kt:ElasticUserSearchService${ return useElasticClient { saveDocumentList(connection, documents, INDEX_NAME) } }</ID>
     <ID>FunctionExpressionBody:ElasticUserSearchService.kt:ElasticUserSearchServiceFactory${ return buildElasticSearchService(env) { ElasticUserSearchService(it) } }</ID>
     <ID>FunctionExpressionBody:ElasticUserSearchService.kt:ElasticUserSearchServiceFactory${ return env["SEARCH_SERVICE"] == "elastic" }</ID>
+    <ID>PackageNaming:Elastic.kt:package com.storyteller_f.a.backend.elastic</ID>
+    <ID>PackageNaming:ElasticCommunitySearchService.kt:package com.storyteller_f.a.backend.elastic</ID>
+    <ID>PackageNaming:ElasticFileSearchService.kt:package com.storyteller_f.a.backend.elastic</ID>
+    <ID>PackageNaming:ElasticMemberSearchService.kt:package com.storyteller_f.a.backend.elastic</ID>
+    <ID>PackageNaming:ElasticRoomSearchService.kt:package com.storyteller_f.a.backend.elastic</ID>
+    <ID>PackageNaming:ElasticTopicSearchService.kt:package com.storyteller_f.a.backend.elastic</ID>
+    <ID>PackageNaming:ElasticUserSearchService.kt:package com.storyteller_f.a.backend.elastic</ID>
   </CurrentIssues>
 </SmellBaseline>

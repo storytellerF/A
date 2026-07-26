@@ -31,5 +31,8 @@
     <ID>ClassSignature:Query.kt:TransferAuthKey$Dilithium : TransferAuthKey</ID>
     <ID>ClassSignature:Query.kt:TransferAuthKey$P256 : TransferAuthKey</ID>
     <ID>FunctionExpressionBody:Query.kt:NewFavorite${ return ObjectTuple(objectId, objectType) }</ID>
+    <ID>PackageNaming:AdminApi.kt:package com.storyteller_f.a.api</ID>
+    <ID>PackageNaming:CustomApi.kt:package com.storyteller_f.a.api</ID>
+    <ID>PackageNaming:Query.kt:package com.storyteller_f.a.api</ID>
   </CurrentIssues>
 </SmellBaseline>

@@ -13,5 +13,23 @@
     <ID>ClassSignature:PlatformAppiumHelper.kt:AppiumTestSetup&lt;T&gt;</ID>
     <ID>ClassSignature:WasmAppiumHelper.kt:WasmAppiumTestScope : AppiumTestScope</ID>
     <ID>ClassSignature:WasmDistributionServer.kt:WasmDistributionServer : AutoCloseable</ID>
+    <ID>MissingPackageDeclaration:AndroidAppTestDriver.kt:.AndroidAppTestDriver.kt</ID>
+    <ID>MissingPackageDeclaration:AndroidAppiumTestBase.kt:.AndroidAppiumTestBase.kt</ID>
+    <ID>MissingPackageDeclaration:AppScenarioData.kt:.AppScenarioData.kt</ID>
+    <ID>MissingPackageDeclaration:AppScenarios.kt:.AppScenarios.kt</ID>
+    <ID>MissingPackageDeclaration:AppTestDriver.kt:.AppTestDriver.kt</ID>
+    <ID>MissingPackageDeclaration:AppiumTestBase.kt:.AppiumTestBase.kt</ID>
+    <ID>MissingPackageDeclaration:AppiumTestEnvironment.kt:.AppiumTestEnvironment.kt</ID>
+    <ID>MissingPackageDeclaration:AppiumTestsByHelper.kt:.AppiumTestsByHelper.kt</ID>
+    <ID>MissingPackageDeclaration:DesktopAppTestDriver.kt:.DesktopAppTestDriver.kt</ID>
+    <ID>MissingPackageDeclaration:DesktopAppiumFailureDumper.kt:.DesktopAppiumFailureDumper.kt</ID>
+    <ID>MissingPackageDeclaration:DesktopBrowserCapture.kt:.DesktopBrowserCapture.kt</ID>
+    <ID>MissingPackageDeclaration:InjectedSessionFixtures.kt:.InjectedSessionFixtures.kt</ID>
+    <ID>MissingPackageDeclaration:PanelScenarios.kt:.PanelScenarios.kt</ID>
+    <ID>MissingPackageDeclaration:PlatformAppiumHelper.kt:.PlatformAppiumHelper.kt</ID>
+    <ID>MissingPackageDeclaration:TargetAppiumHelper.kt:.TargetAppiumHelper.kt</ID>
+    <ID>MissingPackageDeclaration:WasmAppTestDriver.kt:.WasmAppTestDriver.kt</ID>
+    <ID>MissingPackageDeclaration:WasmAppiumHelper.kt:.WasmAppiumHelper.kt</ID>
+    <ID>MissingPackageDeclaration:WasmDistributionServer.kt:.WasmDistributionServer.kt</ID>
   </CurrentIssues>
 </SmellBaseline>

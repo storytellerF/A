@@ -31,5 +31,22 @@
     <ID>FunctionExpressionBody:WebSocketClient.kt:WebSocketClientImpl${ return passHolder.currentUserPass != null &amp;&amp; sessionModel.userHandler.data.value == userInfo }</ID>
     <ID>ImportOrdering:SessionManagerKt.kt:import com.storyteller_f.a.api.SignInBody import com.storyteller_f.a.api.SignInResponse import com.storyteller_f.a.api.SignUpBody import kotlinx.coroutines.CoroutineScope import kotlinx.coroutines.Job import kotlinx.coroutines.cancelAndJoin import kotlinx.coroutines.launch import com.storyteller_f.shared.model.PanelAccountInfo import com.storyteller_f.shared.model.UserInfo import com.storyteller_f.shared.utils.mapResult</ID>
     <ID>Indentation:SessionManagerKt.kt: </ID>
+    <ID>MissingPackageDeclaration:Test.kt:.Test.kt</ID>
+    <ID>PackageNaming:AppRequest.kt:package com.storyteller_f.a.client.core</ID>
+    <ID>PackageNaming:AuthKey.kt:package com.storyteller_f.a.client.core</ID>
+    <ID>PackageNaming:CustomClientAuthProvider.kt:package com.storyteller_f.a.client.core</ID>
+    <ID>PackageNaming:CustomSlf4jLogger.kt:package com.storyteller_f.a.client.core</ID>
+    <ID>PackageNaming:HttpClient.android.kt:package com.storyteller_f.a.client.core</ID>
+    <ID>PackageNaming:HttpClient.ios.kt:package com.storyteller_f.a.client_lib</ID>
+    <ID>PackageNaming:HttpClient.jvm.kt:package com.storyteller_f.a.client.core</ID>
+    <ID>PackageNaming:HttpClient.kt:package com.storyteller_f.a.client.core</ID>
+    <ID>PackageNaming:HttpClient.wasmJs.kt:package com.storyteller_f.a.client.core</ID>
+    <ID>PackageNaming:LoadingState.kt:package com.storyteller_f.a.client.core</ID>
+    <ID>PackageNaming:PanelRequest.kt:package com.storyteller_f.a.client.core</ID>
+    <ID>PackageNaming:SessionManager.kt:package com.storyteller_f.a.client.core</ID>
+    <ID>PackageNaming:SessionManagerKt.kt:package com.storyteller_f.a.client.core</ID>
+    <ID>PackageNaming:SingleFlightCustomAuthPlugin.kt:package com.storyteller_f.a.client.core</ID>
+    <ID>PackageNaming:UserPass.kt:package com.storyteller_f.a.client.core</ID>
+    <ID>PackageNaming:WebSocketClient.kt:package com.storyteller_f.a.client.core</ID>
   </CurrentIssues>
 </SmellBaseline>

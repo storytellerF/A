@@ -12,5 +12,6 @@
     <ID>FunctionExpressionBody:FileSystemObjectStorageService.kt:FileSystemObjectStorageService${ return useFileSystem { val path = base.resolve(it.joinToString("/")) val file = path.toRealPath() if (file.pathString != path.absolutePathString()) { null } else { file } }.getOrNull() }</ID>
     <ID>FunctionExpressionBody:FileSystemObjectStorageService.kt:FileSystemObjectStorageService${ return withContext(Dispatchers.IO) { runCatching { block() } } }</ID>
     <ID>FunctionExpressionBody:FileSystemObjectStorageService.kt:FileSystemObjectStorageServiceFactory${ return env["MEDIA_SERVICE"] == "filesystem" }</ID>
+    <ID>PackageNaming:FileSystemObjectStorageService.kt:package com.storyteller_f.a.backend.filesystem</ID>
   </CurrentIssues>
 </SmellBaseline>

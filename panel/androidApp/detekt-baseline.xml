@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>PackageNaming:MainActivity.kt:package com.storyteller_f.a.panel</ID>
+    <ID>PackageNaming:PanelApplication.kt:package com.storyteller_f.a.panel</ID>
+    <ID>PackageNaming:PanelMediaPlayerActivity.kt:package com.storyteller_f.a.panel</ID>
+  </CurrentIssues>
+</SmellBaseline>

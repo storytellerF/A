@@ -50,5 +50,51 @@
     <ID>FunctionExpressionBody:UserSearchService.kt:UserDocument.Companion${ return UserDocument(user.id, user.nickname, user.aid) }</ID>
     <ID>FunctionExpressionBody:UserSubscription.kt:{ return UserSubscriptionInfo(id, uid, objectId, objectType, createdTime) }</ID>
     <ID>FunctionExpressionBody:UserTwoFactor.kt:{ return TwoFactorSettingsInfo( enabled = this?.enabled == true, type = this?.type?.takeIf { enabled }, ) }</ID>
+    <ID>PackageNaming:AssetTransaction.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:Backend.kt:package com.storyteller_f.a.backend.core</ID>
+    <ID>PackageNaming:CacheService.kt:package com.storyteller_f.a.backend.core.service</ID>
+    <ID>PackageNaming:ChildAccount.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:Community.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:CommunitySearchService.kt:package com.storyteller_f.a.backend.core.service</ID>
+    <ID>PackageNaming:ComponentTestHelper.kt:package com.storyteller_f.a.backend.core</ID>
+    <ID>PackageNaming:Connection.kt:package com.storyteller_f.a.backend.core</ID>
+    <ID>PackageNaming:CustomConfig.kt:package com.storyteller_f.a.backend.core</ID>
+    <ID>PackageNaming:CustomException.kt:package com.storyteller_f.a.backend.core</ID>
+    <ID>PackageNaming:Database.kt:package com.storyteller_f.a.backend.core</ID>
+    <ID>PackageNaming:DatabaseTest.kt:package com.storyteller_f.a.backend.core</ID>
+    <ID>PackageNaming:EncryptedKey.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:Env.kt:package com.storyteller_f.a.backend.core</ID>
+    <ID>PackageNaming:Fetch.kt:package com.storyteller_f.a.backend.core</ID>
+    <ID>PackageNaming:FileRecord.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:FileRef.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:FileSearchService.kt:package com.storyteller_f.a.backend.core.service</ID>
+    <ID>PackageNaming:LockService.kt:package com.storyteller_f.a.backend.core.service</ID>
+    <ID>PackageNaming:Member.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:MemberSearchService.kt:package com.storyteller_f.a.backend.core.service</ID>
+    <ID>PackageNaming:NameService.kt:package com.storyteller_f.a.backend.core.service</ID>
+    <ID>PackageNaming:ObjectStorageService.kt:package com.storyteller_f.a.backend.core.service</ID>
+    <ID>PackageNaming:ObjectStorageServiceTest.kt:package com.storyteller_f.a.backend.core</ID>
+    <ID>PackageNaming:PanelAccount.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:PanelLog.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:Quota.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:RawUserOverview.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:Reaction.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:ReactionRecord.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:Room.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:RoomSearchService.kt:package com.storyteller_f.a.backend.core.service</ID>
+    <ID>PackageNaming:SearchServiceTest.kt:package com.storyteller_f.a.backend.core</ID>
+    <ID>PackageNaming:TaskRecord.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:Title.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:Topic.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:TopicSearchService.kt:package com.storyteller_f.a.backend.core.service</ID>
+    <ID>PackageNaming:UploadRecord.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:User.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:UserDevice.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:UserFavorite.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:UserLog.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:UserSearchService.kt:package com.storyteller_f.a.backend.core.service</ID>
+    <ID>PackageNaming:UserSubscription.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:UserTopicRead.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:UserTwoFactor.kt:package com.storyteller_f.a.backend.core.types</ID>
   </CurrentIssues>
 </SmellBaseline>

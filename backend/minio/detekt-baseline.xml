@@ -13,5 +13,7 @@
     <ID>FunctionExpressionBody:MinIoObjectStorageService.kt:MinIoObjectStorageService${ return useMinIoClient(connection) { names.forEach { name -&gt; try { removeObject(RemoveObjectArgs.builder().bucket(bucketName).`object`(name).build()) } catch (e: ErrorResponseException) { // Ignore missing keys if (e.errorResponse().code() != "NoSuchKey") throw e } } } }</ID>
     <ID>FunctionExpressionBody:MinIoObjectStorageService.kt:MinIoObjectStorageService${ return useMinIoClient(connection) { val names = try { listObjects( ListObjectsArgs.builder().bucket(bucketName).prefix(prefix).recursive(false).build() ).map { it.get().objectName() } } catch (e: ErrorResponseException) { if (e.errorResponse().code() == "NoSuchBucket") { emptyList() } else { throw e } } get(bucketName, names).getOrThrow() } }</ID>
     <ID>FunctionExpressionBody:MinIoObjectStorageService.kt:MinioObjectStorageServiceFactory${ return env["MEDIA_SERVICE"] == "minio" }</ID>
+    <ID>MissingPackageDeclaration:UrlTest.kt:.UrlTest.kt</ID>
+    <ID>PackageNaming:MinIoObjectStorageService.kt:package com.storyteller_f.a.backend.minio</ID>
   </CurrentIssues>
 </SmellBaseline>

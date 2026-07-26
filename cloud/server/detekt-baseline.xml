@@ -24,5 +24,41 @@
     <ID>FunctionExpressionBody:TestBuilder.kt:{ return getAppSignInSession(tuple.authKey, onReceive = onReceive, block = block) }</ID>
     <ID>FunctionExpressionBody:TestBuilder.kt:{ return getPanelSession(tuple.authKey, block = block) { this.panelSignIn(tuple.authKey, it) } }</ID>
     <ID>FunctionExpressionBody:TopicTest.kt:{ return sha256(block()) }</ID>
+    <ID>PackageNaming:AdminFileTest.kt:package com.storyteller_f.a.cloud.server</ID>
+    <ID>PackageNaming:AdminRoute.kt:package com.storyteller_f.a.cloud.server.route</ID>
+    <ID>PackageNaming:AdminTaskRecordTest.kt:package com.storyteller_f.a.cloud.server</ID>
+    <ID>PackageNaming:AdminTest.kt:package com.storyteller_f.a.cloud.server</ID>
+    <ID>PackageNaming:Application.kt:package com.storyteller_f.a.cloud.server</ID>
+    <ID>PackageNaming:AuthRoute.kt:package com.storyteller_f.a.cloud.server.route</ID>
+    <ID>PackageNaming:CliTest.kt:package com.storyteller_f.a.cloud.server</ID>
+    <ID>PackageNaming:ClientIp.kt:package com.storyteller_f.a.cloud.server.common</ID>
+    <ID>PackageNaming:CommunityRoute.kt:package com.storyteller_f.a.cloud.server.route</ID>
+    <ID>PackageNaming:CommunitySearchTest.kt:package com.storyteller_f.a.cloud.server</ID>
+    <ID>PackageNaming:CommunityTest.kt:package com.storyteller_f.a.cloud.server</ID>
+    <ID>PackageNaming:FileRoute.kt:package com.storyteller_f.a.cloud.server.route</ID>
+    <ID>PackageNaming:FileSearchTest.kt:package com.storyteller_f.a.cloud.server</ID>
+    <ID>PackageNaming:FileTest.kt:package com.storyteller_f.a.cloud.server</ID>
+    <ID>PackageNaming:MemberSearchTest.kt:package com.storyteller_f.a.cloud.server</ID>
+    <ID>PackageNaming:Monitor.kt:package com.storyteller_f.a.cloud.server</ID>
+    <ID>PackageNaming:OffsetPaginationTest.kt:package com.storyteller_f.a.cloud.server</ID>
+    <ID>PackageNaming:Pagination.kt:package com.storyteller_f.a.cloud.server.common</ID>
+    <ID>PackageNaming:QuotaTest.kt:package com.storyteller_f.a.cloud.server</ID>
+    <ID>PackageNaming:RegularRoute.kt:package com.storyteller_f.a.cloud.server.route</ID>
+    <ID>PackageNaming:RoomRoute.kt:package com.storyteller_f.a.cloud.server.route</ID>
+    <ID>PackageNaming:RoomSearchTest.kt:package com.storyteller_f.a.cloud.server</ID>
+    <ID>PackageNaming:RoomTest.kt:package com.storyteller_f.a.cloud.server</ID>
+    <ID>PackageNaming:Route.kt:package com.storyteller_f.a.cloud.server.common</ID>
+    <ID>PackageNaming:RouteTitle.kt:package com.storyteller_f.a.cloud.server.route</ID>
+    <ID>PackageNaming:SearchOrderTest.kt:package com.storyteller_f.a.cloud.server</ID>
+    <ID>PackageNaming:SnapshotTest.kt:package com.storyteller_f.a.cloud.server</ID>
+    <ID>PackageNaming:SnowflakeTest.kt:package com.storyteller_f.a.cloud.server</ID>
+    <ID>PackageNaming:TestBuilder.kt:package com.storyteller_f.a.cloud.server</ID>
+    <ID>PackageNaming:TitleTest.kt:package com.storyteller_f.a.cloud.server</ID>
+    <ID>PackageNaming:TopicRoute.kt:package com.storyteller_f.a.cloud.server.route</ID>
+    <ID>PackageNaming:TopicTest.kt:package com.storyteller_f.a.cloud.server</ID>
+    <ID>PackageNaming:UserRoute.kt:package com.storyteller_f.a.cloud.server.route</ID>
+    <ID>PackageNaming:UserStatusTest.kt:package com.storyteller_f.a.cloud.server</ID>
+    <ID>PackageNaming:UserTest.kt:package com.storyteller_f.a.cloud.server</ID>
+    <ID>PackageNaming:WorkerTest.kt:package com.storyteller_f.a.cloud.server</ID>
   </CurrentIssues>
 </SmellBaseline>

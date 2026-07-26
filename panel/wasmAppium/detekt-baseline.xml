@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>MissingPackageDeclaration:PanelWasmAppiumTest.kt:.PanelWasmAppiumTest.kt</ID>
+  </CurrentIssues>
+</SmellBaseline>

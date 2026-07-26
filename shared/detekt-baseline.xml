@@ -69,7 +69,74 @@
     <ID>FunctionExpressionBody:Signature.kt:{ return runCatching { val decode = derPublicKeyStr.hexToByteArray() // 先计算SHA256 val sha256Digest = CryptographyProvider.Default.get(SHA256).hasher().hash(decode) // 再计算RIPEMD160 val ripemd160Digest = ripemd160Platform(sha256Digest) ripemd160Digest.toHexString() } }</ID>
     <ID>FunctionExpressionBody:Signature.kt:{ return when (algo) { AlgoType.P256 -&gt; AlgoP256 AlgoType.DILITHIUM -&gt; AlgoDilithium } }</ID>
     <ID>FunctionExpressionBody:Time.kt:{ return Clock.System.now().toLocalDateTime(TimeZone.UTC) }</ID>
+    <ID>FunctionNaming:ContentTest.kt:ContentTest$@Test fun `test check content`</ID>
+    <ID>FunctionNaming:sha3.kt:external fun keccak_256: String</ID>
+    <ID>MissingPackageDeclaration:ContentTest.kt:.ContentTest.kt</ID>
+    <ID>MissingPackageDeclaration:MarkdownTest.kt:.MarkdownTest.kt</ID>
+    <ID>MissingPackageDeclaration:PlatformHeadlessTest.jvm.kt:.PlatformHeadlessTest.jvm.kt</ID>
+    <ID>MissingPackageDeclaration:PlatformHeadlessTest.kt:.PlatformHeadlessTest.kt</ID>
+    <ID>MissingPackageDeclaration:RoomFrameTest.kt:.RoomFrameTest.kt</ID>
+    <ID>MissingPackageDeclaration:SignatureTest.kt:.SignatureTest.kt</ID>
     <ID>MixedConditionOperators:RoomInfo.kt:RoomInfo$lastRead != null &amp;&amp; lastRead &lt; latestTopic</ID>
     <ID>NoEmptyFile:p256.kt:com.storyteller_f.shared.curves.p256.kt</ID>
+    <ID>NotImplementedDeclaration:Signature.ios.kt:TODO("Not yet implemented")</ID>
+    <ID>NotImplementedDeclaration:Strings.ios.kt:TODO("Not yet implemented")</ID>
+    <ID>PackageNaming:Asset.kt:package com.storyteller_f.shared.model</ID>
+    <ID>PackageNaming:CommunityInfo.kt:package com.storyteller_f.shared.model</ID>
+    <ID>PackageNaming:CustomImmutableList.kt:package com.storyteller_f.shared.type</ID>
+    <ID>PackageNaming:ExplainResult.kt:package com.storyteller_f.shared.obj</ID>
+    <ID>PackageNaming:FileInfo.kt:package com.storyteller_f.shared.model</ID>
+    <ID>PackageNaming:FileRefInfo.kt:package com.storyteller_f.shared.model</ID>
+    <ID>PackageNaming:FontSettings.kt:package com.storyteller_f.shared.model</ID>
+    <ID>PackageNaming:Hash.kt:package com.storyteller_f.shared.utils</ID>
+    <ID>PackageNaming:Hash.wasmJs.kt:package com.storyteller_f.shared.utils</ID>
+    <ID>PackageNaming:JoinStatusSearch.kt:package com.storyteller_f.shared.type</ID>
+    <ID>PackageNaming:List.kt:package com.storyteller_f.shared.utils</ID>
+    <ID>PackageNaming:ListResponse.kt:package com.storyteller_f.shared.obj</ID>
+    <ID>PackageNaming:Markdown.kt:package com.storyteller_f.shared.utils</ID>
+    <ID>PackageNaming:MemberStatus.kt:package com.storyteller_f.shared.type</ID>
+    <ID>PackageNaming:ObjectStatus.kt:package com.storyteller_f.shared.type</ID>
+    <ID>PackageNaming:ObjectTuple.kt:package com.storyteller_f.shared.obj</ID>
+    <ID>PackageNaming:ObjectType.kt:package com.storyteller_f.shared.type</ID>
+    <ID>PackageNaming:PanelAccount.kt:package com.storyteller_f.shared.model</ID>
+    <ID>PackageNaming:PanelLogInfo.kt:package com.storyteller_f.shared.model</ID>
+    <ID>PackageNaming:PanelOverview.kt:package com.storyteller_f.shared.model</ID>
+    <ID>PackageNaming:Platform.android.kt:package com.storyteller_f.shared</ID>
+    <ID>PackageNaming:Platform.ios.kt:package com.storyteller_f.shared</ID>
+    <ID>PackageNaming:Platform.jvm.kt:package com.storyteller_f.shared</ID>
+    <ID>PackageNaming:Platform.kt:package com.storyteller_f.shared</ID>
+    <ID>PackageNaming:Platform.wasmJs.kt:package com.storyteller_f.shared</ID>
+    <ID>PackageNaming:Preset.kt:package com.storyteller_f.shared.obj</ID>
+    <ID>PackageNaming:PrimaryKey.kt:package com.storyteller_f.shared.type</ID>
+    <ID>PackageNaming:PrimaryKeyIdentifiable.kt:package com.storyteller_f.shared.model</ID>
+    <ID>PackageNaming:ReactionInfo.kt:package com.storyteller_f.shared.model</ID>
+    <ID>PackageNaming:Result.kt:package com.storyteller_f.shared.utils</ID>
+    <ID>PackageNaming:RoomFrame.kt:package com.storyteller_f.shared.obj</ID>
+    <ID>PackageNaming:RoomInfo.kt:package com.storyteller_f.shared.model</ID>
+    <ID>PackageNaming:Signature.ios.kt:package com.storyteller_f.shared</ID>
+    <ID>PackageNaming:Signature.kt:package com.storyteller_f.shared</ID>
+    <ID>PackageNaming:Signature.wasmJs.kt:package com.storyteller_f.shared</ID>
+    <ID>PackageNaming:Strings.android.kt:package com.storyteller_f.shared.utils</ID>
+    <ID>PackageNaming:Strings.ios.kt:package com.storyteller_f.shared.utils</ID>
+    <ID>PackageNaming:Strings.jvm.kt:package com.storyteller_f.shared.utils</ID>
+    <ID>PackageNaming:Strings.kt:package com.storyteller_f.shared.utils</ID>
+    <ID>PackageNaming:Strings.wasmJs.kt:package com.storyteller_f.shared.utils</ID>
+    <ID>PackageNaming:TaskRecordInfo.kt:package com.storyteller_f.shared.model</ID>
+    <ID>PackageNaming:Time.kt:package com.storyteller_f.shared.utils</ID>
+    <ID>PackageNaming:TitleInfo.kt:package com.storyteller_f.shared.model</ID>
+    <ID>PackageNaming:TopicInfo.kt:package com.storyteller_f.shared.model</ID>
+    <ID>PackageNaming:UpdateBody.kt:package com.storyteller_f.shared.obj</ID>
+    <ID>PackageNaming:UpdateObjectStatusBody.kt:package com.storyteller_f.shared.obj</ID>
+    <ID>PackageNaming:UpdateReadOnlyBody.kt:package com.storyteller_f.shared.obj</ID>
+    <ID>PackageNaming:UpdateUserStatusBody.kt:package com.storyteller_f.shared.obj</ID>
+    <ID>PackageNaming:UploadRecordInfo.kt:package com.storyteller_f.shared.model</ID>
+    <ID>PackageNaming:UploadRecordStatus.kt:package com.storyteller_f.shared.type</ID>
+    <ID>PackageNaming:UserFavoriteInfo.kt:package com.storyteller_f.shared.model</ID>
+    <ID>PackageNaming:UserInfo.kt:package com.storyteller_f.shared.model</ID>
+    <ID>PackageNaming:UserStatus.kt:package com.storyteller_f.shared.type</ID>
+    <ID>PackageNaming:UserSubscriptionInfo.kt:package com.storyteller_f.shared.model</ID>
+    <ID>PackageNaming:keccak.kt:package com.storyteller_f.shared</ID>
+    <ID>PackageNaming:p256.kt:package com.storyteller_f.shared.curves</ID>
+    <ID>PackageNaming:sha3.kt:package com.storyteller_f.shared.hashes</ID>
   </CurrentIssues>
 </SmellBaseline>

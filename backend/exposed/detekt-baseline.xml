@@ -44,5 +44,43 @@
     <ID>FunctionExpressionBody:Users.kt:{ return Users.selectAll().where(function) }</ID>
     <ID>FunctionExpressionBody:Users.kt:{ return with(ChildAccounts) { ChildAccount( row[uid], row[encryptedPrivateKey], row[encryptedAesKey], row[hostId], row[remark], row[encryptedEncryptionPrivateKey] ) } }</ID>
     <ID>FunctionExpressionBody:Users.kt:{ return with(Users) { User( row[Aids.value], row[encryptionPublicKey], row[publicKey], row[address], row[icon], row[nickname], row[id], row[createdTime], row[acgAmount], row[passType], row[algoType], row[notificationId], row[status], ) } }</ID>
+    <ID>PackageNaming:Aids.kt:package com.storyteller_f.a.backend.exposed.tables</ID>
+    <ID>PackageNaming:Assets.kt:package com.storyteller_f.a.backend.exposed.tables</ID>
+    <ID>PackageNaming:BaseTable.kt:package com.storyteller_f.a.backend.exposed</ID>
+    <ID>PackageNaming:Communities.kt:package com.storyteller_f.a.backend.exposed.tables</ID>
+    <ID>PackageNaming:EncryptedKeys.kt:package com.storyteller_f.a.backend.exposed.tables</ID>
+    <ID>PackageNaming:ExposedAdminDatabase.kt:package com.storyteller_f.a.backend.exposed.database</ID>
+    <ID>PackageNaming:ExposedCommunityDatabase.kt:package com.storyteller_f.a.backend.exposed.database</ID>
+    <ID>PackageNaming:ExposedContainerDatabase.kt:package com.storyteller_f.a.backend.exposed.database</ID>
+    <ID>PackageNaming:ExposedDatabaseFactory.kt:package com.storyteller_f.a.backend.exposed</ID>
+    <ID>PackageNaming:ExposedFavoriteDatabase.kt:package com.storyteller_f.a.backend.exposed.database</ID>
+    <ID>PackageNaming:ExposedFileDatabase.kt:package com.storyteller_f.a.backend.exposed.database</ID>
+    <ID>PackageNaming:ExposedPanelAccountDatabase.kt:package com.storyteller_f.a.backend.exposed.database</ID>
+    <ID>PackageNaming:ExposedReactionDatabase.kt:package com.storyteller_f.a.backend.exposed.database</ID>
+    <ID>PackageNaming:ExposedRoomDatabase.kt:package com.storyteller_f.a.backend.exposed.database</ID>
+    <ID>PackageNaming:ExposedSubscriptionDatabase.kt:package com.storyteller_f.a.backend.exposed.database</ID>
+    <ID>PackageNaming:ExposedTitleDatabase.kt:package com.storyteller_f.a.backend.exposed.database</ID>
+    <ID>PackageNaming:ExposedTopicDatabase.kt:package com.storyteller_f.a.backend.exposed.database</ID>
+    <ID>PackageNaming:ExposedUserDatabase.kt:package com.storyteller_f.a.backend.exposed.database</ID>
+    <ID>PackageNaming:FileRecords.kt:package com.storyteller_f.a.backend.exposed.tables</ID>
+    <ID>PackageNaming:FileRefs.kt:package com.storyteller_f.a.backend.exposed.tables</ID>
+    <ID>PackageNaming:Members.kt:package com.storyteller_f.a.backend.exposed.tables</ID>
+    <ID>PackageNaming:PaginationResult.kt:package com.storyteller_f.a.backend.exposed.query</ID>
+    <ID>PackageNaming:PanelAccounts.kt:package com.storyteller_f.a.backend.exposed.tables</ID>
+    <ID>PackageNaming:PanelLogs.kt:package com.storyteller_f.a.backend.exposed.tables</ID>
+    <ID>PackageNaming:Quotas.kt:package com.storyteller_f.a.backend.exposed.tables</ID>
+    <ID>PackageNaming:ReactionRecords.kt:package com.storyteller_f.a.backend.exposed.tables</ID>
+    <ID>PackageNaming:Rooms.kt:package com.storyteller_f.a.backend.exposed.tables</ID>
+    <ID>PackageNaming:TaskRecords.kt:package com.storyteller_f.a.backend.exposed.tables</ID>
+    <ID>PackageNaming:Titles.kt:package com.storyteller_f.a.backend.exposed.tables</ID>
+    <ID>PackageNaming:Topics.kt:package com.storyteller_f.a.backend.exposed.tables</ID>
+    <ID>PackageNaming:UploadRecords.kt:package com.storyteller_f.a.backend.exposed.tables</ID>
+    <ID>PackageNaming:UserDevices.kt:package com.storyteller_f.a.backend.exposed.tables</ID>
+    <ID>PackageNaming:UserFavorites.kt:package com.storyteller_f.a.backend.exposed.tables</ID>
+    <ID>PackageNaming:UserLogs.kt:package com.storyteller_f.a.backend.exposed.tables</ID>
+    <ID>PackageNaming:UserSubscriptions.kt:package com.storyteller_f.a.backend.exposed.tables</ID>
+    <ID>PackageNaming:UserTopicReads.kt:package com.storyteller_f.a.backend.exposed.tables</ID>
+    <ID>PackageNaming:UserTwoFactors.kt:package com.storyteller_f.a.backend.exposed.tables</ID>
+    <ID>PackageNaming:Users.kt:package com.storyteller_f.a.backend.exposed.tables</ID>
   </CurrentIssues>
 </SmellBaseline>

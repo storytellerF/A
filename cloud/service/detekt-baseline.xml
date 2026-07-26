@@ -53,5 +53,24 @@
     <ID>FunctionExpressionBody:UserService.kt:{ return processRawUserToUserInfo(listOf(raw.rawUser)).map { users -&gt; val userInfo = users.first() UserOverview( raw.subscriptionCount, raw.favoriteCount, raw.acg, raw.childAccountCount, raw.reactionRecordCount, raw.commentCount, raw.hasUnreadChildRoomMessage, userInfo ) } }</ID>
     <ID>FunctionExpressionBody:UserService.kt:{ return this in 'a'..'z' || this in 'A'..'Z' }</ID>
     <ID>FunctionExpressionBody:UserService.kt:{ return when (checkNickname(update.nickname, 1..USER_NICKNAME)) { StringCheckResult.RANGE_MISMATCH -&gt; Result.failure( CustomBadRequestException("user nickname must be between in 1 and $USER_NICKNAME") ) StringCheckResult.CONTAIN_INVALID_CHAR -&gt; Result.failure( CustomBadRequestException("user nickname must be visible") ) else -&gt; UNIT_RESULT } }</ID>
+    <ID>MissingPackageDeclaration:MediaTest.kt:.MediaTest.kt</ID>
+    <ID>MissingPackageDeclaration:SnowflakeTest.kt:.SnowflakeTest.kt</ID>
+    <ID>MissingPackageDeclaration:StringTest.kt:.StringTest.kt</ID>
+    <ID>PackageNaming:AccountService.kt:package com.storyteller_f.a.cloud.core.service</ID>
+    <ID>PackageNaming:AdminService.kt:package com.storyteller_f.a.cloud.core.service</ID>
+    <ID>PackageNaming:AudioUtil.kt:package com.storyteller_f.a.cloud.core.utils</ID>
+    <ID>PackageNaming:CommunityService.kt:package com.storyteller_f.a.cloud.core.service</ID>
+    <ID>PackageNaming:ContainerService.kt:package com.storyteller_f.a.cloud.core.service</ID>
+    <ID>PackageNaming:FavoriteService.kt:package com.storyteller_f.a.cloud.core.service</ID>
+    <ID>PackageNaming:FileService.kt:package com.storyteller_f.a.cloud.core.service</ID>
+    <ID>PackageNaming:ImageUtil.kt:package com.storyteller_f.a.cloud.core.utils</ID>
+    <ID>PackageNaming:ReactionService.kt:package com.storyteller_f.a.cloud.core.service</ID>
+    <ID>PackageNaming:RoomService.kt:package com.storyteller_f.a.cloud.core.service</ID>
+    <ID>PackageNaming:TitleService.kt:package com.storyteller_f.a.cloud.core.service</ID>
+    <ID>PackageNaming:TopicService.kt:package com.storyteller_f.a.cloud.core.service</ID>
+    <ID>PackageNaming:TwoFactorService.kt:package com.storyteller_f.a.cloud.core.service</ID>
+    <ID>PackageNaming:TwoFactorServiceTest.kt:package com.storyteller_f.a.cloud.core.service</ID>
+    <ID>PackageNaming:UserService.kt:package com.storyteller_f.a.cloud.core.service</ID>
+    <ID>PackageNaming:UserSubscriptionService.kt:package com.storyteller_f.a.cloud.core.service</ID>
   </CurrentIssues>
 </SmellBaseline>

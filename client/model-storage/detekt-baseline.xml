@@ -26,5 +26,8 @@
     <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { is UserLogCollection.UserLogs -&gt; "user_logs_$uid" } }</ID>
     <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { is UserReactionRecordCollection.UserReactionRecords -&gt; "user_reaction_records_$uid" } }</ID>
     <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { is UserSubscriptionCollection.UserSubscriptions -&gt; "user_subscriptions_$uid" } }</ID>
+    <ID>PackageNaming:DownloadInfo.kt:package com.storyteller_f.storage</ID>
+    <ID>PackageNaming:ModelStorage.kt:package com.storyteller_f.storage</ID>
+    <ID>PackageNaming:UploadInfo.kt:package com.storyteller_f.storage</ID>
   </CurrentIssues>
 </SmellBaseline>

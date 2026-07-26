@@ -8,5 +8,12 @@
     <ID>ClassSignature:GeneratePresetKeysCommand.kt:GeneratePresetKeysCommand : Subcommand</ID>
     <ID>FunctionExpressionBody:AddPreset.kt:AddPreset${ return getAlgo(algoType).run { val derPublicKey = getDerPublicKeyFromPrivateKey( File(parentDir, privatePath).readText().replace("\r\n", "\n") ).getOrThrow() val ad = calcAddress(derPublicKey).getOrThrow() Pair(derPublicKey, ad) } }</ID>
     <ID>FunctionExpressionBody:AddPreset.kt:{ return path.endsWith("download") || path.endsWith(".download.yaml") || path.endsWith(".download.yml") }</ID>
+    <ID>MissingPackageDeclaration:SignatureTest.kt:.SignatureTest.kt</ID>
+    <ID>PackageNaming:AddPreset.kt:package com.storyteller_f.a.cloud.cli</ID>
+    <ID>PackageNaming:AddPresetTest.kt:package com.storyteller_f.a.cloud.cli</ID>
+    <ID>PackageNaming:CleanCommand.kt:package com.storyteller_f.a.cloud.cli</ID>
+    <ID>PackageNaming:CliMain.kt:package com.storyteller_f.a.cloud.cli</ID>
+    <ID>PackageNaming:GeneratePresetKeysCommand.kt:package com.storyteller_f.a.cloud.cli</ID>
+    <ID>PackageNaming:GeneratePresetKeysCommandTest.kt:package com.storyteller_f.a.cloud.cli</ID>
   </CurrentIssues>
 </SmellBaseline>

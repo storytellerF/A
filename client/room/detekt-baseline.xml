@@ -51,5 +51,18 @@
     <ID>FunctionExpressionBody:RoomStorage.kt:RoomUserSubscriptionStorage${ return impl.getDocument(collection.getName(), key) }</ID>
     <ID>FunctionExpressionBody:RoomStorage.kt:RoomUserSubscriptionStorage${ return impl.observeData(collection.getName()) }</ID>
     <ID>FunctionExpressionBody:RoomStorage.kt:RoomUserSubscriptionStorage${ return impl.observeDatum(UserSubscriptionStorage.COLLECTION_NAME, key) }</ID>
+    <ID>NotImplementedDeclaration:RoomStorage.kt:RoomFileRefInfoStorage$TODO("Not yet implemented")</ID>
+    <ID>NotImplementedDeclaration:RoomStorage.kt:RoomPanelLogInfoStorage$TODO("Not yet implemented - this method is not used in current implementation")</ID>
+    <ID>NotImplementedDeclaration:RoomStorage.kt:RoomReactionInfoStorage$TODO("Not yet implemented")</ID>
+    <ID>NotImplementedDeclaration:RoomStorage.kt:RoomTaskRecordInfoStorage$TODO("Not yet implemented - this method is not used in current implementation")</ID>
+    <ID>NotImplementedDeclaration:RoomStorage.kt:RoomTopicInfoStorage$TODO("Not yet implemented")</ID>
+    <ID>NotImplementedDeclaration:RoomStorage.kt:RoomUploadRecordInfoStorage$TODO("Not yet implemented")</ID>
+    <ID>NotImplementedDeclaration:RoomStorage.kt:RoomUserLogInfoStorage$TODO("Not yet implemented")</ID>
+    <ID>NotImplementedDeclaration:RoomStorage.kt:RoomUserReactionRecordStorage$TODO("Not yet implemented")</ID>
+    <ID>PackageNaming:Database.android.kt:package com.storyteller_f.a.client.room</ID>
+    <ID>PackageNaming:Database.jvm.kt:package com.storyteller_f.a.client.room</ID>
+    <ID>PackageNaming:Database.wasmJs.kt:package com.storyteller_f.a.client.room</ID>
+    <ID>PackageNaming:RoomDatabase.kt:package com.storyteller_f.a.client.room</ID>
+    <ID>PackageNaming:RoomStorage.kt:package com.storyteller_f.a.client.room</ID>
   </CurrentIssues>
 </SmellBaseline>

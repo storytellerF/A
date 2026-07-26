@@ -16,5 +16,10 @@
     <ID>FunctionExpressionBody:SessionCookie.kt:{ return MessageDigest.getInstance("SHA-256").digest(value.toByteArray(Charsets.UTF_8)) }</ID>
     <ID>FunctionExpressionBody:SessionCookie.kt:{ return SessionKeys( encryptKey = sha256("encrypt:$secret").copyOf(16), signKey = sha256("sign:$secret"), ) }</ID>
     <ID>FunctionExpressionBody:UsePrincipal.kt:{ return { result -&gt; handleResultInternal(result, backend.customConfig.buildType) } }</ID>
+    <ID>PackageNaming:Auth.kt:package com.storyteller_f.a.cloud.server.auth</ID>
+    <ID>PackageNaming:ClientIp.kt:package com.storyteller_f.a.cloud.server</ID>
+    <ID>PackageNaming:SessionCookie.kt:package com.storyteller_f.a.cloud.server.auth</ID>
+    <ID>PackageNaming:UsePrincipal.kt:package com.storyteller_f.a.cloud.server.auth</ID>
+    <ID>PackageNaming:UserSession.kt:package com.storyteller_f.a.cloud.server.auth</ID>
   </CurrentIssues>
 </SmellBaseline>

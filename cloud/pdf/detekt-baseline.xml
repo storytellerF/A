@@ -3,5 +3,8 @@
   <ManuallySuppressedIssues/>
   <CurrentIssues>
     <ID>ClassSignature:SignatureTableBuilder.kt:SignatureInfo</ID>
+    <ID>PackageNaming:PdfService.kt:package com.storyteller_f.a.cloud.pdf</ID>
+    <ID>PackageNaming:SignatureImageGenerator.kt:package com.storyteller_f.a.cloud.pdf</ID>
+    <ID>PackageNaming:SignatureTableBuilder.kt:package com.storyteller_f.a.cloud.pdf</ID>
   </CurrentIssues>
 </SmellBaseline>

@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>FunctionNaming:ParseTest.kt:ParseTest$@Test fun `test parse ascii doc`</ID>
+    <ID>MissingPackageDeclaration:ParseTest.kt:.ParseTest.kt</ID>
+    <ID>MissingPackageDeclaration:PlatformHeadlessTest.jvm.kt:.PlatformHeadlessTest.jvm.kt</ID>
+    <ID>MissingPackageDeclaration:PlatformHeadlessTest.kt:.PlatformHeadlessTest.kt</ID>
+    <ID>PackageNaming:AsciidocConverter.wasmJs.kt:package com.storyteller_f.a.client.asciidoc_parser</ID>
+    <ID>PackageNaming:AsciidocPreview.kt:package com.storyteller_f.a.client.asciidoc_parser</ID>
+    <ID>PackageNaming:AsciidocPreviewTest.kt:package com.storyteller_f.a.client.asciidoc_parser</ID>
+  </CurrentIssues>
+</SmellBaseline>

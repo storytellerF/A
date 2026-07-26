@@ -49,5 +49,12 @@
     <ID>FunctionExpressionBody:LuceneUserSearchService.kt:LuceneUserSearchService${ return useLucene { saveDocumentList(documents.map { LuceneUserDocument(it) }, analyzer) } }</ID>
     <ID>FunctionExpressionBody:LuceneUserSearchService.kt:LuceneUserSearchServiceFactory${ return buildLuceneSearchService(env) { path, isInMemory -&gt; LuceneUserSearchService(path.resolve("user"), isInMemory) } }</ID>
     <ID>FunctionExpressionBody:LuceneUserSearchService.kt:LuceneUserSearchServiceFactory${ return env["SEARCH_SERVICE"] == "lucene" }</ID>
+    <ID>PackageNaming:Lucene.kt:package com.storyteller_f.a.backend.lucene</ID>
+    <ID>PackageNaming:LuceneCommunitySearchService.kt:package com.storyteller_f.a.backend.lucene</ID>
+    <ID>PackageNaming:LuceneFileSearchService.kt:package com.storyteller_f.a.backend.lucene</ID>
+    <ID>PackageNaming:LuceneMemberSearchService.kt:package com.storyteller_f.a.backend.lucene</ID>
+    <ID>PackageNaming:LuceneRoomSearchService.kt:package com.storyteller_f.a.backend.lucene</ID>
+    <ID>PackageNaming:LuceneTopicSearchService.kt:package com.storyteller_f.a.backend.lucene</ID>
+    <ID>PackageNaming:LuceneUserSearchService.kt:package com.storyteller_f.a.backend.lucene</ID>
   </CurrentIssues>
 </SmellBaseline>

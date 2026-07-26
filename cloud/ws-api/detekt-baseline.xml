@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>PackageNaming:WsEventService.kt:package com.storyteller_f.a.cloud.ws.api</ID>
+  </CurrentIssues>
+</SmellBaseline>

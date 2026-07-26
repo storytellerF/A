@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>PackageNaming:main.kt:package com.storyteller_f.a.panel</ID>
+  </CurrentIssues>
+</SmellBaseline>

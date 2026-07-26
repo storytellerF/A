@@ -7,5 +7,6 @@
     <ID>BlankLineBetweenWhenConditions:OpenPdf.kt:ParagraphVisitor$when (node.type) { MarkdownTokenTypes.TEXT -&gt; { val text = node.getTextInNode(content).toString() paragraph.add(text) } // Emphasis &amp; strong MarkdownElementTypes.EMPH -&gt; addStyledBlock(node, Font.ITALIC, 1) MarkdownElementTypes.STRONG -&gt; addStyledBlock(node, Font.BOLD, 2) // Inline code MarkdownElementTypes.CODE_SPAN -&gt; addCodeSpan(node) MarkdownTokenTypes.WHITE_SPACE -&gt; paragraph.add(" ") // Links (render as text (url)) to avoid PDF-specific anchors MarkdownElementTypes.INLINE_LINK, MarkdownElementTypes.FULL_REFERENCE_LINK, MarkdownElementTypes.SHORT_REFERENCE_LINK -&gt; addLink(node) GFMElementTypes.STRIKETHROUGH -&gt; addStyledBlock(node, Font.STRIKETHRU, 2) }</ID>
     <ID>ClassSignature:OpenPdf.kt:OpenPdfVisitor$LeftBarCellEvent : PdfPCellEvent</ID>
     <ID>ClassSignature:OpenPdf.kt:ParagraphVisitor : Visitor</ID>
+    <ID>PackageNaming:OpenPdf.kt:package com.storyteller_f.a.cloud.openpdf</ID>
   </CurrentIssues>
 </SmellBaseline>
