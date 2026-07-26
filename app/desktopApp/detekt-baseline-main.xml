@@ -1,0 +1,26 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>AbsentOrWrongFileLicense:JvmMain.kt:com.storyteller_f.a.app.JvmMain.kt</ID>
+    <ID>ExitOutsideMain:JvmMain.kt:exitProcess(1)</ID>
+    <ID>InjectDispatcher:JvmMain.kt:IO</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:JvmMain.kt:@OptIn(DelicateCoroutinesApi::class) val uiViewModel by lazy { UIViewModel( GlobalScope, getDesktopWsServerUrl(), getDesktopServerUrl() ) }</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:JvmMain.kt:@OptIn(DelicateCoroutinesApi::class) fun main</ID>
+    <ID>MagicNumber:JvmMain.kt:300</ID>
+    <ID>MultilineExpressionWrapping:JvmMain.kt:&lt;no name provided&gt;$MediaPlaySession( remoteMediaItem = remoteMediaItem, playList = playList, uuids = listOf(localMediaPlaySession.uuid), videoSize = null )</ID>
+    <ID>MultilineExpressionWrapping:JvmMain.kt:Button("OK").apply { addActionListener { dispose() exitProcess(1) } }</ID>
+    <ID>MultilineExpressionWrapping:JvmMain.kt:object : ClientFileProvider { override suspend fun getDownloader(): Downloader = DownloaderImpl(uiViewModel, taskRegister) override suspend fun getUploader(): Uploader = UploaderImpl(uiViewModel, taskRegister) }</ID>
+    <ID>MultilineExpressionWrapping:JvmMain.kt:object : MediaPlayerService() { override val enablePip: Boolean get() = false override fun fullscreen(remoteMediaItem: RemoteMediaItem) = Unit override suspend fun start( remoteMediaItem: RemoteMediaItem, localMediaPlaySession: LocalMediaPlaySession, playList: List&lt;ConstPlayItem&gt; ) { state.value = MediaPlaySession( remoteMediaItem = remoteMediaItem, playList = playList, uuids = listOf(localMediaPlaySession.uuid), videoSize = null ) } }</ID>
+    <ID>NestedScopeFunctions:JvmMain.kt:apply { addActionListener { dispose() exitProcess(1) } }</ID>
+    <ID>PackageName:JvmMain.kt:package com.storyteller_f.a.app</ID>
+    <ID>PackageNaming:JvmMain.kt:package com.storyteller_f.a.app</ID>
+    <ID>TrailingCommaOnCallSite:JvmMain.kt:( GlobalScope, getDesktopWsServerUrl(), getDesktopServerUrl() )</ID>
+    <ID>TrailingCommaOnCallSite:JvmMain.kt:( LocalClientFileProvider provides provider, LocalUiViewModel provides uiViewModel, LocalMediaPlayerService provides jvmMediaPlayerService )</ID>
+    <ID>TrailingCommaOnCallSite:JvmMain.kt:&lt;no name provided&gt;$( remoteMediaItem = remoteMediaItem, playList = playList, uuids = listOf(localMediaPlaySession.uuid), videoSize = null )</ID>
+    <ID>TrailingCommaOnDeclarationSite:JvmMain.kt:&lt;no name provided&gt;$( remoteMediaItem: RemoteMediaItem, localMediaPlaySession: LocalMediaPlaySession, playList: List&lt;ConstPlayItem&gt; )</ID>
+    <ID>UndocumentedPublicClass:JvmMain.kt:JvmAppPlatformImpl : AppPlatformImpl</ID>
+    <ID>UndocumentedPublicFunction:JvmMain.kt:@OptIn(DelicateCoroutinesApi::class) fun main</ID>
+    <ID>UndocumentedPublicProperty:JvmMain.kt:@OptIn(DelicateCoroutinesApi::class) val uiViewModel by lazy { UIViewModel( GlobalScope, getDesktopWsServerUrl(), getDesktopServerUrl() ) }</ID>
+  </CurrentIssues>
+</SmellBaseline>

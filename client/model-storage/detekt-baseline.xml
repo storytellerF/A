@@ -1,0 +1,439 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>AbsentOrWrongFileLicense:DownloadInfo.kt:com.storyteller_f.storage.DownloadInfo.kt</ID>
+    <ID>AbsentOrWrongFileLicense:ModelStorage.kt:com.storyteller_f.storage.ModelStorage.kt</ID>
+    <ID>AbsentOrWrongFileLicense:UploadInfo.kt:com.storyteller_f.storage.UploadInfo.kt</ID>
+    <ID>AbsentOrWrongFileLicense:build.gradle.kts:.build.gradle.kts</ID>
+    <ID>BlankLineBetweenWhenConditions:ModelStorage.kt:WrappedPagingSource$when (val result = rawSource.load(params)) { is LoadResult.Page&lt;K, T&gt; -&gt; LoadResult.Page(process(result.data), result.prevKey, result.nextKey) is LoadResult.Error&lt;K, T&gt; -&gt; LoadResult.Error(result.throwable) is LoadResult.Invalid&lt;K, T&gt; -&gt; LoadResult.Invalid() }</ID>
+    <ID>BlankLineBetweenWhenConditions:ModelStorage.kt:when (this) { RoomCollection.Rooms -&gt; "rooms" is RoomCollection.SearchRoom -&gt; "rooms_${word}_${joinStatusSearch}_$communityId" is RoomCollection.AllRooms -&gt; "all_rooms_$isPrivate" // 添加社区房间相关的名称生成 is RoomCollection.CommunityRooms -&gt; "community_rooms_$communityId" is RoomCollection.CommunityRoomSearch -&gt; "community_rooms_${communityId}_$word" }</ID>
+    <ID>ClassSignature:ModelStorage.kt:CommunityInfoStorage : CollectionListStorageWithDefault</ID>
+    <ID>ClassSignature:ModelStorage.kt:PanelLogCollection$PanelLogs : PanelLogCollection</ID>
+    <ID>ClassSignature:ModelStorage.kt:RoomCollection$SearchRoom : RoomCollection</ID>
+    <ID>ClassSignature:ModelStorage.kt:WrappedPagingSource&lt;K : Any, T : Any, M : Any&gt; : PagingSource</ID>
+    <ID>ComplexInterface:ModelStorage.kt:ModelStorage</ID>
+    <ID>DataClassContainsFunctions:ModelStorage.kt:RemoteKeyStorageWrapper$suspend fun deleteNextRemoteKey</ID>
+    <ID>DataClassContainsFunctions:ModelStorage.kt:RemoteKeyStorageWrapper$suspend fun deletePreRemoteKey</ID>
+    <ID>DataClassContainsFunctions:ModelStorage.kt:RemoteKeyStorageWrapper$suspend fun getNextRemoteKey</ID>
+    <ID>DataClassContainsFunctions:ModelStorage.kt:RemoteKeyStorageWrapper$suspend fun getPreRemoteKey</ID>
+    <ID>DataClassContainsFunctions:ModelStorage.kt:RemoteKeyStorageWrapper$suspend fun saveNextRemoteKey</ID>
+    <ID>DataClassContainsFunctions:ModelStorage.kt:RemoteKeyStorageWrapper$suspend fun savePreRemoteKey</ID>
+    <ID>DataClassContainsFunctions:ModelStorage.kt:UploadCollection$fun getName</ID>
+    <ID>EnumWrapping:DownloadInfo.kt:DownloadStatus</ID>
+    <ID>EnumWrapping:UploadInfo.kt:UploadStatus</ID>
+    <ID>ExpressionBodySyntax:ModelStorage.kt:WrappedPagingSource$return null</ID>
+    <ID>ForbiddenPublicDataClass:DownloadInfo.kt:DownloadInfo</ID>
+    <ID>ForbiddenPublicDataClass:ModelStorage.kt:CommunityCollection$SearchCommunity : CommunityCollection</ID>
+    <ID>ForbiddenPublicDataClass:ModelStorage.kt:FileCollection$FileList : FileCollection</ID>
+    <ID>ForbiddenPublicDataClass:ModelStorage.kt:FileCollection$FileSearch : FileCollection</ID>
+    <ID>ForbiddenPublicDataClass:ModelStorage.kt:FileRefCollection$FileRefs : FileRefCollection</ID>
+    <ID>ForbiddenPublicDataClass:ModelStorage.kt:MemberCollection$CommunityMembers : MemberCollection</ID>
+    <ID>ForbiddenPublicDataClass:ModelStorage.kt:MemberCollection$RoomMembers : MemberCollection</ID>
+    <ID>ForbiddenPublicDataClass:ModelStorage.kt:PanelLogCollection$PanelLogs : PanelLogCollection</ID>
+    <ID>ForbiddenPublicDataClass:ModelStorage.kt:ReactionCollection$ReactionList : ReactionCollection</ID>
+    <ID>ForbiddenPublicDataClass:ModelStorage.kt:RemoteKeyStorageWrapper</ID>
+    <ID>ForbiddenPublicDataClass:ModelStorage.kt:RemoteKeys</ID>
+    <ID>ForbiddenPublicDataClass:ModelStorage.kt:RoomCollection$AllRooms : RoomCollection</ID>
+    <ID>ForbiddenPublicDataClass:ModelStorage.kt:RoomCollection$CommunityRoomSearch : RoomCollection</ID>
+    <ID>ForbiddenPublicDataClass:ModelStorage.kt:RoomCollection$CommunityRooms : RoomCollection</ID>
+    <ID>ForbiddenPublicDataClass:ModelStorage.kt:RoomCollection$SearchRoom : RoomCollection</ID>
+    <ID>ForbiddenPublicDataClass:ModelStorage.kt:TaskRecordCollection$TaskRecords : TaskRecordCollection</ID>
+    <ID>ForbiddenPublicDataClass:ModelStorage.kt:TitleCollection$SearchTitle : TitleCollection</ID>
+    <ID>ForbiddenPublicDataClass:ModelStorage.kt:TopicCollection$ChildTopicList : TopicCollection</ID>
+    <ID>ForbiddenPublicDataClass:ModelStorage.kt:TopicCollection$SearchTopic : TopicCollection</ID>
+    <ID>ForbiddenPublicDataClass:ModelStorage.kt:TopicCollection$UserComments : TopicCollection</ID>
+    <ID>ForbiddenPublicDataClass:ModelStorage.kt:UploadCollection</ID>
+    <ID>ForbiddenPublicDataClass:ModelStorage.kt:UploadRecordCollection$UserUploadRecords : UploadRecordCollection</ID>
+    <ID>ForbiddenPublicDataClass:ModelStorage.kt:UserCollection$Members : UserCollection</ID>
+    <ID>ForbiddenPublicDataClass:ModelStorage.kt:UserCollection$SearchUser : UserCollection</ID>
+    <ID>ForbiddenPublicDataClass:ModelStorage.kt:UserFavoriteCollection$UserFavorites : UserFavoriteCollection</ID>
+    <ID>ForbiddenPublicDataClass:ModelStorage.kt:UserLogCollection$UserLogs : UserLogCollection</ID>
+    <ID>ForbiddenPublicDataClass:ModelStorage.kt:UserReactionRecordCollection$UserReactionRecords : UserReactionRecordCollection</ID>
+    <ID>ForbiddenPublicDataClass:ModelStorage.kt:UserSubscriptionCollection$UserSubscriptions : UserSubscriptionCollection</ID>
+    <ID>ForbiddenPublicDataClass:UploadInfo.kt:UploadInfo</ID>
+    <ID>FunctionExpressionBody:ModelStorage.kt:WrappedPagingSource${ return null }</ID>
+    <ID>FunctionExpressionBody:ModelStorage.kt:WrappedPagingSource${ return when (val result = rawSource.load(params)) { is LoadResult.Page&lt;K, T&gt; -&gt; LoadResult.Page(process(result.data), result.prevKey, result.nextKey) is LoadResult.Error&lt;K, T&gt; -&gt; LoadResult.Error(result.throwable) is LoadResult.Invalid&lt;K, T&gt; -&gt; LoadResult.Invalid() } }</ID>
+    <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { CommunityCollection.Communities -&gt; "communities" is CommunityCollection.SearchCommunity -&gt; "communities_${word}_${target}_${joinStatusSearch}_$hasPointer" CommunityCollection.AllCommunities -&gt; "all_communities" } }</ID>
+    <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { FileCollection.Files -&gt; "files" is FileCollection.FileList -&gt; "files_$objectId" is FileCollection.FileSearch -&gt; "files_${objectId}_$word" } }</ID>
+    <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { ReactionCollection.Reactions -&gt; "reactions" is ReactionCollection.ReactionList -&gt; "reactions_$objectId" } }</ID>
+    <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { RoomCollection.Rooms -&gt; "rooms" is RoomCollection.SearchRoom -&gt; "rooms_${word}_${joinStatusSearch}_$communityId" is RoomCollection.AllRooms -&gt; "all_rooms_$isPrivate" // 添加社区房间相关的名称生成 is RoomCollection.CommunityRooms -&gt; "community_rooms_$communityId" is RoomCollection.CommunityRoomSearch -&gt; "community_rooms_${communityId}_$word" } }</ID>
+    <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { is FileRefCollection.FileRefs -&gt; "file_refs_$fileId" } }</ID>
+    <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { is MemberCollection.CommunityMembers -&gt; if (word.isNullOrBlank()) { "community_members_$objectId" } else { "community_members_${objectId}_$word" } is MemberCollection.RoomMembers -&gt; if (word.isNullOrBlank()) { "room_members_$objectId" } else { "room_members_${objectId}_$word" } } }</ID>
+    <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { is PanelLogCollection.PanelLogs -&gt; "panel_logs_${targetId}_$objectType" } }</ID>
+    <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { is TaskRecordCollection.TaskRecords -&gt; "task_records_${type ?: "all"}" } }</ID>
+    <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { is TitleCollection.SearchTitle -&gt; "titles_${uid}_${searchType}_${status}_${type}_$scopeId" TitleCollection.Titles -&gt; "title" TitleCollection.AllTitles -&gt; "all_titles" } }</ID>
+    <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { is TopicCollection.SearchTopic -&gt; "topics_${word}_$parentId" is TopicCollection.ChildTopicList -&gt; "topics_$objectId" TopicCollection.Topics -&gt; "topics" TopicCollection.Recommend -&gt; "topics_recommend" TopicCollection.AllTopics -&gt; "all_topics" is TopicCollection.UserComments -&gt; "user_comments" } }</ID>
+    <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { is UploadRecordCollection.UserUploadRecords -&gt; "upload_records_$uid" } }</ID>
+    <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { is UserCollection.SearchUser -&gt; "users_$word" UserCollection.Users -&gt; "users" is UserCollection.Members -&gt; "members_${objectId}_$word" UserCollection.AllUsers -&gt; "all_users" } }</ID>
+    <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { is UserFavoriteCollection.UserFavorites -&gt; "user_favorites_$uid" } }</ID>
+    <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { is UserLogCollection.UserLogs -&gt; "user_logs_$uid" } }</ID>
+    <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { is UserReactionRecordCollection.UserReactionRecords -&gt; "user_reaction_records_$uid" } }</ID>
+    <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { is UserSubscriptionCollection.UserSubscriptions -&gt; "user_subscriptions_$uid" } }</ID>
+    <ID>FunctionSignature:ModelStorage.kt:suspend fun FileInfoStorage.update</ID>
+    <ID>FunctionSignature:ModelStorage.kt:suspend fun RoomInfoStorage.update</ID>
+    <ID>FunctionSignature:ModelStorage.kt:suspend fun TitleInfoStorage.update</ID>
+    <ID>FunctionSignature:ModelStorage.kt:suspend fun TopicInfoStorage.update</ID>
+    <ID>FunctionSignature:ModelStorage.kt:suspend fun UserInfoStorage.update</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:DownloadInfo.kt:DownloadInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:DownloadInfo.kt:DownloadStatus</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:ChildAccountStorage : GlobalListStorage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:CollectionListStorage&lt;C, I : Any&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:CollectionListStorageWithDefault&lt;C, I : Any&gt; : CollectionListStorage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:CommunityCollection</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:CommunityInfoStorage : CollectionListStorageWithDefault</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:DownloadInfoStorage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:FileCollection</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:FileInfoStorage : CollectionListStorageWithDefault</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:FileRefCollection</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:FileRefInfoStorage : CollectionListStorage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:GlobalListStorage&lt;I : Any&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:MemberCollection</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:MemberInfoStorage : CollectionListStorage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:ModelStorage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:OverviewStorage : SingletonItemStorage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:PanelLogCollection</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:PanelLogInfoStorage : CollectionListStorage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:ReactionCollection</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:ReactionInfoStorage : CollectionListStorage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:RemoteKeyStorage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:RemoteKeyStorageWrapper</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:RemoteKeys</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:RoomCollection</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:RoomInfoStorage : CollectionListStorageWithDefault</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:SingletonItemStorage&lt;I : Any&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:TaskRecordCollection</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:TaskRecordInfoStorage : CollectionListStorage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:TitleCollection</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:TitleInfoStorage : CollectionListStorageWithDefault</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:TopicCollection</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:TopicInfoStorage : CollectionListStorageWithDefault</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:UploadCollection</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:UploadInfoStorage : CollectionListStorage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:UploadRecordCollection</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:UploadRecordInfoStorage : CollectionListStorage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:UserCollection</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:UserFavoriteCollection</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:UserFavoriteStorage : CollectionListStorageWithDefault</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:UserInfoStorage : CollectionListStorageWithDefault</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:UserLogCollection</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:UserLogInfoStorage : CollectionListStorage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:UserOverviewStorage : SingletonItemStorage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:UserReactionRecordCollection</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:UserReactionRecordStorage : CollectionListStorage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:UserSubscriptionCollection</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:UserSubscriptionStorage : CollectionListStorageWithDefault</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:WrappedPagingSource&lt;K : Any, T : Any, M : Any&gt; : PagingSource</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:fun CommunityCollection.getName: String</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:fun FileCollection.getName: String</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:fun FileRefCollection.getName: String</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:fun MemberCollection.getName: String</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:fun PanelLogCollection.getName: String</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:fun ReactionCollection.getName: String</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:fun RemoteKeyStorage.wrap</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:fun RoomCollection.getName: String</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:fun TaskRecordCollection.getName: String</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:fun TitleCollection.getName: String</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:fun TopicCollection.getName: String</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:fun UploadRecordCollection.getName: String</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:fun UserCollection.getName: String</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:fun UserFavoriteCollection.getName: String</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:fun UserLogCollection.getName: String</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:fun UserReactionRecordCollection.getName: String</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:fun UserSubscriptionCollection.getName: String</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:suspend fun CommunityInfoStorage.update</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:suspend fun FileInfoStorage.update</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:suspend fun RoomInfoStorage.update</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:suspend fun TitleInfoStorage.update</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:suspend fun TopicInfoStorage.update</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ModelStorage.kt:suspend fun UserInfoStorage.update</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UploadInfo.kt:UploadInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UploadInfo.kt:UploadStatus</ID>
+    <ID>MultilineExpressionWrapping:ModelStorage.kt:if (word.isNullOrBlank()) { "community_members_$objectId" } else { "community_members_${objectId}_$word" }</ID>
+    <ID>MultilineExpressionWrapping:ModelStorage.kt:if (word.isNullOrBlank()) { "room_members_$objectId" } else { "room_members_${objectId}_$word" }</ID>
+    <ID>PackageName:DownloadInfo.kt:package com.storyteller_f.storage</ID>
+    <ID>PackageName:ModelStorage.kt:package com.storyteller_f.storage</ID>
+    <ID>PackageName:UploadInfo.kt:package com.storyteller_f.storage</ID>
+    <ID>PackageNaming:DownloadInfo.kt:package com.storyteller_f.storage</ID>
+    <ID>PackageNaming:ModelStorage.kt:package com.storyteller_f.storage</ID>
+    <ID>PackageNaming:UploadInfo.kt:package com.storyteller_f.storage</ID>
+    <ID>TooManyFunctions:ModelStorage.kt:com.storyteller_f.storage.ModelStorage.kt</ID>
+    <ID>TrailingCommaOnCallSite:UploadInfo.kt:UploadInfo.Companion$(0, 0, "", "", "", 0, 0, 0, UploadStatus.NOT_UPLOADING, "", "", "", 0,)</ID>
+    <ID>TrailingCommaOnDeclarationSite:DownloadInfo.kt:DownloadInfo$( val id: Long, val fileInfo: FileInfo, val status: DownloadStatus, val message: String, val path: String, val progress: Long, val total: Long )</ID>
+    <ID>TrailingCommaOnDeclarationSite:ModelStorage.kt:( collection: CommunityCollection, id: PrimaryKey, block: (CommunityInfo) -&gt; CommunityInfo )</ID>
+    <ID>TrailingCommaOnDeclarationSite:ModelStorage.kt:( collection: FileCollection, id: PrimaryKey, block: (FileInfo) -&gt; FileInfo )</ID>
+    <ID>TrailingCommaOnDeclarationSite:ModelStorage.kt:( collection: RoomCollection, id: PrimaryKey, block: (RoomInfo) -&gt; RoomInfo )</ID>
+    <ID>TrailingCommaOnDeclarationSite:ModelStorage.kt:( collection: TitleCollection, id: PrimaryKey, block: (TitleInfo) -&gt; TitleInfo )</ID>
+    <ID>TrailingCommaOnDeclarationSite:ModelStorage.kt:( collection: TopicCollection, id: PrimaryKey, block: (TopicInfo) -&gt; TopicInfo )</ID>
+    <ID>TrailingCommaOnDeclarationSite:ModelStorage.kt:( collection: UserCollection, id: PrimaryKey, block: (UserInfo) -&gt; UserInfo )</ID>
+    <ID>TrailingCommaOnDeclarationSite:ModelStorage.kt:PanelLogCollection.PanelLogs$( val targetId: PrimaryKey, val objectType: com.storyteller_f.shared.type.ObjectType )</ID>
+    <ID>TrailingCommaOnDeclarationSite:ModelStorage.kt:RoomCollection.SearchRoom$( val word: String, val communityId: PrimaryKey?, val joinStatusSearch: JoinStatusSearch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:UploadInfo.kt:UploadInfo$( val id: PrimaryKey, val objectId: PrimaryKey, val pathHash: String, val path: String, val sha256: String, val progress: Long, val chunkProgress: Long, val total: Long, val status: UploadStatus, val message: String, val name: String, val contentType: String, val chunkSize: Long, // 对应的上传记录 id val recordId: PrimaryKey? = null )</ID>
+    <ID>TrailingCommaOnDeclarationSite:UploadInfo.kt:UploadStatus</ID>
+    <ID>UndocumentedPublicClass:DownloadInfo.kt:DownloadInfo</ID>
+    <ID>UndocumentedPublicClass:DownloadInfo.kt:DownloadStatus</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:ChildAccountStorage : GlobalListStorage</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:ChildAccountStorage$Companion</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:CollectionListStorage&lt;C, I : Any&gt;</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:CollectionListStorageWithDefault&lt;C, I : Any&gt; : CollectionListStorage</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:CommunityCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:CommunityCollection$AllCommunities : CommunityCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:CommunityCollection$Communities : CommunityCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:CommunityCollection$SearchCommunity : CommunityCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:CommunityInfoStorage : CollectionListStorageWithDefault</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:DownloadInfoStorage</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:DownloadInfoStorage$Companion</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:FileCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:FileCollection$FileList : FileCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:FileCollection$FileSearch : FileCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:FileCollection$Files : FileCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:FileInfoStorage : CollectionListStorageWithDefault</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:FileRefCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:FileRefCollection$FileRefs : FileRefCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:FileRefInfoStorage : CollectionListStorage</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:GlobalListStorage&lt;I : Any&gt;</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:MemberCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:MemberCollection$CommunityMembers : MemberCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:MemberCollection$RoomMembers : MemberCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:MemberInfoStorage : CollectionListStorage</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:ModelStorage</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:OverviewStorage : SingletonItemStorage</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:OverviewStorage$Companion</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:PanelLogCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:PanelLogCollection$PanelLogs : PanelLogCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:PanelLogInfoStorage : CollectionListStorage</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:ReactionCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:ReactionCollection$ReactionList : ReactionCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:ReactionCollection$Reactions : ReactionCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:ReactionInfoStorage : CollectionListStorage</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:RemoteKeyStorage</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:RemoteKeyStorage$Companion</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:RemoteKeyStorageWrapper</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:RemoteKeys</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:RoomCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:RoomCollection$AllRooms : RoomCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:RoomCollection$CommunityRoomSearch : RoomCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:RoomCollection$CommunityRooms : RoomCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:RoomCollection$Rooms : RoomCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:RoomCollection$SearchRoom : RoomCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:RoomInfoStorage : CollectionListStorageWithDefault</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:SingletonItemStorage&lt;I : Any&gt;</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:TaskRecordCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:TaskRecordCollection$TaskRecords : TaskRecordCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:TaskRecordInfoStorage : CollectionListStorage</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:TitleCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:TitleCollection$AllTitles : TitleCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:TitleCollection$SearchTitle : TitleCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:TitleCollection$Titles : TitleCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:TitleInfoStorage : CollectionListStorageWithDefault</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:TopicCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:TopicCollection$AllTopics : TopicCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:TopicCollection$ChildTopicList : TopicCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:TopicCollection$Recommend : TopicCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:TopicCollection$SearchTopic : TopicCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:TopicCollection$Topics : TopicCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:TopicCollection$UserComments : TopicCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:TopicInfoStorage : CollectionListStorageWithDefault</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:UploadCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:UploadCollection$Companion</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:UploadInfoStorage : CollectionListStorage</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:UploadRecordCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:UploadRecordCollection$UserUploadRecords : UploadRecordCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:UploadRecordInfoStorage : CollectionListStorage</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:UserCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:UserCollection$AllUsers : UserCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:UserCollection$Members : UserCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:UserCollection$SearchUser : UserCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:UserCollection$Users : UserCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:UserFavoriteCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:UserFavoriteCollection$UserFavorites : UserFavoriteCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:UserFavoriteStorage : CollectionListStorageWithDefault</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:UserFavoriteStorage$Companion</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:UserInfoStorage : CollectionListStorageWithDefault</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:UserLogCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:UserLogCollection$UserLogs : UserLogCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:UserLogInfoStorage : CollectionListStorage</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:UserOverviewStorage : SingletonItemStorage</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:UserOverviewStorage$Companion</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:UserReactionRecordCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:UserReactionRecordCollection$UserReactionRecords : UserReactionRecordCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:UserReactionRecordStorage : CollectionListStorage</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:UserSubscriptionCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:UserSubscriptionCollection$UserSubscriptions : UserSubscriptionCollection</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:UserSubscriptionStorage : CollectionListStorageWithDefault</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:UserSubscriptionStorage$Companion</ID>
+    <ID>UndocumentedPublicClass:ModelStorage.kt:WrappedPagingSource&lt;K : Any, T : Any, M : Any&gt; : PagingSource</ID>
+    <ID>UndocumentedPublicClass:UploadInfo.kt:UploadInfo</ID>
+    <ID>UndocumentedPublicClass:UploadInfo.kt:UploadInfo$Companion</ID>
+    <ID>UndocumentedPublicClass:UploadInfo.kt:UploadStatus</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:CollectionListStorage$fun observeData: PagingSource&lt;Int, I&gt;</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:CollectionListStorage$suspend fun clean</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:CollectionListStorage$suspend fun delete</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:CollectionListStorage$suspend fun getDocument: I?</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:CollectionListStorage$suspend fun saveFirst</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:CollectionListStorage$suspend fun saveLast</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:CollectionListStorage$suspend fun updateDocument</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:CollectionListStorageWithDefault$fun observeDatum: Flow&lt;I?&gt;</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:CollectionListStorageWithDefault$suspend fun saveToDefault</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:DownloadInfoStorage$fun observeData: PagingSource&lt;Int, DownloadInfo&gt;</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:DownloadInfoStorage$fun observeDocumentByFileId: Flow&lt;DownloadInfo?&gt;</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:DownloadInfoStorage$suspend fun clean</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:DownloadInfoStorage$suspend fun getDocumentByFileId: DownloadInfo?</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:DownloadInfoStorage$suspend fun save</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:GlobalListStorage$fun observeData: PagingSource&lt;Int, I&gt;</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:GlobalListStorage$fun observeDatum: Flow&lt;I?&gt;</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:GlobalListStorage$suspend fun clean</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:GlobalListStorage$suspend fun save</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:RemoteKeyStorage$suspend fun deleteNextRemoteKey</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:RemoteKeyStorage$suspend fun deletePreRemoteKey</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:RemoteKeyStorage$suspend fun getNextRemoteKey: RemoteKeys?</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:RemoteKeyStorage$suspend fun getPreRemoteKey: RemoteKeys?</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:RemoteKeyStorage$suspend fun saveNextRemoteKey</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:RemoteKeyStorage$suspend fun savePreRemoteKey</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:RemoteKeyStorageWrapper$suspend fun deleteNextRemoteKey</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:RemoteKeyStorageWrapper$suspend fun deletePreRemoteKey</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:RemoteKeyStorageWrapper$suspend fun getNextRemoteKey</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:RemoteKeyStorageWrapper$suspend fun getPreRemoteKey</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:RemoteKeyStorageWrapper$suspend fun saveNextRemoteKey</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:RemoteKeyStorageWrapper$suspend fun savePreRemoteKey</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:SingletonItemStorage$fun observeDatum: Flow&lt;I?&gt;</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:SingletonItemStorage$suspend fun save</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:UploadCollection$fun getName</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:UploadCollection.Companion$fun fromInfo</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:UploadInfoStorage$fun observeDatumByHash: Flow&lt;UploadInfo?&gt;</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:fun CommunityCollection.getName: String</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:fun FileCollection.getName: String</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:fun FileRefCollection.getName: String</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:fun MemberCollection.getName: String</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:fun PanelLogCollection.getName: String</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:fun ReactionCollection.getName: String</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:fun RemoteKeyStorage.wrap</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:fun RoomCollection.getName: String</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:fun TaskRecordCollection.getName: String</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:fun TitleCollection.getName: String</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:fun TopicCollection.getName: String</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:fun UploadRecordCollection.getName: String</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:fun UserCollection.getName: String</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:fun UserFavoriteCollection.getName: String</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:fun UserLogCollection.getName: String</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:fun UserReactionRecordCollection.getName: String</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:fun UserSubscriptionCollection.getName: String</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:suspend fun CommunityInfoStorage.update</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:suspend fun FileInfoStorage.update</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:suspend fun RoomInfoStorage.update</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:suspend fun TitleInfoStorage.update</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:suspend fun TopicInfoStorage.update</ID>
+    <ID>UndocumentedPublicFunction:ModelStorage.kt:suspend fun UserInfoStorage.update</ID>
+    <ID>UndocumentedPublicProperty:DownloadInfo.kt:DownloadInfo$val fileInfo: FileInfo</ID>
+    <ID>UndocumentedPublicProperty:DownloadInfo.kt:DownloadInfo$val id: Long</ID>
+    <ID>UndocumentedPublicProperty:DownloadInfo.kt:DownloadInfo$val message: String</ID>
+    <ID>UndocumentedPublicProperty:DownloadInfo.kt:DownloadInfo$val path: String</ID>
+    <ID>UndocumentedPublicProperty:DownloadInfo.kt:DownloadInfo$val progress: Long</ID>
+    <ID>UndocumentedPublicProperty:DownloadInfo.kt:DownloadInfo$val status: DownloadStatus</ID>
+    <ID>UndocumentedPublicProperty:DownloadInfo.kt:DownloadInfo$val total: Long</ID>
+    <ID>UndocumentedPublicProperty:DownloadInfo.kt:DownloadStatus$DOWNLOADED</ID>
+    <ID>UndocumentedPublicProperty:DownloadInfo.kt:DownloadStatus$DOWNLOADING</ID>
+    <ID>UndocumentedPublicProperty:DownloadInfo.kt:DownloadStatus$DOWNLOAD_FAILED</ID>
+    <ID>UndocumentedPublicProperty:DownloadInfo.kt:DownloadStatus$NOT_DOWNLOADED</ID>
+    <ID>UndocumentedPublicProperty:DownloadInfo.kt:DownloadStatus$PAUSED</ID>
+    <ID>UndocumentedPublicProperty:DownloadInfo.kt:DownloadStatus$PROCESSED</ID>
+    <ID>UndocumentedPublicProperty:DownloadInfo.kt:DownloadStatus$PROCESS_FAILED</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:ChildAccountStorage.Companion$const val COLLECTION_NAME = "child-account"</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:CommunityCollection.SearchCommunity$val hasPointer: PosterSearch? = null</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:CommunityCollection.SearchCommunity$val joinStatusSearch: JoinStatusSearch</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:CommunityCollection.SearchCommunity$val target: PrimaryKey? = null</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:CommunityCollection.SearchCommunity$val word: String</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:DownloadInfoStorage.Companion$const val COLLECTION_NAME = "download"</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:FileCollection.FileList$val objectId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:FileCollection.FileSearch$val objectId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:FileCollection.FileSearch$val word: String</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:FileRefCollection.FileRefs$val fileId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:MemberCollection.CommunityMembers$val objectId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:MemberCollection.CommunityMembers$val word: String? = null</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:MemberCollection.RoomMembers$val objectId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:MemberCollection.RoomMembers$val word: String? = null</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:ModelStorage$val childAccount: ChildAccountStorage</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:ModelStorage$val community: CommunityInfoStorage</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:ModelStorage$val download: DownloadInfoStorage</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:ModelStorage$val favorite: UserFavoriteStorage</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:ModelStorage$val fileInfo: FileInfoStorage</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:ModelStorage$val fileRef: FileRefInfoStorage</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:ModelStorage$val member: MemberInfoStorage</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:ModelStorage$val overview: OverviewStorage</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:ModelStorage$val panelLog: PanelLogInfoStorage</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:ModelStorage$val reaction: ReactionInfoStorage</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:ModelStorage$val remoteKey: RemoteKeyStorage</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:ModelStorage$val room: RoomInfoStorage</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:ModelStorage$val subscription: UserSubscriptionStorage</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:ModelStorage$val taskRecord: TaskRecordInfoStorage</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:ModelStorage$val title: TitleInfoStorage</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:ModelStorage$val topic: TopicInfoStorage</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:ModelStorage$val upload: UploadInfoStorage</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:ModelStorage$val uploadRecord: UploadRecordInfoStorage</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:ModelStorage$val user: UserInfoStorage</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:ModelStorage$val userLog: UserLogInfoStorage</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:ModelStorage$val userOverview: UserOverviewStorage</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:ModelStorage$val userReactionRecord: UserReactionRecordStorage</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:OverviewStorage.Companion$const val COLLECTION_NAME = "panel-overview"</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:PanelLogCollection.PanelLogs$val objectType: com.storyteller_f.shared.type.ObjectType</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:PanelLogCollection.PanelLogs$val targetId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:ReactionCollection.ReactionList$val objectId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:RemoteKeyStorage.Companion$const val NEXT_COLLECTION = "next_remote_keys"</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:RemoteKeyStorage.Companion$const val PRE_COLLECTION = "pre_remote_keys"</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:RemoteKeyStorageWrapper$val collectionName: String</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:RemoteKeyStorageWrapper$val remoteKeyStorage: RemoteKeyStorage</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:RemoteKeys$val collectionName: String</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:RemoteKeys$val key: String?</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:RoomCollection.AllRooms$val isPrivate: Boolean</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:RoomCollection.CommunityRoomSearch$val communityId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:RoomCollection.CommunityRoomSearch$val word: String</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:RoomCollection.CommunityRooms$val communityId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:RoomCollection.SearchRoom$val communityId: PrimaryKey?</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:RoomCollection.SearchRoom$val joinStatusSearch: JoinStatusSearch</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:RoomCollection.SearchRoom$val word: String</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:TaskRecordCollection.TaskRecords$val type: TaskRecordType?</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:TitleCollection.SearchTitle$val scopeId: PrimaryKey? = null</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:TitleCollection.SearchTitle$val searchType: TitleSearchType</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:TitleCollection.SearchTitle$val status: TitleWorkStatus? = null</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:TitleCollection.SearchTitle$val type: TitleType? = null</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:TitleCollection.SearchTitle$val uid: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:TopicCollection.ChildTopicList$val objectId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:TopicCollection.SearchTopic$val parentId: PrimaryKey?</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:TopicCollection.SearchTopic$val word: String</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:TopicCollection.UserComments$val uid: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:UploadCollection$val objectId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:UploadRecordCollection.UserUploadRecords$val uid: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:UserCollection.Members$val objectId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:UserCollection.Members$val word: String</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:UserCollection.SearchUser$val word: String</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:UserFavoriteCollection.UserFavorites$val uid: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:UserFavoriteStorage.Companion$const val COLLECTION_NAME = "user-favorite"</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:UserLogCollection.UserLogs$val uid: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:UserOverviewStorage.Companion$const val COLLECTION_NAME = "user-overview"</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:UserReactionRecordCollection.UserReactionRecords$val uid: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:UserSubscriptionCollection.UserSubscriptions$val uid: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:UserSubscriptionStorage.Companion$const val COLLECTION_NAME = "user-subscription"</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:WrappedPagingSource$val process: suspend (List&lt;T&gt;) -&gt; List&lt;M&gt;</ID>
+    <ID>UndocumentedPublicProperty:ModelStorage.kt:WrappedPagingSource$val rawSource: PagingSource&lt;K, T&gt;</ID>
+    <ID>UndocumentedPublicProperty:UploadInfo.kt:UploadInfo$val chunkProgress: Long</ID>
+    <ID>UndocumentedPublicProperty:UploadInfo.kt:UploadInfo$val chunkSize: Long</ID>
+    <ID>UndocumentedPublicProperty:UploadInfo.kt:UploadInfo$val contentType: String</ID>
+    <ID>UndocumentedPublicProperty:UploadInfo.kt:UploadInfo$val id: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:UploadInfo.kt:UploadInfo$val message: String</ID>
+    <ID>UndocumentedPublicProperty:UploadInfo.kt:UploadInfo$val name: String</ID>
+    <ID>UndocumentedPublicProperty:UploadInfo.kt:UploadInfo$val objectId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:UploadInfo.kt:UploadInfo$val path: String</ID>
+    <ID>UndocumentedPublicProperty:UploadInfo.kt:UploadInfo$val pathHash: String</ID>
+    <ID>UndocumentedPublicProperty:UploadInfo.kt:UploadInfo$val progress: Long</ID>
+    <ID>UndocumentedPublicProperty:UploadInfo.kt:UploadInfo$val recordId: PrimaryKey? = null</ID>
+    <ID>UndocumentedPublicProperty:UploadInfo.kt:UploadInfo$val sha256: String</ID>
+    <ID>UndocumentedPublicProperty:UploadInfo.kt:UploadInfo$val status: UploadStatus</ID>
+    <ID>UndocumentedPublicProperty:UploadInfo.kt:UploadInfo$val total: Long</ID>
+    <ID>UndocumentedPublicProperty:UploadInfo.kt:UploadInfo.Companion$val EMPTY = UploadInfo(0, 0, "", "", "", 0, 0, 0, UploadStatus.NOT_UPLOADING, "", "", "", 0,)</ID>
+    <ID>UndocumentedPublicProperty:UploadInfo.kt:UploadStatus$FAILED</ID>
+    <ID>UndocumentedPublicProperty:UploadInfo.kt:UploadStatus$NOT_UPLOADING</ID>
+    <ID>UndocumentedPublicProperty:UploadInfo.kt:UploadStatus$PAUSED</ID>
+    <ID>UndocumentedPublicProperty:UploadInfo.kt:UploadStatus$SUCCESS</ID>
+    <ID>UndocumentedPublicProperty:UploadInfo.kt:UploadStatus$UPLOADING</ID>
+  </CurrentIssues>
+</SmellBaseline>

@@ -1,5 +1,6 @@
-import io.gitlab.arturbosch.detekt.Detekt
-import io.gitlab.arturbosch.detekt.report.ReportMergeTask
+import dev.detekt.gradle.Detekt
+import dev.detekt.gradle.DetektCreateBaselineTask
+import dev.detekt.gradle.report.ReportMergeTask
 
 
 plugins {
@@ -41,6 +42,19 @@ fun isNoReleaseCompileTask(taskName: String): Boolean {
     return (isKsp || isKotlinOrJavaCompile) && !isExcludedVariant
 }
 
+fun detektBaselineFileName(taskName: String): String {
+    val suffix = taskName
+        .removePrefix("detektBaseline")
+        .removePrefix("detekt")
+    if (suffix.isEmpty() || suffix.endsWith("SourceSet")) {
+        return "detekt-baseline.xml"
+    }
+    val kebabSuffix = suffix
+        .replace(Regex("([a-z0-9])([A-Z])"), "$1-$2")
+        .lowercase()
+    return "detekt-baseline-$kebabSuffix.xml"
+}
+
 val compileAllNoRelease = tasks.register("compileAllNoRelease") {
     group = "verification"
     description = "Compile all included modules without Android release or benchmark variants."
@@ -58,37 +72,25 @@ val detektReportMergeSarif = tasks.register<ReportMergeTask>("detektReportMergeS
     output = layout.buildDirectory.file("reports/detekt/merge.sarif")
 }
 subprojects {
-    apply(plugin = "io.gitlab.arturbosch.detekt")
+    apply(plugin = "dev.detekt")
     detekt {
-        // The directories where detekt looks for source files.
-        // Defaults to `files("src/main/java", "src/test/java", "src/main/kotlin", "src/test/kotlin")`.
-        source.setFrom(
-            "src/main/kotlin",
-            "src/test/kotlin",
-            "src/commonMain/kotlin",
-            "src/commonTest/kotlin",
-            "src/jvmMain/kotlin",
-            "src/jvmTest/kotlin",
-            "src/iosMain/kotlin",
-            "src/wasmJsMain/kotlin",
-            "src/androidMain/kotlin",
-            "src/androidUnitTest/kotlin",
-            "src/androidDebug/kotlin",
-            "src/headlessTest/kotlin",
-            "build.gradle.kts",
-        )
+        // Include every Kotlin source set so module baselines also cover KMP-only targets.
+        source.setFrom("src", "build.gradle.kts")
         // Builds the AST in parallel. Rules are always executed in parallel.
         // Can lead to speedups in larger projects. `false` by default.
         parallel = true
 
-        autoCorrect = true
+        autoCorrect = false
+
+        // Keep existing violations separate from violations introduced by new code.
+        baseline = layout.projectDirectory.file("detekt-baseline.xml")
 
         // Android: Don't create tasks for the specified build types (e.g. "release")
         ignoredBuildTypes = listOf("release")
 
         // Specify the base path for file paths in the formatted reports.
         // If not set, all file paths reported will be absolute file path.
-        basePath = projectDir.absolutePath
+        basePath = layout.projectDirectory
 
         buildUponDefaultConfig = true
     }
@@ -100,20 +102,26 @@ subprojects {
     }
 
     tasks.withType<Detekt>().configureEach {
+        baseline.set(layout.projectDirectory.file(detektBaselineFileName(name)))
+        exclude { source -> source.file.absolutePath.replace('\\', '/').contains("/build/") }
         reports {
-            xml.required = true
+            checkstyle.required = true
             html.required = true
-            txt.required = true
             sarif.required = true
-            md.required = true
+            markdown.required = true
         }
         basePath = rootDir.absolutePath
         finalizedBy(detektReportMergeSarif)
     }
 
+    tasks.withType<DetektCreateBaselineTask>().configureEach {
+        baseline.set(layout.projectDirectory.file(detektBaselineFileName(name)))
+        exclude { source -> source.file.absolutePath.replace('\\', '/').contains("/build/") }
+    }
+
     detektReportMergeSarif {
         input.from(
-            tasks.withType<Detekt>().map { it.sarifReportFile })
+            tasks.withType<Detekt>().map { it.reports.sarif.outputLocation })
     }
 }
 val koverIncludedProjects = listOf(

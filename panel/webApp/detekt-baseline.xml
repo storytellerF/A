@@ -1,0 +1,14 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>AbsentOrWrongFileLicense:build.gradle.kts:.build.gradle.kts</ID>
+    <ID>AbsentOrWrongFileLicense:main.kt:com.storyteller_f.a.panel.main.kt</ID>
+    <ID>Filename:main.kt:com.storyteller_f.a.panel.main.kt</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:main.kt:@OptIn(ExperimentalComposeUiApi::class) fun main</ID>
+    <ID>MultilineExpressionWrapping:main.kt:window.location.search .removePrefix("?") .split('&amp;') .firstOrNull { it.substringBefore('=') == name } ?.substringAfter('=', missingDelimiterValue = "") ?.takeIf(String::isNotEmpty)</ID>
+    <ID>PackageName:main.kt:package com.storyteller_f.a.panel</ID>
+    <ID>PackageNaming:main.kt:package com.storyteller_f.a.panel</ID>
+    <ID>UndocumentedPublicFunction:main.kt:@OptIn(ExperimentalComposeUiApi::class) fun main</ID>
+  </CurrentIssues>
+</SmellBaseline>

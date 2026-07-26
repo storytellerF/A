@@ -1,0 +1,16 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>AbsentOrWrongFileLicense:PanelWasmAppiumTest.kt:.PanelWasmAppiumTest.kt</ID>
+    <ID>FunctionNameMaxLength:PanelWasmAppiumTest.kt:PanelWasmAppiumTest$@Test fun `test html semantics bridge mounts`</ID>
+    <ID>FunctionNameMaxLength:PanelWasmAppiumTest.kt:PanelWasmAppiumTest$@Test fun `test panel sign in by injected private session`</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:PanelWasmAppiumTest.kt:PanelWasmAppiumTest$@Test fun `test panel sign in by injected private session`</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelWasmAppiumTest.kt:PanelWasmAppiumTest : AppiumTestBase</ID>
+    <ID>MissingPackageDeclaration:PanelWasmAppiumTest.kt:.PanelWasmAppiumTest.kt</ID>
+    <ID>MultilineExpressionWrapping:PanelWasmAppiumTest.kt:PanelWasmAppiumTest$File("build/wasmDistribution") .takeIf { File(it, "index.html").isFile } ?: error("Wasm distribution was not prepared; run :panel:wasmAppium:prepareWasmDistribution first.")</ID>
+    <ID>MultilineExpressionWrapping:PanelWasmAppiumTest.kt:PanelWasmAppiumTest$WasmAppiumHelper( resolveWasmDistribution(), By.cssSelector("[data-appium-text='Sign in'], [data-appium-text='Overview']"), listOf("-headless", "--width=500", "--height=800"), )</ID>
+    <ID>NullableToStringCall:PanelWasmAppiumTest.kt:PanelWasmAppiumTest$$body</ID>
+    <ID>NullableToStringCall:PanelWasmAppiumTest.kt:PanelWasmAppiumTest$$errors</ID>
+  </CurrentIssues>
+</SmellBaseline>

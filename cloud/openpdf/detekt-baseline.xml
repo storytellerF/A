@@ -1,0 +1,115 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>AbsentOrWrongFileLicense:OpenPdf.kt:com.storyteller_f.a.cloud.openpdf.OpenPdf.kt</ID>
+    <ID>AbsentOrWrongFileLicense:build.gradle.kts:.build.gradle.kts</ID>
+    <ID>BlankLineBetweenWhenConditions:OpenPdf.kt:OpenPdf$when (snapshotGeneration) { is SnapshotGeneration.KeyStoreGeneration -&gt; { signPdfWithKeyStore(saveToFile, snapshotGeneration, pdfGenerationSpec) } is SnapshotGeneration.SimpleGeneration -&gt; Unit }</ID>
+    <ID>BlankLineBetweenWhenConditions:OpenPdf.kt:OpenPdfVisitor$when (node.type) { MarkdownElementTypes.PARAGRAPH -&gt; { val paragraph = Paragraph() node.acceptChildren(ParagraphVisitor(paragraph, content, fontBundle)) document.add(paragraph) } MarkdownTokenTypes.TEXT -&gt; { document.add(Paragraph(node.getTextInNode(content).toString(), fontBundle.plainFont())) } MarkdownElementTypes.IMAGE -&gt; { val name = extractImageUrl(node, content) document.add(Image.getInstance(map[name]!!.readBytes())) } MarkdownElementTypes.CODE_FENCE -&gt; { val table = buildRoundedCodeBlockTable(buildParagraphFromCodeFence(node)) document.add(table) } MarkdownElementTypes.CODE_BLOCK -&gt; { val table = buildTableFromCodeBlock(node) document.add(table) } // Headings MarkdownElementTypes.ATX_1 -&gt; addHeading(node, 1) MarkdownElementTypes.ATX_2 -&gt; addHeading(node, 2) MarkdownElementTypes.ATX_3 -&gt; addHeading(node, 3) MarkdownElementTypes.ATX_4 -&gt; addHeading(node, 4) MarkdownElementTypes.ATX_5 -&gt; addHeading(node, 5) MarkdownElementTypes.ATX_6 -&gt; addHeading(node, 6) MarkdownElementTypes.SETEXT_1 -&gt; addHeading(node, 1, isSetext = true) MarkdownElementTypes.SETEXT_2 -&gt; addHeading(node, 2, isSetext = true) // Lists MarkdownElementTypes.ORDERED_LIST -&gt; { listTypeStack.add(true) listCounterStack.add(1) node.acceptChildren(this) listTypeStack.removeAt(listTypeStack.lastIndex) listCounterStack.removeAt(listCounterStack.lastIndex) } MarkdownElementTypes.UNORDERED_LIST -&gt; { listTypeStack.add(false) listCounterStack.add(0) node.acceptChildren(this) listTypeStack.removeAt(listTypeStack.lastIndex) listCounterStack.removeAt(listCounterStack.lastIndex) } MarkdownElementTypes.LIST_ITEM -&gt; addListItem(node) // Block quote MarkdownElementTypes.BLOCK_QUOTE -&gt; addBlockQuote(node) MarkdownElementTypes.MARKDOWN_FILE -&gt; { node.acceptChildren(this) } MarkdownTokenTypes.HORIZONTAL_RULE -&gt; { val p = Paragraph() val line = LineSeparator() line.lineWidth = 1f line.lineColor = Color.GRAY p.add(line) document.add(p) } GFMElementTypes.TABLE -&gt; { val table = buildTable(node) document.add(table) } }</ID>
+    <ID>BlankLineBetweenWhenConditions:OpenPdf.kt:ParagraphVisitor$when (node.type) { MarkdownTokenTypes.TEXT -&gt; { val text = node.getTextInNode(content).toString() paragraph.add(text) } // Emphasis &amp; strong MarkdownElementTypes.EMPH -&gt; addStyledBlock(node, Font.ITALIC, 1) MarkdownElementTypes.STRONG -&gt; addStyledBlock(node, Font.BOLD, 2) // Inline code MarkdownElementTypes.CODE_SPAN -&gt; addCodeSpan(node) MarkdownTokenTypes.WHITE_SPACE -&gt; paragraph.add(" ") // Links (render as text (url)) to avoid PDF-specific anchors MarkdownElementTypes.INLINE_LINK, MarkdownElementTypes.FULL_REFERENCE_LINK, MarkdownElementTypes.SHORT_REFERENCE_LINK -&gt; addLink(node) GFMElementTypes.STRIKETHROUGH -&gt; addStyledBlock(node, Font.STRIKETHRU, 2) }</ID>
+    <ID>BracesOnWhenStatements:OpenPdf.kt:OpenPdf$when</ID>
+    <ID>BracesOnWhenStatements:OpenPdf.kt:OpenPdfVisitor$when</ID>
+    <ID>BracesOnWhenStatements:OpenPdf.kt:ParagraphVisitor$when</ID>
+    <ID>CascadingCallWrapping:OpenPdf.kt:OpenPdfVisitor$build()</ID>
+    <ID>ClassSignature:OpenPdf.kt:OpenPdfVisitor$LeftBarCellEvent : PdfPCellEvent</ID>
+    <ID>ClassSignature:OpenPdf.kt:ParagraphVisitor : Visitor</ID>
+    <ID>DocumentationOverPrivateFunction:OpenPdf.kt:@Suppress("LongMethod") private fun buildSignatureTable</ID>
+    <ID>DocumentationOverPrivateFunction:OpenPdf.kt:private fun drawBadgeIcon</ID>
+    <ID>DocumentationOverPrivateFunction:OpenPdf.kt:private fun truncateText: String</ID>
+    <ID>EndOfSentenceFormat:OpenPdf.kt:OpenPdfFontBundle$ Base font for normal text </ID>
+    <ID>EndOfSentenceFormat:OpenPdf.kt:OpenPdfFontBundle$ Bold font for headings </ID>
+    <ID>EndOfSentenceFormat:OpenPdf.kt:OpenPdfFontBundle$ Italic font for quotes </ID>
+    <ID>EndOfSentenceFormat:OpenPdf.kt:OpenPdfFontBundle$ Link font (underlined, blue) </ID>
+    <ID>EndOfSentenceFormat:OpenPdf.kt:OpenPdfFontBundle$ Monospace bold font for syntax highlight </ID>
+    <ID>EndOfSentenceFormat:OpenPdf.kt:OpenPdfFontBundle$ Monospace font for code </ID>
+    <ID>EndOfSentenceFormat:OpenPdf.kt:OpenPdfFontBundle$ Monospace font with syntax highlight color </ID>
+    <ID>EndOfSentenceFormat:OpenPdf.kt:OpenPdfFontBundle$ Styled font (bold, italic, strikethrough, etc.) </ID>
+    <ID>FunctionSignature:OpenPdf.kt:OpenPdfFontBundle$fun italicFont: Font</ID>
+    <ID>FunctionSignature:OpenPdf.kt:OpenPdfFontBundle$fun linkFont: Font</ID>
+    <ID>FunctionSignature:OpenPdf.kt:OpenPdfFontBundle$fun monoBoldFont: Font</ID>
+    <ID>FunctionSignature:OpenPdf.kt:OpenPdfFontBundle$fun monoFont: Font</ID>
+    <ID>FunctionSignature:OpenPdf.kt:OpenPdfFontBundle$fun monoFontWithColor: Font</ID>
+    <ID>FunctionSignature:OpenPdf.kt:OpenPdfFontBundle$fun styledFont: Font</ID>
+    <ID>FunctionSignature:OpenPdf.kt:OpenPdfVisitor.LeftBarCellEvent$override fun cellLayout</ID>
+    <ID>FunctionSignature:OpenPdf.kt:OpenPdfVisitor.RoundedBackgroundCellEvent$override fun cellLayout</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:OpenPdf.kt:OpenPdf : PdfService</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:OpenPdf.kt:OpenPdfFontBundle</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:OpenPdf.kt:OpenPdfVisitor : Visitor</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:OpenPdf.kt:ParagraphVisitor : Visitor</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:OpenPdf.kt:QuoteVisitor : Visitor</ID>
+    <ID>MagicNumber:OpenPdf.kt:0.1f</ID>
+    <ID>MagicNumber:OpenPdf.kt:0.2f</ID>
+    <ID>MagicNumber:OpenPdf.kt:0.4f</ID>
+    <ID>MagicNumber:OpenPdf.kt:0.5f</ID>
+    <ID>MagicNumber:OpenPdf.kt:0.6f</ID>
+    <ID>MagicNumber:OpenPdf.kt:0.85</ID>
+    <ID>MagicNumber:OpenPdf.kt:1.5f</ID>
+    <ID>MagicNumber:OpenPdf.kt:10f</ID>
+    <ID>MagicNumber:OpenPdf.kt:120f</ID>
+    <ID>MagicNumber:OpenPdf.kt:16</ID>
+    <ID>MagicNumber:OpenPdf.kt:3</ID>
+    <ID>MagicNumber:OpenPdf.kt:3f</ID>
+    <ID>MagicNumber:OpenPdf.kt:400f</ID>
+    <ID>MagicNumber:OpenPdf.kt:8f</ID>
+    <ID>MagicNumber:OpenPdf.kt:OpenPdfVisitor$100f</ID>
+    <ID>MagicNumber:OpenPdf.kt:OpenPdfVisitor$11f</ID>
+    <ID>MagicNumber:OpenPdf.kt:OpenPdfVisitor$12f</ID>
+    <ID>MagicNumber:OpenPdf.kt:OpenPdfVisitor$14f</ID>
+    <ID>MagicNumber:OpenPdf.kt:OpenPdfVisitor$16f</ID>
+    <ID>MagicNumber:OpenPdf.kt:OpenPdfVisitor$180</ID>
+    <ID>MagicNumber:OpenPdf.kt:OpenPdfVisitor$18f</ID>
+    <ID>MagicNumber:OpenPdf.kt:OpenPdfVisitor$20f</ID>
+    <ID>MagicNumber:OpenPdf.kt:OpenPdfVisitor$220</ID>
+    <ID>MagicNumber:OpenPdf.kt:OpenPdfVisitor$230</ID>
+    <ID>MagicNumber:OpenPdf.kt:OpenPdfVisitor$245</ID>
+    <ID>MagicNumber:OpenPdf.kt:OpenPdfVisitor$3</ID>
+    <ID>MagicNumber:OpenPdf.kt:OpenPdfVisitor$3f</ID>
+    <ID>MagicNumber:OpenPdf.kt:OpenPdfVisitor$4</ID>
+    <ID>MagicNumber:OpenPdf.kt:OpenPdfVisitor$5</ID>
+    <ID>MagicNumber:OpenPdf.kt:OpenPdfVisitor$5f</ID>
+    <ID>MagicNumber:OpenPdf.kt:OpenPdfVisitor$6</ID>
+    <ID>MagicNumber:OpenPdf.kt:OpenPdfVisitor$6f</ID>
+    <ID>MagicNumber:OpenPdf.kt:OpenPdfVisitor$8f</ID>
+    <ID>MultilineExpressionWrapping:OpenPdf.kt:OpenPdfVisitor$Highlights.Builder().theme(SyntaxThemes.atom(darkMode = false)) .code(codeFence).build().getHighlights().sortedBy { it.location.start }</ID>
+    <ID>MultilineExpressionWrapping:OpenPdf.kt:OpenPdfVisitor$RoundedBackgroundCellEvent( radius = 6f, fillColor = Color(245, 245, 245), strokeColor = Color(220, 220, 220) )</ID>
+    <ID>MultilineExpressionWrapping:OpenPdf.kt:OpenPdfVisitor$if (isSetext) { raw.lineSequence().firstOrNull()?.trim().orEmpty() } else { raw.replace(Regex("^#{1,6}\\s*"), "").trim() }</ID>
+    <ID>MultilineExpressionWrapping:OpenPdf.kt:OpenPdfVisitor$if (it is ColorHighlight) { fontBundle.monoFontWithColor(Color(it.rgb)) } else { fontBundle.monoBoldFont() }</ID>
+    <ID>MultilineExpressionWrapping:OpenPdf.kt:OpenPdfVisitor$object : Visitor { override fun visitNode(node: ASTNode) { if (node.type == GFMElementTypes.HEADER) { node.acceptChildren(this) } else if (node.type == GFMElementTypes.ROW) { // Actually, let's just accept children of ROW and filter for content. // In GFM, cells are separated by |. // The parser structure for ROW contains CELL or text + pipes. // Let's print raw text for debugging if needed, but here we implement. // Assuming node.children contains cell nodes or we split by pipe? // IntelliJ parser creates nodes for cells. checking standard GFM implementation... // It uses GFMTokenTypes.CELL for content. rows.add(node.children.filter { it.type.name == "CELL" }) } } }</ID>
+    <ID>MultilineExpressionWrapping:OpenPdf.kt:OpenPdfVisitor$when (level) { 1 -&gt; 18f 2 -&gt; 16f 3 -&gt; 14f 4 -&gt; 12f 5 -&gt; 11f else -&gt; 0f }</ID>
+    <ID>MultilineExpressionWrapping:OpenPdf.kt:com.storyteller_f.a.cloud.pdf.SignatureInfo( signee = (chain[0] as java.security.cert.X509Certificate).subjectX500Principal.name, timestamp = pdfGenerationSpec.created.toString(), hint = "Digitally Signed by OpenPDF" )</ID>
+    <ID>MultilineExpressionWrapping:OpenPdf.kt:listOf( "Signee" to signatureInfo.signee, "Timestamp" to signatureInfo.timestamp, "Hint" to signatureInfo.hint )</ID>
+    <ID>MultilineExpressionWrapping:OpenPdf.kt:org.openpdf.text.pdf.BaseFont.createFont( org.openpdf.text.pdf.BaseFont.HELVETICA, org.openpdf.text.pdf.BaseFont.CP1252, org.openpdf.text.pdf.BaseFont.NOT_EMBEDDED )</ID>
+    <ID>MultilineExpressionWrapping:OpenPdf.kt:org.openpdf.text.pdf.BaseFont.createFont( org.openpdf.text.pdf.BaseFont.HELVETICA_BOLD, org.openpdf.text.pdf.BaseFont.CP1252, org.openpdf.text.pdf.BaseFont.NOT_EMBEDDED )</ID>
+    <ID>PackageName:OpenPdf.kt:package com.storyteller_f.a.cloud.openpdf</ID>
+    <ID>PackageNaming:OpenPdf.kt:package com.storyteller_f.a.cloud.openpdf</ID>
+    <ID>StringShouldBeRawString:OpenPdf.kt:ParagraphVisitor$"\\[([^]]+)]\\(([^)]+)\\)"</ID>
+    <ID>TrailingCommaOnCallSite:OpenPdf.kt:( "Signee" to signatureInfo.signee, "Timestamp" to signatureInfo.timestamp, "Hint" to signatureInfo.hint )</ID>
+    <ID>TrailingCommaOnCallSite:OpenPdf.kt:( Rectangle(sigX, sigY, sigX + sigWidth, sigY + sigHeight), 1, "sig" )</ID>
+    <ID>TrailingCommaOnCallSite:OpenPdf.kt:( org.openpdf.text.pdf.BaseFont.HELVETICA, org.openpdf.text.pdf.BaseFont.CP1252, org.openpdf.text.pdf.BaseFont.NOT_EMBEDDED )</ID>
+    <ID>TrailingCommaOnCallSite:OpenPdf.kt:( org.openpdf.text.pdf.BaseFont.HELVETICA_BOLD, org.openpdf.text.pdf.BaseFont.CP1252, org.openpdf.text.pdf.BaseFont.NOT_EMBEDDED )</ID>
+    <ID>TrailingCommaOnCallSite:OpenPdf.kt:( signee = (chain[0] as java.security.cert.X509Certificate).subjectX500Principal.name, timestamp = pdfGenerationSpec.created.toString(), hint = "Digitally Signed by OpenPDF" )</ID>
+    <ID>TrailingCommaOnCallSite:OpenPdf.kt:OpenPdfVisitor$( radius = 6f, fillColor = Color(245, 245, 245), strokeColor = Color(220, 220, 220) )</ID>
+    <ID>TrailingCommaOnDeclarationSite:OpenPdf.kt:( cb: PdfContentByte, signatureInfo: com.storyteller_f.a.cloud.pdf.SignatureInfo, rect: Rectangle )</ID>
+    <ID>TrailingCommaOnDeclarationSite:OpenPdf.kt:( saveToFile: File, snapshotGeneration: SnapshotGeneration.KeyStoreGeneration, pdfGenerationSpec: PdfGenerationSpec )</ID>
+    <ID>TrailingCommaOnDeclarationSite:OpenPdf.kt:OpenPdf$( creatorInfo: UserInfo, authorInfo: UserInfo, content: String, map: Map&lt;String, File&gt;, snapshotGeneration: SnapshotGeneration, pdfGenerationSpec: PdfGenerationSpec )</ID>
+    <ID>TrailingCommaOnDeclarationSite:OpenPdf.kt:OpenPdfVisitor$( it: CodeHighlight, paragraph: Paragraph, codeFence: String, i: Int, codeHighlights: List&lt;CodeHighlight&gt; )</ID>
+    <ID>TrailingCommaOnDeclarationSite:OpenPdf.kt:OpenPdfVisitor$( private val document: Document, private val fontBundle: OpenPdfFontBundle, val content: String, private val map: Map&lt;String, File&gt; )</ID>
+    <ID>TrailingCommaOnDeclarationSite:OpenPdf.kt:OpenPdfVisitor.LeftBarCellEvent$( cell: PdfPCell?, rect: Rectangle?, canvas: Array&lt;PdfContentByte?&gt;? )</ID>
+    <ID>TrailingCommaOnDeclarationSite:OpenPdf.kt:OpenPdfVisitor.LeftBarCellEvent$( private val barWidth: Float, private val barColor: Color )</ID>
+    <ID>TrailingCommaOnDeclarationSite:OpenPdf.kt:OpenPdfVisitor.RoundedBackgroundCellEvent$( cell: PdfPCell?, rect: Rectangle?, canvas: Array&lt;PdfContentByte?&gt;? )</ID>
+    <ID>TrailingCommaOnDeclarationSite:OpenPdf.kt:OpenPdfVisitor.RoundedBackgroundCellEvent$( private val radius: Float, private val fillColor: Color, private val strokeColor: Color )</ID>
+    <ID>TrailingCommaOnDeclarationSite:OpenPdf.kt:ParagraphVisitor$( private val paragraph: Paragraph, val content: String, val fontBundle: OpenPdfFontBundle )</ID>
+    <ID>TrailingCommaOnDeclarationSite:OpenPdf.kt:ParagraphVisitor$MarkdownElementTypes.INLINE_LINK, MarkdownElementTypes.FULL_REFERENCE_LINK, MarkdownElementTypes.SHORT_REFERENCE_LINK -&gt; addLink(node)</ID>
+    <ID>UndocumentedPublicClass:OpenPdf.kt:OpenPdf : PdfService</ID>
+    <ID>UndocumentedPublicClass:OpenPdf.kt:OpenPdf$Companion</ID>
+    <ID>UndocumentedPublicClass:OpenPdf.kt:OpenPdfVisitor : Visitor</ID>
+    <ID>UndocumentedPublicClass:OpenPdf.kt:ParagraphVisitor : Visitor</ID>
+    <ID>UndocumentedPublicClass:OpenPdf.kt:QuoteVisitor : Visitor</ID>
+    <ID>UndocumentedPublicProperty:OpenPdf.kt:OpenPdfVisitor$val content: String</ID>
+    <ID>UndocumentedPublicProperty:OpenPdf.kt:ParagraphVisitor$val content: String</ID>
+    <ID>UndocumentedPublicProperty:OpenPdf.kt:ParagraphVisitor$val fontBundle: OpenPdfFontBundle</ID>
+    <ID>UndocumentedPublicProperty:OpenPdf.kt:QuoteVisitor$val font: Font</ID>
+    <ID>UndocumentedPublicProperty:OpenPdf.kt:QuoteVisitor$val paragraph: Paragraph</ID>
+    <ID>UnnecessaryParentheses:OpenPdf.kt:(iconWidth.coerceAtMost(height) / 2f)</ID>
+  </CurrentIssues>
+</SmellBaseline>

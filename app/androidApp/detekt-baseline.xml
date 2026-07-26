@@ -1,0 +1,214 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>AbsentOrWrongFileLicense:AApplication.kt:com.storyteller_f.a.app.AApplication.kt</ID>
+    <ID>AbsentOrWrongFileLicense:AndroidAppPlatformImpl.kt:com.storyteller_f.a.app.AndroidAppPlatformImpl.kt</ID>
+    <ID>AbsentOrWrongFileLicense:AppComposeScreenshotTest.kt:com.storyteller_f.a.app.AppComposeScreenshotTest.kt</ID>
+    <ID>AbsentOrWrongFileLicense:BubbleActivity.kt:com.storyteller_f.a.app.BubbleActivity.kt</ID>
+    <ID>AbsentOrWrongFileLicense:MainActivity.kt:com.storyteller_f.a.app.MainActivity.kt</ID>
+    <ID>AbsentOrWrongFileLicense:MediaPlayerActivity.kt:com.storyteller_f.a.app.MediaPlayerActivity.kt</ID>
+    <ID>AbsentOrWrongFileLicense:PushServiceImpl.kt:com.storyteller_f.a.app.PushServiceImpl.kt</ID>
+    <ID>AbsentOrWrongFileLicense:RTCActivity.kt:com.storyteller_f.a.app.RTCActivity.kt</ID>
+    <ID>AbsentOrWrongFileLicense:UploadActivity.kt:com.storyteller_f.a.app.UploadActivity.kt</ID>
+    <ID>AbsentOrWrongFileLicense:build.gradle.kts:.build.gradle.kts</ID>
+    <ID>CascadingCallWrapping:AndroidAppPlatformImpl.kt:AndroidAppPlatformImpl$image</ID>
+    <ID>ClassOrdering:AApplication.kt:&lt;no name provided&gt;$override val enablePip: Boolean get() = true</ID>
+    <ID>ClassOrdering:MainActivity.kt:MainActivity$override var binder: FileBinder? = null</ID>
+    <ID>ClassOrdering:MainActivity.kt:MainActivity$override var isConnecting: Boolean = false</ID>
+    <ID>ClassOrdering:PushServiceImpl.kt:PushServiceImpl$override val lifecycle: Lifecycle get() = registry</ID>
+    <ID>ClassOrdering:PushServiceImpl.kt:PushServiceImpl$val registry = LifecycleRegistry(this)</ID>
+    <ID>ClassSignature:MainActivity.kt:MainActivity : ComponentActivityClientFileServiceContainer</ID>
+    <ID>ClassSignature:PushServiceImpl.kt:PushServiceImpl : PushServiceLifecycleOwner</ID>
+    <ID>ClassSignature:RTCActivity.kt:RTCActivity : ComponentActivityRTCContainer</ID>
+    <ID>ClassSignature:UploadActivity.kt:UploadActivity : ComponentActivityClientFileServiceContainer</ID>
+    <ID>ExpressionBodySyntax:AppComposeScreenshotTest.kt:PreviewGlobalDialog$return block()</ID>
+    <ID>FunctionExpressionBody:AndroidAppPlatformImpl.kt:AndroidAppPlatformImpl${ return if (mutable) { if (Build.VERSION.SDK_INT &gt;= 31) { PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE } else { PendingIntent.FLAG_UPDATE_CURRENT } } else { PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE } }</ID>
+    <ID>FunctionExpressionBody:AndroidAppPlatformImpl.kt:AndroidAppPlatformImpl${ return svgStringToBitmap( context, """&lt;svg xmlns="http://www.w3.org/2000/svg" width="40" height="30" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Centered star"&gt; &lt;rect x="0" y="0" width="400" height="300" fill="#BCECE7" stroke="#cccccc"/&gt; &lt;text x="200" y="150" text-anchor="middle" dominant-baseline="central" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Color Emoji', sans-serif" font-size="160" fill="#1f77b4"&gt; ${safeFirstUnicode(name)} &lt;/text&gt; &lt;/svg&gt; """ ) }</ID>
+    <ID>FunctionExpressionBody:AppComposeScreenshotTest.kt:PreviewGlobalDialog${ return block() }</ID>
+    <ID>FunctionName:AppComposeScreenshotTest.kt:@Composable private fun PaddedPreview</ID>
+    <ID>FunctionName:AppComposeScreenshotTest.kt:@Composable private fun ScreenshotAppTheme</ID>
+    <ID>FunctionName:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun ButtonNavScreenshot</ID>
+    <ID>FunctionName:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun CommonTopicCellScreenshot</ID>
+    <ID>FunctionName:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun FixedProgressScreenshot</ID>
+    <ID>FunctionName:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun InfoTableScreenshot</ID>
+    <ID>FunctionName:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun InteractionRowScreenshot</ID>
+    <ID>FunctionName:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun MediaObjectBlockScreenshot</ID>
+    <ID>FunctionName:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun PillScreenshot</ID>
+    <ID>FunctionName:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun PrimaryRoomCellScreenshot</ID>
+    <ID>FunctionName:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun PrivateKeyEditorScreenshot</ID>
+    <ID>FunctionName:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun SettingOptionResettableViewScreenshot</ID>
+    <ID>FunctionName:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun SettingOptionViewScreenshot</ID>
+    <ID>FunctionName:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun SheetContainerScreenshot</ID>
+    <ID>FunctionName:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun SignInButtonScreenshot</ID>
+    <ID>FunctionName:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun TopicCellScreenshot</ID>
+    <ID>FunctionName:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun UnboundedRoomCellScreenshot</ID>
+    <ID>FunctionName:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun UploadItemScreenshot</ID>
+    <ID>FunctionName:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun UserFavoriteCellScreenshot</ID>
+    <ID>FunctionName:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun UserSubscriptionCellScreenshot</ID>
+    <ID>FunctionName:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun UserTopicCellScreenshot</ID>
+    <ID>FunctionNameMaxLength:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun SettingOptionResettableViewScreenshot</ID>
+    <ID>FunctionNaming:AppComposeScreenshotTest.kt:@Composable private fun PaddedPreview</ID>
+    <ID>FunctionNaming:AppComposeScreenshotTest.kt:@Composable private fun ScreenshotAppTheme</ID>
+    <ID>FunctionNaming:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun ButtonNavScreenshot</ID>
+    <ID>FunctionNaming:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun CommonTopicCellScreenshot</ID>
+    <ID>FunctionNaming:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun FixedProgressScreenshot</ID>
+    <ID>FunctionNaming:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun InfoTableScreenshot</ID>
+    <ID>FunctionNaming:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun InteractionRowScreenshot</ID>
+    <ID>FunctionNaming:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun MediaObjectBlockScreenshot</ID>
+    <ID>FunctionNaming:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun PillScreenshot</ID>
+    <ID>FunctionNaming:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun PrimaryRoomCellScreenshot</ID>
+    <ID>FunctionNaming:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun PrivateKeyEditorScreenshot</ID>
+    <ID>FunctionNaming:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun SettingOptionResettableViewScreenshot</ID>
+    <ID>FunctionNaming:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun SettingOptionViewScreenshot</ID>
+    <ID>FunctionNaming:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun SheetContainerScreenshot</ID>
+    <ID>FunctionNaming:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun SignInButtonScreenshot</ID>
+    <ID>FunctionNaming:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun TopicCellScreenshot</ID>
+    <ID>FunctionNaming:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun UnboundedRoomCellScreenshot</ID>
+    <ID>FunctionNaming:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun UploadItemScreenshot</ID>
+    <ID>FunctionNaming:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun UserFavoriteCellScreenshot</ID>
+    <ID>FunctionNaming:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun UserSubscriptionCellScreenshot</ID>
+    <ID>FunctionNaming:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun UserTopicCellScreenshot</ID>
+    <ID>FunctionSignature:AndroidAppPlatformImpl.kt:AndroidAppPlatformImpl$private suspend fun svgStringToBitmap: Bitmap?</ID>
+    <ID>FunctionSignature:AppComposeScreenshotTest.kt:private fun sampleTopic</ID>
+    <ID>FunctionSignature:MainActivity.kt:MainActivity.&lt;no name provided&gt;$override fun onAvailableSessionCommandsChanged</ID>
+    <ID>ImportOrdering:AppComposeScreenshotTest.kt:import androidx.compose.foundation.layout.Arrangement import androidx.compose.foundation.layout.Column import androidx.compose.foundation.layout.Row import androidx.compose.foundation.layout.fillMaxWidth import androidx.compose.foundation.layout.padding import androidx.compose.material.icons.Icons import androidx.compose.material.icons.filled.Edit import androidx.compose.material.icons.filled.Lock import androidx.compose.material.icons.filled.Settings import androidx.compose.material3.MaterialTheme import androidx.compose.material3.Surface import androidx.compose.material3.Text import androidx.compose.runtime.Composable import androidx.compose.runtime.CompositionLocalProvider import androidx.compose.ui.Modifier import androidx.compose.ui.tooling.preview.Preview import androidx.compose.ui.unit.dp import com.android.tools.screenshot.PreviewTest import com.storyteller_f.a.app.components.InteractionRowInternal import com.storyteller_f.a.app.components.SettingOptionResettableView import com.storyteller_f.a.app.components.SettingOptionView import com.storyteller_f.a.client.compose_core.components.ButtonNav import com.storyteller_f.a.client.compose_core.components.GlobalDialogState import com.storyteller_f.a.client.compose_core.components.InfoTable import com.storyteller_f.a.client.compose_core.components.MediaObjectBlock import com.storyteller_f.a.client.compose_core.components.Pill import com.storyteller_f.a.client.compose_core.components.PrivateKeyEditor import com.storyteller_f.a.client.compose_core.components.SheetContainer import com.storyteller_f.a.client.compose_core.components.SignInButton import com.storyteller_f.a.app.pages.file.FixedProgress import com.storyteller_f.a.app.pages.file.UploadItem import com.storyteller_f.a.app.pages.room.PrimaryRoomCell import com.storyteller_f.a.app.pages.room.UnboundedRoomCell import com.storyteller_f.a.app.pages.topic.CommonTopicCellInternal import com.storyteller_f.a.app.pages.topic.TopicCellInternal import com.storyteller_f.a.app.pages.topic.UserTopicCellInternal import com.storyteller_f.a.app.pages.user.UserFavoriteCell import com.storyteller_f.a.app.pages.user.UserSubscriptionCell import com.storyteller_f.a.app.ui.theme.AppTheme import com.storyteller_f.shared.model.RoomInfo import com.storyteller_f.shared.model.TopicContent import com.storyteller_f.shared.model.TopicInfo import com.storyteller_f.shared.model.UserFavoriteInfo import com.storyteller_f.shared.model.UserSubscriptionInfo import com.storyteller_f.shared.type.ObjectType import com.storyteller_f.storage.UploadInfo import com.storyteller_f.storage.UploadStatus import kotlinx.collections.immutable.PersistentList import kotlinx.collections.immutable.persistentListOf import kotlinx.coroutines.flow.MutableStateFlow import kotlinx.datetime.LocalDateTime</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AApplication.kt:AApplication : Application</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun ButtonNavScreenshot</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun CommonTopicCellScreenshot</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun FixedProgressScreenshot</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun InfoTableScreenshot</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun InteractionRowScreenshot</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun MediaObjectBlockScreenshot</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun PillScreenshot</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun PrimaryRoomCellScreenshot</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun PrivateKeyEditorScreenshot</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun SettingOptionResettableViewScreenshot</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun SettingOptionViewScreenshot</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun SheetContainerScreenshot</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun SignInButtonScreenshot</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun TopicCellScreenshot</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun UnboundedRoomCellScreenshot</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun UploadItemScreenshot</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun UserFavoriteCellScreenshot</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun UserSubscriptionCellScreenshot</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun UserTopicCellScreenshot</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:BubbleActivity.kt:BubbleActivity : ComponentActivity</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MainActivity.kt:MainActivity : ComponentActivityClientFileServiceContainer</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MediaPlayerActivity.kt:MediaPlayerActivity : ComponentActivity</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PushServiceImpl.kt:PushServiceImpl : PushServiceLifecycleOwner</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RTCActivity.kt:RTCActivity : ComponentActivityRTCContainer</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UploadActivity.kt:UploadActivity : ComponentActivityClientFileServiceContainer</ID>
+    <ID>MagicNumber:AndroidAppPlatformImpl.kt:AndroidAppPlatformImpl$3</ID>
+    <ID>MagicNumber:AndroidAppPlatformImpl.kt:AndroidAppPlatformImpl$31</ID>
+    <ID>MagicNumber:AndroidAppPlatformImpl.kt:AndroidAppPlatformImpl$600</ID>
+    <ID>MagicNumber:AppComposeScreenshotTest.kt:2026</ID>
+    <ID>MagicNumber:AppComposeScreenshotTest.kt:3</ID>
+    <ID>MagicNumber:AppComposeScreenshotTest.kt:4</ID>
+    <ID>MagicNumber:AppComposeScreenshotTest.kt:5</ID>
+    <ID>MultilineExpressionWrapping:AApplication.kt:&lt;no name provided&gt;$Intent(context, MediaPlayerActivity::class.java).apply { // addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) // addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK) putExtra("json", commonJson.encodeToString&lt;RemoteMediaItem&gt;(remoteMediaItem)) }</ID>
+    <ID>MultilineExpressionWrapping:AApplication.kt:object : MediaPlayerService() { override fun fullscreen(remoteMediaItem: RemoteMediaItem) { val context = mainActivityRef?.get() ?: return context.startActivity(Intent(context, MediaPlayerActivity::class.java).apply { // addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) // addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK) putExtra("json", commonJson.encodeToString&lt;RemoteMediaItem&gt;(remoteMediaItem)) }) } override suspend fun start( remoteMediaItem: RemoteMediaItem, localMediaPlaySession: LocalMediaPlaySession, playList: List&lt;ConstPlayItem&gt; ) { val instance = uiViewModel.instance.value instance.controller.startPlayMedia(remoteMediaItem, localMediaPlaySession, this, playList) } override val enablePip: Boolean get() = true }</ID>
+    <ID>MultilineExpressionWrapping:AndroidAppPlatformImpl.kt:AndroidAppPlatformImpl$Intent(application, RTCActivity::class.java).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK) putExtra("roomId", roomId) }</ID>
+    <ID>MultilineExpressionWrapping:AndroidAppPlatformImpl.kt:AndroidAppPlatformImpl$PendingIntent.getActivity( context, 1, Intent(context, BubbleActivity::class.java).putExtra("roomId", room.id), flagUpdateCurrent(true) )</ID>
+    <ID>MultilineExpressionWrapping:AndroidAppPlatformImpl.kt:AndroidAppPlatformImpl$Person.Builder() .setName("Chat partner") .build()</ID>
+    <ID>MultilineExpressionWrapping:AndroidAppPlatformImpl.kt:AndroidAppPlatformImpl$ShortcutInfoCompat.Builder(context, shortcutId) .setLocusId(LocusIdCompat(shortcutId)) .setCategories(setOf(category)) .setActivity(ComponentName(context, MainActivity::class.java)) .setIntent( Intent(context, MainActivity::class.java) .setAction(Intent.ACTION_VIEW) .setData(getDeepLink("/room/${room.id}").toUri()) ) .setPerson(person) .setLongLived(true) .setShortLabel(room.name) .setIcon(iconCompat)</ID>
+    <ID>MultilineExpressionWrapping:AppComposeScreenshotTest.kt:RoomInfo.EMPTY.copy( id = 301, createdTime = fixedTime(), name = "Snapshot room", memberCount = 12 )</ID>
+    <ID>MultilineExpressionWrapping:AppComposeScreenshotTest.kt:UploadInfo.EMPTY.copy( id = 401, pathHash = "snapshot", path = "/uploads/story.txt", progress = 80, chunkProgress = 40, total = 100, status = UploadStatus.UPLOADING, message = "Uploading", name = "story.txt", contentType = "text/plain", )</ID>
+    <ID>MultilineExpressionWrapping:AppComposeScreenshotTest.kt:UserFavoriteInfo.EMPTY.copy( createdTime = fixedTime(), objectType = ObjectType.TOPIC, extensions = UserFavoriteInfo.Extensions(topicInfo = sampleTopic()) )</ID>
+    <ID>MultilineExpressionWrapping:AppComposeScreenshotTest.kt:UserSubscriptionInfo.EMPTY.copy( createdTime = fixedTime(), objectType = ObjectType.TOPIC, extensions = UserSubscriptionInfo.Extensions(topicInfo = sampleTopic(commentCount = 7, hasComment = true)) )</ID>
+    <ID>MultilineExpressionWrapping:MainActivity.kt:MainActivity$object : MediaController.Listener { override fun onAvailableSessionCommandsChanged( controller: MediaController, commands: SessionCommands ) { super.onAvailableSessionCommandsChanged(controller, commands) Napier.d { "MediaController onAvailableSessionCommandsChanged" } } override fun onDisconnected(controller: MediaController) { super.onDisconnected(controller) Napier.d { "MediaController onDisconnected" } } }</ID>
+    <ID>MultilineExpressionWrapping:PushServiceImpl.kt:PushServiceImpl$NotificationCompat.Builder(this, channel) .setSmallIcon(com.storyteller_f.a.app.android_library.R.drawable.ic_notify) .setContentTitle("New message")</ID>
+    <ID>MultilineExpressionWrapping:RTCActivity.kt:RTCActivity$binder.filterNotNull().flatMapLatest { it.callingRoom }.stateIn(lifecycleScope, SharingStarted.Lazily, null)</ID>
+    <ID>MultilineExpressionWrapping:RTCActivity.kt:RTCActivity$binder.filterNotNull().flatMapLatest { it.localAudioMuted }.stateIn(lifecycleScope, SharingStarted.Lazily, false)</ID>
+    <ID>MultilineExpressionWrapping:RTCActivity.kt:RTCActivity$binder.filterNotNull().flatMapLatest { it.localVideoMuted }.stateIn(lifecycleScope, SharingStarted.Lazily, false)</ID>
+    <ID>MultilineExpressionWrapping:RTCActivity.kt:RTCActivity$binder.filterNotNull().flatMapLatest { it.remotePeers }.map { it.values.sortedBy(RemotePeerState::uid) }.stateIn(lifecycleScope, SharingStarted.Lazily, emptyList())</ID>
+    <ID>MultilineExpressionWrapping:RTCActivity.kt:RTCActivity$binder.filterNotNull().flatMapLatest { it.stream }.stateIn(lifecycleScope, SharingStarted.Lazily, null)</ID>
+    <ID>MultilineExpressionWrapping:RTCActivity.kt:RTCActivity$object : DefaultLifecycleObserver { override fun onDestroy(owner: LifecycleOwner) { super.onDestroy(owner) unbindService(connection) } }</ID>
+    <ID>MultilineExpressionWrapping:build.gradle.kts:(properties["SERVER_URL"] as? String)?.let { URI.create(it).host } ?: "storyteller_f.com"</ID>
+    <ID>MultilineExpressionWrapping:build.gradle.kts:Properties().apply { val file = layout.projectDirectory.file("../../deploy/$flavorStr.env").asFile if (file.exists()) { FileInputStream(file).use { load(it) } } }</ID>
+    <ID>NoEmptyFirstLineInClassBody:AndroidAppPlatformImpl.kt:AndroidAppPlatformImpl${ override fun startCall(roomId: PrimaryKey) { val application = appContextRef.get() ?: return val intent = Intent(application, RTCActivity::class.java).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK) putExtra("roomId", roomId) } application.startActivity(intent) } override suspend fun notifyNotification(room: RoomInfo, bitmap: ImageBitmap?) { val context = appContextRef.get() ?: return if (Build.VERSION.SDK_INT &lt; Build.VERSION_CODES.R) { return } if (ActivityCompat.checkSelfPermission( context, Manifest.permission.POST_NOTIFICATIONS ) == PackageManager.PERMISSION_GRANTED ) { val androidBitmap = bitmap?.asAndroidBitmap() ?: getIconBitmapFromName(context, room.name) ?: return val iconCompat = IconCompat.createWithBitmap(androidBitmap) val channel = "Message" val managerCompat = getOrCreateNotificationChannel(context, channel) val person = Person.Builder() .setName("Chat partner") .build() val user = Person.Builder().setName("You").build() val shortcutId = "room_${room.id}" createShortcut(context, shortcutId, person, room, iconCompat) val notification = getBubbleNotificationBuilder(context, user, channel, shortcutId, person, room, iconCompat) managerCompat.notify(notifyId.getAndIncrement(), notification.build()) } } private fun getBubbleNotificationBuilder( context: Application, user: Person, channel: String, shortcutId: String, person: Person, room: RoomInfo, bitmap: IconCompat, ): NotificationCompat.Builder { val bubbleIntent = PendingIntent.getActivity( context, 1, Intent(context, BubbleActivity::class.java).putExtra("roomId", room.id), flagUpdateCurrent(true) ) val bubbleData = NotificationCompat.BubbleMetadata.Builder(bubbleIntent, bitmap).setDesiredHeight(600) val style = NotificationCompat.MessagingStyle(user).setGroupConversation(false) return NotificationCompat.Builder(context, channel) .setSmallIcon(R.drawable.ic_notify) .setBubbleMetadata(bubbleData.build()) .setLocusId(LocusIdCompat(shortcutId)) .setShortcutId(shortcutId) .addPerson(person) .setStyle(style) .setContentIntent( PendingIntent.getActivity( context, 3, Intent(context, MainActivity::class.java) .setAction(Intent.ACTION_VIEW) .setData(getDeepLink("/room/${room.id}").toUri()), flagUpdateCurrent(true) ), ) .setCategory(NotificationCompat.CATEGORY_MESSAGE) .setContentTitle(room.name) } private fun createShortcut( context: Application, shortcutId: String, person: Person, room: RoomInfo, iconCompat: IconCompat ) { val category = "com.storyteller_f.a.category.SHARE_MESSAGE_TARGET" val builder = ShortcutInfoCompat.Builder(context, shortcutId) .setLocusId(LocusIdCompat(shortcutId)) .setCategories(setOf(category)) .setActivity(ComponentName(context, MainActivity::class.java)) .setIntent( Intent(context, MainActivity::class.java) .setAction(Intent.ACTION_VIEW) .setData(getDeepLink("/room/${room.id}").toUri()) ) .setPerson(person) .setLongLived(true) .setShortLabel(room.name) .setIcon(iconCompat) ShortcutManagerCompat.pushDynamicShortcut(context, builder.build()) } private suspend fun getIconBitmapFromName(context: Application, name: String): Bitmap? { return svgStringToBitmap( context, """&lt;svg xmlns="http://www.w3.org/2000/svg" width="40" height="30" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Centered star"&gt; &lt;rect x="0" y="0" width="400" height="300" fill="#BCECE7" stroke="#cccccc"/&gt; &lt;text x="200" y="150" text-anchor="middle" dominant-baseline="central" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Color Emoji', sans-serif" font-size="160" fill="#1f77b4"&gt; ${safeFirstUnicode(name)} &lt;/text&gt; &lt;/svg&gt; """ ) } private suspend fun svgStringToBitmap( context: Application, svgString: String ): Bitmap? { val file = File(context.cacheDir, "temp.svg") file.writeText(svgString) return SingletonImageLoader.get(context) .execute(ImageRequest.Builder(context).data(file).build()).image?.toBitmap() } private fun flagUpdateCurrent(mutable: Boolean): Int { return if (mutable) { if (Build.VERSION.SDK_INT &gt;= 31) { PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE } else { PendingIntent.FLAG_UPDATE_CURRENT } } else { PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE } } }</ID>
+    <ID>NoEmptyFirstLineInClassBody:PushServiceImpl.kt:PushServiceImpl${ override fun onCreate() { super.onCreate() registry.currentState = Lifecycle.State.STARTED } override fun onMessage(message: PushMessage, instance: String) { Napier.i(tag = "push") { "receive message $message" } val channel = "Push" val notificationManager = getOrCreateNotificationChannel(this, channel) if (ActivityCompat.checkSelfPermission( this, Manifest.permission.POST_NOTIFICATIONS ) == PackageManager.PERMISSION_GRANTED ) { val notification = NotificationCompat.Builder(this, channel) .setSmallIcon(com.storyteller_f.a.app.android_library.R.drawable.ic_notify) .setContentTitle("New message") notificationManager.notify(notifyId.getAndIncrement(), notification.build()) } } override fun onNewEndpoint(endpoint: PushEndpoint, instance: String) { Napier.i(tag = "push") { "receive endpoint $endpoint" } (application as AApplication) val uiViewModel = uiViewModel val accountInstance = uiViewModel.instance.value lifecycle.coroutineScope.launch { accountInstance.sessionManager.addDevice(endpoint.url) } } override fun onRegistrationFailed(reason: FailedReason, instance: String) { Napier.i(tag = "push") { "receive failed $reason" } } override fun onUnregistered(instance: String) { Napier.i(tag = "push") { "receive unregistered" } val context = this UnifiedPush.getDistributors(context).firstOrNull()?.let { instance -&gt; UnifiedPush.saveDistributor(context, instance) UnifiedPush.register(context, instance, "A") instance } } override fun onDestroy() { super.onDestroy() registry.currentState = Lifecycle.State.DESTROYED } val registry = LifecycleRegistry(this) override val lifecycle: Lifecycle get() = registry }</ID>
+    <ID>PackageName:AApplication.kt:package com.storyteller_f.a.app</ID>
+    <ID>PackageName:AndroidAppPlatformImpl.kt:package com.storyteller_f.a.app</ID>
+    <ID>PackageName:AppComposeScreenshotTest.kt:package com.storyteller_f.a.app</ID>
+    <ID>PackageName:BubbleActivity.kt:package com.storyteller_f.a.app</ID>
+    <ID>PackageName:MainActivity.kt:package com.storyteller_f.a.app</ID>
+    <ID>PackageName:MediaPlayerActivity.kt:package com.storyteller_f.a.app</ID>
+    <ID>PackageName:PushServiceImpl.kt:package com.storyteller_f.a.app</ID>
+    <ID>PackageName:RTCActivity.kt:package com.storyteller_f.a.app</ID>
+    <ID>PackageName:UploadActivity.kt:package com.storyteller_f.a.app</ID>
+    <ID>PackageNaming:AApplication.kt:package com.storyteller_f.a.app</ID>
+    <ID>PackageNaming:AndroidAppPlatformImpl.kt:package com.storyteller_f.a.app</ID>
+    <ID>PackageNaming:AppComposeScreenshotTest.kt:package com.storyteller_f.a.app</ID>
+    <ID>PackageNaming:BubbleActivity.kt:package com.storyteller_f.a.app</ID>
+    <ID>PackageNaming:MainActivity.kt:package com.storyteller_f.a.app</ID>
+    <ID>PackageNaming:MediaPlayerActivity.kt:package com.storyteller_f.a.app</ID>
+    <ID>PackageNaming:PushServiceImpl.kt:package com.storyteller_f.a.app</ID>
+    <ID>PackageNaming:RTCActivity.kt:package com.storyteller_f.a.app</ID>
+    <ID>PackageNaming:UploadActivity.kt:package com.storyteller_f.a.app</ID>
+    <ID>TooManyFunctions:AppComposeScreenshotTest.kt:com.storyteller_f.a.app.AppComposeScreenshotTest.kt</ID>
+    <ID>TrailingCommaOnCallSite:AApplication.kt:AApplication$( StrictMode.VmPolicy.Builder(StrictMode.getVmPolicy()) .detectLeakedClosableObjects() .build() )</ID>
+    <ID>TrailingCommaOnCallSite:AndroidAppPlatformImpl.kt:AndroidAppPlatformImpl$( Intent(context, MainActivity::class.java) .setAction(Intent.ACTION_VIEW) .setData(getDeepLink("/room/${room.id}").toUri()) )</ID>
+    <ID>TrailingCommaOnCallSite:AndroidAppPlatformImpl.kt:AndroidAppPlatformImpl$( context, """&lt;svg xmlns="http://www.w3.org/2000/svg" width="40" height="30" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Centered star"&gt; &lt;rect x="0" y="0" width="400" height="300" fill="#BCECE7" stroke="#cccccc"/&gt; &lt;text x="200" y="150" text-anchor="middle" dominant-baseline="central" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Color Emoji', sans-serif" font-size="160" fill="#1f77b4"&gt; ${safeFirstUnicode(name)} &lt;/text&gt; &lt;/svg&gt; """ )</ID>
+    <ID>TrailingCommaOnCallSite:AndroidAppPlatformImpl.kt:AndroidAppPlatformImpl$( context, 1, Intent(context, BubbleActivity::class.java).putExtra("roomId", room.id), flagUpdateCurrent(true) )</ID>
+    <ID>TrailingCommaOnCallSite:AndroidAppPlatformImpl.kt:AndroidAppPlatformImpl$( context, 3, Intent(context, MainActivity::class.java) .setAction(Intent.ACTION_VIEW) .setData(getDeepLink("/room/${room.id}").toUri()), flagUpdateCurrent(true) )</ID>
+    <ID>TrailingCommaOnCallSite:AndroidAppPlatformImpl.kt:AndroidAppPlatformImpl$( context, Manifest.permission.POST_NOTIFICATIONS )</ID>
+    <ID>TrailingCommaOnCallSite:AppComposeScreenshotTest.kt:( "Name" to "Snapshot fixture", "Status" to "Ready", "Scope" to "client/composeCore" )</ID>
+    <ID>TrailingCommaOnCallSite:AppComposeScreenshotTest.kt:( createdTime = fixedTime(), objectType = ObjectType.TOPIC, extensions = UserFavoriteInfo.Extensions(topicInfo = sampleTopic()) )</ID>
+    <ID>TrailingCommaOnCallSite:AppComposeScreenshotTest.kt:( createdTime = fixedTime(), objectType = ObjectType.TOPIC, extensions = UserSubscriptionInfo.Extensions(topicInfo = sampleTopic(commentCount = 7, hasComment = true)) )</ID>
+    <ID>TrailingCommaOnCallSite:AppComposeScreenshotTest.kt:( data = emptyList(), topicInfo = sampleTopic(commentCount = 3, hasComment = true), startAddComment = {}, startAddReaction = {} )</ID>
+    <ID>TrailingCommaOnCallSite:AppComposeScreenshotTest.kt:( id = 101, content = TopicContent.Plain("Snapshot topic content with enough text to exercise wrapping."), createdTime = fixedTime(), commentCount = commentCount, reactionCount = 4, hasComment = hasComment, lastModifiedTime = fixedTime(), extension = TopicInfo.Extension() )</ID>
+    <ID>TrailingCommaOnCallSite:AppComposeScreenshotTest.kt:( id = 301, createdTime = fixedTime(), name = "Snapshot room", memberCount = 12 )</ID>
+    <ID>TrailingCommaOnCallSite:AppComposeScreenshotTest.kt:( listOf( "Name" to "Snapshot fixture", "Status" to "Ready", "Scope" to "client/composeCore" ) )</ID>
+    <ID>TrailingCommaOnCallSite:AppComposeScreenshotTest.kt:( privateKey = "private-key-preview", encryptionPrivateKey = null, enableRandom = false, algo = com.storyteller_f.shared.model.AlgoType.P256, onAlgoChange = {}, onConfirmPrivateKey = {}, onConfirmEncryptionPrivateKey = {}, onCancel = {} )</ID>
+    <ID>TrailingCommaOnCallSite:BubbleActivity.kt:BubbleActivity$( LocalUiViewModel provides uiViewModel )</ID>
+    <ID>TrailingCommaOnCallSite:MainActivity.kt:MainActivity$( LocalClientFileProvider provides receiver, LocalUiViewModel provides uiViewModel, LocalMediaPlayListHandlerProvider provides DefaultMediaPlayListHandlerProvider, LocalMediaPlayerService provides (application as AApplication).mediaPlayer )</ID>
+    <ID>TrailingCommaOnCallSite:MediaPlayerActivity.kt:MediaPlayerActivity$( LocalUiViewModel provides uiViewModel, LocalMediaPlayListHandlerProvider provides DefaultMediaPlayListHandlerProvider, LocalMediaPlayerService provides (application as AApplication).mediaPlayer )</ID>
+    <ID>TrailingCommaOnCallSite:PushServiceImpl.kt:PushServiceImpl$( this, Manifest.permission.POST_NOTIFICATIONS )</ID>
+    <ID>TrailingCommaOnCallSite:UploadActivity.kt:UploadActivity$( LocalClientFileProvider provides receiver, LocalUiViewModel provides uiViewModel )</ID>
+    <ID>TrailingCommaOnCallSite:build.gradle.kts:( "deepLinkScheme" to "$deepLinkSchemePrefix-debug", "deepLinkHost" to deepLinkHost )</ID>
+    <ID>TrailingCommaOnCallSite:build.gradle.kts:( "deepLinkScheme" to deepLinkSchemePrefix, "deepLinkHost" to deepLinkHost )</ID>
+    <ID>TrailingCommaOnCallSite:build.gradle.kts:( mapOf( "deepLinkScheme" to "$deepLinkSchemePrefix-debug", "deepLinkHost" to deepLinkHost ) )</ID>
+    <ID>TrailingCommaOnCallSite:build.gradle.kts:( mapOf( "deepLinkScheme" to deepLinkSchemePrefix, "deepLinkHost" to deepLinkHost ) )</ID>
+    <ID>TrailingCommaOnDeclarationSite:AApplication.kt:&lt;no name provided&gt;$( remoteMediaItem: RemoteMediaItem, localMediaPlaySession: LocalMediaPlaySession, playList: List&lt;ConstPlayItem&gt; )</ID>
+    <ID>TrailingCommaOnDeclarationSite:AndroidAppPlatformImpl.kt:AndroidAppPlatformImpl$( context: Application, shortcutId: String, person: Person, room: RoomInfo, iconCompat: IconCompat )</ID>
+    <ID>TrailingCommaOnDeclarationSite:AndroidAppPlatformImpl.kt:AndroidAppPlatformImpl$( context: Application, svgString: String )</ID>
+    <ID>TrailingCommaOnDeclarationSite:MainActivity.kt:MainActivity.&lt;no name provided&gt;$( controller: MediaController, commands: SessionCommands )</ID>
+    <ID>TrimMultilineRawString:AndroidAppPlatformImpl.kt:AndroidAppPlatformImpl$"""&lt;svg xmlns="http://www.w3.org/2000/svg" width="40" height="30" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Centered star"&gt; &lt;rect x="0" y="0" width="400" height="300" fill="#BCECE7" stroke="#cccccc"/&gt; &lt;text x="200" y="150" text-anchor="middle" dominant-baseline="central" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Color Emoji', sans-serif" font-size="160" fill="#1f77b4"&gt; ${safeFirstUnicode(name)} &lt;/text&gt; &lt;/svg&gt; """</ID>
+    <ID>UndocumentedPublicClass:AApplication.kt:AApplication : Application</ID>
+    <ID>UndocumentedPublicClass:AndroidAppPlatformImpl.kt:AndroidAppPlatformImpl : AppPlatformImpl</ID>
+    <ID>UndocumentedPublicClass:BubbleActivity.kt:BubbleActivity : ComponentActivity</ID>
+    <ID>UndocumentedPublicClass:MainActivity.kt:MainActivity : ComponentActivityClientFileServiceContainer</ID>
+    <ID>UndocumentedPublicClass:MediaPlayerActivity.kt:MediaPlayerActivity : ComponentActivity</ID>
+    <ID>UndocumentedPublicClass:PushServiceImpl.kt:PushServiceImpl : PushServiceLifecycleOwner</ID>
+    <ID>UndocumentedPublicClass:RTCActivity.kt:RTCActivity : ComponentActivityRTCContainer</ID>
+    <ID>UndocumentedPublicClass:UploadActivity.kt:UploadActivity : ComponentActivityClientFileServiceContainer</ID>
+    <ID>UndocumentedPublicFunction:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun ButtonNavScreenshot</ID>
+    <ID>UndocumentedPublicFunction:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun CommonTopicCellScreenshot</ID>
+    <ID>UndocumentedPublicFunction:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun FixedProgressScreenshot</ID>
+    <ID>UndocumentedPublicFunction:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun InfoTableScreenshot</ID>
+    <ID>UndocumentedPublicFunction:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun InteractionRowScreenshot</ID>
+    <ID>UndocumentedPublicFunction:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun MediaObjectBlockScreenshot</ID>
+    <ID>UndocumentedPublicFunction:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun PillScreenshot</ID>
+    <ID>UndocumentedPublicFunction:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun PrimaryRoomCellScreenshot</ID>
+    <ID>UndocumentedPublicFunction:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun PrivateKeyEditorScreenshot</ID>
+    <ID>UndocumentedPublicFunction:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun SettingOptionResettableViewScreenshot</ID>
+    <ID>UndocumentedPublicFunction:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun SettingOptionViewScreenshot</ID>
+    <ID>UndocumentedPublicFunction:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun SheetContainerScreenshot</ID>
+    <ID>UndocumentedPublicFunction:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun SignInButtonScreenshot</ID>
+    <ID>UndocumentedPublicFunction:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun TopicCellScreenshot</ID>
+    <ID>UndocumentedPublicFunction:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun UnboundedRoomCellScreenshot</ID>
+    <ID>UndocumentedPublicFunction:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun UploadItemScreenshot</ID>
+    <ID>UndocumentedPublicFunction:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun UserFavoriteCellScreenshot</ID>
+    <ID>UndocumentedPublicFunction:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun UserSubscriptionCellScreenshot</ID>
+    <ID>UndocumentedPublicFunction:AppComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 360) @Composable fun UserTopicCellScreenshot</ID>
+    <ID>UndocumentedPublicProperty:AApplication.kt:AApplication$@OptIn(DelicateCoroutinesApi::class) val mediaPlayer = buildMediaPlayer()</ID>
+    <ID>UndocumentedPublicProperty:AndroidAppPlatformImpl.kt:val notifyId = AtomicInteger(0)</ID>
+    <ID>UndocumentedPublicProperty:BubbleActivity.kt:BubbleActivity$val roomId = mutableLongStateOf(0L)</ID>
+    <ID>UndocumentedPublicProperty:PushServiceImpl.kt:PushServiceImpl$val registry = LifecycleRegistry(this)</ID>
+    <ID>UndocumentedPublicProperty:RTCActivity.kt:RTCActivity$val roomId = MutableStateFlow&lt;PrimaryKey?&gt;(null)</ID>
+    <ID>UndocumentedPublicProperty:UploadActivity.kt:UploadActivity$val receiver = CustomClientFileProvider(this)</ID>
+    <ID>UnnecessaryParentheses:PushServiceImpl.kt:PushServiceImpl$(application as AApplication)</ID>
+    <ID>Wrapping:AApplication.kt:&lt;no name provided&gt;$(</ID>
+  </CurrentIssues>
+</SmellBaseline>

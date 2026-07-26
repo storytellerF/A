@@ -3,6 +3,8 @@
 ## Gradle Version Catalog
 
 - Versions in `gradle/libs.versions.toml` that are consumed directly by build scripts rather than a library or plugin `version.ref` must include `# @keep this version`, so catalog cleanup does not remove them. Current examples are Android SDK levels and `jdk`.
+- Detekt 2.x uses the `dev.detekt` Gradle plugin and Maven group. Its Ktlint wrapper is `dev.detekt:detekt-rules-ktlint-wrapper`; Gradle reports are `checkstyle`, `html`, `sarif`, and `markdown` (the former `txt` report is removed).
+- Detekt source-set baselines are stored as `detekt-baseline.xml` in each affected module. Type-resolution tasks use task-specific files such as `detekt-baseline-main-jvm.xml` and `detekt-baseline-main-android.xml`; KMP targets must not share one `main` baseline because generating one target would overwrite findings from another. Auto-correct is disabled so static checks do not rewrite source files; remove baseline entries only when the corresponding violations are intentionally fixed.
 
 ## Uploads (files)
 

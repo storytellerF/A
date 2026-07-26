@@ -1,0 +1,74 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>AbsentOrWrongFileLicense:PanelComposeScreenshotTest.kt:com.storyteller_f.a.panel.PanelComposeScreenshotTest.kt</ID>
+    <ID>FunctionName:PanelComposeScreenshotTest.kt:@Composable private fun PaddedPreview</ID>
+    <ID>FunctionName:PanelComposeScreenshotTest.kt:@Composable private fun PanelScreenshotTheme</ID>
+    <ID>FunctionName:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun CommunityCountOverviewCellScreenshot</ID>
+    <ID>FunctionName:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun CommunityRoomCountOverviewCellScreenshot</ID>
+    <ID>FunctionName:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun FileCountOverviewCellScreenshot</ID>
+    <ID>FunctionName:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun PrivateRoomCountOverviewCellScreenshot</ID>
+    <ID>FunctionName:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun TitleCountOverviewCellScreenshot</ID>
+    <ID>FunctionName:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun TopicCountOverviewCellScreenshot</ID>
+    <ID>FunctionName:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun UserCountOverviewCellScreenshot</ID>
+    <ID>FunctionName:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 480) @Composable fun PanelInfoTableScreenshot</ID>
+    <ID>FunctionName:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 480) @Composable fun PanelTopicCellScreenshot</ID>
+    <ID>FunctionNameMaxLength:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun CommunityCountOverviewCellScreenshot</ID>
+    <ID>FunctionNameMaxLength:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun CommunityRoomCountOverviewCellScreenshot</ID>
+    <ID>FunctionNameMaxLength:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun FileCountOverviewCellScreenshot</ID>
+    <ID>FunctionNameMaxLength:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun PrivateRoomCountOverviewCellScreenshot</ID>
+    <ID>FunctionNameMaxLength:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun TitleCountOverviewCellScreenshot</ID>
+    <ID>FunctionNameMaxLength:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun TopicCountOverviewCellScreenshot</ID>
+    <ID>FunctionNameMaxLength:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun UserCountOverviewCellScreenshot</ID>
+    <ID>FunctionNaming:PanelComposeScreenshotTest.kt:@Composable private fun PaddedPreview</ID>
+    <ID>FunctionNaming:PanelComposeScreenshotTest.kt:@Composable private fun PanelScreenshotTheme</ID>
+    <ID>FunctionNaming:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun CommunityCountOverviewCellScreenshot</ID>
+    <ID>FunctionNaming:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun CommunityRoomCountOverviewCellScreenshot</ID>
+    <ID>FunctionNaming:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun FileCountOverviewCellScreenshot</ID>
+    <ID>FunctionNaming:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun PrivateRoomCountOverviewCellScreenshot</ID>
+    <ID>FunctionNaming:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun TitleCountOverviewCellScreenshot</ID>
+    <ID>FunctionNaming:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun TopicCountOverviewCellScreenshot</ID>
+    <ID>FunctionNaming:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun UserCountOverviewCellScreenshot</ID>
+    <ID>FunctionNaming:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 480) @Composable fun PanelInfoTableScreenshot</ID>
+    <ID>FunctionNaming:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 480) @Composable fun PanelTopicCellScreenshot</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun CommunityCountOverviewCellScreenshot</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun CommunityRoomCountOverviewCellScreenshot</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun FileCountOverviewCellScreenshot</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun PrivateRoomCountOverviewCellScreenshot</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun TitleCountOverviewCellScreenshot</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun TopicCountOverviewCellScreenshot</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun UserCountOverviewCellScreenshot</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 480) @Composable fun PanelInfoTableScreenshot</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 480) @Composable fun PanelTopicCellScreenshot</ID>
+    <ID>MagicNumber:PanelComposeScreenshotTest.kt:12</ID>
+    <ID>MagicNumber:PanelComposeScreenshotTest.kt:128</ID>
+    <ID>MagicNumber:PanelComposeScreenshotTest.kt:2026</ID>
+    <ID>MagicNumber:PanelComposeScreenshotTest.kt:3</ID>
+    <ID>MagicNumber:PanelComposeScreenshotTest.kt:34</ID>
+    <ID>MagicNumber:PanelComposeScreenshotTest.kt:4</ID>
+    <ID>MagicNumber:PanelComposeScreenshotTest.kt:5</ID>
+    <ID>MagicNumber:PanelComposeScreenshotTest.kt:7</ID>
+    <ID>MagicNumber:PanelComposeScreenshotTest.kt:8</ID>
+    <ID>MagicNumber:PanelComposeScreenshotTest.kt:9</ID>
+    <ID>MultilineExpressionWrapping:PanelComposeScreenshotTest.kt:TopicInfo.EMPTY.copy( id = 501, content = TopicContent.Plain("Panel topic row rendered from screenshotTest."), createdTime = fixedTime(), commentCount = 2, reactionCount = 3, isEncrypted = true, lastModifiedTime = fixedTime(), )</ID>
+    <ID>NamedArguments:PanelComposeScreenshotTest.kt:LocalDateTime(2026, 1, 2, 3, 4, 5)</ID>
+    <ID>NamedArguments:PanelComposeScreenshotTest.kt:PanelOverview(12, 5, 34, 8, 3, 9, 128, 7)</ID>
+    <ID>PackageName:PanelComposeScreenshotTest.kt:package com.storyteller_f.a.panel</ID>
+    <ID>PackageNaming:PanelComposeScreenshotTest.kt:package com.storyteller_f.a.panel</ID>
+    <ID>TooManyFunctions:PanelComposeScreenshotTest.kt:PreviewPanelNav : PanelNav</ID>
+    <ID>TooManyFunctions:PanelComposeScreenshotTest.kt:com.storyteller_f.a.panel.PanelComposeScreenshotTest.kt</ID>
+    <ID>TrailingCommaOnCallSite:PanelComposeScreenshotTest.kt:( "ID" to "501", "Name" to "Panel snapshot fixture", "Status" to "NORMAL", "Owner" to "system" )</ID>
+    <ID>TrailingCommaOnCallSite:PanelComposeScreenshotTest.kt:( listOf( "ID" to "501", "Name" to "Panel snapshot fixture", "Status" to "NORMAL", "Owner" to "system" ) )</ID>
+    <ID>TrailingCommaOnCallSite:PanelComposeScreenshotTest.kt:( samplePanelTopic().copy(commentCount = 4, reactionCount = 9, isPin = true), PreviewPanelNav )</ID>
+    <ID>UndocumentedPublicFunction:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun CommunityCountOverviewCellScreenshot</ID>
+    <ID>UndocumentedPublicFunction:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun CommunityRoomCountOverviewCellScreenshot</ID>
+    <ID>UndocumentedPublicFunction:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun FileCountOverviewCellScreenshot</ID>
+    <ID>UndocumentedPublicFunction:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun PrivateRoomCountOverviewCellScreenshot</ID>
+    <ID>UndocumentedPublicFunction:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun TitleCountOverviewCellScreenshot</ID>
+    <ID>UndocumentedPublicFunction:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun TopicCountOverviewCellScreenshot</ID>
+    <ID>UndocumentedPublicFunction:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun UserCountOverviewCellScreenshot</ID>
+    <ID>UndocumentedPublicFunction:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 480) @Composable fun PanelInfoTableScreenshot</ID>
+    <ID>UndocumentedPublicFunction:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 480) @Composable fun PanelTopicCellScreenshot</ID>
+  </CurrentIssues>
+</SmellBaseline>
