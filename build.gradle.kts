@@ -42,6 +42,19 @@ fun isNoReleaseCompileTask(taskName: String): Boolean {
     return (isKsp || isKotlinOrJavaCompile) && !isExcludedVariant
 }
 
+fun detektBaselineFileName(taskName: String): String {
+    val suffix = taskName
+        .removePrefix("detektBaseline")
+        .removePrefix("detekt")
+    if (suffix.isEmpty() || suffix.endsWith("SourceSet")) {
+        return "detekt-baseline.xml"
+    }
+    val kebabSuffix = suffix
+        .replace(Regex("([a-z0-9])([A-Z])"), "$1-$2")
+        .lowercase()
+    return "detekt-baseline-$kebabSuffix.xml"
+}
+
 val compileAllNoRelease = tasks.register("compileAllNoRelease") {
     group = "verification"
     description = "Compile all included modules without Android release or benchmark variants."
@@ -89,6 +102,7 @@ subprojects {
     }
 
     tasks.withType<Detekt>().configureEach {
+        baseline.set(layout.projectDirectory.file(detektBaselineFileName(name)))
         exclude { source -> source.file.absolutePath.replace('\\', '/').contains("/build/") }
         reports {
             checkstyle.required = true
@@ -101,6 +115,7 @@ subprojects {
     }
 
     tasks.withType<DetektCreateBaselineTask>().configureEach {
+        baseline.set(layout.projectDirectory.file(detektBaselineFileName(name)))
         exclude { source -> source.file.absolutePath.replace('\\', '/').contains("/build/") }
     }
 

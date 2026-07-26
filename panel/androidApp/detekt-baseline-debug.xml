@@ -1,0 +1,36 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>AbsentOrWrongFileLicense:MainActivity.kt:com.storyteller_f.a.panel.MainActivity.kt</ID>
+    <ID>AbsentOrWrongFileLicense:PanelApplication.kt:com.storyteller_f.a.panel.PanelApplication.kt</ID>
+    <ID>AbsentOrWrongFileLicense:PanelMediaPlayerActivity.kt:com.storyteller_f.a.panel.PanelMediaPlayerActivity.kt</ID>
+    <ID>ClassOrdering:PanelApplication.kt:&lt;no name provided&gt;$override val enablePip: Boolean get() = false</ID>
+    <ID>FunctionSignature:MainActivity.kt:MainActivity.&lt;no name provided&gt;$override fun onAvailableSessionCommandsChanged</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:PanelApplication.kt:PanelApplication$val mediaPlayer by lazy { buildPanelMediaPlayer(panelUiViewModel) }</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:PanelApplication.kt:PanelApplication$val panelUiViewModel by lazy { createPanelUIViewModel() }</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MainActivity.kt:MainActivity : ComponentActivity</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelApplication.kt:PanelApplication : Application</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelMediaPlayerActivity.kt:PanelMediaPlayerActivity : ComponentActivity</ID>
+    <ID>MultilineExpressionWrapping:MainActivity.kt:MainActivity$object : MediaController.Listener { override fun onAvailableSessionCommandsChanged( controller: MediaController, commands: SessionCommands ) { super.onAvailableSessionCommandsChanged(controller, commands) Napier.d { "MediaController onAvailableSessionCommandsChanged" } } override fun onDisconnected(controller: MediaController) { super.onDisconnected(controller) Napier.d { "MediaController onDisconnected" } } }</ID>
+    <ID>MultilineExpressionWrapping:PanelApplication.kt:&lt;no name provided&gt;$Intent(context, PanelMediaPlayerActivity::class.java).apply { // addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) // addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK) putExtra("id", remoteMediaItem.id) }</ID>
+    <ID>NamedArguments:PanelApplication.kt:&lt;no name provided&gt;$startPlayMedia(remoteMediaItem, localMediaPlaySession, this, playList)</ID>
+    <ID>PackageName:MainActivity.kt:package com.storyteller_f.a.panel</ID>
+    <ID>PackageName:PanelApplication.kt:package com.storyteller_f.a.panel</ID>
+    <ID>PackageName:PanelMediaPlayerActivity.kt:package com.storyteller_f.a.panel</ID>
+    <ID>PackageNaming:MainActivity.kt:package com.storyteller_f.a.panel</ID>
+    <ID>PackageNaming:PanelApplication.kt:package com.storyteller_f.a.panel</ID>
+    <ID>PackageNaming:PanelMediaPlayerActivity.kt:package com.storyteller_f.a.panel</ID>
+    <ID>TrailingCommaOnCallSite:MainActivity.kt:MainActivity$( LocalPanelUiViewModel provides (application as PanelApplication).panelUiViewModel, LocalMediaPlayListHandlerProvider provides DefaultMediaPlayListHandlerProvider, LocalMediaPlayerService provides (application as PanelApplication).mediaPlayer )</ID>
+    <ID>TrailingCommaOnCallSite:PanelApplication.kt:PanelApplication$( StrictMode.VmPolicy.Builder(StrictMode.getVmPolicy()) .detectLeakedClosableObjects() .build() )</ID>
+    <ID>TrailingCommaOnCallSite:PanelMediaPlayerActivity.kt:PanelMediaPlayerActivity$( LocalPanelUiViewModel provides (application as PanelApplication).panelUiViewModel, LocalMediaPlayListHandlerProvider provides DefaultMediaPlayListHandlerProvider, LocalMediaPlayerService provides (application as PanelApplication).mediaPlayer )</ID>
+    <ID>TrailingCommaOnDeclarationSite:MainActivity.kt:MainActivity.&lt;no name provided&gt;$( controller: MediaController, commands: SessionCommands )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PanelApplication.kt:&lt;no name provided&gt;$( remoteMediaItem: RemoteMediaItem, localMediaPlaySession: LocalMediaPlaySession, playList: List&lt;ConstPlayItem&gt; )</ID>
+    <ID>UndocumentedPublicClass:MainActivity.kt:MainActivity : ComponentActivity</ID>
+    <ID>UndocumentedPublicClass:PanelApplication.kt:PanelApplication : Application</ID>
+    <ID>UndocumentedPublicClass:PanelMediaPlayerActivity.kt:PanelMediaPlayerActivity : ComponentActivity</ID>
+    <ID>UndocumentedPublicProperty:PanelApplication.kt:PanelApplication$val mediaPlayer by lazy { buildPanelMediaPlayer(panelUiViewModel) }</ID>
+    <ID>UndocumentedPublicProperty:PanelApplication.kt:PanelApplication$val panelUiViewModel by lazy { createPanelUIViewModel() }</ID>
+    <ID>Wrapping:PanelApplication.kt:&lt;no name provided&gt;$(</ID>
+  </CurrentIssues>
+</SmellBaseline>

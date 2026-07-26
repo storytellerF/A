@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>AbsentOrWrongFileLicense:AppAndroidAppiumTest.kt:.AppAndroidAppiumTest.kt</ID>
+    <ID>FunctionNameMaxLength:AppAndroidAppiumTest.kt:AppAndroidAppiumTest$@Test fun `test community profile actions from joined community`</ID>
+    <ID>FunctionNameMaxLength:AppAndroidAppiumTest.kt:AppAndroidAppiumTest$@Test fun `test favorite topic from topic page`</ID>
+    <ID>FunctionNameMaxLength:AppAndroidAppiumTest.kt:AppAndroidAppiumTest$@Test fun `test publish topic in community room`</ID>
+    <ID>FunctionNameMaxLength:AppAndroidAppiumTest.kt:AppAndroidAppiumTest$@Test fun `test publish topic in joined community`</ID>
+    <ID>FunctionNameMaxLength:AppAndroidAppiumTest.kt:AppAndroidAppiumTest$@Test fun `test publish topic in user space`</ID>
+    <ID>FunctionNameMaxLength:AppAndroidAppiumTest.kt:AppAndroidAppiumTest$@Test fun `test sign in by injected private session`</ID>
+    <ID>FunctionNameMaxLength:AppAndroidAppiumTest.kt:AppAndroidAppiumTest$@Test fun `test subscribe topic from community page`</ID>
+    <ID>FunctionSignature:AppAndroidAppiumTest.kt:AppAndroidAppiumTest$@Test fun `test opens asciidoc preview`</ID>
+    <ID>FunctionSignature:AppAndroidAppiumTest.kt:AppAndroidAppiumTest$@Test fun `test sign in as system user`</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:AppAndroidAppiumTest.kt:AppAndroidAppiumTest$@Test fun `test community profile actions from joined community`</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:AppAndroidAppiumTest.kt:AppAndroidAppiumTest$@Test fun `test favorite topic from topic page`</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:AppAndroidAppiumTest.kt:AppAndroidAppiumTest$@Test fun `test opens asciidoc preview`</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:AppAndroidAppiumTest.kt:AppAndroidAppiumTest$@Test fun `test publish topic in community room`</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:AppAndroidAppiumTest.kt:AppAndroidAppiumTest$@Test fun `test publish topic in joined community`</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:AppAndroidAppiumTest.kt:AppAndroidAppiumTest$@Test fun `test publish topic in user space`</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:AppAndroidAppiumTest.kt:AppAndroidAppiumTest$@Test fun `test sign in as system user`</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:AppAndroidAppiumTest.kt:AppAndroidAppiumTest$@Test fun `test sign in by injected private session`</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:AppAndroidAppiumTest.kt:AppAndroidAppiumTest$@Test fun `test sign up`</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:AppAndroidAppiumTest.kt:AppAndroidAppiumTest$@Test fun `test subscribe topic from community page`</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppAndroidAppiumTest.kt:AppAndroidAppiumTest : AppiumTestBase</ID>
+    <ID>MissingPackageDeclaration:AppAndroidAppiumTest.kt:.AppAndroidAppiumTest.kt</ID>
+  </CurrentIssues>
+</SmellBaseline>

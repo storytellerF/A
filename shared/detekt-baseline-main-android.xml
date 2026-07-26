@@ -4,7 +4,6 @@
   <CurrentIssues>
     <ID>AbsentOrWrongFileLicense:Asset.kt:com.storyteller_f.shared.model.Asset.kt</ID>
     <ID>AbsentOrWrongFileLicense:CommunityInfo.kt:com.storyteller_f.shared.model.CommunityInfo.kt</ID>
-    <ID>AbsentOrWrongFileLicense:ContentTest.kt:.ContentTest.kt</ID>
     <ID>AbsentOrWrongFileLicense:CustomImmutableList.kt:com.storyteller_f.shared.type.CustomImmutableList.kt</ID>
     <ID>AbsentOrWrongFileLicense:ExplainResult.kt:com.storyteller_f.shared.obj.ExplainResult.kt</ID>
     <ID>AbsentOrWrongFileLicense:FileInfo.kt:com.storyteller_f.shared.model.FileInfo.kt</ID>
@@ -12,12 +11,10 @@
     <ID>AbsentOrWrongFileLicense:FontSettings.kt:com.storyteller_f.shared.model.FontSettings.kt</ID>
     <ID>AbsentOrWrongFileLicense:Hash.jvmAndroid.kt:com.storyteller_f.shared.utils.Hash.jvmAndroid.kt</ID>
     <ID>AbsentOrWrongFileLicense:Hash.kt:com.storyteller_f.shared.utils.Hash.kt</ID>
-    <ID>AbsentOrWrongFileLicense:Hash.wasmJs.kt:com.storyteller_f.shared.utils.Hash.wasmJs.kt</ID>
     <ID>AbsentOrWrongFileLicense:JoinStatusSearch.kt:com.storyteller_f.shared.type.JoinStatusSearch.kt</ID>
     <ID>AbsentOrWrongFileLicense:List.kt:com.storyteller_f.shared.utils.List.kt</ID>
     <ID>AbsentOrWrongFileLicense:ListResponse.kt:com.storyteller_f.shared.obj.ListResponse.kt</ID>
     <ID>AbsentOrWrongFileLicense:Markdown.kt:com.storyteller_f.shared.utils.Markdown.kt</ID>
-    <ID>AbsentOrWrongFileLicense:MarkdownTest.kt:.MarkdownTest.kt</ID>
     <ID>AbsentOrWrongFileLicense:MemberStatus.kt:com.storyteller_f.shared.type.MemberStatus.kt</ID>
     <ID>AbsentOrWrongFileLicense:ObjectStatus.kt:com.storyteller_f.shared.type.ObjectStatus.kt</ID>
     <ID>AbsentOrWrongFileLicense:ObjectTuple.kt:com.storyteller_f.shared.obj.ObjectTuple.kt</ID>
@@ -26,34 +23,20 @@
     <ID>AbsentOrWrongFileLicense:PanelLogInfo.kt:com.storyteller_f.shared.model.PanelLogInfo.kt</ID>
     <ID>AbsentOrWrongFileLicense:PanelOverview.kt:com.storyteller_f.shared.model.PanelOverview.kt</ID>
     <ID>AbsentOrWrongFileLicense:Platform.android.kt:com.storyteller_f.shared.Platform.android.kt</ID>
-    <ID>AbsentOrWrongFileLicense:Platform.ios.kt:com.storyteller_f.shared.Platform.ios.kt</ID>
-    <ID>AbsentOrWrongFileLicense:Platform.jvm.kt:com.storyteller_f.shared.Platform.jvm.kt</ID>
     <ID>AbsentOrWrongFileLicense:Platform.kt:com.storyteller_f.shared.Platform.kt</ID>
     <ID>AbsentOrWrongFileLicense:Platform.noJvm.kt:com.storyteller_f.shared.Platform.noJvm.kt</ID>
-    <ID>AbsentOrWrongFileLicense:Platform.wasmJs.kt:com.storyteller_f.shared.Platform.wasmJs.kt</ID>
-    <ID>AbsentOrWrongFileLicense:PlatformHeadlessTest.android.kt:.PlatformHeadlessTest.android.kt</ID>
-    <ID>AbsentOrWrongFileLicense:PlatformHeadlessTest.jvm.kt:.PlatformHeadlessTest.jvm.kt</ID>
-    <ID>AbsentOrWrongFileLicense:PlatformHeadlessTest.kt:.PlatformHeadlessTest.kt</ID>
     <ID>AbsentOrWrongFileLicense:Preset.kt:com.storyteller_f.shared.obj.Preset.kt</ID>
     <ID>AbsentOrWrongFileLicense:PrimaryKey.kt:com.storyteller_f.shared.type.PrimaryKey.kt</ID>
     <ID>AbsentOrWrongFileLicense:PrimaryKeyIdentifiable.kt:com.storyteller_f.shared.model.PrimaryKeyIdentifiable.kt</ID>
     <ID>AbsentOrWrongFileLicense:ReactionInfo.kt:com.storyteller_f.shared.model.ReactionInfo.kt</ID>
     <ID>AbsentOrWrongFileLicense:Result.kt:com.storyteller_f.shared.utils.Result.kt</ID>
     <ID>AbsentOrWrongFileLicense:RoomFrame.kt:com.storyteller_f.shared.obj.RoomFrame.kt</ID>
-    <ID>AbsentOrWrongFileLicense:RoomFrameTest.kt:.RoomFrameTest.kt</ID>
     <ID>AbsentOrWrongFileLicense:RoomInfo.kt:com.storyteller_f.shared.model.RoomInfo.kt</ID>
-    <ID>AbsentOrWrongFileLicense:Signature.ios.kt:com.storyteller_f.shared.Signature.ios.kt</ID>
     <ID>AbsentOrWrongFileLicense:Signature.jvmAndroid.kt:com.storyteller_f.shared.Signature.jvmAndroid.kt</ID>
     <ID>AbsentOrWrongFileLicense:Signature.kt:com.storyteller_f.shared.Signature.kt</ID>
-    <ID>AbsentOrWrongFileLicense:Signature.wasmJs.kt:com.storyteller_f.shared.Signature.wasmJs.kt</ID>
-    <ID>AbsentOrWrongFileLicense:SignatureTest.kt:com.storyteller_f.shared.SignatureTest.kt</ID>
-    <ID>AbsentOrWrongFileLicense:SignatureWasmJsTest.kt:com.storyteller_f.shared.SignatureWasmJsTest.kt</ID>
     <ID>AbsentOrWrongFileLicense:SnowflakeData.kt:com.perraco.utils.SnowflakeData.kt</ID>
     <ID>AbsentOrWrongFileLicense:Strings.android.kt:com.storyteller_f.shared.utils.Strings.android.kt</ID>
-    <ID>AbsentOrWrongFileLicense:Strings.ios.kt:com.storyteller_f.shared.utils.Strings.ios.kt</ID>
-    <ID>AbsentOrWrongFileLicense:Strings.jvm.kt:com.storyteller_f.shared.utils.Strings.jvm.kt</ID>
     <ID>AbsentOrWrongFileLicense:Strings.kt:com.storyteller_f.shared.utils.Strings.kt</ID>
-    <ID>AbsentOrWrongFileLicense:Strings.wasmJs.kt:com.storyteller_f.shared.utils.Strings.wasmJs.kt</ID>
     <ID>AbsentOrWrongFileLicense:TaskRecordInfo.kt:com.storyteller_f.shared.model.TaskRecordInfo.kt</ID>
     <ID>AbsentOrWrongFileLicense:Time.kt:com.storyteller_f.shared.utils.Time.kt</ID>
     <ID>AbsentOrWrongFileLicense:TitleInfo.kt:com.storyteller_f.shared.model.TitleInfo.kt</ID>
@@ -68,23 +51,30 @@
     <ID>AbsentOrWrongFileLicense:UserInfo.kt:com.storyteller_f.shared.model.UserInfo.kt</ID>
     <ID>AbsentOrWrongFileLicense:UserStatus.kt:com.storyteller_f.shared.type.UserStatus.kt</ID>
     <ID>AbsentOrWrongFileLicense:UserSubscriptionInfo.kt:com.storyteller_f.shared.model.UserSubscriptionInfo.kt</ID>
-    <ID>AbsentOrWrongFileLicense:build.gradle.kts:.build.gradle.kts</ID>
-    <ID>AbsentOrWrongFileLicense:keccak.kt:com.storyteller_f.shared.keccak.kt</ID>
-    <ID>AbsentOrWrongFileLicense:p256.kt:com.storyteller_f.shared.curves.p256.kt</ID>
-    <ID>AbsentOrWrongFileLicense:sha3.kt:com.storyteller_f.shared.hashes.sha3.kt</ID>
     <ID>BlankLineBetweenWhenConditions:Markdown.kt:&lt;no name provided&gt;$when { type == MarkdownElementTypes.MARKDOWN_FILE -&gt; captureContent = true type == MarkdownElementTypes.ATX_1 -&gt; { // Extract the first level header content headline = node.getTextInNode(markdownText).trim().take(50) } type == MarkdownElementTypes.PARAGRAPH -&gt; { if (captureContent) { val content = node.getTextInNode(markdownText).trim() if (content.isNotEmpty()) { paragraphs.appendLine(content) } } } typeList.any { type.name == it.name } -&gt; { // Stop capturing when encountering the first second-level header captureContent = false } }</ID>
     <ID>BlankLineBetweenWhenConditions:Markdown.kt:&lt;no name provided&gt;$when { type == MarkdownElementTypes.MARKDOWN_FILE -&gt; captureContent = true type == MarkdownElementTypes.PARAGRAPH -&gt; { if (captureContent) { val content = node.getTextInNode(markdownText).trim() if (content.isNotEmpty()) { if (children.size == 1 &amp;&amp; children.first().type == MarkdownElementTypes.IMAGE) { paragraphs.appendLine(content) } else { paragraphs.appendLine(content.take(200)) } captureContent = false } } } typeList.any { it.name == type.name } -&gt; { if (paragraphs.length &lt;= 100) { val content = node.getTextInNode(markdownText).trim() paragraphs.appendLine(content) } captureContent = false } }</ID>
     <ID>BlankLineBetweenWhenConditions:Signature.jvmAndroid.kt:CryptoJvm$when (any) { is org.bouncycastle.openssl.PEMKeyPair -&gt; converter.getPrivateKey(any.privateKeyInfo) is PrivateKeyInfo -&gt; converter.getPrivateKey(any) else -&gt; throw IllegalArgumentException("Unsupported PEM object: " + any.javaClass) }</ID>
+    <ID>BooleanPropertyNaming:CommunityInfo.kt:CommunityInfo$val readOnly get() = status == ObjectStatus.READ_ONLY</ID>
+    <ID>BooleanPropertyNaming:FileInfo.kt:FileInfo$val readOnly get() = status == ObjectStatus.READ_ONLY</ID>
+    <ID>BooleanPropertyNaming:Markdown.kt:var captureContent = false</ID>
+    <ID>BooleanPropertyNaming:RoomFrame.kt:RoomFrame.PeerMediaState$val audioMuted: Boolean</ID>
+    <ID>BooleanPropertyNaming:RoomFrame.kt:RoomFrame.PeerMediaState$val videoMuted: Boolean</ID>
+    <ID>BooleanPropertyNaming:RoomFrame.kt:RoomFrame.UpdateCallMediaState$val audioMuted: Boolean</ID>
+    <ID>BooleanPropertyNaming:RoomFrame.kt:RoomFrame.UpdateCallMediaState$val videoMuted: Boolean</ID>
+    <ID>BooleanPropertyNaming:RoomInfo.kt:RoomInfo$val readOnly get() = status == ObjectStatus.READ_ONLY</ID>
+    <ID>BooleanPropertyNaming:TitleInfo.kt:TitleInfo$val expired get() = titleStatus == TitleWorkStatus.EXPIRED</ID>
+    <ID>BooleanPropertyNaming:TitleInfo.kt:TitleInfo$val readOnly get() = status == ObjectStatus.READ_ONLY</ID>
+    <ID>BooleanPropertyNaming:TopicInfo.kt:TopicInfo$val readOnly get() = status == ObjectStatus.READ_ONLY</ID>
+    <ID>BooleanPropertyNaming:UpdateReadOnlyBody.kt:UpdateReadOnlyBody$val readOnly: Boolean</ID>
+    <ID>BooleanPropertyNaming:UserInfo.kt:TwoFactorSettingsInfo$val enabled: Boolean</ID>
     <ID>BracesOnWhenStatements:Markdown.kt:&lt;no name provided&gt;$when</ID>
     <ID>CascadingCallWrapping:Signature.kt:AlgoP256$decodeToString()</ID>
     <ID>CascadingCallWrapping:Signature.kt:AlgoP256$toHexString()</ID>
     <ID>CascadingCallWrapping:Signature.kt:AlgoP256.&lt;no name provided&gt;$generateSharedSecretToByteArray(publicKey)</ID>
     <ID>CascadingCallWrapping:Signature.kt:AlgoP256.&lt;no name provided&gt;$tryVerifySignature(noMacResult, macResult)</ID>
-    <ID>ClassOrdering:Platform.jvm.kt:CustomAntilog$Companion</ID>
     <ID>ClassOrdering:Signature.jvmAndroid.kt:&lt;no name provided&gt;$override val encryptionAlgo: EncryptionAlgo = object : Type2Algo { override suspend fun kemEncrypt( derPublicKeyStr: String, aesKeyBytes: ByteArray ): Result&lt;ByteArray&gt; { return runCatching { val publicKey = MLKEMPublicKeyParameters( MLKEMParameters.ml_kem_768, derPublicKeyStr.hexToByteArray() ) val secret = MLKEMGenerator(SecureRandom()).generateEncapsulated(publicKey) secret.encapsulation + (aesKeyBytes xor secret.secret) } } override suspend fun kemDecrypt( derPrivateKeyStr: String, encrypted: ByteArray ): Result&lt;ByteArray&gt; { return runCatching { require(encrypted.size &gt; 32) { "invalid ML-KEM ciphertext" } val cipherText = encrypted.copyOfRange(0, encrypted.size - 32) val encryptedAesKey = encrypted.copyOfRange(encrypted.size - 32, encrypted.size) val privateKey = MLKEMPrivateKeyParameters( MLKEMParameters.ml_kem_768, derPrivateKeyStr.hexToByteArray() ) encryptedAesKey xor MLKEMExtractor(privateKey).extractSecret(cipherText) } } @OptIn(ExperimentalEncodingApi::class) override suspend fun generateEncryptionPemKeyPair(): Result&lt;Pair&lt;String, String&gt;&gt; { return runCatching { val kpg = KeyPairGenerator.getInstance("ML-KEM", "BC") kpg.initialize(MLKEMParameterSpec.ml_kem_768, SecureRandom()) val kp = kpg.generateKeyPair() val privDer = (kp.private as MLKEMPrivateKey).privateData val privB64 = Base64.encode(privDer).chunked(64).joinToString("\n") val privatePem = buildString { appendLine("-----BEGIN PRIVATE KEY-----") appendLine(privB64) appendLine("-----END PRIVATE KEY-----") } val pubDer = (kp.public as MLKEMPublicKey).publicData val pubB64 = Base64.encode(pubDer).chunked(64).joinToString("\n") val publicPem = buildString { appendLine("-----BEGIN PUBLIC KEY-----") appendLine(pubB64) appendLine("-----END PUBLIC KEY-----") } privatePem to publicPem } } override suspend fun getDerEncryptionPublicKeyFromPemPrivateKey(pemPrivateKeyStr: String): Result&lt;String&gt; { return runCatching { val base64 = pemPrivateKeyStr .replace("-----BEGIN PRIVATE KEY-----", "") .replace("-----END PRIVATE KEY-----", "") .replace("\r", "") .replace("\n", "") .trim() val privateKeyBytes = Base64.decode(base64) MLKEMPrivateKeyParameters(MLKEMParameters.ml_kem_768, privateKeyBytes) .publicKey .toHexString() } } @OptIn(ExperimentalEncodingApi::class) override suspend fun getDerEncryptionPrivateKeyFromPemPrivateKey(pemPrivateKeyStr: String): Result&lt;String&gt; { return runCatching { val base64 = pemPrivateKeyStr .replace("-----BEGIN PRIVATE KEY-----", "") .replace("-----END PRIVATE KEY-----", "") .replace("\r", "") .replace("\n", "") .trim() val der = Base64.decode(base64) der.toHexString() } } @OptIn(ExperimentalEncodingApi::class) override suspend fun getPemEncryptionPrivateKeyFromDerPrivateKey(derPrivateKeyStr: String): Result&lt;String&gt; { return runCatching { val der = derPrivateKeyStr.hexToByteArray() val base64 = Base64.encode(der).chunked(64).joinToString("\n") buildString { appendLine("-----BEGIN PRIVATE KEY-----") appendLine(base64) appendLine("-----END PRIVATE KEY-----") } } } }</ID>
     <ID>ClassOrdering:Signature.kt:Algo$val encryptionAlgo: EncryptionAlgo</ID>
     <ID>ClassOrdering:Signature.kt:AlgoP256$override val encryptionAlgo: EncryptionAlgo = object : Type1Algo { override suspend fun kemEncrypt( derPublicKeyStr: String, aesKeyBytes: ByteArray ): Result&lt;ByteArray&gt; { return runCatching { val tempKeyPair = CryptographyProvider.Default.get(ECDH).keyPairGenerator(EC.Curve.P256).generateKey() val publicKey = CryptographyProvider.Default.get(ECDH).publicKeyDecoder(EC.Curve.P256) .decodeFromByteArray(EC.PublicKey.Format.DER, derPublicKeyStr.hexToByteArray()) val shared = tempKeyPair.privateKey.sharedSecretGenerator() .generateSharedSecretToByteArray(publicKey) val derivedKeys = CryptographyProvider.Default.get(HKDF) .secretDerivation(SHA256, 512.bits, null, "ecies".encodeToByteArray()) .deriveSecretToByteArray(shared) val aesKey = derivedKeys.copyOfRange(0, 32) val macKey = derivedKeys.copyOfRange(32, 64) val encrypted = CryptographyProvider.Default.get(AES.GCM) .keyDecoder() .decodeFromByteArray(AES.Key.Format.RAW, aesKey) .cipher() .encrypt(aesKeyBytes) val concat = tempKeyPair.publicKey.encodeToByteArray(EC.PublicKey.Format.RAW) + encrypted val signature = CryptographyProvider.Default.get(HMAC).keyDecoder(SHA256) .decodeFromByteArray(HMAC.Key.Format.RAW, macKey) .signatureGenerator() .generateSignature(concat) concat + signature } } override suspend fun kemDecrypt( derPrivateKeyStr: String, encrypted: ByteArray ): Result&lt;ByteArray&gt; { return runCatching { val publicKeyContent = encrypted.copyOfRange(0, 65) val publicKey = CryptographyProvider.Default.get(ECDH).publicKeyDecoder(EC.Curve.P256) .decodeFromByteArray(EC.PublicKey.Format.RAW, publicKeyContent) val shared = CryptographyProvider.Default.get(ECDH).privateKeyDecoder(EC.Curve.P256) .decodeFromByteArray(EC.PrivateKey.Format.DER, derPrivateKeyStr.hexToByteArray()) .sharedSecretGenerator().generateSharedSecretToByteArray(publicKey) val derivedKey = CryptographyProvider.Default.get(HKDF) .secretDerivation(SHA256, 512.bits, null, "ecies".encodeToByteArray()) .deriveSecretToByteArray(shared) val aesKey = derivedKey.copyOfRange(0, 32) val macKey = derivedKey.copyOfRange(32, 64) val noMacResult = encrypted.copyOfRange(0, encrypted.size - 32) val macResult = encrypted.copyOfRange(encrypted.size - 32, encrypted.size) if (!CryptographyProvider.Default.get(HMAC).keyDecoder(SHA256) .decodeFromByteArray(HMAC.Key.Format.RAW, macKey) .signatureVerifier().tryVerifySignature(noMacResult, macResult) ) { throw Exception("hmac verify failed") } val encryptedContent = encrypted.copyOfRange(65, encrypted.size - 32) CryptographyProvider.Default.get(AES.GCM) .keyDecoder() .decodeFromByteArray(AES.Key.Format.RAW, aesKey) .cipher() .decrypt(encryptedContent) } } }</ID>
-    <ID>ClassOrdering:Signature.wasmJs.kt:&lt;no name provided&gt;$override val encryptionAlgo: EncryptionAlgo = object : Type2Algo { override suspend fun kemEncrypt(derPublicKeyStr: String, aesKeyBytes: ByteArray): Result&lt;ByteArray&gt; = runCatching { val encapsulation = commonJson.decodeFromString&lt;MlKemEncapsulation&gt;( MlCrypto.mlKem768Encapsulate(derPublicKeyStr) ) encapsulation.cipherText.hexToByteArray() + (aesKeyBytes xor encapsulation.sharedSecret.hexToByteArray()) } override suspend fun kemDecrypt(derPrivateKeyStr: String, encrypted: ByteArray): Result&lt;ByteArray&gt; = runCatching { require(encrypted.size &gt; 32) { "invalid ML-KEM ciphertext" } val encryptedAesKey = encrypted.copyOfRange(encrypted.size - 32, encrypted.size) val cipherText = encrypted.copyOfRange(0, encrypted.size - 32) encryptedAesKey xor MlCrypto.mlKem768Decapsulate( cipherText.toHexString(), derPrivateKeyStr ).hexToByteArray() } override suspend fun generateEncryptionPemKeyPair(): Result&lt;Pair&lt;String, String&gt;&gt; = runCatching { val keyPair = commonJson.decodeFromString&lt;MlKeyPair&gt;(MlCrypto.mlKem768KeyPair()) rawToPem(keyPair.privateKey.hexToByteArray(), "PRIVATE KEY") to rawToPem(keyPair.publicKey.hexToByteArray(), "PUBLIC KEY") } override suspend fun getDerEncryptionPublicKeyFromPemPrivateKey( pemPrivateKeyStr: String ): Result&lt;String&gt; = runCatching { MlCrypto.mlKem768PublicKey(pemToRaw(pemPrivateKeyStr, "PRIVATE KEY").toHexString()) } override suspend fun getDerEncryptionPrivateKeyFromPemPrivateKey( pemPrivateKeyStr: String ): Result&lt;String&gt; = runCatching { pemToRaw(pemPrivateKeyStr, "PRIVATE KEY").toHexString() } override suspend fun getPemEncryptionPrivateKeyFromDerPrivateKey( derPrivateKeyStr: String ): Result&lt;String&gt; = runCatching { rawToPem(derPrivateKeyStr.hexToByteArray(), "PRIVATE KEY") } }</ID>
     <ID>ClassSignature:CustomImmutableList.kt:ImmutableMapSerializer&lt;K, V&gt; : KSerializer</ID>
     <ID>ClassSignature:Preset.kt:PresetFile</ID>
     <ID>ClassSignature:RoomFrame.kt:CustomCandidate</ID>
@@ -110,7 +100,18 @@
     <ID>CognitiveComplexMethod:Markdown.kt:fun extractHeadParagraph: String</ID>
     <ID>CognitiveComplexMethod:Markdown.kt:fun trimMarkdownUnusedContent: String</ID>
     <ID>DataClassContainsFunctions:Preset.kt:PresetCommunity$fun getSafeAdmin: String</ID>
-    <ID>EmptyKotlinFile:p256.kt:com.storyteller_f.shared.curves.p256.kt</ID>
+    <ID>Deprecation:Markdown.kt:MarkdownParser</ID>
+    <ID>Deprecation:Markdown.kt:buildMarkdownTreeFromString</ID>
+    <ID>Deprecation:Signature.jvmAndroid.kt:&lt;no name provided&gt;$MLDSAParameters</ID>
+    <ID>Deprecation:Signature.jvmAndroid.kt:&lt;no name provided&gt;$MLDSAPrivateKeyParameters</ID>
+    <ID>Deprecation:Signature.jvmAndroid.kt:&lt;no name provided&gt;$MLDSAPublicKeyParameters</ID>
+    <ID>Deprecation:Signature.jvmAndroid.kt:&lt;no name provided&gt;$MLDSASigner</ID>
+    <ID>Deprecation:Signature.jvmAndroid.kt:&lt;no name provided&gt;.&lt;no name provided&gt;$MLKEMExtractor</ID>
+    <ID>Deprecation:Signature.jvmAndroid.kt:&lt;no name provided&gt;.&lt;no name provided&gt;$MLKEMGenerator</ID>
+    <ID>Deprecation:Signature.jvmAndroid.kt:&lt;no name provided&gt;.&lt;no name provided&gt;$MLKEMParameters</ID>
+    <ID>Deprecation:Signature.jvmAndroid.kt:&lt;no name provided&gt;.&lt;no name provided&gt;$MLKEMPrivateKeyParameters</ID>
+    <ID>Deprecation:Signature.jvmAndroid.kt:&lt;no name provided&gt;.&lt;no name provided&gt;$MLKEMPublicKeyParameters</ID>
+    <ID>ElseCaseInsteadOfExhaustiveWhen:Markdown.kt:when (objectTuple.objectType) { ObjectType.USER -&gt; "user" ObjectType.COMMUNITY -&gt; "community" ObjectType.ROOM -&gt; "room" ObjectType.TOPIC -&gt; "topic" else -&gt; throw Exception("unknown object type ${objectTuple.objectType}") }</ID>
     <ID>EndOfSentenceFormat:Markdown.kt:&lt;no name provided&gt;$* 容量为3</ID>
     <ID>EndOfSentenceFormat:MemberStatus.kt:MemberStatus$* INVITED 是为了用户未加入时也能够在列表中看到，此时应该是有Title 的，用户可以选择加入， * 如果没有就无法加入，只能查看，用于Notification</ID>
     <ID>EndOfSentenceFormat:Result.kt:* 获取列表中第一个</ID>
@@ -139,10 +140,9 @@
     <ID>ExpressionBodySyntax:Signature.kt:return replace("\r\n", "\n")</ID>
     <ID>ExpressionBodySyntax:Time.kt:return Clock.System.now().toLocalDateTime(TimeZone.UTC)</ID>
     <ID>Filename:PanelAccount.kt:com.storyteller_f.shared.model.PanelAccount.kt</ID>
-    <ID>Filename:keccak.kt:com.storyteller_f.shared.keccak.kt</ID>
-    <ID>Filename:p256.kt:com.storyteller_f.shared.curves.p256.kt</ID>
-    <ID>Filename:sha3.kt:com.storyteller_f.shared.hashes.sha3.kt</ID>
     <ID>FinalNewline:Platform.noJvm.kt:com.storyteller_f.shared.Platform.noJvm.kt</ID>
+    <ID>ForbiddenMethodCall:Markdown.kt:&lt;no name provided&gt;$println("${node.type}")</ID>
+    <ID>ForbiddenMethodCall:Markdown.kt:&lt;no name provided&gt;$println("else ${value.map { it.code }.joinToString(",")}")</ID>
     <ID>ForbiddenPublicDataClass:Asset.kt:AssetTransactionInfo</ID>
     <ID>ForbiddenPublicDataClass:CommunityInfo.kt:CommunityInfo : ModelObject</ID>
     <ID>ForbiddenPublicDataClass:CommunityInfo.kt:CommunityInfo$Extension</ID>
@@ -290,25 +290,15 @@
     <ID>FunctionExpressionBody:Signature.kt:{ return runCatching { val decode = derPublicKeyStr.hexToByteArray() // 先计算SHA256 val sha256Digest = CryptographyProvider.Default.get(SHA256).hasher().hash(decode) // 再计算RIPEMD160 val ripemd160Digest = ripemd160Platform(sha256Digest) ripemd160Digest.toHexString() } }</ID>
     <ID>FunctionExpressionBody:Signature.kt:{ return when (algo) { AlgoType.P256 -&gt; AlgoP256 AlgoType.DILITHIUM -&gt; AlgoDilithium } }</ID>
     <ID>FunctionExpressionBody:Time.kt:{ return Clock.System.now().toLocalDateTime(TimeZone.UTC) }</ID>
-    <ID>FunctionName:sha3.kt:external fun keccak_256: String</ID>
     <ID>FunctionNameMaxLength:FileInfo.kt:fun checkMediaFileDimensionRatioMatch: Boolean</ID>
-    <ID>FunctionNameMaxLength:MarkdownTest.kt:MarkdownTest$@Test fun `test filter code fence unused content`</ID>
-    <ID>FunctionNameMaxLength:MarkdownTest.kt:MarkdownTest$@Test fun `test preserve asciidoc fence language`</ID>
     <ID>FunctionNameMaxLength:Signature.jvmAndroid.kt:@OptIn(ExperimentalStdlibApi::class) actual suspend fun getDerPublicKeyFromPrivateKeyP256: Result&lt;String&gt;</ID>
     <ID>FunctionNameMaxLength:Signature.kt:Type2Algo$suspend fun getDerEncryptionPrivateKeyFromPemPrivateKey: Result&lt;String&gt;</ID>
     <ID>FunctionNameMaxLength:Signature.kt:Type2Algo$suspend fun getDerEncryptionPublicKeyFromPemPrivateKey: Result&lt;String&gt;</ID>
     <ID>FunctionNameMaxLength:Signature.kt:Type2Algo$suspend fun getPemEncryptionPrivateKeyFromDerPrivateKey: Result&lt;String&gt;</ID>
     <ID>FunctionNameMaxLength:Signature.kt:expect suspend fun getDerPublicKeyFromPrivateKeyP256: Result&lt;String&gt;</ID>
-    <ID>FunctionNameMaxLength:Signature.wasmJs.kt:actual suspend fun getDerPublicKeyFromPrivateKeyP256: Result&lt;String&gt;</ID>
-    <ID>FunctionNameMaxLength:SignatureWasmJsTest.kt:SignatureWasmJsTest$@Test fun p256CanReadJvmGeneratedPrivateKey</ID>
-    <ID>FunctionNameMaxLength:SignatureWasmJsTest.kt:SignatureWasmJsTest$@Test fun p256CanSignEncryptAndDerivePublicKey</ID>
     <ID>FunctionNameMinLength:ObjectTuple.kt:infix fun PrimaryKey.ob: ObjectTuple</ID>
-    <ID>FunctionNaming:ContentTest.kt:ContentTest$@Test fun `test check content`</ID>
-    <ID>FunctionNaming:sha3.kt:external fun keccak_256: String</ID>
-    <ID>FunctionSignature:Hash.wasmJs.kt:internal actual fun md5Platform: ByteArray</ID>
     <ID>FunctionSignature:Markdown.kt:fun extractHeadParagraph: String</ID>
     <ID>FunctionSignature:Markdown.kt:fun generateImageMarkdownContent: String</ID>
-    <ID>FunctionSignature:Platform.jvm.kt:CustomAntilog$override fun performLog</ID>
     <ID>FunctionSignature:Result.kt:suspend fun &lt;T&gt; Result&lt;T?&gt;.ifNotNull</ID>
     <ID>FunctionSignature:Signature.jvmAndroid.kt:&lt;no name provided&gt;$override suspend fun signature: Result&lt;String&gt;</ID>
     <ID>FunctionSignature:Signature.jvmAndroid.kt:&lt;no name provided&gt;$override suspend fun verify: Result&lt;Boolean&gt;</ID>
@@ -320,20 +310,47 @@
     <ID>FunctionSignature:Signature.kt:AlgoP256.&lt;no name provided&gt;$override suspend fun kemEncrypt: Result&lt;ByteArray&gt;</ID>
     <ID>FunctionSignature:Signature.kt:suspend fun &lt;T&gt; algoRunCatching: Result&lt;T&gt;</ID>
     <ID>FunctionSignature:Signature.kt:suspend fun buildEncryptedTopicContent: TopicContent.Encrypted</ID>
-    <ID>FunctionSignature:Signature.wasmJs.kt:&lt;no name provided&gt;$override suspend fun generatePemKeyPair: Result&lt;Pair&lt;String, String&gt;&gt;</ID>
-    <ID>FunctionSignature:Signature.wasmJs.kt:&lt;no name provided&gt;.&lt;no name provided&gt;$override suspend fun getDerEncryptionPrivateKeyFromPemPrivateKey: Result&lt;String&gt;</ID>
-    <ID>FunctionSignature:Signature.wasmJs.kt:&lt;no name provided&gt;.&lt;no name provided&gt;$override suspend fun getDerEncryptionPublicKeyFromPemPrivateKey: Result&lt;String&gt;</ID>
-    <ID>FunctionSignature:Signature.wasmJs.kt:&lt;no name provided&gt;.&lt;no name provided&gt;$override suspend fun getPemEncryptionPrivateKeyFromDerPrivateKey: Result&lt;String&gt;</ID>
-    <ID>FunctionSignature:Strings.wasmJs.kt:actual fun checkContent: Result&lt;Unit&gt;</ID>
     <ID>ImportOrdering:Signature.jvmAndroid.kt:import com.storyteller_f.shared.utils.mapResult import dev.whyoleg.cryptography.CryptographyProvider import dev.whyoleg.cryptography.DelicateCryptographyApi import dev.whyoleg.cryptography.algorithms.RIPEMD160 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo import org.bouncycastle.asn1.x500.X500Name import org.bouncycastle.cert.X509v3CertificateBuilder import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder import org.bouncycastle.jce.interfaces.ECPrivateKey import org.bouncycastle.jce.provider.BouncyCastleProvider import org.bouncycastle.jce.spec.ECPrivateKeySpec import org.bouncycastle.jce.spec.ECPublicKeySpec import org.bouncycastle.openssl.PEMParser import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter import org.bouncycastle.operator.ContentSigner import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider import org.bouncycastle.jcajce.interfaces.MLDSAPrivateKey import org.bouncycastle.jcajce.interfaces.MLDSAPublicKey import org.bouncycastle.jcajce.interfaces.MLKEMPrivateKey import org.bouncycastle.jcajce.interfaces.MLKEMPublicKey import org.bouncycastle.jcajce.spec.MLDSAParameterSpec import org.bouncycastle.jcajce.spec.MLDSAPrivateKeySpec import org.bouncycastle.jcajce.spec.MLDSAPublicKeySpec import org.bouncycastle.jcajce.spec.MLKEMParameterSpec import org.bouncycastle.jcajce.spec.MLKEMPrivateKeySpec import org.bouncycastle.pqc.crypto.mlkem.MLKEMExtractor import org.bouncycastle.pqc.crypto.mlkem.MLKEMGenerator import org.bouncycastle.pqc.crypto.mlkem.MLKEMParameters import org.bouncycastle.pqc.crypto.mlkem.MLKEMPrivateKeyParameters import org.bouncycastle.pqc.crypto.mlkem.MLKEMPublicKeyParameters import org.bouncycastle.pqc.crypto.mldsa.MLDSAParameters import org.bouncycastle.pqc.crypto.mldsa.MLDSAPrivateKeyParameters import org.bouncycastle.pqc.crypto.mldsa.MLDSAPublicKeyParameters import org.bouncycastle.pqc.crypto.mldsa.MLDSASigner import java.io.File import java.io.FileOutputStream import java.io.IOException import java.io.StringReader import java.math.BigInteger import java.security.KeyFactory import java.security.KeyPair import java.security.KeyPairGenerator import java.security.KeyStore import java.security.PrivateKey import java.security.PublicKey import java.security.SecureRandom import java.security.Security import java.security.cert.X509Certificate import java.security.spec.PKCS8EncodedKeySpec import java.security.spec.X509EncodedKeySpec import java.util.Date import javax.crypto.Cipher import javax.crypto.KeyGenerator import javax.crypto.spec.IvParameterSpec import javax.crypto.spec.SecretKeySpec import kotlin.io.encoding.Base64 import kotlin.io.encoding.ExperimentalEncodingApi</ID>
     <ID>LateinitUsage:Platform.android.kt:lateinit var appContextRef: WeakReference&lt;Application&gt;</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:CommunityInfo.kt:CommunityInfo$val isJoined = member != null</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:CommunityInfo.kt:CommunityInfo$val readOnly get() = status == ObjectStatus.READ_ONLY</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:CommunityInfo.kt:CommunityInfo.Companion$val EMPTY = CommunityInfo(DEFAULT_PRIMARY_KEY, "", "", DEFAULT_PRIMARY_KEY, now(), 0, MemberPolicy.OPEN)</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:FileInfo.kt:Dimension.Companion$val COMMUNITY_POSTER = Dimension(3, 4)</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:FileInfo.kt:Dimension.Companion$val DEFAULT_DIMENSION = Dimension(1, 1)</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:FileInfo.kt:Dimension.Companion$val ROOM_DIMENSION = Dimension(4, 3)</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:FileInfo.kt:FileInfo$val readOnly get() = status == ObjectStatus.READ_ONLY</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:FileInfo.kt:FileInfo.Companion$const val M3U8_MIMETYPE = "application/vnd.apple.mpegurl"</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:FileInfo.kt:FileInfo.Companion$const val PDF_CONTENT_TYPE = "application/pdf"</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:FileInfo.kt:FileInfo.Companion$const val SOUND_CLOUD_MIME_TYPE = "audio/sound.cloud"</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:FileInfo.kt:FileInfo.Companion$const val YOUTUBE_MIMETYPE = "video/youtube"</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:FileInfo.kt:FileInfo.Companion$val EMPTY = FileInfo(0, "", "", "", 0, "", 0, ObjectType.USER, now(), null)</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:FileInfo.kt:const val A_FILE_DEFAULT_BUCKET = "default"</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:Platform.kt:val commonJson = Json { ignoreUnknownKeys = true }</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:PrimaryKey.kt:fun String.toPrimaryKey</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:PrimaryKey.kt:fun String.toPrimaryKeyOrNull</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:PrimaryKeyIdentifiable.kt:ModelObject$fun tuple</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:Result.kt:suspend fun &lt;T&gt; Result&lt;T?&gt;.ifNotNull</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:Result.kt:val UNIT_RESULT = Result.success(Unit)</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:RoomFrame.kt:NewRoomTopic$val tuple = ObjectTuple(parentId, parentType)</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:RoomInfo.kt:RoomInfo$val hasUnread get() = latestTopic != null &amp;&amp; (lastRead != null &amp;&amp; lastRead &lt; latestTopic || lastRead == null)</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:RoomInfo.kt:RoomInfo$val isJoined get() = joinedTime != null</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:RoomInfo.kt:RoomInfo$val isPrivate get() = communityId == null</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:RoomInfo.kt:RoomInfo$val readOnly get() = status == ObjectStatus.READ_ONLY</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:RoomInfo.kt:RoomInfo.Companion$val EMPTY = RoomInfo(DEFAULT_PRIMARY_KEY, now(), "", "", DEFAULT_PRIMARY_KEY, 0)</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:Time.kt:@OptIn(ExperimentalTime::class) fun nowInstance</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:TitleInfo.kt:TitleInfo$val expired get() = titleStatus == TitleWorkStatus.EXPIRED</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:TitleInfo.kt:TitleInfo$val readOnly get() = status == ObjectStatus.READ_ONLY</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:TopicInfo.kt:TopicInfo$val readOnly get() = status == ObjectStatus.READ_ONLY</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:TopicInfo.kt:TopicInfo.Companion$val EMPTY = TopicInfo( id = DEFAULT_PRIMARY_KEY, content = TopicContent.Nil, author = DEFAULT_PRIMARY_KEY, rootId = DEFAULT_PRIMARY_KEY, rootType = ObjectType.TOPIC, parentId = DEFAULT_PRIMARY_KEY, parentType = ObjectType.TOPIC, hasJoined = false, createdTime = now(), commentCount = 0, reactionCount = 0, hasComment = false, isEncrypted = false, level = 0, isPin = false, lastModifiedTime = now(), extension = Extension(), status = ObjectStatus.NORMAL, )</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:UserFavoriteInfo.kt:UserFavoriteInfo.Companion$val EMPTY = UserFavoriteInfo( id = DEFAULT_PRIMARY_KEY, uid = DEFAULT_PRIMARY_KEY, objectId = DEFAULT_PRIMARY_KEY, objectType = ObjectType.TOPIC, now(), null )</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:UserInfo.kt:UserInfo.Companion$val EMPTY = UserInfo(DEFAULT_PRIMARY_KEY, "", "", "", null)</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:UserSubscriptionInfo.kt:UserSubscriptionInfo.Companion$val EMPTY = UserSubscriptionInfo( id = DEFAULT_PRIMARY_KEY, uid = DEFAULT_PRIMARY_KEY, objectId = DEFAULT_PRIMARY_KEY, objectType = ObjectType.TOPIC, now(), null )</ID>
     <ID>LibraryEntitiesShouldNotBePublic:Asset.kt:AssetTransactionInfo</ID>
     <ID>LibraryEntitiesShouldNotBePublic:Asset.kt:AssetType</ID>
     <ID>LibraryEntitiesShouldNotBePublic:CommunityInfo.kt:CommunityInfo : ModelObject</ID>
     <ID>LibraryEntitiesShouldNotBePublic:CommunityInfo.kt:FontSettingsWithInfo</ID>
     <ID>LibraryEntitiesShouldNotBePublic:CommunityInfo.kt:MemberPolicy</ID>
     <ID>LibraryEntitiesShouldNotBePublic:CommunityInfo.kt:PosterSearch</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:ContentTest.kt:ContentTest : PlatformHeadlessTest</ID>
     <ID>LibraryEntitiesShouldNotBePublic:CustomImmutableList.kt:ImmutableListSerializer&lt;T&gt; : KSerializer</ID>
     <ID>LibraryEntitiesShouldNotBePublic:CustomImmutableList.kt:ImmutableMapSerializer&lt;K, V&gt; : KSerializer</ID>
     <ID>LibraryEntitiesShouldNotBePublic:CustomImmutableList.kt:typealias CustomImmutableList&lt;T&gt; = @Serializable(ImmutableListSerializer::class) ImmutableList&lt;T&gt;</ID>
@@ -368,7 +385,6 @@
     <ID>LibraryEntitiesShouldNotBePublic:Markdown.kt:fun readCodeFence: String</ID>
     <ID>LibraryEntitiesShouldNotBePublic:Markdown.kt:fun readInlineMath: String</ID>
     <ID>LibraryEntitiesShouldNotBePublic:Markdown.kt:fun trimMarkdownUnusedContent: String</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:MarkdownTest.kt:MarkdownTest</ID>
     <ID>LibraryEntitiesShouldNotBePublic:MemberStatus.kt:MemberStatus</ID>
     <ID>LibraryEntitiesShouldNotBePublic:ObjectStatus.kt:ObjectStatus</ID>
     <ID>LibraryEntitiesShouldNotBePublic:ObjectTuple.kt:ObjectTuple</ID>
@@ -380,19 +396,9 @@
     <ID>LibraryEntitiesShouldNotBePublic:Platform.android.kt:AndroidPlatform : Platform</ID>
     <ID>LibraryEntitiesShouldNotBePublic:Platform.android.kt:actual fun getPlatform: Platform</ID>
     <ID>LibraryEntitiesShouldNotBePublic:Platform.android.kt:fun getAppContextRefValue: Application?</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:Platform.ios.kt:IOSPlatform : Platform</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:Platform.ios.kt:actual fun getPlatform: Platform</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:Platform.jvm.kt:CustomAntilog : Antilog</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:Platform.jvm.kt:JVMPlatform : Platform</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:Platform.jvm.kt:actual fun getPlatform: Platform</ID>
     <ID>LibraryEntitiesShouldNotBePublic:Platform.kt:Platform</ID>
     <ID>LibraryEntitiesShouldNotBePublic:Platform.kt:expect fun getPlatform: Platform</ID>
     <ID>LibraryEntitiesShouldNotBePublic:Platform.kt:fun setupKmpLogger</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:Platform.wasmJs.kt:WasmPlatform : Platform</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:Platform.wasmJs.kt:actual fun getPlatform: Platform</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:PlatformHeadlessTest.android.kt:PlatformHeadlessTest</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:PlatformHeadlessTest.jvm.kt:PlatformHeadlessTest</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:PlatformHeadlessTest.kt:PlatformHeadlessTest</ID>
     <ID>LibraryEntitiesShouldNotBePublic:Preset.kt:PresetCommunity</ID>
     <ID>LibraryEntitiesShouldNotBePublic:Preset.kt:PresetFile</ID>
     <ID>LibraryEntitiesShouldNotBePublic:Preset.kt:PresetPanelAccount</ID>
@@ -425,11 +431,7 @@
     <ID>LibraryEntitiesShouldNotBePublic:RoomFrame.kt:CustomOffer</ID>
     <ID>LibraryEntitiesShouldNotBePublic:RoomFrame.kt:NewRoomTopic</ID>
     <ID>LibraryEntitiesShouldNotBePublic:RoomFrame.kt:RoomFrame</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:RoomFrameTest.kt:RoomFrameTest</ID>
     <ID>LibraryEntitiesShouldNotBePublic:RoomInfo.kt:RoomInfo : ModelObject</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:Signature.ios.kt:actual fun loadIfNeed</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:Signature.ios.kt:actual suspend fun calcAddress: String</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:Signature.ios.kt:actual suspend fun getDerPublicKeyFromPrivateKey: String</ID>
     <ID>LibraryEntitiesShouldNotBePublic:Signature.jvmAndroid.kt:@OptIn(DelicateCryptographyApi::class) actual suspend fun ripemd160Platform: ByteArray</ID>
     <ID>LibraryEntitiesShouldNotBePublic:Signature.jvmAndroid.kt:@OptIn(ExperimentalStdlibApi::class) actual suspend fun getDerPublicKeyFromPrivateKeyP256: Result&lt;String&gt;</ID>
     <ID>LibraryEntitiesShouldNotBePublic:Signature.jvmAndroid.kt:actual fun loadCryptoLibIfNeed</ID>
@@ -452,30 +454,15 @@
     <ID>LibraryEntitiesShouldNotBePublic:Signature.kt:suspend fun &lt;T&gt; algoRunCatching: Result&lt;T&gt;</ID>
     <ID>LibraryEntitiesShouldNotBePublic:Signature.kt:suspend fun Algo.decryptMessage: Result&lt;String&gt;</ID>
     <ID>LibraryEntitiesShouldNotBePublic:Signature.kt:suspend fun buildEncryptedTopicContent: TopicContent.Encrypted</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:Signature.wasmJs.kt:actual fun loadCryptoLibIfNeed</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:Signature.wasmJs.kt:actual suspend fun getDerPrivateKeyP256: Result&lt;String&gt;</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:Signature.wasmJs.kt:actual suspend fun getDerPublicKeyFromPrivateKeyP256: Result&lt;String&gt;</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:Signature.wasmJs.kt:actual suspend fun ripemd160Platform: ByteArray</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:SignatureTest.kt:SignatureTest</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:SignatureWasmJsTest.kt:SignatureWasmJsTest</ID>
     <ID>LibraryEntitiesShouldNotBePublic:SnowflakeData.kt:SnowflakeData</ID>
     <ID>LibraryEntitiesShouldNotBePublic:Strings.android.kt:actual fun checkContent: Result&lt;Unit&gt;</ID>
     <ID>LibraryEntitiesShouldNotBePublic:Strings.android.kt:actual fun safeFirstEmoji: String?</ID>
     <ID>LibraryEntitiesShouldNotBePublic:Strings.android.kt:actual fun safeFirstUnicode: String?</ID>
     <ID>LibraryEntitiesShouldNotBePublic:Strings.android.kt:fun UnicodeSet.safeFreeze: UnicodeSet</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:Strings.ios.kt:actual fun checkContent: Boolean</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:Strings.ios.kt:actual fun safeFirstEmoji: String?</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:Strings.ios.kt:actual fun safeFirstUnicode: String?</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:Strings.jvm.kt:actual fun checkContent: Result&lt;Unit&gt;</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:Strings.jvm.kt:actual fun safeFirstEmoji: String?</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:Strings.jvm.kt:actual fun safeFirstUnicode: String?</ID>
     <ID>LibraryEntitiesShouldNotBePublic:Strings.kt:expect fun checkContent: Result&lt;Unit&gt;</ID>
     <ID>LibraryEntitiesShouldNotBePublic:Strings.kt:expect fun safeFirstEmoji: String?</ID>
     <ID>LibraryEntitiesShouldNotBePublic:Strings.kt:expect fun safeFirstUnicode: String?</ID>
     <ID>LibraryEntitiesShouldNotBePublic:Strings.kt:fun Throwable.safeMessage: String</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:Strings.wasmJs.kt:actual fun checkContent: Result&lt;Unit&gt;</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:Strings.wasmJs.kt:actual fun safeFirstEmoji: String?</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:Strings.wasmJs.kt:actual fun safeFirstUnicode: String?</ID>
     <ID>LibraryEntitiesShouldNotBePublic:TaskRecordInfo.kt:TaskRecordInfo : PrimaryKeyIdentifiable</ID>
     <ID>LibraryEntitiesShouldNotBePublic:TaskRecordInfo.kt:TaskRecordType</ID>
     <ID>LibraryEntitiesShouldNotBePublic:Time.kt:@ExperimentalTime fun LocalDateTime.formatTime: String</ID>
@@ -518,8 +505,6 @@
     <ID>LibraryEntitiesShouldNotBePublic:UserInfo.kt:UserPubKeyInfo</ID>
     <ID>LibraryEntitiesShouldNotBePublic:UserStatus.kt:UserStatus</ID>
     <ID>LibraryEntitiesShouldNotBePublic:UserSubscriptionInfo.kt:UserSubscriptionInfo : PrimaryKeyIdentifiable</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:keccak.kt:@JsModule("keccak") external fun createKeccakHash: Keccak</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:sha3.kt:external fun keccak_256: String</ID>
     <ID>MagicNumber:Markdown.kt:150</ID>
     <ID>MagicNumber:Markdown.kt:&lt;no name provided&gt;$100</ID>
     <ID>MagicNumber:Markdown.kt:&lt;no name provided&gt;$200</ID>
@@ -541,18 +526,7 @@
     <ID>MagicNumber:Signature.kt:AlgoP256.&lt;no name provided&gt;$32</ID>
     <ID>MagicNumber:Signature.kt:AlgoP256.&lt;no name provided&gt;$64</ID>
     <ID>MagicNumber:Signature.kt:AlgoP256.&lt;no name provided&gt;$65</ID>
-    <ID>MagicNumber:Signature.wasmJs.kt:64</ID>
-    <ID>MagicNumber:Signature.wasmJs.kt:&lt;no name provided&gt;.&lt;no name provided&gt;$32</ID>
-    <ID>MagicNumber:SignatureWasmJsTest.kt:SignatureWasmJsTest$32</ID>
     <ID>MatchingDeclarationName:PanelAccount.kt:PanelAccountInfo : ModelObject</ID>
-    <ID>MatchingDeclarationName:Platform.ios.kt:IOSPlatform : Platform</ID>
-    <ID>MatchingDeclarationName:Platform.wasmJs.kt:WasmPlatform : Platform</ID>
-    <ID>MissingPackageDeclaration:ContentTest.kt:.ContentTest.kt</ID>
-    <ID>MissingPackageDeclaration:MarkdownTest.kt:.MarkdownTest.kt</ID>
-    <ID>MissingPackageDeclaration:PlatformHeadlessTest.android.kt:.PlatformHeadlessTest.android.kt</ID>
-    <ID>MissingPackageDeclaration:PlatformHeadlessTest.jvm.kt:.PlatformHeadlessTest.jvm.kt</ID>
-    <ID>MissingPackageDeclaration:PlatformHeadlessTest.kt:.PlatformHeadlessTest.kt</ID>
-    <ID>MissingPackageDeclaration:RoomFrameTest.kt:.RoomFrameTest.kt</ID>
     <ID>MixedConditionOperators:RoomInfo.kt:RoomInfo$lastRead != null &amp;&amp; lastRead &lt; latestTopic</ID>
     <ID>MultilineExpressionWrapping:Markdown.kt:children.first { it.type == GFMTokenTypes.DOLLAR }.endOffset</ID>
     <ID>MultilineExpressionWrapping:Markdown.kt:children.indexOfFirst { it.type == MarkdownTokenTypes.FENCE_LANG }</ID>
@@ -565,16 +539,7 @@
     <ID>MultilineExpressionWrapping:Markdown.kt:object : Visitor { override fun visitNode(node: ASTNode) { val type = node.type when { type == MarkdownElementTypes.MARKDOWN_FILE -&gt; captureContent = true type == MarkdownElementTypes.ATX_1 -&gt; { // Extract the first level header content headline = node.getTextInNode(markdownText).trim().take(50) } type == MarkdownElementTypes.PARAGRAPH -&gt; { if (captureContent) { val content = node.getTextInNode(markdownText).trim() if (content.isNotEmpty()) { paragraphs.appendLine(content) } } } typeList.any { type.name == it.name } -&gt; { // Stop capturing when encountering the first second-level header captureContent = false } } if (captureContent) { node.acceptChildren(this) } } }</ID>
     <ID>MultilineExpressionWrapping:Markdown.kt:object : Visitor { override fun visitNode(node: ASTNode) { when (node.type) { GFMElementTypes.INLINE_MATH, GFMElementTypes.BLOCK_MATH -&gt; { val mathContent = readInlineMath(node, markdownText) images.add( MathContext( mathContent, node.startOffset, node.endOffset, node.type == GFMElementTypes.INLINE_MATH ) ) } MarkdownElementTypes.CODE_FENCE -&gt; { val lang = getLang(node, markdownText) if (lang == "math") { val content = readCodeFence(node, markdownText) images.add(MathContext(content, node.startOffset, node.endOffset, false)) } } } node.acceptChildren(this) } }</ID>
     <ID>MultilineExpressionWrapping:Markdown.kt:object : Visitor { override fun visitNode(node: ASTNode) { when (node.type) { MarkdownElementTypes.IMAGE -&gt; { val imagePath = extractImageUrl(node, markdownText) imagePath?.let { list.add(it) } } MarkdownElementTypes.CODE_FENCE -&gt; { val lang = getLang(node, markdownText) if (lang == "object") { try { val content = readCodeFence(node, markdownText) val obj = commonJson.decodeFromString&lt;MarkdownObject&gt;(content) if (obj.name.isNotBlank() &amp;&amp; obj.url.isBlank()) { list.add(obj.name) } } catch (_: Exception) { } } } } node.acceptChildren(this) } }</ID>
-    <ID>MultilineExpressionWrapping:MarkdownTest.kt:MarkdownTest$""" ![test](/test.jpg "test") """.trimIndent()</ID>
-    <ID>MultilineExpressionWrapping:MarkdownTest.kt:MarkdownTest$""" # First Level Header Some introductory text before the second level header. Hello. ```c print(); ``` ## Second Level Header Content after the second level header. """.trimIndent()</ID>
-    <ID>MultilineExpressionWrapping:MarkdownTest.kt:MarkdownTest$""" ```asciidoc = AsciiDoc Preview ``` """.trimIndent()</ID>
-    <ID>MultilineExpressionWrapping:MarkdownTest.kt:MarkdownTest$""" hello ```csa /user/1 ``` ```object { "contentType": "image/png", "name": "imag.png", "hello": "world" } ``` """.trimIndent()</ID>
-    <ID>MultilineExpressionWrapping:MarkdownTest.kt:MarkdownTest$object : Visitor { override fun visitNode(node: ASTNode) { println(node.type) if (node.type == GFMElementTypes.INLINE_MATH) { println(readInlineMath(node, markdownText)) } node.acceptChildren(this) } }</ID>
     <ID>MultilineExpressionWrapping:Platform.android.kt:try { Class.forName("org.robolectric.Robolectric") true } catch (_: Exception) { false }</ID>
-    <ID>MultilineExpressionWrapping:Platform.jvm.kt:CustomAntilog$if (m.find()) { m.replaceAll("") } else { className }</ID>
-    <ID>MultilineExpressionWrapping:Platform.jvm.kt:CustomAntilog$tag ?: Thread.currentThread().stackTrace[CALL_STACK_INDEX].run { "${createStackElementTag(className)}$$methodName" }</ID>
-    <ID>MultilineExpressionWrapping:Platform.jvm.kt:CustomAntilog$when { message == null -&gt; throwable?.stackTraceToString() ?: return throwable != null -&gt; "$message\n${throwable.stackTraceToString()}" else -&gt; message }</ID>
-    <ID>MultilineExpressionWrapping:RoomFrameTest.kt:RoomFrameTest$RoomFrame.Message( NewRoomTopic(ObjectType.ROOM, DEFAULT_PRIMARY_KEY, TopicContent.Plain("test")) )</ID>
     <ID>MultilineExpressionWrapping:Signature.jvmAndroid.kt:&lt;no name provided&gt;$buildString { appendLine("-----BEGIN PRIVATE KEY-----") appendLine(privB64) appendLine("-----END PRIVATE KEY-----") }</ID>
     <ID>MultilineExpressionWrapping:Signature.jvmAndroid.kt:&lt;no name provided&gt;$buildString { appendLine("-----BEGIN PUBLIC KEY-----") appendLine(pubB64) appendLine("-----END PUBLIC KEY-----") }</ID>
     <ID>MultilineExpressionWrapping:Signature.jvmAndroid.kt:&lt;no name provided&gt;$object : Type2Algo { override suspend fun kemEncrypt( derPublicKeyStr: String, aesKeyBytes: ByteArray ): Result&lt;ByteArray&gt; { return runCatching { val publicKey = MLKEMPublicKeyParameters( MLKEMParameters.ml_kem_768, derPublicKeyStr.hexToByteArray() ) val secret = MLKEMGenerator(SecureRandom()).generateEncapsulated(publicKey) secret.encapsulation + (aesKeyBytes xor secret.secret) } } override suspend fun kemDecrypt( derPrivateKeyStr: String, encrypted: ByteArray ): Result&lt;ByteArray&gt; { return runCatching { require(encrypted.size &gt; 32) { "invalid ML-KEM ciphertext" } val cipherText = encrypted.copyOfRange(0, encrypted.size - 32) val encryptedAesKey = encrypted.copyOfRange(encrypted.size - 32, encrypted.size) val privateKey = MLKEMPrivateKeyParameters( MLKEMParameters.ml_kem_768, derPrivateKeyStr.hexToByteArray() ) encryptedAesKey xor MLKEMExtractor(privateKey).extractSecret(cipherText) } } @OptIn(ExperimentalEncodingApi::class) override suspend fun generateEncryptionPemKeyPair(): Result&lt;Pair&lt;String, String&gt;&gt; { return runCatching { val kpg = KeyPairGenerator.getInstance("ML-KEM", "BC") kpg.initialize(MLKEMParameterSpec.ml_kem_768, SecureRandom()) val kp = kpg.generateKeyPair() val privDer = (kp.private as MLKEMPrivateKey).privateData val privB64 = Base64.encode(privDer).chunked(64).joinToString("\n") val privatePem = buildString { appendLine("-----BEGIN PRIVATE KEY-----") appendLine(privB64) appendLine("-----END PRIVATE KEY-----") } val pubDer = (kp.public as MLKEMPublicKey).publicData val pubB64 = Base64.encode(pubDer).chunked(64).joinToString("\n") val publicPem = buildString { appendLine("-----BEGIN PUBLIC KEY-----") appendLine(pubB64) appendLine("-----END PUBLIC KEY-----") } privatePem to publicPem } } override suspend fun getDerEncryptionPublicKeyFromPemPrivateKey(pemPrivateKeyStr: String): Result&lt;String&gt; { return runCatching { val base64 = pemPrivateKeyStr .replace("-----BEGIN PRIVATE KEY-----", "") .replace("-----END PRIVATE KEY-----", "") .replace("\r", "") .replace("\n", "") .trim() val privateKeyBytes = Base64.decode(base64) MLKEMPrivateKeyParameters(MLKEMParameters.ml_kem_768, privateKeyBytes) .publicKey .toHexString() } } @OptIn(ExperimentalEncodingApi::class) override suspend fun getDerEncryptionPrivateKeyFromPemPrivateKey(pemPrivateKeyStr: String): Result&lt;String&gt; { return runCatching { val base64 = pemPrivateKeyStr .replace("-----BEGIN PRIVATE KEY-----", "") .replace("-----END PRIVATE KEY-----", "") .replace("\r", "") .replace("\n", "") .trim() val der = Base64.decode(base64) der.toHexString() } } @OptIn(ExperimentalEncodingApi::class) override suspend fun getPemEncryptionPrivateKeyFromDerPrivateKey(derPrivateKeyStr: String): Result&lt;String&gt; { return runCatching { val der = derPrivateKeyStr.hexToByteArray() val base64 = Base64.encode(der).chunked(64).joinToString("\n") buildString { appendLine("-----BEGIN PRIVATE KEY-----") appendLine(base64) appendLine("-----END PRIVATE KEY-----") } } } }</ID>
@@ -609,57 +574,40 @@
     <ID>MultilineExpressionWrapping:Signature.kt:CryptographyProvider.Default.get(AES.CBC).keyDecoder() .decodeFromByteArray(AES.Key.Format.RAW, aesKey)</ID>
     <ID>MultilineExpressionWrapping:Signature.kt:it.encryptionPublicKey ?: throw IllegalArgumentException("Dilithium user ${it.id} missing encryption key")</ID>
     <ID>MultilineExpressionWrapping:Signature.kt:keyData.associate { val algo = getAlgo(it.algo) val encryptedKey = (if (it.algo == AlgoType.DILITHIUM) { val key = it.encryptionPublicKey ?: throw IllegalArgumentException("Dilithium user ${it.id} missing encryption key") algo.encryptionAlgo.kemEncrypt(key, aes) } else { algo.encryptionAlgo.kemEncrypt(it.pubKey, aes) }).getOrThrow().toHexString() it.id to encryptedKey }</ID>
-    <ID>MultilineExpressionWrapping:Signature.wasmJs.kt:&lt;no name provided&gt;$object : Type2Algo { override suspend fun kemEncrypt(derPublicKeyStr: String, aesKeyBytes: ByteArray): Result&lt;ByteArray&gt; = runCatching { val encapsulation = commonJson.decodeFromString&lt;MlKemEncapsulation&gt;( MlCrypto.mlKem768Encapsulate(derPublicKeyStr) ) encapsulation.cipherText.hexToByteArray() + (aesKeyBytes xor encapsulation.sharedSecret.hexToByteArray()) } override suspend fun kemDecrypt(derPrivateKeyStr: String, encrypted: ByteArray): Result&lt;ByteArray&gt; = runCatching { require(encrypted.size &gt; 32) { "invalid ML-KEM ciphertext" } val encryptedAesKey = encrypted.copyOfRange(encrypted.size - 32, encrypted.size) val cipherText = encrypted.copyOfRange(0, encrypted.size - 32) encryptedAesKey xor MlCrypto.mlKem768Decapsulate( cipherText.toHexString(), derPrivateKeyStr ).hexToByteArray() } override suspend fun generateEncryptionPemKeyPair(): Result&lt;Pair&lt;String, String&gt;&gt; = runCatching { val keyPair = commonJson.decodeFromString&lt;MlKeyPair&gt;(MlCrypto.mlKem768KeyPair()) rawToPem(keyPair.privateKey.hexToByteArray(), "PRIVATE KEY") to rawToPem(keyPair.publicKey.hexToByteArray(), "PUBLIC KEY") } override suspend fun getDerEncryptionPublicKeyFromPemPrivateKey( pemPrivateKeyStr: String ): Result&lt;String&gt; = runCatching { MlCrypto.mlKem768PublicKey(pemToRaw(pemPrivateKeyStr, "PRIVATE KEY").toHexString()) } override suspend fun getDerEncryptionPrivateKeyFromPemPrivateKey( pemPrivateKeyStr: String ): Result&lt;String&gt; = runCatching { pemToRaw(pemPrivateKeyStr, "PRIVATE KEY").toHexString() } override suspend fun getPemEncryptionPrivateKeyFromDerPrivateKey( derPrivateKeyStr: String ): Result&lt;String&gt; = runCatching { rawToPem(derPrivateKeyStr.hexToByteArray(), "PRIVATE KEY") } }</ID>
-    <ID>MultilineExpressionWrapping:Signature.wasmJs.kt:&lt;no name provided&gt;.&lt;no name provided&gt;$MlCrypto.mlKem768Decapsulate( cipherText.toHexString(), derPrivateKeyStr ).hexToByteArray()</ID>
-    <ID>MultilineExpressionWrapping:Signature.wasmJs.kt:&lt;no name provided&gt;.&lt;no name provided&gt;$commonJson.decodeFromString&lt;MlKemEncapsulation&gt;( MlCrypto.mlKem768Encapsulate(derPublicKeyStr) )</ID>
-    <ID>MultilineExpressionWrapping:Signature.wasmJs.kt:&lt;no name provided&gt;.&lt;no name provided&gt;$runCatching { MlCrypto.mlKem768PublicKey(pemToRaw(pemPrivateKeyStr, "PRIVATE KEY").toHexString()) }</ID>
-    <ID>MultilineExpressionWrapping:Signature.wasmJs.kt:&lt;no name provided&gt;.&lt;no name provided&gt;$runCatching { pemToRaw(pemPrivateKeyStr, "PRIVATE KEY").toHexString() }</ID>
-    <ID>MultilineExpressionWrapping:Signature.wasmJs.kt:&lt;no name provided&gt;.&lt;no name provided&gt;$runCatching { rawToPem(derPrivateKeyStr.hexToByteArray(), "PRIVATE KEY") }</ID>
-    <ID>MultilineExpressionWrapping:Signature.wasmJs.kt:&lt;no name provided&gt;.&lt;no name provided&gt;$runCatching { val keyPair = commonJson.decodeFromString&lt;MlKeyPair&gt;(MlCrypto.mlKem768KeyPair()) rawToPem(keyPair.privateKey.hexToByteArray(), "PRIVATE KEY") to rawToPem(keyPair.publicKey.hexToByteArray(), "PUBLIC KEY") }</ID>
-    <ID>MultilineExpressionWrapping:Signature.wasmJs.kt:Base64.decode( pem.replace("-----BEGIN $type-----", "") .replace("-----END $type-----", "") .replace(Regex("\\s"), "") )</ID>
-    <ID>MultilineExpressionWrapping:Signature.wasmJs.kt:buildString { appendLine("-----BEGIN $type-----") appendLine(Base64.encode(raw).chunked(64).joinToString("\n")) appendLine("-----END $type-----") }</ID>
-    <ID>MultilineExpressionWrapping:Signature.wasmJs.kt:object : Algo { override suspend fun verify(derPublicKey: String, derSignature: String, data: String): Result&lt;Boolean&gt; = runCatching { MlCrypto.mlDsa65Verify(derSignature, data, derPublicKey) } override suspend fun signature(derPrivateKey: String, data: String): Result&lt;String&gt; = runCatching { MlCrypto.mlDsa65Sign(data, derPrivateKey) } override suspend fun getDerPrivateKey(pemPrivateKey: String): Result&lt;String&gt; = runCatching { pemToRaw(pemPrivateKey, "PRIVATE KEY").toHexString() } override suspend fun getPemPrivateKeyFromDer(derPrivateKey: String): Result&lt;String&gt; = runCatching { rawToPem(derPrivateKey.hexToByteArray(), "PRIVATE KEY") } override suspend fun getDerPublicKeyFromPem(pemPublicKeyStr: String): Result&lt;String&gt; = runCatching { pemToRaw(pemPublicKeyStr, "PUBLIC KEY").toHexString() } override suspend fun getPemPublicKeyFromDer(derPublicKey: String): Result&lt;String&gt; = runCatching { rawToPem(derPublicKey.hexToByteArray(), "PUBLIC KEY") } override suspend fun getDerPublicKeyFromPrivateKey(pemPrivateKeyStr: String): Result&lt;String&gt; = runCatching { MlCrypto.mlDsa65PublicKey(getDerPrivateKey(pemPrivateKeyStr).getOrThrow()) } override suspend fun calcAddress(derPublicKeyStr: String): Result&lt;String&gt; = calcAddressSHA256AndRipemd160(derPublicKeyStr) override suspend fun generatePemKeyPair(): Result&lt;Pair&lt;String, String&gt;&gt; = runCatching { val keyPair = commonJson.decodeFromString&lt;MlKeyPair&gt;(MlCrypto.mlDsa65KeyPair()) rawToPem(keyPair.privateKey.hexToByteArray(), "PRIVATE KEY") to rawToPem(keyPair.publicKey.hexToByteArray(), "PUBLIC KEY") } override val encryptionAlgo: EncryptionAlgo = object : Type2Algo { override suspend fun kemEncrypt(derPublicKeyStr: String, aesKeyBytes: ByteArray): Result&lt;ByteArray&gt; = runCatching { val encapsulation = commonJson.decodeFromString&lt;MlKemEncapsulation&gt;( MlCrypto.mlKem768Encapsulate(derPublicKeyStr) ) encapsulation.cipherText.hexToByteArray() + (aesKeyBytes xor encapsulation.sharedSecret.hexToByteArray()) } override suspend fun kemDecrypt(derPrivateKeyStr: String, encrypted: ByteArray): Result&lt;ByteArray&gt; = runCatching { require(encrypted.size &gt; 32) { "invalid ML-KEM ciphertext" } val encryptedAesKey = encrypted.copyOfRange(encrypted.size - 32, encrypted.size) val cipherText = encrypted.copyOfRange(0, encrypted.size - 32) encryptedAesKey xor MlCrypto.mlKem768Decapsulate( cipherText.toHexString(), derPrivateKeyStr ).hexToByteArray() } override suspend fun generateEncryptionPemKeyPair(): Result&lt;Pair&lt;String, String&gt;&gt; = runCatching { val keyPair = commonJson.decodeFromString&lt;MlKeyPair&gt;(MlCrypto.mlKem768KeyPair()) rawToPem(keyPair.privateKey.hexToByteArray(), "PRIVATE KEY") to rawToPem(keyPair.publicKey.hexToByteArray(), "PUBLIC KEY") } override suspend fun getDerEncryptionPublicKeyFromPemPrivateKey( pemPrivateKeyStr: String ): Result&lt;String&gt; = runCatching { MlCrypto.mlKem768PublicKey(pemToRaw(pemPrivateKeyStr, "PRIVATE KEY").toHexString()) } override suspend fun getDerEncryptionPrivateKeyFromPemPrivateKey( pemPrivateKeyStr: String ): Result&lt;String&gt; = runCatching { pemToRaw(pemPrivateKeyStr, "PRIVATE KEY").toHexString() } override suspend fun getPemEncryptionPrivateKeyFromDerPrivateKey( derPrivateKeyStr: String ): Result&lt;String&gt; = runCatching { rawToPem(derPrivateKeyStr.hexToByteArray(), "PRIVATE KEY") } } }</ID>
-    <ID>MultilineExpressionWrapping:Signature.wasmJs.kt:runCatching { MlCrypto.p256PublicKeyDer(pemPrivateKeyStr) }</ID>
-    <ID>MultilineExpressionWrapping:SignatureTest.kt:SignatureTest$algorithm.encryptionAlgo .kemEncrypt(encryptionPublicKey, aesKey) .getOrThrow()</ID>
-    <ID>MultilineExpressionWrapping:SignatureTest.kt:SignatureTest$if (algorithm == AlgoDilithium) { val encryptionAlgorithm = algorithm.encryptionAlgo as Type2Algo val (privateEncryptionPem, publicEncryptionPem) = encryptionAlgorithm.generateEncryptionPemKeyPair().getOrThrow() algorithm.getDerPrivateKey(privateEncryptionPem).getOrThrow() to algorithm.getDerPublicKeyFromPem(publicEncryptionPem).getOrThrow() } else { privateKey to publicKey }</ID>
-    <ID>MultilineExpressionWrapping:SignatureTest.kt:SignatureTest$runTest { loadCryptoLibIfNeed() listOf(AlgoP256, AlgoDilithium).forEach { algorithm -&gt; val (privatePem, publicPem) = algorithm.generatePemKeyPair().getOrThrow() val privateKey = algorithm.getDerPrivateKey(privatePem).getOrThrow() val publicKey = algorithm.getDerPublicKeyFromPem(publicPem).getOrThrow() val signature = algorithm.signature(privateKey, "signed message").getOrThrow() assertTrue(algorithm.verify(publicKey, signature, "signed message").getOrThrow()) val (encrypted, aesKey) = encryptDataByAES("encrypted message").getOrThrow() val (encryptionPrivateKey, encryptionPublicKey) = if (algorithm == AlgoDilithium) { val encryptionAlgorithm = algorithm.encryptionAlgo as Type2Algo val (privateEncryptionPem, publicEncryptionPem) = encryptionAlgorithm.generateEncryptionPemKeyPair().getOrThrow() algorithm.getDerPrivateKey(privateEncryptionPem).getOrThrow() to algorithm.getDerPublicKeyFromPem(publicEncryptionPem).getOrThrow() } else { privateKey to publicKey } val encryptedAesKey = algorithm.encryptionAlgo .kemEncrypt(encryptionPublicKey, aesKey) .getOrThrow() assertContentEquals( aesKey, algorithm.encryptionAlgo.kemDecrypt(encryptionPrivateKey, encryptedAesKey).getOrThrow() ) assertEquals( "encrypted message", algorithm.decryptMessage(encryptionPrivateKey, encrypted, encryptedAesKey).getOrThrow() ) } }</ID>
-    <ID>MultilineExpressionWrapping:SignatureTest.kt:SignatureTest$runTest { loadCryptoLibIfNeed() val (_, publicPem) = getAlgo(AlgoType.P256).generatePemKeyPair().getOrThrow() val publicKey = getAlgo(AlgoType.P256).getDerPublicKeyFromPem(publicPem).getOrThrow() assertTrue(getAlgo(AlgoType.P256).calcAddress(publicKey).getOrThrow().isNotBlank()) }</ID>
-    <ID>MultilineExpressionWrapping:SignatureWasmJsTest.kt:SignatureWasmJsTest$""" -----BEGIN PRIVATE KEY----- MEECAQAwEwYHKoZIzj0CAQYIKoZIzj0DAQcEJzAlAgEBBCAeAx1tytf8DDzj7hXF 3Yj/nWmeQ/PivDcglFiGezFIPQ== -----END PRIVATE KEY----- """.trimIndent()</ID>
-    <ID>MultilineExpressionWrapping:SignatureWasmJsTest.kt:SignatureWasmJsTest$runTest { val (privatePem, publicPem) = AlgoDilithium.generatePemKeyPair().getOrThrow() val privateKey = AlgoDilithium.getDerPrivateKey(privatePem).getOrThrow() val publicKey = AlgoDilithium.getDerPublicKeyFromPem(publicPem).getOrThrow() val signature = AlgoDilithium.signature(privateKey, "wasm ML-DSA").getOrThrow() assertTrue(AlgoDilithium.verify(publicKey, signature, "wasm ML-DSA").getOrThrow()) val encryptionAlgorithm = AlgoDilithium.encryptionAlgo as Type2Algo val (encryptionPrivatePem, encryptionPublicPem) = encryptionAlgorithm.generateEncryptionPemKeyPair().getOrThrow() val encryptionPrivateKey = AlgoDilithium.getDerPrivateKey(encryptionPrivatePem).getOrThrow() val encryptionPublicKey = AlgoDilithium.getDerPublicKeyFromPem(encryptionPublicPem).getOrThrow() val aesKey = ByteArray(32) { it.toByte() } val encryptedAesKey = encryptionAlgorithm.kemEncrypt(encryptionPublicKey, aesKey).getOrThrow() assertContentEquals(aesKey, encryptionAlgorithm.kemDecrypt(encryptionPrivateKey, encryptedAesKey).getOrThrow()) }</ID>
-    <ID>MultilineExpressionWrapping:SignatureWasmJsTest.kt:SignatureWasmJsTest$runTest { val (privatePem, publicPem) = AlgoP256.generatePemKeyPair().getOrThrow() val privateDer = AlgoP256.getDerPrivateKey(privatePem).getOrThrow() val publicDer = AlgoP256.getDerPublicKeyFromPem(publicPem).getOrThrow() assertEquals(publicDer, getDerPublicKeyFromPrivateKeyP256(privatePem).getOrThrow()) val signature = AlgoP256.signature(privateDer, "wasm signature").getOrThrow() assertTrue(AlgoP256.verify(publicDer, signature, "wasm signature").getOrThrow()) val (encrypted, aesKey) = encryptDataByAES("wasm content").getOrThrow() assertEquals("wasm content", decryptDataByAES(encrypted, aesKey).getOrThrow()) val encryptedAesKey = AlgoP256.encryptionAlgo.kemEncrypt(publicDer, aesKey).getOrThrow() assertContentEquals( aesKey, AlgoP256.encryptionAlgo.kemDecrypt(privateDer, encryptedAesKey).getOrThrow() ) }</ID>
-    <ID>MultilineExpressionWrapping:SignatureWasmJsTest.kt:SignatureWasmJsTest$runTest { val privatePem = """ -----BEGIN PRIVATE KEY----- MEECAQAwEwYHKoZIzj0CAQYIKoZIzj0DAQcEJzAlAgEBBCAeAx1tytf8DDzj7hXF 3Yj/nWmeQ/PivDcglFiGezFIPQ== -----END PRIVATE KEY----- """.trimIndent() val privateDer = AlgoP256.getDerPrivateKey(privatePem).getOrThrow() val publicDer = AlgoP256.getDerPublicKeyFromPrivateKey(privatePem).getOrThrow() val signature = AlgoP256.signature(privateDer, "JVM generated key").getOrThrow() assertTrue(AlgoP256.verify(publicDer, signature, "JVM generated key").getOrThrow()) assertTrue(AlgoP256.calcAddress(publicDer).getOrThrow().isNotBlank()) }</ID>
     <ID>MultilineExpressionWrapping:Strings.android.kt:BreakIterator.getCharacterInstance().apply { setText(text) }</ID>
     <ID>MultilineExpressionWrapping:Strings.android.kt:UnicodeSet( "[\\uE000-\\uE0FF \\uE5FA-\\uE6B7 \\uE700-\\uE8EF " + "\\uEA60-\\uEC1E \\uED00-\\uEFCE \\uF000-\\uF2FF " + "\\uF300-\\uF381 \\uF400-\\uFD46 " + "\\U000F0001-\\U000F1AF0]" ).safeFreeze()</ID>
-    <ID>MultilineExpressionWrapping:Strings.jvm.kt:BreakIterator.getCharacterInstance().apply { setText(text) }</ID>
-    <ID>MultilineExpressionWrapping:Strings.jvm.kt:UnicodeSet( "[\\uE000-\\uE0FF \\uE5FA-\\uE6B7 \\uE700-\\uE8EF " + "\\uEA60-\\uEC1E \\uED00-\\uEFCE \\uF000-\\uF2FF " + "\\uF300-\\uF381 \\uF400-\\uFD46 " + "\\U000F0001-\\U000F1AF0]" ).freeze()</ID>
     <ID>MultilineExpressionWrapping:Time.kt:toInstant(TimeZone.UTC) .toLocalDateTime(TimeZone.currentSystemDefault())</ID>
     <ID>MultilineExpressionWrapping:TopicInfo.kt:TopicInfo.Companion$TopicInfo( id = DEFAULT_PRIMARY_KEY, content = TopicContent.Nil, author = DEFAULT_PRIMARY_KEY, rootId = DEFAULT_PRIMARY_KEY, rootType = ObjectType.TOPIC, parentId = DEFAULT_PRIMARY_KEY, parentType = ObjectType.TOPIC, hasJoined = false, createdTime = now(), commentCount = 0, reactionCount = 0, hasComment = false, isEncrypted = false, level = 0, isPin = false, lastModifiedTime = now(), extension = Extension(), status = ObjectStatus.NORMAL, )</ID>
     <ID>MultilineExpressionWrapping:UserFavoriteInfo.kt:UserFavoriteInfo.Companion$UserFavoriteInfo( id = DEFAULT_PRIMARY_KEY, uid = DEFAULT_PRIMARY_KEY, objectId = DEFAULT_PRIMARY_KEY, objectType = ObjectType.TOPIC, now(), null )</ID>
     <ID>MultilineExpressionWrapping:UserSubscriptionInfo.kt:UserSubscriptionInfo.Companion$UserSubscriptionInfo( id = DEFAULT_PRIMARY_KEY, uid = DEFAULT_PRIMARY_KEY, objectId = DEFAULT_PRIMARY_KEY, objectType = ObjectType.TOPIC, now(), null )</ID>
-    <ID>MultilineExpressionWrapping:build.gradle.kts:create("headlessTest") { dependsOn(commonTest.get()) }</ID>
-    <ID>MultilineExpressionWrapping:build.gradle.kts:create("jvmAndroidMain") { dependencies { implementation(libs.bcprov.jdk18on) implementation(libs.bcpkix.jdk18on) } dependsOn(commonMain.get()) }</ID>
-    <ID>MultilineExpressionWrapping:build.gradle.kts:create("noJvmMain") { dependsOn(commonMain.get()) }</ID>
-    <ID>MultilineRawStringIndentation:MarkdownTest.kt:MarkdownTest$""" # First Level Header Some introductory text before the second level header. Hello. """</ID>
-    <ID>MultilineRawStringIndentation:MarkdownTest.kt:MarkdownTest$""" # First Level Header Some introductory text before the second level header. Hello. ```c print(); ``` ## Second Level Header Content after the second level header. """</ID>
-    <ID>MultilineRawStringIndentation:MarkdownTest.kt:MarkdownTest$""" hello ```csa /user/1 ``` ```object { "contentType": "image/png", "name": "imag.png", "hello": "world" } ``` """</ID>
-    <ID>MultilineRawStringIndentation:MarkdownTest.kt:MarkdownTest$""" hello ```csa /user/1 ``` ```object {"name":"imag.png","contentType":"image/png"} ``` """</ID>
+    <ID>MultilineLambdaItParameter:List.kt:{ it.value.map { p -&gt; p.second } }</ID>
+    <ID>MultilineLambdaItParameter:Markdown.kt:&lt;no name provided&gt;${ appendLine("```csa") appendLine(it) append("```") }</ID>
+    <ID>MultilineLambdaItParameter:Result.kt:{ if (it) { UNIT_RESULT } else { Result.failure(error()) } }</ID>
+    <ID>MultilineLambdaItParameter:Signature.jvmAndroid.kt:CryptoJvm${ if (!it.exists() &amp;&amp; !it.mkdirs()) { throw Exception("can not create parent file $path") } }</ID>
+    <ID>MultilineLambdaItParameter:Signature.jvmAndroid.kt:{ CryptoJvm.getPublicKeyFromPrivateKey(it).map { pubKey -&gt; pubKey.encoded.toHexString() } }</ID>
+    <ID>MultilineLambdaItParameter:Signature.kt:{ val algo = getAlgo(it.algo) val encryptedKey = (if (it.algo == AlgoType.DILITHIUM) { val key = it.encryptionPublicKey ?: throw IllegalArgumentException("Dilithium user ${it.id} missing encryption key") algo.encryptionAlgo.kemEncrypt(key, aes) } else { algo.encryptionAlgo.kemEncrypt(it.pubKey, aes) }).getOrThrow().toHexString() it.id to encryptedKey }</ID>
+    <ID>NamedArguments:CommunityInfo.kt:CommunityInfo.Companion$CommunityInfo(DEFAULT_PRIMARY_KEY, "", "", DEFAULT_PRIMARY_KEY, now(), 0, MemberPolicy.OPEN)</ID>
+    <ID>NamedArguments:FileInfo.kt:FileInfo.Companion$FileInfo(0, "", "", "", 0, "", 0, ObjectType.USER, now(), null)</ID>
+    <ID>NamedArguments:Markdown.kt:&lt;no name provided&gt;$MathContext( mathContent, node.startOffset, node.endOffset, node.type == GFMElementTypes.INLINE_MATH )</ID>
+    <ID>NamedArguments:Markdown.kt:&lt;no name provided&gt;$MathContext(content, node.startOffset, node.endOffset, false)</ID>
+    <ID>NamedArguments:RoomInfo.kt:RoomInfo.Companion$RoomInfo(DEFAULT_PRIMARY_KEY, now(), "", "", DEFAULT_PRIMARY_KEY, 0)</ID>
+    <ID>NamedArguments:Signature.kt:AlgoP256.&lt;no name provided&gt;$secretDerivation(SHA256, 512.bits, null, "ecies".encodeToByteArray())</ID>
+    <ID>NamedArguments:UserFavoriteInfo.kt:UserFavoriteInfo.Companion$UserFavoriteInfo( id = DEFAULT_PRIMARY_KEY, uid = DEFAULT_PRIMARY_KEY, objectId = DEFAULT_PRIMARY_KEY, objectType = ObjectType.TOPIC, now(), null )</ID>
+    <ID>NamedArguments:UserInfo.kt:UserInfo.Companion$UserInfo(DEFAULT_PRIMARY_KEY, "", "", "", null)</ID>
+    <ID>NamedArguments:UserSubscriptionInfo.kt:UserSubscriptionInfo.Companion$UserSubscriptionInfo( id = DEFAULT_PRIMARY_KEY, uid = DEFAULT_PRIMARY_KEY, objectId = DEFAULT_PRIMARY_KEY, objectType = ObjectType.TOPIC, now(), null )</ID>
     <ID>NewLineAtEndOfFile:Platform.noJvm.kt:com.storyteller_f.shared.Platform.noJvm.kt</ID>
     <ID>NoBlankLineBeforeRbrace:Signature.jvmAndroid.kt:CryptoJvm$ </ID>
     <ID>NoBlankLineInList:Markdown.kt: </ID>
     <ID>NoConsecutiveBlankLines:Signature.jvmAndroid.kt:&lt;no name provided&gt;.&lt;no name provided&gt;$ </ID>
     <ID>NoConsecutiveBlankLines:Signature.jvmAndroid.kt:CryptoJvm$ </ID>
-    <ID>NoEmptyFile:p256.kt:com.storyteller_f.shared.curves.p256.kt</ID>
     <ID>NoEmptyFirstLineInClassBody:CustomImmutableList.kt:ImmutableMapSerializer${ private val mapSerializer = MapSerializer(keySerializer, valueSerializer) override val descriptor: SerialDescriptor = SerialDescriptor("kotlinx.collections.immutable.ImmutableMap", mapSerializer.descriptor) override fun serialize(encoder: Encoder, value: ImmutableMap&lt;K, V&gt;) { mapSerializer.serialize(encoder, value) } override fun deserialize(decoder: Decoder): ImmutableMap&lt;K, V&gt; { return mapSerializer.deserialize(decoder).toImmutableMap() } }</ID>
-    <ID>NoEmptyFirstLineInClassBody:Platform.jvm.kt:CustomAntilog${ companion object { private const val CALL_STACK_INDEX = 8 } private val logger = LoggerFactory.getLogger(CustomAntilog::class.java) private val anonymousClass = Pattern.compile("(\\$\\d+)+$") override fun performLog( priority: LogLevel, tag: String?, throwable: Throwable?, message: String?, ) { val fullMessage = when { message == null -&gt; throwable?.stackTraceToString() ?: return throwable != null -&gt; "$message\n${throwable.stackTraceToString()}" else -&gt; message } val log = buildLog(tag, fullMessage) when (priority) { LogLevel.VERBOSE -&gt; logger.trace(log) LogLevel.DEBUG -&gt; logger.debug(log) LogLevel.INFO -&gt; logger.info(log) LogLevel.WARNING -&gt; logger.warn(log) LogLevel.ERROR -&gt; logger.error(log) LogLevel.ASSERT -&gt; logger.error(log) } } private fun buildLog(tag: String?, message: String?): String { val customTag = tag ?: Thread.currentThread().stackTrace[CALL_STACK_INDEX].run { "${createStackElementTag(className)}$$methodName" } return "$customTag - $message - ${Thread.currentThread().stackTrace[CALL_STACK_INDEX]}" } private fun createStackElementTag(className: String): String { val m = anonymousClass.matcher(className) val tag = if (m.find()) { m.replaceAll("") } else { className } return tag.substring(tag.lastIndexOf('.') + 1) } }</ID>
     <ID>NoEmptyFirstLineInClassBody:Signature.jvmAndroid.kt:&lt;no name provided&gt;.&lt;no name provided&gt;${ override suspend fun kemEncrypt( derPublicKeyStr: String, aesKeyBytes: ByteArray ): Result&lt;ByteArray&gt; { return runCatching { val publicKey = MLKEMPublicKeyParameters( MLKEMParameters.ml_kem_768, derPublicKeyStr.hexToByteArray() ) val secret = MLKEMGenerator(SecureRandom()).generateEncapsulated(publicKey) secret.encapsulation + (aesKeyBytes xor secret.secret) } } override suspend fun kemDecrypt( derPrivateKeyStr: String, encrypted: ByteArray ): Result&lt;ByteArray&gt; { return runCatching { require(encrypted.size &gt; 32) { "invalid ML-KEM ciphertext" } val cipherText = encrypted.copyOfRange(0, encrypted.size - 32) val encryptedAesKey = encrypted.copyOfRange(encrypted.size - 32, encrypted.size) val privateKey = MLKEMPrivateKeyParameters( MLKEMParameters.ml_kem_768, derPrivateKeyStr.hexToByteArray() ) encryptedAesKey xor MLKEMExtractor(privateKey).extractSecret(cipherText) } } @OptIn(ExperimentalEncodingApi::class) override suspend fun generateEncryptionPemKeyPair(): Result&lt;Pair&lt;String, String&gt;&gt; { return runCatching { val kpg = KeyPairGenerator.getInstance("ML-KEM", "BC") kpg.initialize(MLKEMParameterSpec.ml_kem_768, SecureRandom()) val kp = kpg.generateKeyPair() val privDer = (kp.private as MLKEMPrivateKey).privateData val privB64 = Base64.encode(privDer).chunked(64).joinToString("\n") val privatePem = buildString { appendLine("-----BEGIN PRIVATE KEY-----") appendLine(privB64) appendLine("-----END PRIVATE KEY-----") } val pubDer = (kp.public as MLKEMPublicKey).publicData val pubB64 = Base64.encode(pubDer).chunked(64).joinToString("\n") val publicPem = buildString { appendLine("-----BEGIN PUBLIC KEY-----") appendLine(pubB64) appendLine("-----END PUBLIC KEY-----") } privatePem to publicPem } } override suspend fun getDerEncryptionPublicKeyFromPemPrivateKey(pemPrivateKeyStr: String): Result&lt;String&gt; { return runCatching { val base64 = pemPrivateKeyStr .replace("-----BEGIN PRIVATE KEY-----", "") .replace("-----END PRIVATE KEY-----", "") .replace("\r", "") .replace("\n", "") .trim() val privateKeyBytes = Base64.decode(base64) MLKEMPrivateKeyParameters(MLKEMParameters.ml_kem_768, privateKeyBytes) .publicKey .toHexString() } } @OptIn(ExperimentalEncodingApi::class) override suspend fun getDerEncryptionPrivateKeyFromPemPrivateKey(pemPrivateKeyStr: String): Result&lt;String&gt; { return runCatching { val base64 = pemPrivateKeyStr .replace("-----BEGIN PRIVATE KEY-----", "") .replace("-----END PRIVATE KEY-----", "") .replace("\r", "") .replace("\n", "") .trim() val der = Base64.decode(base64) der.toHexString() } } @OptIn(ExperimentalEncodingApi::class) override suspend fun getPemEncryptionPrivateKeyFromDerPrivateKey(derPrivateKeyStr: String): Result&lt;String&gt; { return runCatching { val der = derPrivateKeyStr.hexToByteArray() val base64 = Base64.encode(der).chunked(64).joinToString("\n") buildString { appendLine("-----BEGIN PRIVATE KEY-----") appendLine(base64) appendLine("-----END PRIVATE KEY-----") } } } }</ID>
     <ID>NoEmptyFirstLineInClassBody:Signature.jvmAndroid.kt:CryptoJvm${ @Throws(IOException::class) fun readPrivateKeyFromPEMString(pemString: String): Result&lt;PrivateKey&gt; { return runCatching { val stringReader = StringReader(pemString) val pemParser = PEMParser(stringReader) val converter = JcaPEMKeyConverter().setProvider("BC") val any = pemParser.readObject() pemParser.close() when (any) { is org.bouncycastle.openssl.PEMKeyPair -&gt; converter.getPrivateKey(any.privateKeyInfo) is PrivateKeyInfo -&gt; converter.getPrivateKey(any) else -&gt; throw IllegalArgumentException("Unsupported PEM object: " + any.javaClass) } } } // 从私钥中生成公钥 @Throws(Exception::class) fun getPublicKeyFromPrivateKey(privateKey: PrivateKey): Result&lt;PublicKey&gt; { return runCatching { val keyFactory = KeyFactory.getInstance("ECDSA", "BC") val ecSpec = (keyFactory.getKeySpec(privateKey, ECPrivateKeySpec::class.java) as ECPrivateKeySpec).params val ecPrivateKeySpec = ECPrivateKeySpec((privateKey as ECPrivateKey).d, ecSpec) val publicKeySpec = ECPublicKeySpec(ecSpec.g.multiply(ecPrivateKeySpec.d), ecSpec) keyFactory.generatePublic(publicKeySpec) } } suspend fun generateCert(pemPrivateKeyStr: String): Result&lt;X509Certificate&gt; { return readPrivateKeyFromPEMString(pemPrivateKeyStr).mapResult { privateKey -&gt; getPublicKeyFromPrivateKey(privateKey).map { publicKey -&gt; // 2️⃣ 证书信息 val issuer = X500Name("CN=MyCertificate, O=MyCompany, C=US") // 证书颁发者 val subject = X500Name("CN=MyCertificate, O=MyCompany, C=US") // 证书主体（自签名） val serialNumber = BigInteger.valueOf(System.currentTimeMillis()) // 唯一序列号 val notBefore = Date(System.currentTimeMillis() - 1000L * 60 * 60 * 24) // 生效时间 val notAfter = Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 365 * 10) // 过期时间 (10 年) // 3️⃣ 创建 X509v3 证书 val certBuilder: X509v3CertificateBuilder = JcaX509v3CertificateBuilder( issuer, serialNumber, notBefore, notAfter, subject, publicKey ) // 4️⃣ 使用 ECDSA-SHA256 签名 val signer: ContentSigner = JcaContentSignerBuilder("SHA256withECDSA") .setProvider("BC") .build(privateKey) // 5️⃣ 生成 X.509 证书 val certHolder = certBuilder.build(signer) JcaX509CertificateConverter().setProvider("BC").getCertificate(certHolder) } } } @Suppress("DeprecatedProvider") fun encrypt(data: String): Result&lt;Pair&lt;ByteArray, ByteArray&gt;&gt; { return runCatching { // 生成AES密钥 val keyGen = KeyGenerator.getInstance("AES", "BC") keyGen.init(256) // 使用256位密钥 val aesKey = keyGen.generateKey() // 初始化Cipher进行AES加密 val aesCipher = Cipher.getInstance("AES/CBC/PKCS5Padding", "BC") val iv = ByteArray(aesCipher.getBlockSize()) val ivSpec = IvParameterSpec(iv) // 待加密的数据 val plaintextBytes = data.toByteArray() // 使用AES密钥加密数据 aesCipher.init(Cipher.ENCRYPT_MODE, aesKey, ivSpec) aesCipher.doFinal(plaintextBytes) to aesKey.encoded } } /** * @param derPrivateKeyStr hex 的der 格式的密钥 */ @Suppress("DeprecatedProvider") @OptIn(ExperimentalStdlibApi::class) fun decrypt( derPrivateKeyStr: String, encrypted: ByteArray, encryptedAesKey: ByteArray ): Result&lt;String&gt; { return runCatching { val privateKeyBytes = derPrivateKeyStr.hexToByteArray() // 将字节数组转换为私钥对象 val privateKeySpec = PKCS8EncodedKeySpec(privateKeyBytes) val keyFactory = KeyFactory.getInstance("EC", "BC") val privateKey = keyFactory.generatePrivate(privateKeySpec) val rsaCipher = Cipher.getInstance("ECIES", "BC") rsaCipher.init(Cipher.DECRYPT_MODE, privateKey) val aesKeyBytes = rsaCipher.doFinal(encryptedAesKey) // 将解密后的AES密钥转换为SecretKey对象 val aesKey = SecretKeySpec(aesKeyBytes, "AES") // 初始化Cipher进行AES解密 val aesCipher = Cipher.getInstance("AES/CBC/PKCS5Padding", "BC") val iv = ByteArray(aesCipher.blockSize) val ivSpec = IvParameterSpec(iv) aesCipher.init(Cipher.DECRYPT_MODE, aesKey, ivSpec) // 使用AES密钥解密数据 String(aesCipher.doFinal(encrypted)) } } /** * @param derPublicKeyStr hex 的der 格式的密钥 */ @Suppress("DeprecatedProvider") @OptIn(ExperimentalStdlibApi::class) fun encryptAesKey(derPublicKeyStr: String, aesKey: ByteArray): Result&lt;ByteArray&gt; { return runCatching { val publicKeyBytes = derPublicKeyStr.hexToByteArray() val keySpec = X509EncodedKeySpec(publicKeyBytes) val keyFactory = KeyFactory.getInstance("EC", "BC") val publicKey = keyFactory.generatePublic(keySpec) val rsaCipher = Cipher.getInstance("ECIES", "BC") rsaCipher.init(Cipher.ENCRYPT_MODE, publicKey) rsaCipher.doFinal(aesKey) } } fun createKeystore(keystorePassword: CharArray, path: String) { val file = File(path) file.parentFile!!.let { if (!it.exists() &amp;&amp; !it.mkdirs()) { throw Exception("can not create parent file $path") } } val alias = "snapshot" val validityDays = 365L // 注册 BouncyCastle 提供者（如未自动加载） Security.addProvider(BouncyCastleProvider()) // 1. 生成密钥对 val keyPairGen = KeyPairGenerator.getInstance("RSA", "BC") keyPairGen.initialize(2048, SecureRandom()) val keyPair: KeyPair = keyPairGen.generateKeyPair() // 2. 证书信息 val issuer = X500Name("CN=Example, OU=Org, O=Company, L=City, ST=State, C=US") val subject = issuer // 自签名 val serial = BigInteger(160, SecureRandom()) val notBefore = Date(System.currentTimeMillis()) val notAfter = Date(System.currentTimeMillis() + validityDays * 24 * 60 * 60 * 1000) // 3. 构建 X509 证书 val certBuilder: X509v3CertificateBuilder = JcaX509v3CertificateBuilder( issuer, serial, notBefore, notAfter, subject, keyPair.public ) // 4. 生成签名 val signer = JcaContentSignerBuilder("SHA256withRSA").build(keyPair.private) val certHolder = certBuilder.build(signer) val cert: X509Certificate = JcaX509CertificateConverter() .setProvider("BC") .getCertificate(certHolder) // 5. 创建 PKCS12 keystore 并存储证书和私钥 val ks = KeyStore.getInstance("PKCS12") ks.load(null, null) ks.setKeyEntry(alias, keyPair.private, keystorePassword, arrayOf(cert)) // 6. 保存 keystore 到文件 FileOutputStream(file).use { fos -&gt; ks.store(fos, keystorePassword) } } }</ID>
     <ID>NoEmptyFirstLineInClassBody:Signature.kt:AlgoP256.&lt;no name provided&gt;${ override suspend fun kemEncrypt( derPublicKeyStr: String, aesKeyBytes: ByteArray ): Result&lt;ByteArray&gt; { return runCatching { val tempKeyPair = CryptographyProvider.Default.get(ECDH).keyPairGenerator(EC.Curve.P256).generateKey() val publicKey = CryptographyProvider.Default.get(ECDH).publicKeyDecoder(EC.Curve.P256) .decodeFromByteArray(EC.PublicKey.Format.DER, derPublicKeyStr.hexToByteArray()) val shared = tempKeyPair.privateKey.sharedSecretGenerator() .generateSharedSecretToByteArray(publicKey) val derivedKeys = CryptographyProvider.Default.get(HKDF) .secretDerivation(SHA256, 512.bits, null, "ecies".encodeToByteArray()) .deriveSecretToByteArray(shared) val aesKey = derivedKeys.copyOfRange(0, 32) val macKey = derivedKeys.copyOfRange(32, 64) val encrypted = CryptographyProvider.Default.get(AES.GCM) .keyDecoder() .decodeFromByteArray(AES.Key.Format.RAW, aesKey) .cipher() .encrypt(aesKeyBytes) val concat = tempKeyPair.publicKey.encodeToByteArray(EC.PublicKey.Format.RAW) + encrypted val signature = CryptographyProvider.Default.get(HMAC).keyDecoder(SHA256) .decodeFromByteArray(HMAC.Key.Format.RAW, macKey) .signatureGenerator() .generateSignature(concat) concat + signature } } override suspend fun kemDecrypt( derPrivateKeyStr: String, encrypted: ByteArray ): Result&lt;ByteArray&gt; { return runCatching { val publicKeyContent = encrypted.copyOfRange(0, 65) val publicKey = CryptographyProvider.Default.get(ECDH).publicKeyDecoder(EC.Curve.P256) .decodeFromByteArray(EC.PublicKey.Format.RAW, publicKeyContent) val shared = CryptographyProvider.Default.get(ECDH).privateKeyDecoder(EC.Curve.P256) .decodeFromByteArray(EC.PrivateKey.Format.DER, derPrivateKeyStr.hexToByteArray()) .sharedSecretGenerator().generateSharedSecretToByteArray(publicKey) val derivedKey = CryptographyProvider.Default.get(HKDF) .secretDerivation(SHA256, 512.bits, null, "ecies".encodeToByteArray()) .deriveSecretToByteArray(shared) val aesKey = derivedKey.copyOfRange(0, 32) val macKey = derivedKey.copyOfRange(32, 64) val noMacResult = encrypted.copyOfRange(0, encrypted.size - 32) val macResult = encrypted.copyOfRange(encrypted.size - 32, encrypted.size) if (!CryptographyProvider.Default.get(HMAC).keyDecoder(SHA256) .decodeFromByteArray(HMAC.Key.Format.RAW, macKey) .signatureVerifier().tryVerifySignature(noMacResult, macResult) ) { throw Exception("hmac verify failed") } val encryptedContent = encrypted.copyOfRange(65, encrypted.size - 32) CryptographyProvider.Default.get(AES.GCM) .keyDecoder() .decodeFromByteArray(AES.Key.Format.RAW, aesKey) .cipher() .decrypt(encryptedContent) } } }</ID>
     <ID>NoEmptyFirstLineInClassBody:Signature.kt:EncryptionAlgo${ /** * @param derPublicKeyStr hex string * @param aesKeyBytes the AES key to encrypt * @return the encrypted AES key */ suspend fun kemEncrypt(derPublicKeyStr: String, aesKeyBytes: ByteArray): Result&lt;ByteArray&gt; /** * @param derPrivateKeyStr hex string * @param encrypted the encrypted AES key * @return the decrypted AES key */ suspend fun kemDecrypt(derPrivateKeyStr: String, encrypted: ByteArray): Result&lt;ByteArray&gt; }</ID>
-    <ID>NoEmptyFirstLineInClassBody:SignatureTest.kt:SignatureTest${ @Test fun algorithmsSignAndEncrypt() = runTest { loadCryptoLibIfNeed() listOf(AlgoP256, AlgoDilithium).forEach { algorithm -&gt; val (privatePem, publicPem) = algorithm.generatePemKeyPair().getOrThrow() val privateKey = algorithm.getDerPrivateKey(privatePem).getOrThrow() val publicKey = algorithm.getDerPublicKeyFromPem(publicPem).getOrThrow() val signature = algorithm.signature(privateKey, "signed message").getOrThrow() assertTrue(algorithm.verify(publicKey, signature, "signed message").getOrThrow()) val (encrypted, aesKey) = encryptDataByAES("encrypted message").getOrThrow() val (encryptionPrivateKey, encryptionPublicKey) = if (algorithm == AlgoDilithium) { val encryptionAlgorithm = algorithm.encryptionAlgo as Type2Algo val (privateEncryptionPem, publicEncryptionPem) = encryptionAlgorithm.generateEncryptionPemKeyPair().getOrThrow() algorithm.getDerPrivateKey(privateEncryptionPem).getOrThrow() to algorithm.getDerPublicKeyFromPem(publicEncryptionPem).getOrThrow() } else { privateKey to publicKey } val encryptedAesKey = algorithm.encryptionAlgo .kemEncrypt(encryptionPublicKey, aesKey) .getOrThrow() assertContentEquals( aesKey, algorithm.encryptionAlgo.kemDecrypt(encryptionPrivateKey, encryptedAesKey).getOrThrow() ) assertEquals( "encrypted message", algorithm.decryptMessage(encryptionPrivateKey, encrypted, encryptedAesKey).getOrThrow() ) } } @Test fun p256AddressIsCalculated() = runTest { loadCryptoLibIfNeed() val (_, publicPem) = getAlgo(AlgoType.P256).generatePemKeyPair().getOrThrow() val publicKey = getAlgo(AlgoType.P256).getDerPublicKeyFromPem(publicPem).getOrThrow() assertTrue(getAlgo(AlgoType.P256).calcAddress(publicKey).getOrThrow().isNotBlank()) } }</ID>
-    <ID>NoEmptyFirstLineInClassBody:SignatureWasmJsTest.kt:SignatureWasmJsTest${ @Test fun md5UsesWasmImplementation() { assertEquals("5d41402abc4b2a76b9719d911017c592", md5("hello")) } @Test fun p256CanReadJvmGeneratedPrivateKey() = runTest { val privatePem = """ -----BEGIN PRIVATE KEY----- MEECAQAwEwYHKoZIzj0CAQYIKoZIzj0DAQcEJzAlAgEBBCAeAx1tytf8DDzj7hXF 3Yj/nWmeQ/PivDcglFiGezFIPQ== -----END PRIVATE KEY----- """.trimIndent() val privateDer = AlgoP256.getDerPrivateKey(privatePem).getOrThrow() val publicDer = AlgoP256.getDerPublicKeyFromPrivateKey(privatePem).getOrThrow() val signature = AlgoP256.signature(privateDer, "JVM generated key").getOrThrow() assertTrue(AlgoP256.verify(publicDer, signature, "JVM generated key").getOrThrow()) assertTrue(AlgoP256.calcAddress(publicDer).getOrThrow().isNotBlank()) } @Test fun p256CanSignEncryptAndDerivePublicKey() = runTest { val (privatePem, publicPem) = AlgoP256.generatePemKeyPair().getOrThrow() val privateDer = AlgoP256.getDerPrivateKey(privatePem).getOrThrow() val publicDer = AlgoP256.getDerPublicKeyFromPem(publicPem).getOrThrow() assertEquals(publicDer, getDerPublicKeyFromPrivateKeyP256(privatePem).getOrThrow()) val signature = AlgoP256.signature(privateDer, "wasm signature").getOrThrow() assertTrue(AlgoP256.verify(publicDer, signature, "wasm signature").getOrThrow()) val (encrypted, aesKey) = encryptDataByAES("wasm content").getOrThrow() assertEquals("wasm content", decryptDataByAES(encrypted, aesKey).getOrThrow()) val encryptedAesKey = AlgoP256.encryptionAlgo.kemEncrypt(publicDer, aesKey).getOrThrow() assertContentEquals( aesKey, AlgoP256.encryptionAlgo.kemDecrypt(privateDer, encryptedAesKey).getOrThrow() ) } @Test fun mlDsaAndMlKemCanSignAndEncrypt() = runTest { val (privatePem, publicPem) = AlgoDilithium.generatePemKeyPair().getOrThrow() val privateKey = AlgoDilithium.getDerPrivateKey(privatePem).getOrThrow() val publicKey = AlgoDilithium.getDerPublicKeyFromPem(publicPem).getOrThrow() val signature = AlgoDilithium.signature(privateKey, "wasm ML-DSA").getOrThrow() assertTrue(AlgoDilithium.verify(publicKey, signature, "wasm ML-DSA").getOrThrow()) val encryptionAlgorithm = AlgoDilithium.encryptionAlgo as Type2Algo val (encryptionPrivatePem, encryptionPublicPem) = encryptionAlgorithm.generateEncryptionPemKeyPair().getOrThrow() val encryptionPrivateKey = AlgoDilithium.getDerPrivateKey(encryptionPrivatePem).getOrThrow() val encryptionPublicKey = AlgoDilithium.getDerPublicKeyFromPem(encryptionPublicPem).getOrThrow() val aesKey = ByteArray(32) { it.toByte() } val encryptedAesKey = encryptionAlgorithm.kemEncrypt(encryptionPublicKey, aesKey).getOrThrow() assertContentEquals(aesKey, encryptionAlgorithm.kemDecrypt(encryptionPrivateKey, encryptedAesKey).getOrThrow()) } }</ID>
+    <ID>NoNameShadowing:Markdown.kt:&lt;no name provided&gt;${ it.isNotBlank() }</ID>
     <ID>NoUnusedImports:Signature.jvmAndroid.kt:com.storyteller_f.shared.Signature.jvmAndroid.kt</ID>
-    <ID>NotImplementedDeclaration:Signature.ios.kt:TODO("Not yet implemented")</ID>
-    <ID>NotImplementedDeclaration:Strings.ios.kt:TODO("Not yet implemented")</ID>
+    <ID>NullableToStringCall:Markdown.kt:children.getOrNull(langOffset)?.getTextInNode(content).toString()</ID>
     <ID>OutdatedDocumentation:Signature.jvmAndroid.kt:CryptoJvm$@Suppress("DeprecatedProvider") @OptIn(ExperimentalStdlibApi::class) fun decrypt: Result&lt;String&gt;</ID>
     <ID>OutdatedDocumentation:Signature.jvmAndroid.kt:CryptoJvm$@Suppress("DeprecatedProvider") @OptIn(ExperimentalStdlibApi::class) fun encryptAesKey: Result&lt;ByteArray&gt;</ID>
     <ID>PackageName:Asset.kt:package com.storyteller_f.shared.model</ID>
@@ -671,7 +619,6 @@
     <ID>PackageName:FontSettings.kt:package com.storyteller_f.shared.model</ID>
     <ID>PackageName:Hash.jvmAndroid.kt:package com.storyteller_f.shared.utils</ID>
     <ID>PackageName:Hash.kt:package com.storyteller_f.shared.utils</ID>
-    <ID>PackageName:Hash.wasmJs.kt:package com.storyteller_f.shared.utils</ID>
     <ID>PackageName:JoinStatusSearch.kt:package com.storyteller_f.shared.type</ID>
     <ID>PackageName:List.kt:package com.storyteller_f.shared.utils</ID>
     <ID>PackageName:ListResponse.kt:package com.storyteller_f.shared.obj</ID>
@@ -684,11 +631,8 @@
     <ID>PackageName:PanelLogInfo.kt:package com.storyteller_f.shared.model</ID>
     <ID>PackageName:PanelOverview.kt:package com.storyteller_f.shared.model</ID>
     <ID>PackageName:Platform.android.kt:package com.storyteller_f.shared</ID>
-    <ID>PackageName:Platform.ios.kt:package com.storyteller_f.shared</ID>
-    <ID>PackageName:Platform.jvm.kt:package com.storyteller_f.shared</ID>
     <ID>PackageName:Platform.kt:package com.storyteller_f.shared</ID>
     <ID>PackageName:Platform.noJvm.kt:package com.storyteller_f.shared</ID>
-    <ID>PackageName:Platform.wasmJs.kt:package com.storyteller_f.shared</ID>
     <ID>PackageName:Preset.kt:package com.storyteller_f.shared.obj</ID>
     <ID>PackageName:PrimaryKey.kt:package com.storyteller_f.shared.type</ID>
     <ID>PackageName:PrimaryKeyIdentifiable.kt:package com.storyteller_f.shared.model</ID>
@@ -696,17 +640,10 @@
     <ID>PackageName:Result.kt:package com.storyteller_f.shared.utils</ID>
     <ID>PackageName:RoomFrame.kt:package com.storyteller_f.shared.obj</ID>
     <ID>PackageName:RoomInfo.kt:package com.storyteller_f.shared.model</ID>
-    <ID>PackageName:Signature.ios.kt:package com.storyteller_f.shared</ID>
     <ID>PackageName:Signature.jvmAndroid.kt:package com.storyteller_f.shared</ID>
     <ID>PackageName:Signature.kt:package com.storyteller_f.shared</ID>
-    <ID>PackageName:Signature.wasmJs.kt:package com.storyteller_f.shared</ID>
-    <ID>PackageName:SignatureTest.kt:package com.storyteller_f.shared</ID>
-    <ID>PackageName:SignatureWasmJsTest.kt:package com.storyteller_f.shared</ID>
     <ID>PackageName:Strings.android.kt:package com.storyteller_f.shared.utils</ID>
-    <ID>PackageName:Strings.ios.kt:package com.storyteller_f.shared.utils</ID>
-    <ID>PackageName:Strings.jvm.kt:package com.storyteller_f.shared.utils</ID>
     <ID>PackageName:Strings.kt:package com.storyteller_f.shared.utils</ID>
-    <ID>PackageName:Strings.wasmJs.kt:package com.storyteller_f.shared.utils</ID>
     <ID>PackageName:TaskRecordInfo.kt:package com.storyteller_f.shared.model</ID>
     <ID>PackageName:Time.kt:package com.storyteller_f.shared.utils</ID>
     <ID>PackageName:TitleInfo.kt:package com.storyteller_f.shared.model</ID>
@@ -721,9 +658,6 @@
     <ID>PackageName:UserInfo.kt:package com.storyteller_f.shared.model</ID>
     <ID>PackageName:UserStatus.kt:package com.storyteller_f.shared.type</ID>
     <ID>PackageName:UserSubscriptionInfo.kt:package com.storyteller_f.shared.model</ID>
-    <ID>PackageName:keccak.kt:package com.storyteller_f.shared</ID>
-    <ID>PackageName:p256.kt:package com.storyteller_f.shared.curves</ID>
-    <ID>PackageName:sha3.kt:package com.storyteller_f.shared.hashes</ID>
     <ID>PackageNaming:Asset.kt:package com.storyteller_f.shared.model</ID>
     <ID>PackageNaming:CommunityInfo.kt:package com.storyteller_f.shared.model</ID>
     <ID>PackageNaming:CustomImmutableList.kt:package com.storyteller_f.shared.type</ID>
@@ -733,7 +667,6 @@
     <ID>PackageNaming:FontSettings.kt:package com.storyteller_f.shared.model</ID>
     <ID>PackageNaming:Hash.jvmAndroid.kt:package com.storyteller_f.shared.utils</ID>
     <ID>PackageNaming:Hash.kt:package com.storyteller_f.shared.utils</ID>
-    <ID>PackageNaming:Hash.wasmJs.kt:package com.storyteller_f.shared.utils</ID>
     <ID>PackageNaming:JoinStatusSearch.kt:package com.storyteller_f.shared.type</ID>
     <ID>PackageNaming:List.kt:package com.storyteller_f.shared.utils</ID>
     <ID>PackageNaming:ListResponse.kt:package com.storyteller_f.shared.obj</ID>
@@ -746,11 +679,8 @@
     <ID>PackageNaming:PanelLogInfo.kt:package com.storyteller_f.shared.model</ID>
     <ID>PackageNaming:PanelOverview.kt:package com.storyteller_f.shared.model</ID>
     <ID>PackageNaming:Platform.android.kt:package com.storyteller_f.shared</ID>
-    <ID>PackageNaming:Platform.ios.kt:package com.storyteller_f.shared</ID>
-    <ID>PackageNaming:Platform.jvm.kt:package com.storyteller_f.shared</ID>
     <ID>PackageNaming:Platform.kt:package com.storyteller_f.shared</ID>
     <ID>PackageNaming:Platform.noJvm.kt:package com.storyteller_f.shared</ID>
-    <ID>PackageNaming:Platform.wasmJs.kt:package com.storyteller_f.shared</ID>
     <ID>PackageNaming:Preset.kt:package com.storyteller_f.shared.obj</ID>
     <ID>PackageNaming:PrimaryKey.kt:package com.storyteller_f.shared.type</ID>
     <ID>PackageNaming:PrimaryKeyIdentifiable.kt:package com.storyteller_f.shared.model</ID>
@@ -758,17 +688,10 @@
     <ID>PackageNaming:Result.kt:package com.storyteller_f.shared.utils</ID>
     <ID>PackageNaming:RoomFrame.kt:package com.storyteller_f.shared.obj</ID>
     <ID>PackageNaming:RoomInfo.kt:package com.storyteller_f.shared.model</ID>
-    <ID>PackageNaming:Signature.ios.kt:package com.storyteller_f.shared</ID>
     <ID>PackageNaming:Signature.jvmAndroid.kt:package com.storyteller_f.shared</ID>
     <ID>PackageNaming:Signature.kt:package com.storyteller_f.shared</ID>
-    <ID>PackageNaming:Signature.wasmJs.kt:package com.storyteller_f.shared</ID>
-    <ID>PackageNaming:SignatureTest.kt:package com.storyteller_f.shared</ID>
-    <ID>PackageNaming:SignatureWasmJsTest.kt:package com.storyteller_f.shared</ID>
     <ID>PackageNaming:Strings.android.kt:package com.storyteller_f.shared.utils</ID>
-    <ID>PackageNaming:Strings.ios.kt:package com.storyteller_f.shared.utils</ID>
-    <ID>PackageNaming:Strings.jvm.kt:package com.storyteller_f.shared.utils</ID>
     <ID>PackageNaming:Strings.kt:package com.storyteller_f.shared.utils</ID>
-    <ID>PackageNaming:Strings.wasmJs.kt:package com.storyteller_f.shared.utils</ID>
     <ID>PackageNaming:TaskRecordInfo.kt:package com.storyteller_f.shared.model</ID>
     <ID>PackageNaming:Time.kt:package com.storyteller_f.shared.utils</ID>
     <ID>PackageNaming:TitleInfo.kt:package com.storyteller_f.shared.model</ID>
@@ -783,27 +706,15 @@
     <ID>PackageNaming:UserInfo.kt:package com.storyteller_f.shared.model</ID>
     <ID>PackageNaming:UserStatus.kt:package com.storyteller_f.shared.type</ID>
     <ID>PackageNaming:UserSubscriptionInfo.kt:package com.storyteller_f.shared.model</ID>
-    <ID>PackageNaming:keccak.kt:package com.storyteller_f.shared</ID>
-    <ID>PackageNaming:p256.kt:package com.storyteller_f.shared.curves</ID>
-    <ID>PackageNaming:sha3.kt:package com.storyteller_f.shared.hashes</ID>
     <ID>StringLiteralDuplication:Signature.jvmAndroid.kt:&lt;no name provided&gt;$"-----BEGIN PRIVATE KEY-----"</ID>
     <ID>StringLiteralDuplication:Signature.jvmAndroid.kt:&lt;no name provided&gt;$"-----BEGIN PUBLIC KEY-----"</ID>
     <ID>StringLiteralDuplication:Signature.jvmAndroid.kt:&lt;no name provided&gt;$"-----END PRIVATE KEY-----"</ID>
     <ID>StringLiteralDuplication:Signature.jvmAndroid.kt:&lt;no name provided&gt;$"-----END PUBLIC KEY-----"</ID>
-    <ID>StringLiteralDuplication:Signature.wasmJs.kt:&lt;no name provided&gt;$"PRIVATE KEY"</ID>
-    <ID>StringLiteralDuplication:Signature.wasmJs.kt:&lt;no name provided&gt;$"PUBLIC KEY"</ID>
-    <ID>StringShouldBeRawString:MarkdownTest.kt:MarkdownTest$"$\\`\\sqrt{3x-1}+(1+x)^2\\`$"</ID>
     <ID>StringShouldBeRawString:Strings.android.kt:"[\\uE000-\\uE0FF \\uE5FA-\\uE6B7 \\uE700-\\uE8EF " + "\\uEA60-\\uEC1E \\uED00-\\uEFCE \\uF000-\\uF2FF " + "\\uF300-\\uF381 \\uF400-\\uFD46 " + "\\U000F0001-\\U000F1AF0]"</ID>
     <ID>StringShouldBeRawString:Strings.android.kt:"^[\\p{L}\\p{N}\\p{P}\\p{Z}\\p{S}\n]+$"</ID>
-    <ID>StringShouldBeRawString:Strings.jvm.kt:"[\\uE000-\\uE0FF \\uE5FA-\\uE6B7 \\uE700-\\uE8EF " + "\\uEA60-\\uEC1E \\uED00-\\uEFCE \\uF000-\\uF2FF " + "\\uF300-\\uF381 \\uF400-\\uFD46 " + "\\U000F0001-\\U000F1AF0]"</ID>
-    <ID>StringShouldBeRawString:Strings.jvm.kt:"^[\\p{L}\\p{N}\\p{P}\\p{Z}\\p{S}\n]+$"</ID>
-    <ID>StringShouldBeRawString:Strings.wasmJs.kt:"/^[\\p{L}\\p{N}\\p{P}\\p{Z}\\p{S}\\s\\p{Emoji_Presentation}]+$/gu.test(text)"</ID>
-    <ID>StringShouldBeRawString:Strings.wasmJs.kt:"text.match(/^[\\p{L}\\p{N}\\p{P}\\p{Z}\\p{S}\\p{Emoji_Presentation}]/gu)[0]"</ID>
-    <ID>StringTemplateIndent:MarkdownTest.kt:MarkdownTest$""" ![test](/test.jpg "test") """</ID>
-    <ID>StringTemplateIndent:MarkdownTest.kt:MarkdownTest$""" # First Level Header Some introductory text before the second level header. Hello. ```c print(); ``` ## Second Level Header Content after the second level header. """</ID>
-    <ID>StringTemplateIndent:MarkdownTest.kt:MarkdownTest$""" ```asciidoc = AsciiDoc Preview ``` """</ID>
-    <ID>StringTemplateIndent:MarkdownTest.kt:MarkdownTest$""" hello ```csa /user/1 ``` ```object { "contentType": "image/png", "name": "imag.png", "hello": "world" } ``` """</ID>
-    <ID>StringTemplateIndent:SignatureWasmJsTest.kt:SignatureWasmJsTest$""" -----BEGIN PRIVATE KEY----- MEECAQAwEwYHKoZIzj0CAQYIKoZIzj0DAQcEJzAlAgEBBCAeAx1tytf8DDzj7hXF 3Yj/nWmeQ/PivDcglFiGezFIPQ== -----END PRIVATE KEY----- """</ID>
+    <ID>SuspendFunSwallowedCancellation:Signature.kt:AlgoP256$runCatching</ID>
+    <ID>SuspendFunSwallowedCancellation:Signature.kt:AlgoP256.&lt;no name provided&gt;$runCatching</ID>
+    <ID>SuspendFunSwallowedCancellation:Signature.kt:runCatching</ID>
     <ID>TooGenericExceptionCaught:Result.kt:e: Throwable</ID>
     <ID>TooGenericExceptionThrown:Markdown.kt:throw Exception("unknown object type ${objectTuple.objectType}")</ID>
     <ID>TooGenericExceptionThrown:Signature.jvmAndroid.kt:CryptoJvm$throw Exception("can not create parent file $path")</ID>
@@ -813,23 +724,11 @@
     <ID>TooManyFunctions:Signature.kt:com.storyteller_f.shared.Signature.kt</ID>
     <ID>TrailingCommaOnCallSite:Markdown.kt:&lt;no name provided&gt;$( MathContext( mathContent, node.startOffset, node.endOffset, node.type == GFMElementTypes.INLINE_MATH ) )</ID>
     <ID>TrailingCommaOnCallSite:Markdown.kt:&lt;no name provided&gt;$( mathContent, node.startOffset, node.endOffset, node.type == GFMElementTypes.INLINE_MATH )</ID>
-    <ID>TrailingCommaOnCallSite:MarkdownTest.kt:MarkdownTest$( """ # First Level Header Some introductory text before the second level header. Hello. """.trimIndent(), extractMarkdownHeadline(markdownText) )</ID>
-    <ID>TrailingCommaOnCallSite:MarkdownTest.kt:MarkdownTest$( """ hello ```csa /user/1 ``` ```object {"name":"imag.png","contentType":"image/png"} ``` """.trimIndent(), message )</ID>
-    <ID>TrailingCommaOnCallSite:MarkdownTest.kt:MarkdownTest$( """![I00012733.jpg](I00012733.jpg "I00012733.jpg")""", extractMarkdownHeadline("""![I00012733.jpg](I00012733.jpg "I00012733.jpg")""") )</ID>
-    <ID>TrailingCommaOnCallSite:MarkdownTest.kt:MarkdownTest$( "appium-favorite-topic-1781614397799", trimMarkdownUnusedContent("appium-favorite-topic-1781614397799") )</ID>
-    <ID>TrailingCommaOnCallSite:RoomFrameTest.kt:RoomFrameTest$( NewRoomTopic(ObjectType.ROOM, DEFAULT_PRIMARY_KEY, TopicContent.Plain("test")) )</ID>
     <ID>TrailingCommaOnCallSite:Signature.jvmAndroid.kt:&lt;no name provided&gt;.&lt;no name provided&gt;$( MLKEMParameters.ml_kem_768, derPrivateKeyStr.hexToByteArray() )</ID>
     <ID>TrailingCommaOnCallSite:Signature.jvmAndroid.kt:&lt;no name provided&gt;.&lt;no name provided&gt;$( MLKEMParameters.ml_kem_768, derPublicKeyStr.hexToByteArray() )</ID>
     <ID>TrailingCommaOnCallSite:Signature.jvmAndroid.kt:CryptoJvm$( issuer, serial, notBefore, notAfter, subject, keyPair.public )</ID>
     <ID>TrailingCommaOnCallSite:Signature.jvmAndroid.kt:CryptoJvm$( issuer, serialNumber, notBefore, notAfter, subject, publicKey )</ID>
-    <ID>TrailingCommaOnCallSite:Signature.wasmJs.kt:( pem.replace("-----BEGIN $type-----", "") .replace("-----END $type-----", "") .replace(Regex("\\s"), "") )</ID>
-    <ID>TrailingCommaOnCallSite:Signature.wasmJs.kt:&lt;no name provided&gt;.&lt;no name provided&gt;$( MlCrypto.mlKem768Encapsulate(derPublicKeyStr) )</ID>
-    <ID>TrailingCommaOnCallSite:Signature.wasmJs.kt:&lt;no name provided&gt;.&lt;no name provided&gt;$( cipherText.toHexString(), derPrivateKeyStr )</ID>
-    <ID>TrailingCommaOnCallSite:SignatureTest.kt:SignatureTest$( "encrypted message", algorithm.decryptMessage(encryptionPrivateKey, encrypted, encryptedAesKey).getOrThrow() )</ID>
-    <ID>TrailingCommaOnCallSite:SignatureTest.kt:SignatureTest$( aesKey, algorithm.encryptionAlgo.kemDecrypt(encryptionPrivateKey, encryptedAesKey).getOrThrow() )</ID>
-    <ID>TrailingCommaOnCallSite:SignatureWasmJsTest.kt:SignatureWasmJsTest$( aesKey, AlgoP256.encryptionAlgo.kemDecrypt(privateDer, encryptedAesKey).getOrThrow() )</ID>
     <ID>TrailingCommaOnCallSite:Strings.android.kt:( "[\\uE000-\\uE0FF \\uE5FA-\\uE6B7 \\uE700-\\uE8EF " + "\\uEA60-\\uEC1E \\uED00-\\uEFCE \\uF000-\\uF2FF " + "\\uF300-\\uF381 \\uF400-\\uFD46 " + "\\U000F0001-\\U000F1AF0]" )</ID>
-    <ID>TrailingCommaOnCallSite:Strings.jvm.kt:( "[\\uE000-\\uE0FF \\uE5FA-\\uE6B7 \\uE700-\\uE8EF " + "\\uEA60-\\uEC1E \\uED00-\\uEFCE \\uF000-\\uF2FF " + "\\uF300-\\uF381 \\uF400-\\uFD46 " + "\\U000F0001-\\U000F1AF0]" )</ID>
     <ID>TrailingCommaOnCallSite:UserFavoriteInfo.kt:UserFavoriteInfo.Companion$( id = DEFAULT_PRIMARY_KEY, uid = DEFAULT_PRIMARY_KEY, objectId = DEFAULT_PRIMARY_KEY, objectType = ObjectType.TOPIC, now(), null )</ID>
     <ID>TrailingCommaOnCallSite:UserSubscriptionInfo.kt:UserSubscriptionInfo.Companion$( id = DEFAULT_PRIMARY_KEY, uid = DEFAULT_PRIMARY_KEY, objectId = DEFAULT_PRIMARY_KEY, objectType = ObjectType.TOPIC, now(), null )</ID>
     <ID>TrailingCommaOnDeclarationSite:Asset.kt:AssetTransactionInfo$( val assetId: PrimaryKey, val type: AssetType, val createdTime: LocalDateTime, val before: Int, val after: Int )</ID>
@@ -859,8 +758,6 @@
     <ID>TrailingCommaOnDeclarationSite:Signature.kt:AlgoP256$( derPublicKey: String, derSignature: String, data: String )</ID>
     <ID>TrailingCommaOnDeclarationSite:Signature.kt:AlgoP256.&lt;no name provided&gt;$( derPrivateKeyStr: String, encrypted: ByteArray )</ID>
     <ID>TrailingCommaOnDeclarationSite:Signature.kt:AlgoP256.&lt;no name provided&gt;$( derPublicKeyStr: String, aesKeyBytes: ByteArray )</ID>
-    <ID>TrailingCommaOnDeclarationSite:Signature.wasmJs.kt:&lt;no name provided&gt;.&lt;no name provided&gt;$( derPrivateKeyStr: String )</ID>
-    <ID>TrailingCommaOnDeclarationSite:Signature.wasmJs.kt:&lt;no name provided&gt;.&lt;no name provided&gt;$( pemPrivateKeyStr: String )</ID>
     <ID>TrailingCommaOnDeclarationSite:SnowflakeData.kt:SnowflakeData$( val machineId: Int, val sequence: Long, val utc: LocalDateTime, val local: LocalDateTime )</ID>
     <ID>TrailingCommaOnDeclarationSite:TaskRecordInfo.kt:TaskRecordInfo$( override val id: PrimaryKey, val createdTime: LocalDateTime, val processedId: PrimaryKey, val type: TaskRecordType )</ID>
     <ID>TrailingCommaOnDeclarationSite:TitleInfo.kt:TitleSearchType</ID>
@@ -890,7 +787,6 @@
     <ID>UndocumentedPublicClass:CommunityInfo.kt:FontSettingsWithInfo</ID>
     <ID>UndocumentedPublicClass:CommunityInfo.kt:MemberPolicy</ID>
     <ID>UndocumentedPublicClass:CommunityInfo.kt:PosterSearch</ID>
-    <ID>UndocumentedPublicClass:ContentTest.kt:ContentTest : PlatformHeadlessTest</ID>
     <ID>UndocumentedPublicClass:CustomImmutableList.kt:ImmutableListSerializer&lt;T&gt; : KSerializer</ID>
     <ID>UndocumentedPublicClass:CustomImmutableList.kt:ImmutableMapSerializer&lt;K, V&gt; : KSerializer</ID>
     <ID>UndocumentedPublicClass:ExplainResult.kt:ExplainResult</ID>
@@ -913,14 +809,7 @@
     <ID>UndocumentedPublicClass:PanelLogInfo.kt:PanelLogInfo : PrimaryKeyIdentifiable</ID>
     <ID>UndocumentedPublicClass:PanelOverview.kt:PanelOverview</ID>
     <ID>UndocumentedPublicClass:Platform.android.kt:AndroidPlatform : Platform</ID>
-    <ID>UndocumentedPublicClass:Platform.ios.kt:IOSPlatform : Platform</ID>
-    <ID>UndocumentedPublicClass:Platform.jvm.kt:CustomAntilog : Antilog</ID>
-    <ID>UndocumentedPublicClass:Platform.jvm.kt:CustomAntilog$Companion</ID>
-    <ID>UndocumentedPublicClass:Platform.jvm.kt:JVMPlatform : Platform</ID>
     <ID>UndocumentedPublicClass:Platform.kt:Platform</ID>
-    <ID>UndocumentedPublicClass:Platform.wasmJs.kt:WasmPlatform : Platform</ID>
-    <ID>UndocumentedPublicClass:PlatformHeadlessTest.android.kt:PlatformHeadlessTest</ID>
-    <ID>UndocumentedPublicClass:PlatformHeadlessTest.kt:PlatformHeadlessTest</ID>
     <ID>UndocumentedPublicClass:Preset.kt:PresetCommunity</ID>
     <ID>UndocumentedPublicClass:Preset.kt:PresetFile</ID>
     <ID>UndocumentedPublicClass:Preset.kt:PresetPanelAccount</ID>
@@ -961,7 +850,6 @@
     <ID>UndocumentedPublicClass:Signature.kt:EncryptionAlgo</ID>
     <ID>UndocumentedPublicClass:Signature.kt:Type1Algo : EncryptionAlgo</ID>
     <ID>UndocumentedPublicClass:Signature.kt:Type2Algo : EncryptionAlgo</ID>
-    <ID>UndocumentedPublicClass:SignatureWasmJsTest.kt:SignatureWasmJsTest</ID>
     <ID>UndocumentedPublicClass:TaskRecordInfo.kt:TaskRecordInfo : PrimaryKeyIdentifiable</ID>
     <ID>UndocumentedPublicClass:TaskRecordInfo.kt:TaskRecordType</ID>
     <ID>UndocumentedPublicClass:TitleInfo.kt:TitleInfo : ModelObject</ID>
@@ -1015,8 +903,6 @@
     <ID>UndocumentedPublicClass:UserSubscriptionInfo.kt:UserSubscriptionInfo : PrimaryKeyIdentifiable</ID>
     <ID>UndocumentedPublicClass:UserSubscriptionInfo.kt:UserSubscriptionInfo$Companion</ID>
     <ID>UndocumentedPublicClass:UserSubscriptionInfo.kt:UserSubscriptionInfo$Extensions</ID>
-    <ID>UndocumentedPublicClass:keccak.kt:Keccak</ID>
-    <ID>UndocumentedPublicFunction:ContentTest.kt:ContentTest$@Test fun `test check content`</ID>
     <ID>UndocumentedPublicFunction:FileInfo.kt:fun checkMediaFileDimensionRatioMatch: Boolean</ID>
     <ID>UndocumentedPublicFunction:Hash.kt:@OptIn(ExperimentalStdlibApi::class) fun md5: String</ID>
     <ID>UndocumentedPublicFunction:Hash.kt:suspend fun sha256: String</ID>
@@ -1039,12 +925,8 @@
     <ID>UndocumentedPublicFunction:ObjectTuple.kt:infix fun PrimaryKey.ob: ObjectTuple</ID>
     <ID>UndocumentedPublicFunction:Platform.android.kt:actual fun getPlatform: Platform</ID>
     <ID>UndocumentedPublicFunction:Platform.android.kt:fun getAppContextRefValue: Application?</ID>
-    <ID>UndocumentedPublicFunction:Platform.ios.kt:actual fun getPlatform: Platform</ID>
-    <ID>UndocumentedPublicFunction:Platform.jvm.kt:actual fun getPlatform: Platform</ID>
     <ID>UndocumentedPublicFunction:Platform.kt:expect fun getPlatform: Platform</ID>
     <ID>UndocumentedPublicFunction:Platform.kt:fun setupKmpLogger</ID>
-    <ID>UndocumentedPublicFunction:Platform.wasmJs.kt:actual fun getPlatform: Platform</ID>
-    <ID>UndocumentedPublicFunction:PlatformHeadlessTest.android.kt:PlatformHeadlessTest$@Before fun setup</ID>
     <ID>UndocumentedPublicFunction:Preset.kt:PresetCommunity$fun getSafeAdmin: String</ID>
     <ID>UndocumentedPublicFunction:PrimaryKey.kt:fun String.toPrimaryKey</ID>
     <ID>UndocumentedPublicFunction:PrimaryKey.kt:fun String.toPrimaryKeyOrNull</ID>
@@ -1060,9 +942,6 @@
     <ID>UndocumentedPublicFunction:Result.kt:suspend fun &lt;T&gt; Result&lt;T?&gt;.filterNotNull: Result&lt;T&gt;</ID>
     <ID>UndocumentedPublicFunction:Result.kt:suspend fun &lt;T&gt; Result&lt;T?&gt;.ifNotNull</ID>
     <ID>UndocumentedPublicFunction:Result.kt:suspend fun Result&lt;Boolean&gt;.errorIfFalse: Result&lt;Unit&gt;</ID>
-    <ID>UndocumentedPublicFunction:Signature.ios.kt:actual fun loadIfNeed</ID>
-    <ID>UndocumentedPublicFunction:Signature.ios.kt:actual suspend fun calcAddress: String</ID>
-    <ID>UndocumentedPublicFunction:Signature.ios.kt:actual suspend fun getDerPublicKeyFromPrivateKey: String</ID>
     <ID>UndocumentedPublicFunction:Signature.jvmAndroid.kt:@OptIn(DelicateCryptographyApi::class) actual suspend fun ripemd160Platform: ByteArray</ID>
     <ID>UndocumentedPublicFunction:Signature.jvmAndroid.kt:CryptoJvm$@Suppress("DeprecatedProvider") fun encrypt: Result&lt;Pair&lt;ByteArray, ByteArray&gt;&gt;</ID>
     <ID>UndocumentedPublicFunction:Signature.jvmAndroid.kt:CryptoJvm$@Throws(Exception::class) fun getPublicKeyFromPrivateKey: Result&lt;PublicKey&gt;</ID>
@@ -1088,37 +967,16 @@
     <ID>UndocumentedPublicFunction:Signature.kt:fun getAlgo: Algo</ID>
     <ID>UndocumentedPublicFunction:Signature.kt:suspend fun &lt;T&gt; algoRunCatching: Result&lt;T&gt;</ID>
     <ID>UndocumentedPublicFunction:Signature.kt:suspend fun buildEncryptedTopicContent: TopicContent.Encrypted</ID>
-    <ID>UndocumentedPublicFunction:Signature.wasmJs.kt:actual fun loadCryptoLibIfNeed</ID>
-    <ID>UndocumentedPublicFunction:Signature.wasmJs.kt:actual suspend fun getDerPrivateKeyP256: Result&lt;String&gt;</ID>
-    <ID>UndocumentedPublicFunction:Signature.wasmJs.kt:actual suspend fun getDerPublicKeyFromPrivateKeyP256: Result&lt;String&gt;</ID>
-    <ID>UndocumentedPublicFunction:Signature.wasmJs.kt:actual suspend fun ripemd160Platform: ByteArray</ID>
-    <ID>UndocumentedPublicFunction:SignatureWasmJsTest.kt:SignatureWasmJsTest$@Test fun md5UsesWasmImplementation</ID>
-    <ID>UndocumentedPublicFunction:SignatureWasmJsTest.kt:SignatureWasmJsTest$@Test fun mlDsaAndMlKemCanSignAndEncrypt</ID>
-    <ID>UndocumentedPublicFunction:SignatureWasmJsTest.kt:SignatureWasmJsTest$@Test fun p256CanReadJvmGeneratedPrivateKey</ID>
-    <ID>UndocumentedPublicFunction:SignatureWasmJsTest.kt:SignatureWasmJsTest$@Test fun p256CanSignEncryptAndDerivePublicKey</ID>
     <ID>UndocumentedPublicFunction:Strings.android.kt:actual fun checkContent: Result&lt;Unit&gt;</ID>
     <ID>UndocumentedPublicFunction:Strings.android.kt:actual fun safeFirstEmoji: String?</ID>
     <ID>UndocumentedPublicFunction:Strings.android.kt:actual fun safeFirstUnicode: String?</ID>
     <ID>UndocumentedPublicFunction:Strings.android.kt:fun UnicodeSet.safeFreeze: UnicodeSet</ID>
-    <ID>UndocumentedPublicFunction:Strings.ios.kt:actual fun checkContent: Boolean</ID>
-    <ID>UndocumentedPublicFunction:Strings.ios.kt:actual fun safeFirstEmoji: String?</ID>
-    <ID>UndocumentedPublicFunction:Strings.ios.kt:actual fun safeFirstUnicode: String?</ID>
-    <ID>UndocumentedPublicFunction:Strings.jvm.kt:actual fun checkContent: Result&lt;Unit&gt;</ID>
-    <ID>UndocumentedPublicFunction:Strings.jvm.kt:actual fun safeFirstEmoji: String?</ID>
-    <ID>UndocumentedPublicFunction:Strings.jvm.kt:actual fun safeFirstUnicode: String?</ID>
     <ID>UndocumentedPublicFunction:Strings.kt:expect fun safeFirstEmoji: String?</ID>
     <ID>UndocumentedPublicFunction:Strings.kt:expect fun safeFirstUnicode: String?</ID>
     <ID>UndocumentedPublicFunction:Strings.kt:fun Throwable.safeMessage: String</ID>
-    <ID>UndocumentedPublicFunction:Strings.wasmJs.kt:actual fun checkContent: Result&lt;Unit&gt;</ID>
-    <ID>UndocumentedPublicFunction:Strings.wasmJs.kt:actual fun safeFirstEmoji: String?</ID>
-    <ID>UndocumentedPublicFunction:Strings.wasmJs.kt:actual fun safeFirstUnicode: String?</ID>
     <ID>UndocumentedPublicFunction:Time.kt:@ExperimentalTime fun LocalDateTime.formatTime: String</ID>
     <ID>UndocumentedPublicFunction:Time.kt:@OptIn(ExperimentalTime::class) fun now: LocalDateTime</ID>
     <ID>UndocumentedPublicFunction:Time.kt:@OptIn(ExperimentalTime::class) fun nowInstance</ID>
-    <ID>UndocumentedPublicFunction:keccak.kt:@JsModule("keccak") external fun createKeccakHash: Keccak</ID>
-    <ID>UndocumentedPublicFunction:keccak.kt:Keccak$fun digest: String</ID>
-    <ID>UndocumentedPublicFunction:keccak.kt:Keccak$fun update: Keccak</ID>
-    <ID>UndocumentedPublicFunction:sha3.kt:external fun keccak_256: String</ID>
     <ID>UndocumentedPublicProperty:Asset.kt:AssetTransactionInfo$val after: Int</ID>
     <ID>UndocumentedPublicProperty:Asset.kt:AssetTransactionInfo$val assetId: PrimaryKey</ID>
     <ID>UndocumentedPublicProperty:Asset.kt:AssetTransactionInfo$val before: Int</ID>
@@ -1240,7 +1098,6 @@
     <ID>UndocumentedPublicProperty:PanelOverview.kt:PanelOverview$val userCount: Long</ID>
     <ID>UndocumentedPublicProperty:Platform.android.kt:lateinit var appContextRef: WeakReference&lt;Application&gt;</ID>
     <ID>UndocumentedPublicProperty:Platform.android.kt:val isRunningOnRobolectric: Boolean get() = try { Class.forName("org.robolectric.Robolectric") true } catch (_: Exception) { false }</ID>
-    <ID>UndocumentedPublicProperty:Platform.jvm.kt:actual val kmpLogger: Antilog = CustomAntilog()</ID>
     <ID>UndocumentedPublicProperty:Platform.kt:Platform$val name: String</ID>
     <ID>UndocumentedPublicProperty:Platform.kt:expect val kmpLogger: Antilog</ID>
     <ID>UndocumentedPublicProperty:Platform.kt:val commonJson = Json { ignoreUnknownKeys = true }</ID>
@@ -1372,7 +1229,6 @@
     <ID>UndocumentedPublicProperty:Signature.jvmAndroid.kt:actual val AlgoDilithium: Algo = object : Algo { override suspend fun verify( derPublicKey: String, derSignature: String, data: String ): Result&lt;Boolean&gt; { return runCatching { MLDSASigner().apply { init(false, MLDSAPublicKeyParameters(MLDSAParameters.ml_dsa_65, derPublicKey.hexToByteArray())) update(data.encodeToByteArray(), 0, data.encodeToByteArray().size) }.verifySignature(derSignature.hexToByteArray()) } } override suspend fun signature( derPrivateKey: String, data: String ): Result&lt;String&gt; { return runCatching { MLDSASigner().apply { init(true, MLDSAPrivateKeyParameters(MLDSAParameters.ml_dsa_65, derPrivateKey.hexToByteArray())) update(data.encodeToByteArray(), 0, data.encodeToByteArray().size) }.generateSignature().toHexString() } } override suspend fun getDerPrivateKey(pemPrivateKey: String): Result&lt;String&gt; { return runCatching { val base64 = pemPrivateKey .replace("-----BEGIN PRIVATE KEY-----", "") .replace("-----END PRIVATE KEY-----", "") .replace("\r", "") .replace("\n", "") .trim() val der = Base64.decode(base64) der.toHexString() } } @OptIn(ExperimentalEncodingApi::class) override suspend fun getPemPrivateKeyFromDer(derPrivateKey: String): Result&lt;String&gt; { return runCatching { val der = derPrivateKey.hexToByteArray() val base64 = Base64.encode(der).chunked(64).joinToString("\n") buildString { appendLine("-----BEGIN PRIVATE KEY-----") appendLine(base64) appendLine("-----END PRIVATE KEY-----") } } } override suspend fun calcAddress(derPublicKeyStr: String): Result&lt;String&gt; { return calcAddressSHA256AndRipemd160(derPublicKeyStr) } @OptIn(ExperimentalEncodingApi::class) override suspend fun generatePemKeyPair(): Result&lt;Pair&lt;String, String&gt;&gt; { return runCatching { val kpg = KeyPairGenerator.getInstance("ML-DSA", "BC") kpg.initialize(MLDSAParameterSpec.ml_dsa_65, SecureRandom()) val kp = kpg.generateKeyPair() val privDer = (kp.private as MLDSAPrivateKey).privateData val privB64 = Base64.encode(privDer).chunked(64).joinToString("\n") val privatePem = buildString { appendLine("-----BEGIN PRIVATE KEY-----") appendLine(privB64) appendLine("-----END PRIVATE KEY-----") } val pubDer = (kp.public as MLDSAPublicKey).publicData val pubB64 = Base64.encode(pubDer).chunked(64).joinToString("\n") val publicPem = buildString { appendLine("-----BEGIN PUBLIC KEY-----") appendLine(pubB64) appendLine("-----END PUBLIC KEY-----") } privatePem to publicPem } } @OptIn(ExperimentalEncodingApi::class) override suspend fun getDerPublicKeyFromPem(pemPublicKeyStr: String): Result&lt;String&gt; { return runCatching { val base64 = pemPublicKeyStr .replace("-----BEGIN PUBLIC KEY-----", "") .replace("-----END PUBLIC KEY-----", "") .replace("\r", "") .replace("\n", "") .trim() val der = Base64.decode(base64) der.toHexString() } } override suspend fun getPemPublicKeyFromDer(derPublicKey: String): Result&lt;String&gt; { return runCatching { val der = derPublicKey.hexToByteArray() val base64 = Base64.encode(der).chunked(64).joinToString("\n") buildString { appendLine("-----BEGIN PUBLIC KEY-----") appendLine(base64) appendLine("-----END PUBLIC KEY-----") } } } override suspend fun getDerPublicKeyFromPrivateKey(pemPrivateKeyStr: String): Result&lt;String&gt; { return runCatching { val base64 = pemPrivateKeyStr .replace("-----BEGIN PRIVATE KEY-----", "") .replace("-----END PRIVATE KEY-----", "") .replace("\r", "") .replace("\n", "") .trim() val privateKeyBytes = Base64.decode(base64) MLDSAPrivateKeyParameters(MLDSAParameters.ml_dsa_65, privateKeyBytes) .publicKey .toHexString() } } override val encryptionAlgo: EncryptionAlgo = object : Type2Algo { override suspend fun kemEncrypt( derPublicKeyStr: String, aesKeyBytes: ByteArray ): Result&lt;ByteArray&gt; { return runCatching { val publicKey = MLKEMPublicKeyParameters( MLKEMParameters.ml_kem_768, derPublicKeyStr.hexToByteArray() ) val secret = MLKEMGenerator(SecureRandom()).generateEncapsulated(publicKey) secret.encapsulation + (aesKeyBytes xor secret.secret) } } override suspend fun kemDecrypt( derPrivateKeyStr: String, encrypted: ByteArray ): Result&lt;ByteArray&gt; { return runCatching { require(encrypted.size &gt; 32) { "invalid ML-KEM ciphertext" } val cipherText = encrypted.copyOfRange(0, encrypted.size - 32) val encryptedAesKey = encrypted.copyOfRange(encrypted.size - 32, encrypted.size) val privateKey = MLKEMPrivateKeyParameters( MLKEMParameters.ml_kem_768, derPrivateKeyStr.hexToByteArray() ) encryptedAesKey xor MLKEMExtractor(privateKey).extractSecret(cipherText) } } @OptIn(ExperimentalEncodingApi::class) override suspend fun generateEncryptionPemKeyPair(): Result&lt;Pair&lt;String, String&gt;&gt; { return runCatching { val kpg = KeyPairGenerator.getInstance("ML-KEM", "BC") kpg.initialize(MLKEMParameterSpec.ml_kem_768, SecureRandom()) val kp = kpg.generateKeyPair() val privDer = (kp.private as MLKEMPrivateKey).privateData val privB64 = Base64.encode(privDer).chunked(64).joinToString("\n") val privatePem = buildString { appendLine("-----BEGIN PRIVATE KEY-----") appendLine(privB64) appendLine("-----END PRIVATE KEY-----") } val pubDer = (kp.public as MLKEMPublicKey).publicData val pubB64 = Base64.encode(pubDer).chunked(64).joinToString("\n") val publicPem = buildString { appendLine("-----BEGIN PUBLIC KEY-----") appendLine(pubB64) appendLine("-----END PUBLIC KEY-----") } privatePem to publicPem } } override suspend fun getDerEncryptionPublicKeyFromPemPrivateKey(pemPrivateKeyStr: String): Result&lt;String&gt; { return runCatching { val base64 = pemPrivateKeyStr .replace("-----BEGIN PRIVATE KEY-----", "") .replace("-----END PRIVATE KEY-----", "") .replace("\r", "") .replace("\n", "") .trim() val privateKeyBytes = Base64.decode(base64) MLKEMPrivateKeyParameters(MLKEMParameters.ml_kem_768, privateKeyBytes) .publicKey .toHexString() } } @OptIn(ExperimentalEncodingApi::class) override suspend fun getDerEncryptionPrivateKeyFromPemPrivateKey(pemPrivateKeyStr: String): Result&lt;String&gt; { return runCatching { val base64 = pemPrivateKeyStr .replace("-----BEGIN PRIVATE KEY-----", "") .replace("-----END PRIVATE KEY-----", "") .replace("\r", "") .replace("\n", "") .trim() val der = Base64.decode(base64) der.toHexString() } } @OptIn(ExperimentalEncodingApi::class) override suspend fun getPemEncryptionPrivateKeyFromDerPrivateKey(derPrivateKeyStr: String): Result&lt;String&gt; { return runCatching { val der = derPrivateKeyStr.hexToByteArray() val base64 = Base64.encode(der).chunked(64).joinToString("\n") buildString { appendLine("-----BEGIN PRIVATE KEY-----") appendLine(base64) appendLine("-----END PRIVATE KEY-----") } } } } }</ID>
     <ID>UndocumentedPublicProperty:Signature.kt:Algo$val encryptionAlgo: EncryptionAlgo</ID>
     <ID>UndocumentedPublicProperty:Signature.kt:expect val AlgoDilithium: Algo</ID>
-    <ID>UndocumentedPublicProperty:Signature.wasmJs.kt:actual val AlgoDilithium: Algo = object : Algo { override suspend fun verify(derPublicKey: String, derSignature: String, data: String): Result&lt;Boolean&gt; = runCatching { MlCrypto.mlDsa65Verify(derSignature, data, derPublicKey) } override suspend fun signature(derPrivateKey: String, data: String): Result&lt;String&gt; = runCatching { MlCrypto.mlDsa65Sign(data, derPrivateKey) } override suspend fun getDerPrivateKey(pemPrivateKey: String): Result&lt;String&gt; = runCatching { pemToRaw(pemPrivateKey, "PRIVATE KEY").toHexString() } override suspend fun getPemPrivateKeyFromDer(derPrivateKey: String): Result&lt;String&gt; = runCatching { rawToPem(derPrivateKey.hexToByteArray(), "PRIVATE KEY") } override suspend fun getDerPublicKeyFromPem(pemPublicKeyStr: String): Result&lt;String&gt; = runCatching { pemToRaw(pemPublicKeyStr, "PUBLIC KEY").toHexString() } override suspend fun getPemPublicKeyFromDer(derPublicKey: String): Result&lt;String&gt; = runCatching { rawToPem(derPublicKey.hexToByteArray(), "PUBLIC KEY") } override suspend fun getDerPublicKeyFromPrivateKey(pemPrivateKeyStr: String): Result&lt;String&gt; = runCatching { MlCrypto.mlDsa65PublicKey(getDerPrivateKey(pemPrivateKeyStr).getOrThrow()) } override suspend fun calcAddress(derPublicKeyStr: String): Result&lt;String&gt; = calcAddressSHA256AndRipemd160(derPublicKeyStr) override suspend fun generatePemKeyPair(): Result&lt;Pair&lt;String, String&gt;&gt; = runCatching { val keyPair = commonJson.decodeFromString&lt;MlKeyPair&gt;(MlCrypto.mlDsa65KeyPair()) rawToPem(keyPair.privateKey.hexToByteArray(), "PRIVATE KEY") to rawToPem(keyPair.publicKey.hexToByteArray(), "PUBLIC KEY") } override val encryptionAlgo: EncryptionAlgo = object : Type2Algo { override suspend fun kemEncrypt(derPublicKeyStr: String, aesKeyBytes: ByteArray): Result&lt;ByteArray&gt; = runCatching { val encapsulation = commonJson.decodeFromString&lt;MlKemEncapsulation&gt;( MlCrypto.mlKem768Encapsulate(derPublicKeyStr) ) encapsulation.cipherText.hexToByteArray() + (aesKeyBytes xor encapsulation.sharedSecret.hexToByteArray()) } override suspend fun kemDecrypt(derPrivateKeyStr: String, encrypted: ByteArray): Result&lt;ByteArray&gt; = runCatching { require(encrypted.size &gt; 32) { "invalid ML-KEM ciphertext" } val encryptedAesKey = encrypted.copyOfRange(encrypted.size - 32, encrypted.size) val cipherText = encrypted.copyOfRange(0, encrypted.size - 32) encryptedAesKey xor MlCrypto.mlKem768Decapsulate( cipherText.toHexString(), derPrivateKeyStr ).hexToByteArray() } override suspend fun generateEncryptionPemKeyPair(): Result&lt;Pair&lt;String, String&gt;&gt; = runCatching { val keyPair = commonJson.decodeFromString&lt;MlKeyPair&gt;(MlCrypto.mlKem768KeyPair()) rawToPem(keyPair.privateKey.hexToByteArray(), "PRIVATE KEY") to rawToPem(keyPair.publicKey.hexToByteArray(), "PUBLIC KEY") } override suspend fun getDerEncryptionPublicKeyFromPemPrivateKey( pemPrivateKeyStr: String ): Result&lt;String&gt; = runCatching { MlCrypto.mlKem768PublicKey(pemToRaw(pemPrivateKeyStr, "PRIVATE KEY").toHexString()) } override suspend fun getDerEncryptionPrivateKeyFromPemPrivateKey( pemPrivateKeyStr: String ): Result&lt;String&gt; = runCatching { pemToRaw(pemPrivateKeyStr, "PRIVATE KEY").toHexString() } override suspend fun getPemEncryptionPrivateKeyFromDerPrivateKey( derPrivateKeyStr: String ): Result&lt;String&gt; = runCatching { rawToPem(derPrivateKeyStr.hexToByteArray(), "PRIVATE KEY") } } }</ID>
     <ID>UndocumentedPublicProperty:TaskRecordInfo.kt:TaskRecordInfo$val createdTime: LocalDateTime</ID>
     <ID>UndocumentedPublicProperty:TaskRecordInfo.kt:TaskRecordInfo$val processedId: PrimaryKey</ID>
     <ID>UndocumentedPublicProperty:TaskRecordInfo.kt:TaskRecordInfo$val type: TaskRecordType</ID>
@@ -1580,6 +1436,11 @@
     <ID>UndocumentedPublicProperty:UserSubscriptionInfo.kt:UserSubscriptionInfo$val uid: PrimaryKey</ID>
     <ID>UndocumentedPublicProperty:UserSubscriptionInfo.kt:UserSubscriptionInfo.Companion$val EMPTY = UserSubscriptionInfo( id = DEFAULT_PRIMARY_KEY, uid = DEFAULT_PRIMARY_KEY, objectId = DEFAULT_PRIMARY_KEY, objectType = ObjectType.TOPIC, now(), null )</ID>
     <ID>UndocumentedPublicProperty:UserSubscriptionInfo.kt:UserSubscriptionInfo.Extensions$val topicInfo: TopicInfo? = null</ID>
+    <ID>UnsafeCallOnNullableType:Result.kt:exceptionOrNull()!!</ID>
+    <ID>UnusedImport:Signature.jvmAndroid.kt:import org.bouncycastle.jcajce.spec.MLDSAPrivateKeySpec</ID>
+    <ID>UnusedImport:Signature.jvmAndroid.kt:import org.bouncycastle.jcajce.spec.MLDSAPublicKeySpec</ID>
+    <ID>UnusedImport:Signature.jvmAndroid.kt:import org.bouncycastle.jcajce.spec.MLKEMPrivateKeySpec</ID>
+    <ID>UseDataClass:Markdown.kt:MathContext</ID>
     <ID>UseLet:Markdown.kt:if (matchResult != null) { matchResult.groupValues[2] // 提取图片路径 } else { null }</ID>
     <ID>UseLet:Result.kt:if (value == null) { null } else { block(value) }</ID>
     <ID>Wrapping:Markdown.kt:&lt;no name provided&gt;$(</ID>

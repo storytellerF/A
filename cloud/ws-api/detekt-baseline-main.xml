@@ -1,0 +1,22 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>AbsentOrWrongFileLicense:WsEventService.kt:com.storyteller_f.a.cloud.ws.api.WsEventService.kt</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:WsEventService.kt:WsEventPublisher</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:WsEventService.kt:WsEventService</ID>
+    <ID>MultilineExpressionWrapping:WsEventService.kt:WsEventPublisher$client.rpc { url { takeFrom(url) } rpcConfig { serialization { json() } } }</ID>
+    <ID>MultilineLambdaItParameter:WsEventService.kt:WsEventPublisher${ Napier.e(it) { "publish websocket event failed" } }</ID>
+    <ID>PackageName:WsEventService.kt:package com.storyteller_f.a.cloud.ws.api</ID>
+    <ID>PackageNaming:WsEventService.kt:package com.storyteller_f.a.cloud.ws.api</ID>
+    <ID>SuspendFunSwallowedCancellation:WsEventService.kt:WsEventPublisher$runCatching</ID>
+    <ID>UndocumentedPublicClass:WsEventService.kt:GlobalWsEventPublisher</ID>
+    <ID>UndocumentedPublicClass:WsEventService.kt:WsEventPublisher</ID>
+    <ID>UndocumentedPublicClass:WsEventService.kt:WsEventService</ID>
+    <ID>UndocumentedPublicFunction:WsEventService.kt:GlobalWsEventPublisher$fun configure</ID>
+    <ID>UndocumentedPublicFunction:WsEventService.kt:GlobalWsEventPublisher$suspend fun publishNewTopic</ID>
+    <ID>UndocumentedPublicFunction:WsEventService.kt:WsEventPublisher$suspend fun publishNewTopic</ID>
+    <ID>UndocumentedPublicFunction:WsEventService.kt:WsEventService$suspend fun health: String</ID>
+    <ID>UndocumentedPublicFunction:WsEventService.kt:WsEventService$suspend fun publishNewTopic: Boolean</ID>
+  </CurrentIssues>
+</SmellBaseline>
