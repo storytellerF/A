@@ -1,5 +1,5 @@
-import io.gitlab.arturbosch.detekt.Detekt
-import io.gitlab.arturbosch.detekt.report.ReportMergeTask
+import dev.detekt.gradle.Detekt
+import dev.detekt.gradle.report.ReportMergeTask
 
 
 plugins {
@@ -58,7 +58,7 @@ val detektReportMergeSarif = tasks.register<ReportMergeTask>("detektReportMergeS
     output = layout.buildDirectory.file("reports/detekt/merge.sarif")
 }
 subprojects {
-    apply(plugin = "io.gitlab.arturbosch.detekt")
+    apply(plugin = "dev.detekt")
     detekt {
         // The directories where detekt looks for source files.
         // Defaults to `files("src/main/java", "src/test/java", "src/main/kotlin", "src/test/kotlin")`.
@@ -88,7 +88,7 @@ subprojects {
 
         // Specify the base path for file paths in the formatted reports.
         // If not set, all file paths reported will be absolute file path.
-        basePath = projectDir.absolutePath
+        basePath = layout.projectDirectory
 
         buildUponDefaultConfig = true
     }
@@ -101,11 +101,10 @@ subprojects {
 
     tasks.withType<Detekt>().configureEach {
         reports {
-            xml.required = true
+            checkstyle.required = true
             html.required = true
-            txt.required = true
             sarif.required = true
-            md.required = true
+            markdown.required = true
         }
         basePath = rootDir.absolutePath
         finalizedBy(detektReportMergeSarif)
@@ -113,7 +112,7 @@ subprojects {
 
     detektReportMergeSarif {
         input.from(
-            tasks.withType<Detekt>().map { it.sarifReportFile })
+            tasks.withType<Detekt>().map { it.reports.sarif.outputLocation })
     }
 }
 val koverIncludedProjects = listOf(

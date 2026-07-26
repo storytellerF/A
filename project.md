@@ -3,6 +3,7 @@
 ## Gradle Version Catalog
 
 - Versions in `gradle/libs.versions.toml` that are consumed directly by build scripts rather than a library or plugin `version.ref` must include `# @keep this version`, so catalog cleanup does not remove them. Current examples are Android SDK levels and `jdk`.
+- Detekt 2.x uses the `dev.detekt` Gradle plugin and Maven group. Its Ktlint wrapper is `dev.detekt:detekt-rules-ktlint-wrapper`; Gradle reports are `checkstyle`, `html`, `sarif`, and `markdown` (the former `txt` report is removed).
 
 ## Uploads (files)
 
