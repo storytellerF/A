@@ -42,6 +42,7 @@
 - After code changes, run `./gradlew assemble --console=plain` to check for compilation errors.
 - After compilation checks, run `./scripts/tool_scripts/exec-until-success.sh ./gradlew detekt --console=plain` for static code style checks.
   - On Windows, run this through Git Bash.
+- Detekt allows function names up to 50 characters so tests can use behavior-descriptive names. Keep production function names concise even when the configured limit permits longer names.
 
 ## Tests
 - Actively test affected modules.

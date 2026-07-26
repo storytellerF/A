@@ -65,4 +65,4 @@ else
 fi
 
 log "Start service by ssh"
-ssh default "cd Projects/AData && git pull && cd ../A && git stash && git fetch && git reset --hard origin/alpha && ./scripts/service_scripts/start-service-in-remote.sh $FLAVOR"
+ssh default "cd Projects/AData && git pull && cd ../A && git stash && git fetch && git reset --hard origin/main && ./scripts/service_scripts/start-service-in-remote.sh $FLAVOR"

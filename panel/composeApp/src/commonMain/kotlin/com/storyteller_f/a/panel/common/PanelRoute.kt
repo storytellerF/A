@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi::class)
+
 package com.storyteller_f.a.panel.common
 
 import PanelFilePreviewPage
@@ -10,6 +12,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -18,7 +21,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
@@ -29,7 +34,9 @@ import com.storyteller_f.a.client.compose_core.components.SignInButton
 import com.storyteller_f.a.client.compose_core.components.safeArea
 import com.storyteller_f.a.panel.LocalPanelNav
 import com.storyteller_f.a.panel.LocalPanelUiViewModel
+import com.storyteller_f.a.panel.PanelListDetailPane
 import com.storyteller_f.a.panel.Res
+import com.storyteller_f.a.panel.addPanelDetail
 import com.storyteller_f.a.panel.input
 import com.storyteller_f.a.panel.pages.AllCommunitiesPage
 import com.storyteller_f.a.panel.pages.AllFilesPage
@@ -47,6 +54,8 @@ import com.storyteller_f.a.panel.pages.TaskRecordsPage
 import com.storyteller_f.a.panel.pages.TitleDetailPage
 import com.storyteller_f.a.panel.pages.TopicDetailPage
 import com.storyteller_f.a.panel.pages.UserDetailPage
+import com.storyteller_f.a.panel.panelListDetailDestination
+import com.storyteller_f.a.panel.select_an_item
 import com.storyteller_f.a.panel.sign_in
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -172,12 +181,13 @@ interface PanelNavFactory {
     }
 }
 
-fun newPanelNav(backStack: NavBackStack<NavKey>, drawerState: DrawerState, scope: CoroutineScope) = object : PanelNav {
-    override val drawerState: DrawerState
-        get() = drawerState
-    override val backStack: NavBackStack<NavKey>
-        get() = backStack
-
+// PanelNav intentionally exposes one method per destination.
+@Suppress("TooManyFunctions")
+private class DefaultPanelNav(
+    override val backStack: NavBackStack<NavKey>,
+    override val drawerState: DrawerState,
+    private val scope: CoroutineScope,
+) : PanelNav {
     override fun gotoLogin() {
         backStack.add(PanelLoginScreen)
     }
@@ -191,7 +201,7 @@ fun newPanelNav(backStack: NavBackStack<NavKey>, drawerState: DrawerState, scope
     }
 
     override fun gotoUserDetail(uid: Long) {
-        backStack.add(PanelUserDetailScreen(uid))
+        backStack.addPanelDetail(PanelUserDetailScreen(uid))
     }
 
     override fun gotoAllCommunities() {
@@ -199,7 +209,7 @@ fun newPanelNav(backStack: NavBackStack<NavKey>, drawerState: DrawerState, scope
     }
 
     override fun gotoCommunityDetail(id: Long) {
-        backStack.add(PanelCommunityDetailScreen(id))
+        backStack.addPanelDetail(PanelCommunityDetailScreen(id))
     }
 
     override fun gotoAllPublicRooms() {
@@ -207,7 +217,7 @@ fun newPanelNav(backStack: NavBackStack<NavKey>, drawerState: DrawerState, scope
     }
 
     override fun gotoRoomDetail(id: Long) {
-        backStack.add(PanelRoomDetailScreen(id))
+        backStack.addPanelDetail(PanelRoomDetailScreen(id))
     }
 
     override fun gotoAllPrivateRooms() {
@@ -219,7 +229,7 @@ fun newPanelNav(backStack: NavBackStack<NavKey>, drawerState: DrawerState, scope
     }
 
     override fun gotoTopicDetail(id: Long) {
-        backStack.add(PanelTopicDetailScreen(id))
+        backStack.addPanelDetail(PanelTopicDetailScreen(id))
     }
 
     override fun gotoAllFiles() {
@@ -227,7 +237,7 @@ fun newPanelNav(backStack: NavBackStack<NavKey>, drawerState: DrawerState, scope
     }
 
     override fun gotoFileDetail(id: Long) {
-        backStack.add(PanelFileDetailScreen(id))
+        backStack.addPanelDetail(PanelFileDetailScreen(id))
     }
 
     override fun gotoAllTitles() {
@@ -235,7 +245,7 @@ fun newPanelNav(backStack: NavBackStack<NavKey>, drawerState: DrawerState, scope
     }
 
     override fun gotoTitleDetail(id: Long) {
-        backStack.add(PanelTitleDetailScreen(id))
+        backStack.addPanelDetail(PanelTitleDetailScreen(id))
     }
 
     override fun gotoTaskRecords() {
@@ -257,7 +267,31 @@ fun newPanelNav(backStack: NavBackStack<NavKey>, drawerState: DrawerState, scope
     }
 }
 
-fun rootEntryProvider(nav: PanelNav) = entryProvider {
+internal fun newPanelNav(backStack: NavBackStack<NavKey>, drawerState: DrawerState, scope: CoroutineScope): PanelNav =
+    DefaultPanelNav(backStack, drawerState, scope)
+
+private fun panelListDetailMetadata(key: NavKey): Map<String, Any> {
+    val destination = key.panelListDetailDestination() ?: return emptyMap()
+    return if (destination.pane == PanelListDetailPane.List) {
+        ListDetailSceneStrategy.listPane(
+            sceneKey = destination.scene,
+            detailPlaceholder = { panelDetailPlaceholder() },
+        )
+    } else {
+        ListDetailSceneStrategy.detailPane(sceneKey = destination.scene)
+    }
+}
+
+internal fun rootEntryProvider(nav: PanelNav): (NavKey) -> NavEntry<NavKey> {
+    val provider =
+        entryProvider {
+            addStandaloneEntries(nav)
+            addListDetailEntries()
+        }
+    return provider
+}
+
+private fun EntryProviderScope<NavKey>.addStandaloneEntries(nav: PanelNav) {
     entry<PanelLoginScreen> {
         PanelLoginPage {
             nav.back()
@@ -269,50 +303,63 @@ fun rootEntryProvider(nav: PanelNav) = entryProvider {
             OverviewPage()
         }
     }
-    entry<PanelAllUsersScreen> {
-        AllUsersPage()
-    }
-    entry<PanelUserDetailScreen> {
-        UserDetailPage(it.uid)
-    }
-    entry<PanelAllCommunitiesScreen> {
-        AllCommunitiesPage()
-    }
-    entry<PanelCommunityDetailScreen> {
-        CommunityDetailPage(it.id)
-    }
-    entry<PanelAllPublicRoomsScreen> {
-        AllPublicRoomsPage()
-    }
-    entry<PanelRoomDetailScreen> {
-        RoomDetailPage(it.id)
-    }
-    entry<PanelAllPrivateRoomsScreen> {
-        AllPrivateRoomsPage()
-    }
-    entry<PanelAllTopicsScreen> {
-        AllTopicsPage()
-    }
-    entry<PanelTopicDetailScreen> {
-        TopicDetailPage(it.id)
-    }
-    entry<PanelAllFilesScreen> {
-        AllFilesPage()
-    }
-    entry<PanelFileDetailScreen> {
-        FileDetailPage(it.id)
-    }
-    entry<PanelAllTitlesScreen> {
-        AllTitlesPage()
-    }
-    entry<PanelTitleDetailScreen> {
-        TitleDetailPage(it.id)
-    }
     entry<PanelTaskRecordsScreen> {
         TaskRecordsPage()
     }
     entry<PanelFilePreviewScreen> {
         PanelFilePreviewPage(it.id)
+    }
+}
+
+private fun EntryProviderScope<NavKey>.addListDetailEntries() {
+    entry<PanelAllUsersScreen>(metadata = { panelListDetailMetadata(it) }) {
+        AllUsersPage()
+    }
+    entry<PanelUserDetailScreen>(metadata = { panelListDetailMetadata(it) }) {
+        UserDetailPage(it.uid)
+    }
+    entry<PanelAllCommunitiesScreen>(metadata = { panelListDetailMetadata(it) }) {
+        AllCommunitiesPage()
+    }
+    entry<PanelCommunityDetailScreen>(metadata = { panelListDetailMetadata(it) }) {
+        CommunityDetailPage(it.id)
+    }
+    entry<PanelAllPublicRoomsScreen>(metadata = { panelListDetailMetadata(it) }) {
+        AllPublicRoomsPage()
+    }
+    entry<PanelRoomDetailScreen>(metadata = { panelListDetailMetadata(it) }) {
+        RoomDetailPage(it.id)
+    }
+    entry<PanelAllPrivateRoomsScreen>(metadata = { panelListDetailMetadata(it) }) {
+        AllPrivateRoomsPage()
+    }
+    entry<PanelAllTopicsScreen>(metadata = { panelListDetailMetadata(it) }) {
+        AllTopicsPage()
+    }
+    entry<PanelTopicDetailScreen>(metadata = { panelListDetailMetadata(it) }) {
+        TopicDetailPage(it.id)
+    }
+    entry<PanelAllFilesScreen>(metadata = { panelListDetailMetadata(it) }) {
+        AllFilesPage()
+    }
+    entry<PanelFileDetailScreen>(metadata = { panelListDetailMetadata(it) }) {
+        FileDetailPage(it.id)
+    }
+    entry<PanelAllTitlesScreen>(metadata = { panelListDetailMetadata(it) }) {
+        AllTitlesPage()
+    }
+    entry<PanelTitleDetailScreen>(metadata = { panelListDetailMetadata(it) }) {
+        TitleDetailPage(it.id)
+    }
+}
+
+@Composable
+private fun panelDetailPlaceholder() {
+    CenterBox {
+        Text(
+            text = stringResource(Res.string.select_an_item),
+            style = MaterialTheme.typography.bodyLarge,
+        )
     }
 }
 
