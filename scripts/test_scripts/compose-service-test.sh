@@ -172,15 +172,40 @@ sample_flavor="compose-test-sample"
 write_env "$sample_flavor" "sample"
 run_compose_service "$sample_flavor"
 assert_contains "$TMP_DIR/$sample_flavor.args" "docker-compose.sample.yml"
-assert_contains "$TMP_DIR/$sample_flavor.gradle.args" ":app:composeApp:wasmJsBrowserDistribution"
-assert_contains "$TMP_DIR/$sample_flavor.gradle.args" "-Ptarget.wasm=true"
-assert_contains "$TMP_DIR/$sample_flavor.gradle.args" "-Papp.server.url=http://localhost:8811"
-assert_contains "$TMP_DIR/$sample_flavor.gradle.args" "-Papp.ws.server.url=ws://localhost:8813"
-if MOCK_GRADLE_EXIT=1 GRADLEW=gradlew BUILD_SERVER_SCRIPT=true BUILD_WS_SCRIPT=true BUILD_CLI_SCRIPT=true ./scripts/service_scripts/compose-service.sh "$sample_flavor" false config > "$TMP_DIR/$sample_flavor.failure.stdout"; then
-  fail "sample profile must stop when the Wasm build fails"
+if [ -s "$TMP_DIR/$sample_flavor.gradle.args" ]; then
+  fail "compose-service must not build the Wasm distribution for the sample profile"
 fi
-assert_contains "$TMP_DIR/$sample_flavor.failure.stdout" "Failed to build the Wasm distribution"
 rm -f "deploy/$sample_flavor.env"
+
+sample_start_args="$TMP_DIR/sample-start.args"
+sample_start_generated="$TMP_DIR/sample-start.generated.yml"
+sample_start_gradle_args="$TMP_DIR/sample-start.gradle.args"
+: > "$sample_start_args"
+: > "$sample_start_generated"
+: > "$sample_start_gradle_args"
+MOCK_DOCKER_ARGS="$sample_start_args" \
+MOCK_GENERATED_OUT="$sample_start_generated" \
+MOCK_GRADLE_ARGS="$sample_start_gradle_args" \
+GRADLEW=gradlew \
+BUILD_SERVER_SCRIPT=true \
+BUILD_WS_SCRIPT=true \
+BUILD_CLI_SCRIPT=true \
+./scripts/service_scripts/start-sample-service.sh > "$TMP_DIR/sample-start.stdout"
+assert_contains "$sample_start_args" "docker-compose.sample.yml"
+assert_contains "$sample_start_gradle_args" ":app:composeApp:wasmJsBrowserDistribution"
+assert_contains "$sample_start_gradle_args" "-Ptarget.wasm=true"
+if MOCK_GRADLE_EXIT=1 \
+  MOCK_DOCKER_ARGS="$sample_start_args" \
+  MOCK_GENERATED_OUT="$sample_start_generated" \
+  MOCK_GRADLE_ARGS="$sample_start_gradle_args" \
+  GRADLEW=gradlew \
+  BUILD_SERVER_SCRIPT=true \
+  BUILD_WS_SCRIPT=true \
+  BUILD_CLI_SCRIPT=true \
+  ./scripts/service_scripts/start-sample-service.sh > "$TMP_DIR/sample-start.failure.stdout"; then
+  fail "start-sample-service must stop when the Wasm build fails"
+fi
+assert_contains "$TMP_DIR/sample-start.failure.stdout" "Failed to build the Wasm distribution"
 
 if find deploy/docker-compose -maxdepth 1 \( -name 'docker-compose._*.yml' -o -name 'docker-compose.generated.??????.yml' \) | grep -q .; then
   find deploy/docker-compose -maxdepth 1 \( -name 'docker-compose._*.yml' -o -name 'docker-compose.generated.??????.yml' \)

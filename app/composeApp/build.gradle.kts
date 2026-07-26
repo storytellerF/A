@@ -5,7 +5,6 @@ import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
-import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
@@ -409,21 +408,6 @@ val downloadFonts by tasks.registering(DownloadFont::class) {
 
 tasks.named("copyNonXmlValueResourcesForCommonMain") {
     dependsOn(downloadFonts)
-}
-
-if (buildWasmTarget) {
-    val copySharedWasmModules by tasks.registering(Copy::class) {
-        dependsOn("wasmJsDevelopmentExecutableCompileSync")
-        from(rootProject.layout.projectDirectory.file("shared/src/wasmJsMain/resources/mlCrypto.mjs"))
-        into(rootProject.layout.buildDirectory.dir("wasm/packages/composeApp/kotlin"))
-        outputs.upToDateWhen { false }
-    }
-
-    tasks.matching { task ->
-        task.name.startsWith("wasmJsBrowser") && task.name.endsWith("Webpack")
-    }.configureEach {
-        dependsOn(copySharedWasmModules)
-    }
 }
 
 tasks.withType<Test>().configureEach {
