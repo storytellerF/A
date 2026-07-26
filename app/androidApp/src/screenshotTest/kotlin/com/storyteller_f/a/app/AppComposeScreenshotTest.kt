@@ -22,8 +22,6 @@ import com.storyteller_f.a.app.components.InteractionRowInternal
 import com.storyteller_f.a.app.components.SettingOptionResettableView
 import com.storyteller_f.a.app.components.SettingOptionView
 import com.storyteller_f.a.client.compose_core.components.ButtonNav
-import com.storyteller_f.a.client.compose_core.components.GlobalDialogContext
-import com.storyteller_f.a.client.compose_core.components.GlobalDialogController
 import com.storyteller_f.a.client.compose_core.components.GlobalDialogState
 import com.storyteller_f.a.client.compose_core.components.InfoTable
 import com.storyteller_f.a.client.compose_core.components.MediaObjectBlock
@@ -41,7 +39,6 @@ import com.storyteller_f.a.app.pages.topic.UserTopicCellInternal
 import com.storyteller_f.a.app.pages.user.UserFavoriteCell
 import com.storyteller_f.a.app.pages.user.UserSubscriptionCell
 import com.storyteller_f.a.app.ui.theme.AppTheme
-import com.storyteller_f.a.client.core.SimpleUserSessionManager
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
@@ -52,7 +49,6 @@ import com.storyteller_f.storage.UploadInfo
 import com.storyteller_f.storage.UploadStatus
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.datetime.LocalDateTime
 
@@ -366,9 +362,10 @@ private fun sampleUpload() = UploadInfo.EMPTY.copy(
 
 private object PreviewGlobalDialog : AppGlobalDialogController {
     override val state: MutableStateFlow<PersistentList<GlobalDialogState>> = MutableStateFlow(persistentListOf())
-    override val context = GlobalDialogContext(MutableSharedFlow(), SimpleUserSessionManager.EMPTY)
+    override val context
+        get() = error("Preview global dialog has no request context")
 
-    override suspend fun <T> useResult(block: suspend GlobalDialogController<GlobalDialogContext<SimpleUserSessionManager>>.() -> Result<T>): Result<T> {
+    override suspend fun <T> useResult(block: suspend AppGlobalDialogController.() -> Result<T>): Result<T> {
         return block()
     }
 

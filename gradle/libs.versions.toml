@@ -28,7 +28,7 @@ couchbaseLite = "3.2.4-1.2.0"
 cryptographyCore = "0.6.0"
 datastorePreferencesCore = "1.3.0-alpha09"
 desugar_jdk_libs = "2.1.5"
-detektVersion = "1.23.8"
+detektVersion = "2.0.0-alpha.5"
 dss = "6.4"
 easylauncher = "6.4.1"
 elasticsearchJava = "9.4.4"
@@ -190,9 +190,9 @@ cryptography-provider-jdk = { module = "dev.whyoleg.cryptography:cryptography-pr
 cryptography-provider-openssl3-prebuilt = { module = "dev.whyoleg.cryptography:cryptography-provider-openssl3-prebuilt", version.ref = "cryptographyCore" }
 cryptography-provider-webcrypto = { module = "dev.whyoleg.cryptography:cryptography-provider-webcrypto", version.ref = "cryptographyCore" }
 desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar_jdk_libs" }
-detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detektVersion" }
-detekt-rules-libraries = { module = "io.gitlab.arturbosch.detekt:detekt-rules-libraries", version.ref = "detektVersion" }
-detekt-rules-ruleauthors = { module = "io.gitlab.arturbosch.detekt:detekt-rules-ruleauthors", version.ref = "detektVersion" }
+detekt-formatting = { module = "dev.detekt:detekt-rules-ktlint-wrapper", version.ref = "detektVersion" }
+detekt-rules-libraries = { module = "dev.detekt:detekt-rules-libraries", version.ref = "detektVersion" }
+detekt-rules-ruleauthors = { module = "dev.detekt:detekt-rules-ruleauthors", version.ref = "detektVersion" }
 dss-cms-object = { module = "eu.europa.ec.joinup.sd-dss:dss-cms-object", version.ref = "dss" }
 dss-pades = { module = "eu.europa.ec.joinup.sd-dss:dss-pades", version.ref = "dss" }
 dss-pades-pdfbox = { module = "eu.europa.ec.joinup.sd-dss:dss-pades-pdfbox", version.ref = "dss" }
@@ -360,7 +360,7 @@ benManesVersions = { id = "com.github.ben-manes.versions", version.ref = "benMan
 buildconfig = { id = "com.codingfeline.buildkonfig", version.ref = "buildconfig" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 composeHotReload = { id = "org.jetbrains.compose.hot-reload", version.ref = "composeHotReload" }
-detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detektVersion" }
+detekt = { id = "dev.detekt", version.ref = "detektVersion" }
 easylauncher = { id = "com.starter.easylauncher", version.ref = "easylauncher" }
 jetbrainsCompose = { id = "org.jetbrains.compose", version.ref = "compose-plugin" }
 kotlinBuildConfig = { id = "com.github.gmazzo.buildconfig", version.ref = "kotlin_buildconfig" }

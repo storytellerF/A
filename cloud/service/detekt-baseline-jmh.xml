@@ -1,0 +1,33 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>AbsentOrWrongFileLicense:IndexBenchmark.kt:com.storyteller_f.a.backend.service.benchmark.IndexBenchmark.kt</ID>
+    <ID>ArgumentListWrapping:IndexBenchmark.kt:IndexBenchmark$( SnowflakeFactory.nextId(), "test", SnowflakeFactory.nextId(), "ROOM", SnowflakeFactory.nextId(), "ROOM", SnowflakeFactory.nextId() )</ID>
+    <ID>FinalNewline:IndexBenchmark.kt:com.storyteller_f.a.backend.service.benchmark.IndexBenchmark.kt</ID>
+    <ID>ImplicitUnitReturnType:IndexBenchmark.kt:IndexBenchmark$@Benchmark fun saveDocumentBenchmark</ID>
+    <ID>LateinitUsage:IndexBenchmark.kt:IndexBenchmark$private lateinit var elasticClient: ElasticsearchContainer</ID>
+    <ID>LateinitUsage:IndexBenchmark.kt:IndexBenchmark$private lateinit var service: ElasticTopicSearchService</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:IndexBenchmark.kt:IndexBenchmark$@Benchmark fun saveDocumentBenchmark</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:IndexBenchmark.kt:IndexBenchmark</ID>
+    <ID>MultilineExpressionWrapping:IndexBenchmark.kt:IndexBenchmark$ElasticConnection( "http://${elasticClient.httpHostAddress}", "", "elastic", "changeme" )</ID>
+    <ID>MultilineExpressionWrapping:IndexBenchmark.kt:IndexBenchmark$ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch:8.17.0").apply { withEnv("xpack.security.transport.ssl.enabled", "false") withEnv("xpack.security.http.ssl.enabled", "false") start() // 只启动一次 }</ID>
+    <ID>MultilineExpressionWrapping:IndexBenchmark.kt:IndexBenchmark$listOf( TopicDocument( SnowflakeFactory.nextId(), "test", SnowflakeFactory.nextId(), "ROOM", SnowflakeFactory.nextId(), "ROOM", SnowflakeFactory.nextId() ) )</ID>
+    <ID>MultilineExpressionWrapping:IndexBenchmark.kt:IndexBenchmark$runBlocking { val topics = listOf( TopicDocument( SnowflakeFactory.nextId(), "test", SnowflakeFactory.nextId(), "ROOM", SnowflakeFactory.nextId(), "ROOM", SnowflakeFactory.nextId() ) ) bh.consume(service.saveDocument(topics)) }</ID>
+    <ID>NamedArguments:IndexBenchmark.kt:IndexBenchmark$ElasticConnection( "http://${elasticClient.httpHostAddress}", "", "elastic", "changeme" )</ID>
+    <ID>NamedArguments:IndexBenchmark.kt:IndexBenchmark$TopicDocument( SnowflakeFactory.nextId(), "test", SnowflakeFactory.nextId(), "ROOM", SnowflakeFactory.nextId(), "ROOM", SnowflakeFactory.nextId() )</ID>
+    <ID>NewLineAtEndOfFile:IndexBenchmark.kt:com.storyteller_f.a.backend.service.benchmark.IndexBenchmark.kt</ID>
+    <ID>NoEmptyFirstLineInClassBody:IndexBenchmark.kt:IndexBenchmark${ private lateinit var elasticClient: ElasticsearchContainer private lateinit var service: ElasticTopicSearchService @Setup(Level.Trial) fun setUp() { SnowflakeFactory.setMachine(0) elasticClient = ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch:8.17.0").apply { withEnv("xpack.security.transport.ssl.enabled", "false") withEnv("xpack.security.http.ssl.enabled", "false") start() // 只启动一次 } val connection = ElasticConnection( "http://${elasticClient.httpHostAddress}", "", "elastic", "changeme" ) service = ElasticTopicSearchService(connection) } @TearDown(Level.Trial) fun tearDown() { elasticClient.stop() // 只停止一次 } @Benchmark fun saveDocumentBenchmark(bh: Blackhole) = runBlocking { val topics = listOf( TopicDocument( SnowflakeFactory.nextId(), "test", SnowflakeFactory.nextId(), "ROOM", SnowflakeFactory.nextId(), "ROOM", SnowflakeFactory.nextId() ) ) bh.consume(service.saveDocument(topics)) } }</ID>
+    <ID>NoWildcardImports:IndexBenchmark.kt:import org.openjdk.jmh.annotations.*</ID>
+    <ID>PackageName:IndexBenchmark.kt:package com.storyteller_f.a.backend.service.benchmark</ID>
+    <ID>PackageNaming:IndexBenchmark.kt:package com.storyteller_f.a.backend.service.benchmark</ID>
+    <ID>TrailingCommaOnCallSite:IndexBenchmark.kt:IndexBenchmark$( "http://${elasticClient.httpHostAddress}", "", "elastic", "changeme" )</ID>
+    <ID>TrailingCommaOnCallSite:IndexBenchmark.kt:IndexBenchmark$( SnowflakeFactory.nextId(), "test", SnowflakeFactory.nextId(), "ROOM", SnowflakeFactory.nextId(), "ROOM", SnowflakeFactory.nextId() )</ID>
+    <ID>TrailingCommaOnCallSite:IndexBenchmark.kt:IndexBenchmark$( TopicDocument( SnowflakeFactory.nextId(), "test", SnowflakeFactory.nextId(), "ROOM", SnowflakeFactory.nextId(), "ROOM", SnowflakeFactory.nextId() ) )</ID>
+    <ID>UndocumentedPublicClass:IndexBenchmark.kt:IndexBenchmark</ID>
+    <ID>UndocumentedPublicFunction:IndexBenchmark.kt:IndexBenchmark$@Benchmark fun saveDocumentBenchmark</ID>
+    <ID>UndocumentedPublicFunction:IndexBenchmark.kt:IndexBenchmark$@Setup(Level.Trial) fun setUp</ID>
+    <ID>UndocumentedPublicFunction:IndexBenchmark.kt:IndexBenchmark$@TearDown(Level.Trial) fun tearDown</ID>
+    <ID>WildcardImport:IndexBenchmark.kt:import org.openjdk.jmh.annotations.*</ID>
+  </CurrentIssues>
+</SmellBaseline>

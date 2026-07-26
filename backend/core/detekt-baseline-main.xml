@@ -1,0 +1,1567 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>AbsentOrWrongFileLicense:AssetTransaction.kt:com.storyteller_f.a.backend.core.types.AssetTransaction.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Backend.kt:com.storyteller_f.a.backend.core.Backend.kt</ID>
+    <ID>AbsentOrWrongFileLicense:CacheService.kt:com.storyteller_f.a.backend.core.service.CacheService.kt</ID>
+    <ID>AbsentOrWrongFileLicense:ChildAccount.kt:com.storyteller_f.a.backend.core.types.ChildAccount.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Community.kt:com.storyteller_f.a.backend.core.types.Community.kt</ID>
+    <ID>AbsentOrWrongFileLicense:CommunitySearchService.kt:com.storyteller_f.a.backend.core.service.CommunitySearchService.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Connection.kt:com.storyteller_f.a.backend.core.Connection.kt</ID>
+    <ID>AbsentOrWrongFileLicense:CustomConfig.kt:com.storyteller_f.a.backend.core.CustomConfig.kt</ID>
+    <ID>AbsentOrWrongFileLicense:CustomException.kt:com.storyteller_f.a.backend.core.CustomException.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Database.kt:com.storyteller_f.a.backend.core.Database.kt</ID>
+    <ID>AbsentOrWrongFileLicense:EncryptedKey.kt:com.storyteller_f.a.backend.core.types.EncryptedKey.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Env.kt:com.storyteller_f.a.backend.core.Env.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Fetch.kt:com.storyteller_f.a.backend.core.Fetch.kt</ID>
+    <ID>AbsentOrWrongFileLicense:FileRecord.kt:com.storyteller_f.a.backend.core.types.FileRecord.kt</ID>
+    <ID>AbsentOrWrongFileLicense:FileRef.kt:com.storyteller_f.a.backend.core.types.FileRef.kt</ID>
+    <ID>AbsentOrWrongFileLicense:FileSearchService.kt:com.storyteller_f.a.backend.core.service.FileSearchService.kt</ID>
+    <ID>AbsentOrWrongFileLicense:LockService.kt:com.storyteller_f.a.backend.core.service.LockService.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Member.kt:com.storyteller_f.a.backend.core.types.Member.kt</ID>
+    <ID>AbsentOrWrongFileLicense:MemberSearchService.kt:com.storyteller_f.a.backend.core.service.MemberSearchService.kt</ID>
+    <ID>AbsentOrWrongFileLicense:NameService.kt:com.storyteller_f.a.backend.core.service.NameService.kt</ID>
+    <ID>AbsentOrWrongFileLicense:ObjectStorageService.kt:com.storyteller_f.a.backend.core.service.ObjectStorageService.kt</ID>
+    <ID>AbsentOrWrongFileLicense:PanelAccount.kt:com.storyteller_f.a.backend.core.types.PanelAccount.kt</ID>
+    <ID>AbsentOrWrongFileLicense:PanelLog.kt:com.storyteller_f.a.backend.core.types.PanelLog.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Quota.kt:com.storyteller_f.a.backend.core.types.Quota.kt</ID>
+    <ID>AbsentOrWrongFileLicense:RawUserOverview.kt:com.storyteller_f.a.backend.core.types.RawUserOverview.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Reaction.kt:com.storyteller_f.a.backend.core.types.Reaction.kt</ID>
+    <ID>AbsentOrWrongFileLicense:ReactionRecord.kt:com.storyteller_f.a.backend.core.types.ReactionRecord.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Room.kt:com.storyteller_f.a.backend.core.types.Room.kt</ID>
+    <ID>AbsentOrWrongFileLicense:RoomSearchService.kt:com.storyteller_f.a.backend.core.service.RoomSearchService.kt</ID>
+    <ID>AbsentOrWrongFileLicense:SnowflakeFactory.kt:com.perraco.utils.SnowflakeFactory.kt</ID>
+    <ID>AbsentOrWrongFileLicense:TaskRecord.kt:com.storyteller_f.a.backend.core.types.TaskRecord.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Title.kt:com.storyteller_f.a.backend.core.types.Title.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Topic.kt:com.storyteller_f.a.backend.core.types.Topic.kt</ID>
+    <ID>AbsentOrWrongFileLicense:TopicSearchService.kt:com.storyteller_f.a.backend.core.service.TopicSearchService.kt</ID>
+    <ID>AbsentOrWrongFileLicense:UploadRecord.kt:com.storyteller_f.a.backend.core.types.UploadRecord.kt</ID>
+    <ID>AbsentOrWrongFileLicense:User.kt:com.storyteller_f.a.backend.core.types.User.kt</ID>
+    <ID>AbsentOrWrongFileLicense:UserDevice.kt:com.storyteller_f.a.backend.core.types.UserDevice.kt</ID>
+    <ID>AbsentOrWrongFileLicense:UserFavorite.kt:com.storyteller_f.a.backend.core.types.UserFavorite.kt</ID>
+    <ID>AbsentOrWrongFileLicense:UserLog.kt:com.storyteller_f.a.backend.core.types.UserLog.kt</ID>
+    <ID>AbsentOrWrongFileLicense:UserSearchService.kt:com.storyteller_f.a.backend.core.service.UserSearchService.kt</ID>
+    <ID>AbsentOrWrongFileLicense:UserSubscription.kt:com.storyteller_f.a.backend.core.types.UserSubscription.kt</ID>
+    <ID>AbsentOrWrongFileLicense:UserTopicRead.kt:com.storyteller_f.a.backend.core.types.UserTopicRead.kt</ID>
+    <ID>AbsentOrWrongFileLicense:UserTwoFactor.kt:com.storyteller_f.a.backend.core.types.UserTwoFactor.kt</ID>
+    <ID>BlankLineBetweenWhenConditions:Backend.kt:when { osName.contains("mac", true) -&gt; System.setProperty("jna.library.path", "/opt/homebrew/lib") osName.contains("win", true) -&gt; { // val vcpkgRoot = System.getenv("VCPKG_ROOT") // if (vcpkgRoot.isNullOrBlank()) { System.setProperty("jna.library.path", "C:\\msys64\\ucrt64\\bin") // } else { // System.setProperty("jna.library.path", "${vcpkgRoot}\\packages\\libavif_x64-windows\\bin") // } } else -&gt; System.setProperty("jna.library.path", "/usr/local/lib") }</ID>
+    <ID>BooleanPropertyNaming:Community.kt:Community$val readOnly get() = status == ObjectStatus.READ_ONLY</ID>
+    <ID>BooleanPropertyNaming:Connection.kt:ElasticConnection$val refresh: Boolean = true</ID>
+    <ID>BooleanPropertyNaming:CustomConfig.kt:CustomConfig$val enableSignUp: Boolean = true</ID>
+    <ID>BooleanPropertyNaming:FileRecord.kt:FileRecord$val readOnly get() = status == ObjectStatus.READ_ONLY</ID>
+    <ID>BooleanPropertyNaming:Room.kt:Room$val readOnly get() = status == ObjectStatus.READ_ONLY</ID>
+    <ID>BooleanPropertyNaming:Title.kt:Title$val readOnly get() = status == ObjectStatus.READ_ONLY</ID>
+    <ID>BooleanPropertyNaming:Topic.kt:Topic$val readOnly get() = status == ObjectStatus.READ_ONLY</ID>
+    <ID>BooleanPropertyNaming:UserTwoFactor.kt:UserTwoFactor$val enabled: Boolean</ID>
+    <ID>BracesOnWhenStatements:Backend.kt:when</ID>
+    <ID>CascadingCallWrapping:Database.kt:CombinedDatabase$associateBy { it.objectId }</ID>
+    <ID>ClassOrdering:SnowflakeFactory.kt:SnowflakeFactory$private val lock = Mutex()</ID>
+    <ID>ClassSignature:CacheService.kt:WrapCacheService&lt;K, V : Any&gt; : CacheService</ID>
+    <ID>ClassSignature:CommunitySearchService.kt:CommunityDocument : PrimaryKeyIdentifiable</ID>
+    <ID>ClassSignature:CommunitySearchService.kt:CommunityDocumentSearch$Keyword : CommunityDocumentSearch</ID>
+    <ID>ClassSignature:Connection.kt:DatabaseConnection</ID>
+    <ID>ClassSignature:Database.kt:InsertRoomTuple</ID>
+    <ID>ClassSignature:FileSearchService.kt:FileDocument : PrimaryKeyIdentifiable</ID>
+    <ID>ClassSignature:FileSearchService.kt:FileDocumentSearch$Keyword : FileDocumentSearch</ID>
+    <ID>ClassSignature:MemberSearchService.kt:MemberDocumentSearch$CommunityMembers : MemberDocumentSearch</ID>
+    <ID>ClassSignature:MemberSearchService.kt:MemberDocumentSearch$Keyword : MemberDocumentSearch</ID>
+    <ID>ClassSignature:ObjectStorageService.kt:ObjectStorageRecord</ID>
+    <ID>ClassSignature:ObjectStorageService.kt:ObjectStorageWriteRecord</ID>
+    <ID>ClassSignature:ObjectStorageService.kt:PresignContext</ID>
+    <ID>ClassSignature:ObjectStorageService.kt:ProcessedUploadPack</ID>
+    <ID>ClassSignature:ObjectStorageService.kt:UploadPack</ID>
+    <ID>ClassSignature:PanelAccount.kt:RawPanelAccount</ID>
+    <ID>ClassSignature:RoomSearchService.kt:RoomDocument : PrimaryKeyIdentifiable</ID>
+    <ID>ClassSignature:RoomSearchService.kt:RoomDocumentSearch$Keyword : RoomDocumentSearch</ID>
+    <ID>ClassSignature:Title.kt:RawTitle</ID>
+    <ID>ClassSignature:User.kt:RawUser</ID>
+    <ID>ComplexInterface:Database.kt:AdminDatabase</ID>
+    <ID>ComplexInterface:Database.kt:CombinedDatabase</ID>
+    <ID>ComplexInterface:Database.kt:ContainerDatabase</ID>
+    <ID>ComplexInterface:Database.kt:FileDatabase</ID>
+    <ID>ComplexInterface:Database.kt:ReactionDatabase</ID>
+    <ID>ComplexInterface:Database.kt:RoomDatabase</ID>
+    <ID>ComplexInterface:Database.kt:TopicDatabase</ID>
+    <ID>ComplexInterface:Database.kt:UserDatabase</ID>
+    <ID>DocumentationOverPrivateFunction:SnowflakeFactory.kt:SnowflakeFactory$private fun newTimestamp: Long</ID>
+    <ID>DocumentationOverPrivateFunction:SnowflakeFactory.kt:SnowflakeFactory$private suspend fun nextIdInternal: PrimaryKey</ID>
+    <ID>EndOfSentenceFormat:Backend.kt:* 安装教程 https://github.com/AOMediaCodec/libavif * 在Windows 上安装后的文件名需要手动重命名为libavif.dll</ID>
+    <ID>EndOfSentenceFormat:Database.kt:CommunityDatabase$* name 为null 或者空字符串时不更新，icon，poster 为null时不更新</ID>
+    <ID>EndOfSentenceFormat:Database.kt:FileDatabase$* 只有在插入文件记录成功后才更新上传记录状态，避免文件上传了但是配额没有更新的情况</ID>
+    <ID>EndOfSentenceFormat:Database.kt:UserDatabase$* nickname 为null 或者空字符串时不更新，avatar 为null 时不更新,aid 为null 或者空字符串时不更新</ID>
+    <ID>EndOfSentenceFormat:Env.kt:* 分割并预处理用户输入的关键字 * @return 返回关键字列表，如果不包含空格则返回 null 表示使用原有逻辑</ID>
+    <ID>EndOfSentenceFormat:ObjectStorageService.kt:ObjectStorageService$* 使用对象存储的 compose/concat 能力，将同一 bucket 下的多个源对象顺序合并为一个目标对象。 * @param bucketName 目标与源对象所在的 bucket（需相同） * @param targetFullName 合并后目标对象完整路径 * @param sourceFullNames 源对象完整路径列表，按顺序依次合并</ID>
+    <ID>EndOfSentenceFormat:ObjectStorageService.kt:ObjectStorageService$* 删除 bucket 下的多个对象。</ID>
+    <ID>ExpressionBodySyntax:CommunitySearchService.kt:CommunityDocument.Companion$return CommunityDocument(community.id, community.name, community.aid, community.owner)</ID>
+    <ID>ExpressionBodySyntax:FileSearchService.kt:FileDocument.Companion$return FileDocument(fileRecord.id, fileRecord.name, fileRecord.owner)</ID>
+    <ID>ExpressionBodySyntax:PanelLog.kt:return PanelLogInfo(id, adminId, targetId, objectType, action, createdTime)</ID>
+    <ID>ExpressionBodySyntax:Quota.kt:return QuotaInfo(ownerId, ownerType, quotaType, total, used, lockId)</ID>
+    <ID>ExpressionBodySyntax:RoomSearchService.kt:RoomDocument.Companion$return RoomDocument(room.id, room.name, room.aid, room.communityId)</ID>
+    <ID>ExpressionBodySyntax:TaskRecord.kt:return TaskRecordInfo(id, createdTime, processedId, type)</ID>
+    <ID>ExpressionBodySyntax:Title.kt:return titleStatus == TitleWorkStatus.EXPIRED || (expiresAt?.let { it &lt;= currentTime } == true)</ID>
+    <ID>ExpressionBodySyntax:UploadRecord.kt:return UploadRecordInfo(id, createdTime, objectId, objectType, status, total, progress, name, chunkSize, sha256)</ID>
+    <ID>ExpressionBodySyntax:UserFavorite.kt:UserFavorite$return ObjectTuple(objectId, objectType)</ID>
+    <ID>ExpressionBodySyntax:UserFavorite.kt:return UserFavoriteInfo(id, uid, objectId, objectType, createdTime)</ID>
+    <ID>ExpressionBodySyntax:UserSearchService.kt:UserDocument.Companion$return UserDocument(user.id, user.nickname, user.aid)</ID>
+    <ID>ExpressionBodySyntax:UserSubscription.kt:return UserSubscriptionInfo(id, uid, objectId, objectType, createdTime)</ID>
+    <ID>ForbiddenMethodCall:Env.kt:println("set log path: $s")</ID>
+    <ID>ForbiddenPublicDataClass:ChildAccount.kt:RawChildAccount</ID>
+    <ID>ForbiddenPublicDataClass:Community.kt:RawCommunity</ID>
+    <ID>ForbiddenPublicDataClass:CommunitySearchService.kt:CommunityDocument : PrimaryKeyIdentifiable</ID>
+    <ID>ForbiddenPublicDataClass:CommunitySearchService.kt:CommunityDocumentSearch$Keyword : CommunityDocumentSearch</ID>
+    <ID>ForbiddenPublicDataClass:Connection.kt:DatabaseConnection</ID>
+    <ID>ForbiddenPublicDataClass:Connection.kt:ElasticConnection</ID>
+    <ID>ForbiddenPublicDataClass:Connection.kt:MinIoConnection</ID>
+    <ID>ForbiddenPublicDataClass:Database.kt:ContainerInfo</ID>
+    <ID>ForbiddenPublicDataClass:Database.kt:JoinSearch$Joined : JoinSearch</ID>
+    <ID>ForbiddenPublicDataClass:Database.kt:JoinSearch$Unspecified : JoinSearch</ID>
+    <ID>ForbiddenPublicDataClass:Database.kt:MemberAuthData</ID>
+    <ID>ForbiddenPublicDataClass:Database.kt:PaginationResult&lt;T&gt;</ID>
+    <ID>ForbiddenPublicDataClass:Database.kt:UserAuthData</ID>
+    <ID>ForbiddenPublicDataClass:Fetch.kt:Cursor$AscCursor&lt;T&gt; : Cursor</ID>
+    <ID>ForbiddenPublicDataClass:Fetch.kt:Cursor$DescCursor&lt;T&gt; : Cursor</ID>
+    <ID>ForbiddenPublicDataClass:Fetch.kt:ObjectFetch$AidFetch : ObjectFetch</ID>
+    <ID>ForbiddenPublicDataClass:Fetch.kt:ObjectFetch$IdFetch : ObjectFetch</ID>
+    <ID>ForbiddenPublicDataClass:Fetch.kt:ObjectListFetch$AidListFetch : ObjectListFetch</ID>
+    <ID>ForbiddenPublicDataClass:Fetch.kt:ObjectListFetch$IdListFetch : ObjectListFetch</ID>
+    <ID>ForbiddenPublicDataClass:Fetch.kt:OffsetFetch : GenericFetch</ID>
+    <ID>ForbiddenPublicDataClass:Fetch.kt:PrimaryKeyFetch : GenericFetch</ID>
+    <ID>ForbiddenPublicDataClass:Fetch.kt:ReactionFetch : GenericFetch</ID>
+    <ID>ForbiddenPublicDataClass:FileRecord.kt:FileRecord</ID>
+    <ID>ForbiddenPublicDataClass:FileSearchService.kt:FileDocument : PrimaryKeyIdentifiable</ID>
+    <ID>ForbiddenPublicDataClass:FileSearchService.kt:FileDocumentSearch$Keyword : FileDocumentSearch</ID>
+    <ID>ForbiddenPublicDataClass:MemberSearchService.kt:MemberDocument : PrimaryKeyIdentifiable</ID>
+    <ID>ForbiddenPublicDataClass:MemberSearchService.kt:MemberDocumentSearch$CommunityMembers : MemberDocumentSearch</ID>
+    <ID>ForbiddenPublicDataClass:MemberSearchService.kt:MemberDocumentSearch$Keyword : MemberDocumentSearch</ID>
+    <ID>ForbiddenPublicDataClass:MemberSearchService.kt:MemberDocumentSearch$RoomMembers : MemberDocumentSearch</ID>
+    <ID>ForbiddenPublicDataClass:ObjectStorageService.kt:CopyPack</ID>
+    <ID>ForbiddenPublicDataClass:ObjectStorageService.kt:ObjectStorageRecord</ID>
+    <ID>ForbiddenPublicDataClass:ObjectStorageService.kt:ObjectStorageWriteRecord</ID>
+    <ID>ForbiddenPublicDataClass:ObjectStorageService.kt:PresignContext</ID>
+    <ID>ForbiddenPublicDataClass:ObjectStorageService.kt:ProcessedUploadPack</ID>
+    <ID>ForbiddenPublicDataClass:ObjectStorageService.kt:UploadPack</ID>
+    <ID>ForbiddenPublicDataClass:RawUserOverview.kt:RawUserOverview</ID>
+    <ID>ForbiddenPublicDataClass:Room.kt:RawRoom</ID>
+    <ID>ForbiddenPublicDataClass:RoomSearchService.kt:RoomDocument : PrimaryKeyIdentifiable</ID>
+    <ID>ForbiddenPublicDataClass:RoomSearchService.kt:RoomDocumentSearch$Keyword : RoomDocumentSearch</ID>
+    <ID>ForbiddenPublicDataClass:Title.kt:RawTitle</ID>
+    <ID>ForbiddenPublicDataClass:Topic.kt:RawTopic</ID>
+    <ID>ForbiddenPublicDataClass:TopicSearchService.kt:TopicDocument : PrimaryKeyIdentifiable</ID>
+    <ID>ForbiddenPublicDataClass:TopicSearchService.kt:TopicDocumentSearch$All : TopicDocumentSearch</ID>
+    <ID>ForbiddenPublicDataClass:TopicSearchService.kt:TopicDocumentSearch$AllCommunityRoot : TopicDocumentSearch</ID>
+    <ID>ForbiddenPublicDataClass:TopicSearchService.kt:TopicDocumentSearch$Recommend : TopicDocumentSearch</ID>
+    <ID>ForbiddenPublicDataClass:TopicSearchService.kt:TopicDocumentSearch$RecommendNotLogin : TopicDocumentSearch</ID>
+    <ID>ForbiddenPublicDataClass:TopicSearchService.kt:TopicDocumentSearch$Topics : TopicDocumentSearch</ID>
+    <ID>ForbiddenPublicDataClass:UploadRecord.kt:UploadRecord</ID>
+    <ID>ForbiddenPublicDataClass:User.kt:RawUser</ID>
+    <ID>ForbiddenPublicDataClass:UserSearchService.kt:UserDocument : PrimaryKeyIdentifiable</ID>
+    <ID>ForbiddenPublicDataClass:UserSearchService.kt:UserDocumentSearch$Keyword : UserDocumentSearch</ID>
+    <ID>ForbiddenPublicDataClass:UserTwoFactor.kt:UserTwoFactor</ID>
+    <ID>FunctionExpressionBody:Backend.kt:{ return get().mapResult { if (it != null) { Result.success(it) } else { add().recoverIfDup(database::isDup) { get() } } } }</ID>
+    <ID>FunctionExpressionBody:Backend.kt:{ return withContext(Dispatchers.IO) { inputStreamProducer().use { val factory = XMLInputFactory.newInstance() val reader = factory.createXMLStreamReader(it) try { if (reader.hasNext()) { val event = reader.next() if (event == XMLStreamConstants.START_ELEMENT &amp;&amp; "svg".equals( reader.localName, true ) ) { val viewBox: String? = reader.getAttributeValue(null, "viewBox") val height: String? = reader.getAttributeValue(null, "height") val width: String? = reader.getAttributeValue(null, "width") getSvgDimension(viewBox, width to height) } else { null } } else { null } } finally { reader.close() } } } }</ID>
+    <ID>FunctionExpressionBody:CommunitySearchService.kt:CommunityDocument.Companion${ return CommunityDocument(community.id, community.name, community.aid, community.owner) }</ID>
+    <ID>FunctionExpressionBody:Database.kt:CombinedDatabase${ return topic.getAllTopicPagination(primaryKeyFetch).mapResult { processTopicToRawTopic(null, it.list).pagingNotNull(it.total) } }</ID>
+    <ID>FunctionExpressionBody:Env.kt:MergedEnv${ return list.firstNotNullOfOrNull { map -&gt; map[key] } }</ID>
+    <ID>FunctionExpressionBody:Env.kt:MergedEnv${ return list.joinToString { it[key] ?: "empty" } }</ID>
+    <ID>FunctionExpressionBody:FileRecord.kt:{ return FileInfo( id, url, fullName, contentType, size, name, owner, ownerType, lastModified, dimension, favoriteId, subscriptionId, status, ) }</ID>
+    <ID>FunctionExpressionBody:FileSearchService.kt:FileDocument.Companion${ return FileDocument(fileRecord.id, fileRecord.name, fileRecord.owner) }</ID>
+    <ID>FunctionExpressionBody:MemberSearchService.kt:MemberDocument.Companion${ return MemberDocument( id = id, uid = userInfo.id, objectId = objectId, objectType = objectType, nickname = userInfo.nickname, objectName = objectName, communityId = communityId ) }</ID>
+    <ID>FunctionExpressionBody:PanelLog.kt:{ return PanelLogInfo(id, adminId, targetId, objectType, action, createdTime) }</ID>
+    <ID>FunctionExpressionBody:Quota.kt:{ return QuotaInfo(ownerId, ownerType, quotaType, total, used, lockId) }</ID>
+    <ID>FunctionExpressionBody:Room.kt:{ return RoomInfo( room.id, room.createdTime, room.name, room.aid, room.creator, memberCount ?: 0, icon = icon, joinedTime = joinedTime, communityId = room.communityId, lastRead = lastRead, latestTopic = latestTopic, favoriteId = favoriteId, subscriptionId = subscriptionId, status = room.status, ) }</ID>
+    <ID>FunctionExpressionBody:RoomSearchService.kt:RoomDocument.Companion${ return RoomDocument(room.id, room.name, room.aid, room.communityId) }</ID>
+    <ID>FunctionExpressionBody:SnowflakeFactory.kt:SnowflakeFactory${ return lock.withLock { nextIdInternal() } }</ID>
+    <ID>FunctionExpressionBody:TaskRecord.kt:{ return TaskRecordInfo(id, createdTime, processedId, type) }</ID>
+    <ID>FunctionExpressionBody:Title.kt:{ return TitleInfo( id = id, createdTime = createdTime, type = type, creator = creator, receiver = receiver, scopeId = scopeId, scopeType = scopeType, name = name, descriptionTopicId = descriptionTopicId, extension = extensions, favoriteId = favoriteId, subscriptionId = subscriptionId, titleStatus = effectiveTitleStatus(currentTime), expiresAt = expiresAt, status = status, ) }</ID>
+    <ID>FunctionExpressionBody:Title.kt:{ return if (isExpired(currentTime)) { TitleWorkStatus.EXPIRED } else { TitleWorkStatus.OK } }</ID>
+    <ID>FunctionExpressionBody:Title.kt:{ return titleStatus == TitleWorkStatus.EXPIRED || (expiresAt?.let { it &lt;= currentTime } == true) }</ID>
+    <ID>FunctionExpressionBody:TopicSearchService.kt:TopicDocument.Companion${ return TopicDocument( id = topic.id, content = content.plain, rootId = topic.rootId, rootType = topic.rootType.name, parentId = topic.parentId, parentType = topic.parentType.name, author = topic.author ) }</ID>
+    <ID>FunctionExpressionBody:UploadRecord.kt:{ return UploadRecordInfo(id, createdTime, objectId, objectType, status, total, progress, name, chunkSize, sha256) }</ID>
+    <ID>FunctionExpressionBody:User.kt:{ return UserInfo( id, address, aid, nickname, avatar, null, null, status, ) }</ID>
+    <ID>FunctionExpressionBody:UserFavorite.kt:UserFavorite${ return ObjectTuple(objectId, objectType) }</ID>
+    <ID>FunctionExpressionBody:UserFavorite.kt:{ return UserFavoriteInfo(id, uid, objectId, objectType, createdTime) }</ID>
+    <ID>FunctionExpressionBody:UserSearchService.kt:UserDocument.Companion${ return UserDocument(user.id, user.nickname, user.aid) }</ID>
+    <ID>FunctionExpressionBody:UserSubscription.kt:{ return UserSubscriptionInfo(id, uid, objectId, objectType, createdTime) }</ID>
+    <ID>FunctionExpressionBody:UserTwoFactor.kt:{ return TwoFactorSettingsInfo( enabled = this?.enabled == true, type = this?.type?.takeIf { enabled }, ) }</ID>
+    <ID>FunctionNameMaxLength:Database.kt:ContainerDatabase$suspend fun getMemberWithUserPaginationResult: Result&lt;PaginationResult&lt;Pair&lt;Member, RawUser&gt;&gt;&gt;</ID>
+    <ID>FunctionNameMaxLength:Database.kt:PanelAccountDatabase$suspend fun getRawUserAndPublicKeyByAddress: Result&lt;Pair&lt;RawPanelAccount, String&gt;?&gt;</ID>
+    <ID>FunctionNameMaxLength:Database.kt:ReactionDatabase$suspend fun getReactionInfoPaginationResult: Result&lt;PaginationResult&lt;ReactionInfo&gt;&gt;</ID>
+    <ID>FunctionNameMaxLength:Database.kt:ReactionDatabase$suspend fun getUserReactionRecordsPaginationResult: Result&lt;PaginationResult&lt;ReactionRecord&gt;&gt;</ID>
+    <ID>FunctionNameMaxLength:Database.kt:TopicDatabase$suspend fun getUserCommentedTopicsPaginationResult: Result&lt;PaginationResult&lt;Topic&gt;&gt;</ID>
+    <ID>FunctionNameMaxLength:Database.kt:UserDatabase$suspend fun getRawChildAccountPaginationListByHost: Result&lt;PaginationResult&lt;RawChildAccount&gt;&gt;</ID>
+    <ID>FunctionNameMaxLength:Database.kt:UserDatabase$suspend fun getRawUserAndPublicKeyByAddress: Result&lt;Pair&lt;RawUser, String&gt;?&gt;</ID>
+    <ID>FunctionNameMaxLength:Database.kt:suspend fun &lt;T, R&gt; Result&lt;PaginationResult&lt;T&gt;?&gt;.mapPagingResultIfNotNullNullable</ID>
+    <ID>FunctionSignature:Backend.kt:suspend fun &lt;T&gt; Backend.addIfNotExists: Result&lt;T?&gt;</ID>
+    <ID>FunctionSignature:Database.kt:AdminDatabase$suspend fun getTaskRecords: Result&lt;PaginationResult&lt;TaskRecord&gt;&gt;</ID>
+    <ID>FunctionSignature:Database.kt:CombinedDatabase$suspend fun getLatestRawTopic</ID>
+    <ID>FunctionSignature:Database.kt:CombinedDatabase$suspend fun getRawTopic</ID>
+    <ID>FunctionSignature:Database.kt:CombinedDatabase$suspend fun getRawTopicListByIds</ID>
+    <ID>FunctionSignature:Database.kt:CombinedDatabase$suspend fun processTopicToRawTopic: Result&lt;List&lt;RawTopic&gt;&gt;</ID>
+    <ID>FunctionSignature:Database.kt:suspend fun &lt;T, R&gt; Result&lt;PaginationResult&lt;T&gt;&gt;.mapPagingNotNull</ID>
+    <ID>FunctionSignature:Database.kt:suspend fun &lt;T, R&gt; Result&lt;PaginationResult&lt;T&gt;&gt;.mapPagingResultNotNull</ID>
+    <ID>FunctionSignature:Database.kt:suspend fun &lt;T, R&gt; Result&lt;PaginationResult&lt;T&gt;&gt;.mapPagingResultNullable</ID>
+    <ID>FunctionSignature:Database.kt:suspend fun &lt;T, R&gt; Result&lt;PaginationResult&lt;T&gt;?&gt;.mapPagingIfNotNull</ID>
+    <ID>FunctionSignature:Fetch.kt:fun&lt;T&gt; fixedSort: List&lt;T&gt;</ID>
+    <ID>FunctionSignature:FileSearchService.kt:FileSearchService$suspend fun searchDocument: Result&lt;PaginationResult&lt;FileDocument&gt;&gt;</ID>
+    <ID>FunctionSignature:MemberSearchService.kt:MemberSearchService$suspend fun searchDocument: Result&lt;PaginationResult&lt;MemberDocument&gt;&gt;</ID>
+    <ID>FunctionSignature:RoomSearchService.kt:RoomSearchService$suspend fun searchDocument: Result&lt;PaginationResult&lt;RoomDocument&gt;&gt;</ID>
+    <ID>FunctionSignature:TopicSearchService.kt:TopicSearchService$suspend fun searchDocument: Result&lt;PaginationResult&lt;TopicDocument&gt;&gt;</ID>
+    <ID>FunctionSignature:UserSearchService.kt:UserSearchService$suspend fun searchDocument: Result&lt;PaginationResult&lt;UserDocument&gt;&gt;</ID>
+    <ID>InjectDispatcher:Backend.kt:IO</ID>
+    <ID>LabeledExpression:Database.kt:CombinedDatabase$@runCatching</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:Community.kt:Community$val readOnly get() = status == ObjectStatus.READ_ONLY</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:Community.kt:RawCommunity$val hasJoined = member != null</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:Community.kt:fun RawCommunity.toCommunityIfo</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:Connection.kt:ContainerImages$const val ELASTICSEARCH = "docker.elastic.co/elasticsearch/elasticsearch:8.17.0"</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:Connection.kt:ContainerImages$const val MINIO = "minio/minio:RELEASE.2024-12-18T13-15-44Z"</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:Connection.kt:ContainerImages$const val POSTGRESQL = "pgvector/pgvector:pg16"</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:Database.kt:// 最长60，如果超过60 会进行裁切然后在后面添加uuid，保存时预留一部分空间 const val MEDIA_NAME_LENGTH = 120</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:Database.kt:CombinedDatabase$suspend fun getLatestRawTopic</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:Database.kt:CombinedDatabase$suspend fun getRawTopic</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:Database.kt:CombinedDatabase$suspend fun getRawTopicByParentId</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:Database.kt:CombinedDatabase$suspend fun getRawTopicListByIds</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:Database.kt:const val ADDRESS_LENGTH = 100</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:Database.kt:const val AID_LENGTH = 20</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:Database.kt:const val COMMUNITY_NAME_LENGTH = 20</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:Database.kt:const val PUBLIC_KEY_LENGTH = 4096</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:Database.kt:const val ROOM_NAME_LENGTH = 20</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:Database.kt:const val USER_NICKNAME = 20</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:Database.kt:fun &lt;T&gt; Result&lt;List&lt;T&gt;&gt;.pagingNotNull</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:Database.kt:suspend fun &lt;T, R&gt; Result&lt;PaginationResult&lt;T&gt;&gt;.mapPagingNotNull</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:Database.kt:suspend fun &lt;T, R&gt; Result&lt;PaginationResult&lt;T&gt;&gt;.mapPagingResultNotNull</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:Database.kt:suspend fun &lt;T, R&gt; Result&lt;PaginationResult&lt;T&gt;&gt;.mapPagingResultNullable</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:Database.kt:suspend fun &lt;T, R&gt; Result&lt;PaginationResult&lt;T&gt;?&gt;.mapPagingIfNotNull</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:Database.kt:suspend fun &lt;T, R&gt; Result&lt;PaginationResult&lt;T&gt;?&gt;.mapPagingResultIfNotNullNullable</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:Database.kt:suspend fun &lt;T&gt; Result&lt;List&lt;T&gt;?&gt;.paging</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:Env.kt:fun readEnv</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:Fetch.kt:fun aidFetch</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:Fetch.kt:fun aidListFetch</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:Fetch.kt:fun idFetch</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:Fetch.kt:fun idListFetch</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:FileRecord.kt:FileRecord$val dimension = Dimension(width, height)</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:FileRecord.kt:FileRecord$val readOnly get() = status == ObjectStatus.READ_ONLY</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:FileRef.kt:fun FileRef.toFileRefInfo</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:Member.kt:fun Member.toMemberInfo</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:Member.kt:fun Member.toNestedMemberInfo</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:PanelAccount.kt:fun PanelAccount.toPanelAccountInfo</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:Room.kt:RawRoom$val hasJoined = joinedTime != null</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:Room.kt:Room$val readOnly get() = status == ObjectStatus.READ_ONLY</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:SnowflakeFactory.kt:SnowflakeFactory$// Maximum possible value for machine ID, derived from the number of bits allocated. // This value is 2^MACHINE_ID_BITS - 1. const val MAX_MACHINE_ID = (1 shl MACHINE_ID_BITS) - 1</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:Title.kt:Title$val readOnly get() = status == ObjectStatus.READ_ONLY</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:Topic.kt:Topic$val readOnly get() = status == ObjectStatus.READ_ONLY</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:Topic.kt:fun RawTopic.toTopicInfo</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:User.kt:fun RawUser.toUserInfo</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:UserLog.kt:fun UserLog.toUserLogInfo</ID>
+    <ID>LibraryCodeMustSpecifyReturnType:UserSubscription.kt:UserSubscription$fun objectTuple</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AssetTransaction.kt:AssetTransaction</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Backend.kt:Backend</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Backend.kt:fun buildCommunitySearchService: CommunitySearchService</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Backend.kt:fun buildFileSearchService: FileSearchService</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Backend.kt:fun buildMemberSearchService: MemberSearchService</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Backend.kt:fun buildNameService: NameService</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Backend.kt:fun buildRoomSearchService: RoomSearchService</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Backend.kt:fun buildTopicSearchService: TopicSearchService</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Backend.kt:fun buildUserSearchService: UserSearchService</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Backend.kt:fun databaseConnection: DatabaseConnection</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Backend.kt:fun getSvgDimension: Dimension?</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Backend.kt:fun loadAvif</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Backend.kt:fun mediaService: ObjectStorageService</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Backend.kt:suspend fun &lt;T&gt; Backend.addIfNotExists: Result&lt;T?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Backend.kt:suspend fun extractSvgDimensionInfo: Dimension?</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Backend.kt:suspend fun getImageDimension: Dimension?</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CacheService.kt:CacheService&lt;K, T&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CacheService.kt:CacheServiceFactory</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CacheService.kt:WrapCacheService&lt;K, V : Any&gt; : CacheService</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ChildAccount.kt:ChildAccount</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ChildAccount.kt:RawChildAccount</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Community.kt:Community</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Community.kt:RawCommunity</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Community.kt:fun RawCommunity.toCommunityIfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CommunitySearchService.kt:CommunityDocument : PrimaryKeyIdentifiable</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CommunitySearchService.kt:CommunityDocumentSearch</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CommunitySearchService.kt:CommunitySearchService</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CommunitySearchService.kt:CommunitySearchServiceFactory</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Connection.kt:DatabaseConnection</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Connection.kt:ElasticConnection</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Connection.kt:MinIoConnection</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CustomConfig.kt:CustomConfig</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CustomConfig.kt:CustomKeyStore</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CustomException.kt:CustomBadRequestException : Exception</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CustomException.kt:ForbiddenException : Exception</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CustomException.kt:UnauthorizedException : Exception</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Database.kt:AdminDatabase</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Database.kt:CombinedDatabase</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Database.kt:CommunityDatabase</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Database.kt:ContainerDatabase</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Database.kt:ContainerInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Database.kt:FavoriteDatabase</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Database.kt:FileDatabase</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Database.kt:InsertCommunityTuple</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Database.kt:InsertRoomTuple</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Database.kt:InsertTopicTuple</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Database.kt:JoinSearch</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Database.kt:MemberAuthData</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Database.kt:PaginationResult&lt;T&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Database.kt:PanelAccountDatabase</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Database.kt:ReactionDatabase</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Database.kt:RoomDatabase</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Database.kt:SubscriptionDatabase</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Database.kt:TitleDatabase</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Database.kt:TopicDatabase</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Database.kt:UserAuthData</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Database.kt:UserDatabase</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Database.kt:fun &lt;T&gt; Result&lt;List&lt;T&gt;&gt;.pagingNotNull</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Database.kt:suspend fun &lt;T, R&gt; Result&lt;PaginationResult&lt;T&gt;&gt;.mapPagingNotNull</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Database.kt:suspend fun &lt;T, R&gt; Result&lt;PaginationResult&lt;T&gt;&gt;.mapPagingResultNotNull</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Database.kt:suspend fun &lt;T, R&gt; Result&lt;PaginationResult&lt;T&gt;&gt;.mapPagingResultNullable</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Database.kt:suspend fun &lt;T, R&gt; Result&lt;PaginationResult&lt;T&gt;?&gt;.mapPagingIfNotNull</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Database.kt:suspend fun &lt;T, R&gt; Result&lt;PaginationResult&lt;T&gt;?&gt;.mapPagingResultIfNotNullNullable</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Database.kt:suspend fun &lt;T&gt; Result&lt;List&lt;T&gt;?&gt;.paging</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Database.kt:suspend fun &lt;T&gt; paginationFromResults: Result&lt;PaginationResult&lt;T&gt;&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Database.kt:suspend fun &lt;T&gt; paginationNullableFromResults: Result&lt;PaginationResult&lt;T&gt;?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:EncryptedKey.kt:EncryptedKey</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Env.kt:MergedEnv</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Env.kt:fun preprocessUserInputKeyword: String</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Env.kt:fun readEnv</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Env.kt:fun readFileEnv: Map&lt;String, String&gt;?</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Env.kt:fun readResourceEnv: Map&lt;String, String&gt;?</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Env.kt:fun setLogPath</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Env.kt:fun splitKeywords: List&lt;String&gt;?</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Fetch.kt:Cursor&lt;T&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Fetch.kt:Fetch</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Fetch.kt:GenericFetch&lt;T&gt; : Fetch</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Fetch.kt:ObjectFetch</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Fetch.kt:ObjectListFetch</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Fetch.kt:OffsetFetch : GenericFetch</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Fetch.kt:PrimaryKeyFetch : GenericFetch</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Fetch.kt:ReactionFetch : GenericFetch</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Fetch.kt:fun aidFetch</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Fetch.kt:fun aidListFetch</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Fetch.kt:fun idFetch</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Fetch.kt:fun idListFetch</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Fetch.kt:fun&lt;T&gt; fixedSort: List&lt;T&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileRecord.kt:FileRecord</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileRecord.kt:fun FileRecord.toFileInfo: FileInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileRef.kt:FileRef</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileRef.kt:fun FileRef.toFileRefInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileSearchService.kt:FileDocument : PrimaryKeyIdentifiable</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileSearchService.kt:FileDocumentSearch</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileSearchService.kt:FileSearchService</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileSearchService.kt:FileSearchServiceFactory</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LockService.kt:LockService</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LockService.kt:LockServiceFactory</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Member.kt:Member</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Member.kt:fun Member.toMemberInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Member.kt:fun Member.toNestedMemberInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MemberSearchService.kt:MemberDocument : PrimaryKeyIdentifiable</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MemberSearchService.kt:MemberDocumentSearch</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MemberSearchService.kt:MemberSearchService</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MemberSearchService.kt:MemberSearchServiceFactory</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:NameService.kt:NameService</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:NameService.kt:NameServiceFactory</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ObjectStorageService.kt:CopyPack</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ObjectStorageService.kt:ObjectStorageRecord</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ObjectStorageService.kt:ObjectStorageService</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ObjectStorageService.kt:ObjectStorageServiceFactory</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ObjectStorageService.kt:ObjectStorageWriteRecord</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ObjectStorageService.kt:PresignContext</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ObjectStorageService.kt:ProcessedUploadPack</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ObjectStorageService.kt:UploadPack</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelAccount.kt:PanelAccount</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelAccount.kt:RawPanelAccount</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelAccount.kt:fun PanelAccount.toPanelAccountInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelLog.kt:PanelLog</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelLog.kt:fun PanelLog.toPanelLogInfo: PanelLogInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Quota.kt:Quota</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Quota.kt:fun Quota.toQuotaInfo: QuotaInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RawUserOverview.kt:RawUserOverview</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Reaction.kt:Reaction</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ReactionRecord.kt:ReactionRecord</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Room.kt:RawRoom</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Room.kt:Room</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Room.kt:fun RawRoom.toRoomInfo: RoomInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Room.kt:fun buildUserNotificationRoom: Room</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Room.kt:suspend fun buildMemberForNotificationRoom: List&lt;Member&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomSearchService.kt:RoomDocument : PrimaryKeyIdentifiable</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomSearchService.kt:RoomDocumentSearch</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomSearchService.kt:RoomSearchService</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomSearchService.kt:RoomSearchServiceFactory</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TaskRecord.kt:TaskRecord</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TaskRecord.kt:fun TaskRecord.toTaskRecordInfo: TaskRecordInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Title.kt:RawTitle</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Title.kt:Title</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Title.kt:fun Title.effectiveTitleStatus: TitleWorkStatus</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Title.kt:fun Title.isExpired: Boolean</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Title.kt:fun Title.toTitleInfo: TitleInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Topic.kt:RawTopic</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Topic.kt:Topic</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Topic.kt:fun RawTopic.toTopicInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TopicSearchService.kt:TopicDocument : PrimaryKeyIdentifiable</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TopicSearchService.kt:TopicDocumentSearch</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TopicSearchService.kt:TopicSearchService</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TopicSearchService.kt:TopicSearchServiceFactory</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UploadRecord.kt:UploadRecord</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UploadRecord.kt:fun UploadRecord.toUploadRecordInfo: UploadRecordInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:User.kt:RawUser</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:User.kt:User</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:User.kt:fun RawUser.toUserInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:User.kt:fun User.toUserInfo: UserInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserDevice.kt:UserDevice</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserFavorite.kt:UserFavorite</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserFavorite.kt:fun UserFavorite.toUserFavoriteInfo: UserFavoriteInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserLog.kt:UserLog</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserLog.kt:fun UserLog.toUserLogInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserSearchService.kt:UserDocument : PrimaryKeyIdentifiable</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserSearchService.kt:UserDocumentSearch</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserSearchService.kt:UserSearchService</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserSearchService.kt:UserSearchServiceFactory</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserSubscription.kt:SubscriptionSentLog</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserSubscription.kt:UserSubscription</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserSubscription.kt:fun UserSubscription.toUserSubscriptionInfo: UserSubscriptionInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserTopicRead.kt:UserTopicRead</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserTwoFactor.kt:UserTwoFactor</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserTwoFactor.kt:fun UserTwoFactor?.toTwoFactorSettingsInfo: TwoFactorSettingsInfo</ID>
+    <ID>LongParameterList:Community.kt:Community</ID>
+    <ID>LongParameterList:Member.kt:Member</ID>
+    <ID>LongParameterList:Room.kt:Room</ID>
+    <ID>LongParameterList:Title.kt:Title</ID>
+    <ID>LongParameterList:Topic.kt:Topic</ID>
+    <ID>LongParameterList:User.kt:User</ID>
+    <ID>MagicNumber:Backend.kt:3</ID>
+    <ID>MagicNumber:Backend.kt:4</ID>
+    <ID>MatchingDeclarationName:Env.kt:MergedEnv</ID>
+    <ID>MultilineExpressionWrapping:Backend.kt:"svg".equals( reader.localName, true )</ID>
+    <ID>MultilineExpressionWrapping:Backend.kt:ImageIO.getImageReadersByMIMEType(contentType).asSequence() .firstNotNullOfOrNull { reader -&gt; try { inputStreamProducer().use { reader.input = ImageIO.createImageInputStream(it) reader.read(reader.minIndex) Dimension(reader.getWidth(reader.minIndex), reader.getHeight(reader.minIndex)) } } catch (e: Throwable) { Napier.e(throwable = e) { "get image dimension failed $filePath" } null } finally { reader.dispose() } }</ID>
+    <ID>MultilineExpressionWrapping:Backend.kt:ServiceLoader.load(CommunitySearchServiceFactory::class.java).firstOrNull { it.match(env) } ?: throw Exception("unsupported community search service type ${env["SEARCH_SERVICE"]}")</ID>
+    <ID>MultilineExpressionWrapping:Backend.kt:ServiceLoader.load(FileSearchServiceFactory::class.java).firstOrNull { it.match(env) } ?: throw Exception("unsupported file search service type ${env["SEARCH_SERVICE"]}")</ID>
+    <ID>MultilineExpressionWrapping:Backend.kt:ServiceLoader.load(MemberSearchServiceFactory::class.java).firstOrNull { it.match(env) } ?: throw Exception("unsupported member search service type ${env["SEARCH_SERVICE"]}")</ID>
+    <ID>MultilineExpressionWrapping:Backend.kt:ServiceLoader.load(NameServiceFactory::class.java).firstOrNull() ?: throw Exception("unsupported name service type")</ID>
+    <ID>MultilineExpressionWrapping:Backend.kt:ServiceLoader.load(ObjectStorageServiceFactory::class.java).firstOrNull { it.match(env) } ?: throw Exception("unsupported media service type ${env["MEDIA_SERVICE"]}")</ID>
+    <ID>MultilineExpressionWrapping:Backend.kt:ServiceLoader.load(RoomSearchServiceFactory::class.java).firstOrNull { it.match(env) } ?: throw Exception("unsupported room search service type ${env["SEARCH_SERVICE"]}")</ID>
+    <ID>MultilineExpressionWrapping:Backend.kt:ServiceLoader.load(TopicSearchServiceFactory::class.java).firstOrNull { it.match(env) } ?: throw Exception("unsupported topic search service type ${env["SEARCH_SERVICE"]}")</ID>
+    <ID>MultilineExpressionWrapping:Backend.kt:ServiceLoader.load(UserSearchServiceFactory::class.java).firstOrNull { it.match(env) } ?: throw Exception("unsupported user search service type ${env["SEARCH_SERVICE"]}")</ID>
+    <ID>MultilineExpressionWrapping:Backend.kt:viewBox.split(Regex("\\s+")).map { it.trim().toFloatOrNull() }</ID>
+    <ID>MultilineExpressionWrapping:CacheService.kt:WrapCacheService$cacheService.get(k) { Json.encodeToString(vClass.serializer(), block()) }</ID>
+    <ID>MultilineExpressionWrapping:Community.kt:member?.let { NestedMemberInfo(it.status, it.joinedTime, it.invitedTime,) }</ID>
+    <ID>MultilineExpressionWrapping:Database.kt:CombinedDatabase$if (childAccountIds.isEmpty()) { false } else { container.getUsersHasUnreadRoomMap(childAccountIds).getOrThrow().values.any { it } }</ID>
+    <ID>MultilineExpressionWrapping:Database.kt:CombinedDatabase$if (uid != null) { container.getTopicReadList(topicIds, uid).map { it.associateBy { userTopicRead -&gt; userTopicRead.objectId } }.getOrThrow() } else { emptyMap() }</ID>
+    <ID>MultilineExpressionWrapping:Database.kt:CombinedDatabase$if (uid != null) { favorite.getHasFavorite(ObjectListFetch.IdListFetch(topicIds), uid) .getOrThrow().associateBy { it.objectId } } else { emptyMap() }</ID>
+    <ID>MultilineExpressionWrapping:Database.kt:CombinedDatabase$if (uid != null) { subscription.getHasSubscription(ObjectListFetch.IdListFetch(topicIds), uid) .getOrThrow().associateBy { it.objectId } } else { emptyMap() }</ID>
+    <ID>MultilineExpressionWrapping:Database.kt:CombinedDatabase$if (uid != null) { topic.isUserCommented(uid, topicIds).map { it.toSet() }.getOrThrow() } else { emptySet() }</ID>
+    <ID>MultilineExpressionWrapping:Database.kt:CombinedDatabase$runCatching { val subscriptionCount = subscription.getUserSubscriptionCount(uid).getOrThrow() val favoriteCount = favorite.getUserFavoriteCount().getOrThrow() val childAccountCount = user.getChildAccountCount(uid).getOrThrow() val reactionRecordCount = reaction.getUserReactionRecordCount(uid).getOrThrow() val commentCount = topic.getUserCommentCount(uid).getOrThrow() val childAccountIds = user.getChildAccountIds(uid).getOrThrow() val hasUnreadChildRoomMessage = if (childAccountIds.isEmpty()) { false } else { container.getUsersHasUnreadRoomMap(childAccountIds).getOrThrow().values.any { it } } val rawUser = user.getRawUser(ObjectFetch.IdFetch(uid), uid).getOrThrow() ?: error("user not found") RawUserOverview( subscriptionCount, favoriteCount, rawUser.user.acgAmount, childAccountCount, reactionRecordCount, commentCount, hasUnreadChildRoomMessage, rawUser ) }</ID>
+    <ID>MultilineExpressionWrapping:Database.kt:CombinedDatabase$runCatching { val topicIds = topics.map { it.id } if (topicIds.isEmpty()) return@runCatching emptyList() val commentedSet = if (uid != null) { topic.isUserCommented(uid, topicIds).map { it.toSet() }.getOrThrow() } else { emptySet() } val commentCountMap = topic.getTopicCommentCount(topicIds).map { it.associateByPair() }.getOrThrow() val reactionCountMap = reaction.getReactionCount(topicIds).map { it.associateByPair() }.getOrThrow() val lastReadMap = if (uid != null) { container.getTopicReadList(topicIds, uid).map { it.associateBy { userTopicRead -&gt; userTopicRead.objectId } }.getOrThrow() } else { emptyMap() } val contentMap = topic.getTopicContentFromByteArray(topics, uid).getOrThrow() val favoriteMap = if (uid != null) { favorite.getHasFavorite(ObjectListFetch.IdListFetch(topicIds), uid) .getOrThrow().associateBy { it.objectId } } else { emptyMap() } val subscriptionMap = if (uid != null) { subscription.getHasSubscription(ObjectListFetch.IdListFetch(topicIds), uid) .getOrThrow().associateBy { it.objectId } } else { emptyMap() } topics.map { topic -&gt; val id = topic.id RawTopic( topic, contentMap[id] ?: TopicContent.Nil, commentCountMap[id] ?: 0, commentedSet.contains(id), reactionCountMap[id] ?: 0, lastReadMap[id]?.topicId, favoriteId = favoriteMap[id]?.id, subscriptionId = subscriptionMap[id]?.id, ) } }</ID>
+    <ID>MultilineExpressionWrapping:Database.kt:listResult.mapResult { list -&gt; totalResult.map { total -&gt; PaginationResult(list, total) } }</ID>
+    <ID>MultilineExpressionWrapping:Database.kt:listResult.mapResultIfNotNull { list -&gt; totalResult.map { total -&gt; PaginationResult(list, total) } }</ID>
+    <ID>MultilineExpressionWrapping:Database.kt:map { PaginationResult(it, total) }</ID>
+    <ID>MultilineExpressionWrapping:Database.kt:mapIfNotNull { PaginationResult(it, total) }</ID>
+    <ID>MultilineExpressionWrapping:Env.kt:MergedEnv( buildList { addAll( listOfNotNull( envMap, // 测试时通过config map手动传递 System.getenv(), // 正式部署 readResourceEnv("test.env"), // 测试 ) ) } )</ID>
+    <ID>MultilineExpressionWrapping:Env.kt:if (isWindowsLike) { File(System.getProperty("java.io.tmpdir"), "log") } else { // 获取home 目录 File(System.getProperty("user.home"), "log") }</ID>
+    <ID>MultilineExpressionWrapping:Fetch.kt:ids.mapNotNull { groupBy[it] }</ID>
+    <ID>MultilineExpressionWrapping:FileRef.kt:FileRefInfo( id = id, objectId = objectId, objectType = objectType, author = author, mediaName = mediaName, fileId = fileId )</ID>
+    <ID>MultilineExpressionWrapping:Member.kt:MemberInfo( id, uid, objectId, objectType, status, joinedTime, invitedTime, userInfo, )</ID>
+    <ID>MultilineExpressionWrapping:Member.kt:NestedMemberInfo( status, joinedTime, invitedTime, )</ID>
+    <ID>MultilineExpressionWrapping:Room.kt:Room( user.notificationId, now(), "${user.aid}_notification", "Notification", adminUid, null, null )</ID>
+    <ID>MultilineExpressionWrapping:Room.kt:listOf( Member( SnowflakeFactory.nextId(), user.id, user.notificationId, ObjectType.ROOM, now(), MemberStatus.INVITED, now(), null, ), Member( SnowflakeFactory.nextId(), adminUid, user.notificationId, ObjectType.ROOM, now(), MemberStatus.JOINED, null, now(), ) )</ID>
+    <ID>MultilineExpressionWrapping:Topic.kt:TopicInfo( id = topic.id, content = content, author = topic.author, rootId = topic.rootId, rootType = topic.rootType, parentId = topic.parentId, parentType = topic.parentType, hasJoined = false, createdTime = topic.createdTime, commentCount = commentCount, reactionCount = reactionCount, hasComment = hasComment, isEncrypted = topic.isEncrypted, level = topic.level, isPin = topic.isPin, lastModifiedTime = topic.lastModifiedTime, extension = extensions, aid = topic.aid, lastRead = lastRead, favoriteId = favoriteId, subscriptionId = subscriptionId, status = topic.status, )</ID>
+    <ID>MultilineExpressionWrapping:User.kt:user.toUserInfo(avatar).copy( favoriteId = favoriteId, subscriptionId = subscriptionId )</ID>
+    <ID>MultilineExpressionWrapping:UserLog.kt:UserLogInfo( id = id, uid = uid, type = type, objectId = objectId, objectType = objectType, createdTime = createdTime.date )</ID>
+    <ID>MultilineLambdaItParameter:Backend.kt:{ if (it != null) { Result.success(it) } else { add().recoverIfDup(database::isDup) { get() } } }</ID>
+    <ID>MultilineLambdaItParameter:Backend.kt:{ reader.input = ImageIO.createImageInputStream(it) reader.read(reader.minIndex) Dimension(reader.getWidth(reader.minIndex), reader.getHeight(reader.minIndex)) }</ID>
+    <ID>MultilineLambdaItParameter:Backend.kt:{ val factory = XMLInputFactory.newInstance() val reader = factory.createXMLStreamReader(it) try { if (reader.hasNext()) { val event = reader.next() if (event == XMLStreamConstants.START_ELEMENT &amp;&amp; "svg".equals( reader.localName, true ) ) { val viewBox: String? = reader.getAttributeValue(null, "viewBox") val height: String? = reader.getAttributeValue(null, "height") val width: String? = reader.getAttributeValue(null, "width") getSvgDimension(viewBox, width to height) } else { null } } else { null } } finally { reader.close() } }</ID>
+    <ID>MultilineLambdaItParameter:Env.kt:{ Properties().apply { load(it) } }</ID>
+    <ID>NamedArguments:Backend.kt:DatabaseConnection(uri, driver, user, pass)</ID>
+    <ID>NamedArguments:Community.kt:CommunityInfo( community.id, community.aid, community.name, community.owner, community.createdTime, memberCount ?: 0, community.memberPolicy, member = member?.let { NestedMemberInfo(it.status, it.joinedTime, it.invitedTime,) }, lastRead = lastRead, latestTopic = latestTopic, icon = icon, poster = poster, hasPoster = poster != null, fontSettings = fontSettingsWithInfo, favoriteId = favoriteId, subscriptionId = subscriptionId, status = community.status, )</ID>
+    <ID>NamedArguments:CommunitySearchService.kt:CommunityDocument.Companion$CommunityDocument(community.id, community.name, community.aid, community.owner)</ID>
+    <ID>NamedArguments:Database.kt:CombinedDatabase$RawTopic( topic, contentMap[id] ?: TopicContent.Nil, commentCountMap[id] ?: 0, commentedSet.contains(id), reactionCountMap[id] ?: 0, lastReadMap[id]?.topicId, favoriteId = favoriteMap[id]?.id, subscriptionId = subscriptionMap[id]?.id, )</ID>
+    <ID>NamedArguments:Database.kt:CombinedDatabase$RawUserOverview( subscriptionCount, favoriteCount, rawUser.user.acgAmount, childAccountCount, reactionRecordCount, commentCount, hasUnreadChildRoomMessage, rawUser )</ID>
+    <ID>NamedArguments:Database.kt:CombinedDatabase$getTopicByParentId(uid, primaryKeyFetch, parentId, pinType)</ID>
+    <ID>NamedArguments:FileRecord.kt:FileInfo( id, url, fullName, contentType, size, name, owner, ownerType, lastModified, dimension, favoriteId, subscriptionId, status, )</ID>
+    <ID>NamedArguments:Member.kt:MemberInfo( id, uid, objectId, objectType, status, joinedTime, invitedTime, userInfo, )</ID>
+    <ID>NamedArguments:PanelLog.kt:PanelLogInfo(id, adminId, targetId, objectType, action, createdTime)</ID>
+    <ID>NamedArguments:Quota.kt:QuotaInfo(ownerId, ownerType, quotaType, total, used, lockId)</ID>
+    <ID>NamedArguments:Room.kt:Member( SnowflakeFactory.nextId(), adminUid, user.notificationId, ObjectType.ROOM, now(), MemberStatus.JOINED, null, now(), )</ID>
+    <ID>NamedArguments:Room.kt:Member( SnowflakeFactory.nextId(), user.id, user.notificationId, ObjectType.ROOM, now(), MemberStatus.INVITED, now(), null, )</ID>
+    <ID>NamedArguments:Room.kt:Room( user.notificationId, now(), "${user.aid}_notification", "Notification", adminUid, null, null )</ID>
+    <ID>NamedArguments:Room.kt:RoomInfo( room.id, room.createdTime, room.name, room.aid, room.creator, memberCount ?: 0, icon = icon, joinedTime = joinedTime, communityId = room.communityId, lastRead = lastRead, latestTopic = latestTopic, favoriteId = favoriteId, subscriptionId = subscriptionId, status = room.status, )</ID>
+    <ID>NamedArguments:RoomSearchService.kt:RoomDocument.Companion$RoomDocument(room.id, room.name, room.aid, room.communityId)</ID>
+    <ID>NamedArguments:TaskRecord.kt:TaskRecordInfo(id, createdTime, processedId, type)</ID>
+    <ID>NamedArguments:UploadRecord.kt:UploadRecordInfo(id, createdTime, objectId, objectType, status, total, progress, name, chunkSize, sha256)</ID>
+    <ID>NamedArguments:User.kt:UserInfo( id, address, aid, nickname, avatar, null, null, status, )</ID>
+    <ID>NamedArguments:UserFavorite.kt:UserFavoriteInfo(id, uid, objectId, objectType, createdTime)</ID>
+    <ID>NamedArguments:UserSubscription.kt:UserSubscriptionInfo(id, uid, objectId, objectType, createdTime)</ID>
+    <ID>NoEmptyFirstLineInClassBody:SnowflakeFactory.kt:SnowflakeFactory${ // The unique machine ID used for generating Snowflake IDs. // Must be set before generating IDs. // This value must be unique for each machine in a distributed system. private var machineId: Int? = null // Tracks the last timestamp in milliseconds when an ID was generated. // Initialized to -1 to indicate no IDs have been generated yet. private var lastTimestampMs: Long = -1L // Tracks the sequence number for generating multiple unique IDs within the same millisecond. // Initialized to 0 and incremented for each ID generated in the same millisecond. This value // will typically be 0 if IDs are not generated at a frequency higher than one per millisecond. private var sequence: Long = 0L // Number of bits allocated for the machine ID within the 64-bit Snowflake ID. // Minimum 1 bit for at least 2 unique IDs. 10 bits allows 2^10 = 1,024 IDs. private const val MACHINE_ID_BITS: Int = 10 // Number of bits for the sequence number, part of the 64-bit limit. // Minimum 1 bit for 2 IDs per millisecond. 12 bits allows 2^12 = 4,096 IDs per millisecond. private const val SEQUENCE_BITS: Int = 12 // Maximum possible value for machine ID, derived from the number of bits allocated. // This value is 2^MACHINE_ID_BITS - 1. const val MAX_MACHINE_ID = (1 shl MACHINE_ID_BITS) - 1 // Maximum possible value for the sequence number, based on the allocated bits. // Equals 2^SEQUENCE_BITS - 1, ensuring a unique ID sequence within a millisecond. private const val MAX_SEQUENCE = (1 shl SEQUENCE_BITS) - 1 // Wall-clock reference time set at SnowflakeFactory initialization. // Utilized in `newTimestamp()` to compute stable millisecond timestamps, // combining with elapsed time since initialization for adjustment-resilient values. private val timestampEpoch: Long = System.currentTimeMillis() // Nanosecond-precision timestamp recorded at SnowflakeFactory initialization. // Used alongside System.currentTimeMillis() in `newTimestamp()` to ensure // monotonically increasing timestamps, immune to system clock modifications. private val nanoTimeStart: Long = System.nanoTime() /** * Sets the unique machine ID for generating Snowflake IDs. * This is the first step required before generating IDs. * This value must be unique for each machine in a distributed system. * * @param id The machine ID to use for generating Snowflake IDs. * @throws IllegalArgumentException If the machine ID is outside the allowable range. */ fun setMachine(id: Int) { require(id in 0..MAX_MACHINE_ID) { "The Machine ID must be between 0 and $MAX_MACHINE_ID" } machineId = id } private val lock = Mutex() suspend fun nextId(): PrimaryKey { return lock.withLock { nextIdInternal() } } /** * Generates the next unique Snowflake ID. * @return The generated Snowflake ID in the configured base alphanumeric string. * @throws IllegalStateException If the system clock has moved backwards, breaking the ID sequence. */ private suspend fun nextIdInternal(): PrimaryKey { var currentTimestampMs: Long = newTimestamp() // Check for invalid system clock settings. check(currentTimestampMs &gt;= lastTimestampMs) { "Invalid System Clock. Current timestamp: $currentTimestampMs, last timestamp: $lastTimestampMs" } // If it's a new millisecond, reset the sequence number. if (currentTimestampMs != lastTimestampMs) { sequence = 0L lastTimestampMs = currentTimestampMs } else { // If the current timestamp is the same, increment the sequence number. // If sequence overflows, wait for the next millisecond. if (++sequence &gt; MAX_SEQUENCE) { sequence = 0L do { yield() currentTimestampMs = newTimestamp() } while (currentTimestampMs &lt;= lastTimestampMs) lastTimestampMs = currentTimestampMs } } // Construct the ID. return (lastTimestampMs shl (MACHINE_ID_BITS + SEQUENCE_BITS)) or (machineId!!.toLong() shl SEQUENCE_BITS) or sequence } /** * Parses a Snowflake ID to extract its segments. * The ID is expected to have an optional "id-" prefix. * @param id The Snowflake ID to parse. * @return SnowflakeData containing the ID segments. */ @OptIn(ExperimentalTime::class) fun parse(id: PrimaryKey): SnowflakeData { // Extract the machine ID segment. val machineIdSegment = (id shr SEQUENCE_BITS) and MAX_MACHINE_ID.toLong() // Extract the timestamp segment. val timestampMs: Long = (id shr (MACHINE_ID_BITS + SEQUENCE_BITS)) val instant = Instant.fromEpochMilliseconds(timestampMs) val utcTimestampSegment: LocalDateTime = instant.toLocalDateTime(TimeZone.Companion.UTC) // Convert the timestamp to LocalDateTime using the system's default timezone. val localTimestampSegment: LocalDateTime = instant.toLocalDateTime(TimeZone.Companion.currentSystemDefault()) // Extract the sequence number segment. val sequenceSegment: Long = id and MAX_SEQUENCE.toLong() return SnowflakeData( machineId = machineIdSegment.toInt(), sequence = sequenceSegment, utc = utcTimestampSegment, local = localTimestampSegment ) } /** * Returns a more robust current timestamp in milliseconds. * This method combines `System.currentTimeMillis()` and `System.nanoTime()` * to mitigate the impact of system clock adjustments. * `System.nanoTime()` is used for its monotonic properties, ensuring the measured * elapsed time does not decrease even if the system clock is adjusted. * The initial system time (`timestampEpoch`) captured at application startup * is combined with the elapsed time since then, calculated using `System.nanoTime()`, * to produce a stable and increasing timestamp. */ private fun newTimestamp(): Long { val nanoTimeDiff: Long = System.nanoTime() - nanoTimeStart return timestampEpoch + nanoTimeDiff.nanoseconds.inWholeMilliseconds } }</ID>
+    <ID>NoEmptyFirstLineInClassBody:TopicSearchService.kt:TopicDocument${ companion object { fun fromTopic(topic: Topic, content: TopicContent.Plain): TopicDocument { return TopicDocument( id = topic.id, content = content.plain, rootId = topic.rootId, rootType = topic.rootType.name, parentId = topic.parentId, parentType = topic.parentType.name, author = topic.author ) } } }</ID>
+    <ID>NoEmptyFirstLineInClassBody:UserFavorite.kt:UserFavorite${ fun objectTuple(): ObjectTuple { return ObjectTuple(objectId, objectType) } companion object }</ID>
+    <ID>NoEmptyFirstLineInClassBody:UserSearchService.kt:UserDocument${ companion object { fun fromUser(user: User): UserDocument { return UserDocument(user.id, user.nickname, user.aid) } } }</ID>
+    <ID>NullableToStringCall:CacheService.kt:WrapCacheService$key.toString()</ID>
+    <ID>NullableToStringCall:Room.kt:${user.aid}</ID>
+    <ID>OutdatedDocumentation:ObjectStorageService.kt:ObjectStorageService$suspend fun get: Result&lt;List&lt;ObjectStorageRecord&gt;&gt;</ID>
+    <ID>PackageName:AssetTransaction.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageName:Backend.kt:package com.storyteller_f.a.backend.core</ID>
+    <ID>PackageName:CacheService.kt:package com.storyteller_f.a.backend.core.service</ID>
+    <ID>PackageName:ChildAccount.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageName:Community.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageName:CommunitySearchService.kt:package com.storyteller_f.a.backend.core.service</ID>
+    <ID>PackageName:Connection.kt:package com.storyteller_f.a.backend.core</ID>
+    <ID>PackageName:CustomConfig.kt:package com.storyteller_f.a.backend.core</ID>
+    <ID>PackageName:CustomException.kt:package com.storyteller_f.a.backend.core</ID>
+    <ID>PackageName:Database.kt:package com.storyteller_f.a.backend.core</ID>
+    <ID>PackageName:EncryptedKey.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageName:Env.kt:package com.storyteller_f.a.backend.core</ID>
+    <ID>PackageName:Fetch.kt:package com.storyteller_f.a.backend.core</ID>
+    <ID>PackageName:FileRecord.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageName:FileRef.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageName:FileSearchService.kt:package com.storyteller_f.a.backend.core.service</ID>
+    <ID>PackageName:LockService.kt:package com.storyteller_f.a.backend.core.service</ID>
+    <ID>PackageName:Member.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageName:MemberSearchService.kt:package com.storyteller_f.a.backend.core.service</ID>
+    <ID>PackageName:NameService.kt:package com.storyteller_f.a.backend.core.service</ID>
+    <ID>PackageName:ObjectStorageService.kt:package com.storyteller_f.a.backend.core.service</ID>
+    <ID>PackageName:PanelAccount.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageName:PanelLog.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageName:Quota.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageName:RawUserOverview.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageName:Reaction.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageName:ReactionRecord.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageName:Room.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageName:RoomSearchService.kt:package com.storyteller_f.a.backend.core.service</ID>
+    <ID>PackageName:TaskRecord.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageName:Title.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageName:Topic.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageName:TopicSearchService.kt:package com.storyteller_f.a.backend.core.service</ID>
+    <ID>PackageName:UploadRecord.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageName:User.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageName:UserDevice.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageName:UserFavorite.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageName:UserLog.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageName:UserSearchService.kt:package com.storyteller_f.a.backend.core.service</ID>
+    <ID>PackageName:UserSubscription.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageName:UserTopicRead.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageName:UserTwoFactor.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:AssetTransaction.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:Backend.kt:package com.storyteller_f.a.backend.core</ID>
+    <ID>PackageNaming:CacheService.kt:package com.storyteller_f.a.backend.core.service</ID>
+    <ID>PackageNaming:ChildAccount.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:Community.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:CommunitySearchService.kt:package com.storyteller_f.a.backend.core.service</ID>
+    <ID>PackageNaming:Connection.kt:package com.storyteller_f.a.backend.core</ID>
+    <ID>PackageNaming:CustomConfig.kt:package com.storyteller_f.a.backend.core</ID>
+    <ID>PackageNaming:CustomException.kt:package com.storyteller_f.a.backend.core</ID>
+    <ID>PackageNaming:Database.kt:package com.storyteller_f.a.backend.core</ID>
+    <ID>PackageNaming:EncryptedKey.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:Env.kt:package com.storyteller_f.a.backend.core</ID>
+    <ID>PackageNaming:Fetch.kt:package com.storyteller_f.a.backend.core</ID>
+    <ID>PackageNaming:FileRecord.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:FileRef.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:FileSearchService.kt:package com.storyteller_f.a.backend.core.service</ID>
+    <ID>PackageNaming:LockService.kt:package com.storyteller_f.a.backend.core.service</ID>
+    <ID>PackageNaming:Member.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:MemberSearchService.kt:package com.storyteller_f.a.backend.core.service</ID>
+    <ID>PackageNaming:NameService.kt:package com.storyteller_f.a.backend.core.service</ID>
+    <ID>PackageNaming:ObjectStorageService.kt:package com.storyteller_f.a.backend.core.service</ID>
+    <ID>PackageNaming:PanelAccount.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:PanelLog.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:Quota.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:RawUserOverview.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:Reaction.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:ReactionRecord.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:Room.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:RoomSearchService.kt:package com.storyteller_f.a.backend.core.service</ID>
+    <ID>PackageNaming:TaskRecord.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:Title.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:Topic.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:TopicSearchService.kt:package com.storyteller_f.a.backend.core.service</ID>
+    <ID>PackageNaming:UploadRecord.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:User.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:UserDevice.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:UserFavorite.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:UserLog.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:UserSearchService.kt:package com.storyteller_f.a.backend.core.service</ID>
+    <ID>PackageNaming:UserSubscription.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:UserTopicRead.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>PackageNaming:UserTwoFactor.kt:package com.storyteller_f.a.backend.core.types</ID>
+    <ID>ReplaceSafeCallChainWithRun:Backend.kt:pair.first?.removeSuffix("px")?.toIntOrNull()</ID>
+    <ID>ReplaceSafeCallChainWithRun:Backend.kt:pair.second?.removeSuffix("px")?.toIntOrNull()</ID>
+    <ID>ReplaceSafeCallChainWithRun:Env.kt:stream?.use { Properties().apply { load(it) } }?.map { it.key as String to it.value as String }?.associate { it }</ID>
+    <ID>ReplaceSafeCallChainWithRun:UserTwoFactor.kt:this?.type?.takeIf { enabled }</ID>
+    <ID>ReturnCount:Backend.kt:fun getSvgDimension: Dimension?</ID>
+    <ID>StringLiteralDuplication:Env.kt:"LOG_PATH"</ID>
+    <ID>StringShouldBeRawString:Backend.kt:"C:\\msys64\\ucrt64\\bin"</ID>
+    <ID>SuspendFunSwallowedCancellation:Database.kt:CombinedDatabase$runCatching</ID>
+    <ID>TooGenericExceptionCaught:Backend.kt:e: Throwable</ID>
+    <ID>TooGenericExceptionThrown:Backend.kt:throw Exception("DATABASE_DRIVE is empty")</ID>
+    <ID>TooGenericExceptionThrown:Backend.kt:throw Exception("DATABASE_PASS is empty")</ID>
+    <ID>TooGenericExceptionThrown:Backend.kt:throw Exception("DATABASE_URI is empty")</ID>
+    <ID>TooGenericExceptionThrown:Backend.kt:throw Exception("DATABASE_USER is empty")</ID>
+    <ID>TooGenericExceptionThrown:Backend.kt:throw Exception("get image dimension failed")</ID>
+    <ID>TooGenericExceptionThrown:Backend.kt:throw Exception("unsupported community search service type ${env["SEARCH_SERVICE"]}")</ID>
+    <ID>TooGenericExceptionThrown:Backend.kt:throw Exception("unsupported file search service type ${env["SEARCH_SERVICE"]}")</ID>
+    <ID>TooGenericExceptionThrown:Backend.kt:throw Exception("unsupported media service type ${env["MEDIA_SERVICE"]}")</ID>
+    <ID>TooGenericExceptionThrown:Backend.kt:throw Exception("unsupported member search service type ${env["SEARCH_SERVICE"]}")</ID>
+    <ID>TooGenericExceptionThrown:Backend.kt:throw Exception("unsupported name service type")</ID>
+    <ID>TooGenericExceptionThrown:Backend.kt:throw Exception("unsupported room search service type ${env["SEARCH_SERVICE"]}")</ID>
+    <ID>TooGenericExceptionThrown:Backend.kt:throw Exception("unsupported topic search service type ${env["SEARCH_SERVICE"]}")</ID>
+    <ID>TooGenericExceptionThrown:Backend.kt:throw Exception("unsupported user search service type ${env["SEARCH_SERVICE"]}")</ID>
+    <ID>TooManyFunctions:Backend.kt:com.storyteller_f.a.backend.core.Backend.kt</ID>
+    <ID>TooManyFunctions:Database.kt:ContainerDatabase</ID>
+    <ID>TooManyFunctions:Database.kt:FileDatabase</ID>
+    <ID>TooManyFunctions:Database.kt:ReactionDatabase</ID>
+    <ID>TooManyFunctions:Database.kt:RoomDatabase</ID>
+    <ID>TooManyFunctions:Database.kt:TopicDatabase</ID>
+    <ID>TooManyFunctions:Database.kt:UserDatabase</ID>
+    <ID>TrailingCommaOnCallSite:Backend.kt:( reader.localName, true )</ID>
+    <ID>TrailingCommaOnCallSite:Community.kt:(it.status, it.joinedTime, it.invitedTime,)</ID>
+    <ID>TrailingCommaOnCallSite:Database.kt:CombinedDatabase$( subscriptionCount, favoriteCount, rawUser.user.acgAmount, childAccountCount, reactionRecordCount, commentCount, hasUnreadChildRoomMessage, rawUser )</ID>
+    <ID>TrailingCommaOnCallSite:Env.kt:( buildList { addAll( listOfNotNull( envMap, // 测试时通过config map手动传递 System.getenv(), // 正式部署 readResourceEnv("test.env"), // 测试 ) ) } )</ID>
+    <ID>TrailingCommaOnCallSite:Env.kt:( listOfNotNull( envMap, // 测试时通过config map手动传递 System.getenv(), // 正式部署 readResourceEnv("test.env"), // 测试 ) )</ID>
+    <ID>TrailingCommaOnCallSite:FileRef.kt:( id = id, objectId = objectId, objectType = objectType, author = author, mediaName = mediaName, fileId = fileId )</ID>
+    <ID>TrailingCommaOnCallSite:MemberSearchService.kt:MemberDocument.Companion$( id = id, uid = userInfo.id, objectId = objectId, objectType = objectType, nickname = userInfo.nickname, objectName = objectName, communityId = communityId )</ID>
+    <ID>TrailingCommaOnCallSite:Room.kt:( Member( SnowflakeFactory.nextId(), user.id, user.notificationId, ObjectType.ROOM, now(), MemberStatus.INVITED, now(), null, ), Member( SnowflakeFactory.nextId(), adminUid, user.notificationId, ObjectType.ROOM, now(), MemberStatus.JOINED, null, now(), ) )</ID>
+    <ID>TrailingCommaOnCallSite:Room.kt:( user.notificationId, now(), "${user.aid}_notification", "Notification", adminUid, null, null )</ID>
+    <ID>TrailingCommaOnCallSite:SnowflakeFactory.kt:SnowflakeFactory$( machineId = machineIdSegment.toInt(), sequence = sequenceSegment, utc = utcTimestampSegment, local = localTimestampSegment )</ID>
+    <ID>TrailingCommaOnCallSite:TopicSearchService.kt:TopicDocument.Companion$( id = topic.id, content = content.plain, rootId = topic.rootId, rootType = topic.rootType.name, parentId = topic.parentId, parentType = topic.parentType.name, author = topic.author )</ID>
+    <ID>TrailingCommaOnCallSite:User.kt:( favoriteId = favoriteId, subscriptionId = subscriptionId )</ID>
+    <ID>TrailingCommaOnCallSite:UserLog.kt:( id = id, uid = uid, type = type, objectId = objectId, objectType = objectType, createdTime = createdTime.date )</ID>
+    <ID>TrailingCommaOnDeclarationSite:AssetTransaction.kt:AssetTransaction$( val id: PrimaryKey, val uid: PrimaryKey, val createdTime: LocalDateTime, val type: AssetType, val before: Long, val after: Long )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Backend.kt:( get: suspend () -&gt; Result&lt;T?&gt;, add: suspend () -&gt; Result&lt;T&gt; )</ID>
+    <ID>TrailingCommaOnDeclarationSite:CacheService.kt:WrapCacheService$( val cacheService: CacheService&lt;String, String&gt;, val vClass: KClass&lt;V&gt; )</ID>
+    <ID>TrailingCommaOnDeclarationSite:ChildAccount.kt:ChildAccount$( val uid: PrimaryKey, val encryptedPrivateKey: String, val encryptedAesKey: String, val hostId: PrimaryKey, val remark: String?, val encryptedEncryptionPrivateKey: String? = null )</ID>
+    <ID>TrailingCommaOnDeclarationSite:CommunitySearchService.kt:CommunityDocumentSearch.Keyword$( val keyword: String, val fetch: OffsetFetch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:CommunitySearchService.kt:CommunitySearchService$( communityDocumentSearch: CommunityDocumentSearch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Connection.kt:DatabaseConnection$( val uri: String, val driver: String, val user: String, val password: String )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Connection.kt:ElasticConnection$( val url: String, val certFile: String, val name: String, val pass: String, val refresh: Boolean = true )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Database.kt:( block: suspend (List&lt;T&gt;) -&gt; List&lt;R&gt; )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Database.kt:( block: suspend (List&lt;T&gt;) -&gt; Result&lt;List&lt;R&gt;&gt; )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Database.kt:( block: suspend (List&lt;T&gt;) -&gt; Result&lt;List&lt;R&gt;?&gt; )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Database.kt:( listResult: Result&lt;List&lt;T&gt;&gt;, totalResult: Result&lt;Long&gt; )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Database.kt:( listResult: Result&lt;List&lt;T&gt;?&gt;, totalResult: Result&lt;Long&gt; )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Database.kt:AdminDatabase$( targetId: PrimaryKey, objectType: com.storyteller_f.shared.type.ObjectType, fetch: PrimaryKeyFetch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Database.kt:AdminDatabase$( tuples: List&lt;InsertTopicTuple&gt;, userMap: Map&lt;String, User&gt;, objectType: ObjectType )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Database.kt:AdminDatabase$( type: TaskRecordType?, fetch: PrimaryKeyFetch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Database.kt:CombinedDatabase$( uid: PrimaryKey?, ids: List&lt;PrimaryKey&gt; )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Database.kt:CombinedDatabase$( uid: PrimaryKey?, parentId: PrimaryKey )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Database.kt:CombinedDatabase$( uid: PrimaryKey?, primaryKeyFetch: PrimaryKeyFetch, parentId: PrimaryKey, pinType: TopicPinSearch? )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Database.kt:CombinedDatabase$( uid: PrimaryKey?, topics: List&lt;Topic&gt; )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Database.kt:CommunityDatabase$( objectFetch: ObjectFetch, fillJoinInfo: Boolean? = null, uid: PrimaryKey? = null )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Database.kt:ContainerDatabase$( objectId: PrimaryKey, fetch: PrimaryKeyFetch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Database.kt:ContainerDatabase$( objectId: PrimaryKey, uidList: List&lt;PrimaryKey&gt; )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Database.kt:ContainerDatabase$( objectId: PrimaryKey?, word: String?, fetch: PrimaryKeyFetch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Database.kt:ContainerDatabase$( parentIds: List&lt;PrimaryKey&gt;, uid: PrimaryKey? )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Database.kt:ContainerDatabase$(parentIds: List&lt;PrimaryKey&gt;, uid: PrimaryKey?,)</ID>
+    <ID>TrailingCommaOnDeclarationSite:Database.kt:FileDatabase$( fileId: PrimaryKey, primaryKeyFetch: PrimaryKeyFetch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Database.kt:FileDatabase$( fileRecordList: List&lt;FileRecord&gt;, ownerId: PrimaryKey, ownerType: ObjectType )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Database.kt:InsertCommunityTuple$( val community: PresetCommunity, val icon: PrimaryKey?, val id: PrimaryKey, val fontSettings: FontSettings?, val createdTime: LocalDateTime )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Database.kt:InsertTopicTuple$( val topic: PresetTopic, val originalIndex: Int, val level: Int, val id: PrimaryKey, val content: ByteArray, val isEncrypted: Boolean, val rootId: PrimaryKey )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Database.kt:ReactionDatabase$( objectId: List&lt;PrimaryKey&gt;, emoji: String )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Database.kt:ReactionDatabase$( uid: PrimaryKey, primaryKeyFetch: PrimaryKeyFetch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Database.kt:SubscriptionDatabase$( objectId: PrimaryKey, primaryKeyFetch: PrimaryKeyFetch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Database.kt:SubscriptionDatabase$( uid: PrimaryKey, fetch: PrimaryKeyFetch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Database.kt:TopicDatabase$( uid: PrimaryKey, primaryKeyFetch: PrimaryKeyFetch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Database.kt:TopicDatabase$( uid: PrimaryKey?, primaryKeyFetch: PrimaryKeyFetch, parentId: PrimaryKey, pinType: TopicPinSearch? )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Database.kt:TopicDatabase$(topicIdList: List&lt;PrimaryKey&gt;,)</ID>
+    <ID>TrailingCommaOnDeclarationSite:Database.kt:UserDatabase$( hostId: PrimaryKey, encryptedPrivateKey: String, encryptedAesKey: String, user: User, encryptedEncryptionPrivateKey: String? = null )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Fetch.kt:( infos: List&lt;T&gt;, ids: List&lt;PrimaryKey&gt;, key: (T) -&gt; PrimaryKey )</ID>
+    <ID>TrailingCommaOnDeclarationSite:FileRecord.kt:( url: String, lastModified: LocalDateTime, favoriteId: PrimaryKey? = null, subscriptionId: PrimaryKey? = null )</ID>
+    <ID>TrailingCommaOnDeclarationSite:FileRef.kt:FileRef$( val id: PrimaryKey, val createdTime: LocalDateTime, val objectId: PrimaryKey, val objectType: ObjectType, val author: PrimaryKey, val mediaName: String, val fileId: PrimaryKey )</ID>
+    <ID>TrailingCommaOnDeclarationSite:FileSearchService.kt:FileDocument$( override val id: PrimaryKey, val name: String, val ownerId: PrimaryKey )</ID>
+    <ID>TrailingCommaOnDeclarationSite:FileSearchService.kt:FileDocumentSearch.Keyword$( val word: String, val ownerId: PrimaryKey? = null, val fetch: OffsetFetch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:FileSearchService.kt:FileSearchService$( fileDocumentSearch: FileDocumentSearch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:MemberSearchService.kt:MemberDocument$( override val id: PrimaryKey, val uid: PrimaryKey, val objectId: PrimaryKey, val objectType: ObjectType, val nickname: String, val objectName: String, val communityId: PrimaryKey? = null )</ID>
+    <ID>TrailingCommaOnDeclarationSite:MemberSearchService.kt:MemberDocument.Companion$( id: PrimaryKey, userInfo: UserInfo, objectId: PrimaryKey, objectType: ObjectType, objectName: String, communityId: PrimaryKey? = null )</ID>
+    <ID>TrailingCommaOnDeclarationSite:MemberSearchService.kt:MemberDocumentSearch.CommunityMembers$( val uid: PrimaryKey, val objectName: String, val fetch: OffsetFetch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:MemberSearchService.kt:MemberDocumentSearch.Keyword$( val objectId: PrimaryKey? = null, val nickname: String, val fetch: OffsetFetch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:MemberSearchService.kt:MemberDocumentSearch.RoomMembers$( val uid: PrimaryKey, val objectName: String, val communityId: PrimaryKey? = null, val fetch: OffsetFetch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:MemberSearchService.kt:MemberSearchService$( memberDocumentSearch: MemberDocumentSearch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:ObjectStorageService.kt:ObjectStorageService$( bucketName: String, names: List&lt;String&gt;, presignContext: PresignContext? )</ID>
+    <ID>TrailingCommaOnDeclarationSite:ObjectStorageService.kt:ObjectStorageService$( bucketName: String, targetFullName: String, sourceFullNames: List&lt;String&gt; )</ID>
+    <ID>TrailingCommaOnDeclarationSite:ObjectStorageService.kt:ProcessedUploadPack$( val pack: UploadPack, val contentType: String, val dimension: Dimension? = null )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PanelAccount.kt:PanelAccount$( val id: PrimaryKey, val name: String, val passType: PassType, val algoType: AlgoType, val publicKey: String, val address: String )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PanelLog.kt:PanelLog$( val id: PrimaryKey, val adminId: PrimaryKey, val targetId: PrimaryKey, val objectType: ObjectType, val action: String, val createdTime: LocalDateTime )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Quota.kt:Quota$( val ownerId: PrimaryKey, val ownerType: ObjectType, val total: Long, val used: Long, val quotaType: QuotaType, val lockId: PrimaryKey? )</ID>
+    <ID>TrailingCommaOnDeclarationSite:RawUserOverview.kt:RawUserOverview$( val subscriptionCount: Long, val favoriteCount: Long, val acg: Long, val childAccountCount: Long, val reactionRecordCount: Long, val commentCount: Long, val hasUnreadChildRoomMessage: Boolean, val rawUser: RawUser )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Reaction.kt:Reaction$( val objectId: PrimaryKey, val objectType: ObjectType, val emoji: String, val count: Long, val lastReactionId: PrimaryKey )</ID>
+    <ID>TrailingCommaOnDeclarationSite:ReactionRecord.kt:ReactionRecord$( val uid: PrimaryKey, val objectId: PrimaryKey, val objectType: ObjectType, val emoji: String, val id: PrimaryKey, val createdTime: LocalDateTime )</ID>
+    <ID>TrailingCommaOnDeclarationSite:RoomSearchService.kt:RoomDocument$( override val id: PrimaryKey, val name: String, val aid: String, val communityId: PrimaryKey? = null )</ID>
+    <ID>TrailingCommaOnDeclarationSite:RoomSearchService.kt:RoomDocumentSearch.Keyword$( val words: String, val communityId: PrimaryKey? = null, val fetch: OffsetFetch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:RoomSearchService.kt:RoomSearchService$( roomDocumentSearch: RoomDocumentSearch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:TaskRecord.kt:TaskRecord$( val id: PrimaryKey, val createdTime: LocalDateTime, val type: TaskRecordType, val processedId: PrimaryKey )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Title.kt:( extensions: TitleInfo.Extension? = null, favoriteId: PrimaryKey? = null, subscriptionId: PrimaryKey? = null, currentTime: LocalDateTime = now() )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Title.kt:RawTitle$( val title: Title, val favoriteId: PrimaryKey? = null, val subscriptionId: PrimaryKey? = null )</ID>
+    <ID>TrailingCommaOnDeclarationSite:TopicSearchService.kt:TopicDocument$( override val id: PrimaryKey, val content: String, val rootId: PrimaryKey, val rootType: String, val parentId: PrimaryKey, val parentType: String, val author: PrimaryKey )</ID>
+    <ID>TrailingCommaOnDeclarationSite:TopicSearchService.kt:TopicSearchService$( topicDocumentSearch: TopicDocumentSearch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:UserLog.kt:UserLog$( val id: PrimaryKey, val createdTime: LocalDateTime, val uid: PrimaryKey, val type: UserLogType, val objectId: PrimaryKey, val objectType: ObjectType )</ID>
+    <ID>TrailingCommaOnDeclarationSite:UserSearchService.kt:UserSearchService$( userDocumentSearch: UserDocumentSearch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:UserSubscription.kt:SubscriptionSentLog$( val id: PrimaryKey, val uid: PrimaryKey, val objectId: PrimaryKey, val objectType: ObjectType, val subscriptionId: PrimaryKey, val createdTime: LocalDateTime )</ID>
+    <ID>TrailingCommaOnDeclarationSite:UserTopicRead.kt:UserTopicRead$( val uid: PrimaryKey, val updatedAt: LocalDateTime, val objectId: PrimaryKey, val objectType: ObjectType, val topicId: PrimaryKey )</ID>
+    <ID>TypeParameterListSpacing:Fetch.kt:&lt;T&gt;</ID>
+    <ID>TypeParameterListSpacing:LockService.kt:LockService$&lt;T&gt;</ID>
+    <ID>UndocumentedPublicClass:AssetTransaction.kt:AssetTransaction</ID>
+    <ID>UndocumentedPublicClass:AssetTransaction.kt:AssetTransaction$Companion</ID>
+    <ID>UndocumentedPublicClass:Backend.kt:Backend</ID>
+    <ID>UndocumentedPublicClass:Backend.kt:Backend$Companion</ID>
+    <ID>UndocumentedPublicClass:CacheService.kt:CacheService&lt;K, T&gt;</ID>
+    <ID>UndocumentedPublicClass:CacheService.kt:CacheServiceFactory</ID>
+    <ID>UndocumentedPublicClass:CacheService.kt:WrapCacheService&lt;K, V : Any&gt; : CacheService</ID>
+    <ID>UndocumentedPublicClass:ChildAccount.kt:ChildAccount</ID>
+    <ID>UndocumentedPublicClass:ChildAccount.kt:ChildAccount$Companion</ID>
+    <ID>UndocumentedPublicClass:ChildAccount.kt:RawChildAccount</ID>
+    <ID>UndocumentedPublicClass:Community.kt:Community</ID>
+    <ID>UndocumentedPublicClass:Community.kt:Community$Companion</ID>
+    <ID>UndocumentedPublicClass:Community.kt:RawCommunity</ID>
+    <ID>UndocumentedPublicClass:CommunitySearchService.kt:CommunityDocument : PrimaryKeyIdentifiable</ID>
+    <ID>UndocumentedPublicClass:CommunitySearchService.kt:CommunityDocument$Companion</ID>
+    <ID>UndocumentedPublicClass:CommunitySearchService.kt:CommunityDocumentSearch</ID>
+    <ID>UndocumentedPublicClass:CommunitySearchService.kt:CommunityDocumentSearch$Keyword : CommunityDocumentSearch</ID>
+    <ID>UndocumentedPublicClass:CommunitySearchService.kt:CommunitySearchService</ID>
+    <ID>UndocumentedPublicClass:CommunitySearchService.kt:CommunitySearchServiceFactory</ID>
+    <ID>UndocumentedPublicClass:Connection.kt:ContainerImages</ID>
+    <ID>UndocumentedPublicClass:Connection.kt:DatabaseConnection</ID>
+    <ID>UndocumentedPublicClass:Connection.kt:ElasticConnection</ID>
+    <ID>UndocumentedPublicClass:Connection.kt:MinIoConnection</ID>
+    <ID>UndocumentedPublicClass:CustomConfig.kt:CustomConfig</ID>
+    <ID>UndocumentedPublicClass:CustomConfig.kt:CustomKeyStore</ID>
+    <ID>UndocumentedPublicClass:CustomException.kt:CustomBadRequestException : Exception</ID>
+    <ID>UndocumentedPublicClass:CustomException.kt:ForbiddenException : Exception</ID>
+    <ID>UndocumentedPublicClass:CustomException.kt:UnauthorizedException : Exception</ID>
+    <ID>UndocumentedPublicClass:Database.kt:AdminDatabase</ID>
+    <ID>UndocumentedPublicClass:Database.kt:CombinedDatabase</ID>
+    <ID>UndocumentedPublicClass:Database.kt:CommunityDatabase</ID>
+    <ID>UndocumentedPublicClass:Database.kt:ContainerDatabase</ID>
+    <ID>UndocumentedPublicClass:Database.kt:ContainerInfo</ID>
+    <ID>UndocumentedPublicClass:Database.kt:FavoriteDatabase</ID>
+    <ID>UndocumentedPublicClass:Database.kt:FileDatabase</ID>
+    <ID>UndocumentedPublicClass:Database.kt:InsertCommunityTuple</ID>
+    <ID>UndocumentedPublicClass:Database.kt:InsertRoomTuple</ID>
+    <ID>UndocumentedPublicClass:Database.kt:InsertTopicTuple</ID>
+    <ID>UndocumentedPublicClass:Database.kt:JoinSearch</ID>
+    <ID>UndocumentedPublicClass:Database.kt:JoinSearch$Joined : JoinSearch</ID>
+    <ID>UndocumentedPublicClass:Database.kt:JoinSearch$Unspecified : JoinSearch</ID>
+    <ID>UndocumentedPublicClass:Database.kt:MemberAuthData</ID>
+    <ID>UndocumentedPublicClass:Database.kt:PaginationResult&lt;T&gt;</ID>
+    <ID>UndocumentedPublicClass:Database.kt:PanelAccountDatabase</ID>
+    <ID>UndocumentedPublicClass:Database.kt:ReactionDatabase</ID>
+    <ID>UndocumentedPublicClass:Database.kt:RoomDatabase</ID>
+    <ID>UndocumentedPublicClass:Database.kt:SubscriptionDatabase</ID>
+    <ID>UndocumentedPublicClass:Database.kt:TitleDatabase</ID>
+    <ID>UndocumentedPublicClass:Database.kt:TopicDatabase</ID>
+    <ID>UndocumentedPublicClass:Database.kt:UserAuthData</ID>
+    <ID>UndocumentedPublicClass:Database.kt:UserDatabase</ID>
+    <ID>UndocumentedPublicClass:EncryptedKey.kt:EncryptedKey</ID>
+    <ID>UndocumentedPublicClass:EncryptedKey.kt:EncryptedKey$Companion</ID>
+    <ID>UndocumentedPublicClass:Env.kt:MergedEnv</ID>
+    <ID>UndocumentedPublicClass:Fetch.kt:Cursor$AscCursor&lt;T&gt; : Cursor</ID>
+    <ID>UndocumentedPublicClass:Fetch.kt:Cursor$DescCursor&lt;T&gt; : Cursor</ID>
+    <ID>UndocumentedPublicClass:Fetch.kt:Cursor&lt;T&gt;</ID>
+    <ID>UndocumentedPublicClass:Fetch.kt:Fetch</ID>
+    <ID>UndocumentedPublicClass:Fetch.kt:GenericFetch&lt;T&gt; : Fetch</ID>
+    <ID>UndocumentedPublicClass:Fetch.kt:ObjectFetch</ID>
+    <ID>UndocumentedPublicClass:Fetch.kt:ObjectFetch$AidFetch : ObjectFetch</ID>
+    <ID>UndocumentedPublicClass:Fetch.kt:ObjectFetch$IdFetch : ObjectFetch</ID>
+    <ID>UndocumentedPublicClass:Fetch.kt:ObjectListFetch</ID>
+    <ID>UndocumentedPublicClass:Fetch.kt:ObjectListFetch$AidListFetch : ObjectListFetch</ID>
+    <ID>UndocumentedPublicClass:Fetch.kt:ObjectListFetch$IdListFetch : ObjectListFetch</ID>
+    <ID>UndocumentedPublicClass:Fetch.kt:OffsetFetch : GenericFetch</ID>
+    <ID>UndocumentedPublicClass:Fetch.kt:PrimaryKeyFetch : GenericFetch</ID>
+    <ID>UndocumentedPublicClass:Fetch.kt:ReactionFetch : GenericFetch</ID>
+    <ID>UndocumentedPublicClass:FileRecord.kt:FileRecord</ID>
+    <ID>UndocumentedPublicClass:FileRecord.kt:FileRecord$Companion</ID>
+    <ID>UndocumentedPublicClass:FileRef.kt:FileRef</ID>
+    <ID>UndocumentedPublicClass:FileRef.kt:FileRef$Companion</ID>
+    <ID>UndocumentedPublicClass:FileSearchService.kt:FileDocument : PrimaryKeyIdentifiable</ID>
+    <ID>UndocumentedPublicClass:FileSearchService.kt:FileDocument$Companion</ID>
+    <ID>UndocumentedPublicClass:FileSearchService.kt:FileDocumentSearch</ID>
+    <ID>UndocumentedPublicClass:FileSearchService.kt:FileDocumentSearch$Keyword : FileDocumentSearch</ID>
+    <ID>UndocumentedPublicClass:FileSearchService.kt:FileSearchService</ID>
+    <ID>UndocumentedPublicClass:FileSearchService.kt:FileSearchServiceFactory</ID>
+    <ID>UndocumentedPublicClass:LockService.kt:LockService</ID>
+    <ID>UndocumentedPublicClass:LockService.kt:LockServiceFactory</ID>
+    <ID>UndocumentedPublicClass:Member.kt:Member</ID>
+    <ID>UndocumentedPublicClass:Member.kt:Member$Companion</ID>
+    <ID>UndocumentedPublicClass:MemberSearchService.kt:MemberDocument : PrimaryKeyIdentifiable</ID>
+    <ID>UndocumentedPublicClass:MemberSearchService.kt:MemberDocument$Companion</ID>
+    <ID>UndocumentedPublicClass:MemberSearchService.kt:MemberDocumentSearch</ID>
+    <ID>UndocumentedPublicClass:MemberSearchService.kt:MemberDocumentSearch$CommunityMembers : MemberDocumentSearch</ID>
+    <ID>UndocumentedPublicClass:MemberSearchService.kt:MemberDocumentSearch$Keyword : MemberDocumentSearch</ID>
+    <ID>UndocumentedPublicClass:MemberSearchService.kt:MemberDocumentSearch$RoomMembers : MemberDocumentSearch</ID>
+    <ID>UndocumentedPublicClass:MemberSearchService.kt:MemberSearchService</ID>
+    <ID>UndocumentedPublicClass:MemberSearchService.kt:MemberSearchServiceFactory</ID>
+    <ID>UndocumentedPublicClass:NameService.kt:NameService</ID>
+    <ID>UndocumentedPublicClass:NameService.kt:NameServiceFactory</ID>
+    <ID>UndocumentedPublicClass:ObjectStorageService.kt:CopyPack</ID>
+    <ID>UndocumentedPublicClass:ObjectStorageService.kt:ObjectStorageRecord</ID>
+    <ID>UndocumentedPublicClass:ObjectStorageService.kt:ObjectStorageService</ID>
+    <ID>UndocumentedPublicClass:ObjectStorageService.kt:ObjectStorageServiceFactory</ID>
+    <ID>UndocumentedPublicClass:ObjectStorageService.kt:ObjectStorageWriteRecord</ID>
+    <ID>UndocumentedPublicClass:ObjectStorageService.kt:PresignContext</ID>
+    <ID>UndocumentedPublicClass:ObjectStorageService.kt:ProcessedUploadPack</ID>
+    <ID>UndocumentedPublicClass:ObjectStorageService.kt:UploadPack</ID>
+    <ID>UndocumentedPublicClass:PanelAccount.kt:PanelAccount</ID>
+    <ID>UndocumentedPublicClass:PanelAccount.kt:PanelAccount$Companion</ID>
+    <ID>UndocumentedPublicClass:PanelAccount.kt:RawPanelAccount</ID>
+    <ID>UndocumentedPublicClass:PanelLog.kt:PanelLog</ID>
+    <ID>UndocumentedPublicClass:PanelLog.kt:PanelLog$Companion</ID>
+    <ID>UndocumentedPublicClass:Quota.kt:Quota</ID>
+    <ID>UndocumentedPublicClass:Quota.kt:Quota$Companion</ID>
+    <ID>UndocumentedPublicClass:RawUserOverview.kt:RawUserOverview</ID>
+    <ID>UndocumentedPublicClass:Reaction.kt:Reaction</ID>
+    <ID>UndocumentedPublicClass:Reaction.kt:Reaction$Companion</ID>
+    <ID>UndocumentedPublicClass:ReactionRecord.kt:ReactionRecord</ID>
+    <ID>UndocumentedPublicClass:ReactionRecord.kt:ReactionRecord$Companion</ID>
+    <ID>UndocumentedPublicClass:Room.kt:RawRoom</ID>
+    <ID>UndocumentedPublicClass:Room.kt:Room</ID>
+    <ID>UndocumentedPublicClass:Room.kt:Room$Companion</ID>
+    <ID>UndocumentedPublicClass:RoomSearchService.kt:RoomDocument : PrimaryKeyIdentifiable</ID>
+    <ID>UndocumentedPublicClass:RoomSearchService.kt:RoomDocument$Companion</ID>
+    <ID>UndocumentedPublicClass:RoomSearchService.kt:RoomDocumentSearch</ID>
+    <ID>UndocumentedPublicClass:RoomSearchService.kt:RoomDocumentSearch$Keyword : RoomDocumentSearch</ID>
+    <ID>UndocumentedPublicClass:RoomSearchService.kt:RoomSearchService</ID>
+    <ID>UndocumentedPublicClass:RoomSearchService.kt:RoomSearchServiceFactory</ID>
+    <ID>UndocumentedPublicClass:TaskRecord.kt:TaskRecord</ID>
+    <ID>UndocumentedPublicClass:TaskRecord.kt:TaskRecord$Companion</ID>
+    <ID>UndocumentedPublicClass:Title.kt:RawTitle</ID>
+    <ID>UndocumentedPublicClass:Title.kt:Title</ID>
+    <ID>UndocumentedPublicClass:Title.kt:Title$Companion</ID>
+    <ID>UndocumentedPublicClass:Topic.kt:RawTopic</ID>
+    <ID>UndocumentedPublicClass:Topic.kt:Topic</ID>
+    <ID>UndocumentedPublicClass:Topic.kt:Topic$Companion</ID>
+    <ID>UndocumentedPublicClass:TopicSearchService.kt:TopicDocument : PrimaryKeyIdentifiable</ID>
+    <ID>UndocumentedPublicClass:TopicSearchService.kt:TopicDocument$Companion</ID>
+    <ID>UndocumentedPublicClass:TopicSearchService.kt:TopicDocumentSearch</ID>
+    <ID>UndocumentedPublicClass:TopicSearchService.kt:TopicDocumentSearch$All : TopicDocumentSearch</ID>
+    <ID>UndocumentedPublicClass:TopicSearchService.kt:TopicDocumentSearch$AllCommunityRoot : TopicDocumentSearch</ID>
+    <ID>UndocumentedPublicClass:TopicSearchService.kt:TopicDocumentSearch$Recommend : TopicDocumentSearch</ID>
+    <ID>UndocumentedPublicClass:TopicSearchService.kt:TopicDocumentSearch$RecommendNotLogin : TopicDocumentSearch</ID>
+    <ID>UndocumentedPublicClass:TopicSearchService.kt:TopicDocumentSearch$Topics : TopicDocumentSearch</ID>
+    <ID>UndocumentedPublicClass:TopicSearchService.kt:TopicSearchService</ID>
+    <ID>UndocumentedPublicClass:TopicSearchService.kt:TopicSearchServiceFactory</ID>
+    <ID>UndocumentedPublicClass:UploadRecord.kt:UploadRecord</ID>
+    <ID>UndocumentedPublicClass:UploadRecord.kt:UploadRecord$Companion</ID>
+    <ID>UndocumentedPublicClass:User.kt:RawUser</ID>
+    <ID>UndocumentedPublicClass:User.kt:User</ID>
+    <ID>UndocumentedPublicClass:User.kt:User$Companion</ID>
+    <ID>UndocumentedPublicClass:UserDevice.kt:UserDevice</ID>
+    <ID>UndocumentedPublicClass:UserDevice.kt:UserDevice$Companion</ID>
+    <ID>UndocumentedPublicClass:UserFavorite.kt:UserFavorite</ID>
+    <ID>UndocumentedPublicClass:UserFavorite.kt:UserFavorite$Companion</ID>
+    <ID>UndocumentedPublicClass:UserLog.kt:UserLog</ID>
+    <ID>UndocumentedPublicClass:UserLog.kt:UserLog$Companion</ID>
+    <ID>UndocumentedPublicClass:UserSearchService.kt:UserDocument : PrimaryKeyIdentifiable</ID>
+    <ID>UndocumentedPublicClass:UserSearchService.kt:UserDocument$Companion</ID>
+    <ID>UndocumentedPublicClass:UserSearchService.kt:UserDocumentSearch</ID>
+    <ID>UndocumentedPublicClass:UserSearchService.kt:UserDocumentSearch$Keyword : UserDocumentSearch</ID>
+    <ID>UndocumentedPublicClass:UserSearchService.kt:UserSearchService</ID>
+    <ID>UndocumentedPublicClass:UserSearchService.kt:UserSearchServiceFactory</ID>
+    <ID>UndocumentedPublicClass:UserSubscription.kt:SubscriptionSentLog</ID>
+    <ID>UndocumentedPublicClass:UserSubscription.kt:SubscriptionSentLog$Companion</ID>
+    <ID>UndocumentedPublicClass:UserSubscription.kt:UserSubscription</ID>
+    <ID>UndocumentedPublicClass:UserSubscription.kt:UserSubscription$Companion</ID>
+    <ID>UndocumentedPublicClass:UserTopicRead.kt:UserTopicRead</ID>
+    <ID>UndocumentedPublicClass:UserTopicRead.kt:UserTopicRead$Companion</ID>
+    <ID>UndocumentedPublicClass:UserTwoFactor.kt:UserTwoFactor</ID>
+    <ID>UndocumentedPublicClass:UserTwoFactor.kt:UserTwoFactor$Companion</ID>
+    <ID>UndocumentedPublicFunction:Backend.kt:fun buildCommunitySearchService: CommunitySearchService</ID>
+    <ID>UndocumentedPublicFunction:Backend.kt:fun buildFileSearchService: FileSearchService</ID>
+    <ID>UndocumentedPublicFunction:Backend.kt:fun buildMemberSearchService: MemberSearchService</ID>
+    <ID>UndocumentedPublicFunction:Backend.kt:fun buildNameService: NameService</ID>
+    <ID>UndocumentedPublicFunction:Backend.kt:fun buildRoomSearchService: RoomSearchService</ID>
+    <ID>UndocumentedPublicFunction:Backend.kt:fun buildTopicSearchService: TopicSearchService</ID>
+    <ID>UndocumentedPublicFunction:Backend.kt:fun buildUserSearchService: UserSearchService</ID>
+    <ID>UndocumentedPublicFunction:Backend.kt:fun databaseConnection: DatabaseConnection</ID>
+    <ID>UndocumentedPublicFunction:Backend.kt:fun getSvgDimension: Dimension?</ID>
+    <ID>UndocumentedPublicFunction:Backend.kt:fun mediaService: ObjectStorageService</ID>
+    <ID>UndocumentedPublicFunction:Backend.kt:suspend fun &lt;T&gt; Backend.addIfNotExists: Result&lt;T?&gt;</ID>
+    <ID>UndocumentedPublicFunction:Backend.kt:suspend fun extractSvgDimensionInfo: Dimension?</ID>
+    <ID>UndocumentedPublicFunction:Backend.kt:suspend fun getImageDimension: Dimension?</ID>
+    <ID>UndocumentedPublicFunction:CacheService.kt:CacheService$suspend fun get: T</ID>
+    <ID>UndocumentedPublicFunction:CacheService.kt:CacheServiceFactory$fun &lt;K, T : Any&gt; build: CacheService&lt;K, T&gt;</ID>
+    <ID>UndocumentedPublicFunction:CacheService.kt:CacheServiceFactory$fun match: Boolean</ID>
+    <ID>UndocumentedPublicFunction:Community.kt:fun RawCommunity.toCommunityIfo</ID>
+    <ID>UndocumentedPublicFunction:CommunitySearchService.kt:CommunityDocument.Companion$fun fromCommunity: CommunityDocument</ID>
+    <ID>UndocumentedPublicFunction:CommunitySearchService.kt:CommunitySearchService$suspend fun clean: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:CommunitySearchService.kt:CommunitySearchService$suspend fun saveDocument: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:CommunitySearchService.kt:CommunitySearchService$suspend fun searchDocument: Result&lt;PaginationResult&lt;CommunityDocument&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:CommunitySearchService.kt:CommunitySearchServiceFactory$fun build: CommunitySearchService</ID>
+    <ID>UndocumentedPublicFunction:CommunitySearchService.kt:CommunitySearchServiceFactory$fun match: Boolean</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:AdminDatabase$suspend fun batchAddCommunities</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:AdminDatabase$suspend fun batchAddEncryptTopicKeys: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:AdminDatabase$suspend fun batchAddRooms</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:AdminDatabase$suspend fun batchAddSubscription: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:AdminDatabase$suspend fun batchAddTopics: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:AdminDatabase$suspend fun batchAddUser</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:AdminDatabase$suspend fun createTaskRecord: Result&lt;TaskRecord&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:AdminDatabase$suspend fun getAllMembers: Result&lt;List&lt;MemberAuthData&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:AdminDatabase$suspend fun getPanelLogs: Result&lt;PaginationResult&lt;com.storyteller_f.a.backend.core.types.PanelLog&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:AdminDatabase$suspend fun getTaskRecords: Result&lt;PaginationResult&lt;TaskRecord&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:AdminDatabase$suspend fun insertPanelLog: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:CombinedDatabase$fun isDup: Boolean</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:CombinedDatabase$suspend fun clean</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:CombinedDatabase$suspend fun getAllRawTopics: Result&lt;PaginationResult&lt;RawTopic&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:CombinedDatabase$suspend fun getLatestRawTopic</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:CombinedDatabase$suspend fun getRawTopic</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:CombinedDatabase$suspend fun getRawTopicByParentId</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:CombinedDatabase$suspend fun getRawTopicListByIds</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:CombinedDatabase$suspend fun getUserOverview: Result&lt;RawUserOverview&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:CombinedDatabase$suspend fun init</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:CombinedDatabase$suspend fun migration</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:CombinedDatabase$suspend fun processTopicToRawTopic: Result&lt;List&lt;RawTopic&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:CommunityDatabase$suspend fun createCommunity: Result&lt;Pair&lt;Community, Member&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:CommunityDatabase$suspend fun getCommunityCount: Result&lt;Long&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:CommunityDatabase$suspend fun getCommunityPaginationResult: Result&lt;PaginationResult&lt;RawCommunity&gt;?&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:CommunityDatabase$suspend fun getJoinedCommunityIds: Result&lt;List&lt;Long&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:CommunityDatabase$suspend fun getRawCommunities: Result&lt;List&lt;RawCommunity&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:CommunityDatabase$suspend fun getRawCommunity: Result&lt;RawCommunity?&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:CommunityDatabase$suspend fun updateCommunityStatus: Result&lt;Boolean&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:ContainerDatabase$suspend fun addMember: Result&lt;Member&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:ContainerDatabase$suspend fun deleteMember: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:ContainerDatabase$suspend fun getContainerInfo: Result&lt;Map&lt;PrimaryKey, ContainerInfo&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:ContainerDatabase$suspend fun getJoinedUserList: Result&lt;List&lt;Member&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:ContainerDatabase$suspend fun getLatestTopicInContainer: Result&lt;Map&lt;PrimaryKey, PrimaryKey?&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:ContainerDatabase$suspend fun getMember: Result&lt;Member?&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:ContainerDatabase$suspend fun getMemberByIds: Result&lt;List&lt;Pair&lt;Long, NestedMemberInfo?&gt;&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:ContainerDatabase$suspend fun getMemberCount: Result&lt;List&lt;Pair&lt;Long, Long&gt;&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:ContainerDatabase$suspend fun getMemberPaginationResult: Result&lt;PaginationResult&lt;RawUser&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:ContainerDatabase$suspend fun getMemberWithUserByUids: Result&lt;List&lt;Pair&lt;Member, RawUser&gt;&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:ContainerDatabase$suspend fun getMemberWithUserPaginationResult: Result&lt;PaginationResult&lt;Pair&lt;Member, RawUser&gt;&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:ContainerDatabase$suspend fun getQuotaInfo: Result&lt;Quota?&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:ContainerDatabase$suspend fun getTopicReadList: Result&lt;List&lt;UserTopicRead&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:ContainerDatabase$suspend fun getUserJoinedTime: Result&lt;List&lt;Member&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:ContainerDatabase$suspend fun getUserUnreadRoomCount: Result&lt;Int&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:ContainerDatabase$suspend fun getUsersHasUnreadRoomMap: Result&lt;Map&lt;PrimaryKey, Boolean&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:ContainerDatabase$suspend fun insertQuota: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:ContainerDatabase$suspend fun isMemberJoined: Result&lt;Boolean&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:ContainerDatabase$suspend fun updateMemberStatus: Result&lt;Member&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:FavoriteDatabase$suspend fun addFavorite: Result&lt;UserFavorite&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:FavoriteDatabase$suspend fun getFavorite: Result&lt;UserFavorite?&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:FavoriteDatabase$suspend fun getHasFavorite: Result&lt;List&lt;UserFavorite&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:FavoriteDatabase$suspend fun getUserFavoriteCount: Result&lt;Long&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:FavoriteDatabase$suspend fun getUserFavorites: Result&lt;PaginationResult&lt;UserFavorite&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:FavoriteDatabase$suspend fun removeFavorite: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:FileDatabase$suspend fun getAllFileRecordPaginationList: Result&lt;PaginationResult&lt;FileRecord&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:FileDatabase$suspend fun getFileCount: Result&lt;Long&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:FileDatabase$suspend fun getFileRecord: Result&lt;FileRecord?&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:FileDatabase$suspend fun getFileRecordByIds: Result&lt;List&lt;FileRecord&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:FileDatabase$suspend fun getFileRecordByNames: Result&lt;List&lt;FileRecord&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:FileDatabase$suspend fun getFileRecordListByOwner: Result&lt;List&lt;FileRecord&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:FileDatabase$suspend fun getFileRecordPaginationList: Result&lt;PaginationResult&lt;FileRecord&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:FileDatabase$suspend fun getFileRefsByFileId: Result&lt;PaginationResult&lt;FileRef&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:FileDatabase$suspend fun getFileVolume: Result&lt;Long&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:FileDatabase$suspend fun getUploadRecord: Result&lt;UploadRecord?&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:FileDatabase$suspend fun getUploadRecordPaginationList: Result&lt;PaginationResult&lt;UploadRecord&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:FileDatabase$suspend fun insertFileRecord: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:FileDatabase$suspend fun insertFileRefs: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:FileDatabase$suspend fun insertUploadRecord: Result&lt;UploadRecord&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:FileDatabase$suspend fun updateFileStatus: Result&lt;Boolean&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:PanelAccountDatabase$suspend fun addPanelAccount: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:PanelAccountDatabase$suspend fun getPanelAccount: Result&lt;PanelAccount?&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:PanelAccountDatabase$suspend fun getRawUserAndPublicKeyByAddress: Result&lt;Pair&lt;RawPanelAccount, String&gt;?&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:PanelAccountDatabase$suspend fun getUserAuthDataByAddress: Result&lt;UserAuthData?&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:PanelAccountDatabase$suspend fun getUserAuthDataById: Result&lt;UserAuthData?&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:PanelAccountDatabase$suspend fun isUserNotExistsByPublicKey: Result&lt;Boolean&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:ReactionDatabase$suspend fun deleteReaction: Result&lt;Boolean&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:ReactionDatabase$suspend fun getReactionCount: Result&lt;List&lt;Pair&lt;Long, Long&gt;&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:ReactionDatabase$suspend fun getReactionCountForEmoji: Result&lt;List&lt;Triple&lt;Long, Long, PrimaryKey?&gt;&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:ReactionDatabase$suspend fun getReactionInfo: Result&lt;ReactionInfo?&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:ReactionDatabase$suspend fun getReactionInfoPaginationResult: Result&lt;PaginationResult&lt;ReactionInfo&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:ReactionDatabase$suspend fun getReactionRecordInfo: Result&lt;ReactionRecordInfo?&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:ReactionDatabase$suspend fun getUserReactionRecordCount: Result&lt;Long&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:ReactionDatabase$suspend fun getUserReactionRecordsPaginationResult: Result&lt;PaginationResult&lt;ReactionRecord&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:ReactionDatabase$suspend fun hasReactedEmoji: Result&lt;List&lt;Pair&lt;Long, String&gt;&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:ReactionDatabase$suspend fun hasReactedForEmoji: Result&lt;Boolean&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:ReactionDatabase$suspend fun insertReaction: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:ReactionDatabase$suspend fun statsReactionRecord: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:RoomDatabase$suspend fun checkRoomIsPrivate: Result&lt;Boolean?&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:RoomDatabase$suspend fun createRoom: Result&lt;Room&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:RoomDatabase$suspend fun getPrivateRoomCount: Result&lt;Long&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:RoomDatabase$suspend fun getPrivateRoomPaginationResult: Result&lt;PaginationResult&lt;RawRoom&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:RoomDatabase$suspend fun getPublicRoomCount: Result&lt;Long&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:RoomDatabase$suspend fun getRawRoom: Result&lt;RawRoom?&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:RoomDatabase$suspend fun getRawRooms: Result&lt;List&lt;RawRoom&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:RoomDatabase$suspend fun getRoomCommunityId: Result&lt;PrimaryKey?&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:RoomDatabase$suspend fun getRoomList: Result&lt;List&lt;Room&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:RoomDatabase$suspend fun getRoomPaginationResult: Result&lt;PaginationResult&lt;RawRoom&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:RoomDatabase$suspend fun getRoomPubKeyPaginationResult: Result&lt;PaginationResult&lt;UserPubKeyInfo&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:RoomDatabase$suspend fun updateRoom: Result&lt;Boolean&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:RoomDatabase$suspend fun updateRoomStatus: Result&lt;Boolean&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:SubscriptionDatabase$suspend fun addSubscription: Result&lt;UserSubscription&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:SubscriptionDatabase$suspend fun getHasSubscription: Result&lt;List&lt;UserSubscription&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:SubscriptionDatabase$suspend fun getLatestSubscriptionSentLog: Result&lt;SubscriptionSentLog?&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:SubscriptionDatabase$suspend fun getSubscription: Result&lt;UserSubscription?&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:SubscriptionDatabase$suspend fun getSubscriptionsByObjectId: Result&lt;List&lt;UserSubscription&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:SubscriptionDatabase$suspend fun getUserSubscriptionCount: Result&lt;Long&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:SubscriptionDatabase$suspend fun getUserSubscriptions: Result&lt;PaginationResult&lt;UserSubscription&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:SubscriptionDatabase$suspend fun insertSubscriptionSentLog: Result&lt;SubscriptionSentLog&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:SubscriptionDatabase$suspend fun removeSubscription: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:TitleDatabase$suspend fun getAllRawTitles: Result&lt;PaginationResult&lt;RawTitle&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:TitleDatabase$suspend fun getTitle: Result&lt;RawTitle?&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:TitleDatabase$suspend fun getTitleCount: Result&lt;Long&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:TitleDatabase$suspend fun getTitlePaginationResult: Result&lt;PaginationResult&lt;RawTitle&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:TitleDatabase$suspend fun updateTitleStatus: Result&lt;Boolean&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:TopicDatabase$suspend fun createTitle: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:TopicDatabase$suspend fun getAllTopicPagination: Result&lt;PaginationResult&lt;Topic&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:TopicDatabase$suspend fun getLatestTopic: Result&lt;List&lt;Topic&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:TopicDatabase$suspend fun getTopic: Result&lt;Topic?&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:TopicDatabase$suspend fun getTopicByParentId: Result&lt;PaginationResult&lt;Topic&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:TopicDatabase$suspend fun getTopicCommentCount: Result&lt;List&lt;Pair&lt;Long, Long&gt;&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:TopicDatabase$suspend fun getTopicContentFromByteArray: Result&lt;Map&lt;PrimaryKey, TopicContent&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:TopicDatabase$suspend fun getTopicCount: Result&lt;Long&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:TopicDatabase$suspend fun getTopicList: Result&lt;List&lt;Topic&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:TopicDatabase$suspend fun getTopicListByIds: Result&lt;List&lt;Topic&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:TopicDatabase$suspend fun getTopicRootTuple: Result&lt;ObjectTuple?&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:TopicDatabase$suspend fun getUserCommentCount: Result&lt;Long&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:TopicDatabase$suspend fun getUserCommentedTopicsPaginationResult: Result&lt;PaginationResult&lt;Topic&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:TopicDatabase$suspend fun isUserCommented: Result&lt;List&lt;Long&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:TopicDatabase$suspend fun saveEncryptedTopic: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:TopicDatabase$suspend fun savePlainTopic: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:TopicDatabase$suspend fun updateTopicPinned: Result&lt;Boolean&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:TopicDatabase$suspend fun updateTopicStatus: Result&lt;Boolean&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:UserDatabase$suspend fun addAcgForUser: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:UserDatabase$suspend fun addDevice: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:UserDatabase$suspend fun addReadLog: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:UserDatabase$suspend fun createChildAccount: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:UserDatabase$suspend fun createUser: Result&lt;User&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:UserDatabase$suspend fun disableUserTwoFactor: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:UserDatabase$suspend fun getAllUsers: Result&lt;PaginationResult&lt;RawUser&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:UserDatabase$suspend fun getChildAccountCount: Result&lt;Long&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:UserDatabase$suspend fun getChildAccountIds: Result&lt;List&lt;PrimaryKey&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:UserDatabase$suspend fun getLatestTaskRecord: Result&lt;TaskRecord?&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:UserDatabase$suspend fun getRawChildAccount: Result&lt;ChildAccount?&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:UserDatabase$suspend fun getRawChildAccountPaginationListByHost: Result&lt;PaginationResult&lt;RawChildAccount&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:UserDatabase$suspend fun getRawUser: Result&lt;RawUser?&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:UserDatabase$suspend fun getRawUserAndPublicKeyByAddress: Result&lt;Pair&lt;RawUser, String&gt;?&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:UserDatabase$suspend fun getRawUsers: Result&lt;List&lt;RawUser&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:UserDatabase$suspend fun getUserAcgByIds: Result&lt;List&lt;Pair&lt;Long, Long&gt;&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:UserDatabase$suspend fun getUserAid: Result&lt;String?&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:UserDatabase$suspend fun getUserAuthDataByAddress: Result&lt;UserAuthData?&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:UserDatabase$suspend fun getUserAuthDataByAid: Result&lt;UserAuthData?&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:UserDatabase$suspend fun getUserAuthDataById: Result&lt;UserAuthData?&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:UserDatabase$suspend fun getUserCount: Result&lt;Long&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:UserDatabase$suspend fun getUserDevices: Result&lt;List&lt;UserDevice&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:UserDatabase$suspend fun getUserLogs: Result&lt;PaginationResult&lt;UserLog&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:UserDatabase$suspend fun getUserTwoFactor: Result&lt;UserTwoFactor?&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:UserDatabase$suspend fun insertUserLog: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:UserDatabase$suspend fun isUserNotExistsByPublicKey: Result&lt;Boolean&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:UserDatabase$suspend fun removeDevice: Result&lt;Int&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:UserDatabase$suspend fun updateRecoveryCodeHashes: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:UserDatabase$suspend fun updateUserStatus: Result&lt;Boolean&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:UserDatabase$suspend fun upsertUserTwoFactor: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:fun &lt;T&gt; Result&lt;List&lt;T&gt;&gt;.pagingNotNull</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:suspend fun &lt;T, R&gt; Result&lt;PaginationResult&lt;T&gt;&gt;.mapPagingNotNull</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:suspend fun &lt;T, R&gt; Result&lt;PaginationResult&lt;T&gt;&gt;.mapPagingResultNotNull</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:suspend fun &lt;T, R&gt; Result&lt;PaginationResult&lt;T&gt;&gt;.mapPagingResultNullable</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:suspend fun &lt;T, R&gt; Result&lt;PaginationResult&lt;T&gt;?&gt;.mapPagingIfNotNull</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:suspend fun &lt;T, R&gt; Result&lt;PaginationResult&lt;T&gt;?&gt;.mapPagingResultIfNotNullNullable</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:suspend fun &lt;T&gt; Result&lt;List&lt;T&gt;?&gt;.paging</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:suspend fun &lt;T&gt; paginationFromResults: Result&lt;PaginationResult&lt;T&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.kt:suspend fun &lt;T&gt; paginationNullableFromResults: Result&lt;PaginationResult&lt;T&gt;?&gt;</ID>
+    <ID>UndocumentedPublicFunction:Env.kt:MergedEnv$fun getAll: String</ID>
+    <ID>UndocumentedPublicFunction:Env.kt:MergedEnv$operator fun get: String?</ID>
+    <ID>UndocumentedPublicFunction:Env.kt:fun preprocessUserInputKeyword: String</ID>
+    <ID>UndocumentedPublicFunction:Env.kt:fun readEnv</ID>
+    <ID>UndocumentedPublicFunction:Env.kt:fun readFileEnv: Map&lt;String, String&gt;?</ID>
+    <ID>UndocumentedPublicFunction:Env.kt:fun readResourceEnv: Map&lt;String, String&gt;?</ID>
+    <ID>UndocumentedPublicFunction:Env.kt:fun setLogPath</ID>
+    <ID>UndocumentedPublicFunction:Fetch.kt:fun aidFetch</ID>
+    <ID>UndocumentedPublicFunction:Fetch.kt:fun aidListFetch</ID>
+    <ID>UndocumentedPublicFunction:Fetch.kt:fun idFetch</ID>
+    <ID>UndocumentedPublicFunction:Fetch.kt:fun idListFetch</ID>
+    <ID>UndocumentedPublicFunction:Fetch.kt:fun&lt;T&gt; fixedSort: List&lt;T&gt;</ID>
+    <ID>UndocumentedPublicFunction:FileRecord.kt:fun FileRecord.toFileInfo: FileInfo</ID>
+    <ID>UndocumentedPublicFunction:FileRef.kt:fun FileRef.toFileRefInfo</ID>
+    <ID>UndocumentedPublicFunction:FileSearchService.kt:FileDocument.Companion$fun fromFileRecord: FileDocument</ID>
+    <ID>UndocumentedPublicFunction:FileSearchService.kt:FileSearchService$suspend fun clean: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:FileSearchService.kt:FileSearchService$suspend fun saveDocument: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:FileSearchService.kt:FileSearchService$suspend fun searchDocument: Result&lt;PaginationResult&lt;FileDocument&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:FileSearchService.kt:FileSearchServiceFactory$fun build: FileSearchService</ID>
+    <ID>UndocumentedPublicFunction:FileSearchService.kt:FileSearchServiceFactory$fun match: Boolean</ID>
+    <ID>UndocumentedPublicFunction:LockService.kt:LockService$suspend fun&lt;T&gt; withLock: Result&lt;T&gt;</ID>
+    <ID>UndocumentedPublicFunction:LockService.kt:LockServiceFactory$fun build: LockService</ID>
+    <ID>UndocumentedPublicFunction:LockService.kt:LockServiceFactory$fun match: Boolean</ID>
+    <ID>UndocumentedPublicFunction:Member.kt:fun Member.toMemberInfo</ID>
+    <ID>UndocumentedPublicFunction:Member.kt:fun Member.toNestedMemberInfo</ID>
+    <ID>UndocumentedPublicFunction:MemberSearchService.kt:MemberDocument.Companion$fun fromUserInfo: MemberDocument</ID>
+    <ID>UndocumentedPublicFunction:MemberSearchService.kt:MemberSearchService$suspend fun clean: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:MemberSearchService.kt:MemberSearchService$suspend fun deleteDocument: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:MemberSearchService.kt:MemberSearchService$suspend fun saveDocument: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:MemberSearchService.kt:MemberSearchService$suspend fun searchDocument: Result&lt;PaginationResult&lt;MemberDocument&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:MemberSearchService.kt:MemberSearchServiceFactory$fun build: MemberSearchService</ID>
+    <ID>UndocumentedPublicFunction:MemberSearchService.kt:MemberSearchServiceFactory$fun match: Boolean</ID>
+    <ID>UndocumentedPublicFunction:NameService.kt:NameService$fun parse: String</ID>
+    <ID>UndocumentedPublicFunction:NameService.kt:NameServiceFactory$fun build: NameService</ID>
+    <ID>UndocumentedPublicFunction:NameService.kt:NameServiceFactory$fun match: Boolean</ID>
+    <ID>UndocumentedPublicFunction:ObjectStorageService.kt:ObjectStorageService$suspend fun clean: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:ObjectStorageService.kt:ObjectStorageService$suspend fun copy: Result&lt;List&lt;ObjectStorageRecord&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:ObjectStorageService.kt:ObjectStorageService$suspend fun getInputStream: Result&lt;InputStream&gt;</ID>
+    <ID>UndocumentedPublicFunction:ObjectStorageService.kt:ObjectStorageService$suspend fun getWithPresignContext: Result&lt;List&lt;ObjectStorageRecord&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:ObjectStorageService.kt:ObjectStorageService$suspend fun list: Result&lt;List&lt;ObjectStorageRecord&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:ObjectStorageService.kt:ObjectStorageService$suspend fun upload: Result&lt;List&lt;ObjectStorageWriteRecord&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:ObjectStorageService.kt:ObjectStorageServiceFactory$fun build: ObjectStorageService</ID>
+    <ID>UndocumentedPublicFunction:ObjectStorageService.kt:ObjectStorageServiceFactory$fun match: Boolean</ID>
+    <ID>UndocumentedPublicFunction:PanelAccount.kt:fun PanelAccount.toPanelAccountInfo</ID>
+    <ID>UndocumentedPublicFunction:PanelLog.kt:fun PanelLog.toPanelLogInfo: PanelLogInfo</ID>
+    <ID>UndocumentedPublicFunction:Quota.kt:fun Quota.toQuotaInfo: QuotaInfo</ID>
+    <ID>UndocumentedPublicFunction:Room.kt:fun RawRoom.toRoomInfo: RoomInfo</ID>
+    <ID>UndocumentedPublicFunction:Room.kt:fun buildUserNotificationRoom: Room</ID>
+    <ID>UndocumentedPublicFunction:Room.kt:suspend fun buildMemberForNotificationRoom: List&lt;Member&gt;</ID>
+    <ID>UndocumentedPublicFunction:RoomSearchService.kt:RoomDocument.Companion$fun fromRoom: RoomDocument</ID>
+    <ID>UndocumentedPublicFunction:RoomSearchService.kt:RoomSearchService$suspend fun clean: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:RoomSearchService.kt:RoomSearchService$suspend fun saveDocument: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:RoomSearchService.kt:RoomSearchService$suspend fun searchDocument: Result&lt;PaginationResult&lt;RoomDocument&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:RoomSearchService.kt:RoomSearchServiceFactory$fun build: RoomSearchService</ID>
+    <ID>UndocumentedPublicFunction:RoomSearchService.kt:RoomSearchServiceFactory$fun match: Boolean</ID>
+    <ID>UndocumentedPublicFunction:SnowflakeFactory.kt:SnowflakeFactory$suspend fun nextId: PrimaryKey</ID>
+    <ID>UndocumentedPublicFunction:TaskRecord.kt:fun TaskRecord.toTaskRecordInfo: TaskRecordInfo</ID>
+    <ID>UndocumentedPublicFunction:Title.kt:fun Title.effectiveTitleStatus: TitleWorkStatus</ID>
+    <ID>UndocumentedPublicFunction:Title.kt:fun Title.isExpired: Boolean</ID>
+    <ID>UndocumentedPublicFunction:Title.kt:fun Title.toTitleInfo: TitleInfo</ID>
+    <ID>UndocumentedPublicFunction:Topic.kt:fun RawTopic.toTopicInfo</ID>
+    <ID>UndocumentedPublicFunction:TopicSearchService.kt:TopicDocument.Companion$fun fromTopic: TopicDocument</ID>
+    <ID>UndocumentedPublicFunction:TopicSearchService.kt:TopicSearchService$suspend fun clean: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:TopicSearchService.kt:TopicSearchService$suspend fun getDocuments: Result&lt;List&lt;TopicDocument?&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:TopicSearchService.kt:TopicSearchService$suspend fun saveDocument: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:TopicSearchService.kt:TopicSearchService$suspend fun searchDocument: Result&lt;PaginationResult&lt;TopicDocument&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:TopicSearchService.kt:TopicSearchServiceFactory$fun build: TopicSearchService</ID>
+    <ID>UndocumentedPublicFunction:TopicSearchService.kt:TopicSearchServiceFactory$fun match: Boolean</ID>
+    <ID>UndocumentedPublicFunction:UploadRecord.kt:fun UploadRecord.toUploadRecordInfo: UploadRecordInfo</ID>
+    <ID>UndocumentedPublicFunction:User.kt:fun RawUser.toUserInfo</ID>
+    <ID>UndocumentedPublicFunction:User.kt:fun User.toUserInfo: UserInfo</ID>
+    <ID>UndocumentedPublicFunction:UserFavorite.kt:UserFavorite$fun objectTuple: ObjectTuple</ID>
+    <ID>UndocumentedPublicFunction:UserFavorite.kt:fun UserFavorite.toUserFavoriteInfo: UserFavoriteInfo</ID>
+    <ID>UndocumentedPublicFunction:UserLog.kt:fun UserLog.toUserLogInfo</ID>
+    <ID>UndocumentedPublicFunction:UserSearchService.kt:UserDocument.Companion$fun fromUser: UserDocument</ID>
+    <ID>UndocumentedPublicFunction:UserSearchService.kt:UserSearchService$suspend fun clean: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:UserSearchService.kt:UserSearchService$suspend fun saveDocument: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:UserSearchService.kt:UserSearchService$suspend fun searchDocument: Result&lt;PaginationResult&lt;UserDocument&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:UserSearchService.kt:UserSearchServiceFactory$fun build: UserSearchService</ID>
+    <ID>UndocumentedPublicFunction:UserSearchService.kt:UserSearchServiceFactory$fun match: Boolean</ID>
+    <ID>UndocumentedPublicFunction:UserSubscription.kt:UserSubscription$fun objectTuple</ID>
+    <ID>UndocumentedPublicFunction:UserSubscription.kt:fun UserSubscription.toUserSubscriptionInfo: UserSubscriptionInfo</ID>
+    <ID>UndocumentedPublicFunction:UserTwoFactor.kt:fun UserTwoFactor?.toTwoFactorSettingsInfo: TwoFactorSettingsInfo</ID>
+    <ID>UndocumentedPublicProperty:AssetTransaction.kt:AssetTransaction$val after: Long</ID>
+    <ID>UndocumentedPublicProperty:AssetTransaction.kt:AssetTransaction$val before: Long</ID>
+    <ID>UndocumentedPublicProperty:AssetTransaction.kt:AssetTransaction$val createdTime: LocalDateTime</ID>
+    <ID>UndocumentedPublicProperty:AssetTransaction.kt:AssetTransaction$val id: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:AssetTransaction.kt:AssetTransaction$val type: AssetType</ID>
+    <ID>UndocumentedPublicProperty:AssetTransaction.kt:AssetTransaction$val uid: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:Backend.kt:Backend$val communitySearchService: CommunitySearchService</ID>
+    <ID>UndocumentedPublicProperty:Backend.kt:Backend$val customConfig: CustomConfig</ID>
+    <ID>UndocumentedPublicProperty:Backend.kt:Backend$val database: CombinedDatabase</ID>
+    <ID>UndocumentedPublicProperty:Backend.kt:Backend$val fileSearchService: FileSearchService</ID>
+    <ID>UndocumentedPublicProperty:Backend.kt:Backend$val memberSearchService: MemberSearchService</ID>
+    <ID>UndocumentedPublicProperty:Backend.kt:Backend$val nameService: NameService</ID>
+    <ID>UndocumentedPublicProperty:Backend.kt:Backend$val objectStorageService: ObjectStorageService</ID>
+    <ID>UndocumentedPublicProperty:Backend.kt:Backend$val roomSearchService: RoomSearchService</ID>
+    <ID>UndocumentedPublicProperty:Backend.kt:Backend$val topicSearchService: TopicSearchService</ID>
+    <ID>UndocumentedPublicProperty:Backend.kt:Backend$val userSearchService: UserSearchService</ID>
+    <ID>UndocumentedPublicProperty:CacheService.kt:WrapCacheService$val cacheService: CacheService&lt;String, String&gt;</ID>
+    <ID>UndocumentedPublicProperty:CacheService.kt:WrapCacheService$val vClass: KClass&lt;V&gt;</ID>
+    <ID>UndocumentedPublicProperty:ChildAccount.kt:ChildAccount$val encryptedAesKey: String</ID>
+    <ID>UndocumentedPublicProperty:ChildAccount.kt:ChildAccount$val encryptedEncryptionPrivateKey: String? = null</ID>
+    <ID>UndocumentedPublicProperty:ChildAccount.kt:ChildAccount$val encryptedPrivateKey: String</ID>
+    <ID>UndocumentedPublicProperty:ChildAccount.kt:ChildAccount$val hostId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:ChildAccount.kt:ChildAccount$val remark: String?</ID>
+    <ID>UndocumentedPublicProperty:ChildAccount.kt:ChildAccount$val uid: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:ChildAccount.kt:RawChildAccount$val childAccount: ChildAccount</ID>
+    <ID>UndocumentedPublicProperty:ChildAccount.kt:RawChildAccount$val rawUser: RawUser</ID>
+    <ID>UndocumentedPublicProperty:Community.kt:Community$val aid: String</ID>
+    <ID>UndocumentedPublicProperty:Community.kt:Community$val createdTime: LocalDateTime</ID>
+    <ID>UndocumentedPublicProperty:Community.kt:Community$val fontSettings: FontSettings? = null</ID>
+    <ID>UndocumentedPublicProperty:Community.kt:Community$val iconId: PrimaryKey? = null</ID>
+    <ID>UndocumentedPublicProperty:Community.kt:Community$val id: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:Community.kt:Community$val memberPolicy: MemberPolicy</ID>
+    <ID>UndocumentedPublicProperty:Community.kt:Community$val name: String</ID>
+    <ID>UndocumentedPublicProperty:Community.kt:Community$val owner: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:Community.kt:Community$val posterId: PrimaryKey? = null</ID>
+    <ID>UndocumentedPublicProperty:Community.kt:Community$val readOnly get() = status == ObjectStatus.READ_ONLY</ID>
+    <ID>UndocumentedPublicProperty:Community.kt:Community$val status: ObjectStatus = ObjectStatus.NORMAL</ID>
+    <ID>UndocumentedPublicProperty:Community.kt:RawCommunity$val community: Community</ID>
+    <ID>UndocumentedPublicProperty:Community.kt:RawCommunity$val favoriteId: PrimaryKey? = null</ID>
+    <ID>UndocumentedPublicProperty:Community.kt:RawCommunity$val hasJoined = member != null</ID>
+    <ID>UndocumentedPublicProperty:Community.kt:RawCommunity$val lastRead: Long?</ID>
+    <ID>UndocumentedPublicProperty:Community.kt:RawCommunity$val latestTopic: PrimaryKey? = null</ID>
+    <ID>UndocumentedPublicProperty:Community.kt:RawCommunity$val member: Member?</ID>
+    <ID>UndocumentedPublicProperty:Community.kt:RawCommunity$val memberCount: Long? = null</ID>
+    <ID>UndocumentedPublicProperty:Community.kt:RawCommunity$val subscriptionId: PrimaryKey? = null</ID>
+    <ID>UndocumentedPublicProperty:CommunitySearchService.kt:CommunityDocument$val aid: String</ID>
+    <ID>UndocumentedPublicProperty:CommunitySearchService.kt:CommunityDocument$val name: String</ID>
+    <ID>UndocumentedPublicProperty:CommunitySearchService.kt:CommunityDocument$val owner: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:CommunitySearchService.kt:CommunityDocumentSearch.Keyword$val fetch: OffsetFetch</ID>
+    <ID>UndocumentedPublicProperty:CommunitySearchService.kt:CommunityDocumentSearch.Keyword$val keyword: String</ID>
+    <ID>UndocumentedPublicProperty:Connection.kt:ContainerImages$const val ELASTICSEARCH = "docker.elastic.co/elasticsearch/elasticsearch:8.17.0"</ID>
+    <ID>UndocumentedPublicProperty:Connection.kt:ContainerImages$const val MINIO = "minio/minio:RELEASE.2024-12-18T13-15-44Z"</ID>
+    <ID>UndocumentedPublicProperty:Connection.kt:ContainerImages$const val POSTGRESQL = "pgvector/pgvector:pg16"</ID>
+    <ID>UndocumentedPublicProperty:Connection.kt:DatabaseConnection$val driver: String</ID>
+    <ID>UndocumentedPublicProperty:Connection.kt:DatabaseConnection$val password: String</ID>
+    <ID>UndocumentedPublicProperty:Connection.kt:DatabaseConnection$val uri: String</ID>
+    <ID>UndocumentedPublicProperty:Connection.kt:DatabaseConnection$val user: String</ID>
+    <ID>UndocumentedPublicProperty:Connection.kt:ElasticConnection$val certFile: String</ID>
+    <ID>UndocumentedPublicProperty:Connection.kt:ElasticConnection$val name: String</ID>
+    <ID>UndocumentedPublicProperty:Connection.kt:ElasticConnection$val pass: String</ID>
+    <ID>UndocumentedPublicProperty:Connection.kt:ElasticConnection$val refresh: Boolean = true</ID>
+    <ID>UndocumentedPublicProperty:Connection.kt:ElasticConnection$val url: String</ID>
+    <ID>UndocumentedPublicProperty:Connection.kt:MinIoConnection$val pass: String</ID>
+    <ID>UndocumentedPublicProperty:Connection.kt:MinIoConnection$val url: String</ID>
+    <ID>UndocumentedPublicProperty:Connection.kt:MinIoConnection$val user: String</ID>
+    <ID>UndocumentedPublicProperty:CustomConfig.kt:CustomConfig$val buildType: String</ID>
+    <ID>UndocumentedPublicProperty:CustomConfig.kt:CustomConfig$val enableSignUp: Boolean = true</ID>
+    <ID>UndocumentedPublicProperty:CustomConfig.kt:CustomConfig$val flavor: String</ID>
+    <ID>UndocumentedPublicProperty:CustomConfig.kt:CustomConfig$val snapshotKeyStore: CustomKeyStore?</ID>
+    <ID>UndocumentedPublicProperty:CustomConfig.kt:CustomKeyStore$val pass: String</ID>
+    <ID>UndocumentedPublicProperty:CustomConfig.kt:CustomKeyStore$val path: String</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:// 最长60，如果超过60 会进行裁切然后在后面添加uuid，保存时预留一部分空间 const val MEDIA_NAME_LENGTH = 120</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:CombinedDatabase$val admin: AdminDatabase</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:CombinedDatabase$val community: CommunityDatabase</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:CombinedDatabase$val container: ContainerDatabase</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:CombinedDatabase$val favorite: FavoriteDatabase</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:CombinedDatabase$val file: FileDatabase</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:CombinedDatabase$val panelAccount: PanelAccountDatabase</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:CombinedDatabase$val reaction: ReactionDatabase</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:CombinedDatabase$val room: RoomDatabase</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:CombinedDatabase$val subscription: SubscriptionDatabase</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:CombinedDatabase$val title: TitleDatabase</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:CombinedDatabase$val topic: TopicDatabase</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:CombinedDatabase$val user: UserDatabase</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:ContainerInfo$val favoriteId: PrimaryKey? = null</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:ContainerInfo$val latestTopicId: PrimaryKey?</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:ContainerInfo$val member: Member?</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:ContainerInfo$val memberCount: Long?</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:ContainerInfo$val subscriptionId: PrimaryKey? = null</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:ContainerInfo$val userTopicRead: UserTopicRead?</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:InsertCommunityTuple$val community: PresetCommunity</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:InsertCommunityTuple$val createdTime: LocalDateTime</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:InsertCommunityTuple$val fontSettings: FontSettings?</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:InsertCommunityTuple$val icon: PrimaryKey?</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:InsertCommunityTuple$val id: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:InsertRoomTuple$val createdTime: LocalDateTime</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:InsertRoomTuple$val icon: PrimaryKey?</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:InsertRoomTuple$val id: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:InsertRoomTuple$val room: PresetRoom</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:InsertTopicTuple$val content: ByteArray</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:InsertTopicTuple$val id: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:InsertTopicTuple$val isEncrypted: Boolean</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:InsertTopicTuple$val level: Int</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:InsertTopicTuple$val originalIndex: Int</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:InsertTopicTuple$val rootId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:InsertTopicTuple$val topic: PresetTopic</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:JoinSearch.Joined$val uid: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:JoinSearch.Unspecified$val uid: PrimaryKey?</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:MemberAuthData$val algoType: AlgoType</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:MemberAuthData$val encryptionPublicKey: String?</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:MemberAuthData$val publicKey: String</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:MemberAuthData$val roomAid: String</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:MemberAuthData$val userId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:PaginationResult$val list: List&lt;T&gt;</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:PaginationResult$val total: Long</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:UserAuthData$val algoType: AlgoType</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:UserAuthData$val publicKey: String</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:UserAuthData$val userId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:const val ADDRESS_LENGTH = 100</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:const val AID_LENGTH = 20</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:const val COMMUNITY_NAME_LENGTH = 20</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:const val PUBLIC_KEY_LENGTH = 4096</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:const val ROOM_NAME_LENGTH = 20</ID>
+    <ID>UndocumentedPublicProperty:Database.kt:const val USER_NICKNAME = 20</ID>
+    <ID>UndocumentedPublicProperty:EncryptedKey.kt:EncryptedKey$val encryptedAes: ByteArray</ID>
+    <ID>UndocumentedPublicProperty:EncryptedKey.kt:EncryptedKey$val topicId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:EncryptedKey.kt:EncryptedKey$val uid: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:Env.kt:MergedEnv$val list: List&lt;Map&lt;String, String&gt;&gt;</ID>
+    <ID>UndocumentedPublicProperty:Fetch.kt:Cursor$val value: T</ID>
+    <ID>UndocumentedPublicProperty:Fetch.kt:Fetch$val size: Int</ID>
+    <ID>UndocumentedPublicProperty:Fetch.kt:GenericFetch$val cursor: Cursor&lt;T&gt;?</ID>
+    <ID>UndocumentedPublicProperty:Fetch.kt:ObjectFetch.AidFetch$val aid: String</ID>
+    <ID>UndocumentedPublicProperty:Fetch.kt:ObjectFetch.IdFetch$val id: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:Fetch.kt:ObjectListFetch.AidListFetch$val aidList: List&lt;String&gt;</ID>
+    <ID>UndocumentedPublicProperty:Fetch.kt:ObjectListFetch.IdListFetch$val idList: List&lt;PrimaryKey&gt;</ID>
+    <ID>UndocumentedPublicProperty:FileRecord.kt:FileRecord$val contentType: String</ID>
+    <ID>UndocumentedPublicProperty:FileRecord.kt:FileRecord$val createdTime: LocalDateTime</ID>
+    <ID>UndocumentedPublicProperty:FileRecord.kt:FileRecord$val dimension = Dimension(width, height)</ID>
+    <ID>UndocumentedPublicProperty:FileRecord.kt:FileRecord$val duration: Long</ID>
+    <ID>UndocumentedPublicProperty:FileRecord.kt:FileRecord$val fullName: String</ID>
+    <ID>UndocumentedPublicProperty:FileRecord.kt:FileRecord$val height: Int</ID>
+    <ID>UndocumentedPublicProperty:FileRecord.kt:FileRecord$val id: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:FileRecord.kt:FileRecord$val name: String</ID>
+    <ID>UndocumentedPublicProperty:FileRecord.kt:FileRecord$val owner: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:FileRecord.kt:FileRecord$val ownerType: ObjectType</ID>
+    <ID>UndocumentedPublicProperty:FileRecord.kt:FileRecord$val readOnly get() = status == ObjectStatus.READ_ONLY</ID>
+    <ID>UndocumentedPublicProperty:FileRecord.kt:FileRecord$val sha256: String</ID>
+    <ID>UndocumentedPublicProperty:FileRecord.kt:FileRecord$val size: Long</ID>
+    <ID>UndocumentedPublicProperty:FileRecord.kt:FileRecord$val status: ObjectStatus = ObjectStatus.NORMAL</ID>
+    <ID>UndocumentedPublicProperty:FileRecord.kt:FileRecord$val width: Int</ID>
+    <ID>UndocumentedPublicProperty:FileRef.kt:FileRef$val author: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:FileRef.kt:FileRef$val createdTime: LocalDateTime</ID>
+    <ID>UndocumentedPublicProperty:FileRef.kt:FileRef$val fileId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:FileRef.kt:FileRef$val id: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:FileRef.kt:FileRef$val mediaName: String</ID>
+    <ID>UndocumentedPublicProperty:FileRef.kt:FileRef$val objectId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:FileRef.kt:FileRef$val objectType: ObjectType</ID>
+    <ID>UndocumentedPublicProperty:FileSearchService.kt:FileDocument$val name: String</ID>
+    <ID>UndocumentedPublicProperty:FileSearchService.kt:FileDocument$val ownerId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:FileSearchService.kt:FileDocumentSearch.Keyword$val fetch: OffsetFetch</ID>
+    <ID>UndocumentedPublicProperty:FileSearchService.kt:FileDocumentSearch.Keyword$val ownerId: PrimaryKey? = null</ID>
+    <ID>UndocumentedPublicProperty:FileSearchService.kt:FileDocumentSearch.Keyword$val word: String</ID>
+    <ID>UndocumentedPublicProperty:Member.kt:Member$val createdTime: LocalDateTime</ID>
+    <ID>UndocumentedPublicProperty:Member.kt:Member$val id: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:Member.kt:Member$val invitedTime: LocalDateTime? = null</ID>
+    <ID>UndocumentedPublicProperty:Member.kt:Member$val joinedTime: LocalDateTime? = null</ID>
+    <ID>UndocumentedPublicProperty:Member.kt:Member$val objectId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:Member.kt:Member$val objectType: ObjectType</ID>
+    <ID>UndocumentedPublicProperty:Member.kt:Member$val status: MemberStatus</ID>
+    <ID>UndocumentedPublicProperty:Member.kt:Member$val uid: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:MemberSearchService.kt:MemberDocument$val communityId: PrimaryKey? = null</ID>
+    <ID>UndocumentedPublicProperty:MemberSearchService.kt:MemberDocument$val nickname: String</ID>
+    <ID>UndocumentedPublicProperty:MemberSearchService.kt:MemberDocument$val objectId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:MemberSearchService.kt:MemberDocument$val objectName: String</ID>
+    <ID>UndocumentedPublicProperty:MemberSearchService.kt:MemberDocument$val objectType: ObjectType</ID>
+    <ID>UndocumentedPublicProperty:MemberSearchService.kt:MemberDocument$val uid: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:MemberSearchService.kt:MemberDocumentSearch.CommunityMembers$val fetch: OffsetFetch</ID>
+    <ID>UndocumentedPublicProperty:MemberSearchService.kt:MemberDocumentSearch.CommunityMembers$val objectName: String</ID>
+    <ID>UndocumentedPublicProperty:MemberSearchService.kt:MemberDocumentSearch.CommunityMembers$val uid: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:MemberSearchService.kt:MemberDocumentSearch.Keyword$val fetch: OffsetFetch</ID>
+    <ID>UndocumentedPublicProperty:MemberSearchService.kt:MemberDocumentSearch.Keyword$val nickname: String</ID>
+    <ID>UndocumentedPublicProperty:MemberSearchService.kt:MemberDocumentSearch.Keyword$val objectId: PrimaryKey? = null</ID>
+    <ID>UndocumentedPublicProperty:MemberSearchService.kt:MemberDocumentSearch.RoomMembers$val communityId: PrimaryKey? = null</ID>
+    <ID>UndocumentedPublicProperty:MemberSearchService.kt:MemberDocumentSearch.RoomMembers$val fetch: OffsetFetch</ID>
+    <ID>UndocumentedPublicProperty:MemberSearchService.kt:MemberDocumentSearch.RoomMembers$val objectName: String</ID>
+    <ID>UndocumentedPublicProperty:MemberSearchService.kt:MemberDocumentSearch.RoomMembers$val uid: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:ObjectStorageService.kt:CopyPack$val newFullName: String</ID>
+    <ID>UndocumentedPublicProperty:ObjectStorageService.kt:CopyPack$val originFullName: String</ID>
+    <ID>UndocumentedPublicProperty:ObjectStorageService.kt:ObjectStorageRecord$val fullName: String</ID>
+    <ID>UndocumentedPublicProperty:ObjectStorageService.kt:ObjectStorageRecord$val lastModified: LocalDateTime</ID>
+    <ID>UndocumentedPublicProperty:ObjectStorageService.kt:ObjectStorageRecord$val url: String</ID>
+    <ID>UndocumentedPublicProperty:ObjectStorageService.kt:ObjectStorageWriteRecord$val fullName: String</ID>
+    <ID>UndocumentedPublicProperty:ObjectStorageService.kt:PresignContext$val ip: String?</ID>
+    <ID>UndocumentedPublicProperty:ObjectStorageService.kt:PresignContext$val uid: String?</ID>
+    <ID>UndocumentedPublicProperty:ObjectStorageService.kt:ProcessedUploadPack$val contentType: String</ID>
+    <ID>UndocumentedPublicProperty:ObjectStorageService.kt:ProcessedUploadPack$val dimension: Dimension? = null</ID>
+    <ID>UndocumentedPublicProperty:ObjectStorageService.kt:ProcessedUploadPack$val pack: UploadPack</ID>
+    <ID>UndocumentedPublicProperty:ObjectStorageService.kt:UploadPack$val file: File</ID>
+    <ID>UndocumentedPublicProperty:ObjectStorageService.kt:UploadPack$val fullName: String</ID>
+    <ID>UndocumentedPublicProperty:ObjectStorageService.kt:UploadPack$val name: String</ID>
+    <ID>UndocumentedPublicProperty:ObjectStorageService.kt:UploadPack$val sha256: String</ID>
+    <ID>UndocumentedPublicProperty:ObjectStorageService.kt:UploadPack$val size: Long</ID>
+    <ID>UndocumentedPublicProperty:PanelAccount.kt:PanelAccount$val address: String</ID>
+    <ID>UndocumentedPublicProperty:PanelAccount.kt:PanelAccount$val algoType: AlgoType</ID>
+    <ID>UndocumentedPublicProperty:PanelAccount.kt:PanelAccount$val id: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:PanelAccount.kt:PanelAccount$val name: String</ID>
+    <ID>UndocumentedPublicProperty:PanelAccount.kt:PanelAccount$val passType: PassType</ID>
+    <ID>UndocumentedPublicProperty:PanelAccount.kt:PanelAccount$val publicKey: String</ID>
+    <ID>UndocumentedPublicProperty:PanelAccount.kt:RawPanelAccount$val algoType: AlgoType</ID>
+    <ID>UndocumentedPublicProperty:PanelAccount.kt:RawPanelAccount$val id: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:PanelAccount.kt:RawPanelAccount$val name: String</ID>
+    <ID>UndocumentedPublicProperty:PanelLog.kt:PanelLog$val action: String</ID>
+    <ID>UndocumentedPublicProperty:PanelLog.kt:PanelLog$val adminId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:PanelLog.kt:PanelLog$val createdTime: LocalDateTime</ID>
+    <ID>UndocumentedPublicProperty:PanelLog.kt:PanelLog$val id: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:PanelLog.kt:PanelLog$val objectType: ObjectType</ID>
+    <ID>UndocumentedPublicProperty:PanelLog.kt:PanelLog$val targetId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:Quota.kt:Quota$val lockId: PrimaryKey?</ID>
+    <ID>UndocumentedPublicProperty:Quota.kt:Quota$val ownerId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:Quota.kt:Quota$val ownerType: ObjectType</ID>
+    <ID>UndocumentedPublicProperty:Quota.kt:Quota$val quotaType: QuotaType</ID>
+    <ID>UndocumentedPublicProperty:Quota.kt:Quota$val total: Long</ID>
+    <ID>UndocumentedPublicProperty:Quota.kt:Quota$val used: Long</ID>
+    <ID>UndocumentedPublicProperty:RawUserOverview.kt:RawUserOverview$val acg: Long</ID>
+    <ID>UndocumentedPublicProperty:RawUserOverview.kt:RawUserOverview$val childAccountCount: Long</ID>
+    <ID>UndocumentedPublicProperty:RawUserOverview.kt:RawUserOverview$val commentCount: Long</ID>
+    <ID>UndocumentedPublicProperty:RawUserOverview.kt:RawUserOverview$val favoriteCount: Long</ID>
+    <ID>UndocumentedPublicProperty:RawUserOverview.kt:RawUserOverview$val hasUnreadChildRoomMessage: Boolean</ID>
+    <ID>UndocumentedPublicProperty:RawUserOverview.kt:RawUserOverview$val rawUser: RawUser</ID>
+    <ID>UndocumentedPublicProperty:RawUserOverview.kt:RawUserOverview$val reactionRecordCount: Long</ID>
+    <ID>UndocumentedPublicProperty:RawUserOverview.kt:RawUserOverview$val subscriptionCount: Long</ID>
+    <ID>UndocumentedPublicProperty:Reaction.kt:Reaction$val count: Long</ID>
+    <ID>UndocumentedPublicProperty:Reaction.kt:Reaction$val emoji: String</ID>
+    <ID>UndocumentedPublicProperty:Reaction.kt:Reaction$val lastReactionId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:Reaction.kt:Reaction$val objectId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:Reaction.kt:Reaction$val objectType: ObjectType</ID>
+    <ID>UndocumentedPublicProperty:ReactionRecord.kt:ReactionRecord$val createdTime: LocalDateTime</ID>
+    <ID>UndocumentedPublicProperty:ReactionRecord.kt:ReactionRecord$val emoji: String</ID>
+    <ID>UndocumentedPublicProperty:ReactionRecord.kt:ReactionRecord$val id: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:ReactionRecord.kt:ReactionRecord$val objectId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:ReactionRecord.kt:ReactionRecord$val objectType: ObjectType</ID>
+    <ID>UndocumentedPublicProperty:ReactionRecord.kt:ReactionRecord$val uid: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:Room.kt:RawRoom$val favoriteId: PrimaryKey? = null</ID>
+    <ID>UndocumentedPublicProperty:Room.kt:RawRoom$val hasJoined = joinedTime != null</ID>
+    <ID>UndocumentedPublicProperty:Room.kt:RawRoom$val joinedTime: LocalDateTime? = null</ID>
+    <ID>UndocumentedPublicProperty:Room.kt:RawRoom$val lastRead: PrimaryKey? = null</ID>
+    <ID>UndocumentedPublicProperty:Room.kt:RawRoom$val latestTopic: PrimaryKey? = null</ID>
+    <ID>UndocumentedPublicProperty:Room.kt:RawRoom$val memberCount: Long? = null</ID>
+    <ID>UndocumentedPublicProperty:Room.kt:RawRoom$val room: Room</ID>
+    <ID>UndocumentedPublicProperty:Room.kt:RawRoom$val subscriptionId: PrimaryKey? = null</ID>
+    <ID>UndocumentedPublicProperty:Room.kt:Room$val aid: String</ID>
+    <ID>UndocumentedPublicProperty:Room.kt:Room$val communityId: PrimaryKey? = null</ID>
+    <ID>UndocumentedPublicProperty:Room.kt:Room$val createdTime: LocalDateTime</ID>
+    <ID>UndocumentedPublicProperty:Room.kt:Room$val creator: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:Room.kt:Room$val icon: PrimaryKey? = null</ID>
+    <ID>UndocumentedPublicProperty:Room.kt:Room$val id: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:Room.kt:Room$val name: String</ID>
+    <ID>UndocumentedPublicProperty:Room.kt:Room$val readOnly get() = status == ObjectStatus.READ_ONLY</ID>
+    <ID>UndocumentedPublicProperty:Room.kt:Room$val status: ObjectStatus = ObjectStatus.NORMAL</ID>
+    <ID>UndocumentedPublicProperty:RoomSearchService.kt:RoomDocument$val aid: String</ID>
+    <ID>UndocumentedPublicProperty:RoomSearchService.kt:RoomDocument$val communityId: PrimaryKey? = null</ID>
+    <ID>UndocumentedPublicProperty:RoomSearchService.kt:RoomDocument$val name: String</ID>
+    <ID>UndocumentedPublicProperty:RoomSearchService.kt:RoomDocument$val objectType: ObjectType = ObjectType.ROOM</ID>
+    <ID>UndocumentedPublicProperty:RoomSearchService.kt:RoomDocumentSearch.Keyword$val communityId: PrimaryKey? = null</ID>
+    <ID>UndocumentedPublicProperty:RoomSearchService.kt:RoomDocumentSearch.Keyword$val fetch: OffsetFetch</ID>
+    <ID>UndocumentedPublicProperty:RoomSearchService.kt:RoomDocumentSearch.Keyword$val words: String</ID>
+    <ID>UndocumentedPublicProperty:SnowflakeFactory.kt:SnowflakeFactory$// Maximum possible value for machine ID, derived from the number of bits allocated. // This value is 2^MACHINE_ID_BITS - 1. const val MAX_MACHINE_ID = (1 shl MACHINE_ID_BITS) - 1</ID>
+    <ID>UndocumentedPublicProperty:TaskRecord.kt:TaskRecord$val createdTime: LocalDateTime</ID>
+    <ID>UndocumentedPublicProperty:TaskRecord.kt:TaskRecord$val id: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:TaskRecord.kt:TaskRecord$val processedId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:TaskRecord.kt:TaskRecord$val type: TaskRecordType</ID>
+    <ID>UndocumentedPublicProperty:Title.kt:RawTitle$val favoriteId: PrimaryKey? = null</ID>
+    <ID>UndocumentedPublicProperty:Title.kt:RawTitle$val subscriptionId: PrimaryKey? = null</ID>
+    <ID>UndocumentedPublicProperty:Title.kt:RawTitle$val title: Title</ID>
+    <ID>UndocumentedPublicProperty:Title.kt:Title$val createdTime: LocalDateTime</ID>
+    <ID>UndocumentedPublicProperty:Title.kt:Title$val creator: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:Title.kt:Title$val descriptionTopicId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:Title.kt:Title$val expiresAt: LocalDateTime? = null</ID>
+    <ID>UndocumentedPublicProperty:Title.kt:Title$val id: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:Title.kt:Title$val name: String</ID>
+    <ID>UndocumentedPublicProperty:Title.kt:Title$val readOnly get() = status == ObjectStatus.READ_ONLY</ID>
+    <ID>UndocumentedPublicProperty:Title.kt:Title$val receiver: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:Title.kt:Title$val scopeId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:Title.kt:Title$val scopeType: ObjectType</ID>
+    <ID>UndocumentedPublicProperty:Title.kt:Title$val status: ObjectStatus = ObjectStatus.NORMAL</ID>
+    <ID>UndocumentedPublicProperty:Title.kt:Title$val titleStatus: TitleWorkStatus</ID>
+    <ID>UndocumentedPublicProperty:Title.kt:Title$val type: TitleType</ID>
+    <ID>UndocumentedPublicProperty:Topic.kt:RawTopic$val commentCount: Long = 0</ID>
+    <ID>UndocumentedPublicProperty:Topic.kt:RawTopic$val content: TopicContent</ID>
+    <ID>UndocumentedPublicProperty:Topic.kt:RawTopic$val favoriteId: PrimaryKey? = null</ID>
+    <ID>UndocumentedPublicProperty:Topic.kt:RawTopic$val hasComment: Boolean = false</ID>
+    <ID>UndocumentedPublicProperty:Topic.kt:RawTopic$val hasJoined: Boolean = false</ID>
+    <ID>UndocumentedPublicProperty:Topic.kt:RawTopic$val lastRead: PrimaryKey? = null</ID>
+    <ID>UndocumentedPublicProperty:Topic.kt:RawTopic$val reactionCount: Long = 0</ID>
+    <ID>UndocumentedPublicProperty:Topic.kt:RawTopic$val subscriptionId: PrimaryKey? = null</ID>
+    <ID>UndocumentedPublicProperty:Topic.kt:RawTopic$val topic: Topic</ID>
+    <ID>UndocumentedPublicProperty:Topic.kt:Topic$val aid: String? = null</ID>
+    <ID>UndocumentedPublicProperty:Topic.kt:Topic$val author: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:Topic.kt:Topic$val content: ByteArray</ID>
+    <ID>UndocumentedPublicProperty:Topic.kt:Topic$val createdTime: LocalDateTime</ID>
+    <ID>UndocumentedPublicProperty:Topic.kt:Topic$val id: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:Topic.kt:Topic$val isEncrypted: Boolean</ID>
+    <ID>UndocumentedPublicProperty:Topic.kt:Topic$val isPin: Boolean = false</ID>
+    <ID>UndocumentedPublicProperty:Topic.kt:Topic$val lastModifiedTime: LocalDateTime? = null</ID>
+    <ID>UndocumentedPublicProperty:Topic.kt:Topic$val level: Int</ID>
+    <ID>UndocumentedPublicProperty:Topic.kt:Topic$val parentId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:Topic.kt:Topic$val parentType: ObjectType</ID>
+    <ID>UndocumentedPublicProperty:Topic.kt:Topic$val readOnly get() = status == ObjectStatus.READ_ONLY</ID>
+    <ID>UndocumentedPublicProperty:Topic.kt:Topic$val rootId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:Topic.kt:Topic$val rootType: ObjectType</ID>
+    <ID>UndocumentedPublicProperty:Topic.kt:Topic$val status: ObjectStatus = ObjectStatus.NORMAL</ID>
+    <ID>UndocumentedPublicProperty:TopicSearchService.kt:TopicDocument$val author: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:TopicSearchService.kt:TopicDocument$val content: String</ID>
+    <ID>UndocumentedPublicProperty:TopicSearchService.kt:TopicDocument$val parentId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:TopicSearchService.kt:TopicDocument$val parentType: String</ID>
+    <ID>UndocumentedPublicProperty:TopicSearchService.kt:TopicDocument$val rootId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:TopicSearchService.kt:TopicDocument$val rootType: String</ID>
+    <ID>UndocumentedPublicProperty:TopicSearchService.kt:TopicDocumentSearch.All$val fetch: OffsetFetch</ID>
+    <ID>UndocumentedPublicProperty:TopicSearchService.kt:TopicDocumentSearch.All$val word: String</ID>
+    <ID>UndocumentedPublicProperty:TopicSearchService.kt:TopicDocumentSearch.AllCommunityRoot$val fetch: OffsetFetch</ID>
+    <ID>UndocumentedPublicProperty:TopicSearchService.kt:TopicDocumentSearch.AllCommunityRoot$val word: String</ID>
+    <ID>UndocumentedPublicProperty:TopicSearchService.kt:TopicDocumentSearch.Recommend$val communities: List&lt;PrimaryKey&gt;</ID>
+    <ID>UndocumentedPublicProperty:TopicSearchService.kt:TopicDocumentSearch.Recommend$val fetch: OffsetFetch</ID>
+    <ID>UndocumentedPublicProperty:TopicSearchService.kt:TopicDocumentSearch.Recommend$val uid: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:TopicSearchService.kt:TopicDocumentSearch.RecommendNotLogin$val fetch: OffsetFetch</ID>
+    <ID>UndocumentedPublicProperty:TopicSearchService.kt:TopicDocumentSearch.Topics$val fetch: OffsetFetch</ID>
+    <ID>UndocumentedPublicProperty:TopicSearchService.kt:TopicDocumentSearch.Topics$val parentId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:TopicSearchService.kt:TopicDocumentSearch.Topics$val word: String</ID>
+    <ID>UndocumentedPublicProperty:UploadRecord.kt:UploadRecord$val chunkSize: Long</ID>
+    <ID>UndocumentedPublicProperty:UploadRecord.kt:UploadRecord$val createdTime: LocalDateTime</ID>
+    <ID>UndocumentedPublicProperty:UploadRecord.kt:UploadRecord$val id: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:UploadRecord.kt:UploadRecord$val name: String</ID>
+    <ID>UndocumentedPublicProperty:UploadRecord.kt:UploadRecord$val objectId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:UploadRecord.kt:UploadRecord$val objectType: ObjectType</ID>
+    <ID>UndocumentedPublicProperty:UploadRecord.kt:UploadRecord$val progress: Long</ID>
+    <ID>UndocumentedPublicProperty:UploadRecord.kt:UploadRecord$val sha256: String?</ID>
+    <ID>UndocumentedPublicProperty:UploadRecord.kt:UploadRecord$val status: UploadRecordStatus</ID>
+    <ID>UndocumentedPublicProperty:UploadRecord.kt:UploadRecord$val total: Long</ID>
+    <ID>UndocumentedPublicProperty:User.kt:RawUser$val favoriteId: PrimaryKey? = null</ID>
+    <ID>UndocumentedPublicProperty:User.kt:RawUser$val subscriptionId: PrimaryKey? = null</ID>
+    <ID>UndocumentedPublicProperty:User.kt:RawUser$val user: User</ID>
+    <ID>UndocumentedPublicProperty:User.kt:User$val acgAmount: Long</ID>
+    <ID>UndocumentedPublicProperty:User.kt:User$val address: String</ID>
+    <ID>UndocumentedPublicProperty:User.kt:User$val aid: String?</ID>
+    <ID>UndocumentedPublicProperty:User.kt:User$val algoType: AlgoType</ID>
+    <ID>UndocumentedPublicProperty:User.kt:User$val createdTime: LocalDateTime</ID>
+    <ID>UndocumentedPublicProperty:User.kt:User$val encryptionPublicKey: String?</ID>
+    <ID>UndocumentedPublicProperty:User.kt:User$val icon: PrimaryKey?</ID>
+    <ID>UndocumentedPublicProperty:User.kt:User$val id: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:User.kt:User$val nickname: String</ID>
+    <ID>UndocumentedPublicProperty:User.kt:User$val notificationId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:User.kt:User$val passType: PassType</ID>
+    <ID>UndocumentedPublicProperty:User.kt:User$val publicKey: String</ID>
+    <ID>UndocumentedPublicProperty:User.kt:User$val status: UserStatus = UserStatus.NORMAL</ID>
+    <ID>UndocumentedPublicProperty:UserDevice.kt:UserDevice$val endpointUrl: String</ID>
+    <ID>UndocumentedPublicProperty:UserDevice.kt:UserDevice$val uid: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:UserFavorite.kt:UserFavorite$val createdTime: LocalDateTime</ID>
+    <ID>UndocumentedPublicProperty:UserFavorite.kt:UserFavorite$val id: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:UserFavorite.kt:UserFavorite$val objectId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:UserFavorite.kt:UserFavorite$val objectType: ObjectType</ID>
+    <ID>UndocumentedPublicProperty:UserFavorite.kt:UserFavorite$val uid: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:UserLog.kt:UserLog$val createdTime: LocalDateTime</ID>
+    <ID>UndocumentedPublicProperty:UserLog.kt:UserLog$val id: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:UserLog.kt:UserLog$val objectId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:UserLog.kt:UserLog$val objectType: ObjectType</ID>
+    <ID>UndocumentedPublicProperty:UserLog.kt:UserLog$val type: UserLogType</ID>
+    <ID>UndocumentedPublicProperty:UserLog.kt:UserLog$val uid: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:UserSearchService.kt:UserDocument$val aid: String?</ID>
+    <ID>UndocumentedPublicProperty:UserSearchService.kt:UserDocument$val nickname: String</ID>
+    <ID>UndocumentedPublicProperty:UserSearchService.kt:UserDocumentSearch.Keyword$val fetch: OffsetFetch</ID>
+    <ID>UndocumentedPublicProperty:UserSearchService.kt:UserDocumentSearch.Keyword$val word: String</ID>
+    <ID>UndocumentedPublicProperty:UserSubscription.kt:SubscriptionSentLog$val createdTime: LocalDateTime</ID>
+    <ID>UndocumentedPublicProperty:UserSubscription.kt:SubscriptionSentLog$val id: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:UserSubscription.kt:SubscriptionSentLog$val objectId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:UserSubscription.kt:SubscriptionSentLog$val objectType: ObjectType</ID>
+    <ID>UndocumentedPublicProperty:UserSubscription.kt:SubscriptionSentLog$val subscriptionId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:UserSubscription.kt:SubscriptionSentLog$val uid: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:UserSubscription.kt:UserSubscription$val createdTime: LocalDateTime</ID>
+    <ID>UndocumentedPublicProperty:UserSubscription.kt:UserSubscription$val id: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:UserSubscription.kt:UserSubscription$val objectId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:UserSubscription.kt:UserSubscription$val objectType: ObjectType</ID>
+    <ID>UndocumentedPublicProperty:UserSubscription.kt:UserSubscription$val uid: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:UserTopicRead.kt:UserTopicRead$val objectId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:UserTopicRead.kt:UserTopicRead$val objectType: ObjectType</ID>
+    <ID>UndocumentedPublicProperty:UserTopicRead.kt:UserTopicRead$val topicId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:UserTopicRead.kt:UserTopicRead$val uid: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:UserTopicRead.kt:UserTopicRead$val updatedAt: LocalDateTime</ID>
+    <ID>UndocumentedPublicProperty:UserTwoFactor.kt:UserTwoFactor$val enabled: Boolean</ID>
+    <ID>UndocumentedPublicProperty:UserTwoFactor.kt:UserTwoFactor$val recoveryCodeHashes: List&lt;String&gt;</ID>
+    <ID>UndocumentedPublicProperty:UserTwoFactor.kt:UserTwoFactor$val totpSecret: String</ID>
+    <ID>UndocumentedPublicProperty:UserTwoFactor.kt:UserTwoFactor$val type: TwoFactorType</ID>
+    <ID>UndocumentedPublicProperty:UserTwoFactor.kt:UserTwoFactor$val uid: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:UserTwoFactor.kt:UserTwoFactor$val updatedAt: LocalDateTime</ID>
+    <ID>UnnecessaryParentheses:SnowflakeFactory.kt:SnowflakeFactory$(MACHINE_ID_BITS + SEQUENCE_BITS)</ID>
+    <ID>UnnecessaryParentheses:SnowflakeFactory.kt:SnowflakeFactory$(id shr (MACHINE_ID_BITS + SEQUENCE_BITS))</ID>
+    <ID>UnnecessaryParentheses:SnowflakeFactory.kt:SnowflakeFactory$(id shr SEQUENCE_BITS)</ID>
+    <ID>UnnecessaryParentheses:SnowflakeFactory.kt:SnowflakeFactory$(lastTimestampMs shl (MACHINE_ID_BITS + SEQUENCE_BITS))</ID>
+    <ID>UnnecessaryParentheses:Title.kt:(expiresAt?.let { it &lt;= currentTime } == true)</ID>
+    <ID>UnsafeCallOnNullableType:SnowflakeFactory.kt:SnowflakeFactory$machineId!!</ID>
+    <ID>UseDataClass:AssetTransaction.kt:AssetTransaction</ID>
+    <ID>UseDataClass:ChildAccount.kt:ChildAccount</ID>
+    <ID>UseDataClass:Community.kt:Community</ID>
+    <ID>UseDataClass:CustomConfig.kt:CustomConfig</ID>
+    <ID>UseDataClass:CustomConfig.kt:CustomKeyStore</ID>
+    <ID>UseDataClass:Database.kt:InsertCommunityTuple</ID>
+    <ID>UseDataClass:Database.kt:InsertRoomTuple</ID>
+    <ID>UseDataClass:Database.kt:InsertTopicTuple</ID>
+    <ID>UseDataClass:EncryptedKey.kt:EncryptedKey</ID>
+    <ID>UseDataClass:FileRef.kt:FileRef</ID>
+    <ID>UseDataClass:Member.kt:Member</ID>
+    <ID>UseDataClass:PanelAccount.kt:PanelAccount</ID>
+    <ID>UseDataClass:PanelAccount.kt:RawPanelAccount</ID>
+    <ID>UseDataClass:PanelLog.kt:PanelLog</ID>
+    <ID>UseDataClass:Quota.kt:Quota</ID>
+    <ID>UseDataClass:Reaction.kt:Reaction</ID>
+    <ID>UseDataClass:ReactionRecord.kt:ReactionRecord</ID>
+    <ID>UseDataClass:Room.kt:Room</ID>
+    <ID>UseDataClass:TaskRecord.kt:TaskRecord</ID>
+    <ID>UseDataClass:Title.kt:Title</ID>
+    <ID>UseDataClass:Topic.kt:Topic</ID>
+    <ID>UseDataClass:User.kt:User</ID>
+    <ID>UseDataClass:UserDevice.kt:UserDevice</ID>
+    <ID>UseDataClass:UserLog.kt:UserLog</ID>
+    <ID>UseDataClass:UserSubscription.kt:SubscriptionSentLog</ID>
+    <ID>UseDataClass:UserTopicRead.kt:UserTopicRead</ID>
+    <ID>UseOrEmpty:Env.kt:System.getenv("OSTYPE")?.lowercase(Locale.getDefault()) ?: ""</ID>
+  </CurrentIssues>
+</SmellBaseline>

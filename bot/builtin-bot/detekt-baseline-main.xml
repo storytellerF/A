@@ -1,0 +1,65 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>AbsentOrWrongFileLicense:BuiltInBot.kt:com.storyteller_f.a.built_in_bot.BuiltInBot.kt</ID>
+    <ID>CascadingCallWrapping:BuiltInBot.kt:onFailure { Napier.e(it.cause) { "createNewTopic failed" } }</ID>
+    <ID>ForbiddenMethodCall:BuiltInBot.kt:println("🔻 收到终止信号，准备退出...")</ID>
+    <ID>FunctionSignature:BuiltInBot.kt:private suspend fun getLatestHasCommentedTopic: Long</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:BuiltInBot.kt:fun main</ID>
+    <ID>MagicNumber:BuiltInBot.kt:10</ID>
+    <ID>MagicNumber:BuiltInBot.kt:1000</ID>
+    <ID>MultilineExpressionWrapping:BuiltInBot.kt:Thread { println("🔻 收到终止信号，准备退出...") job.cancel() Thread.sleep(1000) }</ID>
+    <ID>MultilineExpressionWrapping:BuiltInBot.kt:client.models.generateContent( "gemini-2.5-flash", "$newPrompt\n日期:${year}年${month}月${day}日，领域:${communityInfo.name}", GenerateContentConfig.builder().tools(Tool.builder().googleSearch(GoogleSearch.builder())) .build() )</ID>
+    <ID>MultilineExpressionWrapping:BuiltInBot.kt:client.models.generateContent( "gemini-2.5-flash", "$prompt\n${topicInfo.content}", null )</ID>
+    <ID>MultilineExpressionWrapping:BuiltInBot.kt:if (plain.length &lt; 10) { null } else { val response = client.models.generateContent( "gemini-2.5-flash", "$prompt\n${topicInfo.content}", null ) response.text()?.take(1000) } ?: "👍"</ID>
+    <ID>MultilineExpressionWrapping:BuiltInBot.kt:launch { // 确保第一次登录成功 while (isActive) { try { val algo = getAlgo(AlgoType.P256) val derPriKey = algo.getDerPrivateKey(pemPrivateKey).getOrThrow() val derPubKey = algo.getDerPublicKeyFromPrivateKey(pemPrivateKey).getOrThrow() val authKey = AuthKey.P256(pemPrivateKey, derPriKey, derPubKey) sessionManager.userSignIn(authKey, passHolder) break } catch (e: Exception) { Napier.e(e) { "login failed" } } } processJob(sessionManager, client, commentPrompt, newsPrompt) }</ID>
+    <ID>MultilineExpressionWrapping:BuiltInBot.kt:launch { loop(1.hours) { processCommunityTask(sessionManager) { communityInfo -&gt; handleCommunityNews(sessionManager, client, communityInfo, newsPrompt) } } }</ID>
+    <ID>MultilineExpressionWrapping:BuiltInBot.kt:launch { loop(1.minutes) { processCommunityTask(sessionManager) { communityInfo -&gt; handleCommunityComment(sessionManager, client, communityInfo, commentPrompt) } } }</ID>
+    <ID>MultilineExpressionWrapping:BuiltInBot.kt:sessionManager.getTopicList( ObjectType.COMMUNITY, communityInfo.id, TopicPinSearch.UNSPECIFIED, PaginationQuery(next, null, size = 10) ).getOrThrow()</ID>
+    <ID>MultilineExpressionWrapping:BuiltInBot.kt:sessionManager.getTopicList( ObjectType.COMMUNITY, info.id, TopicPinSearch.UNSPECIFIED, PaginationQuery(next, null, size = 10) ).getOrThrow()</ID>
+    <ID>MultilineExpressionWrapping:BuiltInBot.kt:sessionManager.getTopicList( ObjectType.COMMUNITY, info.id, TopicPinSearch.UNSPECIFIED, PaginationQuery(null, pre, size = 10) ).getOrThrow()</ID>
+    <ID>MultilineExpressionWrapping:BuiltInBot.kt:sessionManager.getUserCommunities( com.storyteller_f.a.api.CustomApi.Users.JoinedCommunities.UserCommunitiesQuery(nextPageToken = next) ).getOrThrow()</ID>
+    <ID>MultilineLambdaItParameter:BuiltInBot.kt:{ Napier.e(it) { "create new topic failed $date $content" } }</ID>
+    <ID>MultilineLambdaItParameter:BuiltInBot.kt:{ Napier.e(it.cause) { "createNewTopic failed" } }</ID>
+    <ID>NamedArguments:BuiltInBot.kt:addTopic(latestTopic, client, prompt, communityInfo, sessionManager)</ID>
+    <ID>NamedArguments:BuiltInBot.kt:createNewsTopic(client, prompt, communityInfo, sessionManager, previousDate)</ID>
+    <ID>NamedArguments:BuiltInBot.kt:createSimpleUserSessionManager( buildWebSocketUrl(wsUrl), AcceptAllCookiesStorage(), passHolder, { model, cookieManager -&gt; getClient { defaultClientConfigure(cookieManager, model, passHolder, httpUrl, LogLevel.INFO) } } ) { r, t, _ -&gt; }</ID>
+    <ID>NamedArguments:BuiltInBot.kt:getTopicList( ObjectType.COMMUNITY, communityInfo.id, TopicPinSearch.UNSPECIFIED, PaginationQuery(next, null, size = 10) )</ID>
+    <ID>NamedArguments:BuiltInBot.kt:getTopicList( ObjectType.COMMUNITY, info.id, TopicPinSearch.UNSPECIFIED, PaginationQuery(next, null, size = 10) )</ID>
+    <ID>NamedArguments:BuiltInBot.kt:getTopicList( ObjectType.COMMUNITY, info.id, TopicPinSearch.UNSPECIFIED, PaginationQuery(null, pre, size = 10) )</ID>
+    <ID>NamedArguments:BuiltInBot.kt:handleCommunityComment(sessionManager, client, communityInfo, commentPrompt)</ID>
+    <ID>NamedArguments:BuiltInBot.kt:handleCommunityNews(sessionManager, client, communityInfo, newsPrompt)</ID>
+    <ID>NamedArguments:BuiltInBot.kt:handleTopic(topicInfo, client, sessionManager, prompt)</ID>
+    <ID>NamedArguments:BuiltInBot.kt:processJob(sessionManager, client, commentPrompt, newsPrompt)</ID>
+    <ID>NullableToStringCall:BuiltInBot.kt:${latestTopic?.id}</ID>
+    <ID>PackageName:BuiltInBot.kt:package com.storyteller_f.a.built_in_bot</ID>
+    <ID>PackageNaming:BuiltInBot.kt:package com.storyteller_f.a.built_in_bot</ID>
+    <ID>SuspendFunSwallowedCancellation:BuiltInBot.kt:catch (e: Exception) { Napier.e(e) { "login failed" } }</ID>
+    <ID>SuspendFunSwallowedCancellation:BuiltInBot.kt:catch (e: Exception) { if (e is kotlinx.coroutines.CancellationException) { throw e } else if (e.message?.contains("User location is not supported for the API use") == true) { break } else { Napier.e(e) { "handleCommunityNews failed" } } }</ID>
+    <ID>SuspendFunWithCoroutineScopeReceiver:BuiltInBot.kt:suspend</ID>
+    <ID>ThrowingExceptionInMain:BuiltInBot.kt:fun main</ID>
+    <ID>ThrowsCount:BuiltInBot.kt:fun main</ID>
+    <ID>TooGenericExceptionCaught:BuiltInBot.kt:e: Exception</ID>
+    <ID>TooGenericExceptionThrown:BuiltInBot.kt:throw Exception("BOT_PEM not exists")</ID>
+    <ID>TooGenericExceptionThrown:BuiltInBot.kt:throw Exception("SERVER_URL not exists")</ID>
+    <ID>TooGenericExceptionThrown:BuiltInBot.kt:throw Exception("WS_SERVER_URL not exists")</ID>
+    <ID>TrailingCommaOnCallSite:BuiltInBot.kt:( "gemini-2.5-flash", "$newPrompt\n日期:${year}年${month}月${day}日，领域:${communityInfo.name}", GenerateContentConfig.builder().tools(Tool.builder().googleSearch(GoogleSearch.builder())) .build() )</ID>
+    <ID>TrailingCommaOnCallSite:BuiltInBot.kt:( "gemini-2.5-flash", "$prompt\n${topicInfo.content}", null )</ID>
+    <ID>TrailingCommaOnCallSite:BuiltInBot.kt:( ObjectType.COMMUNITY, communityInfo.id, TopicPinSearch.UNSPECIFIED, PaginationQuery(next, null, size = 10) )</ID>
+    <ID>TrailingCommaOnCallSite:BuiltInBot.kt:( ObjectType.COMMUNITY, info.id, TopicPinSearch.UNSPECIFIED, PaginationQuery(next, null, size = 10) )</ID>
+    <ID>TrailingCommaOnCallSite:BuiltInBot.kt:( ObjectType.COMMUNITY, info.id, TopicPinSearch.UNSPECIFIED, PaginationQuery(null, pre, size = 10) )</ID>
+    <ID>TrailingCommaOnCallSite:BuiltInBot.kt:( buildWebSocketUrl(wsUrl), AcceptAllCookiesStorage(), passHolder, { model, cookieManager -&gt; getClient { defaultClientConfigure(cookieManager, model, passHolder, httpUrl, LogLevel.INFO) } } )</ID>
+    <ID>TrailingCommaOnCallSite:BuiltInBot.kt:( com.storyteller_f.a.api.CustomApi.Users.JoinedCommunities.UserCommunitiesQuery(nextPageToken = next) )</ID>
+    <ID>TrailingCommaOnDeclarationSite:BuiltInBot.kt:( client: Client, newPrompt: String, communityInfo: CommunityInfo, sessionManager: UserSessionManager, date: LocalDateTime )</ID>
+    <ID>TrailingCommaOnDeclarationSite:BuiltInBot.kt:( latestTopic: TopicInfo?, client: Client, prompt: String, communityInfo: CommunityInfo, sessionManager: UserSessionManager )</ID>
+    <ID>TrailingCommaOnDeclarationSite:BuiltInBot.kt:( sessionManager: SimpleUserSessionManager, client: Client, commentPrompt: String, newsPrompt: String )</ID>
+    <ID>TrailingCommaOnDeclarationSite:BuiltInBot.kt:( sessionManager: SimpleUserSessionManager, client: Client, info: CommunityInfo, prompt: String )</ID>
+    <ID>TrailingCommaOnDeclarationSite:BuiltInBot.kt:( sessionManager: SimpleUserSessionManager, extracted: suspend (CommunityInfo) -&gt; Unit )</ID>
+    <ID>TrailingCommaOnDeclarationSite:BuiltInBot.kt:( sessionManager: SimpleUserSessionManager, info: CommunityInfo )</ID>
+    <ID>TrailingCommaOnDeclarationSite:BuiltInBot.kt:( sessionManager: UserSessionManager, client: Client, communityInfo: CommunityInfo, prompt: String )</ID>
+    <ID>TrailingCommaOnDeclarationSite:BuiltInBot.kt:( topicInfo: TopicInfo, client: Client, sessionManager: SimpleUserSessionManager, prompt: String )</ID>
+    <ID>UndocumentedPublicFunction:BuiltInBot.kt:fun main</ID>
+    <ID>Wrapping:BuiltInBot.kt:(</ID>
+  </CurrentIssues>
+</SmellBaseline>

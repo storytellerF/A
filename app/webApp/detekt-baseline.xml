@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>AbsentOrWrongFileLicense:build.gradle.kts:.build.gradle.kts</ID>
+    <ID>AbsentOrWrongFileLicense:main.kt:.main.kt</ID>
+    <ID>Filename:main.kt:.main.kt</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:main.kt:@OptIn(ExperimentalComposeUiApi::class) fun main</ID>
+    <ID>MissingPackageDeclaration:main.kt:.main.kt</ID>
+    <ID>MultilineExpressionWrapping:main.kt:window.location.search .removePrefix("?") .split('&amp;') .firstOrNull { it.substringBefore('=') == name } ?.substringAfter('=', missingDelimiterValue = "") ?.takeIf(String::isNotEmpty)</ID>
+    <ID>UndocumentedPublicFunction:main.kt:@OptIn(ExperimentalComposeUiApi::class) fun main</ID>
+  </CurrentIssues>
+</SmellBaseline>

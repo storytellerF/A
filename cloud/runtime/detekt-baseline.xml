@@ -1,0 +1,183 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>AbsentOrWrongFileLicense:Auth.kt:com.storyteller_f.a.cloud.server.auth.Auth.kt</ID>
+    <ID>AbsentOrWrongFileLicense:ClientIp.kt:com.storyteller_f.a.cloud.server.ClientIp.kt</ID>
+    <ID>AbsentOrWrongFileLicense:SessionCookie.kt:com.storyteller_f.a.cloud.server.auth.SessionCookie.kt</ID>
+    <ID>AbsentOrWrongFileLicense:UsePrincipal.kt:com.storyteller_f.a.cloud.server.auth.UsePrincipal.kt</ID>
+    <ID>AbsentOrWrongFileLicense:UserSession.kt:com.storyteller_f.a.cloud.server.auth.UserSession.kt</ID>
+    <ID>AbsentOrWrongFileLicense:build.gradle.kts:.build.gradle.kts</ID>
+    <ID>BlankLineBetweenWhenConditions:Auth.kt:when (credential) { is CustomCredential.AidCredential -&gt; userDatabase.getUserAuthDataByAid(credential.aid) is CustomCredential.IdCredential -&gt; userDatabase.getUserAuthDataById(credential.id) is CustomCredential.AddressCredential -&gt; userDatabase.getUserAuthDataByAddress(credential.ad) }</ID>
+    <ID>BlankLineBetweenWhenConditions:Auth.kt:when (credential) { is CustomCredential.IdCredential -&gt; database.panelAccount.getUserAuthDataById(credential.id) is CustomCredential.AddressCredential -&gt; database.panelAccount.getUserAuthDataByAddress(credential.ad) else -&gt; Result.failure(ForbiddenException()) }</ID>
+    <ID>BlankLineBetweenWhenConditions:Auth.kt:when (session) { is UserSession.Success -&gt; Result.success(CustomPrincipal(session.id)) is UserSession.TwoFactorPending -&gt; Result.success(null) is UserSession.Pending -&gt; { if (credential != null) { call.checkAdminApiRequest(backend, credential, session) } else { Result.success(null) } } }</ID>
+    <ID>BlankLineBetweenWhenConditions:Auth.kt:when (session) { is UserSession.Success -&gt; Result.success(CustomPrincipal(session.id)) is UserSession.TwoFactorPending -&gt; Result.success(null) is UserSession.Pending -&gt; { when { credential != null -&gt; call.checkApiRequest(backend, credential, session) backend.customConfig.buildType == "prod" -&gt; Result.success(null) else -&gt; backend.checkDevWsLink(call) } } }</ID>
+    <ID>BlankLineBetweenWhenConditions:UsePrincipal.kt:when (it) { null -&gt; call.respond(HttpStatusCode.NotFound) is FileResponse -&gt; { call.response.header( HttpHeaders.ContentDisposition, ContentDisposition.Attachment.withParameter( ContentDisposition.Parameters.FileName, it.file.name ).toString() ) call.respondFile(it.file) } is PathResponse -&gt; { call.response.header( HttpHeaders.ContentDisposition, ContentDisposition.Attachment.withParameter(ContentDisposition.Parameters.FileName, it.file.name) .toString() ) call.respondPath(it.file) } is Unit -&gt; call.respond(HttpStatusCode.OK) else -&gt; call.respond(it) }</ID>
+    <ID>BracesOnWhenStatements:Auth.kt:CustomAuthProvider$when</ID>
+    <ID>BracesOnWhenStatements:Auth.kt:when</ID>
+    <ID>BracesOnWhenStatements:UsePrincipal.kt:when</ID>
+    <ID>ClassSignature:SessionCookie.kt:SessionKeys</ID>
+    <ID>ClassSignature:UserSession.kt:UserSession$Pending : UserSession</ID>
+    <ID>ClassSignature:UserSession.kt:UserSession$Success : UserSession</ID>
+    <ID>ClassSignature:UserSession.kt:UserSession$TwoFactorPending : UserSession</ID>
+    <ID>CognitiveComplexMethod:Auth.kt:fun Application.configureAuth</ID>
+    <ID>CognitiveComplexMethod:Auth.kt:suspend fun ApplicationCall.checkApiRequest: Result&lt;CustomPrincipal?&gt;</ID>
+    <ID>ExpressionBodySyntax:Auth.kt:return getSession().data</ID>
+    <ID>ExpressionBodySyntax:SessionCookie.kt:return MessageDigest.getInstance("SHA-256").digest(value.toByteArray(Charsets.UTF_8))</ID>
+    <ID>ForbiddenPublicDataClass:Auth.kt:CustomCredential$AddressCredential : CustomCredential</ID>
+    <ID>ForbiddenPublicDataClass:Auth.kt:CustomCredential$AidCredential : CustomCredential</ID>
+    <ID>ForbiddenPublicDataClass:Auth.kt:CustomCredential$IdCredential : CustomCredential</ID>
+    <ID>ForbiddenPublicDataClass:Auth.kt:CustomPrincipal</ID>
+    <ID>ForbiddenPublicDataClass:UserSession.kt:UserSession$Pending : UserSession</ID>
+    <ID>ForbiddenPublicDataClass:UserSession.kt:UserSession$Success : UserSession</ID>
+    <ID>ForbiddenPublicDataClass:UserSession.kt:UserSession$TwoFactorPending : UserSession</ID>
+    <ID>FunctionExpressionBody:Auth.kt:{ return getSession().data }</ID>
+    <ID>FunctionExpressionBody:Auth.kt:{ return when (credential) { is CustomCredential.IdCredential -&gt; database.panelAccount.getUserAuthDataById(credential.id) is CustomCredential.AddressCredential -&gt; database.panelAccount.getUserAuthDataByAddress(credential.ad) else -&gt; Result.failure(ForbiddenException()) } }</ID>
+    <ID>FunctionExpressionBody:SessionCookie.kt:{ return MessageDigest.getInstance("SHA-256").digest(value.toByteArray(Charsets.UTF_8)) }</ID>
+    <ID>FunctionExpressionBody:SessionCookie.kt:{ return SessionKeys( encryptKey = sha256("encrypt:$secret").copyOf(16), signKey = sha256("sign:$secret"), ) }</ID>
+    <ID>FunctionExpressionBody:UsePrincipal.kt:{ return { result -&gt; handleResultInternal(result, backend.customConfig.buildType) } }</ID>
+    <ID>FunctionSignature:Auth.kt:fun ApplicationCall.saveSuccessSession</ID>
+    <ID>FunctionSignature:Auth.kt:fun ApplicationCall.saveTwoFactorPendingSession</ID>
+    <ID>FunctionSignature:Auth.kt:inline fun AuthenticationConfig.custom</ID>
+    <ID>FunctionSignature:Auth.kt:suspend fun Backend.getAdminAuthData: Result&lt;UserAuthData?&gt;</ID>
+    <ID>FunctionSignature:Auth.kt:suspend fun Backend.getUserAuthData: Result&lt;UserAuthData?&gt;</ID>
+    <ID>FunctionSignature:ClientIp.kt:fun ApplicationCall.remoteIp: List&lt;Pair&lt;String, String?&gt;&gt;</ID>
+    <ID>FunctionSignature:UsePrincipal.kt:inline fun &lt;reified R : Any&gt; RoutingContext.usePrincipal</ID>
+    <ID>FunctionSignature:UsePrincipal.kt:inline fun &lt;reified R : Any&gt; RoutingContext.usePrincipalOrNull</ID>
+    <ID>FunctionSignature:UsePrincipal.kt:suspend inline fun &lt;reified R : Any&gt; RoutingContext.callRespond</ID>
+    <ID>LateinitUsage:Auth.kt:CustomAuthProvider.Config$lateinit var challengeFunction: CustomChallenge</ID>
+    <ID>LateinitUsage:Auth.kt:CustomAuthProvider.Config$lateinit var validateFunction: CustomValidator</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Auth.kt:CustomAuthProvider : AuthenticationProvider</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Auth.kt:CustomCredential</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Auth.kt:CustomPrincipal</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Auth.kt:fun Application.configureAuth</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Auth.kt:fun ApplicationCall.getData: String</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Auth.kt:fun ApplicationCall.getRateLimitKey: Comparable&lt;*&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Auth.kt:fun ApplicationCall.getSession: UserSession</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Auth.kt:fun ApplicationCall.saveSuccessSession</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Auth.kt:fun ApplicationCall.saveTwoFactorPendingSession</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Auth.kt:inline fun AuthenticationConfig.custom</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Auth.kt:suspend fun ApplicationCall.checkAdminApiRequest: Result&lt;CustomPrincipal?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Auth.kt:suspend fun ApplicationCall.checkApiRequest: Result&lt;CustomPrincipal?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Auth.kt:suspend fun ApplicationCall.respondUnauthorizedResponse</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Auth.kt:suspend fun Backend.getAdminAuthData: Result&lt;UserAuthData?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Auth.kt:suspend fun Backend.getUserAuthData: Result&lt;UserAuthData?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Auth.kt:typealias CustomChallenge = suspend (UserSession, ApplicationCall) -&gt; Unit</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Auth.kt:typealias CustomValidator = suspend (UserSession, ApplicationCall, CustomCredential?) -&gt; Result&lt;CustomPrincipal?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ClientIp.kt:fun ApplicationCall.remoteIp: List&lt;Pair&lt;String, String?&gt;&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionCookie.kt:fun SessionsConfig.setupUserSessions</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UsePrincipal.kt:inline fun &lt;reified R : Any&gt; DefaultWebSocketServerSession.usePrincipal</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UsePrincipal.kt:inline fun &lt;reified R : Any&gt; RoutingContext.usePrincipal</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UsePrincipal.kt:inline fun &lt;reified R : Any&gt; RoutingContext.usePrincipalOrNull</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UsePrincipal.kt:inline fun &lt;reified R : Any&gt; omitPrincipal</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UsePrincipal.kt:inline fun &lt;reified R&gt; handleResult: suspend RoutingContext.(it: Result&lt;R&gt;) -&gt; Unit</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UsePrincipal.kt:suspend fun RoutingContext.respondError</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UsePrincipal.kt:suspend inline fun &lt;reified R : Any&gt; RoutingContext.callRespond</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UsePrincipal.kt:suspend inline fun &lt;reified R&gt; RoutingContext.handleResultInternal</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserSession.kt:UserSession</ID>
+    <ID>MagicNumber:Auth.kt:5</ID>
+    <ID>MagicNumber:Auth.kt:60</ID>
+    <ID>MagicNumber:SessionCookie.kt:16</ID>
+    <ID>MagicNumber:SessionCookie.kt:32</ID>
+    <ID>MagicNumber:SessionCookie.kt:3600</ID>
+    <ID>MultilineExpressionWrapping:Auth.kt:CustomAuthProvider$if (credential == null) { AuthenticationFailedCause.NoCredentials } else if (err != null) { AuthenticationFailedCause.Error(err.message.toString()) } else { AuthenticationFailedCause.InvalidCredentials }</ID>
+    <ID>MultilineExpressionWrapping:Auth.kt:parameters.associate { it.name to it.value }</ID>
+    <ID>MultilineExpressionWrapping:Auth.kt:when { aTs != null &amp;&amp; checkTsIsValid(aTs, 60 * 5).second -&gt; aTs.toString() else -&gt; Uuid.random().toString() }</ID>
+    <ID>NoEmptyFirstLineInClassBody:Auth.kt:CustomAuthProvider${ class Config(name: String?) : AuthenticationProvider.Config(name) { lateinit var validateFunction: CustomValidator lateinit var challengeFunction: CustomChallenge fun validate(f: CustomValidator) { validateFunction = f } fun challenge(f: CustomChallenge) { challengeFunction = f } } override suspend fun onAuthenticate(context: AuthenticationContext) { val call = context.call val session = call.getSession() val credential = call.customCredential() val result = config.validateFunction(session, call, credential) val principal = result.getOrNull() val err = result.exceptionOrNull() if (principal != null) { context.principal(name, principal) } else { val cause = if (credential == null) { AuthenticationFailedCause.NoCredentials } else if (err != null) { AuthenticationFailedCause.Error(err.message.toString()) } else { AuthenticationFailedCause.InvalidCredentials } @Suppress("NAME_SHADOWING") context.challenge("CustomChallengeKey", cause) { challenge, call -&gt; config.challengeFunction(session, call) challenge.complete() } } } private fun ApplicationCall.customCredential(): CustomCredential? { return when (val authHeader = request.parseAuthorizationHeader()) { is HttpAuthHeader.Parameterized -&gt; { if (!authHeader.authScheme.equals("Custom", ignoreCase = true)) return null authHeader.customCredential() } else -&gt; null } } }</ID>
+    <ID>NoEmptyFirstLineInClassBody:Auth.kt:CustomAuthProvider.Config${ lateinit var validateFunction: CustomValidator lateinit var challengeFunction: CustomChallenge fun validate(f: CustomValidator) { validateFunction = f } fun challenge(f: CustomChallenge) { challengeFunction = f } }</ID>
+    <ID>NoWildcardImports:Auth.kt:import com.storyteller_f.shared.utils.*</ID>
+    <ID>NoWildcardImports:Auth.kt:import io.ktor.http.auth.*</ID>
+    <ID>NoWildcardImports:Auth.kt:import io.ktor.server.application.*</ID>
+    <ID>NoWildcardImports:Auth.kt:import io.ktor.server.auth.*</ID>
+    <ID>NoWildcardImports:Auth.kt:import io.ktor.server.plugins.*</ID>
+    <ID>NoWildcardImports:Auth.kt:import io.ktor.server.request.*</ID>
+    <ID>NoWildcardImports:Auth.kt:import io.ktor.server.response.*</ID>
+    <ID>NoWildcardImports:Auth.kt:import io.ktor.server.sessions.*</ID>
+    <ID>PackageName:Auth.kt:package com.storyteller_f.a.cloud.server.auth</ID>
+    <ID>PackageName:ClientIp.kt:package com.storyteller_f.a.cloud.server</ID>
+    <ID>PackageName:SessionCookie.kt:package com.storyteller_f.a.cloud.server.auth</ID>
+    <ID>PackageName:UsePrincipal.kt:package com.storyteller_f.a.cloud.server.auth</ID>
+    <ID>PackageName:UserSession.kt:package com.storyteller_f.a.cloud.server.auth</ID>
+    <ID>PackageNaming:Auth.kt:package com.storyteller_f.a.cloud.server.auth</ID>
+    <ID>PackageNaming:ClientIp.kt:package com.storyteller_f.a.cloud.server</ID>
+    <ID>PackageNaming:SessionCookie.kt:package com.storyteller_f.a.cloud.server.auth</ID>
+    <ID>PackageNaming:UsePrincipal.kt:package com.storyteller_f.a.cloud.server.auth</ID>
+    <ID>PackageNaming:UserSession.kt:package com.storyteller_f.a.cloud.server.auth</ID>
+    <ID>TooGenericExceptionCaught:UsePrincipal.kt:e: Exception</ID>
+    <ID>TooManyFunctions:Auth.kt:com.storyteller_f.a.cloud.server.auth.Auth.kt</ID>
+    <ID>TrailingCommaOnCallSite:Auth.kt:( pubKey, sig, finalData(session.data) )</ID>
+    <ID>TrailingCommaOnCallSite:UsePrincipal.kt:( ContentDisposition.Parameters.FileName, it.file.name )</ID>
+    <ID>TrailingCommaOnCallSite:UsePrincipal.kt:( HttpHeaders.ContentDisposition, ContentDisposition.Attachment.withParameter( ContentDisposition.Parameters.FileName, it.file.name ).toString() )</ID>
+    <ID>TrailingCommaOnCallSite:UsePrincipal.kt:( HttpHeaders.ContentDisposition, ContentDisposition.Attachment.withParameter(ContentDisposition.Parameters.FileName, it.file.name) .toString() )</ID>
+    <ID>TrailingCommaOnCallSite:UsePrincipal.kt:( HttpStatusCode.InternalServerError, if (buildType == "prod") "" else (e.message ?: e.toString()) )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Auth.kt:( backend: Backend, credential: CustomCredential, session: UserSession.Pending )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Auth.kt:( credential: CustomCredential )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Auth.kt:( name: String? = null, configure: CustomAuthProvider.Config.() -&gt; Unit )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Auth.kt:( session: UserSession.Pending, id: PrimaryKey )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Auth.kt:( session: UserSession.TwoFactorPending )</ID>
+    <ID>TrailingCommaOnDeclarationSite:UserSession.kt:UserSession.Success$( override val data: String, val remote: String, val id: PrimaryKey, val label: String )</ID>
+    <ID>UndocumentedPublicClass:Auth.kt:CustomAuthProvider : AuthenticationProvider</ID>
+    <ID>UndocumentedPublicClass:Auth.kt:CustomAuthProvider$Config : Config</ID>
+    <ID>UndocumentedPublicClass:Auth.kt:CustomCredential</ID>
+    <ID>UndocumentedPublicClass:Auth.kt:CustomCredential$AddressCredential : CustomCredential</ID>
+    <ID>UndocumentedPublicClass:Auth.kt:CustomCredential$AidCredential : CustomCredential</ID>
+    <ID>UndocumentedPublicClass:Auth.kt:CustomCredential$IdCredential : CustomCredential</ID>
+    <ID>UndocumentedPublicClass:Auth.kt:CustomPrincipal</ID>
+    <ID>UndocumentedPublicClass:UserSession.kt:UserSession</ID>
+    <ID>UndocumentedPublicClass:UserSession.kt:UserSession$Pending : UserSession</ID>
+    <ID>UndocumentedPublicClass:UserSession.kt:UserSession$Success : UserSession</ID>
+    <ID>UndocumentedPublicClass:UserSession.kt:UserSession$TwoFactorPending : UserSession</ID>
+    <ID>UndocumentedPublicFunction:Auth.kt:CustomAuthProvider.Config$fun challenge</ID>
+    <ID>UndocumentedPublicFunction:Auth.kt:CustomAuthProvider.Config$fun validate</ID>
+    <ID>UndocumentedPublicFunction:Auth.kt:fun Application.configureAuth</ID>
+    <ID>UndocumentedPublicFunction:Auth.kt:fun ApplicationCall.getData: String</ID>
+    <ID>UndocumentedPublicFunction:Auth.kt:fun ApplicationCall.getRateLimitKey: Comparable&lt;*&gt;</ID>
+    <ID>UndocumentedPublicFunction:Auth.kt:fun ApplicationCall.getSession: UserSession</ID>
+    <ID>UndocumentedPublicFunction:Auth.kt:fun ApplicationCall.saveSuccessSession</ID>
+    <ID>UndocumentedPublicFunction:Auth.kt:fun ApplicationCall.saveTwoFactorPendingSession</ID>
+    <ID>UndocumentedPublicFunction:Auth.kt:inline fun AuthenticationConfig.custom</ID>
+    <ID>UndocumentedPublicFunction:Auth.kt:suspend fun ApplicationCall.checkAdminApiRequest: Result&lt;CustomPrincipal?&gt;</ID>
+    <ID>UndocumentedPublicFunction:Auth.kt:suspend fun ApplicationCall.checkApiRequest: Result&lt;CustomPrincipal?&gt;</ID>
+    <ID>UndocumentedPublicFunction:Auth.kt:suspend fun ApplicationCall.respondUnauthorizedResponse</ID>
+    <ID>UndocumentedPublicFunction:Auth.kt:suspend fun Backend.getAdminAuthData: Result&lt;UserAuthData?&gt;</ID>
+    <ID>UndocumentedPublicFunction:Auth.kt:suspend fun Backend.getUserAuthData: Result&lt;UserAuthData?&gt;</ID>
+    <ID>UndocumentedPublicFunction:ClientIp.kt:fun ApplicationCall.remoteIp: List&lt;Pair&lt;String, String?&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:SessionCookie.kt:fun SessionsConfig.setupUserSessions</ID>
+    <ID>UndocumentedPublicFunction:UsePrincipal.kt:inline fun &lt;reified R : Any&gt; DefaultWebSocketServerSession.usePrincipal</ID>
+    <ID>UndocumentedPublicFunction:UsePrincipal.kt:inline fun &lt;reified R : Any&gt; RoutingContext.usePrincipal</ID>
+    <ID>UndocumentedPublicFunction:UsePrincipal.kt:inline fun &lt;reified R : Any&gt; RoutingContext.usePrincipalOrNull</ID>
+    <ID>UndocumentedPublicFunction:UsePrincipal.kt:inline fun &lt;reified R : Any&gt; omitPrincipal</ID>
+    <ID>UndocumentedPublicFunction:UsePrincipal.kt:inline fun &lt;reified R&gt; handleResult: suspend RoutingContext.(it: Result&lt;R&gt;) -&gt; Unit</ID>
+    <ID>UndocumentedPublicFunction:UsePrincipal.kt:suspend fun RoutingContext.respondError</ID>
+    <ID>UndocumentedPublicFunction:UsePrincipal.kt:suspend inline fun &lt;reified R : Any&gt; RoutingContext.callRespond</ID>
+    <ID>UndocumentedPublicFunction:UsePrincipal.kt:suspend inline fun &lt;reified R&gt; RoutingContext.handleResultInternal</ID>
+    <ID>UndocumentedPublicProperty:Auth.kt:CustomAuthProvider.Config$lateinit var challengeFunction: CustomChallenge</ID>
+    <ID>UndocumentedPublicProperty:Auth.kt:CustomAuthProvider.Config$lateinit var validateFunction: CustomValidator</ID>
+    <ID>UndocumentedPublicProperty:Auth.kt:CustomCredential$open val sig: String</ID>
+    <ID>UndocumentedPublicProperty:Auth.kt:CustomCredential.AddressCredential$val ad: String</ID>
+    <ID>UndocumentedPublicProperty:Auth.kt:CustomCredential.AidCredential$val aid: String</ID>
+    <ID>UndocumentedPublicProperty:Auth.kt:CustomCredential.IdCredential$val id: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:Auth.kt:CustomPrincipal$val uid: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:UserSession.kt:UserSession$val data: String</ID>
+    <ID>UndocumentedPublicProperty:UserSession.kt:UserSession.Pending$val label: String</ID>
+    <ID>UndocumentedPublicProperty:UserSession.kt:UserSession.Pending$val remote: String</ID>
+    <ID>UndocumentedPublicProperty:UserSession.kt:UserSession.Success$val id: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:UserSession.kt:UserSession.Success$val label: String</ID>
+    <ID>UndocumentedPublicProperty:UserSession.kt:UserSession.Success$val remote: String</ID>
+    <ID>UndocumentedPublicProperty:UserSession.kt:UserSession.TwoFactorPending$val id: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:UserSession.kt:UserSession.TwoFactorPending$val label: String</ID>
+    <ID>UndocumentedPublicProperty:UserSession.kt:UserSession.TwoFactorPending$val remote: String</ID>
+    <ID>UnnecessaryParentheses:UsePrincipal.kt:(e.message ?: e.toString())</ID>
+    <ID>UseIfInsteadOfWhen:Auth.kt:CustomAuthProvider$when (val authHeader = request.parseAuthorizationHeader()) { is HttpAuthHeader.Parameterized -&gt; { if (!authHeader.authScheme.equals("Custom", ignoreCase = true)) return null authHeader.customCredential() } else -&gt; null }</ID>
+    <ID>UseIfInsteadOfWhen:Auth.kt:when { aTs != null &amp;&amp; checkTsIsValid(aTs, 60 * 5).second -&gt; aTs.toString() else -&gt; Uuid.random().toString() }</ID>
+    <ID>UseLet:ClientIp.kt:if (c != null) { it to c.country().isoCode() } else { null }</ID>
+    <ID>WildcardImport:Auth.kt:import com.storyteller_f.shared.utils.*</ID>
+    <ID>WildcardImport:Auth.kt:import io.ktor.http.auth.*</ID>
+    <ID>WildcardImport:Auth.kt:import io.ktor.server.application.*</ID>
+    <ID>WildcardImport:Auth.kt:import io.ktor.server.auth.*</ID>
+    <ID>WildcardImport:Auth.kt:import io.ktor.server.plugins.*</ID>
+    <ID>WildcardImport:Auth.kt:import io.ktor.server.request.*</ID>
+    <ID>WildcardImport:Auth.kt:import io.ktor.server.response.*</ID>
+    <ID>WildcardImport:Auth.kt:import io.ktor.server.sessions.*</ID>
+  </CurrentIssues>
+</SmellBaseline>
