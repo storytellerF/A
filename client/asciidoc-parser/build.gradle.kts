@@ -18,7 +18,13 @@ kotlin {
     if (buildWasmTarget) {
         @OptIn(ExperimentalWasmDsl::class)
         wasmJs {
-            browser()
+            browser {
+                testTask {
+                    useKarma {
+                        useFirefox()
+                    }
+                }
+            }
         }
     }
 
@@ -89,6 +95,9 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
+        }
+        wasmJsMain.dependencies {
+            implementation(npm("@asciidoctor/core", "3.0.4"))
         }
 
         jvmMain.dependencies {

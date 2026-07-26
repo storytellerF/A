@@ -16,6 +16,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.client.compose_core.CoreStrings
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.shared.model.UserInfo
 
 @Composable
@@ -25,13 +26,15 @@ fun UserCell(
     onClickCell: (UserInfo) -> Unit = {}
 ) {
     val shape = RoundedCornerShape(8.dp)
+    val openUser = userInfo?.let { info -> { onClickCell(info) } }
     val modifier = Modifier.fillMaxWidth()
         .clip(shape)
-        .clickable(userInfo != null) {
-            userInfo?.let {
-                onClickCell.invoke(it)
-            }
-        }.padding(8.dp)
+        .clickable(userInfo != null) { openUser?.invoke() }
+        .padding(8.dp)
+        .appiumSemantics(
+            text = userInfo?.let { "${it.nickname} ${it.address}" },
+            onClick = openUser,
+        )
     UserCellInternal(modifier, userInfo, iconSize)
 }
 

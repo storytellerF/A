@@ -38,9 +38,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.IAccountInstance
 import com.storyteller_f.a.app.LocalAppNavFactory
@@ -83,6 +80,7 @@ import com.storyteller_f.a.client.compose_core.components.StateView
 import com.storyteller_f.a.client.compose_core.components.bottomAppending
 import com.storyteller_f.a.client.compose_core.components.pagingItems
 import com.storyteller_f.a.client.compose_core.components.topPrepend
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.JoinStatusSearch
@@ -221,13 +219,7 @@ private fun CustomSearchBarInternal(
 private fun SelfIcon(onClickCreate: () -> Unit) {
     val myInfo = LocalUserInfo.current
     val userOverviewViewModel = getUserOverviewViewModel()
-    Box(
-        modifier = Modifier
-            .testTag("me")
-            .semantics { contentDescription = "avatar" }
-    ) {
-        SelfUserIconWithDialog(myInfo, overviewHandler = userOverviewViewModel.handler, onClickCreate = onClickCreate)
-    }
+    SelfUserIconWithDialog(myInfo, overviewHandler = userOverviewViewModel.handler, onClickCreate = onClickCreate)
 }
 
 @Composable
@@ -241,13 +233,20 @@ private fun MergedLeadingIcon(
         leadingIcon()
     } else {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton({
+            val navigateBack = {
                 if (active) {
                     update(false)
                 } else {
                     appNavFactory.newAppNav().back()
                 }
-            }) {
+            }
+            IconButton(
+                onClick = navigateBack,
+                modifier = Modifier.appiumSemantics(
+                    description = "back",
+                    onClick = navigateBack,
+                ),
+            ) {
                 Icon(Icons.AutoMirrored.Default.ArrowBack, "back")
             }
             leadingIcon()

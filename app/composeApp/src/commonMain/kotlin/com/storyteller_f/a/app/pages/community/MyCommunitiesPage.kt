@@ -42,6 +42,7 @@ import com.storyteller_f.a.client.compose_core.components.bottomAppending
 import com.storyteller_f.a.client.compose_core.components.pagingItems
 import com.storyteller_f.a.client.compose_core.components.rememberCommonDialogController
 import com.storyteller_f.a.client.compose_core.components.topPrepend
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.shared.model.CommunityInfo
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
@@ -193,9 +194,20 @@ fun CommunityCell(
     val isCommunityPage = appNavFactory.hasRouteFlow<CommunityScreen> {
         it.communityId == communityInfo?.id
     }
+    val openCommunity = communityInfo?.let { info ->
+        {
+            onClick?.invoke(info) ?: appNavFactory.newAppNav().gotoCommunity(
+                info.id,
+                false
+            )
+        }
+    }
     Row(
         modifier = when {
-            customBackground -> Modifier
+            customBackground -> Modifier.appiumSemantics(
+                text = communityInfo?.name,
+                onClick = openCommunity
+            )
             else -> {
                 val shape = RoundedCornerShape(10.dp)
                 Modifier
@@ -203,14 +215,13 @@ fun CommunityCell(
                     .background(MaterialTheme.colorScheme.secondaryContainer, shape)
                     .clip(shape)
                     .clickable(!isCommunityPage) {
-                        communityInfo?.let {
-                            onClick?.invoke(it) ?: appNavFactory.newAppNav().gotoCommunity(
-                                it.id,
-                                false
-                            )
-                        }
+                        openCommunity?.invoke()
                     }
                     .padding(10.dp)
+                    .appiumSemantics(
+                        text = communityInfo?.name,
+                        onClick = openCommunity.takeUnless { isCommunityPage }
+                    )
             }
         },
         horizontalArrangement = Arrangement.spacedBy(8.dp)

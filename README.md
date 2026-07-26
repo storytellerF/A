@@ -124,6 +124,16 @@ docker build -t a-server .
 sh ./bin/server
 ```
 
+### Sample Compose Stack With Wasm App
+
+`sample` starts PostgreSQL, Elasticsearch, MinIO, initialization CLI, server, WebSocket server, and the browser app. The script builds the Wasm distribution first and passes the sample HTTP/WebSocket URLs into its build configuration.
+
+```bash
+./scripts/service_scripts/start-sample-service.sh
+```
+
+Open `http://localhost:8080` after the containers become healthy. Stop the stack with the same flavor and `down` command.
+
 ### Environment Variables
 
 - `HOST_TYPE`: Host type, such as `docker`

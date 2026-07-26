@@ -3,7 +3,8 @@
     "panelAccountData": [
         {
             "name": "Panel 1",
-            "privateKey": "secrets/p-system"
+            "privateKey": "secrets/p-system",
+            "algoType": "DILITHIUM"
         }
     ]
 }

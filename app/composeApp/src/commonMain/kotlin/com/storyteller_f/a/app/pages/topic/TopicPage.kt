@@ -73,6 +73,7 @@ import com.storyteller_f.a.client.compose_core.components.pagingItems
 import com.storyteller_f.a.client.compose_core.components.request
 import com.storyteller_f.a.client.compose_core.components.topPrepend
 import com.storyteller_f.a.client.compose_core.components.use
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.a.client.core.SimpleUserSessionManager
 import com.storyteller_f.a.client.core.createTopic
@@ -156,12 +157,20 @@ private fun TopicPageInternal(
                     val authorInfo by authorViewModel.handler.data.collectAsState()
                     UserIconWithDialog(authorInfo)
                 }
+                val showTopicDialog = {
+                    showDialog = true
+                }
                 Icon(
                     Icons.Default.Topic,
                     "topic",
-                    modifier = Modifier.size(40.dp).clip(CircleShape).clickable {
-                        showDialog = true
-                    }.padding(8.dp)
+                    modifier = Modifier.size(40.dp)
+                        .appiumSemantics(
+                            description = "topic",
+                            onClick = showTopicDialog,
+                        )
+                        .clip(CircleShape)
+                        .clickable(onClick = showTopicDialog)
+                        .padding(8.dp)
                 )
             }
             TopicDialog(topicInfo, showDialog) {

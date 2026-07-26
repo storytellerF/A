@@ -15,6 +15,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.utils.safeFirstUnicode
 
@@ -26,26 +27,34 @@ fun CommunityIcon(
     onClickIcon: (Boolean) -> Unit
 ) {
     val model = communityInfo?.icon?.url
+    val firstCharacter = communityInfo?.name?.let(::safeFirstUnicode)
+    val openDialog = if (setClickEvent) {
+        { onClickIcon(true) }
+    } else {
+        null
+    }
     val shape = RoundedCornerShape(8.dp)
     if (model != null) {
         CommonImage(
             model,
             "icon",
-            Modifier.size(iconSize).clip(shape).clickable(setClickEvent) {
-                onClickIcon(true)
-            }.border(1.dp, Color.Gray, shape)
+            Modifier.size(iconSize)
+                .appiumSemantics(text = firstCharacter, onClick = openDialog)
+                .clip(shape)
+                .clickable(setClickEvent) { onClickIcon(true) }
+                .border(1.dp, Color.Gray, shape)
         )
     } else {
         Box(
             modifier = Modifier.background(MaterialTheme.colorScheme.tertiaryContainer, shape)
                 .clip(shape)
                 .size(iconSize)
-                .clickable(setClickEvent) {
-                    onClickIcon(true)
-                }.border(1.dp, Color.Gray, shape),
+                .appiumSemantics(text = firstCharacter, onClick = openDialog)
+                .clickable(setClickEvent) { onClickIcon(true) }
+                .border(1.dp, Color.Gray, shape),
             contentAlignment = Alignment.Center
         ) {
-            CharSequenceText(communityInfo?.name?.let { safeFirstUnicode(it) } ?: "")
+            CharSequenceText(firstCharacter.orEmpty())
         }
     }
 }

@@ -1,25 +1,25 @@
 package com.storyteller_f.a.app
 
-import android.app.NotificationManager
 import android.content.Context
+import android.content.Intent
 import androidx.activity.ComponentActivity
-import com.kdroid.composenotification.builder.AndroidChannelConfig
-import com.kdroid.composenotification.builder.NotificationInitializer.notificationInitializer
+import com.mmk.kmpnotifier.KMPNotifier
+import com.mmk.kmpnotifier.extensions.onCreateOrOnNewIntent
+import com.storyteller_f.a.app.utils.initializeAppNotifications
 import com.storyteller_f.a.client.compose_core.components.bindActivity
 import io.github.aakira.napier.Napier
 import org.unifiedpush.android.connector.UnifiedPush
 
 fun ComponentActivity.initFromContext() {
     bindActivity(this)
-    notificationInitializer(
-        defaultChannelConfig = AndroidChannelConfig(
-            channelId = "Regular",
-            channelName = "Regular",
-            channelDescription = "Regular",
-            channelImportance = NotificationManager.IMPORTANCE_DEFAULT,
-            smallIcon = com.storyteller_f.a.app.android_library.R.drawable.ic_notify
-        )
-    )
+    initializeAppNotifications()
+    KMPNotifier.onCreateOrOnNewIntent(intent)
+}
+
+fun handleAppNotificationIntent(intent: Intent) {
+    if (KMPNotifier.isInitialized) {
+        KMPNotifier.onCreateOrOnNewIntent(intent)
+    }
 }
 
 fun registerDevice(context: Context) {

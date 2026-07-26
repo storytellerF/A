@@ -4,5 +4,6 @@ es_ca
 !dev.win.env
 !dev.env
 !dev.container.env
+!sample.env
 /*_data
 docker-images

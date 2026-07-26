@@ -42,6 +42,7 @@ import com.storyteller_f.a.client.compose_core.components.bottomAppending
 import com.storyteller_f.a.client.compose_core.components.pagingItems
 import com.storyteller_f.a.client.compose_core.components.rememberCommonDialogController
 import com.storyteller_f.a.client.compose_core.components.topPrepend
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.shared.model.RoomInfo
 
 @Composable
@@ -79,16 +80,23 @@ fun PrimaryRoomCell(
     onClick: ((RoomInfo) -> Unit)? = null
 ) {
     val appNavFactory = LocalAppNavFactory.current
+    val openRoom = roomInfo?.let { info ->
+        {
+            onClick?.invoke(info) ?: appNavFactory.newAppNav().gotoRoom(info.id, false)
+        }
+    }
     val shape = RoundedCornerShape(10.dp)
     RoomCellInternal(
         roomInfo,
         Modifier.fillMaxWidth()
             .background(MaterialTheme.colorScheme.secondaryContainer, shape)
             .clip(shape)
-            .clickable {
-                roomInfo?.let { onClick?.invoke(it) ?: appNavFactory.newAppNav().gotoRoom(it.id, false) }
-            }
+            .clickable { openRoom?.invoke() }
             .padding(10.dp)
+            .appiumSemantics(
+                text = roomInfo?.name,
+                onClick = openRoom,
+            )
     )
 }
 

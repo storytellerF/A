@@ -1,14 +1,20 @@
 package com.storyteller_f.a.app.utils
 
-import androidx.compose.runtime.Composable
+import androidx.datastore.core.DataStore
+import androidx.datastore.core.DataStoreFactory
+import androidx.datastore.core.okio.WebLocalStorage
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.PreferencesSerializer
 import com.storyteller_f.a.app.AppConfig
-import com.strabled.composepreferences.utilis.DataStoreManager
 import dev.jordond.connectivity.Connectivity
 import dev.jordond.connectivity.ConnectivityProvider
 import kotlinx.coroutines.flow.flowOf
 
 actual val appPlatform: AppPlatform
-    get() = AppPlatform(hasNativeBack = false, debug = false)
+    get() = AppPlatform(
+        hasNativeBack = false,
+        debug = false,
+    )
 
 actual fun initEnvironment(context: Any) = Unit
 
@@ -18,10 +24,18 @@ actual fun createConnectivity(): Connectivity {
 
 actual fun getClientFile(path: String): ClientFile? = null
 
-@Composable
-actual fun createCustomDataStoreManager(): DataStoreManager {
-    return DataStoreManager()
+private const val APP_PREFERENCES_STORE_NAME = "main.preferences_pb"
+
+private val appPreferencesDataStore by lazy {
+    DataStoreFactory.create(
+        storage = WebLocalStorage(
+            serializer = PreferencesSerializer,
+            name = APP_PREFERENCES_STORE_NAME,
+        ),
+    )
 }
+
+internal actual fun createAppPreferencesDataStore(): DataStore<Preferences> = appPreferencesDataStore
 
 actual fun unregisterPushService() = Unit
 

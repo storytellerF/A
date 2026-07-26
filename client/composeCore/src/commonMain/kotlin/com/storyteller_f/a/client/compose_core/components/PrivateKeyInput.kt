@@ -29,9 +29,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboard
-import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.client.compose_core.CoreStrings
 import com.storyteller_f.a.client.compose_core.Res
@@ -42,6 +39,7 @@ import com.storyteller_f.a.client.compose_core.copy
 import com.storyteller_f.a.client.compose_core.edit_private_key
 import com.storyteller_f.a.client.compose_core.generate
 import com.storyteller_f.a.client.compose_core.private_key
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.replaceCrlf
@@ -67,9 +65,10 @@ fun PrivateKeyInput(
     var showDialog by remember { mutableStateOf(false) }
 
     Row(
-        modifier = Modifier.padding(top = 10.dp).fillMaxWidth().semantics {
-            contentDescription = "Private Key Input"
-        }.testTag("privateKeyInput"),
+        modifier = Modifier.padding(top = 10.dp).fillMaxWidth().appiumSemantics(
+            testTag = "privateKeyInput",
+            description = if (privateKey.isEmpty()) "Private Key Input" else "private key loaded",
+        ),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -82,11 +81,13 @@ fun PrivateKeyInput(
         ) {
             Text(
                 address ?: "",
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f).appiumSemantics(
+                    description = address?.let { ACCOUNT_ADDRESS_DESCRIPTION },
+                )
             )
             IconButton({
                 showDialog = true
-            }) {
+            }, modifier = Modifier.appiumSemantics(description = stringResource(Res.string.edit_private_key))) {
                 Icon(Icons.Default.Edit, stringResource(Res.string.edit_private_key))
             }
         }
@@ -101,6 +102,8 @@ fun PrivateKeyInput(
         }
     }
 }
+
+private const val ACCOUNT_ADDRESS_DESCRIPTION = "account address"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -169,7 +172,11 @@ fun PrivateKeyEditor(
         OutlinedTextField(
             value = currentKey,
             onValueChange = { currentKey = it },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().appiumSemantics(
+                input = true,
+                inputValue = currentKey,
+                onInputValueChange = { currentKey = it },
+            ),
             label = { Text(stringResource(Res.string.private_key)) },
             minLines = 3,
             maxLines = 5,
@@ -205,7 +212,7 @@ fun PrivateKeyEditor(
                 } else {
                     onConfirmEncryptionPrivateKey("")
                 }
-            }) {
+            }, modifier = Modifier.appiumSemantics(text = stringResource(Res.string.confirm))) {
                 Text(stringResource(Res.string.confirm))
             }
         }

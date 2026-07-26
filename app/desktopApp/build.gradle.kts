@@ -20,7 +20,6 @@ dependencies {
     implementation(projects.shared)
 
     implementation(compose.desktop.currentOs)
-    implementation(libs.compose.native.notification)
     implementation(libs.kotlinx.coroutines.swing)
     implementation(libs.napier)
 }

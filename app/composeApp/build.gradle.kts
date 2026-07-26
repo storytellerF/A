@@ -1,10 +1,13 @@
-@file:OptIn(ExperimentalKotlinGradlePluginApi::class)
+@file:OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
 
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.BOOLEAN
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING
-import org.gradle.kotlin.dsl.support.uppercaseFirstChar
-import org.jetbrains.compose.internal.de.undercouch.gradle.tasks.download.Download
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+import org.gradle.api.DefaultTask
+import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.provider.Property
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.TaskAction
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.plugin.KotlinDependencyHandler
@@ -13,6 +16,27 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.io.FileInputStream
 import java.net.URI
 import java.util.Properties
+
+abstract class DownloadFont : DefaultTask() {
+    @get:Input
+    abstract val sourceUrl: Property<String>
+
+    @get:OutputFile
+    abstract val outputFile: RegularFileProperty
+
+    @TaskAction
+    fun download() {
+        val destination = outputFile.get().asFile
+        if (destination.isFile) return
+
+        destination.parentFile.mkdirs()
+        URI(sourceUrl.get()).toURL().openStream().buffered().use { input ->
+            destination.outputStream().buffered().use { output ->
+                input.copyTo(output)
+            }
+        }
+    }
+}
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -44,7 +68,7 @@ kotlin {
             isIncludeAndroidResources = true
         }
         withDeviceTest { }
-//        @OptIn(ExperimentalKotlinGradlePluginApi::class)
+//        @OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
 //        instrumentedTestVariant.sourceSetTree.set(KotlinSourceSetTree.test)
     }
 
@@ -72,7 +96,7 @@ kotlin {
         }
     }
 
-    @OptIn(ExperimentalKotlinGradlePluginApi::class)
+    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
     applyDefaultHierarchyTemplate()
 
     sourceSets {
@@ -95,8 +119,6 @@ kotlin {
             implementation(libs.accompanist.permissions)
 
             implementation(libs.androidx.core.splashscreen)
-            implementation(libs.androidx.datastore.preferences.core)
-
             implementation(libs.litertlm.android)
 
             implementation(libs.connector) {
@@ -163,9 +185,9 @@ kotlin {
             implementation(libs.krop.ui)
             implementation(libs.multiplatform.settings)
             implementation(libs.multiplatform.settings.serialization)
+            implementation(libs.androidx.datastore.preferences.core)
 
-            implementation(libs.compose.native.notification)
-            implementation(libs.compose.preferences)
+            implementation(libs.kmpnotifier.local)
             implementation(libs.haze)
             implementation(libs.haze.materials)
             implementation(libs.kmp.zip)
@@ -180,13 +202,13 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
 
             implementation(libs.ui.test)
         }
         jvmMain.dependencies {
             implementation(libs.vlcj)
             implementation(libs.jlayer)
-            implementation(libs.androidx.datastore.preferences.core)
             implementation(libs.connectivity.http)
             implementation(libs.connectivity.compose.http)
             implementation(libs.tika.core)
@@ -220,7 +242,11 @@ val properties = Properties().apply {
         }
     }
 }
-val deepLinkHost = (properties["SERVER_URL"] as? String)?.let {
+val serverUrl = providers.gradleProperty("app.server.url").orNull
+    ?: properties["SERVER_URL"] as? String
+val wsServerUrl = providers.gradleProperty("app.ws.server.url").orNull
+    ?: properties["WS_SERVER_URL"] as? String
+val deepLinkHost = serverUrl?.let {
     URI.create(it).host
 } ?: "storyteller_f.com"
 
@@ -228,8 +254,6 @@ buildkonfig {
     packageName = "com.storyteller_f.a.app"
     objectName = "AppConfig"
 
-    val serverUrl = properties["SERVER_URL"] as? String
-    val wsServerUrl = properties["WS_SERVER_URL"] as? String
     val isDebug = (properties["app.DEBUG"] as? String) ?: "false"
     defaultConfigs {
         buildConfigField(STRING, "SERVER_URL", serverUrl ?: "", const = true)
@@ -374,19 +398,12 @@ private fun KotlinDependencyHandler.implementation(
 }
 
 // Should be run at least once before running the app
-val downloadFonts = tasks.register<Download>("downloadFonts") {
-    fun ms(name: String) =
-        "https://github.com/google/material-design-icons/raw/${
-            "master"
-        }/variablefont/MaterialSymbols${
-            name.uppercaseFirstChar()
-        }%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf" to "material_symbols_$name"
-
-    val fonts = mapOf(ms("outlined"))
-
-    src(fonts.keys)
-    dest(layout.projectDirectory.file("src/commonMain/composeResources/font/${fonts.values.first()}.ttf"))
-    overwrite(false)
+val downloadFonts by tasks.registering(DownloadFont::class) {
+    sourceUrl.set(
+        "https://github.com/google/material-design-icons/raw/master/variablefont/" +
+            "MaterialSymbolsOutlined%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf"
+    )
+    outputFile.set(layout.projectDirectory.file("src/commonMain/composeResources/font/material_symbols_outlined.ttf"))
 }
 
 tasks.named("copyNonXmlValueResourcesForCommonMain") {
