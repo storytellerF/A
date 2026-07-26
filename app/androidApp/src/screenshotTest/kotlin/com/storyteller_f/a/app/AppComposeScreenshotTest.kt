@@ -306,12 +306,32 @@ private fun PaddedPreview(content: @Composable () -> Unit) {
 @Composable
 private fun ScreenshotAppTheme(content: @Composable () -> Unit) {
     AppTheme(dynamicColor = false) {
-        CompositionLocalProvider(LocalGlobalDialog provides PreviewGlobalDialog) {
+        CompositionLocalProvider(
+            LocalGlobalDialog provides PreviewGlobalDialog,
+            LocalSessionManager provides previewSessionManager,
+        ) {
             Surface(modifier = Modifier.fillMaxWidth()) {
                 content()
             }
         }
     }
+}
+
+private val previewSessionManager by lazy(LazyThreadSafetyMode.NONE) {
+    val passHolder = com.storyteller_f.a.client.core.ConstPassHolder(null)
+    com.storyteller_f.a.client.core.createSimpleUserSessionManager(
+        webSocketUrl = "",
+        passHolder = passHolder,
+        createClient = { model, cookies ->
+            buildHttpClient(
+                httpUrl = "",
+                cookieManager = cookies,
+                model = model,
+                passHolder = passHolder,
+            )
+        },
+        onReceiveFrame = { _, _, _ -> },
+    )
 }
 
 private fun sampleTopic(

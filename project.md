@@ -25,6 +25,7 @@
 - Worker execution records are stored in the backend `TaskRecords` table. The record type is `TaskRecordType`, and `processedId` points to the business object processed by the task.
 - Panel queries worker execution records through paginated `/admin/task-records`; it supports filtering by task type, and returns all records when no type is provided.
 - Panel list/detail routes use Navigation 3's `ListDetailSceneStrategy`: users, communities, rooms, topics, files, and titles render side by side on wide content areas and fall back to the existing single-pane navigation when the post-drawer content area is narrow. Public and private room lists share the room detail scene. When the list pane is still the immediate parent, selecting another item replaces the current same-scene detail entry instead of growing the back stack.
+- App root navigation uses Navigation 3's `ListDetailSceneStrategy`: `HomeScreen` is the list pane, while community, room, topic, and user screens share its detail scene. Wide content areas show both panes, compact content stays single-pane, and selecting another Home detail replaces the current paired detail entry.
 
 ## Topic Compose / Block Editing
 
@@ -48,6 +49,7 @@
 - `app/desktopApp` is the Desktop JVM app shell module. It contains the Compose Desktop `main` entry point and `compose.desktop` packaging configuration. `app/composeApp` keeps shared UI and JVM actual implementations.
 - `panel/desktopApp` is the Panel Desktop JVM app shell module. It contains the Compose Desktop `main` entry point and `compose.desktop` packaging configuration. `panel/composeApp` keeps shared UI and JVM actual implementations.
 - `app/androidApp` and `panel/androidApp` entry classes extend `ComponentActivity`, and media services extend Media3 `MediaSessionService`. Release lint has false-positive `Instantiatable` reports for these Kotlin/Compose/Media3 components, so both app shell modules disable that lint check.
+- App screenshot previews share `ScreenshotAppTheme`, which supplies an inert, signed-out `LocalSessionManager` so topic interaction cells render without network or background work. The screenshot source set declares Ktor client core directly because the session factory's public signature contains Ktor types; update intentional debug baselines with `:app:androidApp:updateDebugScreenshotTest`.
 
 ## Appium
 

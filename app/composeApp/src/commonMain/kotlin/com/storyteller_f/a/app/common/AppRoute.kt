@@ -1,8 +1,13 @@
+@file:OptIn(androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi::class)
+
 package com.storyteller_f.a.app.common
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -14,8 +19,11 @@ import com.mikepenz.aboutlibraries.ui.compose.LibraryDefaults
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 import com.mikepenz.aboutlibraries.ui.compose.m3.libraryColors
 import com.mikepenz.aboutlibraries.ui.compose.produceLibraries
+import com.storyteller_f.a.app.AppListDetailPane
 import com.storyteller_f.a.app.LocalUserInfo
 import com.storyteller_f.a.app.Res
+import com.storyteller_f.a.app.addAppDetail
+import com.storyteller_f.a.app.appListDetailDestination
 import com.storyteller_f.a.app.pages.HomePage
 import com.storyteller_f.a.app.pages.PreferencePage
 import com.storyteller_f.a.app.pages.community.CommunityComposePage
@@ -43,8 +51,10 @@ import com.storyteller_f.a.app.pages.user.UserPage
 import com.storyteller_f.a.app.pages.user.UserReactionRecordsPage
 import com.storyteller_f.a.app.pages.user.UserSettingPage
 import com.storyteller_f.a.app.pages.user.UserSubscriptionPage
+import com.storyteller_f.a.app.select_an_item
 import com.storyteller_f.a.app.utils.getDeepLinkHost
 import com.storyteller_f.a.app.utils.getDeepLinkScheme
+import com.storyteller_f.a.client.compose_core.components.CenterBox
 import com.storyteller_f.a.client.compose_core.components.FileViewData
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.obj.ObjectTuple
@@ -56,6 +66,7 @@ import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
 import org.jetbrains.compose.resources.ExperimentalResourceApi
+import org.jetbrains.compose.resources.stringResource
 
 @Serializable
 data object HomeScreen : NavKey
@@ -319,24 +330,23 @@ interface AppNavFactory {
     }
 }
 
-fun newAppNav(backStack: NavBackStack<NavKey>) = object : AppNav {
-    override val backStack: NavBackStack<NavKey>
-        get() = backStack
-
+// AppNav intentionally exposes one method per destination.
+@Suppress("TooManyFunctions")
+private class DefaultAppNav(override val backStack: NavBackStack<NavKey>) : AppNav {
     override fun gotoSignIn() {
         backStack.add(SignSessionScreen)
     }
 
     override fun gotoRoom(roomId: PrimaryKey, showDialog: Boolean) {
-        backStack.add(RoomScreen(roomId, showDialog))
+        backStack.addAppDetail(RoomScreen(roomId, showDialog))
     }
 
     override fun gotoCommunity(communityId: PrimaryKey, showDialog: Boolean) {
-        backStack.add(CommunityScreen(communityId, showDialog))
+        backStack.addAppDetail(CommunityScreen(communityId, showDialog))
     }
 
     override fun gotoTopic(topicId: PrimaryKey) {
-        backStack.add(TopicScreen(topicId))
+        backStack.addAppDetail(TopicScreen(topicId))
     }
 
     override fun gotoHome() {
@@ -355,7 +365,11 @@ fun newAppNav(backStack: NavBackStack<NavKey>) = object : AppNav {
             is TopicComposeData.PublicRoom -> {
                 if (data.parentTuple.objectType == ObjectType.TOPIC) {
                     backStack.add(
-                        TopicComposePublicRoomTopicScreen(data.roomId, data.communityId, data.parentTuple.objectId)
+                        TopicComposePublicRoomTopicScreen(
+                            data.roomId,
+                            data.communityId,
+                            data.parentTuple.objectId,
+                        ),
                     )
                 } else {
                     backStack.add(TopicComposePublicRoomScreen(data.roomId, data.communityId))
@@ -388,10 +402,7 @@ fun newAppNav(backStack: NavBackStack<NavKey>) = object : AppNav {
         }
     }
 
-    override fun gotoMemberPage(
-        objectId: PrimaryKey,
-        objectType: ObjectType,
-    ) {
+    override fun gotoMemberPage(objectId: PrimaryKey, objectType: ObjectType) {
         if (objectType == ObjectType.COMMUNITY) {
             backStack.add(CommunityMemberScreen(objectId))
         } else {
@@ -404,7 +415,7 @@ fun newAppNav(backStack: NavBackStack<NavKey>) = object : AppNav {
     }
 
     override fun gotoUser(uid: PrimaryKey) {
-        backStack.add(UserScreen(uid))
+        backStack.addAppDetail(UserScreen(uid))
     }
 
     override fun back() {
@@ -479,6 +490,7 @@ fun newAppNav(backStack: NavBackStack<NavKey>) = object : AppNav {
         backStack.add(UserCommentsScreen)
     }
 
+    @Suppress("ElseCaseInsteadOfExhaustiveWhen")
     override fun gotoFileExplorer(objectTuple: ObjectTuple?) {
         if (objectTuple == null) {
             backStack.add(FileExplorerScreen)
@@ -495,6 +507,8 @@ fun newAppNav(backStack: NavBackStack<NavKey>) = object : AppNav {
         backStack.add(FileRefsScreen(fileId))
     }
 }
+
+internal fun newAppNav(backStack: NavBackStack<NavKey>): AppNav = DefaultAppNav(backStack)
 
 @OptIn(ExperimentalResourceApi::class)
 fun rootEntryProvider(
@@ -528,20 +542,32 @@ fun rootEntryProvider(
     }
 }
 
+private fun appListDetailMetadata(key: NavKey): Map<String, Any> {
+    val destination = key.appListDetailDestination() ?: return emptyMap()
+    return if (destination.pane == AppListDetailPane.List) {
+        ListDetailSceneStrategy.listPane(
+            sceneKey = destination.scene,
+            detailPlaceholder = { appDetailPlaceholder() },
+        )
+    } else {
+        ListDetailSceneStrategy.detailPane(sceneKey = destination.scene)
+    }
+}
+
 private fun EntryProviderScope<NavKey>.handleMainScreen() {
-    entry<HomeScreen> {
+    entry<HomeScreen>(metadata = { appListDetailMetadata(it) }) {
         HomePage()
     }
     entry<SignSessionScreen> {
         SignInAndSignUpPage()
     }
-    entry<CommunityScreen> { screen ->
+    entry<CommunityScreen>(metadata = { appListDetailMetadata(it) }) { screen ->
         CommunityPage(screen.communityId, screen.showDialog == true)
     }
-    entry<RoomScreen> { screen ->
+    entry<RoomScreen>(metadata = { appListDetailMetadata(it) }) { screen ->
         RoomPage(screen.roomId, screen.showDialog == true)
     }
-    entry<TopicScreen> {
+    entry<TopicScreen>(metadata = { appListDetailMetadata(it) }) {
         TopicPage(it.topicId)
     }
 
@@ -551,7 +577,7 @@ private fun EntryProviderScope<NavKey>.handleMainScreen() {
     entry<CommunityMemberScreen> {
         MemberPage(it.objectId, ObjectType.COMMUNITY)
     }
-    entry<UserScreen> {
+    entry<UserScreen>(metadata = { appListDetailMetadata(it) }) {
         UserPage(it.uid)
     }
     entry<ReactionListScreen> {
@@ -568,6 +594,16 @@ private fun EntryProviderScope<NavKey>.handleMainScreen() {
     }
     entry<UserCommentsScreen> {
         UserCommentsPage()
+    }
+}
+
+@Composable
+private fun appDetailPlaceholder() {
+    CenterBox {
+        Text(
+            text = stringResource(Res.string.select_an_item),
+            style = MaterialTheme.typography.bodyLarge,
+        )
     }
 }
 
