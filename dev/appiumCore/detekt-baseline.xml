@@ -2,6 +2,28 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>AbsentOrWrongFileLicense:AndroidAppTestDriver.kt:.AndroidAppTestDriver.kt</ID>
+    <ID>AbsentOrWrongFileLicense:AndroidAppiumTestBase.kt:.AndroidAppiumTestBase.kt</ID>
+    <ID>AbsentOrWrongFileLicense:AppScenarioData.kt:.AppScenarioData.kt</ID>
+    <ID>AbsentOrWrongFileLicense:AppScenarios.kt:.AppScenarios.kt</ID>
+    <ID>AbsentOrWrongFileLicense:AppTestDriver.kt:.AppTestDriver.kt</ID>
+    <ID>AbsentOrWrongFileLicense:AppiumTestBase.kt:.AppiumTestBase.kt</ID>
+    <ID>AbsentOrWrongFileLicense:AppiumTestEnvironment.kt:.AppiumTestEnvironment.kt</ID>
+    <ID>AbsentOrWrongFileLicense:AppiumTestsByHelper.kt:.AppiumTestsByHelper.kt</ID>
+    <ID>AbsentOrWrongFileLicense:DesktopAppTestDriver.kt:.DesktopAppTestDriver.kt</ID>
+    <ID>AbsentOrWrongFileLicense:DesktopAppiumFailureDumper.kt:.DesktopAppiumFailureDumper.kt</ID>
+    <ID>AbsentOrWrongFileLicense:DesktopBrowserCapture.kt:.DesktopBrowserCapture.kt</ID>
+    <ID>AbsentOrWrongFileLicense:InjectedSessionFixtures.kt:.InjectedSessionFixtures.kt</ID>
+    <ID>AbsentOrWrongFileLicense:PanelScenarios.kt:.PanelScenarios.kt</ID>
+    <ID>AbsentOrWrongFileLicense:PlatformAppiumHelper.kt:.PlatformAppiumHelper.kt</ID>
+    <ID>AbsentOrWrongFileLicense:TargetAppiumHelper.kt:.TargetAppiumHelper.kt</ID>
+    <ID>AbsentOrWrongFileLicense:WasmAppTestDriver.kt:.WasmAppTestDriver.kt</ID>
+    <ID>AbsentOrWrongFileLicense:WasmAppiumHelper.kt:.WasmAppiumHelper.kt</ID>
+    <ID>AbsentOrWrongFileLicense:WasmDistributionServer.kt:.WasmDistributionServer.kt</ID>
+    <ID>AbsentOrWrongFileLicense:build.gradle.kts:.build.gradle.kts</ID>
+    <ID>AlsoCouldBeApply:PlatformAppiumHelper.kt:AndroidAppiumHelper$also</ID>
+    <ID>AlsoCouldBeApply:PlatformAppiumHelper.kt:DesktopAppiumHelper$also</ID>
+    <ID>ClassOrdering:WasmAppTestDriver.kt:WasmAppTestDriver$private val wait get() = WebDriverWait(browser, Duration.ofSeconds(UI_WAIT_SECONDS))</ID>
     <ID>ClassSignature:AndroidAppTestDriver.kt:AndroidAppTestDriver : AppTestDriver</ID>
     <ID>ClassSignature:AndroidAppiumTestBase.kt:AppUnderTest</ID>
     <ID>ClassSignature:AndroidAppiumTestBase.kt:AppiumPorts</ID>
@@ -13,6 +35,34 @@
     <ID>ClassSignature:PlatformAppiumHelper.kt:AppiumTestSetup&lt;T&gt;</ID>
     <ID>ClassSignature:WasmAppiumHelper.kt:WasmAppiumTestScope : AppiumTestScope</ID>
     <ID>ClassSignature:WasmDistributionServer.kt:WasmDistributionServer : AutoCloseable</ID>
+    <ID>ComplexInterface:AppTestDriver.kt:AppTestDriver</ID>
+    <ID>DataClassContainsFunctions:PlatformAppiumHelper.kt:AndroidAppiumHelper.AdbCommandResult$fun connectedDeviceSerials: List&lt;String&gt;</ID>
+    <ID>ForbiddenPublicDataClass:AndroidAppiumTestBase.kt:AppUnderTest</ID>
+    <ID>ForbiddenPublicDataClass:AndroidAppiumTestBase.kt:AppiumPorts</ID>
+    <ID>ForbiddenPublicDataClass:AndroidAppiumTestBase.kt:AuthenticatedSession</ID>
+    <ID>ForbiddenPublicDataClass:AppScenarioData.kt:AsciidocPreviewScenario</ID>
+    <ID>ForbiddenPublicDataClass:AppScenarioData.kt:FavoriteTopicScenario</ID>
+    <ID>ForbiddenPublicDataClass:AppScenarioData.kt:PreparedCommunityRoomScenario</ID>
+    <ID>ForbiddenPublicDataClass:AppScenarioData.kt:SubscriptionTopicScenario</ID>
+    <ID>ForbiddenPublicDataClass:InjectedSessionFixtures.kt:InjectedSession</ID>
+    <ID>ForbiddenPublicDataClass:PlatformAppiumHelper.kt:AppiumTestSetup&lt;T&gt;</ID>
+    <ID>ForbiddenPublicDataClass:TargetAppiumHelper.kt:DesktopAppiumRuntimeConfig</ID>
+    <ID>FunctionNameMaxLength:AppScenarioData.kt:suspend fun prepareSubscriptionTopicScenario: SubscriptionTopicScenario</ID>
+    <ID>FunctionNameMaxLength:AppScenarios.kt:suspend fun scenarioCommunityProfileActions</ID>
+    <ID>FunctionNameMaxLength:AppScenarios.kt:suspend fun scenarioPublishTopicInCommunity</ID>
+    <ID>FunctionNameMaxLength:AppScenarios.kt:suspend fun scenarioPublishTopicInUserSpace</ID>
+    <ID>FunctionNameMaxLength:AppScenarios.kt:suspend fun scenarioVerifyInjectedSessionLoaded</ID>
+    <ID>FunctionNameMaxLength:AppiumTestsByHelper.kt:fun testCommunityProfileActionsByHelper</ID>
+    <ID>FunctionNameMaxLength:AppiumTestsByHelper.kt:fun testOpenAsciidocPreviewByHelper</ID>
+    <ID>FunctionNameMaxLength:AppiumTestsByHelper.kt:fun testPanelInjectedSessionByHelper</ID>
+    <ID>FunctionNameMaxLength:AppiumTestsByHelper.kt:fun testPublishTopicInCommunityByHelper</ID>
+    <ID>FunctionNameMaxLength:AppiumTestsByHelper.kt:fun testPublishTopicInCommunityRoomByHelper</ID>
+    <ID>FunctionNameMaxLength:AppiumTestsByHelper.kt:fun testPublishTopicInUserSpaceByHelper</ID>
+    <ID>FunctionNameMaxLength:AppiumTestsByHelper.kt:private fun testPreparedCommunityRoomScenarioByHelper</ID>
+    <ID>FunctionNameMaxLength:PanelScenarios.kt:suspend fun scenarioOpenAllUsersFromOverview</ID>
+    <ID>FunctionNameMaxLength:PlatformAppiumHelper.kt:AndroidAppiumHelper$private fun pushInjectedSessionToPrivateDir</ID>
+    <ID>FunctionNameMaxLength:TargetAppiumHelper.kt:TargetAppiumHelper$protected suspend fun createPreRegisteredInjectedSession: InjectedSession</ID>
+    <ID>FunctionNameMaxLength:WasmAppTestDriver.kt:WasmAppTestDriver$private fun inputLengthAttributeMatchesValue: Boolean</ID>
     <ID>FunctionSignature:AndroidAppiumTestBase.kt:fun buildContainerEnv: Map&lt;String, String&gt;</ID>
     <ID>FunctionSignature:AndroidAppiumTestBase.kt:suspend fun useDatabaseContainer</ID>
     <ID>FunctionSignature:AppScenarioData.kt:private suspend fun createRoomByApi: Long</ID>
@@ -32,6 +82,95 @@
     <ID>FunctionSignature:PlatformAppiumHelper.kt:DesktopAppiumHelper$private fun String.escapeForDoubleQuotedShell: String</ID>
     <ID>FunctionSignature:TargetAppiumHelper.kt:AppAppiumHelper$private fun createApiSessionManager: UserSessionManager</ID>
     <ID>FunctionSignature:TargetAppiumHelper.kt:PanelAppiumHelper$private fun createApiSessionManager: PanelSessionManager</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AndroidAppTestDriver.kt:AndroidAppTestDriver : AppTestDriver</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AndroidAppiumTestBase.kt:AppUnderTest</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AndroidAppiumTestBase.kt:AppiumPorts</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AndroidAppiumTestBase.kt:AuthenticatedSession</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AndroidAppiumTestBase.kt:fun buildContainerEnv: Map&lt;String, String&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AndroidAppiumTestBase.kt:fun prepareSessionDirectories</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AndroidAppiumTestBase.kt:fun resolveAppiumPresetPath: File</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AndroidAppiumTestBase.kt:suspend fun useCliInitContainer</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AndroidAppiumTestBase.kt:suspend fun useDatabaseContainer</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AndroidAppiumTestBase.kt:suspend fun useServerContainer</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AndroidAppiumTestBase.kt:suspend fun useWorkerContainer</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AndroidAppiumTestBase.kt:suspend fun useWsContainer</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppScenarioData.kt:AsciidocPreviewScenario</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppScenarioData.kt:FavoriteTopicScenario</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppScenarioData.kt:PreparedCommunityRoomScenario</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppScenarioData.kt:SubscriptionTopicScenario</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppScenarioData.kt:suspend fun prepareAsciidocPreviewScenario: AsciidocPreviewScenario</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppScenarioData.kt:suspend fun prepareCommunityRoomScenario: PreparedCommunityRoomScenario</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppScenarioData.kt:suspend fun prepareFavoriteTopicScenario: FavoriteTopicScenario</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppScenarioData.kt:suspend fun prepareSubscriptionTopicScenario: SubscriptionTopicScenario</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppScenarioData.kt:suspend fun waitUntilTopicFavorited</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppScenarioData.kt:suspend fun waitUntilTopicSubscribed</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppScenarios.kt:suspend fun scenarioCommunityProfileActions</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppScenarios.kt:suspend fun scenarioFavoritePreparedTopic</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppScenarios.kt:suspend fun scenarioFavoriteTopic</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppScenarios.kt:suspend fun scenarioOpenAsciidocPreview</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppScenarios.kt:suspend fun scenarioOpenCommunity</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppScenarios.kt:suspend fun scenarioPublishTopicInCommunity</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppScenarios.kt:suspend fun scenarioPublishTopicInRoom</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppScenarios.kt:suspend fun scenarioPublishTopicInUserSpace</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppScenarios.kt:suspend fun scenarioSignIn</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppScenarios.kt:suspend fun scenarioSignInAsSystemUser</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppScenarios.kt:suspend fun scenarioSignUp</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppScenarios.kt:suspend fun scenarioSubscribePreparedTopic</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppScenarios.kt:suspend fun scenarioSubscribeTopic</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppScenarios.kt:suspend fun scenarioVerifyInjectedSessionLoaded</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppTestDriver.kt:AppTestDriver</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppiumTestBase.kt:AppiumTestBase</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppiumTestBase.kt:fun runAppiumBlockingTest</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppiumTestEnvironment.kt:@OptIn(ExperimentalUuidApi::class) suspend fun runAppiumTestEnvironment</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppiumTestsByHelper.kt:fun testCommunityProfileActionsByHelper</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppiumTestsByHelper.kt:fun testFavoriteTopicByHelper</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppiumTestsByHelper.kt:fun testInjectedSessionByHelper</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppiumTestsByHelper.kt:fun testOpenAsciidocPreviewByHelper</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppiumTestsByHelper.kt:fun testPanelInjectedSessionByHelper</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppiumTestsByHelper.kt:fun testPublishTopicInCommunityByHelper</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppiumTestsByHelper.kt:fun testPublishTopicInCommunityRoomByHelper</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppiumTestsByHelper.kt:fun testPublishTopicInUserSpaceByHelper</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppiumTestsByHelper.kt:fun testSignInAsSystemUserByHelper</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppiumTestsByHelper.kt:fun testSignUpByHelper</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppiumTestsByHelper.kt:fun testSubscribeTopicByHelper</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:DesktopAppTestDriver.kt:DesktopAppTestDriver : AppTestDriver</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:DesktopBrowserCapture.kt:DesktopBrowserCapture</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:InjectedSessionFixtures.kt:InjectedSession</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:InjectedSessionFixtures.kt:fun buildInjectedSessionJson: String</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelScenarios.kt:suspend fun scenarioOpenAllUsersFromOverview</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PlatformAppiumHelper.kt:AndroidAppiumHelper : PlatformAppiumHelper</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PlatformAppiumHelper.kt:AppiumTestScope</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PlatformAppiumHelper.kt:AppiumTestSetup&lt;T&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PlatformAppiumHelper.kt:DesktopAppiumHelper : PlatformAppiumHelper</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PlatformAppiumHelper.kt:PlatformAppiumHelper</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TargetAppiumHelper.kt:AppAppiumHelper : TargetAppiumHelper</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TargetAppiumHelper.kt:DesktopAppiumRuntimeConfig</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TargetAppiumHelper.kt:PanelAppiumHelper : TargetAppiumHelper</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TargetAppiumHelper.kt:TargetAppiumHelper</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:WasmAppTestDriver.kt:WasmAppTestDriver : AppTestDriver</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:WasmAppiumHelper.kt:WasmAppiumHelper : PlatformAppiumHelper</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:WasmDistributionServer.kt:WasmDistributionServer : AutoCloseable</ID>
+    <ID>MagicNumber:AndroidAppTestDriver.kt:AndroidAppTestDriver$30</ID>
+    <ID>MagicNumber:AndroidAppiumTestBase.kt:200</ID>
+    <ID>MagicNumber:AndroidAppiumTestBase.kt:3</ID>
+    <ID>MagicNumber:AndroidAppiumTestBase.kt:8811</ID>
+    <ID>MagicNumber:AndroidAppiumTestBase.kt:8813</ID>
+    <ID>MagicNumber:AndroidAppiumTestBase.kt:90</ID>
+    <ID>MagicNumber:AppScenarioData.kt:1_000_000</ID>
+    <ID>MagicNumber:AppScenarioData.kt:30</ID>
+    <ID>MagicNumber:AppScenarioData.kt:6</ID>
+    <ID>MagicNumber:AppiumTestEnvironment.kt:8811</ID>
+    <ID>MagicNumber:AppiumTestEnvironment.kt:8813</ID>
+    <ID>MagicNumber:DesktopAppiumFailureDumper.kt:DesktopAppiumFailureDumper$100</ID>
+    <ID>MagicNumber:DesktopAppiumFailureDumper.kt:DesktopAppiumFailureDumper$50</ID>
+    <ID>MagicNumber:DesktopBrowserCapture.kt:DesktopBrowserCapture$200</ID>
+    <ID>MagicNumber:PlatformAppiumHelper.kt:AndroidAppiumHelper$8811</ID>
+    <ID>MagicNumber:PlatformAppiumHelper.kt:AndroidAppiumHelper$8813</ID>
+    <ID>MagicNumber:WasmAppiumHelper.kt:WasmAppiumHelper$30</ID>
+    <ID>MagicNumber:WasmAppiumHelper.kt:WasmAppiumTestScope$15</ID>
+    <ID>MagicNumber:WasmDistributionServer.kt:WasmDistributionServer$200</ID>
+    <ID>MagicNumber:WasmDistributionServer.kt:WasmDistributionServer$404</ID>
+    <ID>MatchingDeclarationName:InjectedSessionFixtures.kt:InjectedSession</ID>
     <ID>MissingPackageDeclaration:AndroidAppTestDriver.kt:.AndroidAppTestDriver.kt</ID>
     <ID>MissingPackageDeclaration:AndroidAppiumTestBase.kt:.AndroidAppiumTestBase.kt</ID>
     <ID>MissingPackageDeclaration:AppScenarioData.kt:.AppScenarioData.kt</ID>
@@ -103,9 +242,34 @@
     <ID>MultilineExpressionWrapping:WasmDistributionServer.kt:WasmDistributionServer$HttpRequest.newBuilder(targetUri) .method( exchange.requestMethod, if (body.isEmpty()) { HttpRequest.BodyPublishers.noBody() } else { HttpRequest.BodyPublishers.ofByteArray( body ) }, ) .apply { exchange.requestHeaders.forEach { (name, values) -&gt; if (name.lowercase() !in REQUEST_HEADERS_NOT_FORWARDED) { values.forEach { value -&gt; header(name, value) } } } } .build()</ID>
     <ID>MultilineExpressionWrapping:WasmDistributionServer.kt:WasmDistributionServer$HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0).apply { createContext("/") { exchange -&gt; serve(exchange) } start() }</ID>
     <ID>MultilineExpressionWrapping:WasmDistributionServer.kt:WasmDistributionServer$when (extension) { "html" -&gt; "text/html" "js", "mjs" -&gt; "text/javascript" "wasm" -&gt; "application/wasm" "css" -&gt; "text/css" else -&gt; "application/octet-stream" }</ID>
+    <ID>MultilineRawStringIndentation:DesktopBrowserCapture.kt:DesktopBrowserCapture.Companion$""" #!/bin/sh printf '%s' "${'$'}1" &gt; "${capturedUriFile.canonicalPath}" """</ID>
+    <ID>MultilineRawStringIndentation:PlatformAppiumHelper.kt:DesktopAppiumHelper$""" #!/bin/bash mkdir -p "${appLogFile.parentFile.canonicalPath}" $browserEnvironment exec "$javaExec" \\ $argumentLines \\ &gt;&gt; "${appLogFile.canonicalPath}" 2&gt;&amp;1 """</ID>
+    <ID>MultilineRawStringIndentation:PlatformAppiumHelper.kt:DesktopAppiumHelper$""" export BROWSER="${it.command.canonicalPath.escapeForDoubleQuotedShell()}" export PATH="${it.command.parentFile.canonicalPath.escapeForDoubleQuotedShell()}:${'$'}PATH" """</ID>
+    <ID>MultilineRawStringIndentation:WasmAppTestDriver.kt:WasmAppTestDriver$""" arguments[0].value = arguments[1]; arguments[0].dispatchEvent(new Event('input', { bubbles: true })); """</ID>
+    <ID>MultilineRawStringIndentation:WasmAppTestDriver.kt:WasmAppTestDriver$""" const done = arguments[arguments.length - 1]; const startedAt = performance.now(); let previousSignature = ''; let stableFrames = 0; const check = () =&gt; { const signature = Array.from(document.querySelectorAll('#appium-html-semantics &gt; [data-appium-semantics]')) .map(element =&gt; [element.getAttribute('data-appium-semantics'), element.getAttribute('data-appium-text'), element.getAttribute('aria-label'), Math.round(element.getBoundingClientRect().left), Math.round(element.getBoundingClientRect().top), Math.round(element.getBoundingClientRect().width), Math.round(element.getBoundingClientRect().height)].join(':')).join('|'); stableFrames = signature === previousSignature ? stableFrames + 1 : 0; previousSignature = signature; if ((stableFrames &gt;= 4 &amp;&amp; performance.now() - startedAt &gt;= 100) || performance.now() - startedAt &gt;= 1500) done(); else window.requestAnimationFrame(check); }; window.requestAnimationFrame(check); """</ID>
+    <ID>MultilineRawStringIndentation:WasmAppTestDriver.kt:WasmAppTestDriver$""" const input = document.querySelector('[data-appium-input=true]'); return input?.getAttribute(arguments[0]) === String(input.value.length); """</ID>
+    <ID>MultilineRawStringIndentation:WasmAppTestDriver.kt:WasmAppTestDriver$""" const rect = arguments[0].getBoundingClientRect(); const centerX = rect.left + rect.width / 2; const centerY = rect.top + rect.height / 2; return rect.width &gt; 0 &amp;&amp; rect.height &gt; 0 &amp;&amp; centerX &gt;= 0 &amp;&amp; centerX &lt;= window.innerWidth &amp;&amp; centerY &gt;= 0 &amp;&amp; centerY &lt;= window.innerHeight; """</ID>
+    <ID>MultilineRawStringIndentation:WasmAppiumHelper.kt:WasmAppiumHelper$""" window.localStorage.clear(); if (arguments[0] !== null) { window.localStorage.setItem('appium.injected_session', arguments[0]); } """</ID>
     <ID>NoEmptyFirstLineInClassBody:AndroidAppTestDriver.kt:AndroidAppTestDriver${ suspend fun assertAsciidocPreviewOpened(appPackageName: String, expectedSource: String) { assertTrue(expectedSource.isNotBlank(), "AsciiDoc source must not be blank") val expectedTitle = expectedSource.lineSequence() .firstOrNull { it.startsWith("= ") } ?.removePrefix("= ") ?: error("AsciiDoc source must include a document title") var resumedActivity = "" var previewPollCount = 0 while (previewPollCount &lt; 30) { resumedActivity = runAdbCommand( listOf("shell", "dumpsys", "activity", "activities"), ).lineSequence() .firstOrNull { "topResumedActivity=" in it } .orEmpty() if (resumedActivity.contains(appPackageName)) { break } previewPollCount += 1 delay(500.milliseconds) } assertTrue( resumedActivity.contains(appPackageName), "Expected the app to remain foreground for the AsciiDoc preview, " + "but the resumed activity is $resumedActivity", ) assertElementVisible("""new UiSelector().text("AsciiDoc preview")""") assertElementVisible("""new UiSelector().text("$expectedTitle")""") } override suspend fun clickByDescription(description: String) { clickElement("""new UiSelector().description("$description")""") } override suspend fun clickByText(text: String) { clickElement("""new UiSelector().text("$text")""") } override suspend fun clickByTextContaining(text: String) { clickElement("""new UiSelector().textContains("$text")""") } override suspend fun clickByDescriptionContaining(description: String) { clickElement("""new UiSelector().descriptionContains("$description")""") } override suspend fun inputText(text: String) { inputElement("""new UiSelector().className("android.widget.EditText")""", text) } override suspend fun assertVisibleByDescription(description: String) { assertElementVisible("""new UiSelector().description("$description")""") } override suspend fun assertVisibleByText(text: String) { assertElementVisible("""new UiSelector().text("$text")""") } override suspend fun assertNotVisibleByDescription(description: String, timeoutSeconds: Long) { assertElementNotVisible("""new UiSelector().description("$description")""", timeoutSeconds) } override suspend fun assertNotVisibleByText(text: String, timeoutSeconds: Long) { assertElementNotVisible("""new UiSelector().text("$text")""", timeoutSeconds) } override suspend fun navigateBack() { driver.navigate().back() } override suspend fun saveSnapshot(name: String) { saveDebugSnapshot(name) } private fun assertElementVisible(selector: String) { try { val element = WebDriverWait(driver, Duration.ofSeconds(UI_WAIT_SECONDS)) .until(ExpectedConditions.presenceOfElementLocated(AppiumBy.androidUIAutomator(selector))) assertTrue(element.isDisplayed) } catch (throwable: Throwable) { runCatching { saveDebugSnapshot("assert-visible-failed-${System.currentTimeMillis()}") } throw throwable } } private fun assertElementNotVisible(selector: String, seconds: Long) { try { val locator = AppiumBy.androidUIAutomator(selector) WebDriverWait(driver, Duration.ofSeconds(seconds)).until { driver.findElements(locator).isEmpty() } } catch (throwable: Throwable) { runCatching { saveDebugSnapshot("assert-not-visible-failed-${System.currentTimeMillis()}") } throw throwable } } private fun clickElement(selector: String, seconds: Long = UI_WAIT_SECONDS) { try { val locator = AppiumBy.androidUIAutomator(selector) if (seconds &gt; 0) { WebDriverWait(driver, Duration.ofSeconds(seconds)) .until(ExpectedConditions.presenceOfElementLocated(locator)) } driver.findElement(locator).click() } catch (throwable: Throwable) { runCatching { saveDebugSnapshot("click-failed-${System.currentTimeMillis()}") } throw throwable } } private fun inputElement(selector: String, input: String, seconds: Long = UI_WAIT_SECONDS) { try { val locator = AppiumBy.androidUIAutomator(selector) if (seconds &gt; 0) { WebDriverWait(driver, Duration.ofSeconds(seconds)) .until(ExpectedConditions.presenceOfElementLocated(locator)) } driver.findElement(locator).sendKeys(input) } catch (throwable: Throwable) { runCatching { saveDebugSnapshot("input-failed-${System.currentTimeMillis()}") } throw throwable } } private fun saveDebugSnapshot(name: String) { val outputDir = File("build/test/appium-debug/AppiumTest") outputDir.mkdirs() val safeName = name.replace(Regex("[^a-zA-Z0-9._-]"), "_") File(outputDir, "$safeName.xml").writeText(driver.pageSource.orEmpty()) File(outputDir, "$safeName.png").writeBytes(driver.getScreenshotAs(OutputType.BYTES)) } private companion object { const val UI_WAIT_SECONDS = 15L } }</ID>
     <ID>NoEmptyFirstLineInClassBody:DesktopAppTestDriver.kt:DesktopAppTestDriver${ suspend fun assertAsciidocPreviewOpened() { assertVisibleByDescription("close preview") } override suspend fun clickByDescription(description: String) { waitAndClick(By.xpath("//*[@name='$description']")) } override suspend fun clickByText(text: String) { waitAndClick(By.xpath("//*[@value='$text' or @name='$text']")) } override suspend fun clickByTextContaining(text: String) { waitAndClick(By.xpath("//*[contains(@value,'$text') or contains(@name,'$text')]")) } override suspend fun clickByDescriptionContaining(description: String) { waitAndClick(By.xpath("//*[contains(@name,'$description')]")) } private fun waitAndClick(locator: By) { WebDriverWait(driver, Duration.ofSeconds(UI_WAIT_SECONDS)) .until(ExpectedConditions.presenceOfElementLocated(locator)) driver.findElement(locator).click() } override suspend fun inputText(text: String) { val wait = WebDriverWait(driver, Duration.ofSeconds(UI_WAIT_SECONDS)) val element = wait.until( ExpectedConditions.presenceOfElementLocated(By.xpath("//text-field")) ) element.sendKeys(text) } override suspend fun assertVisibleByDescription(description: String) { assertVisible(By.xpath("//*[@name='$description']")) } override suspend fun assertVisibleByText(text: String) { assertVisible(By.xpath("//*[@value='$text' or @name='$text']")) } private fun assertVisible(locator: By) { WebDriverWait(driver, Duration.ofSeconds(UI_WAIT_SECONDS)) .until(ExpectedConditions.presenceOfElementLocated(locator)) } override suspend fun assertNotVisibleByDescription(description: String, timeoutSeconds: Long) { assertNotVisible(By.xpath("//*[@name='$description']"), timeoutSeconds) } override suspend fun assertNotVisibleByText(text: String, timeoutSeconds: Long) { assertNotVisible(By.xpath("//*[@value='$text' or @name='$text']"), timeoutSeconds) } private fun assertNotVisible(locator: By, timeoutSeconds: Long) { WebDriverWait(driver, Duration.ofSeconds(timeoutSeconds)).until { driver.findElements(locator).isEmpty() } } override suspend fun navigateBack() { driver.navigate().back() } override suspend fun saveSnapshot(name: String) { val outputDir = File("build/test/appium-debug/DesktopAppiumTest") outputDir.mkdirs() val safeName = name.replace(Regex("[^a-zA-Z0-9._-]"), "_") File(outputDir, "$safeName.xml").writeText(driver.pageSource.orEmpty()) } companion object { private const val UI_WAIT_SECONDS = 15L } }</ID>
+    <ID>StringLiteralDuplication:AppScenarios.kt:"Sign in"</ID>
+    <ID>StringLiteralDuplication:AppScenarios.kt:"avatar"</ID>
+    <ID>StringLiteralDuplication:AppScenarios.kt:"topic"</ID>
+    <ID>StringLiteralDuplication:AppScenarios.kt:"user-dialog-cell"</ID>
+    <ID>StringLiteralDuplication:PlatformAppiumHelper.kt:AndroidAppiumHelper$"run-as"</ID>
+    <ID>StringLiteralDuplication:PlatformAppiumHelper.kt:AndroidAppiumHelper$"shell"</ID>
     <ID>StringTemplateIndent:AppScenarioData.kt:""" = Appium AsciiDoc Preview $topicMarker """</ID>
+    <ID>TooGenericExceptionCaught:AndroidAppTestDriver.kt:AndroidAppTestDriver$throwable: Throwable</ID>
+    <ID>TooGenericExceptionCaught:AppScenarioData.kt:throwable: Throwable</ID>
+    <ID>TooGenericExceptionCaught:PlatformAppiumHelper.kt:AndroidAppiumHelper$throwable: Throwable</ID>
+    <ID>TooGenericExceptionCaught:PlatformAppiumHelper.kt:DesktopAppiumHelper$throwable: Throwable</ID>
+    <ID>TooGenericExceptionCaught:WasmAppTestDriver.kt:WasmAppTestDriver$throwable: Throwable</ID>
+    <ID>TooManyFunctions:AndroidAppTestDriver.kt:AndroidAppTestDriver : AppTestDriver</ID>
+    <ID>TooManyFunctions:AppScenarios.kt:.AppScenarios.kt</ID>
+    <ID>TooManyFunctions:AppiumTestsByHelper.kt:.AppiumTestsByHelper.kt</ID>
+    <ID>TooManyFunctions:DesktopAppTestDriver.kt:DesktopAppTestDriver : AppTestDriver</ID>
+    <ID>TooManyFunctions:PlatformAppiumHelper.kt:AndroidAppiumHelper : PlatformAppiumHelper</ID>
+    <ID>TooManyFunctions:WasmAppTestDriver.kt:WasmAppTestDriver : AppTestDriver</ID>
     <ID>TrailingCommaOnCallSite:AppScenarioData.kt:( NewCommunity(communityName, "sc$aidSuffix") )</ID>
     <ID>TrailingCommaOnCallSite:AppScenarioData.kt:( ObjectType.COMMUNITY, communityId, topicContent )</ID>
     <ID>TrailingCommaOnCallSite:AppScenarioData.kt:( authenticated.sessionManager, ObjectType.USER, authenticated.sessionManager.model.uid ?: error("not login"), topicContent )</ID>
@@ -117,5 +281,146 @@
     <ID>TrailingCommaOnCallSite:WasmAppiumHelper.kt:WasmAppiumHelper$( "${server.url}?appium=true&amp;appiumHttpUrl=${server.url.removeSuffix( "/" )}&amp;appiumWsUrl=ws://127.0.0.1:${ports.ws}" )</ID>
     <ID>TrailingCommaOnCallSite:WasmAppiumHelper.kt:WasmAppiumHelper$( "/" )</ID>
     <ID>TrailingCommaOnCallSite:WasmDistributionServer.kt:WasmDistributionServer$( body )</ID>
+    <ID>UndocumentedPublicClass:AndroidAppTestDriver.kt:AndroidAppTestDriver : AppTestDriver</ID>
+    <ID>UndocumentedPublicClass:AndroidAppiumTestBase.kt:AppUnderTest</ID>
+    <ID>UndocumentedPublicClass:AndroidAppiumTestBase.kt:AppiumPorts</ID>
+    <ID>UndocumentedPublicClass:AndroidAppiumTestBase.kt:AuthenticatedSession</ID>
+    <ID>UndocumentedPublicClass:AppScenarioData.kt:AsciidocPreviewScenario</ID>
+    <ID>UndocumentedPublicClass:AppScenarioData.kt:FavoriteTopicScenario</ID>
+    <ID>UndocumentedPublicClass:AppScenarioData.kt:PreparedCommunityRoomScenario</ID>
+    <ID>UndocumentedPublicClass:AppScenarioData.kt:SubscriptionTopicScenario</ID>
+    <ID>UndocumentedPublicClass:AppTestDriver.kt:AppTestDriver</ID>
+    <ID>UndocumentedPublicClass:AppiumTestBase.kt:AppiumTestBase</ID>
+    <ID>UndocumentedPublicClass:DesktopAppTestDriver.kt:DesktopAppTestDriver : AppTestDriver</ID>
+    <ID>UndocumentedPublicClass:DesktopAppTestDriver.kt:DesktopAppTestDriver$Companion</ID>
+    <ID>UndocumentedPublicClass:DesktopAppiumFailureDumper.kt:DesktopAppiumFailureDumper</ID>
+    <ID>UndocumentedPublicClass:DesktopBrowserCapture.kt:DesktopBrowserCapture</ID>
+    <ID>UndocumentedPublicClass:DesktopBrowserCapture.kt:DesktopBrowserCapture$Companion</ID>
+    <ID>UndocumentedPublicClass:InjectedSessionFixtures.kt:InjectedSession</ID>
+    <ID>UndocumentedPublicClass:PlatformAppiumHelper.kt:AndroidAppiumHelper : PlatformAppiumHelper</ID>
+    <ID>UndocumentedPublicClass:PlatformAppiumHelper.kt:AppiumTestScope</ID>
+    <ID>UndocumentedPublicClass:PlatformAppiumHelper.kt:AppiumTestSetup&lt;T&gt;</ID>
+    <ID>UndocumentedPublicClass:PlatformAppiumHelper.kt:DesktopAppiumHelper : PlatformAppiumHelper</ID>
+    <ID>UndocumentedPublicClass:PlatformAppiumHelper.kt:DesktopAppiumHelper$Companion</ID>
+    <ID>UndocumentedPublicClass:PlatformAppiumHelper.kt:PlatformAppiumHelper</ID>
+    <ID>UndocumentedPublicClass:TargetAppiumHelper.kt:AppAppiumHelper : TargetAppiumHelper</ID>
+    <ID>UndocumentedPublicClass:TargetAppiumHelper.kt:DesktopAppiumRuntimeConfig</ID>
+    <ID>UndocumentedPublicClass:TargetAppiumHelper.kt:PanelAppiumHelper : TargetAppiumHelper</ID>
+    <ID>UndocumentedPublicClass:TargetAppiumHelper.kt:TargetAppiumHelper</ID>
+    <ID>UndocumentedPublicClass:WasmAppiumHelper.kt:WasmAppiumHelper : PlatformAppiumHelper</ID>
+    <ID>UndocumentedPublicClass:WasmDistributionServer.kt:WasmDistributionServer : AutoCloseable</ID>
+    <ID>UndocumentedPublicFunction:AndroidAppTestDriver.kt:AndroidAppTestDriver$suspend fun assertAsciidocPreviewOpened</ID>
+    <ID>UndocumentedPublicFunction:AndroidAppiumTestBase.kt:fun buildContainerEnv: Map&lt;String, String&gt;</ID>
+    <ID>UndocumentedPublicFunction:AndroidAppiumTestBase.kt:fun prepareSessionDirectories</ID>
+    <ID>UndocumentedPublicFunction:AndroidAppiumTestBase.kt:fun resolveAppiumPresetPath: File</ID>
+    <ID>UndocumentedPublicFunction:AndroidAppiumTestBase.kt:suspend fun useCliInitContainer</ID>
+    <ID>UndocumentedPublicFunction:AndroidAppiumTestBase.kt:suspend fun useDatabaseContainer</ID>
+    <ID>UndocumentedPublicFunction:AndroidAppiumTestBase.kt:suspend fun useServerContainer</ID>
+    <ID>UndocumentedPublicFunction:AndroidAppiumTestBase.kt:suspend fun useWorkerContainer</ID>
+    <ID>UndocumentedPublicFunction:AndroidAppiumTestBase.kt:suspend fun useWsContainer</ID>
+    <ID>UndocumentedPublicFunction:AppScenarioData.kt:suspend fun prepareAsciidocPreviewScenario: AsciidocPreviewScenario</ID>
+    <ID>UndocumentedPublicFunction:AppScenarioData.kt:suspend fun prepareCommunityRoomScenario: PreparedCommunityRoomScenario</ID>
+    <ID>UndocumentedPublicFunction:AppScenarioData.kt:suspend fun prepareFavoriteTopicScenario: FavoriteTopicScenario</ID>
+    <ID>UndocumentedPublicFunction:AppScenarioData.kt:suspend fun prepareSubscriptionTopicScenario: SubscriptionTopicScenario</ID>
+    <ID>UndocumentedPublicFunction:AppScenarioData.kt:suspend fun waitUntilTopicFavorited</ID>
+    <ID>UndocumentedPublicFunction:AppScenarioData.kt:suspend fun waitUntilTopicSubscribed</ID>
+    <ID>UndocumentedPublicFunction:AppScenarios.kt:suspend fun scenarioCommunityProfileActions</ID>
+    <ID>UndocumentedPublicFunction:AppScenarios.kt:suspend fun scenarioFavoritePreparedTopic</ID>
+    <ID>UndocumentedPublicFunction:AppScenarios.kt:suspend fun scenarioFavoriteTopic</ID>
+    <ID>UndocumentedPublicFunction:AppScenarios.kt:suspend fun scenarioOpenAsciidocPreview</ID>
+    <ID>UndocumentedPublicFunction:AppScenarios.kt:suspend fun scenarioOpenCommunity</ID>
+    <ID>UndocumentedPublicFunction:AppScenarios.kt:suspend fun scenarioPublishTopicInCommunity</ID>
+    <ID>UndocumentedPublicFunction:AppScenarios.kt:suspend fun scenarioPublishTopicInRoom</ID>
+    <ID>UndocumentedPublicFunction:AppScenarios.kt:suspend fun scenarioPublishTopicInUserSpace</ID>
+    <ID>UndocumentedPublicFunction:AppScenarios.kt:suspend fun scenarioSignIn</ID>
+    <ID>UndocumentedPublicFunction:AppScenarios.kt:suspend fun scenarioSignInAsSystemUser</ID>
+    <ID>UndocumentedPublicFunction:AppScenarios.kt:suspend fun scenarioSignUp</ID>
+    <ID>UndocumentedPublicFunction:AppScenarios.kt:suspend fun scenarioSubscribePreparedTopic</ID>
+    <ID>UndocumentedPublicFunction:AppScenarios.kt:suspend fun scenarioSubscribeTopic</ID>
+    <ID>UndocumentedPublicFunction:AppScenarios.kt:suspend fun scenarioVerifyInjectedSessionLoaded</ID>
+    <ID>UndocumentedPublicFunction:AppTestDriver.kt:AppTestDriver$suspend fun assertNotVisibleByDescription</ID>
+    <ID>UndocumentedPublicFunction:AppTestDriver.kt:AppTestDriver$suspend fun assertNotVisibleByText</ID>
+    <ID>UndocumentedPublicFunction:AppTestDriver.kt:AppTestDriver$suspend fun assertVisibleByDescription</ID>
+    <ID>UndocumentedPublicFunction:AppTestDriver.kt:AppTestDriver$suspend fun assertVisibleByText</ID>
+    <ID>UndocumentedPublicFunction:AppTestDriver.kt:AppTestDriver$suspend fun clickByDescription</ID>
+    <ID>UndocumentedPublicFunction:AppTestDriver.kt:AppTestDriver$suspend fun clickByDescriptionContaining</ID>
+    <ID>UndocumentedPublicFunction:AppTestDriver.kt:AppTestDriver$suspend fun clickByText</ID>
+    <ID>UndocumentedPublicFunction:AppTestDriver.kt:AppTestDriver$suspend fun clickByTextContaining</ID>
+    <ID>UndocumentedPublicFunction:AppTestDriver.kt:AppTestDriver$suspend fun inputText</ID>
+    <ID>UndocumentedPublicFunction:AppTestDriver.kt:AppTestDriver$suspend fun navigateBack</ID>
+    <ID>UndocumentedPublicFunction:AppTestDriver.kt:AppTestDriver$suspend fun saveSnapshot</ID>
+    <ID>UndocumentedPublicFunction:AppiumTestBase.kt:fun runAppiumBlockingTest</ID>
+    <ID>UndocumentedPublicFunction:AppiumTestsByHelper.kt:fun testCommunityProfileActionsByHelper</ID>
+    <ID>UndocumentedPublicFunction:AppiumTestsByHelper.kt:fun testFavoriteTopicByHelper</ID>
+    <ID>UndocumentedPublicFunction:AppiumTestsByHelper.kt:fun testInjectedSessionByHelper</ID>
+    <ID>UndocumentedPublicFunction:AppiumTestsByHelper.kt:fun testOpenAsciidocPreviewByHelper</ID>
+    <ID>UndocumentedPublicFunction:AppiumTestsByHelper.kt:fun testPanelInjectedSessionByHelper</ID>
+    <ID>UndocumentedPublicFunction:AppiumTestsByHelper.kt:fun testPublishTopicInCommunityByHelper</ID>
+    <ID>UndocumentedPublicFunction:AppiumTestsByHelper.kt:fun testPublishTopicInCommunityRoomByHelper</ID>
+    <ID>UndocumentedPublicFunction:AppiumTestsByHelper.kt:fun testPublishTopicInUserSpaceByHelper</ID>
+    <ID>UndocumentedPublicFunction:AppiumTestsByHelper.kt:fun testSignInAsSystemUserByHelper</ID>
+    <ID>UndocumentedPublicFunction:AppiumTestsByHelper.kt:fun testSignUpByHelper</ID>
+    <ID>UndocumentedPublicFunction:AppiumTestsByHelper.kt:fun testSubscribeTopicByHelper</ID>
+    <ID>UndocumentedPublicFunction:DesktopAppTestDriver.kt:DesktopAppTestDriver$suspend fun assertAsciidocPreviewOpened</ID>
+    <ID>UndocumentedPublicFunction:DesktopAppiumFailureDumper.kt:DesktopAppiumFailureDumper$fun dumpOnFailure</ID>
+    <ID>UndocumentedPublicFunction:DesktopBrowserCapture.kt:DesktopBrowserCapture$suspend fun assertOpenedAsciidocPreview</ID>
+    <ID>UndocumentedPublicFunction:DesktopBrowserCapture.kt:DesktopBrowserCapture.Companion$fun create: DesktopBrowserCapture</ID>
+    <ID>UndocumentedPublicFunction:InjectedSessionFixtures.kt:InjectedSession$fun toAuthKey: AuthKey</ID>
+    <ID>UndocumentedPublicFunction:InjectedSessionFixtures.kt:fun buildInjectedSessionJson: String</ID>
+    <ID>UndocumentedPublicFunction:PanelScenarios.kt:suspend fun scenarioOpenAllUsersFromOverview</ID>
+    <ID>UndocumentedPublicFunction:PlatformAppiumHelper.kt:AppiumTestScope$suspend fun assertAsciidocPreviewOpened</ID>
+    <ID>UndocumentedPublicFunction:PlatformAppiumHelper.kt:DesktopAppiumHelper.Companion$fun safeName: String</ID>
+    <ID>UndocumentedPublicFunction:PlatformAppiumHelper.kt:PlatformAppiumHelper$abstract suspend fun &lt;T&gt; runTest</ID>
+    <ID>UndocumentedPublicFunction:TargetAppiumHelper.kt:AppAppiumHelper$fun readSystemPrivateKey: String</ID>
+    <ID>UndocumentedPublicFunction:TargetAppiumHelper.kt:AppAppiumHelper$suspend fun createAuthenticatedSession: AuthenticatedSession</ID>
+    <ID>UndocumentedPublicFunction:TargetAppiumHelper.kt:AppAppiumHelper$suspend fun createPreRegisteredSession: InjectedSession</ID>
+    <ID>UndocumentedPublicFunction:TargetAppiumHelper.kt:PanelAppiumHelper$suspend fun createPreRegisteredSession: InjectedSession</ID>
+    <ID>UndocumentedPublicProperty:AndroidAppiumTestBase.kt:AppUnderTest$val mainActivityClassName: String</ID>
+    <ID>UndocumentedPublicProperty:AndroidAppiumTestBase.kt:AppUnderTest$val packageName: String</ID>
+    <ID>UndocumentedPublicProperty:AndroidAppiumTestBase.kt:AppiumPorts$val server: Int</ID>
+    <ID>UndocumentedPublicProperty:AndroidAppiumTestBase.kt:AppiumPorts$val ws: Int</ID>
+    <ID>UndocumentedPublicProperty:AndroidAppiumTestBase.kt:AuthenticatedSession$val session: InjectedSession</ID>
+    <ID>UndocumentedPublicProperty:AndroidAppiumTestBase.kt:AuthenticatedSession$val sessionManager: UserSessionManager</ID>
+    <ID>UndocumentedPublicProperty:AndroidAppiumTestBase.kt:const val CLI_READY_PORT = 8081</ID>
+    <ID>UndocumentedPublicProperty:AppScenarioData.kt:AsciidocPreviewScenario$val asciidocSource: String</ID>
+    <ID>UndocumentedPublicProperty:AppScenarioData.kt:AsciidocPreviewScenario$val authenticated: AuthenticatedSession</ID>
+    <ID>UndocumentedPublicProperty:AppScenarioData.kt:AsciidocPreviewScenario$val topicMarker: String</ID>
+    <ID>UndocumentedPublicProperty:AppScenarioData.kt:FavoriteTopicScenario$val authenticated: AuthenticatedSession</ID>
+    <ID>UndocumentedPublicProperty:AppScenarioData.kt:FavoriteTopicScenario$val topicContent: String</ID>
+    <ID>UndocumentedPublicProperty:AppScenarioData.kt:FavoriteTopicScenario$val topicId: Long</ID>
+    <ID>UndocumentedPublicProperty:AppScenarioData.kt:PreparedCommunityRoomScenario$val communityId: Long</ID>
+    <ID>UndocumentedPublicProperty:AppScenarioData.kt:PreparedCommunityRoomScenario$val communityName: String</ID>
+    <ID>UndocumentedPublicProperty:AppScenarioData.kt:PreparedCommunityRoomScenario$val ownerSession: InjectedSession</ID>
+    <ID>UndocumentedPublicProperty:AppScenarioData.kt:PreparedCommunityRoomScenario$val roomId: Long</ID>
+    <ID>UndocumentedPublicProperty:AppScenarioData.kt:PreparedCommunityRoomScenario$val roomName: String</ID>
+    <ID>UndocumentedPublicProperty:AppScenarioData.kt:PreparedCommunityRoomScenario$val viewerSession: InjectedSession</ID>
+    <ID>UndocumentedPublicProperty:AppScenarioData.kt:SubscriptionTopicScenario$val authenticated: AuthenticatedSession</ID>
+    <ID>UndocumentedPublicProperty:AppScenarioData.kt:SubscriptionTopicScenario$val communityName: String</ID>
+    <ID>UndocumentedPublicProperty:AppScenarioData.kt:SubscriptionTopicScenario$val topicContent: String</ID>
+    <ID>UndocumentedPublicProperty:AppScenarioData.kt:SubscriptionTopicScenario$val topicId: Long</ID>
+    <ID>UndocumentedPublicProperty:AppiumTestBase.kt:AppiumTestBase$@get:Rule val name = TestName()</ID>
+    <ID>UndocumentedPublicProperty:DesktopBrowserCapture.kt:DesktopBrowserCapture$val command: File</ID>
+    <ID>UndocumentedPublicProperty:InjectedSessionFixtures.kt:InjectedSession$val address: String</ID>
+    <ID>UndocumentedPublicProperty:InjectedSessionFixtures.kt:InjectedSession$val derPrivateKey: String</ID>
+    <ID>UndocumentedPublicProperty:InjectedSessionFixtures.kt:InjectedSession$val derPublicKey: String</ID>
+    <ID>UndocumentedPublicProperty:InjectedSessionFixtures.kt:InjectedSession$val pemPrivateKey: String</ID>
+    <ID>UndocumentedPublicProperty:PlatformAppiumHelper.kt:AppiumTestScope$val driver: AppTestDriver</ID>
+    <ID>UndocumentedPublicProperty:PlatformAppiumHelper.kt:AppiumTestSetup$val data: T</ID>
+    <ID>UndocumentedPublicProperty:PlatformAppiumHelper.kt:AppiumTestSetup$val injectedSession: InjectedSession? = null</ID>
+    <ID>UndocumentedPublicProperty:PlatformAppiumHelper.kt:PlatformAppiumHelper$abstract val capturesExternalAsciidocPreview: Boolean</ID>
+    <ID>UndocumentedPublicProperty:TargetAppiumHelper.kt:DesktopAppiumRuntimeConfig$val appLabel: String</ID>
+    <ID>UndocumentedPublicProperty:TargetAppiumHelper.kt:DesktopAppiumRuntimeConfig$val includeWsUrl: Boolean</ID>
+    <ID>UndocumentedPublicProperty:TargetAppiumHelper.kt:DesktopAppiumRuntimeConfig$val mainClassName: String</ID>
+    <ID>UndocumentedPublicProperty:TargetAppiumHelper.kt:DesktopAppiumRuntimeConfig$val runtimeClasspathCandidates: List&lt;File&gt;</ID>
+    <ID>UndocumentedPublicProperty:TargetAppiumHelper.kt:DesktopAppiumRuntimeConfig$val runtimeClasspathErrorMessage: String</ID>
+    <ID>UndocumentedPublicProperty:TargetAppiumHelper.kt:DesktopAppiumRuntimeConfig$val scriptPrefix: String</ID>
+    <ID>UndocumentedPublicProperty:TargetAppiumHelper.kt:DesktopAppiumRuntimeConfig$val suiteName: String</ID>
+    <ID>UndocumentedPublicProperty:TargetAppiumHelper.kt:DesktopAppiumRuntimeConfig$val windowWaitSeconds: Long = 30L</ID>
+    <ID>UndocumentedPublicProperty:TargetAppiumHelper.kt:TargetAppiumHelper$abstract val androidApp: AppUnderTest</ID>
+    <ID>UndocumentedPublicProperty:TargetAppiumHelper.kt:TargetAppiumHelper$abstract val desktopRuntimeConfig: DesktopAppiumRuntimeConfig</ID>
+    <ID>UndocumentedPublicProperty:TargetAppiumHelper.kt:TargetAppiumHelper$abstract val suiteName: String</ID>
+    <ID>UndocumentedPublicProperty:WasmDistributionServer.kt:WasmDistributionServer$val bootstrapUrl: String = "${url}appium-bootstrap.html"</ID>
+    <ID>UndocumentedPublicProperty:WasmDistributionServer.kt:WasmDistributionServer$val requestedPaths = mutableListOf&lt;String&gt;()</ID>
+    <ID>UndocumentedPublicProperty:WasmDistributionServer.kt:WasmDistributionServer$val url: String = "http://127.0.0.1:${server.address.port}/"</ID>
   </CurrentIssues>
 </SmellBaseline>

@@ -2,6 +2,56 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>AbsentOrWrongFileLicense:Aids.kt:com.storyteller_f.a.backend.exposed.tables.Aids.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Assets.kt:com.storyteller_f.a.backend.exposed.tables.Assets.kt</ID>
+    <ID>AbsentOrWrongFileLicense:BaseTable.kt:com.storyteller_f.a.backend.exposed.BaseTable.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Communities.kt:com.storyteller_f.a.backend.exposed.tables.Communities.kt</ID>
+    <ID>AbsentOrWrongFileLicense:EncryptedKeys.kt:com.storyteller_f.a.backend.exposed.tables.EncryptedKeys.kt</ID>
+    <ID>AbsentOrWrongFileLicense:ExposedAdminDatabase.kt:com.storyteller_f.a.backend.exposed.database.ExposedAdminDatabase.kt</ID>
+    <ID>AbsentOrWrongFileLicense:ExposedCommunityDatabase.kt:com.storyteller_f.a.backend.exposed.database.ExposedCommunityDatabase.kt</ID>
+    <ID>AbsentOrWrongFileLicense:ExposedContainerDatabase.kt:com.storyteller_f.a.backend.exposed.database.ExposedContainerDatabase.kt</ID>
+    <ID>AbsentOrWrongFileLicense:ExposedDatabaseFactory.kt:com.storyteller_f.a.backend.exposed.ExposedDatabaseFactory.kt</ID>
+    <ID>AbsentOrWrongFileLicense:ExposedFavoriteDatabase.kt:com.storyteller_f.a.backend.exposed.database.ExposedFavoriteDatabase.kt</ID>
+    <ID>AbsentOrWrongFileLicense:ExposedFileDatabase.kt:com.storyteller_f.a.backend.exposed.database.ExposedFileDatabase.kt</ID>
+    <ID>AbsentOrWrongFileLicense:ExposedPanelAccountDatabase.kt:com.storyteller_f.a.backend.exposed.database.ExposedPanelAccountDatabase.kt</ID>
+    <ID>AbsentOrWrongFileLicense:ExposedReactionDatabase.kt:com.storyteller_f.a.backend.exposed.database.ExposedReactionDatabase.kt</ID>
+    <ID>AbsentOrWrongFileLicense:ExposedRoomDatabase.kt:com.storyteller_f.a.backend.exposed.database.ExposedRoomDatabase.kt</ID>
+    <ID>AbsentOrWrongFileLicense:ExposedSubscriptionDatabase.kt:com.storyteller_f.a.backend.exposed.database.ExposedSubscriptionDatabase.kt</ID>
+    <ID>AbsentOrWrongFileLicense:ExposedTitleDatabase.kt:com.storyteller_f.a.backend.exposed.database.ExposedTitleDatabase.kt</ID>
+    <ID>AbsentOrWrongFileLicense:ExposedTopicDatabase.kt:com.storyteller_f.a.backend.exposed.database.ExposedTopicDatabase.kt</ID>
+    <ID>AbsentOrWrongFileLicense:ExposedUserDatabase.kt:com.storyteller_f.a.backend.exposed.database.ExposedUserDatabase.kt</ID>
+    <ID>AbsentOrWrongFileLicense:FileRecords.kt:com.storyteller_f.a.backend.exposed.tables.FileRecords.kt</ID>
+    <ID>AbsentOrWrongFileLicense:FileRefs.kt:com.storyteller_f.a.backend.exposed.tables.FileRefs.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Members.kt:com.storyteller_f.a.backend.exposed.tables.Members.kt</ID>
+    <ID>AbsentOrWrongFileLicense:PaginationResult.kt:com.storyteller_f.a.backend.exposed.query.PaginationResult.kt</ID>
+    <ID>AbsentOrWrongFileLicense:PanelAccounts.kt:com.storyteller_f.a.backend.exposed.tables.PanelAccounts.kt</ID>
+    <ID>AbsentOrWrongFileLicense:PanelLogs.kt:com.storyteller_f.a.backend.exposed.tables.PanelLogs.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Quotas.kt:com.storyteller_f.a.backend.exposed.tables.Quotas.kt</ID>
+    <ID>AbsentOrWrongFileLicense:ReactionRecords.kt:com.storyteller_f.a.backend.exposed.tables.ReactionRecords.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Rooms.kt:com.storyteller_f.a.backend.exposed.tables.Rooms.kt</ID>
+    <ID>AbsentOrWrongFileLicense:TaskRecords.kt:com.storyteller_f.a.backend.exposed.tables.TaskRecords.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Titles.kt:com.storyteller_f.a.backend.exposed.tables.Titles.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Topics.kt:com.storyteller_f.a.backend.exposed.tables.Topics.kt</ID>
+    <ID>AbsentOrWrongFileLicense:UploadRecords.kt:com.storyteller_f.a.backend.exposed.tables.UploadRecords.kt</ID>
+    <ID>AbsentOrWrongFileLicense:UserDevices.kt:com.storyteller_f.a.backend.exposed.tables.UserDevices.kt</ID>
+    <ID>AbsentOrWrongFileLicense:UserFavorites.kt:com.storyteller_f.a.backend.exposed.tables.UserFavorites.kt</ID>
+    <ID>AbsentOrWrongFileLicense:UserLogs.kt:com.storyteller_f.a.backend.exposed.tables.UserLogs.kt</ID>
+    <ID>AbsentOrWrongFileLicense:UserSubscriptions.kt:com.storyteller_f.a.backend.exposed.tables.UserSubscriptions.kt</ID>
+    <ID>AbsentOrWrongFileLicense:UserTopicReads.kt:com.storyteller_f.a.backend.exposed.tables.UserTopicReads.kt</ID>
+    <ID>AbsentOrWrongFileLicense:UserTwoFactors.kt:com.storyteller_f.a.backend.exposed.tables.UserTwoFactors.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Users.kt:com.storyteller_f.a.backend.exposed.tables.Users.kt</ID>
+    <ID>AbsentOrWrongFileLicense:build.gradle.kts:.build.gradle.kts</ID>
+    <ID>BracesOnWhenStatements:ExposedCommunityDatabase.kt:ExposedCommunityDatabase$when</ID>
+    <ID>BracesOnWhenStatements:ExposedRoomDatabase.kt:ExposedRoomDatabase$when</ID>
+    <ID>BracesOnWhenStatements:ExposedTopicDatabase.kt:ExposedTopicDatabase$when</ID>
+    <ID>BracesOnWhenStatements:PaginationResult.kt:when</ID>
+    <ID>CascadingCallWrapping:ExposedAdminDatabase.kt:ExposedAdminDatabase$toList()</ID>
+    <ID>CascadingCallWrapping:ExposedCommunityDatabase.kt:ExposedCommunityDatabase$select(Communities.id)</ID>
+    <ID>CascadingCallWrapping:ExposedContainerDatabase.kt:ExposedContainerDatabase$associateBy { it.objectId }</ID>
+    <ID>CascadingCallWrapping:ExposedRoomDatabase.kt:ExposedRoomDatabase$where { Members.objectId eq roomId }</ID>
+    <ID>CascadingCallWrapping:ExposedTopicDatabase.kt:ExposedTopicDatabase$extraQuery()</ID>
+    <ID>CascadingCallWrapping:ExposedUserDatabase.kt:ExposedUserDatabase$associateBy { it.objectId }</ID>
+    <ID>CascadingCallWrapping:ExposedUserDatabase.kt:ExposedUserDatabase$where { ChildAccounts.hostId eq hostId }</ID>
     <ID>ClassSignature:ExposedCommunityDatabase.kt:ExposedCommunityDatabase : CommunityDatabase</ID>
     <ID>ClassSignature:ExposedContainerDatabase.kt:ExposedContainerDatabase : ContainerDatabase</ID>
     <ID>ClassSignature:ExposedFavoriteDatabase.kt:ExposedFavoriteDatabase : FavoriteDatabase</ID>
@@ -10,6 +60,13 @@
     <ID>ClassSignature:ExposedRoomDatabase.kt:ExposedRoomDatabase : RoomDatabase</ID>
     <ID>ClassSignature:ExposedSubscriptionDatabase.kt:ExposedSubscriptionDatabase : SubscriptionDatabase</ID>
     <ID>ClassSignature:ExposedTopicDatabase.kt:ExposedTopicDatabase : TopicDatabase</ID>
+    <ID>CognitiveComplexMethod:ExposedCommunityDatabase.kt:ExposedCommunityDatabase$override suspend fun updateCommunity</ID>
+    <ID>CognitiveComplexMethod:ExposedContainerDatabase.kt:ExposedContainerDatabase$override suspend fun getContainerInfo: Result&lt;Map&lt;PrimaryKey, ContainerInfo&gt;&gt;</ID>
+    <ID>DestructuringDeclarationWithTooManyEntries:ExposedDatabaseFactory.kt:ExposedDatabaseFactory$val (uri, driver, user, password) = connection</ID>
+    <ID>ExpressionBodySyntax:BaseTable.kt:ExposedDatabase$return throwable.cause?.isDup() ?: false</ID>
+    <ID>ExpressionBodySyntax:UserTwoFactors.kt:return json.encodeToString(recoveryCodeHashesSerializer, hashes)</ID>
+    <ID>ExpressionBodySyntax:Users.kt:return RawUser(User.wrapRow(it))</ID>
+    <ID>ExpressionBodySyntax:Users.kt:return Users.selectAll().where(function)</ID>
     <ID>FunctionExpressionBody:Assets.kt:{ return with(AssetTransactions) { AssetTransaction(row[id], row[uid], row[createdTime], row[type], row[before], row[after]) } }</ID>
     <ID>FunctionExpressionBody:BaseTable.kt:ExposedDatabase${ return throwable.cause?.isDup() ?: false }</ID>
     <ID>FunctionExpressionBody:Communities.kt:{ return with(Communities) { val fontSettingsJson = row[fontSettings] val fontSettings = fontSettingsJson?.let { runCatching { json.decodeFromString&lt;FontSettings&gt;(it) } .onFailure { Napier.e("Failed to parse font_settings", it) } .getOrNull() } Community( row[id], row[createdTime], row[Aids.value], row[name], row[owner], row[memberPolicy], row[icon], row[poster], fontSettings, row[status], ) } }</ID>
@@ -44,6 +101,9 @@
     <ID>FunctionExpressionBody:Users.kt:{ return Users.selectAll().where(function) }</ID>
     <ID>FunctionExpressionBody:Users.kt:{ return with(ChildAccounts) { ChildAccount( row[uid], row[encryptedPrivateKey], row[encryptedAesKey], row[hostId], row[remark], row[encryptedEncryptionPrivateKey] ) } }</ID>
     <ID>FunctionExpressionBody:Users.kt:{ return with(Users) { User( row[Aids.value], row[encryptionPublicKey], row[publicKey], row[address], row[icon], row[nickname], row[id], row[createdTime], row[acgAmount], row[passType], row[algoType], row[notificationId], row[status], ) } }</ID>
+    <ID>FunctionNameMaxLength:ExposedFileDatabase.kt:ExposedFileDatabase$private suspend fun getUploadRecordCountByPredicate</ID>
+    <ID>FunctionNameMaxLength:ExposedReactionDatabase.kt:ExposedReactionDatabase$private suspend fun getUserReactionRecordCountByUid</ID>
+    <ID>FunctionNameMaxLength:ExposedSubscriptionDatabase.kt:ExposedSubscriptionDatabase$private suspend fun getSubscriptionCountByPredicate</ID>
     <ID>FunctionSignature:ExposedAdminDatabase.kt:ExposedAdminDatabase$override suspend fun getPanelLogs</ID>
     <ID>FunctionSignature:ExposedAdminDatabase.kt:ExposedAdminDatabase$override suspend fun getTaskRecords</ID>
     <ID>FunctionSignature:ExposedCommunityDatabase.kt:ExposedCommunityDatabase$fun Query.bindPosterSearch: Query</ID>
@@ -147,6 +207,99 @@
     <ID>FunctionSignature:ExposedUserDatabase.kt:ExposedUserDatabase$private suspend fun updateUser: Boolean</ID>
     <ID>FunctionSignature:Members.kt:suspend fun batchAddMembers: List&lt;ResultRow&gt;</ID>
     <ID>FunctionSignature:PaginationResult.kt:fun Query.bindPaginationQuery: Query</ID>
+    <ID>LabeledExpression:ExposedUserDatabase.kt:ExposedUserDatabase$@runCatching</ID>
+    <ID>LateinitUsage:ExposedDatabaseFactory.kt:DatabaseSearchConfig$lateinit var searchFunc: () -&gt; Q</ID>
+    <ID>LateinitUsage:ExposedDatabaseFactory.kt:DatabaseSearchConfig$lateinit var transformFunc: suspend Q.() -&gt; R</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Assets.kt:fun AssetTransaction.Companion.wrapRow: AssetTransaction</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:BaseTable.kt:BaseTable : Table</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:BaseTable.kt:ExposedDatabase : CombinedDatabase</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:BaseTable.kt:fun &lt;T : Table&gt; T.emoji</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:BaseTable.kt:fun Table.algoType</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:BaseTable.kt:fun Table.assetType</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:BaseTable.kt:fun Table.customPrimaryKey</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:BaseTable.kt:fun Table.memberPolicy</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:BaseTable.kt:fun Table.memberStatus</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:BaseTable.kt:fun Table.objectStatus</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:BaseTable.kt:fun Table.objectType</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:BaseTable.kt:fun Table.passType</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:BaseTable.kt:fun Table.quotaType</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:BaseTable.kt:fun Table.taskRecordType</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:BaseTable.kt:fun Table.titleStatus</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:BaseTable.kt:fun Table.titleType</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:BaseTable.kt:fun Table.uploadRecordStatus</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:BaseTable.kt:fun Throwable.isDup: Boolean</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:BaseTable.kt:fun buildExposedDatabase: ExposedDatabase</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Communities.kt:fun Community.Companion.wrapRow: Community</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:EncryptedKeys.kt:fun EncryptedKey.Companion.wrapRow: EncryptedKey</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ExposedAdminDatabase.kt:ExposedAdminDatabase : AdminDatabase</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ExposedCommunityDatabase.kt:ExposedCommunityDatabase : CommunityDatabase</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ExposedContainerDatabase.kt:ExposedContainerDatabase : ContainerDatabase</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ExposedDatabaseFactory.kt:DatabaseSearchConfig&lt;R, Q&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ExposedDatabaseFactory.kt:ExposedDatabaseSession</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ExposedDatabaseFactory.kt:fun &lt;R&gt; DatabaseSearchConfig&lt;R, Query&gt;.firstNotNull</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ExposedDatabaseFactory.kt:fun &lt;R&gt; DatabaseSearchConfig&lt;R?, Query&gt;.first</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ExposedDatabaseFactory.kt:fun &lt;T&gt; DatabaseSearchConfig&lt;List&lt;T&gt;, Query&gt;.map</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ExposedDatabaseFactory.kt:fun DatabaseSearchConfig&lt;Boolean, Query&gt;.isEmpty</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ExposedDatabaseFactory.kt:fun DatabaseSearchConfig&lt;Boolean, Query&gt;.isNotEmpty</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ExposedDatabaseFactory.kt:fun DatabaseSearchConfig&lt;Long, Query&gt;.count</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ExposedFavoriteDatabase.kt:ExposedFavoriteDatabase : FavoriteDatabase</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ExposedFileDatabase.kt:ExposedFileDatabase : FileDatabase</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ExposedPanelAccountDatabase.kt:ExposedPanelAccountDatabase : PanelAccountDatabase</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ExposedReactionDatabase.kt:ExposedReactionDatabase : ReactionDatabase</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ExposedRoomDatabase.kt:ExposedRoomDatabase : RoomDatabase</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ExposedSubscriptionDatabase.kt:ExposedSubscriptionDatabase : SubscriptionDatabase</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ExposedTitleDatabase.kt:ExposedTitleDatabase : TitleDatabase</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ExposedTopicDatabase.kt:ExposedTopicDatabase : TopicDatabase</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ExposedUserDatabase.kt:ExposedUserDatabase : UserDatabase</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileRecords.kt:fun FileRecord.Companion.wrapRow: FileRecord</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileRefs.kt:fun FileRef.Companion.wrapRow: FileRef</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Members.kt:fun Member.Companion.wrapRow: Member</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Members.kt:suspend fun batchAddMembers: List&lt;ResultRow&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PaginationResult.kt:fun Query.bindPaginationQuery: Query</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelAccounts.kt:fun PanelAccount.Companion.wrapRow: PanelAccount</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelLogs.kt:fun PanelLog.Companion.wrapRow: PanelLog</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Quotas.kt:fun Quota.Companion.wrapRow: Quota</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ReactionRecords.kt:fun Reaction.Companion.wrapRow: Reaction</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ReactionRecords.kt:fun ReactionRecord.Companion.wrapRow: ReactionRecord</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Rooms.kt:fun Room.Companion.findRoomById</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Rooms.kt:fun Room.Companion.wrapRow: Room</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TaskRecords.kt:fun TaskRecord.Companion.wrapRow: TaskRecord</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TaskRecords.kt:suspend fun addTaskRecord</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Titles.kt:fun Title.Companion.wrapRow: Title</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Topics.kt:fun Topic.Companion.wrapRow: Topic</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UploadRecords.kt:fun UploadRecord.Companion.wrapRow: UploadRecord</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserDevices.kt:fun UserDevice.Companion.wrapRow: UserDevice</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserFavorites.kt:fun UserFavorite.Companion.wrapRow: UserFavorite</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserLogs.kt:fun Table.userLogType</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserLogs.kt:fun UserLog.Companion.wrapRow: UserLog</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserSubscriptions.kt:fun SubscriptionSentLog.Companion.wrapRow: SubscriptionSentLog</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserSubscriptions.kt:fun UserSubscription.Companion.wrapRow: UserSubscription</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserTopicReads.kt:fun UserTopicRead.Companion.wrapRow: UserTopicRead</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserTwoFactors.kt:fun UserTwoFactor.Companion.wrapRow: UserTwoFactor</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserTwoFactors.kt:fun encodeRecoveryCodeHashes: String</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Users.kt:fun ChildAccount.Companion.wrapRow: ChildAccount</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Users.kt:fun User.Companion.find: Query</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Users.kt:fun User.Companion.wrapRow: User</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Users.kt:fun mapUserInfo: RawUser</ID>
+    <ID>MagicNumber:Aids.kt:Aids$100</ID>
+    <ID>MagicNumber:BaseTable.kt:10</ID>
+    <ID>MagicNumber:BaseTable.kt:20</ID>
+    <ID>MagicNumber:FileRecords.kt:FileRecords$200</ID>
+    <ID>MagicNumber:FileRecords.kt:FileRecords$50</ID>
+    <ID>MagicNumber:FileRecords.kt:FileRecords$64</ID>
+    <ID>MagicNumber:PanelAccounts.kt:PanelAccounts$100</ID>
+    <ID>MagicNumber:PanelAccounts.kt:PanelAccounts$32</ID>
+    <ID>MagicNumber:Titles.kt:Titles$20</ID>
+    <ID>MagicNumber:UploadRecords.kt:UploadRecords$100</ID>
+    <ID>MagicNumber:UploadRecords.kt:UploadRecords$64</ID>
+    <ID>MagicNumber:UserDevices.kt:UserDevices$100</ID>
+    <ID>MagicNumber:UserLogs.kt:30</ID>
+    <ID>MagicNumber:UserTwoFactors.kt:UserTwoFactors$20</ID>
+    <ID>MagicNumber:UserTwoFactors.kt:UserTwoFactors$64</ID>
+    <ID>MagicNumber:Users.kt:ChildAccounts$32</ID>
+    <ID>MagicNumber:Users.kt:Users$20</ID>
+    <ID>MagicNumber:Users.kt:Users$32</ID>
+    <ID>MatchingDeclarationName:Assets.kt:AssetTransactions : BaseTable</ID>
     <ID>MultilineExpressionWrapping:Communities.kt:fontSettingsJson?.let { runCatching { json.decodeFromString&lt;FontSettings&gt;(it) } .onFailure { Napier.e("Failed to parse font_settings", it) } .getOrNull() }</ID>
     <ID>MultilineExpressionWrapping:ExposedAdminDatabase.kt:ExposedAdminDatabase$PanelLogs.insert { it[id] = log.id it[adminId] = log.adminId it[targetId] = log.targetId it[objectType] = log.objectType it[action] = log.action it[createdTime] = log.createdTime }.insertedCount &gt; 0</ID>
     <ID>MultilineExpressionWrapping:ExposedAdminDatabase.kt:ExposedAdminDatabase$databaseSession.dbQuery { Members .join(Rooms, JoinType.INNER, Members.objectId, Rooms.id) .join(Aids, JoinType.INNER, Members.objectId, Aids.objectId) .join(Users, JoinType.INNER, Members.uid, Users.id) .select(Users.fields + Aids.value) .where { Aids.value inList distinct }.toList().map { MemberAuthData( it[Users.publicKey], it[Users.encryptionPublicKey], it[Users.id], it[Aids.value], it[Users.algoType], ) } }</ID>
@@ -385,6 +538,18 @@
     <ID>PackageNaming:UserTopicReads.kt:package com.storyteller_f.a.backend.exposed.tables</ID>
     <ID>PackageNaming:UserTwoFactors.kt:package com.storyteller_f.a.backend.exposed.tables</ID>
     <ID>PackageNaming:Users.kt:package com.storyteller_f.a.backend.exposed.tables</ID>
+    <ID>StringLiteralDuplication:ExposedDatabaseFactory.kt:ExposedDatabaseFactory$"database"</ID>
+    <ID>TooGenericExceptionCaught:ExposedDatabaseFactory.kt:ExposedDatabaseSession$e: Exception</ID>
+    <ID>TooManyFunctions:BaseTable.kt:com.storyteller_f.a.backend.exposed.BaseTable.kt</ID>
+    <ID>TooManyFunctions:ExposedAdminDatabase.kt:ExposedAdminDatabase : AdminDatabase</ID>
+    <ID>TooManyFunctions:ExposedCommunityDatabase.kt:ExposedCommunityDatabase : CommunityDatabase</ID>
+    <ID>TooManyFunctions:ExposedContainerDatabase.kt:ExposedContainerDatabase : ContainerDatabase</ID>
+    <ID>TooManyFunctions:ExposedFileDatabase.kt:ExposedFileDatabase : FileDatabase</ID>
+    <ID>TooManyFunctions:ExposedReactionDatabase.kt:ExposedReactionDatabase : ReactionDatabase</ID>
+    <ID>TooManyFunctions:ExposedRoomDatabase.kt:ExposedRoomDatabase : RoomDatabase</ID>
+    <ID>TooManyFunctions:ExposedSubscriptionDatabase.kt:ExposedSubscriptionDatabase : SubscriptionDatabase</ID>
+    <ID>TooManyFunctions:ExposedTopicDatabase.kt:ExposedTopicDatabase : TopicDatabase</ID>
+    <ID>TooManyFunctions:ExposedUserDatabase.kt:ExposedUserDatabase : UserDatabase</ID>
     <ID>TrailingCommaOnCallSite:ExposedAdminDatabase.kt:ExposedAdminDatabase$( databaseSession.dbSearch { search { PanelLogs.selectAll().where { PanelLogs.targetId eq targetId and (PanelLogs.objectType eq objectType) }.orderBy(PanelLogs.id, SortOrder.DESC).bindPaginationQuery(PanelLogs, fetch) } map(com.storyteller_f.a.backend.core.types.PanelLog::wrapRow) }, databaseSession.dbSearch { search { PanelLogs.select(PanelLogs.id).where { PanelLogs.targetId eq targetId and (PanelLogs.objectType eq objectType) } } count() } )</ID>
     <ID>TrailingCommaOnCallSite:ExposedAdminDatabase.kt:ExposedAdminDatabase$( databaseSession.dbSearch { search { val query = type?.let { taskRecordType -&gt; TaskRecords.selectAll().where { TaskRecords.type eq taskRecordType } } ?: TaskRecords.selectAll() query.orderBy(TaskRecords.id, SortOrder.DESC).bindPaginationQuery(TaskRecords, fetch) } map(TaskRecord::wrapRow) }, databaseSession.dbSearch { search { type?.let { taskRecordType -&gt; TaskRecords.select(TaskRecords.id).where { TaskRecords.type eq taskRecordType } } ?: TaskRecords.select(TaskRecords.id) } count() } )</ID>
     <ID>TrailingCommaOnCallSite:ExposedCommunityDatabase.kt:ExposedCommunityDatabase$( memberId, community.owner, community.id, ObjectType.COMMUNITY, community.createdTime, MemberStatus.JOINED, community.createdTime )</ID>
@@ -477,6 +642,313 @@
     <ID>TrailingCommaOnDeclarationSite:ExposedUserDatabase.kt:ExposedUserDatabase$( queryBuilder: Query.() -&gt; Query = { this }, block: (ResultRow) -&gt; T )</ID>
     <ID>TrailingCommaOnDeclarationSite:ExposedUserDatabase.kt:ExposedUserDatabase$( uid: PrimaryKey?, users: List&lt;User&gt; )</ID>
     <ID>TrailingCommaOnDeclarationSite:PaginationResult.kt:( table: BaseTable, primaryKeyFetch: PrimaryKeyFetch )</ID>
+    <ID>UndocumentedPublicClass:Aids.kt:Aids : Table</ID>
+    <ID>UndocumentedPublicClass:Assets.kt:AssetTransactions : BaseTable</ID>
+    <ID>UndocumentedPublicClass:BaseTable.kt:BaseTable : Table</ID>
+    <ID>UndocumentedPublicClass:BaseTable.kt:ExposedDatabase : CombinedDatabase</ID>
+    <ID>UndocumentedPublicClass:Communities.kt:Communities : BaseTable</ID>
+    <ID>UndocumentedPublicClass:EncryptedKeys.kt:EncryptedKeys : Table</ID>
+    <ID>UndocumentedPublicClass:ExposedAdminDatabase.kt:ExposedAdminDatabase : AdminDatabase</ID>
+    <ID>UndocumentedPublicClass:ExposedCommunityDatabase.kt:ExposedCommunityDatabase : CommunityDatabase</ID>
+    <ID>UndocumentedPublicClass:ExposedContainerDatabase.kt:ExposedContainerDatabase : ContainerDatabase</ID>
+    <ID>UndocumentedPublicClass:ExposedDatabaseFactory.kt:DatabaseSearchConfig&lt;R, Q&gt;</ID>
+    <ID>UndocumentedPublicClass:ExposedDatabaseFactory.kt:ExposedDatabaseFactory</ID>
+    <ID>UndocumentedPublicClass:ExposedDatabaseFactory.kt:ExposedDatabaseSession</ID>
+    <ID>UndocumentedPublicClass:ExposedFavoriteDatabase.kt:ExposedFavoriteDatabase : FavoriteDatabase</ID>
+    <ID>UndocumentedPublicClass:ExposedFileDatabase.kt:ExposedFileDatabase : FileDatabase</ID>
+    <ID>UndocumentedPublicClass:ExposedPanelAccountDatabase.kt:ExposedPanelAccountDatabase : PanelAccountDatabase</ID>
+    <ID>UndocumentedPublicClass:ExposedReactionDatabase.kt:ExposedReactionDatabase : ReactionDatabase</ID>
+    <ID>UndocumentedPublicClass:ExposedRoomDatabase.kt:ExposedRoomDatabase : RoomDatabase</ID>
+    <ID>UndocumentedPublicClass:ExposedSubscriptionDatabase.kt:ExposedSubscriptionDatabase : SubscriptionDatabase</ID>
+    <ID>UndocumentedPublicClass:ExposedTitleDatabase.kt:ExposedTitleDatabase : TitleDatabase</ID>
+    <ID>UndocumentedPublicClass:ExposedTopicDatabase.kt:ExposedTopicDatabase : TopicDatabase</ID>
+    <ID>UndocumentedPublicClass:ExposedUserDatabase.kt:ExposedUserDatabase : UserDatabase</ID>
+    <ID>UndocumentedPublicClass:FileRecords.kt:FileRecords : BaseTable</ID>
+    <ID>UndocumentedPublicClass:FileRefs.kt:FileRefs : BaseTable</ID>
+    <ID>UndocumentedPublicClass:Members.kt:Members : BaseTable</ID>
+    <ID>UndocumentedPublicClass:PanelAccounts.kt:PanelAccounts : BaseTable</ID>
+    <ID>UndocumentedPublicClass:PanelLogs.kt:PanelLogs : BaseTable</ID>
+    <ID>UndocumentedPublicClass:Quotas.kt:Quotas : Table</ID>
+    <ID>UndocumentedPublicClass:ReactionRecords.kt:ReactionRecords : BaseTable</ID>
+    <ID>UndocumentedPublicClass:ReactionRecords.kt:Reactions : Table</ID>
+    <ID>UndocumentedPublicClass:Rooms.kt:Rooms : BaseTable</ID>
+    <ID>UndocumentedPublicClass:TaskRecords.kt:TaskRecords : BaseTable</ID>
+    <ID>UndocumentedPublicClass:Titles.kt:Titles : BaseTable</ID>
+    <ID>UndocumentedPublicClass:Topics.kt:Topics : BaseTable</ID>
+    <ID>UndocumentedPublicClass:UploadRecords.kt:UploadRecords : BaseTable</ID>
+    <ID>UndocumentedPublicClass:UserDevices.kt:UserDevices : Table</ID>
+    <ID>UndocumentedPublicClass:UserFavorites.kt:UserFavorites : BaseTable</ID>
+    <ID>UndocumentedPublicClass:UserLogs.kt:UserLogs : BaseTable</ID>
+    <ID>UndocumentedPublicClass:UserSubscriptions.kt:SubscriptionSentLogs : BaseTable</ID>
+    <ID>UndocumentedPublicClass:UserSubscriptions.kt:UserSubscriptions : BaseTable</ID>
+    <ID>UndocumentedPublicClass:UserTopicReads.kt:UserTopicReads : Table</ID>
+    <ID>UndocumentedPublicClass:UserTwoFactors.kt:UserTwoFactors : BaseTable</ID>
+    <ID>UndocumentedPublicClass:Users.kt:ChildAccounts : Table</ID>
+    <ID>UndocumentedPublicClass:Users.kt:Users : BaseTable</ID>
+    <ID>UndocumentedPublicFunction:Assets.kt:fun AssetTransaction.Companion.wrapRow: AssetTransaction</ID>
+    <ID>UndocumentedPublicFunction:BaseTable.kt:fun &lt;T : Table&gt; T.emoji</ID>
+    <ID>UndocumentedPublicFunction:BaseTable.kt:fun Table.algoType</ID>
+    <ID>UndocumentedPublicFunction:BaseTable.kt:fun Table.assetType</ID>
+    <ID>UndocumentedPublicFunction:BaseTable.kt:fun Table.customPrimaryKey</ID>
+    <ID>UndocumentedPublicFunction:BaseTable.kt:fun Table.memberPolicy</ID>
+    <ID>UndocumentedPublicFunction:BaseTable.kt:fun Table.memberStatus</ID>
+    <ID>UndocumentedPublicFunction:BaseTable.kt:fun Table.objectStatus</ID>
+    <ID>UndocumentedPublicFunction:BaseTable.kt:fun Table.objectType</ID>
+    <ID>UndocumentedPublicFunction:BaseTable.kt:fun Table.passType</ID>
+    <ID>UndocumentedPublicFunction:BaseTable.kt:fun Table.quotaType</ID>
+    <ID>UndocumentedPublicFunction:BaseTable.kt:fun Table.taskRecordType</ID>
+    <ID>UndocumentedPublicFunction:BaseTable.kt:fun Table.titleStatus</ID>
+    <ID>UndocumentedPublicFunction:BaseTable.kt:fun Table.titleType</ID>
+    <ID>UndocumentedPublicFunction:BaseTable.kt:fun Table.uploadRecordStatus</ID>
+    <ID>UndocumentedPublicFunction:BaseTable.kt:fun Throwable.isDup: Boolean</ID>
+    <ID>UndocumentedPublicFunction:BaseTable.kt:fun buildExposedDatabase: ExposedDatabase</ID>
+    <ID>UndocumentedPublicFunction:Communities.kt:fun Community.Companion.wrapRow: Community</ID>
+    <ID>UndocumentedPublicFunction:EncryptedKeys.kt:fun EncryptedKey.Companion.wrapRow: EncryptedKey</ID>
+    <ID>UndocumentedPublicFunction:ExposedCommunityDatabase.kt:ExposedCommunityDatabase$fun Query.bindPosterSearch: Query</ID>
+    <ID>UndocumentedPublicFunction:ExposedCommunityDatabase.kt:ExposedCommunityDatabase$fun Query.buildCommunitySearchQuery: Query</ID>
+    <ID>UndocumentedPublicFunction:ExposedCommunityDatabase.kt:ExposedCommunityDatabase$suspend fun processCommunityToRawCommunity</ID>
+    <ID>UndocumentedPublicFunction:ExposedContainerDatabase.kt:ExposedContainerDatabase$fun buildSearchMembersQuery: Query</ID>
+    <ID>UndocumentedPublicFunction:ExposedDatabaseFactory.kt:DatabaseSearchConfig$fun search</ID>
+    <ID>UndocumentedPublicFunction:ExposedDatabaseFactory.kt:DatabaseSearchConfig$fun transform</ID>
+    <ID>UndocumentedPublicFunction:ExposedDatabaseFactory.kt:ExposedDatabaseFactory$fun connect: R2dbcDatabase</ID>
+    <ID>UndocumentedPublicFunction:ExposedDatabaseFactory.kt:ExposedDatabaseFactory$suspend fun clean</ID>
+    <ID>UndocumentedPublicFunction:ExposedDatabaseFactory.kt:ExposedDatabaseFactory$suspend fun init</ID>
+    <ID>UndocumentedPublicFunction:ExposedDatabaseFactory.kt:ExposedDatabaseFactory$suspend fun migration</ID>
+    <ID>UndocumentedPublicFunction:ExposedDatabaseFactory.kt:ExposedDatabaseSession$@OptIn(ExperimentalTime::class) suspend fun &lt;R&gt; dbSearch: Result&lt;R&gt;</ID>
+    <ID>UndocumentedPublicFunction:ExposedDatabaseFactory.kt:ExposedDatabaseSession$suspend fun &lt;T&gt; dbQuery: Result&lt;T&gt;</ID>
+    <ID>UndocumentedPublicFunction:ExposedDatabaseFactory.kt:fun &lt;R&gt; DatabaseSearchConfig&lt;R, Query&gt;.firstNotNull</ID>
+    <ID>UndocumentedPublicFunction:ExposedDatabaseFactory.kt:fun &lt;R&gt; DatabaseSearchConfig&lt;R?, Query&gt;.first</ID>
+    <ID>UndocumentedPublicFunction:ExposedDatabaseFactory.kt:fun &lt;T&gt; DatabaseSearchConfig&lt;List&lt;T&gt;, Query&gt;.map</ID>
+    <ID>UndocumentedPublicFunction:ExposedDatabaseFactory.kt:fun DatabaseSearchConfig&lt;Boolean, Query&gt;.isEmpty</ID>
+    <ID>UndocumentedPublicFunction:ExposedDatabaseFactory.kt:fun DatabaseSearchConfig&lt;Boolean, Query&gt;.isNotEmpty</ID>
+    <ID>UndocumentedPublicFunction:ExposedDatabaseFactory.kt:fun DatabaseSearchConfig&lt;Long, Query&gt;.count</ID>
+    <ID>UndocumentedPublicFunction:ExposedReactionDatabase.kt:ExposedReactionDatabase$fun buildReactionInfoQuery: Query</ID>
+    <ID>UndocumentedPublicFunction:ExposedRoomDatabase.kt:ExposedRoomDatabase$fun Query.buildRoomSearchWhereQuery: Query</ID>
+    <ID>UndocumentedPublicFunction:ExposedRoomDatabase.kt:ExposedRoomDatabase$suspend fun processRoomListToRawRoom: Result&lt;List&lt;RawRoom&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:ExposedTitleDatabase.kt:ExposedTitleDatabase$fun Query.buildTitleSearchQuery: Query</ID>
+    <ID>UndocumentedPublicFunction:ExposedTopicDatabase.kt:ExposedTopicDatabase$@OptIn(ExperimentalStdlibApi::class) suspend fun getEncryptedTopicContents: Result&lt;List&lt;Pair&lt;PrimaryKey, TopicContent&gt;&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:ExposedTopicDatabase.kt:ExposedTopicDatabase$suspend fun getTopicCountByPredicate</ID>
+    <ID>UndocumentedPublicFunction:FileRecords.kt:fun FileRecord.Companion.wrapRow: FileRecord</ID>
+    <ID>UndocumentedPublicFunction:FileRefs.kt:fun FileRef.Companion.wrapRow: FileRef</ID>
+    <ID>UndocumentedPublicFunction:Members.kt:fun Member.Companion.wrapRow: Member</ID>
+    <ID>UndocumentedPublicFunction:Members.kt:suspend fun batchAddMembers: List&lt;ResultRow&gt;</ID>
+    <ID>UndocumentedPublicFunction:PaginationResult.kt:fun Query.bindPaginationQuery: Query</ID>
+    <ID>UndocumentedPublicFunction:PanelAccounts.kt:fun PanelAccount.Companion.wrapRow: PanelAccount</ID>
+    <ID>UndocumentedPublicFunction:PanelLogs.kt:fun PanelLog.Companion.wrapRow: PanelLog</ID>
+    <ID>UndocumentedPublicFunction:Quotas.kt:fun Quota.Companion.wrapRow: Quota</ID>
+    <ID>UndocumentedPublicFunction:ReactionRecords.kt:fun Reaction.Companion.wrapRow: Reaction</ID>
+    <ID>UndocumentedPublicFunction:ReactionRecords.kt:fun ReactionRecord.Companion.wrapRow: ReactionRecord</ID>
+    <ID>UndocumentedPublicFunction:Rooms.kt:fun Room.Companion.findRoomById</ID>
+    <ID>UndocumentedPublicFunction:Rooms.kt:fun Room.Companion.wrapRow: Room</ID>
+    <ID>UndocumentedPublicFunction:TaskRecords.kt:fun TaskRecord.Companion.wrapRow: TaskRecord</ID>
+    <ID>UndocumentedPublicFunction:TaskRecords.kt:suspend fun addTaskRecord</ID>
+    <ID>UndocumentedPublicFunction:Titles.kt:fun Title.Companion.wrapRow: Title</ID>
+    <ID>UndocumentedPublicFunction:Topics.kt:fun Topic.Companion.wrapRow: Topic</ID>
+    <ID>UndocumentedPublicFunction:UploadRecords.kt:fun UploadRecord.Companion.wrapRow: UploadRecord</ID>
+    <ID>UndocumentedPublicFunction:UserDevices.kt:fun UserDevice.Companion.wrapRow: UserDevice</ID>
+    <ID>UndocumentedPublicFunction:UserFavorites.kt:fun UserFavorite.Companion.wrapRow: UserFavorite</ID>
+    <ID>UndocumentedPublicFunction:UserLogs.kt:fun Table.userLogType</ID>
+    <ID>UndocumentedPublicFunction:UserLogs.kt:fun UserLog.Companion.wrapRow: UserLog</ID>
+    <ID>UndocumentedPublicFunction:UserSubscriptions.kt:fun SubscriptionSentLog.Companion.wrapRow: SubscriptionSentLog</ID>
+    <ID>UndocumentedPublicFunction:UserSubscriptions.kt:fun UserSubscription.Companion.wrapRow: UserSubscription</ID>
+    <ID>UndocumentedPublicFunction:UserTopicReads.kt:fun UserTopicRead.Companion.wrapRow: UserTopicRead</ID>
+    <ID>UndocumentedPublicFunction:UserTwoFactors.kt:fun UserTwoFactor.Companion.wrapRow: UserTwoFactor</ID>
+    <ID>UndocumentedPublicFunction:UserTwoFactors.kt:fun encodeRecoveryCodeHashes: String</ID>
+    <ID>UndocumentedPublicFunction:Users.kt:fun ChildAccount.Companion.wrapRow: ChildAccount</ID>
+    <ID>UndocumentedPublicFunction:Users.kt:fun User.Companion.find: Query</ID>
+    <ID>UndocumentedPublicFunction:Users.kt:fun User.Companion.wrapRow: User</ID>
+    <ID>UndocumentedPublicFunction:Users.kt:fun mapUserInfo: RawUser</ID>
+    <ID>UndocumentedPublicProperty:Aids.kt:Aids$val objectId = customPrimaryKey("object_id").uniqueIndex()</ID>
+    <ID>UndocumentedPublicProperty:Aids.kt:Aids$val objectType = objectType("object_type")</ID>
+    <ID>UndocumentedPublicProperty:Aids.kt:Aids$val value = varchar("value", 100).uniqueIndex()</ID>
+    <ID>UndocumentedPublicProperty:Assets.kt:AssetTransactions$val after = long("after")</ID>
+    <ID>UndocumentedPublicProperty:Assets.kt:AssetTransactions$val before = long("before")</ID>
+    <ID>UndocumentedPublicProperty:Assets.kt:AssetTransactions$val type = assetType("type")</ID>
+    <ID>UndocumentedPublicProperty:Assets.kt:AssetTransactions$val uid = customPrimaryKey("uid")</ID>
+    <ID>UndocumentedPublicProperty:BaseTable.kt:BaseTable$val createdTime = datetime("created_time")</ID>
+    <ID>UndocumentedPublicProperty:BaseTable.kt:BaseTable$val id = customPrimaryKey("id")</ID>
+    <ID>UndocumentedPublicProperty:BaseTable.kt:ExposedDatabase$val databaseSession: ExposedDatabaseSession</ID>
+    <ID>UndocumentedPublicProperty:Communities.kt:Communities$val fontSettings = text("font_settings").nullable()</ID>
+    <ID>UndocumentedPublicProperty:Communities.kt:Communities$val icon = customPrimaryKey("icon").nullable()</ID>
+    <ID>UndocumentedPublicProperty:Communities.kt:Communities$val memberPolicy = memberPolicy("member_policy")</ID>
+    <ID>UndocumentedPublicProperty:Communities.kt:Communities$val name = varchar("name", COMMUNITY_NAME_LENGTH).index()</ID>
+    <ID>UndocumentedPublicProperty:Communities.kt:Communities$val owner = customPrimaryKey("owner").index()</ID>
+    <ID>UndocumentedPublicProperty:Communities.kt:Communities$val poster = customPrimaryKey("poster").index().nullable()</ID>
+    <ID>UndocumentedPublicProperty:Communities.kt:Communities$val status = objectStatus("status")</ID>
+    <ID>UndocumentedPublicProperty:EncryptedKeys.kt:EncryptedKeys$val encryptedAes = blob("encrypted_aes")</ID>
+    <ID>UndocumentedPublicProperty:EncryptedKeys.kt:EncryptedKeys$val topicId = customPrimaryKey("topic_id").index()</ID>
+    <ID>UndocumentedPublicProperty:EncryptedKeys.kt:EncryptedKeys$val uid = customPrimaryKey("uid")</ID>
+    <ID>UndocumentedPublicProperty:ExposedAdminDatabase.kt:ExposedAdminDatabase$val databaseSession: ExposedDatabaseSession</ID>
+    <ID>UndocumentedPublicProperty:ExposedCommunityDatabase.kt:ExposedCommunityDatabase$val containerDatabase: ContainerDatabase</ID>
+    <ID>UndocumentedPublicProperty:ExposedCommunityDatabase.kt:ExposedCommunityDatabase$val databaseSession: ExposedDatabaseSession</ID>
+    <ID>UndocumentedPublicProperty:ExposedContainerDatabase.kt:ExposedContainerDatabase$val combinedDatabase: CombinedDatabase</ID>
+    <ID>UndocumentedPublicProperty:ExposedContainerDatabase.kt:ExposedContainerDatabase$val databaseSession: ExposedDatabaseSession</ID>
+    <ID>UndocumentedPublicProperty:ExposedDatabaseFactory.kt:DatabaseSearchConfig$lateinit var searchFunc: () -&gt; Q</ID>
+    <ID>UndocumentedPublicProperty:ExposedDatabaseFactory.kt:DatabaseSearchConfig$lateinit var transformFunc: suspend Q.() -&gt; R</ID>
+    <ID>UndocumentedPublicProperty:ExposedDatabaseFactory.kt:ExposedDatabaseSession$val database: R2dbcDatabase</ID>
+    <ID>UndocumentedPublicProperty:ExposedDatabaseFactory.kt:ExposedDatabaseSession$val port: Int?</ID>
+    <ID>UndocumentedPublicProperty:ExposedFileDatabase.kt:ExposedFileDatabase$val databaseSession: ExposedDatabaseSession</ID>
+    <ID>UndocumentedPublicProperty:ExposedPanelAccountDatabase.kt:ExposedPanelAccountDatabase$val databaseSession: ExposedDatabaseSession</ID>
+    <ID>UndocumentedPublicProperty:ExposedReactionDatabase.kt:ExposedReactionDatabase$val databaseSession: ExposedDatabaseSession</ID>
+    <ID>UndocumentedPublicProperty:ExposedRoomDatabase.kt:ExposedRoomDatabase$val containerDatabase: ContainerDatabase</ID>
+    <ID>UndocumentedPublicProperty:ExposedRoomDatabase.kt:ExposedRoomDatabase$val databaseSession: ExposedDatabaseSession</ID>
+    <ID>UndocumentedPublicProperty:ExposedTitleDatabase.kt:ExposedTitleDatabase$val exposedDatabaseSession: ExposedDatabaseSession</ID>
+    <ID>UndocumentedPublicProperty:ExposedTopicDatabase.kt:ExposedTopicDatabase$val combinedDatabase: CombinedDatabase</ID>
+    <ID>UndocumentedPublicProperty:ExposedTopicDatabase.kt:ExposedTopicDatabase$val databaseSession: ExposedDatabaseSession</ID>
+    <ID>UndocumentedPublicProperty:FileRecords.kt:FileRecords$val contentType = varchar("content_type", 50)</ID>
+    <ID>UndocumentedPublicProperty:FileRecords.kt:FileRecords$val duration = long("duration")</ID>
+    <ID>UndocumentedPublicProperty:FileRecords.kt:FileRecords$val fullName = varchar("full_name", 200).index()</ID>
+    <ID>UndocumentedPublicProperty:FileRecords.kt:FileRecords$val height = integer("height")</ID>
+    <ID>UndocumentedPublicProperty:FileRecords.kt:FileRecords$val name = varchar("name", 200)</ID>
+    <ID>UndocumentedPublicProperty:FileRecords.kt:FileRecords$val owner = customPrimaryKey("owner")</ID>
+    <ID>UndocumentedPublicProperty:FileRecords.kt:FileRecords$val ownerType = objectType("owner_type")</ID>
+    <ID>UndocumentedPublicProperty:FileRecords.kt:FileRecords$val sha256 = varchar("sha256", 64)</ID>
+    <ID>UndocumentedPublicProperty:FileRecords.kt:FileRecords$val size = long("size")</ID>
+    <ID>UndocumentedPublicProperty:FileRecords.kt:FileRecords$val status = objectStatus("status")</ID>
+    <ID>UndocumentedPublicProperty:FileRecords.kt:FileRecords$val width = integer("width")</ID>
+    <ID>UndocumentedPublicProperty:FileRefs.kt:FileRefs$val author = customPrimaryKey("owner")</ID>
+    <ID>UndocumentedPublicProperty:FileRefs.kt:FileRefs$val fileId = customPrimaryKey("file_id")</ID>
+    <ID>UndocumentedPublicProperty:FileRefs.kt:FileRefs$val mediaName = varchar("media_name", MEDIA_NAME_LENGTH)</ID>
+    <ID>UndocumentedPublicProperty:FileRefs.kt:FileRefs$val objectId = customPrimaryKey("object_id")</ID>
+    <ID>UndocumentedPublicProperty:FileRefs.kt:FileRefs$val objectType = objectType("object_type")</ID>
+    <ID>UndocumentedPublicProperty:Members.kt:Members$val invitedTime = datetime("invited_time").nullable()</ID>
+    <ID>UndocumentedPublicProperty:Members.kt:Members$val joinedTime = datetime("joined_time").nullable()</ID>
+    <ID>UndocumentedPublicProperty:Members.kt:Members$val objectId = customPrimaryKey("object_id").index()</ID>
+    <ID>UndocumentedPublicProperty:Members.kt:Members$val objectType = objectType("object_type")</ID>
+    <ID>UndocumentedPublicProperty:Members.kt:Members$val status = memberStatus("status")</ID>
+    <ID>UndocumentedPublicProperty:Members.kt:Members$val uid = customPrimaryKey("uid").index()</ID>
+    <ID>UndocumentedPublicProperty:PanelAccounts.kt:PanelAccounts$val address = varchar("address", ADDRESS_LENGTH).uniqueIndex()</ID>
+    <ID>UndocumentedPublicProperty:PanelAccounts.kt:PanelAccounts$val algoType = algoType("algo_type")</ID>
+    <ID>UndocumentedPublicProperty:PanelAccounts.kt:PanelAccounts$val name = varchar("name", 100)</ID>
+    <ID>UndocumentedPublicProperty:PanelAccounts.kt:PanelAccounts$val passType = passType("pass_type")</ID>
+    <ID>UndocumentedPublicProperty:PanelAccounts.kt:PanelAccounts$val publicKey = text("public_key")</ID>
+    <ID>UndocumentedPublicProperty:PanelAccounts.kt:PanelAccounts$val publicKeyMd5 = varchar("public_key_md5", 32).uniqueIndex()</ID>
+    <ID>UndocumentedPublicProperty:PanelLogs.kt:PanelLogs$val action = text("action")</ID>
+    <ID>UndocumentedPublicProperty:PanelLogs.kt:PanelLogs$val adminId = customPrimaryKey("admin_id").index()</ID>
+    <ID>UndocumentedPublicProperty:PanelLogs.kt:PanelLogs$val objectType = objectType("object_type").default(ObjectType.USER)</ID>
+    <ID>UndocumentedPublicProperty:PanelLogs.kt:PanelLogs$val targetId = customPrimaryKey("target_id").index()</ID>
+    <ID>UndocumentedPublicProperty:Quotas.kt:Quotas$val lockId = customPrimaryKey("lock_id").nullable()</ID>
+    <ID>UndocumentedPublicProperty:Quotas.kt:Quotas$val ownerId = customPrimaryKey("owner_id")</ID>
+    <ID>UndocumentedPublicProperty:Quotas.kt:Quotas$val ownerType = objectType("owner_type")</ID>
+    <ID>UndocumentedPublicProperty:Quotas.kt:Quotas$val quotaType = quotaType("quota_type")</ID>
+    <ID>UndocumentedPublicProperty:Quotas.kt:Quotas$val total = long("total")</ID>
+    <ID>UndocumentedPublicProperty:Quotas.kt:Quotas$val used = long("used")</ID>
+    <ID>UndocumentedPublicProperty:ReactionRecords.kt:ReactionRecords$val emoji = emoji()</ID>
+    <ID>UndocumentedPublicProperty:ReactionRecords.kt:ReactionRecords$val objectId = customPrimaryKey("object_id").index()</ID>
+    <ID>UndocumentedPublicProperty:ReactionRecords.kt:ReactionRecords$val objectType = objectType("object_type")</ID>
+    <ID>UndocumentedPublicProperty:ReactionRecords.kt:ReactionRecords$val uid = customPrimaryKey("uid")</ID>
+    <ID>UndocumentedPublicProperty:ReactionRecords.kt:Reactions$val count = long("count")</ID>
+    <ID>UndocumentedPublicProperty:ReactionRecords.kt:Reactions$val emoji = emoji()</ID>
+    <ID>UndocumentedPublicProperty:ReactionRecords.kt:Reactions$val lastReactionId = customPrimaryKey("last_reaction_id")</ID>
+    <ID>UndocumentedPublicProperty:ReactionRecords.kt:Reactions$val objectId = customPrimaryKey("object_id")</ID>
+    <ID>UndocumentedPublicProperty:ReactionRecords.kt:Reactions$val objectType = objectType("object_type")</ID>
+    <ID>UndocumentedPublicProperty:Rooms.kt:Rooms$val communityId = customPrimaryKey("community_id").index().nullable()</ID>
+    <ID>UndocumentedPublicProperty:Rooms.kt:Rooms$val creator = customPrimaryKey("creator").index()</ID>
+    <ID>UndocumentedPublicProperty:Rooms.kt:Rooms$val icon = customPrimaryKey("icon").nullable()</ID>
+    <ID>UndocumentedPublicProperty:Rooms.kt:Rooms$val name = varchar("name", ROOM_NAME_LENGTH).index()</ID>
+    <ID>UndocumentedPublicProperty:Rooms.kt:Rooms$val status = objectStatus("status")</ID>
+    <ID>UndocumentedPublicProperty:TaskRecords.kt:TaskRecords$val processedId = customPrimaryKey("processed_id")</ID>
+    <ID>UndocumentedPublicProperty:TaskRecords.kt:TaskRecords$val type = taskRecordType("type")</ID>
+    <ID>UndocumentedPublicProperty:Titles.kt:Titles$val creator = customPrimaryKey("creator").index()</ID>
+    <ID>UndocumentedPublicProperty:Titles.kt:Titles$val descriptionTopicId = customPrimaryKey("description_topic_id")</ID>
+    <ID>UndocumentedPublicProperty:Titles.kt:Titles$val expiresAt = datetime("expires_at").nullable()</ID>
+    <ID>UndocumentedPublicProperty:Titles.kt:Titles$val name = varchar("name", 20).index()</ID>
+    <ID>UndocumentedPublicProperty:Titles.kt:Titles$val receiver = customPrimaryKey("receiver").index()</ID>
+    <ID>UndocumentedPublicProperty:Titles.kt:Titles$val scopeId = customPrimaryKey("scope_id").index()</ID>
+    <ID>UndocumentedPublicProperty:Titles.kt:Titles$val scopeType = objectType("scope_type")</ID>
+    <ID>UndocumentedPublicProperty:Titles.kt:Titles$val status = objectStatus("status")</ID>
+    <ID>UndocumentedPublicProperty:Titles.kt:Titles$val titleStatus = titleStatus("title_status")</ID>
+    <ID>UndocumentedPublicProperty:Titles.kt:Titles$val type = titleType("type").index()</ID>
+    <ID>UndocumentedPublicProperty:Topics.kt:Topics$val author = customPrimaryKey("author").index()</ID>
+    <ID>UndocumentedPublicProperty:Topics.kt:Topics$val content = blob("content")</ID>
+    <ID>UndocumentedPublicProperty:Topics.kt:Topics$val isEncrypted = bool("is_encrypted")</ID>
+    <ID>UndocumentedPublicProperty:Topics.kt:Topics$val lastModifiedTime = datetime("last_modified_time").nullable()</ID>
+    <ID>UndocumentedPublicProperty:Topics.kt:Topics$val level = integer("level")</ID>
+    <ID>UndocumentedPublicProperty:Topics.kt:Topics$val parentId = customPrimaryKey("parent_id").index()</ID>
+    <ID>UndocumentedPublicProperty:Topics.kt:Topics$val parentType = objectType("parent_type")</ID>
+    <ID>UndocumentedPublicProperty:Topics.kt:Topics$val pinned = bool("pinned").default(false)</ID>
+    <ID>UndocumentedPublicProperty:Topics.kt:Topics$val rootId = customPrimaryKey("root_id").index()</ID>
+    <ID>UndocumentedPublicProperty:Topics.kt:Topics$val rootType = objectType("root_type")</ID>
+    <ID>UndocumentedPublicProperty:Topics.kt:Topics$val status = objectStatus("status")</ID>
+    <ID>UndocumentedPublicProperty:UploadRecords.kt:UploadRecords$val chunkSize = long("chunk_size")</ID>
+    <ID>UndocumentedPublicProperty:UploadRecords.kt:UploadRecords$val name = varchar("name", 100)</ID>
+    <ID>UndocumentedPublicProperty:UploadRecords.kt:UploadRecords$val objectId = customPrimaryKey("object_id")</ID>
+    <ID>UndocumentedPublicProperty:UploadRecords.kt:UploadRecords$val objectType = objectType("object_type")</ID>
+    <ID>UndocumentedPublicProperty:UploadRecords.kt:UploadRecords$val progress = long("progress")</ID>
+    <ID>UndocumentedPublicProperty:UploadRecords.kt:UploadRecords$val sha256 = varchar("sha256", 64).nullable()</ID>
+    <ID>UndocumentedPublicProperty:UploadRecords.kt:UploadRecords$val status = uploadRecordStatus("status")</ID>
+    <ID>UndocumentedPublicProperty:UploadRecords.kt:UploadRecords$val total = long("total")</ID>
+    <ID>UndocumentedPublicProperty:UserDevices.kt:UserDevices$val endpointUrl = varchar("endpoint_url", 100).uniqueIndex()</ID>
+    <ID>UndocumentedPublicProperty:UserDevices.kt:UserDevices$val uid = customPrimaryKey("uid")</ID>
+    <ID>UndocumentedPublicProperty:UserFavorites.kt:UserFavorites$val objectId = customPrimaryKey("object_id")</ID>
+    <ID>UndocumentedPublicProperty:UserFavorites.kt:UserFavorites$val objectType = objectType("object_type")</ID>
+    <ID>UndocumentedPublicProperty:UserFavorites.kt:UserFavorites$val uid = customPrimaryKey("uid")</ID>
+    <ID>UndocumentedPublicProperty:UserLogs.kt:UserLogs$val objectId = customPrimaryKey("object_id")</ID>
+    <ID>UndocumentedPublicProperty:UserLogs.kt:UserLogs$val objectType = objectType("object_type")</ID>
+    <ID>UndocumentedPublicProperty:UserLogs.kt:UserLogs$val type = userLogType("type")</ID>
+    <ID>UndocumentedPublicProperty:UserLogs.kt:UserLogs$val uid = customPrimaryKey("uid")</ID>
+    <ID>UndocumentedPublicProperty:UserSubscriptions.kt:SubscriptionSentLogs$val objectId = customPrimaryKey("object_id")</ID>
+    <ID>UndocumentedPublicProperty:UserSubscriptions.kt:SubscriptionSentLogs$val objectType = objectType("object_type")</ID>
+    <ID>UndocumentedPublicProperty:UserSubscriptions.kt:SubscriptionSentLogs$val subscriptionId = customPrimaryKey("subscription_id")</ID>
+    <ID>UndocumentedPublicProperty:UserSubscriptions.kt:SubscriptionSentLogs$val uid = customPrimaryKey("uid")</ID>
+    <ID>UndocumentedPublicProperty:UserSubscriptions.kt:UserSubscriptions$val objectId = customPrimaryKey("object_id")</ID>
+    <ID>UndocumentedPublicProperty:UserSubscriptions.kt:UserSubscriptions$val objectType = objectType("object_type")</ID>
+    <ID>UndocumentedPublicProperty:UserSubscriptions.kt:UserSubscriptions$val uid = customPrimaryKey("uid")</ID>
+    <ID>UndocumentedPublicProperty:UserTopicReads.kt:UserTopicReads$val objectId = customPrimaryKey("object_id")</ID>
+    <ID>UndocumentedPublicProperty:UserTopicReads.kt:UserTopicReads$val objectType = objectType("object_type")</ID>
+    <ID>UndocumentedPublicProperty:UserTopicReads.kt:UserTopicReads$val topicId = customPrimaryKey("topic_id")</ID>
+    <ID>UndocumentedPublicProperty:UserTopicReads.kt:UserTopicReads$val uid = customPrimaryKey("uid")</ID>
+    <ID>UndocumentedPublicProperty:UserTopicReads.kt:UserTopicReads$val updatedAt = datetime("updated_at")</ID>
+    <ID>UndocumentedPublicProperty:UserTwoFactors.kt:UserTwoFactors$val enabled = bool("enabled").default(false)</ID>
+    <ID>UndocumentedPublicProperty:UserTwoFactors.kt:UserTwoFactors$val recoveryCodeHashes = text("recovery_code_hashes")</ID>
+    <ID>UndocumentedPublicProperty:UserTwoFactors.kt:UserTwoFactors$val totpSecret = varchar("totp_secret", 64)</ID>
+    <ID>UndocumentedPublicProperty:UserTwoFactors.kt:UserTwoFactors$val type = enumerationByName&lt;TwoFactorType&gt;("type", 20)</ID>
+    <ID>UndocumentedPublicProperty:UserTwoFactors.kt:UserTwoFactors$val uid = customPrimaryKey("uid").uniqueIndex()</ID>
+    <ID>UndocumentedPublicProperty:UserTwoFactors.kt:UserTwoFactors$val updatedAt = datetime("updated_at")</ID>
+    <ID>UndocumentedPublicProperty:Users.kt:ChildAccounts$val encryptedAesKey = text("encrypted_aes_key")</ID>
+    <ID>UndocumentedPublicProperty:Users.kt:ChildAccounts$val encryptedEncryptionPrivateKey = text("encrypted_encryption_private_key").nullable()</ID>
+    <ID>UndocumentedPublicProperty:Users.kt:ChildAccounts$val encryptedPrivateKey = text("encrypted_private_key")</ID>
+    <ID>UndocumentedPublicProperty:Users.kt:ChildAccounts$val hostId = customPrimaryKey("host_id")</ID>
+    <ID>UndocumentedPublicProperty:Users.kt:ChildAccounts$val primaryKeyMd5 = varchar("private_key_md5", 32).uniqueIndex()</ID>
+    <ID>UndocumentedPublicProperty:Users.kt:ChildAccounts$val remark = text("remark").nullable()</ID>
+    <ID>UndocumentedPublicProperty:Users.kt:ChildAccounts$val uid = customPrimaryKey("uid")</ID>
+    <ID>UndocumentedPublicProperty:Users.kt:Users$// Public Key (Kyber-768) hex 编码的der 格式 val encryptionPublicKey = text("encryption_public_key").nullable()</ID>
+    <ID>UndocumentedPublicProperty:Users.kt:Users$// hex编码的der 格式公钥 val publicKey = text("public_key")</ID>
+    <ID>UndocumentedPublicProperty:Users.kt:Users$val acgAmount = long("acg_amount").default(0)</ID>
+    <ID>UndocumentedPublicProperty:Users.kt:Users$val address = varchar("address", ADDRESS_LENGTH).uniqueIndex()</ID>
+    <ID>UndocumentedPublicProperty:Users.kt:Users$val algoType = algoType("algo_type")</ID>
+    <ID>UndocumentedPublicProperty:Users.kt:Users$val icon = customPrimaryKey("icon").nullable()</ID>
+    <ID>UndocumentedPublicProperty:Users.kt:Users$val nickname = varchar("nickname", USER_NICKNAME).index()</ID>
+    <ID>UndocumentedPublicProperty:Users.kt:Users$val notificationId = customPrimaryKey("notification_id")</ID>
+    <ID>UndocumentedPublicProperty:Users.kt:Users$val passType = passType("pass_type")</ID>
+    <ID>UndocumentedPublicProperty:Users.kt:Users$val publicKeyMd5 = varchar("public_key_md5", 32).uniqueIndex()</ID>
+    <ID>UndocumentedPublicProperty:Users.kt:Users$val status = enumerationByName&lt;UserStatus&gt;("status", 20).default(UserStatus.NORMAL)</ID>
+    <ID>UnnecessaryParentheses:ExposedContainerDatabase.kt:ExposedContainerDatabase$(Members.objectId eq objectId)</ID>
+    <ID>UnnecessaryParentheses:ExposedContainerDatabase.kt:ExposedContainerDatabase$(Members.uid eq uid)</ID>
+    <ID>UnnecessaryParentheses:ExposedContainerDatabase.kt:ExposedContainerDatabase$(Members.uid inList uidList)</ID>
+    <ID>UnnecessaryParentheses:ExposedContainerDatabase.kt:ExposedContainerDatabase$(UserTopicReads.uid eq Members.uid)</ID>
+    <ID>UnnecessaryParentheses:ExposedFavoriteDatabase.kt:ExposedFavoriteDatabase$(UserFavorites.uid eq uid)</ID>
+    <ID>UnnecessaryParentheses:ExposedReactionDatabase.kt:ExposedReactionDatabase$(ReactionRecords.objectId eq objectId)</ID>
+    <ID>UnnecessaryParentheses:ExposedReactionDatabase.kt:ExposedReactionDatabase$(ReactionRecords.objectId inList objectId)</ID>
+    <ID>UnnecessaryParentheses:ExposedReactionDatabase.kt:ExposedReactionDatabase$(ReactionRecords.objectId inList objectIdList)</ID>
+    <ID>UnnecessaryParentheses:ExposedRoomDatabase.kt:ExposedRoomDatabase$(Members.uid eq uid)</ID>
+    <ID>UnnecessaryParentheses:ExposedSubscriptionDatabase.kt:ExposedSubscriptionDatabase$(UserSubscriptions.uid eq uid)</ID>
+    <ID>UnnecessaryParentheses:ExposedTitleDatabase.kt:ExposedTitleDatabase$(Titles.expiresAt.isNull().or(Titles.expiresAt greater currentTime))</ID>
+    <ID>UnnecessaryParentheses:ExposedTitleDatabase.kt:ExposedTitleDatabase$(Titles.titleStatus eq TitleWorkStatus.OK)</ID>
+    <ID>UnnecessaryParentheses:ExposedUserDatabase.kt:ExposedUserDatabase$(UserDevices.uid eq uid)</ID>
+    <ID>UnnecessaryParentheses:ExposedUserDatabase.kt:ExposedUserDatabase$(Users.publicKeyMd5 eq md5)</ID>
+    <ID>UnnecessaryParentheses:PaginationResult.kt:(order ?: SortOrder.DESC)</ID>
+    <ID>UseIfInsteadOfWhen:ExposedCommunityDatabase.kt:ExposedCommunityDatabase$when (joinSearch) { is JoinSearch.Joined -&gt; { adjustColumnSet { join(Members, JoinType.INNER, Communities.id, Members.objectId) { Members.uid eq joinSearch.uid } } } else -&gt; { } }</ID>
+    <ID>UseIfInsteadOfWhen:ExposedTitleDatabase.kt:ExposedTitleDatabase$when (searchType) { TitleSearchType.CREATOR -&gt; Titles.creator eq uid else -&gt; Titles.receiver eq uid }</ID>
+    <ID>UseLet:ExposedDatabaseFactory.kt:ExposedDatabaseSession$if (input != null) { val s = "explain" val end = input.indexOf(s, ignoreCase = true) + s.length val trimmedStatements = input.substring(end).trim() ExplainResult(db.dialect.name, trimmedStatements, result, "") } else { null }</ID>
+    <ID>WildcardImport:Communities.kt:import org.jetbrains.exposed.v1.core.*</ID>
+    <ID>WildcardImport:FileRecords.kt:import org.jetbrains.exposed.v1.core.*</ID>
+    <ID>WildcardImport:ReactionRecords.kt:import org.jetbrains.exposed.v1.core.*</ID>
+    <ID>WildcardImport:Titles.kt:import org.jetbrains.exposed.v1.core.*</ID>
+    <ID>WildcardImport:Topics.kt:import com.storyteller_f.shared.utils.*</ID>
+    <ID>WildcardImport:Topics.kt:import org.jetbrains.exposed.v1.core.*</ID>
+    <ID>WildcardImport:UserDevices.kt:import org.jetbrains.exposed.v1.core.*</ID>
+    <ID>WildcardImport:Users.kt:import org.jetbrains.exposed.v1.core.*</ID>
     <ID>Wrapping:ExposedAdminDatabase.kt:ExposedAdminDatabase$(</ID>
     <ID>Wrapping:ExposedCommunityDatabase.kt:ExposedCommunityDatabase$(</ID>
     <ID>Wrapping:ExposedCommunityDatabase.kt:ExposedCommunityDatabase$(getCommunityListByPredicate { buildCommunitySearchQuery(joinSearch, hasPosterSearch) .bindPaginationQuery(Communities, primaryKeyFetch) }, getCommunityCountByPredicate { buildCommunitySearchQuery(joinSearch, hasPosterSearch) })</ID>

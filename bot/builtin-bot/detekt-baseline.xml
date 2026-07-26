@@ -2,7 +2,13 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>AbsentOrWrongFileLicense:BuiltInBot.kt:com.storyteller_f.a.built_in_bot.BuiltInBot.kt</ID>
+    <ID>AbsentOrWrongFileLicense:build.gradle.kts:.build.gradle.kts</ID>
+    <ID>CascadingCallWrapping:BuiltInBot.kt:onFailure { Napier.e(it.cause) { "createNewTopic failed" } }</ID>
     <ID>FunctionSignature:BuiltInBot.kt:private suspend fun getLatestHasCommentedTopic: Long</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:BuiltInBot.kt:fun main</ID>
+    <ID>MagicNumber:BuiltInBot.kt:10</ID>
+    <ID>MagicNumber:BuiltInBot.kt:1000</ID>
     <ID>MultilineExpressionWrapping:BuiltInBot.kt:Thread { println("🔻 收到终止信号，准备退出...") job.cancel() Thread.sleep(1000) }</ID>
     <ID>MultilineExpressionWrapping:BuiltInBot.kt:client.models.generateContent( "gemini-2.5-flash", "$newPrompt\n日期:${year}年${month}月${day}日，领域:${communityInfo.name}", GenerateContentConfig.builder().tools(Tool.builder().googleSearch(GoogleSearch.builder())) .build() )</ID>
     <ID>MultilineExpressionWrapping:BuiltInBot.kt:client.models.generateContent( "gemini-2.5-flash", "$prompt\n${topicInfo.content}", null )</ID>
@@ -16,6 +22,12 @@
     <ID>MultilineExpressionWrapping:BuiltInBot.kt:sessionManager.getUserCommunities( com.storyteller_f.a.api.CustomApi.Users.JoinedCommunities.UserCommunitiesQuery(nextPageToken = next) ).getOrThrow()</ID>
     <ID>PackageName:BuiltInBot.kt:package com.storyteller_f.a.built_in_bot</ID>
     <ID>PackageNaming:BuiltInBot.kt:package com.storyteller_f.a.built_in_bot</ID>
+    <ID>ThrowingExceptionInMain:BuiltInBot.kt:fun main</ID>
+    <ID>ThrowsCount:BuiltInBot.kt:fun main</ID>
+    <ID>TooGenericExceptionCaught:BuiltInBot.kt:e: Exception</ID>
+    <ID>TooGenericExceptionThrown:BuiltInBot.kt:throw Exception("BOT_PEM not exists")</ID>
+    <ID>TooGenericExceptionThrown:BuiltInBot.kt:throw Exception("SERVER_URL not exists")</ID>
+    <ID>TooGenericExceptionThrown:BuiltInBot.kt:throw Exception("WS_SERVER_URL not exists")</ID>
     <ID>TrailingCommaOnCallSite:BuiltInBot.kt:( "gemini-2.5-flash", "$newPrompt\n日期:${year}年${month}月${day}日，领域:${communityInfo.name}", GenerateContentConfig.builder().tools(Tool.builder().googleSearch(GoogleSearch.builder())) .build() )</ID>
     <ID>TrailingCommaOnCallSite:BuiltInBot.kt:( "gemini-2.5-flash", "$prompt\n${topicInfo.content}", null )</ID>
     <ID>TrailingCommaOnCallSite:BuiltInBot.kt:( ObjectType.COMMUNITY, communityInfo.id, TopicPinSearch.UNSPECIFIED, PaginationQuery(next, null, size = 10) )</ID>
@@ -31,6 +43,7 @@
     <ID>TrailingCommaOnDeclarationSite:BuiltInBot.kt:( sessionManager: SimpleUserSessionManager, info: CommunityInfo )</ID>
     <ID>TrailingCommaOnDeclarationSite:BuiltInBot.kt:( sessionManager: UserSessionManager, client: Client, communityInfo: CommunityInfo, prompt: String )</ID>
     <ID>TrailingCommaOnDeclarationSite:BuiltInBot.kt:( topicInfo: TopicInfo, client: Client, sessionManager: SimpleUserSessionManager, prompt: String )</ID>
+    <ID>UndocumentedPublicFunction:BuiltInBot.kt:fun main</ID>
     <ID>Wrapping:BuiltInBot.kt:(</ID>
   </CurrentIssues>
 </SmellBaseline>

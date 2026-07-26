@@ -2,11 +2,69 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>AbsentOrWrongFileLicense:AdminFileTest.kt:com.storyteller_f.a.cloud.server.AdminFileTest.kt</ID>
+    <ID>AbsentOrWrongFileLicense:AdminRoute.kt:com.storyteller_f.a.cloud.server.route.AdminRoute.kt</ID>
+    <ID>AbsentOrWrongFileLicense:AdminTaskRecordTest.kt:com.storyteller_f.a.cloud.server.AdminTaskRecordTest.kt</ID>
+    <ID>AbsentOrWrongFileLicense:AdminTest.kt:com.storyteller_f.a.cloud.server.AdminTest.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Application.kt:com.storyteller_f.a.cloud.server.Application.kt</ID>
+    <ID>AbsentOrWrongFileLicense:AuthRoute.kt:com.storyteller_f.a.cloud.server.route.AuthRoute.kt</ID>
+    <ID>AbsentOrWrongFileLicense:CliTest.kt:com.storyteller_f.a.cloud.server.CliTest.kt</ID>
+    <ID>AbsentOrWrongFileLicense:ClientIp.kt:com.storyteller_f.a.cloud.server.common.ClientIp.kt</ID>
+    <ID>AbsentOrWrongFileLicense:CommunityRoute.kt:com.storyteller_f.a.cloud.server.route.CommunityRoute.kt</ID>
+    <ID>AbsentOrWrongFileLicense:CommunitySearchTest.kt:com.storyteller_f.a.cloud.server.CommunitySearchTest.kt</ID>
+    <ID>AbsentOrWrongFileLicense:CommunityTest.kt:com.storyteller_f.a.cloud.server.CommunityTest.kt</ID>
+    <ID>AbsentOrWrongFileLicense:FileRoute.kt:com.storyteller_f.a.cloud.server.route.FileRoute.kt</ID>
+    <ID>AbsentOrWrongFileLicense:FileSearchTest.kt:com.storyteller_f.a.cloud.server.FileSearchTest.kt</ID>
+    <ID>AbsentOrWrongFileLicense:FileTest.kt:com.storyteller_f.a.cloud.server.FileTest.kt</ID>
+    <ID>AbsentOrWrongFileLicense:MemberSearchTest.kt:com.storyteller_f.a.cloud.server.MemberSearchTest.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Monitor.kt:com.storyteller_f.a.cloud.server.Monitor.kt</ID>
+    <ID>AbsentOrWrongFileLicense:OffsetPaginationTest.kt:com.storyteller_f.a.cloud.server.OffsetPaginationTest.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Pagination.kt:com.storyteller_f.a.cloud.server.common.Pagination.kt</ID>
+    <ID>AbsentOrWrongFileLicense:QuotaTest.kt:com.storyteller_f.a.cloud.server.QuotaTest.kt</ID>
+    <ID>AbsentOrWrongFileLicense:RegularRoute.kt:com.storyteller_f.a.cloud.server.route.RegularRoute.kt</ID>
+    <ID>AbsentOrWrongFileLicense:RoomRoute.kt:com.storyteller_f.a.cloud.server.route.RoomRoute.kt</ID>
+    <ID>AbsentOrWrongFileLicense:RoomSearchTest.kt:com.storyteller_f.a.cloud.server.RoomSearchTest.kt</ID>
+    <ID>AbsentOrWrongFileLicense:RoomTest.kt:com.storyteller_f.a.cloud.server.RoomTest.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Route.kt:com.storyteller_f.a.cloud.server.common.Route.kt</ID>
+    <ID>AbsentOrWrongFileLicense:RouteTitle.kt:com.storyteller_f.a.cloud.server.route.RouteTitle.kt</ID>
+    <ID>AbsentOrWrongFileLicense:SearchOrderTest.kt:com.storyteller_f.a.cloud.server.SearchOrderTest.kt</ID>
+    <ID>AbsentOrWrongFileLicense:SnapshotTest.kt:com.storyteller_f.a.cloud.server.SnapshotTest.kt</ID>
+    <ID>AbsentOrWrongFileLicense:SnowflakeTest.kt:com.storyteller_f.a.cloud.server.SnowflakeTest.kt</ID>
+    <ID>AbsentOrWrongFileLicense:TestBuilder.kt:com.storyteller_f.a.cloud.server.TestBuilder.kt</ID>
+    <ID>AbsentOrWrongFileLicense:TitleTest.kt:com.storyteller_f.a.cloud.server.TitleTest.kt</ID>
+    <ID>AbsentOrWrongFileLicense:TopicRoute.kt:com.storyteller_f.a.cloud.server.route.TopicRoute.kt</ID>
+    <ID>AbsentOrWrongFileLicense:TopicTest.kt:com.storyteller_f.a.cloud.server.TopicTest.kt</ID>
+    <ID>AbsentOrWrongFileLicense:UserRoute.kt:com.storyteller_f.a.cloud.server.route.UserRoute.kt</ID>
+    <ID>AbsentOrWrongFileLicense:UserStatusTest.kt:com.storyteller_f.a.cloud.server.UserStatusTest.kt</ID>
+    <ID>AbsentOrWrongFileLicense:UserTest.kt:com.storyteller_f.a.cloud.server.UserTest.kt</ID>
+    <ID>AbsentOrWrongFileLicense:WorkerTest.kt:com.storyteller_f.a.cloud.server.WorkerTest.kt</ID>
+    <ID>AbsentOrWrongFileLicense:build.gradle.kts:.build.gradle.kts</ID>
+    <ID>BracesOnWhenStatements:AuthRoute.kt:when</ID>
+    <ID>CascadingCallWrapping:CommunityTest.kt:CommunityTest$data</ID>
+    <ID>CascadingCallWrapping:TestBuilder.kt:toList()</ID>
+    <ID>CascadingCallWrapping:TestBuilder.kt:use { elasticClient -&gt; elasticClient.start() env["SEARCH_SERVICE"] = "elastic" env["ELASTIC_NAME"] = "elastic" env["ELASTIC_PASSWORD"] = "changeme" env["ELASTIC_URL"] = "http://${elasticClient.httpHostAddress}" block() }</ID>
+    <ID>CascadingCallWrapping:TitleTest.kt:TitleTest$data</ID>
     <ID>ClassSignature:Pagination.kt:PrimaryKeyPagingGenerator&lt;T&gt; : PagingGenerator</ID>
     <ID>ClassSignature:Pagination.kt:ReactionPaginationGenerator : PagingGenerator</ID>
     <ID>ClassSignature:TestBuilder.kt:SessionOuterTuple&lt;T&gt;</ID>
     <ID>ClassSignature:TestBuilder.kt:SessionTuple</ID>
     <ID>ClassSignature:TestBuilder.kt:TestMate</ID>
+    <ID>CollapsibleIfStatements:SnapshotTest.kt:if (updateSnapshots &amp;&amp; !result.isEqual()) { // 用本次生成的 actual 覆盖 baseline if (actualFile.canonicalPath != snapshotFile.canonicalPath) { actualFile.copyTo(snapshotFile, overwrite = true) } }</ID>
+    <ID>DestructuringDeclarationWithTooManyEntries:TestBuilder.kt:val (dialect, statements, result, stackTraceString) = explainResult</ID>
+    <ID>EndOfSentenceFormat:FileTest.kt:************************* END INITS </ID>
+    <ID>EndOfSentenceFormat:FileTest.kt:*************************** INITS </ID>
+    <ID>EndOfSentenceFormat:RoomTest.kt:* 用于搜索当前用户的所有房间（不带关键词）</ID>
+    <ID>EndOfSentenceFormat:RoomTest.kt:* 用于搜索社区中的所有房间（不带关键词）</ID>
+    <ID>ExpressionBodySyntax:Pagination.kt:return object : PrimaryKeyPagingGenerator&lt;T&gt;(block) {}</ID>
+    <ID>ExpressionBodySyntax:Route.kt:return call.parameters.checkParameter&lt;R, T&gt;(name, block)</ID>
+    <ID>ExpressionBodySyntax:TestBuilder.kt:TestMate$return applicationTestBuilder.createClient(block)</ID>
+    <ID>ExpressionBodySyntax:TestBuilder.kt:return attachPanelSession { }</ID>
+    <ID>ExpressionBodySyntax:TestBuilder.kt:return attachSession(onReceive = NOOP_ON_RECEIVE, block = {})</ID>
+    <ID>ExpressionBodySyntax:TestBuilder.kt:return block(workerBackend)</ID>
+    <ID>ExpressionBodySyntax:TestBuilder.kt:return getAppSignInSession(tuple.authKey, onReceive = onReceive, block = block)</ID>
+    <ID>ExpressionBodySyntax:TopicTest.kt:return sha256(block())</ID>
+    <ID>ForbiddenPublicDataClass:TestBuilder.kt:SessionOuterTuple&lt;T&gt;</ID>
+    <ID>ForbiddenPublicDataClass:TestBuilder.kt:SessionTuple</ID>
     <ID>FunctionExpressionBody:Pagination.kt:PrimaryKeyPagingGenerator${ return PrimaryKeyFetch( when { !nextPageToken.isNullOrBlank() -&gt; getPageToken( PrimaryKey::class, nextPageToken )?.let { Cursor.DescCursor(it) } !prePageToken.isNullOrBlank() -&gt; getPageToken( PrimaryKey::class, prePageToken )?.let { Cursor.AscCursor(it) } else -&gt; null }, size ) }</ID>
     <ID>FunctionExpressionBody:Pagination.kt:ReactionPaginationGenerator${ return ReactionFetch( when { !nextPageToken.isNullOrBlank() -&gt; Cursor.DescCursor( commonJson.decodeFromString&lt;ReactionCursorKey&gt;(nextPageToken) ) !prePageToken.isNullOrBlank() -&gt; Cursor.AscCursor( commonJson.decodeFromString&lt;ReactionCursorKey&gt;(prePageToken) ) else -&gt; null }, size ) }</ID>
     <ID>FunctionExpressionBody:Pagination.kt:{ return object : PrimaryKeyPagingGenerator&lt;T&gt;(block) {} }</ID>
@@ -24,6 +82,80 @@
     <ID>FunctionExpressionBody:TestBuilder.kt:{ return getAppSignInSession(tuple.authKey, onReceive = onReceive, block = block) }</ID>
     <ID>FunctionExpressionBody:TestBuilder.kt:{ return getPanelSession(tuple.authKey, block = block) { this.panelSignIn(tuple.authKey, it) } }</ID>
     <ID>FunctionExpressionBody:TopicTest.kt:{ return sha256(block()) }</ID>
+    <ID>FunctionNameMaxLength:AdminFileTest.kt:AdminFileTest$@Test fun `admin search files across multiple users`</ID>
+    <ID>FunctionNameMaxLength:AdminFileTest.kt:AdminFileTest$@Test fun `admin search files with empty keyword returns all files`</ID>
+    <ID>FunctionNameMaxLength:AdminTest.kt:AdminTest$@Test fun `admin get file refs for file with multiple references`</ID>
+    <ID>FunctionNameMaxLength:AdminTest.kt:AdminTest$@Test fun `admin get file refs for file with no references`</ID>
+    <ID>FunctionNameMaxLength:AdminTest.kt:AdminTest$@Test fun `admin get file refs for topic with media`</ID>
+    <ID>FunctionNameMaxLength:AdminTest.kt:AdminTest$@Test fun `admin user logs after join community`</ID>
+    <ID>FunctionNameMaxLength:AdminTest.kt:AdminTest$@Test fun `test overview private room count`</ID>
+    <ID>FunctionNameMaxLength:AdminTest.kt:AdminTest$@Test fun `test overview public room count`</ID>
+    <ID>FunctionNameMaxLength:CliTest.kt:CliTest$@Suppress("LongMethod") @Test fun `cli apply community and room presets visible to admin`</ID>
+    <ID>FunctionNameMaxLength:CliTest.kt:CliTest$@Suppress("LongMethod") @Test fun `cli apply topic and title presets reflected in overview`</ID>
+    <ID>FunctionNameMaxLength:CliTest.kt:CliTest$@Test fun `cli apply file preset reflected in overview`</ID>
+    <ID>FunctionNameMaxLength:CliTest.kt:CliTest$@Test fun `cli apply panel account preset can be queried by address`</ID>
+    <ID>FunctionNameMaxLength:CliTest.kt:CliTest$@Test fun `cli apply user preset and sign in`</ID>
+    <ID>FunctionNameMaxLength:CliTest.kt:CliTest$@Test fun `cli clean and init reset core data`</ID>
+    <ID>FunctionNameMaxLength:CliTest.kt:CliTest$@Test fun `cli preset data works with worker acg task`</ID>
+    <ID>FunctionNameMaxLength:CommunitySearchTest.kt:CommunitySearchTest$@Test fun `test get user communities with poster filter`</ID>
+    <ID>FunctionNameMaxLength:CommunitySearchTest.kt:CommunitySearchTest$@Test fun `test search community with different strategies`</ID>
+    <ID>FunctionNameMaxLength:CommunityTest.kt:CommunityTest$@Test fun `test create empty topic in community`</ID>
+    <ID>FunctionNameMaxLength:CommunityTest.kt:CommunityTest$@Test fun `test expired community invite title cannot join`</ID>
+    <ID>FunctionNameMaxLength:CommunityTest.kt:CommunityTest$@Test fun `test get other user joined communities`</ID>
+    <ID>FunctionNameMaxLength:CommunityTest.kt:CommunityTest$@Test fun `test update community font settings`</ID>
+    <ID>FunctionNameMaxLength:FileSearchTest.kt:FileSearchTest$@Test fun `test search files case insensitive`</ID>
+    <ID>FunctionNameMaxLength:FileSearchTest.kt:FileSearchTest$@Test fun `test search files only returns user own files`</ID>
+    <ID>FunctionNameMaxLength:FileSearchTest.kt:FileSearchTest$@Test fun `test search files with empty keyword returns empty`</ID>
+    <ID>FunctionNameMaxLength:FileSearchTest.kt:FileSearchTest$@Test fun `test search files without permission fails`</ID>
+    <ID>FunctionNameMaxLength:FileSearchTest.kt:FileSearchTest$@Test fun `test search room files with permission check`</ID>
+    <ID>FunctionNameMaxLength:FileTest.kt:FileTest$@Test @Ignore fun `file sha256 mismatch makes chunk complete fail and marks record failed`</ID>
+    <ID>FunctionNameMaxLength:FileTest.kt:FileTest$@Test fun `abort chunk upload cleans up and unlocks quota`</ID>
+    <ID>FunctionNameMaxLength:FileTest.kt:FileTest$@Test fun `chunk hash mismatch is rejected`</ID>
+    <ID>FunctionNameMaxLength:FileTest.kt:FileTest$@Test fun `file sha256 mismatch is rejected for direct upload`</ID>
+    <ID>FunctionNameMaxLength:FileTest.kt:FileTest$@Test fun `test get file refs when file has no references`</ID>
+    <ID>FunctionNameMaxLength:FileTest.kt:FileTest$@Test fun `test get file refs when file is referenced by multiple topics`</ID>
+    <ID>FunctionNameMaxLength:FileTest.kt:FileTest$@Test fun `test get file refs when file is referenced by topic`</ID>
+    <ID>FunctionNameMaxLength:MemberSearchTest.kt:MemberSearchTest$@Test fun `test community member search with keyword and objectId`</ID>
+    <ID>FunctionNameMaxLength:MemberSearchTest.kt:MemberSearchTest$@Test fun `test community member search without keyword`</ID>
+    <ID>FunctionNameMaxLength:MemberSearchTest.kt:MemberSearchTest$@Test fun `test member search after exit community`</ID>
+    <ID>FunctionNameMaxLength:MemberSearchTest.kt:MemberSearchTest$@Test fun `test member search after exit private room`</ID>
+    <ID>FunctionNameMaxLength:MemberSearchTest.kt:MemberSearchTest$@Test fun `test member search after exit room`</ID>
+    <ID>FunctionNameMaxLength:MemberSearchTest.kt:MemberSearchTest$@Test fun `test private room member search with keyword and objectId`</ID>
+    <ID>FunctionNameMaxLength:MemberSearchTest.kt:MemberSearchTest$@Test fun `test private room member search without keyword`</ID>
+    <ID>FunctionNameMaxLength:MemberSearchTest.kt:MemberSearchTest$@Test fun `test room member search with keyword and objectId`</ID>
+    <ID>FunctionNameMaxLength:MemberSearchTest.kt:MemberSearchTest$@Test fun `test room member search without keyword`</ID>
+    <ID>FunctionNameMaxLength:QuotaTest.kt:QuotaTest$@Test fun `test used increases after upload and not locking`</ID>
+    <ID>FunctionNameMaxLength:RoomSearchTest.kt:RoomSearchTest$@Test fun `test private room cannot be searched unless joined`</ID>
+    <ID>FunctionNameMaxLength:RoomSearchTest.kt:RoomSearchTest$@Test fun `test search joined rooms by name`</ID>
+    <ID>FunctionNameMaxLength:RoomSearchTest.kt:RoomSearchTest$@Test fun `test search rooms with member search service`</ID>
+    <ID>FunctionNameMaxLength:RoomTest.kt:RoomTest$@Test fun `test expired private room join title cannot join`</ID>
+    <ID>FunctionNameMaxLength:RoomTest.kt:suspend fun UserSessionManager.expectedRoomCountForAllRoomList</ID>
+    <ID>FunctionNameMaxLength:RoomTest.kt:suspend fun UserSessionManager.expectedRoomCountForCommunityRoomList</ID>
+    <ID>FunctionNameMaxLength:RoomTest.kt:suspend fun UserSessionManager.expectedRoomCountForJoinedRoomList</ID>
+    <ID>FunctionNameMaxLength:RoomTest.kt:suspend fun UserSessionManager.expectedRoomCountForJoinedRooms</ID>
+    <ID>FunctionNameMaxLength:SnapshotTest.kt:SnapshotTest$@Test fun `test generate block quote with empty line`</ID>
+    <ID>FunctionNameMaxLength:SnapshotTest.kt:SnapshotTest$@Test fun `test generate emphasis and strong`</ID>
+    <ID>FunctionNameMaxLength:TopicRoute.kt:private fun Route.bindProtectedTopicFavoriteRoute</ID>
+    <ID>FunctionNameMaxLength:TopicRoute.kt:private fun Route.bindProtectedTopicReactionRoute</ID>
+    <ID>FunctionNameMaxLength:TopicRoute.kt:private fun Route.bindProtectedTopicSubscriptionRoute</ID>
+    <ID>FunctionNameMaxLength:TopicTest.kt:TopicTest$@Test fun `test P256 and Dilithium users in community room`</ID>
+    <ID>FunctionNameMaxLength:TopicTest.kt:TopicTest$@Test fun `test P256 and Dilithium users in private room`</ID>
+    <ID>FunctionNameMaxLength:TopicTest.kt:TopicTest$@Test fun `test community room permission check`</ID>
+    <ID>FunctionNameMaxLength:TopicTest.kt:TopicTest$@Test fun `test community topic author is not null`</ID>
+    <ID>FunctionNameMaxLength:TopicTest.kt:TopicTest$@Test fun `test community topic has comment and comment count`</ID>
+    <ID>FunctionNameMaxLength:TopicTest.kt:TopicTest$@Test fun `test community topic latest topic`</ID>
+    <ID>FunctionNameMaxLength:TopicTest.kt:TopicTest$@Test fun `test community topic search and pagination`</ID>
+    <ID>FunctionNameMaxLength:TopicTest.kt:TopicTest$@Test fun `test create topic in private room`</ID>
+    <ID>FunctionNameMaxLength:TopicTest.kt:TopicTest$@Test fun `test forbid use api send message in room`</ID>
+    <ID>FunctionNameMaxLength:UserRoute.kt:fun Route.bindProtectedUserSubscriptionRoute</ID>
+    <ID>FunctionNameMaxLength:UserStatusTest.kt:UserStatusTest$@Test fun `test ReadOnly user cannot create topic`</ID>
+    <ID>FunctionNameMaxLength:UserTest.kt:UserTest$@Test fun `test add community subscription`</ID>
+    <ID>FunctionNameMaxLength:UserTest.kt:UserTest$@Test fun `test update user nickname and aid`</ID>
+    <ID>FunctionNameMaxLength:WorkerTest.kt:WorkerTest$@Test fun `test acg task increases user acg count`</ID>
+    <ID>FunctionNameMaxLength:WorkerTest.kt:WorkerTest$@Test fun `test all worker tasks run without error`</ID>
+    <ID>FunctionNameMaxLength:WorkerTest.kt:WorkerTest$@Test fun `test intro task sends welcome message`</ID>
+    <ID>FunctionNameMaxLength:WorkerTest.kt:WorkerTest$@Test fun `test subscription task processes topics`</ID>
+    <ID>FunctionNameMaxLength:WorkerTest.kt:WorkerTest$@Test fun `test title task sends notification`</ID>
     <ID>FunctionSignature:Application.kt:private fun Application.configurePlugin</ID>
     <ID>FunctionSignature:Application.kt:private fun buildLog: String</ID>
     <ID>FunctionSignature:AuthRoute.kt:fun Route.bindUnprotectedAccountRoute</ID>
@@ -44,6 +176,116 @@
     <ID>FunctionSignature:TestBuilder.kt:suspend fun &lt;R2&gt; TestMate.noneSession: R2</ID>
     <ID>FunctionSignature:TestBuilder.kt:suspend fun &lt;R&gt; TestMate.withCliBackend: R</ID>
     <ID>FunctionSignature:TestBuilder.kt:suspend fun &lt;R&gt; TestMate.withWorkerBackend: R</ID>
+    <ID>LabeledExpression:Application.kt:@onCall</ID>
+    <ID>LabeledExpression:CliTest.kt:@withCliBackend</ID>
+    <ID>LateinitUsage:Application.kt:RegionBlockerConfig$lateinit var reader: DatabaseReader</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AdminFileTest.kt:AdminFileTest</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AdminRoute.kt:fun Route.bindProtectedAdminRoute</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AdminRoute.kt:fun Routing.bindUnauthenticatedPanelRoute</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AdminTaskRecordTest.kt:AdminTaskRecordTest</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AdminTest.kt:AdminTest</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Application.kt:@Suppress("ThrowsCount", "unused") @OptIn(InternalAPI::class) suspend fun ByteReadChannel.copyWithLimitAndClose: Long</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Application.kt:RegionBlockerConfig</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Application.kt:ServerBackend : Backend</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Application.kt:fun Application.configureRoute</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Application.kt:fun Application.module</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Application.kt:fun buildBackendFromEnv: Backend</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Application.kt:fun main</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AuthRoute.kt:fun Route.bindAccountRoute</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AuthRoute.kt:fun Route.bindProtectedAccountRoute</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AuthRoute.kt:fun Route.bindUnprotectedAccountRoute</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AuthRoute.kt:fun RoutingContext.saveSuccessSessionOnFirst</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AuthRoute.kt:fun RoutingContext.saveTwoFactorPendingSession</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CliTest.kt:CliTest</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ClientIp.kt:fun ApplicationCall.clientIp: String</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CommunityRoute.kt:fun Route.bindCommunityRoute</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CommunityRoute.kt:fun Route.bindProtectedCommunityRoute</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CommunitySearchTest.kt:CommunitySearchTest</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CommunityTest.kt:CommunityTest</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CommunityTest.kt:suspend fun UserSessionManager.createCommunityForTest: CommunityInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileRoute.kt:@OptIn(ExperimentalUuidApi::class) suspend fun RoutingContext.uploadMedia: Result&lt;FileInfoListResponse?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileRoute.kt:fun Route.bindProtectedFileRoute</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileRoute.kt:suspend fun uploadChunkFromChannel</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileSearchTest.kt:FileSearchTest</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileTest.kt:FileTest</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileTest.kt:suspend fun UserSessionManager.downloadFile</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MemberSearchTest.kt:MemberSearchTest</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Monitor.kt:fun Application.configureMonitor</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:OffsetPaginationTest.kt:OffsetPaginationTest</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Pagination.kt:@Suppress("UNCHECKED_CAST") fun &lt;R : Any&gt; getPageToken: R?</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Pagination.kt:OffsetPagingGenerator&lt;T&gt; : PagingGenerator</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Pagination.kt:PagingGenerator&lt;in T, F : Any&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Pagination.kt:PrimaryKeyPagingGenerator&lt;T&gt; : PagingGenerator</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Pagination.kt:ReactionPaginationGenerator : PagingGenerator</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Pagination.kt:fun &lt;T&gt; pagingGenerator: PrimaryKeyPagingGenerator&lt;T&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Pagination.kt:suspend fun &lt;T, F : Fetch, Response : ListResponse&lt;T&gt;&gt; PageableQuery.pagination: Result&lt;Response?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:QuotaTest.kt:QuotaTest</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RegularRoute.kt:fun Routing.bindUnauthenticatedRoute</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomRoute.kt:fun Route.bindProtectedRoomRoute</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomRoute.kt:fun Route.bindRoomRoute</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomSearchTest.kt:RoomSearchTest</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomSearchTest.kt:suspend fun UserSessionManager.expectedCommunityRoomCount</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomSearchTest.kt:suspend fun UserSessionManager.expectedCurrentUserRoomCount</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomTest.kt:RoomTest</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomTest.kt:suspend fun UserSessionManager.createJoinRoomTitleForTest: TitleInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomTest.kt:suspend fun UserSessionManager.createPrivateRoomForTest: RoomInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomTest.kt:suspend fun UserSessionManager.createPublicRoomForTest: RoomInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomTest.kt:suspend fun UserSessionManager.expectedRoomCountForAllRoomList</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomTest.kt:suspend fun UserSessionManager.expectedRoomCountForAllRooms</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomTest.kt:suspend fun UserSessionManager.expectedRoomCountForCommunityRoomList</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomTest.kt:suspend fun UserSessionManager.expectedRoomCountForJoinedRoomList</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomTest.kt:suspend fun UserSessionManager.expectedRoomCountForJoinedRooms</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomTest.kt:suspend fun processRTCMessage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomTest.kt:suspend fun waitForRtcFrame</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomTest.kt:suspend fun waitRTCAnswer</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomTest.kt:suspend fun waitRTCAnswerCount</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Route.kt:inline fun &lt;reified R : Any, reified T : Any&gt; Parameters.checkParameter: Result&lt;R?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Route.kt:inline fun &lt;reified T : Any, reified R : Any&gt; RoutingContext.checkParameter: Result&lt;R?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Route.kt:inline fun &lt;reified T : Any&gt; Parameters.getOrFailCompact: T</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RouteTitle.kt:fun Route.bindProtectedTitleRoute</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SearchOrderTest.kt:SearchOrderTest</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SnapshotTest.kt:SnapshotTest</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SnowflakeTest.kt:SnowflakeTest</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TestBuilder.kt:@OptIn(ExperimentalUuidApi::class) fun test</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TestBuilder.kt:SessionOuterTuple&lt;T&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TestBuilder.kt:SessionTuple</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TestBuilder.kt:TestMate</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TestBuilder.kt:fun &lt;T&gt; assertListSize</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TestBuilder.kt:fun &lt;T&gt; assertListTotalSize</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TestBuilder.kt:fun extractTableNames: List&lt;String&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TestBuilder.kt:fun saveDatabaseExplainResult</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TestBuilder.kt:suspend fun &lt;R1, R2&gt; TestMate.loginPanelSession: SessionOuterTuple&lt;R2&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TestBuilder.kt:suspend fun &lt;R1, R2&gt; TestMate.loginSession: SessionOuterTuple&lt;R2&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TestBuilder.kt:suspend fun &lt;R2&gt; TestMate.noneSession: R2</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TestBuilder.kt:suspend fun &lt;R&gt; TestMate.attachPanelSession: SessionOuterTuple&lt;R&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TestBuilder.kt:suspend fun &lt;R&gt; TestMate.attachSession: SessionOuterTuple&lt;R&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TestBuilder.kt:suspend fun &lt;R&gt; TestMate.getAppSession: SessionOuterTuple&lt;R&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TestBuilder.kt:suspend fun &lt;R&gt; TestMate.getAppSignInSession: SessionOuterTuple&lt;R&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TestBuilder.kt:suspend fun &lt;R&gt; TestMate.getAppSignUpSession: SessionOuterTuple&lt;R&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TestBuilder.kt:suspend fun &lt;R&gt; TestMate.withCliBackend: R</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TestBuilder.kt:suspend fun &lt;R&gt; TestMate.withWorkerBackend: R</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TestBuilder.kt:suspend fun &lt;T&gt; UserSessionManager.waitAndSend: Result&lt;T&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TestBuilder.kt:suspend fun TestMate.attachPanelSession: SessionOuterTuple&lt;Unit&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TestBuilder.kt:suspend fun TestMate.attachSession: SessionOuterTuple&lt;Unit&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TitleTest.kt:TitleTest</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TopicRoute.kt:fun Route.bindProtectedTopicRoute</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TopicRoute.kt:fun Route.bindTopicRoute</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TopicTest.kt:TopicTest</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TopicTest.kt:suspend fun UploadData.calcSha256: String</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TopicTest.kt:suspend fun UserSessionManager.createTopicInRoomAndWait</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TopicTest.kt:suspend fun UserSessionManager.upload</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TopicTest.kt:suspend fun getUploadDataFromText</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserRoute.kt:fun Route.bindProtectedUserRoute</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserRoute.kt:fun Route.bindProtectedUserSubscriptionRoute</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserRoute.kt:fun Route.bindUserRoute</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserStatusTest.kt:UserStatusTest</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserTest.kt:UserTest</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserTest.kt:suspend fun getUploadDataFromBytes</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:WorkerTest.kt:WorkerTest</ID>
+    <ID>MagicNumber:Application.kt:451</ID>
+    <ID>MagicNumber:Application.kt:80</ID>
+    <ID>MagicNumber:FileRoute.kt:100</ID>
+    <ID>MagicNumber:FileRoute.kt:1024</ID>
     <ID>MultilineExpressionWrapping:AdminFileTest.kt:AdminFileTest$searchFiles( SearchQuery(word = "document") ).getOrThrow().data</ID>
     <ID>MultilineExpressionWrapping:AdminFileTest.kt:AdminFileTest$searchFiles( SearchQuery(word = "test") ).getOrThrow().data</ID>
     <ID>MultilineExpressionWrapping:AdminFileTest.kt:AdminFileTest$searchFiles( SearchQuery(word = "user") ).getOrThrow().data</ID>
@@ -421,6 +663,20 @@
     <ID>MultilineExpressionWrapping:WorkerTest.kt:WorkerTest$test { // 创建用户和 title attachSession { val c = createCommunity(com.storyteller_f.a.api.NewCommunity("test community", "tc1")).getOrThrow() val cId = c.id // 创建 title createTitle(com.storyteller_f.a.api.NewTitle( "Test Title", com.storyteller_f.shared.model.TitleType.REGULAR, it.uid, cId, ObjectType.COMMUNITY, "Test title description" )).getOrThrow() } // 执行 title 任务 withWorkerBackend { backend -&gt; // 创建 System 用户（为 title 任务准备） val algo = com.storyteller_f.shared.getAlgo(AlgoType.P256) val (_, sysPubPem) = algo.generatePemKeyPair().getOrThrow() val sysPubDer = algo.getDerPublicKeyFromPem(sysPubPem).getOrThrow() val sysAddress = algo.calcAddress(sysPubDer).getOrThrow() val systemUser = User( aid = "System", encryptionPublicKey = null, publicKey = sysPubDer, address = sysAddress, icon = null, nickname = "System", id = 1L, // System user ID should be 1 createdTime = now(), acgAmount = 0L, passType = PassType.RAW, algoType = AlgoType.P256, notificationId = SnowflakeFactory.nextId() ) backend.database.user.createUser(systemUser).getOrThrow() // 执行 title 任务 backend.doTitleTask() // 验证任务记录是否存在 val taskRecord = backend.database.user.getLatestTaskRecord(TaskRecordType.TITLE).getOrThrow() // 任务记录应该存在 assertNotNull(taskRecord, "Title task record should exist after running doTitleTask") } }</ID>
     <ID>MultilineExpressionWrapping:WorkerTest.kt:WorkerTest$test { // 创建用户和多个 topic val (userId, topicCount) = attachSession { val community = createCommunityForTest("test community", "tc1") // 创建多个 topic 来触发 ACG 任务 createTopic(ObjectType.COMMUNITY, community.id, "Test topic 1").getOrThrow() createTopic(ObjectType.COMMUNITY, community.id, "Test topic 2").getOrThrow() createTopic(ObjectType.COMMUNITY, community.id, "Test topic 3").getOrThrow() it.uid to 3 }.custom // 执行 ACG 任务 withWorkerBackend { backend -&gt; backend.doAcgTask() // 验证用户的 ACG 是否增加 val userAcg = backend.database.user.getUserAcgByIds( com.storyteller_f.a.backend.core.ObjectListFetch.IdListFetch(listOf(userId)) ).getOrThrow() // ACG 应该等于创建的 topic 数量 assertTrue(userAcg.isNotEmpty(), "User ACG should be recorded") val totalAcg = userAcg.find { it.first == userId }?.second ?: 0L assertTrue(totalAcg &gt;= topicCount, "User ACG should be at least $topicCount, but was $totalAcg") } }</ID>
     <ID>MultilineExpressionWrapping:build.gradle.kts:tasks.register&lt;Copy&gt;("copyAppiumDockerDistribution") { group = "appium" description = "Copies the server distribution used by the Appium Docker image." dependsOn(tasks.named("distTar"), tasks.named("distZip")) from(layout.buildDirectory.dir("distributions")) { include("server.tar", "server.zip") } into(rootProject.layout.projectDirectory.dir("deploy/build")) }</ID>
+    <ID>MultilineRawStringIndentation:Application.kt:"""Url: ${call.request.uri}, | Status: $status, HTTP method: $httpMethod, | Query: ${call.request.queryString()}, | Headers: ${call.request.headers.toMap()}, | Ip：$ipList"""</ID>
+    <ID>MultilineRawStringIndentation:SnapshotTest.kt:SnapshotTest$""" # Heading 1 ## Heading 2 Normal paragraph Heading A === Heading B --- """</ID>
+    <ID>MultilineRawStringIndentation:SnapshotTest.kt:SnapshotTest$""" *italic* and **bold** text with normal content. """</ID>
+    <ID>MultilineRawStringIndentation:SnapshotTest.kt:SnapshotTest$""" - item 1 - nested item 1.1 - item 2 1. first 2. second 1. sub first """</ID>
+    <ID>MultilineRawStringIndentation:SnapshotTest.kt:SnapshotTest$""" &gt; quoted line &gt; &gt; second line """</ID>
+    <ID>MultilineRawStringIndentation:SnapshotTest.kt:SnapshotTest$""" &gt; quoted line &gt; second line """</ID>
+    <ID>MultilineRawStringIndentation:SnapshotTest.kt:SnapshotTest$""" First paragraph. --- Second paragraph after horizontal rule. """</ID>
+    <ID>MultilineRawStringIndentation:SnapshotTest.kt:SnapshotTest$""" Inline `code` span inside a sentence. """</ID>
+    <ID>MultilineRawStringIndentation:SnapshotTest.kt:SnapshotTest$""" This is a [link text](https://example.com) in paragraph. """</ID>
+    <ID>MultilineRawStringIndentation:SnapshotTest.kt:SnapshotTest$""" This is ~~strikethrough~~ text in a paragraph. """</ID>
+    <ID>MultilineRawStringIndentation:SnapshotTest.kt:SnapshotTest$""" | Header 1 | Header 2 | Header 3 | | --- | --- | --- | | Cell 1 | Cell 2 | Cell 3 | | Cell 4 | Cell 5 | Cell 6 | """</ID>
+    <ID>MultilineRawStringIndentation:SnapshotTest.kt:SnapshotTest$""" | fun main() { | println("hello world") | } """</ID>
+    <ID>MultilineRawStringIndentation:SnapshotTest.kt:SnapshotTest$"""```kotlin |fun main() { | println("hello world") |} |```"""</ID>
+    <ID>MultilineRawStringIndentation:TopicTest.kt:TopicTest$"""hello | |![png](${info.name}) """</ID>
     <ID>NoConsecutiveComments:FileTest.kt:// PRELIMINARY COMPUTING</ID>
     <ID>NoEmptyFirstLineInClassBody:AdminFileTest.kt:AdminFileTest${ @Test fun `admin search files by name`() = test { val outer = attachPanelSession() attachSession { upload(it.uid ob ObjectType.USER, getUploadDataFromText("file1", "test1.txt")).getOrThrow() upload(it.uid ob ObjectType.USER, getUploadDataFromText("file2", "document.txt")).getOrThrow() upload(it.uid ob ObjectType.USER, getUploadDataFromText("file3", "test2.txt")).getOrThrow() } loginPanelSession(outer) { // 按名称搜索 val testFiles = searchFiles( SearchQuery(word = "test") ).getOrThrow().data assertEquals(2, testFiles.size) kotlin.test.assertTrue(testFiles.all { it.name.contains("test") }) // 搜索特定文件 val docFiles = searchFiles( SearchQuery(word = "document") ).getOrThrow().data assertEquals(1, docFiles.size) assertEquals("document.txt", docFiles.first().name) } } @Test fun `admin search files across multiple users`() = test { val outer = attachPanelSession() attachSession { upload(it.uid ob ObjectType.USER, getUploadDataFromText("user1 file", "user1.txt")).getOrThrow() } attachSession { upload(it.uid ob ObjectType.USER, getUploadDataFromText("user2 file", "user2.txt")).getOrThrow() } loginPanelSession(outer) { // 管理员应该能搜索所有用户的文件 val allUserFiles = searchFiles( SearchQuery(word = "user") ).getOrThrow().data assertEquals(2, allUserFiles.size) val fileNames = allUserFiles.map { it.name }.toSet() kotlin.test.assertTrue(fileNames.contains("user1.txt")) kotlin.test.assertTrue(fileNames.contains("user2.txt")) } } @Test fun `admin search files with empty keyword returns all files`() = test { val outer = attachPanelSession() attachSession { upload(it.uid ob ObjectType.USER, getUploadDataFromText("content1", "file1.txt")).getOrThrow() upload(it.uid ob ObjectType.USER, getUploadDataFromText("content2", "file2.txt")).getOrThrow() } loginPanelSession(outer) { // 空关键词应返回所有文件 val allFiles = getAllFiles(PaginationQuery()).getOrThrow().data assertEquals(2, allFiles.size) } } }</ID>
     <ID>NoEmptyFirstLineInClassBody:CliTest.kt:CliTest${ @Test fun `cli clean and init reset core data`() = test { attachSession { val community = createCommunityForTest("cli-clean-community", "cli-clean-community") createTopic(ObjectType.COMMUNITY, community.id, "seed-topic").getOrThrow() } withCliBackend { backend -&gt; backend.database.clean() backend.database.init() } attachPanelSession { val panelOverview = overview().getOrThrow() assertEquals(0, panelOverview.userCount) assertEquals(0, panelOverview.communityCount) assertEquals(0, panelOverview.topicCount) assertEquals(0, panelOverview.fileCount) } attachSession() attachPanelSession() } @Test fun `cli apply user preset and sign in`() = test { ensureSystemUser(this) val presetDir = preparePresetDir("user") val keysDir = File(presetDir, "keys").apply { mkdirs() } val userAid = "cli_preset_user" val userKeys = generateP256KeyMaterial() val userKeyPath = File(keysDir, "user.pem").apply { writeText(userKeys.privatePem) } withCliBackend { backend -&gt; backend.database.init() backend.applyPreset( PresetValue( type = "user", userData = listOf( PresetUser( name = "Preset User", aid = userAid, privateKey = userKeyPath.relativeTo(presetDir).path ) ) ), presetDir ) } val userAuthKey = AuthKey.P256( userKeys.privatePem, userKeys.derPrivate, userKeys.derPublic ) val userTuple = getAppSignInSession( authKey = userAuthKey, onReceive = { _, _, _ -&gt; } ) { getUserInfo(it.uid).getOrThrow() } assertEquals(userAid, userTuple.custom.aid) } @Suppress("LongMethod") @Test fun `cli apply community and room presets visible to admin`() = test { ensureSystemUser(this) val presetDir = preparePresetDir("community-room") val keysDir = File(presetDir, "keys").apply { mkdirs() } val userAid = "cli_preset_user" val communityAid = "cli_preset_community" val publicRoomAid = "cli_public_room" val privateRoomAid = "cli_private_room" val userKeys = generateP256KeyMaterial() val userKeyPath = File(keysDir, "user.pem").apply { writeText(userKeys.privatePem) } withCliBackend { backend -&gt; backend.database.init() backend.applyPreset( PresetValue( type = "user", userData = listOf( PresetUser( name = "Preset User", aid = userAid, privateKey = userKeyPath.relativeTo(presetDir).path ) ) ), presetDir ) backend.applyPreset( PresetValue( type = "community", communityData = listOf( PresetCommunity( name = "Preset Community", id = communityAid, admin = userAid, users = emptyList() ) ) ), presetDir ) backend.applyPreset( PresetValue( type = "room", roomData = listOf( PresetRoom( name = "Preset Public Room", community = communityAid, users = listOf(userAid), id = publicRoomAid, admin = userAid ), PresetRoom( name = "Preset Private Room", users = listOf(userAid), id = privateRoomAid, admin = userAid ) ) ), presetDir ) } attachPanelSession { val panelOverview = overview().getOrThrow() assertEquals(1, panelOverview.communityCount) val publicRooms = getAllPublicRooms(PaginationQuery()).getOrThrow().data val privateRooms = getAllPrivateRooms(PaginationQuery()).getOrThrow().data assertTrue(publicRooms.any { room -&gt; room.aid == publicRoomAid }) assertTrue(privateRooms.any { room -&gt; room.aid == privateRoomAid }) } } @Suppress("LongMethod") @Test fun `cli apply topic and title presets reflected in overview`() = test { ensureSystemUser(this) val presetDir = preparePresetDir("topic-title") val keysDir = File(presetDir, "keys").apply { mkdirs() } val userAid = "cli_preset_user" val communityAid = "cli_preset_community" val userKeys = generateP256KeyMaterial() val userKeyPath = File(keysDir, "user.pem").apply { writeText(userKeys.privatePem) } withCliBackend { backend -&gt; backend.database.init() backend.applyPreset( PresetValue( type = "user", userData = listOf( PresetUser( name = "Preset User", aid = userAid, privateKey = userKeyPath.relativeTo(presetDir).path ) ) ), presetDir ) backend.applyPreset( PresetValue( type = "community", communityData = listOf( PresetCommunity( name = "Preset Community", id = communityAid, admin = userAid, users = emptyList() ) ) ), presetDir ) backend.applyPreset( PresetValue( type = "topic", topicData = listOf( PresetTopic( content = "preset topic content", author = userAid ) ) ), presetDir ) backend.applyPreset( PresetValue( type = "title", titleData = listOf( PresetTitle( creator = userAid, uid = userAid, name = "Preset Title", scope = communityAid, scopeType = ObjectType.COMMUNITY, type = TitleType.REGULAR, description = "preset title description" ) ) ), presetDir ) } attachPanelSession { val panelOverview = overview().getOrThrow() assertTrue(panelOverview.topicCount &gt;= 2) } } @Test fun `cli apply file preset reflected in overview`() = test { ensureSystemUser(this) val presetDir = preparePresetDir("file") val keysDir = File(presetDir, "keys").apply { mkdirs() } val userAid = "cli_preset_user" val userKeys = generateP256KeyMaterial() val userKeyPath = File(keysDir, "user.pem").apply { writeText(userKeys.privatePem) } val fileForPreset = File(presetDir, "sample.txt").apply { writeText("cli preset file") } withCliBackend { backend -&gt; backend.database.init() backend.applyPreset( PresetValue( type = "user", userData = listOf( PresetUser( name = "Preset User", aid = userAid, privateKey = userKeyPath.relativeTo(presetDir).path ) ) ), presetDir ) backend.applyPreset( PresetValue( type = "file", fileData = listOf( PresetFile( owner = userAid, paths = listOf(fileForPreset.relativeTo(presetDir).path) ) ) ), presetDir ) } attachPanelSession { val panelOverview = overview().getOrThrow() assertTrue(panelOverview.fileCount &gt;= 1) } } @Test fun `cli apply panel account preset can be queried by address`() = test { ensureSystemUser(this) val presetDir = preparePresetDir("panel-account") val keysDir = File(presetDir, "keys").apply { mkdirs() } val panelKeys = generateP256KeyMaterial() val panelKeyPath = File(keysDir, "panel.pem").apply { writeText(panelKeys.privatePem) } withCliBackend { backend -&gt; backend.database.init() backend.applyPreset( PresetValue( type = "panelAccount", panelAccountData = listOf( PresetPanelAccount( name = "Preset Panel", privateKey = panelKeyPath.relativeTo(presetDir).path ) ) ), presetDir ) val panelAuth = backend.database.panelAccount.getUserAuthDataByAddress(panelKeys.address).getOrThrow() assertNotNull(panelAuth) } } @Test fun `cli preset data works with worker acg task`() = test { ensureSystemUser(this) val presetDir = preparePresetDir("worker-combination") val keysDir = File(presetDir, "keys").apply { mkdirs() } val userAid = "cli_worker_user" val userKeys = generateP256KeyMaterial() val userKeyPath = File(keysDir, "user.pem").apply { writeText(userKeys.privatePem) } val presetUser = PresetValue( type = "user", userData = listOf( PresetUser( name = "Worker User", aid = userAid, privateKey = userKeyPath.relativeTo(presetDir).path ) ) ) val presetTopic = PresetValue( type = "topic", topicData = listOf( PresetTopic(content = "topic-1", author = userAid), PresetTopic(content = "topic-2", author = userAid), PresetTopic(content = "topic-3", author = userAid) ) ) withCliBackend { backend -&gt; backend.database.init() backend.applyPreset(presetUser, presetDir) backend.applyPreset(presetTopic, presetDir) val uid = backend.database.user.getRawUsers(AidListFetch(listOf(userAid))).getOrThrow().first().user.id backend.doAcgTask() val userAcg = backend.database.user.getUserAcgByIds( com.storyteller_f.a.backend.core.ObjectListFetch.IdListFetch(listOf(uid)) ).getOrThrow() val totalAcg = userAcg.find { pair -&gt; pair.first == uid }?.second ?: 0L assertTrue(totalAcg &gt;= 3L) } } }</ID>
@@ -515,6 +771,17 @@
     <ID>PackageNaming:UserStatusTest.kt:package com.storyteller_f.a.cloud.server</ID>
     <ID>PackageNaming:UserTest.kt:package com.storyteller_f.a.cloud.server</ID>
     <ID>PackageNaming:WorkerTest.kt:package com.storyteller_f.a.cloud.server</ID>
+    <ID>StringShouldBeRawString:TestBuilder.kt:"${SqlFormatter.format(statements)}\n\n$result\n\n$stackTraceString"</ID>
+    <ID>StringShouldBeRawString:TestBuilder.kt:"(?i)\\bFROM\\s+([a-zA-Z0-9_.]+)|\\bJOIN\\s+([a-zA-Z0-9_.]+)"</ID>
+    <ID>TooGenericExceptionCaught:Application.kt:cause: Throwable</ID>
+    <ID>TooGenericExceptionCaught:Application.kt:e: Exception</ID>
+    <ID>TooGenericExceptionCaught:FileRoute.kt:e: Exception</ID>
+    <ID>TooGenericExceptionThrown:Application.kt:throw Exception("FLAVOR is empty")</ID>
+    <ID>TooGenericExceptionThrown:FileTest.kt:FileTest$throw Exception("cover is not exists")</ID>
+    <ID>TooGenericExceptionThrown:FileTest.kt:FileTest$throw Exception("flac is not exists")</ID>
+    <ID>TooGenericExceptionThrown:TestBuilder.kt:throw Exception("mkdirs failed ${it.canonicalPath}")</ID>
+    <ID>TooGenericExceptionThrown:TestBuilder.kt:throw Exception("test not found")</ID>
+    <ID>TooManyFunctions:AdminRoute.kt:com.storyteller_f.a.cloud.server.route.AdminRoute.kt</ID>
     <ID>TrailingCommaOnCallSite:AdminFileTest.kt:AdminFileTest$( SearchQuery(word = "document") )</ID>
     <ID>TrailingCommaOnCallSite:AdminFileTest.kt:AdminFileTest$( SearchQuery(word = "test") )</ID>
     <ID>TrailingCommaOnCallSite:AdminFileTest.kt:AdminFileTest$( SearchQuery(word = "user") )</ID>
@@ -724,6 +991,71 @@
     <ID>TrailingCommaOnDeclarationSite:UserTest.kt:UserTest$( hostAlgo: com.storyteller_f.shared.model.AlgoType, hostAuthKey: com.storyteller_f.a.client.core.AuthKey, childAccountInfo: com.storyteller_f.shared.model.ChildAccountInfo )</ID>
     <ID>TrailingCommaOnDeclarationSite:UserTest.kt:UserTest$( index: Int, hostAlgo: com.storyteller_f.shared.model.AlgoType, childAlgo: com.storyteller_f.shared.model.AlgoType )</ID>
     <ID>TrailingCommaOnDeclarationSite:UserTest.kt:UserTest$( roomName: String, roomAid: String, topicName: String, communityId: Long?, receivedFrame: MutableList&lt;com.storyteller_f.shared.obj.RoomFrame&gt; )</ID>
+    <ID>UndocumentedPublicClass:Application.kt:RegionBlockerConfig</ID>
+    <ID>UndocumentedPublicClass:Application.kt:ServerBackend : Backend</ID>
+    <ID>UndocumentedPublicClass:Pagination.kt:GeneralOffsetPagingGenerator : OffsetPagingGenerator</ID>
+    <ID>UndocumentedPublicClass:Pagination.kt:IdentifiablePagingGenerator : PrimaryKeyPagingGenerator</ID>
+    <ID>UndocumentedPublicClass:Pagination.kt:OffsetPagingGenerator&lt;T&gt; : PagingGenerator</ID>
+    <ID>UndocumentedPublicClass:Pagination.kt:PagingGenerator&lt;in T, F : Any&gt;</ID>
+    <ID>UndocumentedPublicClass:Pagination.kt:PrimaryKeyPagingGenerator&lt;T&gt; : PagingGenerator</ID>
+    <ID>UndocumentedPublicClass:Pagination.kt:ReactionPaginationGenerator : PagingGenerator</ID>
+    <ID>UndocumentedPublicFunction:AdminRoute.kt:fun Route.bindProtectedAdminRoute</ID>
+    <ID>UndocumentedPublicFunction:AdminRoute.kt:fun Routing.bindUnauthenticatedPanelRoute</ID>
+    <ID>UndocumentedPublicFunction:Application.kt:@Suppress("ThrowsCount", "unused") @OptIn(InternalAPI::class) suspend fun ByteReadChannel.copyWithLimitAndClose: Long</ID>
+    <ID>UndocumentedPublicFunction:Application.kt:fun Application.configureRoute</ID>
+    <ID>UndocumentedPublicFunction:Application.kt:fun Application.module</ID>
+    <ID>UndocumentedPublicFunction:Application.kt:fun buildBackendFromEnv: Backend</ID>
+    <ID>UndocumentedPublicFunction:Application.kt:fun main</ID>
+    <ID>UndocumentedPublicFunction:AuthRoute.kt:fun Route.bindAccountRoute</ID>
+    <ID>UndocumentedPublicFunction:AuthRoute.kt:fun Route.bindProtectedAccountRoute</ID>
+    <ID>UndocumentedPublicFunction:AuthRoute.kt:fun Route.bindUnprotectedAccountRoute</ID>
+    <ID>UndocumentedPublicFunction:AuthRoute.kt:fun RoutingContext.saveSuccessSessionOnFirst</ID>
+    <ID>UndocumentedPublicFunction:AuthRoute.kt:fun RoutingContext.saveTwoFactorPendingSession</ID>
+    <ID>UndocumentedPublicFunction:ClientIp.kt:fun ApplicationCall.clientIp: String</ID>
+    <ID>UndocumentedPublicFunction:CommunityRoute.kt:fun Route.bindCommunityRoute</ID>
+    <ID>UndocumentedPublicFunction:CommunityRoute.kt:fun Route.bindProtectedCommunityRoute</ID>
+    <ID>UndocumentedPublicFunction:FileRoute.kt:@OptIn(ExperimentalUuidApi::class) suspend fun RoutingContext.uploadMedia: Result&lt;FileInfoListResponse?&gt;</ID>
+    <ID>UndocumentedPublicFunction:FileRoute.kt:fun Route.bindProtectedFileRoute</ID>
+    <ID>UndocumentedPublicFunction:FileRoute.kt:suspend fun uploadChunkFromChannel</ID>
+    <ID>UndocumentedPublicFunction:Monitor.kt:fun Application.configureMonitor</ID>
+    <ID>UndocumentedPublicFunction:Pagination.kt:@Suppress("UNCHECKED_CAST") fun &lt;R : Any&gt; getPageToken: R?</ID>
+    <ID>UndocumentedPublicFunction:Pagination.kt:PagingGenerator$fun generate: Pair&lt;String?, String?&gt;</ID>
+    <ID>UndocumentedPublicFunction:Pagination.kt:PagingGenerator$fun parse: F</ID>
+    <ID>UndocumentedPublicFunction:Pagination.kt:fun &lt;T&gt; pagingGenerator: PrimaryKeyPagingGenerator&lt;T&gt;</ID>
+    <ID>UndocumentedPublicFunction:Pagination.kt:suspend fun &lt;T, F : Fetch, Response : ListResponse&lt;T&gt;&gt; PageableQuery.pagination: Result&lt;Response?&gt;</ID>
+    <ID>UndocumentedPublicFunction:RegularRoute.kt:fun Routing.bindUnauthenticatedRoute</ID>
+    <ID>UndocumentedPublicFunction:RoomRoute.kt:fun Route.bindProtectedRoomRoute</ID>
+    <ID>UndocumentedPublicFunction:RoomRoute.kt:fun Route.bindRoomRoute</ID>
+    <ID>UndocumentedPublicFunction:Route.kt:inline fun &lt;reified R : Any, reified T : Any&gt; Parameters.checkParameter: Result&lt;R?&gt;</ID>
+    <ID>UndocumentedPublicFunction:Route.kt:inline fun &lt;reified T : Any, reified R : Any&gt; RoutingContext.checkParameter: Result&lt;R?&gt;</ID>
+    <ID>UndocumentedPublicFunction:Route.kt:inline fun &lt;reified T : Any&gt; Parameters.getOrFailCompact: T</ID>
+    <ID>UndocumentedPublicFunction:RouteTitle.kt:fun Route.bindProtectedTitleRoute</ID>
+    <ID>UndocumentedPublicFunction:TopicRoute.kt:fun Route.bindProtectedTopicRoute</ID>
+    <ID>UndocumentedPublicFunction:TopicRoute.kt:fun Route.bindTopicRoute</ID>
+    <ID>UndocumentedPublicFunction:UserRoute.kt:fun Route.bindProtectedUserRoute</ID>
+    <ID>UndocumentedPublicFunction:UserRoute.kt:fun Route.bindProtectedUserSubscriptionRoute</ID>
+    <ID>UndocumentedPublicFunction:UserRoute.kt:fun Route.bindUserRoute</ID>
+    <ID>UndocumentedPublicProperty:Application.kt:RegionBlockerConfig$lateinit var reader: DatabaseReader</ID>
+    <ID>UndocumentedPublicProperty:Application.kt:RegionBlockerConfig$var denyIsoCodes: Set&lt;String&gt; = setOf("CN")</ID>
+    <ID>UndocumentedPublicProperty:Application.kt:RegionBlockerConfig$var excludePaths: Set&lt;String&gt; = setOf("/metrics")</ID>
+    <ID>UndocumentedPublicProperty:Application.kt:val RegionBlocker = createApplicationPlugin(name = "RegionBlocker", ::RegionBlockerConfig) { val reader = pluginConfig.reader val deny = pluginConfig.denyIsoCodes val exclude = pluginConfig.excludePaths onCall { call -&gt; val uri = call.request.uri if (exclude.any { uri.startsWith(it) }) return@onCall val codes = call.remoteIp(reader).mapNotNull { it.second }.toSet() if (codes.any { it in deny }) { call.respond(HttpStatusCode(451, "Unavailable For Legal Reasons")) } } }</ID>
+    <ID>UndocumentedPublicProperty:Pagination.kt:PrimaryKeyPagingGenerator$val block: (T) -&gt; PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:Pagination.kt:ReactionPaginationGenerator$val backend: Backend</ID>
+    <ID>UnnecessaryParentheses:FileTest.kt:(255 * 255)</ID>
+    <ID>UnnecessaryParentheses:Pagination.kt:OffsetPagingGenerator$(maxOf(0, currentOffset - size))</ID>
+    <ID>UseIfInsteadOfWhen:Application.kt:when (applicationCall.request.httpMethod) { HttpMethod.Post -&gt; 2 else -&gt; 1 }</ID>
+    <ID>UseIfInsteadOfWhen:AuthRoute.kt:when (val session = call.getSession()) { is UserSession.TwoFactorPending -&gt; { backend.verifyUserTotp(session.id, body.code).mapResult { verified -&gt; if (verified) { backend.addUserLog(session.id, UserLogType.SIGN_IN, session.id ob ObjectType.USER) call.saveSuccessSession(session) backend.getUserInfo(ObjectFetch.IdFetch(session.id)) } else { Result.failure(CustomBadRequestException("invalid totp code")) } } } else -&gt; Result.failure(ForbiddenException()) }</ID>
+    <ID>UseIfInsteadOfWhen:FileRoute.kt:when (part) { is PartData.FileItem -&gt; { val fileName = part.originalFileName as String backend.uploadFilesFromChannel(root, it, fileName, query.sha256, ip) { part.provider() } } else -&gt; { emptyList() } }</ID>
+    <ID>UseIfInsteadOfWhen:Route.kt:when { v.isSuccess -&gt; block(v.getOrThrow()) else -&gt; Result.failure(v.exceptionOrNull()!!) }</ID>
+    <ID>WildcardImport:Monitor.kt:import io.ktor.server.application.*</ID>
+    <ID>WildcardImport:Monitor.kt:import io.ktor.server.metrics.micrometer.*</ID>
+    <ID>WildcardImport:Monitor.kt:import io.ktor.server.response.*</ID>
+    <ID>WildcardImport:Monitor.kt:import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:RegularRoute.kt:import io.ktor.server.response.*</ID>
+    <ID>WildcardImport:RegularRoute.kt:import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:Route.kt:import io.ktor.http.*</ID>
+    <ID>WildcardImport:Route.kt:import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:Route.kt:import io.ktor.server.util.*</ID>
     <ID>Wrapping:AdminTest.kt:AdminTest$(</ID>
     <ID>Wrapping:AdminTest.kt:AdminTest$(com.storyteller_f.a.client.core.AuthKey.P256( privateKey, derPrivateKey, publicKey ), onReceive = { _, _, _ -&gt; })</ID>
     <ID>Wrapping:Application.kt:"""</ID>

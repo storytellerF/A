@@ -2,10 +2,17 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>AbsentOrWrongFileLicense:RedisCacheService.kt:com.storyteller_f.a.backend.redis.RedisCacheService.kt</ID>
+    <ID>AbsentOrWrongFileLicense:build.gradle.kts:.build.gradle.kts</ID>
+    <ID>ExpressionBodySyntax:RedisCacheService.kt:RedisCacheServiceFactory$return !env["CACHE_SERVICE"].isNullOrBlank()</ID>
     <ID>FunctionExpressionBody:RedisCacheService.kt:RedisCacheService${ return useRedis(endpoint) { val cache = get(key) if (cache == null) { val new = block() set(key, new) new } else { cache } } }</ID>
     <ID>FunctionExpressionBody:RedisCacheService.kt:RedisCacheServiceFactory${ return !env["CACHE_SERVICE"].isNullOrBlank() }</ID>
     <ID>FunctionExpressionBody:RedisCacheService.kt:{ return newClient(Endpoint.from(endpoint)).use { it.block() } }</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RedisCacheService.kt:RedisCacheService : CacheService</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RedisCacheService.kt:RedisCacheServiceFactory : CacheServiceFactory</ID>
     <ID>PackageName:RedisCacheService.kt:package com.storyteller_f.a.backend.redis</ID>
     <ID>PackageNaming:RedisCacheService.kt:package com.storyteller_f.a.backend.redis</ID>
+    <ID>UndocumentedPublicClass:RedisCacheService.kt:RedisCacheService : CacheService</ID>
+    <ID>UndocumentedPublicClass:RedisCacheService.kt:RedisCacheServiceFactory : CacheServiceFactory</ID>
   </CurrentIssues>
 </SmellBaseline>

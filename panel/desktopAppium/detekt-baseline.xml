@@ -2,6 +2,10 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>AbsentOrWrongFileLicense:PanelDesktopAppiumTest.kt:.PanelDesktopAppiumTest.kt</ID>
+    <ID>AbsentOrWrongFileLicense:build.gradle.kts:.build.gradle.kts</ID>
+    <ID>FunctionNameMaxLength:PanelDesktopAppiumTest.kt:PanelDesktopAppiumTest$@Test fun `test panel sign in by injected private session`</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelDesktopAppiumTest.kt:PanelDesktopAppiumTest : AppiumTestBase</ID>
     <ID>MissingPackageDeclaration:PanelDesktopAppiumTest.kt:.PanelDesktopAppiumTest.kt</ID>
     <ID>TrailingCommaOnCallSite:build.gradle.kts:( "desktop.accessibility.dump.agent", accessibilityDumpAgentJar.flatMap { it.archiveFile }.get().asFile.canonicalPath )</ID>
   </CurrentIssues>

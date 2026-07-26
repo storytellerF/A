@@ -2,6 +2,115 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>AbsentOrWrongFileLicense:Activity.kt:com.storyteller_f.a.client.compose_core.Activity.kt</ID>
+    <ID>AbsentOrWrongFileLicense:AlgoTypeSelector.kt:com.storyteller_f.a.client.compose_core.components.AlgoTypeSelector.kt</ID>
+    <ID>AbsentOrWrongFileLicense:AndroidPlayerContainer.kt:com.storyteller_f.a.client.compose_core.components.AndroidPlayerContainer.kt</ID>
+    <ID>AbsentOrWrongFileLicense:AppiumSemantics.ios.kt:com.storyteller_f.a.client.compose_core.utils.AppiumSemantics.ios.kt</ID>
+    <ID>AbsentOrWrongFileLicense:AppiumSemantics.jvmAndroid.kt:com.storyteller_f.a.client.compose_core.utils.AppiumSemantics.jvmAndroid.kt</ID>
+    <ID>AbsentOrWrongFileLicense:AppiumSemantics.kt:com.storyteller_f.a.client.compose_core.utils.AppiumSemantics.kt</ID>
+    <ID>AbsentOrWrongFileLicense:AppiumSemantics.wasmJs.kt:com.storyteller_f.a.client.compose_core.utils.AppiumSemantics.wasmJs.kt</ID>
+    <ID>AbsentOrWrongFileLicense:AsciidocPreviewBlock.kt:com.storyteller_f.a.client.compose_core.components.AsciidocPreviewBlock.kt</ID>
+    <ID>AbsentOrWrongFileLicense:AudioView.android.kt:com.storyteller_f.a.client.compose_core.components.AudioView.android.kt</ID>
+    <ID>AbsentOrWrongFileLicense:AudioView.jvm.kt:com.storyteller_f.a.client.compose_core.components.AudioView.jvm.kt</ID>
+    <ID>AbsentOrWrongFileLicense:AudioView.kt:com.storyteller_f.a.client.compose_core.components.AudioView.kt</ID>
+    <ID>AbsentOrWrongFileLicense:AudioView.wasmJs.kt:com.storyteller_f.a.client.compose_core.components.AudioView.wasmJs.kt</ID>
+    <ID>AbsentOrWrongFileLicense:BlockEditor.kt:com.storyteller_f.a.client.compose_core.components.block.BlockEditor.kt</ID>
+    <ID>AbsentOrWrongFileLicense:BlockModel.kt:com.storyteller_f.a.client.compose_core.components.block.BlockModel.kt</ID>
+    <ID>AbsentOrWrongFileLicense:BlockModelTest.kt:com.storyteller_f.a.client.compose_core.components.block.BlockModelTest.kt</ID>
+    <ID>AbsentOrWrongFileLicense:BlockParserTest.kt:com.storyteller_f.a.client.compose_core.components.block.BlockParserTest.kt</ID>
+    <ID>AbsentOrWrongFileLicense:BlockToMarkdownGenerator.kt:com.storyteller_f.a.client.compose_core.components.block.BlockToMarkdownGenerator.kt</ID>
+    <ID>AbsentOrWrongFileLicense:BlockToolbar.kt:com.storyteller_f.a.client.compose_core.components.block.BlockToolbar.kt</ID>
+    <ID>AbsentOrWrongFileLicense:ButtonNav.kt:com.storyteller_f.a.client.compose_core.components.ButtonNav.kt</ID>
+    <ID>AbsentOrWrongFileLicense:CenterBox.kt:com.storyteller_f.a.client.compose_core.components.CenterBox.kt</ID>
+    <ID>AbsentOrWrongFileLicense:CharSequanceText.kt:com.storyteller_f.a.client.compose_core.components.CharSequanceText.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Clipboard.android.kt:com.storyteller_f.a.client.compose_core.components.Clipboard.android.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Clipboard.jvm.kt:com.storyteller_f.a.client.compose_core.components.Clipboard.jvm.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Clipboard.kt:com.storyteller_f.a.client.compose_core.components.Clipboard.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Clipboard.wasmJs.kt:com.storyteller_f.a.client.compose_core.components.Clipboard.wasmJs.kt</ID>
+    <ID>AbsentOrWrongFileLicense:CodeFence.kt:com.storyteller_f.a.client.compose_core.components.CodeFence.kt</ID>
+    <ID>AbsentOrWrongFileLicense:CommunityIcon.kt:com.storyteller_f.a.client.compose_core.components.CommunityIcon.kt</ID>
+    <ID>AbsentOrWrongFileLicense:CompatPagingSource.kt:com.storyteller_f.a.client.compose_core.common.CompatPagingSource.kt</ID>
+    <ID>AbsentOrWrongFileLicense:CoreStrings.kt:com.storyteller_f.a.client.compose_core.CoreStrings.kt</ID>
+    <ID>AbsentOrWrongFileLicense:CustomIcon.kt:com.storyteller_f.a.client.compose_core.components.CustomIcon.kt</ID>
+    <ID>AbsentOrWrongFileLicense:CustomMarkdown.kt:com.storyteller_f.a.client.compose_core.components.CustomMarkdown.kt</ID>
+    <ID>AbsentOrWrongFileLicense:DefaultMediaPlayListHandlerProvider.android.kt:com.storyteller_f.a.client.compose_core.components.DefaultMediaPlayListHandlerProvider.android.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Dialog.kt:com.storyteller_f.a.client.compose_core.components.Dialog.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Dp.kt:com.storyteller_f.a.client.compose_core.components.Dp.kt</ID>
+    <ID>AbsentOrWrongFileLicense:EditableBlock.kt:com.storyteller_f.a.client.compose_core.components.block.EditableBlock.kt</ID>
+    <ID>AbsentOrWrongFileLicense:ExceptionView.kt:com.storyteller_f.a.client.compose_core.components.ExceptionView.kt</ID>
+    <ID>AbsentOrWrongFileLicense:FileIcon.kt:com.storyteller_f.a.client.compose_core.components.FileIcon.kt</ID>
+    <ID>AbsentOrWrongFileLicense:FileView.kt:com.storyteller_f.a.client.compose_core.components.FileView.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Font.android.kt:com.storyteller_f.a.client.compose_core.utils.Font.android.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Font.jvm.kt:com.storyteller_f.a.client.compose_core.utils.Font.jvm.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Font.kt:com.storyteller_f.a.client.compose_core.utils.Font.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Font.wasmJs.kt:com.storyteller_f.a.client.compose_core.utils.Font.wasmJs.kt</ID>
+    <ID>AbsentOrWrongFileLicense:GlobalDialog.kt:com.storyteller_f.a.client.compose_core.components.GlobalDialog.kt</ID>
+    <ID>AbsentOrWrongFileLicense:GlobalTask.kt:com.storyteller_f.a.client.compose_core.components.GlobalTask.kt</ID>
+    <ID>AbsentOrWrongFileLicense:IO.kt:com.storyteller_f.a.client.compose_core.utils.IO.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Image.android.kt:com.storyteller_f.a.client.compose_core.utils.Image.android.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Image.jvm.kt:com.storyteller_f.a.client.compose_core.utils.Image.jvm.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Image.kt:com.storyteller_f.a.client.compose_core.components.Image.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Image.kt:com.storyteller_f.a.client.compose_core.utils.Image.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Image.wasmJs.kt:com.storyteller_f.a.client.compose_core.utils.Image.wasmJs.kt</ID>
+    <ID>AbsentOrWrongFileLicense:ImageUtils.kt:com.storyteller_f.a.client.compose_core.utils.ImageUtils.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Ime.android.kt:com.storyteller_f.a.client.compose_core.components.Ime.android.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Ime.jvm.kt:com.storyteller_f.a.client.compose_core.components.Ime.jvm.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Ime.kt:com.storyteller_f.a.client.compose_core.components.Ime.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Ime.wasmJs.kt:com.storyteller_f.a.client.compose_core.components.Ime.wasmJs.kt</ID>
+    <ID>AbsentOrWrongFileLicense:InfoTable.kt:com.storyteller_f.a.client.compose_core.components.InfoTable.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Language.android.kt:com.storyteller_f.a.client.compose_core.utils.Language.android.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Language.jvm.kt:com.storyteller_f.a.client.compose_core.utils.Language.jvm.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Language.kt:com.storyteller_f.a.client.compose_core.utils.Language.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Language.wasmJs.kt:com.storyteller_f.a.client.compose_core.utils.Language.wasmJs.kt</ID>
+    <ID>AbsentOrWrongFileLicense:LayoutDefaults.kt:com.storyteller_f.a.client.compose_core.components.LayoutDefaults.kt</ID>
+    <ID>AbsentOrWrongFileLicense:LocalSource.kt:com.storyteller_f.a.client.compose_core.common.LocalSource.kt</ID>
+    <ID>AbsentOrWrongFileLicense:LoginUser.android.kt:com.storyteller_f.a.client.compose_core.utils.LoginUser.android.kt</ID>
+    <ID>AbsentOrWrongFileLicense:LoginUser.jvm.kt:com.storyteller_f.a.client.compose_core.utils.LoginUser.jvm.kt</ID>
+    <ID>AbsentOrWrongFileLicense:LoginUser.wasmJs.kt:com.storyteller_f.a.client.compose_core.utils.LoginUser.wasmJs.kt</ID>
+    <ID>AbsentOrWrongFileLicense:MarkdownToBlockParser.kt:com.storyteller_f.a.client.compose_core.components.block.MarkdownToBlockParser.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Math.kt:com.storyteller_f.a.client.compose_core.utils.Math.kt</ID>
+    <ID>AbsentOrWrongFileLicense:MathInlineContent.kt:com.storyteller_f.a.client.compose_core.components.MathInlineContent.kt</ID>
+    <ID>AbsentOrWrongFileLicense:MeasureTextLineCount.kt:com.storyteller_f.a.client.compose_core.components.MeasureTextLineCount.kt</ID>
+    <ID>AbsentOrWrongFileLicense:MediaPlayer.kt:com.storyteller_f.a.client.compose_core.components.MediaPlayer.kt</ID>
+    <ID>AbsentOrWrongFileLicense:MediaPlayerInternal.kt:com.storyteller_f.a.client.compose_core.components.MediaPlayerInternal.kt</ID>
+    <ID>AbsentOrWrongFileLicense:MediaPlayerService.android.kt:com.storyteller_f.a.client.compose_core.components.MediaPlayerService.android.kt</ID>
+    <ID>AbsentOrWrongFileLicense:MediaPlayerService.jvm.kt:com.storyteller_f.a.client.compose_core.components.MediaPlayerService.jvm.kt</ID>
+    <ID>AbsentOrWrongFileLicense:MediaPlayerService.wasmJs.kt:com.storyteller_f.a.client.compose_core.components.MediaPlayerService.wasmJs.kt</ID>
+    <ID>AbsentOrWrongFileLicense:MediaUtils.jvmAndroid.kt:com.storyteller_f.a.client.compose_core.utils.MediaUtils.jvmAndroid.kt</ID>
+    <ID>AbsentOrWrongFileLicense:MediaUtils.kt:com.storyteller_f.a.client.compose_core.utils.MediaUtils.kt</ID>
+    <ID>AbsentOrWrongFileLicense:MediaUtils.wasmJs.kt:com.storyteller_f.a.client.compose_core.utils.MediaUtils.wasmJs.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Nav.kt:com.storyteller_f.a.client.compose_core.components.Nav.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Paging.kt:com.storyteller_f.a.client.compose_core.common.Paging.kt</ID>
+    <ID>AbsentOrWrongFileLicense:PdfView.jvmAndroid.kt:com.storyteller_f.a.client.compose_core.components.PdfView.jvmAndroid.kt</ID>
+    <ID>AbsentOrWrongFileLicense:PdfView.kt:com.storyteller_f.a.client.compose_core.components.PdfView.kt</ID>
+    <ID>AbsentOrWrongFileLicense:PdfView.wasmJs.kt:com.storyteller_f.a.client.compose_core.components.PdfView.wasmJs.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Permission.android.kt:com.storyteller_f.a.client.compose_core.components.Permission.android.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Permission.jvm.kt:com.storyteller_f.a.client.compose_core.components.Permission.jvm.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Permission.kt:com.storyteller_f.a.client.compose_core.components.Permission.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Permission.wasmJs.kt:com.storyteller_f.a.client.compose_core.components.Permission.wasmJs.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Pill.kt:com.storyteller_f.a.client.compose_core.components.Pill.kt</ID>
+    <ID>AbsentOrWrongFileLicense:PlaybackService.kt:com.storyteller_f.a.client.compose_core.PlaybackService.kt</ID>
+    <ID>AbsentOrWrongFileLicense:PrivateKeyInput.kt:com.storyteller_f.a.client.compose_core.components.PrivateKeyInput.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Provider.kt:com.storyteller_f.a.client.compose_core.common.Provider.kt</ID>
+    <ID>AbsentOrWrongFileLicense:RoomIcon.kt:com.storyteller_f.a.client.compose_core.components.RoomIcon.kt</ID>
+    <ID>AbsentOrWrongFileLicense:SessionHistoryManager.kt:com.storyteller_f.a.client.compose_core.utils.SessionHistoryManager.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Sheet.kt:com.storyteller_f.a.client.compose_core.components.Sheet.kt</ID>
+    <ID>AbsentOrWrongFileLicense:SignInButton.kt:com.storyteller_f.a.client.compose_core.components.SignInButton.kt</ID>
+    <ID>AbsentOrWrongFileLicense:SimpleMessageWithButton.kt:com.storyteller_f.a.client.compose_core.components.SimpleMessageWithButton.kt</ID>
+    <ID>AbsentOrWrongFileLicense:SimpleViewModel.kt:com.storyteller_f.a.client.compose_core.common.SimpleViewModel.kt</ID>
+    <ID>AbsentOrWrongFileLicense:StateView.kt:com.storyteller_f.a.client.compose_core.components.StateView.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Theme.android.kt:com.storyteller_f.a.client.compose_core.utils.Theme.android.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Theme.jvm.kt:com.storyteller_f.a.client.compose_core.utils.Theme.jvm.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Theme.kt:com.storyteller_f.a.client.compose_core.utils.Theme.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Theme.wasmJs.kt:com.storyteller_f.a.client.compose_core.utils.Theme.wasmJs.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Toast.kt:com.storyteller_f.a.client.compose_core.components.Toast.kt</ID>
+    <ID>AbsentOrWrongFileLicense:TopicContentView.kt:com.storyteller_f.a.client.compose_core.components.TopicContentView.kt</ID>
+    <ID>AbsentOrWrongFileLicense:UserIcon.kt:com.storyteller_f.a.client.compose_core.components.UserIcon.kt</ID>
+    <ID>AbsentOrWrongFileLicense:VideoView.android.kt:com.storyteller_f.a.client.compose_core.components.VideoView.android.kt</ID>
+    <ID>AbsentOrWrongFileLicense:VideoView.jvm.kt:com.storyteller_f.a.client.compose_core.components.VideoView.jvm.kt</ID>
+    <ID>AbsentOrWrongFileLicense:VideoView.kt:com.storyteller_f.a.client.compose_core.components.VideoView.kt</ID>
+    <ID>AbsentOrWrongFileLicense:VideoView.wasmJs.kt:com.storyteller_f.a.client.compose_core.components.VideoView.wasmJs.kt</ID>
+    <ID>AbsentOrWrongFileLicense:build.gradle.kts:.build.gradle.kts</ID>
     <ID>ArgumentListWrapping:Image.jvm.kt:( when (format) { PNG -&gt; EncodedImageFormat.PNG JPEG -&gt; EncodedImageFormat.JPEG WEBP -&gt; EncodedImageFormat.WEBP }, quality )</ID>
     <ID>ArgumentListWrapping:Paging.kt:SectionPagingSource$( data = emptyList(), prevKey = null, // Only paging forward. nextKey = null )</ID>
     <ID>BlankLineBetweenWhenConditions:AudioView.android.kt:when { player == null -&gt; PlayerWaiting(localMediaPlaySession, remoteMediaItem) playingSession == null -&gt; PlayerWaiting(localMediaPlaySession, remoteMediaItem) playingSession.lastUuid == localMediaPlaySession.uuid -&gt; AudioPlayerInternal( player, localMediaPlaySession, remoteMediaItem, playingSession ) playingSession.id == localMediaPlaySession.id -&gt; PlayerOccupy(localMediaPlaySession) else -&gt; PlayerWaiting(localMediaPlaySession, remoteMediaItem) }</ID>
@@ -19,6 +128,25 @@
     <ID>BlankLineBetweenWhenConditions:StateView.kt:when (this) { null -&gt; null is LoadState.Loading -&gt; LoadingState.Loading is LoadState.Error -&gt; LoadingState.Error(error) is LoadState.NotLoading -&gt; LoadingState.Done }</ID>
     <ID>BlankLineBetweenWhenConditions:TopicContentView.kt:when (content) { is TopicContent.Plain -&gt; content.plain to content.fileInfos is TopicContent.Extracted -&gt; content.plain to content.fileInfos else -&gt; return }</ID>
     <ID>BlankLineBetweenWhenConditions:VideoView.android.kt:when { player == null -&gt; PlayerWaiting(localMediaPlaySession, remoteMediaItem) playingSession == null -&gt; PlayerWaiting(localMediaPlaySession, remoteMediaItem) playingSession.lastUuid == localMediaPlaySession.uuid -&gt; VideoPlayerInternal( localMediaPlaySession, player, contentType ) playingSession.id == localMediaPlaySession.id -&gt; PlayerOccupy(localMediaPlaySession) else -&gt; PlayerWaiting(localMediaPlaySession, remoteMediaItem) }</ID>
+    <ID>BracesOnWhenStatements:CustomIcon.kt:when</ID>
+    <ID>BracesOnWhenStatements:LocalSource.kt:CustomRemoteMediator$when</ID>
+    <ID>BracesOnWhenStatements:LocalSource.kt:IntermediatePagingSource$when</ID>
+    <ID>BracesOnWhenStatements:MarkdownToBlockParser.kt:when</ID>
+    <ID>BracesOnWhenStatements:MediaPlayerInternal.kt:when</ID>
+    <ID>BracesOnWhenStatements:Paging.kt:SectionPagingSource$when</ID>
+    <ID>BracesOnWhenStatements:Pill.kt:when</ID>
+    <ID>BracesOnWhenStatements:StateView.kt:when</ID>
+    <ID>BracesOnWhenStatements:Theme.android.kt:when</ID>
+    <ID>CascadingCallWrapping:MediaPlayerInternal.kt:build()</ID>
+    <ID>CascadingCallWrapping:RoomIcon.kt:border(1.dp, Color.Gray, shape)</ID>
+    <ID>ClassOrdering:GlobalDialog.kt:GlobalDialogController$val context: C</ID>
+    <ID>ClassOrdering:GlobalDialog.kt:GlobalDialogController.Companion.&lt;no name provided&gt;$override val context: Unit get() = TODO("Not yet implemented")</ID>
+    <ID>ClassOrdering:LoginUser.wasmJs.kt:PrefixedSettings$override val keys: Set&lt;String&gt; get() = delegate.keys.filter { it.startsWith(keyPrefix) }.map { it.strip() }.toSet()</ID>
+    <ID>ClassOrdering:LoginUser.wasmJs.kt:PrefixedSettings$override val size: Int get() = keys.size</ID>
+    <ID>ClassOrdering:MediaPlayer.kt:MediaPlaySession$val uuidCount get() = uuids.size</ID>
+    <ID>ClassOrdering:MediaPlayerService.android.kt:MediaPlayerService$actual abstract val enablePip: Boolean</ID>
+    <ID>ClassOrdering:MediaPlayerService.android.kt:MediaPlayerService$val controller: MutableStateFlow&lt;MediaController?&gt; = MutableStateFlow(null)</ID>
+    <ID>ClassOrdering:MediaPlayerService.jvm.kt:MediaPlayerService$actual abstract val enablePip: Boolean</ID>
     <ID>ClassSignature:BlockEditor.kt:BlockEditorState</ID>
     <ID>ClassSignature:BlockModel.kt:ContentBlock$CodeBlock : ContentBlock</ID>
     <ID>ClassSignature:BlockModel.kt:ContentBlock$Divider : ContentBlock</ID>
@@ -38,9 +166,113 @@
     <ID>ClassSignature:Paging.kt:SectionPagingSource&lt;DATUM : Any&gt; : PagingSource</ID>
     <ID>ClassSignature:SessionHistoryManager.kt:SavedSession</ID>
     <ID>ClassSignature:VideoView.jvm.kt:VideoMediaPlayerState</ID>
+    <ID>CollapsibleIfStatements:StateView.kt:if (pullRefreshing) { // 刷新结束或者当前没有内容时停止刷新，如果没有内容会使用列表刷新控件 if (refreshLoadState !is LoadState.Loading || pagingItems.itemCount == 0) { pullRefreshing = false } }</ID>
+    <ID>DataClassContainsFunctions:MediaPlayer.kt:MediaPlaySession$@OptIn(ExperimentalUuidApi::class) fun appendUuid</ID>
+    <ID>DocumentationOverPrivateFunction:BlockEditor.kt:private fun updateBlockContent: ContentBlock</ID>
+    <ID>EndOfSentenceFormat:BlockEditor.kt:* Block 编辑器主组件 * 类似 Notion 的编辑体验，每个块独立编辑，支持拖拽排序 * * @param blocks 外部管理的 Block 列表（由父组件通过 [rememberBlockEditorState] 创建） * @param initialMarkdown 初始 Markdown 内容（仅在 blocks 为空时使用） * @param onMarkdownChange Markdown 内容变化回调 * @param modifier 修饰符</ID>
+    <ID>EndOfSentenceFormat:BlockEditor.kt:* 创建并记住 BlockEditorState</ID>
+    <ID>EndOfSentenceFormat:BlockEditor.kt:* 更新 Block 内容，保持类型不变 * 注意：ImageBlock、ObjectBlock、RefBlock 的分支目前不会被调用， * 因为这些类型的 EditableBlock 没有实现 onContentChange 回调</ID>
+    <ID>EndOfSentenceFormat:BlockEditor.kt:BlockEditorState$* Block 编辑器状态类 * 用于在父组件中管理 Block 列表，以便与 BlockToolbar 共享</ID>
+    <ID>EndOfSentenceFormat:BlockEditor.kt:BlockEditorState$* 在指定位置插入一个 Block</ID>
+    <ID>EndOfSentenceFormat:BlockEditor.kt:BlockEditorState$* 在末尾添加一个 Block</ID>
+    <ID>EndOfSentenceFormat:BlockEditor.kt:BlockEditorState$* 替换指定 ID 的 Block</ID>
+    <ID>EndOfSentenceFormat:BlockModel.kt:* 创建默认的空段落块</ID>
+    <ID>EndOfSentenceFormat:BlockModel.kt:* 生成唯一 Block ID</ID>
+    <ID>EndOfSentenceFormat:BlockModel.kt:BlockType$* Block 类型枚举</ID>
+    <ID>EndOfSentenceFormat:BlockModel.kt:ContentBlock$* Block 数据模型，用于表示文档中的一个内容块 * 类似 Notion 的 Block 概念，每个块独立编辑，支持拖拽排序</ID>
+    <ID>EndOfSentenceFormat:BlockModel.kt:ContentBlock.CodeBlock$* 代码块 - CodeFence</ID>
+    <ID>EndOfSentenceFormat:BlockModel.kt:ContentBlock.Divider$* 分割线</ID>
+    <ID>EndOfSentenceFormat:BlockModel.kt:ContentBlock.ImageBlock$* 图片块</ID>
+    <ID>EndOfSentenceFormat:BlockModel.kt:ContentBlock.ListItem$* 列表项 - 有序/无序列表</ID>
+    <ID>EndOfSentenceFormat:BlockModel.kt:ContentBlock.MathBlock$* 数学公式块</ID>
+    <ID>EndOfSentenceFormat:BlockModel.kt:ContentBlock.ObjectBlock$* 对象嵌入块 - 用于嵌入视频、音频等多媒体对象</ID>
+    <ID>EndOfSentenceFormat:BlockModel.kt:ContentBlock.Paragraph$* 段落块 - 普通文本内容</ID>
+    <ID>EndOfSentenceFormat:BlockModel.kt:ContentBlock.Quote$* 引用块 - BlockQuote</ID>
+    <ID>EndOfSentenceFormat:BlockModel.kt:ContentBlock.RefBlock$* 自定义引用块 - CSA (com.storyteller_f.a) * 用于引用其他用户、社区、房间、帖子等</ID>
+    <ID>EndOfSentenceFormat:BlockModelTest.kt:BlockModelTest$* Block 模型的单元测试</ID>
+    <ID>EndOfSentenceFormat:BlockParserTest.kt:BlockParserTest$* Block 解析器和生成器的单元测试 * 验证 Markdown &lt;-&gt; Block 双向转换的正确性</ID>
+    <ID>EndOfSentenceFormat:BlockToMarkdownGenerator.kt:* 将 ContentBlock 列表转换为 Markdown 文本</ID>
+    <ID>EndOfSentenceFormat:BlockToolbar.kt:* Block 工具栏 * 提供快速插入不同类型 Block 的按钮</ID>
+    <ID>EndOfSentenceFormat:EditableBlock.kt:* 分割线块</ID>
+    <ID>EndOfSentenceFormat:EditableBlock.kt:* 可编辑的 Block 组件 * 每个 Block 在聚焦时显示为编辑模式，失焦时显示为渲染后的预览</ID>
+    <ID>EndOfSentenceFormat:EditableBlock.kt:* 可编辑的代码块</ID>
+    <ID>EndOfSentenceFormat:EditableBlock.kt:* 可编辑的列表项</ID>
+    <ID>EndOfSentenceFormat:EditableBlock.kt:* 可编辑的图片块</ID>
+    <ID>EndOfSentenceFormat:EditableBlock.kt:* 可编辑的对象嵌入块</ID>
+    <ID>EndOfSentenceFormat:EditableBlock.kt:* 可编辑的引用块</ID>
+    <ID>EndOfSentenceFormat:EditableBlock.kt:* 可编辑的引用块 (CSA)</ID>
+    <ID>EndOfSentenceFormat:EditableBlock.kt:* 可编辑的数学公式块</ID>
+    <ID>EndOfSentenceFormat:EditableBlock.kt:* 可编辑的段落块</ID>
+    <ID>EndOfSentenceFormat:GlobalTask.kt:* 便捷方法：从 GlobalTask 触发事件或发起请求（与 GlobalDialogController 的扩展一致）。</ID>
+    <ID>EndOfSentenceFormat:InfoTable.kt:* 通用信息表格组件，用于以表格形式展示对象的所有属性 * @param items 键值对列表，每个 Pair 代表一行：key 为字段名，value 为字段值</ID>
+    <ID>EndOfSentenceFormat:MarkdownToBlockParser.kt:* 将 Markdown 文本解析为 ContentBlock 列表</ID>
+    <ID>EndOfSentenceFormat:Paging.kt:* Result 的范型为out，说明这是一个生产者，只有在传入端需要明确指定类型</ID>
+    <ID>EndOfSentenceFormat:SessionHistoryManager.kt:SessionHistory$* 登录之后会修改last 和current，如果没有退出登录，再次打开时会读取current 重新登录 * 如果退出登录current 会被删除</ID>
+    <ID>ExpressionBodySyntax:BlockEditor.kt:return this is ContentBlock.Paragraph &amp;&amp; content.isEmpty() &amp;&amp; level == 0</ID>
+    <ID>ExpressionBodySyntax:BlockToMarkdownGenerator.kt:return "```csa\n${block.refPath}\n```"</ID>
+    <ID>ExpressionBodySyntax:BlockToMarkdownGenerator.kt:return block.content.lines().joinToString("\n") { "&gt; $it" }</ID>
+    <ID>ExpressionBodySyntax:CompatPagingSource.kt:CompatPagingSource$return null</ID>
+    <ID>ExpressionBodySyntax:CompatPagingSource.kt:IntKeyConverter$return f.toString()</ID>
+    <ID>ExpressionBodySyntax:CompatPagingSource.kt:IntKeyConverter$return t.toInt()</ID>
+    <ID>ExpressionBodySyntax:EditableBlock.kt:return trimEnd('\r', '\n')</ID>
+    <ID>ExpressionBodySyntax:GlobalDialog.kt:GlobalDialogContext$return block(sessionManager)</ID>
+    <ID>ExpressionBodySyntax:GlobalDialog.kt:return context.request(block)</ID>
+    <ID>ExpressionBodySyntax:GlobalTask.kt:GlobalTaskContext$return block(sessionManager)</ID>
+    <ID>ExpressionBodySyntax:GlobalTask.kt:return context.request(block)</ID>
+    <ID>ExpressionBodySyntax:Image.android.kt:return allowHardware(b)</ID>
+    <ID>ExpressionBodySyntax:Image.android.kt:return runCatching { toBitmap().asImageBitmap() }</ID>
+    <ID>ExpressionBodySyntax:Image.jvm.kt:return this</ID>
+    <ID>ExpressionBodySyntax:Ime.android.kt:return imeNestedScroll()</ID>
+    <ID>ExpressionBodySyntax:Language.android.kt:return Locale.getDefault().getDisplayLanguage(Locale.CHINESE)</ID>
+    <ID>ExpressionBodySyntax:Language.jvm.kt:return Locale.getDefault().getDisplayLanguage(Locale.CHINESE)</ID>
+    <ID>ExpressionBodySyntax:LocalSource.kt:IntermediatePagingSource$return null</ID>
+    <ID>ExpressionBodySyntax:LoginUser.android.kt:AndroidKeyStoreSessionHistoryManager$return AndroidKeyStoreUserPass(alias)</ID>
+    <ID>ExpressionBodySyntax:LoginUser.jvm.kt:return DefaultSessionHistoryManager(settings)</ID>
+    <ID>ExpressionBodySyntax:LoginUser.jvm.kt:return PreferencesSettings.Factory().create(name)</ID>
+    <ID>ExpressionBodySyntax:LoginUser.wasmJs.kt:return DefaultSessionHistoryManager(settings)</ID>
+    <ID>ExpressionBodySyntax:LoginUser.wasmJs.kt:return PrefixedSettings(StorageSettings(), name)</ID>
+    <ID>ExpressionBodySyntax:Math.kt:return (a * b) / gcd(a, b)</ID>
+    <ID>ExpressionBodySyntax:Math.kt:return if (b == 0) a else gcd(b, a % b)</ID>
+    <ID>ExpressionBodySyntax:Paging.kt:RegularPagingSource$return null</ID>
+    <ID>ExpressionBodySyntax:Permission.wasmJs.kt:return remember { mutableStateOf(true) }</ID>
+    <ID>ExpressionBodySyntax:SessionHistoryManager.kt:DefaultSessionHistoryManager.Companion$return "${SESSION_USER_PREFIX}_$address"</ID>
+    <ID>ExpressionBodySyntax:SessionHistoryManager.kt:return this?.take(8) ?: "null"</ID>
+    <ID>ExpressionBodySyntax:Theme.jvm.kt:return null</ID>
+    <ID>ExpressionBodySyntax:VideoView.jvm.kt:return false</ID>
     <ID>Filename:AppiumSemantics.ios.kt:com.storyteller_f.a.client.compose_core.utils.AppiumSemantics.ios.kt</ID>
     <ID>Filename:AppiumSemantics.jvmAndroid.kt:com.storyteller_f.a.client.compose_core.utils.AppiumSemantics.jvmAndroid.kt</ID>
     <ID>Filename:AppiumSemantics.wasmJs.kt:com.storyteller_f.a.client.compose_core.utils.AppiumSemantics.wasmJs.kt</ID>
+    <ID>ForbiddenComment:BlockEditor.kt:// TODO: 以下三种类型需要专门的编辑界面，目前不会执行这些分支</ID>
+    <ID>ForbiddenPublicDataClass:BlockModel.kt:ContentBlock$CodeBlock : ContentBlock</ID>
+    <ID>ForbiddenPublicDataClass:BlockModel.kt:ContentBlock$Divider : ContentBlock</ID>
+    <ID>ForbiddenPublicDataClass:BlockModel.kt:ContentBlock$ImageBlock : ContentBlock</ID>
+    <ID>ForbiddenPublicDataClass:BlockModel.kt:ContentBlock$ListItem : ContentBlock</ID>
+    <ID>ForbiddenPublicDataClass:BlockModel.kt:ContentBlock$MathBlock : ContentBlock</ID>
+    <ID>ForbiddenPublicDataClass:BlockModel.kt:ContentBlock$ObjectBlock : ContentBlock</ID>
+    <ID>ForbiddenPublicDataClass:BlockModel.kt:ContentBlock$Paragraph : ContentBlock</ID>
+    <ID>ForbiddenPublicDataClass:BlockModel.kt:ContentBlock$Quote : ContentBlock</ID>
+    <ID>ForbiddenPublicDataClass:BlockModel.kt:ContentBlock$RefBlock : ContentBlock</ID>
+    <ID>ForbiddenPublicDataClass:CustomIcon.kt:IconRes$Font : IconRes</ID>
+    <ID>ForbiddenPublicDataClass:CustomIcon.kt:IconRes$Vector : IconRes</ID>
+    <ID>ForbiddenPublicDataClass:FileView.kt:FileViewData$LocalImage : FileViewData</ID>
+    <ID>ForbiddenPublicDataClass:FileView.kt:FileViewData$Player : FileViewData</ID>
+    <ID>ForbiddenPublicDataClass:FileView.kt:FileViewData$Regular : FileViewData</ID>
+    <ID>ForbiddenPublicDataClass:FileView.kt:RemoteMediaItem</ID>
+    <ID>ForbiddenPublicDataClass:GlobalDialog.kt:GlobalDialogState$Error : GlobalDialogState</ID>
+    <ID>ForbiddenPublicDataClass:GlobalDialog.kt:GlobalDialogState$Loading : GlobalDialogState</ID>
+    <ID>ForbiddenPublicDataClass:GlobalDialog.kt:GlobalDialogStateProgress</ID>
+    <ID>ForbiddenPublicDataClass:LoginUser.android.kt:AndroidKeyStoreUserPass : UserPass</ID>
+    <ID>ForbiddenPublicDataClass:MediaPlayer.kt:ConstPlayItem : PlayItem</ID>
+    <ID>ForbiddenPublicDataClass:MediaPlayer.kt:CustomVideoSize</ID>
+    <ID>ForbiddenPublicDataClass:MediaPlayer.kt:LocalMediaPlaySession</ID>
+    <ID>ForbiddenPublicDataClass:MediaPlayer.kt:MediaPlaySession</ID>
+    <ID>ForbiddenPublicDataClass:MediaPlayerInternal.kt:MediaPlayerState</ID>
+    <ID>ForbiddenPublicDataClass:Paging.kt:APagingData&lt;K, T&gt;</ID>
+    <ID>ForbiddenPublicDataClass:Paging.kt:SectionLoadParams</ID>
+    <ID>ForbiddenPublicDataClass:SessionHistoryManager.kt:ConvertedRawUserPassInfo</ID>
+    <ID>ForbiddenPublicDataClass:SessionHistoryManager.kt:SavedSession</ID>
+    <ID>ForbiddenPublicDataClass:SessionHistoryManager.kt:SessionHistory</ID>
+    <ID>ForbiddenPublicDataClass:VideoView.jvm.kt:VideoMediaPlayerState</ID>
     <ID>FunctionExpressionBody:AppiumSemantics.wasmJs.kt:AppiumHtmlSemantics${ return if (input) { (document.createElement("textarea") as HTMLTextAreaElement).also { textArea -&gt; textArea.addEventListener("input", { inputCallbacks[id]?.invoke(textArea.value) window.requestAnimationFrame { window.requestAnimationFrame { textArea.setAttribute( "data-appium-input-delivered-length", textArea.value.length.toString(), ) } } }) } } else { (document.createElement("button") as HTMLElement).also { button -&gt; button.setAttribute("type", "button") button.addEventListener("click", { actionCallbacks[id]?.invoke() }) } } }</ID>
     <ID>FunctionExpressionBody:BlockEditor.kt:{ return this is ContentBlock.Paragraph &amp;&amp; content.isEmpty() &amp;&amp; level == 0 }</ID>
     <ID>FunctionExpressionBody:BlockEditor.kt:{ return when (block) { is ContentBlock.Paragraph -&gt; block.copy(content = newContent) is ContentBlock.ListItem -&gt; block.copy(content = newContent) is ContentBlock.Quote -&gt; block.copy(content = newContent) is ContentBlock.CodeBlock -&gt; block.copy(content = newContent) // TODO: 以下三种类型需要专门的编辑界面，目前不会执行这些分支 is ContentBlock.ImageBlock -&gt; block.copy(alt = newContent) is ContentBlock.ObjectBlock -&gt; block.copy(title = newContent) is ContentBlock.RefBlock -&gt; block.copy(refPath = newContent) is ContentBlock.MathBlock -&gt; block.copy(content = newContent) is ContentBlock.Divider -&gt; block } }</ID>
@@ -232,6 +464,43 @@
     <ID>FunctionName:VideoView.wasmJs.kt:@Composable actual fun VideoViewEmbed</ID>
     <ID>FunctionName:VideoView.wasmJs.kt:@Composable actual fun VideoViewFilled</ID>
     <ID>FunctionName:VideoView.wasmJs.kt:@Composable actual fun VideoViewFullScreen</ID>
+    <ID>FunctionNameMaxLength:BlockModelTest.kt:BlockModelTest$@Test fun `test inline math block creation`</ID>
+    <ID>FunctionNameMaxLength:BlockParserTest.kt:BlockParserTest$@Test fun `test block id generation is unique`</ID>
+    <ID>FunctionNameMaxLength:BlockParserTest.kt:BlockParserTest$@Test fun `test create empty paragraph block`</ID>
+    <ID>FunctionNameMaxLength:BlockParserTest.kt:BlockParserTest$@Test fun `test generate code block markdown`</ID>
+    <ID>FunctionNameMaxLength:BlockParserTest.kt:BlockParserTest$@Test fun `test generate empty markdown from empty blocks`</ID>
+    <ID>FunctionNameMaxLength:BlockParserTest.kt:BlockParserTest$@Test fun `test generate heading level 2 markdown`</ID>
+    <ID>FunctionNameMaxLength:BlockParserTest.kt:BlockParserTest$@Test fun `test generate image markdown with all fields`</ID>
+    <ID>FunctionNameMaxLength:BlockParserTest.kt:BlockParserTest$@Test fun `test generate image markdown with minimal fields`</ID>
+    <ID>FunctionNameMaxLength:BlockParserTest.kt:BlockParserTest$@Test fun `test generate math block markdown`</ID>
+    <ID>FunctionNameMaxLength:BlockParserTest.kt:BlockParserTest$@Test fun `test generate object block markdown`</ID>
+    <ID>FunctionNameMaxLength:BlockParserTest.kt:BlockParserTest$@Test fun `test generate ordered list markdown`</ID>
+    <ID>FunctionNameMaxLength:BlockParserTest.kt:BlockParserTest$@Test fun `test generate paragraph markdown`</ID>
+    <ID>FunctionNameMaxLength:BlockParserTest.kt:BlockParserTest$@Test fun `test generate quote with empty content`</ID>
+    <ID>FunctionNameMaxLength:BlockParserTest.kt:BlockParserTest$@Test fun `test generate quote with multiple lines`</ID>
+    <ID>FunctionNameMaxLength:BlockParserTest.kt:BlockParserTest$@Test fun `test generate ref block markdown`</ID>
+    <ID>FunctionNameMaxLength:BlockParserTest.kt:BlockParserTest$@Test fun `test generate unordered list markdown`</ID>
+    <ID>FunctionNameMaxLength:BlockParserTest.kt:BlockParserTest$@Test fun `test parse and regenerate heading levels`</ID>
+    <ID>FunctionNameMaxLength:BlockParserTest.kt:BlockParserTest$@Test fun `test parse blank markdown returns empty paragraph block`</ID>
+    <ID>FunctionNameMaxLength:BlockParserTest.kt:BlockParserTest$@Test fun `test parse code block with language`</ID>
+    <ID>FunctionNameMaxLength:BlockParserTest.kt:BlockParserTest$@Test fun `test parse code block without language`</ID>
+    <ID>FunctionNameMaxLength:BlockParserTest.kt:BlockParserTest$@Test fun `test parse empty markdown returns empty paragraph block`</ID>
+    <ID>FunctionNameMaxLength:BlockParserTest.kt:BlockParserTest$@Test fun `test parse invalid object block falls back to code block`</ID>
+    <ID>FunctionNameMaxLength:BlockParserTest.kt:BlockParserTest$@Test fun `test parse markdown with extra blank lines`</ID>
+    <ID>FunctionNameMaxLength:BlockParserTest.kt:BlockParserTest$@Test fun `test parse paragraph with special characters`</ID>
+    <ID>FunctionNameMaxLength:BlockParserTest.kt:BlockParserTest$@Test fun `test parse ref block with community path`</ID>
+    <ID>FunctionNameMaxLength:BlockParserTest.kt:BlockParserTest$@Test fun `test round-trip conversion code block`</ID>
+    <ID>FunctionNameMaxLength:BlockParserTest.kt:BlockParserTest$@Test fun `test round-trip conversion heading`</ID>
+    <ID>FunctionNameMaxLength:BlockParserTest.kt:BlockParserTest$@Test fun `test round-trip conversion multiple blocks`</ID>
+    <ID>FunctionNameMaxLength:BlockParserTest.kt:BlockParserTest$@Test fun `test round-trip conversion paragraph`</ID>
+    <ID>FunctionNameMaxLength:LoginUser.android.kt:actual fun readInjectedSessionFromPrivateStorageOrNull: ConvertedRawUserPassInfo?</ID>
+    <ID>FunctionNameMaxLength:LoginUser.jvm.kt:actual fun readInjectedSessionFromPrivateStorageOrNull: ConvertedRawUserPassInfo?</ID>
+    <ID>FunctionNameMaxLength:LoginUser.wasmJs.kt:actual fun readInjectedSessionFromPrivateStorageOrNull: ConvertedRawUserPassInfo?</ID>
+    <ID>FunctionNameMaxLength:SessionHistoryManager.kt:expect fun readInjectedSessionFromPrivateStorageOrNull: ConvertedRawUserPassInfo?</ID>
+    <ID>FunctionNameMinLength:CompatPagingSource.kt:CompatKeyConverter$fun to: F</ID>
+    <ID>FunctionNameMinLength:CoreStrings.kt:CoreStrings$@Composable fun ad: String</ID>
+    <ID>FunctionNameMinLength:CoreStrings.kt:CoreStrings$@Composable fun ok: String</ID>
+    <ID>FunctionNameMinLength:LoginUser.wasmJs.kt:PrefixedSettings$private fun String.k</ID>
     <ID>FunctionNaming:AlgoTypeSelector.kt:@Composable fun AlgoTypeSelector</ID>
     <ID>FunctionNaming:AndroidPlayerContainer.kt:@Composable fun PipBroadcastReceiver</ID>
     <ID>FunctionNaming:AndroidPlayerContainer.kt:@OptIn(ExperimentalUuidApi::class) @Composable fun BoxScope.AndroidPlayerContainer</ID>
@@ -428,6 +697,324 @@
     <ID>FunctionSignature:UserIcon.kt:@Composable fun UserIcon</ID>
     <ID>ImportOrdering:PdfView.jvmAndroid.kt:import androidx.compose.runtime.Composable import androidx.compose.ui.Modifier import dev.zt64.compose.pdf.rememberPdfState import dev.zt64.compose.pdf.component.PdfHorizontalPager import java.net.URI</ID>
     <ID>Kdoc:Activity.kt:/** * 在Android 13 上必须加这一行 */</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Activity.kt:fun ComponentActivity.commonForActivity</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AlgoTypeSelector.kt:@Composable fun AlgoTypeSelector</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AndroidPlayerContainer.kt:@Composable fun Modifier.androidPipMode: Modifier</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AndroidPlayerContainer.kt:@Composable fun PipBroadcastReceiver</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AndroidPlayerContainer.kt:@OptIn(ExperimentalUuidApi::class) @Composable fun BoxScope.AndroidPlayerContainer</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AndroidPlayerContainer.kt:@OptIn(ExperimentalUuidApi::class) @Composable fun EnablePipPre31</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppiumSemantics.kt:fun Modifier.appiumSemantics: Modifier</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AsciidocPreviewBlock.kt:@Composable fun AsciidocPreviewBlock</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AudioView.android.kt:@Composable actual fun AudioViewEmbed</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AudioView.android.kt:@Composable actual fun AudioViewFilled</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AudioView.android.kt:@Composable actual fun AudioViewFullScreen</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AudioView.jvm.kt:@Composable actual fun AudioViewEmbed</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AudioView.jvm.kt:@Composable actual fun AudioViewFilled</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AudioView.jvm.kt:@Composable actual fun AudioViewFullScreen</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AudioView.jvm.kt:@Composable fun AudioPlayer</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AudioView.jvm.kt:@Composable fun AudioPlayerInternal</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AudioView.jvm.kt:AudioPlayerComponent</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AudioView.kt:@Composable expect fun AudioViewEmbed</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AudioView.kt:@Composable expect fun AudioViewFilled</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AudioView.kt:@Composable expect fun AudioViewFullScreen</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AudioView.wasmJs.kt:@Composable actual fun AudioViewEmbed</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AudioView.wasmJs.kt:@Composable actual fun AudioViewFilled</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AudioView.wasmJs.kt:@Composable actual fun AudioViewFullScreen</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:BlockEditor.kt:@Composable fun BlockEditor</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:BlockEditor.kt:@Composable fun rememberBlockEditorState: BlockEditorState</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:BlockEditor.kt:BlockEditorState</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:BlockModel.kt:BlockType</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:BlockModel.kt:ContentBlock</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:BlockModel.kt:fun createEmptyParagraphBlock: ContentBlock.Paragraph</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:BlockModel.kt:fun generateBlockId: String</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:BlockModelTest.kt:BlockModelTest</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:BlockParserTest.kt:BlockParserTest</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:BlockToMarkdownGenerator.kt:fun generateMarkdownFromBlocks: String</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:BlockToolbar.kt:@OptIn(ExperimentalLayoutApi::class) @Composable fun BlockToolbar</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ButtonNav.kt:@Composable fun ButtonNav</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CenterBox.kt:@Composable fun CenterBox</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CharSequanceText.kt:@Composable fun CharSequenceText</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Clipboard.android.kt:actual suspend fun Clipboard.setText</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Clipboard.jvm.kt:@OptIn(ExperimentalComposeUiApi::class) actual suspend fun Clipboard.setText</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Clipboard.kt:expect suspend fun Clipboard.setText</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Clipboard.wasmJs.kt:actual suspend fun Clipboard.setText</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CodeFence.kt:@Composable fun CustomCodeFence</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CodeFence.kt:@Composable fun HighlightCodeBlock</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CodeFence.kt:@Composable fun ObjectBlock</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CommunityIcon.kt:@Composable fun CommunityIcon</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CommunityIcon.kt:@Composable fun CommunityPoster</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CompatPagingSource.kt:CompatKeyConverter&lt;F, T&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CompatPagingSource.kt:CompatPagingSource&lt;OK : Any, TK : Any, T : Any&gt; : PagingSource</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CustomIcon.kt:@Composable fun CustomIcon</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CustomIcon.kt:IconRes</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CustomIcon.kt:fun Modifier.clickableIfNotNull: Modifier</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CustomMarkdown.kt:@Composable fun CustomMarkdown</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CustomMarkdown.kt:@Composable fun imageRequestInMarkdown: ImageRequest</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CustomMarkdown.kt:CustomCoil3ImageTransformerImpl : ImageTransformer</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Dialog.kt:@Composable fun CustomAlertDialog</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Dialog.kt:@Composable fun CustomAlertDialogInternal</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Dialog.kt:@Composable fun DialogContainer</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Dialog.kt:@Composable fun rememberAlertDialogController: CustomAlertDialogController</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Dialog.kt:@Composable fun rememberCommonDialogController: CommonDialogController</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Dialog.kt:CommonDialogController</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Dialog.kt:CustomAlertDialogController</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Dialog.kt:CustomAlertDialogState</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Dialog.kt:DialogSaveState</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Dp.kt:@Composable fun convertPxToDp: Dp</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Dp.kt:@Composable fun convertPxToSp: TextUnit</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Dp.kt:@Composable fun textUnitToPx: Float</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Dp.kt:fun pxToDp</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Dp.kt:fun pxToSp: TextUnit</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Dp.kt:fun textUnitToPx: Float</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:EditableBlock.kt:@Composable fun DividerBlock</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:EditableBlock.kt:@Composable fun EditableBlock</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:EditableBlock.kt:@Composable fun EditableCodeBlock</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:EditableBlock.kt:@Composable fun EditableImageBlock</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:EditableBlock.kt:@Composable fun EditableListItemBlock</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:EditableBlock.kt:@Composable fun EditableMathBlock</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:EditableBlock.kt:@Composable fun EditableObjectBlock</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:EditableBlock.kt:@Composable fun EditableParagraphBlock</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:EditableBlock.kt:@Composable fun EditableQuoteBlock</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:EditableBlock.kt:@Composable fun EditableRefBlock</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ExceptionView.kt:@Composable fun ExceptionCell</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ExceptionView.kt:@OptIn(ExperimentalRichTextApi::class) @Composable fun ExceptionView</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ExceptionView.kt:fun ServerErrorException.isHtmlContent: Boolean</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileIcon.kt:@Composable fun FileIcon</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileView.kt:FileViewData</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileView.kt:RemoteMediaItem</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Font.android.kt:actual fun loadFontFromLocal: FontFamily?</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Font.jvm.kt:actual fun loadFontFromLocal: FontFamily?</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Font.kt:expect fun loadFontFromLocal: FontFamily?</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Font.wasmJs.kt:actual fun loadFontFromLocal: FontFamily?</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:GlobalDialog.kt:@Composable fun &lt;C&gt; GlobalDialog</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:GlobalDialog.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun GlobalDialogInternal</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:GlobalDialog.kt:CustomGlobalDialogContent</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:GlobalDialog.kt:CustomGlobalDialogController&lt;C&gt; : GlobalDialogController</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:GlobalDialog.kt:GlobalDialogContext&lt;C&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:GlobalDialog.kt:GlobalDialogController&lt;C&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:GlobalDialog.kt:GlobalDialogState</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:GlobalDialog.kt:GlobalDialogStateProgress</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:GlobalDialog.kt:NestedGlobalDialogController&lt;C&gt; : GlobalDialogController</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:GlobalDialog.kt:fun &lt;C&gt; GlobalDialogController&lt;C&gt;.catchingResult</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:GlobalDialog.kt:suspend inline fun &lt;T, R&gt; GlobalDialogController&lt;GlobalDialogContext&lt;T&gt;&gt;.request: Result&lt;R&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:GlobalDialog.kt:suspend inline fun &lt;T&gt; GlobalDialogController&lt;GlobalDialogContext&lt;T&gt;&gt;.emitEvent</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:GlobalTask.kt:CustomGlobalTask&lt;C&gt; : GlobalTask</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:GlobalTask.kt:GlobalTask&lt;C&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:GlobalTask.kt:GlobalTaskContext&lt;C&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:GlobalTask.kt:suspend inline fun &lt;T, R&gt; GlobalTask&lt;GlobalTaskContext&lt;T&gt;&gt;.request: Result&lt;R&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:GlobalTask.kt:suspend inline fun &lt;T&gt; GlobalTask&lt;GlobalTaskContext&lt;T&gt;&gt;.emitEvent</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:GlobalTask.kt:suspend inline fun &lt;T&gt; MutableStateFlow&lt;LoadingState?&gt;.use: Result&lt;T&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:IO.kt:fun Path.safeSink: RawSink</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Image.android.kt:actual fun Image.coilImageToImageBitmap: Result&lt;ImageBitmap&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Image.android.kt:actual fun ImageRequest.Builder.androidAllowHardware: ImageRequest.Builder</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Image.android.kt:actual fun saveImageBitmap: Result&lt;Path&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Image.jvm.kt:actual fun Image.coilImageToImageBitmap: Result&lt;ImageBitmap&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Image.jvm.kt:actual fun ImageRequest.Builder.androidAllowHardware: ImageRequest.Builder</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Image.jvm.kt:actual fun saveImageBitmap: Result&lt;Path&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Image.jvm.kt:fun imageBitmapToByteArray: ByteArray</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Image.kt:@Composable fun CommonImage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Image.kt:@Composable fun CustomMarkdownImage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Image.kt:@Composable fun ImageError</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Image.kt:@Composable fun ImageLoading</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Image.kt:@OptIn(ExperimentalCoilApi::class) @Composable fun globalLoader: ImageRequest</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Image.kt:ImageFormat</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Image.kt:expect fun Image.coilImageToImageBitmap: Result&lt;ImageBitmap&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Image.kt:expect fun ImageRequest.Builder.androidAllowHardware: ImageRequest.Builder</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Image.kt:expect fun saveImageBitmap: Result&lt;Path&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Image.kt:fun writeImageFile: Path</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Image.wasmJs.kt:actual fun Image.coilImageToImageBitmap: Result&lt;ImageBitmap&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Image.wasmJs.kt:actual fun ImageRequest.Builder.androidAllowHardware: ImageRequest.Builder</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Image.wasmJs.kt:actual fun saveImageBitmap: Result&lt;Path&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ImageUtils.kt:@OptIn(ExperimentalCoilApi::class) fun imageRequest</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ImageUtils.kt:suspend fun getRemoteImageBitmap: Result&lt;ImageBitmap&gt;?</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Ime.android.kt:@OptIn(ExperimentalLayoutApi::class) actual fun Modifier.imeAnimation: Modifier</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Ime.jvm.kt:actual fun Modifier.imeAnimation</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Ime.kt:expect fun Modifier.imeAnimation: Modifier</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Ime.wasmJs.kt:actual fun Modifier.imeAnimation: Modifier</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:InfoTable.kt:@Composable fun InfoTable</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Language.android.kt:actual fun getCurrentLanguage: String</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Language.jvm.kt:actual fun getCurrentLanguage: String</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Language.kt:expect fun getCurrentLanguage: String</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Language.wasmJs.kt:actual fun getCurrentLanguage: String</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LayoutDefaults.kt:fun Modifier.horizontalSafeArea: Modifier</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LayoutDefaults.kt:fun Modifier.safeArea: Modifier</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LocalSource.kt:CachedLoadingHandler&lt;T : Any&gt; : LoadingHandler</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LocalSource.kt:CustomRemoteMediator&lt;Datum : Any&gt; : RemoteMediator</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LocalSource.kt:IntermediatePagingSource&lt;Key : Any, T : Any&gt; : PagingSource</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LoginUser.android.kt:AndroidKeyStoreSessionHistoryManager : SessionHistoryManager</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LoginUser.android.kt:AndroidKeyStoreUserPass : UserPass</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LoginUser.android.kt:actual fun buildSessionHistoryFactory: SessionHistoryManager</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LoginUser.android.kt:actual fun createSettings: Settings</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LoginUser.android.kt:actual fun readInjectedSessionFromPrivateStorageOrNull: ConvertedRawUserPassInfo?</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LoginUser.jvm.kt:actual fun buildSessionHistoryFactory: SessionHistoryManager</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LoginUser.jvm.kt:actual fun createSettings: Settings</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LoginUser.jvm.kt:actual fun readInjectedSessionFromPrivateStorageOrNull: ConvertedRawUserPassInfo?</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LoginUser.wasmJs.kt:actual fun buildSessionHistoryFactory: SessionHistoryManager</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LoginUser.wasmJs.kt:actual fun createSettings: Settings</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LoginUser.wasmJs.kt:actual fun readInjectedSessionFromPrivateStorageOrNull: ConvertedRawUserPassInfo?</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MarkdownToBlockParser.kt:fun parseMarkdownToBlocks: List&lt;ContentBlock&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Math.kt:fun gcd: Int</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Math.kt:fun lcm: Int</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MathInlineContent.kt:@Composable fun LatexInlineContent</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MathInlineContent.kt:@Composable fun customMarkdownTypography: MarkdownTypography</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MathInlineContent.kt:fun ASTNode.findChildOfTypeRecursive: ASTNode?</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MathInlineContent.kt:fun AnnotatedString.Builder.imageAnnotator: Boolean</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MathInlineContent.kt:fun imageInlineContent: InlineTextContent</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MeasureTextLineCount.kt:@Composable fun MeasureTextLineCount</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MediaPlayer.kt:@Composable fun MediaObjectBlock</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MediaPlayer.kt:ConstPlayItem : PlayItem</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MediaPlayer.kt:CustomVideoSize</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MediaPlayer.kt:LocalMediaPlaySession</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MediaPlayer.kt:MediaPlayListHandlerProvider</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MediaPlayer.kt:MediaPlaySession</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MediaPlayer.kt:MediaPlayerService</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MediaPlayer.kt:PlayItem</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MediaPlayerInternal.kt:@Composable fun BoxScope.PlayerOccupy</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MediaPlayerInternal.kt:@Composable fun BoxScope.PlayerWaiting</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MediaPlayerInternal.kt:@Composable fun MediaPlayerEmbed</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MediaPlayerInternal.kt:@Composable fun MediaPlayerFilled</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MediaPlayerInternal.kt:@Composable fun MediaPlayerFullScreen</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MediaPlayerInternal.kt:@OptIn(ExperimentalMaterial3Api::class, ExperimentalUuidApi::class) @Composable fun EmbedMediaPlayerContainer</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MediaPlayerInternal.kt:@OptIn(ExperimentalUuidApi::class) @Composable fun MediaPlayerInternal</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MediaPlayerInternal.kt:@OptIn(ExperimentalUuidApi::class) @Composable fun rememberPlayerState: State&lt;MediaPlayerState&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MediaPlayerInternal.kt:MediaPlayerState</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MediaPlayerInternal.kt:fun MediaController.playNewMedia</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MediaPlayerInternal.kt:fun buildM3UListener: Player.Listener</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MediaPlayerService.android.kt:@OptIn(ExperimentalUuidApi::class) suspend fun MediaPlayerService.startPlay: Result&lt;Unit&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MediaPlayerService.android.kt:MediaPlayerService</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MediaPlayerService.jvm.kt:MediaPlayerService</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MediaPlayerService.wasmJs.kt:MediaPlayerService</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MediaUtils.jvmAndroid.kt:actual suspend fun parseM3UPlayList: List&lt;ConstPlayItem&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MediaUtils.kt:expect suspend fun parseM3UPlayList: List&lt;ConstPlayItem&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MediaUtils.kt:fun getUploadDataFromPath</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MediaUtils.wasmJs.kt:@Suppress("UNUSED_PARAMETER") actual suspend fun parseM3UPlayList: List&lt;ConstPlayItem&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Nav.kt:@Composable fun CustomBottomNav</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Nav.kt:@Composable fun CustomRailNav</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Nav.kt:NavRoute</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Paging.kt:@OptIn(ExperimentalPagingApi::class) fun &lt;C : Any, T : Any&gt; buildPager: Pager&lt;String, T&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Paging.kt:@OptIn(ExperimentalPagingApi::class) fun &lt;T : Any&gt; buildPager: Pager&lt;String, T&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Paging.kt:APagingData&lt;K, T&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Paging.kt:PagingViewModel&lt;V : Any&gt; : ViewModel</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Paging.kt:RegularPagingSource&lt;DATUM : Any&gt; : PagingSource</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Paging.kt:SectionLoadParams</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Paging.kt:SectionPagingSource&lt;DATUM : Any&gt; : PagingSource</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PdfView.jvmAndroid.kt:@Composable actual fun PdfView</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PdfView.kt:@Composable expect fun PdfView</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PdfView.kt:@Composable fun PdfViewBlock</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PdfView.wasmJs.kt:@Composable actual fun PdfView</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Permission.android.kt:@Composable actual fun isPermissionGranted: MutableState&lt;Boolean&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Permission.android.kt:actual fun requestPermission</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Permission.android.kt:fun bindActivity</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Permission.android.kt:fun unbindActivity</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Permission.jvm.kt:@Composable actual fun isPermissionGranted: MutableState&lt;Boolean&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Permission.jvm.kt:actual fun requestPermission</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Permission.kt:@Composable expect fun isPermissionGranted: MutableState&lt;Boolean&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Permission.kt:Permission</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Permission.kt:expect fun requestPermission</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Permission.wasmJs.kt:@Composable actual fun isPermissionGranted: MutableState&lt;Boolean&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Permission.wasmJs.kt:actual fun requestPermission</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Pill.kt:@Composable fun Pill</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PlaybackService.kt:PlaybackService : MediaSessionService</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PlaybackService.kt:suspend fun&lt;C&gt; GlobalDialogController&lt;C&gt;.startPlayMedia</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PrivateKeyInput.kt:@Composable fun PrivateKeyTools</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PrivateKeyInput.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun PrivateKeyDialog</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PrivateKeyInput.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun PrivateKeyInput</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PrivateKeyInput.kt:@Suppress("LongMethod") @Composable fun PrivateKeyEditor</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomIcon.kt:@Composable fun RoomIcon</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionHistoryManager.kt:ConvertedRawUserPassInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionHistoryManager.kt:DefaultSessionHistoryManager : SessionHistoryManager</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionHistoryManager.kt:SavedSession</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionHistoryManager.kt:SessionHistory</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionHistoryManager.kt:SessionHistoryManager</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionHistoryManager.kt:expect fun buildSessionHistoryFactory: SessionHistoryManager</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionHistoryManager.kt:expect fun createSettings: Settings</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionHistoryManager.kt:expect fun readInjectedSessionFromPrivateStorageOrNull: ConvertedRawUserPassInfo?</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionHistoryManager.kt:fun RawUserPassInfo.toConverted: ConvertedRawUserPassInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionHistoryManager.kt:fun restoreFromStorage: ClientSessionState?</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Sheet.kt:@Composable fun SheetContainer</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Sheet.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun BaseSheet</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SignInButton.kt:@Composable fun SignInButton</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SimpleMessageWithButton.kt:@Composable fun SimpleMessageWithButton</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SimpleViewModel.kt:SimpleViewModel&lt;T : Any&gt; : ViewModel</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:StateView.kt:@Composable fun &lt;T : Any&gt; RefCellStateView</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:StateView.kt:@Composable fun debounce: LoadingState?</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:StateView.kt:@OptIn(ExperimentalMaterialApi::class, ExperimentalHazeMaterialsApi::class) @Composable fun &lt;T : Any&gt; StateView</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:StateView.kt:@OptIn(ExperimentalMaterialApi::class, FlowPreview::class) @Composable fun &lt;T&gt; StateView</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:StateView.kt:LoadingStatePreviewProvider : PreviewParameterProvider</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:StateView.kt:fun &lt;T : Any&gt; LazyGridScope.pagingItems</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:StateView.kt:fun &lt;T : Any&gt; LazyListScope.pagingItems</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:StateView.kt:fun LazyGridScope.bottomAppending</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:StateView.kt:fun LazyGridScope.topPrepend</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:StateView.kt:fun LazyListScope.bottomAppending</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:StateView.kt:fun LazyListScope.topPrepend</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Theme.android.kt:@Composable actual fun getAppDynamicColorScheme: ColorScheme?</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Theme.jvm.kt:@Composable actual fun getAppDynamicColorScheme: ColorScheme?</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Theme.kt:@Composable expect fun getAppDynamicColorScheme: ColorScheme?</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Theme.wasmJs.kt:@Composable actual fun getAppDynamicColorScheme: ColorScheme?</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Toast.kt:Sonner : Toast</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Toast.kt:Toast</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TopicContentView.kt:@Composable fun TopicContentView</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserIcon.kt:@Composable fun UserIcon</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:VideoView.android.kt:@Composable actual fun VideoViewEmbed</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:VideoView.android.kt:@Composable actual fun VideoViewFilled</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:VideoView.android.kt:@Composable actual fun VideoViewFullScreen</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:VideoView.android.kt:@Composable actual fun rememberIsInPipMode: Boolean</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:VideoView.android.kt:@OptIn(ExperimentalUuidApi::class) @Composable fun EmbedMediaPlayerMenus</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:VideoView.jvm.kt:@Composable actual fun VideoViewEmbed</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:VideoView.jvm.kt:@Composable actual fun VideoViewFilled</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:VideoView.jvm.kt:@Composable actual fun VideoViewFullScreen</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:VideoView.jvm.kt:@Composable actual fun rememberIsInPipMode: Boolean</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:VideoView.jvm.kt:@Composable fun VideoPlayer</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:VideoView.jvm.kt:@Composable fun VideoPlayerInternal</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:VideoView.jvm.kt:@Composable fun rememberMediaPlayerState: State&lt;VideoMediaPlayerState&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:VideoView.jvm.kt:VideoMediaPlayerState</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:VideoView.jvm.kt:fun Component.mediaPlayer: EmbeddedMediaPlayer</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:VideoView.jvm.kt:fun Component.release</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:VideoView.jvm.kt:fun initializeMediaPlayerComponent: Component</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:VideoView.kt:@Composable expect fun VideoViewEmbed</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:VideoView.kt:@Composable expect fun VideoViewFilled</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:VideoView.kt:@Composable expect fun VideoViewFullScreen</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:VideoView.kt:@Composable expect fun rememberIsInPipMode: Boolean</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:VideoView.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun VideoPlaylistPicker</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:VideoView.kt:VideoListener</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:VideoView.wasmJs.kt:@Composable actual fun VideoViewEmbed</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:VideoView.wasmJs.kt:@Composable actual fun VideoViewFilled</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:VideoView.wasmJs.kt:@Composable actual fun VideoViewFullScreen</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:VideoView.wasmJs.kt:@Composable actual fun rememberIsInPipMode: Boolean</ID>
+    <ID>MagicNumber:AudioView.android.kt:16</ID>
+    <ID>MagicNumber:AudioView.android.kt:9</ID>
+    <ID>MagicNumber:BlockModel.kt:8</ID>
+    <ID>MagicNumber:CustomMarkdown.kt:CustomCoil3ImageTransformerImpl$7</ID>
+    <ID>MagicNumber:EditableBlock.kt:3</ID>
+    <ID>MagicNumber:EditableBlock.kt:4</ID>
+    <ID>MagicNumber:EditableBlock.kt:5</ID>
+    <ID>MagicNumber:EditableBlock.kt:6</ID>
+    <ID>MagicNumber:InfoTable.kt:0.4f</ID>
+    <ID>MagicNumber:InfoTable.kt:0.6f</ID>
+    <ID>MagicNumber:LoginUser.jvm.kt:8</ID>
+    <ID>MagicNumber:MarkdownToBlockParser.kt:3</ID>
+    <ID>MagicNumber:MarkdownToBlockParser.kt:4</ID>
+    <ID>MagicNumber:MarkdownToBlockParser.kt:5</ID>
+    <ID>MagicNumber:MarkdownToBlockParser.kt:6</ID>
+    <ID>MagicNumber:MathInlineContent.kt:0.8f</ID>
+    <ID>MagicNumber:MathInlineContent.kt:1.5f</ID>
+    <ID>MagicNumber:MediaPlayerInternal.kt:&lt;no name provided&gt;$1000</ID>
+    <ID>MagicNumber:RoomIcon.kt:3</ID>
+    <ID>MagicNumber:RoomIcon.kt:4</ID>
+    <ID>MagicNumber:SessionHistoryManager.kt:8</ID>
+    <ID>MagicNumber:StateView.kt:500</ID>
+    <ID>MagicNumber:UserIcon.kt:5</ID>
+    <ID>MagicNumber:VideoView.android.kt:1000</ID>
+    <ID>MagicNumber:VideoView.android.kt:16</ID>
+    <ID>MagicNumber:VideoView.android.kt:9</ID>
+    <ID>MagicNumber:VideoView.jvm.kt:16f</ID>
+    <ID>MagicNumber:VideoView.jvm.kt:9</ID>
+    <ID>MatchingDeclarationName:AppiumSemantics.ios.kt:AppiumHtmlSemantics</ID>
+    <ID>MatchingDeclarationName:AppiumSemantics.jvmAndroid.kt:AppiumHtmlSemantics</ID>
+    <ID>MatchingDeclarationName:AppiumSemantics.wasmJs.kt:AppiumHtmlSemantics</ID>
+    <ID>MatchingDeclarationName:CustomIcon.kt:IconRes</ID>
+    <ID>MatchingDeclarationName:MediaPlayerService.wasmJs.kt:MediaPlayerService</ID>
+    <ID>MatchingDeclarationName:Nav.kt:NavRoute</ID>
     <ID>MultilineExpressionWrapping:AndroidPlayerContainer.kt:Runnable { Napier.d(tag = "MediaPlayer") { "EnablePipPre31 ${localMediaPlaySession.uuid} $enablePip" } if (enablePip) { context.findActivity() .enterPictureInPictureMode(PictureInPictureParams.Builder().build()) } }</ID>
     <ID>MultilineExpressionWrapping:AndroidPlayerContainer.kt:object : BroadcastReceiver() { override fun onReceive(context: Context?, intent: Intent?) { if ((intent == null) || (intent.action != ACTION_BROADCAST_CONTROL)) { return } when (intent.getIntExtra(EXTRA_CONTROL_TYPE, 0)) { EXTRA_CONTROL_PAUSE -&gt; player.pause() EXTRA_CONTROL_PLAY -&gt; player.play() } } }</ID>
     <ID>MultilineExpressionWrapping:AppiumSemantics.kt:composed { val id = remember { nextAppiumSemanticsId++ } DisposableEffect(id) { onDispose { AppiumHtmlSemantics.remove(id) } } SideEffect { AppiumHtmlSemantics.updateAction(id, onClick) if (input) { AppiumHtmlSemantics.updateInput( id = id, value = inputValue.orEmpty(), onValueChange = onInputValueChange, ) } } var modifier = this if (testTag != null) { modifier = modifier.testTag(testTag) } if (description != null) { modifier = modifier.semantics { contentDescription = description } } modifier.onGloballyPositioned { coordinates -&gt; val position = coordinates.positionInWindow() val size = coordinates.size AppiumHtmlSemantics.update( id = id, testTag = testTag, description = description, text = text, input = input, action = onClick != null, left = position.x, top = position.y, width = size.width.toFloat(), height = size.height.toFloat(), ) } }</ID>
@@ -647,6 +1234,7 @@
     <ID>MultilineExpressionWrapping:VideoView.jvm.kt:remember { initializeMediaPlayerComponent() }</ID>
     <ID>MultilineExpressionWrapping:VideoView.jvm.kt:when (this) { is CallbackMediaPlayerComponent -&gt; mediaPlayer() is EmbeddedMediaPlayerComponent -&gt; mediaPlayer() else -&gt; error("mediaPlayer() can only be called on vlcj player components") }</ID>
     <ID>MultilineExpressionWrapping:build.gradle.kts:create("jvmAndroidMain") { dependsOn(commonMain.get()) dependencies { implementation(libs.compose.pdf) implementation(libs.m3u.parser) } }</ID>
+    <ID>MultilineRawStringIndentation:BlockParserTest.kt:BlockParserTest$"""# Title Some text - Item 1 - Item 2 &gt; Quote here"""</ID>
     <ID>NoBlankLineInList:MediaPlayer.kt: </ID>
     <ID>NoEmptyFirstLineInClassBody:BlockModelTest.kt:BlockModelTest${ @Test fun `test paragraph block creation`() { val block = ContentBlock.Paragraph( id = "test-1", content = "Hello", level = 0 ) assertEquals("test-1", block.id) assertEquals("Hello", block.content) assertEquals(0, block.level) assertEquals(BlockType.PARAGRAPH, block.type) } @Test fun `test heading block creation`() { val block = ContentBlock.Paragraph( id = "test-2", content = "Title", level = 1 ) assertEquals(1, block.level) assertEquals(BlockType.PARAGRAPH, block.type) } @Test fun `test list item block creation`() { val block = ContentBlock.ListItem( id = "test-3", content = "List item", ordered = true, indent = 2 ) assertEquals("test-3", block.id) assertEquals("List item", block.content) assertEquals(true, block.ordered) assertEquals(2, block.indent) assertEquals(BlockType.LIST_ITEM, block.type) } @Test fun `test quote block creation`() { val block = ContentBlock.Quote( id = "test-4", content = "To be or not to be" ) assertEquals("test-4", block.id) assertEquals("To be or not to be", block.content) assertEquals(BlockType.QUOTE, block.type) } @Test fun `test code block creation`() { val block = ContentBlock.CodeBlock( id = "test-5", content = "print('hello')", language = "python" ) assertEquals("test-5", block.id) assertEquals("print('hello')", block.content) assertEquals("python", block.language) assertEquals(BlockType.CODE, block.type) } @Test fun `test image block creation`() { val block = ContentBlock.ImageBlock( id = "test-6", name = "photo.jpg", url = "https://example.com/photo.jpg", alt = "A beautiful photo", title = "Photo Title" ) assertEquals("test-6", block.id) assertEquals("photo.jpg", block.name) assertEquals("https://example.com/photo.jpg", block.url) assertEquals("A beautiful photo", block.alt) assertEquals(BlockType.IMAGE, block.type) } @Test fun `test object block creation`() { val block = ContentBlock.ObjectBlock( id = "test-7", name = "video.mp4", url = "https://example.com/video.mp4", contentType = "video/mp4", cover = "cover.jpg", title = "My Video", isPlaylist = false ) assertEquals("test-7", block.id) assertEquals("video.mp4", block.name) assertEquals("video/mp4", block.contentType) assertEquals("cover.jpg", block.cover) assertEquals("My Video", block.title) assertEquals(false, block.isPlaylist) assertEquals(BlockType.OBJECT, block.type) } @Test fun `test ref block creation`() { val block = ContentBlock.RefBlock( id = "test-8", refPath = "/topic/123" ) assertEquals("test-8", block.id) assertEquals("/topic/123", block.refPath) assertEquals(BlockType.REF, block.type) } @Test fun `test math block creation`() { val block = ContentBlock.MathBlock( id = "test-9", content = "\\sum_{i=1}^{n} i", inline = false ) assertEquals("test-9", block.id) assertEquals("\\sum_{i=1}^{n} i", block.content) assertEquals(false, block.inline) assertEquals(BlockType.MATH, block.type) } @Test fun `test inline math block creation`() { val block = ContentBlock.MathBlock( id = "test-10", content = "E = mc^2", inline = true ) assertEquals(true, block.inline) assertEquals(BlockType.MATH_INLINE, block.type) } @Test fun `test divider block creation`() { val block = ContentBlock.Divider( id = "test-11" ) assertEquals("test-11", block.id) assertEquals(BlockType.DIVIDER, block.type) } @Test fun `test block type enum values`() { val expectedTypes = listOf( BlockType.PARAGRAPH, BlockType.LIST_ITEM, BlockType.QUOTE, BlockType.CODE, BlockType.IMAGE, BlockType.OBJECT, BlockType.REF, BlockType.MATH, BlockType.MATH_INLINE, BlockType.DIVIDER ) assertEquals(10, BlockType.values().size) expectedTypes.forEach { type -&gt; assertTrue(BlockType.values().contains(type)) } } @Test fun `test paragraph block copy`() { val original = ContentBlock.Paragraph( id = "test-12", content = "Original", level = 0 ) val copied = original.copy(content = "Modified") assertEquals("test-12", copied.id) assertEquals("Modified", copied.content) assertEquals(0, copied.level) } @Test fun `test code block copy`() { val original = ContentBlock.CodeBlock( id = "test-13", content = "old code", language = "kotlin" ) val copied = original.copy(content = "new code", language = "java") assertEquals("test-13", copied.id) assertEquals("new code", copied.content) assertEquals("java", copied.language) } }</ID>
     <ID>NoEmptyFirstLineInClassBody:BlockParserTest.kt:BlockParserTest${ // ========== 解析测试 ========== @Test fun `test parse empty markdown returns empty paragraph block`() { val blocks = parseMarkdownToBlocks("") assertEquals(1, blocks.size) assertTrue(blocks[0] is ContentBlock.Paragraph) assertEquals("", (blocks[0] as ContentBlock.Paragraph).content) } @Test fun `test parse blank markdown returns empty paragraph block`() { val blocks = parseMarkdownToBlocks(" \n\n ") assertEquals(1, blocks.size) assertTrue(blocks[0] is ContentBlock.Paragraph) } @Test fun `test parse plain paragraph`() { val markdown = "Hello, World!" val blocks = parseMarkdownToBlocks(markdown) assertEquals(1, blocks.size) val paragraph = blocks[0] as ContentBlock.Paragraph assertEquals("Hello, World!", paragraph.content) assertEquals(0, paragraph.level) } @Test fun `test parse headings`() { val markdown = "# Heading 1" val blocks = parseMarkdownToBlocks(markdown) assertEquals(1, blocks.size) val heading = blocks[0] as ContentBlock.Paragraph assertEquals("Heading 1", heading.content) assertEquals(1, heading.level) } @Test fun `test parse heading level 2`() { val markdown = "## Heading 2" val blocks = parseMarkdownToBlocks(markdown) val heading = blocks[0] as ContentBlock.Paragraph assertEquals("Heading 2", heading.content) assertEquals(2, heading.level) } @Test fun `test parse heading level 3`() { val markdown = "### Heading 3" val blocks = parseMarkdownToBlocks(markdown) val heading = blocks[0] as ContentBlock.Paragraph assertEquals("Heading 3", heading.content) assertEquals(3, heading.level) } @Test fun `test parse unordered list`() { val markdown = """ - Item 1 - Item 2 - Item 3 """.trimIndent() val blocks = parseMarkdownToBlocks(markdown) assertEquals(3, blocks.size) blocks.forEach { block -&gt; assertTrue(block is ContentBlock.ListItem) assertEquals(false, block.ordered) } assertEquals("Item 1", (blocks[0] as ContentBlock.ListItem).content) assertEquals("Item 2", (blocks[1] as ContentBlock.ListItem).content) assertEquals("Item 3", (blocks[2] as ContentBlock.ListItem).content) } @Test fun `test parse ordered list`() { val markdown = """ 1. First 2. Second 3. Third """.trimIndent() val blocks = parseMarkdownToBlocks(markdown) assertEquals(3, blocks.size) blocks.forEach { block -&gt; assertTrue(block is ContentBlock.ListItem) assertEquals(true, block.ordered) } assertEquals("First", (blocks[0] as ContentBlock.ListItem).content) } @Test fun `test parse quote block`() { val markdown = "&gt; This is a quote" val blocks = parseMarkdownToBlocks(markdown) assertEquals(1, blocks.size) val quote = blocks[0] as ContentBlock.Quote assertEquals("This is a quote", quote.content) } @Test fun `test parse code block without language`() { val markdown = """ ``` fun hello() { println("Hello") } ``` """.trimIndent() val blocks = parseMarkdownToBlocks(markdown) assertEquals(1, blocks.size) val codeBlock = blocks[0] as ContentBlock.CodeBlock // 验证是代码块类型，语言可能为空 assertTrue(codeBlock.type == BlockType.CODE) assertTrue(codeBlock.content.contains("fun hello()"), "Should contain function code") } @Test fun `test parse code block with language`() { val markdown = """ ```kotlin fun main() { println("Hello Kotlin") } ``` """.trimIndent() val blocks = parseMarkdownToBlocks(markdown) val codeBlock = blocks[0] as ContentBlock.CodeBlock assertEquals("kotlin", codeBlock.language) assertTrue(codeBlock.content.contains("fun main()")) } @Test fun `test parse object block`() { val markdown = """ ```object {"name": "test.mp4", "contentType": "video/mp4", "url": "https://example.com/test.mp4"} ``` """.trimIndent() val blocks = parseMarkdownToBlocks(markdown) assertEquals(1, blocks.size) val objectBlock = blocks[0] as ContentBlock.ObjectBlock assertEquals("test.mp4", objectBlock.name) assertEquals("video/mp4", objectBlock.contentType) assertEquals("https://example.com/test.mp4", objectBlock.url) } @Test fun `test parse ref block (csa)`() { val markdown = """ ```csa /user/123 ``` """.trimIndent() val blocks = parseMarkdownToBlocks(markdown) assertEquals(1, blocks.size) val refBlock = blocks[0] as ContentBlock.RefBlock assertEquals("/user/123", refBlock.refPath) } @Test fun `test parse ref block with community path`() { val markdown = """ ```com.storyteller_f.a /community/456 ``` """.trimIndent() val blocks = parseMarkdownToBlocks(markdown) val refBlock = blocks[0] as ContentBlock.RefBlock assertEquals("/community/456", refBlock.refPath) } @Test fun `test parse math block`() { val markdown = """ ```math E = mc^2 ``` """.trimIndent() val blocks = parseMarkdownToBlocks(markdown) assertEquals(1, blocks.size) val mathBlock = blocks[0] as ContentBlock.MathBlock assertEquals("E = mc^2", mathBlock.content) assertEquals(false, mathBlock.inline) } @Test fun `test parse multiple blocks`() { val markdown = """ # Title This is a paragraph. - List item 1 - List item 2 &gt; A quote ```kotlin fun test() {} ``` """.trimIndent() val blocks = parseMarkdownToBlocks(markdown) // 验证有多种类型的块 val types = blocks.map { it::class.simpleName }.toSet() assertTrue(types.contains("Paragraph"), "Should have paragraph blocks") assertTrue(types.contains("ListItem"), "Should have list item blocks") assertTrue(types.contains("Quote"), "Should have quote block") assertTrue(types.contains("CodeBlock"), "Should have code block") assertTrue(blocks.size &gt;= 4, "Should have at least 4 blocks") } // ========== 生成测试 ========== @Test fun `test generate empty markdown from empty blocks`() { val blocks = emptyList&lt;ContentBlock&gt;() val markdown = generateMarkdownFromBlocks(blocks) assertEquals("", markdown) } @Test fun `test generate paragraph markdown`() { val blocks = listOf( ContentBlock.Paragraph( id = "test-id", content = "Hello, World!", level = 0 ) ) val markdown = generateMarkdownFromBlocks(blocks) assertEquals("Hello, World!", markdown) } @Test fun `test generate heading markdown`() { val blocks = listOf( ContentBlock.Paragraph( id = "test-id", content = "Heading 1", level = 1 ) ) val markdown = generateMarkdownFromBlocks(blocks) assertEquals("# Heading 1", markdown) } @Test fun `test generate heading level 2 markdown`() { val blocks = listOf( ContentBlock.Paragraph( id = "test-id", content = "Heading 2", level = 2 ) ) val markdown = generateMarkdownFromBlocks(blocks) assertEquals("## Heading 2", markdown) } @Test fun `test generate unordered list markdown`() { val blocks = listOf( ContentBlock.ListItem( id = "test-id", content = "Item 1", ordered = false ) ) val markdown = generateMarkdownFromBlocks(blocks) assertEquals("- Item 1", markdown) } @Test fun `test generate ordered list markdown`() { val blocks = listOf( ContentBlock.ListItem( id = "test-id", content = "First", ordered = true ) ) val markdown = generateMarkdownFromBlocks(blocks) assertEquals("1. First", markdown) } @Test fun `test generate quote markdown`() { val blocks = listOf( ContentBlock.Quote( id = "test-id", content = "This is a quote" ) ) val markdown = generateMarkdownFromBlocks(blocks) assertEquals("&gt; This is a quote", markdown) } @Test fun `test generate code block markdown`() { val blocks = listOf( ContentBlock.CodeBlock( id = "test-id", content = "fun hello() {}", language = "kotlin" ) ) val markdown = generateMarkdownFromBlocks(blocks) // 验证包含代码块的基本结构 assertTrue(markdown.contains("kotlin"), "Should contain language name") assertTrue(markdown.contains("fun hello() {}"), "Should contain code content") assertTrue(markdown.contains("```"), "Should contain code fences") } @Test fun `test generate object block markdown`() { val blocks = listOf( ContentBlock.ObjectBlock( id = "test-id", name = "video.mp4", url = "https://example.com/video.mp4", contentType = "video/mp4" ) ) val markdown = generateMarkdownFromBlocks(blocks) assertTrue(markdown.contains("```object")) assertTrue(markdown.contains("video.mp4")) assertTrue(markdown.contains("video/mp4")) } @Test fun `test generate ref block markdown`() { val blocks = listOf( ContentBlock.RefBlock( id = "test-id", refPath = "/user/123" ) ) val markdown = generateMarkdownFromBlocks(blocks) assertEquals("```csa\n/user/123\n```", markdown) } @Test fun `test generate math block markdown`() { val blocks = listOf( ContentBlock.MathBlock( id = "test-id", content = "E = mc^2", inline = false ) ) val markdown = generateMarkdownFromBlocks(blocks) assertEquals("```math\nE = mc^2\n```", markdown) } @Test fun `test generate divider markdown`() { val blocks = listOf( ContentBlock.Divider(id = "test-id") ) val markdown = generateMarkdownFromBlocks(blocks) assertEquals("---", markdown) } // ========== 双向转换测试 ========== @Test fun `test round-trip conversion paragraph`() { val original = "Hello, World!" val blocks = parseMarkdownToBlocks(original) val result = generateMarkdownFromBlocks(blocks) assertEquals(original, result.trim()) } @Test fun `test round-trip conversion heading`() { val original = "# My Title" val blocks = parseMarkdownToBlocks(original) val result = generateMarkdownFromBlocks(blocks) assertEquals(original, result.trim()) } @Test fun `test round-trip conversion code block`() { val original = """```kotlin fun test() = "hello" ```""" val blocks = parseMarkdownToBlocks(original) val result = generateMarkdownFromBlocks(blocks) // 代码块转换可能有一些格式差异，但核心内容应该保留 assertTrue(result.contains("```kotlin") || result.contains("```"), "Should contain code fence") assertTrue(result.contains("fun test()"), "Should contain function definition") } @Test fun `test round-trip conversion multiple blocks`() { val original = """# Title Some text - Item 1 - Item 2 &gt; Quote here""".trimIndent() val blocks = parseMarkdownToBlocks(original) val result = generateMarkdownFromBlocks(blocks) // 验证关键内容保留 assertTrue(result.contains("# Title")) assertTrue(result.contains("Some text")) assertTrue(result.contains("- Item 1")) assertTrue(result.contains("- Item 2")) assertTrue(result.contains("&gt; Quote here")) } @Test fun `test block id generation is unique`() { val id1 = generateBlockId() val id2 = generateBlockId() assertTrue(id1 != id2) assertTrue(id1.startsWith("block_")) assertTrue(id2.startsWith("block_")) } @Test fun `test create empty paragraph block`() { val block = createEmptyParagraphBlock() assertEquals("", block.content) assertEquals(0, block.level) assertTrue(block.id.startsWith("block_")) } // ========== 边界情况测试 ========== @Test fun `test parse invalid object block falls back to code block`() { val markdown = """ ```object not valid json ``` """.trimIndent() val blocks = parseMarkdownToBlocks(markdown) assertEquals(1, blocks.size) // 无效 JSON 应该降级为 CodeBlock assertTrue(blocks[0] is ContentBlock.CodeBlock) assertEquals("object", (blocks[0] as ContentBlock.CodeBlock).language) } @Test fun `test parse paragraph with special characters`() { val markdown = "Text with # hash and &gt; quote and * asterisk" val blocks = parseMarkdownToBlocks(markdown) assertEquals(1, blocks.size) val paragraph = blocks[0] as ContentBlock.Paragraph assertEquals("Text with # hash and &gt; quote and * asterisk", paragraph.content) } @Test fun `test parse markdown with extra blank lines`() { val markdown = """ # Title Some text - Item 1 - Item 2 """.trimIndent() val blocks = parseMarkdownToBlocks(markdown) // 应该忽略多余的空行 assertTrue(blocks.size &gt;= 3) } @Test fun `test generate quote with multiple lines`() { val blocks = listOf( ContentBlock.Quote( id = "test-id", content = "line 1\nline 2\nline 3" ) ) val markdown = generateMarkdownFromBlocks(blocks) assertEquals("&gt; line 1\n&gt; line 2\n&gt; line 3", markdown) } @Test fun `test generate quote with empty content`() { val blocks = listOf( ContentBlock.Quote( id = "test-id", content = "" ) ) val markdown = generateMarkdownFromBlocks(blocks) // 空内容的 quote 会生成一个空行 assertTrue(markdown.isEmpty() || markdown == "&gt; ") } @Test fun `test generate image markdown with all fields`() { val blocks = listOf( ContentBlock.ImageBlock( id = "test-id", name = "photo.jpg", url = "https://example.com/photo.jpg", alt = "A photo", title = "Photo Title" ) ) val markdown = generateMarkdownFromBlocks(blocks) assertEquals("![A photo](https://example.com/photo.jpg \"Photo Title\")", markdown) } @Test fun `test generate image markdown with minimal fields`() { val blocks = listOf( ContentBlock.ImageBlock( id = "test-id", name = "photo.jpg", url = "", alt = "", title = "" ) ) val markdown = generateMarkdownFromBlocks(blocks) assertEquals("![photo.jpg](photo.jpg)", markdown) } @Test fun `test parse and regenerate heading levels`() { for (level in 1..6) { val hashes = "#".repeat(level) val markdown = "$hashes Heading $level" val blocks = parseMarkdownToBlocks(markdown) assertEquals(1, blocks.size) val heading = blocks[0] as ContentBlock.Paragraph assertEquals(level, heading.level) assertEquals("Heading $level", heading.content) // 验证生成 val regenerated = generateMarkdownFromBlocks(blocks) assertEquals(markdown, regenerated) } } }</ID>
@@ -669,6 +1257,9 @@
     <ID>NotImplementedDeclaration:LoginUser.android.kt:AndroidKeyStoreUserPass$TODO("Not yet implemented")</ID>
     <ID>NotImplementedDeclaration:Permission.android.kt:TODO()</ID>
     <ID>NotImplementedDeclaration:Toast.kt:Toast.Companion.&lt;no name provided&gt;$TODO("Not yet implemented")</ID>
+    <ID>OutdatedDocumentation:BlockEditor.kt:@Composable fun BlockEditor</ID>
+    <ID>OutdatedDocumentation:InfoTable.kt:@Composable fun InfoTable</ID>
+    <ID>OutdatedDocumentation:MeasureTextLineCount.kt:@Composable fun MeasureTextLineCount</ID>
     <ID>PackageName:Activity.kt:package com.storyteller_f.a.client.compose_core</ID>
     <ID>PackageName:AlgoTypeSelector.kt:package com.storyteller_f.a.client.compose_core.components</ID>
     <ID>PackageName:AndroidPlayerContainer.kt:package com.storyteller_f.a.client.compose_core.components</ID>
@@ -885,7 +1476,21 @@
     <ID>PackageNaming:VideoView.jvm.kt:package com.storyteller_f.a.client.compose_core.components</ID>
     <ID>PackageNaming:VideoView.kt:package com.storyteller_f.a.client.compose_core.components</ID>
     <ID>PackageNaming:VideoView.wasmJs.kt:package com.storyteller_f.a.client.compose_core.components</ID>
+    <ID>ReturnCount:AndroidPlayerContainer.kt:@Composable fun Modifier.androidPipMode: Modifier</ID>
+    <ID>ReturnCount:CodeFence.kt:@Composable private fun FileObjectBlock</ID>
+    <ID>ReturnCount:Font.android.kt:actual fun loadFontFromLocal: FontFamily?</ID>
+    <ID>ReturnCount:Font.jvm.kt:actual fun loadFontFromLocal: FontFamily?</ID>
+    <ID>ReturnCount:GlobalDialog.kt:NestedGlobalDialogController$override suspend fun &lt;T&gt; useResult: Result&lt;T&gt;</ID>
+    <ID>ReturnCount:LocalSource.kt:CustomRemoteMediator$override suspend fun load: MediatorResult</ID>
+    <ID>ReturnCount:LoginUser.jvm.kt:actual fun readInjectedSessionFromPrivateStorageOrNull: ConvertedRawUserPassInfo?</ID>
+    <ID>ReturnCount:MathInlineContent.kt:fun ASTNode.findChildOfTypeRecursive: ASTNode?</ID>
+    <ID>ReturnCount:MediaPlayerService.android.kt:MediaPlayerService$fun release</ID>
+    <ID>ReturnCount:SessionHistoryManager.kt:fun restoreFromStorage: ClientSessionState?</ID>
+    <ID>ReturnCount:TopicContentView.kt:@Composable fun TopicContentView</ID>
     <ID>StatementWrapping:StateView.kt:when (this) { null -&gt; null is LoadState.Loading -&gt; LoadingState.Loading is LoadState.Error -&gt; LoadingState.Error(error) is LoadState.NotLoading -&gt; LoadingState.Done }</ID>
+    <ID>StringLiteralDuplication:GlobalDialog.kt:GlobalDialogController.Companion.&lt;no name provided&gt;$"Not yet implemented"</ID>
+    <ID>StringLiteralDuplication:LoginUser.android.kt:"AndroidKeyStore"</ID>
+    <ID>StringLiteralDuplication:MediaPlayerInternal.kt:"MediaPlayer"</ID>
     <ID>StringTemplateIndent:BlockParserTest.kt:BlockParserTest$""" # Title Some text - Item 1 - Item 2 """</ID>
     <ID>StringTemplateIndent:BlockParserTest.kt:BlockParserTest$""" # Title This is a paragraph. - List item 1 - List item 2 &gt; A quote ```kotlin fun test() {} ``` """</ID>
     <ID>StringTemplateIndent:BlockParserTest.kt:BlockParserTest$""" - Item 1 - Item 2 - Item 3 """</ID>
@@ -898,6 +1503,17 @@
     <ID>StringTemplateIndent:BlockParserTest.kt:BlockParserTest$""" ```object not valid json ``` """</ID>
     <ID>StringTemplateIndent:BlockParserTest.kt:BlockParserTest$""" ```object {"name": "test.mp4", "contentType": "video/mp4", "url": "https://example.com/test.mp4"} ``` """</ID>
     <ID>StringTemplateIndent:BlockParserTest.kt:BlockParserTest$"""# Title Some text - Item 1 - Item 2 &gt; Quote here"""</ID>
+    <ID>ThrowingExceptionsWithoutMessageOrCause:StateView.kt:LoadingStatePreviewProvider$Exception()</ID>
+    <ID>TooGenericExceptionCaught:AudioView.jvm.kt:e: Exception</ID>
+    <ID>TooGenericExceptionCaught:GlobalDialog.kt:CustomGlobalDialogController$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:GlobalTask.kt:CustomGlobalTask$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:LocalSource.kt:CustomRemoteMediator$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:LoginUser.android.kt:e: Exception</ID>
+    <ID>TooManyFunctions:AppiumSemantics.wasmJs.kt:AppiumHtmlSemantics</ID>
+    <ID>TooManyFunctions:EditableBlock.kt:com.storyteller_f.a.client.compose_core.components.block.EditableBlock.kt</ID>
+    <ID>TooManyFunctions:LoginUser.wasmJs.kt:PrefixedSettings : Settings</ID>
+    <ID>TooManyFunctions:MediaPlayerInternal.kt:com.storyteller_f.a.client.compose_core.components.MediaPlayerInternal.kt</ID>
+    <ID>TooManyFunctions:StateView.kt:com.storyteller_f.a.client.compose_core.components.StateView.kt</ID>
     <ID>TrailingCommaOnCallSite:AlgoTypeSelector.kt:( onClick = { onSelected(it) }, colors = if (isSelected) ButtonDefaults.buttonColors() else ButtonDefaults.filledTonalButtonColors() )</ID>
     <ID>TrailingCommaOnCallSite:AndroidPlayerContainer.kt:( context, broadcastReceiver, IntentFilter(ACTION_BROADCAST_CONTROL), ContextCompat.RECEIVER_NOT_EXPORTED )</ID>
     <ID>TrailingCommaOnCallSite:AsciidocPreviewBlock.kt:( "AsciiDoc preview", maxLines = 1, overflow = TextOverflow.MiddleEllipsis, modifier = Modifier.weight(1f).padding(horizontal = 12.dp) )</ID>
@@ -1282,9 +1898,527 @@
     <ID>TrailingCommaOnDeclarationSite:TopicContentView.kt:( topicInfo: TopicInfo, onClick: (FileInfo) -&gt; Unit, isEmbed: Boolean, refBlock: MarkdownComponent )</ID>
     <ID>TrailingCommaOnDeclarationSite:UserIcon.kt:( setClickEvent: Boolean, avatarUrl: String?, size: Dp = 40.dp, onClick: () -&gt; Unit )</ID>
     <ID>TrailingCommaOnDeclarationSite:VideoView.kt:( showSheet: Boolean, sheetState: SheetState, hideSheet: () -&gt; Unit, playList: List&lt;PlayItem&gt;, onClick: (PlayItem, Int) -&gt; Unit )</ID>
+    <ID>TrimMultilineRawString:BlockParserTest.kt:BlockParserTest$"""```kotlin fun test() = "hello" ```"""</ID>
     <ID>TypeParameterListSpacing:PlaybackService.kt:&lt;C&gt;</ID>
+    <ID>UndocumentedPublicClass:AudioView.jvm.kt:AudioPlayerComponent</ID>
+    <ID>UndocumentedPublicClass:CompatPagingSource.kt:CompatKeyConverter&lt;F, T&gt;</ID>
+    <ID>UndocumentedPublicClass:CompatPagingSource.kt:CompatPagingSource&lt;OK : Any, TK : Any, T : Any&gt; : PagingSource</ID>
+    <ID>UndocumentedPublicClass:CompatPagingSource.kt:IntKeyConverter : CompatKeyConverter</ID>
+    <ID>UndocumentedPublicClass:CoreStrings.kt:CoreStrings</ID>
+    <ID>UndocumentedPublicClass:CustomIcon.kt:IconRes</ID>
+    <ID>UndocumentedPublicClass:CustomIcon.kt:IconRes$Font : IconRes</ID>
+    <ID>UndocumentedPublicClass:CustomIcon.kt:IconRes$Loading : IconRes</ID>
+    <ID>UndocumentedPublicClass:CustomIcon.kt:IconRes$Vector : IconRes</ID>
+    <ID>UndocumentedPublicClass:CustomMarkdown.kt:CustomCoil3ImageTransformerImpl : ImageTransformer</ID>
+    <ID>UndocumentedPublicClass:DefaultMediaPlayListHandlerProvider.android.kt:DefaultMediaPlayListHandlerProvider : MediaPlayListHandlerProvider</ID>
+    <ID>UndocumentedPublicClass:Dialog.kt:CommonDialogController</ID>
+    <ID>UndocumentedPublicClass:Dialog.kt:CustomAlertDialogController</ID>
+    <ID>UndocumentedPublicClass:Dialog.kt:CustomAlertDialogState</ID>
+    <ID>UndocumentedPublicClass:Dialog.kt:DialogSaveState</ID>
+    <ID>UndocumentedPublicClass:FileView.kt:FileViewData</ID>
+    <ID>UndocumentedPublicClass:FileView.kt:FileViewData$LocalImage : FileViewData</ID>
+    <ID>UndocumentedPublicClass:FileView.kt:FileViewData$Player : FileViewData</ID>
+    <ID>UndocumentedPublicClass:FileView.kt:FileViewData$Regular : FileViewData</ID>
+    <ID>UndocumentedPublicClass:FileView.kt:RemoteMediaItem</ID>
+    <ID>UndocumentedPublicClass:GlobalDialog.kt:CustomGlobalDialogContent</ID>
+    <ID>UndocumentedPublicClass:GlobalDialog.kt:CustomGlobalDialogController&lt;C&gt; : GlobalDialogController</ID>
+    <ID>UndocumentedPublicClass:GlobalDialog.kt:GlobalDialogContext&lt;C&gt;</ID>
+    <ID>UndocumentedPublicClass:GlobalDialog.kt:GlobalDialogController$Companion</ID>
+    <ID>UndocumentedPublicClass:GlobalDialog.kt:GlobalDialogController&lt;C&gt;</ID>
+    <ID>UndocumentedPublicClass:GlobalDialog.kt:GlobalDialogState</ID>
+    <ID>UndocumentedPublicClass:GlobalDialog.kt:GlobalDialogState$Custom : GlobalDialogState</ID>
+    <ID>UndocumentedPublicClass:GlobalDialog.kt:GlobalDialogState$Error : GlobalDialogState</ID>
+    <ID>UndocumentedPublicClass:GlobalDialog.kt:GlobalDialogState$Loading : GlobalDialogState</ID>
+    <ID>UndocumentedPublicClass:GlobalDialog.kt:GlobalDialogStateProgress</ID>
+    <ID>UndocumentedPublicClass:GlobalDialog.kt:NestedGlobalDialogController&lt;C&gt; : GlobalDialogController</ID>
+    <ID>UndocumentedPublicClass:GlobalTask.kt:CustomGlobalTask&lt;C&gt; : GlobalTask</ID>
+    <ID>UndocumentedPublicClass:GlobalTask.kt:GlobalTask$Companion</ID>
+    <ID>UndocumentedPublicClass:GlobalTask.kt:GlobalTask&lt;C&gt;</ID>
+    <ID>UndocumentedPublicClass:GlobalTask.kt:GlobalTaskContext&lt;C&gt;</ID>
+    <ID>UndocumentedPublicClass:Image.kt:ImageFormat</ID>
+    <ID>UndocumentedPublicClass:LayoutDefaults.kt:LayoutDefaults</ID>
+    <ID>UndocumentedPublicClass:LocalSource.kt:CachedLoadingHandler&lt;T : Any&gt; : LoadingHandler</ID>
+    <ID>UndocumentedPublicClass:LocalSource.kt:CustomRemoteMediator&lt;Datum : Any&gt; : RemoteMediator</ID>
+    <ID>UndocumentedPublicClass:LocalSource.kt:IntermediatePagingSource&lt;Key : Any, T : Any&gt; : PagingSource</ID>
+    <ID>UndocumentedPublicClass:LoginUser.android.kt:AndroidKeyStoreSessionHistoryManager : SessionHistoryManager</ID>
+    <ID>UndocumentedPublicClass:LoginUser.android.kt:AndroidKeyStoreUserPass : UserPass</ID>
+    <ID>UndocumentedPublicClass:MediaPlayer.kt:ConstPlayItem : PlayItem</ID>
+    <ID>UndocumentedPublicClass:MediaPlayer.kt:CustomVideoSize</ID>
+    <ID>UndocumentedPublicClass:MediaPlayer.kt:LocalMediaPlaySession</ID>
+    <ID>UndocumentedPublicClass:MediaPlayer.kt:MediaPlayListHandlerProvider</ID>
+    <ID>UndocumentedPublicClass:MediaPlayer.kt:MediaPlaySession</ID>
+    <ID>UndocumentedPublicClass:MediaPlayer.kt:MediaPlayerService</ID>
+    <ID>UndocumentedPublicClass:MediaPlayer.kt:PlayItem</ID>
+    <ID>UndocumentedPublicClass:MediaPlayerInternal.kt:MediaPlayerState</ID>
+    <ID>UndocumentedPublicClass:MediaPlayerService.android.kt:MediaPlayerService</ID>
+    <ID>UndocumentedPublicClass:MediaPlayerService.jvm.kt:MediaPlayerService</ID>
+    <ID>UndocumentedPublicClass:MediaPlayerService.wasmJs.kt:MediaPlayerService</ID>
+    <ID>UndocumentedPublicClass:Nav.kt:NavRoute</ID>
+    <ID>UndocumentedPublicClass:Paging.kt:APagingData&lt;K, T&gt;</ID>
+    <ID>UndocumentedPublicClass:Paging.kt:PagingViewModel&lt;V : Any&gt; : ViewModel</ID>
+    <ID>UndocumentedPublicClass:Paging.kt:RegularPagingSource&lt;DATUM : Any&gt; : PagingSource</ID>
+    <ID>UndocumentedPublicClass:Paging.kt:SectionLoadParams</ID>
+    <ID>UndocumentedPublicClass:Paging.kt:SectionPagingSource&lt;DATUM : Any&gt; : PagingSource</ID>
+    <ID>UndocumentedPublicClass:Permission.kt:Permission</ID>
+    <ID>UndocumentedPublicClass:Permission.kt:Permission$Audio : Permission</ID>
+    <ID>UndocumentedPublicClass:Permission.kt:Permission$Camera : Permission</ID>
+    <ID>UndocumentedPublicClass:Permission.kt:Permission$Notification : Permission</ID>
+    <ID>UndocumentedPublicClass:PlaybackService.kt:PlaybackService : MediaSessionService</ID>
+    <ID>UndocumentedPublicClass:SessionHistoryManager.kt:ConvertedRawUserPassInfo</ID>
+    <ID>UndocumentedPublicClass:SessionHistoryManager.kt:DefaultSessionHistoryManager : SessionHistoryManager</ID>
+    <ID>UndocumentedPublicClass:SessionHistoryManager.kt:DefaultSessionHistoryManager$Companion</ID>
+    <ID>UndocumentedPublicClass:SessionHistoryManager.kt:SavedSession</ID>
+    <ID>UndocumentedPublicClass:SessionHistoryManager.kt:SessionHistoryManager</ID>
+    <ID>UndocumentedPublicClass:SimpleViewModel.kt:SimpleViewModel&lt;T : Any&gt; : ViewModel</ID>
+    <ID>UndocumentedPublicClass:StateView.kt:LoadingStatePreviewProvider : PreviewParameterProvider</ID>
+    <ID>UndocumentedPublicClass:Toast.kt:Sonner : Toast</ID>
+    <ID>UndocumentedPublicClass:Toast.kt:Toast</ID>
+    <ID>UndocumentedPublicClass:Toast.kt:Toast$Companion</ID>
+    <ID>UndocumentedPublicClass:VideoView.jvm.kt:VideoMediaPlayerState</ID>
+    <ID>UndocumentedPublicClass:VideoView.kt:VideoListener</ID>
+    <ID>UndocumentedPublicFunction:Activity.kt:fun ComponentActivity.commonForActivity</ID>
+    <ID>UndocumentedPublicFunction:AlgoTypeSelector.kt:@Composable fun AlgoTypeSelector</ID>
+    <ID>UndocumentedPublicFunction:AndroidPlayerContainer.kt:@Composable fun Modifier.androidPipMode: Modifier</ID>
+    <ID>UndocumentedPublicFunction:AndroidPlayerContainer.kt:@Composable fun PipBroadcastReceiver</ID>
+    <ID>UndocumentedPublicFunction:AndroidPlayerContainer.kt:@OptIn(ExperimentalUuidApi::class) @Composable fun BoxScope.AndroidPlayerContainer</ID>
+    <ID>UndocumentedPublicFunction:AndroidPlayerContainer.kt:@OptIn(ExperimentalUuidApi::class) @Composable fun EnablePipPre31</ID>
+    <ID>UndocumentedPublicFunction:AppiumSemantics.kt:fun Modifier.appiumSemantics: Modifier</ID>
+    <ID>UndocumentedPublicFunction:AsciidocPreviewBlock.kt:@Composable fun AsciidocPreviewBlock</ID>
+    <ID>UndocumentedPublicFunction:AudioView.android.kt:@Composable actual fun AudioViewEmbed</ID>
+    <ID>UndocumentedPublicFunction:AudioView.android.kt:@Composable actual fun AudioViewFilled</ID>
+    <ID>UndocumentedPublicFunction:AudioView.android.kt:@Composable actual fun AudioViewFullScreen</ID>
+    <ID>UndocumentedPublicFunction:AudioView.jvm.kt:@Composable actual fun AudioViewEmbed</ID>
+    <ID>UndocumentedPublicFunction:AudioView.jvm.kt:@Composable actual fun AudioViewFilled</ID>
+    <ID>UndocumentedPublicFunction:AudioView.jvm.kt:@Composable actual fun AudioViewFullScreen</ID>
+    <ID>UndocumentedPublicFunction:AudioView.jvm.kt:@Composable fun AudioPlayer</ID>
+    <ID>UndocumentedPublicFunction:AudioView.jvm.kt:@Composable fun AudioPlayerInternal</ID>
+    <ID>UndocumentedPublicFunction:AudioView.jvm.kt:AudioPlayerComponent$fun play</ID>
+    <ID>UndocumentedPublicFunction:AudioView.jvm.kt:AudioPlayerComponent$fun stop</ID>
+    <ID>UndocumentedPublicFunction:AudioView.kt:@Composable expect fun AudioViewEmbed</ID>
+    <ID>UndocumentedPublicFunction:AudioView.kt:@Composable expect fun AudioViewFilled</ID>
+    <ID>UndocumentedPublicFunction:AudioView.kt:@Composable expect fun AudioViewFullScreen</ID>
+    <ID>UndocumentedPublicFunction:AudioView.wasmJs.kt:@Composable actual fun AudioViewEmbed</ID>
+    <ID>UndocumentedPublicFunction:AudioView.wasmJs.kt:@Composable actual fun AudioViewFilled</ID>
+    <ID>UndocumentedPublicFunction:AudioView.wasmJs.kt:@Composable actual fun AudioViewFullScreen</ID>
+    <ID>UndocumentedPublicFunction:ButtonNav.kt:@Composable fun ButtonNav</ID>
+    <ID>UndocumentedPublicFunction:CenterBox.kt:@Composable fun CenterBox</ID>
+    <ID>UndocumentedPublicFunction:CharSequanceText.kt:@Composable fun CharSequenceText</ID>
+    <ID>UndocumentedPublicFunction:Clipboard.android.kt:actual suspend fun Clipboard.setText</ID>
+    <ID>UndocumentedPublicFunction:Clipboard.jvm.kt:@OptIn(ExperimentalComposeUiApi::class) actual suspend fun Clipboard.setText</ID>
+    <ID>UndocumentedPublicFunction:Clipboard.kt:expect suspend fun Clipboard.setText</ID>
+    <ID>UndocumentedPublicFunction:Clipboard.wasmJs.kt:actual suspend fun Clipboard.setText</ID>
+    <ID>UndocumentedPublicFunction:CodeFence.kt:@Composable fun CustomCodeFence</ID>
+    <ID>UndocumentedPublicFunction:CodeFence.kt:@Composable fun HighlightCodeBlock</ID>
+    <ID>UndocumentedPublicFunction:CodeFence.kt:@Composable fun ObjectBlock</ID>
+    <ID>UndocumentedPublicFunction:CommunityIcon.kt:@Composable fun CommunityIcon</ID>
+    <ID>UndocumentedPublicFunction:CommunityIcon.kt:@Composable fun CommunityPoster</ID>
+    <ID>UndocumentedPublicFunction:CompatPagingSource.kt:CompatKeyConverter$fun from: T</ID>
+    <ID>UndocumentedPublicFunction:CompatPagingSource.kt:CompatKeyConverter$fun to: F</ID>
+    <ID>UndocumentedPublicFunction:CoreStrings.kt:CoreStrings$@Composable fun ad: String</ID>
+    <ID>UndocumentedPublicFunction:CoreStrings.kt:CoreStrings$@Composable fun aid: String</ID>
+    <ID>UndocumentedPublicFunction:CoreStrings.kt:CoreStrings$@Composable fun cancel: String</ID>
+    <ID>UndocumentedPublicFunction:CoreStrings.kt:CoreStrings$@Composable fun ok: String</ID>
+    <ID>UndocumentedPublicFunction:CoreStrings.kt:CoreStrings$@Composable fun permission_denied: String</ID>
+    <ID>UndocumentedPublicFunction:CoreStrings.kt:CoreStrings$@Composable fun privateKey: String</ID>
+    <ID>UndocumentedPublicFunction:CoreStrings.kt:CoreStrings$@Composable fun selectFile: String</ID>
+    <ID>UndocumentedPublicFunction:CoreStrings.kt:CoreStrings$@Composable fun start: String</ID>
+    <ID>UndocumentedPublicFunction:CustomIcon.kt:@Composable fun CustomIcon</ID>
+    <ID>UndocumentedPublicFunction:CustomIcon.kt:fun Modifier.clickableIfNotNull: Modifier</ID>
+    <ID>UndocumentedPublicFunction:CustomMarkdown.kt:@Composable fun CustomMarkdown</ID>
+    <ID>UndocumentedPublicFunction:CustomMarkdown.kt:@Composable fun imageRequestInMarkdown: ImageRequest</ID>
+    <ID>UndocumentedPublicFunction:Dialog.kt:@Composable fun CustomAlertDialog</ID>
+    <ID>UndocumentedPublicFunction:Dialog.kt:@Composable fun CustomAlertDialogInternal</ID>
+    <ID>UndocumentedPublicFunction:Dialog.kt:@Composable fun DialogContainer</ID>
+    <ID>UndocumentedPublicFunction:Dialog.kt:@Composable fun rememberAlertDialogController: CustomAlertDialogController</ID>
+    <ID>UndocumentedPublicFunction:Dialog.kt:@Composable fun rememberCommonDialogController: CommonDialogController</ID>
+    <ID>UndocumentedPublicFunction:Dialog.kt:CommonDialogController$fun update</ID>
+    <ID>UndocumentedPublicFunction:Dialog.kt:CustomAlertDialogController$fun close</ID>
+    <ID>UndocumentedPublicFunction:Dialog.kt:CustomAlertDialogController$fun showErrorMessage</ID>
+    <ID>UndocumentedPublicFunction:Dialog.kt:CustomAlertDialogController$fun showMessage</ID>
+    <ID>UndocumentedPublicFunction:Dialog.kt:CustomAlertDialogController$fun showTitle</ID>
+    <ID>UndocumentedPublicFunction:Dialog.kt:DialogSaveState$fun markDialogShown</ID>
+    <ID>UndocumentedPublicFunction:Dp.kt:@Composable fun convertPxToDp: Dp</ID>
+    <ID>UndocumentedPublicFunction:Dp.kt:@Composable fun convertPxToSp: TextUnit</ID>
+    <ID>UndocumentedPublicFunction:Dp.kt:@Composable fun textUnitToPx: Float</ID>
+    <ID>UndocumentedPublicFunction:Dp.kt:fun pxToDp</ID>
+    <ID>UndocumentedPublicFunction:Dp.kt:fun pxToSp: TextUnit</ID>
+    <ID>UndocumentedPublicFunction:Dp.kt:fun textUnitToPx: Float</ID>
+    <ID>UndocumentedPublicFunction:ExceptionView.kt:@Composable fun ExceptionCell</ID>
+    <ID>UndocumentedPublicFunction:ExceptionView.kt:@OptIn(ExperimentalRichTextApi::class) @Composable fun ExceptionView</ID>
+    <ID>UndocumentedPublicFunction:ExceptionView.kt:fun ServerErrorException.isHtmlContent: Boolean</ID>
+    <ID>UndocumentedPublicFunction:FileIcon.kt:@Composable fun FileIcon</ID>
+    <ID>UndocumentedPublicFunction:Font.android.kt:actual fun loadFontFromLocal: FontFamily?</ID>
+    <ID>UndocumentedPublicFunction:Font.jvm.kt:actual fun loadFontFromLocal: FontFamily?</ID>
+    <ID>UndocumentedPublicFunction:Font.kt:expect fun loadFontFromLocal: FontFamily?</ID>
+    <ID>UndocumentedPublicFunction:Font.wasmJs.kt:actual fun loadFontFromLocal: FontFamily?</ID>
+    <ID>UndocumentedPublicFunction:GlobalDialog.kt:@Composable fun &lt;C&gt; GlobalDialog</ID>
+    <ID>UndocumentedPublicFunction:GlobalDialog.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun GlobalDialogInternal</ID>
+    <ID>UndocumentedPublicFunction:GlobalDialog.kt:GlobalDialogContext$suspend fun &lt;T&gt; request: Result&lt;T&gt;</ID>
+    <ID>UndocumentedPublicFunction:GlobalDialog.kt:GlobalDialogContext$suspend fun emitEvent</ID>
+    <ID>UndocumentedPublicFunction:GlobalDialog.kt:GlobalDialogController$fun emitProgress</ID>
+    <ID>UndocumentedPublicFunction:GlobalDialog.kt:GlobalDialogController$suspend fun &lt;T&gt; useResult: Result&lt;T&gt;</ID>
+    <ID>UndocumentedPublicFunction:GlobalDialog.kt:fun &lt;C&gt; GlobalDialogController&lt;C&gt;.catchingResult</ID>
+    <ID>UndocumentedPublicFunction:GlobalDialog.kt:suspend inline fun &lt;T, R&gt; GlobalDialogController&lt;GlobalDialogContext&lt;T&gt;&gt;.request: Result&lt;R&gt;</ID>
+    <ID>UndocumentedPublicFunction:GlobalDialog.kt:suspend inline fun &lt;T&gt; GlobalDialogController&lt;GlobalDialogContext&lt;T&gt;&gt;.emitEvent</ID>
+    <ID>UndocumentedPublicFunction:GlobalTask.kt:GlobalTask$fun use</ID>
+    <ID>UndocumentedPublicFunction:GlobalTask.kt:GlobalTaskContext$suspend fun &lt;T&gt; request: Result&lt;T&gt;</ID>
+    <ID>UndocumentedPublicFunction:GlobalTask.kt:GlobalTaskContext$suspend fun emitEvent</ID>
+    <ID>UndocumentedPublicFunction:GlobalTask.kt:suspend inline fun &lt;T&gt; GlobalTask&lt;GlobalTaskContext&lt;T&gt;&gt;.emitEvent</ID>
+    <ID>UndocumentedPublicFunction:GlobalTask.kt:suspend inline fun &lt;T&gt; MutableStateFlow&lt;LoadingState?&gt;.use: Result&lt;T&gt;</ID>
+    <ID>UndocumentedPublicFunction:IO.kt:fun Path.safeSink: RawSink</ID>
+    <ID>UndocumentedPublicFunction:Image.android.kt:actual fun Image.coilImageToImageBitmap: Result&lt;ImageBitmap&gt;</ID>
+    <ID>UndocumentedPublicFunction:Image.android.kt:actual fun ImageRequest.Builder.androidAllowHardware: ImageRequest.Builder</ID>
+    <ID>UndocumentedPublicFunction:Image.android.kt:actual fun saveImageBitmap: Result&lt;Path&gt;</ID>
+    <ID>UndocumentedPublicFunction:Image.jvm.kt:actual fun Image.coilImageToImageBitmap: Result&lt;ImageBitmap&gt;</ID>
+    <ID>UndocumentedPublicFunction:Image.jvm.kt:actual fun ImageRequest.Builder.androidAllowHardware: ImageRequest.Builder</ID>
+    <ID>UndocumentedPublicFunction:Image.jvm.kt:actual fun saveImageBitmap: Result&lt;Path&gt;</ID>
+    <ID>UndocumentedPublicFunction:Image.jvm.kt:fun imageBitmapToByteArray: ByteArray</ID>
+    <ID>UndocumentedPublicFunction:Image.kt:@Composable fun CommonImage</ID>
+    <ID>UndocumentedPublicFunction:Image.kt:@Composable fun CustomMarkdownImage</ID>
+    <ID>UndocumentedPublicFunction:Image.kt:@Composable fun ImageError</ID>
+    <ID>UndocumentedPublicFunction:Image.kt:@Composable fun ImageLoading</ID>
+    <ID>UndocumentedPublicFunction:Image.kt:@OptIn(ExperimentalCoilApi::class) @Composable fun globalLoader: ImageRequest</ID>
+    <ID>UndocumentedPublicFunction:Image.kt:expect fun Image.coilImageToImageBitmap: Result&lt;ImageBitmap&gt;</ID>
+    <ID>UndocumentedPublicFunction:Image.kt:expect fun ImageRequest.Builder.androidAllowHardware: ImageRequest.Builder</ID>
+    <ID>UndocumentedPublicFunction:Image.kt:expect fun saveImageBitmap: Result&lt;Path&gt;</ID>
+    <ID>UndocumentedPublicFunction:Image.kt:fun writeImageFile: Path</ID>
+    <ID>UndocumentedPublicFunction:Image.wasmJs.kt:actual fun Image.coilImageToImageBitmap: Result&lt;ImageBitmap&gt;</ID>
+    <ID>UndocumentedPublicFunction:Image.wasmJs.kt:actual fun ImageRequest.Builder.androidAllowHardware: ImageRequest.Builder</ID>
+    <ID>UndocumentedPublicFunction:Image.wasmJs.kt:actual fun saveImageBitmap: Result&lt;Path&gt;</ID>
+    <ID>UndocumentedPublicFunction:ImageUtils.kt:@OptIn(ExperimentalCoilApi::class) fun imageRequest</ID>
+    <ID>UndocumentedPublicFunction:Ime.android.kt:@OptIn(ExperimentalLayoutApi::class) actual fun Modifier.imeAnimation: Modifier</ID>
+    <ID>UndocumentedPublicFunction:Ime.jvm.kt:actual fun Modifier.imeAnimation</ID>
+    <ID>UndocumentedPublicFunction:Ime.kt:expect fun Modifier.imeAnimation: Modifier</ID>
+    <ID>UndocumentedPublicFunction:Ime.wasmJs.kt:actual fun Modifier.imeAnimation: Modifier</ID>
+    <ID>UndocumentedPublicFunction:Language.android.kt:actual fun getCurrentLanguage: String</ID>
+    <ID>UndocumentedPublicFunction:Language.jvm.kt:actual fun getCurrentLanguage: String</ID>
+    <ID>UndocumentedPublicFunction:Language.kt:expect fun getCurrentLanguage: String</ID>
+    <ID>UndocumentedPublicFunction:Language.wasmJs.kt:actual fun getCurrentLanguage: String</ID>
+    <ID>UndocumentedPublicFunction:LayoutDefaults.kt:fun Modifier.horizontalSafeArea: Modifier</ID>
+    <ID>UndocumentedPublicFunction:LayoutDefaults.kt:fun Modifier.safeArea: Modifier</ID>
+    <ID>UndocumentedPublicFunction:LoginUser.android.kt:actual fun buildSessionHistoryFactory: SessionHistoryManager</ID>
+    <ID>UndocumentedPublicFunction:LoginUser.android.kt:actual fun createSettings: Settings</ID>
+    <ID>UndocumentedPublicFunction:LoginUser.android.kt:actual fun readInjectedSessionFromPrivateStorageOrNull: ConvertedRawUserPassInfo?</ID>
+    <ID>UndocumentedPublicFunction:LoginUser.jvm.kt:actual fun buildSessionHistoryFactory: SessionHistoryManager</ID>
+    <ID>UndocumentedPublicFunction:LoginUser.jvm.kt:actual fun createSettings: Settings</ID>
+    <ID>UndocumentedPublicFunction:LoginUser.jvm.kt:actual fun readInjectedSessionFromPrivateStorageOrNull: ConvertedRawUserPassInfo?</ID>
+    <ID>UndocumentedPublicFunction:LoginUser.wasmJs.kt:actual fun buildSessionHistoryFactory: SessionHistoryManager</ID>
+    <ID>UndocumentedPublicFunction:LoginUser.wasmJs.kt:actual fun createSettings: Settings</ID>
+    <ID>UndocumentedPublicFunction:LoginUser.wasmJs.kt:actual fun readInjectedSessionFromPrivateStorageOrNull: ConvertedRawUserPassInfo?</ID>
+    <ID>UndocumentedPublicFunction:Math.kt:fun gcd: Int</ID>
+    <ID>UndocumentedPublicFunction:Math.kt:fun lcm: Int</ID>
+    <ID>UndocumentedPublicFunction:MathInlineContent.kt:@Composable fun LatexInlineContent</ID>
+    <ID>UndocumentedPublicFunction:MathInlineContent.kt:@Composable fun customMarkdownTypography: MarkdownTypography</ID>
+    <ID>UndocumentedPublicFunction:MathInlineContent.kt:fun ASTNode.findChildOfTypeRecursive: ASTNode?</ID>
+    <ID>UndocumentedPublicFunction:MathInlineContent.kt:fun AnnotatedString.Builder.imageAnnotator: Boolean</ID>
+    <ID>UndocumentedPublicFunction:MathInlineContent.kt:fun imageInlineContent: InlineTextContent</ID>
+    <ID>UndocumentedPublicFunction:MediaPlayer.kt:@Composable fun MediaObjectBlock</ID>
+    <ID>UndocumentedPublicFunction:MediaPlayer.kt:MediaPlayListHandlerProvider$@Composable fun playListHandler: LoadingHandler&lt;List&lt;ConstPlayItem&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:MediaPlayer.kt:MediaPlaySession$@OptIn(ExperimentalUuidApi::class) fun appendUuid</ID>
+    <ID>UndocumentedPublicFunction:MediaPlayer.kt:MediaPlayerService$abstract fun fullscreen</ID>
+    <ID>UndocumentedPublicFunction:MediaPlayer.kt:MediaPlayerService$abstract suspend fun start</ID>
+    <ID>UndocumentedPublicFunction:MediaPlayerInternal.kt:@Composable fun BoxScope.PlayerOccupy</ID>
+    <ID>UndocumentedPublicFunction:MediaPlayerInternal.kt:@Composable fun BoxScope.PlayerWaiting</ID>
+    <ID>UndocumentedPublicFunction:MediaPlayerInternal.kt:@Composable fun MediaPlayerEmbed</ID>
+    <ID>UndocumentedPublicFunction:MediaPlayerInternal.kt:@Composable fun MediaPlayerFilled</ID>
+    <ID>UndocumentedPublicFunction:MediaPlayerInternal.kt:@Composable fun MediaPlayerFullScreen</ID>
+    <ID>UndocumentedPublicFunction:MediaPlayerInternal.kt:@OptIn(ExperimentalMaterial3Api::class, ExperimentalUuidApi::class) @Composable fun EmbedMediaPlayerContainer</ID>
+    <ID>UndocumentedPublicFunction:MediaPlayerInternal.kt:@OptIn(ExperimentalUuidApi::class) @Composable fun MediaPlayerInternal</ID>
+    <ID>UndocumentedPublicFunction:MediaPlayerInternal.kt:@OptIn(ExperimentalUuidApi::class) @Composable fun rememberPlayerState: State&lt;MediaPlayerState&gt;</ID>
+    <ID>UndocumentedPublicFunction:MediaPlayerInternal.kt:fun MediaController.playNewMedia</ID>
+    <ID>UndocumentedPublicFunction:MediaPlayerInternal.kt:fun buildM3UListener: Player.Listener</ID>
+    <ID>UndocumentedPublicFunction:MediaPlayerService.android.kt:@OptIn(ExperimentalUuidApi::class) suspend fun MediaPlayerService.startPlay: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:MediaPlayerService.android.kt:MediaPlayerService$actual abstract fun fullscreen</ID>
+    <ID>UndocumentedPublicFunction:MediaPlayerService.android.kt:MediaPlayerService$actual abstract suspend fun start</ID>
+    <ID>UndocumentedPublicFunction:MediaPlayerService.android.kt:MediaPlayerService$fun release</ID>
+    <ID>UndocumentedPublicFunction:MediaPlayerService.android.kt:MediaPlayerService$fun setCurrentPlayerState</ID>
+    <ID>UndocumentedPublicFunction:MediaPlayerService.android.kt:MediaPlayerService$fun update</ID>
+    <ID>UndocumentedPublicFunction:MediaPlayerService.android.kt:MediaPlayerService$suspend fun get</ID>
+    <ID>UndocumentedPublicFunction:MediaPlayerService.android.kt:MediaPlayerService$suspend fun switch</ID>
+    <ID>UndocumentedPublicFunction:MediaPlayerService.jvm.kt:MediaPlayerService$actual abstract fun fullscreen</ID>
+    <ID>UndocumentedPublicFunction:MediaPlayerService.jvm.kt:MediaPlayerService$actual abstract suspend fun start</ID>
+    <ID>UndocumentedPublicFunction:MediaPlayerService.wasmJs.kt:MediaPlayerService$actual abstract fun fullscreen</ID>
+    <ID>UndocumentedPublicFunction:MediaPlayerService.wasmJs.kt:MediaPlayerService$actual abstract suspend fun start</ID>
+    <ID>UndocumentedPublicFunction:MediaUtils.jvmAndroid.kt:actual suspend fun parseM3UPlayList: List&lt;ConstPlayItem&gt;</ID>
+    <ID>UndocumentedPublicFunction:MediaUtils.kt:expect suspend fun parseM3UPlayList: List&lt;ConstPlayItem&gt;</ID>
+    <ID>UndocumentedPublicFunction:MediaUtils.kt:fun getUploadDataFromPath</ID>
+    <ID>UndocumentedPublicFunction:MediaUtils.wasmJs.kt:@Suppress("UNUSED_PARAMETER") actual suspend fun parseM3UPlayList: List&lt;ConstPlayItem&gt;</ID>
+    <ID>UndocumentedPublicFunction:Nav.kt:@Composable fun CustomBottomNav</ID>
+    <ID>UndocumentedPublicFunction:Nav.kt:@Composable fun CustomRailNav</ID>
+    <ID>UndocumentedPublicFunction:Paging.kt:@OptIn(ExperimentalPagingApi::class) fun &lt;C : Any, T : Any&gt; buildPager: Pager&lt;String, T&gt;</ID>
+    <ID>UndocumentedPublicFunction:Paging.kt:@OptIn(ExperimentalPagingApi::class) fun &lt;T : Any&gt; buildPager: Pager&lt;String, T&gt;</ID>
+    <ID>UndocumentedPublicFunction:PdfView.jvmAndroid.kt:@Composable actual fun PdfView</ID>
+    <ID>UndocumentedPublicFunction:PdfView.kt:@Composable expect fun PdfView</ID>
+    <ID>UndocumentedPublicFunction:PdfView.kt:@Composable fun PdfViewBlock</ID>
+    <ID>UndocumentedPublicFunction:PdfView.wasmJs.kt:@Composable actual fun PdfView</ID>
+    <ID>UndocumentedPublicFunction:Permission.android.kt:@Composable actual fun isPermissionGranted: MutableState&lt;Boolean&gt;</ID>
+    <ID>UndocumentedPublicFunction:Permission.android.kt:actual fun requestPermission</ID>
+    <ID>UndocumentedPublicFunction:Permission.android.kt:fun bindActivity</ID>
+    <ID>UndocumentedPublicFunction:Permission.android.kt:fun unbindActivity</ID>
+    <ID>UndocumentedPublicFunction:Permission.jvm.kt:@Composable actual fun isPermissionGranted: MutableState&lt;Boolean&gt;</ID>
+    <ID>UndocumentedPublicFunction:Permission.jvm.kt:actual fun requestPermission</ID>
+    <ID>UndocumentedPublicFunction:Permission.kt:@Composable expect fun isPermissionGranted: MutableState&lt;Boolean&gt;</ID>
+    <ID>UndocumentedPublicFunction:Permission.kt:expect fun requestPermission</ID>
+    <ID>UndocumentedPublicFunction:Permission.wasmJs.kt:@Composable actual fun isPermissionGranted: MutableState&lt;Boolean&gt;</ID>
+    <ID>UndocumentedPublicFunction:Permission.wasmJs.kt:actual fun requestPermission</ID>
+    <ID>UndocumentedPublicFunction:Pill.kt:@Composable fun Pill</ID>
+    <ID>UndocumentedPublicFunction:PlaybackService.kt:suspend fun&lt;C&gt; GlobalDialogController&lt;C&gt;.startPlayMedia</ID>
+    <ID>UndocumentedPublicFunction:PrivateKeyInput.kt:@Composable fun PrivateKeyTools</ID>
+    <ID>UndocumentedPublicFunction:PrivateKeyInput.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun PrivateKeyDialog</ID>
+    <ID>UndocumentedPublicFunction:PrivateKeyInput.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun PrivateKeyInput</ID>
+    <ID>UndocumentedPublicFunction:PrivateKeyInput.kt:@Suppress("LongMethod") @Composable fun PrivateKeyEditor</ID>
+    <ID>UndocumentedPublicFunction:RoomIcon.kt:@Composable fun RoomIcon</ID>
+    <ID>UndocumentedPublicFunction:SessionHistoryManager.kt:ConvertedRawUserPassInfo$fun toRawUserPassInfo: RawUserPassInfo</ID>
+    <ID>UndocumentedPublicFunction:SessionHistoryManager.kt:DefaultSessionHistoryManager.Companion$fun getUserKey: String</ID>
+    <ID>UndocumentedPublicFunction:SessionHistoryManager.kt:SessionHistoryManager$fun buildSession: UserPass?</ID>
+    <ID>UndocumentedPublicFunction:SessionHistoryManager.kt:SessionHistoryManager$fun exitSession</ID>
+    <ID>UndocumentedPublicFunction:SessionHistoryManager.kt:SessionHistoryManager$fun getSavedSession: SavedSession</ID>
+    <ID>UndocumentedPublicFunction:SessionHistoryManager.kt:SessionHistoryManager$fun logSession</ID>
+    <ID>UndocumentedPublicFunction:SessionHistoryManager.kt:SessionHistoryManager$fun removeSession</ID>
+    <ID>UndocumentedPublicFunction:SessionHistoryManager.kt:SessionHistoryManager$suspend fun addSession: UserPass</ID>
+    <ID>UndocumentedPublicFunction:SessionHistoryManager.kt:expect fun buildSessionHistoryFactory: SessionHistoryManager</ID>
+    <ID>UndocumentedPublicFunction:SessionHistoryManager.kt:expect fun createSettings: Settings</ID>
+    <ID>UndocumentedPublicFunction:SessionHistoryManager.kt:expect fun readInjectedSessionFromPrivateStorageOrNull: ConvertedRawUserPassInfo?</ID>
+    <ID>UndocumentedPublicFunction:SessionHistoryManager.kt:fun RawUserPassInfo.toConverted: ConvertedRawUserPassInfo</ID>
+    <ID>UndocumentedPublicFunction:SessionHistoryManager.kt:fun restoreFromStorage: ClientSessionState?</ID>
+    <ID>UndocumentedPublicFunction:Sheet.kt:@Composable fun SheetContainer</ID>
+    <ID>UndocumentedPublicFunction:Sheet.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun BaseSheet</ID>
+    <ID>UndocumentedPublicFunction:SignInButton.kt:@Composable fun SignInButton</ID>
+    <ID>UndocumentedPublicFunction:SimpleMessageWithButton.kt:@Composable fun SimpleMessageWithButton</ID>
+    <ID>UndocumentedPublicFunction:StateView.kt:@Composable fun &lt;T : Any&gt; RefCellStateView</ID>
+    <ID>UndocumentedPublicFunction:StateView.kt:@Composable fun debounce: LoadingState?</ID>
+    <ID>UndocumentedPublicFunction:StateView.kt:@OptIn(ExperimentalMaterialApi::class, ExperimentalHazeMaterialsApi::class) @Composable fun &lt;T : Any&gt; StateView</ID>
+    <ID>UndocumentedPublicFunction:StateView.kt:@OptIn(ExperimentalMaterialApi::class, FlowPreview::class) @Composable fun &lt;T&gt; StateView</ID>
+    <ID>UndocumentedPublicFunction:StateView.kt:fun &lt;T : Any&gt; LazyGridScope.pagingItems</ID>
+    <ID>UndocumentedPublicFunction:StateView.kt:fun &lt;T : Any&gt; LazyListScope.pagingItems</ID>
+    <ID>UndocumentedPublicFunction:StateView.kt:fun LazyGridScope.bottomAppending</ID>
+    <ID>UndocumentedPublicFunction:StateView.kt:fun LazyGridScope.topPrepend</ID>
+    <ID>UndocumentedPublicFunction:StateView.kt:fun LazyListScope.bottomAppending</ID>
+    <ID>UndocumentedPublicFunction:StateView.kt:fun LazyListScope.topPrepend</ID>
+    <ID>UndocumentedPublicFunction:Theme.android.kt:@Composable actual fun getAppDynamicColorScheme: ColorScheme?</ID>
+    <ID>UndocumentedPublicFunction:Theme.jvm.kt:@Composable actual fun getAppDynamicColorScheme: ColorScheme?</ID>
+    <ID>UndocumentedPublicFunction:Theme.kt:@Composable expect fun getAppDynamicColorScheme: ColorScheme?</ID>
+    <ID>UndocumentedPublicFunction:Theme.wasmJs.kt:@Composable actual fun getAppDynamicColorScheme: ColorScheme?</ID>
+    <ID>UndocumentedPublicFunction:Toast.kt:Toast$fun showMessage</ID>
+    <ID>UndocumentedPublicFunction:TopicContentView.kt:@Composable fun TopicContentView</ID>
+    <ID>UndocumentedPublicFunction:UserIcon.kt:@Composable fun UserIcon</ID>
+    <ID>UndocumentedPublicFunction:VideoView.android.kt:@Composable actual fun VideoViewEmbed</ID>
+    <ID>UndocumentedPublicFunction:VideoView.android.kt:@Composable actual fun VideoViewFilled</ID>
+    <ID>UndocumentedPublicFunction:VideoView.android.kt:@Composable actual fun VideoViewFullScreen</ID>
+    <ID>UndocumentedPublicFunction:VideoView.android.kt:@Composable actual fun rememberIsInPipMode: Boolean</ID>
+    <ID>UndocumentedPublicFunction:VideoView.android.kt:@OptIn(ExperimentalUuidApi::class) @Composable fun EmbedMediaPlayerMenus</ID>
+    <ID>UndocumentedPublicFunction:VideoView.jvm.kt:@Composable actual fun VideoViewEmbed</ID>
+    <ID>UndocumentedPublicFunction:VideoView.jvm.kt:@Composable actual fun VideoViewFilled</ID>
+    <ID>UndocumentedPublicFunction:VideoView.jvm.kt:@Composable actual fun VideoViewFullScreen</ID>
+    <ID>UndocumentedPublicFunction:VideoView.jvm.kt:@Composable actual fun rememberIsInPipMode: Boolean</ID>
+    <ID>UndocumentedPublicFunction:VideoView.jvm.kt:@Composable fun VideoPlayer</ID>
+    <ID>UndocumentedPublicFunction:VideoView.jvm.kt:@Composable fun VideoPlayerInternal</ID>
+    <ID>UndocumentedPublicFunction:VideoView.jvm.kt:@Composable fun rememberMediaPlayerState: State&lt;VideoMediaPlayerState&gt;</ID>
+    <ID>UndocumentedPublicFunction:VideoView.jvm.kt:fun Component.release</ID>
+    <ID>UndocumentedPublicFunction:VideoView.jvm.kt:fun initializeMediaPlayerComponent: Component</ID>
+    <ID>UndocumentedPublicFunction:VideoView.kt:@Composable expect fun VideoViewEmbed</ID>
+    <ID>UndocumentedPublicFunction:VideoView.kt:@Composable expect fun VideoViewFilled</ID>
+    <ID>UndocumentedPublicFunction:VideoView.kt:@Composable expect fun VideoViewFullScreen</ID>
+    <ID>UndocumentedPublicFunction:VideoView.kt:@Composable expect fun rememberIsInPipMode: Boolean</ID>
+    <ID>UndocumentedPublicFunction:VideoView.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun VideoPlaylistPicker</ID>
+    <ID>UndocumentedPublicFunction:VideoView.kt:VideoListener$fun onMediaItemChanged</ID>
+    <ID>UndocumentedPublicFunction:VideoView.kt:VideoListener$fun onPlayStateChange</ID>
+    <ID>UndocumentedPublicFunction:VideoView.kt:VideoListener$fun onUpdateLoading</ID>
+    <ID>UndocumentedPublicFunction:VideoView.kt:VideoListener$fun onUpdateSize</ID>
+    <ID>UndocumentedPublicFunction:VideoView.wasmJs.kt:@Composable actual fun VideoViewEmbed</ID>
+    <ID>UndocumentedPublicFunction:VideoView.wasmJs.kt:@Composable actual fun VideoViewFilled</ID>
+    <ID>UndocumentedPublicFunction:VideoView.wasmJs.kt:@Composable actual fun VideoViewFullScreen</ID>
+    <ID>UndocumentedPublicFunction:VideoView.wasmJs.kt:@Composable actual fun rememberIsInPipMode: Boolean</ID>
+    <ID>UndocumentedPublicProperty:AudioView.jvm.kt:AudioPlayerComponent$val isPlaying = mutableStateOf(false)</ID>
+    <ID>UndocumentedPublicProperty:AudioView.jvm.kt:AudioPlayerComponent$val player: jlp? = createPlayer(url)</ID>
+    <ID>UndocumentedPublicProperty:BlockEditor.kt:BlockEditorState$val blocks: SnapshotStateList&lt;ContentBlock&gt;</ID>
+    <ID>UndocumentedPublicProperty:BlockModel.kt:BlockType$CODE</ID>
+    <ID>UndocumentedPublicProperty:BlockModel.kt:BlockType$DIVIDER</ID>
+    <ID>UndocumentedPublicProperty:BlockModel.kt:BlockType$IMAGE</ID>
+    <ID>UndocumentedPublicProperty:BlockModel.kt:BlockType$LIST_ITEM</ID>
+    <ID>UndocumentedPublicProperty:BlockModel.kt:BlockType$MATH</ID>
+    <ID>UndocumentedPublicProperty:BlockModel.kt:BlockType$MATH_INLINE</ID>
+    <ID>UndocumentedPublicProperty:BlockModel.kt:BlockType$OBJECT</ID>
+    <ID>UndocumentedPublicProperty:BlockModel.kt:BlockType$PARAGRAPH</ID>
+    <ID>UndocumentedPublicProperty:BlockModel.kt:BlockType$QUOTE</ID>
+    <ID>UndocumentedPublicProperty:BlockModel.kt:BlockType$REF</ID>
+    <ID>UndocumentedPublicProperty:BlockModel.kt:ContentBlock$val id: String</ID>
+    <ID>UndocumentedPublicProperty:BlockModel.kt:ContentBlock$val type: BlockType</ID>
+    <ID>UndocumentedPublicProperty:BlockModel.kt:ContentBlock.CodeBlock$val content: String</ID>
+    <ID>UndocumentedPublicProperty:BlockModel.kt:ContentBlock.CodeBlock$val language: String = ""</ID>
+    <ID>UndocumentedPublicProperty:BlockModel.kt:ContentBlock.ImageBlock$val alt: String = ""</ID>
+    <ID>UndocumentedPublicProperty:BlockModel.kt:ContentBlock.ImageBlock$val name: String</ID>
+    <ID>UndocumentedPublicProperty:BlockModel.kt:ContentBlock.ImageBlock$val title: String = ""</ID>
+    <ID>UndocumentedPublicProperty:BlockModel.kt:ContentBlock.ImageBlock$val url: String = ""</ID>
+    <ID>UndocumentedPublicProperty:BlockModel.kt:ContentBlock.ListItem$val content: String</ID>
+    <ID>UndocumentedPublicProperty:BlockModel.kt:ContentBlock.ListItem$val indent: Int = 0</ID>
+    <ID>UndocumentedPublicProperty:BlockModel.kt:ContentBlock.ListItem$val ordered: Boolean</ID>
+    <ID>UndocumentedPublicProperty:BlockModel.kt:ContentBlock.MathBlock$val content: String</ID>
+    <ID>UndocumentedPublicProperty:BlockModel.kt:ContentBlock.MathBlock$val inline: Boolean = false</ID>
+    <ID>UndocumentedPublicProperty:BlockModel.kt:ContentBlock.ObjectBlock$val contentType: String? = null</ID>
+    <ID>UndocumentedPublicProperty:BlockModel.kt:ContentBlock.ObjectBlock$val cover: String? = null</ID>
+    <ID>UndocumentedPublicProperty:BlockModel.kt:ContentBlock.ObjectBlock$val isPlaylist: Boolean? = null</ID>
+    <ID>UndocumentedPublicProperty:BlockModel.kt:ContentBlock.ObjectBlock$val name: String = ""</ID>
+    <ID>UndocumentedPublicProperty:BlockModel.kt:ContentBlock.ObjectBlock$val title: String? = null</ID>
+    <ID>UndocumentedPublicProperty:BlockModel.kt:ContentBlock.ObjectBlock$val url: String = ""</ID>
+    <ID>UndocumentedPublicProperty:BlockModel.kt:ContentBlock.Paragraph$val content: String</ID>
+    <ID>UndocumentedPublicProperty:BlockModel.kt:ContentBlock.Paragraph$val level: Int = 0 // 0=普通文本, 1-6=标题</ID>
+    <ID>UndocumentedPublicProperty:BlockModel.kt:ContentBlock.Quote$val content: String</ID>
+    <ID>UndocumentedPublicProperty:BlockModel.kt:ContentBlock.RefBlock$val refPath: String // 如 /user/123, /community/456</ID>
+    <ID>UndocumentedPublicProperty:CompatPagingSource.kt:CompatPagingSource$val converter: CompatKeyConverter&lt;OK, TK&gt;</ID>
+    <ID>UndocumentedPublicProperty:CompatPagingSource.kt:CompatPagingSource$val rawSource: PagingSource&lt;OK, T&gt;</ID>
+    <ID>UndocumentedPublicProperty:CustomIcon.kt:IconRes.Font$val char: Char</ID>
+    <ID>UndocumentedPublicProperty:CustomIcon.kt:IconRes.Font$val description: String = ""</ID>
+    <ID>UndocumentedPublicProperty:CustomIcon.kt:IconRes.Vector$val description: String = ""</ID>
+    <ID>UndocumentedPublicProperty:CustomIcon.kt:IconRes.Vector$val vector: ImageVector</ID>
+    <ID>UndocumentedPublicProperty:CustomMarkdown.kt:CustomCoil3ImageTransformerImpl$val onClick: (FileInfo) -&gt; Unit</ID>
+    <ID>UndocumentedPublicProperty:Dialog.kt:CommonDialogController$val shown: MutableState&lt;Boolean&gt; = mutableStateOf(false)</ID>
+    <ID>UndocumentedPublicProperty:Dialog.kt:CustomAlertDialogController$val state: MutableState&lt;CustomAlertDialogState?&gt; = mutableStateOf(null)</ID>
+    <ID>UndocumentedPublicProperty:Dialog.kt:CustomAlertDialogState$val enableCopy: Boolean = false</ID>
+    <ID>UndocumentedPublicProperty:Dialog.kt:CustomAlertDialogState$val message: String</ID>
+    <ID>UndocumentedPublicProperty:Dialog.kt:CustomAlertDialogState$val positiveButton: String = "Yes"</ID>
+    <ID>UndocumentedPublicProperty:Dialog.kt:CustomAlertDialogState$val title: String?</ID>
+    <ID>UndocumentedPublicProperty:Dialog.kt:DialogSaveState$val dialogShown = MutableStateFlow(false)</ID>
+    <ID>UndocumentedPublicProperty:FileView.kt:FileViewData.LocalImage$val url: String</ID>
+    <ID>UndocumentedPublicProperty:FileView.kt:FileViewData.Player$val remoteMediaItem: RemoteMediaItem</ID>
+    <ID>UndocumentedPublicProperty:FileView.kt:FileViewData.Regular$val fileId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:FileView.kt:RemoteMediaItem$val contentType: String</ID>
+    <ID>UndocumentedPublicProperty:FileView.kt:RemoteMediaItem$val cover: FileInfo? = null</ID>
+    <ID>UndocumentedPublicProperty:FileView.kt:RemoteMediaItem$val id: String</ID>
+    <ID>UndocumentedPublicProperty:FileView.kt:RemoteMediaItem$val isM3U8PlayList: Boolean</ID>
+    <ID>UndocumentedPublicProperty:FileView.kt:RemoteMediaItem$val name: String</ID>
+    <ID>UndocumentedPublicProperty:FileView.kt:RemoteMediaItem$val title: String? = null</ID>
+    <ID>UndocumentedPublicProperty:FileView.kt:RemoteMediaItem$val url: String</ID>
+    <ID>UndocumentedPublicProperty:GlobalDialog.kt:CustomGlobalDialogContent$val content: @Composable () -&gt; Unit</ID>
+    <ID>UndocumentedPublicProperty:GlobalDialog.kt:GlobalDialogContext$val events: MutableSharedFlow&lt;Any&gt;</ID>
+    <ID>UndocumentedPublicProperty:GlobalDialog.kt:GlobalDialogContext$val sessionManager: C</ID>
+    <ID>UndocumentedPublicProperty:GlobalDialog.kt:GlobalDialogController$val context: C</ID>
+    <ID>UndocumentedPublicProperty:GlobalDialog.kt:GlobalDialogController$val state: MutableStateFlow&lt;PersistentList&lt;GlobalDialogState&gt;&gt;</ID>
+    <ID>UndocumentedPublicProperty:GlobalDialog.kt:GlobalDialogController.Companion$val EMPTY = object : GlobalDialogController&lt;Unit&gt; { override val state: MutableStateFlow&lt;PersistentList&lt;GlobalDialogState&gt;&gt; get() = TODO("Not yet implemented") override suspend fun &lt;T&gt; useResult(block: suspend GlobalDialogController&lt;Unit&gt;.() -&gt; Result&lt;T&gt;): Result&lt;T&gt; { TODO("Not yet implemented") } override fun emitProgress(block: (GlobalDialogState.Loading) -&gt; GlobalDialogState.Loading) { TODO("Not yet implemented") } override val context: Unit get() = TODO("Not yet implemented") }</ID>
+    <ID>UndocumentedPublicProperty:GlobalDialog.kt:GlobalDialogState.Custom$val content: CustomGlobalDialogContent</ID>
+    <ID>UndocumentedPublicProperty:GlobalDialog.kt:GlobalDialogState.Error$val throwable: Throwable</ID>
+    <ID>UndocumentedPublicProperty:GlobalDialog.kt:GlobalDialogState.Loading$val content: CustomGlobalDialogContent? = null</ID>
+    <ID>UndocumentedPublicProperty:GlobalDialog.kt:GlobalDialogState.Loading$val progress: GlobalDialogStateProgress? = null</ID>
+    <ID>UndocumentedPublicProperty:GlobalDialog.kt:GlobalDialogState.Loading$val title: String? = null</ID>
+    <ID>UndocumentedPublicProperty:GlobalDialog.kt:GlobalDialogStateProgress$val total: Long?</ID>
+    <ID>UndocumentedPublicProperty:GlobalDialog.kt:GlobalDialogStateProgress$val value: Long</ID>
+    <ID>UndocumentedPublicProperty:GlobalDialog.kt:NestedGlobalDialogController$val customGlobalDialogController: CustomGlobalDialogController&lt;C&gt;</ID>
+    <ID>UndocumentedPublicProperty:GlobalDialog.kt:NestedGlobalDialogController$val level: Int</ID>
+    <ID>UndocumentedPublicProperty:GlobalTask.kt:CustomGlobalTask$val mutex = Mutex()</ID>
+    <ID>UndocumentedPublicProperty:GlobalTask.kt:CustomGlobalTask$val scope: CoroutineScope</ID>
+    <ID>UndocumentedPublicProperty:GlobalTask.kt:GlobalTask$val context: C</ID>
+    <ID>UndocumentedPublicProperty:GlobalTask.kt:GlobalTask$val stateMap: SnapshotStateMap&lt;String, LoadingState?&gt;</ID>
+    <ID>UndocumentedPublicProperty:GlobalTask.kt:GlobalTaskContext$val events: MutableSharedFlow&lt;Any&gt;</ID>
+    <ID>UndocumentedPublicProperty:GlobalTask.kt:GlobalTaskContext$val sessionManager: C</ID>
+    <ID>UndocumentedPublicProperty:Image.kt:ImageFormat$JPEG</ID>
+    <ID>UndocumentedPublicProperty:Image.kt:ImageFormat$PNG</ID>
+    <ID>UndocumentedPublicProperty:Image.kt:ImageFormat$WEBP</ID>
+    <ID>UndocumentedPublicProperty:LayoutDefaults.kt:LayoutDefaults$val contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp)</ID>
+    <ID>UndocumentedPublicProperty:LayoutDefaults.kt:LayoutDefaults$val pagingHorizontalArrangement = Arrangement.spacedBy(10.dp)</ID>
+    <ID>UndocumentedPublicProperty:LayoutDefaults.kt:LayoutDefaults$val pagingVerticalArrangement = Arrangement.spacedBy(10.dp)</ID>
+    <ID>UndocumentedPublicProperty:LocalSource.kt:IntermediatePagingSource$val clazz: KClass&lt;Key&gt;</ID>
+    <ID>UndocumentedPublicProperty:LocalSource.kt:IntermediatePagingSource$val pagingSource: PagingSource&lt;Key, T&gt;</ID>
+    <ID>UndocumentedPublicProperty:LoginUser.android.kt:AndroidKeyStoreSessionHistoryManager$val settings: Settings</ID>
+    <ID>UndocumentedPublicProperty:MediaPlayer.kt:ConstPlayItem$val url: String</ID>
+    <ID>UndocumentedPublicProperty:MediaPlayer.kt:CustomVideoSize$val height: Int</ID>
+    <ID>UndocumentedPublicProperty:MediaPlayer.kt:CustomVideoSize$val width: Int</ID>
+    <ID>UndocumentedPublicProperty:MediaPlayer.kt:LocalMediaPlaySession$val id: String</ID>
+    <ID>UndocumentedPublicProperty:MediaPlayer.kt:LocalMediaPlaySession$val uuid: Uuid</ID>
+    <ID>UndocumentedPublicProperty:MediaPlayer.kt:MediaPlaySession$val id = remoteMediaItem.url</ID>
+    <ID>UndocumentedPublicProperty:MediaPlayer.kt:MediaPlaySession$val lastUuid get() = uuids.lastOrNull()</ID>
+    <ID>UndocumentedPublicProperty:MediaPlayer.kt:MediaPlaySession$val playList: List&lt;ConstPlayItem&gt;</ID>
+    <ID>UndocumentedPublicProperty:MediaPlayer.kt:MediaPlaySession$val remoteMediaItem: RemoteMediaItem</ID>
+    <ID>UndocumentedPublicProperty:MediaPlayer.kt:MediaPlaySession$val uuidCount get() = uuids.size</ID>
+    <ID>UndocumentedPublicProperty:MediaPlayer.kt:MediaPlaySession$val uuids: List&lt;Uuid&gt;</ID>
+    <ID>UndocumentedPublicProperty:MediaPlayer.kt:MediaPlaySession$val videoSize: CustomVideoSize?</ID>
+    <ID>UndocumentedPublicProperty:MediaPlayer.kt:MediaPlayerService$abstract val enablePip: Boolean</ID>
+    <ID>UndocumentedPublicProperty:MediaPlayer.kt:MediaPlayerService$val state: MutableStateFlow&lt;MediaPlaySession?&gt;</ID>
+    <ID>UndocumentedPublicProperty:MediaPlayer.kt:PlayItem$val icon: String?</ID>
+    <ID>UndocumentedPublicProperty:MediaPlayer.kt:PlayItem$val id: String</ID>
+    <ID>UndocumentedPublicProperty:MediaPlayer.kt:PlayItem$val title: String?</ID>
+    <ID>UndocumentedPublicProperty:MediaPlayer.kt:val LocalMediaPlayListHandlerProvider = staticCompositionLocalOf&lt;MediaPlayListHandlerProvider&gt; { error("LocalMediaPlayListHandlerProvider must be provided") }</ID>
+    <ID>UndocumentedPublicProperty:MediaPlayer.kt:val LocalMediaPlayerService = staticCompositionLocalOf&lt;MediaPlayerService&gt; { error("LocalMediaPlayerComponent not provided") }</ID>
+    <ID>UndocumentedPublicProperty:MediaPlayerInternal.kt:MediaPlayerState$val currentIsPlaying: Boolean</ID>
+    <ID>UndocumentedPublicProperty:MediaPlayerInternal.kt:MediaPlayerState$val currentLoading: Boolean</ID>
+    <ID>UndocumentedPublicProperty:MediaPlayerInternal.kt:MediaPlayerState$val currentPlayingItem: MediaItem?</ID>
+    <ID>UndocumentedPublicProperty:MediaPlayerService.android.kt:MediaPlayerService$actual abstract val enablePip: Boolean</ID>
+    <ID>UndocumentedPublicProperty:MediaPlayerService.android.kt:MediaPlayerService$actual val state: MutableStateFlow&lt;MediaPlaySession?&gt; = MutableStateFlow(null)</ID>
+    <ID>UndocumentedPublicProperty:MediaPlayerService.android.kt:MediaPlayerService$val controller: MutableStateFlow&lt;MediaController?&gt; = MutableStateFlow(null)</ID>
+    <ID>UndocumentedPublicProperty:MediaPlayerService.android.kt:MediaPlayerService$val currentPlayerState: MediaPlaySession? get() = state.value</ID>
+    <ID>UndocumentedPublicProperty:MediaPlayerService.android.kt:MediaPlayerService$val mutex = Mutex()</ID>
+    <ID>UndocumentedPublicProperty:MediaPlayerService.jvm.kt:MediaPlayerService$actual abstract val enablePip: Boolean</ID>
+    <ID>UndocumentedPublicProperty:MediaPlayerService.jvm.kt:MediaPlayerService$actual val state: MutableStateFlow&lt;MediaPlaySession?&gt; = MutableStateFlow(null)</ID>
+    <ID>UndocumentedPublicProperty:MediaPlayerService.wasmJs.kt:MediaPlayerService$actual abstract val enablePip: Boolean</ID>
+    <ID>UndocumentedPublicProperty:MediaPlayerService.wasmJs.kt:MediaPlayerService$actual val state: MutableStateFlow&lt;MediaPlaySession?&gt; = MutableStateFlow(null)</ID>
+    <ID>UndocumentedPublicProperty:Nav.kt:NavRoute$val icon: ImageVector</ID>
+    <ID>UndocumentedPublicProperty:Nav.kt:NavRoute$val label: String</ID>
+    <ID>UndocumentedPublicProperty:Nav.kt:NavRoute$val path: String</ID>
+    <ID>UndocumentedPublicProperty:Paging.kt:APagingData$val data: List&lt;T&gt;</ID>
+    <ID>UndocumentedPublicProperty:Paging.kt:APagingData$val pagination: K?</ID>
+    <ID>UndocumentedPublicProperty:Paging.kt:PagingViewModel$abstract val flow: Flow&lt;PagingData&lt;V&gt;&gt;</ID>
+    <ID>UndocumentedPublicProperty:Paging.kt:RegularPagingSource$val service: suspend (String?, Int) -&gt; Result&lt;ListResponse&lt;DATUM&gt;&gt;</ID>
+    <ID>UndocumentedPublicProperty:Paging.kt:SectionLoadParams$val index: Int</ID>
+    <ID>UndocumentedPublicProperty:Paging.kt:SectionLoadParams$val param: String?</ID>
+    <ID>UndocumentedPublicProperty:Permission.android.kt:val requestQueue = mutableStateListOf&lt;Permission&gt;()</ID>
+    <ID>UndocumentedPublicProperty:Permission.android.kt:var launcherRef: WeakReference&lt;ActivityResultLauncher&lt;String&gt;&gt;? = null</ID>
+    <ID>UndocumentedPublicProperty:Permission.android.kt:var mainActivityRef: WeakReference&lt;ComponentActivity&gt;? = null</ID>
+    <ID>UndocumentedPublicProperty:Provider.kt:val LocalClient = compositionLocalOf&lt;HttpClient&gt; { error("no client") }</ID>
+    <ID>UndocumentedPublicProperty:SessionHistoryManager.kt:ConvertedRawUserPassInfo$val address: String</ID>
+    <ID>UndocumentedPublicProperty:SessionHistoryManager.kt:ConvertedRawUserPassInfo$val algo: AlgoType</ID>
+    <ID>UndocumentedPublicProperty:SessionHistoryManager.kt:ConvertedRawUserPassInfo$val derEncryptionPrivateKey: String? = null</ID>
+    <ID>UndocumentedPublicProperty:SessionHistoryManager.kt:ConvertedRawUserPassInfo$val derEncryptionPublicKey: String? = null</ID>
+    <ID>UndocumentedPublicProperty:SessionHistoryManager.kt:ConvertedRawUserPassInfo$val derPrivateKey: String</ID>
+    <ID>UndocumentedPublicProperty:SessionHistoryManager.kt:ConvertedRawUserPassInfo$val derPublicKey: String</ID>
+    <ID>UndocumentedPublicProperty:SessionHistoryManager.kt:ConvertedRawUserPassInfo$val pemEncryptionPrivateKey: String? = null</ID>
+    <ID>UndocumentedPublicProperty:SessionHistoryManager.kt:ConvertedRawUserPassInfo$val pemPrivateKey: String</ID>
+    <ID>UndocumentedPublicProperty:SessionHistoryManager.kt:DefaultSessionHistoryManager$val settings: Settings</ID>
+    <ID>UndocumentedPublicProperty:SessionHistoryManager.kt:DefaultSessionHistoryManager.Companion$const val SESSION_HISTORY = "session_history"</ID>
+    <ID>UndocumentedPublicProperty:SessionHistoryManager.kt:DefaultSessionHistoryManager.Companion$const val SESSION_USER_PREFIX = "S_U"</ID>
+    <ID>UndocumentedPublicProperty:SessionHistoryManager.kt:SavedSession$val alias: List&lt;String&gt;</ID>
+    <ID>UndocumentedPublicProperty:SessionHistoryManager.kt:SavedSession$val history: SessionHistory?</ID>
+    <ID>UndocumentedPublicProperty:SessionHistoryManager.kt:SessionHistory$val current: String? = null</ID>
+    <ID>UndocumentedPublicProperty:SessionHistoryManager.kt:SessionHistory$val last: String? = null</ID>
+    <ID>UndocumentedPublicProperty:SimpleViewModel.kt:SimpleViewModel$abstract val handler: LoadingHandler&lt;T&gt;</ID>
+    <ID>UndocumentedPublicProperty:StateView.kt:const val REFRESH_AFTER = 300L</ID>
+    <ID>UndocumentedPublicProperty:Toast.kt:@OptIn(DelicateCoroutinesApi::class) val LocalToaster = compositionLocalOf { Toast.EMPTY }</ID>
+    <ID>UndocumentedPublicProperty:Toast.kt:Sonner$val toasterState: ToasterState</ID>
+    <ID>UndocumentedPublicProperty:Toast.kt:Toast.Companion$val EMPTY = object : Toast { override fun showMessage(message: String) { TODO("Not yet implemented") } }</ID>
+    <ID>UndocumentedPublicProperty:VideoView.android.kt:// Constant for broadcast receiver const val ACTION_BROADCAST_CONTROL = "broadcast_control"</ID>
+    <ID>UndocumentedPublicProperty:VideoView.android.kt:// Intent extras for broadcast controls from Picture-in-Picture mode. const val EXTRA_CONTROL_TYPE = "control_type"</ID>
+    <ID>UndocumentedPublicProperty:VideoView.android.kt:const val EXTRA_CONTROL_PAUSE = 2</ID>
+    <ID>UndocumentedPublicProperty:VideoView.android.kt:const val EXTRA_CONTROL_PLAY = 1</ID>
+    <ID>UndocumentedPublicProperty:VideoView.jvm.kt:VideoMediaPlayerState$val currentIsPlaying: Boolean</ID>
+    <ID>UndocumentedPublicProperty:VideoView.jvm.kt:VideoMediaPlayerState$val currentLoading: Boolean</ID>
+    <ID>UnnecessaryParentheses:AndroidPlayerContainer.kt:(mediaPlayerService.enablePip)</ID>
+    <ID>UnnecessaryParentheses:AndroidPlayerContainer.kt:&lt;no name provided&gt;$(intent == null)</ID>
+    <ID>UnnecessaryParentheses:AndroidPlayerContainer.kt:&lt;no name provided&gt;$(intent.action != ACTION_BROADCAST_CONTROL)</ID>
+    <ID>UnnecessaryParentheses:AppiumSemantics.wasmJs.kt:AppiumHtmlSemantics$(document.getElementById(OVERLAY_ID) as? HTMLElement)</ID>
+    <ID>UnnecessaryParentheses:AudioView.android.kt:(playingSession?.lastUuid == localMediaPlaySession.uuid)</ID>
+    <ID>UnnecessaryParentheses:Math.kt:(a * b)</ID>
+    <ID>UnnecessaryParentheses:MathInlineContent.kt:(width.value / imageWidth.value)</ID>
+    <ID>UnnecessaryParentheses:StateView.kt:(pagingItems.loadState.refresh)</ID>
+    <ID>UnnecessaryParentheses:VideoView.android.kt:(playingSession?.lastUuid == localMediaPlaySession.uuid)</ID>
+    <ID>UseIfInsteadOfWhen:AudioView.android.kt:when { state.currentIsPlaying -&gt; Icon(Icons.Default.PauseCircle, "pause", modifier = Modifier.size(40.dp)) else -&gt; Icon(Icons.Default.PlayCircle, "play", modifier = Modifier.size(40.dp)) }</ID>
+    <ID>UseIfInsteadOfWhen:AudioView.jvm.kt:when { currentPlaying -&gt; Icon(Icons.Default.PauseCircle, "pause", modifier = Modifier.size(40.dp)) else -&gt; Icon(Icons.Default.PlayCircle, "play", modifier = Modifier.size(40.dp)) }</ID>
+    <ID>UseIfInsteadOfWhen:DefaultMediaPlayListHandlerProvider.android.kt:when (remoteMediaItem.contentType) { FileInfo.M3U8_MIMETYPE -&gt; parseM3UPlayList(remoteMediaItem, HttpClient { }) else -&gt; listOf(ConstPlayItem(remoteMediaItem.url, title = remoteMediaItem.url)) }</ID>
+    <ID>UseIfInsteadOfWhen:Pill.kt:when { selected -&gt; MaterialTheme.colorScheme.onSecondaryContainer else -&gt; MaterialTheme.colorScheme.onSurfaceVariant }</ID>
+    <ID>UseIfInsteadOfWhen:Pill.kt:when { selected -&gt; MaterialTheme.colorScheme.secondaryContainer else -&gt; MaterialTheme.colorScheme.surfaceVariant }</ID>
+    <ID>UseIfInsteadOfWhen:StateView.kt:when (val capturedState = state) { is LoadingState.Error -&gt; { ExceptionCell(capturedState.e) { handler.refresh() } } else -&gt; { CircularProgressIndicator() } }</ID>
+    <ID>UseIfInsteadOfWhen:StateView.kt:when (val localState = state) { is LoadingState.Error -&gt; Box( modifier = Modifier.fillMaxSize().clickable { // TODO show message }.padding(vertical = 8.dp), contentAlignment = Alignment.Center ) { ExceptionView(localState.e) } else -&gt; { Box( modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), contentAlignment = Alignment.Center ) { CircularProgressIndicator() } } }</ID>
+    <ID>UseIfInsteadOfWhen:Theme.android.kt:when { dynamicColor &amp;&amp; Build.VERSION.SDK_INT &gt;= Build.VERSION_CODES.S -&gt; { val context = LocalContext.current if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context) } else -&gt; null }</ID>
+    <ID>UseLet:StateView.kt:if (key != null) { lazyPagingItems.itemKey { key(it) } } else { null }</ID>
+    <ID>UseLet:StateView.kt:if (span != null) { { span(lazyPagingItems[it]!!) } } else { null }</ID>
     <ID>ValueParameterComment:BlockModel.kt:ContentBlock.Paragraph$// 0=普通文本, 1-6=标题</ID>
     <ID>ValueParameterComment:BlockModel.kt:ContentBlock.RefBlock$// 如 /user/123, /community/456</ID>
+    <ID>WildcardImport:AudioView.jvm.kt:import androidx.compose.runtime.*</ID>
+    <ID>WildcardImport:ExceptionView.kt:import io.ktor.client.network.sockets.*</ID>
+    <ID>WildcardImport:Image.kt:import io.ktor.utils.io.core.*</ID>
+    <ID>WildcardImport:Permission.android.kt:import androidx.compose.runtime.*</ID>
+    <ID>WildcardImport:Permission.jvm.kt:import androidx.compose.runtime.*</ID>
+    <ID>WildcardImport:StateView.kt:import androidx.compose.foundation.layout.*</ID>
+    <ID>WildcardImport:StateView.kt:import androidx.compose.runtime.*</ID>
+    <ID>WildcardImport:VideoView.kt:import androidx.compose.foundation.layout.*</ID>
+    <ID>WildcardImport:VideoView.kt:import androidx.compose.material3.*</ID>
     <ID>Wrapping:BlockParserTest.kt:BlockParserTest$"""</ID>
     <ID>Wrapping:Image.jvm.kt:( when (format) { PNG -&gt; EncodedImageFormat.PNG JPEG -&gt; EncodedImageFormat.JPEG WEBP -&gt; EncodedImageFormat.WEBP }, quality )</ID>
     <ID>Wrapping:LoginUser.android.kt:(</ID>

@@ -2,12 +2,53 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>AbsentOrWrongFileLicense:PdfBox.kt:com.storyteller_f.a.cloud.pdfbox.PdfBox.kt</ID>
+    <ID>AbsentOrWrongFileLicense:build.gradle.kts:.build.gradle.kts</ID>
     <ID>BlankLineBetweenWhenConditions:PdfBox.kt:&lt;no name provided&gt;$when (node.type) { GFMElementTypes.HEADER -&gt; { val cells = node.children .filter { it.type.name == "CELL" } .map { it.getTextInNode(content).toString().trim() } if (cells.isNotEmpty()) { rows.add(cells) } } GFMElementTypes.ROW -&gt; { val cells = node.children .filter { it.type.name == "CELL" } .map { it.getTextInNode(content).toString().trim() } if (cells.isNotEmpty()) { rows.add(cells) } } else -&gt; node.acceptChildren(this) }</ID>
     <ID>BlankLineBetweenWhenConditions:PdfBox.kt:ParagraphVisitor$when (node.type) { MarkdownTokenTypes.TEXT -&gt; { val text = node.getTextInNode(content).toString() flow.addText(text, 14f, fontBundle.plain) } MarkdownElementTypes.EMPH -&gt; addStyledBlock(node, fontBundle.italic, 1) MarkdownElementTypes.STRONG -&gt; addStyledBlock(node, fontBundle.bold, 2) MarkdownElementTypes.CODE_SPAN -&gt; { val raw = node.getTextInNode(content).toString() val text = raw.replace("`", "").trim() flow.addText(text, 12f, fontBundle.mono) } MarkdownTokenTypes.WHITE_SPACE -&gt; flow.addText(" ", 14f, fontBundle.plain) MarkdownElementTypes.INLINE_LINK, MarkdownElementTypes.FULL_REFERENCE_LINK, MarkdownElementTypes.SHORT_REFERENCE_LINK -&gt; addLink(node) GFMElementTypes.STRIKETHROUGH -&gt; { val text = node.getTextInNode(content).toString() val actual = text.substring(2, text.length - 2) flow.addText(actual, 14f, fontBundle.plain) } }</ID>
+    <ID>BracesOnWhenStatements:PdfBox.kt:&lt;no name provided&gt;$when</ID>
+    <ID>BracesOnWhenStatements:PdfBox.kt:ParagraphVisitor$when</ID>
+    <ID>BracesOnWhenStatements:PdfBox.kt:PdfBox$when</ID>
+    <ID>BracesOnWhenStatements:PdfBox.kt:PdfBoxVisitor$when</ID>
+    <ID>CascadingCallWrapping:PdfBox.kt:QuoteVisitor$replace("\n", " ")</ID>
     <ID>ClassSignature:PdfBox.kt:PdfBoxVisitor : Visitor</ID>
     <ID>ClassSignature:PdfBox.kt:PdfFontBundle</ID>
     <ID>ClassSignature:PdfBox.kt:QuoteVisitor : Visitor</ID>
+    <ID>CognitiveComplexMethod:PdfBox.kt:private fun addTable</ID>
+    <ID>DocumentationOverPrivateFunction:PdfBox.kt:private fun insertBlankPageAtBeginning</ID>
+    <ID>ForbiddenPublicDataClass:PdfBox.kt:PdfFontBundle</ID>
     <ID>FunctionSignature:PdfBox.kt:fun loadSystemFont: PDType0Font</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PdfBox.kt:PdfBox : PdfService</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PdfBox.kt:PdfBoxVisitor : Visitor</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PdfBox.kt:PdfFontBundle</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PdfBox.kt:QuoteVisitor : Visitor</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PdfBox.kt:fun loadSystemFont: PDType0Font</ID>
+    <ID>MagicNumber:PdfBox.kt:1000</ID>
+    <ID>MagicNumber:PdfBox.kt:15f</ID>
+    <ID>MagicNumber:PdfBox.kt:16f</ID>
+    <ID>MagicNumber:PdfBox.kt:18f</ID>
+    <ID>MagicNumber:PdfBox.kt:20f</ID>
+    <ID>MagicNumber:PdfBox.kt:22f</ID>
+    <ID>MagicNumber:PdfBox.kt:230</ID>
+    <ID>MagicNumber:PdfBox.kt:24f</ID>
+    <ID>MagicNumber:PdfBox.kt:3f</ID>
+    <ID>MagicNumber:PdfBox.kt:500f</ID>
+    <ID>MagicNumber:PdfBox.kt:595f</ID>
+    <ID>MagicNumber:PdfBox.kt:5f</ID>
+    <ID>MagicNumber:PdfBox.kt:75f</ID>
+    <ID>MagicNumber:PdfBox.kt:80</ID>
+    <ID>MagicNumber:PdfBox.kt:842f</ID>
+    <ID>MagicNumber:PdfBox.kt:ParagraphVisitor$12f</ID>
+    <ID>MagicNumber:PdfBox.kt:ParagraphVisitor$14f</ID>
+    <ID>MagicNumber:PdfBox.kt:PdfBox$14f</ID>
+    <ID>MagicNumber:PdfBox.kt:PdfBox$50f</ID>
+    <ID>MagicNumber:PdfBox.kt:PdfBoxVisitor$0xF0</ID>
+    <ID>MagicNumber:PdfBox.kt:PdfBoxVisitor$10f</ID>
+    <ID>MagicNumber:PdfBox.kt:PdfBoxVisitor$12f</ID>
+    <ID>MagicNumber:PdfBox.kt:PdfBoxVisitor$14f</ID>
+    <ID>MagicNumber:PdfBox.kt:PdfBoxVisitor$6f</ID>
+    <ID>MagicNumber:PdfBox.kt:PdfBoxVisitor$8f</ID>
+    <ID>MagicNumber:PdfBox.kt:QuoteVisitor$14f</ID>
     <ID>MultilineExpressionWrapping:PdfBox.kt:&lt;no name provided&gt;$node.children .filter { it.type.name == "CELL" } .map { it.getTextInNode(content).toString().trim() }</ID>
     <ID>MultilineExpressionWrapping:PdfBox.kt:Highlights.Builder() .theme(SyntaxThemes.atom(darkMode = false)) .code(code) .build() .getHighlights() .sortedBy { it.location.start }</ID>
     <ID>MultilineExpressionWrapping:PdfBox.kt:PAdESSignatureParameters().apply { signingCertificate = key.certificate certificateChain = key.certificateChain.toList() signatureLevel = SignatureLevel.PAdES_BASELINE_B digestAlgorithm = DigestAlgorithm.SHA256 bLevel().signingDate = java.util.Date(key.certificate.notBefore.time + 1000) val imageParameters = eu.europa.esig.dss.pades.SignatureImageParameters() val subjectName = key.certificate.certificate.subjectX500Principal.name val imageBytes = com.storyteller_f.a.cloud.pdf.SignatureImageGenerator.generate( subjectName, pdfGenerationSpec.created.toString(), "Digitally Signed by PdfBox" ) imageParameters.image = eu.europa.esig.dss.model.InMemoryDocument( imageBytes, "signature.png", eu.europa.esig.dss.enumerations.MimeTypeEnum.PNG ) val fieldParameters = eu.europa.esig.dss.pades.SignatureFieldParameters().apply { page = 1 // Center the signature on the new first page // Image is 600x90, so we maintain similar aspect ratio val sigWidth = 500f val sigHeight = 75f // A4 page size: 595 x 842 points originX = (595f - sigWidth) / 2 originY = (842f - sigHeight) / 2 width = sigWidth height = sigHeight } imageParameters.fieldParameters = fieldParameters this.imageParameters = imageParameters }</ID>
@@ -32,6 +73,9 @@
     <ID>MultilineExpressionWrapping:PdfBox.kt:when (type) { MarkdownElementTypes.ATX_1 -&gt; 24f MarkdownElementTypes.ATX_2 -&gt; 22f MarkdownElementTypes.ATX_3 -&gt; 20f MarkdownElementTypes.ATX_4 -&gt; 18f MarkdownElementTypes.ATX_5 -&gt; 16f MarkdownElementTypes.ATX_6 -&gt; 15f else -&gt; 18f }</ID>
     <ID>PackageName:PdfBox.kt:package com.storyteller_f.a.cloud.pdfbox</ID>
     <ID>PackageNaming:PdfBox.kt:package com.storyteller_f.a.cloud.pdfbox</ID>
+    <ID>StringShouldBeRawString:PdfBox.kt:ParagraphVisitor$"\\[([^]]+)]\\(([^)]+)\\)"</ID>
+    <ID>TooGenericExceptionThrown:PdfBox.kt:throw Exception("bold font not found")</ID>
+    <ID>TooGenericExceptionThrown:PdfBox.kt:throw Exception("italic font not found")</ID>
     <ID>TrailingCommaOnCallSite:PdfBox.kt:( document, FontMappers.instance().getTrueTypeFont(f.name, null).font, true )</ID>
     <ID>TrailingCommaOnCallSite:PdfBox.kt:( imageBytes, "signature.png", eu.europa.esig.dss.enumerations.MimeTypeEnum.PNG )</ID>
     <ID>TrailingCommaOnCallSite:PdfBox.kt:( keyStoreInput, KeyStore.PasswordProtection(password.toCharArray()) )</ID>
@@ -47,6 +91,21 @@
     <ID>TrailingCommaOnDeclarationSite:PdfBox.kt:PdfBoxVisitor$( val font: PDFont, val content: String, val map: Map&lt;String, File&gt;, val document: Document )</ID>
     <ID>TrailingCommaOnDeclarationSite:PdfBox.kt:PdfBoxVisitor$MarkdownElementTypes.ATX_1, MarkdownElementTypes.ATX_2, MarkdownElementTypes.ATX_3, MarkdownElementTypes.ATX_4, MarkdownElementTypes.ATX_5, MarkdownElementTypes.ATX_6 -&gt; { val headerText = collectPlainText(node, content) if (headerText.isNotBlank()) { val size = headerFontSizeFor(type) document.add(Paragraph().apply { addText(headerText, size, font) }) } }</ID>
     <ID>TrailingCommaOnDeclarationSite:PdfBox.kt:PdfFontBundle$( val plain: PDFont, val bold: PDFont, val italic: PDFont, val mono: PDFont )</ID>
+    <ID>UndocumentedPublicClass:PdfBox.kt:PdfBox : PdfService</ID>
+    <ID>UndocumentedPublicClass:PdfBox.kt:PdfBoxVisitor : Visitor</ID>
+    <ID>UndocumentedPublicClass:PdfBox.kt:PdfFontBundle</ID>
+    <ID>UndocumentedPublicClass:PdfBox.kt:QuoteVisitor : Visitor</ID>
+    <ID>UndocumentedPublicFunction:PdfBox.kt:fun loadSystemFont: PDType0Font</ID>
+    <ID>UndocumentedPublicProperty:PdfBox.kt:PdfBoxVisitor$val content: String</ID>
+    <ID>UndocumentedPublicProperty:PdfBox.kt:PdfBoxVisitor$val document: Document</ID>
+    <ID>UndocumentedPublicProperty:PdfBox.kt:PdfBoxVisitor$val font: PDFont</ID>
+    <ID>UndocumentedPublicProperty:PdfBox.kt:PdfBoxVisitor$val map: Map&lt;String, File&gt;</ID>
+    <ID>UndocumentedPublicProperty:PdfBox.kt:PdfFontBundle$val bold: PDFont</ID>
+    <ID>UndocumentedPublicProperty:PdfBox.kt:PdfFontBundle$val italic: PDFont</ID>
+    <ID>UndocumentedPublicProperty:PdfBox.kt:PdfFontBundle$val mono: PDFont</ID>
+    <ID>UndocumentedPublicProperty:PdfBox.kt:PdfFontBundle$val plain: PDFont</ID>
+    <ID>UndocumentedPublicProperty:PdfBox.kt:QuoteVisitor$val font: PdfFontBundle</ID>
+    <ID>UndocumentedPublicProperty:PdfBox.kt:QuoteVisitor$val paragraph: TextFlow</ID>
     <ID>Wrapping:PdfBox.kt:PdfBox$(</ID>
     <ID>Wrapping:PdfBox.kt:PdfBoxVisitor$(</ID>
   </CurrentIssues>

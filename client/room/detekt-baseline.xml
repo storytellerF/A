@@ -2,11 +2,63 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>AbsentOrWrongFileLicense:Database.android.kt:com.storyteller_f.a.client.room.Database.android.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Database.jvm.kt:com.storyteller_f.a.client.room.Database.jvm.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Database.wasmJs.kt:com.storyteller_f.a.client.room.Database.wasmJs.kt</ID>
+    <ID>AbsentOrWrongFileLicense:LoggingSQLiteDriver.kt:com.storyteller_f.a.client.room.LoggingSQLiteDriver.kt</ID>
+    <ID>AbsentOrWrongFileLicense:RoomDatabase.kt:com.storyteller_f.a.client.room.RoomDatabase.kt</ID>
+    <ID>AbsentOrWrongFileLicense:RoomStorage.kt:com.storyteller_f.a.client.room.RoomStorage.kt</ID>
+    <ID>AbsentOrWrongFileLicense:build.gradle.kts:.build.gradle.kts</ID>
+    <ID>CascadingCallWrapping:RoomStorage.kt:RoomDownloadInfoStorage$map { it?.data?.let { string -&gt; commonJson.safeDecodeFromStringOrNull(string) } }</ID>
     <ID>ClassSignature:LoggingSQLiteDriver.kt:LoggingSQLiteConnection : SQLiteConnection</ID>
     <ID>ClassSignature:LoggingSQLiteDriver.kt:LoggingSQLiteStatement : SQLiteStatement</ID>
     <ID>ClassSignature:RoomDatabase.kt:CommonEntity</ID>
     <ID>ClassSignature:RoomDatabase.kt:DownloadEntity</ID>
     <ID>ClassSignature:RoomDatabase.kt:UploadEntity</ID>
+    <ID>ComplexInterface:RoomDatabase.kt:CommonDao</ID>
+    <ID>ExpressionBodySyntax:Database.wasmJs.kt:return Room.databaseBuilder&lt;AppDatabase&gt;(name = "$scope.db")</ID>
+    <ID>ExpressionBodySyntax:LoggingSQLiteDriver.kt:LoggingSQLiteConnection$return LoggingSQLiteStatement(delegate.prepare(sql), sql)</ID>
+    <ID>ExpressionBodySyntax:LoggingSQLiteDriver.kt:LoggingSQLiteDriver$return LoggingSQLiteConnection(delegate.open(fileName))</ID>
+    <ID>ExpressionBodySyntax:RoomStorage.kt:RoomChildAccountStorage$return impl.observeData(ChildAccountStorage.COLLECTION_NAME)</ID>
+    <ID>ExpressionBodySyntax:RoomStorage.kt:RoomChildAccountStorage$return impl.observeDatum(ChildAccountStorage.COLLECTION_NAME, key)</ID>
+    <ID>ExpressionBodySyntax:RoomStorage.kt:RoomCommunityInfoStorage$return impl.getDocument(collection.getName(), key)</ID>
+    <ID>ExpressionBodySyntax:RoomStorage.kt:RoomCommunityInfoStorage$return impl.observeData(collection.getName())</ID>
+    <ID>ExpressionBodySyntax:RoomStorage.kt:RoomFileInfoStorage$return impl.getDocument(collection.getName(), key)</ID>
+    <ID>ExpressionBodySyntax:RoomStorage.kt:RoomFileInfoStorage$return impl.observeData(collection.getName())</ID>
+    <ID>ExpressionBodySyntax:RoomStorage.kt:RoomFileInfoStorage$return impl.observeDatum(FileCollection.Files.getName(), key)</ID>
+    <ID>ExpressionBodySyntax:RoomStorage.kt:RoomFileRefInfoStorage$return impl.observeData(collection.getName())</ID>
+    <ID>ExpressionBodySyntax:RoomStorage.kt:RoomMemberInfoStorage$return impl.getDocument(collection.getName(), key)</ID>
+    <ID>ExpressionBodySyntax:RoomStorage.kt:RoomMemberInfoStorage$return impl.observeData(collection.getName())</ID>
+    <ID>ExpressionBodySyntax:RoomStorage.kt:RoomOverviewStorage$return impl.observeDatum(OverviewStorage.COLLECTION_NAME, "overview")</ID>
+    <ID>ExpressionBodySyntax:RoomStorage.kt:RoomPanelLogInfoStorage$return impl.observeData(collection.getName())</ID>
+    <ID>ExpressionBodySyntax:RoomStorage.kt:RoomReactionInfoStorage$return impl.observeData(collection.getName())</ID>
+    <ID>ExpressionBodySyntax:RoomStorage.kt:RoomRoomInfoStorage$return impl.getDocument(collection.getName(), key)</ID>
+    <ID>ExpressionBodySyntax:RoomStorage.kt:RoomRoomInfoStorage$return impl.observeData(collection.getName())</ID>
+    <ID>ExpressionBodySyntax:RoomStorage.kt:RoomRoomInfoStorage$return impl.observeDatum(RoomCollection.Rooms.getName(), key)</ID>
+    <ID>ExpressionBodySyntax:RoomStorage.kt:RoomTaskRecordInfoStorage$return impl.observeData(collection.getName())</ID>
+    <ID>ExpressionBodySyntax:RoomStorage.kt:RoomTitleInfoStorage$return impl.getDocument(collection.getName(), key)</ID>
+    <ID>ExpressionBodySyntax:RoomStorage.kt:RoomTitleInfoStorage$return impl.observeData(collection.getName())</ID>
+    <ID>ExpressionBodySyntax:RoomStorage.kt:RoomTitleInfoStorage$return impl.observeDatum(TitleCollection.Titles.getName(), key)</ID>
+    <ID>ExpressionBodySyntax:RoomStorage.kt:RoomTopicInfoStorage$return impl.getDocument(collection.getName(), key)</ID>
+    <ID>ExpressionBodySyntax:RoomStorage.kt:RoomTopicInfoStorage$return impl.observeData(collection.getName())</ID>
+    <ID>ExpressionBodySyntax:RoomStorage.kt:RoomTopicInfoStorage$return impl.observeDatum(TopicCollection.Topics.getName(), key)</ID>
+    <ID>ExpressionBodySyntax:RoomStorage.kt:RoomUploadRecordInfoStorage$return impl.observeData(collection.getName())</ID>
+    <ID>ExpressionBodySyntax:RoomStorage.kt:RoomUserFavoriteStorage$return impl.getDocument(collection.getName(), key)</ID>
+    <ID>ExpressionBodySyntax:RoomStorage.kt:RoomUserFavoriteStorage$return impl.observeData(collection.getName())</ID>
+    <ID>ExpressionBodySyntax:RoomStorage.kt:RoomUserFavoriteStorage$return impl.observeDatum(UserFavoriteStorage.COLLECTION_NAME, key)</ID>
+    <ID>ExpressionBodySyntax:RoomStorage.kt:RoomUserInfoStorage$return impl.getDocument(collection.getName(), key)</ID>
+    <ID>ExpressionBodySyntax:RoomStorage.kt:RoomUserInfoStorage$return impl.observeData(collection.getName())</ID>
+    <ID>ExpressionBodySyntax:RoomStorage.kt:RoomUserInfoStorage$return impl.observeDatum(UserCollection.Users.getName(), key)</ID>
+    <ID>ExpressionBodySyntax:RoomStorage.kt:RoomUserLogInfoStorage$return impl.observeData(collection.getName())</ID>
+    <ID>ExpressionBodySyntax:RoomStorage.kt:RoomUserOverviewStorage$return impl.observeDatum(UserOverviewStorage.COLLECTION_NAME, "overview")</ID>
+    <ID>ExpressionBodySyntax:RoomStorage.kt:RoomUserReactionRecordStorage$return impl.clean(collection.getName())</ID>
+    <ID>ExpressionBodySyntax:RoomStorage.kt:RoomUserReactionRecordStorage$return impl.observeData(collection.getName())</ID>
+    <ID>ExpressionBodySyntax:RoomStorage.kt:RoomUserSubscriptionStorage$return impl.getDocument(collection.getName(), key)</ID>
+    <ID>ExpressionBodySyntax:RoomStorage.kt:RoomUserSubscriptionStorage$return impl.observeData(collection.getName())</ID>
+    <ID>ExpressionBodySyntax:RoomStorage.kt:RoomUserSubscriptionStorage$return impl.observeDatum(UserSubscriptionStorage.COLLECTION_NAME, key)</ID>
+    <ID>ForbiddenPublicDataClass:RoomDatabase.kt:CommonEntity</ID>
+    <ID>ForbiddenPublicDataClass:RoomDatabase.kt:DownloadEntity</ID>
+    <ID>ForbiddenPublicDataClass:RoomDatabase.kt:UploadEntity</ID>
     <ID>FunctionExpressionBody:Database.wasmJs.kt:{ return Room.databaseBuilder&lt;AppDatabase&gt;(name = "$scope.db") }</ID>
     <ID>FunctionExpressionBody:LoggingSQLiteDriver.kt:LoggingSQLiteConnection${ return LoggingSQLiteStatement(delegate.prepare(sql), sql) }</ID>
     <ID>FunctionExpressionBody:LoggingSQLiteDriver.kt:LoggingSQLiteDriver${ return LoggingSQLiteConnection(delegate.open(fileName)) }</ID>
@@ -112,6 +164,47 @@
     <ID>FunctionSignature:RoomStorage.kt:RoomUserReactionRecordStorage$override suspend fun saveLast</ID>
     <ID>FunctionSignature:RoomStorage.kt:RoomUserSubscriptionStorage$override suspend fun getDocument: UserSubscriptionInfo?</ID>
     <ID>FunctionSignature:RoomStorage.kt:inline fun &lt;reified T : Any&gt; Json.safeDecodeFromStringOrNull: T?</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Database.android.kt:actual fun getRoomDatabase: AppDatabase</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Database.android.kt:fun getDatabaseBuilder: RoomDatabase.Builder&lt;AppDatabase&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Database.jvm.kt:actual fun getRoomDatabase: AppDatabase</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Database.jvm.kt:fun getDatabaseBuilder: RoomDatabase.Builder&lt;AppDatabase&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Database.wasmJs.kt:actual fun getRoomDatabase: AppDatabase</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Database.wasmJs.kt:fun getDatabaseBuilder: RoomDatabase.Builder&lt;AppDatabase&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LoggingSQLiteDriver.kt:LoggingSQLiteDriver : SQLiteDriver</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomDatabase.kt:AppDatabase : RoomDatabase</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomDatabase.kt:CommonDao</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomDatabase.kt:CommonEntity</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomDatabase.kt:DownloadDao</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomDatabase.kt:DownloadEntity</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomDatabase.kt:UploadDao</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomDatabase.kt:UploadEntity</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomDatabase.kt:expect fun getRoomDatabase: AppDatabase</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomStorage.kt:CommonStorageImpl</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomStorage.kt:RemoteKeyRoomStorage : RemoteKeyStorage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomStorage.kt:RoomChildAccountStorage : ChildAccountStorage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomStorage.kt:RoomCommunityInfoStorage : CommunityInfoStorage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomStorage.kt:RoomDownloadInfoStorage : DownloadInfoStorage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomStorage.kt:RoomFileInfoStorage : FileInfoStorage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomStorage.kt:RoomFileRefInfoStorage : FileRefInfoStorage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomStorage.kt:RoomMemberInfoStorage : MemberInfoStorage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomStorage.kt:RoomModelStorage : ModelStorage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomStorage.kt:RoomOverviewStorage : OverviewStorage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomStorage.kt:RoomPanelLogInfoStorage : PanelLogInfoStorage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomStorage.kt:RoomReactionInfoStorage : ReactionInfoStorage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomStorage.kt:RoomRoomInfoStorage : RoomInfoStorage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomStorage.kt:RoomTaskRecordInfoStorage : TaskRecordInfoStorage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomStorage.kt:RoomTitleInfoStorage : TitleInfoStorage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomStorage.kt:RoomTopicInfoStorage : TopicInfoStorage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomStorage.kt:RoomUploadInfoStorage : UploadInfoStorage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomStorage.kt:RoomUploadRecordInfoStorage : UploadRecordInfoStorage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomStorage.kt:RoomUserFavoriteStorage : UserFavoriteStorage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomStorage.kt:RoomUserInfoStorage : UserInfoStorage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomStorage.kt:RoomUserLogInfoStorage : UserLogInfoStorage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomStorage.kt:RoomUserOverviewStorage : UserOverviewStorage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomStorage.kt:RoomUserReactionRecordStorage : UserReactionRecordStorage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomStorage.kt:RoomUserSubscriptionStorage : UserSubscriptionStorage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomStorage.kt:fun getRoomModelStorage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomStorage.kt:inline fun &lt;reified T : Any&gt; Json.safeDecodeFromStringOrNull: T?</ID>
     <ID>MultilineExpressionWrapping:RoomStorage.kt:try { decodeFromString(string) } catch (e: SerializationException) { Napier.e(e) { "decodeFromString failed, string: $string" } null }</ID>
     <ID>MultilineExpressionWrapping:build.gradle.kts:create("jvmAndroidMain") { dependsOn(commonMain.get()) dependencies { implementation(libs.androidx.sqlite.bundled) } }</ID>
     <ID>NoEmptyFirstLineInClassBody:RoomDatabase.kt:UploadDao${ @Insert(onConflict = REPLACE) suspend fun insert(item: UploadEntity) @Query("select * from UploadEntity where collection = :collection and pathHash = :pathHash") suspend fun get(collection: String, pathHash: String): UploadEntity? @Query("select * from UploadEntity where collection = :collection order by id desc") fun getAsSource(collection: String): PagingSource&lt;Int, UploadEntity&gt; @Query("select * from UploadEntity where collection = :collection and pathHash = :pathHash") fun getAsFlow(collection: String, pathHash: String): Flow&lt;UploadEntity?&gt; @Query("delete from UploadEntity where collection = :collection and pathHash = :pathHash") suspend fun delete(collection: String, pathHash: String) @Query("delete from UploadEntity where collection = :collection") suspend fun clean(collection: String) @Query("update UploadEntity set data = :data where collection = :collection and id = :id") suspend fun updateData(collection: String, id: String, data: String) }</ID>
@@ -136,6 +229,10 @@
     <ID>PackageNaming:LoggingSQLiteDriver.kt:package com.storyteller_f.a.client.room</ID>
     <ID>PackageNaming:RoomDatabase.kt:package com.storyteller_f.a.client.room</ID>
     <ID>PackageNaming:RoomStorage.kt:package com.storyteller_f.a.client.room</ID>
+    <ID>StringLiteralDuplication:RoomStorage.kt:RoomOverviewStorage$"overview"</ID>
+    <ID>StringLiteralDuplication:RoomStorage.kt:RoomPanelLogInfoStorage$"Not yet implemented - this method is not used in current implementation"</ID>
+    <ID>StringLiteralDuplication:RoomStorage.kt:RoomTopicInfoStorage$"Not yet implemented"</ID>
+    <ID>TooManyFunctions:LoggingSQLiteDriver.kt:LoggingSQLiteStatement : SQLiteStatement</ID>
     <ID>TrailingCommaOnCallSite:RoomDatabase.kt:AppDatabaseConstructor$( "NO_ACTUAL_FOR_EXPECT", "EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING", "KotlinNoActualForExpect", "RedundantSuppression" )</ID>
     <ID>TrailingCommaOnCallSite:RoomStorage.kt:RemoteKeyRoomStorage$( CommonEntity(remoteKeys.collectionName, PRE_COLLECTION, commonJson.encodeToString(remoteKeys)) )</ID>
     <ID>TrailingCommaOnCallSite:RoomStorage.kt:RoomCommunityInfoStorage$(item.id, CommunityCollection.Communities.getName(), data,)</ID>
@@ -173,5 +270,118 @@
     <ID>TrailingCommaOnDeclarationSite:RoomStorage.kt:RoomUserReactionRecordStorage$( collection: UserReactionRecordCollection, item: ReactionRecordInfo )</ID>
     <ID>TrailingCommaOnDeclarationSite:RoomStorage.kt:RoomUserReactionRecordStorage$( collection: UserReactionRecordCollection, key: String )</ID>
     <ID>TrailingCommaOnDeclarationSite:RoomStorage.kt:RoomUserSubscriptionStorage$( collection: UserSubscriptionCollection, key: String )</ID>
+    <ID>UndocumentedPublicClass:LoggingSQLiteDriver.kt:LoggingSQLiteDriver : SQLiteDriver</ID>
+    <ID>UndocumentedPublicClass:RoomDatabase.kt:AppDatabase : RoomDatabase</ID>
+    <ID>UndocumentedPublicClass:RoomDatabase.kt:AppDatabaseConstructor : RoomDatabaseConstructor</ID>
+    <ID>UndocumentedPublicClass:RoomDatabase.kt:CommonDao</ID>
+    <ID>UndocumentedPublicClass:RoomDatabase.kt:CommonEntity</ID>
+    <ID>UndocumentedPublicClass:RoomDatabase.kt:DownloadDao</ID>
+    <ID>UndocumentedPublicClass:RoomDatabase.kt:DownloadEntity</ID>
+    <ID>UndocumentedPublicClass:RoomDatabase.kt:UploadDao</ID>
+    <ID>UndocumentedPublicClass:RoomDatabase.kt:UploadEntity</ID>
+    <ID>UndocumentedPublicClass:RoomStorage.kt:CommonStorageImpl</ID>
+    <ID>UndocumentedPublicClass:RoomStorage.kt:RemoteKeyRoomStorage : RemoteKeyStorage</ID>
+    <ID>UndocumentedPublicClass:RoomStorage.kt:RoomChildAccountStorage : ChildAccountStorage</ID>
+    <ID>UndocumentedPublicClass:RoomStorage.kt:RoomCommunityInfoStorage : CommunityInfoStorage</ID>
+    <ID>UndocumentedPublicClass:RoomStorage.kt:RoomDownloadInfoStorage : DownloadInfoStorage</ID>
+    <ID>UndocumentedPublicClass:RoomStorage.kt:RoomFileInfoStorage : FileInfoStorage</ID>
+    <ID>UndocumentedPublicClass:RoomStorage.kt:RoomFileRefInfoStorage : FileRefInfoStorage</ID>
+    <ID>UndocumentedPublicClass:RoomStorage.kt:RoomMemberInfoStorage : MemberInfoStorage</ID>
+    <ID>UndocumentedPublicClass:RoomStorage.kt:RoomModelStorage : ModelStorage</ID>
+    <ID>UndocumentedPublicClass:RoomStorage.kt:RoomOverviewStorage : OverviewStorage</ID>
+    <ID>UndocumentedPublicClass:RoomStorage.kt:RoomPanelLogInfoStorage : PanelLogInfoStorage</ID>
+    <ID>UndocumentedPublicClass:RoomStorage.kt:RoomReactionInfoStorage : ReactionInfoStorage</ID>
+    <ID>UndocumentedPublicClass:RoomStorage.kt:RoomRoomInfoStorage : RoomInfoStorage</ID>
+    <ID>UndocumentedPublicClass:RoomStorage.kt:RoomTaskRecordInfoStorage : TaskRecordInfoStorage</ID>
+    <ID>UndocumentedPublicClass:RoomStorage.kt:RoomTitleInfoStorage : TitleInfoStorage</ID>
+    <ID>UndocumentedPublicClass:RoomStorage.kt:RoomTopicInfoStorage : TopicInfoStorage</ID>
+    <ID>UndocumentedPublicClass:RoomStorage.kt:RoomUploadInfoStorage : UploadInfoStorage</ID>
+    <ID>UndocumentedPublicClass:RoomStorage.kt:RoomUploadRecordInfoStorage : UploadRecordInfoStorage</ID>
+    <ID>UndocumentedPublicClass:RoomStorage.kt:RoomUserFavoriteStorage : UserFavoriteStorage</ID>
+    <ID>UndocumentedPublicClass:RoomStorage.kt:RoomUserInfoStorage : UserInfoStorage</ID>
+    <ID>UndocumentedPublicClass:RoomStorage.kt:RoomUserLogInfoStorage : UserLogInfoStorage</ID>
+    <ID>UndocumentedPublicClass:RoomStorage.kt:RoomUserOverviewStorage : UserOverviewStorage</ID>
+    <ID>UndocumentedPublicClass:RoomStorage.kt:RoomUserReactionRecordStorage : UserReactionRecordStorage</ID>
+    <ID>UndocumentedPublicClass:RoomStorage.kt:RoomUserSubscriptionStorage : UserSubscriptionStorage</ID>
+    <ID>UndocumentedPublicFunction:Database.android.kt:actual fun getRoomDatabase: AppDatabase</ID>
+    <ID>UndocumentedPublicFunction:Database.android.kt:fun getDatabaseBuilder: RoomDatabase.Builder&lt;AppDatabase&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.jvm.kt:actual fun getRoomDatabase: AppDatabase</ID>
+    <ID>UndocumentedPublicFunction:Database.jvm.kt:fun getDatabaseBuilder: RoomDatabase.Builder&lt;AppDatabase&gt;</ID>
+    <ID>UndocumentedPublicFunction:Database.wasmJs.kt:actual fun getRoomDatabase: AppDatabase</ID>
+    <ID>UndocumentedPublicFunction:Database.wasmJs.kt:fun getDatabaseBuilder: RoomDatabase.Builder&lt;AppDatabase&gt;</ID>
+    <ID>UndocumentedPublicFunction:RoomDatabase.kt:AppDatabase$abstract fun getCommonDao: CommonDao</ID>
+    <ID>UndocumentedPublicFunction:RoomDatabase.kt:AppDatabase$abstract fun getDownloadDao: DownloadDao</ID>
+    <ID>UndocumentedPublicFunction:RoomDatabase.kt:AppDatabase$abstract fun getUploadDao: UploadDao</ID>
+    <ID>UndocumentedPublicFunction:RoomDatabase.kt:CommonDao$@Insert(onConflict = REPLACE) suspend fun insert</ID>
+    <ID>UndocumentedPublicFunction:RoomDatabase.kt:CommonDao$@Query("SELECT * FROM CommonEntity where collection = :collection and id = :id") fun getAsFlow: Flow&lt;CommonEntity?&gt;</ID>
+    <ID>UndocumentedPublicFunction:RoomDatabase.kt:CommonDao$@Query("delete from CommonEntity where collection = :collection and id = :id") suspend fun delete</ID>
+    <ID>UndocumentedPublicFunction:RoomDatabase.kt:CommonDao$@Query("delete from CommonEntity where collection = :collection") suspend fun clean</ID>
+    <ID>UndocumentedPublicFunction:RoomDatabase.kt:CommonDao$@Query("select * from CommonEntity where collection = :collection and id = :id") suspend fun get: CommonEntity?</ID>
+    <ID>UndocumentedPublicFunction:RoomDatabase.kt:CommonDao$@Query("select * from CommonEntity where collection = :collection order by seq asc") fun getAsSource: PagingSource&lt;Int, CommonEntity&gt;</ID>
+    <ID>UndocumentedPublicFunction:RoomDatabase.kt:CommonDao$@Query("select COALESCE(MAX(seq), -1) from CommonEntity where collection = :collection") suspend fun getMaxSeq: Long</ID>
+    <ID>UndocumentedPublicFunction:RoomDatabase.kt:CommonDao$@Query("select COALESCE(MIN(seq), 1) from CommonEntity where collection = :collection") suspend fun getMinSeq: Long</ID>
+    <ID>UndocumentedPublicFunction:RoomDatabase.kt:CommonDao$@Query("update CommonEntity set data = :data where collection = :collection and id = :id") suspend fun updateData</ID>
+    <ID>UndocumentedPublicFunction:RoomDatabase.kt:CommonDao$suspend fun saveFirst</ID>
+    <ID>UndocumentedPublicFunction:RoomDatabase.kt:CommonDao$suspend fun saveLast</ID>
+    <ID>UndocumentedPublicFunction:RoomDatabase.kt:DownloadDao$@Insert(onConflict = REPLACE) suspend fun insert</ID>
+    <ID>UndocumentedPublicFunction:RoomDatabase.kt:DownloadDao$@Query("SELECT * FROM DownloadEntity where collection = :collection and fileId = :fileId") fun getByFileIdAsFlow: Flow&lt;DownloadEntity?&gt;</ID>
+    <ID>UndocumentedPublicFunction:RoomDatabase.kt:DownloadDao$@Query("SELECT * FROM DownloadEntity where collection = :collection and id = :id") fun getByIdAsFlow: Flow&lt;DownloadEntity?&gt;</ID>
+    <ID>UndocumentedPublicFunction:RoomDatabase.kt:DownloadDao$@Query("delete from DownloadEntity where collection = :collection") suspend fun clean</ID>
+    <ID>UndocumentedPublicFunction:RoomDatabase.kt:DownloadDao$@Query("select * from DownloadEntity where collection = :collection and fileId = :fileId") suspend fun getByFileId: DownloadEntity?</ID>
+    <ID>UndocumentedPublicFunction:RoomDatabase.kt:DownloadDao$@Query("select * from DownloadEntity where collection = :collection and id = :id") suspend fun getById: DownloadEntity?</ID>
+    <ID>UndocumentedPublicFunction:RoomDatabase.kt:DownloadDao$@Query("select * from DownloadEntity where collection = :collection order by id desc") fun getAsSource: PagingSource&lt;Int, DownloadEntity&gt;</ID>
+    <ID>UndocumentedPublicFunction:RoomDatabase.kt:UploadDao$@Insert(onConflict = REPLACE) suspend fun insert</ID>
+    <ID>UndocumentedPublicFunction:RoomDatabase.kt:UploadDao$@Query("delete from UploadEntity where collection = :collection and pathHash = :pathHash") suspend fun delete</ID>
+    <ID>UndocumentedPublicFunction:RoomDatabase.kt:UploadDao$@Query("delete from UploadEntity where collection = :collection") suspend fun clean</ID>
+    <ID>UndocumentedPublicFunction:RoomDatabase.kt:UploadDao$@Query("select * from UploadEntity where collection = :collection and pathHash = :pathHash") fun getAsFlow: Flow&lt;UploadEntity?&gt;</ID>
+    <ID>UndocumentedPublicFunction:RoomDatabase.kt:UploadDao$@Query("select * from UploadEntity where collection = :collection and pathHash = :pathHash") suspend fun get: UploadEntity?</ID>
+    <ID>UndocumentedPublicFunction:RoomDatabase.kt:UploadDao$@Query("select * from UploadEntity where collection = :collection order by id desc") fun getAsSource: PagingSource&lt;Int, UploadEntity&gt;</ID>
+    <ID>UndocumentedPublicFunction:RoomDatabase.kt:UploadDao$@Query("update UploadEntity set data = :data where collection = :collection and id = :id") suspend fun updateData</ID>
+    <ID>UndocumentedPublicFunction:RoomDatabase.kt:expect fun getRoomDatabase: AppDatabase</ID>
+    <ID>UndocumentedPublicFunction:RoomStorage.kt:CommonStorageImpl$inline fun &lt;reified T : Any&gt; observeData: PagingSource&lt;Int, T&gt;</ID>
+    <ID>UndocumentedPublicFunction:RoomStorage.kt:CommonStorageImpl$inline fun &lt;reified T : Any&gt; observeDatum: Flow&lt;T?&gt;</ID>
+    <ID>UndocumentedPublicFunction:RoomStorage.kt:CommonStorageImpl$suspend fun clean</ID>
+    <ID>UndocumentedPublicFunction:RoomStorage.kt:CommonStorageImpl$suspend fun delete</ID>
+    <ID>UndocumentedPublicFunction:RoomStorage.kt:CommonStorageImpl$suspend fun save</ID>
+    <ID>UndocumentedPublicFunction:RoomStorage.kt:CommonStorageImpl$suspend fun saveFirst</ID>
+    <ID>UndocumentedPublicFunction:RoomStorage.kt:CommonStorageImpl$suspend fun saveLast</ID>
+    <ID>UndocumentedPublicFunction:RoomStorage.kt:CommonStorageImpl$suspend fun update</ID>
+    <ID>UndocumentedPublicFunction:RoomStorage.kt:CommonStorageImpl$suspend inline fun &lt;reified T&gt; getDocument: T?</ID>
+    <ID>UndocumentedPublicFunction:RoomStorage.kt:RoomReactionInfoStorage$suspend fun saveToDefaultCollections: CommonEntity</ID>
+    <ID>UndocumentedPublicFunction:RoomStorage.kt:fun getRoomModelStorage</ID>
+    <ID>UndocumentedPublicFunction:RoomStorage.kt:inline fun &lt;reified T : Any&gt; Json.safeDecodeFromStringOrNull: T?</ID>
+    <ID>UndocumentedPublicProperty:RoomDatabase.kt:CommonEntity$val collection: String</ID>
+    <ID>UndocumentedPublicProperty:RoomDatabase.kt:CommonEntity$val data: String</ID>
+    <ID>UndocumentedPublicProperty:RoomDatabase.kt:CommonEntity$val id: String</ID>
+    <ID>UndocumentedPublicProperty:RoomDatabase.kt:CommonEntity$val seq: Long = 0</ID>
+    <ID>UndocumentedPublicProperty:RoomDatabase.kt:DownloadEntity$val collection: String</ID>
+    <ID>UndocumentedPublicProperty:RoomDatabase.kt:DownloadEntity$val data: String</ID>
+    <ID>UndocumentedPublicProperty:RoomDatabase.kt:DownloadEntity$val fileId: Long</ID>
+    <ID>UndocumentedPublicProperty:RoomDatabase.kt:DownloadEntity$val id: String</ID>
+    <ID>UndocumentedPublicProperty:RoomDatabase.kt:UploadEntity$val collection: String</ID>
+    <ID>UndocumentedPublicProperty:RoomDatabase.kt:UploadEntity$val data: String</ID>
+    <ID>UndocumentedPublicProperty:RoomDatabase.kt:UploadEntity$val id: String</ID>
+    <ID>UndocumentedPublicProperty:RoomDatabase.kt:UploadEntity$val pathHash: String</ID>
+    <ID>UndocumentedPublicProperty:RoomStorage.kt:CommonStorageImpl$val appDatabase: AppDatabase</ID>
+    <ID>UndocumentedPublicProperty:RoomStorage.kt:RemoteKeyRoomStorage$val appDatabase: AppDatabase</ID>
+    <ID>UndocumentedPublicProperty:RoomStorage.kt:RoomChildAccountStorage$val impl = CommonStorageImpl(appDatabase)</ID>
+    <ID>UndocumentedPublicProperty:RoomStorage.kt:RoomCommunityInfoStorage$val impl = CommonStorageImpl(appDatabase)</ID>
+    <ID>UndocumentedPublicProperty:RoomStorage.kt:RoomDownloadInfoStorage$val appDatabase: AppDatabase</ID>
+    <ID>UndocumentedPublicProperty:RoomStorage.kt:RoomFileInfoStorage$val impl = CommonStorageImpl(appDatabase)</ID>
+    <ID>UndocumentedPublicProperty:RoomStorage.kt:RoomMemberInfoStorage$val impl = CommonStorageImpl(appDatabase)</ID>
+    <ID>UndocumentedPublicProperty:RoomStorage.kt:RoomOverviewStorage$val impl = CommonStorageImpl(appDatabase)</ID>
+    <ID>UndocumentedPublicProperty:RoomStorage.kt:RoomReactionInfoStorage$val impl = CommonStorageImpl(appDatabase)</ID>
+    <ID>UndocumentedPublicProperty:RoomStorage.kt:RoomRoomInfoStorage$val impl = CommonStorageImpl(appDatabase)</ID>
+    <ID>UndocumentedPublicProperty:RoomStorage.kt:RoomTitleInfoStorage$val impl = CommonStorageImpl(appDatabase)</ID>
+    <ID>UndocumentedPublicProperty:RoomStorage.kt:RoomTopicInfoStorage$val appDatabase: AppDatabase</ID>
+    <ID>UndocumentedPublicProperty:RoomStorage.kt:RoomTopicInfoStorage$val impl = CommonStorageImpl(appDatabase)</ID>
+    <ID>UndocumentedPublicProperty:RoomStorage.kt:RoomUploadInfoStorage$val appDatabase: AppDatabase</ID>
+    <ID>UndocumentedPublicProperty:RoomStorage.kt:RoomUploadRecordInfoStorage$val impl = CommonStorageImpl(appDatabase)</ID>
+    <ID>UndocumentedPublicProperty:RoomStorage.kt:RoomUserFavoriteStorage$val impl = CommonStorageImpl(appDatabase)</ID>
+    <ID>UndocumentedPublicProperty:RoomStorage.kt:RoomUserInfoStorage$val impl = CommonStorageImpl(appDatabase)</ID>
+    <ID>UndocumentedPublicProperty:RoomStorage.kt:RoomUserLogInfoStorage$val impl = CommonStorageImpl(appDatabase)</ID>
+    <ID>UndocumentedPublicProperty:RoomStorage.kt:RoomUserOverviewStorage$val impl = CommonStorageImpl(appDatabase)</ID>
+    <ID>UndocumentedPublicProperty:RoomStorage.kt:RoomUserReactionRecordStorage$val impl = CommonStorageImpl(appDatabase)</ID>
+    <ID>UndocumentedPublicProperty:RoomStorage.kt:RoomUserSubscriptionStorage$val impl = CommonStorageImpl(appDatabase)</ID>
   </CurrentIssues>
 </SmellBaseline>

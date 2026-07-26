@@ -2,10 +2,27 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>AbsentOrWrongFileLicense:RTC.kt:com.storyteller_f.a.cloud.ws.RTC.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Websocket.kt:com.storyteller_f.a.cloud.ws.Websocket.kt</ID>
+    <ID>AbsentOrWrongFileLicense:WsApplication.kt:com.storyteller_f.a.cloud.ws.WsApplication.kt</ID>
+    <ID>AbsentOrWrongFileLicense:build.gradle.kts:.build.gradle.kts</ID>
     <ID>BlankLineBetweenWhenConditions:Websocket.kt:when (e) { is ClosedReceiveChannelException -&gt; log.info("ws closed ${call.remoteIp(reader).first()}") is CancellationException -&gt; log.info("ws cancel") else -&gt; log.error("ws receive", e) }</ID>
+    <ID>CascadingCallWrapping:Websocket.kt:onSuccess { it.forEach { dispatcher -&gt; dispatcher.dispatch(frame).onFailure { throwable -&gt; Napier.e(throwable = throwable) { "send topic to room members failed: ${throwable.message}" } } } }</ID>
     <ID>ClassSignature:RTC.kt:RtcFrame</ID>
     <ID>ClassSignature:RTC.kt:RtcMediaState</ID>
     <ID>ClassSignature:WsApplication.kt:WsEventServiceImpl : WsEventService</ID>
+    <ID>DocumentationOverPrivateFunction:RTC.kt:private suspend fun processSendAnswer</ID>
+    <ID>DocumentationOverPrivateFunction:RTC.kt:private suspend fun processSendOffer</ID>
+    <ID>DocumentationOverPrivateFunction:RTC.kt:private suspend fun processStartCall</ID>
+    <ID>DocumentationOverPrivateFunction:RTC.kt:private suspend fun processStopCall</ID>
+    <ID>EndOfSentenceFormat:RTC.kt:* answer 创建成功，要求另一个用户回应answer</ID>
+    <ID>EndOfSentenceFormat:RTC.kt:* offer 创建成功，要求另一个用户创建answer</ID>
+    <ID>EndOfSentenceFormat:RTC.kt:* 发起会话</ID>
+    <ID>EndOfSentenceFormat:RTC.kt:* 结束会话</ID>
+    <ID>ExpressionBodySyntax:WsApplication.kt:return buildBackendFromEnv(readEnv(readInjectedEnv()))</ID>
+    <ID>ForbiddenPublicDataClass:RTC.kt:RtcMediaState</ID>
+    <ID>ForbiddenPublicDataClass:RTC.kt:RtcSession</ID>
+    <ID>ForbiddenPublicDataClass:Websocket.kt:Notification</ID>
     <ID>FunctionExpressionBody:Websocket.kt:ExternalDispatcher${ return runCatching { val content = when (val content = frame.topicInfo.content) { is TopicContent.Plain -&gt; content.plain else -&gt; "" } client.post(endpointUrl) { contentType(ContentType.Application.Json) setBody(Notification("new topic", content)) } } }</ID>
     <ID>FunctionExpressionBody:Websocket.kt:WebsocketDispatcher${ return runCatching { session.sendFrame(frame) } }</ID>
     <ID>FunctionExpressionBody:WsApplication.kt:{ return buildBackendFromEnv(readEnv(readInjectedEnv())) }</ID>
@@ -21,6 +38,31 @@
     <ID>FunctionSignature:Websocket.kt:suspend fun DefaultWebSocketServerSession.webSocketContent</ID>
     <ID>FunctionSignature:Websocket.kt:suspend fun dispatchNewMessageFrame</ID>
     <ID>FunctionSignature:WsApplication.kt:private fun Application.configureWsRoute</ID>
+    <ID>LabeledExpression:RTC.kt:@forEachIndexed</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RTC.kt:RtcFrame</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RTC.kt:RtcMediaState</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RTC.kt:RtcSession</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RTC.kt:RtcUser</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RTC.kt:suspend fun DefaultWebSocketServerSession.sendFrame</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RTC.kt:suspend fun listenerRoomRTC</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RTC.kt:suspend fun listenerRtcChannel</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RTC.kt:suspend fun processSendCandidate</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Websocket.kt:ExternalDispatcher : NotificationDispatcher</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Websocket.kt:Notification</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Websocket.kt:NotificationDispatcher</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Websocket.kt:WebsocketDispatcher : NotificationDispatcher</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Websocket.kt:fun Application.startNewMessageTask</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Websocket.kt:suspend fun DefaultWebSocketServerSession.processNewMessage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Websocket.kt:suspend fun DefaultWebSocketServerSession.useWebSocket</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Websocket.kt:suspend fun DefaultWebSocketServerSession.webSocketContent</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Websocket.kt:suspend fun dispatchNewMessageFrame</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:WsApplication.kt:WsBackend : Backend</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:WsApplication.kt:fun Application.module</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:WsApplication.kt:fun buildBackendFromEnv: Backend</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:WsApplication.kt:fun main</ID>
+    <ID>MagicNumber:RTC.kt:1000</ID>
+    <ID>MagicNumber:Websocket.kt:1000</ID>
+    <ID>MagicNumber:WsApplication.kt:8813</ID>
     <ID>MultilineExpressionWrapping:RTC.kt:Channel&lt;RtcFrame&gt; { }</ID>
     <ID>MultilineExpressionWrapping:RTC.kt:RtcMediaState( audioMuted = frame.audioMuted, videoMuted = frame.videoMuted, )</ID>
     <ID>MultilineExpressionWrapping:RTC.kt:rtcSession.getOrPut(roomId) { RtcSession(roomId) }</ID>
@@ -43,6 +85,13 @@
     <ID>PackageNaming:RTC.kt:package com.storyteller_f.a.cloud.ws</ID>
     <ID>PackageNaming:Websocket.kt:package com.storyteller_f.a.cloud.ws</ID>
     <ID>PackageNaming:WsApplication.kt:package com.storyteller_f.a.cloud.ws</ID>
+    <ID>ReturnCount:RTC.kt:private suspend fun processRTCSession</ID>
+    <ID>ReturnCount:Websocket.kt:suspend fun DefaultWebSocketServerSession.processNewMessage</ID>
+    <ID>TooGenericExceptionCaught:RTC.kt:e: Exception</ID>
+    <ID>TooGenericExceptionCaught:RTC.kt:e: Throwable</ID>
+    <ID>TooGenericExceptionCaught:Websocket.kt:e: Exception</ID>
+    <ID>TooGenericExceptionThrown:WsApplication.kt:throw Exception("FLAVOR is empty")</ID>
+    <ID>TooManyFunctions:RTC.kt:com.storyteller_f.a.cloud.ws.RTC.kt</ID>
     <ID>TrailingCommaOnCallSite:RTC.kt:( RoomFrame.PeerMediaState( uid = peerUid, roomId = session.roomId, audioMuted = state.audioMuted, videoMuted = state.videoMuted, ) )</ID>
     <ID>TrailingCommaOnCallSite:RTC.kt:( RoomFrame.PeerMediaState( uid = uid, roomId = frame.roomId, audioMuted = frame.audioMuted, videoMuted = frame.videoMuted, ) )</ID>
     <ID>TrailingCommaOnCallSite:WsApplication.kt:( ClassLoader.getSystemResourceAsStream("GeoLite2-Country.mmdb") )</ID>
@@ -51,6 +100,54 @@
     <ID>TrailingCommaOnDeclarationSite:RTC.kt:( frontUserIndex: Int, backUserIndex: Int, backRtcUser: RtcUser, session: RtcSession, frontRtcUser: RtcUser, frontSocket: DefaultWebSocketServerSession, roomId: PrimaryKey )</ID>
     <ID>TrailingCommaOnDeclarationSite:RTC.kt:RtcFrame$( val frame: RoomFrame, val uid: PrimaryKey, val session: DefaultWebSocketServerSession )</ID>
     <ID>TrailingCommaOnDeclarationSite:WsApplication.kt:WsBackend$( override val customConfig: CustomConfig, override val topicSearchService: TopicSearchService, override val roomSearchService: RoomSearchService, override val communitySearchService: CommunitySearchService, override val userSearchService: UserSearchService, override val memberSearchService: MemberSearchService, override val fileSearchService: FileSearchService, override val objectStorageService: ObjectStorageService, override val nameService: NameService, override val database: CombinedDatabase )</ID>
+    <ID>UndocumentedPublicClass:RTC.kt:RtcFrame</ID>
+    <ID>UndocumentedPublicClass:RTC.kt:RtcMediaState</ID>
+    <ID>UndocumentedPublicClass:RTC.kt:RtcSession</ID>
+    <ID>UndocumentedPublicClass:RTC.kt:RtcUser</ID>
+    <ID>UndocumentedPublicClass:Websocket.kt:ExternalDispatcher : NotificationDispatcher</ID>
+    <ID>UndocumentedPublicClass:Websocket.kt:Notification</ID>
+    <ID>UndocumentedPublicClass:Websocket.kt:NotificationDispatcher</ID>
+    <ID>UndocumentedPublicClass:Websocket.kt:WebsocketDispatcher : NotificationDispatcher</ID>
+    <ID>UndocumentedPublicClass:WsApplication.kt:WsBackend : Backend</ID>
+    <ID>UndocumentedPublicFunction:RTC.kt:suspend fun DefaultWebSocketServerSession.sendFrame</ID>
+    <ID>UndocumentedPublicFunction:RTC.kt:suspend fun listenerRoomRTC</ID>
+    <ID>UndocumentedPublicFunction:RTC.kt:suspend fun listenerRtcChannel</ID>
+    <ID>UndocumentedPublicFunction:RTC.kt:suspend fun processSendCandidate</ID>
+    <ID>UndocumentedPublicFunction:Websocket.kt:NotificationDispatcher$suspend fun dispatch: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:Websocket.kt:fun Application.startNewMessageTask</ID>
+    <ID>UndocumentedPublicFunction:Websocket.kt:suspend fun DefaultWebSocketServerSession.processNewMessage</ID>
+    <ID>UndocumentedPublicFunction:Websocket.kt:suspend fun DefaultWebSocketServerSession.useWebSocket</ID>
+    <ID>UndocumentedPublicFunction:Websocket.kt:suspend fun DefaultWebSocketServerSession.webSocketContent</ID>
+    <ID>UndocumentedPublicFunction:Websocket.kt:suspend fun dispatchNewMessageFrame</ID>
+    <ID>UndocumentedPublicFunction:WsApplication.kt:fun Application.module</ID>
+    <ID>UndocumentedPublicFunction:WsApplication.kt:fun buildBackendFromEnv: Backend</ID>
+    <ID>UndocumentedPublicFunction:WsApplication.kt:fun main</ID>
+    <ID>UndocumentedPublicProperty:RTC.kt:RtcFrame$val frame: RoomFrame</ID>
+    <ID>UndocumentedPublicProperty:RTC.kt:RtcFrame$val session: DefaultWebSocketServerSession</ID>
+    <ID>UndocumentedPublicProperty:RTC.kt:RtcFrame$val uid: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:RTC.kt:RtcMediaState$val audioMuted: Boolean = false</ID>
+    <ID>UndocumentedPublicProperty:RTC.kt:RtcMediaState$val videoMuted: Boolean = false</ID>
+    <ID>UndocumentedPublicProperty:RTC.kt:RtcSession$val answerList: MutableMap&lt;PrimaryKey, MutableMap&lt;PrimaryKey, CustomAnswer&gt;&gt; = mutableMapOf()</ID>
+    <ID>UndocumentedPublicProperty:RTC.kt:RtcSession$val mediaStateMap: MutableMap&lt;PrimaryKey, RtcMediaState&gt; = mutableMapOf()</ID>
+    <ID>UndocumentedPublicProperty:RTC.kt:RtcSession$val offerList: MutableMap&lt;PrimaryKey, MutableMap&lt;PrimaryKey, CustomOffer&gt;&gt; = mutableMapOf()</ID>
+    <ID>UndocumentedPublicProperty:RTC.kt:RtcSession$val roomId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:RTC.kt:RtcSession$val socketMap: MutableMap&lt;PrimaryKey, DefaultWebSocketServerSession&gt; = mutableMapOf()</ID>
+    <ID>UndocumentedPublicProperty:RTC.kt:RtcSession$val uidList: MutableList&lt;RtcUser&gt; = mutableListOf()</ID>
+    <ID>UndocumentedPublicProperty:RTC.kt:RtcUser$val session: DefaultWebSocketServerSession</ID>
+    <ID>UndocumentedPublicProperty:RTC.kt:RtcUser$val uid: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:RTC.kt:val rtcChannel = Channel&lt;RtcFrame&gt; { }</ID>
+    <ID>UndocumentedPublicProperty:RTC.kt:val rtcSession = mutableMapOf&lt;PrimaryKey, RtcSession&gt;()</ID>
+    <ID>UndocumentedPublicProperty:Websocket.kt:ExternalDispatcher$val client: HttpClient</ID>
+    <ID>UndocumentedPublicProperty:Websocket.kt:ExternalDispatcher$val endpointUrl: String</ID>
+    <ID>UndocumentedPublicProperty:Websocket.kt:Notification$val message: String</ID>
+    <ID>UndocumentedPublicProperty:Websocket.kt:Notification$val title: String</ID>
+    <ID>UndocumentedPublicProperty:Websocket.kt:WebsocketDispatcher$val session: DefaultWebSocketServerSession</ID>
+    <ID>UndocumentedPublicProperty:Websocket.kt:val messageResponseFlow = MutableSharedFlow&lt;RoomFrame.NewTopicInfo&gt;()</ID>
+    <ID>UndocumentedPublicProperty:Websocket.kt:val sharedFlow = messageResponseFlow.asSharedFlow()</ID>
+    <ID>UndocumentedPublicProperty:Websocket.kt:val userWebSocketSessionMap = mutableMapOf&lt;PrimaryKey, PersistentList&lt;DefaultWebSocketServerSession&gt;&gt;()</ID>
+    <ID>UnnecessaryParentheses:RTC.kt:(frontSocket.isActive)</ID>
+    <ID>UseIfInsteadOfWhen:Websocket.kt:ExternalDispatcher$when (val content = frame.topicInfo.content) { is TopicContent.Plain -&gt; content.plain else -&gt; "" }</ID>
+    <ID>UseIfInsteadOfWhen:WsApplication.kt:when (applicationCall.request.httpMethod) { HttpMethod.Post -&gt; 2 else -&gt; 1 }</ID>
     <ID>Wrapping:Websocket.kt:(</ID>
   </CurrentIssues>
 </SmellBaseline>

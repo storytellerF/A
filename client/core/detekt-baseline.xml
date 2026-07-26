@@ -2,12 +2,60 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>AbsentOrWrongFileLicense:AppRequest.kt:com.storyteller_f.a.client.core.AppRequest.kt</ID>
+    <ID>AbsentOrWrongFileLicense:AuthKey.kt:com.storyteller_f.a.client.core.AuthKey.kt</ID>
+    <ID>AbsentOrWrongFileLicense:CustomClientAuthProvider.kt:com.storyteller_f.a.client.core.CustomClientAuthProvider.kt</ID>
+    <ID>AbsentOrWrongFileLicense:CustomSlf4jLogger.kt:com.storyteller_f.a.client.core.CustomSlf4jLogger.kt</ID>
+    <ID>AbsentOrWrongFileLicense:HttpClient.android.kt:com.storyteller_f.a.client.core.HttpClient.android.kt</ID>
+    <ID>AbsentOrWrongFileLicense:HttpClient.ios.kt:com.storyteller_f.a.client_lib.HttpClient.ios.kt</ID>
+    <ID>AbsentOrWrongFileLicense:HttpClient.jvm.kt:com.storyteller_f.a.client.core.HttpClient.jvm.kt</ID>
+    <ID>AbsentOrWrongFileLicense:HttpClient.kt:com.storyteller_f.a.client.core.HttpClient.kt</ID>
+    <ID>AbsentOrWrongFileLicense:HttpClient.wasmJs.kt:com.storyteller_f.a.client.core.HttpClient.wasmJs.kt</ID>
+    <ID>AbsentOrWrongFileLicense:LoadingState.kt:com.storyteller_f.a.client.core.LoadingState.kt</ID>
+    <ID>AbsentOrWrongFileLicense:PanelRequest.kt:com.storyteller_f.a.client.core.PanelRequest.kt</ID>
+    <ID>AbsentOrWrongFileLicense:SessionManager.kt:com.storyteller_f.a.client.core.SessionManager.kt</ID>
+    <ID>AbsentOrWrongFileLicense:SessionManagerKt.kt:com.storyteller_f.a.client.core.SessionManagerKt.kt</ID>
+    <ID>AbsentOrWrongFileLicense:SingleFlightCustomAuthPlugin.kt:com.storyteller_f.a.client.core.SingleFlightCustomAuthPlugin.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Test.kt:.Test.kt</ID>
+    <ID>AbsentOrWrongFileLicense:UserPass.kt:com.storyteller_f.a.client.core.UserPass.kt</ID>
+    <ID>AbsentOrWrongFileLicense:WebSocketClient.kt:com.storyteller_f.a.client.core.WebSocketClient.kt</ID>
+    <ID>AbsentOrWrongFileLicense:build.gradle.kts:.build.gradle.kts</ID>
+    <ID>AlsoCouldBeApply:Test.kt:Test$also</ID>
     <ID>BlankLineBetweenWhenConditions:WebSocketClient.kt:WebSocketClientImpl$when (connectionHandler.state.value) { is LoadingState.Loading -&gt; return is LoadingState.Done -&gt; { val oldSession = connectionHandler.data.value if (oldSession?.isActive == true) return } else -&gt; {} }</ID>
+    <ID>BracesOnWhenStatements:SessionManagerKt.kt:when</ID>
+    <ID>BracesOnWhenStatements:WebSocketClient.kt:WebSocketClientImpl$when</ID>
     <ID>ClassSignature:LoadingState.kt:SimpleLoadingHandler&lt;T&gt; : LoadingHandler</ID>
     <ID>ClassSignature:SessionManager.kt:PendingTotpSignIn</ID>
     <ID>ClassSignature:SessionManager.kt:PreparedSignInParam</ID>
     <ID>ClassSignature:Test.kt:CountingUserPass : UserPass</ID>
     <ID>ClassSignature:UserPass.kt:RawUserPassInfo</ID>
+    <ID>CognitiveComplexMethod:WebSocketClient.kt:WebSocketClientImpl$suspend fun connectWebSocket</ID>
+    <ID>EndOfSentenceFormat:AppRequest.kt:* 搜索房间主题</ID>
+    <ID>EndOfSentenceFormat:AppRequest.kt:* 搜索用户主题</ID>
+    <ID>EndOfSentenceFormat:AppRequest.kt:* 搜索社区主题</ID>
+    <ID>ExpressionBodySyntax:CustomSlf4jLogger.kt:CustomLoggerFactory$return CustomSlf4jLogger(name ?: "Default")</ID>
+    <ID>ExpressionBodySyntax:CustomSlf4jLogger.kt:CustomSLF4JServiceProvider$return "2.0.0"</ID>
+    <ID>ExpressionBodySyntax:CustomSlf4jLogger.kt:CustomSLF4JServiceProvider$return BasicMDCAdapter()</ID>
+    <ID>ExpressionBodySyntax:CustomSlf4jLogger.kt:CustomSLF4JServiceProvider$return BasicMarkerFactory()</ID>
+    <ID>ExpressionBodySyntax:CustomSlf4jLogger.kt:CustomSLF4JServiceProvider$return CustomLoggerFactory()</ID>
+    <ID>ExpressionBodySyntax:CustomSlf4jLogger.kt:CustomSlf4jLogger$return false</ID>
+    <ID>ExpressionBodySyntax:CustomSlf4jLogger.kt:CustomSlf4jLogger$return null</ID>
+    <ID>ExpressionBodySyntax:CustomSlf4jLogger.kt:CustomSlf4jLogger$return true</ID>
+    <ID>ExpressionBodySyntax:UserPass.kt:RawUserPass$return getAlgo(rawUSerPass.algo).calcAddress(rawUSerPass.authKey.derPublicKey)</ID>
+    <ID>ExpressionBodySyntax:UserPass.kt:RawUserPass$return getAlgo(rawUSerPass.algo).signature(rawUSerPass.authKey.derPrivateKey, data)</ID>
+    <ID>ExpressionBodySyntax:UserPass.kt:RawUserPass$return getAlgo(rawUSerPass.algo).verify(rawUSerPass.authKey.derPublicKey, signature, data)</ID>
+    <ID>ForbiddenPublicDataClass:AuthKey.kt:AuthKey$Dilithium : AuthKey</ID>
+    <ID>ForbiddenPublicDataClass:AuthKey.kt:AuthKey$P256 : AuthKey</ID>
+    <ID>ForbiddenPublicDataClass:LoadingState.kt:LoadingState$Error : LoadingState</ID>
+    <ID>ForbiddenPublicDataClass:LoadingState.kt:LoadingState$Processing : LoadingState</ID>
+    <ID>ForbiddenPublicDataClass:SessionManager.kt:ClientSessionState$Success : ClientSessionState</ID>
+    <ID>ForbiddenPublicDataClass:SessionManager.kt:PendingTotpSignIn</ID>
+    <ID>ForbiddenPublicDataClass:SessionManager.kt:PreparedSignInParam</ID>
+    <ID>ForbiddenPublicDataClass:SessionManager.kt:SignResult&lt;U&gt;</ID>
+    <ID>ForbiddenPublicDataClass:SessionManager.kt:UserAuthResult$RequiresTotp : UserAuthResult</ID>
+    <ID>ForbiddenPublicDataClass:SessionManager.kt:UserAuthResult$Success : UserAuthResult</ID>
+    <ID>ForbiddenPublicDataClass:UserPass.kt:RawUserPass : UserPass</ID>
+    <ID>ForbiddenPublicDataClass:UserPass.kt:RawUserPassInfo</ID>
     <ID>FunctionExpressionBody:AppRequest.kt:{ return serviceCatching { CustomApi.Users.Read.add(info) { contentType(ContentType.Application.Json) } } }</ID>
     <ID>FunctionExpressionBody:CustomSlf4jLogger.kt:CustomLoggerFactory${ return CustomSlf4jLogger(name ?: "Default") }</ID>
     <ID>FunctionExpressionBody:CustomSlf4jLogger.kt:CustomSLF4JServiceProvider${ return "2.0.0" }</ID>
@@ -29,6 +77,8 @@
     <ID>FunctionExpressionBody:UserPass.kt:RawUserPass${ return getAlgo(rawUSerPass.algo).verify(rawUSerPass.authKey.derPublicKey, signature, data) }</ID>
     <ID>FunctionExpressionBody:UserPass.kt:RawUserPass${ return runCatching { // Generate new key pair for child account val algo = getAlgo(childAlgoType) val (pemPrivateKey, pemPublicKey) = algo.generatePemKeyPair().getOrThrow() val derPrivateKey = algo.getDerPrivateKey(pemPrivateKey).getOrThrow() val derPublicKey = algo.getDerPublicKeyFromPem(pemPublicKey).getOrThrow() val (derEncryptionPrivateKey, derEncryptionPublicKey) = if (childAlgoType == AlgoType.DILITHIUM) { val encAlgo = (algo.encryptionAlgo as com.storyteller_f.shared.Type2Algo) val (encPriv, _) = encAlgo.generateEncryptionPemKeyPair().getOrThrow() encAlgo.getDerEncryptionPrivateKeyFromPemPrivateKey(encPriv).getOrThrow() to encAlgo.getDerEncryptionPublicKeyFromPemPrivateKey(encPriv).getOrThrow() } else { null to null } // Encrypt the child's private key with AES val (encryptedPrivateKey, aesKey) = encryptDataByAES(derPrivateKey).getOrThrow() val encryptedEncryptionPrivateKey = derEncryptionPrivateKey?.let { encryptDataByAES(it, aesKey).getOrThrow().toHexString() } // Get user's public key for encryption val authKey = rawUSerPass.authKey val parentAlgo = getAlgo(authKey.algo) val encryptedAesKey = if (authKey is AuthKey.Dilithium) { parentAlgo.encryptionAlgo.kemEncrypt(authKey.derEncryptionPublicKey, aesKey) } else { parentAlgo.encryptionAlgo.kemEncrypt(authKey.derPublicKey, aesKey) }.getOrThrow() CustomApi.Accounts.ChildAccounts.AddChildAccountRequest( encryptedPrivateKey = encryptedPrivateKey.toHexString(), encryptedAesKey = encryptedAesKey.toHexString(), derPublicKey = derPublicKey, algoType = childAlgoType, encryptedEncryptionPrivateKey = encryptedEncryptionPrivateKey, encryptionPublicKey = derEncryptionPublicKey ) } }</ID>
     <ID>FunctionExpressionBody:WebSocketClient.kt:WebSocketClientImpl${ return passHolder.currentUserPass != null &amp;&amp; sessionModel.userHandler.data.value == userInfo }</ID>
+    <ID>FunctionNameMaxLength:SessionManager.kt:fun createSimplePanelSessionManager: SimplePanelSessionManager</ID>
+    <ID>FunctionNameMaxLength:Test.kt:Test$@Test fun `custom auth refresh is single flight for concurrent 401 responses`</ID>
     <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.abortChunkUpload</ID>
     <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.completeChunkUpload</ID>
     <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.copy</ID>
@@ -66,6 +116,214 @@
     <ID>FunctionSignature:SessionManagerKt.kt:suspend fun UserSessionManager.getUserSignUpPass: SignResult&lt;UserInfo&gt;</ID>
     <ID>ImportOrdering:SessionManagerKt.kt:import com.storyteller_f.a.api.SignInBody import com.storyteller_f.a.api.SignInResponse import com.storyteller_f.a.api.SignUpBody import kotlinx.coroutines.CoroutineScope import kotlinx.coroutines.Job import kotlinx.coroutines.cancelAndJoin import kotlinx.coroutines.launch import com.storyteller_f.shared.model.PanelAccountInfo import com.storyteller_f.shared.model.UserInfo import com.storyteller_f.shared.utils.mapResult</ID>
     <ID>Indentation:SessionManagerKt.kt: </ID>
+    <ID>InvalidPackageDeclaration:HttpClient.ios.kt:package com.storyteller_f.a.client_lib</ID>
+    <ID>LabeledExpression:SingleFlightCustomAuthPlugin.kt:@on</ID>
+    <ID>LateinitUsage:SingleFlightCustomAuthPlugin.kt:SingleFlightCustomAuthConfig$internal lateinit var addRequestHeaders: suspend (HttpRequestBuilder) -&gt; Unit</ID>
+    <ID>LateinitUsage:SingleFlightCustomAuthPlugin.kt:SingleFlightCustomAuthConfig$internal lateinit var refreshSignature: suspend (String) -&gt; Boolean</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:@OptIn(ExperimentalStdlibApi::class) suspend fun DefaultClientWebSocketSession.sendMessage</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:UploadData</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun &lt;R, U&gt; SessionManager&lt;U&gt;.serviceCatching: Result&lt;R&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.abortChunkUpload</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.addChildAccount: Result&lt;ChildAccountInfo&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.addDevice</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.addFavorite</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.addReaction</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.addReadLog: Result&lt;Unit&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.addSubscription</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.completeChunkUpload</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.copy</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.createCommunity</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.createRoom</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.createTitle</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.createTopic</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.createTopicSnapshot</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.deleteReaction</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.disableTwoFactor</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.enableTotp</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.exitCommunity</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.exitRoom</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.extractAlbum</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.generateRecoveryCodes</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.getChildAccounts</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.getChunkStatus</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.getComments</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.getCommunityInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.getCommunityInfoByAid</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.getCommunityRooms</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.getCommunityTopics</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.getData</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.getFavorites</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.getFileInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.getFileList</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.getFileRefs</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.getMediaByName</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.getQuotaInfo: Result&lt;QuotaInfo&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.getReactionRecords</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.getReactions</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.getRecommendTopics</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.getRoomInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.getRoomInfoByAid</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.getRoomMembersPublicKeys</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.getRoomTopics</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.getSubscriptions</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.getTopicInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.getTopicInfoByAid</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.getTopicList</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.getTopicTopics</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.getTwoFactorSettings</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.getUserCommunities</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.getUserInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.getUserInfoByAid</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.getUserJoinedCommunities</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.getUserOverview</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.getUserRooms</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.getUserTopics</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.hasUnreadRooms: Result&lt;UnreadRoomsResponse&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.initChunkUpload</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.joinCommunity</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.joinRoom</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.pinTopic</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.removeFavorite</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.removeSubscription</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.searchAllMembers</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.searchCommunity</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.searchCommunityMembers</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.searchCommunityRooms</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.searchCommunityTopics</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.searchCurrentUserRooms</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.searchFiles</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.searchRoomMembers</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.searchRoomTopics</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.searchUserTopics</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.setupTotp</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.signIn</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.signInTotp</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.signOut</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.signUp</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.unpinTopic</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.updateCommunityInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.updateRoomInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.updateUserInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.upload</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.uploadChunk</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AppRequest.kt:suspend fun UserSessionManager.userTitles: Result&lt;ListResponse&lt;TitleInfo&gt;&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AuthKey.kt:AuthKey</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AuthKey.kt:suspend fun getAuthKey: AuthKey</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CustomClientAuthProvider.kt:fun HttpRequestBuilder.addRequestHeadersFromInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CustomClientAuthProvider.kt:suspend fun &lt;U&gt; HttpRequestBuilder.addRequestHeaders</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CustomSlf4jLogger.kt:CustomLoggerFactory : ILoggerFactory</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CustomSlf4jLogger.kt:CustomSLF4JServiceProvider : SLF4JServiceProvider</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CustomSlf4jLogger.kt:CustomSlf4jLogger : AbstractLogger</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:HttpClient.android.kt:actual fun getClient: HttpClient</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:HttpClient.ios.kt:actual fun getClient: HttpClient</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:HttpClient.jvm.kt:actual fun getClient: HttpClient</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:HttpClient.kt:@OptIn(ExperimentalUuidApi::class) fun HttpClientConfig&lt;*&gt;.defaultClientConfigure</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:HttpClient.kt:@OptIn(ExperimentalUuidApi::class) fun HttpClientConfig&lt;*&gt;.defaultClientConfigureForPanel</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:HttpClient.kt:ServerErrorException : Exception</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:HttpClient.kt:expect fun getClient: HttpClient</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:HttpClient.kt:fun buildWebSocketUrl: String</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:HttpClient.wasmJs.kt:actual fun getClient: HttpClient</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LoadingState.kt:FixedLoadingHandler&lt;T&gt; : LoadingHandler</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LoadingState.kt:LoadingHandler&lt;T&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LoadingState.kt:LoadingState</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LoadingState.kt:SimpleLoadingHandler&lt;T&gt; : LoadingHandler</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LoadingState.kt:fun MutableStateFlow&lt;LoadingState?&gt;.markDone</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LoadingState.kt:fun MutableStateFlow&lt;LoadingState?&gt;.markError</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LoadingState.kt:fun MutableStateFlow&lt;LoadingState?&gt;.markLoading</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LoadingState.kt:suspend fun &lt;T&gt; LoadingHandler&lt;T&gt;.request</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.addUser</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.getAllCommunities</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.getAllFiles</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.getAllPrivateRooms</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.getAllPublicRooms</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.getAllTitles</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.getAllTopics</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.getAllUsers</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.getCommunityById</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.getCommunityMembers</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.getData</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.getFileById</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.getFileRefs</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.getPanelLogs</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.getRoomById</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.getRoomFiles</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.getRoomMembers</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.getTaskRecords</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.getTitleById</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.getTopicById</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.getTopicTopics</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.getUserById</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.getUserComments</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.getUserFavorites</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.getUserFiles</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.getUserJoinedCommunities</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.getUserJoinedRooms</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.getUserLogs</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.getUserOverview</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.getUserReactions</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.getUserReceivedTitles</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.getUserSubscriptions</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.getUserUploadRecords</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.overview</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.searchFiles</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.signIn</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.signOut</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.signUp</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.updateCommunityStatus</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.updateFileStatus</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.updateRoomStatus</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.updateTitleStatus</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.updateTopicStatus</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelRequest.kt:suspend fun PanelSessionManager.updateUserStatus</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionManager.kt:@OptIn(ExperimentalStdlibApi::class) suspend fun processEncryptedTopic: List&lt;TopicInfo&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionManager.kt:ClientSessionState</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionManager.kt:ConstPassHolder : PassHolder</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionManager.kt:IUserSessionManager : SessionManager</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionManager.kt:PanelSessionManager : SessionManager</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionManager.kt:PanelSessionModel : SessionModel</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionManager.kt:PassHolder</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionManager.kt:PendingTotpSignIn</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionManager.kt:PreparedSignInParam</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionManager.kt:SessionManager&lt;U&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionManager.kt:SessionModel&lt;U&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionManager.kt:SignResult&lt;U&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionManager.kt:SimplePanelSessionManager : PanelSessionManager</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionManager.kt:SimplePassHolder : PassHolder</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionManager.kt:SimpleSessionModel&lt;U : PrimaryKeyIdentifiable&gt; : SessionModel</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionManager.kt:SimpleUserSessionManager : UserSessionManager</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionManager.kt:UserAuthResult</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionManager.kt:UserSessionManager : IUserSessionManager</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionManager.kt:UserSessionModel : SessionModel</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionManager.kt:fun createSimplePanelSessionManager: SimplePanelSessionManager</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionManager.kt:fun createSimpleUserSessionManager: SimpleUserSessionManager</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionManager.kt:suspend fun PanelSessionManager.login</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionManager.kt:suspend fun PanelSessionManager.panelSignIn: PanelAccountInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionManager.kt:suspend fun PanelSessionManager.panelSignUp: PanelAccountInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionManager.kt:suspend fun UserSessionManager.login</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionManager.kt:suspend fun UserSessionManager.userSignIn: UserInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionManager.kt:suspend fun UserSessionManager.userSignUp: UserInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionManager.kt:suspend fun prepareSignInFromPrivateKey: Result&lt;PreparedSignInParam&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionManagerKt.kt:context(c: CoroutineScope) fun SimpleUserSessionManager.startBackgroundTask: List&lt;Job&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionManagerKt.kt:context(c: CoroutineScope) suspend inline fun &lt;R&gt; SimpleUserSessionManager.onBackgroundTask: R</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionManagerKt.kt:suspend fun PanelSessionManager.getPanelUserSignInPass: SignResult&lt;PanelAccountInfo&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionManagerKt.kt:suspend fun PanelSessionManager.getPanelUserSignUpPass: SignResult&lt;PanelAccountInfo&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionManagerKt.kt:suspend fun UserSessionManager.getUserSignInPass: SignResult&lt;UserInfo&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SessionManagerKt.kt:suspend fun UserSessionManager.getUserSignUpPass: SignResult&lt;UserInfo&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SingleFlightCustomAuthPlugin.kt:SingleFlightCustomAuthConfig</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SingleFlightCustomAuthPlugin.kt:fun &lt;U&gt; SingleFlightCustomAuthConfig.configClientAuth</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Test.kt:Test</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserPass.kt:RawUserPass : UserPass</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserPass.kt:RawUserPassInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserPass.kt:UserPass</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:WebSocketClient.kt:WebSocketClient</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:WebSocketClient.kt:WebSocketClientImpl : WebSocketClient</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:WebSocketClient.kt:suspend fun DefaultClientWebSocketSession.sendFrame</ID>
+    <ID>MagicNumber:HttpClient.android.kt:20</ID>
+    <ID>MagicNumber:HttpClient.jvm.kt:20</ID>
+    <ID>MagicNumber:HttpClient.kt:1000</ID>
+    <ID>MagicNumber:SessionManager.kt:SimpleSessionModel$3</ID>
+    <ID>MagicNumber:SessionManager.kt:SimpleSessionModel$60</ID>
+    <ID>MatchingDeclarationName:HttpClient.kt:ServerErrorException : Exception</ID>
     <ID>MissingPackageDeclaration:Test.kt:.Test.kt</ID>
     <ID>MultilineExpressionWrapping:AppRequest.kt:Headers.build { append(HttpHeaders.ContentType, data.contentType) append(HttpHeaders.ContentDisposition, "filename=\"${data.name}\"") }</ID>
     <ID>MultilineExpressionWrapping:AppRequest.kt:if (isPrivate) { buildEncryptedTopicContent(input, keyData) } else { TopicContent.Plain(input) }</ID>
@@ -226,6 +484,14 @@
     <ID>PackageNaming:SingleFlightCustomAuthPlugin.kt:package com.storyteller_f.a.client.core</ID>
     <ID>PackageNaming:UserPass.kt:package com.storyteller_f.a.client.core</ID>
     <ID>PackageNaming:WebSocketClient.kt:package com.storyteller_f.a.client.core</ID>
+    <ID>StringLiteralDuplication:WebSocketClient.kt:WebSocketClientImpl$"ClientWebSocket"</ID>
+    <ID>ThrowingExceptionsWithoutMessageOrCause:AppRequest.kt:Exception()</ID>
+    <ID>TooGenericExceptionCaught:AppRequest.kt:e: Throwable</ID>
+    <ID>TooGenericExceptionCaught:WebSocketClient.kt:WebSocketClientImpl$e: Exception</ID>
+    <ID>TooGenericExceptionThrown:AuthKey.kt:throw Exception("encryption private key is null")</ID>
+    <ID>TooManyFunctions:AppRequest.kt:com.storyteller_f.a.client.core.AppRequest.kt</ID>
+    <ID>TooManyFunctions:CustomSlf4jLogger.kt:CustomSlf4jLogger : AbstractLogger</ID>
+    <ID>TooManyFunctions:PanelRequest.kt:com.storyteller_f.a.client.core.PanelRequest.kt</ID>
     <ID>TrailingCommaOnCallSite:AppRequest.kt:( CommonPath(recordId), Unit )</ID>
     <ID>TrailingCommaOnCallSite:AppRequest.kt:( CustomApi.Communities.CommunitySearchQuery( joinStatusSearch, word, target, hasPosterSearch, nextCommunityId, size, ) )</ID>
     <ID>TrailingCommaOnCallSite:AppRequest.kt:( CustomApi.Communities.Id.Rooms.CommunityRoomSearchQuery(word, joinStatusSearch, nextRoomId, size), CommonPath(communityId) )</ID>
@@ -299,6 +565,308 @@
     <ID>TrailingCommaOnDeclarationSite:UserPass.kt:RawUserPass$( encryptedPrivateKey: String, encryptedAesKey: String, childAlgoType: AlgoType, encryptedEncryptionPrivateKey: String? )</ID>
     <ID>TrailingCommaOnDeclarationSite:UserPass.kt:UserPass$( childAlgoType: AlgoType )</ID>
     <ID>TrailingCommaOnDeclarationSite:UserPass.kt:UserPass$( encryptedPrivateKey: String, encryptedAesKey: String, childAlgoType: AlgoType, encryptedEncryptionPrivateKey: String? = null )</ID>
+    <ID>UndocumentedPublicClass:AppRequest.kt:UploadData</ID>
+    <ID>UndocumentedPublicClass:AuthKey.kt:AuthKey</ID>
+    <ID>UndocumentedPublicClass:AuthKey.kt:AuthKey$Dilithium : AuthKey</ID>
+    <ID>UndocumentedPublicClass:AuthKey.kt:AuthKey$P256 : AuthKey</ID>
+    <ID>UndocumentedPublicClass:CustomSlf4jLogger.kt:CustomLoggerFactory : ILoggerFactory</ID>
+    <ID>UndocumentedPublicClass:CustomSlf4jLogger.kt:CustomSLF4JServiceProvider : SLF4JServiceProvider</ID>
+    <ID>UndocumentedPublicClass:CustomSlf4jLogger.kt:CustomSlf4jLogger : AbstractLogger</ID>
+    <ID>UndocumentedPublicClass:HttpClient.kt:ServerErrorException : Exception</ID>
+    <ID>UndocumentedPublicClass:LoadingState.kt:FixedLoadingHandler&lt;T&gt; : LoadingHandler</ID>
+    <ID>UndocumentedPublicClass:LoadingState.kt:LoadingHandler&lt;T&gt;</ID>
+    <ID>UndocumentedPublicClass:LoadingState.kt:LoadingState</ID>
+    <ID>UndocumentedPublicClass:LoadingState.kt:LoadingState$Done : LoadingState</ID>
+    <ID>UndocumentedPublicClass:LoadingState.kt:LoadingState$Error : LoadingState</ID>
+    <ID>UndocumentedPublicClass:LoadingState.kt:LoadingState$Loading : LoadingState</ID>
+    <ID>UndocumentedPublicClass:LoadingState.kt:LoadingState$Processing : LoadingState</ID>
+    <ID>UndocumentedPublicClass:LoadingState.kt:SimpleLoadingHandler&lt;T&gt; : LoadingHandler</ID>
+    <ID>UndocumentedPublicClass:SessionManager.kt:ClientSessionState</ID>
+    <ID>UndocumentedPublicClass:SessionManager.kt:ClientSessionState$None : ClientSessionState</ID>
+    <ID>UndocumentedPublicClass:SessionManager.kt:ClientSessionState$Success : ClientSessionState</ID>
+    <ID>UndocumentedPublicClass:SessionManager.kt:ConstPassHolder : PassHolder</ID>
+    <ID>UndocumentedPublicClass:SessionManager.kt:IUserSessionManager : SessionManager</ID>
+    <ID>UndocumentedPublicClass:SessionManager.kt:PanelSessionManager : SessionManager</ID>
+    <ID>UndocumentedPublicClass:SessionManager.kt:PanelSessionModel : SessionModel</ID>
+    <ID>UndocumentedPublicClass:SessionManager.kt:PassHolder</ID>
+    <ID>UndocumentedPublicClass:SessionManager.kt:PendingTotpSignIn</ID>
+    <ID>UndocumentedPublicClass:SessionManager.kt:PreparedSignInParam</ID>
+    <ID>UndocumentedPublicClass:SessionManager.kt:SessionManager&lt;U&gt;</ID>
+    <ID>UndocumentedPublicClass:SessionManager.kt:SessionModel&lt;U&gt;</ID>
+    <ID>UndocumentedPublicClass:SessionManager.kt:SignResult&lt;U&gt;</ID>
+    <ID>UndocumentedPublicClass:SessionManager.kt:SimplePanelSessionManager : PanelSessionManager</ID>
+    <ID>UndocumentedPublicClass:SessionManager.kt:SimplePassHolder : PassHolder</ID>
+    <ID>UndocumentedPublicClass:SessionManager.kt:SimpleSessionModel&lt;U : PrimaryKeyIdentifiable&gt; : SessionModel</ID>
+    <ID>UndocumentedPublicClass:SessionManager.kt:SimpleUserSessionManager : UserSessionManager</ID>
+    <ID>UndocumentedPublicClass:SessionManager.kt:UserAuthResult</ID>
+    <ID>UndocumentedPublicClass:SessionManager.kt:UserAuthResult$RequiresTotp : UserAuthResult</ID>
+    <ID>UndocumentedPublicClass:SessionManager.kt:UserAuthResult$Success : UserAuthResult</ID>
+    <ID>UndocumentedPublicClass:SessionManager.kt:UserSessionManager : IUserSessionManager</ID>
+    <ID>UndocumentedPublicClass:SessionManager.kt:UserSessionModel : SessionModel</ID>
+    <ID>UndocumentedPublicClass:SingleFlightCustomAuthPlugin.kt:SingleFlightCustomAuthConfig</ID>
+    <ID>UndocumentedPublicClass:UserPass.kt:RawUserPass : UserPass</ID>
+    <ID>UndocumentedPublicClass:UserPass.kt:RawUserPassInfo</ID>
+    <ID>UndocumentedPublicClass:UserPass.kt:UserPass</ID>
+    <ID>UndocumentedPublicClass:WebSocketClient.kt:WebSocketClient</ID>
+    <ID>UndocumentedPublicClass:WebSocketClient.kt:WebSocketClientImpl : WebSocketClient</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:@OptIn(ExperimentalStdlibApi::class) suspend fun DefaultClientWebSocketSession.sendMessage</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun &lt;R, U&gt; SessionManager&lt;U&gt;.serviceCatching: Result&lt;R&gt;</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.abortChunkUpload</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.addChildAccount: Result&lt;ChildAccountInfo&gt;</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.addDevice</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.addFavorite</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.addReaction</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.addReadLog: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.addSubscription</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.completeChunkUpload</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.copy</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.createCommunity</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.createRoom</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.createTitle</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.createTopic</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.createTopicSnapshot</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.deleteReaction</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.disableTwoFactor</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.enableTotp</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.exitCommunity</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.exitRoom</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.extractAlbum</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.generateRecoveryCodes</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.getChildAccounts</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.getChunkStatus</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.getComments</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.getCommunityInfo</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.getCommunityInfoByAid</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.getCommunityRooms</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.getCommunityTopics</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.getData</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.getFavorites</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.getFileInfo</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.getFileList</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.getFileRefs</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.getMediaByName</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.getQuotaInfo: Result&lt;QuotaInfo&gt;</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.getReactionRecords</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.getReactions</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.getRecommendTopics</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.getRoomInfo</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.getRoomInfoByAid</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.getRoomMembersPublicKeys</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.getRoomTopics</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.getSubscriptions</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.getTopicInfo</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.getTopicInfoByAid</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.getTopicList</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.getTopicTopics</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.getTwoFactorSettings</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.getUserCommunities</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.getUserInfo</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.getUserInfoByAid</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.getUserJoinedCommunities</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.getUserOverview</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.getUserRooms</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.getUserTopics</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.hasUnreadRooms: Result&lt;UnreadRoomsResponse&gt;</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.initChunkUpload</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.joinCommunity</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.joinRoom</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.pinTopic</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.removeFavorite</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.removeSubscription</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.searchAllMembers</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.searchCommunity</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.searchCommunityMembers</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.searchCommunityRooms</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.searchCurrentUserRooms</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.searchFiles</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.searchRoomMembers</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.setupTotp</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.signIn</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.signInTotp</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.signOut</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.signUp</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.unpinTopic</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.updateCommunityInfo</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.updateRoomInfo</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.updateUserInfo</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.upload</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.uploadChunk</ID>
+    <ID>UndocumentedPublicFunction:AppRequest.kt:suspend fun UserSessionManager.userTitles: Result&lt;ListResponse&lt;TitleInfo&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:AuthKey.kt:suspend fun getAuthKey: AuthKey</ID>
+    <ID>UndocumentedPublicFunction:CustomClientAuthProvider.kt:fun HttpRequestBuilder.addRequestHeadersFromInfo</ID>
+    <ID>UndocumentedPublicFunction:CustomClientAuthProvider.kt:suspend fun &lt;U&gt; HttpRequestBuilder.addRequestHeaders</ID>
+    <ID>UndocumentedPublicFunction:HttpClient.android.kt:actual fun getClient: HttpClient</ID>
+    <ID>UndocumentedPublicFunction:HttpClient.ios.kt:actual fun getClient: HttpClient</ID>
+    <ID>UndocumentedPublicFunction:HttpClient.jvm.kt:actual fun getClient: HttpClient</ID>
+    <ID>UndocumentedPublicFunction:HttpClient.kt:@OptIn(ExperimentalUuidApi::class) fun HttpClientConfig&lt;*&gt;.defaultClientConfigure</ID>
+    <ID>UndocumentedPublicFunction:HttpClient.kt:@OptIn(ExperimentalUuidApi::class) fun HttpClientConfig&lt;*&gt;.defaultClientConfigureForPanel</ID>
+    <ID>UndocumentedPublicFunction:HttpClient.kt:expect fun getClient: HttpClient</ID>
+    <ID>UndocumentedPublicFunction:HttpClient.kt:fun buildWebSocketUrl: String</ID>
+    <ID>UndocumentedPublicFunction:HttpClient.wasmJs.kt:actual fun getClient: HttpClient</ID>
+    <ID>UndocumentedPublicFunction:LoadingState.kt:FixedLoadingHandler$fun done</ID>
+    <ID>UndocumentedPublicFunction:LoadingState.kt:LoadingHandler$fun refresh</ID>
+    <ID>UndocumentedPublicFunction:LoadingState.kt:SimpleLoadingHandler$fun done</ID>
+    <ID>UndocumentedPublicFunction:LoadingState.kt:fun MutableStateFlow&lt;LoadingState?&gt;.markDone</ID>
+    <ID>UndocumentedPublicFunction:LoadingState.kt:fun MutableStateFlow&lt;LoadingState?&gt;.markError</ID>
+    <ID>UndocumentedPublicFunction:LoadingState.kt:fun MutableStateFlow&lt;LoadingState?&gt;.markLoading</ID>
+    <ID>UndocumentedPublicFunction:LoadingState.kt:suspend fun &lt;T&gt; LoadingHandler&lt;T&gt;.request</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.addUser</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.getAllCommunities</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.getAllFiles</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.getAllPrivateRooms</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.getAllPublicRooms</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.getAllTitles</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.getAllTopics</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.getAllUsers</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.getCommunityById</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.getCommunityMembers</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.getData</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.getFileById</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.getFileRefs</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.getPanelLogs</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.getRoomById</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.getRoomFiles</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.getRoomMembers</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.getTaskRecords</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.getTitleById</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.getTopicById</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.getTopicTopics</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.getUserById</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.getUserComments</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.getUserFavorites</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.getUserFiles</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.getUserJoinedCommunities</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.getUserJoinedRooms</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.getUserLogs</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.getUserOverview</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.getUserReactions</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.getUserReceivedTitles</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.getUserSubscriptions</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.getUserUploadRecords</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.overview</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.searchFiles</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.signIn</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.signOut</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.signUp</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.updateCommunityStatus</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.updateFileStatus</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.updateRoomStatus</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.updateTitleStatus</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.updateTopicStatus</ID>
+    <ID>UndocumentedPublicFunction:PanelRequest.kt:suspend fun PanelSessionManager.updateUserStatus</ID>
+    <ID>UndocumentedPublicFunction:SessionManager.kt:@OptIn(ExperimentalStdlibApi::class) suspend fun processEncryptedTopic: List&lt;TopicInfo&gt;</ID>
+    <ID>UndocumentedPublicFunction:SessionManager.kt:SessionModel$fun clear</ID>
+    <ID>UndocumentedPublicFunction:SessionManager.kt:SessionModel$fun generateData: String</ID>
+    <ID>UndocumentedPublicFunction:SessionManager.kt:SessionModel$fun updateSignature</ID>
+    <ID>UndocumentedPublicFunction:SessionManager.kt:SessionModel$fun updateUser</ID>
+    <ID>UndocumentedPublicFunction:SessionManager.kt:SimplePassHolder$fun updateState</ID>
+    <ID>UndocumentedPublicFunction:SessionManager.kt:fun createSimplePanelSessionManager: SimplePanelSessionManager</ID>
+    <ID>UndocumentedPublicFunction:SessionManager.kt:fun createSimpleUserSessionManager: SimpleUserSessionManager</ID>
+    <ID>UndocumentedPublicFunction:SessionManager.kt:suspend fun PanelSessionManager.login</ID>
+    <ID>UndocumentedPublicFunction:SessionManager.kt:suspend fun PanelSessionManager.panelSignIn: PanelAccountInfo</ID>
+    <ID>UndocumentedPublicFunction:SessionManager.kt:suspend fun PanelSessionManager.panelSignUp: PanelAccountInfo</ID>
+    <ID>UndocumentedPublicFunction:SessionManager.kt:suspend fun UserSessionManager.login</ID>
+    <ID>UndocumentedPublicFunction:SessionManager.kt:suspend fun UserSessionManager.userSignIn: UserInfo</ID>
+    <ID>UndocumentedPublicFunction:SessionManager.kt:suspend fun UserSessionManager.userSignUp: UserInfo</ID>
+    <ID>UndocumentedPublicFunction:SessionManager.kt:suspend fun prepareSignInFromPrivateKey: Result&lt;PreparedSignInParam&gt;</ID>
+    <ID>UndocumentedPublicFunction:SessionManagerKt.kt:context(c: CoroutineScope) fun SimpleUserSessionManager.startBackgroundTask: List&lt;Job&gt;</ID>
+    <ID>UndocumentedPublicFunction:SessionManagerKt.kt:context(c: CoroutineScope) suspend inline fun &lt;R&gt; SimpleUserSessionManager.onBackgroundTask: R</ID>
+    <ID>UndocumentedPublicFunction:SessionManagerKt.kt:suspend fun PanelSessionManager.getPanelUserSignInPass: SignResult&lt;PanelAccountInfo&gt;</ID>
+    <ID>UndocumentedPublicFunction:SessionManagerKt.kt:suspend fun PanelSessionManager.getPanelUserSignUpPass: SignResult&lt;PanelAccountInfo&gt;</ID>
+    <ID>UndocumentedPublicFunction:SessionManagerKt.kt:suspend fun UserSessionManager.getUserSignInPass: SignResult&lt;UserInfo&gt;</ID>
+    <ID>UndocumentedPublicFunction:SessionManagerKt.kt:suspend fun UserSessionManager.getUserSignUpPass: SignResult&lt;UserInfo&gt;</ID>
+    <ID>UndocumentedPublicFunction:SingleFlightCustomAuthPlugin.kt:SingleFlightCustomAuthConfig$fun addRequestHeaders</ID>
+    <ID>UndocumentedPublicFunction:SingleFlightCustomAuthPlugin.kt:SingleFlightCustomAuthConfig$fun refreshSignature</ID>
+    <ID>UndocumentedPublicFunction:SingleFlightCustomAuthPlugin.kt:fun &lt;U&gt; SingleFlightCustomAuthConfig.configClientAuth</ID>
+    <ID>UndocumentedPublicFunction:UserPass.kt:UserPass$suspend fun address: Result&lt;String&gt;</ID>
+    <ID>UndocumentedPublicFunction:UserPass.kt:UserPass$suspend fun decrypt: Result&lt;String&gt;</ID>
+    <ID>UndocumentedPublicFunction:UserPass.kt:UserPass$suspend fun decryptChildAccount: Result&lt;Pair&lt;String, String?&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:UserPass.kt:UserPass$suspend fun encryptChildAccount: Result&lt;CustomApi.Accounts.ChildAccounts.AddChildAccountRequest&gt;</ID>
+    <ID>UndocumentedPublicFunction:UserPass.kt:UserPass$suspend fun signature: Result&lt;String&gt;</ID>
+    <ID>UndocumentedPublicFunction:UserPass.kt:UserPass$suspend fun verify: Result&lt;Boolean&gt;</ID>
+    <ID>UndocumentedPublicFunction:WebSocketClient.kt:WebSocketClient$suspend fun &lt;T&gt; useWebSocket: Result&lt;T&gt;</ID>
+    <ID>UndocumentedPublicFunction:WebSocketClient.kt:WebSocketClientImpl$suspend fun connectWebSocket</ID>
+    <ID>UndocumentedPublicFunction:WebSocketClient.kt:suspend fun DefaultClientWebSocketSession.sendFrame</ID>
+    <ID>UndocumentedPublicProperty:AppRequest.kt:UploadData$val block: () -&gt; Input</ID>
+    <ID>UndocumentedPublicProperty:AppRequest.kt:UploadData$val contentType: ContentType</ID>
+    <ID>UndocumentedPublicProperty:AppRequest.kt:UploadData$val name: String</ID>
+    <ID>UndocumentedPublicProperty:AppRequest.kt:UploadData$val sha256: String</ID>
+    <ID>UndocumentedPublicProperty:AppRequest.kt:UploadData$val size: Long</ID>
+    <ID>UndocumentedPublicProperty:AuthKey.kt:AuthKey$val algo: AlgoType</ID>
+    <ID>UndocumentedPublicProperty:AuthKey.kt:AuthKey$val derPrivateKey: String</ID>
+    <ID>UndocumentedPublicProperty:AuthKey.kt:AuthKey$val derPublicKey: String</ID>
+    <ID>UndocumentedPublicProperty:AuthKey.kt:AuthKey$val pemPrivateKey: String</ID>
+    <ID>UndocumentedPublicProperty:AuthKey.kt:AuthKey.Dilithium$val derEncryptionPrivateKey: String</ID>
+    <ID>UndocumentedPublicProperty:AuthKey.kt:AuthKey.Dilithium$val derEncryptionPublicKey: String</ID>
+    <ID>UndocumentedPublicProperty:AuthKey.kt:AuthKey.Dilithium$val pemEncryptionPrivateKey: String</ID>
+    <ID>UndocumentedPublicProperty:HttpClient.kt:ServerErrorException$val status: HttpStatusCode</ID>
+    <ID>UndocumentedPublicProperty:HttpClient.kt:ServerErrorException$val text: String</ID>
+    <ID>UndocumentedPublicProperty:LoadingState.kt:LoadingHandler$val data: StateFlow&lt;T?&gt;</ID>
+    <ID>UndocumentedPublicProperty:LoadingState.kt:LoadingHandler$val state: MutableStateFlow&lt;LoadingState?&gt;</ID>
+    <ID>UndocumentedPublicProperty:LoadingState.kt:LoadingState.Error$val e: Throwable</ID>
+    <ID>UndocumentedPublicProperty:LoadingState.kt:LoadingState.Processing$val total: Long</ID>
+    <ID>UndocumentedPublicProperty:LoadingState.kt:LoadingState.Processing$val value: Long</ID>
+    <ID>UndocumentedPublicProperty:LoadingState.kt:SimpleLoadingHandler$val loader: suspend () -&gt; Result&lt;T&gt;</ID>
+    <ID>UndocumentedPublicProperty:LoadingState.kt:SimpleLoadingHandler$val scope: CoroutineScope</ID>
+    <ID>UndocumentedPublicProperty:LoadingState.kt:val MutableStateFlow&lt;LoadingState?&gt;.isLoading get() = this.value is LoadingState.Loading</ID>
+    <ID>UndocumentedPublicProperty:SessionManager.kt:ClientSessionState.Success$val userPass: UserPass</ID>
+    <ID>UndocumentedPublicProperty:SessionManager.kt:PanelSessionModel$val simpleSessionModel: SimpleSessionModel&lt;PanelAccountInfo&gt; = SimpleSessionModel()</ID>
+    <ID>UndocumentedPublicProperty:SessionManager.kt:PassHolder$val currentUserPass: UserPass?</ID>
+    <ID>UndocumentedPublicProperty:SessionManager.kt:PendingTotpSignIn$val address: String</ID>
+    <ID>UndocumentedPublicProperty:SessionManager.kt:PendingTotpSignIn$val authKey: AuthKey</ID>
+    <ID>UndocumentedPublicProperty:SessionManager.kt:PendingTotpSignIn$val data: String</ID>
+    <ID>UndocumentedPublicProperty:SessionManager.kt:PendingTotpSignIn$val signature: String</ID>
+    <ID>UndocumentedPublicProperty:SessionManager.kt:PreparedSignInParam$val address: String</ID>
+    <ID>UndocumentedPublicProperty:SessionManager.kt:PreparedSignInParam$val authKey: AuthKey</ID>
+    <ID>UndocumentedPublicProperty:SessionManager.kt:PreparedSignInParam$val data: String</ID>
+    <ID>UndocumentedPublicProperty:SessionManager.kt:PreparedSignInParam$val signature: String</ID>
+    <ID>UndocumentedPublicProperty:SessionManager.kt:SessionManager$val client: HttpClient</ID>
+    <ID>UndocumentedPublicProperty:SessionManager.kt:SessionManager$val currentIsAlreadySignUp get() = passHolder.currentUserPass != null</ID>
+    <ID>UndocumentedPublicProperty:SessionManager.kt:SessionManager$val model: SessionModel&lt;U&gt;</ID>
+    <ID>UndocumentedPublicProperty:SessionManager.kt:SessionManager$val passHolder: PassHolder</ID>
+    <ID>UndocumentedPublicProperty:SessionManager.kt:SessionModel$val dataAndSignature: Pair&lt;String, String?&gt;?</ID>
+    <ID>UndocumentedPublicProperty:SessionManager.kt:SessionModel$val uid: PrimaryKey?</ID>
+    <ID>UndocumentedPublicProperty:SessionManager.kt:SessionModel$val userHandler: FixedLoadingHandler&lt;U?&gt;</ID>
+    <ID>UndocumentedPublicProperty:SessionManager.kt:SignResult$val address: String</ID>
+    <ID>UndocumentedPublicProperty:SessionManager.kt:SignResult$val authKey: AuthKey</ID>
+    <ID>UndocumentedPublicProperty:SessionManager.kt:SignResult$val data: String</ID>
+    <ID>UndocumentedPublicProperty:SessionManager.kt:SignResult$val signature: String</ID>
+    <ID>UndocumentedPublicProperty:SessionManager.kt:SignResult$val userInfo: U</ID>
+    <ID>UndocumentedPublicProperty:SessionManager.kt:SimplePanelSessionManager$val cookieManager: AcceptAllCookiesStorage</ID>
+    <ID>UndocumentedPublicProperty:SessionManager.kt:SimplePassHolder$val state = MutableStateFlow&lt;ClientSessionState&gt;(ClientSessionState.None)</ID>
+    <ID>UndocumentedPublicProperty:SessionManager.kt:SimpleUserSessionManager$val cookieManager: AcceptAllCookiesStorage</ID>
+    <ID>UndocumentedPublicProperty:SessionManager.kt:UserAuthResult.RequiresTotp$val pending: PendingTotpSignIn</ID>
+    <ID>UndocumentedPublicProperty:SessionManager.kt:UserAuthResult.Success$val signResult: SignResult&lt;UserInfo&gt;</ID>
+    <ID>UndocumentedPublicProperty:SessionManager.kt:UserAuthResult.Success$val userPass: UserPass</ID>
+    <ID>UndocumentedPublicProperty:SessionManager.kt:UserSessionManager$val webSocketClient: WebSocketClientImpl</ID>
+    <ID>UndocumentedPublicProperty:SessionManager.kt:UserSessionModel$val simpleSessionModel: SimpleSessionModel&lt;UserInfo&gt; = SimpleSessionModel()</ID>
+    <ID>UndocumentedPublicProperty:SingleFlightCustomAuthPlugin.kt:val SingleFlightCustomAuthPlugin = createClientPlugin( "SingleFlightCustomAuthPlugin", ::SingleFlightCustomAuthConfig ) { val addRequestHeaders = pluginConfig.addRequestHeaders val refreshSignature = pluginConfig.refreshSignature val refreshGate = AuthRefreshGate() on(Send) { originalRequest -&gt; val origin = proceed(originalRequest) if (origin.response.status != HttpStatusCode.Unauthorized) return@on origin if (origin.request.attributes.contains(CustomAuthRetryAttribute)) return@on origin val challengeData = origin.response.customChallengeData() ?: return@on origin when (val turn = refreshGate.enter()) { is AuthRefreshTurn.Leader -&gt; { var success = false try { if (!refreshSignature(challengeData)) { Napier.i(tag = "SingleFlight") { "Leader failed because refresh signature failed" } return@on origin } val retriedCall = executeWithCustomAuth(originalRequest, addRequestHeaders) if (retriedCall.response.status == HttpStatusCode.Unauthorized) { Napier.i(tag = "SingleFlight") { "Leader retry failed" } return@on retriedCall } success = true retriedCall } finally { refreshGate.complete(turn, success) } } is AuthRefreshTurn.Waiter -&gt; { if (!turn.result.await()) { Napier.i(tag = "SingleFlight") { "Waiter failed because of Leader failed" } return@on origin } executeWithCustomAuth(originalRequest, addRequestHeaders) } } } }</ID>
+    <ID>UndocumentedPublicProperty:UserPass.kt:RawUserPass$val rawUSerPass: RawUserPassInfo</ID>
+    <ID>UndocumentedPublicProperty:UserPass.kt:RawUserPassInfo$val address: String</ID>
+    <ID>UndocumentedPublicProperty:UserPass.kt:RawUserPassInfo$val algo: AlgoType get() = authKey.algo</ID>
+    <ID>UndocumentedPublicProperty:UserPass.kt:RawUserPassInfo$val authKey: AuthKey</ID>
+    <ID>UndocumentedPublicProperty:WebSocketClient.kt:WebSocketClient$val connectionHandler: LoadingHandler&lt;DefaultClientWebSocketSession&gt;</ID>
+    <ID>UndocumentedPublicProperty:WebSocketClient.kt:WebSocketClient$val frameFlow: SharedFlow&lt;RoomFrame&gt;</ID>
+    <ID>UndocumentedPublicProperty:WebSocketClient.kt:WebSocketClient$val localState: StateFlow&lt;LoadingState?&gt;</ID>
+    <ID>UndocumentedPublicProperty:WebSocketClient.kt:WebSocketClientImpl$val buildConnection: suspend (UserInfo, String) -&gt; DefaultClientWebSocketSession</ID>
+    <ID>UndocumentedPublicProperty:WebSocketClient.kt:WebSocketClientImpl$val onMessage: suspend (RoomFrame, DefaultClientWebSocketSession) -&gt; Unit</ID>
+    <ID>UndocumentedPublicProperty:WebSocketClient.kt:WebSocketClientImpl$val passHolder: PassHolder</ID>
+    <ID>UndocumentedPublicProperty:WebSocketClient.kt:WebSocketClientImpl$val sessionModel: SessionModel&lt;UserInfo&gt;</ID>
+    <ID>UnnecessaryParentheses:UserPass.kt:RawUserPass$(algo.encryptionAlgo as com.storyteller_f.shared.Type2Algo)</ID>
+    <ID>WildcardImport:CustomClientAuthProvider.kt:import io.ktor.client.request.*</ID>
+    <ID>WildcardImport:CustomClientAuthProvider.kt:import io.ktor.http.*</ID>
+    <ID>WildcardImport:HttpClient.android.kt:import io.ktor.client.*</ID>
+    <ID>WildcardImport:HttpClient.android.kt:import io.ktor.client.engine.okhttp.*</ID>
+    <ID>WildcardImport:HttpClient.ios.kt:import io.ktor.client.*</ID>
+    <ID>WildcardImport:HttpClient.ios.kt:import io.ktor.client.engine.darwin.*</ID>
+    <ID>WildcardImport:HttpClient.ios.kt:import io.ktor.client.plugins.contentnegotiation.*</ID>
+    <ID>WildcardImport:HttpClient.ios.kt:import io.ktor.serialization.kotlinx.json.*</ID>
+    <ID>WildcardImport:HttpClient.jvm.kt:import io.ktor.client.*</ID>
+    <ID>WildcardImport:HttpClient.jvm.kt:import io.ktor.client.engine.okhttp.*</ID>
+    <ID>WildcardImport:HttpClient.wasmJs.kt:import io.ktor.client.*</ID>
+    <ID>WildcardImport:WebSocketClient.kt:import io.ktor.client.plugins.websocket.*</ID>
+    <ID>WildcardImport:WebSocketClient.kt:import kotlinx.coroutines.*</ID>
+    <ID>WildcardImport:WebSocketClient.kt:import kotlinx.coroutines.flow.*</ID>
     <ID>Wrapping:AppRequest.kt:(</ID>
     <ID>Wrapping:AppRequest.kt:("file", Headers.build { append(HttpHeaders.ContentType, data.contentType) append(HttpHeaders.ContentDisposition, "filename=\"${data.name}\"") }, data.size, data.block)</ID>
     <ID>Wrapping:HttpClient.kt:(</ID>

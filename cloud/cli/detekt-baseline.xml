@@ -2,12 +2,34 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>AbsentOrWrongFileLicense:AddPreset.kt:com.storyteller_f.a.cloud.cli.AddPreset.kt</ID>
+    <ID>AbsentOrWrongFileLicense:AddPresetTest.kt:com.storyteller_f.a.cloud.cli.AddPresetTest.kt</ID>
+    <ID>AbsentOrWrongFileLicense:CleanCommand.kt:com.storyteller_f.a.cloud.cli.CleanCommand.kt</ID>
+    <ID>AbsentOrWrongFileLicense:CliMain.kt:com.storyteller_f.a.cloud.cli.CliMain.kt</ID>
+    <ID>AbsentOrWrongFileLicense:GeneratePresetKeysCommand.kt:com.storyteller_f.a.cloud.cli.GeneratePresetKeysCommand.kt</ID>
+    <ID>AbsentOrWrongFileLicense:GeneratePresetKeysCommandTest.kt:com.storyteller_f.a.cloud.cli.GeneratePresetKeysCommandTest.kt</ID>
+    <ID>AbsentOrWrongFileLicense:SignatureTest.kt:.SignatureTest.kt</ID>
+    <ID>AbsentOrWrongFileLicense:build.gradle.kts:.build.gradle.kts</ID>
     <ID>BlankLineBetweenWhenConditions:AddPreset.kt:AddPreset$when (it.scopeType) { ObjectType.USER -&gt; { userMap[it.scope]!!.id } ObjectType.COMMUNITY -&gt; { communityMap[it.scope]!!.id } ObjectType.ROOM -&gt; roomMap[it.scope]!!.id else -&gt; throw Exception("not support") }</ID>
     <ID>BlankLineBetweenWhenConditions:AddPreset.kt:AddPreset$when (val type = presetValue.type) { "community" -&gt; addCommunities(presetValue, parentDir) "user" -&gt; addUsers(presetValue, parentDir) "topic" -&gt; addTopics(presetValue, parentDir) "room" -&gt; addRooms(presetValue, parentDir) "file" -&gt; addFiles(presetValue, parentDir) "title" -&gt; addTitles(presetValue) "panelAccount" -&gt; addPanels(presetValue, parentDir) else -&gt; { Napier.e { "unrecognized type $type" } exitProcess(2) } }</ID>
+    <ID>BracesOnWhenStatements:AddPreset.kt:AddPreset$when</ID>
     <ID>ClassSignature:AddPreset.kt:DownloadProgress</ID>
     <ID>ClassSignature:GeneratePresetKeysCommand.kt:GeneratePresetKeysCommand : Subcommand</ID>
+    <ID>CognitiveComplexMethod:AddPreset.kt:internal suspend fun downloadPresetFileIfNeed: File?</ID>
+    <ID>ExpressionBodySyntax:AddPreset.kt:return path.endsWith("download") || path.endsWith(".download.yaml") || path.endsWith(".download.yml")</ID>
+    <ID>ForbiddenPublicDataClass:AddPreset.kt:UserPresetTuple</ID>
     <ID>FunctionExpressionBody:AddPreset.kt:AddPreset${ return getAlgo(algoType).run { val derPublicKey = getDerPublicKeyFromPrivateKey( File(parentDir, privatePath).readText().replace("\r\n", "\n") ).getOrThrow() val ad = calcAddress(derPublicKey).getOrThrow() Pair(derPublicKey, ad) } }</ID>
     <ID>FunctionExpressionBody:AddPreset.kt:{ return path.endsWith("download") || path.endsWith(".download.yaml") || path.endsWith(".download.yml") }</ID>
+    <ID>FunctionNameMaxLength:AddPreset.kt:internal fun repackArchiveWithExclusionsAndInclusionsInPlace: File</ID>
+    <ID>FunctionNameMaxLength:AddPreset.kt:private fun createProcessedPresetFileIfNeeded: File</ID>
+    <ID>FunctionNameMaxLength:AddPresetTest.kt:AddPresetTest$@Test fun `download yaml config keeps downloaded file and returns processed archive`</ID>
+    <ID>FunctionNameMaxLength:AddPresetTest.kt:AddPresetTest$@Test fun `fallback to legacy 3-line download config`</ID>
+    <ID>FunctionNameMaxLength:AddPresetTest.kt:AddPresetTest$@Test fun `parse yaml download config with archive excludes`</ID>
+    <ID>FunctionNameMaxLength:AddPresetTest.kt:AddPresetTest$@Test fun `recognize download config path variants`</ID>
+    <ID>FunctionNameMaxLength:AddPresetTest.kt:AddPresetTest$@Test fun `repack zip excludes matched entries`</ID>
+    <ID>FunctionNameMaxLength:AddPresetTest.kt:AddPresetTest$@Test fun `repack zip with includeArchiveEntries only keeps included files after exclude`</ID>
+    <ID>FunctionNameMaxLength:GeneratePresetKeysCommandTest.kt:GeneratePresetKeysCommandTest$@Test fun `generate Dilithium preset private keys`</ID>
+    <ID>FunctionNameMaxLength:GeneratePresetKeysCommandTest.kt:GeneratePresetKeysCommandTest$@Test fun `refuse to overwrite existing preset keys by default`</ID>
     <ID>FunctionSignature:AddPreset.kt:AddPreset$private fun buildEncryptedTopicTuples</ID>
     <ID>FunctionSignature:AddPreset.kt:AddPreset$private suspend fun Backend.addTitles</ID>
     <ID>FunctionSignature:AddPreset.kt:AddPreset$private suspend fun Backend.batchAddSubscriptions</ID>
@@ -19,6 +41,29 @@
     <ID>FunctionSignature:AddPreset.kt:suspend fun downloadWithResume</ID>
     <ID>FunctionSignature:AddPresetTest.kt:AddPresetTest$private fun assertZipEntries</ID>
     <ID>FunctionSignature:GeneratePresetKeysCommand.kt:internal suspend fun generatePresetDilithiumKeys: List&lt;File&gt;</ID>
+    <ID>LabeledExpression:AddPreset.kt:@forEach</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AddPreset.kt:AddPreset : Subcommand</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AddPreset.kt:EncryptedTopicTuple</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AddPreset.kt:UserPresetTuple</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AddPreset.kt:fun sha256File: String</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AddPreset.kt:suspend fun Backend.applyPreset</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AddPreset.kt:suspend fun downloadWithResume</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AddPresetTest.kt:AddPresetTest</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CleanCommand.kt:CleanCommand : Subcommand</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CleanCommand.kt:InitTableCommand : Subcommand</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CleanCommand.kt:PrintCommand : Subcommand</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CliMain.kt:@OptIn(ExperimentalCli::class) fun main</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CliMain.kt:CliBackend : Backend</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CliMain.kt:fun buildBackendFromEnv: Backend</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CliMain.kt:fun requireBackend: Backend</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:GeneratePresetKeysCommand.kt:GeneratePresetKeysCommand : Subcommand</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:GeneratePresetKeysCommandTest.kt:GeneratePresetKeysCommandTest</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SignatureTest.kt:SignatureTest</ID>
+    <ID>MagicNumber:AddPreset.kt:1024L</ID>
+    <ID>MagicNumber:AddPreset.kt:3</ID>
+    <ID>MagicNumber:AddPreset.kt:8192</ID>
+    <ID>MagicNumber:AddPreset.kt:AddPreset$1000</ID>
+    <ID>MagicNumber:AddPreset.kt:DownloadProgress$100</ID>
     <ID>MissingPackageDeclaration:SignatureTest.kt:.SignatureTest.kt</ID>
     <ID>MultilineExpressionWrapping:AddPreset.kt:AddPreset$AidListFetch(data.flatMap { it.community.users.orEmpty() + (it.community.admin ?: "System") }.distinct())</ID>
     <ID>MultilineExpressionWrapping:AddPreset.kt:AddPreset$AidListFetch(data.map { it.author }.distinct())</ID>
@@ -99,6 +144,9 @@
     <ID>MultilineExpressionWrapping:GeneratePresetKeysCommandTest.kt:GeneratePresetKeysCommandTest$runTest { setLogPath() loadCryptoLibIfNeed() val tempDir = createTempDirectory(prefix = "preset-keys-existing-").toFile() try { generatePresetDilithiumKeys(tempDir, overwrite = false) assertFailsWith&lt;IllegalArgumentException&gt; { generatePresetDilithiumKeys(tempDir, overwrite = false) } val overwritten = generatePresetDilithiumKeys(tempDir, overwrite = true) assertEquals(names.size * 2, overwritten.size) } finally { tempDir.deleteRecursively() } }</ID>
     <ID>MultilineExpressionWrapping:SignatureTest.kt:SignatureTest$Json { ignoreUnknownKeys = true }.decodeFromString&lt;PresetValue&gt;(jsonFile.readText())</ID>
     <ID>MultilineExpressionWrapping:build.gradle.kts:tasks.register&lt;Copy&gt;("copyAppiumDockerDistribution") { group = "appium" description = "Copies the cli distribution used by the Appium Docker image." dependsOn(tasks.named("distTar"), tasks.named("distZip")) from(layout.buildDirectory.dir("distributions")) { include("cli.tar", "cli.zip") } into(rootProject.layout.projectDirectory.dir("deploy/build")) }</ID>
+    <ID>MultilineRawStringIndentation:AddPresetTest.kt:AddPresetTest$""" archive.zip https://example.com/archive.zip sha256:deadbeef """</ID>
+    <ID>MultilineRawStringIndentation:AddPresetTest.kt:AddPresetTest$""" name: bundle.zip link: http://127.0.0.1:$port/bundle.zip hash: sha256:$hash excludeArchiveEntries: - "**/*.md" - "nested/**" """</ID>
+    <ID>MultilineRawStringIndentation:AddPresetTest.kt:AddPresetTest$""" name: dataset.zip link: https://example.com/dataset.zip hash: sha256:abc123 excludeArchiveEntries: - "**/*.md" - "docs/**" """</ID>
     <ID>NoWildcardImports:SignatureTest.kt:import com.storyteller_f.shared.*</ID>
     <ID>PackageName:AddPreset.kt:package com.storyteller_f.a.cloud.cli</ID>
     <ID>PackageName:AddPresetTest.kt:package com.storyteller_f.a.cloud.cli</ID>
@@ -112,6 +160,10 @@
     <ID>PackageNaming:CliMain.kt:package com.storyteller_f.a.cloud.cli</ID>
     <ID>PackageNaming:GeneratePresetKeysCommand.kt:package com.storyteller_f.a.cloud.cli</ID>
     <ID>PackageNaming:GeneratePresetKeysCommandTest.kt:package com.storyteller_f.a.cloud.cli</ID>
+    <ID>TooGenericExceptionThrown:AddPreset.kt:AddPreset$throw Exception("not support")</ID>
+    <ID>TooGenericExceptionThrown:CliMain.kt:throw Exception("FLAVOR is empty")</ID>
+    <ID>TooManyFunctions:AddPreset.kt:AddPreset : Subcommand</ID>
+    <ID>TooManyFunctions:AddPreset.kt:com.storyteller_f.a.cloud.cli.AddPreset.kt</ID>
     <ID>TrailingCommaOnCallSite:AddPreset.kt:( processedFile, config.excludeArchiveEntries, config.includeArchiveEntries )</ID>
     <ID>TrailingCommaOnCallSite:AddPreset.kt:AddPreset$( AidListFetch( titles.filter { it.scopeType == ObjectType.COMMUNITY }.map { it.scope }.distinct() ) )</ID>
     <ID>TrailingCommaOnCallSite:AddPreset.kt:AddPreset$( AidListFetch( titles.filter { it.scopeType == ObjectType.ROOM }.map { it.scope }.distinct() ), null )</ID>
@@ -180,6 +232,42 @@
     <ID>TrailingCommaOnDeclarationSite:AddPresetTest.kt:AddPresetTest$( file: File, kept: Set&lt;String&gt; = emptySet(), removed: Set&lt;String&gt; = emptySet() )</ID>
     <ID>TrailingCommaOnDeclarationSite:CliMain.kt:CliBackend$( override val customConfig: CustomConfig, override val topicSearchService: TopicSearchService, override val roomSearchService: RoomSearchService, override val communitySearchService: CommunitySearchService, override val userSearchService: UserSearchService, override val memberSearchService: MemberSearchService, override val fileSearchService: FileSearchService, override val objectStorageService: ObjectStorageService, override val nameService: NameService, override val database: CombinedDatabase )</ID>
     <ID>TrailingCommaOnDeclarationSite:GeneratePresetKeysCommand.kt:( outputDir: File, overwrite: Boolean )</ID>
+    <ID>UndocumentedPublicClass:AddPreset.kt:AddPreset : Subcommand</ID>
+    <ID>UndocumentedPublicClass:AddPreset.kt:EncryptedTopicTuple</ID>
+    <ID>UndocumentedPublicClass:AddPreset.kt:UserPresetTuple</ID>
+    <ID>UndocumentedPublicClass:CleanCommand.kt:CleanCommand : Subcommand</ID>
+    <ID>UndocumentedPublicClass:CleanCommand.kt:InitTableCommand : Subcommand</ID>
+    <ID>UndocumentedPublicClass:CleanCommand.kt:PrintCommand : Subcommand</ID>
+    <ID>UndocumentedPublicClass:CliMain.kt:CliBackend : Backend</ID>
+    <ID>UndocumentedPublicClass:GeneratePresetKeysCommand.kt:GeneratePresetKeysCommand : Subcommand</ID>
+    <ID>UndocumentedPublicFunction:AddPreset.kt:AddPreset$suspend fun Backend.applyPresetByValue</ID>
+    <ID>UndocumentedPublicFunction:AddPreset.kt:AddPreset$suspend fun Backend.uploadFile: List&lt;FileInfo&gt;</ID>
+    <ID>UndocumentedPublicFunction:AddPreset.kt:fun sha256File: String</ID>
+    <ID>UndocumentedPublicFunction:AddPreset.kt:suspend fun Backend.applyPreset</ID>
+    <ID>UndocumentedPublicFunction:AddPreset.kt:suspend fun downloadWithResume</ID>
+    <ID>UndocumentedPublicFunction:CliMain.kt:@OptIn(ExperimentalCli::class) fun main</ID>
+    <ID>UndocumentedPublicFunction:CliMain.kt:fun buildBackendFromEnv: Backend</ID>
+    <ID>UndocumentedPublicFunction:CliMain.kt:fun requireBackend: Backend</ID>
+    <ID>UndocumentedPublicProperty:AddPreset.kt:EncryptedTopicTuple$val aesKey: ByteArray</ID>
+    <ID>UndocumentedPublicProperty:AddPreset.kt:EncryptedTopicTuple$val encryptedContent: ByteArray</ID>
+    <ID>UndocumentedPublicProperty:AddPreset.kt:EncryptedTopicTuple$val id: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:AddPreset.kt:EncryptedTopicTuple$val presetTopic: PresetTopic</ID>
+    <ID>UndocumentedPublicProperty:AddPreset.kt:UserPresetTuple$val address: String</ID>
+    <ID>UndocumentedPublicProperty:AddPreset.kt:UserPresetTuple$val algoType: AlgoType</ID>
+    <ID>UndocumentedPublicProperty:AddPreset.kt:UserPresetTuple$val id: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:AddPreset.kt:UserPresetTuple$val pic: PrimaryKey?</ID>
+    <ID>UndocumentedPublicProperty:AddPreset.kt:UserPresetTuple$val presetUser: PresetUser</ID>
+    <ID>UndocumentedPublicProperty:AddPreset.kt:UserPresetTuple$val publicKey: String</ID>
+    <ID>UnnecessaryParentheses:AddPreset.kt:(excludeGlobs.isEmpty() &amp;&amp; includeGlobs.isEmpty())</ID>
+    <ID>UnnecessaryParentheses:AddPreset.kt:DownloadProgress$(currentSize * 100)</ID>
+    <ID>UseIfInsteadOfWhen:AddPreset.kt:AddPreset$when (level) { 0 -&gt; objectType else -&gt; ObjectType.TOPIC }</ID>
+    <ID>UseIfInsteadOfWhen:AddPreset.kt:AddPreset$when (level) { 0 -&gt; topicTuple.rootId else -&gt; tuples[index - topicTuple.topic.parent!!].id }</ID>
+    <ID>UseLet:AddPreset.kt:AddPreset$if (font == null) { null } else { val fontMediaId = getFileInfoList(listOf("100/$font")).getOrThrow()?.firstOrNull()?.id fontMediaId?.let { fontId -&gt; FontSettings(contentFontId = fontId) } }</ID>
+    <ID>UseLet:AddPreset.kt:AddPreset$if (icon == null) { null } else { uploadRoomIcon(id, parentDir, icon, fileRefs, it) }</ID>
+    <ID>UseLet:AddPreset.kt:AddPreset$if (icon == null) { null } else { uploadUserIcon(id, parentDir, icon, fileRefs) }</ID>
+    <ID>UseLet:AddPreset.kt:AddPreset$if (icon == null) { null } else { val uploadFile = uploadFile(id, ObjectType.COMMUNITY, parentDir, listOf(icon)).first() fileRefs.add(Triple(uploadFile, id, it.getSafeAdmin())) uploadFile.id }</ID>
+    <ID>UseLet:AddPreset.kt:if (config != null) { val realPath = File(parentDir, "download/${config.name}") if (realPath.exists()) { if (config.hash.startsWith("sha256:")) { val calculatedSha = sha256File(realPath) val hashValue = config.hash.removePrefix("sha256:") Napier.i { "calculated ${config.name} sha $calculatedSha, real $hashValue" } if (calculatedSha != hashValue) { downloadWithResume(config.link, realPath, client) } } } else { downloadWithResume(config.link, realPath, client) } createProcessedPresetFileIfNeeded(realPath, config) } else { null }</ID>
+    <ID>WildcardImport:SignatureTest.kt:import com.storyteller_f.shared.*</ID>
     <ID>Wrapping:AddPreset.kt:AddPreset$(</ID>
     <ID>Wrapping:AddPreset.kt:AddPreset$(author, ObjectType.USER, parentDir, mediaLink.map { "medias/topics/$it" })</ID>
     <ID>Wrapping:AddPreset.kt:AddPreset$(parentDir, roomMap, list.filter { roomMap[it.room]?.communityId == null }, userMap)</ID>

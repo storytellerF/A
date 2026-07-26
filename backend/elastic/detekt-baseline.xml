@@ -2,13 +2,35 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>AbsentOrWrongFileLicense:Elastic.kt:com.storyteller_f.a.backend.elastic.Elastic.kt</ID>
+    <ID>AbsentOrWrongFileLicense:ElasticCommunitySearchService.kt:com.storyteller_f.a.backend.elastic.ElasticCommunitySearchService.kt</ID>
+    <ID>AbsentOrWrongFileLicense:ElasticFileSearchService.kt:com.storyteller_f.a.backend.elastic.ElasticFileSearchService.kt</ID>
+    <ID>AbsentOrWrongFileLicense:ElasticMemberSearchService.kt:com.storyteller_f.a.backend.elastic.ElasticMemberSearchService.kt</ID>
+    <ID>AbsentOrWrongFileLicense:ElasticRoomSearchService.kt:com.storyteller_f.a.backend.elastic.ElasticRoomSearchService.kt</ID>
+    <ID>AbsentOrWrongFileLicense:ElasticTopicSearchService.kt:com.storyteller_f.a.backend.elastic.ElasticTopicSearchService.kt</ID>
+    <ID>AbsentOrWrongFileLicense:ElasticUserSearchService.kt:com.storyteller_f.a.backend.elastic.ElasticUserSearchService.kt</ID>
+    <ID>AbsentOrWrongFileLicense:build.gradle.kts:.build.gradle.kts</ID>
     <ID>BlankLineBetweenWhenConditions:Elastic.kt:when { certFile.isBlank() -&gt; { "" } certFile.startsWith("~") -&gt; { val homeDir = System.getProperty("user.home") File(certFile.replace("~", homeDir)).canonicalPath } else -&gt; { File(certFile).canonicalPath } }</ID>
+    <ID>BracesOnWhenStatements:Elastic.kt:Elastic$when</ID>
+    <ID>CascadingCallWrapping:Elastic.kt:Elastic$jsonMapper(JacksonJsonpMapper().apply { objectMapper().registerKotlinModule() })</ID>
+    <ID>ClassOrdering:ElasticCommunitySearchService.kt:ElasticCommunitySearchService$Companion</ID>
+    <ID>ClassOrdering:ElasticFileSearchService.kt:ElasticFileSearchService$Companion</ID>
+    <ID>ClassOrdering:ElasticMemberSearchService.kt:ElasticMemberSearchService$Companion</ID>
+    <ID>ClassOrdering:ElasticRoomSearchService.kt:ElasticRoomSearchService$Companion</ID>
+    <ID>ClassOrdering:ElasticTopicSearchService.kt:ElasticTopicSearchService$Companion</ID>
+    <ID>ClassOrdering:ElasticUserSearchService.kt:ElasticUserSearchService$Companion</ID>
     <ID>ClassSignature:ElasticCommunitySearchService.kt:ElasticCommunitySearchService : ElasticCommunitySearchService</ID>
     <ID>ClassSignature:ElasticFileSearchService.kt:ElasticFileSearchService : ElasticFileSearchService</ID>
     <ID>ClassSignature:ElasticMemberSearchService.kt:ElasticMemberSearchService : ElasticMemberSearchService</ID>
     <ID>ClassSignature:ElasticRoomSearchService.kt:ElasticRoomSearchService : ElasticRoomSearchService</ID>
     <ID>ClassSignature:ElasticTopicSearchService.kt:ElasticTopicSearchService : ElasticTopicSearchService</ID>
     <ID>ClassSignature:ElasticUserSearchService.kt:ElasticUserSearchService : ElasticUserSearchService</ID>
+    <ID>ExpressionBodySyntax:ElasticCommunitySearchService.kt:ElasticCommunitySearchServiceFactory$return env["SEARCH_SERVICE"] == "elastic"</ID>
+    <ID>ExpressionBodySyntax:ElasticFileSearchService.kt:ElasticFileSearchServiceFactory$return env["SEARCH_SERVICE"] == "elastic"</ID>
+    <ID>ExpressionBodySyntax:ElasticMemberSearchService.kt:ElasticMemberSearchServiceFactory$return env["SEARCH_SERVICE"] == "elastic"</ID>
+    <ID>ExpressionBodySyntax:ElasticRoomSearchService.kt:ElasticRoomSearchServiceFactory$return env["SEARCH_SERVICE"] == "elastic"</ID>
+    <ID>ExpressionBodySyntax:ElasticTopicSearchService.kt:ElasticTopicSearchServiceFactory$return env["SEARCH_SERVICE"] == "elastic"</ID>
+    <ID>ExpressionBodySyntax:ElasticUserSearchService.kt:ElasticUserSearchServiceFactory$return env["SEARCH_SERVICE"] == "elastic"</ID>
     <ID>FunctionExpressionBody:Elastic.kt:{ return if (idList.size == 1) { idList.map { id -&gt; get({ it.index(indexName).id(id.toString()) }, clazz).await().source() } } else { mget({ builder -&gt; builder.index(indexName).ids(idList.map { it.toString() }) }, clazz).await().docs().map { it.result().source() } } }</ID>
     <ID>FunctionExpressionBody:Elastic.kt:{ return try { val response = search(request, clazz).await() val hits = response.hits() val total = hits.total()?.value() Napier.i { "size: ${hits.hits().size} maxScore: ${hits.maxScore()} total: $total" } PaginationResult(hits.hits().mapNotNull { it.source() }, total ?: 0) } catch (e: Exception) { Napier.e(e) { "elastic search failed" } PaginationResult(emptyList(), 0) } }</ID>
     <ID>FunctionExpressionBody:ElasticCommunitySearchService.kt:ElasticCommunitySearchService${ return SearchRequest.of { s -&gt; s.index(INDEX_NAME).apply { when (communityDocumentSearch) { is CommunityDocumentSearch.Keyword -&gt; { val fetch = communityDocumentSearch.fetch from(fetch.cursor?.value ?: 0) size(fetch.size) val word = communityDocumentSearch.keyword query { q -&gt; q.bool { b -&gt; val keyword = preprocessUserInputKeyword(word) b.prioritizedFields(keyword, "aid", "name") } } } } } } }</ID>
@@ -39,6 +61,10 @@
     <ID>FunctionExpressionBody:ElasticUserSearchService.kt:ElasticUserSearchService${ return useElasticClient { saveDocumentList(connection, documents, INDEX_NAME) } }</ID>
     <ID>FunctionExpressionBody:ElasticUserSearchService.kt:ElasticUserSearchServiceFactory${ return buildElasticSearchService(env) { ElasticUserSearchService(it) } }</ID>
     <ID>FunctionExpressionBody:ElasticUserSearchService.kt:ElasticUserSearchServiceFactory${ return env["SEARCH_SERVICE"] == "elastic" }</ID>
+    <ID>FunctionNameMaxLength:ElasticMemberSearchService.kt:ElasticMemberSearchService$private fun SearchRequest.Builder.buildCommunityMemberSearchRequest</ID>
+    <ID>FunctionNameMaxLength:ElasticTopicSearchService.kt:ElasticTopicSearchService$private fun SearchRequest.Builder.buildCommunityRootSearchRequest</ID>
+    <ID>FunctionNameMaxLength:ElasticTopicSearchService.kt:ElasticTopicSearchService$private fun SearchRequest.Builder.buildTopicRecommendNotLoginSearchRequest</ID>
+    <ID>FunctionNameMaxLength:ElasticTopicSearchService.kt:ElasticTopicSearchService$private fun SearchRequest.Builder.buildTopicRecommendSearchRequest</ID>
     <ID>FunctionSignature:Elastic.kt:Elastic$suspend fun &lt;T&gt; useElasticClient: Result&lt;T&gt;</ID>
     <ID>FunctionSignature:ElasticCommunitySearchService.kt:ElasticCommunitySearchService$private fun buildSearchRequest: SearchRequest</ID>
     <ID>FunctionSignature:ElasticFileSearchService.kt:ElasticFileSearchService$private fun buildSearchRequest: SearchRequest</ID>
@@ -46,6 +72,31 @@
     <ID>FunctionSignature:ElasticRoomSearchService.kt:ElasticRoomSearchService$private fun buildSearchRequest: SearchRequest</ID>
     <ID>FunctionSignature:ElasticTopicSearchService.kt:ElasticTopicSearchService$private fun buildSearchRequest: SearchRequest</ID>
     <ID>FunctionSignature:ElasticUserSearchService.kt:ElasticUserSearchService$private fun buildSearchRequest: SearchRequest</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Elastic.kt:Elastic</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Elastic.kt:fun &lt;T&gt; buildElasticSearchService: T</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Elastic.kt:fun BoolQuery.Builder.prioritizedField: BoolQuery.Builder</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Elastic.kt:fun BoolQuery.Builder.prioritizedFields: BoolQuery.Builder</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Elastic.kt:fun getSslContext: SSLContext?</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Elastic.kt:suspend fun &lt;T : PrimaryKeyIdentifiable&gt; ElasticsearchAsyncClient.saveDocumentList</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Elastic.kt:suspend fun &lt;T&gt; ElasticsearchAsyncClient.getDocumentList: List&lt;T?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Elastic.kt:suspend fun &lt;T&gt; ElasticsearchAsyncClient.searchDocumentList: PaginationResult&lt;T&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Elastic.kt:suspend fun ElasticsearchAsyncClient.cleanAll</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ElasticCommunitySearchService.kt:ElasticCommunitySearchService : ElasticCommunitySearchService</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ElasticCommunitySearchService.kt:ElasticCommunitySearchServiceFactory : CommunitySearchServiceFactory</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ElasticFileSearchService.kt:ElasticFileSearchService : ElasticFileSearchService</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ElasticFileSearchService.kt:ElasticFileSearchServiceFactory : FileSearchServiceFactory</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ElasticMemberSearchService.kt:ElasticMemberSearchService : ElasticMemberSearchService</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ElasticMemberSearchService.kt:ElasticMemberSearchServiceFactory : MemberSearchServiceFactory</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ElasticRoomSearchService.kt:ElasticRoomSearchService : ElasticRoomSearchService</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ElasticRoomSearchService.kt:ElasticRoomSearchServiceFactory : RoomSearchServiceFactory</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ElasticTopicSearchService.kt:ElasticTopicSearchService : ElasticTopicSearchService</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ElasticTopicSearchService.kt:ElasticTopicSearchServiceFactory : TopicSearchServiceFactory</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ElasticUserSearchService.kt:ElasticUserSearchService : ElasticUserSearchService</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ElasticUserSearchService.kt:ElasticUserSearchServiceFactory : UserSearchServiceFactory</ID>
+    <ID>MagicNumber:Elastic.kt:1000f</ID>
+    <ID>MagicNumber:Elastic.kt:100f</ID>
+    <ID>MagicNumber:Elastic.kt:10f</ID>
+    <ID>MagicNumber:Elastic.kt:Elastic$404</ID>
     <ID>MultilineExpressionWrapping:Elastic.kt:Elastic$JacksonJsonpMapper().apply { objectMapper().registerKotlinModule() }</ID>
     <ID>MultilineExpressionWrapping:Elastic.kt:bulk { it.operations(documents.map { document -&gt; BulkOperation.of { op -&gt; op.index( IndexOperation.Builder&lt;T&gt;() .index(indexName) .id(document.id.toString()) // 指定文档 ID .document(document) .build() ) } }).refresh(Refresh.WaitFor) }.await()</ID>
     <ID>MultilineExpressionWrapping:Elastic.kt:documents.map { document -&gt; BulkOperation.of { op -&gt; op.index( IndexOperation.Builder&lt;T&gt;() .index(indexName) .id(document.id.toString()) // 指定文档 ID .document(document) .build() ) } }</ID>
@@ -72,6 +123,13 @@
     <ID>PackageNaming:ElasticRoomSearchService.kt:package com.storyteller_f.a.backend.elastic</ID>
     <ID>PackageNaming:ElasticTopicSearchService.kt:package com.storyteller_f.a.backend.elastic</ID>
     <ID>PackageNaming:ElasticUserSearchService.kt:package com.storyteller_f.a.backend.elastic</ID>
+    <ID>ThrowingExceptionsWithoutMessageOrCause:Elastic.kt:Elastic$Exception()</ID>
+    <ID>ThrowsCount:Elastic.kt:fun &lt;T&gt; buildElasticSearchService: T</ID>
+    <ID>TooGenericExceptionCaught:Elastic.kt:e: Exception</ID>
+    <ID>TooGenericExceptionThrown:Elastic.kt:throw Exception("ELASTIC_CERT_FILE is empty")</ID>
+    <ID>TooGenericExceptionThrown:Elastic.kt:throw Exception("ELASTIC_NAME is empty")</ID>
+    <ID>TooGenericExceptionThrown:Elastic.kt:throw Exception("ELASTIC_PASSWORD is empty")</ID>
+    <ID>TooGenericExceptionThrown:Elastic.kt:throw Exception("ELASTIC_URL is empty")</ID>
     <ID>TrailingCommaOnCallSite:Elastic.kt:( IndexOperation.Builder&lt;T&gt;() .index(indexName) .id(document.id.toString()) // 指定文档 ID .document(document) .build() )</ID>
     <ID>TrailingCommaOnCallSite:Elastic.kt:Elastic$( when (e) { is ConnectException, is ConnectionClosedException -&gt; Exception("elastic service unavailable", e) is ElasticsearchException if e.status() == 404 -&gt; Exception("index not found", e) else -&gt; { point.initCause(e) point } } )</ID>
     <ID>TrailingCommaOnDeclarationSite:Elastic.kt:( connection: ElasticConnection, documents: List&lt;T&gt;, indexName: String )</ID>
@@ -89,6 +147,40 @@
     <ID>TrailingCommaOnDeclarationSite:ElasticTopicSearchService.kt:ElasticTopicSearchService$( topicDocumentSearch: TopicDocumentSearch.Recommend )</ID>
     <ID>TrailingCommaOnDeclarationSite:ElasticTopicSearchService.kt:ElasticTopicSearchService$( topicDocumentSearch: TopicDocumentSearch.RecommendNotLogin )</ID>
     <ID>TrailingCommaOnDeclarationSite:ElasticUserSearchService.kt:ElasticUserSearchService$( userDocumentSearch: UserDocumentSearch )</ID>
+    <ID>UndocumentedPublicClass:Elastic.kt:Elastic</ID>
+    <ID>UndocumentedPublicClass:ElasticCommunitySearchService.kt:ElasticCommunitySearchService : ElasticCommunitySearchService</ID>
+    <ID>UndocumentedPublicClass:ElasticCommunitySearchService.kt:ElasticCommunitySearchService$Companion</ID>
+    <ID>UndocumentedPublicClass:ElasticCommunitySearchService.kt:ElasticCommunitySearchServiceFactory : CommunitySearchServiceFactory</ID>
+    <ID>UndocumentedPublicClass:ElasticFileSearchService.kt:ElasticFileSearchService : ElasticFileSearchService</ID>
+    <ID>UndocumentedPublicClass:ElasticFileSearchService.kt:ElasticFileSearchService$Companion</ID>
+    <ID>UndocumentedPublicClass:ElasticFileSearchService.kt:ElasticFileSearchServiceFactory : FileSearchServiceFactory</ID>
+    <ID>UndocumentedPublicClass:ElasticMemberSearchService.kt:ElasticMemberSearchService : ElasticMemberSearchService</ID>
+    <ID>UndocumentedPublicClass:ElasticMemberSearchService.kt:ElasticMemberSearchService$Companion</ID>
+    <ID>UndocumentedPublicClass:ElasticMemberSearchService.kt:ElasticMemberSearchServiceFactory : MemberSearchServiceFactory</ID>
+    <ID>UndocumentedPublicClass:ElasticRoomSearchService.kt:ElasticRoomSearchService : ElasticRoomSearchService</ID>
+    <ID>UndocumentedPublicClass:ElasticRoomSearchService.kt:ElasticRoomSearchService$Companion</ID>
+    <ID>UndocumentedPublicClass:ElasticRoomSearchService.kt:ElasticRoomSearchServiceFactory : RoomSearchServiceFactory</ID>
+    <ID>UndocumentedPublicClass:ElasticTopicSearchService.kt:ElasticTopicSearchService : ElasticTopicSearchService</ID>
+    <ID>UndocumentedPublicClass:ElasticTopicSearchService.kt:ElasticTopicSearchService$Companion</ID>
+    <ID>UndocumentedPublicClass:ElasticTopicSearchService.kt:ElasticTopicSearchServiceFactory : TopicSearchServiceFactory</ID>
+    <ID>UndocumentedPublicClass:ElasticUserSearchService.kt:ElasticUserSearchService : ElasticUserSearchService</ID>
+    <ID>UndocumentedPublicClass:ElasticUserSearchService.kt:ElasticUserSearchService$Companion</ID>
+    <ID>UndocumentedPublicClass:ElasticUserSearchService.kt:ElasticUserSearchServiceFactory : UserSearchServiceFactory</ID>
+    <ID>UndocumentedPublicFunction:Elastic.kt:Elastic$suspend fun &lt;T&gt; useElasticClient: Result&lt;T&gt;</ID>
+    <ID>UndocumentedPublicFunction:Elastic.kt:fun &lt;T&gt; buildElasticSearchService: T</ID>
+    <ID>UndocumentedPublicFunction:Elastic.kt:fun BoolQuery.Builder.prioritizedField: BoolQuery.Builder</ID>
+    <ID>UndocumentedPublicFunction:Elastic.kt:fun BoolQuery.Builder.prioritizedFields: BoolQuery.Builder</ID>
+    <ID>UndocumentedPublicFunction:Elastic.kt:fun getSslContext: SSLContext?</ID>
+    <ID>UndocumentedPublicFunction:Elastic.kt:suspend fun &lt;T : PrimaryKeyIdentifiable&gt; ElasticsearchAsyncClient.saveDocumentList</ID>
+    <ID>UndocumentedPublicFunction:Elastic.kt:suspend fun &lt;T&gt; ElasticsearchAsyncClient.getDocumentList: List&lt;T?&gt;</ID>
+    <ID>UndocumentedPublicFunction:Elastic.kt:suspend fun &lt;T&gt; ElasticsearchAsyncClient.searchDocumentList: PaginationResult&lt;T&gt;</ID>
+    <ID>UndocumentedPublicFunction:Elastic.kt:suspend fun ElasticsearchAsyncClient.cleanAll</ID>
+    <ID>UndocumentedPublicProperty:Elastic.kt:Elastic$val connection: ElasticConnection</ID>
+    <ID>UndocumentedPublicProperty:Elastic.kt:Elastic$val sslContext = getSslContext(connection)</ID>
+    <ID>UndocumentedPublicProperty:ElasticFileSearchService.kt:ElasticFileSearchService.Companion$const val INDEX_NAME = "files"</ID>
+    <ID>UndocumentedPublicProperty:ElasticMemberSearchService.kt:ElasticMemberSearchService.Companion$const val INDEX_NAME = "members"</ID>
+    <ID>UndocumentedPublicProperty:ElasticRoomSearchService.kt:ElasticRoomSearchService.Companion$const val INDEX_NAME = "rooms"</ID>
+    <ID>UndocumentedPublicProperty:ElasticUserSearchService.kt:ElasticUserSearchService.Companion$const val INDEX_NAME = "users"</ID>
     <ID>Wrapping:Elastic.kt:(</ID>
     <ID>Wrapping:Elastic.kt:(hits.hits().mapNotNull { it.source() }, total ?: 0)</ID>
     <ID>Wrapping:Elastic.kt:Elastic$(</ID>

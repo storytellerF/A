@@ -2,8 +2,13 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>AbsentOrWrongFileLicense:PanelMain.kt:com.storyteller_f.a.panel.PanelMain.kt</ID>
+    <ID>AbsentOrWrongFileLicense:build.gradle.kts:.build.gradle.kts</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:PanelMain.kt:fun main</ID>
+    <ID>MagicNumber:PanelMain.kt:300</ID>
     <ID>MultilineExpressionWrapping:PanelMain.kt:Button("OK").apply { addActionListener { dispose() exitProcess(1) } }</ID>
     <ID>PackageName:PanelMain.kt:package com.storyteller_f.a.panel</ID>
     <ID>PackageNaming:PanelMain.kt:package com.storyteller_f.a.panel</ID>
+    <ID>UndocumentedPublicFunction:PanelMain.kt:fun main</ID>
   </CurrentIssues>
 </SmellBaseline>

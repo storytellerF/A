@@ -2,6 +2,15 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>AbsentOrWrongFileLicense:Lucene.kt:com.storyteller_f.a.backend.lucene.Lucene.kt</ID>
+    <ID>AbsentOrWrongFileLicense:LuceneCommunitySearchService.kt:com.storyteller_f.a.backend.lucene.LuceneCommunitySearchService.kt</ID>
+    <ID>AbsentOrWrongFileLicense:LuceneFileSearchService.kt:com.storyteller_f.a.backend.lucene.LuceneFileSearchService.kt</ID>
+    <ID>AbsentOrWrongFileLicense:LuceneMemberSearchService.kt:com.storyteller_f.a.backend.lucene.LuceneMemberSearchService.kt</ID>
+    <ID>AbsentOrWrongFileLicense:LuceneRoomSearchService.kt:com.storyteller_f.a.backend.lucene.LuceneRoomSearchService.kt</ID>
+    <ID>AbsentOrWrongFileLicense:LuceneTopicSearchService.kt:com.storyteller_f.a.backend.lucene.LuceneTopicSearchService.kt</ID>
+    <ID>AbsentOrWrongFileLicense:LuceneUserSearchService.kt:com.storyteller_f.a.backend.lucene.LuceneUserSearchService.kt</ID>
+    <ID>AbsentOrWrongFileLicense:build.gradle.kts:.build.gradle.kts</ID>
+    <ID>BracesOnWhenStatements:LuceneTopicSearchService.kt:LuceneTopicSearchService$when</ID>
     <ID>ClassSignature:LuceneCommunitySearchService.kt:LuceneCommunitySearchService : LuceneCommunitySearchService</ID>
     <ID>ClassSignature:LuceneFileSearchService.kt:LuceneFileSearchService : LuceneFileSearchService</ID>
     <ID>ClassSignature:LuceneMemberSearchService.kt:LuceneMemberDocument : LuceneDocument</ID>
@@ -12,6 +21,20 @@
     <ID>ClassSignature:LuceneTopicSearchService.kt:LuceneTopicSearchService : LuceneTopicSearchService</ID>
     <ID>ClassSignature:LuceneUserSearchService.kt:LuceneUserDocument : LuceneDocument</ID>
     <ID>ClassSignature:LuceneUserSearchService.kt:LuceneUserSearchService : LuceneUserSearchService</ID>
+    <ID>ExpressionBodySyntax:LuceneCommunitySearchService.kt:LuceneCommunitySearchServiceFactory$return env["SEARCH_SERVICE"] == "lucene"</ID>
+    <ID>ExpressionBodySyntax:LuceneFileSearchService.kt:LuceneFileDocument.Companion$return FileDocument(id, document.get("name"), document.get("ownerId").toLong())</ID>
+    <ID>ExpressionBodySyntax:LuceneFileSearchService.kt:LuceneFileSearchServiceFactory$return env["SEARCH_SERVICE"] == "lucene"</ID>
+    <ID>ExpressionBodySyntax:LuceneMemberSearchService.kt:LuceneMemberSearchServiceFactory$return env["SEARCH_SERVICE"] == "lucene"</ID>
+    <ID>ExpressionBodySyntax:LuceneRoomSearchService.kt:LuceneRoomDocument.Companion$return RoomDocument(id, document.get("name"), document.get("aid"), document.get("communityId")?.toLong())</ID>
+    <ID>ExpressionBodySyntax:LuceneRoomSearchService.kt:LuceneRoomSearchServiceFactory$return env["SEARCH_SERVICE"] == "lucene"</ID>
+    <ID>ExpressionBodySyntax:LuceneTopicSearchService.kt:LuceneTopicSearchServiceFactory$return env["SEARCH_SERVICE"] == "lucene"</ID>
+    <ID>ExpressionBodySyntax:LuceneUserSearchService.kt:LuceneUserDocument.Companion$return UserDocument(id, document.get("nickname"), document.get("aid"))</ID>
+    <ID>ExpressionBodySyntax:LuceneUserSearchService.kt:LuceneUserSearchServiceFactory$return env["SEARCH_SERVICE"] == "lucene"</ID>
+    <ID>ForbiddenPublicDataClass:LuceneFileSearchService.kt:LuceneFileDocument : LuceneDocument</ID>
+    <ID>ForbiddenPublicDataClass:LuceneMemberSearchService.kt:LuceneMemberDocument : LuceneDocument</ID>
+    <ID>ForbiddenPublicDataClass:LuceneRoomSearchService.kt:LuceneRoomDocument : LuceneDocument</ID>
+    <ID>ForbiddenPublicDataClass:LuceneTopicSearchService.kt:LuceneTopicDocument : LuceneDocument</ID>
+    <ID>ForbiddenPublicDataClass:LuceneUserSearchService.kt:LuceneUserDocument : LuceneDocument</ID>
     <ID>FunctionExpressionBody:Lucene.kt:{ return try { DirectoryReader.open(this).use { reader -&gt; val searcher = IndexSearcher(reader) val offset = fetch?.cursor?.value ?: 0 val limit = offset + (fetch?.size ?: 10) val docs = searcher.search(combinedQuery, limit, sortById) val scoreDocs = docs.scoreDocs val list = if (scoreDocs.size &gt; offset) { scoreDocs.slice(offset until scoreDocs.size).mapNotNull { doc -&gt; searcher.storedFields().document(doc.doc)?.let { document -&gt; val id = document.get("id1").toPrimaryKeyOrNull() if (id != null) { t.restore(id, document) } else { null } } } } else { emptyList() } PaginationResult(list, docs.totalHits.value) } } catch (_: IndexNotFoundException) { PaginationResult(emptyList(), 0) } }</ID>
     <ID>FunctionExpressionBody:LuceneCommunitySearchService.kt:LuceneCommunityDocument.Companion${ return CommunityDocument( id, document.get("name"), document.get("aid"), document.get("owner").toPrimaryKey() ) }</ID>
     <ID>FunctionExpressionBody:LuceneCommunitySearchService.kt:LuceneCommunitySearchService${ return BooleanQuery.Builder().apply { when (communityDocumentSearch) { is CommunityDocumentSearch.Keyword -&gt; { addPrioritizedFieldsQuery(communityDocumentSearch.keyword, "aid", "name") } } }.build() }</ID>
@@ -66,6 +89,39 @@
     <ID>FunctionSignature:LuceneTopicSearchService.kt:LuceneTopicSearchService$private fun buildQuery: Query</ID>
     <ID>FunctionSignature:LuceneUserSearchService.kt:LuceneUserDocument.Companion$override fun restore: UserDocument</ID>
     <ID>FunctionSignature:LuceneUserSearchService.kt:LuceneUserSearchService$private fun buildQuery: Query</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Lucene.kt:Lucene</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Lucene.kt:LuceneDocument</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Lucene.kt:LuceneDocumentCompanion&lt;T&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Lucene.kt:fun &lt;D, T : LuceneDocumentCompanion&lt;D&gt;&gt; FSDirectory.searchDocumentList: PaginationResult&lt;D&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Lucene.kt:fun &lt;T : LuceneDocument&gt; FSDirectory.saveDocumentList</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Lucene.kt:fun BooleanQuery.Builder.addMatchQuery</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Lucene.kt:fun BooleanQuery.Builder.addPrefixAndInclusionQuery</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Lucene.kt:fun BooleanQuery.Builder.addPrioritizedFieldsQuery</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Lucene.kt:fun FSDirectory.cleanAll</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:Lucene.kt:fun&lt;T&gt; buildLuceneSearchService: T</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LuceneCommunitySearchService.kt:LuceneCommunityDocument : LuceneDocument</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LuceneCommunitySearchService.kt:LuceneCommunitySearchService : LuceneCommunitySearchService</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LuceneCommunitySearchService.kt:LuceneCommunitySearchServiceFactory : CommunitySearchServiceFactory</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LuceneFileSearchService.kt:LuceneFileDocument : LuceneDocument</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LuceneFileSearchService.kt:LuceneFileSearchService : LuceneFileSearchService</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LuceneFileSearchService.kt:LuceneFileSearchServiceFactory : FileSearchServiceFactory</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LuceneMemberSearchService.kt:LuceneMemberDocument : LuceneDocument</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LuceneMemberSearchService.kt:LuceneMemberSearchService : LuceneMemberSearchService</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LuceneMemberSearchService.kt:LuceneMemberSearchServiceFactory : MemberSearchServiceFactory</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LuceneRoomSearchService.kt:LuceneRoomDocument : LuceneDocument</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LuceneRoomSearchService.kt:LuceneRoomSearchService : LuceneRoomSearchService</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LuceneRoomSearchService.kt:LuceneRoomSearchServiceFactory : RoomSearchServiceFactory</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LuceneTopicSearchService.kt:LuceneTopicDocument : LuceneDocument</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LuceneTopicSearchService.kt:LuceneTopicSearchService : LuceneTopicSearchService</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LuceneTopicSearchService.kt:LuceneTopicSearchServiceFactory : TopicSearchServiceFactory</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LuceneUserSearchService.kt:LuceneUserDocument : LuceneDocument</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LuceneUserSearchService.kt:LuceneUserSearchService : LuceneUserSearchService</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:LuceneUserSearchService.kt:LuceneUserSearchServiceFactory : UserSearchServiceFactory</ID>
+    <ID>MagicNumber:Lucene.kt:10</ID>
+    <ID>MagicNumber:Lucene.kt:10.0f</ID>
+    <ID>MagicNumber:Lucene.kt:1000f</ID>
+    <ID>MagicNumber:Lucene.kt:100f</ID>
+    <ID>MagicNumber:Lucene.kt:10f</ID>
     <ID>MultilineExpressionWrapping:Lucene.kt:documents.map { document -&gt; document.save() }</ID>
     <ID>MultilineExpressionWrapping:Lucene.kt:if (luceneBase.isNullOrBlank()) { Napier.i { "use in-memory document service" } MemoryFileSystemBuilder.newLinux().build().getPath("/documents") to true } else { val p = Paths.get(luceneBase) Napier.i { "use file system lucene ${p.toFile().canonicalPath}" } p to false }</ID>
     <ID>MultilineExpressionWrapping:Lucene.kt:if (scoreDocs.size &gt; offset) { scoreDocs.slice(offset until scoreDocs.size).mapNotNull { doc -&gt; searcher.storedFields().document(doc.doc)?.let { document -&gt; val id = document.get("id1").toPrimaryKeyOrNull() if (id != null) { t.restore(id, document) } else { null } } } } else { emptyList() }</ID>
@@ -101,6 +157,10 @@
     <ID>PackageNaming:LuceneRoomSearchService.kt:package com.storyteller_f.a.backend.lucene</ID>
     <ID>PackageNaming:LuceneTopicSearchService.kt:package com.storyteller_f.a.backend.lucene</ID>
     <ID>PackageNaming:LuceneUserSearchService.kt:package com.storyteller_f.a.backend.lucene</ID>
+    <ID>StringLiteralDuplication:Lucene.kt:"*$keyword*"</ID>
+    <ID>StringLiteralDuplication:LuceneMemberSearchService.kt:LuceneMemberDocument$"objectId"</ID>
+    <ID>StringLiteralDuplication:LuceneTopicSearchService.kt:LuceneTopicDocument$"content"</ID>
+    <ID>StringLiteralDuplication:LuceneTopicSearchService.kt:LuceneTopicDocument$"parentId"</ID>
     <ID>TrailingCommaOnCallSite:Lucene.kt:( BooleanQuery.Builder().apply { // 1. aid 前缀匹配 (最高优先级) add(BoostQuery(PrefixQuery(Term(aidField, keyword)), 1000f), BooleanClause.Occur.SHOULD) // 2. name 前缀匹配 add(BoostQuery(PrefixQuery(Term(nameField, keyword)), 100f), BooleanClause.Occur.SHOULD) // 3. aid 包含匹配 add(BoostQuery(WildcardQuery(Term(aidField, "*$keyword*")), 10f), BooleanClause.Occur.SHOULD) // 4. name 包含匹配 add(BoostQuery(WildcardQuery(Term(nameField, "*$keyword*")), 1f), BooleanClause.Occur.SHOULD) }.build(), BooleanClause.Occur.MUST )</ID>
     <ID>TrailingCommaOnCallSite:Lucene.kt:( BooleanQuery.Builder().apply { // 仅包含匹配，aid 优先于 name add( BoostQuery(WildcardQuery(Term(aidField, "*$keyword*")), positionBoost * 10f), BooleanClause.Occur.SHOULD ) add( BoostQuery(WildcardQuery(Term(nameField, "*$keyword*")), positionBoost), BooleanClause.Occur.SHOULD ) }.build(), BooleanClause.Occur.MUST )</ID>
     <ID>TrailingCommaOnCallSite:Lucene.kt:( BooleanQuery.Builder().apply { add(prefixQuery, BooleanClause.Occur.SHOULD) add(inclusionQuery, BooleanClause.Occur.SHOULD) }.build(), BooleanClause.Occur.MUST )</ID>
@@ -134,6 +194,51 @@
     <ID>TrailingCommaOnDeclarationSite:LuceneUserSearchService.kt:LuceneUserDocument.Companion$( id: PrimaryKey, document: Document )</ID>
     <ID>TrailingCommaOnDeclarationSite:LuceneUserSearchService.kt:LuceneUserSearchService$( userDocumentSearch: UserDocumentSearch )</ID>
     <ID>TypeParameterListSpacing:Lucene.kt:&lt;T&gt;</ID>
+    <ID>UndocumentedPublicClass:Lucene.kt:Lucene</ID>
+    <ID>UndocumentedPublicClass:Lucene.kt:LuceneDocument</ID>
+    <ID>UndocumentedPublicClass:Lucene.kt:LuceneDocumentCompanion&lt;T&gt;</ID>
+    <ID>UndocumentedPublicClass:LuceneCommunitySearchService.kt:LuceneCommunityDocument : LuceneDocument</ID>
+    <ID>UndocumentedPublicClass:LuceneCommunitySearchService.kt:LuceneCommunityDocument$Companion : LuceneDocumentCompanion</ID>
+    <ID>UndocumentedPublicClass:LuceneCommunitySearchService.kt:LuceneCommunitySearchService : LuceneCommunitySearchService</ID>
+    <ID>UndocumentedPublicClass:LuceneCommunitySearchService.kt:LuceneCommunitySearchServiceFactory : CommunitySearchServiceFactory</ID>
+    <ID>UndocumentedPublicClass:LuceneFileSearchService.kt:LuceneFileDocument : LuceneDocument</ID>
+    <ID>UndocumentedPublicClass:LuceneFileSearchService.kt:LuceneFileDocument$Companion : LuceneDocumentCompanion</ID>
+    <ID>UndocumentedPublicClass:LuceneFileSearchService.kt:LuceneFileSearchService : LuceneFileSearchService</ID>
+    <ID>UndocumentedPublicClass:LuceneFileSearchService.kt:LuceneFileSearchServiceFactory : FileSearchServiceFactory</ID>
+    <ID>UndocumentedPublicClass:LuceneMemberSearchService.kt:LuceneMemberDocument : LuceneDocument</ID>
+    <ID>UndocumentedPublicClass:LuceneMemberSearchService.kt:LuceneMemberDocument$Companion : LuceneDocumentCompanion</ID>
+    <ID>UndocumentedPublicClass:LuceneMemberSearchService.kt:LuceneMemberSearchService : LuceneMemberSearchService</ID>
+    <ID>UndocumentedPublicClass:LuceneMemberSearchService.kt:LuceneMemberSearchServiceFactory : MemberSearchServiceFactory</ID>
+    <ID>UndocumentedPublicClass:LuceneRoomSearchService.kt:LuceneRoomDocument : LuceneDocument</ID>
+    <ID>UndocumentedPublicClass:LuceneRoomSearchService.kt:LuceneRoomDocument$Companion : LuceneDocumentCompanion</ID>
+    <ID>UndocumentedPublicClass:LuceneRoomSearchService.kt:LuceneRoomSearchService : LuceneRoomSearchService</ID>
+    <ID>UndocumentedPublicClass:LuceneRoomSearchService.kt:LuceneRoomSearchServiceFactory : RoomSearchServiceFactory</ID>
+    <ID>UndocumentedPublicClass:LuceneTopicSearchService.kt:LuceneTopicDocument : LuceneDocument</ID>
+    <ID>UndocumentedPublicClass:LuceneTopicSearchService.kt:LuceneTopicDocument$Companion : LuceneDocumentCompanion</ID>
+    <ID>UndocumentedPublicClass:LuceneTopicSearchService.kt:LuceneTopicSearchService : LuceneTopicSearchService</ID>
+    <ID>UndocumentedPublicClass:LuceneTopicSearchService.kt:LuceneTopicSearchServiceFactory : TopicSearchServiceFactory</ID>
+    <ID>UndocumentedPublicClass:LuceneUserSearchService.kt:LuceneUserDocument : LuceneDocument</ID>
+    <ID>UndocumentedPublicClass:LuceneUserSearchService.kt:LuceneUserDocument$Companion : LuceneDocumentCompanion</ID>
+    <ID>UndocumentedPublicClass:LuceneUserSearchService.kt:LuceneUserSearchService : LuceneUserSearchService</ID>
+    <ID>UndocumentedPublicClass:LuceneUserSearchService.kt:LuceneUserSearchServiceFactory : UserSearchServiceFactory</ID>
+    <ID>UndocumentedPublicFunction:Lucene.kt:Lucene$suspend fun &lt;R&gt; useLucene</ID>
+    <ID>UndocumentedPublicFunction:Lucene.kt:LuceneDocument$fun save: Document</ID>
+    <ID>UndocumentedPublicFunction:Lucene.kt:LuceneDocumentCompanion$fun restore: T</ID>
+    <ID>UndocumentedPublicFunction:Lucene.kt:fun &lt;D, T : LuceneDocumentCompanion&lt;D&gt;&gt; FSDirectory.searchDocumentList: PaginationResult&lt;D&gt;</ID>
+    <ID>UndocumentedPublicFunction:Lucene.kt:fun &lt;T : LuceneDocument&gt; FSDirectory.saveDocumentList</ID>
+    <ID>UndocumentedPublicFunction:Lucene.kt:fun BooleanQuery.Builder.addMatchQuery</ID>
+    <ID>UndocumentedPublicFunction:Lucene.kt:fun BooleanQuery.Builder.addPrefixAndInclusionQuery</ID>
+    <ID>UndocumentedPublicFunction:Lucene.kt:fun BooleanQuery.Builder.addPrioritizedFieldsQuery</ID>
+    <ID>UndocumentedPublicFunction:Lucene.kt:fun FSDirectory.cleanAll</ID>
+    <ID>UndocumentedPublicFunction:Lucene.kt:fun&lt;T&gt; buildLuceneSearchService: T</ID>
+    <ID>UndocumentedPublicProperty:Lucene.kt:Lucene$val analyzer = StandardAnalyzer()</ID>
+    <ID>UndocumentedPublicProperty:LuceneCommunitySearchService.kt:LuceneCommunityDocument$val communityDocument: CommunityDocument</ID>
+    <ID>UndocumentedPublicProperty:LuceneFileSearchService.kt:LuceneFileDocument$val fileDocument: FileDocument</ID>
+    <ID>UndocumentedPublicProperty:LuceneMemberSearchService.kt:LuceneMemberDocument$val memberDocument: MemberDocument</ID>
+    <ID>UndocumentedPublicProperty:LuceneRoomSearchService.kt:LuceneRoomDocument$val roomDocument: RoomDocument</ID>
+    <ID>UndocumentedPublicProperty:LuceneTopicSearchService.kt:LuceneTopicDocument$val topicDocument: TopicDocument</ID>
+    <ID>UndocumentedPublicProperty:LuceneUserSearchService.kt:LuceneUserDocument$val userDocument: UserDocument</ID>
+    <ID>UseLet:Lucene.kt:if (id != null) { t.restore(id, document) } else { null }</ID>
     <ID>Wrapping:Lucene.kt:(</ID>
     <ID>Wrapping:LuceneCommunitySearchService.kt:LuceneCommunitySearchService$(</ID>
     <ID>Wrapping:LuceneCommunitySearchService.kt:LuceneCommunitySearchService$(documents.map { LuceneCommunityDocument(it) }, analyzer)</ID>

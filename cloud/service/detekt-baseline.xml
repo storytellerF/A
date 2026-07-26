@@ -2,6 +2,27 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>AbsentOrWrongFileLicense:AccountService.kt:com.storyteller_f.a.cloud.core.service.AccountService.kt</ID>
+    <ID>AbsentOrWrongFileLicense:AdminService.kt:com.storyteller_f.a.cloud.core.service.AdminService.kt</ID>
+    <ID>AbsentOrWrongFileLicense:AudioUtil.kt:com.storyteller_f.a.cloud.core.utils.AudioUtil.kt</ID>
+    <ID>AbsentOrWrongFileLicense:CommunityService.kt:com.storyteller_f.a.cloud.core.service.CommunityService.kt</ID>
+    <ID>AbsentOrWrongFileLicense:ContainerService.kt:com.storyteller_f.a.cloud.core.service.ContainerService.kt</ID>
+    <ID>AbsentOrWrongFileLicense:FavoriteService.kt:com.storyteller_f.a.cloud.core.service.FavoriteService.kt</ID>
+    <ID>AbsentOrWrongFileLicense:FileService.kt:com.storyteller_f.a.cloud.core.service.FileService.kt</ID>
+    <ID>AbsentOrWrongFileLicense:ImageUtil.kt:com.storyteller_f.a.cloud.core.utils.ImageUtil.kt</ID>
+    <ID>AbsentOrWrongFileLicense:IndexBenchmark.kt:com.storyteller_f.a.backend.service.benchmark.IndexBenchmark.kt</ID>
+    <ID>AbsentOrWrongFileLicense:MediaTest.kt:.MediaTest.kt</ID>
+    <ID>AbsentOrWrongFileLicense:ReactionService.kt:com.storyteller_f.a.cloud.core.service.ReactionService.kt</ID>
+    <ID>AbsentOrWrongFileLicense:RoomService.kt:com.storyteller_f.a.cloud.core.service.RoomService.kt</ID>
+    <ID>AbsentOrWrongFileLicense:SnowflakeTest.kt:.SnowflakeTest.kt</ID>
+    <ID>AbsentOrWrongFileLicense:StringTest.kt:.StringTest.kt</ID>
+    <ID>AbsentOrWrongFileLicense:TitleService.kt:com.storyteller_f.a.cloud.core.service.TitleService.kt</ID>
+    <ID>AbsentOrWrongFileLicense:TopicService.kt:com.storyteller_f.a.cloud.core.service.TopicService.kt</ID>
+    <ID>AbsentOrWrongFileLicense:TwoFactorService.kt:com.storyteller_f.a.cloud.core.service.TwoFactorService.kt</ID>
+    <ID>AbsentOrWrongFileLicense:TwoFactorServiceTest.kt:com.storyteller_f.a.cloud.core.service.TwoFactorServiceTest.kt</ID>
+    <ID>AbsentOrWrongFileLicense:UserService.kt:com.storyteller_f.a.cloud.core.service.UserService.kt</ID>
+    <ID>AbsentOrWrongFileLicense:UserSubscriptionService.kt:com.storyteller_f.a.cloud.core.service.UserSubscriptionService.kt</ID>
+    <ID>AbsentOrWrongFileLicense:build.gradle.kts:.build.gradle.kts</ID>
     <ID>ArgumentListWrapping:IndexBenchmark.kt:IndexBenchmark$( SnowflakeFactory.nextId(), "test", SnowflakeFactory.nextId(), "ROOM", SnowflakeFactory.nextId(), "ROOM", SnowflakeFactory.nextId() )</ID>
     <ID>BlankLineBetweenWhenConditions:CommunityService.kt:when (checkResult) { MediaCheckResult.NOT_FOUND -&gt; Result.failure(CustomBadRequestException("icon not found")) MediaCheckResult.CONTENT_TYPE_MISMATCH -&gt; Result.failure(CustomBadRequestException("only support image")) MediaCheckResult.DIMENSION_MISMATCH -&gt; Result.failure(CustomBadRequestException("dimension mismatch")) else -&gt; UNIT_RESULT }</ID>
     <ID>BlankLineBetweenWhenConditions:CommunityService.kt:when (checkResult) { MediaCheckResult.NOT_FOUND -&gt; Result.failure(CustomBadRequestException("poster not found")) MediaCheckResult.CONTENT_TYPE_MISMATCH -&gt; Result.failure(CustomBadRequestException("only support image")) MediaCheckResult.DIMENSION_MISMATCH -&gt; Result.failure(CustomBadRequestException("dimension mismatch")) else -&gt; UNIT_RESULT }</ID>
@@ -17,10 +38,43 @@
     <ID>BlankLineBetweenWhenConditions:UserService.kt:when (checkNickname( newUser.nickname, 1..USER_NICKNAME )) { StringCheckResult.CONTAIN_INVALID_CHAR -&gt; throw CustomBadRequestException( "user nickname must not contain invalid char" ) StringCheckResult.RANGE_MISMATCH -&gt; throw CustomBadRequestException("user nickname must be between in 1 and 20") else -&gt; UNIT_RESULT }</ID>
     <ID>BlankLineBetweenWhenConditions:UserService.kt:when (it) { MediaCheckResult.NOT_FOUND -&gt; Result.failure(CustomBadRequestException("avatar not font")) MediaCheckResult.CONTENT_TYPE_MISMATCH -&gt; Result.failure(CustomBadRequestException("avatar must be image")) else -&gt; UNIT_RESULT }</ID>
     <ID>BlankLineBetweenWhenConditions:UserService.kt:when { mediaInfo == null -&gt; MediaCheckResult.NOT_FOUND !mediaInfo.contentType.startsWith("image/") -&gt; MediaCheckResult.CONTENT_TYPE_MISMATCH aspectRatio != null &amp;&amp; (dimension == null || !checkMediaFileDimensionRatioMatch( dimension, aspectRatio )) -&gt; MediaCheckResult.DIMENSION_MISMATCH else -&gt; MediaCheckResult.SUCCESS }</ID>
+    <ID>BracesOnWhenStatements:CommunityService.kt:when</ID>
+    <ID>BracesOnWhenStatements:UserSubscriptionService.kt:when</ID>
+    <ID>CascadingCallWrapping:AccountService.kt:mapResult { (rawPanelAccount, publicKey) -&gt; getAlgo(rawPanelAccount.algoType).verify(publicKey, pack.signature, f).mapResult { isVerified -&gt; if (isVerified) { Result.success(rawPanelAccount) } else { Result.failure(CustomBadRequestException("Verify failed")) } } }</ID>
+    <ID>CascadingCallWrapping:AccountService.kt:mapResult { (rawUser, publicKey) -&gt; getAlgo(rawUser.user.algoType).verify(publicKey, pack.signature, f).mapResult { isVerified -&gt; if (isVerified) { Result.success(rawUser) } else { Result.failure(CustomBadRequestException("Verify failed")) } } }</ID>
+    <ID>CascadingCallWrapping:FavoriteService.kt:associateBy { it.id }</ID>
+    <ID>CascadingCallWrapping:FileService.kt:associateBy { it.objectId }</ID>
+    <ID>CascadingCallWrapping:FileService.kt:mapResultIfNotNull { (file, contentType) -&gt; val name = newCoverFileName(fileRecord.name, contentType) tryUploadFiles( fileRecord.owner, fileRecord.ownerType, listOf( UploadPack( file, name, fileRecord.size, "${fileRecord.owner}/$name", file.inputStream().buffered().use { input -&gt; sha256(input.asSource().buffered()) }, ) ) ) }</ID>
+    <ID>CascadingCallWrapping:FileService.kt:mapResultIfNotNull { backend.database.file.insertUploadRecord( UploadRecord( SnowflakeFactory.nextId(), now(), body.objectId, body.objectType, UploadRecordStatus.PENDING, body.size, 0, body.name, body.chunkSize, body.sha256, ) ) }</ID>
+    <ID>CascadingCallWrapping:FileService.kt:mapResultIfNotNull { backend.processFileRecordToFileInfo(it, id, clientIp) }</ID>
+    <ID>CascadingCallWrapping:TitleService.kt:associateBy { it.objectId }</ID>
+    <ID>CascadingCallWrapping:TopicService.kt:mapResultIfNotNull { info -&gt; processRawTopicToTopicInfo(listOf(info), uid, true) }</ID>
+    <ID>CascadingCallWrapping:TopicService.kt:use { input -&gt; targetFile.outputStream().buffered().use { output -&gt; input.copyTo(output) } }</ID>
+    <ID>CascadingCallWrapping:UserService.kt:getOrThrow()</ID>
     <ID>ClassSignature:ContainerService.kt:RootAdminPermission</ID>
     <ID>ClassSignature:ContainerService.kt:RootReadPermission</ID>
     <ID>ClassSignature:ContainerService.kt:RootWritePermission</ID>
+    <ID>CognitiveComplexMethod:AudioUtil.kt:@Suppress("CyclomaticComplexMethod") fun &lt;T&gt; BufferedInputStream.readMp3AlbumFromAudioStream: Pair&lt;T, String&gt;?</ID>
+    <ID>CognitiveComplexMethod:AudioUtil.kt:fun &lt;T&gt; BufferedInputStream.readFlacAlbumFromAudioStream: Pair&lt;T, String&gt;?</ID>
+    <ID>CognitiveComplexMethod:ContainerService.kt:suspend fun Backend.checkObjectWritable: Result&lt;Unit&gt;</ID>
+    <ID>EndOfSentenceFormat:ContainerService.kt:* 执行出错会释放配额并标记为失败</ID>
+    <ID>EndOfSentenceFormat:RoomService.kt:* 搜索当前用户的房间 * @param uid 当前登录用户ID * @param primaryKeyFetch 分页参数 * @param query 搜索查询参数 * @return 返回房间信息列表</ID>
+    <ID>EndOfSentenceFormat:RoomService.kt:* 搜索社区中的房间 * @param uid 用户ID * @param communityId 社区ID * @param primaryKeyFetch 分页参数 * @param query 搜索查询参数 * @return 返回房间信息列表</ID>
+    <ID>EndOfSentenceFormat:TopicService.kt:* 搜索房间主题</ID>
+    <ID>EndOfSentenceFormat:TopicService.kt:* 搜索用户主题</ID>
+    <ID>EndOfSentenceFormat:TopicService.kt:* 搜索社区主题</ID>
+    <ID>EndOfSentenceFormat:UserService.kt:* 接受空字符串或者null</ID>
+    <ID>EndOfSentenceFormat:UserService.kt:* 搜索 room/community 的成员列表 * @param objectId 容器 ID（room 或 community） * @param word 搜索关键字，可选 * @return 返回 MemberInfo 列表，包含成员关系信息</ID>
+    <ID>EndOfSentenceFormat:UserService.kt:* 搜索用户 * @param word 搜索关键字 * @return 返回 UserInfo 列表</ID>
+    <ID>ExpressionBodySyntax:ReactionService.kt:return safeFirstEmoji(emoji)?.length == emoji.length</ID>
+    <ID>ExpressionBodySyntax:TwoFactorService.kt:return URLEncoder.encode(this, StandardCharsets.UTF_8.name()).replace("+", "%20")</ID>
+    <ID>ExpressionBodySyntax:UserService.kt:return this in 'a'..'z' || this in 'A'..'Z'</ID>
     <ID>FinalNewline:IndexBenchmark.kt:com.storyteller_f.a.backend.service.benchmark.IndexBenchmark.kt</ID>
+    <ID>ForbiddenPublicDataClass:AccountService.kt:SignInServiceResponse$RequiresTotp : SignInServiceResponse</ID>
+    <ID>ForbiddenPublicDataClass:AccountService.kt:SignInServiceResponse$Success : SignInServiceResponse</ID>
+    <ID>ForbiddenPublicDataClass:ContainerService.kt:RootAdminPermission</ID>
+    <ID>ForbiddenPublicDataClass:ContainerService.kt:RootReadPermission</ID>
+    <ID>ForbiddenPublicDataClass:ContainerService.kt:RootWritePermission</ID>
     <ID>FunctionExpressionBody:AdminService.kt:{ return database.admin.getPanelLogs(targetId, objectType, fetch).map { result -&gt; PaginationResult(result.list.map { it.toPanelLogInfo() }, result.total) } }</ID>
     <ID>FunctionExpressionBody:AdminService.kt:{ return database.admin.getTaskRecords(type, fetch).map { result -&gt; PaginationResult(result.list.map { it.toTaskRecordInfo() }, result.total) } }</ID>
     <ID>FunctionExpressionBody:AudioUtil.kt:{ return ((bytes[0].toInt() and 0x7F) shl 21) or ((bytes[1].toInt() and 0x7F) shl 14) or ((bytes[2].toInt() and 0x7F) shl 7) or (bytes[3].toInt() and 0x7F) }</ID>
@@ -55,6 +109,15 @@
     <ID>FunctionExpressionBody:UserService.kt:{ return processRawUserToUserInfo(listOf(raw.rawUser)).map { users -&gt; val userInfo = users.first() UserOverview( raw.subscriptionCount, raw.favoriteCount, raw.acg, raw.childAccountCount, raw.reactionRecordCount, raw.commentCount, raw.hasUnreadChildRoomMessage, userInfo ) } }</ID>
     <ID>FunctionExpressionBody:UserService.kt:{ return this in 'a'..'z' || this in 'A'..'Z' }</ID>
     <ID>FunctionExpressionBody:UserService.kt:{ return when (checkNickname(update.nickname, 1..USER_NICKNAME)) { StringCheckResult.RANGE_MISMATCH -&gt; Result.failure( CustomBadRequestException("user nickname must be between in 1 and $USER_NICKNAME") ) StringCheckResult.CONTAIN_INVALID_CHAR -&gt; Result.failure( CustomBadRequestException("user nickname must be visible") ) else -&gt; UNIT_RESULT } }</ID>
+    <ID>FunctionNameMaxLength:CommunityService.kt:private suspend fun Backend.checkCommunityFontSettingsForUpdate: Result&lt;Unit&gt;</ID>
+    <ID>FunctionNameMaxLength:CommunityService.kt:suspend fun Backend.processRawCommunityToCommunityInfo: Result&lt;List&lt;CommunityInfo&gt;?&gt;</ID>
+    <ID>FunctionNameMaxLength:FavoriteService.kt:suspend fun Backend.processUserFavoriteToUserFavoriteInfo</ID>
+    <ID>FunctionNameMaxLength:FileService.kt:private suspend fun Backend.buildFileRecordFromComposedObject: FileRecord</ID>
+    <ID>FunctionNameMaxLength:SnowflakeTest.kt:SnowflakeTest$@Test fun `test 'MACHINE_ID = 0' generate snowflake`</ID>
+    <ID>FunctionNameMaxLength:SnowflakeTest.kt:SnowflakeTest$@Test fun `test 'MAX_MACHINE_ID' generate snowflake`</ID>
+    <ID>FunctionNameMaxLength:TwoFactorServiceTest.kt:TwoFactorServiceTest$@Test fun `totp matches rfc 6238 sha1 vectors with six digits`</ID>
+    <ID>FunctionNameMaxLength:UserService.kt:suspend fun Backend.processRawUserOverviewToUserOverview: Result&lt;UserOverview&gt;</ID>
+    <ID>FunctionNameMaxLength:UserSubscriptionService.kt:suspend fun Backend.processUserSubscriptionToUserSubscriptionInfo</ID>
     <ID>FunctionSignature:AccountService.kt:private suspend fun Backend.signUpInternal: User</ID>
     <ID>FunctionSignature:AccountService.kt:suspend fun Backend.adminSignUp: Result&lt;PanelAccountInfo&gt;</ID>
     <ID>FunctionSignature:AccountService.kt:suspend fun Backend.signIn: Result&lt;SignInServiceResponse&gt;</ID>
@@ -143,6 +206,216 @@
     <ID>FunctionSignature:UserSubscriptionService.kt:suspend fun Backend.getUserSubscriptions</ID>
     <ID>FunctionSignature:UserSubscriptionService.kt:suspend fun Backend.removeSubscription</ID>
     <ID>FunctionSignature:UserSubscriptionService.kt:suspend fun Backend.removeSubscriptionByObject</ID>
+    <ID>LabeledExpression:ContainerService.kt:@mapResult</ID>
+    <ID>LateinitUsage:IndexBenchmark.kt:IndexBenchmark$private lateinit var elasticClient: ElasticsearchContainer</ID>
+    <ID>LateinitUsage:IndexBenchmark.kt:IndexBenchmark$private lateinit var service: ElasticTopicSearchService</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AccountService.kt:SignInServiceResponse</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AccountService.kt:suspend fun Backend.adminSignIn: Result&lt;PanelAccountInfo&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AccountService.kt:suspend fun Backend.adminSignUp: Result&lt;PanelAccountInfo&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AccountService.kt:suspend fun Backend.signIn: Result&lt;SignInServiceResponse&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AccountService.kt:suspend fun Backend.signUp: Result&lt;UserInfo&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AdminService.kt:suspend fun Backend.addUser: Result&lt;UserInfo&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AdminService.kt:suspend fun Backend.getOverview</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AdminService.kt:suspend fun Backend.getPanelLogs: Result&lt;PaginationResult&lt;PanelLogInfo&gt;&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AdminService.kt:suspend fun Backend.getTaskRecords: Result&lt;PaginationResult&lt;TaskRecordInfo&gt;&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AdminService.kt:suspend fun Backend.updateCommunityStatus: Result&lt;Unit&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AdminService.kt:suspend fun Backend.updateFileStatus: Result&lt;Unit&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AdminService.kt:suspend fun Backend.updateRoomStatus: Result&lt;Unit&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AdminService.kt:suspend fun Backend.updateTitleStatus: Result&lt;Unit&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AdminService.kt:suspend fun Backend.updateTopicStatus: Result&lt;Unit&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AdminService.kt:suspend fun Backend.updateUserStatus: Result&lt;Unit&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AudioUtil.kt:@Suppress("CyclomaticComplexMethod") fun &lt;T&gt; BufferedInputStream.readMp3AlbumFromAudioStream: Pair&lt;T, String&gt;?</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:AudioUtil.kt:fun &lt;T&gt; BufferedInputStream.readFlacAlbumFromAudioStream: Pair&lt;T, String&gt;?</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CommunityService.kt:fun JoinStatusSearch?.toJoinSearch: JoinSearch</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CommunityService.kt:suspend fun Backend.createCommunity: Result&lt;CommunityInfo?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CommunityService.kt:suspend fun Backend.exitCommunity</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CommunityService.kt:suspend fun Backend.getAllCommunities</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CommunityService.kt:suspend fun Backend.getCommunity</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CommunityService.kt:suspend fun Backend.getCommunityMemberInfos: Result&lt;PaginationResult&lt;MemberInfo&gt;&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CommunityService.kt:suspend fun Backend.getContainerMemberInfos</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CommunityService.kt:suspend fun Backend.getUserJoinedCommunities: Result&lt;PaginationResult&lt;CommunityInfo&gt;?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CommunityService.kt:suspend fun Backend.joinCommunity</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CommunityService.kt:suspend fun Backend.processRawCommunityToCommunityInfo: Result&lt;List&lt;CommunityInfo&gt;?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CommunityService.kt:suspend fun Backend.searchCommunities: Result&lt;PaginationResult&lt;CommunityInfo&gt;?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CommunityService.kt:suspend fun Backend.searchUserJoinedCommunities: Result&lt;PaginationResult&lt;CommunityInfo&gt;?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:CommunityService.kt:suspend fun Backend.updateCommunity: Result&lt;CommunityInfo?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ContainerService.kt:RootAdminPermission</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ContainerService.kt:RootReadPermission</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ContainerService.kt:RootWritePermission</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ContainerService.kt:suspend fun Backend.checkCommunityAdminPermission: Result&lt;RootAdminPermission?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ContainerService.kt:suspend fun Backend.checkCommunityReadPermission: Result&lt;RootReadPermission?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ContainerService.kt:suspend fun Backend.checkCommunityWritePermission: Result&lt;RootWritePermission?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ContainerService.kt:suspend fun Backend.checkObjectWritable: Result&lt;Unit&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ContainerService.kt:suspend fun Backend.checkQuotaStatus: Result&lt;QuotaInfo&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ContainerService.kt:suspend fun Backend.checkRoomAdminPermission: Result&lt;RootAdminPermission?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ContainerService.kt:suspend fun Backend.checkRoomReadPermission: Result&lt;RootReadPermission?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ContainerService.kt:suspend fun Backend.checkRoomWritePermission: Result&lt;RootWritePermission?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ContainerService.kt:suspend fun Backend.checkRootAdminPermission: Result&lt;RootAdminPermission?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ContainerService.kt:suspend fun Backend.checkRootReadPermission: Result&lt;RootReadPermission?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ContainerService.kt:suspend fun Backend.checkRootWritePermission: Result&lt;RootWritePermission?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ContainerService.kt:suspend fun Backend.checkTopicAdminPermission: Result&lt;RootAdminPermission?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ContainerService.kt:suspend fun Backend.checkTopicReadPermission: Result&lt;RootReadPermission?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ContainerService.kt:suspend fun Backend.checkTopicWritePermission: Result&lt;RootWritePermission?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ContainerService.kt:suspend fun Backend.checkUserAdminPermission: Result&lt;RootAdminPermission?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ContainerService.kt:suspend fun Backend.checkUserReadPermission: Result&lt;RootReadPermission?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ContainerService.kt:suspend fun Backend.checkUserWritePermission: Result&lt;RootWritePermission?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ContainerService.kt:suspend fun Backend.getQuotaInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ContainerService.kt:suspend fun Backend.lockQuotaInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FavoriteService.kt:suspend fun Backend.addFavorite</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FavoriteService.kt:suspend fun Backend.deleteFavorite</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FavoriteService.kt:suspend fun Backend.deleteFavoriteByObject</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FavoriteService.kt:suspend fun Backend.getFavorites</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FavoriteService.kt:suspend fun Backend.processUserFavoriteToUserFavoriteInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileService.kt:@OptIn(ExperimentalUuidApi::class) fun newCopiedFileName: String</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileService.kt:@OptIn(ExperimentalUuidApi::class) fun newFileName: String</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileService.kt:@OptIn(ExperimentalUuidApi::class) suspend fun Backend.extractAlbum</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileService.kt:@OptIn(ExperimentalUuidApi::class) suspend fun Backend.tryUploadFiles</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileService.kt:@Suppress("LongMethod") suspend fun completeChunkUpload: Result&lt;FileInfo?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileService.kt:FileResponse</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileService.kt:PathResponse</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileService.kt:fun getCoverExtensionFromMimeType: String</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileService.kt:suspend fun Backend.getAllFileInfos: Result&lt;PaginationResult&lt;FileInfo&gt;&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileService.kt:suspend fun Backend.getFileInfoById: Result&lt;FileInfo?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileService.kt:suspend fun Backend.getFileInfoByName: Result&lt;FileInfo?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileService.kt:suspend fun Backend.getFileInfoList: Result&lt;List&lt;FileInfo?&gt;?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileService.kt:suspend fun Backend.getFileInfoPaginationResult: Result&lt;PaginationResult&lt;FileInfo&gt;&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileService.kt:suspend fun Backend.getFileList: Result&lt;PaginationResult&lt;FileInfo&gt;?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileService.kt:suspend fun Backend.getFileRefsByFileId</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileService.kt:suspend fun Backend.getUserUploadRecords</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileService.kt:suspend fun Backend.processFileRecordToFileInfo: Result&lt;List&lt;FileInfo&gt;&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileService.kt:suspend fun Backend.searchFiles: Result&lt;PaginationResult&lt;FileInfo&gt;?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileService.kt:suspend fun Backend.tryCopyFile</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileService.kt:suspend fun Backend.uncheckedGetFileRefsByFileId</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileService.kt:suspend fun Backend.uncheckedSearchFiles: Result&lt;PaginationResult&lt;FileInfo&gt;?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileService.kt:suspend fun abortChunkUpload</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileService.kt:suspend fun getChunkStatus</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileService.kt:suspend fun getFileSystemDownloadUrl: Result&lt;PathResponse?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:FileService.kt:suspend fun initChunkUpload</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ImageUtil.kt:fun cleanImageMeta</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:IndexBenchmark.kt:IndexBenchmark</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:MediaTest.kt:MediaTest</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ReactionService.kt:suspend fun Backend.addReaction</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ReactionService.kt:suspend fun Backend.reactionList: Result&lt;PaginationResult&lt;ReactionInfo&gt;&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ReactionService.kt:suspend fun addReaction: Result&lt;ReactionInfo?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:ReactionService.kt:suspend fun deleteReaction: Result&lt;ReactionInfo?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomService.kt:suspend fun Backend.createRoom: Result&lt;RoomInfo?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomService.kt:suspend fun Backend.exitRoom</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomService.kt:suspend fun Backend.getAllPrivateRooms</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomService.kt:suspend fun Backend.getAllPublicRooms</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomService.kt:suspend fun Backend.getCommunityRooms: Result&lt;PaginationResult&lt;RoomInfo&gt;&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomService.kt:suspend fun Backend.getJoinTitleByScope: Result&lt;Unit&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomService.kt:suspend fun Backend.getRoomInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomService.kt:suspend fun Backend.getRoomInfoList</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomService.kt:suspend fun Backend.getRoomMemberInfos: Result&lt;PaginationResult&lt;MemberInfo&gt;?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomService.kt:suspend fun Backend.getRoomPubKeys</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomService.kt:suspend fun Backend.getUserJoinedRooms: Result&lt;PaginationResult&lt;RoomInfo&gt;&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomService.kt:suspend fun Backend.joinRoom</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomService.kt:suspend fun Backend.processRawRoomToRoomInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomService.kt:suspend fun Backend.searchCommunityRooms: Result&lt;PaginationResult&lt;RoomInfo&gt;&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomService.kt:suspend fun Backend.searchCurrentUserRooms: Result&lt;PaginationResult&lt;RoomInfo&gt;?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomService.kt:suspend fun Backend.uncheckedGetRoomMemberInfos: Result&lt;PaginationResult&lt;MemberInfo&gt;&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomService.kt:suspend fun Backend.updateRoom: Result&lt;RoomInfo?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:RoomService.kt:suspend fun searchRoomMembers: Result&lt;PaginationResult&lt;MemberInfo&gt;?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:SnowflakeTest.kt:SnowflakeTest</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:StringTest.kt:StringTest</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TitleService.kt:suspend fun Backend.createTitle</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TitleService.kt:suspend fun Backend.getAllTitles: Result&lt;PaginationResult&lt;TitleInfo&gt;&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TitleService.kt:suspend fun Backend.getTitleInfo: Result&lt;TitleInfo?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TitleService.kt:suspend fun Backend.getUserTitles</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TitleService.kt:suspend fun createTitle: Result&lt;TitleInfo?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TopicService.kt:@OptIn(ExperimentalUuidApi::class) suspend fun Backend.generateSignedSnapshot: Result&lt;Unit?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TopicService.kt:fun documentFileList: List&lt;Pair&lt;PrimaryKey, String&gt;&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TopicService.kt:suspend fun Backend.createPlainTopic: Result&lt;TopicInfo?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TopicService.kt:suspend fun Backend.createTopicAtRoom: Result&lt;TopicInfo?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TopicService.kt:suspend fun Backend.createTopicSnapshot: Result&lt;FileInfo?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TopicService.kt:suspend fun Backend.getAllTopics</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TopicService.kt:suspend fun Backend.getTopic: Result&lt;TopicInfo?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TopicService.kt:suspend fun Backend.getTopicByAid: Result&lt;TopicInfo?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TopicService.kt:suspend fun Backend.getTopicByIds: Result&lt;List&lt;TopicInfo&gt;?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TopicService.kt:suspend fun Backend.getTopicsByParentId: Result&lt;PaginationResult&lt;TopicInfo&gt;?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TopicService.kt:suspend fun Backend.processRawTopicToTopicInfo: Result&lt;List&lt;TopicInfo&gt;?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TopicService.kt:suspend fun Backend.processTopicAfterCreate</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TopicService.kt:suspend fun Backend.processTopicFileObject: Result&lt;List&lt;TopicInfo&gt;?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TopicService.kt:suspend fun Backend.recommendTopics: Result&lt;PaginationResult&lt;TopicInfo&gt;?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TopicService.kt:suspend fun Backend.searchCommunityTopics: Result&lt;PaginationResult&lt;TopicInfo&gt;?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TopicService.kt:suspend fun Backend.searchRoomTopics: Result&lt;PaginationResult&lt;TopicInfo&gt;?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TopicService.kt:suspend fun Backend.searchUserTopics: Result&lt;PaginationResult&lt;TopicInfo&gt;?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TopicService.kt:suspend fun Backend.uncheckGetTopicById: Result&lt;TopicInfo?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TopicService.kt:suspend fun Backend.uncheckGetTopicsByParentId</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TopicService.kt:suspend fun Backend.updateTopicPin</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TwoFactorService.kt:suspend fun Backend.disableTwoFactor: Result&lt;TwoFactorSettingsInfo&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TwoFactorService.kt:suspend fun Backend.enableTotp: Result&lt;TwoFactorSettingsInfo&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TwoFactorService.kt:suspend fun Backend.generateRecoveryCodes: Result&lt;RecoveryCodesResponse&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TwoFactorService.kt:suspend fun Backend.getTwoFactorSettings: Result&lt;TwoFactorSettingsInfo&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TwoFactorService.kt:suspend fun Backend.isTwoFactorEnabled: Result&lt;Boolean&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TwoFactorService.kt:suspend fun Backend.setupTotp: Result&lt;TotpSetupInfo&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TwoFactorService.kt:suspend fun Backend.verifyUserTotp: Result&lt;Boolean&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:TwoFactorServiceTest.kt:TwoFactorServiceTest</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserService.kt:MediaCheckResult</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserService.kt:StringCheckResult</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserService.kt:fun Char.isEnglishLetter: Boolean</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserService.kt:fun checkAid: Result&lt;Unit&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserService.kt:fun checkNickname: StringCheckResult</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserService.kt:fun checkUserNickname</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserService.kt:fun checkUserNickname: Result&lt;Unit&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserService.kt:fun isAllVisibleChar</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserService.kt:suspend fun Backend.addChildAccount: Result&lt;ChildAccountInfo&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserService.kt:suspend fun Backend.addDevice: Result&lt;Unit&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserService.kt:suspend fun Backend.addReadLog: Result&lt;Unit?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserService.kt:suspend fun Backend.addUserLog: Result&lt;Unit&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserService.kt:suspend fun Backend.checkIcon: Result&lt;MediaCheckResult?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserService.kt:suspend fun Backend.getAllUsers</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserService.kt:suspend fun Backend.getUserAlternateUserInfoList: Result&lt;PaginationResult&lt;ChildAccountInfo&gt;?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserService.kt:suspend fun Backend.getUserById</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserService.kt:suspend fun Backend.getUserCommentedTopics</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserService.kt:suspend fun Backend.getUserInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserService.kt:suspend fun Backend.getUserInfoList</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserService.kt:suspend fun Backend.getUserLogs</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserService.kt:suspend fun Backend.getUserOverview</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserService.kt:suspend fun Backend.getUserReactions</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserService.kt:suspend fun Backend.hasUnreadRooms: Result&lt;UnreadRoomsResponse&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserService.kt:suspend fun Backend.isKeyVerified: Result&lt;Boolean&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserService.kt:suspend fun Backend.processRawUserOverviewToUserOverview: Result&lt;UserOverview&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserService.kt:suspend fun Backend.processRawUserToUserInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserService.kt:suspend fun Backend.searchContainerMembers: Result&lt;PaginationResult&lt;MemberInfo&gt;&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserService.kt:suspend fun Backend.searchUsers: Result&lt;PaginationResult&lt;UserInfo&gt;?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserService.kt:suspend fun Backend.updateUser: Result&lt;UserInfo?&gt;</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserSubscriptionService.kt:suspend fun Backend.addSubscription</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserSubscriptionService.kt:suspend fun Backend.getUserSubscriptions</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserSubscriptionService.kt:suspend fun Backend.processUserSubscriptionToUserSubscriptionInfo</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserSubscriptionService.kt:suspend fun Backend.removeSubscription</ID>
+    <ID>LibraryEntitiesShouldNotBePublic:UserSubscriptionService.kt:suspend fun Backend.removeSubscriptionByObject</ID>
+    <ID>MagicNumber:AccountService.kt:1000</ID>
+    <ID>MagicNumber:AudioUtil.kt:0x7F</ID>
+    <ID>MagicNumber:AudioUtil.kt:0x80</ID>
+    <ID>MagicNumber:AudioUtil.kt:0xFF</ID>
+    <ID>MagicNumber:AudioUtil.kt:10</ID>
+    <ID>MagicNumber:AudioUtil.kt:14</ID>
+    <ID>MagicNumber:AudioUtil.kt:16</ID>
+    <ID>MagicNumber:AudioUtil.kt:21</ID>
+    <ID>MagicNumber:AudioUtil.kt:24</ID>
+    <ID>MagicNumber:AudioUtil.kt:3</ID>
+    <ID>MagicNumber:AudioUtil.kt:4</ID>
+    <ID>MagicNumber:AudioUtil.kt:5</ID>
+    <ID>MagicNumber:AudioUtil.kt:6</ID>
+    <ID>MagicNumber:AudioUtil.kt:7</ID>
+    <ID>MagicNumber:AudioUtil.kt:8</ID>
+    <ID>MagicNumber:ContainerService.kt:1024</ID>
+    <ID>MagicNumber:FileService.kt:10</ID>
+    <ID>MagicNumber:FileService.kt:27</ID>
+    <ID>MagicNumber:FileService.kt:60</ID>
+    <ID>MagicNumber:TopicService.kt:10</ID>
+    <ID>MagicNumber:TopicService.kt:1000</ID>
+    <ID>MagicNumber:TopicService.kt:20</ID>
+    <ID>MagicNumber:TwoFactorService.kt:0x7f</ID>
+    <ID>MagicNumber:TwoFactorService.kt:0xff</ID>
+    <ID>MagicNumber:TwoFactorService.kt:16</ID>
+    <ID>MagicNumber:TwoFactorService.kt:24</ID>
+    <ID>MagicNumber:TwoFactorService.kt:3</ID>
+    <ID>MagicNumber:TwoFactorService.kt:4</ID>
+    <ID>MagicNumber:TwoFactorService.kt:5</ID>
+    <ID>MagicNumber:TwoFactorService.kt:8</ID>
+    <ID>MagicNumber:UserService.kt:4</ID>
     <ID>MissingPackageDeclaration:MediaTest.kt:.MediaTest.kt</ID>
     <ID>MissingPackageDeclaration:SnowflakeTest.kt:.SnowflakeTest.kt</ID>
     <ID>MissingPackageDeclaration:StringTest.kt:.StringTest.kt</ID>
@@ -280,6 +553,8 @@
     <ID>NewLineAtEndOfFile:IndexBenchmark.kt:com.storyteller_f.a.backend.service.benchmark.IndexBenchmark.kt</ID>
     <ID>NoEmptyFirstLineInClassBody:IndexBenchmark.kt:IndexBenchmark${ private lateinit var elasticClient: ElasticsearchContainer private lateinit var service: ElasticTopicSearchService @Setup(Level.Trial) fun setUp() { SnowflakeFactory.setMachine(0) elasticClient = ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch:8.17.0").apply { withEnv("xpack.security.transport.ssl.enabled", "false") withEnv("xpack.security.http.ssl.enabled", "false") start() // 只启动一次 } val connection = ElasticConnection( "http://${elasticClient.httpHostAddress}", "", "elastic", "changeme" ) service = ElasticTopicSearchService(connection) } @TearDown(Level.Trial) fun tearDown() { elasticClient.stop() // 只停止一次 } @Benchmark fun saveDocumentBenchmark(bh: Blackhole) = runBlocking { val topics = listOf( TopicDocument( SnowflakeFactory.nextId(), "test", SnowflakeFactory.nextId(), "ROOM", SnowflakeFactory.nextId(), "ROOM", SnowflakeFactory.nextId() ) ) bh.consume(service.saveDocument(topics)) } }</ID>
     <ID>NoWildcardImports:IndexBenchmark.kt:import org.openjdk.jmh.annotations.*</ID>
+    <ID>OutdatedDocumentation:UserService.kt:suspend fun Backend.searchContainerMembers: Result&lt;PaginationResult&lt;MemberInfo&gt;&gt;</ID>
+    <ID>OutdatedDocumentation:UserService.kt:suspend fun Backend.searchUsers: Result&lt;PaginationResult&lt;UserInfo&gt;?&gt;</ID>
     <ID>PackageName:AccountService.kt:package com.storyteller_f.a.cloud.core.service</ID>
     <ID>PackageName:AdminService.kt:package com.storyteller_f.a.cloud.core.service</ID>
     <ID>PackageName:AudioUtil.kt:package com.storyteller_f.a.cloud.core.utils</ID>
@@ -314,6 +589,34 @@
     <ID>PackageNaming:TwoFactorServiceTest.kt:package com.storyteller_f.a.cloud.core.service</ID>
     <ID>PackageNaming:UserService.kt:package com.storyteller_f.a.cloud.core.service</ID>
     <ID>PackageNaming:UserSubscriptionService.kt:package com.storyteller_f.a.cloud.core.service</ID>
+    <ID>ReturnCount:AdminService.kt:suspend fun Backend.addUser: Result&lt;UserInfo&gt;</ID>
+    <ID>ReturnCount:AudioUtil.kt:@Suppress("CyclomaticComplexMethod") fun &lt;T&gt; BufferedInputStream.readMp3AlbumFromAudioStream: Pair&lt;T, String&gt;?</ID>
+    <ID>ReturnCount:AudioUtil.kt:fun &lt;T&gt; BufferedInputStream.readFlacAlbumFromAudioStream: Pair&lt;T, String&gt;?</ID>
+    <ID>ReturnCount:TopicService.kt:@OptIn(ExperimentalUuidApi::class) suspend fun Backend.generateSignedSnapshot: Result&lt;Unit?&gt;</ID>
+    <ID>ReturnCount:TopicService.kt:private suspend fun Backend.createTopicAtRoom: Result&lt;TopicInfo?&gt;</ID>
+    <ID>ReturnCount:TopicService.kt:private suspend fun Backend.savePlainTopic: Result&lt;TopicInfo?&gt;</ID>
+    <ID>ReturnCount:TopicService.kt:suspend fun Backend.createPlainTopic: Result&lt;TopicInfo?&gt;</ID>
+    <ID>ReturnCount:TopicService.kt:suspend fun Backend.getTopicByIds: Result&lt;List&lt;TopicInfo&gt;?&gt;</ID>
+    <ID>ReturnCount:TopicService.kt:suspend fun Backend.searchCommunityTopics: Result&lt;PaginationResult&lt;TopicInfo&gt;?&gt;</ID>
+    <ID>ReturnCount:TopicService.kt:suspend fun Backend.searchRoomTopics: Result&lt;PaginationResult&lt;TopicInfo&gt;?&gt;</ID>
+    <ID>ReturnCount:TopicService.kt:suspend fun Backend.searchUserTopics: Result&lt;PaginationResult&lt;TopicInfo&gt;?&gt;</ID>
+    <ID>ReturnCount:UserService.kt:fun checkAid: Result&lt;Unit&gt;</ID>
+    <ID>StringLiteralDuplication:AccountService.kt:"Verify failed"</ID>
+    <ID>StringLiteralDuplication:FileService.kt:"chunks/$recordId/"</ID>
+    <ID>StringLiteralDuplication:ImageUtil.kt:"ImageUtil"</ID>
+    <ID>StringLiteralDuplication:RoomService.kt:"room name must be visible"</ID>
+    <ID>StringLiteralDuplication:TopicService.kt:"Permission Denied"</ID>
+    <ID>ThrowsCount:FileService.kt:@Suppress("LongMethod") suspend fun completeChunkUpload: Result&lt;FileInfo?&gt;</ID>
+    <ID>TooGenericExceptionCaught:ContainerService.kt:e: Exception</ID>
+    <ID>TooGenericExceptionCaught:TopicService.kt:e: Exception</ID>
+    <ID>TooManyFunctions:CommunityService.kt:com.storyteller_f.a.cloud.core.service.CommunityService.kt</ID>
+    <ID>TooManyFunctions:ContainerService.kt:com.storyteller_f.a.cloud.core.service.ContainerService.kt</ID>
+    <ID>TooManyFunctions:FileService.kt:com.storyteller_f.a.cloud.core.service.FileService.kt</ID>
+    <ID>TooManyFunctions:RoomService.kt:com.storyteller_f.a.cloud.core.service.RoomService.kt</ID>
+    <ID>TooManyFunctions:TitleService.kt:com.storyteller_f.a.cloud.core.service.TitleService.kt</ID>
+    <ID>TooManyFunctions:TopicService.kt:com.storyteller_f.a.cloud.core.service.TopicService.kt</ID>
+    <ID>TooManyFunctions:TwoFactorService.kt:com.storyteller_f.a.cloud.core.service.TwoFactorService.kt</ID>
+    <ID>TooManyFunctions:UserService.kt:com.storyteller_f.a.cloud.core.service.UserService.kt</ID>
     <ID>TrailingCommaOnCallSite:AccountService.kt:( null, encPubKey, pack.publicKey, ad, null, name, newId, now(), 0, PassType.RAW, algoType, notificationId )</ID>
     <ID>TrailingCommaOnCallSite:AdminService.kt:( PanelLog( id = logId, adminId = adminId, targetId = id, objectType = ObjectType.COMMUNITY, action = "Update community status to ${body.status}", createdTime = now() ) )</ID>
     <ID>TrailingCommaOnCallSite:AdminService.kt:( PanelLog( id = logId, adminId = adminId, targetId = id, objectType = ObjectType.FILE, action = "Update file status to ${body.status}", createdTime = now() ) )</ID>
@@ -509,6 +812,241 @@
     <ID>TrailingCommaOnDeclarationSite:UserSubscriptionService.kt:( uid: PrimaryKey, objectId: PrimaryKey )</ID>
     <ID>TrailingCommaOnDeclarationSite:UserSubscriptionService.kt:( uid: PrimaryKey, subscriptionId: PrimaryKey )</ID>
     <ID>TrailingCommaOnDeclarationSite:UserSubscriptionService.kt:( uid: PrimaryKey, userSubscriptions: List&lt;UserSubscription&gt; )</ID>
+    <ID>UnderscoresInNumericLiterals:TwoFactorServiceTest.kt:TwoFactorServiceTest$1111111109</ID>
+    <ID>UnderscoresInNumericLiterals:TwoFactorServiceTest.kt:TwoFactorServiceTest$1111111111</ID>
+    <ID>UnderscoresInNumericLiterals:TwoFactorServiceTest.kt:TwoFactorServiceTest$1234567890</ID>
+    <ID>UnderscoresInNumericLiterals:TwoFactorServiceTest.kt:TwoFactorServiceTest$2000000000</ID>
+    <ID>UnderscoresInNumericLiterals:TwoFactorServiceTest.kt:TwoFactorServiceTest$20000000000</ID>
+    <ID>UndocumentedPublicClass:AccountService.kt:SignInServiceResponse</ID>
+    <ID>UndocumentedPublicClass:AccountService.kt:SignInServiceResponse$RequiresTotp : SignInServiceResponse</ID>
+    <ID>UndocumentedPublicClass:AccountService.kt:SignInServiceResponse$Success : SignInServiceResponse</ID>
+    <ID>UndocumentedPublicClass:ContainerService.kt:RootAdminPermission</ID>
+    <ID>UndocumentedPublicClass:ContainerService.kt:RootReadPermission</ID>
+    <ID>UndocumentedPublicClass:ContainerService.kt:RootWritePermission</ID>
+    <ID>UndocumentedPublicClass:FileService.kt:FileResponse</ID>
+    <ID>UndocumentedPublicClass:FileService.kt:PathResponse</ID>
+    <ID>UndocumentedPublicClass:IndexBenchmark.kt:IndexBenchmark</ID>
+    <ID>UndocumentedPublicClass:UserService.kt:MediaCheckResult</ID>
+    <ID>UndocumentedPublicClass:UserService.kt:StringCheckResult</ID>
+    <ID>UndocumentedPublicFunction:AccountService.kt:suspend fun Backend.adminSignIn: Result&lt;PanelAccountInfo&gt;</ID>
+    <ID>UndocumentedPublicFunction:AccountService.kt:suspend fun Backend.adminSignUp: Result&lt;PanelAccountInfo&gt;</ID>
+    <ID>UndocumentedPublicFunction:AccountService.kt:suspend fun Backend.signIn: Result&lt;SignInServiceResponse&gt;</ID>
+    <ID>UndocumentedPublicFunction:AccountService.kt:suspend fun Backend.signUp: Result&lt;UserInfo&gt;</ID>
+    <ID>UndocumentedPublicFunction:AdminService.kt:suspend fun Backend.addUser: Result&lt;UserInfo&gt;</ID>
+    <ID>UndocumentedPublicFunction:AdminService.kt:suspend fun Backend.getOverview</ID>
+    <ID>UndocumentedPublicFunction:AdminService.kt:suspend fun Backend.getPanelLogs: Result&lt;PaginationResult&lt;PanelLogInfo&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:AdminService.kt:suspend fun Backend.getTaskRecords: Result&lt;PaginationResult&lt;TaskRecordInfo&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:AdminService.kt:suspend fun Backend.updateCommunityStatus: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:AdminService.kt:suspend fun Backend.updateFileStatus: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:AdminService.kt:suspend fun Backend.updateRoomStatus: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:AdminService.kt:suspend fun Backend.updateTitleStatus: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:AdminService.kt:suspend fun Backend.updateTopicStatus: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:AdminService.kt:suspend fun Backend.updateUserStatus: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:AudioUtil.kt:@Suppress("CyclomaticComplexMethod") fun &lt;T&gt; BufferedInputStream.readMp3AlbumFromAudioStream: Pair&lt;T, String&gt;?</ID>
+    <ID>UndocumentedPublicFunction:AudioUtil.kt:fun &lt;T&gt; BufferedInputStream.readFlacAlbumFromAudioStream: Pair&lt;T, String&gt;?</ID>
+    <ID>UndocumentedPublicFunction:CommunityService.kt:fun JoinStatusSearch?.toJoinSearch: JoinSearch</ID>
+    <ID>UndocumentedPublicFunction:CommunityService.kt:suspend fun Backend.createCommunity: Result&lt;CommunityInfo?&gt;</ID>
+    <ID>UndocumentedPublicFunction:CommunityService.kt:suspend fun Backend.exitCommunity</ID>
+    <ID>UndocumentedPublicFunction:CommunityService.kt:suspend fun Backend.getAllCommunities</ID>
+    <ID>UndocumentedPublicFunction:CommunityService.kt:suspend fun Backend.getCommunity</ID>
+    <ID>UndocumentedPublicFunction:CommunityService.kt:suspend fun Backend.getCommunityMemberInfos: Result&lt;PaginationResult&lt;MemberInfo&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:CommunityService.kt:suspend fun Backend.getContainerMemberInfos</ID>
+    <ID>UndocumentedPublicFunction:CommunityService.kt:suspend fun Backend.getUserJoinedCommunities: Result&lt;PaginationResult&lt;CommunityInfo&gt;?&gt;</ID>
+    <ID>UndocumentedPublicFunction:CommunityService.kt:suspend fun Backend.joinCommunity</ID>
+    <ID>UndocumentedPublicFunction:CommunityService.kt:suspend fun Backend.processRawCommunityToCommunityInfo: Result&lt;List&lt;CommunityInfo&gt;?&gt;</ID>
+    <ID>UndocumentedPublicFunction:CommunityService.kt:suspend fun Backend.searchCommunities: Result&lt;PaginationResult&lt;CommunityInfo&gt;?&gt;</ID>
+    <ID>UndocumentedPublicFunction:CommunityService.kt:suspend fun Backend.searchUserJoinedCommunities: Result&lt;PaginationResult&lt;CommunityInfo&gt;?&gt;</ID>
+    <ID>UndocumentedPublicFunction:CommunityService.kt:suspend fun Backend.updateCommunity: Result&lt;CommunityInfo?&gt;</ID>
+    <ID>UndocumentedPublicFunction:ContainerService.kt:suspend fun Backend.checkCommunityAdminPermission: Result&lt;RootAdminPermission?&gt;</ID>
+    <ID>UndocumentedPublicFunction:ContainerService.kt:suspend fun Backend.checkCommunityReadPermission: Result&lt;RootReadPermission?&gt;</ID>
+    <ID>UndocumentedPublicFunction:ContainerService.kt:suspend fun Backend.checkCommunityWritePermission: Result&lt;RootWritePermission?&gt;</ID>
+    <ID>UndocumentedPublicFunction:ContainerService.kt:suspend fun Backend.checkObjectWritable: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:ContainerService.kt:suspend fun Backend.checkQuotaStatus: Result&lt;QuotaInfo&gt;</ID>
+    <ID>UndocumentedPublicFunction:ContainerService.kt:suspend fun Backend.checkRoomAdminPermission: Result&lt;RootAdminPermission?&gt;</ID>
+    <ID>UndocumentedPublicFunction:ContainerService.kt:suspend fun Backend.checkRoomReadPermission: Result&lt;RootReadPermission?&gt;</ID>
+    <ID>UndocumentedPublicFunction:ContainerService.kt:suspend fun Backend.checkRoomWritePermission: Result&lt;RootWritePermission?&gt;</ID>
+    <ID>UndocumentedPublicFunction:ContainerService.kt:suspend fun Backend.checkRootAdminPermission: Result&lt;RootAdminPermission?&gt;</ID>
+    <ID>UndocumentedPublicFunction:ContainerService.kt:suspend fun Backend.checkRootReadPermission: Result&lt;RootReadPermission?&gt;</ID>
+    <ID>UndocumentedPublicFunction:ContainerService.kt:suspend fun Backend.checkRootWritePermission: Result&lt;RootWritePermission?&gt;</ID>
+    <ID>UndocumentedPublicFunction:ContainerService.kt:suspend fun Backend.checkTopicAdminPermission: Result&lt;RootAdminPermission?&gt;</ID>
+    <ID>UndocumentedPublicFunction:ContainerService.kt:suspend fun Backend.checkTopicReadPermission: Result&lt;RootReadPermission?&gt;</ID>
+    <ID>UndocumentedPublicFunction:ContainerService.kt:suspend fun Backend.checkTopicWritePermission: Result&lt;RootWritePermission?&gt;</ID>
+    <ID>UndocumentedPublicFunction:ContainerService.kt:suspend fun Backend.checkUserAdminPermission: Result&lt;RootAdminPermission?&gt;</ID>
+    <ID>UndocumentedPublicFunction:ContainerService.kt:suspend fun Backend.checkUserReadPermission: Result&lt;RootReadPermission?&gt;</ID>
+    <ID>UndocumentedPublicFunction:ContainerService.kt:suspend fun Backend.checkUserWritePermission: Result&lt;RootWritePermission?&gt;</ID>
+    <ID>UndocumentedPublicFunction:ContainerService.kt:suspend fun Backend.getQuotaInfo</ID>
+    <ID>UndocumentedPublicFunction:FavoriteService.kt:suspend fun Backend.addFavorite</ID>
+    <ID>UndocumentedPublicFunction:FavoriteService.kt:suspend fun Backend.deleteFavorite</ID>
+    <ID>UndocumentedPublicFunction:FavoriteService.kt:suspend fun Backend.deleteFavoriteByObject</ID>
+    <ID>UndocumentedPublicFunction:FavoriteService.kt:suspend fun Backend.getFavorites</ID>
+    <ID>UndocumentedPublicFunction:FavoriteService.kt:suspend fun Backend.processUserFavoriteToUserFavoriteInfo</ID>
+    <ID>UndocumentedPublicFunction:FileService.kt:@OptIn(ExperimentalUuidApi::class) fun newCopiedFileName: String</ID>
+    <ID>UndocumentedPublicFunction:FileService.kt:@OptIn(ExperimentalUuidApi::class) fun newFileName: String</ID>
+    <ID>UndocumentedPublicFunction:FileService.kt:@OptIn(ExperimentalUuidApi::class) suspend fun Backend.extractAlbum</ID>
+    <ID>UndocumentedPublicFunction:FileService.kt:@OptIn(ExperimentalUuidApi::class) suspend fun Backend.tryUploadFiles</ID>
+    <ID>UndocumentedPublicFunction:FileService.kt:@Suppress("LongMethod") suspend fun completeChunkUpload: Result&lt;FileInfo?&gt;</ID>
+    <ID>UndocumentedPublicFunction:FileService.kt:fun getCoverExtensionFromMimeType: String</ID>
+    <ID>UndocumentedPublicFunction:FileService.kt:suspend fun Backend.getAllFileInfos: Result&lt;PaginationResult&lt;FileInfo&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:FileService.kt:suspend fun Backend.getFileInfoById: Result&lt;FileInfo?&gt;</ID>
+    <ID>UndocumentedPublicFunction:FileService.kt:suspend fun Backend.getFileInfoByName: Result&lt;FileInfo?&gt;</ID>
+    <ID>UndocumentedPublicFunction:FileService.kt:suspend fun Backend.getFileInfoList: Result&lt;List&lt;FileInfo?&gt;?&gt;</ID>
+    <ID>UndocumentedPublicFunction:FileService.kt:suspend fun Backend.getFileInfoPaginationResult: Result&lt;PaginationResult&lt;FileInfo&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:FileService.kt:suspend fun Backend.getFileList: Result&lt;PaginationResult&lt;FileInfo&gt;?&gt;</ID>
+    <ID>UndocumentedPublicFunction:FileService.kt:suspend fun Backend.getFileRefsByFileId</ID>
+    <ID>UndocumentedPublicFunction:FileService.kt:suspend fun Backend.getUserUploadRecords</ID>
+    <ID>UndocumentedPublicFunction:FileService.kt:suspend fun Backend.processFileRecordToFileInfo: Result&lt;List&lt;FileInfo&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:FileService.kt:suspend fun Backend.searchFiles: Result&lt;PaginationResult&lt;FileInfo&gt;?&gt;</ID>
+    <ID>UndocumentedPublicFunction:FileService.kt:suspend fun Backend.tryCopyFile</ID>
+    <ID>UndocumentedPublicFunction:FileService.kt:suspend fun Backend.uncheckedGetFileRefsByFileId</ID>
+    <ID>UndocumentedPublicFunction:FileService.kt:suspend fun Backend.uncheckedSearchFiles: Result&lt;PaginationResult&lt;FileInfo&gt;?&gt;</ID>
+    <ID>UndocumentedPublicFunction:FileService.kt:suspend fun abortChunkUpload</ID>
+    <ID>UndocumentedPublicFunction:FileService.kt:suspend fun getChunkStatus</ID>
+    <ID>UndocumentedPublicFunction:FileService.kt:suspend fun getFileSystemDownloadUrl: Result&lt;PathResponse?&gt;</ID>
+    <ID>UndocumentedPublicFunction:FileService.kt:suspend fun initChunkUpload</ID>
+    <ID>UndocumentedPublicFunction:ImageUtil.kt:fun cleanImageMeta</ID>
+    <ID>UndocumentedPublicFunction:IndexBenchmark.kt:IndexBenchmark$@Benchmark fun saveDocumentBenchmark</ID>
+    <ID>UndocumentedPublicFunction:IndexBenchmark.kt:IndexBenchmark$@Setup(Level.Trial) fun setUp</ID>
+    <ID>UndocumentedPublicFunction:IndexBenchmark.kt:IndexBenchmark$@TearDown(Level.Trial) fun tearDown</ID>
+    <ID>UndocumentedPublicFunction:ReactionService.kt:suspend fun Backend.addReaction</ID>
+    <ID>UndocumentedPublicFunction:ReactionService.kt:suspend fun Backend.reactionList: Result&lt;PaginationResult&lt;ReactionInfo&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:ReactionService.kt:suspend fun addReaction: Result&lt;ReactionInfo?&gt;</ID>
+    <ID>UndocumentedPublicFunction:ReactionService.kt:suspend fun deleteReaction: Result&lt;ReactionInfo?&gt;</ID>
+    <ID>UndocumentedPublicFunction:RoomService.kt:suspend fun Backend.createRoom: Result&lt;RoomInfo?&gt;</ID>
+    <ID>UndocumentedPublicFunction:RoomService.kt:suspend fun Backend.exitRoom</ID>
+    <ID>UndocumentedPublicFunction:RoomService.kt:suspend fun Backend.getAllPrivateRooms</ID>
+    <ID>UndocumentedPublicFunction:RoomService.kt:suspend fun Backend.getAllPublicRooms</ID>
+    <ID>UndocumentedPublicFunction:RoomService.kt:suspend fun Backend.getCommunityRooms: Result&lt;PaginationResult&lt;RoomInfo&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:RoomService.kt:suspend fun Backend.getJoinTitleByScope: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:RoomService.kt:suspend fun Backend.getRoomInfo</ID>
+    <ID>UndocumentedPublicFunction:RoomService.kt:suspend fun Backend.getRoomInfoList</ID>
+    <ID>UndocumentedPublicFunction:RoomService.kt:suspend fun Backend.getRoomMemberInfos: Result&lt;PaginationResult&lt;MemberInfo&gt;?&gt;</ID>
+    <ID>UndocumentedPublicFunction:RoomService.kt:suspend fun Backend.getRoomPubKeys</ID>
+    <ID>UndocumentedPublicFunction:RoomService.kt:suspend fun Backend.getUserJoinedRooms: Result&lt;PaginationResult&lt;RoomInfo&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:RoomService.kt:suspend fun Backend.joinRoom</ID>
+    <ID>UndocumentedPublicFunction:RoomService.kt:suspend fun Backend.processRawRoomToRoomInfo</ID>
+    <ID>UndocumentedPublicFunction:RoomService.kt:suspend fun Backend.uncheckedGetRoomMemberInfos: Result&lt;PaginationResult&lt;MemberInfo&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:RoomService.kt:suspend fun Backend.updateRoom: Result&lt;RoomInfo?&gt;</ID>
+    <ID>UndocumentedPublicFunction:RoomService.kt:suspend fun searchRoomMembers: Result&lt;PaginationResult&lt;MemberInfo&gt;?&gt;</ID>
+    <ID>UndocumentedPublicFunction:TitleService.kt:suspend fun Backend.createTitle</ID>
+    <ID>UndocumentedPublicFunction:TitleService.kt:suspend fun Backend.getAllTitles: Result&lt;PaginationResult&lt;TitleInfo&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:TitleService.kt:suspend fun Backend.getTitleInfo: Result&lt;TitleInfo?&gt;</ID>
+    <ID>UndocumentedPublicFunction:TitleService.kt:suspend fun Backend.getUserTitles</ID>
+    <ID>UndocumentedPublicFunction:TitleService.kt:suspend fun createTitle: Result&lt;TitleInfo?&gt;</ID>
+    <ID>UndocumentedPublicFunction:TopicService.kt:@OptIn(ExperimentalUuidApi::class) suspend fun Backend.generateSignedSnapshot: Result&lt;Unit?&gt;</ID>
+    <ID>UndocumentedPublicFunction:TopicService.kt:fun documentFileList: List&lt;Pair&lt;PrimaryKey, String&gt;&gt;</ID>
+    <ID>UndocumentedPublicFunction:TopicService.kt:suspend fun Backend.createPlainTopic: Result&lt;TopicInfo?&gt;</ID>
+    <ID>UndocumentedPublicFunction:TopicService.kt:suspend fun Backend.createTopicAtRoom: Result&lt;TopicInfo?&gt;</ID>
+    <ID>UndocumentedPublicFunction:TopicService.kt:suspend fun Backend.createTopicSnapshot: Result&lt;FileInfo?&gt;</ID>
+    <ID>UndocumentedPublicFunction:TopicService.kt:suspend fun Backend.getAllTopics</ID>
+    <ID>UndocumentedPublicFunction:TopicService.kt:suspend fun Backend.getTopic: Result&lt;TopicInfo?&gt;</ID>
+    <ID>UndocumentedPublicFunction:TopicService.kt:suspend fun Backend.getTopicByAid: Result&lt;TopicInfo?&gt;</ID>
+    <ID>UndocumentedPublicFunction:TopicService.kt:suspend fun Backend.getTopicByIds: Result&lt;List&lt;TopicInfo&gt;?&gt;</ID>
+    <ID>UndocumentedPublicFunction:TopicService.kt:suspend fun Backend.getTopicsByParentId: Result&lt;PaginationResult&lt;TopicInfo&gt;?&gt;</ID>
+    <ID>UndocumentedPublicFunction:TopicService.kt:suspend fun Backend.processRawTopicToTopicInfo: Result&lt;List&lt;TopicInfo&gt;?&gt;</ID>
+    <ID>UndocumentedPublicFunction:TopicService.kt:suspend fun Backend.processTopicAfterCreate</ID>
+    <ID>UndocumentedPublicFunction:TopicService.kt:suspend fun Backend.processTopicFileObject: Result&lt;List&lt;TopicInfo&gt;?&gt;</ID>
+    <ID>UndocumentedPublicFunction:TopicService.kt:suspend fun Backend.recommendTopics: Result&lt;PaginationResult&lt;TopicInfo&gt;?&gt;</ID>
+    <ID>UndocumentedPublicFunction:TopicService.kt:suspend fun Backend.uncheckGetTopicById: Result&lt;TopicInfo?&gt;</ID>
+    <ID>UndocumentedPublicFunction:TopicService.kt:suspend fun Backend.uncheckGetTopicsByParentId</ID>
+    <ID>UndocumentedPublicFunction:TopicService.kt:suspend fun Backend.updateTopicPin</ID>
+    <ID>UndocumentedPublicFunction:TwoFactorService.kt:suspend fun Backend.disableTwoFactor: Result&lt;TwoFactorSettingsInfo&gt;</ID>
+    <ID>UndocumentedPublicFunction:TwoFactorService.kt:suspend fun Backend.enableTotp: Result&lt;TwoFactorSettingsInfo&gt;</ID>
+    <ID>UndocumentedPublicFunction:TwoFactorService.kt:suspend fun Backend.generateRecoveryCodes: Result&lt;RecoveryCodesResponse&gt;</ID>
+    <ID>UndocumentedPublicFunction:TwoFactorService.kt:suspend fun Backend.getTwoFactorSettings: Result&lt;TwoFactorSettingsInfo&gt;</ID>
+    <ID>UndocumentedPublicFunction:TwoFactorService.kt:suspend fun Backend.isTwoFactorEnabled: Result&lt;Boolean&gt;</ID>
+    <ID>UndocumentedPublicFunction:TwoFactorService.kt:suspend fun Backend.setupTotp: Result&lt;TotpSetupInfo&gt;</ID>
+    <ID>UndocumentedPublicFunction:TwoFactorService.kt:suspend fun Backend.verifyUserTotp: Result&lt;Boolean&gt;</ID>
+    <ID>UndocumentedPublicFunction:UserService.kt:fun Char.isEnglishLetter: Boolean</ID>
+    <ID>UndocumentedPublicFunction:UserService.kt:fun checkAid: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:UserService.kt:fun checkNickname: StringCheckResult</ID>
+    <ID>UndocumentedPublicFunction:UserService.kt:fun checkUserNickname</ID>
+    <ID>UndocumentedPublicFunction:UserService.kt:fun isAllVisibleChar</ID>
+    <ID>UndocumentedPublicFunction:UserService.kt:suspend fun Backend.addChildAccount: Result&lt;ChildAccountInfo&gt;</ID>
+    <ID>UndocumentedPublicFunction:UserService.kt:suspend fun Backend.addDevice: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:UserService.kt:suspend fun Backend.addReadLog: Result&lt;Unit?&gt;</ID>
+    <ID>UndocumentedPublicFunction:UserService.kt:suspend fun Backend.addUserLog: Result&lt;Unit&gt;</ID>
+    <ID>UndocumentedPublicFunction:UserService.kt:suspend fun Backend.checkIcon: Result&lt;MediaCheckResult?&gt;</ID>
+    <ID>UndocumentedPublicFunction:UserService.kt:suspend fun Backend.getAllUsers</ID>
+    <ID>UndocumentedPublicFunction:UserService.kt:suspend fun Backend.getUserAlternateUserInfoList: Result&lt;PaginationResult&lt;ChildAccountInfo&gt;?&gt;</ID>
+    <ID>UndocumentedPublicFunction:UserService.kt:suspend fun Backend.getUserById</ID>
+    <ID>UndocumentedPublicFunction:UserService.kt:suspend fun Backend.getUserCommentedTopics</ID>
+    <ID>UndocumentedPublicFunction:UserService.kt:suspend fun Backend.getUserInfo</ID>
+    <ID>UndocumentedPublicFunction:UserService.kt:suspend fun Backend.getUserInfoList</ID>
+    <ID>UndocumentedPublicFunction:UserService.kt:suspend fun Backend.getUserLogs</ID>
+    <ID>UndocumentedPublicFunction:UserService.kt:suspend fun Backend.getUserOverview</ID>
+    <ID>UndocumentedPublicFunction:UserService.kt:suspend fun Backend.getUserReactions</ID>
+    <ID>UndocumentedPublicFunction:UserService.kt:suspend fun Backend.hasUnreadRooms: Result&lt;UnreadRoomsResponse&gt;</ID>
+    <ID>UndocumentedPublicFunction:UserService.kt:suspend fun Backend.isKeyVerified: Result&lt;Boolean&gt;</ID>
+    <ID>UndocumentedPublicFunction:UserService.kt:suspend fun Backend.processRawUserOverviewToUserOverview: Result&lt;UserOverview&gt;</ID>
+    <ID>UndocumentedPublicFunction:UserService.kt:suspend fun Backend.processRawUserToUserInfo</ID>
+    <ID>UndocumentedPublicFunction:UserService.kt:suspend fun Backend.updateUser: Result&lt;UserInfo?&gt;</ID>
+    <ID>UndocumentedPublicFunction:UserSubscriptionService.kt:suspend fun Backend.addSubscription</ID>
+    <ID>UndocumentedPublicFunction:UserSubscriptionService.kt:suspend fun Backend.getUserSubscriptions</ID>
+    <ID>UndocumentedPublicFunction:UserSubscriptionService.kt:suspend fun Backend.processUserSubscriptionToUserSubscriptionInfo</ID>
+    <ID>UndocumentedPublicFunction:UserSubscriptionService.kt:suspend fun Backend.removeSubscription</ID>
+    <ID>UndocumentedPublicFunction:UserSubscriptionService.kt:suspend fun Backend.removeSubscriptionByObject</ID>
+    <ID>UndocumentedPublicProperty:AccountService.kt:SignInServiceResponse$abstract val response: SignInResponse</ID>
+    <ID>UndocumentedPublicProperty:AccountService.kt:SignInServiceResponse$abstract val uid: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:AccountService.kt:SignInServiceResponse.Success$val userInfo: UserInfo</ID>
+    <ID>UndocumentedPublicProperty:ContainerService.kt:RootAdminPermission$val rootId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:ContainerService.kt:RootAdminPermission$val rootType: ObjectType</ID>
+    <ID>UndocumentedPublicProperty:ContainerService.kt:RootReadPermission$val hasJoined: Boolean</ID>
+    <ID>UndocumentedPublicProperty:ContainerService.kt:RootReadPermission$val hasRead: Boolean</ID>
+    <ID>UndocumentedPublicProperty:ContainerService.kt:RootReadPermission$val isPrivate: Boolean</ID>
+    <ID>UndocumentedPublicProperty:ContainerService.kt:RootWritePermission$val level: Int = 0</ID>
+    <ID>UndocumentedPublicProperty:ContainerService.kt:RootWritePermission$val rootId: PrimaryKey</ID>
+    <ID>UndocumentedPublicProperty:ContainerService.kt:RootWritePermission$val rootType: ObjectType</ID>
+    <ID>UndocumentedPublicProperty:ContainerService.kt:RootWritePermission$val tuple = ObjectTuple(rootId, rootType)</ID>
+    <ID>UndocumentedPublicProperty:ContainerService.kt:val Backend.Companion.tika by lazy { Tika() }</ID>
+    <ID>UndocumentedPublicProperty:FileService.kt:FileResponse$val file: File</ID>
+    <ID>UndocumentedPublicProperty:FileService.kt:PathResponse$val file: Path</ID>
+    <ID>UndocumentedPublicProperty:TitleService.kt:val titleMap = mutableMapOf( ObjectType.COMMUNITY to listOf(TitleType.REGULAR, TitleType.JOIN), ObjectType.ROOM to listOf(TitleType.REGULAR, TitleType.JOIN), ObjectType.USER to listOf(TitleType.REGULAR), ObjectType.TOPIC to listOf(TitleType.REGULAR) )</ID>
+    <ID>UndocumentedPublicProperty:UserService.kt:MediaCheckResult$CONTENT_TYPE_MISMATCH</ID>
+    <ID>UndocumentedPublicProperty:UserService.kt:MediaCheckResult$DIMENSION_MISMATCH</ID>
+    <ID>UndocumentedPublicProperty:UserService.kt:MediaCheckResult$EMPTY</ID>
+    <ID>UndocumentedPublicProperty:UserService.kt:MediaCheckResult$NOT_FOUND</ID>
+    <ID>UndocumentedPublicProperty:UserService.kt:MediaCheckResult$SUCCESS</ID>
+    <ID>UndocumentedPublicProperty:UserService.kt:StringCheckResult$CONTAIN_INVALID_CHAR</ID>
+    <ID>UndocumentedPublicProperty:UserService.kt:StringCheckResult$EMPTY</ID>
+    <ID>UndocumentedPublicProperty:UserService.kt:StringCheckResult$NULL</ID>
+    <ID>UndocumentedPublicProperty:UserService.kt:StringCheckResult$RANGE_MISMATCH</ID>
+    <ID>UndocumentedPublicProperty:UserService.kt:StringCheckResult$SUCCESS</ID>
+    <ID>UnnecessaryParentheses:AudioUtil.kt:((bytes[0].toInt() and 0x7F) shl 21)</ID>
+    <ID>UnnecessaryParentheses:AudioUtil.kt:((frameHeader[4].toInt() and 0xFF) shl 24)</ID>
+    <ID>UnnecessaryParentheses:AudioUtil.kt:((lengthBytes[0].toInt() and 0xFF) shl 16)</ID>
+    <ID>UnnecessaryParentheses:AudioUtil.kt:(bytes[0].toInt() and 0x7F)</ID>
+    <ID>UnnecessaryParentheses:AudioUtil.kt:(bytes[1].toInt() and 0x7F)</ID>
+    <ID>UnnecessaryParentheses:AudioUtil.kt:(bytes[2].toInt() and 0x7F)</ID>
+    <ID>UnnecessaryParentheses:AudioUtil.kt:(dataInput.read() shl 24)</ID>
+    <ID>UnnecessaryParentheses:AudioUtil.kt:(frameHeader[4].toInt() and 0xFF)</ID>
+    <ID>UnnecessaryParentheses:AudioUtil.kt:(frameHeader[5].toInt() and 0xFF)</ID>
+    <ID>UnnecessaryParentheses:AudioUtil.kt:(frameHeader[6].toInt() and 0xFF)</ID>
+    <ID>UnnecessaryParentheses:AudioUtil.kt:(header and 0x80)</ID>
+    <ID>UnnecessaryParentheses:AudioUtil.kt:(lengthBytes[0].toInt() and 0xFF)</ID>
+    <ID>UnnecessaryParentheses:AudioUtil.kt:(lengthBytes[1].toInt() and 0xFF)</ID>
+    <ID>UnnecessaryParentheses:TwoFactorService.kt:((hmac[offset].toInt() and 0x7f) shl 24)</ID>
+    <ID>UnnecessaryParentheses:TwoFactorService.kt:(5 - bitsLeft)</ID>
+    <ID>UnnecessaryParentheses:TwoFactorService.kt:(bitsLeft - 5)</ID>
+    <ID>UnnecessaryParentheses:TwoFactorService.kt:(bitsLeft - 8)</ID>
+    <ID>UnnecessaryParentheses:TwoFactorService.kt:(buffer shl (5 - bitsLeft))</ID>
+    <ID>UnnecessaryParentheses:TwoFactorService.kt:(buffer shl 5)</ID>
+    <ID>UnnecessaryParentheses:TwoFactorService.kt:(buffer shl 8)</ID>
+    <ID>UnnecessaryParentheses:TwoFactorService.kt:(buffer shr (bitsLeft - 5))</ID>
+    <ID>UnnecessaryParentheses:TwoFactorService.kt:(buffer shr (bitsLeft - 8))</ID>
+    <ID>UnnecessaryParentheses:TwoFactorService.kt:(hmac[offset + 1].toInt() and 0xff)</ID>
+    <ID>UnnecessaryParentheses:TwoFactorService.kt:(hmac[offset + 2].toInt() and 0xff)</ID>
+    <ID>UnnecessaryParentheses:TwoFactorService.kt:(hmac[offset].toInt() and 0x7f)</ID>
+    <ID>UnnecessaryParentheses:UserService.kt:((Character.isWhitespace(codePoint) || Character.isSpaceChar(codePoint)) &amp;&amp; codePoint != ' '.code)</ID>
+    <ID>UnnecessaryParentheses:UserService.kt:(1.0 / 4)</ID>
+    <ID>UseIfInsteadOfWhen:CommunityService.kt:when { // word 不为空 &amp;&amp; 搜索已加入的社区，使用 memberSearchService joinSearch is JoinSearch.Joined -&gt; { memberSearchService.searchDocument( MemberDocumentSearch.CommunityMembers(uid = joinSearch.uid, objectName = word, fetch = primaryKeyFetch) ).mapPagingResultNotNull { searchResults -&gt; val communityIds = searchResults .map { it.objectId } database.community.getRawCommunities(ObjectListFetch.IdListFetch(communityIds)) } } // word 不为空 &amp;&amp; 不是搜索已加入（Unspecified），使用 communitySearchService else -&gt; communitySearchService.searchDocument( CommunityDocumentSearch.Keyword(word, fetch = primaryKeyFetch) ).mapPagingResultNotNull { list -&gt; database.community.getRawCommunities( ObjectListFetch.IdListFetch(list.map { it.id }) ) } }</ID>
+    <ID>UseIfInsteadOfWhen:RoomService.kt:when { // word 不为空 &amp;&amp; 搜索已加入的房间，使用 memberSearchService search is JoinSearch.Joined -&gt; { memberSearchService.searchDocument( MemberDocumentSearch.RoomMembers( uid = search.uid, objectName = word, communityId = communityId, fetch = primaryKeyFetch ) ).mapPagingResultNotNull { searchResults -&gt; val roomIds = searchResults.map { it.objectId } // 过滤出属于该社区的房间 database.room.getRawRooms(idListFetch(roomIds), uid) } } // word 不为空 &amp;&amp; 不是搜索已加入（Unspecified），使用 roomSearchService else -&gt; { val keyword = RoomDocumentSearch.Keyword(word, communityId, fetch = primaryKeyFetch) roomSearchService.searchDocument( keyword ).mapPagingResultNotNull { list -&gt; val roomIds = list.map { it.id } // 过滤出属于该社区的房间 database.room.getRawRooms(idListFetch(roomIds), uid) } } }</ID>
+    <ID>UseIfInsteadOfWhen:TitleService.kt:when (title.scopeType) { ObjectType.COMMUNITY -&gt; communityMap[title.scopeId] else -&gt; null }</ID>
+    <ID>UseIfInsteadOfWhen:TitleService.kt:when (title.scopeType) { ObjectType.ROOM -&gt; roomMap[title.scopeId] else -&gt; null }</ID>
+    <ID>UseIfInsteadOfWhen:TitleService.kt:when (title.scopeType) { ObjectType.TOPIC -&gt; topicMap[title.scopeId] else -&gt; null }</ID>
+    <ID>UseIfInsteadOfWhen:TitleService.kt:when (title.scopeType) { ObjectType.USER -&gt; userMap[title.scopeId] else -&gt; null }</ID>
+    <ID>UseIfInsteadOfWhen:UserSubscriptionService.kt:when (it.objectType) { ObjectType.TOPIC -&gt; { val topicInfo = getTopic(it.objectId, uid, true).getOrThrow() favoriteInfo.copy(extensions = UserSubscriptionInfo.Extensions(topicInfo)) } else -&gt; favoriteInfo }</ID>
+    <ID>UseLet:FileService.kt:if (index == null) { null } else { index to r.fullName }</ID>
+    <ID>WildcardImport:IndexBenchmark.kt:import org.openjdk.jmh.annotations.*</ID>
     <ID>Wrapping:CommunityService.kt:(</ID>
     <ID>Wrapping:FileService.kt:(</ID>
     <ID>Wrapping:FileService.kt:(A_FILE_DEFAULT_BUCKET, listOf( targetFullName ))</ID>
