@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi::class)
+
 package com.storyteller_f.a.panel
 
 import androidx.compose.animation.slideInHorizontally
@@ -27,6 +29,7 @@ import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.PermanentDrawerSheet
 import androidx.compose.material3.PermanentNavigationDrawer
 import androidx.compose.material3.Text
+import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
@@ -178,7 +181,7 @@ fun App() {
                     PanelDrawer(scope, drawerState, nav.newPanelNav(), permanent)
                 }
             ) {
-                MainPanelPage(backStack, nav.newPanelNav())
+                mainPanelPage(backStack, nav.newPanelNav())
             }
             GlobalDialog(controller)
         }
@@ -209,16 +212,16 @@ private fun PanelNavigationDrawer(
 }
 
 @Composable
-private fun MainPanelPage(
-    backStack: NavBackStack<NavKey>,
-    nav: PanelNav
-) {
+private fun mainPanelPage(backStack: NavBackStack<NavKey>, nav: PanelNav) {
+    val listDetailSceneStrategy = rememberListDetailSceneStrategy<NavKey>()
     NavDisplay(
-        backStack,
-        entryDecorators = listOf(
+        backStack = backStack,
+        entryDecorators =
+        listOf(
             rememberSaveableStateHolderNavEntryDecorator(),
-            rememberViewModelStoreNavEntryDecorator()
+            rememberViewModelStoreNavEntryDecorator(),
         ),
+        sceneStrategies = listOf(listDetailSceneStrategy),
         transitionSpec = {
             slideInHorizontally { it } togetherWith slideOutHorizontally { -it }
         },
@@ -228,7 +231,7 @@ private fun MainPanelPage(
         predictivePopTransitionSpec = {
             slideInHorizontally { -it } togetherWith slideOutHorizontally { it }
         },
-        entryProvider = rootEntryProvider(nav)
+        entryProvider = rootEntryProvider(nav),
     )
 }
 

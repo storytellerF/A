@@ -24,6 +24,7 @@
 
 - Worker execution records are stored in the backend `TaskRecords` table. The record type is `TaskRecordType`, and `processedId` points to the business object processed by the task.
 - Panel queries worker execution records through paginated `/admin/task-records`; it supports filtering by task type, and returns all records when no type is provided.
+- Panel list/detail routes use Navigation 3's `ListDetailSceneStrategy`: users, communities, rooms, topics, files, and titles render side by side on wide windows and fall back to the existing single-pane navigation on compact windows. Public and private room lists share the room detail scene. When the list pane is still the immediate parent, selecting another item replaces the current same-scene detail entry instead of growing the back stack.
 
 ## Topic Compose / Block Editing
 
