@@ -13,16 +13,13 @@ plugins {
 }
 
 val buildIosTarget = project.findProperty("target.ios") == "true"
-val buildWasmTarget = project.findProperty("target.wasm") == "true"
 kotlin {
-    if (buildWasmTarget) {
-        @OptIn(ExperimentalWasmDsl::class)
-        wasmJs {
-            browser {
-                testTask {
-                    useKarma {
-                        useFirefox()
-                    }
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmJs {
+        browser {
+            testTask {
+                useKarma {
+                    useFirefox()
                 }
             }
         }

@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.collectLatest
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
     ComposeViewport {
-        val httpUrl = wasmQueryParameter("appiumHttpUrl") ?: PanelConfig.SERVER_URL
+        val httpUrl = wasmQueryParameter("appiumHttpUrl") ?: getWasmPanelServerUrl()
         val panelUiViewModel = remember(httpUrl) { PanelUIViewModel(MainScope(), httpUrl) }
         LaunchedEffect(panelUiViewModel) {
             if (window.location.search.contains("appium=true")) {

@@ -8,15 +8,12 @@ plugins {
 }
 
 val buildIosTarget = project.findProperty("target.ios") == "true"
-val buildWasmTarget = project.findProperty("target.wasm") == "true"
 kotlin {
-    if (buildWasmTarget) {
-        @OptIn(ExperimentalWasmDsl::class)
-        wasmJs {
-            browser()
-            compilerOptions {
-                freeCompilerArgs.add("-Xwasm-attach-js-exception")
-            }
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmJs {
+        browser()
+        compilerOptions {
+            freeCompilerArgs.add("-Xwasm-attach-js-exception")
         }
     }
 

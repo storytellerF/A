@@ -4,10 +4,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.ComposeViewport
 import com.storyteller_f.a.app.App
-import com.storyteller_f.a.app.AppConfig
 import com.storyteller_f.a.app.IAccountInstance
 import com.storyteller_f.a.app.LocalUiViewModel
 import com.storyteller_f.a.app.UIViewModel
+import com.storyteller_f.a.app.getWasmServerUrl
+import com.storyteller_f.a.app.getWasmWsServerUrl
 import com.storyteller_f.a.client.compose_core.components.ConstPlayItem
 import com.storyteller_f.a.client.compose_core.components.LocalMediaPlaySession
 import com.storyteller_f.a.client.compose_core.components.LocalMediaPlayerService
@@ -22,8 +23,8 @@ import kotlinx.coroutines.flow.collectLatest
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
     ComposeViewport(document.body!!) {
-        val httpUrl = wasmQueryParameter("appiumHttpUrl") ?: AppConfig.SERVER_URL
-        val wsUrl = wasmQueryParameter("appiumWsUrl") ?: AppConfig.WS_SERVER_URL
+        val httpUrl = wasmQueryParameter("appiumHttpUrl") ?: getWasmServerUrl()
+        val wsUrl = wasmQueryParameter("appiumWsUrl") ?: getWasmWsServerUrl()
         val uiViewModel = remember(httpUrl, wsUrl) { UIViewModel(MainScope(), wsUrl, httpUrl) }
         LaunchedEffect(uiViewModel) {
             if (window.location.search.contains("appium=true")) {

@@ -2,12 +2,12 @@ plugins {
     alias(libs.plugins.kotlinJvm)
 }
 
-val prepareWasmDistribution by tasks.registering(Sync::class) {
-    dependsOn(":panel:composeApp:wasmJsBrowserDevelopmentWebpack")
-    from(project(":panel:composeApp").layout.buildDirectory.dir("kotlin-webpack/wasmJs/developmentExecutable"))
-    from(rootProject.layout.buildDirectory.file("wasm/packages/A-panel-composeApp/kotlin/index.html"))
-    from(rootProject.layout.buildDirectory.file("wasm/packages/A-panel-composeApp/kotlin/styles.css"))
-    from(rootProject.layout.buildDirectory.dir("wasm/packages/A-panel-composeApp/kotlin/composeResources")) {
+val prepareWasmDistribution = tasks.register<Sync>("prepareWasmDistribution") {
+    dependsOn(":panel:webApp:wasmJsBrowserDevelopmentWebpack")
+    from(project(":panel:webApp").layout.buildDirectory.dir("kotlin-webpack/wasmJs/developmentExecutable"))
+    from(rootProject.layout.buildDirectory.file("wasm/packages/panelWebApp/kotlin/index.html"))
+    from(rootProject.layout.buildDirectory.file("wasm/packages/panelWebApp/kotlin/styles.css"))
+    from(rootProject.layout.buildDirectory.dir("wasm/packages/panelWebApp/kotlin/composeResources")) {
         into("composeResources")
     }
     into(layout.buildDirectory.dir("wasmDistribution"))
