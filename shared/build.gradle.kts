@@ -9,21 +9,18 @@ plugins {
 }
 
 val buildIosTarget = project.findProperty("target.ios") == "true"
-val buildWasmTarget = project.findProperty("target.wasm") == "true"
 kotlin {
-    if (buildWasmTarget) {
-        @OptIn(ExperimentalWasmDsl::class)
-        wasmJs {
-            browser {
-                testTask {
-                    useKarma {
-                        useFirefox()
-                    }
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmJs {
+        browser {
+            testTask {
+                useKarma {
+                    useFirefox()
                 }
             }
-            compilerOptions {
-                freeCompilerArgs.add("-Xwasm-attach-js-exception")
-            }
+        }
+        compilerOptions {
+            freeCompilerArgs.add("-Xwasm-attach-js-exception")
         }
     }
 
@@ -107,18 +104,16 @@ kotlin {
                 dependsOn(noJvmMain)
             }
         }
-        if (buildWasmTarget) {
-            wasmJsMain.dependencies {
-                implementation(libs.cryptography.provider.webcrypto)
-                implementation(npm("@noble/hashes", "1.7.2"))
-                implementation(npm("ethereum-cryptography", "3.1.0"))
-                implementation(npm("keccak", "3.0.4"))
-                implementation(npm("@noble/curves", "1.0.0"))
-                implementation(npm("@noble/post-quantum", "0.6.1"))
-            }
-            wasmJsMain {
-                dependsOn(noJvmMain)
-            }
+        wasmJsMain.dependencies {
+            implementation(libs.cryptography.provider.webcrypto)
+            implementation(npm("@noble/hashes", "1.7.2"))
+            implementation(npm("ethereum-cryptography", "3.1.0"))
+            implementation(npm("keccak", "3.0.4"))
+            implementation(npm("@noble/curves", "1.0.0"))
+            implementation(npm("@noble/post-quantum", "0.6.1"))
+        }
+        wasmJsMain {
+            dependsOn(noJvmMain)
         }
     }
     compilerOptions {

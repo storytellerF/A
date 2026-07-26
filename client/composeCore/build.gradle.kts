@@ -11,7 +11,6 @@ plugins {
 }
 
 val buildIosTarget = project.findProperty("target.ios") == "true"
-val buildWasmTarget = project.findProperty("target.wasm") == "true"
 kotlin {
     android {
         namespace = "com.storyteller_f.a.client.compose_core"
@@ -34,11 +33,9 @@ kotlin {
 
     jvm()
 
-    if (buildWasmTarget) {
-        @OptIn(ExperimentalWasmDsl::class)
-        wasmJs {
-            browser()
-        }
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmJs {
+        browser()
     }
 
     @OptIn(ExperimentalKotlinGradlePluginApi::class)
@@ -143,11 +140,9 @@ kotlin {
             implementation(libs.connectivity.compose.http)
             implementation(libs.tika.core)
         }
-        if (buildWasmTarget) {
-            getByName("wasmJsMain") {
-                dependencies {
-                    implementation(libs.kotlinx.browser)
-                }
+        getByName("wasmJsMain") {
+            dependencies {
+                implementation(libs.kotlinx.browser)
             }
         }
         // jvm 与 android 共享：compose-pdf 的 PdfView actual、m3u-parser 的播放列表解析

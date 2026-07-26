@@ -9,7 +9,10 @@ import kotlin.test.Test
 
 class WasmAppiumTest : AppiumTestBase() {
     private val targetHelper = AppAppiumHelper()
-    private val platformHelper = WasmAppiumHelper(resolveWasmDistribution())
+    private val platformHelper = WasmAppiumHelper(
+        resolveWasmDistribution(),
+        By.cssSelector("[aria-label='avatar']"),
+    )
 
     @Test
     fun `test html semantics bridge mounts`() {
