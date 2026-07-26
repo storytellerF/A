@@ -2,6 +2,9 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>Filename:main.kt:com.storyteller_f.a.panel.main.kt</ID>
+    <ID>MultilineExpressionWrapping:main.kt:window.location.search .removePrefix("?") .split('&amp;') .firstOrNull { it.substringBefore('=') == name } ?.substringAfter('=', missingDelimiterValue = "") ?.takeIf(String::isNotEmpty)</ID>
+    <ID>PackageName:main.kt:package com.storyteller_f.a.panel</ID>
     <ID>PackageNaming:main.kt:package com.storyteller_f.a.panel</ID>
   </CurrentIssues>
 </SmellBaseline>

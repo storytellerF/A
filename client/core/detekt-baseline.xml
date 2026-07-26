@@ -29,9 +29,206 @@
     <ID>FunctionExpressionBody:UserPass.kt:RawUserPass${ return getAlgo(rawUSerPass.algo).verify(rawUSerPass.authKey.derPublicKey, signature, data) }</ID>
     <ID>FunctionExpressionBody:UserPass.kt:RawUserPass${ return runCatching { // Generate new key pair for child account val algo = getAlgo(childAlgoType) val (pemPrivateKey, pemPublicKey) = algo.generatePemKeyPair().getOrThrow() val derPrivateKey = algo.getDerPrivateKey(pemPrivateKey).getOrThrow() val derPublicKey = algo.getDerPublicKeyFromPem(pemPublicKey).getOrThrow() val (derEncryptionPrivateKey, derEncryptionPublicKey) = if (childAlgoType == AlgoType.DILITHIUM) { val encAlgo = (algo.encryptionAlgo as com.storyteller_f.shared.Type2Algo) val (encPriv, _) = encAlgo.generateEncryptionPemKeyPair().getOrThrow() encAlgo.getDerEncryptionPrivateKeyFromPemPrivateKey(encPriv).getOrThrow() to encAlgo.getDerEncryptionPublicKeyFromPemPrivateKey(encPriv).getOrThrow() } else { null to null } // Encrypt the child's private key with AES val (encryptedPrivateKey, aesKey) = encryptDataByAES(derPrivateKey).getOrThrow() val encryptedEncryptionPrivateKey = derEncryptionPrivateKey?.let { encryptDataByAES(it, aesKey).getOrThrow().toHexString() } // Get user's public key for encryption val authKey = rawUSerPass.authKey val parentAlgo = getAlgo(authKey.algo) val encryptedAesKey = if (authKey is AuthKey.Dilithium) { parentAlgo.encryptionAlgo.kemEncrypt(authKey.derEncryptionPublicKey, aesKey) } else { parentAlgo.encryptionAlgo.kemEncrypt(authKey.derPublicKey, aesKey) }.getOrThrow() CustomApi.Accounts.ChildAccounts.AddChildAccountRequest( encryptedPrivateKey = encryptedPrivateKey.toHexString(), encryptedAesKey = encryptedAesKey.toHexString(), derPublicKey = derPublicKey, algoType = childAlgoType, encryptedEncryptionPrivateKey = encryptedEncryptionPrivateKey, encryptionPublicKey = derEncryptionPublicKey ) } }</ID>
     <ID>FunctionExpressionBody:WebSocketClient.kt:WebSocketClientImpl${ return passHolder.currentUserPass != null &amp;&amp; sessionModel.userHandler.data.value == userInfo }</ID>
+    <ID>FunctionSignature:AppRequest.kt:@OptIn(ExperimentalStdlibApi::class) suspend fun DefaultClientWebSocketSession.sendMessage</ID>
+    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.abortChunkUpload</ID>
+    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.completeChunkUpload</ID>
+    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.copy</ID>
+    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.createTopic</ID>
+    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.deleteReaction</ID>
+    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.getChunkStatus</ID>
+    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.getCommunityRooms</ID>
+    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.getCommunityTopics</ID>
+    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.getFileList</ID>
+    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.getFileRefs</ID>
+    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.getMediaByName</ID>
+    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.getQuotaInfo: Result&lt;QuotaInfo&gt;</ID>
+    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.getReactions</ID>
+    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.getRecommendTopics</ID>
+    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.getRoomMembersPublicKeys</ID>
+    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.getRoomTopics</ID>
+    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.getSubscriptions</ID>
+    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.getTopicList</ID>
+    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.getTopicTopics</ID>
+    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.getUserCommunities</ID>
+    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.getUserJoinedCommunities</ID>
+    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.getUserRooms</ID>
+    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.getUserTopics</ID>
+    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.initChunkUpload</ID>
+    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.removeSubscription</ID>
+    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.searchAllMembers</ID>
+    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.searchCommunityMembers</ID>
+    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.searchCurrentUserRooms</ID>
+    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.searchFiles</ID>
+    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.searchRoomMembers</ID>
+    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.updateCommunityInfo</ID>
+    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.updateRoomInfo</ID>
+    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.upload</ID>
+    <ID>FunctionSignature:CustomSlf4jLogger.kt:CustomSlf4jLogger$override fun handleNormalizedLoggingCall</ID>
+    <ID>FunctionSignature:LoadingState.kt:suspend fun &lt;T&gt; LoadingHandler&lt;T&gt;.request</ID>
+    <ID>FunctionSignature:PanelRequest.kt:suspend fun PanelSessionManager.getPanelLogs</ID>
+    <ID>FunctionSignature:PanelRequest.kt:suspend fun PanelSessionManager.getTaskRecords</ID>
+    <ID>FunctionSignature:PanelRequest.kt:suspend fun PanelSessionManager.getTopicTopics</ID>
+    <ID>FunctionSignature:PanelRequest.kt:suspend fun PanelSessionManager.getUserReceivedTitles</ID>
+    <ID>FunctionSignature:PanelRequest.kt:suspend fun PanelSessionManager.updateUserStatus</ID>
+    <ID>FunctionSignature:SessionManager.kt:@OptIn(ExperimentalStdlibApi::class) suspend fun processEncryptedTopic: List&lt;TopicInfo&gt;</ID>
+    <ID>FunctionSignature:SessionManager.kt:suspend fun PanelSessionManager.panelSignIn: PanelAccountInfo</ID>
+    <ID>FunctionSignature:SessionManager.kt:suspend fun PanelSessionManager.panelSignUp: PanelAccountInfo</ID>
+    <ID>FunctionSignature:SessionManager.kt:suspend fun UserSessionManager.userSignIn: UserInfo</ID>
+    <ID>FunctionSignature:SessionManager.kt:suspend fun UserSessionManager.userSignUp: UserInfo</ID>
+    <ID>FunctionSignature:SessionManager.kt:suspend fun prepareSignInFromPrivateKey: Result&lt;PreparedSignInParam&gt;</ID>
+    <ID>FunctionSignature:SessionManagerKt.kt:suspend fun PanelSessionManager.getPanelUserSignInPass: SignResult&lt;PanelAccountInfo&gt;</ID>
+    <ID>FunctionSignature:SessionManagerKt.kt:suspend fun PanelSessionManager.getPanelUserSignUpPass: SignResult&lt;PanelAccountInfo&gt;</ID>
+    <ID>FunctionSignature:SessionManagerKt.kt:suspend fun UserSessionManager.getUserSignInPass: SignResult&lt;UserInfo&gt;</ID>
+    <ID>FunctionSignature:SessionManagerKt.kt:suspend fun UserSessionManager.getUserSignUpPass: SignResult&lt;UserInfo&gt;</ID>
+    <ID>FunctionSignature:Test.kt:CountingUserPass$override suspend fun encryptChildAccount: Result&lt;com.storyteller_f.a.api.CustomApi.Accounts.ChildAccounts.AddChildAccountRequest&gt;</ID>
+    <ID>FunctionSignature:UserPass.kt:RawUserPass$@OptIn(ExperimentalEncodingApi::class) override suspend fun encryptChildAccount: Result&lt;CustomApi.Accounts.ChildAccounts.AddChildAccountRequest&gt;</ID>
+    <ID>FunctionSignature:UserPass.kt:UserPass$suspend fun encryptChildAccount: Result&lt;CustomApi.Accounts.ChildAccounts.AddChildAccountRequest&gt;</ID>
     <ID>ImportOrdering:SessionManagerKt.kt:import com.storyteller_f.a.api.SignInBody import com.storyteller_f.a.api.SignInResponse import com.storyteller_f.a.api.SignUpBody import kotlinx.coroutines.CoroutineScope import kotlinx.coroutines.Job import kotlinx.coroutines.cancelAndJoin import kotlinx.coroutines.launch import com.storyteller_f.shared.model.PanelAccountInfo import com.storyteller_f.shared.model.UserInfo import com.storyteller_f.shared.utils.mapResult</ID>
     <ID>Indentation:SessionManagerKt.kt: </ID>
     <ID>MissingPackageDeclaration:Test.kt:.Test.kt</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:Headers.build { append(HttpHeaders.ContentType, data.contentType) append(HttpHeaders.ContentDisposition, "filename=\"${data.name}\"") }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:if (isPrivate) { buildEncryptedTopicContent(input, keyData) } else { TopicContent.Plain(input) }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { CustomApi.Accounts.ChildAccounts.get(CustomApi.Accounts.ChildAccounts.ChildAccountQuery(nextId, size)) }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { CustomApi.Accounts.getData() }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { CustomApi.Accounts.signIn(body) { contentType(ContentType.Application.Json) } }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { CustomApi.Accounts.signInTotp(TotpCodeBody(code)) { contentType(ContentType.Application.Json) } }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { CustomApi.Accounts.signOut(Unit) {} }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { CustomApi.Accounts.signUp(body) { contentType(ContentType.Application.Json) } }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { CustomApi.Communities.Aid.get(CustomApi.Communities.Aid.CommunityAidQuery(aid, currentIsAlreadySignUp)) }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { CustomApi.Communities.Id.Members.join(CommonPath(id), Unit) {} }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { CustomApi.Communities.Id.Members.leave(CommonPath(communityId), Unit) {} }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { CustomApi.Communities.Id.get(CustomApi.Communities.Id.CommunityIdQuery(currentIsAlreadySignUp), CommonPath(id)) }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { CustomApi.Communities.add(newCommunity) { contentType(ContentType.Application.Json) } }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { CustomApi.Files.Id.extractAlbum(CommonPath(mediaId), Unit) {} }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { CustomApi.Files.Id.get(CommonPath(fileId)) }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { CustomApi.Rooms.Aid.get(CustomApi.Rooms.Aid.RoomAidQuery(aid, currentIsAlreadySignUp)) }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { CustomApi.Rooms.Id.Members.join(CommonPath(id), Unit) { contentType(ContentType.Application.Json) } }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { CustomApi.Rooms.Id.Members.leave(CommonPath(roomId), Unit) {} }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { CustomApi.Rooms.Id.get(CustomApi.Rooms.Id.RoomIdQuery(currentIsAlreadySignUp), CommonPath(id)) }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { CustomApi.Rooms.add(newRoom) { contentType(ContentType.Application.Json) } }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { CustomApi.Titles.add(newTitle) { contentType(ContentType.Application.Json) } }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { CustomApi.Topics.Aid.get(CustomApi.Topics.Aid.TopicAidQuery(aid, currentIsAlreadySignUp)) }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { CustomApi.Topics.Id.Reactions.add(CommonPath(topicId), NewReaction(emoji)) { contentType(ContentType.Application.Json) } }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { CustomApi.Topics.Id.createSnapshot(CommonPath(topicId), Unit) { } }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { CustomApi.Topics.Id.get(CustomApi.Topics.Id.TopicIdQuery(currentIsAlreadySignUp), CommonPath(id)) }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { CustomApi.Topics.Id.pin(CommonPath(topicId), Unit) { contentType(ContentType.Application.Json) } }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { CustomApi.Topics.Id.unpin(CommonPath(topicId), Unit) { } }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { CustomApi.Users.Aid.get(CustomApi.Users.Aid.UserAidQuery(aid)) }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { CustomApi.Users.Comments.get(query) }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { CustomApi.Users.Devices.add(NewDevice(endpointUrl)) { contentType(ContentType.Application.Json) } }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { CustomApi.Users.Favorites.get(paginationQuery) }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { CustomApi.Users.Id.Titles.get( CustomApi.Users.Id.Titles.TitleQuery(searchType, type, scopeId, status, nextId, size), CommonPath(uid) ) }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { CustomApi.Users.Id.get(CommonPath(id)) }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { CustomApi.Users.ReactionRecords.get(query) }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { CustomApi.Users.TwoFactor.Totp.enable(TotpCodeBody(code)) { contentType(ContentType.Application.Json) } }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { CustomApi.Users.TwoFactor.Totp.setup(Unit) { contentType(ContentType.Application.Json) } }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { CustomApi.Users.TwoFactor.disable(Unit) { contentType(ContentType.Application.Json) } }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { CustomApi.Users.TwoFactor.get() }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { CustomApi.Users.TwoFactor.recoveryCodes(Unit) { contentType(ContentType.Application.Json) } }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { CustomApi.Users.Unread.hasUnreadRooms() }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { CustomApi.Users.overview() }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { CustomApi.Users.update(newInfo) { contentType(ContentType.Application.Json) } }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { val commonPath = CommonPath(newFavorite.objectId) when (newFavorite.objectType) { USER -&gt; CustomApi.Users.Id.Favorite.add(commonPath, Unit) {} TOPIC -&gt; CustomApi.Topics.Id.Favorite.add(commonPath, Unit) {} COMMUNITY -&gt; CustomApi.Communities.Id.Favorite.add(commonPath, Unit) {} ROOM -&gt; CustomApi.Rooms.Id.Favorite.add(commonPath, Unit) {} ObjectType.TITLE -&gt; CustomApi.Titles.Id.Favorite.add(commonPath, Unit) {} ObjectType.FILE -&gt; CustomApi.Files.Id.Favorite.add(commonPath, Unit) {} else -&gt; throw IllegalArgumentException("Unsupported object type for favorite") } }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { val commonPath = CommonPath(newFavorite.objectId) when (newFavorite.objectType) { USER -&gt; CustomApi.Users.Id.Subscription.add(commonPath, Unit) {} TOPIC -&gt; CustomApi.Topics.Id.Subscription.add(commonPath, Unit) {} COMMUNITY -&gt; CustomApi.Communities.Id.Subscription.add(commonPath, Unit) {} ROOM -&gt; CustomApi.Rooms.Id.Subscription.add(commonPath, Unit) {} ObjectType.TITLE -&gt; CustomApi.Titles.Id.Subscription.add(commonPath, Unit) {} ObjectType.FILE -&gt; CustomApi.Files.Id.Subscription.add(commonPath, Unit) {} else -&gt; throw IllegalArgumentException("Unsupported object type for subscription") } }</ID>
+    <ID>MultilineExpressionWrapping:AppRequest.kt:serviceCatching { val commonPath = CommonPath(objectId) when (objectType) { USER -&gt; CustomApi.Users.Id.Favorite.delete(commonPath, Unit) {} TOPIC -&gt; CustomApi.Topics.Id.Favorite.delete(commonPath, Unit) {} COMMUNITY -&gt; CustomApi.Communities.Id.Favorite.delete(commonPath, Unit) {} ROOM -&gt; CustomApi.Rooms.Id.Favorite.delete(commonPath, Unit) {} ObjectType.TITLE -&gt; CustomApi.Titles.Id.Favorite.delete(commonPath, Unit) {} ObjectType.FILE -&gt; CustomApi.Files.Id.Favorite.delete(commonPath, Unit) {} else -&gt; throw IllegalArgumentException("Unsupported object type for favorite") } }</ID>
+    <ID>MultilineExpressionWrapping:CustomSlf4jLogger.kt:CustomSlf4jLogger$when (level) { Level.ERROR -&gt; LogLevel.ERROR Level.WARN -&gt; LogLevel.WARNING Level.INFO -&gt; LogLevel.INFO Level.DEBUG -&gt; LogLevel.DEBUG Level.TRACE -&gt; LogLevel.VERBOSE }</ID>
+    <ID>MultilineExpressionWrapping:HttpClient.android.kt:Interceptor { chain -&gt; val originalRequest = chain.request() // 创建一个新的请求，移除特定头 val modifiedRequest = originalRequest.newBuilder() .removeHeader("Accept-Charset") // 移除 Accept-Charset 头 .build() // 继续请求链 chain.proceed(modifiedRequest) }</ID>
+    <ID>MultilineExpressionWrapping:HttpClient.android.kt:OkHttpClient.Builder() .pingInterval(20, TimeUnit.SECONDS) .build()</ID>
+    <ID>MultilineExpressionWrapping:HttpClient.android.kt:originalRequest.newBuilder() .removeHeader("Accept-Charset") // 移除 Accept-Charset 头 .build()</ID>
+    <ID>MultilineExpressionWrapping:HttpClient.jvm.kt:Interceptor { chain -&gt; val originalRequest = chain.request() // 创建一个新的请求，移除特定头 val modifiedRequest = originalRequest.newBuilder() .removeHeader("Accept-Charset") // 移除 Accept-Charset 头 .build() // 继续请求链 chain.proceed(modifiedRequest) }</ID>
+    <ID>MultilineExpressionWrapping:HttpClient.jvm.kt:OkHttpClient.Builder() .pingInterval(20, TimeUnit.SECONDS) .build()</ID>
+    <ID>MultilineExpressionWrapping:HttpClient.jvm.kt:originalRequest.newBuilder() .removeHeader("Accept-Charset") // 移除 Accept-Charset 头 .build()</ID>
+    <ID>MultilineExpressionWrapping:HttpClient.kt:Json { ignoreUnknownKeys = true }</ID>
+    <ID>MultilineExpressionWrapping:HttpClient.kt:buildUrl { takeFrom(wsServerUrl) appendPathSegments("link") }.toString()</ID>
+    <ID>MultilineExpressionWrapping:PanelRequest.kt:serviceCatching { AdminApi.Communities.Id.Members.get(query, CommonPath(communityId)) }</ID>
+    <ID>MultilineExpressionWrapping:PanelRequest.kt:serviceCatching { AdminApi.Communities.Id.Status.update(CommonPath(id), body) { contentType(ContentType.Application.Json) } }</ID>
+    <ID>MultilineExpressionWrapping:PanelRequest.kt:serviceCatching { AdminApi.Communities.Id.get(CommonPath(id)) }</ID>
+    <ID>MultilineExpressionWrapping:PanelRequest.kt:serviceCatching { AdminApi.Communities.get(query) }</ID>
+    <ID>MultilineExpressionWrapping:PanelRequest.kt:serviceCatching { AdminApi.Files.Id.Refs.get(query, CommonPath(id)) }</ID>
+    <ID>MultilineExpressionWrapping:PanelRequest.kt:serviceCatching { AdminApi.Files.Id.Status.update(CommonPath(id), body) { contentType(ContentType.Application.Json) } }</ID>
+    <ID>MultilineExpressionWrapping:PanelRequest.kt:serviceCatching { AdminApi.Files.Id.get(CommonPath(id)) }</ID>
+    <ID>MultilineExpressionWrapping:PanelRequest.kt:serviceCatching { AdminApi.Files.get(query) }</ID>
+    <ID>MultilineExpressionWrapping:PanelRequest.kt:serviceCatching { AdminApi.Files.search(query) }</ID>
+    <ID>MultilineExpressionWrapping:PanelRequest.kt:serviceCatching { AdminApi.Rooms.Id.Files.get(query, CommonPath(roomId)) }</ID>
+    <ID>MultilineExpressionWrapping:PanelRequest.kt:serviceCatching { AdminApi.Rooms.Id.Members.get(query, CommonPath(roomId)) }</ID>
+    <ID>MultilineExpressionWrapping:PanelRequest.kt:serviceCatching { AdminApi.Rooms.Id.Status.update(CommonPath(id), body) { contentType(ContentType.Application.Json) } }</ID>
+    <ID>MultilineExpressionWrapping:PanelRequest.kt:serviceCatching { AdminApi.Rooms.Id.get(CommonPath(id)) }</ID>
+    <ID>MultilineExpressionWrapping:PanelRequest.kt:serviceCatching { AdminApi.Rooms.getPrivate(query) }</ID>
+    <ID>MultilineExpressionWrapping:PanelRequest.kt:serviceCatching { AdminApi.Rooms.getPublic(query) }</ID>
+    <ID>MultilineExpressionWrapping:PanelRequest.kt:serviceCatching { AdminApi.Titles.Id.Status.update(CommonPath(id), body) { contentType(ContentType.Application.Json) } }</ID>
+    <ID>MultilineExpressionWrapping:PanelRequest.kt:serviceCatching { AdminApi.Titles.Id.get(CommonPath(id)) }</ID>
+    <ID>MultilineExpressionWrapping:PanelRequest.kt:serviceCatching { AdminApi.Titles.get(query) }</ID>
+    <ID>MultilineExpressionWrapping:PanelRequest.kt:serviceCatching { AdminApi.Topics.Id.Status.update(CommonPath(id), body) { contentType(ContentType.Application.Json) } }</ID>
+    <ID>MultilineExpressionWrapping:PanelRequest.kt:serviceCatching { AdminApi.Topics.Id.get(CommonPath(id)) }</ID>
+    <ID>MultilineExpressionWrapping:PanelRequest.kt:serviceCatching { AdminApi.Topics.get(query) }</ID>
+    <ID>MultilineExpressionWrapping:PanelRequest.kt:serviceCatching { AdminApi.Users.Id.Comments.get(query, CommonPath(uid)) }</ID>
+    <ID>MultilineExpressionWrapping:PanelRequest.kt:serviceCatching { AdminApi.Users.Id.Favorites.get(query, CommonPath(uid)) }</ID>
+    <ID>MultilineExpressionWrapping:PanelRequest.kt:serviceCatching { AdminApi.Users.Id.Files.get(query, CommonPath(uid)) }</ID>
+    <ID>MultilineExpressionWrapping:PanelRequest.kt:serviceCatching { AdminApi.Users.Id.Logs.get(query, CommonPath(uid)) }</ID>
+    <ID>MultilineExpressionWrapping:PanelRequest.kt:serviceCatching { AdminApi.Users.Id.Overview.get(CommonPath(uid)) }</ID>
+    <ID>MultilineExpressionWrapping:PanelRequest.kt:serviceCatching { AdminApi.Users.Id.Reactions.get(query, CommonPath(uid)) }</ID>
+    <ID>MultilineExpressionWrapping:PanelRequest.kt:serviceCatching { AdminApi.Users.Id.Rooms.get(query, CommonPath(uid)) }</ID>
+    <ID>MultilineExpressionWrapping:PanelRequest.kt:serviceCatching { AdminApi.Users.Id.Subscriptions.get(query, CommonPath(uid)) }</ID>
+    <ID>MultilineExpressionWrapping:PanelRequest.kt:serviceCatching { AdminApi.Users.Id.UploadRecords.get(query, CommonPath(uid)) }</ID>
+    <ID>MultilineExpressionWrapping:PanelRequest.kt:serviceCatching { AdminApi.Users.Id.get(CommonPath(uid)) }</ID>
+    <ID>MultilineExpressionWrapping:PanelRequest.kt:serviceCatching { AdminApi.Users.add(newUser) { contentType(ContentType.Application.Json) } }</ID>
+    <ID>MultilineExpressionWrapping:PanelRequest.kt:serviceCatching { AdminApi.Users.get(query) }</ID>
+    <ID>MultilineExpressionWrapping:PanelRequest.kt:serviceCatching { AdminApi.getData() }</ID>
+    <ID>MultilineExpressionWrapping:PanelRequest.kt:serviceCatching { AdminApi.overview() }</ID>
+    <ID>MultilineExpressionWrapping:PanelRequest.kt:serviceCatching { AdminApi.signIn(signInPack) { contentType(ContentType.Application.Json) } }</ID>
+    <ID>MultilineExpressionWrapping:PanelRequest.kt:serviceCatching { AdminApi.signOut(Unit) { contentType(ContentType.Application.Json) } }</ID>
+    <ID>MultilineExpressionWrapping:PanelRequest.kt:serviceCatching { AdminApi.signUp(newUser) { contentType(ContentType.Application.Json) } }</ID>
+    <ID>MultilineExpressionWrapping:SessionManager.kt:RawUserPass( RawUserPassInfo( signResult.address, signResult.authKey, ) )</ID>
+    <ID>MultilineExpressionWrapping:SessionManager.kt:WebSocketClientImpl( model, passHolder, { userInfo, sig -&gt; client.webSocketSession(webSocketUrl) { addRequestHeadersFromInfo(userInfo, sig) } }, ) { frame, session -&gt; onReceiveFrame(frame, model, session) }</ID>
+    <ID>MultilineExpressionWrapping:SessionManager.kt:extractMarkdownMediaLink(it).mapNotNull { mediaName -&gt; manager.getMediaByName(mediaName, topicInfo.rootId, topicInfo.rootType) .getOrNull() }</ID>
+    <ID>MultilineExpressionWrapping:SessionManager.kt:key.decrypt( content.encrypted.hexToByteArray(), s.hexToByteArray() ).fold(onSuccess = { val mediaInfos = extractMarkdownMediaLink(it).mapNotNull { mediaName -&gt; manager.getMediaByName(mediaName, topicInfo.rootId, topicInfo.rootType) .getOrNull() } TopicContent.Plain(it, mediaInfos) }, onFailure = { TopicContent.DecryptFailed(it.message.toString()) })</ID>
+    <ID>MultilineExpressionWrapping:SessionManagerKt.kt:c.launch { webSocketClient.connectWebSocket() }</ID>
+    <ID>MultilineExpressionWrapping:SingleFlightCustomAuthPlugin.kt:AuthRefreshGate$mutex.withLock { current?.let { AuthRefreshTurn.Waiter(it) } ?: CompletableDeferred&lt;Boolean&gt;().also { current = it }.let { AuthRefreshTurn.Leader(it) } }</ID>
+    <ID>MultilineExpressionWrapping:SingleFlightCustomAuthPlugin.kt:createClientPlugin( "SingleFlightCustomAuthPlugin", ::SingleFlightCustomAuthConfig ) { val addRequestHeaders = pluginConfig.addRequestHeaders val refreshSignature = pluginConfig.refreshSignature val refreshGate = AuthRefreshGate() on(Send) { originalRequest -&gt; val origin = proceed(originalRequest) if (origin.response.status != HttpStatusCode.Unauthorized) return@on origin if (origin.request.attributes.contains(CustomAuthRetryAttribute)) return@on origin val challengeData = origin.response.customChallengeData() ?: return@on origin when (val turn = refreshGate.enter()) { is AuthRefreshTurn.Leader -&gt; { var success = false try { if (!refreshSignature(challengeData)) { Napier.i(tag = "SingleFlight") { "Leader failed because refresh signature failed" } return@on origin } val retriedCall = executeWithCustomAuth(originalRequest, addRequestHeaders) if (retriedCall.response.status == HttpStatusCode.Unauthorized) { Napier.i(tag = "SingleFlight") { "Leader retry failed" } return@on retriedCall } success = true retriedCall } finally { refreshGate.complete(turn, success) } } is AuthRefreshTurn.Waiter -&gt; { if (!turn.result.await()) { Napier.i(tag = "SingleFlight") { "Waiter failed because of Leader failed" } return@on origin } executeWithCustomAuth(originalRequest, addRequestHeaders) } } } }</ID>
+    <ID>MultilineExpressionWrapping:Test.kt:Test$List(3) { async { client.get("https://example.test/resource/$it").bodyAsText() } }.awaitAll()</ID>
+    <ID>MultilineExpressionWrapping:Test.kt:Test$SimplePassHolder().also { it.updateState(ClientSessionState.Success(userPass)) }</ID>
+    <ID>MultilineExpressionWrapping:Test.kt:Test$UserSessionModel().also { it.updateUser(UserInfo.EMPTY) }</ID>
+    <ID>MultilineExpressionWrapping:Test.kt:Test$buildSingleFlightTestClient(manager, passHolder) { request -&gt; handleSingleFlightRequest(request, lock, retryCookies) { initial401Count += 1 if (initial401Count == 3) { initialResponsesReleased.complete(Unit) } } }</ID>
+    <ID>MultilineExpressionWrapping:Test.kt:Test$headersOf( HttpHeaders.WWWAuthenticate to listOf("Custom auth-data"), HttpHeaders.SetCookie to listOf("user_session=pending; Path=/") )</ID>
+    <ID>MultilineExpressionWrapping:Test.kt:Test$runTest { val initialResponsesReleased = CompletableDeferred&lt;Unit&gt;() val lock = Mutex() var initial401Count = 0 val retryCookies = mutableListOf&lt;String?&gt;() val userPass = CountingUserPass(initialResponsesReleased) val passHolder = SimplePassHolder().also { it.updateState(ClientSessionState.Success(userPass)) } val manager = UserSessionModel().also { it.updateUser(UserInfo.EMPTY) } val client = buildSingleFlightTestClient(manager, passHolder) { request -&gt; handleSingleFlightRequest(request, lock, retryCookies) { initial401Count += 1 if (initial401Count == 3) { initialResponsesReleased.complete(Unit) } } } val responses = List(3) { async { client.get("https://example.test/resource/$it").bodyAsText() } }.awaitAll() assertEquals(listOf("ok", "ok", "ok"), responses) assertEquals(1, userPass.signatureCount) assertEquals(3, retryCookies.size) assertEquals("user_session=success", retryCookies.last()) }</ID>
+    <ID>MultilineExpressionWrapping:UserPass.kt:RawUserPass$derEncryptionPrivateKey?.let { encryptDataByAES(it, aesKey).getOrThrow().toHexString() }</ID>
+    <ID>MultilineExpressionWrapping:UserPass.kt:RawUserPass$encryptedEncryptionPrivateKey?.let { enc -&gt; decryptDataByAES(enc.hexToByteArray(), it).getOrThrow() }</ID>
+    <ID>MultilineExpressionWrapping:UserPass.kt:RawUserPass$if (authKey is AuthKey.Dilithium) { parentAlgo.encryptionAlgo.kemEncrypt(authKey.derEncryptionPublicKey, aesKey) } else { parentAlgo.encryptionAlgo.kemEncrypt(authKey.derPublicKey, aesKey) }.getOrThrow()</ID>
+    <ID>MultilineExpressionWrapping:UserPass.kt:RawUserPass$if (childAlgoType == AlgoType.DILITHIUM) { val encAlgo = (algo.encryptionAlgo as com.storyteller_f.shared.Type2Algo) val (encPriv, _) = encAlgo.generateEncryptionPemKeyPair().getOrThrow() encAlgo.getDerEncryptionPrivateKeyFromPemPrivateKey(encPriv).getOrThrow() to encAlgo.getDerEncryptionPublicKeyFromPemPrivateKey(encPriv).getOrThrow() } else { null to null }</ID>
+    <ID>MultilineExpressionWrapping:UserPass.kt:RawUserPass$if (rawUSerPass.authKey is AuthKey.Dilithium) { rawUSerPass.authKey.derEncryptionPrivateKey to getAlgo(rawUSerPass.algo) } else { rawUSerPass.authKey.derPrivateKey to getAlgo(rawUSerPass.algo) }</ID>
+    <ID>MultilineExpressionWrapping:WebSocketClient.kt:WebSocketClientImpl$launch { var connectionJob: Job? = null try { for (userInfo in requests) { connectionJob?.cancelAndJoin() connectionJob = null if (userInfo == null) { connectionHandler.data.value?.cancel(CancellationException("User sign out")) } else { connectionJob = launch { while (isActive &amp;&amp; canConnectWebSocket(userInfo)) { connectWebSocketIfNeed(userInfo) delay(5000.milliseconds) } } } } } finally { connectionJob?.cancelAndJoin() } }</ID>
+    <ID>MultilineExpressionWrapping:WebSocketClient.kt:WebSocketClientImpl$launch { while (isActive &amp;&amp; canConnectWebSocket(userInfo)) { connectWebSocketIfNeed(userInfo) delay(5000.milliseconds) } }</ID>
+    <ID>NoEmptyFirstLineInClassBody:SessionManager.kt:SimpleSessionModel${ // 用于header 和server 协商被签名的数据 private var currentStamp = 0L override val uid: PrimaryKey? get() = userHandler.data.value?.id // currentData 是本地使用的，但是还是需要依据server 的为准 override var dataAndSignature: Pair&lt;String, String?&gt;? = null override val userHandler = FixedLoadingHandler&lt;U?&gt;() @OptIn(ExperimentalTime::class) override fun generateData(): String { val (nowSeconds, isValid) = checkTsIsValid(currentStamp, 60 * 3) return if (isValid) { currentStamp } else { // 超时，需要替换新的 currentStamp = nowSeconds nowSeconds }.toString() } override fun updateSignature(data: String, signature: String?) { dataAndSignature = data to signature } override fun updateUser(u: U) { userHandler.done(u) } override fun clear() { userHandler.done(null) dataAndSignature = null } }</ID>
+    <ID>NoWildcardImports:CustomClientAuthProvider.kt:import io.ktor.client.request.*</ID>
+    <ID>NoWildcardImports:CustomClientAuthProvider.kt:import io.ktor.http.*</ID>
+    <ID>NoWildcardImports:HttpClient.android.kt:import io.ktor.client.*</ID>
+    <ID>NoWildcardImports:HttpClient.android.kt:import io.ktor.client.engine.okhttp.*</ID>
+    <ID>NoWildcardImports:HttpClient.ios.kt:import io.ktor.client.*</ID>
+    <ID>NoWildcardImports:HttpClient.ios.kt:import io.ktor.client.engine.darwin.*</ID>
+    <ID>NoWildcardImports:HttpClient.ios.kt:import io.ktor.client.plugins.contentnegotiation.*</ID>
+    <ID>NoWildcardImports:HttpClient.ios.kt:import io.ktor.serialization.kotlinx.json.*</ID>
+    <ID>NoWildcardImports:HttpClient.jvm.kt:import io.ktor.client.*</ID>
+    <ID>NoWildcardImports:HttpClient.jvm.kt:import io.ktor.client.engine.okhttp.*</ID>
+    <ID>NoWildcardImports:HttpClient.wasmJs.kt:import io.ktor.client.*</ID>
+    <ID>NoWildcardImports:WebSocketClient.kt:import io.ktor.client.plugins.websocket.*</ID>
+    <ID>NoWildcardImports:WebSocketClient.kt:import kotlinx.coroutines.*</ID>
+    <ID>NoWildcardImports:WebSocketClient.kt:import kotlinx.coroutines.flow.*</ID>
+    <ID>PackageName:AppRequest.kt:package com.storyteller_f.a.client.core</ID>
+    <ID>PackageName:AuthKey.kt:package com.storyteller_f.a.client.core</ID>
+    <ID>PackageName:CustomClientAuthProvider.kt:package com.storyteller_f.a.client.core</ID>
+    <ID>PackageName:CustomSlf4jLogger.kt:package com.storyteller_f.a.client.core</ID>
+    <ID>PackageName:HttpClient.android.kt:package com.storyteller_f.a.client.core</ID>
+    <ID>PackageName:HttpClient.ios.kt:package com.storyteller_f.a.client_lib</ID>
+    <ID>PackageName:HttpClient.jvm.kt:package com.storyteller_f.a.client.core</ID>
+    <ID>PackageName:HttpClient.kt:package com.storyteller_f.a.client.core</ID>
+    <ID>PackageName:HttpClient.wasmJs.kt:package com.storyteller_f.a.client.core</ID>
+    <ID>PackageName:LoadingState.kt:package com.storyteller_f.a.client.core</ID>
+    <ID>PackageName:PanelRequest.kt:package com.storyteller_f.a.client.core</ID>
+    <ID>PackageName:SessionManager.kt:package com.storyteller_f.a.client.core</ID>
+    <ID>PackageName:SessionManagerKt.kt:package com.storyteller_f.a.client.core</ID>
+    <ID>PackageName:SingleFlightCustomAuthPlugin.kt:package com.storyteller_f.a.client.core</ID>
+    <ID>PackageName:UserPass.kt:package com.storyteller_f.a.client.core</ID>
+    <ID>PackageName:WebSocketClient.kt:package com.storyteller_f.a.client.core</ID>
     <ID>PackageNaming:AppRequest.kt:package com.storyteller_f.a.client.core</ID>
     <ID>PackageNaming:AuthKey.kt:package com.storyteller_f.a.client.core</ID>
     <ID>PackageNaming:CustomClientAuthProvider.kt:package com.storyteller_f.a.client.core</ID>
@@ -48,5 +245,81 @@
     <ID>PackageNaming:SingleFlightCustomAuthPlugin.kt:package com.storyteller_f.a.client.core</ID>
     <ID>PackageNaming:UserPass.kt:package com.storyteller_f.a.client.core</ID>
     <ID>PackageNaming:WebSocketClient.kt:package com.storyteller_f.a.client.core</ID>
+    <ID>TrailingCommaOnCallSite:AppRequest.kt:( CommonPath(recordId), Unit )</ID>
+    <ID>TrailingCommaOnCallSite:AppRequest.kt:( CustomApi.Communities.CommunitySearchQuery( joinStatusSearch, word, target, hasPosterSearch, nextCommunityId, size, ) )</ID>
+    <ID>TrailingCommaOnCallSite:AppRequest.kt:( CustomApi.Communities.Id.Rooms.CommunityRoomSearchQuery(word, joinStatusSearch, nextRoomId, size), CommonPath(communityId) )</ID>
+    <ID>TrailingCommaOnCallSite:AppRequest.kt:( CustomApi.Files.Chunks.InitBody( objectTuple.objectId, objectTuple.objectType, name, size, contentType.contentType, chunkSize, sha256, ) )</ID>
+    <ID>TrailingCommaOnCallSite:AppRequest.kt:( CustomApi.Files.Chunks.UploadQuery(hash), CustomApi.Files.Chunks.UploadPath(recordId, index), Unit )</ID>
+    <ID>TrailingCommaOnCallSite:AppRequest.kt:( CustomApi.Files.UploadQuery( objectTuple.objectId, objectTuple.objectType, data.sha256 ), Unit )</ID>
+    <ID>TrailingCommaOnCallSite:AppRequest.kt:( CustomApi.Topics.Communities.Id.CommunityTopicSearchQuery( word, nextTopicId, prePageToken, size, fillHasCommented ), CommonPath(communityId) )</ID>
+    <ID>TrailingCommaOnCallSite:AppRequest.kt:( CustomApi.Topics.RecommendQuery( currentIsAlreadySignUp, paginationQuery.nextPageToken, paginationQuery.size, paginationQuery.prePageToken ) )</ID>
+    <ID>TrailingCommaOnCallSite:AppRequest.kt:( CustomApi.Topics.Rooms.Id.RoomTopicSearchQuery( word, nextTopicId, prePageToken, size, fillHasCommented ), CommonPath(roomId) )</ID>
+    <ID>TrailingCommaOnCallSite:AppRequest.kt:( CustomApi.Topics.Users.Id.UserTopicSearchQuery( word, nextTopicId, prePageToken, size, fillHasCommented ), CommonPath(userId) )</ID>
+    <ID>TrailingCommaOnCallSite:AppRequest.kt:( CustomApi.Users.Id.Titles.TitleQuery(searchType, type, scopeId, status, nextId, size), CommonPath(uid) )</ID>
+    <ID>TrailingCommaOnCallSite:AppRequest.kt:( CustomApi.Users.JoinedRooms.UserRoomsSearchQuery(word, nextRoomId, size) )</ID>
+    <ID>TrailingCommaOnCallSite:AppRequest.kt:( MultiPartFormDataContent( formData { append("description", "a_file") appendInput("file", Headers.build { append(HttpHeaders.ContentType, data.contentType) append(HttpHeaders.ContentDisposition, "filename=\"${data.name}\"") }, data.size, data.block) }, boundary = "WebAppBoundary" ) )</ID>
+    <ID>TrailingCommaOnCallSite:AppRequest.kt:( PaginationQuery(nextToken, size = size), CommonPath(communityId) )</ID>
+    <ID>TrailingCommaOnCallSite:AppRequest.kt:( PaginationQuery(nextToken, size = size), CommonPath(roomId) )</ID>
+    <ID>TrailingCommaOnCallSite:AppRequest.kt:( SearchQuery(word, nextToken, size = size), CommonPath(communityId) )</ID>
+    <ID>TrailingCommaOnCallSite:AppRequest.kt:( SearchQuery(word, nextToken, size = size), CommonPath(roomId) )</ID>
+    <ID>TrailingCommaOnCallSite:AppRequest.kt:( TopicQuery(pinType, currentIsAlreadySignUp, paginationQuery), CommonPath(communityId) )</ID>
+    <ID>TrailingCommaOnCallSite:AppRequest.kt:( currentIsAlreadySignUp, paginationQuery.nextPageToken, paginationQuery.size, paginationQuery.prePageToken )</ID>
+    <ID>TrailingCommaOnCallSite:AppRequest.kt:( formData { append("description", "a_file") appendInput("file", Headers.build { append(HttpHeaders.ContentType, data.contentType) append(HttpHeaders.ContentDisposition, "filename=\"${data.name}\"") }, data.size, data.block) }, boundary = "WebAppBoundary" )</ID>
+    <ID>TrailingCommaOnCallSite:AppRequest.kt:( objectTuple.objectId, objectTuple.objectType, data.sha256 )</ID>
+    <ID>TrailingCommaOnCallSite:AppRequest.kt:( word, nextTopicId, prePageToken, size, fillHasCommented )</ID>
+    <ID>TrailingCommaOnCallSite:AuthKey.kt:( pemPrivateKey, derPrivateKey, derPublicKey, pemEncryptionPrivateKey, derEncryptionPrivate, derEncryptionPublicKey )</ID>
+    <ID>TrailingCommaOnCallSite:AuthKey.kt:( priKey, derPrivateKey, derPublicKey, pemPrivateKey, derEncryptionPrivate, derEncryptionPublicKey )</ID>
+    <ID>TrailingCommaOnCallSite:SessionManager.kt:( RawUserPassInfo( signResult.address, signResult.authKey, ) )</ID>
+    <ID>TrailingCommaOnCallSite:SessionManager.kt:( content.encrypted.hexToByteArray(), s.hexToByteArray() )</ID>
+    <ID>TrailingCommaOnCallSite:SessionManagerKt.kt:( SignUpBody( param.authKey.derPublicKey, param.signature, encryptionPublicKey ) )</ID>
+    <ID>TrailingCommaOnCallSite:SessionManagerKt.kt:( SignUpBody( param.authKey.derPublicKey, param.signature, encryptionPublicKey1 ) )</ID>
+    <ID>TrailingCommaOnCallSite:SessionManagerKt.kt:( it, param.data, param.signature, param.address, authKey )</ID>
+    <ID>TrailingCommaOnCallSite:SessionManagerKt.kt:( param.authKey.derPublicKey, param.signature, encryptionPublicKey )</ID>
+    <ID>TrailingCommaOnCallSite:SessionManagerKt.kt:( param.authKey.derPublicKey, param.signature, encryptionPublicKey1 )</ID>
+    <ID>TrailingCommaOnCallSite:SessionManagerKt.kt:( signIn.userInfo, param.data, param.signature, param.address, param.authKey )</ID>
+    <ID>TrailingCommaOnCallSite:SessionManagerKt.kt:( userInfo, param.data, param.signature, param.address, param.authKey )</ID>
+    <ID>TrailingCommaOnCallSite:SingleFlightCustomAuthPlugin.kt:( "SingleFlightCustomAuthPlugin", ::SingleFlightCustomAuthConfig )</ID>
+    <ID>TrailingCommaOnCallSite:Test.kt:Test$( HttpHeaders.WWWAuthenticate to listOf("Custom auth-data"), HttpHeaders.SetCookie to listOf("user_session=pending; Path=/") )</ID>
+    <ID>TrailingCommaOnCallSite:Test.kt:Test$( content = "ok", status = HttpStatusCode.OK, headers = headersOf(HttpHeaders.SetCookie to listOf("user_session=success; Path=/")) )</ID>
+    <ID>TrailingCommaOnCallSite:Test.kt:Test$( content = "unauthorized", status = HttpStatusCode.Unauthorized, headers = headersOf( HttpHeaders.WWWAuthenticate to listOf("Custom auth-data"), HttpHeaders.SetCookie to listOf("user_session=pending; Path=/") ) )</ID>
+    <ID>TrailingCommaOnCallSite:UserPass.kt:RawUserPass$( encryptedPrivateKey = encryptedPrivateKey.toHexString(), encryptedAesKey = encryptedAesKey.toHexString(), derPublicKey = derPublicKey, algoType = childAlgoType, encryptedEncryptionPrivateKey = encryptedEncryptionPrivateKey, encryptionPublicKey = derEncryptionPublicKey )</ID>
+    <ID>TrailingCommaOnDeclarationSite:AppRequest.kt:( childAlgoType: com.storyteller_f.shared.model.AlgoType = com.storyteller_f.shared.model.AlgoType.P256 )</ID>
+    <ID>TrailingCommaOnDeclarationSite:AppRequest.kt:( communityId: PrimaryKey, size: Int, word: String, nextTopicId: String? = null, prePageToken: String? = null, fillHasCommented: Boolean? = null )</ID>
+    <ID>TrailingCommaOnDeclarationSite:AppRequest.kt:( fileId: PrimaryKey, query: PaginationQuery )</ID>
+    <ID>TrailingCommaOnDeclarationSite:AppRequest.kt:( id: PrimaryKey, paginationQuery: PaginationQuery )</ID>
+    <ID>TrailingCommaOnDeclarationSite:AppRequest.kt:( objectId: PrimaryKey, objectType: ObjectType, nextId: String?, size: Int )</ID>
+    <ID>TrailingCommaOnDeclarationSite:AppRequest.kt:( objectTuple: ObjectTuple, quotaType: QuotaType = QuotaType.FILE )</ID>
+    <ID>TrailingCommaOnDeclarationSite:AppRequest.kt:( paginationQuery: PaginationQuery )</ID>
+    <ID>TrailingCommaOnDeclarationSite:AppRequest.kt:( query: SearchQuery, objectId: PrimaryKey, objectType: ObjectType )</ID>
+    <ID>TrailingCommaOnDeclarationSite:AppRequest.kt:( recordId: PrimaryKey )</ID>
+    <ID>TrailingCommaOnDeclarationSite:AppRequest.kt:( roomId: PrimaryKey, size: Int, word: String, nextTopicId: String? = null, prePageToken: String? = null, fillHasCommented: Boolean? = null )</ID>
+    <ID>TrailingCommaOnDeclarationSite:AppRequest.kt:( topicId: PrimaryKey, size: Int, nextCursor: String? = null )</ID>
+    <ID>TrailingCommaOnDeclarationSite:AppRequest.kt:( userId: PrimaryKey, size: Int, word: String, nextTopicId: String? = null, prePageToken: String? = null, fillHasCommented: Boolean? = null )</ID>
+    <ID>TrailingCommaOnDeclarationSite:AppRequest.kt:( word: String, objectId: PrimaryKey, objectType: ObjectType )</ID>
+    <ID>TrailingCommaOnDeclarationSite:AppRequest.kt:UploadData$( val size: Long, val name: String, val contentType: ContentType, val sha256: String, val block: () -&gt; Input )</ID>
+    <ID>TrailingCommaOnDeclarationSite:CustomClientAuthProvider.kt:( sessionModel: SessionModel&lt;U&gt;, passHolder: PassHolder, addRequestHeader: HttpRequestBuilder.(U, String) -&gt; Unit )</ID>
+    <ID>TrailingCommaOnDeclarationSite:CustomSlf4jLogger.kt:CustomSlf4jLogger$( level: Level?, marker: Marker?, messagePattern: String?, arguments: Array&lt;out Any&gt;?, throwable: Throwable? )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PanelRequest.kt:( targetId: PrimaryKey, objectType: ObjectType, query: PaginationQuery )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PanelRequest.kt:( type: TaskRecordType?, query: PaginationQuery )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PanelRequest.kt:( uid: PrimaryKey, body: com.storyteller_f.shared.obj.UpdateUserStatusBody )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PanelRequest.kt:( uid: PrimaryKey, query: com.storyteller_f.a.api.CustomApi.Users.Id.Titles.TitleQuery )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PanelRequest.kt:( uid: PrimaryKey, query: com.storyteller_f.a.api.CustomApi.Users.JoinedCommunities.UserCommunitiesQuery )</ID>
+    <ID>TrailingCommaOnDeclarationSite:SessionManager.kt:( authKey: AuthKey, passHolder: SimplePassHolder )</ID>
+    <ID>TrailingCommaOnDeclarationSite:SessionManager.kt:( topicInfos: List&lt;TopicInfo&gt;, manager: UserSessionManager )</ID>
+    <ID>TrailingCommaOnDeclarationSite:SessionManagerKt.kt:( authKey: AuthKey )</ID>
+    <ID>TrailingCommaOnDeclarationSite:SingleFlightCustomAuthPlugin.kt:( manager: SessionModel&lt;U&gt;, passHolder: PassHolder, addRequestHeader: HttpRequestBuilder.(U, String) -&gt; Unit )</ID>
+    <ID>TrailingCommaOnDeclarationSite:SingleFlightCustomAuthPlugin.kt:( originalRequest: HttpRequestBuilder, addRequestHeaders: suspend (HttpRequestBuilder) -&gt; Unit )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Test.kt:CountingUserPass$( childAlgoType: AlgoType )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Test.kt:CountingUserPass$( encryptedPrivateKey: String, encryptedAesKey: String, childAlgoType: AlgoType, encryptedEncryptionPrivateKey: String? )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Test.kt:CountingUserPass$( private val initialResponsesReleased: CompletableDeferred&lt;Unit&gt; )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Test.kt:Test$( manager: UserSessionModel, passHolder: SimplePassHolder, handler: suspend MockRequestHandleScope.(HttpRequestData) -&gt; HttpResponseData )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Test.kt:Test$( request: HttpRequestData, lock: Mutex, retryCookies: MutableList&lt;String?&gt;, onInitial401: () -&gt; Unit )</ID>
+    <ID>TrailingCommaOnDeclarationSite:UserPass.kt:RawUserPass$( childAlgoType: AlgoType )</ID>
+    <ID>TrailingCommaOnDeclarationSite:UserPass.kt:RawUserPass$( encryptedPrivateKey: String, encryptedAesKey: String, childAlgoType: AlgoType, encryptedEncryptionPrivateKey: String? )</ID>
+    <ID>TrailingCommaOnDeclarationSite:UserPass.kt:UserPass$( childAlgoType: AlgoType )</ID>
+    <ID>TrailingCommaOnDeclarationSite:UserPass.kt:UserPass$( encryptedPrivateKey: String, encryptedAesKey: String, childAlgoType: AlgoType, encryptedEncryptionPrivateKey: String? = null )</ID>
+    <ID>Wrapping:AppRequest.kt:(</ID>
+    <ID>Wrapping:AppRequest.kt:("file", Headers.build { append(HttpHeaders.ContentType, data.contentType) append(HttpHeaders.ContentDisposition, "filename=\"${data.name}\"") }, data.size, data.block)</ID>
+    <ID>Wrapping:HttpClient.kt:(</ID>
   </CurrentIssues>
 </SmellBaseline>

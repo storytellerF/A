@@ -612,7 +612,7 @@ style:
     maxChainedCalls: 5
   MaxLineLength:
     active: true
-    maxLineLength: 120
+    maxLineLength: 160
     excludePackageStatements: true
     excludeImportStatements: true
     excludeCommentStatements: true
@@ -763,7 +763,7 @@ ktlint:
   android: false
   autoCorrect: true
   BackingPropertyNaming:
-    active: false
+    active: true
   AnnotationOnSeparateLine:
     active: true
     autoCorrect: true
@@ -775,7 +775,7 @@ ktlint:
     active: true
     autoCorrect: true
     indentSize: 4
-    maxLineLength: 120
+    maxLineLength: 160
   BlockCommentInitialStarAlignment:
     active: true
     autoCorrect: true
@@ -784,7 +784,7 @@ ktlint:
     autoCorrect: true
     indentSize: 4
   ClassName:
-    active: false
+    active: true
   CommentSpacing:
     active: true
     autoCorrect: true
@@ -793,22 +793,22 @@ ktlint:
     autoCorrect: true
     indentSize: 4
   ContextReceiverMapping:
-    active: false
+    active: true
     autoCorrect: true
-    maxLineLength: 120
+    maxLineLength: 160
     indentSize: 4
   DiscouragedCommentLocation:
-    active: false
+    active: true
     autoCorrect: true
   EnumEntryNameCase:
     active: true
     autoCorrect: true
   EnumWrapping:
-    active: false
+    active: true
     autoCorrect: true
     indentSize: 4
   Filename:
-    active: false
+    active: true
   FinalNewline:
     active: true
     autoCorrect: true
@@ -817,17 +817,17 @@ ktlint:
     active: true
     autoCorrect: true
   FunctionName:
-    active: false
+    active: true
   FunctionReturnTypeSpacing:
     active: true
     autoCorrect: true
-    maxLineLength: 120
+    maxLineLength: 160
   FunctionSignature:
-    active: false
+    active: true
     autoCorrect: true
     forceMultilineWhenParameterCountGreaterOrEqualThan: 2147483647
     functionBodyExpressionWrapping: 'default'
-    maxLineLength: 120
+    maxLineLength: 160
     indentSize: 4
   FunctionStartOfBodySpacing:
     active: true
@@ -836,11 +836,11 @@ ktlint:
     active: true
     autoCorrect: true
   IfElseBracing:
-    active: false
+    active: true
     autoCorrect: true
     indentSize: 4
   IfElseWrapping:
-    active: false
+    active: true
     autoCorrect: true
     indentSize: 4
   ImportOrdering:
@@ -857,7 +857,7 @@ ktlint:
     indentSize: 4
   MaximumLineLength:
     active: true
-    maxLineLength: 120
+    maxLineLength: 160
     ignoreBackTickedIdentifier: false
   ModifierListSpacing:
     active: true
@@ -870,14 +870,14 @@ ktlint:
     autoCorrect: true
     indentSize: 4
   MultilineExpressionWrapping:
-    active: false
+    active: true
     autoCorrect: true
     indentSize: 4
   NoBlankLineBeforeRbrace:
     active: true
     autoCorrect: true
   NoBlankLineInList:
-    active: false
+    active: true
     autoCorrect: true
   NoBlankLinesInChainedMethodCalls:
     active: true
@@ -886,12 +886,12 @@ ktlint:
     active: true
     autoCorrect: true
   NoConsecutiveComments:
-    active: false
+    active: true
   NoEmptyClassBody:
     active: true
     autoCorrect: true
   NoEmptyFirstLineInClassBody:
-    active: false
+    active: true
     autoCorrect: true
     indentSize: 4
   NoEmptyFirstLineInMethodBlock:
@@ -910,7 +910,7 @@ ktlint:
     active: true
     autoCorrect: true
   NoSingleLineBlockComment:
-    active: false
+    active: true
     autoCorrect: true
     indentSize: 4
   NoTrailingSpaces:
@@ -923,34 +923,34 @@ ktlint:
     active: true
     autoCorrect: true
   NoWildcardImports:
-    active: false
+    active: true
     packagesToUseImportOnDemandProperty: 'java.util.*,kotlinx.android.synthetic.**'
   NullableTypeSpacing:
     active: true
     autoCorrect: true
   PackageName:
-    active: false
+    active: true
     autoCorrect: true
   ParameterListSpacing:
-    active: false
+    active: true
     autoCorrect: true
   ParameterListWrapping:
     active: true
     autoCorrect: true
-    maxLineLength: 120
+    maxLineLength: 160
     indentSize: 4
   ParameterWrapping:
     active: true
     autoCorrect: true
     indentSize: 4
-    maxLineLength: 120
+    maxLineLength: 160
   PropertyName:
-    active: false
+    active: true
   PropertyWrapping:
     active: true
     autoCorrect: true
     indentSize: 4
-    maxLineLength: 120
+    maxLineLength: 160
   SpacingAroundAngleBrackets:
     active: true
     autoCorrect: true
@@ -997,37 +997,37 @@ ktlint:
     active: true
     autoCorrect: true
   StringTemplateIndent:
-    active: false
+    active: true
     autoCorrect: true
     indentSize: 4
   TrailingCommaOnCallSite:
-    active: false
+    active: true
     autoCorrect: true
     useTrailingCommaOnCallSite: true
   TrailingCommaOnDeclarationSite:
-    active: false
+    active: true
     autoCorrect: true
     useTrailingCommaOnDeclarationSite: true
   TryCatchFinallySpacing:
-    active: false
+    active: true
     autoCorrect: true
     indentSize: 4
   TypeArgumentListSpacing:
-    active: false
+    active: true
     autoCorrect: true
     indentSize: 4
   TypeParameterListSpacing:
-    active: false
+    active: true
     autoCorrect: true
     indentSize: 4
   UnnecessaryParenthesesBeforeTrailingLambda:
     active: true
     autoCorrect: true
   Wrapping:
-    active: false
+    active: true
     autoCorrect: true
     indentSize: 4
-    maxLineLength: 120
+    maxLineLength: 160
 
 libraries:
   active: true

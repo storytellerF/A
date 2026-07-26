@@ -1,4 +1,5 @@
 import dev.detekt.gradle.Detekt
+import dev.detekt.gradle.DetektCreateBaselineTask
 import dev.detekt.gradle.report.ReportMergeTask
 
 
@@ -60,23 +61,8 @@ val detektReportMergeSarif = tasks.register<ReportMergeTask>("detektReportMergeS
 subprojects {
     apply(plugin = "dev.detekt")
     detekt {
-        // The directories where detekt looks for source files.
-        // Defaults to `files("src/main/java", "src/test/java", "src/main/kotlin", "src/test/kotlin")`.
-        source.setFrom(
-            "src/main/kotlin",
-            "src/test/kotlin",
-            "src/commonMain/kotlin",
-            "src/commonTest/kotlin",
-            "src/jvmMain/kotlin",
-            "src/jvmTest/kotlin",
-            "src/iosMain/kotlin",
-            "src/wasmJsMain/kotlin",
-            "src/androidMain/kotlin",
-            "src/androidUnitTest/kotlin",
-            "src/androidDebug/kotlin",
-            "src/headlessTest/kotlin",
-            "build.gradle.kts",
-        )
+        // Include every Kotlin source set so module baselines also cover KMP-only targets.
+        source.setFrom("src", "build.gradle.kts")
         // Builds the AST in parallel. Rules are always executed in parallel.
         // Can lead to speedups in larger projects. `false` by default.
         parallel = true
@@ -103,7 +89,7 @@ subprojects {
     }
 
     tasks.withType<Detekt>().configureEach {
-        exclude("**/build/**")
+        exclude { source -> source.file.absolutePath.replace('\\', '/').contains("/build/") }
         reports {
             checkstyle.required = true
             html.required = true
@@ -112,6 +98,10 @@ subprojects {
         }
         basePath = rootDir.absolutePath
         finalizedBy(detektReportMergeSarif)
+    }
+
+    tasks.withType<DetektCreateBaselineTask>().configureEach {
+        exclude { source -> source.file.absolutePath.replace('\\', '/').contains("/build/") }
     }
 
     detektReportMergeSarif {

@@ -2,6 +2,8 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>MultilineExpressionWrapping:WsEventService.kt:WsEventPublisher$client.rpc { url { takeFrom(url) } rpcConfig { serialization { json() } } }</ID>
+    <ID>PackageName:WsEventService.kt:package com.storyteller_f.a.cloud.ws.api</ID>
     <ID>PackageNaming:WsEventService.kt:package com.storyteller_f.a.cloud.ws.api</ID>
   </CurrentIssues>
 </SmellBaseline>

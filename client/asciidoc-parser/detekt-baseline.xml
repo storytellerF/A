@@ -2,12 +2,34 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>EmptyFunctionBlock:PlatformHeadlessTest.android.kt:PlatformHeadlessTest${ }</ID>
     <ID>FunctionNaming:ParseTest.kt:ParseTest$@Test fun `test parse ascii doc`</ID>
+    <ID>FunctionSignature:AsciidocConverter.jvmAndroid.kt:actual suspend fun convertAsciidoc: String</ID>
+    <ID>FunctionSignature:AsciidocConverter.wasmJs.kt:actual suspend fun convertAsciidoc: String</ID>
     <ID>MissingPackageDeclaration:ParseTest.kt:.ParseTest.kt</ID>
+    <ID>MissingPackageDeclaration:PlatformHeadlessTest.android.kt:.PlatformHeadlessTest.android.kt</ID>
     <ID>MissingPackageDeclaration:PlatformHeadlessTest.jvm.kt:.PlatformHeadlessTest.jvm.kt</ID>
     <ID>MissingPackageDeclaration:PlatformHeadlessTest.kt:.PlatformHeadlessTest.kt</ID>
+    <ID>MultilineExpressionWrapping:AsciidocConverter.wasmJs.kt:js( """ ({ safe: 'safe', attributes: { showtitle: true } }) """ )</ID>
+    <ID>MultilineExpressionWrapping:AsciidocPreview.kt:buildString { append('"') for (char in this@toJsStringLiteral) { when (char) { '\\' -&gt; append("\\\\") '"' -&gt; append("\\\"") '\b' -&gt; append("\\b") '\u000C' -&gt; append("\\f") '\n' -&gt; append("\\n") '\r' -&gt; append("\\r") '\t' -&gt; append("\\t") '\u2028' -&gt; append("\\u2028") '\u2029' -&gt; append("\\u2029") else -&gt; append(char) } } append('"') }</ID>
+    <ID>MultilineExpressionWrapping:AsciidocPreviewTest.kt:AsciidocPreviewTest$kotlinx.coroutines.test.runTest { val html = buildAsciidocPreviewHtml("= Title\n\nHello, _AsciiDoc_ \"reader\"") assertContains(html, "&lt;title&gt;AsciiDoc Preview&lt;/title&gt;") assertContains(html, "&lt;h1&gt;Title&lt;/h1&gt;") assertContains(html, "Hello, &lt;em&gt;AsciiDoc&lt;/em&gt; \"reader\"") assertFalse(html.contains("&lt;script")) }</ID>
+    <ID>MultilineExpressionWrapping:ParseTest.kt:ParseTest$File(scriptDir, "parse-asciidoc.js").bufferedReader().use { it.readText() }</ID>
+    <ID>MultilineExpressionWrapping:ParseTest.kt:ParseTest$it.getExecutor(scripts) .executeString()</ID>
+    <ID>MultilineExpressionWrapping:build.gradle.kts:create("headlessTest") { dependsOn(commonTest.get()) }</ID>
+    <ID>MultilineExpressionWrapping:build.gradle.kts:create("jvmAndroidMain") { dependsOn(commonMain.get()) dependencies { compileOnly(libs.javet) } }</ID>
+    <ID>NoBlankLineBeforeRbrace:PlatformHeadlessTest.android.kt:PlatformHeadlessTest$ </ID>
+    <ID>NoEmptyFirstLineInMethodBlock:PlatformHeadlessTest.android.kt:PlatformHeadlessTest$ </ID>
+    <ID>PackageName:AsciidocConverter.jvmAndroid.kt:package com.storyteller_f.a.client.asciidoc_parser</ID>
+    <ID>PackageName:AsciidocConverter.wasmJs.kt:package com.storyteller_f.a.client.asciidoc_parser</ID>
+    <ID>PackageName:AsciidocPreview.kt:package com.storyteller_f.a.client.asciidoc_parser</ID>
+    <ID>PackageName:AsciidocPreviewTest.kt:package com.storyteller_f.a.client.asciidoc_parser</ID>
+    <ID>PackageNaming:AsciidocConverter.jvmAndroid.kt:package com.storyteller_f.a.client.asciidoc_parser</ID>
     <ID>PackageNaming:AsciidocConverter.wasmJs.kt:package com.storyteller_f.a.client.asciidoc_parser</ID>
     <ID>PackageNaming:AsciidocPreview.kt:package com.storyteller_f.a.client.asciidoc_parser</ID>
     <ID>PackageNaming:AsciidocPreviewTest.kt:package com.storyteller_f.a.client.asciidoc_parser</ID>
+    <ID>StringTemplateIndent:AsciidocPreview.kt:""" &lt;!doctype html&gt; &lt;html lang="en"&gt; &lt;head&gt; &lt;meta charset="utf-8"&gt; &lt;meta name="viewport" content="width=device-width, initial-scale=1"&gt; &lt;title&gt;AsciiDoc Preview&lt;/title&gt; &lt;style&gt; :root { color-scheme: light dark; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.55; } body { box-sizing: border-box; max-width: 960px; margin: 0 auto; padding: 32px 24px; } pre { overflow-x: auto; padding: 16px; border-radius: 8px; background: color-mix(in srgb, CanvasText 8%, Canvas); } &lt;/style&gt; &lt;/head&gt; &lt;body&gt; &lt;main id="preview"&gt;$documentHtml&lt;/main&gt; &lt;/body&gt; &lt;/html&gt; """</ID>
+    <ID>TrailingCommaOnCallSite:AsciidocConverter.jvmAndroid.kt:( "module\$build\$asciidoctor_browser.default().convert(" + "${source.toJsStringLiteral()}, { safe: 'safe', attributes: { showtitle: true } })" )</ID>
+    <ID>TrailingCommaOnCallSite:AsciidocConverter.wasmJs.kt:( """ ({ safe: 'safe', attributes: { showtitle: true } }) """ )</ID>
+    <ID>TrailingCommaOnCallSite:ParseTest.kt:ParseTest$( """ &lt;div class="paragraph"&gt; &lt;p&gt;Hello, &lt;em&gt;Asciidoctor&lt;/em&gt;&lt;/p&gt; &lt;/div&gt; """.trimIndent(), result )</ID>
   </CurrentIssues>
 </SmellBaseline>

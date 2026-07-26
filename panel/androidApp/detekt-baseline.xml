@@ -2,8 +2,50 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>FunctionName:PanelComposeScreenshotTest.kt:@Composable private fun PaddedPreview</ID>
+    <ID>FunctionName:PanelComposeScreenshotTest.kt:@Composable private fun PanelScreenshotTheme</ID>
+    <ID>FunctionName:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun CommunityCountOverviewCellScreenshot</ID>
+    <ID>FunctionName:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun CommunityRoomCountOverviewCellScreenshot</ID>
+    <ID>FunctionName:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun FileCountOverviewCellScreenshot</ID>
+    <ID>FunctionName:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun PrivateRoomCountOverviewCellScreenshot</ID>
+    <ID>FunctionName:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun TitleCountOverviewCellScreenshot</ID>
+    <ID>FunctionName:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun TopicCountOverviewCellScreenshot</ID>
+    <ID>FunctionName:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun UserCountOverviewCellScreenshot</ID>
+    <ID>FunctionName:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 480) @Composable fun PanelInfoTableScreenshot</ID>
+    <ID>FunctionName:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 480) @Composable fun PanelTopicCellScreenshot</ID>
+    <ID>FunctionNaming:PanelComposeScreenshotTest.kt:@Composable private fun PaddedPreview</ID>
+    <ID>FunctionNaming:PanelComposeScreenshotTest.kt:@Composable private fun PanelScreenshotTheme</ID>
+    <ID>FunctionNaming:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun CommunityCountOverviewCellScreenshot</ID>
+    <ID>FunctionNaming:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun CommunityRoomCountOverviewCellScreenshot</ID>
+    <ID>FunctionNaming:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun FileCountOverviewCellScreenshot</ID>
+    <ID>FunctionNaming:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun PrivateRoomCountOverviewCellScreenshot</ID>
+    <ID>FunctionNaming:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun TitleCountOverviewCellScreenshot</ID>
+    <ID>FunctionNaming:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun TopicCountOverviewCellScreenshot</ID>
+    <ID>FunctionNaming:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 240) @Composable fun UserCountOverviewCellScreenshot</ID>
+    <ID>FunctionNaming:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 480) @Composable fun PanelInfoTableScreenshot</ID>
+    <ID>FunctionNaming:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 480) @Composable fun PanelTopicCellScreenshot</ID>
+    <ID>FunctionSignature:MainActivity.kt:MainActivity.&lt;no name provided&gt;$override fun onAvailableSessionCommandsChanged</ID>
+    <ID>FunctionSignature:PanelApplication.kt:&lt;no name provided&gt;$override suspend fun start</ID>
+    <ID>FunctionSignature:PanelApplication.kt:private fun buildPanelMediaPlayer: MediaPlayerService</ID>
+    <ID>MultilineExpressionWrapping:MainActivity.kt:MainActivity$object : MediaController.Listener { override fun onAvailableSessionCommandsChanged( controller: MediaController, commands: SessionCommands ) { super.onAvailableSessionCommandsChanged(controller, commands) Napier.d { "MediaController onAvailableSessionCommandsChanged" } } override fun onDisconnected(controller: MediaController) { super.onDisconnected(controller) Napier.d { "MediaController onDisconnected" } } }</ID>
+    <ID>MultilineExpressionWrapping:PanelApplication.kt:&lt;no name provided&gt;$Intent(context, PanelMediaPlayerActivity::class.java).apply { // addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) // addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK) putExtra("id", remoteMediaItem.id) }</ID>
+    <ID>MultilineExpressionWrapping:PanelComposeScreenshotTest.kt:TopicInfo.EMPTY.copy( id = 501, content = TopicContent.Plain("Panel topic row rendered from screenshotTest."), createdTime = fixedTime(), commentCount = 2, reactionCount = 3, isEncrypted = true, lastModifiedTime = fixedTime(), )</ID>
+    <ID>PackageName:MainActivity.kt:package com.storyteller_f.a.panel</ID>
+    <ID>PackageName:PanelApplication.kt:package com.storyteller_f.a.panel</ID>
+    <ID>PackageName:PanelComposeScreenshotTest.kt:package com.storyteller_f.a.panel</ID>
+    <ID>PackageName:PanelMediaPlayerActivity.kt:package com.storyteller_f.a.panel</ID>
     <ID>PackageNaming:MainActivity.kt:package com.storyteller_f.a.panel</ID>
     <ID>PackageNaming:PanelApplication.kt:package com.storyteller_f.a.panel</ID>
+    <ID>PackageNaming:PanelComposeScreenshotTest.kt:package com.storyteller_f.a.panel</ID>
     <ID>PackageNaming:PanelMediaPlayerActivity.kt:package com.storyteller_f.a.panel</ID>
+    <ID>TrailingCommaOnCallSite:MainActivity.kt:MainActivity$( LocalPanelUiViewModel provides (application as PanelApplication).panelUiViewModel, LocalMediaPlayListHandlerProvider provides DefaultMediaPlayListHandlerProvider, LocalMediaPlayerService provides (application as PanelApplication).mediaPlayer )</ID>
+    <ID>TrailingCommaOnCallSite:PanelApplication.kt:PanelApplication$( StrictMode.VmPolicy.Builder(StrictMode.getVmPolicy()) .detectLeakedClosableObjects() .build() )</ID>
+    <ID>TrailingCommaOnCallSite:PanelComposeScreenshotTest.kt:( "ID" to "501", "Name" to "Panel snapshot fixture", "Status" to "NORMAL", "Owner" to "system" )</ID>
+    <ID>TrailingCommaOnCallSite:PanelComposeScreenshotTest.kt:( listOf( "ID" to "501", "Name" to "Panel snapshot fixture", "Status" to "NORMAL", "Owner" to "system" ) )</ID>
+    <ID>TrailingCommaOnCallSite:PanelComposeScreenshotTest.kt:( samplePanelTopic().copy(commentCount = 4, reactionCount = 9, isPin = true), PreviewPanelNav )</ID>
+    <ID>TrailingCommaOnCallSite:PanelMediaPlayerActivity.kt:PanelMediaPlayerActivity$( LocalPanelUiViewModel provides (application as PanelApplication).panelUiViewModel, LocalMediaPlayListHandlerProvider provides DefaultMediaPlayListHandlerProvider, LocalMediaPlayerService provides (application as PanelApplication).mediaPlayer )</ID>
+    <ID>TrailingCommaOnDeclarationSite:MainActivity.kt:MainActivity.&lt;no name provided&gt;$( controller: MediaController, commands: SessionCommands )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PanelApplication.kt:&lt;no name provided&gt;$( remoteMediaItem: RemoteMediaItem, localMediaPlaySession: LocalMediaPlaySession, playList: List&lt;ConstPlayItem&gt; )</ID>
+    <ID>Wrapping:PanelApplication.kt:&lt;no name provided&gt;$(</ID>
   </CurrentIssues>
 </SmellBaseline>

@@ -16,10 +16,50 @@
     <ID>FunctionExpressionBody:SessionCookie.kt:{ return MessageDigest.getInstance("SHA-256").digest(value.toByteArray(Charsets.UTF_8)) }</ID>
     <ID>FunctionExpressionBody:SessionCookie.kt:{ return SessionKeys( encryptKey = sha256("encrypt:$secret").copyOf(16), signKey = sha256("sign:$secret"), ) }</ID>
     <ID>FunctionExpressionBody:UsePrincipal.kt:{ return { result -&gt; handleResultInternal(result, backend.customConfig.buildType) } }</ID>
+    <ID>FunctionSignature:Auth.kt:fun ApplicationCall.saveSuccessSession</ID>
+    <ID>FunctionSignature:Auth.kt:fun ApplicationCall.saveTwoFactorPendingSession</ID>
+    <ID>FunctionSignature:Auth.kt:inline fun AuthenticationConfig.custom</ID>
+    <ID>FunctionSignature:Auth.kt:suspend fun ApplicationCall.checkAdminApiRequest: Result&lt;CustomPrincipal?&gt;</ID>
+    <ID>FunctionSignature:Auth.kt:suspend fun ApplicationCall.checkApiRequest: Result&lt;CustomPrincipal?&gt;</ID>
+    <ID>FunctionSignature:Auth.kt:suspend fun Backend.getAdminAuthData: Result&lt;UserAuthData?&gt;</ID>
+    <ID>FunctionSignature:Auth.kt:suspend fun Backend.getUserAuthData: Result&lt;UserAuthData?&gt;</ID>
+    <ID>FunctionSignature:ClientIp.kt:fun ApplicationCall.remoteIp: List&lt;Pair&lt;String, String?&gt;&gt;</ID>
+    <ID>FunctionSignature:UsePrincipal.kt:inline fun &lt;reified R : Any&gt; RoutingContext.usePrincipal</ID>
+    <ID>FunctionSignature:UsePrincipal.kt:inline fun &lt;reified R : Any&gt; RoutingContext.usePrincipalOrNull</ID>
+    <ID>FunctionSignature:UsePrincipal.kt:suspend inline fun &lt;reified R : Any&gt; RoutingContext.callRespond</ID>
+    <ID>MultilineExpressionWrapping:Auth.kt:CustomAuthProvider$if (credential == null) { AuthenticationFailedCause.NoCredentials } else if (err != null) { AuthenticationFailedCause.Error(err.message.toString()) } else { AuthenticationFailedCause.InvalidCredentials }</ID>
+    <ID>MultilineExpressionWrapping:Auth.kt:parameters.associate { it.name to it.value }</ID>
+    <ID>MultilineExpressionWrapping:Auth.kt:when { aTs != null &amp;&amp; checkTsIsValid(aTs, 60 * 5).second -&gt; aTs.toString() else -&gt; Uuid.random().toString() }</ID>
+    <ID>NoEmptyFirstLineInClassBody:Auth.kt:CustomAuthProvider${ class Config(name: String?) : AuthenticationProvider.Config(name) { lateinit var validateFunction: CustomValidator lateinit var challengeFunction: CustomChallenge fun validate(f: CustomValidator) { validateFunction = f } fun challenge(f: CustomChallenge) { challengeFunction = f } } override suspend fun onAuthenticate(context: AuthenticationContext) { val call = context.call val session = call.getSession() val credential = call.customCredential() val result = config.validateFunction(session, call, credential) val principal = result.getOrNull() val err = result.exceptionOrNull() if (principal != null) { context.principal(name, principal) } else { val cause = if (credential == null) { AuthenticationFailedCause.NoCredentials } else if (err != null) { AuthenticationFailedCause.Error(err.message.toString()) } else { AuthenticationFailedCause.InvalidCredentials } @Suppress("NAME_SHADOWING") context.challenge("CustomChallengeKey", cause) { challenge, call -&gt; config.challengeFunction(session, call) challenge.complete() } } } private fun ApplicationCall.customCredential(): CustomCredential? { return when (val authHeader = request.parseAuthorizationHeader()) { is HttpAuthHeader.Parameterized -&gt; { if (!authHeader.authScheme.equals("Custom", ignoreCase = true)) return null authHeader.customCredential() } else -&gt; null } } }</ID>
+    <ID>NoEmptyFirstLineInClassBody:Auth.kt:CustomAuthProvider.Config${ lateinit var validateFunction: CustomValidator lateinit var challengeFunction: CustomChallenge fun validate(f: CustomValidator) { validateFunction = f } fun challenge(f: CustomChallenge) { challengeFunction = f } }</ID>
+    <ID>NoWildcardImports:Auth.kt:import com.storyteller_f.shared.utils.*</ID>
+    <ID>NoWildcardImports:Auth.kt:import io.ktor.http.auth.*</ID>
+    <ID>NoWildcardImports:Auth.kt:import io.ktor.server.application.*</ID>
+    <ID>NoWildcardImports:Auth.kt:import io.ktor.server.auth.*</ID>
+    <ID>NoWildcardImports:Auth.kt:import io.ktor.server.plugins.*</ID>
+    <ID>NoWildcardImports:Auth.kt:import io.ktor.server.request.*</ID>
+    <ID>NoWildcardImports:Auth.kt:import io.ktor.server.response.*</ID>
+    <ID>NoWildcardImports:Auth.kt:import io.ktor.server.sessions.*</ID>
+    <ID>PackageName:Auth.kt:package com.storyteller_f.a.cloud.server.auth</ID>
+    <ID>PackageName:ClientIp.kt:package com.storyteller_f.a.cloud.server</ID>
+    <ID>PackageName:SessionCookie.kt:package com.storyteller_f.a.cloud.server.auth</ID>
+    <ID>PackageName:UsePrincipal.kt:package com.storyteller_f.a.cloud.server.auth</ID>
+    <ID>PackageName:UserSession.kt:package com.storyteller_f.a.cloud.server.auth</ID>
     <ID>PackageNaming:Auth.kt:package com.storyteller_f.a.cloud.server.auth</ID>
     <ID>PackageNaming:ClientIp.kt:package com.storyteller_f.a.cloud.server</ID>
     <ID>PackageNaming:SessionCookie.kt:package com.storyteller_f.a.cloud.server.auth</ID>
     <ID>PackageNaming:UsePrincipal.kt:package com.storyteller_f.a.cloud.server.auth</ID>
     <ID>PackageNaming:UserSession.kt:package com.storyteller_f.a.cloud.server.auth</ID>
+    <ID>TrailingCommaOnCallSite:Auth.kt:( pubKey, sig, finalData(session.data) )</ID>
+    <ID>TrailingCommaOnCallSite:UsePrincipal.kt:( ContentDisposition.Parameters.FileName, it.file.name )</ID>
+    <ID>TrailingCommaOnCallSite:UsePrincipal.kt:( HttpHeaders.ContentDisposition, ContentDisposition.Attachment.withParameter( ContentDisposition.Parameters.FileName, it.file.name ).toString() )</ID>
+    <ID>TrailingCommaOnCallSite:UsePrincipal.kt:( HttpHeaders.ContentDisposition, ContentDisposition.Attachment.withParameter(ContentDisposition.Parameters.FileName, it.file.name) .toString() )</ID>
+    <ID>TrailingCommaOnCallSite:UsePrincipal.kt:( HttpStatusCode.InternalServerError, if (buildType == "prod") "" else (e.message ?: e.toString()) )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Auth.kt:( backend: Backend, credential: CustomCredential, session: UserSession.Pending )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Auth.kt:( credential: CustomCredential )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Auth.kt:( name: String? = null, configure: CustomAuthProvider.Config.() -&gt; Unit )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Auth.kt:( session: UserSession.Pending, id: PrimaryKey )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Auth.kt:( session: UserSession.TwoFactorPending )</ID>
+    <ID>TrailingCommaOnDeclarationSite:UserSession.kt:UserSession.Success$( override val data: String, val remote: String, val id: PrimaryKey, val label: String )</ID>
   </CurrentIssues>
 </SmellBaseline>

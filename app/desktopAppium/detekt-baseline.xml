@@ -2,6 +2,16 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>FunctionSignature:DesktopAppiumTest.kt:DesktopAppiumTest$@Test fun `test community profile actions from joined community`</ID>
+    <ID>FunctionSignature:DesktopAppiumTest.kt:DesktopAppiumTest$@Test fun `test favorite topic from topic page`</ID>
+    <ID>FunctionSignature:DesktopAppiumTest.kt:DesktopAppiumTest$@Test fun `test opens asciidoc preview`</ID>
+    <ID>FunctionSignature:DesktopAppiumTest.kt:DesktopAppiumTest$@Test fun `test publish topic in community room`</ID>
+    <ID>FunctionSignature:DesktopAppiumTest.kt:DesktopAppiumTest$@Test fun `test publish topic in joined community`</ID>
+    <ID>FunctionSignature:DesktopAppiumTest.kt:DesktopAppiumTest$@Test fun `test publish topic in user space`</ID>
+    <ID>FunctionSignature:DesktopAppiumTest.kt:DesktopAppiumTest$@Test fun `test sign in as system user`</ID>
+    <ID>FunctionSignature:DesktopAppiumTest.kt:DesktopAppiumTest$@Test fun `test sign in by injected session`</ID>
+    <ID>FunctionSignature:DesktopAppiumTest.kt:DesktopAppiumTest$@Test fun `test subscribe topic from community page`</ID>
     <ID>MissingPackageDeclaration:DesktopAppiumTest.kt:.DesktopAppiumTest.kt</ID>
+    <ID>TrailingCommaOnCallSite:build.gradle.kts:( "desktop.accessibility.dump.agent", accessibilityDumpAgentJar.flatMap { it.archiveFile }.get().asFile.canonicalPath )</ID>
   </CurrentIssues>
 </SmellBaseline>

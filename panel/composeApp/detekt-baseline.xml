@@ -36,11 +36,111 @@
     <ID>ClassSignature:PanelModel.kt:UserSubscriptionsViewModel : PagingViewModel</ID>
     <ID>ClassSignature:PanelModel.kt:UserUploadRecordsViewModel : PagingViewModel</ID>
     <ID>ClassSignature:Theme.kt:ColorFamily</ID>
+    <ID>FinalNewline:Platform.js.kt:com.storyteller_f.a.panel.Platform.js.kt</ID>
     <ID>FunctionExpressionBody:Greeting.kt:Greeting${ return "Hello, ${platform.name}!" }</ID>
     <ID>FunctionLiteral:AllFilesPage.kt:&lt;anonymous&gt;</ID>
     <ID>FunctionLiteral:AllPrivateRoomsPage.kt:&lt;anonymous&gt;</ID>
     <ID>FunctionLiteral:AllTitlesPage.kt:&lt;anonymous&gt;</ID>
     <ID>FunctionLiteral:AllTopicsPage.kt:&lt;anonymous&gt;</ID>
+    <ID>FunctionName:AllCommunitiesPage.kt:@Composable fun AllCommunitiesPage</ID>
+    <ID>FunctionName:AllCommunitiesPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AllCommunitiesPageInternal</ID>
+    <ID>FunctionName:AllFilesPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AllFilesPage</ID>
+    <ID>FunctionName:AllFilesPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AllFilesPageInternal</ID>
+    <ID>FunctionName:AllPrivateRoomsPage.kt:@Composable fun AllPrivateRoomsPage</ID>
+    <ID>FunctionName:AllPrivateRoomsPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AllPrivateRoomsPageInternal</ID>
+    <ID>FunctionName:AllPublicRoomsPage.kt:@Composable fun AllPublicRoomsPage</ID>
+    <ID>FunctionName:AllPublicRoomsPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AllPublicRoomsPageInternal</ID>
+    <ID>FunctionName:AllTitlesPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AllTitlesPage</ID>
+    <ID>FunctionName:AllTitlesPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AllTitlesPageInternal</ID>
+    <ID>FunctionName:AllTopicsPage.kt:@Composable fun AllTopicsPage</ID>
+    <ID>FunctionName:AllTopicsPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AllTopicsPageInternal</ID>
+    <ID>FunctionName:AllUsersPage.kt:@Composable fun AddUserInternal</ID>
+    <ID>FunctionName:AllUsersPage.kt:@Composable fun AllUsersPage</ID>
+    <ID>FunctionName:AllUsersPage.kt:@Composable private fun AddUserDialogButtons</ID>
+    <ID>FunctionName:AllUsersPage.kt:@Composable private fun AddUserProfilePage</ID>
+    <ID>FunctionName:AllUsersPage.kt:@Composable private fun AddressField</ID>
+    <ID>FunctionName:AllUsersPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AddUserDialog</ID>
+    <ID>FunctionName:AllUsersPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AllUsersPageInternal</ID>
+    <ID>FunctionName:AllUsersPage.kt:@Suppress("LongMethod") @Composable private fun AddUserPrivateKeyPage</ID>
+    <ID>FunctionName:CommunityDetailPage.kt:@Composable private fun CommunityBasicInfoSection</ID>
+    <ID>FunctionName:CommunityDetailPage.kt:@Composable private fun CommunityInfoTabs</ID>
+    <ID>FunctionName:CommunityDetailPage.kt:@Composable private fun CommunityLogsTab</ID>
+    <ID>FunctionName:CommunityDetailPage.kt:@Composable private fun CommunityMembersTab</ID>
+    <ID>FunctionName:CommunityDetailPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun CommunityDetailPage</ID>
+    <ID>FunctionName:CommunityDetailPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable private fun CommunityTopBar</ID>
+    <ID>FunctionName:FileDetailPage.kt:@Composable private fun FileBasicInfoSection</ID>
+    <ID>FunctionName:FileDetailPage.kt:@Composable private fun FileInfoTabs</ID>
+    <ID>FunctionName:FileDetailPage.kt:@Composable private fun FileLogsTab</ID>
+    <ID>FunctionName:FileDetailPage.kt:@Composable private fun FileReadOnlyToggleButton</ID>
+    <ID>FunctionName:FileDetailPage.kt:@Composable private fun FileRefsSection</ID>
+    <ID>FunctionName:FileDetailPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun FileDetailPage</ID>
+    <ID>FunctionName:FileDetailPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable private fun FileTopBar</ID>
+    <ID>FunctionName:InfoTable.kt:@Composable fun InfoTable</ID>
+    <ID>FunctionName:MainViewController.kt:fun MainViewController</ID>
+    <ID>FunctionName:OverviewPage.kt:@Composable fun CommunityCountOverviewCell</ID>
+    <ID>FunctionName:OverviewPage.kt:@Composable fun CommunityRoomCountOverviewCell</ID>
+    <ID>FunctionName:OverviewPage.kt:@Composable fun FileCountOverviewCell</ID>
+    <ID>FunctionName:OverviewPage.kt:@Composable fun OverviewPage</ID>
+    <ID>FunctionName:OverviewPage.kt:@Composable fun PrivateRoomCountOverviewCell</ID>
+    <ID>FunctionName:OverviewPage.kt:@Composable fun TitleCountOverviewCell</ID>
+    <ID>FunctionName:OverviewPage.kt:@Composable fun TopicCountOverviewCell</ID>
+    <ID>FunctionName:OverviewPage.kt:@Composable fun UserCountOverviewCell</ID>
+    <ID>FunctionName:OverviewPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun OverviewPageInternal</ID>
+    <ID>FunctionName:OverviewPage.kt:@Preview @Composable private fun OverviewFlow</ID>
+    <ID>FunctionName:PanelApp.kt:@Composable private fun DrawerHeader</ID>
+    <ID>FunctionName:PanelApp.kt:@Composable private fun DrawerNavItem</ID>
+    <ID>FunctionName:PanelApp.kt:@Composable private fun MainPanelPage</ID>
+    <ID>FunctionName:PanelApp.kt:@Composable private fun PanelDrawer</ID>
+    <ID>FunctionName:PanelApp.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun App</ID>
+    <ID>FunctionName:PanelApp.kt:@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3WindowSizeClassApi::class) @Composable private fun PanelNavigationDrawer</ID>
+    <ID>FunctionName:PanelFilePreviewPage.kt:@Composable fun PanelFilePreviewPage</ID>
+    <ID>FunctionName:PanelInputPage.kt:@Composable fun PanelInputPage</ID>
+    <ID>FunctionName:PanelModelBuild.kt:@Composable fun PanelLogsTab</ID>
+    <ID>FunctionName:PanelModelBuild.kt:@Composable private fun PanelLogItem</ID>
+    <ID>FunctionName:PanelRoute.kt:@Composable fun PanelLoginPage</ID>
+    <ID>FunctionName:PanelRoute.kt:@Composable private fun PanelSelectLoginPage</ID>
+    <ID>FunctionName:PanelRoute.kt:@Suppress("UnusedMaterial3ScaffoldPaddingParameter") @Composable private fun PanelHost</ID>
+    <ID>FunctionName:RoomDetailPage.kt:@Composable private fun RoomBasicInfoSection</ID>
+    <ID>FunctionName:RoomDetailPage.kt:@Composable private fun RoomFilesTab</ID>
+    <ID>FunctionName:RoomDetailPage.kt:@Composable private fun RoomInfoTabs</ID>
+    <ID>FunctionName:RoomDetailPage.kt:@Composable private fun RoomLogsTab</ID>
+    <ID>FunctionName:RoomDetailPage.kt:@Composable private fun RoomMembersTab</ID>
+    <ID>FunctionName:RoomDetailPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun RoomDetailPage</ID>
+    <ID>FunctionName:RoomDetailPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable private fun RoomTopBar</ID>
+    <ID>FunctionName:TaskRecordsPage.kt:@Composable private fun TaskRecordItem</ID>
+    <ID>FunctionName:TaskRecordsPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun TaskRecordsPage</ID>
+    <ID>FunctionName:TaskRecordsPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable private fun TaskRecordTypeChip</ID>
+    <ID>FunctionName:TaskRecordsPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable private fun TaskRecordTypeFilter</ID>
+    <ID>FunctionName:Theme.kt:@Composable fun PanelTheme</ID>
+    <ID>FunctionName:TitleDetailPage.kt:@Composable private fun TitleBasicInfoSection</ID>
+    <ID>FunctionName:TitleDetailPage.kt:@Composable private fun TitleInfoTabs</ID>
+    <ID>FunctionName:TitleDetailPage.kt:@Composable private fun TitleLogsTab</ID>
+    <ID>FunctionName:TitleDetailPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun TitleDetailPage</ID>
+    <ID>FunctionName:TitleDetailPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable private fun TitleTopBar</ID>
+    <ID>FunctionName:TopicCell.kt:@Composable fun TopicCell</ID>
+    <ID>FunctionName:TopicDetailPage.kt:@Composable private fun TopicBasicInfoSection</ID>
+    <ID>FunctionName:TopicDetailPage.kt:@Composable private fun TopicCell</ID>
+    <ID>FunctionName:TopicDetailPage.kt:@Composable private fun TopicInfoTabs</ID>
+    <ID>FunctionName:TopicDetailPage.kt:@Composable private fun TopicLogsTab</ID>
+    <ID>FunctionName:TopicDetailPage.kt:@Composable private fun TopicTopicsTab</ID>
+    <ID>FunctionName:TopicDetailPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun TopicDetailPage</ID>
+    <ID>FunctionName:TopicDetailPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable private fun TopicTopBar</ID>
+    <ID>FunctionName:UserCell.kt:@Composable fun UserCell</ID>
+    <ID>FunctionName:UserDetailPage.kt:@Composable private fun UserBasicInfoSection</ID>
+    <ID>FunctionName:UserDetailPage.kt:@Composable private fun UserCommentsSection</ID>
+    <ID>FunctionName:UserDetailPage.kt:@Composable private fun UserCreatedFilesSection</ID>
+    <ID>FunctionName:UserDetailPage.kt:@Composable private fun UserFavoritesSection</ID>
+    <ID>FunctionName:UserDetailPage.kt:@Composable private fun UserJoinedCommunitiesSection</ID>
+    <ID>FunctionName:UserDetailPage.kt:@Composable private fun UserJoinedRoomsSection</ID>
+    <ID>FunctionName:UserDetailPage.kt:@Composable private fun UserLogsTab</ID>
+    <ID>FunctionName:UserDetailPage.kt:@Composable private fun UserPanelLogsTab</ID>
+    <ID>FunctionName:UserDetailPage.kt:@Composable private fun UserReactionsSection</ID>
+    <ID>FunctionName:UserDetailPage.kt:@Composable private fun UserReceivedTitlesSection</ID>
+    <ID>FunctionName:UserDetailPage.kt:@Composable private fun UserSubscriptionsSection</ID>
+    <ID>FunctionName:UserDetailPage.kt:@Composable private fun UserUploadRecordsSection</ID>
+    <ID>FunctionName:UserDetailPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun UserDetailPage</ID>
+    <ID>FunctionName:UserDetailPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable private fun UserInfoTabs</ID>
+    <ID>FunctionName:UserDetailPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable private fun UserTopBar</ID>
     <ID>FunctionNaming:AllCommunitiesPage.kt:@Composable fun AllCommunitiesPage</ID>
     <ID>FunctionNaming:AllCommunitiesPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AllCommunitiesPageInternal</ID>
     <ID>FunctionNaming:AllFilesPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AllFilesPage</ID>
@@ -140,7 +240,224 @@
     <ID>FunctionNaming:UserDetailPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun UserDetailPage</ID>
     <ID>FunctionNaming:UserDetailPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable private fun UserInfoTabs</ID>
     <ID>FunctionNaming:UserDetailPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable private fun UserTopBar</ID>
+    <ID>FunctionSignature:AllUsersPage.kt:@Composable private fun AddUserDialogButtons</ID>
+    <ID>FunctionSignature:AllUsersPage.kt:@Composable private fun AddUserProfilePage</ID>
+    <ID>FunctionSignature:AllUsersPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AddUserDialog</ID>
+    <ID>FunctionSignature:AllUsersPage.kt:@Suppress("LongMethod") @Composable private fun AddUserPrivateKeyPage</ID>
+    <ID>FunctionSignature:FileDetailPage.kt:@Composable private fun FileReadOnlyToggleButton</ID>
+    <ID>FunctionSignature:PanelApp.kt:&lt;no name provided&gt;$override suspend fun &lt;T&gt; useResult: Result&lt;T&gt;</ID>
+    <ID>FunctionSignature:PanelApp.kt:@Composable private fun MainPanelPage</ID>
+    <ID>FunctionSignature:PanelApp.kt:@Composable private fun PanelDrawer</ID>
+    <ID>FunctionSignature:PanelApp.kt:@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3WindowSizeClassApi::class) @Composable private fun PanelNavigationDrawer</ID>
+    <ID>FunctionSignature:PanelApp.kt:IPanelAccountInstance.Regular$private suspend fun handleCommunityReadOnlyUpdated</ID>
+    <ID>FunctionSignature:PanelApp.kt:IPanelAccountInstance.Regular$private suspend fun handleFileReadOnlyUpdated</ID>
+    <ID>FunctionSignature:PanelApp.kt:IPanelAccountInstance.Regular$private suspend fun handleRoomReadOnlyUpdated</ID>
+    <ID>FunctionSignature:PanelApp.kt:IPanelAccountInstance.Regular$private suspend fun handleTitleReadOnlyUpdated</ID>
+    <ID>FunctionSignature:PanelApp.kt:IPanelAccountInstance.Regular$private suspend fun handleTopicReadOnlyUpdated</ID>
+    <ID>FunctionSignature:PanelApp.kt:IPanelAccountInstance.Regular$private suspend fun handleUserStatusUpdated</ID>
+    <ID>FunctionSignature:PanelApp.kt:IPanelAccountInstance.Regular$private suspend fun processEvent</ID>
+    <ID>FunctionSignature:PanelApp.kt:fun createPanelSessionManager: CustomPanelSessionManager</ID>
+    <ID>FunctionSignature:PanelApp.kt:private fun onNavigate: () -&gt; Unit</ID>
+    <ID>FunctionSignature:PanelModelBuild.kt:@Composable fun createPanelCommunityMembersViewModel</ID>
+    <ID>FunctionSignature:PanelModelBuild.kt:@Composable fun createPanelCommunityViewModel</ID>
+    <ID>FunctionSignature:PanelModelBuild.kt:@Composable fun createPanelFileRefsViewModel</ID>
+    <ID>FunctionSignature:PanelModelBuild.kt:@Composable fun createPanelFileViewModel</ID>
+    <ID>FunctionSignature:PanelModelBuild.kt:@Composable fun createPanelJoinedCommunitiesViewModel</ID>
+    <ID>FunctionSignature:PanelModelBuild.kt:@Composable fun createPanelJoinedRoomsViewModel</ID>
+    <ID>FunctionSignature:PanelModelBuild.kt:@Composable fun createPanelLogsViewModel</ID>
+    <ID>FunctionSignature:PanelModelBuild.kt:@Composable fun createPanelReceivedTitlesViewModel</ID>
+    <ID>FunctionSignature:PanelModelBuild.kt:@Composable fun createPanelRoomFilesViewModel</ID>
+    <ID>FunctionSignature:PanelModelBuild.kt:@Composable fun createPanelRoomMembersViewModel</ID>
+    <ID>FunctionSignature:PanelModelBuild.kt:@Composable fun createPanelRoomViewModel</ID>
+    <ID>FunctionSignature:PanelModelBuild.kt:@Composable fun createPanelTaskRecordsViewModel</ID>
+    <ID>FunctionSignature:PanelModelBuild.kt:@Composable fun createPanelTitleViewModel</ID>
+    <ID>FunctionSignature:PanelModelBuild.kt:@Composable fun createPanelTopicTopicsViewModel</ID>
+    <ID>FunctionSignature:PanelModelBuild.kt:@Composable fun createPanelTopicViewModel</ID>
+    <ID>FunctionSignature:PanelModelBuild.kt:@Composable fun createPanelUserCommentsViewModel</ID>
+    <ID>FunctionSignature:PanelModelBuild.kt:@Composable fun createPanelUserFavoritesViewModel</ID>
+    <ID>FunctionSignature:PanelModelBuild.kt:@Composable fun createPanelUserFilesViewModel</ID>
+    <ID>FunctionSignature:PanelModelBuild.kt:@Composable fun createPanelUserLogsViewModel</ID>
+    <ID>FunctionSignature:PanelModelBuild.kt:@Composable fun createPanelUserOverviewViewModel</ID>
+    <ID>FunctionSignature:PanelModelBuild.kt:@Composable fun createPanelUserReactionsViewModel</ID>
+    <ID>FunctionSignature:PanelModelBuild.kt:@Composable fun createPanelUserSubscriptionsViewModel</ID>
+    <ID>FunctionSignature:PanelModelBuild.kt:@Composable fun createPanelUserUploadRecordsViewModel</ID>
+    <ID>FunctionSignature:PanelModelBuild.kt:@Composable fun createPanelUserViewModel</ID>
+    <ID>FunctionSignature:PanelModelBuild.kt:@Composable inline fun &lt;reified VM : ViewModel&gt; panelViewModel: VM</ID>
+    <ID>FunctionSignature:TaskRecordsPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable private fun TaskRecordTypeFilter</ID>
+    <ID>FunctionSignature:TopicCell.kt:@Composable fun TopicCell</ID>
+    <ID>FunctionSignature:TopicDetailPage.kt:@Composable private fun TopicCell</ID>
     <ID>MissingPackageDeclaration:PanelFilePreviewPage.kt:.PanelFilePreviewPage.kt</ID>
+    <ID>MultilineExpressionWrapping:AllFilesPage.kt:TopAppBar( title = { Text(stringResource(Res.string.all_files)) }, navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } } )</ID>
+    <ID>MultilineExpressionWrapping:AllPrivateRoomsPage.kt:TopAppBar( title = { Text(stringResource(Res.string.all_private_rooms)) }, navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } } )</ID>
+    <ID>MultilineExpressionWrapping:AllTitlesPage.kt:TopAppBar( title = { Text(stringResource(Res.string.all_titles)) }, navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } } )</ID>
+    <ID>MultilineExpressionWrapping:AllTopicsPage.kt:TopAppBar( title = { Text(stringResource(Res.string.all_topics)) }, navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } } )</ID>
+    <ID>MultilineExpressionWrapping:AllUsersPage.kt:Modifier.weight(1f) .border(1.dp, MaterialTheme.colorScheme.primaryContainer, shape) .padding(8.dp)</ID>
+    <ID>MultilineExpressionWrapping:AllUsersPage.kt:SerializersModule { polymorphic(NavKey::class) { subclass(AddUserStartScreen::class, AddUserStartScreen.serializer()) subclass(AddUserPrivateKeyScreen::class, AddUserPrivateKeyScreen.serializer()) } }</ID>
+    <ID>MultilineExpressionWrapping:AllUsersPage.kt:entryProvider { entry&lt;AddUserStartScreen&gt; { AddUserProfilePage( addUserViewModel, { addUserBackStack.add(AddUserPrivateKeyScreen) }, dismiss ) } entry&lt;AddUserPrivateKeyScreen&gt; { AddUserPrivateKeyPage(addUserViewModel) { addUserBackStack.removeLastOrNull() } } }</ID>
+    <ID>MultilineExpressionWrapping:AllUsersPage.kt:if (algoType == AlgoType.DILITHIUM) { val encryptionPublicKey = addUserViewModel.encryptionPublicKey.value if (encryptionPublicKey == null) { toast.showMessage(requiredPrivateKeyMessage) return } com.storyteller_f.a.api.TransferAuthKey.Dilithium( derPublicKey = publicKey, derEncryptionPublicKey = encryptionPublicKey ) } else { com.storyteller_f.a.api.TransferAuthKey.P256( derPublicKey = publicKey ) }</ID>
+    <ID>MultilineExpressionWrapping:AllUsersPage.kt:remember { SavedStateConfiguration { serializersModule = module } }</ID>
+    <ID>MultilineExpressionWrapping:AllUsersPage.kt:viewModel { AddUserViewModel() }</ID>
+    <ID>MultilineExpressionWrapping:CommunityDetailPage.kt:"fontSettings" to (info.fontSettings?.let { compactJson.encodeToString( com.storyteller_f.shared.model.FontSettings.serializer(), it.settings ) } ?: "null")</ID>
+    <ID>MultilineExpressionWrapping:CommunityDetailPage.kt:buildList { add("id" to info.id.toString()) add("name" to info.name) add("aid" to info.aid) add("owner" to info.owner.toString()) add("createdTime" to info.createdTime.toString()) add("memberCount" to info.memberCount.toString()) add("memberPolicy" to info.memberPolicy.name) add("icon" to (info.icon?.name ?: "null")) add("poster" to (info.poster?.name ?: "null")) add("latestTopic" to (info.latestTopic?.toString() ?: "null")) add("hasPoster" to info.hasPoster.toString()) add("fontSettings" to (info.fontSettings?.let { compactJson.encodeToString( com.storyteller_f.shared.model.FontSettings.serializer(), it.settings ) } ?: "null")) add("readOnly" to info.readOnly.toString()) }</ID>
+    <ID>MultilineExpressionWrapping:CommunityDetailPage.kt:if (name != null &amp;&amp; aid != null) { stringResource(Res.string.community_detail_title_with_info, name, aid) } else { stringResource(Res.string.community_detail_title) }</ID>
+    <ID>MultilineExpressionWrapping:CommunityDetailPage.kt:listOf( NavRoute("/info", Icons.Default.Group, "Info"), NavRoute("/logs", Icons.AutoMirrored.Filled.Article, "Logs"), )</ID>
+    <ID>MultilineExpressionWrapping:FileDetailPage.kt:Modifier.clickable { when (ref?.objectType) { com.storyteller_f.shared.type.ObjectType.COMMUNITY -&gt; nav.gotoCommunityDetail(ref.objectId) com.storyteller_f.shared.type.ObjectType.ROOM -&gt; nav.gotoRoomDetail(ref.objectId) com.storyteller_f.shared.type.ObjectType.TOPIC -&gt; nav.gotoTopicDetail(ref.objectId) com.storyteller_f.shared.type.ObjectType.USER -&gt; nav.gotoUserDetail(ref.objectId) else -&gt; {} } }</ID>
+    <ID>MultilineExpressionWrapping:FileDetailPage.kt:buildList { add("id" to info.id.toString()) add("name" to info.name) add("fullName" to info.fullName) add("url" to info.url) add("contentType" to info.contentType) add("size" to info.size.toString()) add("owner" to info.owner.toString()) add("ownerType" to info.ownerType.name) add("lastModified" to info.lastModified.toString()) add("dimension" to (info.dimension?.let { "${it.width}x${it.height}" } ?: "null")) add("readOnly" to info.readOnly.toString()) }</ID>
+    <ID>MultilineExpressionWrapping:FileDetailPage.kt:if (name != null) { stringResource(Res.string.file_detail_title_with_info, name) } else { stringResource(Res.string.file_detail_title) }</ID>
+    <ID>MultilineExpressionWrapping:FileDetailPage.kt:listOf( NavRoute("/info", Icons.Default.FilePresent, stringResource(Res.string.tab_info)), NavRoute("/logs", Icons.AutoMirrored.Filled.Article, stringResource(Res.string.tab_logs)), )</ID>
+    <ID>MultilineExpressionWrapping:InfoTable.kt:Modifier .fillMaxWidth() .then( if (index &lt; items.size - 1) { Modifier.border( width = 0.dp, color = MaterialTheme.colorScheme.outline, shape = RectangleShape ).border( width = 0.dp, color = MaterialTheme.colorScheme.outline, shape = RectangleShape ) } else { Modifier } )</ID>
+    <ID>MultilineExpressionWrapping:InfoTable.kt:modifier .fillMaxWidth() .verticalScroll(rememberScrollState()) .border(1.dp, MaterialTheme.colorScheme.outline)</ID>
+    <ID>MultilineExpressionWrapping:MainViewController.kt:ComposeUIViewController { val panelUiViewModel = remember { createPanelUIViewModel() } CompositionLocalProvider(LocalPanelUiViewModel provides panelUiViewModel) { App() } }</ID>
+    <ID>MultilineExpressionWrapping:OverviewPage.kt:Modifier.appiumSemantics( description = stringResource(Res.string.menu), onClick = panelNav::open, )</ID>
+    <ID>MultilineExpressionWrapping:OverviewPage.kt:OverviewFlowPreviewProvider$sequenceOf( PanelOverview(1, 2, 3, 4, 5, 6, 7000, 8000,) )</ID>
+    <ID>MultilineExpressionWrapping:OverviewPage.kt:remember(panelOverview.communityCount, raw) { buildAnnotatedString { val start = raw.indexOf($$"%1$d") val s = panelOverview.communityCount.toString() val end = start + s.length append(raw.replace($$"%1$d", s)) addStyle(SpanStyle(fontSize = 40.sp, fontWeight = FontWeight.Bold), start, end) } }</ID>
+    <ID>MultilineExpressionWrapping:OverviewPage.kt:remember(panelOverview.communityRoomCount, raw) { buildAnnotatedString { val start = raw.indexOf($$"%1$d") val s = panelOverview.communityRoomCount.toString() val end = start + s.length append(raw.replace($$"%1$d", s)) addStyle(SpanStyle(fontSize = 40.sp, fontWeight = FontWeight.Bold), start, end) } }</ID>
+    <ID>MultilineExpressionWrapping:OverviewPage.kt:remember(panelOverview.fileCount, raw) { buildAnnotatedString { val start = raw.indexOf($$"%1$d") val s = panelOverview.fileCount.toString() val end = start + s.length append(raw.replace($$"%1$d", s)) addStyle(SpanStyle(fontSize = 40.sp, fontWeight = FontWeight.Bold), start, end) } }</ID>
+    <ID>MultilineExpressionWrapping:OverviewPage.kt:remember(panelOverview.fileVolume) { buildAnnotatedString { withStyle( style = SpanStyle(fontSize = 30.sp, fontWeight = FontWeight.Bold) ) { append(HumanReadable.fileSize(panelOverview.fileVolume)) } } }</ID>
+    <ID>MultilineExpressionWrapping:OverviewPage.kt:remember(panelOverview.privateRoomCount, raw) { buildAnnotatedString { val start = raw.indexOf($$"%1$d") val s = panelOverview.privateRoomCount.toString() val end = start + s.length append(raw.replace($$"%1$d", s)) addStyle(SpanStyle(fontSize = 40.sp, fontWeight = FontWeight.Bold), start, end) } }</ID>
+    <ID>MultilineExpressionWrapping:OverviewPage.kt:remember(panelOverview.titleCount, raw) { buildAnnotatedString { val start = raw.indexOf($$"%1$d") val s = panelOverview.titleCount.toString() val end = start + s.length append(raw.replace($$"%1$d", s)) addStyle(SpanStyle(fontSize = 40.sp, fontWeight = FontWeight.Bold), start, end) } }</ID>
+    <ID>MultilineExpressionWrapping:OverviewPage.kt:remember(panelOverview.topicCount, raw) { buildAnnotatedString { val start = raw.indexOf($$"%1$d") val s = panelOverview.topicCount.toString() val end = start + s.length append(raw.replace($$"%1$d", s)) addStyle(SpanStyle(fontSize = 40.sp, fontWeight = FontWeight.Bold), start, end) } }</ID>
+    <ID>MultilineExpressionWrapping:OverviewPage.kt:remember(panelOverview.userCount, raw) { buildAnnotatedString { val start = raw.indexOf($$"%1$d") val s = panelOverview.userCount.toString() val end = start + s.length append(raw.replace($$"%1$d", s)) addStyle(SpanStyle(fontSize = 40.sp, fontWeight = FontWeight.Bold), start, end) } }</ID>
+    <ID>MultilineExpressionWrapping:PanelApp.kt:IPanelAccountInstance.None$createPanelSessionManager( httpUrl, passHolder, AcceptAllCookiesStorage() )</ID>
+    <ID>MultilineExpressionWrapping:PanelApp.kt:IPanelAccountInstance.Regular$storage.room.getDocument(RoomCollection.AllRooms(false), event.id) ?: storage.room.getDocument(RoomCollection.AllRooms(true), event.id)</ID>
+    <ID>MultilineExpressionWrapping:PanelApp.kt:PanelUIViewModel$IPanelAccountInstance.Regular( viewModelScope, address, httpUrl, ConstPassHolder(state.userPass), AcceptAllCookiesStorage() )</ID>
+    <ID>MultilineExpressionWrapping:PanelApp.kt:PanelUIViewModel$IPanelAccountInstance.Regular( viewModelScope, it.address, httpUrl, ConstPassHolder(pass), old )</ID>
+    <ID>MultilineExpressionWrapping:PanelApp.kt:compositionLocalOf&lt;PanelGlobalDialogController&gt; { object : PanelGlobalDialogController { override val state: MutableStateFlow&lt;PersistentList&lt;GlobalDialogState&gt;&gt; = MutableStateFlow(persistentListOf()) override suspend fun &lt;T&gt; useResult( block: suspend PanelGlobalDialogController.() -&gt; Result&lt;T&gt; ): Result&lt;T&gt; { TODO("Not yet implemented") } override fun emitProgress(block: (GlobalDialogState.Loading) -&gt; GlobalDialogState.Loading) { TODO("Not yet implemented") } override val context: GlobalDialogContext&lt;CustomPanelSessionManager&gt; get() = TODO("Not yet implemented") } }</ID>
+    <ID>MultilineExpressionWrapping:PanelApp.kt:createSimplePanelSessionManager( passHolder, cookiesStorage ) { m, c -&gt; getClient { defaultClientConfigureForPanel(c, m, passHolder, httpUrl) } }</ID>
+    <ID>MultilineExpressionWrapping:PanelApp.kt:listOf( rememberSaveableStateHolderNavEntryDecorator(), rememberViewModelStoreNavEntryDecorator() )</ID>
+    <ID>MultilineExpressionWrapping:PanelApp.kt:remember { SavedStateConfiguration { serializersModule = panelNavSerializersModule } }</ID>
+    <ID>MultilineExpressionWrapping:PanelApp.kt:remember { object : PanelNavFactory { val panelNav = newPanelNav(backStack, drawerState, scope) override fun newPanelNav() = panelNav } }</ID>
+    <ID>MultilineExpressionWrapping:PanelFilePreviewPage.kt:RemoteMediaItem( id = id.toString(), url = url, contentType = contentType, isM3U8PlayList = false, name = name )</ID>
+    <ID>MultilineExpressionWrapping:PanelInputPage.kt:PanelInputViewModel$privateKey.map { getAlgo(AlgoType.P256).run { getDerPublicKeyFromPrivateKey(it).getOrNull() } }.stateIn(viewModelScope, SharingStarted.Eagerly, null)</ID>
+    <ID>MultilineExpressionWrapping:PanelInputPage.kt:PanelInputViewModel$publicKey.map { getAlgo(AlgoType.P256).run { it?.let { derPublicKeyStr -&gt; calcAddress(derPublicKeyStr).getOrNull() } } }.stateIn(viewModelScope, SharingStarted.Eagerly, null)</ID>
+    <ID>MultilineExpressionWrapping:PanelInputPage.kt:getPanelUserSignInPass( AuthKey.P256(privateKey, derPriKey, derPubKey), )</ID>
+    <ID>MultilineExpressionWrapping:PanelInputPage.kt:historyFactory.addSession( RawUserPassInfo( signResult.address, signResult.authKey, ) )</ID>
+    <ID>MultilineExpressionWrapping:PanelModel.kt:AddUserViewModel$encryptionPrivateKey.combine(algoType) { pk, algo -&gt; if (algo != AlgoType.DILITHIUM || pk.isBlank()) return@combine null val encryptionAlgo = getAlgo(algo).encryptionAlgo as? Type2Algo encryptionAlgo?.getDerEncryptionPublicKeyFromPemPrivateKey(pk)?.getOrNull() }.stateIn(viewModelScope, SharingStarted.Eagerly, null)</ID>
+    <ID>MultilineExpressionWrapping:PanelModel.kt:AddUserViewModel$privateKey.combine(algoType) { pk, algo -&gt; getAlgo(algo).run { getDerPublicKeyFromPrivateKey(pk).getOrNull() } }.stateIn(viewModelScope, SharingStarted.Eagerly, null)</ID>
+    <ID>MultilineExpressionWrapping:PanelModel.kt:AddUserViewModel$publicKey.combine(algoType) { pub, algo -&gt; getAlgo(algo).run { pub?.let { derPublicKeyStr -&gt; calcAddress(derPublicKeyStr).getOrNull() } } }.stateIn(viewModelScope, SharingStarted.Eagerly, null)</ID>
+    <ID>MultilineExpressionWrapping:PanelModel.kt:AllCommunitiesViewModel$buildPager( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.community ) { key, size -&gt; sessionManager.getAllCommunities(PaginationQuery(key, size = size)) }.flow.cachedIn(viewModelScope)</ID>
+    <ID>MultilineExpressionWrapping:PanelModel.kt:AllFilesViewModel$buildPager( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.fileInfo ) { key, size -&gt; sessionManager.getAllFiles(PaginationQuery(key, size = size)) }.flow.cachedIn(viewModelScope)</ID>
+    <ID>MultilineExpressionWrapping:PanelModel.kt:AllPrivateRoomsViewModel$buildPager( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.room ) { key, size -&gt; sessionManager.getAllPrivateRooms(PaginationQuery(key, size = size)) }.flow.cachedIn(viewModelScope)</ID>
+    <ID>MultilineExpressionWrapping:PanelModel.kt:AllPublicRoomsViewModel$buildPager( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.room ) { key, size -&gt; sessionManager.getAllPublicRooms(PaginationQuery(key, size = size)) }.flow.cachedIn(viewModelScope)</ID>
+    <ID>MultilineExpressionWrapping:PanelModel.kt:AllTitlesViewModel$buildPager( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.title ) { key, size -&gt; sessionManager.getAllTitles(PaginationQuery(key, size = size)) }.flow.cachedIn(viewModelScope)</ID>
+    <ID>MultilineExpressionWrapping:PanelModel.kt:AllTopicsViewModel$buildPager( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.topic ) { key, size -&gt; sessionManager.getAllTopics(PaginationQuery(key, size = size)) }.flow.cachedIn(viewModelScope)</ID>
+    <ID>MultilineExpressionWrapping:PanelModel.kt:AllUsersViewModel$buildPager( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.user ) { key, size -&gt; sessionManager.getAllUsers(PaginationQuery(key, size = size)) }.flow.cachedIn(viewModelScope)</ID>
+    <ID>MultilineExpressionWrapping:PanelModel.kt:CommunityMembersViewModel$buildPager( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.member ) { key, size -&gt; sessionManager.getCommunityMembers(communityId, PaginationQuery(key, size = size)) }.flow.cachedIn(viewModelScope)</ID>
+    <ID>MultilineExpressionWrapping:PanelModel.kt:FileRefsViewModel$buildPager( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.fileRef ) { key, size -&gt; sessionManager.getFileRefs(fileId, PaginationQuery(key, size = size)) }.flow.cachedIn(viewModelScope)</ID>
+    <ID>MultilineExpressionWrapping:PanelModel.kt:IdCommunityViewModel$CachedLoadingHandler( modelStorage.community.observeDatum(id), viewModelScope, { modelStorage.community.saveToDefault(it) } ) { sessionManager.getCommunityById(id) }</ID>
+    <ID>MultilineExpressionWrapping:PanelModel.kt:IdFileViewModel$CachedLoadingHandler( modelStorage.fileInfo.observeDatum(id), viewModelScope, { modelStorage.fileInfo.saveToDefault(it) } ) { sessionManager.getFileById(id) }</ID>
+    <ID>MultilineExpressionWrapping:PanelModel.kt:IdRoomViewModel$CachedLoadingHandler( modelStorage.room.observeDatum(id), viewModelScope, { modelStorage.room.saveToDefault(it) } ) { sessionManager.getRoomById(id) }</ID>
+    <ID>MultilineExpressionWrapping:PanelModel.kt:IdTitleViewModel$CachedLoadingHandler( modelStorage.title.observeDatum(id), viewModelScope, { modelStorage.title.saveToDefault(it) } ) { sessionManager.getTitleById(id) }</ID>
+    <ID>MultilineExpressionWrapping:PanelModel.kt:IdTopicViewModel$CachedLoadingHandler( modelStorage.topic.observeDatum(id), viewModelScope, { modelStorage.topic.saveToDefault(it) } ) { sessionManager.getTopicById(id) }</ID>
+    <ID>MultilineExpressionWrapping:PanelModel.kt:IdUserOverviewViewModel$CachedLoadingHandler( modelStorage.userOverview.observeDatum(), viewModelScope, { modelStorage.userOverview.save(it) } ) { sessionManager.getUserOverview(id) }</ID>
+    <ID>MultilineExpressionWrapping:PanelModel.kt:IdUserViewModel$CachedLoadingHandler( modelStorage.user.observeDatum(id), viewModelScope, { modelStorage.user.saveToDefault(it) } ) { sessionManager.getUserById(id) }</ID>
+    <ID>MultilineExpressionWrapping:PanelModel.kt:OverviewViewModel$CachedLoadingHandler( modelStorage.overview.observeDatum(), viewModelScope, { modelStorage.overview.save(it) } ) { sessionManager.overview() }</ID>
+    <ID>MultilineExpressionWrapping:PanelModel.kt:PanelLogsViewModel$buildPager( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.panelLog ) { key, size -&gt; sessionManager.getPanelLogs(targetId, objectType, PaginationQuery(key, size = size)) }.flow.cachedIn(viewModelScope)</ID>
+    <ID>MultilineExpressionWrapping:PanelModel.kt:RoomFilesViewModel$buildPager( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.fileInfo ) { key, size -&gt; sessionManager.getRoomFiles(roomId, PaginationQuery(key, size = size)) }.flow.cachedIn(viewModelScope)</ID>
+    <ID>MultilineExpressionWrapping:PanelModel.kt:RoomMembersViewModel$buildPager( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.member ) { key, size -&gt; sessionManager.getRoomMembers(roomId, PaginationQuery(key, size = size)) }.flow.cachedIn(viewModelScope)</ID>
+    <ID>MultilineExpressionWrapping:PanelModel.kt:TaskRecordsViewModel$buildPager( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.taskRecord ) { key, size -&gt; sessionManager.getTaskRecords(type, PaginationQuery(key, size = size)) }.flow.cachedIn(viewModelScope)</ID>
+    <ID>MultilineExpressionWrapping:PanelModel.kt:TopicTopicsViewModel$buildPager( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.topic ) { key, size -&gt; sessionManager.getTopicTopics( topicId, TopicPinSearch.UNSPECIFIED, PaginationQuery(key, size = size) ) }.flow.cachedIn(viewModelScope)</ID>
+    <ID>MultilineExpressionWrapping:PanelModel.kt:UserCommentsViewModel$buildPager( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.topic ) { key, size -&gt; sessionManager.getUserComments(uid, PaginationQuery(key, size = size)) }.flow.cachedIn(viewModelScope)</ID>
+    <ID>MultilineExpressionWrapping:PanelModel.kt:UserFavoritesViewModel$buildPager( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.favorite ) { key, size -&gt; sessionManager.getUserFavorites(uid, PaginationQuery(key, size = size)) }.flow.cachedIn(viewModelScope)</ID>
+    <ID>MultilineExpressionWrapping:PanelModel.kt:UserFilesViewModel$buildPager( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.fileInfo ) { key, size -&gt; sessionManager.getUserFiles(uid, PaginationQuery(key, size = size)) }.flow.cachedIn(viewModelScope)</ID>
+    <ID>MultilineExpressionWrapping:PanelModel.kt:UserJoinedCommunitiesViewModel$CommunityCollection.SearchCommunity( joinStatusSearch = JoinStatusSearch.JOINED, word = "", target = uid )</ID>
+    <ID>MultilineExpressionWrapping:PanelModel.kt:UserJoinedCommunitiesViewModel$buildPager( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.community ) { key, size -&gt; sessionManager.getUserJoinedCommunities( uid, CustomApi.Users.JoinedCommunities.UserCommunitiesQuery( com.storyteller_f.shared.model.PosterSearch.UNSPECIFIED, key, size = size ) ) }.flow.cachedIn(viewModelScope)</ID>
+    <ID>MultilineExpressionWrapping:PanelModel.kt:UserJoinedRoomsViewModel$RoomCollection.SearchRoom( word = "", communityId = null, joinStatusSearch = JoinStatusSearch.JOINED )</ID>
+    <ID>MultilineExpressionWrapping:PanelModel.kt:UserJoinedRoomsViewModel$buildPager( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.room ) { key, size -&gt; sessionManager.getUserJoinedRooms(uid, PaginationQuery(key, size = size)) }.flow.cachedIn(viewModelScope)</ID>
+    <ID>MultilineExpressionWrapping:PanelModel.kt:UserLogsViewModel$buildPager( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.userLog ) { key, size -&gt; sessionManager.getUserLogs(uid, PaginationQuery(key, size = size)) }.flow.cachedIn(viewModelScope)</ID>
+    <ID>MultilineExpressionWrapping:PanelModel.kt:UserReactionsViewModel$buildPager( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.userReactionRecord ) { key, size -&gt; sessionManager.getUserReactions(uid, PaginationQuery(key, size = size)) }.flow.cachedIn(viewModelScope)</ID>
+    <ID>MultilineExpressionWrapping:PanelModel.kt:UserReceivedTitlesViewModel$buildPager( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.title ) { key, size -&gt; sessionManager.getUserReceivedTitles( uid, CustomApi.Users.Id.Titles.TitleQuery( searchType = TitleSearchType.RECEIVER, nextPageToken = key, size = size ) ) }.flow.cachedIn(viewModelScope)</ID>
+    <ID>MultilineExpressionWrapping:PanelModel.kt:UserSubscriptionsViewModel$buildPager( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.subscription ) { key, size -&gt; sessionManager.getUserSubscriptions(uid, PaginationQuery(key, size = size)) }.flow.cachedIn(viewModelScope)</ID>
+    <ID>MultilineExpressionWrapping:PanelModel.kt:UserUploadRecordsViewModel$buildPager( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.uploadRecord ) { key, size -&gt; sessionManager.getUserUploadRecords(uid, PaginationQuery(key, size = size)) }.flow.cachedIn(viewModelScope)</ID>
+    <ID>MultilineExpressionWrapping:PanelModelBuild.kt:panelViewModel { sessionManager, modelStorage -&gt; AllCommunitiesViewModel(sessionManager, modelStorage) }</ID>
+    <ID>MultilineExpressionWrapping:PanelModelBuild.kt:panelViewModel { sessionManager, modelStorage -&gt; AllFilesViewModel(sessionManager, modelStorage) }</ID>
+    <ID>MultilineExpressionWrapping:PanelModelBuild.kt:panelViewModel { sessionManager, modelStorage -&gt; AllPrivateRoomsViewModel(sessionManager, modelStorage) }</ID>
+    <ID>MultilineExpressionWrapping:PanelModelBuild.kt:panelViewModel { sessionManager, modelStorage -&gt; AllPublicRoomsViewModel(sessionManager, modelStorage) }</ID>
+    <ID>MultilineExpressionWrapping:PanelModelBuild.kt:panelViewModel { sessionManager, modelStorage -&gt; AllTitlesViewModel(sessionManager, modelStorage) }</ID>
+    <ID>MultilineExpressionWrapping:PanelModelBuild.kt:panelViewModel { sessionManager, modelStorage -&gt; AllTopicsViewModel(sessionManager, modelStorage) }</ID>
+    <ID>MultilineExpressionWrapping:PanelModelBuild.kt:panelViewModel { sessionManager, modelStorage -&gt; AllUsersViewModel(sessionManager, modelStorage) }</ID>
+    <ID>MultilineExpressionWrapping:PanelModelBuild.kt:panelViewModel { sessionManager, modelStorage -&gt; OverviewViewModel(sessionManager, modelStorage) }</ID>
+    <ID>MultilineExpressionWrapping:PanelRoute.kt:PanelNavFactory.Companion$object : PanelNavFactory { override fun newPanelNav(): PanelNav { error("no panel nav") } }</ID>
+    <ID>MultilineExpressionWrapping:PanelRoute.kt:SerializersModule { polymorphic(NavKey::class) { subclass(LoginSelectScreen::class, LoginSelectScreen.serializer()) subclass(LoginInputScreen::class, LoginInputScreen.serializer()) } }</ID>
+    <ID>MultilineExpressionWrapping:PanelRoute.kt:SerializersModule { polymorphic(NavKey::class) { subclass(PanelUserDetailScreen::class) subclass(PanelCommunityDetailScreen::class) subclass(PanelRoomDetailScreen::class) subclass(PanelTopicDetailScreen::class) subclass(PanelFileDetailScreen::class) subclass(PanelFilePreviewScreen::class) subclass(PanelTitleDetailScreen::class) subclass(PanelLoginScreen::class) subclass(PanelOverviewScreen::class) subclass(PanelAllUsersScreen::class) subclass(PanelAllCommunitiesScreen::class) subclass(PanelAllPublicRoomsScreen::class) subclass(PanelAllPrivateRoomsScreen::class) subclass(PanelAllTopicsScreen::class) subclass(PanelAllFilesScreen::class) subclass(PanelAllTitlesScreen::class) subclass(PanelTaskRecordsScreen::class) } }</ID>
+    <ID>MultilineExpressionWrapping:PanelRoute.kt:entryProvider { entry&lt;LoginSelectScreen&gt; { PanelSelectLoginPage { backStack.add(LoginInputScreen) } } entry&lt;LoginInputScreen&gt; { PanelInputPage(back) } }</ID>
+    <ID>MultilineExpressionWrapping:PanelRoute.kt:entryProvider { entry&lt;PanelLoginScreen&gt; { PanelLoginPage { nav.back() nav.gotoOverview() } } entry&lt;PanelOverviewScreen&gt; { PanelHost { OverviewPage() } } entry&lt;PanelAllUsersScreen&gt; { AllUsersPage() } entry&lt;PanelUserDetailScreen&gt; { UserDetailPage(it.uid) } entry&lt;PanelAllCommunitiesScreen&gt; { AllCommunitiesPage() } entry&lt;PanelCommunityDetailScreen&gt; { CommunityDetailPage(it.id) } entry&lt;PanelAllPublicRoomsScreen&gt; { AllPublicRoomsPage() } entry&lt;PanelRoomDetailScreen&gt; { RoomDetailPage(it.id) } entry&lt;PanelAllPrivateRoomsScreen&gt; { AllPrivateRoomsPage() } entry&lt;PanelAllTopicsScreen&gt; { AllTopicsPage() } entry&lt;PanelTopicDetailScreen&gt; { TopicDetailPage(it.id) } entry&lt;PanelAllFilesScreen&gt; { AllFilesPage() } entry&lt;PanelFileDetailScreen&gt; { FileDetailPage(it.id) } entry&lt;PanelAllTitlesScreen&gt; { AllTitlesPage() } entry&lt;PanelTitleDetailScreen&gt; { TitleDetailPage(it.id) } entry&lt;PanelTaskRecordsScreen&gt; { TaskRecordsPage() } entry&lt;PanelFilePreviewScreen&gt; { PanelFilePreviewPage(it.id) } }</ID>
+    <ID>MultilineExpressionWrapping:PanelRoute.kt:object : PanelNav { override val drawerState: DrawerState get() = drawerState override val backStack: NavBackStack&lt;NavKey&gt; get() = backStack override fun gotoLogin() { backStack.add(PanelLoginScreen) } override fun gotoOverview() { backStack.add(PanelOverviewScreen) } override fun gotoAllUsers() { backStack.add(PanelAllUsersScreen) } override fun gotoUserDetail(uid: Long) { backStack.add(PanelUserDetailScreen(uid)) } override fun gotoAllCommunities() { backStack.add(PanelAllCommunitiesScreen) } override fun gotoCommunityDetail(id: Long) { backStack.add(PanelCommunityDetailScreen(id)) } override fun gotoAllPublicRooms() { backStack.add(PanelAllPublicRoomsScreen) } override fun gotoRoomDetail(id: Long) { backStack.add(PanelRoomDetailScreen(id)) } override fun gotoAllPrivateRooms() { backStack.add(PanelAllPrivateRoomsScreen) } override fun gotoAllTopics() { backStack.add(PanelAllTopicsScreen) } override fun gotoTopicDetail(id: Long) { backStack.add(PanelTopicDetailScreen(id)) } override fun gotoAllFiles() { backStack.add(PanelAllFilesScreen) } override fun gotoFileDetail(id: Long) { backStack.add(PanelFileDetailScreen(id)) } override fun gotoAllTitles() { backStack.add(PanelAllTitlesScreen) } override fun gotoTitleDetail(id: Long) { backStack.add(PanelTitleDetailScreen(id)) } override fun gotoTaskRecords() { backStack.add(PanelTaskRecordsScreen) } override fun gotoFilePreview(id: Long, url: String, contentType: String, name: String) { backStack.add(PanelFilePreviewScreen(id)) } override fun back() { backStack.removeLastOrNull() } override fun open() { scope.launch { drawerState.open() } } }</ID>
+    <ID>MultilineExpressionWrapping:PanelRoute.kt:remember { SavedStateConfiguration { serializersModule = module } }</ID>
+    <ID>MultilineExpressionWrapping:RoomDetailPage.kt:buildList { add("id" to info.id.toString()) add("name" to info.name) add("aid" to info.aid) add("creator" to info.creator.toString()) add("createdTime" to info.createdTime.toString()) add("memberCount" to info.memberCount.toString()) add("icon" to (info.icon?.name ?: "null")) add("joinedTime" to (info.joinedTime?.toString() ?: "null")) add("communityId" to (info.communityId?.toString() ?: "null")) add("latestTopic" to (info.latestTopic?.toString() ?: "null")) add("isPrivate" to info.isPrivate.toString()) add("isJoined" to info.isJoined.toString()) add("hasUnread" to info.hasUnread.toString()) add("readOnly" to info.readOnly.toString()) }</ID>
+    <ID>MultilineExpressionWrapping:RoomDetailPage.kt:if (name != null &amp;&amp; aid != null) { stringResource(Res.string.room_detail_title_with_info, name, aid) } else { stringResource(Res.string.room_detail_title) }</ID>
+    <ID>MultilineExpressionWrapping:RoomDetailPage.kt:listOf( NavRoute("/info", Icons.Default.People, "Info"), NavRoute("/logs", Icons.AutoMirrored.Filled.Article, "Logs"), )</ID>
+    <ID>MultilineExpressionWrapping:RoomDetailPage.kt:listOf( stringResource(Res.string.tab_basic_info), stringResource(Res.string.tab_members), stringResource(Res.string.tab_files) )</ID>
+    <ID>MultilineExpressionWrapping:TaskRecordsPage.kt:Modifier .horizontalScroll(rememberScrollState()) .padding(horizontal = 16.dp, vertical = 8.dp)</ID>
+    <ID>MultilineExpressionWrapping:TaskRecordsPage.kt:Modifier.clickable { when (info.type) { TaskRecordType.INTRO -&gt; nav.gotoUserDetail(info.processedId) TaskRecordType.TITLE -&gt; nav.gotoTitleDetail(info.processedId) TaskRecordType.SUBSCRIPTION, TaskRecordType.TOPIC_ACG -&gt; nav.gotoTopicDetail(info.processedId) } }</ID>
+    <ID>MultilineExpressionWrapping:Theme.kt:darkColorScheme( primary = primaryDark, onPrimary = onPrimaryDark, primaryContainer = primaryContainerDark, onPrimaryContainer = onPrimaryContainerDark, secondary = secondaryDark, onSecondary = onSecondaryDark, secondaryContainer = secondaryContainerDark, onSecondaryContainer = onSecondaryContainerDark, tertiary = tertiaryDark, onTertiary = onTertiaryDark, tertiaryContainer = tertiaryContainerDark, onTertiaryContainer = onTertiaryContainerDark, error = errorDark, onError = onErrorDark, errorContainer = errorContainerDark, onErrorContainer = onErrorContainerDark, background = backgroundDark, onBackground = onBackgroundDark, surface = surfaceDark, onSurface = onSurfaceDark, surfaceVariant = surfaceVariantDark, onSurfaceVariant = onSurfaceVariantDark, outline = outlineDark, outlineVariant = outlineVariantDark, scrim = scrimDark, inverseSurface = inverseSurfaceDark, inverseOnSurface = inverseOnSurfaceDark, inversePrimary = inversePrimaryDark, surfaceDim = surfaceDimDark, surfaceBright = surfaceBrightDark, surfaceContainerLowest = surfaceContainerLowestDark, surfaceContainerLow = surfaceContainerLowDark, surfaceContainer = surfaceContainerDark, surfaceContainerHigh = surfaceContainerHighDark, surfaceContainerHighest = surfaceContainerHighestDark, )</ID>
+    <ID>MultilineExpressionWrapping:Theme.kt:lightColorScheme( primary = primaryLight, onPrimary = onPrimaryLight, primaryContainer = primaryContainerLight, onPrimaryContainer = onPrimaryContainerLight, secondary = secondaryLight, onSecondary = onSecondaryLight, secondaryContainer = secondaryContainerLight, onSecondaryContainer = onSecondaryContainerLight, tertiary = tertiaryLight, onTertiary = onTertiaryLight, tertiaryContainer = tertiaryContainerLight, onTertiaryContainer = onTertiaryContainerLight, error = errorLight, onError = onErrorLight, errorContainer = errorContainerLight, onErrorContainer = onErrorContainerLight, background = backgroundLight, onBackground = onBackgroundLight, surface = surfaceLight, onSurface = onSurfaceLight, surfaceVariant = surfaceVariantLight, onSurfaceVariant = onSurfaceVariantLight, outline = outlineLight, outlineVariant = outlineVariantLight, scrim = scrimLight, inverseSurface = inverseSurfaceLight, inverseOnSurface = inverseOnSurfaceLight, inversePrimary = inversePrimaryLight, surfaceDim = surfaceDimLight, surfaceBright = surfaceBrightLight, surfaceContainerLowest = surfaceContainerLowestLight, surfaceContainerLow = surfaceContainerLowLight, surfaceContainer = surfaceContainerLight, surfaceContainerHigh = surfaceContainerHighLight, surfaceContainerHighest = surfaceContainerHighestLight, )</ID>
+    <ID>MultilineExpressionWrapping:TitleDetailPage.kt:buildList { add("id" to info.id.toString()) add("name" to info.name) add("createdTime" to info.createdTime.toString()) add("type" to info.type.name) add("creator" to info.creator.toString()) add("receiver" to info.receiver.toString()) add("scopeId" to info.scopeId.toString()) add("scopeType" to info.scopeType.name) add("descriptionTopicId" to info.descriptionTopicId.toString()) add("readOnly" to info.readOnly.toString()) }</ID>
+    <ID>MultilineExpressionWrapping:TitleDetailPage.kt:if (info?.name != null) { stringResource(Res.string.title_detail_title_with_info, id) } else { stringResource(Res.string.title_detail_title) }</ID>
+    <ID>MultilineExpressionWrapping:TitleDetailPage.kt:listOf( NavRoute("/info", Icons.Default.Title, "Info"), NavRoute("/logs", Icons.AutoMirrored.Filled.Article, "Logs"), )</ID>
+    <ID>MultilineExpressionWrapping:TopicCell.kt:if (info.commentCount &gt; 0 || info.reactionCount &gt; 0) { stringResource(Res.string.interaction, info.commentCount, info.reactionCount) } else { "" }</ID>
+    <ID>MultilineExpressionWrapping:TopicCell.kt:listOf( info.createdTime.toString(), counts, flags ).filter { it.isNotEmpty() }.joinToString(" • ")</ID>
+    <ID>MultilineExpressionWrapping:TopicCell.kt:listOfNotNull( if (info.isEncrypted) stringResource(Res.string.encrypted) else null, if (info.isPin) stringResource(Res.string.pinned) else null ).joinToString(" • ")</ID>
+    <ID>MultilineExpressionWrapping:TopicCell.kt:when (val content = info.content) { is TopicContent.Plain -&gt; content.plain is TopicContent.Extracted -&gt; content.plain else -&gt; "" }</ID>
+    <ID>MultilineExpressionWrapping:TopicDetailPage.kt:buildList { add("id" to info.id.toString()) add("author" to info.author.toString()) add("rootId" to info.rootId.toString()) add("rootType" to info.rootType.name) add("parentId" to info.parentId.toString()) add("parentType" to info.parentType.name) add("createdTime" to info.createdTime.toString()) add("commentCount" to info.commentCount.toString()) add("reactionCount" to info.reactionCount.toString()) add("hasComment" to info.hasComment.toString()) add("isEncrypted" to info.isEncrypted.toString()) add("level" to info.level.toString()) add("isPin" to info.isPin.toString()) add("lastModifiedTime" to (info.lastModifiedTime?.toString() ?: "null")) add("aid" to (info.aid ?: "null")) add("readOnly" to info.readOnly.toString()) }</ID>
+    <ID>MultilineExpressionWrapping:TopicDetailPage.kt:if (info.commentCount &gt; 0 || info.reactionCount &gt; 0) { stringResource(Res.string.interaction, info.commentCount, info.reactionCount) } else { "" }</ID>
+    <ID>MultilineExpressionWrapping:TopicDetailPage.kt:listOf( NavRoute("/info", Icons.Default.Topic, stringResource(Res.string.tab_basic_info)), NavRoute("/topics", Icons.Default.Topic, stringResource(Res.string.tab_topics)), NavRoute("/logs", Icons.AutoMirrored.Filled.Article, stringResource(Res.string.tab_logs)), )</ID>
+    <ID>MultilineExpressionWrapping:TopicDetailPage.kt:listOf( info.createdTime.toString(), counts, flags ).filter { it.isNotEmpty() }.joinToString(" • ")</ID>
+    <ID>MultilineExpressionWrapping:TopicDetailPage.kt:listOfNotNull( if (info.isEncrypted) stringResource(Res.string.encrypted) else null, if (info.isPin) stringResource(Res.string.pinned) else null ).joinToString(" • ")</ID>
+    <ID>MultilineExpressionWrapping:TopicDetailPage.kt:when (val content = info.content) { is TopicContent.Plain -&gt; content.plain is TopicContent.Extracted -&gt; content.plain else -&gt; "" }</ID>
+    <ID>MultilineExpressionWrapping:UserCell.kt:Modifier.fillMaxWidth().let { m -&gt; if (onClick != null) m.clickable { onClick() } else m }.padding(8.dp)</ID>
+    <ID>MultilineExpressionWrapping:UserDetailPage.kt:Modifier.clickable { when (info.objectType) { ObjectType.USER -&gt; panelNav.gotoUserDetail(info.objectId) ObjectType.COMMUNITY -&gt; panelNav.gotoCommunityDetail(info.objectId) ObjectType.ROOM -&gt; panelNav.gotoRoomDetail(info.objectId) ObjectType.TOPIC -&gt; panelNav.gotoTopicDetail(info.objectId) ObjectType.TITLE -&gt; panelNav.gotoTitleDetail(info.objectId) ObjectType.FILE -&gt; panelNav.gotoFileDetail(info.objectId) else -&gt; {} } }</ID>
+    <ID>MultilineExpressionWrapping:UserDetailPage.kt:buildList { add("id" to overview.userInfo.id.toString()) add("nickname" to overview.userInfo.nickname) add("status" to overview.userInfo.status.name) add("address" to overview.userInfo.address) add("aid" to overview.userInfo.aid.toString()) add("favoriteCount" to overview.favoriteCount.toString()) add("subscriptionCount" to overview.subscriptionCount.toString()) add("acg" to overview.acg.toString()) add("reactionRecordCount" to overview.reactionRecordCount.toString()) add("commentCount" to overview.commentCount.toString()) add("childAccountCount" to overview.childAccountCount.toString()) }</ID>
+    <ID>MultilineExpressionWrapping:UserDetailPage.kt:if (nickname != null &amp;&amp; aid != null) { stringResource(Res.string.user_detail_title_with_info, nickname, aid) } else { stringResource(Res.string.user_detail_title) }</ID>
+    <ID>MultilineExpressionWrapping:UserDetailPage.kt:if (overview.userInfo.status == UserStatus.NORMAL) { UserStatus.READ_ONLY } else { UserStatus.NORMAL }</ID>
+    <ID>MultilineExpressionWrapping:UserDetailPage.kt:listOf( NavRoute("/info", Icons.Default.People, stringResource(Res.string.user_info)), NavRoute("/logs", Icons.AutoMirrored.Filled.Article, stringResource(Res.string.user_logs)), NavRoute("/panel-logs", Icons.AutoMirrored.Filled.Article, stringResource(Res.string.tab_logs)), )</ID>
+    <ID>MultilineExpressionWrapping:UserDetailPage.kt:listOf( stringResource(Res.string.tab_basic_info), stringResource(Res.string.tab_joined_communities), stringResource(Res.string.tab_joined_rooms), stringResource(Res.string.tab_received_titles), stringResource(Res.string.tab_created_files), stringResource(Res.string.upload_records), stringResource(Res.string.tab_user_reactions), stringResource(Res.string.tab_user_comments), stringResource(Res.string.tab_user_favorites), stringResource(Res.string.tab_user_subscriptions) )</ID>
+    <ID>MultilineExpressionWrapping:build.gradle.kts:Properties().apply { val file = layout.projectDirectory.file("../../deploy/$flavorStr.env").asFile if (file.exists()) { FileInputStream(file).use { load(it) } } }</ID>
+    <ID>MultilineExpressionWrapping:build.gradle.kts:create("headlessTest") { dependsOn(commonTest.get()) }</ID>
+    <ID>NewLineAtEndOfFile:Platform.js.kt:com.storyteller_f.a.panel.Platform.js.kt</ID>
+    <ID>NoEmptyFirstLineInClassBody:ComposeAppCommonTest.kt:ComposeAppCommonTest${ @Test fun example() { assertEquals(3, 1 + 2) } }</ID>
+    <ID>NoWildcardImports:AllTopicsPage.kt:import androidx.compose.foundation.layout.*</ID>
+    <ID>NoWildcardImports:AllTopicsPage.kt:import androidx.compose.material3.*</ID>
+    <ID>NoWildcardImports:PanelModel.kt:import androidx.lifecycle.*</ID>
+    <ID>NoWildcardImports:PanelModel.kt:import androidx.paging.*</ID>
+    <ID>PackageName:AllCommunitiesPage.kt:package com.storyteller_f.a.panel.pages</ID>
+    <ID>PackageName:AllFilesPage.kt:package com.storyteller_f.a.panel.pages</ID>
+    <ID>PackageName:AllPrivateRoomsPage.kt:package com.storyteller_f.a.panel.pages</ID>
+    <ID>PackageName:AllPublicRoomsPage.kt:package com.storyteller_f.a.panel.pages</ID>
+    <ID>PackageName:AllTitlesPage.kt:package com.storyteller_f.a.panel.pages</ID>
+    <ID>PackageName:AllTopicsPage.kt:package com.storyteller_f.a.panel.pages</ID>
+    <ID>PackageName:AllUsersPage.kt:package com.storyteller_f.a.panel.pages</ID>
+    <ID>PackageName:Color.kt:package com.storyteller_f.a.panel.ui.theme</ID>
+    <ID>PackageName:CommunityDetailPage.kt:package com.storyteller_f.a.panel.pages</ID>
+    <ID>PackageName:ComposeAppCommonTest.kt:package com.storyteller_f.a.panel</ID>
+    <ID>PackageName:DesktopPanelConfig.kt:package com.storyteller_f.a.panel</ID>
+    <ID>PackageName:FileDetailPage.kt:package com.storyteller_f.a.panel.pages</ID>
+    <ID>PackageName:Greeting.kt:package com.storyteller_f.a.panel</ID>
+    <ID>PackageName:InfoTable.kt:package com.storyteller_f.a.panel.components</ID>
+    <ID>PackageName:MainViewController.kt:package com.storyteller_f.a.panel</ID>
+    <ID>PackageName:OverviewPage.kt:package com.storyteller_f.a.panel.pages</ID>
+    <ID>PackageName:PanelApp.kt:package com.storyteller_f.a.panel</ID>
+    <ID>PackageName:PanelEvent.kt:package com.storyteller_f.a.panel.common</ID>
+    <ID>PackageName:PanelInputPage.kt:package com.storyteller_f.a.panel.pages</ID>
+    <ID>PackageName:PanelModel.kt:package com.storyteller_f.a.panel.common</ID>
+    <ID>PackageName:PanelModelBuild.kt:package com.storyteller_f.a.panel.common</ID>
+    <ID>PackageName:PanelNav.kt:package com.storyteller_f.a.panel</ID>
+    <ID>PackageName:PanelRoute.kt:package com.storyteller_f.a.panel.common</ID>
+    <ID>PackageName:Platform.android.kt:package com.storyteller_f.a.panel</ID>
+    <ID>PackageName:Platform.ios.kt:package com.storyteller_f.a.panel</ID>
+    <ID>PackageName:Platform.js.kt:package com.storyteller_f.a.panel</ID>
+    <ID>PackageName:Platform.jvm.kt:package com.storyteller_f.a.panel</ID>
+    <ID>PackageName:Platform.kt:package com.storyteller_f.a.panel</ID>
+    <ID>PackageName:Platform.wasmJs.kt:package com.storyteller_f.a.panel</ID>
+    <ID>PackageName:RoomDetailPage.kt:package com.storyteller_f.a.panel.pages</ID>
+    <ID>PackageName:TaskRecordsPage.kt:package com.storyteller_f.a.panel.pages</ID>
+    <ID>PackageName:Theme.kt:package com.storyteller_f.a.panel.ui.theme</ID>
+    <ID>PackageName:TitleDetailPage.kt:package com.storyteller_f.a.panel.pages</ID>
+    <ID>PackageName:TopicCell.kt:package com.storyteller_f.a.panel.components</ID>
+    <ID>PackageName:TopicDetailPage.kt:package com.storyteller_f.a.panel.pages</ID>
+    <ID>PackageName:UserCell.kt:package com.storyteller_f.a.panel.components</ID>
+    <ID>PackageName:UserDetailPage.kt:package com.storyteller_f.a.panel.pages</ID>
+    <ID>PackageName:WasmConfig.wasmJs.kt:package com.storyteller_f.a.panel</ID>
     <ID>PackageNaming:AllCommunitiesPage.kt:package com.storyteller_f.a.panel.pages</ID>
     <ID>PackageNaming:AllFilesPage.kt:package com.storyteller_f.a.panel.pages</ID>
     <ID>PackageNaming:AllPrivateRoomsPage.kt:package com.storyteller_f.a.panel.pages</ID>
@@ -166,6 +483,7 @@
     <ID>PackageNaming:PanelRoute.kt:package com.storyteller_f.a.panel.common</ID>
     <ID>PackageNaming:Platform.android.kt:package com.storyteller_f.a.panel</ID>
     <ID>PackageNaming:Platform.ios.kt:package com.storyteller_f.a.panel</ID>
+    <ID>PackageNaming:Platform.js.kt:package com.storyteller_f.a.panel</ID>
     <ID>PackageNaming:Platform.jvm.kt:package com.storyteller_f.a.panel</ID>
     <ID>PackageNaming:Platform.kt:package com.storyteller_f.a.panel</ID>
     <ID>PackageNaming:Platform.wasmJs.kt:package com.storyteller_f.a.panel</ID>
@@ -178,9 +496,212 @@
     <ID>PackageNaming:UserCell.kt:package com.storyteller_f.a.panel.components</ID>
     <ID>PackageNaming:UserDetailPage.kt:package com.storyteller_f.a.panel.pages</ID>
     <ID>PackageNaming:WasmConfig.wasmJs.kt:package com.storyteller_f.a.panel</ID>
+    <ID>SpacingAroundColon:Platform.js.kt:JsPlatform$:</ID>
     <ID>StatementWrapping:AllFilesPage.kt:TopAppBar( title = { Text(stringResource(Res.string.all_files)) }, navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } } )</ID>
     <ID>StatementWrapping:AllPrivateRoomsPage.kt:TopAppBar( title = { Text(stringResource(Res.string.all_private_rooms)) }, navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } } )</ID>
     <ID>StatementWrapping:AllTitlesPage.kt:TopAppBar( title = { Text(stringResource(Res.string.all_titles)) }, navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } } )</ID>
     <ID>StatementWrapping:AllTopicsPage.kt:TopAppBar( title = { Text(stringResource(Res.string.all_topics)) }, navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } } )</ID>
+    <ID>TrailingCommaOnCallSite:AllCommunitiesPage.kt:( listOf(owner, members, policy).filter { it.isNotEmpty() } .joinToString(" • ") )</ID>
+    <ID>TrailingCommaOnCallSite:AllCommunitiesPage.kt:( modifier = Modifier.clickable { panelNav.gotoCommunityDetail(info.id) }, leadingContent = { CommunityIcon(info, 40.dp, false) {} }, headlineContent = { Text(info.name) }, overlineContent = { Text(info.aid) }, supportingContent = { val owner = info.owner.toString() val members = info.memberCount.toString() val policy = info.memberPolicy.name Text( listOf(owner, members, policy).filter { it.isNotEmpty() } .joinToString(" • ") ) } )</ID>
+    <ID>TrailingCommaOnCallSite:AllCommunitiesPage.kt:( title = { Text(stringResource(Res.string.all_communities)) }, navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } } )</ID>
+    <ID>TrailingCommaOnCallSite:AllCommunitiesPage.kt:( topBar = { TopAppBar( title = { Text(stringResource(Res.string.all_communities)) }, navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } } ) } )</ID>
+    <ID>TrailingCommaOnCallSite:AllFilesPage.kt:( listOf(size, dim).filter { it.isNotEmpty() }.joinToString(" • ") )</ID>
+    <ID>TrailingCommaOnCallSite:AllFilesPage.kt:( title = { Text(stringResource(Res.string.all_files)) }, navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } } )</ID>
+    <ID>TrailingCommaOnCallSite:AllFilesPage.kt:( topBar = { TopAppBar( title = { Text(stringResource(Res.string.all_files)) }, navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } } ) } )</ID>
+    <ID>TrailingCommaOnCallSite:AllPrivateRoomsPage.kt:( listOf( members, stringResource(Res.string.room_private) ).filter { it.isNotEmpty() }.joinToString(" • ") )</ID>
+    <ID>TrailingCommaOnCallSite:AllPrivateRoomsPage.kt:( members, stringResource(Res.string.room_private) )</ID>
+    <ID>TrailingCommaOnCallSite:AllPrivateRoomsPage.kt:( title = { Text(stringResource(Res.string.all_private_rooms)) }, navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } } )</ID>
+    <ID>TrailingCommaOnCallSite:AllPrivateRoomsPage.kt:( topBar = { TopAppBar( title = { Text(stringResource(Res.string.all_private_rooms)) }, navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } } ) } )</ID>
+    <ID>TrailingCommaOnCallSite:AllPublicRoomsPage.kt:( listOf( members, stringResource(Res.string.room_public) ).filter { it.isNotEmpty() }.joinToString(" • ") )</ID>
+    <ID>TrailingCommaOnCallSite:AllPublicRoomsPage.kt:( members, stringResource(Res.string.room_public) )</ID>
+    <ID>TrailingCommaOnCallSite:AllPublicRoomsPage.kt:( title = { Text(stringResource(Res.string.all_public_rooms)) }, navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } } )</ID>
+    <ID>TrailingCommaOnCallSite:AllPublicRoomsPage.kt:( topBar = { TopAppBar( title = { Text(stringResource(Res.string.all_public_rooms)) }, navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } } ) } )</ID>
+    <ID>TrailingCommaOnCallSite:AllTitlesPage.kt:( listOf(scope, creator, receiver).filter { it.isNotEmpty() }.joinToString(" • ") )</ID>
+    <ID>TrailingCommaOnCallSite:AllTitlesPage.kt:( title = { Text(stringResource(Res.string.all_titles)) }, navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } } )</ID>
+    <ID>TrailingCommaOnCallSite:AllTitlesPage.kt:( topBar = { TopAppBar( title = { Text(stringResource(Res.string.all_titles)) }, navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } } ) } )</ID>
+    <ID>TrailingCommaOnCallSite:AllTopicsPage.kt:( title = { Text(stringResource(Res.string.all_topics)) }, navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } } )</ID>
+    <ID>TrailingCommaOnCallSite:AllTopicsPage.kt:( topBar = { TopAppBar( title = { Text(stringResource(Res.string.all_topics)) }, navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } } ) } )</ID>
+    <ID>TrailingCommaOnCallSite:AllUsersPage.kt:( "P256 算法不够安全，可能面临未来被解密的风险", color = androidx.compose.ui.graphics.Color.Red, modifier = Modifier.padding(top = 8.dp) )</ID>
+    <ID>TrailingCommaOnCallSite:AllUsersPage.kt:( addUserBackStack, entryProvider = entryProvider { entry&lt;AddUserStartScreen&gt; { AddUserProfilePage( addUserViewModel, { addUserBackStack.add(AddUserPrivateKeyScreen) }, dismiss ) } entry&lt;AddUserPrivateKeyScreen&gt; { AddUserPrivateKeyPage(addUserViewModel) { addUserBackStack.removeLastOrNull() } } } )</ID>
+    <ID>TrailingCommaOnCallSite:AllUsersPage.kt:( addUserViewModel, { addUserBackStack.add(AddUserPrivateKeyScreen) }, dismiss )</ID>
+    <ID>TrailingCommaOnCallSite:AllUsersPage.kt:( address ?: "", modifier = Modifier.weight(1f) )</ID>
+    <ID>TrailingCommaOnCallSite:AllUsersPage.kt:( derPublicKey = publicKey )</ID>
+    <ID>TrailingCommaOnCallSite:AllUsersPage.kt:( derPublicKey = publicKey, derEncryptionPublicKey = encryptionPublicKey )</ID>
+    <ID>TrailingCommaOnCallSite:AllUsersPage.kt:( horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically )</ID>
+    <ID>TrailingCommaOnCallSite:AllUsersPage.kt:( modifier = Modifier.weight(1f) .border(1.dp, MaterialTheme.colorScheme.primaryContainer, shape) .padding(8.dp), verticalAlignment = Alignment.CenterVertically )</ID>
+    <ID>TrailingCommaOnCallSite:AllUsersPage.kt:( topBar = { var showDialog by remember { mutableStateOf(false) } TopAppBar(title = { Text( stringResource(Res.string.all_users), modifier = Modifier.appiumSemantics(text = stringResource(Res.string.all_users)), ) }, navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, stringResource(Res.string.menu)) } }, actions = { IconButton({ showDialog = true }) { Icon(Icons.Default.Add, stringResource(Res.string.add_user)) } }) AddUserDialog(showDialog) { showDialog = false } } )</ID>
+    <ID>TrailingCommaOnCallSite:CommunityDetailPage.kt:( com.storyteller_f.shared.model.FontSettings.serializer(), it.settings )</ID>
+    <ID>TrailingCommaOnCallSite:CommunityDetailPage.kt:( modifier = Modifier.clickable { nav.gotoUserDetail(m.userInfo.id) }, headlineContent = { Text(m.userInfo.nickname) }, supportingContent = { val joined = m.joinedTime.toString() val status = m.status.name Text(listOf(joined, status).joinToString(" • ")) } )</ID>
+    <ID>TrailingCommaOnCallSite:CommunityDetailPage.kt:( title = { Text(title) }, navigationIcon = { IconButton(onClick = { nav.open() }) { Icon(Icons.Default.Menu, null) } } )</ID>
+    <ID>TrailingCommaOnCallSite:CommunityDetailPage.kt:(stringResource(Res.string.tab_basic_info), stringResource(Res.string.tab_members),)</ID>
+    <ID>TrailingCommaOnCallSite:FileDetailPage.kt:( model = globalLoader(info.url), contentDescription = stringResource(Res.string.preview_image), modifier = Modifier.fillMaxSize() )</ID>
+    <ID>TrailingCommaOnCallSite:FileDetailPage.kt:( modifier = Modifier.clickable { when (ref?.objectType) { com.storyteller_f.shared.type.ObjectType.COMMUNITY -&gt; nav.gotoCommunityDetail(ref.objectId) com.storyteller_f.shared.type.ObjectType.ROOM -&gt; nav.gotoRoomDetail(ref.objectId) com.storyteller_f.shared.type.ObjectType.TOPIC -&gt; nav.gotoTopicDetail(ref.objectId) com.storyteller_f.shared.type.ObjectType.USER -&gt; nav.gotoUserDetail(ref.objectId) else -&gt; {} } }, headlineContent = { Text("${ref?.objectType?.name ?: "Unknown"} #${ref?.objectId ?: "Unknown"}") }, supportingContent = { Text("Author: ${ref?.author ?: "Unknown"}") } )</ID>
+    <ID>TrailingCommaOnCallSite:FileDetailPage.kt:( onClick = { nav.gotoFilePreview(info.id, info.url, info.contentType, info.name) }, modifier = Modifier.padding(top = 16.dp) )</ID>
+    <ID>TrailingCommaOnCallSite:FileDetailPage.kt:( title = { Text(title) }, navigationIcon = { IconButton(onClick = { nav.open() }) { Icon(Icons.Default.Menu, null) } } )</ID>
+    <ID>TrailingCommaOnCallSite:InfoTable.kt:( if (index &lt; items.size - 1) { Modifier.border( width = 0.dp, color = MaterialTheme.colorScheme.outline, shape = RectangleShape ).border( width = 0.dp, color = MaterialTheme.colorScheme.outline, shape = RectangleShape ) } else { Modifier } )</ID>
+    <ID>TrailingCommaOnCallSite:InfoTable.kt:( modifier = Modifier .fillMaxWidth() .then( if (index &lt; items.size - 1) { Modifier.border( width = 0.dp, color = MaterialTheme.colorScheme.outline, shape = RectangleShape ).border( width = 0.dp, color = MaterialTheme.colorScheme.outline, shape = RectangleShape ) } else { Modifier } ), verticalAlignment = Alignment.CenterVertically )</ID>
+    <ID>TrailingCommaOnCallSite:InfoTable.kt:( modifier = Modifier.weight(0.4f).padding(8.dp), text = key, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold )</ID>
+    <ID>TrailingCommaOnCallSite:InfoTable.kt:( modifier = modifier .fillMaxWidth() .verticalScroll(rememberScrollState()) .border(1.dp, MaterialTheme.colorScheme.outline) )</ID>
+    <ID>TrailingCommaOnCallSite:InfoTable.kt:( width = 0.dp, color = MaterialTheme.colorScheme.outline, shape = RectangleShape )</ID>
+    <ID>TrailingCommaOnCallSite:OverviewPage.kt:( horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom )</ID>
+    <ID>TrailingCommaOnCallSite:OverviewPage.kt:( horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp) )</ID>
+    <ID>TrailingCommaOnCallSite:OverviewPage.kt:( style = SpanStyle(fontSize = 30.sp, fontWeight = FontWeight.Bold) )</ID>
+    <ID>TrailingCommaOnCallSite:OverviewPage.kt:( title = { Text( stringResource(Res.string.overview), modifier = Modifier.appiumSemantics(text = stringResource(Res.string.overview)), ) }, navigationIcon = { IconButton( { panelNav.open() }, modifier = Modifier.appiumSemantics( description = stringResource(Res.string.menu), onClick = panelNav::open, ), ) { Icon(Icons.Default.Menu, stringResource(Res.string.menu)) } } )</ID>
+    <ID>TrailingCommaOnCallSite:OverviewPage.kt:( topBar = { TopAppBar( title = { Text( stringResource(Res.string.overview), modifier = Modifier.appiumSemantics(text = stringResource(Res.string.overview)), ) }, navigationIcon = { IconButton( { panelNav.open() }, modifier = Modifier.appiumSemantics( description = stringResource(Res.string.menu), onClick = panelNav::open, ), ) { Icon(Icons.Default.Menu, stringResource(Res.string.menu)) } } ) } )</ID>
+    <ID>TrailingCommaOnCallSite:OverviewPage.kt:OverviewFlowPreviewProvider$( PanelOverview(1, 2, 3, 4, 5, 6, 7000, 8000,) )</ID>
+    <ID>TrailingCommaOnCallSite:OverviewPage.kt:OverviewFlowPreviewProvider$(1, 2, 3, 4, 5, 6, 7000, 8000,)</ID>
+    <ID>TrailingCommaOnCallSite:PanelApp.kt:( Icons.Default.Build, stringResource(Res.string.worker_records), onNavigate(scope, drawerState) { nav.gotoTaskRecords() } )</ID>
+    <ID>TrailingCommaOnCallSite:PanelApp.kt:( Icons.Default.FilePresent, stringResource(Res.string.all_files), onNavigate(scope, drawerState) { nav.gotoAllFiles() } )</ID>
+    <ID>TrailingCommaOnCallSite:PanelApp.kt:( Icons.Default.Group, stringResource(Res.string.all_communities), onNavigate(scope, drawerState) { nav.gotoAllCommunities() } )</ID>
+    <ID>TrailingCommaOnCallSite:PanelApp.kt:( Icons.Default.Home, stringResource(Res.string.overview), onNavigate(scope, drawerState) { nav.gotoOverview() } )</ID>
+    <ID>TrailingCommaOnCallSite:PanelApp.kt:( Icons.Default.Lock, stringResource(Res.string.all_private_rooms), onNavigate(scope, drawerState) { nav.gotoAllPrivateRooms() } )</ID>
+    <ID>TrailingCommaOnCallSite:PanelApp.kt:( Icons.Default.People, stringResource(Res.string.all_users), onNavigate(scope, drawerState) { nav.gotoAllUsers() } )</ID>
+    <ID>TrailingCommaOnCallSite:PanelApp.kt:( Icons.Default.Public, stringResource(Res.string.all_public_rooms), onNavigate(scope, drawerState) { nav.gotoAllPublicRooms() } )</ID>
+    <ID>TrailingCommaOnCallSite:PanelApp.kt:( Icons.Default.Title, stringResource(Res.string.all_titles), onNavigate(scope, drawerState) { nav.gotoAllTitles() } )</ID>
+    <ID>TrailingCommaOnCallSite:PanelApp.kt:( Icons.Default.Topic, stringResource(Res.string.all_topics), onNavigate(scope, drawerState) { nav.gotoAllTopics() } )</ID>
+    <ID>TrailingCommaOnCallSite:PanelApp.kt:( LocalClient provides client, LocalPanelNav provides nav.newPanelNav(), LocalPanelGlobalDialog provides controller, LocalPanelGlobalTask provides task )</ID>
+    <ID>TrailingCommaOnCallSite:PanelApp.kt:( backStack, entryDecorators = listOf( rememberSaveableStateHolderNavEntryDecorator(), rememberViewModelStoreNavEntryDecorator() ), transitionSpec = { slideInHorizontally { it } togetherWith slideOutHorizontally { -it } }, popTransitionSpec = { slideInHorizontally { -it } togetherWith slideOutHorizontally { it } }, predictivePopTransitionSpec = { slideInHorizontally { -it } togetherWith slideOutHorizontally { it } }, entryProvider = rootEntryProvider(nav) )</ID>
+    <ID>TrailingCommaOnCallSite:PanelApp.kt:( drawerContent = { drawerContent(true) }, content = content )</ID>
+    <ID>TrailingCommaOnCallSite:PanelApp.kt:( drawerState = drawerState, drawerContent = { drawerContent(false) }, content = content )</ID>
+    <ID>TrailingCommaOnCallSite:PanelApp.kt:( drawerState = drawerState, drawerContent = { permanent -&gt; PanelDrawer(scope, drawerState, nav.newPanelNav(), permanent) } )</ID>
+    <ID>TrailingCommaOnCallSite:PanelApp.kt:( modifier = Modifier.appiumSemantics(text = label, onClick = onClick), icon = { Icon(icon, contentDescription = null) }, label = { Text(label) }, selected = false, onClick = onClick )</ID>
+    <ID>TrailingCommaOnCallSite:PanelApp.kt:( passHolder, cookiesStorage )</ID>
+    <ID>TrailingCommaOnCallSite:PanelApp.kt:( rememberSaveableStateHolderNavEntryDecorator(), rememberViewModelStoreNavEntryDecorator() )</ID>
+    <ID>TrailingCommaOnCallSite:PanelApp.kt:( stringResource(Res.string.navigation_menu), modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.titleLarge )</ID>
+    <ID>TrailingCommaOnCallSite:PanelApp.kt:IPanelAccountInstance.None$( httpUrl, passHolder, AcceptAllCookiesStorage() )</ID>
+    <ID>TrailingCommaOnCallSite:PanelApp.kt:PanelUIViewModel$( viewModelScope, address, httpUrl, ConstPassHolder(state.userPass), AcceptAllCookiesStorage() )</ID>
+    <ID>TrailingCommaOnCallSite:PanelApp.kt:PanelUIViewModel$( viewModelScope, it.address, httpUrl, ConstPassHolder(pass), old )</ID>
+    <ID>TrailingCommaOnCallSite:PanelFilePreviewPage.kt:( id = id.toString(), url = url, contentType = contentType, isM3U8PlayList = false, name = name )</ID>
+    <ID>TrailingCommaOnCallSite:PanelInputPage.kt:( RawUserPassInfo( signResult.address, signResult.authKey, ) )</ID>
+    <ID>TrailingCommaOnCallSite:PanelInputPage.kt:( privateKey = privateKey, encryptionPrivateKey = null, address = address, enableRandom = false, update = { viewModel.updatePrivateKey(it) } )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModel.kt:AllCommunitiesViewModel$( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.community )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModel.kt:AllFilesViewModel$( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.fileInfo )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModel.kt:AllPrivateRoomsViewModel$( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.room )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModel.kt:AllPublicRoomsViewModel$( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.room )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModel.kt:AllTitlesViewModel$( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.title )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModel.kt:AllTopicsViewModel$( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.topic )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModel.kt:AllUsersViewModel$( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.user )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModel.kt:CommunityMembersViewModel$( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.member )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModel.kt:FileRefsViewModel$( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.fileRef )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModel.kt:IdCommunityViewModel$( modelStorage.community.observeDatum(id), viewModelScope, { modelStorage.community.saveToDefault(it) } )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModel.kt:IdFileViewModel$( modelStorage.fileInfo.observeDatum(id), viewModelScope, { modelStorage.fileInfo.saveToDefault(it) } )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModel.kt:IdRoomViewModel$( modelStorage.room.observeDatum(id), viewModelScope, { modelStorage.room.saveToDefault(it) } )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModel.kt:IdTitleViewModel$( modelStorage.title.observeDatum(id), viewModelScope, { modelStorage.title.saveToDefault(it) } )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModel.kt:IdTopicViewModel$( modelStorage.topic.observeDatum(id), viewModelScope, { modelStorage.topic.saveToDefault(it) } )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModel.kt:IdUserOverviewViewModel$( modelStorage.userOverview.observeDatum(), viewModelScope, { modelStorage.userOverview.save(it) } )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModel.kt:IdUserViewModel$( modelStorage.user.observeDatum(id), viewModelScope, { modelStorage.user.saveToDefault(it) } )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModel.kt:OverviewViewModel$( modelStorage.overview.observeDatum(), viewModelScope, { modelStorage.overview.save(it) } )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModel.kt:PanelLogsViewModel$( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.panelLog )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModel.kt:RoomFilesViewModel$( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.fileInfo )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModel.kt:RoomMembersViewModel$( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.member )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModel.kt:TaskRecordsViewModel$( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.taskRecord )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModel.kt:TopicTopicsViewModel$( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.topic )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModel.kt:TopicTopicsViewModel$( topicId, TopicPinSearch.UNSPECIFIED, PaginationQuery(key, size = size) )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModel.kt:UserCommentsViewModel$( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.topic )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModel.kt:UserFavoritesViewModel$( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.favorite )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModel.kt:UserFilesViewModel$( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.fileInfo )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModel.kt:UserJoinedCommunitiesViewModel$( com.storyteller_f.shared.model.PosterSearch.UNSPECIFIED, key, size = size )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModel.kt:UserJoinedCommunitiesViewModel$( joinStatusSearch = JoinStatusSearch.JOINED, word = "", target = uid )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModel.kt:UserJoinedCommunitiesViewModel$( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.community )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModel.kt:UserJoinedCommunitiesViewModel$( uid, CustomApi.Users.JoinedCommunities.UserCommunitiesQuery( com.storyteller_f.shared.model.PosterSearch.UNSPECIFIED, key, size = size ) )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModel.kt:UserJoinedRoomsViewModel$( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.room )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModel.kt:UserJoinedRoomsViewModel$( word = "", communityId = null, joinStatusSearch = JoinStatusSearch.JOINED )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModel.kt:UserLogsViewModel$( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.userLog )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModel.kt:UserReactionsViewModel$( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.userReactionRecord )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModel.kt:UserReceivedTitlesViewModel$( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.title )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModel.kt:UserReceivedTitlesViewModel$( searchType = TitleSearchType.RECEIVER, nextPageToken = key, size = size )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModel.kt:UserReceivedTitlesViewModel$( uid, CustomApi.Users.Id.Titles.TitleQuery( searchType = TitleSearchType.RECEIVER, nextPageToken = key, size = size ) )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModel.kt:UserSubscriptionsViewModel$( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.subscription )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModel.kt:UserUploadRecordsViewModel$( modelCollection, modelStorage.remoteKey.wrap(modelCollection.getName()), modelStorage.uploadRecord )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModelBuild.kt:( Res.string.log_supporting, info.objectType, info.targetId.toString(), info.adminId.toString(), info.createdTime.toString() )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModelBuild.kt:( headlineContent = { Text(info.action) }, supportingContent = { Text( stringResource( Res.string.log_supporting, info.objectType, info.targetId.toString(), info.adminId.toString(), info.createdTime.toString() ) ) } )</ID>
+    <ID>TrailingCommaOnCallSite:PanelModelBuild.kt:( stringResource( Res.string.log_supporting, info.objectType, info.targetId.toString(), info.adminId.toString(), info.createdTime.toString() ) )</ID>
+    <ID>TrailingCommaOnCallSite:PanelRoute.kt:( backStack, entryProvider = entryProvider { entry&lt;LoginSelectScreen&gt; { PanelSelectLoginPage { backStack.add(LoginInputScreen) } } entry&lt;LoginInputScreen&gt; { PanelInputPage(back) } } )</ID>
+    <ID>TrailingCommaOnCallSite:PanelRoute.kt:( gotoInput, shape = ButtonDefaults.outlinedShape )</ID>
+    <ID>TrailingCommaOnCallSite:PanelRoute.kt:( verticalArrangement = Arrangement.spacedBy(40.dp), horizontalAlignment = Alignment.CenterHorizontally )</ID>
+    <ID>TrailingCommaOnCallSite:PanelRoute.kt:( verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.CenterHorizontally )</ID>
+    <ID>TrailingCommaOnCallSite:RoomDetailPage.kt:( Modifier.padding(paddingValues) )</ID>
+    <ID>TrailingCommaOnCallSite:RoomDetailPage.kt:( modifier = Modifier.clickable { nav.gotoFileDetail(info.id) }, headlineContent = { Text(info.name) }, supportingContent = { val ct = info.contentType val s = listOf(ct).filter { it.isNotEmpty() }.joinToString(" • ") Text(s) }, leadingContent = { Icon(Icons.Default.FilePresent, null) } )</ID>
+    <ID>TrailingCommaOnCallSite:RoomDetailPage.kt:( modifier = Modifier.clickable { nav.gotoUserDetail(m.userInfo.id) }, headlineContent = { Text(m.userInfo.nickname) }, supportingContent = { val joined = m.joinedTime.toString() val status = m.status.name Text(listOf(joined, status).joinToString(" • ")) } )</ID>
+    <ID>TrailingCommaOnCallSite:RoomDetailPage.kt:( stringResource(Res.string.tab_basic_info), stringResource(Res.string.tab_members), stringResource(Res.string.tab_files) )</ID>
+    <ID>TrailingCommaOnCallSite:RoomDetailPage.kt:( title = { Text(title) }, navigationIcon = { IconButton(onClick = { nav.open() }) { Icon(Icons.Default.Menu, null) } } )</ID>
+    <ID>TrailingCommaOnCallSite:TaskRecordsPage.kt:( Res.string.task_record_supporting, info.processedId.toString(), info.id.toString(), info.createdTime.toString() )</ID>
+    <ID>TrailingCommaOnCallSite:TaskRecordsPage.kt:( label = "ALL", selected = selectedType == null, onClick = { onSelectedTypeChanged(null) } )</ID>
+    <ID>TrailingCommaOnCallSite:TaskRecordsPage.kt:( label = type.name, selected = selectedType == type, onClick = { onSelectedTypeChanged(type) } )</ID>
+    <ID>TrailingCommaOnCallSite:TaskRecordsPage.kt:( modifier = Modifier .horizontalScroll(rememberScrollState()) .padding(horizontal = 16.dp, vertical = 8.dp) )</ID>
+    <ID>TrailingCommaOnCallSite:TaskRecordsPage.kt:( modifier = Modifier.clickable { when (info.type) { TaskRecordType.INTRO -&gt; nav.gotoUserDetail(info.processedId) TaskRecordType.TITLE -&gt; nav.gotoTitleDetail(info.processedId) TaskRecordType.SUBSCRIPTION, TaskRecordType.TOPIC_ACG -&gt; nav.gotoTopicDetail(info.processedId) } }, headlineContent = { Text(info.type.name) }, supportingContent = { Text( stringResource( Res.string.task_record_supporting, info.processedId.toString(), info.id.toString(), info.createdTime.toString() ), modifier = Modifier.widthIn(max = 720.dp) ) } )</ID>
+    <ID>TrailingCommaOnCallSite:TaskRecordsPage.kt:( selected = selected, onClick = onClick, label = { Text(label) } )</ID>
+    <ID>TrailingCommaOnCallSite:TaskRecordsPage.kt:( stringResource( Res.string.task_record_supporting, info.processedId.toString(), info.id.toString(), info.createdTime.toString() ), modifier = Modifier.widthIn(max = 720.dp) )</ID>
+    <ID>TrailingCommaOnCallSite:TaskRecordsPage.kt:( title = { Text(stringResource(Res.string.worker_records)) }, navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } } )</ID>
+    <ID>TrailingCommaOnCallSite:TaskRecordsPage.kt:( topBar = { TopAppBar( title = { Text(stringResource(Res.string.worker_records)) }, navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } } ) } )</ID>
+    <ID>TrailingCommaOnCallSite:TitleDetailPage.kt:( title = { Text(title) }, navigationIcon = { IconButton(onClick = { nav.open() }) { Icon(Icons.Default.Menu, null) } } )</ID>
+    <ID>TrailingCommaOnCallSite:TopicCell.kt:( if (info.isEncrypted) stringResource(Res.string.encrypted) else null, if (info.isPin) stringResource(Res.string.pinned) else null )</ID>
+    <ID>TrailingCommaOnCallSite:TopicCell.kt:( info.createdTime.toString(), counts, flags )</ID>
+    <ID>TrailingCommaOnCallSite:TopicDetailPage.kt:( if (info.isEncrypted) stringResource(Res.string.encrypted) else null, if (info.isPin) stringResource(Res.string.pinned) else null )</ID>
+    <ID>TrailingCommaOnCallSite:TopicDetailPage.kt:( info.createdTime.toString(), counts, flags )</ID>
+    <ID>TrailingCommaOnCallSite:TopicDetailPage.kt:( title = { Text(title) }, navigationIcon = { IconButton(onClick = { nav.open() }) { Icon(Icons.Default.Menu, null) } } )</ID>
+    <ID>TrailingCommaOnCallSite:UserCell.kt:( modifier = Modifier.fillMaxWidth().let { m -&gt; if (onClick != null) m.clickable { onClick() } else m }.padding(8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp) )</ID>
+    <ID>TrailingCommaOnCallSite:UserDetailPage.kt:( Res.string.file_progress, info.status, HumanReadable.fileSize(info.progress), HumanReadable.fileSize(info.total) )</ID>
+    <ID>TrailingCommaOnCallSite:UserDetailPage.kt:( Res.string.log_supporting, info.objectType, info.objectId.toString(), info.createdTime.toString() )</ID>
+    <ID>TrailingCommaOnCallSite:UserDetailPage.kt:( headlineContent = { Text("${info.emoji} • Topic ${info.objectId}") }, supportingContent = { Text("${info.objectType} • ${info.createdTime}") }, modifier = Modifier.clickable { panelNav.gotoTopicDetail(info.objectId) } )</ID>
+    <ID>TrailingCommaOnCallSite:UserDetailPage.kt:( headlineContent = { Text("Object ${info.objectId}") }, supportingContent = { Text("Type: ${info.objectType} • Time: ${info.createdTime}") }, modifier = Modifier.clickable { when (info.objectType) { ObjectType.USER -&gt; panelNav.gotoUserDetail(info.objectId) ObjectType.COMMUNITY -&gt; panelNav.gotoCommunityDetail(info.objectId) ObjectType.ROOM -&gt; panelNav.gotoRoomDetail(info.objectId) ObjectType.TOPIC -&gt; panelNav.gotoTopicDetail(info.objectId) ObjectType.TITLE -&gt; panelNav.gotoTitleDetail(info.objectId) ObjectType.FILE -&gt; panelNav.gotoFileDetail(info.objectId) else -&gt; {} } } )</ID>
+    <ID>TrailingCommaOnCallSite:UserDetailPage.kt:( headlineContent = { Text(info.name) }, supportingContent = { Text( stringResource( Res.string.file_progress, info.status, HumanReadable.fileSize(info.progress), HumanReadable.fileSize(info.total) ) ) } )</ID>
+    <ID>TrailingCommaOnCallSite:UserDetailPage.kt:( headlineContent = { Text(info.name) }, supportingContent = { Text(HumanReadable.fileSize(info.size)) }, leadingContent = { FileIcon(info) }, modifier = Modifier.clickable { panelNav.gotoFileDetail(info.id) } )</ID>
+    <ID>TrailingCommaOnCallSite:UserDetailPage.kt:( headlineContent = { Text(info.name) }, supportingContent = { Text(info.type.name) }, modifier = Modifier.clickable { panelNav.gotoTitleDetail(info.id) } )</ID>
+    <ID>TrailingCommaOnCallSite:UserDetailPage.kt:( headlineContent = { Text(info.type.name) }, supportingContent = { Text( stringResource( Res.string.log_supporting, info.objectType, info.objectId.toString(), info.createdTime.toString() ) ) }, modifier = Modifier.clickable { when (info.objectType) { ObjectType.USER -&gt; panelNav.gotoUserDetail(info.objectId) ObjectType.COMMUNITY -&gt; panelNav.gotoCommunityDetail(info.objectId) ObjectType.ROOM -&gt; panelNav.gotoRoomDetail(info.objectId) ObjectType.TOPIC -&gt; panelNav.gotoTopicDetail(info.objectId) ObjectType.TITLE -&gt; panelNav.gotoTitleDetail(info.objectId) ObjectType.FILE -&gt; panelNav.gotoFileDetail(info.objectId) else -&gt; {} } } )</ID>
+    <ID>TrailingCommaOnCallSite:UserDetailPage.kt:( if (overview.userInfo.status == UserStatus.NORMAL) { "Set to ReadOnly" } else { "Set to Normal" } )</ID>
+    <ID>TrailingCommaOnCallSite:UserDetailPage.kt:( leadingContent = { CommunityIcon(info, 40.dp, false) {} }, headlineContent = { Text(info.name) }, overlineContent = { Text(info.aid) }, modifier = Modifier.clickable { panelNav.gotoCommunityDetail(info.id) } )</ID>
+    <ID>TrailingCommaOnCallSite:UserDetailPage.kt:( leadingContent = { RoomIcon(info, 40.dp, false) {} }, headlineContent = { Text(info.name) }, supportingContent = { val creator = info.creator.toString() Text(listOf(creator).filter { it.isNotEmpty() }.joinToString(" • ")) }, modifier = Modifier.clickable { panelNav.gotoRoomDetail(info.id) } )</ID>
+    <ID>TrailingCommaOnCallSite:UserDetailPage.kt:( stringResource( Res.string.file_progress, info.status, HumanReadable.fileSize(info.progress), HumanReadable.fileSize(info.total) ) )</ID>
+    <ID>TrailingCommaOnCallSite:UserDetailPage.kt:( stringResource( Res.string.log_supporting, info.objectType, info.objectId.toString(), info.createdTime.toString() ) )</ID>
+    <ID>TrailingCommaOnCallSite:UserDetailPage.kt:( stringResource(Res.string.tab_basic_info), stringResource(Res.string.tab_joined_communities), stringResource(Res.string.tab_joined_rooms), stringResource(Res.string.tab_received_titles), stringResource(Res.string.tab_created_files), stringResource(Res.string.upload_records), stringResource(Res.string.tab_user_reactions), stringResource(Res.string.tab_user_comments), stringResource(Res.string.tab_user_favorites), stringResource(Res.string.tab_user_subscriptions) )</ID>
+    <ID>TrailingCommaOnCallSite:UserDetailPage.kt:( title = { Text(title) }, navigationIcon = { IconButton(onClick = { nav.open() }) { Icon(Icons.Default.Menu, null) } } )</ID>
+    <ID>TrailingCommaOnCallSite:UserDetailPage.kt:( uid, UpdateUserStatusBody(newStatus) )</ID>
+    <ID>TrailingCommaOnCallSite:build.gradle.kts:( iosArm64(), iosSimulatorArm64() )</ID>
+    <ID>TrailingCommaOnDeclarationSite:AllUsersPage.kt:( addUserViewModel: AddUserViewModel, goBack: () -&gt; Unit )</ID>
+    <ID>TrailingCommaOnDeclarationSite:AllUsersPage.kt:( addUserViewModel: AddUserViewModel, gotoPrivateKey: () -&gt; Unit, dismiss: () -&gt; Unit )</ID>
+    <ID>TrailingCommaOnDeclarationSite:AllUsersPage.kt:( dismiss: () -&gt; Unit, addUserViewModel: AddUserViewModel )</ID>
+    <ID>TrailingCommaOnDeclarationSite:AllUsersPage.kt:( scope: CoroutineScope, addUserViewModel: AddUserViewModel, toast: Toast, dismiss: () -&gt; Unit, requiredPrivateKeyMessage: String )</ID>
+    <ID>TrailingCommaOnDeclarationSite:FileDetailPage.kt:( readOnly: Boolean, onToggle: (Boolean) -&gt; Unit )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PanelApp.kt:( backStack: NavBackStack&lt;NavKey&gt;, nav: PanelNav )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PanelApp.kt:( drawerState: DrawerState, drawerContent: @Composable (permanent: Boolean) -&gt; Unit, content: @Composable () -&gt; Unit )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PanelApp.kt:( httpUrl: String, passHolder: ConstPassHolder, cookiesStorage: AcceptAllCookiesStorage )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PanelApp.kt:( scope: CoroutineScope, drawerState: DrawerState, nav: PanelNav, permanent: Boolean )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PanelApp.kt:( scope: CoroutineScope, drawerState: DrawerState, navigate: () -&gt; Unit )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PanelApp.kt:&lt;no name provided&gt;$( block: suspend PanelGlobalDialogController.() -&gt; Result&lt;T&gt; )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PanelApp.kt:IPanelAccountInstance.Regular$( any: Any, storage: ModelStorage )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PanelApp.kt:IPanelAccountInstance.Regular$( scope: CoroutineScope, override val address: String, httpUrl: String, override val passHolder: ConstPassHolder, cookiesStorage: AcceptAllCookiesStorage )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PanelApp.kt:IPanelAccountInstance.Regular$( storage: ModelStorage, event: OnCommunityStatusUpdated )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PanelApp.kt:IPanelAccountInstance.Regular$( storage: ModelStorage, event: OnFileStatusUpdated )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PanelApp.kt:IPanelAccountInstance.Regular$( storage: ModelStorage, event: OnRoomStatusUpdated )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PanelApp.kt:IPanelAccountInstance.Regular$( storage: ModelStorage, event: OnTitleStatusUpdated )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PanelApp.kt:IPanelAccountInstance.Regular$( storage: ModelStorage, event: OnTopicStatusUpdated )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PanelApp.kt:IPanelAccountInstance.Regular$( storage: ModelStorage, event: OnUserStatusUpdated )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PanelModel.kt:FileRefsViewModel$( sessionManager: PanelSessionManager, modelStorage: ModelStorage, fileId: PrimaryKey )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PanelModel.kt:IdCommunityViewModel$( sessionManager: PanelSessionManager, modelStorage: ModelStorage, id: PrimaryKey )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PanelModel.kt:IdFileViewModel$( sessionManager: PanelSessionManager, modelStorage: ModelStorage, id: PrimaryKey )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PanelModel.kt:IdRoomViewModel$( sessionManager: PanelSessionManager, modelStorage: ModelStorage, id: PrimaryKey )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PanelModel.kt:IdTitleViewModel$( sessionManager: PanelSessionManager, modelStorage: ModelStorage, id: PrimaryKey )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PanelModel.kt:IdTopicViewModel$( sessionManager: PanelSessionManager, modelStorage: ModelStorage, id: PrimaryKey )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PanelModel.kt:IdUserOverviewViewModel$( sessionManager: PanelSessionManager, modelStorage: ModelStorage, id: PrimaryKey )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PanelModel.kt:IdUserViewModel$( sessionManager: PanelSessionManager, modelStorage: ModelStorage, id: PrimaryKey )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PanelModelBuild.kt:( id: PrimaryKey )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PanelModelBuild.kt:( keys: List&lt;Comparable&lt;*&gt;?&gt;? = null, crossinline factory: (PanelSessionManager, ModelStorage) -&gt; VM )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PanelModelBuild.kt:( targetId: PrimaryKey, objectType: com.storyteller_f.shared.type.ObjectType )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PanelModelBuild.kt:( type: TaskRecordType? )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PanelModelBuild.kt:( uid: PrimaryKey )</ID>
+    <ID>TrailingCommaOnDeclarationSite:TaskRecordsPage.kt:( selectedType: TaskRecordType?, onSelectedTypeChanged: (TaskRecordType?) -&gt; Unit )</ID>
+    <ID>TrailingCommaOnDeclarationSite:TaskRecordsPage.kt:TaskRecordType.SUBSCRIPTION, TaskRecordType.TOPIC_ACG -&gt; nav.gotoTopicDetail(info.processedId)</ID>
+    <ID>TrailingCommaOnDeclarationSite:Theme.kt:( darkTheme: Boolean = isSystemInDarkTheme(), // Dynamic color is available on Android 12+ dynamicColor: Boolean = true, content: @Composable () -&gt; Unit )</ID>
+    <ID>TrailingCommaOnDeclarationSite:Theme.kt:ColorFamily$( val color: Color, val onColor: Color, val colorContainer: Color, val onColorContainer: Color )</ID>
+    <ID>TrailingCommaOnDeclarationSite:TopicCell.kt:( info: TopicInfo, panelNav: PanelNav )</ID>
+    <ID>TrailingCommaOnDeclarationSite:TopicDetailPage.kt:( info: TopicInfo, panelNav: PanelNav )</ID>
+    <ID>TrailingCommaOnDeclarationSite:build.gradle.kts:( dependencyNotation: Provider&lt;MinimalExternalModuleDependency&gt;, configure: ExternalModuleDependency.() -&gt; Unit )</ID>
+    <ID>Wrapping:AllFilesPage.kt:TopAppBar( title = { Text(stringResource(Res.string.all_files)) }, navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } } )</ID>
+    <ID>Wrapping:AllPrivateRoomsPage.kt:TopAppBar( title = { Text(stringResource(Res.string.all_private_rooms)) }, navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } } )</ID>
+    <ID>Wrapping:AllTitlesPage.kt:TopAppBar( title = { Text(stringResource(Res.string.all_titles)) }, navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } } )</ID>
+    <ID>Wrapping:AllTopicsPage.kt:TopAppBar( title = { Text(stringResource(Res.string.all_topics)) }, navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } } )</ID>
+    <ID>Wrapping:CommunityDetailPage.kt:(</ID>
+    <ID>Wrapping:OverviewPage.kt:(</ID>
   </CurrentIssues>
 </SmellBaseline>

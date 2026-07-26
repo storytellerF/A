@@ -8,6 +8,8 @@
     <ID>ClassSignature:ModelStorage.kt:PanelLogCollection$PanelLogs : PanelLogCollection</ID>
     <ID>ClassSignature:ModelStorage.kt:RoomCollection$SearchRoom : RoomCollection</ID>
     <ID>ClassSignature:ModelStorage.kt:WrappedPagingSource&lt;K : Any, T : Any, M : Any&gt; : PagingSource</ID>
+    <ID>EnumWrapping:DownloadInfo.kt:DownloadStatus</ID>
+    <ID>EnumWrapping:UploadInfo.kt:UploadStatus</ID>
     <ID>FunctionExpressionBody:ModelStorage.kt:WrappedPagingSource${ return null }</ID>
     <ID>FunctionExpressionBody:ModelStorage.kt:WrappedPagingSource${ return when (val result = rawSource.load(params)) { is LoadResult.Page&lt;K, T&gt; -&gt; LoadResult.Page(process(result.data), result.prevKey, result.nextKey) is LoadResult.Error&lt;K, T&gt; -&gt; LoadResult.Error(result.throwable) is LoadResult.Invalid&lt;K, T&gt; -&gt; LoadResult.Invalid() } }</ID>
     <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { CommunityCollection.Communities -&gt; "communities" is CommunityCollection.SearchCommunity -&gt; "communities_${word}_${target}_${joinStatusSearch}_$hasPointer" CommunityCollection.AllCommunities -&gt; "all_communities" } }</ID>
@@ -26,8 +28,31 @@
     <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { is UserLogCollection.UserLogs -&gt; "user_logs_$uid" } }</ID>
     <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { is UserReactionRecordCollection.UserReactionRecords -&gt; "user_reaction_records_$uid" } }</ID>
     <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { is UserSubscriptionCollection.UserSubscriptions -&gt; "user_subscriptions_$uid" } }</ID>
+    <ID>FunctionSignature:ModelStorage.kt:suspend fun CommunityInfoStorage.update</ID>
+    <ID>FunctionSignature:ModelStorage.kt:suspend fun FileInfoStorage.update</ID>
+    <ID>FunctionSignature:ModelStorage.kt:suspend fun RoomInfoStorage.update</ID>
+    <ID>FunctionSignature:ModelStorage.kt:suspend fun TitleInfoStorage.update</ID>
+    <ID>FunctionSignature:ModelStorage.kt:suspend fun TopicInfoStorage.update</ID>
+    <ID>FunctionSignature:ModelStorage.kt:suspend fun UserInfoStorage.update</ID>
+    <ID>MultilineExpressionWrapping:ModelStorage.kt:if (word.isNullOrBlank()) { "community_members_$objectId" } else { "community_members_${objectId}_$word" }</ID>
+    <ID>MultilineExpressionWrapping:ModelStorage.kt:if (word.isNullOrBlank()) { "room_members_$objectId" } else { "room_members_${objectId}_$word" }</ID>
+    <ID>PackageName:DownloadInfo.kt:package com.storyteller_f.storage</ID>
+    <ID>PackageName:ModelStorage.kt:package com.storyteller_f.storage</ID>
+    <ID>PackageName:UploadInfo.kt:package com.storyteller_f.storage</ID>
     <ID>PackageNaming:DownloadInfo.kt:package com.storyteller_f.storage</ID>
     <ID>PackageNaming:ModelStorage.kt:package com.storyteller_f.storage</ID>
     <ID>PackageNaming:UploadInfo.kt:package com.storyteller_f.storage</ID>
+    <ID>TrailingCommaOnCallSite:UploadInfo.kt:UploadInfo.Companion$(0, 0, "", "", "", 0, 0, 0, UploadStatus.NOT_UPLOADING, "", "", "", 0,)</ID>
+    <ID>TrailingCommaOnDeclarationSite:DownloadInfo.kt:DownloadInfo$( val id: Long, val fileInfo: FileInfo, val status: DownloadStatus, val message: String, val path: String, val progress: Long, val total: Long )</ID>
+    <ID>TrailingCommaOnDeclarationSite:ModelStorage.kt:( collection: CommunityCollection, id: PrimaryKey, block: (CommunityInfo) -&gt; CommunityInfo )</ID>
+    <ID>TrailingCommaOnDeclarationSite:ModelStorage.kt:( collection: FileCollection, id: PrimaryKey, block: (FileInfo) -&gt; FileInfo )</ID>
+    <ID>TrailingCommaOnDeclarationSite:ModelStorage.kt:( collection: RoomCollection, id: PrimaryKey, block: (RoomInfo) -&gt; RoomInfo )</ID>
+    <ID>TrailingCommaOnDeclarationSite:ModelStorage.kt:( collection: TitleCollection, id: PrimaryKey, block: (TitleInfo) -&gt; TitleInfo )</ID>
+    <ID>TrailingCommaOnDeclarationSite:ModelStorage.kt:( collection: TopicCollection, id: PrimaryKey, block: (TopicInfo) -&gt; TopicInfo )</ID>
+    <ID>TrailingCommaOnDeclarationSite:ModelStorage.kt:( collection: UserCollection, id: PrimaryKey, block: (UserInfo) -&gt; UserInfo )</ID>
+    <ID>TrailingCommaOnDeclarationSite:ModelStorage.kt:PanelLogCollection.PanelLogs$( val targetId: PrimaryKey, val objectType: com.storyteller_f.shared.type.ObjectType )</ID>
+    <ID>TrailingCommaOnDeclarationSite:ModelStorage.kt:RoomCollection.SearchRoom$( val word: String, val communityId: PrimaryKey?, val joinStatusSearch: JoinStatusSearch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:UploadInfo.kt:UploadInfo$( val id: PrimaryKey, val objectId: PrimaryKey, val pathHash: String, val path: String, val sha256: String, val progress: Long, val chunkProgress: Long, val total: Long, val status: UploadStatus, val message: String, val name: String, val contentType: String, val chunkSize: Long, // 对应的上传记录 id val recordId: PrimaryKey? = null )</ID>
+    <ID>TrailingCommaOnDeclarationSite:UploadInfo.kt:UploadStatus</ID>
   </CurrentIssues>
 </SmellBaseline>

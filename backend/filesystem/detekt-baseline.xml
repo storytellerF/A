@@ -12,6 +12,20 @@
     <ID>FunctionExpressionBody:FileSystemObjectStorageService.kt:FileSystemObjectStorageService${ return useFileSystem { val path = base.resolve(it.joinToString("/")) val file = path.toRealPath() if (file.pathString != path.absolutePathString()) { null } else { file } }.getOrNull() }</ID>
     <ID>FunctionExpressionBody:FileSystemObjectStorageService.kt:FileSystemObjectStorageService${ return withContext(Dispatchers.IO) { runCatching { block() } } }</ID>
     <ID>FunctionExpressionBody:FileSystemObjectStorageService.kt:FileSystemObjectStorageServiceFactory${ return env["MEDIA_SERVICE"] == "filesystem" }</ID>
+    <ID>FunctionSignature:FileSystemObjectStorageService.kt:FileSystemObjectStorageService$@OptIn(ExperimentalTime::class) override suspend fun get: Result&lt;List&lt;ObjectStorageRecord&gt;&gt;</ID>
+    <ID>FunctionSignature:FileSystemObjectStorageService.kt:FileSystemObjectStorageService$override suspend fun compose: Result&lt;ObjectStorageWriteRecord&gt;</ID>
+    <ID>FunctionSignature:FileSystemObjectStorageService.kt:FileSystemObjectStorageService$override suspend fun copy: Result&lt;List&lt;ObjectStorageRecord&gt;&gt;</ID>
+    <ID>FunctionSignature:FileSystemObjectStorageService.kt:FileSystemObjectStorageService$override suspend fun getInputStream: Result&lt;InputStream&gt;</ID>
+    <ID>FunctionSignature:FileSystemObjectStorageService.kt:FileSystemObjectStorageService$override suspend fun list: Result&lt;List&lt;ObjectStorageRecord&gt;&gt;</ID>
+    <ID>FunctionSignature:FileSystemObjectStorageService.kt:FileSystemObjectStorageService$override suspend fun upload: Result&lt;List&lt;ObjectStorageWriteRecord&gt;&gt;</ID>
+    <ID>MultilineExpressionWrapping:FileSystemObjectStorageService.kt:FileSystemObjectStorageService$UrlBuilder.fromString(url) .withPath("a_file/${A_FILE_DEFAULT_BUCKET}/$it") .toString()</ID>
+    <ID>MultilineExpressionWrapping:FileSystemObjectStorageService.kt:FileSystemObjectStorageService$if (!base.exists()) { base.createDirectories() } else { base.toRealPath() }</ID>
+    <ID>MultilineExpressionWrapping:FileSystemObjectStorageService.kt:FileSystemObjectStorageServiceFactory$if (base.isNullOrBlank()) { Napier.i { "use in-memory file" } MemoryFileSystemBuilder.newLinux().build().getPath("/a_file") } else { val path = Paths.get(base) Napier.i { "use file system oss ${path.toFile().canonicalPath}" } path }</ID>
+    <ID>PackageName:FileSystemObjectStorageService.kt:package com.storyteller_f.a.backend.filesystem</ID>
     <ID>PackageNaming:FileSystemObjectStorageService.kt:package com.storyteller_f.a.backend.filesystem</ID>
+    <ID>TrailingCommaOnCallSite:FileSystemObjectStorageService.kt:FileSystemObjectStorageService$( newUrl, mediaPath.getLastModifiedTime().toInstant().toKotlinInstant() .toLocalDateTime(TimeZone.UTC), it )</ID>
+    <ID>TrailingCommaOnDeclarationSite:FileSystemObjectStorageService.kt:FileSystemObjectStorageService$( bucketName: String, names: List&lt;String&gt; )</ID>
+    <ID>TrailingCommaOnDeclarationSite:FileSystemObjectStorageService.kt:FileSystemObjectStorageService$( bucketName: String, prefix: String )</ID>
+    <ID>TrailingCommaOnDeclarationSite:FileSystemObjectStorageService.kt:FileSystemObjectStorageService$( bucketName: String, targetFullName: String, sourceFullNames: List&lt;String&gt; )</ID>
   </CurrentIssues>
 </SmellBaseline>

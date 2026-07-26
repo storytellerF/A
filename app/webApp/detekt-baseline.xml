@@ -2,6 +2,9 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>Filename:main.kt:.main.kt</ID>
+    <ID>FunctionSignature:main.kt:WasmMediaPlayerService$override suspend fun start</ID>
     <ID>MissingPackageDeclaration:main.kt:.main.kt</ID>
+    <ID>MultilineExpressionWrapping:main.kt:window.location.search .removePrefix("?") .split('&amp;') .firstOrNull { it.substringBefore('=') == name } ?.substringAfter('=', missingDelimiterValue = "") ?.takeIf(String::isNotEmpty)</ID>
   </CurrentIssues>
 </SmellBaseline>

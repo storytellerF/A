@@ -7,6 +7,48 @@
     <ID>ClassSignature:PdfBox.kt:PdfBoxVisitor : Visitor</ID>
     <ID>ClassSignature:PdfBox.kt:PdfFontBundle</ID>
     <ID>ClassSignature:PdfBox.kt:QuoteVisitor : Visitor</ID>
+    <ID>FunctionSignature:PdfBox.kt:fun loadSystemFont: PDType0Font</ID>
+    <ID>FunctionSignature:PdfBox.kt:private fun signPdfWithDss</ID>
+    <ID>MultilineExpressionWrapping:PdfBox.kt:&lt;no name provided&gt;$node.children .filter { it.type.name == "CELL" } .map { it.getTextInNode(content).toString().trim() }</ID>
+    <ID>MultilineExpressionWrapping:PdfBox.kt:Highlights.Builder() .theme(SyntaxThemes.atom(darkMode = false)) .code(code) .build() .getHighlights() .sortedBy { it.location.start }</ID>
+    <ID>MultilineExpressionWrapping:PdfBox.kt:PAdESSignatureParameters().apply { signingCertificate = key.certificate certificateChain = key.certificateChain.toList() signatureLevel = SignatureLevel.PAdES_BASELINE_B digestAlgorithm = DigestAlgorithm.SHA256 bLevel().signingDate = java.util.Date(key.certificate.notBefore.time + 1000) val imageParameters = eu.europa.esig.dss.pades.SignatureImageParameters() val subjectName = key.certificate.certificate.subjectX500Principal.name val imageBytes = com.storyteller_f.a.cloud.pdf.SignatureImageGenerator.generate( subjectName, pdfGenerationSpec.created.toString(), "Digitally Signed by PdfBox" ) imageParameters.image = eu.europa.esig.dss.model.InMemoryDocument( imageBytes, "signature.png", eu.europa.esig.dss.enumerations.MimeTypeEnum.PNG ) val fieldParameters = eu.europa.esig.dss.pades.SignatureFieldParameters().apply { page = 1 // Center the signature on the new first page // Image is 600x90, so we maintain similar aspect ratio val sigWidth = 500f val sigHeight = 75f // A4 page size: 595 x 842 points originX = (595f - sigWidth) / 2 originY = (842f - sigHeight) / 2 width = sigWidth height = sigHeight } imageParameters.fieldParameters = fieldParameters this.imageParameters = imageParameters }</ID>
+    <ID>MultilineExpressionWrapping:PdfBox.kt:PDType0Font.load( document, FontMappers.instance().getTrueTypeFont(f.name, null).font, true )</ID>
+    <ID>MultilineExpressionWrapping:PdfBox.kt:PdfBox$Paragraph().apply { addText("capture at ${pdfGenerationSpec.captured}", 14f, font) }</ID>
+    <ID>MultilineExpressionWrapping:PdfBox.kt:PdfBox$Paragraph().apply { addText("capture by $creatorId", 14f, font) }</ID>
+    <ID>MultilineExpressionWrapping:PdfBox.kt:PdfBox$Paragraph().apply { addText("pub at ${pdfGenerationSpec.created}", 14f, font) }</ID>
+    <ID>MultilineExpressionWrapping:PdfBox.kt:PdfBox$Paragraph().apply { addText("pub by $authorId", 14f, font) }</ID>
+    <ID>MultilineExpressionWrapping:PdfBox.kt:PdfBoxVisitor$Paragraph().apply { addText( "${index + 1}. $text", 14f, font ) }</ID>
+    <ID>MultilineExpressionWrapping:PdfBox.kt:PdfBoxVisitor$Paragraph().apply { val tf = TextFlow() addHighlightedCode(tf, code, fontBundle) add(tf) }</ID>
+    <ID>MultilineExpressionWrapping:PdfBox.kt:PdfBoxVisitor$Paragraph().apply { val tf = TextFlow() tf.addText(code, 12f, fontBundle.mono) add(tf) }</ID>
+    <ID>MultilineExpressionWrapping:PdfBox.kt:Pkcs12SignatureToken( keyStoreInput, KeyStore.PasswordProtection(password.toCharArray()) )</ID>
+    <ID>MultilineExpressionWrapping:PdfBox.kt:QuoteVisitor$node.getTextInNode(content).toString() .trimMargin("&gt; ").replace("\n", " ") + "\n\n"</ID>
+    <ID>MultilineExpressionWrapping:PdfBox.kt:candidates.firstOrNull { it.name.contains("Bold") &amp;&amp; !it.name.contains("Italic") } ?: throw Exception("bold font not found")</ID>
+    <ID>MultilineExpressionWrapping:PdfBox.kt:candidates.firstOrNull { it.name.contains("Italic") &amp;&amp; !it.name.contains("Bold") } ?: throw Exception("italic font not found")</ID>
+    <ID>MultilineExpressionWrapping:PdfBox.kt:com.storyteller_f.a.cloud.pdf.SignatureImageGenerator.generate( subjectName, pdfGenerationSpec.created.toString(), "Digitally Signed by PdfBox" )</ID>
+    <ID>MultilineExpressionWrapping:PdfBox.kt:eu.europa.esig.dss.model.InMemoryDocument( imageBytes, "signature.png", eu.europa.esig.dss.enumerations.MimeTypeEnum.PNG )</ID>
+    <ID>MultilineExpressionWrapping:PdfBox.kt:eu.europa.esig.dss.pades.SignatureFieldParameters().apply { page = 1 // Center the signature on the new first page // Image is 600x90, so we maintain similar aspect ratio val sigWidth = 500f val sigHeight = 75f // A4 page size: 595 x 842 points originX = (595f - sigWidth) / 2 originY = (842f - sigHeight) / 2 width = sigWidth height = sigHeight }</ID>
+    <ID>MultilineExpressionWrapping:PdfBox.kt:if (document.numberOfPages &gt; 0) { document.getPage(0).mediaBox } else { org.apache.pdfbox.pdmodel.common.PDRectangle.A4 }</ID>
+    <ID>MultilineExpressionWrapping:PdfBox.kt:if (highlight is ColorHighlight) { Color(highlight.rgb) } else { Color.BLACK }</ID>
+    <ID>MultilineExpressionWrapping:PdfBox.kt:object : Visitor { override fun visitNode(node: ASTNode) { when (node.type) { GFMElementTypes.HEADER -&gt; { val cells = node.children .filter { it.type.name == "CELL" } .map { it.getTextInNode(content).toString().trim() } if (cells.isNotEmpty()) { rows.add(cells) } } GFMElementTypes.ROW -&gt; { val cells = node.children .filter { it.type.name == "CELL" } .map { it.getTextInNode(content).toString().trim() } if (cells.isNotEmpty()) { rows.add(cells) } } else -&gt; node.acceptChildren(this) } } }</ID>
+    <ID>MultilineExpressionWrapping:PdfBox.kt:when (type) { MarkdownElementTypes.ATX_1 -&gt; 24f MarkdownElementTypes.ATX_2 -&gt; 22f MarkdownElementTypes.ATX_3 -&gt; 20f MarkdownElementTypes.ATX_4 -&gt; 18f MarkdownElementTypes.ATX_5 -&gt; 16f MarkdownElementTypes.ATX_6 -&gt; 15f else -&gt; 18f }</ID>
+    <ID>PackageName:PdfBox.kt:package com.storyteller_f.a.cloud.pdfbox</ID>
     <ID>PackageNaming:PdfBox.kt:package com.storyteller_f.a.cloud.pdfbox</ID>
+    <ID>TrailingCommaOnCallSite:PdfBox.kt:( document, FontMappers.instance().getTrueTypeFont(f.name, null).font, true )</ID>
+    <ID>TrailingCommaOnCallSite:PdfBox.kt:( imageBytes, "signature.png", eu.europa.esig.dss.enumerations.MimeTypeEnum.PNG )</ID>
+    <ID>TrailingCommaOnCallSite:PdfBox.kt:( keyStoreInput, KeyStore.PasswordProtection(password.toCharArray()) )</ID>
+    <ID>TrailingCommaOnCallSite:PdfBox.kt:( loadByName(base), loadByName(bold), loadByName(italic), loadByName(mono) )</ID>
+    <ID>TrailingCommaOnCallSite:PdfBox.kt:( subjectName, pdfGenerationSpec.created.toString(), "Digitally Signed by PdfBox" )</ID>
+    <ID>TrailingCommaOnCallSite:PdfBox.kt:PdfBoxVisitor$( "${index + 1}. $text", 14f, font )</ID>
+    <ID>TrailingCommaOnCallSite:PdfBox.kt:PdfBoxVisitor$( "________________________________________________________________", 12f, font )</ID>
+    <ID>TrailingCommaOnCallSite:PdfBox.kt:PdfBoxVisitor$( Paragraph().apply { addText( "________________________________________________________________", 12f, font ) } )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PdfBox.kt:( saveToFile: File, snapshotGeneration: SnapshotGeneration.KeyStoreGeneration, pdfGenerationSpec: PdfGenerationSpec )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PdfBox.kt:ParagraphVisitor$( private val flow: TextFlow, private val content: String, private val fontBundle: PdfFontBundle )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PdfBox.kt:ParagraphVisitor$MarkdownElementTypes.INLINE_LINK, MarkdownElementTypes.FULL_REFERENCE_LINK, MarkdownElementTypes.SHORT_REFERENCE_LINK -&gt; addLink(node)</ID>
+    <ID>TrailingCommaOnDeclarationSite:PdfBox.kt:PdfBox$( creatorInfo: UserInfo, authorInfo: UserInfo, content: String, map: Map&lt;String, File&gt;, snapshotGeneration: SnapshotGeneration, pdfGenerationSpec: PdfGenerationSpec )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PdfBox.kt:PdfBoxVisitor$( val font: PDFont, val content: String, val map: Map&lt;String, File&gt;, val document: Document )</ID>
+    <ID>TrailingCommaOnDeclarationSite:PdfBox.kt:PdfBoxVisitor$MarkdownElementTypes.ATX_1, MarkdownElementTypes.ATX_2, MarkdownElementTypes.ATX_3, MarkdownElementTypes.ATX_4, MarkdownElementTypes.ATX_5, MarkdownElementTypes.ATX_6 -&gt; { val headerText = collectPlainText(node, content) if (headerText.isNotBlank()) { val size = headerFontSizeFor(type) document.add(Paragraph().apply { addText(headerText, size, font) }) } }</ID>
+    <ID>TrailingCommaOnDeclarationSite:PdfBox.kt:PdfFontBundle$( val plain: PDFont, val bold: PDFont, val italic: PDFont, val mono: PDFont )</ID>
+    <ID>Wrapping:PdfBox.kt:PdfBox$(</ID>
+    <ID>Wrapping:PdfBox.kt:PdfBoxVisitor$(</ID>
   </CurrentIssues>
 </SmellBaseline>

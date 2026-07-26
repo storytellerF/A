@@ -2,6 +2,7 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>ArgumentListWrapping:IndexBenchmark.kt:IndexBenchmark$( SnowflakeFactory.nextId(), "test", SnowflakeFactory.nextId(), "ROOM", SnowflakeFactory.nextId(), "ROOM", SnowflakeFactory.nextId() )</ID>
     <ID>BlankLineBetweenWhenConditions:CommunityService.kt:when (checkResult) { MediaCheckResult.NOT_FOUND -&gt; Result.failure(CustomBadRequestException("icon not found")) MediaCheckResult.CONTENT_TYPE_MISMATCH -&gt; Result.failure(CustomBadRequestException("only support image")) MediaCheckResult.DIMENSION_MISMATCH -&gt; Result.failure(CustomBadRequestException("dimension mismatch")) else -&gt; UNIT_RESULT }</ID>
     <ID>BlankLineBetweenWhenConditions:CommunityService.kt:when (checkResult) { MediaCheckResult.NOT_FOUND -&gt; Result.failure(CustomBadRequestException("poster not found")) MediaCheckResult.CONTENT_TYPE_MISMATCH -&gt; Result.failure(CustomBadRequestException("only support image")) MediaCheckResult.DIMENSION_MISMATCH -&gt; Result.failure(CustomBadRequestException("dimension mismatch")) else -&gt; UNIT_RESULT }</ID>
     <ID>BlankLineBetweenWhenConditions:CommunityService.kt:when { // word 不为空 &amp;&amp; 搜索已加入的社区，使用 memberSearchService joinSearch is JoinSearch.Joined -&gt; { memberSearchService.searchDocument( MemberDocumentSearch.CommunityMembers(uid = joinSearch.uid, objectName = word, fetch = primaryKeyFetch) ).mapPagingResultNotNull { searchResults -&gt; val communityIds = searchResults .map { it.objectId } database.community.getRawCommunities(ObjectListFetch.IdListFetch(communityIds)) } } // word 不为空 &amp;&amp; 不是搜索已加入（Unspecified），使用 communitySearchService else -&gt; communitySearchService.searchDocument( CommunityDocumentSearch.Keyword(word, fetch = primaryKeyFetch) ).mapPagingResultNotNull { list -&gt; database.community.getRawCommunities( ObjectListFetch.IdListFetch(list.map { it.id }) ) } }</ID>
@@ -19,6 +20,7 @@
     <ID>ClassSignature:ContainerService.kt:RootAdminPermission</ID>
     <ID>ClassSignature:ContainerService.kt:RootReadPermission</ID>
     <ID>ClassSignature:ContainerService.kt:RootWritePermission</ID>
+    <ID>FinalNewline:IndexBenchmark.kt:com.storyteller_f.a.backend.service.benchmark.IndexBenchmark.kt</ID>
     <ID>FunctionExpressionBody:AdminService.kt:{ return database.admin.getPanelLogs(targetId, objectType, fetch).map { result -&gt; PaginationResult(result.list.map { it.toPanelLogInfo() }, result.total) } }</ID>
     <ID>FunctionExpressionBody:AdminService.kt:{ return database.admin.getTaskRecords(type, fetch).map { result -&gt; PaginationResult(result.list.map { it.toTaskRecordInfo() }, result.total) } }</ID>
     <ID>FunctionExpressionBody:AudioUtil.kt:{ return ((bytes[0].toInt() and 0x7F) shl 21) or ((bytes[1].toInt() and 0x7F) shl 14) or ((bytes[2].toInt() and 0x7F) shl 7) or (bytes[3].toInt() and 0x7F) }</ID>
@@ -53,9 +55,290 @@
     <ID>FunctionExpressionBody:UserService.kt:{ return processRawUserToUserInfo(listOf(raw.rawUser)).map { users -&gt; val userInfo = users.first() UserOverview( raw.subscriptionCount, raw.favoriteCount, raw.acg, raw.childAccountCount, raw.reactionRecordCount, raw.commentCount, raw.hasUnreadChildRoomMessage, userInfo ) } }</ID>
     <ID>FunctionExpressionBody:UserService.kt:{ return this in 'a'..'z' || this in 'A'..'Z' }</ID>
     <ID>FunctionExpressionBody:UserService.kt:{ return when (checkNickname(update.nickname, 1..USER_NICKNAME)) { StringCheckResult.RANGE_MISMATCH -&gt; Result.failure( CustomBadRequestException("user nickname must be between in 1 and $USER_NICKNAME") ) StringCheckResult.CONTAIN_INVALID_CHAR -&gt; Result.failure( CustomBadRequestException("user nickname must be visible") ) else -&gt; UNIT_RESULT } }</ID>
+    <ID>FunctionSignature:AccountService.kt:private suspend fun Backend.signUpInternal: User</ID>
+    <ID>FunctionSignature:AccountService.kt:suspend fun Backend.adminSignUp: Result&lt;PanelAccountInfo&gt;</ID>
+    <ID>FunctionSignature:AccountService.kt:suspend fun Backend.signIn: Result&lt;SignInServiceResponse&gt;</ID>
+    <ID>FunctionSignature:AccountService.kt:suspend fun Backend.signUp: Result&lt;UserInfo&gt;</ID>
+    <ID>FunctionSignature:AdminService.kt:suspend fun Backend.getTaskRecords: Result&lt;PaginationResult&lt;TaskRecordInfo&gt;&gt;</ID>
+    <ID>FunctionSignature:AudioUtil.kt:@Suppress("CyclomaticComplexMethod") fun &lt;T&gt; BufferedInputStream.readMp3AlbumFromAudioStream: Pair&lt;T, String&gt;?</ID>
+    <ID>FunctionSignature:CommunityService.kt:private fun checkCommunityNameForUpdate: Result&lt;Unit&gt;</ID>
+    <ID>FunctionSignature:CommunityService.kt:private suspend fun Backend.checkBeforeUpdateCommunity: Result&lt;Unit&gt;</ID>
+    <ID>FunctionSignature:CommunityService.kt:private suspend fun Backend.processCommunities: Result&lt;List&lt;CommunityInfo&gt;?&gt;</ID>
+    <ID>FunctionSignature:CommunityService.kt:private suspend fun Backend.processUserJoinedTimeReplace: Result&lt;List&lt;CommunityInfo&gt;&gt;</ID>
+    <ID>FunctionSignature:CommunityService.kt:private suspend fun Backend.saveMemberDocument</ID>
+    <ID>FunctionSignature:CommunityService.kt:suspend fun Backend.createCommunity: Result&lt;CommunityInfo?&gt;</ID>
+    <ID>FunctionSignature:CommunityService.kt:suspend fun Backend.exitCommunity</ID>
+    <ID>FunctionSignature:CommunityService.kt:suspend fun Backend.getAllCommunities</ID>
+    <ID>FunctionSignature:CommunityService.kt:suspend fun Backend.getCommunity</ID>
+    <ID>FunctionSignature:CommunityService.kt:suspend fun Backend.getCommunityMemberInfos: Result&lt;PaginationResult&lt;MemberInfo&gt;&gt;</ID>
+    <ID>FunctionSignature:CommunityService.kt:suspend fun Backend.getContainerMemberInfos</ID>
+    <ID>FunctionSignature:CommunityService.kt:suspend fun Backend.joinCommunity</ID>
+    <ID>FunctionSignature:CommunityService.kt:suspend fun Backend.processRawCommunityToCommunityInfo: Result&lt;List&lt;CommunityInfo&gt;?&gt;</ID>
+    <ID>FunctionSignature:CommunityService.kt:suspend fun Backend.updateCommunity: Result&lt;CommunityInfo?&gt;</ID>
+    <ID>FunctionSignature:ContainerService.kt:private suspend fun Backend.insertQuotaAndGet: Result&lt;QuotaInfo&gt;</ID>
+    <ID>FunctionSignature:ContainerService.kt:suspend fun Backend.checkCommunityAdminPermission: Result&lt;RootAdminPermission?&gt;</ID>
+    <ID>FunctionSignature:ContainerService.kt:suspend fun Backend.checkCommunityReadPermission: Result&lt;RootReadPermission?&gt;</ID>
+    <ID>FunctionSignature:ContainerService.kt:suspend fun Backend.checkCommunityWritePermission: Result&lt;RootWritePermission?&gt;</ID>
+    <ID>FunctionSignature:ContainerService.kt:suspend fun Backend.checkObjectWritable: Result&lt;Unit&gt;</ID>
+    <ID>FunctionSignature:ContainerService.kt:suspend fun Backend.checkQuotaStatus: Result&lt;QuotaInfo&gt;</ID>
+    <ID>FunctionSignature:ContainerService.kt:suspend fun Backend.checkRoomAdminPermission: Result&lt;RootAdminPermission?&gt;</ID>
+    <ID>FunctionSignature:ContainerService.kt:suspend fun Backend.checkRoomReadPermission: Result&lt;RootReadPermission?&gt;</ID>
+    <ID>FunctionSignature:ContainerService.kt:suspend fun Backend.checkRoomWritePermission: Result&lt;RootWritePermission?&gt;</ID>
+    <ID>FunctionSignature:ContainerService.kt:suspend fun Backend.checkRootAdminPermission: Result&lt;RootAdminPermission?&gt;</ID>
+    <ID>FunctionSignature:ContainerService.kt:suspend fun Backend.checkRootReadPermission: Result&lt;RootReadPermission?&gt;</ID>
+    <ID>FunctionSignature:ContainerService.kt:suspend fun Backend.checkRootWritePermission: Result&lt;RootWritePermission?&gt;</ID>
+    <ID>FunctionSignature:ContainerService.kt:suspend fun Backend.checkTopicAdminPermission: Result&lt;RootAdminPermission?&gt;</ID>
+    <ID>FunctionSignature:ContainerService.kt:suspend fun Backend.checkTopicReadPermission: Result&lt;RootReadPermission?&gt;</ID>
+    <ID>FunctionSignature:ContainerService.kt:suspend fun Backend.checkTopicWritePermission: Result&lt;RootWritePermission?&gt;</ID>
+    <ID>FunctionSignature:ContainerService.kt:suspend fun Backend.checkUserAdminPermission: Result&lt;RootAdminPermission?&gt;</ID>
+    <ID>FunctionSignature:ContainerService.kt:suspend fun Backend.checkUserReadPermission: Result&lt;RootReadPermission?&gt;</ID>
+    <ID>FunctionSignature:ContainerService.kt:suspend fun Backend.checkUserWritePermission: Result&lt;RootWritePermission?&gt;</ID>
+    <ID>FunctionSignature:ContainerService.kt:suspend fun Backend.getQuotaInfo</ID>
+    <ID>FunctionSignature:ContainerService.kt:suspend fun Backend.lockQuotaInfo</ID>
+    <ID>FunctionSignature:FavoriteService.kt:suspend fun Backend.addFavorite</ID>
+    <ID>FunctionSignature:FavoriteService.kt:suspend fun Backend.deleteFavorite</ID>
+    <ID>FunctionSignature:FavoriteService.kt:suspend fun Backend.getFavorites</ID>
+    <ID>FunctionSignature:FavoriteService.kt:suspend fun Backend.processUserFavoriteToUserFavoriteInfo</ID>
+    <ID>FunctionSignature:FileService.kt:@OptIn(ExperimentalUuidApi::class) private suspend fun extractAlbumFromStream</ID>
+    <ID>FunctionSignature:FileService.kt:@OptIn(ExperimentalUuidApi::class) private suspend fun removeExifIfImage: List&lt;ProcessedUploadPack&gt;</ID>
+    <ID>FunctionSignature:FileService.kt:@OptIn(ExperimentalUuidApi::class) suspend fun Backend.tryUploadFiles</ID>
+    <ID>FunctionSignature:FileService.kt:@Suppress("LongMethod") suspend fun completeChunkUpload: Result&lt;FileInfo?&gt;</ID>
+    <ID>FunctionSignature:FileService.kt:private suspend fun Backend.copyFile</ID>
+    <ID>FunctionSignature:FileService.kt:private suspend fun cleanChunk</ID>
+    <ID>FunctionSignature:FileService.kt:private suspend fun processContentTypeAndDimension: List&lt;ProcessedUploadPack&gt;</ID>
+    <ID>FunctionSignature:FileService.kt:suspend fun Backend.getFileInfoById: Result&lt;FileInfo?&gt;</ID>
+    <ID>FunctionSignature:FileService.kt:suspend fun Backend.getFileInfoByName: Result&lt;FileInfo?&gt;</ID>
+    <ID>FunctionSignature:FileService.kt:suspend fun Backend.getFileRefsByFileId</ID>
+    <ID>FunctionSignature:FileService.kt:suspend fun Backend.getUserUploadRecords</ID>
+    <ID>FunctionSignature:FileService.kt:suspend fun Backend.processFileRecordToFileInfo: Result&lt;List&lt;FileInfo&gt;&gt;</ID>
+    <ID>FunctionSignature:FileService.kt:suspend fun Backend.tryCopyFile</ID>
+    <ID>FunctionSignature:FileService.kt:suspend fun Backend.uncheckedGetFileRefsByFileId</ID>
+    <ID>FunctionSignature:FileService.kt:suspend fun Backend.uncheckedSearchFiles: Result&lt;PaginationResult&lt;FileInfo&gt;?&gt;</ID>
+    <ID>FunctionSignature:FileService.kt:suspend fun abortChunkUpload</ID>
+    <ID>FunctionSignature:FileService.kt:suspend fun getChunkStatus</ID>
+    <ID>FunctionSignature:FileService.kt:suspend fun getFileSystemDownloadUrl: Result&lt;PathResponse?&gt;</ID>
+    <ID>FunctionSignature:FileService.kt:suspend fun initChunkUpload</ID>
+    <ID>FunctionSignature:ReactionService.kt:suspend fun Backend.addReaction</ID>
+    <ID>FunctionSignature:ReactionService.kt:suspend fun addReaction: Result&lt;ReactionInfo?&gt;</ID>
+    <ID>FunctionSignature:ReactionService.kt:suspend fun deleteReaction: Result&lt;ReactionInfo?&gt;</ID>
+    <ID>FunctionSignature:RoomService.kt:private suspend fun Backend.checkRoomIcon: Result&lt;Unit&gt;</ID>
+    <ID>FunctionSignature:RoomService.kt:private suspend fun Backend.joinRoomOrUpdateMemberStatus: Result&lt;Member&gt;</ID>
+    <ID>FunctionSignature:RoomService.kt:private suspend fun Backend.saveMemberDocument</ID>
+    <ID>FunctionSignature:RoomService.kt:suspend fun Backend.createRoom: Result&lt;RoomInfo?&gt;</ID>
+    <ID>FunctionSignature:RoomService.kt:suspend fun Backend.exitRoom</ID>
+    <ID>FunctionSignature:RoomService.kt:suspend fun Backend.getAllPrivateRooms</ID>
+    <ID>FunctionSignature:RoomService.kt:suspend fun Backend.getAllPublicRooms</ID>
+    <ID>FunctionSignature:RoomService.kt:suspend fun Backend.getCommunityRooms: Result&lt;PaginationResult&lt;RoomInfo&gt;&gt;</ID>
+    <ID>FunctionSignature:RoomService.kt:suspend fun Backend.getJoinTitleByScope: Result&lt;Unit&gt;</ID>
+    <ID>FunctionSignature:RoomService.kt:suspend fun Backend.getRoomInfo</ID>
+    <ID>FunctionSignature:RoomService.kt:suspend fun Backend.getRoomInfoList</ID>
+    <ID>FunctionSignature:RoomService.kt:suspend fun Backend.getRoomMemberInfos: Result&lt;PaginationResult&lt;MemberInfo&gt;?&gt;</ID>
+    <ID>FunctionSignature:RoomService.kt:suspend fun Backend.getRoomPubKeys</ID>
+    <ID>FunctionSignature:RoomService.kt:suspend fun Backend.getUserJoinedRooms: Result&lt;PaginationResult&lt;RoomInfo&gt;&gt;</ID>
+    <ID>FunctionSignature:RoomService.kt:suspend fun Backend.joinRoom</ID>
+    <ID>FunctionSignature:RoomService.kt:suspend fun Backend.processRawRoomToRoomInfo</ID>
+    <ID>FunctionSignature:RoomService.kt:suspend fun Backend.uncheckedGetRoomMemberInfos: Result&lt;PaginationResult&lt;MemberInfo&gt;&gt;</ID>
+    <ID>FunctionSignature:RoomService.kt:suspend fun Backend.updateRoom: Result&lt;RoomInfo?&gt;</ID>
+    <ID>FunctionSignature:RoomService.kt:suspend fun searchRoomMembers: Result&lt;PaginationResult&lt;MemberInfo&gt;?&gt;</ID>
+    <ID>FunctionSignature:TitleService.kt:private suspend fun Backend.processTitleList: Result&lt;List&lt;TitleInfo&gt;?&gt;</ID>
+    <ID>FunctionSignature:TitleService.kt:private suspend fun toTitle: Title</ID>
+    <ID>FunctionSignature:TitleService.kt:suspend fun Backend.createTitle</ID>
+    <ID>FunctionSignature:TitleService.kt:suspend fun Backend.getTitleInfo: Result&lt;TitleInfo?&gt;</ID>
+    <ID>FunctionSignature:TitleService.kt:suspend fun createTitle: Result&lt;TitleInfo?&gt;</ID>
+    <ID>FunctionSignature:TopicService.kt:private suspend fun Backend.addSubscription</ID>
+    <ID>FunctionSignature:TopicService.kt:private suspend fun Backend.buildFileRefs: Result&lt;List&lt;FileRef&gt;&gt;</ID>
+    <ID>FunctionSignature:TopicService.kt:private suspend fun Backend.createTopicSnapshot: Result&lt;FileInfo?&gt;</ID>
+    <ID>FunctionSignature:TopicService.kt:private suspend fun Backend.getReactionMap: Map&lt;PrimaryKey, List&lt;ReactionInfo&gt;&gt;</ID>
+    <ID>FunctionSignature:TopicService.kt:private suspend fun Backend.processTopicsDocument: Result&lt;List&lt;TopicInfo&gt;?&gt;</ID>
+    <ID>FunctionSignature:TopicService.kt:private suspend fun Backend.savePlainTopic: Result&lt;TopicInfo?&gt;</ID>
+    <ID>FunctionSignature:TopicService.kt:suspend fun Backend.createPlainTopic: Result&lt;TopicInfo?&gt;</ID>
+    <ID>FunctionSignature:TopicService.kt:suspend fun Backend.createTopicAtRoom: Result&lt;TopicInfo?&gt;</ID>
+    <ID>FunctionSignature:TopicService.kt:suspend fun Backend.createTopicSnapshot: Result&lt;FileInfo?&gt;</ID>
+    <ID>FunctionSignature:TopicService.kt:suspend fun Backend.getAllTopics</ID>
+    <ID>FunctionSignature:TopicService.kt:suspend fun Backend.getTopic: Result&lt;TopicInfo?&gt;</ID>
+    <ID>FunctionSignature:TopicService.kt:suspend fun Backend.getTopicByAid: Result&lt;TopicInfo?&gt;</ID>
+    <ID>FunctionSignature:TopicService.kt:suspend fun Backend.getTopicByIds: Result&lt;List&lt;TopicInfo&gt;?&gt;</ID>
+    <ID>FunctionSignature:TopicService.kt:suspend fun Backend.processRawTopicToTopicInfo: Result&lt;List&lt;TopicInfo&gt;?&gt;</ID>
+    <ID>FunctionSignature:TopicService.kt:suspend fun Backend.processTopicAfterCreate</ID>
+    <ID>FunctionSignature:TopicService.kt:suspend fun Backend.processTopicFileObject: Result&lt;List&lt;TopicInfo&gt;?&gt;</ID>
+    <ID>FunctionSignature:TopicService.kt:suspend fun Backend.recommendTopics: Result&lt;PaginationResult&lt;TopicInfo&gt;?&gt;</ID>
+    <ID>FunctionSignature:TopicService.kt:suspend fun Backend.uncheckGetTopicsByParentId</ID>
+    <ID>FunctionSignature:TopicService.kt:suspend fun Backend.updateTopicPin</ID>
+    <ID>FunctionSignature:UserService.kt:private suspend fun Backend.checkAidModifyTimes</ID>
+    <ID>FunctionSignature:UserService.kt:private suspend fun Backend.processUserLogToUserLogInfo</ID>
+    <ID>FunctionSignature:UserService.kt:suspend fun Backend.addUserLog: Result&lt;Unit&gt;</ID>
+    <ID>FunctionSignature:UserService.kt:suspend fun Backend.checkIcon: Result&lt;MediaCheckResult?&gt;</ID>
+    <ID>FunctionSignature:UserService.kt:suspend fun Backend.getAllUsers</ID>
+    <ID>FunctionSignature:UserService.kt:suspend fun Backend.getUserAlternateUserInfoList: Result&lt;PaginationResult&lt;ChildAccountInfo&gt;?&gt;</ID>
+    <ID>FunctionSignature:UserService.kt:suspend fun Backend.getUserCommentedTopics</ID>
+    <ID>FunctionSignature:UserService.kt:suspend fun Backend.getUserInfo</ID>
+    <ID>FunctionSignature:UserService.kt:suspend fun Backend.getUserInfoList</ID>
+    <ID>FunctionSignature:UserService.kt:suspend fun Backend.getUserLogs</ID>
+    <ID>FunctionSignature:UserService.kt:suspend fun Backend.getUserReactions</ID>
+    <ID>FunctionSignature:UserService.kt:suspend fun Backend.isKeyVerified: Result&lt;Boolean&gt;</ID>
+    <ID>FunctionSignature:UserService.kt:suspend fun Backend.processRawUserToUserInfo</ID>
+    <ID>FunctionSignature:UserService.kt:suspend fun Backend.searchContainerMembers: Result&lt;PaginationResult&lt;MemberInfo&gt;&gt;</ID>
+    <ID>FunctionSignature:UserService.kt:suspend fun Backend.searchUsers: Result&lt;PaginationResult&lt;UserInfo&gt;?&gt;</ID>
+    <ID>FunctionSignature:UserService.kt:suspend fun Backend.updateUser: Result&lt;UserInfo?&gt;</ID>
+    <ID>FunctionSignature:UserSubscriptionService.kt:suspend fun Backend.addSubscription</ID>
+    <ID>FunctionSignature:UserSubscriptionService.kt:suspend fun Backend.getUserSubscriptions</ID>
+    <ID>FunctionSignature:UserSubscriptionService.kt:suspend fun Backend.processUserSubscriptionToUserSubscriptionInfo</ID>
+    <ID>FunctionSignature:UserSubscriptionService.kt:suspend fun Backend.removeSubscription</ID>
+    <ID>FunctionSignature:UserSubscriptionService.kt:suspend fun Backend.removeSubscriptionByObject</ID>
     <ID>MissingPackageDeclaration:MediaTest.kt:.MediaTest.kt</ID>
     <ID>MissingPackageDeclaration:SnowflakeTest.kt:.SnowflakeTest.kt</ID>
     <ID>MissingPackageDeclaration:StringTest.kt:.StringTest.kt</ID>
+    <ID>MultilineExpressionWrapping:AccountService.kt:User( null, encPubKey, pack.publicKey, ad, null, name, newId, now(), 0, PassType.RAW, algoType, notificationId )</ID>
+    <ID>MultilineExpressionWrapping:AccountService.kt:if (algoType == AlgoType.DILITHIUM) { pack.encryptionPublicKey } else { null }</ID>
+    <ID>MultilineExpressionWrapping:AdminService.kt:getAlgo(algoType).run { val address = calcAddress(authKey.derPublicKey).getOrThrow() address to authKey.derPublicKey }</ID>
+    <ID>MultilineExpressionWrapping:AdminService.kt:runCatching { val userCount = database.user.getUserCount().getOrThrow() val topicCount = database.topic.getTopicCount().getOrThrow() val communityCount = database.community.getCommunityCount().getOrThrow() val privateRoomCount = database.room.getPrivateRoomCount().getOrThrow() val publicRoomCount = database.room.getPublicRoomCount().getOrThrow() val fileCount = database.file.getFileCount().getOrThrow() val fileVolume = database.file.getFileVolume().getOrThrow() val titleCount = database.title.getTitleCount().getOrThrow() PanelOverview( userCount, topicCount, communityCount, privateRoomCount, publicRoomCount, fileCount, fileVolume, titleCount, ) }</ID>
+    <ID>MultilineExpressionWrapping:AdminService.kt:when (authKey) { is TransferAuthKey.Dilithium -&gt; authKey.derEncryptionPublicKey is TransferAuthKey.P256 -&gt; null }</ID>
+    <ID>MultilineExpressionWrapping:AudioUtil.kt:((frameHeader[4].toInt() and 0xFF) shl 24) or ((frameHeader[5].toInt() and 0xFF) shl 16) or ((frameHeader[6].toInt() and 0xFF) shl 8) or (frameHeader[7].toInt() and 0xFF)</ID>
+    <ID>MultilineExpressionWrapping:AudioUtil.kt:((lengthBytes[0].toInt() and 0xFF) shl 16) or ((lengthBytes[1].toInt() and 0xFF) shl 8) or (lengthBytes[2].toInt() and 0xFF)</ID>
+    <ID>MultilineExpressionWrapping:AudioUtil.kt:(dataInput.read() shl 24) or (dataInput.read() shl 16) or (dataInput.read() shl 8) or dataInput.read()</ID>
+    <ID>MultilineExpressionWrapping:CommunityService.kt:Community( id, now(), newCommunity.aid, newCommunity.name, uid, newCommunity.memberPolicy, newCommunity.icon, null )</ID>
+    <ID>MultilineExpressionWrapping:CommunityService.kt:Result.failure( CustomBadRequestException("community name must be between in 1 and $COMMUNITY_NAME_LENGTH") )</ID>
+    <ID>MultilineExpressionWrapping:CommunityService.kt:Result.failure( CustomBadRequestException("community name must be between in 1 and 20") )</ID>
+    <ID>MultilineExpressionWrapping:CommunityService.kt:Result.failure( CustomBadRequestException("community name must be visible") )</ID>
+    <ID>MultilineExpressionWrapping:CommunityService.kt:Result.success(value.map { it.copy(member = null, extension = CommunityInfo.Extension(it.member)) })</ID>
+    <ID>MultilineExpressionWrapping:CommunityService.kt:communityInfos.map { it.id }</ID>
+    <ID>MultilineExpressionWrapping:CommunityService.kt:communitySearchService.searchDocument( CommunityDocumentSearch.Keyword(word, fetch = primaryKeyFetch) ).mapPagingResultNotNull { list -&gt; database.community.getRawCommunities( ObjectListFetch.IdListFetch(list.map { it.id }) ) }</ID>
+    <ID>MultilineExpressionWrapping:CommunityService.kt:files.firstOrNull { !it.contentType.startsWith("font/") &amp;&amp; !it.contentType.startsWith("application/font-") }</ID>
+    <ID>MultilineExpressionWrapping:CommunityService.kt:fs?.let { FontSettingsWithInfo( settings = it, contentFont = it.contentFontId?.let { id -&gt; map[id] }, codeFont = it.codeFontId?.let { id -&gt; map[id] }, fallbackFont = it.fallbackFontId?.let { id -&gt; map[id] }, ) }</ID>
+    <ID>MultilineExpressionWrapping:CommunityService.kt:if (currentMember == null) { Member( SnowflakeFactory.nextId(), uid, communityId, ObjectType.COMMUNITY, time, MemberStatus.JOINED, time ) } else { Member( currentMember.id, currentMember.uid, currentMember.objectId, currentMember.objectType, time, MemberStatus.JOINED, time, currentMember.invitedTime ) }</ID>
+    <ID>MultilineExpressionWrapping:CommunityService.kt:if (currentMember == null) { database.container.addMember(member) } else { database.container.updateMemberStatus(member) }</ID>
+    <ID>MultilineExpressionWrapping:CommunityService.kt:if (search.target != null) { JoinStatusSearch.JOINED.toJoinSearch(search.target) } else { search.joinStatus.toJoinSearch(uid) }</ID>
+    <ID>MultilineExpressionWrapping:CommunityService.kt:list.flatMap { (community) -&gt; community.fontSettings?.let { fs -&gt; listOfNotNull(fs.contentFontId, fs.codeFontId, fs.fallbackFontId) }.orEmpty() + listOf(community.iconId, community.posterId) }.filterNotNull()</ID>
+    <ID>MultilineExpressionWrapping:CommunityService.kt:list.map { it.id }</ID>
+    <ID>MultilineExpressionWrapping:CommunityService.kt:listOfNotNull( fontSettings.contentFontId, fontSettings.codeFontId, fontSettings.fallbackFontId, )</ID>
+    <ID>MultilineExpressionWrapping:CommunityService.kt:old.copy( name = old.name?.trim(), icon = old.icon, poster = old.poster, fontSettings = old.fontSettings, )</ID>
+    <ID>MultilineExpressionWrapping:CommunityService.kt:processRawCommunityToCommunityInfo(communities).mapResultIfNotNull { value -&gt; when { target == null -&gt; Result.success(value) uid != null -&gt; processUserJoinedTimeReplace(value, uid) else -&gt; Result.success(value.map { it.copy(member = null, extension = CommunityInfo.Extension(it.member)) }) } }</ID>
+    <ID>MultilineExpressionWrapping:CommunityService.kt:searchResults .map { it.objectId }</ID>
+    <ID>MultilineExpressionWrapping:CommunityService.kt:value.map { it.copy(member = null, extension = CommunityInfo.Extension(it.member)) }</ID>
+    <ID>MultilineExpressionWrapping:ContainerService.kt:database.community.getRawCommunity(IdFetch(communityId)) .mapResultIfNotNull { if (it.community.readOnly) { Result.failure(ForbiddenException("community is read only")) } else if (it.community.owner == uid) { Result.success(RootAdminPermission(ObjectType.COMMUNITY, communityId)) } else { Result.failure(ForbiddenException()) } }</ID>
+    <ID>MultilineExpressionWrapping:ContainerService.kt:database.community.getRawCommunity(IdFetch(communityId)).mapResultIfNotNull { database.container.isMemberJoined(communityId, uid).map { hasJoined -&gt; RootReadPermission(true, hasJoined, false) } }</ID>
+    <ID>MultilineExpressionWrapping:ContainerService.kt:database.community.getRawCommunity(IdFetch(objectId)).mapResult { val community = it ?: return@mapResult Result.success(Unit) if (community.community.readOnly) { Result.failure( ForbiddenException("community is read only") ) } else { Result.success(Unit) } }</ID>
+    <ID>MultilineExpressionWrapping:ContainerService.kt:database.file.getFileRecordByIds(listOf(objectId)).mapResult { val fileRecord = it.firstOrNull() ?: return@mapResult Result.success(Unit) if (fileRecord.readOnly) Result.failure(ForbiddenException("file is read only")) else Result.success(Unit) }</ID>
+    <ID>MultilineExpressionWrapping:ContainerService.kt:database.getRawTopic(IdFetch(topicId), null).mapResultIfNotNull { topicInfo -&gt; if (topicInfo.topic.readOnly) { Result.failure(ForbiddenException("topic is read only")) } else { checkRootAdminPermission(topicInfo.topic.rootType, topicInfo.topic.rootId, uid) } }</ID>
+    <ID>MultilineExpressionWrapping:ContainerService.kt:database.getRawTopic(IdFetch(topicId), null).mapResultIfNotNull { topicInfo -&gt; if (topicInfo.topic.readOnly) { Result.failure(ForbiddenException("topic is read only")) } else { checkRootWritePermission( topicInfo.topic.rootType, topicInfo.topic.rootId, uid ).mapIfNotNull { it.copy(level = topicInfo.topic.level) } } }</ID>
+    <ID>MultilineExpressionWrapping:ContainerService.kt:database.room.getRawRoom(IdFetch(objectId)).mapResult { val room = it ?: return@mapResult Result.success(Unit) if (room.room.readOnly) Result.failure(ForbiddenException("room is read only")) else Result.success(Unit) }</ID>
+    <ID>MultilineExpressionWrapping:ContainerService.kt:database.room.getRawRoom(IdFetch(roomId), true, uid) .mapResultIfNotNull { if (it.room.readOnly) { Result.failure(ForbiddenException("room is read only")) } else if (it.room.creator == uid) { Result.success(RootAdminPermission(ObjectType.ROOM, roomId)) } else { Result.failure(ForbiddenException()) } }</ID>
+    <ID>MultilineExpressionWrapping:ContainerService.kt:database.room.getRawRoom(IdFetch(roomId), true, uid).mapResultIfNotNull { if (it.room.readOnly) { Result.failure(ForbiddenException("room is read only")) } else if (it.hasJoined) { Result.success(RootWritePermission(ObjectType.ROOM, roomId)) } else { Result.failure(ForbiddenException()) } }</ID>
+    <ID>MultilineExpressionWrapping:ContainerService.kt:database.title.getTitle(objectId).mapResult { val title = it ?: return@mapResult Result.success(Unit) if (title.title.readOnly) Result.failure(ForbiddenException("title is read only")) else Result.success(Unit) }</ID>
+    <ID>MultilineExpressionWrapping:ContainerService.kt:database.topic.getTopic(IdFetch(objectId)).mapResult { val topic = it ?: return@mapResult Result.success(Unit) if (topic.readOnly) Result.failure(ForbiddenException("topic is read only")) else Result.success(Unit) }</ID>
+    <ID>MultilineExpressionWrapping:ContainerService.kt:database.user.getRawUser(IdFetch(userId)).mapIfNotNull { RootReadPermission(hasRead = true, hasJoined = false, isPrivate = false) }</ID>
+    <ID>MultilineExpressionWrapping:ContainerService.kt:getQuotaInfo(quotaType, tuple).mapResult { if (it.lockId != null) { Result.failure(CustomBadRequestException("quota is locking")) } else if (it.used + size &gt; it.total) { Result.failure(CustomBadRequestException("quota is not enough")) } else { Result.success(it) } }</ID>
+    <ID>MultilineExpressionWrapping:ContainerService.kt:if (uid == userId) { database.user.getRawUser(IdFetch(userId)).mapIfNotNull { RootWritePermission(ObjectType.USER, userId) } } else { Result.failure(ForbiddenException()) }</ID>
+    <ID>MultilineExpressionWrapping:ContainerService.kt:if (userId == uid) { database.user.getRawUser(IdFetch(userId)).mapIfNotNull { RootAdminPermission(ObjectType.USER, userId) } } else { Result.failure(ForbiddenException()) }</ID>
+    <ID>MultilineExpressionWrapping:ContainerService.kt:when (objectType) { ObjectType.COMMUNITY -&gt; database.community.getRawCommunity(IdFetch(objectId)).mapResult { val community = it ?: return@mapResult Result.success(Unit) if (community.community.readOnly) { Result.failure( ForbiddenException("community is read only") ) } else { Result.success(Unit) } } ObjectType.ROOM -&gt; database.room.getRawRoom(IdFetch(objectId)).mapResult { val room = it ?: return@mapResult Result.success(Unit) if (room.room.readOnly) Result.failure(ForbiddenException("room is read only")) else Result.success(Unit) } ObjectType.TOPIC -&gt; database.topic.getTopic(IdFetch(objectId)).mapResult { val topic = it ?: return@mapResult Result.success(Unit) if (topic.readOnly) Result.failure(ForbiddenException("topic is read only")) else Result.success(Unit) } ObjectType.TITLE -&gt; database.title.getTitle(objectId).mapResult { val title = it ?: return@mapResult Result.success(Unit) if (title.title.readOnly) Result.failure(ForbiddenException("title is read only")) else Result.success(Unit) } ObjectType.FILE -&gt; database.file.getFileRecordByIds(listOf(objectId)).mapResult { val fileRecord = it.firstOrNull() ?: return@mapResult Result.success(Unit) if (fileRecord.readOnly) Result.failure(ForbiddenException("file is read only")) else Result.success(Unit) } ObjectType.USER, ObjectType.PANEL_ACCOUNT -&gt; Result.success(Unit) }</ID>
+    <ID>MultilineExpressionWrapping:FavoriteService.kt:database.community.getRawCommunities(ObjectListFetch.IdListFetch(communityIds)) .mapResult { processRawCommunityToCommunityInfo(it) } .getOrNull()?.associateBy { it.id } ?: emptyMap()</ID>
+    <ID>MultilineExpressionWrapping:FavoriteService.kt:database.file.getFileRecordByIds(fileIds) .mapResult { processFileRecordToFileInfo(it) } .getOrNull()?.associateBy { it.id } ?: emptyMap()</ID>
+    <ID>MultilineExpressionWrapping:FavoriteService.kt:getRoomInfoList(ObjectListFetch.IdListFetch(roomIds), uid) .getOrNull()?.associateBy { it.id } ?: emptyMap()</ID>
+    <ID>MultilineExpressionWrapping:FavoriteService.kt:getUserInfoList(ObjectListFetch.IdListFetch(userIds)) .getOrNull()?.associateBy { it.id } ?: emptyMap()</ID>
+    <ID>MultilineExpressionWrapping:FavoriteService.kt:when (it.objectType) { ObjectType.TOPIC -&gt; UserFavoriteInfo.Extensions(topicInfo = topics[it.objectId]) ObjectType.COMMUNITY -&gt; UserFavoriteInfo.Extensions(communityInfo = communities[it.objectId]) ObjectType.ROOM -&gt; UserFavoriteInfo.Extensions(roomInfo = rooms[it.objectId]) ObjectType.USER -&gt; UserFavoriteInfo.Extensions(userInfo = users[it.objectId]) ObjectType.TITLE -&gt; UserFavoriteInfo.Extensions(titleInfo = titles[it.objectId]) ObjectType.FILE -&gt; UserFavoriteInfo.Extensions(fileInfo = files[it.objectId]) else -&gt; null }</ID>
+    <ID>MultilineExpressionWrapping:FileService.kt:(0 until expectedChunkCount).map { index -&gt; chunkMap[index] ?: throw CustomBadRequestException("chunk missing") }</ID>
+    <ID>MultilineExpressionWrapping:FileService.kt:backend.buildFileRecordFromComposedObject( targetFullName, newSavedName, tuple, totalSize, expectedSha256, )</ID>
+    <ID>MultilineExpressionWrapping:FileService.kt:backend.database.file.getUploadRecord(recordId).getOrThrow() ?: throw CustomBadRequestException("upload record not found")</ID>
+    <ID>MultilineExpressionWrapping:FileService.kt:backend.objectStorageService.list( A_FILE_DEFAULT_BUCKET, "chunks/$recordId/" ).getOrThrow()</ID>
+    <ID>MultilineExpressionWrapping:FileService.kt:backend.objectStorageService.list( A_FILE_DEFAULT_BUCKET, "chunks/$recordId/" ).getOrThrow().map { it.fullName }</ID>
+    <ID>MultilineExpressionWrapping:FileService.kt:backend.objectStorageService.list( A_FILE_DEFAULT_BUCKET, "chunks/${path.id}/" ).getOrThrow()</ID>
+    <ID>MultilineExpressionWrapping:FileService.kt:chunkRecords.mapNotNull { r -&gt; val index = r.fullName.substringAfter("chunk_").toIntOrNull() if (index == null) { null } else { index to r.fullName } }.toMap()</ID>
+    <ID>MultilineExpressionWrapping:FileService.kt:database.file.getFileRecordPaginationList(uid, primaryKeyFetch) .mapPagingResultNotNull { list -&gt; processFileRecordToFileInfo(list, uid, clientIp) }</ID>
+    <ID>MultilineExpressionWrapping:FileService.kt:files.sumOf { it.size }</ID>
+    <ID>MultilineExpressionWrapping:FileService.kt:if (contentType.startsWith("image")) { getImageDimension(targetFullName, contentType) { objectStorageService.getInputStream(A_FILE_DEFAULT_BUCKET, targetFullName).getOrThrow().buffered() } } else { null }</ID>
+    <ID>MultilineExpressionWrapping:FileService.kt:if (detectedType.startsWith("image")) { getImageDimension(it.file.absolutePath, detectedType) { it.file.inputStream().buffered() } } else { null }</ID>
+    <ID>MultilineExpressionWrapping:FileService.kt:if (fileName.length &gt; 60) { // 60 - 32 - 1 = 27 "${originName.take(27 - extension.length)}$uuid.$extension" } else { fileName }</ID>
+    <ID>MultilineExpressionWrapping:FileService.kt:if (ownerId != null) { FileDocumentSearch.Keyword(word, ownerId, fetch = primaryKeyFetch) } else { FileDocumentSearch.Keyword(word, fetch = primaryKeyFetch) }</ID>
+    <ID>MultilineExpressionWrapping:FileService.kt:if (uid != null &amp;&amp; fileRecordIds.isNotEmpty()) { database.favorite.getHasFavorite(ObjectListFetch.IdListFetch(fileRecordIds), uid) .getOrNull()?.associateBy { it.objectId } ?: emptyMap() } else { emptyMap() }</ID>
+    <ID>MultilineExpressionWrapping:FileService.kt:if (uid != null &amp;&amp; fileRecordIds.isNotEmpty()) { database.subscription.getHasSubscription(ObjectListFetch.IdListFetch(fileRecordIds), uid) .getOrNull()?.associateBy { it.objectId } ?: emptyMap() } else { emptyMap() }</ID>
+    <ID>MultilineExpressionWrapping:FileService.kt:listOf( targetFullName )</ID>
+    <ID>MultilineExpressionWrapping:FileService.kt:objectStorageService.getInputStream( A_FILE_DEFAULT_BUCKET, targetFullName ).getOrThrow().buffered().use { Backend.tika.detect(it) }</ID>
+    <ID>MultilineExpressionWrapping:FileService.kt:records.mapNotNull { r -&gt; r.fullName.substringAfter("chunk_").toIntOrNull() }.sorted()</ID>
+    <ID>MultilineExpressionWrapping:FileService.kt:target.inputStream().buffered().use { input -&gt; sha256(input.asSource().buffered()) }</ID>
+    <ID>MultilineExpressionWrapping:FileService.kt:uploadPacks.map { if (it.contentType.startsWith("image")) { val target = File(System.getProperty("java.io.tmpdir"), Uuid.random().toHexString() + it.pack.name) target.outputStream().buffered().use { output -&gt; cleanImageMeta(it.pack.file, output, it.contentType) } f.add(target) val newSha256 = target.inputStream().buffered().use { input -&gt; sha256(input.asSource().buffered()) } it.copy(pack = it.pack.copy(file = target, sha256 = newSha256)) } else { it } }</ID>
+    <ID>MultilineExpressionWrapping:FileService.kt:uploadPacks.map { p -&gt; val uploadPack = p.pack val nextId = SnowflakeFactory.nextId() val dimension = p.dimension val savedSha256 = p.pack.sha256 FileRecord( nextId, now(), uploadPack.name, 0, dimension?.width ?: 0, dimension?.height ?: 0, ownerId, ownerType, p.contentType, uploadPack.size, uploadPack.fullName, savedSha256, ) }</ID>
+    <ID>MultilineExpressionWrapping:IndexBenchmark.kt:IndexBenchmark$ElasticConnection( "http://${elasticClient.httpHostAddress}", "", "elastic", "changeme" )</ID>
+    <ID>MultilineExpressionWrapping:IndexBenchmark.kt:IndexBenchmark$ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch:8.17.0").apply { withEnv("xpack.security.transport.ssl.enabled", "false") withEnv("xpack.security.http.ssl.enabled", "false") start() // 只启动一次 }</ID>
+    <ID>MultilineExpressionWrapping:IndexBenchmark.kt:IndexBenchmark$listOf( TopicDocument( SnowflakeFactory.nextId(), "test", SnowflakeFactory.nextId(), "ROOM", SnowflakeFactory.nextId(), "ROOM", SnowflakeFactory.nextId() ) )</ID>
+    <ID>MultilineExpressionWrapping:IndexBenchmark.kt:IndexBenchmark$runBlocking { val topics = listOf( TopicDocument( SnowflakeFactory.nextId(), "test", SnowflakeFactory.nextId(), "ROOM", SnowflakeFactory.nextId(), "ROOM", SnowflakeFactory.nextId() ) ) bh.consume(service.saveDocument(topics)) }</ID>
+    <ID>MultilineExpressionWrapping:ReactionService.kt:ReactionInfo( reactionRecord.emoji, reactionRecord.objectId, (oldReaction?.count ?: 0) + 1, true, reactionRecord.id )</ID>
+    <ID>MultilineExpressionWrapping:ReactionService.kt:if (isEmoji(emoji)) { backend.addReaction(uid, p.id, emoji) } else { Result.failure(CustomBadRequestException("invalid emoji")) }</ID>
+    <ID>MultilineExpressionWrapping:RoomService.kt:Member( memberId, room.creator, room.id, ObjectType.ROOM, room.createdTime, MemberStatus.JOINED, room.createdTime )</ID>
+    <ID>MultilineExpressionWrapping:RoomService.kt:Result.failure( CustomBadRequestException("room name must be between in 1 and $ROOM_NAME_LENGTH") )</ID>
+    <ID>MultilineExpressionWrapping:RoomService.kt:Result.failure( CustomBadRequestException("room name must be between in 1 and 20") )</ID>
+    <ID>MultilineExpressionWrapping:RoomService.kt:database.title.getTitlePaginationResult( PrimaryKeyFetch(null, 1), uid, TitleSearchType.RECEIVER, TitleType.JOIN, scopeId, TitleWorkStatus.OK ).mapResult { if (it.list.isNotEmpty()) { UNIT_RESULT } else { Result.failure(ForbiddenException("Join failed.")) } }</ID>
+    <ID>MultilineExpressionWrapping:RoomService.kt:list.mapNotNull { it.room.icon }</ID>
+    <ID>MultilineExpressionWrapping:TitleService.kt:TitleInfo.Extension( userMap[title.creator]!!, userMap[title.receiver]!!, topicMap[title.descriptionTopicId]!!, when (title.scopeType) { ObjectType.COMMUNITY -&gt; communityMap[title.scopeId] else -&gt; null }, when (title.scopeType) { ObjectType.ROOM -&gt; roomMap[title.scopeId] else -&gt; null }, when (title.scopeType) { ObjectType.USER -&gt; userMap[title.scopeId] else -&gt; null }, when (title.scopeType) { ObjectType.TOPIC -&gt; topicMap[title.scopeId] else -&gt; null } )</ID>
+    <ID>MultilineExpressionWrapping:TitleService.kt:Topic( title.descriptionTopicId, now(), uid, title.id, ObjectType.TITLE, title.id, ObjectType.TITLE, newTitle.description.encodeToByteArray(), isEncrypted = false, level = 1, isPin = false, lastModifiedTime = null )</ID>
+    <ID>MultilineExpressionWrapping:TitleService.kt:database.community.getRawCommunities( ObjectListFetch.IdListFetch(communityIdList) ).mapResult { processRawCommunityToCommunityInfo(it) }.getOrThrow()</ID>
+    <ID>MultilineExpressionWrapping:TitleService.kt:if (uid != null &amp;&amp; titleIds.isNotEmpty()) { database.favorite.getHasFavorite(ObjectListFetch.IdListFetch(titleIds), uid) .getOrNull()?.associateBy { it.objectId } ?: emptyMap() } else { emptyMap() }</ID>
+    <ID>MultilineExpressionWrapping:TitleService.kt:if (uid != null &amp;&amp; titleIds.isNotEmpty()) { database.subscription.getHasSubscription(ObjectListFetch.IdListFetch(titleIds), uid) .getOrNull()?.associateBy { it.objectId } ?: emptyMap() } else { emptyMap() }</ID>
+    <ID>MultilineExpressionWrapping:TitleService.kt:list.flatMap { val title = it.title buildList { if (title.scopeType == ObjectType.TOPIC) { add(title.scopeId) } if (title.descriptionTopicId != 0L) { add(title.descriptionTopicId) } } }.distinct()</ID>
+    <ID>MultilineExpressionWrapping:TitleService.kt:list.flatMap { val title = it.title val listOf = listOf(title.receiver, title.creator) if (title.scopeType == ObjectType.USER) { listOf + title.scopeId } else { listOf } }.distinct()</ID>
+    <ID>MultilineExpressionWrapping:TitleService.kt:list.map { it.copy( favoriteId = favoriteMap[it.title.id]?.id, subscriptionId = subscriptionMap[it.title.id]?.id ) }</ID>
+    <ID>MultilineExpressionWrapping:TitleService.kt:list.mapNotNull { val title = it.title if (title.scopeType == ObjectType.COMMUNITY) { title.scopeId } else { null } }.distinct()</ID>
+    <ID>MultilineExpressionWrapping:TitleService.kt:list.mapNotNull { val title = it.title if (title.scopeType == ObjectType.ROOM) { title.scopeId } else { null } }.distinct()</ID>
+    <ID>MultilineExpressionWrapping:TitleService.kt:mutableMapOf( ObjectType.COMMUNITY to listOf(TitleType.REGULAR, TitleType.JOIN), ObjectType.ROOM to listOf(TitleType.REGULAR, TitleType.JOIN), ObjectType.USER to listOf(TitleType.REGULAR), ObjectType.TOPIC to listOf(TitleType.REGULAR) )</ID>
+    <ID>MultilineExpressionWrapping:TopicService.kt:Topic( id = newId, createdTime = now(), author = uid, parentId = parentTuple.objectId, parentType = parentTuple.objectType, rootId = rootTuple.objectId, rootType = rootTuple.objectType, trimmedContent.encodeToByteArray(), false, level + 1, lastModifiedTime = null, )</ID>
+    <ID>MultilineExpressionWrapping:TopicService.kt:Topic( newId, now(), uid, parentTuple.objectId, parentTuple.objectType, rootTuple.objectId, rootTuple.objectType, bytes, true, permission.level + 1, false, null )</ID>
+    <ID>MultilineExpressionWrapping:TopicService.kt:documentFileList(infos).filter { val temp = File(it.second) temp.canonicalPath == temp.absolutePath }</ID>
+    <ID>MultilineExpressionWrapping:TopicService.kt:documentFileList(listOf(topicInfo)).map { it.second }</ID>
+    <ID>MultilineExpressionWrapping:TopicService.kt:documentFileList.filter { !fileList.contains(it) }</ID>
+    <ID>MultilineExpressionWrapping:TopicService.kt:fileList.map { it.second }.distinct()</ID>
+    <ID>MultilineExpressionWrapping:TopicService.kt:fileMap[info.id]?.mapNotNull { mediaInfoMap[it] }.orEmpty()</ID>
+    <ID>MultilineExpressionWrapping:TopicService.kt:fixedSort(infos, ids) { it.topic.id }</ID>
+    <ID>MultilineExpressionWrapping:TopicService.kt:if (addLatestSubTopic) { topics.flatMap { t -&gt; database.getLatestRawTopic(uid, t.topic.id).getOrThrow() }.groupBy { it.topic.parentId } } else { emptyMap() }</ID>
+    <ID>MultilineExpressionWrapping:TopicService.kt:if (topicInfo.content is TopicContent.Plain) { processTopicFileObject(listOf(topicInfo)).firstOrNull().getOrThrow() } else { topicInfo }</ID>
+    <ID>MultilineExpressionWrapping:TopicService.kt:list.map { it.id }</ID>
+    <ID>MultilineExpressionWrapping:TopicService.kt:subTopicsMap.flatMap { it.value }.map { it.topic.author }.distinct()</ID>
+    <ID>MultilineExpressionWrapping:TopicService.kt:subTopicsMap.mapValues { it.value.map { subTopic -&gt; subTopic.toTopicInfo(TopicInfo.Extension(authorInfo = userMap[subTopic.topic.author])) } }</ID>
+    <ID>MultilineExpressionWrapping:TopicService.kt:topics.map { it.topic.author } + subTopicsMap.flatMap { it.value }.map { it.topic.author }.distinct()</ID>
+    <ID>MultilineExpressionWrapping:TopicService.kt:topics.map { it.topic.id }</ID>
+    <ID>MultilineExpressionWrapping:TopicService.kt:topics.mapNotNull { if (it.topic.rootType == ObjectType.ROOM) { it.topic.rootId } else { null } }</ID>
+    <ID>MultilineExpressionWrapping:TwoFactorService.kt:((hmac[offset].toInt() and 0x7f) shl 24) or ((hmac[offset + 1].toInt() and 0xff) shl 16) or ((hmac[offset + 2].toInt() and 0xff) shl 8) or (hmac[offset + 3].toInt() and 0xff)</ID>
+    <ID>MultilineExpressionWrapping:TwoFactorService.kt:ByteArray(RECOVERY_CODE_BYTES).apply { secureRandom.nextBytes(this) }</ID>
+    <ID>MultilineExpressionWrapping:TwoFactorService.kt:ByteArray(TOTP_SECRET_BYTES).apply { secureRandom.nextBytes(this) }</ID>
+    <ID>MultilineExpressionWrapping:TwoFactorService.kt:Mac.getInstance("HmacSHA1").run { init(SecretKeySpec(key, "HmacSHA1")) doFinal(data) }</ID>
+    <ID>MultilineExpressionWrapping:TwoFactorService.kt:database.user.getRawUser(ObjectFetch.IdFetch(uid), uid).getOrThrow() ?: throw CustomBadRequestException("user not found")</ID>
+    <ID>MultilineExpressionWrapping:TwoFactorService.kt:database.user.getUserTwoFactor(uid).getOrThrow() ?: throw CustomBadRequestException("totp setup required")</ID>
+    <ID>MultilineExpressionWrapping:TwoFactorService.kt:runCatching { database.user.getUserTwoFactor(uid).getOrThrow() ?: throw CustomBadRequestException("two factor not configured") val recoveryCodes = generateRecoveryCodes() database.user.updateRecoveryCodeHashes(uid, recoveryCodes.map(::hashRecoveryCode)).getOrThrow() RecoveryCodesResponse(recoveryCodes) }</ID>
+    <ID>MultilineExpressionWrapping:TwoFactorService.kt:runCatching { val current = database.user.getUserTwoFactor(uid).getOrThrow() ?: throw CustomBadRequestException("totp setup required") if (!verifyTotpCode(current.totpSecret, code)) { throw CustomBadRequestException("invalid totp code") } database.user.upsertUserTwoFactor(current.copy(enabled = true, updatedAt = now())).getOrThrow() TwoFactorSettingsInfo(enabled = true, type = TwoFactorType.TOTP) }</ID>
+    <ID>MultilineExpressionWrapping:TwoFactorService.kt:runCatching { val secret = generateBase32Secret() val recoveryCodes = generateRecoveryCodes() val rawUser = database.user.getRawUser(ObjectFetch.IdFetch(uid), uid).getOrThrow() ?: throw CustomBadRequestException("user not found") val label = rawUser.user.aid ?: rawUser.user.nickname.ifBlank { rawUser.user.address } val otpauthUri = buildOtpAuthUri(label, secret) database.user.upsertUserTwoFactor( UserTwoFactor( uid, enabled = false, type = TwoFactorType.TOTP, totpSecret = secret, recoveryCodeHashes = recoveryCodes.map(::hashRecoveryCode), updatedAt = now(), ) ).getOrThrow() TotpSetupInfo(secret, otpauthUri, recoveryCodes) }</ID>
+    <ID>MultilineExpressionWrapping:UserService.kt:!checkMediaFileDimensionRatioMatch( dimension, aspectRatio )</ID>
+    <ID>MultilineExpressionWrapping:UserService.kt:!s.codePoints().anyMatch { codePoint -&gt; val type = Character.getType(codePoint).toByte() type == Character.FORMAT || type == Character.NON_SPACING_MARK || type == Character.COMBINING_SPACING_MARK || type == Character.ENCLOSING_MARK || Character.isISOControl(codePoint) || ((Character.isWhitespace(codePoint) || Character.isSpaceChar(codePoint)) &amp;&amp; codePoint != ' '.code) || !Character.isDefined(codePoint) || !Character.isValidCodePoint(codePoint) }</ID>
+    <ID>MultilineExpressionWrapping:UserService.kt:ObjectListFetch.IdListFetch(list.map { it.id })</ID>
+    <ID>MultilineExpressionWrapping:UserService.kt:Result.failure( CustomBadRequestException("user nickname must be between in 1 and $USER_NICKNAME") )</ID>
+    <ID>MultilineExpressionWrapping:UserService.kt:Result.failure( CustomBadRequestException("user nickname must be visible") )</ID>
+    <ID>MultilineExpressionWrapping:UserService.kt:User( null, encryptionPublicKey, derPublicKey, address, null, nameService.parse(id), id, now(), 0, PassType.RAW, algoType, notificationId )</ID>
+    <ID>MultilineExpressionWrapping:UserService.kt:database.community.getRawCommunities(ObjectListFetch.IdListFetch(communityIds)) .mapResult { processRawCommunityToCommunityInfo(it) }.getOrThrow() ?: emptyList()</ID>
+    <ID>MultilineExpressionWrapping:UserService.kt:database.getUserOverview(uid).mapResult { processRawUserOverviewToUserOverview(it) }</ID>
+    <ID>MultilineExpressionWrapping:UserService.kt:list.map { it.id }</ID>
+    <ID>MultilineExpressionWrapping:UserService.kt:list.map { record -&gt; ReactionRecordInfo(record.id, record.emoji, record.objectId, record.objectType, record.createdTime, record.uid) }</ID>
+    <ID>MultilineExpressionWrapping:UserService.kt:list.map { topic -&gt; database.processTopicToRawTopic(uid, listOf(topic)).getOrThrow().first() }</ID>
+    <ID>MultilineExpressionWrapping:UserService.kt:memberSearchService.searchDocument( MemberDocumentSearch.Keyword(objectId = objectId, nickname = word, fetch = primaryKeyFetch) ).mapPagingResultNotNull { searchResults -&gt; val uidList = searchResults.map { it.uid } database.container.getMemberWithUserByUids(objectId, uidList) }</ID>
+    <ID>MultilineExpressionWrapping:UserService.kt:rawResults.mapNotNull { it.user.icon }</ID>
+    <ID>MultilineExpressionWrapping:UserService.kt:results.map { it.rawUser }</ID>
+    <ID>MultilineExpressionWrapping:UserService.kt:when (log.objectType) { ObjectType.USER -&gt; UserLogInfo.Extensions(user = userMap[log.objectId]) ObjectType.COMMUNITY -&gt; UserLogInfo.Extensions(community = communityMap[log.objectId]) ObjectType.ROOM -&gt; UserLogInfo.Extensions(room = roomMap[log.objectId]) ObjectType.TOPIC -&gt; UserLogInfo.Extensions(topic = topicMap[log.objectId]) else -&gt; null }</ID>
+    <ID>NewLineAtEndOfFile:IndexBenchmark.kt:com.storyteller_f.a.backend.service.benchmark.IndexBenchmark.kt</ID>
+    <ID>NoEmptyFirstLineInClassBody:IndexBenchmark.kt:IndexBenchmark${ private lateinit var elasticClient: ElasticsearchContainer private lateinit var service: ElasticTopicSearchService @Setup(Level.Trial) fun setUp() { SnowflakeFactory.setMachine(0) elasticClient = ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch:8.17.0").apply { withEnv("xpack.security.transport.ssl.enabled", "false") withEnv("xpack.security.http.ssl.enabled", "false") start() // 只启动一次 } val connection = ElasticConnection( "http://${elasticClient.httpHostAddress}", "", "elastic", "changeme" ) service = ElasticTopicSearchService(connection) } @TearDown(Level.Trial) fun tearDown() { elasticClient.stop() // 只停止一次 } @Benchmark fun saveDocumentBenchmark(bh: Blackhole) = runBlocking { val topics = listOf( TopicDocument( SnowflakeFactory.nextId(), "test", SnowflakeFactory.nextId(), "ROOM", SnowflakeFactory.nextId(), "ROOM", SnowflakeFactory.nextId() ) ) bh.consume(service.saveDocument(topics)) } }</ID>
+    <ID>NoWildcardImports:IndexBenchmark.kt:import org.openjdk.jmh.annotations.*</ID>
+    <ID>PackageName:AccountService.kt:package com.storyteller_f.a.cloud.core.service</ID>
+    <ID>PackageName:AdminService.kt:package com.storyteller_f.a.cloud.core.service</ID>
+    <ID>PackageName:AudioUtil.kt:package com.storyteller_f.a.cloud.core.utils</ID>
+    <ID>PackageName:CommunityService.kt:package com.storyteller_f.a.cloud.core.service</ID>
+    <ID>PackageName:ContainerService.kt:package com.storyteller_f.a.cloud.core.service</ID>
+    <ID>PackageName:FavoriteService.kt:package com.storyteller_f.a.cloud.core.service</ID>
+    <ID>PackageName:FileService.kt:package com.storyteller_f.a.cloud.core.service</ID>
+    <ID>PackageName:ImageUtil.kt:package com.storyteller_f.a.cloud.core.utils</ID>
+    <ID>PackageName:IndexBenchmark.kt:package com.storyteller_f.a.backend.service.benchmark</ID>
+    <ID>PackageName:ReactionService.kt:package com.storyteller_f.a.cloud.core.service</ID>
+    <ID>PackageName:RoomService.kt:package com.storyteller_f.a.cloud.core.service</ID>
+    <ID>PackageName:TitleService.kt:package com.storyteller_f.a.cloud.core.service</ID>
+    <ID>PackageName:TopicService.kt:package com.storyteller_f.a.cloud.core.service</ID>
+    <ID>PackageName:TwoFactorService.kt:package com.storyteller_f.a.cloud.core.service</ID>
+    <ID>PackageName:TwoFactorServiceTest.kt:package com.storyteller_f.a.cloud.core.service</ID>
+    <ID>PackageName:UserService.kt:package com.storyteller_f.a.cloud.core.service</ID>
+    <ID>PackageName:UserSubscriptionService.kt:package com.storyteller_f.a.cloud.core.service</ID>
     <ID>PackageNaming:AccountService.kt:package com.storyteller_f.a.cloud.core.service</ID>
     <ID>PackageNaming:AdminService.kt:package com.storyteller_f.a.cloud.core.service</ID>
     <ID>PackageNaming:AudioUtil.kt:package com.storyteller_f.a.cloud.core.utils</ID>
@@ -64,6 +347,7 @@
     <ID>PackageNaming:FavoriteService.kt:package com.storyteller_f.a.cloud.core.service</ID>
     <ID>PackageNaming:FileService.kt:package com.storyteller_f.a.cloud.core.service</ID>
     <ID>PackageNaming:ImageUtil.kt:package com.storyteller_f.a.cloud.core.utils</ID>
+    <ID>PackageNaming:IndexBenchmark.kt:package com.storyteller_f.a.backend.service.benchmark</ID>
     <ID>PackageNaming:ReactionService.kt:package com.storyteller_f.a.cloud.core.service</ID>
     <ID>PackageNaming:RoomService.kt:package com.storyteller_f.a.cloud.core.service</ID>
     <ID>PackageNaming:TitleService.kt:package com.storyteller_f.a.cloud.core.service</ID>
@@ -72,5 +356,210 @@
     <ID>PackageNaming:TwoFactorServiceTest.kt:package com.storyteller_f.a.cloud.core.service</ID>
     <ID>PackageNaming:UserService.kt:package com.storyteller_f.a.cloud.core.service</ID>
     <ID>PackageNaming:UserSubscriptionService.kt:package com.storyteller_f.a.cloud.core.service</ID>
+    <ID>TrailingCommaOnCallSite:AccountService.kt:( null, encPubKey, pack.publicKey, ad, null, name, newId, now(), 0, PassType.RAW, algoType, notificationId )</ID>
+    <ID>TrailingCommaOnCallSite:AdminService.kt:( PanelLog( id = logId, adminId = adminId, targetId = id, objectType = ObjectType.COMMUNITY, action = "Update community status to ${body.status}", createdTime = now() ) )</ID>
+    <ID>TrailingCommaOnCallSite:AdminService.kt:( PanelLog( id = logId, adminId = adminId, targetId = id, objectType = ObjectType.FILE, action = "Update file status to ${body.status}", createdTime = now() ) )</ID>
+    <ID>TrailingCommaOnCallSite:AdminService.kt:( PanelLog( id = logId, adminId = adminId, targetId = id, objectType = ObjectType.ROOM, action = "Update room status to ${body.status}", createdTime = now() ) )</ID>
+    <ID>TrailingCommaOnCallSite:AdminService.kt:( PanelLog( id = logId, adminId = adminId, targetId = id, objectType = ObjectType.TITLE, action = "Update title status to ${body.status}", createdTime = now() ) )</ID>
+    <ID>TrailingCommaOnCallSite:AdminService.kt:( PanelLog( id = logId, adminId = adminId, targetId = id, objectType = ObjectType.TOPIC, action = "Update topic status to ${body.status}", createdTime = now() ) )</ID>
+    <ID>TrailingCommaOnCallSite:AdminService.kt:( PanelLog( id = logId, adminId = adminId, targetId = uid, objectType = ObjectType.USER, action = "Update user status to ${body.status}", createdTime = now() ) )</ID>
+    <ID>TrailingCommaOnCallSite:AdminService.kt:( User( newUser.aid, encPubKey, pemPubKey, address, null, nickname ?: nameService.parse(id), id, now(), 0, PassType.RAW, algoType, notificationId ) )</ID>
+    <ID>TrailingCommaOnCallSite:AdminService.kt:( id = logId, adminId = adminId, targetId = id, objectType = ObjectType.COMMUNITY, action = "Update community status to ${body.status}", createdTime = now() )</ID>
+    <ID>TrailingCommaOnCallSite:AdminService.kt:( id = logId, adminId = adminId, targetId = id, objectType = ObjectType.FILE, action = "Update file status to ${body.status}", createdTime = now() )</ID>
+    <ID>TrailingCommaOnCallSite:AdminService.kt:( id = logId, adminId = adminId, targetId = id, objectType = ObjectType.ROOM, action = "Update room status to ${body.status}", createdTime = now() )</ID>
+    <ID>TrailingCommaOnCallSite:AdminService.kt:( id = logId, adminId = adminId, targetId = id, objectType = ObjectType.TITLE, action = "Update title status to ${body.status}", createdTime = now() )</ID>
+    <ID>TrailingCommaOnCallSite:AdminService.kt:( id = logId, adminId = adminId, targetId = id, objectType = ObjectType.TOPIC, action = "Update topic status to ${body.status}", createdTime = now() )</ID>
+    <ID>TrailingCommaOnCallSite:AdminService.kt:( id = logId, adminId = adminId, targetId = uid, objectType = ObjectType.USER, action = "Update user status to ${body.status}", createdTime = now() )</ID>
+    <ID>TrailingCommaOnCallSite:AdminService.kt:( newUser.aid, encPubKey, pemPubKey, address, null, nickname ?: nameService.parse(id), id, now(), 0, PassType.RAW, algoType, notificationId )</ID>
+    <ID>TrailingCommaOnCallSite:CommunityService.kt:( CommunityDocumentSearch.Keyword(word, fetch = primaryKeyFetch) )</ID>
+    <ID>TrailingCommaOnCallSite:CommunityService.kt:( CustomBadRequestException("community name must be between in 1 and $COMMUNITY_NAME_LENGTH") )</ID>
+    <ID>TrailingCommaOnCallSite:CommunityService.kt:( CustomBadRequestException("community name must be between in 1 and 20") )</ID>
+    <ID>TrailingCommaOnCallSite:CommunityService.kt:( CustomBadRequestException("community name must be visible") )</ID>
+    <ID>TrailingCommaOnCallSite:CommunityService.kt:( MemberDocumentSearch.CommunityMembers(uid = joinSearch.uid, objectName = word, fetch = primaryKeyFetch) )</ID>
+    <ID>TrailingCommaOnCallSite:CommunityService.kt:( MemberDocumentSearch.CommunityMembers(uid = uid, objectName = word, fetch = primaryKeyFetch) )</ID>
+    <ID>TrailingCommaOnCallSite:CommunityService.kt:( ObjectListFetch.IdListFetch(list.map { it.id }) )</ID>
+    <ID>TrailingCommaOnCallSite:CommunityService.kt:( SnowflakeFactory.nextId(), uid, communityId, ObjectType.COMMUNITY, time, MemberStatus.JOINED, time )</ID>
+    <ID>TrailingCommaOnCallSite:CommunityService.kt:( currentMember.id, currentMember.uid, currentMember.objectId, currentMember.objectType, time, MemberStatus.JOINED, time, currentMember.invitedTime )</ID>
+    <ID>TrailingCommaOnCallSite:CommunityService.kt:( hasPosterSearch = PosterSearch.UNSPECIFIED, primaryKeyFetch = primaryKeyFetch, joinSearch = JoinSearch.Unspecified(null) )</ID>
+    <ID>TrailingCommaOnCallSite:CommunityService.kt:( hasPosterSearch = hasPosterSearch ?: PosterSearch.UNSPECIFIED, primaryKeyFetch = primaryKeyFetch, joinSearch = JoinSearch.Joined(target) )</ID>
+    <ID>TrailingCommaOnCallSite:CommunityService.kt:( id, now(), newCommunity.aid, newCommunity.name, uid, newCommunity.memberPolicy, newCommunity.icon, null )</ID>
+    <ID>TrailingCommaOnCallSite:CommunityService.kt:( listOf(MemberDocument.fromUserInfo(memberId, userInfo, id, ObjectType.COMMUNITY, name)) )</ID>
+    <ID>TrailingCommaOnCallSite:ContainerService.kt:( ForbiddenException("community is read only") )</ID>
+    <ID>TrailingCommaOnCallSite:ContainerService.kt:( UploadRecord( SnowflakeFactory.nextId(), now(), objectTuple.objectId, objectTuple.objectType, UploadRecordStatus.PENDING, length, 0, name, 0, null, ) )</ID>
+    <ID>TrailingCommaOnCallSite:ContainerService.kt:( t.map { fileRecord -&gt; FileDocument.fromFileRecord(fileRecord) } )</ID>
+    <ID>TrailingCommaOnCallSite:ContainerService.kt:( topicInfo.topic.rootType, topicInfo.topic.rootId, uid )</ID>
+    <ID>TrailingCommaOnCallSite:FileService.kt:( A_FILE_DEFAULT_BUCKET, "chunks/$recordId/" )</ID>
+    <ID>TrailingCommaOnCallSite:FileService.kt:( A_FILE_DEFAULT_BUCKET, "chunks/${path.id}/" )</ID>
+    <ID>TrailingCommaOnCallSite:FileService.kt:( A_FILE_DEFAULT_BUCKET, fileRecords.map { it.fullName }, PresignContext(uid?.toString(), clientIp) )</ID>
+    <ID>TrailingCommaOnCallSite:FileService.kt:( A_FILE_DEFAULT_BUCKET, listOf(CopyPack(fileRecord.fullName, newFileRecord.fullName)) )</ID>
+    <ID>TrailingCommaOnCallSite:FileService.kt:( A_FILE_DEFAULT_BUCKET, targetFullName )</ID>
+    <ID>TrailingCommaOnCallSite:FileService.kt:( A_FILE_DEFAULT_BUCKET, targetFullName, sortedSources )</ID>
+    <ID>TrailingCommaOnCallSite:FileService.kt:( A_FILE_DEFAULT_BUCKET, uploadPacks.map { it.pack } )</ID>
+    <ID>TrailingCommaOnCallSite:FileService.kt:( ObjectTuple(uid, ObjectType.USER), QuotaType.FILE, fileRecord.size, fileRecord.name )</ID>
+    <ID>TrailingCommaOnCallSite:FileService.kt:( UploadPack( file, name, fileRecord.size, "${fileRecord.owner}/$name", file.inputStream().buffered().use { input -&gt; sha256(input.asSource().buffered()) }, ) )</ID>
+    <ID>TrailingCommaOnCallSite:FileService.kt:( UploadRecord( SnowflakeFactory.nextId(), now(), body.objectId, body.objectType, UploadRecordStatus.PENDING, body.size, 0, body.name, body.chunkSize, body.sha256, ) )</ID>
+    <ID>TrailingCommaOnCallSite:FileService.kt:( fileRecord.owner, fileRecord.ownerType, listOf( UploadPack( file, name, fileRecord.size, "${fileRecord.owner}/$name", file.inputStream().buffered().use { input -&gt; sha256(input.asSource().buffered()) }, ) ) )</ID>
+    <ID>TrailingCommaOnCallSite:FileService.kt:( fileRecord.ownerType, fileRecord.owner, uid )</ID>
+    <ID>TrailingCommaOnCallSite:FileService.kt:( listOf(FileDocument.fromFileRecord(fileRecord)) )</ID>
+    <ID>TrailingCommaOnCallSite:FileService.kt:( onSuccess = { fileRecords -&gt; Result.success(fileRecords) }, onFailure = { error -&gt; runCatching { val quotaInfo = backend.getQuotaInfo(QuotaType.FILE, tuple).getOrThrow() backend.database.file.updateUploadRecordStatus( quotaInfo, record.copy(status = UploadRecordStatus.FAILED), emptyList(), ).getOrThrow() } runCatching { backend.objectStorageService.delete(A_FILE_DEFAULT_BUCKET, listOf( targetFullName )).getOrThrow() } runCatching { val sessionObjects = backend.objectStorageService.list( A_FILE_DEFAULT_BUCKET, "chunks/$recordId/" ).getOrThrow().map { it.fullName } if (sessionObjects.isNotEmpty()) { backend.objectStorageService.delete(A_FILE_DEFAULT_BUCKET, sessionObjects).getOrThrow() } } Result.failure(error) } )</ID>
+    <ID>TrailingCommaOnCallSite:FileService.kt:( parentType, parentId, uid )</ID>
+    <ID>TrailingCommaOnCallSite:FileService.kt:( quotaInfo, uploadRecord.copy(status = UploadRecordStatus.ABORTED), emptyList() )</ID>
+    <ID>TrailingCommaOnCallSite:FileService.kt:( targetFullName )</ID>
+    <ID>TrailingCommaOnCallSite:ImageUtil.kt:(image, output, Imaging.guessFormat(input),)</ID>
+    <ID>TrailingCommaOnCallSite:IndexBenchmark.kt:IndexBenchmark$( "http://${elasticClient.httpHostAddress}", "", "elastic", "changeme" )</ID>
+    <ID>TrailingCommaOnCallSite:IndexBenchmark.kt:IndexBenchmark$( SnowflakeFactory.nextId(), "test", SnowflakeFactory.nextId(), "ROOM", SnowflakeFactory.nextId(), "ROOM", SnowflakeFactory.nextId() )</ID>
+    <ID>TrailingCommaOnCallSite:IndexBenchmark.kt:IndexBenchmark$( TopicDocument( SnowflakeFactory.nextId(), "test", SnowflakeFactory.nextId(), "ROOM", SnowflakeFactory.nextId(), "ROOM", SnowflakeFactory.nextId() ) )</ID>
+    <ID>TrailingCommaOnCallSite:ReactionService.kt:( reactionRecord.emoji, reactionRecord.objectId, (oldReaction?.count ?: 0) + 1, true, reactionRecord.id )</ID>
+    <ID>TrailingCommaOnCallSite:ReactionService.kt:( reactionRecord.objectId, reactionRecord.emoji, reactionRecord.objectType )</ID>
+    <ID>TrailingCommaOnCallSite:RoomService.kt:( CustomBadRequestException("room name must be between in 1 and $ROOM_NAME_LENGTH") )</ID>
+    <ID>TrailingCommaOnCallSite:RoomService.kt:( CustomBadRequestException("room name must be between in 1 and 20") )</ID>
+    <ID>TrailingCommaOnCallSite:RoomService.kt:( Member(SnowflakeFactory.nextId(), uid, roomId, ObjectType.ROOM, time, MemberStatus.JOINED, time) )</ID>
+    <ID>TrailingCommaOnCallSite:RoomService.kt:( Member(member.id, member.uid, member.objectId, member.objectType, time, MemberStatus.JOINED, time) )</ID>
+    <ID>TrailingCommaOnCallSite:RoomService.kt:( MemberDocument.fromUserInfo( member.id, userInfo, roomId, ObjectType.ROOM, room.name, room.communityId ) )</ID>
+    <ID>TrailingCommaOnCallSite:RoomService.kt:( MemberDocumentSearch.RoomMembers( uid = search.uid, objectName = word, communityId = communityId, fetch = primaryKeyFetch ) )</ID>
+    <ID>TrailingCommaOnCallSite:RoomService.kt:( MemberDocumentSearch.RoomMembers(uid = uid, objectName = word, fetch = primaryKeyFetch) )</ID>
+    <ID>TrailingCommaOnCallSite:RoomService.kt:( PrimaryKeyFetch(null, 1), uid, TitleSearchType.RECEIVER, TitleType.JOIN, scopeId, TitleWorkStatus.OK )</ID>
+    <ID>TrailingCommaOnCallSite:RoomService.kt:( keyword )</ID>
+    <ID>TrailingCommaOnCallSite:RoomService.kt:( listOf( MemberDocument.fromUserInfo( member.id, userInfo, roomId, ObjectType.ROOM, room.name, room.communityId ) ) )</ID>
+    <ID>TrailingCommaOnCallSite:RoomService.kt:( member.id, userInfo, roomId, ObjectType.ROOM, room.name, room.communityId )</ID>
+    <ID>TrailingCommaOnCallSite:RoomService.kt:( memberId, room.creator, room.id, ObjectType.ROOM, room.createdTime, MemberStatus.JOINED, room.createdTime )</ID>
+    <ID>TrailingCommaOnCallSite:RoomService.kt:( primaryKeyFetch = primaryKeyFetch, word = null )</ID>
+    <ID>TrailingCommaOnCallSite:RoomService.kt:( uid = null, community = null, primaryKeyFetch = primaryKeyFetch, joinSearch = JoinSearch.Unspecified(null) )</ID>
+    <ID>TrailingCommaOnCallSite:RoomService.kt:( uid = search.uid, objectName = word, communityId = communityId, fetch = primaryKeyFetch )</ID>
+    <ID>TrailingCommaOnCallSite:RoomService.kt:( uid = uid, community = communityId, primaryKeyFetch = primaryKeyFetch, joinSearch = joinStatus.toJoinSearch(uid) )</ID>
+    <ID>TrailingCommaOnCallSite:RoomService.kt:( uid = uid, community = null, primaryKeyFetch = primaryKeyFetch, joinSearch = JoinSearch.Joined(uid) )</ID>
+    <ID>TrailingCommaOnCallSite:TitleService.kt:( Member( memberId, title.receiver, title.scopeId, title.scopeType, invitedTime, MemberStatus.INVITED, null, invitedTime ) )</ID>
+    <ID>TrailingCommaOnCallSite:TitleService.kt:( ObjectListFetch.IdListFetch(communityIdList) )</ID>
+    <ID>TrailingCommaOnCallSite:TitleService.kt:( ObjectType.COMMUNITY to listOf(TitleType.REGULAR, TitleType.JOIN), ObjectType.ROOM to listOf(TitleType.REGULAR, TitleType.JOIN), ObjectType.USER to listOf(TitleType.REGULAR), ObjectType.TOPIC to listOf(TitleType.REGULAR) )</ID>
+    <ID>TrailingCommaOnCallSite:TitleService.kt:( favoriteId = favoriteMap[it.title.id]?.id, subscriptionId = subscriptionMap[it.title.id]?.id )</ID>
+    <ID>TrailingCommaOnCallSite:TitleService.kt:( fetch, uid, searchType, type, scopeId, titleStatus )</ID>
+    <ID>TrailingCommaOnCallSite:TitleService.kt:( memberId, title.receiver, title.scopeId, title.scopeType, invitedTime, MemberStatus.INVITED, null, invitedTime )</ID>
+    <ID>TrailingCommaOnCallSite:TitleService.kt:( title.descriptionTopicId, now(), uid, title.id, ObjectType.TITLE, title.id, ObjectType.TITLE, newTitle.description.encodeToByteArray(), isEncrypted = false, level = 1, isPin = false, lastModifiedTime = null )</ID>
+    <ID>TrailingCommaOnCallSite:TitleService.kt:( titleId, now(), newTitle.name, id, newTitle.receiver, newTitle.type, newTitle.scopeId, newTitle.scopeType, TitleWorkStatus.OK, descriptionTopicId, newTitle.expiresAt )</ID>
+    <ID>TrailingCommaOnCallSite:TitleService.kt:( userMap[title.creator]!!, userMap[title.receiver]!!, topicMap[title.descriptionTopicId]!!, when (title.scopeType) { ObjectType.COMMUNITY -&gt; communityMap[title.scopeId] else -&gt; null }, when (title.scopeType) { ObjectType.ROOM -&gt; roomMap[title.scopeId] else -&gt; null }, when (title.scopeType) { ObjectType.USER -&gt; userMap[title.scopeId] else -&gt; null }, when (title.scopeType) { ObjectType.TOPIC -&gt; topicMap[title.scopeId] else -&gt; null } )</ID>
+    <ID>TrailingCommaOnCallSite:TopicService.kt:( Exception("not register pdf service") )</ID>
+    <ID>TrailingCommaOnCallSite:TopicService.kt:( ObjectFetch.IdFetch(topicInfo.author) )</ID>
+    <ID>TrailingCommaOnCallSite:TopicService.kt:( TopicDocumentSearch.Topics(communityId, word, fetch = primaryKeyFetch) )</ID>
+    <ID>TrailingCommaOnCallSite:TopicService.kt:( TopicDocumentSearch.Topics(roomId, word, fetch = primaryKeyFetch) )</ID>
+    <ID>TrailingCommaOnCallSite:TopicService.kt:( TopicDocumentSearch.Topics(userId, word, fetch = primaryKeyFetch) )</ID>
+    <ID>TrailingCommaOnCallSite:TopicService.kt:( TopicInfo.Extension( userMap[it.topic.author], subTopics = processedSubTopic[it.topic.id]?.toImmutableList(), reactions = reactionMap[it.topic.id]?.toImmutableList(), roomInfo = if (it.topic.rootType == ObjectType.ROOM) rooms[it.topic.rootId] else null ) )</ID>
+    <ID>TrailingCommaOnCallSite:TopicService.kt:( UploadPack( pdfFile, "$topicId.pdf", pdfFile.length(), "$uid/$topicId.pdf", pdfFile.inputStream().buffered().use { input -&gt; sha256(input.asSource().buffered()) }, ) )</ID>
+    <ID>TrailingCommaOnCallSite:TopicService.kt:( UserSubscription(SnowflakeFactory.nextId(), uid, objectTuple.objectId, objectTuple.objectType, now()) )</ID>
+    <ID>TrailingCommaOnCallSite:TopicService.kt:( creatorInfo, authorInfo, plainContent, map, snapshotGeneration, PdfGenerationSpec(topicInfo.createdTime, now()) )</ID>
+    <ID>TrailingCommaOnCallSite:TopicService.kt:( id = SnowflakeFactory.nextId(), createdTime = now(), objectId = topic.id, objectType = ObjectType.TOPIC, author = uid, mediaName = mediaName, fileId = fileRecord.id )</ID>
+    <ID>TrailingCommaOnCallSite:TopicService.kt:( info.topic.id, uid )</ID>
+    <ID>TrailingCommaOnCallSite:TopicService.kt:( listOf(TopicDocument.fromTopic(topic, plain)) )</ID>
+    <ID>TrailingCommaOnCallSite:TopicService.kt:( newId, now(), uid, parentTuple.objectId, parentTuple.objectType, rootTuple.objectId, rootTuple.objectType, bytes, true, permission.level + 1, false, null )</ID>
+    <ID>TrailingCommaOnCallSite:TopicService.kt:( newTopic.parentType, newTopic.parentId, uid )</ID>
+    <ID>TrailingCommaOnCallSite:TopicService.kt:( parentType, parentId, uid )</ID>
+    <ID>TrailingCommaOnCallSite:TopicService.kt:( topicDocumentSearch = TopicDocumentSearch.Recommend(uid, it, fetch = primaryKeyFetch) )</ID>
+    <ID>TrailingCommaOnCallSite:TopicService.kt:( topicDocumentSearch = TopicDocumentSearch.RecommendNotLogin(fetch = primaryKeyFetch) )</ID>
+    <ID>TrailingCommaOnCallSite:TopicService.kt:( topicId, uid )</ID>
+    <ID>TrailingCommaOnCallSite:TopicService.kt:( uid, ObjectType.USER, listOf( UploadPack( pdfFile, "$topicId.pdf", pdfFile.length(), "$uid/$topicId.pdf", pdfFile.inputStream().buffered().use { input -&gt; sha256(input.asSource().buffered()) }, ) ) )</ID>
+    <ID>TrailingCommaOnCallSite:TopicService.kt:( userInfo, creatorInfo, topicInfo, customConfig.snapshotKeyStore?.let { SnapshotGeneration.KeyStoreGeneration(it.path, it.pass, pdfFile, signedFile) } ?: SnapshotGeneration.SimpleGeneration(pdfFile) )</ID>
+    <ID>TrailingCommaOnCallSite:TopicService.kt:( userMap[it.topic.author], subTopics = processedSubTopic[it.topic.id]?.toImmutableList(), reactions = reactionMap[it.topic.id]?.toImmutableList(), roomInfo = if (it.topic.rootType == ObjectType.ROOM) rooms[it.topic.rootId] else null )</ID>
+    <ID>TrailingCommaOnCallSite:TwoFactorService.kt:( UserTwoFactor( uid, enabled = false, type = TwoFactorType.TOTP, totpSecret = secret, recoveryCodeHashes = recoveryCodes.map(::hashRecoveryCode), updatedAt = now(), ) )</ID>
+    <ID>TrailingCommaOnCallSite:UserService.kt:( "user nickname must not contain invalid char" )</ID>
+    <ID>TrailingCommaOnCallSite:UserService.kt:( CustomBadRequestException("user nickname must be between in 1 and $USER_NICKNAME") )</ID>
+    <ID>TrailingCommaOnCallSite:UserService.kt:( CustomBadRequestException("user nickname must be visible") )</ID>
+    <ID>TrailingCommaOnCallSite:UserService.kt:( MemberDocumentSearch.Keyword(objectId = objectId, nickname = word, fetch = primaryKeyFetch) )</ID>
+    <ID>TrailingCommaOnCallSite:UserService.kt:( UserDocumentSearch.Keyword(word, fetch = primaryKeyFetch) )</ID>
+    <ID>TrailingCommaOnCallSite:UserService.kt:( UserTopicRead(uid, now(), tuple.objectTuple.objectId, tuple.objectTuple.objectType, tuple.topicId) )</ID>
+    <ID>TrailingCommaOnCallSite:UserService.kt:( dimension, aspectRatio )</ID>
+    <ID>TrailingCommaOnCallSite:UserService.kt:( hostId = uid, encryptedPrivateKey = encryptedPrivateKey, encryptedAesKey = encryptedAesKey, userInfo = user.toUserInfo(), algoType = algoType, encryptedEncryptionPrivateKey = encryptedEncryptionPrivateKey )</ID>
+    <ID>TrailingCommaOnCallSite:UserService.kt:( id = member.id, uid = member.uid, objectId = member.objectId, objectType = member.objectType, status = member.status, joinedTime = member.joinedTime, invitedTime = member.invitedTime, userInfo = userMap[rawUser.user.id]!! )</ID>
+    <ID>TrailingCommaOnCallSite:UserService.kt:( newUser.nickname, 1..USER_NICKNAME )</ID>
+    <ID>TrailingCommaOnCallSite:UserService.kt:( null, encryptionPublicKey, derPublicKey, address, null, nameService.parse(id), id, now(), 0, PassType.RAW, algoType, notificationId )</ID>
+    <ID>TrailingCommaOnCallSite:UserService.kt:( raw.subscriptionCount, raw.favoriteCount, raw.acg, raw.childAccountCount, raw.reactionRecordCount, raw.commentCount, raw.hasUnreadChildRoomMessage, userInfo )</ID>
+    <ID>TrailingCommaOnCallSite:UserService.kt:( tuple.objectTuple.objectType, tuple.objectTuple.objectId, uid )</ID>
+    <ID>TrailingCommaOnCallSite:UserService.kt:( uid, encryptedPrivateKey, encryptedAesKey, user, encryptedEncryptionPrivateKey )</ID>
+    <ID>TrailingCommaOnCallSite:UserService.kt:( uid, fetch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:AccountService.kt:( algo: Algo, pack: SignUpBody, f: String, algoType: AlgoType )</ID>
+    <ID>TrailingCommaOnDeclarationSite:AccountService.kt:( data: String, pack: SignInBody )</ID>
+    <ID>TrailingCommaOnDeclarationSite:AccountService.kt:( data: String, pack: SignUpBody )</ID>
+    <ID>TrailingCommaOnDeclarationSite:AdminService.kt:( id: com.storyteller_f.shared.type.PrimaryKey, body: UpdateObjectStatusBody, adminId: com.storyteller_f.shared.type.PrimaryKey? )</ID>
+    <ID>TrailingCommaOnDeclarationSite:AdminService.kt:( targetId: com.storyteller_f.shared.type.PrimaryKey, objectType: ObjectType, fetch: PrimaryKeyFetch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:AdminService.kt:( type: TaskRecordType?, fetch: PrimaryKeyFetch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:AdminService.kt:( uid: com.storyteller_f.shared.type.PrimaryKey, body: UpdateUserStatusBody, adminId: com.storyteller_f.shared.type.PrimaryKey? )</ID>
+    <ID>TrailingCommaOnDeclarationSite:AudioUtil.kt:( saveAlbum: (ByteArray, String) -&gt; T )</ID>
+    <ID>TrailingCommaOnDeclarationSite:CommunityService.kt:( communities: List&lt;RawCommunity&gt;, uid: PrimaryKey?, target: PrimaryKey? )</ID>
+    <ID>TrailingCommaOnDeclarationSite:CommunityService.kt:( communityId: PrimaryKey, id: PrimaryKey )</ID>
+    <ID>TrailingCommaOnDeclarationSite:CommunityService.kt:( communityId: PrimaryKey, primaryKeyFetch: PrimaryKeyFetch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:CommunityService.kt:( communityInfos: List&lt;CommunityInfo&gt;, uid: PrimaryKey )</ID>
+    <ID>TrailingCommaOnDeclarationSite:CommunityService.kt:( id: PrimaryKey, old: UpdateCommunityBody, uid: PrimaryKey )</ID>
+    <ID>TrailingCommaOnDeclarationSite:CommunityService.kt:( newCommunity: NewCommunity, uid: PrimaryKey )</ID>
+    <ID>TrailingCommaOnDeclarationSite:CommunityService.kt:( objectFetch: ObjectFetch, id: PrimaryKey?, fillJoinInfo: Boolean? )</ID>
+    <ID>TrailingCommaOnDeclarationSite:CommunityService.kt:( objectId: PrimaryKey, primaryKeyFetch: PrimaryKeyFetch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:CommunityService.kt:( uid: PrimaryKey, communityId: PrimaryKey )</ID>
+    <ID>TrailingCommaOnDeclarationSite:CommunityService.kt:( uid: PrimaryKey, communityId: PrimaryKey, communityInfo: CommunityInfo, currentMember: Member? )</ID>
+    <ID>TrailingCommaOnDeclarationSite:CommunityService.kt:( uid: PrimaryKey, memberId: PrimaryKey, id: PrimaryKey, name: String )</ID>
+    <ID>TrailingCommaOnDeclarationSite:CommunityService.kt:( uid: PrimaryKey, search: CustomApi.Users.JoinedCommunities.UserCommunitiesSearchQuery, primaryKeyFetch: OffsetFetch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:CommunityService.kt:( uid: PrimaryKey?, search: CustomApi.Communities.CommunitySearchQuery, primaryKeyFetch: OffsetFetch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:ContainerService.kt:( objectTuple: ObjectTuple, quotaType: QuotaType, length: Long, name: String, block: suspend () -&gt; Result&lt;List&lt;FileRecord&gt;&gt; )</ID>
+    <ID>TrailingCommaOnDeclarationSite:ContainerService.kt:( quotaType: QuotaType, objectTuple: ObjectTuple )</ID>
+    <ID>TrailingCommaOnDeclarationSite:ContainerService.kt:( tuple: ObjectTuple, size: Long, quotaType: QuotaType )</ID>
+    <ID>TrailingCommaOnDeclarationSite:FavoriteService.kt:( uid: PrimaryKey, newFavorite: NewFavorite )</ID>
+    <ID>TrailingCommaOnDeclarationSite:FavoriteService.kt:( uid: PrimaryKey, userFavorite: List&lt;UserFavorite&gt; )</ID>
+    <ID>TrailingCommaOnDeclarationSite:FileService.kt:( backend: Backend, id: PrimaryKey, body: CustomApi.Files.Chunks.InitBody )</ID>
+    <ID>TrailingCommaOnDeclarationSite:FileService.kt:( backend: Backend, id: PrimaryKey, path: CommonPath, clientIp: String? = null )</ID>
+    <ID>TrailingCommaOnDeclarationSite:FileService.kt:( backend: Backend, path: CommonPath )</ID>
+    <ID>TrailingCommaOnDeclarationSite:FileService.kt:( backend: Backend, paths: List&lt;String&gt; )</ID>
+    <ID>TrailingCommaOnDeclarationSite:FileService.kt:( backend: Backend, sortedSources: List&lt;String&gt;, recordId: PrimaryKey )</ID>
+    <ID>TrailingCommaOnDeclarationSite:FileService.kt:( fileId: PrimaryKey, primaryKeyFetch: PrimaryKeyFetch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:FileService.kt:( fileRecord: FileRecord, newOwner: PrimaryKey )</ID>
+    <ID>TrailingCommaOnDeclarationSite:FileService.kt:( fileRecords: List&lt;FileRecord&gt;, uid: PrimaryKey? = null, clientIp: String? = null )</ID>
+    <ID>TrailingCommaOnDeclarationSite:FileService.kt:( id: PrimaryKey, uid: PrimaryKey? = null, clientIp: String? = null )</ID>
+    <ID>TrailingCommaOnDeclarationSite:FileService.kt:( input: BufferedInputStream, root: File, fileRecord: FileRecord )</ID>
+    <ID>TrailingCommaOnDeclarationSite:FileService.kt:( ownerId: PrimaryKey, ownerType: ObjectType, files: List&lt;UploadPack&gt;, clientIp: String? = null )</ID>
+    <ID>TrailingCommaOnDeclarationSite:FileService.kt:( p: CommonPath, uid: PrimaryKey, clientIp: String? = null )</ID>
+    <ID>TrailingCommaOnDeclarationSite:FileService.kt:( query: SearchQuery, primaryKeyFetch: OffsetFetch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:FileService.kt:( uid: PrimaryKey, fileId: PrimaryKey, primaryKeyFetch: PrimaryKeyFetch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:FileService.kt:( uid: PrimaryKey, objectTuple: ObjectTuple, primaryKeyFetch: PrimaryKeyFetch, clientIp: String? = null )</ID>
+    <ID>TrailingCommaOnDeclarationSite:FileService.kt:( uid: PrimaryKey, primaryKeyFetch: PrimaryKeyFetch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:FileService.kt:( uid: PrimaryKey, query: SearchQuery, objectTuple: ObjectTuple, primaryKeyFetch: OffsetFetch, clientIp: String? = null )</ID>
+    <ID>TrailingCommaOnDeclarationSite:FileService.kt:( uploadPacks: List&lt;ProcessedUploadPack&gt;, f: MutableList&lt;File&gt; )</ID>
+    <ID>TrailingCommaOnDeclarationSite:FileService.kt:( word: String?, ownerId: PrimaryKey?, primaryKeyFetch: OffsetFetch, clientIp: String? = null )</ID>
+    <ID>TrailingCommaOnDeclarationSite:ReactionService.kt:( deleteReaction: DeleteReaction, backend: Backend, uid: PrimaryKey, p: CommonPath )</ID>
+    <ID>TrailingCommaOnDeclarationSite:ReactionService.kt:( emoji: String, backend: Backend, uid: PrimaryKey, p: CommonPath )</ID>
+    <ID>TrailingCommaOnDeclarationSite:ReactionService.kt:( userId: PrimaryKey, topicId: PrimaryKey, emojiText: String )</ID>
+    <ID>TrailingCommaOnDeclarationSite:RoomService.kt:( backend: Backend, p: CommonPath, uid: PrimaryKey?, q: SearchQuery, f: OffsetFetch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:RoomService.kt:( communityId: PrimaryKey, primaryKeyFetch: PrimaryKeyFetch, uid: PrimaryKey?, joinStatus: JoinStatusSearch? = null )</ID>
+    <ID>TrailingCommaOnDeclarationSite:RoomService.kt:( listFetch: ObjectListFetch.IdListFetch, uid: PrimaryKey? = null )</ID>
+    <ID>TrailingCommaOnDeclarationSite:RoomService.kt:( roomId: PrimaryKey, primaryKeyFetch: PrimaryKeyFetch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:RoomService.kt:( roomId: PrimaryKey, uid: PrimaryKey?, primaryKeyFetch: PrimaryKeyFetch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:RoomService.kt:( uid: PrimaryKey, member: Member, roomId: PrimaryKey, room: Room )</ID>
+    <ID>TrailingCommaOnDeclarationSite:RoomService.kt:( uid: PrimaryKey, primaryKeyFetch: PrimaryKeyFetch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:RoomService.kt:( uid: PrimaryKey, scopeId: PrimaryKey )</ID>
+    <ID>TrailingCommaOnDeclarationSite:TitleService.kt:( list: List&lt;RawTitle&gt;, uid: PrimaryKey? )</ID>
+    <ID>TrailingCommaOnDeclarationSite:TitleService.kt:( newTitle: NewTitle, uid: PrimaryKey )</ID>
+    <ID>TrailingCommaOnDeclarationSite:TitleService.kt:( title: NewTitle, backend: Backend, uid: PrimaryKey )</ID>
+    <ID>TrailingCommaOnDeclarationSite:TitleService.kt:( uid: PrimaryKey, searchType: TitleSearchType, type: TitleType? = null, scopeId: PrimaryKey? = null, titleStatus: TitleWorkStatus? = null, fetch: PrimaryKeyFetch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:TitleService.kt:( uidList: List&lt;PrimaryKey&gt;, communityIdList: List&lt;PrimaryKey&gt;, roomIdList: List&lt;PrimaryKey&gt; )</ID>
+    <ID>TrailingCommaOnDeclarationSite:TopicService.kt:( documentFileList: List&lt;String&gt;, topic: Topic, uid: PrimaryKey )</ID>
+    <ID>TrailingCommaOnDeclarationSite:TopicService.kt:( topicInfo: TopicInfo, uid: PrimaryKey )</ID>
+    <ID>TrailingCommaOnDeclarationSite:TopicService.kt:( topics: List&lt;RawTopic&gt;, uid: PrimaryKey? )</ID>
+    <ID>TrailingCommaOnDeclarationSite:TopicService.kt:( uid: PrimaryKey, content: String, level: Int, parentTuple: ObjectTuple, rootTuple: ObjectTuple )</ID>
+    <ID>TrailingCommaOnDeclarationSite:TopicService.kt:( uid: PrimaryKey, permission: RootWritePermission, newTopic: NewRoomTopic, isPrivate: Boolean, content: TopicContent )</ID>
+    <ID>TrailingCommaOnDeclarationSite:TopicService.kt:( uid: PrimaryKey?, primaryKeyFetch: OffsetFetch, q: CustomApi.Topics.RecommendQuery )</ID>
+    <ID>TrailingCommaOnDeclarationSite:UserService.kt:( fetch: ObjectFetch, uid: PrimaryKey? = null )</ID>
+    <ID>TrailingCommaOnDeclarationSite:UserService.kt:( list: List&lt;UserLog&gt;, uid: PrimaryKey )</ID>
+    <ID>TrailingCommaOnDeclarationSite:UserService.kt:( uid: PrimaryKey, encryptedPrivateKey: String, encryptedAesKey: String, derPublicKey: String, algoType: AlgoType, encryptedEncryptionPrivateKey: String? = null, encryptionPublicKey: String? = null )</ID>
+    <ID>TrailingCommaOnDeclarationSite:UserService.kt:( uid: PrimaryKey, fetch: PrimaryKeyFetch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:UserService.kt:( uid: PrimaryKey, type: UserLogType, objectTuple: ObjectTuple )</ID>
+    <ID>TrailingCommaOnDeclarationSite:UserSubscriptionService.kt:( uid: PrimaryKey, fetch: PrimaryKeyFetch )</ID>
+    <ID>TrailingCommaOnDeclarationSite:UserSubscriptionService.kt:( uid: PrimaryKey, newSubscription: NewSubscription )</ID>
+    <ID>TrailingCommaOnDeclarationSite:UserSubscriptionService.kt:( uid: PrimaryKey, objectId: PrimaryKey )</ID>
+    <ID>TrailingCommaOnDeclarationSite:UserSubscriptionService.kt:( uid: PrimaryKey, subscriptionId: PrimaryKey )</ID>
+    <ID>TrailingCommaOnDeclarationSite:UserSubscriptionService.kt:( uid: PrimaryKey, userSubscriptions: List&lt;UserSubscription&gt; )</ID>
+    <ID>Wrapping:CommunityService.kt:(</ID>
+    <ID>Wrapping:FileService.kt:(</ID>
+    <ID>Wrapping:FileService.kt:(A_FILE_DEFAULT_BUCKET, listOf( targetFullName ))</ID>
+    <ID>Wrapping:FileService.kt:(ownerId ob ownerType, QuotaType.FILE, files.sumOf { it.size }, Uuid.random().toHexString())</ID>
+    <ID>Wrapping:RoomService.kt:(</ID>
+    <ID>Wrapping:TopicService.kt:(</ID>
+    <ID>Wrapping:TopicService.kt:(topics.map { it.topic.id }, uid, ReactionFetch(null, 20))</ID>
+    <ID>Wrapping:UserService.kt:(</ID>
+    <ID>Wrapping:UserService.kt:(ObjectListFetch.IdListFetch(list.map { it.id }), uid)</ID>
+    <ID>Wrapping:UserService.kt:(list.map { topic -&gt; database.processTopicToRawTopic(uid, listOf(topic)).getOrThrow().first() }, uid, false)</ID>
   </CurrentIssues>
 </SmellBaseline>

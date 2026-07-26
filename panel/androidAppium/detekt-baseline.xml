@@ -2,6 +2,7 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>FunctionSignature:PanelAndroidAppiumTest.kt:PanelAndroidAppiumTest$@Test fun `test panel sign in by injected private session`</ID>
     <ID>MissingPackageDeclaration:PanelAndroidAppiumTest.kt:.PanelAndroidAppiumTest.kt</ID>
   </CurrentIssues>
 </SmellBaseline>

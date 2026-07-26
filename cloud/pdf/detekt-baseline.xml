@@ -3,8 +3,17 @@
   <ManuallySuppressedIssues/>
   <CurrentIssues>
     <ID>ClassSignature:SignatureTableBuilder.kt:SignatureInfo</ID>
+    <ID>Filename:SignatureTableBuilder.kt:com.storyteller_f.a.cloud.pdf.SignatureTableBuilder.kt</ID>
+    <ID>FunctionSignature:SignatureImageGenerator.kt:SignatureImageGenerator$fun generate: ByteArray</ID>
+    <ID>MultilineExpressionWrapping:PdfService.kt:object : Visitor { override fun visitNode(node: ASTNode) { if (node.type == MarkdownTokenTypes.TEXT) { sb.append(node.getTextInNode(content)) } else { node.acceptChildren(this) } } }</ID>
+    <ID>PackageName:PdfService.kt:package com.storyteller_f.a.cloud.pdf</ID>
+    <ID>PackageName:SignatureImageGenerator.kt:package com.storyteller_f.a.cloud.pdf</ID>
+    <ID>PackageName:SignatureTableBuilder.kt:package com.storyteller_f.a.cloud.pdf</ID>
     <ID>PackageNaming:PdfService.kt:package com.storyteller_f.a.cloud.pdf</ID>
     <ID>PackageNaming:SignatureImageGenerator.kt:package com.storyteller_f.a.cloud.pdf</ID>
     <ID>PackageNaming:SignatureTableBuilder.kt:package com.storyteller_f.a.cloud.pdf</ID>
+    <ID>TrailingCommaOnDeclarationSite:SignatureImageGenerator.kt:SignatureImageGenerator$( g2d: Graphics2D, label: String, value: String, @Suppress("UNUSED_PARAMETER") x: Int, y: Int, height: Int, dividerX: Int, font: Font, boldFont: Font )</ID>
+    <ID>TrailingCommaOnDeclarationSite:SignatureImageGenerator.kt:SignatureImageGenerator$( signee: String, timestamp: String, hint: String )</ID>
+    <ID>TrailingCommaOnDeclarationSite:SignatureTableBuilder.kt:SignatureInfo$( val signee: String, val timestamp: String, val hint: String )</ID>
   </CurrentIssues>
 </SmellBaseline>

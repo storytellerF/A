@@ -7,6 +7,46 @@
     <ID>BlankLineBetweenWhenConditions:OpenPdf.kt:ParagraphVisitor$when (node.type) { MarkdownTokenTypes.TEXT -&gt; { val text = node.getTextInNode(content).toString() paragraph.add(text) } // Emphasis &amp; strong MarkdownElementTypes.EMPH -&gt; addStyledBlock(node, Font.ITALIC, 1) MarkdownElementTypes.STRONG -&gt; addStyledBlock(node, Font.BOLD, 2) // Inline code MarkdownElementTypes.CODE_SPAN -&gt; addCodeSpan(node) MarkdownTokenTypes.WHITE_SPACE -&gt; paragraph.add(" ") // Links (render as text (url)) to avoid PDF-specific anchors MarkdownElementTypes.INLINE_LINK, MarkdownElementTypes.FULL_REFERENCE_LINK, MarkdownElementTypes.SHORT_REFERENCE_LINK -&gt; addLink(node) GFMElementTypes.STRIKETHROUGH -&gt; addStyledBlock(node, Font.STRIKETHRU, 2) }</ID>
     <ID>ClassSignature:OpenPdf.kt:OpenPdfVisitor$LeftBarCellEvent : PdfPCellEvent</ID>
     <ID>ClassSignature:OpenPdf.kt:ParagraphVisitor : Visitor</ID>
+    <ID>FunctionSignature:OpenPdf.kt:@Suppress("LongMethod") private fun buildSignatureTable</ID>
+    <ID>FunctionSignature:OpenPdf.kt:OpenPdfFontBundle$fun boldFont: Font</ID>
+    <ID>FunctionSignature:OpenPdf.kt:OpenPdfFontBundle$fun italicFont: Font</ID>
+    <ID>FunctionSignature:OpenPdf.kt:OpenPdfFontBundle$fun linkFont: Font</ID>
+    <ID>FunctionSignature:OpenPdf.kt:OpenPdfFontBundle$fun monoBoldFont: Font</ID>
+    <ID>FunctionSignature:OpenPdf.kt:OpenPdfFontBundle$fun monoFont: Font</ID>
+    <ID>FunctionSignature:OpenPdf.kt:OpenPdfFontBundle$fun monoFontWithColor: Font</ID>
+    <ID>FunctionSignature:OpenPdf.kt:OpenPdfFontBundle$fun styledFont: Font</ID>
+    <ID>FunctionSignature:OpenPdf.kt:OpenPdfVisitor$private fun addHighlightCodeFence</ID>
+    <ID>FunctionSignature:OpenPdf.kt:OpenPdfVisitor.LeftBarCellEvent$override fun cellLayout</ID>
+    <ID>FunctionSignature:OpenPdf.kt:OpenPdfVisitor.RoundedBackgroundCellEvent$override fun cellLayout</ID>
+    <ID>FunctionSignature:OpenPdf.kt:private fun signPdfWithKeyStore</ID>
+    <ID>MultilineExpressionWrapping:OpenPdf.kt:OpenPdfVisitor$Highlights.Builder().theme(SyntaxThemes.atom(darkMode = false)) .code(codeFence).build().getHighlights().sortedBy { it.location.start }</ID>
+    <ID>MultilineExpressionWrapping:OpenPdf.kt:OpenPdfVisitor$RoundedBackgroundCellEvent( radius = 6f, fillColor = Color(245, 245, 245), strokeColor = Color(220, 220, 220) )</ID>
+    <ID>MultilineExpressionWrapping:OpenPdf.kt:OpenPdfVisitor$if (isSetext) { raw.lineSequence().firstOrNull()?.trim().orEmpty() } else { raw.replace(Regex("^#{1,6}\\s*"), "").trim() }</ID>
+    <ID>MultilineExpressionWrapping:OpenPdf.kt:OpenPdfVisitor$if (it is ColorHighlight) { fontBundle.monoFontWithColor(Color(it.rgb)) } else { fontBundle.monoBoldFont() }</ID>
+    <ID>MultilineExpressionWrapping:OpenPdf.kt:OpenPdfVisitor$object : Visitor { override fun visitNode(node: ASTNode) { if (node.type == GFMElementTypes.HEADER) { node.acceptChildren(this) } else if (node.type == GFMElementTypes.ROW) { // Actually, let's just accept children of ROW and filter for content. // In GFM, cells are separated by |. // The parser structure for ROW contains CELL or text + pipes. // Let's print raw text for debugging if needed, but here we implement. // Assuming node.children contains cell nodes or we split by pipe? // IntelliJ parser creates nodes for cells. checking standard GFM implementation... // It uses GFMTokenTypes.CELL for content. rows.add(node.children.filter { it.type.name == "CELL" }) } } }</ID>
+    <ID>MultilineExpressionWrapping:OpenPdf.kt:OpenPdfVisitor$when (level) { 1 -&gt; 18f 2 -&gt; 16f 3 -&gt; 14f 4 -&gt; 12f 5 -&gt; 11f else -&gt; 0f }</ID>
+    <ID>MultilineExpressionWrapping:OpenPdf.kt:com.storyteller_f.a.cloud.pdf.SignatureInfo( signee = (chain[0] as java.security.cert.X509Certificate).subjectX500Principal.name, timestamp = pdfGenerationSpec.created.toString(), hint = "Digitally Signed by OpenPDF" )</ID>
+    <ID>MultilineExpressionWrapping:OpenPdf.kt:listOf( "Signee" to signatureInfo.signee, "Timestamp" to signatureInfo.timestamp, "Hint" to signatureInfo.hint )</ID>
+    <ID>MultilineExpressionWrapping:OpenPdf.kt:org.openpdf.text.pdf.BaseFont.createFont( org.openpdf.text.pdf.BaseFont.HELVETICA, org.openpdf.text.pdf.BaseFont.CP1252, org.openpdf.text.pdf.BaseFont.NOT_EMBEDDED )</ID>
+    <ID>MultilineExpressionWrapping:OpenPdf.kt:org.openpdf.text.pdf.BaseFont.createFont( org.openpdf.text.pdf.BaseFont.HELVETICA_BOLD, org.openpdf.text.pdf.BaseFont.CP1252, org.openpdf.text.pdf.BaseFont.NOT_EMBEDDED )</ID>
+    <ID>PackageName:OpenPdf.kt:package com.storyteller_f.a.cloud.openpdf</ID>
     <ID>PackageNaming:OpenPdf.kt:package com.storyteller_f.a.cloud.openpdf</ID>
+    <ID>TrailingCommaOnCallSite:OpenPdf.kt:( "Signee" to signatureInfo.signee, "Timestamp" to signatureInfo.timestamp, "Hint" to signatureInfo.hint )</ID>
+    <ID>TrailingCommaOnCallSite:OpenPdf.kt:( Rectangle(sigX, sigY, sigX + sigWidth, sigY + sigHeight), 1, "sig" )</ID>
+    <ID>TrailingCommaOnCallSite:OpenPdf.kt:( org.openpdf.text.pdf.BaseFont.HELVETICA, org.openpdf.text.pdf.BaseFont.CP1252, org.openpdf.text.pdf.BaseFont.NOT_EMBEDDED )</ID>
+    <ID>TrailingCommaOnCallSite:OpenPdf.kt:( org.openpdf.text.pdf.BaseFont.HELVETICA_BOLD, org.openpdf.text.pdf.BaseFont.CP1252, org.openpdf.text.pdf.BaseFont.NOT_EMBEDDED )</ID>
+    <ID>TrailingCommaOnCallSite:OpenPdf.kt:( signee = (chain[0] as java.security.cert.X509Certificate).subjectX500Principal.name, timestamp = pdfGenerationSpec.created.toString(), hint = "Digitally Signed by OpenPDF" )</ID>
+    <ID>TrailingCommaOnCallSite:OpenPdf.kt:OpenPdfVisitor$( radius = 6f, fillColor = Color(245, 245, 245), strokeColor = Color(220, 220, 220) )</ID>
+    <ID>TrailingCommaOnDeclarationSite:OpenPdf.kt:( cb: PdfContentByte, signatureInfo: com.storyteller_f.a.cloud.pdf.SignatureInfo, rect: Rectangle )</ID>
+    <ID>TrailingCommaOnDeclarationSite:OpenPdf.kt:( saveToFile: File, snapshotGeneration: SnapshotGeneration.KeyStoreGeneration, pdfGenerationSpec: PdfGenerationSpec )</ID>
+    <ID>TrailingCommaOnDeclarationSite:OpenPdf.kt:OpenPdf$( creatorInfo: UserInfo, authorInfo: UserInfo, content: String, map: Map&lt;String, File&gt;, snapshotGeneration: SnapshotGeneration, pdfGenerationSpec: PdfGenerationSpec )</ID>
+    <ID>TrailingCommaOnDeclarationSite:OpenPdf.kt:OpenPdfVisitor$( it: CodeHighlight, paragraph: Paragraph, codeFence: String, i: Int, codeHighlights: List&lt;CodeHighlight&gt; )</ID>
+    <ID>TrailingCommaOnDeclarationSite:OpenPdf.kt:OpenPdfVisitor$( private val document: Document, private val fontBundle: OpenPdfFontBundle, val content: String, private val map: Map&lt;String, File&gt; )</ID>
+    <ID>TrailingCommaOnDeclarationSite:OpenPdf.kt:OpenPdfVisitor.LeftBarCellEvent$( cell: PdfPCell?, rect: Rectangle?, canvas: Array&lt;PdfContentByte?&gt;? )</ID>
+    <ID>TrailingCommaOnDeclarationSite:OpenPdf.kt:OpenPdfVisitor.LeftBarCellEvent$( private val barWidth: Float, private val barColor: Color )</ID>
+    <ID>TrailingCommaOnDeclarationSite:OpenPdf.kt:OpenPdfVisitor.RoundedBackgroundCellEvent$( cell: PdfPCell?, rect: Rectangle?, canvas: Array&lt;PdfContentByte?&gt;? )</ID>
+    <ID>TrailingCommaOnDeclarationSite:OpenPdf.kt:OpenPdfVisitor.RoundedBackgroundCellEvent$( private val radius: Float, private val fillColor: Color, private val strokeColor: Color )</ID>
+    <ID>TrailingCommaOnDeclarationSite:OpenPdf.kt:ParagraphVisitor$( private val paragraph: Paragraph, val content: String, val fontBundle: OpenPdfFontBundle )</ID>
+    <ID>TrailingCommaOnDeclarationSite:OpenPdf.kt:ParagraphVisitor$MarkdownElementTypes.INLINE_LINK, MarkdownElementTypes.FULL_REFERENCE_LINK, MarkdownElementTypes.SHORT_REFERENCE_LINK -&gt; addLink(node)</ID>
   </CurrentIssues>
 </SmellBaseline>

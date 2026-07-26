@@ -2,6 +2,16 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>FunctionSignature:JvmMain.kt:&lt;no name provided&gt;$override suspend fun start</ID>
+    <ID>MultilineExpressionWrapping:JvmMain.kt:&lt;no name provided&gt;$MediaPlaySession( remoteMediaItem = remoteMediaItem, playList = playList, uuids = listOf(localMediaPlaySession.uuid), videoSize = null )</ID>
+    <ID>MultilineExpressionWrapping:JvmMain.kt:Button("OK").apply { addActionListener { dispose() exitProcess(1) } }</ID>
+    <ID>MultilineExpressionWrapping:JvmMain.kt:object : ClientFileProvider { override suspend fun getDownloader(): Downloader = DownloaderImpl(uiViewModel, taskRegister) override suspend fun getUploader(): Uploader = UploaderImpl(uiViewModel, taskRegister) }</ID>
+    <ID>MultilineExpressionWrapping:JvmMain.kt:object : MediaPlayerService() { override val enablePip: Boolean get() = false override fun fullscreen(remoteMediaItem: RemoteMediaItem) = Unit override suspend fun start( remoteMediaItem: RemoteMediaItem, localMediaPlaySession: LocalMediaPlaySession, playList: List&lt;ConstPlayItem&gt; ) { state.value = MediaPlaySession( remoteMediaItem = remoteMediaItem, playList = playList, uuids = listOf(localMediaPlaySession.uuid), videoSize = null ) } }</ID>
+    <ID>PackageName:JvmMain.kt:package com.storyteller_f.a.app</ID>
     <ID>PackageNaming:JvmMain.kt:package com.storyteller_f.a.app</ID>
+    <ID>TrailingCommaOnCallSite:JvmMain.kt:( GlobalScope, getDesktopWsServerUrl(), getDesktopServerUrl() )</ID>
+    <ID>TrailingCommaOnCallSite:JvmMain.kt:( LocalClientFileProvider provides provider, LocalUiViewModel provides uiViewModel, LocalMediaPlayerService provides jvmMediaPlayerService )</ID>
+    <ID>TrailingCommaOnCallSite:JvmMain.kt:&lt;no name provided&gt;$( remoteMediaItem = remoteMediaItem, playList = playList, uuids = listOf(localMediaPlaySession.uuid), videoSize = null )</ID>
+    <ID>TrailingCommaOnDeclarationSite:JvmMain.kt:&lt;no name provided&gt;$( remoteMediaItem: RemoteMediaItem, localMediaPlaySession: LocalMediaPlaySession, playList: List&lt;ConstPlayItem&gt; )</ID>
   </CurrentIssues>
 </SmellBaseline>

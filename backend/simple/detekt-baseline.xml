@@ -10,6 +10,11 @@
     <ID>FunctionExpressionBody:SimpleNameService.kt:SimpleNameService${ return numberToCustomCharset(id) }</ID>
     <ID>FunctionExpressionBody:SimpleNameService.kt:SimpleNameServiceFactory${ return SimpleNameService() }</ID>
     <ID>FunctionExpressionBody:SimpleNameService.kt:SimpleNameServiceFactory${ return true }</ID>
+    <ID>MultilineExpressionWrapping:SimpleNameService.kt:SimpleNameService$countList.indexOfFirst { it &gt; remainder }</ID>
+    <ID>NoEmptyFirstLineInClassBody:SimpleCacheService.kt:SimpleCacheService${ private data class CacheEntry&lt;V&gt;(val value: V, val expiryTime: Long) private val cache = mutableMapOf&lt;K, CacheEntry&lt;V&gt;&gt;() private fun put(key: K, value: V) { val expireAt = System.currentTimeMillis() + defaultExpireMillis.inWholeMilliseconds cache[key] = CacheEntry(value, expireAt) } override suspend fun get(key: K, block: suspend () -&gt; V): V { val entry = cache[key] if (entry != null) { if (System.currentTimeMillis() &lt; entry.expiryTime) { return entry.value } } val value = block() put(key, value) return value } }</ID>
+    <ID>PackageName:NativeLockService.kt:package com.storyteller_f.a.backend.simple</ID>
+    <ID>PackageName:SimpleCacheService.kt:package com.storyteller_f.a.backend.simple</ID>
+    <ID>PackageName:SimpleNameService.kt:package com.storyteller_f.a.backend.simple</ID>
     <ID>PackageNaming:NativeLockService.kt:package com.storyteller_f.a.backend.simple</ID>
     <ID>PackageNaming:SimpleCacheService.kt:package com.storyteller_f.a.backend.simple</ID>
     <ID>PackageNaming:SimpleNameService.kt:package com.storyteller_f.a.backend.simple</ID>
