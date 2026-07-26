@@ -2,7 +2,7 @@
   "type": "room",
   "roomData": [
     {
-      "name": "Rust 语言",
+      "name": "Rust Language",
       "community": "code",
       "users": [
         "robot1",
@@ -14,7 +14,7 @@
       "admin": "System"
     },
     {
-      "name": "拉寡",
+      "name": "Casual Chat",
       "users": [
         "robot1",
         "robot2",
@@ -24,7 +24,7 @@
       "admin": "System"
     },
     {
-      "name": "AI 技术交流",
+      "name": "AI Tech Exchange",
       "community": "computer",
       "users": [
         "robot1",
@@ -32,17 +32,6 @@
       ],
       "id": "AITech",
       "admin": "System"
-    },
-    {
-      "name": "健身交流",
-      "users": [
-        "user1",
-        "user2",
-        "user3",
-        "System"
-      ],
-      "id": "lifestyle",
-      "admin": "user1"
     }
   ]
 }

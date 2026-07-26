@@ -168,44 +168,52 @@ assert_contains "$TMP_DIR/$bunker_flavor.generated.yml" "  etcd:"
 assert_contains "$TMP_DIR/$bunker_flavor.generated.yml" "      - bw-services"
 rm -f "deploy/$bunker_flavor.env"
 
-sample_flavor="compose-test-sample"
-write_env "$sample_flavor" "sample"
-run_compose_service "$sample_flavor"
-assert_contains "$TMP_DIR/$sample_flavor.args" "docker-compose.sample.yml"
-if [ -s "$TMP_DIR/$sample_flavor.gradle.args" ]; then
-  fail "compose-service must not build the Wasm distribution for the sample profile"
+app_flavor="compose-test-app"
+write_env "$app_flavor" "pg,server,app"
+run_compose_service "$app_flavor"
+assert_contains "$TMP_DIR/$app_flavor.args" "docker-compose.app.yml"
+if [ -s "$TMP_DIR/$app_flavor.gradle.args" ]; then
+  fail "compose-service must not build the Wasm distributions itself"
 fi
-rm -f "deploy/$sample_flavor.env"
 
-sample_start_args="$TMP_DIR/sample-start.args"
-sample_start_generated="$TMP_DIR/sample-start.generated.yml"
-sample_start_gradle_args="$TMP_DIR/sample-start.gradle.args"
-: > "$sample_start_args"
-: > "$sample_start_generated"
-: > "$sample_start_gradle_args"
-MOCK_DOCKER_ARGS="$sample_start_args" \
-MOCK_GENERATED_OUT="$sample_start_generated" \
-MOCK_GRADLE_ARGS="$sample_start_gradle_args" \
+app_start_args="$TMP_DIR/app-start.args"
+app_start_generated="$TMP_DIR/app-start.generated.yml"
+app_start_gradle_args="$TMP_DIR/app-start.gradle.args"
+: > "$app_start_args"
+: > "$app_start_generated"
+: > "$app_start_gradle_args"
+MOCK_DOCKER_ARGS="$app_start_args" \
+MOCK_GENERATED_OUT="$app_start_generated" \
+MOCK_GRADLE_ARGS="$app_start_gradle_args" \
 GRADLEW=gradlew \
-BUILD_SERVER_SCRIPT=true \
-BUILD_WS_SCRIPT=true \
-BUILD_CLI_SCRIPT=true \
-./scripts/service_scripts/start-sample-service.sh > "$TMP_DIR/sample-start.stdout"
-assert_contains "$sample_start_args" "docker-compose.sample.yml"
-assert_contains "$sample_start_gradle_args" ":app:composeApp:wasmJsBrowserDistribution"
-assert_contains "$sample_start_gradle_args" "-Ptarget.wasm=true"
-if MOCK_GRADLE_EXIT=1 \
-  MOCK_DOCKER_ARGS="$sample_start_args" \
-  MOCK_GENERATED_OUT="$sample_start_generated" \
-  MOCK_GRADLE_ARGS="$sample_start_gradle_args" \
-  GRADLEW=gradlew \
-  BUILD_SERVER_SCRIPT=true \
-  BUILD_WS_SCRIPT=true \
-  BUILD_CLI_SCRIPT=true \
-  ./scripts/service_scripts/start-sample-service.sh > "$TMP_DIR/sample-start.failure.stdout"; then
-  fail "start-sample-service must stop when the Wasm build fails"
+BUILD_CLOUD_SCRIPT=true \
+./scripts/service_scripts/start-service-in-local.sh "$app_flavor" > "$TMP_DIR/app-start.stdout"
+assert_contains "$app_start_args" "docker-compose.app.yml"
+assert_contains "$app_start_gradle_args" ":app:webApp:wasmJsBrowserDistribution"
+assert_contains "$app_start_gradle_args" ":panel:webApp:wasmJsBrowserDistribution"
+assert_contains "$app_start_gradle_args" "-Ptarget.wasm=true"
+assert_contains "$app_start_gradle_args" "-Pserver.flavor=$app_flavor"
+assert_contains "$app_start_gradle_args" "-Pserver.buildType=dev"
+rm -f "deploy/$app_flavor.env"
+
+no_app_flavor="compose-test-no-app"
+write_env "$no_app_flavor" "pg,server"
+no_app_start_args="$TMP_DIR/no-app-start.args"
+no_app_start_generated="$TMP_DIR/no-app-start.generated.yml"
+no_app_start_gradle_args="$TMP_DIR/no-app-start.gradle.args"
+: > "$no_app_start_args"
+: > "$no_app_start_generated"
+: > "$no_app_start_gradle_args"
+MOCK_DOCKER_ARGS="$no_app_start_args" \
+MOCK_GENERATED_OUT="$no_app_start_generated" \
+MOCK_GRADLE_ARGS="$no_app_start_gradle_args" \
+GRADLEW=gradlew \
+BUILD_CLOUD_SCRIPT=true \
+./scripts/service_scripts/start-service-in-local.sh "$no_app_flavor" > "$TMP_DIR/no-app-start.stdout"
+if [ -s "$no_app_start_gradle_args" ]; then
+  fail "start-service-in-local must skip Wasm builds without the app profile"
 fi
-assert_contains "$TMP_DIR/sample-start.failure.stdout" "Failed to build the Wasm distribution"
+rm -f "deploy/$no_app_flavor.env"
 
 if find deploy/docker-compose -maxdepth 1 \( -name 'docker-compose._*.yml' -o -name 'docker-compose.generated.??????.yml' \) | grep -q .; then
   find deploy/docker-compose -maxdepth 1 \( -name 'docker-compose._*.yml' -o -name 'docker-compose.generated.??????.yml' \)

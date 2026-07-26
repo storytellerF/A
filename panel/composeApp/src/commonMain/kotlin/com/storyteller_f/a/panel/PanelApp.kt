@@ -59,6 +59,7 @@ import com.storyteller_f.a.client.compose_core.components.GlobalDialogState
 import com.storyteller_f.a.client.compose_core.components.GlobalTask
 import com.storyteller_f.a.client.compose_core.components.GlobalTaskContext
 import com.storyteller_f.a.client.compose_core.utils.SessionHistoryManager
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.a.client.compose_core.utils.buildSessionHistoryFactory
 import com.storyteller_f.a.client.compose_core.utils.createSettings
 import com.storyteller_f.a.client.compose_core.utils.restoreFromStorage
@@ -306,6 +307,7 @@ private fun DrawerHeader() {
 @Composable
 private fun DrawerNavItem(icon: ImageVector, label: String, onClick: () -> Unit) {
     NavigationDrawerItem(
+        modifier = Modifier.appiumSemantics(text = label, onClick = onClick),
         icon = { Icon(icon, contentDescription = null) },
         label = { Text(label) },
         selected = false,

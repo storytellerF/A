@@ -18,7 +18,6 @@ plugins {
 }
 
 val buildIosTarget = project.findProperty("target.ios") == "true"
-val buildWasmTarget = project.findProperty("target.wasm") == "true"
 val flavorStr = project.findProperty("server.flavor") as String
 val flavorId = CaseFormat.LOWER_HYPHEN.converterTo(CaseFormat.LOWER_UNDERSCORE).convert(flavorStr)!!
 val buildType = project.findProperty("server.buildType") as String

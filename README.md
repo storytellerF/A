@@ -124,15 +124,15 @@ docker build -t a-server .
 sh ./bin/server
 ```
 
-### Sample Compose Stack With Wasm App
+### Compose Stack With Wasm Apps
 
-`sample` starts PostgreSQL, Elasticsearch, MinIO, initialization CLI, server, WebSocket server, and the browser app. The script builds the Wasm distribution first and passes the sample HTTP/WebSocket URLs into its build configuration.
+Add `app` to a flavor's `COMPOSE_FILE_LIST` to deploy the user app and admin panel as Wasm sites. The local startup script builds both distributions before starting Compose.
 
 ```bash
-./scripts/service_scripts/start-sample-service.sh
+./scripts/service_scripts/start-service-in-local.sh sample
 ```
 
-Open `http://localhost:8080` after the containers become healthy. Stop the stack with the same flavor and `down` command.
+Open the user app at `http://localhost:8080` and the panel at `http://localhost:8081` after the containers become healthy. Omit `app` to skip both Wasm builds and services.
 
 ### Environment Variables
 

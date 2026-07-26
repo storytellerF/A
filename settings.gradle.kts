@@ -44,6 +44,7 @@ dependencyResolutionManagement {
 include(":shared")
 
 include(":app:composeApp")
+include(":app:webApp")
 include(":app:cliApp")
 include(":app:androidApp")
 include(":app:desktopApp")
@@ -55,6 +56,7 @@ if (isAppiumTestEnable) {
     include(":app:wasmAppium")
     include(":panel:androidAppium")
     include(":panel:desktopAppium")
+    include(":panel:wasmAppium")
 }
 
 include(":cloud:server")
@@ -68,6 +70,7 @@ include(":cloud:pdfbox")
 include(":cloud:openpdf")
 include(":cloud:pdf")
 include(":panel:composeApp")
+include(":panel:webApp")
 include(":panel:androidApp")
 include(":panel:cliApp")
 include(":panel:desktopApp")

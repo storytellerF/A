@@ -20,7 +20,6 @@ plugins {
     alias(libs.plugins.buildconfig)
 }
 val buildIosTarget = project.findProperty("target.ios") == "true"
-val buildWasmTarget = project.findProperty("target.wasm") == "true"
 val flavorStr = project.findProperty("server.flavor") as String
 val flavorId = CaseFormat.LOWER_HYPHEN.converterTo(CaseFormat.LOWER_UNDERSCORE).convert(flavorStr)!!
 val buildType = project.findProperty("server.buildType") as String
@@ -52,7 +51,7 @@ kotlin {
 
     jvm()
 
-    if (buildWasmTarget) {
+    run {
 //        js {
 //            browser()
 //            binaries.executable()
@@ -61,7 +60,6 @@ kotlin {
         @OptIn(ExperimentalWasmDsl::class)
         wasmJs {
             browser()
-            binaries.executable()
         }
     }
 
@@ -218,16 +216,14 @@ compose.resources {
     generateResClass = auto
 }
 
-if (buildWasmTarget) {
-    rootProject.plugins.withType<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin> {
-        rootProject.the<WasmYarnRootExtension>().run {
-            lockFileDirectory = project.rootDir.resolve("panel/kotlin-js-store/wasm")
-            lockFileName = "panel-yarn.lock"
-        }
-        rootProject.the<YarnRootExtension>().run {
-            lockFileDirectory = project.rootDir.resolve("panel/kotlin-js-store")
-            lockFileName = "panel-yarn.lock"
-        }
+rootProject.plugins.withType<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin> {
+    rootProject.the<WasmYarnRootExtension>().run {
+        lockFileDirectory = project.rootDir.resolve("panel/kotlin-js-store/wasm")
+        lockFileName = "panel-yarn.lock"
+    }
+    rootProject.the<YarnRootExtension>().run {
+        lockFileDirectory = project.rootDir.resolve("panel/kotlin-js-store")
+        lockFileName = "panel-yarn.lock"
     }
 }
 

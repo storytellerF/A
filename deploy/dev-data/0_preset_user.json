@@ -19,7 +19,7 @@
       "id": 100
     },
     {
-      "name": "人机一号",
+      "name": "Robot One",
       "aid": "robot1",
       "icon": "medias/users/robot1.png",
     "privateKey": "secrets/p-robot1",
@@ -27,7 +27,7 @@
     "algoType": "DILITHIUM"
     },
     {
-      "name": "人机二号",
+      "name": "Robot Two",
       "aid": "robot2",
       "icon": "medias/users/robot2.png",
     "privateKey": "secrets/p-robot2",
@@ -49,13 +49,6 @@
     "privateKey": "secrets/p-user2",
     "encryptionPrivateKey": "secrets/ep-user2",
     "algoType": "DILITHIUM"
-    },
-    {
-      "name": "User3",
-      "aid": "user3",
-      "privateKey": "secrets/p-user3",
-      "encryptionPrivateKey": "secrets/ep-user3",
-      "algoType": "DILITHIUM"
     }
   ]
 }

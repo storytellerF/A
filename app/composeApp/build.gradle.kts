@@ -49,7 +49,6 @@ plugins {
 }
 
 val buildIosTarget = project.findProperty("target.ios") == "true"
-val buildWasmTarget = project.findProperty("target.wasm") == "true"
 val flavorStr = project.findProperty("server.flavor") as String
 val buildType = project.findProperty("server.buildType") as String
 
@@ -87,13 +86,9 @@ kotlin {
 
     jvm()
 
-    if (buildWasmTarget) {
-        @OptIn(ExperimentalWasmDsl::class)
-        wasmJs {
-            outputModuleName = "composeApp"
-            browser()
-            binaries.executable()
-        }
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmJs {
+        browser()
     }
 
     @OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
@@ -377,16 +372,14 @@ compose.resources {
     generateResClass = auto
 }
 
-if (buildWasmTarget) {
-    rootProject.plugins.withType<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin> {
-        rootProject.the<WasmYarnRootExtension>().run {
-            lockFileDirectory = project.rootDir.resolve("app/kotlin-js-store/wasm")
-            lockFileName = "app-yarn.lock"
-        }
-        rootProject.the<WasmYarnRootExtension>().run {
-            lockFileDirectory = project.rootDir.resolve("app/kotlin-js-store")
-            lockFileName = "app-yarn.lock"
-        }
+rootProject.plugins.withType<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin> {
+    rootProject.the<WasmYarnRootExtension>().run {
+        lockFileDirectory = project.rootDir.resolve("app/kotlin-js-store/wasm")
+        lockFileName = "app-yarn.lock"
+    }
+    rootProject.the<WasmYarnRootExtension>().run {
+        lockFileDirectory = project.rootDir.resolve("app/kotlin-js-store")
+        lockFileName = "app-yarn.lock"
     }
 }
 
@@ -398,7 +391,7 @@ private fun KotlinDependencyHandler.implementation(
 }
 
 // Should be run at least once before running the app
-val downloadFonts by tasks.registering(DownloadFont::class) {
+val downloadFonts = tasks.register<DownloadFont>("downloadFonts") {
     sourceUrl.set(
         "https://github.com/google/material-design-icons/raw/master/variablefont/" +
             "MaterialSymbolsOutlined%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf"

@@ -10,13 +10,10 @@ plugins {
 }
 
 val buildIosTarget = project.findProperty("target.ios") == "true"
-val buildWasmTarget = project.findProperty("target.wasm") == "true"
 kotlin {
-    if (buildWasmTarget) {
-        @OptIn(ExperimentalWasmDsl::class)
-        wasmJs {
-            browser()
-        }
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmJs {
+        browser()
     }
 
     android {
@@ -59,13 +56,11 @@ kotlin {
         }
         jvmMain.get().dependsOn(jvmAndroidMain)
         androidMain.get().dependsOn(jvmAndroidMain)
-        if (buildWasmTarget) {
-            getByName("wasmJsMain") {
-                dependencies {
-                    implementation(libs.androidx.sqlite.web)
-                    implementation(libs.kotlinx.browser)
-                    implementation(npm("sqlite-web-worker", project.file("sqlite-web-worker")))
-                }
+        getByName("wasmJsMain") {
+            dependencies {
+                implementation(libs.androidx.sqlite.web)
+                implementation(libs.kotlinx.browser)
+                implementation(npm("sqlite-web-worker", project.file("sqlite-web-worker")))
             }
         }
     }
@@ -76,12 +71,9 @@ kotlin {
 
 dependencies {
     val roomCompiler = libs.androidx.room.compiler.get()
-    add("kspCommonMainMetadata", roomCompiler)
     add("kspJvm", roomCompiler)
     add("kspAndroid", roomCompiler)
-    if (buildWasmTarget) {
-        add("kspWasmJs", roomCompiler)
-    }
+    add("kspWasmJs", roomCompiler)
     if (buildIosTarget) {
         add("kspIosX64", roomCompiler)
         add("kspIosArm64", roomCompiler)
