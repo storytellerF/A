@@ -14,15 +14,10 @@
     <ID>FunctionExpressionBody:MinIoObjectStorageService.kt:MinIoObjectStorageService${ return useMinIoClient(connection) { val names = try { listObjects( ListObjectsArgs.builder().bucket(bucketName).prefix(prefix).recursive(false).build() ).map { it.get().objectName() } } catch (e: ErrorResponseException) { if (e.errorResponse().code() == "NoSuchBucket") { emptyList() } else { throw e } } get(bucketName, names).getOrThrow() } }</ID>
     <ID>FunctionExpressionBody:MinIoObjectStorageService.kt:MinioObjectStorageServiceFactory${ return env["MEDIA_SERVICE"] == "minio" }</ID>
     <ID>FunctionSignature:MinIoObjectStorageService.kt:@OptIn(ExperimentalTime::class) private fun MinioClient.getMinioObjectUrl</ID>
-    <ID>FunctionSignature:MinIoObjectStorageService.kt:MinIoObjectStorageService$override suspend fun compose: Result&lt;ObjectStorageWriteRecord&gt;</ID>
     <ID>FunctionSignature:MinIoObjectStorageService.kt:MinIoObjectStorageService$override suspend fun copy: Result&lt;List&lt;ObjectStorageRecord&gt;&gt;</ID>
     <ID>FunctionSignature:MinIoObjectStorageService.kt:MinIoObjectStorageService$override suspend fun getInputStream: Result&lt;InputStream&gt;</ID>
-    <ID>FunctionSignature:MinIoObjectStorageService.kt:MinIoObjectStorageService$override suspend fun getWithPresignContext: Result&lt;List&lt;ObjectStorageRecord&gt;&gt;</ID>
     <ID>FunctionSignature:MinIoObjectStorageService.kt:MinIoObjectStorageService$override suspend fun list: Result&lt;List&lt;ObjectStorageRecord&gt;&gt;</ID>
-    <ID>FunctionSignature:MinIoObjectStorageService.kt:MinIoObjectStorageService$override suspend fun upload: Result&lt;List&lt;ObjectStorageWriteRecord&gt;&gt;</ID>
     <ID>FunctionSignature:MinIoObjectStorageService.kt:MinIoObjectStorageService$override suspend operator fun get: Result&lt;List&lt;ObjectStorageRecord&gt;&gt;</ID>
-    <ID>FunctionSignature:MinIoObjectStorageService.kt:MinIoObjectStorageService$private suspend fun getInternal: Result&lt;List&lt;ObjectStorageRecord&gt;&gt;</ID>
-    <ID>FunctionSignature:MinIoObjectStorageService.kt:private suspend fun &lt;R&gt; useMinIoClient: Result&lt;R&gt;</ID>
     <ID>MissingPackageDeclaration:UrlTest.kt:.UrlTest.kt</ID>
     <ID>MultilineExpressionWrapping:MinIoObjectStorageService.kt:MinIoObjectStorageService$if (hasContext) { cache.get(presignContext.ip + presignContext.uid + objName) { getMinioObjectUrl(bucketName, objName, presignContext) } } else { cache.get(objName) { getMinioObjectUrl(bucketName, objName, null) } }</ID>
     <ID>MultilineExpressionWrapping:MinIoObjectStorageService.kt:MinIoObjectStorageService$if (minioHost.isNullOrBlank()) { minioObjectUrl } else { replaceUrl(minioHost, minioObjectUrl) }</ID>

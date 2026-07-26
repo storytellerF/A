@@ -40,25 +40,11 @@
     <ID>FunctionExpressionBody:ElasticUserSearchService.kt:ElasticUserSearchServiceFactory${ return buildElasticSearchService(env) { ElasticUserSearchService(it) } }</ID>
     <ID>FunctionExpressionBody:ElasticUserSearchService.kt:ElasticUserSearchServiceFactory${ return env["SEARCH_SERVICE"] == "elastic" }</ID>
     <ID>FunctionSignature:Elastic.kt:Elastic$suspend fun &lt;T&gt; useElasticClient: Result&lt;T&gt;</ID>
-    <ID>FunctionSignature:Elastic.kt:suspend fun &lt;T : PrimaryKeyIdentifiable&gt; ElasticsearchAsyncClient.saveDocumentList</ID>
-    <ID>FunctionSignature:Elastic.kt:suspend fun &lt;T&gt; ElasticsearchAsyncClient.getDocumentList: List&lt;T?&gt;</ID>
-    <ID>FunctionSignature:Elastic.kt:suspend fun &lt;T&gt; ElasticsearchAsyncClient.searchDocumentList: PaginationResult&lt;T&gt;</ID>
-    <ID>FunctionSignature:ElasticCommunitySearchService.kt:ElasticCommunitySearchService$override suspend fun searchDocument: Result&lt;PaginationResult&lt;CommunityDocument&gt;&gt;</ID>
     <ID>FunctionSignature:ElasticCommunitySearchService.kt:ElasticCommunitySearchService$private fun buildSearchRequest: SearchRequest</ID>
-    <ID>FunctionSignature:ElasticFileSearchService.kt:ElasticFileSearchService$override suspend fun searchDocument: Result&lt;PaginationResult&lt;FileDocument&gt;&gt;</ID>
     <ID>FunctionSignature:ElasticFileSearchService.kt:ElasticFileSearchService$private fun buildSearchRequest: SearchRequest</ID>
-    <ID>FunctionSignature:ElasticMemberSearchService.kt:ElasticMemberSearchService$override suspend fun searchDocument: Result&lt;PaginationResult&lt;MemberDocument&gt;&gt;</ID>
-    <ID>FunctionSignature:ElasticMemberSearchService.kt:ElasticMemberSearchService$private fun SearchRequest.Builder.buildCommunityMemberSearchRequest</ID>
-    <ID>FunctionSignature:ElasticMemberSearchService.kt:ElasticMemberSearchService$private fun SearchRequest.Builder.buildRoomMemberSearchRequest</ID>
     <ID>FunctionSignature:ElasticMemberSearchService.kt:ElasticMemberSearchService$private fun buildSearchRequest: SearchRequest</ID>
-    <ID>FunctionSignature:ElasticRoomSearchService.kt:ElasticRoomSearchService$override suspend fun searchDocument: Result&lt;PaginationResult&lt;RoomDocument&gt;&gt;</ID>
     <ID>FunctionSignature:ElasticRoomSearchService.kt:ElasticRoomSearchService$private fun buildSearchRequest: SearchRequest</ID>
-    <ID>FunctionSignature:ElasticTopicSearchService.kt:ElasticTopicSearchService$override suspend fun searchDocument: Result&lt;PaginationResult&lt;TopicDocument&gt;&gt;</ID>
-    <ID>FunctionSignature:ElasticTopicSearchService.kt:ElasticTopicSearchService$private fun SearchRequest.Builder.buildCommunityRootSearchRequest</ID>
-    <ID>FunctionSignature:ElasticTopicSearchService.kt:ElasticTopicSearchService$private fun SearchRequest.Builder.buildTopicRecommendNotLoginSearchRequest</ID>
-    <ID>FunctionSignature:ElasticTopicSearchService.kt:ElasticTopicSearchService$private fun SearchRequest.Builder.buildTopicRecommendSearchRequest</ID>
     <ID>FunctionSignature:ElasticTopicSearchService.kt:ElasticTopicSearchService$private fun buildSearchRequest: SearchRequest</ID>
-    <ID>FunctionSignature:ElasticUserSearchService.kt:ElasticUserSearchService$override suspend fun searchDocument: Result&lt;PaginationResult&lt;UserDocument&gt;&gt;</ID>
     <ID>FunctionSignature:ElasticUserSearchService.kt:ElasticUserSearchService$private fun buildSearchRequest: SearchRequest</ID>
     <ID>MultilineExpressionWrapping:Elastic.kt:Elastic$JacksonJsonpMapper().apply { objectMapper().registerKotlinModule() }</ID>
     <ID>MultilineExpressionWrapping:Elastic.kt:bulk { it.operations(documents.map { document -&gt; BulkOperation.of { op -&gt; op.index( IndexOperation.Builder&lt;T&gt;() .index(indexName) .id(document.id.toString()) // 指定文档 ID .document(document) .build() ) } }).refresh(Refresh.WaitFor) }.await()</ID>

@@ -2,15 +2,7 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>FunctionSignature:BuiltInBot.kt:@OptIn(ExperimentalTime::class) private suspend fun addTopic</ID>
-    <ID>FunctionSignature:BuiltInBot.kt:@OptIn(ExperimentalTime::class) private suspend fun handleCommunityNews</ID>
-    <ID>FunctionSignature:BuiltInBot.kt:private fun readResource: String</ID>
-    <ID>FunctionSignature:BuiltInBot.kt:private suspend fun CoroutineScope.processJob</ID>
-    <ID>FunctionSignature:BuiltInBot.kt:private suspend fun createNewsTopic</ID>
     <ID>FunctionSignature:BuiltInBot.kt:private suspend fun getLatestHasCommentedTopic: Long</ID>
-    <ID>FunctionSignature:BuiltInBot.kt:private suspend fun handleCommunityComment</ID>
-    <ID>FunctionSignature:BuiltInBot.kt:private suspend fun handleTopic</ID>
-    <ID>FunctionSignature:BuiltInBot.kt:private suspend fun processCommunityTask</ID>
     <ID>MultilineExpressionWrapping:BuiltInBot.kt:Thread { println("🔻 收到终止信号，准备退出...") job.cancel() Thread.sleep(1000) }</ID>
     <ID>MultilineExpressionWrapping:BuiltInBot.kt:client.models.generateContent( "gemini-2.5-flash", "$newPrompt\n日期:${year}年${month}月${day}日，领域:${communityInfo.name}", GenerateContentConfig.builder().tools(Tool.builder().googleSearch(GoogleSearch.builder())) .build() )</ID>
     <ID>MultilineExpressionWrapping:BuiltInBot.kt:client.models.generateContent( "gemini-2.5-flash", "$prompt\n${topicInfo.content}", null )</ID>

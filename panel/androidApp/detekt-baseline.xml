@@ -25,8 +25,6 @@
     <ID>FunctionNaming:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 480) @Composable fun PanelInfoTableScreenshot</ID>
     <ID>FunctionNaming:PanelComposeScreenshotTest.kt:@PreviewTest @Preview(showBackground = true, widthDp = 480) @Composable fun PanelTopicCellScreenshot</ID>
     <ID>FunctionSignature:MainActivity.kt:MainActivity.&lt;no name provided&gt;$override fun onAvailableSessionCommandsChanged</ID>
-    <ID>FunctionSignature:PanelApplication.kt:&lt;no name provided&gt;$override suspend fun start</ID>
-    <ID>FunctionSignature:PanelApplication.kt:private fun buildPanelMediaPlayer: MediaPlayerService</ID>
     <ID>MultilineExpressionWrapping:MainActivity.kt:MainActivity$object : MediaController.Listener { override fun onAvailableSessionCommandsChanged( controller: MediaController, commands: SessionCommands ) { super.onAvailableSessionCommandsChanged(controller, commands) Napier.d { "MediaController onAvailableSessionCommandsChanged" } } override fun onDisconnected(controller: MediaController) { super.onDisconnected(controller) Napier.d { "MediaController onDisconnected" } } }</ID>
     <ID>MultilineExpressionWrapping:PanelApplication.kt:&lt;no name provided&gt;$Intent(context, PanelMediaPlayerActivity::class.java).apply { // addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) // addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK) putExtra("id", remoteMediaItem.id) }</ID>
     <ID>MultilineExpressionWrapping:PanelComposeScreenshotTest.kt:TopicInfo.EMPTY.copy( id = 501, content = TopicContent.Plain("Panel topic row rendered from screenshotTest."), createdTime = fixedTime(), commentCount = 2, reactionCount = 3, isEncrypted = true, lastModifiedTime = fixedTime(), )</ID>

@@ -827,15 +827,12 @@
     <ID>FunctionSignature:ActionButtons.kt:@Composable fun SubscriptionButton</ID>
     <ID>FunctionSignature:App.kt:@Composable private fun MainPage</ID>
     <ID>FunctionSignature:App.kt:UIViewModel$fun login</ID>
-    <ID>FunctionSignature:App.kt:fun buildHttpClient: HttpClient</ID>
-    <ID>FunctionSignature:App.kt:fun getAsyncImageLoader</ID>
     <ID>FunctionSignature:App.kt:private fun sendTopicNotification</ID>
     <ID>FunctionSignature:AppNotifications.kt:internal fun showAppNotification</ID>
     <ID>FunctionSignature:AppPreferences.kt:@Composable internal fun ProvideAppPreferences</ID>
     <ID>FunctionSignature:AppRoute.kt:&lt;no name provided&gt;$override fun gotoMemberPage</ID>
     <ID>FunctionSignature:AppRoute.kt:@OptIn(ExperimentalResourceApi::class) fun rootEntryProvider</ID>
     <ID>FunctionSignature:AppTopicContentView.kt:@Composable fun RefBlock</ID>
-    <ID>FunctionSignature:AuthPageChrome.kt:@Composable internal fun AuthPageChrome</ID>
     <ID>FunctionSignature:Build.kt:@Composable fun createFileRefsViewModel</ID>
     <ID>FunctionSignature:Build.kt:@Composable fun createFileViewModel</ID>
     <ID>FunctionSignature:Build.kt:@Composable fun createRoomSearchViewModel</ID>
@@ -844,39 +841,28 @@
     <ID>FunctionSignature:Build.kt:@Composable fun createUserTopicsViewModel: TopicsViewModel</ID>
     <ID>FunctionSignature:Build.kt:@Composable fun createUserViewModel</ID>
     <ID>FunctionSignature:Build.kt:@Composable fun getQuotaViewModel: QuotaViewModel</ID>
-    <ID>FunctionSignature:Build.kt:@Composable fun getUnreadRoomsStateViewModel: UnreadRoomsStateViewModel</ID>
     <ID>FunctionSignature:Build.kt:@Composable fun getUploadViewModel: UploadDetailViewModel</ID>
     <ID>FunctionSignature:Build.kt:@Composable fun getUserOverviewViewModel</ID>
-    <ID>FunctionSignature:Build.kt:@Composable inline fun &lt;reified VM : ViewModel&gt; customMainViewModel: VM</ID>
     <ID>FunctionSignature:CommunityComposePage.kt:@Composable private fun SelectedMemberPolicyDescription</ID>
-    <ID>FunctionSignature:CommunityPage.kt:@Composable private fun CommunityAdminButtons</ID>
     <ID>FunctionSignature:CommunityPage.kt:@Composable private fun CommunityBottomNav</ID>
     <ID>FunctionSignature:CommunityPage.kt:@Composable private fun CommunityCreateButton</ID>
-    <ID>FunctionSignature:CommunityPage.kt:@Composable private fun CommunityMemberStatusButton</ID>
     <ID>FunctionSignature:CommunityPage.kt:@Composable private fun CommunityMenus</ID>
-    <ID>FunctionSignature:CommunityPage.kt:@Composable private fun CommunityNonCompatPageInternal</ID>
     <ID>FunctionSignature:CommunityPage.kt:@Composable private fun CommunityPageInternal</ID>
     <ID>FunctionSignature:CommunityPage.kt:@Composable private fun CommunityRailNav</ID>
     <ID>FunctionSignature:CommunityPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun CommunityDialog</ID>
     <ID>FunctionSignature:CommunityPage.kt:@OptIn(ExperimentalMaterial3WindowSizeClassApi::class) @Composable fun CommunityPage</ID>
     <ID>FunctionSignature:CommunityPage.kt:@Suppress("UnusedMaterial3ScaffoldPaddingParameter") @Composable private fun CommunityCompatPageInternal</ID>
     <ID>FunctionSignature:CommunityPage.kt:private fun buildSearchScope</ID>
-    <ID>FunctionSignature:CommunityRefCell.kt:@Composable private fun CommunityRefCellInternal</ID>
-    <ID>FunctionSignature:CommunitySettingPage.kt:@Suppress("LongMethod") @Composable private fun CommunitySettingInternal</ID>
-    <ID>FunctionSignature:CommunitySettingPage.kt:private suspend fun updateCommunityInfo</ID>
     <ID>FunctionSignature:CommunityTitleComposePage.kt:private suspend fun AppGlobalDialogController.createTitle: Result&lt;TitleInfo&gt;</ID>
     <ID>FunctionSignature:CustomSearchBar.kt:@Composable private fun MergedLeadingIcon</ID>
     <ID>FunctionSignature:CustomSearchBar.kt:@Composable private fun SearchContent</ID>
-    <ID>FunctionSignature:Downloader.kt:DownloaderImpl$@OptIn(ExperimentalTime::class) private suspend fun downloadIfNeed</ID>
     <ID>FunctionSignature:Downloader.kt:DownloaderImpl$private fun pauseIfNeed</ID>
     <ID>FunctionSignature:Downloader.kt:DownloaderImpl$private suspend fun download</ID>
     <ID>FunctionSignature:Downloader.kt:DownloaderImpl$private suspend fun extractFile: Boolean</ID>
     <ID>FunctionSignature:Downloader.kt:DownloaderImpl$suspend fun HttpClient.segmentedDownload</ID>
     <ID>FunctionSignature:Downloader.kt:DownloaderImpl$suspend fun updateDownloadInfo</ID>
     <ID>FunctionSignature:EmojiPicker.kt:@Composable @OptIn(ExperimentalMaterial3Api::class) private fun EmojiItem</ID>
-    <ID>FunctionSignature:EmojiPicker.kt:@Composable @OptIn(ExperimentalMaterial3Api::class) private fun EmojiPickerInternal</ID>
     <ID>FunctionSignature:EmojiPicker.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun EmojiPicker</ID>
-    <ID>FunctionSignature:EmojiPicker.kt:suspend fun GlobalTask&lt;GlobalTaskContext&lt;SimpleUserSessionManager&gt;&gt;.addReaction: Result&lt;ReactionInfo&gt;</ID>
     <ID>FunctionSignature:Event.kt:private suspend fun processOnAddFavorite</ID>
     <ID>FunctionSignature:Event.kt:private suspend fun processOnAddReaction</ID>
     <ID>FunctionSignature:Event.kt:private suspend fun processOnAddSubscription</ID>
@@ -896,15 +882,11 @@
     <ID>FunctionSignature:FileExplorerPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun DownloadInfoPage</ID>
     <ID>FunctionSignature:FileExplorerPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun UploadInfoPage</ID>
     <ID>FunctionSignature:FileExplorerPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable private fun QuotaSheet</ID>
-    <ID>FunctionSignature:FileExplorerPage.kt:private fun getDownloadProgress: Float</ID>
     <ID>FunctionSignature:FilePicker.kt:@Composable fun AudioRecorder</ID>
-    <ID>FunctionSignature:FilePicker.kt:@Composable private fun BoxScope.RecorderButton</ID>
-    <ID>FunctionSignature:FilePicker.kt:@Composable private fun FileListView</ID>
-    <ID>FunctionSignature:FilePicker.kt:PlatformClientFile.Companion$suspend operator fun invoke</ID>
     <ID>FunctionSignature:FilePicker.kt:fun insertContent</ID>
     <ID>FunctionSignature:FilePicker.kt:private fun getUploadDataFromPlatformFile</ID>
-    <ID>FunctionSignature:FilePicker.kt:suspend fun AppGlobalDialogController.selectFileAndUpload</ID>
     <ID>FunctionSignature:FilePicker.kt:suspend fun AppGlobalDialogController.uploadPath: Result&lt;List&lt;FileInfo&gt;?&gt;</ID>
+    <ID>FunctionSignature:FileService.kt:fun &lt;T&gt; T.bindFileService</ID>
     <ID>FunctionSignature:FileUtils.wasmJs.kt:actual suspend fun saveTextToFile</ID>
     <ID>FunctionSignature:FileViewPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun ImageSheet</ID>
     <ID>FunctionSignature:FontSettingsPage.kt:@Composable private fun FontSettingRow</ID>
@@ -917,26 +899,17 @@
     <ID>FunctionSignature:HomePage.kt:@Suppress("UnusedMaterial3ScaffoldPaddingParameter") @Composable private fun HomeNonCompatPage</ID>
     <ID>FunctionSignature:InteractionRow.kt:@Composable fun InteractionRow</ID>
     <ID>FunctionSignature:InteractionRow.kt:@Composable private fun EmojiCell</ID>
-    <ID>FunctionSignature:InteractionRow.kt:@Composable private fun EmojiRow</ID>
-    <ID>FunctionSignature:InteractionRow.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun InteractionRowInternal</ID>
-    <ID>FunctionSignature:MaterialSymbolsOutlined.kt:MaterialSymbolsOutlined$@Composable @OptIn(ExperimentalResourceApi::class) fun rememberIconFont: VariableIconFont</ID>
-    <ID>FunctionSignature:MyCommunitiesPage.kt:@Composable fun CommunityCell</ID>
     <ID>FunctionSignature:MyCommunitiesPage.kt:@Composable fun CommunityCellList</ID>
     <ID>FunctionSignature:MyCommunitiesPage.kt:@Composable fun CommunityList</ID>
     <ID>FunctionSignature:MyCommunitiesPage.kt:@Composable fun CommunityPosterGrid</ID>
     <ID>FunctionSignature:MyCommunitiesPage.kt:@OptIn(ExperimentalHazeMaterialsApi::class) @Composable fun CommunityGrid</ID>
-    <ID>FunctionSignature:MyRoomsPage.kt:@Composable fun RoomIconWithDialog</ID>
     <ID>FunctionSignature:MyRoomsPage.kt:@Composable fun RoomList</ID>
     <ID>FunctionSignature:MyRoomsPage.kt:@Composable private fun RoomCellInternal</ID>
-    <ID>FunctionSignature:MyRoomsPage.kt:@Preview(widthDp = 300) @Composable fun PrimaryRoomCell</ID>
     <ID>FunctionSignature:NotificationChannel.kt:fun getOrCreateNotificationChannel: NotificationManagerCompat</ID>
-    <ID>FunctionSignature:OptionView.kt:@Composable fun SettingOptionResettableView</ID>
-    <ID>FunctionSignature:PrivateKeyAuthPage.kt:@Composable private fun TotpSignInDialog</ID>
     <ID>FunctionSignature:RTCService.kt:DefaultRTCHandle$private fun processCreateAnswer</ID>
     <ID>FunctionSignature:RTCService.kt:DefaultRTCHandle$private fun processCreateOffer</ID>
-    <ID>FunctionSignature:RefCellHandlerProvider.kt:DefaultRefCellHandlerProvider$@Composable override fun communityHandler: LoadingHandler&lt;CommunityInfo&gt;</ID>
+    <ID>FunctionSignature:RefRoute.kt:TopicRoute.Companion$fun parseRefUri: Pair&lt;@Composable (( Map&lt;String, String&gt;, ) -&gt; Unit)?, MutableMap&lt;String, String&gt;&gt;</ID>
     <ID>FunctionSignature:RoomPage.kt:@Composable fun CommonInputButton</ID>
-    <ID>FunctionSignature:RoomPage.kt:@Composable fun RoomSendButton</ID>
     <ID>FunctionSignature:RoomPage.kt:@Composable private fun BoxScope.NewTopicView</ID>
     <ID>FunctionSignature:RoomPage.kt:@Composable private fun RoomAllMembers</ID>
     <ID>FunctionSignature:RoomPage.kt:@Composable private fun RoomFileExplorerButton</ID>
@@ -945,72 +918,45 @@
     <ID>FunctionSignature:RoomPage.kt:@Composable private fun RoomSettings</ID>
     <ID>FunctionSignature:RoomPage.kt:@Composable private fun StartCallButton</ID>
     <ID>FunctionSignature:RoomPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun RoomDialog</ID>
-    <ID>FunctionSignature:RoomPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable private fun InputGroupSuffix</ID>
     <ID>FunctionSignature:RoomPage.kt:private fun checkRoomRouteAndAlert</ID>
-    <ID>FunctionSignature:RoomPage.kt:private suspend fun exitRoom</ID>
-    <ID>FunctionSignature:RoomPage.kt:private suspend fun joinRoom</ID>
     <ID>FunctionSignature:RoomRefCell.kt:@Composable private fun RoomRefCellInternal</ID>
     <ID>FunctionSignature:RoomSettingPage.kt:@Composable private fun RoomSettingInternal</ID>
-    <ID>FunctionSignature:RoomSettingPage.kt:private suspend fun AppGlobalDialogController.updateRoom</ID>
     <ID>FunctionSignature:RoomTitleComposePage.kt:private suspend fun AppGlobalDialogController.createTitle: Result&lt;TitleInfo&gt;</ID>
     <ID>FunctionSignature:TitleComposePage.kt:@Composable @OptIn(ExperimentalMaterial3Api::class) private fun TitleTypeSelector</ID>
     <ID>FunctionSignature:TitleComposePage.kt:@Composable fun TitleComposeInternalEdit</ID>
-    <ID>FunctionSignature:TitleComposePage.kt:@Composable private fun DateTimeNumberField</ID>
     <ID>FunctionSignature:TitleComposePage.kt:@Composable private fun ReceiverEditor</ID>
     <ID>FunctionSignature:TitleComposePage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun ComposeMenu</ID>
-    <ID>FunctionSignature:TitleComposePage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun ObjectPicker</ID>
-    <ID>FunctionSignature:TitleComposePage.kt:@Suppress("LongMethod") @Composable private fun ExpireTimePickerDialog</ID>
-    <ID>FunctionSignature:TitleComposePage.kt:private fun buildExpireTimeText: String</ID>
     <ID>FunctionSignature:TitleComposePage.kt:private suspend fun AppGlobalDialogController.createTitle: Result&lt;TitleInfo&gt;</ID>
     <ID>FunctionSignature:TopicCell.kt:@Composable fun RoomTopicDropdownMenu</ID>
     <ID>FunctionSignature:TopicCell.kt:@Composable private fun TopicContentAndInteraction</ID>
     <ID>FunctionSignature:TopicCell.kt:@OptIn(ExperimentalFoundationApi::class) @Composable fun RoomTopicCellInternal</ID>
-    <ID>FunctionSignature:TopicCell.kt:@OptIn(ExperimentalFoundationApi::class) @Preview @Composable fun TopicCellInternal</ID>
     <ID>FunctionSignature:TopicCell.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun RoomTopicCell</ID>
     <ID>FunctionSignature:TopicComposePage.kt:@Composable @OptIn(ExperimentalMaterial3Api::class) private fun TopicComposeScaffold</ID>
     <ID>FunctionSignature:TopicComposePage.kt:@Composable fun BlockEditTopicPage</ID>
     <ID>FunctionSignature:TopicComposePage.kt:@Composable fun TopicComposePage</ID>
     <ID>FunctionSignature:TopicComposePage.kt:@Composable private fun PreviewTopicInternal</ID>
     <ID>FunctionSignature:TopicComposePage.kt:@Composable private fun TopicComposeSubmitButton</ID>
-    <ID>FunctionSignature:TopicComposePage.kt:@Composable private fun getCommunityTypography: Typography?</ID>
-    <ID>FunctionSignature:TopicComposePage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable private fun TopicComposeInternal</ID>
-    <ID>FunctionSignature:TopicDialog.kt:@Composable private fun BoxScope.TopicTranslateSheetInternal</ID>
     <ID>FunctionSignature:TopicDialog.kt:@OptIn(ExperimentalMaterial3Api::class, InternalComposeUiApi::class) @Composable fun TopicTranslateSheet</ID>
     <ID>FunctionSignature:TopicDialog.kt:suspend fun AppGlobalDialogController.pinOrUnpinTopic: Result&lt;TopicInfo&gt;</ID>
-    <ID>FunctionSignature:TopicList.kt:@Composable fun CommonTopicList</ID>
     <ID>FunctionSignature:TopicList.kt:@Composable fun RoomTopicList</ID>
-    <ID>FunctionSignature:TopicPage.kt:@Composable fun TopicSendButton</ID>
     <ID>FunctionSignature:TopicPage.kt:@Composable private fun TopicInputGroup</ID>
     <ID>FunctionSignature:TopicPage.kt:@Composable private fun TopicPageInputGroup</ID>
     <ID>FunctionSignature:TopicPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun TopicEmojiPicker</ID>
     <ID>FunctionSignature:TopicRefCell.kt:@Composable fun TopicRefCellContent</ID>
-    <ID>FunctionSignature:Uploader.kt:UploaderImpl$suspend fun updateUploadInfo</ID>
     <ID>FunctionSignature:UserCell.kt:@Composable fun UnboundedUserCell</ID>
     <ID>FunctionSignature:UserCell.kt:@Composable fun UserCell</ID>
     <ID>FunctionSignature:UserCell.kt:@Composable fun UserCellInternal</ID>
-    <ID>FunctionSignature:UserDialog.kt:@Composable @OptIn(ExperimentalMaterial3Api::class) fun SelfDialog</ID>
     <ID>FunctionSignature:UserDialog.kt:@Composable @OptIn(ExperimentalMaterial3Api::class) fun UserDialog</ID>
-    <ID>FunctionSignature:UserDialog.kt:@Composable fun SelfUserDetailCard</ID>
-    <ID>FunctionSignature:UserDialog.kt:@Composable fun SelfUserIconWithDialog</ID>
     <ID>FunctionSignature:UserDialog.kt:@Composable fun UserIconWithDialog</ID>
     <ID>FunctionSignature:UserDialog.kt:@Composable private fun UserOverviewRow</ID>
     <ID>FunctionSignature:UserDialog.kt:@Preview @Composable fun UserCard</ID>
     <ID>FunctionSignature:UserDialog.kt:suspend fun AppGlobalDialogController.signOut</ID>
-    <ID>FunctionSignature:UserPage.kt:@Composable private fun UserNonCompatContent</ID>
     <ID>FunctionSignature:UserPage.kt:@Composable private fun UserRailNav</ID>
     <ID>FunctionSignature:UserPage.kt:@OptIn(ExperimentalMaterial3WindowSizeClassApi::class) @Composable private fun UserPageInternal</ID>
     <ID>FunctionSignature:UserPage.kt:@Suppress("UnusedMaterial3ScaffoldPaddingParameter") @Composable private fun UserCompatInternal</ID>
     <ID>FunctionSignature:UserRefCell.kt:@Composable private fun UserRefCellInternal</ID>
     <ID>FunctionSignature:UserSessionTest.kt:fun loginSessionTest</ID>
-    <ID>FunctionSignature:UserSettingPage.kt:@Composable private fun ColumnScope.TotpSetupView</ID>
-    <ID>FunctionSignature:UserSettingPage.kt:@Composable private fun LoadTwoFactorSettings</ID>
-    <ID>FunctionSignature:UserSettingPage.kt:@Composable private fun UserSettingInternal</ID>
     <ID>FunctionSignature:UserSettingPage.kt:private fun getMediaTarget: ObjectTuple</ID>
-    <ID>FunctionSignature:UserSettingPage.kt:private fun kotlinx.coroutines.CoroutineScope.disableTwoFactor</ID>
-    <ID>FunctionSignature:UserSettingPage.kt:private fun kotlinx.coroutines.CoroutineScope.downloadRecoveryCodes</ID>
-    <ID>FunctionSignature:UserSettingPage.kt:private fun kotlinx.coroutines.CoroutineScope.setupTotp</ID>
-    <ID>FunctionSignature:UserSettingPage.kt:private suspend fun updateUser</ID>
-    <ID>FunctionSignature:UserSubscriptionPage.kt:@Preview(widthDp = 300) @Composable fun UserSubscriptionCell</ID>
     <ID>FunctionSignature:WebRTCPage.kt:@Composable private fun AudioToggleButton</ID>
     <ID>FunctionSignature:WebRTCPage.kt:@Composable private fun VideoToggleButton</ID>
     <ID>GlobalCoroutineUsage:UserDialog.kt:GlobalScope.launch { try { val sessionModel = sessionManager.model if (my == null) { val userPass = sessionManager.passHolder.currentUserPass ?: return@launch val data = sessionManager.getData().getOrThrow() val address = userPass.address().getOrThrow() val signature = userPass.signature(finalData(data)).getOrThrow() when (val response = sessionManager.signIn(SignInBody(address, signature)).getOrThrow()) { is SignInResponse.Success -&gt; { sessionModel.updateUser(response.userInfo) sessionModel.updateSignature(data, signature) } SignInResponse.RequiresTotp -&gt; Unit } } else { val aid = my.aid val userInfo = if (aid.isNullOrBlank()) { sessionManager.getUserInfo(my.id) } else { sessionManager.getUserInfoByAid(aid) }.getOrThrow() sessionModel.updateUser(userInfo) } } catch (e: Exception) { Napier.e(e) { "refresh user info" } } }</ID>

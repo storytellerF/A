@@ -16,13 +16,6 @@
     <ID>FunctionSignature:AndroidAppiumTestBase.kt:fun buildContainerEnv: Map&lt;String, String&gt;</ID>
     <ID>FunctionSignature:AndroidAppiumTestBase.kt:suspend fun useDatabaseContainer</ID>
     <ID>FunctionSignature:AppScenarioData.kt:private suspend fun createRoomByApi: Long</ID>
-    <ID>FunctionSignature:AppScenarioData.kt:private suspend fun createTopicByApi: Long</ID>
-    <ID>FunctionSignature:AppScenarioData.kt:suspend fun prepareAsciidocPreviewScenario: AsciidocPreviewScenario</ID>
-    <ID>FunctionSignature:AppScenarioData.kt:suspend fun prepareCommunityRoomScenario: PreparedCommunityRoomScenario</ID>
-    <ID>FunctionSignature:AppScenarioData.kt:suspend fun prepareFavoriteTopicScenario: FavoriteTopicScenario</ID>
-    <ID>FunctionSignature:AppScenarioData.kt:suspend fun prepareSubscriptionTopicScenario: SubscriptionTopicScenario</ID>
-    <ID>FunctionSignature:AppScenarioData.kt:suspend fun waitUntilTopicFavorited</ID>
-    <ID>FunctionSignature:AppScenarioData.kt:suspend fun waitUntilTopicSubscribed</ID>
     <ID>FunctionSignature:AppScenarios.kt:suspend fun scenarioCommunityProfileActions</ID>
     <ID>FunctionSignature:AppScenarios.kt:suspend fun scenarioPublishTopicInCommunity</ID>
     <ID>FunctionSignature:AppScenarios.kt:suspend fun scenarioPublishTopicInRoom</ID>
@@ -32,20 +25,13 @@
     <ID>FunctionSignature:AppiumTestsByHelper.kt:fun testOpenAsciidocPreviewByHelper</ID>
     <ID>FunctionSignature:AppiumTestsByHelper.kt:fun testPanelInjectedSessionByHelper</ID>
     <ID>FunctionSignature:AppiumTestsByHelper.kt:fun testPublishTopicInCommunityByHelper</ID>
-    <ID>FunctionSignature:AppiumTestsByHelper.kt:fun testPublishTopicInCommunityRoomByHelper</ID>
     <ID>FunctionSignature:AppiumTestsByHelper.kt:fun testPublishTopicInUserSpaceByHelper</ID>
     <ID>FunctionSignature:AppiumTestsByHelper.kt:fun testSignInAsSystemUserByHelper</ID>
-    <ID>FunctionSignature:AppiumTestsByHelper.kt:fun testSignUpByHelper</ID>
     <ID>FunctionSignature:AppiumTestsByHelper.kt:fun testSubscribeTopicByHelper</ID>
     <ID>FunctionSignature:InjectedSessionFixtures.kt:fun buildInjectedSessionJson: String</ID>
     <ID>FunctionSignature:PlatformAppiumHelper.kt:DesktopAppiumHelper$private fun String.escapeForDoubleQuotedShell: String</ID>
-    <ID>FunctionSignature:PlatformAppiumHelper.kt:DesktopAppiumHelper$private fun resolveRuntimeClasspath: String</ID>
-    <ID>FunctionSignature:TargetAppiumHelper.kt:AppAppiumHelper$fun readSystemPrivateKey: String</ID>
     <ID>FunctionSignature:TargetAppiumHelper.kt:AppAppiumHelper$private fun createApiSessionManager: UserSessionManager</ID>
     <ID>FunctionSignature:TargetAppiumHelper.kt:PanelAppiumHelper$private fun createApiSessionManager: PanelSessionManager</ID>
-    <ID>FunctionSignature:TargetAppiumHelper.kt:TargetAppiumHelper$protected suspend fun createPreRegisteredInjectedSession: InjectedSession</ID>
-    <ID>FunctionSignature:WasmAppTestDriver.kt:WasmAppTestDriver$override suspend fun assertNotVisibleByText</ID>
-    <ID>FunctionSignature:WasmAppTestDriver.kt:WasmAppTestDriver$private fun inputLengthAttributeMatchesValue: Boolean</ID>
     <ID>MissingPackageDeclaration:AndroidAppTestDriver.kt:.AndroidAppTestDriver.kt</ID>
     <ID>MissingPackageDeclaration:AndroidAppiumTestBase.kt:.AndroidAppiumTestBase.kt</ID>
     <ID>MissingPackageDeclaration:AppScenarioData.kt:.AppScenarioData.kt</ID>

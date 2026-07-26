@@ -2,15 +2,8 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>FunctionSignature:WasmAppiumTest.kt:WasmAppiumTest$@Test fun `test community profile actions from joined community`</ID>
-    <ID>FunctionSignature:WasmAppiumTest.kt:WasmAppiumTest$@Test fun `test favorite topic from topic page`</ID>
     <ID>FunctionSignature:WasmAppiumTest.kt:WasmAppiumTest$@Test fun `test opens asciidoc preview`</ID>
-    <ID>FunctionSignature:WasmAppiumTest.kt:WasmAppiumTest$@Test fun `test publish topic in community room`</ID>
-    <ID>FunctionSignature:WasmAppiumTest.kt:WasmAppiumTest$@Test fun `test publish topic in joined community`</ID>
-    <ID>FunctionSignature:WasmAppiumTest.kt:WasmAppiumTest$@Test fun `test publish topic in user space`</ID>
     <ID>FunctionSignature:WasmAppiumTest.kt:WasmAppiumTest$@Test fun `test sign in as system user`</ID>
-    <ID>FunctionSignature:WasmAppiumTest.kt:WasmAppiumTest$@Test fun `test sign in by injected session`</ID>
-    <ID>FunctionSignature:WasmAppiumTest.kt:WasmAppiumTest$@Test fun `test subscribe topic from community page`</ID>
     <ID>MissingPackageDeclaration:WasmAppiumTest.kt:.WasmAppiumTest.kt</ID>
     <ID>MultilineExpressionWrapping:WasmAppiumTest.kt:WasmAppiumTest$(driver as org.openqa.selenium.JavascriptExecutor) .executeScript("return window.appiumErrors || []")</ID>
     <ID>MultilineExpressionWrapping:WasmAppiumTest.kt:WasmAppiumTest$File("build/wasmDistribution") .takeIf { File(it, "index.html").isFile } ?: error("Wasm distribution was not prepared; run :app:wasmAppium:prepareWasmDistribution first.")</ID>

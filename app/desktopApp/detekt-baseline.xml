@@ -2,7 +2,6 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>FunctionSignature:JvmMain.kt:&lt;no name provided&gt;$override suspend fun start</ID>
     <ID>MultilineExpressionWrapping:JvmMain.kt:&lt;no name provided&gt;$MediaPlaySession( remoteMediaItem = remoteMediaItem, playList = playList, uuids = listOf(localMediaPlaySession.uuid), videoSize = null )</ID>
     <ID>MultilineExpressionWrapping:JvmMain.kt:Button("OK").apply { addActionListener { dispose() exitProcess(1) } }</ID>
     <ID>MultilineExpressionWrapping:JvmMain.kt:object : ClientFileProvider { override suspend fun getDownloader(): Downloader = DownloaderImpl(uiViewModel, taskRegister) override suspend fun getUploader(): Uploader = UploaderImpl(uiViewModel, taskRegister) }</ID>

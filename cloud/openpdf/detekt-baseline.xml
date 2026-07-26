@@ -7,18 +7,14 @@
     <ID>BlankLineBetweenWhenConditions:OpenPdf.kt:ParagraphVisitor$when (node.type) { MarkdownTokenTypes.TEXT -&gt; { val text = node.getTextInNode(content).toString() paragraph.add(text) } // Emphasis &amp; strong MarkdownElementTypes.EMPH -&gt; addStyledBlock(node, Font.ITALIC, 1) MarkdownElementTypes.STRONG -&gt; addStyledBlock(node, Font.BOLD, 2) // Inline code MarkdownElementTypes.CODE_SPAN -&gt; addCodeSpan(node) MarkdownTokenTypes.WHITE_SPACE -&gt; paragraph.add(" ") // Links (render as text (url)) to avoid PDF-specific anchors MarkdownElementTypes.INLINE_LINK, MarkdownElementTypes.FULL_REFERENCE_LINK, MarkdownElementTypes.SHORT_REFERENCE_LINK -&gt; addLink(node) GFMElementTypes.STRIKETHROUGH -&gt; addStyledBlock(node, Font.STRIKETHRU, 2) }</ID>
     <ID>ClassSignature:OpenPdf.kt:OpenPdfVisitor$LeftBarCellEvent : PdfPCellEvent</ID>
     <ID>ClassSignature:OpenPdf.kt:ParagraphVisitor : Visitor</ID>
-    <ID>FunctionSignature:OpenPdf.kt:@Suppress("LongMethod") private fun buildSignatureTable</ID>
-    <ID>FunctionSignature:OpenPdf.kt:OpenPdfFontBundle$fun boldFont: Font</ID>
     <ID>FunctionSignature:OpenPdf.kt:OpenPdfFontBundle$fun italicFont: Font</ID>
     <ID>FunctionSignature:OpenPdf.kt:OpenPdfFontBundle$fun linkFont: Font</ID>
     <ID>FunctionSignature:OpenPdf.kt:OpenPdfFontBundle$fun monoBoldFont: Font</ID>
     <ID>FunctionSignature:OpenPdf.kt:OpenPdfFontBundle$fun monoFont: Font</ID>
     <ID>FunctionSignature:OpenPdf.kt:OpenPdfFontBundle$fun monoFontWithColor: Font</ID>
     <ID>FunctionSignature:OpenPdf.kt:OpenPdfFontBundle$fun styledFont: Font</ID>
-    <ID>FunctionSignature:OpenPdf.kt:OpenPdfVisitor$private fun addHighlightCodeFence</ID>
     <ID>FunctionSignature:OpenPdf.kt:OpenPdfVisitor.LeftBarCellEvent$override fun cellLayout</ID>
     <ID>FunctionSignature:OpenPdf.kt:OpenPdfVisitor.RoundedBackgroundCellEvent$override fun cellLayout</ID>
-    <ID>FunctionSignature:OpenPdf.kt:private fun signPdfWithKeyStore</ID>
     <ID>MultilineExpressionWrapping:OpenPdf.kt:OpenPdfVisitor$Highlights.Builder().theme(SyntaxThemes.atom(darkMode = false)) .code(codeFence).build().getHighlights().sortedBy { it.location.start }</ID>
     <ID>MultilineExpressionWrapping:OpenPdf.kt:OpenPdfVisitor$RoundedBackgroundCellEvent( radius = 6f, fillColor = Color(245, 245, 245), strokeColor = Color(220, 220, 220) )</ID>
     <ID>MultilineExpressionWrapping:OpenPdf.kt:OpenPdfVisitor$if (isSetext) { raw.lineSequence().firstOrNull()?.trim().orEmpty() } else { raw.replace(Regex("^#{1,6}\\s*"), "").trim() }</ID>

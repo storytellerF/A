@@ -27,20 +27,13 @@
     <ID>FunctionSignature:Application.kt:private fun Application.configurePlugin</ID>
     <ID>FunctionSignature:Application.kt:private fun buildLog: String</ID>
     <ID>FunctionSignature:AuthRoute.kt:fun Route.bindUnprotectedAccountRoute</ID>
-    <ID>FunctionSignature:FileRoute.kt:@OptIn(ExperimentalUuidApi::class) suspend fun RoutingContext.uploadMedia: Result&lt;FileInfoListResponse?&gt;</ID>
     <ID>FunctionSignature:FileRoute.kt:private suspend fun RoutingContext.processFormData</ID>
     <ID>FunctionSignature:FileTest.kt:suspend fun UserSessionManager.downloadFile</ID>
     <ID>FunctionSignature:Pagination.kt:@Suppress("UNCHECKED_CAST") fun &lt;R : Any&gt; getPageToken: R?</ID>
-    <ID>FunctionSignature:RoomSearchTest.kt:suspend fun UserSessionManager.expectedCurrentUserRoomCount</ID>
-    <ID>FunctionSignature:RoomTest.kt:private suspend fun TestMate.runRtcCalls: CopyOnWriteArrayList&lt;RoomFrame&gt;</ID>
     <ID>FunctionSignature:RoomTest.kt:suspend fun UserSessionManager.createJoinRoomTitleForTest: TitleInfo</ID>
-    <ID>FunctionSignature:RoomTest.kt:suspend fun UserSessionManager.createPublicRoomForTest: RoomInfo</ID>
     <ID>FunctionSignature:RoomTest.kt:suspend fun UserSessionManager.expectedRoomCountForAllRoomList</ID>
     <ID>FunctionSignature:RoomTest.kt:suspend fun UserSessionManager.expectedRoomCountForJoinedRoomList</ID>
-    <ID>FunctionSignature:RoomTest.kt:suspend fun UserSessionManager.expectedRoomCountForJoinedRooms</ID>
     <ID>FunctionSignature:RoomTest.kt:suspend fun waitForRtcFrame</ID>
-    <ID>FunctionSignature:Route.kt:inline fun &lt;reified R : Any, reified T : Any&gt; Parameters.checkParameter: Result&lt;R?&gt;</ID>
-    <ID>FunctionSignature:Route.kt:inline fun &lt;reified T : Any, reified R : Any&gt; RoutingContext.checkParameter: Result&lt;R?&gt;</ID>
     <ID>FunctionSignature:TestBuilder.kt:@OptIn(ExperimentalUuidApi::class) fun test</ID>
     <ID>FunctionSignature:TestBuilder.kt:private fun doTest</ID>
     <ID>FunctionSignature:TestBuilder.kt:private fun startTestContainerTest</ID>
@@ -48,13 +41,9 @@
     <ID>FunctionSignature:TestBuilder.kt:private suspend fun useDatabaseContainer</ID>
     <ID>FunctionSignature:TestBuilder.kt:private suspend fun useElasticTestContainer</ID>
     <ID>FunctionSignature:TestBuilder.kt:private suspend fun useMinioTestContainer</ID>
-    <ID>FunctionSignature:TestBuilder.kt:suspend fun &lt;R1, R2&gt; TestMate.loginPanelSession: SessionOuterTuple&lt;R2&gt;</ID>
     <ID>FunctionSignature:TestBuilder.kt:suspend fun &lt;R2&gt; TestMate.noneSession: R2</ID>
-    <ID>FunctionSignature:TestBuilder.kt:suspend fun &lt;R&gt; TestMate.attachPanelSession: SessionOuterTuple&lt;R&gt;</ID>
     <ID>FunctionSignature:TestBuilder.kt:suspend fun &lt;R&gt; TestMate.withCliBackend: R</ID>
     <ID>FunctionSignature:TestBuilder.kt:suspend fun &lt;R&gt; TestMate.withWorkerBackend: R</ID>
-    <ID>FunctionSignature:TopicTest.kt:suspend fun UserSessionManager.createTopicInRoomAndWait</ID>
-    <ID>FunctionSignature:TopicTest.kt:suspend fun UserSessionManager.upload</ID>
     <ID>MultilineExpressionWrapping:AdminFileTest.kt:AdminFileTest$searchFiles( SearchQuery(word = "document") ).getOrThrow().data</ID>
     <ID>MultilineExpressionWrapping:AdminFileTest.kt:AdminFileTest$searchFiles( SearchQuery(word = "test") ).getOrThrow().data</ID>
     <ID>MultilineExpressionWrapping:AdminFileTest.kt:AdminFileTest$searchFiles( SearchQuery(word = "user") ).getOrThrow().data</ID>

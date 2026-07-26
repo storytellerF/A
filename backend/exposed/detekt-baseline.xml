@@ -44,28 +44,19 @@
     <ID>FunctionExpressionBody:Users.kt:{ return Users.selectAll().where(function) }</ID>
     <ID>FunctionExpressionBody:Users.kt:{ return with(ChildAccounts) { ChildAccount( row[uid], row[encryptedPrivateKey], row[encryptedAesKey], row[hostId], row[remark], row[encryptedEncryptionPrivateKey] ) } }</ID>
     <ID>FunctionExpressionBody:Users.kt:{ return with(Users) { User( row[Aids.value], row[encryptionPublicKey], row[publicKey], row[address], row[icon], row[nickname], row[id], row[createdTime], row[acgAmount], row[passType], row[algoType], row[notificationId], row[status], ) } }</ID>
-    <ID>FunctionReturnTypeSpacing:ExposedTopicDatabase.kt:ExposedTopicDatabase$override suspend fun getAllTopicPagination: Result&lt;PaginationResult&lt;Topic&gt;&gt;</ID>
-    <ID>FunctionSignature:ExposedAdminDatabase.kt:ExposedAdminDatabase$override suspend fun batchAddEncryptTopicKeys: Result&lt;Unit&gt;</ID>
-    <ID>FunctionSignature:ExposedAdminDatabase.kt:ExposedAdminDatabase$override suspend fun batchAddTopics</ID>
     <ID>FunctionSignature:ExposedAdminDatabase.kt:ExposedAdminDatabase$override suspend fun getPanelLogs</ID>
     <ID>FunctionSignature:ExposedAdminDatabase.kt:ExposedAdminDatabase$override suspend fun getTaskRecords</ID>
-    <ID>FunctionSignature:ExposedAdminDatabase.kt:ExposedAdminDatabase$private suspend fun insertTopics</ID>
     <ID>FunctionSignature:ExposedCommunityDatabase.kt:ExposedCommunityDatabase$fun Query.bindPosterSearch: Query</ID>
     <ID>FunctionSignature:ExposedCommunityDatabase.kt:ExposedCommunityDatabase$fun Query.buildCommunitySearchQuery: Query</ID>
-    <ID>FunctionSignature:ExposedCommunityDatabase.kt:ExposedCommunityDatabase$override suspend fun createCommunity: Result&lt;Pair&lt;Community, Member&gt;&gt;</ID>
-    <ID>FunctionSignature:ExposedCommunityDatabase.kt:ExposedCommunityDatabase$override suspend fun getCommunityPaginationResult</ID>
     <ID>FunctionSignature:ExposedCommunityDatabase.kt:ExposedCommunityDatabase$override suspend fun getRawCommunities: Result&lt;List&lt;RawCommunity&gt;&gt;</ID>
-    <ID>FunctionSignature:ExposedCommunityDatabase.kt:ExposedCommunityDatabase$override suspend fun getRawCommunity: Result&lt;RawCommunity?&gt;</ID>
     <ID>FunctionSignature:ExposedCommunityDatabase.kt:ExposedCommunityDatabase$override suspend fun updateCommunity</ID>
     <ID>FunctionSignature:ExposedCommunityDatabase.kt:ExposedCommunityDatabase$private suspend fun getCommunityByPredicate</ID>
     <ID>FunctionSignature:ExposedCommunityDatabase.kt:ExposedCommunityDatabase$private suspend fun getCommunityCountByPredicate</ID>
     <ID>FunctionSignature:ExposedCommunityDatabase.kt:ExposedCommunityDatabase$private suspend fun getCommunityListByPredicate</ID>
     <ID>FunctionSignature:ExposedCommunityDatabase.kt:ExposedCommunityDatabase$suspend fun processCommunityToRawCommunity</ID>
     <ID>FunctionSignature:ExposedContainerDatabase.kt:ExposedContainerDatabase$override suspend fun deleteMember</ID>
-    <ID>FunctionSignature:ExposedContainerDatabase.kt:ExposedContainerDatabase$override suspend fun getContainerInfo: Result&lt;Map&lt;PrimaryKey, ContainerInfo&gt;&gt;</ID>
     <ID>FunctionSignature:ExposedContainerDatabase.kt:ExposedContainerDatabase$override suspend fun getLatestTopicInContainer</ID>
     <ID>FunctionSignature:ExposedContainerDatabase.kt:ExposedContainerDatabase$override suspend fun getMember</ID>
-    <ID>FunctionSignature:ExposedContainerDatabase.kt:ExposedContainerDatabase$override suspend fun getMemberByIds: Result&lt;List&lt;Pair&lt;Long, NestedMemberInfo?&gt;&gt;&gt;</ID>
     <ID>FunctionSignature:ExposedContainerDatabase.kt:ExposedContainerDatabase$override suspend fun getMemberPaginationResult</ID>
     <ID>FunctionSignature:ExposedContainerDatabase.kt:ExposedContainerDatabase$override suspend fun getMemberWithUserByUids</ID>
     <ID>FunctionSignature:ExposedContainerDatabase.kt:ExposedContainerDatabase$override suspend fun getMemberWithUserPaginationResult</ID>
@@ -77,7 +68,6 @@
     <ID>FunctionSignature:ExposedDatabaseFactory.kt:ExposedDatabaseSession$private fun sendExplainResult</ID>
     <ID>FunctionSignature:ExposedDatabaseFactory.kt:ExposedDatabaseSession$private suspend fun &lt;R&gt; explainQuery</ID>
     <ID>FunctionSignature:ExposedFavoriteDatabase.kt:ExposedFavoriteDatabase$override suspend fun getFavorite</ID>
-    <ID>FunctionSignature:ExposedFavoriteDatabase.kt:ExposedFavoriteDatabase$override suspend fun getHasFavorite</ID>
     <ID>FunctionSignature:ExposedFavoriteDatabase.kt:ExposedFavoriteDatabase$override suspend fun getUserFavorites</ID>
     <ID>FunctionSignature:ExposedFavoriteDatabase.kt:ExposedFavoriteDatabase$private suspend fun getFavoriteCountByPredicate</ID>
     <ID>FunctionSignature:ExposedFavoriteDatabase.kt:ExposedFavoriteDatabase$private suspend fun getFavoriteListByPredicate</ID>
@@ -85,10 +75,8 @@
     <ID>FunctionSignature:ExposedFileDatabase.kt:ExposedFileDatabase$override suspend fun getFileRecordPaginationList</ID>
     <ID>FunctionSignature:ExposedFileDatabase.kt:ExposedFileDatabase$override suspend fun getFileRefsByFileId</ID>
     <ID>FunctionSignature:ExposedFileDatabase.kt:ExposedFileDatabase$override suspend fun getUploadRecordPaginationList</ID>
-    <ID>FunctionSignature:ExposedFileDatabase.kt:ExposedFileDatabase$override suspend fun insertFileRecord</ID>
     <ID>FunctionSignature:ExposedFileDatabase.kt:ExposedFileDatabase$override suspend fun insertFileRefs</ID>
     <ID>FunctionSignature:ExposedFileDatabase.kt:ExposedFileDatabase$override suspend fun insertUploadRecord: Result&lt;UploadRecord&gt;</ID>
-    <ID>FunctionSignature:ExposedFileDatabase.kt:ExposedFileDatabase$override suspend fun updateUploadRecordStatus: Result&lt;List&lt;FileRecord&gt;&gt;</ID>
     <ID>FunctionSignature:ExposedFileDatabase.kt:ExposedFileDatabase$private suspend fun getFileRecordCountByPredicate</ID>
     <ID>FunctionSignature:ExposedFileDatabase.kt:ExposedFileDatabase$private suspend fun getFileRecordListByPredicate</ID>
     <ID>FunctionSignature:ExposedFileDatabase.kt:ExposedFileDatabase$private suspend fun getFileRefCountByPredicate</ID>
@@ -100,11 +88,9 @@
     <ID>FunctionSignature:ExposedReactionDatabase.kt:ExposedReactionDatabase$override suspend fun deleteReaction</ID>
     <ID>FunctionSignature:ExposedReactionDatabase.kt:ExposedReactionDatabase$override suspend fun getReactionCountForEmoji</ID>
     <ID>FunctionSignature:ExposedReactionDatabase.kt:ExposedReactionDatabase$override suspend fun getReactionInfo</ID>
-    <ID>FunctionSignature:ExposedReactionDatabase.kt:ExposedReactionDatabase$override suspend fun getReactionInfoPaginationResult</ID>
     <ID>FunctionSignature:ExposedReactionDatabase.kt:ExposedReactionDatabase$override suspend fun getReactionRecordInfo</ID>
     <ID>FunctionSignature:ExposedReactionDatabase.kt:ExposedReactionDatabase$override suspend fun getUserReactionRecordCount</ID>
     <ID>FunctionSignature:ExposedReactionDatabase.kt:ExposedReactionDatabase$override suspend fun getUserReactionRecordsPaginationResult</ID>
-    <ID>FunctionSignature:ExposedReactionDatabase.kt:ExposedReactionDatabase$override suspend fun hasReactedEmoji: Result&lt;List&lt;Pair&lt;Long, String&gt;&gt;&gt;</ID>
     <ID>FunctionSignature:ExposedReactionDatabase.kt:ExposedReactionDatabase$override suspend fun hasReactedForEmoji</ID>
     <ID>FunctionSignature:ExposedReactionDatabase.kt:ExposedReactionDatabase$override suspend fun insertReaction</ID>
     <ID>FunctionSignature:ExposedReactionDatabase.kt:ExposedReactionDatabase$override suspend fun statsReactionRecord</ID>
@@ -113,9 +99,7 @@
     <ID>FunctionSignature:ExposedRoomDatabase.kt:ExposedRoomDatabase$fun Query.buildRoomSearchWhereQuery: Query</ID>
     <ID>FunctionSignature:ExposedRoomDatabase.kt:ExposedRoomDatabase$override suspend fun createRoom: Result&lt;Room&gt;</ID>
     <ID>FunctionSignature:ExposedRoomDatabase.kt:ExposedRoomDatabase$override suspend fun getPrivateRoomPaginationResult</ID>
-    <ID>FunctionSignature:ExposedRoomDatabase.kt:ExposedRoomDatabase$override suspend fun getRawRoom: Result&lt;RawRoom?&gt;</ID>
     <ID>FunctionSignature:ExposedRoomDatabase.kt:ExposedRoomDatabase$override suspend fun getRawRooms: Result&lt;List&lt;RawRoom&gt;&gt;</ID>
-    <ID>FunctionSignature:ExposedRoomDatabase.kt:ExposedRoomDatabase$override suspend fun getRoomPaginationResult</ID>
     <ID>FunctionSignature:ExposedRoomDatabase.kt:ExposedRoomDatabase$override suspend fun getRoomPubKeyPaginationResult</ID>
     <ID>FunctionSignature:ExposedRoomDatabase.kt:ExposedRoomDatabase$override suspend fun updateRoom</ID>
     <ID>FunctionSignature:ExposedRoomDatabase.kt:ExposedRoomDatabase$private suspend fun getRoomByPredicate</ID>
@@ -123,7 +107,6 @@
     <ID>FunctionSignature:ExposedRoomDatabase.kt:ExposedRoomDatabase$private suspend fun getRoomListByPredicate</ID>
     <ID>FunctionSignature:ExposedRoomDatabase.kt:ExposedRoomDatabase$suspend fun processRoomListToRawRoom: Result&lt;List&lt;RawRoom&gt;&gt;</ID>
     <ID>FunctionSignature:ExposedSubscriptionDatabase.kt:ExposedSubscriptionDatabase$override suspend fun addSubscription</ID>
-    <ID>FunctionSignature:ExposedSubscriptionDatabase.kt:ExposedSubscriptionDatabase$override suspend fun getHasSubscription</ID>
     <ID>FunctionSignature:ExposedSubscriptionDatabase.kt:ExposedSubscriptionDatabase$override suspend fun getLatestSubscriptionSentLog</ID>
     <ID>FunctionSignature:ExposedSubscriptionDatabase.kt:ExposedSubscriptionDatabase$override suspend fun getSubscription</ID>
     <ID>FunctionSignature:ExposedSubscriptionDatabase.kt:ExposedSubscriptionDatabase$override suspend fun getSubscriptionsByObjectId</ID>
@@ -134,22 +117,18 @@
     <ID>FunctionSignature:ExposedTitleDatabase.kt:ExposedTitleDatabase$private suspend fun getTitleCountByPredicate</ID>
     <ID>FunctionSignature:ExposedTitleDatabase.kt:ExposedTitleDatabase$private suspend fun getTitleListByPredicate</ID>
     <ID>FunctionSignature:ExposedTopicDatabase.kt:ExposedTopicDatabase$@OptIn(ExperimentalStdlibApi::class) override suspend fun saveEncryptedTopic</ID>
-    <ID>FunctionSignature:ExposedTopicDatabase.kt:ExposedTopicDatabase$@OptIn(ExperimentalStdlibApi::class) suspend fun getEncryptedTopicContents: Result&lt;List&lt;Pair&lt;PrimaryKey, TopicContent&gt;&gt;&gt;</ID>
     <ID>FunctionSignature:ExposedTopicDatabase.kt:ExposedTopicDatabase$override suspend fun createTitle</ID>
     <ID>FunctionSignature:ExposedTopicDatabase.kt:ExposedTopicDatabase$override suspend fun getAllTopicPagination: Result&lt;PaginationResult&lt;Topic&gt;&gt;</ID>
     <ID>FunctionSignature:ExposedTopicDatabase.kt:ExposedTopicDatabase$override suspend fun getLatestTopic: Result&lt;List&lt;Topic&gt;&gt;</ID>
     <ID>FunctionSignature:ExposedTopicDatabase.kt:ExposedTopicDatabase$override suspend fun getTopic: Result&lt;Topic?&gt;</ID>
     <ID>FunctionSignature:ExposedTopicDatabase.kt:ExposedTopicDatabase$override suspend fun getTopicCommentCount: Result&lt;List&lt;Pair&lt;Long, Long&gt;&gt;&gt;</ID>
-    <ID>FunctionSignature:ExposedTopicDatabase.kt:ExposedTopicDatabase$override suspend fun getTopicContentFromByteArray: Result&lt;Map&lt;PrimaryKey, TopicContent&gt;&gt;</ID>
     <ID>FunctionSignature:ExposedTopicDatabase.kt:ExposedTopicDatabase$override suspend fun getTopicList</ID>
     <ID>FunctionSignature:ExposedTopicDatabase.kt:ExposedTopicDatabase$override suspend fun getTopicListByIds: Result&lt;List&lt;Topic&gt;&gt;</ID>
     <ID>FunctionSignature:ExposedTopicDatabase.kt:ExposedTopicDatabase$override suspend fun getTopicRootTuple</ID>
     <ID>FunctionSignature:ExposedTopicDatabase.kt:ExposedTopicDatabase$override suspend fun getUserCommentCount: Result&lt;Long&gt;</ID>
-    <ID>FunctionSignature:ExposedTopicDatabase.kt:ExposedTopicDatabase$override suspend fun getUserCommentedTopicsPaginationResult: Result&lt;PaginationResult&lt;Topic&gt;&gt;</ID>
     <ID>FunctionSignature:ExposedTopicDatabase.kt:ExposedTopicDatabase$override suspend fun isUserCommented: Result&lt;List&lt;Long&gt;&gt;</ID>
     <ID>FunctionSignature:ExposedTopicDatabase.kt:ExposedTopicDatabase$override suspend fun savePlainTopic</ID>
     <ID>FunctionSignature:ExposedTopicDatabase.kt:ExposedTopicDatabase$override suspend fun updateTopicPinned</ID>
-    <ID>FunctionSignature:ExposedTopicDatabase.kt:ExposedTopicDatabase$private suspend fun &lt;T&gt; getTopicByPredicate: Result&lt;T?&gt;</ID>
     <ID>FunctionSignature:ExposedTopicDatabase.kt:ExposedTopicDatabase$private suspend fun getTopicListByPredicate: Result&lt;List&lt;Topic&gt;&gt;</ID>
     <ID>FunctionSignature:ExposedTopicDatabase.kt:ExposedTopicDatabase$suspend fun getTopicCountByPredicate</ID>
     <ID>FunctionSignature:ExposedUserDatabase.kt:ExposedUserDatabase$override suspend fun addAcgForUser</ID>
@@ -161,7 +140,6 @@
     <ID>FunctionSignature:ExposedUserDatabase.kt:ExposedUserDatabase$override suspend fun updateUserInfo</ID>
     <ID>FunctionSignature:ExposedUserDatabase.kt:ExposedUserDatabase$override suspend fun updateUserStatus</ID>
     <ID>FunctionSignature:ExposedUserDatabase.kt:ExposedUserDatabase$private suspend fun &lt;T&gt; getUserByPredicate</ID>
-    <ID>FunctionSignature:ExposedUserDatabase.kt:ExposedUserDatabase$private suspend fun &lt;T&gt; getUserListByPredicate</ID>
     <ID>FunctionSignature:ExposedUserDatabase.kt:ExposedUserDatabase$private suspend fun getUserAuthDataBy</ID>
     <ID>FunctionSignature:ExposedUserDatabase.kt:ExposedUserDatabase$private suspend fun getUserCountByPredicate</ID>
     <ID>FunctionSignature:ExposedUserDatabase.kt:ExposedUserDatabase$private suspend fun processUserToRawUser: Result&lt;List&lt;RawUser&gt;&gt;</ID>

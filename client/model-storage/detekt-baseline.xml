@@ -28,7 +28,6 @@
     <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { is UserLogCollection.UserLogs -&gt; "user_logs_$uid" } }</ID>
     <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { is UserReactionRecordCollection.UserReactionRecords -&gt; "user_reaction_records_$uid" } }</ID>
     <ID>FunctionExpressionBody:ModelStorage.kt:{ return when (this) { is UserSubscriptionCollection.UserSubscriptions -&gt; "user_subscriptions_$uid" } }</ID>
-    <ID>FunctionSignature:ModelStorage.kt:suspend fun CommunityInfoStorage.update</ID>
     <ID>FunctionSignature:ModelStorage.kt:suspend fun FileInfoStorage.update</ID>
     <ID>FunctionSignature:ModelStorage.kt:suspend fun RoomInfoStorage.update</ID>
     <ID>FunctionSignature:ModelStorage.kt:suspend fun TitleInfoStorage.update</ID>

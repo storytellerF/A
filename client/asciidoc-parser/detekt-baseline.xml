@@ -5,7 +5,6 @@
     <ID>EmptyFunctionBlock:PlatformHeadlessTest.android.kt:PlatformHeadlessTest${ }</ID>
     <ID>FunctionNaming:ParseTest.kt:ParseTest$@Test fun `test parse ascii doc`</ID>
     <ID>FunctionSignature:AsciidocConverter.jvmAndroid.kt:actual suspend fun convertAsciidoc: String</ID>
-    <ID>FunctionSignature:AsciidocConverter.wasmJs.kt:actual suspend fun convertAsciidoc: String</ID>
     <ID>MissingPackageDeclaration:ParseTest.kt:.ParseTest.kt</ID>
     <ID>MissingPackageDeclaration:PlatformHeadlessTest.android.kt:.PlatformHeadlessTest.android.kt</ID>
     <ID>MissingPackageDeclaration:PlatformHeadlessTest.jvm.kt:.PlatformHeadlessTest.jvm.kt</ID>

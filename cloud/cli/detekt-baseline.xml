@@ -9,25 +9,13 @@
     <ID>FunctionExpressionBody:AddPreset.kt:AddPreset${ return getAlgo(algoType).run { val derPublicKey = getDerPublicKeyFromPrivateKey( File(parentDir, privatePath).readText().replace("\r\n", "\n") ).getOrThrow() val ad = calcAddress(derPublicKey).getOrThrow() Pair(derPublicKey, ad) } }</ID>
     <ID>FunctionExpressionBody:AddPreset.kt:{ return path.endsWith("download") || path.endsWith(".download.yaml") || path.endsWith(".download.yml") }</ID>
     <ID>FunctionSignature:AddPreset.kt:AddPreset$private fun buildEncryptedTopicTuples</ID>
-    <ID>FunctionSignature:AddPreset.kt:AddPreset$private fun getDocumentsFromTuples: List&lt;TopicDocument&gt;</ID>
     <ID>FunctionSignature:AddPreset.kt:AddPreset$private suspend fun Backend.addTitles</ID>
-    <ID>FunctionSignature:AddPreset.kt:AddPreset$private suspend fun Backend.addTopics</ID>
-    <ID>FunctionSignature:AddPreset.kt:AddPreset$private suspend fun Backend.addTopicsIntoRoom</ID>
     <ID>FunctionSignature:AddPreset.kt:AddPreset$private suspend fun Backend.batchAddSubscriptions</ID>
-    <ID>FunctionSignature:AddPreset.kt:AddPreset$private suspend fun Backend.uploadEncryptedTopicMedias</ID>
-    <ID>FunctionSignature:AddPreset.kt:AddPreset$private suspend fun Backend.uploadTopicMedias</ID>
-    <ID>FunctionSignature:AddPreset.kt:AddPreset$private suspend fun Backend.uploadUserIcon: PrimaryKey</ID>
-    <ID>FunctionSignature:AddPreset.kt:AddPreset$private suspend fun buildEncryptedTopicContents: List&lt;EncryptedTopicTuple&gt;</ID>
-    <ID>FunctionSignature:AddPreset.kt:AddPreset$private suspend fun buildEncryptedTopicKeys</ID>
     <ID>FunctionSignature:AddPreset.kt:AddPreset$private suspend fun downloadFileIfNeed: File?</ID>
-    <ID>FunctionSignature:AddPreset.kt:AddPreset$private suspend fun getCommunityMembers: List&lt;Member&gt;</ID>
-    <ID>FunctionSignature:AddPreset.kt:AddPreset$private suspend fun getPubKeyAndAddress: Pair&lt;String, String&gt;</ID>
     <ID>FunctionSignature:AddPreset.kt:AddPreset$private suspend fun getRoomMembers: List&lt;Member&gt;</ID>
     <ID>FunctionSignature:AddPreset.kt:AddPreset$suspend fun Backend.uploadFile: List&lt;FileInfo&gt;</ID>
-    <ID>FunctionSignature:AddPreset.kt:internal fun repackArchiveWithExclusionsAndInclusionsInPlace: File</ID>
     <ID>FunctionSignature:AddPreset.kt:internal suspend fun downloadPresetFileIfNeed: File?</ID>
     <ID>FunctionSignature:AddPreset.kt:private fun createProcessedPresetFileIfNeeded: File</ID>
-    <ID>FunctionSignature:AddPreset.kt:private fun zipDirectoryWithFilter</ID>
     <ID>FunctionSignature:AddPreset.kt:suspend fun downloadWithResume</ID>
     <ID>FunctionSignature:AddPresetTest.kt:AddPresetTest$private fun assertZipEntries</ID>
     <ID>FunctionSignature:GeneratePresetKeysCommand.kt:internal suspend fun generatePresetDilithiumKeys: List&lt;File&gt;</ID>

@@ -50,28 +50,21 @@
     <ID>FunctionExpressionBody:LuceneUserSearchService.kt:LuceneUserSearchServiceFactory${ return buildLuceneSearchService(env) { path, isInMemory -&gt; LuceneUserSearchService(path.resolve("user"), isInMemory) } }</ID>
     <ID>FunctionExpressionBody:LuceneUserSearchService.kt:LuceneUserSearchServiceFactory${ return env["SEARCH_SERVICE"] == "lucene" }</ID>
     <ID>FunctionSignature:Lucene.kt:Lucene$suspend fun &lt;R&gt; useLucene</ID>
-    <ID>FunctionSignature:Lucene.kt:fun &lt;D, T : LuceneDocumentCompanion&lt;D&gt;&gt; FSDirectory.searchDocumentList: PaginationResult&lt;D&gt;</ID>
     <ID>FunctionSignature:Lucene.kt:fun &lt;T : LuceneDocument&gt; FSDirectory.saveDocumentList</ID>
     <ID>FunctionSignature:Lucene.kt:fun FSDirectory.cleanAll</ID>
     <ID>FunctionSignature:LuceneCommunitySearchService.kt:LuceneCommunityDocument.Companion$override fun restore: CommunityDocument</ID>
-    <ID>FunctionSignature:LuceneCommunitySearchService.kt:LuceneCommunitySearchService$override suspend fun searchDocument: Result&lt;PaginationResult&lt;CommunityDocument&gt;&gt;</ID>
     <ID>FunctionSignature:LuceneCommunitySearchService.kt:LuceneCommunitySearchService$private fun buildQuery: Query</ID>
     <ID>FunctionSignature:LuceneFileSearchService.kt:LuceneFileDocument.Companion$override fun restore: FileDocument</ID>
-    <ID>FunctionSignature:LuceneFileSearchService.kt:LuceneFileSearchService$override suspend fun searchDocument: Result&lt;PaginationResult&lt;FileDocument&gt;&gt;</ID>
     <ID>FunctionSignature:LuceneFileSearchService.kt:LuceneFileSearchService$private fun buildQuery: Query</ID>
     <ID>FunctionSignature:LuceneMemberSearchService.kt:LuceneMemberDocument.Companion$override fun restore: MemberDocument</ID>
-    <ID>FunctionSignature:LuceneMemberSearchService.kt:LuceneMemberSearchService$override suspend fun searchDocument: Result&lt;PaginationResult&lt;MemberDocument&gt;&gt;</ID>
     <ID>FunctionSignature:LuceneMemberSearchService.kt:LuceneMemberSearchService$private fun buildQuery: Query</ID>
     <ID>FunctionSignature:LuceneRoomSearchService.kt:LuceneRoomDocument.Companion$override fun restore: RoomDocument</ID>
-    <ID>FunctionSignature:LuceneRoomSearchService.kt:LuceneRoomSearchService$override suspend fun searchDocument: Result&lt;PaginationResult&lt;RoomDocument&gt;&gt;</ID>
     <ID>FunctionSignature:LuceneRoomSearchService.kt:LuceneRoomSearchService$private fun buildQuery: Query</ID>
     <ID>FunctionSignature:LuceneTopicSearchService.kt:LuceneTopicDocument.Companion$override fun restore: TopicDocument</ID>
-    <ID>FunctionSignature:LuceneTopicSearchService.kt:LuceneTopicSearchService$override suspend fun searchDocument: Result&lt;PaginationResult&lt;TopicDocument&gt;&gt;</ID>
     <ID>FunctionSignature:LuceneTopicSearchService.kt:LuceneTopicSearchService$private fun BooleanQuery.Builder.addLongQuery</ID>
     <ID>FunctionSignature:LuceneTopicSearchService.kt:LuceneTopicSearchService$private fun BooleanQuery.Builder.addMustLongQuery</ID>
     <ID>FunctionSignature:LuceneTopicSearchService.kt:LuceneTopicSearchService$private fun buildQuery: Query</ID>
     <ID>FunctionSignature:LuceneUserSearchService.kt:LuceneUserDocument.Companion$override fun restore: UserDocument</ID>
-    <ID>FunctionSignature:LuceneUserSearchService.kt:LuceneUserSearchService$override suspend fun searchDocument: Result&lt;PaginationResult&lt;UserDocument&gt;&gt;</ID>
     <ID>FunctionSignature:LuceneUserSearchService.kt:LuceneUserSearchService$private fun buildQuery: Query</ID>
     <ID>MultilineExpressionWrapping:Lucene.kt:documents.map { document -&gt; document.save() }</ID>
     <ID>MultilineExpressionWrapping:Lucene.kt:if (luceneBase.isNullOrBlank()) { Napier.i { "use in-memory document service" } MemoryFileSystemBuilder.newLinux().build().getPath("/documents") to true } else { val p = Paths.get(luceneBase) Napier.i { "use file system lucene ${p.toFile().canonicalPath}" } p to false }</ID>

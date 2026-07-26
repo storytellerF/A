@@ -8,7 +8,6 @@
     <ID>Filename:main.kt:com.storyteller_f.a.panel_cli_app.main.kt</ID>
     <ID>FunctionName:main.kt:@Suppress("ComplexMethod", "LongMethod") @Composable fun App</ID>
     <ID>FunctionNaming:main.kt:@Suppress("ComplexMethod", "LongMethod") @Composable fun App</ID>
-    <ID>FunctionSignature:main.kt:@Suppress("CyclomaticComplexMethod", "LongMethod") suspend fun handleInput</ID>
     <ID>MultilineExpressionWrapping:main.kt:Modifier.onKeyEvent { event -&gt; if (event.key == "Enter") { submitChannel.trySend(inputBuffer) inputBuffer = "" } else if (event.key == "Backspace") { if (inputBuffer.isNotEmpty()) inputBuffer = inputBuffer.dropLast(1) } else if (event.key == "Space") { inputBuffer += " " } else if (event.key.length == 1) { inputBuffer += event.key } true }</ID>
     <ID>MultilineExpressionWrapping:main.kt:buildAnnotatedString { withStyle(SpanStyle(color = TitleGreen)) { append("&gt; ") } append(inputBuffer) append("\u2588") }</ID>
     <ID>MultilineExpressionWrapping:main.kt:createSimplePanelSessionManager( passHolder, AcceptAllCookiesStorage() ) { model, cookieManager -&gt; HttpClient(OkHttp) { defaultClientConfigureForPanel(cookieManager, model, passHolder, httpUrl) } }</ID>

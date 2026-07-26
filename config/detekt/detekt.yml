@@ -612,7 +612,7 @@ style:
     maxChainedCalls: 5
   MaxLineLength:
     active: true
-    maxLineLength: 160
+    maxLineLength: 120
     excludePackageStatements: true
     excludeImportStatements: true
     excludeCommentStatements: true
@@ -775,7 +775,7 @@ ktlint:
     active: true
     autoCorrect: true
     indentSize: 4
-    maxLineLength: 160
+    maxLineLength: 120
   BlockCommentInitialStarAlignment:
     active: true
     autoCorrect: true
@@ -795,7 +795,7 @@ ktlint:
   ContextReceiverMapping:
     active: true
     autoCorrect: true
-    maxLineLength: 160
+    maxLineLength: 120
     indentSize: 4
   DiscouragedCommentLocation:
     active: true
@@ -821,13 +821,13 @@ ktlint:
   FunctionReturnTypeSpacing:
     active: true
     autoCorrect: true
-    maxLineLength: 160
+    maxLineLength: 120
   FunctionSignature:
     active: true
     autoCorrect: true
     forceMultilineWhenParameterCountGreaterOrEqualThan: 2147483647
     functionBodyExpressionWrapping: 'default'
-    maxLineLength: 160
+    maxLineLength: 120
     indentSize: 4
   FunctionStartOfBodySpacing:
     active: true
@@ -857,7 +857,7 @@ ktlint:
     indentSize: 4
   MaximumLineLength:
     active: true
-    maxLineLength: 160
+    maxLineLength: 120
     ignoreBackTickedIdentifier: false
   ModifierListSpacing:
     active: true
@@ -937,20 +937,20 @@ ktlint:
   ParameterListWrapping:
     active: true
     autoCorrect: true
-    maxLineLength: 160
+    maxLineLength: 120
     indentSize: 4
   ParameterWrapping:
     active: true
     autoCorrect: true
     indentSize: 4
-    maxLineLength: 160
+    maxLineLength: 120
   PropertyName:
     active: true
   PropertyWrapping:
     active: true
     autoCorrect: true
     indentSize: 4
-    maxLineLength: 160
+    maxLineLength: 120
   SpacingAroundAngleBrackets:
     active: true
     autoCorrect: true
@@ -1027,7 +1027,7 @@ ktlint:
     active: true
     autoCorrect: true
     indentSize: 4
-    maxLineLength: 160
+    maxLineLength: 120
 
 libraries:
   active: true

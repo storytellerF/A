@@ -51,50 +51,18 @@
     <ID>FunctionExpressionBody:UserSubscription.kt:{ return UserSubscriptionInfo(id, uid, objectId, objectType, createdTime) }</ID>
     <ID>FunctionExpressionBody:UserTwoFactor.kt:{ return TwoFactorSettingsInfo( enabled = this?.enabled == true, type = this?.type?.takeIf { enabled }, ) }</ID>
     <ID>FunctionSignature:Backend.kt:suspend fun &lt;T&gt; Backend.addIfNotExists: Result&lt;T?&gt;</ID>
-    <ID>FunctionSignature:Backend.kt:suspend fun getImageDimension: Dimension?</ID>
-    <ID>FunctionSignature:Community.kt:fun RawCommunity.toCommunityIfo</ID>
-    <ID>FunctionSignature:CommunitySearchService.kt:CommunitySearchService$suspend fun searchDocument: Result&lt;PaginationResult&lt;CommunityDocument&gt;&gt;</ID>
-    <ID>FunctionSignature:Database.kt:AdminDatabase$suspend fun batchAddTopics: Result&lt;Unit&gt;</ID>
     <ID>FunctionSignature:Database.kt:AdminDatabase$suspend fun getTaskRecords: Result&lt;PaginationResult&lt;TaskRecord&gt;&gt;</ID>
     <ID>FunctionSignature:Database.kt:CombinedDatabase$suspend fun getLatestRawTopic</ID>
     <ID>FunctionSignature:Database.kt:CombinedDatabase$suspend fun getRawTopic</ID>
-    <ID>FunctionSignature:Database.kt:CombinedDatabase$suspend fun getRawTopicByParentId</ID>
     <ID>FunctionSignature:Database.kt:CombinedDatabase$suspend fun getRawTopicListByIds</ID>
     <ID>FunctionSignature:Database.kt:CombinedDatabase$suspend fun processTopicToRawTopic: Result&lt;List&lt;RawTopic&gt;&gt;</ID>
-    <ID>FunctionSignature:Database.kt:CommunityDatabase$suspend fun getRawCommunity: Result&lt;RawCommunity?&gt;</ID>
-    <ID>FunctionSignature:Database.kt:ContainerDatabase$suspend fun getLatestTopicInContainer: Result&lt;Map&lt;PrimaryKey, PrimaryKey?&gt;&gt;</ID>
-    <ID>FunctionSignature:Database.kt:ContainerDatabase$suspend fun getMemberByIds: Result&lt;List&lt;Pair&lt;Long, NestedMemberInfo?&gt;&gt;&gt;</ID>
-    <ID>FunctionSignature:Database.kt:ContainerDatabase$suspend fun getMemberPaginationResult: Result&lt;PaginationResult&lt;RawUser&gt;&gt;</ID>
-    <ID>FunctionSignature:Database.kt:ContainerDatabase$suspend fun getMemberWithUserByUids: Result&lt;List&lt;Pair&lt;Member, RawUser&gt;&gt;&gt;</ID>
-    <ID>FunctionSignature:Database.kt:ContainerDatabase$suspend fun getMemberWithUserPaginationResult: Result&lt;PaginationResult&lt;Pair&lt;Member, RawUser&gt;&gt;&gt;</ID>
-    <ID>FunctionSignature:Database.kt:FileDatabase$suspend fun getFileRecordPaginationList: Result&lt;PaginationResult&lt;FileRecord&gt;&gt;</ID>
-    <ID>FunctionSignature:Database.kt:FileDatabase$suspend fun getFileRefsByFileId: Result&lt;PaginationResult&lt;FileRef&gt;&gt;</ID>
-    <ID>FunctionSignature:Database.kt:FileDatabase$suspend fun getUploadRecordPaginationList: Result&lt;PaginationResult&lt;UploadRecord&gt;&gt;</ID>
-    <ID>FunctionSignature:Database.kt:FileDatabase$suspend fun insertFileRecord: Result&lt;Unit&gt;</ID>
-    <ID>FunctionSignature:Database.kt:FileDatabase$suspend fun updateUploadRecordStatus: Result&lt;List&lt;FileRecord&gt;&gt;</ID>
-    <ID>FunctionSignature:Database.kt:ReactionDatabase$suspend fun getReactionCountForEmoji: Result&lt;List&lt;Triple&lt;Long, Long, PrimaryKey?&gt;&gt;&gt;</ID>
-    <ID>FunctionSignature:Database.kt:ReactionDatabase$suspend fun getUserReactionRecordsPaginationResult: Result&lt;PaginationResult&lt;ReactionRecord&gt;&gt;</ID>
-    <ID>FunctionSignature:Database.kt:RoomDatabase$suspend fun getPrivateRoomPaginationResult: Result&lt;PaginationResult&lt;RawRoom&gt;&gt;</ID>
-    <ID>FunctionSignature:Database.kt:RoomDatabase$suspend fun getRawRoom: Result&lt;RawRoom?&gt;</ID>
-    <ID>FunctionSignature:Database.kt:RoomDatabase$suspend fun getRoomPubKeyPaginationResult: Result&lt;PaginationResult&lt;UserPubKeyInfo&gt;&gt;</ID>
-    <ID>FunctionSignature:Database.kt:SubscriptionDatabase$suspend fun getSubscriptionsByObjectId: Result&lt;List&lt;UserSubscription&gt;&gt;</ID>
-    <ID>FunctionSignature:Database.kt:SubscriptionDatabase$suspend fun getUserSubscriptions: Result&lt;PaginationResult&lt;UserSubscription&gt;&gt;</ID>
-    <ID>FunctionSignature:Database.kt:TopicDatabase$suspend fun getTopicContentFromByteArray: Result&lt;Map&lt;PrimaryKey, TopicContent&gt;&gt;</ID>
-    <ID>FunctionSignature:Database.kt:TopicDatabase$suspend fun getUserCommentedTopicsPaginationResult: Result&lt;PaginationResult&lt;Topic&gt;&gt;</ID>
-    <ID>FunctionSignature:Database.kt:UserDatabase$suspend fun getRawChildAccountPaginationListByHost: Result&lt;PaginationResult&lt;RawChildAccount&gt;&gt;</ID>
     <ID>FunctionSignature:Database.kt:suspend fun &lt;T, R&gt; Result&lt;PaginationResult&lt;T&gt;&gt;.mapPagingNotNull</ID>
     <ID>FunctionSignature:Database.kt:suspend fun &lt;T, R&gt; Result&lt;PaginationResult&lt;T&gt;&gt;.mapPagingResultNotNull</ID>
     <ID>FunctionSignature:Database.kt:suspend fun &lt;T, R&gt; Result&lt;PaginationResult&lt;T&gt;&gt;.mapPagingResultNullable</ID>
     <ID>FunctionSignature:Database.kt:suspend fun &lt;T, R&gt; Result&lt;PaginationResult&lt;T&gt;?&gt;.mapPagingIfNotNull</ID>
-    <ID>FunctionSignature:Database.kt:suspend fun &lt;T, R&gt; Result&lt;PaginationResult&lt;T&gt;?&gt;.mapPagingResultIfNotNullNullable</ID>
-    <ID>FunctionSignature:Database.kt:suspend fun &lt;T&gt; paginationFromResults: Result&lt;PaginationResult&lt;T&gt;&gt;</ID>
-    <ID>FunctionSignature:Database.kt:suspend fun &lt;T&gt; paginationNullableFromResults: Result&lt;PaginationResult&lt;T&gt;?&gt;</ID>
     <ID>FunctionSignature:Fetch.kt:fun&lt;T&gt; fixedSort: List&lt;T&gt;</ID>
-    <ID>FunctionSignature:FileRecord.kt:fun FileRecord.toFileInfo: FileInfo</ID>
     <ID>FunctionSignature:FileSearchService.kt:FileSearchService$suspend fun searchDocument: Result&lt;PaginationResult&lt;FileDocument&gt;&gt;</ID>
     <ID>FunctionSignature:MemberSearchService.kt:MemberSearchService$suspend fun searchDocument: Result&lt;PaginationResult&lt;MemberDocument&gt;&gt;</ID>
-    <ID>FunctionSignature:ObjectStorageService.kt:ObjectStorageService$suspend fun compose: Result&lt;ObjectStorageWriteRecord&gt;</ID>
-    <ID>FunctionSignature:ObjectStorageService.kt:ObjectStorageService$suspend fun getWithPresignContext: Result&lt;List&lt;ObjectStorageRecord&gt;&gt;</ID>
     <ID>FunctionSignature:RoomSearchService.kt:RoomSearchService$suspend fun searchDocument: Result&lt;PaginationResult&lt;RoomDocument&gt;&gt;</ID>
     <ID>FunctionSignature:TopicSearchService.kt:TopicSearchService$suspend fun searchDocument: Result&lt;PaginationResult&lt;TopicDocument&gt;&gt;</ID>
     <ID>FunctionSignature:UserSearchService.kt:UserSearchService$suspend fun searchDocument: Result&lt;PaginationResult&lt;UserDocument&gt;&gt;</ID>

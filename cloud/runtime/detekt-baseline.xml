@@ -19,8 +19,6 @@
     <ID>FunctionSignature:Auth.kt:fun ApplicationCall.saveSuccessSession</ID>
     <ID>FunctionSignature:Auth.kt:fun ApplicationCall.saveTwoFactorPendingSession</ID>
     <ID>FunctionSignature:Auth.kt:inline fun AuthenticationConfig.custom</ID>
-    <ID>FunctionSignature:Auth.kt:suspend fun ApplicationCall.checkAdminApiRequest: Result&lt;CustomPrincipal?&gt;</ID>
-    <ID>FunctionSignature:Auth.kt:suspend fun ApplicationCall.checkApiRequest: Result&lt;CustomPrincipal?&gt;</ID>
     <ID>FunctionSignature:Auth.kt:suspend fun Backend.getAdminAuthData: Result&lt;UserAuthData?&gt;</ID>
     <ID>FunctionSignature:Auth.kt:suspend fun Backend.getUserAuthData: Result&lt;UserAuthData?&gt;</ID>
     <ID>FunctionSignature:ClientIp.kt:fun ApplicationCall.remoteIp: List&lt;Pair&lt;String, String?&gt;&gt;</ID>

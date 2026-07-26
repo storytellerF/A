@@ -13,14 +13,11 @@
     <ID>FunctionSignature:RTC.kt:private suspend fun notifyPeerLeft</ID>
     <ID>FunctionSignature:RTC.kt:private suspend fun processSendAnswer</ID>
     <ID>FunctionSignature:RTC.kt:private suspend fun processSendOffer</ID>
-    <ID>FunctionSignature:RTC.kt:private suspend fun processStartCall</ID>
     <ID>FunctionSignature:RTC.kt:private suspend fun processStopCall</ID>
     <ID>FunctionSignature:RTC.kt:private suspend fun processUpdateCallMediaState</ID>
     <ID>FunctionSignature:RTC.kt:private suspend fun syncRtcMediaState</ID>
     <ID>FunctionSignature:RTC.kt:suspend fun processSendCandidate</ID>
-    <ID>FunctionSignature:Websocket.kt:private suspend fun DefaultWebSocketServerSession.processUserMessage</ID>
     <ID>FunctionSignature:Websocket.kt:private suspend fun dispatchNewMessage: Nothing</ID>
-    <ID>FunctionSignature:Websocket.kt:suspend fun DefaultWebSocketServerSession.processNewMessage</ID>
     <ID>FunctionSignature:Websocket.kt:suspend fun DefaultWebSocketServerSession.webSocketContent</ID>
     <ID>FunctionSignature:Websocket.kt:suspend fun dispatchNewMessageFrame</ID>
     <ID>FunctionSignature:WsApplication.kt:private fun Application.configureWsRoute</ID>

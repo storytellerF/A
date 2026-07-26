@@ -29,15 +29,12 @@
     <ID>FunctionExpressionBody:UserPass.kt:RawUserPass${ return getAlgo(rawUSerPass.algo).verify(rawUSerPass.authKey.derPublicKey, signature, data) }</ID>
     <ID>FunctionExpressionBody:UserPass.kt:RawUserPass${ return runCatching { // Generate new key pair for child account val algo = getAlgo(childAlgoType) val (pemPrivateKey, pemPublicKey) = algo.generatePemKeyPair().getOrThrow() val derPrivateKey = algo.getDerPrivateKey(pemPrivateKey).getOrThrow() val derPublicKey = algo.getDerPublicKeyFromPem(pemPublicKey).getOrThrow() val (derEncryptionPrivateKey, derEncryptionPublicKey) = if (childAlgoType == AlgoType.DILITHIUM) { val encAlgo = (algo.encryptionAlgo as com.storyteller_f.shared.Type2Algo) val (encPriv, _) = encAlgo.generateEncryptionPemKeyPair().getOrThrow() encAlgo.getDerEncryptionPrivateKeyFromPemPrivateKey(encPriv).getOrThrow() to encAlgo.getDerEncryptionPublicKeyFromPemPrivateKey(encPriv).getOrThrow() } else { null to null } // Encrypt the child's private key with AES val (encryptedPrivateKey, aesKey) = encryptDataByAES(derPrivateKey).getOrThrow() val encryptedEncryptionPrivateKey = derEncryptionPrivateKey?.let { encryptDataByAES(it, aesKey).getOrThrow().toHexString() } // Get user's public key for encryption val authKey = rawUSerPass.authKey val parentAlgo = getAlgo(authKey.algo) val encryptedAesKey = if (authKey is AuthKey.Dilithium) { parentAlgo.encryptionAlgo.kemEncrypt(authKey.derEncryptionPublicKey, aesKey) } else { parentAlgo.encryptionAlgo.kemEncrypt(authKey.derPublicKey, aesKey) }.getOrThrow() CustomApi.Accounts.ChildAccounts.AddChildAccountRequest( encryptedPrivateKey = encryptedPrivateKey.toHexString(), encryptedAesKey = encryptedAesKey.toHexString(), derPublicKey = derPublicKey, algoType = childAlgoType, encryptedEncryptionPrivateKey = encryptedEncryptionPrivateKey, encryptionPublicKey = derEncryptionPublicKey ) } }</ID>
     <ID>FunctionExpressionBody:WebSocketClient.kt:WebSocketClientImpl${ return passHolder.currentUserPass != null &amp;&amp; sessionModel.userHandler.data.value == userInfo }</ID>
-    <ID>FunctionSignature:AppRequest.kt:@OptIn(ExperimentalStdlibApi::class) suspend fun DefaultClientWebSocketSession.sendMessage</ID>
     <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.abortChunkUpload</ID>
     <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.completeChunkUpload</ID>
     <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.copy</ID>
     <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.createTopic</ID>
     <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.deleteReaction</ID>
     <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.getChunkStatus</ID>
-    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.getCommunityRooms</ID>
-    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.getCommunityTopics</ID>
     <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.getFileList</ID>
     <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.getFileRefs</ID>
     <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.getMediaByName</ID>
@@ -45,44 +42,28 @@
     <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.getReactions</ID>
     <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.getRecommendTopics</ID>
     <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.getRoomMembersPublicKeys</ID>
-    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.getRoomTopics</ID>
     <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.getSubscriptions</ID>
-    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.getTopicList</ID>
-    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.getTopicTopics</ID>
     <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.getUserCommunities</ID>
-    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.getUserJoinedCommunities</ID>
     <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.getUserRooms</ID>
-    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.getUserTopics</ID>
-    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.initChunkUpload</ID>
     <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.removeSubscription</ID>
     <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.searchAllMembers</ID>
-    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.searchCommunityMembers</ID>
     <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.searchCurrentUserRooms</ID>
     <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.searchFiles</ID>
     <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.searchRoomMembers</ID>
     <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.updateCommunityInfo</ID>
     <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.updateRoomInfo</ID>
-    <ID>FunctionSignature:AppRequest.kt:suspend fun UserSessionManager.upload</ID>
-    <ID>FunctionSignature:CustomSlf4jLogger.kt:CustomSlf4jLogger$override fun handleNormalizedLoggingCall</ID>
     <ID>FunctionSignature:LoadingState.kt:suspend fun &lt;T&gt; LoadingHandler&lt;T&gt;.request</ID>
     <ID>FunctionSignature:PanelRequest.kt:suspend fun PanelSessionManager.getPanelLogs</ID>
     <ID>FunctionSignature:PanelRequest.kt:suspend fun PanelSessionManager.getTaskRecords</ID>
-    <ID>FunctionSignature:PanelRequest.kt:suspend fun PanelSessionManager.getTopicTopics</ID>
-    <ID>FunctionSignature:PanelRequest.kt:suspend fun PanelSessionManager.getUserReceivedTitles</ID>
-    <ID>FunctionSignature:PanelRequest.kt:suspend fun PanelSessionManager.updateUserStatus</ID>
     <ID>FunctionSignature:SessionManager.kt:@OptIn(ExperimentalStdlibApi::class) suspend fun processEncryptedTopic: List&lt;TopicInfo&gt;</ID>
     <ID>FunctionSignature:SessionManager.kt:suspend fun PanelSessionManager.panelSignIn: PanelAccountInfo</ID>
     <ID>FunctionSignature:SessionManager.kt:suspend fun PanelSessionManager.panelSignUp: PanelAccountInfo</ID>
     <ID>FunctionSignature:SessionManager.kt:suspend fun UserSessionManager.userSignIn: UserInfo</ID>
     <ID>FunctionSignature:SessionManager.kt:suspend fun UserSessionManager.userSignUp: UserInfo</ID>
-    <ID>FunctionSignature:SessionManager.kt:suspend fun prepareSignInFromPrivateKey: Result&lt;PreparedSignInParam&gt;</ID>
     <ID>FunctionSignature:SessionManagerKt.kt:suspend fun PanelSessionManager.getPanelUserSignInPass: SignResult&lt;PanelAccountInfo&gt;</ID>
     <ID>FunctionSignature:SessionManagerKt.kt:suspend fun PanelSessionManager.getPanelUserSignUpPass: SignResult&lt;PanelAccountInfo&gt;</ID>
     <ID>FunctionSignature:SessionManagerKt.kt:suspend fun UserSessionManager.getUserSignInPass: SignResult&lt;UserInfo&gt;</ID>
     <ID>FunctionSignature:SessionManagerKt.kt:suspend fun UserSessionManager.getUserSignUpPass: SignResult&lt;UserInfo&gt;</ID>
-    <ID>FunctionSignature:Test.kt:CountingUserPass$override suspend fun encryptChildAccount: Result&lt;com.storyteller_f.a.api.CustomApi.Accounts.ChildAccounts.AddChildAccountRequest&gt;</ID>
-    <ID>FunctionSignature:UserPass.kt:RawUserPass$@OptIn(ExperimentalEncodingApi::class) override suspend fun encryptChildAccount: Result&lt;CustomApi.Accounts.ChildAccounts.AddChildAccountRequest&gt;</ID>
-    <ID>FunctionSignature:UserPass.kt:UserPass$suspend fun encryptChildAccount: Result&lt;CustomApi.Accounts.ChildAccounts.AddChildAccountRequest&gt;</ID>
     <ID>ImportOrdering:SessionManagerKt.kt:import com.storyteller_f.a.api.SignInBody import com.storyteller_f.a.api.SignInResponse import com.storyteller_f.a.api.SignUpBody import kotlinx.coroutines.CoroutineScope import kotlinx.coroutines.Job import kotlinx.coroutines.cancelAndJoin import kotlinx.coroutines.launch import com.storyteller_f.shared.model.PanelAccountInfo import com.storyteller_f.shared.model.UserInfo import com.storyteller_f.shared.utils.mapResult</ID>
     <ID>Indentation:SessionManagerKt.kt: </ID>
     <ID>MissingPackageDeclaration:Test.kt:.Test.kt</ID>

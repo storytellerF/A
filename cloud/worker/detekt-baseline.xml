@@ -6,7 +6,6 @@
     <ID>FunctionExpressionBody:IntroTask.kt:{ return runCatching { val adminUserResult = database.user.getRawUser(ObjectFetch.AidFetch("System")).getOrThrow() val adminAid = adminUserResult?.user?.id ?: throw Exception("System user not found") rawUsers.forEach { sendTopicToNotificationRoom(adminAid, it.user, "Hello, ${it.user.nickname}") database.admin.createTaskRecord( TaskRecord(SnowflakeFactory.nextId(), now(), TaskRecordType.INTRO, it.user.id) ) Napier.i(tag = "intro") { "send hello success" } } } }</ID>
     <ID>FunctionExpressionBody:TitleTask.kt:{ return buildString { appendLine("You received a new title!") appendLine("Title: ${title.name}") appendLine("From: System") appendLine("Created: ${title.createdTime}") if (title.expiresAt != null) { appendLine("Expires: ${title.expiresAt}") } } }</ID>
     <ID>FunctionSignature:IntroTask.kt:private suspend fun Backend.createNotificationRoom: Room</ID>
-    <ID>FunctionSignature:IntroTask.kt:private suspend fun Backend.getNotificationRoom: Room?</ID>
     <ID>FunctionSignature:IntroTask.kt:suspend fun Backend.sedTopicAtRoom</ID>
     <ID>FunctionSignature:SubscriptionTask.kt:private fun generateTopicSubscriptionContent: String?</ID>
     <ID>FunctionSignature:SubscriptionTask.kt:private fun generateTopicSubscriptionContentForCommunity</ID>

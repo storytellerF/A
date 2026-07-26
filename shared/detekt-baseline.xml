@@ -109,7 +109,6 @@
     <ID>FunctionName:sha3.kt:external fun keccak_256: String</ID>
     <ID>FunctionNaming:ContentTest.kt:ContentTest$@Test fun `test check content`</ID>
     <ID>FunctionNaming:sha3.kt:external fun keccak_256: String</ID>
-    <ID>FunctionSignature:Hash.jvmAndroid.kt:@OptIn(DelicateCryptographyApi::class) internal actual fun md5Platform: ByteArray</ID>
     <ID>FunctionSignature:Hash.wasmJs.kt:internal actual fun md5Platform: ByteArray</ID>
     <ID>FunctionSignature:Markdown.kt:fun extractHeadParagraph: String</ID>
     <ID>FunctionSignature:Markdown.kt:fun generateImageMarkdownContent: String</ID>
@@ -119,30 +118,17 @@
     <ID>FunctionSignature:Signature.jvmAndroid.kt:&lt;no name provided&gt;$override suspend fun verify: Result&lt;Boolean&gt;</ID>
     <ID>FunctionSignature:Signature.jvmAndroid.kt:&lt;no name provided&gt;.&lt;no name provided&gt;$override suspend fun kemDecrypt: Result&lt;ByteArray&gt;</ID>
     <ID>FunctionSignature:Signature.jvmAndroid.kt:&lt;no name provided&gt;.&lt;no name provided&gt;$override suspend fun kemEncrypt: Result&lt;ByteArray&gt;</ID>
-    <ID>FunctionSignature:Signature.jvmAndroid.kt:@OptIn(DelicateCryptographyApi::class) actual suspend fun ripemd160Platform: ByteArray</ID>
     <ID>FunctionSignature:Signature.jvmAndroid.kt:CryptoJvm$@Suppress("DeprecatedProvider") @OptIn(ExperimentalStdlibApi::class) fun decrypt: Result&lt;String&gt;</ID>
     <ID>FunctionSignature:Signature.kt:AlgoP256$override suspend fun verify: Result&lt;Boolean&gt;</ID>
     <ID>FunctionSignature:Signature.kt:AlgoP256.&lt;no name provided&gt;$override suspend fun kemDecrypt: Result&lt;ByteArray&gt;</ID>
     <ID>FunctionSignature:Signature.kt:AlgoP256.&lt;no name provided&gt;$override suspend fun kemEncrypt: Result&lt;ByteArray&gt;</ID>
     <ID>FunctionSignature:Signature.kt:suspend fun &lt;T&gt; algoRunCatching: Result&lt;T&gt;</ID>
-    <ID>FunctionSignature:Signature.kt:suspend fun Algo.decryptMessage: Result&lt;String&gt;</ID>
     <ID>FunctionSignature:Signature.kt:suspend fun buildEncryptedTopicContent: TopicContent.Encrypted</ID>
-    <ID>FunctionSignature:Signature.wasmJs.kt:&lt;no name provided&gt;$override suspend fun calcAddress: Result&lt;String&gt;</ID>
     <ID>FunctionSignature:Signature.wasmJs.kt:&lt;no name provided&gt;$override suspend fun generatePemKeyPair: Result&lt;Pair&lt;String, String&gt;&gt;</ID>
-    <ID>FunctionSignature:Signature.wasmJs.kt:&lt;no name provided&gt;$override suspend fun getDerPrivateKey: Result&lt;String&gt;</ID>
-    <ID>FunctionSignature:Signature.wasmJs.kt:&lt;no name provided&gt;$override suspend fun getDerPublicKeyFromPem: Result&lt;String&gt;</ID>
-    <ID>FunctionSignature:Signature.wasmJs.kt:&lt;no name provided&gt;$override suspend fun getPemPublicKeyFromDer: Result&lt;String&gt;</ID>
-    <ID>FunctionSignature:Signature.wasmJs.kt:&lt;no name provided&gt;$override suspend fun signature: Result&lt;String&gt;</ID>
     <ID>FunctionSignature:Signature.wasmJs.kt:&lt;no name provided&gt;.&lt;no name provided&gt;$override suspend fun getDerEncryptionPrivateKeyFromPemPrivateKey: Result&lt;String&gt;</ID>
     <ID>FunctionSignature:Signature.wasmJs.kt:&lt;no name provided&gt;.&lt;no name provided&gt;$override suspend fun getDerEncryptionPublicKeyFromPemPrivateKey: Result&lt;String&gt;</ID>
     <ID>FunctionSignature:Signature.wasmJs.kt:&lt;no name provided&gt;.&lt;no name provided&gt;$override suspend fun getPemEncryptionPrivateKeyFromDerPrivateKey: Result&lt;String&gt;</ID>
-    <ID>FunctionSignature:Signature.wasmJs.kt:&lt;no name provided&gt;.&lt;no name provided&gt;$override suspend fun kemDecrypt: Result&lt;ByteArray&gt;</ID>
-    <ID>FunctionSignature:Signature.wasmJs.kt:&lt;no name provided&gt;.&lt;no name provided&gt;$override suspend fun kemEncrypt: Result&lt;ByteArray&gt;</ID>
-    <ID>FunctionSignature:Signature.wasmJs.kt:actual suspend fun getDerPrivateKeyP256: Result&lt;String&gt;</ID>
-    <ID>FunctionSignature:Signature.wasmJs.kt:actual suspend fun ripemd160Platform: ByteArray</ID>
-    <ID>FunctionSignature:Strings.wasmJs.kt:@Suppress("UnusedParameter") private fun checkContentRaw: Boolean</ID>
     <ID>FunctionSignature:Strings.wasmJs.kt:actual fun checkContent: Result&lt;Unit&gt;</ID>
-    <ID>FunctionSignature:Strings.wasmJs.kt:actual fun safeFirstUnicode: String?</ID>
     <ID>ImportOrdering:Signature.jvmAndroid.kt:import com.storyteller_f.shared.utils.mapResult import dev.whyoleg.cryptography.CryptographyProvider import dev.whyoleg.cryptography.DelicateCryptographyApi import dev.whyoleg.cryptography.algorithms.RIPEMD160 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo import org.bouncycastle.asn1.x500.X500Name import org.bouncycastle.cert.X509v3CertificateBuilder import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder import org.bouncycastle.jce.interfaces.ECPrivateKey import org.bouncycastle.jce.provider.BouncyCastleProvider import org.bouncycastle.jce.spec.ECPrivateKeySpec import org.bouncycastle.jce.spec.ECPublicKeySpec import org.bouncycastle.openssl.PEMParser import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter import org.bouncycastle.operator.ContentSigner import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider import org.bouncycastle.jcajce.interfaces.MLDSAPrivateKey import org.bouncycastle.jcajce.interfaces.MLDSAPublicKey import org.bouncycastle.jcajce.interfaces.MLKEMPrivateKey import org.bouncycastle.jcajce.interfaces.MLKEMPublicKey import org.bouncycastle.jcajce.spec.MLDSAParameterSpec import org.bouncycastle.jcajce.spec.MLDSAPrivateKeySpec import org.bouncycastle.jcajce.spec.MLDSAPublicKeySpec import org.bouncycastle.jcajce.spec.MLKEMParameterSpec import org.bouncycastle.jcajce.spec.MLKEMPrivateKeySpec import org.bouncycastle.pqc.crypto.mlkem.MLKEMExtractor import org.bouncycastle.pqc.crypto.mlkem.MLKEMGenerator import org.bouncycastle.pqc.crypto.mlkem.MLKEMParameters import org.bouncycastle.pqc.crypto.mlkem.MLKEMPrivateKeyParameters import org.bouncycastle.pqc.crypto.mlkem.MLKEMPublicKeyParameters import org.bouncycastle.pqc.crypto.mldsa.MLDSAParameters import org.bouncycastle.pqc.crypto.mldsa.MLDSAPrivateKeyParameters import org.bouncycastle.pqc.crypto.mldsa.MLDSAPublicKeyParameters import org.bouncycastle.pqc.crypto.mldsa.MLDSASigner import java.io.File import java.io.FileOutputStream import java.io.IOException import java.io.StringReader import java.math.BigInteger import java.security.KeyFactory import java.security.KeyPair import java.security.KeyPairGenerator import java.security.KeyStore import java.security.PrivateKey import java.security.PublicKey import java.security.SecureRandom import java.security.Security import java.security.cert.X509Certificate import java.security.spec.PKCS8EncodedKeySpec import java.security.spec.X509EncodedKeySpec import java.util.Date import javax.crypto.Cipher import javax.crypto.KeyGenerator import javax.crypto.spec.IvParameterSpec import javax.crypto.spec.SecretKeySpec import kotlin.io.encoding.Base64 import kotlin.io.encoding.ExperimentalEncodingApi</ID>
     <ID>MissingPackageDeclaration:ContentTest.kt:.ContentTest.kt</ID>
     <ID>MissingPackageDeclaration:MarkdownTest.kt:.MarkdownTest.kt</ID>

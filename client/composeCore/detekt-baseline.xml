@@ -369,15 +369,10 @@
     <ID>FunctionNaming:VideoView.wasmJs.kt:@Composable actual fun VideoViewFullScreen</ID>
     <ID>FunctionSignature:AlgoTypeSelector.kt:@Composable fun AlgoTypeSelector</ID>
     <ID>FunctionSignature:AndroidPlayerContainer.kt:@Composable fun Modifier.androidPipMode: Modifier</ID>
-    <ID>FunctionSignature:AndroidPlayerContainer.kt:@OptIn(ExperimentalUuidApi::class) @Composable fun BoxScope.AndroidPlayerContainer</ID>
-    <ID>FunctionSignature:AppiumSemantics.wasmJs.kt:AppiumHtmlSemantics$private fun HTMLElement.updateLayout</ID>
     <ID>FunctionSignature:AppiumSemantics.wasmJs.kt:AppiumHtmlSemantics$private fun isInViewport: Boolean</ID>
     <ID>FunctionSignature:AsciidocPreviewBlock.kt:@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class) @Composable private fun AsciidocPreviewDialog</ID>
     <ID>FunctionSignature:AudioView.android.kt:@Composable private fun AudioPlayerControls</ID>
     <ID>FunctionSignature:AudioView.android.kt:@Composable private fun AudioTitle</ID>
-    <ID>FunctionSignature:AudioView.android.kt:@Composable private fun RowScope.AudioDetail</ID>
-    <ID>FunctionSignature:AudioView.android.kt:@OptIn(ExperimentalUuidApi::class) @Composable private fun AudioPlayer</ID>
-    <ID>FunctionSignature:BlockEditor.kt:@Composable fun BlockEditor</ID>
     <ID>FunctionSignature:BlockEditor.kt:@Composable fun rememberBlockEditorState: BlockEditorState</ID>
     <ID>FunctionSignature:BlockEditor.kt:private fun addBlock: String</ID>
     <ID>FunctionSignature:BlockEditor.kt:private fun changeBlockType</ID>
@@ -385,94 +380,52 @@
     <ID>FunctionSignature:BlockEditor.kt:private fun updateBlockContent</ID>
     <ID>FunctionSignature:BlockToolbar.kt:@Composable private fun BlockToolBarMenu</ID>
     <ID>FunctionSignature:BlockToolbar.kt:@OptIn(ExperimentalLayoutApi::class) @Composable fun BlockToolbar</ID>
-    <ID>FunctionSignature:ButtonNav.kt:@Composable fun ButtonNav</ID>
     <ID>FunctionSignature:CodeFence.kt:@Composable fun HighlightCodeBlock</ID>
     <ID>FunctionSignature:CodeFence.kt:@Composable fun ObjectBlock</ID>
     <ID>FunctionSignature:CodeFence.kt:@Composable private fun CustomObjectBlock</ID>
-    <ID>FunctionSignature:CodeFence.kt:@Composable private fun FileObjectBlock</ID>
     <ID>FunctionSignature:CodeFence.kt:@Composable private fun LatexBlock</ID>
     <ID>FunctionSignature:CommunityIcon.kt:@Composable fun CommunityIcon</ID>
     <ID>FunctionSignature:CustomMarkdown.kt:@Composable fun imageRequestInMarkdown: ImageRequest</ID>
     <ID>FunctionSignature:DefaultMediaPlayListHandlerProvider.android.kt:private suspend fun loadMediaPlayList: List&lt;ConstPlayItem&gt;</ID>
     <ID>FunctionSignature:Dialog.kt:@Composable fun CustomAlertDialog</ID>
     <ID>FunctionSignature:Dialog.kt:@Composable fun CustomAlertDialogInternal</ID>
-    <ID>FunctionSignature:EditableBlock.kt:@Composable fun EditableCodeBlock</ID>
     <ID>FunctionSignature:EditableBlock.kt:@Composable fun EditableImageBlock</ID>
-    <ID>FunctionSignature:EditableBlock.kt:@Composable fun EditableListItemBlock</ID>
-    <ID>FunctionSignature:EditableBlock.kt:@Composable fun EditableMathBlock</ID>
     <ID>FunctionSignature:EditableBlock.kt:@Composable fun EditableObjectBlock</ID>
-    <ID>FunctionSignature:EditableBlock.kt:@Composable fun EditableParagraphBlock</ID>
-    <ID>FunctionSignature:EditableBlock.kt:@Composable fun EditableQuoteBlock</ID>
     <ID>FunctionSignature:EditableBlock.kt:@Composable fun EditableRefBlock</ID>
-    <ID>FunctionSignature:EditableBlock.kt:@Composable private fun BlockMenu</ID>
-    <ID>FunctionSignature:EditableBlock.kt:@Composable private fun RichEditableParagraphBlock</ID>
-    <ID>FunctionSignature:EditableBlock.kt:@Composable private fun RowScope.BlockPreview</ID>
     <ID>FunctionSignature:ExceptionView.kt:@Composable fun ExceptionCell</ID>
     <ID>FunctionSignature:GlobalDialog.kt:@Composable private fun GlobalDialogContent</ID>
     <ID>FunctionSignature:GlobalDialog.kt:@Composable private fun LoadingGlobalDialogContent</ID>
     <ID>FunctionSignature:GlobalDialog.kt:CustomGlobalDialogController$@OptIn(ExperimentalUuidApi::class) override suspend fun &lt;T&gt; useResult: Result&lt;T&gt;</ID>
-    <ID>FunctionSignature:GlobalDialog.kt:fun &lt;C&gt; GlobalDialogController&lt;C&gt;.catchingResult</ID>
-    <ID>FunctionSignature:GlobalDialog.kt:suspend inline fun &lt;T, R&gt; GlobalDialogController&lt;GlobalDialogContext&lt;T&gt;&gt;.request: Result&lt;R&gt;</ID>
     <ID>FunctionSignature:GlobalTask.kt:CustomGlobalTask$override fun use</ID>
-    <ID>FunctionSignature:GlobalTask.kt:CustomGlobalTask$private suspend fun useInternal</ID>
-    <ID>FunctionSignature:GlobalTask.kt:suspend inline fun &lt;T, R&gt; GlobalTask&lt;GlobalTaskContext&lt;T&gt;&gt;.request: Result&lt;R&gt;</ID>
     <ID>FunctionSignature:Image.android.kt:actual fun saveImageBitmap: Result&lt;Path&gt;</ID>
     <ID>FunctionSignature:Image.jvm.kt:actual fun saveImageBitmap: Result&lt;Path&gt;</ID>
     <ID>FunctionSignature:Image.jvm.kt:fun imageBitmapToByteArray: ByteArray</ID>
-    <ID>FunctionSignature:Image.kt:@Composable fun CommonImage</ID>
-    <ID>FunctionSignature:Image.kt:expect fun saveImageBitmap: Result&lt;Path&gt;</ID>
-    <ID>FunctionSignature:Image.wasmJs.kt:actual fun Image.coilImageToImageBitmap: Result&lt;ImageBitmap&gt;</ID>
     <ID>FunctionSignature:Image.wasmJs.kt:actual fun saveImageBitmap: Result&lt;Path&gt;</ID>
-    <ID>FunctionSignature:ImageUtils.kt:suspend fun getRemoteImageBitmap: Result&lt;ImageBitmap&gt;?</ID>
     <ID>FunctionSignature:LocalSource.kt:CustomRemoteMediator$override suspend fun load: MediatorResult</ID>
     <ID>FunctionSignature:LocalSource.kt:CustomRemoteMediator$private suspend fun mediatorResult</ID>
-    <ID>FunctionSignature:LoginUser.android.kt:AndroidKeyStoreUserPass$override suspend fun encryptChildAccount: Result&lt;CustomApi.Accounts.ChildAccounts.AddChildAccountRequest&gt;</ID>
     <ID>FunctionSignature:MathInlineContent.kt:@Composable fun LatexInlineContent</ID>
     <ID>FunctionSignature:MeasureTextLineCount.kt:@Composable fun MeasureTextLineCount</ID>
-    <ID>FunctionSignature:MediaPlayer.kt:MediaPlayerService$abstract suspend fun start</ID>
     <ID>FunctionSignature:MediaPlayerInternal.kt:@Composable fun BoxScope.PlayerWaiting</ID>
-    <ID>FunctionSignature:MediaPlayerInternal.kt:@Composable fun MediaPlayerEmbed</ID>
-    <ID>FunctionSignature:MediaPlayerInternal.kt:@Composable fun MediaPlayerFilled</ID>
-    <ID>FunctionSignature:MediaPlayerInternal.kt:@Composable fun MediaPlayerFullScreen</ID>
     <ID>FunctionSignature:MediaPlayerInternal.kt:@Composable private fun BoxScope.PlayerWaitingState</ID>
-    <ID>FunctionSignature:MediaPlayerInternal.kt:@OptIn(ExperimentalUuidApi::class) @Composable fun MediaPlayerInternal</ID>
-    <ID>FunctionSignature:MediaPlayerInternal.kt:@OptIn(ExperimentalUuidApi::class) @Composable fun rememberPlayerState: State&lt;MediaPlayerState&gt;</ID>
     <ID>FunctionSignature:MediaPlayerInternal.kt:fun MediaController.playNewMedia</ID>
     <ID>FunctionSignature:MediaPlayerInternal.kt:fun buildM3UListener: Player.Listener</ID>
     <ID>FunctionSignature:MediaPlayerInternal.kt:private fun buildListener: Player.Listener</ID>
-    <ID>FunctionSignature:MediaPlayerService.android.kt:MediaPlayerService$actual abstract suspend fun start</ID>
     <ID>FunctionSignature:MediaPlayerService.android.kt:MediaPlayerService$suspend fun get</ID>
-    <ID>FunctionSignature:MediaPlayerService.jvm.kt:MediaPlayerService$actual abstract suspend fun start</ID>
-    <ID>FunctionSignature:MediaPlayerService.wasmJs.kt:MediaPlayerService$actual abstract suspend fun start</ID>
     <ID>FunctionSignature:MediaUtils.jvmAndroid.kt:actual suspend fun parseM3UPlayList: List&lt;ConstPlayItem&gt;</ID>
     <ID>FunctionSignature:MediaUtils.kt:expect suspend fun parseM3UPlayList: List&lt;ConstPlayItem&gt;</ID>
     <ID>FunctionSignature:MediaUtils.kt:fun getUploadDataFromPath</ID>
     <ID>FunctionSignature:MediaUtils.wasmJs.kt:@Suppress("UNUSED_PARAMETER") actual suspend fun parseM3UPlayList: List&lt;ConstPlayItem&gt;</ID>
-    <ID>FunctionSignature:Nav.kt:@Composable fun CustomBottomNav</ID>
-    <ID>FunctionSignature:Nav.kt:@Composable fun CustomRailNav</ID>
     <ID>FunctionSignature:Paging.kt:SectionPagingSource$override suspend fun load: LoadResult&lt;SectionLoadParams, DATUM&gt;</ID>
     <ID>FunctionSignature:Paging.kt:SectionPagingSource$private fun getNextParams: SectionLoadParams?</ID>
-    <ID>FunctionSignature:Paging.kt:SectionPagingSource$private suspend fun load: LoadResult&lt;SectionLoadParams, DATUM&gt;</ID>
-    <ID>FunctionSignature:Pill.kt:@Composable fun Pill</ID>
-    <ID>FunctionSignature:PlaybackService.kt:PlaybackService.MyCallback$@OptIn(UnstableApi::class) override fun onConnect: MediaSession.ConnectionResult</ID>
     <ID>FunctionSignature:RoomIcon.kt:@Composable fun RoomIcon</ID>
-    <ID>FunctionSignature:Sheet.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun BaseSheet</ID>
-    <ID>FunctionSignature:StateView.kt:@Composable fun &lt;T : Any&gt; RefCellStateView</ID>
     <ID>FunctionSignature:StateView.kt:@Composable private fun &lt;T : Any&gt; StateViewTopIndicator</ID>
     <ID>FunctionSignature:StateView.kt:@Composable private fun &lt;T&gt; StateViewTopIndicator</ID>
-    <ID>FunctionSignature:StateView.kt:@OptIn(ExperimentalHazeMaterialsApi::class) @Composable private fun &lt;T&gt; HandlerStateViewInternal</ID>
-    <ID>FunctionSignature:StateView.kt:@OptIn(ExperimentalMaterialApi::class, ExperimentalHazeMaterialsApi::class) @Composable fun &lt;T : Any&gt; StateView</ID>
     <ID>FunctionSignature:StateView.kt:@OptIn(ExperimentalMaterialApi::class, FlowPreview::class) @Composable fun &lt;T&gt; StateView</ID>
-    <ID>FunctionSignature:StateView.kt:@Preview @Composable private fun StateViewTopIndicatorInternal</ID>
     <ID>FunctionSignature:StateView.kt:fun LazyGridScope.bottomAppending</ID>
     <ID>FunctionSignature:StateView.kt:fun LazyGridScope.topPrepend</ID>
     <ID>FunctionSignature:Theme.jvm.kt:@Composable actual fun getAppDynamicColorScheme: ColorScheme?</ID>
     <ID>FunctionSignature:TopicContentView.kt:@Composable fun TopicContentView</ID>
     <ID>FunctionSignature:UserIcon.kt:@Composable fun UserIcon</ID>
-    <ID>FunctionSignature:VideoView.android.kt:@OptIn(ExperimentalUuidApi::class) @Composable fun EmbedMediaPlayerMenus</ID>
-    <ID>FunctionSignature:VideoView.android.kt:@OptIn(ExperimentalUuidApi::class) @Composable private fun VideoPlayer</ID>
-    <ID>FunctionSignature:VideoView.android.kt:@OptIn(ExperimentalUuidApi::class) @androidx.annotation.OptIn(UnstableApi::class) @Composable private fun BoxScope.VideoPlayerInternal</ID>
-    <ID>FunctionSignature:VideoView.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun VideoPlaylistPicker</ID>
     <ID>ImportOrdering:PdfView.jvmAndroid.kt:import androidx.compose.runtime.Composable import androidx.compose.ui.Modifier import dev.zt64.compose.pdf.rememberPdfState import dev.zt64.compose.pdf.component.PdfHorizontalPager import java.net.URI</ID>
     <ID>Kdoc:Activity.kt:/** * 在Android 13 上必须加这一行 */</ID>
     <ID>MultilineExpressionWrapping:AndroidPlayerContainer.kt:Runnable { Napier.d(tag = "MediaPlayer") { "EnablePipPre31 ${localMediaPlaySession.uuid} $enablePip" } if (enablePip) { context.findActivity() .enterPictureInPictureMode(PictureInPictureParams.Builder().build()) } }</ID>

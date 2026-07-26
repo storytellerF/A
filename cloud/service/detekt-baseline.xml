@@ -59,34 +59,22 @@
     <ID>FunctionSignature:AccountService.kt:suspend fun Backend.adminSignUp: Result&lt;PanelAccountInfo&gt;</ID>
     <ID>FunctionSignature:AccountService.kt:suspend fun Backend.signIn: Result&lt;SignInServiceResponse&gt;</ID>
     <ID>FunctionSignature:AccountService.kt:suspend fun Backend.signUp: Result&lt;UserInfo&gt;</ID>
-    <ID>FunctionSignature:AdminService.kt:suspend fun Backend.getTaskRecords: Result&lt;PaginationResult&lt;TaskRecordInfo&gt;&gt;</ID>
     <ID>FunctionSignature:AudioUtil.kt:@Suppress("CyclomaticComplexMethod") fun &lt;T&gt; BufferedInputStream.readMp3AlbumFromAudioStream: Pair&lt;T, String&gt;?</ID>
-    <ID>FunctionSignature:CommunityService.kt:private fun checkCommunityNameForUpdate: Result&lt;Unit&gt;</ID>
     <ID>FunctionSignature:CommunityService.kt:private suspend fun Backend.checkBeforeUpdateCommunity: Result&lt;Unit&gt;</ID>
-    <ID>FunctionSignature:CommunityService.kt:private suspend fun Backend.processCommunities: Result&lt;List&lt;CommunityInfo&gt;?&gt;</ID>
-    <ID>FunctionSignature:CommunityService.kt:private suspend fun Backend.processUserJoinedTimeReplace: Result&lt;List&lt;CommunityInfo&gt;&gt;</ID>
     <ID>FunctionSignature:CommunityService.kt:private suspend fun Backend.saveMemberDocument</ID>
     <ID>FunctionSignature:CommunityService.kt:suspend fun Backend.createCommunity: Result&lt;CommunityInfo?&gt;</ID>
     <ID>FunctionSignature:CommunityService.kt:suspend fun Backend.exitCommunity</ID>
-    <ID>FunctionSignature:CommunityService.kt:suspend fun Backend.getAllCommunities</ID>
     <ID>FunctionSignature:CommunityService.kt:suspend fun Backend.getCommunity</ID>
-    <ID>FunctionSignature:CommunityService.kt:suspend fun Backend.getCommunityMemberInfos: Result&lt;PaginationResult&lt;MemberInfo&gt;&gt;</ID>
     <ID>FunctionSignature:CommunityService.kt:suspend fun Backend.getContainerMemberInfos</ID>
     <ID>FunctionSignature:CommunityService.kt:suspend fun Backend.joinCommunity</ID>
     <ID>FunctionSignature:CommunityService.kt:suspend fun Backend.processRawCommunityToCommunityInfo: Result&lt;List&lt;CommunityInfo&gt;?&gt;</ID>
     <ID>FunctionSignature:CommunityService.kt:suspend fun Backend.updateCommunity: Result&lt;CommunityInfo?&gt;</ID>
     <ID>FunctionSignature:ContainerService.kt:private suspend fun Backend.insertQuotaAndGet: Result&lt;QuotaInfo&gt;</ID>
-    <ID>FunctionSignature:ContainerService.kt:suspend fun Backend.checkCommunityAdminPermission: Result&lt;RootAdminPermission?&gt;</ID>
-    <ID>FunctionSignature:ContainerService.kt:suspend fun Backend.checkCommunityReadPermission: Result&lt;RootReadPermission?&gt;</ID>
-    <ID>FunctionSignature:ContainerService.kt:suspend fun Backend.checkCommunityWritePermission: Result&lt;RootWritePermission?&gt;</ID>
     <ID>FunctionSignature:ContainerService.kt:suspend fun Backend.checkObjectWritable: Result&lt;Unit&gt;</ID>
     <ID>FunctionSignature:ContainerService.kt:suspend fun Backend.checkQuotaStatus: Result&lt;QuotaInfo&gt;</ID>
     <ID>FunctionSignature:ContainerService.kt:suspend fun Backend.checkRoomAdminPermission: Result&lt;RootAdminPermission?&gt;</ID>
     <ID>FunctionSignature:ContainerService.kt:suspend fun Backend.checkRoomReadPermission: Result&lt;RootReadPermission?&gt;</ID>
     <ID>FunctionSignature:ContainerService.kt:suspend fun Backend.checkRoomWritePermission: Result&lt;RootWritePermission?&gt;</ID>
-    <ID>FunctionSignature:ContainerService.kt:suspend fun Backend.checkRootAdminPermission: Result&lt;RootAdminPermission?&gt;</ID>
-    <ID>FunctionSignature:ContainerService.kt:suspend fun Backend.checkRootReadPermission: Result&lt;RootReadPermission?&gt;</ID>
-    <ID>FunctionSignature:ContainerService.kt:suspend fun Backend.checkRootWritePermission: Result&lt;RootWritePermission?&gt;</ID>
     <ID>FunctionSignature:ContainerService.kt:suspend fun Backend.checkTopicAdminPermission: Result&lt;RootAdminPermission?&gt;</ID>
     <ID>FunctionSignature:ContainerService.kt:suspend fun Backend.checkTopicReadPermission: Result&lt;RootReadPermission?&gt;</ID>
     <ID>FunctionSignature:ContainerService.kt:suspend fun Backend.checkTopicWritePermission: Result&lt;RootWritePermission?&gt;</ID>
@@ -94,82 +82,55 @@
     <ID>FunctionSignature:ContainerService.kt:suspend fun Backend.checkUserReadPermission: Result&lt;RootReadPermission?&gt;</ID>
     <ID>FunctionSignature:ContainerService.kt:suspend fun Backend.checkUserWritePermission: Result&lt;RootWritePermission?&gt;</ID>
     <ID>FunctionSignature:ContainerService.kt:suspend fun Backend.getQuotaInfo</ID>
-    <ID>FunctionSignature:ContainerService.kt:suspend fun Backend.lockQuotaInfo</ID>
     <ID>FunctionSignature:FavoriteService.kt:suspend fun Backend.addFavorite</ID>
-    <ID>FunctionSignature:FavoriteService.kt:suspend fun Backend.deleteFavorite</ID>
-    <ID>FunctionSignature:FavoriteService.kt:suspend fun Backend.getFavorites</ID>
     <ID>FunctionSignature:FavoriteService.kt:suspend fun Backend.processUserFavoriteToUserFavoriteInfo</ID>
     <ID>FunctionSignature:FileService.kt:@OptIn(ExperimentalUuidApi::class) private suspend fun extractAlbumFromStream</ID>
-    <ID>FunctionSignature:FileService.kt:@OptIn(ExperimentalUuidApi::class) private suspend fun removeExifIfImage: List&lt;ProcessedUploadPack&gt;</ID>
-    <ID>FunctionSignature:FileService.kt:@OptIn(ExperimentalUuidApi::class) suspend fun Backend.tryUploadFiles</ID>
-    <ID>FunctionSignature:FileService.kt:@Suppress("LongMethod") suspend fun completeChunkUpload: Result&lt;FileInfo?&gt;</ID>
     <ID>FunctionSignature:FileService.kt:private suspend fun Backend.copyFile</ID>
     <ID>FunctionSignature:FileService.kt:private suspend fun cleanChunk</ID>
     <ID>FunctionSignature:FileService.kt:private suspend fun processContentTypeAndDimension: List&lt;ProcessedUploadPack&gt;</ID>
     <ID>FunctionSignature:FileService.kt:suspend fun Backend.getFileInfoById: Result&lt;FileInfo?&gt;</ID>
-    <ID>FunctionSignature:FileService.kt:suspend fun Backend.getFileInfoByName: Result&lt;FileInfo?&gt;</ID>
     <ID>FunctionSignature:FileService.kt:suspend fun Backend.getFileRefsByFileId</ID>
     <ID>FunctionSignature:FileService.kt:suspend fun Backend.getUserUploadRecords</ID>
-    <ID>FunctionSignature:FileService.kt:suspend fun Backend.processFileRecordToFileInfo: Result&lt;List&lt;FileInfo&gt;&gt;</ID>
     <ID>FunctionSignature:FileService.kt:suspend fun Backend.tryCopyFile</ID>
     <ID>FunctionSignature:FileService.kt:suspend fun Backend.uncheckedGetFileRefsByFileId</ID>
-    <ID>FunctionSignature:FileService.kt:suspend fun Backend.uncheckedSearchFiles: Result&lt;PaginationResult&lt;FileInfo&gt;?&gt;</ID>
     <ID>FunctionSignature:FileService.kt:suspend fun abortChunkUpload</ID>
     <ID>FunctionSignature:FileService.kt:suspend fun getChunkStatus</ID>
     <ID>FunctionSignature:FileService.kt:suspend fun getFileSystemDownloadUrl: Result&lt;PathResponse?&gt;</ID>
     <ID>FunctionSignature:FileService.kt:suspend fun initChunkUpload</ID>
     <ID>FunctionSignature:ReactionService.kt:suspend fun Backend.addReaction</ID>
     <ID>FunctionSignature:ReactionService.kt:suspend fun addReaction: Result&lt;ReactionInfo?&gt;</ID>
-    <ID>FunctionSignature:ReactionService.kt:suspend fun deleteReaction: Result&lt;ReactionInfo?&gt;</ID>
-    <ID>FunctionSignature:RoomService.kt:private suspend fun Backend.checkRoomIcon: Result&lt;Unit&gt;</ID>
-    <ID>FunctionSignature:RoomService.kt:private suspend fun Backend.joinRoomOrUpdateMemberStatus: Result&lt;Member&gt;</ID>
     <ID>FunctionSignature:RoomService.kt:private suspend fun Backend.saveMemberDocument</ID>
     <ID>FunctionSignature:RoomService.kt:suspend fun Backend.createRoom: Result&lt;RoomInfo?&gt;</ID>
-    <ID>FunctionSignature:RoomService.kt:suspend fun Backend.exitRoom</ID>
     <ID>FunctionSignature:RoomService.kt:suspend fun Backend.getAllPrivateRooms</ID>
     <ID>FunctionSignature:RoomService.kt:suspend fun Backend.getAllPublicRooms</ID>
     <ID>FunctionSignature:RoomService.kt:suspend fun Backend.getCommunityRooms: Result&lt;PaginationResult&lt;RoomInfo&gt;&gt;</ID>
     <ID>FunctionSignature:RoomService.kt:suspend fun Backend.getJoinTitleByScope: Result&lt;Unit&gt;</ID>
     <ID>FunctionSignature:RoomService.kt:suspend fun Backend.getRoomInfo</ID>
     <ID>FunctionSignature:RoomService.kt:suspend fun Backend.getRoomInfoList</ID>
-    <ID>FunctionSignature:RoomService.kt:suspend fun Backend.getRoomMemberInfos: Result&lt;PaginationResult&lt;MemberInfo&gt;?&gt;</ID>
     <ID>FunctionSignature:RoomService.kt:suspend fun Backend.getRoomPubKeys</ID>
     <ID>FunctionSignature:RoomService.kt:suspend fun Backend.getUserJoinedRooms: Result&lt;PaginationResult&lt;RoomInfo&gt;&gt;</ID>
     <ID>FunctionSignature:RoomService.kt:suspend fun Backend.joinRoom</ID>
     <ID>FunctionSignature:RoomService.kt:suspend fun Backend.processRawRoomToRoomInfo</ID>
-    <ID>FunctionSignature:RoomService.kt:suspend fun Backend.uncheckedGetRoomMemberInfos: Result&lt;PaginationResult&lt;MemberInfo&gt;&gt;</ID>
     <ID>FunctionSignature:RoomService.kt:suspend fun Backend.updateRoom: Result&lt;RoomInfo?&gt;</ID>
-    <ID>FunctionSignature:RoomService.kt:suspend fun searchRoomMembers: Result&lt;PaginationResult&lt;MemberInfo&gt;?&gt;</ID>
     <ID>FunctionSignature:TitleService.kt:private suspend fun Backend.processTitleList: Result&lt;List&lt;TitleInfo&gt;?&gt;</ID>
     <ID>FunctionSignature:TitleService.kt:private suspend fun toTitle: Title</ID>
     <ID>FunctionSignature:TitleService.kt:suspend fun Backend.createTitle</ID>
-    <ID>FunctionSignature:TitleService.kt:suspend fun Backend.getTitleInfo: Result&lt;TitleInfo?&gt;</ID>
     <ID>FunctionSignature:TitleService.kt:suspend fun createTitle: Result&lt;TitleInfo?&gt;</ID>
     <ID>FunctionSignature:TopicService.kt:private suspend fun Backend.addSubscription</ID>
-    <ID>FunctionSignature:TopicService.kt:private suspend fun Backend.buildFileRefs: Result&lt;List&lt;FileRef&gt;&gt;</ID>
-    <ID>FunctionSignature:TopicService.kt:private suspend fun Backend.createTopicSnapshot: Result&lt;FileInfo?&gt;</ID>
     <ID>FunctionSignature:TopicService.kt:private suspend fun Backend.getReactionMap: Map&lt;PrimaryKey, List&lt;ReactionInfo&gt;&gt;</ID>
-    <ID>FunctionSignature:TopicService.kt:private suspend fun Backend.processTopicsDocument: Result&lt;List&lt;TopicInfo&gt;?&gt;</ID>
-    <ID>FunctionSignature:TopicService.kt:private suspend fun Backend.savePlainTopic: Result&lt;TopicInfo?&gt;</ID>
     <ID>FunctionSignature:TopicService.kt:suspend fun Backend.createPlainTopic: Result&lt;TopicInfo?&gt;</ID>
     <ID>FunctionSignature:TopicService.kt:suspend fun Backend.createTopicAtRoom: Result&lt;TopicInfo?&gt;</ID>
     <ID>FunctionSignature:TopicService.kt:suspend fun Backend.createTopicSnapshot: Result&lt;FileInfo?&gt;</ID>
-    <ID>FunctionSignature:TopicService.kt:suspend fun Backend.getAllTopics</ID>
     <ID>FunctionSignature:TopicService.kt:suspend fun Backend.getTopic: Result&lt;TopicInfo?&gt;</ID>
     <ID>FunctionSignature:TopicService.kt:suspend fun Backend.getTopicByAid: Result&lt;TopicInfo?&gt;</ID>
     <ID>FunctionSignature:TopicService.kt:suspend fun Backend.getTopicByIds: Result&lt;List&lt;TopicInfo&gt;?&gt;</ID>
-    <ID>FunctionSignature:TopicService.kt:suspend fun Backend.processRawTopicToTopicInfo: Result&lt;List&lt;TopicInfo&gt;?&gt;</ID>
     <ID>FunctionSignature:TopicService.kt:suspend fun Backend.processTopicAfterCreate</ID>
     <ID>FunctionSignature:TopicService.kt:suspend fun Backend.processTopicFileObject: Result&lt;List&lt;TopicInfo&gt;?&gt;</ID>
-    <ID>FunctionSignature:TopicService.kt:suspend fun Backend.recommendTopics: Result&lt;PaginationResult&lt;TopicInfo&gt;?&gt;</ID>
-    <ID>FunctionSignature:TopicService.kt:suspend fun Backend.uncheckGetTopicsByParentId</ID>
     <ID>FunctionSignature:TopicService.kt:suspend fun Backend.updateTopicPin</ID>
     <ID>FunctionSignature:UserService.kt:private suspend fun Backend.checkAidModifyTimes</ID>
     <ID>FunctionSignature:UserService.kt:private suspend fun Backend.processUserLogToUserLogInfo</ID>
     <ID>FunctionSignature:UserService.kt:suspend fun Backend.addUserLog: Result&lt;Unit&gt;</ID>
     <ID>FunctionSignature:UserService.kt:suspend fun Backend.checkIcon: Result&lt;MediaCheckResult?&gt;</ID>
-    <ID>FunctionSignature:UserService.kt:suspend fun Backend.getAllUsers</ID>
-    <ID>FunctionSignature:UserService.kt:suspend fun Backend.getUserAlternateUserInfoList: Result&lt;PaginationResult&lt;ChildAccountInfo&gt;?&gt;</ID>
     <ID>FunctionSignature:UserService.kt:suspend fun Backend.getUserCommentedTopics</ID>
     <ID>FunctionSignature:UserService.kt:suspend fun Backend.getUserInfo</ID>
     <ID>FunctionSignature:UserService.kt:suspend fun Backend.getUserInfoList</ID>
@@ -177,12 +138,9 @@
     <ID>FunctionSignature:UserService.kt:suspend fun Backend.getUserReactions</ID>
     <ID>FunctionSignature:UserService.kt:suspend fun Backend.isKeyVerified: Result&lt;Boolean&gt;</ID>
     <ID>FunctionSignature:UserService.kt:suspend fun Backend.processRawUserToUserInfo</ID>
-    <ID>FunctionSignature:UserService.kt:suspend fun Backend.searchContainerMembers: Result&lt;PaginationResult&lt;MemberInfo&gt;&gt;</ID>
-    <ID>FunctionSignature:UserService.kt:suspend fun Backend.searchUsers: Result&lt;PaginationResult&lt;UserInfo&gt;?&gt;</ID>
     <ID>FunctionSignature:UserService.kt:suspend fun Backend.updateUser: Result&lt;UserInfo?&gt;</ID>
     <ID>FunctionSignature:UserSubscriptionService.kt:suspend fun Backend.addSubscription</ID>
     <ID>FunctionSignature:UserSubscriptionService.kt:suspend fun Backend.getUserSubscriptions</ID>
-    <ID>FunctionSignature:UserSubscriptionService.kt:suspend fun Backend.processUserSubscriptionToUserSubscriptionInfo</ID>
     <ID>FunctionSignature:UserSubscriptionService.kt:suspend fun Backend.removeSubscription</ID>
     <ID>FunctionSignature:UserSubscriptionService.kt:suspend fun Backend.removeSubscriptionByObject</ID>
     <ID>MissingPackageDeclaration:MediaTest.kt:.MediaTest.kt</ID>

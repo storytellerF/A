@@ -55,7 +55,6 @@
     <ID>FunctionExpressionBody:RoomStorage.kt:RoomUserSubscriptionStorage${ return impl.getDocument(collection.getName(), key) }</ID>
     <ID>FunctionExpressionBody:RoomStorage.kt:RoomUserSubscriptionStorage${ return impl.observeData(collection.getName()) }</ID>
     <ID>FunctionExpressionBody:RoomStorage.kt:RoomUserSubscriptionStorage${ return impl.observeDatum(UserSubscriptionStorage.COLLECTION_NAME, key) }</ID>
-    <ID>FunctionSignature:Database.wasmJs.kt:@OptIn(ExperimentalWasmJsInterop::class) private fun createWorker: Worker</ID>
     <ID>FunctionSignature:RoomStorage.kt:CommonStorageImpl$inline fun &lt;reified T : Any&gt; observeData: PagingSource&lt;Int, T&gt;</ID>
     <ID>FunctionSignature:RoomStorage.kt:CommonStorageImpl$inline fun &lt;reified T : Any&gt; observeDatum: Flow&lt;T?&gt;</ID>
     <ID>FunctionSignature:RoomStorage.kt:CommonStorageImpl$suspend inline fun &lt;reified T&gt; getDocument: T?</ID>
