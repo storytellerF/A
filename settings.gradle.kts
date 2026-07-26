@@ -55,6 +55,7 @@ if (isAppiumTestEnable) {
     include(":app:wasmAppium")
     include(":panel:androidAppium")
     include(":panel:desktopAppium")
+    include(":panel:wasmAppium")
 }
 
 include(":cloud:server")

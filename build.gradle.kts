@@ -154,8 +154,10 @@ val koverIncludedProjects = listOf(
         ":dev:appiumCore",
         ":app:androidAppium",
         ":app:desktopAppium",
+        ":app:wasmAppium",
         ":panel:androidAppium",
         ":panel:desktopAppium",
+        ":panel:wasmAppium",
     )
 } else {
     emptyList()

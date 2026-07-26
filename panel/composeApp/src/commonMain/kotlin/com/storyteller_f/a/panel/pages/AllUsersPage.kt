@@ -56,6 +56,7 @@ import com.storyteller_f.a.client.compose_core.components.Toast
 import com.storyteller_f.a.client.compose_core.components.pagingItems
 import com.storyteller_f.a.client.compose_core.components.safeArea
 import com.storyteller_f.a.client.compose_core.components.setText
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.a.client.core.addUser
 import com.storyteller_f.a.panel.CustomPanelSessionManager
 import com.storyteller_f.a.panel.LocalPanelGlobalDialog
@@ -110,7 +111,10 @@ fun AllUsersPageInternal(viewModel: AllUsersViewModel) {
                 mutableStateOf(false)
             }
             TopAppBar(title = {
-                Text(stringResource(Res.string.all_users))
+                Text(
+                    stringResource(Res.string.all_users),
+                    modifier = Modifier.appiumSemantics(text = stringResource(Res.string.all_users)),
+                )
             }, navigationIcon = {
                 IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, stringResource(Res.string.menu)) }
             }, actions = {
@@ -228,7 +232,7 @@ private fun AddUserPrivateKeyPage(
                 scope.launch {
                     val f = FileKit.openFilePicker()
                     if (f != null) {
-                        val privateKey = String(f.readBytes()).replaceCrlf()
+                        val privateKey = f.readBytes().decodeToString().replaceCrlf()
                         addUserViewModel.updatePrivateKey(privateKey)
                     }
                 }
