@@ -5,7 +5,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
-import com.kdroid.composenotification.builder.NotificationInitializer
 import com.storyteller_f.a.app.common.Downloader
 import com.storyteller_f.a.app.common.DownloaderImpl
 import com.storyteller_f.a.app.common.ExternalUriHandler
@@ -40,7 +39,6 @@ import java.awt.TextArea
 import java.io.File
 import kotlin.system.exitProcess
 import kotlin.uuid.ExperimentalUuidApi
-import com.kdroid.composenotification.builder.AppConfig as NotificationAppConfig
 
 @OptIn(DelicateCoroutinesApi::class)
 val uiViewModel by lazy {
@@ -146,6 +144,4 @@ private fun initForJvmMain(args: Array<String>) {
             ExternalUriHandler.onNewUri(it)
         }
     }
-
-    NotificationInitializer.configure(NotificationAppConfig(appName = "A"))
 }

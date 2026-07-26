@@ -73,6 +73,7 @@ import com.storyteller_f.a.app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.a.app.pages.topic.TopicList
 import com.storyteller_f.a.app.rooms
+import com.storyteller_f.a.app.utils.rememberStringPreference
 import com.storyteller_f.a.app.world
 import com.storyteller_f.a.client.compose_core.components.ButtonNav
 import com.storyteller_f.a.client.compose_core.components.CenterBox
@@ -80,8 +81,6 @@ import com.storyteller_f.a.client.compose_core.components.CustomBottomNav
 import com.storyteller_f.a.client.compose_core.components.CustomRailNav
 import com.storyteller_f.a.client.compose_core.components.NavRoute
 import com.storyteller_f.a.client.compose_core.components.SignInButton
-import com.strabled.composepreferences.getPreference
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.SerializersModule
@@ -93,8 +92,10 @@ import org.jetbrains.compose.resources.stringResource
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class, ExperimentalFoundationApi::class)
 fun HomePage() {
     val size = calculateWindowSizeClass()
-    val homeStartDestinationFlow: StateFlow<String> by getPreference(HOME_START_DESTINATION_PREFERENCE_KEY)
-    val homeStartDestination by homeStartDestinationFlow.collectAsState()
+    val homeStartDestination by rememberStringPreference(
+        HOME_START_DESTINATION_PREFERENCE_KEY,
+        HOME_START_DESTINATION_WORLD,
+    )
     val defaultHomeRoute = homeRouteFromPreference(homeStartDestination)
     val defaultHomePage = homePageFromPreference(homeStartDestination)
     val homeNavRoutes = listOf(

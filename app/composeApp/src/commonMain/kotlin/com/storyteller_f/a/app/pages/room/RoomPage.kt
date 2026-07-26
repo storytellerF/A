@@ -123,6 +123,7 @@ import com.storyteller_f.a.client.compose_core.components.imeAnimation
 import com.storyteller_f.a.client.compose_core.components.rememberAlertDialogController
 import com.storyteller_f.a.client.compose_core.components.rememberCommonDialogController
 import com.storyteller_f.a.client.compose_core.components.request
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.a.client.compose_core.utils.getRemoteImageBitmap
 import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.a.client.core.WebSocketClient
@@ -462,7 +463,7 @@ fun CommonInputButton(
     Box(modifier = Modifier.size(40.dp), contentAlignment = Alignment.Center) {
         when (state) {
             is LoadingState.Done -> {
-                IconButton({
+                val submit: () -> Unit = {
                     if (input.isBlank()) {
                         scope.launch {
                             alertDialogController.showTitle(getString(Res.string.input_is_empty))
@@ -470,7 +471,15 @@ fun CommonInputButton(
                     } else {
                         send()
                     }
-                }, enabled = !isSending) {
+                }
+                IconButton(
+                    onClick = submit,
+                    modifier = Modifier.appiumSemantics(
+                        description = stringResource(Res.string.send),
+                        onClick = submit,
+                    ),
+                    enabled = !isSending,
+                ) {
                     Icon(Icons.AutoMirrored.Default.Send, stringResource(Res.string.send))
                 }
             }
@@ -513,9 +522,11 @@ fun InputGroupInternal(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(2.dp)
         ) {
-            OutlinedTextField(input, {
-                updateInput(it)
-            }, modifier = Modifier.weight(1f), suffix = {
+            OutlinedTextField(input, updateInput, modifier = Modifier.weight(1f).appiumSemantics(
+                input = true,
+                inputValue = input,
+                onInputValueChange = updateInput,
+            ), suffix = {
                 if (input.isNotEmpty()) {
                     Icon(
                         Icons.Default.Clear,

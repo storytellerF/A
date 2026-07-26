@@ -20,6 +20,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.unit.dp
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
@@ -130,9 +131,16 @@ class CommonDialogController(val shown: MutableState<Boolean> = mutableStateOf(f
 @Composable
 fun DialogContainer(
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
+    onDismissRequest: (() -> Unit)? = null,
     block: @Composable ColumnScope.() -> Unit
 ) {
-    Surface(shape = RoundedCornerShape(8.dp)) {
+    Surface(
+        modifier = Modifier.appiumSemantics(
+            description = "dialog",
+            onClick = onDismissRequest,
+        ),
+        shape = RoundedCornerShape(8.dp),
+    ) {
         val scrollState = rememberScrollState()
         Column(
             modifier = Modifier.padding(20.dp).verticalScroll(scrollState),

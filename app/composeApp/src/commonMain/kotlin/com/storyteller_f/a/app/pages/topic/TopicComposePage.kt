@@ -59,6 +59,7 @@ import com.storyteller_f.a.client.compose_core.components.emitEvent
 import com.storyteller_f.a.client.compose_core.components.rememberAlertDialogController
 import com.storyteller_f.a.client.compose_core.components.request
 import com.storyteller_f.a.client.compose_core.components.safeArea
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
@@ -214,11 +215,16 @@ private fun TopicComposeInternal(
 
     PrimaryTabRow(selected) {
         tabs.forEachIndexed { i, e ->
-            Tab(selected = selected == i, onClick = {
+            val selectTab: () -> Unit = {
                 coroutineScope.launch {
                     pagerState.scrollToPage(i)
                 }
-            }) {
+            }
+            Tab(
+                selected = selected == i,
+                onClick = selectTab,
+                modifier = Modifier.appiumSemantics(text = e, onClick = selectTab),
+            ) {
                 Text(text = e, modifier = Modifier.padding(vertical = 12.dp))
             }
         }
@@ -278,7 +284,7 @@ private fun TopicComposeSubmitButton(
     val (objectId, objectType) = data.getParent()
     val scope = rememberCoroutineScope()
     val globalDialogController = LocalGlobalDialog.current
-    IconButton({
+    val submit = {
         val finalInput = input.trim()
         if (finalInput.isNotEmpty()) {
             scope.launch {
@@ -292,7 +298,11 @@ private fun TopicComposeSubmitButton(
                 }
             }
         }
-    }) {
+    }
+    IconButton(
+        onClick = submit,
+        modifier = Modifier.appiumSemantics(description = "submit", onClick = submit),
+    ) {
         Icon(imageVector = Icons.AutoMirrored.Filled.Send, stringResource(Res.string.submit))
     }
 }
@@ -327,7 +337,13 @@ fun EditTopicPage(input: String, data: TopicComposeData, updateInput: (String) -
         BasicTextField(
             input,
             updateInput,
-            modifier = Modifier.fillMaxSize().padding(20.dp),
+            modifier = Modifier.fillMaxSize()
+                .appiumSemantics(
+                    input = true,
+                    inputValue = input,
+                    onInputValueChange = updateInput,
+                )
+                .padding(20.dp),
             textStyle = textStyle.merge(color = LocalContentColor.current, fontFamily = fontFamily),
             decorationBox = { innerTextField ->
                 if (input.isEmpty()) {

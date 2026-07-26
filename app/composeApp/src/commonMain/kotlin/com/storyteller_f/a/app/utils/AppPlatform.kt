@@ -1,11 +1,11 @@
 package com.storyteller_f.a.app.utils
 
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.type.PrimaryKey
-import com.strabled.composepreferences.utilis.DataStoreManager
 import dev.jordond.connectivity.Connectivity
 import io.ktor.http.ContentType
 import kotlinx.io.Source
@@ -20,7 +20,11 @@ interface ClientFile {
     fun source(): Source
 }
 
-class AppPlatform(val hasNativeBack: Boolean, val isActive: Boolean = true, val debug: Boolean)
+class AppPlatform(
+    val hasNativeBack: Boolean,
+    val isActive: Boolean = true,
+    val debug: Boolean,
+)
 
 interface AppPlatformImpl {
     fun startCall(roomId: PrimaryKey)
@@ -37,8 +41,7 @@ expect fun getClientFile(path: String): ClientFile?
 
 expect fun createConnectivity(): Connectivity
 
-@Composable
-expect fun createCustomDataStoreManager(): DataStoreManager
+internal expect fun createAppPreferencesDataStore(): DataStore<Preferences>
 
 expect fun unregisterPushService()
 

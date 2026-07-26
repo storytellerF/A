@@ -47,15 +47,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalInspectionMode
-import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.kdroid.composenotification.builder.getNotificationProvider
 import com.storyteller_f.a.api.SignInBody
 import com.storyteller_f.a.api.SignInResponse
 import com.storyteller_f.a.app.AppGlobalDialogController
@@ -80,6 +76,8 @@ import com.storyteller_f.a.app.sign_out_prompt
 import com.storyteller_f.a.app.switch_account
 import com.storyteller_f.a.app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.utils.createConnectivity
+import com.storyteller_f.a.app.utils.rememberAppNotificationPermission
+import com.storyteller_f.a.app.utils.requestAppNotificationPermission
 import com.storyteller_f.a.app.utils.unregisterPushService
 import com.storyteller_f.a.client.compose_core.CoreStrings
 import com.storyteller_f.a.client.compose_core.components.ButtonNav
@@ -93,6 +91,7 @@ import com.storyteller_f.a.client.compose_core.components.SignInButton
 import com.storyteller_f.a.client.compose_core.components.SubscriptionButton
 import com.storyteller_f.a.client.compose_core.components.UserIcon
 import com.storyteller_f.a.client.compose_core.components.request
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.a.client.core.LoadingHandler
 import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.a.client.core.UserSessionManager
@@ -187,7 +186,11 @@ fun SystemSettingsButton(dismiss: () -> Unit) {
 
 @Composable
 fun CreateButton(dismiss: () -> Unit, clickCreate: () -> Unit) {
-    ButtonNav(Icons.Default.Add, stringResource(Res.string.create)) {
+    ButtonNav(
+        Icons.Default.Add,
+        stringResource(Res.string.create),
+        semanticDescription = "create",
+    ) {
         dismiss()
         clickCreate()
     }
@@ -217,15 +220,20 @@ fun UserCardContainer(userInfo: UserInfo?, dismiss: () -> Unit, content: @Compos
     }
     val shape = RoundedCornerShape(8.dp)
     val cellClickable = !isUserPage
+    val openUser: () -> Unit = {
+        dismiss()
+        userInfo?.id?.let { appNavFactory.newAppNav().gotoUser(it) }
+    }
     val modifier = Modifier.fillMaxWidth()
-        .testTag("user-dialog-cell")
-        .semantics { contentDescription = "user-dialog-cell" }
+        .appiumSemantics(
+            testTag = "user-dialog-cell",
+            description = "user-dialog-cell",
+            onClick = openUser.takeIf { userInfo != null && cellClickable },
+        )
         .clip(shape)
         .background(MaterialTheme.colorScheme.surfaceDim, shape)
-        .clickable(userInfo != null && cellClickable) {
-            dismiss()
-            userInfo?.id?.let { appNavFactory.newAppNav().gotoUser(it) }
-        }.padding(8.dp)
+        .clickable(userInfo != null && cellClickable, onClick = openUser)
+        .padding(8.dp)
     Box(modifier) {
         content()
     }
@@ -253,10 +261,17 @@ fun SelfUserDetailCard(
             }
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
-            FilledIconButton({
+            val createTopic = {
                 dismiss()
                 onClickCreate()
-            }) {
+            }
+            FilledIconButton(
+                onClick = createTopic,
+                modifier = Modifier.appiumSemantics(
+                    description = "create",
+                    onClick = createTopic,
+                ),
+            ) {
                 Icon(Icons.Default.Add, "create")
             }
             UserOverviewRow(userOverview, isLoading, dismiss)
@@ -418,19 +433,11 @@ fun SignOutButton(controller: CustomAlertDialogController) {
 fun NotificationButton() {
     val inspectionMode = LocalInspectionMode.current
     if (inspectionMode) return
-    val notificationProvider = getNotificationProvider()
-    val hasPermission by notificationProvider.hasPermissionState
+    val hasPermission = rememberAppNotificationPermission()
 
     if (!hasPermission) {
         ButtonNav(Icons.Default.Notifications, stringResource(Res.string.grant_notification)) {
-            notificationProvider.requestPermission(
-                onGranted = {
-                    notificationProvider.updatePermissionState(true)
-                },
-                onDenied = {
-                    notificationProvider.updatePermissionState(false)
-                }
-            )
+            requestAppNotificationPermission()
         }
     }
 }
@@ -619,8 +626,17 @@ fun SelfUserIconWithDialog(
         mutableStateOf(false)
     }
     val url = userInfo?.avatar?.url
-    UserIcon(true, url, size = size) {
+    val showDialog = {
         showUserDialog = true
+    }
+    Box(
+        modifier = Modifier.appiumSemantics(
+            testTag = "me",
+            description = "avatar",
+            onClick = showDialog,
+        ),
+    ) {
+        UserIcon(true, url, size = size, onClick = showDialog)
     }
     SelfDialog(
         userInfo,

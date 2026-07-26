@@ -12,8 +12,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 
 class NavRoute(val path: String, val icon: ImageVector, val label: String)
 
@@ -29,9 +29,10 @@ fun CustomRailNav(
     NavigationRail(modifier = Modifier.padding(horizontal = 8.dp)) {
         navRoutes.forEach { route ->
             val showBadge = route.path == HOME_START_DESTINATION_ROOMS && unreadRoomsBadge
+            val onClick = { navigate(route.path) }
             NavigationRailItem(
                 selected = currentEntry == route.path,
-                onClick = { navigate(route.path) },
+                onClick = onClick,
                 icon = {
                     if (showBadge) {
                         BadgedBox(badge = { Badge { } }) {
@@ -41,7 +42,12 @@ fun CustomRailNav(
                         Icon(imageVector = route.icon, contentDescription = route.label)
                     }
                 },
-                label = { Text(route.label) }
+                label = { Text(route.label) },
+                modifier = Modifier.appiumSemantics(
+                    testTag = route.label,
+                    text = route.label,
+                    onClick = onClick,
+                ),
             )
         }
     }
@@ -57,9 +63,10 @@ fun CustomBottomNav(
     NavigationBar {
         navRoutes.forEach { route ->
             val showBadge = route.path == HOME_START_DESTINATION_ROOMS && unreadRoomsBadge
+            val onClick = { navigate(route.path) }
             NavigationBarItem(
                 selected = path == route.path,
-                onClick = { navigate(route.path) },
+                onClick = onClick,
                 icon = {
                     if (showBadge) {
                         BadgedBox(badge = { Badge { } }) {
@@ -70,7 +77,11 @@ fun CustomBottomNav(
                     }
                 },
                 label = { Text(route.label) },
-                modifier = Modifier.testTag(route.label)
+                modifier = Modifier.appiumSemantics(
+                    testTag = route.label,
+                    text = route.label,
+                    onClick = onClick,
+                ),
             )
         }
     }

@@ -14,13 +14,19 @@ class InputPrivateKeyViewModel : ViewModel() {
     val privateKey = MutableStateFlow("")
     val encryptionPrivateKey = MutableStateFlow("")
     val algo = MutableStateFlow(AlgoType.P256)
+    val privateKeyError = MutableStateFlow<String?>(null)
 
     val publicKey = privateKey.combine(algo) { privateKey, algo ->
         if (privateKey.isEmpty()) {
             null
         } else {
             getAlgo(algo).run {
-                getDerPublicKeyFromPrivateKey(privateKey).getOrNull()
+                getDerPublicKeyFromPrivateKey(privateKey)
+                    .onSuccess { privateKeyError.value = null }
+                    .onFailure { throwable ->
+                        privateKeyError.value = throwable.message ?: throwable::class.simpleName
+                    }
+                    .getOrNull()
             }
         }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
@@ -30,7 +36,12 @@ class InputPrivateKeyViewModel : ViewModel() {
             null
         } else {
             getAlgo(algo).run {
-                calcAddress(publicKey).getOrNull()
+                calcAddress(publicKey)
+                    .onSuccess { privateKeyError.value = null }
+                    .onFailure { throwable ->
+                        privateKeyError.value = throwable.message ?: throwable::class.simpleName
+                    }
+                    .getOrNull()
             }
         }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)

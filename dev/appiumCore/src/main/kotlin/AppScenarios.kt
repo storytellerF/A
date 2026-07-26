@@ -11,6 +11,8 @@ suspend fun scenarioSignUp(driver: AppTestDriver) {
     driver.clickByDescription("Edit Private Key")
     driver.inputText(privateKey)
     driver.clickByText("Confirm")
+    driver.assertVisibleByDescription("private key loaded")
+    driver.assertVisibleByDescription("account address")
     driver.clickByText("Start sign up")
     driver.assertVisibleByDescription("avatar")
 }
@@ -22,6 +24,8 @@ suspend fun scenarioSignIn(driver: AppTestDriver, privateKey: String) {
     driver.clickByDescription("Edit Private Key")
     driver.inputText(privateKey)
     driver.clickByText("Confirm")
+    driver.assertVisibleByDescription("private key loaded")
+    driver.assertVisibleByDescription("account address")
     driver.clickByText("Start sign in")
     driver.clickByDescription("avatar")
     driver.assertNotVisibleByText("Sign in")
@@ -34,6 +38,7 @@ suspend fun scenarioSignInAsSystemUser(driver: AppTestDriver, privateKey: String
 
 suspend fun scenarioVerifyInjectedSessionLoaded(driver: AppTestDriver) {
     driver.clickByDescription("avatar")
+    driver.assertVisibleByDescription("user-dialog-cell")
     driver.assertNotVisibleByText("Sign in")
 }
 

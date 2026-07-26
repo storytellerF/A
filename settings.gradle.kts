@@ -52,6 +52,7 @@ if (isAppiumTestEnable) {
     include(":dev:appiumCore")
     include(":app:androidAppium")
     include(":app:desktopAppium")
+    include(":app:wasmAppium")
     include(":panel:androidAppium")
     include(":panel:desktopAppium")
 }

@@ -33,9 +33,6 @@ import coil3.request.crossfade
 import coil3.util.DebugLogger
 import com.dokar.sonner.Toaster
 import com.dokar.sonner.rememberToasterState
-import com.kdroid.composenotification.builder.ExperimentalNotificationsApi
-import com.kdroid.composenotification.builder.Notification
-import com.kdroid.composenotification.builder.getNotificationProvider
 import com.storyteller_f.a.app.common.AppNav
 import com.storyteller_f.a.app.common.AppNavFactory
 import com.storyteller_f.a.app.common.Downloader
@@ -50,8 +47,6 @@ import com.storyteller_f.a.app.common.newAppNav
 import com.storyteller_f.a.app.common.processEvent
 import com.storyteller_f.a.app.common.rootEntryProvider
 import com.storyteller_f.a.app.common.toRoute
-import com.storyteller_f.a.app.pages.HOME_START_DESTINATION_PREFERENCE_KEY
-import com.storyteller_f.a.app.pages.HOME_START_DESTINATION_WORLD
 import com.storyteller_f.a.app.pages.file.FileExplorerPage
 import com.storyteller_f.a.app.pages.file.FileViewPage
 import com.storyteller_f.a.app.pages.room.RoomPage
@@ -60,8 +55,13 @@ import com.storyteller_f.a.app.pages.user.AccountSwitch
 import com.storyteller_f.a.app.pages.user.AccountSwitcher
 import com.storyteller_f.a.app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.ui.theme.AppTheme
+import com.storyteller_f.a.app.utils.ObserveAppNotificationClicks
+import com.storyteller_f.a.app.utils.ProvideAppPreferences
 import com.storyteller_f.a.app.utils.appPlatform
-import com.storyteller_f.a.app.utils.createCustomDataStoreManager
+import com.storyteller_f.a.app.utils.createAppPreferencesDataStore
+import com.storyteller_f.a.app.utils.initializeAppNotifications
+import com.storyteller_f.a.app.utils.rememberAppNotificationPermission
+import com.storyteller_f.a.app.utils.showAppNotification
 import com.storyteller_f.a.client.compose_core.common.LocalClient
 import com.storyteller_f.a.client.compose_core.components.AudioViewFilled
 import com.storyteller_f.a.client.compose_core.components.CustomGlobalDialogController
@@ -106,8 +106,6 @@ import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.storage.ModelStorage
-import com.strabled.composepreferences.ProvideDataStoreManager
-import com.strabled.composepreferences.setPreferences
 import dev.tclement.fonticons.LocalIconFont
 import dev.tclement.fonticons.LocalIconSize
 import dev.tclement.fonticons.LocalIconTintProvider
@@ -118,13 +116,11 @@ import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
 import io.ktor.client.plugins.cookies.CookiesStorage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 fun getAsyncImageLoader(context: PlatformContext) =
     ImageLoader.Builder(context).crossfade(true).logger(DebugLogger()).build()
@@ -187,6 +183,7 @@ val LocalGlobalTask = compositionLocalOf<AppGlobalTask> {
 
 @Composable
 fun App() {
+    remember { initializeAppNotifications() }
     CommonEntry {
         val mediaPlayerService = LocalMediaPlayerService.current
         val playerSession by mediaPlayerService.state.collectAsState()
@@ -282,12 +279,8 @@ fun CommonEntry(content: @Composable () -> Unit) {
             LocalRefCellHandlerProvider provides DefaultRefCellHandlerProvider
         ) {
             ProvideFontIcon {
-                val dataStoreManager = createCustomDataStoreManager()
-                ProvideDataStoreManager(dataStoreManager) {
-                    setPreferences {
-                        "gpt_model" defaultValue ""
-                        HOME_START_DESTINATION_PREFERENCE_KEY defaultValue HOME_START_DESTINATION_WORLD
-                    }
+                val dataStore = createAppPreferencesDataStore()
+                ProvideAppPreferences(dataStore) {
                     Box(Modifier.fillMaxSize()) {
                         content()
                         AccountSwitch()
@@ -471,7 +464,10 @@ class UIViewModel(
         val state = restoreFromStorage(settings)
         if (state is ClientSessionState.Success) {
             viewModelScope.launch {
-                val address = state.userPass.address().getOrNull() ?: return@launch
+                val address = when (val userPass = state.userPass) {
+                    is RawUserPass -> userPass.rawUSerPass.address
+                    else -> userPass.address().getOrNull() ?: return@launch
+                }
                 val regular = IAccountInstance.Regular(
                     viewModelScope,
                     address,
@@ -554,8 +550,13 @@ private fun ObserveMessage() {
     val sessionManager = LocalSessionManager.current
     val messageToasterState = rememberToasterState()
     Toaster(messageToasterState, alignment = Alignment.TopCenter)
-    val notificationProvider = getNotificationProvider()
-    val hasPermission by notificationProvider.hasPermissionState
+    val hasPermission = rememberAppNotificationPermission()
+    ObserveAppNotificationClicks { payload ->
+        payload[TOPIC_NOTIFICATION_ID_KEY]
+            ?.toString()
+            ?.toLongOrNull()
+            ?.let { topicId -> appNavFactory.newAppNav().gotoTopic(topicId) }
+    }
     LaunchedEffect(sessionManager) {
         sessionManager.webSocketClient.frameFlow.collect { frame ->
             if (frame is RoomFrame.NewTopicInfo) {
@@ -582,9 +583,7 @@ private fun ObserveMessage() {
                             messageToasterState.show("$nickname: ${message.plain}")
                         }
                     } else if (hasPermission) {
-                        sendTopicNotification(message, topicInfo) {
-                            appNavFactory.newAppNav().gotoTopic(it.id)
-                        }
+                        sendTopicNotification(message, topicInfo)
                     }
                 }
             }
@@ -592,29 +591,17 @@ private fun ObserveMessage() {
     }
 }
 
-@OptIn(ExperimentalNotificationsApi::class)
-private suspend fun sendTopicNotification(
+private const val TOPIC_NOTIFICATION_ID_KEY = "topic-id"
+
+private fun sendTopicNotification(
     message: TopicContent.Plain,
     topicInfo: TopicInfo,
-    onClickTopic: (TopicInfo) -> Unit,
 ) {
-    withContext(Dispatchers.Main) {
-        Notification(
-            title = "New topic",
-            message = message.plain,
-            onActivated = {
-                Napier.d(message = "Notification 1 activated", tag = "NotificationLog")
-                onClickTopic(topicInfo)
-            },
-            onDismissed = { reason ->
-                Napier.d(message = "Notification 1 dismissed: $reason", tag = "NotificationLog")
-            },
-            onFailed = {
-                Napier.d(tag = "NotificationLog", message = "Notification 1 failed")
-            }
-        ) {
-        }
-    }
+    showAppNotification(
+        title = "New topic",
+        body = message.plain,
+        payloadData = mapOf(TOPIC_NOTIFICATION_ID_KEY to topicInfo.id.toString()),
+    )
 }
 
 @Composable

@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.mikepenz.markdown.compose.components.MarkdownComponent
 import com.storyteller_f.a.client.compose_core.CoreStrings
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
@@ -59,7 +60,13 @@ fun TopicContentView(
     val dimensionMap = remember(mediaMap) {
         mediaMap.mapValues { it.value.dimension }.toImmutableMap()
     }
-    CustomMarkdown(plain, isEmbed, imageTransformer, dimensionMap, {
-        CustomCodeFence(it, mediaMap, refBlock, onClick)
-    })
+    Box(
+        modifier = Modifier.appiumSemantics(
+            text = plain.lineSequence().firstOrNull { it.isNotBlank() }?.trim(),
+        ),
+    ) {
+        CustomMarkdown(plain, isEmbed, imageTransformer, dimensionMap, {
+            CustomCodeFence(it, mediaMap, refBlock, onClick)
+        })
+    }
 }

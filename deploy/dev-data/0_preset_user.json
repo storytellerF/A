@@ -5,38 +5,50 @@
       "name": "System",
       "aid": "System",
       "icon": "medias/users/robot1.png",
-      "privateKey": "secrets/p-system",
+    "privateKey": "secrets/p-system",
+    "encryptionPrivateKey": "secrets/ep-system",
+    "algoType": "DILITHIUM",
       "id": 1
     },
     {
       "name": "FontProvider",
       "aid": "FontProvider",
-      "privateKey": "secrets/p-font-provider",
+    "privateKey": "secrets/p-font-provider",
+    "encryptionPrivateKey": "secrets/ep-font-provider",
+    "algoType": "DILITHIUM",
       "id": 100
     },
     {
       "name": "人机一号",
       "aid": "robot1",
       "icon": "medias/users/robot1.png",
-      "privateKey": "secrets/p-robot1"
+    "privateKey": "secrets/p-robot1",
+    "encryptionPrivateKey": "secrets/ep-robot1",
+    "algoType": "DILITHIUM"
     },
     {
       "name": "人机二号",
       "aid": "robot2",
       "icon": "medias/users/robot2.png",
-      "privateKey": "secrets/p-robot2"
+    "privateKey": "secrets/p-robot2",
+    "encryptionPrivateKey": "secrets/ep-robot2",
+    "algoType": "DILITHIUM"
     },
     {
       "name": "User1",
       "aid": "user1",
-      "privateKey": "secrets/p-user1",
+    "privateKey": "secrets/p-user1",
+    "encryptionPrivateKey": "secrets/ep-user1",
+    "algoType": "DILITHIUM",
       "icon": "medias/users/user1.jpg"
     },
     {
       "name": "User2",
       "aid": "user2",
       "icon": "medias/users/user2.jpg",
-      "privateKey": "secrets/p-user2"
+    "privateKey": "secrets/p-user2",
+    "encryptionPrivateKey": "secrets/ep-user2",
+    "algoType": "DILITHIUM"
     },
     {
       "name": "User3",

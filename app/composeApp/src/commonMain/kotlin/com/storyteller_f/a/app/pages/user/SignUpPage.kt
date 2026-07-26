@@ -12,13 +12,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.Res
 import com.storyteller_f.a.app.go_to_sign_in
 import com.storyteller_f.a.app.private_key
 import com.storyteller_f.a.app.sign_up
 import com.storyteller_f.a.app.sign_up_subtitle
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -27,7 +27,10 @@ fun SignUpPage(signInAndSignUpNav: SignInAndSignUpNav) {
         title = stringResource(Res.string.sign_up),
         subtitle = stringResource(Res.string.sign_up_subtitle),
         footer = {
-            TextButton(onClick = { signInAndSignUpNav.gotoSignIn() }) {
+            TextButton(
+                onClick = { signInAndSignUpNav.gotoSignIn() },
+                modifier = Modifier.appiumSemantics(text = stringResource(Res.string.go_to_sign_in)),
+            ) {
                 Text(stringResource(Res.string.go_to_sign_in))
             }
         }
@@ -35,7 +38,10 @@ fun SignUpPage(signInAndSignUpNav: SignInAndSignUpNav) {
         Column {
             Button(
                 onClick = { signInAndSignUpNav.gotoPrivateKey(true) },
-                modifier = Modifier.fillMaxWidth().testTag("private_key"),
+                modifier = Modifier.fillMaxWidth().appiumSemantics(
+                    testTag = "private_key",
+                    text = stringResource(Res.string.private_key),
+                ),
                 shape = ButtonDefaults.shape
             ) {
                 Icon(Icons.Default.PersonAdd, contentDescription = null)

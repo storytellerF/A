@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 
 @Composable
 internal fun AuthPageChrome(
@@ -45,7 +46,11 @@ internal fun AuthPageChrome(
                     verticalArrangement = Arrangement.spacedBy(20.dp)
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(title, style = MaterialTheme.typography.headlineMedium)
+                        Text(
+                            title,
+                            modifier = Modifier.appiumSemantics(text = title),
+                            style = MaterialTheme.typography.headlineMedium,
+                        )
                         Text(
                             subtitle,
                             style = MaterialTheme.typography.bodyMedium,

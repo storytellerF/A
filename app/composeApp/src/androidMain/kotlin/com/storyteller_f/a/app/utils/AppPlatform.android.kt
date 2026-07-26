@@ -1,16 +1,16 @@
 package com.storyteller_f.a.app.utils
 
 import androidx.activity.ComponentActivity
-import androidx.compose.runtime.Composable
 import androidx.core.net.toUri
+import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.Preferences
 import androidx.lifecycle.Lifecycle
 import com.storyteller_f.a.app.AppConfig
 import com.storyteller_f.a.app.getClipFile
 import com.storyteller_f.a.app.initFromContext
 import com.storyteller_f.a.client.compose_core.components.mainActivityRef
 import com.storyteller_f.shared.getAppContextRefValue
-import com.strabled.composepreferences.utilis.DataStoreManager
 import dev.jordond.connectivity.Connectivity
 import okio.Path.Companion.toOkioPath
 import org.unifiedpush.android.connector.UnifiedPush
@@ -39,21 +39,16 @@ actual fun getClientFile(path: String): ClientFile? {
     return getClipFile(getAppContextRefValue()!!, path.toUri())
 }
 
-private val store by lazy {
+private val appPreferencesDataStore by lazy {
     val context = getAppContextRefValue()!!
-    DataStoreManager(
-        PreferenceDataStoreFactory.createWithPath(
-            produceFile = {
-                context.filesDir.resolve("main.preferences_pb").toOkioPath()
-            }
-        )
+    PreferenceDataStoreFactory.createWithPath(
+        produceFile = {
+            context.filesDir.resolve("main.preferences_pb").toOkioPath()
+        }
     )
 }
 
-@Composable
-actual fun createCustomDataStoreManager(): DataStoreManager {
-    return store
-}
+internal actual fun createAppPreferencesDataStore(): DataStore<Preferences> = appPreferencesDataStore
 
 actual fun unregisterPushService() {
     val context = getAppContextRefValue() ?: return

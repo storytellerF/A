@@ -14,7 +14,13 @@ kotlin {
     if (buildWasmTarget) {
         @OptIn(ExperimentalWasmDsl::class)
         wasmJs {
-            browser()
+            browser {
+                testTask {
+                    useKarma {
+                        useFirefox()
+                    }
+                }
+            }
             compilerOptions {
                 freeCompilerArgs.add("-Xwasm-attach-js-exception")
             }
@@ -108,6 +114,7 @@ kotlin {
                 implementation(npm("ethereum-cryptography", "3.1.0"))
                 implementation(npm("keccak", "3.0.4"))
                 implementation(npm("@noble/curves", "1.0.0"))
+                implementation(npm("@noble/post-quantum", "0.6.1"))
             }
             wasmJsMain {
                 dependsOn(noJvmMain)

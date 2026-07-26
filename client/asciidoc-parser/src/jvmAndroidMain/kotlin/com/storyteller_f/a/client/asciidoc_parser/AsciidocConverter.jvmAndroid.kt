@@ -6,8 +6,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.use
 
-actual suspend fun convertAsciidoc(source: String, asciidoctorScript: String): String =
+private const val ASCIIDOCTOR_SCRIPT_PATH = "files/asciidoctor.min.js"
+
+actual suspend fun convertAsciidoc(source: String): String =
     withContext(Dispatchers.Default) {
+        val asciidoctorScript = Res.readBytes(ASCIIDOCTOR_SCRIPT_PATH).decodeToString()
         (V8Host.getNodeInstance().createV8Runtime() as NodeRuntime).use { runtime ->
             runtime.getExecutor(asciidoctorScript).executeVoid()
             runtime.getExecutor(
