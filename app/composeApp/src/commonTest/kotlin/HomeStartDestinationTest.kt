@@ -6,7 +6,6 @@ import androidx.navigation3.runtime.NavKey
 import com.storyteller_f.a.app.AppListDetailDestination
 import com.storyteller_f.a.app.AppListDetailPane
 import com.storyteller_f.a.app.AppListDetailScene
-import com.storyteller_f.a.app.addAppDetail
 import com.storyteller_f.a.app.appListDetailDestination
 import com.storyteller_f.a.app.calculateAppPaneDirective
 import com.storyteller_f.a.app.common.AboutScreen
@@ -15,12 +14,15 @@ import com.storyteller_f.a.app.common.HomeScreen
 import com.storyteller_f.a.app.common.RoomScreen
 import com.storyteller_f.a.app.common.TopicScreen
 import com.storyteller_f.a.app.common.UserScreen
+import com.storyteller_f.a.app.common.createListPaneAppNavFactory
+import com.storyteller_f.a.app.common.newAppNav
 import com.storyteller_f.a.app.pages.HOME_START_DESTINATION_COMMUNITIES
 import com.storyteller_f.a.app.pages.HOME_START_DESTINATION_ROOMS
 import com.storyteller_f.a.app.pages.HOME_START_DESTINATION_WORLD
 import com.storyteller_f.a.app.pages.HomeRoute
 import com.storyteller_f.a.app.pages.homePageFromPreference
 import com.storyteller_f.a.app.pages.homeRouteFromPreference
+import com.storyteller_f.a.app.selectAppDetail
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -60,10 +62,10 @@ class HomeStartDestinationTest {
     }
 
     @Test
-    fun selectingAnotherHomeDetailReplacesCurrentDetail() {
+    fun listPaneSelectionReplacesCurrentDetail() {
         val backStack = NavBackStack<NavKey>(HomeScreen, RoomScreen(1))
 
-        backStack.addAppDetail(TopicScreen(2))
+        createListPaneAppNavFactory(newAppNav(backStack)).newAppNav().gotoTopic(2)
 
         assertEquals(
             listOf(HomeScreen, TopicScreen(2)),
@@ -72,10 +74,22 @@ class HomeStartDestinationTest {
     }
 
     @Test
-    fun detailOutsideImmediateHomePairPreservesHistory() {
+    fun detailNavigationPreservesBackHistory() {
+        val backStack = NavBackStack<NavKey>(HomeScreen, RoomScreen(1))
+
+        newAppNav(backStack).gotoTopic(2)
+
+        assertEquals(
+            listOf(HomeScreen, RoomScreen(1), TopicScreen(2)),
+            backStack,
+        )
+    }
+
+    @Test
+    fun unpairedListSelectionPreservesHistory() {
         val backStack = NavBackStack<NavKey>(HomeScreen, AboutScreen)
 
-        backStack.addAppDetail(UserScreen(2))
+        backStack.selectAppDetail(UserScreen(2))
 
         assertEquals(
             listOf(HomeScreen, AboutScreen, UserScreen(2)),

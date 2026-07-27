@@ -25,7 +25,7 @@
 - Worker execution records are stored in the backend `TaskRecords` table. The record type is `TaskRecordType`, and `processedId` points to the business object processed by the task.
 - Panel queries worker execution records through paginated `/admin/task-records`; it supports filtering by task type, and returns all records when no type is provided.
 - Panel list/detail routes use Navigation 3's `ListDetailSceneStrategy`: users, communities, rooms, topics, files, and titles render side by side on wide content areas and fall back to the existing single-pane navigation when the post-drawer content area is narrow. Public and private room lists share the room detail scene. When the list pane is still the immediate parent, selecting another item replaces the current same-scene detail entry instead of growing the back stack.
-- App root navigation uses Navigation 3's `ListDetailSceneStrategy`: `HomeScreen` is the list pane, while community, room, topic, and user screens share its detail scene. Wide content areas show both panes, compact content stays single-pane, and selecting another Home detail replaces the current paired detail entry.
+- App root navigation uses Navigation 3's `ListDetailSceneStrategy`: `HomeScreen` is the list pane, while community, room, topic, and user screens share its detail scene. Wide content areas show both panes and compact content stays single-pane. Navigation originating from the Home list replaces its current immediately paired detail; navigation originating from a detail screen pushes a new entry so compact back history is preserved.
 
 ## Topic Compose / Block Editing
 

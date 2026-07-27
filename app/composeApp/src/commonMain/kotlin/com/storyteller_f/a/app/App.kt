@@ -191,10 +191,10 @@ private fun listDestination(scene: AppListDetailScene) = AppListDetailDestinatio
 
 private fun detailDestination(scene: AppListDetailScene) = AppListDetailDestination(scene, AppListDetailPane.Detail)
 
-internal fun NavBackStack<NavKey>.addAppDetail(detail: NavKey) {
+internal fun NavBackStack<NavKey>.selectAppDetail(detail: NavKey) {
     val detailDestination = detail.appListDetailDestination()
     require(detailDestination?.pane == AppListDetailPane.Detail) {
-        "Only app detail destinations can be added with addAppDetail"
+        "Only app detail destinations can be selected with selectAppDetail"
     }
     val currentDestination = lastOrNull()?.appListDetailDestination()
     val previousDestination = getOrNull(lastIndex - 1)?.appListDetailDestination()

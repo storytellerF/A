@@ -9,6 +9,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.EntryProviderScope
@@ -20,9 +21,9 @@ import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 import com.mikepenz.aboutlibraries.ui.compose.m3.libraryColors
 import com.mikepenz.aboutlibraries.ui.compose.produceLibraries
 import com.storyteller_f.a.app.AppListDetailPane
+import com.storyteller_f.a.app.LocalAppNavFactory
 import com.storyteller_f.a.app.LocalUserInfo
 import com.storyteller_f.a.app.Res
-import com.storyteller_f.a.app.addAppDetail
 import com.storyteller_f.a.app.appListDetailDestination
 import com.storyteller_f.a.app.pages.HomePage
 import com.storyteller_f.a.app.pages.PreferencePage
@@ -51,6 +52,7 @@ import com.storyteller_f.a.app.pages.user.UserPage
 import com.storyteller_f.a.app.pages.user.UserReactionRecordsPage
 import com.storyteller_f.a.app.pages.user.UserSettingPage
 import com.storyteller_f.a.app.pages.user.UserSubscriptionPage
+import com.storyteller_f.a.app.selectAppDetail
 import com.storyteller_f.a.app.select_an_item
 import com.storyteller_f.a.app.utils.getDeepLinkHost
 import com.storyteller_f.a.app.utils.getDeepLinkScheme
@@ -338,15 +340,15 @@ private class DefaultAppNav(override val backStack: NavBackStack<NavKey>) : AppN
     }
 
     override fun gotoRoom(roomId: PrimaryKey, showDialog: Boolean) {
-        backStack.addAppDetail(RoomScreen(roomId, showDialog))
+        backStack.add(RoomScreen(roomId, showDialog))
     }
 
     override fun gotoCommunity(communityId: PrimaryKey, showDialog: Boolean) {
-        backStack.addAppDetail(CommunityScreen(communityId, showDialog))
+        backStack.add(CommunityScreen(communityId, showDialog))
     }
 
     override fun gotoTopic(topicId: PrimaryKey) {
-        backStack.addAppDetail(TopicScreen(topicId))
+        backStack.add(TopicScreen(topicId))
     }
 
     override fun gotoHome() {
@@ -415,7 +417,7 @@ private class DefaultAppNav(override val backStack: NavBackStack<NavKey>) : AppN
     }
 
     override fun gotoUser(uid: PrimaryKey) {
-        backStack.addAppDetail(UserScreen(uid))
+        backStack.add(UserScreen(uid))
     }
 
     override fun back() {
@@ -510,11 +512,35 @@ private class DefaultAppNav(override val backStack: NavBackStack<NavKey>) : AppN
 
 internal fun newAppNav(backStack: NavBackStack<NavKey>): AppNav = DefaultAppNav(backStack)
 
+internal fun createListPaneAppNavFactory(nav: AppNav): AppNavFactory {
+    val listPaneNav =
+        object : AppNav by nav {
+            override fun gotoRoom(roomId: PrimaryKey, showDialog: Boolean) {
+                backStack.selectAppDetail(RoomScreen(roomId, showDialog))
+            }
+
+            override fun gotoCommunity(communityId: PrimaryKey, showDialog: Boolean) {
+                backStack.selectAppDetail(CommunityScreen(communityId, showDialog))
+            }
+
+            override fun gotoTopic(topicId: PrimaryKey) {
+                backStack.selectAppDetail(TopicScreen(topicId))
+            }
+
+            override fun gotoUser(uid: PrimaryKey) {
+                backStack.selectAppDetail(UserScreen(uid))
+            }
+        }
+    return object : AppNavFactory {
+        override fun newAppNav(): AppNav = listPaneNav
+    }
+}
+
 @OptIn(ExperimentalResourceApi::class)
 fun rootEntryProvider(
     nav: AppNav,
 ) = entryProvider {
-    handleMainScreen()
+    handleMainScreen(createListPaneAppNavFactory(nav))
     handleSettingsScreen()
     handleComposeScreen(nav)
     handleFileExplorerScreen()
@@ -554,9 +580,11 @@ private fun appListDetailMetadata(key: NavKey): Map<String, Any> {
     }
 }
 
-private fun EntryProviderScope<NavKey>.handleMainScreen() {
+private fun EntryProviderScope<NavKey>.handleMainScreen(listPaneAppNavFactory: AppNavFactory) {
     entry<HomeScreen>(metadata = { appListDetailMetadata(it) }) {
-        HomePage()
+        CompositionLocalProvider(LocalAppNavFactory provides listPaneAppNavFactory) {
+            HomePage()
+        }
     }
     entry<SignSessionScreen> {
         SignInAndSignUpPage()
