@@ -111,6 +111,12 @@ GENERATED_COMPOSE_FILE="./deploy/docker-compose/docker-compose.generated-patch.y
                 echo "  etcd:"
                 emit_bunker_network_if_needed
             fi
+            if has_profile app; then
+                echo "  app-wasm:"
+                emit_bunker_network_if_needed
+                echo "  panel-wasm:"
+                emit_bunker_network_if_needed
+            fi
         fi
         if has_profile cli; then
             echo "  cli:"
