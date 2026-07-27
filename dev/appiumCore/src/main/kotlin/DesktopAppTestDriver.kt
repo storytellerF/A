@@ -6,13 +6,16 @@ import java.io.File
 import java.time.Duration
 
 class DesktopAppTestDriver(private val driver: AppiumDriver) : AppTestDriver {
-
     suspend fun assertAsciidocPreviewOpened() {
         assertVisibleByDescription("close preview")
     }
 
     override suspend fun clickByDescription(description: String) {
         waitAndClick(By.xpath("//*[@name='$description']"))
+    }
+
+    override suspend fun clickUserDetailAvatar() {
+        clickByDescription("avatar")
     }
 
     override suspend fun clickByText(text: String) {
@@ -23,10 +26,6 @@ class DesktopAppTestDriver(private val driver: AppiumDriver) : AppTestDriver {
         waitAndClick(By.xpath("//*[contains(@value,'$text') or contains(@name,'$text')]"))
     }
 
-    override suspend fun clickByDescriptionContaining(description: String) {
-        waitAndClick(By.xpath("//*[contains(@name,'$description')]"))
-    }
-
     private fun waitAndClick(locator: By) {
         WebDriverWait(driver, Duration.ofSeconds(UI_WAIT_SECONDS))
             .until(ExpectedConditions.presenceOfElementLocated(locator))
@@ -35,9 +34,11 @@ class DesktopAppTestDriver(private val driver: AppiumDriver) : AppTestDriver {
 
     override suspend fun inputText(text: String) {
         val wait = WebDriverWait(driver, Duration.ofSeconds(UI_WAIT_SECONDS))
-        val element = wait.until(
-            ExpectedConditions.presenceOfElementLocated(By.xpath("//text-field"))
-        )
+        val elements =
+            wait.until {
+                driver.findElements(By.xpath("//text-field")).takeIf(List<*>::isNotEmpty)
+            }
+        val element = elements.last()
         element.sendKeys(text)
     }
 
@@ -49,13 +50,13 @@ class DesktopAppTestDriver(private val driver: AppiumDriver) : AppTestDriver {
         assertVisible(By.xpath("//*[@value='$text' or @name='$text']"))
     }
 
+    override suspend fun assertVisibleByTextContaining(text: String) {
+        assertVisible(By.xpath("//*[contains(@value,'$text') or contains(@name,'$text')]"))
+    }
+
     private fun assertVisible(locator: By) {
         WebDriverWait(driver, Duration.ofSeconds(UI_WAIT_SECONDS))
             .until(ExpectedConditions.presenceOfElementLocated(locator))
-    }
-
-    override suspend fun assertNotVisibleByDescription(description: String, timeoutSeconds: Long) {
-        assertNotVisible(By.xpath("//*[@name='$description']"), timeoutSeconds)
     }
 
     override suspend fun assertNotVisibleByText(text: String, timeoutSeconds: Long) {

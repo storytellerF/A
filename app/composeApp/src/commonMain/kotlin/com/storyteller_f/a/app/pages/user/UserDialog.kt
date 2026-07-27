@@ -224,16 +224,18 @@ fun UserCardContainer(userInfo: UserInfo?, dismiss: () -> Unit, content: @Compos
         dismiss()
         userInfo?.id?.let { appNavFactory.newAppNav().gotoUser(it) }
     }
-    val modifier = Modifier.fillMaxWidth()
-        .appiumSemantics(
-            testTag = "user-dialog-cell",
-            description = "user-dialog-cell",
-            onClick = openUser.takeIf { userInfo != null && cellClickable },
-        )
-        .clip(shape)
-        .background(MaterialTheme.colorScheme.surfaceDim, shape)
-        .clickable(userInfo != null && cellClickable, onClick = openUser)
-        .padding(8.dp)
+    val modifier =
+        Modifier.fillMaxWidth()
+            .appiumSemantics(
+                testTag = "user-dialog-cell",
+                description = "user-dialog-cell",
+                text = userInfo?.let { "${it.nickname}, ${CoreStrings.ad(it.address)}" },
+                onClick = openUser.takeIf { userInfo != null && cellClickable },
+            )
+            .clip(shape)
+            .background(MaterialTheme.colorScheme.surfaceDim, shape)
+            .clickable(userInfo != null && cellClickable, onClick = openUser)
+            .padding(8.dp)
     Box(modifier) {
         content()
     }

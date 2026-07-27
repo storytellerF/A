@@ -245,8 +245,13 @@ def main():
         if not results:
             print(json.dumps({"ok": False, "error": "element not found"}))
             return
-        ok, action_name = perform_action(results[0])
-        cx, cy = get_center(results[0])
+        index = cmd.get("index", 0)
+        target = results[index] if len(results) > index else None
+        if not target:
+            print(json.dumps({"ok": False, "error": "element index out of range"}))
+            return
+        ok, action_name = perform_action(target)
+        cx, cy = get_center(target)
         print(json.dumps({"ok": ok, "action": action_name, "cx": cx, "cy": cy}))
 
     elif action == "set_text":
@@ -264,13 +269,30 @@ def main():
                 cmd.get("timeout", 15),
             )
         target = results[0] if results else find_editable(app)
+        index = cmd.get("index", 0)
+        target = results[index] if len(results) > index else target
         if not target:
             print(json.dumps({"ok": False, "error": "editable element not found"}))
             return
         perform_action(target)
         try:
             editable = target.queryEditableText()
-            editable.setTextContents(cmd.get("text", ""))
+            expected_text = cmd.get("text", "")
+            editable.setTextContents(expected_text)
+            deadline = time.time() + 2
+            stable_reads = 0
+            while time.time() < deadline:
+                try:
+                    actual_text = target.queryText().getText(0, -1)
+                except Exception:
+                    actual_text = None
+                stable_reads = stable_reads + 1 if actual_text == expected_text else 0
+                if stable_reads >= 2:
+                    break
+                time.sleep(0.05)
+            if stable_reads < 2:
+                print(json.dumps({"ok": False, "error": "editable text did not reach the requested value"}))
+                return
             cx, cy = get_center(target)
             print(json.dumps({"ok": True, "cx": cx, "cy": cy}))
         except Exception as e:

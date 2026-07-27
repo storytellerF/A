@@ -11,8 +11,7 @@ suspend fun scenarioSignUp(driver: AppTestDriver) {
     driver.clickByDescription("Edit Private Key")
     driver.inputText(privateKey)
     driver.clickByText("Confirm")
-    driver.assertVisibleByDescription("private key loaded")
-    driver.assertVisibleByDescription("account address")
+    driver.assertVisibleByText("Start sign up")
     driver.clickByText("Start sign up")
     driver.assertVisibleByDescription("avatar")
 }
@@ -24,8 +23,7 @@ suspend fun scenarioSignIn(driver: AppTestDriver, privateKey: String) {
     driver.clickByDescription("Edit Private Key")
     driver.inputText(privateKey)
     driver.clickByText("Confirm")
-    driver.assertVisibleByDescription("private key loaded")
-    driver.assertVisibleByDescription("account address")
+    driver.assertVisibleByText("Start sign in")
     driver.clickByText("Start sign in")
     driver.clickByDescription("avatar")
     driver.assertNotVisibleByText("Sign in")
@@ -36,17 +34,17 @@ suspend fun scenarioSignInAsSystemUser(driver: AppTestDriver, privateKey: String
     driver.assertNotVisibleByText("Sign in")
 }
 
-suspend fun scenarioVerifyInjectedSessionLoaded(driver: AppTestDriver) {
+suspend fun scenarioVerifyInjectedSessionLoaded(driver: AppTestDriver, address: String) {
     driver.clickByDescription("avatar")
-    driver.assertVisibleByDescription("user-dialog-cell")
+    driver.assertVisibleByTextContaining(address)
     driver.assertNotVisibleByText("Sign in")
 }
 
-suspend fun scenarioPublishTopicInUserSpace(driver: AppTestDriver) {
+suspend fun scenarioPublishTopicInUserSpace(driver: AppTestDriver, address: String) {
     val topicContent = "appium-user-space-topic-${System.currentTimeMillis()}"
     driver.clickByDescription("avatar")
-    driver.clickByDescriptionContaining("user-dialog-cell")
-    driver.clickByDescription("avatar")
+    driver.clickByTextContaining(address)
+    driver.clickUserDetailAvatar()
     driver.clickByDescription("create")
     driver.clickByText("Raw")
     driver.inputText(topicContent)
@@ -54,26 +52,26 @@ suspend fun scenarioPublishTopicInUserSpace(driver: AppTestDriver) {
     driver.assertVisibleByText(topicContent)
 }
 
-suspend fun scenarioFavoriteTopic(driver: AppTestDriver, topicContent: String) {
+suspend fun scenarioFavoriteTopic(driver: AppTestDriver, address: String, topicContent: String) {
     driver.clickByDescription("avatar")
-    driver.clickByDescriptionContaining("user-dialog-cell")
+    driver.clickByTextContaining(address)
     driver.assertVisibleByText(topicContent)
     driver.clickByText(topicContent)
     driver.clickByDescription("topic")
-    driver.clickByDescriptionContaining("favorite-action")
+    driver.clickByText("Favorite")
 }
 
-suspend fun scenarioOpenAsciidocPreview(driver: AppTestDriver, topicMarker: String) {
+suspend fun scenarioOpenAsciidocPreview(driver: AppTestDriver, address: String, topicMarker: String) {
     driver.clickByDescription("avatar")
-    driver.clickByDescriptionContaining("user-dialog-cell")
+    driver.clickByTextContaining(address)
     driver.assertVisibleByText(topicMarker)
     driver.clickByText(topicMarker)
-    driver.assertVisibleByDescription("asciidoc")
+    driver.assertVisibleByTextContaining("AsciiDoc preview")
     driver.clickByDescription("open")
 }
 
 suspend fun scenarioFavoritePreparedTopic(driver: AppTestDriver, data: FavoriteTopicScenario) {
-    scenarioFavoriteTopic(driver, data.topicContent)
+    scenarioFavoriteTopic(driver, data.authenticated.session.address, data.topicContent)
     waitUntilTopicFavorited(data.authenticated.sessionManager, data.topicId)
     driver.navigateBack()
     driver.assertVisibleByDescription("topic")
@@ -88,7 +86,7 @@ suspend fun scenarioSubscribeTopic(driver: AppTestDriver, communityName: String,
     scenarioOpenCommunity(driver, communityName)
     driver.clickByText(topicContent)
     driver.clickByDescription("topic")
-    driver.clickByDescriptionContaining("subscribe-action")
+    driver.clickByText("Subscription")
 }
 
 suspend fun scenarioSubscribePreparedTopic(driver: AppTestDriver, data: SubscriptionTopicScenario) {
@@ -105,9 +103,9 @@ suspend fun scenarioCommunityProfileActions(
 ) {
     scenarioOpenCommunity(driver, communityName)
     driver.clickByText(communityName.first().toString())
-    driver.clickByDescriptionContaining("favorite-action")
-    driver.clickByDescriptionContaining("subscribe-action")
-    driver.clickByDescriptionContaining("all-members-action")
+    driver.clickByText("Favorite")
+    driver.clickByText("Subscription")
+    driver.clickByTextContaining("All members")
     driver.clickByTextContaining(ownerAddress)
 }
 
@@ -118,7 +116,7 @@ suspend fun scenarioPublishTopicInCommunity(
     val topicContent = "appium-community-topic-${System.currentTimeMillis()}"
     scenarioOpenCommunity(driver, communityName)
     driver.clickByText(communityName.first().toString())
-    driver.clickByDescriptionContaining("community-add-topic-action")
+    driver.clickByText("Add")
     driver.saveSnapshot("community-after-add")
     driver.clickByText("Raw")
     driver.inputText(topicContent)

@@ -13,14 +13,14 @@ import java.time.Duration
 class WasmAppTestDriver(private val browser: WebDriver) : AppTestDriver {
     override suspend fun clickByDescription(description: String) = click(descriptionLocator(description))
 
+    override suspend fun clickUserDetailAvatar() {
+        clickLast(descriptionLocator("avatar"))
+    }
+
     override suspend fun clickByText(text: String) = click(textLocator(text))
 
     override suspend fun clickByTextContaining(text: String) = click(
         By.cssSelector("[data-appium-text*='${text.cssAttributeValue()}']"),
-    )
-
-    override suspend fun clickByDescriptionContaining(description: String) = click(
-        By.cssSelector("[aria-label*='${description.cssAttributeValue()}']"),
     )
 
     override suspend fun inputText(text: String) {
@@ -53,8 +53,11 @@ class WasmAppTestDriver(private val browser: WebDriver) : AppTestDriver {
 
     override suspend fun assertVisibleByText(text: String) = assertVisible(textLocator(text))
 
-    override suspend fun assertNotVisibleByDescription(description: String, timeoutSeconds: Long) =
-        assertNotVisible(descriptionLocator(description), timeoutSeconds)
+    override suspend fun assertVisibleByTextContaining(text: String) {
+        assertVisible(
+            By.cssSelector("[data-appium-text*='${text.cssAttributeValue()}']"),
+        )
+    }
 
     override suspend fun assertNotVisibleByText(text: String, timeoutSeconds: Long) =
         assertNotVisible(textLocator(text), timeoutSeconds)
@@ -86,8 +89,20 @@ class WasmAppTestDriver(private val browser: WebDriver) : AppTestDriver {
         ) == true
 
     private fun click(locator: By) {
+        clickWithSnapshot {
+            findOnScreen(locator)
+        }
+    }
+
+    private fun clickLast(locator: By) {
+        clickWithSnapshot {
+            findLastOnScreen(locator)
+        }
+    }
+
+    private fun clickWithSnapshot(findElement: () -> WebElement) {
         try {
-            val element = findOnScreen(locator)
+            val element = findElement()
             if (element.getAttribute("data-appium-action") == "true") {
                 (browser as JavascriptExecutor).executeScript("arguments[0].click();", element)
             } else {
@@ -145,6 +160,14 @@ class WasmAppTestDriver(private val browser: WebDriver) : AppTestDriver {
 
     private fun findOnScreen(locator: By): WebElement = wait.until {
         browser.findElements(locator).firstOrNull(::isOnScreen)
+    }
+
+    private fun findLastOnScreen(locator: By): WebElement {
+        val element =
+            wait.until {
+                browser.findElements(locator).lastOrNull(::isOnScreen)
+            }
+        return element
     }
 
     private fun isOnScreen(element: WebElement): Boolean = runCatching {

@@ -32,13 +32,14 @@ fun testInjectedSessionByHelper(
         testName = testName,
         target = target,
         setup = { ports ->
+            val session = target.createPreRegisteredSession(ports)
             AppiumTestSetup(
-                data = Unit,
-                injectedSession = target.createPreRegisteredSession(ports),
+                data = session.address,
+                injectedSession = session,
             )
         },
-    ) { scope, _ ->
-        scenarioVerifyInjectedSessionLoaded(scope.driver)
+    ) { scope, address ->
+        scenarioVerifyInjectedSessionLoaded(scope.driver, address)
     }
 }
 
@@ -52,10 +53,10 @@ fun testPublishTopicInUserSpaceByHelper(
         target = target,
         setup = { ports ->
             val session = target.createPreRegisteredSession(ports)
-            AppiumTestSetup(data = Unit, injectedSession = session)
+            AppiumTestSetup(data = session.address, injectedSession = session)
         },
-    ) { scope, _ ->
-        scenarioPublishTopicInUserSpace(scope.driver)
+    ) { scope, address ->
+        scenarioPublishTopicInUserSpace(scope.driver, address)
     }
 }
 
@@ -95,7 +96,11 @@ fun testOpenAsciidocPreviewByHelper(
         },
     ) { scope, data ->
         try {
-            scenarioOpenAsciidocPreview(scope.driver, data.topicMarker)
+            scenarioOpenAsciidocPreview(
+                scope.driver,
+                data.authenticated.session.address,
+                data.topicMarker,
+            )
             scope.assertAsciidocPreviewOpened(data.asciidocSource)
         } finally {
             data.authenticated.sessionManager.client.close()

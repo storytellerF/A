@@ -28,7 +28,8 @@ data class DesktopAppiumRuntimeConfig(
     val runtimeClasspathErrorMessage: String,
     val scriptPrefix: String,
     val includeWsUrl: Boolean,
-    val windowWaitSeconds: Long = 30L,
+    /** Maximum time to wait for the desktop application's main window. */
+    val windowWaitSeconds: Long = 120L,
 )
 
 abstract class TargetAppiumHelper {

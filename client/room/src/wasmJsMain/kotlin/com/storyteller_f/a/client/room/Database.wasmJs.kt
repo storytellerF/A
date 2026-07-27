@@ -14,6 +14,7 @@ actual fun getRoomDatabase(scope: String): AppDatabase {
         .fallbackToDestructiveMigration(true)
         .fallbackToDestructiveMigrationFrom(true)
         .setDriver(WebWorkerSQLiteDriver(createWorker()))
+        .setSingleConnectionPool()
         .build()
 }
 
