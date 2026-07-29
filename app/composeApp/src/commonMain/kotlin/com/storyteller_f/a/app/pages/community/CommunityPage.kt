@@ -70,8 +70,8 @@ import com.storyteller_f.a.app.components.FontView
 import com.storyteller_f.a.app.exit_community
 import com.storyteller_f.a.app.join_community
 import com.storyteller_f.a.app.pages.room.RoomList
-import com.storyteller_f.a.app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.pages.search.SearchScope
+import com.storyteller_f.a.app.pages.search.detailSearchBar
 import com.storyteller_f.a.app.pages.topic.TopicComposeData
 import com.storyteller_f.a.app.pages.topic.TopicList
 import com.storyteller_f.a.app.pages.user.ButtonBadgeSuffix
@@ -268,7 +268,7 @@ private fun CommunityNonCompatContent(
     Column(
         modifier = Modifier,
     ) {
-        CustomSearchBar(searchScope) {
+        detailSearchBar(searchScope) {
             var showDialog by remember {
                 mutableStateOf(false)
             }
@@ -325,9 +325,9 @@ private fun CommunityCompatPageInternal(
     }
     Scaffold(bottomBar = {
         CommunityBottomNav(navRoutes, pagerState)
-    }) {
-        Column(modifier = Modifier.padding(bottom = it.calculateBottomPadding())) {
-            CustomSearchBar(searchScope) {
+    }) { paddingValues ->
+        Column(modifier = Modifier.padding(bottom = paddingValues.calculateBottomPadding())) {
+            detailSearchBar(searchScope) {
                 LaunchedEffect(needShowDialog) {
                     if (needShowDialog && !dialogShown) {
                         model.dialog.markDialogShown()

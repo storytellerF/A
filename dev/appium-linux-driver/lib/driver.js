@@ -13,6 +13,8 @@ class LinuxDriver extends BaseDriver {
     super(opts);
     this.appProcess = null;
     this.appPid = null;
+    this.elements = new Map();
+    this.nextElementId = 0;
     this.locatorStrategies = ['xpath', 'name', 'class name'];
   }
 
@@ -60,6 +62,7 @@ class LinuxDriver extends BaseDriver {
       this.appProcess = null;
       this.appPid = null;
     }
+    this.elements.clear();
     await super.deleteSession();
   }
 
@@ -84,8 +87,16 @@ class LinuxDriver extends BaseDriver {
       }
       throw new Error(`No element found for ${strategy}="${selector}"`);
     }
-    const els = result.elements.map((e) => {
-      const encoded = `${e.id}:${e.cx}:${e.cy}:${e.name}`;
+    const els = result.elements.map((e, index) => {
+      const encoded = String(this.nextElementId++);
+      this.elements.set(encoded, {
+        index,
+        strategy: atspiStrategy.strategy,
+        selector: atspiStrategy.selector,
+        cx: e.cx,
+        cy: e.cy,
+        name: e.name,
+      });
       return {
         ELEMENT: encoded,
         'element-6066-11e4-a52e-4f735466cecf': encoded,
@@ -109,28 +120,28 @@ class LinuxDriver extends BaseDriver {
 
   _parseElement(elId) {
     const decoded = decodeURIComponent(elId.replace(/\+/g, '%20'));
-    const [, cx, cy, name] = decoded.split(':');
-    return { cx: parseInt(cx, 10), cy: parseInt(cy, 10), name };
+    const element = this.elements.get(decoded);
+    if (!element) throw new Error(`Unknown element id: ${decoded}`);
+    return element;
   }
 
   // ── Element interaction ───────────────────────────────────────────────────
 
   async click(elementId) {
-    const { cx, cy, name } = this._parseElement(elementId);
-    if (name) {
-      const result = await this._atspi({
-        action: 'click_element',
-        pid: this.appPid,
-        strategy: 'name',
-        selector: name,
-        timeout: ATSPI_TIMEOUT,
-      });
-      if (result.ok) {
-        this.log.info(`Clicked element "${name}" via AT-SPI action "${result.action}"`);
-        return;
-      }
-      this.log.warn(`AT-SPI click failed for "${name}": ${result.error || 'unknown error'}`);
+    const { index, strategy, selector, cx, cy, name } = this._parseElement(elementId);
+    const result = await this._atspi({
+      action: 'click_element',
+      pid: this.appPid,
+      strategy,
+      selector,
+      index,
+      timeout: ATSPI_TIMEOUT,
+    });
+    if (result.ok) {
+      this.log.info(`Clicked element "${name}" via AT-SPI action "${result.action}"`);
+      return;
     }
+    this.log.warn(`AT-SPI click failed for "${name}": ${result.error || 'unknown error'}`);
     // xdotool is a last-resort fallback. For Compose popup/scroll descendants AT-SPI may expose
     // DESKTOP_COORDS with an ancestor offset applied twice, so this coordinate can miss the real row.
     // Tests should prefer semantic descriptions or nodes with AT-SPI click actions.
@@ -140,13 +151,14 @@ class LinuxDriver extends BaseDriver {
   }
 
   async setValue(value, elementId) {
-    const { cx, cy, name } = this._parseElement(elementId);
+    const { index, strategy, selector, cx, cy, name } = this._parseElement(elementId);
     const text = Array.isArray(value) ? value.join('') : String(value);
     const result = await this._atspi({
       action: 'set_text',
       pid: this.appPid,
-      strategy: name ? 'name' : 'xpath',
-      selector: name || '//text-field',
+      strategy,
+      selector,
+      index,
       text,
       timeout: ATSPI_TIMEOUT,
     });

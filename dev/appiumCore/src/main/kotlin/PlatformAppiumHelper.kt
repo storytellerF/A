@@ -375,9 +375,6 @@ class DesktopAppiumHelper : PlatformAppiumHelper() {
             add(atspiClasspath)
             add(config.mainClassName)
         }
-        val argumentLines = arguments.joinToString(" \\\n") {
-            "              \"${it.escapeForDoubleQuotedShell()}\""
-        }
         val browserEnvironment = browserCapture?.let {
             """
             export BROWSER="${it.command.canonicalPath.escapeForDoubleQuotedShell()}"
@@ -385,28 +382,53 @@ class DesktopAppiumHelper : PlatformAppiumHelper() {
             """.trimIndent()
         }.orEmpty()
         script.writeText(
-            """
-            #!/bin/bash
-            mkdir -p "${appLogFile.parentFile.canonicalPath}"
-            $browserEnvironment
-            exec "$javaExec" \\
-$argumentLines \\
-              >> "${appLogFile.canonicalPath}" 2>&1
-            """.trimIndent(),
+            buildDesktopLaunchScriptContent(
+                javaExec = javaExec,
+                arguments = arguments,
+                appLogFile = appLogFile,
+                browserEnvironment = browserEnvironment,
+            ),
         )
         script.setExecutable(true)
         return script
     }
 
-    private fun String.escapeForDoubleQuotedShell(): String =
-        replace("\\", "\\\\")
-            .replace("\"", "\\\"")
-            .replace("${'$'}", "\\${'$'}")
-            .replace("`", "\\`")
-
     companion object {
         fun safeName(value: String): String = value.replace(Regex("[^a-zA-Z0-9._-]"), "_")
     }
+}
+
+internal fun buildDesktopLaunchScriptContent(
+    javaExec: String,
+    arguments: List<String>,
+    appLogFile: File,
+    browserEnvironment: String,
+): String {
+    val argumentLines =
+        arguments.joinToString(" \\\n") {
+            "              \"${it.escapeForDoubleQuotedShell()}\""
+        }
+    return buildString {
+        appendLine("#!/bin/bash")
+        appendLine("""mkdir -p "${appLogFile.parentFile.canonicalPath}"""")
+        if (browserEnvironment.isNotEmpty()) {
+            appendLine(browserEnvironment)
+        }
+        append("exec \"")
+        append(javaExec.escapeForDoubleQuotedShell())
+        appendLine("\" \\")
+        append(argumentLines)
+        appendLine(" \\")
+        append("""  >> "${appLogFile.canonicalPath}" 2>&1""")
+    }
+}
+
+private fun String.escapeForDoubleQuotedShell(): String {
+    val escapedBackslashes = replace("\\", "\\\\")
+    return escapedBackslashes
+        .replace("\"", "\\\"")
+        .replace("${'$'}", "\\${'$'}")
+        .replace("`", "\\`")
 }
 
 private class AndroidAppiumTestScope(

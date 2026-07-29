@@ -55,6 +55,7 @@
     <string name="connected">已连接</string>
     <string name="disconnected">未连接</string>
     <string name="file_explorer">文件管理器</string>
+    <string name="select_an_item">请选择一个条目查看详情</string>
     <string name="file_refs">文件引用</string>
     <string name="image_requires_crop_hint">该文件需裁切后才能使用</string>
     <string name="translate_model">翻译模型</string>

@@ -6,10 +6,13 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.Diversity3
 import androidx.compose.material.icons.filled.Topic
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
@@ -29,6 +32,7 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import androidx.savedstate.serialization.SavedStateConfiguration
+import com.storyteller_f.a.app.LocalAppNavFactory
 import com.storyteller_f.a.app.LocalUserInfo
 import com.storyteller_f.a.app.Res
 import com.storyteller_f.a.app.common.IdUserViewModel
@@ -38,9 +42,10 @@ import com.storyteller_f.a.app.common.createUserTopicsViewModel
 import com.storyteller_f.a.app.common.createUserViewModel
 import com.storyteller_f.a.app.communities_title
 import com.storyteller_f.a.app.pages.community.CommunityList
-import com.storyteller_f.a.app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.pages.search.SearchScope
+import com.storyteller_f.a.app.pages.search.detailSearchBar
 import com.storyteller_f.a.app.pages.title.TitleList
+import com.storyteller_f.a.app.pages.topic.TopicComposeData
 import com.storyteller_f.a.app.pages.topic.UserTopicList
 import com.storyteller_f.a.app.rooms
 import com.storyteller_f.a.app.titles
@@ -48,6 +53,7 @@ import com.storyteller_f.a.app.topics
 import com.storyteller_f.a.client.compose_core.components.CustomBottomNav
 import com.storyteller_f.a.client.compose_core.components.CustomRailNav
 import com.storyteller_f.a.client.compose_core.components.NavRoute
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.PrimaryKey
@@ -71,14 +77,14 @@ private fun UserPageInternal(
     userViewModel: IdUserViewModel,
 ) {
     val user by userViewModel.handler.data.collectAsState()
-    val my = LocalUserInfo.current
     val pagerState = rememberPagerState {
         3
     }
     val size = calculateWindowSizeClass()
-    when (size.widthSizeClass) {
-        WindowWidthSizeClass.Compact -> UserCompatInternal(uid, user, my, pagerState)
-        else -> UserNonCompatInternal(uid, user)
+    if (size.widthSizeClass == WindowWidthSizeClass.Compact) {
+        UserCompatInternal(uid, user, pagerState)
+    } else {
+        UserNonCompatInternal(uid, user)
     }
 }
 
@@ -169,11 +175,8 @@ private fun UserNonCompatContent(
             "/titles" -> SearchScope.UserReceivedTitle(uid)
             else -> SearchScope.UserCommunities(uid)
         }
-        val my = LocalUserInfo.current
-        CustomSearchBar(searchScope) {
-            if (uid != my?.id) {
-                UserIconWithDialog(user)
-            }
+        detailSearchBar(searchScope) {
+            userSearchLeadingIcon(uid, user)
         }
         NavDisplay(
             backStack,
@@ -204,17 +207,14 @@ private fun UserNonCompatContent(
 private fun UserCompatInternal(
     uid: PrimaryKey,
     user: UserInfo?,
-    my: UserInfo?,
     pagerState: PagerState,
 ) {
     Scaffold(bottomBar = {
         UserPageBottomNavBar(pagerState)
     }, modifier = Modifier.testTag("user-page")) {
         Column {
-            CustomSearchBar(SearchScope.UserTopic(uid)) {
-                if (uid != my?.id) {
-                    UserIconWithDialog(user)
-                }
+            detailSearchBar(SearchScope.UserTopic(uid)) {
+                userSearchLeadingIcon(uid, user)
             }
             HorizontalPager(pagerState) { pageIndex ->
                 when (pageIndex) {
@@ -235,6 +235,32 @@ private fun UserCompatInternal(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun userSearchLeadingIcon(uid: PrimaryKey, user: UserInfo?) {
+    val my = LocalUserInfo.current
+    if (user != null && my?.id == user.id) {
+        val appNavFactory = LocalAppNavFactory.current
+        val createTopic = {
+            appNavFactory
+                .newAppNav()
+                .gotoTopicCompose(TopicComposeData.User(user.id, user.tuple()))
+        }
+        val createModifier =
+            Modifier.appiumSemantics(
+                description = "create",
+                onClick = createTopic,
+            )
+        IconButton(
+            onClick = createTopic,
+            modifier = createModifier,
+        ) {
+            Icon(Icons.Default.Add, "create")
+        }
+    } else if (uid != my?.id) {
+        UserIconWithDialog(user)
     }
 }
 

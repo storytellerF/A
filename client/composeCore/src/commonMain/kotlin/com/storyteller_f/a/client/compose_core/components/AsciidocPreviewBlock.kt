@@ -73,21 +73,26 @@ private fun AsciidocPreviewCard(source: String, openPreview: () -> Unit) {
     val toasterState = LocalToaster.current
     val shape = RoundedCornerShape(20.dp)
     Column(
-        modifier = Modifier
+        modifier =
+        Modifier
             .fillMaxWidth()
-            .appiumSemantics(description = "asciidoc", onClick = openPreview)
+            .appiumSemantics(
+                description = "asciidoc",
+                text = "AsciiDoc preview",
+                onClick = openPreview,
+            )
             .clip(shape)
             .background(MaterialTheme.colorScheme.surfaceContainer, shape)
             .clickable { openPreview() }
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.AutoMirrored.Filled.Article, "asciidoc")
             Text(
-                "AsciiDoc preview",
+                text = "AsciiDoc preview",
                 maxLines = 1,
                 overflow = TextOverflow.MiddleEllipsis,
-                modifier = Modifier.weight(1f).padding(horizontal = 12.dp)
+                modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
             )
             IconButton(
                 onClick = openPreview,

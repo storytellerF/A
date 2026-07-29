@@ -247,13 +247,10 @@ private fun TopicComposeInternal(
 private fun TopicComposeSubmitButton(
     input: String,
     data: TopicComposeData,
-    backPrePage: () -> Unit
+    backPrePage: () -> Unit,
 ) {
     val alertDialogController = rememberAlertDialogController()
-    CustomAlertDialog(alertDialogController, {
-        alertDialogController.close()
-    }) {
-    }
+    CustomAlertDialog(alertDialogController, alertDialogController::close) {}
     if (data is TopicComposeData.PublicRoom) {
         val roomViewModel = createRoomViewModel(data.roomId)
         val roomData by roomViewModel.handler.data.collectAsState()
@@ -301,7 +298,11 @@ private fun TopicComposeSubmitButton(
     }
     IconButton(
         onClick = submit,
-        modifier = Modifier.appiumSemantics(description = "submit", onClick = submit),
+        modifier =
+        Modifier.appiumSemantics(
+            description = stringResource(Res.string.submit),
+            onClick = submit,
+        ),
     ) {
         Icon(imageVector = Icons.AutoMirrored.Filled.Send, stringResource(Res.string.submit))
     }

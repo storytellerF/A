@@ -57,8 +57,8 @@ import com.storyteller_f.a.app.components.InteractionRow
 import com.storyteller_f.a.app.pages.room.CommonInputButton
 import com.storyteller_f.a.app.pages.room.InputGroupInternal
 import com.storyteller_f.a.app.pages.room.RoomInputGroup
-import com.storyteller_f.a.app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.pages.search.SearchScope
+import com.storyteller_f.a.app.pages.search.detailSearchBar
 import com.storyteller_f.a.app.pages.user.UserIconWithDialog
 import com.storyteller_f.a.client.compose_core.components.CustomAlertDialog
 import com.storyteller_f.a.client.compose_core.components.CustomAlertDialogController
@@ -146,7 +146,7 @@ private fun TopicPageInternal(
         var showDialog by remember {
             mutableStateOf(false)
         }
-        CustomSearchBar(SearchScope.TopicTopic(topicId)) {
+        detailSearchBar(SearchScope.TopicTopic(topicId)) {
             Row(
                 verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)

@@ -13,7 +13,6 @@ class AndroidAppTestDriver(
     private val driver: AndroidDriver,
     private val runAdbCommand: (List<String>) -> String,
 ) : AppTestDriver {
-
     suspend fun assertAsciidocPreviewOpened(appPackageName: String, expectedSource: String) {
         assertTrue(expectedSource.isNotBlank(), "AsciiDoc source must not be blank")
         val expectedTitle = expectedSource.lineSequence()
@@ -55,12 +54,8 @@ class AndroidAppTestDriver(
         clickElement("""new UiSelector().textContains("$text")""")
     }
 
-    override suspend fun clickByDescriptionContaining(description: String) {
-        clickElement("""new UiSelector().descriptionContains("$description")""")
-    }
-
     override suspend fun inputText(text: String) {
-        inputElement("""new UiSelector().className("android.widget.EditText")""", text)
+        inputLastElement("""new UiSelector().className("android.widget.EditText")""", text)
     }
 
     override suspend fun assertVisibleByDescription(description: String) {
@@ -71,8 +66,8 @@ class AndroidAppTestDriver(
         assertElementVisible("""new UiSelector().text("$text")""")
     }
 
-    override suspend fun assertNotVisibleByDescription(description: String, timeoutSeconds: Long) {
-        assertElementNotVisible("""new UiSelector().description("$description")""", timeoutSeconds)
+    override suspend fun assertVisibleByTextContaining(text: String) {
+        assertElementVisible("""new UiSelector().textContains("$text")""")
     }
 
     override suspend fun assertNotVisibleByText(text: String, timeoutSeconds: Long) {
@@ -130,14 +125,18 @@ class AndroidAppTestDriver(
         }
     }
 
-    private fun inputElement(selector: String, input: String, seconds: Long = UI_WAIT_SECONDS) {
+    private fun inputLastElement(selector: String, input: String, seconds: Long = UI_WAIT_SECONDS) {
         try {
             val locator = AppiumBy.androidUIAutomator(selector)
-            if (seconds > 0) {
-                WebDriverWait(driver, Duration.ofSeconds(seconds))
-                    .until(ExpectedConditions.presenceOfElementLocated(locator))
-            }
-            driver.findElement(locator).sendKeys(input)
+            val elements =
+                if (seconds > 0) {
+                    WebDriverWait(driver, Duration.ofSeconds(seconds)).until {
+                        driver.findElements(locator).takeIf(List<*>::isNotEmpty)
+                    }
+                } else {
+                    driver.findElements(locator)
+                }
+            elements.last().sendKeys(input)
         } catch (throwable: Throwable) {
             runCatching {
                 saveDebugSnapshot("input-failed-${System.currentTimeMillis()}")

@@ -19,10 +19,6 @@ class WasmAppTestDriver(private val browser: WebDriver) : AppTestDriver {
         By.cssSelector("[data-appium-text*='${text.cssAttributeValue()}']"),
     )
 
-    override suspend fun clickByDescriptionContaining(description: String) = click(
-        By.cssSelector("[aria-label*='${description.cssAttributeValue()}']"),
-    )
-
     override suspend fun inputText(text: String) {
         try {
             val expectedValue = text.replace("\r\n", "\n").replace('\r', '\n')
@@ -53,8 +49,11 @@ class WasmAppTestDriver(private val browser: WebDriver) : AppTestDriver {
 
     override suspend fun assertVisibleByText(text: String) = assertVisible(textLocator(text))
 
-    override suspend fun assertNotVisibleByDescription(description: String, timeoutSeconds: Long) =
-        assertNotVisible(descriptionLocator(description), timeoutSeconds)
+    override suspend fun assertVisibleByTextContaining(text: String) {
+        assertVisible(
+            By.cssSelector("[data-appium-text*='${text.cssAttributeValue()}']"),
+        )
+    }
 
     override suspend fun assertNotVisibleByText(text: String, timeoutSeconds: Long) =
         assertNotVisible(textLocator(text), timeoutSeconds)
@@ -86,8 +85,14 @@ class WasmAppTestDriver(private val browser: WebDriver) : AppTestDriver {
         ) == true
 
     private fun click(locator: By) {
+        clickWithSnapshot {
+            findOnScreen(locator)
+        }
+    }
+
+    private fun clickWithSnapshot(findElement: () -> WebElement) {
         try {
-            val element = findOnScreen(locator)
+            val element = findElement()
             if (element.getAttribute("data-appium-action") == "true") {
                 (browser as JavascriptExecutor).executeScript("arguments[0].click();", element)
             } else {

@@ -1,18 +1,74 @@
 package com.storyteller_f.a.client.compose_core.utils
 
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
 import kotlinx.browser.document
 import kotlinx.browser.window
 import org.w3c.dom.HTMLElement
 import org.w3c.dom.HTMLTextAreaElement
 
-internal actual object AppiumHtmlSemantics {
+private var nextAppiumSemanticsId = 0L
+
+/** Wasm implementation of [appiumSemantics] backed by transparent HTML elements. */
+@Suppress("LibraryEntitiesShouldNotBePublic", "LongParameterList")
+actual fun Modifier.appiumSemantics(
+    testTag: String?,
+    description: String?,
+    text: String?,
+    input: Boolean,
+    inputValue: String?,
+    onInputValueChange: ((String) -> Unit)?,
+    onClick: (() -> Unit)?,
+): Modifier {
+    val semanticsModifier =
+        composed {
+            val id = remember { nextAppiumSemanticsId++ }
+            DisposableEffect(id) {
+                onDispose { AppiumHtmlSemantics.remove(id) }
+            }
+            SideEffect {
+                AppiumHtmlSemantics.updateAction(id, onClick)
+                if (input) {
+                    AppiumHtmlSemantics.updateInput(
+                        id = id,
+                        value = inputValue.orEmpty(),
+                        onValueChange = onInputValueChange,
+                    )
+                }
+            }
+            onGloballyPositioned { coordinates ->
+                val position = coordinates.positionInWindow()
+                val size = coordinates.size
+                AppiumHtmlSemantics.update(
+                    id = id,
+                    testTag = testTag,
+                    description = description,
+                    text = text,
+                    input = input,
+                    action = onClick != null,
+                    left = position.x,
+                    top = position.y,
+                    width = size.width.toFloat(),
+                    height = size.height.toFloat(),
+                )
+            }
+        }
+    return semanticsModifier
+}
+
+private object AppiumHtmlSemantics {
     private const val OVERLAY_ID = "appium-html-semantics"
     private val elements = mutableMapOf<Long, HTMLElement>()
     private val inputCallbacks = mutableMapOf<Long, (String) -> Unit>()
     private val inputValues = mutableMapOf<Long, String>()
     private val actionCallbacks = mutableMapOf<Long, () -> Unit>()
 
-    actual fun update(
+    fun update(
         id: Long,
         testTag: String?,
         description: String?,
@@ -115,7 +171,7 @@ internal actual object AppiumHtmlSemantics {
         }
     }
 
-    actual fun updateInput(id: Long, value: String, onValueChange: ((String) -> Unit)?) {
+    fun updateInput(id: Long, value: String, onValueChange: ((String) -> Unit)?) {
         if (!isEnabled()) return
         inputValues[id] = value
         if (onValueChange != null) {
@@ -130,7 +186,7 @@ internal actual object AppiumHtmlSemantics {
         textArea.setAttribute("data-appium-input-compose-length", value.length.toString())
     }
 
-    actual fun updateAction(id: Long, onClick: (() -> Unit)?) {
+    fun updateAction(id: Long, onClick: (() -> Unit)?) {
         if (!isEnabled()) return
         if (onClick != null) {
             actionCallbacks[id] = onClick
@@ -139,7 +195,7 @@ internal actual object AppiumHtmlSemantics {
         }
     }
 
-    actual fun remove(id: Long) {
+    fun remove(id: Long) {
         inputCallbacks.remove(id)
         inputValues.remove(id)
         actionCallbacks.remove(id)
