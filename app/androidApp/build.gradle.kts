@@ -110,6 +110,7 @@ dependencies {
     screenshotTestImplementation(projects.client.core)
     screenshotTestImplementation(projects.client.modelStorage)
     screenshotTestImplementation(libs.kotlinx.datetime)
+    screenshotTestImplementation(libs.ktor.client.core)
     screenshotTestImplementation(libs.runtime)
     screenshotTestImplementation(libs.foundation)
     screenshotTestImplementation(libs.material3)

@@ -92,8 +92,8 @@ import com.storyteller_f.a.app.join_room_prompt
 import com.storyteller_f.a.app.need_sign_in
 import com.storyteller_f.a.app.open_in_full
 import com.storyteller_f.a.app.pages.community.CommunityRefCell
-import com.storyteller_f.a.app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.pages.search.SearchScope
+import com.storyteller_f.a.app.pages.search.detailSearchBar
 import com.storyteller_f.a.app.pages.topic.FilePicker
 import com.storyteller_f.a.app.pages.topic.RoomTopicList
 import com.storyteller_f.a.app.pages.topic.TopicComposeData
@@ -170,8 +170,8 @@ private fun RoomPageInternal(
 
     Scaffold(snackbarHost = {
         SnackbarHost(snackBarHost)
-    }) {
-        Column(modifier = Modifier.horizontalSafeArea(it, LocalLayoutDirection.current)) {
+    }) { paddingValues ->
+        Column(modifier = Modifier.horizontalSafeArea(paddingValues, LocalLayoutDirection.current)) {
             var showDialog by remember {
                 mutableStateOf(false)
             }
@@ -183,7 +183,7 @@ private fun RoomPageInternal(
                 }
             }
             val roomInfo by room.handler.data.collectAsState()
-            CustomSearchBar(SearchScope.RoomTopic(roomId)) {
+            detailSearchBar(SearchScope.RoomTopic(roomId)) {
                 RoomIconWithDialog(
                     roomInfo,
                     showDialog = showDialog,

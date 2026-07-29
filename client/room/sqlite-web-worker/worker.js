@@ -31,7 +31,7 @@ const SQLITE_NULL = 5
 
 let sqlite3 = null
 const databases = new Map() // databaseId -> oo1.DB
-const statements = new Map() // statementId -> oo1.Stmt
+const statements = new Map() // statementId -> { databaseId, sql, statement }
 let nextDatabaseId = 1
 let nextStatementId = 1
 
@@ -65,7 +65,11 @@ function handlePrepare(data) {
   if (!db) throw new Error('Unknown databaseId: ' + data.databaseId)
   const stmt = db.prepare(data.sql)
   const statementId = nextStatementId++
-  statements.set(statementId, stmt)
+  statements.set(statementId, {
+    databaseId: data.databaseId,
+    sql: data.sql,
+    statement: stmt,
+  })
   const columnNames = []
   const columnCount = stmt.columnCount
   for (let i = 0; i < columnCount; i++) {
@@ -79,8 +83,28 @@ function handlePrepare(data) {
 }
 
 function handleStep(data) {
-  const stmt = statements.get(data.statementId)
-  if (!stmt) throw new Error('Unknown statementId: ' + data.statementId)
+  const statementRecord = statements.get(data.statementId)
+  if (!statementRecord) throw new Error('Unknown statementId: ' + data.statementId)
+  const db = databases.get(statementRecord.databaseId)
+  if (!db) throw new Error('Unknown databaseId: ' + statementRecord.databaseId)
+  const stmt = statementRecord.statement
+
+  const transactionOperation = getTransactionOperation(statementRecord.sql)
+  const isAutoCommit = sqlite3.capi.sqlite3_get_autocommit(db.pointer) !== 0
+  if (transactionOperation === 'begin' && !isAutoCommit) {
+    // A suspended driver request can be cancelled after SQLite executes BEGIN but
+    // before the WebWorkerSQLiteConnection receives the response and records its
+    // transaction state. Room then cannot see or roll back that orphaned transaction.
+    db.exec('ROLLBACK TRANSACTION')
+  } else if (
+    (transactionOperation === 'end' || transactionOperation === 'rollback') &&
+    isAutoCommit
+  ) {
+    // The inverse race can cancel an END/ROLLBACK response after SQLite has
+    // completed it. Treat a repeated finalizer as successful so the driver can
+    // synchronize its transaction state with SQLite.
+    return { rows: [], columnTypes: [] }
+  }
 
   // The statement may be re-executed with fresh bindings, so reset first.
   stmt.reset(true)
@@ -114,11 +138,19 @@ function handleStep(data) {
   return { rows, columnTypes }
 }
 
+function getTransactionOperation(sql) {
+  const prefix = sql.trimStart().slice(0, 3).toUpperCase()
+  if (prefix === 'BEG') return 'begin'
+  if (prefix === 'END' || prefix === 'COM') return 'end'
+  if (prefix === 'ROL' && !/\sTO\s/i.test(sql)) return 'rollback'
+  return null
+}
+
 function handleClose(data) {
   if (data.statementId != null) {
-    const stmt = statements.get(data.statementId)
-    if (stmt) {
-      stmt.finalize()
+    const statementRecord = statements.get(data.statementId)
+    if (statementRecord) {
+      statementRecord.statement.finalize()
       statements.delete(data.statementId)
     }
   }
