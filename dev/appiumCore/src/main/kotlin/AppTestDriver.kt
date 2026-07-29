@@ -1,9 +1,6 @@
 interface AppTestDriver {
     suspend fun clickByDescription(description: String)
 
-    /** Opens the avatar shown by the current user-detail surface. */
-    suspend fun clickUserDetailAvatar()
-
     suspend fun clickByText(text: String)
     suspend fun clickByTextContaining(text: String)
     suspend fun inputText(text: String)

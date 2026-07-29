@@ -14,10 +14,6 @@ class DesktopAppTestDriver(private val driver: AppiumDriver) : AppTestDriver {
         waitAndClick(By.xpath("//*[@name='$description']"))
     }
 
-    override suspend fun clickUserDetailAvatar() {
-        clickByDescription("avatar")
-    }
-
     override suspend fun clickByText(text: String) {
         waitAndClick(By.xpath("//*[@value='$text' or @name='$text']"))
     }

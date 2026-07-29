@@ -27,6 +27,8 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
+import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.navigation3.LocalListDetailSceneScope
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -71,7 +73,6 @@ import com.storyteller_f.a.app.pages.community.CommunityList
 import com.storyteller_f.a.app.pages.file.FileCell
 import com.storyteller_f.a.app.pages.room.RoomList
 import com.storyteller_f.a.app.pages.title.ComposeMenu
-import com.storyteller_f.a.app.pages.topic.TopicComposeData
 import com.storyteller_f.a.app.pages.topic.TopicList
 import com.storyteller_f.a.app.pages.user.MemberList
 import com.storyteller_f.a.app.pages.user.SelfUserIconWithDialog
@@ -82,7 +83,6 @@ import com.storyteller_f.a.client.compose_core.components.pagingItems
 import com.storyteller_f.a.client.compose_core.components.topPrepend
 import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.shared.model.FileInfo
-import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -109,7 +109,7 @@ sealed interface SearchScope {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CustomSearchBar(scope: SearchScope, leadingIcon: @Composable () -> Unit) {
+fun CustomSearchBar(scope: SearchScope, showSelfIcon: Boolean = true, leadingIcon: @Composable () -> Unit) {
     val appNavFactory = LocalAppNavFactory.current
     var query by remember {
         mutableStateOf("")
@@ -123,51 +123,51 @@ fun CustomSearchBar(scope: SearchScope, leadingIcon: @Composable () -> Unit) {
     var showSheet by remember {
         mutableStateOf(false)
     }
-    CustomSearchBarInternal(scope, query, {
-        query = it
-    }, searchQuery, {
-        searchQuery = it
-    }, active, {
-        active = it
-    }, leadingIcon) {
-        when (scope) {
-            is SearchScope.UserTopic -> appNavFactory.newAppNav().gotoTopicCompose(
-                TopicComposeData.User(scope.userId, scope.userId ob ObjectType.USER)
-            )
-
-            else -> showSheet = true
-        }
-    }
+    CustomSearchBarInternal(
+        scope = scope,
+        query = query,
+        updateQuery = { updatedQuery ->
+            query = updatedQuery
+        },
+        searchQuery = searchQuery,
+        updateSearch = { updatedSearch ->
+            searchQuery = updatedSearch
+        },
+        active = active,
+        onActiveChange = { updatedActive ->
+            active = updatedActive
+        },
+        showSelfIcon = showSelfIcon,
+        leadingIcon = leadingIcon,
+        onClickCreate = {
+            showSheet = true
+        },
+    )
     val sheetState = rememberModalBottomSheetState()
     ComposeMenu(showSheet, sheetState, {
         showSheet = false
-    }) {
+    }) { objectType ->
         showSheet = false
-        when (it) {
+        when (objectType) {
             ObjectType.COMMUNITY -> appNavFactory.newAppNav().gotoCommunityCompose()
             ObjectType.ROOM -> appNavFactory.newAppNav().gotoRoomCompose()
-            ObjectType.TOPIC -> when (scope) {
-                is SearchScope.CommunityTopic -> appNavFactory.newAppNav().gotoTopicCompose(
-                    TopicComposeData.Community(scope.communityId, scope.communityId ob ObjectType.COMMUNITY)
-                )
-
-                is SearchScope.RoomTopic -> appNavFactory.newAppNav().gotoTopicCompose(
-                    TopicComposeData.PrivateRoom(scope.roomId, scope.roomId ob ObjectType.ROOM)
-                )
-
-                is SearchScope.UserTopic -> appNavFactory.newAppNav().gotoTopicCompose(
-                    TopicComposeData.User(scope.userId, scope.userId ob ObjectType.USER)
-                )
-
-                else -> Unit
-            }
-
+            ObjectType.TOPIC -> Unit
             ObjectType.USER -> TODO()
             ObjectType.TITLE -> appNavFactory.newAppNav().gotoTitleCompose()
             ObjectType.FILE -> TODO()
             ObjectType.PANEL_ACCOUNT -> TODO()
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
+@Composable
+internal fun detailSearchBar(scope: SearchScope, leadingIcon: @Composable () -> Unit) {
+    CustomSearchBar(
+        scope = scope,
+        showSelfIcon = LocalListDetailSceneScope.current == null,
+        leadingIcon = leadingIcon,
+    )
 }
 
 @Composable
@@ -180,8 +180,9 @@ private fun CustomSearchBarInternal(
     updateSearch: (String) -> Unit,
     active: Boolean,
     onActiveChange: (Boolean) -> Unit,
+    showSelfIcon: Boolean,
     leadingIcon: @Composable (() -> Unit),
-    onClickCreate: () -> Unit
+    onClickCreate: () -> Unit,
 ) {
     Box(modifier = Modifier.fillMaxWidth()) {
         SearchBar(
@@ -198,7 +199,9 @@ private fun CustomSearchBarInternal(
                         }
                     },
                     trailingIcon = {
-                        SelfIcon(onClickCreate)
+                        if (showSelfIcon) {
+                            SelfIcon(onClickCreate)
+                        }
                     },
                     placeholder = {
                         SearchPlaceholder(scope)

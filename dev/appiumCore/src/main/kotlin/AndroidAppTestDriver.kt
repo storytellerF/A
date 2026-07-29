@@ -46,10 +46,6 @@ class AndroidAppTestDriver(
         clickElement("""new UiSelector().description("$description")""")
     }
 
-    override suspend fun clickUserDetailAvatar() {
-        clickByDescription("avatar")
-    }
-
     override suspend fun clickByText(text: String) {
         clickElement("""new UiSelector().text("$text")""")
     }

@@ -13,10 +13,6 @@ import java.time.Duration
 class WasmAppTestDriver(private val browser: WebDriver) : AppTestDriver {
     override suspend fun clickByDescription(description: String) = click(descriptionLocator(description))
 
-    override suspend fun clickUserDetailAvatar() {
-        clickLast(descriptionLocator("avatar"))
-    }
-
     override suspend fun clickByText(text: String) = click(textLocator(text))
 
     override suspend fun clickByTextContaining(text: String) = click(
@@ -94,12 +90,6 @@ class WasmAppTestDriver(private val browser: WebDriver) : AppTestDriver {
         }
     }
 
-    private fun clickLast(locator: By) {
-        clickWithSnapshot {
-            findLastOnScreen(locator)
-        }
-    }
-
     private fun clickWithSnapshot(findElement: () -> WebElement) {
         try {
             val element = findElement()
@@ -160,14 +150,6 @@ class WasmAppTestDriver(private val browser: WebDriver) : AppTestDriver {
 
     private fun findOnScreen(locator: By): WebElement = wait.until {
         browser.findElements(locator).firstOrNull(::isOnScreen)
-    }
-
-    private fun findLastOnScreen(locator: By): WebElement {
-        val element =
-            wait.until {
-                browser.findElements(locator).lastOrNull(::isOnScreen)
-            }
-        return element
     }
 
     private fun isOnScreen(element: WebElement): Boolean = runCatching {

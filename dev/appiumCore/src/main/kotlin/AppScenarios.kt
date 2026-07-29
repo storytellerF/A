@@ -44,7 +44,6 @@ suspend fun scenarioPublishTopicInUserSpace(driver: AppTestDriver, address: Stri
     val topicContent = "appium-user-space-topic-${System.currentTimeMillis()}"
     driver.clickByDescription("avatar")
     driver.clickByTextContaining(address)
-    driver.clickUserDetailAvatar()
     driver.clickByDescription("create")
     driver.clickByText("Raw")
     driver.inputText(topicContent)
