@@ -49,7 +49,7 @@
 - `app/desktopApp` is the Desktop JVM app shell module. It contains the Compose Desktop `main` entry point and `compose.desktop` packaging configuration. `app/composeApp` keeps shared UI and JVM actual implementations.
 - `panel/desktopApp` is the Panel Desktop JVM app shell module. It contains the Compose Desktop `main` entry point and `compose.desktop` packaging configuration. `panel/composeApp` keeps shared UI and JVM actual implementations.
 - `app/androidApp` and `panel/androidApp` entry classes extend `ComponentActivity`, and media services extend Media3 `MediaSessionService`. Release lint has false-positive `Instantiatable` reports for these Kotlin/Compose/Media3 components, so both app shell modules disable that lint check.
-- App screenshot previews share `ScreenshotAppTheme`, which supplies an inert, signed-out `LocalSessionManager` so topic interaction cells render without network or background work. The screenshot source set declares Ktor client core directly because the session factory's public signature contains Ktor types; update intentional debug baselines with `:app:androidApp:updateDebugScreenshotTest`.
+- App and Panel screenshot previews are context-free: they render only components that do not require injected runtime `CompositionLocal` dependencies such as session managers, dialog controllers, or navigation contexts. Update intentional debug baselines with `:app:androidApp:updateDebugScreenshotTest` or `:panel:androidApp:updateDebugScreenshotTest`.
 
 ## Appium
 

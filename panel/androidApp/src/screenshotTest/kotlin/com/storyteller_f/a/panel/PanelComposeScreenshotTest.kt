@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -17,95 +16,10 @@ import com.android.tools.screenshot.PreviewTest
 import com.storyteller_f.a.panel.common.PanelNav
 import com.storyteller_f.a.panel.components.InfoTable
 import com.storyteller_f.a.panel.components.TopicCell
-import com.storyteller_f.a.panel.pages.CommunityCountOverviewCell
-import com.storyteller_f.a.panel.pages.CommunityRoomCountOverviewCell
-import com.storyteller_f.a.panel.pages.FileCountOverviewCell
-import com.storyteller_f.a.panel.pages.PrivateRoomCountOverviewCell
-import com.storyteller_f.a.panel.pages.TitleCountOverviewCell
-import com.storyteller_f.a.panel.pages.TopicCountOverviewCell
-import com.storyteller_f.a.panel.pages.UserCountOverviewCell
 import com.storyteller_f.a.panel.ui.theme.PanelTheme
-import com.storyteller_f.shared.model.PanelOverview
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import kotlinx.datetime.LocalDateTime
-
-@PreviewTest
-@Preview(showBackground = true, widthDp = 240)
-@Composable
-fun UserCountOverviewCellScreenshot() {
-    PanelScreenshotTheme {
-        PaddedPreview {
-            UserCountOverviewCell(sampleOverview())
-        }
-    }
-}
-
-@PreviewTest
-@Preview(showBackground = true, widthDp = 240)
-@Composable
-fun CommunityCountOverviewCellScreenshot() {
-    PanelScreenshotTheme {
-        PaddedPreview {
-            CommunityCountOverviewCell(sampleOverview())
-        }
-    }
-}
-
-@PreviewTest
-@Preview(showBackground = true, widthDp = 240)
-@Composable
-fun TopicCountOverviewCellScreenshot() {
-    PanelScreenshotTheme {
-        PaddedPreview {
-            TopicCountOverviewCell(sampleOverview())
-        }
-    }
-}
-
-@PreviewTest
-@Preview(showBackground = true, widthDp = 240)
-@Composable
-fun TitleCountOverviewCellScreenshot() {
-    PanelScreenshotTheme {
-        PaddedPreview {
-            TitleCountOverviewCell(sampleOverview())
-        }
-    }
-}
-
-@PreviewTest
-@Preview(showBackground = true, widthDp = 240)
-@Composable
-fun PrivateRoomCountOverviewCellScreenshot() {
-    PanelScreenshotTheme {
-        PaddedPreview {
-            PrivateRoomCountOverviewCell(sampleOverview())
-        }
-    }
-}
-
-@PreviewTest
-@Preview(showBackground = true, widthDp = 240)
-@Composable
-fun CommunityRoomCountOverviewCellScreenshot() {
-    PanelScreenshotTheme {
-        PaddedPreview {
-            CommunityRoomCountOverviewCell(sampleOverview())
-        }
-    }
-}
-
-@PreviewTest
-@Preview(showBackground = true, widthDp = 240)
-@Composable
-fun FileCountOverviewCellScreenshot() {
-    PanelScreenshotTheme {
-        PaddedPreview {
-            FileCountOverviewCell(sampleOverview())
-        }
-    }
-}
 
 @PreviewTest
 @Preview(showBackground = true, widthDp = 480)
@@ -148,11 +62,9 @@ private fun PaddedPreview(content: @Composable () -> Unit) {
 
 @Composable
 private fun PanelScreenshotTheme(content: @Composable () -> Unit) {
-    CompositionLocalProvider(LocalPanelNav provides PreviewPanelNav) {
-        PanelTheme(dynamicColor = false) {
-            Surface(modifier = Modifier.fillMaxWidth()) {
-                content()
-            }
+    PanelTheme(dynamicColor = false) {
+        Surface(modifier = Modifier.fillMaxWidth()) {
+            content()
         }
     }
 }
@@ -166,8 +78,6 @@ private fun samplePanelTopic() = TopicInfo.EMPTY.copy(
     isEncrypted = true,
     lastModifiedTime = fixedTime(),
 )
-
-private fun sampleOverview() = PanelOverview(12, 5, 34, 8, 3, 9, 128, 7)
 
 private object PreviewPanelNav : PanelNav {
     override val drawerState: DrawerState
