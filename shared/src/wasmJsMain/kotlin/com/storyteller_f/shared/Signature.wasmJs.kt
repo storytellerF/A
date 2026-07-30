@@ -8,7 +8,7 @@ import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.js.ExperimentalWasmJsInterop
 
 @OptIn(ExperimentalWasmJsInterop::class)
-@JsModule("./mlCrypto.mjs")
+@JsModule("ml-crypto")
 private external object MlCrypto {
     fun p256PrivateKeyDer(privateKeyPem: String): String
     fun p256PublicKeyDer(privateKeyPem: String): String

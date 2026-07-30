@@ -109,8 +109,7 @@ kotlin {
             implementation(npm("@noble/hashes", "1.7.2"))
             implementation(npm("ethereum-cryptography", "3.1.0"))
             implementation(npm("keccak", "3.0.4"))
-            implementation(npm("@noble/curves", "1.0.0"))
-            implementation(npm("@noble/post-quantum", "0.6.1"))
+            implementation(npm("ml-crypto", project.file("ml-crypto")))
         }
         wasmJsMain {
             dependsOn(noJvmMain)
