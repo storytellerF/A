@@ -100,7 +100,8 @@
 ## Wasm
 
 - Wasm targets are always enabled; `target.wasm` is no longer a project property.
-- App and Panel prefer an installed CJK system font on Wasm. The browser probes OS-prioritized font candidates before Compose creates the global Material typography; when none are available, typography retains Compose's default font.
+- App and Panel load a bundled Noto Sans SC font into Compose typography on Wasm so Canvas/Skia rendering does not depend on browser CSS font fallback. On secure Chromium contexts with Local Font Access, the `client/composeCore/local-font-access` bridge waits for the first pointer or keyboard interaction, requests permission, and replaces the bundled fallback with the first preferred installed CJK font. Firefox and denied/unsupported Local Font Access paths continue using the bundled font.
+- The cacheable `downloadNotoWasmFont` task downloads Noto Sans SC Regular and its SIL OFL license from the pinned Noto CJK `Sans2.004` release, verifies both SHA-256 hashes, and exposes them as generated `wasmJsMain` Compose resources. Do not commit the 8.3 MB generated font into source control.
 - `:app:webApp` and `:panel:webApp` define the executable `wasmJs` browser targets. `:app:composeApp` and `:panel:composeApp` retain non-executable Wasm targets for shared UI and platform actuals. Shared modules such as `shared`, `api`, `client:core`, `client:model-storage`, `client:room`, `client:bot-lib`, and `client:asciidoc-parser` also define Wasm targets.
 - `dev/core`, `dev/cli`, and `dev/server` were removed from the included build. Do not add dependencies on `projects.dev.core`, `:dev:cli`, or `:dev:server`.
 - Runtime support remains incomplete for app image save/conversion, clipboard write, media playback, local client file access, text file save, and GPT, which are no-op or unsupported wasm actuals.

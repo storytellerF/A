@@ -1,5 +1,6 @@
 package com.storyteller_f.a.client.compose_core.utils
 
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -76,5 +77,6 @@ actual fun loadFontFromLocal(path: String): FontFamily? {
 /**
  * Desktop already provides its platform font through Compose defaults.
  */
+@Composable
 @Suppress("LibraryEntitiesShouldNotBePublic")
-actual fun getPlatformDefaultFontFamily(): FontFamily? = null
+actual fun rememberPlatformDefaultFontFamily(): FontFamily? = null
