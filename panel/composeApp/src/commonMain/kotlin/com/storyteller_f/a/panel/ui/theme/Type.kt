@@ -1,4 +1,4 @@
-package com.example.ui.theme
+package com.storyteller_f.a.panel.ui.theme
 
 import androidx.compose.material3.Typography
 import com.storyteller_f.a.client.compose_core.utils.getPlatformDefaultFontFamily
