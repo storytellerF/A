@@ -105,7 +105,6 @@
     <ID>AbsentOrWrongFileLicense:Theme.wasmJs.kt:com.storyteller_f.a.client.compose_core.utils.Theme.wasmJs.kt</ID>
     <ID>AbsentOrWrongFileLicense:Toast.kt:com.storyteller_f.a.client.compose_core.components.Toast.kt</ID>
     <ID>AbsentOrWrongFileLicense:TopicContentView.kt:com.storyteller_f.a.client.compose_core.components.TopicContentView.kt</ID>
-    <ID>AbsentOrWrongFileLicense:TypographyTest.kt:com.storyteller_f.a.client.compose_core.utils.TypographyTest.kt</ID>
     <ID>AbsentOrWrongFileLicense:UserIcon.kt:com.storyteller_f.a.client.compose_core.components.UserIcon.kt</ID>
     <ID>AbsentOrWrongFileLicense:VideoView.android.kt:com.storyteller_f.a.client.compose_core.components.VideoView.android.kt</ID>
     <ID>AbsentOrWrongFileLicense:VideoView.jvm.kt:com.storyteller_f.a.client.compose_core.components.VideoView.jvm.kt</ID>
@@ -1364,7 +1363,6 @@
     <ID>PackageName:Theme.wasmJs.kt:package com.storyteller_f.a.client.compose_core.utils</ID>
     <ID>PackageName:Toast.kt:package com.storyteller_f.a.client.compose_core.components</ID>
     <ID>PackageName:TopicContentView.kt:package com.storyteller_f.a.client.compose_core.components</ID>
-    <ID>PackageName:TypographyTest.kt:package com.storyteller_f.a.client.compose_core.utils</ID>
     <ID>PackageName:UserIcon.kt:package com.storyteller_f.a.client.compose_core.components</ID>
     <ID>PackageName:VideoView.android.kt:package com.storyteller_f.a.client.compose_core.components</ID>
     <ID>PackageName:VideoView.jvm.kt:package com.storyteller_f.a.client.compose_core.components</ID>
@@ -1473,7 +1471,6 @@
     <ID>PackageNaming:Theme.wasmJs.kt:package com.storyteller_f.a.client.compose_core.utils</ID>
     <ID>PackageNaming:Toast.kt:package com.storyteller_f.a.client.compose_core.components</ID>
     <ID>PackageNaming:TopicContentView.kt:package com.storyteller_f.a.client.compose_core.components</ID>
-    <ID>PackageNaming:TypographyTest.kt:package com.storyteller_f.a.client.compose_core.utils</ID>
     <ID>PackageNaming:UserIcon.kt:package com.storyteller_f.a.client.compose_core.components</ID>
     <ID>PackageNaming:VideoView.android.kt:package com.storyteller_f.a.client.compose_core.components</ID>
     <ID>PackageNaming:VideoView.jvm.kt:package com.storyteller_f.a.client.compose_core.components</ID>

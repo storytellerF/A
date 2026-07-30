@@ -32,7 +32,7 @@
     <ID>AbsentOrWrongFileLicense:TitleDetailPage.kt:com.storyteller_f.a.panel.pages.TitleDetailPage.kt</ID>
     <ID>AbsentOrWrongFileLicense:TopicCell.kt:com.storyteller_f.a.panel.components.TopicCell.kt</ID>
     <ID>AbsentOrWrongFileLicense:TopicDetailPage.kt:com.storyteller_f.a.panel.pages.TopicDetailPage.kt</ID>
-    <ID>AbsentOrWrongFileLicense:Type.kt:com.storyteller_f.a.panel.ui.theme.Type.kt</ID>
+    <ID>AbsentOrWrongFileLicense:Type.kt:com.example.ui.theme.Type.kt</ID>
     <ID>AbsentOrWrongFileLicense:UserCell.kt:com.storyteller_f.a.panel.components.UserCell.kt</ID>
     <ID>AbsentOrWrongFileLicense:UserDetailPage.kt:com.storyteller_f.a.panel.pages.UserDetailPage.kt</ID>
     <ID>ArgumentListWrapping:PanelApp.kt:PanelUIViewModel$( viewModelScope, it.address, httpUrl, ConstPassHolder(pass), old )</ID>
@@ -354,6 +354,7 @@
     <ID>FunctionSignature:TaskRecordsPage.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable private fun TaskRecordTypeFilter</ID>
     <ID>FunctionSignature:TopicCell.kt:@Composable fun TopicCell</ID>
     <ID>FunctionSignature:TopicDetailPage.kt:@Composable private fun TopicCell</ID>
+    <ID>InvalidPackageDeclaration:Type.kt:package com.example.ui.theme</ID>
     <ID>LabeledExpression:PanelApp.kt:PanelUIViewModel$@launch</ID>
     <ID>LabeledExpression:PanelModel.kt:AddUserViewModel$@combine</ID>
     <ID>LibraryCodeMustSpecifyReturnType:Color.kt:val backgroundDark = Color(0xFF1A110F)</ID>
@@ -1082,7 +1083,6 @@
     <ID>PackageName:RoomDetailPage.kt:package com.storyteller_f.a.panel.pages</ID>
     <ID>PackageName:TaskRecordsPage.kt:package com.storyteller_f.a.panel.pages</ID>
     <ID>PackageName:Theme.kt:package com.storyteller_f.a.panel.ui.theme</ID>
-    <ID>PackageName:Type.kt:package com.storyteller_f.a.panel.ui.theme</ID>
     <ID>PackageName:TitleDetailPage.kt:package com.storyteller_f.a.panel.pages</ID>
     <ID>PackageName:TopicCell.kt:package com.storyteller_f.a.panel.components</ID>
     <ID>PackageName:TopicDetailPage.kt:package com.storyteller_f.a.panel.pages</ID>
@@ -1114,7 +1114,6 @@
     <ID>PackageNaming:RoomDetailPage.kt:package com.storyteller_f.a.panel.pages</ID>
     <ID>PackageNaming:TaskRecordsPage.kt:package com.storyteller_f.a.panel.pages</ID>
     <ID>PackageNaming:Theme.kt:package com.storyteller_f.a.panel.ui.theme</ID>
-    <ID>PackageNaming:Type.kt:package com.storyteller_f.a.panel.ui.theme</ID>
     <ID>PackageNaming:TitleDetailPage.kt:package com.storyteller_f.a.panel.pages</ID>
     <ID>PackageNaming:TopicCell.kt:package com.storyteller_f.a.panel.components</ID>
     <ID>PackageNaming:TopicDetailPage.kt:package com.storyteller_f.a.panel.pages</ID>

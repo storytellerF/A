@@ -1,7 +1,12 @@
-package com.storyteller_f.a.client.compose_core.utils
+/*
+ * This is a private project. All rights reserved.
+ */
+
+package com.storyteller.a.client.composecore.utils
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.font.FontFamily
+import com.storyteller_f.a.client.compose_core.utils.withDefaultFontFamily
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertSame
