@@ -21,9 +21,11 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.appendPathSegments
 import io.ktor.http.buildUrl
+import io.ktor.http.protocolWithAuthority
 import io.ktor.http.takeFrom
 import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.serialization.kotlinx.json.json
+import io.ktor.util.AttributeKey
 import kotlinx.serialization.json.Json
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -34,6 +36,8 @@ class ServerErrorException(val status: HttpStatusCode, val text: String, cause: 
     Exception("$status, $text", cause)
 
 expect fun getClient(block: HttpClientConfig<*>.() -> Unit): HttpClient
+
+internal val CredentialedOriginAttribute = AttributeKey<String>("CredentialedOrigin")
 
 @OptIn(ExperimentalUuidApi::class)
 fun HttpClientConfig<*>.defaultClientConfigure(
@@ -56,6 +60,7 @@ fun HttpClientConfig<*>.defaultClientConfigure(
         header("a-ts", manager.generateData())
         if (httpUrl != null) {
             url(httpUrl)
+            attributes.put(CredentialedOriginAttribute, buildUrl { takeFrom(httpUrl) }.protocolWithAuthority)
         }
     }
     install(ContentNegotiation) {
@@ -117,6 +122,7 @@ fun HttpClientConfig<*>.defaultClientConfigureForPanel(
         header("a-ts", manager.generateData())
         if (httpUrl != null) {
             url(httpUrl)
+            attributes.put(CredentialedOriginAttribute, buildUrl { takeFrom(httpUrl) }.protocolWithAuthority)
         }
     }
     install(ContentNegotiation) {
