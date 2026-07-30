@@ -9,6 +9,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import com.storyteller_f.a.client.compose_core.utils.getAppDynamicColorScheme
+import com.storyteller_f.a.client.compose_core.utils.getPlatformDefaultFontFamily
+import com.storyteller_f.a.client.compose_core.utils.withDefaultFontFamily
+
+private val appTypography: Typography = Typography().withDefaultFontFamily(getPlatformDefaultFontFamily())
 
 private val lightScheme = lightColorScheme(
     primary = primaryLight,
@@ -257,5 +261,5 @@ fun PanelTheme(
 ) {
     val colorScheme = getAppDynamicColorScheme(dynamicColor, darkTheme) ?: if (darkTheme) darkScheme else lightScheme
 
-    MaterialTheme(colorScheme = colorScheme, typography = Typography(), content = content)
+    MaterialTheme(colorScheme = colorScheme, typography = appTypography, content = content)
 }

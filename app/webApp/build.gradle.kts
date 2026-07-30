@@ -15,7 +15,6 @@ kotlin {
     }
 
     sourceSets {
-        getByName("wasmJsMain").resources.srcDir(project(":shared").file("src/wasmJsMain/resources"))
         wasmJsMain.dependencies {
             implementation(projects.app.composeApp)
             implementation(projects.client.composeCore)
