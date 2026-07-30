@@ -1,0 +1,7 @@
+{
+  "name": "local-font-access",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "localFontAccess.mjs"
+}

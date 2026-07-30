@@ -1,15 +1,30 @@
 package com.storyteller_f.a.client.compose_core.utils
 
 import androidx.compose.material3.Typography
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.text.font.FontFamily
 
 expect fun loadFontFromLocal(path: String): FontFamily?
 
 /**
- * Returns the preferred installed font family for the current platform, or null to use Compose defaults.
+ * Remembers the preferred font family for the current platform, or null to use Compose defaults.
  */
+@Composable
 @Suppress("LibraryEntitiesShouldNotBePublic")
-expect fun getPlatformDefaultFontFamily(): FontFamily?
+expect fun rememberPlatformDefaultFontFamily(): FontFamily?
+
+/**
+ * Applies the remembered platform font to [typography] and updates it when asynchronous font loading completes.
+ */
+@Composable
+@Suppress("LibraryEntitiesShouldNotBePublic")
+fun rememberPlatformTypography(typography: Typography): Typography {
+    val fontFamily = rememberPlatformDefaultFontFamily()
+    return remember(typography, fontFamily) {
+        typography.withDefaultFontFamily(fontFamily)
+    }
+}
 
 /**
  * Applies [fontFamily] to every Material typography style, keeping the receiver unchanged when it is null.

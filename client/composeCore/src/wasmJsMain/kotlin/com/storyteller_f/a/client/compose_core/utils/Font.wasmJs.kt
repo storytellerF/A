@@ -1,105 +1,141 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.utils
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.platform.SystemFont
-import kotlinx.browser.document
-import org.jetbrains.skiko.OS
-import org.jetbrains.skiko.hostOs
-import org.w3c.dom.CanvasRenderingContext2D
-import org.w3c.dom.HTMLCanvasElement
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.platform.LoadedFont
+import com.storyteller_f.a.client.compose_core.Res
+import com.storyteller_f.shared.commonJson
+import io.github.aakira.napier.Napier
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.await
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
+import org.jetbrains.compose.resources.MissingResourceException
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.js.ExperimentalWasmJsInterop
-import kotlin.math.abs
+import kotlin.js.JsException
+import kotlin.js.JsString
+import kotlin.js.Promise
 
 actual fun loadFontFromLocal(path: String): FontFamily? = null
 
+@OptIn(ExperimentalWasmJsInterop::class)
+@JsModule("local-font-access")
+private external object LocalFontAccess {
+    fun isSupported(): Boolean
+
+    fun loadPreferredFontJsonAfterUserActivation(): Promise<JsString>
+
+    fun cancelLocalFontQuery()
+}
+
 /**
- * Selects the first installed CJK-capable system font for Compose Web.
+ * Loads a browser-local CJK font after user activation when permitted, with a bundled font as fallback.
  */
+@Composable
 @OptIn(ExperimentalTextApi::class)
 @Suppress("LibraryEntitiesShouldNotBePublic")
-actual fun getPlatformDefaultFontFamily(): FontFamily? {
-    val fontName = systemFontCandidates().firstOrNull(::isSystemFontInstalled) ?: return null
-    return FontFamily(SystemFont(fontName))
+actual fun rememberPlatformDefaultFontFamily(): FontFamily? {
+    val fallbackFont = rememberBundledFallbackFont()
+    val localFont = rememberPreferredLocalFont()
+    val selectedFont = localFont ?: fallbackFont
+    return remember(selectedFont) {
+        selectedFont?.toFontFamily()
+    }
 }
 
-private const val FONT_PROBE = "72px"
-private const val FONT_PROBE_TEXT = "mmmmmmmmmmWWWWWWWWWW中文字体"
-private const val FONT_PROBE_TOLERANCE = 0.01
+@Composable
+private fun rememberBundledFallbackFont(): FontBinary? {
+    var fallbackFont by remember { mutableStateOf<FontBinary?>(null) }
 
-@OptIn(ExperimentalWasmJsInterop::class)
-private val fontProbeContext: CanvasRenderingContext2D by lazy {
-    val canvas = document.createElement("canvas") as HTMLCanvasElement
-    canvas.getContext("2d") as CanvasRenderingContext2D
+    LaunchedEffect(Unit) {
+        try {
+            fallbackFont =
+                FontBinary(
+                    identity = FALLBACK_FONT_IDENTITY,
+                    bytes = Res.readBytes(FALLBACK_FONT_RESOURCE),
+                )
+        } catch (exception: CancellationException) {
+            throw exception
+        } catch (exception: MissingResourceException) {
+            Napier.w(exception) { "Unable to load the bundled Wasm CJK fallback font." }
+        }
+    }
+    return fallbackFont
 }
 
-private fun isSystemFontInstalled(fontFamily: String): Boolean =
-    listOf("monospace", "sans-serif", "serif").any { fallback ->
-        fontProbeContext.font = "$FONT_PROBE $fallback"
-        val fallbackWidth = fontProbeContext.measureText(FONT_PROBE_TEXT).width
-        fontProbeContext.font = "$FONT_PROBE \"$fontFamily\", $fallback"
-        abs(fontProbeContext.measureText(FONT_PROBE_TEXT).width - fallbackWidth) > FONT_PROBE_TOLERANCE
+@Composable
+@OptIn(ExperimentalEncodingApi::class, ExperimentalWasmJsInterop::class)
+private fun rememberPreferredLocalFont(): FontBinary? {
+    var localFont by remember { mutableStateOf<FontBinary?>(null) }
+    LaunchedEffect(Unit) {
+        if (LocalFontAccess.isSupported()) {
+            localFont = loadPreferredLocalFont()
+        }
     }
 
-private fun systemFontCandidates(): List<String> {
-    val prioritizedCandidates =
-        when (hostOs) {
-            OS.Windows -> windowsFontCandidates
-            OS.MacOS, OS.Ios -> appleFontCandidates
-            OS.Linux -> linuxFontCandidates
-            OS.Android -> androidFontCandidates
-            OS.Tvos, OS.Unknown -> emptyList()
+    DisposableEffect(Unit) {
+        onDispose {
+            LocalFontAccess.cancelLocalFontQuery()
         }
-    return (prioritizedCandidates + commonFontCandidates).distinct()
+    }
+    return localFont
 }
 
-private val windowsFontCandidates =
-    listOf(
-        "Microsoft YaHei UI",
-        "Microsoft YaHei",
-        "DengXian",
-        "SimHei",
-        "SimSun",
-    )
+@OptIn(ExperimentalEncodingApi::class, ExperimentalWasmJsInterop::class)
+private suspend fun loadPreferredLocalFont(): FontBinary? {
+    val fontQuery = LocalFontAccess.loadPreferredFontJsonAfterUserActivation()
+    return try {
+        val selectedFont =
+            commonJson.decodeFromString<LocalFontBinaryMetadata?>(
+                fontQuery.await().toString(),
+            )
+        selectedFont?.toFontBinary()
+    } catch (exception: CancellationException) {
+        throw exception
+    } catch (exception: SerializationException) {
+        logLocalFontFailure(exception)
+        null
+    } catch (exception: IllegalArgumentException) {
+        logLocalFontFailure(exception)
+        null
+    } catch (exception: JsException) {
+        logLocalFontFailure(exception)
+        null
+    }
+}
 
-private val appleFontCandidates =
-    listOf(
-        "PingFang SC",
-        "Hiragino Sans GB",
-        "Heiti SC",
-        "Songti SC",
-    )
+@OptIn(ExperimentalTextApi::class)
+private fun FontBinary.toFontFamily(): FontFamily = FontFamily(toLoadedFont())
 
-private val linuxFontCandidates =
-    listOf(
-        "Noto Sans CJK SC",
-        "Noto Sans SC",
-        "WenQuanYi Micro Hei",
-        "Droid Sans Fallback",
-        "AR PL UMing CN",
-        "AR PL UKai CN",
-    )
+@OptIn(ExperimentalTextApi::class)
+private fun FontBinary.toLoadedFont() = LoadedFont(identity, { bytes }, FontWeight.Normal, FontStyle.Normal)
 
-private val androidFontCandidates =
-    listOf(
-        "Noto Sans CJK SC",
-        "Noto Sans SC",
-        "Droid Sans Fallback",
-    )
+@OptIn(ExperimentalEncodingApi::class)
+private fun LocalFontBinaryMetadata.toFontBinary(): FontBinary = FontBinary(identity, Base64.decode(base64))
 
-private val commonFontCandidates =
-    listOf(
-        "Noto Sans CJK SC",
-        "Noto Sans SC",
-        "Source Han Sans SC",
-        "Source Han Sans CN",
-        "HarmonyOS Sans SC",
-        "MiSans",
-        "Microsoft YaHei UI",
-        "Microsoft YaHei",
-        "PingFang SC",
-        "Hiragino Sans GB",
-        "WenQuanYi Micro Hei",
-        "Droid Sans Fallback",
-        "Arial Unicode MS",
-    )
+private fun logLocalFontFailure(exception: Throwable) {
+    Napier.w(exception) { "Unable to load a local CJK font; using the bundled fallback." }
+}
+
+@Serializable
+private data class LocalFontBinaryMetadata(val identity: String, val base64: String)
+
+private data class FontBinary(val identity: String, val bytes: ByteArray)
+
+private const val FALLBACK_FONT_IDENTITY = "NotoSansSC-Regular"
+private const val FALLBACK_FONT_RESOURCE = "files/fonts/noto_sans_sc_regular.otf"
