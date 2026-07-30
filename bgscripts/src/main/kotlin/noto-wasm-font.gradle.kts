@@ -10,6 +10,9 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 import java.net.URI
+import java.nio.file.AtomicMoveNotSupportedException
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 import java.security.MessageDigest
 
 @CacheableTask
@@ -50,27 +53,53 @@ abstract class DownloadNotoWasmFontTask : DefaultTask() {
         expectedSha256: String,
         destination: File,
     ) {
-        if (!destination.isFile) {
+        if (destination.isFile && calculateSha256(destination) == expectedSha256) return
+
+        destination.delete()
+        val temporaryFile = destination.parentFile.resolve("${destination.name}.part")
+        temporaryFile.delete()
+        try {
             URI(url).toURL().openStream().buffered().use { input ->
-                destination.outputStream().buffered().use { output ->
+                temporaryFile.outputStream().buffered().use { output ->
                     input.copyTo(output)
                 }
             }
-        }
-        val actualSha256 =
-            destination.inputStream().buffered().use { input ->
-                val digest = MessageDigest.getInstance("SHA-256")
-                val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
-                while (true) {
-                    val count = input.read(buffer)
-                    if (count < 0) break
-                    digest.update(buffer, 0, count)
-                }
-                digest.digest().toHexString()
+            val actualSha256 = calculateSha256(temporaryFile)
+            if (actualSha256 != expectedSha256) {
+                error("SHA-256 mismatch for $url: expected $expectedSha256, received $actualSha256")
             }
-        if (actualSha256 != expectedSha256) {
-            destination.delete()
-            error("SHA-256 mismatch for $url: expected $expectedSha256, received $actualSha256")
+            moveIntoPlace(temporaryFile, destination)
+        } finally {
+            temporaryFile.delete()
+        }
+    }
+
+    private fun calculateSha256(file: File): String =
+        file.inputStream().buffered().use { input ->
+            val digest = MessageDigest.getInstance("SHA-256")
+            val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+            while (true) {
+                val count = input.read(buffer)
+                if (count < 0) break
+                digest.update(buffer, 0, count)
+            }
+            digest.digest().toHexString()
+        }
+
+    private fun moveIntoPlace(
+        source: File,
+        destination: File,
+    ) {
+        try {
+            Files.move(
+                source.toPath(),
+                destination.toPath(),
+                StandardCopyOption.ATOMIC_MOVE,
+                StandardCopyOption.REPLACE_EXISTING,
+            )
+        } catch (exception: AtomicMoveNotSupportedException) {
+            logger.info("Atomic move is unavailable for {}; using a regular move.", destination, exception)
+            Files.move(source.toPath(), destination.toPath(), StandardCopyOption.REPLACE_EXISTING)
         }
     }
 }
