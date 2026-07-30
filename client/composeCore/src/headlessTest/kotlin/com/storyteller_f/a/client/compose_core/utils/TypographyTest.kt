@@ -8,14 +8,14 @@ import kotlin.test.assertSame
 
 internal class TypographyTest {
     @Test
-    fun `keeps typography without a font`() {
+    fun keepsTypographyWithoutAFont() {
         val typography = Typography()
 
         assertSame(typography, typography.withDefaultFontFamily(null))
     }
 
     @Test
-    fun `applies font to all styles`() {
+    fun appliesFontToAllStyles() {
         val fontFamily = FontFamily.SansSerif
         val typography = Typography().withDefaultFontFamily(fontFamily)
 

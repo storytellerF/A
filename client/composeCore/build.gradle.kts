@@ -48,6 +48,10 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     sourceSets {
+        val headlessTest =
+            create("headlessTest") {
+                dependsOn(commonTest.get())
+            }
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)
 
@@ -73,6 +77,7 @@ kotlin {
             dependencies {
                 implementation(libs.robolectric)
             }
+            dependsOn(headlessTest)
         }
 
         commonMain.dependencies {
@@ -145,6 +150,9 @@ kotlin {
             implementation(libs.connectivity.http)
             implementation(libs.connectivity.compose.http)
             implementation(libs.tika.core)
+        }
+        jvmTest {
+            dependsOn(headlessTest)
         }
         getByName("wasmJsMain") {
             dependencies {
