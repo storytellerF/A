@@ -185,6 +185,13 @@ minimatch@^5.0.1:
   dependencies:
     brace-expansion "^2.0.1"
 
+"ml-crypto@file:../../shared/ml-crypto":
+  version "1.0.0"
+  dependencies:
+    "@noble/curves" "1.0.0"
+    "@noble/hashes" "1.7.2"
+    "@noble/post-quantum" "0.6.1"
+
 node-addon-api@^2.0.0:
   version "2.0.2"
   resolved "https://registry.yarnpkg.com/node-addon-api/-/node-addon-api-2.0.2.tgz#432cfa82962ce494b132e9d72a15b29f71ff5d32"

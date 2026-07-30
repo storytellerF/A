@@ -5,7 +5,8 @@
 - Prefer KMP-shareable code. Handle platform differences with `expect`/`actual` or platform source directories.
 - Keep the Gradle configuration cache enabled (`org.gradle.configuration-cache=true`) and avoid side effects or IO during configuration.
 - Logging: use Napier in shared/app code. Initialize a logging tree only when needed for tests or debugging.
-- Static analysis: run Detekt with `config/detekt/detekt.yml`. Fix issues, or explain the reason for any suppression.
+- Static analysis: run Detekt with `config/detekt/detekt.yml`. Existing `detekt-baseline*.xml` files are immutable after creation: never edit, regenerate, add, remove, or migrate their entries. Fix every new or newly exposed issue in source code, and do not add or broaden suppressions to bypass it.
+- New Kotlin source files must start with the private-project license header configured by Detekt.
 - Coverage: generate Kover reports when needed.
 - Environment/secrets: `app/composeApp` and `panel/composeApp` inject values from `deploy/{flavor}.env` through BuildKonfig. `app/androidApp` reads the same env file for deep links. `app/androidApp` and `panel/androidApp` use flavor/buildType values to configure application IDs and build types. Always pass `-Pserver.flavor` and `-Pserver.buildType`.
 - Commit messages: start with a verb in English or Chinese and include the module/scope, for example `client/core: add getAllUsers request`.

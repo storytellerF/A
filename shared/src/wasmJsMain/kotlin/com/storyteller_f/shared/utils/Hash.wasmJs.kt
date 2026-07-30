@@ -3,7 +3,7 @@ package com.storyteller_f.shared.utils
 import kotlin.js.ExperimentalWasmJsInterop
 
 @OptIn(ExperimentalWasmJsInterop::class)
-@JsModule("./mlCrypto.mjs")
+@JsModule("ml-crypto")
 private external object MlHash {
     @Suppress("UnusedParameter")
     fun md5Hex(data: String): String

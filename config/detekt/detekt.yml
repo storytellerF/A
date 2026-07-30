@@ -35,7 +35,10 @@ comments:
   active: true
   AbsentOrWrongFileLicense:
     active: true
-    licenseTemplate: 'license.template'
+    licenseTemplate: |-
+      /*
+       * This is a private project. All rights reserved.
+       */
     licenseTemplateIsRegex: false
   DocumentationOverPrivateFunction:
     active: true

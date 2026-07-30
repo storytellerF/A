@@ -72,3 +72,9 @@ actual fun loadFontFromLocal(path: String): FontFamily? {
     if (fonts.isEmpty()) return null
     return FontFamily(fonts)
 }
+
+/**
+ * Desktop already provides its platform font through Compose defaults.
+ */
+@Suppress("LibraryEntitiesShouldNotBePublic")
+actual fun getPlatformDefaultFontFamily(): FontFamily? = null
