@@ -134,6 +134,8 @@ Add `app` to a flavor's `COMPOSE_FILE_LIST` to deploy the user app and admin pan
 
 Open the user app at `http://localhost:8080` and the panel at `http://localhost:8081` after the containers become healthy. Omit `app` to skip both Wasm builds and services.
 
+The Wasm distributions bundle Noto Sans SC so CJK text works in browsers such as Firefox without relying on installed fonts. On Chromium browsers that support Local Font Access, the app requests local-font permission after the first pointer or keyboard interaction and prefers an installed CJK font when permission is granted; otherwise it keeps using the bundled font.
+
 ### Environment Variables
 
 - `HOST_TYPE`: Host type, such as `docker`

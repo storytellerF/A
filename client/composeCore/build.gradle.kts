@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.serialization)
+    id("noto-wasm-font")
 }
 
 val buildIosTarget = project.findProperty("target.ios") == "true"
@@ -157,6 +158,7 @@ kotlin {
         getByName("wasmJsMain") {
             dependencies {
                 implementation(libs.kotlinx.browser)
+                implementation(npm("local-font-access", project.file("local-font-access")))
             }
         }
         // jvm 与 android 共享：compose-pdf 的 PdfView actual、m3u-parser 的播放列表解析
@@ -185,4 +187,8 @@ compose.resources {
     publicResClass = false
     packageOfResClass = "com.storyteller_f.a.client.compose_core"
     generateResClass = auto
+    customDirectory(
+        sourceSetName = "wasmJsMain",
+        directoryProvider = layout.dir(tasks.named("downloadNotoWasmFont").map { it.outputs.files.singleFile }),
+    )
 }
