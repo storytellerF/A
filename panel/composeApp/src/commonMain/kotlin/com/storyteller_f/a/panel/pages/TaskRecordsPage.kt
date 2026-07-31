@@ -122,15 +122,17 @@ private fun TaskRecordTypeChip(label: String, selected: Boolean, onClick: () -> 
 @Composable
 private fun TaskRecordItem(info: TaskRecordInfo) {
     val nav = LocalPanelNav.current
+    fun openTaskRecord() {
+        when (info.type) {
+            TaskRecordType.INTRO -> nav.gotoUserDetail(info.processedId)
+            TaskRecordType.TITLE -> nav.gotoTitleDetail(info.processedId)
+            TaskRecordType.SUBSCRIPTION -> nav.gotoTopicDetail(info.processedId)
+            TaskRecordType.TOPIC_ACG -> nav.gotoTopicDetail(info.processedId)
+            TaskRecordType.TOPIC_MODERATION -> nav.gotoTopicDetail(info.processedId)
+        }
+    }
     ListItem(
-        modifier = Modifier.clickable {
-            when (info.type) {
-                TaskRecordType.INTRO -> nav.gotoUserDetail(info.processedId)
-                TaskRecordType.TITLE -> nav.gotoTitleDetail(info.processedId)
-                TaskRecordType.SUBSCRIPTION,
-                TaskRecordType.TOPIC_ACG -> nav.gotoTopicDetail(info.processedId)
-            }
-        },
+        modifier = Modifier.clickable(onClick = ::openTaskRecord),
         headlineContent = { Text(info.type.name) },
         supportingContent = {
             Text(
@@ -138,11 +140,11 @@ private fun TaskRecordItem(info: TaskRecordInfo) {
                     Res.string.task_record_supporting,
                     info.processedId.toString(),
                     info.id.toString(),
-                    info.createdTime.toString()
+                    info.createdTime.toString(),
                 ),
-                modifier = Modifier.widthIn(max = 720.dp)
+                modifier = Modifier.widthIn(max = 720.dp),
             )
-        }
+        },
     )
     HorizontalDivider()
 }

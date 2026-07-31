@@ -5,7 +5,13 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
 
 enum class TaskRecordType {
-    TOPIC_ACG, INTRO, SUBSCRIPTION, TITLE
+    TOPIC_ACG,
+    INTRO,
+    SUBSCRIPTION,
+    TITLE,
+
+    /** Records the last topic examined by automated content moderation. */
+    TOPIC_MODERATION,
 }
 
 @Serializable
