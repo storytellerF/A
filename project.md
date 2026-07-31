@@ -19,6 +19,7 @@
 
 - When creating an `InputStream`/`OutputStream` and passing it to a consuming function, callers should close it explicitly with `use {}`. For example, when computing `sha256`, use `inputStream().buffered().use { input -> sha256(input.asSource().buffered()) }`.
 - Utility functions that receive caller-created streams should not close them internally. The caller should wrap the function call in `use {}` when creating the stream.
+- Shared `Result` transformation extensions never retain `CancellationException` as `Result.failure`: they rethrow cancellation received from the source result, thrown by a transformation block, or returned inside a nested result.
 
 ## Panel / Worker
 

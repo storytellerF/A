@@ -17,13 +17,11 @@ import com.storyteller_f.shared.type.UserStatus
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.now
 import io.github.aakira.napier.Napier
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 
 internal suspend fun Backend.doTopicModerationTask(reviewer: TopicSafetyReviewer) {
     val result = executeTopicModerationTask(reviewer)
     val failure = result.exceptionOrNull()
-    if (failure is CancellationException) throw failure
     if (failure == null) {
         Napier.i(tag = MODERATION_LOG_TAG) {
             "topic moderation task succeeded"
