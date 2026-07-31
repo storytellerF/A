@@ -2,8 +2,6 @@ package com.storyteller_f.a.api
 
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.MemberPolicy
-import com.storyteller_f.shared.model.TaskFailureType
-import com.storyteller_f.shared.model.TaskRecordStatus
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.model.TopicPinSearch
@@ -189,9 +187,9 @@ class PanelLogsQuery(
 class TaskRecordsQuery(
     val type: TaskRecordType? = null,
     /** Filters task executions by their outcome. */
-    val status: TaskRecordStatus? = null,
+    val isSuccess: Boolean? = null,
     /** Filters failed task executions by their failure classification. */
-    val failureType: TaskFailureType? = null,
+    val failureType: String? = null,
     override val nextPageToken: String? = null,
     override val prePageToken: String? = null,
     override val size: Int = DEFAULT_PAGE_SIZE,

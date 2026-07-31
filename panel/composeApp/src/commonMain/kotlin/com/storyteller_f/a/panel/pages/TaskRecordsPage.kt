@@ -40,16 +40,17 @@ import com.storyteller_f.a.panel.Res
 import com.storyteller_f.a.panel.common.createPanelTaskRecordsViewModel
 import com.storyteller_f.a.panel.common.createTaskRecordSummariesViewModel
 import com.storyteller_f.a.panel.worker_records
-import com.storyteller_f.shared.model.TaskFailureType
 import com.storyteller_f.shared.model.TaskRecordInfo
-import com.storyteller_f.shared.model.TaskRecordStatus
-import com.storyteller_f.shared.model.TaskRecordSummary
 import com.storyteller_f.shared.model.TaskRecordType
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TaskRecordsPage() {
+fun TaskRecordsPage(type: TaskRecordType? = null) {
+    if (type != null) {
+        taskRecordDetailContent(type)
+        return
+    }
     val panelNav = LocalPanelNav.current
     val viewModel = createTaskRecordSummariesViewModel()
     Scaffold(
@@ -68,7 +69,7 @@ fun TaskRecordsPage() {
         StateView(viewModel.handler, Modifier.safeArea(paddingValues, direction).fillMaxSize()) { summaries ->
             LazyColumn {
                 items(summaries, key = { it.type }) { summary ->
-                    TaskRecordSummaryItem(summary) {
+                    taskRecordSummaryItem(summary) {
                         panelNav.gotoTaskRecordDetail(summary.type)
                     }
                 }
@@ -79,12 +80,12 @@ fun TaskRecordsPage() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TaskRecordDetailPage(type: TaskRecordType) {
+private fun taskRecordDetailContent(type: TaskRecordType): Boolean {
     val panelNav = LocalPanelNav.current
     val summariesViewModel = createTaskRecordSummariesViewModel()
-    var status by rememberSaveable { mutableStateOf<TaskRecordStatus?>(null) }
-    var failureType by rememberSaveable { mutableStateOf<TaskFailureType?>(null) }
-    val recordsViewModel = createPanelTaskRecordsViewModel(type, status, failureType)
+    var isSuccess by rememberSaveable { mutableStateOf<Boolean?>(null) }
+    var failureType by rememberSaveable { mutableStateOf<String?>(null) }
+    val recordsViewModel = createPanelTaskRecordsViewModel(type, isSuccess, failureType)
     val retryRequestedIds by recordsViewModel.retryRequestedIds.collectAsState()
     Scaffold(
         topBar = {
@@ -102,20 +103,20 @@ fun TaskRecordDetailPage(type: TaskRecordType) {
         Column(Modifier.safeArea(paddingValues, direction).fillMaxSize()) {
             StateView(summariesViewModel.handler) { summaries ->
                 summaries.firstOrNull { it.type == type }?.let { summary ->
-                    TaskRecordOverview(summary)
+                    taskRecordOverview(summary)
                 }
             }
-            TaskRecordStatusFilter(status) { status = it }
-            if (status == TaskRecordStatus.FAILURE || failureType != null) {
-                TaskFailureTypeFilter(failureType) { failureType = it }
+            taskRecordStatusFilter(isSuccess) { isSuccess = it }
+            if (isSuccess == false || failureType != null) {
+                taskFailureTypeFilter(failureType) { failureType = it }
             }
             StateView(recordsViewModel, modifier = Modifier.weight(1f)) { records ->
                 LazyColumn {
                     pagingItems(records, key = { it.id }) { index ->
                         records[index]?.let { record ->
-                            TaskRecordHistoryItem(
+                            taskRecordHistoryItem(
                                 record,
-                                record.retryRequested || record.id in retryRequestedIds,
+                                record.isRetryRequested || record.id in retryRequestedIds,
                                 recordsViewModel::markForRetry,
                             )
                         }
@@ -124,80 +125,89 @@ fun TaskRecordDetailPage(type: TaskRecordType) {
             }
         }
     }
+    return true
 }
 
 @Composable
-private fun TaskRecordSummaryItem(summary: TaskRecordSummary, onClick: () -> Unit) {
+private fun taskRecordSummaryItem(summary: TaskRecordInfo, onClick: () -> Unit): Boolean {
     ListItem(
         modifier = Modifier.clickable(onClick = onClick),
         headlineContent = { Text(summary.type.name) },
         supportingContent = {
             Text(
-                "Success: ${summary.successCount} | Failure: ${summary.failureCount} | Retry: ${summary.retryRequestedCount}",
+                "Success: ${summary.successCount ?: 0} | Failure: ${summary.failureCount ?: 0} | " +
+                    "Retry: ${summary.retryRequestedCount ?: 0}",
             )
         },
     )
     HorizontalDivider()
+    return true
 }
 
 @Composable
-private fun TaskRecordOverview(summary: TaskRecordSummary) {
+private fun taskRecordOverview(summary: TaskRecordInfo): Boolean {
     Text(
-        "Success: ${summary.successCount} | Failure: ${summary.failureCount} | Retry requested: ${summary.retryRequestedCount}",
+        "Success: ${summary.successCount ?: 0} | Failure: ${summary.failureCount ?: 0} | " +
+            "Retry requested: ${summary.retryRequestedCount ?: 0}",
         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
     )
+    return true
 }
 
 @Composable
-private fun TaskRecordStatusFilter(
-    selectedStatus: TaskRecordStatus?,
-    onSelectedStatusChanged: (TaskRecordStatus?) -> Unit,
-) {
+private fun taskRecordStatusFilter(selectedStatus: Boolean?, onSelectedStatusChanged: (Boolean?) -> Unit): Boolean {
     Row(
         modifier = Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp),
     ) {
-        TaskRecordFilterChip("ALL", selectedStatus == null) { onSelectedStatusChanged(null) }
-        TaskRecordStatus.entries.forEach { status ->
-            TaskRecordFilterChip(status.name, selectedStatus == status) { onSelectedStatusChanged(status) }
-        }
+        taskRecordFilterChip("ALL", selectedStatus == null) { onSelectedStatusChanged(null) }
+        taskRecordFilterChip("SUCCESS", selectedStatus == true) { onSelectedStatusChanged(true) }
+        taskRecordFilterChip("FAILURE", selectedStatus == false) { onSelectedStatusChanged(false) }
     }
+    return true
 }
 
 @Composable
-private fun TaskFailureTypeFilter(
-    selectedFailureType: TaskFailureType?,
-    onSelectedFailureTypeChanged: (TaskFailureType?) -> Unit,
-) {
+private fun taskFailureTypeFilter(
+    selectedFailureType: String?,
+    onSelectedFailureTypeChanged: (String?) -> Unit,
+): Boolean {
     Row(
         modifier = Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp),
     ) {
-        TaskRecordFilterChip("ALL FAILURES", selectedFailureType == null) {
+        taskRecordFilterChip("ALL FAILURES", selectedFailureType == null) {
             onSelectedFailureTypeChanged(null)
         }
-        TaskFailureType.entries.forEach { failureType ->
-            TaskRecordFilterChip(failureType.name, selectedFailureType == failureType) {
+        listOf(
+            TaskRecordType.MODEL_RESPONSE_FAILURE,
+            TaskRecordType.MODEL_EXECUTION_FAILURE,
+            TaskRecordType.DATA_ACCESS_FAILURE,
+            TaskRecordType.UNKNOWN_FAILURE,
+        ).forEach { failureType ->
+            taskRecordFilterChip(failureType, selectedFailureType == failureType) {
                 onSelectedFailureTypeChanged(failureType)
             }
         }
     }
+    return true
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TaskRecordFilterChip(label: String, selected: Boolean, onClick: () -> Unit) {
+private fun taskRecordFilterChip(label: String, selected: Boolean, onClick: () -> Unit): Boolean {
     Box(modifier = Modifier.padding(end = 8.dp)) {
         FilterChip(selected = selected, onClick = onClick, label = { Text(label) })
     }
+    return true
 }
 
 @Composable
-private fun TaskRecordHistoryItem(
+private fun taskRecordHistoryItem(
     record: TaskRecordInfo,
     retryRequested: Boolean,
     onMarkForRetry: (Long) -> Unit,
-) {
+): Boolean {
     ListItem(
-        headlineContent = { Text("${record.status}: ${record.objectId}") },
+        headlineContent = { Text("${if (record.isSuccess) "SUCCESS" else "FAILURE"}: ${record.objectId}") },
         supportingContent = {
             Column {
                 Text("Record: ${record.id} | Time: ${record.createdTime}")
@@ -208,7 +218,7 @@ private fun TaskRecordHistoryItem(
             }
         },
         trailingContent = {
-            if (record.status == TaskRecordStatus.FAILURE) {
+            if (!record.isSuccess) {
                 Button(
                     enabled = !retryRequested,
                     onClick = { onMarkForRetry(record.id) },
@@ -219,4 +229,5 @@ private fun TaskRecordHistoryItem(
         },
     )
     HorizontalDivider()
+    return true
 }

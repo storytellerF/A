@@ -29,13 +29,9 @@ import com.storyteller_f.a.backend.exposed.tables.addTaskRecord
 import com.storyteller_f.a.backend.exposed.tables.batchAddMembers
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.TaskRecordType
-import com.storyteller_f.shared.model.TaskFailureType
-import com.storyteller_f.shared.model.TaskRecordStatus
-import com.storyteller_f.shared.model.TaskRecordSummary
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.md5
-import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.now
 import kotlinx.coroutines.flow.toList
 import kotlinx.serialization.encodeToString
@@ -46,16 +42,14 @@ import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.statements.api.ExposedBlob
-import org.jetbrains.exposed.v1.r2dbc.batchInsert
 import org.jetbrains.exposed.v1.r2dbc.Query
 import org.jetbrains.exposed.v1.r2dbc.andWhere
+import org.jetbrains.exposed.v1.r2dbc.batchInsert
 import org.jetbrains.exposed.v1.r2dbc.insert
 import org.jetbrains.exposed.v1.r2dbc.select
 import org.jetbrains.exposed.v1.r2dbc.selectAll
-import org.jetbrains.exposed.v1.r2dbc.update
 
 class ExposedAdminDatabase(val databaseSession: ExposedDatabaseSession) : AdminDatabase {
-
     private val json = Json { ignoreUnknownKeys = true }
 
     override suspend fun batchAddUser(users: List<User>) {
@@ -168,95 +162,28 @@ class ExposedAdminDatabase(val databaseSession: ExposedDatabaseSession) : AdminD
 
     override suspend fun getTaskRecords(
         type: TaskRecordType?,
-        status: TaskRecordStatus?,
-        failureType: TaskFailureType?,
-        fetch: PrimaryKeyFetch
+        isSuccess: Boolean?,
+        failureType: String?,
+        fetch: PrimaryKeyFetch,
     ) = paginationFromResults(
         databaseSession.dbSearch {
             search {
-                val query = TaskRecords.selectAll().filterTaskRecords(type, status, failureType)
+                val query = TaskRecords.selectAll().filterTaskRecords(type, isSuccess, failureType)
                 query.orderBy(TaskRecords.id, SortOrder.DESC).bindPaginationQuery(TaskRecords, fetch)
             }
             map(TaskRecord::wrapRow)
         },
         databaseSession.dbSearch {
             search {
-                TaskRecords.select(TaskRecords.id).filterTaskRecords(type, status, failureType)
+                TaskRecords.select(TaskRecords.id).filterTaskRecords(type, isSuccess, failureType)
             }
             count()
-        }
+        },
     )
 
-    override suspend fun getTaskRecordSummaries(): Result<List<TaskRecordSummary>> =
-        TaskRecordType.entries.fold(Result.success(emptyList())) { result, type ->
-            result.mapResult { summaries ->
-                getTaskRecordSummary(type).mapResult { summary ->
-                    Result.success(summaries + summary)
-                }
-            }
-        }
-
-    override suspend fun getTaskRecordsToRetry(type: TaskRecordType, limit: Int) = databaseSession.dbSearch {
-        search {
-            TaskRecords.selectAll().where {
-                (TaskRecords.type eq type) and
-                    (TaskRecords.status eq TaskRecordStatus.FAILURE) and
-                    (TaskRecords.retryRequested eq true)
-            }.orderBy(TaskRecords.id, SortOrder.ASC).limit(limit)
-        }
-        map(TaskRecord::wrapRow)
-    }
-
-    override suspend fun markTaskRecordForRetry(id: PrimaryKey) = databaseSession.dbQuery {
-        TaskRecords.update({
-            (TaskRecords.id eq id) and (TaskRecords.status eq TaskRecordStatus.FAILURE)
-        }) {
-            it[retryRequested] = true
-        } > 0
-    }
-
-    override suspend fun clearTaskRecordRetryRequested(id: PrimaryKey) = databaseSession.dbQuery {
-        TaskRecords.update({ TaskRecords.id eq id }) {
-            it[retryRequested] = false
-        } > 0
-    }
-
-    private suspend fun getTaskRecordSummary(type: TaskRecordType): Result<TaskRecordSummary> =
-        getTaskRecordCount(type, TaskRecordStatus.SUCCESS).mapResult { successCount ->
-            getTaskRecordCount(type, TaskRecordStatus.FAILURE).mapResult { failureCount ->
-                getRetryRequestedTaskRecordCount(type).mapResult { retryRequestedCount ->
-                    Result.success(TaskRecordSummary(type, successCount, failureCount, retryRequestedCount))
-                }
-            }
-        }
-
-    private suspend fun getTaskRecordCount(type: TaskRecordType, status: TaskRecordStatus) = databaseSession.dbSearch {
-        search {
-            TaskRecords.select(TaskRecords.id).where {
-                (TaskRecords.type eq type) and (TaskRecords.status eq status)
-            }
-        }
-        count()
-    }
-
-    private suspend fun getRetryRequestedTaskRecordCount(type: TaskRecordType) = databaseSession.dbSearch {
-        search {
-            TaskRecords.select(TaskRecords.id).where {
-                (TaskRecords.type eq type) and
-                    (TaskRecords.status eq TaskRecordStatus.FAILURE) and
-                    (TaskRecords.retryRequested eq true)
-            }
-        }
-        count()
-    }
-
-    private fun Query.filterTaskRecords(
-        type: TaskRecordType?,
-        status: TaskRecordStatus?,
-        failureType: TaskFailureType?,
-    ): Query {
+    private fun Query.filterTaskRecords(type: TaskRecordType?, isSuccess: Boolean?, failureType: String?): Query {
         type?.let { value -> andWhere { TaskRecords.type eq value } }
-        status?.let { value -> andWhere { TaskRecords.status eq value } }
+        isSuccess?.let { value -> andWhere { TaskRecords.success eq value } }
         failureType?.let { value -> andWhere { TaskRecords.failureType eq value } }
         return this
     }

@@ -4,8 +4,8 @@
 package com.storytellerf.a.cloud.worker.moderation
 
 import com.storyteller_f.a.backend.core.types.Topic
+import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.shared.model.TaskFailureType
 import com.storyteller_f.shared.utils.now
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
@@ -43,13 +43,13 @@ internal class TopicModerationTaskTest {
     }
 
     @Test
-    fun `invalid moderation response has model response failure type`() {
+    fun `invalid response has model response failure type`() {
         val failure =
             assertFailsWith<UnexpectedTopicSafetyDecisionException> {
                 parseSafetyDecision("UNSAFE because the topic is violent")
             }
 
-        assertTrue(failure.toTaskFailureType() == TaskFailureType.MODEL_RESPONSE)
+        assertTrue(failure.toTaskFailureType() == TaskRecordType.MODEL_RESPONSE_FAILURE)
     }
 
     private fun buildTopic(rootType: ObjectType, isEncrypted: Boolean = false): Topic {

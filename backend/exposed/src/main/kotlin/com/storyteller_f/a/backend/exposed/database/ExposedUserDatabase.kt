@@ -36,6 +36,7 @@ import com.storyteller_f.a.backend.exposed.tables.addTaskRecord
 import com.storyteller_f.a.backend.exposed.tables.encodeRecoveryCodeHashes
 import com.storyteller_f.a.backend.exposed.tables.find
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
+import com.storyteller_f.shared.model.TaskRecordInfo
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.type.ObjectType
@@ -44,6 +45,7 @@ import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.md5
+import com.storyteller_f.shared.utils.now
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.Op
 import org.jetbrains.exposed.v1.core.ResultRow
@@ -338,13 +340,101 @@ class ExposedUserDatabase(
         records.forEach { addTaskRecord(it) }
     }
 
-    override suspend fun getLatestTaskRecord(type: TaskRecordType) = databaseSession.dbSearch {
-        search {
-            TaskRecords.selectAll().where {
-                TaskRecords.type eq type
-            }.orderBy(TaskRecords.objectId, SortOrder.DESC)
+    override suspend fun getLatestTaskRecord(type: TaskRecordType): Result<TaskRecord?> {
+        val result =
+            databaseSession.dbSearch {
+                search {
+                    TaskRecords.selectAll().where {
+                        TaskRecords.type eq type
+                    }.orderBy(TaskRecords.objectId, SortOrder.DESC)
+                }
+                first(TaskRecord::wrapRow)
+            }
+        return result
+    }
+
+    override suspend fun getTaskRecordSummaries(): Result<List<TaskRecord>> =
+        TaskRecordType.entries.fold(Result.success(emptyList())) { result, type ->
+            result.mapResult { summaries ->
+                getTaskRecordSummary(type).mapResult { summary -> Result.success(summaries + summary) }
+            }
         }
-        first(TaskRecord::wrapRow)
+
+    override suspend fun getTaskRecordsToRetry(type: TaskRecordType, limit: Int): Result<List<TaskRecord>> {
+        val result =
+            databaseSession.dbSearch {
+                search {
+                    TaskRecords.selectAll().where {
+                        TaskRecords.type eq type and
+                            (TaskRecords.success eq false) and
+                            (TaskRecords.retryRequested eq true)
+                    }.orderBy(TaskRecords.id, SortOrder.ASC).limit(limit)
+                }
+                map(TaskRecord::wrapRow)
+            }
+        return result
+    }
+
+    override suspend fun updateTaskRecordRetryRequested(id: PrimaryKey, isRequested: Boolean): Result<Boolean> =
+        databaseSession.dbQuery {
+            TaskRecords.update({
+                if (isRequested) {
+                    TaskRecords.id eq id and (TaskRecords.success eq false)
+                } else {
+                    TaskRecords.id eq id
+                }
+            }) {
+                it[TaskRecords.retryRequested] = isRequested
+            } > 0
+        }
+
+    private suspend fun getTaskRecordSummary(type: TaskRecordType): Result<TaskRecord> =
+        getTaskRecordCount(type, true).mapResult { successCount ->
+            getTaskRecordCount(type, false).mapResult { failureCount ->
+                getRetryRequestedTaskRecordCount(type).mapResult { retryRequestedCount ->
+                    Result.success(
+                        TaskRecord(
+                            TaskRecordInfo(
+                                id = 0,
+                                createdTime = now(),
+                                type = type,
+                                objectId = 0,
+                                successCount = successCount,
+                                failureCount = failureCount,
+                                retryRequestedCount = retryRequestedCount,
+                            ),
+                        ),
+                    )
+                }
+            }
+        }
+
+    private suspend fun getTaskRecordCount(type: TaskRecordType, isSuccess: Boolean): Result<Long> {
+        val result =
+            databaseSession.dbSearch {
+                search {
+                    TaskRecords.select(TaskRecords.id).where {
+                        TaskRecords.type eq type and (TaskRecords.success eq isSuccess)
+                    }
+                }
+                count()
+            }
+        return result
+    }
+
+    private suspend fun getRetryRequestedTaskRecordCount(type: TaskRecordType): Result<Long> {
+        val result =
+            databaseSession.dbSearch {
+                search {
+                    TaskRecords.select(TaskRecords.id).where {
+                        TaskRecords.type eq type and
+                            (TaskRecords.success eq false) and
+                            (TaskRecords.retryRequested eq true)
+                    }
+                }
+                count()
+            }
+        return result
     }
 
     override suspend fun getRawChildAccountPaginationListByHost(

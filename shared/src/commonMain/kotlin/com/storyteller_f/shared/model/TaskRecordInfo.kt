@@ -12,55 +12,44 @@ enum class TaskRecordType {
 
     /** Records the last topic examined by automated content moderation. */
     TOPIC_MODERATION,
-}
 
-@Serializable
-/** Outcome of an individual task-object execution. */
-enum class TaskRecordStatus {
-    /** The execution completed successfully. */
-    SUCCESS,
-    /** The execution did not complete successfully. */
-    FAILURE,
-}
+    ;
 
-@Serializable
-/** Category used to group task execution failures. */
-enum class TaskFailureType {
-    /** The moderation model returned an invalid decision. */
-    MODEL_RESPONSE,
-    /** The moderation model could not execute. */
-    MODEL_EXECUTION,
-    /** A required persisted object could not be accessed. */
-    DATA_ACCESS,
-    /** A failure that has not been classified. */
-    UNKNOWN,
-}
+    /** Stable failure classifications serialized by the API and database. */
+    companion object {
+        /** Failure caused by a malformed model response. */
+        const val MODEL_RESPONSE_FAILURE: String = "MODEL_RESPONSE"
 
-@Serializable
-/** Aggregate counts for one task type. */
-data class TaskRecordSummary(
-    /** The task type represented by these counts. */
-    val type: TaskRecordType,
-    /** Number of successful executions. */
-    val successCount: Long,
-    /** Number of failed executions. */
-    val failureCount: Long,
-    /** Number of failures manually selected for retry. */
-    val retryRequestedCount: Long,
-)
+        /** Failure caused while executing a model. */
+        const val MODEL_EXECUTION_FAILURE: String = "MODEL_EXECUTION"
+
+        /** Failure caused while accessing persisted data. */
+        const val DATA_ACCESS_FAILURE: String = "DATA_ACCESS"
+
+        /** Failure without a more specific classification. */
+        const val UNKNOWN_FAILURE: String = "UNKNOWN"
+    }
+}
 
 @Serializable
 data class TaskRecordInfo(
     override val id: PrimaryKey,
     val createdTime: LocalDateTime,
+    /** Identifier of the business object processed by this execution. */
     val objectId: PrimaryKey,
     val type: TaskRecordType,
-    /** Whether this execution succeeded or failed. */
-    val status: TaskRecordStatus = TaskRecordStatus.SUCCESS,
+    /** Whether this execution completed successfully. */
+    val isSuccess: Boolean = true,
     /** Classification of the failure, when the execution failed. */
-    val failureType: TaskFailureType? = null,
+    val failureType: String? = null,
     /** Safe diagnostic reason for the failure, when available. */
     val failureReason: String? = null,
     /** Whether an administrator requested this failed execution be retried. */
-    val retryRequested: Boolean = false,
+    val isRetryRequested: Boolean = false,
+    /** Number of successful executions for a task-type summary row. */
+    val successCount: Long? = null,
+    /** Number of failed executions for a task-type summary row. */
+    val failureCount: Long? = null,
+    /** Number of pending retries for a task-type summary row. */
+    val retryRequestedCount: Long? = null,
 ) : PrimaryKeyIdentifiable

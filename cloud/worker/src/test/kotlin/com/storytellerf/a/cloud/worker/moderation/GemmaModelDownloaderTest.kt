@@ -21,8 +21,8 @@ internal class GemmaModelDownloaderTest {
             assertEquals(
                 modelPath,
                 ensureGemmaModel(
-                    MergedEnv(emptyList()),
-                    homeDirectory,
+                    env = MergedEnv(emptyList()),
+                    homeDirectory = homeDirectory,
                     modelVerifier = { it == modelPath },
                 ),
             )
@@ -38,8 +38,8 @@ internal class GemmaModelDownloaderTest {
         try {
             assertFailsWith<Exception> {
                 ensureGemmaModel(
-                    MergedEnv(emptyList()),
-                    homeDirectory,
+                    env = MergedEnv(emptyList()),
+                    homeDirectory = homeDirectory,
                     modelVerifier = { false },
                     modelDownloader = { token, _ ->
                         check(token == null)

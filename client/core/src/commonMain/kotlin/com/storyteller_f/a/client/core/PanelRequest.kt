@@ -12,8 +12,6 @@ import com.storyteller_f.a.api.TaskRecordsQuery
 import com.storyteller_f.a.api.TopicQuery
 import com.storyteller_f.endpoint4k.ktor.client.invoke
 import com.storyteller_f.shared.model.TaskRecordType
-import com.storyteller_f.shared.model.TaskFailureType
-import com.storyteller_f.shared.model.TaskRecordStatus
 import com.storyteller_f.shared.model.TopicPinSearch
 import com.storyteller_f.shared.obj.UpdateObjectStatusBody
 import com.storyteller_f.shared.type.ObjectType
@@ -143,20 +141,19 @@ suspend fun PanelSessionManager.getPanelLogs(
 suspend fun PanelSessionManager.getTaskRecords(
     type: TaskRecordType?,
     query: PaginationQuery,
-    status: TaskRecordStatus? = null,
-    failureType: TaskFailureType? = null,
+    isSuccess: Boolean? = null,
+    failureType: String? = null,
 ) = serviceCatching {
     AdminApi.TaskRecords.get(
-        TaskRecordsQuery(type, status, failureType, query.nextPageToken, query.prePageToken, query.size),
+        TaskRecordsQuery(
+            type = type,
+            isSuccess = isSuccess,
+            failureType = failureType,
+            nextPageToken = query.nextPageToken,
+            prePageToken = query.prePageToken,
+            size = query.size,
+        ),
     )
-}
-
-suspend fun PanelSessionManager.getTaskRecordSummaries() = serviceCatching {
-    AdminApi.TaskRecords.summary()
-}
-
-suspend fun PanelSessionManager.markTaskRecordForRetry(id: PrimaryKey) = serviceCatching {
-    AdminApi.TaskRecords.Id.Retry.update(CommonPath(id), Unit)
 }
 
 suspend fun PanelSessionManager.getUserUploadRecords(uid: PrimaryKey, query: PaginationQuery) = serviceCatching {

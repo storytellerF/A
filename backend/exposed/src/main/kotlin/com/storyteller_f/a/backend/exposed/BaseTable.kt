@@ -38,8 +38,6 @@ import com.storyteller_f.shared.type.MemberStatus
 import com.storyteller_f.shared.type.ObjectStatus
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.UploadRecordStatus
-import com.storyteller_f.shared.model.TaskFailureType
-import com.storyteller_f.shared.model.TaskRecordStatus
 import io.github.aakira.napier.Napier
 import io.r2dbc.spi.R2dbcDataIntegrityViolationException
 import org.jetbrains.exposed.v1.core.Table
@@ -81,8 +79,6 @@ fun Table.assetType(name: String) = enumerationByName<AssetType>(name, 20)
 fun Table.quotaType(name: String) = enumerationByName<QuotaType>(name, 20)
 
 fun Table.taskRecordType(name: String) = enumerationByName<TaskRecordType>(name, 20)
-fun Table.taskRecordStatus(name: String) = enumerationByName<TaskRecordStatus>(name, 10)
-fun Table.taskFailureType(name: String) = enumerationByName<TaskFailureType>(name, 20)
 fun Table.memberPolicy(name: String) = enumerationByName<MemberPolicy>(name, 20)
 fun Table.uploadRecordStatus(name: String) = enumerationByName<UploadRecordStatus>(name, 20)
 

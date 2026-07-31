@@ -333,6 +333,16 @@ interface UserDatabase {
     suspend fun addAcgForUser(records: List<TaskRecord>, assetTransactions: List<AssetTransaction>): Result<Unit>
 
     suspend fun getLatestTaskRecord(type: TaskRecordType): Result<TaskRecord?>
+
+    /** Returns task-type summary rows for panel display. */
+    suspend fun getTaskRecordSummaries(): Result<List<TaskRecord>>
+
+    /** Returns failed task executions selected for retry. */
+    suspend fun getTaskRecordsToRetry(type: TaskRecordType, limit: Int): Result<List<TaskRecord>>
+
+    /** Updates whether a task execution should be retried. */
+    suspend fun updateTaskRecordRetryRequested(id: PrimaryKey, isRequested: Boolean): Result<Boolean>
+
     suspend fun getRawChildAccountPaginationListByHost(
         hostId: PrimaryKey,
         fetch: PrimaryKeyFetch,
@@ -661,14 +671,10 @@ interface AdminDatabase {
     suspend fun createTaskRecord(record: TaskRecord): Result<TaskRecord>
     suspend fun getTaskRecords(
         type: TaskRecordType?,
-        status: com.storyteller_f.shared.model.TaskRecordStatus?,
-        failureType: com.storyteller_f.shared.model.TaskFailureType?,
-        fetch: PrimaryKeyFetch
+        isSuccess: Boolean?,
+        failureType: String?,
+        fetch: PrimaryKeyFetch,
     ): Result<PaginationResult<TaskRecord>>
-    suspend fun getTaskRecordSummaries(): Result<List<com.storyteller_f.shared.model.TaskRecordSummary>>
-    suspend fun getTaskRecordsToRetry(type: TaskRecordType, limit: Int): Result<List<TaskRecord>>
-    suspend fun markTaskRecordForRetry(id: PrimaryKey): Result<Boolean>
-    suspend fun clearTaskRecordRetryRequested(id: PrimaryKey): Result<Boolean>
 
     suspend fun batchAddSubscription(list: List<UserSubscription>): Result<Unit>
     suspend fun insertPanelLog(log: com.storyteller_f.a.backend.core.types.PanelLog): Result<Unit>

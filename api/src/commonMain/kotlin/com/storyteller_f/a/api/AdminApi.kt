@@ -1,5 +1,7 @@
 package com.storyteller_f.a.api
 
+import com.storyteller_f.endpoint4k.common.MutationEndpointWithPath
+import com.storyteller_f.endpoint4k.common.SafeEndpoint
 import com.storyteller_f.endpoint4k.common.body
 import com.storyteller_f.endpoint4k.common.mutationEndpointBuilder
 import com.storyteller_f.endpoint4k.common.mutationEndpointWithPathBuilder
@@ -20,7 +22,6 @@ import com.storyteller_f.shared.model.PanelOverview
 import com.storyteller_f.shared.model.ReactionRecordInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TaskRecordInfo
-import com.storyteller_f.shared.model.TaskRecordSummary
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserFavoriteInfo
@@ -139,13 +140,6 @@ data class TaskRecordInfoListResponse(
     override val pagination: Pagination<String>? = null
 ) :
     ListResponse<TaskRecordInfo>
-
-@Serializable
-/** Paginated aggregate execution counts grouped by task type. */
-data class TaskRecordSummaryListResponse(
-    override val data: CustomImmutableList<TaskRecordSummary>,
-    override val pagination: Pagination<String>? = null,
-) : ListResponse<TaskRecordSummary>
 
 object AdminApi {
     object Users {
@@ -295,9 +289,9 @@ object AdminApi {
         }
 
         /** Retrieves aggregate task execution counts. */
-        val summary =
+        val summary: SafeEndpoint<TaskRecordInfoListResponse> =
             safeEndpointBuilder("/admin/task-records/summary") {
-                resp(TaskRecordSummaryListResponse::class)
+                resp(TaskRecordInfoListResponse::class)
             }
 
         /** Operations scoped to a task-record identifier. */
@@ -305,7 +299,7 @@ object AdminApi {
             /** Retry operations for a failed task record. */
             object Retry {
                 /** Marks a failed task record for the worker to retry. */
-                val update =
+                val update: MutationEndpointWithPath<Unit, Unit, CommonPath> =
                     mutationEndpointWithPathBuilder("/admin/task-records/{id}/retry") {
                         resp(Unit::class)
                         body(Unit::class)

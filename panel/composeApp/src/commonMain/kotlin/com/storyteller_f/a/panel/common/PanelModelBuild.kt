@@ -20,8 +20,6 @@ import com.storyteller_f.a.panel.Res
 import com.storyteller_f.a.panel.log_supporting
 import com.storyteller_f.shared.model.PanelLogInfo
 import com.storyteller_f.shared.model.TaskRecordType
-import com.storyteller_f.shared.model.TaskFailureType
-import com.storyteller_f.shared.model.TaskRecordStatus
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.storage.ModelStorage
@@ -254,16 +252,23 @@ fun createPanelLogsViewModel(
 @Composable
 fun createPanelTaskRecordsViewModel(
     type: TaskRecordType?,
-    status: TaskRecordStatus?,
-    failureType: TaskFailureType?,
-) = panelViewModel(keys = listOf("task-records", type, status, failureType)) { sessionManager, modelStorage ->
-    TaskRecordsViewModel(sessionManager, modelStorage, type, status, failureType)
+    isSuccess: Boolean?,
+    failureType: String?,
+) = panelViewModel(keys = listOf("task-records", type, isSuccess, failureType)) { sessionManager, modelStorage ->
+    TaskRecordsViewModel(
+        sessionManager = sessionManager,
+        modelStorage = modelStorage,
+        type = type,
+        isSuccess = isSuccess,
+        failureType = failureType,
+    )
 }
 
 @Composable
-fun createTaskRecordSummariesViewModel() = panelViewModel(keys = listOf("task-record-summaries")) { sessionManager, _ ->
-    TaskRecordSummariesViewModel(sessionManager)
-}
+internal fun createTaskRecordSummariesViewModel() =
+    panelViewModel(keys = listOf("task-record-summaries")) { sessionManager, _ ->
+        TaskRecordSummariesViewModel(sessionManager)
+    }
 
 @Composable
 fun PanelLogsTab(targetId: PrimaryKey, objectType: ObjectType) {

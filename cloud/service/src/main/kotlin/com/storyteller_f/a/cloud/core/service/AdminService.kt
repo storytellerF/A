@@ -19,8 +19,6 @@ import com.storyteller_f.shared.model.PanelOverview
 import com.storyteller_f.shared.model.PassType
 import com.storyteller_f.shared.model.TaskRecordInfo
 import com.storyteller_f.shared.model.TaskRecordType
-import com.storyteller_f.shared.model.TaskFailureType
-import com.storyteller_f.shared.model.TaskRecordStatus
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.UpdateObjectStatusBody
 import com.storyteller_f.shared.obj.UpdateUserStatusBody
@@ -231,23 +229,18 @@ suspend fun Backend.getPanelLogs(
 
 suspend fun Backend.getTaskRecords(
     type: TaskRecordType?,
-    status: TaskRecordStatus?,
-    failureType: TaskFailureType?,
-    fetch: PrimaryKeyFetch
+    isSuccess: Boolean?,
+    failureType: String?,
+    fetch: PrimaryKeyFetch,
 ): Result<PaginationResult<TaskRecordInfo>> {
-    return database.admin.getTaskRecords(type, status, failureType, fetch).map { result ->
-        PaginationResult(result.list.map { it.toTaskRecordInfo() }, result.total)
-    }
-}
-
-suspend fun Backend.getTaskRecordSummaries() = database.admin.getTaskRecordSummaries()
-
-suspend fun Backend.markTaskRecordForRetry(
-    id: com.storyteller_f.shared.type.PrimaryKey,
-    adminId: com.storyteller_f.shared.type.PrimaryKey?,
-): Result<Unit> {
-    if (adminId == null) return Result.failure(UnauthorizedException())
-    return database.admin.markTaskRecordForRetry(id).map { updated ->
-        check(updated) { "Task record $id cannot be marked for retry" }
-    }
+    val taskRecords =
+        database.admin.getTaskRecords(
+            type = type,
+            isSuccess = isSuccess,
+            failureType = failureType,
+            fetch = fetch,
+        ).map { result ->
+            PaginationResult(result.list.map { it.toTaskRecordInfo() }, result.total)
+        }
+    return taskRecords
 }

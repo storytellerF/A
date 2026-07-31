@@ -4,51 +4,69 @@ import com.storyteller_f.a.backend.core.types.TaskRecord
 import com.storyteller_f.a.backend.exposed.BaseTable
 import com.storyteller_f.a.backend.exposed.customPrimaryKey
 import com.storyteller_f.a.backend.exposed.taskRecordType
-import com.storyteller_f.a.backend.exposed.taskRecordStatus
-import com.storyteller_f.a.backend.exposed.taskFailureType
-import com.storyteller_f.shared.model.TaskRecordStatus
+import com.storyteller_f.shared.model.TaskRecordInfo
+import org.jetbrains.exposed.v1.core.Column
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.r2dbc.insert
 
 object TaskRecords : BaseTable() {
     val type = taskRecordType("type")
-    val objectId = customPrimaryKey("object_id")
-    val status = taskRecordStatus("status").default(TaskRecordStatus.SUCCESS)
-    val failureType = taskFailureType("failure_type").nullable()
-    val failureReason = text("failure_reason").nullable()
-    val retryRequested = bool("retry_requested").default(false)
+
+    /** Identifier of the object processed by the task execution. */
+    val objectId: Column<Long> = customPrimaryKey("object_id")
+
+    /** Whether the task execution completed successfully. */
+    val success: Column<Boolean> = bool("is_success").default(true)
+
+    /** Optional machine-readable failure category. */
+    val failureType: Column<String?> = varchar("failure_type", FAILURE_TYPE_LENGTH).nullable()
+
+    /** Optional safe diagnostic failure reason. */
+    val failureReason: Column<String?> = text("failure_reason").nullable()
+
+    /** Whether an administrator requested another execution attempt. */
+    val retryRequested: Column<Boolean> = bool("is_retry_requested").default(false)
 
     init {
         index("task-records-main", false, type)
-        index("task-records-filter", false, type, status, failureType, retryRequested)
+        index("task-records-filter", false, type, success, failureType, retryRequested)
     }
 }
 
 fun TaskRecord.Companion.wrapRow(resultRow: ResultRow): TaskRecord {
-    return with(TaskRecords) {
-        TaskRecord(
-            resultRow[id],
-            resultRow[createdTime],
-            resultRow[type],
-            resultRow[objectId],
-            resultRow[status],
-            resultRow[failureType],
-            resultRow[failureReason],
-            resultRow[retryRequested],
-        )
-    }
+    val taskRecord =
+        with(TaskRecords) {
+            TaskRecord(
+                TaskRecordInfo(
+                    id = resultRow[id],
+                    createdTime = resultRow[createdTime],
+                    objectId = resultRow[objectId],
+                    type = resultRow[type],
+                    isSuccess = resultRow[success],
+                    failureType = resultRow[failureType],
+                    failureReason = resultRow[failureReason],
+                    isRetryRequested = resultRow[retryRequested],
+                ),
+            )
+        }
+    return taskRecord
 }
+
 suspend fun addTaskRecord(taskRecord: TaskRecord) {
-    check(TaskRecords.insert {
-        it[TaskRecords.id] = taskRecord.id
-        it[TaskRecords.createdTime] = taskRecord.createdTime
-        it[TaskRecords.type] = taskRecord.type
-        it[TaskRecords.objectId] = taskRecord.objectId
-        it[TaskRecords.status] = taskRecord.status
-        it[TaskRecords.failureType] = taskRecord.failureType
-        it[TaskRecords.failureReason] = taskRecord.failureReason
-        it[TaskRecords.retryRequested] = taskRecord.retryRequested
-    }.insertedCount > 0) {
+    check(
+        TaskRecords.insert { statement ->
+            statement[TaskRecords.id] = taskRecord.id
+            statement[TaskRecords.createdTime] = taskRecord.createdTime
+            statement[TaskRecords.type] = taskRecord.type
+            statement[TaskRecords.objectId] = taskRecord.objectId
+            statement[TaskRecords.success] = taskRecord.isSuccess
+            statement[TaskRecords.failureType] = taskRecord.failureType
+            statement[TaskRecords.failureReason] = taskRecord.failureReason
+            statement[TaskRecords.retryRequested] = taskRecord.isRetryRequested
+        }.insertedCount > 0,
+    ) {
         "Insert task record failed"
     }
 }
+
+private const val FAILURE_TYPE_LENGTH = 20

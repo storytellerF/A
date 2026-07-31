@@ -66,10 +66,13 @@ internal fun ensureGemmaModel(
     return modelPath
 }
 
-private fun isCompleteModel(path: Path): Boolean =
-    Files.isRegularFile(path) &&
-        Files.size(path) == GEMMA_MODEL_SIZE &&
-        calculateSha256(path) == GEMMA_MODEL_SHA256
+private fun isCompleteModel(path: Path): Boolean {
+    val isComplete =
+        Files.isRegularFile(path) &&
+            Files.size(path) == GEMMA_MODEL_SIZE &&
+            calculateSha256(path) == GEMMA_MODEL_SHA256
+    return isComplete
+}
 
 private fun downloadModel(token: String?, destination: Path) {
     val client =

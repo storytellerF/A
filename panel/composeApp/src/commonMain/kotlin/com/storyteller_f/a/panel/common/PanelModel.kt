@@ -26,8 +26,6 @@ import com.storyteller_f.a.client.core.getRoomById
 import com.storyteller_f.a.client.core.getRoomFiles
 import com.storyteller_f.a.client.core.getRoomMembers
 import com.storyteller_f.a.client.core.getTaskRecords
-import com.storyteller_f.a.client.core.getTaskRecordSummaries
-import com.storyteller_f.a.client.core.markTaskRecordForRetry
 import com.storyteller_f.a.client.core.getTitleById
 import com.storyteller_f.a.client.core.getTopicById
 import com.storyteller_f.a.client.core.getTopicTopics
@@ -56,9 +54,6 @@ import com.storyteller_f.shared.model.ReactionRecordInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TaskRecordInfo
 import com.storyteller_f.shared.model.TaskRecordType
-import com.storyteller_f.shared.model.TaskFailureType
-import com.storyteller_f.shared.model.TaskRecordStatus
-import com.storyteller_f.shared.model.TaskRecordSummary
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TopicInfo
@@ -86,6 +81,8 @@ import com.storyteller_f.storage.wrap
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -678,23 +675,37 @@ class TaskRecordsViewModel(
     sessionManager: PanelSessionManager,
     modelStorage: ModelStorage,
     type: TaskRecordType?,
-    status: TaskRecordStatus?,
-    failureType: TaskFailureType?,
+    isSuccess: Boolean?,
+    failureType: String?,
 ) : PagingViewModel<TaskRecordInfo>() {
-    private val modelCollection = com.storyteller_f.storage.TaskRecordCollection.TaskRecords(type, status, failureType)
+    private val modelCollection =
+        com.storyteller_f.storage.TaskRecordCollection.TaskRecords(
+            type,
+            isSuccess,
+            failureType,
+        )
     private val sessionManager = sessionManager
     private val _retryRequestedIds = MutableStateFlow(emptySet<PrimaryKey>())
-    val retryRequestedIds = _retryRequestedIds
+
+    /** IDs optimistically marked for retry during this screen session. */
+    val retryRequestedIds: StateFlow<Set<PrimaryKey>> = _retryRequestedIds.asStateFlow()
 
     @OptIn(ExperimentalPagingApi::class)
-    override val flow: Flow<PagingData<TaskRecordInfo>> = buildPager(
-        modelCollection,
-        modelStorage.remoteKey.wrap(modelCollection.getName()),
-        modelStorage.taskRecord
-    ) { key, size ->
-        sessionManager.getTaskRecords(type, PaginationQuery(key, size = size), status, failureType)
-    }.flow.cachedIn(viewModelScope)
+    override val flow: Flow<PagingData<TaskRecordInfo>> =
+        buildPager(
+            modelCollection,
+            modelStorage.remoteKey.wrap(modelCollection.getName()),
+            modelStorage.taskRecord,
+        ) { key, size ->
+            sessionManager.getTaskRecords(
+                type = type,
+                query = PaginationQuery(key, size = size),
+                isSuccess = isSuccess,
+                failureType = failureType,
+            )
+        }.flow.cachedIn(viewModelScope)
 
+    /** Requests that the worker retry a failed task execution. */
     fun markForRetry(id: PrimaryKey) {
         viewModelScope.launch {
             sessionManager.markTaskRecordForRetry(id).onSuccess {
@@ -704,13 +715,14 @@ class TaskRecordsViewModel(
     }
 }
 
-class TaskRecordSummariesViewModel(sessionManager: PanelSessionManager) :
-    SimpleViewModel<List<TaskRecordSummary>>() {
-    override val handler: LoadingHandler<List<TaskRecordSummary>> = CachedLoadingHandler(
-        MutableStateFlow(null),
-        viewModelScope,
-        {},
-    ) {
-        sessionManager.getTaskRecordSummaries().map { it.data }
-    }
+internal class TaskRecordSummariesViewModel(sessionManager: PanelSessionManager) :
+    SimpleViewModel<List<TaskRecordInfo>>() {
+    override val handler: LoadingHandler<List<TaskRecordInfo>> =
+        CachedLoadingHandler(
+            MutableStateFlow(null),
+            viewModelScope,
+            {},
+        ) {
+            sessionManager.getTaskRecordSummaries().map { it.data }
+        }
 }

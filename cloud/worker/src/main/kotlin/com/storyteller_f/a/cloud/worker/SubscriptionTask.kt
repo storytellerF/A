@@ -82,7 +82,12 @@ private suspend fun Backend.processTopicSubscription(topic: Topic) {
         }
     }
     database.admin.createTaskRecord(
-        TaskRecord(SnowflakeFactory.nextId(), now(), TaskRecordType.SUBSCRIPTION, topic.id)
+        TaskRecord(
+            id = SnowflakeFactory.nextId(),
+            createdTime = now(),
+            type = TaskRecordType.SUBSCRIPTION,
+            objectId = topic.id,
+        ),
     ).getOrThrow()
 }
 

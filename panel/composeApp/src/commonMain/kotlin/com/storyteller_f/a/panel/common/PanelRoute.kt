@@ -51,7 +51,6 @@ import com.storyteller_f.a.panel.pages.OverviewPage
 import com.storyteller_f.a.panel.pages.PanelInputPage
 import com.storyteller_f.a.panel.pages.RoomDetailPage
 import com.storyteller_f.a.panel.pages.TaskRecordsPage
-import com.storyteller_f.a.panel.pages.TaskRecordDetailPage
 import com.storyteller_f.a.panel.pages.TitleDetailPage
 import com.storyteller_f.a.panel.pages.TopicDetailPage
 import com.storyteller_f.a.panel.pages.UserDetailPage
@@ -125,30 +124,32 @@ data object PanelAllTitlesScreen : NavKey
 data object PanelTaskRecordsScreen : NavKey
 
 @Serializable
-data class PanelTaskRecordDetailScreen(val type: TaskRecordType) : NavKey
+internal class PanelTaskRecordDetailScreen(val type: TaskRecordType) : NavKey
 
-val panelNavSerializersModule = SerializersModule {
-    polymorphic(NavKey::class) {
-        subclass(PanelUserDetailScreen::class)
-        subclass(PanelCommunityDetailScreen::class)
-        subclass(PanelRoomDetailScreen::class)
-        subclass(PanelTopicDetailScreen::class)
-        subclass(PanelFileDetailScreen::class)
-        subclass(PanelFilePreviewScreen::class)
-        subclass(PanelTitleDetailScreen::class)
-        subclass(PanelLoginScreen::class)
-        subclass(PanelOverviewScreen::class)
-        subclass(PanelAllUsersScreen::class)
-        subclass(PanelAllCommunitiesScreen::class)
-        subclass(PanelAllPublicRoomsScreen::class)
-        subclass(PanelAllPrivateRoomsScreen::class)
-        subclass(PanelAllTopicsScreen::class)
-        subclass(PanelAllFilesScreen::class)
-        subclass(PanelAllTitlesScreen::class)
-        subclass(PanelTaskRecordsScreen::class)
-        subclass(PanelTaskRecordDetailScreen::class)
+/** Serializers used by panel navigation state persistence. */
+val panelNavSerializersModule: SerializersModule =
+    SerializersModule {
+        polymorphic(NavKey::class) {
+            subclass(PanelUserDetailScreen::class)
+            subclass(PanelCommunityDetailScreen::class)
+            subclass(PanelRoomDetailScreen::class)
+            subclass(PanelTopicDetailScreen::class)
+            subclass(PanelFileDetailScreen::class)
+            subclass(PanelFilePreviewScreen::class)
+            subclass(PanelTitleDetailScreen::class)
+            subclass(PanelLoginScreen::class)
+            subclass(PanelOverviewScreen::class)
+            subclass(PanelAllUsersScreen::class)
+            subclass(PanelAllCommunitiesScreen::class)
+            subclass(PanelAllPublicRoomsScreen::class)
+            subclass(PanelAllPrivateRoomsScreen::class)
+            subclass(PanelAllTopicsScreen::class)
+            subclass(PanelAllFilesScreen::class)
+            subclass(PanelAllTitlesScreen::class)
+            subclass(PanelTaskRecordsScreen::class)
+            subclass(PanelTaskRecordDetailScreen::class)
+        }
     }
-}
 
 interface PanelNav {
     val drawerState: DrawerState
@@ -170,7 +171,10 @@ interface PanelNav {
     fun gotoAllTitles()
     fun gotoTitleDetail(id: Long)
     fun gotoTaskRecords()
+
+    /** Opens execution history for one task type. */
     fun gotoTaskRecordDetail(type: TaskRecordType)
+
     fun gotoFilePreview(id: Long, url: String, contentType: String, name: String)
     fun back()
     fun open()
@@ -318,7 +322,7 @@ private fun EntryProviderScope<NavKey>.addStandaloneEntries(nav: PanelNav) {
         TaskRecordsPage()
     }
     entry<PanelTaskRecordDetailScreen> {
-        TaskRecordDetailPage(it.type)
+        TaskRecordsPage(it.type)
     }
     entry<PanelFilePreviewScreen> {
         PanelFilePreviewPage(it.id)

@@ -1,7 +1,11 @@
 package com.storyteller_f.a.client.core
 
+import com.storyteller_f.a.api.AdminApi
+import com.storyteller_f.a.api.CommonPath
 import com.storyteller_f.a.api.SignInBody
 import com.storyteller_f.a.api.SignInResponse
+import com.storyteller_f.a.api.TaskRecordInfoListResponse
+import com.storyteller_f.endpoint4k.ktor.client.invoke
 import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.PanelAccountInfo
@@ -120,7 +124,25 @@ class SimpleUserSessionManager(
     override val passHolder: PassHolder,
 ) : UserSessionManager
 
-interface PanelSessionManager : SessionManager<PanelAccountInfo>
+interface PanelSessionManager : SessionManager<PanelAccountInfo> {
+    /** Retrieves aggregate task execution counts. */
+    suspend fun getTaskRecordSummaries(): Result<TaskRecordInfoListResponse> {
+        val result =
+            serviceCatching {
+                AdminApi.TaskRecords.summary()
+            }
+        return result
+    }
+
+    /** Marks a failed task execution for retry. */
+    suspend fun markTaskRecordForRetry(id: PrimaryKey): Result<Unit> {
+        val result =
+            serviceCatching {
+                AdminApi.TaskRecords.Id.Retry.update(CommonPath(id), Unit)
+            }
+        return result
+    }
+}
 
 class SimplePanelSessionManager(
     override val client: HttpClient,
