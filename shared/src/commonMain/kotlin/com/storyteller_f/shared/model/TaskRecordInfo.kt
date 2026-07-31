@@ -53,7 +53,7 @@ data class TaskRecordSummary(
 data class TaskRecordInfo(
     override val id: PrimaryKey,
     val createdTime: LocalDateTime,
-    val processedId: PrimaryKey,
+    val objectId: PrimaryKey,
     val type: TaskRecordType,
     /** Whether this execution succeeded or failed. */
     val status: TaskRecordStatus = TaskRecordStatus.SUCCESS,

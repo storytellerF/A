@@ -197,7 +197,7 @@ private fun TaskRecordHistoryItem(
     onMarkForRetry: (Long) -> Unit,
 ) {
     ListItem(
-        headlineContent = { Text("${record.status}: ${record.processedId}") },
+        headlineContent = { Text("${record.status}: ${record.objectId}") },
         supportingContent = {
             Column {
                 Text("Record: ${record.id} | Time: ${record.createdTime}")

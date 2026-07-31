@@ -23,7 +23,7 @@
 
 ## Panel / Worker
 
-- Worker execution records are stored in the backend `TaskRecords` table. The record type is `TaskRecordType`, and `processedId` points to the business object processed by the task.
+- Worker execution records are stored in the backend `TaskRecords` table. The record type is `TaskRecordType`, and `objectId` points to the business object processed by the task.
 - Worker topic moderation uses LiteRT-LM with `gemma-4-E2B-it.litertlm` from `litert-community/gemma-4-E2B-it-litert-lm`. Startup verifies a cached model in the worker home directory using SHA-256 or downloads and verifies it before launching any task; `HUGGING_FACE_HUB_TOKEN` is optional.
 - `TaskRecordType.TOPIC_MODERATION` advances through topics by primary key. It reviews unencrypted community and user-space topic trees plus rooms whose `communityId` is non-null, skips private/encrypted rooms, and changes an unsafe topic author's status to `UserStatus.READ_ONLY`.
 - Panel queries worker execution records through paginated `/admin/task-records`; it supports filtering by task type, and returns all records when no type is provided.

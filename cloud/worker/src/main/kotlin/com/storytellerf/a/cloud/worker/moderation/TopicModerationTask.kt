@@ -45,7 +45,7 @@ private suspend fun Backend.executeTopicModerationTask(reviewer: TopicSafetyRevi
         }
         database.user.getLatestTaskRecord(TaskRecordType.TOPIC_MODERATION)
     }.mapResult { taskRecord ->
-        val cursor = Cursor.AscCursor(taskRecord?.processedId ?: 0)
+        val cursor = Cursor.AscCursor(taskRecord?.objectId ?: 0)
         database.topic.getTopicList(PrimaryKeyFetch(cursor, TOPIC_BATCH_SIZE))
     }.mapResult { topics ->
         if (topics.isEmpty()) {
@@ -69,11 +69,11 @@ private suspend fun Backend.processTopicsForModeration(topics: List<Topic>, revi
 }
 
 private suspend fun Backend.retryTopicModeration(record: TaskRecord, reviewer: TopicSafetyReviewer) {
-    val topic = database.topic.getTopic(ObjectFetch.IdFetch(record.processedId)).getOrThrow()
+    val topic = database.topic.getTopic(ObjectFetch.IdFetch(record.objectId)).getOrThrow()
     if (topic == null) {
         saveTopicModerationFailure(
-            record.processedId,
-            TopicModerationDataAccessException("Topic ${record.processedId} no longer exists"),
+            record.objectId,
+            TopicModerationDataAccessException("Topic ${record.objectId} no longer exists"),
             retryRecordId = record.id,
         )
     } else {
@@ -108,7 +108,7 @@ private suspend fun Backend.saveTopicModerationSuccess(topicId: PrimaryKey, retr
             id = SnowflakeFactory.nextId(),
             createdTime = now(),
             type = TaskRecordType.TOPIC_MODERATION,
-            processedId = topicId,
+            objectId = topicId,
             status = TaskRecordStatus.SUCCESS,
         ),
         retryRecordId,
@@ -125,7 +125,7 @@ private suspend fun Backend.saveTopicModerationFailure(
             id = SnowflakeFactory.nextId(),
             createdTime = now(),
             type = TaskRecordType.TOPIC_MODERATION,
-            processedId = topicId,
+            objectId = topicId,
             status = TaskRecordStatus.FAILURE,
             failureType = throwable.toTaskFailureType(),
             failureReason = throwable.message ?: throwable::class.simpleName,

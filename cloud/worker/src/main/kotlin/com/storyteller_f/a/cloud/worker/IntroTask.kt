@@ -26,7 +26,7 @@ import kotlinx.coroutines.delay
 
 suspend fun Backend.doIntroTask() {
     database.user.getLatestTaskRecord(TaskRecordType.INTRO).mapResult { taskRecord ->
-        val fetch = PrimaryKeyFetch(Cursor.AscCursor(taskRecord?.processedId ?: 1000), 10)
+        val fetch = PrimaryKeyFetch(Cursor.AscCursor(taskRecord?.objectId ?: 1000), 10)
         database.user.getAllUsers(fetch)
     }.mapResult { paginationResult ->
         if (paginationResult.list.isEmpty()) {

@@ -12,7 +12,7 @@ import org.jetbrains.exposed.v1.r2dbc.insert
 
 object TaskRecords : BaseTable() {
     val type = taskRecordType("type")
-    val processedId = customPrimaryKey("processed_id")
+    val objectId = customPrimaryKey("object_id")
     val status = taskRecordStatus("status").default(TaskRecordStatus.SUCCESS)
     val failureType = taskFailureType("failure_type").nullable()
     val failureReason = text("failure_reason").nullable()
@@ -30,7 +30,7 @@ fun TaskRecord.Companion.wrapRow(resultRow: ResultRow): TaskRecord {
             resultRow[id],
             resultRow[createdTime],
             resultRow[type],
-            resultRow[processedId],
+            resultRow[objectId],
             resultRow[status],
             resultRow[failureType],
             resultRow[failureReason],
@@ -43,7 +43,7 @@ suspend fun addTaskRecord(taskRecord: TaskRecord) {
         it[TaskRecords.id] = taskRecord.id
         it[TaskRecords.createdTime] = taskRecord.createdTime
         it[TaskRecords.type] = taskRecord.type
-        it[TaskRecords.processedId] = taskRecord.processedId
+        it[TaskRecords.objectId] = taskRecord.objectId
         it[TaskRecords.status] = taskRecord.status
         it[TaskRecords.failureType] = taskRecord.failureType
         it[TaskRecords.failureReason] = taskRecord.failureReason

@@ -17,7 +17,7 @@ import kotlinx.coroutines.delay
 
 suspend fun Backend.doTitleTask() {
     database.user.getLatestTaskRecord(TaskRecordType.TITLE).mapResult { taskRecord ->
-        val cursor = Cursor.AscCursor(taskRecord?.processedId ?: 0)
+        val cursor = Cursor.AscCursor(taskRecord?.objectId ?: 0)
         database.title.getAllRawTitles(PrimaryKeyFetch(cursor, 10))
     }.mapResult { result ->
         if (result.list.isEmpty()) {

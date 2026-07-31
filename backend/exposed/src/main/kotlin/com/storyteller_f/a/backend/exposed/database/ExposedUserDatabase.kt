@@ -312,7 +312,7 @@ class ExposedUserDatabase(
     }
 
     override suspend fun addAcgForUser(
-        record: TaskRecord,
+        records: List<TaskRecord>,
         assetTransactions: List<AssetTransaction>,
     ) = databaseSession.dbQuery {
         assetTransactions.forEach { at ->
@@ -335,14 +335,14 @@ class ExposedUserDatabase(
             }
         }
 
-        addTaskRecord(record)
+        records.forEach { addTaskRecord(it) }
     }
 
     override suspend fun getLatestTaskRecord(type: TaskRecordType) = databaseSession.dbSearch {
         search {
             TaskRecords.selectAll().where {
                 TaskRecords.type eq type
-            }.orderBy(TaskRecords.processedId, SortOrder.DESC)
+            }.orderBy(TaskRecords.objectId, SortOrder.DESC)
         }
         first(TaskRecord::wrapRow)
     }

@@ -18,7 +18,7 @@ import kotlinx.coroutines.delay
 
 suspend fun Backend.doAcgTask() {
     database.user.getLatestTaskRecord(TaskRecordType.TOPIC_ACG).mapResult { taskRecord ->
-        val cursor = AscCursor(taskRecord?.processedId ?: 0)
+        val cursor = AscCursor(taskRecord?.objectId ?: 0)
         database.topic.getTopicList(PrimaryKeyFetch(cursor = cursor, size = 10))
     }.mapResult { list ->
         if (list.isNotEmpty()) {
@@ -58,7 +58,9 @@ private suspend fun Backend.acgTask(list: List<Topic>): Result<Unit> {
         list.associateByPair()
     }.mapResult { userAcgMap ->
         database.user.addAcgForUser(
-            TaskRecord(SnowflakeFactory.nextId(), now(), TaskRecordType.TOPIC_ACG, list.last().id),
+            list.map { topic ->
+                TaskRecord(SnowflakeFactory.nextId(), now(), TaskRecordType.TOPIC_ACG, topic.id)
+            },
             acgList.mapNotNull { (id, acg) ->
                 userAcgMap[id]?.let { oldAcgAmount ->
                     AssetTransaction(

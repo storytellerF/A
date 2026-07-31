@@ -21,7 +21,7 @@ import kotlinx.coroutines.delay
 
 suspend fun Backend.doSubscriptionTask() {
     database.user.getLatestTaskRecord(TaskRecordType.SUBSCRIPTION).mapResult { taskRecord ->
-        val cursor = Cursor.AscCursor(taskRecord?.processedId ?: 0)
+        val cursor = Cursor.AscCursor(taskRecord?.objectId ?: 0)
         database.topic.getTopicList(PrimaryKeyFetch(cursor, 10))
     }.mapResult {
         if (it.isEmpty()) {
@@ -80,10 +80,10 @@ private suspend fun Backend.processTopicSubscription(topic: Topic) {
         Napier.i(tag = "subscription") {
             "no user subscription to send topic ${topic.id}"
         }
-        database.admin.createTaskRecord(
-            TaskRecord(SnowflakeFactory.nextId(), now(), TaskRecordType.SUBSCRIPTION, topic.id,)
-        ).getOrThrow()
     }
+    database.admin.createTaskRecord(
+        TaskRecord(SnowflakeFactory.nextId(), now(), TaskRecordType.SUBSCRIPTION, topic.id)
+    ).getOrThrow()
 }
 
 private fun generateTopicSubscriptionContent(

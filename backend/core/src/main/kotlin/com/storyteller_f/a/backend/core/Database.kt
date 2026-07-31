@@ -330,7 +330,7 @@ interface UserDatabase {
     suspend fun addDevice(uid: PrimaryKey, endpointUrl: String): Result<Unit>
     suspend fun removeDevice(uid: PrimaryKey, endpointUrl: String): Result<Int>
     suspend fun getUserDevices(uid: List<PrimaryKey>): Result<List<UserDevice>>
-    suspend fun addAcgForUser(record: TaskRecord, assetTransactions: List<AssetTransaction>): Result<Unit>
+    suspend fun addAcgForUser(records: List<TaskRecord>, assetTransactions: List<AssetTransaction>): Result<Unit>
 
     suspend fun getLatestTaskRecord(type: TaskRecordType): Result<TaskRecord?>
     suspend fun getRawChildAccountPaginationListByHost(

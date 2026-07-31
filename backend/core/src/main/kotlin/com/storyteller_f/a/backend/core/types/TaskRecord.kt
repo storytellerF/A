@@ -11,7 +11,7 @@ class TaskRecord(
     val id: PrimaryKey,
     val createdTime: LocalDateTime,
     val type: TaskRecordType,
-    val processedId: PrimaryKey,
+    val objectId: PrimaryKey,
     val status: TaskRecordStatus = TaskRecordStatus.SUCCESS,
     val failureType: TaskFailureType? = null,
     val failureReason: String? = null,
@@ -21,5 +21,5 @@ class TaskRecord(
 }
 
 fun TaskRecord.toTaskRecordInfo(): TaskRecordInfo {
-    return TaskRecordInfo(id, createdTime, processedId, type, status, failureType, failureReason, retryRequested)
+    return TaskRecordInfo(id, createdTime, objectId, type, status, failureType, failureReason, retryRequested)
 }
