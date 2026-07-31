@@ -64,9 +64,12 @@ internal fun parseSafetyDecision(response: String): Boolean {
     return when (normalizedResponse) {
         SAFE_DECISION -> false
         UNSAFE_DECISION -> true
-        else -> error("Unexpected topic moderation response: $response")
+        else -> throw UnexpectedTopicSafetyDecisionException()
     }
 }
+
+internal class UnexpectedTopicSafetyDecisionException :
+    IllegalStateException("Topic safety model did not return SAFE or UNSAFE")
 
 private fun buildReviewPrompt(content: String): String {
     val prompt =

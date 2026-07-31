@@ -661,8 +661,14 @@ interface AdminDatabase {
     suspend fun createTaskRecord(record: TaskRecord): Result<TaskRecord>
     suspend fun getTaskRecords(
         type: TaskRecordType?,
+        status: com.storyteller_f.shared.model.TaskRecordStatus?,
+        failureType: com.storyteller_f.shared.model.TaskFailureType?,
         fetch: PrimaryKeyFetch
     ): Result<PaginationResult<TaskRecord>>
+    suspend fun getTaskRecordSummaries(): Result<List<com.storyteller_f.shared.model.TaskRecordSummary>>
+    suspend fun getTaskRecordsToRetry(type: TaskRecordType, limit: Int): Result<List<TaskRecord>>
+    suspend fun markTaskRecordForRetry(id: PrimaryKey): Result<Boolean>
+    suspend fun clearTaskRecordRetryRequested(id: PrimaryKey): Result<Boolean>
 
     suspend fun batchAddSubscription(list: List<UserSubscription>): Result<Unit>
     suspend fun insertPanelLog(log: com.storyteller_f.a.backend.core.types.PanelLog): Result<Unit>

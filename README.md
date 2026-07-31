@@ -84,14 +84,12 @@ A is a Kotlin Multiplatform application framework that targets Android, Desktop,
 
 ### Worker Topic Moderation
 
-The worker uses Google LiteRT-LM with `google/gemma-3n-E2B-it-litert-lm`. Before the first startup,
-accept the Gemma terms on the
-[official Hugging Face model page](https://huggingface.co/google/gemma-3n-E2B-it-litert-lm) and provide
-`HUGGING_FACE_HUB_TOKEN` with read access. The worker downloads and verifies
-`gemma-3n-E2B-it-int4.litertlm` in its home directory before starting background tasks.
+The worker uses Google LiteRT-LM with `litert-community/gemma-4-E2B-it-litert-lm` and downloads then verifies
+`gemma-4-E2B-it.litertlm` in its home directory before starting background tasks. The worker verifies the
+cached model SHA-256 on every startup; a corrupt cache is downloaded again.
 
-The model is approximately 3.66 GB. A complete existing file is reused without a token or another download.
-For offline deployment, place the model at `${HOME}/gemma-3n-E2B-it-int4.litertlm` before starting the
+The model is approximately 2.59 GB. A complete existing file is reused without another download.
+For offline deployment, place the model at `${HOME}/gemma-4-E2B-it.litertlm` before starting the
 worker. The Docker Compose worker persists `/home/app` in the `worker-home` volume.
 
 Moderation covers topics and comments in communities, user spaces, and public rooms that belong to a
@@ -163,7 +161,7 @@ The Wasm distributions bundle Noto Sans SC so CJK text works in browsers such as
 - `BUILD_ON`: Build platform
 - `APP_UID/GID`: Container user permissions, default `1000`
 - `ENABLE_SIGN_UP`: Whether user sign-up is allowed, default `true`
-- `HUGGING_FACE_HUB_TOKEN`: Read token used only when the worker must download the gated Gemma model
+- `HUGGING_FACE_HUB_TOKEN`: Optional read token forwarded when the worker downloads the Gemma model
 - `MEDIA_SERVICE`: Media storage backend, either `minio` or `filesystem`
 
 ### Gradle Properties

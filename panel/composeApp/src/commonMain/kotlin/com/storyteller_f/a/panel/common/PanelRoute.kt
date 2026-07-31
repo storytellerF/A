@@ -51,12 +51,14 @@ import com.storyteller_f.a.panel.pages.OverviewPage
 import com.storyteller_f.a.panel.pages.PanelInputPage
 import com.storyteller_f.a.panel.pages.RoomDetailPage
 import com.storyteller_f.a.panel.pages.TaskRecordsPage
+import com.storyteller_f.a.panel.pages.TaskRecordDetailPage
 import com.storyteller_f.a.panel.pages.TitleDetailPage
 import com.storyteller_f.a.panel.pages.TopicDetailPage
 import com.storyteller_f.a.panel.pages.UserDetailPage
 import com.storyteller_f.a.panel.panelListDetailDestination
 import com.storyteller_f.a.panel.select_an_item
 import com.storyteller_f.a.panel.sign_in
+import com.storyteller_f.shared.model.TaskRecordType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -122,6 +124,9 @@ data object PanelAllTitlesScreen : NavKey
 @Serializable
 data object PanelTaskRecordsScreen : NavKey
 
+@Serializable
+data class PanelTaskRecordDetailScreen(val type: TaskRecordType) : NavKey
+
 val panelNavSerializersModule = SerializersModule {
     polymorphic(NavKey::class) {
         subclass(PanelUserDetailScreen::class)
@@ -141,6 +146,7 @@ val panelNavSerializersModule = SerializersModule {
         subclass(PanelAllFilesScreen::class)
         subclass(PanelAllTitlesScreen::class)
         subclass(PanelTaskRecordsScreen::class)
+        subclass(PanelTaskRecordDetailScreen::class)
     }
 }
 
@@ -164,6 +170,7 @@ interface PanelNav {
     fun gotoAllTitles()
     fun gotoTitleDetail(id: Long)
     fun gotoTaskRecords()
+    fun gotoTaskRecordDetail(type: TaskRecordType)
     fun gotoFilePreview(id: Long, url: String, contentType: String, name: String)
     fun back()
     fun open()
@@ -252,6 +259,10 @@ private class DefaultPanelNav(
         backStack.add(PanelTaskRecordsScreen)
     }
 
+    override fun gotoTaskRecordDetail(type: TaskRecordType) {
+        backStack.add(PanelTaskRecordDetailScreen(type))
+    }
+
     override fun gotoFilePreview(id: Long, url: String, contentType: String, name: String) {
         backStack.add(PanelFilePreviewScreen(id))
     }
@@ -305,6 +316,9 @@ private fun EntryProviderScope<NavKey>.addStandaloneEntries(nav: PanelNav) {
     }
     entry<PanelTaskRecordsScreen> {
         TaskRecordsPage()
+    }
+    entry<PanelTaskRecordDetailScreen> {
+        TaskRecordDetailPage(it.type)
     }
     entry<PanelFilePreviewScreen> {
         PanelFilePreviewPage(it.id)

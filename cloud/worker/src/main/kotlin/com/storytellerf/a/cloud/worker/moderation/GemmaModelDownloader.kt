@@ -18,18 +18,23 @@ import java.security.MessageDigest
 import java.time.Duration
 import java.util.HexFormat
 
-internal const val GEMMA_MODEL_FILE_NAME = "gemma-3n-E2B-it-int4.litertlm"
-internal const val GEMMA_MODEL_SIZE = 3_655_827_456L
-private const val GEMMA_MODEL_SHA256 = "2ed7bc3a0026c93d5b8a4544b352d9d00cd66ff0bac3ef6a20ac3d2cba4010d6"
+internal const val GEMMA_MODEL_FILE_NAME = "gemma-4-E2B-it.litertlm"
+internal const val GEMMA_MODEL_SIZE = 2_588_147_712L
+private const val GEMMA_MODEL_SHA256 = "181938105e0eefd105961417e8da75903eacda102c4fce9ce90f50b97139a63c"
 private const val HUGGING_FACE_TOKEN = "HUGGING_FACE_HUB_TOKEN"
 private const val MODEL_DOWNLOAD_URL =
-    "https://huggingface.co/google/gemma-3n-E2B-it-litert-lm/resolve/main/$GEMMA_MODEL_FILE_NAME"
+    "https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/$GEMMA_MODEL_FILE_NAME"
 private val MODEL_DOWNLOAD_TIMEOUT: Duration = Duration.ofHours(2)
 
-internal fun ensureGemmaModel(env: MergedEnv, homeDirectory: Path = Path.of(System.getProperty("user.home"))): Path {
+internal fun ensureGemmaModel(
+    env: MergedEnv,
+    homeDirectory: Path = Path.of(System.getProperty("user.home")),
+    modelVerifier: (Path) -> Boolean = ::isCompleteModel,
+    modelDownloader: (String?, Path) -> Unit = ::downloadModel,
+): Path {
     Files.createDirectories(homeDirectory)
     val modelPath = homeDirectory.resolve(GEMMA_MODEL_FILE_NAME)
-    if (isCompleteModel(modelPath)) {
+    if (modelVerifier(modelPath)) {
         Napier.i(tag = "moderation") {
             "use existing Gemma model at $modelPath"
         }
@@ -37,16 +42,13 @@ internal fun ensureGemmaModel(env: MergedEnv, homeDirectory: Path = Path.of(Syst
     }
 
     val token = env[HUGGING_FACE_TOKEN]
-    check(!token.isNullOrBlank()) {
-        "$HUGGING_FACE_TOKEN is required when $modelPath has not been downloaded"
-    }
 
     val temporaryPath = homeDirectory.resolve("$GEMMA_MODEL_FILE_NAME.part")
     Napier.i(tag = "moderation") {
         "download Gemma model to $modelPath"
     }
     runCatching {
-        downloadModel(token, temporaryPath)
+        modelDownloader(token, temporaryPath)
         check(Files.size(temporaryPath) == GEMMA_MODEL_SIZE) {
             "Downloaded Gemma model has an unexpected size"
         }
@@ -64,20 +66,25 @@ internal fun ensureGemmaModel(env: MergedEnv, homeDirectory: Path = Path.of(Syst
     return modelPath
 }
 
-private fun isCompleteModel(path: Path): Boolean = Files.isRegularFile(path) && Files.size(path) == GEMMA_MODEL_SIZE
+private fun isCompleteModel(path: Path): Boolean =
+    Files.isRegularFile(path) &&
+        Files.size(path) == GEMMA_MODEL_SIZE &&
+        calculateSha256(path) == GEMMA_MODEL_SHA256
 
-private fun downloadModel(token: String, destination: Path) {
+private fun downloadModel(token: String?, destination: Path) {
     val client =
         HttpClient.newBuilder()
             .followRedirects(HttpClient.Redirect.NORMAL)
             .connectTimeout(MODEL_DOWNLOAD_TIMEOUT)
             .build()
-    val request =
+    val requestBuilder =
         HttpRequest.newBuilder(URI.create(MODEL_DOWNLOAD_URL))
             .timeout(MODEL_DOWNLOAD_TIMEOUT)
-            .header("Authorization", "Bearer $token")
             .GET()
-            .build()
+    if (!token.isNullOrBlank()) {
+        requestBuilder.header("Authorization", "Bearer $token")
+    }
+    val request = requestBuilder.build()
     val response =
         client.send(
             request,

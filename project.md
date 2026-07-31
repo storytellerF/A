@@ -24,7 +24,7 @@
 ## Panel / Worker
 
 - Worker execution records are stored in the backend `TaskRecords` table. The record type is `TaskRecordType`, and `processedId` points to the business object processed by the task.
-- Worker topic moderation uses LiteRT-LM with `gemma-3n-E2B-it-int4.litertlm` from `google/gemma-3n-E2B-it-litert-lm`. Startup reuses a complete model in the worker home directory or downloads and verifies it with `HUGGING_FACE_HUB_TOKEN` before launching any task.
+- Worker topic moderation uses LiteRT-LM with `gemma-4-E2B-it.litertlm` from `litert-community/gemma-4-E2B-it-litert-lm`. Startup verifies a cached model in the worker home directory using SHA-256 or downloads and verifies it before launching any task; `HUGGING_FACE_HUB_TOKEN` is optional.
 - `TaskRecordType.TOPIC_MODERATION` advances through topics by primary key. It reviews unencrypted community and user-space topic trees plus rooms whose `communityId` is non-null, skips private/encrypted rooms, and changes an unsafe topic author's status to `UserStatus.READ_ONLY`.
 - Panel queries worker execution records through paginated `/admin/task-records`; it supports filtering by task type, and returns all records when no type is provided.
 - Panel list/detail routes use Navigation 3's `ListDetailSceneStrategy`: users, communities, rooms, topics, files, and titles render side by side on wide content areas and fall back to the existing single-pane navigation when the post-drawer content area is narrow. Public and private room lists share the room detail scene. When the list pane is still the immediate parent, selecting another item replaces the current same-scene detail entry instead of growing the back stack.

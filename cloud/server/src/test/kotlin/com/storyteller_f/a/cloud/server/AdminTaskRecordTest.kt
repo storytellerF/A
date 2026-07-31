@@ -3,6 +3,10 @@ package com.storyteller_f.a.cloud.server
 import com.storyteller_f.a.api.PaginationQuery
 import com.storyteller_f.a.backend.core.types.TaskRecord
 import com.storyteller_f.a.client.core.getTaskRecords
+import com.storyteller_f.a.client.core.getTaskRecordSummaries
+import com.storyteller_f.a.client.core.markTaskRecordForRetry
+import com.storyteller_f.shared.model.TaskFailureType
+import com.storyteller_f.shared.model.TaskRecordStatus
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.utils.now
 import kotlin.test.Test
@@ -17,23 +21,52 @@ class AdminTaskRecordTest {
                 TaskRecord(101, now(), TaskRecordType.INTRO, 1001),
                 TaskRecord(102, now(), TaskRecordType.TITLE, 1002),
                 TaskRecord(103, now(), TaskRecordType.SUBSCRIPTION, 1003),
+                TaskRecord(
+                    104,
+                    now(),
+                    TaskRecordType.TOPIC_MODERATION,
+                    1004,
+                    TaskRecordStatus.FAILURE,
+                    TaskFailureType.MODEL_RESPONSE,
+                    "unexpected model output",
+                ),
             ).forEach {
                 backend.database.admin.createTaskRecord(it).getOrThrow()
             }
         }
         loginPanelSession(outer) {
             val firstPage = getTaskRecords(null, PaginationQuery(size = 2)).getOrThrow()
-            assertEquals(listOf(103L, 102L), firstPage.data.map { it.id })
-            assertEquals(3, firstPage.pagination?.total)
+            assertEquals(listOf(104L, 103L), firstPage.data.map { it.id })
+            assertEquals(4, firstPage.pagination?.total)
 
             val secondPage = getTaskRecords(
                 null,
                 PaginationQuery(nextPageToken = firstPage.pagination?.nextPageToken, size = 2)
             ).getOrThrow()
-            assertEquals(listOf(101L), secondPage.data.map { it.id })
+            assertEquals(listOf(102L, 101L), secondPage.data.map { it.id })
 
             val filtered = getTaskRecords(TaskRecordType.TITLE, PaginationQuery()).getOrThrow()
             assertEquals(listOf(TaskRecordType.TITLE), filtered.data.map { it.type })
+
+            val failed = getTaskRecords(
+                TaskRecordType.TOPIC_MODERATION,
+                PaginationQuery(),
+                status = TaskRecordStatus.FAILURE,
+                failureType = TaskFailureType.MODEL_RESPONSE,
+            ).getOrThrow()
+            assertEquals(listOf(104L), failed.data.map { it.id })
+
+            val summaries = getTaskRecordSummaries().getOrThrow().data.associateBy { it.type }
+            assertEquals(1, summaries[TaskRecordType.TOPIC_MODERATION]?.failureCount)
+            assertEquals(1, summaries[TaskRecordType.TITLE]?.successCount)
+
+            markTaskRecordForRetry(104).getOrThrow()
+            val retryRequested = getTaskRecords(
+                TaskRecordType.TOPIC_MODERATION,
+                PaginationQuery(),
+                status = TaskRecordStatus.FAILURE,
+            ).getOrThrow()
+            assertEquals(true, retryRequested.data.single().retryRequested)
         }
     }
 }

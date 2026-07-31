@@ -4,7 +4,6 @@
 package com.storytellerf.a.cloud.worker.moderation
 
 import com.storyteller_f.a.backend.core.MergedEnv
-import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.StandardOpenOption
 import kotlin.test.Test
@@ -13,16 +12,20 @@ import kotlin.test.assertFailsWith
 
 internal class GemmaModelDownloaderTest {
     @Test
-    fun `complete existing model does not require token`() {
+    fun `verified existing model does not require token`() {
         val homeDirectory = Files.createTempDirectory("worker-model-test")
         val modelPath = homeDirectory.resolve(GEMMA_MODEL_FILE_NAME)
         try {
-            Files.newByteChannel(modelPath, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE).use { channel ->
-                channel.position(GEMMA_MODEL_SIZE - 1)
-                channel.write(ByteBuffer.wrap(byteArrayOf(0)))
-            }
+            Files.newByteChannel(modelPath, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE).close()
 
-            assertEquals(modelPath, ensureGemmaModel(MergedEnv(emptyList()), homeDirectory))
+            assertEquals(
+                modelPath,
+                ensureGemmaModel(
+                    MergedEnv(emptyList()),
+                    homeDirectory,
+                    modelVerifier = { it == modelPath },
+                ),
+            )
         } finally {
             Files.deleteIfExists(modelPath)
             Files.deleteIfExists(homeDirectory)
@@ -30,11 +33,19 @@ internal class GemmaModelDownloaderTest {
     }
 
     @Test
-    fun `missing model requires token`() {
+    fun `unverified model starts download without token`() {
         val homeDirectory = Files.createTempDirectory("worker-model-test")
         try {
-            assertFailsWith<IllegalStateException> {
-                ensureGemmaModel(MergedEnv(emptyList()), homeDirectory)
+            assertFailsWith<Exception> {
+                ensureGemmaModel(
+                    MergedEnv(emptyList()),
+                    homeDirectory,
+                    modelVerifier = { false },
+                    modelDownloader = { token, _ ->
+                        check(token == null)
+                        error("download started")
+                    },
+                )
             }
         } finally {
             Files.deleteIfExists(homeDirectory)

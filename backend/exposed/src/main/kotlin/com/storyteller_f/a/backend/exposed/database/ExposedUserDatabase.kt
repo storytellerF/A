@@ -342,7 +342,7 @@ class ExposedUserDatabase(
         search {
             TaskRecords.selectAll().where {
                 TaskRecords.type eq type
-            }.orderBy(TaskRecords.id, SortOrder.DESC)
+            }.orderBy(TaskRecords.processedId, SortOrder.DESC)
         }
         first(TaskRecord::wrapRow)
     }

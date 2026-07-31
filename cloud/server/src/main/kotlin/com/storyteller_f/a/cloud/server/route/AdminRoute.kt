@@ -9,6 +9,7 @@ import com.storyteller_f.a.api.PanelLogInfoListResponse
 import com.storyteller_f.a.api.ReactionRecordInfoListResponse
 import com.storyteller_f.a.api.RoomInfoListResponse
 import com.storyteller_f.a.api.TaskRecordInfoListResponse
+import com.storyteller_f.a.api.TaskRecordSummaryListResponse
 import com.storyteller_f.a.api.TitleInfoListResponse
 import com.storyteller_f.a.api.TopicInfoListResponse
 import com.storyteller_f.a.api.UploadRecordInfoListResponse
@@ -37,6 +38,8 @@ import com.storyteller_f.a.cloud.core.service.getOverview
 import com.storyteller_f.a.cloud.core.service.getPanelLogs
 import com.storyteller_f.a.cloud.core.service.getRoomInfo
 import com.storyteller_f.a.cloud.core.service.getTaskRecords
+import com.storyteller_f.a.cloud.core.service.getTaskRecordSummaries
+import com.storyteller_f.a.cloud.core.service.markTaskRecordForRetry
 import com.storyteller_f.a.cloud.core.service.getTitleInfo
 import com.storyteller_f.a.cloud.core.service.getUserById
 import com.storyteller_f.a.cloud.core.service.getUserCommentedTopics
@@ -73,6 +76,7 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.Routing
 import io.ktor.server.sessions.clear
 import io.ktor.server.sessions.sessions
+import kotlinx.collections.immutable.toImmutableList
 
 fun Route.bindProtectedAdminRoute(backend: Backend) {
     bindAdminUserRoutes(backend)
@@ -352,7 +356,15 @@ private fun Route.bindAdminTaskRecordRoutes(backend: Backend) {
         q.pagination(IdentifiablePagingGenerator, { l, p ->
             TaskRecordInfoListResponse(l, p)
         }) { f ->
-            backend.getTaskRecords(q.type, f)
+            backend.getTaskRecords(q.type, q.status, q.failureType, f)
+        }
+    }
+    AdminApi.TaskRecords.summary(handleResult(backend)) {
+        backend.getTaskRecordSummaries().map { TaskRecordSummaryListResponse(it.toImmutableList()) }
+    }
+    AdminApi.TaskRecords.Id.Retry.update(handleResult(backend)) { path, _ ->
+        usePrincipal { adminId ->
+            backend.markTaskRecordForRetry(path.id, adminId)
         }
     }
 }

@@ -13,7 +13,9 @@ import com.storyteller_f.shared.model.PosterSearch
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.ReactionRecordInfo
 import com.storyteller_f.shared.model.RoomInfo
+import com.storyteller_f.shared.model.TaskFailureType
 import com.storyteller_f.shared.model.TaskRecordInfo
+import com.storyteller_f.shared.model.TaskRecordStatus
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TitleSearchType
@@ -170,7 +172,13 @@ sealed interface PanelLogCollection {
 }
 
 sealed interface TaskRecordCollection {
-    data class TaskRecords(val type: TaskRecordType?) : TaskRecordCollection
+    data class TaskRecords(
+        val type: TaskRecordType?,
+        /** Filters cached task records by their execution outcome. */
+        val status: TaskRecordStatus?,
+        /** Filters cached failed task records by failure classification. */
+        val failureType: TaskFailureType?,
+    ) : TaskRecordCollection
 }
 
 fun FileCollection.getName(): String {
@@ -277,11 +285,10 @@ fun PanelLogCollection.getName(): String {
     }
 }
 
-fun TaskRecordCollection.getName(): String {
-    return when (this) {
-        is TaskRecordCollection.TaskRecords -> "task_records_${type ?: "all"}"
+fun TaskRecordCollection.getName(): String = when (this) {
+    is TaskRecordCollection.TaskRecords ->
+        "task_records_${type ?: "all"}_${status ?: "all"}_${failureType ?: "all"}"
     }
-}
 
 @Serializable
 data class RemoteKeys(val collectionName: String, val key: String?)
