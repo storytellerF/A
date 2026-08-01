@@ -8,6 +8,7 @@ import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.now
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -50,6 +51,14 @@ internal class TopicModerationTaskTest {
             }
 
         assertTrue(failure.toTaskFailureType() == TaskRecordType.MODEL_RESPONSE_FAILURE)
+    }
+
+    @Test
+    fun `notification identifies harmful topic`() {
+        assertEquals(
+            "Your account was set to read only because topic 1 contains harmful content.",
+            buildModerationNotificationContent(1),
+        )
     }
 
     private fun buildTopic(rootType: ObjectType, isEncrypted: Boolean = false): Topic {

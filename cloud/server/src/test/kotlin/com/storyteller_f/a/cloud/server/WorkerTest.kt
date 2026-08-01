@@ -4,6 +4,7 @@ import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.api.NewCommunity
 import com.storyteller_f.a.api.NewSubscription
 import com.storyteller_f.a.backend.core.Backend
+import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.types.SubscriptionSentLog
 import com.storyteller_f.a.backend.core.types.TaskRecord
@@ -49,6 +50,7 @@ class WorkerTest {
 
             // 执行 ACG 任务
             withWorkerBackend { backend ->
+                backend.createSystemUser(1L)
                 backend.doAcgTask()
 
                 // 验证用户的 ACG 是否增加
@@ -62,6 +64,7 @@ class WorkerTest {
                 assertEquals(topicIds.size.toLong(), totalAcg)
                 val taskRecord = backend.database.user.getLatestTaskRecord(TaskRecordType.TOPIC_ACG).getOrThrow()
                 assertEquals(topicIds.last(), taskRecord?.objectId)
+                backend.assertAcgNotificationCount(userId, topicIds.size)
 
                 val missingTopicId = topicIds.first() - 1
                 val missingTopicRetry = buildRetryTaskRecord(TaskRecordType.TOPIC_ACG, missingTopicId)
@@ -247,6 +250,20 @@ class WorkerTest {
             }
         }
     }
+}
+
+private suspend fun Backend.assertAcgNotificationCount(userId: Long, expectedCount: Int) {
+    val user =
+        database.user.getRawUser(ObjectFetch.IdFetch(userId)).getOrThrow()?.user
+    requireNotNull(user)
+    val notificationTopics =
+        database.topic.getTopicByParentId(
+            uid = null,
+            primaryKeyFetch = PrimaryKeyFetch(cursor = null, size = 10),
+            parentId = user.notificationId,
+            pinType = null,
+        ).getOrThrow().list
+    assertEquals(expectedCount, notificationTopics.size)
 }
 
 private suspend fun buildRetryTaskRecord(type: TaskRecordType, objectId: Long): TaskRecord {

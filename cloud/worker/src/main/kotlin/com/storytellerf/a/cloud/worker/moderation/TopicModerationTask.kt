@@ -12,7 +12,6 @@ import com.storyteller_f.a.backend.core.types.Topic
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.type.UserStatus
 import com.storyteller_f.shared.utils.mapResult
 import com.storytellerf.a.cloud.worker.TASK_DELAY_MILLIS
 import com.storytellerf.a.cloud.worker.TASK_OBJECT_FETCH_SIZE
@@ -137,21 +136,6 @@ internal fun Topic.isReviewable(publicRoomIds: Set<PrimaryKey>): Boolean {
     }
 }
 
-private suspend fun Backend.moderateTopic(topic: Topic, reviewer: TopicSafetyReviewer) {
-    if (!reviewer.isHarmful(topic.content.decodeToString())) return
-
-    val isUpdated =
-        database.user.updateUserStatus(topic.author, UserStatus.READ_ONLY).getOrElse { failure ->
-            throw TopicModerationDataAccessException("Failed to update topic author ${topic.author}", failure)
-        }
-    if (!isUpdated) {
-        throw TopicModerationDataAccessException("Topic author ${topic.author} not found")
-    }
-    Napier.w(tag = MODERATION_LOG_TAG) {
-        "marked topic author ${topic.author} as read only after reviewing topic ${topic.id}"
-    }
-}
-
 private suspend fun Backend.moderateTopicIfRequired(topic: Topic, reviewer: TopicSafetyReviewer) {
     val publicRoomIds = getPublicRoomIds(topic)
     if (topic.isReviewable(publicRoomIds)) {
@@ -174,4 +158,4 @@ private fun Result<Unit>.logTopicModerationResult(objectId: PrimaryKey) {
     )
 }
 
-private const val MODERATION_LOG_TAG = "moderation"
+internal const val MODERATION_LOG_TAG = "moderation"

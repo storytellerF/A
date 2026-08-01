@@ -35,6 +35,7 @@
 
 ## Code Style And Practices
 - **Kotlin**: Do not expose mutable collections in public APIs. Prefer `data class`, `sealed interface`/`sealed class`, and `suspend` + `Result<T>`. Use verb-object naming for functions.
+- **Compose**: Name `@Composable` functions in PascalCase. The general lowercase function-naming checks exclude `composeApp` source trees because Compose uses a different naming convention.
 - **Architecture**: UI -> `SessionManager` request extensions -> API endpoint. Add local storage and paging when appropriate.
 - **Paging**: Store cursors consistently in `RemoteKeyStorage` (`PRE_COLLECTION`/`NEXT_COLLECTION`).
 - **Logging**: Instrument external network requests through `serviceCatching`. Avoid noisy logging in hot paths.

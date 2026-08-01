@@ -18,6 +18,7 @@ import com.storyteller_f.shared.utils.now
 import com.storytellerf.a.cloud.worker.TASK_DELAY_MILLIS
 import com.storytellerf.a.cloud.worker.TASK_OBJECT_FETCH_SIZE
 import com.storytellerf.a.cloud.worker.executeTaskObject
+import com.storytellerf.a.cloud.worker.getSystemUserId
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.delay
 
@@ -109,8 +110,23 @@ private suspend fun Backend.addAcgForTopic(topic: Topic, successRecord: TaskReco
                 after = oldAcgAmount + 1,
             )
         }
+    val systemUserId = getSystemUserId()
+    if (assetTransaction != null && shouldNotifyAcgAuthor(topic.author, systemUserId)) {
+        val rawUser =
+            database.user.getRawUser(ObjectFetch.IdFetch(topic.author)).getOrThrow()
+                ?: error("User ${topic.author} not found")
+        sendTopicToNotificationRoom(
+            systemUserId,
+            rawUser.user,
+            buildAcgNotificationContent(topic.id),
+        )
+    }
     database.user.addAcgForUser(successRecord, assetTransaction).getOrThrow()
 }
+
+private fun shouldNotifyAcgAuthor(authorId: PrimaryKey, systemUserId: PrimaryKey): Boolean = authorId != systemUserId
+
+private fun buildAcgNotificationContent(topicId: PrimaryKey): String = "Your topic $topicId earned 1 ACG."
 
 private fun Result<Unit>.logAcgResult(objectId: PrimaryKey) {
     fold(

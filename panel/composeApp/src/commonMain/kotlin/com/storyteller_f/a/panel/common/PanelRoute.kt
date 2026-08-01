@@ -290,7 +290,7 @@ private fun panelListDetailMetadata(key: NavKey): Map<String, Any> {
     return if (destination.pane == PanelListDetailPane.List) {
         ListDetailSceneStrategy.listPane(
             sceneKey = destination.scene,
-            detailPlaceholder = { panelDetailPlaceholder() },
+            detailPlaceholder = { PanelDetailPlaceholder() },
         )
     } else {
         ListDetailSceneStrategy.detailPane(sceneKey = destination.scene)
@@ -372,7 +372,7 @@ private fun EntryProviderScope<NavKey>.addListDetailEntries() {
 }
 
 @Composable
-private fun panelDetailPlaceholder() {
+private fun PanelDetailPlaceholder() {
     CenterBox {
         Text(
             text = stringResource(Res.string.select_an_item),
