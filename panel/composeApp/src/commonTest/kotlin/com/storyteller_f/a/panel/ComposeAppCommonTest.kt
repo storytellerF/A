@@ -18,6 +18,7 @@ import com.storyteller_f.a.panel.common.PanelRoomDetailScreen
 import com.storyteller_f.a.panel.common.PanelTitleDetailScreen
 import com.storyteller_f.a.panel.common.PanelTopicDetailScreen
 import com.storyteller_f.a.panel.common.PanelUserDetailScreen
+import com.storyteller_f.a.panel.pages.failureTypeForStatus
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -109,6 +110,13 @@ class ComposeAppCommonTest {
             )
 
         assertEquals(2, directive.maxHorizontalPartitions)
+    }
+
+    @Test
+    fun taskRecordStatusClearsIncompatibleFailureType() {
+        assertEquals(null, failureTypeForStatus(status = null, failureType = "failure"))
+        assertEquals(null, failureTypeForStatus(status = true, failureType = "failure"))
+        assertEquals("failure", failureTypeForStatus(status = false, failureType = "failure"))
     }
 }
 

@@ -170,7 +170,13 @@ sealed interface PanelLogCollection {
 }
 
 sealed interface TaskRecordCollection {
-    data class TaskRecords(val type: TaskRecordType?) : TaskRecordCollection
+    data class TaskRecords(
+        val type: TaskRecordType?,
+        /** Filters cached task records by their execution outcome. */
+        val isSuccess: Boolean?,
+        /** Filters cached failed task records by failure classification. */
+        val failureType: String?,
+    ) : TaskRecordCollection
 }
 
 fun FileCollection.getName(): String {
@@ -278,9 +284,12 @@ fun PanelLogCollection.getName(): String {
 }
 
 fun TaskRecordCollection.getName(): String {
-    return when (this) {
-        is TaskRecordCollection.TaskRecords -> "task_records_${type ?: "all"}"
-    }
+    val name =
+        when (this) {
+            is TaskRecordCollection.TaskRecords ->
+                "task_records_${type ?: "all"}_${isSuccess ?: "all"}_${failureType ?: "all"}"
+        }
+    return name
 }
 
 @Serializable

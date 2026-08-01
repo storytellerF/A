@@ -8,6 +8,7 @@ import com.storyteller_f.a.api.PanelLogsQuery
 import com.storyteller_f.a.api.SearchQuery
 import com.storyteller_f.a.api.SignInBody
 import com.storyteller_f.a.api.SignUpBody
+import com.storyteller_f.a.api.TaskRecordSummaryListResponse
 import com.storyteller_f.a.api.TaskRecordsQuery
 import com.storyteller_f.a.api.TopicQuery
 import com.storyteller_f.endpoint4k.ktor.client.invoke
@@ -140,9 +141,38 @@ suspend fun PanelSessionManager.getPanelLogs(
 
 suspend fun PanelSessionManager.getTaskRecords(
     type: TaskRecordType?,
-    query: PaginationQuery
+    query: PaginationQuery,
+    isSuccess: Boolean? = null,
+    failureType: String? = null,
 ) = serviceCatching {
-    AdminApi.TaskRecords.get(TaskRecordsQuery(type, query.nextPageToken, query.prePageToken, query.size))
+    AdminApi.TaskRecords.get(
+        TaskRecordsQuery(
+            type = type,
+            isSuccess = isSuccess,
+            failureType = failureType,
+            nextPageToken = query.nextPageToken,
+            prePageToken = query.prePageToken,
+            size = query.size,
+        ),
+    )
+}
+
+/** Retrieves aggregate task execution counts. */
+suspend fun PanelSessionManager.getTaskRecordSummaries(): Result<TaskRecordSummaryListResponse> {
+    val result =
+        serviceCatching {
+            AdminApi.TaskRecords.summary()
+        }
+    return result
+}
+
+/** Marks a failed task execution for retry. */
+suspend fun PanelSessionManager.markTaskRecordForRetry(id: PrimaryKey): Result<Unit> {
+    val result =
+        serviceCatching {
+            AdminApi.TaskRecords.Id.Retry.update(CommonPath(id), Unit)
+        }
+    return result
 }
 
 suspend fun PanelSessionManager.getUserUploadRecords(uid: PrimaryKey, query: PaginationQuery) = serviceCatching {

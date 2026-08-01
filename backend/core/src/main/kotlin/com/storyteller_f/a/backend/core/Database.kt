@@ -38,6 +38,7 @@ import com.storyteller_f.shared.model.QuotaInfo
 import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.ReactionRecordInfo
+import com.storyteller_f.shared.model.TaskRecordSummary
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleType
@@ -330,9 +331,19 @@ interface UserDatabase {
     suspend fun addDevice(uid: PrimaryKey, endpointUrl: String): Result<Unit>
     suspend fun removeDevice(uid: PrimaryKey, endpointUrl: String): Result<Int>
     suspend fun getUserDevices(uid: List<PrimaryKey>): Result<List<UserDevice>>
-    suspend fun addAcgForUser(record: TaskRecord, assetTransactions: List<AssetTransaction>): Result<Unit>
+    suspend fun addAcgForUser(record: TaskRecord, assetTransaction: AssetTransaction?): Result<Unit>
 
     suspend fun getLatestTaskRecord(type: TaskRecordType): Result<TaskRecord?>
+
+    /** Returns task-type summary rows for panel display. */
+    suspend fun getTaskRecordSummaries(): Result<List<TaskRecordSummary>>
+
+    /** Returns failed task executions selected for retry. */
+    suspend fun getTaskRecordsToRetry(type: TaskRecordType, limit: Int): Result<List<TaskRecord>>
+
+    /** Updates whether a task execution should be retried. */
+    suspend fun updateTaskRecordRetryRequested(id: PrimaryKey, isRequested: Boolean): Result<Boolean>
+
     suspend fun getRawChildAccountPaginationListByHost(
         hostId: PrimaryKey,
         fetch: PrimaryKeyFetch,
@@ -661,7 +672,9 @@ interface AdminDatabase {
     suspend fun createTaskRecord(record: TaskRecord): Result<TaskRecord>
     suspend fun getTaskRecords(
         type: TaskRecordType?,
-        fetch: PrimaryKeyFetch
+        isSuccess: Boolean?,
+        failureType: String?,
+        fetch: PrimaryKeyFetch,
     ): Result<PaginationResult<TaskRecord>>
 
     suspend fun batchAddSubscription(list: List<UserSubscription>): Result<Unit>

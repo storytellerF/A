@@ -1,5 +1,7 @@
 package com.storyteller_f.a.api
 
+import com.storyteller_f.endpoint4k.common.MutationEndpointWithPath
+import com.storyteller_f.endpoint4k.common.SafeEndpoint
 import com.storyteller_f.endpoint4k.common.body
 import com.storyteller_f.endpoint4k.common.mutationEndpointBuilder
 import com.storyteller_f.endpoint4k.common.mutationEndpointWithPathBuilder
@@ -20,6 +22,7 @@ import com.storyteller_f.shared.model.PanelOverview
 import com.storyteller_f.shared.model.ReactionRecordInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TaskRecordInfo
+import com.storyteller_f.shared.model.TaskRecordSummary
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserFavoriteInfo
@@ -138,6 +141,13 @@ data class TaskRecordInfoListResponse(
     override val pagination: Pagination<String>? = null
 ) :
     ListResponse<TaskRecordInfo>
+
+/** Response containing aggregate worker task execution counts. */
+@Serializable
+data class TaskRecordSummaryListResponse(
+    override val data: CustomImmutableList<TaskRecordSummary>,
+    override val pagination: Pagination<String>? = null,
+) : ListResponse<TaskRecordSummary>
 
 object AdminApi {
     object Users {
@@ -284,6 +294,26 @@ object AdminApi {
         val get = safeEndpointWithQueryBuilder("/admin/task-records") {
             resp(TaskRecordInfoListResponse::class)
             query(TaskRecordsQuery::class)
+        }
+
+        /** Retrieves aggregate task execution counts. */
+        val summary: SafeEndpoint<TaskRecordSummaryListResponse> =
+            safeEndpointBuilder("/admin/task-records/summary") {
+                resp(TaskRecordSummaryListResponse::class)
+            }
+
+        /** Operations scoped to a task-record identifier. */
+        object Id {
+            /** Retry operations for a failed task record. */
+            object Retry {
+                /** Marks a failed task record for the worker to retry. */
+                val update: MutationEndpointWithPath<Unit, Unit, CommonPath> =
+                    mutationEndpointWithPathBuilder("/admin/task-records/{id}/retry") {
+                        resp(Unit::class)
+                        body(Unit::class)
+                        path(CommonPath::class)
+                    }
+            }
         }
     }
 

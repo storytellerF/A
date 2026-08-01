@@ -42,13 +42,14 @@ import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.statements.api.ExposedBlob
+import org.jetbrains.exposed.v1.r2dbc.Query
+import org.jetbrains.exposed.v1.r2dbc.andWhere
 import org.jetbrains.exposed.v1.r2dbc.batchInsert
 import org.jetbrains.exposed.v1.r2dbc.insert
 import org.jetbrains.exposed.v1.r2dbc.select
 import org.jetbrains.exposed.v1.r2dbc.selectAll
 
 class ExposedAdminDatabase(val databaseSession: ExposedDatabaseSession) : AdminDatabase {
-
     private val json = Json { ignoreUnknownKeys = true }
 
     override suspend fun batchAddUser(users: List<User>) {
@@ -161,30 +162,31 @@ class ExposedAdminDatabase(val databaseSession: ExposedDatabaseSession) : AdminD
 
     override suspend fun getTaskRecords(
         type: TaskRecordType?,
-        fetch: PrimaryKeyFetch
+        isSuccess: Boolean?,
+        failureType: String?,
+        fetch: PrimaryKeyFetch,
     ) = paginationFromResults(
         databaseSession.dbSearch {
             search {
-                val query = type?.let { taskRecordType ->
-                    TaskRecords.selectAll().where {
-                        TaskRecords.type eq taskRecordType
-                    }
-                } ?: TaskRecords.selectAll()
+                val query = TaskRecords.selectAll().filterTaskRecords(type, isSuccess, failureType)
                 query.orderBy(TaskRecords.id, SortOrder.DESC).bindPaginationQuery(TaskRecords, fetch)
             }
             map(TaskRecord::wrapRow)
         },
         databaseSession.dbSearch {
             search {
-                type?.let { taskRecordType ->
-                    TaskRecords.select(TaskRecords.id).where {
-                        TaskRecords.type eq taskRecordType
-                    }
-                } ?: TaskRecords.select(TaskRecords.id)
+                TaskRecords.select(TaskRecords.id).filterTaskRecords(type, isSuccess, failureType)
             }
             count()
-        }
+        },
     )
+
+    private fun Query.filterTaskRecords(type: TaskRecordType?, isSuccess: Boolean?, failureType: String?): Query {
+        type?.let { value -> andWhere { TaskRecords.type eq value } }
+        isSuccess?.let { value -> andWhere { TaskRecords.success eq value } }
+        failureType?.let { value -> andWhere { TaskRecords.failureType eq value } }
+        return this
+    }
 
     override suspend fun batchAddSubscription(list: List<UserSubscription>): Result<Unit> {
         return databaseSession.dbQuery {

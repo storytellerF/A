@@ -3,9 +3,9 @@ aboutlibrariesComposeM3 = "15.0.4"
 aboutlibrariesCore = "15.0.4"
 accompanistPermissions = "0.37.3"
 agp = "9.3.1"
-android-compileSdk = "37" # @keep this version
-android-minSdk = "33" # @keep this version
-android-targetSdk = "37" # @keep this version
+android-compileSdk = "37"
+android-minSdk = "33"
+android-targetSdk = "37"
 androidx-activityCompose = "1.13.0"
 bcprovJdk18on = "1.85"
 benManesVersions = "0.54.0"
@@ -51,13 +51,13 @@ jacksonModuleKotlin = "2.22.1"
 javaClient = "10.1.1"
 javacvPlatform = "1.5.13"
 javet = "5.0.9"
-jdk = "65" # @keep this version
+jdk = "65"
 jlayer = "1.0.3"
 junit = "1.3.0"
 kfswatch = "1.4.0"
 kim = "0.26.2"
-kmpZip = "0.13.0"
 kmpNotifier = "2.0.0"
+kmpZip = "0.13.0"
 kodio-core = "0.2.0"
 kotlin = "2.4.10"
 kotlin_buildconfig = "6.0.10"
@@ -114,8 +114,8 @@ selenium = "4.42.0"
 sentryAndroidGradle = "6.16.0"
 sonner = "0.4.0"
 sqlFormatter = "2.0.5"
-sqlitenow = "0.15.0"
 sqliteBundled = "2.7.0"
+sqlitenow = "0.15.0"
 testContainer = "1.21.4"
 tikaCore = "3.3.2"
 ui = "1.11.1"
@@ -159,7 +159,6 @@ androidx-sqlite-web = { module = "androidx.sqlite:sqlite-web", version.ref = "sq
 androidx-ui-test-junit4-android = { module = "androidx.compose.ui:ui-test-junit4-android", version.ref = "uiTestJunit4Android" }
 androidx-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest", version.ref = "uiTestJunit4Android" }
 androidx-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "uiToolingPreview" }
-selenium-firefox-driver = { module = "org.seleniumhq.selenium:selenium-firefox-driver", version.ref = "selenium" }
 androidx-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "uiToolingPreview" }
 androidx-uiautomator = { module = "androidx.test.uiautomator:uiautomator", version.ref = "uiautomator" }
 bcpkix-jdk18on = { module = "org.bouncycastle:bcpkix-jdk18on", version.ref = "bcprovJdk18on" }
@@ -181,7 +180,6 @@ connectivity-core = { module = "dev.jordond.connectivity:connectivity-core", ver
 connectivity-device = { module = "dev.jordond.connectivity:connectivity-device", version.ref = "connectivity" }
 connectivity-http = { module = "dev.jordond.connectivity:connectivity-http", version.ref = "connectivity" }
 connector = { module = "org.unifiedpush.android:connector", version.ref = "connector" }
-kmpnotifier-local = { module = "io.github.mirzemehdi:kmpnotifier-local", version.ref = "kmpNotifier" }
 couchbase-lite = { module = "dev.kotbase:couchbase-lite", version.ref = "couchbaseLite" }
 couchbase-lite-ktx = { module = "dev.kotbase:couchbase-lite-ktx", version.ref = "couchbaseLite" }
 couchbase-lite-paging = { module = "dev.kotbase:couchbase-lite-paging", version.ref = "couchbaseLite" }
@@ -249,6 +247,7 @@ kfswatch = { module = "io.github.irgaly.kfswatch:kfswatch", version.ref = "kfswa
 kim = { module = "com.ashampoo:kim", version.ref = "kim" }
 kmp-zip = { module = "no.synth:kmp-zip", version.ref = "kmpZip" }
 kmp-zip-kotlinx = { module = "no.synth:kmp-zip-kotlinx", version.ref = "kmpZip" }
+kmpnotifier-local = { module = "io.github.mirzemehdi:kmpnotifier-local", version.ref = "kmpNotifier" }
 kodio-core = { module = "space.kodio:core", version.ref = "kodio-core" }
 kotlinx-browser = { module = "org.jetbrains.kotlinx:kotlinx-browser", version.ref = "kotlinxBrowser" }
 kotlinx-cli = { module = "org.jetbrains.kotlinx:kotlinx-cli", version.ref = "kotlinxCli" }
@@ -332,6 +331,7 @@ richeditor-compose = { module = "com.mohamedrejeb.richeditor:richeditor-compose"
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "runtime" }
 screenshot-validation-api = { module = "com.android.tools.screenshot:screenshot-validation-api", version.ref = "screenshot" }
+selenium-firefox-driver = { module = "org.seleniumhq.selenium:selenium-firefox-driver", version.ref = "selenium" }
 sonner = { module = "io.github.dokar3:sonner", version.ref = "sonner" }
 sql-formatter = { module = "com.github.vertical-blank:sql-formatter", version.ref = "sqlFormatter" }
 sqlitenow-core = { module = "dev.goquick.sqlitenow:core", version.ref = "sqlitenow" }

@@ -16,74 +16,97 @@ import com.storyteller_f.shared.utils.UNIT_RESULT
 import com.storyteller_f.shared.utils.generateModelMarkdownContent
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.now
+import com.storytellerf.a.cloud.worker.TASK_DELAY_MILLIS
+import com.storytellerf.a.cloud.worker.TASK_OBJECT_FETCH_SIZE
+import com.storytellerf.a.cloud.worker.getSystemUserId
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.delay
 
 suspend fun Backend.doSubscriptionTask() {
-    database.user.getLatestTaskRecord(TaskRecordType.SUBSCRIPTION).mapResult { taskRecord ->
-        val cursor = Cursor.AscCursor(taskRecord?.processedId ?: 0)
-        database.topic.getTopicList(PrimaryKeyFetch(cursor, 10))
-    }.mapResult {
-        if (it.isEmpty()) {
-            Napier.i(tag = "subscription") {
-                "no topic to send"
-            }
-            UNIT_RESULT
-        } else {
-            Napier.i(tag = "subscription") {
-                "send ${it.size} topics"
-            }
-            runCatching {
-                it.forEach { topic ->
-                    processTopicSubscription(topic)
+    val result =
+        database.user.getLatestTaskRecord(TaskRecordType.SUBSCRIPTION).mapResult { taskRecord ->
+            val cursor = Cursor.AscCursor(taskRecord?.objectId ?: 0)
+            database.topic.getTopicList(PrimaryKeyFetch(cursor, TASK_OBJECT_FETCH_SIZE))
+        }.mapResult { topics ->
+            if (topics.isEmpty()) {
+                Napier.i(tag = SUBSCRIPTION_LOG_TAG) {
+                    "no topic to send"
+                }
+                UNIT_RESULT
+            } else {
+                Napier.i(tag = SUBSCRIPTION_LOG_TAG) {
+                    "process ${topics.size} topics"
+                }
+                UNIT_RESULT.mapResult {
+                    topics.forEach { topic ->
+                        Napier.i(tag = SUBSCRIPTION_LOG_TAG) { "send topic ${topic.id}" }
+                        processTopicSubscription(topic)
+                    }
+                    UNIT_RESULT
                 }
             }
         }
-    }.onSuccess {
-        delay(10000)
-        Napier.i(tag = "subscription") {
-            "task success $it"
-        }
-    }.onFailure {
-        delay(10000)
-        Napier.i(tag = "subscription", throwable = it) {
-            "task failed"
-        }
-    }
+    result.fold(
+        onSuccess = {
+            Napier.i(tag = SUBSCRIPTION_LOG_TAG) {
+                "subscription task completed"
+            }
+        },
+        onFailure = { failure ->
+            Napier.e(tag = SUBSCRIPTION_LOG_TAG, throwable = failure) {
+                "subscription task failed"
+            }
+        },
+    )
+    delay(TASK_DELAY_MILLIS)
 }
 
 private suspend fun Backend.processTopicSubscription(topic: Topic) {
     // 当前对象发送的最新日志
     val topicParentId = topic.parentId
-    val content = generateTopicSubscriptionContent(topic, topicParentId) ?: return
-    val log = database.subscription.getLatestSubscriptionSentLog(topicParentId)
-        .getOrThrow()?.subscriptionId
-    val cursor = Cursor.AscCursor(log ?: 0)
-    val userSubscriptions = database.subscription.getSubscriptionsByObjectId(topicParentId, PrimaryKeyFetch(cursor, 10))
-        .getOrThrow()
-    userSubscriptions.forEach { userSubscription ->
-        val rawUser = database.user.getRawUser(ObjectFetch.IdFetch(userSubscription.uid))
-            .getOrThrow() ?: throw Exception("user not found")
-        sendTopicToNotificationRoom(1L, rawUser.user, content)
-        database.subscription.insertSubscriptionSentLog(
-            SubscriptionSentLog(
-                SnowflakeFactory.nextId(),
-                userSubscription.uid,
-                topic.id,
-                ObjectType.TOPIC,
-                userSubscription.id,
-                now(),
-            )
-        ).getOrThrow()
-    }
-    if (userSubscriptions.isEmpty()) {
-        Napier.i(tag = "subscription") {
-            "no user subscription to send topic ${topic.id}"
+    val content = generateTopicSubscriptionContent(topic, topicParentId)
+    val latestSentSubscriptionId =
+        database.subscription.getLatestSubscriptionSentLog(topic.id)
+            .getOrThrow()?.subscriptionId
+    var cursor = Cursor.AscCursor(latestSentSubscriptionId ?: 0)
+    while (content != null) {
+        val userSubscriptions =
+            database.subscription.getSubscriptionsByObjectId(
+                topicParentId,
+                PrimaryKeyFetch(cursor, SUBSCRIBER_PAGE_SIZE),
+            ).getOrThrow()
+        if (userSubscriptions.isEmpty()) {
+            break
         }
-        database.admin.createTaskRecord(
-            TaskRecord(SnowflakeFactory.nextId(), now(), TaskRecordType.SUBSCRIPTION, topic.id,)
-        ).getOrThrow()
+        val systemUserId = getSystemUserId()
+        userSubscriptions.forEach { userSubscription ->
+            val rawUser = database.user.getRawUser(ObjectFetch.IdFetch(userSubscription.uid))
+                .getOrThrow() ?: throw Exception("user not found")
+            sendTopicToNotificationRoom(systemUserId, rawUser.user, content)
+            database.subscription.insertSubscriptionSentLog(
+                SubscriptionSentLog(
+                    SnowflakeFactory.nextId(),
+                    userSubscription.uid,
+                    topic.id,
+                    ObjectType.TOPIC,
+                    userSubscription.id,
+                    now(),
+                )
+            ).getOrThrow()
+        }
+        cursor = Cursor.AscCursor(userSubscriptions.last().id)
     }
+    Napier.i(tag = "subscription") {
+        "all user subscriptions sent for topic ${topic.id}"
+    }
+    database.admin.createTaskRecord(
+        TaskRecord(
+            id = SnowflakeFactory.nextId(),
+            createdTime = now(),
+            type = TaskRecordType.SUBSCRIPTION,
+            objectId = topic.id,
+        ),
+    ).getOrThrow()
 }
 
 private fun generateTopicSubscriptionContent(
@@ -136,3 +159,6 @@ private fun generateTopicSubscriptionContentForTopic(
     appendLine(generateModelMarkdownContent(ObjectTuple(topicId, ObjectType.TOPIC)))
     appendLine(generateModelMarkdownContent(ObjectTuple(topicParentId, ObjectType.TOPIC)))
 }
+
+private const val SUBSCRIBER_PAGE_SIZE = 10
+private const val SUBSCRIPTION_LOG_TAG = "subscription"
