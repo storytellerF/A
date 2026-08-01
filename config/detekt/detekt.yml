@@ -1048,4 +1048,5 @@ libraries:
     active: true
     excludes:
       - '**/api/src/**'
+      - '**/client/core/src/**/PanelRequest.kt'
       - '**/shared/src/**/com/storyteller_f/shared/model/**'
