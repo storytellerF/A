@@ -101,7 +101,7 @@
 ## CI
 
 - `Alpha Server CI` runs backend/server tests before starting the remote alpha service: `:backend:minio:test`, `:cloud:cli:test`, `:cloud:service:test`, and `:cloud:server:test`. It also enables `ENABLE_TEST_CONTAINER=true` to override the Testcontainers path.
-- Test and release workflows use `gradle/actions/setup-gradle@v4` instead of a hand-written `actions/cache` Gradle User Home cache. PR test jobs should set `cache-read-only: true`; release/main jobs should keep the default write behavior and `cache-cleanup: on-success` so PR checks can restore default-branch Gradle cache without trying to save large merge-ref caches.
+- Test and release workflows use `gradle/actions/setup-gradle@v6` instead of a hand-written `actions/cache` Gradle User Home cache. PR test jobs should set `cache-read-only: true`; release/main jobs should keep the default write behavior and `cache-cleanup: on-success` so PR checks can restore default-branch Gradle cache without trying to save large merge-ref caches. The Windows MSI job temporarily disables cache cleanup because `setup-gradle` v6.2 can remove its Gradle User Home before saving; restore `on-success` after `gradle/actions#1013` is fixed.
 - PR compile checks run `./gradlew compileAllNoRelease --console=plain`, a root aggregation task that compiles included modules while excluding Android release and benchmark variants.
 - `client/composeCore` shares JVM/Android actual sources through a custom `jvmAndroidMain` source set with explicit `dependsOn` edges from `jvmMain` and `androidMain`; this keeps the shared `compose-pdf` and `m3u-parser` actual implementations out of wasm.
 
