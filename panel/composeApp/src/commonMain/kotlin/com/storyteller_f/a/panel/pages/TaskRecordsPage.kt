@@ -107,7 +107,10 @@ private fun TaskRecordDetailContent(type: TaskRecordType) {
                     TaskRecordOverview(summary)
                 }
             }
-            TaskRecordStatusFilter(isSuccess) { isSuccess = it }
+            TaskRecordStatusFilter(isSuccess) { selectedStatus ->
+                isSuccess = selectedStatus
+                failureType = failureTypeForStatus(selectedStatus, failureType)
+            }
             if (isSuccess == false || failureType != null) {
                 TaskFailureTypeFilter(failureType) { failureType = it }
             }
@@ -127,6 +130,9 @@ private fun TaskRecordDetailContent(type: TaskRecordType) {
         }
     }
 }
+
+internal fun failureTypeForStatus(status: Boolean?, failureType: String?): String? =
+    failureType.takeIf { status == false }
 
 @Composable
 private fun TaskRecordSummaryItem(summary: TaskRecordSummary, onClick: () -> Unit) {
