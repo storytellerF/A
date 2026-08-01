@@ -55,15 +55,18 @@ fun RawRoom.toRoomInfo(icon: FileInfo? = null): RoomInfo {
     )
 }
 
-fun buildUserNotificationRoom(user: User, adminUid: PrimaryKey): Room = Room(
-    user.notificationId,
-    now(),
-    "${user.aid}_notification",
-    "Notification",
-    adminUid,
-    null,
-    null
-)
+fun buildUserNotificationRoom(user: User, adminUid: PrimaryKey): Room {
+    val notificationAid = "${user.aid?.takeIf(String::isNotBlank) ?: user.id}_notification"
+    return Room(
+        id = user.notificationId,
+        createdTime = now(),
+        aid = notificationAid,
+        name = "Notification",
+        creator = adminUid,
+        icon = null,
+        communityId = null,
+    )
+}
 
 suspend fun buildMemberForNotificationRoom(user: User, adminUid: PrimaryKey): List<Member> = listOf(
     Member(

@@ -3,11 +3,9 @@
  */
 package com.storytellerf.a.cloud.worker.moderation
 
-import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.Cursor
 import com.storyteller_f.a.backend.core.ObjectFetch
-import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.types.TaskRecord
 import com.storyteller_f.a.backend.core.types.Topic
@@ -16,7 +14,9 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.UserStatus
 import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.shared.utils.now
+import com.storytellerf.a.cloud.worker.TASK_DELAY_MILLIS
+import com.storytellerf.a.cloud.worker.TASK_OBJECT_FETCH_SIZE
+import com.storytellerf.a.cloud.worker.executeTaskObject
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.delay
 
@@ -32,7 +32,7 @@ internal suspend fun Backend.doTopicModerationTask(reviewer: TopicSafetyReviewer
             "topic moderation task failed"
         }
     }
-    delay(DEFAULT_TASK_DELAY_MILLIS)
+    delay(TASK_DELAY_MILLIS)
 }
 
 private suspend fun Backend.executeTopicModerationTask(reviewer: TopicSafetyReviewer): Result<Unit> =
@@ -40,12 +40,13 @@ private suspend fun Backend.executeTopicModerationTask(reviewer: TopicSafetyRevi
         TaskRecordType.TOPIC_MODERATION,
         TASK_OBJECT_FETCH_SIZE,
     ).mapResult { retryRecords ->
-        val retryRecord = retryRecords.firstOrNull()
-        if (retryRecord != null) {
-            retryTopicModeration(retryRecord, reviewer)
-            Result.success(Unit)
-        } else {
+        if (retryRecords.isEmpty()) {
             processNextTopicModeration(reviewer)
+        } else {
+            retryRecords.forEach { retryRecord ->
+                retryTopicModeration(retryRecord, reviewer)
+            }
+            Result.success(Unit)
         }
     }
 
@@ -54,98 +55,51 @@ private suspend fun Backend.processNextTopicModeration(reviewer: TopicSafetyRevi
         val cursor = Cursor.AscCursor(taskRecord?.objectId ?: 0)
         database.topic.getTopicList(PrimaryKeyFetch(cursor, TASK_OBJECT_FETCH_SIZE))
     }.mapResult { topics ->
-        val topic = topics.firstOrNull()
-        if (topic == null) {
+        if (topics.isEmpty()) {
             Napier.i(tag = MODERATION_LOG_TAG) {
                 "no topic to review"
             }
         } else {
             Napier.i(tag = MODERATION_LOG_TAG) {
-                "review topic ${topic.id}"
+                "review ${topics.size} topics"
             }
-            processTopicModeration(
-                topic = topic,
-                publicRoomIds = getPublicRoomIds(listOf(topic)),
-                reviewer = reviewer,
-                retryRecordId = null,
-            )
+            topics.forEach { topic ->
+                processTopicModeration(topic, reviewer, retryRecordId = null)
+            }
         }
         Result.success(Unit)
     }
 
 private suspend fun Backend.retryTopicModeration(record: TaskRecord, reviewer: TopicSafetyReviewer) {
-    val topic = database.topic.getTopic(ObjectFetch.IdFetch(record.objectId)).getOrThrow()
-    if (topic == null) {
-        saveTopicModerationFailure(
-            record.objectId,
-            TopicModerationDataAccessException("Topic ${record.objectId} no longer exists"),
-            retryRecordId = record.id,
-        )
-    } else {
-        processTopicModeration(
-            topic = topic,
-            publicRoomIds = getPublicRoomIds(listOf(topic)),
-            reviewer = reviewer,
-            retryRecordId = record.id,
-        )
-    }
+    executeTaskObject(
+        type = TaskRecordType.TOPIC_MODERATION,
+        objectId = record.objectId,
+        retryRecordId = record.id,
+        failureType = Throwable::toTaskFailureType,
+    ) { successRecord ->
+        val topic =
+            database.topic.getTopic(ObjectFetch.IdFetch(record.objectId)).getOrElse { failure ->
+                throw TopicModerationDataAccessException("Failed to load topic ${record.objectId}", failure)
+            } ?: throw TopicModerationDataAccessException("Topic ${record.objectId} no longer exists")
+        moderateTopicIfRequired(topic, reviewer)
+        database.admin.createTaskRecord(successRecord).getOrThrow()
+    }.logTopicModerationResult(record.objectId)
 }
 
 private suspend fun Backend.processTopicModeration(
     topic: Topic,
-    publicRoomIds: Set<PrimaryKey>,
     reviewer: TopicSafetyReviewer,
     retryRecordId: PrimaryKey?,
 ) {
-    val result =
-        Result.success(Unit).mapResult {
-            if (topic.isReviewable(publicRoomIds)) {
-                moderateTopic(topic, reviewer)
-            }
-            Result.success(Unit)
-        }
-    result.fold(
-        onSuccess = {
-            saveTopicModerationRecord(
-                TaskRecord(
-                    id = SnowflakeFactory.nextId(),
-                    createdTime = now(),
-                    type = TaskRecordType.TOPIC_MODERATION,
-                    objectId = topic.id,
-                ),
-                retryRecordId,
-            )
-        },
-        onFailure = { failure ->
-            saveTopicModerationFailure(topic.id, failure, retryRecordId)
-            Napier.e(tag = MODERATION_LOG_TAG, throwable = failure) {
-                "topic moderation failed for ${topic.id}"
-            }
-        },
-    )
-}
-
-private suspend fun Backend.saveTopicModerationFailure(
-    topicId: PrimaryKey,
-    throwable: Throwable,
-    retryRecordId: PrimaryKey?,
-) {
-    saveTopicModerationRecord(
-        TaskRecord(
-            id = SnowflakeFactory.nextId(),
-            createdTime = now(),
-            type = TaskRecordType.TOPIC_MODERATION,
-            objectId = topicId,
-            failureType = throwable.toTaskFailureType(),
-            failureReason = throwable.message ?: throwable::class.simpleName,
-        ),
-        retryRecordId,
-    )
-}
-
-private suspend fun Backend.saveTopicModerationRecord(record: TaskRecord, retryRecordId: PrimaryKey?) {
-    database.admin.createTaskRecord(record).getOrThrow()
-    retryRecordId?.let { database.user.updateTaskRecordRetryRequested(it, false).getOrThrow() }
+    executeTaskObject(
+        type = TaskRecordType.TOPIC_MODERATION,
+        objectId = topic.id,
+        retryRecordId = retryRecordId,
+        failureType = Throwable::toTaskFailureType,
+    ) { successRecord ->
+        moderateTopicIfRequired(topic, reviewer)
+        database.admin.createTaskRecord(successRecord).getOrThrow()
+    }.logTopicModerationResult(topic.id)
 }
 
 internal fun Throwable.toTaskFailureType(): String {
@@ -158,21 +112,16 @@ internal fun Throwable.toTaskFailureType(): String {
     return failureType
 }
 
-internal class TopicModerationDataAccessException(message: String) : IllegalStateException(message)
+internal class TopicModerationDataAccessException(message: String, cause: Throwable? = null) :
+    IllegalStateException(message, cause)
 
-private suspend fun Backend.getPublicRoomIds(topics: List<Topic>): Set<PrimaryKey> {
-    val roomIds =
-        topics.asSequence()
-            .filter { it.rootType == ObjectType.ROOM && !it.isEncrypted }
-            .map { it.rootId }
-            .distinct()
-            .toList()
-    if (roomIds.isEmpty()) return emptySet()
-    return database.room
-        .getRoomList(ObjectListFetch.IdListFetch(roomIds))
-        .getOrThrow()
-        .filter { it.communityId != null }
-        .mapTo(mutableSetOf()) { it.id }
+private suspend fun Backend.getPublicRoomIds(topic: Topic): Set<PrimaryKey> {
+    if (topic.rootType != ObjectType.ROOM || topic.isEncrypted) return emptySet()
+    val room =
+        database.room.getRawRoom(ObjectFetch.IdFetch(topic.rootId)).getOrElse { failure ->
+            throw TopicModerationDataAccessException("Failed to load room ${topic.rootId}", failure)
+        }?.room ?: throw TopicModerationDataAccessException("Room ${topic.rootId} not found")
+    return if (room.communityId == null) emptySet() else setOf(room.id)
 }
 
 internal fun Topic.isReviewable(publicRoomIds: Set<PrimaryKey>): Boolean {
@@ -191,14 +140,38 @@ internal fun Topic.isReviewable(publicRoomIds: Set<PrimaryKey>): Boolean {
 private suspend fun Backend.moderateTopic(topic: Topic, reviewer: TopicSafetyReviewer) {
     if (!reviewer.isHarmful(topic.content.decodeToString())) return
 
-    check(database.user.updateUserStatus(topic.author, UserStatus.READ_ONLY).getOrThrow()) {
-        "Failed to mark topic author ${topic.author} as read only"
+    val isUpdated =
+        database.user.updateUserStatus(topic.author, UserStatus.READ_ONLY).getOrElse { failure ->
+            throw TopicModerationDataAccessException("Failed to update topic author ${topic.author}", failure)
+        }
+    if (!isUpdated) {
+        throw TopicModerationDataAccessException("Topic author ${topic.author} not found")
     }
     Napier.w(tag = MODERATION_LOG_TAG) {
         "marked topic author ${topic.author} as read only after reviewing topic ${topic.id}"
     }
 }
 
-private const val TASK_OBJECT_FETCH_SIZE = 1
-private const val DEFAULT_TASK_DELAY_MILLIS = 10_000L
+private suspend fun Backend.moderateTopicIfRequired(topic: Topic, reviewer: TopicSafetyReviewer) {
+    val publicRoomIds = getPublicRoomIds(topic)
+    if (topic.isReviewable(publicRoomIds)) {
+        moderateTopic(topic, reviewer)
+    }
+}
+
+private fun Result<Unit>.logTopicModerationResult(objectId: PrimaryKey) {
+    fold(
+        onSuccess = {
+            Napier.i(tag = MODERATION_LOG_TAG) {
+                "reviewed topic $objectId"
+            }
+        },
+        onFailure = { failure ->
+            Napier.e(tag = MODERATION_LOG_TAG, throwable = failure) {
+                "topic moderation failed for $objectId"
+            }
+        },
+    )
+}
+
 private const val MODERATION_LOG_TAG = "moderation"

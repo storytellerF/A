@@ -1,6 +1,5 @@
 package com.storyteller_f.a.cloud.worker
 
-import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.Cursor
 import com.storyteller_f.a.backend.core.ObjectFetch
@@ -9,59 +8,114 @@ import com.storyteller_f.a.backend.core.types.TaskRecord
 import com.storyteller_f.a.backend.core.types.Title
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.UNIT_RESULT
 import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.shared.utils.now
+import com.storytellerf.a.cloud.worker.TASK_DELAY_MILLIS
+import com.storytellerf.a.cloud.worker.TASK_OBJECT_FETCH_SIZE
+import com.storytellerf.a.cloud.worker.executeTaskObject
+import com.storytellerf.a.cloud.worker.getSystemUserId
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.delay
 
 suspend fun Backend.doTitleTask() {
+    val result = executeTitleTask()
+    result.fold(
+        onSuccess = {
+            Napier.i(tag = TITLE_LOG_TAG) {
+                "title task completed"
+            }
+        },
+        onFailure = { failure ->
+            Napier.e(tag = TITLE_LOG_TAG, throwable = failure) {
+                "title task failed"
+            }
+        },
+    )
+    delay(TASK_DELAY_MILLIS)
+}
+
+private suspend fun Backend.executeTitleTask(): Result<Unit> =
+    database.user.getTaskRecordsToRetry(TaskRecordType.TITLE, TASK_OBJECT_FETCH_SIZE).mapResult { retryRecords ->
+        if (retryRecords.isEmpty()) {
+            processNextTitles()
+        } else {
+            retryRecords.forEach { retryRecord ->
+                processTitleRetry(retryRecord)
+            }
+            Result.success(Unit)
+        }
+    }
+
+private suspend fun Backend.processNextTitles(): Result<Unit> =
     database.user.getLatestTaskRecord(TaskRecordType.TITLE).mapResult { taskRecord ->
         val cursor = Cursor.AscCursor(taskRecord?.objectId ?: 0)
         database.title.getAllRawTitles(PrimaryKeyFetch(cursor, TASK_OBJECT_FETCH_SIZE))
     }.mapResult { result ->
         if (result.list.isEmpty()) {
-            Napier.i(tag = "title") {
+            Napier.i(tag = TITLE_LOG_TAG) {
                 "no title to send"
             }
-            UNIT_RESULT
         } else {
-            Napier.i(tag = "title") {
+            Napier.i(tag = TITLE_LOG_TAG) {
                 "process ${result.list.size} titles"
             }
-            runCatching {
-                val adminUserResult = database.user.getRawUser(ObjectFetch.AidFetch("System")).getOrThrow()
-                val adminAid = adminUserResult?.user?.id ?: throw Exception("System user not found")
-                processTitleNotification(result.list.first().title, adminAid)
+            result.list.forEach { rawTitle ->
+                processTitle(rawTitle.title, retryRecordId = null)
             }
         }
-    }.onSuccess {
-        delay(10000)
-        Napier.i(tag = "title") {
-            "task success $it"
-        }
-    }.onFailure {
-        delay(10000)
-        Napier.i(tag = "title", throwable = it) {
-            "task failed"
-        }
+        Result.success(Unit)
     }
+
+private suspend fun Backend.processTitleRetry(record: TaskRecord) {
+    executeTaskObject(
+        type = TaskRecordType.TITLE,
+        objectId = record.objectId,
+        retryRecordId = record.id,
+        failureType = { TaskRecordType.DATA_ACCESS_FAILURE },
+    ) { successRecord ->
+        val title =
+            database.title.getTitle(record.objectId).getOrThrow()?.title
+                ?: error("Title ${record.objectId} not found")
+        processTitleNotification(title, successRecord)
+    }.logTitleResult(record.objectId)
 }
 
-private suspend fun Backend.processTitleNotification(title: Title, adminAid: PrimaryKey) {
+private suspend fun Backend.processTitle(title: Title, retryRecordId: PrimaryKey?) {
+    executeTaskObject(
+        type = TaskRecordType.TITLE,
+        objectId = title.id,
+        retryRecordId = retryRecordId,
+        failureType = { TaskRecordType.DATA_ACCESS_FAILURE },
+    ) { successRecord ->
+        processTitleNotification(title, successRecord)
+    }.logTitleResult(title.id)
+}
+
+private suspend fun Backend.processTitleNotification(title: Title, successRecord: TaskRecord) {
     val rawUser = database.user.getRawUser(ObjectFetch.IdFetch(title.receiver))
         .getOrThrow() ?: throw Exception("user not found")
 
     val content = generateTitleNotificationContent(title)
-    sendTopicToNotificationRoom(adminAid, rawUser.user, content)
+    sendTopicToNotificationRoom(getSystemUserId(), rawUser.user, content)
+    database.admin.createTaskRecord(successRecord).getOrThrow()
 
-    database.admin.createTaskRecord(
-        TaskRecord(SnowflakeFactory.nextId(), now(), TaskRecordType.TITLE, title.id)
-    ).getOrThrow()
-
-    Napier.i(tag = "title") {
+    Napier.i(tag = TITLE_LOG_TAG) {
         "send title notification to user ${title.receiver}"
     }
+}
+
+private fun Result<Unit>.logTitleResult(objectId: PrimaryKey) {
+    fold(
+        onSuccess = {
+            Napier.i(tag = TITLE_LOG_TAG) {
+                "processed title $objectId"
+            }
+        },
+        onFailure = { failure ->
+            Napier.e(tag = TITLE_LOG_TAG, throwable = failure) {
+                "failed to process title $objectId"
+            }
+        },
+    )
 }
 
 private fun generateTitleNotificationContent(title: Title): String {
@@ -76,4 +130,4 @@ private fun generateTitleNotificationContent(title: Title): String {
     }
 }
 
-private const val TASK_OBJECT_FETCH_SIZE = 1
+private const val TITLE_LOG_TAG = "title"

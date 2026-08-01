@@ -313,10 +313,10 @@ class ExposedUserDatabase(
     }
 
     override suspend fun addAcgForUser(
-        records: List<TaskRecord>,
-        assetTransactions: List<AssetTransaction>,
+        record: TaskRecord,
+        assetTransaction: AssetTransaction?,
     ) = databaseSession.dbQuery {
-        assetTransactions.forEach { at ->
+        assetTransaction?.let { at ->
             check(AssetTransactions.insert {
                 it[AssetTransactions.id] = at.id
                 it[AssetTransactions.uid] = at.uid
@@ -335,8 +335,7 @@ class ExposedUserDatabase(
                 "update user acg failed"
             }
         }
-
-        records.forEach { addTaskRecord(it) }
+        addTaskRecord(record)
     }
 
     override suspend fun getLatestTaskRecord(type: TaskRecordType): Result<TaskRecord?> {

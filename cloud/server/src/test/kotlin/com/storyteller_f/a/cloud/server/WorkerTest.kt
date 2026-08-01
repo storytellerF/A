@@ -4,7 +4,9 @@ import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.api.NewCommunity
 import com.storyteller_f.a.api.NewSubscription
 import com.storyteller_f.a.backend.core.Backend
+import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.types.SubscriptionSentLog
+import com.storyteller_f.a.backend.core.types.TaskRecord
 import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.a.client.core.addSubscription
 import com.storyteller_f.a.client.core.createCommunity
@@ -23,7 +25,6 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.now
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class WorkerTest {
@@ -56,12 +57,37 @@ class WorkerTest {
                         com.storyteller_f.a.backend.core.ObjectListFetch.IdListFetch(listOf(userId)),
                     ).getOrThrow()
 
-                // 每轮只处理一个 topic
                 assertTrue(userAcg.isNotEmpty(), "User ACG should be recorded")
                 val totalAcg = userAcg.find { it.first == userId }?.second ?: 0L
-                assertEquals(1, totalAcg)
+                assertEquals(topicIds.size.toLong(), totalAcg)
                 val taskRecord = backend.database.user.getLatestTaskRecord(TaskRecordType.TOPIC_ACG).getOrThrow()
-                assertEquals(topicIds.first(), taskRecord?.objectId)
+                assertEquals(topicIds.last(), taskRecord?.objectId)
+
+                val missingTopicId = topicIds.first() - 1
+                val missingTopicRetry = buildRetryTaskRecord(TaskRecordType.TOPIC_ACG, missingTopicId)
+                val existingTopicRetry = buildRetryTaskRecord(TaskRecordType.TOPIC_ACG, topicIds.first())
+                backend.database.admin.createTaskRecord(missingTopicRetry).getOrThrow()
+                backend.database.admin.createTaskRecord(existingTopicRetry).getOrThrow()
+
+                backend.doAcgTask()
+
+                val taskRecords =
+                    backend.database.admin.getTaskRecords(
+                        type = TaskRecordType.TOPIC_ACG,
+                        isSuccess = null,
+                        failureType = null,
+                        fetch = PrimaryKeyFetch(cursor = null, size = 20),
+                    ).getOrThrow().list
+                assertTrue(taskRecords.any { it.objectId == missingTopicId && !it.isSuccess })
+                assertTrue(taskRecords.any { it.objectId == topicIds.first() && it.isSuccess })
+                assertEquals(false, taskRecords.single { it.id == missingTopicRetry.id }.isRetryRequested)
+                assertEquals(false, taskRecords.single { it.id == existingTopicRetry.id }.isRetryRequested)
+
+                val retriedUserAcg =
+                    backend.database.user.getUserAcgByIds(
+                        com.storyteller_f.a.backend.core.ObjectListFetch.IdListFetch(listOf(userId)),
+                    ).getOrThrow().find { it.first == userId }?.second
+                assertEquals(topicIds.size + 1L, retriedUserAcg)
             }
         }
     }
@@ -69,23 +95,25 @@ class WorkerTest {
     @Test
     fun `test intro task sends welcome message`() {
         test {
-            // 创建新用户（这会初始化 Backend）
-            attachSession {
-                it.uid
-            }
+            val userIds =
+                (1..3).map {
+                    attachSession { session ->
+                        session.uid
+                    }.custom
+                }
 
-            // 创建 System 用户并执行 Intro 任务
             withWorkerBackend { backend ->
-                backend.createSystemUser(SnowflakeFactory.nextId())
-
-                // 执行 Intro 任务
+                backend.createSystemUser(1L)
                 backend.doIntroTask()
 
-                // 验证任务记录是否存在
-                val taskRecord = backend.database.user.getLatestTaskRecord(TaskRecordType.INTRO).getOrThrow()
-
-                // 任务记录应该存在
-                assertNotNull(taskRecord, "Intro task record should exist after running doIntroTask")
+                val records =
+                    backend.database.admin.getTaskRecords(
+                        type = TaskRecordType.INTRO,
+                        isSuccess = true,
+                        failureType = null,
+                        fetch = PrimaryKeyFetch(cursor = null, size = 10),
+                    ).getOrThrow().list
+                assertEquals(userIds.toSet(), records.map { it.objectId }.toSet())
             }
         }
     }
@@ -144,34 +172,36 @@ class WorkerTest {
     @Test
     fun `test title task sends notification`() {
         test {
-            // 创建用户和 title
-            attachSession {
-                val c = createCommunity(com.storyteller_f.a.api.NewCommunity("test community", "tc1")).getOrThrow()
-                val cId = c.id
+            val titleIds =
+                attachSession { session ->
+                    val c = createCommunity(com.storyteller_f.a.api.NewCommunity("test community", "tc1")).getOrThrow()
+                    val cId = c.id
+                    (1..3).map { index ->
+                        createTitle(
+                            com.storyteller_f.a.api.NewTitle(
+                                name = "Test Title $index",
+                                type = com.storyteller_f.shared.model.TitleType.REGULAR,
+                                receiver = session.uid,
+                                scopeId = cId,
+                                scopeType = ObjectType.COMMUNITY,
+                                description = "Test title description",
+                            ),
+                        ).getOrThrow().id
+                    }
+                }.custom
 
-                // 创建 title
-                createTitle(com.storyteller_f.a.api.NewTitle(
-                    "Test Title",
-                    com.storyteller_f.shared.model.TitleType.REGULAR,
-                    it.uid,
-                    cId,
-                    ObjectType.COMMUNITY,
-                    "Test title description"
-                )).getOrThrow()
-            }
-
-            // 执行 title 任务
             withWorkerBackend { backend ->
                 backend.createSystemUser(1L)
-
-                // 执行 title 任务
                 backend.doTitleTask()
 
-                // 验证任务记录是否存在
-                val taskRecord = backend.database.user.getLatestTaskRecord(TaskRecordType.TITLE).getOrThrow()
-
-                // 任务记录应该存在
-                assertNotNull(taskRecord, "Title task record should exist after running doTitleTask")
+                val taskRecords =
+                    backend.database.admin.getTaskRecords(
+                        type = TaskRecordType.TITLE,
+                        isSuccess = true,
+                        failureType = null,
+                        fetch = PrimaryKeyFetch(cursor = null, size = 10),
+                    ).getOrThrow().list
+                assertEquals(titleIds.toSet(), taskRecords.map { it.objectId }.toSet())
             }
         }
     }
@@ -217,6 +247,19 @@ class WorkerTest {
             }
         }
     }
+}
+
+private suspend fun buildRetryTaskRecord(type: TaskRecordType, objectId: Long): TaskRecord {
+    val recordId = SnowflakeFactory.nextId()
+    return TaskRecord(
+        id = recordId,
+        createdTime = now(),
+        type = type,
+        objectId = objectId,
+        failureType = TaskRecordType.UNKNOWN_FAILURE,
+        failureReason = "retry test",
+        isRetryRequested = true,
+    )
 }
 
 private suspend fun Backend.createSystemUser(id: Long) {
