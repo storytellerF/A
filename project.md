@@ -32,6 +32,7 @@
 - Panel queries worker execution records through paginated `/admin/task-records`; it supports filtering by task type, and returns all records when no type is provided.
 - Panel REST calls are public `PanelSessionManager` extension functions in `client/core/PanelRequest.kt`; `PanelSessionManager` itself only describes session state and capabilities.
 - Panel list/detail routes use Navigation 3's `ListDetailSceneStrategy`: users, communities, rooms, topics, files, and titles render side by side on wide content areas and fall back to the existing single-pane navigation when the post-drawer content area is narrow. Public and private room lists share the room detail scene. When the list pane is still the immediate parent, selecting another item replaces the current same-scene detail entry instead of growing the back stack.
+- Renovate is configured at the repository root to maintain GitHub Actions, Gradle dependencies, and the Gradle Wrapper. Workflows use the current supported major tags for checkout, JDK setup, Gradle setup, and artifact upload actions.
 - App root navigation uses Navigation 3's `ListDetailSceneStrategy`: `HomeScreen` is the list pane, while community, room, topic, and user screens share its detail scene. Wide content areas show both panes and compact content stays single-pane. Navigation originating from the Home list replaces its current immediately paired detail; navigation originating from a detail screen pushes a new entry so compact back history is preserved.
 
 ## Topic Compose / Block Editing
