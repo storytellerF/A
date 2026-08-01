@@ -19,13 +19,13 @@ import kotlinx.coroutines.delay
 suspend fun Backend.doAcgTask() {
     database.user.getLatestTaskRecord(TaskRecordType.TOPIC_ACG).mapResult { taskRecord ->
         val cursor = AscCursor(taskRecord?.objectId ?: 0)
-        database.topic.getTopicList(PrimaryKeyFetch(cursor = cursor, size = 10))
+        database.topic.getTopicList(PrimaryKeyFetch(cursor = cursor, size = TASK_OBJECT_FETCH_SIZE))
     }.mapResult { list ->
         if (list.isNotEmpty()) {
             Napier.i(tag = "acg") {
                 "topic count ${list.size}"
             }
-            acgTask(list)
+            acgTask(list.first())
         } else {
             Napier.i(tag = "acg") {
                 "no more topic"
@@ -45,39 +45,32 @@ suspend fun Backend.doAcgTask() {
     }
 }
 
-private suspend fun Backend.acgTask(list: List<Topic>): Result<Unit> {
-    val acgList = list.groupBy {
-        it.author
-    }.mapValues {
-        it.value.count()
-    }.toList()
-    val uids = acgList.map {
-        it.first
-    }
-    return database.user.getUserAcgByIds(IdListFetch(uids)).map { list ->
+private suspend fun Backend.acgTask(topic: Topic): Result<Unit> =
+    database.user.getUserAcgByIds(IdListFetch(listOf(topic.author))).map { list ->
         list.associateByPair()
     }.mapResult { userAcgMap ->
         database.user.addAcgForUser(
-            list.map { topic ->
+            listOf(
                 TaskRecord(
                     id = SnowflakeFactory.nextId(),
                     createdTime = now(),
                     type = TaskRecordType.TOPIC_ACG,
                     objectId = topic.id,
-                )
-            },
-            acgList.mapNotNull { (id, acg) ->
-                userAcgMap[id]?.let { oldAcgAmount ->
+                ),
+            ),
+            listOfNotNull(
+                userAcgMap[topic.author]?.let { oldAcgAmount ->
                     AssetTransaction(
                         id = SnowflakeFactory.nextId(),
-                        uid = id,
+                        uid = topic.author,
                         createdTime = now(),
                         type = AssetType.ACG,
                         before = oldAcgAmount,
-                        after = oldAcgAmount + acg,
+                        after = oldAcgAmount + 1,
                     )
-                }
-            },
+                },
+            ),
         )
     }
-}
+
+private const val TASK_OBJECT_FETCH_SIZE = 1

@@ -18,7 +18,7 @@ import kotlinx.coroutines.delay
 suspend fun Backend.doTitleTask() {
     database.user.getLatestTaskRecord(TaskRecordType.TITLE).mapResult { taskRecord ->
         val cursor = Cursor.AscCursor(taskRecord?.objectId ?: 0)
-        database.title.getAllRawTitles(PrimaryKeyFetch(cursor, 10))
+        database.title.getAllRawTitles(PrimaryKeyFetch(cursor, TASK_OBJECT_FETCH_SIZE))
     }.mapResult { result ->
         if (result.list.isEmpty()) {
             Napier.i(tag = "title") {
@@ -32,9 +32,7 @@ suspend fun Backend.doTitleTask() {
             runCatching {
                 val adminUserResult = database.user.getRawUser(ObjectFetch.AidFetch("System")).getOrThrow()
                 val adminAid = adminUserResult?.user?.id ?: throw Exception("System user not found")
-                result.list.forEach { rawTitle ->
-                    processTitleNotification(rawTitle.title, adminAid)
-                }
+                processTitleNotification(result.list.first().title, adminAid)
             }
         }
     }.onSuccess {
@@ -77,3 +75,5 @@ private fun generateTitleNotificationContent(title: Title): String {
         }
     }
 }
+
+private const val TASK_OBJECT_FETCH_SIZE = 1

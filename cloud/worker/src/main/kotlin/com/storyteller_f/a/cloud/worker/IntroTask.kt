@@ -26,7 +26,7 @@ import kotlinx.coroutines.delay
 
 suspend fun Backend.doIntroTask() {
     database.user.getLatestTaskRecord(TaskRecordType.INTRO).mapResult { taskRecord ->
-        val fetch = PrimaryKeyFetch(Cursor.AscCursor(taskRecord?.objectId ?: 1000), 10)
+        val fetch = PrimaryKeyFetch(Cursor.AscCursor(taskRecord?.objectId ?: 1000), TASK_OBJECT_FETCH_SIZE)
         database.user.getAllUsers(fetch)
     }.mapResult { paginationResult ->
         if (paginationResult.list.isEmpty()) {
@@ -38,7 +38,7 @@ suspend fun Backend.doIntroTask() {
             Napier.i(tag = "intro") {
                 "user count ${paginationResult.list.size}"
             }
-            sendHelloTopic(paginationResult.list)
+            sendHelloTopic(paginationResult.list.first())
         }
     }.onSuccess {
         delay(10000)
@@ -53,20 +53,25 @@ suspend fun Backend.doIntroTask() {
     }
 }
 
-private suspend fun Backend.sendHelloTopic(rawUsers: List<RawUser>): Result<Unit> {
-    return runCatching {
-        val adminUserResult = database.user.getRawUser(ObjectFetch.AidFetch("System")).getOrThrow()
-        val adminAid = adminUserResult?.user?.id ?: throw Exception("System user not found")
-        rawUsers.forEach {
-            sendTopicToNotificationRoom(adminAid, it.user, "Hello, ${it.user.nickname}")
+private suspend fun Backend.sendHelloTopic(rawUser: RawUser): Result<Unit> {
+    val result =
+        runCatching {
+            val adminUserResult = database.user.getRawUser(ObjectFetch.AidFetch("System")).getOrThrow()
+            val adminAid = adminUserResult?.user?.id ?: throw Exception("System user not found")
+            sendTopicToNotificationRoom(adminAid, rawUser.user, "Hello, ${rawUser.user.nickname}")
             database.admin.createTaskRecord(
-                TaskRecord(SnowflakeFactory.nextId(), now(), TaskRecordType.INTRO, it.user.id)
-            )
+                TaskRecord(
+                    id = SnowflakeFactory.nextId(),
+                    createdTime = now(),
+                    type = TaskRecordType.INTRO,
+                    objectId = rawUser.user.id,
+                ),
+            ).getOrThrow()
             Napier.i(tag = "intro") {
                 "send hello success"
             }
         }
-    }
+    return result
 }
 
 suspend fun Backend.sendTopicToNotificationRoom(uid: PrimaryKey, user: User, content: String) {
@@ -97,3 +102,5 @@ suspend fun Backend.sedTopicAtRoom(
         GlobalWsEventPublisher.publishNewTopic(RoomFrame.NewTopicInfo(it))
     }
 }
+
+private const val TASK_OBJECT_FETCH_SIZE = 1

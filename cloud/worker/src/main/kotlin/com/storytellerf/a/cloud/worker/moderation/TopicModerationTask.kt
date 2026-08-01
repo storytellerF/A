@@ -36,39 +36,42 @@ internal suspend fun Backend.doTopicModerationTask(reviewer: TopicSafetyReviewer
 }
 
 private suspend fun Backend.executeTopicModerationTask(reviewer: TopicSafetyReviewer): Result<Unit> =
-    database.user.getTaskRecordsToRetry(TaskRecordType.TOPIC_MODERATION, TOPIC_BATCH_SIZE).mapResult { retryRecords ->
-        retryRecords.forEach { record ->
-            retryTopicModeration(record, reviewer)
+    database.user.getTaskRecordsToRetry(
+        TaskRecordType.TOPIC_MODERATION,
+        TASK_OBJECT_FETCH_SIZE,
+    ).mapResult { retryRecords ->
+        val retryRecord = retryRecords.firstOrNull()
+        if (retryRecord != null) {
+            retryTopicModeration(retryRecord, reviewer)
+            Result.success(Unit)
+        } else {
+            processNextTopicModeration(reviewer)
         }
-        database.user.getLatestTaskRecord(TaskRecordType.TOPIC_MODERATION)
-    }.mapResult { taskRecord ->
+    }
+
+private suspend fun Backend.processNextTopicModeration(reviewer: TopicSafetyReviewer): Result<Unit> =
+    database.user.getLatestTaskRecord(TaskRecordType.TOPIC_MODERATION).mapResult { taskRecord ->
         val cursor = Cursor.AscCursor(taskRecord?.objectId ?: 0)
-        database.topic.getTopicList(PrimaryKeyFetch(cursor, TOPIC_BATCH_SIZE))
+        database.topic.getTopicList(PrimaryKeyFetch(cursor, TASK_OBJECT_FETCH_SIZE))
     }.mapResult { topics ->
-        if (topics.isEmpty()) {
+        val topic = topics.firstOrNull()
+        if (topic == null) {
             Napier.i(tag = MODERATION_LOG_TAG) {
                 "no topic to review"
             }
         } else {
             Napier.i(tag = MODERATION_LOG_TAG) {
-                "review ${topics.size} topics"
+                "review topic ${topic.id}"
             }
-            processTopicsForModeration(topics, reviewer)
+            processTopicModeration(
+                topic = topic,
+                publicRoomIds = getPublicRoomIds(listOf(topic)),
+                reviewer = reviewer,
+                retryRecordId = null,
+            )
         }
         Result.success(Unit)
     }
-
-private suspend fun Backend.processTopicsForModeration(topics: List<Topic>, reviewer: TopicSafetyReviewer) {
-    val publicRoomIds = getPublicRoomIds(topics)
-    topics.forEach { topic ->
-        processTopicModeration(
-            topic = topic,
-            publicRoomIds = publicRoomIds,
-            reviewer = reviewer,
-            retryRecordId = null,
-        )
-    }
-}
 
 private suspend fun Backend.retryTopicModeration(record: TaskRecord, reviewer: TopicSafetyReviewer) {
     val topic = database.topic.getTopic(ObjectFetch.IdFetch(record.objectId)).getOrThrow()
@@ -197,6 +200,6 @@ private suspend fun Backend.moderateTopic(topic: Topic, reviewer: TopicSafetyRev
     }
 }
 
-private const val TOPIC_BATCH_SIZE = 10
+private const val TASK_OBJECT_FETCH_SIZE = 1
 private const val DEFAULT_TASK_DELAY_MILLIS = 10_000L
 private const val MODERATION_LOG_TAG = "moderation"

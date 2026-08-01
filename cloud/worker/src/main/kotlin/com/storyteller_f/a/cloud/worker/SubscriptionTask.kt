@@ -22,21 +22,18 @@ import kotlinx.coroutines.delay
 suspend fun Backend.doSubscriptionTask() {
     database.user.getLatestTaskRecord(TaskRecordType.SUBSCRIPTION).mapResult { taskRecord ->
         val cursor = Cursor.AscCursor(taskRecord?.objectId ?: 0)
-        database.topic.getTopicList(PrimaryKeyFetch(cursor, 10))
-    }.mapResult {
-        if (it.isEmpty()) {
+        database.topic.getTopicList(PrimaryKeyFetch(cursor, TASK_OBJECT_FETCH_SIZE))
+    }.mapResult { topics ->
+        if (topics.isEmpty()) {
             Napier.i(tag = "subscription") {
                 "no topic to send"
             }
             UNIT_RESULT
         } else {
-            Napier.i(tag = "subscription") {
-                "send ${it.size} topics"
-            }
+            val topic = topics.first()
+            Napier.i(tag = "subscription") { "send topic ${topic.id}" }
             runCatching {
-                it.forEach { topic ->
-                    processTopicSubscription(topic)
-                }
+                processTopicSubscription(topic)
             }
         }
     }.onSuccess {
@@ -55,31 +52,39 @@ suspend fun Backend.doSubscriptionTask() {
 private suspend fun Backend.processTopicSubscription(topic: Topic) {
     // 当前对象发送的最新日志
     val topicParentId = topic.parentId
-    val content = generateTopicSubscriptionContent(topic, topicParentId) ?: return
-    val log = database.subscription.getLatestSubscriptionSentLog(topicParentId)
-        .getOrThrow()?.subscriptionId
-    val cursor = Cursor.AscCursor(log ?: 0)
-    val userSubscriptions = database.subscription.getSubscriptionsByObjectId(topicParentId, PrimaryKeyFetch(cursor, 10))
-        .getOrThrow()
-    userSubscriptions.forEach { userSubscription ->
-        val rawUser = database.user.getRawUser(ObjectFetch.IdFetch(userSubscription.uid))
-            .getOrThrow() ?: throw Exception("user not found")
-        sendTopicToNotificationRoom(1L, rawUser.user, content)
-        database.subscription.insertSubscriptionSentLog(
-            SubscriptionSentLog(
-                SnowflakeFactory.nextId(),
-                userSubscription.uid,
-                topic.id,
-                ObjectType.TOPIC,
-                userSubscription.id,
-                now(),
-            )
-        ).getOrThrow()
-    }
-    if (userSubscriptions.isEmpty()) {
-        Napier.i(tag = "subscription") {
-            "no user subscription to send topic ${topic.id}"
+    val content = generateTopicSubscriptionContent(topic, topicParentId)
+    val latestSentSubscriptionId =
+        database.subscription.getLatestSubscriptionSentLog(topic.id)
+            .getOrThrow()?.subscriptionId
+    var cursor = Cursor.AscCursor(latestSentSubscriptionId ?: 0)
+    while (content != null) {
+        val userSubscriptions =
+            database.subscription.getSubscriptionsByObjectId(
+                topicParentId,
+                PrimaryKeyFetch(cursor, SUBSCRIBER_PAGE_SIZE),
+            ).getOrThrow()
+        if (userSubscriptions.isEmpty()) {
+            break
         }
+        userSubscriptions.forEach { userSubscription ->
+            val rawUser = database.user.getRawUser(ObjectFetch.IdFetch(userSubscription.uid))
+                .getOrThrow() ?: throw Exception("user not found")
+            sendTopicToNotificationRoom(1L, rawUser.user, content)
+            database.subscription.insertSubscriptionSentLog(
+                SubscriptionSentLog(
+                    SnowflakeFactory.nextId(),
+                    userSubscription.uid,
+                    topic.id,
+                    ObjectType.TOPIC,
+                    userSubscription.id,
+                    now(),
+                )
+            ).getOrThrow()
+        }
+        cursor = Cursor.AscCursor(userSubscriptions.last().id)
+    }
+    Napier.i(tag = "subscription") {
+        "all user subscriptions sent for topic ${topic.id}"
     }
     database.admin.createTaskRecord(
         TaskRecord(
@@ -141,3 +146,6 @@ private fun generateTopicSubscriptionContentForTopic(
     appendLine(generateModelMarkdownContent(ObjectTuple(topicId, ObjectType.TOPIC)))
     appendLine(generateModelMarkdownContent(ObjectTuple(topicParentId, ObjectType.TOPIC)))
 }
+
+private const val TASK_OBJECT_FETCH_SIZE = 1
+private const val SUBSCRIBER_PAGE_SIZE = 10
