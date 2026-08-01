@@ -17,6 +17,7 @@ import com.storyteller_f.a.panel.common.PanelNav
 import com.storyteller_f.a.panel.components.InfoTable
 import com.storyteller_f.a.panel.components.TopicCell
 import com.storyteller_f.a.panel.ui.theme.PanelTheme
+import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import kotlinx.datetime.LocalDateTime
@@ -101,6 +102,7 @@ private object PreviewPanelNav : PanelNav {
     override fun gotoAllTitles() = Unit
     override fun gotoTitleDetail(id: Long) = Unit
     override fun gotoTaskRecords() = Unit
+    override fun gotoTaskRecordDetail(type: TaskRecordType) = Unit
     override fun gotoFilePreview(id: Long, url: String, contentType: String, name: String) = Unit
     override fun back() = Unit
     override fun open() = Unit

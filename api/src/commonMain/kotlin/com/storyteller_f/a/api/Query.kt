@@ -186,6 +186,10 @@ class PanelLogsQuery(
 @Serializable
 class TaskRecordsQuery(
     val type: TaskRecordType? = null,
+    /** Filters task executions by their outcome. */
+    val isSuccess: Boolean? = null,
+    /** Filters failed task executions by their failure classification. */
+    val failureType: String? = null,
     override val nextPageToken: String? = null,
     override val prePageToken: String? = null,
     override val size: Int = DEFAULT_PAGE_SIZE,

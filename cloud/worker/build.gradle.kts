@@ -16,6 +16,7 @@ dependencies {
     implementation(projects.cloud.service)
     implementation(projects.cloud.wsApi)
     implementation(projects.shared)
+    implementation(libs.litertlm.jvm)
     implementation(libs.kotlinx.datetime)
     implementation(libs.kotlinx.coroutines.core)
     testImplementation(kotlin("test"))

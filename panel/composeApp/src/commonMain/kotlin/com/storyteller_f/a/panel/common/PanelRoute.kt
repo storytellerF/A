@@ -57,6 +57,7 @@ import com.storyteller_f.a.panel.pages.UserDetailPage
 import com.storyteller_f.a.panel.panelListDetailDestination
 import com.storyteller_f.a.panel.select_an_item
 import com.storyteller_f.a.panel.sign_in
+import com.storyteller_f.shared.model.TaskRecordType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -122,27 +123,33 @@ data object PanelAllTitlesScreen : NavKey
 @Serializable
 data object PanelTaskRecordsScreen : NavKey
 
-val panelNavSerializersModule = SerializersModule {
-    polymorphic(NavKey::class) {
-        subclass(PanelUserDetailScreen::class)
-        subclass(PanelCommunityDetailScreen::class)
-        subclass(PanelRoomDetailScreen::class)
-        subclass(PanelTopicDetailScreen::class)
-        subclass(PanelFileDetailScreen::class)
-        subclass(PanelFilePreviewScreen::class)
-        subclass(PanelTitleDetailScreen::class)
-        subclass(PanelLoginScreen::class)
-        subclass(PanelOverviewScreen::class)
-        subclass(PanelAllUsersScreen::class)
-        subclass(PanelAllCommunitiesScreen::class)
-        subclass(PanelAllPublicRoomsScreen::class)
-        subclass(PanelAllPrivateRoomsScreen::class)
-        subclass(PanelAllTopicsScreen::class)
-        subclass(PanelAllFilesScreen::class)
-        subclass(PanelAllTitlesScreen::class)
-        subclass(PanelTaskRecordsScreen::class)
+@Serializable
+internal class PanelTaskRecordDetailScreen(val type: TaskRecordType) : NavKey
+
+/** Serializers used by panel navigation state persistence. */
+val panelNavSerializersModule: SerializersModule =
+    SerializersModule {
+        polymorphic(NavKey::class) {
+            subclass(PanelUserDetailScreen::class)
+            subclass(PanelCommunityDetailScreen::class)
+            subclass(PanelRoomDetailScreen::class)
+            subclass(PanelTopicDetailScreen::class)
+            subclass(PanelFileDetailScreen::class)
+            subclass(PanelFilePreviewScreen::class)
+            subclass(PanelTitleDetailScreen::class)
+            subclass(PanelLoginScreen::class)
+            subclass(PanelOverviewScreen::class)
+            subclass(PanelAllUsersScreen::class)
+            subclass(PanelAllCommunitiesScreen::class)
+            subclass(PanelAllPublicRoomsScreen::class)
+            subclass(PanelAllPrivateRoomsScreen::class)
+            subclass(PanelAllTopicsScreen::class)
+            subclass(PanelAllFilesScreen::class)
+            subclass(PanelAllTitlesScreen::class)
+            subclass(PanelTaskRecordsScreen::class)
+            subclass(PanelTaskRecordDetailScreen::class)
+        }
     }
-}
 
 interface PanelNav {
     val drawerState: DrawerState
@@ -164,6 +171,10 @@ interface PanelNav {
     fun gotoAllTitles()
     fun gotoTitleDetail(id: Long)
     fun gotoTaskRecords()
+
+    /** Opens execution history for one task type. */
+    fun gotoTaskRecordDetail(type: TaskRecordType)
+
     fun gotoFilePreview(id: Long, url: String, contentType: String, name: String)
     fun back()
     fun open()
@@ -252,6 +263,10 @@ private class DefaultPanelNav(
         backStack.add(PanelTaskRecordsScreen)
     }
 
+    override fun gotoTaskRecordDetail(type: TaskRecordType) {
+        backStack.add(PanelTaskRecordDetailScreen(type))
+    }
+
     override fun gotoFilePreview(id: Long, url: String, contentType: String, name: String) {
         backStack.add(PanelFilePreviewScreen(id))
     }
@@ -275,7 +290,7 @@ private fun panelListDetailMetadata(key: NavKey): Map<String, Any> {
     return if (destination.pane == PanelListDetailPane.List) {
         ListDetailSceneStrategy.listPane(
             sceneKey = destination.scene,
-            detailPlaceholder = { panelDetailPlaceholder() },
+            detailPlaceholder = { PanelDetailPlaceholder() },
         )
     } else {
         ListDetailSceneStrategy.detailPane(sceneKey = destination.scene)
@@ -305,6 +320,9 @@ private fun EntryProviderScope<NavKey>.addStandaloneEntries(nav: PanelNav) {
     }
     entry<PanelTaskRecordsScreen> {
         TaskRecordsPage()
+    }
+    entry<PanelTaskRecordDetailScreen> {
+        TaskRecordsPage(it.type)
     }
     entry<PanelFilePreviewScreen> {
         PanelFilePreviewPage(it.id)
@@ -354,7 +372,7 @@ private fun EntryProviderScope<NavKey>.addListDetailEntries() {
 }
 
 @Composable
-private fun panelDetailPlaceholder() {
+private fun PanelDetailPlaceholder() {
     CenterBox {
         Text(
             text = stringResource(Res.string.select_an_item),

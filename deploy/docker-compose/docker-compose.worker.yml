@@ -8,3 +8,8 @@ services:
 #    restart: unless-stopped
     env_file:
       - ../../deploy/${FLAVOR}.env
+    volumes:
+      - worker-home:/home/app
+
+volumes:
+  worker-home:

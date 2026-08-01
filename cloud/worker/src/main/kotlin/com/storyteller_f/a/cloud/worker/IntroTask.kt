@@ -1,6 +1,5 @@
 package com.storyteller_f.a.cloud.worker
 
-import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.Cursor
 import com.storyteller_f.a.backend.core.ObjectFetch
@@ -20,53 +19,110 @@ import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.shared.utils.now
+import com.storytellerf.a.cloud.worker.TASK_DELAY_MILLIS
+import com.storytellerf.a.cloud.worker.TASK_OBJECT_FETCH_SIZE
+import com.storytellerf.a.cloud.worker.executeTaskObject
+import com.storytellerf.a.cloud.worker.getSystemUserId
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.delay
 
 suspend fun Backend.doIntroTask() {
+    val result = executeIntroTask()
+    result.fold(
+        onSuccess = {
+            Napier.i(tag = INTRO_LOG_TAG) {
+                "intro task completed"
+            }
+        },
+        onFailure = { failure ->
+            Napier.e(tag = INTRO_LOG_TAG, throwable = failure) {
+                "intro task failed"
+            }
+        },
+    )
+    delay(TASK_DELAY_MILLIS)
+}
+
+private suspend fun Backend.executeIntroTask(): Result<Unit> =
+    database.user.getTaskRecordsToRetry(TaskRecordType.INTRO, TASK_OBJECT_FETCH_SIZE).mapResult { retryRecords ->
+        if (retryRecords.isEmpty()) {
+            processNextIntroUsers()
+        } else {
+            retryRecords.forEach { retryRecord ->
+                processIntroRetry(retryRecord)
+            }
+            Result.success(Unit)
+        }
+    }
+
+private suspend fun Backend.processNextIntroUsers(): Result<Unit> =
     database.user.getLatestTaskRecord(TaskRecordType.INTRO).mapResult { taskRecord ->
-        val fetch = PrimaryKeyFetch(Cursor.AscCursor(taskRecord?.processedId ?: 1000), 10)
+        val fetch =
+            PrimaryKeyFetch(
+                Cursor.AscCursor(taskRecord?.objectId ?: INTRO_START_OBJECT_ID),
+                TASK_OBJECT_FETCH_SIZE,
+            )
         database.user.getAllUsers(fetch)
     }.mapResult { paginationResult ->
         if (paginationResult.list.isEmpty()) {
-            Napier.i(tag = "intro") {
+            Napier.i(tag = INTRO_LOG_TAG) {
                 "no more user, total user count is ${paginationResult.total}"
             }
-            Result.success(null)
         } else {
-            Napier.i(tag = "intro") {
-                "user count ${paginationResult.list.size}"
+            Napier.i(tag = INTRO_LOG_TAG) {
+                "process ${paginationResult.list.size} users"
             }
-            sendHelloTopic(paginationResult.list)
+            paginationResult.list.forEach { rawUser ->
+                processIntroUser(rawUser, retryRecordId = null)
+            }
         }
-    }.onSuccess {
-        delay(10000)
-        Napier.i(tag = "intro") {
-            "task success $it"
-        }
-    }.onFailure {
-        delay(10000)
-        Napier.i(tag = "intro", throwable = it) {
-            "task failed"
-        }
+        Result.success(Unit)
     }
+
+private suspend fun Backend.processIntroRetry(record: TaskRecord) {
+    executeTaskObject(
+        type = TaskRecordType.INTRO,
+        objectId = record.objectId,
+        retryRecordId = record.id,
+        failureType = { TaskRecordType.DATA_ACCESS_FAILURE },
+    ) { successRecord ->
+        val rawUser =
+            database.user.getRawUser(ObjectFetch.IdFetch(record.objectId)).getOrThrow()
+                ?: error("User ${record.objectId} not found")
+        sendHelloTopic(rawUser, successRecord)
+    }.logIntroResult(record.objectId)
 }
 
-private suspend fun Backend.sendHelloTopic(rawUsers: List<RawUser>): Result<Unit> {
-    return runCatching {
-        val adminUserResult = database.user.getRawUser(ObjectFetch.AidFetch("System")).getOrThrow()
-        val adminAid = adminUserResult?.user?.id ?: throw Exception("System user not found")
-        rawUsers.forEach {
-            sendTopicToNotificationRoom(adminAid, it.user, "Hello, ${it.user.nickname}")
-            database.admin.createTaskRecord(
-                TaskRecord(SnowflakeFactory.nextId(), now(), TaskRecordType.INTRO, it.user.id)
-            )
-            Napier.i(tag = "intro") {
-                "send hello success"
+private suspend fun Backend.processIntroUser(rawUser: RawUser, retryRecordId: PrimaryKey?) {
+    executeTaskObject(
+        type = TaskRecordType.INTRO,
+        objectId = rawUser.user.id,
+        retryRecordId = retryRecordId,
+        failureType = { TaskRecordType.DATA_ACCESS_FAILURE },
+    ) { successRecord ->
+        sendHelloTopic(rawUser, successRecord)
+    }.logIntroResult(rawUser.user.id)
+}
+
+private suspend fun Backend.sendHelloTopic(rawUser: RawUser, successRecord: TaskRecord) {
+    val systemUserId = getSystemUserId()
+    sendTopicToNotificationRoom(systemUserId, rawUser.user, "Hello, ${rawUser.user.nickname}")
+    database.admin.createTaskRecord(successRecord).getOrThrow()
+}
+
+private fun Result<Unit>.logIntroResult(objectId: PrimaryKey) {
+    fold(
+        onSuccess = {
+            Napier.i(tag = INTRO_LOG_TAG) {
+                "sent hello topic to user $objectId"
             }
-        }
-    }
+        },
+        onFailure = { failure ->
+            Napier.e(tag = INTRO_LOG_TAG, throwable = failure) {
+                "failed to send hello topic to user $objectId"
+            }
+        },
+    )
 }
 
 suspend fun Backend.sendTopicToNotificationRoom(uid: PrimaryKey, user: User, content: String) {
@@ -97,3 +153,6 @@ suspend fun Backend.sedTopicAtRoom(
         GlobalWsEventPublisher.publishNewTopic(RoomFrame.NewTopicInfo(it))
     }
 }
+
+private const val INTRO_START_OBJECT_ID = 1000L
+private const val INTRO_LOG_TAG = "intro"

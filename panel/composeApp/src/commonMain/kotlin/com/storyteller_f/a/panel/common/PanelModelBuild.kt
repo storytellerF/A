@@ -250,11 +250,22 @@ fun createPanelLogsViewModel(
 }
 
 @Composable
-fun createPanelTaskRecordsViewModel(
-    type: TaskRecordType?
-) = panelViewModel(keys = listOf("task-records", type)) { sessionManager, modelStorage ->
-    TaskRecordsViewModel(sessionManager, modelStorage, type)
-}
+internal fun CreatePanelTaskRecordsViewModel(type: TaskRecordType?, isSuccess: Boolean?, failureType: String?) =
+    panelViewModel(keys = listOf("task-records", type, isSuccess, failureType)) { sessionManager, modelStorage ->
+        TaskRecordsViewModel(
+            sessionManager = sessionManager,
+            modelStorage = modelStorage,
+            type = type,
+            isSuccess = isSuccess,
+            failureType = failureType,
+        )
+    }
+
+@Composable
+internal fun CreateTaskRecordSummariesViewModel() =
+    panelViewModel(keys = listOf("task-record-summaries")) { sessionManager, _ ->
+        TaskRecordSummariesViewModel(sessionManager)
+    }
 
 @Composable
 fun PanelLogsTab(targetId: PrimaryKey, objectType: ObjectType) {

@@ -79,6 +79,23 @@ A is a Kotlin Multiplatform application framework that targets Android, Desktop,
 - Worker execution record storage and querying
 - Paginated task records in the Panel administration UI
 - Filtering by task type
+- Local Gemma 3n topic safety review for communities, user spaces, and public community rooms
+- Automatic `READ_ONLY` status for authors of harmful non-private topics
+
+### Worker Topic Moderation
+
+The worker uses Google LiteRT-LM with `litert-community/gemma-4-E2B-it-litert-lm` and downloads then verifies
+`gemma-4-E2B-it.litertlm` in its home directory before starting background tasks. The worker verifies the
+cached model SHA-256 on every startup; a corrupt cache is downloaded again.
+
+The model is approximately 2.59 GB. A complete existing file is reused without another download.
+For offline deployment, place the model at `${HOME}/gemma-4-E2B-it.litertlm` before starting the
+worker. The Docker Compose worker persists `/home/app` in the `worker-home` volume.
+
+Moderation covers topics and comments in communities, user spaces, and public rooms that belong to a
+community. Encrypted private and notification-room topics are excluded. Harmful content such as abusive
+profanity, threats or graphic violence, pornography, hate, self-harm, exploitation, or promoted illegal
+activity causes the author account to be marked `READ_ONLY`.
 
 ### Media Playback
 
@@ -144,6 +161,7 @@ The Wasm distributions bundle Noto Sans SC so CJK text works in browsers such as
 - `BUILD_ON`: Build platform
 - `APP_UID/GID`: Container user permissions, default `1000`
 - `ENABLE_SIGN_UP`: Whether user sign-up is allowed, default `true`
+- `HUGGING_FACE_HUB_TOKEN`: Optional read token forwarded when the worker downloads the Gemma model
 - `MEDIA_SERVICE`: Media storage backend, either `minio` or `filesystem`
 
 ### Gradle Properties

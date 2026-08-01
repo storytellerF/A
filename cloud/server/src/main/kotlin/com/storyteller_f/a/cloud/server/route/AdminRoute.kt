@@ -9,6 +9,7 @@ import com.storyteller_f.a.api.PanelLogInfoListResponse
 import com.storyteller_f.a.api.ReactionRecordInfoListResponse
 import com.storyteller_f.a.api.RoomInfoListResponse
 import com.storyteller_f.a.api.TaskRecordInfoListResponse
+import com.storyteller_f.a.api.TaskRecordSummaryListResponse
 import com.storyteller_f.a.api.TitleInfoListResponse
 import com.storyteller_f.a.api.TopicInfoListResponse
 import com.storyteller_f.a.api.UploadRecordInfoListResponse
@@ -73,6 +74,7 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.Routing
 import io.ktor.server.sessions.clear
 import io.ktor.server.sessions.sessions
+import kotlinx.collections.immutable.toImmutableList
 
 fun Route.bindProtectedAdminRoute(backend: Backend) {
     bindAdminUserRoutes(backend)
@@ -352,7 +354,24 @@ private fun Route.bindAdminTaskRecordRoutes(backend: Backend) {
         q.pagination(IdentifiablePagingGenerator, { l, p ->
             TaskRecordInfoListResponse(l, p)
         }) { f ->
-            backend.getTaskRecords(q.type, f)
+            backend.getTaskRecords(
+                type = q.type,
+                isSuccess = q.isSuccess,
+                failureType = q.failureType,
+                fetch = f,
+            )
+        }
+    }
+    AdminApi.TaskRecords.summary(handleResult(backend)) {
+        backend.database.user.getTaskRecordSummaries().map { summaries ->
+            TaskRecordSummaryListResponse(summaries.toImmutableList())
+        }
+    }
+    AdminApi.TaskRecords.Id.Retry.update(handleResult(backend)) { path, _ ->
+        usePrincipal {
+            backend.database.user.updateTaskRecordRetryRequested(path.id, true).map { updated ->
+                check(updated) { "Task record ${path.id} cannot be marked for retry" }
+            }
         }
     }
 }

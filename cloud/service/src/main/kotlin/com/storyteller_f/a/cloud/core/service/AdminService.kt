@@ -229,9 +229,18 @@ suspend fun Backend.getPanelLogs(
 
 suspend fun Backend.getTaskRecords(
     type: TaskRecordType?,
-    fetch: PrimaryKeyFetch
+    isSuccess: Boolean?,
+    failureType: String?,
+    fetch: PrimaryKeyFetch,
 ): Result<PaginationResult<TaskRecordInfo>> {
-    return database.admin.getTaskRecords(type, fetch).map { result ->
-        PaginationResult(result.list.map { it.toTaskRecordInfo() }, result.total)
-    }
+    val taskRecords =
+        database.admin.getTaskRecords(
+            type = type,
+            isSuccess = isSuccess,
+            failureType = failureType,
+            fetch = fetch,
+        ).map { result ->
+            PaginationResult(result.list.map { it.toTaskRecordInfo() }, result.total)
+        }
+    return taskRecords
 }

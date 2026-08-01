@@ -29,8 +29,15 @@ import com.storyteller_f.a.cloud.ws.api.GlobalWsEventPublisher
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.setupKmpLogger
 import com.storyteller_f.shared.utils.now
+import com.storytellerf.a.cloud.worker.moderation.LiteRtTopicSafetyReviewer
+import com.storytellerf.a.cloud.worker.moderation.TopicSafetyReviewer
+import com.storytellerf.a.cloud.worker.moderation.doTopicModerationTask
+import com.storytellerf.a.cloud.worker.moderation.ensureGemmaModel
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
@@ -46,51 +53,69 @@ fun main() {
     GlobalWsEventPublisher.configure(env["WS_RPC_URL"])
     val backend = buildBackendFromEnv(env)
     runBlocking {
+        val modelPath = ensureGemmaModel(env)
         Napier.i {
-            "worker started"
+            "initialize topic moderation model"
         }
-        val jobs = listOf(launch {
-            while (isActive) {
-                Napier.i(tag = "task") {
-                    "execute agc task at ${now()}"
-                }
-                backend.doAcgTask()
+        LiteRtTopicSafetyReviewer.create(modelPath).use { reviewer ->
+            Napier.i {
+                "worker started"
             }
-        }, launch {
-            while (isActive) {
-                Napier.i(tag = "task") {
-                    "execute intro task at ${now()}"
-                }
-                backend.doIntroTask()
-            }
-        }, launch {
-            while (isActive) {
-                Napier.i(tag = "task") {
-                    "execute subscription task at ${now()}"
-                }
-                backend.doSubscriptionTask()
-            }
-        }, launch {
-            while (isActive) {
-                Napier.i(tag = "task") {
-                    "execute title task at ${now()}"
-                }
-                backend.doTitleTask()
-            }
-        })
-        // 注册 JVM 关闭钩子，捕获 SIGINT / SIGTERM
-        Runtime.getRuntime().addShutdownHook(Thread {
-            println("🔻 收到终止信号，准备退出...")
-            jobs.forEach {
-                it.cancel()
-            }
-            Thread.sleep(1000)
-        })
-        jobs.forEach {
-            it.join()
+            val jobs = startWorkerTasks(backend, reviewer)
+            registerShutdownHook(jobs)
+            jobs.joinAll()
         }
         Napier.i("worker done")
     }
+}
+
+private fun CoroutineScope.startWorkerTasks(backend: Backend, reviewer: TopicSafetyReviewer): List<Job> {
+    val jobs =
+        listOf(
+            launchWorkerTask("acg") {
+                backend.doAcgTask()
+            },
+            launchWorkerTask("intro") {
+                backend.doIntroTask()
+            },
+            launchWorkerTask("subscription") {
+                backend.doSubscriptionTask()
+            },
+            launchWorkerTask("title") {
+                backend.doTitleTask()
+            },
+            launchWorkerTask("topic moderation") {
+                backend.doTopicModerationTask(reviewer)
+            },
+        )
+    return jobs
+}
+
+private fun CoroutineScope.launchWorkerTask(name: String, task: suspend () -> Unit): Job {
+    val job =
+        launch {
+            while (isActive) {
+                Napier.i(tag = "task") {
+                    "execute $name task at ${now()}"
+                }
+                task()
+            }
+        }
+    return job
+}
+
+private fun registerShutdownHook(jobs: List<Job>) {
+    val shutdownHook =
+        Thread(
+            {
+                Napier.i {
+                    "worker received shutdown signal"
+                }
+                jobs.forEach(Job::cancel)
+            },
+            "worker-shutdown",
+        )
+    Runtime.getRuntime().addShutdownHook(shutdownHook)
 }
 
 class WorkerBackend(
