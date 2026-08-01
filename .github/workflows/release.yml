@@ -120,7 +120,9 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
         with:
-          cache-cleanup: on-success
+          # setup-gradle v6.2 cleanup removes Windows cache paths before saving.
+          # Restore on-success after https://github.com/gradle/actions/issues/1013 is fixed.
+          cache-cleanup: never
 
       - name: Build alpha msi
         run: |
