@@ -38,6 +38,7 @@ import com.storyteller_f.shared.model.QuotaInfo
 import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.ReactionRecordInfo
+import com.storyteller_f.shared.model.TaskRecordSummary
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleType
@@ -335,7 +336,7 @@ interface UserDatabase {
     suspend fun getLatestTaskRecord(type: TaskRecordType): Result<TaskRecord?>
 
     /** Returns task-type summary rows for panel display. */
-    suspend fun getTaskRecordSummaries(): Result<List<TaskRecord>>
+    suspend fun getTaskRecordSummaries(): Result<List<TaskRecordSummary>>
 
     /** Returns failed task executions selected for retry. */
     suspend fun getTaskRecordsToRetry(type: TaskRecordType, limit: Int): Result<List<TaskRecord>>

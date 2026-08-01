@@ -136,7 +136,6 @@ private suspend fun Backend.saveTopicModerationFailure(
             createdTime = now(),
             type = TaskRecordType.TOPIC_MODERATION,
             objectId = topicId,
-            isSuccess = false,
             failureType = throwable.toTaskFailureType(),
             failureReason = throwable.message ?: throwable::class.simpleName,
         ),

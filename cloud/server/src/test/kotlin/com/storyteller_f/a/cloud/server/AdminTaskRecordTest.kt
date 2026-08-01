@@ -23,7 +23,6 @@ class AdminTaskRecordTest {
                         createdTime = now(),
                         type = TaskRecordType.TOPIC_MODERATION,
                         objectId = 1004,
-                        isSuccess = false,
                         failureType = TaskRecordType.MODEL_RESPONSE_FAILURE,
                         failureReason = "unexpected model output",
                     ),

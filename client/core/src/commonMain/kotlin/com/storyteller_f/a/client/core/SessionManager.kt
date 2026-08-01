@@ -4,7 +4,7 @@ import com.storyteller_f.a.api.AdminApi
 import com.storyteller_f.a.api.CommonPath
 import com.storyteller_f.a.api.SignInBody
 import com.storyteller_f.a.api.SignInResponse
-import com.storyteller_f.a.api.TaskRecordInfoListResponse
+import com.storyteller_f.a.api.TaskRecordSummaryListResponse
 import com.storyteller_f.endpoint4k.ktor.client.invoke
 import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.getAlgo
@@ -126,7 +126,7 @@ class SimpleUserSessionManager(
 
 interface PanelSessionManager : SessionManager<PanelAccountInfo> {
     /** Retrieves aggregate task execution counts. */
-    suspend fun getTaskRecordSummaries(): Result<TaskRecordInfoListResponse> {
+    suspend fun getTaskRecordSummaries(): Result<TaskRecordSummaryListResponse> {
         val result =
             serviceCatching {
                 AdminApi.TaskRecords.summary()

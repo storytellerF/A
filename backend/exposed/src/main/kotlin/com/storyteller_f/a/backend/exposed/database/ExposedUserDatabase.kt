@@ -36,7 +36,7 @@ import com.storyteller_f.a.backend.exposed.tables.addTaskRecord
 import com.storyteller_f.a.backend.exposed.tables.encodeRecoveryCodeHashes
 import com.storyteller_f.a.backend.exposed.tables.find
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
-import com.storyteller_f.shared.model.TaskRecordInfo
+import com.storyteller_f.shared.model.TaskRecordSummary
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.type.ObjectType
@@ -45,7 +45,6 @@ import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.md5
-import com.storyteller_f.shared.utils.now
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.Op
 import org.jetbrains.exposed.v1.core.ResultRow
@@ -353,7 +352,7 @@ class ExposedUserDatabase(
         return result
     }
 
-    override suspend fun getTaskRecordSummaries(): Result<List<TaskRecord>> =
+    override suspend fun getTaskRecordSummaries(): Result<List<TaskRecordSummary>> =
         TaskRecordType.entries.fold(Result.success(emptyList())) { result, type ->
             result.mapResult { summaries ->
                 getTaskRecordSummary(type).mapResult { summary -> Result.success(summaries + summary) }
@@ -388,21 +387,16 @@ class ExposedUserDatabase(
             } > 0
         }
 
-    private suspend fun getTaskRecordSummary(type: TaskRecordType): Result<TaskRecord> =
+    private suspend fun getTaskRecordSummary(type: TaskRecordType): Result<TaskRecordSummary> =
         getTaskRecordCount(type, true).mapResult { successCount ->
             getTaskRecordCount(type, false).mapResult { failureCount ->
                 getRetryRequestedTaskRecordCount(type).mapResult { retryRequestedCount ->
                     Result.success(
-                        TaskRecord(
-                            TaskRecordInfo(
-                                id = 0,
-                                createdTime = now(),
-                                type = type,
-                                objectId = 0,
-                                successCount = successCount,
-                                failureCount = failureCount,
-                                retryRequestedCount = retryRequestedCount,
-                            ),
+                        TaskRecordSummary(
+                            type = type,
+                            successCount = successCount,
+                            failureCount = failureCount,
+                            retryRequestedCount = retryRequestedCount,
                         ),
                     )
                 }

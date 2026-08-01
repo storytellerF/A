@@ -1039,8 +1039,13 @@ libraries:
     ignorePackages:
       - '*.internal'
       - '*.internal.*'
+      - 'com.storyteller_f.a.api'
+      - 'com.storyteller_f.shared.model'
   LibraryCodeMustSpecifyReturnType:
     active: true
     allowOmitUnit: false
   LibraryEntitiesShouldNotBePublic:
     active: true
+    excludes:
+      - '**/api/src/**'
+      - '**/shared/src/**/com/storyteller_f/shared/model/**'

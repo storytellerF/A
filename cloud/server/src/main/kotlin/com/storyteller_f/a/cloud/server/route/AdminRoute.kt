@@ -9,6 +9,7 @@ import com.storyteller_f.a.api.PanelLogInfoListResponse
 import com.storyteller_f.a.api.ReactionRecordInfoListResponse
 import com.storyteller_f.a.api.RoomInfoListResponse
 import com.storyteller_f.a.api.TaskRecordInfoListResponse
+import com.storyteller_f.a.api.TaskRecordSummaryListResponse
 import com.storyteller_f.a.api.TitleInfoListResponse
 import com.storyteller_f.a.api.TopicInfoListResponse
 import com.storyteller_f.a.api.UploadRecordInfoListResponse
@@ -18,7 +19,6 @@ import com.storyteller_f.a.api.UserLogInfoListResponse
 import com.storyteller_f.a.api.UserSubscriptionInfoListResponse
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.ObjectFetch
-import com.storyteller_f.a.backend.core.types.toTaskRecordInfo
 import com.storyteller_f.a.cloud.core.service.addUser
 import com.storyteller_f.a.cloud.core.service.adminSignIn
 import com.storyteller_f.a.cloud.core.service.adminSignUp
@@ -363,8 +363,8 @@ private fun Route.bindAdminTaskRecordRoutes(backend: Backend) {
         }
     }
     AdminApi.TaskRecords.summary(handleResult(backend)) {
-        backend.database.user.getTaskRecordSummaries().map { records ->
-            TaskRecordInfoListResponse(records.map { it.toTaskRecordInfo() }.toImmutableList())
+        backend.database.user.getTaskRecordSummaries().map { summaries ->
+            TaskRecordSummaryListResponse(summaries.toImmutableList())
         }
     }
     AdminApi.TaskRecords.Id.Retry.update(handleResult(backend)) { path, _ ->

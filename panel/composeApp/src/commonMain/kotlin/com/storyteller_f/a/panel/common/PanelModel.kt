@@ -53,6 +53,7 @@ import com.storyteller_f.shared.model.PanelOverview
 import com.storyteller_f.shared.model.ReactionRecordInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TaskRecordInfo
+import com.storyteller_f.shared.model.TaskRecordSummary
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TitleSearchType
@@ -716,8 +717,8 @@ class TaskRecordsViewModel(
 }
 
 internal class TaskRecordSummariesViewModel(sessionManager: PanelSessionManager) :
-    SimpleViewModel<List<TaskRecordInfo>>() {
-    override val handler: LoadingHandler<List<TaskRecordInfo>> =
+    SimpleViewModel<List<TaskRecordSummary>>() {
+    override val handler: LoadingHandler<List<TaskRecordSummary>> =
         CachedLoadingHandler(
             MutableStateFlow(null),
             viewModelScope,

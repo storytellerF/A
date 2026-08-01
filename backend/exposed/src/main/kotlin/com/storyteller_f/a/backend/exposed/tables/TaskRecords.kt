@@ -4,7 +4,7 @@ import com.storyteller_f.a.backend.core.types.TaskRecord
 import com.storyteller_f.a.backend.exposed.BaseTable
 import com.storyteller_f.a.backend.exposed.customPrimaryKey
 import com.storyteller_f.a.backend.exposed.taskRecordType
-import com.storyteller_f.shared.model.TaskRecordInfo
+import com.storyteller_f.shared.model.TaskRecordType
 import org.jetbrains.exposed.v1.core.Column
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.r2dbc.insert
@@ -36,17 +36,20 @@ object TaskRecords : BaseTable() {
 fun TaskRecord.Companion.wrapRow(resultRow: ResultRow): TaskRecord {
     val taskRecord =
         with(TaskRecords) {
+            val rowFailureType =
+                if (resultRow[success]) {
+                    null
+                } else {
+                    resultRow[failureType] ?: TaskRecordType.UNKNOWN_FAILURE
+                }
             TaskRecord(
-                TaskRecordInfo(
-                    id = resultRow[id],
-                    createdTime = resultRow[createdTime],
-                    objectId = resultRow[objectId],
-                    type = resultRow[type],
-                    isSuccess = resultRow[success],
-                    failureType = resultRow[failureType],
-                    failureReason = resultRow[failureReason],
-                    isRetryRequested = resultRow[retryRequested],
-                ),
+                id = resultRow[id],
+                createdTime = resultRow[createdTime],
+                objectId = resultRow[objectId],
+                type = resultRow[type],
+                failureType = rowFailureType,
+                failureReason = resultRow[failureReason],
+                isRetryRequested = resultRow[retryRequested],
             )
         }
     return taskRecord

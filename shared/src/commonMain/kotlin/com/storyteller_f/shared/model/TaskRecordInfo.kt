@@ -46,10 +46,17 @@ data class TaskRecordInfo(
     val failureReason: String? = null,
     /** Whether an administrator requested this failed execution be retried. */
     val isRetryRequested: Boolean = false,
-    /** Number of successful executions for a task-type summary row. */
-    val successCount: Long? = null,
-    /** Number of failed executions for a task-type summary row. */
-    val failureCount: Long? = null,
-    /** Number of pending retries for a task-type summary row. */
-    val retryRequestedCount: Long? = null,
 ) : PrimaryKeyIdentifiable
+
+/** Aggregate execution counts for one worker task type. */
+@Serializable
+data class TaskRecordSummary(
+    /** Worker task type represented by these counts. */
+    val type: TaskRecordType,
+    /** Number of successful executions. */
+    val successCount: Long,
+    /** Number of failed executions. */
+    val failureCount: Long,
+    /** Number of failed executions awaiting an administrator-requested retry. */
+    val retryRequestedCount: Long,
+)

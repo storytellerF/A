@@ -41,6 +41,7 @@ import com.storyteller_f.a.panel.common.createPanelTaskRecordsViewModel
 import com.storyteller_f.a.panel.common.createTaskRecordSummariesViewModel
 import com.storyteller_f.a.panel.worker_records
 import com.storyteller_f.shared.model.TaskRecordInfo
+import com.storyteller_f.shared.model.TaskRecordSummary
 import com.storyteller_f.shared.model.TaskRecordType
 import org.jetbrains.compose.resources.stringResource
 
@@ -129,14 +130,14 @@ private fun taskRecordDetailContent(type: TaskRecordType): Boolean {
 }
 
 @Composable
-private fun taskRecordSummaryItem(summary: TaskRecordInfo, onClick: () -> Unit): Boolean {
+private fun taskRecordSummaryItem(summary: TaskRecordSummary, onClick: () -> Unit): Boolean {
     ListItem(
         modifier = Modifier.clickable(onClick = onClick),
         headlineContent = { Text(summary.type.name) },
         supportingContent = {
             Text(
-                "Success: ${summary.successCount ?: 0} | Failure: ${summary.failureCount ?: 0} | " +
-                    "Retry: ${summary.retryRequestedCount ?: 0}",
+                "Success: ${summary.successCount} | Failure: ${summary.failureCount} | " +
+                    "Retry: ${summary.retryRequestedCount}",
             )
         },
     )
@@ -145,10 +146,10 @@ private fun taskRecordSummaryItem(summary: TaskRecordInfo, onClick: () -> Unit):
 }
 
 @Composable
-private fun taskRecordOverview(summary: TaskRecordInfo): Boolean {
+private fun taskRecordOverview(summary: TaskRecordSummary): Boolean {
     Text(
-        "Success: ${summary.successCount ?: 0} | Failure: ${summary.failureCount ?: 0} | " +
-            "Retry requested: ${summary.retryRequestedCount ?: 0}",
+        "Success: ${summary.successCount} | Failure: ${summary.failureCount} | " +
+            "Retry requested: ${summary.retryRequestedCount}",
         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
     )
     return true

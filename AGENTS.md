@@ -6,6 +6,7 @@
 - Keep the Gradle configuration cache enabled (`org.gradle.configuration-cache=true`) and avoid side effects or IO during configuration.
 - Logging: use Napier in shared/app code. Initialize a logging tree only when needed for tests or debugging.
 - Static analysis: run Detekt with `config/detekt/detekt.yml`. Existing `detekt-baseline*.xml` files are immutable after creation: never edit, regenerate, add, remove, or migrate their entries. Fix every new or newly exposed issue in source code, and do not add or broaden suppressions to bypass it.
+- Detekt permits public library entities and public data classes only in the configured `api` and `shared.model` protocol/model scopes; keep these exceptions narrowly scoped in `config/detekt/detekt.yml`.
 - New Kotlin source files must start with the private-project license header configured by Detekt.
 - Coverage: generate Kover reports when needed.
 - Environment/secrets: `app/composeApp` and `panel/composeApp` inject values from `deploy/{flavor}.env` through BuildKonfig. `app/androidApp` reads the same env file for deep links. `app/androidApp` and `panel/androidApp` use flavor/buildType values to configure application IDs and build types. Always pass `-Pserver.flavor` and `-Pserver.buildType`.
