@@ -30,6 +30,31 @@ import kotlin.test.assertTrue
 
 class WorkerTest {
     @Test
+    fun `acg award survives notification failure`() {
+        test {
+            val (userId, topicId) =
+                attachSession { session ->
+                    val community = createCommunityForTest("notification failure", "nf1")
+                    val topic = createTopic(ObjectType.COMMUNITY, community.id, "Awarded topic").getOrThrow()
+                    session.uid to topic.id
+                }.custom
+
+            withWorkerBackend { backend ->
+                backend.doAcgTask()
+
+                val userAcg =
+                    backend.database.user.getUserAcgByIds(
+                        com.storyteller_f.a.backend.core.ObjectListFetch.IdListFetch(listOf(userId)),
+                    ).getOrThrow().single { it.first == userId }.second
+                assertEquals(1L, userAcg)
+                val taskRecord = backend.database.user.getLatestTaskRecord(TaskRecordType.TOPIC_ACG).getOrThrow()
+                assertEquals(topicId, taskRecord?.objectId)
+                assertEquals(true, taskRecord?.isSuccess)
+            }
+        }
+    }
+
+    @Test
     fun `test acg task increases user acg count`() {
         test {
             // 创建用户和多个 topic

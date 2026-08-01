@@ -12,6 +12,7 @@ import com.storyteller_f.a.backend.core.types.Topic
 import com.storyteller_f.shared.model.AssetType
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.UNIT_RESULT
 import com.storyteller_f.shared.utils.associateByPair
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.now
@@ -110,18 +111,31 @@ private suspend fun Backend.addAcgForTopic(topic: Topic, successRecord: TaskReco
                 after = oldAcgAmount + 1,
             )
         }
-    val systemUserId = getSystemUserId()
-    if (assetTransaction != null && shouldNotifyAcgAuthor(topic.author, systemUserId)) {
-        val rawUser =
-            database.user.getRawUser(ObjectFetch.IdFetch(topic.author)).getOrThrow()
-                ?: error("User ${topic.author} not found")
-        sendTopicToNotificationRoom(
-            systemUserId,
-            rawUser.user,
-            buildAcgNotificationContent(topic.id),
-        )
-    }
     database.user.addAcgForUser(successRecord, assetTransaction).getOrThrow()
+    if (assetTransaction != null) {
+        notifyAcgAuthor(topic)
+    }
+}
+
+private suspend fun Backend.notifyAcgAuthor(topic: Topic) {
+    UNIT_RESULT.mapResult {
+        val systemUserId = getSystemUserId()
+        if (shouldNotifyAcgAuthor(topic.author, systemUserId)) {
+            val rawUser =
+                database.user.getRawUser(ObjectFetch.IdFetch(topic.author)).getOrThrow()
+                    ?: error("User ${topic.author} not found")
+            sendTopicToNotificationRoom(
+                systemUserId,
+                rawUser.user,
+                buildAcgNotificationContent(topic.id),
+            )
+        }
+        UNIT_RESULT
+    }.onFailure { failure ->
+        Napier.e(tag = ACG_LOG_TAG, throwable = failure) {
+            "failed to notify topic author ${topic.author} about ACG award for ${topic.id}"
+        }
+    }
 }
 
 private fun shouldNotifyAcgAuthor(authorId: PrimaryKey, systemUserId: PrimaryKey): Boolean = authorId != systemUserId
