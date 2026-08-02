@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -31,9 +32,19 @@ kotlin {
 
     jvm()
 
+    @OptIn(ExperimentalKotlinGradlePluginApi::class)
+    applyDefaultHierarchyTemplate()
+
     sourceSets {
+        val headlessTest =
+            create("headlessTest") {
+                dependsOn(commonTest.get())
+            }
         androidMain.dependencies {
             implementation(libs.ktor.client.okhttp)
+        }
+        getByName("androidHostTest") {
+            dependsOn(headlessTest)
         }
         commonMain.dependencies {
             implementation(libs.napier)
@@ -52,6 +63,9 @@ kotlin {
         }
         jvmMain.dependencies {
             implementation(libs.ktor.client.okhttp)
+        }
+        jvmTest {
+            dependsOn(headlessTest)
         }
         if (buildIosTarget) {
             iosMain.dependencies {

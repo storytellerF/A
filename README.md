@@ -72,6 +72,7 @@ A is a Kotlin Multiplatform application framework that targets Android, Desktop,
 
 - Private-key signature sign-in (`/accounts/sign-in`)
 - TOTP two-factor authentication (2FA)
+- Authenticated WebSocket connections through `/ws`
 - User sign-up control through the `ENABLE_SIGN_UP` environment variable
 
 ### Task Management

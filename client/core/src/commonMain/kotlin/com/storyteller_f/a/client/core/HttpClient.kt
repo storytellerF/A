@@ -19,6 +19,7 @@ import io.ktor.client.request.header
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.URLBuilder
 import io.ktor.http.appendPathSegments
 import io.ktor.http.buildUrl
 import io.ktor.http.protocolWithAuthority
@@ -159,7 +160,4 @@ fun HttpClientConfig<*>.defaultClientConfigureForPanel(
     }
 }
 
-fun buildWebSocketUrl(wsServerUrl: String): String = buildUrl {
-    takeFrom(wsServerUrl)
-    appendPathSegments("link")
-}.toString()
+fun buildWebSocketUrl(wsServerUrl: String): String = URLBuilder(wsServerUrl).appendPathSegments("ws").buildString()
