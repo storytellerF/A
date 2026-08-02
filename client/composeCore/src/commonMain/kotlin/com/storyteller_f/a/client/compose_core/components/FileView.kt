@@ -9,10 +9,9 @@ data class RemoteMediaItem(
     val id: String,
     val url: String,
     val contentType: String,
-    val isM3U8PlayList: Boolean,
     val name: String,
     val cover: FileInfo? = null,
-    val title: String? = null
+    val title: String? = null,
 )
 
 sealed interface FileViewData {

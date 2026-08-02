@@ -87,15 +87,14 @@ actual abstract class MediaPlayerService {
 suspend fun MediaPlayerService.startPlay(
     remoteMediaItem: RemoteMediaItem,
     localMediaPlaySession: LocalMediaPlaySession,
-    playList: List<ConstPlayItem>
+    playList: List<ConstPlayItem>,
 ): Result<Unit> {
-    return if (playList.isNotEmpty()) {
-        val newSession = MediaPlaySession(remoteMediaItem, playList, listOf(localMediaPlaySession.uuid), null)
-        get(newSession) { player, s ->
-            player.playNewMedia(s.playList, remoteMediaItem.contentType)
-        }
-        UNIT_RESULT
-    } else {
-        Result.failure(Exception("can't play"))
+    if (playList.isEmpty()) {
+        return Result.failure(Exception("can't play"))
     }
+    val newSession = MediaPlaySession(remoteMediaItem, playList, listOf(localMediaPlaySession.uuid), null)
+    get(newSession) { player, session ->
+        player.playNewMedia(session.playList)
+    }
+    return UNIT_RESULT
 }

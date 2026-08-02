@@ -466,11 +466,12 @@ private fun DownloadRecordPage() {
 }
 
 class DownloadRecordItemPreviewProvider : PreviewParameterProvider<DownloadInfo?> {
-    override val values: Sequence<DownloadInfo?>
-        get() = sequenceOf(
+    override val values: Sequence<DownloadInfo?> =
+        sequenceOf(
             DownloadInfo(
                 id = 1000L,
-                fileInfo = FileInfo(
+                fileInfo =
+                FileInfo(
                     id = 1L,
                     url = "https://example.com/files/sample1.png",
                     fullName = "images/sample1.png",
@@ -480,17 +481,18 @@ class DownloadRecordItemPreviewProvider : PreviewParameterProvider<DownloadInfo?
                     owner = 1001L,
                     ownerType = ObjectType.USER,
                     lastModified = now(),
-                    dimension = null
+                    dimension = null,
                 ),
                 status = DownloadStatus.DOWNLOADING,
                 message = "正在下载…",
                 path = "/downloads/sample1.png",
                 progress = 2_500_000,
-                total = 5_000_000
+                total = 5_000_000,
             ),
             DownloadInfo(
                 id = 2000L,
-                fileInfo = FileInfo(
+                fileInfo =
+                FileInfo(
                     id = 2L,
                     url = "https://example.com/files/sample2.mp4",
                     fullName = "videos/sample2.mp4",
@@ -500,17 +502,18 @@ class DownloadRecordItemPreviewProvider : PreviewParameterProvider<DownloadInfo?
                     owner = 1002L,
                     ownerType = ObjectType.USER,
                     lastModified = now(),
-                    dimension = null
+                    dimension = null,
                 ),
                 status = DownloadStatus.DOWNLOADED,
                 message = "下载完成",
                 path = "/downloads/sample2.mp4",
                 progress = 120_000_000,
-                total = 120_000_000
+                total = 120_000_000,
             ),
             DownloadInfo(
                 id = 3000L,
-                fileInfo = FileInfo(
+                fileInfo =
+                FileInfo(
                     id = 3L,
                     url = "https://example.com/files/sample3.pdf",
                     fullName = "docs/sample3.pdf",
@@ -520,37 +523,18 @@ class DownloadRecordItemPreviewProvider : PreviewParameterProvider<DownloadInfo?
                     owner = 1003L,
                     ownerType = ObjectType.USER,
                     lastModified = now(),
-                    dimension = null
+                    dimension = null,
                 ),
                 status = DownloadStatus.DOWNLOAD_FAILED,
                 message = "网络错误，稍后重试",
                 path = "/downloads/sample3.pdf",
                 progress = 500_000,
-                total = 2_000_000
-            ),
-            DownloadInfo(
-                id = 4000L,
-                fileInfo = FileInfo(
-                    id = 4L,
-                    url = "https://example.com/files/sample4.m3u8",
-                    fullName = "streams/sample4.m3u8",
-                    contentType = FileInfo.M3U8_MIMETYPE,
-                    size = 50_000_000,
-                    name = "sample4.m3u8",
-                    owner = 1004L,
-                    ownerType = ObjectType.USER,
-                    lastModified = now(),
-                    dimension = null
-                ),
-                status = DownloadStatus.PROCESSED,
-                message = "已处理",
-                path = "/downloads/sample4.m3u8",
-                progress = 50_000_000,
-                total = 50_000_000
+                total = 2_000_000,
             ),
             DownloadInfo(
                 id = 5000L,
-                fileInfo = FileInfo(
+                fileInfo =
+                FileInfo(
                     id = 5L,
                     url = "https://example.com/files/sample5.jpg",
                     fullName = "images/sample5.jpg",
@@ -560,14 +544,14 @@ class DownloadRecordItemPreviewProvider : PreviewParameterProvider<DownloadInfo?
                     owner = 1005L,
                     ownerType = ObjectType.USER,
                     lastModified = now(),
-                    dimension = null
+                    dimension = null,
                 ),
                 status = DownloadStatus.PROCESS_FAILED,
                 message = "处理失败：文件损坏",
                 path = "/downloads/sample5.jpg",
                 progress = 3_500_000,
-                total = 3_500_000
-            )
+                total = 3_500_000,
+            ),
         )
 }
 

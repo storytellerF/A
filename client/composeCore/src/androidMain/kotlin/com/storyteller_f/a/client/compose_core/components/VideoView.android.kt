@@ -39,7 +39,6 @@ import androidx.core.util.Consumer
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.ui.PlayerView
-import com.storyteller_f.shared.model.FileInfo
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.launch
 import kotlin.uuid.ExperimentalUuidApi
@@ -91,7 +90,6 @@ private fun VideoPlayer(
 ) {
     val mediaPlayerService = LocalMediaPlayerService.current
     val player by mediaPlayerService.controller.collectAsState()
-    val contentType = remoteMediaItem.contentType
     val videoSize = playingSession?.videoSize
     val ratio = remember(playingSession, localMediaPlaySession) {
         if (videoSize != null &&
@@ -115,14 +113,17 @@ private fun VideoPlayer(
     Box(modifier = pipModifier.aspectRatio(ratio.toFloat())) {
         when {
             player == null -> PlayerWaiting(localMediaPlaySession, remoteMediaItem)
+
             playingSession == null -> PlayerWaiting(localMediaPlaySession, remoteMediaItem)
-            playingSession.lastUuid == localMediaPlaySession.uuid -> VideoPlayerInternal(
-                localMediaPlaySession,
-                player,
-                contentType
-            )
+
+            playingSession.lastUuid == localMediaPlaySession.uuid ->
+                VideoPlayerInternal(
+                    localMediaPlaySession,
+                    player,
+                )
 
             playingSession.id == localMediaPlaySession.id -> PlayerOccupy(localMediaPlaySession)
+
             else -> PlayerWaiting(localMediaPlaySession, remoteMediaItem)
         }
     }
@@ -131,13 +132,9 @@ private fun VideoPlayer(
 @OptIn(ExperimentalUuidApi::class)
 @androidx.annotation.OptIn(UnstableApi::class)
 @Composable
-private fun BoxScope.VideoPlayerInternal(
-    localMediaPlaySession: LocalMediaPlaySession,
-    player: MediaController?,
-    contentType: String,
-) {
+private fun BoxScope.VideoPlayerInternal(localMediaPlaySession: LocalMediaPlaySession, player: MediaController?) {
     player ?: return
-    AndroidPlayerContainer(localMediaPlaySession, player) {
+    AndroidPlayerContainer(player) {
         AndroidView(
             factory = {
                 PlayerView(it).apply {
@@ -152,7 +149,7 @@ private fun BoxScope.VideoPlayerInternal(
             it.player = player
         }
         val playerState by rememberPlayerState(player, localMediaPlaySession)
-        if (playerState.currentIsPlaying && contentType != FileInfo.M3U8_MIMETYPE) {
+        if (playerState.currentIsPlaying) {
             CircularProgressIndicator(modifier = Modifier.align(Alignment.Center).height(40.dp))
         }
     }
@@ -163,7 +160,6 @@ private fun BoxScope.VideoPlayerInternal(
 fun EmbedMediaPlayerMenus(
     localMediaPlaySession: LocalMediaPlaySession,
     playingSession: MediaPlaySession?,
-    contentType: String,
     showSheet: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
@@ -184,13 +180,11 @@ fun EmbedMediaPlayerMenus(
         }) {
             Icon(Icons.Default.ContentCopy, "copy list")
         }
-        if (contentType != FileInfo.M3U8_MIMETYPE) {
-            val uriHandler = LocalUriHandler.current
-            IconButton({
-                uriHandler.openUri(localMediaPlaySession.id)
-            }) {
-                Icon(Icons.Default.Download, "download")
-            }
+        val uriHandler = LocalUriHandler.current
+        IconButton({
+            uriHandler.openUri(localMediaPlaySession.id)
+        }) {
+            Icon(Icons.Default.Download, "download")
         }
         IconButton({
             context.findActivity().enterPictureInPictureMode(
