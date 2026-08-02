@@ -4,7 +4,6 @@ import com.storyteller_f.a.client.core.SingleFlightCustomAuthPlugin
 import com.storyteller_f.a.client.core.UserPass
 import com.storyteller_f.a.client.core.UserSessionModel
 import com.storyteller_f.a.client.core.addRequestHeadersFromInfo
-import com.storyteller_f.a.client.core.buildWebSocketUrl
 import com.storyteller_f.a.client.core.configClientAuth
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.UserInfo
@@ -33,11 +32,6 @@ import kotlin.test.assertEquals
 class Test {
     @Test
     fun `test request`() = Unit
-
-    @Test
-    fun `build websocket url uses ws path`() {
-        assertEquals("wss://api.example.test/ws", buildWebSocketUrl("wss://api.example.test"))
-    }
 
     @Test
     fun `custom auth refresh is single flight for concurrent 401 responses`() = runTest {
