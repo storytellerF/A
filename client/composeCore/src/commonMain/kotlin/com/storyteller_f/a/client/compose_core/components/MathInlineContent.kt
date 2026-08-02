@@ -23,6 +23,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.times
 import com.hrm.latex.renderer.Latex
+import com.hrm.latex.renderer.measure.LatexDimensions
+import com.hrm.latex.renderer.measure.LatexMeasurerState
 import com.hrm.latex.renderer.model.LatexConfig
 import com.mikepenz.markdown.m3.markdownTypography
 import com.mikepenz.markdown.model.ImageTransformer
@@ -116,35 +118,48 @@ fun AnnotatedString.Builder.imageAnnotator(
     isEmbed: Boolean,
     imageTransformer: ImageTransformer,
     typography: MarkdownTypography,
-    colors: MarkdownColors
-): Boolean = when (child.type) {
-    MarkdownElementTypes.IMAGE -> {
-        val id = "image${child.startOffset}-${child.endOffset}"
-        val name = child.findChildOfTypeRecursive(MarkdownElementTypes.LINK_DESTINATION)
-            ?.getUnescapedTextInNode(content)
-        if (name != null) {
-            inlineContentMap[id] = imageInlineContent(
-                uri = name,
-                mediaMap = dimensionMap,
-                maxWidth = maxWidth,
+    colors: MarkdownColors,
+    latexMeasurer: LatexMeasurerState,
+): Boolean {
+    val childType = child.type
+    return when (childType) {
+        MarkdownElementTypes.IMAGE -> {
+            val id = "image${child.startOffset}-${child.endOffset}"
+            val name = child.findChildOfTypeRecursive(MarkdownElementTypes.LINK_DESTINATION)
+                ?.getUnescapedTextInNode(content)
+            if (name != null) {
+                inlineContentMap[id] = imageInlineContent(
+                    uri = name,
+                    mediaMap = dimensionMap,
+                    maxWidth = maxWidth,
+                    density = density,
+                    isEmbed = isEmbed,
+                    transformer = imageTransformer
+                )
+                appendInlineContent(id, name)
+                true
+            } else {
+                false
+            }
+        }
+
+        GFMElementTypes.INLINE_MATH, GFMElementTypes.BLOCK_MATH -> {
+            addMathContent(
+                child = child,
+                content = content,
+                typography = typography,
+                colors = colors,
                 density = density,
-                isEmbed = isEmbed,
-                transformer = imageTransformer
+                maxWidth = maxWidth,
+                inlineContentMap = inlineContentMap,
+                latexMeasurer = latexMeasurer,
             )
-            appendInlineContent(id, name)
             true
-        } else {
+        }
+
+        else -> {
             false
         }
-    }
-
-    GFMElementTypes.INLINE_MATH, GFMElementTypes.BLOCK_MATH -> {
-        addMathContent(child, content, typography, colors, density, maxWidth, inlineContentMap)
-        true
-    }
-
-    else -> {
-        false
     }
 }
 
@@ -155,7 +170,8 @@ private fun AnnotatedString.Builder.addMathContent(
     colors: MarkdownColors,
     density: Density,
     maxWidth: Dp,
-    inlineContentMap: MutableMap<String, InlineTextContent>
+    inlineContentMap: MutableMap<String, InlineTextContent>,
+    latexMeasurer: LatexMeasurerState,
 ) {
     val tex = readInlineMath(child, content)
     val id = "math${child.startOffset}-${child.endOffset}"
@@ -166,26 +182,30 @@ private fun AnnotatedString.Builder.addMathContent(
             typography.code
         }
 
-    // Estimate placeholder size based on font metrics
-    val fontSizePx = with(density) { style.fontSize.toPx() }
-    val lineHeight = fontSizePx * 1.5f
-    val estimatedWidth = if (child.type == GFMElementTypes.INLINE_MATH) {
-        fontSizePx * (1 + tex.length * 0.8f) // conservative width estimate
-    } else {
-        with(density) { maxWidth.toPx() }
-    }
+    val config = LatexConfig(fontSize = style.fontSize)
+    val dimensions = latexMeasurer.measure(tex, config)
+    val fallbackFontSizePx = with(density) { style.fontSize.toPx() }
+    val placeholderSize =
+        calculateMathPlaceholderSize(
+            dimensions = dimensions,
+            isInline = child.type == GFMElementTypes.INLINE_MATH,
+            maxWidthPx = with(density) { maxWidth.toPx() },
+            fallbackFontSizePx = fallbackFontSizePx,
+            contentLength = tex.length,
+        )
 
     val bgColor = style.background.takeIf { it.toArgb() != 0 }
 
-    inlineContentMap[id] = InlineTextContent(
-        Placeholder(
-            width = (estimatedWidth / density.density).sp,
-            height = (lineHeight / density.density).sp,
-            placeholderVerticalAlign = PlaceholderVerticalAlign.TextCenter
-        )
-    ) {
-        LatexInlineContent(tex, style, bgColor)
-    }
+    inlineContentMap[id] =
+        InlineTextContent(
+            Placeholder(
+                width = with(density) { placeholderSize.widthPx.toSp() },
+                height = with(density) { placeholderSize.heightPx.toSp() },
+                placeholderVerticalAlign = PlaceholderVerticalAlign.TextCenter,
+            ),
+        ) {
+            LatexInlineContent(tex, style, bgColor)
+        }
 
     if (child.type == GFMElementTypes.INLINE_MATH) {
         appendInlineContent(id, tex)
@@ -195,4 +215,23 @@ private fun AnnotatedString.Builder.addMathContent(
         appendInlineContent(id, tex)
         pop()
     }
+}
+
+internal data class MathPlaceholderSize(val widthPx: Float, val heightPx: Float)
+
+internal fun calculateMathPlaceholderSize(
+    dimensions: LatexDimensions?,
+    isInline: Boolean,
+    maxWidthPx: Float,
+    fallbackFontSizePx: Float,
+    contentLength: Int,
+): MathPlaceholderSize {
+    val widthPx =
+        if (isInline) {
+            dimensions?.widthPx ?: fallbackFontSizePx * (1 + contentLength * 0.8f)
+        } else {
+            maxWidthPx
+        }
+    val heightPx = dimensions?.heightPx ?: fallbackFontSizePx * 1.5f
+    return MathPlaceholderSize(widthPx, heightPx)
 }

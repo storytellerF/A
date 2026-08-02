@@ -115,6 +115,12 @@ activity causes the author account to be marked `READ_ONLY`.
 - Media playlist management
 - Cross-platform media player service
 
+### Markdown Rendering
+
+- Syntax-highlighted code fences and embedded media
+- LaTeX inline and block formulas with measured layout
+- Mermaid code fences rendered as SVG on Android, Desktop, and Web
+
 ### Cloud CLI
 
 - Preset account key generation
