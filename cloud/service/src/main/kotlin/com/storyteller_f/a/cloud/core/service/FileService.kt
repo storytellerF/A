@@ -390,16 +390,17 @@ suspend fun Backend.tryUploadFiles(
 }
 
 private suspend fun processContentTypeAndDimension(files: List<UploadPack>): List<ProcessedUploadPack> =
-    files.map {
-        val detectedType = Backend.tika.detect(it.file) ?: error("delete content type failed")
-        val dimension = if (detectedType.startsWith("image")) {
-            getImageDimension(it.file.absolutePath, detectedType) {
-                it.file.inputStream().buffered()
+    files.map { uploadPack ->
+        val detectedType = Backend.tika.detect(uploadPack.file) ?: error("delete content type failed")
+        val dimension =
+            if (detectedType.startsWith("image")) {
+                getImageDimension(uploadPack.file.absolutePath, detectedType) {
+                    uploadPack.file.inputStream().buffered()
+                }
+            } else {
+                null
             }
-        } else {
-            null
-        }
-        ProcessedUploadPack(it, detectedType, dimension)
+        ProcessedUploadPack(uploadPack, detectedType, dimension)
     }
 
 @OptIn(ExperimentalUuidApi::class)
@@ -486,9 +487,10 @@ suspend fun Backend.processFileRecordToFileInfo(
         emptyMap()
     }
     return objectStorageService.getWithPresignContext(
-        A_FILE_DEFAULT_BUCKET,
-        fileRecords.map { it.fullName },
-        PresignContext(uid?.toString(), clientIp)
+        bucketName = A_FILE_DEFAULT_BUCKET,
+        names = fileRecords.map { it.fullName },
+        presignContext = PresignContext(uid?.toString(), clientIp),
+        responseContentTypes = fileRecords.associate { it.fullName to it.contentType },
     ).map { mediaList ->
         val mediaRecordMap = mediaList.associateBy { it.fullName }
         fileRecords.mapNotNull { media ->

@@ -5,12 +5,15 @@ import com.storyteller_f.a.backend.core.service.ObjectStorageService
 import com.storyteller_f.a.backend.core.service.UploadPack
 import com.storyteller_f.shared.model.A_FILE_DEFAULT_BUCKET
 import java.io.File
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class ObjectStorageServiceTest {
-
     private fun createTempUploadPack(name: String, content: String): UploadPack {
         val file = File.createTempFile("test-upload-", ".txt").apply {
             writeText(content)
@@ -21,7 +24,7 @@ class ObjectStorageServiceTest {
             name = name,
             size = file.length(),
             fullName = "test/$name",
-            sha256 = "test-sha256-$name"
+            sha256 = "test-sha256-$name",
         )
     }
 
@@ -89,6 +92,12 @@ class ObjectStorageServiceTest {
         assertTrue(getResult.isEmpty())
     }
 
+    private fun getResponseContentType(url: String): String? {
+        val request = HttpRequest.newBuilder(URI(url)).GET().build()
+        val response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.discarding())
+        return response.headers().firstValue("content-type").orElse(null)
+    }
+
     @Test
     fun `test upload and get memory`() = testOssMemory(uploadAndGet)
 
@@ -124,4 +133,21 @@ class ObjectStorageServiceTest {
 
     @Test
     fun `test clean container`() = testOssContainer(clean)
+
+    @Test
+    internal fun `test response content type override container`() {
+        testOssContainer { service ->
+            val pack = createTempUploadPack("legacy.bin", "content")
+            service.upload(A_FILE_DEFAULT_BUCKET, listOf(pack)).getOrThrow()
+            val record =
+                service.getWithPresignContext(
+                    bucketName = A_FILE_DEFAULT_BUCKET,
+                    names = listOf(pack.fullName),
+                    presignContext = null,
+                    responseContentTypes = mapOf(pack.fullName to "image/avif"),
+                ).getOrThrow().single()
+
+            assertEquals("image/avif", getResponseContentType(record.url))
+        }
+    }
 }

@@ -111,37 +111,46 @@ class MinIoObjectStorageService(
     override suspend operator fun get(
         bucketName: String,
         names: List<String>
-    ): Result<List<ObjectStorageRecord>> {
-        return getInternal(bucketName, names, null)
-    }
+    ): Result<List<ObjectStorageRecord>> = getInternal(bucketName, names, null)
 
     override suspend fun getWithPresignContext(
         bucketName: String,
         names: List<String>,
-        presignContext: PresignContext?
+        presignContext: PresignContext?,
+        responseContentTypes: Map<String, String>,
     ): Result<List<ObjectStorageRecord>> {
-        return getInternal(bucketName, names, presignContext)
+        val result =
+            getInternal(
+                bucketName = bucketName,
+                names = names,
+                presignContext = presignContext,
+                responseContentTypes = responseContentTypes,
+            )
+        return result
     }
 
     override suspend fun upload(
         bucketName: String,
         uploadPacks: List<UploadPack>,
     ): Result<List<ObjectStorageWriteRecord>> {
-        return useMinIoClient(connection) {
-            if (!bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
-                makeBucket(MakeBucketArgs.builder().bucket(bucketName).build())
+        val result =
+            useMinIoClient(connection) {
+                if (!bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
+                    makeBucket(MakeBucketArgs.builder().bucket(bucketName).build())
+                }
+                uploadPacks.map { uploadPack ->
+                    val resp =
+                        uploadObject(
+                            UploadObjectArgs.builder()
+                                .bucket(bucketName)
+                                .`object`(uploadPack.fullName)
+                                .filename(uploadPack.file.absolutePath)
+                                .build(),
+                        )
+                    ObjectStorageWriteRecord(resp.`object`())
+                }
             }
-            uploadPacks.map { uploadPack ->
-                val resp = uploadObject(
-                    UploadObjectArgs.builder()
-                        .bucket(bucketName)
-                        .`object`(uploadPack.fullName)
-                        .filename(uploadPack.file.absolutePath)
-                        .build()
-                )
-                ObjectStorageWriteRecord(resp.`object`())
-            }
-        }
+        return result
     }
 
     override suspend fun compose(
@@ -186,21 +195,41 @@ class MinIoObjectStorageService(
     private suspend fun getInternal(
         bucketName: String,
         names: List<String>,
-        presignContext: PresignContext?
+        presignContext: PresignContext?,
+        responseContentTypes: Map<String, String> = emptyMap(),
     ): Result<List<ObjectStorageRecord>> {
         val hasContext = presignContext?.uid.isNullOrBlank().not() || presignContext?.ip.isNullOrBlank().not()
         return useMinIoClient(connection) {
             names.mapNotNull { objName ->
                 try {
-                    val minioObjectUrl = if (hasContext) {
-                        cache.get(presignContext.ip + presignContext.uid + objName) {
-                            getMinioObjectUrl(bucketName, objName, presignContext)
+                    val responseContentType = responseContentTypes[objName]
+                    val cacheKey =
+                        presignCacheKey(
+                            bucketName = bucketName,
+                            objName = objName,
+                            presignContext = presignContext,
+                            responseContentType = responseContentType,
+                        )
+                    val minioObjectUrl =
+                        if (hasContext) {
+                            cache.get(cacheKey) {
+                                getMinioObjectUrl(
+                                    bucketName = bucketName,
+                                    objName = objName,
+                                    presignContext = presignContext,
+                                    responseContentType = responseContentType,
+                                )
+                            }
+                        } else {
+                            cache.get(cacheKey) {
+                                getMinioObjectUrl(
+                                    bucketName = bucketName,
+                                    objName = objName,
+                                    presignContext = null,
+                                    responseContentType = responseContentType,
+                                )
+                            }
                         }
-                    } else {
-                        cache.get(objName) {
-                            getMinioObjectUrl(bucketName, objName, null)
-                        }
-                    }
                     val url = if (minioHost.isNullOrBlank()) {
                         minioObjectUrl
                     } else {
@@ -265,7 +294,8 @@ private fun MinioClient.removeAllObject(bucketName: String) {
 private fun MinioClient.getMinioObjectUrl(
     bucketName: String,
     objName: String,
-    presignContext: PresignContext?
+    presignContext: PresignContext?,
+    responseContentType: String?,
 ) = getPresignedObjectUrl(
     GetPresignedObjectUrlArgs.builder()
         .method(Method.GET)
@@ -277,11 +307,31 @@ private fun MinioClient.getMinioObjectUrl(
                 val ip = presignContext?.ip?.takeIf { it.isNotBlank() }
                 if (uid != null) put("a_uid", uid)
                 if (ip != null) put("a_ip", ip)
-            }
+                responseContentType?.takeIf { it.isNotBlank() }?.let {
+                    put("response-content-type", it)
+                }
+            },
         )
         .expiry(7, TimeUnit.DAYS)
-        .build()
+        .build(),
 )
+
+private fun presignCacheKey(
+    bucketName: String,
+    objName: String,
+    presignContext: PresignContext?,
+    responseContentType: String?,
+): String {
+    val parts =
+        listOf(
+            bucketName,
+            objName,
+            presignContext?.uid.orEmpty(),
+            presignContext?.ip.orEmpty(),
+            responseContentType.orEmpty(),
+        )
+    return parts.joinToString("\u0000")
+}
 
 class MinioObjectStorageServiceFactory : ObjectStorageServiceFactory {
     override fun match(env: MergedEnv): Boolean {

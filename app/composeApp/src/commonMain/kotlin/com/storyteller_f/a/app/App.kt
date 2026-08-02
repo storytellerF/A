@@ -45,6 +45,7 @@ import coil3.request.crossfade
 import coil3.util.DebugLogger
 import com.dokar.sonner.Toaster
 import com.dokar.sonner.rememberToasterState
+import com.storyteller.a.app.addPlatformImageDecoders
 import com.storyteller_f.a.app.common.AppNav
 import com.storyteller_f.a.app.common.AppNavFactory
 import com.storyteller_f.a.app.common.CommunityScreen
@@ -136,8 +137,13 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
-fun getAsyncImageLoader(context: PlatformContext) =
-    ImageLoader.Builder(context).crossfade(true).logger(DebugLogger()).build()
+internal fun getAsyncImageLoader(context: PlatformContext): ImageLoader {
+    val builder = ImageLoader.Builder(context)
+    return builder.addPlatformImageDecoders()
+        .crossfade(true)
+        .logger(DebugLogger())
+        .build()
+}
 
 /**
  * 可以通过lazy 的模式获取Downloader 和 Uploader
