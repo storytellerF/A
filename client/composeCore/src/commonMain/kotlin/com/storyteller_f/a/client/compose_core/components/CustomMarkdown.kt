@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.LocalPlatformContext
 import coil3.compose.rememberAsyncImagePainter
 import coil3.request.ImageRequest
+import com.hrm.latex.renderer.measure.rememberLatexMeasurer
 import com.mikepenz.markdown.compose.Markdown
 import com.mikepenz.markdown.compose.components.MarkdownComponent
 import com.mikepenz.markdown.compose.components.markdownComponents
@@ -47,39 +48,43 @@ fun CustomMarkdown(
 ) {
     val inlineContentMap = remember { mutableMapOf<String, InlineTextContent>() }
     val density = LocalDensity.current
+    val latexMeasurer = rememberLatexMeasurer()
     BoxWithConstraints {
         val maxWidth = this.maxWidth
         CompositionLocalProvider(LocalInspectionMode provides true) {
             val colors = markdownColor()
             val typography = customMarkdownTypography(colors)
+            val annotator =
+                markdownAnnotator { content, child ->
+                    imageAnnotator(
+                        child = child,
+                        content = content,
+                        inlineContentMap = inlineContentMap,
+                        dimensionMap = dimensionMap,
+                        maxWidth = maxWidth,
+                        density = density,
+                        isEmbed = isEmbed,
+                        imageTransformer = imageTransformer,
+                        typography = typography,
+                        colors = colors,
+                        latexMeasurer = latexMeasurer,
+                    )
+                }
             Markdown(
-                plain,
+                content = plain,
                 modifier = Modifier.fillMaxWidth(),
                 colors = colors,
                 typography = typography,
                 imageTransformer = imageTransformer,
                 components = markdownComponents(codeFence = codeFence, codeBlock = highlightedCodeBlock,),
-                annotator = markdownAnnotator { content, child ->
-                    imageAnnotator(
-                        child,
-                        content,
-                        inlineContentMap,
-                        dimensionMap,
-                        maxWidth,
-                        density,
-                        isEmbed,
-                        imageTransformer,
-                        typography,
-                        colors
-                    )
-                },
+                annotator = annotator,
                 inlineContent = markdownInlineContent(inlineContentMap),
                 extendedSpans = markdownExtendedSpans {
                     val animator = rememberSquigglyUnderlineAnimator()
                     remember {
                         ExtendedSpans(RoundedCornerSpanPainter(), SquigglyUnderlineSpanPainter(animator = animator))
                     }
-                }
+                },
             )
         }
     }
