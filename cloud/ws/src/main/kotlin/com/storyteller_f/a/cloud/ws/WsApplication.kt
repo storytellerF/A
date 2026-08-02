@@ -159,10 +159,8 @@ private fun Application.configureWsRoute(
     }
     routing {
         authenticate("user") {
-            listOf(WEB_SOCKET_PATH, LEGACY_WEB_SOCKET_PATH).forEach { path ->
-                webSocket(path) {
-                    webSocketContent(reader, backend)
-                }
+            webSocket("/ws") {
+                webSocketContent(reader, backend)
             }
         }
         rpc("/rpc") {
@@ -180,9 +178,6 @@ private fun Application.configureWsRoute(
         httpClient.close()
     }
 }
-
-private const val WEB_SOCKET_PATH = "/ws"
-private const val LEGACY_WEB_SOCKET_PATH = "/link"
 
 private class WsEventServiceImpl(
     private val backend: Backend,
