@@ -67,7 +67,7 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import com.storyteller_f.a.cloud.ws.module as wsModule
 
-private const val TEST_WS_URL = "ws://localhost/link"
+private const val TEST_WS_URL = "ws://localhost/ws"
 private const val TEST_SESSION_SECRET = "test-session-secret"
 
 private typealias TestRoomReceiver = suspend (
