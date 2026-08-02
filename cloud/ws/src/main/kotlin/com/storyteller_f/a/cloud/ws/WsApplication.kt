@@ -159,7 +159,7 @@ private fun Application.configureWsRoute(
     }
     routing {
         authenticate("user") {
-            webSocket("/link") {
+            webSocket("/ws") {
                 webSocketContent(reader, backend)
             }
         }
