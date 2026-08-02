@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.components
 
 import androidx.compose.runtime.Composable
@@ -7,6 +11,7 @@ import com.hrm.latex.renderer.model.LatexConfig
 import com.mikepenz.markdown.compose.LocalMarkdownTypography
 import com.mikepenz.markdown.compose.components.MarkdownComponentModel
 import com.mikepenz.markdown.compose.elements.highlightedCodeFence
+import com.storyteller.a.client.composecore.markdown.mermaidBlock
 import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.utils.MarkdownObject
@@ -24,17 +29,36 @@ fun CustomCodeFence(
     val lang = remember(modal.node, modal.content) {
         getLang(modal.node, modal.content)
     }
-    when {
-        listOf("com.storyteller_f.a", "c.s.a", "csa").contains(lang) -> refBlock(modal)
-
-        lang == "math" -> LatexBlock(modal)
-
-        lang == "asciidoc" -> AsciidocPreviewBlock(modal)
-
-        lang == "object" -> ObjectBlock(modal, mediaList, onClick)
-
-        else -> HighlightCodeBlock(modal)
+    when (codeFenceKind(lang)) {
+        CodeFenceKind.REF -> refBlock(modal)
+        CodeFenceKind.MATH -> LatexBlock(modal)
+        CodeFenceKind.MERMAID -> mermaidBlock(modal)
+        CodeFenceKind.ASCIIDOC -> AsciidocPreviewBlock(modal)
+        CodeFenceKind.OBJECT -> ObjectBlock(modal, mediaList, onClick)
+        CodeFenceKind.CODE -> HighlightCodeBlock(modal)
     }
+}
+
+internal enum class CodeFenceKind {
+    REF,
+    MATH,
+    MERMAID,
+    ASCIIDOC,
+    OBJECT,
+    CODE,
+}
+
+internal fun codeFenceKind(language: String): CodeFenceKind {
+    val kind =
+        when (language) {
+            "com.storyteller_f.a", "c.s.a", "csa" -> CodeFenceKind.REF
+            "math" -> CodeFenceKind.MATH
+            "mermaid" -> CodeFenceKind.MERMAID
+            "asciidoc" -> CodeFenceKind.ASCIIDOC
+            "object" -> CodeFenceKind.OBJECT
+            else -> CodeFenceKind.CODE
+        }
+    return kind
 }
 
 @Composable

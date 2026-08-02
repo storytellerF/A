@@ -157,8 +157,10 @@ kotlin {
         }
         getByName("wasmJsMain") {
             dependencies {
+                implementation(libs.mermaid.ffi)
                 implementation(libs.kotlinx.browser)
                 implementation(npm("local-font-access", project.file("local-font-access")))
+                implementation(npm("mermaid-ffi-wasm", libs.versions.mermaidFfi.get()))
             }
         }
         // jvm 与 android 共享 compose-pdf 的 PdfView actual（wasm 上无对应库）。
@@ -167,6 +169,7 @@ kotlin {
                 dependsOn(commonMain.get())
                 dependencies {
                     implementation(libs.compose.pdf)
+                    implementation(libs.mermaid.ffi)
                 }
             }
         jvmMain.get().dependsOn(jvmAndroidMain)

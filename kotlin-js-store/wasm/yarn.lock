@@ -18,6 +18,16 @@
     glob "8.1.0"
     unxhr "1.2.0"
 
+"@boltffi/runtime@*":
+  version "0.29.0"
+  resolved "https://registry.yarnpkg.com/@boltffi/runtime/-/runtime-0.29.0.tgz#c9e3f0164e078719f2344a3192ffe873973ce112"
+  integrity sha512-9jxk9Eonl68WhbWNUG62sqbMKmzEiAcmIOKbIV7hbhe5skQ1RP0yNh5okRRMkDko79K4bp+Za5MculjTHevjmw==
+
+"@boltffi/runtime@0.26.1":
+  version "0.26.1"
+  resolved "https://registry.yarnpkg.com/@boltffi/runtime/-/runtime-0.26.1.tgz#9ec02136d3e9954f9c40f6512d52d0f842c7d35d"
+  integrity sha512-0ZU+UJFYBGy94y2ZxwGe6keGh2DgmLxQZCL/j1gVLaGqiD6YDoH8uQINuBkHS+Mua5dI0fW9rDVYVyioOEWI0w==
+
 "@js-joda/core@3.2.0":
   version "3.2.0"
   resolved "https://registry.yarnpkg.com/@js-joda/core/-/core-3.2.0.tgz#3e61e21b7b2b8a6be746df1335cf91d70db2a273"
@@ -180,6 +190,13 @@ keccak@3.0.4:
 
 "local-font-access@file:../../client/composeCore/local-font-access":
   version "1.0.0"
+
+mermaid-ffi-wasm@0.0.1-alpha2:
+  version "0.0.1-alpha2"
+  resolved "https://registry.yarnpkg.com/mermaid-ffi-wasm/-/mermaid-ffi-wasm-0.0.1-alpha2.tgz#e747098ec3adf4becb5fbb6f3cf0cd443ed8be2e"
+  integrity sha512-/mD1I12qO1lyhVvdjlNzimAs0BwVI4L/ILdXhsL7smEx+1qZF5rBpIygX6NVUR1uVqxWtF7VgTFrFP47FfAMKA==
+  dependencies:
+    "@boltffi/runtime" "*"
 
 minimatch@^5.0.1:
   version "5.1.9"
