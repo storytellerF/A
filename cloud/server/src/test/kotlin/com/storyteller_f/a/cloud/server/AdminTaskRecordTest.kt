@@ -2,15 +2,43 @@ package com.storyteller_f.a.cloud.server
 
 import com.storyteller_f.a.api.PaginationQuery
 import com.storyteller_f.a.backend.core.types.TaskRecord
+import com.storyteller_f.a.client.core.getTaskConfigs
 import com.storyteller_f.a.client.core.getTaskRecordSummaries
 import com.storyteller_f.a.client.core.getTaskRecords
 import com.storyteller_f.a.client.core.markTaskRecordForRetry
+import com.storyteller_f.a.client.core.updateTaskConfig
+import com.storyteller_f.shared.model.TaskConfig
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.utils.now
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class AdminTaskRecordTest {
+    @Test
+    fun `admin manages persisted task configs`() {
+        test {
+            val outer = attachPanelSession()
+            loginPanelSession(outer) {
+                assertTrue(getTaskConfigs().getOrThrow().data.isEmpty())
+
+                val initial =
+                    TaskConfig(
+                        type = TaskRecordType.INTRO,
+                        isEnabled = true,
+                        fetchSize = 12,
+                        waitDurationMillis = 2_000,
+                    )
+                assertEquals(initial, updateTaskConfig(initial).getOrThrow())
+                assertEquals(listOf(initial), getTaskConfigs().getOrThrow().data)
+
+                val updated = initial.copy(isEnabled = false, fetchSize = 4)
+                assertEquals(updated, updateTaskConfig(updated).getOrThrow())
+                assertEquals(listOf(updated), getTaskConfigs().getOrThrow().data)
+            }
+        }
+    }
+
     @Test
     fun `admin list worker task records`() {
         test {

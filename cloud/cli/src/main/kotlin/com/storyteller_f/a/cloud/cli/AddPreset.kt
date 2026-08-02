@@ -192,11 +192,18 @@ class AddPreset : Subcommand("add", "add entry") {
             "file" -> addFiles(presetValue, parentDir)
             "title" -> addTitles(presetValue)
             "panelAccount" -> addPanels(presetValue, parentDir)
-            else -> {
-                Napier.e { "unrecognized type $type" }
-                exitProcess(2)
-            }
+            "taskConfig" -> addTaskConfigs(presetValue)
+            else -> handleUnknownPresetType(type)
         }
+    }
+
+    private fun handleUnknownPresetType(type: String) {
+        Napier.e { "unrecognized type $type" }
+        exitProcess(2)
+    }
+
+    private suspend fun Backend.addTaskConfigs(presetValue: PresetValue) {
+        database.upsertTaskConfigs(presetValue.taskConfigData.orEmpty()).getOrThrow()
     }
 
     private suspend fun Backend.addPanels(presetValue: PresetValue, parentDir: File) {

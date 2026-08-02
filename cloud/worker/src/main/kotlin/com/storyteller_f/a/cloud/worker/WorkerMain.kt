@@ -27,6 +27,8 @@ import com.storyteller_f.a.backend.core.setLogPath
 import com.storyteller_f.a.backend.exposed.buildExposedDatabase
 import com.storyteller_f.a.cloud.ws.api.GlobalWsEventPublisher
 import com.storyteller_f.shared.loadCryptoLibIfNeed
+import com.storyteller_f.shared.model.TaskConfig
+import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.setupKmpLogger
 import com.storyteller_f.shared.utils.now
 import com.storytellerf.a.cloud.worker.moderation.LiteRtTopicSafetyReviewer
@@ -34,12 +36,16 @@ import com.storytellerf.a.cloud.worker.moderation.TopicSafetyReviewer
 import com.storytellerf.a.cloud.worker.moderation.doTopicModerationTask
 import com.storytellerf.a.cloud.worker.moderation.ensureGemmaModel
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import java.nio.file.Path
+import java.util.Locale
 
 fun main() {
     setLogPath()
@@ -53,15 +59,11 @@ fun main() {
     GlobalWsEventPublisher.configure(env["WS_RPC_URL"])
     val backend = buildBackendFromEnv(env)
     runBlocking {
-        val modelPath = ensureGemmaModel(env)
-        Napier.i {
-            "initialize topic moderation model"
-        }
-        LiteRtTopicSafetyReviewer.create(modelPath).use { reviewer ->
+        TopicSafetyReviewerProvider { createTopicSafetyReviewer(env) }.use { reviewerProvider ->
             Napier.i {
                 "worker started"
             }
-            val jobs = startWorkerTasks(backend, reviewer)
+            val jobs = startWorkerTasks(backend, reviewerProvider)
             registerShutdownHook(jobs)
             jobs.joinAll()
         }
@@ -69,39 +71,116 @@ fun main() {
     }
 }
 
-private fun CoroutineScope.startWorkerTasks(backend: Backend, reviewer: TopicSafetyReviewer): List<Job> {
+internal class TopicSafetyReviewerProvider(factory: () -> TopicSafetyReviewer?) : AutoCloseable {
+    private val reviewer = lazy(factory)
+
+    fun get(): TopicSafetyReviewer? = reviewer.value
+
+    override fun close() {
+        if (reviewer.isInitialized()) {
+            reviewer.value?.close()
+        }
+    }
+}
+
+internal fun createTopicSafetyReviewer(
+    env: MergedEnv,
+    modelProvider: (MergedEnv) -> Path = ::ensureGemmaModel,
+    reviewerFactory: ((Path) -> TopicSafetyReviewer)? = null,
+): TopicSafetyReviewer? {
+    if (!isTopicModerationEnabled(env)) {
+        Napier.w(tag = "moderation") {
+            "topic moderation is disabled"
+        }
+        return null
+    }
+    val modelPath = modelProvider(env)
+    Napier.i(tag = "moderation") {
+        "initialize topic moderation model"
+    }
+    return reviewerFactory?.invoke(modelPath) ?: LiteRtTopicSafetyReviewer.create(modelPath)
+}
+
+internal fun isTopicModerationEnabled(env: MergedEnv): Boolean {
+    val configuredValue = env[TOPIC_MODERATION_ENABLED]?.run { trim().lowercase(Locale.ROOT) }
+    return when (configuredValue) {
+        null, "true" -> true
+        "false" -> false
+        else -> throw IllegalArgumentException("$TOPIC_MODERATION_ENABLED must be true or false")
+    }
+}
+
+private fun CoroutineScope.startWorkerTasks(
+    backend: Backend,
+    reviewerProvider: TopicSafetyReviewerProvider,
+): List<Job> {
     val jobs =
         listOf(
-            launchWorkerTask("acg") {
-                backend.doAcgTask()
+            launchWorkerTask(backend, TaskRecordType.TOPIC_ACG, "acg") { config ->
+                backend.doAcgTask(config.fetchSize)
             },
-            launchWorkerTask("intro") {
-                backend.doIntroTask()
+            launchWorkerTask(backend, TaskRecordType.INTRO, "intro") { config ->
+                backend.doIntroTask(config.fetchSize)
             },
-            launchWorkerTask("subscription") {
-                backend.doSubscriptionTask()
+            launchWorkerTask(backend, TaskRecordType.SUBSCRIPTION, "subscription") { config ->
+                backend.doSubscriptionTask(config.fetchSize)
             },
-            launchWorkerTask("title") {
-                backend.doTitleTask()
+            launchWorkerTask(backend, TaskRecordType.TITLE, "title") { config ->
+                backend.doTitleTask(config.fetchSize)
             },
-            launchWorkerTask("topic moderation") {
-                backend.doTopicModerationTask(reviewer)
+            launchWorkerTask(backend, TaskRecordType.TOPIC_MODERATION, "topic moderation") { config ->
+                reviewerProvider.get()?.let { reviewer ->
+                    backend.doTopicModerationTask(reviewer, config.fetchSize)
+                }
             },
         )
     return jobs
 }
 
-private fun CoroutineScope.launchWorkerTask(name: String, task: suspend () -> Unit): Job {
+private fun CoroutineScope.launchWorkerTask(
+    backend: Backend,
+    type: TaskRecordType,
+    name: String,
+    task: suspend (TaskConfig) -> Unit,
+): Job {
     val job =
         launch {
             while (isActive) {
-                Napier.i(tag = "task") {
-                    "execute $name task at ${now()}"
-                }
-                task()
+                val configResult = backend.database.getTaskConfig(type)
+                executeConfiguredTaskIteration(name, configResult, task)
             }
         }
     return job
+}
+
+internal suspend fun executeConfiguredTaskIteration(
+    name: String,
+    configResult: Result<TaskConfig?>,
+    task: suspend (TaskConfig) -> Unit,
+    wait: suspend (Long) -> Unit = { delay(it) },
+) {
+    val failure = configResult.exceptionOrNull()
+    if (failure is CancellationException) throw failure
+    if (failure != null) {
+        Napier.e(tag = "task", throwable = failure) {
+            "failed to load $name task configuration"
+        }
+        wait(TASK_CONFIG_POLL_MILLIS)
+        return
+    }
+    val config = configResult.getOrNull()
+    if (config?.isEnabled != true) {
+        Napier.d(tag = "task") {
+            "$name task is not configured or is disabled"
+        }
+        wait(TASK_CONFIG_POLL_MILLIS)
+        return
+    }
+    Napier.i(tag = "task") {
+        "execute $name task at ${now()}"
+    }
+    task(config)
+    wait(config.waitDurationMillis)
 }
 
 private fun registerShutdownHook(jobs: List<Job>) {
@@ -162,3 +241,6 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
         buildExposedDatabase(databaseConnection)
     )
 }
+
+private const val TOPIC_MODERATION_ENABLED = "TOPIC_MODERATION_ENABLED"
+internal const val TASK_CONFIG_POLL_MILLIS = 10_000L

@@ -13,8 +13,10 @@ import com.google.ai.edge.litertlm.SamplerConfig
 import java.nio.file.Path
 import java.util.Locale
 
-internal fun interface TopicSafetyReviewer {
+internal fun interface TopicSafetyReviewer : AutoCloseable {
     suspend fun isHarmful(content: String): Boolean
+
+    override fun close() = Unit
 }
 
 internal class LiteRtTopicSafetyReviewer private constructor(private val engine: Engine) :

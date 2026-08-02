@@ -38,6 +38,7 @@ import com.storyteller_f.shared.model.QuotaInfo
 import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.ReactionRecordInfo
+import com.storyteller_f.shared.model.TaskConfig
 import com.storyteller_f.shared.model.TaskRecordSummary
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.model.TitleSearchType
@@ -187,6 +188,15 @@ interface CombinedDatabase {
     val reaction: ReactionDatabase
     val favorite: FavoriteDatabase
     val subscription: SubscriptionDatabase
+
+    /** Returns the persisted configuration for one worker task, or null when it has not been configured. */
+    val getTaskConfig: suspend (TaskRecordType) -> Result<TaskConfig?>
+
+    /** Returns all persisted worker task configurations. */
+    val getTaskConfigs: suspend () -> Result<List<TaskConfig>>
+
+    /** Creates or replaces worker task configurations by task type. */
+    val upsertTaskConfigs: suspend (List<TaskConfig>) -> Result<Unit>
 
     suspend fun init()
     suspend fun clean()
@@ -670,6 +680,7 @@ interface AdminDatabase {
     ): Result<Unit>
 
     suspend fun createTaskRecord(record: TaskRecord): Result<TaskRecord>
+
     suspend fun getTaskRecords(
         type: TaskRecordType?,
         isSuccess: Boolean?,

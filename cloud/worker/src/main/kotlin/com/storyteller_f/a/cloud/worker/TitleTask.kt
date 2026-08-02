@@ -9,15 +9,13 @@ import com.storyteller_f.a.backend.core.types.Title
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
-import com.storytellerf.a.cloud.worker.TASK_DELAY_MILLIS
-import com.storytellerf.a.cloud.worker.TASK_OBJECT_FETCH_SIZE
+import com.storytellerf.a.cloud.worker.DEFAULT_TASK_OBJECT_FETCH_SIZE
 import com.storytellerf.a.cloud.worker.executeTaskObject
 import com.storytellerf.a.cloud.worker.getSystemUserId
 import io.github.aakira.napier.Napier
-import kotlinx.coroutines.delay
 
-suspend fun Backend.doTitleTask() {
-    val result = executeTitleTask()
+suspend fun Backend.doTitleTask(fetchSize: Int = DEFAULT_TASK_OBJECT_FETCH_SIZE) {
+    val result = executeTitleTask(fetchSize)
     result.fold(
         onSuccess = {
             Napier.i(tag = TITLE_LOG_TAG) {
@@ -30,13 +28,12 @@ suspend fun Backend.doTitleTask() {
             }
         },
     )
-    delay(TASK_DELAY_MILLIS)
 }
 
-private suspend fun Backend.executeTitleTask(): Result<Unit> =
-    database.user.getTaskRecordsToRetry(TaskRecordType.TITLE, TASK_OBJECT_FETCH_SIZE).mapResult { retryRecords ->
+private suspend fun Backend.executeTitleTask(fetchSize: Int): Result<Unit> =
+    database.user.getTaskRecordsToRetry(TaskRecordType.TITLE, fetchSize).mapResult { retryRecords ->
         if (retryRecords.isEmpty()) {
-            processNextTitles()
+            processNextTitles(fetchSize)
         } else {
             retryRecords.forEach { retryRecord ->
                 processTitleRetry(retryRecord)
@@ -45,10 +42,10 @@ private suspend fun Backend.executeTitleTask(): Result<Unit> =
         }
     }
 
-private suspend fun Backend.processNextTitles(): Result<Unit> =
+private suspend fun Backend.processNextTitles(fetchSize: Int): Result<Unit> =
     database.user.getLatestTaskRecord(TaskRecordType.TITLE).mapResult { taskRecord ->
         val cursor = Cursor.AscCursor(taskRecord?.objectId ?: 0)
-        database.title.getAllRawTitles(PrimaryKeyFetch(cursor, TASK_OBJECT_FETCH_SIZE))
+        database.title.getAllRawTitles(PrimaryKeyFetch(cursor, fetchSize))
     }.mapResult { result ->
         if (result.list.isEmpty()) {
             Napier.i(tag = TITLE_LOG_TAG) {

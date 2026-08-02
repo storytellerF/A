@@ -8,6 +8,7 @@ import com.storyteller_f.a.api.MemberInfoListResponse
 import com.storyteller_f.a.api.PanelLogInfoListResponse
 import com.storyteller_f.a.api.ReactionRecordInfoListResponse
 import com.storyteller_f.a.api.RoomInfoListResponse
+import com.storyteller_f.a.api.TaskConfigListResponse
 import com.storyteller_f.a.api.TaskRecordInfoListResponse
 import com.storyteller_f.a.api.TaskRecordSummaryListResponse
 import com.storyteller_f.a.api.TitleInfoListResponse
@@ -69,6 +70,7 @@ import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.cloud.server.common.pagination
 import com.storyteller_f.endpoint4k.ktor.server.invoke
 import com.storyteller_f.endpoint4k.ktor.server.receiveBody
+import com.storyteller_f.shared.model.TaskConfig
 import com.storyteller_f.shared.utils.UNIT_RESULT
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.Routing
@@ -85,12 +87,34 @@ fun Route.bindProtectedAdminRoute(backend: Backend) {
     bindAdminFileRoutes(backend)
     bindAdminPanelLogRoutes(backend)
     bindAdminTaskRecordRoutes(backend)
+    bindAdminTaskConfigRoutes(backend)
     AdminApi.signOut(handleResult(backend)) {
         call.sessions.clear(UserSession::class)
         UNIT_RESULT
     }
     AdminApi.overview(handleResult(backend)) {
         backend.getOverview()
+    }
+}
+
+private fun Route.bindAdminTaskConfigRoutes(backend: Backend) {
+    AdminApi.TaskConfigs.get(handleResult(backend)) {
+        backend.database.getTaskConfigs().map { configs ->
+            TaskConfigListResponse(configs.toImmutableList())
+        }
+    }
+    AdminApi.TaskConfigs.Type.update(handleResult(backend)) { path, api ->
+        usePrincipal {
+            val body = api.receiveBody()
+            val config =
+                TaskConfig(
+                    type = path.type,
+                    isEnabled = body.isEnabled,
+                    fetchSize = body.fetchSize,
+                    waitDurationMillis = body.waitDurationMillis,
+                )
+            backend.database.upsertTaskConfigs(listOf(config)).map { config }
+        }
     }
 }
 

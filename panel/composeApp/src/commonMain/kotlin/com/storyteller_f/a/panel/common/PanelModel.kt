@@ -25,6 +25,7 @@ import com.storyteller_f.a.client.core.getPanelLogs
 import com.storyteller_f.a.client.core.getRoomById
 import com.storyteller_f.a.client.core.getRoomFiles
 import com.storyteller_f.a.client.core.getRoomMembers
+import com.storyteller_f.a.client.core.getTaskConfigs
 import com.storyteller_f.a.client.core.getTaskRecordSummaries
 import com.storyteller_f.a.client.core.getTaskRecords
 import com.storyteller_f.a.client.core.getTitleById
@@ -44,6 +45,7 @@ import com.storyteller_f.a.client.core.getUserSubscriptions
 import com.storyteller_f.a.client.core.getUserUploadRecords
 import com.storyteller_f.a.client.core.markTaskRecordForRetry
 import com.storyteller_f.a.client.core.overview
+import com.storyteller_f.a.client.core.updateTaskConfig
 import com.storyteller_f.shared.Type2Algo
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.AlgoType
@@ -54,6 +56,7 @@ import com.storyteller_f.shared.model.PanelLogInfo
 import com.storyteller_f.shared.model.PanelOverview
 import com.storyteller_f.shared.model.ReactionRecordInfo
 import com.storyteller_f.shared.model.RoomInfo
+import com.storyteller_f.shared.model.TaskConfig
 import com.storyteller_f.shared.model.TaskRecordInfo
 import com.storyteller_f.shared.model.TaskRecordSummary
 import com.storyteller_f.shared.model.TaskRecordType
@@ -88,6 +91,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class AllUsersViewModel(
@@ -728,4 +732,119 @@ internal class TaskRecordSummariesViewModel(sessionManager: PanelSessionManager)
         ) {
             sessionManager.getTaskRecordSummaries().map { it.data }
         }
+}
+
+internal data class TaskConfigEditorState(
+    val type: TaskRecordType,
+    val isEnabled: Boolean,
+    val fetchSize: String,
+    val waitDurationMillis: String,
+    val isSaving: Boolean = false,
+)
+
+internal data class TaskConfigsUiState(
+    val isLoading: Boolean = true,
+    val configs: List<TaskConfigEditorState> = emptyList(),
+    val error: String? = null,
+)
+
+internal class TaskConfigsViewModel(private val sessionManager: PanelSessionManager) : ViewModel() {
+    private val mutableUiState = MutableStateFlow(TaskConfigsUiState())
+    val uiState: StateFlow<TaskConfigsUiState> = mutableUiState.asStateFlow()
+
+    init {
+        refresh()
+    }
+
+    fun refresh() {
+        viewModelScope.launch {
+            mutableUiState.update { it.copy(isLoading = true, error = null) }
+            sessionManager.getTaskConfigs().fold(
+                onSuccess = { response ->
+                    mutableUiState.value =
+                        TaskConfigsUiState(
+                            isLoading = false,
+                            configs = response.data.sortedBy { it.type.ordinal }.map(TaskConfig::toEditorState),
+                        )
+                },
+                onFailure = { failure ->
+                    mutableUiState.update {
+                        it.copy(isLoading = false, error = failure.message ?: "Failed to load task configurations")
+                    }
+                },
+            )
+        }
+    }
+
+    fun updateEnabled(type: TaskRecordType, isEnabled: Boolean) {
+        updateEditor(type) { it.copy(isEnabled = isEnabled) }
+    }
+
+    fun updateFetchSize(type: TaskRecordType, fetchSize: String) {
+        updateEditor(type) { it.copy(fetchSize = fetchSize) }
+    }
+
+    fun updateWaitDuration(type: TaskRecordType, waitDurationMillis: String) {
+        updateEditor(type) { it.copy(waitDurationMillis = waitDurationMillis) }
+    }
+
+    fun save(type: TaskRecordType) {
+        val editor = mutableUiState.value.configs.firstOrNull { it.type == type } ?: return
+        val config = editor.toTaskConfigOrNull()
+        if (config == null) {
+            mutableUiState.update { it.copy(error = "Fetch size and wait duration must be greater than zero") }
+            return
+        }
+        viewModelScope.launch {
+            setSaving(type, true)
+            sessionManager.updateTaskConfig(config).fold(
+                onSuccess = { savedConfig ->
+                    updateEditor(type) { savedConfig.toEditorState() }
+                    mutableUiState.update { it.copy(error = null) }
+                },
+                onFailure = { failure ->
+                    setSaving(type, false)
+                    mutableUiState.update {
+                        it.copy(error = failure.message ?: "Failed to save task configuration")
+                    }
+                },
+            )
+        }
+    }
+
+    private fun setSaving(type: TaskRecordType, isSaving: Boolean) {
+        updateEditor(type) { it.copy(isSaving = isSaving) }
+    }
+
+    private fun updateEditor(type: TaskRecordType, transform: (TaskConfigEditorState) -> TaskConfigEditorState) {
+        mutableUiState.update { state ->
+            val configs =
+                state.configs.map { editor ->
+                    if (editor.type == type) transform(editor) else editor
+                }
+            state.copy(configs = configs)
+        }
+    }
+}
+
+private fun TaskConfig.toEditorState(): TaskConfigEditorState {
+    val editorState =
+        TaskConfigEditorState(
+            type = type,
+            isEnabled = isEnabled,
+            fetchSize = fetchSize.toString(),
+            waitDurationMillis = waitDurationMillis.toString(),
+        )
+    return editorState
+}
+
+private fun TaskConfigEditorState.toTaskConfigOrNull(): TaskConfig? {
+    val parsedFetchSize = fetchSize.toIntOrNull()?.takeIf { it > 0 } ?: return null
+    val parsedWaitDuration = waitDurationMillis.toLongOrNull()?.takeIf { it > 0 } ?: return null
+    return TaskConfig(
+        type = type,
+        isEnabled = isEnabled,
+        fetchSize = parsedFetchSize,
+        waitDurationMillis = parsedWaitDuration,
+    )
 }

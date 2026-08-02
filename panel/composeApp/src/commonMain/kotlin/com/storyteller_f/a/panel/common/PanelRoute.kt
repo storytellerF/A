@@ -58,6 +58,7 @@ import com.storyteller_f.a.panel.panelListDetailDestination
 import com.storyteller_f.a.panel.select_an_item
 import com.storyteller_f.a.panel.sign_in
 import com.storyteller_f.shared.model.TaskRecordType
+import com.storytellerf.a.panel.pages.TaskConfigsPage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -123,6 +124,10 @@ data object PanelAllTitlesScreen : NavKey
 @Serializable
 data object PanelTaskRecordsScreen : NavKey
 
+/** Opens the worker task configuration editor. */
+@Serializable
+data object PanelTaskConfigsScreen : NavKey
+
 @Serializable
 internal class PanelTaskRecordDetailScreen(val type: TaskRecordType) : NavKey
 
@@ -147,6 +152,7 @@ val panelNavSerializersModule: SerializersModule =
             subclass(PanelAllFilesScreen::class)
             subclass(PanelAllTitlesScreen::class)
             subclass(PanelTaskRecordsScreen::class)
+            subclass(PanelTaskConfigsScreen::class)
             subclass(PanelTaskRecordDetailScreen::class)
         }
     }
@@ -171,6 +177,9 @@ interface PanelNav {
     fun gotoAllTitles()
     fun gotoTitleDetail(id: Long)
     fun gotoTaskRecords()
+
+    /** Opens the worker task configuration editor. */
+    fun gotoTaskConfigs()
 
     /** Opens execution history for one task type. */
     fun gotoTaskRecordDetail(type: TaskRecordType)
@@ -263,6 +272,10 @@ private class DefaultPanelNav(
         backStack.add(PanelTaskRecordsScreen)
     }
 
+    override fun gotoTaskConfigs() {
+        backStack.add(PanelTaskConfigsScreen)
+    }
+
     override fun gotoTaskRecordDetail(type: TaskRecordType) {
         backStack.add(PanelTaskRecordDetailScreen(type))
     }
@@ -320,6 +333,9 @@ private fun EntryProviderScope<NavKey>.addStandaloneEntries(nav: PanelNav) {
     }
     entry<PanelTaskRecordsScreen> {
         TaskRecordsPage()
+    }
+    entry<PanelTaskConfigsScreen> {
+        TaskConfigsPage()
     }
     entry<PanelTaskRecordDetailScreen> {
         TaskRecordsPage(it.type)

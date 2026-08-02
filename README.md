@@ -79,18 +79,31 @@ A is a Kotlin Multiplatform application framework that targets Android, Desktop,
 - Worker execution record storage and querying
 - Paginated task records in the Panel administration UI
 - Filtering by task type
+- Persisted worker task switches, fetch sizes, and wait durations managed from the Panel
 - Local Gemma 3n topic safety review for communities, user spaces, and public community rooms
 - Automatic `READ_ONLY` status for authors of harmful non-private topics
 
+Worker task settings are stored per task type. A task without a persisted configuration does not run.
+The CLI `add` command accepts a `taskConfig` preset whose `taskConfigData` entries contain `type`,
+`isEnabled`, `fetchSize`, and `waitDurationMillis`; see `deploy/dev-data/7_preset_task_config.json`.
+Administrators can edit the same values from the Panel's **Worker task configurations** page. Workers
+reload the setting before every iteration, so enabling, disabling, or tuning a task does not require a restart.
+
 ### Worker Topic Moderation
 
-The worker uses Google LiteRT-LM with `litert-community/gemma-4-E2B-it-litert-lm` and downloads then verifies
-`gemma-4-E2B-it.litertlm` in its home directory before starting background tasks. The worker verifies the
-cached model SHA-256 on every startup; a corrupt cache is downloaded again.
+When the persisted `TOPIC_MODERATION` task configuration is enabled, the worker uses Google LiteRT-LM
+with `litert-community/gemma-4-E2B-it-litert-lm` and downloads then verifies
+`gemma-4-E2B-it.litertlm` in its home directory before the first moderation iteration. The worker verifies
+the cached model SHA-256 before loading it; a corrupt cache is downloaded again.
 
 The model is approximately 2.59 GB. A complete existing file is reused without another download.
 For offline deployment, place the model at `${HOME}/gemma-4-E2B-it.litertlm` before starting the
 worker. The Docker Compose worker persists `/home/app` in the `worker-home` volume.
+
+LiteRT-LM's prebuilt Linux x86_64 library requires AVX. On a NAS or other host without AVX support,
+set `TOPIC_MODERATION_ENABLED=false` in the worker's `deploy/<flavor>.env` file. This hard override skips
+the model download and LiteRT initialization while continuing its other background tasks. Topic content
+is not reviewed and harmful-topic authors are not automatically marked `READ_ONLY` while moderation is disabled.
 
 Moderation covers topics and comments in communities, user spaces, and public rooms that belong to a
 community. Encrypted private and notification-room topics are excluded. Harmful content such as abusive
@@ -161,6 +174,7 @@ The Wasm distributions bundle Noto Sans SC so CJK text works in browsers such as
 - `BUILD_ON`: Build platform
 - `APP_UID/GID`: Container user permissions, default `1000`
 - `ENABLE_SIGN_UP`: Whether user sign-up is allowed, default `true`
+- `TOPIC_MODERATION_ENABLED`: Whether the worker runs local topic moderation, default `true`
 - `HUGGING_FACE_HUB_TOKEN`: Optional read token forwarded when the worker downloads the Gemma model
 - `MEDIA_SERVICE`: Media storage backend, either `minio` or `filesystem`
 

@@ -268,6 +268,12 @@ internal fun CreateTaskRecordSummariesViewModel() =
     }
 
 @Composable
+internal fun CreateTaskConfigsViewModel(): TaskConfigsViewModel =
+    panelViewModel(keys = listOf("task-configs")) { sessionManager, _ ->
+        TaskConfigsViewModel(sessionManager)
+    }
+
+@Composable
 fun PanelLogsTab(targetId: PrimaryKey, objectType: ObjectType) {
     val vm = createPanelLogsViewModel(targetId, objectType)
     StateView(vm, modifier = Modifier.fillMaxSize()) { items ->

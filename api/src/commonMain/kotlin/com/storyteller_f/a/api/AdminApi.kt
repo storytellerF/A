@@ -21,8 +21,10 @@ import com.storyteller_f.shared.model.PanelLogInfo
 import com.storyteller_f.shared.model.PanelOverview
 import com.storyteller_f.shared.model.ReactionRecordInfo
 import com.storyteller_f.shared.model.RoomInfo
+import com.storyteller_f.shared.model.TaskConfig
 import com.storyteller_f.shared.model.TaskRecordInfo
 import com.storyteller_f.shared.model.TaskRecordSummary
+import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserFavoriteInfo
@@ -148,6 +150,31 @@ data class TaskRecordSummaryListResponse(
     override val data: CustomImmutableList<TaskRecordSummary>,
     override val pagination: Pagination<String>? = null,
 ) : ListResponse<TaskRecordSummary>
+
+/** Response containing persisted worker task configurations. */
+@Serializable
+data class TaskConfigListResponse(
+    override val data: CustomImmutableList<TaskConfig>,
+    override val pagination: Pagination<String>? = null,
+) : ListResponse<TaskConfig>
+
+/**
+ * Path identifying a worker task configuration by task type.
+ *
+ * @property type Worker task type to configure.
+ */
+@Serializable
+data class TaskConfigPath(val type: TaskRecordType)
+
+/**
+ * Editable values for a worker task configuration.
+ *
+ * @property isEnabled Whether the worker may execute this task.
+ * @property fetchSize Maximum number of business objects fetched in one iteration.
+ * @property waitDurationMillis Delay after an enabled iteration, in milliseconds.
+ */
+@Serializable
+data class UpdateTaskConfigBody(val isEnabled: Boolean, val fetchSize: Int, val waitDurationMillis: Long)
 
 object AdminApi {
     object Users {
@@ -314,6 +341,26 @@ object AdminApi {
                         path(CommonPath::class)
                     }
             }
+        }
+    }
+
+    /** Administrative worker task configuration endpoints. */
+    object TaskConfigs {
+        /** Lists persisted task configurations without synthesizing missing task types. */
+        val get: SafeEndpoint<TaskConfigListResponse> =
+            safeEndpointBuilder("/admin/task-configs") {
+                resp(TaskConfigListResponse::class)
+            }
+
+        /** Operations scoped to a worker task type. */
+        object Type {
+            /** Creates or replaces one task configuration. */
+            val update: MutationEndpointWithPath<TaskConfig, UpdateTaskConfigBody, TaskConfigPath> =
+                mutationEndpointWithPathBuilder("/admin/task-configs/{type}") {
+                    resp(TaskConfig::class)
+                    body(UpdateTaskConfigBody::class)
+                    path(TaskConfigPath::class)
+                }
         }
     }
 
