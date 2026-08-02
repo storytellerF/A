@@ -24,21 +24,31 @@ log "clean result is $?"
 sh "$cli_path" init
 log "init result is $?"
 
-index=0
+tab=$(printf '\t')
+
+# Validate every preset before importing anything so ordering is never ambiguous.
+for json_file in "$base"/*.json; do
+  if [ -f "$json_file" ]; then
+    filename=${json_file##*/}
+    file_index=${filename%%[!0-9]*}
+    if [ -z "$file_index" ]; then
+      echo "Error: preset filename has no numeric index: $filename"
+      exit 1
+    fi
+  fi
+done
 
 for json_file in "$base"/*.json; do
   if [ -f "$json_file" ]; then
-    filename=$(basename -- "$json_file")
-
-    file_index=$(echo "$filename" | grep -o '^[0-9]\+')
-
+    filename=${json_file##*/}
+    file_index=${filename%%[!0-9]*}
+    printf '%s\t%s\n' "$file_index" "$json_file"
+  fi
+done | LC_ALL=C sort -t "$tab" -k1,1n -k2,2 | while IFS="$tab" read -r file_index json_file; do
+  if [ -n "$json_file" ]; then
     rp=$(realpath "$json_file")
-    if [ "$file_index" -eq "$index" ]; then
-      log "Process start $rp"
-      sh "$cli_path" add "$json_file"
-      log "Process done $rp"
-    fi
-
-    index=$((index + 1))
+    log "Process start index=$file_index $rp"
+    sh "$cli_path" add "$json_file"
+    log "Process done index=$file_index $rp"
   fi
 done
