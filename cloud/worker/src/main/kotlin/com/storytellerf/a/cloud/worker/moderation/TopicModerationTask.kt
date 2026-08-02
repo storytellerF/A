@@ -13,14 +13,15 @@ import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
-import com.storytellerf.a.cloud.worker.TASK_DELAY_MILLIS
-import com.storytellerf.a.cloud.worker.TASK_OBJECT_FETCH_SIZE
+import com.storytellerf.a.cloud.worker.DEFAULT_TASK_OBJECT_FETCH_SIZE
 import com.storytellerf.a.cloud.worker.executeTaskObject
 import io.github.aakira.napier.Napier
-import kotlinx.coroutines.delay
 
-internal suspend fun Backend.doTopicModerationTask(reviewer: TopicSafetyReviewer) {
-    val result = executeTopicModerationTask(reviewer)
+internal suspend fun Backend.doTopicModerationTask(
+    reviewer: TopicSafetyReviewer,
+    fetchSize: Int = DEFAULT_TASK_OBJECT_FETCH_SIZE,
+) {
+    val result = executeTopicModerationTask(reviewer, fetchSize)
     val failure = result.exceptionOrNull()
     if (failure == null) {
         Napier.i(tag = MODERATION_LOG_TAG) {
@@ -31,16 +32,15 @@ internal suspend fun Backend.doTopicModerationTask(reviewer: TopicSafetyReviewer
             "topic moderation task failed"
         }
     }
-    delay(TASK_DELAY_MILLIS)
 }
 
-private suspend fun Backend.executeTopicModerationTask(reviewer: TopicSafetyReviewer): Result<Unit> =
+private suspend fun Backend.executeTopicModerationTask(reviewer: TopicSafetyReviewer, fetchSize: Int): Result<Unit> =
     database.user.getTaskRecordsToRetry(
         TaskRecordType.TOPIC_MODERATION,
-        TASK_OBJECT_FETCH_SIZE,
+        fetchSize,
     ).mapResult { retryRecords ->
         if (retryRecords.isEmpty()) {
-            processNextTopicModeration(reviewer)
+            processNextTopicModeration(reviewer, fetchSize)
         } else {
             retryRecords.forEach { retryRecord ->
                 retryTopicModeration(retryRecord, reviewer)
@@ -49,10 +49,10 @@ private suspend fun Backend.executeTopicModerationTask(reviewer: TopicSafetyRevi
         }
     }
 
-private suspend fun Backend.processNextTopicModeration(reviewer: TopicSafetyReviewer): Result<Unit> =
+private suspend fun Backend.processNextTopicModeration(reviewer: TopicSafetyReviewer, fetchSize: Int): Result<Unit> =
     database.user.getLatestTaskRecord(TaskRecordType.TOPIC_MODERATION).mapResult { taskRecord ->
         val cursor = Cursor.AscCursor(taskRecord?.objectId ?: 0)
-        database.topic.getTopicList(PrimaryKeyFetch(cursor, TASK_OBJECT_FETCH_SIZE))
+        database.topic.getTopicList(PrimaryKeyFetch(cursor, fetchSize))
     }.mapResult { topics ->
         if (topics.isEmpty()) {
             Napier.i(tag = MODERATION_LOG_TAG) {

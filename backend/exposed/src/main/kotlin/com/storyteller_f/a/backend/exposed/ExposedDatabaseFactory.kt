@@ -17,6 +17,7 @@ import com.storyteller_f.a.backend.exposed.tables.ReactionRecords
 import com.storyteller_f.a.backend.exposed.tables.Reactions
 import com.storyteller_f.a.backend.exposed.tables.Rooms
 import com.storyteller_f.a.backend.exposed.tables.SubscriptionSentLogs
+import com.storyteller_f.a.backend.exposed.tables.TaskConfigs
 import com.storyteller_f.a.backend.exposed.tables.TaskRecords
 import com.storyteller_f.a.backend.exposed.tables.Titles
 import com.storyteller_f.a.backend.exposed.tables.Topics
@@ -222,34 +223,36 @@ class ExposedDatabaseSession(val database: R2dbcDatabase, val port: Int?) {
 }
 
 object ExposedDatabaseFactory {
-    private val tables = arrayOf(
-        Aids,
-        ChildAccounts,
-        AssetTransactions,
-        Communities,
-        EncryptedKeys,
-        FileRefs,
-        FileRecords,
-        Members,
-        Reactions,
-        ReactionRecords,
-        Rooms,
-        Titles,
-        Topics,
-        Users,
-        PanelLogs,
-        UserLogs,
-        UserDevices,
-        UserTopicReads,
-        UserTwoFactors,
-        UserFavorites,
-        UserSubscriptions,
-        SubscriptionSentLogs,
-        TaskRecords,
-        Quotas,
-        UploadRecords,
-        PanelAccounts,
-    )
+    private val tables =
+        arrayOf(
+            Aids,
+            ChildAccounts,
+            AssetTransactions,
+            Communities,
+            EncryptedKeys,
+            FileRefs,
+            FileRecords,
+            Members,
+            Reactions,
+            ReactionRecords,
+            Rooms,
+            Titles,
+            Topics,
+            Users,
+            PanelLogs,
+            UserLogs,
+            UserDevices,
+            UserTopicReads,
+            UserTwoFactors,
+            UserFavorites,
+            UserSubscriptions,
+            SubscriptionSentLogs,
+            TaskConfigs,
+            TaskRecords,
+            Quotas,
+            UploadRecords,
+            PanelAccounts,
+        )
 
     fun connect(connection: DatabaseConnection): R2dbcDatabase {
         Napier.d {

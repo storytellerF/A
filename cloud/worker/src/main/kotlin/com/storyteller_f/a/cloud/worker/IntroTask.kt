@@ -19,15 +19,13 @@ import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapResult
-import com.storytellerf.a.cloud.worker.TASK_DELAY_MILLIS
-import com.storytellerf.a.cloud.worker.TASK_OBJECT_FETCH_SIZE
+import com.storytellerf.a.cloud.worker.DEFAULT_TASK_OBJECT_FETCH_SIZE
 import com.storytellerf.a.cloud.worker.executeTaskObject
 import com.storytellerf.a.cloud.worker.getSystemUserId
 import io.github.aakira.napier.Napier
-import kotlinx.coroutines.delay
 
-suspend fun Backend.doIntroTask() {
-    val result = executeIntroTask()
+suspend fun Backend.doIntroTask(fetchSize: Int = DEFAULT_TASK_OBJECT_FETCH_SIZE) {
+    val result = executeIntroTask(fetchSize)
     result.fold(
         onSuccess = {
             Napier.i(tag = INTRO_LOG_TAG) {
@@ -40,13 +38,12 @@ suspend fun Backend.doIntroTask() {
             }
         },
     )
-    delay(TASK_DELAY_MILLIS)
 }
 
-private suspend fun Backend.executeIntroTask(): Result<Unit> =
-    database.user.getTaskRecordsToRetry(TaskRecordType.INTRO, TASK_OBJECT_FETCH_SIZE).mapResult { retryRecords ->
+private suspend fun Backend.executeIntroTask(fetchSize: Int): Result<Unit> =
+    database.user.getTaskRecordsToRetry(TaskRecordType.INTRO, fetchSize).mapResult { retryRecords ->
         if (retryRecords.isEmpty()) {
-            processNextIntroUsers()
+            processNextIntroUsers(fetchSize)
         } else {
             retryRecords.forEach { retryRecord ->
                 processIntroRetry(retryRecord)
@@ -55,12 +52,12 @@ private suspend fun Backend.executeIntroTask(): Result<Unit> =
         }
     }
 
-private suspend fun Backend.processNextIntroUsers(): Result<Unit> =
+private suspend fun Backend.processNextIntroUsers(fetchSize: Int): Result<Unit> =
     database.user.getLatestTaskRecord(TaskRecordType.INTRO).mapResult { taskRecord ->
         val fetch =
             PrimaryKeyFetch(
                 Cursor.AscCursor(taskRecord?.objectId ?: INTRO_START_OBJECT_ID),
-                TASK_OBJECT_FETCH_SIZE,
+                fetchSize,
             )
         database.user.getAllUsers(fetch)
     }.mapResult { paginationResult ->

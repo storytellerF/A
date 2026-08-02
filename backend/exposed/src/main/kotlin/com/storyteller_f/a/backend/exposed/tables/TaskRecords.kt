@@ -4,9 +4,11 @@ import com.storyteller_f.a.backend.core.types.TaskRecord
 import com.storyteller_f.a.backend.exposed.BaseTable
 import com.storyteller_f.a.backend.exposed.customPrimaryKey
 import com.storyteller_f.a.backend.exposed.taskRecordType
+import com.storyteller_f.shared.model.TaskConfig
 import com.storyteller_f.shared.model.TaskRecordType
 import org.jetbrains.exposed.v1.core.Column
 import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.r2dbc.insert
 
 object TaskRecords : BaseTable() {
@@ -73,3 +75,34 @@ suspend fun addTaskRecord(taskRecord: TaskRecord) {
 }
 
 private const val FAILURE_TYPE_LENGTH = 20
+
+/** Persisted runtime configuration for worker tasks. */
+object TaskConfigs : Table("task_configs") {
+    /** Configured worker task type. */
+    val type: Column<TaskRecordType> = taskRecordType("type")
+
+    /** Whether the task may execute. */
+    val enabled: Column<Boolean> = bool("enabled")
+
+    /** Maximum number of objects fetched per iteration. */
+    val fetchSize: Column<Int> = integer("fetch_size")
+
+    /** Delay after an enabled iteration, in milliseconds. */
+    val waitDurationMillis: Column<Long> = long("wait_duration_millis")
+
+    override val primaryKey: PrimaryKey = PrimaryKey(type)
+}
+
+/** Maps a task configuration database row to its shared model. */
+internal fun TaskConfig.Companion.wrapRow(resultRow: ResultRow): TaskConfig {
+    val config =
+        with(TaskConfigs) {
+            TaskConfig(
+                type = resultRow[type],
+                isEnabled = resultRow[enabled],
+                fetchSize = resultRow[fetchSize],
+                waitDurationMillis = resultRow[waitDurationMillis],
+            )
+        }
+    return config
+}

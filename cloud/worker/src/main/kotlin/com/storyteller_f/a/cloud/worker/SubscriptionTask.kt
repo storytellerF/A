@@ -16,17 +16,15 @@ import com.storyteller_f.shared.utils.UNIT_RESULT
 import com.storyteller_f.shared.utils.generateModelMarkdownContent
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.now
-import com.storytellerf.a.cloud.worker.TASK_DELAY_MILLIS
-import com.storytellerf.a.cloud.worker.TASK_OBJECT_FETCH_SIZE
+import com.storytellerf.a.cloud.worker.DEFAULT_TASK_OBJECT_FETCH_SIZE
 import com.storytellerf.a.cloud.worker.getSystemUserId
 import io.github.aakira.napier.Napier
-import kotlinx.coroutines.delay
 
-suspend fun Backend.doSubscriptionTask() {
+suspend fun Backend.doSubscriptionTask(fetchSize: Int = DEFAULT_TASK_OBJECT_FETCH_SIZE) {
     val result =
         database.user.getLatestTaskRecord(TaskRecordType.SUBSCRIPTION).mapResult { taskRecord ->
             val cursor = Cursor.AscCursor(taskRecord?.objectId ?: 0)
-            database.topic.getTopicList(PrimaryKeyFetch(cursor, TASK_OBJECT_FETCH_SIZE))
+            database.topic.getTopicList(PrimaryKeyFetch(cursor, fetchSize))
         }.mapResult { topics ->
             if (topics.isEmpty()) {
                 Napier.i(tag = SUBSCRIPTION_LOG_TAG) {
@@ -40,7 +38,7 @@ suspend fun Backend.doSubscriptionTask() {
                 UNIT_RESULT.mapResult {
                     topics.forEach { topic ->
                         Napier.i(tag = SUBSCRIPTION_LOG_TAG) { "send topic ${topic.id}" }
-                        processTopicSubscription(topic)
+                        processTopicSubscription(topic, fetchSize)
                     }
                     UNIT_RESULT
                 }
@@ -58,10 +56,9 @@ suspend fun Backend.doSubscriptionTask() {
             }
         },
     )
-    delay(TASK_DELAY_MILLIS)
 }
 
-private suspend fun Backend.processTopicSubscription(topic: Topic) {
+private suspend fun Backend.processTopicSubscription(topic: Topic, fetchSize: Int) {
     // 当前对象发送的最新日志
     val topicParentId = topic.parentId
     val content = generateTopicSubscriptionContent(topic, topicParentId)
@@ -73,7 +70,7 @@ private suspend fun Backend.processTopicSubscription(topic: Topic) {
         val userSubscriptions =
             database.subscription.getSubscriptionsByObjectId(
                 topicParentId,
-                PrimaryKeyFetch(cursor, SUBSCRIBER_PAGE_SIZE),
+                PrimaryKeyFetch(cursor, fetchSize),
             ).getOrThrow()
         if (userSubscriptions.isEmpty()) {
             break
@@ -160,5 +157,4 @@ private fun generateTopicSubscriptionContentForTopic(
     appendLine(generateModelMarkdownContent(ObjectTuple(topicParentId, ObjectType.TOPIC)))
 }
 
-private const val SUBSCRIBER_PAGE_SIZE = 10
 private const val SUBSCRIPTION_LOG_TAG = "subscription"

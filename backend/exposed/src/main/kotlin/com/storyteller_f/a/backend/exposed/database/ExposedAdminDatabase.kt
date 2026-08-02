@@ -13,6 +13,7 @@ import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.a.backend.core.types.UserSubscription
 import com.storyteller_f.a.backend.exposed.ExposedDatabaseSession
 import com.storyteller_f.a.backend.exposed.count
+import com.storyteller_f.a.backend.exposed.first
 import com.storyteller_f.a.backend.exposed.map
 import com.storyteller_f.a.backend.exposed.query.bindPaginationQuery
 import com.storyteller_f.a.backend.exposed.tables.Aids
