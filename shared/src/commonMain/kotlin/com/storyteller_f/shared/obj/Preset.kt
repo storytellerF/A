@@ -1,5 +1,6 @@
 package com.storyteller_f.shared.obj
 
+import com.storyteller_f.shared.model.TaskConfig
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -85,4 +86,6 @@ data class PresetValue(
     val fileData: List<PresetFile>? = null,
     val titleData: List<PresetTitle>? = null,
     val panelAccountData: List<PresetPanelAccount>? = null,
+    /** Worker task configurations initialized by a `taskConfig` preset. */
+    val taskConfigData: List<TaskConfig>? = null,
 )

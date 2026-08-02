@@ -16,15 +16,13 @@ import com.storyteller_f.shared.utils.UNIT_RESULT
 import com.storyteller_f.shared.utils.associateByPair
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.now
-import com.storytellerf.a.cloud.worker.TASK_DELAY_MILLIS
-import com.storytellerf.a.cloud.worker.TASK_OBJECT_FETCH_SIZE
+import com.storytellerf.a.cloud.worker.DEFAULT_TASK_OBJECT_FETCH_SIZE
 import com.storytellerf.a.cloud.worker.executeTaskObject
 import com.storytellerf.a.cloud.worker.getSystemUserId
 import io.github.aakira.napier.Napier
-import kotlinx.coroutines.delay
 
-suspend fun Backend.doAcgTask() {
-    val result = executeAcgTask()
+suspend fun Backend.doAcgTask(fetchSize: Int = DEFAULT_TASK_OBJECT_FETCH_SIZE) {
+    val result = executeAcgTask(fetchSize)
     result.fold(
         onSuccess = {
             Napier.i(tag = ACG_LOG_TAG) {
@@ -37,13 +35,12 @@ suspend fun Backend.doAcgTask() {
             }
         },
     )
-    delay(TASK_DELAY_MILLIS)
 }
 
-private suspend fun Backend.executeAcgTask(): Result<Unit> =
-    database.user.getTaskRecordsToRetry(TaskRecordType.TOPIC_ACG, TASK_OBJECT_FETCH_SIZE).mapResult { retryRecords ->
+private suspend fun Backend.executeAcgTask(fetchSize: Int): Result<Unit> =
+    database.user.getTaskRecordsToRetry(TaskRecordType.TOPIC_ACG, fetchSize).mapResult { retryRecords ->
         if (retryRecords.isEmpty()) {
-            processNextAcgTopics()
+            processNextAcgTopics(fetchSize)
         } else {
             retryRecords.forEach { retryRecord ->
                 processAcgRetry(retryRecord)
@@ -52,10 +49,10 @@ private suspend fun Backend.executeAcgTask(): Result<Unit> =
         }
     }
 
-private suspend fun Backend.processNextAcgTopics(): Result<Unit> =
+private suspend fun Backend.processNextAcgTopics(fetchSize: Int): Result<Unit> =
     database.user.getLatestTaskRecord(TaskRecordType.TOPIC_ACG).mapResult { taskRecord ->
         val cursor = AscCursor(taskRecord?.objectId ?: 0)
-        database.topic.getTopicList(PrimaryKeyFetch(cursor = cursor, size = TASK_OBJECT_FETCH_SIZE))
+        database.topic.getTopicList(PrimaryKeyFetch(cursor = cursor, size = fetchSize))
     }.mapResult { topics ->
         if (topics.isEmpty()) {
             Napier.i(tag = ACG_LOG_TAG) {

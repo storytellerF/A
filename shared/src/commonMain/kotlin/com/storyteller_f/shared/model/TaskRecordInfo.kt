@@ -60,3 +60,24 @@ data class TaskRecordSummary(
     /** Number of failed executions awaiting an administrator-requested retry. */
     val retryRequestedCount: Long,
 )
+
+/** Runtime configuration for one worker task type. */
+@Serializable
+data class TaskConfig(
+    /** Worker task controlled by this configuration. */
+    val type: TaskRecordType,
+    /** Whether the worker may execute this task. */
+    val isEnabled: Boolean,
+    /** Maximum number of business objects fetched in one task iteration. */
+    val fetchSize: Int,
+    /** Delay after an enabled task iteration, in milliseconds. */
+    val waitDurationMillis: Long,
+) {
+    init {
+        require(fetchSize > 0) { "fetchSize must be greater than zero" }
+        require(waitDurationMillis > 0) { "waitDurationMillis must be greater than zero" }
+    }
+
+    /** Marker used by database row mappers. */
+    companion object
+}

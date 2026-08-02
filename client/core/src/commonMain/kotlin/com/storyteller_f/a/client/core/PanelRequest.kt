@@ -8,10 +8,14 @@ import com.storyteller_f.a.api.PanelLogsQuery
 import com.storyteller_f.a.api.SearchQuery
 import com.storyteller_f.a.api.SignInBody
 import com.storyteller_f.a.api.SignUpBody
+import com.storyteller_f.a.api.TaskConfigListResponse
+import com.storyteller_f.a.api.TaskConfigPath
 import com.storyteller_f.a.api.TaskRecordSummaryListResponse
 import com.storyteller_f.a.api.TaskRecordsQuery
 import com.storyteller_f.a.api.TopicQuery
+import com.storyteller_f.a.api.UpdateTaskConfigBody
 import com.storyteller_f.endpoint4k.ktor.client.invoke
+import com.storyteller_f.shared.model.TaskConfig
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.model.TopicPinSearch
 import com.storyteller_f.shared.obj.UpdateObjectStatusBody
@@ -171,6 +175,33 @@ suspend fun PanelSessionManager.markTaskRecordForRetry(id: PrimaryKey): Result<U
     val result =
         serviceCatching {
             AdminApi.TaskRecords.Id.Retry.update(CommonPath(id), Unit)
+        }
+    return result
+}
+
+/** Retrieves all persisted worker task configurations. */
+suspend fun PanelSessionManager.getTaskConfigs(): Result<TaskConfigListResponse> {
+    val result =
+        serviceCatching {
+            AdminApi.TaskConfigs.get()
+        }
+    return result
+}
+
+/** Creates or replaces one worker task configuration. */
+suspend fun PanelSessionManager.updateTaskConfig(config: TaskConfig): Result<TaskConfig> {
+    val result =
+        serviceCatching {
+            AdminApi.TaskConfigs.Type.update(
+                TaskConfigPath(config.type),
+                UpdateTaskConfigBody(
+                    isEnabled = config.isEnabled,
+                    fetchSize = config.fetchSize,
+                    waitDurationMillis = config.waitDurationMillis,
+                ),
+            ) {
+                contentType(ContentType.Application.Json)
+            }
         }
     return result
 }

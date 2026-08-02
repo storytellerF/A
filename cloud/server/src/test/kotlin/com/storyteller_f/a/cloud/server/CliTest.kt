@@ -15,6 +15,8 @@ import com.storyteller_f.a.cloud.worker.doAcgTask
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.PassType
+import com.storyteller_f.shared.model.TaskConfig
+import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.obj.PresetCommunity
 import com.storyteller_f.shared.obj.PresetFile
@@ -86,7 +88,6 @@ private suspend fun ensureSystemUser(testMate: TestMate) {
 }
 
 class CliTest {
-
     @Test
     fun `cli clean and init reset core data`() = test {
         attachSession {
@@ -444,6 +445,38 @@ class CliTest {
             ).getOrThrow()
             val totalAcg = userAcg.find { pair -> pair.first == uid }?.second ?: 0L
             assertTrue(totalAcg >= 3L)
+        }
+    }
+
+    @Test
+    fun `cli preset initializes worker task configurations`() {
+        test {
+            val presetDir = preparePresetDir("task-config")
+            val configs =
+                listOf(
+                    TaskConfig(
+                        type = TaskRecordType.TOPIC_ACG,
+                        isEnabled = true,
+                        fetchSize = 5,
+                        waitDurationMillis = 1_000,
+                    ),
+                    TaskConfig(
+                        type = TaskRecordType.TOPIC_MODERATION,
+                        isEnabled = false,
+                        fetchSize = 2,
+                        waitDurationMillis = 20_000,
+                    ),
+                )
+
+            withCliBackend { backend ->
+                backend.database.init()
+                backend.applyPreset(
+                    PresetValue(type = "taskConfig", taskConfigData = configs),
+                    presetDir,
+                )
+
+                assertEquals(configs, backend.database.getTaskConfigs().getOrThrow())
+            }
         }
     }
 }

@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Title
 import androidx.compose.material.icons.filled.Topic
 import androidx.compose.material3.DrawerState
@@ -319,6 +320,11 @@ private fun PanelDrawer(
             Icons.Default.Build,
             stringResource(Res.string.worker_records),
             onNavigate(scope, drawerState) { nav.gotoTaskRecords() }
+        )
+        DrawerNavItem(
+            Icons.Default.Settings,
+            stringResource(Res.string.worker_task_configurations),
+            onNavigate(scope, drawerState) { nav.gotoTaskConfigs() },
         )
     }
     if (permanent) {

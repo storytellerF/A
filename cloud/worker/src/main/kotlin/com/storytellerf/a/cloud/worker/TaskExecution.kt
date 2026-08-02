@@ -53,6 +53,5 @@ internal suspend fun Backend.getSystemUserId(): PrimaryKey {
     return systemUser?.run { user.id } ?: error("System user not found")
 }
 
-internal const val TASK_OBJECT_FETCH_SIZE = 10
-internal const val TASK_DELAY_MILLIS = 10_000L
+internal const val DEFAULT_TASK_OBJECT_FETCH_SIZE = 10
 private const val SYSTEM_USER_AID = "System"
