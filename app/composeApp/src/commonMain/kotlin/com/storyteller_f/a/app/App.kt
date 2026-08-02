@@ -337,7 +337,7 @@ internal fun calculateAppPaneDirective(contentSize: DpSize, windowPosture: Postu
             ),
             windowPosture = windowPosture,
         ),
-    )
+    ).copy(defaultPanePreferredWidth = 420.dp)
 
 @Composable
 fun CommonEntry(content: @Composable () -> Unit) {
