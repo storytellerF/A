@@ -50,6 +50,10 @@ kotlin {
     jvmToolchain(21)
 }
 
+tasks.named<Zip>("shadowJar") {
+    isZip64 = true
+}
+
 // configurations.all {
 //    resolutionStrategy {
 //        force(libs.bcprov.jdk18on)
