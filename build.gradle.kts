@@ -1,6 +1,7 @@
 import dev.detekt.gradle.Detekt
 import dev.detekt.gradle.DetektCreateBaselineTask
 import dev.detekt.gradle.report.ReportMergeTask
+import org.gradle.api.tasks.testing.Test
 
 
 plugins {
@@ -58,6 +59,23 @@ fun detektBaselineFileName(taskName: String): String {
 val compileAllNoRelease = tasks.register("compileAllNoRelease") {
     group = "verification"
     description = "Compile all included modules without Android release or benchmark variants."
+}
+
+val buildAndTestFilters =
+    providers.gradleProperty("buildAndTest.testFilters").orNull
+        ?.lineSequence()
+        ?.filter(String::isNotEmpty)
+        ?.toList()
+
+if (!buildAndTestFilters.isNullOrEmpty()) {
+    subprojects {
+        tasks.withType<Test>().configureEach {
+            filter {
+                buildAndTestFilters.forEach(::includeTestsMatching)
+                isFailOnNoMatchingTests = false
+            }
+        }
+    }
 }
 
 subprojects {

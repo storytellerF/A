@@ -59,6 +59,13 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
+runGradle() {
+  if [ -n "$GRADLE_CONSOLE_ARGS" ]; then
+    set -- "$@" "$GRADLE_CONSOLE_ARGS"
+  fi
+  ./gradlew "$@"
+}
+
 runGradleWithTests() {
   if [ -n "$TEST_FILTERS" ]; then
     original_ifs=$IFS
@@ -74,10 +81,14 @@ runGradleWithTests() {
     IFS=$original_ifs
     [ "$restore_globbing" = true ] && set +f
   fi
-  if [ -n "$GRADLE_CONSOLE_ARGS" ]; then
-    set -- "$@" "$GRADLE_CONSOLE_ARGS"
+  runGradle "$@"
+}
+
+runGradleCheck() {
+  if [ -n "$TEST_FILTERS" ]; then
+    set -- "$@" "-PbuildAndTest.testFilters=$TEST_FILTERS"
   fi
-  ./gradlew "$@"
+  runGradle "$@"
 }
 
 if [ "$RUN_ALL" = true ]; then
@@ -198,7 +209,7 @@ if [ "$RUN_COMPILE_UNIT" = true ]; then
     rm -rf cloud/server/build/test/session
 
     echo "Running check..."
-    if ! runGradleWithTests check -Pappium=false; then
+    if ! runGradleCheck check -Pappium=false; then
         showNotification "测试失败" "编译或测试执行失败！请检查错误。" "false"
         exit 1
     fi

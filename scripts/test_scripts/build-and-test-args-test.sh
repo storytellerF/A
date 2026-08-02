@@ -17,6 +17,7 @@ chmod +x "$test_directory/scripts/tool_scripts/exec-until-success.sh"
 printf '%s\n' \
   '#!/bin/sh' \
   ': > "$BUILD_AND_TEST_LOG"' \
+  'printf "COUNT=%s\n" "$#" >> "$BUILD_AND_TEST_LOG"' \
   'for argument in "$@"; do' \
   '  printf "%s\n" "$argument" >> "$BUILD_AND_TEST_LOG"' \
   'done' \
@@ -40,16 +41,13 @@ argument_log="$test_directory/gradle-arguments.log"
 )
 
 expected_arguments=$(printf '%s\n' \
+  'COUNT=4' \
   'check' \
   '-Pappium=false' \
-  '--tests' \
-  'com.example.FirstTest' \
-  '--tests' \
-  'com.example.SecondTest.method with spaces' \
-  '--tests' \
-  'com.example.ThirdTest' \
-  '--tests' \
-  'com.example.*Test' \
+  '-PbuildAndTest.testFilters=com.example.FirstTest
+com.example.SecondTest.method with spaces
+com.example.ThirdTest
+com.example.*Test' \
   '--console=plain')
 actual_arguments=$(sed -n '1,$p' "$argument_log")
 
