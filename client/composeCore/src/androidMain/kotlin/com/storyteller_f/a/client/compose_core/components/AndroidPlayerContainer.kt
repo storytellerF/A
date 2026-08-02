@@ -12,7 +12,6 @@ import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toAndroidRectF
 import androidx.compose.ui.layout.boundsInWindow
@@ -50,21 +49,9 @@ fun EnablePipPre31(enablePip: Boolean, localMediaPlaySession: LocalMediaPlaySess
 
 @OptIn(ExperimentalUuidApi::class)
 @Composable
-fun BoxScope.AndroidPlayerContainer(
-    localMediaPlaySession: LocalMediaPlaySession,
-    player: MediaController,
-    block: @Composable BoxScope.() -> Unit,
-) {
+fun BoxScope.AndroidPlayerContainer(player: MediaController, block: @Composable BoxScope.() -> Unit) {
     block()
     PipBroadcastReceiver(player)
-    val scope = rememberCoroutineScope()
-    val toast = LocalToaster.current
-    DisposableEffect(player, localMediaPlaySession.id) {
-        val listener = buildM3UListener(player, localMediaPlaySession.id, toast, scope)
-        onDispose {
-            player.removeListener(listener)
-        }
-    }
 }
 
 @Composable

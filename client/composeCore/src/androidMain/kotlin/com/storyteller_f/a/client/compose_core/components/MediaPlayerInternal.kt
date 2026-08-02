@@ -34,17 +34,12 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
-import androidx.media3.common.MimeTypes
-import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
 import androidx.media3.session.MediaController
 import coil3.compose.AsyncImage
 import com.storyteller_f.a.client.core.LoadingState
-import com.storyteller_f.shared.model.FileInfo
 import io.github.aakira.napier.Napier
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -63,7 +58,7 @@ fun MediaPlayerEmbed(
     block: @Composable ((MediaPlaySession?, LocalMediaPlaySession) -> Unit)
 ) {
     MediaPlayerInternal(remoteMediaItem, false) { session, localSession ->
-        EmbedMediaPlayerContainer(session, localSession, remoteMediaItem.contentType, block)
+        EmbedMediaPlayerContainer(session, localSession, block)
     }
 }
 
@@ -131,7 +126,6 @@ private suspend fun MediaPlayerService.switchSessionIfNeed(
 fun EmbedMediaPlayerContainer(
     playingSession: MediaPlaySession?,
     localMediaPlaySession: LocalMediaPlaySession,
-    contentType: String,
     block: @Composable (MediaPlaySession?, LocalMediaPlaySession) -> Unit,
 ) {
     var showSheet by remember {
@@ -144,7 +138,6 @@ fun EmbedMediaPlayerContainer(
         EmbedMediaPlayerMenus(
             localMediaPlaySession,
             playingSession,
-            contentType
         ) {
             showSheet = true
         }
@@ -213,25 +206,13 @@ fun BoxScope.PlayerWaiting(
             Icon(Icons.Default.PlayArrow, "play")
         }
     }
-    if (remoteMediaItem.contentType == FileInfo.M3U8_MIMETYPE ||
-        remoteMediaItem.contentType == FileInfo.YOUTUBE_MIMETYPE
-    ) {
-        Text(
-            remoteMediaItem.title ?: remoteMediaItem.url,
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(10.dp),
-            maxLines = 2
-        )
-    } else {
-        Text(
-            remoteMediaItem.title ?: remoteMediaItem.name,
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(10.dp),
-            maxLines = 2
-        )
-    }
+    Text(
+        remoteMediaItem.title ?: remoteMediaItem.name,
+        modifier = Modifier
+            .align(Alignment.BottomStart)
+            .padding(10.dp),
+        maxLines = 2
+    )
 }
 
 @Composable
@@ -329,27 +310,21 @@ fun rememberPlayerState(
     }
 }
 
-fun MediaController.playNewMedia(
-    playList: List<ConstPlayItem>,
-    contentType: String
-) {
+fun MediaController.playNewMedia(playList: List<ConstPlayItem>) {
     clearMediaItems()
 
-    addMediaItems(playList.map { playItem ->
-        val uri = playItem.url
-        MediaItem.Builder().setUri(uri)
-            .setMediaMetadata(
-                MediaMetadata.Builder()
-                    .setArtworkUri(playItem.icon?.toUri())
-                    .setTitle(playItem.title)
-                    .build()
-            )
-            .apply {
-                if (contentType == FileInfo.M3U8_MIMETYPE && !uri.endsWith(".m3u8")) {
-                    setMimeType(MimeTypes.APPLICATION_M3U8)
-                }
-            }.build()
-    })
+    addMediaItems(
+        playList.map { playItem ->
+            val uri = playItem.url
+            MediaItem.Builder().setUri(uri)
+                .setMediaMetadata(
+                    MediaMetadata.Builder()
+                        .setArtworkUri(playItem.icon?.toUri())
+                        .setTitle(playItem.title)
+                        .build(),
+                ).build()
+        },
+    )
     play()
 }
 
@@ -376,39 +351,6 @@ private fun buildListener(
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             super.onMediaItemTransition(mediaItem, reason)
             listener.onMediaItemChanged(mediaItem?.mediaId, player.currentMediaItemIndex)
-        }
-    }
-}
-
-fun buildM3UListener(
-    player: Player,
-    id: String,
-    toasterState: Toast,
-    scope: CoroutineScope
-): Player.Listener {
-    return object : Player.Listener {
-
-        override fun onPlayerError(error: PlaybackException) {
-            super.onPlayerError(error)
-            Napier.i {
-                "Video $id error $error ${error.errorCode} ${error.errorCodeName}"
-            }
-            if (error.errorCode == PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW ||
-                error.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT
-            ) {
-                toasterState.showMessage("source error, restart after 1 seconds")
-                scope.launch {
-                    delay(1000)
-                    player.play()
-                }
-            } else if (error.errorCode == PlaybackException.ERROR_CODE_PARSING_MANIFEST_MALFORMED) {
-                toasterState.showMessage("source error, skip to next after 1 seconds")
-                scope.launch {
-                    delay(1000)
-                    player.seekToNext()
-                    player.play()
-                }
-            }
         }
     }
 }

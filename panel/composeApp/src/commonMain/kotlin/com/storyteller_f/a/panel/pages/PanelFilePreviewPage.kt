@@ -19,30 +19,30 @@ import org.jetbrains.compose.resources.stringResource
 fun PanelFilePreviewPage(id: Long) {
     val fileInfoViewModel = createPanelFileViewModel(id)
     Surface {
-        StateView(fileInfoViewModel.handler, modifier = Modifier.fillMaxSize()) {
-            val contentType = it.contentType
-            val name = it.name
-            val url = it.url
+        StateView(fileInfoViewModel.handler, modifier = Modifier.fillMaxSize()) { fileInfo ->
+            val contentType = fileInfo.contentType
+            val name = fileInfo.name
+            val url = fileInfo.url
             when {
                 contentType.startsWith("video") -> {
-                    val item = RemoteMediaItem(
-                        id = id.toString(),
-                        url = url,
-                        contentType = contentType,
-                        isM3U8PlayList = false,
-                        name = name
-                    )
+                    val item =
+                        RemoteMediaItem(
+                            id = id.toString(),
+                            url = url,
+                            contentType = contentType,
+                            name = name,
+                        )
                     VideoViewFullScreen(item)
                 }
 
                 contentType.startsWith("audio") -> {
-                    val item = RemoteMediaItem(
-                        id = id.toString(),
-                        url = url,
-                        contentType = contentType,
-                        isM3U8PlayList = false,
-                        name = name
-                    )
+                    val item =
+                        RemoteMediaItem(
+                            id = id.toString(),
+                            url = url,
+                            contentType = contentType,
+                            name = name,
+                        )
                     AudioViewFullScreen(item)
                 }
 

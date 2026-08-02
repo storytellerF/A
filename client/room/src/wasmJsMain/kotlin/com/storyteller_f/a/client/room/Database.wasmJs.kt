@@ -3,6 +3,7 @@ package com.storyteller_f.a.client.room
 import androidx.room3.Room
 import androidx.room3.RoomDatabase
 import androidx.sqlite.driver.web.WebWorkerSQLiteDriver
+import com.storyteller.a.client.room.CancellationSafeSQLiteDriver
 import io.github.aakira.napier.Napier
 import org.w3c.dom.Worker
 import kotlin.js.ExperimentalWasmJsInterop
@@ -13,7 +14,7 @@ actual fun getRoomDatabase(scope: String): AppDatabase {
         .fallbackToDestructiveMigrationOnDowngrade(true)
         .fallbackToDestructiveMigration(true)
         .fallbackToDestructiveMigrationFrom(true)
-        .setDriver(WebWorkerSQLiteDriver(createWorker()))
+        .setDriver(CancellationSafeSQLiteDriver(WebWorkerSQLiteDriver(createWorker())))
         .setSingleConnectionPool()
         .build()
 }

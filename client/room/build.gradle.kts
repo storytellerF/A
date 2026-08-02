@@ -63,6 +63,12 @@ kotlin {
                 implementation(npm("sqlite-web-worker", project.file("sqlite-web-worker")))
             }
         }
+        getByName("wasmJsTest") {
+            dependencies {
+                implementation(kotlin("test"))
+                implementation(libs.kotlinx.coroutines.test)
+            }
+        }
     }
     compilerOptions {
         freeCompilerArgs.addAll("-Xexpect-actual-classes")

@@ -111,7 +111,7 @@ private fun BoxScope.AudioPlayerInternal(
     playingSession: MediaPlaySession
 ) {
     player ?: return
-    AndroidPlayerContainer(localMediaPlaySession, player) {
+    AndroidPlayerContainer(player) {
         val coverMediaInfo = remoteMediaItem.cover
         Row(
             modifier = Modifier

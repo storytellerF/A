@@ -28,7 +28,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.storyteller_f.shared.model.FileInfo
 
 /**
  * Block 工具栏
@@ -190,34 +189,6 @@ private fun BlockToolBarMenu(
             onClick = {
                 onInsertBlock(
                     ContentBlock.ImageBlock(id = generateBlockId(), name = "", url = "", alt = "")
-                )
-                update(false)
-            }
-        )
-        DropdownMenuItem(
-            text = { Text("Video (YouTube)") },
-            onClick = {
-                onInsertBlock(
-                    ContentBlock.ObjectBlock(
-                        id = generateBlockId(),
-                        contentType = FileInfo.YOUTUBE_MIMETYPE,
-                        url = "https://www.youtube.com/watch?v=",
-                        title = ""
-                    )
-                )
-                update(false)
-            }
-        )
-        DropdownMenuItem(
-            text = { Text("Audio (SoundCloud)") },
-            onClick = {
-                onInsertBlock(
-                    ContentBlock.ObjectBlock(
-                        id = generateBlockId(),
-                        contentType = FileInfo.SOUND_CLOUD_MIME_TYPE,
-                        url = "https://soundcloud.com/",
-                        title = ""
-                    )
                 )
                 update(false)
             }
