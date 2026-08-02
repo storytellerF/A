@@ -8,10 +8,19 @@ RUN_APPIUM=false
 RUN_COMPILE_UNIT=false
 RUN_COMPOSE=false
 MODULE="app:composeApp"
-TEST_ARGS=""
+TEST_FILTERS=""
 GRADLE_CONSOLE_ARGS=""
 RUN_ALL=false
 EXEC_MODE="both"  # "prepare", "run", or "both"
+
+appendTestFilter() {
+  if [ -z "$TEST_FILTERS" ]; then
+    TEST_FILTERS="$1"
+  else
+    TEST_FILTERS="$TEST_FILTERS
+$1"
+  fi
+}
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -30,9 +39,18 @@ while [ "$#" -gt 0 ]; do
       shift 2
       ;;
     --tests)
-      [ -z "$2" ] && { echo "--tests requires a value"; exit 1; }
-      TEST_ARGS="$TEST_ARGS --tests \"$2\""
-      shift 2
+      shift
+      test_count=0
+      while [ "$#" -gt 0 ]; do
+        case "$1" in
+          --*) break ;;
+        esac
+        [ -z "$1" ] && { echo "--tests requires non-empty values"; exit 1; }
+        appendTestFilter "$1"
+        test_count=$((test_count + 1))
+        shift
+      done
+      [ "$test_count" -eq 0 ] && { echo "--tests requires at least one value"; exit 1; }
       ;;
     *)
       echo "Unknown argument: $1"
@@ -40,6 +58,27 @@ while [ "$#" -gt 0 ]; do
       ;;
   esac
 done
+
+runGradleWithTests() {
+  if [ -n "$TEST_FILTERS" ]; then
+    original_ifs=$IFS
+    case $- in
+      *f*) restore_globbing=false ;;
+      *) restore_globbing=true; set -f ;;
+    esac
+    IFS='
+'
+    for test_filter in $TEST_FILTERS; do
+      set -- "$@" --tests "$test_filter"
+    done
+    IFS=$original_ifs
+    [ "$restore_globbing" = true ] && set +f
+  fi
+  if [ -n "$GRADLE_CONSOLE_ARGS" ]; then
+    set -- "$@" "$GRADLE_CONSOLE_ARGS"
+  fi
+  ./gradlew "$@"
+}
 
 if [ "$RUN_ALL" = true ]; then
   RUN_ANDROID=true
@@ -159,7 +198,7 @@ if [ "$RUN_COMPILE_UNIT" = true ]; then
     rm -rf cloud/server/build/test/session
 
     echo "Running check..."
-    if ! ./gradlew check -Pappium=false $TEST_ARGS $GRADLE_CONSOLE_ARGS; then
+    if ! runGradleWithTests check -Pappium=false; then
         showNotification "测试失败" "编译或测试执行失败！请检查错误。" "false"
         exit 1
     fi
@@ -175,13 +214,13 @@ fi
 # Running android Tests
 if [ "$RUN_ANDROID" = true ]; then
     echo "Running Android Connected Tests..."
-    ./gradlew ${MODULE}:connectedAndroidTest $TEST_ARGS $GRADLE_CONSOLE_ARGS
+    runGradleWithTests "${MODULE}:connectedAndroidTest"
 fi
 
 # Running desktop Tests
 if [ "$RUN_DESKTOP" = true ]; then
     echo "Running Desktop Tests..."
-    ./gradlew ${MODULE}:desktopTest $TEST_ARGS $GRADLE_CONSOLE_ARGS
+    runGradleWithTests "${MODULE}:desktopTest"
 fi
 
 # Running Appium Tests
@@ -192,12 +231,12 @@ if [ "$RUN_APPIUM" = true ]; then
     rm -rf ./panel/androidAppium/build/test/appium/sessions
     rm -rf ./panel/desktopAppium/build/test/appium/sessions
     appium_exit=0
-    ./gradlew \
+    runGradleWithTests \
         :app:androidAppium:test \
         :app:desktopAppium:test \
         :panel:androidAppium:test \
         :panel:desktopAppium:test \
-        -Pappium=true $TEST_ARGS $GRADLE_CONSOLE_ARGS || appium_exit=$?
+        -Pappium=true || appium_exit=$?
     if [ "$appium_exit" -ne 0 ]; then
         exit "$appium_exit"
     fi

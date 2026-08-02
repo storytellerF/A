@@ -50,8 +50,8 @@
 ## Tests
 - Actively test affected modules.
     * For small changes, use `./gradlew :module:test --console=plain`.
-    * For the full regular unit test suite, use `./scripts/test_scripts/build-and-test.sh --unit --console=plain` (excluding device-dependent Compose and Appium tests).
-    * For end-to-end Appium tests, use `./scripts/test_scripts/build-and-test.sh --appium --console=plain`.
+    * For the full regular unit test suite, use `./scripts/test_scripts/build-and-test.sh --unit --plain` (excluding device-dependent Compose and Appium tests). Filter multiple tests with `--tests 'package.FirstTest' 'package.SecondTest'`; repeating `--tests` is also supported.
+    * For end-to-end Appium tests, use `./scripts/test_scripts/build-and-test.sh --appium --plain`.
     * For Compose common tests under `device_based`, use a real device with `./gradlew :module:connectedAndroidTest` or run `./gradlew :module:jvmTest`.
     * For Compose UI changes, run `./gradlew validateDebugScreenshotTest` for snapshot tests.
 - Keep Compose screenshot tests context-free: do not inject app runtime `CompositionLocal` dependencies such as session managers, dialog controllers, or navigation contexts. Cover components that require those dependencies in another test layer.
