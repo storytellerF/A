@@ -112,5 +112,7 @@ class HomeStartDestinationTest {
 
         assertEquals(1, compactDirective.maxHorizontalPartitions)
         assertEquals(2, expandedDirective.maxHorizontalPartitions)
+        assertEquals(420.dp, compactDirective.defaultPanePreferredWidth)
+        assertEquals(420.dp, expandedDirective.defaultPanePreferredWidth)
     }
 }

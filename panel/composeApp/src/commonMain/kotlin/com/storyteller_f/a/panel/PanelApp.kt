@@ -265,7 +265,7 @@ internal fun calculatePanelPaneDirective(contentSize: DpSize, windowPosture: Pos
             ),
             windowPosture = windowPosture,
         ),
-    )
+    ).copy(defaultPanePreferredWidth = 420.dp)
 
 @Composable
 private fun PanelDrawer(

@@ -99,6 +99,7 @@ class ComposeAppCommonTest {
             )
 
         assertEquals(1, directive.maxHorizontalPartitions)
+        assertEquals(420.dp, directive.defaultPanePreferredWidth)
     }
 
     @Test
@@ -110,6 +111,7 @@ class ComposeAppCommonTest {
             )
 
         assertEquals(2, directive.maxHorizontalPartitions)
+        assertEquals(420.dp, directive.defaultPanePreferredWidth)
     }
 
     @Test
