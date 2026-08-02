@@ -161,15 +161,14 @@ kotlin {
                 implementation(npm("local-font-access", project.file("local-font-access")))
             }
         }
-        // jvm 与 android 共享：compose-pdf 的 PdfView actual、m3u-parser 的播放列表解析
-        // （wasm 上均无对应库）
-        val jvmAndroidMain = create("jvmAndroidMain") {
-            dependsOn(commonMain.get())
-            dependencies {
-                implementation(libs.compose.pdf)
-                implementation(libs.m3u.parser)
+        // jvm 与 android 共享 compose-pdf 的 PdfView actual（wasm 上无对应库）。
+        val jvmAndroidMain =
+            create("jvmAndroidMain") {
+                dependsOn(commonMain.get())
+                dependencies {
+                    implementation(libs.compose.pdf)
+                }
             }
-        }
         jvmMain.get().dependsOn(jvmAndroidMain)
         androidMain.get().dependsOn(jvmAndroidMain)
     }

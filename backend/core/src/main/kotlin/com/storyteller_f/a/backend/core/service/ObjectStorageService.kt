@@ -48,7 +48,8 @@ interface ObjectStorageService {
     suspend fun getWithPresignContext(
         bucketName: String,
         names: List<String>,
-        presignContext: PresignContext?
+        presignContext: PresignContext?,
+        responseContentTypes: Map<String, String> = emptyMap(),
     ): Result<List<ObjectStorageRecord>> = get(bucketName, names)
 
     suspend fun clean(bucketName: String): Result<Unit>

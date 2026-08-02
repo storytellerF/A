@@ -17,6 +17,7 @@ dependencies {
     testImplementation(projects.backend.minio)
     testImplementation(projects.backend.filesystem)
     testImplementation(projects.backend.exposed)
+    testImplementation(projects.backend.simple)
     testImplementation(libs.testcontainers.elasticsearch)
     testImplementation(libs.testcontainers.minio)
     testImplementation(libs.testcontainers.postgresql)

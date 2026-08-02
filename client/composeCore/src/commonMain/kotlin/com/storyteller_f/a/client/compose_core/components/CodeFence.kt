@@ -2,7 +2,6 @@ package com.storyteller_f.a.client.compose_core.components
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import com.eygraber.uri.Uri
 import com.hrm.latex.renderer.Latex
 import com.hrm.latex.renderer.model.LatexConfig
 import com.mikepenz.markdown.compose.LocalMarkdownTypography
@@ -51,7 +50,7 @@ fun ObjectBlock(
     if (obj.contentType.isNullOrBlank()) {
         FileObjectBlock(obj, modal, mediaList, onClick)
     } else {
-        CustomObjectBlock(obj, modal, mediaList)
+        HighlightCodeBlock(modal)
     }
 }
 
@@ -78,59 +77,19 @@ private fun FileObjectBlock(
         return
     }
     val coverInfo = mediaMap[obj.cover]
-    val obj1 = RemoteMediaItem(mediaInfo.id.toString(), url, contentType, false, obj.name, coverInfo, obj.title)
+    val obj1 =
+        RemoteMediaItem(
+            id = mediaInfo.id.toString(),
+            url = url,
+            contentType = contentType,
+            name = obj.name,
+            cover = coverInfo,
+            title = obj.title,
+        )
     if (contentType.startsWith("video/")) {
         VideoViewEmbed(obj1)
     } else if (contentType.startsWith("audio/")) {
         AudioViewEmbed(obj1)
-    }
-}
-
-@Composable
-private fun CustomObjectBlock(
-    obj: MarkdownObject,
-    modal: MarkdownComponentModel,
-    mediaList: Map<String, FileInfo>
-) {
-    val name = when (obj.contentType) {
-        FileInfo.YOUTUBE_MIMETYPE -> {
-            "Youtube:${Uri.parse(obj.url).getQueryParameter("v")}"
-        }
-
-        FileInfo.SOUND_CLOUD_MIME_TYPE -> {
-            "SoundCloud:${Uri.parse(obj.url).lastPathSegment}"
-        }
-
-        FileInfo.M3U8_MIMETYPE -> {
-            "M3U:${Uri.parse(obj.url).lastPathSegment}"
-        }
-
-        else -> {
-            HighlightCodeBlock(modal)
-            return
-        }
-    }
-    val mediaItem = RemoteMediaItem(
-        obj.url,
-        obj.url,
-        FileInfo.YOUTUBE_MIMETYPE,
-        false,
-        name,
-        mediaList[obj.cover],
-        obj.title
-    )
-    when (obj.contentType) {
-        FileInfo.YOUTUBE_MIMETYPE -> {
-            VideoViewEmbed(mediaItem)
-        }
-
-        FileInfo.SOUND_CLOUD_MIME_TYPE -> {
-            AudioViewEmbed(mediaItem)
-        }
-
-        FileInfo.M3U8_MIMETYPE -> {
-            VideoViewEmbed(mediaItem)
-        }
     }
 }
 

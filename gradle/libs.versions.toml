@@ -80,7 +80,6 @@ lifecycleViewmodelCompose = "2.11.0"
 litertlmAndroid = "0.14.0"
 logback = "1.6.0"
 luceneCore = "10.5.0"
-m3uParser = "1.4.0"
 markdown = "0.7.7"
 material = "1.11.1"
 material3 = "1.9.0"
@@ -301,7 +300,6 @@ lucene-analysis-common = { module = "org.apache.lucene:lucene-analysis-common", 
 lucene-backward-codecs = { module = "org.apache.lucene:lucene-backward-codecs", version.ref = "luceneCore" }
 lucene-core = { module = "org.apache.lucene:lucene-core", version.ref = "luceneCore" }
 lucene-queryparser = { module = "org.apache.lucene:lucene-queryparser", version.ref = "luceneCore" }
-m3u-parser = { module = "com.github.bjoernpetersen:m3u-parser", version.ref = "m3uParser" }
 markdown = { module = "org.jetbrains:markdown", version.ref = "markdown" }
 material = { module = "org.jetbrains.compose.material:material", version.ref = "material" }
 material-icons-extended = { module = "org.jetbrains.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }

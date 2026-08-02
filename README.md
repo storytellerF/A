@@ -166,6 +166,8 @@ Open the user app at `http://localhost:8080` and the panel at `http://localhost:
 
 The Wasm distributions bundle Noto Sans SC so CJK text works in browsers such as Firefox without relying on installed fonts. On Chromium browsers that support Local Font Access, the app requests local-font permission after the first pointer or keyboard interaction and prefers an installed CJK font when permission is granted; otherwise it keeps using the bundled font.
 
+The user Wasm app uses native browser audio and video controls and supports AVIF images through its browser-backed Coil decoder. MinIO downloads override signed response types from file records without modifying object metadata.
+
 ### Environment Variables
 
 - `HOST_TYPE`: Host type, such as `docker`

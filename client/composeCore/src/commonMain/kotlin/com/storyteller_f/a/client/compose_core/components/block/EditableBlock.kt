@@ -563,14 +563,7 @@ fun EditableObjectBlock(
     block: ContentBlock.ObjectBlock,
     isFocused: Boolean
 ) {
-    val name = block.contentType?.let { ct ->
-        when (ct) {
-            "youtube" -> "YouTube Video"
-            "soundcloud" -> "SoundCloud Audio"
-            "m3u8" -> "M3U8 Stream"
-            else -> ct
-        }
-    } ?: "Embedded Object"
+    val name = block.contentType ?: "Embedded Object"
 
     Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
         Text(
