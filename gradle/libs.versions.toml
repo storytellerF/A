@@ -103,6 +103,7 @@ pdfbox = "3.0.8"
 pdfboxLayout = "3.0.0-rc.0"
 pdfcompare = "1.2.9"
 postgresql = "1.1.2.RELEASE"
+pty4j = "0.13.4"
 qrose = "1.1.2"
 recordCore = "0.5.0"
 richeditorCompose = "1.0.0"
@@ -325,6 +326,7 @@ pdfbox = { module = "org.apache.pdfbox:pdfbox", version.ref = "pdfbox" }
 pdfbox-layout = { module = "com.github.cghislai:pdfbox-layout", version.ref = "pdfboxLayout" }
 pdfcompare = { module = "de.redsix:pdfcompare", version.ref = "pdfcompare" }
 postgresql = { module = "org.postgresql:r2dbc-postgresql", version.ref = "postgresql" }
+pty4j = { module = "org.jetbrains.pty4j:pty4j", version.ref = "pty4j" }
 qrose = { module = "io.github.alexzhirkevich:qrose", version.ref = "qrose" }
 record-core = { module = "dev.theolm.record:record-core", version.ref = "recordCore" }
 richeditor-compose = { module = "com.mohamedrejeb.richeditor:richeditor-compose", version.ref = "richeditorCompose" }

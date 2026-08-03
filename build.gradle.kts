@@ -179,6 +179,7 @@ val koverIncludedProjects = listOf(
     listOf(
         ":dev:appiumCore",
         ":app:androidAppium",
+        ":app:cliAppium",
         ":app:desktopAppium",
         ":app:wasmAppium",
         ":panel:androidAppium",

@@ -238,12 +238,14 @@ fi
 if [ "$RUN_APPIUM" = true ]; then
     echo "Running Appium Tests..."
     rm -rf ./app/androidAppium/build/test/appium/sessions
+    rm -rf ./app/cliAppium/build/test/appium/sessions
     rm -rf ./app/desktopAppium/build/test/appium/sessions
     rm -rf ./panel/androidAppium/build/test/appium/sessions
     rm -rf ./panel/desktopAppium/build/test/appium/sessions
     appium_exit=0
     runGradleWithTests \
         :app:androidAppium:test \
+        :app:cliAppium:test \
         :app:desktopAppium:test \
         :panel:androidAppium:test \
         :panel:desktopAppium:test \
