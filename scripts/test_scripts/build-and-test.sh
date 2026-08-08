@@ -4,7 +4,6 @@ set -e
 # Parsing Arguments
 RUN_ANDROID=false
 RUN_DESKTOP=false
-RUN_APPIUM=false
 RUN_E2E=false
 RUN_COMPILE_UNIT=false
 RUN_COMPOSE=false
@@ -28,7 +27,6 @@ while [ "$#" -gt 0 ]; do
     --all) RUN_ALL=true; shift ;;
     --android) RUN_ANDROID=true; shift ;;
     --desktop) RUN_DESKTOP=true; shift ;;
-    --appium) RUN_APPIUM=true; shift ;;
     --e2e) RUN_E2E=true; shift ;;
     --compose) RUN_COMPOSE=true; shift ;;
     --unit) RUN_COMPILE_UNIT=true; shift ;;
@@ -96,7 +94,6 @@ runGradleCheck() {
 if [ "$RUN_ALL" = true ]; then
   RUN_ANDROID=true
   RUN_DESKTOP=true
-  RUN_APPIUM=true
   RUN_E2E=true
   RUN_COMPILE_UNIT=true
   RUN_COMPOSE=true
@@ -135,15 +132,8 @@ vmwareHostIp() {
     echo "$local_ip" | awk -F. 'NF == 4 { print $1 "." $2 "." $3 ".1" }'
 }
 
-findEmulatorSerials() {
-    emulator_serials=""
-    for device_serial in $(adb devices | awk 'NR > 1 && $2 == "device" { print $1 }'); do
-        is_emulator=$(adb -s "$device_serial" shell getprop ro.kernel.qemu 2>/dev/null | tr -d '\r')
-        if [ "$is_emulator" = "1" ]; then
-            emulator_serials="${emulator_serials}${emulator_serials:+ }$device_serial"
-        fi
-    done
-    echo "$emulator_serials"
+findConnectedDeviceSerials() {
+    adb devices | awk 'NR > 1 && $2 == "device" { print $1 }'
 }
 
 tryConnectHostEmulator() {
@@ -153,31 +143,31 @@ tryConnectHostEmulator() {
         return 1
     fi
 
-    echo "No local Android emulator found. VMware environment detected; trying host emulator via adb connect $host..."
+    echo "No Android device connected. VMware environment detected; trying host emulator via adb connect $host..."
 
     target="$host:5555"
     connect_output=$(adb connect "$target" 2>&1 || true)
     echo "adb connect $target: $connect_output"
 
-    emulator_serials=$(findEmulatorSerials)
-    [ -n "$emulator_serials" ]
+    device_serials=$(findConnectedDeviceSerials)
+    [ -n "$device_serials" ]
 }
 
-checkEmulatorReady() {
+checkAndroidDeviceReady() {
     if ! command -v adb >/dev/null 2>&1; then
-        echo "adb is not available. Start a booted Android emulator before running Android/Appium tests."
+        echo "adb is not available. Connect a booted Android device before running Android/Appium tests."
         exit 1
     fi
 
-    emulator_serials=$(findEmulatorSerials)
+    device_serials=$(findConnectedDeviceSerials)
 
-    if [ -z "$emulator_serials" ]; then
+    if [ -z "$device_serials" ]; then
         if isVmwareEnvironment && tryConnectHostEmulator; then
-            emulator_serials=$(findEmulatorSerials)
+            device_serials=$(findConnectedDeviceSerials)
         fi
 
-        if [ -z "$emulator_serials" ]; then
-            echo "No running Android emulator found. Start and fully boot an emulator before running Android/Appium tests."
+        if [ -z "$device_serials" ]; then
+            echo "No connected Android device found. Connect a booted phone or emulator before running Android/Appium tests."
             if isVmwareEnvironment; then
                 echo "VMware environment detected, but no host emulator accepted adb connections."
             fi
@@ -185,30 +175,87 @@ checkEmulatorReady() {
         fi
     fi
 
-    for emulator_serial in $emulator_serials; do
-        boot_completed=$(adb -s "$emulator_serial" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')
+    for device_serial in $device_serials; do
+        boot_completed=$(adb -s "$device_serial" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')
         if [ "$boot_completed" = "1" ]; then
-            echo "Android emulator is ready: $emulator_serial"
+            echo "Android device is ready: $device_serial"
             return 0
         fi
     done
 
-    echo "Android emulator is running but has not completed boot. Wait until sys.boot_completed=1 before running Android/Appium tests."
+    echo "Connected Android devices have not completed boot. Wait until sys.boot_completed=1 before running Android/Appium tests."
     exit 1
 }
 
-# Check emulator readiness (for Android and Appium tests)
-if [ "$RUN_ANDROID" = true ] || [ "$RUN_APPIUM" = true ]; then
-    checkEmulatorReady
+acquireAppiumDeviceLock() {
+    appium_lock_serial="$1"
+    appium_lock_token_file="$2"
+    appium_lock_path="/data/local/tmp/appium-device-test.lock.d"
+    appium_lock_requested_at=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+    appium_lock_wait_deadline=$(( $(date +%s) + 3600 ))
+    appium_lock_owner_token="$(hostname 2>/dev/null || printf unknown-host):$$:$(date +%s)"
+
+    while true; do
+        if adb -s "$appium_lock_serial" shell "mkdir $appium_lock_path" >/dev/null 2>&1; then
+            appium_lock_acquired_at=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+            appium_lock_expires_at=$(( $(date +%s) + 1800 ))
+            {
+                printf '{\n'
+                printf '  "project_dir": "%s",\n' "$PWD"
+                printf '  "test_name": "appium-suite",\n'
+                printf '  "requested_at_utc": "%s",\n' "$appium_lock_requested_at"
+                printf '  "acquired_at_utc": "%s",\n' "$appium_lock_acquired_at"
+                printf '  "max_timeout_seconds": 1800,\n'
+                printf '  "expires_at_epoch": %s,\n' "$appium_lock_expires_at"
+                printf '  "host": "%s",\n' "$(hostname 2>/dev/null || printf unknown-host)"
+                printf '  "pid": %s,\n' "$$"
+                printf '  "owner_token": "%s"\n' "$appium_lock_owner_token"
+                printf '}\n'
+            } | adb -s "$appium_lock_serial" shell "cat > $appium_lock_path/lock.json"
+            printf '%s\n' "$appium_lock_owner_token" > "$appium_lock_token_file"
+            echo "Acquired Android device lock at $appium_lock_path"
+            return 0
+        fi
+
+        appium_lock_metadata=$(adb -s "$appium_lock_serial" shell "cat $appium_lock_path/lock.json" 2>/dev/null || true)
+        appium_lock_expires_at=$(printf '%s' "$appium_lock_metadata" | sed -n 's/.*"expires_at_epoch"[[:space:]]*:[[:space:]]*\([0-9][0-9]*\).*/\1/p' | head -n 1)
+        appium_lock_now=$(date +%s)
+        if [ -n "$appium_lock_expires_at" ] && [ "$appium_lock_expires_at" -le "$appium_lock_now" ]; then
+            adb -s "$appium_lock_serial" shell "rm -rf $appium_lock_path"
+            continue
+        fi
+        if [ "$appium_lock_now" -ge "$appium_lock_wait_deadline" ]; then
+            echo "Timed out waiting for Android device lock at $appium_lock_path"
+            return 1
+        fi
+        echo "Waiting for Android device lock at $appium_lock_path"
+        sleep 5
+    done
+}
+
+releaseAppiumDeviceLock() {
+    if [ ! -f "$appium_lock_token_file" ]; then
+        return 0
+    fi
+    appium_lock_expected_token=$(tr -d '\r\n' < "$appium_lock_token_file")
+    appium_lock_metadata=$(adb -s "$appium_lock_serial" shell "cat $appium_lock_path/lock.json" 2>/dev/null || true)
+    appium_lock_actual_token=$(printf '%s' "$appium_lock_metadata" | sed -n 's/.*"owner_token"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1)
+    if [ "$appium_lock_actual_token" = "$appium_lock_expected_token" ]; then
+        adb -s "$appium_lock_serial" shell "rm -rf $appium_lock_path"
+        echo "Released Android device lock at $appium_lock_path"
+    else
+        echo "Refusing to release Android device lock: owner token does not match"
+    fi
+    rm -f "$appium_lock_token_file"
+}
+
+# Check emulator readiness (for Android and end-to-end tests)
+if [ "$RUN_ANDROID" = true ] || [ "$RUN_E2E" = true ]; then
+    checkAndroidDeviceReady
 fi
 
 echo "Running detekt..."
-if [ "$RUN_E2E" = true ]; then
-    detekt_property="-Pe2e=true"
-else
-    detekt_property=""
-fi
-if ! ./scripts/tool_scripts/exec-until-success.sh ./gradlew detekt $detekt_property $GRADLE_CONSOLE_ARGS; then
+if ! ./scripts/tool_scripts/exec-until-success.sh ./gradlew detekt $GRADLE_CONSOLE_ARGS; then
     showNotification "Detekt 失败" "代码静态分析失败！请检查代码规范问题。" "false"
     exit 1
 fi
@@ -217,7 +264,7 @@ if [ "$RUN_COMPILE_UNIT" = true ]; then
     rm -rf cloud/server/build/test/session
 
     echo "Running check..."
-    if ! runGradleCheck check -Pappium=false; then
+    if ! runGradleCheck check; then
         showNotification "测试失败" "编译或测试执行失败！请检查错误。" "false"
         exit 1
     fi
@@ -242,20 +289,30 @@ if [ "$RUN_DESKTOP" = true ]; then
     runGradleWithTests "${MODULE}:desktopTest"
 fi
 
-# Running Appium Tests
-if [ "$RUN_APPIUM" = true ]; then
-    echo "Running Appium Tests..."
+# Running End-to-End Tests
+if [ "$RUN_E2E" = true ]; then
+    echo "Running Appium End-to-End Tests..."
+    appium_device_serial=$(findConnectedDeviceSerials | awk 'NR == 1 { print; exit }')
+    appium_lock_token=$(mktemp)
+    acquireAppiumDeviceLock "$appium_device_serial" "$appium_lock_token"
+    trap 'releaseAppiumDeviceLock || true' EXIT
     rm -rf ./app/androidAppium/build/test/appium/sessions
     rm -rf ./app/desktopAppium/build/test/appium/sessions
     rm -rf ./panel/androidAppium/build/test/appium/sessions
     rm -rf ./panel/desktopAppium/build/test/appium/sessions
     appium_exit=0
-    runGradleWithTests \
-        :app:androidAppium:test \
-        :app:desktopAppium:test \
-        :panel:androidAppium:test \
-        :panel:desktopAppium:test \
-        -Pappium=true || appium_exit=$?
+    for appium_task in \
+        :app:androidAppium:appiumTest \
+        :app:desktopAppium:appiumTest \
+        :app:wasmAppium:appiumTest \
+        :panel:androidAppium:appiumTest \
+        :panel:desktopAppium:appiumTest \
+        :panel:wasmAppium:appiumTest
+    do
+        runGradleWithTests "$appium_task" || appium_exit=$?
+    done
+    releaseAppiumDeviceLock
+    trap - EXIT
     if [ "$appium_exit" -ne 0 ]; then
         exit "$appium_exit"
     fi
@@ -265,7 +322,7 @@ if [ "$RUN_E2E" = true ]; then
     echo "Running CLI End-to-End Tests..."
     rm -rf ./app/cliE2e/build/test/e2e/sessions
     rm -rf ./panel/cliE2e/build/test/e2e/sessions
-    runGradleWithTests :app:cliE2e:test :panel:cliE2e:test -Pe2e=true
+    runGradleWithTests :app:cliE2e:e2eTest :panel:cliE2e:e2eTest
 fi
 #./gradlew :composeApp:wasmJsTest
 #./gradlew :composeApp:iosSimulatorArm64Test

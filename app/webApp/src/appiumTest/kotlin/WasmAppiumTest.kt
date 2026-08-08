@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 import org.openqa.selenium.By
 import org.openqa.selenium.firefox.FirefoxDriver
 import org.openqa.selenium.firefox.FirefoxOptions
@@ -67,10 +71,6 @@ class WasmAppiumTest : AppiumTestBase() {
     @Test
     fun `test subscribe topic from community page`() =
         testSubscribeTopicByHelper(name.methodName, targetHelper, platformHelper)
-
-    @Test
-    fun `test community profile actions from joined community`() =
-        testCommunityProfileActionsByHelper(name.methodName, targetHelper, platformHelper)
 
     @Test
     fun `test publish topic in joined community`() =

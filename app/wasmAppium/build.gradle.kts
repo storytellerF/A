@@ -2,16 +2,24 @@ plugins {
     alias(libs.plugins.kotlinJvm)
 }
 
-val prepareWasmDistribution = tasks.register<Sync>("prepareWasmDistribution") {
-    dependsOn(":app:webApp:wasmJsBrowserDevelopmentWebpack")
-    from(project(":app:webApp").layout.buildDirectory.dir("kotlin-webpack/wasmJs/developmentExecutable"))
-    from(rootProject.layout.buildDirectory.file("wasm/packages/appWebApp/kotlin/index.html"))
-    from(rootProject.layout.buildDirectory.file("wasm/packages/appWebApp/kotlin/styles.css"))
-    from(rootProject.layout.buildDirectory.dir("wasm/packages/appWebApp/kotlin/composeResources")) {
-        into("composeResources")
+val appiumTest =
+    sourceSets.create(
+        "appiumTest",
+    ) {
+        java.srcDir("../webApp/src/appiumTest/kotlin")
     }
-    into(layout.buildDirectory.dir("wasmDistribution"))
-}
+
+val prepareWasmDistribution =
+    tasks.register<Sync>("prepareWasmDistribution") {
+        dependsOn(":app:webApp:wasmJsBrowserDevelopmentWebpack")
+        from(project(":app:webApp").layout.buildDirectory.dir("kotlin-webpack/wasmJs/developmentExecutable"))
+        from(rootProject.layout.buildDirectory.file("wasm/packages/appWebApp/kotlin/index.html"))
+        from(rootProject.layout.buildDirectory.file("wasm/packages/appWebApp/kotlin/styles.css"))
+        from(rootProject.layout.buildDirectory.dir("wasm/packages/appWebApp/kotlin/composeResources")) {
+            into("composeResources")
+        }
+        into(layout.buildDirectory.dir("wasmDistribution"))
+    }
 
 kotlin {
     jvmToolchain(21)
@@ -23,8 +31,26 @@ dependencies {
     testImplementation(libs.selenium.firefox.driver)
 }
 
-tasks.test {
-    dependsOn(prepareWasmDistribution)
+configurations.named(appiumTest.implementationConfigurationName) {
+    extendsFrom(configurations.testImplementation.get())
+}
+
+configurations.named(appiumTest.runtimeOnlyConfigurationName) {
+    extendsFrom(configurations.testRuntimeOnly.get())
+}
+
+tasks.register<Test>("appiumTest") {
+    group = "verification"
+    description = "Runs the App Wasm Appium tests."
+    testClassesDirs = appiumTest.output.classesDirs
+    classpath = appiumTest.runtimeClasspath
+    dependsOn(
+        prepareWasmDistribution,
+        ":cloud:server:buildAppiumDockerImage",
+        ":cloud:worker:buildAppiumDockerImage",
+        ":cloud:cli:buildAppiumDockerImage",
+        ":cloud:ws:buildAppiumDockerImage",
+    )
     jvmArgs("--add-modules", "jdk.httpserver")
     maxParallelForks = 1
 }

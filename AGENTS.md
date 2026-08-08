@@ -39,7 +39,7 @@
 - **Architecture**: UI -> `SessionManager` request extensions -> API endpoint. Add local storage and paging when appropriate.
 - **Paging**: Store cursors consistently in `RemoteKeyStorage` (`PRE_COLLECTION`/`NEXT_COLLECTION`).
 - **Logging**: Instrument external network requests through `serviceCatching`. Avoid noisy logging in hot paths.
-- **Tests**: Write tests whenever possible. Client-side non-UI tests go under `src/headlessTest/kotlin`. Compose tests should follow https://kotlinlang.org/docs/multiplatform/compose-test.html. End-to-end tests go in the Appium modules enabled by `-Pappium=true`.
+- **Tests**: Write tests whenever possible. Client-side non-UI tests go under `src/headlessTest/kotlin`. Compose tests should follow https://kotlinlang.org/docs/multiplatform/compose-test.html. End-to-end tests use `scripts/test_scripts/build-and-test.sh --e2e`, which runs the Appium runner modules' explicit `appiumTest` tasks and CLI E2E tasks; no Gradle property is required.
 
 ## Static Checks
 - After code changes, run `./gradlew assemble --console=plain` to check for compilation errors.
@@ -51,7 +51,7 @@
 - Actively test affected modules.
     * For small changes, use `./gradlew :module:test --console=plain`.
     * For the full regular unit test suite, use `./scripts/test_scripts/build-and-test.sh --unit --plain` (excluding device-dependent Compose and Appium tests). Filter multiple tests with `--tests 'package.FirstTest' 'package.SecondTest'`; repeating `--tests` is also supported.
-    * For end-to-end Appium tests, use `./scripts/test_scripts/build-and-test.sh --appium --plain`.
+    * For end-to-end tests, use `./scripts/test_scripts/build-and-test.sh --e2e --plain`; this runs Appium and CLI E2E suites.
     * For Compose common tests under `device_based`, use a real device with `./gradlew :module:connectedAndroidTest` or run `./gradlew :module:jvmTest`.
     * For Compose UI changes, run `./gradlew validateDebugScreenshotTest` for snapshot tests.
 - Keep Compose screenshot tests context-free: do not inject app runtime `CompositionLocal` dependencies such as session managers, dialog controllers, or navigation contexts. Cover components that require those dependencies in another test layer.
