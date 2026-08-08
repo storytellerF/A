@@ -1,6 +1,4 @@
 import org.gradle.accessors.dm.LibrariesForLibs
-import java.io.FileOutputStream
-import java.util.Base64
 
 plugins {
     id("com.android.application")
@@ -101,44 +99,4 @@ dependencies {
 
 fun getenv(key: String): String? {
     return System.getenv(key) ?: System.getenv(key.lowercase()) ?: System.getenv(key.uppercase())
-}
-
-
-val decodeBase64ToStoreFileTask = tasks.register("decodeBase64ToStoreFile") {
-    group = "signing"
-    val signKey = getenv("storyteller_f_sign_key")
-    val generatedJksFile = layout.buildDirectory.file("signing/signing_key.jks").get().asFile
-
-    inputs.property("signKey", signKey ?: "")
-    outputs.file(generatedJksFile)
-    doLast {
-        if (!signKey.isNullOrBlank()) {
-            // 定义输出文件路径 (如密钥存储文件)
-            val outputFile = generatedJksFile
-
-            outputFile.parentFile!!.let {
-                if (!it.exists() && !it.mkdirs()) {
-                    throw Exception("mkdirs failed: $it")
-                }
-            }
-            if (!outputFile.exists() && !outputFile.createNewFile()) {
-                throw Exception("create failed: $outputFile")
-            }
-            // 将 Base64 解码为字节
-            val decodedBytes = Base64.getDecoder().decode(signKey)
-
-            // 将解码后的字节写入文件
-            FileOutputStream(outputFile).use { it.write(decodedBytes) }
-
-            println("Base64 decoded and written to: $outputFile")
-        } else {
-            println("skip decodeBase64ToStoreFile")
-        }
-
-    }
-
-}
-
-afterEvaluate {
-    tasks["packageRelease"]?.dependsOn(decodeBase64ToStoreFileTask)
 }
