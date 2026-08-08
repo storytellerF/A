@@ -22,6 +22,7 @@ import com.storyteller_f.a.cloud.core.service.deleteFavoriteByObject
 import com.storyteller_f.a.cloud.core.service.disableTwoFactor
 import com.storyteller_f.a.cloud.core.service.enableTotp
 import com.storyteller_f.a.cloud.core.service.generateRecoveryCodes
+import com.storyteller_f.a.cloud.core.service.getAllUsers
 import com.storyteller_f.a.cloud.core.service.getFavorites
 import com.storyteller_f.a.cloud.core.service.getTopicsByParentId
 import com.storyteller_f.a.cloud.core.service.getTwoFactorSettings
@@ -262,10 +263,18 @@ fun Route.bindUserRoute(backend: Backend) {
 
     CustomApi.Users.search(handleResult(backend)) { q ->
         usePrincipalOrNull { uid ->
-            q.pagination(GeneralOffsetPagingGenerator, { l, p ->
-                UserInfoListResponse(l, p)
-            }) { f ->
-                backend.searchUsers(q.word, uid, f)
+            if (q.word.isBlank()) {
+                q.pagination(IdentifiablePagingGenerator, { l, p ->
+                    UserInfoListResponse(l, p)
+                }) { f ->
+                    backend.getAllUsers(f)
+                }
+            } else {
+                q.pagination(GeneralOffsetPagingGenerator, { l, p ->
+                    UserInfoListResponse(l, p)
+                }) { f ->
+                    backend.searchUsers(q.word, uid, f)
+                }
             }
         }
     }

@@ -187,7 +187,15 @@ val koverIncludedProjects = listOf(
     )
 } else {
     emptyList()
-}
+} + if (providers.gradleProperty("e2e").orNull == "true") {
+    listOf(
+        ":dev:e2eCore",
+        ":app:cliE2e",
+        ":panel:cliE2e",
+    )
+} else {
+    emptyList()
+}.distinct()
 dependencies {
     koverIncludedProjects.forEach { projectPath ->
         kover(project(projectPath))

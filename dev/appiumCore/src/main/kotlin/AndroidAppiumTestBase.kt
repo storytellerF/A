@@ -140,12 +140,7 @@ suspend fun useWorkerContainer(
     }
 }
 
-fun resolveAppiumPresetPath(): File = sequenceOf(
-    File("src/test/resources/preset"),
-    File("../../dev/appiumCore/src/main/resources/preset"),
-    File("dev/appiumCore/src/main/resources/preset"),
-).firstOrNull { File(it, "0_preset_user.json").exists() }
-    ?: error("Appium preset data directory not found")
+fun resolveAppiumPresetPath(): File = File("src/main/resources/preset")
 
 fun prepareSessionDirectories(sessionPath: String) {
     val sessionDir = File(sessionPath)

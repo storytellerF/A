@@ -1,0 +1,11 @@
+{
+  "type": "user",
+  "userData": [
+    {
+      "name": "System",
+      "aid": "System",
+      "privateKey": "secrets/p-system",
+      "id": 1
+    }
+  ]
+}

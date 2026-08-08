@@ -315,7 +315,7 @@ naming:
     minimumFunctionNameLength: 3
   FunctionNaming:
     active: true
-    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/composeApp/**']
+    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/composeApp/**', '**/composeCore/**']
     functionPattern: '[a-z][a-zA-Z0-9]*'
     excludeClassPattern: '$^'
   FunctionParameterNaming:
@@ -821,7 +821,7 @@ ktlint:
     autoCorrect: true
   FunctionName:
     active: true
-    excludes: ['**/composeApp/**']
+    excludes: ['**/composeApp/**', '**/composeCore/**']
   FunctionReturnTypeSpacing:
     active: true
     autoCorrect: true
@@ -1050,4 +1050,5 @@ libraries:
     excludes:
       - '**/api/src/**'
       - '**/client/core/src/**/PanelRequest.kt'
+      - '**/dev/e2eCore/src/**'
       - '**/shared/src/**/com/storyteller_f/shared/model/**'
