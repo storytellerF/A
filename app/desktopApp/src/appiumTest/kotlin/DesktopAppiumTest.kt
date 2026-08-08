@@ -1,8 +1,12 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 import kotlin.test.Test
 
-class AppAndroidAppiumTest : AppiumTestBase() {
+class DesktopAppiumTest : AppiumTestBase() {
     private val targetHelper = AppAppiumHelper()
-    private val platformHelper = AndroidAppiumHelper()
+    private val platformHelper = DesktopAppiumHelper()
 
     @Test
     fun `test sign up`() = testSignUpByHelper(name.methodName, targetHelper, platformHelper)
@@ -12,7 +16,7 @@ class AppAndroidAppiumTest : AppiumTestBase() {
         testSignInAsSystemUserByHelper(name.methodName, targetHelper, platformHelper)
 
     @Test
-    fun `test sign in by injected private session`() =
+    fun `test sign in by injected session`() =
         testInjectedSessionByHelper(name.methodName, targetHelper, platformHelper)
 
     @Test

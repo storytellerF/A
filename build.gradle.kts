@@ -121,7 +121,11 @@ subprojects {
 
     tasks.withType<Detekt>().configureEach {
         baseline.set(layout.projectDirectory.file(detektBaselineFileName(name)))
-        exclude { source -> source.file.absolutePath.replace('\\', '/').contains("/build/") }
+        exclude { source ->
+            source.file.absolutePath.replace('\\', '/').let { path ->
+                path.contains("/build/") || path.contains("/src/appiumTest/") || path.contains("/src/e2eTest/")
+            }
+        }
         reports {
             checkstyle.required = true
             html.required = true
@@ -134,7 +138,11 @@ subprojects {
 
     tasks.withType<DetektCreateBaselineTask>().configureEach {
         baseline.set(layout.projectDirectory.file(detektBaselineFileName(name)))
-        exclude { source -> source.file.absolutePath.replace('\\', '/').contains("/build/") }
+        exclude { source ->
+            source.file.absolutePath.replace('\\', '/').let { path ->
+                path.contains("/build/") || path.contains("/src/appiumTest/") || path.contains("/src/e2eTest/")
+            }
+        }
     }
 
     detektReportMergeSarif {
@@ -175,27 +183,7 @@ val koverIncludedProjects = listOf(
     ":client:room",
     ":client:asciidoc-parser",
     ":bot:builtin-bot",
-) + if (providers.gradleProperty("appium").orNull == "true") {
-    listOf(
-        ":dev:appiumCore",
-        ":app:androidAppium",
-        ":app:desktopAppium",
-        ":app:wasmAppium",
-        ":panel:androidAppium",
-        ":panel:desktopAppium",
-        ":panel:wasmAppium",
-    )
-} else {
-    emptyList()
-} + if (providers.gradleProperty("e2e").orNull == "true") {
-    listOf(
-        ":dev:e2eCore",
-        ":app:cliE2e",
-        ":panel:cliE2e",
-    )
-} else {
-    emptyList()
-}.distinct()
+).distinct()
 dependencies {
     koverIncludedProjects.forEach { projectPath ->
         kover(project(projectPath))

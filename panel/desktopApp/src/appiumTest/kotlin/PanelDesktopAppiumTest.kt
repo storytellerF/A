@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 import kotlin.test.Test
 
 class PanelDesktopAppiumTest : AppiumTestBase() {
