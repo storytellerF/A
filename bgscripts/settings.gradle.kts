@@ -1,4 +1,4 @@
-
+rootProject.name = "bgscripts"
 pluginManagement {
     repositories {
         gradlePluginPortal()
