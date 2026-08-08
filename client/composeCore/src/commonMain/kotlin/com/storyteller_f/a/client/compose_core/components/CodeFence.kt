@@ -11,7 +11,7 @@ import com.hrm.latex.renderer.model.LatexConfig
 import com.mikepenz.markdown.compose.LocalMarkdownTypography
 import com.mikepenz.markdown.compose.components.MarkdownComponentModel
 import com.mikepenz.markdown.compose.elements.highlightedCodeFence
-import com.storyteller.a.client.composecore.markdown.mermaidBlock
+import com.storyteller.a.client.composecore.markdown.MermaidBlock
 import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.utils.MarkdownObject
@@ -32,7 +32,7 @@ fun CustomCodeFence(
     when (codeFenceKind(lang)) {
         CodeFenceKind.REF -> refBlock(modal)
         CodeFenceKind.MATH -> LatexBlock(modal)
-        CodeFenceKind.MERMAID -> mermaidBlock(modal)
+        CodeFenceKind.MERMAID -> MermaidBlock(modal)
         CodeFenceKind.ASCIIDOC -> AsciidocPreviewBlock(modal)
         CodeFenceKind.OBJECT -> ObjectBlock(modal, mediaList, onClick)
         CodeFenceKind.CODE -> HighlightCodeBlock(modal)

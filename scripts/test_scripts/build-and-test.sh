@@ -5,6 +5,7 @@ set -e
 RUN_ANDROID=false
 RUN_DESKTOP=false
 RUN_APPIUM=false
+RUN_E2E=false
 RUN_COMPILE_UNIT=false
 RUN_COMPOSE=false
 MODULE="app:composeApp"
@@ -28,6 +29,7 @@ while [ "$#" -gt 0 ]; do
     --android) RUN_ANDROID=true; shift ;;
     --desktop) RUN_DESKTOP=true; shift ;;
     --appium) RUN_APPIUM=true; shift ;;
+    --e2e) RUN_E2E=true; shift ;;
     --compose) RUN_COMPOSE=true; shift ;;
     --unit) RUN_COMPILE_UNIT=true; shift ;;
     --plain) GRADLE_CONSOLE_ARGS="--console=plain"; shift ;;
@@ -95,6 +97,7 @@ if [ "$RUN_ALL" = true ]; then
   RUN_ANDROID=true
   RUN_DESKTOP=true
   RUN_APPIUM=true
+  RUN_E2E=true
   RUN_COMPILE_UNIT=true
   RUN_COMPOSE=true
 fi
@@ -200,7 +203,12 @@ if [ "$RUN_ANDROID" = true ] || [ "$RUN_APPIUM" = true ]; then
 fi
 
 echo "Running detekt..."
-if ! ./scripts/tool_scripts/exec-until-success.sh ./gradlew detekt $GRADLE_CONSOLE_ARGS; then
+if [ "$RUN_E2E" = true ]; then
+    detekt_property="-Pe2e=true"
+else
+    detekt_property=""
+fi
+if ! ./scripts/tool_scripts/exec-until-success.sh ./gradlew detekt $detekt_property $GRADLE_CONSOLE_ARGS; then
     showNotification "Detekt 失败" "代码静态分析失败！请检查代码规范问题。" "false"
     exit 1
 fi
@@ -251,6 +259,13 @@ if [ "$RUN_APPIUM" = true ]; then
     if [ "$appium_exit" -ne 0 ]; then
         exit "$appium_exit"
     fi
+fi
+
+if [ "$RUN_E2E" = true ]; then
+    echo "Running CLI End-to-End Tests..."
+    rm -rf ./app/cliE2e/build/test/e2e/sessions
+    rm -rf ./panel/cliE2e/build/test/e2e/sessions
+    runGradleWithTests :app:cliE2e:test :panel:cliE2e:test -Pe2e=true
 fi
 #./gradlew :composeApp:wasmJsTest
 #./gradlew :composeApp:iosSimulatorArm64Test

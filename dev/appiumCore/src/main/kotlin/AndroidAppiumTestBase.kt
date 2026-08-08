@@ -140,12 +140,13 @@ suspend fun useWorkerContainer(
     }
 }
 
-fun resolveAppiumPresetPath(): File = sequenceOf(
-    File("src/test/resources/preset"),
-    File("../../dev/appiumCore/src/main/resources/preset"),
-    File("dev/appiumCore/src/main/resources/preset"),
-).firstOrNull { File(it, "0_preset_user.json").exists() }
-    ?: error("Appium preset data directory not found")
+fun resolveAppiumPresetPath(): File {
+    val presetPaths =
+        generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }
+            .map { File(it, "dev/preset") }
+    return presetPaths.firstOrNull { File(it, "0_preset_user.json").exists() }
+        ?: error("Shared E2E preset data directory not found")
+}
 
 fun prepareSessionDirectories(sessionPath: String) {
     val sessionDir = File(sessionPath)

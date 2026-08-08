@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import com.jakewharton.mosaic.layout.onKeyEvent
 import com.jakewharton.mosaic.modifier.Modifier
@@ -27,6 +28,7 @@ import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.addFavorite
 import com.storyteller_f.a.client.core.addReaction
 import com.storyteller_f.a.client.core.addSubscription
+import com.storyteller_f.a.client.core.buildWebSocketUrl
 import com.storyteller_f.a.client.core.createSimpleUserSessionManager
 import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.a.client.core.defaultClientConfigure
@@ -51,6 +53,7 @@ import com.storyteller_f.a.client.core.sendMessage
 import com.storyteller_f.a.client.core.userSignIn
 import com.storyteller_f.a.client.core.userSignUp
 import com.storyteller_f.shared.getAlgo
+import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.MemberInfo
@@ -550,10 +553,17 @@ fun App(sessionManager: UserSessionManager, passHolder: SimplePassHolder) {
     var screen by remember { mutableStateOf<Screen>(Screen.Main) }
     var inputBuffer by remember { mutableStateOf("") }
     val submitChannel = remember { Channel<String>(Channel.UNLIMITED) }
+    val currentScreen by rememberUpdatedState(screen)
 
     LaunchedEffect(Unit) {
         for (line in submitChannel) {
-            handleInput(line, screen, { screen = it }, sessionManager, passHolder)
+            handleInput(
+                line = line,
+                screen = currentScreen,
+                setScreen = { screen = it },
+                sessionManager = sessionManager,
+                passHolder = passHolder,
+            )
         }
     }
 
@@ -786,26 +796,29 @@ fun App(sessionManager: UserSessionManager, passHolder: SimplePassHolder) {
 fun main() {
     kotlinx.coroutines.runBlocking {
         Napier.base(ConsoleAntilog())
+        loadCryptoLibIfNeed()
 
-        val wsUrl = "ws://127.0.0.1:8080"
-        val httpUrl = "http://127.0.0.1:8080"
+        val wsUrl = System.getenv("WS_SERVER_URL") ?: "ws://127.0.0.1:8080"
+        val httpUrl = System.getenv("SERVER_URL") ?: "http://127.0.0.1:8080"
 
         val passHolder = SimplePassHolder()
-        val sessionManager = createSimpleUserSessionManager(
-            wsUrl,
-            AcceptAllCookiesStorage(),
-            passHolder,
-            { model, cookieManager ->
-                HttpClient(OkHttp) {
-                    defaultClientConfigure(
-                        cookieManager,
-                        model,
-                        passHolder,
-                        httpUrl
-                    )
-                }
-            }
-        ) { _, _, _ -> }
+        val sessionManager =
+            createSimpleUserSessionManager(
+                webSocketUrl = buildWebSocketUrl(wsUrl),
+                cookieManager = AcceptAllCookiesStorage(),
+                passHolder = passHolder,
+                createClient = { model, cookieManager ->
+                    HttpClient(OkHttp) {
+                        defaultClientConfigure(
+                            cookiesStorage = cookieManager,
+                            manager = model,
+                            passHolder = passHolder,
+                            httpUrl = httpUrl,
+                        )
+                    }
+                },
+                onReceiveFrame = { _, _, _ -> },
+            )
 
         sessionManager.onBackgroundTask {
             runMosaicBlocking {

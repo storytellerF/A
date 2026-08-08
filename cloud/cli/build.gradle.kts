@@ -39,31 +39,39 @@ application {
     applicationDefaultJvmArgs = listOf("--add-modules", "jdk.incubator.vector")
 }
 
-val copyAppiumDockerDistribution = tasks.register<Copy>("copyAppiumDockerDistribution") {
-    group = "appium"
-    description = "Copies the cli distribution used by the Appium Docker image."
-    dependsOn(tasks.named("distTar"), tasks.named("distZip"))
-    from(layout.buildDirectory.dir("distributions")) {
-        include("cli.tar", "cli.zip")
+val copyTestDockerDistribution =
+    tasks.register<Copy>("copyTestDockerDistribution") {
+        group = "verification"
+        description = "Copies the cli distribution used by test Docker images."
+        dependsOn(tasks.named("distTar"), tasks.named("distZip"))
+        from(layout.buildDirectory.dir("distributions")) {
+            include("cli.tar", "cli.zip")
+        }
+        into(rootProject.layout.projectDirectory.dir("deploy/build"))
     }
-    into(rootProject.layout.projectDirectory.dir("deploy/build"))
-}
 
-tasks.register<Exec>("buildAppiumDockerImage") {
+val buildTestDockerImage =
+    tasks.register<Exec>("buildTestDockerImage") {
+        group = "verification"
+        description = "Builds the a-cli Docker image used by integration tests."
+        dependsOn(copyTestDockerDistribution)
+        workingDir = rootProject.layout.projectDirectory.asFile
+        commandLine(
+            "docker",
+            "build",
+            "-f",
+            "cli.Dockerfile",
+            "--build-arg",
+            "BUILD_ON=host",
+            "-t",
+            "a-cli:latest",
+            ".",
+        )
+        outputs.upToDateWhen { false }
+    }
+
+tasks.register("buildAppiumDockerImage") {
     group = "appium"
-    description = "Builds the a-cli Docker image used by Appium tests."
-    dependsOn(copyAppiumDockerDistribution)
-    workingDir = rootProject.layout.projectDirectory.asFile
-    commandLine(
-        "docker",
-        "build",
-        "-f",
-        "cli.Dockerfile",
-        "--build-arg",
-        "BUILD_ON=host",
-        "-t",
-        "a-cli:latest",
-        ".",
-    )
-    outputs.upToDateWhen { false }
+    description = "Compatibility alias for buildTestDockerImage."
+    dependsOn(buildTestDockerImage)
 }

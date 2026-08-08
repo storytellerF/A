@@ -24,7 +24,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 
-internal val mermaidBlock: @Composable (MarkdownComponentModel) -> Unit = { modal ->
+@Composable
+internal fun MermaidBlock(modal: MarkdownComponentModel) {
     val source =
         remember(modal.node, modal.content) {
             readCodeFence(modal.node, modal.content)

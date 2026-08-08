@@ -1,6 +1,7 @@
 @file:Suppress("UnstableApiUsage")
 
 val isAppiumTestEnable = providers.gradleProperty("appium").get() == "true"
+val isE2eTestEnable = providers.gradleProperty("e2e").orNull == "true"
 
 rootProject.name = "A"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
@@ -49,6 +50,10 @@ include(":app:cliApp")
 include(":app:androidApp")
 include(":app:desktopApp")
 
+if (isE2eTestEnable) {
+    include(":dev:e2eCore")
+}
+
 if (isAppiumTestEnable) {
     include(":dev:appiumCore")
     include(":app:androidAppium")
@@ -57,6 +62,11 @@ if (isAppiumTestEnable) {
     include(":panel:androidAppium")
     include(":panel:desktopAppium")
     include(":panel:wasmAppium")
+}
+
+if (isE2eTestEnable) {
+    include(":app:cliE2e")
+    include(":panel:cliE2e")
 }
 
 include(":cloud:server")
