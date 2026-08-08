@@ -211,14 +211,11 @@ private suspend fun useWorkerContainer(
 }
 
 private fun resolveE2ePresetPath(): File {
-    val presetDirectories =
-        listOf(
-            File("src/test/resources/preset"),
-            File("../../dev/e2eCore/src/main/resources/preset"),
-            File("dev/e2eCore/src/main/resources/preset"),
-        )
-    return presetDirectories.firstOrNull { File(it, "0_preset_user.json").exists() }
-        ?: error("E2E preset data directory not found")
+    val presetPaths =
+        generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }
+            .map { File(it, "dev/preset") }
+    return presetPaths.firstOrNull { File(it, "0_preset_user.json").exists() }
+        ?: error("Shared E2E preset data directory not found")
 }
 
 private fun prepareSessionDirectories(sessionPath: String) {

@@ -24,17 +24,12 @@ android {
         }
     }
     val signPath: String? = getenv("storyteller_f_sign_path")
-    val signKey: String? = getenv("storyteller_f_sign_key")
     val signAlias: String? = getenv("storyteller_f_sign_alias")
     val signStorePassword: String? = getenv("storyteller_f_sign_store_password")
     val signKeyPassword: String? = getenv("storyteller_f_sign_key_password")
 
     signingConfigs {
-        val signStorePath = when {
-            signPath != null -> File(signPath)
-            signKey != null -> layout.buildDirectory.file("signing/signing_key.jks").get().asFile
-            else -> null
-        }
+        val signStorePath = signPath?.let(::File)
         if (signStorePath != null && signAlias != null && signStorePassword != null && signKeyPassword != null) {
             create("release") {
                 keyAlias = signAlias
