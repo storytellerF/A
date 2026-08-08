@@ -30,6 +30,7 @@ import com.storyteller_f.a.client.core.overview
 import com.storyteller_f.a.client.core.panelSignIn
 import com.storyteller_f.a.client.core.panelSignUp
 import com.storyteller_f.shared.getAlgo
+import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.PanelOverview
@@ -309,8 +310,9 @@ fun App(sessionManager: PanelSessionManager, passHolder: SimplePassHolder) {
 fun main() {
     kotlinx.coroutines.runBlocking {
         Napier.base(ConsoleAntilog())
+        loadCryptoLibIfNeed()
 
-        val httpUrl = "http://127.0.0.1:8080"
+        val httpUrl = System.getenv("SERVER_URL") ?: "http://127.0.0.1:8080"
 
         val passHolder = SimplePassHolder()
 

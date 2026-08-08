@@ -27,9 +27,22 @@ done > ./secrets_env.sh
 . ./secrets_env.sh
 mkdir -p app/config
 
+restore_signing_key() {
+    local sign_key="${storyteller_f_sign_key:-${STORYTELLER_F_SIGN_KEY:-}}"
+    if [[ -z "$sign_key" ]]; then
+        return
+    fi
+
+    local sign_path="$PWD/build/signing/signing_key.jks"
+    mkdir -p "$(dirname "$sign_path")"
+    printf '%s' "$sign_key" | base64 --decode > "$sign_path"
+    export storyteller_f_sign_path="$sign_path"
+}
+
 case "$TARGET" in
     android)
         echo "Running Android-specific command..."
+        restore_signing_key
         # 在这里添加 Android 相关命令
         ./gradlew app:androidApp:assembleRelease -Pserver.flavor="$FLAVOR" -Pserver.buildType="$BUILD_TYPE"
         mkdir -p "build/outputs/apk/release"
@@ -57,6 +70,7 @@ case "$TARGET" in
         ;;
     android-panel)
         echo "Running AndroidPanel-specific command..."
+        restore_signing_key
         # 在这里添加 AndroidPanel 相关命令
         ./gradlew panel:androidApp:assembleRelease -Pserver.flavor="$FLAVOR" -Pserver.buildType="$BUILD_TYPE"
         mkdir -p "build/outputs/apk/release"
