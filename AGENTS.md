@@ -45,7 +45,7 @@
 - After code changes, run `./gradlew assemble --console=plain` to check for compilation errors.
 - After compilation checks, run `./scripts/tool_scripts/exec-until-success.sh ./gradlew detekt --console=plain` for static code style checks.
   - On Windows, run this through Git Bash.
-- Detekt allows function names up to 50 characters so tests can use behavior-descriptive names. Keep production function names concise even when the configured limit permits longer names.
+- Detekt allows function names up to 50 characters. Appium and CLI E2E source sets are exempt from function naming and length rules so backtick test names can remain behavior-descriptive. Keep production function names concise even when the configured limit permits longer names.
 
 ## Tests
 - Actively test affected modules.
@@ -58,7 +58,7 @@
 - Tests are meant to reveal problems. If a test finds a problem, fix the problem instead of working around it in the test.
 - Do not add extra test steps into a test case unless there is an actual dependency between the steps.
 - Extract repeated test steps into helper methods.
-- Appium tests require a real device or emulator and cannot run in parallel.
+- Android Appium tests require a real device or emulator and cannot run concurrently on the same device. Keep the device-side lock leased for the entire `--e2e` Appium sequence and refresh its expiry until release.
 - Native Appium sources and runners belong to the corresponding `androidApp` or `desktopApp` module under `src/appiumTest/kotlin`; Wasm Appium continues to use its dedicated runner module.
 - Appium tests compose a target helper (`AppAppiumHelper` or `PanelAppiumHelper`) with a platform helper (`AndroidAppiumHelper` or `DesktopAppiumHelper`). Keep concrete test methods as calls to shared `test*ByHelper` functions; target helpers create sessions and platform helpers own launch, cleanup, and log collection.
 

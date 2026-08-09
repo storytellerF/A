@@ -13,10 +13,11 @@ import kotlin.test.Test
 
 class WasmAppiumTest : AppiumTestBase() {
     private val targetHelper = AppAppiumHelper()
-    private val platformHelper = WasmAppiumHelper(
-        resolveWasmDistribution(),
-        By.cssSelector("[aria-label='avatar']"),
-    )
+    private val platformHelper =
+        WasmAppiumHelper(
+            resolveWasmDistribution(),
+            By.cssSelector("[aria-label='avatar']"),
+        )
 
     @Test
     fun `test html semantics bridge mounts`() {
@@ -29,10 +30,12 @@ class WasmAppiumTest : AppiumTestBase() {
                         ExpectedConditions.presenceOfElementLocated(By.cssSelector("[aria-label='avatar']")),
                     )
                 }.getOrElse { cause ->
-                    val body = driver.findElement(By.tagName("body")).getAttribute("innerHTML")
-                    val console = runCatching { driver.manage().logs().get("browser").all }.getOrNull()
-                    val errors = (driver as org.openqa.selenium.JavascriptExecutor)
-                        .executeScript("return window.appiumErrors || []")
+                    val body = driver.findElement(By.tagName("body")).getAttribute("innerHTML").orEmpty()
+                    val console = runCatching { driver.manage().logs().get("browser").all }.getOrNull().orEmpty()
+                    val errors =
+                        (driver as org.openqa.selenium.JavascriptExecutor)
+                            .executeScript("return window.appiumErrors || []")
+                            ?: emptyList<Any>()
                     throw AssertionError(
                         "Wasm semantics did not mount; requested=${server.requestedPaths}; body=$body; " +
                             "console=$console; errors=$errors",
@@ -49,8 +52,7 @@ class WasmAppiumTest : AppiumTestBase() {
     fun `test sign up`() = testSignUpByHelper(name.methodName, targetHelper, platformHelper)
 
     @Test
-    fun `test sign in as system user`() =
-        testSignInAsSystemUserByHelper(name.methodName, targetHelper, platformHelper)
+    fun `test sign in as system user`() = testSignInAsSystemUserByHelper(name.methodName, targetHelper, platformHelper)
 
     @Test
     fun `test sign in by injected session`() =
@@ -65,12 +67,15 @@ class WasmAppiumTest : AppiumTestBase() {
         testFavoriteTopicByHelper(name.methodName, targetHelper, platformHelper)
 
     @Test
-    fun `test opens asciidoc preview`() =
-        testOpenAsciidocPreviewByHelper(name.methodName, targetHelper, platformHelper)
+    fun `test opens asciidoc preview`() = testOpenAsciidocPreviewByHelper(name.methodName, targetHelper, platformHelper)
 
     @Test
     fun `test subscribe topic from community page`() =
         testSubscribeTopicByHelper(name.methodName, targetHelper, platformHelper)
+
+    @Test
+    fun `test community profile actions from joined community`() =
+        testCommunityProfileActionsByHelper(name.methodName, targetHelper, platformHelper)
 
     @Test
     fun `test publish topic in joined community`() =
@@ -80,7 +85,9 @@ class WasmAppiumTest : AppiumTestBase() {
     fun `test publish topic in community room`() =
         testPublishTopicInCommunityRoomByHelper(name.methodName, targetHelper, platformHelper)
 
-    private fun resolveWasmDistribution(): File = File("build/wasmDistribution")
-        .takeIf { File(it, "index.html").isFile }
-        ?: error("Wasm distribution was not prepared; run :app:wasmAppium:prepareWasmDistribution first.")
+    private fun resolveWasmDistribution(): File {
+        val distribution = File("build/wasmDistribution")
+        return distribution.takeIf { File(it, "index.html").isFile }
+            ?: error("Wasm distribution was not prepared; run :app:wasmAppium:prepareWasmDistribution first.")
+    }
 }

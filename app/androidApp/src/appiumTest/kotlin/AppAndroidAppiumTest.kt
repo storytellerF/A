@@ -12,8 +12,7 @@ class AppAndroidAppiumTest : AppiumTestBase() {
     fun `test sign up`() = testSignUpByHelper(name.methodName, targetHelper, platformHelper)
 
     @Test
-    fun `test sign in as system user`() =
-        testSignInAsSystemUserByHelper(name.methodName, targetHelper, platformHelper)
+    fun `test sign in as system user`() = testSignInAsSystemUserByHelper(name.methodName, targetHelper, platformHelper)
 
     @Test
     fun `test sign in by injected private session`() =
@@ -28,8 +27,7 @@ class AppAndroidAppiumTest : AppiumTestBase() {
         testFavoriteTopicByHelper(name.methodName, targetHelper, platformHelper)
 
     @Test
-    fun `test opens asciidoc preview`() =
-        testOpenAsciidocPreviewByHelper(name.methodName, targetHelper, platformHelper)
+    fun `test opens asciidoc preview`() = testOpenAsciidocPreviewByHelper(name.methodName, targetHelper, platformHelper)
 
     @Test
     fun `test subscribe topic from community page`() =

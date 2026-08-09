@@ -198,21 +198,12 @@ acquireAppiumDeviceLock() {
     while true; do
         if adb -s "$appium_lock_serial" shell "mkdir $appium_lock_path" >/dev/null 2>&1; then
             appium_lock_acquired_at=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-            appium_lock_expires_at=$(( $(date +%s) + 1800 ))
-            {
-                printf '{\n'
-                printf '  "project_dir": "%s",\n' "$PWD"
-                printf '  "test_name": "appium-suite",\n'
-                printf '  "requested_at_utc": "%s",\n' "$appium_lock_requested_at"
-                printf '  "acquired_at_utc": "%s",\n' "$appium_lock_acquired_at"
-                printf '  "max_timeout_seconds": 1800,\n'
-                printf '  "expires_at_epoch": %s,\n' "$appium_lock_expires_at"
-                printf '  "host": "%s",\n' "$(hostname 2>/dev/null || printf unknown-host)"
-                printf '  "pid": %s,\n' "$$"
-                printf '  "owner_token": "%s"\n' "$appium_lock_owner_token"
-                printf '}\n'
-            } | adb -s "$appium_lock_serial" shell "cat > $appium_lock_path/lock.json"
+            appium_lock_max_timeout_seconds=${APPIUM_DEVICE_LOCK_MAX_TIMEOUT_SECONDS:-1800}
+            appium_lock_heartbeat_seconds=${APPIUM_DEVICE_LOCK_HEARTBEAT_SECONDS:-300}
+            appium_lock_expires_at=$(( $(date +%s) + appium_lock_max_timeout_seconds ))
+            writeAppiumDeviceLockMetadata "$appium_lock_expires_at"
             printf '%s\n' "$appium_lock_owner_token" > "$appium_lock_token_file"
+            startAppiumDeviceLockHeartbeat
             echo "Acquired Android device lock at $appium_lock_path"
             return 0
         fi
@@ -233,7 +224,54 @@ acquireAppiumDeviceLock() {
     done
 }
 
+writeAppiumDeviceLockMetadata() {
+    appium_lock_metadata_expires_at="$1"
+    {
+        printf '{\n'
+        printf '  "project_dir": "%s",\n' "$PWD"
+        printf '  "test_name": "appium-suite",\n'
+        printf '  "requested_at_utc": "%s",\n' "$appium_lock_requested_at"
+        printf '  "acquired_at_utc": "%s",\n' "$appium_lock_acquired_at"
+        printf '  "max_timeout_seconds": %s,\n' "$appium_lock_max_timeout_seconds"
+        printf '  "expires_at_epoch": %s,\n' "$appium_lock_metadata_expires_at"
+        printf '  "host": "%s",\n' "$(hostname 2>/dev/null || printf unknown-host)"
+        printf '  "pid": %s,\n' "$$"
+        printf '  "owner_token": "%s"\n' "$appium_lock_owner_token"
+        printf '}\n'
+    } | adb -s "$appium_lock_serial" shell "cat > $appium_lock_path/lock.json"
+}
+
+refreshAppiumDeviceLock() {
+    appium_lock_expected_token=$(tr -d '\r\n' < "$appium_lock_token_file")
+    appium_lock_metadata=$(adb -s "$appium_lock_serial" shell "cat $appium_lock_path/lock.json" 2>/dev/null || true)
+    appium_lock_actual_token=$(printf '%s' "$appium_lock_metadata" | sed -n 's/.*"owner_token"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1)
+    if [ "$appium_lock_actual_token" != "$appium_lock_expected_token" ]; then
+        echo "Stopped refreshing Android device lock: owner token does not match"
+        return 1
+    fi
+    appium_lock_expires_at=$(( $(date +%s) + appium_lock_max_timeout_seconds ))
+    writeAppiumDeviceLockMetadata "$appium_lock_expires_at"
+}
+
+startAppiumDeviceLockHeartbeat() {
+    (
+        while sleep "$appium_lock_heartbeat_seconds"; do
+            refreshAppiumDeviceLock || exit 1
+        done
+    ) &
+    appium_lock_heartbeat_pid=$!
+}
+
+stopAppiumDeviceLockHeartbeat() {
+    if [ -n "${appium_lock_heartbeat_pid:-}" ]; then
+        kill "$appium_lock_heartbeat_pid" 2>/dev/null || true
+        wait "$appium_lock_heartbeat_pid" 2>/dev/null || true
+        appium_lock_heartbeat_pid=""
+    fi
+}
+
 releaseAppiumDeviceLock() {
+    stopAppiumDeviceLockHeartbeat
     if [ ! -f "$appium_lock_token_file" ]; then
         return 0
     fi

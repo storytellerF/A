@@ -121,11 +121,7 @@ subprojects {
 
     tasks.withType<Detekt>().configureEach {
         baseline.set(layout.projectDirectory.file(detektBaselineFileName(name)))
-        exclude { source ->
-            source.file.absolutePath.replace('\\', '/').let { path ->
-                path.contains("/build/") || path.contains("/src/appiumTest/") || path.contains("/src/e2eTest/")
-            }
-        }
+        exclude { source -> source.file.absolutePath.replace('\\', '/').contains("/build/") }
         reports {
             checkstyle.required = true
             html.required = true
@@ -138,11 +134,7 @@ subprojects {
 
     tasks.withType<DetektCreateBaselineTask>().configureEach {
         baseline.set(layout.projectDirectory.file(detektBaselineFileName(name)))
-        exclude { source ->
-            source.file.absolutePath.replace('\\', '/').let { path ->
-                path.contains("/build/") || path.contains("/src/appiumTest/") || path.contains("/src/e2eTest/")
-            }
-        }
+        exclude { source -> source.file.absolutePath.replace('\\', '/').contains("/build/") }
     }
 
     detektReportMergeSarif {
