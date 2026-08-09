@@ -71,13 +71,34 @@ class LinuxDriver extends BaseDriver {
   async findElOrEls(strategy, selector, mult) {
     this.log.info(`Finding element(s) by ${strategy}: "${selector}"`);
     const atspiStrategy = this._mapStrategy(strategy, selector);
-    const result = await this._atspi({
-      action: 'find_elements',
-      pid: this.appPid,
-      strategy: atspiStrategy.strategy,
-      selector: atspiStrategy.selector,
-      timeout: ATSPI_TIMEOUT,
-    });
+    const deadline = Date.now() + ATSPI_TIMEOUT * 1000;
+    let result;
+    do {
+      const searchStartedAt = Date.now();
+      result = await this._atspi({
+        action: 'find_elements_once',
+        pid: this.appPid,
+        strategy: atspiStrategy.strategy,
+        selector: atspiStrategy.selector,
+        timeout: 1,
+        max_results: mult ? 10 : 1,
+      });
+      if (!result.ok || result.elements.length > 0) break;
+      if (Date.now() >= deadline) {
+        if (searchStartedAt < deadline) {
+          result = await this._atspi({
+            action: 'find_elements_once',
+            pid: this.appPid,
+            strategy: atspiStrategy.strategy,
+            selector: atspiStrategy.selector,
+            timeout: 1,
+            max_results: mult ? 10 : 1,
+          });
+        }
+        break;
+      }
+      await this._sleep(200);
+    } while (Date.now() < deadline);
     if (!result.ok) throw new Error(`findElOrEls failed: ${result.error}`);
     if (result.elements.length === 0) {
       if (mult) return [];

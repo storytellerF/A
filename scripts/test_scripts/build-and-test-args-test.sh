@@ -21,6 +21,9 @@ printf '%s\n' \
   'for argument in "$@"; do' \
   '  printf "%s\n" "$argument" >> "$BUILD_AND_TEST_LOG"' \
   'done' \
+  'if [ -n "${BUILD_AND_TEST_MARKER:-}" ]; then' \
+  '  printf "%s\n" "$*" >> "$BUILD_AND_TEST_MARKER"' \
+  'fi' \
   > "$test_directory/gradlew"
 chmod +x "$test_directory/gradlew"
 
@@ -30,7 +33,7 @@ argument_log="$test_directory/gradle-arguments.log"
   cd "$test_directory"
   BUILD_AND_TEST_LOG="$argument_log" \
     ./scripts/test_scripts/build-and-test.sh \
-      --unit \
+      --desktop \
       --tests \
       'com.example.FirstTest' \
       'com.example.SecondTest.method with spaces' \
@@ -41,13 +44,16 @@ argument_log="$test_directory/gradle-arguments.log"
 )
 
 expected_arguments=$(printf '%s\n' \
-  'COUNT=4' \
-  'check' \
-  '-Pappium=false' \
-  '-PbuildAndTest.testFilters=com.example.FirstTest
-com.example.SecondTest.method with spaces
-com.example.ThirdTest
-com.example.*Test' \
+  'COUNT=10' \
+  'app:composeApp:desktopTest' \
+  '--tests' \
+  'com.example.FirstTest' \
+  '--tests' \
+  'com.example.SecondTest.method with spaces' \
+  '--tests' \
+  'com.example.ThirdTest' \
+  '--tests' \
+  'com.example.*Test' \
   '--console=plain')
 actual_arguments=$(sed -n '1,$p' "$argument_log")
 
@@ -59,8 +65,79 @@ fi
 
 if (
   cd "$test_directory"
-  ./scripts/test_scripts/build-and-test.sh --unit --tests --plain
+  ./scripts/test_scripts/build-and-test.sh --desktop --tests --plain
 ) >/dev/null 2>&1; then
   echo "--tests without values should fail"
   exit 1
 fi
+
+for removed_argument in --unit --prepare --run; do
+  if (
+    cd "$test_directory"
+    ./scripts/test_scripts/build-and-test.sh "$removed_argument"
+  ) >/dev/null 2>&1; then
+    echo "$removed_argument should be rejected"
+    exit 1
+  fi
+done
+
+printf '%s\n' \
+  '#!/bin/sh' \
+  'if [ "$1" = "devices" ]; then' \
+  '  printf "List of devices attached\\nphysical-device\\tdevice\\n"' \
+  '  exit 0' \
+  'fi' \
+  'if [ "$1" = "connect" ]; then' \
+  '  echo "VMware connection must not be attempted when a physical device is connected" >&2' \
+  '  exit 1' \
+  'fi' \
+  'if [ "$1" = "-s" ]; then' \
+  '  shift 2' \
+  'fi' \
+  'if [ "$1" = "shell" ]; then' \
+  '  shift' \
+  'fi' \
+  'case "$*" in' \
+  '  *"getprop sys.boot_completed"*) printf "1\\n" ;;' \
+  '  *"appium-device-test.lock.d"*)' \
+  '    echo "build-and-test.sh must not manage the Appium device lock" >&2' \
+  '    exit 1' \
+  '    ;;' \
+  'esac' \
+  > "$test_directory/adb"
+chmod +x "$test_directory/adb"
+
+(
+  cd "$test_directory"
+  PATH="$test_directory:$PATH" \
+    BUILD_AND_TEST_LOG="$argument_log" \
+    BUILD_AND_TEST_MARKER="$test_directory/e2e-gradle-tasks.log" \
+    ./scripts/test_scripts/build-and-test.sh --e2e --plain
+)
+
+expected_e2e_arguments=$(printf '%s\n' \
+  'COUNT=3' \
+  ':app:cliE2e:e2eTest' \
+  ':panel:cliE2e:e2eTest' \
+  '--console=plain')
+actual_e2e_arguments=$(sed -n '1,$p' "$argument_log")
+
+if [ "$actual_e2e_arguments" != "$expected_e2e_arguments" ]; then
+  echo "Unexpected CLI E2E Gradle arguments:"
+  printf '%s\n' "$actual_e2e_arguments"
+  exit 1
+fi
+
+for appium_task in \
+  :app:androidAppium:appiumTest \
+  :app:desktopAppium:appiumTest \
+  :app:wasmAppium:appiumTest \
+  :panel:androidAppium:appiumTest \
+  :panel:desktopAppium:appiumTest \
+  :panel:wasmAppium:appiumTest
+do
+  if ! grep -q "$appium_task" "$test_directory/e2e-gradle-tasks.log"; then
+    echo "--e2e did not run $appium_task"
+    exit 1
+  fi
+done

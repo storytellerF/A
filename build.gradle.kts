@@ -1,9 +1,6 @@
 import dev.detekt.gradle.Detekt
 import dev.detekt.gradle.DetektCreateBaselineTask
 import dev.detekt.gradle.report.ReportMergeTask
-import org.gradle.api.tasks.testing.Test
-
-
 plugins {
     // this is necessary to avoid the plugins to be loaded multiple times
     // in each subproject's classloader
@@ -59,23 +56,6 @@ fun detektBaselineFileName(taskName: String): String {
 val compileAllNoRelease = tasks.register("compileAllNoRelease") {
     group = "verification"
     description = "Compile all included modules without Android release or benchmark variants."
-}
-
-val buildAndTestFilters =
-    providers.gradleProperty("buildAndTest.testFilters").orNull
-        ?.lineSequence()
-        ?.filter(String::isNotEmpty)
-        ?.toList()
-
-if (!buildAndTestFilters.isNullOrEmpty()) {
-    subprojects {
-        tasks.withType<Test>().configureEach {
-            filter {
-                buildAndTestFilters.forEach(::includeTestsMatching)
-                isFailOnNoMatchingTests = false
-            }
-        }
-    }
 }
 
 subprojects {
@@ -175,27 +155,7 @@ val koverIncludedProjects = listOf(
     ":client:room",
     ":client:asciidoc-parser",
     ":bot:builtin-bot",
-) + if (providers.gradleProperty("appium").orNull == "true") {
-    listOf(
-        ":dev:appiumCore",
-        ":app:androidAppium",
-        ":app:desktopAppium",
-        ":app:wasmAppium",
-        ":panel:androidAppium",
-        ":panel:desktopAppium",
-        ":panel:wasmAppium",
-    )
-} else {
-    emptyList()
-} + if (providers.gradleProperty("e2e").orNull == "true") {
-    listOf(
-        ":dev:e2eCore",
-        ":app:cliE2e",
-        ":panel:cliE2e",
-    )
-} else {
-    emptyList()
-}.distinct()
+).distinct()
 dependencies {
     koverIncludedProjects.forEach { projectPath ->
         kover(project(projectPath))

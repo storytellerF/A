@@ -39,26 +39,29 @@
 - **Architecture**: UI -> `SessionManager` request extensions -> API endpoint. Add local storage and paging when appropriate.
 - **Paging**: Store cursors consistently in `RemoteKeyStorage` (`PRE_COLLECTION`/`NEXT_COLLECTION`).
 - **Logging**: Instrument external network requests through `serviceCatching`. Avoid noisy logging in hot paths.
-- **Tests**: Write tests whenever possible. Client-side non-UI tests go under `src/headlessTest/kotlin`. Compose tests should follow https://kotlinlang.org/docs/multiplatform/compose-test.html. End-to-end tests go in the Appium modules enabled by `-Pappium=true`.
+- **Tests**: Write tests whenever possible. Client-side non-UI tests go under `src/headlessTest/kotlin`. Compose tests should follow https://kotlinlang.org/docs/multiplatform/compose-test.html. End-to-end tests use `scripts/test_scripts/build-and-test.sh --e2e`, which runs the Appium runner modules' explicit `appiumTest` tasks and CLI E2E tasks; no Gradle property is required.
 
 ## Static Checks
 - After code changes, run `./gradlew assemble --console=plain` to check for compilation errors.
 - After compilation checks, run `./scripts/tool_scripts/exec-until-success.sh ./gradlew detekt --console=plain` for static code style checks.
   - On Windows, run this through Git Bash.
-- Detekt allows function names up to 50 characters so tests can use behavior-descriptive names. Keep production function names concise even when the configured limit permits longer names.
+- Detekt allows function names up to 50 characters. Appium and CLI E2E source sets are exempt from function naming and length rules so backtick test names can remain behavior-descriptive. Keep production function names concise even when the configured limit permits longer names.
 
 ## Tests
 - Actively test affected modules.
     * For small changes, use `./gradlew :module:test --console=plain`.
-    * For the full regular unit test suite, use `./scripts/test_scripts/build-and-test.sh --unit --plain` (excluding device-dependent Compose and Appium tests). Filter multiple tests with `--tests 'package.FirstTest' 'package.SecondTest'`; repeating `--tests` is also supported.
-    * For end-to-end Appium tests, use `./scripts/test_scripts/build-and-test.sh --appium --plain`.
+    * For the full regular unit test suite, use `./gradlew check --console=plain` (excluding device-dependent Compose and Appium tests).
+    * For end-to-end tests, use `./scripts/test_scripts/build-and-test.sh --e2e --plain`; this runs Appium and CLI E2E suites.
     * For Compose common tests under `device_based`, use a real device with `./gradlew :module:connectedAndroidTest` or run `./gradlew :module:jvmTest`.
     * For Compose UI changes, run `./gradlew validateDebugScreenshotTest` for snapshot tests.
 - Keep Compose screenshot tests context-free: do not inject app runtime `CompositionLocal` dependencies such as session managers, dialog controllers, or navigation contexts. Cover components that require those dependencies in another test layer.
 - Tests are meant to reveal problems. If a test finds a problem, fix the problem instead of working around it in the test.
 - Do not add extra test steps into a test case unless there is an actual dependency between the steps.
 - Extract repeated test steps into helper methods.
-- Appium tests require a real device or emulator and cannot run in parallel.
+- Android Appium tests require a real device or emulator and cannot run concurrently on the same device. The caller must keep the device-side lock leased for the entire `--e2e` Appium sequence and refresh its expiry until release; `build-and-test.sh` does not acquire or release that lock.
+- `build-and-test.sh` only orchestrates device/UI and end-to-end tests through `--android`, `--desktop`, `--compose`, and `--e2e`; run ordinary unit tests directly with Gradle.
+- Appium sources and runners belong to the independent `*Appium` modules under `src/appiumTest/kotlin`. They depend on built or installed application artifacts, not application implementation code.
+- Appium `appiumTest` tasks must disable Gradle up-to-date reuse so every explicit E2E invocation drives the target again.
 - Appium tests compose a target helper (`AppAppiumHelper` or `PanelAppiumHelper`) with a platform helper (`AndroidAppiumHelper` or `DesktopAppiumHelper`). Keep concrete test methods as calls to shared `test*ByHelper` functions; target helpers create sessions and platform helpers own launch, cleanup, and log collection.
 
 ## Additional AI Collaboration Rules
