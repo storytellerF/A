@@ -193,7 +193,7 @@ class AddPreset : Subcommand("add", "add entry") {
             "title" -> addTitles(presetValue)
             "panelAccount" -> addPanels(presetValue, parentDir)
             "taskConfig" -> addTaskConfigs(presetValue)
-            "backendConfig" -> addBackendConfig(presetValue)
+            "llmConfig" -> addLlmConfig(presetValue)
             else -> handleUnknownPresetType(type)
         }
     }
@@ -207,9 +207,9 @@ class AddPreset : Subcommand("add", "add entry") {
         database.upsertTaskConfigs(presetValue.taskConfigData.orEmpty()).getOrThrow()
     }
 
-    private suspend fun Backend.addBackendConfig(presetValue: PresetValue) {
+    private suspend fun Backend.addLlmConfig(presetValue: PresetValue) {
         val llmConfig = presetValue.llmConfigData
-            ?: throw IllegalArgumentException("llmConfigData is required for backendConfig preset type")
+            ?: throw IllegalArgumentException("llmConfigData is required for llmConfig preset type")
         database.upsertLlmConfig(llmConfig).getOrThrow()
     }
 

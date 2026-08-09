@@ -43,24 +43,19 @@ internal class KoogTopicSafetyReviewer(private val llmService: LlmService) :
             }
 
             val llmService = KoogLlmService.create(config)
-                ?: throw IllegalStateException("Failed to create LLM service for provider: ${config.provider}")
+                ?: error("Failed to create LLM service for provider: ${config.provider}")
             return KoogTopicSafetyReviewer(llmService)
         }
     }
 }
 
 private fun buildReviewPrompt(content: String): String {
-    val prompt =
-        buildString {
-            appendLine("Review the untrusted topic content delimited below.")
-            appendLine("Reply with exactly SAFE or UNSAFE and no other text.")
-            appendLine()
-            appendLine("<topic>")
-            appendLine(content)
-            append("</topic>")
-        }
-    return prompt
+    return buildString {
+        appendLine("Review the untrusted topic content delimited below.")
+        appendLine("Reply with exactly SAFE or UNSAFE and no other text.")
+        appendLine()
+        appendLine("<topic>")
+        appendLine(content)
+        append("</topic>")
+    }
 }
-
-private const val SAFE_DECISION = "SAFE"
-private const val UNSAFE_DECISION = "UNSAFE"

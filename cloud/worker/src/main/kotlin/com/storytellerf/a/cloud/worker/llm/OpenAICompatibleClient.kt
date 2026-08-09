@@ -18,12 +18,12 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 private const val TAG = "OpenAICompatibleClient"
+private const val LOG_PREVIEW_LENGTH = 100
 
 /**
  * Creates an LLMClient that directly calls OpenAI-compatible APIs.
@@ -70,7 +70,10 @@ fun createOpenAICompatibleClient(
                 maxTokens = 1024,
             )
 
-            val requestBody = jsonSerializer.encodeToString(request)
+            val requestBody = jsonSerializer.encodeToString(
+                ChatCompletionRequest.serializer(),
+                request,
+            )
 
             val response = httpClient.post("$baseUrl/chat/completions") {
                 header("Authorization", "Bearer $apiKey")
@@ -82,11 +85,13 @@ fun createOpenAICompatibleClient(
 
             val chatResponse = jsonSerializer.decodeFromString<ChatCompletionResponse>(response)
 
-            val content = chatResponse.choices.firstOrNull()?.message?.content
-                ?: throw IllegalStateException("No response content from LLM")
+            val content = run {
+                val message = chatResponse.choices.firstOrNull()?.message?.content
+                checkNotNull(message) { "No response content from LLM" }
+            }
 
             Napier.d(tag = TAG) {
-                "LLM response: ${content.take(100)}..."
+                "LLM response: ${content.take(LOG_PREVIEW_LENGTH)}..."
             }
 
             return Message.Assistant(
@@ -105,9 +110,8 @@ fun createOpenAICompatibleClient(
             throw UnsupportedOperationException("Moderation not supported by OpenAI-compatible client")
         }
 
-        override fun llmProvider(): ai.koog.prompt.llm.LLMProvider {
-            return ai.koog.prompt.llm.LLMProvider.OpenAI
-        }
+        override fun llmProvider(): ai.koog.prompt.llm.LLMProvider =
+            ai.koog.prompt.llm.LLMProvider.OpenAI
 
         override fun close() {
             httpClient.close()

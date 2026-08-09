@@ -26,11 +26,11 @@ import com.storyteller_f.a.backend.core.setLogPath
 import com.storyteller_f.a.backend.exposed.buildExposedDatabase
 import com.storyteller_f.a.cloud.ws.api.GlobalWsEventPublisher
 import com.storyteller_f.shared.loadCryptoLibIfNeed
+import com.storyteller_f.shared.model.LlmProvider
 import com.storyteller_f.shared.model.TaskConfig
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.setupKmpLogger
 import com.storyteller_f.shared.utils.now
-import com.storyteller_f.shared.model.LlmProvider
 import com.storytellerf.a.cloud.worker.moderation.KoogTopicSafetyReviewer
 import com.storytellerf.a.cloud.worker.moderation.LiteRtTopicSafetyReviewer
 import com.storytellerf.a.cloud.worker.moderation.TopicSafetyReviewer
@@ -97,10 +97,18 @@ internal suspend fun createTopicSafetyReviewer(backend: Backend): TopicSafetyRev
         return when (llmConfig.provider) {
             LlmProvider.LITERT_LLM -> {
                 val modelPath = llmConfig.modelPath
-                    ?: throw IllegalArgumentException("modelPath required for LITERT_LLM provider")
-                LiteRtTopicSafetyReviewer.create(java.nio.file.Path.of(modelPath))
+                    ?: error("modelPath required for LITERT_LLM provider")
+                LiteRtTopicSafetyReviewer.create(
+                    java.nio.file.Path.of(modelPath),
+                )
             }
-            else -> KoogTopicSafetyReviewer.create(llmConfig)
+
+            LlmProvider.OPENAI,
+            LlmProvider.ANTHROPIC,
+            LlmProvider.GOOGLE,
+            LlmProvider.OLLAMA,
+            LlmProvider.OPENAI_COMPATIBLE,
+            -> KoogTopicSafetyReviewer.create(llmConfig)
         }
     }
 

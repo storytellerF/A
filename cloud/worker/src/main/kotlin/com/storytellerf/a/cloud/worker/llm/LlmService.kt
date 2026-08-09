@@ -76,7 +76,7 @@ class KoogLlmService(
         fun create(config: LlmConfig): KoogLlmService? {
             val client = KoogClientFactory.createClient(config) ?: return null
             val model = KoogClientFactory.resolveModel(config)
-                ?: throw IllegalStateException("Model resolution failed for ${config.provider}")
+                ?: error("Model resolution failed for ${config.provider}")
             return KoogLlmService(client, model)
         }
     }
