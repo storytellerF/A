@@ -59,7 +59,7 @@ comments:
     allowParamOnConstructorProperties: false
   UndocumentedPublicClass:
     active: true
-    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**']
+    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/appiumTest/**', '**/e2eTest/**']
     searchInNestedClass: true
     searchInInnerClass: true
     searchInInnerObject: true
@@ -67,11 +67,11 @@ comments:
     searchInProtectedClass: false
   UndocumentedPublicFunction:
     active: true
-    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**']
+    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/appiumTest/**', '**/e2eTest/**']
     searchProtectedFunction: false
   UndocumentedPublicProperty:
     active: true
-    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**']
+    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/appiumTest/**', '**/e2eTest/**']
     searchProtectedProperty: false
 
 complexity:
@@ -150,7 +150,7 @@ complexity:
     ignoreStringsRegex: '$^'
   TooManyFunctions:
     active: true
-    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**']
+    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/appiumTest/**', '**/e2eTest/**']
     allowedFunctionsPerFile: 11
     allowedFunctionsPerClass: 11
     allowedFunctionsPerInterface: 11
@@ -309,13 +309,14 @@ naming:
     forbiddenName: []
   FunctionNameMaxLength:
     active: true
+    excludes: ['**/appiumTest/**', '**/e2eTest/**']
     maximumFunctionNameLength: 50
   FunctionNameMinLength:
     active: true
     minimumFunctionNameLength: 3
   FunctionNaming:
     active: true
-    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/composeApp/**', '**/composeCore/**']
+    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/appiumTest/**', '**/e2eTest/**', '**/composeApp/**', '**/composeCore/**']
     functionPattern: '[a-z][a-zA-Z0-9]*'
     excludeClassPattern: '$^'
   FunctionParameterNaming:
@@ -455,7 +456,7 @@ potential-bugs:
     active: true
   MissingPackageDeclaration:
     active: true
-    excludes: ['**/*.kts']
+    excludes: ['**/*.kts', '**/appiumTest/**', '**/e2eTest/**']
   NullCheckOnMutableProperty:
     active: true
   NullableToStringCall:
@@ -592,7 +593,7 @@ style:
     maxJumpCount: 3
   MagicNumber:
     active: true
-    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/*.kts']
+    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/appiumTest/**', '**/e2eTest/**', '**/*.kts']
     ignoreNumbers:
       - '-1'
       - '0'
@@ -1044,6 +1045,7 @@ libraries:
       - 'com.storyteller_f.shared.model'
   LibraryCodeMustSpecifyReturnType:
     active: true
+    excludes: ['**/appiumTest/**', '**/e2eTest/**']
     allowOmitUnit: false
   LibraryEntitiesShouldNotBePublic:
     active: true
@@ -1051,4 +1053,6 @@ libraries:
       - '**/api/src/**'
       - '**/client/core/src/**/PanelRequest.kt'
       - '**/dev/e2eCore/src/**'
+      - '**/appiumTest/**'
+      - '**/e2eTest/**'
       - '**/shared/src/**/com/storyteller_f/shared/model/**'

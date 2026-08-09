@@ -70,51 +70,70 @@ def node_to_dict(node, depth=0, max_depth=20):
 def find_nodes(node, strategy, selector, results, max_results=10):
     if node is None or len(results) >= max_results:
         return
+
     try:
         role = node.getRoleName()
+    except Exception:
+        role = ""
+    try:
         name = node.name or ""
+    except Exception:
+        name = ""
+    try:
         desc = node.description or ""
-        try:
-            text_iface = node.queryText()
-            value = text_iface.getText(0, -1)
-        except Exception:
-            value = ""
-        matched = False
-        if strategy == "name":
-            matched = name == selector or desc == selector or value == selector
-        elif strategy == "name_contains":
-            matched = selector in name or selector in desc or selector in value
-        elif strategy == "xpath":
-            # simplified: treat xpath like //*/[@name='X'] or //*[contains(@name,'X')]
-            import re
-            m = re.search(r"@name='([^']+)'", selector)
-            mc = re.search(r"contains\(@(?:name|value),'([^']+)'\)", selector)
-            if selector == "//text-field":
+    except Exception:
+        desc = ""
+    try:
+        text_iface = node.queryText()
+        value = text_iface.getText(0, -1)
+    except Exception:
+        value = ""
+
+    matched = False
+    if strategy == "name":
+        matched = name == selector or desc == selector or value == selector
+    elif strategy == "name_contains":
+        matched = selector in name or selector in desc or selector in value
+    elif strategy == "xpath":
+        # simplified: treat xpath like //*/[@name='X'] or //*[contains(@name,'X')]
+        import re
+        m = re.search(r"@name='([^']+)'", selector)
+        mc = re.search(r"contains\(@(?:name|value),'([^']+)'\)", selector)
+        if selector == "//text-field":
+            try:
                 state = node.getState()
                 matched = role == "text" and state.contains(pyatspi.STATE_EDITABLE)
-            elif m:
-                matched = name == m.group(1) or desc == m.group(1) or value == m.group(1)
-            elif mc:
-                needle = mc.group(1)
-                matched = needle in name or needle in desc or needle in value
-        if matched:
-            results.append(node)
-        for i in range(node.childCount):
-            if len(results) >= max_results:
-                break
-            find_nodes(node.getChildAtIndex(i), strategy, selector, results, max_results)
+            except Exception:
+                matched = False
+        elif m:
+            matched = name == m.group(1) or desc == m.group(1) or value == m.group(1)
+        elif mc:
+            needle = mc.group(1)
+            matched = needle in name or needle in desc or needle in value
+    if matched:
+        results.append(node)
+
+    try:
+        child_count = node.childCount
     except Exception:
-        pass
+        return
+    for i in range(child_count):
+        if len(results) >= max_results:
+            break
+        try:
+            find_nodes(node.getChildAtIndex(i), strategy, selector, results, max_results)
+        except Exception:
+            continue
 
 
-def wait_for_elements(app_pid, strategy, selector, timeout=15):
-    deadline = time.time() + timeout
+def wait_for_elements(app_pid, strategy, selector, timeout=15, max_results=10):
+    deadline = time.monotonic() + timeout
     last_results = []
-    while time.time() < deadline:
+    while time.monotonic() < deadline:
         app = get_app(app_pid)
         if app:
             results = []
-            find_nodes(app, strategy, selector, results)
+            find_nodes(app, strategy, selector, results, max_results)
             if results:
                 return results
             last_results = results
@@ -196,17 +215,28 @@ def main():
         tree = node_to_dict(app)
         print(json.dumps({"ok": True, "tree": tree}))
 
-    elif action == "find_elements":
+    elif action in ("find_elements", "find_elements_once"):
         app = wait_for_app(cmd["pid"], cmd.get("timeout", 15))
         if not app:
             print(json.dumps({"ok": False, "error": "app not found"}))
             return
-        results = wait_for_elements(
-            cmd["pid"],
-            cmd["strategy"],
-            cmd["selector"],
-            cmd.get("timeout", 15),
-        )
+        if action == "find_elements_once":
+            results = []
+            find_nodes(
+                app,
+                cmd["strategy"],
+                cmd["selector"],
+                results,
+                cmd.get("max_results", 10),
+            )
+        else:
+            results = wait_for_elements(
+                cmd["pid"],
+                cmd["strategy"],
+                cmd["selector"],
+                cmd.get("timeout", 15),
+                cmd.get("max_results", 10),
+            )
         elements = []
         for i, node in enumerate(results):
             cx, cy = get_center(node)

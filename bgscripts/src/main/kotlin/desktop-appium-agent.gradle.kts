@@ -1,7 +1,7 @@
 val accessibilityDumpAgentJar = tasks.register<Jar>("accessibilityDumpAgentJar") {
     archiveFileName.set(
         when (project.path) {
-            ":panel:desktopAppium" -> "desktop-panel-accessibility-dump-agent.jar"
+            ":panel:desktopApp" -> "desktop-panel-accessibility-dump-agent.jar"
             else -> "desktop-accessibility-dump-agent.jar"
         }
     )

@@ -93,7 +93,11 @@ fun MediaPlayerInternal(
         Napier.i(tag = "MediaPlayer") {
             "MediaPlayerInternal $uuid switch uuids: ${playingSession?.uuids}, isSingleton: $isSingleton"
         }
-        mediaPlayerService.switchSessionIfNeed(playingSession, localMediaPlaySession, isSingleton)
+        playingSession?.let { session ->
+            if (session.id == localMediaPlaySession.id && (session.lastUuid == null || isSingleton)) {
+                mediaPlayerService.switch(localMediaPlaySession)
+            }
+        }
     }
     val context = LocalContext.current.findActivity()
     DisposableEffect(null) {
@@ -107,18 +111,6 @@ fun MediaPlayerInternal(
         }
     }
     block(playingSession, localMediaPlaySession)
-}
-
-@OptIn(ExperimentalUuidApi::class)
-private suspend fun MediaPlayerService.switchSessionIfNeed(
-    playingSession: MediaPlaySession?,
-    localMediaPlaySession: LocalMediaPlaySession,
-    isSingleton: Boolean
-) {
-    if (playingSession == null) return
-    if (playingSession.id == localMediaPlaySession.id && (playingSession.lastUuid == null || isSingleton)) {
-        switch(localMediaPlaySession)
-    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalUuidApi::class)
