@@ -24,9 +24,6 @@ printf '%s\n' \
   'if [ -n "${BUILD_AND_TEST_MARKER:-}" ]; then' \
   '  printf "%s\n" "$*" >> "$BUILD_AND_TEST_MARKER"' \
   'fi' \
-  'if [ -n "${BUILD_AND_TEST_DELAY_MARKER:-}" ] && printf "%s\n" "$*" | grep -q appiumTest && mkdir "$BUILD_AND_TEST_DELAY_MARKER" 2>/dev/null; then' \
-  '  sleep "${BUILD_AND_TEST_DELAY_SECONDS:-3}"' \
-  'fi' \
   > "$test_directory/gradlew"
 chmod +x "$test_directory/gradlew"
 
@@ -36,7 +33,7 @@ argument_log="$test_directory/gradle-arguments.log"
   cd "$test_directory"
   BUILD_AND_TEST_LOG="$argument_log" \
     ./scripts/test_scripts/build-and-test.sh \
-      --unit \
+      --desktop \
       --tests \
       'com.example.FirstTest' \
       'com.example.SecondTest.method with spaces' \
@@ -47,12 +44,16 @@ argument_log="$test_directory/gradle-arguments.log"
 )
 
 expected_arguments=$(printf '%s\n' \
-  'COUNT=3' \
-  'check' \
-  '-PbuildAndTest.testFilters=com.example.FirstTest
-com.example.SecondTest.method with spaces
-com.example.ThirdTest
-com.example.*Test' \
+  'COUNT=10' \
+  'app:composeApp:desktopTest' \
+  '--tests' \
+  'com.example.FirstTest' \
+  '--tests' \
+  'com.example.SecondTest.method with spaces' \
+  '--tests' \
+  'com.example.ThirdTest' \
+  '--tests' \
+  'com.example.*Test' \
   '--console=plain')
 actual_arguments=$(sed -n '1,$p' "$argument_log")
 
@@ -64,11 +65,21 @@ fi
 
 if (
   cd "$test_directory"
-  ./scripts/test_scripts/build-and-test.sh --unit --tests --plain
+  ./scripts/test_scripts/build-and-test.sh --desktop --tests --plain
 ) >/dev/null 2>&1; then
   echo "--tests without values should fail"
   exit 1
 fi
+
+for removed_argument in --unit --prepare --run; do
+  if (
+    cd "$test_directory"
+    ./scripts/test_scripts/build-and-test.sh "$removed_argument"
+  ) >/dev/null 2>&1; then
+    echo "$removed_argument should be rejected"
+    exit 1
+  fi
+done
 
 printf '%s\n' \
   '#!/bin/sh' \
@@ -88,27 +99,18 @@ printf '%s\n' \
   'fi' \
   'case "$*" in' \
   '  *"getprop sys.boot_completed"*) printf "1\\n" ;;' \
-  '  "mkdir /data/local/tmp/appium-device-test.lock.d") mkdir "$ADB_FAKE_LOCK_DIR" ;;' \
-  '  "cat > /data/local/tmp/appium-device-test.lock.d/lock.json")' \
-  '    cat > "$ADB_FAKE_LOCK_DIR/lock.json"' \
-  '    printf "write\\n" >> "$ADB_LOCK_WRITE_LOG"' \
+  '  *"appium-device-test.lock.d"*)' \
+  '    echo "build-and-test.sh must not manage the Appium device lock" >&2' \
+  '    exit 1' \
   '    ;;' \
-  '  "cat /data/local/tmp/appium-device-test.lock.d/lock.json") cat "$ADB_FAKE_LOCK_DIR/lock.json" 2>/dev/null || true ;;' \
-  '  "rm -rf /data/local/tmp/appium-device-test.lock.d") rm -rf "$ADB_FAKE_LOCK_DIR" ;;' \
   'esac' \
   > "$test_directory/adb"
 chmod +x "$test_directory/adb"
 
-lock_write_log="$test_directory/device-lock-writes.log"
-: > "$lock_write_log"
 (
   cd "$test_directory"
   PATH="$test_directory:$PATH" \
-    ADB_FAKE_LOCK_DIR="$test_directory/device-lock" \
-    ADB_LOCK_WRITE_LOG="$lock_write_log" \
-    APPIUM_DEVICE_LOCK_HEARTBEAT_SECONDS=1 \
     BUILD_AND_TEST_LOG="$argument_log" \
-    BUILD_AND_TEST_DELAY_MARKER="$test_directory/e2e-delay" \
     BUILD_AND_TEST_MARKER="$test_directory/e2e-gradle-tasks.log" \
     ./scripts/test_scripts/build-and-test.sh --e2e --plain
 )
@@ -126,13 +128,16 @@ if [ "$actual_e2e_arguments" != "$expected_e2e_arguments" ]; then
   exit 1
 fi
 
-if ! grep -q ':app:androidApp:appiumTest' "$test_directory/e2e-gradle-tasks.log"; then
-  echo "--e2e did not run Appium tests"
-  exit 1
-fi
-
-lock_write_count=$(wc -l < "$lock_write_log")
-if [ "$lock_write_count" -lt 2 ]; then
-  echo "Appium device lock lease was not refreshed"
-  exit 1
-fi
+for appium_task in \
+  :app:androidAppium:appiumTest \
+  :app:desktopAppium:appiumTest \
+  :app:wasmAppium:appiumTest \
+  :panel:androidAppium:appiumTest \
+  :panel:desktopAppium:appiumTest \
+  :panel:wasmAppium:appiumTest
+do
+  if ! grep -q "$appium_task" "$test_directory/e2e-gradle-tasks.log"; then
+    echo "--e2e did not run $appium_task"
+    exit 1
+  fi
+done

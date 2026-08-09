@@ -2,12 +2,7 @@ plugins {
     alias(libs.plugins.kotlinJvm)
 }
 
-val appiumTest =
-    sourceSets.create(
-        "appiumTest",
-    ) {
-        java.srcDir("../webApp/src/appiumTest/kotlin")
-    }
+val appiumTest = sourceSets.create("appiumTest")
 
 val prepareWasmDistribution =
     tasks.register<Sync>("prepareWasmDistribution") {
@@ -42,6 +37,7 @@ configurations.named(appiumTest.runtimeOnlyConfigurationName) {
 tasks.register<Test>("appiumTest") {
     group = "verification"
     description = "Runs the App Wasm Appium tests."
+    outputs.upToDateWhen { false }
     testClassesDirs = appiumTest.output.classesDirs
     classpath = appiumTest.runtimeClasspath
     dependsOn(

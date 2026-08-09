@@ -39,7 +39,7 @@
 - **Architecture**: UI -> `SessionManager` request extensions -> API endpoint. Add local storage and paging when appropriate.
 - **Paging**: Store cursors consistently in `RemoteKeyStorage` (`PRE_COLLECTION`/`NEXT_COLLECTION`).
 - **Logging**: Instrument external network requests through `serviceCatching`. Avoid noisy logging in hot paths.
-- **Tests**: Write tests whenever possible. Client-side non-UI tests go under `src/headlessTest/kotlin`. Compose tests should follow https://kotlinlang.org/docs/multiplatform/compose-test.html. End-to-end tests use `scripts/test_scripts/build-and-test.sh --e2e`, which runs the native app modules' Appium tasks, the Wasm Appium runner modules, and CLI E2E tasks; no Gradle property is required.
+- **Tests**: Write tests whenever possible. Client-side non-UI tests go under `src/headlessTest/kotlin`. Compose tests should follow https://kotlinlang.org/docs/multiplatform/compose-test.html. End-to-end tests use `scripts/test_scripts/build-and-test.sh --e2e`, which runs the Appium runner modules' explicit `appiumTest` tasks and CLI E2E tasks; no Gradle property is required.
 
 ## Static Checks
 - After code changes, run `./gradlew assemble --console=plain` to check for compilation errors.
@@ -50,7 +50,7 @@
 ## Tests
 - Actively test affected modules.
     * For small changes, use `./gradlew :module:test --console=plain`.
-    * For the full regular unit test suite, use `./scripts/test_scripts/build-and-test.sh --unit --plain` (excluding device-dependent Compose and Appium tests). Filter multiple tests with `--tests 'package.FirstTest' 'package.SecondTest'`; repeating `--tests` is also supported.
+    * For the full regular unit test suite, use `./gradlew check --console=plain` (excluding device-dependent Compose and Appium tests).
     * For end-to-end tests, use `./scripts/test_scripts/build-and-test.sh --e2e --plain`; this runs Appium and CLI E2E suites.
     * For Compose common tests under `device_based`, use a real device with `./gradlew :module:connectedAndroidTest` or run `./gradlew :module:jvmTest`.
     * For Compose UI changes, run `./gradlew validateDebugScreenshotTest` for snapshot tests.
@@ -58,8 +58,10 @@
 - Tests are meant to reveal problems. If a test finds a problem, fix the problem instead of working around it in the test.
 - Do not add extra test steps into a test case unless there is an actual dependency between the steps.
 - Extract repeated test steps into helper methods.
-- Android Appium tests require a real device or emulator and cannot run concurrently on the same device. Keep the device-side lock leased for the entire `--e2e` Appium sequence and refresh its expiry until release.
-- Native Appium sources and runners belong to the corresponding `androidApp` or `desktopApp` module under `src/appiumTest/kotlin`; Wasm Appium continues to use its dedicated runner module.
+- Android Appium tests require a real device or emulator and cannot run concurrently on the same device. The caller must keep the device-side lock leased for the entire `--e2e` Appium sequence and refresh its expiry until release; `build-and-test.sh` does not acquire or release that lock.
+- `build-and-test.sh` only orchestrates device/UI and end-to-end tests through `--android`, `--desktop`, `--compose`, and `--e2e`; run ordinary unit tests directly with Gradle.
+- Appium sources and runners belong to the independent `*Appium` modules under `src/appiumTest/kotlin`. They depend on built or installed application artifacts, not application implementation code.
+- Appium `appiumTest` tasks must disable Gradle up-to-date reuse so every explicit E2E invocation drives the target again.
 - Appium tests compose a target helper (`AppAppiumHelper` or `PanelAppiumHelper`) with a platform helper (`AndroidAppiumHelper` or `DesktopAppiumHelper`). Keep concrete test methods as calls to shared `test*ByHelper` functions; target helpers create sessions and platform helpers own launch, cleanup, and log collection.
 
 ## Additional AI Collaboration Rules
