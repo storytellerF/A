@@ -50,11 +50,7 @@ include(":app:desktopApp")
 include(":dev:e2eCore")
 
 include(":dev:appiumCore")
-include(":app:androidAppium")
-include(":app:desktopAppium")
 include(":app:wasmAppium")
-include(":panel:androidAppium")
-include(":panel:desktopAppium")
 include(":panel:wasmAppium")
 
 include(":app:cliE2e")

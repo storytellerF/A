@@ -39,7 +39,7 @@
 - **Architecture**: UI -> `SessionManager` request extensions -> API endpoint. Add local storage and paging when appropriate.
 - **Paging**: Store cursors consistently in `RemoteKeyStorage` (`PRE_COLLECTION`/`NEXT_COLLECTION`).
 - **Logging**: Instrument external network requests through `serviceCatching`. Avoid noisy logging in hot paths.
-- **Tests**: Write tests whenever possible. Client-side non-UI tests go under `src/headlessTest/kotlin`. Compose tests should follow https://kotlinlang.org/docs/multiplatform/compose-test.html. End-to-end tests use `scripts/test_scripts/build-and-test.sh --e2e`, which runs the Appium runner modules' explicit `appiumTest` tasks and CLI E2E tasks; no Gradle property is required.
+- **Tests**: Write tests whenever possible. Client-side non-UI tests go under `src/headlessTest/kotlin`. Compose tests should follow https://kotlinlang.org/docs/multiplatform/compose-test.html. End-to-end tests use `scripts/test_scripts/build-and-test.sh --e2e`, which runs the native app modules' Appium tasks, the Wasm Appium runner modules, and CLI E2E tasks; no Gradle property is required.
 
 ## Static Checks
 - After code changes, run `./gradlew assemble --console=plain` to check for compilation errors.
@@ -59,6 +59,7 @@
 - Do not add extra test steps into a test case unless there is an actual dependency between the steps.
 - Extract repeated test steps into helper methods.
 - Appium tests require a real device or emulator and cannot run in parallel.
+- Native Appium sources and runners belong to the corresponding `androidApp` or `desktopApp` module under `src/appiumTest/kotlin`; Wasm Appium continues to use its dedicated runner module.
 - Appium tests compose a target helper (`AppAppiumHelper` or `PanelAppiumHelper`) with a platform helper (`AndroidAppiumHelper` or `DesktopAppiumHelper`). Keep concrete test methods as calls to shared `test*ByHelper` functions; target helpers create sessions and platform helpers own launch, cleanup, and log collection.
 
 ## Additional AI Collaboration Rules

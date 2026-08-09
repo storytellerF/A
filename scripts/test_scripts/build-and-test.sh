@@ -296,17 +296,17 @@ if [ "$RUN_E2E" = true ]; then
     appium_lock_token=$(mktemp)
     acquireAppiumDeviceLock "$appium_device_serial" "$appium_lock_token"
     trap 'releaseAppiumDeviceLock || true' EXIT
-    rm -rf ./app/androidAppium/build/test/appium/sessions
-    rm -rf ./app/desktopAppium/build/test/appium/sessions
-    rm -rf ./panel/androidAppium/build/test/appium/sessions
-    rm -rf ./panel/desktopAppium/build/test/appium/sessions
+    rm -rf ./app/androidApp/build/test/appium/sessions
+    rm -rf ./app/desktopApp/build/test/appium/sessions
+    rm -rf ./panel/androidApp/build/test/appium/sessions
+    rm -rf ./panel/desktopApp/build/test/appium/sessions
     appium_exit=0
     for appium_task in \
-        :app:androidAppium:appiumTest \
-        :app:desktopAppium:appiumTest \
+        :app:androidApp:appiumTest \
+        :app:desktopApp:appiumTest \
         :app:wasmAppium:appiumTest \
-        :panel:androidAppium:appiumTest \
-        :panel:desktopAppium:appiumTest \
+        :panel:androidApp:appiumTest \
+        :panel:desktopApp:appiumTest \
         :panel:wasmAppium:appiumTest
     do
         runGradleWithTests "$appium_task" || appium_exit=$?

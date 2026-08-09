@@ -1,8 +1,16 @@
 @file:OptIn(ExperimentalKotlinGradlePluginApi::class)
 
 import com.google.common.base.CaseFormat
+import org.gradle.api.attributes.Bundling
+import org.gradle.api.attributes.Category
+import org.gradle.api.attributes.LibraryElements
+import org.gradle.api.attributes.Usage
+import org.gradle.api.attributes.java.TargetJvmVersion
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+import org.jetbrains.kotlin.gradle.dsl.ExplicitApiMode
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.plugin.KotlinBaseApiPlugin
+import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import java.io.FileInputStream
 import java.net.URI
 import java.util.Properties
@@ -21,6 +29,7 @@ val buildIosTarget = project.findProperty("target.ios") == "true"
 val flavorStr = project.findProperty("server.flavor") as String
 val flavorId = CaseFormat.LOWER_HYPHEN.converterTo(CaseFormat.LOWER_UNDERSCORE).convert(flavorStr)!!
 val buildType = project.findProperty("server.buildType") as String
+val debugBuildTypeName = "debug"
 
 val properties = Properties().apply {
     val file = layout.projectDirectory.file("../../deploy/$flavorStr.env").asFile
@@ -60,7 +69,7 @@ android {
         }
         create("benchmark") {
             initWith(buildTypes.getByName("release"))
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName(debugBuildTypeName)
             matchingFallbacks += listOf("release")
             isDebuggable = false
         }
@@ -70,6 +79,82 @@ android {
     }
 }
 
+val appiumTestImplementation =
+    configurations.create("appiumTestImplementation") {
+        isCanBeConsumed = false
+        isCanBeResolved = false
+    }
+val appiumTestRuntimeOnly =
+    configurations.create("appiumTestRuntimeOnly") {
+        isCanBeConsumed = false
+        isCanBeResolved = false
+    }
+val appiumTestCompileClasspath =
+    configurations.create("appiumTestCompileClasspath") {
+        isCanBeConsumed = false
+        isCanBeResolved = true
+        extendsFrom(appiumTestImplementation)
+        attributes {
+            attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage.JAVA_API))
+            attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.LIBRARY))
+            attribute(Bundling.BUNDLING_ATTRIBUTE, objects.named(Bundling.EXTERNAL))
+            attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, objects.named(LibraryElements.CLASSES))
+            attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, 21)
+            attribute(KotlinPlatformType.attribute, KotlinPlatformType.jvm)
+        }
+    }
+val appiumTestRuntimeClasspath =
+    configurations.create("appiumTestRuntimeClasspath") {
+        isCanBeConsumed = false
+        isCanBeResolved = true
+        extendsFrom(appiumTestImplementation, appiumTestRuntimeOnly)
+        attributes {
+            attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage.JAVA_RUNTIME))
+            attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.LIBRARY))
+            attribute(Bundling.BUNDLING_ATTRIBUTE, objects.named(Bundling.EXTERNAL))
+            attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, objects.named(LibraryElements.JAR))
+            attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, 21)
+            attribute(KotlinPlatformType.attribute, KotlinPlatformType.jvm)
+        }
+    }
+val appiumTestClasses = layout.buildDirectory.dir("classes/kotlin/appiumTest")
+val kotlinBaseApi = plugins.withType<KotlinBaseApiPlugin>().single()
+val appiumTestCompilerOptions =
+    kotlinBaseApi.createCompilerJvmOptions().apply {
+        jvmTarget.set(JvmTarget.JVM_21)
+        moduleName.set("app-android-appium-test")
+    }
+val compileAppiumTestKotlin =
+    kotlinBaseApi.registerKotlinJvmCompileTask(
+        "compileAppiumTestKotlin",
+        appiumTestCompilerOptions,
+        providers.provider { ExplicitApiMode.Disabled },
+    ).apply {
+        configure {
+            source("src/appiumTest/kotlin")
+            libraries.from(appiumTestCompileClasspath)
+            destinationDirectory.set(appiumTestClasses)
+            sourceSetName.set("appiumTest")
+            multiPlatformEnabled.set(false)
+        }
+    }
+
+tasks.register<Test>("appiumTest") {
+    group = "verification"
+    description = "Runs the App Android Appium tests."
+    testClassesDirs = files(appiumTestClasses)
+    classpath = files(appiumTestClasses, appiumTestRuntimeClasspath)
+    dependsOn(
+        compileAppiumTestKotlin,
+        ":cloud:server:buildAppiumDockerImage",
+        ":cloud:worker:buildAppiumDockerImage",
+        ":cloud:cli:buildAppiumDockerImage",
+        ":cloud:ws:buildAppiumDockerImage",
+        ":app:androidApp:installDebug",
+    )
+    maxParallelForks = 1
+}
+
 kotlin {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_21)
@@ -77,6 +162,9 @@ kotlin {
 }
 
 dependencies {
+    add(appiumTestImplementation.name, libs.kotlin.test.junit)
+    add(appiumTestImplementation.name, projects.dev.appiumCore)
+
     implementation(projects.client.composeCore)
     implementation(projects.app.composeApp)
     implementation(projects.shared)

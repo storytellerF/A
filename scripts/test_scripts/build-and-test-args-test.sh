@@ -107,7 +107,7 @@ if [ "$actual_e2e_arguments" != "$expected_e2e_arguments" ]; then
   exit 1
 fi
 
-if ! grep -q ':app:androidAppium:appiumTest' "$test_directory/e2e-gradle-tasks.log"; then
+if ! grep -q ':app:androidApp:appiumTest' "$test_directory/e2e-gradle-tasks.log"; then
   echo "--e2e did not run Appium tests"
   exit 1
 fi

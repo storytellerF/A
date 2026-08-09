@@ -250,6 +250,7 @@ kmp-zip = { module = "no.synth:kmp-zip", version.ref = "kmpZip" }
 kmp-zip-kotlinx = { module = "no.synth:kmp-zip-kotlinx", version.ref = "kmpZip" }
 kmpnotifier-local = { module = "io.github.mirzemehdi:kmpnotifier-local", version.ref = "kmpNotifier" }
 kodio-core = { module = "space.kodio:core", version.ref = "kodio-core" }
+kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
 kotlinx-browser = { module = "org.jetbrains.kotlinx:kotlinx-browser", version.ref = "kotlinxBrowser" }
 kotlinx-cli = { module = "org.jetbrains.kotlinx:kotlinx-cli", version.ref = "kotlinxCli" }
 kotlinx-collections-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "kotlinxCollectionsImmutable" }

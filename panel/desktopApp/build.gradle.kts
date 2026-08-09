@@ -6,7 +6,11 @@ plugins {
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
     id("appium-runtime-classpath")
+    id("desktop-appium-agent")
 }
+
+val appiumTest = sourceSets.create("appiumTest")
+val accessibilityDumpAgentJar = tasks.named<Jar>("accessibilityDumpAgentJar")
 
 kotlin {
     compilerOptions {
@@ -20,6 +24,10 @@ dependencies {
 
     implementation(compose.desktop.currentOs)
     implementation(libs.napier)
+
+    add(appiumTest.implementationConfigurationName, libs.kotlin.test.junit)
+    add(appiumTest.implementationConfigurationName, libs.runtime)
+    add(appiumTest.implementationConfigurationName, projects.dev.appiumCore)
 }
 
 composeCompiler {
@@ -45,4 +53,29 @@ compose.desktop {
             configurationFiles.from(file("proguard-rules-desktop.pro"))
         }
     }
+}
+
+tasks.register<Test>("appiumTest") {
+    group = "verification"
+    description = "Runs the Panel Desktop Appium tests."
+    testClassesDirs = appiumTest.output.classesDirs
+    classpath = appiumTest.runtimeClasspath
+    dependsOn(
+        ":cloud:server:buildAppiumDockerImage",
+        ":cloud:worker:buildAppiumDockerImage",
+        ":cloud:cli:buildAppiumDockerImage",
+        ":cloud:ws:buildAppiumDockerImage",
+        ":panel:desktopApp:writeAppiumRuntimeClasspath",
+        accessibilityDumpAgentJar,
+    )
+    systemProperty(
+        "desktop.accessibility.dump.agent",
+        accessibilityDumpAgentJar.flatMap { it.archiveFile }.get().asFile.canonicalPath,
+    )
+    jvmArgs("--add-modules", "jdk.attach")
+    maxParallelForks = 1
+}
+
+tasks.withType<JavaCompile>().configureEach {
+    options.compilerArgs.addAll(listOf("--add-modules", "jdk.attach"))
 }
