@@ -25,17 +25,15 @@ interface LlmService : AutoCloseable {
     override fun close() {}
 }
 
-class KoogLlmService(
-    private val client: LLMClient,
-    private val model: LLModel,
-) : LlmService {
-    override suspend fun generateResponse(prompt: String, systemPrompt: String?): String {
-        return try {
-            Napier.d(tag = "llm") {
-                "Generating response for prompt: ${prompt.take(LOG_PREVIEW_LENGTH)}..."
-            }
+class KoogLlmService(private val client: LLMClient, private val model: LLModel) : LlmService {
+    override suspend fun generateResponse(prompt: String, systemPrompt: String?): String =
+        try {
+        Napier.d(tag = "llm") {
+            "Generating response for prompt: ${prompt.take(LOG_PREVIEW_LENGTH)}..."
+        }
 
-            val promptObj = if (systemPrompt != null) {
+        val promptObj =
+            if (systemPrompt != null) {
                 prompt(existing = emptyPrompt()) {
                     system(systemPrompt)
                     user(prompt)
@@ -46,20 +44,19 @@ class KoogLlmService(
                 }
             }
 
-            val result = client.execute(promptObj, model)
-            val text = result.textContent()
+        val result = client.execute(promptObj, model)
+        val text = result.textContent()
 
-            Napier.d(tag = "llm") {
-                "Generated response: ${text.take(LOG_PREVIEW_LENGTH)}..."
-            }
-
-            text
-        } catch (e: IllegalStateException) {
-            Napier.e(tag = "llm", throwable = e) {
-                "LLM generation failed"
-            }
-            throw e
+        Napier.d(tag = "llm") {
+            "Generated response: ${text.take(LOG_PREVIEW_LENGTH)}..."
         }
+
+        text
+    } catch (e: IllegalStateException) {
+        Napier.e(tag = "llm", throwable = e) {
+            "LLM generation failed"
+        }
+        throw e
     }
 
     override fun close() {
@@ -75,8 +72,9 @@ class KoogLlmService(
          */
         fun create(config: LlmConfig): KoogLlmService? {
             val client = KoogClientFactory.createClient(config) ?: return null
-            val model = KoogClientFactory.resolveModel(config)
-                ?: error("Model resolution failed for ${config.provider}")
+            val model =
+                KoogClientFactory.resolveModel(config)
+                    ?: error("Model resolution failed for ${config.provider}")
             return KoogLlmService(client, model)
         }
     }

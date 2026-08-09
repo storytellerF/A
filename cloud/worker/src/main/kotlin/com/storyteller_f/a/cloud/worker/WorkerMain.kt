@@ -96,8 +96,9 @@ internal suspend fun createTopicSafetyReviewer(backend: Backend): TopicSafetyRev
         }
         return when (llmConfig.provider) {
             LlmProvider.LITERT_LLM -> {
-                val modelPath = llmConfig.modelPath
-                    ?: error("modelPath required for LITERT_LLM provider")
+                val modelPath =
+                    llmConfig.modelPath
+                        ?: error("modelPath required for LITERT_LLM provider")
                 LiteRtTopicSafetyReviewer.create(
                     java.nio.file.Path.of(modelPath),
                 )
@@ -108,7 +109,9 @@ internal suspend fun createTopicSafetyReviewer(backend: Backend): TopicSafetyRev
             LlmProvider.GOOGLE,
             LlmProvider.OLLAMA,
             LlmProvider.OPENAI_COMPATIBLE,
-            -> KoogTopicSafetyReviewer.create(llmConfig)
+            -> {
+                KoogTopicSafetyReviewer.create(llmConfig)
+            }
         }
     }
 

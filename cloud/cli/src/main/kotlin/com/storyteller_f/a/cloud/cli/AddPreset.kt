@@ -208,8 +208,9 @@ class AddPreset : Subcommand("add", "add entry") {
     }
 
     private suspend fun Backend.addLlmConfig(presetValue: PresetValue) {
-        val llmConfig = presetValue.llmConfigData
-            ?: throw IllegalArgumentException("llmConfigData is required for llmConfig preset type")
+        val llmConfig =
+            presetValue.llmConfigData
+                ?: error("llmConfigData is required for llmConfig preset type")
         database.upsertLlmConfig(llmConfig).getOrThrow()
     }
 

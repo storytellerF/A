@@ -9,8 +9,8 @@ import ai.koog.prompt.executor.clients.anthropic.AnthropicClientSettings
 import ai.koog.prompt.executor.clients.anthropic.AnthropicLLMClient
 import ai.koog.prompt.executor.clients.openai.OpenAIClientSettings
 import ai.koog.prompt.executor.clients.openai.OpenAILLMClient
-import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.llm.LLMProvider
+import ai.koog.prompt.llm.LLModel
 import com.storyteller_f.shared.model.LlmConfig
 import com.storyteller_f.shared.model.LlmProvider
 import io.github.aakira.napier.Napier
@@ -39,15 +39,15 @@ object KoogClientFactory {
      * Resolves the model for the given configuration.
      */
     fun resolveModel(config: LlmConfig): LLModel? {
-        val modelName = config.model
-            ?: when (config.provider) {
-                LlmProvider.OPENAI -> "gpt-4o"
-                LlmProvider.ANTHROPIC -> "claude-sonnet-4-20250514"
-                LlmProvider.GOOGLE -> "gemini-2.0-flash"
-                LlmProvider.OLLAMA -> "llama3"
-                LlmProvider.OPENAI_COMPATIBLE -> "gpt-3.5-turbo"
-                LlmProvider.LITERT_LLM -> return null // No model needed for LiteRT
-            }
+        val modelName =
+            config.model ?: when (config.provider) {
+            LlmProvider.OPENAI -> "gpt-4o"
+            LlmProvider.ANTHROPIC -> "claude-sonnet-4-20250514"
+            LlmProvider.GOOGLE -> "gemini-2.0-flash"
+            LlmProvider.OLLAMA -> "llama3"
+            LlmProvider.OPENAI_COMPATIBLE -> "gpt-3.5-turbo"
+            LlmProvider.LITERT_LLM -> return null // No model needed for LiteRT
+        }
 
         return when (config.provider) {
             LlmProvider.OPENAI -> resolveOpenAIModel(modelName)
@@ -60,9 +60,9 @@ object KoogClientFactory {
     }
 
     private fun createOpenAiClient(config: LlmConfig): LLMClient {
-        val apiKey = config.apiKey
-            ?: error("API key required for OpenAI")
-        val settings = OpenAIClientSettings(
+        val apiKey = config.apiKey ?: error("API key required for OpenAI")
+        val settings =
+            OpenAIClientSettings(
             baseUrl = config.baseUrl ?: "https://api.openai.com/v1",
         )
         val httpClientFactory = KtorKoogHttpClient.Factory()
@@ -75,9 +75,9 @@ object KoogClientFactory {
     }
 
     private fun createAnthropicClient(config: LlmConfig): LLMClient {
-        val apiKey = config.apiKey
-            ?: error("API key required for Anthropic")
-        val settings = AnthropicClientSettings(
+        val apiKey = config.apiKey ?: error("API key required for Anthropic")
+        val settings =
+            AnthropicClientSettings(
             baseUrl = config.baseUrl ?: "https://api.anthropic.com",
         )
         val httpClientFactory = KtorKoogHttpClient.Factory()
@@ -90,12 +90,13 @@ object KoogClientFactory {
     }
 
     private fun createGoogleClient(config: LlmConfig): LLMClient {
-        val apiKey = config.apiKey
-            ?: error("API key required for Google")
-        val settings = OpenAIClientSettings(
-            baseUrl = config.baseUrl
+        val apiKey = config.apiKey ?: error("API key required for Google")
+        val settings =
+            OpenAIClientSettings(
+            baseUrl =
+                config.baseUrl
                 ?: "https://generativelanguage.googleapis.com/v1beta/openai",
-        )
+                )
         val httpClientFactory = KtorKoogHttpClient.Factory()
 
         Napier.i(tag = "koog") {
@@ -120,7 +121,8 @@ object KoogClientFactory {
     }
 
     private fun createOpenAICompatibleClient(config: LlmConfig): LLMClient {
-        val baseUrl = config.baseUrl
+        val baseUrl =
+            config.baseUrl
             ?: error("Base URL required for OpenAI-compatible provider")
         val apiKey = config.apiKey ?: "no-key"
 

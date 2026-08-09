@@ -132,18 +132,15 @@ private suspend fun Backend.getNotificationRoom(user: User): Room? =
 
 private suspend fun Backend.createNotificationRoom(user: User, uid: PrimaryKey): Room =
     database.room.createRoom(
-        buildUserNotificationRoom(user, uid),
-        buildMemberForNotificationRoom(user, uid)
-    ).getOrThrow()
+    buildUserNotificationRoom(user, uid),
+    buildMemberForNotificationRoom(user, uid),
+).getOrThrow()
 
-suspend fun Backend.sedTopicAtRoom(
-    uid: PrimaryKey,
-    roomId: PrimaryKey,
-    content: String
-) {
-    val userPubKeyInfos = database.room.getRoomPubKeyPaginationResult(
+suspend fun Backend.sedTopicAtRoom(uid: PrimaryKey, roomId: PrimaryKey, content: String) {
+    val userPubKeyInfos =
+        database.room.getRoomPubKeyPaginationResult(
         roomId,
-        PrimaryKeyFetch(null, 10)
+        PrimaryKeyFetch(null, 10),
     ).getOrThrow().list
     val encrypted = buildEncryptedTopicContent(content, userPubKeyInfos)
     createTopicAtRoom(NewRoomTopic(ObjectType.ROOM, roomId, encrypted), uid).getOrThrow()?.let {

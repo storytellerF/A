@@ -1,3 +1,6 @@
+/*
+ * This is a private project. All rights reserved.
+ */
 package com.storyteller_f.a.backend.exposed.tables
 
 import com.storyteller_f.shared.model.LlmConfig
@@ -40,23 +43,23 @@ private val json = Json { ignoreUnknownKeys = true }
 
 /** Maps an LLM configuration from the generic config table. */
 internal fun LlmConfig.Companion.fromConfigRow(resultRow: ResultRow): LlmConfig? {
-    val config = with(BackendConfigs) {
-        val valueType = resultRow[valueType]
-        if (valueType != "json") return null
+    val config =
+        with(BackendConfigs) {
+            val valueType = resultRow[valueType]
+            if (valueType != "json") return null
 
-        val valueJson = resultRow[valueJson] ?: return null
-        json.decodeFromString<LlmConfig>(valueJson)
-    }
+            val valueJson = resultRow[valueJson] ?: return null
+            json.decodeFromString<LlmConfig>(valueJson)
+        }
     return config
 }
 
 /** Maps an LLM configuration to a generic config row for storage. */
-internal fun LlmConfig.toConfigRow(): Map<Column<*>, Any?> {
-    return with(BackendConfigs) {
+internal fun LlmConfig.toConfigRow(): Map<Column<*>, Any?> =
+    with(BackendConfigs) {
         mapOf(
             key to LLM_CONFIG_KEY,
             valueType to "json",
             valueJson to json.encodeToString(LlmConfig.serializer(), this@toConfigRow),
         )
     }
-}

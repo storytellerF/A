@@ -29,15 +29,13 @@ private const val LOG_PREVIEW_LENGTH = 100
  * Creates an LLMClient that directly calls OpenAI-compatible APIs.
  * This bypasses koog's parameter determination logic for non-standard model names.
  */
-fun createOpenAICompatibleClient(
-    apiKey: String,
-    baseUrl: String,
-): LLMClient {
+fun createOpenAICompatibleClient(apiKey: String, baseUrl: String): LLMClient {
     val httpClient = HttpClient(OkHttp)
-    val jsonSerializer = Json {
-        ignoreUnknownKeys = true
-        isLenient = true
-    }
+    val jsonSerializer =
+        Json {
+            ignoreUnknownKeys = true
+            isLenient = true
+        }
 
     return object : LLMClient() {
         @OptIn(ExperimentalTime::class)
@@ -46,49 +44,56 @@ fun createOpenAICompatibleClient(
             model: LLModel,
             tools: List<ai.koog.agents.core.tools.ToolDescriptor>,
         ): Message.Assistant {
-            val systemPrompt = prompt.messages
-                .filterIsInstance<Message.System>()
-                .joinToString("\n") { it.textContent() }
+            val systemPrompt =
+                prompt.messages
+                    .filterIsInstance<Message.System>()
+                    .joinToString("\n") { it.textContent() }
 
-            val userPrompt = prompt.messages
-                .filterIsInstance<Message.User>()
-                .joinToString("\n") { it.textContent() }
+            val userPrompt =
+                prompt.messages
+                    .filterIsInstance<Message.User>()
+                    .joinToString("\n") { it.textContent() }
 
             Napier.d(tag = TAG) {
                 "Calling OpenAI-compatible API with model: ${model.id}"
             }
 
-            val request = ChatCompletionRequest(
-                model = model.id,
-                messages = buildList {
-                    if (systemPrompt.isNotBlank()) {
-                        add(ChatMessage(role = "system", content = systemPrompt))
-                    }
-                    add(ChatMessage(role = "user", content = userPrompt))
-                },
-                temperature = 0.7,
-                maxTokens = 1024,
-            )
+            val request =
+                ChatCompletionRequest(
+                    model = model.id,
+                    messages =
+                    buildList {
+                        if (systemPrompt.isNotBlank()) {
+                            add(ChatMessage(role = "system", content = systemPrompt))
+                        }
+                        add(ChatMessage(role = "user", content = userPrompt))
+                    },
+                    temperature = 0.7,
+                    maxTokens = 1024,
+                )
 
-            val requestBody = jsonSerializer.encodeToString(
-                ChatCompletionRequest.serializer(),
-                request,
-            )
+            val requestBody =
+                jsonSerializer.encodeToString(
+                    ChatCompletionRequest.serializer(),
+                    request,
+                )
 
-            val response = httpClient.post("$baseUrl/chat/completions") {
-                header("Authorization", "Bearer $apiKey")
-                header("HTTP-Referer", "https://github.com/storyteller")
-                header("X-Title", "StoryTeller Worker")
-                contentType(ContentType.Application.Json)
-                setBody(requestBody)
-            }.body<String>()
+            val response =
+                httpClient.post("$baseUrl/chat/completions") {
+                    header("Authorization", "Bearer $apiKey")
+                    header("HTTP-Referer", "https://github.com/storyteller")
+                    header("X-Title", "StoryTeller Worker")
+                    contentType(ContentType.Application.Json)
+                    setBody(requestBody)
+                }.body<String>()
 
             val chatResponse = jsonSerializer.decodeFromString<ChatCompletionResponse>(response)
 
-            val content = run {
-                val message = chatResponse.choices.firstOrNull()?.message?.content
-                checkNotNull(message) { "No response content from LLM" }
-            }
+            val content =
+                run {
+                    val message = chatResponse.choices.firstOrNull()?.message?.content
+                    checkNotNull(message) { "No response content from LLM" }
+                }
 
             Napier.d(tag = TAG) {
                 "LLM response: ${content.take(LOG_PREVIEW_LENGTH)}..."
@@ -96,7 +101,8 @@ fun createOpenAICompatibleClient(
 
             return Message.Assistant(
                 content = content,
-                metaInfo = ResponseMetaInfo(
+                metaInfo =
+                ResponseMetaInfo(
                     timestamp = Clock.System.now(),
                     modelId = model.id,
                 ),
@@ -106,12 +112,11 @@ fun createOpenAICompatibleClient(
         override suspend fun moderate(
             prompt: ai.koog.prompt.Prompt,
             model: LLModel,
-        ): ai.koog.prompt.dsl.ModerationResult {
-            throw UnsupportedOperationException("Moderation not supported by OpenAI-compatible client")
-        }
+        ): ai.koog.prompt.dsl.ModerationResult = throw UnsupportedOperationException(
+            "Moderation not supported by OpenAI-compatible client",
+        )
 
-        override fun llmProvider(): ai.koog.prompt.llm.LLMProvider =
-            ai.koog.prompt.llm.LLMProvider.OpenAI
+        override fun llmProvider(): ai.koog.prompt.llm.LLMProvider = ai.koog.prompt.llm.LLMProvider.OpenAI
 
         override fun close() {
             httpClient.close()
@@ -129,17 +134,10 @@ data class ChatCompletionRequest(
 )
 
 @Serializable
-data class ChatMessage(
-    val role: String,
-    val content: String,
-)
+data class ChatMessage(val role: String, val content: String)
 
 @Serializable
-data class ChatCompletionResponse(
-    val choices: List<Choice>,
-)
+data class ChatCompletionResponse(val choices: List<Choice>)
 
 @Serializable
-data class Choice(
-    val message: ChatMessage,
-)
+data class Choice(val message: ChatMessage)
