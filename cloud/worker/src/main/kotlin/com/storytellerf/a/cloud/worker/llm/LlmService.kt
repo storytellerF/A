@@ -71,10 +71,12 @@ class KoogLlmService(
     companion object {
         /**
          * Create a KoogLlmService from LLM configuration.
+         * Returns null for LITERT_LLM provider (handled separately).
          */
-        fun create(config: LlmConfig): KoogLlmService {
-            val client = KoogClientFactory.createClient(config)
+        fun create(config: LlmConfig): KoogLlmService? {
+            val client = KoogClientFactory.createClient(config) ?: return null
             val model = KoogClientFactory.resolveModel(config)
+                ?: throw IllegalStateException("Model resolution failed for ${config.provider}")
             return KoogLlmService(client, model)
         }
     }

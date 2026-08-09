@@ -18,31 +18,36 @@ import io.github.aakira.napier.Napier
 /**
  * Factory for creating LLM clients based on configuration.
  * Uses koog's LLMClient interface directly for simple text generation.
+ *
+ * Note: LITERT_LLM provider is not handled here as it uses the litertlm library directly.
  */
 object KoogClientFactory {
     /**
      * Creates an LLM client for the given configuration.
+     * Returns null for LITERT_LLM provider (handled separately).
      */
-    fun createClient(config: LlmConfig): LLMClient {
+    fun createClient(config: LlmConfig): LLMClient? {
         return when (config.provider) {
             LlmProvider.OPENAI -> createOpenAiClient(config)
             LlmProvider.ANTHROPIC -> createAnthropicClient(config)
             LlmProvider.GOOGLE -> createGoogleClient(config)
             LlmProvider.OLLAMA -> createOllamaClient(config)
-            LlmProvider.LITELLM -> createLiteLlmClient(config)
+            LlmProvider.OPENAI_COMPATIBLE -> createOpenAICompatibleClient(config)
+            LlmProvider.LITERT_LLM -> null // Handled separately using litertlm library
         }
     }
 
     /**
      * Resolves the model for the given configuration.
      */
-    fun resolveModel(config: LlmConfig): LLModel {
+    fun resolveModel(config: LlmConfig): LLModel? {
         val modelName = config.model ?: when (config.provider) {
             LlmProvider.OPENAI -> "gpt-4o"
             LlmProvider.ANTHROPIC -> "claude-sonnet-4-20250514"
             LlmProvider.GOOGLE -> "gemini-2.0-flash"
             LlmProvider.OLLAMA -> "llama3"
-            LlmProvider.LITELLM -> "gpt-3.5-turbo"
+            LlmProvider.OPENAI_COMPATIBLE -> "gpt-3.5-turbo"
+            LlmProvider.LITERT_LLM -> return null // No model needed for LiteRT
         }
 
         return when (config.provider) {
@@ -50,7 +55,8 @@ object KoogClientFactory {
             LlmProvider.ANTHROPIC -> resolveAnthropicModel(modelName)
             LlmProvider.GOOGLE -> resolveGoogleModel(modelName)
             LlmProvider.OLLAMA -> resolveOllamaModel(modelName)
-            LlmProvider.LITELLM -> resolveOpenAIModel(modelName)
+            LlmProvider.OPENAI_COMPATIBLE -> resolveOpenAIModel(modelName)
+            LlmProvider.LITERT_LLM -> null
         }
     }
 
@@ -114,13 +120,13 @@ object KoogClientFactory {
         )
     }
 
-    private fun createLiteLlmClient(config: LlmConfig): LLMClient {
+    private fun createOpenAICompatibleClient(config: LlmConfig): LLMClient {
         val baseUrl = config.baseUrl
-            ?: throw IllegalArgumentException("Base URL required for LiteLLM")
+            ?: throw IllegalArgumentException("Base URL required for OpenAI-compatible provider")
         val apiKey = config.apiKey ?: "no-key"
 
         Napier.i(tag = "koog") {
-            "Creating LiteLLM client at $baseUrl with model: ${config.model ?: "gpt-3.5-turbo"}"
+            "Creating OpenAI-compatible client at $baseUrl with model: ${config.model ?: "gpt-3.5-turbo"}"
         }
 
         // Use custom OpenAI-compatible client for OpenRouter and similar providers

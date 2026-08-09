@@ -7,7 +7,8 @@ enum class LlmProvider {
     ANTHROPIC,
     GOOGLE,
     OLLAMA,
-    LITELLM,    // OpenAI-compatible endpoint
+    OPENAI_COMPATIBLE,  // OpenAI-compatible endpoint (OpenRouter, LiteLLM, etc.)
+    LITERT_LLM,         // Google LiteRT LM (local model)
 }
 
 @Serializable
@@ -16,7 +17,7 @@ data class LlmConfig(
     val provider: LlmProvider,
     /** API key for the provider */
     val apiKey: String? = null,
-    /** Base URL for OpenAI-compatible endpoints (e.g., LiteLLM) */
+    /** Base URL for OpenAI-compatible endpoints (e.g., OpenRouter, LiteLLM) */
     val baseUrl: String? = null,
     /** Model name/identifier */
     val model: String? = null,
@@ -24,6 +25,8 @@ data class LlmConfig(
     val temperature: Double = 0.7,
     /** Maximum tokens to generate */
     val maxTokens: Int = 1024,
+    /** Model file path for LITERT_LLM provider */
+    val modelPath: String? = null,
 ) {
     companion object
 }

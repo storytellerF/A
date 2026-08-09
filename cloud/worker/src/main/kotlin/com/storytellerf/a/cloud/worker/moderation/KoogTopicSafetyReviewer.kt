@@ -43,6 +43,7 @@ internal class KoogTopicSafetyReviewer(private val llmService: LlmService) :
             }
 
             val llmService = KoogLlmService.create(config)
+                ?: throw IllegalStateException("Failed to create LLM service for provider: ${config.provider}")
             return KoogTopicSafetyReviewer(llmService)
         }
     }

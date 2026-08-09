@@ -30,7 +30,9 @@ import com.storyteller_f.shared.model.TaskConfig
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.setupKmpLogger
 import com.storyteller_f.shared.utils.now
+import com.storyteller_f.shared.model.LlmProvider
 import com.storytellerf.a.cloud.worker.moderation.KoogTopicSafetyReviewer
+import com.storytellerf.a.cloud.worker.moderation.LiteRtTopicSafetyReviewer
 import com.storytellerf.a.cloud.worker.moderation.TopicSafetyReviewer
 import com.storytellerf.a.cloud.worker.moderation.doTopicModerationTask
 import io.github.aakira.napier.Napier
@@ -90,9 +92,16 @@ internal suspend fun createTopicSafetyReviewer(backend: Backend): TopicSafetyRev
     val llmConfig = llmConfigResult.getOrNull()
     if (llmConfig != null) {
         Napier.i(tag = "moderation") {
-            "using Koog LLM provider: ${llmConfig.provider}"
+            "using LLM provider: ${llmConfig.provider}"
         }
-        return KoogTopicSafetyReviewer.create(llmConfig)
+        return when (llmConfig.provider) {
+            LlmProvider.LITERT_LLM -> {
+                val modelPath = llmConfig.modelPath
+                    ?: throw IllegalArgumentException("modelPath required for LITERT_LLM provider")
+                LiteRtTopicSafetyReviewer.create(java.nio.file.Path.of(modelPath))
+            }
+            else -> KoogTopicSafetyReviewer.create(llmConfig)
+        }
     }
 
     error(

@@ -58,11 +58,11 @@ class KoogIntegrationTest {
     }
 
     @Test
-    fun `test LiteLLM client creation`() {
+    fun `test OpenAI-compatible client creation`() {
         val config = LlmConfig(
-            provider = LlmProvider.LITELLM,
+            provider = LlmProvider.OPENAI_COMPATIBLE,
             apiKey = "test-key",
-            baseUrl = "http://localhost:4000",
+            baseUrl = "https://openrouter.ai/api/v1",
             model = "gpt-3.5-turbo",
         )
 
