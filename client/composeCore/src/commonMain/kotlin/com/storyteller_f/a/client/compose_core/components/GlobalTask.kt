@@ -13,27 +13,14 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-interface GlobalTask<C> {
-    val stateMap: SnapshotStateMap<String, LoadingState?>
-
-    val context: C
-
-    fun use(key: String, block: suspend GlobalTask<C>.(MutableStateFlow<LoadingState?>) -> Unit)
-
-    companion object
-}
-
 class CustomGlobalTask<C>(
     val scope: CoroutineScope,
-    override val context: C
-) : GlobalTask<C> {
-    val mutex = Mutex()
-    override val stateMap = mutableStateMapOf<String, LoadingState?>()
+    val context: C
+) {
+    private val mutex = Mutex()
+    val stateMap: SnapshotStateMap<String, LoadingState?> = mutableStateMapOf()
 
-    override fun use(
-        key: String,
-        block: suspend GlobalTask<C>.(MutableStateFlow<LoadingState?>) -> Unit
-    ) {
+    fun launch(key: String, block: suspend NestedGlobalTask<C>.() -> Unit) {
         scope.launch {
             useInternal(key, block)
         }
@@ -41,7 +28,7 @@ class CustomGlobalTask<C>(
 
     private suspend fun useInternal(
         key: String,
-        block: suspend CustomGlobalTask<C>.(MutableStateFlow<LoadingState?>) -> Unit
+        block: suspend NestedGlobalTask<C>.() -> Unit
     ) {
         val newFlow = mutex.withLock {
             if (stateMap.contains(key)) {
@@ -66,7 +53,8 @@ class CustomGlobalTask<C>(
                     }
                 }
                 try {
-                    block.invoke(this@CustomGlobalTask, newFlow)
+                    val nestedTask = NestedGlobalTask(this@CustomGlobalTask, newFlow)
+                    nestedTask.block()
                 } catch (e: Exception) {
                     Napier.e(e) {
                         "global task $key failed"
@@ -83,9 +71,16 @@ class CustomGlobalTask<C>(
     }
 }
 
-suspend inline fun <T> MutableStateFlow<LoadingState?>.use(block: suspend () -> Result<T>): Result<T> {
-    value = LoadingState.Loading
-    return block()
+class NestedGlobalTask<C>(
+    val controller: CustomGlobalTask<C>,
+    val state: MutableStateFlow<LoadingState?>
+) {
+    val context: C get() = controller.context
+
+    suspend inline fun <T> use(block: suspend () -> Result<T>): Result<T> {
+        state.value = LoadingState.Loading
+        return block()
+    }
 }
 
 class GlobalTaskContext<C>(val events: MutableSharedFlow<Any>, val sessionManager: C) {
@@ -99,14 +94,14 @@ class GlobalTaskContext<C>(val events: MutableSharedFlow<Any>, val sessionManage
 }
 
 /**
- * 便捷方法：从 GlobalTask 触发事件或发起请求（与 GlobalDialogController 的扩展一致）。
+ * 便捷方法：从 NestedGlobalTask 触发事件或发起请求。
  */
-suspend inline fun <T, R> GlobalTask<GlobalTaskContext<T>>.request(
+suspend inline fun <T, R> NestedGlobalTask<GlobalTaskContext<T>>.request(
     noinline block: suspend T.() -> Result<R>
 ): Result<R> {
     return context.request(block)
 }
 
-suspend inline fun <T> GlobalTask<GlobalTaskContext<T>>.emitEvent(event: Any) {
+suspend inline fun <T> NestedGlobalTask<GlobalTaskContext<T>>.emitEvent(event: Any) {
     context.emitEvent(event)
 }

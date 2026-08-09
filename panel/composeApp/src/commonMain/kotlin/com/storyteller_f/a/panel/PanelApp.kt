@@ -68,9 +68,7 @@ import com.storyteller_f.a.client.compose_core.components.CustomGlobalDialogCont
 import com.storyteller_f.a.client.compose_core.components.CustomGlobalTask
 import com.storyteller_f.a.client.compose_core.components.GlobalDialog
 import com.storyteller_f.a.client.compose_core.components.GlobalDialogContext
-import com.storyteller_f.a.client.compose_core.components.GlobalDialogController
 import com.storyteller_f.a.client.compose_core.components.GlobalDialogState
-import com.storyteller_f.a.client.compose_core.components.GlobalTask
 import com.storyteller_f.a.client.compose_core.components.GlobalTaskContext
 import com.storyteller_f.a.client.compose_core.utils.SessionHistoryManager
 import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
@@ -121,29 +119,14 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
-typealias PanelGlobalDialogController = GlobalDialogController<GlobalDialogContext<CustomPanelSessionManager>>
+typealias PanelGlobalDialogController = CustomGlobalDialogController<GlobalDialogContext<CustomPanelSessionManager>>
 
 val LocalPanelGlobalDialog = compositionLocalOf<PanelGlobalDialogController> {
-    object : PanelGlobalDialogController {
-        override val state: MutableStateFlow<PersistentList<GlobalDialogState>> = MutableStateFlow(persistentListOf())
-
-        override suspend fun <T> useResult(
-            block: suspend PanelGlobalDialogController.() -> Result<T>
-        ): Result<T> {
-            TODO("Not yet implemented")
-        }
-
-        override fun emitProgress(block: (GlobalDialogState.Loading) -> GlobalDialogState.Loading) {
-            TODO("Not yet implemented")
-        }
-
-        override val context: GlobalDialogContext<CustomPanelSessionManager>
-            get() = TODO("Not yet implemented")
-    }
+    error("LocalPanelGlobalDialog must be provided")
 }
 
 val LocalPanelGlobalTask =
-    compositionLocalOf<GlobalTask<GlobalTaskContext<CustomPanelSessionManager>>> {
+    compositionLocalOf<CustomGlobalTask<GlobalTaskContext<CustomPanelSessionManager>>> {
         error("LocalPanelGlobalTask must be provided")
     }
 
@@ -397,7 +380,7 @@ sealed interface IPanelAccountInstance {
         val dialogContext: GlobalDialogContext<CustomPanelSessionManager> =
             GlobalDialogContext(events, sessionManager)
         override val task = CustomGlobalTask(scope, context)
-        override val controller = CustomGlobalDialogController(dialogContext)
+        override val controller = CustomGlobalDialogController(scope, dialogContext)
         override val address: String = "guest"
     }
 
@@ -416,7 +399,7 @@ sealed interface IPanelAccountInstance {
         val dialogContext: GlobalDialogContext<CustomPanelSessionManager> =
             GlobalDialogContext(events, sessionManager)
         override val task = CustomGlobalTask(scope, context)
-        override val controller = CustomGlobalDialogController(dialogContext)
+        override val controller = CustomGlobalDialogController(scope, dialogContext)
 
         init {
             scope.launch {

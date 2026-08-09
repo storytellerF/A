@@ -84,8 +84,6 @@ import com.storyteller_f.a.client.compose_core.components.CustomGlobalTask
 import com.storyteller_f.a.client.compose_core.components.FileViewData
 import com.storyteller_f.a.client.compose_core.components.GlobalDialog
 import com.storyteller_f.a.client.compose_core.components.GlobalDialogContext
-import com.storyteller_f.a.client.compose_core.components.GlobalDialogController
-import com.storyteller_f.a.client.compose_core.components.GlobalTask
 import com.storyteller_f.a.client.compose_core.components.GlobalTaskContext
 import com.storyteller_f.a.client.compose_core.components.LocalMediaPlayerService
 import com.storyteller_f.a.client.compose_core.components.LocalToaster
@@ -235,13 +233,13 @@ val LocalClientFileProvider = compositionLocalOf {
 val LocalUiViewModel = staticCompositionLocalOf<UIViewModel> {
     error("LocalUiViewModel must be provided")
 }
-typealias AppGlobalDialogController = GlobalDialogController<GlobalDialogContext<SimpleUserSessionManager>>
+typealias AppGlobalDialogController = CustomGlobalDialogController<GlobalDialogContext<SimpleUserSessionManager>>
 
 val LocalGlobalDialog = compositionLocalOf<AppGlobalDialogController> {
     error("LocalGlobalDialog must be provided")
 }
 
-typealias AppGlobalTask = GlobalTask<GlobalTaskContext<SimpleUserSessionManager>>
+typealias AppGlobalTask = CustomGlobalTask<GlobalTaskContext<SimpleUserSessionManager>>
 
 val LocalGlobalTask = compositionLocalOf<AppGlobalTask> {
     error("LocalGlobalTask must be provided")
@@ -418,6 +416,7 @@ sealed interface IAccountInstance {
             GlobalTaskContext(events, sessionManager)
         )
         override val controller = CustomGlobalDialogController(
+            scope,
             GlobalDialogContext(
                 events,
                 sessionManager
@@ -449,6 +448,7 @@ sealed interface IAccountInstance {
             GlobalTaskContext(events, sessionManager)
         )
         override val controller = CustomGlobalDialogController(
+            scope,
             GlobalDialogContext(
                 events,
                 sessionManager
@@ -509,6 +509,7 @@ sealed interface IAccountInstance {
             GlobalTaskContext(events, sessionManager)
         )
         override val controller = CustomGlobalDialogController(
+            scope,
             GlobalDialogContext(
                 events,
                 sessionManager

@@ -49,78 +49,7 @@ sealed interface GlobalDialogState {
     class Custom(val content: CustomGlobalDialogContent) : GlobalDialogState
 }
 
-private val mutex = Mutex()
-
 data class GlobalDialogStateProgress(val value: Long, val total: Long?)
-
-interface GlobalDialogController<C> {
-    val state: MutableStateFlow<PersistentList<GlobalDialogState>>
-
-    suspend fun <T> useResult(block: suspend GlobalDialogController<C>.() -> Result<T>): Result<T>
-
-    fun emitProgress(block: (GlobalDialogState.Loading) -> GlobalDialogState.Loading)
-
-    val context: C
-
-    companion object {
-        val EMPTY = object : GlobalDialogController<Unit> {
-            override val state: MutableStateFlow<PersistentList<GlobalDialogState>>
-                get() = TODO("Not yet implemented")
-
-            override suspend fun <T> useResult(block: suspend GlobalDialogController<Unit>.() -> Result<T>): Result<T> {
-                TODO("Not yet implemented")
-            }
-
-            override fun emitProgress(block: (GlobalDialogState.Loading) -> GlobalDialogState.Loading) {
-                TODO("Not yet implemented")
-            }
-
-            override val context: Unit
-                get() = TODO("Not yet implemented")
-        }
-    }
-}
-
-@OptIn(ExperimentalUuidApi::class)
-class NestedGlobalDialogController<C>(
-    val customGlobalDialogController: CustomGlobalDialogController<C>,
-    val level: Int
-) : GlobalDialogController<C> {
-    override val state: MutableStateFlow<PersistentList<GlobalDialogState>>
-        get() = customGlobalDialogController.state
-    override val context: C
-        get() = customGlobalDialogController.context
-
-    override suspend fun <T> useResult(block: suspend GlobalDialogController<C>.() -> Result<T>): Result<T> {
-        val value = state.value
-        if (value.last() !is GlobalDialogState.Loading) {
-            return Result.failure(Exception("lock failed"))
-        }
-        val stack = state.value
-        if (stack.size != level) {
-            return Result.failure(Exception("level mismatch"))
-        }
-        state.value = stack.adding(GlobalDialogState.Loading())
-        val nestedGlobalDialogController = NestedGlobalDialogController(customGlobalDialogController, level + 1)
-        try {
-            return nestedGlobalDialogController.block()
-        } finally {
-            state.value = stack
-        }
-    }
-
-    override fun emitProgress(block: (GlobalDialogState.Loading) -> GlobalDialogState.Loading) {
-        val value = state.value
-        if (value.size != level) {
-            return
-        }
-        val last = value.last()
-        if (last !is GlobalDialogState.Loading) {
-            return
-        }
-        state.value = value.replacingAt(level - 1, block(last))
-    }
-}
 
 class CustomGlobalDialogContent(val content: @Composable () -> Unit)
 
@@ -135,23 +64,31 @@ class GlobalDialogContext<C>(val events: MutableSharedFlow<Any>, val sessionMana
 }
 
 class CustomGlobalDialogController<C>(
-    override val context: C,
-    override val state: MutableStateFlow<PersistentList<GlobalDialogState>> = MutableStateFlow(persistentListOf())
-) : GlobalDialogController<C> {
+    val scope: CoroutineScope,
+    val context: C,
+    val state: MutableStateFlow<PersistentList<GlobalDialogState>> = MutableStateFlow(persistentListOf())
+) {
+    private val mutex = Mutex()
+
+    fun launch(block: suspend NestedGlobalDialogController<C>.() -> Unit) {
+        scope.launch {
+            val nestedController = NestedGlobalDialogController(this@CustomGlobalDialogController)
+            nestedController.block()
+        }
+    }
 
     @OptIn(ExperimentalUuidApi::class)
-    override suspend fun <T> useResult(
-        block: suspend GlobalDialogController<C>.() -> Result<T>,
+    suspend fun <T> useResult(
+        block: suspend CustomGlobalDialogController<C>.() -> Result<T>,
     ): Result<T> {
         return mutex.withLock {
             val dialogState = state.value
             if (!dialogState.isEmpty()) {
-                return Result.failure(Exception("dialog show failed"))
+                return@withLock Result.failure(Exception("dialog show failed"))
             }
             try {
                 state.value = persistentListOf(GlobalDialogState.Loading())
-                val nestedGlobalDialogController = NestedGlobalDialogController(this, 1)
-                val result = nestedGlobalDialogController.block().getOrThrow()
+                val result = this.block().getOrThrow()
                 if (result is CustomGlobalDialogContent) {
                     state.value = persistentListOf(GlobalDialogState.Custom(result))
                 } else {
@@ -168,11 +105,38 @@ class CustomGlobalDialogController<C>(
         }
     }
 
-    override fun emitProgress(block: (GlobalDialogState.Loading) -> GlobalDialogState.Loading) = Unit
+    fun emitProgress(block: (GlobalDialogState.Loading) -> GlobalDialogState.Loading) = Unit
+}
+
+class NestedGlobalDialogController<C>(
+    val controller: CustomGlobalDialogController<C>
+) {
+    val state: MutableStateFlow<PersistentList<GlobalDialogState>>
+        get() = controller.state
+
+    val context: C
+        get() = controller.context
+
+    suspend fun <T> useResult(block: suspend NestedGlobalDialogController<C>.() -> Result<T>): Result<T> {
+        val currentState = state.value
+        state.value = currentState.adding(GlobalDialogState.Loading())
+        try {
+            return block()
+        } finally {
+            state.value = state.value.removingAt(state.value.lastIndex)
+        }
+    }
+
+    fun emitProgress(block: (GlobalDialogState.Loading) -> GlobalDialogState.Loading) {
+        val value = state.value
+        val last = value.lastOrNull() ?: return
+        if (last !is GlobalDialogState.Loading) return
+        state.value = value.replacingAt(value.lastIndex, block(last))
+    }
 }
 
 @Composable
-fun <C> GlobalDialog(state: GlobalDialogController<C>) {
+fun <C> GlobalDialog(state: CustomGlobalDialogController<C>) {
     val message by state.state.collectAsState()
     val dialogState = message.lastOrNull()
     dialogState?.let {
@@ -268,25 +232,22 @@ private fun LoadingGlobalDialogContent(
     }
 }
 
-suspend inline fun <T, R> GlobalDialogController<GlobalDialogContext<T>>.request(
+suspend inline fun <T, R> NestedGlobalDialogController<GlobalDialogContext<T>>.request(
     noinline block: suspend T.() -> Result<R>
 ): Result<R> {
     return context.request(block)
 }
 
-suspend inline fun <T> GlobalDialogController<GlobalDialogContext<T>>.emitEvent(event: Any) {
+suspend inline fun <T> NestedGlobalDialogController<GlobalDialogContext<T>>.emitEvent(event: Any) {
     context.emitEvent(event)
 }
 
-fun <C> GlobalDialogController<C>.catchingResult(
-    scope: CoroutineScope,
-    block: suspend GlobalDialogController<C>.() -> Unit
-) {
-    scope.launch {
-        useResult {
-            runCatching {
-                block()
-            }
-        }
-    }
+suspend inline fun <T, R> CustomGlobalDialogController<GlobalDialogContext<T>>.request(
+    noinline block: suspend T.() -> Result<R>
+): Result<R> {
+    return context.request(block)
+}
+
+suspend inline fun <T> CustomGlobalDialogController<GlobalDialogContext<T>>.emitEvent(event: Any) {
+    context.emitEvent(event)
 }

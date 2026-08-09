@@ -47,10 +47,12 @@ import androidx.savedstate.serialization.SavedStateConfiguration
 import com.storyteller_f.a.api.NewUser
 import com.storyteller_f.a.client.compose_core.CoreStrings
 import com.storyteller_f.a.client.compose_core.components.AlgoTypeSelector
+import com.storyteller_f.a.client.compose_core.components.CustomGlobalDialogController
 import com.storyteller_f.a.client.compose_core.components.DialogContainer
 import com.storyteller_f.a.client.compose_core.components.GlobalDialogContext
-import com.storyteller_f.a.client.compose_core.components.GlobalDialogController
 import com.storyteller_f.a.client.compose_core.components.LocalToaster
+import com.storyteller_f.a.client.compose_core.components.emitEvent
+import com.storyteller_f.a.client.compose_core.components.request
 import com.storyteller_f.a.client.compose_core.components.StateView
 import com.storyteller_f.a.client.compose_core.components.Toast
 import com.storyteller_f.a.client.compose_core.components.pagingItems
@@ -346,7 +348,7 @@ private fun AddressField(address: String?, gotoPrivateKey: () -> Unit) {
     }
 }
 
-private fun GlobalDialogController<GlobalDialogContext<CustomPanelSessionManager>>.addUser(
+private fun CustomGlobalDialogController<GlobalDialogContext<CustomPanelSessionManager>>.addUser(
     scope: CoroutineScope,
     addUserViewModel: AddUserViewModel,
     toast: Toast,
@@ -377,7 +379,7 @@ private fun GlobalDialogController<GlobalDialogContext<CustomPanelSessionManager
         )
     }
     val newUser = NewUser(nickname, aid, authKey)
-    scope.launch {
+    launch {
         useResult {
             context.request { addUser(newUser) }.onSuccess {
                 context.emitEvent(OnUserAdded(it))

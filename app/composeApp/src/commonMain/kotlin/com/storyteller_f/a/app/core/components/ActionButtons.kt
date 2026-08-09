@@ -40,18 +40,16 @@ fun FavoriteButton(
         IconRes.Vector(Icons.Default.FavoriteBorder)
     }
     ButtonNav(icon, "Favorite", semanticDescription = "favorite-action") {
-        scope.launch {
-            dialogController.use(taskId) { state ->
-                state.use {
-                    request {
-                        if (favoriteId != null) {
-                            removeFavorite(infoTuple.objectId, infoTuple.objectType).onSuccess {
-                                emitEvent(OnRemoveFavorite(infoTuple))
-                            }
-                        } else {
-                            addFavorite(NewFavorite(infoTuple.objectType, infoTuple.objectId)).onSuccess {
-                                emitEvent(OnAddFavorite(infoTuple))
-                            }
+        dialogController.launch(taskId) {
+            use {
+                request {
+                    if (favoriteId != null) {
+                        removeFavorite(infoTuple.objectId, infoTuple.objectType).onSuccess {
+                            emitEvent(OnRemoveFavorite(infoTuple))
+                        }
+                    } else {
+                        addFavorite(NewFavorite(infoTuple.objectType, infoTuple.objectId)).onSuccess {
+                            emitEvent(OnAddFavorite(infoTuple))
                         }
                     }
                 }
@@ -77,20 +75,18 @@ fun SubscriptionButton(
         IconRes.Vector(Icons.Default.NotificationsOff)
     }
     ButtonNav(icon, "Subscription", semanticDescription = "subscribe-action") {
-        scope.launch {
-            dialogController.use(taskId) { state ->
-                state.use {
-                    request {
-                        if (subscriptionId != null) {
-                            removeSubscription(infoTuple.objectId, infoTuple.objectType).onSuccess {
-                                emitEvent(OnRemoveSubscription(infoTuple))
-                            }
-                        } else {
-                            addSubscription(
-                                NewSubscription(infoTuple.objectId, infoTuple.objectType)
-                            ).onSuccess {
-                                emitEvent(OnAddSubscription(infoTuple))
-                            }
+        dialogController.launch(taskId) {
+            use {
+                request {
+                    if (subscriptionId != null) {
+                        removeSubscription(infoTuple.objectId, infoTuple.objectType).onSuccess {
+                            emitEvent(OnRemoveSubscription(infoTuple))
+                        }
+                    } else {
+                        addSubscription(
+                            NewSubscription(infoTuple.objectId, infoTuple.objectType)
+                        ).onSuccess {
+                            emitEvent(OnAddSubscription(infoTuple))
                         }
                     }
                 }

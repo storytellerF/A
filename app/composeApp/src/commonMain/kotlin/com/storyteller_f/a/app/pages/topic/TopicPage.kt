@@ -62,7 +62,7 @@ import com.storyteller_f.a.app.pages.search.detailSearchBar
 import com.storyteller_f.a.app.pages.user.UserIconWithDialog
 import com.storyteller_f.a.client.compose_core.components.CustomAlertDialog
 import com.storyteller_f.a.client.compose_core.components.CustomAlertDialogController
-import com.storyteller_f.a.client.compose_core.components.GlobalTask
+import com.storyteller_f.a.client.compose_core.components.CustomGlobalTask
 import com.storyteller_f.a.client.compose_core.components.GlobalTaskContext
 import com.storyteller_f.a.client.compose_core.components.LayoutDefaults
 import com.storyteller_f.a.client.compose_core.components.StateView
@@ -72,7 +72,6 @@ import com.storyteller_f.a.client.compose_core.components.horizontalSafeArea
 import com.storyteller_f.a.client.compose_core.components.pagingItems
 import com.storyteller_f.a.client.compose_core.components.request
 import com.storyteller_f.a.client.compose_core.components.topPrepend
-import com.storyteller_f.a.client.compose_core.components.use
 import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.a.client.core.SimpleUserSessionManager
@@ -365,7 +364,7 @@ private fun sendTopicInTopicPage(
     input: String,
     scope: CoroutineScope,
     snackBarHostState: SnackbarHostState,
-    globalTask: GlobalTask<GlobalTaskContext<SimpleUserSessionManager>>,
+    globalTask: CustomGlobalTask<GlobalTaskContext<SimpleUserSessionManager>>,
     key: String,
     topic: TopicInfo,
     updateInput: (String) -> Unit,
@@ -378,8 +377,8 @@ private fun sendTopicInTopicPage(
         }
         return
     }
-    globalTask.use(key) { state ->
-        state.use {
+    globalTask.launch(key) {
+        use {
             request {
                 createTopic(ObjectType.TOPIC, topic.id, input).onSuccess {
                     emitEvent(OnTopicCreated(it))
