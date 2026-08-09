@@ -1,5 +1,6 @@
 package com.storyteller_f.a.backend.core
 
+import com.storyteller_f.shared.model.LlmConfig
 import com.storyteller_f.a.backend.core.types.AssetTransaction
 import com.storyteller_f.a.backend.core.types.ChildAccount
 import com.storyteller_f.a.backend.core.types.Community
@@ -197,6 +198,9 @@ interface CombinedDatabase {
 
     /** Creates or replaces worker task configurations by task type. */
     val upsertTaskConfigs: suspend (List<TaskConfig>) -> Result<Unit>
+
+    /** Returns the LLM configuration from the database, or null if not configured. */
+    val getLlmConfig: suspend () -> Result<LlmConfig?>
 
     suspend fun init()
     suspend fun clean()

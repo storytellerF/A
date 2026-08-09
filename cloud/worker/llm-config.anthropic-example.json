@@ -1,0 +1,7 @@
+{
+  "provider": "ANTHROPIC",
+  "apiKey": "your-anthropic-api-key",
+  "model": "claude-3-sonnet-20240229",
+  "temperature": 0.7,
+  "maxTokens": 1024
+}

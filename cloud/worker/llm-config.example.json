@@ -1,0 +1,8 @@
+{
+  "provider": "LITELLM",
+  "apiKey": "your-litellm-api-key",
+  "baseUrl": "http://litellm-proxy:4000",
+  "model": "gpt-3.5-turbo",
+  "temperature": 0.7,
+  "maxTokens": 1024
+}

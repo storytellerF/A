@@ -2,7 +2,6 @@ package com.storyteller_f.a.cloud.worker
 
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.Backend
-import com.storyteller_f.a.backend.core.CombinedDatabase
 import com.storyteller_f.a.backend.core.CustomConfig
 import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.buildCommunitySearchService
@@ -31,10 +30,9 @@ import com.storyteller_f.shared.model.TaskConfig
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.setupKmpLogger
 import com.storyteller_f.shared.utils.now
-import com.storytellerf.a.cloud.worker.moderation.LiteRtTopicSafetyReviewer
+import com.storytellerf.a.cloud.worker.moderation.KoogTopicSafetyReviewer
 import com.storytellerf.a.cloud.worker.moderation.TopicSafetyReviewer
 import com.storytellerf.a.cloud.worker.moderation.doTopicModerationTask
-import com.storytellerf.a.cloud.worker.moderation.ensureGemmaModel
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -44,8 +42,6 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import java.nio.file.Path
-import java.util.Locale
 
 fun main() {
     setLogPath()
@@ -59,7 +55,7 @@ fun main() {
     GlobalWsEventPublisher.configure(env["WS_RPC_URL"])
     val backend = buildBackendFromEnv(env)
     runBlocking {
-        TopicSafetyReviewerProvider { createTopicSafetyReviewer(env) }.use { reviewerProvider ->
+        TopicSafetyReviewerProvider { createTopicSafetyReviewer(backend) }.use { reviewerProvider ->
             Napier.i {
                 "worker started"
             }
@@ -71,43 +67,38 @@ fun main() {
     }
 }
 
-internal class TopicSafetyReviewerProvider(factory: () -> TopicSafetyReviewer?) : AutoCloseable {
-    private val reviewer = lazy(factory)
+internal class TopicSafetyReviewerProvider(private val factory: suspend () -> TopicSafetyReviewer?) :
+    AutoCloseable {
+    private var reviewer: TopicSafetyReviewer? = null
+    private var isInitialized = false
 
-    fun get(): TopicSafetyReviewer? = reviewer.value
+    suspend fun get(): TopicSafetyReviewer? {
+        if (!isInitialized) {
+            reviewer = factory()
+            isInitialized = true
+        }
+        return reviewer
+    }
 
     override fun close() {
-        if (reviewer.isInitialized()) {
-            reviewer.value?.close()
-        }
+        reviewer?.close()
     }
 }
 
-internal fun createTopicSafetyReviewer(
-    env: MergedEnv,
-    modelProvider: (MergedEnv) -> Path = ::ensureGemmaModel,
-    reviewerFactory: ((Path) -> TopicSafetyReviewer)? = null,
-): TopicSafetyReviewer? {
-    if (!isTopicModerationEnabled(env)) {
-        Napier.w(tag = "moderation") {
-            "topic moderation is disabled"
+internal suspend fun createTopicSafetyReviewer(backend: Backend): TopicSafetyReviewer? {
+    val llmConfigResult = backend.database.getLlmConfig()
+    val llmConfig = llmConfigResult.getOrNull()
+    if (llmConfig != null) {
+        Napier.i(tag = "moderation") {
+            "using Koog LLM provider: ${llmConfig.provider}"
         }
-        return null
+        return KoogTopicSafetyReviewer.create(llmConfig)
     }
-    val modelPath = modelProvider(env)
-    Napier.i(tag = "moderation") {
-        "initialize topic moderation model"
-    }
-    return reviewerFactory?.invoke(modelPath) ?: LiteRtTopicSafetyReviewer.create(modelPath)
-}
 
-internal fun isTopicModerationEnabled(env: MergedEnv): Boolean {
-    val configuredValue = env[TOPIC_MODERATION_ENABLED]?.run { trim().lowercase(Locale.ROOT) }
-    return when (configuredValue) {
-        null, "true" -> true
-        "false" -> false
-        else -> throw IllegalArgumentException("$TOPIC_MODERATION_ENABLED must be true or false")
-    }
+    error(
+        "LLM configuration not found in database. " +
+            "Please configure an LLM provider in the backend_configs table.",
+    )
 }
 
 private fun CoroutineScope.startWorkerTasks(
@@ -207,7 +198,7 @@ class WorkerBackend(
     override val fileSearchService: FileSearchService,
     override val objectStorageService: ObjectStorageService,
     override val nameService: NameService,
-    override val database: CombinedDatabase
+    override val database: com.storyteller_f.a.backend.core.CombinedDatabase,
 ) : Backend
 
 fun buildBackendFromEnv(env: MergedEnv): Backend {
@@ -238,9 +229,8 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
         fileSearchService,
         mediaService,
         buildNameService(env),
-        buildExposedDatabase(databaseConnection)
+        buildExposedDatabase(databaseConnection),
     )
 }
 
-private const val TOPIC_MODERATION_ENABLED = "TOPIC_MODERATION_ENABLED"
 internal const val TASK_CONFIG_POLL_MILLIS = 10_000L

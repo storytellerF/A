@@ -57,6 +57,7 @@ kfswatch = "1.4.0"
 kim = "0.26.2"
 kmpNotifier = "2.0.0"
 kmpZip = "0.13.0"
+koog = "1.1.1"
 kodio-core = "0.2.0"
 kotlin = "2.4.10"
 kotlin_buildconfig = "6.0.10"
@@ -246,6 +247,11 @@ kfswatch = { module = "io.github.irgaly.kfswatch:kfswatch", version.ref = "kfswa
 kim = { module = "com.ashampoo:kim", version.ref = "kim" }
 kmp-zip = { module = "no.synth:kmp-zip", version.ref = "kmpZip" }
 kmp-zip-kotlinx = { module = "no.synth:kmp-zip-kotlinx", version.ref = "kmpZip" }
+koog-core = { module = "ai.koog:koog-agents-jvm", version.ref = "koog" }
+koog-http-client-ktor = { module = "ai.koog:http-client-ktor-jvm", version.ref = "koog" }
+koog-prompt-executor-openai = { module = "ai.koog:prompt-executor-openai-client-jvm", version.ref = "koog" }
+koog-prompt-executor-anthropic = { module = "ai.koog:prompt-executor-anthropic-client-jvm", version.ref = "koog" }
+koog-prompt-executor-ollama = { module = "ai.koog:prompt-executor-ollama-client-jvm", version.ref = "koog" }
 kmpnotifier-local = { module = "io.github.mirzemehdi:kmpnotifier-local", version.ref = "kmpNotifier" }
 kodio-core = { module = "space.kodio:core", version.ref = "kodio-core" }
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }

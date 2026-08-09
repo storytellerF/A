@@ -3,57 +3,16 @@
  */
 package com.storytellerf.a.cloud.worker
 
-import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.cloud.worker.TASK_CONFIG_POLL_MILLIS
-import com.storyteller_f.a.cloud.worker.createTopicSafetyReviewer
 import com.storyteller_f.a.cloud.worker.executeConfiguredTaskIteration
-import com.storyteller_f.a.cloud.worker.isTopicModerationEnabled
 import com.storyteller_f.shared.model.TaskConfig
 import com.storyteller_f.shared.model.TaskRecordType
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
 
 internal class WorkerMainTest {
-    @Test
-    fun `topic moderation defaults to enabled`() {
-        assertTrue(isTopicModerationEnabled(MergedEnv(emptyList())))
-    }
-
-    @Test
-    fun `topic moderation can be disabled`() {
-        val env = MergedEnv(listOf(mapOf("TOPIC_MODERATION_ENABLED" to " FaLsE ")))
-
-        assertFalse(isTopicModerationEnabled(env))
-    }
-
-    @Test
-    fun `invalid topic moderation setting is rejected`() {
-        val env = MergedEnv(listOf(mapOf("TOPIC_MODERATION_ENABLED" to "invalid")))
-
-        assertFailsWith<IllegalArgumentException> {
-            isTopicModerationEnabled(env)
-        }
-    }
-
-    @Test
-    fun `disabled topic moderation skips model setup`() {
-        val env = MergedEnv(listOf(mapOf("TOPIC_MODERATION_ENABLED" to "false")))
-
-        val reviewer =
-            createTopicSafetyReviewer(
-                env = env,
-                modelProvider = { error("model setup must be skipped") },
-                reviewerFactory = { error("reviewer setup must be skipped") },
-            )
-
-        assertNull(reviewer)
-    }
-
     @Test
     fun `missing task configuration does not execute task`() {
         runTest {

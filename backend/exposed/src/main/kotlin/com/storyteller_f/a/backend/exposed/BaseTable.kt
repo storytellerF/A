@@ -26,9 +26,13 @@ import com.storyteller_f.a.backend.exposed.database.ExposedSubscriptionDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedTitleDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedTopicDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedUserDatabase
+import com.storyteller_f.a.backend.exposed.tables.BackendConfigs
+import com.storyteller_f.a.backend.exposed.tables.LLM_CONFIG_KEY
 import com.storyteller_f.a.backend.exposed.tables.TaskConfigs
+import com.storyteller_f.a.backend.exposed.tables.fromConfigRow
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.AlgoType
+import com.storyteller_f.shared.model.LlmConfig
 import com.storyteller_f.shared.model.AssetType
 import com.storyteller_f.shared.model.MemberPolicy
 import com.storyteller_f.shared.model.PassType
@@ -148,6 +152,15 @@ class ExposedDatabase(val databaseSession: ExposedDatabaseSession) : CombinedDat
                     statement[TaskConfigs.waitDurationMillis] = config.waitDurationMillis
                 }
             }
+        }
+    }
+
+    override val getLlmConfig: suspend () -> Result<LlmConfig?> = {
+        databaseSession.dbSearch {
+            search {
+                BackendConfigs.selectAll().where { BackendConfigs.key eq LLM_CONFIG_KEY }
+            }
+            first(LlmConfig::fromConfigRow)
         }
     }
 

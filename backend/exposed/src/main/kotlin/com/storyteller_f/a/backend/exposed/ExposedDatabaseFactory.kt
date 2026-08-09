@@ -2,6 +2,7 @@ package com.storyteller_f.a.backend.exposed
 
 import com.storyteller_f.a.backend.core.DatabaseConnection
 import com.storyteller_f.a.backend.core.UnauthorizedException
+import com.storyteller_f.a.backend.exposed.tables.BackendConfigs
 import com.storyteller_f.a.backend.exposed.tables.Aids
 import com.storyteller_f.a.backend.exposed.tables.AssetTransactions
 import com.storyteller_f.a.backend.exposed.tables.ChildAccounts
@@ -252,6 +253,7 @@ object ExposedDatabaseFactory {
             Quotas,
             UploadRecords,
             PanelAccounts,
+            BackendConfigs,
         )
 
     fun connect(connection: DatabaseConnection): R2dbcDatabase {
