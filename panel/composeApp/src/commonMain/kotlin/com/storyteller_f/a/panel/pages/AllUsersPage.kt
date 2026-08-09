@@ -51,8 +51,6 @@ import com.storyteller_f.a.client.compose_core.components.CustomGlobalDialogCont
 import com.storyteller_f.a.client.compose_core.components.DialogContainer
 import com.storyteller_f.a.client.compose_core.components.GlobalDialogContext
 import com.storyteller_f.a.client.compose_core.components.LocalToaster
-import com.storyteller_f.a.client.compose_core.components.emitEvent
-import com.storyteller_f.a.client.compose_core.components.request
 import com.storyteller_f.a.client.compose_core.components.StateView
 import com.storyteller_f.a.client.compose_core.components.Toast
 import com.storyteller_f.a.client.compose_core.components.pagingItems
@@ -84,7 +82,6 @@ import com.storyteller_f.shared.replaceCrlf
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.openFilePicker
 import io.github.vinceglb.filekit.readBytes
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.SerializersModule
@@ -312,12 +309,16 @@ private fun AddUserDialogButtons(
         }) {
             Text(CoreStrings.cancel())
         }
-        val scope = rememberCoroutineScope()
         val globalDialogController = LocalPanelGlobalDialog.current
         val toast = LocalToaster.current
         val requiredPrivateKeyMessage = stringResource(Res.string.private_key_required)
         Button({
-            globalDialogController.addUser(scope, addUserViewModel, toast, dismiss, requiredPrivateKeyMessage)
+            globalDialogController.addUser(
+                addUserViewModel = addUserViewModel,
+                toast = toast,
+                dismiss = dismiss,
+                requiredPrivateKeyMessage = requiredPrivateKeyMessage,
+            )
         }) {
             Text(stringResource(Res.string.add))
         }
@@ -349,11 +350,10 @@ private fun AddressField(address: String?, gotoPrivateKey: () -> Unit) {
 }
 
 private fun CustomGlobalDialogController<GlobalDialogContext<CustomPanelSessionManager>>.addUser(
-    scope: CoroutineScope,
     addUserViewModel: AddUserViewModel,
     toast: Toast,
     dismiss: () -> Unit,
-    requiredPrivateKeyMessage: String
+    requiredPrivateKeyMessage: String,
 ) {
     val nickname = addUserViewModel.nickname.value.takeIf { it.isNotBlank() }
     val aid = addUserViewModel.aid.value.takeIf { it.isNotBlank() }

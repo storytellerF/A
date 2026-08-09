@@ -6,7 +6,6 @@ import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
 import com.storyteller_f.a.api.NewFavorite
 import com.storyteller_f.a.api.NewSubscription
 import com.storyteller_f.a.app.LocalGlobalTask
@@ -21,7 +20,6 @@ import com.storyteller_f.a.client.core.removeFavorite
 import com.storyteller_f.a.client.core.removeSubscription
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.PrimaryKey
-import kotlinx.coroutines.launch
 
 @Composable
 fun FavoriteButton(
@@ -29,7 +27,6 @@ fun FavoriteButton(
     infoTuple: ObjectTuple
 ) {
     val dialogController = LocalGlobalTask.current
-    val scope = rememberCoroutineScope()
     val taskId = "favorite-${infoTuple.objectId}"
     val state = dialogController.stateMap[taskId]
     val icon = if (state is LoadingState.Loading) {
@@ -64,7 +61,6 @@ fun SubscriptionButton(
     infoTuple: ObjectTuple
 ) {
     val dialogController = LocalGlobalTask.current
-    val scope = rememberCoroutineScope()
     val taskId = "subscription-${infoTuple.objectId}"
     val state = dialogController.stateMap[taskId]
     val icon = if (state is LoadingState.Loading) {
