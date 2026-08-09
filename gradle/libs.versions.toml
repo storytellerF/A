@@ -8,7 +8,6 @@ android-minSdk = "33"
 android-targetSdk = "37"
 androidx-activityCompose = "1.13.0"
 bcprovJdk18on = "1.85"
-benManesVersions = "0.54.0"
 benchmarkMacroJunit4 = "1.4.1"
 buildconfig = "0.22.0"
 coil = "3.5.0"
@@ -126,7 +125,6 @@ uiautomator = "2.4.0"
 uriKmp = "0.0.21"
 urlbuilder = "2.0.9"
 vaviImageAvif = "0.0.7"
-versionCatalogUpdate = "1.1.0"
 vlcj = "4.12.1"
 webrtcKmp = "0.125.11"
 zoomimageComposeCoil3 = "1.6.0"
@@ -359,7 +357,6 @@ aboutlibrary = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "about
 android-test = { id = "com.android.test", version.ref = "agp" }
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 androidLibrary = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
-benManesVersions = { id = "com.github.ben-manes.versions", version.ref = "benManesVersions" }
 buildconfig = { id = "com.codingfeline.buildkonfig", version.ref = "buildconfig" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 composeHotReload = { id = "org.jetbrains.compose.hot-reload", version.ref = "composeHotReload" }
@@ -378,7 +375,6 @@ screenshot = { id = "com.android.compose.screenshot", version.ref = "screenshot"
 sentryAndroidGradle = { id = "io.sentry.android.gradle", version.ref = "sentryAndroidGradle" }
 serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 sqlitenow = { id = "dev.goquick.sqlitenow", version.ref = "sqlitenow" }
-versionCatalogUpdate = { id = "nl.littlerobots.version-catalog-update", version.ref = "versionCatalogUpdate" }
 
 [bundles]
 coil = [
