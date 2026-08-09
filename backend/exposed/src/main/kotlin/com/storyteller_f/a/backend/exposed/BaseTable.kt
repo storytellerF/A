@@ -30,6 +30,7 @@ import com.storyteller_f.a.backend.exposed.tables.BackendConfigs
 import com.storyteller_f.a.backend.exposed.tables.LLM_CONFIG_KEY
 import com.storyteller_f.a.backend.exposed.tables.TaskConfigs
 import com.storyteller_f.a.backend.exposed.tables.fromConfigRow
+import com.storyteller_f.a.backend.exposed.tables.toConfigRow
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.LlmConfig
@@ -161,6 +162,18 @@ class ExposedDatabase(val databaseSession: ExposedDatabaseSession) : CombinedDat
                 BackendConfigs.selectAll().where { BackendConfigs.key eq LLM_CONFIG_KEY }
             }
             first(LlmConfig::fromConfigRow)
+        }
+    }
+
+    override val upsertLlmConfig: suspend (LlmConfig) -> Result<Unit> = { config ->
+        databaseSession.dbQuery {
+            val row = config.toConfigRow()
+            BackendConfigs.upsert(BackendConfigs.key) { statement ->
+                row.forEach { (column, value) ->
+                    @Suppress("UNCHECKED_CAST")
+                    statement[column as org.jetbrains.exposed.v1.core.Column<Any?>] = value
+                }
+            }
         }
     }
 

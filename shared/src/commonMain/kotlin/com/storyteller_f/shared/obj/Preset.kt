@@ -1,5 +1,6 @@
 package com.storyteller_f.shared.obj
 
+import com.storyteller_f.shared.model.LlmConfig
 import com.storyteller_f.shared.model.TaskConfig
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.type.ObjectType
@@ -88,4 +89,6 @@ data class PresetValue(
     val panelAccountData: List<PresetPanelAccount>? = null,
     /** Worker task configurations initialized by a `taskConfig` preset. */
     val taskConfigData: List<TaskConfig>? = null,
+    /** LLM configuration initialized by a `llmConfig` preset. */
+    val llmConfigData: LlmConfig? = null,
 )

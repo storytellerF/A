@@ -202,6 +202,9 @@ interface CombinedDatabase {
     /** Returns the LLM configuration from the database, or null if not configured. */
     val getLlmConfig: suspend () -> Result<LlmConfig?>
 
+    /** Creates or replaces the LLM configuration. */
+    val upsertLlmConfig: suspend (LlmConfig) -> Result<Unit>
+
     suspend fun init()
     suspend fun clean()
     suspend fun migration()
