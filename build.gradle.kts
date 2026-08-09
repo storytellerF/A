@@ -15,8 +15,6 @@ plugins {
     alias(libs.plugins.room) apply false
     alias(libs.plugins.kover)
     alias(libs.plugins.detekt)
-    alias(libs.plugins.benManesVersions)
-    alias(libs.plugins.versionCatalogUpdate)
     alias(libs.plugins.android.test) apply false
     alias(libs.plugins.kotlinxRpc) apply false
     alias(libs.plugins.sentryAndroidGradle) apply false
@@ -175,12 +173,5 @@ subprojects {
                 }
             }
         }
-    }
-}
-
-versionCatalogUpdate {
-    keep {
-        // keep versions without any library or plugin reference
-        keepUnusedVersions.set(true)
     }
 }
