@@ -125,7 +125,7 @@ uiToolingPreview = "1.11.4"
 uiautomator = "2.4.0"
 uriKmp = "0.0.21"
 urlbuilder = "2.0.9"
-vaviImageAvif = "0.0.7"
+imageAvif = "0.0.1-alpha6"
 vlcj = "4.12.1"
 webrtcKmp = "0.125.11"
 zoomimageComposeCoil3 = "1.6.0"
@@ -353,7 +353,7 @@ ui-tooling = { module = "org.jetbrains.compose.ui:ui-tooling", version.ref = "ui
 ui-tooling-preview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "ui" }
 uri-kmp = { module = "com.eygraber:uri-kmp", version.ref = "uriKmp" }
 urlbuilder = { module = "io.mikael:urlbuilder", version.ref = "urlbuilder" }
-vavi-image-avif = { module = "com.github.umjammer:vavi-image-avif", version.ref = "vaviImageAvif" }
+image-avif = { module = "io.github.storytellerf:image-avif", version.ref = "imageAvif" }
 vlcj = { module = "uk.co.caprica:vlcj", version.ref = "vlcj" }
 webrtc-kmp = { module = "com.shepeliev:webrtc-kmp", version.ref = "webrtcKmp" }
 zoomimage-compose-coil3 = { module = "io.github.panpf.zoomimage:zoomimage-compose-coil3", version.ref = "zoomimageComposeCoil3" }
