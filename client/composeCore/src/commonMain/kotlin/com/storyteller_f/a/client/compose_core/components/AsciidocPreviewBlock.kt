@@ -34,11 +34,11 @@ import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.mikepenz.markdown.compose.components.MarkdownComponentModel
-import com.multiplatform.webview.web.WebView
-import com.multiplatform.webview.web.rememberWebViewStateWithHTMLData
 import com.storyteller_f.a.client.asciidoc_parser.buildAsciidocPreviewHtml
 import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.shared.utils.readCodeFence
+import io.github.kdroidfilter.webview.web.WebView
+import io.github.kdroidfilter.webview.web.rememberWebViewStateWithHTMLData
 import kotlinx.coroutines.launch
 
 @Composable

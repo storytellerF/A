@@ -60,6 +60,10 @@
 - `app/androidApp` and `panel/androidApp` entry classes extend `ComponentActivity`, and media services extend Media3 `MediaSessionService`. Release lint has false-positive `Instantiatable` reports for these Kotlin/Compose/Media3 components, so both app shell modules disable that lint check.
 - App and Panel screenshot previews are context-free: they render only components that do not require injected runtime `CompositionLocal` dependencies such as session managers, dialog controllers, or navigation contexts. Update intentional debug baselines with `:app:androidApp:updateDebugScreenshotTest` or `:panel:androidApp:updateDebugScreenshotTest`.
 
+## Desktop WebView
+
+- AsciiDoc previews use `io.github.kdroidfilter:composewebview` rather than KCEF/JCEF. Its Desktop implementation uses Wry through JNA and the system WebView engine (WebView2 on Windows, WKWebView on macOS, WebKitGTK on Linux). `app/desktopApp` must retain `--enable-native-access=ALL-UNNAMED`; the JogAmp Maven repository is not needed.
+
 ## Appium
 
 - Appium and CLI E2E infrastructure plus their lightweight runner modules are always included. Appium test sources live with their independent `androidAppium`, `desktopAppium`, and `wasmAppium` runners instead of application modules because they exercise installed or built artifacts without linking application implementation code. `scripts/test_scripts/build-and-test.sh --e2e` runs Appium and CLI E2E tests without Gradle properties. Docker image builds, distribution preparation, and app installation are dependencies of these explicit E2E tasks, never ordinary `test` / `check`; every Appium `appiumTest` task disables Gradle up-to-date reuse so an explicit E2E run always drives its target. The script uses any booted device in `adb devices` (phone or emulator), only attempting the VMware host emulator when no device is connected. It deliberately does not manage the device-side Appium lock; callers that share an Android device must acquire and lease the lock around the complete `--e2e` invocation.

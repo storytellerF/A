@@ -19,7 +19,7 @@ compose-multiplatform-lifecycle = "2.11.0"
 compose-plugin = "1.11.1"
 composeHotReload = "1.2.0"
 composePdf = "2.0.0"
-composeWebviewMultiplatform = "2.0.3"
+composeNativeWebview = "1.0.0-beta-02"
 connectivity = "2.5.0"
 connector = "3.3.3"
 coreSplashscreen = "1.2.0"
@@ -172,7 +172,7 @@ commons-imaging = { module = "org.apache.commons:commons-imaging", version.ref =
 commons-logging = { module = "commons-logging:commons-logging", version.ref = "commonsLogging" }
 components-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "componentsResources" }
 compose-pdf = { module = "dev.zt64:compose-pdf", version.ref = "composePdf" }
-compose-webview-multiplatform = { module = "io.github.kevinnzou:compose-webview-multiplatform", version.ref = "composeWebviewMultiplatform" }
+compose-native-webview = { module = "io.github.kdroidfilter:composewebview", version.ref = "composeNativeWebview" }
 connectivity-compose = { module = "dev.jordond.connectivity:connectivity-compose", version.ref = "connectivity" }
 connectivity-compose-device = { module = "dev.jordond.connectivity:connectivity-compose-device", version.ref = "connectivity" }
 connectivity-compose-http = { module = "dev.jordond.connectivity:connectivity-compose-http", version.ref = "connectivity" }
