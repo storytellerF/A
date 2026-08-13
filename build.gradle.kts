@@ -132,7 +132,7 @@ val koverIncludedProjects = listOf(
     ":cloud:cli",
     ":cloud:worker",
     ":cloud:pdf",
-    ":cloud:pdfbox",
+    // ":cloud:pdfbox", // Disabled - pdfbox-layout requires JitPack
     ":cloud:openpdf",
     ":api",
     ":panel:composeApp",

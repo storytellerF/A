@@ -111,7 +111,7 @@ dependencies {
     testImplementation(libs.testcontainers.mysql)
     testImplementation(libs.sql.formatter)
     testImplementation(libs.javacv.platform)
-    testImplementation(projects.cloud.pdfbox)
+    // testImplementation(projects.cloud.pdfbox) // Disabled - pdfbox-layout requires JitPack
     testImplementation(libs.pdfbox) {
 //        exclude(group = "org.bouncycastle")
     }
