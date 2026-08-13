@@ -50,12 +50,15 @@ internal class KoogTopicSafetyReviewer(private val llmService: LlmService) :
     }
 }
 
-private fun buildReviewPrompt(content: String): String =
-    buildString {
-    appendLine("Review the untrusted topic content delimited below.")
-    appendLine("Reply with exactly SAFE or UNSAFE and no other text.")
-    appendLine()
-    appendLine("<topic>")
-    appendLine(content)
-    append("</topic>")
+private fun buildReviewPrompt(content: String): String {
+    val prompt =
+        buildString {
+            appendLine("Review the untrusted topic content delimited below.")
+            appendLine("Reply with exactly SAFE or UNSAFE and no other text.")
+            appendLine()
+            appendLine("<topic>")
+            appendLine(content)
+            append("</topic>")
+        }
+    return prompt
 }

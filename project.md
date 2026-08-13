@@ -4,7 +4,7 @@
 
 - Versions in `gradle/libs.versions.toml` that are consumed directly by build scripts rather than a library or plugin `version.ref` must include `# @keep this version`, so catalog cleanup does not remove them. Current examples are Android SDK levels and `jdk`.
 - Detekt 2.x uses the `dev.detekt` Gradle plugin and Maven group. Its Ktlint wrapper is `dev.detekt:detekt-rules-ktlint-wrapper`; Gradle reports are `checkstyle`, `html`, `sarif`, and `markdown` (the former `txt` report is removed).
-- Detekt source-set baselines are stored as `detekt-baseline.xml` in each affected module. Type-resolution tasks use task-specific files such as `detekt-baseline-main-jvm.xml` and `detekt-baseline-main-android.xml`; KMP targets must not share one `main` baseline because generating one target would overwrite findings from another. Auto-correct is disabled so static checks do not rewrite source files; remove baseline entries only when the corresponding violations are intentionally fixed.
+- Detekt source-set baselines are stored as `detekt-baseline.xml` in each affected module. Type-resolution tasks use task-specific files such as `detekt-baseline-main-jvm.xml` and `detekt-baseline-main-android.xml`; KMP targets must not share one `main` baseline because generating one target would overwrite findings from another. Auto-correct is disabled so static checks do not rewrite source files. Existing baseline files and entries are immutable; fix newly exposed findings in source without adding, removing, or regenerating baseline entries.
 
 ## Uploads (files)
 
@@ -107,6 +107,7 @@
 
 ## CI
 
+- `cloud:pdfbox` is intentionally excluded from `settings.gradle.kts`, and `cloud/server` snapshot tests cover only the enabled `OpenPdf` implementation. Do not restore the JitPack repository or a `cloud:pdfbox` test dependency merely to compile those tests.
 - `Alpha Server CI` runs backend/server tests before starting the remote alpha service: `:backend:minio:test`, `:cloud:cli:test`, `:cloud:service:test`, and `:cloud:server:test`. It also enables `ENABLE_TEST_CONTAINER=true` to override the Testcontainers path.
 - Test and release workflows use `gradle/actions/setup-gradle@v6` instead of a hand-written `actions/cache` Gradle User Home cache. PR test jobs should set `cache-read-only: true`; release/main jobs should keep the default write behavior and `cache-cleanup: on-success` so PR checks can restore default-branch Gradle cache without trying to save large merge-ref caches. The Windows MSI job temporarily disables cache cleanup because `setup-gradle` v6.2 can remove its Gradle User Home before saving; restore `on-success` after `gradle/actions#1013` is fixed.
 - PR compile checks run `./gradlew compileAllNoRelease --console=plain`, a root aggregation task that compiles included modules while excluding Android release and benchmark variants.

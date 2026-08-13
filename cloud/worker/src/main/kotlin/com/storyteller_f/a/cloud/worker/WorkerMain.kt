@@ -240,16 +240,16 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
     val mediaService = mediaService(env)
 
     return WorkerBackend(
-        customConfig,
-        topicSearchService,
-        roomSearchService,
-        communitySearchService,
-        userSearchService,
-        memberSearchService,
-        fileSearchService,
-        mediaService,
-        buildNameService(env),
-        buildExposedDatabase(databaseConnection),
+        customConfig = customConfig,
+        topicSearchService = topicSearchService,
+        roomSearchService = roomSearchService,
+        communitySearchService = communitySearchService,
+        userSearchService = userSearchService,
+        memberSearchService = memberSearchService,
+        fileSearchService = fileSearchService,
+        objectStorageService = mediaService,
+        nameService = buildNameService(env),
+        database = buildExposedDatabase(databaseConnection),
     )
 }
 

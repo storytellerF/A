@@ -26,13 +26,17 @@ object KoogClientFactory {
      * Creates an LLM client for the given configuration.
      * Returns null for LITERT_LLM provider (handled separately).
      */
-    fun createClient(config: LlmConfig): LLMClient? = when (config.provider) {
-        LlmProvider.OPENAI -> createOpenAiClient(config)
-        LlmProvider.ANTHROPIC -> createAnthropicClient(config)
-        LlmProvider.GOOGLE -> createGoogleClient(config)
-        LlmProvider.OLLAMA -> createOllamaClient(config)
-        LlmProvider.OPENAI_COMPATIBLE -> createOpenAICompatibleClient(config)
-        LlmProvider.LITERT_LLM -> null // Handled separately using litertlm library
+    fun createClient(config: LlmConfig): LLMClient? {
+        val client =
+            when (config.provider) {
+                LlmProvider.OPENAI -> createOpenAiClient(config)
+                LlmProvider.ANTHROPIC -> createAnthropicClient(config)
+                LlmProvider.GOOGLE -> createGoogleClient(config)
+                LlmProvider.OLLAMA -> createOllamaClient(config)
+                LlmProvider.OPENAI_COMPATIBLE -> createOpenAICompatibleClient(config)
+                LlmProvider.LITERT_LLM -> null
+            }
+        return client
     }
 
     /**
@@ -41,13 +45,13 @@ object KoogClientFactory {
     fun resolveModel(config: LlmConfig): LLModel? {
         val modelName =
             config.model ?: when (config.provider) {
-            LlmProvider.OPENAI -> "gpt-4o"
-            LlmProvider.ANTHROPIC -> "claude-sonnet-4-20250514"
-            LlmProvider.GOOGLE -> "gemini-2.0-flash"
-            LlmProvider.OLLAMA -> "llama3"
-            LlmProvider.OPENAI_COMPATIBLE -> "gpt-3.5-turbo"
-            LlmProvider.LITERT_LLM -> return null // No model needed for LiteRT
-        }
+                LlmProvider.OPENAI -> "gpt-4o"
+                LlmProvider.ANTHROPIC -> "claude-sonnet-4-20250514"
+                LlmProvider.GOOGLE -> "gemini-2.0-flash"
+                LlmProvider.OLLAMA -> "llama3"
+                LlmProvider.OPENAI_COMPATIBLE -> "gpt-3.5-turbo"
+                LlmProvider.LITERT_LLM -> return null // No model needed for LiteRT
+            }
 
         return when (config.provider) {
             LlmProvider.OPENAI -> resolveOpenAIModel(modelName)
@@ -63,8 +67,8 @@ object KoogClientFactory {
         val apiKey = config.apiKey ?: error("API key required for OpenAI")
         val settings =
             OpenAIClientSettings(
-            baseUrl = config.baseUrl ?: "https://api.openai.com/v1",
-        )
+                baseUrl = config.baseUrl ?: "https://api.openai.com/v1",
+            )
         val httpClientFactory = KtorKoogHttpClient.Factory()
 
         Napier.i(tag = "koog") {
@@ -78,8 +82,8 @@ object KoogClientFactory {
         val apiKey = config.apiKey ?: error("API key required for Anthropic")
         val settings =
             AnthropicClientSettings(
-            baseUrl = config.baseUrl ?: "https://api.anthropic.com",
-        )
+                baseUrl = config.baseUrl ?: "https://api.anthropic.com",
+            )
         val httpClientFactory = KtorKoogHttpClient.Factory()
 
         Napier.i(tag = "koog") {
@@ -93,10 +97,10 @@ object KoogClientFactory {
         val apiKey = config.apiKey ?: error("API key required for Google")
         val settings =
             OpenAIClientSettings(
-            baseUrl =
+                baseUrl =
                 config.baseUrl
-                ?: "https://generativelanguage.googleapis.com/v1beta/openai",
-                )
+                    ?: "https://generativelanguage.googleapis.com/v1beta/openai",
+            )
         val httpClientFactory = KtorKoogHttpClient.Factory()
 
         Napier.i(tag = "koog") {
@@ -123,7 +127,7 @@ object KoogClientFactory {
     private fun createOpenAICompatibleClient(config: LlmConfig): LLMClient {
         val baseUrl =
             config.baseUrl
-            ?: error("Base URL required for OpenAI-compatible provider")
+                ?: error("Base URL required for OpenAI-compatible provider")
         val apiKey = config.apiKey ?: "no-key"
 
         Napier.i(tag = "koog") {
@@ -135,97 +139,119 @@ object KoogClientFactory {
         return createOpenAICompatibleClient(apiKey, baseUrl)
     }
 
-    private fun resolveOpenAIModel(modelName: String): LLModel = when (modelName.lowercase()) {
-        "gpt-4o", "gpt-4" ->
-            ai.koog.prompt.executor.clients.openai.OpenAIModels.Chat.GPT4o
+    private fun resolveOpenAIModel(modelName: String): LLModel {
+        val model =
+            when (modelName.lowercase()) {
+                "gpt-4o", "gpt-4" ->
+                    ai.koog.prompt.executor.clients.openai.OpenAIModels.Chat.GPT4o
 
-        "gpt-4o-mini" ->
-            ai.koog.prompt.executor.clients.openai.OpenAIModels.Chat.GPT4oMini
+                "gpt-4o-mini" ->
+                    ai.koog.prompt.executor.clients.openai.OpenAIModels.Chat.GPT4oMini
 
-        "gpt-4-turbo" ->
-            ai.koog.prompt.executor.clients.openai.OpenAIModels.Chat.GPT4_1
+                "gpt-4-turbo" ->
+                    ai.koog.prompt.executor.clients.openai.OpenAIModels.Chat.GPT4_1
 
-        "gpt-3.5-turbo" ->
-            ai.koog.prompt.executor.clients.openai.OpenAIModels.Chat.GPT4oMini
+                "gpt-3.5-turbo" ->
+                    ai.koog.prompt.executor.clients.openai.OpenAIModels.Chat.GPT4oMini
 
-        "o1" ->
-            ai.koog.prompt.executor.clients.openai.OpenAIModels.Chat.O1
+                "o1" ->
+                    ai.koog.prompt.executor.clients.openai.OpenAIModels.Chat.O1
 
-        "o3" ->
-            ai.koog.prompt.executor.clients.openai.OpenAIModels.Chat.O3
+                "o3" ->
+                    ai.koog.prompt.executor.clients.openai.OpenAIModels.Chat.O3
 
-        "o3-mini" ->
-            ai.koog.prompt.executor.clients.openai.OpenAIModels.Chat.O3Mini
+                "o3-mini" ->
+                    ai.koog.prompt.executor.clients.openai.OpenAIModels.Chat.O3Mini
 
-        "o4-mini" ->
-            ai.koog.prompt.executor.clients.openai.OpenAIModels.Chat.O4Mini
+                "o4-mini" ->
+                    ai.koog.prompt.executor.clients.openai.OpenAIModels.Chat.O4Mini
 
-        else -> LLModel(
-            provider = LLMProvider.OpenAI,
-            id = modelName,
-            capabilities = listOf(
-                ai.koog.prompt.llm.LLMCapability.Temperature,
-                ai.koog.prompt.llm.LLMCapability.Tools,
-                ai.koog.prompt.llm.LLMCapability.Completion,
-            ),
-            contextLength = 128_000,
-            maxOutputTokens = 4_096,
-        )
+                else ->
+                    LLModel(
+                        provider = LLMProvider.OpenAI,
+                        id = modelName,
+                        capabilities =
+                        listOf(
+                            ai.koog.prompt.llm.LLMCapability.Temperature,
+                            ai.koog.prompt.llm.LLMCapability.Tools,
+                            ai.koog.prompt.llm.LLMCapability.Completion,
+                        ),
+                        contextLength = 128_000,
+                        maxOutputTokens = 4_096,
+                    )
+            }
+        return model
     }
 
-    private fun resolveAnthropicModel(modelName: String): LLModel = when (modelName.lowercase()) {
-        "claude-3-sonnet", "claude-3-sonnet-20240229" ->
-            ai.koog.prompt.executor.clients.anthropic.AnthropicModels.Sonnet_4
+    private fun resolveAnthropicModel(modelName: String): LLModel {
+        val model =
+            when (modelName.lowercase()) {
+                "claude-3-sonnet", "claude-3-sonnet-20240229" ->
+                    ai.koog.prompt.executor.clients.anthropic.AnthropicModels.Sonnet_4
 
-        "claude-3-opus", "claude-3-opus-20240229" ->
-            ai.koog.prompt.executor.clients.anthropic.AnthropicModels.Opus_4
+                "claude-3-opus", "claude-3-opus-20240229" ->
+                    ai.koog.prompt.executor.clients.anthropic.AnthropicModels.Opus_4
 
-        "claude-3-haiku", "claude-3-haiku-20240307" ->
-            ai.koog.prompt.executor.clients.anthropic.AnthropicModels.Haiku_4_5
+                "claude-3-haiku", "claude-3-haiku-20240307" ->
+                    ai.koog.prompt.executor.clients.anthropic.AnthropicModels.Haiku_4_5
 
-        "claude-sonnet-4-0" ->
-            ai.koog.prompt.executor.clients.anthropic.AnthropicModels.Sonnet_4
+                "claude-sonnet-4-0" ->
+                    ai.koog.prompt.executor.clients.anthropic.AnthropicModels.Sonnet_4
 
-        "claude-sonnet-4-5" ->
-            ai.koog.prompt.executor.clients.anthropic.AnthropicModels.Sonnet_4_5
+                "claude-sonnet-4-5" ->
+                    ai.koog.prompt.executor.clients.anthropic.AnthropicModels.Sonnet_4_5
 
-        "claude-opus-4-0" ->
-            ai.koog.prompt.executor.clients.anthropic.AnthropicModels.Opus_4
+                "claude-opus-4-0" ->
+                    ai.koog.prompt.executor.clients.anthropic.AnthropicModels.Opus_4
 
-        else -> LLModel(
-            provider = LLMProvider.Anthropic,
-            id = modelName,
-            capabilities = listOf(
-                ai.koog.prompt.llm.LLMCapability.Temperature,
-                ai.koog.prompt.llm.LLMCapability.Tools,
-                ai.koog.prompt.llm.LLMCapability.Completion,
-            ),
-            contextLength = 200_000,
-            maxOutputTokens = 4_096,
-        )
+                else ->
+                    LLModel(
+                        provider = LLMProvider.Anthropic,
+                        id = modelName,
+                        capabilities =
+                        listOf(
+                            ai.koog.prompt.llm.LLMCapability.Temperature,
+                            ai.koog.prompt.llm.LLMCapability.Tools,
+                            ai.koog.prompt.llm.LLMCapability.Completion,
+                        ),
+                        contextLength = 200_000,
+                        maxOutputTokens = 4_096,
+                    )
+            }
+        return model
     }
 
-    private fun resolveGoogleModel(modelName: String): LLModel = LLModel(
-        provider = LLMProvider.Google,
-        id = modelName,
-        capabilities = listOf(
-            ai.koog.prompt.llm.LLMCapability.Temperature,
-            ai.koog.prompt.llm.LLMCapability.Tools,
-            ai.koog.prompt.llm.LLMCapability.Completion,
-        ),
-        contextLength = 1_000_000,
-        maxOutputTokens = 8_192,
-    )
+    private fun resolveGoogleModel(modelName: String): LLModel {
+        val model =
+            LLModel(
+                provider = LLMProvider.Google,
+                id = modelName,
+                capabilities =
+                listOf(
+                    ai.koog.prompt.llm.LLMCapability.Temperature,
+                    ai.koog.prompt.llm.LLMCapability.Tools,
+                    ai.koog.prompt.llm.LLMCapability.Completion,
+                ),
+                contextLength = 1_000_000,
+                maxOutputTokens = 8_192,
+            )
+        return model
+    }
 
-    private fun resolveOllamaModel(modelName: String): LLModel = LLModel(
-        provider = LLMProvider.Ollama,
-        id = modelName,
-        capabilities = listOf(
-            ai.koog.prompt.llm.LLMCapability.Temperature,
-            ai.koog.prompt.llm.LLMCapability.Tools,
-            ai.koog.prompt.llm.LLMCapability.Completion,
-        ),
-        contextLength = 8_192,
-        maxOutputTokens = 4_096,
-    )
+    private fun resolveOllamaModel(modelName: String): LLModel {
+        val model =
+            LLModel(
+                provider = LLMProvider.Ollama,
+                id = modelName,
+                capabilities =
+                listOf(
+                    ai.koog.prompt.llm.LLMCapability.Temperature,
+                    ai.koog.prompt.llm.LLMCapability.Tools,
+                    ai.koog.prompt.llm.LLMCapability.Completion,
+                ),
+                contextLength = 8_192,
+                maxOutputTokens = 4_096,
+            )
+        return model
+    }
 }

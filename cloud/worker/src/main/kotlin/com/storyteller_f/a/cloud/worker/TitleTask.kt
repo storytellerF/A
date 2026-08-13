@@ -90,7 +90,7 @@ private suspend fun Backend.processTitle(title: Title, retryRecordId: PrimaryKey
 private suspend fun Backend.processTitleNotification(title: Title, successRecord: TaskRecord) {
     val rawUser =
         database.user.getRawUser(ObjectFetch.IdFetch(title.receiver))
-        .getOrThrow() ?: throw Exception("user not found")
+            .getOrThrow() ?: throw Exception("user not found")
 
     val content = generateTitleNotificationContent(title)
     sendTopicToNotificationRoom(getSystemUserId(), rawUser.user, content)
@@ -116,7 +116,8 @@ private fun Result<Unit>.logTitleResult(objectId: PrimaryKey) {
     )
 }
 
-private fun generateTitleNotificationContent(title: Title): String = buildString {
+private fun generateTitleNotificationContent(title: Title): String {
+    return buildString {
         appendLine("You received a new title!")
         appendLine("Title: ${title.name}")
         appendLine("From: System")
@@ -125,5 +126,6 @@ private fun generateTitleNotificationContent(title: Title): String = buildString
             appendLine("Expires: ${title.expiresAt}")
         }
     }
+}
 
 private const val TITLE_LOG_TAG = "title"

@@ -130,18 +130,21 @@ suspend fun Backend.sendTopicToNotificationRoom(uid: PrimaryKey, user: User, con
 private suspend fun Backend.getNotificationRoom(user: User): Room? =
     database.room.getRawRoom(ObjectFetch.IdFetch(user.notificationId)).getOrThrow()?.room
 
-private suspend fun Backend.createNotificationRoom(user: User, uid: PrimaryKey): Room =
-    database.room.createRoom(
-    buildUserNotificationRoom(user, uid),
-    buildMemberForNotificationRoom(user, uid),
-).getOrThrow()
+private suspend fun Backend.createNotificationRoom(user: User, uid: PrimaryKey): Room {
+    val room =
+        database.room.createRoom(
+            buildUserNotificationRoom(user, uid),
+            buildMemberForNotificationRoom(user, uid),
+        ).getOrThrow()
+    return room
+}
 
 suspend fun Backend.sedTopicAtRoom(uid: PrimaryKey, roomId: PrimaryKey, content: String) {
     val userPubKeyInfos =
         database.room.getRoomPubKeyPaginationResult(
-        roomId,
-        PrimaryKeyFetch(null, 10),
-    ).getOrThrow().list
+            roomId,
+            PrimaryKeyFetch(null, 10),
+        ).getOrThrow().list
     val encrypted = buildEncryptedTopicContent(content, userPubKeyInfos)
     createTopicAtRoom(NewRoomTopic(ObjectType.ROOM, roomId, encrypted), uid).getOrThrow()?.let {
         GlobalWsEventPublisher.publishNewTopic(RoomFrame.NewTopicInfo(it))

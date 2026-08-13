@@ -1,6 +1,5 @@
 package com.storyteller_f.a.backend.core
 
-import com.storyteller_f.shared.model.LlmConfig
 import com.storyteller_f.a.backend.core.types.AssetTransaction
 import com.storyteller_f.a.backend.core.types.ChildAccount
 import com.storyteller_f.a.backend.core.types.Community
@@ -33,6 +32,7 @@ import com.storyteller_f.a.backend.core.types.UserTopicRead
 import com.storyteller_f.a.backend.core.types.UserTwoFactor
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.FontSettings
+import com.storyteller_f.shared.model.LlmConfig
 import com.storyteller_f.shared.model.NestedMemberInfo
 import com.storyteller_f.shared.model.PosterSearch
 import com.storyteller_f.shared.model.QuotaInfo

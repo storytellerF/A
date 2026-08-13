@@ -29,7 +29,7 @@ private const val LOG_PREVIEW_LENGTH = 100
  * Creates an LLMClient that directly calls OpenAI-compatible APIs.
  * This bypasses koog's parameter determination logic for non-standard model names.
  */
-fun createOpenAICompatibleClient(apiKey: String, baseUrl: String): LLMClient {
+internal fun createOpenAICompatibleClient(apiKey: String, baseUrl: String): LLMClient {
     val httpClient = HttpClient(OkHttp)
     val jsonSerializer =
         Json {
@@ -89,11 +89,8 @@ fun createOpenAICompatibleClient(apiKey: String, baseUrl: String): LLMClient {
 
             val chatResponse = jsonSerializer.decodeFromString<ChatCompletionResponse>(response)
 
-            val content =
-                run {
-                    val message = chatResponse.choices.firstOrNull()?.message?.content
-                    checkNotNull(message) { "No response content from LLM" }
-                }
+            val firstChoice = checkNotNull(chatResponse.choices.firstOrNull()) { "No response content from LLM" }
+            val content = firstChoice.message.content
 
             Napier.d(tag = TAG) {
                 "LLM response: ${content.take(LOG_PREVIEW_LENGTH)}..."
@@ -125,7 +122,7 @@ fun createOpenAICompatibleClient(apiKey: String, baseUrl: String): LLMClient {
 }
 
 @Serializable
-data class ChatCompletionRequest(
+private data class ChatCompletionRequest(
     val model: String,
     val messages: List<ChatMessage>,
     val temperature: Double = 0.7,
@@ -134,10 +131,10 @@ data class ChatCompletionRequest(
 )
 
 @Serializable
-data class ChatMessage(val role: String, val content: String)
+private data class ChatMessage(val role: String, val content: String)
 
 @Serializable
-data class ChatCompletionResponse(val choices: List<Choice>)
+private data class ChatCompletionResponse(val choices: List<Choice>)
 
 @Serializable
-data class Choice(val message: ChatMessage)
+private data class Choice(val message: ChatMessage)

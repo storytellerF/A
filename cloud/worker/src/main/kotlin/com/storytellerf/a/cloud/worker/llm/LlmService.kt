@@ -9,10 +9,11 @@ import ai.koog.prompt.executor.clients.LLMClient
 import ai.koog.prompt.llm.LLModel
 import com.storyteller_f.shared.model.LlmConfig
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.CancellationException
 
 private const val LOG_PREVIEW_LENGTH = 100
 
-interface LlmService : AutoCloseable {
+internal interface LlmService : AutoCloseable {
     /**
      * Generate a response from the LLM.
      *
@@ -25,38 +26,43 @@ interface LlmService : AutoCloseable {
     override fun close() {}
 }
 
-class KoogLlmService(private val client: LLMClient, private val model: LLModel) : LlmService {
-    override suspend fun generateResponse(prompt: String, systemPrompt: String?): String =
-        try {
-        Napier.d(tag = "llm") {
-            "Generating response for prompt: ${prompt.take(LOG_PREVIEW_LENGTH)}..."
-        }
+internal class KoogLlmService(private val client: LLMClient, private val model: LLModel) : LlmService {
+    override suspend fun generateResponse(prompt: String, systemPrompt: String?): String {
+        val response =
+            try {
+                Napier.d(tag = "llm") {
+                    "Generating response for prompt: ${prompt.take(LOG_PREVIEW_LENGTH)}..."
+                }
 
-        val promptObj =
-            if (systemPrompt != null) {
-                prompt(existing = emptyPrompt()) {
-                    system(systemPrompt)
-                    user(prompt)
+                val promptObj =
+                    if (systemPrompt != null) {
+                        prompt(existing = emptyPrompt()) {
+                            system(systemPrompt)
+                            user(prompt)
+                        }
+                    } else {
+                        prompt(existing = emptyPrompt()) {
+                            user(prompt)
+                        }
+                    }
+
+                val result = client.execute(promptObj, model)
+                val text = result.textContent()
+
+                Napier.d(tag = "llm") {
+                    "Generated response: ${text.take(LOG_PREVIEW_LENGTH)}..."
                 }
-            } else {
-                prompt(existing = emptyPrompt()) {
-                    user(prompt)
+
+                text
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: IllegalStateException) {
+                Napier.e(tag = "llm", throwable = exception) {
+                    "LLM generation failed"
                 }
+                throw exception
             }
-
-        val result = client.execute(promptObj, model)
-        val text = result.textContent()
-
-        Napier.d(tag = "llm") {
-            "Generated response: ${text.take(LOG_PREVIEW_LENGTH)}..."
-        }
-
-        text
-    } catch (e: IllegalStateException) {
-        Napier.e(tag = "llm", throwable = e) {
-            "LLM generation failed"
-        }
-        throw e
+        return response
     }
 
     override fun close() {

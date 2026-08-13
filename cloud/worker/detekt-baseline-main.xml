@@ -7,56 +7,80 @@
     <ID>AbsentOrWrongFileLicense:SubscriptionTask.kt:com.storyteller_f.a.cloud.worker.SubscriptionTask.kt</ID>
     <ID>AbsentOrWrongFileLicense:TitleTask.kt:com.storyteller_f.a.cloud.worker.TitleTask.kt</ID>
     <ID>AbsentOrWrongFileLicense:WorkerMain.kt:com.storyteller_f.a.cloud.worker.WorkerMain.kt</ID>
+    <ID>BlankLineBetweenWhenConditions:SubscriptionTask.kt:when (topic.parentType) { ObjectType.TOPIC -&gt; generateTopicSubscriptionContentForTopic(topic.id, topicParentId) ObjectType.ROOM -&gt; generateTopicSubscriptionContentForRoom(topic.id, topicParentId) ObjectType.COMMUNITY -&gt; generateTopicSubscriptionContentForCommunity(topic.id, topicParentId) ObjectType.USER -&gt; generateTopicSubscriptionContentForUser(topic.id, topicParentId) else -&gt; null }</ID>
     <ID>CascadingCallWrapping:SubscriptionTask.kt:database.user.getRawUser(ObjectFetch.IdFetch(userSubscription.uid)) .getOrThrow() ?: throw Exception("user not found")</ID>
     <ID>CascadingCallWrapping:SubscriptionTask.kt:subscriptionId</ID>
     <ID>CascadingCallWrapping:TitleTask.kt:database.user.getRawUser(ObjectFetch.IdFetch(title.receiver)) .getOrThrow() ?: throw Exception("user not found")</ID>
     <ID>ElseCaseInsteadOfExhaustiveWhen:SubscriptionTask.kt:when (topic.parentType) { ObjectType.TOPIC -&gt; generateTopicSubscriptionContentForTopic(topic.id, topicParentId) ObjectType.ROOM -&gt; generateTopicSubscriptionContentForRoom(topic.id, topicParentId) ObjectType.COMMUNITY -&gt; generateTopicSubscriptionContentForCommunity(topic.id, topicParentId) ObjectType.USER -&gt; generateTopicSubscriptionContentForUser(topic.id, topicParentId) else -&gt; null }</ID>
-    <ID>ForbiddenPublicDataClass:OpenAICompatibleClient.kt:ChatCompletionRequest</ID>
-    <ID>ForbiddenPublicDataClass:OpenAICompatibleClient.kt:ChatCompletionResponse</ID>
-    <ID>ForbiddenPublicDataClass:OpenAICompatibleClient.kt:ChatMessage</ID>
-    <ID>ForbiddenPublicDataClass:OpenAICompatibleClient.kt:Choice</ID>
+    <ID>ForbiddenMethodCall:WorkerMain.kt:println("🔻 收到终止信号，准备退出...")</ID>
+    <ID>FunctionExpressionBody:IntroTask.kt:{ return runCatching { val adminUserResult = database.user.getRawUser(ObjectFetch.AidFetch("System")).getOrThrow() val adminAid = adminUserResult?.user?.id ?: throw Exception("System user not found") rawUsers.forEach { sendTopicToNotificationRoom(adminAid, it.user, "Hello, ${it.user.nickname}") database.admin.createTaskRecord( TaskRecord(SnowflakeFactory.nextId(), now(), TaskRecordType.INTRO, it.user.id) ) Napier.i(tag = "intro") { "send hello success" } } } }</ID>
+    <ID>FunctionExpressionBody:TitleTask.kt:{ return buildString { appendLine("You received a new title!") appendLine("Title: ${title.name}") appendLine("From: System") appendLine("Created: ${title.createdTime}") if (title.expiresAt != null) { appendLine("Expires: ${title.expiresAt}") } } }</ID>
+    <ID>FunctionNameMaxLength:SubscriptionTask.kt:private fun generateTopicSubscriptionContent: String?</ID>
+    <ID>FunctionNameMaxLength:SubscriptionTask.kt:private fun generateTopicSubscriptionContentForCommunity</ID>
+    <ID>FunctionNameMaxLength:SubscriptionTask.kt:private fun generateTopicSubscriptionContentForRoom</ID>
+    <ID>FunctionNameMaxLength:SubscriptionTask.kt:private fun generateTopicSubscriptionContentForTopic</ID>
+    <ID>FunctionNameMaxLength:SubscriptionTask.kt:private fun generateTopicSubscriptionContentForUser</ID>
+    <ID>FunctionNameMaxLength:TitleTask.kt:private fun generateTitleNotificationContent: String</ID>
     <ID>FunctionSignature:IntroTask.kt:private suspend fun Backend.createNotificationRoom: Room</ID>
-    <ID>FunctionSignature:KoogTopicSafetyReviewer.kt:private fun buildReviewPrompt: String</ID>
-    <ID>FunctionSignature:LlmService.kt:KoogLlmService$override suspend fun generateResponse: String</ID>
+    <ID>FunctionSignature:IntroTask.kt:suspend fun Backend.sedTopicAtRoom</ID>
+    <ID>FunctionSignature:SubscriptionTask.kt:private fun generateTopicSubscriptionContent: String?</ID>
     <ID>FunctionSignature:SubscriptionTask.kt:private fun generateTopicSubscriptionContentForCommunity</ID>
     <ID>FunctionSignature:SubscriptionTask.kt:private fun generateTopicSubscriptionContentForRoom</ID>
     <ID>FunctionSignature:SubscriptionTask.kt:private fun generateTopicSubscriptionContentForTopic</ID>
     <ID>FunctionSignature:SubscriptionTask.kt:private fun generateTopicSubscriptionContentForUser</ID>
-    <ID>Indentation:IntroTask.kt: </ID>
-    <ID>Indentation:KoogClientFactory.kt:KoogClientFactory$ </ID>
-    <ID>Indentation:KoogTopicSafetyReviewer.kt: </ID>
-    <ID>Indentation:LlmService.kt:KoogLlmService$ </ID>
-    <ID>Indentation:SubscriptionTask.kt: </ID>
-    <ID>Indentation:TitleTask.kt: </ID>
     <ID>LibraryEntitiesShouldNotBePublic:AcgTask.kt:suspend fun Backend.doAcgTask</ID>
     <ID>LibraryEntitiesShouldNotBePublic:IntroTask.kt:suspend fun Backend.doIntroTask</ID>
     <ID>LibraryEntitiesShouldNotBePublic:IntroTask.kt:suspend fun Backend.sedTopicAtRoom</ID>
     <ID>LibraryEntitiesShouldNotBePublic:IntroTask.kt:suspend fun Backend.sendTopicToNotificationRoom</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:LlmService.kt:KoogLlmService : LlmService</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:LlmService.kt:LlmService : AutoCloseable</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:OpenAICompatibleClient.kt:ChatCompletionRequest</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:OpenAICompatibleClient.kt:ChatCompletionResponse</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:OpenAICompatibleClient.kt:ChatMessage</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:OpenAICompatibleClient.kt:Choice</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:OpenAICompatibleClient.kt:fun createOpenAICompatibleClient: LLMClient</ID>
     <ID>LibraryEntitiesShouldNotBePublic:SubscriptionTask.kt:suspend fun Backend.doSubscriptionTask</ID>
     <ID>LibraryEntitiesShouldNotBePublic:TitleTask.kt:suspend fun Backend.doTitleTask</ID>
     <ID>LibraryEntitiesShouldNotBePublic:WorkerMain.kt:WorkerBackend : Backend</ID>
     <ID>LibraryEntitiesShouldNotBePublic:WorkerMain.kt:fun buildBackendFromEnv: Backend</ID>
     <ID>LibraryEntitiesShouldNotBePublic:WorkerMain.kt:fun main</ID>
     <ID>LongParameterList:WorkerMain.kt:WorkerBackend</ID>
+    <ID>MagicNumber:AcgTask.kt:10000</ID>
     <ID>MagicNumber:IntroTask.kt:10</ID>
-    <ID>MultilineExpressionWrapping:KoogClientFactory.kt:KoogClientFactory$LLModel( provider = LLMProvider.Anthropic, id = modelName, capabilities = listOf( ai.koog.prompt.llm.LLMCapability.Temperature, ai.koog.prompt.llm.LLMCapability.Tools, ai.koog.prompt.llm.LLMCapability.Completion, ), contextLength = 200_000, maxOutputTokens = 4_096, )</ID>
-    <ID>MultilineExpressionWrapping:KoogClientFactory.kt:KoogClientFactory$LLModel( provider = LLMProvider.Google, id = modelName, capabilities = listOf( ai.koog.prompt.llm.LLMCapability.Temperature, ai.koog.prompt.llm.LLMCapability.Tools, ai.koog.prompt.llm.LLMCapability.Completion, ), contextLength = 1_000_000, maxOutputTokens = 8_192, )</ID>
-    <ID>MultilineExpressionWrapping:KoogClientFactory.kt:KoogClientFactory$LLModel( provider = LLMProvider.Ollama, id = modelName, capabilities = listOf( ai.koog.prompt.llm.LLMCapability.Temperature, ai.koog.prompt.llm.LLMCapability.Tools, ai.koog.prompt.llm.LLMCapability.Completion, ), contextLength = 8_192, maxOutputTokens = 4_096, )</ID>
-    <ID>MultilineExpressionWrapping:KoogClientFactory.kt:KoogClientFactory$LLModel( provider = LLMProvider.OpenAI, id = modelName, capabilities = listOf( ai.koog.prompt.llm.LLMCapability.Temperature, ai.koog.prompt.llm.LLMCapability.Tools, ai.koog.prompt.llm.LLMCapability.Completion, ), contextLength = 128_000, maxOutputTokens = 4_096, )</ID>
-    <ID>MultilineExpressionWrapping:KoogClientFactory.kt:KoogClientFactory$listOf( ai.koog.prompt.llm.LLMCapability.Temperature, ai.koog.prompt.llm.LLMCapability.Tools, ai.koog.prompt.llm.LLMCapability.Completion, )</ID>
-    <ID>MultilineExpressionWrapping:KoogClientFactory.kt:KoogClientFactory$when (config.provider) { LlmProvider.OPENAI -&gt; createOpenAiClient(config) LlmProvider.ANTHROPIC -&gt; createAnthropicClient(config) LlmProvider.GOOGLE -&gt; createGoogleClient(config) LlmProvider.OLLAMA -&gt; createOllamaClient(config) LlmProvider.OPENAI_COMPATIBLE -&gt; createOpenAICompatibleClient(config) LlmProvider.LITERT_LLM -&gt; null // Handled separately using litertlm library }</ID>
-    <ID>MultilineExpressionWrapping:KoogClientFactory.kt:KoogClientFactory$when (modelName.lowercase()) { "claude-3-sonnet", "claude-3-sonnet-20240229" -&gt; ai.koog.prompt.executor.clients.anthropic.AnthropicModels.Sonnet_4 "claude-3-opus", "claude-3-opus-20240229" -&gt; ai.koog.prompt.executor.clients.anthropic.AnthropicModels.Opus_4 "claude-3-haiku", "claude-3-haiku-20240307" -&gt; ai.koog.prompt.executor.clients.anthropic.AnthropicModels.Haiku_4_5 "claude-sonnet-4-0" -&gt; ai.koog.prompt.executor.clients.anthropic.AnthropicModels.Sonnet_4 "claude-sonnet-4-5" -&gt; ai.koog.prompt.executor.clients.anthropic.AnthropicModels.Sonnet_4_5 "claude-opus-4-0" -&gt; ai.koog.prompt.executor.clients.anthropic.AnthropicModels.Opus_4 else -&gt; LLModel( provider = LLMProvider.Anthropic, id = modelName, capabilities = listOf( ai.koog.prompt.llm.LLMCapability.Temperature, ai.koog.prompt.llm.LLMCapability.Tools, ai.koog.prompt.llm.LLMCapability.Completion, ), contextLength = 200_000, maxOutputTokens = 4_096, ) }</ID>
-    <ID>MultilineExpressionWrapping:KoogClientFactory.kt:KoogClientFactory$when (modelName.lowercase()) { "gpt-4o", "gpt-4" -&gt; ai.koog.prompt.executor.clients.openai.OpenAIModels.Chat.GPT4o "gpt-4o-mini" -&gt; ai.koog.prompt.executor.clients.openai.OpenAIModels.Chat.GPT4oMini "gpt-4-turbo" -&gt; ai.koog.prompt.executor.clients.openai.OpenAIModels.Chat.GPT4_1 "gpt-3.5-turbo" -&gt; ai.koog.prompt.executor.clients.openai.OpenAIModels.Chat.GPT4oMini "o1" -&gt; ai.koog.prompt.executor.clients.openai.OpenAIModels.Chat.O1 "o3" -&gt; ai.koog.prompt.executor.clients.openai.OpenAIModels.Chat.O3 "o3-mini" -&gt; ai.koog.prompt.executor.clients.openai.OpenAIModels.Chat.O3Mini "o4-mini" -&gt; ai.koog.prompt.executor.clients.openai.OpenAIModels.Chat.O4Mini else -&gt; LLModel( provider = LLMProvider.OpenAI, id = modelName, capabilities = listOf( ai.koog.prompt.llm.LLMCapability.Temperature, ai.koog.prompt.llm.LLMCapability.Tools, ai.koog.prompt.llm.LLMCapability.Completion, ), contextLength = 128_000, maxOutputTokens = 4_096, ) }</ID>
-    <ID>MultilineExpressionWrapping:TitleTask.kt:buildString { appendLine("You received a new title!") appendLine("Title: ${title.name}") appendLine("From: System") appendLine("Created: ${title.createdTime}") if (title.expiresAt != null) { appendLine("Expires: ${title.expiresAt}") } }</ID>
+    <ID>MagicNumber:IntroTask.kt:1000</ID>
+    <ID>MagicNumber:IntroTask.kt:10000</ID>
+    <ID>MagicNumber:SubscriptionTask.kt:10</ID>
+    <ID>MagicNumber:SubscriptionTask.kt:10000</ID>
+    <ID>MagicNumber:TitleTask.kt:10</ID>
+    <ID>MagicNumber:TitleTask.kt:10000</ID>
+    <ID>MagicNumber:WorkerMain.kt:1000</ID>
+    <ID>MultilineExpressionWrapping:AcgTask.kt:acgList.map { it.first }</ID>
+    <ID>MultilineExpressionWrapping:AcgTask.kt:list.groupBy { it.author }.mapValues { it.value.count() }.toList()</ID>
+    <ID>MultilineExpressionWrapping:IntroTask.kt:database.room.getRoomPubKeyPaginationResult( roomId, PrimaryKeyFetch(null, 10) ).getOrThrow().list</ID>
+    <ID>MultilineExpressionWrapping:SubscriptionTask.kt:database.subscription.getLatestSubscriptionSentLog(topicParentId) .getOrThrow()?.subscriptionId</ID>
+    <ID>MultilineExpressionWrapping:SubscriptionTask.kt:database.subscription.getSubscriptionsByObjectId(topicParentId, PrimaryKeyFetch(cursor, 10)) .getOrThrow()</ID>
+    <ID>MultilineExpressionWrapping:SubscriptionTask.kt:database.user.getRawUser(ObjectFetch.IdFetch(userSubscription.uid)) .getOrThrow() ?: throw Exception("user not found")</ID>
+    <ID>MultilineExpressionWrapping:SubscriptionTask.kt:when (topic.parentType) { ObjectType.TOPIC -&gt; generateTopicSubscriptionContentForTopic(topic.id, topicParentId) ObjectType.ROOM -&gt; generateTopicSubscriptionContentForRoom(topic.id, topicParentId) ObjectType.COMMUNITY -&gt; generateTopicSubscriptionContentForCommunity(topic.id, topicParentId) ObjectType.USER -&gt; generateTopicSubscriptionContentForUser(topic.id, topicParentId) else -&gt; null }</ID>
+    <ID>MultilineExpressionWrapping:TitleTask.kt:database.user.getRawUser(ObjectFetch.IdFetch(title.receiver)) .getOrThrow() ?: throw Exception("user not found")</ID>
+    <ID>MultilineExpressionWrapping:WorkerMain.kt:Thread { println("🔻 收到终止信号，准备退出...") jobs.forEach { it.cancel() } Thread.sleep(1000) }</ID>
+    <ID>MultilineExpressionWrapping:WorkerMain.kt:launch { while (isActive) { Napier.i(tag = "task") { "execute agc task at ${now()}" } backend.doAcgTask() } }</ID>
+    <ID>MultilineExpressionWrapping:WorkerMain.kt:launch { while (isActive) { Napier.i(tag = "task") { "execute intro task at ${now()}" } backend.doIntroTask() } }</ID>
+    <ID>MultilineExpressionWrapping:WorkerMain.kt:launch { while (isActive) { Napier.i(tag = "task") { "execute subscription task at ${now()}" } backend.doSubscriptionTask() } }</ID>
+    <ID>MultilineExpressionWrapping:WorkerMain.kt:launch { while (isActive) { Napier.i(tag = "task") { "execute title task at ${now()}" } backend.doTitleTask() } }</ID>
+    <ID>MultilineExpressionWrapping:WorkerMain.kt:listOf(launch { while (isActive) { Napier.i(tag = "task") { "execute agc task at ${now()}" } backend.doAcgTask() } }, launch { while (isActive) { Napier.i(tag = "task") { "execute intro task at ${now()}" } backend.doIntroTask() } }, launch { while (isActive) { Napier.i(tag = "task") { "execute subscription task at ${now()}" } backend.doSubscriptionTask() } }, launch { while (isActive) { Napier.i(tag = "task") { "execute title task at ${now()}" } backend.doTitleTask() } })</ID>
+    <ID>MultilineLambdaItParameter:AcgTask.kt:{ delay(10000) Napier.i(tag = "acg") { "task success $it" } }</ID>
+    <ID>MultilineLambdaItParameter:AcgTask.kt:{ delay(10000) Napier.i(tag = "acg", throwable = it) { "task failed" } }</ID>
+    <ID>MultilineLambdaItParameter:IntroTask.kt:{ delay(10000) Napier.i(tag = "intro") { "task success $it" } }</ID>
+    <ID>MultilineLambdaItParameter:IntroTask.kt:{ delay(10000) Napier.i(tag = "intro", throwable = it) { "task failed" } }</ID>
+    <ID>MultilineLambdaItParameter:IntroTask.kt:{ sendTopicToNotificationRoom(adminAid, it.user, "Hello, ${it.user.nickname}") database.admin.createTaskRecord( TaskRecord(SnowflakeFactory.nextId(), now(), TaskRecordType.INTRO, it.user.id) ) Napier.i(tag = "intro") { "send hello success" } }</ID>
+    <ID>MultilineLambdaItParameter:SubscriptionTask.kt:{ delay(10000) Napier.i(tag = "subscription") { "task success $it" } }</ID>
+    <ID>MultilineLambdaItParameter:SubscriptionTask.kt:{ delay(10000) Napier.i(tag = "subscription", throwable = it) { "task failed" } }</ID>
+    <ID>MultilineLambdaItParameter:SubscriptionTask.kt:{ if (it.isEmpty()) { Napier.i(tag = "subscription") { "no topic to send" } UNIT_RESULT } else { Napier.i(tag = "subscription") { "send ${it.size} topics" } runCatching { it.forEach { topic -&gt; processTopicSubscription(topic) } } } }</ID>
+    <ID>MultilineLambdaItParameter:TitleTask.kt:{ delay(10000) Napier.i(tag = "title") { "task success $it" } }</ID>
+    <ID>MultilineLambdaItParameter:TitleTask.kt:{ delay(10000) Napier.i(tag = "title", throwable = it) { "task failed" } }</ID>
+    <ID>NamedArguments:AcgTask.kt:AssetTransaction( SnowflakeFactory.nextId(), id, now(), AssetType.ACG, oldAcgAmount, oldAcgAmount + acg )</ID>
+    <ID>NamedArguments:AcgTask.kt:TaskRecord(SnowflakeFactory.nextId(), now(), TaskRecordType.TOPIC_ACG, list.last().id)</ID>
+    <ID>NamedArguments:IntroTask.kt:TaskRecord(SnowflakeFactory.nextId(), now(), TaskRecordType.INTRO, it.user.id)</ID>
     <ID>NamedArguments:SubscriptionTask.kt:SubscriptionSentLog( SnowflakeFactory.nextId(), userSubscription.uid, topic.id, ObjectType.TOPIC, userSubscription.id, now(), )</ID>
-    <ID>NamedArguments:WorkerMain.kt:WorkerBackend( customConfig, topicSearchService, roomSearchService, communitySearchService, userSearchService, memberSearchService, fileSearchService, mediaService, buildNameService(env), buildExposedDatabase(databaseConnection), )</ID>
+    <ID>NamedArguments:SubscriptionTask.kt:TaskRecord(SnowflakeFactory.nextId(), now(), TaskRecordType.SUBSCRIPTION, topic.id,)</ID>
+    <ID>NamedArguments:TitleTask.kt:TaskRecord(SnowflakeFactory.nextId(), now(), TaskRecordType.TITLE, title.id)</ID>
+    <ID>NamedArguments:WorkerMain.kt:WorkerBackend( customConfig, topicSearchService, roomSearchService, communitySearchService, userSearchService, memberSearchService, fileSearchService, mediaService, buildNameService(env), buildExposedDatabase(databaseConnection) )</ID>
+    <ID>NoNameShadowing:AcgTask.kt:list</ID>
+    <ID>NullableToStringCall:AcgTask.kt:$it</ID>
+    <ID>NullableToStringCall:IntroTask.kt:$it</ID>
     <ID>NullableToStringCall:TitleTask.kt:${title.expiresAt}</ID>
     <ID>PackageName:AcgTask.kt:package com.storyteller_f.a.cloud.worker</ID>
     <ID>PackageName:IntroTask.kt:package com.storyteller_f.a.cloud.worker</ID>
@@ -68,18 +92,37 @@
     <ID>PackageNaming:SubscriptionTask.kt:package com.storyteller_f.a.cloud.worker</ID>
     <ID>PackageNaming:TitleTask.kt:package com.storyteller_f.a.cloud.worker</ID>
     <ID>PackageNaming:WorkerMain.kt:package com.storyteller_f.a.cloud.worker</ID>
-    <ID>ReplaceSafeCallChainWithRun:OpenAICompatibleClient.kt:&lt;no name provided&gt;$chatResponse.choices.firstOrNull()?.message?.content</ID>
-    <ID>SuspendFunSwallowedCancellation:LlmService.kt:KoogLlmService$catch (e: IllegalStateException) { Napier.e(tag = "llm", throwable = e) { "LLM generation failed" } throw e }</ID>
+    <ID>ReplaceSafeCallChainWithRun:IntroTask.kt:adminUserResult?.user?.id</ID>
+    <ID>ReplaceSafeCallChainWithRun:TitleTask.kt:adminUserResult?.user?.id</ID>
+    <ID>StringLiteralDuplication:IntroTask.kt:"intro"</ID>
+    <ID>StringLiteralDuplication:SubscriptionTask.kt:"subscription"</ID>
+    <ID>StringLiteralDuplication:TitleTask.kt:"title"</ID>
+    <ID>SuspendFunSwallowedCancellation:IntroTask.kt:runCatching</ID>
+    <ID>SuspendFunSwallowedCancellation:SubscriptionTask.kt:runCatching</ID>
+    <ID>SuspendFunSwallowedCancellation:TitleTask.kt:runCatching</ID>
+    <ID>TooGenericExceptionThrown:IntroTask.kt:throw Exception("System user not found")</ID>
     <ID>TooGenericExceptionThrown:SubscriptionTask.kt:throw Exception("user not found")</ID>
+    <ID>TooGenericExceptionThrown:TitleTask.kt:throw Exception("System user not found")</ID>
     <ID>TooGenericExceptionThrown:TitleTask.kt:throw Exception("user not found")</ID>
     <ID>TooGenericExceptionThrown:WorkerMain.kt:throw Exception("FLAVOR is empty")</ID>
-    <ID>UndocumentedPublicClass:LlmService.kt:KoogLlmService : LlmService</ID>
-    <ID>UndocumentedPublicClass:LlmService.kt:KoogLlmService$Companion</ID>
-    <ID>UndocumentedPublicClass:LlmService.kt:LlmService : AutoCloseable</ID>
-    <ID>UndocumentedPublicClass:OpenAICompatibleClient.kt:ChatCompletionRequest</ID>
-    <ID>UndocumentedPublicClass:OpenAICompatibleClient.kt:ChatCompletionResponse</ID>
-    <ID>UndocumentedPublicClass:OpenAICompatibleClient.kt:ChatMessage</ID>
-    <ID>UndocumentedPublicClass:OpenAICompatibleClient.kt:Choice</ID>
+    <ID>TrailingCommaOnCallSite:AcgTask.kt:( SnowflakeFactory.nextId(), id, now(), AssetType.ACG, oldAcgAmount, oldAcgAmount + acg )</ID>
+    <ID>TrailingCommaOnCallSite:AcgTask.kt:( TaskRecord(SnowflakeFactory.nextId(), now(), TaskRecordType.TOPIC_ACG, list.last().id), acgList.mapNotNull { (id, acg) -&gt; userAcgMap[id]?.let { oldAcgAmount -&gt; AssetTransaction( SnowflakeFactory.nextId(), id, now(), AssetType.ACG, oldAcgAmount, oldAcgAmount + acg ) } } )</ID>
+    <ID>TrailingCommaOnCallSite:IntroTask.kt:( TaskRecord(SnowflakeFactory.nextId(), now(), TaskRecordType.INTRO, it.user.id) )</ID>
+    <ID>TrailingCommaOnCallSite:IntroTask.kt:( buildUserNotificationRoom(user, uid), buildMemberForNotificationRoom(user, uid) )</ID>
+    <ID>TrailingCommaOnCallSite:IntroTask.kt:( roomId, PrimaryKeyFetch(null, 10) )</ID>
+    <ID>TrailingCommaOnCallSite:SubscriptionTask.kt:( SubscriptionSentLog( SnowflakeFactory.nextId(), userSubscription.uid, topic.id, ObjectType.TOPIC, userSubscription.id, now(), ) )</ID>
+    <ID>TrailingCommaOnCallSite:SubscriptionTask.kt:( TaskRecord(SnowflakeFactory.nextId(), now(), TaskRecordType.SUBSCRIPTION, topic.id,) )</ID>
+    <ID>TrailingCommaOnCallSite:SubscriptionTask.kt:(SnowflakeFactory.nextId(), now(), TaskRecordType.SUBSCRIPTION, topic.id,)</ID>
+    <ID>TrailingCommaOnCallSite:TitleTask.kt:( TaskRecord(SnowflakeFactory.nextId(), now(), TaskRecordType.TITLE, title.id) )</ID>
+    <ID>TrailingCommaOnCallSite:WorkerMain.kt:( customConfig, topicSearchService, roomSearchService, communitySearchService, userSearchService, memberSearchService, fileSearchService, mediaService, buildNameService(env), buildExposedDatabase(databaseConnection) )</ID>
+    <ID>TrailingCommaOnDeclarationSite:IntroTask.kt:( uid: PrimaryKey, roomId: PrimaryKey, content: String )</ID>
+    <ID>TrailingCommaOnDeclarationSite:SubscriptionTask.kt:( topic: Topic, topicParentId: PrimaryKey )</ID>
+    <ID>TrailingCommaOnDeclarationSite:SubscriptionTask.kt:( topicId: PrimaryKey, topicParentId: PrimaryKey )</ID>
+    <ID>TrailingCommaOnDeclarationSite:WorkerMain.kt:WorkerBackend$( override val customConfig: CustomConfig, override val topicSearchService: TopicSearchService, override val roomSearchService: RoomSearchService, override val communitySearchService: CommunitySearchService, override val userSearchService: UserSearchService, override val memberSearchService: MemberSearchService, override val fileSearchService: FileSearchService, override val objectStorageService: ObjectStorageService, override val nameService: NameService, override val database: CombinedDatabase )</ID>
+    <ID>UnderscoresInNumericLiterals:AcgTask.kt:10000</ID>
+    <ID>UnderscoresInNumericLiterals:IntroTask.kt:10000</ID>
+    <ID>UnderscoresInNumericLiterals:SubscriptionTask.kt:10000</ID>
+    <ID>UnderscoresInNumericLiterals:TitleTask.kt:10000</ID>
     <ID>UndocumentedPublicClass:WorkerMain.kt:WorkerBackend : Backend</ID>
     <ID>UndocumentedPublicFunction:AcgTask.kt:suspend fun Backend.doAcgTask</ID>
     <ID>UndocumentedPublicFunction:IntroTask.kt:suspend fun Backend.doIntroTask</ID>
@@ -89,13 +132,7 @@
     <ID>UndocumentedPublicFunction:TitleTask.kt:suspend fun Backend.doTitleTask</ID>
     <ID>UndocumentedPublicFunction:WorkerMain.kt:fun buildBackendFromEnv: Backend</ID>
     <ID>UndocumentedPublicFunction:WorkerMain.kt:fun main</ID>
-    <ID>UndocumentedPublicProperty:OpenAICompatibleClient.kt:ChatCompletionRequest$@SerialName("max_tokens") val maxTokens: Int = 1024</ID>
-    <ID>UndocumentedPublicProperty:OpenAICompatibleClient.kt:ChatCompletionRequest$val messages: List&lt;ChatMessage&gt;</ID>
-    <ID>UndocumentedPublicProperty:OpenAICompatibleClient.kt:ChatCompletionRequest$val model: String</ID>
-    <ID>UndocumentedPublicProperty:OpenAICompatibleClient.kt:ChatCompletionRequest$val temperature: Double = 0.7</ID>
-    <ID>UndocumentedPublicProperty:OpenAICompatibleClient.kt:ChatCompletionResponse$val choices: List&lt;Choice&gt;</ID>
-    <ID>UndocumentedPublicProperty:OpenAICompatibleClient.kt:ChatMessage$val content: String</ID>
-    <ID>UndocumentedPublicProperty:OpenAICompatibleClient.kt:ChatMessage$val role: String</ID>
-    <ID>UndocumentedPublicProperty:OpenAICompatibleClient.kt:Choice$val message: ChatMessage</ID>
+    <ID>Wrapping:WorkerMain.kt:(</ID>
+    <ID>Wrapping:WorkerMain.kt:(launch { while (isActive) { Napier.i(tag = "task") { "execute agc task at ${now()}" } backend.doAcgTask() } }, launch { while (isActive) { Napier.i(tag = "task") { "execute intro task at ${now()}" } backend.doIntroTask() } }, launch { while (isActive) { Napier.i(tag = "task") { "execute subscription task at ${now()}" } backend.doSubscriptionTask() } }, launch { while (isActive) { Napier.i(tag = "task") { "execute title task at ${now()}" } backend.doTitleTask() } })</ID>
   </CurrentIssues>
 </SmellBaseline>
