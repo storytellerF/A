@@ -44,6 +44,11 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+
+private const val MODERATION_LOG_TAG = "moderation"
+private const val TOPIC_MODERATION_ENABLED_ENV = "TOPIC_MODERATION_ENABLED"
 
 fun main() {
     setLogPath()
@@ -56,8 +61,11 @@ fun main() {
     val env = readEnv()
     GlobalWsEventPublisher.configure(env["WS_RPC_URL"])
     val backend = buildBackendFromEnv(env)
+    val isTopicModerationEnabled = env[TOPIC_MODERATION_ENABLED_ENV]?.toBooleanStrictOrNull() != false
     runBlocking {
-        TopicSafetyReviewerProvider { createTopicSafetyReviewer(backend) }.use { reviewerProvider ->
+        TopicSafetyReviewerProvider {
+            if (isTopicModerationEnabled) createTopicSafetyReviewer(backend) else null
+        }.use { reviewerProvider ->
             Napier.i {
                 "worker started"
             }
@@ -71,23 +79,26 @@ fun main() {
 
 internal class TopicSafetyReviewerProvider(private val factory: suspend () -> TopicSafetyReviewer?) :
     AutoCloseable {
+    private val initializationMutex = Mutex()
     private var reviewer: TopicSafetyReviewer? = null
 
     suspend fun get(): TopicSafetyReviewer? {
-        if (reviewer == null) {
-            reviewer =
-                try {
-                    factory()
-                } catch (exception: CancellationException) {
-                    throw exception
-                } catch (exception: IllegalStateException) {
-                    Napier.e(tag = "moderation", throwable = exception) {
-                        "Unable to initialize topic safety reviewer; will retry"
+        return initializationMutex.withLock {
+            reviewer ?: run {
+                reviewer =
+                    try {
+                        factory()
+                    } catch (exception: CancellationException) {
+                        throw exception
+                    } catch (exception: IllegalStateException) {
+                        Napier.e(tag = MODERATION_LOG_TAG, throwable = exception) {
+                            "Unable to initialize topic safety reviewer; will retry"
+                        }
+                        null
                     }
-                    null
-                }
+                reviewer
+            }
         }
-        return reviewer
     }
 
     override fun close() {
@@ -97,15 +108,23 @@ internal class TopicSafetyReviewerProvider(private val factory: suspend () -> To
 
 internal suspend fun createTopicSafetyReviewer(backend: Backend): TopicSafetyReviewer? {
     val llmConfigResult = backend.database.getLlmConfig()
-    val llmConfig = llmConfigResult.getOrNull()
-    if (llmConfig != null) {
-        Napier.i(tag = "moderation") {
-            "using LLM provider: ${llmConfig.provider}"
+    val llmConfig =
+        llmConfigResult.getOrElse { exception ->
+            if (exception is CancellationException) throw exception
+            Napier.e(tag = MODERATION_LOG_TAG, throwable = exception) {
+                "Failed to read LLM configuration from database"
+            }
+            return null
         }
-        return when (llmConfig.provider) {
+
+    return llmConfig?.let { config ->
+        Napier.i(tag = MODERATION_LOG_TAG) {
+            "using LLM provider: ${config.provider}"
+        }
+        when (config.provider) {
             LlmProvider.LITERT_LLM -> {
                 val modelPath =
-                    llmConfig.modelPath
+                    config.modelPath
                         ?: error("modelPath required for LITERT_LLM provider")
                 LiteRtTopicSafetyReviewer.create(
                     java.nio.file.Path.of(modelPath),
@@ -118,15 +137,15 @@ internal suspend fun createTopicSafetyReviewer(backend: Backend): TopicSafetyRev
             LlmProvider.OLLAMA,
             LlmProvider.OPENAI_COMPATIBLE,
             -> {
-                KoogTopicSafetyReviewer.create(llmConfig)
+                KoogTopicSafetyReviewer.create(config)
             }
         }
+    } ?: run {
+        Napier.w(tag = MODERATION_LOG_TAG) {
+            "LLM configuration not found; topic moderation will retry after configuration is added"
+        }
+        null
     }
-
-    Napier.w(tag = "moderation") {
-        "LLM configuration not found; topic moderation will retry after configuration is added"
-    }
-    return null
 }
 
 private fun CoroutineScope.startWorkerTasks(
