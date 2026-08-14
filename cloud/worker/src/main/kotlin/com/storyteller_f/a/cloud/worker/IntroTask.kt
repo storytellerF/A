@@ -103,7 +103,11 @@ private suspend fun Backend.processIntroUser(rawUser: RawUser, retryRecordId: Pr
 
 private suspend fun Backend.sendHelloTopic(rawUser: RawUser, successRecord: TaskRecord) {
     val systemUserId = getSystemUserId()
-    sendTopicToNotificationRoom(systemUserId, rawUser.user, "Hello, ${rawUser.user.nickname}")
+    sendTopicToNotificationRoom(
+        systemUserId,
+        rawUser.user,
+        "Hello, ${rawUser.user.nickname}",
+    ).getOrThrow()
     database.admin.createTaskRecord(successRecord).getOrThrow()
 }
 
@@ -122,34 +126,36 @@ private fun Result<Unit>.logIntroResult(objectId: PrimaryKey) {
     )
 }
 
-suspend fun Backend.sendTopicToNotificationRoom(uid: PrimaryKey, user: User, content: String) {
-    val room = getNotificationRoom(user) ?: createNotificationRoom(user, uid)
-    sedTopicAtRoom(uid, room.id, content)
-}
-
-private suspend fun Backend.getNotificationRoom(user: User): Room? =
-    database.room.getRawRoom(ObjectFetch.IdFetch(user.notificationId)).getOrThrow()?.room
-
-private suspend fun Backend.createNotificationRoom(user: User, uid: PrimaryKey): Room {
-    val room =
-        database.room.createRoom(
-            buildUserNotificationRoom(user, uid),
-            buildMemberForNotificationRoom(user, uid),
-        ).getOrThrow()
-    return room
-}
-
-suspend fun Backend.sedTopicAtRoom(uid: PrimaryKey, roomId: PrimaryKey, content: String) {
-    val userPubKeyInfos =
-        database.room.getRoomPubKeyPaginationResult(
-            roomId,
-            PrimaryKeyFetch(null, 10),
-        ).getOrThrow().list
-    val encrypted = buildEncryptedTopicContent(content, userPubKeyInfos)
-    createTopicAtRoom(NewRoomTopic(ObjectType.ROOM, roomId, encrypted), uid).getOrThrow()?.let {
-        GlobalWsEventPublisher.publishNewTopic(RoomFrame.NewTopicInfo(it))
+internal suspend fun Backend.sendTopicToNotificationRoom(uid: PrimaryKey, user: User, content: String): Result<Unit> =
+    getNotificationRoom(user).mapResult { room ->
+        (room?.let { Result.success(it) } ?: createNotificationRoom(user, uid))
+            .mapResult { notificationRoom ->
+                sedTopicAtRoom(uid, notificationRoom.id, content)
+            }
     }
-}
+
+private suspend fun Backend.getNotificationRoom(user: User): Result<Room?> =
+    database.room.getRawRoom(ObjectFetch.IdFetch(user.notificationId)).map { rawRoom -> rawRoom?.room }
+
+private suspend fun Backend.createNotificationRoom(user: User, uid: PrimaryKey): Result<Room> =
+    database.room.createRoom(
+        buildUserNotificationRoom(user, uid),
+        buildMemberForNotificationRoom(user, uid),
+    )
+
+internal suspend fun Backend.sedTopicAtRoom(uid: PrimaryKey, roomId: PrimaryKey, content: String): Result<Unit> =
+    database.room.getRoomPubKeyPaginationResult(
+        roomId,
+        PrimaryKeyFetch(null, 10),
+    ).mapResult { paginationResult ->
+        val encrypted = buildEncryptedTopicContent(content, paginationResult.list)
+        createTopicAtRoom(NewRoomTopic(ObjectType.ROOM, roomId, encrypted), uid).mapResult { topic ->
+            topic?.let {
+                GlobalWsEventPublisher.publishNewTopic(RoomFrame.NewTopicInfo(it))
+            }
+            Result.success(Unit)
+        }
+    }
 
 private const val INTRO_START_OBJECT_ID = 1000L
 private const val INTRO_LOG_TAG = "intro"

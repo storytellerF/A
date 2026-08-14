@@ -23,7 +23,7 @@ internal class WorkerMainTest {
             val provider =
                 TopicSafetyReviewerProvider {
                     attempts += 1
-                    if (attempts == 1) null else TopicSafetyReviewer { false }
+                    Result.success(if (attempts == 1) null else TopicSafetyReviewer { false })
                 }
 
             assertEquals(null, provider.get())

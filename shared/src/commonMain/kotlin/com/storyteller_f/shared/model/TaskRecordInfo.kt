@@ -100,8 +100,11 @@ data class LlmConfig(
     /** Local model path used by the LiteRT provider. */
     val modelPath: String? = null,
 ) {
-    /** Marker used by database row mappers. */
-    companion object
+    /** Constants used to persist this configuration model. */
+    companion object {
+        /** Backend configuration key used to persist the active LLM configuration. */
+        const val CONFIG_KEY: String = "llm_config"
+    }
 }
 
 /** Runtime configuration for one worker task type. */

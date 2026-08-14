@@ -180,8 +180,6 @@ object KoogClientFactory {
         return createOpenAICompatibleClient(
             apiKey = apiKey,
             baseUrl = baseUrl,
-            temperature = config.temperature,
-            maxTokens = config.maxTokens,
         )
     }
 

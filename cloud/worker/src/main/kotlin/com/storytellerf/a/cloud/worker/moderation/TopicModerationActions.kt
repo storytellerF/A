@@ -10,8 +10,6 @@ import com.storyteller_f.a.backend.core.types.Topic
 import com.storyteller_f.a.cloud.worker.sendTopicToNotificationRoom
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.UserStatus
-import com.storyteller_f.shared.utils.UNIT_RESULT
-import com.storyteller_f.shared.utils.mapResult
 import com.storytellerf.a.cloud.worker.getSystemUserId
 import io.github.aakira.napier.Napier
 
@@ -42,14 +40,11 @@ private suspend fun Backend.updateTopicAuthorStatus(topic: Topic) {
 }
 
 private suspend fun Backend.notifyTopicAuthor(topic: Topic, rawUser: RawUser) {
-    UNIT_RESULT.mapResult {
-        sendTopicToNotificationRoom(
-            getSystemUserId(),
-            rawUser.user,
-            buildModerationNotificationContent(topic.id),
-        )
-        UNIT_RESULT
-    }.getOrElse { failure ->
+    sendTopicToNotificationRoom(
+        getSystemUserId(),
+        rawUser.user,
+        buildModerationNotificationContent(topic.id),
+    ).getOrElse { failure ->
         throw TopicModerationDataAccessException("Failed to notify topic author ${topic.author}", failure)
     }
 }

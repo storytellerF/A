@@ -93,7 +93,7 @@ private suspend fun Backend.processTitleNotification(title: Title, successRecord
             .getOrThrow() ?: throw Exception("user not found")
 
     val content = generateTitleNotificationContent(title)
-    sendTopicToNotificationRoom(getSystemUserId(), rawUser.user, content)
+    sendTopicToNotificationRoom(getSystemUserId(), rawUser.user, content).getOrThrow()
     database.admin.createTaskRecord(successRecord).getOrThrow()
 
     Napier.i(tag = TITLE_LOG_TAG) {

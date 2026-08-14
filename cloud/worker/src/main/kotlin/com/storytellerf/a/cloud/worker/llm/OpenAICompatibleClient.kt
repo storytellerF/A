@@ -29,12 +29,7 @@ private const val LOG_PREVIEW_LENGTH = 100
  * Creates an LLMClient that directly calls OpenAI-compatible APIs.
  * This bypasses koog's parameter determination logic for non-standard model names.
  */
-internal fun createOpenAICompatibleClient(
-    apiKey: String,
-    baseUrl: String,
-    temperature: Double,
-    maxTokens: Int,
-): LLMClient {
+internal fun createOpenAICompatibleClient(apiKey: String, baseUrl: String): LLMClient {
     val httpClient = HttpClient(OkHttp)
     val jsonSerializer =
         Json {
@@ -73,8 +68,8 @@ internal fun createOpenAICompatibleClient(
                         }
                         add(ChatMessage(role = "user", content = userPrompt))
                     },
-                    temperature = prompt.params.temperature ?: temperature,
-                    maxTokens = prompt.params.maxTokens ?: maxTokens,
+                    temperature = prompt.params.temperature,
+                    maxTokens = prompt.params.maxTokens,
                 )
 
             val requestBody =
@@ -130,9 +125,9 @@ internal fun createOpenAICompatibleClient(
 private data class ChatCompletionRequest(
     val model: String,
     val messages: List<ChatMessage>,
-    val temperature: Double,
+    val temperature: Double?,
     @SerialName("max_tokens")
-    val maxTokens: Int,
+    val maxTokens: Int?,
 )
 
 @Serializable

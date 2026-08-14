@@ -125,7 +125,7 @@ private suspend fun Backend.notifyAcgAuthor(topic: Topic) {
                 systemUserId,
                 rawUser.user,
                 buildAcgNotificationContent(topic.id),
-            )
+            ).getOrThrow()
         }
         UNIT_RESULT
     }.onFailure { failure ->
