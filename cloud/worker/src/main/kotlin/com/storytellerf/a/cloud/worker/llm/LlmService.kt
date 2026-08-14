@@ -7,6 +7,7 @@ import ai.koog.prompt.dsl.emptyPrompt
 import ai.koog.prompt.dsl.prompt
 import ai.koog.prompt.executor.clients.LLMClient
 import ai.koog.prompt.llm.LLModel
+import ai.koog.prompt.params.LLMParams
 import com.storyteller_f.shared.model.LlmConfig
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellationException
@@ -26,7 +27,11 @@ internal interface LlmService : AutoCloseable {
     override fun close() {}
 }
 
-internal class KoogLlmService(private val client: LLMClient, private val model: LLModel) : LlmService {
+internal class KoogLlmService(
+    private val client: LLMClient,
+    private val model: LLModel,
+    private val config: LlmConfig,
+) : LlmService {
     override suspend fun generateResponse(prompt: String, systemPrompt: String?): String {
         val response =
             try {
@@ -46,7 +51,16 @@ internal class KoogLlmService(private val client: LLMClient, private val model: 
                         }
                     }
 
-                val result = client.execute(promptObj, model)
+                val result =
+                    client.execute(
+                        promptObj.withParams(
+                            LLMParams(
+                                temperature = config.temperature,
+                                maxTokens = config.maxTokens,
+                            ),
+                        ),
+                        model,
+                    )
                 val text = result.textContent()
 
                 Napier.d(tag = "llm") {
@@ -81,7 +95,7 @@ internal class KoogLlmService(private val client: LLMClient, private val model: 
             val model =
                 KoogClientFactory.resolveModel(config)
                     ?: error("Model resolution failed for ${config.provider}")
-            return KoogLlmService(client, model)
+            return KoogLlmService(client, model, config)
         }
     }
 }

@@ -4,15 +4,35 @@
 package com.storytellerf.a.cloud.worker
 
 import com.storyteller_f.a.cloud.worker.TASK_CONFIG_POLL_MILLIS
+import com.storyteller_f.a.cloud.worker.TopicSafetyReviewerProvider
 import com.storyteller_f.a.cloud.worker.executeConfiguredTaskIteration
 import com.storyteller_f.shared.model.TaskConfig
 import com.storyteller_f.shared.model.TaskRecordType
+import com.storytellerf.a.cloud.worker.moderation.TopicSafetyReviewer
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 
 internal class WorkerMainTest {
+    @Test
+    fun `reviewer provider retries initialization`() {
+        runTest {
+            var attempts = 0
+            val provider =
+                TopicSafetyReviewerProvider {
+                    attempts += 1
+                    if (attempts == 1) null else TopicSafetyReviewer { false }
+                }
+
+            assertEquals(null, provider.get())
+            assertNotNull(provider.get())
+            assertNotNull(provider.get())
+            assertEquals(2, attempts)
+        }
+    }
+
     @Test
     fun `missing task configuration does not execute task`() {
         runTest {

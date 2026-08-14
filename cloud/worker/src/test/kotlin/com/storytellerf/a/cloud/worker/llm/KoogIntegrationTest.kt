@@ -8,8 +8,8 @@ import com.storyteller_f.shared.model.LlmProvider
 import java.io.File
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
 
 internal class KoogIntegrationTest {
     @BeforeTest
@@ -85,16 +85,16 @@ internal class KoogIntegrationTest {
     }
 
     @Test
-    fun `test model resolution`() {
+    fun `test explicit model identifier is preserved`() {
         val config =
             LlmConfig(
                 provider = LlmProvider.OPENAI,
                 apiKey = "test-key",
-                model = "gpt-4o",
+                model = "gpt-4",
             )
 
         val model = KoogClientFactory.resolveModel(config)
         assertNotNull(model)
-        assertTrue(model.id.contains("gpt-4o", ignoreCase = true))
+        assertEquals("gpt-4", model.id)
     }
 }

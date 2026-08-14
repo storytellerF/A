@@ -72,12 +72,20 @@ fun main() {
 internal class TopicSafetyReviewerProvider(private val factory: suspend () -> TopicSafetyReviewer?) :
     AutoCloseable {
     private var reviewer: TopicSafetyReviewer? = null
-    private var isInitialized = false
 
     suspend fun get(): TopicSafetyReviewer? {
-        if (!isInitialized) {
-            reviewer = factory()
-            isInitialized = true
+        if (reviewer == null) {
+            reviewer =
+                try {
+                    factory()
+                } catch (exception: CancellationException) {
+                    throw exception
+                } catch (exception: IllegalStateException) {
+                    Napier.e(tag = "moderation", throwable = exception) {
+                        "Unable to initialize topic safety reviewer; will retry"
+                    }
+                    null
+                }
         }
         return reviewer
     }
@@ -115,10 +123,10 @@ internal suspend fun createTopicSafetyReviewer(backend: Backend): TopicSafetyRev
         }
     }
 
-    error(
-        "LLM configuration not found in database. " +
-            "Please configure an LLM provider in the backend_configs table.",
-    )
+    Napier.w(tag = "moderation") {
+        "LLM configuration not found; topic moderation will retry after configuration is added"
+    }
+    return null
 }
 
 private fun CoroutineScope.startWorkerTasks(

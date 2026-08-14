@@ -1,6 +1,9 @@
 {
-  "provider": "LITERT_LLM",
-  "modelPath": "/path/to/your/model.litertlm",
-  "temperature": 0.0,
-  "maxTokens": 1024
+  "type": "llmConfig",
+  "llmConfigData": {
+    "provider": "LITERT_LLM",
+    "modelPath": "/path/to/your/model.litertlm",
+    "temperature": 0.0,
+    "maxTokens": 1024
+  }
 }
