@@ -36,7 +36,6 @@ import com.storyteller_f.a.app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.client.compose_core.components.CustomIcon
 import com.storyteller_f.a.client.compose_core.components.IconRes
 import com.storyteller_f.a.client.compose_core.components.LocalToaster
-import com.storyteller_f.a.client.compose_core.components.catchingResult
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import io.github.vinceglb.filekit.FileKit
@@ -111,10 +110,13 @@ private fun TranslateModelPreferenceItem() {
         trailingContent = {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button({
-                    globalDialogController.catchingResult(scope) {
-                        FileKit.openFilePicker()?.let { file ->
-                            gpt.importModel(file).getOrThrow()
-                            toast.showMessage("${file.name} imported")
+                    globalDialogController.launch {
+                        useResult {
+                            FileKit.openFilePicker()?.let { file ->
+                                gpt.importModel(file).getOrThrow()
+                                toast.showMessage("${file.name} imported")
+                                Result.success(Unit)
+                            } ?: Result.failure(Exception("No file selected"))
                         }
                     }
                 }) {

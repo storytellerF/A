@@ -17,7 +17,6 @@ import com.storyteller_f.a.app.LocalSessionManager
 import com.storyteller_f.a.app.pages.topic.addReaction
 import com.storyteller_f.a.app.pages.topic.deleteReaction
 import com.storyteller_f.a.client.compose_core.components.Pill
-import com.storyteller_f.a.client.compose_core.components.use
 import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.TopicInfo
@@ -232,8 +231,8 @@ private fun EmojiCell(
         emoji = emoji,
         selected = hasReacted
     ) {
-        globalTask.use(key) { state ->
-            state.use {
+        globalTask.launch(key) {
+            use {
                 if (hasReacted) {
                     deleteReaction(topicInfo, emoji, info)
                 } else {
