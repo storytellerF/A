@@ -14,7 +14,6 @@ pluginManagement {
             }
         }
         mavenCentral()
-        maven("https://maven.pkg.jetbrains.space/public/p/ktor/eap")
         gradlePluginPortal()
     }
 }
@@ -33,9 +32,7 @@ dependencyResolutionManagement {
             }
         }
         mavenCentral()
-        maven("https://maven.pkg.jetbrains.space/public/p/ktor/eap")
-        maven("https://jogamp.org/deployment/maven/")
-        maven("https://jitpack.io")
+        // maven("https://jitpack.io") // Disabled - no JitPack dependencies
     }
 }
 
@@ -67,7 +64,7 @@ include(":cloud:ws")
 include(":cloud:cli")
 include(":cloud:worker")
 include(":cloud:service")
-include(":cloud:pdfbox")
+//include(":cloud:pdfbox") // Disabled - pdfbox-layout requires JitPack
 include(":cloud:openpdf")
 include(":cloud:pdf")
 include(":panel:composeApp")

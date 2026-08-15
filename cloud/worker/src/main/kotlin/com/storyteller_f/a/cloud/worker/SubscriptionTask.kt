@@ -77,9 +77,10 @@ private suspend fun Backend.processTopicSubscription(topic: Topic, fetchSize: In
         }
         val systemUserId = getSystemUserId()
         userSubscriptions.forEach { userSubscription ->
-            val rawUser = database.user.getRawUser(ObjectFetch.IdFetch(userSubscription.uid))
-                .getOrThrow() ?: throw Exception("user not found")
-            sendTopicToNotificationRoom(systemUserId, rawUser.user, content)
+            val rawUser =
+                database.user.getRawUser(ObjectFetch.IdFetch(userSubscription.uid))
+                    .getOrThrow() ?: throw Exception("user not found")
+            sendTopicToNotificationRoom(systemUserId, rawUser.user, content).getOrThrow()
             database.subscription.insertSubscriptionSentLog(
                 SubscriptionSentLog(
                     SnowflakeFactory.nextId(),
@@ -88,7 +89,7 @@ private suspend fun Backend.processTopicSubscription(topic: Topic, fetchSize: In
                     ObjectType.TOPIC,
                     userSubscription.id,
                     now(),
-                )
+                ),
             ).getOrThrow()
         }
         cursor = Cursor.AscCursor(userSubscriptions.last().id)
@@ -106,55 +107,53 @@ private suspend fun Backend.processTopicSubscription(topic: Topic, fetchSize: In
     ).getOrThrow()
 }
 
-private fun generateTopicSubscriptionContent(
-    topic: Topic,
-    topicParentId: PrimaryKey
-): String? = when (topic.parentType) {
-    ObjectType.TOPIC -> generateTopicSubscriptionContentForTopic(topic.id, topicParentId)
+private fun generateTopicSubscriptionContent(topic: Topic, topicParentId: PrimaryKey): String? =
+    when (topic.parentType) {
+        ObjectType.TOPIC -> generateTopicSubscriptionContentForTopic(topic.id, topicParentId)
+        ObjectType.ROOM -> generateTopicSubscriptionContentForRoom(topic.id, topicParentId)
+        ObjectType.COMMUNITY -> generateTopicSubscriptionContentForCommunity(topic.id, topicParentId)
+        ObjectType.USER -> generateTopicSubscriptionContentForUser(topic.id, topicParentId)
+        else -> null
+    }
 
-    ObjectType.ROOM -> generateTopicSubscriptionContentForRoom(topic.id, topicParentId)
-
-    ObjectType.COMMUNITY -> generateTopicSubscriptionContentForCommunity(topic.id, topicParentId)
-
-    ObjectType.USER -> generateTopicSubscriptionContentForUser(topic.id, topicParentId)
-
-    else -> null
+private fun generateTopicSubscriptionContentForUser(topicId: PrimaryKey, topicParentId: PrimaryKey): String {
+    val content =
+        buildString {
+            appendLine("New topic at user")
+            appendLine(generateModelMarkdownContent(ObjectTuple(topicId, ObjectType.TOPIC)))
+            appendLine(generateModelMarkdownContent(ObjectTuple(topicParentId, ObjectType.USER)))
+        }
+    return content
 }
 
-private fun generateTopicSubscriptionContentForUser(
-    topicId: PrimaryKey,
-    topicParentId: PrimaryKey
-) = buildString {
-    appendLine("New topic at user")
-    appendLine(generateModelMarkdownContent(ObjectTuple(topicId, ObjectType.TOPIC)))
-    appendLine(generateModelMarkdownContent(ObjectTuple(topicParentId, ObjectType.USER)))
+private fun generateTopicSubscriptionContentForCommunity(topicId: PrimaryKey, topicParentId: PrimaryKey): String {
+    val content =
+        buildString {
+            appendLine("New topic at community")
+            appendLine(generateModelMarkdownContent(ObjectTuple(topicId, ObjectType.TOPIC)))
+            appendLine(generateModelMarkdownContent(ObjectTuple(topicParentId, ObjectType.COMMUNITY)))
+        }
+    return content
 }
 
-private fun generateTopicSubscriptionContentForCommunity(
-    topicId: PrimaryKey,
-    topicParentId: PrimaryKey
-) = buildString {
-    appendLine("New topic at community")
-    appendLine(generateModelMarkdownContent(ObjectTuple(topicId, ObjectType.TOPIC)))
-    appendLine(generateModelMarkdownContent(ObjectTuple(topicParentId, ObjectType.COMMUNITY)))
+private fun generateTopicSubscriptionContentForRoom(topicId: PrimaryKey, topicParentId: PrimaryKey): String {
+    val content =
+        buildString {
+            appendLine("New topic at room")
+            appendLine(generateModelMarkdownContent(ObjectTuple(topicId, ObjectType.TOPIC)))
+            appendLine(generateModelMarkdownContent(ObjectTuple(topicParentId, ObjectType.ROOM)))
+        }
+    return content
 }
 
-private fun generateTopicSubscriptionContentForRoom(
-    topicId: PrimaryKey,
-    topicParentId: PrimaryKey
-) = buildString {
-    appendLine("New topic at room")
-    appendLine(generateModelMarkdownContent(ObjectTuple(topicId, ObjectType.TOPIC)))
-    appendLine(generateModelMarkdownContent(ObjectTuple(topicParentId, ObjectType.ROOM)))
-}
-
-private fun generateTopicSubscriptionContentForTopic(
-    topicId: PrimaryKey,
-    topicParentId: PrimaryKey
-) = buildString {
-    appendLine("New topic at topic")
-    appendLine(generateModelMarkdownContent(ObjectTuple(topicId, ObjectType.TOPIC)))
-    appendLine(generateModelMarkdownContent(ObjectTuple(topicParentId, ObjectType.TOPIC)))
+private fun generateTopicSubscriptionContentForTopic(topicId: PrimaryKey, topicParentId: PrimaryKey): String {
+    val content =
+        buildString {
+            appendLine("New topic at topic")
+            appendLine(generateModelMarkdownContent(ObjectTuple(topicId, ObjectType.TOPIC)))
+            appendLine(generateModelMarkdownContent(ObjectTuple(topicParentId, ObjectType.TOPIC)))
+        }
+    return content
 }
 
 private const val SUBSCRIPTION_LOG_TAG = "subscription"

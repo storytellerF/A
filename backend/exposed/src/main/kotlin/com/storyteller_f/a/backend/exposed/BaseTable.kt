@@ -26,6 +26,7 @@ import com.storyteller_f.a.backend.exposed.database.ExposedSubscriptionDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedTitleDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedTopicDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedUserDatabase
+import com.storyteller_f.a.backend.exposed.tables.BackendConfigs
 import com.storyteller_f.a.backend.exposed.tables.TaskConfigs
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.AlgoType
@@ -151,12 +152,34 @@ class ExposedDatabase(val databaseSession: ExposedDatabaseSession) : CombinedDat
         }
     }
 
-    override suspend fun init() {
+    override val init: suspend () -> Unit = {
         ExposedDatabaseFactory.init(databaseSession.database)
     }
 
-    override suspend fun clean() {
+    override val clean: suspend () -> Unit = {
         ExposedDatabaseFactory.clean(databaseSession.database)
+    }
+
+    override suspend fun getBackendConfig(key: String): Result<String?> {
+        val configResult =
+            databaseSession.dbSearch {
+                search {
+                    BackendConfigs.selectAll().where { BackendConfigs.key eq key }
+                }
+                first { row -> row[BackendConfigs.value] }
+            }
+        return configResult
+    }
+
+    override suspend fun upsertBackendConfig(key: String, value: String): Result<Unit> {
+        val upsertResult: Result<Unit> =
+            databaseSession.dbQuery {
+                BackendConfigs.upsert(BackendConfigs.key) { statement ->
+                    statement[BackendConfigs.key] = key
+                    statement[BackendConfigs.value] = value
+                }
+            }
+        return upsertResult
     }
 
     override suspend fun migration() {

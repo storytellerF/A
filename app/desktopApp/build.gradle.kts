@@ -33,6 +33,7 @@ composeCompiler {
 compose.desktop {
     application {
         mainClass = "com.storyteller_f.a.app.JvmMainKt"
+        jvmArgs += "--enable-native-access=ALL-UNNAMED"
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
@@ -47,11 +48,4 @@ compose.desktop {
             configurationFiles.from(file("proguard-rules-desktop.pro"))
         }
     }
-}
-
-tasks.withType<JavaExec>().configureEach {
-    jvmArgs(
-        "--add-opens=java.desktop/sun.awt=ALL-UNNAMED",
-        "--add-opens=java.desktop/java.awt.peer=ALL-UNNAMED",
-    )
 }

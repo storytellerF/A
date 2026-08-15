@@ -198,8 +198,18 @@ interface CombinedDatabase {
     /** Creates or replaces worker task configurations by task type. */
     val upsertTaskConfigs: suspend (List<TaskConfig>) -> Result<Unit>
 
-    suspend fun init()
-    suspend fun clean()
+    /** Initializes the database schema and required resources. */
+    val init: suspend () -> Unit
+
+    /** Removes persisted database data. */
+    val clean: suspend () -> Unit
+
+    /** Returns a persisted backend configuration value, or null if the key is not configured. */
+    suspend fun getBackendConfig(key: String): Result<String?>
+
+    /** Creates or replaces a persisted backend configuration value. */
+    suspend fun upsertBackendConfig(key: String, value: String): Result<Unit>
+
     suspend fun migration()
 
     fun isDup(throwable: Throwable): Boolean

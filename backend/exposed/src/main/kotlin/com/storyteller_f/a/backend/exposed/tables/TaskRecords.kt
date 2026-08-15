@@ -106,3 +106,16 @@ internal fun TaskConfig.Companion.wrapRow(resultRow: ResultRow): TaskConfig {
         }
     return config
 }
+
+/** Generic persisted backend configuration values. */
+object BackendConfigs : Table("backend_configs") {
+    /** Unique configuration key. */
+    val key: Column<String> = varchar("key", CONFIG_KEY_MAX_LENGTH)
+
+    /** Serialized configuration value interpreted by the caller that owns the key. */
+    val value: Column<String> = text("value")
+
+    override val primaryKey: PrimaryKey = PrimaryKey(key)
+}
+
+private const val CONFIG_KEY_MAX_LENGTH = 100
