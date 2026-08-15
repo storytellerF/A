@@ -72,15 +72,17 @@ abstract class TargetAppiumHelper {
 }
 
 class AppAppiumHelper : TargetAppiumHelper() {
-    override val androidApp = AppUnderTest(
-        packageName = resolvePackageName(
-            sequenceOf(
-                File("../../app/androidApp/build/outputs/apk/debug/output-metadata.json"),
-                File("app/androidApp/build/outputs/apk/debug/output-metadata.json"),
+    override val androidApp by lazy {
+        AppUnderTest(
+            packageName = resolvePackageName(
+                sequenceOf(
+                    File("../../app/androidApp/build/outputs/apk/debug/output-metadata.json"),
+                    File("app/androidApp/build/outputs/apk/debug/output-metadata.json"),
+                ),
             ),
-        ),
-        mainActivityClassName = "com.storyteller_f.a.app.MainActivity",
-    )
+            mainActivityClassName = "com.storyteller_f.a.app.MainActivity",
+        )
+    }
     override val desktopRuntimeConfig = DesktopAppiumRuntimeConfig(
         suiteName = "DesktopAppiumTest",
         appLabel = "Desktop app",
@@ -141,15 +143,17 @@ class AppAppiumHelper : TargetAppiumHelper() {
 }
 
 class PanelAppiumHelper : TargetAppiumHelper() {
-    override val androidApp = AppUnderTest(
-        packageName = resolvePackageName(
-            sequenceOf(
-                File("../../panel/androidApp/build/outputs/apk/debug/output-metadata.json"),
-                File("panel/androidApp/build/outputs/apk/debug/output-metadata.json"),
+    override val androidApp by lazy {
+        AppUnderTest(
+            packageName = resolvePackageName(
+                sequenceOf(
+                    File("../../panel/androidApp/build/outputs/apk/debug/output-metadata.json"),
+                    File("panel/androidApp/build/outputs/apk/debug/output-metadata.json"),
+                ),
             ),
-        ),
-        mainActivityClassName = "com.storyteller_f.a.panel.MainActivity",
-    )
+            mainActivityClassName = "com.storyteller_f.a.panel.MainActivity",
+        )
+    }
     override val desktopRuntimeConfig = DesktopAppiumRuntimeConfig(
         suiteName = "DesktopPanelAppiumTest",
         appLabel = "Desktop panel app",

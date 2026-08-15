@@ -94,7 +94,6 @@ import com.storyteller_f.a.client.compose_core.components.NavRoute
 import com.storyteller_f.a.client.compose_core.components.SheetContainer
 import com.storyteller_f.a.client.compose_core.components.StateView
 import com.storyteller_f.a.client.compose_core.components.bottomAppending
-import com.storyteller_f.a.client.compose_core.components.catchingResult
 import com.storyteller_f.a.client.compose_core.components.pagingItems
 import com.storyteller_f.a.client.compose_core.components.request
 import com.storyteller_f.a.client.compose_core.components.topPrepend
@@ -332,12 +331,14 @@ private fun FileQuotaActionButton(onClick: () -> Unit) {
 private fun UploadFileActionButton() {
     val fileProvider = LocalClientFileProvider.current
     val globalDialogController = LocalGlobalDialog.current
-    val scope = rememberCoroutineScope()
     FloatingActionButton({
-        globalDialogController.catchingResult(scope) {
-            val f = FileKit.openFilePicker()
-            if (f != null) {
-                fileProvider.getUploader()?.upload(persistentListOf(PlatformClientFile(f)))
+        globalDialogController.launch {
+            useResult {
+                val f = FileKit.openFilePicker()
+                if (f != null) {
+                    fileProvider.getUploader()?.upload(persistentListOf(PlatformClientFile(f)))
+                }
+                Result.success(Unit)
             }
         }
     }) {
@@ -606,13 +607,15 @@ private fun DownloadStatusButton(d: DownloadInfo?) {
     d ?: return
     val fileProvider = LocalClientFileProvider.current
     val globalDialogController = LocalGlobalDialog.current
-    val scope = rememberCoroutineScope()
     // 根据下载状态显示操作按钮
     when (d.status) {
         DownloadStatus.DOWNLOADING -> {
             IconButton(onClick = {
-                globalDialogController.catchingResult(scope) {
-                    fileProvider.getDownloader()?.pause(d.fileInfo.id)
+                globalDialogController.launch {
+                    useResult {
+                        fileProvider.getDownloader()?.pause(d.fileInfo.id)
+                        Result.success(Unit)
+                    }
                 }
             }) {
                 Icon(Icons.Default.Pause, contentDescription = "pause")
@@ -624,8 +627,11 @@ private fun DownloadStatusButton(d: DownloadInfo?) {
         DownloadStatus.PROCESS_FAILED,
         DownloadStatus.DOWNLOADED -> {
             IconButton(onClick = {
-                globalDialogController.catchingResult(scope) {
-                    fileProvider.getDownloader()?.resume(d.fileInfo.id)
+                globalDialogController.launch {
+                    useResult {
+                        fileProvider.getDownloader()?.resume(d.fileInfo.id)
+                        Result.success(Unit)
+                    }
                 }
             }) {
                 Icon(Icons.Default.PlayCircle, contentDescription = "resume")
@@ -640,8 +646,11 @@ private fun DownloadStatusButton(d: DownloadInfo?) {
 
         DownloadStatus.NOT_DOWNLOADED -> {
             IconButton({
-                globalDialogController.catchingResult(scope) {
-                    fileProvider.getDownloader()?.download(d.fileInfo)
+                globalDialogController.launch {
+                    useResult {
+                        fileProvider.getDownloader()?.download(d.fileInfo)
+                        Result.success(Unit)
+                    }
                 }
             }) {
                 Icon(Icons.Default.NotStarted, "start")
@@ -845,7 +854,6 @@ fun UploadItem(@PreviewParameter(UploadItemPreviewProvider::class) uploadInfo: U
 
 @Composable
 fun CancelUploadButton(uploadInfo: UploadInfo, updateDropdown: (Boolean) -> Unit) {
-    val scope = rememberCoroutineScope()
     val globalDialogController = LocalGlobalDialog.current
     val current = LocalUiViewModel.current
     val state by current.instance.collectAsState()
@@ -855,13 +863,16 @@ fun CancelUploadButton(uploadInfo: UploadInfo, updateDropdown: (Boolean) -> Unit
         text = { Text("Abort Upload") },
         onClick = {
             updateDropdown(false)
-            globalDialogController.catchingResult(scope) {
-                uploadInfo.recordId?.let {
-                    request {
-                        abortChunkUpload(it)
-                    }.getOrThrow()
+            globalDialogController.launch {
+                useResult {
+                    uploadInfo.recordId?.let {
+                        request {
+                            abortChunkUpload(it)
+                        }.getOrThrow()
+                    }
+                    modelStorage.upload.delete(UploadCollection(myUid), uploadInfo.pathHash)
+                    Result.success(Unit)
                 }
-                modelStorage.upload.delete(UploadCollection(myUid), uploadInfo.pathHash)
             }
         },
         leadingIcon = {
@@ -874,7 +885,6 @@ fun CancelUploadButton(uploadInfo: UploadInfo, updateDropdown: (Boolean) -> Unit
 private fun UploadStatusButton(file: UploadInfo?) {
     file ?: return
     val provider = LocalClientFileProvider.current
-    val scope = rememberCoroutineScope()
     val globalDialogController = LocalGlobalDialog.current
     when (file.status) {
         UploadStatus.SUCCESS -> {
@@ -883,8 +893,11 @@ private fun UploadStatusButton(file: UploadInfo?) {
 
         UploadStatus.FAILED -> {
             IconButton({
-                globalDialogController.catchingResult(scope) {
-                    provider.getUploader()?.resume(file.pathHash)
+                globalDialogController.launch {
+                    useResult {
+                        provider.getUploader()?.resume(file.pathHash)
+                        Result.success(Unit)
+                    }
                 }
             }) {
                 Icon(Icons.Default.Refresh, "retry")
@@ -893,8 +906,11 @@ private fun UploadStatusButton(file: UploadInfo?) {
 
         UploadStatus.PAUSED, UploadStatus.NOT_UPLOADING -> {
             IconButton({
-                globalDialogController.catchingResult(scope) {
-                    provider.getUploader()?.resume(file.pathHash)
+                globalDialogController.launch {
+                    useResult {
+                        provider.getUploader()?.resume(file.pathHash)
+                        Result.success(Unit)
+                    }
                 }
             }) {
                 Icon(Icons.Default.PlayCircle, "resume")
@@ -903,8 +919,11 @@ private fun UploadStatusButton(file: UploadInfo?) {
 
         UploadStatus.UPLOADING -> {
             IconButton({
-                globalDialogController.catchingResult(scope) {
-                    provider.getUploader()?.pause(file.pathHash)
+                globalDialogController.launch {
+                    useResult {
+                        provider.getUploader()?.pause(file.pathHash)
+                        Result.success(Unit)
+                    }
                 }
             }) {
                 Icon(Icons.Default.Pause, "pause")

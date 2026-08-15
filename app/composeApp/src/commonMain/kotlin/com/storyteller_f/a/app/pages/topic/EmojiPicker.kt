@@ -20,12 +20,11 @@ import com.storyteller_f.a.app.LocalGlobalTask
 import com.storyteller_f.a.app.common.OnAddReaction
 import com.storyteller_f.a.app.common.OnRemoveReaction
 import com.storyteller_f.a.client.compose_core.components.BaseSheet
-import com.storyteller_f.a.client.compose_core.components.GlobalTask
 import com.storyteller_f.a.client.compose_core.components.GlobalTaskContext
+import com.storyteller_f.a.client.compose_core.components.NestedGlobalTask
 import com.storyteller_f.a.client.compose_core.components.SheetContainer
 import com.storyteller_f.a.client.compose_core.components.emitEvent
 import com.storyteller_f.a.client.compose_core.components.request
-import com.storyteller_f.a.client.compose_core.components.use
 import com.storyteller_f.a.client.core.SimpleUserSessionManager
 import com.storyteller_f.a.client.core.addReaction
 import com.storyteller_f.a.client.core.deleteReaction
@@ -123,8 +122,8 @@ private fun EmojiItem(
     val emojiText = emoji.details.string
     Box(modifier = Modifier.size(emojiSize).clickable {
         hideSheet()
-        globalTask.use("${topic.id} $emojiText") { state ->
-            state.use {
+        globalTask.launch("${topic.id} $emojiText") {
+            use {
                 addReaction(topic, emojiText)
             }
         }
@@ -133,7 +132,7 @@ private fun EmojiItem(
     }
 }
 
-suspend fun GlobalTask<GlobalTaskContext<SimpleUserSessionManager>>.addReaction(
+suspend fun NestedGlobalTask<GlobalTaskContext<SimpleUserSessionManager>>.addReaction(
     topic: TopicInfo,
     emojiText: String,
 ): Result<ReactionInfo> {
@@ -157,7 +156,7 @@ suspend fun GlobalTask<GlobalTaskContext<SimpleUserSessionManager>>.addReaction(
     }
 }
 
-suspend fun GlobalTask<GlobalTaskContext<SimpleUserSessionManager>>.deleteReaction(
+suspend fun NestedGlobalTask<GlobalTaskContext<SimpleUserSessionManager>>.deleteReaction(
     topic: TopicInfo,
     emojiText: String,
     existing: ReactionInfo,

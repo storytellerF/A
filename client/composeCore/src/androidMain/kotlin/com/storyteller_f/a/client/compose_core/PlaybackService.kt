@@ -11,7 +11,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import com.storyteller_f.a.client.compose_core.components.ConstPlayItem
-import com.storyteller_f.a.client.compose_core.components.GlobalDialogController
+import com.storyteller_f.a.client.compose_core.components.CustomGlobalDialogController
 import com.storyteller_f.a.client.compose_core.components.LocalMediaPlaySession
 import com.storyteller_f.a.client.compose_core.components.MediaPlayerService
 import com.storyteller_f.a.client.compose_core.components.RemoteMediaItem
@@ -81,7 +81,7 @@ class PlaybackService : MediaSessionService() {
     }
 }
 
-suspend fun<C> GlobalDialogController<C>.startPlayMedia(
+suspend fun<C> CustomGlobalDialogController<C>.startPlayMedia(
     remoteMediaItem: RemoteMediaItem,
     localMediaPlaySession: LocalMediaPlaySession,
     mediaPlayerService: MediaPlayerService,
@@ -89,5 +89,6 @@ suspend fun<C> GlobalDialogController<C>.startPlayMedia(
 ) {
     useResult {
         mediaPlayerService.startPlay(remoteMediaItem, localMediaPlaySession, playList)
+        Result.success(Unit)
     }
 }
