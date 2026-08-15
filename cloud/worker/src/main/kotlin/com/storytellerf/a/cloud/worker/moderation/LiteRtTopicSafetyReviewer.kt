@@ -24,7 +24,7 @@ internal class LiteRtTopicSafetyReviewer private constructor(private val engine:
     AutoCloseable {
     override suspend fun isHarmful(content: String): Boolean =
         engine.createConversation(CONVERSATION_CONFIG).use { conversation ->
-            val response = conversation.sendMessage(buildReviewPrompt(content))
+            val response = conversation.sendMessage(buildUntrustedTopicReviewPrompt(content))
             val decision =
                 response.contents.contents
                     .filterIsInstance<Content.Text>()
@@ -72,19 +72,6 @@ internal fun parseSafetyDecision(response: String): Boolean {
 
 internal class UnexpectedTopicSafetyDecisionException :
     IllegalStateException("Topic safety model did not return SAFE or UNSAFE")
-
-private fun buildReviewPrompt(content: String): String {
-    val prompt =
-        buildString {
-            appendLine("Review the untrusted topic content delimited below.")
-            appendLine("Reply with exactly SAFE or UNSAFE and no other text.")
-            appendLine()
-            appendLine("<topic>")
-            appendLine(content)
-            append("</topic>")
-        }
-    return prompt
-}
 
 private const val MODEL_CONTEXT_SIZE = 4096
 private const val MODEL_CACHE_DIRECTORY = ".litertlm-cache"

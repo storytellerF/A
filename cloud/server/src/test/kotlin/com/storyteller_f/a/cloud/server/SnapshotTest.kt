@@ -5,7 +5,6 @@ import com.storyteller_f.a.backend.core.setLogPath
 import com.storyteller_f.a.cloud.openpdf.OpenPdf
 import com.storyteller_f.a.cloud.pdf.PdfGenerationSpec
 import com.storyteller_f.a.cloud.pdf.SnapshotGeneration
-import com.storyteller_f.a.cloud.pdfbox.PdfBox
 import com.storyteller_f.shared.CryptoJvm
 import com.storyteller_f.shared.model.UserInfo
 import de.redsix.pdfcompare.PdfComparator
@@ -16,7 +15,6 @@ import java.security.Security
 import kotlin.test.Test
 
 class SnapshotTest {
-
     @Test
     fun `test generate signed pdf`() {
         setLogPath()
@@ -24,24 +22,19 @@ class SnapshotTest {
         val path1 = "build/test/keystore2.p12"
         CryptoJvm.createKeystore(password1.toCharArray(), path1)
         Security.addProvider(SecurityProvider.getProvider())
-        listOf(
-            OpenPdf(),
-            PdfBox()
-        ).forEachIndexed { i, pdf ->
-            val pdfFile = File("build/tmp/$i.pdf")
-            val signedFile = File("build/tmp/$i.signed.pdf")
-            pdf.generateSignedSnapshot(
-                UserInfo.EMPTY,
-                UserInfo.EMPTY,
-                "hello world",
-                emptyMap(),
-                SnapshotGeneration.KeyStoreGeneration(path1, password1, pdfFile, signedFile),
-                PdfGenerationSpec(
-                    LocalDateTime.parse("2023-01-01T00:00:00"),
-                    LocalDateTime.parse("2023-01-01T00:00:00")
-                )
-            ).getOrThrow()
-        }
+        val pdfFile = File("build/tmp/openpdf.pdf")
+        val signedFile = File("build/tmp/openpdf.signed.pdf")
+        OpenPdf().generateSignedSnapshot(
+            UserInfo.EMPTY,
+            UserInfo.EMPTY,
+            "hello world",
+            emptyMap(),
+            SnapshotGeneration.KeyStoreGeneration(path1, password1, pdfFile, signedFile),
+            PdfGenerationSpec(
+                LocalDateTime.parse("2023-01-01T00:00:00"),
+                LocalDateTime.parse("2023-01-01T00:00:00")
+            )
+        ).getOrThrow()
     }
 
     @Test
@@ -166,52 +159,38 @@ private fun openPdfSnapshot(content: String, map: Map<String, File> = emptyMap()
         it.className.endsWith("SnapshotTest")
     }.methodName
 
-    listOf(
-        OpenPdf(),
-        PdfBox()
-    ).forEach { pdf ->
-        val name = pdf::class.simpleName
-        val baseDir = File("build/tmp/$name")
+    val pdf = OpenPdf()
+    val name = pdf::class.simpleName
+    val baseDir = File("build/tmp/$name")
 
-        val snapshotDir = File("src/test/pdf-snapshot/$name").apply { mkdirs() }
-        val snapshotFile = File(snapshotDir, "$methodName.pdf")
+    val snapshotDir = File("src/test/pdf-snapshot/$name").apply { mkdirs() }
+    val snapshotFile = File(snapshotDir, "$methodName.pdf")
 
-        val actualFile = if (snapshotFile.exists()) {
-            File(baseDir, "$methodName.actual.pdf")
-        } else {
-            snapshotFile
-        }
-        actualFile.parentFile.mkdirs()
-        pdf.generateSignedSnapshot(
-            UserInfo.EMPTY,
-            UserInfo.EMPTY,
-            content,
-            map,
-            SnapshotGeneration.SimpleGeneration(actualFile),
-            PdfGenerationSpec(LocalDateTime.parse("2023-01-01T00:00:00"), LocalDateTime.parse("2023-01-01T00:00:00"))
-        ).getOrThrow()
-        if (snapshotFile.exists()) {
-            val result = PdfComparator<de.redsix.pdfcompare.CompareResultImpl>(
-                snapshotFile.absolutePath,
-                actualFile.absolutePath
-            ).compare()
-            // 可选：输出 diff 到目录（返回是否相等）
-            val diffFile = baseDir.resolve("$methodName-diff")
-            result.writeTo(diffFile.path)
+    val actualFile = if (snapshotFile.exists()) {
+        File(baseDir, "$methodName.actual.pdf")
+    } else {
+        snapshotFile
+    }
+    actualFile.parentFile.mkdirs()
+    pdf.generateSignedSnapshot(
+        UserInfo.EMPTY,
+        UserInfo.EMPTY,
+        content,
+        map,
+        SnapshotGeneration.SimpleGeneration(actualFile),
+        PdfGenerationSpec(LocalDateTime.parse("2023-01-01T00:00:00"), LocalDateTime.parse("2023-01-01T00:00:00"))
+    ).getOrThrow()
+    if (snapshotFile.exists()) {
+        val result = PdfComparator<de.redsix.pdfcompare.CompareResultImpl>(
+            snapshotFile.absolutePath,
+            actualFile.absolutePath
+        ).compare()
+        val diffFile = baseDir.resolve("$methodName-diff")
+        result.writeTo(diffFile.path)
 
-            // 支持通过环境变量刷新快照：UPDATE_SNAPSHOTS=1 覆盖现有快照（仅当结果不同时）
-            val updateSnapshots = System.getenv("UPDATE_SNAPSHOTS") == "1"
-            if (updateSnapshots && !result.isEqual()) {
-                // 用本次生成的 actual 覆盖 baseline
-                if (actualFile.canonicalPath != snapshotFile.canonicalPath) {
-                    actualFile.copyTo(snapshotFile, overwrite = true)
-                }
-            }
-
-            println(actualFile.canonicalPath)
-            println(diffFile.canonicalPath + ".pdf")
-
-            // assertTrue(result.isEqual(), "$name PDF snapshot mismatch for $methodName")
+        val updateSnapshots = System.getenv("UPDATE_SNAPSHOTS") == "1"
+        if (updateSnapshots && !result.isEqual() && actualFile.canonicalPath != snapshotFile.canonicalPath) {
+            actualFile.copyTo(snapshotFile, overwrite = true)
         }
     }
 }

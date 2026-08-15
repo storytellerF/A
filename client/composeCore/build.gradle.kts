@@ -82,7 +82,7 @@ kotlin {
         }
 
         commonMain.dependencies {
-            api(libs.compose.webview.multiplatform)
+            api(libs.compose.native.webview)
             implementation(libs.runtime)
             implementation(libs.foundation)
             implementation(libs.material)

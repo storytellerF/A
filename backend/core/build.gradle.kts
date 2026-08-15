@@ -23,7 +23,7 @@ dependencies {
     testImplementation(libs.testcontainers.postgresql)
     testImplementation(libs.h2)
     testImplementation(libs.postgresql)
-    runtimeOnly(libs.vavi.image.avif)
+    runtimeOnly(libs.image.avif)
 }
 
 tasks.test {

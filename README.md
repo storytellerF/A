@@ -134,6 +134,7 @@ activity causes the author account to be marked `READ_ONLY`.
 
 - Java 21 (Eclipse Temurin)
 - The included Gradle wrapper (`./gradlew`)
+- Desktop AsciiDoc previews use the system WebView engine: WebView2 on Windows, WKWebView on macOS, and WebKitGTK on Linux.
 
 ### Build Commands
 

@@ -61,6 +61,52 @@ data class TaskRecordSummary(
     val retryRequestedCount: Long,
 )
 
+/** Supported large-language-model providers. */
+enum class LlmProvider {
+    /** OpenAI API. */
+    OPENAI,
+
+    /** Anthropic API. */
+    ANTHROPIC,
+
+    /** Google API. */
+    GOOGLE,
+
+    /** Local Ollama server. */
+    OLLAMA,
+
+    /** API implementing the OpenAI protocol. */
+    OPENAI_COMPATIBLE,
+
+    /** Local Google LiteRT language model. */
+    LITERT_LLM,
+}
+
+/** Runtime configuration used to create an LLM client. */
+@Serializable
+data class LlmConfig(
+    /** Provider used to execute requests. */
+    val provider: LlmProvider,
+    /** Provider API key, when required. */
+    val apiKey: String? = null,
+    /** Endpoint override for OpenAI-compatible providers. */
+    val baseUrl: String? = null,
+    /** Provider model identifier. */
+    val model: String? = null,
+    /** Sampling temperature used for generation. */
+    val temperature: Double = DEFAULT_LLM_TEMPERATURE,
+    /** Maximum number of tokens generated in one response. */
+    val maxTokens: Int = DEFAULT_LLM_MAX_TOKENS,
+    /** Local model path used by the LiteRT provider. */
+    val modelPath: String? = null,
+) {
+    /** Constants used to persist this configuration model. */
+    companion object {
+        /** Backend configuration key used to persist the active LLM configuration. */
+        const val CONFIG_KEY: String = "llm_config"
+    }
+}
+
 /** Runtime configuration for one worker task type. */
 @Serializable
 data class TaskConfig(
@@ -81,3 +127,6 @@ data class TaskConfig(
     /** Marker used by database row mappers. */
     companion object
 }
+
+private const val DEFAULT_LLM_TEMPERATURE = 0.7
+private const val DEFAULT_LLM_MAX_TOKENS = 1024

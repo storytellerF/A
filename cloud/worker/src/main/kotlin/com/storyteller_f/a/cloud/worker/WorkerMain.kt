@@ -2,7 +2,6 @@ package com.storyteller_f.a.cloud.worker
 
 import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.Backend
-import com.storyteller_f.a.backend.core.CombinedDatabase
 import com.storyteller_f.a.backend.core.CustomConfig
 import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.buildCommunitySearchService
@@ -26,15 +25,20 @@ import com.storyteller_f.a.backend.core.service.UserSearchService
 import com.storyteller_f.a.backend.core.setLogPath
 import com.storyteller_f.a.backend.exposed.buildExposedDatabase
 import com.storyteller_f.a.cloud.ws.api.GlobalWsEventPublisher
+import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.loadCryptoLibIfNeed
+import com.storyteller_f.shared.model.LlmConfig
+import com.storyteller_f.shared.model.LlmProvider
 import com.storyteller_f.shared.model.TaskConfig
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.setupKmpLogger
+import com.storyteller_f.shared.utils.mapCatchingNotNull
+import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
+import com.storytellerf.a.cloud.worker.moderation.KoogTopicSafetyReviewer
 import com.storytellerf.a.cloud.worker.moderation.LiteRtTopicSafetyReviewer
 import com.storytellerf.a.cloud.worker.moderation.TopicSafetyReviewer
 import com.storytellerf.a.cloud.worker.moderation.doTopicModerationTask
-import com.storytellerf.a.cloud.worker.moderation.ensureGemmaModel
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -44,8 +48,10 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import java.nio.file.Path
-import java.util.Locale
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+
+private const val MODERATION_LOG_TAG = "moderation"
 
 fun main() {
     setLogPath()
@@ -59,7 +65,9 @@ fun main() {
     GlobalWsEventPublisher.configure(env["WS_RPC_URL"])
     val backend = buildBackendFromEnv(env)
     runBlocking {
-        TopicSafetyReviewerProvider { createTopicSafetyReviewer(env) }.use { reviewerProvider ->
+        TopicSafetyReviewerProvider {
+            createTopicSafetyReviewer(backend)
+        }.use { reviewerProvider ->
             Napier.i {
                 "worker started"
             }
@@ -71,44 +79,71 @@ fun main() {
     }
 }
 
-internal class TopicSafetyReviewerProvider(factory: () -> TopicSafetyReviewer?) : AutoCloseable {
-    private val reviewer = lazy(factory)
+internal class TopicSafetyReviewerProvider(private val factory: suspend () -> Result<TopicSafetyReviewer?>) :
+    AutoCloseable {
+    private val initializationMutex = Mutex()
+    private var reviewer: TopicSafetyReviewer? = null
 
-    fun get(): TopicSafetyReviewer? = reviewer.value
+    suspend fun get(): TopicSafetyReviewer? {
+        val initializedReviewer =
+            initializationMutex.withLock {
+                reviewer ?: run {
+                    val result = factory()
+                    val failure = result.exceptionOrNull()
+                    if (failure is CancellationException) throw failure
+                    if (failure != null) {
+                        Napier.e(tag = MODERATION_LOG_TAG, throwable = failure) {
+                            "Unable to initialize topic safety reviewer; will retry"
+                        }
+                    }
+                    reviewer = result.getOrNull()
+                    reviewer
+                }
+            }
+        return initializedReviewer
+    }
 
     override fun close() {
-        if (reviewer.isInitialized()) {
-            reviewer.value?.close()
-        }
+        reviewer?.close()
     }
 }
 
-internal fun createTopicSafetyReviewer(
-    env: MergedEnv,
-    modelProvider: (MergedEnv) -> Path = ::ensureGemmaModel,
-    reviewerFactory: ((Path) -> TopicSafetyReviewer)? = null,
-): TopicSafetyReviewer? {
-    if (!isTopicModerationEnabled(env)) {
-        Napier.w(tag = "moderation") {
-            "topic moderation is disabled"
-        }
-        return null
-    }
-    val modelPath = modelProvider(env)
-    Napier.i(tag = "moderation") {
-        "initialize topic moderation model"
-    }
-    return reviewerFactory?.invoke(modelPath) ?: LiteRtTopicSafetyReviewer.create(modelPath)
-}
+internal suspend fun createTopicSafetyReviewer(backend: Backend): Result<TopicSafetyReviewer?> =
+    backend.database.getBackendConfig(LlmConfig.CONFIG_KEY)
+        .mapCatchingNotNull { value -> commonJson.decodeFromString<LlmConfig>(value) }
+        .mapResultIfNotNull { config ->
+            Napier.i(tag = MODERATION_LOG_TAG) {
+                "using LLM provider: ${config.provider}"
+            }
+            Result.success(
+                when (config.provider) {
+                    LlmProvider.LITERT_LLM -> {
+                        val modelPath =
+                            config.modelPath
+                                ?: error("modelPath required for LITERT_LLM provider")
+                        LiteRtTopicSafetyReviewer.create(
+                            java.nio.file.Path.of(modelPath),
+                        )
+                    }
 
-internal fun isTopicModerationEnabled(env: MergedEnv): Boolean {
-    val configuredValue = env[TOPIC_MODERATION_ENABLED]?.run { trim().lowercase(Locale.ROOT) }
-    return when (configuredValue) {
-        null, "true" -> true
-        "false" -> false
-        else -> throw IllegalArgumentException("$TOPIC_MODERATION_ENABLED must be true or false")
-    }
-}
+                    LlmProvider.OPENAI,
+                    LlmProvider.ANTHROPIC,
+                    LlmProvider.GOOGLE,
+                    LlmProvider.OLLAMA,
+                    LlmProvider.OPENAI_COMPATIBLE,
+                    -> {
+                        KoogTopicSafetyReviewer.create(config)
+                    }
+                },
+            )
+        }
+        .onSuccess { reviewer ->
+            if (reviewer == null) {
+                Napier.w(tag = MODERATION_LOG_TAG) {
+                    "LLM configuration not found; topic moderation will retry after configuration is added"
+                }
+            }
+        }
 
 private fun CoroutineScope.startWorkerTasks(
     backend: Backend,
@@ -207,7 +242,7 @@ class WorkerBackend(
     override val fileSearchService: FileSearchService,
     override val objectStorageService: ObjectStorageService,
     override val nameService: NameService,
-    override val database: CombinedDatabase
+    override val database: com.storyteller_f.a.backend.core.CombinedDatabase,
 ) : Backend
 
 fun buildBackendFromEnv(env: MergedEnv): Backend {
@@ -229,18 +264,17 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
     val mediaService = mediaService(env)
 
     return WorkerBackend(
-        customConfig,
-        topicSearchService,
-        roomSearchService,
-        communitySearchService,
-        userSearchService,
-        memberSearchService,
-        fileSearchService,
-        mediaService,
-        buildNameService(env),
-        buildExposedDatabase(databaseConnection)
+        customConfig = customConfig,
+        topicSearchService = topicSearchService,
+        roomSearchService = roomSearchService,
+        communitySearchService = communitySearchService,
+        userSearchService = userSearchService,
+        memberSearchService = memberSearchService,
+        fileSearchService = fileSearchService,
+        objectStorageService = mediaService,
+        nameService = buildNameService(env),
+        database = buildExposedDatabase(databaseConnection),
     )
 }
 
-private const val TOPIC_MODERATION_ENABLED = "TOPIC_MODERATION_ENABLED"
 internal const val TASK_CONFIG_POLL_MILLIS = 10_000L

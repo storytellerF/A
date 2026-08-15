@@ -33,12 +33,14 @@ import com.storyteller_f.a.cloud.core.service.addUserLog
 import com.storyteller_f.a.cloud.core.service.getFileInfoList
 import com.storyteller_f.a.cloud.core.service.tryUploadFiles
 import com.storyteller_f.shared.Type2Algo
+import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.encryptDataByAES
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.FontSettings
+import com.storyteller_f.shared.model.LlmConfig
 import com.storyteller_f.shared.model.MemberPolicy
 import com.storyteller_f.shared.model.PassType
 import com.storyteller_f.shared.model.TitleWorkStatus
@@ -193,6 +195,7 @@ class AddPreset : Subcommand("add", "add entry") {
             "title" -> addTitles(presetValue)
             "panelAccount" -> addPanels(presetValue, parentDir)
             "taskConfig" -> addTaskConfigs(presetValue)
+            "llmConfig" -> addLlmConfig(presetValue)
             else -> handleUnknownPresetType(type)
         }
     }
@@ -204,6 +207,16 @@ class AddPreset : Subcommand("add", "add entry") {
 
     private suspend fun Backend.addTaskConfigs(presetValue: PresetValue) {
         database.upsertTaskConfigs(presetValue.taskConfigData.orEmpty()).getOrThrow()
+    }
+
+    private suspend fun Backend.addLlmConfig(presetValue: PresetValue) {
+        val llmConfig =
+            presetValue.llmConfigData
+                ?: error("llmConfigData is required for llmConfig preset type")
+        database.upsertBackendConfig(
+            LlmConfig.CONFIG_KEY,
+            commonJson.encodeToString(llmConfig),
+        ).getOrThrow()
     }
 
     private suspend fun Backend.addPanels(presetValue: PresetValue, parentDir: File) {
