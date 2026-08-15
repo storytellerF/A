@@ -95,6 +95,7 @@ jobs:
             build/outputs/pkg/release/
 
   build-desktop-msi:
+    if: false
     runs-on: windows-latest
     env:
       # this will take the entire vars context configured in the repository > environments
@@ -133,6 +134,7 @@ jobs:
 
   build-desktop-dmg:
     runs-on: macos-latest
+    if: false
     env:
       # this will take the entire vars context configured in the repository > environments
       # setting and convert it to JSON so we can automatically assign all the values to the
