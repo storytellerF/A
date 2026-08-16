@@ -200,6 +200,7 @@ interface CombinedDatabase {
     val reaction: ReactionDatabase
     val favorite: FavoriteDatabase
     val subscription: SubscriptionDatabase
+    /** Persisted worker task configuration access. */
     val workerTask: WorkerTaskDatabase
 
     /** Initializes the database schema and required resources. */
@@ -219,6 +220,7 @@ interface CombinedDatabase {
     fun isDup(throwable: Throwable): Boolean
 }
 
+/** Assembles a full [RawUserOverview] for the given user. */
 suspend fun CombinedDatabase.getUserOverview(uid: PrimaryKey): Result<RawUserOverview> = runCatching {
     val subscriptionCount = subscription.getUserSubscriptionCount(uid).getOrThrow()
     val favoriteCount = favorite.getUserFavoriteCount().getOrThrow()
@@ -244,6 +246,7 @@ suspend fun CombinedDatabase.getUserOverview(uid: PrimaryKey): Result<RawUserOve
     )
 }
 
+/** Enriches raw [Topic] objects with content, counts, and user state. */
 suspend fun CombinedDatabase.processTopicToRawTopic(
     uid: PrimaryKey?,
     topics: List<Topic>
@@ -299,17 +302,20 @@ suspend fun CombinedDatabase.processTopicToRawTopic(
     }
 }
 
+/** Returns a single enriched topic or null when not found. */
 suspend fun CombinedDatabase.getRawTopic(fetch: ObjectFetch, uid: PrimaryKey?) =
     topic.getTopic(fetch).mapResultIfNotNull { topic ->
         processTopicToRawTopic(uid, listOf(topic))
     }.firstOrNull()
 
+/** Returns a paginated list of enriched topics. */
 suspend fun CombinedDatabase.getAllRawTopics(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<RawTopic>> {
     return topic.getAllTopicPagination(primaryKeyFetch).mapResult {
         processTopicToRawTopic(null, it.list).pagingNotNull(it.total)
     }
 }
 
+/** Returns enriched topics for the given [ids]. */
 suspend fun CombinedDatabase.getRawTopicListByIds(
     uid: PrimaryKey?,
     ids: List<PrimaryKey>
@@ -317,6 +323,7 @@ suspend fun CombinedDatabase.getRawTopicListByIds(
     processTopicToRawTopic(uid, it)
 }
 
+/** Returns paginated child topics for a parent, enriched with user state. */
 suspend fun CombinedDatabase.getRawTopicByParentId(
     uid: PrimaryKey?,
     primaryKeyFetch: PrimaryKeyFetch,
@@ -326,6 +333,7 @@ suspend fun CombinedDatabase.getRawTopicByParentId(
     processTopicToRawTopic(uid, it.list).pagingNotNull(it.total)
 }
 
+/** Returns the most recent child topic for a parent, enriched with user state. */
 suspend fun CombinedDatabase.getLatestRawTopic(
     uid: PrimaryKey?,
     parentId: PrimaryKey
