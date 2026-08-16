@@ -1563,12 +1563,5 @@
     <ID>UseDataClass:UserSubscription.kt:SubscriptionSentLog</ID>
     <ID>UseDataClass:UserTopicRead.kt:UserTopicRead</ID>
     <ID>UseOrEmpty:Env.kt:System.getenv("OSTYPE")?.lowercase(Locale.getDefault()) ?: ""</ID>
-    <ID>TooManyFunctions:Database.kt:com.storyteller_f.a.backend.core.Database.kt</ID>
-    <ID>CascadingCallWrapping:Database.kt:CombinedDatabase$associateBy { it.objectId }</ID>
-    <ID>FunctionSignature:Database.kt:CombinedDatabase$suspend fun getRawTopicListByIds</ID>
-    <ID>FunctionSignature:Database.kt:CombinedDatabase$suspend fun getRawTopicByParentId</ID>
-    <ID>FunctionSignature:Database.kt:CombinedDatabase$suspend fun getUserOverview</ID>
-    <ID>FunctionSignature:Database.kt:CombinedDatabase$suspend fun processTopicToRawTopic: Result&lt;List&lt;RawTopic&gt;&gt;</ID>
-    <ID>FunctionSignature:Database.kt:CombinedDatabase$suspend fun getAllRawTopics</ID>
   </CurrentIssues>
 </SmellBaseline>
