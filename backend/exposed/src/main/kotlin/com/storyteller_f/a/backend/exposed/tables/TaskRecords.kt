@@ -4,8 +4,8 @@ import com.storyteller_f.a.backend.core.types.TaskRecord
 import com.storyteller_f.a.backend.exposed.BaseTable
 import com.storyteller_f.a.backend.exposed.customPrimaryKey
 import com.storyteller_f.a.backend.exposed.taskRecordType
-import com.storyteller_f.shared.model.WorkerTask
 import com.storyteller_f.shared.model.TaskRecordType
+import com.storyteller_f.shared.model.WorkerTask
 import org.jetbrains.exposed.v1.core.Column
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.Table

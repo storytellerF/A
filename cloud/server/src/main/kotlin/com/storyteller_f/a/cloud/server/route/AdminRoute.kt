@@ -8,7 +8,6 @@ import com.storyteller_f.a.api.MemberInfoListResponse
 import com.storyteller_f.a.api.PanelLogInfoListResponse
 import com.storyteller_f.a.api.ReactionRecordInfoListResponse
 import com.storyteller_f.a.api.RoomInfoListResponse
-import com.storyteller_f.a.api.WorkerTaskListResponse
 import com.storyteller_f.a.api.TaskRecordInfoListResponse
 import com.storyteller_f.a.api.TaskRecordSummaryListResponse
 import com.storyteller_f.a.api.TitleInfoListResponse
@@ -18,6 +17,7 @@ import com.storyteller_f.a.api.UserFavoriteInfoListResponse
 import com.storyteller_f.a.api.UserInfoListResponse
 import com.storyteller_f.a.api.UserLogInfoListResponse
 import com.storyteller_f.a.api.UserSubscriptionInfoListResponse
+import com.storyteller_f.a.api.WorkerTaskListResponse
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.cloud.core.service.addUser

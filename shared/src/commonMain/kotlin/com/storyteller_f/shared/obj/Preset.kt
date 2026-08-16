@@ -1,8 +1,8 @@
 package com.storyteller_f.shared.obj
 
 import com.storyteller_f.shared.model.LlmConfig
-import com.storyteller_f.shared.model.WorkerTask
 import com.storyteller_f.shared.model.TitleType
+import com.storyteller_f.shared.model.WorkerTask
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.serialization.Serializable

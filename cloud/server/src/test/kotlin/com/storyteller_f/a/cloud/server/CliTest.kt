@@ -15,8 +15,8 @@ import com.storyteller_f.a.cloud.worker.doAcgTask
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.PassType
-import com.storyteller_f.shared.model.WorkerTask
 import com.storyteller_f.shared.model.TaskRecordType
+import com.storyteller_f.shared.model.WorkerTask
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.obj.PresetCommunity
 import com.storyteller_f.shared.obj.PresetFile

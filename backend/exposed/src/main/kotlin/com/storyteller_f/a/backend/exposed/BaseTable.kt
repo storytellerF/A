@@ -47,7 +47,6 @@ import io.r2dbc.spi.R2dbcDataIntegrityViolationException
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.datetime.datetime
-import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.r2dbc.ExposedR2dbcException
 import org.jetbrains.exposed.v1.r2dbc.selectAll
 import org.jetbrains.exposed.v1.r2dbc.upsert

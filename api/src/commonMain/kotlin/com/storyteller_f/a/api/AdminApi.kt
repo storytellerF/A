@@ -21,11 +21,11 @@ import com.storyteller_f.shared.model.PanelLogInfo
 import com.storyteller_f.shared.model.PanelOverview
 import com.storyteller_f.shared.model.ReactionRecordInfo
 import com.storyteller_f.shared.model.RoomInfo
-import com.storyteller_f.shared.model.WorkerTask
 import com.storyteller_f.shared.model.TaskRecordInfo
 import com.storyteller_f.shared.model.TaskRecordSummary
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.model.TitleInfo
+import com.storyteller_f.shared.model.WorkerTask
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserFavoriteInfo
 import com.storyteller_f.shared.model.UserInfo
