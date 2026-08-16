@@ -13,9 +13,7 @@ import com.storyteller_f.a.backend.core.types.RawCommunity
 import com.storyteller_f.a.backend.core.types.RawPanelAccount
 import com.storyteller_f.a.backend.core.types.RawRoom
 import com.storyteller_f.a.backend.core.types.RawTitle
-import com.storyteller_f.a.backend.core.types.RawTopic
 import com.storyteller_f.a.backend.core.types.RawUser
-import com.storyteller_f.a.backend.core.types.RawUserOverview
 import com.storyteller_f.a.backend.core.types.ReactionRecord
 import com.storyteller_f.a.backend.core.types.Room
 import com.storyteller_f.a.backend.core.types.SubscriptionSentLog
@@ -197,6 +195,7 @@ interface CombinedDatabase {
     val reaction: ReactionDatabase
     val favorite: FavoriteDatabase
     val subscription: SubscriptionDatabase
+
     /** Persisted worker task configuration access. */
     val workerTask: WorkerTaskDatabase
 

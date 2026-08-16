@@ -13,7 +13,11 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.r2dbc.selectAll
 import org.jetbrains.exposed.v1.r2dbc.upsert
 
-class ExposedWorkerTaskDatabase(val databaseSession: ExposedDatabaseSession) : WorkerTaskDatabase {
+/** Exposed-backed implementation of [WorkerTaskDatabase]. */
+class ExposedWorkerTaskDatabase(
+    /** Database session used for executing queries. */
+    val databaseSession: ExposedDatabaseSession,
+) : WorkerTaskDatabase {
     override suspend fun getWorkerTask(type: TaskRecordType): Result<WorkerTask?> {
         return databaseSession.dbSearch {
             search {
