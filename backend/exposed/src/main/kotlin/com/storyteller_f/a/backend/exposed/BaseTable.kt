@@ -29,7 +29,6 @@ import com.storyteller_f.a.backend.exposed.database.ExposedTopicDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedUserDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedWorkerTaskDatabase
 import com.storyteller_f.a.backend.exposed.tables.BackendConfigs
-import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.AssetType
 import com.storyteller_f.shared.model.MemberPolicy

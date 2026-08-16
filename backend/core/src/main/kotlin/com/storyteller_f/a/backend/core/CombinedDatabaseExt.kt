@@ -3,6 +3,8 @@ package com.storyteller_f.a.backend.core
 import com.storyteller_f.a.backend.core.types.RawTopic
 import com.storyteller_f.a.backend.core.types.RawUserOverview
 import com.storyteller_f.a.backend.core.types.Topic
+import com.storyteller_f.a.backend.core.types.UserFavorite
+import com.storyteller_f.a.backend.core.types.UserSubscription
 import com.storyteller_f.a.backend.core.types.UserTopicRead
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicPinSearch
@@ -13,8 +15,8 @@ import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 
 /** Assembles a full [RawUserOverview] for the given user. */
-suspend fun CombinedDatabase.getUserOverview(uid: PrimaryKey): Result<RawUserOverview> =
-    runCatching {
+suspend fun CombinedDatabase.getUserOverview(uid: PrimaryKey): Result<RawUserOverview> {
+    return runCatching {
         val subscriptionCount = subscription.getUserSubscriptionCount(uid).getOrThrow()
         val favoriteCount = favorite.getUserFavoriteCount().getOrThrow()
         val childAccountCount = user.getChildAccountCount(uid).getOrThrow()
@@ -43,17 +45,20 @@ suspend fun CombinedDatabase.getUserOverview(uid: PrimaryKey): Result<RawUserOve
             rawUser,
         )
     }
+}
 
 /** Enriches raw [Topic] objects with content, counts, and user state. */
 suspend fun CombinedDatabase.processTopicToRawTopic(
     uid: PrimaryKey?,
     topics: List<Topic>,
-): Result<List<RawTopic>> = runCatching {
-    val topicIds = topics.map { it.id }
-    if (topicIds.isEmpty()) {
-        emptyList()
-    } else {
-        buildRawTopics(uid, topics, topicIds)
+): Result<List<RawTopic>> {
+    return runCatching {
+        val topicIds = topics.map { it.id }
+        if (topicIds.isEmpty()) {
+            emptyList()
+        } else {
+            buildRawTopics(uid, topics, topicIds)
+        }
     }
 }
 
@@ -94,56 +99,70 @@ private suspend fun CombinedDatabase.buildRawTopics(
 private suspend fun CombinedDatabase.fetchLastReadMap(
     uid: PrimaryKey?,
     topicIds: List<PrimaryKey>,
-): Map<PrimaryKey, UserTopicRead> = if (uid != null) {
-    container.getTopicReadList(topicIds, uid)
-        .map {
-            it.associateBy { userTopicRead -> userTopicRead.objectId }
-        }
-        .getOrThrow()
-} else {
-    emptyMap()
+): Map<PrimaryKey, UserTopicRead> {
+    return if (uid != null) {
+        container.getTopicReadList(topicIds, uid)
+            .map {
+                it.associateBy { userTopicRead -> userTopicRead.objectId }
+            }
+            .getOrThrow()
+    } else {
+        emptyMap()
+    }
 }
 
 private suspend fun CombinedDatabase.fetchFavoriteMap(
     uid: PrimaryKey?,
     topicIds: List<PrimaryKey>,
-) = if (uid != null) {
-    favorite.getHasFavorite(ObjectListFetch.IdListFetch(topicIds), uid)
-        .getOrThrow()
-        .associateBy { it.objectId }
-} else {
-    emptyMap()
+): Map<PrimaryKey, UserFavorite> {
+    return if (uid != null) {
+        favorite.getHasFavorite(ObjectListFetch.IdListFetch(topicIds), uid)
+            .getOrThrow()
+            .associateBy { it.objectId }
+    } else {
+        emptyMap()
+    }
 }
 
 private suspend fun CombinedDatabase.fetchSubscriptionMap(
     uid: PrimaryKey?,
     topicIds: List<PrimaryKey>,
-) = if (uid != null) {
-    subscription.getHasSubscription(ObjectListFetch.IdListFetch(topicIds), uid)
-        .getOrThrow()
-        .associateBy { it.objectId }
-} else {
-    emptyMap()
+): Map<PrimaryKey, UserSubscription> {
+    return if (uid != null) {
+        subscription.getHasSubscription(ObjectListFetch.IdListFetch(topicIds), uid)
+            .getOrThrow()
+            .associateBy { it.objectId }
+    } else {
+        emptyMap()
+    }
 }
 
 /** Returns a single enriched topic or null when not found. */
-suspend fun CombinedDatabase.getRawTopic(fetch: ObjectFetch, uid: PrimaryKey?) =
-    topic.getTopic(fetch).mapResultIfNotNull { topic ->
-        processTopicToRawTopic(uid, listOf(topic))
-    }.firstOrNull()
+suspend fun CombinedDatabase.getRawTopic(
+    fetch: ObjectFetch,
+    uid: PrimaryKey?,
+): Result<RawTopic?> = topic.getTopic(fetch).mapResultIfNotNull { t ->
+    processTopicToRawTopic(uid, listOf(t))
+}.firstOrNull()
 
 /** Returns a paginated list of enriched topics. */
 suspend fun CombinedDatabase.getAllRawTopics(
     primaryKeyFetch: PrimaryKeyFetch,
-): Result<PaginationResult<RawTopic>> = topic.getAllTopicPagination(primaryKeyFetch).mapResult {
-    processTopicToRawTopic(null, it.list).pagingNotNull(it.total)
+): Result<PaginationResult<RawTopic>> {
+    return topic.getAllTopicPagination(primaryKeyFetch).mapResult {
+        processTopicToRawTopic(null, it.list).pagingNotNull(it.total)
+    }
 }
 
 /** Returns enriched topics for the given [ids]. */
-suspend fun CombinedDatabase.getRawTopicListByIds(uid: PrimaryKey?, ids: List<PrimaryKey>) =
-    topic.getTopicListByIds(ids).mapResult {
+suspend fun CombinedDatabase.getRawTopicListByIds(
+    uid: PrimaryKey?,
+    ids: List<PrimaryKey>,
+): Result<List<RawTopic>> {
+    return topic.getTopicListByIds(ids).mapResult {
         processTopicToRawTopic(uid, it)
     }
+}
 
 /** Returns paginated child topics for a parent, enriched with user state. */
 suspend fun CombinedDatabase.getRawTopicByParentId(
@@ -151,12 +170,18 @@ suspend fun CombinedDatabase.getRawTopicByParentId(
     primaryKeyFetch: PrimaryKeyFetch,
     parentId: PrimaryKey,
     pinType: TopicPinSearch?,
-) = topic.getTopicByParentId(uid, primaryKeyFetch, parentId, pinType).mapResult {
-    processTopicToRawTopic(uid, it.list).pagingNotNull(it.total)
+): Result<PaginationResult<RawTopic>> {
+    return topic.getTopicByParentId(uid, primaryKeyFetch, parentId, pinType).mapResult {
+        processTopicToRawTopic(uid, it.list).pagingNotNull(it.total)
+    }
 }
 
 /** Returns the most recent child topic for a parent, enriched with user state. */
-suspend fun CombinedDatabase.getLatestRawTopic(uid: PrimaryKey?, parentId: PrimaryKey) =
-    topic.getLatestTopic(parentId).mapResult {
+suspend fun CombinedDatabase.getLatestRawTopic(
+    uid: PrimaryKey?,
+    parentId: PrimaryKey,
+): Result<List<RawTopic>> {
+    return topic.getLatestTopic(parentId).mapResult {
         processTopicToRawTopic(uid, it)
     }
+}
