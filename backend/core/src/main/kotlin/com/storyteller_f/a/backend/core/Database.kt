@@ -38,7 +38,7 @@ import com.storyteller_f.shared.model.QuotaInfo
 import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.ReactionRecordInfo
-import com.storyteller_f.shared.model.TaskConfig
+import com.storyteller_f.shared.model.WorkerTask
 import com.storyteller_f.shared.model.TaskRecordSummary
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.model.TitleSearchType
@@ -175,6 +175,18 @@ class InsertRoomTuple(
     val createdTime: LocalDateTime,
 )
 
+/** Database access for persisted worker task configurations. */
+interface WorkerTaskDatabase {
+    /** Returns the persisted configuration for one worker task, or null when it has not been configured. */
+    suspend fun getWorkerTask(type: TaskRecordType): Result<WorkerTask?>
+
+    /** Returns all persisted worker task configurations. */
+    suspend fun getWorkerTasks(): Result<List<WorkerTask>>
+
+    /** Creates or replaces worker task configurations by task type. */
+    suspend fun upsertWorkerTasks(configs: List<WorkerTask>): Result<Unit>
+}
+
 interface CombinedDatabase {
     val user: UserDatabase
     val topic: TopicDatabase
@@ -188,21 +200,13 @@ interface CombinedDatabase {
     val reaction: ReactionDatabase
     val favorite: FavoriteDatabase
     val subscription: SubscriptionDatabase
-
-    /** Returns the persisted configuration for one worker task, or null when it has not been configured. */
-    val getTaskConfig: suspend (TaskRecordType) -> Result<TaskConfig?>
-
-    /** Returns all persisted worker task configurations. */
-    val getTaskConfigs: suspend () -> Result<List<TaskConfig>>
-
-    /** Creates or replaces worker task configurations by task type. */
-    val upsertTaskConfigs: suspend (List<TaskConfig>) -> Result<Unit>
+    val workerTask: WorkerTaskDatabase
 
     /** Initializes the database schema and required resources. */
-    val init: suspend () -> Unit
+    suspend fun init()
 
     /** Removes persisted database data. */
-    val clean: suspend () -> Unit
+    suspend fun clean()
 
     /** Returns a persisted backend configuration value, or null if the key is not configured. */
     suspend fun getBackendConfig(key: String): Result<String?>
@@ -213,120 +217,120 @@ interface CombinedDatabase {
     suspend fun migration()
 
     fun isDup(throwable: Throwable): Boolean
+}
 
-    suspend fun getUserOverview(uid: PrimaryKey): Result<RawUserOverview> = runCatching {
-        val subscriptionCount = subscription.getUserSubscriptionCount(uid).getOrThrow()
-        val favoriteCount = favorite.getUserFavoriteCount().getOrThrow()
-        val childAccountCount = user.getChildAccountCount(uid).getOrThrow()
-        val reactionRecordCount = reaction.getUserReactionRecordCount(uid).getOrThrow()
-        val commentCount = topic.getUserCommentCount(uid).getOrThrow()
-        val childAccountIds = user.getChildAccountIds(uid).getOrThrow()
-        val hasUnreadChildRoomMessage = if (childAccountIds.isEmpty()) {
-            false
-        } else {
-            container.getUsersHasUnreadRoomMap(childAccountIds).getOrThrow().values.any { it }
-        }
-        val rawUser = user.getRawUser(ObjectFetch.IdFetch(uid), uid).getOrThrow() ?: error("user not found")
-        RawUserOverview(
-            subscriptionCount,
-            favoriteCount,
-            rawUser.user.acgAmount,
-            childAccountCount,
-            reactionRecordCount,
-            commentCount,
-            hasUnreadChildRoomMessage,
-            rawUser
+suspend fun CombinedDatabase.getUserOverview(uid: PrimaryKey): Result<RawUserOverview> = runCatching {
+    val subscriptionCount = subscription.getUserSubscriptionCount(uid).getOrThrow()
+    val favoriteCount = favorite.getUserFavoriteCount().getOrThrow()
+    val childAccountCount = user.getChildAccountCount(uid).getOrThrow()
+    val reactionRecordCount = reaction.getUserReactionRecordCount(uid).getOrThrow()
+    val commentCount = topic.getUserCommentCount(uid).getOrThrow()
+    val childAccountIds = user.getChildAccountIds(uid).getOrThrow()
+    val hasUnreadChildRoomMessage = if (childAccountIds.isEmpty()) {
+        false
+    } else {
+        container.getUsersHasUnreadRoomMap(childAccountIds).getOrThrow().values.any { it }
+    }
+    val rawUser = user.getRawUser(ObjectFetch.IdFetch(uid), uid).getOrThrow() ?: error("user not found")
+    RawUserOverview(
+        subscriptionCount,
+        favoriteCount,
+        rawUser.user.acgAmount,
+        childAccountCount,
+        reactionRecordCount,
+        commentCount,
+        hasUnreadChildRoomMessage,
+        rawUser
+    )
+}
+
+suspend fun CombinedDatabase.processTopicToRawTopic(
+    uid: PrimaryKey?,
+    topics: List<Topic>
+): Result<List<RawTopic>> = runCatching {
+    val topicIds = topics.map { it.id }
+    if (topicIds.isEmpty()) return@runCatching emptyList()
+
+    val commentedSet = if (uid != null) {
+        topic.isUserCommented(uid, topicIds).map { it.toSet() }.getOrThrow()
+    } else {
+        emptySet()
+    }
+
+    val commentCountMap = topic.getTopicCommentCount(topicIds).map { it.associateByPair() }.getOrThrow()
+    val reactionCountMap = reaction.getReactionCount(topicIds).map { it.associateByPair() }.getOrThrow()
+
+    val lastReadMap = if (uid != null) {
+        container.getTopicReadList(topicIds, uid).map {
+            it.associateBy { userTopicRead -> userTopicRead.objectId }
+        }.getOrThrow()
+    } else {
+        emptyMap()
+    }
+
+    val contentMap = topic.getTopicContentFromByteArray(topics, uid).getOrThrow()
+
+    val favoriteMap = if (uid != null) {
+        favorite.getHasFavorite(ObjectListFetch.IdListFetch(topicIds), uid)
+            .getOrThrow().associateBy { it.objectId }
+    } else {
+        emptyMap()
+    }
+
+    val subscriptionMap = if (uid != null) {
+        subscription.getHasSubscription(ObjectListFetch.IdListFetch(topicIds), uid)
+            .getOrThrow().associateBy { it.objectId }
+    } else {
+        emptyMap()
+    }
+
+    topics.map { topic ->
+        val id = topic.id
+        RawTopic(
+            topic,
+            contentMap[id] ?: TopicContent.Nil,
+            commentCountMap[id] ?: 0,
+            commentedSet.contains(id),
+            reactionCountMap[id] ?: 0,
+            lastReadMap[id]?.topicId,
+            favoriteId = favoriteMap[id]?.id,
+            subscriptionId = subscriptionMap[id]?.id,
         )
     }
+}
 
-    suspend fun processTopicToRawTopic(
-        uid: PrimaryKey?,
-        topics: List<Topic>
-    ): Result<List<RawTopic>> = runCatching {
-        val topicIds = topics.map { it.id }
-        if (topicIds.isEmpty()) return@runCatching emptyList()
+suspend fun CombinedDatabase.getRawTopic(fetch: ObjectFetch, uid: PrimaryKey?) =
+    topic.getTopic(fetch).mapResultIfNotNull { topic ->
+        processTopicToRawTopic(uid, listOf(topic))
+    }.firstOrNull()
 
-        val commentedSet = if (uid != null) {
-            topic.isUserCommented(uid, topicIds).map { it.toSet() }.getOrThrow()
-        } else {
-            emptySet()
-        }
-
-        val commentCountMap = topic.getTopicCommentCount(topicIds).map { it.associateByPair() }.getOrThrow()
-        val reactionCountMap = reaction.getReactionCount(topicIds).map { it.associateByPair() }.getOrThrow()
-
-        val lastReadMap = if (uid != null) {
-            container.getTopicReadList(topicIds, uid).map {
-                it.associateBy { userTopicRead -> userTopicRead.objectId }
-            }.getOrThrow()
-        } else {
-            emptyMap()
-        }
-
-        val contentMap = topic.getTopicContentFromByteArray(topics, uid).getOrThrow()
-
-        val favoriteMap = if (uid != null) {
-            favorite.getHasFavorite(ObjectListFetch.IdListFetch(topicIds), uid)
-                .getOrThrow().associateBy { it.objectId }
-        } else {
-            emptyMap()
-        }
-
-        val subscriptionMap = if (uid != null) {
-            subscription.getHasSubscription(ObjectListFetch.IdListFetch(topicIds), uid)
-                .getOrThrow().associateBy { it.objectId }
-        } else {
-            emptyMap()
-        }
-
-        topics.map { topic ->
-            val id = topic.id
-            RawTopic(
-                topic,
-                contentMap[id] ?: TopicContent.Nil,
-                commentCountMap[id] ?: 0,
-                commentedSet.contains(id),
-                reactionCountMap[id] ?: 0,
-                lastReadMap[id]?.topicId,
-                favoriteId = favoriteMap[id]?.id,
-                subscriptionId = subscriptionMap[id]?.id,
-            )
-        }
+suspend fun CombinedDatabase.getAllRawTopics(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<RawTopic>> {
+    return topic.getAllTopicPagination(primaryKeyFetch).mapResult {
+        processTopicToRawTopic(null, it.list).pagingNotNull(it.total)
     }
+}
 
-    suspend fun getRawTopic(fetch: ObjectFetch, uid: PrimaryKey?) =
-        topic.getTopic(fetch).mapResultIfNotNull { topic ->
-            processTopicToRawTopic(uid, listOf(topic))
-        }.firstOrNull()
+suspend fun CombinedDatabase.getRawTopicListByIds(
+    uid: PrimaryKey?,
+    ids: List<PrimaryKey>
+) = topic.getTopicListByIds(ids).mapResult {
+    processTopicToRawTopic(uid, it)
+}
 
-    suspend fun getAllRawTopics(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<RawTopic>> {
-        return topic.getAllTopicPagination(primaryKeyFetch).mapResult {
-            processTopicToRawTopic(null, it.list).pagingNotNull(it.total)
-        }
-    }
+suspend fun CombinedDatabase.getRawTopicByParentId(
+    uid: PrimaryKey?,
+    primaryKeyFetch: PrimaryKeyFetch,
+    parentId: PrimaryKey,
+    pinType: TopicPinSearch?
+) = topic.getTopicByParentId(uid, primaryKeyFetch, parentId, pinType).mapResult {
+    processTopicToRawTopic(uid, it.list).pagingNotNull(it.total)
+}
 
-    suspend fun getRawTopicListByIds(
-        uid: PrimaryKey?,
-        ids: List<PrimaryKey>
-    ) = topic.getTopicListByIds(ids).mapResult {
-        processTopicToRawTopic(uid, it)
-    }
-
-    suspend fun getRawTopicByParentId(
-        uid: PrimaryKey?,
-        primaryKeyFetch: PrimaryKeyFetch,
-        parentId: PrimaryKey,
-        pinType: TopicPinSearch?
-    ) = topic.getTopicByParentId(uid, primaryKeyFetch, parentId, pinType).mapResult {
-        processTopicToRawTopic(uid, it.list).pagingNotNull(it.total)
-    }
-
-    suspend fun getLatestRawTopic(
-        uid: PrimaryKey?,
-        parentId: PrimaryKey
-    ) = topic.getLatestTopic(parentId).mapResult {
-        processTopicToRawTopic(uid, it)
-    }
+suspend fun CombinedDatabase.getLatestRawTopic(
+    uid: PrimaryKey?,
+    parentId: PrimaryKey
+) = topic.getLatestTopic(parentId).mapResult {
+    processTopicToRawTopic(uid, it)
 }
 
 interface UserDatabase {
