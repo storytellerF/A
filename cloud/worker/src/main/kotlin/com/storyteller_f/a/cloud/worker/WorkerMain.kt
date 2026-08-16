@@ -29,7 +29,7 @@ import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.model.LlmConfig
 import com.storyteller_f.shared.model.LlmProvider
-import com.storyteller_f.shared.model.TaskConfig
+import com.storyteller_f.shared.model.WorkerTask
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.setupKmpLogger
 import com.storyteller_f.shared.utils.mapCatchingNotNull
@@ -176,12 +176,12 @@ private fun CoroutineScope.launchWorkerTask(
     backend: Backend,
     type: TaskRecordType,
     name: String,
-    task: suspend (TaskConfig) -> Unit,
+    task: suspend (WorkerTask) -> Unit,
 ): Job {
     val job =
         launch {
             while (isActive) {
-                val configResult = backend.database.getTaskConfig(type)
+                val configResult = backend.database.workerTask.getWorkerTask(type)
                 executeConfiguredTaskIteration(name, configResult, task)
             }
         }
@@ -190,8 +190,8 @@ private fun CoroutineScope.launchWorkerTask(
 
 internal suspend fun executeConfiguredTaskIteration(
     name: String,
-    configResult: Result<TaskConfig?>,
-    task: suspend (TaskConfig) -> Unit,
+    configResult: Result<WorkerTask?>,
+    task: suspend (WorkerTask) -> Unit,
     wait: suspend (Long) -> Unit = { delay(it) },
 ) {
     val failure = configResult.exceptionOrNull()
@@ -200,7 +200,7 @@ internal suspend fun executeConfiguredTaskIteration(
         Napier.e(tag = "task", throwable = failure) {
             "failed to load $name task configuration"
         }
-        wait(TASK_CONFIG_POLL_MILLIS)
+        wait(WORKER_TASK_POLL_MILLIS)
         return
     }
     val config = configResult.getOrNull()
@@ -208,7 +208,7 @@ internal suspend fun executeConfiguredTaskIteration(
         Napier.d(tag = "task") {
             "$name task is not configured or is disabled"
         }
-        wait(TASK_CONFIG_POLL_MILLIS)
+        wait(WORKER_TASK_POLL_MILLIS)
         return
     }
     Napier.i(tag = "task") {
@@ -277,4 +277,4 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
     )
 }
 
-internal const val TASK_CONFIG_POLL_MILLIS = 10_000L
+internal const val WORKER_TASK_POLL_MILLIS = 10_000L

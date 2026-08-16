@@ -21,7 +21,7 @@ import com.storyteller_f.shared.model.PanelLogInfo
 import com.storyteller_f.shared.model.PanelOverview
 import com.storyteller_f.shared.model.ReactionRecordInfo
 import com.storyteller_f.shared.model.RoomInfo
-import com.storyteller_f.shared.model.TaskConfig
+import com.storyteller_f.shared.model.WorkerTask
 import com.storyteller_f.shared.model.TaskRecordInfo
 import com.storyteller_f.shared.model.TaskRecordSummary
 import com.storyteller_f.shared.model.TaskRecordType
@@ -153,10 +153,10 @@ data class TaskRecordSummaryListResponse(
 
 /** Response containing persisted worker task configurations. */
 @Serializable
-data class TaskConfigListResponse(
-    override val data: CustomImmutableList<TaskConfig>,
+data class WorkerTaskListResponse(
+    override val data: CustomImmutableList<WorkerTask>,
     override val pagination: Pagination<String>? = null,
-) : ListResponse<TaskConfig>
+) : ListResponse<WorkerTask>
 
 /**
  * Path identifying a worker task configuration by task type.
@@ -164,7 +164,7 @@ data class TaskConfigListResponse(
  * @property type Worker task type to configure.
  */
 @Serializable
-data class TaskConfigPath(val type: TaskRecordType)
+data class WorkerTaskPath(val type: TaskRecordType)
 
 /**
  * Editable values for a worker task configuration.
@@ -174,7 +174,7 @@ data class TaskConfigPath(val type: TaskRecordType)
  * @property waitDurationMillis Delay after an enabled iteration, in milliseconds.
  */
 @Serializable
-data class UpdateTaskConfigBody(val isEnabled: Boolean, val fetchSize: Int, val waitDurationMillis: Long)
+data class UpdateWorkerTaskBody(val isEnabled: Boolean, val fetchSize: Int, val waitDurationMillis: Long)
 
 object AdminApi {
     object Users {
@@ -345,21 +345,21 @@ object AdminApi {
     }
 
     /** Administrative worker task configuration endpoints. */
-    object TaskConfigs {
+    object WorkerTasks {
         /** Lists persisted task configurations without synthesizing missing task types. */
-        val get: SafeEndpoint<TaskConfigListResponse> =
+        val get: SafeEndpoint<WorkerTaskListResponse> =
             safeEndpointBuilder("/admin/task-configs") {
-                resp(TaskConfigListResponse::class)
+                resp(WorkerTaskListResponse::class)
             }
 
         /** Operations scoped to a worker task type. */
         object Type {
             /** Creates or replaces one task configuration. */
-            val update: MutationEndpointWithPath<TaskConfig, UpdateTaskConfigBody, TaskConfigPath> =
+            val update: MutationEndpointWithPath<WorkerTask, UpdateWorkerTaskBody, WorkerTaskPath> =
                 mutationEndpointWithPathBuilder("/admin/task-configs/{type}") {
-                    resp(TaskConfig::class)
-                    body(UpdateTaskConfigBody::class)
-                    path(TaskConfigPath::class)
+                    resp(WorkerTask::class)
+                    body(UpdateWorkerTaskBody::class)
+                    path(WorkerTaskPath::class)
                 }
         }
     }

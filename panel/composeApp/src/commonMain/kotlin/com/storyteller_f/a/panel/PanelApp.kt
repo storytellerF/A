@@ -304,7 +304,7 @@ private fun PanelDrawer(
         DrawerNavItem(
             Icons.Default.Settings,
             stringResource(Res.string.worker_task_configurations),
-            onNavigate(scope, drawerState) { nav.gotoTaskConfigs() },
+            onNavigate(scope, drawerState) { nav.gotoWorkerTasks() },
         )
     }
     if (permanent) {

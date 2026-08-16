@@ -4,9 +4,9 @@
     <string name="all_titles">All titles</string>
     <string name="worker_records">Worker records</string>
     <string name="worker_task_configurations">Worker task configurations</string>
-    <string name="no_task_configurations">No task configurations have been initialized.</string>
-    <string name="task_config_fetch_size">Fetch size</string>
-    <string name="task_config_wait_duration">Wait duration (milliseconds)</string>
+    <string name="no_worker_task_configurations">No task configurations have been initialized.</string>
+    <string name="worker_task_fetch_size">Fetch size</string>
+    <string name="worker_task_wait_duration">Wait duration (milliseconds)</string>
     <string name="save">Save</string>
     <string name="all_public_rooms">All public rooms</string>
     <string name="all_private_rooms">All private rooms</string>

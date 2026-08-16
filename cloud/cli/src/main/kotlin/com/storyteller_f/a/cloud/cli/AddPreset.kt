@@ -194,7 +194,7 @@ class AddPreset : Subcommand("add", "add entry") {
             "file" -> addFiles(presetValue, parentDir)
             "title" -> addTitles(presetValue)
             "panelAccount" -> addPanels(presetValue, parentDir)
-            "taskConfig" -> addTaskConfigs(presetValue)
+            "taskConfig" -> addWorkerTasks(presetValue)
             "llmConfig" -> addLlmConfig(presetValue)
             else -> handleUnknownPresetType(type)
         }
@@ -205,8 +205,8 @@ class AddPreset : Subcommand("add", "add entry") {
         exitProcess(2)
     }
 
-    private suspend fun Backend.addTaskConfigs(presetValue: PresetValue) {
-        database.upsertTaskConfigs(presetValue.taskConfigData.orEmpty()).getOrThrow()
+    private suspend fun Backend.addWorkerTasks(presetValue: PresetValue) {
+        database.workerTask.upsertWorkerTasks(presetValue.workerTaskData.orEmpty()).getOrThrow()
     }
 
     private suspend fun Backend.addLlmConfig(presetValue: PresetValue) {

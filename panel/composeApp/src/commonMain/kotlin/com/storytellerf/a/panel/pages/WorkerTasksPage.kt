@@ -38,21 +38,21 @@ import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.client.compose_core.components.safeArea
 import com.storyteller_f.a.panel.LocalPanelNav
 import com.storyteller_f.a.panel.Res
-import com.storyteller_f.a.panel.common.CreateTaskConfigsViewModel
-import com.storyteller_f.a.panel.common.TaskConfigEditorState
-import com.storyteller_f.a.panel.no_task_configurations
+import com.storyteller_f.a.panel.common.CreateWorkerTasksViewModel
+import com.storyteller_f.a.panel.common.WorkerTaskEditorState
+import com.storyteller_f.a.panel.no_worker_task_configurations
 import com.storyteller_f.a.panel.save
-import com.storyteller_f.a.panel.task_config_fetch_size
-import com.storyteller_f.a.panel.task_config_wait_duration
+import com.storyteller_f.a.panel.worker_task_fetch_size
+import com.storyteller_f.a.panel.worker_task_wait_duration
 import com.storyteller_f.a.panel.worker_task_configurations
 import org.jetbrains.compose.resources.stringResource
 
 /** Displays persisted worker task configurations and their editable values. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun TaskConfigsPage() {
+internal fun WorkerTasksPage() {
     val panelNav = LocalPanelNav.current
-    val viewModel = CreateTaskConfigsViewModel()
+    val viewModel = CreateWorkerTasksViewModel()
     val uiState by viewModel.uiState.collectAsState()
     Scaffold(
         topBar = {
@@ -81,7 +81,7 @@ internal fun TaskConfigsPage() {
                     }
                     if (uiState.configs.isEmpty()) {
                         Text(
-                            text = stringResource(Res.string.no_task_configurations),
+                            text = stringResource(Res.string.no_worker_task_configurations),
                             modifier = Modifier.padding(16.dp),
                         )
                     } else {
@@ -90,7 +90,7 @@ internal fun TaskConfigsPage() {
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
                             items(uiState.configs, key = { it.type }) { config ->
-                                TaskConfigEditor(
+                                WorkerTaskEditor(
                                     config = config,
                                     onEnabledChange = { viewModel.updateEnabled(config.type, it) },
                                     onFetchSizeChange = { viewModel.updateFetchSize(config.type, it) },
@@ -107,8 +107,8 @@ internal fun TaskConfigsPage() {
 }
 
 @Composable
-private fun TaskConfigEditor(
-    config: TaskConfigEditorState,
+private fun WorkerTaskEditor(
+    config: WorkerTaskEditorState,
     onEnabledChange: (Boolean) -> Unit,
     onFetchSizeChange: (String) -> Unit,
     onWaitDurationChange: (String) -> Unit,
@@ -138,7 +138,7 @@ private fun TaskConfigEditor(
                 value = config.fetchSize,
                 onValueChange = onFetchSizeChange,
                 enabled = !config.isSaving,
-                label = { Text(stringResource(Res.string.task_config_fetch_size)) },
+                label = { Text(stringResource(Res.string.worker_task_fetch_size)) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
@@ -147,7 +147,7 @@ private fun TaskConfigEditor(
                 value = config.waitDurationMillis,
                 onValueChange = onWaitDurationChange,
                 enabled = !config.isSaving,
-                label = { Text(stringResource(Res.string.task_config_wait_duration)) },
+                label = { Text(stringResource(Res.string.worker_task_wait_duration)) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),

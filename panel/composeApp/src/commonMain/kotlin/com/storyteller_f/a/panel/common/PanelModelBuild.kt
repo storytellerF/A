@@ -268,9 +268,9 @@ internal fun CreateTaskRecordSummariesViewModel() =
     }
 
 @Composable
-internal fun CreateTaskConfigsViewModel(): TaskConfigsViewModel =
-    panelViewModel(keys = listOf("task-configs")) { sessionManager, _ ->
-        TaskConfigsViewModel(sessionManager)
+internal fun CreateWorkerTasksViewModel(): WorkerTasksViewModel =
+    panelViewModel(keys = listOf("worker-tasks")) { sessionManager, _ ->
+        WorkerTasksViewModel(sessionManager)
     }
 
 @Composable

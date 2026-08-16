@@ -25,7 +25,7 @@ import com.storyteller_f.a.client.core.getPanelLogs
 import com.storyteller_f.a.client.core.getRoomById
 import com.storyteller_f.a.client.core.getRoomFiles
 import com.storyteller_f.a.client.core.getRoomMembers
-import com.storyteller_f.a.client.core.getTaskConfigs
+import com.storyteller_f.a.client.core.getWorkerTasks
 import com.storyteller_f.a.client.core.getTaskRecordSummaries
 import com.storyteller_f.a.client.core.getTaskRecords
 import com.storyteller_f.a.client.core.getTitleById
@@ -45,7 +45,7 @@ import com.storyteller_f.a.client.core.getUserSubscriptions
 import com.storyteller_f.a.client.core.getUserUploadRecords
 import com.storyteller_f.a.client.core.markTaskRecordForRetry
 import com.storyteller_f.a.client.core.overview
-import com.storyteller_f.a.client.core.updateTaskConfig
+import com.storyteller_f.a.client.core.updateWorkerTask
 import com.storyteller_f.shared.Type2Algo
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.AlgoType
@@ -56,7 +56,7 @@ import com.storyteller_f.shared.model.PanelLogInfo
 import com.storyteller_f.shared.model.PanelOverview
 import com.storyteller_f.shared.model.ReactionRecordInfo
 import com.storyteller_f.shared.model.RoomInfo
-import com.storyteller_f.shared.model.TaskConfig
+import com.storyteller_f.shared.model.WorkerTask
 import com.storyteller_f.shared.model.TaskRecordInfo
 import com.storyteller_f.shared.model.TaskRecordSummary
 import com.storyteller_f.shared.model.TaskRecordType
@@ -734,7 +734,7 @@ internal class TaskRecordSummariesViewModel(sessionManager: PanelSessionManager)
         }
 }
 
-internal data class TaskConfigEditorState(
+internal data class WorkerTaskEditorState(
     val type: TaskRecordType,
     val isEnabled: Boolean,
     val fetchSize: String,
@@ -742,15 +742,15 @@ internal data class TaskConfigEditorState(
     val isSaving: Boolean = false,
 )
 
-internal data class TaskConfigsUiState(
+internal data class WorkerTasksUiState(
     val isLoading: Boolean = true,
-    val configs: List<TaskConfigEditorState> = emptyList(),
+    val configs: List<WorkerTaskEditorState> = emptyList(),
     val error: String? = null,
 )
 
-internal class TaskConfigsViewModel(private val sessionManager: PanelSessionManager) : ViewModel() {
-    private val mutableUiState = MutableStateFlow(TaskConfigsUiState())
-    val uiState: StateFlow<TaskConfigsUiState> = mutableUiState.asStateFlow()
+internal class WorkerTasksViewModel(private val sessionManager: PanelSessionManager) : ViewModel() {
+    private val mutableUiState = MutableStateFlow(WorkerTasksUiState())
+    val uiState: StateFlow<WorkerTasksUiState> = mutableUiState.asStateFlow()
 
     init {
         refresh()
@@ -759,12 +759,12 @@ internal class TaskConfigsViewModel(private val sessionManager: PanelSessionMana
     fun refresh() {
         viewModelScope.launch {
             mutableUiState.update { it.copy(isLoading = true, error = null) }
-            sessionManager.getTaskConfigs().fold(
+            sessionManager.getWorkerTasks().fold(
                 onSuccess = { response ->
                     mutableUiState.value =
-                        TaskConfigsUiState(
+                        WorkerTasksUiState(
                             isLoading = false,
-                            configs = response.data.sortedBy { it.type.ordinal }.map(TaskConfig::toEditorState),
+                            configs = response.data.sortedBy { it.type.ordinal }.map(WorkerTask::toEditorState),
                         )
                 },
                 onFailure = { failure ->
@@ -790,14 +790,14 @@ internal class TaskConfigsViewModel(private val sessionManager: PanelSessionMana
 
     fun save(type: TaskRecordType) {
         val editor = mutableUiState.value.configs.firstOrNull { it.type == type } ?: return
-        val config = editor.toTaskConfigOrNull()
+        val config = editor.toWorkerTaskOrNull()
         if (config == null) {
             mutableUiState.update { it.copy(error = "Fetch size and wait duration must be greater than zero") }
             return
         }
         viewModelScope.launch {
             setSaving(type, true)
-            sessionManager.updateTaskConfig(config).fold(
+            sessionManager.updateWorkerTask(config).fold(
                 onSuccess = { savedConfig ->
                     updateEditor(type) { savedConfig.toEditorState() }
                     mutableUiState.update { it.copy(error = null) }
@@ -816,7 +816,7 @@ internal class TaskConfigsViewModel(private val sessionManager: PanelSessionMana
         updateEditor(type) { it.copy(isSaving = isSaving) }
     }
 
-    private fun updateEditor(type: TaskRecordType, transform: (TaskConfigEditorState) -> TaskConfigEditorState) {
+    private fun updateEditor(type: TaskRecordType, transform: (WorkerTaskEditorState) -> WorkerTaskEditorState) {
         mutableUiState.update { state ->
             val configs =
                 state.configs.map { editor ->
@@ -827,9 +827,9 @@ internal class TaskConfigsViewModel(private val sessionManager: PanelSessionMana
     }
 }
 
-private fun TaskConfig.toEditorState(): TaskConfigEditorState {
+private fun WorkerTask.toEditorState(): WorkerTaskEditorState {
     val editorState =
-        TaskConfigEditorState(
+        WorkerTaskEditorState(
             type = type,
             isEnabled = isEnabled,
             fetchSize = fetchSize.toString(),
@@ -838,10 +838,10 @@ private fun TaskConfig.toEditorState(): TaskConfigEditorState {
     return editorState
 }
 
-private fun TaskConfigEditorState.toTaskConfigOrNull(): TaskConfig? {
+private fun WorkerTaskEditorState.toWorkerTaskOrNull(): WorkerTask? {
     val parsedFetchSize = fetchSize.toIntOrNull()?.takeIf { it > 0 } ?: return null
     val parsedWaitDuration = waitDurationMillis.toLongOrNull()?.takeIf { it > 0 } ?: return null
-    return TaskConfig(
+    return WorkerTask(
         type = type,
         isEnabled = isEnabled,
         fetchSize = parsedFetchSize,

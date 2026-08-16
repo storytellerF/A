@@ -4,7 +4,7 @@ import com.storyteller_f.a.backend.core.types.TaskRecord
 import com.storyteller_f.a.backend.exposed.BaseTable
 import com.storyteller_f.a.backend.exposed.customPrimaryKey
 import com.storyteller_f.a.backend.exposed.taskRecordType
-import com.storyteller_f.shared.model.TaskConfig
+import com.storyteller_f.shared.model.WorkerTask
 import com.storyteller_f.shared.model.TaskRecordType
 import org.jetbrains.exposed.v1.core.Column
 import org.jetbrains.exposed.v1.core.ResultRow
@@ -77,7 +77,7 @@ suspend fun addTaskRecord(taskRecord: TaskRecord) {
 private const val FAILURE_TYPE_LENGTH = 20
 
 /** Persisted runtime configuration for worker tasks. */
-object TaskConfigs : Table("task_configs") {
+object WorkerTasks : Table("worker_tasks") {
     /** Configured worker task type. */
     val type: Column<TaskRecordType> = taskRecordType("type")
 
@@ -94,10 +94,10 @@ object TaskConfigs : Table("task_configs") {
 }
 
 /** Maps a task configuration database row to its shared model. */
-internal fun TaskConfig.Companion.wrapRow(resultRow: ResultRow): TaskConfig {
+internal fun WorkerTask.Companion.wrapRow(resultRow: ResultRow): WorkerTask {
     val config =
-        with(TaskConfigs) {
-            TaskConfig(
+        with(WorkerTasks) {
+            WorkerTask(
                 type = resultRow[type],
                 isEnabled = resultRow[enabled],
                 fetchSize = resultRow[fetchSize],

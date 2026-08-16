@@ -102,7 +102,7 @@ private object PreviewPanelNav : PanelNav {
     override fun gotoAllTitles() = Unit
     override fun gotoTitleDetail(id: Long) = Unit
     override fun gotoTaskRecords() = Unit
-    override fun gotoTaskConfigs() = Unit
+    override fun gotoWorkerTasks() = Unit
     override fun gotoTaskRecordDetail(type: TaskRecordType) = Unit
     override fun gotoFilePreview(id: Long, url: String, contentType: String, name: String) = Unit
     override fun back() = Unit

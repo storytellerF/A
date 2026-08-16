@@ -15,7 +15,7 @@ import com.storyteller_f.a.cloud.worker.doAcgTask
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.PassType
-import com.storyteller_f.shared.model.TaskConfig
+import com.storyteller_f.shared.model.WorkerTask
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.obj.PresetCommunity
@@ -454,13 +454,13 @@ class CliTest {
             val presetDir = preparePresetDir("task-config")
             val configs =
                 listOf(
-                    TaskConfig(
+                    WorkerTask(
                         type = TaskRecordType.TOPIC_ACG,
                         isEnabled = true,
                         fetchSize = 5,
                         waitDurationMillis = 1_000,
                     ),
-                    TaskConfig(
+                    WorkerTask(
                         type = TaskRecordType.TOPIC_MODERATION,
                         isEnabled = false,
                         fetchSize = 2,
@@ -471,11 +471,11 @@ class CliTest {
             withCliBackend { backend ->
                 backend.database.init()
                 backend.applyPreset(
-                    PresetValue(type = "taskConfig", taskConfigData = configs),
+                    PresetValue(type = "taskConfig", workerTaskData = configs),
                     presetDir,
                 )
 
-                assertEquals(configs, backend.database.getTaskConfigs().getOrThrow())
+                assertEquals(configs, backend.database.workerTask.getWorkerTasks().getOrThrow())
             }
         }
     }

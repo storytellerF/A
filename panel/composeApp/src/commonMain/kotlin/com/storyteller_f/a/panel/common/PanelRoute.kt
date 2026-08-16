@@ -58,7 +58,7 @@ import com.storyteller_f.a.panel.panelListDetailDestination
 import com.storyteller_f.a.panel.select_an_item
 import com.storyteller_f.a.panel.sign_in
 import com.storyteller_f.shared.model.TaskRecordType
-import com.storytellerf.a.panel.pages.TaskConfigsPage
+import com.storytellerf.a.panel.pages.WorkerTasksPage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -126,7 +126,7 @@ data object PanelTaskRecordsScreen : NavKey
 
 /** Opens the worker task configuration editor. */
 @Serializable
-data object PanelTaskConfigsScreen : NavKey
+data object PanelWorkerTasksScreen : NavKey
 
 @Serializable
 internal class PanelTaskRecordDetailScreen(val type: TaskRecordType) : NavKey
@@ -152,7 +152,7 @@ val panelNavSerializersModule: SerializersModule =
             subclass(PanelAllFilesScreen::class)
             subclass(PanelAllTitlesScreen::class)
             subclass(PanelTaskRecordsScreen::class)
-            subclass(PanelTaskConfigsScreen::class)
+            subclass(PanelWorkerTasksScreen::class)
             subclass(PanelTaskRecordDetailScreen::class)
         }
     }
@@ -179,7 +179,7 @@ interface PanelNav {
     fun gotoTaskRecords()
 
     /** Opens the worker task configuration editor. */
-    fun gotoTaskConfigs()
+    fun gotoWorkerTasks()
 
     /** Opens execution history for one task type. */
     fun gotoTaskRecordDetail(type: TaskRecordType)
@@ -272,8 +272,8 @@ private class DefaultPanelNav(
         backStack.add(PanelTaskRecordsScreen)
     }
 
-    override fun gotoTaskConfigs() {
-        backStack.add(PanelTaskConfigsScreen)
+    override fun gotoWorkerTasks() {
+        backStack.add(PanelWorkerTasksScreen)
     }
 
     override fun gotoTaskRecordDetail(type: TaskRecordType) {
@@ -334,8 +334,8 @@ private fun EntryProviderScope<NavKey>.addStandaloneEntries(nav: PanelNav) {
     entry<PanelTaskRecordsScreen> {
         TaskRecordsPage()
     }
-    entry<PanelTaskConfigsScreen> {
-        TaskConfigsPage()
+    entry<PanelWorkerTasksScreen> {
+        WorkerTasksPage()
     }
     entry<PanelTaskRecordDetailScreen> {
         TaskRecordsPage(it.type)
