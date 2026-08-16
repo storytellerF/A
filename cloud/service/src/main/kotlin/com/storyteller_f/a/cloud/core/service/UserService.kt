@@ -5,6 +5,8 @@ import com.storyteller_f.a.api.NewDevice
 import com.storyteller_f.a.api.NewUser
 import com.storyteller_f.a.backend.core.AID_LENGTH
 import com.storyteller_f.a.backend.core.Backend
+import com.storyteller_f.a.backend.core.getUserOverview
+import com.storyteller_f.a.backend.core.processTopicToRawTopic
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.ObjectFetch

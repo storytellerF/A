@@ -4,6 +4,11 @@ import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.api.CustomApi
 import com.storyteller_f.a.api.NewTopic
 import com.storyteller_f.a.backend.core.Backend
+import com.storyteller_f.a.backend.core.getAllRawTopics
+import com.storyteller_f.a.backend.core.getLatestRawTopic
+import com.storyteller_f.a.backend.core.getRawTopic
+import com.storyteller_f.a.backend.core.getRawTopicByParentId
+import com.storyteller_f.a.backend.core.getRawTopicListByIds
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.ObjectFetch
