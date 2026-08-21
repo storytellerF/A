@@ -1,3 +1,9 @@
+/*
+ * This is a private project. All rights reserved.
+*/
+
+package com.storyteller_f.a.dev.appium
+
 import org.testcontainers.containers.Network
 import java.io.File
 import kotlin.uuid.ExperimentalUuidApi

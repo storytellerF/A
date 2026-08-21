@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.cli
 
 import com.storyteller_f.a.backend.core.setLogPath
@@ -14,18 +18,20 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class GeneratePresetKeysCommandTest {
-    private val names = listOf(
-        "font-provider",
-        "robot1",
-        "robot2",
-        "system",
-        "user1",
-        "user2",
-        "user3",
-    )
+    private val names =
+        listOf(
+            "font-provider",
+            "robot1",
+            "robot2",
+            "system",
+            "user1",
+            "user2",
+            "user3",
+        )
 
     @Test
-    fun `generate Dilithium preset private keys`() = runTest {
+    fun `generate Dilithium preset private keys`() =
+        runTest {
         setLogPath()
         loadCryptoLibIfNeed()
         val tempDir = createTempDirectory(prefix = "preset-keys-").toFile()
@@ -46,12 +52,12 @@ class GeneratePresetKeysCommandTest {
                 assertTrue(
                     signAlgo.getDerPublicKeyFromPrivateKey(privateKeyFile.readText())
                         .getOrThrow()
-                        .isNotBlank()
+                        .isNotBlank(),
                 )
                 assertTrue(
                     encryptionAlgo.getDerEncryptionPublicKeyFromPemPrivateKey(
-                        encryptionPrivateKeyFile.readText()
-                    ).getOrThrow().isNotBlank()
+                        encryptionPrivateKeyFile.readText(),
+                    ).getOrThrow().isNotBlank(),
                 )
             }
         } finally {
@@ -60,7 +66,8 @@ class GeneratePresetKeysCommandTest {
     }
 
     @Test
-    fun `refuse to overwrite existing preset keys by default`() = runTest {
+    fun `refuse to overwrite existing preset keys by default`() =
+        runTest {
         setLogPath()
         loadCryptoLibIfNeed()
         val tempDir = createTempDirectory(prefix = "preset-keys-existing-").toFile()

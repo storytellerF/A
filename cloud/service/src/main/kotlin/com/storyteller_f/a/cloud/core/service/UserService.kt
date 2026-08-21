@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.core.service
 
 import com.perraco.utils.SnowflakeFactory
@@ -5,8 +9,6 @@ import com.storyteller_f.a.api.NewDevice
 import com.storyteller_f.a.api.NewUser
 import com.storyteller_f.a.backend.core.AID_LENGTH
 import com.storyteller_f.a.backend.core.Backend
-import com.storyteller_f.a.backend.core.getUserOverview
-import com.storyteller_f.a.backend.core.processTopicToRawTopic
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.ObjectFetch
@@ -15,9 +17,11 @@ import com.storyteller_f.a.backend.core.OffsetFetch
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.USER_NICKNAME
+import com.storyteller_f.a.backend.core.getUserOverview
 import com.storyteller_f.a.backend.core.mapPagingResultNotNull
 import com.storyteller_f.a.backend.core.paging
 import com.storyteller_f.a.backend.core.pagingNotNull
+import com.storyteller_f.a.backend.core.processTopicToRawTopic
 import com.storyteller_f.a.backend.core.service.MemberDocumentSearch
 import com.storyteller_f.a.backend.core.service.UserDocument
 import com.storyteller_f.a.backend.core.service.UserDocumentSearch
@@ -48,6 +52,7 @@ import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.UNIT_RESULT
+import com.storyteller_f.shared.utils.cancellableRunCatching
 import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
@@ -55,12 +60,9 @@ import com.storyteller_f.shared.utils.now
 import com.storyteller_f.shared.utils.recoverIfDup
 import io.github.aakira.napier.Napier
 
-suspend fun Backend.updateUser(
-    uid: PrimaryKey,
-    old: UpdateUserBody,
-): Result<UserInfo?> {
+suspend fun Backend.updateUser(uid: PrimaryKey, old: UpdateUserBody): Result<UserInfo?> {
     val newUpdate = old.copy(nickname = old.nickname?.trim(), aid = old.aid?.trim(), avatar = old.avatar)
-    runCatching {
+    cancellableRunCatching {
         checkAidModifyTimes(newUpdate, uid).getOrThrow()
         checkAid(newUpdate.aid, true).getOrThrow()
         checkUserNickname(old).getOrThrow()
@@ -79,45 +81,46 @@ suspend fun Backend.updateUser(
 }
 
 private suspend fun Backend.checkUserIcon(newUser: UpdateUserBody) {
-    checkIcon(newUser.avatar, Dimension.DEFAULT_DIMENSION).mapResult {
-        when (it) {
+    checkIcon(newUser.avatar, Dimension.DEFAULT_DIMENSION).mapResult { checkResult ->
+        when (checkResult) {
             MediaCheckResult.NOT_FOUND -> Result.failure(CustomBadRequestException("avatar not font"))
             MediaCheckResult.CONTENT_TYPE_MISMATCH -> Result.failure(CustomBadRequestException("avatar must be image"))
-
-            else -> UNIT_RESULT
+            MediaCheckResult.DIMENSION_MISMATCH -> Result.failure(CustomBadRequestException("dimension mismatch"))
+            MediaCheckResult.EMPTY, MediaCheckResult.SUCCESS, null -> UNIT_RESULT
         }
     }.getOrThrow()
 }
 
 fun checkUserNickname(newUser: NewUser) {
-    when (checkNickname(
-        newUser.nickname,
-        1..USER_NICKNAME
-    )) {
+    when (
+        checkNickname(
+            newUser.nickname,
+            1..USER_NICKNAME,
+        )
+    ) {
         StringCheckResult.CONTAIN_INVALID_CHAR -> throw CustomBadRequestException(
-            "user nickname must not contain invalid char"
+            "user nickname must not contain invalid char",
         )
 
         StringCheckResult.RANGE_MISMATCH -> throw CustomBadRequestException("user nickname must be between in 1 and 20")
-        else -> UNIT_RESULT
+
+        StringCheckResult.NULL, StringCheckResult.EMPTY, StringCheckResult.SUCCESS -> UNIT_RESULT
     }
 }
 
-private suspend fun Backend.checkAidModifyTimes(
-    newUser: UpdateUserBody,
-    id: PrimaryKey,
-) = if (newUser.aid.isNullOrBlank()) {
-    UNIT_RESULT
-} else {
-    // check aid is null
-    database.user.getUserAid(id).mapResult {
-        if (it != null) {
-            Result.failure(CustomBadRequestException("aid is not null."))
-        } else {
-            UNIT_RESULT
+private suspend fun Backend.checkAidModifyTimes(newUser: UpdateUserBody, id: PrimaryKey) =
+    if (newUser.aid.isNullOrBlank()) {
+        UNIT_RESULT
+    } else {
+        // check aid is null
+        database.user.getUserAid(id).mapResult {
+            if (it != null) {
+                Result.failure(CustomBadRequestException("aid is not null."))
+            } else {
+                UNIT_RESULT
+            }
         }
     }
-}
 
 fun checkAid(aid: String?, supportEmptyAid: Boolean = false): Result<Unit> {
     if (aid.isNullOrBlank()) {
@@ -132,16 +135,18 @@ fun checkAid(aid: String?, supportEmptyAid: Boolean = false): Result<Unit> {
 
     if (aid.all {
             !it.isEnglishLetter()
-        }) {
+        }
+    ) {
         return Result.failure(CustomBadRequestException("aid must contains english letter"))
     }
     if (!aid.all {
             it.isEnglishLetter() || it.isDigit() || it == '_' || it == '-'
-        }) {
+        }
+    ) {
         return Result.failure(CustomBadRequestException("only support alphabet, number, underline and hyphen"))
     }
     val underlineCount = aid.count { it == '_' || it == '-' }
-    if (underlineCount / aid.length > (1.0 / 4)) {
+    if (underlineCount / aid.length > 1.0 / 4) {
         return Result.failure(CustomBadRequestException("aid contains too many underline or hyphen"))
     }
     return checkUnderlineAndHyphen(aid)
@@ -165,30 +170,32 @@ fun checkNickname(nickname: String?, range: IntRange): StringCheckResult {
 }
 
 /**
- * 接受空字符串或者null
+ * 接受空字符串或者null.
  */
-fun checkUserNickname(update: UpdateUserBody): Result<Unit> {
-    return when (checkNickname(update.nickname, 1..USER_NICKNAME)) {
-        StringCheckResult.RANGE_MISMATCH -> Result.failure(
-            CustomBadRequestException("user nickname must be between in 1 and $USER_NICKNAME")
+fun checkUserNickname(update: UpdateUserBody): Result<Unit> =
+    when (checkNickname(update.nickname, 1..USER_NICKNAME)) {
+    StringCheckResult.RANGE_MISMATCH ->
+        Result.failure(
+            CustomBadRequestException("user nickname must be between in 1 and $USER_NICKNAME"),
         )
 
-        StringCheckResult.CONTAIN_INVALID_CHAR -> Result.failure(
-            CustomBadRequestException("user nickname must be visible")
+    StringCheckResult.CONTAIN_INVALID_CHAR ->
+        Result.failure(
+            CustomBadRequestException("user nickname must be visible"),
         )
 
-        else -> UNIT_RESULT
-    }
+    StringCheckResult.NULL, StringCheckResult.EMPTY, StringCheckResult.SUCCESS -> UNIT_RESULT
 }
 
-fun isAllVisibleChar(s: String) = !s.codePoints().anyMatch { codePoint ->
+fun isAllVisibleChar(s: String) =
+    !s.codePoints().anyMatch { codePoint ->
     val type = Character.getType(codePoint).toByte()
     type == Character.FORMAT ||
         type == Character.NON_SPACING_MARK ||
         type == Character.COMBINING_SPACING_MARK ||
         type == Character.ENCLOSING_MARK ||
         Character.isISOControl(codePoint) ||
-        ((Character.isWhitespace(codePoint) || Character.isSpaceChar(codePoint)) && codePoint != ' '.code) ||
+        (Character.isWhitespace(codePoint) || Character.isSpaceChar(codePoint)) && codePoint != ' '.code ||
         !Character.isDefined(codePoint) ||
         !Character.isValidCodePoint(codePoint)
 }
@@ -209,42 +216,43 @@ enum class StringCheckResult {
     CONTAIN_INVALID_CHAR,
 }
 
-suspend fun Backend.checkIcon(
-    icon: PrimaryKey?,
-    aspectRatio: Dimension? = null,
-): Result<MediaCheckResult?> {
+suspend fun Backend.checkIcon(icon: PrimaryKey?, aspectRatio: Dimension? = null): Result<MediaCheckResult?> {
     if (icon == null) {
         return Result.success(MediaCheckResult.EMPTY)
     }
-    return database.file.getFileRecordByIds(listOf(icon)).mapIfNotNull {
-        val mediaInfo = it.firstOrNull()
+    return database.file.getFileRecordByIds(listOf(icon)).mapIfNotNull { fileRecords ->
+        val mediaInfo = fileRecords.firstOrNull()
         val dimension = mediaInfo?.dimension
         when {
             mediaInfo == null -> MediaCheckResult.NOT_FOUND
+
             !mediaInfo.contentType.startsWith("image/") -> MediaCheckResult.CONTENT_TYPE_MISMATCH
-            aspectRatio != null && (dimension == null || !checkMediaFileDimensionRatioMatch(
-                dimension,
-                aspectRatio
-            )) -> MediaCheckResult.DIMENSION_MISMATCH
+
+            aspectRatio != null && (
+                dimension == null ||
+                    !checkMediaFileDimensionRatioMatch(
+                        dimension,
+                        aspectRatio,
+                    )
+                ) -> MediaCheckResult.DIMENSION_MISMATCH
 
             else -> MediaCheckResult.SUCCESS
         }
     }
 }
 
-suspend fun Backend.addReadLog(uid: PrimaryKey, tuple: UpdateUserRead): Result<Unit?> {
-    return checkRootReadPermission(
-        tuple.objectTuple.objectType,
-        tuple.objectTuple.objectId,
-        uid
-    ).mapResultIfNotNull {
-        if (it.hasRead) {
-            database.user.addReadLog(
-                UserTopicRead(uid, now(), tuple.objectTuple.objectId, tuple.objectTuple.objectType, tuple.topicId)
-            )
-        } else {
-            Result.failure(ForbiddenException("Permission denied"))
-        }
+suspend fun Backend.addReadLog(uid: PrimaryKey, tuple: UpdateUserRead): Result<Unit?> =
+    checkRootReadPermission(
+    tuple.objectTuple.objectType,
+    tuple.objectTuple.objectId,
+    uid,
+).mapResultIfNotNull { topic ->
+    if (topic.hasRead) {
+        database.user.addReadLog(
+            UserTopicRead(uid, now(), tuple.objectTuple.objectId, tuple.objectTuple.objectType, tuple.topicId),
+        )
+    } else {
+        Result.failure(ForbiddenException("Permission denied"))
     }
 }
 
@@ -255,19 +263,20 @@ suspend fun Backend.addChildAccount(
     derPublicKey: String,
     algoType: AlgoType,
     encryptedEncryptionPrivateKey: String? = null,
-    encryptionPublicKey: String? = null
-): Result<ChildAccountInfo> {
-    return database.user.getRawChildAccount(uid).mapResult {
-        if (it != null) {
-            Result.failure(CustomBadRequestException("child account can't create child account"))
-        } else {
-            runCatching {
-                // Get user's public key based on algorithm type
-                // Generate new user account with the public key
-                val address = getAlgo(algoType).calcAddress(derPublicKey).getOrThrow()
-                val id = SnowflakeFactory.nextId()
-                val notificationId = SnowflakeFactory.nextId()
-                val user = User(
+    encryptionPublicKey: String? = null,
+): Result<ChildAccountInfo> =
+    database.user.getRawChildAccount(uid).mapResult { childAccount ->
+    if (childAccount != null) {
+        Result.failure(CustomBadRequestException("child account can't create child account"))
+    } else {
+        cancellableRunCatching {
+            // Get user's public key based on algorithm type
+            // Generate new user account with the public key
+            val address = getAlgo(algoType).calcAddress(derPublicKey).getOrThrow()
+            val id = SnowflakeFactory.nextId()
+            val notificationId = SnowflakeFactory.nextId()
+            val user =
+                User(
                     null,
                     encryptionPublicKey,
                     derPublicKey,
@@ -279,40 +288,35 @@ suspend fun Backend.addChildAccount(
                     0,
                     PassType.RAW,
                     algoType,
-                    notificationId
+                    notificationId,
                 )
-                database.user.createChildAccount(
-                    uid,
-                    encryptedPrivateKey,
-                    encryptedAesKey,
-                    user,
-                    encryptedEncryptionPrivateKey
-                ).getOrThrow()
-                userSearchService.saveDocument(listOf(UserDocument.fromUser(user)))
-                    .onFailure { throwable ->
-                        Napier.e(throwable) {
-                            "save user document failed"
-                        }
+            database.user.createChildAccount(
+                uid,
+                encryptedPrivateKey,
+                encryptedAesKey,
+                user,
+                encryptedEncryptionPrivateKey,
+            ).getOrThrow()
+            userSearchService.saveDocument(listOf(UserDocument.fromUser(user)))
+                .onFailure { throwable ->
+                    Napier.e(throwable) {
+                        "save user document failed"
                     }
-                addUserLog(uid, UserLogType.ADD_ALTERNATIVE_ACCOUNT, id ob ObjectType.USER)
-                ChildAccountInfo(
-                    hostId = uid,
-                    encryptedPrivateKey = encryptedPrivateKey,
-                    encryptedAesKey = encryptedAesKey,
-                    userInfo = user.toUserInfo(),
-                    algoType = algoType,
-                    encryptedEncryptionPrivateKey = encryptedEncryptionPrivateKey
-                )
-            }
+                }
+            addUserLog(uid, UserLogType.ADD_ALTERNATIVE_ACCOUNT, id ob ObjectType.USER)
+            ChildAccountInfo(
+                hostId = uid,
+                encryptedPrivateKey = encryptedPrivateKey,
+                encryptedAesKey = encryptedAesKey,
+                userInfo = user.toUserInfo(),
+                algoType = algoType,
+                encryptedEncryptionPrivateKey = encryptedEncryptionPrivateKey,
+            )
         }
     }
 }
 
-suspend fun Backend.addUserLog(
-    uid: PrimaryKey,
-    type: UserLogType,
-    objectTuple: ObjectTuple
-): Result<Unit> {
+suspend fun Backend.addUserLog(uid: PrimaryKey, type: UserLogType, objectTuple: ObjectTuple): Result<Unit> {
     val logId = SnowflakeFactory.nextId()
     val log = UserLog(logId, now(), uid, type, objectTuple.objectId, objectTuple.objectType)
     return database.user.insertUserLog(log).onFailure {
@@ -330,46 +334,45 @@ suspend fun Backend.addDevice(uid: PrimaryKey, newDevice: NewDevice): Result<Uni
 suspend fun Backend.getUserAlternateUserInfoList(
     uid: PrimaryKey,
     fetch: PrimaryKeyFetch,
-): Result<PaginationResult<ChildAccountInfo>?> {
-    return database.user.getRawChildAccountPaginationListByHost(
-        uid,
-        fetch
-    ).mapPagingResultNotNull { results ->
-        processRawUserToUserInfo(results.map {
+): Result<PaginationResult<ChildAccountInfo>?> =
+    database.user.getRawChildAccountPaginationListByHost(
+    uid,
+    fetch,
+).mapPagingResultNotNull { results ->
+    processRawUserToUserInfo(
+        results.map {
             it.rawUser
-        }).map { userList ->
-            val userInfoMap = userList.associateBy { it.id }
-            val unreadRoomMap = database.container.getUsersHasUnreadRoomMap(userInfoMap.keys.toList()).getOrThrow()
-            results.mapNotNull {
-                userInfoMap[it.rawUser.user.id]?.let { userInfo ->
-                    ChildAccountInfo(
-                        hostId = it.rawUser.user.id,
-                        encryptedPrivateKey = it.childAccount.encryptedPrivateKey,
-                        encryptedAesKey = it.childAccount.encryptedAesKey,
-                        userInfo = userInfo,
-                        algoType = it.rawUser.user.algoType,
-                        encryptedEncryptionPrivateKey = it.childAccount.encryptedEncryptionPrivateKey,
-                        hasUnreadRoomMessage = unreadRoomMap[userInfo.id] == true,
-                    )
-                }
+        },
+    ).map { userList ->
+        val userInfoMap = userList.associateBy { it.id }
+        val unreadRoomMap = database.container.getUsersHasUnreadRoomMap(userInfoMap.keys.toList()).getOrThrow()
+        results.mapNotNull {
+            userInfoMap[it.rawUser.user.id]?.let { userInfo ->
+                ChildAccountInfo(
+                    hostId = it.rawUser.user.id,
+                    encryptedPrivateKey = it.childAccount.encryptedPrivateKey,
+                    encryptedAesKey = it.childAccount.encryptedAesKey,
+                    userInfo = userInfo,
+                    algoType = it.rawUser.user.algoType,
+                    encryptedEncryptionPrivateKey = it.childAccount.encryptedEncryptionPrivateKey,
+                    hasUnreadRoomMessage = unreadRoomMap[userInfo.id] == true,
+                )
             }
         }
     }
 }
 
-suspend fun Backend.isKeyVerified(
-    roomId: PrimaryKey,
-    encryptedAes: Map<PrimaryKey, String>,
-): Result<Boolean> {
-    return database.container.getJoinedUserList(roomId).map { value ->
+suspend fun Backend.isKeyVerified(roomId: PrimaryKey, encryptedAes: Map<PrimaryKey, String>): Result<Boolean> =
+    database.container.getJoinedUserList(
+        roomId,
+    ).map { value ->
         value.map {
             it.uid
         }.toSet().minus(encryptedAes.keys).isEmpty()
     }
-}
 
 /**
- * 搜索 room/community 的成员列表
+ * 搜索 room/community 的成员列表.
  * @param objectId 容器 ID（room 或 community）
  * @param word 搜索关键字，可选
  * @return 返回 MemberInfo 列表，包含成员关系信息
@@ -382,12 +385,13 @@ suspend fun Backend.searchContainerMembers(
     if (word.isBlank()) {
         return Result.success(PaginationResult(emptyList(), 0))
     }
-    val result = memberSearchService.searchDocument(
-        MemberDocumentSearch.Keyword(objectId = objectId, nickname = word, fetch = primaryKeyFetch)
-    ).mapPagingResultNotNull { searchResults ->
-        val uidList = searchResults.map { it.uid }
-        database.container.getMemberWithUserByUids(objectId, uidList)
-    }
+    val result =
+        memberSearchService.searchDocument(
+            MemberDocumentSearch.Keyword(objectId = objectId, nickname = word, fetch = primaryKeyFetch),
+        ).mapPagingResultNotNull { searchResults ->
+            val uidList = searchResults.map { it.uid }
+            database.container.getMemberWithUserByUids(objectId, uidList)
+        }
 
     return result.mapPagingResultNotNull { list ->
         val rawUsers = list.map { it.second }
@@ -402,7 +406,7 @@ suspend fun Backend.searchContainerMembers(
                     status = member.status,
                     joinedTime = member.joinedTime,
                     invitedTime = member.invitedTime,
-                    userInfo = userMap[rawUser.user.id]!!
+                    userInfo = userMap.getValue(rawUser.user.id),
                 )
             }
         }
@@ -410,7 +414,7 @@ suspend fun Backend.searchContainerMembers(
 }
 
 /**
- * 搜索用户
+ * 搜索用户.
  * @param word 搜索关键字
  * @return 返回 UserInfo 列表
  */
@@ -423,34 +427,37 @@ suspend fun Backend.searchUsers(
         return Result.success(null)
     }
     return userSearchService.searchDocument(
-        UserDocumentSearch.Keyword(word, fetch = primaryKeyFetch)
+        UserDocumentSearch.Keyword(word, fetch = primaryKeyFetch),
     ).mapResult { (list, total) ->
-        database.user.getRawUsers(ObjectListFetch.IdListFetch(list.map {
-            it.id
-        }), uid).mapResult {
+        database.user.getRawUsers(
+            ObjectListFetch.IdListFetch(
+                list.map {
+                    it.id
+                },
+            ),
+            uid,
+        ).mapResult {
             processRawUserToUserInfo(it)
         }.pagingNotNull(total)
     }
 }
 
-suspend fun Backend.getUserInfoList(
-    listFetch: ObjectListFetch,
-) = database.user.getRawUsers(listFetch).mapResult {
+suspend fun Backend.getUserInfoList(listFetch: ObjectListFetch) =
+    database.user.getRawUsers(listFetch).mapResult {
     processRawUserToUserInfo(it)
 }
 
-suspend fun Backend.getUserInfo(
-    fetch: ObjectFetch,
-    uid: PrimaryKey? = null
-) = database.user.getRawUser(fetch, uid).mapResultIfNotNull {
-    processRawUserToUserInfo(listOf(it)).mapIfNotNull(List<UserInfo>::first)
-}
+suspend fun Backend.getUserInfo(fetch: ObjectFetch, uid: PrimaryKey? = null) =
+    database.user.getRawUser(fetch, uid).mapResultIfNotNull {
+        processRawUserToUserInfo(listOf(it)).mapIfNotNull(List<UserInfo>::first)
+    }
 
-suspend fun Backend.processRawUserToUserInfo(
-    rawResults: List<RawUser>,
-) = database.file.getFileRecordByIds(rawResults.mapNotNull {
-    it.user.icon
-}).mapResult { medias ->
+suspend fun Backend.processRawUserToUserInfo(rawResults: List<RawUser>) =
+    database.file.getFileRecordByIds(
+    rawResults.mapNotNull {
+        it.user.icon
+    },
+).mapResult { medias ->
     processFileRecordToFileInfo(medias).map { list ->
         val mediaInfoMap = list.associateBy { it.id }
         rawResults.map { rawUser ->
@@ -459,12 +466,15 @@ suspend fun Backend.processRawUserToUserInfo(
     }
 }
 
-suspend fun Backend.getUserOverview(uid: PrimaryKey) = database.getUserOverview(uid).mapResult {
+suspend fun Backend.getUserOverview(uid: PrimaryKey) =
+    database.getUserOverview(uid).mapResult {
     processRawUserOverviewToUserOverview(it)
 }
 
-suspend fun Backend.processRawUserOverviewToUserOverview(raw: RawUserOverview): Result<UserOverview> {
-    return processRawUserToUserInfo(listOf(raw.rawUser)).map { users ->
+suspend fun Backend.processRawUserOverviewToUserOverview(raw: RawUserOverview): Result<UserOverview> =
+    processRawUserToUserInfo(
+        listOf(raw.rawUser),
+    ).map { users ->
         val userInfo = users.first()
         UserOverview(
             raw.subscriptionCount,
@@ -474,10 +484,9 @@ suspend fun Backend.processRawUserOverviewToUserOverview(raw: RawUserOverview): 
             raw.reactionRecordCount,
             raw.commentCount,
             raw.hasUnreadChildRoomMessage,
-            userInfo
+            userInfo,
         )
     }
-}
 
 suspend fun Backend.getAllUsers(primaryKeyFetch: PrimaryKeyFetch) =
     database.user.getAllUsers(primaryKeyFetch).mapPagingResultNotNull { list ->
@@ -486,17 +495,13 @@ suspend fun Backend.getAllUsers(primaryKeyFetch: PrimaryKeyFetch) =
 
 suspend fun Backend.getUserById(id: PrimaryKey) = getUserInfo(ObjectFetch.IdFetch(id))
 
-suspend fun Backend.getUserLogs(
-    uid: PrimaryKey,
-    fetch: PrimaryKeyFetch
-) = database.user.getUserLogs(uid, fetch).mapResult { (list, total) ->
-    processUserLogToUserLogInfo(list, uid).pagingNotNull(total)
-}
+suspend fun Backend.getUserLogs(uid: PrimaryKey, fetch: PrimaryKeyFetch) =
+    database.user.getUserLogs(uid, fetch).mapResult { (list, total) ->
+        processUserLogToUserLogInfo(list, uid).pagingNotNull(total)
+    }
 
-private suspend fun Backend.processUserLogToUserLogInfo(
-    list: List<UserLog>,
-    uid: PrimaryKey
-) = runCatching {
+private suspend fun Backend.processUserLogToUserLogInfo(list: List<UserLog>, uid: PrimaryKey) =
+    cancellableRunCatching {
     val userIds = mutableListOf<PrimaryKey>()
     val communityIds = mutableListOf<PrimaryKey>()
     val roomIds = mutableListOf<PrimaryKey>()
@@ -511,9 +516,10 @@ private suspend fun Backend.processUserLogToUserLogInfo(
         }
     }
     val users = getUserInfoList(ObjectListFetch.IdListFetch(userIds)).getOrThrow()
-    val communities = database.community.getRawCommunities(ObjectListFetch.IdListFetch(communityIds))
-        .mapResult { processRawCommunityToCommunityInfo(it) }.getOrThrow()
-        ?: emptyList()
+    val communities =
+        database.community.getRawCommunities(ObjectListFetch.IdListFetch(communityIds))
+            .mapResult { processRawCommunityToCommunityInfo(it) }.getOrThrow()
+            ?: emptyList()
     val rooms = getRoomInfoList(ObjectListFetch.IdListFetch(roomIds)).getOrThrow()
     val topics = getTopicByIds(topicIds, uid).getOrThrow() ?: emptyList()
     val userMap = users.associateBy { it.id }
@@ -521,38 +527,46 @@ private suspend fun Backend.processUserLogToUserLogInfo(
     val roomMap = rooms.associateBy { it.id }
     val topicMap = topics.associateBy { it.id }
     list.map { log ->
-        val ext = when (log.objectType) {
-            ObjectType.USER -> UserLogInfo.Extensions(user = userMap[log.objectId])
-            ObjectType.COMMUNITY -> UserLogInfo.Extensions(community = communityMap[log.objectId])
-            ObjectType.ROOM -> UserLogInfo.Extensions(room = roomMap[log.objectId])
-            ObjectType.TOPIC -> UserLogInfo.Extensions(topic = topicMap[log.objectId])
-            else -> null
-        }
+        val ext =
+            when (log.objectType) {
+                ObjectType.USER -> UserLogInfo.Extensions(user = userMap[log.objectId])
+                ObjectType.COMMUNITY -> UserLogInfo.Extensions(community = communityMap[log.objectId])
+                ObjectType.ROOM -> UserLogInfo.Extensions(room = roomMap[log.objectId])
+                ObjectType.TOPIC -> UserLogInfo.Extensions(topic = topicMap[log.objectId])
+                else -> null
+            }
         log.toUserLogInfo().copy(extensions = ext)
     }
 }
 
-fun Char.isEnglishLetter(): Boolean {
-    return this in 'a'..'z' || this in 'A'..'Z'
-}
+fun Char.isEnglishLetter(): Boolean = this in 'a'..'z' || this in 'A'..'Z'
 
-suspend fun Backend.getUserReactions(
-    uid: PrimaryKey,
-    fetch: PrimaryKeyFetch
-) = database.reaction.getUserReactionRecordsPaginationResult(uid, fetch).mapPagingResultNotNull { list ->
-    Result.success(list.map { record ->
-        ReactionRecordInfo(record.id, record.emoji, record.objectId, record.objectType, record.createdTime, record.uid)
-    })
-}
+suspend fun Backend.getUserReactions(uid: PrimaryKey, fetch: PrimaryKeyFetch) =
+    database.reaction.getUserReactionRecordsPaginationResult(uid, fetch).mapPagingResultNotNull { list ->
+        Result.success(
+            list.map { record ->
+                ReactionRecordInfo(
+                    record.id,
+                    record.emoji,
+                    record.objectId,
+                    record.objectType,
+                    record.createdTime,
+                    record.uid,
+                )
+            },
+        )
+    }
 
-suspend fun Backend.getUserCommentedTopics(
-    uid: PrimaryKey,
-    fetch: PrimaryKeyFetch
-) = database.topic.getUserCommentedTopicsPaginationResult(uid, fetch).mapResult { (list, total) ->
-    processRawTopicToTopicInfo(list.map { topic ->
-        database.processTopicToRawTopic(uid, listOf(topic)).getOrThrow().first()
-    }, uid, false).paging(total)
-}
+suspend fun Backend.getUserCommentedTopics(uid: PrimaryKey, fetch: PrimaryKeyFetch) =
+    database.topic.getUserCommentedTopicsPaginationResult(uid, fetch).mapResult { (list, total) ->
+        processRawTopicToTopicInfo(
+            list.map { topic ->
+                database.processTopicToRawTopic(uid, listOf(topic)).getOrThrow().first()
+            },
+            uid,
+            false,
+        ).paging(total)
+    }
 
 suspend fun Backend.hasUnreadRooms(uid: PrimaryKey): Result<UnreadRoomsResponse> {
     val unreadCount = database.container.getUserUnreadRoomCount(uid).getOrThrow()

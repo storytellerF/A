@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.exposed.database
 
 import com.storyteller_f.a.backend.core.Cursor
@@ -43,79 +47,79 @@ import org.jetbrains.exposed.v1.r2dbc.select
 import org.jetbrains.exposed.v1.r2dbc.selectAll
 import org.jetbrains.exposed.v1.r2dbc.upsert
 
-class ExposedReactionDatabase(
-    val databaseSession: ExposedDatabaseSession,
-) : ReactionDatabase {
-    override suspend fun statsReactionRecord(
-        objectId: PrimaryKey,
-        emoji: String,
-        objectType: ObjectType,
-    ) = getReactionCountForEmoji(listOf(objectId), emoji).mapResult { reactionCountList ->
-        val triple = reactionCountList.firstOrNull()
-        if (triple == null) {
-            databaseSession.dbQuery {
-                Reactions.deleteWhere {
-                    Reactions.objectId eq objectId and (Reactions.emoji eq emoji)
+class ExposedReactionDatabase(val databaseSession: ExposedDatabaseSession) : ReactionDatabase {
+    override suspend fun statsReactionRecord(objectId: PrimaryKey, emoji: String, objectType: ObjectType) =
+        getReactionCountForEmoji(listOf(objectId), emoji).mapResult { reactionCountList ->
+            val triple = reactionCountList.firstOrNull()
+            if (triple == null) {
+                databaseSession.dbQuery {
+                    Reactions.deleteWhere {
+                        Reactions.objectId eq objectId and (Reactions.emoji eq emoji)
+                    }
+                    Unit
                 }
-                Unit
-            }
-        } else {
-            databaseSession.dbQuery {
-                check(Reactions.upsert(Reactions.objectId, Reactions.emoji) {
-                    it[Reactions.objectId] = objectId
-                    it[Reactions.emoji] = emoji
-                    it[Reactions.count] = triple.second
-                    it[Reactions.objectType] = objectType
-                    it[Reactions.lastReactionId] = triple.third
-                }.insertedCount > 0) {
-                    "insert reaction failed"
+            } else {
+                databaseSession.dbQuery {
+                    check(
+                        Reactions.upsert(Reactions.objectId, Reactions.emoji) {
+                            it[Reactions.objectId] = objectId
+                            it[Reactions.emoji] = emoji
+                            it[Reactions.count] = triple.second
+                            it[Reactions.objectType] = objectType
+                            it[Reactions.lastReactionId] = triple.third
+                        }.insertedCount > 0,
+                    ) {
+                        "insert reaction failed"
+                    }
                 }
             }
         }
-    }
 
     override suspend fun getReactionInfoPaginationResult(
         objectId: List<PrimaryKey>,
         uid: PrimaryKey?,
         reactionFetch: ReactionFetch,
-    ) = paginationFromResults(databaseSession.dbSearch {
-        search {
-            buildReactionInfoQuery(objectId, reactionFetch).limit(reactionFetch.size)
-                .orderBy(
-                    Reactions.count to SortOrder.DESC,
-                    Reactions.lastReactionId to SortOrder.ASC
-                )
-        }
-        map(Reaction::wrapRow)
-    }, databaseSession.dbSearch {
-        search {
-            buildReactionInfoQuery(objectId, reactionFetch)
-        }
-        count()
-    }).mapPagingResultNotNull { list ->
+    ) = paginationFromResults(
+        databaseSession.dbSearch {
+            search {
+                buildReactionInfoQuery(objectId, reactionFetch).limit(reactionFetch.size)
+                    .orderBy(
+                        Reactions.count to SortOrder.DESC,
+                        Reactions.lastReactionId to SortOrder.ASC,
+                    )
+            }
+            map(Reaction::wrapRow)
+        },
+        databaseSession.dbSearch {
+            search {
+                buildReactionInfoQuery(objectId, reactionFetch)
+            }
+            count()
+        },
+    ).mapPagingResultNotNull { list ->
         processReactionToReactionInfo(uid, list)
     }
 
-    private suspend fun processReactionToReactionInfo(
-        uid: PrimaryKey?,
-        list: List<Reaction>
-    ) = (if (uid == null) {
-        Result.success(emptyMap())
-    } else {
-        val objectIdList = list.map { it.objectId }.distinct()
-        hasReactedEmoji(objectIdList, uid).map {
-            it.groupByPair().mapValues { v ->
-                v.value.toSet()
+    private suspend fun processReactionToReactionInfo(uid: PrimaryKey?, list: List<Reaction>) =
+        (
+        if (uid == null) {
+            Result.success(emptyMap())
+        } else {
+            val objectIdList = list.map { it.objectId }.distinct()
+            hasReactedEmoji(objectIdList, uid).map {
+                it.groupByPair().mapValues { v ->
+                    v.value.toSet()
+                }
             }
         }
-    }).map { reactedMap ->
-        list.map {
+        ).map { reactedMap ->
+        list.map { reaction ->
             ReactionInfo(
-                it.emoji,
-                it.objectId,
-                it.count,
-                reactedMap[it.objectId]?.contains(it.emoji) == true,
-                it.lastReactionId
+                reaction.emoji,
+                reaction.objectId,
+                reaction.count,
+                reactedMap[reaction.objectId]?.contains(reaction.emoji) == true,
+                reaction.lastReactionId,
             )
         }
     }
@@ -128,7 +132,7 @@ class ExposedReactionDatabase(
         return databaseSession.dbSearch {
             search {
                 ReactionRecords.select(ReactionRecords.objectId, ReactionRecords.emoji).where {
-                    (ReactionRecords.objectId inList objectIdList) and (ReactionRecords.uid eq uid)
+                    ReactionRecords.objectId inList objectIdList and (ReactionRecords.uid eq uid)
                 }.groupBy(ReactionRecords.objectId, ReactionRecords.emoji)
             }
             map {
@@ -137,92 +141,80 @@ class ExposedReactionDatabase(
         }
     }
 
-    override suspend fun getReactionInfo(
-        uid: PrimaryKey,
-        objectId: PrimaryKey,
-        emojiText: String,
-    ) = databaseSession.dbSearch {
-        search {
-            Reactions.selectAll().where {
-                Reactions.objectId eq objectId and (Reactions.emoji eq emojiText)
+    override suspend fun getReactionInfo(uid: PrimaryKey, objectId: PrimaryKey, emojiText: String) =
+        databaseSession.dbSearch {
+            search {
+                Reactions.selectAll().where {
+                    Reactions.objectId eq objectId and (Reactions.emoji eq emojiText)
+                }
+            }
+            first { Reaction.wrapRow(it) }
+        }.mapResultIfNotNull {
+            hasReactedForEmoji(objectId, uid, emojiText).map { hasReacted ->
+                ReactionInfo(it.emoji, it.objectId, it.count, hasReacted, it.lastReactionId)
             }
         }
-        first { Reaction.wrapRow(it) }
-    }.mapResultIfNotNull {
-        hasReactedForEmoji(objectId, uid, emojiText).map { hasReacted ->
-            ReactionInfo(it.emoji, it.objectId, it.count, hasReacted, it.lastReactionId)
-        }
-    }
 
-    override suspend fun hasReactedForEmoji(
-        objectId: PrimaryKey,
-        uid: PrimaryKey,
-        emoji: String,
-    ) = databaseSession.dbSearch {
-        search {
-            ReactionRecords.selectAll().where {
-                (ReactionRecords.objectId eq objectId) and
-                    (ReactionRecords.emoji eq emoji) and
-                    (ReactionRecords.uid eq uid)
+    override suspend fun hasReactedForEmoji(objectId: PrimaryKey, uid: PrimaryKey, emoji: String) =
+        databaseSession.dbSearch {
+            search {
+                ReactionRecords.selectAll().where {
+                    ReactionRecords.objectId eq objectId and
+                        (ReactionRecords.emoji eq emoji) and
+                        (ReactionRecords.uid eq uid)
+                }
+            }
+            isNotEmpty()
+        }
+
+    override suspend fun deleteReaction(uid: PrimaryKey, emoji: String, objectId: PrimaryKey) =
+        getReactionRecordInfo(uid, emoji, objectId).mapResult { recordInfo ->
+            if (recordInfo == null) {
+                Result.success(true)
+            } else {
+                deleteReaction(recordInfo.id)
             }
         }
-        isNotEmpty()
-    }
 
-    override suspend fun deleteReaction(
-        uid: PrimaryKey,
-        emoji: String,
-        objectId: PrimaryKey,
-    ) = getReactionRecordInfo(uid, emoji, objectId).mapResult { recordInfo ->
-        if (recordInfo == null) {
-            Result.success(true)
-        } else {
-            deleteReaction(recordInfo.id)
-        }
-    }
-
-    override suspend fun getReactionRecordInfo(
-        uid: PrimaryKey,
-        emoji: String,
-        objectId: PrimaryKey,
-    ) = databaseSession.dbSearch {
-        search {
-            ReactionRecords.selectAll().where {
-                (ReactionRecords.objectId eq objectId) and
-                    (ReactionRecords.emoji eq emoji) and
-                    (ReactionRecords.uid eq uid)
+    override suspend fun getReactionRecordInfo(uid: PrimaryKey, emoji: String, objectId: PrimaryKey) =
+        databaseSession.dbSearch {
+            search {
+                ReactionRecords.selectAll().where {
+                    ReactionRecords.objectId eq objectId and
+                        (ReactionRecords.emoji eq emoji) and
+                        (ReactionRecords.uid eq uid)
+                }
+            }
+            first { row ->
+                val reactionRecord = ReactionRecord.wrapRow(row)
+                ReactionRecordInfo(
+                    reactionRecord.id,
+                    emoji,
+                    reactionRecord.objectId,
+                    reactionRecord.objectType,
+                    reactionRecord.createdTime,
+                    uid,
+                )
             }
         }
-        first {
-            val reactionRecord = ReactionRecord.wrapRow(it)
-            ReactionRecordInfo(
-                reactionRecord.id,
-                emoji,
-                reactionRecord.objectId,
-                reactionRecord.objectType,
-                reactionRecord.createdTime,
-                uid
-            )
-        }
-    }
 
-    override suspend fun deleteReaction(
-        reactionId: PrimaryKey,
-    ) = databaseSession.dbQuery {
+    override suspend fun deleteReaction(reactionId: PrimaryKey) =
+        databaseSession.dbQuery {
         ReactionRecords.deleteWhere { ReactionRecords.id eq reactionId }
     }.map { value -> value > 0 }
 
-    override suspend fun insertReaction(
-        reactionRecord: ReactionRecord,
-    ) = databaseSession.dbQuery {
-        check(ReactionRecords.insert { statement ->
-            statement[ReactionRecords.id] = reactionRecord.id
-            statement[ReactionRecords.uid] = reactionRecord.uid
-            statement[ReactionRecords.objectId] = reactionRecord.objectId
-            statement[ReactionRecords.objectType] = reactionRecord.objectType
-            statement[ReactionRecords.emoji] = reactionRecord.emoji
-            statement[ReactionRecords.createdTime] = reactionRecord.createdTime
-        }.insertedCount > 0) {
+    override suspend fun insertReaction(reactionRecord: ReactionRecord) =
+        databaseSession.dbQuery {
+        check(
+            ReactionRecords.insert { statement ->
+                statement[ReactionRecords.id] = reactionRecord.id
+                statement[ReactionRecords.uid] = reactionRecord.uid
+                statement[ReactionRecords.objectId] = reactionRecord.objectId
+                statement[ReactionRecords.objectType] = reactionRecord.objectType
+                statement[ReactionRecords.emoji] = reactionRecord.emoji
+                statement[ReactionRecords.createdTime] = reactionRecord.createdTime
+            }.insertedCount > 0,
+        ) {
             "insert reaction failed"
         }
     }
@@ -239,63 +231,59 @@ class ExposedReactionDatabase(
         }
     }
 
-    override suspend fun getReactionCountForEmoji(
-        objectId: List<PrimaryKey>,
-        emoji: String,
-    ) = databaseSession.dbSearch {
-        val column = ReactionRecords.emoji.countDistinct()
-        val lastReactionId = ReactionRecords.id.max()
-        search {
-            ReactionRecords.select(ReactionRecords.objectId, column, lastReactionId).where {
-                (ReactionRecords.objectId inList objectId) and (ReactionRecords.emoji eq emoji)
-            }.groupBy(ReactionRecords.objectId)
+    override suspend fun getReactionCountForEmoji(objectId: List<PrimaryKey>, emoji: String) =
+        databaseSession.dbSearch {
+            val column = ReactionRecords.emoji.countDistinct()
+            val lastReactionId = ReactionRecords.id.max()
+            search {
+                ReactionRecords.select(ReactionRecords.objectId, column, lastReactionId).where {
+                    ReactionRecords.objectId inList objectId and (ReactionRecords.emoji eq emoji)
+                }.groupBy(ReactionRecords.objectId)
+            }
+            map { Triple(it[ReactionRecords.objectId], it[column], it[lastReactionId] ?: 0) }
         }
-        map { Triple(it[ReactionRecords.objectId], it[column], it[lastReactionId] ?: 0) }
-    }
 
     fun buildReactionInfoQuery(objectId: List<PrimaryKey>, reactionFetch: ReactionFetch): Query {
-        val query = Reactions.selectAll().where {
-            Reactions.objectId inList objectId
-        }
+        val query =
+            Reactions.selectAll().where {
+                Reactions.objectId inList objectId
+            }
         when (val cursor = reactionFetch.cursor) {
-            is Cursor.DescCursor<ReactionCursorKey> -> query.andWhere {
-                val value = cursor.value
-                Reactions.count greaterEq value.count and (Reactions.lastReactionId less value.reactionId)
-            }
+            is Cursor.DescCursor<ReactionCursorKey> ->
+                query.andWhere {
+                    val value = cursor.value
+                    Reactions.count greaterEq value.count and (Reactions.lastReactionId less value.reactionId)
+                }
 
-            is Cursor.AscCursor<ReactionCursorKey> -> query.andWhere {
-                val value = cursor.value
-                Reactions.count lessEq value.count and (Reactions.lastReactionId greater value.reactionId)
-            }
+            is Cursor.AscCursor<ReactionCursorKey> ->
+                query.andWhere {
+                    val value = cursor.value
+                    Reactions.count lessEq value.count and (Reactions.lastReactionId greater value.reactionId)
+                }
 
             null -> {}
         }
         return query
     }
 
-    override suspend fun getUserReactionRecordsPaginationResult(
-        uid: PrimaryKey,
-        primaryKeyFetch: PrimaryKeyFetch
-    ) = paginationFromResults(
+    override suspend fun getUserReactionRecordsPaginationResult(uid: PrimaryKey, primaryKeyFetch: PrimaryKeyFetch) =
+        paginationFromResults(
+            databaseSession.dbSearch {
+                search {
+                    ReactionRecords.selectAll().where {
+                        ReactionRecords.uid eq uid
+                    }.orderBy(ReactionRecords.id to SortOrder.DESC)
+                        .bindPaginationQuery(ReactionRecords, primaryKeyFetch)
+                }
+                map(ReactionRecord::wrapRow)
+            },
+            getUserReactionRecordCountByUid(uid),
+        )
+
+    override suspend fun getUserReactionRecordCount(uid: PrimaryKey) = getUserReactionRecordCountByUid(uid)
+
+    private suspend fun getUserReactionRecordCountByUid(uid: PrimaryKey) =
         databaseSession.dbSearch {
-            search {
-                ReactionRecords.selectAll().where {
-                    ReactionRecords.uid eq uid
-                }.orderBy(ReactionRecords.id to SortOrder.DESC)
-                    .bindPaginationQuery(ReactionRecords, primaryKeyFetch)
-            }
-            map(ReactionRecord::wrapRow)
-        },
-        getUserReactionRecordCountByUid(uid)
-    )
-
-    override suspend fun getUserReactionRecordCount(
-        uid: PrimaryKey
-    ) = getUserReactionRecordCountByUid(uid)
-
-    private suspend fun getUserReactionRecordCountByUid(
-        uid: PrimaryKey
-    ) = databaseSession.dbSearch {
         search {
             ReactionRecords.selectAll().where {
                 ReactionRecords.uid eq uid

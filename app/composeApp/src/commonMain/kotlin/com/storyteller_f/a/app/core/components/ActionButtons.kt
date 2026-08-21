@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.components
 
 import androidx.compose.material.icons.Icons
@@ -22,20 +26,18 @@ import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.PrimaryKey
 
 @Composable
-fun FavoriteButton(
-    favoriteId: PrimaryKey?,
-    infoTuple: ObjectTuple
-) {
+fun FavoriteButton(favoriteId: PrimaryKey?, infoTuple: ObjectTuple) {
     val dialogController = LocalGlobalTask.current
     val taskId = "favorite-${infoTuple.objectId}"
     val state = dialogController.stateMap[taskId]
-    val icon = if (state is LoadingState.Loading) {
-        IconRes.Loading
-    } else if (favoriteId != null) {
-        IconRes.Vector(Icons.Default.Favorite)
-    } else {
-        IconRes.Vector(Icons.Default.FavoriteBorder)
-    }
+    val icon =
+        if (state is LoadingState.Loading) {
+            IconRes.Loading
+        } else if (favoriteId != null) {
+            IconRes.Vector(Icons.Default.Favorite)
+        } else {
+            IconRes.Vector(Icons.Default.FavoriteBorder)
+        }
     ButtonNav(icon, "Favorite", semanticDescription = "favorite-action") {
         dialogController.launch(taskId) {
             use {
@@ -56,20 +58,18 @@ fun FavoriteButton(
 }
 
 @Composable
-fun SubscriptionButton(
-    subscriptionId: PrimaryKey?,
-    infoTuple: ObjectTuple
-) {
+fun SubscriptionButton(subscriptionId: PrimaryKey?, infoTuple: ObjectTuple) {
     val dialogController = LocalGlobalTask.current
     val taskId = "subscription-${infoTuple.objectId}"
     val state = dialogController.stateMap[taskId]
-    val icon = if (state is LoadingState.Loading) {
-        IconRes.Loading
-    } else if (subscriptionId != null) {
-        IconRes.Vector(Icons.Default.NotificationsActive)
-    } else {
-        IconRes.Vector(Icons.Default.NotificationsOff)
-    }
+    val icon =
+        if (state is LoadingState.Loading) {
+            IconRes.Loading
+        } else if (subscriptionId != null) {
+            IconRes.Vector(Icons.Default.NotificationsActive)
+        } else {
+            IconRes.Vector(Icons.Default.NotificationsOff)
+        }
     ButtonNav(icon, "Subscription", semanticDescription = "subscribe-action") {
         dialogController.launch(taskId) {
             use {
@@ -80,7 +80,7 @@ fun SubscriptionButton(
                         }
                     } else {
                         addSubscription(
-                            NewSubscription(infoTuple.objectId, infoTuple.objectType)
+                            NewSubscription(infoTuple.objectId, infoTuple.objectType),
                         ).onSuccess {
                             emitEvent(OnAddSubscription(infoTuple))
                         }

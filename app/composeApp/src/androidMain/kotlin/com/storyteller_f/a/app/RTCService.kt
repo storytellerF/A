@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app
 
 import android.content.ComponentName
@@ -37,10 +41,11 @@ class RTCService : LifecycleService() {
         super.onCreate()
         val channel = "Upload"
         getOrCreateNotificationChannel(this, channel)
-        val notification = NotificationCompat.Builder(this, channel)
-            .setSmallIcon(com.storyteller_f.a.app.android_library.R.drawable.baseline_video_call_24)
-            .setContentTitle("RTC")
-            .setOngoing(true)
+        val notification =
+            NotificationCompat.Builder(this, channel)
+                .setSmallIcon(com.storyteller_f.a.app.android_library.R.drawable.baseline_video_call_24)
+                .setContentTitle("RTC")
+                .setOngoing(true)
         startForeground(2, notification.build())
     }
 
@@ -88,9 +93,10 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
 
     init {
         lifecycle.coroutineScope.launch {
-            val flow = uiViewModel.instance.flatMapLatest {
-                it.sessionManager.webSocketClient.frameFlow
-            }
+            val flow =
+                uiViewModel.instance.flatMapLatest {
+                    it.sessionManager.webSocketClient.frameFlow
+                }
             combine(callingRoom, uiViewModel.instance, flow) { r, i, f ->
                 Triple(r, i, f)
             }.collectLatest { (room, instance, frame) ->
@@ -190,17 +196,14 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
                         roomId = roomId,
                         audioMuted = localAudioMuted.value,
                         videoMuted = localVideoMuted.value,
-                    )
+                    ),
                 )
             }
         }
         callingRoom.value = roomId
     }
 
-    private fun processCreateAnswer(
-        frame: RoomFrame.CreateAnswer,
-        instance: IAccountInstance,
-    ) {
+    private fun processCreateAnswer(frame: RoomFrame.CreateAnswer, instance: IAccountInstance) {
         if (callingRoom.value != frame.roomId) {
             return
         }
@@ -210,16 +213,17 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
         val localStream = stream.value ?: return
         val targetUid = frame.targetUid
         val signaling = peerSignals.getOrPut(targetUid) { PeerSignaling() }
-        val currentJob = lifecycle.coroutineScope.launch {
-            makeCallByAnswer(
-                frame,
-                localStream,
-                onRemoteVideoTrack = { setRemoteVideoTrack(targetUid, it) },
-                onRemoteAudioTrack = { setRemoteAudioTrack(targetUid, it) },
-                signaling = signaling,
-                instance = instance,
-            )
-        }
+        val currentJob =
+            lifecycle.coroutineScope.launch {
+                makeCallByAnswer(
+                    frame,
+                    localStream,
+                    onRemoteVideoTrack = { setRemoteVideoTrack(targetUid, it) },
+                    onRemoteAudioTrack = { setRemoteAudioTrack(targetUid, it) },
+                    signaling = signaling,
+                    instance = instance,
+                )
+            }
         peerJobs[targetUid] = currentJob
         job = currentJob
         currentJob.invokeOnCompletion {
@@ -229,10 +233,7 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
         }
     }
 
-    private fun processCreateOffer(
-        frame: RoomFrame.CreateOffer,
-        instance: IAccountInstance
-    ) {
+    private fun processCreateOffer(frame: RoomFrame.CreateOffer, instance: IAccountInstance) {
         if (callingRoom.value != frame.roomId) {
             return
         }
@@ -242,16 +243,17 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
         val localStream = stream.value ?: return
         val targetUid = frame.targetUid
         val signaling = peerSignals.getOrPut(targetUid) { PeerSignaling() }
-        val currentJob = lifecycle.coroutineScope.launch {
-            makeCallByOffer(
-                frame,
-                localStream,
-                onRemoteVideoTrack = { setRemoteVideoTrack(targetUid, it) },
-                onRemoteAudioTrack = { setRemoteAudioTrack(targetUid, it) },
-                signaling = signaling,
-                instance = instance,
-            )
-        }
+        val currentJob =
+            lifecycle.coroutineScope.launch {
+                makeCallByOffer(
+                    frame,
+                    localStream,
+                    onRemoteVideoTrack = { setRemoteVideoTrack(targetUid, it) },
+                    onRemoteAudioTrack = { setRemoteAudioTrack(targetUid, it) },
+                    signaling = signaling,
+                    instance = instance,
+                )
+            }
         peerJobs[targetUid] = currentJob
         job = currentJob
         currentJob.invokeOnCompletion {
@@ -310,10 +312,11 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
         }
         val updated = remotePeers.value.toMutableMap()
         val current = updated[frame.uid] ?: RemotePeerState(uid = frame.uid)
-        updated[frame.uid] = current.copy(
-            audioMuted = frame.audioMuted,
-            videoMuted = frame.videoMuted,
-        )
+        updated[frame.uid] =
+            current.copy(
+                audioMuted = frame.audioMuted,
+                videoMuted = frame.videoMuted,
+            )
         remotePeers.value = updated
     }
 
@@ -342,26 +345,28 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
                         roomId = roomId,
                         audioMuted = localAudioMuted.value,
                         videoMuted = localVideoMuted.value,
-                    )
+                    ),
                 )
             }
         }
     }
 
     private fun removeRemotePeer(uid: PrimaryKey) {
-        remotePeers.value = remotePeers.value.toMutableMap().apply {
-            remove(uid)
-        }
+        remotePeers.value =
+            remotePeers.value.toMutableMap().apply {
+                remove(uid)
+            }
     }
 }
 
 class PeerSignaling {
     val answer = CompletableDeferred<RoomFrame.RespondAnswer>()
-    private val candidateEvents = MutableSharedFlow<RoomFrame.ReceiveCandidate>(
-        replay = 1,
-        extraBufferCapacity = 16,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST,
-    )
+    private val candidateEvents =
+        MutableSharedFlow<RoomFrame.ReceiveCandidate>(
+            replay = 1,
+            extraBufferCapacity = 16,
+            onBufferOverflow = BufferOverflow.DROP_OLDEST,
+        )
     val candidates: SharedFlow<RoomFrame.ReceiveCandidate> = candidateEvents
 
     fun receiveAnswer(frame: RoomFrame.RespondAnswer) {
@@ -377,7 +382,9 @@ class PeerSignaling {
     }
 }
 
-class RTCBinder(val rtcHandle: RTCHandle) : Binder(), RTCHandle by rtcHandle
+class RTCBinder(val rtcHandle: RTCHandle) :
+    Binder(),
+    RTCHandle by rtcHandle
 
 class RTCServiceConnection(val rtcActivity: WeakReference<RTCContainer>) : ServiceConnection {
     override fun onServiceConnected(p0: ComponentName?, p1: IBinder?) {

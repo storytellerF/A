@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.core.service
 
 import com.storyteller_f.a.backend.core.MergedEnv
@@ -12,24 +16,18 @@ data class RoomDocument(
     override val id: PrimaryKey,
     val name: String,
     val aid: String,
-    val communityId: PrimaryKey? = null
-) :
-    PrimaryKeyIdentifiable {
+    val communityId: PrimaryKey? = null,
+) : PrimaryKeyIdentifiable {
     val objectType: ObjectType = ObjectType.ROOM
 
     companion object {
-        fun fromRoom(room: Room): RoomDocument {
-            return RoomDocument(room.id, room.name, room.aid, room.communityId)
-        }
+        fun fromRoom(room: Room): RoomDocument = RoomDocument(room.id, room.name, room.aid, room.communityId)
     }
 }
 
 sealed interface RoomDocumentSearch {
-    data class Keyword(
-        val words: String,
-        val communityId: PrimaryKey? = null,
-        val fetch: OffsetFetch
-    ) : RoomDocumentSearch
+    data class Keyword(val words: String, val communityId: PrimaryKey? = null, val fetch: OffsetFetch) :
+        RoomDocumentSearch
 }
 
 interface RoomSearchService {
@@ -37,9 +35,7 @@ interface RoomSearchService {
 
     suspend fun clean(): Result<Unit>
 
-    suspend fun searchDocument(
-        roomDocumentSearch: RoomDocumentSearch
-    ): Result<PaginationResult<RoomDocument>>
+    suspend fun searchDocument(roomDocumentSearch: RoomDocumentSearch): Result<PaginationResult<RoomDocument>>
 }
 
 interface RoomSearchServiceFactory {

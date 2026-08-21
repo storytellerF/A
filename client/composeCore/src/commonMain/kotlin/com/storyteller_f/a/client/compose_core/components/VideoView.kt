@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.components
 
 import androidx.compose.foundation.layout.*
@@ -39,35 +43,35 @@ fun VideoPlaylistPicker(
     sheetState: SheetState,
     hideSheet: () -> Unit,
     playList: List<PlayItem>,
-    onClick: (PlayItem, Int) -> Unit
+    onClick: (PlayItem, Int) -> Unit,
 ) {
     BaseSheet(showSheet, sheetState, hideSheet) {
         LazyColumn(
             modifier = Modifier.height(300.dp).fillMaxSize(),
             contentPadding = PaddingValues(20.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             items(playList.size, key = {
                 playList[it].id
-            }) {
+            }) { index ->
                 Row(
                     modifier = Modifier.height(40.dp).fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    val icon = playList[it].icon
+                    val icon = playList[index].icon
                     if (!icon.isNullOrBlank()) {
                         AsyncImage(icon, "icon", modifier = Modifier.height(30.dp))
                     } else {
                         Box(modifier = Modifier.height(30.dp))
                     }
                     Text(
-                        playList[it].title ?: "unknown",
+                        playList[index].title ?: "unknown",
                         modifier = Modifier.weight(1f),
-                        style = MaterialTheme.typography.labelSmall
+                        style = MaterialTheme.typography.labelSmall,
                     )
                     IconButton({
-                        onClick(playList[it], it)
+                        onClick(playList[index], index)
                     }) {
                         Icon(Icons.AutoMirrored.Default.PlaylistPlay, "play")
                     }

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.core
 
 import io.github.aakira.napier.LogLevel
@@ -14,82 +18,50 @@ import org.slf4j.spi.MDCAdapter
 import org.slf4j.spi.SLF4JServiceProvider
 
 class CustomSLF4JServiceProvider : SLF4JServiceProvider {
-    override fun getLoggerFactory(): ILoggerFactory {
-        return CustomLoggerFactory()
-    }
+    override fun getLoggerFactory(): ILoggerFactory = CustomLoggerFactory()
 
-    override fun getMarkerFactory(): IMarkerFactory {
-        return BasicMarkerFactory()
-    }
+    override fun getMarkerFactory(): IMarkerFactory = BasicMarkerFactory()
 
-    override fun getMDCAdapter(): MDCAdapter {
-        return BasicMDCAdapter()
-    }
+    override fun getMDCAdapter(): MDCAdapter = BasicMDCAdapter()
 
-    override fun getRequestedApiVersion(): String {
-        return "2.0.0"
-    }
+    override fun getRequestedApiVersion(): String = "2.0.0"
 
     override fun initialize() = Unit
 }
 
 class CustomLoggerFactory : ILoggerFactory {
-    override fun getLogger(name: String?): Logger {
-        return CustomSlf4jLogger(name ?: "Default")
-    }
+    override fun getLogger(name: String?): Logger = CustomSlf4jLogger(name ?: "Default")
 }
 
 class CustomSlf4jLogger(private val customName: String) : AbstractLogger() {
-    override fun isTraceEnabled(): Boolean {
-        return false
-    }
+    override fun isTraceEnabled(): Boolean = false
 
-    override fun isTraceEnabled(marker: Marker?): Boolean {
-        return false
-    }
+    override fun isTraceEnabled(marker: Marker?): Boolean = false
 
-    override fun isDebugEnabled(): Boolean {
-        return true
-    }
+    override fun isDebugEnabled(): Boolean = true
 
-    override fun isDebugEnabled(marker: Marker?): Boolean {
-        return true
-    }
+    override fun isDebugEnabled(marker: Marker?): Boolean = true
 
-    override fun isInfoEnabled(): Boolean {
-        return true
-    }
+    override fun isInfoEnabled(): Boolean = true
 
-    override fun isInfoEnabled(marker: Marker?): Boolean {
-        return true
-    }
+    override fun isInfoEnabled(marker: Marker?): Boolean = true
 
-    override fun isWarnEnabled(): Boolean {
-        return true
-    }
+    override fun isWarnEnabled(): Boolean = true
 
-    override fun isWarnEnabled(marker: Marker?): Boolean {
-        return true
-    }
+    override fun isWarnEnabled(marker: Marker?): Boolean = true
 
-    override fun isErrorEnabled(): Boolean {
-        return true
-    }
+    override fun isErrorEnabled(): Boolean = true
 
-    override fun isErrorEnabled(marker: Marker?): Boolean {
-        return true
-    }
+    override fun isErrorEnabled(marker: Marker?): Boolean = true
 
-    override fun getFullyQualifiedCallerName(): String? {
-        return null
-    }
+    override fun getFullyQualifiedCallerName(): String? = null
 
     override fun handleNormalizedLoggingCall(
         level: Level?,
         marker: Marker?,
         messagePattern: String?,
         arguments: Array<out Any>?,
-        throwable: Throwable?
+        throwable: Throwable?,
     ) {
         level ?: return
         messagePattern ?: return
@@ -101,7 +73,8 @@ class CustomSlf4jLogger(private val customName: String) : AbstractLogger() {
         Napier.log(getLevel(level), customName, throwable, messagePattern)
     }
 
-    private fun getLevel(level: Level): LogLevel = when (level) {
+    private fun getLevel(level: Level): LogLevel =
+        when (level) {
         Level.ERROR -> LogLevel.ERROR
         Level.WARN -> LogLevel.WARNING
         Level.INFO -> LogLevel.INFO

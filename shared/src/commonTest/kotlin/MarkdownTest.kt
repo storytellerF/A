@@ -1,3 +1,9 @@
+/*
+ * This is a private project. All rights reserved.
+*/
+
+package com.storyteller_f.shared
+
 import com.storyteller_f.shared.utils.astNode
 import com.storyteller_f.shared.utils.extractHeadParagraph
 import com.storyteller_f.shared.utils.extractMarkdownHeadline
@@ -15,35 +21,37 @@ import kotlin.test.assertEquals
 class MarkdownTest {
     @Test
     fun `test extract headline`() {
-        val markdownText = """
-        # First Level Header
+        val markdownText =
+            """
+            # First Level Header
 
-        Some introductory text before the second level header.
+            Some introductory text before the second level header.
 
-        Hello.
-        ```c
-            print();
-        ```
-        ## Second Level Header
+            Hello.
+            ```c
+                print();
+            ```
+            ## Second Level Header
 
-        Content after the second level header.
-        """.trimIndent()
+            Content after the second level header.
+            """.trimIndent()
         assertEquals(
             """
             # First Level Header
             Some introductory text before the second level header.
             Hello.
             """.trimIndent(),
-            extractMarkdownHeadline(markdownText)
+            extractMarkdownHeadline(markdownText),
         )
         assertEquals("*hello*", extractMarkdownHeadline("*hello*"))
     }
 
     @Test
     fun `test extract media`() {
-        val text = """
+        val text =
+            """
             ![test](/test.jpg "test")
-        """.trimIndent()
+            """.trimIndent()
         val list = extractMarkdownMediaLink(text)
         assertEquals("/test.jpg", list.first())
     }
@@ -58,51 +66,51 @@ class MarkdownTest {
     fun `test extract image`() {
         assertEquals(
             """![I00012733.jpg](I00012733.jpg "I00012733.jpg")""",
-            extractMarkdownHeadline("""![I00012733.jpg](I00012733.jpg "I00012733.jpg")""")
+            extractMarkdownHeadline("""![I00012733.jpg](I00012733.jpg "I00012733.jpg")"""),
         )
     }
 
     @Test
     fun `test extract inline math`() {
-        val markdownText = "$\\`\\sqrt{3x-1}+(1+x)^2\\`$".trimIndent()
+        val markdownText = """${'$'}\`\sqrt{3x-1}+(1+x)^2\`${'$'}"""
         val parsedTree = astNode(markdownText)
-        parsedTree.accept(object : Visitor {
-            override fun visitNode(node: ASTNode) {
-                println(node.type)
-                if (node.type == GFMElementTypes.INLINE_MATH) {
-                    println(readInlineMath(node, markdownText))
+        parsedTree.accept(
+            object : Visitor {
+                override fun visitNode(node: ASTNode) {
+                    if (node.type == GFMElementTypes.INLINE_MATH) readInlineMath(node, markdownText)
+                    node.acceptChildren(this)
                 }
-                node.acceptChildren(this)
-            }
-        })
+            },
+        )
     }
 
     @Test
     fun `test trim keeps plain text`() {
         assertEquals(
             "appium-favorite-topic-1781614397799",
-            trimMarkdownUnusedContent("appium-favorite-topic-1781614397799")
+            trimMarkdownUnusedContent("appium-favorite-topic-1781614397799"),
         )
     }
 
     @Test
     fun `test filter code fence unused content`() {
-        val markdownText = """
-        hello
-        ```csa
-        
-            /user/1
-        ```
-        
-        
-        ```object
-        {
-            "contentType": "image/png",
-            "name": "imag.png",
-            "hello": "world"
-        }
-        ```
-        """.trimIndent()
+        val markdownText =
+            """
+            hello
+            ```csa
+
+                /user/1
+            ```
+
+
+            ```object
+            {
+                "contentType": "image/png",
+                "name": "imag.png",
+                "hello": "world"
+            }
+            ```
+            """.trimIndent()
         val message = trimMarkdownUnusedContent(markdownText)
         assertEquals(
             """
@@ -115,17 +123,18 @@ class MarkdownTest {
             {"name":"imag.png","contentType":"image/png"}
             ```
             """.trimIndent(),
-            message
+            message,
         )
     }
 
     @Test
     fun `test preserve asciidoc fence language`() {
-        val markdownText = """
+        val markdownText =
+            """
             ```asciidoc
             = AsciiDoc Preview
             ```
-        """.trimIndent()
+            """.trimIndent()
 
         assertEquals(markdownText, trimMarkdownUnusedContent(markdownText))
     }

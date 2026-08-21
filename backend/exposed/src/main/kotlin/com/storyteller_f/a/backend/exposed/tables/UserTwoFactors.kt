@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.exposed.tables
 
 import com.storyteller_f.a.backend.core.types.UserTwoFactor
@@ -22,19 +26,16 @@ object UserTwoFactors : BaseTable() {
 private val json = Json { ignoreUnknownKeys = true }
 private val recoveryCodeHashesSerializer = ListSerializer(String.serializer())
 
-fun UserTwoFactor.Companion.wrapRow(row: ResultRow): UserTwoFactor {
-    return with(UserTwoFactors) {
-        UserTwoFactor(
-            row[uid],
-            row[enabled],
-            row[type],
-            row[totpSecret],
-            json.decodeFromString(recoveryCodeHashesSerializer, row[recoveryCodeHashes]),
-            row[updatedAt],
-        )
-    }
+fun UserTwoFactor.Companion.wrapRow(row: ResultRow): UserTwoFactor =
+    with(UserTwoFactors) {
+    UserTwoFactor(
+        row[uid],
+        row[enabled],
+        row[type],
+        row[totpSecret],
+        json.decodeFromString(recoveryCodeHashesSerializer, row[recoveryCodeHashes]),
+        row[updatedAt],
+    )
 }
 
-fun encodeRecoveryCodeHashes(hashes: List<String>): String {
-    return json.encodeToString(recoveryCodeHashesSerializer, hashes)
-}
+fun encodeRecoveryCodeHashes(hashes: List<String>): String = json.encodeToString(recoveryCodeHashesSerializer, hashes)

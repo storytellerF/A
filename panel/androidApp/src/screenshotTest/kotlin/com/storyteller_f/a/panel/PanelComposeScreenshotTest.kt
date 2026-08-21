@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.panel
 
 import androidx.compose.foundation.layout.Arrangement
@@ -30,7 +34,7 @@ fun PanelTopicCellScreenshot() {
         PaddedPreview {
             TopicCell(
                 samplePanelTopic().copy(commentCount = 4, reactionCount = 9, isPin = true),
-                PreviewPanelNav
+                PreviewPanelNav,
             )
         }
     }
@@ -47,8 +51,8 @@ fun PanelInfoTableScreenshot() {
                     "ID" to "501",
                     "Name" to "Panel snapshot fixture",
                     "Status" to "NORMAL",
-                    "Owner" to "system"
-                )
+                    "Owner" to "system",
+                ),
             )
         }
     }
@@ -70,7 +74,8 @@ private fun PanelScreenshotTheme(content: @Composable () -> Unit) {
     }
 }
 
-private fun samplePanelTopic() = TopicInfo.EMPTY.copy(
+private fun samplePanelTopic() =
+    TopicInfo.EMPTY.copy(
     id = 501,
     content = TopicContent.Plain("Panel topic row rendered from screenshotTest."),
     createdTime = fixedTime(),

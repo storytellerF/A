@@ -1,3 +1,9 @@
+/*
+ * This is a private project. All rights reserved.
+*/
+
+package com.storyteller_f.a.dev.appium
+
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.AlgoType
 
@@ -95,11 +101,7 @@ suspend fun scenarioSubscribePreparedTopic(driver: AppTestDriver, data: Subscrip
     driver.assertVisibleByDescription("topic")
 }
 
-suspend fun scenarioCommunityProfileActions(
-    driver: AppTestDriver,
-    communityName: String,
-    ownerAddress: String,
-) {
+suspend fun scenarioCommunityProfileActions(driver: AppTestDriver, communityName: String, ownerAddress: String) {
     scenarioOpenCommunity(driver, communityName)
     driver.clickByText(communityName.first().toString())
     driver.clickByText("Favorite")
@@ -108,10 +110,7 @@ suspend fun scenarioCommunityProfileActions(
     driver.clickByTextContaining(ownerAddress)
 }
 
-suspend fun scenarioPublishTopicInCommunity(
-    driver: AppTestDriver,
-    communityName: String,
-) {
+suspend fun scenarioPublishTopicInCommunity(driver: AppTestDriver, communityName: String) {
     val topicContent = "appium-community-topic-${System.currentTimeMillis()}"
     scenarioOpenCommunity(driver, communityName)
     driver.clickByText(communityName.first().toString())
@@ -123,11 +122,7 @@ suspend fun scenarioPublishTopicInCommunity(
     driver.assertVisibleByText(topicContent)
 }
 
-suspend fun scenarioPublishTopicInRoom(
-    driver: AppTestDriver,
-    communityName: String,
-    roomName: String,
-) {
+suspend fun scenarioPublishTopicInRoom(driver: AppTestDriver, communityName: String, roomName: String) {
     val topicContent = "appium-room-topic-${System.currentTimeMillis()}"
     scenarioOpenCommunity(driver, communityName)
     driver.clickByText("Rooms")

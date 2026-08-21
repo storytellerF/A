@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.panel.components
 
 import androidx.compose.foundation.border
@@ -20,43 +24,45 @@ import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.client.compose_core.components.SimpleMessageWithButton
 
 /**
- * 通用信息表格组件，用于以表格形式展示对象的所有属性
+ * 通用信息表格组件，用于以表格形式展示对象的所有属性.
  * @param items 键值对列表，每个 Pair 代表一行：key 为字段名，value 为字段值
  */
 @Composable
 fun InfoTable(items: List<Pair<String, String>>, modifier: Modifier = Modifier) {
     Column(
-        modifier = modifier
+        modifier =
+        modifier
             .fillMaxWidth()
             .verticalScroll(rememberScrollState())
-            .border(1.dp, MaterialTheme.colorScheme.outline)
+            .border(1.dp, MaterialTheme.colorScheme.outline),
     ) {
         items.forEachIndexed { index, (key, value) ->
             Row(
-                modifier = Modifier
+                modifier =
+                Modifier
                     .fillMaxWidth()
                     .then(
                         if (index < items.size - 1) {
                             Modifier.border(
                                 width = 0.dp,
                                 color = MaterialTheme.colorScheme.outline,
-                                shape = RectangleShape
+                                shape = RectangleShape,
                             ).border(
                                 width = 0.dp,
                                 color = MaterialTheme.colorScheme.outline,
-                                shape = RectangleShape
+                                shape = RectangleShape,
                             )
                         } else {
                             Modifier
-                        }
+                        },
                     ),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     modifier = Modifier.weight(0.4f).padding(8.dp),
                     text = key,
                     style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
                 VerticalDivider()
                 Box(

@@ -42,9 +42,9 @@ import com.storyteller_f.a.panel.common.CreateWorkerTasksViewModel
 import com.storyteller_f.a.panel.common.WorkerTaskEditorState
 import com.storyteller_f.a.panel.no_worker_task_configurations
 import com.storyteller_f.a.panel.save
+import com.storyteller_f.a.panel.worker_task_configurations
 import com.storyteller_f.a.panel.worker_task_fetch_size
 import com.storyteller_f.a.panel.worker_task_wait_duration
-import com.storyteller_f.a.panel.worker_task_configurations
 import org.jetbrains.compose.resources.stringResource
 
 /** Displays persisted worker task configurations and their editable values. */

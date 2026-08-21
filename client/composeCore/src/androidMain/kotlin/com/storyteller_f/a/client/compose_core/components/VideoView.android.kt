@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.components
 
 import android.app.PictureInPictureParams
@@ -57,7 +61,7 @@ actual fun VideoViewEmbed(remoteMediaItem: RemoteMediaItem) {
         remoteMediaItem,
         { playingSession, localMediaPlaySession ->
             VideoPlayer(playingSession, localMediaPlaySession, remoteMediaItem)
-        }
+        },
     )
 }
 
@@ -67,7 +71,7 @@ actual fun VideoViewFullScreen(remoteMediaItem: RemoteMediaItem) {
         remoteMediaItem,
         { playingSession, localMediaPlaySession ->
             VideoPlayer(playingSession, localMediaPlaySession, remoteMediaItem)
-        }
+        },
     )
 }
 
@@ -77,7 +81,7 @@ actual fun VideoViewFilled(remoteMediaItem: RemoteMediaItem) {
         remoteMediaItem,
         { playingSession, localMediaPlaySession ->
             VideoPlayer(playingSession, localMediaPlaySession, remoteMediaItem)
-        }
+        },
     )
 }
 
@@ -91,20 +95,21 @@ private fun VideoPlayer(
     val mediaPlayerService = LocalMediaPlayerService.current
     val player by mediaPlayerService.controller.collectAsState()
     val videoSize = playingSession?.videoSize
-    val ratio = remember(playingSession, localMediaPlaySession) {
-        if (videoSize != null &&
-            playingSession.lastUuid == localMediaPlaySession.uuid
-        ) {
-            Rational(videoSize.width, videoSize.height)
-        } else {
-            Rational(16, 9)
+    val ratio =
+        remember(playingSession, localMediaPlaySession) {
+            if (videoSize != null &&
+                playingSession.lastUuid == localMediaPlaySession.uuid
+            ) {
+                Rational(videoSize.width, videoSize.height)
+            } else {
+                Rational(16, 9)
+            }
         }
-    }
     Napier.d {
-        "VideoPlayer ${localMediaPlaySession.uuid} ratio $ratio ${playingSession?.uuids} $videoSize"
+        "VideoPlayer ${localMediaPlaySession.uuid} ratio $ratio ${playingSession?.uuids ?: "<none>"} ${videoSize ?: "<none>"}"
     }
     val playerState by rememberPlayerState(player, localMediaPlaySession)
-    val enablePip = playerState.currentIsPlaying && (playingSession?.lastUuid == localMediaPlaySession.uuid)
+    val enablePip = playerState.currentIsPlaying && playingSession?.lastUuid == localMediaPlaySession.uuid
     Napier.d(tag = "MediaPlayer") {
         "VideoPlayer ${localMediaPlaySession.uuid} $enablePip"
     }
@@ -141,7 +146,7 @@ private fun BoxScope.VideoPlayerInternal(localMediaPlaySession: LocalMediaPlaySe
                     controllerShowTimeoutMs = 1000
                 }
             },
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
         ) {
             Napier.i {
                 "Video ${localMediaPlaySession.uuid} update"
@@ -188,7 +193,7 @@ fun EmbedMediaPlayerMenus(
         }
         IconButton({
             context.findActivity().enterPictureInPictureMode(
-                PictureInPictureParams.Builder().build()
+                PictureInPictureParams.Builder().build(),
             )
         }, enabled = isActive) {
             Icon(Icons.Default.PictureInPicture, "pip")
@@ -209,9 +214,10 @@ actual fun rememberIsInPipMode(): Boolean {
     val activity = LocalContext.current.findActivity()
     var pipMode by remember { mutableStateOf(activity.isInPictureInPictureMode) }
     DisposableEffect(activity) {
-        val observer = Consumer<PictureInPictureModeChangedInfo> { info ->
-            pipMode = info.isInPictureInPictureMode
-        }
+        val observer =
+            Consumer<PictureInPictureModeChangedInfo> { info ->
+                pipMode = info.isInPictureInPictureMode
+            }
         activity.addOnPictureInPictureModeChangedListener(observer)
         onDispose { activity.removeOnPictureInPictureModeChangedListener(observer) }
     }

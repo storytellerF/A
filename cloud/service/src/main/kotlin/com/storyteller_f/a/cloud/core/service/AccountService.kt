@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.core.service
 
 import com.perraco.utils.SnowflakeFactory
@@ -20,31 +24,24 @@ import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.cancellableRunCatching
 import com.storyteller_f.shared.utils.errorIfFalse
 import com.storyteller_f.shared.utils.filterNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.now
 
-suspend fun Backend.signUp(
-    data: String,
-    pack: SignUpBody
-): Result<UserInfo> {
+suspend fun Backend.signUp(data: String, pack: SignUpBody): Result<UserInfo> {
     val f = finalData(data)
     // Simple heuristic: Dilithium keys are much larger than P256 keys.
     // P256 PEM is ~200-300 chars. Dilithium PEM is > 2000 chars.
     val algoType = if (pack.publicKey.length > 1000) AlgoType.DILITHIUM else AlgoType.P256
     val algo = getAlgo(algoType)
-    return runCatching {
+    return cancellableRunCatching {
         signUpInternal(algo, pack, f, algoType).toUserInfo()
     }
 }
 
-private suspend fun Backend.signUpInternal(
-    algo: Algo,
-    pack: SignUpBody,
-    f: String,
-    algoType: AlgoType
-): User {
+private suspend fun Backend.signUpInternal(algo: Algo, pack: SignUpBody, f: String, algoType: AlgoType): User {
     val verify = algo.verify(pack.publicKey, pack.signature, f).getOrThrow()
     if (!verify) {
         throw CustomBadRequestException("Verify failed")
@@ -57,33 +54,32 @@ private suspend fun Backend.signUpInternal(
     val notificationId = SnowflakeFactory.nextId()
     val name = nameService.parse(newId)
 
-    val encPubKey = if (algoType == AlgoType.DILITHIUM) {
-        pack.encryptionPublicKey
-    } else {
-        null
-    }
+    val encPubKey =
+        if (algoType == AlgoType.DILITHIUM) {
+            pack.encryptionPublicKey
+        } else {
+            null
+        }
 
-    val user = User(
-        null,
-        encPubKey,
-        pack.publicKey,
-        ad,
-        null,
-        name,
-        newId,
-        now(),
-        0,
-        PassType.RAW,
-        algoType,
-        notificationId
-    )
+    val user =
+        User(
+            null,
+            encPubKey,
+            pack.publicKey,
+            ad,
+            null,
+            name,
+            newId,
+            now(),
+            0,
+            PassType.RAW,
+            algoType,
+            notificationId,
+        )
     return database.user.createUser(user).getOrThrow()
 }
 
-suspend fun Backend.signIn(
-    data: String,
-    pack: SignInBody
-): Result<SignInServiceResponse> {
+suspend fun Backend.signIn(data: String, pack: SignInBody): Result<SignInServiceResponse> {
     val f = finalData(data)
     return database.user.getRawUserAndPublicKeyByAddress(pack.address)
         .filterNotNull {
@@ -144,10 +140,7 @@ suspend fun Backend.adminSignIn(data: String, pack: SignInBody): Result<PanelAcc
         }
 }
 
-suspend fun Backend.adminSignUp(
-    data: String,
-    pack: SignUpBody
-): Result<PanelAccountInfo> {
+suspend fun Backend.adminSignUp(data: String, pack: SignUpBody): Result<PanelAccountInfo> {
     val f = finalData(data)
     return getAlgo(AlgoType.P256).run {
         verify(pack.publicKey, pack.signature, f).errorIfFalse {

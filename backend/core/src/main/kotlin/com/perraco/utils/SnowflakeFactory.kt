@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.perraco.utils
 
 import com.storyteller_f.shared.type.PrimaryKey
@@ -21,7 +25,6 @@ import kotlin.time.Instant
  * See: [Snowflake ID](https://en.wikipedia.org/wiki/Snowflake_ID)
  */
 object SnowflakeFactory {
-
     // The unique machine ID used for generating Snowflake IDs.
     // Must be set before generating IDs.
     // This value must be unique for each machine in a distributed system.
@@ -77,10 +80,9 @@ object SnowflakeFactory {
 
     private val lock = Mutex()
 
-    suspend fun nextId(): PrimaryKey {
-        return lock.withLock {
-            nextIdInternal()
-        }
+    suspend fun nextId(): PrimaryKey =
+        lock.withLock {
+        nextIdInternal()
     }
 
     /**
@@ -90,6 +92,7 @@ object SnowflakeFactory {
      */
     private suspend fun nextIdInternal(): PrimaryKey {
         var currentTimestampMs: Long = newTimestamp()
+        val currentMachineId = checkNotNull(machineId) { "Machine ID must be configured before generating IDs" }
 
         // Check for invalid system clock settings.
         check(currentTimestampMs >= lastTimestampMs) {
@@ -115,8 +118,8 @@ object SnowflakeFactory {
 
         // Construct the ID.
 
-        return (lastTimestampMs shl (MACHINE_ID_BITS + SEQUENCE_BITS)) or
-            (machineId!!.toLong() shl SEQUENCE_BITS) or
+        return lastTimestampMs shl MACHINE_ID_BITS + SEQUENCE_BITS or
+            (currentMachineId.toLong() shl SEQUENCE_BITS) or
             sequence
     }
 
@@ -129,10 +132,10 @@ object SnowflakeFactory {
     @OptIn(ExperimentalTime::class)
     fun parse(id: PrimaryKey): SnowflakeData {
         // Extract the machine ID segment.
-        val machineIdSegment = (id shr SEQUENCE_BITS) and MAX_MACHINE_ID.toLong()
+        val machineIdSegment = id shr SEQUENCE_BITS and MAX_MACHINE_ID.toLong()
 
         // Extract the timestamp segment.
-        val timestampMs: Long = (id shr (MACHINE_ID_BITS + SEQUENCE_BITS))
+        val timestampMs: Long = id shr MACHINE_ID_BITS + SEQUENCE_BITS
         val instant = Instant.fromEpochMilliseconds(timestampMs)
         val utcTimestampSegment: LocalDateTime = instant.toLocalDateTime(TimeZone.Companion.UTC)
 
@@ -146,7 +149,7 @@ object SnowflakeFactory {
             machineId = machineIdSegment.toInt(),
             sequence = sequenceSegment,
             utc = utcTimestampSegment,
-            local = localTimestampSegment
+            local = localTimestampSegment,
         )
     }
 

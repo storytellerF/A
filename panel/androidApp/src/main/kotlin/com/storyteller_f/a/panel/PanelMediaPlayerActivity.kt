@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.panel
 
 import PanelFilePreviewPage
@@ -26,7 +30,7 @@ class PanelMediaPlayerActivity : ComponentActivity() {
                 CompositionLocalProvider(
                     LocalPanelUiViewModel provides (application as PanelApplication).panelUiViewModel,
                     LocalMediaPlayListHandlerProvider provides DefaultMediaPlayListHandlerProvider,
-                    LocalMediaPlayerService provides (application as PanelApplication).mediaPlayer
+                    LocalMediaPlayerService provides (application as PanelApplication).mediaPlayer,
                 ) {
                     PanelFilePreviewPage(fileId)
                 }

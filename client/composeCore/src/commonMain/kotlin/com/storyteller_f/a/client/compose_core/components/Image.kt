@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.components
 
 import androidx.compose.foundation.Image
@@ -31,7 +35,7 @@ fun CommonImage(
     model: String,
     contentDescription: String,
     modifier: Modifier,
-    contentScale: ContentScale = ContentScale.Fit
+    contentScale: ContentScale = ContentScale.Fit,
 ) {
     SubcomposeAsyncImage(
         globalLoader(model),
@@ -43,7 +47,7 @@ fun CommonImage(
         error = {
             ImageError()
         },
-        contentScale = contentScale
+        contentScale = contentScale,
     )
 }
 
@@ -68,7 +72,7 @@ fun globalLoader(url: String): ImageRequest {
     val platformContext = LocalPlatformContext.current
     return remember(url) {
         ImageRequest.Builder(platformContext).data(url).crossfade(true).fetcherFactory(
-            KtorNetworkFetcherFactory(client)
+            KtorNetworkFetcherFactory(client),
         ).build()
     }
 }
@@ -80,7 +84,8 @@ fun CustomMarkdownImage(imageData: ImageData) {
         val state by painter.state.collectAsState()
         when (val s = state) {
             is AsyncImagePainter.State.Empty,
-            is AsyncImagePainter.State.Loading -> {
+            is AsyncImagePainter.State.Loading,
+            -> {
                 ImageLoading()
             }
 
@@ -92,7 +97,7 @@ fun CustomMarkdownImage(imageData: ImageData) {
                     alignment = imageData.alignment,
                     contentScale = imageData.contentScale,
                     alpha = imageData.alpha,
-                    colorFilter = imageData.colorFilter
+                    colorFilter = imageData.colorFilter,
                 )
             }
 
@@ -111,7 +116,7 @@ fun CustomMarkdownImage(imageData: ImageData) {
             alignment = imageData.alignment,
             contentScale = imageData.contentScale,
             alpha = imageData.alpha,
-            colorFilter = imageData.colorFilter
+            colorFilter = imageData.colorFilter,
         )
     }
 }

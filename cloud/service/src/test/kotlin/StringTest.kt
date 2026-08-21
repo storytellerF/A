@@ -1,3 +1,9 @@
+/*
+ * This is a private project. All rights reserved.
+*/
+
+package com.storyteller_f.a.cloud.core.service
+
 import com.storyteller_f.a.cloud.core.service.isAllVisibleChar
 import kotlin.test.Test
 import kotlin.test.assertFalse

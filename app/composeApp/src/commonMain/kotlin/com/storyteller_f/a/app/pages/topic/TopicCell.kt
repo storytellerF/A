@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.topic
 
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -87,10 +91,7 @@ fun UserTopicCell(info: TopicInfo?) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RoomTopicCell(
-    info: TopicInfo?,
-    showAvatar: Boolean = true
-) {
+fun RoomTopicCell(info: TopicInfo?, showAvatar: Boolean = true) {
     val sheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
     RoomTopicCellInternal(info, showAvatar) {
@@ -114,7 +115,7 @@ class TopicPreviewProvider : PreviewParameterProvider<TopicInfo> {
 fun TopicCellInternal(
     @PreviewParameter(TopicPreviewProvider::class) topicInfo: TopicInfo?,
     supportPin: Boolean = false,
-    startAddReaction: () -> Unit = {}
+    startAddReaction: () -> Unit = {},
 ) {
     topicInfo ?: return
     val topicId = topicInfo.id
@@ -131,7 +132,7 @@ fun TopicCellInternal(
 fun UserTopicCellInternal(
     @PreviewParameter(TopicPreviewProvider::class) topicInfo: TopicInfo?,
     supportPin: Boolean = false,
-    startAddReaction: () -> Unit = {}
+    startAddReaction: () -> Unit = {},
 ) {
     topicInfo ?: return
     val topicId = topicInfo.id
@@ -141,15 +142,11 @@ fun UserTopicCellInternal(
 }
 
 @Composable
-private fun TopicContentAndInteraction(
-    topicInfo: TopicInfo,
-    startAddReaction: () -> Unit,
-    topicId: PrimaryKey
-) {
+private fun TopicContentAndInteraction(topicInfo: TopicInfo, startAddReaction: () -> Unit, topicId: PrimaryKey) {
     val appNavFactory = LocalAppNavFactory.current
     Column(
         Modifier.padding(horizontal = 8.dp).padding(bottom = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         AppTopicContentView(topicInfo, true)
         InteractionRow(topicInfo, startAddReaction) {
@@ -165,7 +162,7 @@ private fun TopicContentAndInteraction(
 fun CommonTopicCellInternal(
     @PreviewParameter(TopicPreviewProvider::class) topicInfo: TopicInfo?,
     supportPin: Boolean = false,
-    block: @Composable () -> Unit = {}
+    block: @Composable () -> Unit = {},
 ) {
     topicInfo ?: return
     val topicId = topicInfo.id
@@ -173,13 +170,14 @@ fun CommonTopicCellInternal(
     var expanded by remember { mutableStateOf(false) }
     Box {
         Column(
-            modifier = Modifier.clip(RoundedCornerShape(8.dp)).combinedClickable(onLongClick = {
+            modifier =
+            Modifier.clip(RoundedCornerShape(8.dp)).combinedClickable(onLongClick = {
                 if (supportPin) {
                     expanded = true
                 }
             }, onLongClickLabel = stringResource(Res.string.topic_menu)) {
                 appNavFactory.newAppNav().gotoTopic(topicId)
-            }
+            },
         ) {
             block()
         }
@@ -188,7 +186,7 @@ fun CommonTopicCellInternal(
             FontIcon(
                 MaterialSymbolsOutlined.Keep,
                 stringResource(Res.string.is_pinned),
-                modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)
+                modifier = Modifier.align(Alignment.TopEnd).padding(8.dp),
             )
         }
         TopicDropdownMenu(expanded, topicInfo) {
@@ -199,11 +197,7 @@ fun CommonTopicCellInternal(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun RoomTopicCellInternal(
-    topicInfo: TopicInfo?,
-    showAvatar: Boolean,
-    startAddReaction: () -> Unit
-) {
+fun RoomTopicCellInternal(topicInfo: TopicInfo?, showAvatar: Boolean, startAddReaction: () -> Unit) {
     topicInfo ?: return
     val authorInfo = topicInfo.extension?.authorInfo
     val topicId = topicInfo.id
@@ -211,11 +205,12 @@ fun RoomTopicCellInternal(
     var expanded by remember { mutableStateOf(false) }
     Box {
         Column(
-            modifier = Modifier.clip(RoundedCornerShape(8.dp)).combinedClickable(onLongClick = {
+            modifier =
+            Modifier.clip(RoundedCornerShape(8.dp)).combinedClickable(onLongClick = {
                 expanded = true
             }, onLongClickLabel = stringResource(Res.string.topic_menu)) {
                 appNavFactory.newAppNav().gotoTopic(topicId)
-            }.padding(8.dp)
+            }.padding(8.dp),
         ) {
             if (showAvatar) {
                 UserCell(authorInfo)
@@ -224,7 +219,7 @@ fun RoomTopicCellInternal(
                 Modifier.fillMaxWidth().padding(start = 48.dp, end = 8.dp)
                     .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(8.dp))
                     .padding(horizontal = 12.dp).padding(top = 8.dp, bottom = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 AppTopicContentView(topicInfo, true)
                 if (topicInfo.reactionCount > 0) {
@@ -248,16 +243,17 @@ private fun SubTopics(topicInfo: TopicInfo) {
     val topics = topicInfo.extension?.subTopics.orEmpty()
     if (topics.isNotEmpty()) {
         Column(
-            modifier = Modifier
+            modifier =
+            Modifier
                 .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(10.dp))
-                .padding(horizontal = 8.dp)
+                .padding(horizontal = 8.dp),
         ) {
-            repeat(topics.size) {
-                val info = topics[it]
+            repeat(topics.size) { index ->
+                val info = topics[index]
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(5.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     val userInfo = info.extension?.authorInfo
                     UserIconWithDialog(userInfo, size = 20.dp)
@@ -286,15 +282,16 @@ fun TopicDropdownMenu(expanded: Boolean, topicInfo: TopicInfo, onDismissRequest:
     val globalDialogController = LocalGlobalDialog.current
     DropdownMenu(
         expanded = expanded,
-        onDismissRequest = onDismissRequest
+        onDismissRequest = onDismissRequest,
     ) {
         val title = if (topicInfo.isPin) stringResource(Res.string.unpin) else stringResource(Res.string.pin)
         DropdownMenuItem(
             leadingIcon = {
-                val char = when {
-                    topicInfo.isPin -> MaterialSymbolsOutlined.KeepOff
-                    else -> MaterialSymbolsOutlined.Keep
-                }
+                val char =
+                    when {
+                        topicInfo.isPin -> MaterialSymbolsOutlined.KeepOff
+                        else -> MaterialSymbolsOutlined.Keep
+                    }
                 Box(modifier = Modifier.size(20.dp)) {
                     CustomIcon(IconRes.Font(char))
                 }
@@ -307,20 +304,16 @@ fun TopicDropdownMenu(expanded: Boolean, topicInfo: TopicInfo, onDismissRequest:
                         globalDialogController.emitEvent(OnTopicChanged(it))
                     }
                 }
-            }
+            },
         )
     }
 }
 
 @Composable
-fun RoomTopicDropdownMenu(
-    expanded: Boolean,
-    startAddReaction: () -> Unit,
-    onDismissRequest: () -> Unit
-) {
+fun RoomTopicDropdownMenu(expanded: Boolean, startAddReaction: () -> Unit, onDismissRequest: () -> Unit) {
     DropdownMenu(
         expanded = expanded,
-        onDismissRequest = onDismissRequest
+        onDismissRequest = onDismissRequest,
     ) {
         DropdownMenuItem(
             leadingIcon = {
@@ -331,7 +324,7 @@ fun RoomTopicDropdownMenu(
             text = { Text(stringResource(Res.string.add_reaction)) },
             onClick = {
                 startAddReaction()
-            }
+            },
         )
     }
 }

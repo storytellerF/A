@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 @file:OptIn(androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi::class)
 
 package com.storyteller_f.a.panel.common
@@ -193,11 +197,12 @@ interface PanelNavFactory {
     fun newPanelNav(): PanelNav
 
     companion object {
-        val EMPTY = object : PanelNavFactory {
-            override fun newPanelNav(): PanelNav {
-                error("no panel nav")
+        val EMPTY =
+            object : PanelNavFactory {
+                override fun newPanelNav(): PanelNav {
+                    error("no panel nav")
+                }
             }
-        }
     }
 }
 
@@ -418,31 +423,34 @@ private fun PanelHost(content: @Composable () -> Unit) {
 
 @Composable
 fun PanelLoginPage(back: () -> Unit) {
-    val module = SerializersModule {
-        polymorphic(NavKey::class) {
-            subclass(LoginSelectScreen::class, LoginSelectScreen.serializer())
-            subclass(LoginInputScreen::class, LoginInputScreen.serializer())
+    val module =
+        SerializersModule {
+            polymorphic(NavKey::class) {
+                subclass(LoginSelectScreen::class, LoginSelectScreen.serializer())
+                subclass(LoginInputScreen::class, LoginInputScreen.serializer())
+            }
         }
-    }
-    val config = remember {
-        SavedStateConfiguration {
-            serializersModule = module
+    val config =
+        remember {
+            SavedStateConfiguration {
+                serializersModule = module
+            }
         }
-    }
     val backStack = rememberNavBackStack(config, LoginSelectScreen)
-    Scaffold {
+    Scaffold { paddingValues ->
         val direction = LocalLayoutDirection.current
-        Box(Modifier.safeArea(it, direction)) {
+        Box(Modifier.safeArea(paddingValues, direction)) {
             NavDisplay(
                 backStack,
-                entryProvider = entryProvider {
+                entryProvider =
+                entryProvider {
                     entry<LoginSelectScreen> {
                         PanelSelectLoginPage { backStack.add(LoginInputScreen) }
                     }
                     entry<LoginInputScreen> {
                         PanelInputPage(back)
                     }
-                }
+                },
             )
         }
     }
@@ -453,16 +461,16 @@ private fun PanelSelectLoginPage(gotoInput: () -> Unit) {
     CenterBox {
         Column(
             verticalArrangement = Arrangement.spacedBy(40.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(stringResource(Res.string.sign_in), style = MaterialTheme.typography.headlineMedium)
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 OutlinedButton(
                     gotoInput,
-                    shape = ButtonDefaults.outlinedShape
+                    shape = ButtonDefaults.outlinedShape,
                 ) {
                     Text(stringResource(Res.string.input))
                 }

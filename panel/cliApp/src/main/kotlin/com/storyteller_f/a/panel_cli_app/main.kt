@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.panel_cli_app
 
 import androidx.compose.runtime.Composable
@@ -57,7 +61,7 @@ class ConsoleAntilog : Antilog() {
             if (logs.size > 15) logs.removeAt(0)
         }
         throwable?.let {
-            logs.add("$priority ${it.message}")
+            logs.add("$priority ${it.message ?: "<none>"}")
             if (logs.size > 15) logs.removeAt(0)
         }
     }
@@ -91,45 +95,53 @@ suspend fun handleInput(
     screen: Screen,
     setScreen: (Screen) -> Unit,
     sessionManager: PanelSessionManager,
-    passHolder: SimplePassHolder
+    passHolder: SimplePassHolder,
 ) {
     when (screen) {
         is Screen.Main -> {
             when (line) {
                 "1" -> setScreen(Screen.PromptRegister)
+
                 "2" -> setScreen(Screen.PromptLogin)
+
                 "3" -> {
                     sysLog("Fetching Users...")
                     sessionManager.getAllUsers(PaginationQuery(size = 10)).fold(
                         onSuccess = { setScreen(Screen.UserList(it.data)) },
-                        onFailure = { sysLogError("Failed", it) }
+                        onFailure = { sysLogError("Failed", it) },
                     )
                 }
+
                 "4" -> {
                     sysLog("Fetching Communities...")
                     sessionManager.getAllCommunities(PaginationQuery(size = 10)).fold(
                         onSuccess = { setScreen(Screen.CommunityList(it.data)) },
-                        onFailure = { sysLogError("Failed", it) }
+                        onFailure = { sysLogError("Failed", it) },
                     )
                 }
+
                 "5" -> {
                     sysLog("Fetching Rooms...")
                     sessionManager.getAllPublicRooms(PaginationQuery(size = 10)).fold(
                         onSuccess = { setScreen(Screen.RoomList(it.data)) },
-                        onFailure = { sysLogError("Failed", it) }
+                        onFailure = { sysLogError("Failed", it) },
                     )
                 }
+
                 "6" -> {
                     sysLog("Fetching Overview...")
                     sessionManager.overview().fold(
                         onSuccess = { setScreen(Screen.Overview(it)) },
-                        onFailure = { sysLogError("Failed", it) }
+                        onFailure = { sysLogError("Failed", it) },
                     )
                 }
+
                 "0" -> kotlin.system.exitProcess(0)
+
                 else -> sysLog("Invalid Choice")
             }
         }
+
         is Screen.PromptRegister -> {
             var pk = line
             if (pk.isEmpty()) {
@@ -142,49 +154,60 @@ suspend fun handleInput(
                     val algo = getAlgo(AlgoType.P256)
                     val derPriKey = algo.getDerPrivateKey(pk).getOrThrow()
                     val derPubKey = algo.getDerPublicKeyFromPrivateKey(pk).getOrThrow()
-                    val user = sessionManager.panelSignUp(
-                        AuthKey.P256(pk, derPriKey, derPubKey),
-                        passHolder
-                    )
+                    val user =
+                        sessionManager.panelSignUp(
+                            AuthKey.P256(pk, derPriKey, derPubKey),
+                            passHolder,
+                        )
                     sysLog("Registered and Logged in as: ${user.name}")
                     setScreen(Screen.Main)
+                } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+                    throw cancellation
                 } catch (e: Exception) {
                     sysLogError("Error", e)
                     setScreen(Screen.Main)
                 }
             }
         }
+
         is Screen.PromptLogin -> {
             try {
                 val algo = getAlgo(AlgoType.P256)
                 val derPriKey = algo.getDerPrivateKey(line).getOrThrow()
                 val derPubKey = algo.getDerPublicKeyFromPrivateKey(line).getOrThrow()
-                val user = sessionManager.panelSignIn(
-                    AuthKey.P256(line, derPriKey, derPubKey),
-                    passHolder
-                )
+                val user =
+                    sessionManager.panelSignIn(
+                        AuthKey.P256(line, derPriKey, derPubKey),
+                        passHolder,
+                    )
                 sysLog("Logged in as: ${user.name}")
                 setScreen(Screen.Main)
+            } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+                throw cancellation
             } catch (e: Exception) {
                 sysLogError("Error", e)
                 setScreen(Screen.Main)
             }
         }
+
         is Screen.UserList -> {
             if (line == "") {
                 setScreen(Screen.Main)
             }
         }
+
         is Screen.CommunityList -> {
             if (line == "") {
                 setScreen(Screen.Main)
             }
         }
+
         is Screen.RoomList -> {
             if (line == "") {
                 setScreen(Screen.Main)
             }
         }
+
         is Screen.Overview -> {
             if (line == "") {
                 setScreen(Screen.Main)
@@ -206,25 +229,28 @@ fun App(sessionManager: PanelSessionManager, passHolder: SimplePassHolder) {
         }
     }
 
-    Column(modifier = Modifier.onKeyEvent { event ->
-        if (event.key == "Enter") {
-            submitChannel.trySend(inputBuffer)
-            inputBuffer = ""
-        } else if (event.key == "Backspace") {
-            if (inputBuffer.isNotEmpty()) inputBuffer = inputBuffer.dropLast(1)
-        } else if (event.key == "Space") {
-            inputBuffer += " "
-        } else if (event.key.length == 1) {
-            inputBuffer += event.key
-        }
-        true
-    }) {
+    Column(
+        modifier =
+        Modifier.onKeyEvent { event ->
+            if (event.key == "Enter") {
+                submitChannel.trySend(inputBuffer)
+                inputBuffer = ""
+            } else if (event.key == "Backspace") {
+                if (inputBuffer.isNotEmpty()) inputBuffer = inputBuffer.dropLast(1)
+            } else if (event.key == "Space") {
+                inputBuffer += " "
+            } else if (event.key.length == 1) {
+                inputBuffer += event.key
+            }
+            true
+        },
+    ) {
         Text(
             buildAnnotatedString {
                 withStyle(SpanStyle(color = TitleGreen, textStyle = TextStyle.Bold)) {
                     append("PANEL CLI")
                 }
-            }
+            },
         )
         Text("===============")
         Text("")
@@ -240,12 +266,15 @@ fun App(sessionManager: PanelSessionManager, passHolder: SimplePassHolder) {
                 Text("0. Exit")
                 Text("\nChoice: ")
             }
+
             is Screen.PromptRegister -> {
                 Text("Enter Private Key (leave empty for auto-generate): ")
             }
+
             is Screen.PromptLogin -> {
                 Text("Enter Private Key: ")
             }
+
             is Screen.UserList -> {
                 Text("=== Member List ===")
                 s.users.forEachIndexed { i, u ->
@@ -254,6 +283,7 @@ fun App(sessionManager: PanelSessionManager, passHolder: SimplePassHolder) {
                 Text("===================")
                 Text("\nHit enter to go back: ")
             }
+
             is Screen.CommunityList -> {
                 Text("=== Community List ===")
                 s.communities.forEachIndexed { i, c ->
@@ -262,6 +292,7 @@ fun App(sessionManager: PanelSessionManager, passHolder: SimplePassHolder) {
                 Text("======================")
                 Text("\nHit enter to go back: ")
             }
+
             is Screen.RoomList -> {
                 Text("=== Room List ===")
                 s.rooms.forEachIndexed { i, r ->
@@ -270,6 +301,7 @@ fun App(sessionManager: PanelSessionManager, passHolder: SimplePassHolder) {
                 Text("=================")
                 Text("\nHit enter to go back: ")
             }
+
             is Screen.Overview -> {
                 Text("=== Overview ===")
                 Text("User count: ${s.state.userCount}")
@@ -286,13 +318,15 @@ fun App(sessionManager: PanelSessionManager, passHolder: SimplePassHolder) {
         }
 
         Text("")
-        Text(buildAnnotatedString {
-            withStyle(SpanStyle(color = TitleGreen)) {
-                append("> ")
-            }
-            append(inputBuffer)
-            append("\u2588")
-        })
+        Text(
+            buildAnnotatedString {
+                withStyle(SpanStyle(color = TitleGreen)) {
+                    append("> ")
+                }
+                append(inputBuffer)
+                append("\u2588")
+            },
+        )
         Text("")
         Text("--- Logs ---")
         logs.forEach { logText ->
@@ -301,7 +335,7 @@ fun App(sessionManager: PanelSessionManager, passHolder: SimplePassHolder) {
                     withStyle(SpanStyle(color = LogGray)) {
                         append(logText)
                     }
-                }
+                },
             )
         }
     }
@@ -316,14 +350,15 @@ fun main() {
 
         val passHolder = SimplePassHolder()
 
-        val sessionManager = createSimplePanelSessionManager(
-            passHolder,
-            AcceptAllCookiesStorage()
-        ) { model, cookieManager ->
-            HttpClient(OkHttp) {
-                defaultClientConfigureForPanel(cookieManager, model, passHolder, httpUrl)
+        val sessionManager =
+            createSimplePanelSessionManager(
+                passHolder,
+                AcceptAllCookiesStorage(),
+            ) { model, cookieManager ->
+                HttpClient(OkHttp) {
+                    defaultClientConfigureForPanel(cookieManager, model, passHolder, httpUrl)
+                }
             }
-        }
 
         runMosaicBlocking {
             App(sessionManager, passHolder)

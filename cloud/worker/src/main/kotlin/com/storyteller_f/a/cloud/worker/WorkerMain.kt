@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.worker
 
 import com.perraco.utils.SnowflakeFactory
@@ -251,7 +255,7 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
     val databaseConnection = databaseConnection(env)
 
     val buildType = env["BUILD_TYPE"] ?: "prod"
-    val flavor = env["FLAVOR"] ?: throw Exception("FLAVOR is empty")
+    val flavor = env["FLAVOR"] ?: throw IllegalStateException("FLAVOR is empty")
 
     val customConfig = CustomConfig(buildType, flavor, null)
 

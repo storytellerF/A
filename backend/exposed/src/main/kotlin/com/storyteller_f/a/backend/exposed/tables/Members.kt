@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.exposed.tables
 
 import com.storyteller_f.a.backend.core.types.Member
@@ -23,29 +27,28 @@ object Members : BaseTable() {
     }
 }
 
-fun Member.Companion.wrapRow(row: ResultRow): Member {
-    return with(Members) {
-        Member(
-            row[id],
-            row[uid],
-            row[objectId],
-            row[objectType],
-            row[createdTime],
-            row[status],
-            row[joinedTime],
-            row[invitedTime]
-        )
-    }
+fun Member.Companion.wrapRow(row: ResultRow): Member =
+    with(Members) {
+    Member(
+        row[id],
+        row[uid],
+        row[objectId],
+        row[objectType],
+        row[createdTime],
+        row[status],
+        row[joinedTime],
+        row[invitedTime],
+    )
 }
 
 suspend fun batchAddMembers(members: List<Member>): List<ResultRow> =
     Members.batchInsert(members) {
-        this[Members.joinedTime] = it.createdTime
-        this[Members.createdTime] = it.createdTime
-        this[Members.invitedTime] = it.invitedTime
-        this[Members.id] = it.id
-        this[Members.uid] = it.uid
-        this[Members.objectId] = it.objectId
-        this[Members.objectType] = it.objectType
-        this[Members.status] = it.status
-    }
+    this[Members.joinedTime] = it.createdTime
+    this[Members.createdTime] = it.createdTime
+    this[Members.invitedTime] = it.invitedTime
+    this[Members.id] = it.id
+    this[Members.uid] = it.uid
+    this[Members.objectId] = it.objectId
+    this[Members.objectType] = it.objectType
+    this[Members.status] = it.status
+}

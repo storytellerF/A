@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.room
 
 import androidx.compose.foundation.layout.Arrangement

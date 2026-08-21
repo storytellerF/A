@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.simple
 
 import com.storyteller_f.a.backend.core.MergedEnv
@@ -7,10 +11,7 @@ import kotlin.reflect.KClass
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 
-class SimpleCacheService<K, V>(
-    private val defaultExpireMillis: Duration,
-) : CacheService<K, V> {
-
+class SimpleCacheService<K, V>(private val defaultExpireMillis: Duration) : CacheService<K, V> {
     private data class CacheEntry<V>(val value: V, val expiryTime: Long)
 
     private val cache = mutableMapOf<K, CacheEntry<V>>()
@@ -34,11 +35,7 @@ class SimpleCacheService<K, V>(
 }
 
 class SimpleCacheServiceFactory : CacheServiceFactory {
-    override fun match(env: MergedEnv): Boolean {
-        return true
-    }
+    override fun match(env: MergedEnv): Boolean = true
 
-    override fun <K, T : Any> build(env: MergedEnv, vClass: KClass<T>): CacheService<K, T> {
-        return SimpleCacheService(7.days)
-    }
+    override fun <K, T : Any> build(env: MergedEnv, vClass: KClass<T>): CacheService<K, T> = SimpleCacheService(7.days)
 }

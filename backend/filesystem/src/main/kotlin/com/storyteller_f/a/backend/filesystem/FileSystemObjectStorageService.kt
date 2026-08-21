@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.filesystem
 
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder
@@ -9,6 +13,7 @@ import com.storyteller_f.a.backend.core.service.ObjectStorageServiceFactory
 import com.storyteller_f.a.backend.core.service.ObjectStorageWriteRecord
 import com.storyteller_f.a.backend.core.service.UploadPack
 import com.storyteller_f.shared.model.A_FILE_DEFAULT_BUCKET
+import com.storyteller_f.shared.utils.cancellableRunCatching
 import com.storyteller_f.shared.utils.mapResult
 import io.github.aakira.napier.Napier
 import io.mikael.urlbuilder.UrlBuilder
@@ -39,11 +44,12 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.toKotlinInstant
 
 class FileSystemObjectStorageService(private val url: String, base: Path) : ObjectStorageService {
-    private val base = if (!base.exists()) {
-        base.createDirectories()
-    } else {
-        base.toRealPath()
-    }
+    private val base =
+        if (!base.exists()) {
+            base.createDirectories()
+        } else {
+            base.toRealPath()
+        }
 
     init {
         Napier.i {
@@ -54,54 +60,46 @@ class FileSystemObjectStorageService(private val url: String, base: Path) : Obje
     override suspend fun upload(
         bucketName: String,
         uploadPacks: List<UploadPack>,
-    ): Result<List<ObjectStorageWriteRecord>> {
-        return useFileSystem {
-            val bucketPath = base.resolve(bucketName)
-            uploadPacks.map { uploadPack ->
-                val target = bucketPath.resolve(uploadPack.fullName).createParentDirectories()
-                Files.copy(uploadPack.file.toPath(), target, StandardCopyOption.REPLACE_EXISTING)
-                ObjectStorageWriteRecord(uploadPack.fullName)
-            }
+    ): Result<List<ObjectStorageWriteRecord>> =
+        useFileSystem {
+        val bucketPath = base.resolve(bucketName)
+        uploadPacks.map { uploadPack ->
+            val target = bucketPath.resolve(uploadPack.fullName).createParentDirectories()
+            Files.copy(uploadPack.file.toPath(), target, StandardCopyOption.REPLACE_EXISTING)
+            ObjectStorageWriteRecord(uploadPack.fullName)
         }
     }
 
     @OptIn(ExperimentalTime::class)
-    override suspend fun get(
-        bucketName: String,
-        names: List<String>
-    ): Result<List<ObjectStorageRecord>> {
-        return useFileSystem {
-            names.mapNotNull {
-                val mediaPath = base.resolve("$bucketName/$it")
+    override suspend fun get(bucketName: String, names: List<String>): Result<List<ObjectStorageRecord>> =
+        useFileSystem {
+            names.mapNotNull { name ->
+                val mediaPath = base.resolve("$bucketName/$name")
                 if (mediaPath.exists()) {
-                    val newUrl = UrlBuilder.fromString(url)
-                        .withPath("a_file/${A_FILE_DEFAULT_BUCKET}/$it")
-                        .toString()
+                    val newUrl =
+                        UrlBuilder.fromString(url)
+                            .withPath("a_file/${A_FILE_DEFAULT_BUCKET}/$name")
+                            .toString()
                     ObjectStorageRecord(
                         newUrl,
                         mediaPath.getLastModifiedTime().toInstant().toKotlinInstant()
                             .toLocalDateTime(TimeZone.UTC),
-                        it
+                        name,
                     )
                 } else {
                     null
                 }
             }
         }
-    }
 
     @OptIn(ExperimentalPathApi::class)
-    override suspend fun clean(bucketName: String): Result<Unit> {
-        return useFileSystem {
-            val bucketPath = base.resolve(bucketName)
-            bucketPath.deleteRecursively()
-        }
+    override suspend fun clean(bucketName: String): Result<Unit> =
+        useFileSystem {
+        val bucketPath = base.resolve(bucketName)
+        bucketPath.deleteRecursively()
     }
 
-    override suspend fun list(
-        bucketName: String,
-        prefix: String
-    ): Result<List<ObjectStorageRecord>> {
+    override suspend fun list(bucketName: String, prefix: String): Result<List<ObjectStorageRecord>> {
         val p = base.resolve("$bucketName/$prefix")
         if (p.notExists()) {
             return Result.success(emptyList())
@@ -120,16 +118,13 @@ class FileSystemObjectStorageService(private val url: String, base: Path) : Obje
         }
     }
 
-    override suspend fun copy(
-        bucketName: String,
-        copyPacks: List<CopyPack>,
-    ): Result<List<ObjectStorageRecord>> {
-        return useFileSystem {
+    override suspend fun copy(bucketName: String, copyPacks: List<CopyPack>): Result<List<ObjectStorageRecord>> =
+        useFileSystem {
             val bucketPath = base.resolve(bucketName)
             copyPacks.map {
                 val p = bucketPath.resolve(it.originFullName)
                 if (!p.exists()) {
-                    throw Exception("${it.originFullName} not exists")
+                    throw IllegalStateException("${it.originFullName} not exists")
                 }
                 val targetFile = bucketPath.resolve(it.newFullName).createParentDirectories()
                 p.copyTo(targetFile, true)
@@ -138,97 +133,87 @@ class FileSystemObjectStorageService(private val url: String, base: Path) : Obje
         }.mapResult {
             get(bucketName, it)
         }
-    }
 
-    override suspend fun getInputStream(
-        bucketName: String,
-        name: String,
-    ): Result<InputStream> {
-        return useFileSystem {
-            val mediaPath = base.resolve("$bucketName/$name")
-            if (mediaPath.exists()) {
-                mediaPath.inputStream()
-            } else {
-                throw Exception("file $name not exists")
-            }
+    override suspend fun getInputStream(bucketName: String, name: String): Result<InputStream> =
+        useFileSystem {
+        val mediaPath = base.resolve("$bucketName/$name")
+        if (mediaPath.exists()) {
+            mediaPath.inputStream()
+        } else {
+            throw IllegalStateException("file $name not exists")
         }
     }
 
     override suspend fun compose(
         bucketName: String,
         targetFullName: String,
-        sourceFullNames: List<String>
-    ): Result<ObjectStorageWriteRecord> {
-        return useFileSystem {
-            val bucketPath = base.resolve(bucketName)
-            val target = bucketPath.resolve(targetFullName).createParentDirectories()
-            Files.newOutputStream(target).use { out ->
-                sourceFullNames.forEach { src ->
-                    val p = bucketPath.resolve(src)
-                    if (!p.exists()) throw Exception("source $src not exists")
-                    Files.newInputStream(p).use { ins ->
-                        ins.copyTo(out)
-                    }
+        sourceFullNames: List<String>,
+    ): Result<ObjectStorageWriteRecord> =
+        useFileSystem {
+        val bucketPath = base.resolve(bucketName)
+        val target = bucketPath.resolve(targetFullName).createParentDirectories()
+        Files.newOutputStream(target).use { out ->
+            sourceFullNames.forEach { src ->
+                val p = bucketPath.resolve(src)
+                if (!p.exists()) throw IllegalStateException("source $src not exists")
+                Files.newInputStream(p).use { ins ->
+                    ins.copyTo(out)
                 }
             }
-            ObjectStorageWriteRecord(targetFullName)
+        }
+        ObjectStorageWriteRecord(targetFullName)
+    }
+
+    override suspend fun delete(bucketName: String, names: List<String>): Result<Unit> =
+        useFileSystem {
+        val bucketPath = base.resolve(bucketName)
+        names.forEach { name ->
+            val p = bucketPath.resolve(name)
+            if (p.exists()) {
+                Files.deleteIfExists(p)
+            }
+        }
+        Unit
+    }
+
+    suspend fun <T> useFileSystem(block: suspend () -> T): Result<T> =
+        withContext(Dispatchers.IO) {
+        cancellableRunCatching {
+            block()
         }
     }
 
-    override suspend fun delete(bucketName: String, names: List<String>): Result<Unit> {
-        return useFileSystem {
-            val bucketPath = base.resolve(bucketName)
-            names.forEach { name ->
-                val p = bucketPath.resolve(name)
-                if (p.exists()) {
-                    Files.deleteIfExists(p)
-                }
-            }
-            Unit
+    suspend fun getPathResponse(it: List<String>): Path? =
+        useFileSystem {
+        val path = base.resolve(it.joinToString("/"))
+        val file = path.toRealPath()
+        if (file.pathString != path.absolutePathString()) {
+            null
+        } else {
+            file
         }
-    }
-
-    suspend fun <T> useFileSystem(block: suspend () -> T): Result<T> {
-        return withContext(Dispatchers.IO) {
-            runCatching {
-                block()
-            }
-        }
-    }
-
-    suspend fun getPathResponse(it: List<String>): Path? {
-        return useFileSystem {
-            val path = base.resolve(it.joinToString("/"))
-            val file = path.toRealPath()
-            if (file.pathString != path.absolutePathString()) {
-                null
-            } else {
-                file
-            }
-        }.getOrNull()
-    }
+    }.getOrNull()
 }
 
 class FileSystemObjectStorageServiceFactory : ObjectStorageServiceFactory {
-    override fun match(env: MergedEnv): Boolean {
-        return env["MEDIA_SERVICE"] == "filesystem"
-    }
+    override fun match(env: MergedEnv): Boolean = env["MEDIA_SERVICE"] == "filesystem"
 
     override fun build(env: MergedEnv): ObjectStorageService {
-        val url = env["SERVER_URL"] ?: throw Exception("SERVER_URL is empty")
+        val url = env["SERVER_URL"] ?: throw IllegalStateException("SERVER_URL is empty")
         val base = env["FILE_SYSTEM_MEDIA_PATH"]
-        val p = if (base.isNullOrBlank()) {
-            Napier.i {
-                "use in-memory file"
+        val p =
+            if (base.isNullOrBlank()) {
+                Napier.i {
+                    "use in-memory file"
+                }
+                MemoryFileSystemBuilder.newLinux().build().getPath("/a_file")
+            } else {
+                val path = Paths.get(base)
+                Napier.i {
+                    "use file system oss ${path.toFile().canonicalPath}"
+                }
+                path
             }
-            MemoryFileSystemBuilder.newLinux().build().getPath("/a_file")
-        } else {
-            val path = Paths.get(base)
-            Napier.i {
-                "use file system oss ${path.toFile().canonicalPath}"
-            }
-            path
-        }
         return FileSystemObjectStorageService(url, p)
     }
 }

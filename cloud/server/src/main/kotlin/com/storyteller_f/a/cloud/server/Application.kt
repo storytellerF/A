@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.server
 
 import com.maxmind.geoip2.DatabaseReader
@@ -111,9 +115,11 @@ fun main(args: Array<String>) {
             options.isDebug = false
         }
     }
-    Runtime.getRuntime().addShutdownHook(Thread {
-        Napier.i("程序即将退出，执行清理操作...")
-    })
+    Runtime.getRuntime().addShutdownHook(
+        Thread {
+            Napier.i("程序即将退出，执行清理操作...")
+        },
+    )
     EngineMain.main(args + extraArgs)
 }
 
@@ -127,22 +133,24 @@ fun Application.module() {
         monitor.unsubscribe(ApplicationStarted) {}
         monitor.unsubscribe(ApplicationStopped) {}
     }
-    val backend = try {
-        buildBackend()
-    } catch (e: Exception) {
-        Napier.e(e, tag = "module") {
-            "buildBackend failed"
+    val backend =
+        try {
+            buildBackend()
+        } catch (e: Exception) {
+            Napier.e(e, tag = "module") {
+                "buildBackend failed"
+            }
+            throw e
         }
-        throw e
-    }
-    val reader = try {
-        buildDatabaseReader()
-    } catch (e: Exception) {
-        Napier.i(e, tag = "module") {
-            "buildDatabaseReader failed"
+    val reader =
+        try {
+            buildDatabaseReader()
+        } catch (e: Exception) {
+            Napier.i(e, tag = "module") {
+                "buildDatabaseReader failed"
+            }
+            throw e
         }
-        throw e
-    }
     runBlocking {
         if (backend.customConfig.buildType == "test") {
             backend.database.init()
@@ -156,10 +164,7 @@ fun Application.module() {
     configureRoute(backend)
 }
 
-private fun Application.configurePlugin(
-    reader: DatabaseReader,
-    backend: Backend,
-) {
+private fun Application.configurePlugin(reader: DatabaseReader, backend: Backend) {
     val env = readEnv(readInjectedEnv())
     install(ContentNegotiation) {
         json()
@@ -223,28 +228,28 @@ private fun Application.buildBackend(): Backend {
     return buildBackendFromEnv(env)
 }
 
-private fun Application.readInjectedEnv() = engine.environment.config.toMap().mapNotNull {
+private fun Application.readInjectedEnv() =
+    engine.environment.config.toMap().mapNotNull {
     (it.value as? String)?.let { v ->
         it.key to v
     }
 }.associate { it }
 
-private fun buildDatabaseReader() = DatabaseReader.Builder(
-    ClassLoader.getSystemResourceAsStream("GeoLite2-Country.mmdb")
+private fun buildDatabaseReader() =
+    DatabaseReader.Builder(
+    ClassLoader.getSystemResourceAsStream("GeoLite2-Country.mmdb"),
 ).build()
 
-private fun buildLog(
-    call: ApplicationCall,
-    reader: DatabaseReader,
-): String {
+private fun buildLog(call: ApplicationCall, reader: DatabaseReader): String {
     val status = call.response.status()
     val httpMethod = call.request.httpMethod.value
     val ipList = call.remoteIp(reader).joinToString(",")
     return """Url: ${call.request.uri}, 
-                |    Status: $status, HTTP method: $httpMethod,
+                |    Status: ${status ?: "<none>"}, HTTP method: $httpMethod,
                 |    Query: ${call.request.queryString()},
                 |    Headers: ${call.request.headers.toMap()},
-                |    Ip：$ipList""".trimMargin()
+                |    Ip：$ipList
+    """.trimMargin()
 }
 
 class RegionBlockerConfig {
@@ -253,19 +258,20 @@ class RegionBlockerConfig {
     var excludePaths: Set<String> = setOf("/metrics")
 }
 
-val RegionBlocker = createApplicationPlugin(name = "RegionBlocker", ::RegionBlockerConfig) {
-    val reader = pluginConfig.reader
-    val deny = pluginConfig.denyIsoCodes
-    val exclude = pluginConfig.excludePaths
-    onCall { call ->
-        val uri = call.request.uri
-        if (exclude.any { uri.startsWith(it) }) return@onCall
-        val codes = call.remoteIp(reader).mapNotNull { it.second }.toSet()
-        if (codes.any { it in deny }) {
-            call.respond(HttpStatusCode(451, "Unavailable For Legal Reasons"))
+val RegionBlocker =
+    createApplicationPlugin(name = "RegionBlocker", ::RegionBlockerConfig) {
+        val reader = pluginConfig.reader
+        val deny = pluginConfig.denyIsoCodes
+        val exclude = pluginConfig.excludePaths
+        onCall { call ->
+            val uri = call.request.uri
+            if (exclude.any { uri.startsWith(it) }) return@onCall
+            val codes = call.remoteIp(reader).mapNotNull { it.second }.toSet()
+            if (codes.any { it in deny }) {
+                call.respond(HttpStatusCode(451, "Unavailable For Legal Reasons"))
+            }
         }
     }
-}
 
 class ServerBackend(
     override val customConfig: CustomConfig,
@@ -277,7 +283,7 @@ class ServerBackend(
     override val fileSearchService: FileSearchService,
     override val objectStorageService: ObjectStorageService,
     override val nameService: NameService,
-    override val database: CombinedDatabase
+    override val database: CombinedDatabase,
 ) : Backend
 
 fun buildBackendFromEnv(env: MergedEnv): Backend {
@@ -286,7 +292,7 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
     val databaseConnection = databaseConnection(env)
 
     val buildType = env["BUILD_TYPE"] ?: "prod"
-    val flavor = env["FLAVOR"] ?: throw Exception("FLAVOR is empty")
+    val flavor = env["FLAVOR"] ?: throw IllegalStateException("FLAVOR is empty")
     val enableSignUp = env["ENABLE_SIGN_UP"]?.toBoolean() ?: true
 
     val topicSearchService = buildTopicSearchService(env)
@@ -320,7 +326,7 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
         fileSearchService,
         mediaService,
         buildNameService(env),
-        buildExposedDatabase(databaseConnection)
+        buildExposedDatabase(databaseConnection),
     )
 }
 
@@ -339,6 +345,8 @@ suspend fun ByteReadChannel.copyWithLimitAndClose(channel: ByteWriteChannel, lim
         }
 
         closedCause?.let { throw it }
+    } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+        throw cancellation
     } catch (cause: Throwable) {
         cancel(cause)
         channel.close(cause)

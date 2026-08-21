@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app
 
 import android.content.ComponentName
@@ -49,10 +53,11 @@ class FileService : LifecycleService() {
         getOrCreateNotificationChannel(this, channel)
         val id = 2
         if (count > 0) {
-            val notification = NotificationCompat.Builder(this, channel)
-                .setSmallIcon(baseline_upload_file_24)
-                .setContentTitle("Uploading")
-                .setOngoing(true)
+            val notification =
+                NotificationCompat.Builder(this, channel)
+                    .setSmallIcon(baseline_upload_file_24)
+                    .setContentTitle("Uploading")
+                    .setOngoing(true)
             startForeground(id, notification.build())
         } else {
             stopForeground(STOP_FOREGROUND_REMOVE)
@@ -66,20 +71,18 @@ class FileService : LifecycleService() {
     }
 }
 
-class FileBinder(
-    val downloader: Downloader,
-    val uploader: Uploader
-) : Binder(), Downloader by downloader, Uploader by uploader
+class FileBinder(val downloader: Downloader, val uploader: Uploader) :
+    Binder(),
+    Downloader by downloader,
+    Uploader by uploader
 
 interface ClientFileServiceContainer {
     var binder: FileBinder?
     var isConnecting: Boolean
 }
 
-class FileConnection(
-    val context: WeakReference<ClientFileServiceContainer>,
-    val clipData: ImmutableList<ClipFile>
-) : ServiceConnection {
+class FileConnection(val context: WeakReference<ClientFileServiceContainer>, val clipData: ImmutableList<ClipFile>) :
+    ServiceConnection {
     override fun onServiceConnected(p0: ComponentName?, p1: IBinder?) {
         val binder = p1 as FileBinder
         binder.upload(clipData)
@@ -93,18 +96,22 @@ class FileConnection(
     }
 }
 
-fun <T> T.bindFileService(clipFiles: ImmutableList<ClipFile>)
+fun <T> T.bindFileService(
+    clipFiles: ImmutableList<ClipFile>,
+)
     where T : ComponentActivity, T : ClientFileServiceContainer {
     isConnecting = true
     val serviceIntent = Intent(this, FileService::class.java)
     val connection = FileConnection(WeakReference(this), clipFiles)
     bindService(serviceIntent, connection, Context.BIND_AUTO_CREATE)
-    lifecycle.addObserver(object : DefaultLifecycleObserver {
-        override fun onDestroy(owner: LifecycleOwner) {
-            super.onDestroy(owner)
-            unbindService(connection)
-        }
-    })
+    lifecycle.addObserver(
+        object : DefaultLifecycleObserver {
+            override fun onDestroy(owner: LifecycleOwner) {
+                super.onDestroy(owner)
+                unbindService(connection)
+            }
+        },
+    )
 }
 
 class CustomClientFileProvider<T>(val service: T) :

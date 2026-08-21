@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.server.route
 
 import com.storyteller_f.a.api.ChildAccountInfoListResponse
@@ -38,9 +42,7 @@ import io.ktor.server.routing.RoutingContext
 import io.ktor.server.sessions.clear
 import io.ktor.server.sessions.sessions
 
-fun Route.bindUnprotectedAccountRoute(
-    backend: Backend
-) {
+fun Route.bindUnprotectedAccountRoute(backend: Backend) {
     CustomApi.Accounts.getData(handleResult(backend)) {
         Result.success(call.getData())
     }
@@ -112,7 +114,7 @@ fun Route.bindProtectedAccountRoute(backend: Backend) {
                 request.derPublicKey,
                 request.algoType,
                 request.encryptedEncryptionPrivateKey,
-                request.encryptionPublicKey
+                request.encryptionPublicKey,
             )
         }
     }

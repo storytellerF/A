@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.common
 
 import androidx.lifecycle.ViewModel
@@ -25,9 +29,8 @@ data class APagingData<K, T>(val data: List<T>, val pagination: K?)
 @Serializable
 data class SectionLoadParams(val index: Int, val param: String?)
 
-class SectionPagingSource<DATUM : Any>(
-    private val services: List<RegularPagingSource<DATUM>>
-) : PagingSource<SectionLoadParams, DATUM>() {
+class SectionPagingSource<DATUM : Any>(private val services: List<RegularPagingSource<DATUM>>) :
+    PagingSource<SectionLoadParams, DATUM>() {
     init {
         services.forEach {
             it.registerInvalidatedCallback {
@@ -36,9 +39,7 @@ class SectionPagingSource<DATUM : Any>(
         }
     }
 
-    override suspend fun load(
-        params: LoadParams<SectionLoadParams>
-    ): LoadResult<SectionLoadParams, DATUM> {
+    override suspend fun load(params: LoadParams<SectionLoadParams>): LoadResult<SectionLoadParams, DATUM> {
         val index = params.key?.index ?: 0
         val key = params.key?.param
         return load(index, key, params.loadSize, params.placeholdersEnabled)
@@ -48,19 +49,22 @@ class SectionPagingSource<DATUM : Any>(
         index: Int,
         key: String?,
         loadSize: Int,
-        placeholdersEnabled: Boolean
+        placeholdersEnabled: Boolean,
     ): LoadResult<SectionLoadParams, DATUM> {
-        val service = services.getOrNull(index) ?: return LoadResult.Page(
-            data = emptyList(), prevKey = null, // Only paging forward.
-            nextKey = null
-        )
-        val pageResult = service.load(
-            if (key == null) {
-                LoadParams.Refresh(null, loadSize, placeholdersEnabled)
-            } else {
-                LoadParams.Append(key, loadSize, placeholdersEnabled)
-            }
-        )
+        val service =
+            services.getOrNull(index) ?: return LoadResult.Page(
+                data = emptyList(),
+                prevKey = null, // Only paging forward.
+                nextKey = null,
+            )
+        val pageResult =
+            service.load(
+                if (key == null) {
+                    LoadParams.Refresh(null, loadSize, placeholdersEnabled)
+                } else {
+                    LoadParams.Append(key, loadSize, placeholdersEnabled)
+                },
+            )
         return when (pageResult) {
             is LoadResult.Error<String, DATUM> -> LoadResult.Error(pageResult.throwable)
             is LoadResult.Invalid<String, DATUM> -> LoadResult.Invalid()
@@ -72,84 +76,85 @@ class SectionPagingSource<DATUM : Any>(
         loadSize: Int,
         prePageResult: LoadResult.Page<String, DATUM>,
         index: Int,
-        placeholdersEnabled: Boolean
-    ): LoadResult<SectionLoadParams, DATUM> {
-        return if (loadSize - prePageResult.data.size > 0) {
-            getNextParams(prePageResult.nextKey, index)?.let {
-                when (val nextPageResult =
-                    load(it.index, it.param, loadSize, placeholdersEnabled)) {
-                    is LoadResult.Error<SectionLoadParams, DATUM> ->
-                        LoadResult.Error(nextPageResult.throwable)
+        placeholdersEnabled: Boolean,
+    ): LoadResult<SectionLoadParams, DATUM> =
+        if (loadSize - prePageResult.data.size > 0) {
+        getNextParams(prePageResult.nextKey, index)?.let { nextParams ->
+            when (
+                val nextPageResult =
+                    load(nextParams.index, nextParams.param, loadSize, placeholdersEnabled)
+            ) {
+                is LoadResult.Error<SectionLoadParams, DATUM> ->
+                    LoadResult.Error(nextPageResult.throwable)
 
-                    is LoadResult.Invalid<SectionLoadParams, DATUM> ->
-                        LoadResult.Invalid()
+                is LoadResult.Invalid<SectionLoadParams, DATUM> ->
+                    LoadResult.Invalid()
 
-                    is LoadResult.Page<SectionLoadParams, DATUM> -> {
-                        // 合并两页
-                        LoadResult.Page(prePageResult.data + nextPageResult.data, null, nextPageResult.nextKey)
-                    }
+                is LoadResult.Page<SectionLoadParams, DATUM> -> {
+                    // 合并两页
+                    LoadResult.Page(prePageResult.data + nextPageResult.data, null, nextPageResult.nextKey)
                 }
-            } ?: LoadResult.Page(
-                prePageResult.data,
-                null,
-                getNextParams(prePageResult.nextKey, index)
-            )
-        } else {
-            LoadResult.Page(prePageResult.data, null, getNextParams(prePageResult.nextKey, index))
-        }
+            }
+        } ?: LoadResult.Page(
+            prePageResult.data,
+            null,
+            getNextParams(prePageResult.nextKey, index),
+        )
+    } else {
+        LoadResult.Page(prePageResult.data, null, getNextParams(prePageResult.nextKey, index))
     }
 
     private fun getNextParams(nextToken: String?, index: Int): SectionLoadParams? =
         if (nextToken != null) {
-            SectionLoadParams(index, nextToken)
+        SectionLoadParams(index, nextToken)
+    } else {
+        val newIndex = index + 1
+        if (newIndex >= services.size) {
+            null
         } else {
-            val newIndex = index + 1
-            if (newIndex >= services.size) {
-                null
-            } else {
-                SectionLoadParams(newIndex, null)
-            }
+            SectionLoadParams(newIndex, null)
         }
+    }
 
     override fun getRefreshKey(state: PagingState<SectionLoadParams, DATUM>) = null
 }
 
-class RegularPagingSource<DATUM : Any>(
-    val service: suspend (String?, Int) -> Result<ListResponse<DATUM>>
-) : PagingSource<String, DATUM>() {
-    override suspend fun load(params: LoadParams<String>): LoadResult<String, DATUM> {
-        return service(params.key, params.loadSize).map {
-            val pagination = it.pagination
-            APagingData(
-                it.data,
-                Pagination(pagination?.nextPageToken, pagination?.prePageToken, pagination?.total ?: 0)
-            )
-        }.fold(onSuccess = { (data, pagination) ->
-            LoadResult.Page(data = data, prevKey = null, nextKey = pagination?.nextPageToken)
-        }, onFailure = {
-            LoadResult.Error(it)
-        })
-    }
+class RegularPagingSource<DATUM : Any>(val service: suspend (String?, Int) -> Result<ListResponse<DATUM>>) :
+    PagingSource<String, DATUM>() {
+    override suspend fun load(params: LoadParams<String>): LoadResult<String, DATUM> =
+        service(
+        params.key,
+        params.loadSize,
+    ).map { response ->
+        val pagination = response.pagination
+        APagingData(
+            response.data,
+            Pagination(pagination?.nextPageToken, pagination?.prePageToken, pagination?.total ?: 0),
+        )
+    }.fold(onSuccess = { (data, pagination) ->
+        LoadResult.Page(data = data, prevKey = null, nextKey = pagination?.nextPageToken)
+    }, onFailure = {
+        LoadResult.Error(it)
+    })
 
-    override fun getRefreshKey(state: PagingState<String, DATUM>): String? {
-        return null
-    }
+    override fun getRefreshKey(state: PagingState<String, DATUM>): String? = null
 }
 
 /**
- * Result 的范型为out，说明这是一个生产者，只有在传入端需要明确指定类型
+ * Result 的范型为out，说明这是一个生产者，只有在传入端需要明确指定类型.
  */
 @OptIn(ExperimentalPagingApi::class)
 fun <C : Any, T : Any> buildPager(
     collection: C,
     wrapper: RemoteKeyStorageWrapper,
     storage: CollectionListStorage<C, T>,
-    service: suspend (String?, Int) -> Result<ListResponse<T>>
-): Pager<String, T> = buildPager(
+    service: suspend (String?, Int) -> Result<ListResponse<T>>,
+): Pager<String, T> =
+    buildPager(
     collection,
     wrapper,
     storage,
-    RegularPagingSource(service)
+    RegularPagingSource(service),
 )
 
 @OptIn(ExperimentalPagingApi::class)
@@ -157,10 +162,12 @@ fun <C : Any, T : Any> buildPager(
     collection: C,
     wrapper: RemoteKeyStorageWrapper,
     storage: CollectionListStorage<C, T>,
-    source: PagingSource<String, T>
-): Pager<String, T> = Pager(
+    source: PagingSource<String, T>,
+): Pager<String, T> =
+    Pager(
     PagingConfig(pageSize = 20),
-    remoteMediator = CustomRemoteMediator(wrapper, source) { data, loadType ->
+    remoteMediator =
+    CustomRemoteMediator(wrapper, source) { data, loadType ->
         if (loadType == LoadType.REFRESH) {
             storage.clean(collection)
         }
@@ -182,10 +189,12 @@ fun <C : Any, T : Any> buildPager(
     wrapper: RemoteKeyStorageWrapper,
     storage: CollectionListStorage<C, T>,
     networkSource: PagingSource<String, T>,
-    localSourceFactory: () -> PagingSource<String, T>
-): Pager<String, T> = Pager(
+    localSourceFactory: () -> PagingSource<String, T>,
+): Pager<String, T> =
+    Pager(
     PagingConfig(pageSize = 20),
-    remoteMediator = CustomRemoteMediator(wrapper, networkSource) { data, loadType ->
+    remoteMediator =
+    CustomRemoteMediator(wrapper, networkSource) { data, loadType ->
         if (loadType == LoadType.REFRESH) {
             storage.clean(collection)
         }
@@ -204,8 +213,9 @@ fun <C : Any, T : Any> buildPager(
 fun <T : Any> buildPager(
     wrapper: RemoteKeyStorageWrapper,
     storage: GlobalListStorage<T>,
-    service: suspend (String?, Int) -> Result<ListResponse<T>>
-): Pager<String, T> = buildPager(wrapper, storage, RegularPagingSource(service)) {
+    service: suspend (String?, Int) -> Result<ListResponse<T>>,
+): Pager<String, T> =
+    buildPager(wrapper, storage, RegularPagingSource(service)) {
     CompatPagingSource(storage.observeData(), IntKeyConverter)
 }
 
@@ -214,10 +224,12 @@ fun <T : Any> buildPager(
     wrapper: RemoteKeyStorageWrapper,
     storage: GlobalListStorage<T>,
     networkSource: PagingSource<String, T>,
-    localSourceFactory: () -> PagingSource<String, T>
-): Pager<String, T> = Pager(
+    localSourceFactory: () -> PagingSource<String, T>,
+): Pager<String, T> =
+    Pager(
     PagingConfig(pageSize = 20),
-    remoteMediator = CustomRemoteMediator(wrapper, networkSource) { data, loadType ->
+    remoteMediator =
+    CustomRemoteMediator(wrapper, networkSource) { data, loadType ->
         if (loadType == LoadType.REFRESH) {
             storage.clean()
         }
@@ -225,5 +237,5 @@ fun <T : Any> buildPager(
             storage.save(it)
         }
     },
-    pagingSourceFactory = localSourceFactory
+    pagingSourceFactory = localSourceFactory,
 )

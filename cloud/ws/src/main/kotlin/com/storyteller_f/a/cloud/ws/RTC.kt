@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.ws
 
 import com.storyteller_f.a.backend.core.Backend
@@ -7,6 +11,7 @@ import com.storyteller_f.shared.obj.CustomOffer
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.cancellableRunCatching
 import io.github.aakira.napier.Napier
 import io.ktor.server.websocket.DefaultWebSocketServerSession
 import io.ktor.server.websocket.sendSerialized
@@ -16,18 +21,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 
-class RtcFrame(
-    val frame: RoomFrame,
-    val uid: PrimaryKey,
-    val session: DefaultWebSocketServerSession
-)
+data class RtcFrame(val frame: RoomFrame, val uid: PrimaryKey, val session: DefaultWebSocketServerSession)
 
-class RtcUser(val uid: PrimaryKey, val session: DefaultWebSocketServerSession)
+data class RtcUser(val uid: PrimaryKey, val session: DefaultWebSocketServerSession)
 
-data class RtcMediaState(
-    val audioMuted: Boolean = false,
-    val videoMuted: Boolean = false,
-)
+data class RtcMediaState(val audioMuted: Boolean = false, val videoMuted: Boolean = false)
 
 data class RtcSession(
     val roomId: PrimaryKey,
@@ -39,16 +37,14 @@ data class RtcSession(
 )
 
 val rtcSession = mutableMapOf<PrimaryKey, RtcSession>()
-val rtcChannel = Channel<RtcFrame> {
-}
+val rtcChannel =
+    Channel<RtcFrame> {
+    }
 
 /**
- * 结束会话
+ * 结束会话.
  */
-private suspend fun processStopCall(
-    frame: RoomFrame.StopCall,
-    uid: PrimaryKey,
-) {
+private suspend fun processStopCall(frame: RoomFrame.StopCall, uid: PrimaryKey) {
     val roomId = frame.roomId
     val session = rtcSession[roomId] ?: return
     if (session.uidList.none { it.uid == uid }) {
@@ -61,14 +57,11 @@ private suspend fun processStopCall(
     }
 }
 
-private suspend fun notifyPeerLeft(
-    session: RtcSession,
-    uid: PrimaryKey,
-) {
+private suspend fun notifyPeerLeft(session: RtcSession, uid: PrimaryKey) {
     session.socketMap.filterKeys {
         it != uid
     }.values.forEach { socket ->
-        runCatching {
+        cancellableRunCatching {
             socket.sendFrame(RoomFrame.PeerLeft(uid, session.roomId))
         }.onFailure { e ->
             Napier.e(e) {
@@ -78,22 +71,18 @@ private suspend fun notifyPeerLeft(
     }
 }
 
-private suspend fun syncRtcMediaState(
-    session: RtcSession,
-    uid: PrimaryKey,
-    socket: DefaultWebSocketServerSession,
-) {
+private suspend fun syncRtcMediaState(session: RtcSession, uid: PrimaryKey, socket: DefaultWebSocketServerSession) {
     session.mediaStateMap.filterKeys {
         it != uid
     }.forEach { (peerUid, state) ->
-        runCatching {
+        cancellableRunCatching {
             socket.sendFrame(
                 RoomFrame.PeerMediaState(
                     uid = peerUid,
                     roomId = session.roomId,
                     audioMuted = state.audioMuted,
                     videoMuted = state.videoMuted,
-                )
+                ),
             )
         }.onFailure { e ->
             Napier.e(e) {
@@ -103,10 +92,7 @@ private suspend fun syncRtcMediaState(
     }
 }
 
-private fun cleanupRtcUser(
-    session: RtcSession,
-    uid: PrimaryKey,
-) {
+private fun cleanupRtcUser(session: RtcSession, uid: PrimaryKey) {
     session.uidList.removeIf {
         it.uid == uid
     }
@@ -123,7 +109,7 @@ private fun cleanupRtcUser(
 }
 
 /**
- * 发起会话
+ * 发起会话.
  */
 private suspend fun processStartCall(
     frame: RoomFrame.StartCall,
@@ -140,9 +126,10 @@ private suspend fun processStartCall(
         if (permission == null) {
             session.sendFrame(RoomFrame.Error("no permission"))
         } else {
-            val list = rtcSession.getOrPut(roomId) {
-                RtcSession(roomId)
-            }
+            val list =
+                rtcSession.getOrPut(roomId) {
+                    RtcSession(roomId)
+                }
             cleanupRtcUser(list, uid)
             list.uidList.add(RtcUser(uid, session))
             list.socketMap[uid] = session
@@ -150,17 +137,14 @@ private suspend fun processStartCall(
             syncRtcMediaState(list, uid, session)
         }
     }.onFailure {
-        session.sendFrame(RoomFrame.Error(it.message.toString()))
+        session.sendFrame(RoomFrame.Error(it.message?.toString().orEmpty()))
     }
 }
 
 /**
- * answer 创建成功，要求另一个用户回应answer
+ * answer 创建成功，要求另一个用户回应answer.
  */
-private suspend fun processSendAnswer(
-    frame: RoomFrame.SendAnswer,
-    uid: PrimaryKey,
-) {
+private suspend fun processSendAnswer(frame: RoomFrame.SendAnswer, uid: PrimaryKey) {
     val answer = frame.answer
     val session = rtcSession[frame.roomId]
     if (session != null) {
@@ -172,12 +156,9 @@ private suspend fun processSendAnswer(
 }
 
 /**
- * offer 创建成功，要求另一个用户创建answer
+ * offer 创建成功，要求另一个用户创建answer.
  */
-private suspend fun processSendOffer(
-    frame: RoomFrame.SendOffer,
-    uid: PrimaryKey,
-) {
+private suspend fun processSendOffer(frame: RoomFrame.SendOffer, uid: PrimaryKey) {
     val offer = frame.offer
     val session = rtcSession[frame.roomId]
     Napier.i {
@@ -191,18 +172,16 @@ private suspend fun processSendOffer(
     }
 }
 
-private suspend fun processUpdateCallMediaState(
-    frame: RoomFrame.UpdateCallMediaState,
-    uid: PrimaryKey,
-) {
+private suspend fun processUpdateCallMediaState(frame: RoomFrame.UpdateCallMediaState, uid: PrimaryKey) {
     val session = rtcSession[frame.roomId] ?: return
     if (session.uidList.none { it.uid == uid }) {
         return
     }
-    val state = RtcMediaState(
-        audioMuted = frame.audioMuted,
-        videoMuted = frame.videoMuted,
-    )
+    val state =
+        RtcMediaState(
+            audioMuted = frame.audioMuted,
+            videoMuted = frame.videoMuted,
+        )
     session.mediaStateMap[uid] = state
     session.socketMap.filterKeys {
         it != uid
@@ -213,7 +192,7 @@ private suspend fun processUpdateCallMediaState(
                 roomId = frame.roomId,
                 audioMuted = frame.audioMuted,
                 videoMuted = frame.videoMuted,
-            )
+            ),
         )
     }
 }
@@ -224,7 +203,7 @@ suspend fun listenerRoomRTC() {
         rtcSession.forEach { (roomId, it) ->
             it.uidList.forEachIndexed { frontUserIndex, frontRtcUser ->
                 val frontSocket = frontRtcUser.session
-                if (!(frontSocket.isActive)) return@forEachIndexed
+                if (!frontSocket.isActive) return@forEachIndexed
                 it.uidList.forEachIndexed { backUserIndex, backRtcUser ->
                     processRTCSession(frontUserIndex, backUserIndex, backRtcUser, it, frontRtcUser, frontSocket, roomId)
                 }
@@ -239,9 +218,10 @@ suspend fun listenerRoomRTC() {
 private suspend fun cleanupInactiveRtcUsers() {
     val emptyRooms = mutableListOf<PrimaryKey>()
     rtcSession.values.forEach { session ->
-        val inactiveUids = session.uidList.filterNot {
-            it.session.isActive
-        }.map(RtcUser::uid)
+        val inactiveUids =
+            session.uidList.filterNot {
+                it.session.isActive
+            }.map(RtcUser::uid)
         inactiveUids.forEach { uid ->
             notifyPeerLeft(session, uid)
             cleanupRtcUser(session, uid)
@@ -260,14 +240,14 @@ private suspend fun processRTCSession(
     session: RtcSession,
     frontRtcUser: RtcUser,
     frontSocket: DefaultWebSocketServerSession,
-    roomId: PrimaryKey
+    roomId: PrimaryKey,
 ) {
     if (frontUserIndex >= backUserIndex) return
     val backSocket = backRtcUser.session
     if (!backSocket.isActive) return
     val offer = session.offerList.getOrPut(frontRtcUser.uid) { mutableMapOf() }[backRtcUser.uid]
     Napier.i {
-        "processRTCSession $frontUserIndex ${frontRtcUser.uid} $backUserIndex ${backRtcUser.uid} $offer"
+        "processRTCSession $frontUserIndex ${frontRtcUser.uid} $backUserIndex ${backRtcUser.uid} ${offer ?: "<none>"}"
     }
     if (offer != null) {
         val answer = session.answerList.getOrPut(frontRtcUser.uid) { mutableMapOf() }[backRtcUser.uid]
@@ -275,6 +255,8 @@ private suspend fun processRTCSession(
         try {
             val frame = RoomFrame.CreateAnswer(frontRtcUser.uid, offer, session.roomId)
             backSocket.sendFrame(frame)
+        } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+            throw cancellation
         } catch (e: Exception) {
             Napier.e(e) {
                 "send CreateAnswer"
@@ -285,6 +267,8 @@ private suspend fun processRTCSession(
     try {
         val frame = RoomFrame.CreateOffer(backRtcUser.uid, roomId)
         frontSocket.sendFrame(frame)
+    } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+        throw cancellation
     } catch (e: Exception) {
         Napier.e(e) {
             "send CreateOffer"
@@ -328,6 +312,8 @@ suspend fun listenerRtcChannel(backend: Backend) {
                 else -> {
                 }
             }
+        } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+            throw cancellation
         } catch (e: Throwable) {
             Napier.e(e) {
                 "catch exception"
@@ -336,10 +322,7 @@ suspend fun listenerRtcChannel(backend: Backend) {
     }
 }
 
-suspend fun processSendCandidate(
-    frame: RoomFrame.SendCandidate,
-    uid: PrimaryKey
-) {
+suspend fun processSendCandidate(frame: RoomFrame.SendCandidate, uid: PrimaryKey) {
     val session = rtcSession[frame.roomId] ?: return
     val targetSession = session.socketMap[frame.targetUid] ?: return
     val f = RoomFrame.ReceiveCandidate(frame.candidate, frame.roomId, uid)

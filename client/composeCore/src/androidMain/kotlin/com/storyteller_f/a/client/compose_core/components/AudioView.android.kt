@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.components
 
 import android.util.Rational
@@ -46,7 +50,7 @@ actual fun AudioViewEmbed(remoteMediaItem: RemoteMediaItem) {
         remoteMediaItem,
         { playingSession, localMediaPlaySession ->
             AudioPlayer(playingSession, localMediaPlaySession, remoteMediaItem)
-        }
+        },
     )
 }
 
@@ -56,7 +60,7 @@ actual fun AudioViewFilled(remoteMediaItem: RemoteMediaItem) {
         remoteMediaItem,
         { playingSession, localMediaPlaySession ->
             AudioPlayer(playingSession, localMediaPlaySession, remoteMediaItem)
-        }
+        },
     )
 }
 
@@ -66,7 +70,7 @@ actual fun AudioViewFullScreen(remoteMediaItem: RemoteMediaItem) {
         remoteMediaItem,
         { playingSession, localMediaPlaySession ->
             AudioPlayer(playingSession, localMediaPlaySession, remoteMediaItem)
-        }
+        },
     )
 }
 
@@ -75,12 +79,12 @@ actual fun AudioViewFullScreen(remoteMediaItem: RemoteMediaItem) {
 private fun AudioPlayer(
     playingSession: MediaPlaySession?,
     localMediaPlaySession: LocalMediaPlaySession,
-    remoteMediaItem: RemoteMediaItem
+    remoteMediaItem: RemoteMediaItem,
 ) {
     val mediaPlayerService = LocalMediaPlayerService.current
     val player by mediaPlayerService.controller.collectAsState(null)
     val playerState by rememberPlayerState(player, localMediaPlaySession)
-    val enablePip = playerState.currentIsPlaying && (playingSession?.lastUuid == localMediaPlaySession.uuid)
+    val enablePip = playerState.currentIsPlaying && playingSession?.lastUuid == localMediaPlaySession.uuid
     Napier.d(tag = "MediaPlayer") {
         "VideoPlayer ${localMediaPlaySession.uuid} enablePip: $enablePip"
     }
@@ -89,15 +93,19 @@ private fun AudioPlayer(
     Box(modifier = pipModifier.aspectRatio(ratio.toFloat())) {
         when {
             player == null -> PlayerWaiting(localMediaPlaySession, remoteMediaItem)
+
             playingSession == null -> PlayerWaiting(localMediaPlaySession, remoteMediaItem)
-            playingSession.lastUuid == localMediaPlaySession.uuid -> AudioPlayerInternal(
-                player,
-                localMediaPlaySession,
-                remoteMediaItem,
-                playingSession
-            )
+
+            playingSession.lastUuid == localMediaPlaySession.uuid ->
+                AudioPlayerInternal(
+                    player,
+                    localMediaPlaySession,
+                    remoteMediaItem,
+                    playingSession,
+                )
 
             playingSession.id == localMediaPlaySession.id -> PlayerOccupy(localMediaPlaySession)
+
             else -> PlayerWaiting(localMediaPlaySession, remoteMediaItem)
         }
     }
@@ -108,17 +116,18 @@ private fun BoxScope.AudioPlayerInternal(
     player: MediaController?,
     localMediaPlaySession: LocalMediaPlaySession,
     remoteMediaItem: RemoteMediaItem,
-    playingSession: MediaPlaySession
+    playingSession: MediaPlaySession,
 ) {
     player ?: return
     AndroidPlayerContainer(player) {
         val coverMediaInfo = remoteMediaItem.cover
         Row(
-            modifier = Modifier
+            modifier =
+            Modifier
                 .padding(10.dp)
                 .fillMaxHeight(),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             AudioCover(coverMediaInfo)
             AudioDetail(player, localMediaPlaySession, playingSession)
@@ -130,13 +139,14 @@ private fun BoxScope.AudioPlayerInternal(
 private fun RowScope.AudioDetail(
     player: MediaController,
     localMediaPlaySession: LocalMediaPlaySession,
-    playingSession: MediaPlaySession
+    playingSession: MediaPlaySession,
 ) {
     Box(
-        modifier = Modifier
+        modifier =
+        Modifier
             .weight(2f)
             .background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(8.dp)),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         Column(modifier = Modifier.padding(10.dp)) {
             val state by rememberPlayerState(player, localMediaPlaySession)
@@ -151,24 +161,23 @@ private fun RowScope.AudioDetail(
 }
 
 @Composable
-private fun AudioTitle(
-    state: MediaPlayerState,
-    playingSession: MediaPlaySession
-) {
-    val title = state.currentPlayingItem?.mediaMetadata?.title?.toString()
-        ?: playingSession.remoteMediaItem.title
-        ?: playingSession.remoteMediaItem.name
+private fun AudioTitle(state: MediaPlayerState, playingSession: MediaPlaySession) {
+    val title =
+        state.currentPlayingItem?.mediaMetadata?.title?.toString()
+            ?: playingSession.remoteMediaItem.title
+            ?: playingSession.remoteMediaItem.name
     Text(title, maxLines = 2, modifier = Modifier.basicMarquee().padding(horizontal = 20.dp))
 }
 
 @Composable
 private fun RowScope.AudioCover(coverMediaInfo: FileInfo?) {
     val request = coverMediaInfo?.let { imageRequestInMarkdown(it) }
-    val modifier = Modifier
-        .aspectRatio(1f)
-        .clip(CircleShape)
-        .weight(1f)
-        .widthIn(max = 100.dp)
+    val modifier =
+        Modifier
+            .aspectRatio(1f)
+            .clip(CircleShape)
+            .weight(1f)
+            .widthIn(max = 100.dp)
     if (request == null) {
         Icon(Icons.Default.Audiotrack, "cover", modifier)
     } else {
@@ -176,16 +185,13 @@ private fun RowScope.AudioCover(coverMediaInfo: FileInfo?) {
             request,
             contentDescription = "cover",
             modifier = modifier,
-            fallback = rememberVectorPainter(Icons.Default.Audiotrack)
+            fallback = rememberVectorPainter(Icons.Default.Audiotrack),
         )
     }
 }
 
 @Composable
-private fun AudioPlayerControls(
-    player: MediaController,
-    state: MediaPlayerState
-) {
+private fun AudioPlayerControls(player: MediaController, state: MediaPlayerState) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
         IconButton({
             if (player.isPlaying) {
@@ -196,7 +202,6 @@ private fun AudioPlayerControls(
         }) {
             when {
                 state.currentIsPlaying -> Icon(Icons.Default.PauseCircle, "pause", modifier = Modifier.size(40.dp))
-
                 else -> Icon(Icons.Default.PlayCircle, "play", modifier = Modifier.size(40.dp))
             }
         }

@@ -1,4 +1,6 @@
-
+/*
+ * This is a private project. All rights reserved.
+ */
 
 package com.storyteller_f.a.panel.pages
 
@@ -32,10 +34,12 @@ fun AllTopicsPage() {
 fun AllTopicsPageInternal(viewModel: AllTopicsViewModel) {
     val panelNav = LocalPanelNav.current
     Scaffold(
-        topBar = { TopAppBar(
-            title = { Text(stringResource(Res.string.all_topics)) },
-            navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } }
-        ) }
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(Res.string.all_topics)) },
+                navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } },
+            )
+        },
     ) {
         val direction = LocalLayoutDirection.current
         Box(Modifier.safeArea(it, direction)) {

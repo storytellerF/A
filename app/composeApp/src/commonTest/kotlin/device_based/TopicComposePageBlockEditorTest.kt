@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package device_based
 
 import androidx.compose.material3.MaterialTheme
@@ -13,10 +17,26 @@ import com.storyteller_f.a.app.pages.topic.BlockEditTopicPage
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
+private val expectedComplexMarkdown =
+    """
+    # Title
+
+    > Quote
+
+    ``` kotlin
+    println(1)
+    ```
+
+    ```math
+    x^2
+    ```
+    """.trimIndent()
+
 @OptIn(ExperimentalTestApi::class)
 class TopicComposePageBlockEditorTest {
     @Test
-    fun rendersInitialMarkdownInBlockEditor() = runComposeUiTest {
+    fun rendersInitialMarkdownInBlockEditor() =
+        runComposeUiTest {
         var latestMarkdown = ""
 
         setBlockEditorContent("# Title") {
@@ -32,7 +52,8 @@ class TopicComposePageBlockEditorTest {
     }
 
     @Test
-    fun updatesMarkdownWhenListBlockChanges() = runComposeUiTest {
+    fun updatesMarkdownWhenListBlockChanges() =
+        runComposeUiTest {
         var latestMarkdown = ""
 
         setBlockEditorContent("- old item") {
@@ -50,7 +71,8 @@ class TopicComposePageBlockEditorTest {
     }
 
     @Test
-    fun insertsCodeBlockFromToolbar() = runComposeUiTest {
+    fun insertsCodeBlockFromToolbar() =
+        runComposeUiTest {
         var latestMarkdown = ""
 
         setBlockEditorContent("Intro") {
@@ -63,15 +85,33 @@ class TopicComposePageBlockEditorTest {
         onNodeWithContentDescription("Code Block").performClick()
 
         waitUntil(timeoutMillis = TestTimeoutMillis) {
-            latestMarkdown == "Intro\n\n```\n\n```"
+            latestMarkdown ==
+                """
+                Intro
+
+                ```
+
+                ```
+                """.trimIndent()
         }
 
-        assertEquals("Intro\n\n```\n\n```", latestMarkdown)
+        assertEquals(
+            """
+            Intro
+
+            ```
+
+            ```
+            """.trimIndent(),
+            latestMarkdown,
+        )
     }
 
     @Test
-    fun rendersMixedMarkdownBlocks() = runComposeUiTest {
-        val input = """
+    fun rendersMixedMarkdownBlocks() =
+        runComposeUiTest {
+        val input =
+            """
             # Title
 
             > Quote
@@ -83,7 +123,7 @@ class TopicComposePageBlockEditorTest {
             ```math
             x^2
             ```
-        """.trimIndent()
+            """.trimIndent()
         var latestMarkdown = ""
 
         setBlockEditorContent(input) {
@@ -97,17 +137,18 @@ class TopicComposePageBlockEditorTest {
         onNodeWithText("Math Formula").assertExists()
         onNodeWithText("x^2").assertExists()
         waitUntil(timeoutMillis = TestTimeoutMillis) {
-            latestMarkdown == "# Title\n\n> Quote\n\n``` kotlin\nprintln(1)\n```\n\n```math\nx^2\n```"
+            latestMarkdown == expectedComplexMarkdown
         }
 
         assertEquals(
-            "# Title\n\n> Quote\n\n``` kotlin\nprintln(1)\n```\n\n```math\nx^2\n```",
-            latestMarkdown
+            expectedComplexMarkdown,
+            latestMarkdown,
         )
     }
 
     @Test
-    fun updatesMarkdownWhenQuoteBlockChanges() = runComposeUiTest {
+    fun updatesMarkdownWhenQuoteBlockChanges() =
+        runComposeUiTest {
         var latestMarkdown = ""
 
         setBlockEditorContent("> old quote") {
@@ -125,7 +166,8 @@ class TopicComposePageBlockEditorTest {
     }
 
     @Test
-    fun updatesMarkdownWhenCodeBlockChanges() = runComposeUiTest {
+    fun updatesMarkdownWhenCodeBlockChanges() =
+        runComposeUiTest {
         var latestMarkdown = ""
 
         setBlockEditorContent("```\nold()\n```") {
@@ -143,7 +185,8 @@ class TopicComposePageBlockEditorTest {
     }
 
     @Test
-    fun deletesLastBlockAndKeepsEditorUsable() = runComposeUiTest {
+    fun deletesLastBlockAndKeepsEditorUsable() =
+        runComposeUiTest {
         var latestMarkdown = ""
 
         setBlockEditorContent("Only block") {
@@ -169,7 +212,8 @@ class TopicComposePageBlockEditorTest {
     }
 
     @Test
-    fun changesListBlockToCodeBlockFromBlockMenu() = runComposeUiTest {
+    fun changesListBlockToCodeBlockFromBlockMenu() =
+        runComposeUiTest {
         var latestMarkdown = ""
 
         setBlockEditorContent("- item") {
@@ -190,7 +234,8 @@ class TopicComposePageBlockEditorTest {
     }
 
     @Test
-    fun insertsReferenceBlockFromMediaMenu() = runComposeUiTest {
+    fun insertsReferenceBlockFromMediaMenu() =
+        runComposeUiTest {
         var latestMarkdown = ""
 
         setBlockEditorContent("Intro") {
@@ -204,10 +249,26 @@ class TopicComposePageBlockEditorTest {
         onNodeWithText("Reference (CSA)").performClick()
 
         waitUntil(timeoutMillis = TestTimeoutMillis) {
-            latestMarkdown == "Intro\n\n```csa\n/topic/\n```"
+            latestMarkdown ==
+                """
+                Intro
+
+                ```csa
+                /topic/
+                ```
+                """.trimIndent()
         }
 
-        assertEquals("Intro\n\n```csa\n/topic/\n```", latestMarkdown)
+        assertEquals(
+            """
+            Intro
+
+            ```csa
+            /topic/
+            ```
+            """.trimIndent(),
+            latestMarkdown,
+        )
     }
 
     private fun ComposeUiTest.setBlockEditorContent(input: String, updateInput: (String) -> Unit) {
@@ -215,7 +276,7 @@ class TopicComposePageBlockEditorTest {
             MaterialTheme {
                 BlockEditTopicPage(
                     input = input,
-                    updateInput = updateInput
+                    updateInput = updateInput,
                 )
             }
         }

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.user
 
 import androidx.compose.foundation.clickable
@@ -83,11 +87,12 @@ fun AccountSwitch() {
 private fun AccountSwitchInternal(viewModel: ChildAccountsViewModel) {
     val isInChildAccount = isInChildAccount()
     val uiViewModel = LocalUiViewModel.current
-    val mainInstance = when (val instance = uiViewModel.instance.value) {
-        is IAccountInstance.Child -> instance.main
-        is IAccountInstance.None -> return
-        is IAccountInstance.Regular -> instance
-    }
+    val mainInstance =
+        when (val instance = uiViewModel.instance.value) {
+            is IAccountInstance.Child -> instance.main
+            is IAccountInstance.None -> return
+            is IAccountInstance.Regular -> instance
+        }
     val mainSessionManager = mainInstance.sessionManager
     val globalDialogController = LocalGlobalDialog.current
     val scope = rememberCoroutineScope()
@@ -118,13 +123,13 @@ private fun AccountSwitchInternal(viewModel: ChildAccountsViewModel) {
     StateView(viewModel, modifier = Modifier.height(300.dp)) { pagingItems ->
         LazyColumn(
             contentPadding = PaddingValues(10.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             pagingItems(
                 pagingItems,
                 key = { accountInfo ->
                     accountInfo.id
-                }
+                },
             ) { index ->
                 val childAccountInfo = pagingItems[index]
                 childAccountInfo?.let {
@@ -145,7 +150,7 @@ fun ChildAccountCell(childAccountInfo: ChildAccountInfo, onClick: () -> Unit) {
     Row(
         modifier = Modifier.padding(8.dp).clickable(onClick = onClick),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         BadgedBox(badge = {
             if (childAccountInfo.hasUnreadRoomMessage) {
@@ -178,54 +183,54 @@ fun isInChildAccount(): Boolean {
     return instance is IAccountInstance.Child
 }
 
-suspend fun AppGlobalDialogController.switchUser(
-    childAccountInfo: ChildAccountInfo,
-    uiViewModel: UIViewModel
-) {
-    val mainInstance = when (val instance = uiViewModel.instance.value) {
-        is IAccountInstance.Child -> instance.main
-        is IAccountInstance.None -> return
-        is IAccountInstance.Regular -> instance
-    }
+suspend fun AppGlobalDialogController.switchUser(childAccountInfo: ChildAccountInfo, uiViewModel: UIViewModel) {
+    val mainInstance =
+        when (val instance = uiViewModel.instance.value) {
+            is IAccountInstance.Child -> instance.main
+            is IAccountInstance.None -> return
+            is IAccountInstance.Regular -> instance
+        }
     useResult {
         algoRunCatching {
             val currentUserPass = mainInstance.sessionManager.passHolder.currentUserPass
-            val userPass = currentUserPass ?: throw Exception("user not login")
-            val (decrypted, decryptedEnc) = userPass.decryptChildAccount(
-                childAccountInfo.encryptedPrivateKey,
-                childAccountInfo.encryptedAesKey,
-                childAccountInfo.algoType,
-                childAccountInfo.encryptedEncryptionPrivateKey
-            ).getOrThrow()
+            val userPass = currentUserPass ?: throw IllegalStateException("user not login")
+            val (decrypted, decryptedEnc) =
+                userPass.decryptChildAccount(
+                    childAccountInfo.encryptedPrivateKey,
+                    childAccountInfo.encryptedAesKey,
+                    childAccountInfo.algoType,
+                    childAccountInfo.encryptedEncryptionPrivateKey,
+                ).getOrThrow()
             val algoImpl = getAlgo(childAccountInfo.algoType)
             val pem = algoImpl.getPemPrivateKeyFromDer(decrypted).getOrThrow()
             val publicKey = algoImpl.getDerPublicKeyFromPrivateKey(pem).getOrThrow()
 
             val address = algoImpl.calcAddress(publicKey).getOrThrow()
-            val authKey = if (childAccountInfo.algoType == com.storyteller_f.shared.model.AlgoType.DILITHIUM) {
-                if (decryptedEnc == null) {
-                    throw Exception("decryptedEnc is null")
+            val authKey =
+                if (childAccountInfo.algoType == com.storyteller_f.shared.model.AlgoType.DILITHIUM) {
+                    if (decryptedEnc == null) {
+                        throw IllegalStateException("decryptedEnc is null")
+                    }
+                    val type2Algo = algoImpl.encryptionAlgo as Type2Algo
+                    val pemPrivateKey =
+                        type2Algo.getPemEncryptionPrivateKeyFromDerPrivateKey(decryptedEnc)
+                            .getOrThrow()
+                    val publicEnc = type2Algo.getDerEncryptionPublicKeyFromPemPrivateKey(pemPrivateKey).getOrThrow()
+                    com.storyteller_f.a.client.core.AuthKey.Dilithium(
+                        pemPrivateKey = pem,
+                        derPrivateKey = decrypted,
+                        derPublicKey = publicKey,
+                        pemEncryptionPrivateKey = pemPrivateKey, // Not implemented for child accounts
+                        derEncryptionPrivateKey = decryptedEnc,
+                        derEncryptionPublicKey = publicEnc,
+                    )
+                } else {
+                    com.storyteller_f.a.client.core.AuthKey.P256(
+                        pemPrivateKey = pem,
+                        derPrivateKey = decrypted,
+                        derPublicKey = publicKey,
+                    )
                 }
-                val type2Algo = algoImpl.encryptionAlgo as Type2Algo
-                val pemPrivateKey =
-                    type2Algo.getPemEncryptionPrivateKeyFromDerPrivateKey(decryptedEnc)
-                        .getOrThrow()
-                val publicEnc = type2Algo.getDerEncryptionPublicKeyFromPemPrivateKey(pemPrivateKey).getOrThrow()
-                com.storyteller_f.a.client.core.AuthKey.Dilithium(
-                    pemPrivateKey = pem,
-                    derPrivateKey = decrypted,
-                    derPublicKey = publicKey,
-                    pemEncryptionPrivateKey = pemPrivateKey, // Not implemented for child accounts
-                    derEncryptionPrivateKey = decryptedEnc,
-                    derEncryptionPublicKey = publicEnc
-                )
-            } else {
-                com.storyteller_f.a.client.core.AuthKey.P256(
-                    pemPrivateKey = pem,
-                    derPrivateKey = decrypted,
-                    derPublicKey = publicKey
-                )
-            }
             RawUserPass(RawUserPassInfo(address, authKey))
         }
     }.getOrNull()?.let {

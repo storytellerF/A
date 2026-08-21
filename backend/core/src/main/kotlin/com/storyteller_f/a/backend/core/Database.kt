@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.core
 
 import com.storyteller_f.a.backend.core.types.AssetTransaction
@@ -62,63 +66,63 @@ import kotlinx.datetime.LocalDateTime
 
 data class PaginationResult<T>(val list: List<T>, val total: Long)
 
-suspend fun <T> Result<List<T>?>.paging(total: Long) = mapIfNotNull {
+suspend fun <T> Result<List<T>?>.paging(total: Long) =
+    mapIfNotNull {
     PaginationResult(it, total)
 }
 
-fun <T> Result<List<T>>.pagingNotNull(total: Long) = map {
+fun <T> Result<List<T>>.pagingNotNull(total: Long) =
+    map {
     PaginationResult(it, total)
 }
 
-suspend fun <T, R> Result<PaginationResult<T>>.mapPagingResultNotNull(
-    block: suspend (List<T>) -> Result<List<R>>
-) = mapResult { paging ->
-    block(paging.list).map {
-        PaginationResult(it, paging.total)
+suspend fun <T, R> Result<PaginationResult<T>>.mapPagingResultNotNull(block: suspend (List<T>) -> Result<List<R>>) =
+    mapResult { paging ->
+        block(paging.list).map {
+            PaginationResult(it, paging.total)
+        }
     }
-}
 
-suspend fun <T, R> Result<PaginationResult<T>>.mapPagingNotNull(
-    block: suspend (List<T>) -> List<R>
-) = map { paging ->
+suspend fun <T, R> Result<PaginationResult<T>>.mapPagingNotNull(block: suspend (List<T>) -> List<R>) =
+    map { paging ->
     PaginationResult(block(paging.list), paging.total)
 }
 
-suspend fun <T, R> Result<PaginationResult<T>?>.mapPagingIfNotNull(
-    block: suspend (List<T>) -> Result<List<R>>
-) = mapResultIfNotNull { paging ->
-    block(paging.list).map {
-        PaginationResult(it, paging.total)
+suspend fun <T, R> Result<PaginationResult<T>?>.mapPagingIfNotNull(block: suspend (List<T>) -> Result<List<R>>) =
+    mapResultIfNotNull { paging ->
+        block(paging.list).map {
+            PaginationResult(it, paging.total)
+        }
     }
-}
 
 suspend fun <T, R> Result<PaginationResult<T>?>.mapPagingResultIfNotNullNullable(
-    block: suspend (List<T>) -> Result<List<R>?>
+    block: suspend (List<T>) -> Result<List<R>?>,
 ) = mapResultIfNotNull { paging ->
     block(paging.list).mapIfNotNull {
         PaginationResult(it, paging.total)
     }
 }
 
-suspend fun <T, R> Result<PaginationResult<T>>.mapPagingResultNullable(
-    block: suspend (List<T>) -> Result<List<R>?>
-) = mapResult { paging ->
-    block(paging.list).mapIfNotNull {
-        PaginationResult(it, paging.total)
+suspend fun <T, R> Result<PaginationResult<T>>.mapPagingResultNullable(block: suspend (List<T>) -> Result<List<R>?>) =
+    mapResult { paging ->
+        block(paging.list).mapIfNotNull {
+            PaginationResult(it, paging.total)
+        }
     }
-}
 
 suspend fun <T> paginationFromResults(
     listResult: Result<List<T>>,
-    totalResult: Result<Long>
-): Result<PaginationResult<T>> = listResult.mapResult { list ->
+    totalResult: Result<Long>,
+): Result<PaginationResult<T>> =
+    listResult.mapResult { list ->
     totalResult.map { total -> PaginationResult(list, total) }
 }
 
 suspend fun <T> paginationNullableFromResults(
     listResult: Result<List<T>?>,
-    totalResult: Result<Long>
-): Result<PaginationResult<T>?> = listResult.mapResultIfNotNull { list ->
+    totalResult: Result<Long>,
+): Result<PaginationResult<T>?> =
+    listResult.mapResultIfNotNull { list ->
     totalResult.map { total -> PaginationResult(list, total) }
 }
 
@@ -145,25 +149,25 @@ sealed interface JoinSearch {
     data class Unspecified(val uid: PrimaryKey?) : JoinSearch
 }
 
-class InsertTopicTuple(
+data class InsertTopicTuple(
     val topic: PresetTopic,
     val originalIndex: Int,
     val level: Int,
     val id: PrimaryKey,
     val content: ByteArray,
     val isEncrypted: Boolean,
-    val rootId: PrimaryKey
+    val rootId: PrimaryKey,
 )
 
-class InsertCommunityTuple(
+data class InsertCommunityTuple(
     val community: PresetCommunity,
     val icon: PrimaryKey?,
     val id: PrimaryKey,
     val fontSettings: FontSettings?,
-    val createdTime: LocalDateTime
+    val createdTime: LocalDateTime,
 )
 
-class InsertRoomTuple(
+data class InsertRoomTuple(
     val room: PresetRoom,
     val icon: PrimaryKey?,
     val id: PrimaryKey,
@@ -225,7 +229,7 @@ interface UserDatabase {
     suspend fun updateUserStatus(id: PrimaryKey, status: com.storyteller_f.shared.type.UserStatus): Result<Boolean>
 
     /**
-     * nickname 为null 或者空字符串时不更新，avatar 为null 时不更新,aid 为null 或者空字符串时不更新
+     * nickname 为null 或者空字符串时不更新，avatar 为null 时不更新,aid 为null 或者空字符串时不更新.
      */
     suspend fun updateUserInfo(id: PrimaryKey, newUser: UpdateUserBody): Result<Boolean>
     suspend fun getUserAuthDataById(id: PrimaryKey): Result<UserAuthData?>
@@ -264,7 +268,7 @@ interface UserDatabase {
         encryptedPrivateKey: String,
         encryptedAesKey: String,
         user: User,
-        encryptedEncryptionPrivateKey: String? = null
+        encryptedEncryptionPrivateKey: String? = null,
     ): Result<Unit>
 
     suspend fun getAllUsers(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<RawUser>>
@@ -289,13 +293,13 @@ interface TopicDatabase {
     suspend fun updateTopicPinned(topicId: PrimaryKey, newValue: Boolean): Result<Boolean>
     suspend fun updateTopicStatus(topicId: PrimaryKey, status: ObjectStatus): Result<Boolean>
     suspend fun getTopicList(primaryKeyFetch: PrimaryKeyFetch): Result<List<Topic>>
-    suspend fun getTopicCommentCount(topicIdList: List<PrimaryKey>,): Result<List<Pair<Long, Long>>>
+    suspend fun getTopicCommentCount(topicIdList: List<PrimaryKey>): Result<List<Pair<Long, Long>>>
 
     suspend fun isUserCommented(uid: PrimaryKey, topicId: List<PrimaryKey>): Result<List<Long>>
 
     suspend fun getUserCommentedTopicsPaginationResult(
         uid: PrimaryKey,
-        primaryKeyFetch: PrimaryKeyFetch
+        primaryKeyFetch: PrimaryKeyFetch,
     ): Result<PaginationResult<Topic>>
 
     suspend fun getUserCommentCount(uid: PrimaryKey): Result<Long>
@@ -314,7 +318,7 @@ interface TopicDatabase {
         uid: PrimaryKey?,
         primaryKeyFetch: PrimaryKeyFetch,
         parentId: PrimaryKey,
-        pinType: TopicPinSearch?
+        pinType: TopicPinSearch?,
     ): Result<PaginationResult<Topic>>
 
     suspend fun getLatestTopic(parentId: PrimaryKey): Result<List<Topic>>
@@ -335,7 +339,7 @@ interface FavoriteDatabase {
 interface SubscriptionDatabase {
     suspend fun getUserSubscriptions(
         uid: PrimaryKey,
-        fetch: PrimaryKeyFetch
+        fetch: PrimaryKeyFetch,
     ): Result<PaginationResult<UserSubscription>>
 
     suspend fun addSubscription(userSubscription: UserSubscription): Result<UserSubscription>
@@ -344,7 +348,7 @@ interface SubscriptionDatabase {
     suspend fun getSubscription(uid: PrimaryKey, objectId: PrimaryKey): Result<UserSubscription?>
     suspend fun getSubscriptionsByObjectId(
         objectId: PrimaryKey,
-        primaryKeyFetch: PrimaryKeyFetch
+        primaryKeyFetch: PrimaryKeyFetch,
     ): Result<List<UserSubscription>>
 
     suspend fun insertSubscriptionSentLog(log: SubscriptionSentLog): Result<SubscriptionSentLog>
@@ -378,12 +382,12 @@ interface ReactionDatabase {
     suspend fun getReactionCount(objectIdList: List<PrimaryKey>): Result<List<Pair<Long, Long>>>
     suspend fun getReactionCountForEmoji(
         objectId: List<PrimaryKey>,
-        emoji: String
+        emoji: String,
     ): Result<List<Triple<Long, Long, PrimaryKey?>>>
 
     suspend fun getUserReactionRecordsPaginationResult(
         uid: PrimaryKey,
-        primaryKeyFetch: PrimaryKeyFetch
+        primaryKeyFetch: PrimaryKeyFetch,
     ): Result<PaginationResult<ReactionRecord>>
 
     suspend fun getUserReactionRecordCount(uid: PrimaryKey): Result<Long>
@@ -409,7 +413,7 @@ interface CommunityDatabase {
     suspend fun getRawCommunity(
         objectFetch: ObjectFetch,
         fillJoinInfo: Boolean? = null,
-        uid: PrimaryKey? = null
+        uid: PrimaryKey? = null,
     ): Result<RawCommunity?>
 
     suspend fun getJoinedCommunityIds(uid: PrimaryKey): Result<List<Long>>
@@ -424,7 +428,7 @@ interface CommunityDatabase {
     suspend fun getRawCommunities(objectListFetch: ObjectListFetch): Result<List<RawCommunity>>
 
     /**
-     * name 为null 或者空字符串时不更新，icon，poster 为null时不更新
+     * name 为null 或者空字符串时不更新，icon，poster 为null时不更新.
      */
     suspend fun updateCommunity(id: PrimaryKey, body: UpdateCommunityBody): Result<Boolean>
     suspend fun updateCommunityStatus(id: PrimaryKey, status: ObjectStatus): Result<Boolean>
@@ -484,13 +488,13 @@ interface FileDatabase {
     suspend fun insertFileRecord(
         fileRecordList: List<FileRecord>,
         ownerId: PrimaryKey,
-        ownerType: ObjectType
+        ownerType: ObjectType,
     ): Result<Unit>
 
     suspend fun insertUploadRecord(record: UploadRecord): Result<UploadRecord>
 
     /**
-     * 只有在插入文件记录成功后才更新上传记录状态，避免文件上传了但是配额没有更新的情况
+     * 只有在插入文件记录成功后才更新上传记录状态，避免文件上传了但是配额没有更新的情况.
      */
     suspend fun updateUploadRecordStatus(
         quotaInfo: QuotaInfo,
@@ -509,7 +513,7 @@ interface FileDatabase {
 
     suspend fun getFileRefsByFileId(
         fileId: PrimaryKey,
-        primaryKeyFetch: PrimaryKeyFetch
+        primaryKeyFetch: PrimaryKeyFetch,
     ): Result<PaginationResult<FileRef>>
 }
 
@@ -524,7 +528,7 @@ interface ContainerDatabase {
     suspend fun getUserJoinedTime(parentIds: List<PrimaryKey>, uid: PrimaryKey): Result<List<Member>>
 
     suspend fun getMemberCount(parentIds: List<PrimaryKey>): Result<List<Pair<Long, Long>>>
-    suspend fun getContainerInfo(parentIds: List<PrimaryKey>, uid: PrimaryKey?,): Result<Map<PrimaryKey, ContainerInfo>>
+    suspend fun getContainerInfo(parentIds: List<PrimaryKey>, uid: PrimaryKey?): Result<Map<PrimaryKey, ContainerInfo>>
 
     suspend fun getTopicReadList(parentIds: List<PrimaryKey>, uid: PrimaryKey): Result<List<UserTopicRead>>
     suspend fun getUsersHasUnreadRoomMap(uidList: List<PrimaryKey>): Result<Map<PrimaryKey, Boolean>>
@@ -533,17 +537,17 @@ interface ContainerDatabase {
     suspend fun getMemberPaginationResult(
         objectId: PrimaryKey?,
         word: String?,
-        fetch: PrimaryKeyFetch
+        fetch: PrimaryKeyFetch,
     ): Result<PaginationResult<RawUser>>
 
     suspend fun getMemberWithUserPaginationResult(
         objectId: PrimaryKey,
-        fetch: PrimaryKeyFetch
+        fetch: PrimaryKeyFetch,
     ): Result<PaginationResult<Pair<Member, RawUser>>>
 
     suspend fun getMemberWithUserByUids(
         objectId: PrimaryKey,
-        uidList: List<PrimaryKey>
+        uidList: List<PrimaryKey>,
     ): Result<List<Pair<Member, RawUser>>>
 
     suspend fun getQuotaInfo(ownerId: PrimaryKey, quotaType: QuotaType): Result<Quota?>
@@ -551,7 +555,7 @@ interface ContainerDatabase {
 
     suspend fun getLatestTopicInContainer(
         parentIds: List<PrimaryKey>,
-        uid: PrimaryKey?
+        uid: PrimaryKey?,
     ): Result<Map<PrimaryKey, PrimaryKey?>>
 
     suspend fun getMember(containerId: PrimaryKey, id: PrimaryKey): Result<Member?>
@@ -573,7 +577,7 @@ interface AdminDatabase {
     suspend fun batchAddTopics(
         tuples: List<InsertTopicTuple>,
         userMap: Map<String, User>,
-        objectType: ObjectType
+        objectType: ObjectType,
     ): Result<Unit>
 
     suspend fun createTaskRecord(record: TaskRecord): Result<TaskRecord>
@@ -590,7 +594,7 @@ interface AdminDatabase {
     suspend fun getPanelLogs(
         targetId: PrimaryKey,
         objectType: com.storyteller_f.shared.type.ObjectType,
-        fetch: PrimaryKeyFetch
+        fetch: PrimaryKeyFetch,
     ): Result<PaginationResult<com.storyteller_f.a.backend.core.types.PanelLog>>
 }
 

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.core.types
 
 import com.storyteller_f.shared.model.TitleInfo
@@ -27,45 +31,40 @@ class Title(
     companion object
 }
 
-fun Title.isExpired(currentTime: LocalDateTime = now()): Boolean {
-    return titleStatus == TitleWorkStatus.EXPIRED || (expiresAt?.let { it <= currentTime } == true)
-}
+fun Title.isExpired(currentTime: LocalDateTime = now()): Boolean =
+    titleStatus == TitleWorkStatus.EXPIRED || expiresAt?.let {
+        it <= currentTime
+    } == true
 
-fun Title.effectiveTitleStatus(currentTime: LocalDateTime = now()): TitleWorkStatus {
-    return if (isExpired(currentTime)) {
-        TitleWorkStatus.EXPIRED
-    } else {
-        TitleWorkStatus.OK
-    }
+fun Title.effectiveTitleStatus(currentTime: LocalDateTime = now()): TitleWorkStatus =
+    if (isExpired(currentTime)) {
+    TitleWorkStatus.EXPIRED
+} else {
+    TitleWorkStatus.OK
 }
 
 fun Title.toTitleInfo(
     extensions: TitleInfo.Extension? = null,
     favoriteId: PrimaryKey? = null,
     subscriptionId: PrimaryKey? = null,
-    currentTime: LocalDateTime = now()
-): TitleInfo {
-    return TitleInfo(
-        id = id,
-        createdTime = createdTime,
-        type = type,
-        creator = creator,
-        receiver = receiver,
-        scopeId = scopeId,
-        scopeType = scopeType,
-        name = name,
-        descriptionTopicId = descriptionTopicId,
-        extension = extensions,
-        favoriteId = favoriteId,
-        subscriptionId = subscriptionId,
-        titleStatus = effectiveTitleStatus(currentTime),
-        expiresAt = expiresAt,
-        status = status,
-    )
-}
-
-data class RawTitle(
-    val title: Title,
-    val favoriteId: PrimaryKey? = null,
-    val subscriptionId: PrimaryKey? = null
+    currentTime: LocalDateTime = now(),
+): TitleInfo =
+    TitleInfo(
+    id = id,
+    createdTime = createdTime,
+    type = type,
+    creator = creator,
+    receiver = receiver,
+    scopeId = scopeId,
+    scopeType = scopeType,
+    name = name,
+    descriptionTopicId = descriptionTopicId,
+    extension = extensions,
+    favoriteId = favoriteId,
+    subscriptionId = subscriptionId,
+    titleStatus = effectiveTitleStatus(currentTime),
+    expiresAt = expiresAt,
+    status = status,
 )
+
+data class RawTitle(val title: Title, val favoriteId: PrimaryKey? = null, val subscriptionId: PrimaryKey? = null)

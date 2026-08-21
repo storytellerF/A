@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.core.types
 
 import com.storyteller_f.shared.model.CommunityInfo
@@ -38,8 +42,9 @@ fun RawCommunity.toCommunityIfo(
     community.createdTime,
     memberCount ?: 0,
     community.memberPolicy,
-    member = member?.let {
-        NestedMemberInfo(it.status, it.joinedTime, it.invitedTime,)
+    member =
+    member?.let {
+        NestedMemberInfo(it.status, it.joinedTime, it.invitedTime)
     },
     lastRead = lastRead,
     latestTopic = latestTopic,

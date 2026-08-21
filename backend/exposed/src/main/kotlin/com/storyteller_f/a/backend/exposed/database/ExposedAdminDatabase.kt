@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.exposed.database
 
 import com.storyteller_f.a.backend.core.AdminDatabase
@@ -69,7 +73,7 @@ class ExposedAdminDatabase(val databaseSession: ExposedDatabaseSession) : AdminD
                 this[Users.algoType] = it.algoType
             }
             Aids.batchInsert(users) {
-                this[Aids.value] = it.aid!!
+                this[Aids.value] = checkNotNull(it.aid) { "Imported user aid is missing" }
                 this[Aids.objectId] = it.id
                 this[Aids.objectType] = ObjectType.USER
             }
@@ -117,7 +121,8 @@ class ExposedAdminDatabase(val databaseSession: ExposedDatabaseSession) : AdminD
         }.getOrThrow()
     }
 
-    override suspend fun getAllMembers(distinct: List<String>) = databaseSession.dbQuery {
+    override suspend fun getAllMembers(distinct: List<String>) =
+        databaseSession.dbQuery {
         Members
             .join(Rooms, JoinType.INNER, Members.objectId, Rooms.id)
             .join(Aids, JoinType.INNER, Members.objectId, Aids.objectId)
@@ -137,26 +142,26 @@ class ExposedAdminDatabase(val databaseSession: ExposedDatabaseSession) : AdminD
     }
 
     override suspend fun batchAddEncryptTopicKeys(
-        encryptedKeys: List<Triple<PrimaryKey, ByteArray, Long>>
-    ): Result<Unit> {
-        return databaseSession.dbQuery {
-            EncryptedKeys.batchInsert(encryptedKeys) { (topicId, b, uid) ->
-                this[EncryptedKeys.topicId] = topicId
-                this[EncryptedKeys.encryptedAes] = ExposedBlob(b)
-                this[EncryptedKeys.uid] = uid
-            }
+        encryptedKeys: List<Triple<PrimaryKey, ByteArray, Long>>,
+    ): Result<Unit> =
+        databaseSession.dbQuery {
+        EncryptedKeys.batchInsert(encryptedKeys) { (topicId, b, uid) ->
+            this[EncryptedKeys.topicId] = topicId
+            this[EncryptedKeys.encryptedAes] = ExposedBlob(b)
+            this[EncryptedKeys.uid] = uid
         }
     }
 
     override suspend fun batchAddTopics(
         tuples: List<InsertTopicTuple>,
         userMap: Map<String, User>,
-        objectType: ObjectType
+        objectType: ObjectType,
     ) = databaseSession.dbQuery {
         insertTopics(tuples, userMap, objectType)
     }
 
-    override suspend fun createTaskRecord(record: TaskRecord) = databaseSession.dbQuery {
+    override suspend fun createTaskRecord(record: TaskRecord) =
+        databaseSession.dbQuery {
         addTaskRecord(record)
         record
     }
@@ -189,55 +194,52 @@ class ExposedAdminDatabase(val databaseSession: ExposedDatabaseSession) : AdminD
         return this
     }
 
-    override suspend fun batchAddSubscription(list: List<UserSubscription>): Result<Unit> {
-        return databaseSession.dbQuery {
-            UserSubscriptions.batchInsert(list) {
-                this[UserSubscriptions.id] = it.id
-                this[UserSubscriptions.createdTime] = it.createdTime
-                this[UserSubscriptions.uid] = it.uid
-                this[UserSubscriptions.objectId] = it.objectId
-                this[UserSubscriptions.objectType] = it.objectType
-            }
+    override suspend fun batchAddSubscription(list: List<UserSubscription>): Result<Unit> =
+        databaseSession.dbQuery {
+        UserSubscriptions.batchInsert(list) {
+            this[UserSubscriptions.id] = it.id
+            this[UserSubscriptions.createdTime] = it.createdTime
+            this[UserSubscriptions.uid] = it.uid
+            this[UserSubscriptions.objectId] = it.objectId
+            this[UserSubscriptions.objectType] = it.objectType
         }
     }
 
-    override suspend fun insertPanelLog(log: com.storyteller_f.a.backend.core.types.PanelLog): Result<Unit> {
-        return databaseSession.dbQuery {
-            check(PanelLogs.insert {
-                it[id] = log.id
-                it[adminId] = log.adminId
-                it[targetId] = log.targetId
-                it[objectType] = log.objectType
-                it[action] = log.action
-                it[createdTime] = log.createdTime
-            }.insertedCount > 0) {
+    override suspend fun insertPanelLog(log: com.storyteller_f.a.backend.core.types.PanelLog): Result<Unit> =
+        databaseSession.dbQuery {
+            check(
+                PanelLogs.insert {
+                    it[id] = log.id
+                    it[adminId] = log.adminId
+                    it[targetId] = log.targetId
+                    it[objectType] = log.objectType
+                    it[action] = log.action
+                    it[createdTime] = log.createdTime
+                }.insertedCount > 0,
+            ) {
                 "insert panel log failed"
             }
         }
-    }
 
-    override suspend fun getPanelLogs(
-        targetId: PrimaryKey,
-        objectType: ObjectType,
-        fetch: PrimaryKeyFetch
-    ) = paginationFromResults(
-        databaseSession.dbSearch {
-            search {
-                PanelLogs.selectAll().where {
-                    PanelLogs.targetId eq targetId and (PanelLogs.objectType eq objectType)
-                }.orderBy(PanelLogs.id, SortOrder.DESC).bindPaginationQuery(PanelLogs, fetch)
-            }
-            map(com.storyteller_f.a.backend.core.types.PanelLog::wrapRow)
-        },
-        databaseSession.dbSearch {
-            search {
-                PanelLogs.select(PanelLogs.id).where {
-                    PanelLogs.targetId eq targetId and (PanelLogs.objectType eq objectType)
+    override suspend fun getPanelLogs(targetId: PrimaryKey, objectType: ObjectType, fetch: PrimaryKeyFetch) =
+        paginationFromResults(
+            databaseSession.dbSearch {
+                search {
+                    PanelLogs.selectAll().where {
+                        PanelLogs.targetId eq targetId and (PanelLogs.objectType eq objectType)
+                    }.orderBy(PanelLogs.id, SortOrder.DESC).bindPaginationQuery(PanelLogs, fetch)
                 }
-            }
-            count()
-        }
-    )
+                map(com.storyteller_f.a.backend.core.types.PanelLog::wrapRow)
+            },
+            databaseSession.dbSearch {
+                search {
+                    PanelLogs.select(PanelLogs.id).where {
+                        PanelLogs.targetId eq targetId and (PanelLogs.objectType eq objectType)
+                    }
+                }
+                count()
+            },
+        )
 
     private suspend fun insertTopics(
         topicTuples: List<InsertTopicTuple>,
@@ -250,22 +252,30 @@ class ExposedAdminDatabase(val databaseSession: ExposedDatabaseSession) : AdminD
             val level = it.level
             val index = it.originalIndex
             this[Topics.id] = id
-            this[Topics.author] = userMap[presetTopic.author]!!.id
+            this[Topics.author] = userMap.getValue(presetTopic.author).id
             this[Topics.createdTime] = now()
             this[Topics.rootId] = it.rootId
             this[Topics.rootType] = rootType
-            this[Topics.parentId] = if (level == 0) it.rootId else topicTuples[index - presetTopic.parent!!].id
+            this[Topics.parentId] =
+                if (level == 0) {
+                    it.rootId
+                } else {
+                    val parentIndex = checkNotNull(presetTopic.parent) { "Nested imported topic parent is missing" }
+                    topicTuples[index - parentIndex].id
+                }
             this[Topics.parentType] = if (level == 0) rootType else ObjectType.TOPIC
             this[Topics.content] = ExposedBlob(it.content)
             this[Topics.isEncrypted] = it.isEncrypted
             this[Topics.level] = level + 1
         }
-        Aids.batchInsert(topicTuples.filter {
-            !it.topic.aid.isNullOrBlank()
-        }) {
+        Aids.batchInsert(
+            topicTuples.filter {
+                !it.topic.aid.isNullOrBlank()
+            },
+        ) {
             val first = it.topic
             val id = it.id
-            this[Aids.value] = first.aid!!
+            this[Aids.value] = checkNotNull(first.aid) { "Imported topic aid is missing" }
             this[Aids.objectId] = id
             this[Aids.objectType] = ObjectType.TOPIC
         }

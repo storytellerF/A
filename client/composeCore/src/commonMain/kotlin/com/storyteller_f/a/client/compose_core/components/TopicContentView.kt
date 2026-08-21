@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.components
 
 import androidx.compose.foundation.layout.Box
@@ -19,17 +23,12 @@ import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableMap
 
 @Composable
-fun TopicContentView(
-    topicInfo: TopicInfo,
-    onClick: (FileInfo) -> Unit,
-    isEmbed: Boolean,
-    refBlock: MarkdownComponent
-) {
+fun TopicContentView(topicInfo: TopicInfo, onClick: (FileInfo) -> Unit, isEmbed: Boolean, refBlock: MarkdownComponent) {
     val content = topicInfo.content
     if (content is TopicContent.DecryptFailed) {
         Box(
             modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
         ) {
             Text(content.message)
         }
@@ -38,30 +37,33 @@ fun TopicContentView(
     if (content is TopicContent.Encrypted) {
         Box(
             modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
         ) {
             Text(CoreStrings.permission_denied())
         }
         return
     }
-    val (plain, fileInfos) = when (content) {
-        is TopicContent.Plain -> content.plain to content.fileInfos
-
-        is TopicContent.Extracted -> content.plain to content.fileInfos
-
-        else -> return
-    }
-    val mediaMap = remember(fileInfos.toImmutableList()) {
-        fileInfos.toImmutableList().associateBy { it.name }.toImmutableMap()
-    }
-    val imageTransformer = remember(mediaMap) {
-        CustomCoil3ImageTransformerImpl(mediaMap, onClick)
-    }
-    val dimensionMap = remember(mediaMap) {
-        mediaMap.mapValues { it.value.dimension }.toImmutableMap()
-    }
+    val (plain, fileInfos) =
+        when (content) {
+            is TopicContent.Plain -> content.plain to content.fileInfos
+            is TopicContent.Extracted -> content.plain to content.fileInfos
+            else -> return
+        }
+    val mediaMap =
+        remember(fileInfos.toImmutableList()) {
+            fileInfos.toImmutableList().associateBy { it.name }.toImmutableMap()
+        }
+    val imageTransformer =
+        remember(mediaMap) {
+            CustomCoil3ImageTransformerImpl(mediaMap, onClick)
+        }
+    val dimensionMap =
+        remember(mediaMap) {
+            mediaMap.mapValues { it.value.dimension }.toImmutableMap()
+        }
     Box(
-        modifier = Modifier.appiumSemantics(
+        modifier =
+        Modifier.appiumSemantics(
             text = plain.lineSequence().firstOrNull { it.isNotBlank() }?.trim(),
         ),
     ) {

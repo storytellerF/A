@@ -1,6 +1,17 @@
-import com.storyteller_f.shared.*
+/*
+ * This is a private project. All rights reserved.
+*/
+
+package com.storyteller_f.a.cloud.cli
+
+import com.storyteller_f.shared.CryptoJvm
+import com.storyteller_f.shared.decryptMessage
+import com.storyteller_f.shared.encryptDataByAES
+import com.storyteller_f.shared.getAlgo
+import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.obj.PresetValue
+import com.storyteller_f.shared.replaceCrlf
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import java.io.File
@@ -17,9 +28,10 @@ class SignatureTest {
         if (!jsonFile.exists()) return
         loadCryptoLibIfNeed()
 
-        val presetValue = Json {
-            ignoreUnknownKeys = true
-        }.decodeFromString<PresetValue>(jsonFile.readText())
+        val presetValue =
+            Json {
+                ignoreUnknownKeys = true
+            }.decodeFromString<PresetValue>(jsonFile.readText())
         runTest {
             val data = "hello"
             presetValue.userData!!.forEach {
@@ -42,9 +54,10 @@ class SignatureTest {
         if (!jsonFile.exists()) return
         loadCryptoLibIfNeed()
 
-        val presetValue = Json {
-            ignoreUnknownKeys = true
-        }.decodeFromString<PresetValue>(jsonFile.readText())
+        val presetValue =
+            Json {
+                ignoreUnknownKeys = true
+            }.decodeFromString<PresetValue>(jsonFile.readText())
         runTest {
             val data = "hello"
             presetValue.userData!!.forEach {

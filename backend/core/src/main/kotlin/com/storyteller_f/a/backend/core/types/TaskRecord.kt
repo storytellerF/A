@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.core.types
 
 import com.storyteller_f.shared.model.TaskRecordInfo
@@ -5,7 +9,7 @@ import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.datetime.LocalDateTime
 
-class TaskRecord(
+data class TaskRecord(
     /** Unique identifier of this task execution. */
     val id: PrimaryKey,
     /** Time when this task execution was recorded. */

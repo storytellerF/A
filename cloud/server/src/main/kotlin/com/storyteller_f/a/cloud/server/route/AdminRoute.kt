@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.server.route
 
 import com.storyteller_f.a.api.AdminApi

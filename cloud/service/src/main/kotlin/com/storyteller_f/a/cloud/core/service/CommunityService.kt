@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.core.service
 
 import com.perraco.utils.SnowflakeFactory
@@ -40,6 +44,7 @@ import com.storyteller_f.shared.type.MemberStatus
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.UNIT_RESULT
+import com.storyteller_f.shared.utils.cancellableRunCatching
 import com.storyteller_f.shared.utils.errorIfFalse
 import com.storyteller_f.shared.utils.firstOrNull
 import com.storyteller_f.shared.utils.ifNotNull
@@ -50,68 +55,65 @@ import com.storyteller_f.shared.utils.now
 import com.storyteller_f.shared.utils.recoverIfDup
 import io.github.aakira.napier.Napier
 
-suspend fun Backend.getCommunity(
-    objectFetch: ObjectFetch,
-    id: PrimaryKey?,
-    fillJoinInfo: Boolean?
-) = database.community.getRawCommunity(objectFetch, fillJoinInfo, id).mapResultIfNotNull {
-    processRawCommunityToCommunityInfo(listOf(it)).mapIfNotNull(List<CommunityInfo>::first)
-}
+suspend fun Backend.getCommunity(objectFetch: ObjectFetch, id: PrimaryKey?, fillJoinInfo: Boolean?) =
+    database.community.getRawCommunity(objectFetch, fillJoinInfo, id).mapResultIfNotNull {
+        processRawCommunityToCommunityInfo(listOf(it)).mapIfNotNull(List<CommunityInfo>::first)
+    }
 
-suspend fun Backend.joinCommunity(
-    uid: PrimaryKey,
-    communityId: PrimaryKey
-) = getCommunity(ObjectFetch.IdFetch(communityId), uid, true).mapResultIfNotNull { community ->
-    val joinedMember = community.member?.takeIf { it.status == MemberStatus.JOINED }
-    if (joinedMember != null) {
-        Result.success(community)
-    } else {
-        if (community.memberPolicy == MemberPolicy.INVITE_ONLY) {
-            getJoinTitleByScope(uid, communityId)
+suspend fun Backend.joinCommunity(uid: PrimaryKey, communityId: PrimaryKey) =
+    getCommunity(ObjectFetch.IdFetch(communityId), uid, true).mapResultIfNotNull { community ->
+        val joinedMember = community.member?.takeIf { it.status == MemberStatus.JOINED }
+        if (joinedMember != null) {
+            Result.success(community)
         } else {
-            UNIT_RESULT
-        }.mapResult {
-            database.container.getMember(communityId, uid).mapResult { member ->
-                joinCommunity(uid, communityId, community, member)
+            if (community.memberPolicy == MemberPolicy.INVITE_ONLY) {
+                getJoinTitleByScope(uid, communityId)
+            } else {
+                UNIT_RESULT
+            }.mapResult {
+                database.container.getMember(communityId, uid).mapResult { member ->
+                    joinCommunity(uid, communityId, community, member)
+                }
             }
         }
     }
-}
 
 private suspend fun Backend.joinCommunity(
     uid: PrimaryKey,
     communityId: PrimaryKey,
     communityInfo: CommunityInfo,
-    currentMember: Member?
+    currentMember: Member?,
 ): Result<CommunityInfo?> {
     val time = now()
-    val member = if (currentMember == null) {
-        Member(
-            SnowflakeFactory.nextId(),
-            uid,
-            communityId,
-            ObjectType.COMMUNITY,
-            time,
-            MemberStatus.JOINED,
-            time
-        )
-    } else {
-        Member(
-            currentMember.id,
-            currentMember.uid,
-            currentMember.objectId,
-            currentMember.objectType,
-            time,
-            MemberStatus.JOINED,
-            time,
-            currentMember.invitedTime
-        )
-    }
-    val joinResult = if (currentMember == null) {
-        database.container.addMember(member)
-    } else {
-        database.container.updateMemberStatus(member)
-    }
+    val member =
+        if (currentMember == null) {
+            Member(
+                SnowflakeFactory.nextId(),
+                uid,
+                communityId,
+                ObjectType.COMMUNITY,
+                time,
+                MemberStatus.JOINED,
+                time,
+            )
+        } else {
+            Member(
+                currentMember.id,
+                currentMember.uid,
+                currentMember.objectId,
+                currentMember.objectType,
+                time,
+                MemberStatus.JOINED,
+                time,
+                currentMember.invitedTime,
+            )
+        }
+    val joinResult =
+        if (currentMember == null) {
+            database.container.addMember(member)
+        } else {
+            database.container.updateMemberStatus(member)
+        }
     return joinResult.onSuccess {
         addUserLog(uid, UserLogType.JOIN, communityId ob ObjectType.COMMUNITY)
         saveMemberDocument(uid, member.id, communityId, communityInfo.name)
@@ -122,60 +124,61 @@ private suspend fun Backend.joinCommunity(
     }
 }
 
-suspend fun Backend.exitCommunity(
-    communityId: PrimaryKey,
-    id: PrimaryKey
-) = getCommunity(ObjectFetch.IdFetch(communityId), id, true).mapResultIfNotNull { info ->
-    if (info.member == null) {
-        Result.success(info)
-    } else {
-        database.container.deleteMember(communityId, id).onSuccess {
-            addUserLog(id, UserLogType.EXIT, communityId ob ObjectType.COMMUNITY)
-            // 从 MemberSearchService 删除
-            memberSearchService.deleteDocument(id, communityId).onFailure { e ->
-                Napier.e(e) {
-                    "delete member document failed"
+suspend fun Backend.exitCommunity(communityId: PrimaryKey, id: PrimaryKey) =
+    getCommunity(ObjectFetch.IdFetch(communityId), id, true).mapResultIfNotNull { info ->
+        if (info.member == null) {
+            Result.success(info)
+        } else {
+            database.container.deleteMember(communityId, id).onSuccess {
+                addUserLog(id, UserLogType.EXIT, communityId ob ObjectType.COMMUNITY)
+                // 从 MemberSearchService 删除
+                memberSearchService.deleteDocument(id, communityId).onFailure { e ->
+                    Napier.e(e) {
+                        "delete member document failed"
+                    }
                 }
+            }.mapResult {
+                Result.success(info.copy(member = null))
             }
-        }.mapResult {
-            Result.success(info.copy(member = null))
         }
     }
-}
 
 suspend fun Backend.searchCommunities(
     uid: PrimaryKey?,
     search: CustomApi.Communities.CommunitySearchQuery,
-    primaryKeyFetch: OffsetFetch
+    primaryKeyFetch: OffsetFetch,
 ): Result<PaginationResult<CommunityInfo>?> {
     val word = search.word.trim()
     if (word.isBlank()) {
         return Result.success(null)
     }
-    val joinSearch = if (search.target != null) {
-        JoinStatusSearch.JOINED.toJoinSearch(search.target)
-    } else {
-        search.joinStatus.toJoinSearch(uid)
-    }
-    return when {
-        // word 不为空 && 搜索已加入的社区，使用 memberSearchService
-        joinSearch is JoinSearch.Joined -> {
-            memberSearchService.searchDocument(
-                MemberDocumentSearch.CommunityMembers(uid = joinSearch.uid, objectName = word, fetch = primaryKeyFetch)
-            ).mapPagingResultNotNull { searchResults ->
-                val communityIds = searchResults
-                    .map { it.objectId }
-                database.community.getRawCommunities(ObjectListFetch.IdListFetch(communityIds))
-            }
+    val joinSearch =
+        if (search.target != null) {
+            JoinStatusSearch.JOINED.toJoinSearch(search.target)
+        } else {
+            search.joinStatus.toJoinSearch(uid)
         }
+    // word 不为空 && 搜索已加入的社区，使用 memberSearchService
+    return if (joinSearch is JoinSearch.Joined) {
+        memberSearchService.searchDocument(
+            MemberDocumentSearch.CommunityMembers(uid = joinSearch.uid, objectName = word, fetch = primaryKeyFetch),
+        ).mapPagingResultNotNull { searchResults ->
+            val communityIds =
+                searchResults
+                    .map { it.objectId }
+            database.community.getRawCommunities(ObjectListFetch.IdListFetch(communityIds))
+        }
+    } else {
         // word 不为空 && 不是搜索已加入（Unspecified），使用 communitySearchService
-        else -> communitySearchService.searchDocument(
-            CommunityDocumentSearch.Keyword(word, fetch = primaryKeyFetch)
+        communitySearchService.searchDocument(
+            CommunityDocumentSearch.Keyword(word, fetch = primaryKeyFetch),
         ).mapPagingResultNotNull { list ->
             database.community.getRawCommunities(
-                ObjectListFetch.IdListFetch(list.map {
-                    it.id
-                })
+                ObjectListFetch.IdListFetch(
+                    list.map {
+                        it.id
+                    },
+                ),
             )
         }
     }.mapPagingResultIfNotNullNullable { communities ->
@@ -186,17 +189,18 @@ suspend fun Backend.searchCommunities(
 suspend fun Backend.searchUserJoinedCommunities(
     uid: PrimaryKey,
     search: CustomApi.Users.JoinedCommunities.UserCommunitiesSearchQuery,
-    primaryKeyFetch: OffsetFetch
+    primaryKeyFetch: OffsetFetch,
 ): Result<PaginationResult<CommunityInfo>?> {
     val word = search.word.trim()
     if (word.isBlank()) {
         return Result.success(null)
     }
     return memberSearchService.searchDocument(
-        MemberDocumentSearch.CommunityMembers(uid = uid, objectName = word, fetch = primaryKeyFetch)
+        MemberDocumentSearch.CommunityMembers(uid = uid, objectName = word, fetch = primaryKeyFetch),
     ).mapPagingResultNotNull { searchResults ->
-        val communityIds = searchResults
-            .map { it.objectId }
+        val communityIds =
+            searchResults
+                .map { it.objectId }
         database.community.getRawCommunities(ObjectListFetch.IdListFetch(communityIds))
     }.mapPagingResultIfNotNullNullable { communities ->
         processCommunities(communities, uid, null)
@@ -206,24 +210,31 @@ suspend fun Backend.searchUserJoinedCommunities(
 private suspend fun Backend.processCommunities(
     communities: List<RawCommunity>,
     uid: PrimaryKey?,
-    target: PrimaryKey?
-): Result<List<CommunityInfo>?> = processRawCommunityToCommunityInfo(communities).mapResultIfNotNull { value ->
+    target: PrimaryKey?,
+): Result<List<CommunityInfo>?> =
+    processRawCommunityToCommunityInfo(communities).mapResultIfNotNull { value ->
     when {
         target == null -> Result.success(value)
+
         uid != null -> processUserJoinedTimeReplace(value, uid)
-        else -> Result.success(value.map {
-            it.copy(member = null, extension = CommunityInfo.Extension(it.member))
-        })
+
+        else ->
+            Result.success(
+                value.map {
+                    it.copy(member = null, extension = CommunityInfo.Extension(it.member))
+                },
+            )
     }
 }
 
 private suspend fun Backend.processUserJoinedTimeReplace(
     communityInfos: List<CommunityInfo>,
-    uid: PrimaryKey
+    uid: PrimaryKey,
 ): Result<List<CommunityInfo>> {
-    val communityIds = communityInfos.map {
-        it.id
-    }
+    val communityIds =
+        communityInfos.map {
+            it.id
+        }
     return database.container.getMemberByIds(uid, communityIds).map { joinedTimeList ->
         val map = joinedTimeList.associate { it }
         communityInfos.map {
@@ -232,17 +243,15 @@ private suspend fun Backend.processUserJoinedTimeReplace(
     }
 }
 
-suspend fun Backend.createCommunity(
-    newCommunity: NewCommunity,
-    uid: PrimaryKey
-): Result<CommunityInfo?> {
-    return runCatching {
-        checkAid(newCommunity.aid).getOrThrow()
-        checkCommunityName(newCommunity).getOrThrow()
-    }.mapResult {
-        val id = SnowflakeFactory.nextId()
-        val memberId = SnowflakeFactory.nextId()
-        val community = Community(
+suspend fun Backend.createCommunity(newCommunity: NewCommunity, uid: PrimaryKey): Result<CommunityInfo?> =
+    runCatching {
+    checkAid(newCommunity.aid).getOrThrow()
+    checkCommunityName(newCommunity).getOrThrow()
+}.mapResult {
+    val id = SnowflakeFactory.nextId()
+    val memberId = SnowflakeFactory.nextId()
+    val community =
+        Community(
             id,
             now(),
             newCommunity.aid,
@@ -250,34 +259,28 @@ suspend fun Backend.createCommunity(
             uid,
             newCommunity.memberPolicy,
             newCommunity.icon,
-            null
+            null,
         )
-        database.community.createCommunity(community, memberId).onSuccess {
-            communitySearchService.saveDocument(listOf(CommunityDocument.fromCommunity(community)))
-                .onFailure {
-                    Napier.e(it) {
-                        "save community document failed"
-                    }
+    database.community.createCommunity(community, memberId).onSuccess {
+        communitySearchService.saveDocument(listOf(CommunityDocument.fromCommunity(community)))
+            .onFailure {
+                Napier.e(it) {
+                    "save community document failed"
                 }
-            addUserLog(uid, UserLogType.CREATE, community.id ob ObjectType.COMMUNITY)
-            // 保存创建者到 MemberSearchService
-            saveMemberDocument(uid, memberId, id, newCommunity.name)
-        }
-    }.mapResult { (community, member) ->
-        val rawCommunity = RawCommunity(community, member, null, 0)
-        processRawCommunityToCommunityInfo(listOf(rawCommunity))
-    }.firstOrNull()
-}
+            }
+        addUserLog(uid, UserLogType.CREATE, community.id ob ObjectType.COMMUNITY)
+        // 保存创建者到 MemberSearchService
+        saveMemberDocument(uid, memberId, id, newCommunity.name)
+    }
+}.mapResult { (community, member) ->
+    val rawCommunity = RawCommunity(community, member, null, 0)
+    processRawCommunityToCommunityInfo(listOf(rawCommunity))
+}.firstOrNull()
 
-private suspend fun Backend.saveMemberDocument(
-    uid: PrimaryKey,
-    memberId: PrimaryKey,
-    id: PrimaryKey,
-    name: String
-) {
+private suspend fun Backend.saveMemberDocument(uid: PrimaryKey, memberId: PrimaryKey, id: PrimaryKey, name: String) {
     getUserInfo(ObjectFetch.IdFetch(uid)).ifNotNull { userInfo ->
         memberSearchService.saveDocument(
-            listOf(MemberDocument.fromUserInfo(memberId, userInfo, id, ObjectType.COMMUNITY, name))
+            listOf(MemberDocument.fromUserInfo(memberId, userInfo, id, ObjectType.COMMUNITY, name)),
         ).onFailure { e ->
             Napier.e(e) {
                 "save member document failed"
@@ -286,33 +289,37 @@ private suspend fun Backend.saveMemberDocument(
     }
 }
 
-private fun checkCommunityName(newCommunity: NewCommunity): Result<Unit> {
-    return when (checkNickname(newCommunity.name, 1..COMMUNITY_NAME_LENGTH)) {
-        StringCheckResult.RANGE_MISMATCH -> Result.failure(
-            CustomBadRequestException("community name must be between in 1 and $COMMUNITY_NAME_LENGTH")
+private fun checkCommunityName(newCommunity: NewCommunity): Result<Unit> =
+    when (
+    checkNickname(
+        newCommunity.name,
+        1..COMMUNITY_NAME_LENGTH,
+    )
+) {
+    StringCheckResult.RANGE_MISMATCH ->
+        Result.failure(
+            CustomBadRequestException("community name must be between in 1 and $COMMUNITY_NAME_LENGTH"),
         )
 
-        StringCheckResult.CONTAIN_INVALID_CHAR -> Result.failure(
-            CustomBadRequestException("community name must be visible")
+    StringCheckResult.CONTAIN_INVALID_CHAR ->
+        Result.failure(
+            CustomBadRequestException("community name must be visible"),
         )
 
-        StringCheckResult.SUCCESS -> Result.success(Unit)
+    StringCheckResult.SUCCESS -> Result.success(Unit)
 
-        else -> Result.failure(CustomBadRequestException("name must be set"))
-    }
+    StringCheckResult.NULL, StringCheckResult.EMPTY ->
+        Result.failure(CustomBadRequestException("name must be set"))
 }
 
-suspend fun Backend.updateCommunity(
-    id: PrimaryKey,
-    old: UpdateCommunityBody,
-    uid: PrimaryKey
-): Result<CommunityInfo?> {
-    val newCommunity = old.copy(
-        name = old.name?.trim(),
-        icon = old.icon,
-        poster = old.poster,
-        fontSettings = old.fontSettings,
-    )
+suspend fun Backend.updateCommunity(id: PrimaryKey, old: UpdateCommunityBody, uid: PrimaryKey): Result<CommunityInfo?> {
+    val newCommunity =
+        old.copy(
+            name = old.name?.trim(),
+            icon = old.icon,
+            poster = old.poster,
+            fontSettings = old.fontSettings,
+        )
     return checkCommunityAdminPermission(id, uid).mapResultIfNotNull {
         checkBeforeUpdateCommunity(newCommunity)
     }.mapResultIfNotNull {
@@ -328,10 +335,8 @@ suspend fun Backend.updateCommunity(
     }.firstOrNull()
 }
 
-private suspend fun Backend.checkBeforeUpdateCommunity(
-    newCommunity: UpdateCommunityBody,
-): Result<Unit> {
-    runCatching {
+private suspend fun Backend.checkBeforeUpdateCommunity(newCommunity: UpdateCommunityBody): Result<Unit> {
+    cancellableRunCatching {
         checkCommunityNameForUpdate(newCommunity).getOrThrow()
         checkCommunityIconForUpdate(newCommunity).getOrThrow()
         checkCommunityPosterForUpdate(newCommunity).getOrThrow()
@@ -344,11 +349,12 @@ private suspend fun Backend.checkBeforeUpdateCommunity(
 
 private suspend fun Backend.checkCommunityFontSettingsForUpdate(newCommunity: UpdateCommunityBody): Result<Unit> {
     val fontSettings = newCommunity.fontSettings ?: return UNIT_RESULT
-    val fontIds = listOfNotNull(
-        fontSettings.contentFontId,
-        fontSettings.codeFontId,
-        fontSettings.fallbackFontId,
-    )
+    val fontIds =
+        listOfNotNull(
+            fontSettings.contentFontId,
+            fontSettings.codeFontId,
+            fontSettings.fallbackFontId,
+        )
     if (fontIds.isEmpty()) return UNIT_RESULT
     return database.file.getFileRecordByIds(fontIds).mapResult { files ->
         val foundIds = files.map { it.id }.toSet()
@@ -356,9 +362,10 @@ private suspend fun Backend.checkCommunityFontSettingsForUpdate(newCommunity: Up
         if (missingId != null) {
             Result.failure<Unit>(CustomBadRequestException("font file not found: $missingId"))
         } else {
-            val invalidFile = files.firstOrNull {
-                !it.contentType.startsWith("font/") && !it.contentType.startsWith("application/font-")
-            }
+            val invalidFile =
+                files.firstOrNull {
+                    !it.contentType.startsWith("font/") && !it.contentType.startsWith("application/font-")
+                }
             if (invalidFile != null) {
                 Result.failure<Unit>(CustomBadRequestException("invalid font content type: ${invalidFile.contentType}"))
             } else {
@@ -373,10 +380,8 @@ private suspend fun Backend.checkCommunityPosterForUpdate(newCommunity: UpdateCo
         when (checkResult) {
             MediaCheckResult.NOT_FOUND -> Result.failure(CustomBadRequestException("poster not found"))
             MediaCheckResult.CONTENT_TYPE_MISMATCH -> Result.failure(CustomBadRequestException("only support image"))
-
             MediaCheckResult.DIMENSION_MISMATCH -> Result.failure(CustomBadRequestException("dimension mismatch"))
-
-            else -> UNIT_RESULT
+            MediaCheckResult.EMPTY, MediaCheckResult.SUCCESS, null -> UNIT_RESULT
         }
     }
 
@@ -385,46 +390,47 @@ private suspend fun Backend.checkCommunityIconForUpdate(newCommunity: UpdateComm
         when (checkResult) {
             MediaCheckResult.NOT_FOUND -> Result.failure(CustomBadRequestException("icon not found"))
             MediaCheckResult.CONTENT_TYPE_MISMATCH -> Result.failure(CustomBadRequestException("only support image"))
-
             MediaCheckResult.DIMENSION_MISMATCH -> Result.failure(CustomBadRequestException("dimension mismatch"))
-
-            else -> UNIT_RESULT
+            MediaCheckResult.EMPTY, MediaCheckResult.SUCCESS, null -> UNIT_RESULT
         }
     }
 
 private fun checkCommunityNameForUpdate(newCommunity: UpdateCommunityBody): Result<Unit> =
     when (checkNickname(newCommunity.name, 1..COMMUNITY_NAME_LENGTH)) {
-        StringCheckResult.RANGE_MISMATCH -> Result.failure(
-            CustomBadRequestException("community name must be between in 1 and 20")
-        )
+        StringCheckResult.RANGE_MISMATCH ->
+            Result.failure(
+                CustomBadRequestException("community name must be between in 1 and 20"),
+            )
 
-        StringCheckResult.CONTAIN_INVALID_CHAR -> Result.failure(
-            CustomBadRequestException("community name must be visible")
-        )
+        StringCheckResult.CONTAIN_INVALID_CHAR ->
+            Result.failure(
+                CustomBadRequestException("community name must be visible"),
+            )
 
-        else -> UNIT_RESULT
+        StringCheckResult.NULL, StringCheckResult.EMPTY, StringCheckResult.SUCCESS -> UNIT_RESULT
     }
 
-suspend fun Backend.processRawCommunityToCommunityInfo(
-    list: List<RawCommunity>,
-): Result<List<CommunityInfo>?> {
-    return database.file.getFileRecordByIds(list.flatMap { (community) ->
-        community.fontSettings?.let { fs ->
-            listOfNotNull(fs.contentFontId, fs.codeFontId, fs.fallbackFontId)
-        }.orEmpty() + listOf(community.iconId, community.posterId)
-    }.filterNotNull()).mapResultIfNotNull { medias ->
+suspend fun Backend.processRawCommunityToCommunityInfo(list: List<RawCommunity>): Result<List<CommunityInfo>?> =
+    database.file.getFileRecordByIds(
+        list.flatMap { (community) ->
+            community.fontSettings?.let { fs ->
+                listOfNotNull(fs.contentFontId, fs.codeFontId, fs.fallbackFontId)
+            }.orEmpty() + listOf(community.iconId, community.posterId)
+        }.filterNotNull(),
+    ).mapResultIfNotNull { medias ->
         processFileRecordToFileInfo(medias).map { mediaList ->
             val map = mediaList.associateBy { it.id }
             list.map { rawResult ->
                 val fs = rawResult.community.fontSettings
-                val fontSettingsWithInfo = fs?.let {
-                    FontSettingsWithInfo(
-                        settings = it,
-                        contentFont = it.contentFontId?.let { id -> map[id] },
-                        codeFont = it.codeFontId?.let { id -> map[id] },
-                        fallbackFont = it.fallbackFontId?.let { id -> map[id] },
-                    )
-                }
+                val fontSettingsWithInfo =
+                    fs?.let {
+                        FontSettingsWithInfo(
+                            settings = it,
+                            contentFont = it.contentFontId?.let { id -> map[id] },
+                            codeFont = it.codeFontId?.let { id -> map[id] },
+                            fallbackFont = it.fallbackFontId?.let { id -> map[id] },
+                        )
+                    }
                 rawResult.toCommunityIfo(
                     rawResult.community.iconId?.let { map[it] },
                     rawResult.community.posterId?.let { map[it] },
@@ -433,7 +439,6 @@ suspend fun Backend.processRawCommunityToCommunityInfo(
             }
         }
     }
-}
 
 fun JoinStatusSearch?.toJoinSearch(uid: PrimaryKey?): JoinSearch {
     if (this != JoinStatusSearch.JOINED) return JoinSearch.Unspecified(uid)
@@ -445,7 +450,7 @@ suspend fun Backend.getAllCommunities(primaryKeyFetch: PrimaryKeyFetch) =
     database.community.getCommunityPaginationResult(
         hasPosterSearch = PosterSearch.UNSPECIFIED,
         primaryKeyFetch = primaryKeyFetch,
-        joinSearch = JoinSearch.Unspecified(null)
+        joinSearch = JoinSearch.Unspecified(null),
     ).mapResultIfNotNull { (list, total) ->
         processRawCommunityToCommunityInfo(list).paging(total)
     }
@@ -455,31 +460,28 @@ suspend fun Backend.getUserJoinedCommunities(
     target: PrimaryKey,
     primaryKeyFetch: PrimaryKeyFetch,
     hasPosterSearch: PosterSearch? = null,
-): Result<PaginationResult<CommunityInfo>?> {
-    return database.community.getCommunityPaginationResult(
-        hasPosterSearch = hasPosterSearch ?: PosterSearch.UNSPECIFIED,
-        primaryKeyFetch = primaryKeyFetch,
-        joinSearch = JoinSearch.Joined(target)
-    ).mapPagingResultIfNotNullNullable {
-        processCommunities(it, uid, target)
-    }
+): Result<PaginationResult<CommunityInfo>?> =
+    database.community.getCommunityPaginationResult(
+    hasPosterSearch = hasPosterSearch ?: PosterSearch.UNSPECIFIED,
+    primaryKeyFetch = primaryKeyFetch,
+    joinSearch = JoinSearch.Joined(target),
+).mapPagingResultIfNotNullNullable {
+    processCommunities(it, uid, target)
 }
 
 suspend fun Backend.getCommunityMemberInfos(
     communityId: PrimaryKey,
-    primaryKeyFetch: PrimaryKeyFetch
+    primaryKeyFetch: PrimaryKeyFetch,
 ): Result<PaginationResult<MemberInfo>> = getContainerMemberInfos(communityId, primaryKeyFetch)
 
-suspend fun Backend.getContainerMemberInfos(
-    objectId: PrimaryKey,
-    primaryKeyFetch: PrimaryKeyFetch
-) = database.container.getMemberWithUserPaginationResult(objectId, primaryKeyFetch)
-    .mapPagingResultNotNull { list ->
-        val rawUsers = list.map { it.second }
-        processRawUserToUserInfo(rawUsers).map { users ->
-            val userMap = users.associateBy { it.id }
-            list.map { (member, rawUser) ->
-                member.toMemberInfo(userMap[rawUser.user.id]!!)
+suspend fun Backend.getContainerMemberInfos(objectId: PrimaryKey, primaryKeyFetch: PrimaryKeyFetch) =
+    database.container.getMemberWithUserPaginationResult(objectId, primaryKeyFetch)
+        .mapPagingResultNotNull { list ->
+            val rawUsers = list.map { it.second }
+            processRawUserToUserInfo(rawUsers).map { users ->
+                val userMap = users.associateBy { it.id }
+                list.map { (member, rawUser) ->
+                    member.toMemberInfo(userMap.getValue(rawUser.user.id))
+                }
             }
         }
-    }

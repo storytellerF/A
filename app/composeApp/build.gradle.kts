@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 @file:OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
 
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.BOOLEAN
@@ -75,7 +79,7 @@ kotlin {
         listOf(
             iosX64(),
             iosArm64(),
-            iosSimulatorArm64()
+            iosSimulatorArm64(),
         ).forEach { iosTarget ->
             iosTarget.binaries.framework {
                 baseName = "ComposeApp"
@@ -95,9 +99,10 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     sourceSets {
-        val headlessTest = create("headlessTest") {
-            dependsOn(commonTest.get())
-        }
+        val headlessTest =
+            create("headlessTest") {
+                dependsOn(commonTest.get())
+            }
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)
 
@@ -229,27 +234,31 @@ composeCompiler {
     metricsDestination = layout.buildDirectory.dir("compose_compiler")
     stabilityConfigurationFiles.addAll(rootProject.layout.projectDirectory.file("stability_config.conf"))
 }
-val properties = Properties().apply {
-    val file = layout.projectDirectory.file("../../deploy/$flavorStr.env").asFile
-    if (file.exists()) {
-        FileInputStream(file).use {
-            load(it)
+val properties =
+    Properties().apply {
+        val file = layout.projectDirectory.file("../../deploy/$flavorStr.env").asFile
+        if (file.exists()) {
+            FileInputStream(file).use {
+                load(it)
+            }
         }
     }
-}
-val serverUrl = providers.gradleProperty("app.server.url").orNull
-    ?: properties["SERVER_URL"] as? String
-val wsServerUrl = providers.gradleProperty("app.ws.server.url").orNull
-    ?: properties["WS_SERVER_URL"] as? String
-val deepLinkHost = serverUrl?.let {
-    URI.create(it).host
-} ?: "storyteller_f.com"
+val serverUrl =
+    providers.gradleProperty("app.server.url").orNull
+        ?: properties["SERVER_URL"] as? String
+val wsServerUrl =
+    providers.gradleProperty("app.ws.server.url").orNull
+        ?: properties["WS_SERVER_URL"] as? String
+val deepLinkHost =
+    serverUrl?.let {
+        URI.create(it).host
+    } ?: "storyteller_f.com"
 
 buildkonfig {
     packageName = "com.storyteller_f.a.app"
     objectName = "AppConfig"
 
-    val isDebug = (properties["app.DEBUG"] as? String) ?: "false"
+    val isDebug = properties["app.DEBUG"] as? String ?: "false"
     defaultConfigs {
         buildConfigField(STRING, "SERVER_URL", serverUrl ?: "", const = true)
         buildConfigField(STRING, "WS_SERVER_URL", wsServerUrl ?: "", const = true)
@@ -330,14 +339,15 @@ aboutLibraries {
             "MIT",
             "BSD-3-Clause",
             "The BSD License",
-            "The 3-Clause BSD License"
+            "The 3-Clause BSD License",
         )
 
         // Allowed set of licenses for specific dependencies, this project will be able to use without build failure
-        allowedLicensesMap = mapOf(
-            "asdkl" to listOf("androidx.jetpack.library"),
-            "NOASSERTION" to listOf("org.jetbrains.kotlinx"),
-        )
+        allowedLicensesMap =
+            mapOf(
+                "asdkl" to listOf("androidx.jetpack.library"),
+                "NOASSERTION" to listOf("org.jetbrains.kotlinx"),
+            )
 
         // Full license text for license IDs mentioned here will be included, even if no detected dependency uses them.
         // additionalLicenses.addAll("mit", "mpl_2_0")
@@ -385,19 +395,22 @@ rootProject.plugins.withType<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlu
 
 private fun KotlinDependencyHandler.implementation(
     dependencyNotation: Provider<MinimalExternalModuleDependency>,
-    configure: ExternalModuleDependency.() -> Unit
+    configure: ExternalModuleDependency.() -> Unit,
 ) {
     implementation(dependencyNotation.get().toString(), configure)
 }
 
 // Should be run at least once before running the app
-val downloadFonts = tasks.register<DownloadFont>("downloadFonts") {
-    sourceUrl.set(
-        "https://github.com/google/material-design-icons/raw/master/variablefont/" +
-            "MaterialSymbolsOutlined%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf"
-    )
-    outputFile.set(layout.projectDirectory.file("src/commonMain/composeResources/font/material_symbols_outlined.ttf"))
-}
+val downloadFonts =
+    tasks.register<DownloadFont>("downloadFonts") {
+        sourceUrl.set(
+            "https://github.com/google/material-design-icons/raw/master/variablefont/" +
+                "MaterialSymbolsOutlined%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf",
+        )
+        outputFile.set(
+            layout.projectDirectory.file("src/commonMain/composeResources/font/material_symbols_outlined.ttf"),
+        )
+    }
 
 tasks.named("copyNonXmlValueResourcesForCommonMain") {
     dependsOn(downloadFonts)

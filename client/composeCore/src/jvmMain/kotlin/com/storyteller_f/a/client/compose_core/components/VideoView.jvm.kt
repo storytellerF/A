@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.components
 
 import androidx.compose.foundation.layout.Box
@@ -66,16 +70,17 @@ fun VideoPlayer(mediaPlayerComponent: Component) {
         factory = {
             mediaPlayerComponent
         },
-        modifier = Modifier.aspectRatio(16f / 9)
+        modifier = Modifier.aspectRatio(16f / 9),
     ) {
     }
 }
 
 @Composable
 fun VideoPlayerInternal(block: @Composable (Component, VideoMediaPlayerState) -> Unit) {
-    val mediaPlayerComponent = remember {
-        initializeMediaPlayerComponent()
-    }
+    val mediaPlayerComponent =
+        remember {
+            initializeMediaPlayerComponent()
+        }
     DisposableEffect(mediaPlayerComponent) {
         onDispose {
             mediaPlayerComponent.release()
@@ -85,10 +90,7 @@ fun VideoPlayerInternal(block: @Composable (Component, VideoMediaPlayerState) ->
     block(mediaPlayerComponent, mediaPlayerState)
 }
 
-data class VideoMediaPlayerState(
-    val currentLoading: Boolean,
-    val currentIsPlaying: Boolean,
-)
+data class VideoMediaPlayerState(val currentLoading: Boolean, val currentIsPlaying: Boolean)
 
 @Composable
 fun rememberMediaPlayerState(mediaPlayerComponent: Component): State<VideoMediaPlayerState> {
@@ -99,26 +101,27 @@ fun rememberMediaPlayerState(mediaPlayerComponent: Component): State<VideoMediaP
         mutableStateOf(false)
     }
     DisposableEffect(mediaPlayerComponent) {
-        val listener = object : MediaPlayerEventAdapter() {
-            override fun playing(mediaPlayer: MediaPlayer?) {
-                super.playing(mediaPlayer)
-                isPlaying = true
-            }
+        val listener =
+            object : MediaPlayerEventAdapter() {
+                override fun playing(mediaPlayer: MediaPlayer?) {
+                    super.playing(mediaPlayer)
+                    isPlaying = true
+                }
 
-            override fun paused(mediaPlayer: MediaPlayer?) {
-                super.paused(mediaPlayer)
-                isPlaying = false
-            }
+                override fun paused(mediaPlayer: MediaPlayer?) {
+                    super.paused(mediaPlayer)
+                    isPlaying = false
+                }
 
-            override fun error(mediaPlayer: MediaPlayer?) {
-                super.error(mediaPlayer)
-                isBuffering = false
-            }
+                override fun error(mediaPlayer: MediaPlayer?) {
+                    super.error(mediaPlayer)
+                    isBuffering = false
+                }
 
-            override fun buffering(mediaPlayer: MediaPlayer?, newCache: Float) {
-                super.buffering(mediaPlayer, newCache)
+                override fun buffering(mediaPlayer: MediaPlayer?, newCache: Float) {
+                    super.buffering(mediaPlayer, newCache)
+                }
             }
-        }
         mediaPlayerComponent.mediaPlayer().events().addMediaPlayerEventListener(listener)
         onDispose {
             mediaPlayerComponent.mediaPlayer().events().removeMediaPlayerEventListener(listener)
@@ -133,11 +136,12 @@ fun rememberMediaPlayerState(mediaPlayerComponent: Component): State<VideoMediaP
 
 fun initializeMediaPlayerComponent(): Component {
     NativeDiscovery().discover()
-    val component: Component = if (isMacOS()) {
-        CallbackMediaPlayerComponent()
-    } else {
-        EmbeddedMediaPlayerComponent()
-    }
+    val component: Component =
+        if (isMacOS()) {
+            CallbackMediaPlayerComponent()
+        } else {
+            EmbeddedMediaPlayerComponent()
+        }
     return component
 }
 
@@ -146,7 +150,8 @@ fun initializeMediaPlayerComponent(): Component {
  * The method names are the same, but they don't share the same parent/interface.
  * That's why we need this method.
  */
-fun Component.mediaPlayer(): EmbeddedMediaPlayer = when (this) {
+fun Component.mediaPlayer(): EmbeddedMediaPlayer =
+    when (this) {
     is CallbackMediaPlayerComponent -> mediaPlayer()
     is EmbeddedMediaPlayerComponent -> mediaPlayer()
     else -> error("mediaPlayer() can only be called on vlcj player components")
@@ -161,13 +166,12 @@ fun Component.release() {
 }
 
 private fun isMacOS(): Boolean {
-    val os = System
-        .getProperty("os.name", "generic")
-        .lowercase(Locale.ENGLISH)
+    val os =
+        System
+            .getProperty("os.name", "generic")
+            .lowercase(Locale.ENGLISH)
     return "mac" in os || "darwin" in os
 }
 
 @Composable
-actual fun rememberIsInPipMode(): Boolean {
-    return false
-}
+actual fun rememberIsInPipMode(): Boolean = false

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.exposed
 
 import com.storyteller_f.a.backend.core.DatabaseConnection
@@ -32,6 +36,7 @@ import com.storyteller_f.a.backend.exposed.tables.Users
 import com.storyteller_f.a.backend.exposed.tables.WorkerTasks
 import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.obj.ExplainResult
+import com.storyteller_f.shared.utils.cancellableRunCatching
 import com.storyteller_f.shared.utils.transformThrowable
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellableContinuation
@@ -110,7 +115,6 @@ fun DatabaseSearchConfig<Boolean, Query>.isNotEmpty() {
 }
 
 class ExposedDatabaseSession(val database: R2dbcDatabase, val port: Int?) {
-
     private fun handleDatabaseException(e: Throwable, anchor: Throwable): Throwable {
         if (e is UnauthorizedException || e.isDup()) {
             return e
@@ -121,7 +125,7 @@ class ExposedDatabaseSession(val database: R2dbcDatabase, val port: Int?) {
 
     suspend fun <T> dbQuery(block: suspend R2dbcTransaction.() -> T): Result<T> {
         val anchor = Exception("dbQuery failed")
-        return runCatching {
+        return cancellableRunCatching {
             withContext(Dispatchers.IO) {
                 suspendTransaction(db = database) {
                     maxAttempts = 1
@@ -134,12 +138,10 @@ class ExposedDatabaseSession(val database: R2dbcDatabase, val port: Int?) {
     }
 
     @OptIn(ExperimentalTime::class)
-    suspend fun <R> dbSearch(
-        block: DatabaseSearchConfig<R, Query>.() -> Unit,
-    ): Result<R> {
+    suspend fun <R> dbSearch(block: DatabaseSearchConfig<R, Query>.() -> Unit): Result<R> {
         val anchor = Exception("dbSearch failed")
         port?.let { explainQuery(it, block) }
-        return runCatching {
+        return cancellableRunCatching {
             withContext(Dispatchers.IO) {
                 suspendTransaction(db = database) {
                     maxAttempts = 1
@@ -154,21 +156,19 @@ class ExposedDatabaseSession(val database: R2dbcDatabase, val port: Int?) {
         }
     }
 
-    private suspend fun <R> explainQuery(
-        port: Int,
-        query: DatabaseSearchConfig<R, Query>.() -> Unit
-    ) {
+    private suspend fun <R> explainQuery(port: Int, query: DatabaseSearchConfig<R, Query>.() -> Unit) {
         val anchor = Exception("explainQuery failed ${database.dialect.name}")
         try {
-            val explainResult = withContext(Dispatchers.IO) {
-                suspendTransaction(db = database) {
-                    maxAttempts = 1
-                    explainQuery {
-                        val databaseSearchConfig = DatabaseSearchConfig<R, Query>()
-                        databaseSearchConfig.apply(query).searchFunc()
+            val explainResult =
+                withContext(Dispatchers.IO) {
+                    suspendTransaction(db = database) {
+                        maxAttempts = 1
+                        explainQuery {
+                            val databaseSearchConfig = DatabaseSearchConfig<R, Query>()
+                            databaseSearchConfig.apply(query).searchFunc()
+                        }
                     }
                 }
-            }
             if (explainResult != null) {
                 val result = explainResult.copy(stackTraceString = anchor.stackTraceToString())
                 suspendCancellableCoroutine { continuation ->
@@ -177,17 +177,15 @@ class ExposedDatabaseSession(val database: R2dbcDatabase, val port: Int?) {
                     }
                 }
             }
+        } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+            throw cancellation
         } catch (e: Exception) {
             throw handleDatabaseException(e, anchor)
         }
         error("")
     }
 
-    private fun sendExplainResult(
-        result: ExplainResult,
-        continuation: CancellableContinuation<Unit>,
-        port: Int,
-    ) {
+    private fun sendExplainResult(result: ExplainResult, continuation: CancellableContinuation<Unit>, port: Int) {
         runCatching {
             Socket("localhost", port).use { socket ->
                 socket.getOutputStream().use {
@@ -205,13 +203,15 @@ class ExposedDatabaseSession(val database: R2dbcDatabase, val port: Int?) {
 
     private suspend fun R2dbcTransaction.explainQuery(block: () -> Query): ExplainResult? {
         debug = true
-        val result = explain {
-            block()
-        }.toList().joinToString("\n")
+        val result =
+            explain {
+                block()
+            }.toList().joinToString("\n")
         assert(statements.isNotEmpty())
-        val input = statements.toString().split("\n").firstOrNull { statement ->
-            statement.isNotEmpty() && !statement.contains("INFORMATION_SCHEMA")
-        }
+        val input =
+            statements.toString().split("\n").firstOrNull { statement ->
+                statement.isNotEmpty() && !statement.contains("INFORMATION_SCHEMA")
+            }
         return if (input != null) {
             val s = "explain"
             val end = input.indexOf(s, ignoreCase = true) + s.length

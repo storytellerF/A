@@ -1,3 +1,9 @@
+/*
+ * This is a private project. All rights reserved.
+*/
+
+package com.storyteller_f.a.dev.appium
+
 fun testSignUpByHelper(testName: String, target: AppAppiumHelper, platform: PlatformAppiumHelper) =
     runAppiumBlockingTest {
         platform.runTest(
@@ -9,141 +15,117 @@ fun testSignUpByHelper(testName: String, target: AppAppiumHelper, platform: Plat
         }
     }
 
-fun testSignInAsSystemUserByHelper(
-    testName: String,
-    target: AppAppiumHelper,
-    platform: PlatformAppiumHelper,
-) = runAppiumBlockingTest {
-    platform.runTest(
-        testName = testName,
-        target = target,
-        setup = { AppiumTestSetup(Unit) },
-    ) { scope, _ ->
-        scenarioSignInAsSystemUser(scope.driver, target.readSystemPrivateKey())
-    }
-}
-
-fun testInjectedSessionByHelper(
-    testName: String,
-    target: AppAppiumHelper,
-    platform: PlatformAppiumHelper,
-) = runAppiumBlockingTest {
-    platform.runTest(
-        testName = testName,
-        target = target,
-        setup = { ports ->
-            val session = target.createPreRegisteredSession(ports)
-            AppiumTestSetup(
-                data = session.address,
-                injectedSession = session,
-            )
-        },
-    ) { scope, address ->
-        scenarioVerifyInjectedSessionLoaded(scope.driver, address)
-    }
-}
-
-fun testPublishTopicInUserSpaceByHelper(
-    testName: String,
-    target: AppAppiumHelper,
-    platform: PlatformAppiumHelper,
-) = runAppiumBlockingTest {
-    platform.runTest(
-        testName = testName,
-        target = target,
-        setup = { ports ->
-            val session = target.createPreRegisteredSession(ports)
-            AppiumTestSetup(data = session.address, injectedSession = session)
-        },
-    ) { scope, address ->
-        scenarioPublishTopicInUserSpace(scope.driver, address)
-    }
-}
-
-fun testFavoriteTopicByHelper(
-    testName: String,
-    target: AppAppiumHelper,
-    platform: PlatformAppiumHelper,
-) = runAppiumBlockingTest {
-    platform.runTest(
-        testName = testName,
-        target = target,
-        setup = { ports ->
-            val data = prepareFavoriteTopicScenario { target.createAuthenticatedSession(ports) }
-            AppiumTestSetup(data = data, injectedSession = data.authenticated.session)
-        },
-    ) { scope, data ->
-        try {
-            scenarioFavoritePreparedTopic(scope.driver, data)
-        } finally {
-            data.authenticated.sessionManager.client.close()
+fun testSignInAsSystemUserByHelper(testName: String, target: AppAppiumHelper, platform: PlatformAppiumHelper) =
+    runAppiumBlockingTest {
+        platform.runTest(
+            testName = testName,
+            target = target,
+            setup = { AppiumTestSetup(Unit) },
+        ) { scope, _ ->
+            scenarioSignInAsSystemUser(scope.driver, target.readSystemPrivateKey())
         }
     }
-}
 
-fun testOpenAsciidocPreviewByHelper(
-    testName: String,
-    target: AppAppiumHelper,
-    platform: PlatformAppiumHelper,
-) = runAppiumBlockingTest {
-    platform.runTest(
-        testName = testName,
-        target = target,
-        captureBrowserOpen = platform.capturesExternalAsciidocPreview,
-        setup = { ports ->
-            val data = prepareAsciidocPreviewScenario { target.createAuthenticatedSession(ports) }
-            AppiumTestSetup(data = data, injectedSession = data.authenticated.session)
-        },
-    ) { scope, data ->
-        try {
-            scenarioOpenAsciidocPreview(
-                scope.driver,
-                data.authenticated.session.address,
-                data.topicMarker,
-            )
-            scope.assertAsciidocPreviewOpened(data.asciidocSource)
-        } finally {
-            data.authenticated.sessionManager.client.close()
+fun testInjectedSessionByHelper(testName: String, target: AppAppiumHelper, platform: PlatformAppiumHelper) =
+    runAppiumBlockingTest {
+        platform.runTest(
+            testName = testName,
+            target = target,
+            setup = { ports ->
+                val session = target.createPreRegisteredSession(ports)
+                AppiumTestSetup(
+                    data = session.address,
+                    injectedSession = session,
+                )
+            },
+        ) { scope, address ->
+            scenarioVerifyInjectedSessionLoaded(scope.driver, address)
         }
     }
-}
 
-fun testSubscribeTopicByHelper(
-    testName: String,
-    target: AppAppiumHelper,
-    platform: PlatformAppiumHelper,
-) = runAppiumBlockingTest {
-    platform.runTest(
-        testName = testName,
-        target = target,
-        setup = { ports ->
-            val data = prepareSubscriptionTopicScenario { target.createAuthenticatedSession(ports) }
-            AppiumTestSetup(data = data, injectedSession = data.authenticated.session)
-        },
-    ) { scope, data ->
-        try {
-            scenarioSubscribePreparedTopic(scope.driver, data)
-        } finally {
-            data.authenticated.sessionManager.client.close()
+fun testPublishTopicInUserSpaceByHelper(testName: String, target: AppAppiumHelper, platform: PlatformAppiumHelper) =
+    runAppiumBlockingTest {
+        platform.runTest(
+            testName = testName,
+            target = target,
+            setup = { ports ->
+                val session = target.createPreRegisteredSession(ports)
+                AppiumTestSetup(data = session.address, injectedSession = session)
+            },
+        ) { scope, address ->
+            scenarioPublishTopicInUserSpace(scope.driver, address)
         }
     }
-}
 
-fun testCommunityProfileActionsByHelper(
-    testName: String,
-    target: AppAppiumHelper,
-    platform: PlatformAppiumHelper,
-) = testPreparedCommunityRoomScenarioByHelper(testName, target, platform) { driver, data ->
-    scenarioCommunityProfileActions(driver, data.communityName, data.ownerSession.address)
-}
+fun testFavoriteTopicByHelper(testName: String, target: AppAppiumHelper, platform: PlatformAppiumHelper) =
+    runAppiumBlockingTest {
+        platform.runTest(
+            testName = testName,
+            target = target,
+            setup = { ports ->
+                val data = prepareFavoriteTopicScenario { target.createAuthenticatedSession(ports) }
+                AppiumTestSetup(data = data, injectedSession = data.authenticated.session)
+            },
+        ) { scope, data ->
+            try {
+                scenarioFavoritePreparedTopic(scope.driver, data)
+            } finally {
+                data.authenticated.sessionManager.client.close()
+            }
+        }
+    }
 
-fun testPublishTopicInCommunityByHelper(
-    testName: String,
-    target: AppAppiumHelper,
-    platform: PlatformAppiumHelper,
-) = testPreparedCommunityRoomScenarioByHelper(testName, target, platform) { driver, data ->
-    scenarioPublishTopicInCommunity(driver, data.communityName)
-}
+fun testOpenAsciidocPreviewByHelper(testName: String, target: AppAppiumHelper, platform: PlatformAppiumHelper) =
+    runAppiumBlockingTest {
+        platform.runTest(
+            testName = testName,
+            target = target,
+            captureBrowserOpen = platform.capturesExternalAsciidocPreview,
+            setup = { ports ->
+                val data = prepareAsciidocPreviewScenario { target.createAuthenticatedSession(ports) }
+                AppiumTestSetup(data = data, injectedSession = data.authenticated.session)
+            },
+        ) { scope, data ->
+            try {
+                scenarioOpenAsciidocPreview(
+                    scope.driver,
+                    data.authenticated.session.address,
+                    data.topicMarker,
+                )
+                scope.assertAsciidocPreviewOpened(data.asciidocSource)
+            } finally {
+                data.authenticated.sessionManager.client.close()
+            }
+        }
+    }
+
+fun testSubscribeTopicByHelper(testName: String, target: AppAppiumHelper, platform: PlatformAppiumHelper) =
+    runAppiumBlockingTest {
+        platform.runTest(
+            testName = testName,
+            target = target,
+            setup = { ports ->
+                val data = prepareSubscriptionTopicScenario { target.createAuthenticatedSession(ports) }
+                AppiumTestSetup(data = data, injectedSession = data.authenticated.session)
+            },
+        ) { scope, data ->
+            try {
+                scenarioSubscribePreparedTopic(scope.driver, data)
+            } finally {
+                data.authenticated.sessionManager.client.close()
+            }
+        }
+    }
+
+fun testCommunityProfileActionsByHelper(testName: String, target: AppAppiumHelper, platform: PlatformAppiumHelper) =
+    testPreparedCommunityRoomScenarioByHelper(testName, target, platform) { driver, data ->
+        scenarioCommunityProfileActions(driver, data.communityName, data.ownerSession.address)
+    }
+
+fun testPublishTopicInCommunityByHelper(testName: String, target: AppAppiumHelper, platform: PlatformAppiumHelper) =
+    testPreparedCommunityRoomScenarioByHelper(testName, target, platform) { driver, data ->
+        scenarioPublishTopicInCommunity(driver, data.communityName)
+    }
 
 fun testPublishTopicInCommunityRoomByHelper(
     testName: String,
@@ -153,22 +135,19 @@ fun testPublishTopicInCommunityRoomByHelper(
     scenarioPublishTopicInRoom(driver, data.communityName, data.roomName)
 }
 
-fun testPanelInjectedSessionByHelper(
-    testName: String,
-    target: PanelAppiumHelper,
-    platform: PlatformAppiumHelper,
-) = runAppiumBlockingTest {
-    platform.runTest(
-        testName = testName,
-        target = target,
-        setup = { ports ->
-            val session = target.createPreRegisteredSession(ports)
-            AppiumTestSetup(data = Unit, injectedSession = session)
-        },
-    ) { scope, _ ->
-        scenarioOpenAllUsersFromOverview(scope.driver)
+fun testPanelInjectedSessionByHelper(testName: String, target: PanelAppiumHelper, platform: PlatformAppiumHelper) =
+    runAppiumBlockingTest {
+        platform.runTest(
+            testName = testName,
+            target = target,
+            setup = { ports ->
+                val session = target.createPreRegisteredSession(ports)
+                AppiumTestSetup(data = Unit, injectedSession = session)
+            },
+        ) { scope, _ ->
+            scenarioOpenAllUsersFromOverview(scope.driver)
+        }
     }
-}
 
 private fun testPreparedCommunityRoomScenarioByHelper(
     testName: String,

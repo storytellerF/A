@@ -1,3 +1,9 @@
+/*
+ * This is a private project. All rights reserved.
+*/
+
+package com.storyteller_f.a.app
+
 import androidx.compose.material3.adaptive.Posture
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp

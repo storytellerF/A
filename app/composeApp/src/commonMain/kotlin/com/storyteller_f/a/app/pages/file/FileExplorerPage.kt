@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.file
 
 import androidx.compose.foundation.clickable
@@ -134,10 +138,11 @@ fun FileExplorerPage(mediaTarget: ObjectTuple) {
 
 @Composable
 private fun fileNavRoutes(mediaTarget: ObjectTuple): List<NavRoute> {
-    val list = mutableListOf(
-        NavRoute("/uploaded", Icons.Filled.Folder, "Uploaded"),
-        NavRoute("/upload-record", Icons.Filled.CloudUpload, "Upload")
-    )
+    val list =
+        mutableListOf(
+            NavRoute("/uploaded", Icons.Filled.Folder, "Uploaded"),
+            NavRoute("/upload-record", Icons.Filled.CloudUpload, "Upload"),
+        )
     if (mediaTarget.objectType == ObjectType.USER) {
         list.add(NavRoute("/download-record", Icons.Filled.Download, "Download"))
     }
@@ -175,7 +180,7 @@ private fun FileExplorerCompatPageInternal(mediaTarget: ObjectTuple) {
         Column {
             CustomSearchBar(
                 scope = SearchScope.UploadedFiles(mediaTarget.objectId, mediaTarget.objectType),
-                leadingIcon = {}
+                leadingIcon = {},
             )
             FileExplorerPager(pagerState, mediaTarget, PaddingValues(0.dp))
         }
@@ -184,14 +189,10 @@ private fun FileExplorerCompatPageInternal(mediaTarget: ObjectTuple) {
 }
 
 @Composable
-private fun FileExplorerPager(
-    pagerState: PagerState,
-    mediaTarget: ObjectTuple,
-    paddingValues: PaddingValues
-) {
+private fun FileExplorerPager(pagerState: PagerState, mediaTarget: ObjectTuple, paddingValues: PaddingValues) {
     HorizontalPager(
         pagerState,
-        modifier = Modifier.padding(top = paddingValues.calculateTopPadding())
+        modifier = Modifier.padding(top = paddingValues.calculateTopPadding()),
     ) { index ->
         when (index) {
             0 -> UploadedPage(mediaTarget)
@@ -224,17 +225,19 @@ sealed interface FileExplorerRoute : NavKey {
 @Composable
 private fun FileExplorerNonCompatPageInternal(mediaTarget: ObjectTuple) {
     val navRoutes = fileNavRoutes(mediaTarget)
-    val config = remember {
-        SavedStateConfiguration {
-            serializersModule = SerializersModule {
-                polymorphic(NavKey::class) {
-                    subclass(FileExplorerRoute.Uploaded::class)
-                    subclass(FileExplorerRoute.UploadRecord::class)
-                    subclass(FileExplorerRoute.DownloadRecord::class)
-                }
+    val config =
+        remember {
+            SavedStateConfiguration {
+                serializersModule =
+                    SerializersModule {
+                        polymorphic(NavKey::class) {
+                            subclass(FileExplorerRoute.Uploaded::class)
+                            subclass(FileExplorerRoute.UploadRecord::class)
+                            subclass(FileExplorerRoute.DownloadRecord::class)
+                        }
+                    }
             }
         }
-    }
     val backStack = rememberNavBackStack(config, FileExplorerRoute.Uploaded)
     val current = backStack.last()
     var showQuota by remember { mutableStateOf(false) }
@@ -264,17 +267,14 @@ private fun FileExplorerFab(current: NavKey, showQuota: () -> Unit) {
 }
 
 @Composable
-private fun FileExplorerRailNav(
-    backStack: NavBackStack<NavKey>,
-    current: NavKey,
-    navRoutes: List<NavRoute>,
-) {
+private fun FileExplorerRailNav(backStack: NavBackStack<NavKey>, current: NavKey, navRoutes: List<NavRoute>) {
     CustomRailNav(current.toString(), navRoutes) { path ->
-        val target = when (path) {
-            "/upload-record" -> FileExplorerRoute.UploadRecord
-            "/download-record" -> FileExplorerRoute.DownloadRecord
-            else -> FileExplorerRoute.Uploaded
-        }
+        val target =
+            when (path) {
+                "/upload-record" -> FileExplorerRoute.UploadRecord
+                "/download-record" -> FileExplorerRoute.DownloadRecord
+                else -> FileExplorerRoute.Uploaded
+            }
         if (backStack.last() != target) {
             val i = backStack.indexOf(target)
             if (i >= 0) {
@@ -289,23 +289,22 @@ private fun FileExplorerRailNav(
 }
 
 @Composable
-private fun RowScope.FileExplorerNonCompatContent(
-    mediaTarget: ObjectTuple,
-    backStack: NavBackStack<NavKey>,
-) {
+private fun RowScope.FileExplorerNonCompatContent(mediaTarget: ObjectTuple, backStack: NavBackStack<NavKey>) {
     Column(modifier = Modifier.weight(1f)) {
         CustomSearchBar(
             scope = SearchScope.UploadedFiles(mediaTarget.objectId, mediaTarget.objectType),
-            leadingIcon = {}
+            leadingIcon = {},
         )
 
         NavDisplay(
             backStack,
-            entryDecorators = listOf(
+            entryDecorators =
+            listOf(
                 rememberSaveableStateHolderNavEntryDecorator(),
-                rememberViewModelStoreNavEntryDecorator()
+                rememberViewModelStoreNavEntryDecorator(),
             ),
-            entryProvider = entryProvider {
+            entryProvider =
+            entryProvider {
                 entry<FileExplorerRoute.Uploaded> {
                     UploadedPage(mediaTarget)
                 }
@@ -315,7 +314,7 @@ private fun RowScope.FileExplorerNonCompatContent(
                 entry<FileExplorerRoute.DownloadRecord> {
                     DownloadRecordPage()
                 }
-            }
+            },
         )
     }
 }
@@ -373,12 +372,7 @@ private fun UploadedPage(mediaTarget: ObjectTuple) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun QuotaSheet(
-    showSheet: Boolean,
-    sheetState: SheetState,
-    hideSheet: () -> Unit,
-    mediaTarget: ObjectTuple
-) {
+private fun QuotaSheet(showSheet: Boolean, sheetState: SheetState, hideSheet: () -> Unit, mediaTarget: ObjectTuple) {
     BaseSheet(showSheet, sheetState, hideSheet) {
         val quotaVm = getQuotaViewModel(mediaTarget)
         StateView(quotaVm.handler) { q: QuotaInfo ->
@@ -390,10 +384,10 @@ private fun QuotaSheet(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     LinearProgressIndicator(
                         progress = { q.used.toFloat() / q.total.coerceAtLeast(1) },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
                     )
                     Spacer(modifier = Modifier.padding(8.dp))
-                    val percent = if (q.total > 0) (q.used * 100f / q.total) else 0f
+                    val percent = if (q.total > 0) q.used * 100f / q.total else 0f
                     Text("${percent.toInt()}%")
                 }
                 val rec = q.extensions?.uploadRecord
@@ -405,13 +399,13 @@ private fun QuotaSheet(
                             progress = {
                                 (rec.progress.toFloat() / rec.total.coerceAtLeast(1)).coerceIn(
                                     0f,
-                                    1f
+                                    1f,
                                 )
                             },
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
                         )
                         Spacer(modifier = Modifier.padding(horizontal = 8.dp))
-                        val uploadPercent = if (rec.total > 0) (rec.progress * 100f / rec.total) else 0f
+                        val uploadPercent = if (rec.total > 0) rec.progress * 100f / rec.total else 0f
                         Text("${uploadPercent.toInt()}%")
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -435,7 +429,7 @@ private fun UploadRecordPage(mediaTarget: ObjectTuple) {
     val viewModel = createUploadViewModel(mediaTarget.objectId)
     StateView(viewModel, modifier = Modifier.fillMaxSize()) { items ->
         LazyColumn(
-            contentPadding = PaddingValues(20.dp)
+            contentPadding = PaddingValues(20.dp),
         ) {
             pagingItems(items, key = { it.id }) {
                 val file = items[it]
@@ -455,7 +449,7 @@ private fun DownloadRecordPage() {
     val items = vm.flow.collectAsLazyPagingItems()
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(20.dp)
+        contentPadding = PaddingValues(20.dp),
     ) {
         pagingItems(items, key = { it.fileInfo.id }) {
             DownloadRecordItem(items[it])
@@ -564,14 +558,15 @@ private fun DownloadRecordItem(@PreviewParameter(DownloadRecordItemPreviewProvid
     var showSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
     Row(
-        modifier = Modifier
+        modifier =
+        Modifier
             .fillMaxWidth()
             .clickable {
                 showSheet = true
             }
             .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         FileIcon(d.fileInfo)
         Column(modifier = Modifier.weight(1f)) {
@@ -597,9 +592,9 @@ private fun DownloadRecordItem(@PreviewParameter(DownloadRecordItemPreviewProvid
 }
 
 private fun getDownloadProgress(d: DownloadInfo): Float =
-    (d.progress.toFloat() / (if (d.total == 0L) 1 else d.total)).coerceIn(
+    (d.progress.toFloat() / if (d.total == 0L) 1 else d.total).coerceIn(
         0f,
-        1f
+        1f,
     )
 
 @Composable
@@ -625,7 +620,8 @@ private fun DownloadStatusButton(d: DownloadInfo?) {
         DownloadStatus.PAUSED,
         DownloadStatus.DOWNLOAD_FAILED,
         DownloadStatus.PROCESS_FAILED,
-        DownloadStatus.DOWNLOADED -> {
+        DownloadStatus.DOWNLOADED,
+        -> {
             IconButton(onClick = {
                 globalDialogController.launch {
                     useResult {
@@ -661,19 +657,14 @@ private fun DownloadStatusButton(d: DownloadInfo?) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DownloadInfoPage(
-    showSheet: Boolean,
-    sheetState: SheetState,
-    id: PrimaryKey,
-    hideSheet: () -> Unit,
-) {
+fun DownloadInfoPage(showSheet: Boolean, sheetState: SheetState, id: PrimaryKey, hideSheet: () -> Unit) {
     if (LocalInspectionMode.current) return
     val downloadViewModel = getDownloadViewModel(id)
     BaseSheet(showSheet, sheetState, hideSheet) {
         SheetContainer {
             Column(
                 modifier = Modifier.heightIn(200.dp, 600.dp).padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 DownloadInfoPageInternal(downloadViewModel)
             }
@@ -685,15 +676,15 @@ fun DownloadInfoPage(
 private fun DownloadInfoPageInternal(downloadViewModel: DownloadViewModel) {
     val downloadInfo by downloadViewModel.data.collectAsState(null)
     DownloadInfoTitle(downloadInfo)
-    downloadInfo?.let {
+    downloadInfo?.let { info ->
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             LinearProgressIndicator(progress = {
-                it.progress.toFloat() / it.total
+                info.progress.toFloat() / info.total
             })
-            FixedProgress(it.getPercent())
+            FixedProgress(info.getPercent())
         }
     }
     DownloadInfoTable(downloadInfo)
@@ -708,7 +699,7 @@ private fun DownloadInfoTitle(data: DownloadInfo?) {
     LocalGlobalDialog.current
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(20.dp)
+        horizontalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         LocalClientFileProvider.current
         Text(it?.name ?: "-", modifier = Modifier.weight(1f))
@@ -717,22 +708,21 @@ private fun DownloadInfoTitle(data: DownloadInfo?) {
 }
 
 @Composable
-fun DownloadInfoTable(
-    downloadInfo: DownloadInfo?
-) {
+fun DownloadInfoTable(downloadInfo: DownloadInfo?) {
     val fileInfo = downloadInfo?.fileInfo
-    val tableData = remember(downloadInfo, fileInfo) {
-        buildList {
-            downloadInfo?.path?.let { add("Path" to it) }
-            fileInfo?.size?.let { add("Size" to HumanReadable.fileSize(it)) }
-            downloadInfo?.status?.name?.let { add("Status" to it) }
-            if (downloadInfo?.status == DownloadStatus.DOWNLOAD_FAILED) {
-                add("Error" to downloadInfo.message)
+    val tableData =
+        remember(downloadInfo, fileInfo) {
+            buildList {
+                downloadInfo?.path?.let { add("Path" to it) }
+                fileInfo?.size?.let { add("Size" to HumanReadable.fileSize(it)) }
+                downloadInfo?.status?.name?.let { add("Status" to it) }
+                if (downloadInfo?.status == DownloadStatus.DOWNLOAD_FAILED) {
+                    add("Error" to downloadInfo.message)
+                }
+                downloadInfo?.message?.let { add("Message" to it) }
+                fileInfo?.url?.let { add("Url" to it) }
             }
-            downloadInfo?.message?.let { add("Message" to it) }
-            fileInfo?.url?.let { add("Url" to it) }
         }
-    }
     InfoTable(tableData)
 }
 
@@ -743,60 +733,61 @@ fun Float.roundToDecimalPlaces(decimals: Int): Float {
 
 class UploadItemPreviewProvider : PreviewParameterProvider<UploadInfo> {
     override val values: Sequence<UploadInfo>
-        get() = sequenceOf(
-            UploadInfo.EMPTY.copy(
-                id = 1,
-                pathHash = "test",
-                path = "text/plain",
-                progress = 100,
-                status = UploadStatus.SUCCESS,
-                message = "message",
-                name = "name",
-                contentType = "image/png",
-            ),
-            UploadInfo.EMPTY.copy(
-                id = 2,
-                pathHash = "test",
-                path = "text/plain",
-                progress = 100,
-                chunkProgress = 50,
-                status = UploadStatus.FAILED,
-                message = "message",
-                name = "name",
-                contentType = "image/png",
-            ),
-            UploadInfo.EMPTY.copy(
-                id = 3,
-                pathHash = "test",
-                path = "text/plain",
-                progress = 100,
-                chunkProgress = 100,
-                status = UploadStatus.NOT_UPLOADING,
-                message = "message",
-                name = "name",
-                contentType = "image/png",
-            ),
-            UploadInfo.EMPTY.copy(
-                id = 4,
-                pathHash = "test",
-                path = "text/plain",
-                progress = 100,
-                status = UploadStatus.PAUSED,
-                message = "message",
-                name = "name",
-                contentType = "image/png",
-            ),
-            UploadInfo.EMPTY.copy(
-                id = 5,
-                pathHash = "test",
-                path = "text/plain",
-                progress = 100,
-                status = UploadStatus.UPLOADING,
-                message = "message",
-                name = "name",
-                contentType = "image/png",
-            ),
-        )
+        get() =
+            sequenceOf(
+                UploadInfo.EMPTY.copy(
+                    id = 1,
+                    pathHash = "test",
+                    path = "text/plain",
+                    progress = 100,
+                    status = UploadStatus.SUCCESS,
+                    message = "message",
+                    name = "name",
+                    contentType = "image/png",
+                ),
+                UploadInfo.EMPTY.copy(
+                    id = 2,
+                    pathHash = "test",
+                    path = "text/plain",
+                    progress = 100,
+                    chunkProgress = 50,
+                    status = UploadStatus.FAILED,
+                    message = "message",
+                    name = "name",
+                    contentType = "image/png",
+                ),
+                UploadInfo.EMPTY.copy(
+                    id = 3,
+                    pathHash = "test",
+                    path = "text/plain",
+                    progress = 100,
+                    chunkProgress = 100,
+                    status = UploadStatus.NOT_UPLOADING,
+                    message = "message",
+                    name = "name",
+                    contentType = "image/png",
+                ),
+                UploadInfo.EMPTY.copy(
+                    id = 4,
+                    pathHash = "test",
+                    path = "text/plain",
+                    progress = 100,
+                    status = UploadStatus.PAUSED,
+                    message = "message",
+                    name = "name",
+                    contentType = "image/png",
+                ),
+                UploadInfo.EMPTY.copy(
+                    id = 5,
+                    pathHash = "test",
+                    path = "text/plain",
+                    progress = 100,
+                    status = UploadStatus.UPLOADING,
+                    message = "message",
+                    name = "name",
+                    contentType = "image/png",
+                ),
+            )
 }
 
 @Preview
@@ -808,14 +799,15 @@ fun UploadItem(@PreviewParameter(UploadItemPreviewProvider::class) uploadInfo: U
     var showDropdown by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
     Row(
-        modifier = Modifier
+        modifier =
+        Modifier
             .clickable { showSheet = true }
             .combinedClickable(
                 onClick = { showSheet = true },
-                onLongClick = { showDropdown = true }
+                onLongClick = { showDropdown = true },
             )
             .padding(20.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         UploadIcon(contentType = uploadInfo.contentType)
 
@@ -829,7 +821,7 @@ fun UploadItem(@PreviewParameter(UploadItemPreviewProvider::class) uploadInfo: U
             Row(verticalAlignment = Alignment.CenterVertically) {
                 LinearProgressIndicator(
                     progress = { uploadInfo.progress.toFloat() / uploadInfo.total },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 )
                 Text(uploadInfo.getPercent())
             }
@@ -840,7 +832,7 @@ fun UploadItem(@PreviewParameter(UploadItemPreviewProvider::class) uploadInfo: U
 
     DropdownMenu(
         expanded = showDropdown,
-        onDismissRequest = { showDropdown = false }
+        onDismissRequest = { showDropdown = false },
     ) {
         if (uploadInfo.recordId != null) {
             CancelUploadButton(uploadInfo) { showDropdown = false }
@@ -877,7 +869,7 @@ fun CancelUploadButton(uploadInfo: UploadInfo, updateDropdown: (Boolean) -> Unit
         },
         leadingIcon = {
             Icon(Icons.Default.Stop, contentDescription = CoreStrings.cancel())
-        }
+        },
     )
 }
 
@@ -932,7 +924,8 @@ private fun UploadStatusButton(file: UploadInfo?) {
     }
 }
 
-fun ClientFile.getUploadDataFromClipFile(sha256: String) = UploadData(
+fun ClientFile.getUploadDataFromClipFile(sha256: String) =
+    UploadData(
     size,
     name,
     contentType,
@@ -943,12 +936,7 @@ fun ClientFile.getUploadDataFromClipFile(sha256: String) = UploadData(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UploadInfoPage(
-    showSheet: Boolean,
-    sheetState: SheetState,
-    pathHash: String,
-    hideSheet: () -> Unit,
-) {
+fun UploadInfoPage(showSheet: Boolean, sheetState: SheetState, pathHash: String, hideSheet: () -> Unit) {
     if (LocalInspectionMode.current) return
     val my = LocalUserInfo.current ?: return
     val uploadViewModel = getUploadViewModel(pathHash, my.id)
@@ -956,7 +944,7 @@ fun UploadInfoPage(
         SheetContainer {
             Column(
                 modifier = Modifier.heightIn(200.dp, 600.dp).padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 UploadInfoPageInternal(uploadViewModel)
             }
@@ -970,7 +958,7 @@ private fun UploadInfoPageInternal(uploadViewModel: UploadDetailViewModel) {
     UploadInfoTitle(data)
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         LinearProgressIndicator(progress = {
             getUploadProgress(data)
@@ -982,9 +970,9 @@ private fun UploadInfoPageInternal(uploadViewModel: UploadDetailViewModel) {
 
 private fun getUploadProgress(info: UploadInfo?): Float {
     info ?: return 0f
-    return (info.progress.toFloat() / (if (info.total == 0L) 1 else info.total)).coerceIn(
+    return (info.progress.toFloat() / if (info.total == 0L) 1 else info.total).coerceIn(
         0f,
-        1f
+        1f,
     )
 }
 
@@ -992,7 +980,7 @@ private fun getUploadProgress(info: UploadInfo?): Float {
 private fun UploadInfoTitle(data: UploadInfo?) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(20.dp)
+        horizontalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         Text(data?.name ?: "-", modifier = Modifier.weight(1f))
         UploadStatusButton(data)
@@ -1001,25 +989,26 @@ private fun UploadInfoTitle(data: UploadInfo?) {
 
 @Composable
 private fun UploadInfoTable(uploadInfo: UploadInfo?) {
-    val tableData = remember(uploadInfo) {
-        buildList {
-            uploadInfo?.path?.let { add("Path" to it) }
-            uploadInfo?.pathHash?.let { add("Hash" to it) }
-            uploadInfo?.total?.let { add("Size" to HumanReadable.fileSize(it)) }
-            uploadInfo?.status?.name?.let { add("Status" to it) }
-            uploadInfo?.message?.let { add("Message" to it) }
-            uploadInfo?.name?.let { add("Name" to it) }
-            uploadInfo?.contentType?.let { add("ContentType" to it) }
+    val tableData =
+        remember(uploadInfo) {
+            buildList {
+                uploadInfo?.path?.let { add("Path" to it) }
+                uploadInfo?.pathHash?.let { add("Hash" to it) }
+                uploadInfo?.total?.let { add("Size" to HumanReadable.fileSize(it)) }
+                uploadInfo?.status?.name?.let { add("Status" to it) }
+                uploadInfo?.message?.let { add("Message" to it) }
+                uploadInfo?.name?.let { add("Name" to it) }
+                uploadInfo?.contentType?.let { add("ContentType" to it) }
+            }
         }
-    }
     InfoTable(tableData)
 }
 
 fun UploadInfo?.getPercent(): String {
     this ?: return "-"
     return "${
-        (progress.toFloat() * 100 / (if (total == 0L) 1 else total)).roundToDecimalPlaces(
-            2
+        (progress.toFloat() * 100 / if (total == 0L) 1 else total).roundToDecimalPlaces(
+            2,
         )
     } %"
 }

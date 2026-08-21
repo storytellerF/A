@@ -1,3 +1,9 @@
+/*
+ * This is a private project. All rights reserved.
+*/
+
+package com.storyteller_f.a.dev.appium
+
 import com.storyteller_f.a.api.NewCommunity
 import com.storyteller_f.a.api.NewRoom
 import com.storyteller_f.a.client.core.UserSessionManager
@@ -18,11 +24,7 @@ data class SubscriptionTopicScenario(
     val topicContent: String,
 )
 
-data class FavoriteTopicScenario(
-    val authenticated: AuthenticatedSession,
-    val topicId: Long,
-    val topicContent: String,
-)
+data class FavoriteTopicScenario(val authenticated: AuthenticatedSession, val topicId: Long, val topicContent: String)
 
 data class AsciidocPreviewScenario(
     val authenticated: AuthenticatedSession,
@@ -45,13 +47,16 @@ suspend fun prepareFavoriteTopicScenario(
     val topicContent = "appium-favorite-topic-${System.currentTimeMillis()}"
     val authenticated = createAuthenticatedSession()
     try {
-        val topicId = createTopicByApi(
-            authenticated.sessionManager,
-            ObjectType.USER,
-            authenticated.sessionManager.model.uid ?: error("not login"),
-            topicContent
-        )
+        val topicId =
+            createTopicByApi(
+                authenticated.sessionManager,
+                ObjectType.USER,
+                authenticated.sessionManager.model.uid ?: error("not login"),
+                topicContent,
+            )
         return FavoriteTopicScenario(authenticated, topicId, topicContent)
+    } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+        throw cancellation
     } catch (throwable: Throwable) {
         authenticated.sessionManager.client.close()
         throw throwable
@@ -63,18 +68,20 @@ suspend fun prepareAsciidocPreviewScenario(
 ): AsciidocPreviewScenario {
     val now = System.currentTimeMillis()
     val topicMarker = "appium-asciidoc-preview-$now"
-    val asciidocSource = """
+    val asciidocSource =
+        """
         = Appium AsciiDoc Preview
 
         $topicMarker
-    """.trimIndent()
-    val topicContent = listOf(
-        topicMarker,
-        "",
-        "```asciidoc",
-        asciidocSource,
-        "```",
-    ).joinToString("\n")
+        """.trimIndent()
+    val topicContent =
+        listOf(
+            topicMarker,
+            "",
+            "```asciidoc",
+            asciidocSource,
+            "```",
+        ).joinToString("\n")
     val authenticated = createAuthenticatedSession()
     try {
         createTopicByApi(
@@ -84,6 +91,8 @@ suspend fun prepareAsciidocPreviewScenario(
             topicContent,
         )
         return AsciidocPreviewScenario(authenticated, topicMarker, asciidocSource)
+    } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+        throw cancellation
     } catch (throwable: Throwable) {
         authenticated.sessionManager.client.close()
         throw throwable
@@ -100,17 +109,21 @@ suspend fun prepareSubscriptionTopicScenario(
     try {
         val aidSuffix = (now % 1_000_000).toString().padStart(6, '0')
         val communityName = "community-$aidSuffix"
-        val communityId = owner.sessionManager.createCommunity(
-            NewCommunity(communityName, "sc$aidSuffix")
-        ).getOrThrow().id
-        val topicId = owner.sessionManager.createTopic(
-            ObjectType.COMMUNITY,
-            communityId,
-            topicContent
-        ).getOrThrow().id
+        val communityId =
+            owner.sessionManager.createCommunity(
+                NewCommunity(communityName, "sc$aidSuffix"),
+            ).getOrThrow().id
+        val topicId =
+            owner.sessionManager.createTopic(
+                ObjectType.COMMUNITY,
+                communityId,
+                topicContent,
+            ).getOrThrow().id
         viewer = createAuthenticatedSession()
         viewer.sessionManager.joinCommunity(communityId).getOrThrow()
         return SubscriptionTopicScenario(viewer, topicId, communityName, topicContent)
+    } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+        throw cancellation
     } catch (throwable: Throwable) {
         viewer?.sessionManager?.client?.close()
         throw throwable
@@ -143,6 +156,8 @@ suspend fun prepareCommunityRoomScenario(
             communityName,
             roomName,
         )
+    } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+        throw cancellation
     } catch (throwable: Throwable) {
         viewer?.sessionManager?.client?.close()
         throw throwable
@@ -181,12 +196,8 @@ suspend fun waitUntilTopicSubscribed(
 private suspend fun createCommunityByApi(manager: UserSessionManager, name: String, aid: String): Long =
     manager.createCommunity(NewCommunity(name, aid)).getOrThrow().id
 
-private suspend fun createRoomByApi(
-    manager: UserSessionManager,
-    name: String,
-    aid: String,
-    communityId: Long,
-): Long = manager.createRoom(NewRoom(name, aid, communityId = communityId)).getOrThrow().id
+private suspend fun createRoomByApi(manager: UserSessionManager, name: String, aid: String, communityId: Long): Long =
+    manager.createRoom(NewRoom(name, aid, communityId = communityId)).getOrThrow().id
 
 private suspend fun createTopicByApi(
     manager: UserSessionManager,

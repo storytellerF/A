@@ -1,3 +1,9 @@
+/*
+ * This is a private project. All rights reserved.
+*/
+
+package com.storyteller_f.a.dev.appium
+
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
 import java.io.File
@@ -9,20 +15,18 @@ import java.net.http.HttpResponse
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 
-class WasmDistributionServer(
-    private val root: File,
-    backendUrl: String? = null,
-) : AutoCloseable {
+class WasmDistributionServer(private val root: File, backendUrl: String? = null) : AutoCloseable {
     private val backendUri = backendUrl?.let { URI.create("${it.removeSuffix("/")}/") }
     private val httpClient = HttpClient.newHttpClient()
-    private val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0).apply {
-        createContext("/") { exchange -> serve(exchange) }
-        start()
-    }
+    val requestedPaths = mutableListOf<String>()
+    private val server =
+        HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0).apply {
+            createContext("/") { exchange -> serve(exchange) }
+            start()
+        }
 
     val url: String = "http://127.0.0.1:${server.address.port}/"
     val bootstrapUrl: String = "${url}appium-bootstrap.html"
-    val requestedPaths = mutableListOf<String>()
 
     override fun close() {
         server.stop(0)
@@ -56,27 +60,30 @@ class WasmDistributionServer(
     }
 
     private fun proxyToBackend(exchange: HttpExchange) {
-        val targetUri = backendUri!!.resolve(exchange.requestURI.toString().removePrefix("/"))
+        val targetUri =
+            checkNotNull(backendUri) { "Backend URI is required for proxy requests" }
+                .resolve(exchange.requestURI.toString().removePrefix("/"))
         val body = exchange.requestBody.use { it.readAllBytes() }
-        val request = HttpRequest.newBuilder(targetUri)
-            .method(
-                exchange.requestMethod,
-                if (body.isEmpty()) {
-                    HttpRequest.BodyPublishers.noBody()
-                } else {
-                    HttpRequest.BodyPublishers.ofByteArray(
-                        body
-                    )
-                },
-            )
-            .apply {
-                exchange.requestHeaders.forEach { (name, values) ->
-                    if (name.lowercase() !in REQUEST_HEADERS_NOT_FORWARDED) {
-                        values.forEach { value -> header(name, value) }
+        val request =
+            HttpRequest.newBuilder(targetUri)
+                .method(
+                    exchange.requestMethod,
+                    if (body.isEmpty()) {
+                        HttpRequest.BodyPublishers.noBody()
+                    } else {
+                        HttpRequest.BodyPublishers.ofByteArray(
+                            body,
+                        )
+                    },
+                )
+                .apply {
+                    exchange.requestHeaders.forEach { (name, values) ->
+                        if (name.lowercase() !in REQUEST_HEADERS_NOT_FORWARDED) {
+                            values.forEach { value -> header(name, value) }
+                        }
                     }
                 }
-            }
-            .build()
+                .build()
         val response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray())
         response.headers().map().forEach { (name, values) ->
             if (name.lowercase() !in RESPONSE_HEADERS_NOT_FORWARDED) {
@@ -87,7 +94,8 @@ class WasmDistributionServer(
         exchange.responseBody.use { it.write(response.body()) }
     }
 
-    private fun contentTypeFor(extension: String): String = when (extension) {
+    private fun contentTypeFor(extension: String): String =
+        when (extension) {
         "html" -> "text/html"
         "js", "mjs" -> "text/javascript"
         "wasm" -> "application/wasm"

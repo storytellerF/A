@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.components
 
 import androidx.media3.session.MediaController
@@ -22,10 +26,7 @@ actual abstract class MediaPlayerService {
 
     val controller: MutableStateFlow<MediaController?> = MutableStateFlow(null)
 
-    suspend fun get(
-        currentSession: MediaPlaySession,
-        init: (MediaController, MediaPlaySession) -> Unit
-    ) {
+    suspend fun get(currentSession: MediaPlaySession, init: (MediaController, MediaPlaySession) -> Unit) {
         val c = controller.value ?: return
         mutex.withLock {
             val session = currentPlayerState
@@ -44,7 +45,7 @@ actual abstract class MediaPlayerService {
         val session = currentPlayerState ?: return
         val lastUuid = session.lastUuid ?: return
         Napier.i(tag = "MediaPlayer") {
-            "MediaPlayerService release $lastUuid ${localMediaPlaySession.uuid} count: ${session.uuidCount}"
+            "MediaPlayerService release ${lastUuid ?: "<none>"} ${localMediaPlaySession.uuid} count: ${session.uuidCount}"
         }
         if (lastUuid != localMediaPlaySession.uuid) return
         val new = session.uuids.subList(0, session.uuids.size - 1)
@@ -59,7 +60,7 @@ actual abstract class MediaPlayerService {
         val lastUuid = session.lastUuid
         if (session.id != localMediaPlaySession.id || localMediaPlaySession.uuid == lastUuid) return
         Napier.d(tag = "MediaPlayer") {
-            "MediaPlayerService $lastUuid switch to ${localMediaPlaySession.uuid}"
+            "MediaPlayerService ${lastUuid ?: "<none>"} switch to ${localMediaPlaySession.uuid}"
         }
         mutex.withLock {
             setCurrentPlayerState(session.appendUuid(localMediaPlaySession.uuid))
@@ -77,7 +78,7 @@ actual abstract class MediaPlayerService {
     actual abstract suspend fun start(
         remoteMediaItem: RemoteMediaItem,
         localMediaPlaySession: LocalMediaPlaySession,
-        playList: List<ConstPlayItem>
+        playList: List<ConstPlayItem>,
     )
 
     actual abstract val enablePip: Boolean

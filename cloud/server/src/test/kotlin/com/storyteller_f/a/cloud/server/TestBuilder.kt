@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.server
 
 import com.github.vertical_blank.sqlformatter.SqlFormatter
@@ -73,27 +77,21 @@ private const val TEST_SESSION_SECRET = "test-session-secret"
 private typealias TestRoomReceiver = suspend (
     RoomFrame,
     UserSessionModel,
-    DefaultClientWebSocketSession
+    DefaultClientWebSocketSession,
 ) -> Unit
 
 private val NOOP_ON_RECEIVE: TestRoomReceiver = { _, _, _ -> }
 
 @OptIn(ExperimentalUuidApi::class)
-class TestMate(
-    val applicationTestBuilder: ApplicationTestBuilder,
-    val workerBackend: WorkerBackend
-) {
-
-    fun createClient(block: HttpClientConfig<out HttpClientEngineConfig>.() -> Unit = {}): HttpClient {
-        return applicationTestBuilder.createClient(block)
-    }
+class TestMate(val applicationTestBuilder: ApplicationTestBuilder, val workerBackend: WorkerBackend) {
+    fun createClient(
+        block: HttpClientConfig<out HttpClientEngineConfig>.() -> Unit = {
+        },
+    ): HttpClient = applicationTestBuilder.createClient(block)
 }
 
 @OptIn(ExperimentalUuidApi::class)
-fun test(
-    overrideEnv: Map<String, String> = emptyMap(),
-    block: suspend TestMate.() -> Unit
-) {
+fun test(overrideEnv: Map<String, String> = emptyMap(), block: suspend TestMate.() -> Unit) {
     val uuid = Uuid.random().toHexString()
     val logPath = File("build/test/session/$uuid/logs").canonicalPath
     System.setProperty("LOG_PATH", logPath)
@@ -102,11 +100,12 @@ fun test(
     loadCryptoLibIfNeed()
     loadAvif()
     val traceElements = Exception().stackTrace
-    val methodNameIndex = traceElements.indexOfFirst {
-        it.fileName != "TestBuilder.kt"
-    }
+    val methodNameIndex =
+        traceElements.indexOfFirst {
+            it.fileName != "TestBuilder.kt"
+        }
     if (methodNameIndex < 0) {
-        throw Exception("test not found")
+        throw IllegalStateException("test not found")
     }
     val methodName = traceElements[methodNameIndex + 1].methodName
     Napier.i {
@@ -117,20 +116,16 @@ fun test(
         uuid,
         mapOf(
             "SESSION_SECRET" to TEST_SESSION_SECRET,
-            "METHOD_NAME" to methodName
+            "METHOD_NAME" to methodName,
         ) + overrideEnv,
-        block
+        block,
     )
     Napier.i {
         "test done `$methodName`"
     }
 }
 
-private fun startTestContainerTest(
-    uuid: String,
-    overrideEnv: Map<String, String>,
-    block: suspend TestMate.() -> Unit
-) {
+private fun startTestContainerTest(uuid: String, overrideEnv: Map<String, String>, block: suspend TestMate.() -> Unit) {
     runBlocking {
         val env = mutableMapOf<String, String>()
         useElasticTestContainer(env) {
@@ -143,12 +138,9 @@ private fun startTestContainerTest(
     }
 }
 
-private suspend fun useDatabaseContainer(
-    env: MutableMap<String, String>,
-    block: suspend () -> Unit
-) {
+private suspend fun useDatabaseContainer(env: MutableMap<String, String>, block: suspend () -> Unit) {
     PostgreSQLContainer(
-        ContainerImages.POSTGRESQL
+        ContainerImages.POSTGRESQL,
     ).use { postgreSQLContainer ->
         postgreSQLContainer.start()
         Napier.i("jdbc: ${postgreSQLContainer.jdbcUrl}")
@@ -161,10 +153,7 @@ private suspend fun useDatabaseContainer(
     }
 }
 
-private suspend fun useMinioTestContainer(
-    env: MutableMap<String, String>,
-    block: suspend () -> Unit
-) {
+private suspend fun useMinioTestContainer(env: MutableMap<String, String>, block: suspend () -> Unit) {
     MinIOContainer(ContainerImages.MINIO)
         .use { minioContainer ->
             minioContainer.start()
@@ -176,12 +165,9 @@ private suspend fun useMinioTestContainer(
         }
 }
 
-private suspend fun useElasticTestContainer(
-    env: MutableMap<String, String>,
-    block: suspend () -> Unit
-) {
+private suspend fun useElasticTestContainer(env: MutableMap<String, String>, block: suspend () -> Unit) {
     ElasticsearchContainer(
-        ContainerImages.ELASTICSEARCH
+        ContainerImages.ELASTICSEARCH,
     ).withEnv("xpack.security.transport.ssl.enabled", "false")
         .withEnv("xpack.security.http.ssl.enabled", "false").use { elasticClient ->
             elasticClient.start()
@@ -193,18 +179,15 @@ private suspend fun useElasticTestContainer(
         }
 }
 
-private fun doTest(
-    uuid: String,
-    env: Map<String, String>,
-    block: suspend TestMate.() -> Unit
-) {
+private fun doTest(uuid: String, env: Map<String, String>, block: suspend TestMate.() -> Unit) {
     testApplication {
         environment {
-            config = MapApplicationConfig().apply {
-                env.forEach {
-                    put(it.key, it.value)
+            config =
+                MapApplicationConfig().apply {
+                    env.forEach {
+                        put(it.key, it.value)
+                    }
                 }
-            }
         }
         application {
             module()
@@ -222,9 +205,10 @@ private fun doTest(
         if (port != null) {
             coroutineScope {
                 val task = CompletableDeferred<Unit>()
-                val job = launch(Dispatchers.IO) {
-                    receiveExplainResult(task, port, uuid)
-                }
+                val job =
+                    launch(Dispatchers.IO) {
+                        receiveExplainResult(task, port, uuid)
+                    }
                 task.await()
                 testMate.block()
                 job.cancel()
@@ -235,11 +219,7 @@ private fun doTest(
     }
 }
 
-private suspend fun receiveExplainResult(
-    task: CompletableDeferred<Unit>,
-    port: Int,
-    uuid: String,
-) {
+private suspend fun receiveExplainResult(task: CompletableDeferred<Unit>, port: Int, uuid: String) {
     withContext(Dispatchers.IO) {
         ServerSocket(port).apply {
             soTimeout = 1000
@@ -275,55 +255,55 @@ private suspend fun receiveExplainResult(
 
 fun saveDatabaseExplainResult(explainResult: ExplainResult, uuid: String) {
     val (dialect, statements, result, stackTraceString) = explainResult
-    val file = File(
-        "./build/test/session/$uuid/$dialect/${extractTableNames(
-            statements
-        ).joinToString("/")}/${md5(statements)}.explain"
-    )
+    val file =
+        File(
+            "./build/test/session/$uuid/$dialect/${extractTableNames(
+                statements,
+            ).joinToString("/")}/${md5(statements)}.explain",
+        )
     file.parentFile!!.let {
         if (!it.exists() && !it.mkdirs()) {
-            throw Exception("mkdirs failed ${it.canonicalPath}")
+            throw IllegalStateException("mkdirs failed ${it.canonicalPath}")
         }
     }
-    val newText = "${SqlFormatter.format(statements)}\n\n$result\n\n$stackTraceString"
+    val newText =
+        """
+        ${SqlFormatter.format(statements)}
+
+        $result
+
+        $stackTraceString
+        """.trimIndent()
     if (!file.exists() || file.readText() != newText) {
         file.writeText(newText)
     }
 }
 
-data class SessionTuple(
-    val authKey: AuthKey,
-    val uid: PrimaryKey
-)
+data class SessionTuple(val authKey: AuthKey, val uid: PrimaryKey)
 
-data class SessionOuterTuple<T>(
-    val authKey: AuthKey,
-    val uid: PrimaryKey,
-    val custom: T
-)
+data class SessionOuterTuple<T>(val authKey: AuthKey, val uid: PrimaryKey, val custom: T)
 
 suspend fun <R> TestMate.attachSession(
     algo: AlgoType = AlgoType.P256,
     onReceive: suspend (RoomFrame, UserSessionModel, DefaultClientWebSocketSession) -> Unit = NOOP_ON_RECEIVE,
-    block: suspend UserSessionManager.(SessionTuple) -> R
+    block: suspend UserSessionManager.(SessionTuple) -> R,
 ): SessionOuterTuple<R> {
     val authKey = getAuthKey(algo)
     return getAppSignUpSession(authKey, onReceive, block)
 }
 
-suspend fun TestMate.attachSession(): SessionOuterTuple<Unit> {
-    return attachSession(onReceive = NOOP_ON_RECEIVE, block = {})
-}
+suspend fun TestMate.attachSession(): SessionOuterTuple<Unit> = attachSession(onReceive = NOOP_ON_RECEIVE, block = {})
 
 suspend fun <R> TestMate.getAppSession(
     authKey: AuthKey,
     onReceive: suspend (RoomFrame, UserSessionModel, DefaultClientWebSocketSession) -> Unit,
     block: suspend UserSessionManager.(SessionTuple) -> R,
-    getUserInfo: suspend UserSessionManager.(SimplePassHolder) -> UserInfo
-): SessionOuterTuple<R> {
-    return coroutineScope {
-        val passHolder = SimplePassHolder()
-        val sessionManager = createSimpleUserSessionManager(
+    getUserInfo: suspend UserSessionManager.(SimplePassHolder) -> UserInfo,
+): SessionOuterTuple<R> =
+    coroutineScope {
+    val passHolder = SimplePassHolder()
+    val sessionManager =
+        createSimpleUserSessionManager(
             TEST_WS_URL,
             AcceptAllCookiesStorage(),
             passHolder,
@@ -332,19 +312,18 @@ suspend fun <R> TestMate.getAppSession(
                     defaultClientConfigure(cookiesStorage, model, passHolder)
                 }
             },
-            onReceive
+            onReceive,
         )
-        sessionManager.onBackgroundTask {
-            try {
-                val sessionModel = sessionManager.model
-                val userInfo = sessionManager.getUserInfo(passHolder)
-                val custom = sessionManager.block(SessionTuple(authKey, userInfo.id))
-                sessionManager.signOut().getOrThrow()
-                sessionModel.clear()
-                SessionOuterTuple(authKey, userInfo.id, custom)
-            } finally {
-                sessionManager.client.coroutineContext[Job]?.cancelAndJoin()
-            }
+    sessionManager.onBackgroundTask {
+        try {
+            val sessionModel = sessionManager.model
+            val userInfo = sessionManager.getUserInfo(passHolder)
+            val custom = sessionManager.block(SessionTuple(authKey, userInfo.id))
+            sessionManager.signOut().getOrThrow()
+            sessionModel.clear()
+            SessionOuterTuple(authKey, userInfo.id, custom)
+        } finally {
+            sessionManager.client.coroutineContext[Job]?.cancelAndJoin()
         }
     }
 }
@@ -353,36 +332,31 @@ suspend fun <R> TestMate.getAppSignUpSession(
     authKey: AuthKey,
     onReceive: suspend (RoomFrame, UserSessionModel, DefaultClientWebSocketSession) -> Unit,
     block: suspend UserSessionManager.(SessionTuple) -> R,
-): SessionOuterTuple<R> {
-    return getAppSession(authKey, onReceive, block) {
-        this.userSignUp(authKey, it)
-    }
+): SessionOuterTuple<R> =
+    getAppSession(authKey, onReceive, block) {
+    this.userSignUp(authKey, it)
 }
 
 suspend fun <R> TestMate.getAppSignInSession(
     authKey: AuthKey,
     onReceive: suspend (RoomFrame, UserSessionModel, DefaultClientWebSocketSession) -> Unit,
     block: suspend UserSessionManager.(SessionTuple) -> R,
-): SessionOuterTuple<R> {
-    return getAppSession(authKey, onReceive, block) {
-        this.userSignIn(authKey, it)
-    }
+): SessionOuterTuple<R> =
+    getAppSession(authKey, onReceive, block) {
+    this.userSignIn(authKey, it)
 }
 
 suspend fun <R1, R2> TestMate.loginSession(
     tuple: SessionOuterTuple<R1>,
     onReceive: suspend (RoomFrame, UserSessionModel, DefaultClientWebSocketSession) -> Unit = NOOP_ON_RECEIVE,
-    block: suspend UserSessionManager.(SessionTuple) -> R2
-): SessionOuterTuple<R2> {
-    return getAppSignInSession(tuple.authKey, onReceive = onReceive, block = block)
-}
+    block: suspend UserSessionManager.(SessionTuple) -> R2,
+): SessionOuterTuple<R2> = getAppSignInSession(tuple.authKey, onReceive = onReceive, block = block)
 
-suspend fun <R2> TestMate.noneSession(
-    block: suspend UserSessionManager.() -> R2
-): R2 {
-    return coroutineScope {
-        val passHolder = ConstPassHolder(null)
-        val sessionManager = createSimpleUserSessionManager(
+suspend fun <R2> TestMate.noneSession(block: suspend UserSessionManager.() -> R2): R2 =
+    coroutineScope {
+    val passHolder = ConstPassHolder(null)
+    val sessionManager =
+        createSimpleUserSessionManager(
             TEST_WS_URL,
             AcceptAllCookiesStorage(),
             passHolder,
@@ -390,11 +364,10 @@ suspend fun <R2> TestMate.noneSession(
                 createClient {
                     defaultClientConfigure(cookiesStorage, model, passHolder)
                 }
-            }
+            },
         ) { _, _, _ -> }
-        sessionManager.onBackgroundTask {
-            block()
-        }
+    sessionManager.onBackgroundTask {
+        block()
     }
 }
 
@@ -407,7 +380,7 @@ fun <T> assertListTotalSize(count: Int, result: Result<ListResponse<T>>) {
 }
 
 fun extractTableNames(query: String): List<String> {
-    val regex = Regex("(?i)\\bFROM\\s+([a-zA-Z0-9_.]+)|\\bJOIN\\s+([a-zA-Z0-9_.]+)")
+    val regex = Regex("""(?i)\bFROM\s+([a-zA-Z0-9_.]+)|\bJOIN\s+([a-zA-Z0-9_.]+)""")
     return regex.findAll(query)
         .flatMap { it.groupValues.drop(1).filter { name -> name.isNotEmpty() } }.toList()
 }
@@ -426,7 +399,7 @@ suspend fun <T> UserSessionManager.waitAndSend(block: suspend DefaultClientWebSo
 
 suspend fun <R> TestMate.attachPanelSession(
     algo: AlgoType = AlgoType.P256,
-    block: suspend PanelSessionManager.(SessionTuple) -> R
+    block: suspend PanelSessionManager.(SessionTuple) -> R,
 ): SessionOuterTuple<R> {
     val authKey = getAuthKey(algo)
     return getPanelSession(authKey, block) {
@@ -434,48 +407,37 @@ suspend fun <R> TestMate.attachPanelSession(
     }
 }
 
-suspend fun TestMate.attachPanelSession(): SessionOuterTuple<Unit> {
-    return attachPanelSession { }
-}
+suspend fun TestMate.attachPanelSession(): SessionOuterTuple<Unit> = attachPanelSession { }
 
 private suspend fun <R> TestMate.getPanelSession(
     authKey: AuthKey,
     block: suspend PanelSessionManager.(SessionTuple) -> R,
     getUserInfo: suspend PanelSessionManager.(SimplePassHolder) -> PanelAccountInfo,
-): SessionOuterTuple<R> {
-    return coroutineScope {
-        val passHolder = SimplePassHolder()
-        val sessionManager = createSimplePanelSessionManager(passHolder) { model, cookiesStorage ->
+): SessionOuterTuple<R> =
+    coroutineScope {
+    val passHolder = SimplePassHolder()
+    val sessionManager =
+        createSimplePanelSessionManager(passHolder) { model, cookiesStorage ->
             createClient {
                 defaultClientConfigureForPanel(cookiesStorage, model, passHolder)
             }
         }
-        val sessionModel = sessionManager.model
-        val userInfo = getUserInfo(sessionManager, passHolder)
-        val custom = sessionManager.block(SessionTuple(authKey, userInfo.id))
-        sessionManager.signOut().getOrThrow()
-        sessionModel.clear()
-        SessionOuterTuple(authKey, userInfo.id, custom)
-    }
+    val sessionModel = sessionManager.model
+    val userInfo = getUserInfo(sessionManager, passHolder)
+    val custom = sessionManager.block(SessionTuple(authKey, userInfo.id))
+    sessionManager.signOut().getOrThrow()
+    sessionModel.clear()
+    SessionOuterTuple(authKey, userInfo.id, custom)
 }
 
 suspend fun <R1, R2> TestMate.loginPanelSession(
     tuple: SessionOuterTuple<R1>,
-    block: suspend PanelSessionManager.(SessionTuple) -> R2
-): SessionOuterTuple<R2> {
-    return getPanelSession(tuple.authKey, block = block) {
-        this.panelSignIn(tuple.authKey, it)
-    }
+    block: suspend PanelSessionManager.(SessionTuple) -> R2,
+): SessionOuterTuple<R2> =
+    getPanelSession(tuple.authKey, block = block) {
+    this.panelSignIn(tuple.authKey, it)
 }
 
-suspend fun <R> TestMate.withWorkerBackend(
-    block: suspend (WorkerBackend) -> R
-): R {
-    return block(workerBackend)
-}
+suspend fun <R> TestMate.withWorkerBackend(block: suspend (WorkerBackend) -> R): R = block(workerBackend)
 
-suspend fun <R> TestMate.withCliBackend(
-    block: suspend (WorkerBackend) -> R
-): R {
-    return block(workerBackend)
-}
+suspend fun <R> TestMate.withCliBackend(block: suspend (WorkerBackend) -> R): R = block(workerBackend)

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.openpdf
 
 import com.storyteller_f.a.cloud.pdf.PdfGenerationSpec
@@ -47,36 +51,30 @@ class OpenPdfFontBundle(private val baseFont: Font) {
         getMonoFont().fontName
     }
 
-    /** Base font for normal text */
+    // Base font for normal text
     fun plainFont(): Font = baseFont
 
-    /** Bold font for headings */
+    // Bold font for headings
     fun boldFont(sizeBoost: Float = 0f): Font =
         FontFactory.getFont(baseFont.familyname, baseFont.size + sizeBoost, Font.BOLD)
 
-    /** Italic font for quotes */
-    fun italicFont(): Font =
-        FontFactory.getFont(baseFont.familyname, baseFont.size, Font.ITALIC)
+    // Italic font for quotes
+    fun italicFont(): Font = FontFactory.getFont(baseFont.familyname, baseFont.size, Font.ITALIC)
 
-    /** Styled font (bold, italic, strikethrough, etc.) */
-    fun styledFont(style: Int): Font =
-        FontFactory.getFont(baseFont.familyname, baseFont.size, style)
+    // Styled font (bold, italic, strikethrough, etc.)
+    fun styledFont(style: Int): Font = FontFactory.getFont(baseFont.familyname, baseFont.size, style)
 
-    /** Monospace font for code */
-    fun monoFont(): Font =
-        FontFactory.getFont(monoFontName, baseFont.size, Font.NORMAL)
+    // Monospace font for code
+    fun monoFont(): Font = FontFactory.getFont(monoFontName, baseFont.size, Font.NORMAL)
 
-    /** Monospace font with syntax highlight color */
-    fun monoFontWithColor(color: Color): Font =
-        FontFactory.getFont(monoFontName, baseFont.size, baseFont.style, color)
+    // Monospace font with syntax highlight color
+    fun monoFontWithColor(color: Color): Font = FontFactory.getFont(monoFontName, baseFont.size, baseFont.style, color)
 
-    /** Monospace bold font for syntax highlight */
-    fun monoBoldFont(): Font =
-        FontFactory.getFont(monoFontName, baseFont.size, Font.BOLD)
+    // Monospace bold font for syntax highlight
+    fun monoBoldFont(): Font = FontFactory.getFont(monoFontName, baseFont.size, Font.BOLD)
 
-    /** Link font (underlined, blue) */
-    fun linkFont(): Font =
-        FontFactory.getFont(baseFont.familyname, baseFont.size, Font.UNDERLINE, Color.BLUE)
+    // Link font (underlined, blue)
+    fun linkFont(): Font = FontFactory.getFont(baseFont.familyname, baseFont.size, Font.UNDERLINE, Color.BLUE)
 }
 
 class OpenPdf : PdfService {
@@ -86,7 +84,7 @@ class OpenPdf : PdfService {
         content: String,
         map: Map<String, File>,
         snapshotGeneration: SnapshotGeneration,
-        pdfGenerationSpec: PdfGenerationSpec
+        pdfGenerationSpec: PdfGenerationSpec,
     ): Result<Unit> {
         val saveToFile = snapshotGeneration.path
         return runCatching {
@@ -99,9 +97,9 @@ class OpenPdf : PdfService {
                     val fontBundle = OpenPdfFontBundle(baseFont)
                     val creatorId = if (creatorInfo.aid == null) creatorInfo.address else creatorInfo.aid
                     val authorId = if (authorInfo.aid == null) authorInfo.address else authorInfo.aid
-                    add(Paragraph("pub by $authorId", fontBundle.plainFont()))
+                    add(Paragraph("pub by ${authorId ?: "<none>"}", fontBundle.plainFont()))
                     add(Paragraph("pub at ${pdfGenerationSpec.created}", fontBundle.plainFont()))
-                    add(Paragraph("capture by $creatorId", fontBundle.plainFont()))
+                    add(Paragraph("capture by ${creatorId ?: "<none>"}", fontBundle.plainFont()))
                     add(Paragraph("capture at ${pdfGenerationSpec.captured}", fontBundle.plainFont()))
                     val parsedTree = astNode(content)
                     parsedTree.accept(OpenPdfVisitor(this, fontBundle, content, map))
@@ -112,6 +110,7 @@ class OpenPdf : PdfService {
                 is SnapshotGeneration.KeyStoreGeneration -> {
                     signPdfWithKeyStore(saveToFile, snapshotGeneration, pdfGenerationSpec)
                 }
+
                 is SnapshotGeneration.SimpleGeneration -> Unit
             }
         }
@@ -132,7 +131,7 @@ class OpenPdf : PdfService {
 private fun signPdfWithKeyStore(
     saveToFile: File,
     snapshotGeneration: SnapshotGeneration.KeyStoreGeneration,
-    pdfGenerationSpec: PdfGenerationSpec
+    pdfGenerationSpec: PdfGenerationSpec,
 ) {
     val ks = java.security.KeyStore.getInstance("PKCS12")
     java.io.FileInputStream(snapshotGeneration.keyStorePath).use { input ->
@@ -161,16 +160,17 @@ private fun signPdfWithKeyStore(
                 appearance.setVisibleSignature(
                     Rectangle(sigX, sigY, sigX + sigWidth, sigY + sigHeight),
                     1,
-                    "sig"
+                    "sig",
                 )
 
                 // Use Layer2 to render a table-based signature instead of an image
                 val layer2 = appearance.getLayer(2)
-                val signatureInfo = com.storyteller_f.a.cloud.pdf.SignatureInfo(
-                    signee = (chain[0] as java.security.cert.X509Certificate).subjectX500Principal.name,
-                    timestamp = pdfGenerationSpec.created.toString(),
-                    hint = "Digitally Signed by OpenPDF"
-                )
+                val signatureInfo =
+                    com.storyteller_f.a.cloud.pdf.SignatureInfo(
+                        signee = (chain[0] as java.security.cert.X509Certificate).subjectX500Principal.name,
+                        timestamp = pdfGenerationSpec.created.toString(),
+                        hint = "Digitally Signed by OpenPDF",
+                    )
                 buildSignatureTable(layer2, signatureInfo, appearance.rect)
 
                 appearance.setCrypto(pk, chain, null, org.openpdf.text.pdf.PdfSignatureAppearance.WINCER_SIGNED)
@@ -188,7 +188,7 @@ class OpenPdfVisitor(
     private val document: Document,
     private val fontBundle: OpenPdfFontBundle,
     val content: String,
-    private val map: Map<String, File>
+    private val map: Map<String, File>,
 ) : Visitor {
     private val listTypeStack = mutableListOf<Boolean>() // true = ordered, false = unordered
     private val listCounterStack = mutableListOf<Int>()
@@ -207,8 +207,8 @@ class OpenPdfVisitor(
             }
 
             MarkdownElementTypes.IMAGE -> {
-                val name = extractImageUrl(node, content)
-                document.add(Image.getInstance(map[name]!!.readBytes()))
+                val name = checkNotNull(extractImageUrl(node, content)) { "Markdown image URL is missing" }
+                document.add(Image.getInstance(map.getValue(name).readBytes()))
             }
 
             MarkdownElementTypes.CODE_FENCE -> {
@@ -223,12 +223,19 @@ class OpenPdfVisitor(
 
             // Headings
             MarkdownElementTypes.ATX_1 -> addHeading(node, 1)
+
             MarkdownElementTypes.ATX_2 -> addHeading(node, 2)
+
             MarkdownElementTypes.ATX_3 -> addHeading(node, 3)
+
             MarkdownElementTypes.ATX_4 -> addHeading(node, 4)
+
             MarkdownElementTypes.ATX_5 -> addHeading(node, 5)
+
             MarkdownElementTypes.ATX_6 -> addHeading(node, 6)
+
             MarkdownElementTypes.SETEXT_1 -> addHeading(node, 1, isSetext = true)
+
             MarkdownElementTypes.SETEXT_2 -> addHeading(node, 2, isSetext = true)
 
             // Lists
@@ -276,10 +283,11 @@ class OpenPdfVisitor(
     private fun buildParagraphFromCodeFence(node: ASTNode): Paragraph {
         val paragraph = Paragraph()
         val codeFence = readCodeFence(node, content)
-        val codeHighlights = Highlights.Builder().theme(SyntaxThemes.atom(darkMode = false))
-            .code(codeFence).build().getHighlights().sortedBy {
-                it.location.start
-            }
+        val codeHighlights =
+            Highlights.Builder().theme(SyntaxThemes.atom(darkMode = false))
+                .code(codeFence).build().getHighlights().sortedBy {
+                    it.location.start
+                }
         if (codeHighlights.isEmpty()) {
             paragraph.add(Chunk(codeFence, fontBundle.monoFont()))
             return paragraph
@@ -305,13 +313,14 @@ class OpenPdfVisitor(
         paragraph: Paragraph,
         codeFence: String,
         i: Int,
-        codeHighlights: List<CodeHighlight>
+        codeHighlights: List<CodeHighlight>,
     ) {
-        val highlightFont = if (it is ColorHighlight) {
-            fontBundle.monoFontWithColor(Color(it.rgb))
-        } else {
-            fontBundle.monoBoldFont()
-        }
+        val highlightFont =
+            if (it is ColorHighlight) {
+                fontBundle.monoFontWithColor(Color(it.rgb))
+            } else {
+                fontBundle.monoBoldFont()
+            }
         val endIndex = it.location.end
         paragraph.add(Chunk(codeFence.substring(it.location.start, endIndex), highlightFont))
         if (i != codeHighlights.lastIndex) {
@@ -342,11 +351,12 @@ class OpenPdfVisitor(
         cell.paddingTop = verticalPadding
         cell.paddingBottom = verticalPadding
 
-        cell.cellEvent = RoundedBackgroundCellEvent(
-            radius = 6f,
-            fillColor = Color(245, 245, 245),
-            strokeColor = Color(220, 220, 220)
-        )
+        cell.cellEvent =
+            RoundedBackgroundCellEvent(
+                radius = 6f,
+                fillColor = Color(245, 245, 245),
+                strokeColor = Color(220, 220, 220),
+            )
 
         table.addCell(cell)
         return table
@@ -355,13 +365,9 @@ class OpenPdfVisitor(
     private class RoundedBackgroundCellEvent(
         private val radius: Float,
         private val fillColor: Color,
-        private val strokeColor: Color
+        private val strokeColor: Color,
     ) : PdfPCellEvent {
-        override fun cellLayout(
-            cell: PdfPCell?,
-            rect: Rectangle?,
-            canvas: Array<PdfContentByte?>?
-        ) {
+        override fun cellLayout(cell: PdfPCell?, rect: Rectangle?, canvas: Array<PdfContentByte?>?) {
             if (rect == null || canvas == null) return
             val cb = canvas.getOrNull(PdfPTable.BACKGROUNDCANVAS) ?: return
             cb.saveState()
@@ -401,15 +407,8 @@ class OpenPdfVisitor(
         return table
     }
 
-    private class LeftBarCellEvent(
-        private val barWidth: Float,
-        private val barColor: Color
-    ) : PdfPCellEvent {
-        override fun cellLayout(
-            cell: PdfPCell?,
-            rect: Rectangle?,
-            canvas: Array<PdfContentByte?>?
-        ) {
+    private class LeftBarCellEvent(private val barWidth: Float, private val barColor: Color) : PdfPCellEvent {
+        override fun cellLayout(cell: PdfPCell?, rect: Rectangle?, canvas: Array<PdfContentByte?>?) {
             if (rect == null || canvas == null) return
             val cb = canvas.getOrNull(PdfPTable.BACKGROUNDCANVAS) ?: return
             cb.saveState()
@@ -422,19 +421,21 @@ class OpenPdfVisitor(
 
     private fun addHeading(node: ASTNode, level: Int, isSetext: Boolean = false) {
         val raw = node.getTextInNode(content).toString().trim()
-        val text = if (isSetext) {
-            raw.lineSequence().firstOrNull()?.trim().orEmpty()
-        } else {
-            raw.replace(Regex("^#{1,6}\\s*"), "").trim()
-        }
-        val sizeBoost = when (level) {
-            1 -> 18f
-            2 -> 16f
-            3 -> 14f
-            4 -> 12f
-            5 -> 11f
-            else -> 0f
-        }
+        val text =
+            if (isSetext) {
+                raw.lineSequence().firstOrNull()?.trim().orEmpty()
+            } else {
+                raw.replace(Regex("^#{1,6}\\s*"), "").trim()
+            }
+        val sizeBoost =
+            when (level) {
+                1 -> 18f
+                2 -> 16f
+                3 -> 14f
+                4 -> 12f
+                5 -> 11f
+                else -> 0f
+            }
         document.add(Paragraph(text, fontBundle.boldFont(sizeBoost)))
     }
 
@@ -463,22 +464,24 @@ class OpenPdfVisitor(
         // For simplicity, we assume consistent column count or scan first row.
         // We need a visitor to just count columns first? Or just gather data.
         val rows = mutableListOf<List<ASTNode>>()
-        node.acceptChildren(object : Visitor {
-            override fun visitNode(node: ASTNode) {
-                if (node.type == GFMElementTypes.HEADER) {
-                    node.acceptChildren(this)
-                } else if (node.type == GFMElementTypes.ROW) {
-                    // Actually, let's just accept children of ROW and filter for content.
-                    // In GFM, cells are separated by |.
-                    // The parser structure for ROW contains CELL or text + pipes.
-                    // Let's print raw text for debugging if needed, but here we implement.
-                    // Assuming node.children contains cell nodes or we split by pipe?
-                    // IntelliJ parser creates nodes for cells. checking standard GFM implementation...
-                    // It uses GFMTokenTypes.CELL for content.
-                    rows.add(node.children.filter { it.type.name == "CELL" })
+        node.acceptChildren(
+            object : Visitor {
+                override fun visitNode(node: ASTNode) {
+                    if (node.type == GFMElementTypes.HEADER) {
+                        node.acceptChildren(this)
+                    } else if (node.type == GFMElementTypes.ROW) {
+                        // Actually, let's just accept children of ROW and filter for content.
+                        // In GFM, cells are separated by |.
+                        // The parser structure for ROW contains CELL or text + pipes.
+                        // Let's print raw text for debugging if needed, but here we implement.
+                        // Assuming node.children contains cell nodes or we split by pipe?
+                        // IntelliJ parser creates nodes for cells. checking standard GFM implementation...
+                        // It uses GFMTokenTypes.CELL for content.
+                        rows.add(node.children.filter { it.type.name == "CELL" })
+                    }
                 }
-            }
-        })
+            },
+        )
 
         val colCount = rows.maxOfOrNull { it.size } ?: 1
         val table = PdfPTable(colCount)
@@ -510,11 +513,8 @@ class OpenPdfVisitor(
     }
 }
 
-class ParagraphVisitor(
-    private val paragraph: Paragraph,
-    val content: String,
-    val fontBundle: OpenPdfFontBundle
-) : Visitor {
+class ParagraphVisitor(private val paragraph: Paragraph, val content: String, val fontBundle: OpenPdfFontBundle) :
+    Visitor {
     override fun visitNode(node: ASTNode) {
         when (node.type) {
             MarkdownTokenTypes.TEXT -> {
@@ -524,16 +524,19 @@ class ParagraphVisitor(
 
             // Emphasis & strong
             MarkdownElementTypes.EMPH -> addStyledBlock(node, Font.ITALIC, 1)
+
             MarkdownElementTypes.STRONG -> addStyledBlock(node, Font.BOLD, 2)
 
             // Inline code
             MarkdownElementTypes.CODE_SPAN -> addCodeSpan(node)
+
             MarkdownTokenTypes.WHITE_SPACE -> paragraph.add(" ")
 
             // Links (render as text (url)) to avoid PDF-specific anchors
             MarkdownElementTypes.INLINE_LINK,
             MarkdownElementTypes.FULL_REFERENCE_LINK,
-            MarkdownElementTypes.SHORT_REFERENCE_LINK -> addLink(node)
+            MarkdownElementTypes.SHORT_REFERENCE_LINK,
+            -> addLink(node)
 
             GFMElementTypes.STRIKETHROUGH -> addStyledBlock(node, Font.STRIKETHRU, 2)
         }
@@ -552,7 +555,7 @@ class ParagraphVisitor(
 
     private fun addLink(node: ASTNode) {
         val raw = node.getTextInNode(content).toString()
-        val match = Regex("\\[([^]]+)]\\(([^)]+)\\)").find(raw)
+        val match = Regex("""\[([^]]+)]\(([^)]+)\)""").find(raw)
         val text = match?.groupValues?.getOrNull(1)?.trim()
         val url = match?.groupValues?.getOrNull(2)?.trim()
         if (!text.isNullOrEmpty() && !url.isNullOrEmpty()) {
@@ -585,7 +588,7 @@ class QuoteVisitor(private val content: String, val paragraph: Paragraph, val fo
 private fun buildSignatureTable(
     cb: PdfContentByte,
     signatureInfo: com.storyteller_f.a.cloud.pdf.SignatureInfo,
-    rect: Rectangle
+    rect: Rectangle,
 ) {
     // For PdfTemplate, coordinates start from (0, 0)
     val left = 0f
@@ -597,16 +600,18 @@ private fun buildSignatureTable(
     val labelWidth = width * 0.2f
     val rowHeight = height / 3f
 
-    val baseFont = org.openpdf.text.pdf.BaseFont.createFont(
-        org.openpdf.text.pdf.BaseFont.HELVETICA,
-        org.openpdf.text.pdf.BaseFont.CP1252,
-        org.openpdf.text.pdf.BaseFont.NOT_EMBEDDED
-    )
-    val boldFont = org.openpdf.text.pdf.BaseFont.createFont(
-        org.openpdf.text.pdf.BaseFont.HELVETICA_BOLD,
-        org.openpdf.text.pdf.BaseFont.CP1252,
-        org.openpdf.text.pdf.BaseFont.NOT_EMBEDDED
-    )
+    val baseFont =
+        org.openpdf.text.pdf.BaseFont.createFont(
+            org.openpdf.text.pdf.BaseFont.HELVETICA,
+            org.openpdf.text.pdf.BaseFont.CP1252,
+            org.openpdf.text.pdf.BaseFont.NOT_EMBEDDED,
+        )
+    val boldFont =
+        org.openpdf.text.pdf.BaseFont.createFont(
+            org.openpdf.text.pdf.BaseFont.HELVETICA_BOLD,
+            org.openpdf.text.pdf.BaseFont.CP1252,
+            org.openpdf.text.pdf.BaseFont.NOT_EMBEDDED,
+        )
 
     val fontSize = 8f
 
@@ -659,15 +664,16 @@ private fun buildSignatureTable(
     // Draw badge icon (simple checkmark badge)
     val iconCenterX = left + iconWidth / 2
     val iconCenterY = bottom + height / 2
-    val radius = (iconWidth.coerceAtMost(height) / 2f) * 0.6f
+    val radius = iconWidth.coerceAtMost(height) / 2f * 0.6f
     drawBadgeIcon(cb, iconCenterX, iconCenterY, radius)
 
     // Draw row content
-    val rows = listOf(
-        "Signee" to signatureInfo.signee,
-        "Timestamp" to signatureInfo.timestamp,
-        "Hint" to signatureInfo.hint
-    )
+    val rows =
+        listOf(
+            "Signee" to signatureInfo.signee,
+            "Timestamp" to signatureInfo.timestamp,
+            "Hint" to signatureInfo.hint,
+        )
 
     rows.forEachIndexed { index, (label, value) ->
         val rowY = bottom + height - (index + 1) * rowHeight + rowHeight / 2 - fontSize / 3

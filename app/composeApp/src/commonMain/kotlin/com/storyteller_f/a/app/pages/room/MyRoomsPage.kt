@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.room
 
 import androidx.compose.foundation.background
@@ -52,15 +56,12 @@ fun MyRoomsPage() {
 }
 
 @Composable
-fun RoomList(
-    roomsViewModel: PagingViewModel<RoomInfo>,
-    onClick: ((RoomInfo) -> Unit)? = null
-) {
+fun RoomList(roomsViewModel: PagingViewModel<RoomInfo>, onClick: ((RoomInfo) -> Unit)? = null) {
     StateView(roomsViewModel) { items ->
         LazyColumn(
             modifier = Modifier.fillMaxHeight(),
             contentPadding = LayoutDefaults.contentPadding,
-            verticalArrangement = LayoutDefaults.pagingVerticalArrangement
+            verticalArrangement = LayoutDefaults.pagingVerticalArrangement,
         ) {
             topPrepend(items.loadState)
             pagingItems(items, {
@@ -77,14 +78,15 @@ fun RoomList(
 @Composable
 fun PrimaryRoomCell(
     @PreviewParameter(RoomCellPreviewProvider::class) roomInfo: RoomInfo?,
-    onClick: ((RoomInfo) -> Unit)? = null
+    onClick: ((RoomInfo) -> Unit)? = null,
 ) {
     val appNavFactory = LocalAppNavFactory.current
-    val openRoom = roomInfo?.let { info ->
-        {
-            onClick?.invoke(info) ?: appNavFactory.newAppNav().gotoRoom(info.id, false)
+    val openRoom =
+        roomInfo?.let { info ->
+            {
+                onClick?.invoke(info) ?: appNavFactory.newAppNav().gotoRoom(info.id, false)
+            }
         }
-    }
     val shape = RoundedCornerShape(10.dp)
     RoomCellInternal(
         roomInfo,
@@ -96,7 +98,7 @@ fun PrimaryRoomCell(
             .appiumSemantics(
                 text = roomInfo?.name,
                 onClick = openRoom,
-            )
+            ),
     )
 }
 
@@ -109,16 +111,14 @@ fun UnboundedRoomCell(@PreviewParameter(RoomCellPreviewProvider::class) roomInfo
 
 class RoomCellPreviewProvider : PreviewParameterProvider<RoomInfo> {
     override val values: Sequence<RoomInfo>
-        get() = sequenceOf(
-            RoomInfo.EMPTY.copy(name = "Room Name", latestTopic = 1, lastRead = 0)
-        )
+        get() =
+            sequenceOf(
+                RoomInfo.EMPTY.copy(name = "Room Name", latestTopic = 1, lastRead = 0),
+            )
 }
 
 @Composable
-private fun RoomCellInternal(
-    roomInfo: RoomInfo?,
-    modifier: Modifier = Modifier
-) {
+private fun RoomCellInternal(roomInfo: RoomInfo?, modifier: Modifier = Modifier) {
     BadgedBox(badge = {
         if (roomInfo != null && roomInfo.hasUnread) {
             Badge(containerColor = Color.Red)
@@ -154,7 +154,7 @@ private fun RowScope.CommunityIconInRoomCellInternal(model: IdCommunityViewModel
     Spacer(modifier = Modifier.weight(1f))
     CommunityIconWithDialog(
         communityInfo,
-        showDialog = showCommunityDialog
+        showDialog = showCommunityDialog,
     ) {
         showCommunityDialog = it
     }

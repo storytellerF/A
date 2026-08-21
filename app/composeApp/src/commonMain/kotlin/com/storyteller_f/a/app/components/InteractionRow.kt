@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.components
 
 import androidx.compose.material.icons.Icons
@@ -22,11 +26,7 @@ import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.TopicInfo
 
 @Composable
-fun InteractionRow(
-    topicInfo: TopicInfo,
-    startAddReaction: () -> Unit,
-    startAddComment: () -> Unit
-) {
+fun InteractionRow(topicInfo: TopicInfo, startAddReaction: () -> Unit, startAddComment: () -> Unit) {
     val reactions = topicInfo.extension?.reactions
     InteractionRowInternal(reactions.orEmpty(), topicInfo, startAddComment, startAddReaction)
 }
@@ -37,7 +37,7 @@ fun InteractionRowInternal(
     data: List<ReactionInfo>,
     topicInfo: TopicInfo,
     startAddComment: () -> Unit,
-    startAddReaction: () -> Unit
+    startAddReaction: () -> Unit,
 ) {
     val appNavFactory = LocalAppNavFactory.current
     val hasComment = topicInfo.hasComment
@@ -64,7 +64,7 @@ fun InteractionRowInternal(
                 Pill(
                     commentCount.toString(),
                     selected = hasComment,
-                    icon = Icons.AutoMirrored.Outlined.Comment
+                    icon = Icons.AutoMirrored.Outlined.Comment,
                 ) {
                     startAddComment()
                 }
@@ -74,7 +74,7 @@ fun InteractionRowInternal(
                     EmojiCell(info, topicInfo)
                 }
             }
-        }
+        },
     )
 }
 
@@ -96,20 +96,23 @@ private fun EmojiRow(
 
         while (true) {
             // 提前计算overflow 的尺寸
-            val overflowPlaceable = subcompose("overflow$emojiUsed") {
-                overflow(emojiUsed)
-            }.map {
-                it.measure(constraints)
-            }
+            val overflowPlaceable =
+                subcompose("overflow$emojiUsed") {
+                    overflow(emojiUsed)
+                }.map {
+                    it.measure(constraints)
+                }
             val spacing = horizontalPx.roundToPx() * (overflowPlaceable.size - 1)
             if (currentWidth + overflowPlaceable.sumOf { it.width } + spacing <= maxWidth) {
                 currentRow.addAll(overflowPlaceable)
                 break
             } else if (firstMeasureResult.first.size < 2) {
                 // 超过了当前行，但是现在只有一行，选择跳到下一行
-                firstMeasureResult.first.add(mutableListOf<Placeable>().apply {
-                    addAll(overflowPlaceable)
-                })
+                firstMeasureResult.first.add(
+                    mutableListOf<Placeable>().apply {
+                        addAll(overflowPlaceable)
+                    },
+                )
                 break
             }
             // 不停的删除最后一行的emoji 直到overflow 可以加入进来
@@ -119,9 +122,10 @@ private fun EmojiRow(
             emojiUsed--
         }
 
-        val height = firstMeasureResult.first.sumOf {
-            it.maxOf { placeable -> placeable.height }
-        } + verticalPx.roundToPx() * (firstMeasureResult.first.size - 1)
+        val height =
+            firstMeasureResult.first.sumOf {
+                it.maxOf { placeable -> placeable.height }
+            } + verticalPx.roundToPx() * (firstMeasureResult.first.size - 1)
 
         layout(maxWidth, height) {
             var yOffset = 0
@@ -142,7 +146,7 @@ private fun SubcomposeMeasureScope.measureFirstStage(
     constraints: Constraints,
     maxWidth: Int,
     horizontalPx: Dp,
-    content: @Composable (Int) -> Unit
+    content: @Composable (Int) -> Unit,
 ): Triple<MutableList<MutableList<Placeable>>, Int, Int> {
     val rows = mutableListOf<MutableList<Placeable>>()
     var currentRow = mutableListOf<Placeable>()
@@ -151,14 +155,16 @@ private fun SubcomposeMeasureScope.measureFirstStage(
     var emojiUsedCount = 0
 
     while (index < data.size.coerceAtLeast(1) && rows.size < 2) {
-        val placeableList = subcompose("emoji_$index") {
-            content(index)
-        }.map {
-            it.measure(constraints)
-        }
-        val newWidth = placeableList.sumOf {
-            it.width
-        } + horizontalPx.roundToPx() * (placeableList.size - 1)
+        val placeableList =
+            subcompose("emoji_$index") {
+                content(index)
+            }.map {
+                it.measure(constraints)
+            }
+        val newWidth =
+            placeableList.sumOf {
+                it.width
+            } + horizontalPx.roundToPx() * (placeableList.size - 1)
 
         val nextWidth =
             if (currentRow.isEmpty()) newWidth else currentWidth + horizontalPx.roundToPx() + newWidth
@@ -180,12 +186,13 @@ private fun SubcomposeMeasureScope.measureFirstStage(
                 // 新的一行作为第二行，并且把计算好的placeable 放进list 中，防止重复测量
                 index++
                 emojiUsedCount++
-                currentRow = mutableListOf<Placeable>().apply {
-                    addAll(placeableList)
-                }
+                currentRow =
+                    mutableListOf<Placeable>().apply {
+                        addAll(placeableList)
+                    }
                 currentWidth = placeableList.sumOf {
                     it.width
-                } + (horizontalPx.roundToPx() * (placeableList.size - 1))
+                } + horizontalPx.roundToPx() * (placeableList.size - 1)
             }
 
             else -> {
@@ -200,19 +207,17 @@ private fun SubcomposeMeasureScope.measureFirstStage(
     if (currentRow.isNotEmpty()) {
         rows.add(currentRow)
     }
-    val lastRowWidth = rows.last().let { list ->
-        list.sumOf {
-            it.width
-        } + (list.size - 1).coerceAtLeast(0) * horizontalPx.roundToPx()
-    }
+    val lastRowWidth =
+        rows.last().let { list ->
+            list.sumOf {
+                it.width
+            } + (list.size - 1).coerceAtLeast(0) * horizontalPx.roundToPx()
+        }
     return Triple(rows, lastRowWidth, emojiUsedCount)
 }
 
 @Composable
-private fun EmojiCell(
-    info: ReactionInfo,
-    topicInfo: TopicInfo
-) {
+private fun EmojiCell(info: ReactionInfo, topicInfo: TopicInfo) {
     val topicId = topicInfo.id
     val emoji = info.emoji
     val hasReacted = info.hasReacted
@@ -229,7 +234,7 @@ private fun EmojiCell(
             }
         }",
         emoji = emoji,
-        selected = hasReacted
+        selected = hasReacted,
     ) {
         globalTask.launch(key) {
             use {

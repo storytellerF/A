@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client_lib
 
 import io.ktor.client.*
@@ -5,11 +9,10 @@ import io.ktor.client.engine.darwin.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.serialization.kotlinx.json.*
 
-actual fun getClient(block: HttpClientConfig<*>.() -> Unit): HttpClient {
-    return HttpClient(Darwin) {
-        install(ContentNegotiation) {
-            json()
-        }
-        block()
+actual fun getClient(block: HttpClientConfig<*>.() -> Unit): HttpClient =
+    HttpClient(Darwin) {
+    install(ContentNegotiation) {
+        json()
     }
+    block()
 }

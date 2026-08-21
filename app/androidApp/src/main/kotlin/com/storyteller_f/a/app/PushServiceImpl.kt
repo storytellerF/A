@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app
 
 import android.Manifest
@@ -17,8 +21,9 @@ import org.unifiedpush.android.connector.UnifiedPush
 import org.unifiedpush.android.connector.data.PushEndpoint
 import org.unifiedpush.android.connector.data.PushMessage
 
-class PushServiceImpl : PushService(), LifecycleOwner {
-
+class PushServiceImpl :
+    PushService(),
+    LifecycleOwner {
     override fun onCreate() {
         super.onCreate()
         registry.currentState = Lifecycle.State.STARTED
@@ -32,12 +37,13 @@ class PushServiceImpl : PushService(), LifecycleOwner {
         val notificationManager = getOrCreateNotificationChannel(this, channel)
         if (ActivityCompat.checkSelfPermission(
                 this,
-                Manifest.permission.POST_NOTIFICATIONS
+                Manifest.permission.POST_NOTIFICATIONS,
             ) == PackageManager.PERMISSION_GRANTED
         ) {
-            val notification = NotificationCompat.Builder(this, channel)
-                .setSmallIcon(com.storyteller_f.a.app.android_library.R.drawable.ic_notify)
-                .setContentTitle("New message")
+            val notification =
+                NotificationCompat.Builder(this, channel)
+                    .setSmallIcon(com.storyteller_f.a.app.android_library.R.drawable.ic_notify)
+                    .setContentTitle("New message")
             notificationManager.notify(notifyId.getAndIncrement(), notification.build())
         }
     }
@@ -46,7 +52,7 @@ class PushServiceImpl : PushService(), LifecycleOwner {
         Napier.i(tag = "push") {
             "receive endpoint $endpoint"
         }
-        (application as AApplication)
+        application as AApplication
         val uiViewModel = uiViewModel
         val accountInstance = uiViewModel.instance.value
         lifecycle.coroutineScope.launch {

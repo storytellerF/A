@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.core
 
 import kotlinx.coroutines.CoroutineScope
@@ -5,17 +9,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-sealed class LoadingState {
-    data object Loading : LoadingState()
-    data class Processing(val value: Long, val total: Long) : LoadingState()
-    data class Error(val e: Throwable) : LoadingState()
-    data object Done : LoadingState()
+sealed interface LoadingState {
+    data object Loading : LoadingState
+    data class Processing(val value: Long, val total: Long) : LoadingState
+    data class Error(val e: Throwable) : LoadingState
+    data object Done : LoadingState
 }
 
-suspend fun <T> LoadingHandler<T>.request(
-    onSave: suspend (T) -> Unit,
-    service: suspend () -> Result<T>,
-) {
+suspend fun <T> LoadingHandler<T>.request(onSave: suspend (T) -> Unit, service: suspend () -> Result<T>) {
     if (state.value is LoadingState.Loading) return
     state.markLoading()
     service().onSuccess { res ->
@@ -48,8 +49,7 @@ class FixedLoadingHandler<T> : LoadingHandler<T> {
     override fun refresh() = Unit
 }
 
-class SimpleLoadingHandler<T>(val scope: CoroutineScope, val loader: suspend () -> Result<T>) :
-    LoadingHandler<T> {
+class SimpleLoadingHandler<T>(val scope: CoroutineScope, val loader: suspend () -> Result<T>) : LoadingHandler<T> {
     override val state: MutableStateFlow<LoadingState?> = MutableStateFlow(null)
     override val data: MutableStateFlow<T?> = MutableStateFlow(null)
 

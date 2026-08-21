@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.panel.pages
 
 import androidx.compose.foundation.layout.Column
@@ -26,6 +30,7 @@ import com.storyteller_f.a.panel.LocalPanelGlobalDialog
 import com.storyteller_f.a.panel.LocalPanelUiViewModel
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.AlgoType
+import com.storyteller_f.shared.utils.cancellableRunCatching
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
@@ -35,17 +40,19 @@ import kotlinx.coroutines.launch
 class PanelInputViewModel : ViewModel() {
     val privateKey = MutableStateFlow("")
 
-    val publicKey = privateKey.map {
-        getAlgo(AlgoType.P256).run {
-            getDerPublicKeyFromPrivateKey(it).getOrNull()
-        }
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+    val publicKey =
+        privateKey.map {
+            getAlgo(AlgoType.P256).run {
+                getDerPublicKeyFromPrivateKey(it).getOrNull()
+            }
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    val address = publicKey.map {
-        getAlgo(AlgoType.P256).run {
-            it?.let { derPublicKeyStr -> calcAddress(derPublicKeyStr).getOrNull() }
-        }
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+    val address =
+        publicKey.map {
+            getAlgo(AlgoType.P256).run {
+                it?.let { derPublicKeyStr -> calcAddress(derPublicKeyStr).getOrNull() }
+            }
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     fun updatePrivateKey(privateKey: String) {
         this.privateKey.value = privateKey
@@ -74,20 +81,22 @@ fun PanelInputPage(back: () -> Unit) {
             scope.launch {
                 dialogController.useResult {
                     request {
-                        runCatching {
+                        cancellableRunCatching {
                             val algo = getAlgo(AlgoType.P256)
                             val derPriKey = algo.getDerPrivateKey(privateKey).getOrThrow()
                             val derPubKey =
                                 algo.getDerPublicKeyFromPrivateKey(privateKey).getOrThrow()
-                            val signResult = getPanelUserSignInPass(
-                                AuthKey.P256(privateKey, derPriKey, derPubKey),
-                            )
-                            signResult to historyFactory.addSession(
-                                RawUserPassInfo(
-                                    signResult.address,
-                                    signResult.authKey,
+                            val signResult =
+                                getPanelUserSignInPass(
+                                    AuthKey.P256(privateKey, derPriKey, derPubKey),
                                 )
-                            )
+                            signResult to
+                                historyFactory.addSession(
+                                    RawUserPassInfo(
+                                        signResult.address,
+                                        signResult.authKey,
+                                    ),
+                                )
                         }
                     }
                 }.onSuccess { (it, pass) ->
@@ -104,7 +113,7 @@ fun PanelInputPage(back: () -> Unit) {
                 enableRandom = false,
                 update = {
                     viewModel.updatePrivateKey(it)
-                }
+                },
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Button(startSign) {

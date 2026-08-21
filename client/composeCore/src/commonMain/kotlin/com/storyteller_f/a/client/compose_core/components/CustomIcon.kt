@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.components
 
 import androidx.compose.foundation.clickable
@@ -44,9 +48,9 @@ fun CustomIcon(icon: IconRes, onClick: (() -> Unit)? = null) {
                     FontIcon(
                         icon.char,
                         icon.description,
-                        modifier = Modifier.clickableIfNotNull(onClick).size(20.dp)
+                        modifier = Modifier.clickableIfNotNull(onClick).size(20.dp),
                     )
-                }
+                },
             )
         }
 
@@ -54,7 +58,7 @@ fun CustomIcon(icon: IconRes, onClick: (() -> Unit)? = null) {
             Icon(
                 imageVector = icon.vector,
                 contentDescription = icon.description,
-                modifier = Modifier.clickableIfNotNull(onClick).size(20.dp)
+                modifier = Modifier.clickableIfNotNull(onClick).size(20.dp),
             )
         }
 

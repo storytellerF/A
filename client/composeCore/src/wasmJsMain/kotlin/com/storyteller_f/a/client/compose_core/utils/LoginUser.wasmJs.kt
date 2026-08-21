@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.utils
 
 import com.russhwolf.settings.Settings
@@ -6,13 +10,12 @@ import kotlinx.browser.localStorage
 import kotlinx.browser.window
 import kotlinx.serialization.json.Json
 
-actual fun buildSessionHistoryFactory(settings: Settings): SessionHistoryManager {
-    return DefaultSessionHistoryManager(settings)
-}
+actual fun buildSessionHistoryFactory(settings: Settings): SessionHistoryManager =
+    DefaultSessionHistoryManager(
+    settings,
+)
 
-actual fun createSettings(name: String): Settings {
-    return PrefixedSettings(StorageSettings(), name)
-}
+actual fun createSettings(name: String): Settings = PrefixedSettings(StorageSettings(), name)
 
 actual fun readInjectedSessionFromPrivateStorageOrNull(): ConvertedRawUserPassInfo? {
     val serializedSession = localStorage.getItem(APPIUM_INJECTED_SESSION_KEY) ?: return null

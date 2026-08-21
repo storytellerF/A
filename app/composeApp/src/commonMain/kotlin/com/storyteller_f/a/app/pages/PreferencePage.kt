@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages
 
 import androidx.compose.foundation.layout.Arrangement
@@ -47,7 +51,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun PreferencePage() {
     Column(
-        Modifier.fillMaxSize().verticalScroll(rememberScrollState())
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
     ) {
         HomeStartDestinationPreferenceItem()
         TranslateModelPreferenceItem()
@@ -60,7 +64,8 @@ private fun HomeStartDestinationPreferenceItem() {
         key = HOME_START_DESTINATION_PREFERENCE_KEY,
         defaultValue = HOME_START_DESTINATION_WORLD,
         title = stringResource(Res.string.home_start_destination),
-        items = mapOf(
+        items =
+        mapOf(
             stringResource(Res.string.home_start_destination_world) to HOME_START_DESTINATION_WORLD,
             stringResource(Res.string.home_start_destination_communities) to HOME_START_DESTINATION_COMMUNITIES,
             stringResource(Res.string.home_start_destination_rooms) to HOME_START_DESTINATION_ROOMS,
@@ -78,9 +83,10 @@ private fun HomeStartDestinationPreferenceItem() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TranslateModelPreferenceItem() {
-    val gpt = remember {
-        buildGPT()
-    }
+    val gpt =
+        remember {
+            buildGPT()
+        }
     var showSheet by remember {
         mutableStateOf(false)
     }
@@ -93,7 +99,8 @@ private fun TranslateModelPreferenceItem() {
         key = "gpt_model",
         defaultValue = "",
         title = stringResource(Res.string.translate_model),
-        items = models.associate {
+        items =
+        models.associate {
             it.value to it.key
         },
         summary = {
@@ -128,13 +135,16 @@ private fun TranslateModelPreferenceItem() {
                     Text(stringResource(Res.string.try_button))
                 }
             }
-        }
+        },
     )
 
     TopicTranslateSheet(
         showSheet,
         sheetState,
-        TopicInfo.EMPTY.copy(content = TopicContent.Plain("""Jonas, a 12-year-old boy, lives in 
+        TopicInfo.EMPTY.copy(
+            content =
+            TopicContent.Plain(
+                """Jonas, a 12-year-old boy, lives in
             |a community isolated from all except a few similar towns, 
             |where everyone has an assigned role. 
             |With the annual Ceremony of Twelve upcoming, 
@@ -143,7 +153,10 @@ private fun TranslateModelPreferenceItem() {
             |a Nurturer (who cares for the infants in the Community) and his mother, 
             |a high-ranking official in the Department of Justice. 
             |He is told by his parents that the Elders, 
-            |who assign the children their careers, are always right. """.trimMargin()))
+            |who assign the children their careers, are always right.
+                """.trimMargin(),
+            ),
+        ),
     ) {
         showSheet = false
     }

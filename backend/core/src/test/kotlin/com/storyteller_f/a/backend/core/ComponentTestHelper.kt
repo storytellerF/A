@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.core
 
 import com.storyteller_f.a.backend.core.service.ObjectStorageService
@@ -11,29 +15,27 @@ import java.io.File
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-fun buildMemorySearchEnv(): MergedEnv {
-    return MergedEnv(
-        listOf(
-            mapOf(
-                "SEARCH_SERVICE" to "lucene",
-                "LUCENE_BASE_PATH" to "",
-                "BUILD_TYPE" to "test"
-            )
-        )
-    )
-}
+fun buildMemorySearchEnv(): MergedEnv =
+    MergedEnv(
+    listOf(
+        mapOf(
+            "SEARCH_SERVICE" to "lucene",
+            "LUCENE_BASE_PATH" to "",
+            "BUILD_TYPE" to "test",
+        ),
+    ),
+)
 
-fun buildMemoryOssEnv(): MergedEnv {
-    return MergedEnv(
-        listOf(
-            mapOf(
-                "MEDIA_SERVICE" to "filesystem",
-                "FILE_SYSTEM_MEDIA_PATH" to "",
-                "SERVER_URL" to "http://localhost"
-            )
-        )
-    )
-}
+fun buildMemoryOssEnv(): MergedEnv =
+    MergedEnv(
+    listOf(
+        mapOf(
+            "MEDIA_SERVICE" to "filesystem",
+            "FILE_SYSTEM_MEDIA_PATH" to "",
+            "SERVER_URL" to "http://localhost",
+        ),
+    ),
+)
 
 @OptIn(ExperimentalUuidApi::class)
 fun buildMemoryDatabaseConnection(): DatabaseConnection {
@@ -41,7 +43,7 @@ fun buildMemoryDatabaseConnection(): DatabaseConnection {
     val h2File = File("./build/test/session/$uuid/h2/default")
     h2File.parentFile!!.let {
         if (!it.exists() && !it.mkdirs()) {
-            throw Exception("mkdirs failed ${it.canonicalPath}")
+            throw IllegalStateException("mkdirs failed ${it.canonicalPath}")
         }
     }
     val url = "r2dbc:h2:file:///${h2File.path.replace("\\", "/")}"
@@ -55,18 +57,19 @@ fun useElasticSearchContainer(block: (MergedEnv) -> Unit) {
         .withEnv("xpack.security.http.ssl.enabled", "false")
         .use { container ->
             container.start()
-            val env = MergedEnv(
-                listOf(
-                    mapOf(
-                        "SEARCH_SERVICE" to "elastic",
-                        "ELASTIC_NAME" to "elastic",
-                        "ELASTIC_PASSWORD" to "changeme",
-                        "ELASTIC_URL" to "http://${container.httpHostAddress}",
-                        "ELASTIC_CERT_FILE" to "",
-                        "BUILD_TYPE" to "test"
-                    )
+            val env =
+                MergedEnv(
+                    listOf(
+                        mapOf(
+                            "SEARCH_SERVICE" to "elastic",
+                            "ELASTIC_NAME" to "elastic",
+                            "ELASTIC_PASSWORD" to "changeme",
+                            "ELASTIC_URL" to "http://${container.httpHostAddress}",
+                            "ELASTIC_CERT_FILE" to "",
+                            "BUILD_TYPE" to "test",
+                        ),
+                    ),
                 )
-            )
             block(env)
         }
 }
@@ -75,16 +78,17 @@ fun useMinioContainer(block: (MergedEnv) -> Unit) {
     MinIOContainer(ContainerImages.MINIO)
         .use { container ->
             container.start()
-            val env = MergedEnv(
-                listOf(
-                    mapOf(
-                        "MEDIA_SERVICE" to "minio",
-                        "MINIO_URL" to container.s3URL,
-                        "MINIO_NAME" to container.userName,
-                        "MINIO_PASS" to container.password,
-                    )
+            val env =
+                MergedEnv(
+                    listOf(
+                        mapOf(
+                            "MEDIA_SERVICE" to "minio",
+                            "MINIO_URL" to container.s3URL,
+                            "MINIO_NAME" to container.userName,
+                            "MINIO_PASS" to container.password,
+                        ),
+                    ),
                 )
-            )
             block(env)
         }
 }
@@ -94,12 +98,13 @@ fun usePostgresContainer(block: (DatabaseConnection) -> Unit) {
     PostgreSQLContainer(ContainerImages.POSTGRESQL)
         .use { container ->
             container.start()
-            val connection = DatabaseConnection(
-                container.jdbcUrl.replace("jdbc", "r2dbc"),
-                "postgresql",
-                container.username,
-                container.password
-            )
+            val connection =
+                DatabaseConnection(
+                    container.jdbcUrl.replace("jdbc", "r2dbc"),
+                    "postgresql",
+                    container.username,
+                    container.password,
+                )
             block(connection)
         }
 }

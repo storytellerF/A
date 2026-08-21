@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.server
 
 import com.storyteller_f.a.api.PaginationQuery
@@ -11,9 +15,9 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class AdminFileTest {
-
     @Test
-    fun `admin search files by name`() = test {
+    fun `admin search files by name`() =
+        test {
         val outer = attachPanelSession()
         attachSession {
             upload(it.uid ob ObjectType.USER, getUploadDataFromText("file1", "test1.txt")).getOrThrow()
@@ -23,23 +27,26 @@ class AdminFileTest {
 
         loginPanelSession(outer) {
             // 按名称搜索
-            val testFiles = searchFiles(
-                SearchQuery(word = "test")
-            ).getOrThrow().data
+            val testFiles =
+                searchFiles(
+                    SearchQuery(word = "test"),
+                ).getOrThrow().data
             assertEquals(2, testFiles.size)
             kotlin.test.assertTrue(testFiles.all { it.name.contains("test") })
 
             // 搜索特定文件
-            val docFiles = searchFiles(
-                SearchQuery(word = "document")
-            ).getOrThrow().data
+            val docFiles =
+                searchFiles(
+                    SearchQuery(word = "document"),
+                ).getOrThrow().data
             assertEquals(1, docFiles.size)
             assertEquals("document.txt", docFiles.first().name)
         }
     }
 
     @Test
-    fun `admin search files across multiple users`() = test {
+    fun `admin search files across multiple users`() =
+        test {
         val outer = attachPanelSession()
         attachSession {
             upload(it.uid ob ObjectType.USER, getUploadDataFromText("user1 file", "user1.txt")).getOrThrow()
@@ -50,9 +57,10 @@ class AdminFileTest {
 
         loginPanelSession(outer) {
             // 管理员应该能搜索所有用户的文件
-            val allUserFiles = searchFiles(
-                SearchQuery(word = "user")
-            ).getOrThrow().data
+            val allUserFiles =
+                searchFiles(
+                    SearchQuery(word = "user"),
+                ).getOrThrow().data
             assertEquals(2, allUserFiles.size)
 
             val fileNames = allUserFiles.map { it.name }.toSet()
@@ -62,7 +70,8 @@ class AdminFileTest {
     }
 
     @Test
-    fun `admin search files with empty keyword returns all files`() = test {
+    fun `admin search files with empty keyword returns all files`() =
+        test {
         val outer = attachPanelSession()
         attachSession {
             upload(it.uid ob ObjectType.USER, getUploadDataFromText("content1", "file1.txt")).getOrThrow()

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.utils
 
 import android.content.Context
@@ -12,9 +16,12 @@ import com.storyteller_f.a.api.CustomApi
 import com.storyteller_f.a.client.core.RawUserPassInfo
 import com.storyteller_f.a.client.core.UserPass
 import com.storyteller_f.shared.CryptoJvm
+import com.storyteller_f.shared.Type2Algo
+import com.storyteller_f.shared.encryptDataByAES
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.getAppContextRefValue
 import com.storyteller_f.shared.model.AlgoType
+import com.storyteller_f.shared.utils.cancellableRunCatching
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -29,15 +36,18 @@ import java.security.spec.PKCS8EncodedKeySpec
 import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
+import kotlin.io.encoding.ExperimentalEncodingApi
 
 private val injectedSessionJson = Json { ignoreUnknownKeys = true }
 
 actual fun buildSessionHistoryFactory(settings: Settings): SessionHistoryManager {
     if (runCatching {
             Cipher.getInstance("ECIES", "AndroidKeyStore")
-        }.isSuccess && runCatching {
+        }.isSuccess &&
+        runCatching {
             Signature.getInstance("SHA256withECDSA")
-        }.isSuccess) {
+        }.isSuccess
+    ) {
         try {
             val keyStore = KeyStore.getInstance("AndroidKeyStore")
             keyStore.load(null)
@@ -53,46 +63,44 @@ actual fun buildSessionHistoryFactory(settings: Settings): SessionHistoryManager
 
 data class AndroidKeyStoreUserPass(private val alias: String) : UserPass {
     @OptIn(ExperimentalStdlibApi::class)
-    override suspend fun signature(data: String): Result<String> {
-        return runCatching {
-            val keyStore = KeyStore.getInstance("AndroidKeyStore")
-            withContext(Dispatchers.IO) {
-                keyStore.load(null)
-            }
-
-            // 获取私钥
-            val privateKey = keyStore.getKey(alias, null) as PrivateKey
-
-            // 初始化签名对象
-            val signature = Signature.getInstance("SHA256withECDSA")
-            signature.initSign(privateKey)
-            signature.update(data.encodeToByteArray())
-
-            signature.sign().toHexString()
+    override suspend fun signature(data: String): Result<String> =
+        cancellableRunCatching {
+        val keyStore = KeyStore.getInstance("AndroidKeyStore")
+        withContext(Dispatchers.IO) {
+            keyStore.load(null)
         }
+
+        // 获取私钥
+        val privateKey = keyStore.getKey(alias, null) as PrivateKey
+
+        // 初始化签名对象
+        val signature = Signature.getInstance("SHA256withECDSA")
+        signature.initSign(privateKey)
+        signature.update(data.encodeToByteArray())
+
+        signature.sign().toHexString()
     }
 
     @OptIn(ExperimentalStdlibApi::class)
-    override suspend fun verify(signature: String, data: String): Result<Boolean> {
-        return runCatching {
-            val keyStore = KeyStore.getInstance("AndroidKeyStore")
-            withContext(Dispatchers.IO) {
-                keyStore.load(null)
-            }
-
-            // 获取公钥
-            val publicKey = keyStore.getCertificate(alias).publicKey
-
-            // 初始化签名验证对象
-            val signature1 = Signature.getInstance("SHA256withECDSA")
-            signature1.initVerify(publicKey)
-            signature1.update(data.encodeToByteArray())
-            signature1.verify(signature.hexToByteArray())
+    override suspend fun verify(signature: String, data: String): Result<Boolean> =
+        cancellableRunCatching {
+        val keyStore = KeyStore.getInstance("AndroidKeyStore")
+        withContext(Dispatchers.IO) {
+            keyStore.load(null)
         }
+
+        // 获取公钥
+        val publicKey = keyStore.getCertificate(alias).publicKey
+
+        // 初始化签名验证对象
+        val signature1 = Signature.getInstance("SHA256withECDSA")
+        signature1.initVerify(publicKey)
+        signature1.update(data.encodeToByteArray())
+        signature1.verify(signature.hexToByteArray())
     }
 
-    override suspend fun decrypt(encrypted: ByteArray, encryptedAesKey: ByteArray): Result<String> {
-        return runCatching {
+    override suspend fun decrypt(encrypted: ByteArray, encryptedAesKey: ByteArray): Result<String> =
+        cancellableRunCatching {
             // 获取 Android Keystore 实例
             val keyStore = KeyStore.getInstance("AndroidKeyStore")
             withContext(Dispatchers.IO) {
@@ -123,7 +131,6 @@ data class AndroidKeyStoreUserPass(private val alias: String) : UserPass {
             // 转换为字符串并返回
             String(decryptedData)
         }
-    }
 
     @OptIn(ExperimentalStdlibApi::class)
     override suspend fun address(): Result<String> {
@@ -133,24 +140,69 @@ data class AndroidKeyStoreUserPass(private val alias: String) : UserPass {
             keyStore.load(null)
         }
 
-        val derPublicKeyStr = keyStore.getCertificate("default").publicKey.encoded.toHexString()
-        println("public $derPublicKeyStr")
+        val derPublicKeyStr = keyStore.getCertificate(alias).publicKey.encoded.toHexString()
         return getAlgo(AlgoType.P256).calcAddress(derPublicKeyStr)
     }
 
+    @OptIn(ExperimentalStdlibApi::class)
     override suspend fun decryptChildAccount(
         encryptedPrivateKey: String,
         encryptedAesKey: String,
         childAlgoType: AlgoType,
-        encryptedEncryptionPrivateKey: String?
-    ): Result<Pair<String, String?>> {
-        TODO("Not yet implemented")
+        encryptedEncryptionPrivateKey: String?,
+    ): Result<Pair<String, String?>> =
+        cancellableRunCatching {
+        val encryptedKey = encryptedAesKey.hexToByteArray()
+        val privateKey = decrypt(encryptedPrivateKey.hexToByteArray(), encryptedKey).getOrThrow()
+        val encryptionPrivateKey =
+            encryptedEncryptionPrivateKey?.let {
+                decrypt(it.hexToByteArray(), encryptedKey).getOrThrow()
+            }
+        privateKey to encryptionPrivateKey
     }
 
+    @OptIn(ExperimentalEncodingApi::class, ExperimentalStdlibApi::class)
     override suspend fun encryptChildAccount(
-        childAlgoType: AlgoType
-    ): Result<CustomApi.Accounts.ChildAccounts.AddChildAccountRequest> {
-        TODO("Not yet implemented")
+        childAlgoType: AlgoType,
+    ): Result<CustomApi.Accounts.ChildAccounts.AddChildAccountRequest> =
+        cancellableRunCatching {
+        val childAlgo = getAlgo(childAlgoType)
+        val (pemPrivateKey, pemPublicKey) = childAlgo.generatePemKeyPair().getOrThrow()
+        val derPrivateKey = childAlgo.getDerPrivateKey(pemPrivateKey).getOrThrow()
+        val derPublicKey = childAlgo.getDerPublicKeyFromPem(pemPublicKey).getOrThrow()
+        val (derEncryptionPrivateKey, derEncryptionPublicKey) =
+            if (childAlgoType == AlgoType.DILITHIUM) {
+                val encryptionAlgo = childAlgo.encryptionAlgo as Type2Algo
+                val (encryptionPrivateKey, _) = encryptionAlgo.generateEncryptionPemKeyPair().getOrThrow()
+                encryptionAlgo.getDerEncryptionPrivateKeyFromPemPrivateKey(encryptionPrivateKey).getOrThrow() to
+                    encryptionAlgo.getDerEncryptionPublicKeyFromPemPrivateKey(encryptionPrivateKey).getOrThrow()
+            } else {
+                null to null
+            }
+
+        val (encryptedPrivateKey, aesKey) = encryptDataByAES(derPrivateKey).getOrThrow()
+        val encryptedEncryptionPrivateKey =
+            derEncryptionPrivateKey?.let {
+                encryptDataByAES(it, aesKey).getOrThrow().toHexString()
+            }
+
+        val keyStore = KeyStore.getInstance("AndroidKeyStore")
+        withContext(Dispatchers.IO) {
+            keyStore.load(null)
+        }
+        val publicKey = keyStore.getCertificate(alias).publicKey
+        val keyCipher = Cipher.getInstance("ECIES", "AndroidKeyStore")
+        keyCipher.init(Cipher.ENCRYPT_MODE, publicKey)
+        val encryptedAesKey = keyCipher.doFinal(aesKey)
+
+        CustomApi.Accounts.ChildAccounts.AddChildAccountRequest(
+            encryptedPrivateKey = encryptedPrivateKey.toHexString(),
+            encryptedAesKey = encryptedAesKey.toHexString(),
+            derPublicKey = derPublicKey,
+            algoType = childAlgoType,
+            encryptedEncryptionPrivateKey = encryptedEncryptionPrivateKey,
+            encryptionPublicKey = derEncryptionPublicKey,
+        )
     }
 }
 
@@ -174,9 +226,7 @@ class AndroidKeyStoreSessionHistoryManager(val settings: Settings) : SessionHist
         return AndroidKeyStoreUserPass(current)
     }
 
-    override fun buildSession(alias: String): UserPass {
-        return AndroidKeyStoreUserPass(alias)
-    }
+    override fun buildSession(alias: String): UserPass = AndroidKeyStoreUserPass(alias)
 
     private suspend fun importEcdsaPrivateKey(alias: String, derPrivateKey: String) {
         val keyStore = KeyStore.getInstance("AndroidKeyStore")
@@ -199,17 +249,18 @@ class AndroidKeyStoreSessionHistoryManager(val settings: Settings) : SessionHist
         val privateKey = keyFactory.generatePrivate(keySpec)
 
         // 定义密钥保护参数
-        val protectionParams = KeyProtection.Builder(KeyProperties.PURPOSE_SIGN)
-            .setDigests(KeyProperties.DIGEST_SHA256)
-            .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
-            .build()
+        val protectionParams =
+            KeyProtection.Builder(KeyProperties.PURPOSE_SIGN)
+                .setDigests(KeyProperties.DIGEST_SHA256)
+                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+                .build()
 
         val cert = CryptoJvm.generateCert(derPrivateKey).getOrThrow()
         // 将私钥导入 Keystore
         val privateKeyEntry = KeyStore.PrivateKeyEntry(privateKey, arrayOf(cert))
         keyStore.setEntry(alias, privateKeyEntry, protectionParams)
 
-        println("ECDSA private key imported successfully with alias: $alias")
+        Napier.i { "ECDSA private key imported into AndroidKeyStore" }
     }
 
     override fun removeSession(alias: String) {
@@ -224,15 +275,16 @@ class AndroidKeyStoreSessionHistoryManager(val settings: Settings) : SessionHist
 }
 
 actual fun createSettings(name: String): Settings {
-    val context = getAppContextRefValue()!!
+    val context = checkNotNull(getAppContextRefValue()) { "Application context is not initialized" }
     return SharedPreferencesSettings(context.getSharedPreferences(name, Context.MODE_PRIVATE))
 }
 
 actual fun readInjectedSessionFromPrivateStorageOrNull(): ConvertedRawUserPassInfo? {
     val context = getAppContextRefValue() ?: return null
-    val injectedFile = context.filesDir
-        .resolve("appium-session")
-        .resolve("session.json")
+    val injectedFile =
+        context.filesDir
+            .resolve("appium-session")
+            .resolve("session.json")
     if (!injectedFile.exists()) {
         Napier.d("Injected session file does not exist: ${injectedFile.absolutePath}")
         return null
@@ -244,7 +296,7 @@ actual fun readInjectedSessionFromPrivateStorageOrNull(): ConvertedRawUserPassIn
     }.getOrElse { throwable ->
         throw IllegalStateException(
             "Injected session file exists but cannot be loaded: ${injectedFile.absolutePath}",
-            throwable
+            throwable,
         )
     }
 }

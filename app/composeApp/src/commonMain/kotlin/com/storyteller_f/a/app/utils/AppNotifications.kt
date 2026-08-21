@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.utils
 
 import androidx.compose.runtime.Composable
@@ -16,11 +20,12 @@ import kotlinx.coroutines.flow.receiveAsFlow
 private val mutableNotificationPermission = MutableStateFlow(false)
 private val notificationPermission = mutableNotificationPermission.asStateFlow()
 private val notificationClicks = Channel<PayloadData>(Channel.BUFFERED)
-private val notificationClickListener = object : KMPNotifier.Listener {
-    override fun onNotificationClicked(data: PayloadData) {
-        notificationClicks.trySend(data)
+private val notificationClickListener =
+    object : KMPNotifier.Listener {
+        override fun onNotificationClicked(data: PayloadData) {
+            notificationClicks.trySend(data)
+        }
     }
-}
 private var notificationClickListenerRegistered = false
 
 internal fun initializeAppNotifications() {
@@ -72,11 +77,7 @@ internal fun ObserveAppNotificationClicks(onClick: (PayloadData) -> Unit) {
     }
 }
 
-internal fun showAppNotification(
-    title: String,
-    body: String,
-    payloadData: Map<String, String> = emptyMap(),
-) {
+internal fun showAppNotification(title: String, body: String, payloadData: Map<String, String> = emptyMap()) {
     if (!KMPNotifier.isInitialized) return
     KMPNotifier.localNotifier.notify(
         title = title,

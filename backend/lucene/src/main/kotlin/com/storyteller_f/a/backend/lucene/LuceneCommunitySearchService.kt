@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.lucene
 
 import com.storyteller_f.a.backend.core.MergedEnv
@@ -32,41 +36,36 @@ class LuceneCommunityDocument(val communityDocument: CommunityDocument) : Lucene
     }
 
     companion object : LuceneDocumentCompanion<CommunityDocument> {
-
-        override fun restore(
-            id: PrimaryKey,
-            document: Document
-        ): CommunityDocument {
-            return CommunityDocument(
-                id,
-                document.get("name"),
-                document.get("aid"),
-                document.get("owner").toPrimaryKey()
-            )
-        }
+        override fun restore(id: PrimaryKey, document: Document): CommunityDocument =
+            CommunityDocument(
+            id,
+            document.get("name"),
+            document.get("aid"),
+            document.get("owner").toPrimaryKey(),
+        )
     }
 }
 
-class LuceneCommunitySearchService(
-    path: Path,
-    isInMemory: Boolean = false
-) : Lucene(path, isInMemory), CommunitySearchService {
-    override suspend fun saveDocument(documents: List<CommunityDocument>): Result<Unit> {
-        return useLucene {
-            saveDocumentList(documents.map {
+class LuceneCommunitySearchService(path: Path, isInMemory: Boolean = false) :
+    Lucene(path, isInMemory),
+    CommunitySearchService {
+    override suspend fun saveDocument(documents: List<CommunityDocument>): Result<Unit> =
+        useLucene {
+        saveDocumentList(
+            documents.map {
                 LuceneCommunityDocument(it)
-            }, analyzer)
-        }
+            },
+            analyzer,
+        )
     }
 
-    override suspend fun clean(): Result<Unit> {
-        return useLucene {
-            cleanAll(analyzer)
-        }
+    override suspend fun clean(): Result<Unit> =
+        useLucene {
+        cleanAll(analyzer)
     }
 
     override suspend fun searchDocument(
-        communityDocumentSearch: CommunityDocumentSearch
+        communityDocumentSearch: CommunityDocumentSearch,
     ): Result<PaginationResult<CommunityDocument>> {
         if (communityDocumentSearch is CommunityDocumentSearch.Keyword && communityDocumentSearch.keyword.isEmpty()) {
             return Result.success(PaginationResult(emptyList(), 0))
@@ -82,34 +81,28 @@ class LuceneCommunitySearchService(
                         combinedQuery,
                         communityDocumentSearch.fetch,
                         Sort.RELEVANCE,
-                        LuceneCommunityDocument
+                        LuceneCommunityDocument,
                     )
                 }
             }
         }
     }
 
-    private fun buildQuery(
-        communityDocumentSearch: CommunityDocumentSearch
-    ): Query {
-        return BooleanQuery.Builder().apply {
-            when (communityDocumentSearch) {
-                is CommunityDocumentSearch.Keyword -> {
-                    addPrioritizedFieldsQuery(communityDocumentSearch.keyword, "aid", "name")
-                }
+    private fun buildQuery(communityDocumentSearch: CommunityDocumentSearch): Query =
+        BooleanQuery.Builder().apply {
+        when (communityDocumentSearch) {
+            is CommunityDocumentSearch.Keyword -> {
+                addPrioritizedFieldsQuery(communityDocumentSearch.keyword, "aid", "name")
             }
-        }.build()
-    }
+        }
+    }.build()
 }
 
 class LuceneCommunitySearchServiceFactory : CommunitySearchServiceFactory {
-    override fun match(env: MergedEnv): Boolean {
-        return env["SEARCH_SERVICE"] == "lucene"
-    }
+    override fun match(env: MergedEnv): Boolean = env["SEARCH_SERVICE"] == "lucene"
 
-    override fun build(env: MergedEnv): CommunitySearchService {
-        return buildLuceneSearchService(env) { path, isInMemory ->
-            LuceneCommunitySearchService(path.resolve("community"), isInMemory)
-        }
+    override fun build(env: MergedEnv): CommunitySearchService =
+        buildLuceneSearchService(env) { path, isInMemory ->
+        LuceneCommunitySearchService(path.resolve("community"), isInMemory)
     }
 }

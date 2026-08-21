@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.common
 
 import com.storyteller_f.shared.model.CommunityInfo
@@ -58,11 +62,13 @@ suspend fun processEvent(database: ModelStorage, bus: MutableSharedFlow<Any>) {
 
             is OnCommunityJoined -> database.community.saveToDefault(event.info)
 
-            is OnCommunityExited -> database.community
-                .saveToDefault(event.info)
+            is OnCommunityExited ->
+                database.community
+                    .saveToDefault(event.info)
 
-            is OnCommunityUpdated -> database.community
-                .saveToDefault(event.info)
+            is OnCommunityUpdated ->
+                database.community
+                    .saveToDefault(event.info)
 
             is OnTopicChanged -> processTopicChanged(event, database)
 
@@ -91,10 +97,7 @@ suspend fun processEvent(database: ModelStorage, bus: MutableSharedFlow<Any>) {
     }
 }
 
-private suspend fun processOnMediaUploaded(
-    event: OnMediaUploaded,
-    database: ModelStorage
-) {
+private suspend fun processOnMediaUploaded(event: OnMediaUploaded, database: ModelStorage) {
     event.fileInfos.forEach {
         database.fileInfo.saveToDefault(it)
         // 同时保存到对应的 FileList 集合中
@@ -102,136 +105,166 @@ private suspend fun processOnMediaUploaded(
     }
 }
 
-private suspend fun processOnAddFavorite(
-    event: OnAddFavorite,
-    database: ModelStorage
-) {
+private suspend fun processOnAddFavorite(event: OnAddFavorite, database: ModelStorage) {
     val objectId = event.objectTuple.objectId
     when (event.objectTuple.objectType) {
-        ObjectType.TOPIC -> database.topic.update(TopicCollection.Topics, objectId) {
-            it.copy(favoriteId = -1)
-        }
-        ObjectType.ROOM -> database.room.update(RoomCollection.Rooms, objectId) {
-            it.copy(favoriteId = -1)
-        }
-        ObjectType.COMMUNITY -> database.community.update(CommunityCollection.Communities, objectId) {
-            it.copy(favoriteId = -1)
-        }
-        ObjectType.TITLE -> database.title.update(TitleCollection.Titles, objectId) {
-            it.copy(favoriteId = -1)
-        }
-        ObjectType.FILE -> database.fileInfo.update(FileCollection.Files, objectId) {
-            it.copy(favoriteId = -1)
-        }
-        ObjectType.USER -> database.user.update(UserCollection.Users, objectId) {
-            it.copy(favoriteId = -1)
-        }
+        ObjectType.TOPIC ->
+            database.topic.update(TopicCollection.Topics, objectId) {
+                it.copy(favoriteId = -1)
+            }
+
+        ObjectType.ROOM ->
+            database.room.update(RoomCollection.Rooms, objectId) {
+                it.copy(favoriteId = -1)
+            }
+
+        ObjectType.COMMUNITY ->
+            database.community.update(CommunityCollection.Communities, objectId) {
+                it.copy(favoriteId = -1)
+            }
+
+        ObjectType.TITLE ->
+            database.title.update(TitleCollection.Titles, objectId) {
+                it.copy(favoriteId = -1)
+            }
+
+        ObjectType.FILE ->
+            database.fileInfo.update(FileCollection.Files, objectId) {
+                it.copy(favoriteId = -1)
+            }
+
+        ObjectType.USER ->
+            database.user.update(UserCollection.Users, objectId) {
+                it.copy(favoriteId = -1)
+            }
+
         else -> Unit
     }
 }
 
-private suspend fun processOnRemoveFavorite(
-    event: OnRemoveFavorite,
-    database: ModelStorage
-) {
+private suspend fun processOnRemoveFavorite(event: OnRemoveFavorite, database: ModelStorage) {
     val objectId = event.objectTuple.objectId
     when (event.objectTuple.objectType) {
-        ObjectType.TOPIC -> database.topic.update(TopicCollection.Topics, objectId) {
-            it.copy(favoriteId = null)
-        }
-        ObjectType.ROOM -> database.room.update(RoomCollection.Rooms, objectId) {
-            it.copy(favoriteId = null)
-        }
-        ObjectType.COMMUNITY -> database.community.update(CommunityCollection.Communities, objectId) {
-            it.copy(favoriteId = null)
-        }
-        ObjectType.TITLE -> database.title.update(TitleCollection.Titles, objectId) {
-            it.copy(favoriteId = null)
-        }
-        ObjectType.FILE -> database.fileInfo.update(FileCollection.Files, objectId) {
-            it.copy(favoriteId = null)
-        }
-        ObjectType.USER -> database.user.update(UserCollection.Users, objectId) {
-            it.copy(favoriteId = null)
-        }
+        ObjectType.TOPIC ->
+            database.topic.update(TopicCollection.Topics, objectId) {
+                it.copy(favoriteId = null)
+            }
+
+        ObjectType.ROOM ->
+            database.room.update(RoomCollection.Rooms, objectId) {
+                it.copy(favoriteId = null)
+            }
+
+        ObjectType.COMMUNITY ->
+            database.community.update(CommunityCollection.Communities, objectId) {
+                it.copy(favoriteId = null)
+            }
+
+        ObjectType.TITLE ->
+            database.title.update(TitleCollection.Titles, objectId) {
+                it.copy(favoriteId = null)
+            }
+
+        ObjectType.FILE ->
+            database.fileInfo.update(FileCollection.Files, objectId) {
+                it.copy(favoriteId = null)
+            }
+
+        ObjectType.USER ->
+            database.user.update(UserCollection.Users, objectId) {
+                it.copy(favoriteId = null)
+            }
+
         else -> Unit
     }
 }
 
-private suspend fun processOnAddSubscription(
-    event: OnAddSubscription,
-    database: ModelStorage
-) {
+private suspend fun processOnAddSubscription(event: OnAddSubscription, database: ModelStorage) {
     val objectId = event.objectTuple.objectId
     when (event.objectTuple.objectType) {
-        ObjectType.TOPIC -> database.topic.update(TopicCollection.Topics, objectId) {
-            it.copy(subscriptionId = -1)
-        }
-        ObjectType.ROOM -> database.room.update(RoomCollection.Rooms, objectId) {
-            it.copy(subscriptionId = -1)
-        }
-        ObjectType.COMMUNITY -> database.community.update(CommunityCollection.Communities, objectId) {
-            it.copy(subscriptionId = -1)
-        }
-        ObjectType.TITLE -> database.title.update(TitleCollection.Titles, objectId) {
-            it.copy(subscriptionId = -1)
-        }
-        ObjectType.FILE -> database.fileInfo.update(FileCollection.Files, objectId) {
-            it.copy(subscriptionId = -1)
-        }
-        ObjectType.USER -> database.user.update(UserCollection.Users, objectId) {
-            it.copy(subscriptionId = -1)
-        }
+        ObjectType.TOPIC ->
+            database.topic.update(TopicCollection.Topics, objectId) {
+                it.copy(subscriptionId = -1)
+            }
+
+        ObjectType.ROOM ->
+            database.room.update(RoomCollection.Rooms, objectId) {
+                it.copy(subscriptionId = -1)
+            }
+
+        ObjectType.COMMUNITY ->
+            database.community.update(CommunityCollection.Communities, objectId) {
+                it.copy(subscriptionId = -1)
+            }
+
+        ObjectType.TITLE ->
+            database.title.update(TitleCollection.Titles, objectId) {
+                it.copy(subscriptionId = -1)
+            }
+
+        ObjectType.FILE ->
+            database.fileInfo.update(FileCollection.Files, objectId) {
+                it.copy(subscriptionId = -1)
+            }
+
+        ObjectType.USER ->
+            database.user.update(UserCollection.Users, objectId) {
+                it.copy(subscriptionId = -1)
+            }
+
         else -> Unit
     }
 }
 
-private suspend fun processOnRemoveSubscriptionEvent(
-    event: OnRemoveSubscription,
-    database: ModelStorage
-) {
+private suspend fun processOnRemoveSubscriptionEvent(event: OnRemoveSubscription, database: ModelStorage) {
     val objectId = event.objectTuple.objectId
     when (event.objectTuple.objectType) {
-        ObjectType.TOPIC -> database.topic.update(TopicCollection.Topics, objectId) {
-            it.copy(subscriptionId = null)
-        }
-        ObjectType.ROOM -> database.room.update(RoomCollection.Rooms, objectId) {
-            it.copy(subscriptionId = null)
-        }
-        ObjectType.COMMUNITY -> database.community.update(CommunityCollection.Communities, objectId) {
-            it.copy(subscriptionId = null)
-        }
-        ObjectType.TITLE -> database.title.update(TitleCollection.Titles, objectId) {
-            it.copy(subscriptionId = null)
-        }
-        ObjectType.FILE -> database.fileInfo.update(FileCollection.Files, objectId) {
-            it.copy(subscriptionId = null)
-        }
-        ObjectType.USER -> database.user.update(UserCollection.Users, objectId) {
-            it.copy(subscriptionId = null)
-        }
+        ObjectType.TOPIC ->
+            database.topic.update(TopicCollection.Topics, objectId) {
+                it.copy(subscriptionId = null)
+            }
+
+        ObjectType.ROOM ->
+            database.room.update(RoomCollection.Rooms, objectId) {
+                it.copy(subscriptionId = null)
+            }
+
+        ObjectType.COMMUNITY ->
+            database.community.update(CommunityCollection.Communities, objectId) {
+                it.copy(subscriptionId = null)
+            }
+
+        ObjectType.TITLE ->
+            database.title.update(TitleCollection.Titles, objectId) {
+                it.copy(subscriptionId = null)
+            }
+
+        ObjectType.FILE ->
+            database.fileInfo.update(FileCollection.Files, objectId) {
+                it.copy(subscriptionId = null)
+            }
+
+        ObjectType.USER ->
+            database.user.update(UserCollection.Users, objectId) {
+                it.copy(subscriptionId = null)
+            }
+
         else -> Unit
     }
 }
 
-private suspend fun processTopicCreated(
-    event: OnTopicCreated,
-    database: ModelStorage,
-) {
+private suspend fun processTopicCreated(event: OnTopicCreated, database: ModelStorage) {
     val topicInfo = event.topicInfo
     database.topic.saveToDefault(topicInfo)
     database.topic.saveFirst(TopicCollection.ChildTopicList(topicInfo.parentId), topicInfo)
 }
 
-private suspend fun processTopicChanged(
-    event: OnTopicChanged,
-    database: ModelStorage,
-) {
+private suspend fun processTopicChanged(event: OnTopicChanged, database: ModelStorage) {
     val topicInfo = event.topicInfo
     database.topic.saveToDefault(topicInfo)
     if (database.topic.getDocument(
             TopicCollection.Recommend,
-            event.topicInfo.id
+            event.topicInfo.id,
         ) != null
     ) {
         database.topic.updateDocument(TopicCollection.Recommend, topicInfo)
@@ -241,10 +274,7 @@ private suspend fun processTopicChanged(
     }
 }
 
-private suspend fun processRoomUpdated(
-    event: OnRoomUpdated,
-    database: ModelStorage
-) {
+private suspend fun processRoomUpdated(event: OnRoomUpdated, database: ModelStorage) {
     val info = event.info
     database.room.saveToDefault(info)
     val communityId = info.communityId
@@ -256,10 +286,7 @@ private suspend fun processRoomUpdated(
     }
 }
 
-private suspend fun processRoomCreated(
-    event: OnRoomCreated,
-    database: ModelStorage
-) {
+private suspend fun processRoomCreated(event: OnRoomCreated, database: ModelStorage) {
     val info = event.info
     database.room.saveToDefault(info)
     val communityId = info.communityId
@@ -268,58 +295,55 @@ private suspend fun processRoomCreated(
     }
 }
 
-private suspend fun processRemoveReaction(
-    database: ModelStorage,
-    event: OnRemoveReaction,
-) {
+private suspend fun processRemoveReaction(database: ModelStorage, event: OnRemoveReaction) {
     listOf(
         TopicCollection.Topics,
         TopicCollection.Recommend,
-        TopicCollection.ChildTopicList(event.topicInfo.parentId)
+        TopicCollection.ChildTopicList(event.topicInfo.parentId),
     ).forEach { collectionName ->
         database.topic.update(collectionName, event.topicInfo.id) { old ->
             val extension = old.extension ?: TopicInfo.Extension(UserInfo.EMPTY)
-            val newReactions = extension.reactions.orEmpty().map { info ->
-                if (info.emoji == event.info.emoji) {
-                    event.info
-                } else {
-                    info
-                }
-            }.filter {
-                it.count > 0
-            }.toImmutableList()
-            old.copy(extension = extension.copy(reactions = newReactions), reactionCount = old.reactionCount - 1)
-        }
-    }
-}
-
-private suspend fun processOnAddReaction(
-    database: ModelStorage,
-    event: OnAddReaction,
-) {
-    listOf(
-        TopicCollection.Topics,
-        TopicCollection.Recommend,
-        TopicCollection.ChildTopicList(event.topicInfo.parentId)
-    ).forEach { collectionName ->
-        database.topic.update(collectionName, event.info.objectId) { old ->
-            val extension = old.extension ?: TopicInfo.Extension(UserInfo.EMPTY)
-            val oldReactions = extension.reactions.orEmpty()
-            val existing = oldReactions.firstOrNull {
-                it.emoji == event.info.emoji
-            }
-            val newReactions = if (existing == null) {
-                val info = event.info
-                oldReactions.toPersistentList().adding(info)
-            } else {
-                oldReactions.map { info ->
+            val newReactions =
+                extension.reactions.orEmpty().map { info ->
                     if (info.emoji == event.info.emoji) {
                         event.info
                     } else {
                         info
                     }
+                }.filter {
+                    it.count > 0
                 }.toImmutableList()
-            }
+            old.copy(extension = extension.copy(reactions = newReactions), reactionCount = old.reactionCount - 1)
+        }
+    }
+}
+
+private suspend fun processOnAddReaction(database: ModelStorage, event: OnAddReaction) {
+    listOf(
+        TopicCollection.Topics,
+        TopicCollection.Recommend,
+        TopicCollection.ChildTopicList(event.topicInfo.parentId),
+    ).forEach { collectionName ->
+        database.topic.update(collectionName, event.info.objectId) { old ->
+            val extension = old.extension ?: TopicInfo.Extension(UserInfo.EMPTY)
+            val oldReactions = extension.reactions.orEmpty()
+            val existing =
+                oldReactions.firstOrNull {
+                    it.emoji == event.info.emoji
+                }
+            val newReactions =
+                if (existing == null) {
+                    val info = event.info
+                    oldReactions.toPersistentList().adding(info)
+                } else {
+                    oldReactions.map { info ->
+                        if (info.emoji == event.info.emoji) {
+                            event.info
+                        } else {
+                            info
+                        }
+                    }.toImmutableList()
+                }
             old.copy(extension = extension.copy(reactions = newReactions), reactionCount = old.reactionCount + 1)
         }
     }

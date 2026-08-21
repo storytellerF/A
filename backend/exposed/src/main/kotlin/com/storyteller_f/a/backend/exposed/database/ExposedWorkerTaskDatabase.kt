@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.exposed.database
 
 import com.storyteller_f.a.backend.core.WorkerTaskDatabase
@@ -14,37 +18,34 @@ import org.jetbrains.exposed.v1.r2dbc.selectAll
 import org.jetbrains.exposed.v1.r2dbc.upsert
 
 /** Exposed-backed implementation of [WorkerTaskDatabase]. */
-class ExposedWorkerTaskDatabase(
+internal class ExposedWorkerTaskDatabase(
     /** Database session used for executing queries. */
     val databaseSession: ExposedDatabaseSession,
 ) : WorkerTaskDatabase {
-    override suspend fun getWorkerTask(type: TaskRecordType): Result<WorkerTask?> {
-        return databaseSession.dbSearch {
-            search {
-                WorkerTasks.selectAll().where { WorkerTasks.type eq type }
-            }
-            first(WorkerTask::wrapRow)
+    override suspend fun getWorkerTask(type: TaskRecordType): Result<WorkerTask?> =
+        databaseSession.dbSearch {
+        search {
+            WorkerTasks.selectAll().where { WorkerTasks.type eq type }
         }
+        first(WorkerTask::wrapRow)
     }
 
-    override suspend fun getWorkerTasks(): Result<List<WorkerTask>> {
-        return databaseSession.dbSearch {
-            search {
-                WorkerTasks.selectAll().orderBy(WorkerTasks.type, SortOrder.ASC)
-            }
-            map(WorkerTask::wrapRow)
+    override suspend fun getWorkerTasks(): Result<List<WorkerTask>> =
+        databaseSession.dbSearch {
+        search {
+            WorkerTasks.selectAll().orderBy(WorkerTasks.type, SortOrder.ASC)
         }
+        map(WorkerTask::wrapRow)
     }
 
-    override suspend fun upsertWorkerTasks(configs: List<WorkerTask>): Result<Unit> {
-        return databaseSession.dbQuery {
-            configs.forEach { config ->
-                WorkerTasks.upsert(WorkerTasks.type) { statement ->
-                    statement[WorkerTasks.type] = config.type
-                    statement[WorkerTasks.enabled] = config.isEnabled
-                    statement[WorkerTasks.fetchSize] = config.fetchSize
-                    statement[WorkerTasks.waitDurationMillis] = config.waitDurationMillis
-                }
+    override suspend fun upsertWorkerTasks(configs: List<WorkerTask>): Result<Unit> =
+        databaseSession.dbQuery {
+        configs.forEach { config ->
+            WorkerTasks.upsert(WorkerTasks.type) { statement ->
+                statement[WorkerTasks.type] = config.type
+                statement[WorkerTasks.enabled] = config.isEnabled
+                statement[WorkerTasks.fetchSize] = config.fetchSize
+                statement[WorkerTasks.waitDurationMillis] = config.waitDurationMillis
             }
         }
     }

@@ -1,5 +1,6 @@
-
-
+/*
+ * This is a private project. All rights reserved.
+ */
 
 package com.storyteller_f.a.panel.pages
 
@@ -41,13 +42,15 @@ fun AllTitlesPage() {
 fun AllTitlesPageInternal(viewModel: AllTitlesViewModel) {
     val panelNav = LocalPanelNav.current
     Scaffold(
-        topBar = { TopAppBar(
-            title = { Text(stringResource(Res.string.all_titles)) },
-            navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } }
-        ) }
-    ) {
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(Res.string.all_titles)) },
+                navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } },
+            )
+        },
+    ) { paddingValues ->
         val direction = LocalLayoutDirection.current
-        Box(Modifier.safeArea(it, direction)) {
+        Box(Modifier.safeArea(paddingValues, direction)) {
             StateView(viewModel) { items ->
                 LazyColumn {
                     pagingItems(items, key = { it.id }) { index ->
@@ -63,7 +66,7 @@ fun AllTitlesPageInternal(viewModel: AllTitlesViewModel) {
                                 overlineContent = { Text(type) },
                                 supportingContent = {
                                     Text(
-                                        listOf(scope, creator, receiver).filter { it.isNotEmpty() }.joinToString(" • ")
+                                        listOf(scope, creator, receiver).filter { it.isNotEmpty() }.joinToString(" • "),
                                     )
                                 },
                             )

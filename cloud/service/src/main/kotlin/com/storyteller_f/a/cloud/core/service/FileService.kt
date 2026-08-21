@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.core.service
 
 import com.perraco.utils.SnowflakeFactory
@@ -37,6 +41,7 @@ import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.UploadRecordStatus
+import com.storyteller_f.shared.utils.cancellableRunCatching
 import com.storyteller_f.shared.utils.firstOrNull
 import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
@@ -56,15 +61,15 @@ import kotlin.io.path.exists
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-class FileResponse(val file: File)
+data class FileResponse(val file: File)
 
-class PathResponse(val file: Path)
+data class PathResponse(val file: Path)
 
 suspend fun Backend.getFileList(
     uid: PrimaryKey,
     objectTuple: ObjectTuple,
     primaryKeyFetch: PrimaryKeyFetch,
-    clientIp: String? = null
+    clientIp: String? = null,
 ): Result<PaginationResult<FileInfo>?> {
     if (objectTuple.objectType == ObjectType.TOPIC) {
         return Result.failure(CustomBadRequestException("can't get topic file record"))
@@ -90,7 +95,7 @@ suspend fun Backend.getFileInfoByName(
     return checkRootWritePermission(
         parentType,
         parentId,
-        uid
+        uid,
     ).mapResultIfNotNull { (_, rootId) ->
         database.file.getFileRecord(rootId, word)
     }.mapResultIfNotNull { fileRecord ->
@@ -105,7 +110,7 @@ suspend fun Backend.searchFiles(
     query: SearchQuery,
     objectTuple: ObjectTuple,
     primaryKeyFetch: OffsetFetch,
-    clientIp: String? = null
+    clientIp: String? = null,
 ): Result<PaginationResult<FileInfo>?> {
     val word = query.word.trim()
     if (word.isBlank()) {
@@ -122,7 +127,7 @@ suspend fun Backend.searchFiles(
 
 suspend fun Backend.uncheckedSearchFiles(
     query: SearchQuery,
-    primaryKeyFetch: OffsetFetch
+    primaryKeyFetch: OffsetFetch,
 ): Result<PaginationResult<FileInfo>?> {
     val word = query.word
     return if (word.isBlank()) {
@@ -137,27 +142,27 @@ private suspend fun Backend.searchFilesByWord(
     word: String?,
     ownerId: PrimaryKey?,
     primaryKeyFetch: OffsetFetch,
-    clientIp: String? = null
-): Result<PaginationResult<FileInfo>?> {
-    return if (word.isNullOrBlank()) {
-        Result.success(PaginationResult(emptyList(), 0))
-    } else {
-        // 使用 fileSearchService 搜索
-        val searchQuery = if (ownerId != null) {
+    clientIp: String? = null,
+): Result<PaginationResult<FileInfo>?> =
+    if (word.isNullOrBlank()) {
+    Result.success(PaginationResult(emptyList(), 0))
+} else {
+    // 使用 fileSearchService 搜索
+    val searchQuery =
+        if (ownerId != null) {
             FileDocumentSearch.Keyword(word, ownerId, fetch = primaryKeyFetch)
         } else {
             FileDocumentSearch.Keyword(word, fetch = primaryKeyFetch)
         }
-        fileSearchService.searchDocument(searchQuery).mapResultIfNotNull { (documents, total) ->
-            val fileIds = documents.map { it.id }
-            if (fileIds.isEmpty()) {
-                Result.success(PaginationResult(emptyList(), total))
-            } else {
-                database.file.getFileRecordByIds(fileIds).mapResultIfNotNull { fileRecords ->
-                    processFileRecordToFileInfo(fileRecords, ownerId, clientIp)
-                }.mapIfNotNull { fileInfos ->
-                    PaginationResult(fileInfos, total)
-                }
+    fileSearchService.searchDocument(searchQuery).mapResultIfNotNull { (documents, total) ->
+        val fileIds = documents.map { it.id }
+        if (fileIds.isEmpty()) {
+            Result.success(PaginationResult(emptyList(), total))
+        } else {
+            database.file.getFileRecordByIds(fileIds).mapResultIfNotNull { fileRecords ->
+                processFileRecordToFileInfo(fileRecords, ownerId, clientIp)
+            }.mapIfNotNull { fileInfos ->
+                PaginationResult(fileInfos, total)
             }
         }
     }
@@ -181,7 +186,8 @@ suspend fun Backend.extractAlbum(fileRecordId: PrimaryKey, root: File, uid: Prim
         objectStorageService.getInputStream(A_FILE_DEFAULT_BUCKET, fileRecord.fullName)
             .mapResult { input ->
                 extractAlbumFromStream(input.buffered(), root, fileRecord)
-            }.mapResultIfNotNull { (file, contentType) ->
+            }
+            .mapResultIfNotNull { (file, contentType) ->
                 val name = newCoverFileName(fileRecord.name, contentType)
                 tryUploadFiles(
                     fileRecord.owner,
@@ -195,8 +201,8 @@ suspend fun Backend.extractAlbum(fileRecordId: PrimaryKey, root: File, uid: Prim
                             file.inputStream().buffered().use { input ->
                                 sha256(input.asSource().buffered())
                             },
-                        )
-                    )
+                        ),
+                    ),
                 )
             }
     }.mapIfNotNull {
@@ -204,27 +210,24 @@ suspend fun Backend.extractAlbum(fileRecordId: PrimaryKey, root: File, uid: Prim
     }
 
 @OptIn(ExperimentalUuidApi::class)
-private suspend fun extractAlbumFromStream(
-    input: BufferedInputStream,
-    root: File,
-    fileRecord: FileRecord
-) = runCatching {
-    withContext(Dispatchers.IO) {
-        input.use {
-            val saveAlbum = { image: ByteArray, mimeType: String ->
-                val ext = getCoverExtensionFromMimeType(mimeType)
-                val file = File(root, "${Uuid.random()}$ext")
-                file.writeBytes(image)
-                file
-            }
-            when (fileRecord.contentType) {
-                "audio/mp3" -> it.readMp3AlbumFromAudioStream(saveAlbum)
-                "audio/flac", "audio/x-flac" -> it.readFlacAlbumFromAudioStream(saveAlbum)
-                else -> throw CustomBadRequestException("unsupported audio type: ${fileRecord.contentType}")
+private suspend fun extractAlbumFromStream(input: BufferedInputStream, root: File, fileRecord: FileRecord) =
+    cancellableRunCatching {
+        withContext(Dispatchers.IO) {
+            input.use {
+                val saveAlbum = { image: ByteArray, mimeType: String ->
+                    val ext = getCoverExtensionFromMimeType(mimeType)
+                    val file = File(root, "${Uuid.random()}$ext")
+                    file.writeBytes(image)
+                    file
+                }
+                when (fileRecord.contentType) {
+                    "audio/mp3" -> it.readMp3AlbumFromAudioStream(saveAlbum)
+                    "audio/flac", "audio/x-flac" -> it.readFlacAlbumFromAudioStream(saveAlbum)
+                    else -> throw CustomBadRequestException("unsupported audio type: ${fileRecord.contentType}")
+                }
             }
         }
     }
-}
 
 @OptIn(ExperimentalUuidApi::class)
 fun newFileName(fileName: String): String {
@@ -232,12 +235,13 @@ fun newFileName(fileName: String): String {
     val originName = fileName.substringBeforeLast(".")
     // length 32
     val uuid = Uuid.random().toHexString()
-    val newSavedName = if (fileName.length > 60) {
-        // 60 - 32 - 1 = 27
-        "${originName.take(27 - extension.length)}$uuid.$extension"
-    } else {
-        fileName
-    }
+    val newSavedName =
+        if (fileName.length > 60) {
+            // 60 - 32 - 1 = 27
+            "${originName.take(27 - extension.length)}$uuid.$extension"
+        } else {
+            fileName
+        }
     return newSavedName
 }
 
@@ -259,15 +263,13 @@ private fun newCoverFileName(fileName: String, contentType: String): String {
     return "${originName.take(27 - extension.length)}$uuid$extension"
 }
 
-fun getCoverExtensionFromMimeType(mimeType: String): String {
-    return MimeTypes.getDefaultMimeTypes().forName(mimeType)?.extension
-        ?: error("Unsupported mime type: $mimeType")
-}
+fun getCoverExtensionFromMimeType(mimeType: String): String =
+    MimeTypes.getDefaultMimeTypes().forName(
+    mimeType,
+)?.extension
+    ?: error("Unsupported mime type: $mimeType")
 
-suspend fun getFileSystemDownloadUrl(
-    backend: Backend,
-    paths: List<String>
-): Result<PathResponse?> {
+suspend fun getFileSystemDownloadUrl(backend: Backend, paths: List<String>): Result<PathResponse?> {
     val service = backend.objectStorageService
     return if (service is FileSystemObjectStorageService) {
         val path = service.getPathResponse(paths)
@@ -286,7 +288,8 @@ suspend fun Backend.getFileInfoPaginationResult(
     uid: PrimaryKey,
     primaryKeyFetch: PrimaryKeyFetch,
     clientIp: String? = null,
-): Result<PaginationResult<FileInfo>> = database.file.getFileRecordPaginationList(uid, primaryKeyFetch)
+): Result<PaginationResult<FileInfo>> =
+    database.file.getFileRecordPaginationList(uid, primaryKeyFetch)
     .mapPagingResultNotNull { list ->
         processFileRecordToFileInfo(list, uid, clientIp)
     }
@@ -296,33 +299,27 @@ suspend fun Backend.getAllFileInfos(primaryKeyFetch: PrimaryKeyFetch): Result<Pa
         processFileRecordToFileInfo(list)
     }
 
-suspend fun Backend.getUserUploadRecords(
-    uid: PrimaryKey,
-    primaryKeyFetch: PrimaryKeyFetch
-) = database.file.getUploadRecordPaginationList(uid, primaryKeyFetch).mapPagingNotNull { list ->
-    list.map { it.toUploadRecordInfo() }
-}
+suspend fun Backend.getUserUploadRecords(uid: PrimaryKey, primaryKeyFetch: PrimaryKeyFetch) =
+    database.file.getUploadRecordPaginationList(uid, primaryKeyFetch).mapPagingNotNull { list ->
+        list.map { it.toUploadRecordInfo() }
+    }
 
 suspend fun Backend.getFileInfoById(
     id: PrimaryKey,
     uid: PrimaryKey? = null,
-    clientIp: String? = null
+    clientIp: String? = null,
 ): Result<FileInfo?> =
     database.file.getFileRecordByIds(listOf(id)).mapResultIfNotNull { list ->
-        processFileRecordToFileInfo(list, uid, clientIp)
-    }.mapIfNotNull { it.firstOrNull() }
+    processFileRecordToFileInfo(list, uid, clientIp)
+}.mapIfNotNull { it.firstOrNull() }
 
-suspend fun Backend.tryCopyFile(
-    p: CommonPath,
-    uid: PrimaryKey,
-    clientIp: String? = null
-) =
+suspend fun Backend.tryCopyFile(p: CommonPath, uid: PrimaryKey, clientIp: String? = null) =
     checkObjectWritable(ObjectType.FILE, p.id).mapResultIfNotNull {
         database.file.getFileRecordByIds(listOf(p.id)).firstOrNull().mapResultIfNotNull { fileRecord ->
             checkRootReadPermission(
                 fileRecord.ownerType,
                 fileRecord.owner,
-                uid
+                uid,
             ).mapResultIfNotNull { permission ->
                 if (permission.hasRead) {
                     Result.success(fileRecord)
@@ -336,7 +333,7 @@ suspend fun Backend.tryCopyFile(
             ObjectTuple(uid, ObjectType.USER),
             QuotaType.FILE,
             fileRecord.size,
-            fileRecord.name
+            fileRecord.name,
         ) {
             copyFile(fileRecord, uid)
         }
@@ -346,35 +343,38 @@ suspend fun Backend.tryCopyFile(
         it.firstOrNull()
     }
 
-private suspend fun Backend.copyFile(
-    fileRecord: FileRecord,
-    newOwner: PrimaryKey
-) = database.file.getFileRecord(newOwner, fileRecord.name).map {
-    if (it == null) {
-        fileRecord.name
-    } else {
-        newCopiedFileName(fileRecord.name)
+private suspend fun Backend.copyFile(fileRecord: FileRecord, newOwner: PrimaryKey) =
+    database.file.getFileRecord(newOwner, fileRecord.name).map {
+        if (it == null) {
+            fileRecord.name
+        } else {
+            newCopiedFileName(fileRecord.name)
+        }
+    }.mapResult { newName ->
+        val id = SnowflakeFactory.nextId()
+        val newFileRecord = fileRecord.copy(id = id, owner = newOwner, name = newName, fullName = "$newOwner/$newName")
+        objectStorageService.copy(
+            A_FILE_DEFAULT_BUCKET,
+            listOf(CopyPack(fileRecord.fullName, newFileRecord.fullName)),
+        ).map {
+            listOf(newFileRecord)
+        }
     }
-}.mapResult { newName ->
-    val id = SnowflakeFactory.nextId()
-    val newFileRecord = fileRecord.copy(id = id, owner = newOwner, name = newName, fullName = "$newOwner/$newName")
-    objectStorageService.copy(
-        A_FILE_DEFAULT_BUCKET,
-        listOf(CopyPack(fileRecord.fullName, newFileRecord.fullName))
-    ).map {
-        listOf(newFileRecord)
-    }
-}
 
 @OptIn(ExperimentalUuidApi::class)
 suspend fun Backend.tryUploadFiles(
     ownerId: PrimaryKey,
     ownerType: ObjectType,
     files: List<UploadPack>,
-    clientIp: String? = null
-) = lockQuotaInfo(ownerId ob ownerType, QuotaType.FILE, files.sumOf {
-    it.size
-}, Uuid.random().toHexString()) {
+    clientIp: String? = null,
+) = lockQuotaInfo(
+    ownerId ob ownerType,
+    QuotaType.FILE,
+    files.sumOf {
+        it.size
+    },
+    Uuid.random().toHexString(),
+) {
     val f = mutableListOf<File>()
     try {
         val uploadPacks = processContentTypeAndDimension(files)
@@ -406,17 +406,19 @@ private suspend fun processContentTypeAndDimension(files: List<UploadPack>): Lis
 @OptIn(ExperimentalUuidApi::class)
 private suspend fun removeExifIfImage(
     uploadPacks: List<ProcessedUploadPack>,
-    f: MutableList<File>
-): List<ProcessedUploadPack> = uploadPacks.map {
+    f: MutableList<File>,
+): List<ProcessedUploadPack> =
+    uploadPacks.map {
     if (it.contentType.startsWith("image")) {
         val target = File(System.getProperty("java.io.tmpdir"), Uuid.random().toHexString() + it.pack.name)
         target.outputStream().buffered().use { output ->
             cleanImageMeta(it.pack.file, output, it.contentType)
         }
         f.add(target)
-        val newSha256 = target.inputStream().buffered().use { input ->
-            sha256(input.asSource().buffered())
-        }
+        val newSha256 =
+            target.inputStream().buffered().use { input ->
+                sha256(input.asSource().buffered())
+            }
         it.copy(pack = it.pack.copy(file = target, sha256 = newSha256))
     } else {
         it
@@ -428,29 +430,30 @@ private suspend fun Backend.uploadFilesToStorage(
     ownerType: ObjectType,
     uploadPacks: List<ProcessedUploadPack>,
 ): Result<List<FileRecord>> {
-    val data = uploadPacks.map { p ->
-        val uploadPack = p.pack
-        val nextId = SnowflakeFactory.nextId()
-        val dimension = p.dimension
-        val savedSha256 = p.pack.sha256
-        FileRecord(
-            nextId,
-            now(),
-            uploadPack.name,
-            0,
-            dimension?.width ?: 0,
-            dimension?.height ?: 0,
-            ownerId,
-            ownerType,
-            p.contentType,
-            uploadPack.size,
-            uploadPack.fullName,
-            savedSha256,
-        )
-    }
+    val data =
+        uploadPacks.map { p ->
+            val uploadPack = p.pack
+            val nextId = SnowflakeFactory.nextId()
+            val dimension = p.dimension
+            val savedSha256 = p.pack.sha256
+            FileRecord(
+                nextId,
+                now(),
+                uploadPack.name,
+                0,
+                dimension?.width ?: 0,
+                dimension?.height ?: 0,
+                ownerId,
+                ownerType,
+                p.contentType,
+                uploadPack.size,
+                uploadPack.fullName,
+                savedSha256,
+            )
+        }
     return objectStorageService.upload(
         A_FILE_DEFAULT_BUCKET,
-        uploadPacks.map { it.pack }
+        uploadPacks.map { it.pack },
     ).mapResult { uploaded ->
         val map = uploaded.associateBy { it.fullName }
         data.forEach { record ->
@@ -462,30 +465,33 @@ private suspend fun Backend.uploadFilesToStorage(
     }
 }
 
-suspend fun Backend.getFileInfoList(names: List<String>): Result<List<FileInfo?>?> {
-    return database.file.getFileRecordByNames(names).mapResult { fileRecords ->
-        processFileRecordToFileInfo(fileRecords)
-    }
+suspend fun Backend.getFileInfoList(names: List<String>): Result<List<FileInfo?>?> =
+    database.file.getFileRecordByNames(
+    names,
+).mapResult { fileRecords ->
+    processFileRecordToFileInfo(fileRecords)
 }
 
 suspend fun Backend.processFileRecordToFileInfo(
     fileRecords: List<FileRecord>,
     uid: PrimaryKey? = null,
-    clientIp: String? = null
+    clientIp: String? = null,
 ): Result<List<FileInfo>> {
     val fileRecordIds = fileRecords.map { it.id }
-    val favoriteMap = if (uid != null && fileRecordIds.isNotEmpty()) {
-        database.favorite.getHasFavorite(ObjectListFetch.IdListFetch(fileRecordIds), uid)
-            .getOrNull()?.associateBy { it.objectId } ?: emptyMap()
-    } else {
-        emptyMap()
-    }
-    val subscriptionMap = if (uid != null && fileRecordIds.isNotEmpty()) {
-        database.subscription.getHasSubscription(ObjectListFetch.IdListFetch(fileRecordIds), uid)
-            .getOrNull()?.associateBy { it.objectId } ?: emptyMap()
-    } else {
-        emptyMap()
-    }
+    val favoriteMap =
+        if (uid != null && fileRecordIds.isNotEmpty()) {
+            database.favorite.getHasFavorite(ObjectListFetch.IdListFetch(fileRecordIds), uid)
+                .getOrNull()?.associateBy { it.objectId } ?: emptyMap()
+        } else {
+            emptyMap()
+        }
+    val subscriptionMap =
+        if (uid != null && fileRecordIds.isNotEmpty()) {
+            database.subscription.getHasSubscription(ObjectListFetch.IdListFetch(fileRecordIds), uid)
+                .getOrNull()?.associateBy { it.objectId } ?: emptyMap()
+        } else {
+            emptyMap()
+        }
     return objectStorageService.getWithPresignContext(
         bucketName = A_FILE_DEFAULT_BUCKET,
         names = fileRecords.map { it.fullName },
@@ -501,43 +507,43 @@ suspend fun Backend.processFileRecordToFileInfo(
     }
 }
 
-suspend fun initChunkUpload(
-    backend: Backend,
-    id: PrimaryKey,
-    body: CustomApi.Files.Chunks.InitBody
-) = backend.checkRootWritePermission(body.objectType, body.objectId, id)
-    .mapResultIfNotNull {
-        backend.checkQuotaStatus(body.objectId ob body.objectType, body.size, QuotaType.FILE)
-    }.mapResultIfNotNull {
-        backend.database.file.insertUploadRecord(
-            UploadRecord(
-                SnowflakeFactory.nextId(),
-                now(),
-                body.objectId,
-                body.objectType,
-                UploadRecordStatus.PENDING,
-                body.size,
-                0,
-                body.name,
-                body.chunkSize,
-                body.sha256,
+suspend fun initChunkUpload(backend: Backend, id: PrimaryKey, body: CustomApi.Files.Chunks.InitBody) =
+    backend.checkRootWritePermission(body.objectType, body.objectId, id)
+        .mapResultIfNotNull {
+            backend.checkQuotaStatus(body.objectId ob body.objectType, body.size, QuotaType.FILE)
+        }
+        .mapResultIfNotNull {
+            backend.database.file.insertUploadRecord(
+                UploadRecord(
+                    SnowflakeFactory.nextId(),
+                    now(),
+                    body.objectId,
+                    body.objectType,
+                    UploadRecordStatus.PENDING,
+                    body.size,
+                    0,
+                    body.name,
+                    body.chunkSize,
+                    body.sha256,
+                ),
             )
-        )
-    }.mapIfNotNull {
-        CustomApi.Files.Chunks.InitResponse(it.id, body.chunkSize)
-    }
+        }
+        .mapIfNotNull {
+            CustomApi.Files.Chunks.InitResponse(it.id, body.chunkSize)
+        }
 
 @Suppress("LongMethod")
 suspend fun completeChunkUpload(
     backend: Backend,
     id: PrimaryKey,
     path: CommonPath,
-    clientIp: String? = null
+    clientIp: String? = null,
 ): Result<FileInfo?> {
     val recordId = path.id
     // 读取上传记录以获取所有者信息
-    val record = backend.database.file.getUploadRecord(recordId).getOrThrow()
-        ?: throw CustomBadRequestException("upload record not found")
+    val record =
+        backend.database.file.getUploadRecord(recordId).getOrThrow()
+            ?: throw CustomBadRequestException("upload record not found")
     val expectedSha256 = record.sha256 ?: throw CustomBadRequestException("file sha256 missing")
     val tuple = ObjectTuple(record.objectId, record.objectType)
     return backend.checkRootWritePermission(tuple.objectType, tuple.objectId, id)
@@ -547,39 +553,43 @@ suspend fun completeChunkUpload(
             val expectedChunkCount = ((totalSize + record.chunkSize - 1) / record.chunkSize).toInt()
             val newSavedName = newFileName(name)
             val targetFullName = "${tuple.objectId}/$newSavedName"
-            runCatching {
+            cancellableRunCatching {
                 // 使用对象存储 compose 在默认桶直接合并到最终路径
-                val chunkRecords = backend.objectStorageService.list(
-                    A_FILE_DEFAULT_BUCKET,
-                    "chunks/$recordId/"
-                ).getOrThrow()
-                val chunkMap = chunkRecords.mapNotNull { r ->
-                    val index = r.fullName.substringAfter("chunk_").toIntOrNull()
-                    if (index == null) {
-                        null
-                    } else {
-                        index to r.fullName
-                    }
-                }.toMap()
+                val chunkRecords =
+                    backend.objectStorageService.list(
+                        A_FILE_DEFAULT_BUCKET,
+                        "chunks/$recordId/",
+                    ).getOrThrow()
+                val chunkMap =
+                    chunkRecords.mapNotNull { r ->
+                        val index = r.fullName.substringAfter("chunk_").toIntOrNull()
+                        if (index == null) {
+                            null
+                        } else {
+                            index to r.fullName
+                        }
+                    }.toMap()
                 if (chunkMap.size != expectedChunkCount) {
                     throw CustomBadRequestException("chunk missing")
                 }
-                val sortedSources = (0 until expectedChunkCount).map { index ->
-                    chunkMap[index] ?: throw CustomBadRequestException("chunk missing")
-                }
+                val sortedSources =
+                    (0 until expectedChunkCount).map { index ->
+                        chunkMap[index] ?: throw CustomBadRequestException("chunk missing")
+                    }
                 // 合并到最终对象
                 backend.objectStorageService.compose(
                     A_FILE_DEFAULT_BUCKET,
                     targetFullName,
-                    sortedSources
+                    sortedSources,
                 ).getOrThrow()
-                val fileRecord = backend.buildFileRecordFromComposedObject(
-                    targetFullName,
-                    newSavedName,
-                    tuple,
-                    totalSize,
-                    expectedSha256,
-                )
+                val fileRecord =
+                    backend.buildFileRecordFromComposedObject(
+                        targetFullName,
+                        newSavedName,
+                        tuple,
+                        totalSize,
+                        expectedSha256,
+                    )
                 // 完成后释放上传锁并更新配额使用量
                 val quotaInfo = backend.getQuotaInfo(QuotaType.FILE, tuple).getOrThrow()
                 backend.database.file.updateUploadRecordStatus(
@@ -589,7 +599,7 @@ suspend fun completeChunkUpload(
                 ).onSuccess {
                     // 保存文件文档到搜索服务
                     backend.fileSearchService.saveDocument(
-                        listOf(FileDocument.fromFileRecord(fileRecord))
+                        listOf(FileDocument.fromFileRecord(fileRecord)),
                     ).onFailure { error ->
                         Napier.e(error) {
                             "save file document failed"
@@ -604,7 +614,7 @@ suspend fun completeChunkUpload(
                     Result.success(fileRecords)
                 },
                 onFailure = { error ->
-                    runCatching {
+                    cancellableRunCatching {
                         val quotaInfo = backend.getQuotaInfo(QuotaType.FILE, tuple).getOrThrow()
                         backend.database.file.updateUploadRecordStatus(
                             quotaInfo,
@@ -612,22 +622,26 @@ suspend fun completeChunkUpload(
                             emptyList(),
                         ).getOrThrow()
                     }
-                    runCatching {
-                        backend.objectStorageService.delete(A_FILE_DEFAULT_BUCKET, listOf(
-                            targetFullName
-                        )).getOrThrow()
-                    }
-                    runCatching {
-                        val sessionObjects = backend.objectStorageService.list(
+                    cancellableRunCatching {
+                        backend.objectStorageService.delete(
                             A_FILE_DEFAULT_BUCKET,
-                            "chunks/$recordId/"
-                        ).getOrThrow().map { it.fullName }
+                            listOf(
+                                targetFullName,
+                            ),
+                        ).getOrThrow()
+                    }
+                    cancellableRunCatching {
+                        val sessionObjects =
+                            backend.objectStorageService.list(
+                                A_FILE_DEFAULT_BUCKET,
+                                "chunks/$recordId/",
+                            ).getOrThrow().map { it.fullName }
                         if (sessionObjects.isNotEmpty()) {
                             backend.objectStorageService.delete(A_FILE_DEFAULT_BUCKET, sessionObjects).getOrThrow()
                         }
                     }
                     Result.failure(error)
-                }
+                },
             )
         }.mapResultIfNotNull {
             backend.processFileRecordToFileInfo(it, id, clientIp)
@@ -642,19 +656,21 @@ private suspend fun Backend.buildFileRecordFromComposedObject(
     sha256: String,
 ): FileRecord {
     // 内容类型与尺寸检测
-    val contentType = objectStorageService.getInputStream(
-        A_FILE_DEFAULT_BUCKET,
-        targetFullName
-    ).getOrThrow().buffered().use {
-        Backend.tika.detect(it)
-    }
-    val dimension = if (contentType.startsWith("image")) {
-        getImageDimension(targetFullName, contentType) {
-            objectStorageService.getInputStream(A_FILE_DEFAULT_BUCKET, targetFullName).getOrThrow().buffered()
+    val contentType =
+        objectStorageService.getInputStream(
+            A_FILE_DEFAULT_BUCKET,
+            targetFullName,
+        ).getOrThrow().buffered().use {
+            Backend.tika.detect(it)
         }
-    } else {
-        null
-    }
+    val dimension =
+        if (contentType.startsWith("image")) {
+            getImageDimension(targetFullName, contentType) {
+                objectStorageService.getInputStream(A_FILE_DEFAULT_BUCKET, targetFullName).getOrThrow().buffered()
+            }
+        } else {
+            null
+        }
 
     // 写入数据库记录
     return FileRecord(
@@ -673,18 +689,15 @@ private suspend fun Backend.buildFileRecordFromComposedObject(
     )
 }
 
-private suspend fun cleanChunk(
-    backend: Backend,
-    sortedSources: List<String>,
-    recordId: PrimaryKey
-) {
-    runCatching {
+private suspend fun cleanChunk(backend: Backend, sortedSources: List<String>, recordId: PrimaryKey) {
+    cancellableRunCatching {
         backend.objectStorageService.delete(A_FILE_DEFAULT_BUCKET, sortedSources).getOrThrow()
         // 删除整个分片目录下可能残留的对象
-        val sessionObjects = backend.objectStorageService.list(
-            A_FILE_DEFAULT_BUCKET,
-            "chunks/$recordId/"
-        ).getOrThrow().map { it.fullName }
+        val sessionObjects =
+            backend.objectStorageService.list(
+                A_FILE_DEFAULT_BUCKET,
+                "chunks/$recordId/",
+            ).getOrThrow().map { it.fullName }
         if (sessionObjects.isNotEmpty()) {
             backend.objectStorageService.delete(A_FILE_DEFAULT_BUCKET, sessionObjects)
                 .getOrThrow()
@@ -694,61 +707,60 @@ private suspend fun cleanChunk(
     }
 }
 
-suspend fun abortChunkUpload(
-    backend: Backend,
-    path: CommonPath
-) = backend.database.file.getUploadRecord(path.id).mapResultIfNotNull { uploadRecord ->
-    runCatching {
-        // 删除默认桶下对应会话的所有对象，并释放上传锁
-        val recordId = path.id
-        val tuple = ObjectTuple(uploadRecord.objectId, uploadRecord.objectType)
-        val quotaInfo = backend.getQuotaInfo(QuotaType.FILE, tuple).getOrThrow()
-        backend.database.file.updateUploadRecordStatus(
-            quotaInfo,
-            uploadRecord.copy(status = UploadRecordStatus.ABORTED),
-            emptyList()
-        ).getOrThrow()
-        val records = backend.objectStorageService.list(A_FILE_DEFAULT_BUCKET, "chunks/$recordId/").getOrThrow()
-        val names = records.map { it.fullName }
-        backend.objectStorageService.delete(A_FILE_DEFAULT_BUCKET, names).getOrThrow()
+suspend fun abortChunkUpload(backend: Backend, path: CommonPath) =
+    backend.database.file.getUploadRecord(path.id).mapResultIfNotNull { uploadRecord ->
+        cancellableRunCatching {
+            // 删除默认桶下对应会话的所有对象，并释放上传锁
+            val recordId = path.id
+            val tuple = ObjectTuple(uploadRecord.objectId, uploadRecord.objectType)
+            val quotaInfo = backend.getQuotaInfo(QuotaType.FILE, tuple).getOrThrow()
+            backend.database.file.updateUploadRecordStatus(
+                quotaInfo,
+                uploadRecord.copy(status = UploadRecordStatus.ABORTED),
+                emptyList(),
+            ).getOrThrow()
+            val records = backend.objectStorageService.list(A_FILE_DEFAULT_BUCKET, "chunks/$recordId/").getOrThrow()
+            val names = records.map { it.fullName }
+            backend.objectStorageService.delete(A_FILE_DEFAULT_BUCKET, names).getOrThrow()
+        }
     }
-}
 
-suspend fun getChunkStatus(
-    backend: Backend,
-    path: CommonPath
-) = backend.database.file.getUploadRecord(path.id).mapResultIfNotNull { record ->
-    runCatching {
-        // 从对象存储临时桶读取已上传分片索引
-        val records = backend.objectStorageService.list(
-            A_FILE_DEFAULT_BUCKET,
-            "chunks/${path.id}/"
-        ).getOrThrow()
-        val uploadedIndices = records.mapNotNull { r ->
-            r.fullName.substringAfter("chunk_").toIntOrNull()
-        }.sorted()
-        // 从数据库中的 UploadRecord 获取 chunkSize/size
-        CustomApi.Files.Chunks.StatusResponse(uploadedIndices, record.chunkSize, record.total, record.id, record.status)
+suspend fun getChunkStatus(backend: Backend, path: CommonPath) =
+    backend.database.file.getUploadRecord(path.id).mapResultIfNotNull { record ->
+        cancellableRunCatching {
+            // 从对象存储临时桶读取已上传分片索引
+            val records =
+                backend.objectStorageService.list(
+                    A_FILE_DEFAULT_BUCKET,
+                    "chunks/${path.id}/",
+                ).getOrThrow()
+            val uploadedIndices =
+                records.mapNotNull { r ->
+                    r.fullName.substringAfter("chunk_").toIntOrNull()
+                }.sorted()
+            // 从数据库中的 UploadRecord 获取 chunkSize/size
+            CustomApi.Files.Chunks.StatusResponse(
+                uploadedIndices,
+                record.chunkSize,
+                record.total,
+                record.id,
+                record.status,
+            )
+        }
     }
-}
 
-suspend fun Backend.uncheckedGetFileRefsByFileId(
-    fileId: PrimaryKey,
-    primaryKeyFetch: PrimaryKeyFetch
-) = database.file.getFileRefsByFileId(fileId, primaryKeyFetch).mapPagingNotNull { list ->
-    list.map { ref ->
-        ref.toFileRefInfo()
-    }
-}
-
-suspend fun Backend.getFileRefsByFileId(
-    uid: PrimaryKey,
-    fileId: PrimaryKey,
-    primaryKeyFetch: PrimaryKeyFetch
-) = checkRootReadPermission(ObjectType.FILE, fileId, uid).mapResultIfNotNull {
+suspend fun Backend.uncheckedGetFileRefsByFileId(fileId: PrimaryKey, primaryKeyFetch: PrimaryKeyFetch) =
     database.file.getFileRefsByFileId(fileId, primaryKeyFetch).mapPagingNotNull { list ->
         list.map { ref ->
             ref.toFileRefInfo()
         }
     }
-}
+
+suspend fun Backend.getFileRefsByFileId(uid: PrimaryKey, fileId: PrimaryKey, primaryKeyFetch: PrimaryKeyFetch) =
+    checkRootReadPermission(ObjectType.FILE, fileId, uid).mapResultIfNotNull {
+        database.file.getFileRefsByFileId(fileId, primaryKeyFetch).mapPagingNotNull { list ->
+            list.map { ref ->
+                ref.toFileRefInfo()
+            }
+        }
+    }

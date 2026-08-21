@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.file
 
 import androidx.compose.foundation.layout.Box
@@ -103,7 +107,7 @@ private fun ZoomImage(fileInfo: FileInfo) {
             modifier = Modifier.fillMaxSize(),
             onLongPress = {
                 showSheet = true
-            }
+            },
         )
         ImageSheet(fileInfo, showSheet, sheetState) {
             showSheet = false
@@ -113,19 +117,14 @@ private fun ZoomImage(fileInfo: FileInfo) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ImageSheet(
-    fileInfo: FileInfo,
-    showSheet: Boolean,
-    sheetState: SheetState,
-    hideSheet: () -> Unit,
-) {
+fun ImageSheet(fileInfo: FileInfo, showSheet: Boolean, sheetState: SheetState, hideSheet: () -> Unit) {
     val scope = rememberCoroutineScope()
     val toaster = LocalToaster.current
     val globalDialogController = LocalGlobalDialog.current
     BaseSheet(
         showSheet,
         sheetState,
-        hideSheet
+        hideSheet,
     ) {
         Column(modifier = Modifier.height(200.dp).padding(20.dp)) {
             ButtonNav(MaterialSymbolsOutlined.FileCopy, "copy") {

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.cli
 
 import com.perraco.utils.SnowflakeFactory
@@ -55,7 +59,7 @@ class CliBackend(
     override val fileSearchService: FileSearchService,
     override val objectStorageService: ObjectStorageService,
     override val nameService: NameService,
-    override val database: CombinedDatabase
+    override val database: CombinedDatabase,
 ) : Backend
 
 fun buildBackendFromEnv(env: MergedEnv): Backend {
@@ -64,7 +68,7 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
     val databaseConnection = databaseConnection(env)
 
     val buildType = env["BUILD_TYPE"] ?: "prod"
-    val flavor = env["FLAVOR"] ?: throw Exception("FLAVOR is empty")
+    val flavor = env["FLAVOR"] ?: throw IllegalStateException("FLAVOR is empty")
 
     val customConfig = CustomConfig(buildType, flavor, null)
 
@@ -87,6 +91,6 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
         fileSearchService,
         mediaService,
         buildNameService(env),
-        exposedDatabase
+        exposedDatabase,
     )
 }

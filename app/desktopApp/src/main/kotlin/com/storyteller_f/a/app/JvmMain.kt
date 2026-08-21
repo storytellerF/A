@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app
 
 import androidx.compose.runtime.CompositionLocalProvider
@@ -35,12 +39,13 @@ import java.awt.TextArea
 import kotlin.system.exitProcess
 import kotlin.uuid.ExperimentalUuidApi
 
+/** Shared desktop UI model. */
 @OptIn(DelicateCoroutinesApi::class)
-val uiViewModel by lazy {
+val uiViewModel: UIViewModel by lazy {
     UIViewModel(
         GlobalScope,
         getDesktopWsServerUrl(),
-        getDesktopServerUrl()
+        getDesktopServerUrl(),
     )
 }
 
@@ -50,25 +55,27 @@ object JvmAppPlatformImpl : AppPlatformImpl {
 }
 
 @OptIn(ExperimentalUuidApi::class)
-private val jvmMediaPlayerService = object : MediaPlayerService() {
-    override val enablePip: Boolean
-        get() = false
+private val jvmMediaPlayerService =
+    object : MediaPlayerService() {
+        override val enablePip: Boolean
+            get() = false
 
-    override fun fullscreen(remoteMediaItem: RemoteMediaItem) = Unit
+        override fun fullscreen(remoteMediaItem: RemoteMediaItem) = Unit
 
-    override suspend fun start(
-        remoteMediaItem: RemoteMediaItem,
-        localMediaPlaySession: LocalMediaPlaySession,
-        playList: List<ConstPlayItem>
-    ) {
-        state.value = MediaPlaySession(
-            remoteMediaItem = remoteMediaItem,
-            playList = playList,
-            uuids = listOf(localMediaPlaySession.uuid),
-            videoSize = null
-        )
+        override suspend fun start(
+            remoteMediaItem: RemoteMediaItem,
+            localMediaPlaySession: LocalMediaPlaySession,
+            playList: List<ConstPlayItem>,
+        ) {
+            state.value =
+                MediaPlaySession(
+                    remoteMediaItem = remoteMediaItem,
+                    playList = playList,
+                    uuids = listOf(localMediaPlaySession.uuid),
+                    videoSize = null,
+                )
+        }
     }
-}
 
 @OptIn(DelicateCoroutinesApi::class)
 fun main(args: Array<String>) {
@@ -77,11 +84,12 @@ fun main(args: Array<String>) {
     initForJvmMain(args)
     loadCryptoLibIfNeed()
     val taskRegister = SimpleTaskRegister(GlobalScope)
-    val provider = object : ClientFileProvider {
-        override suspend fun getDownloader(): Downloader = DownloaderImpl(uiViewModel, taskRegister)
+    val provider =
+        object : ClientFileProvider {
+            override suspend fun getDownloader(): Downloader = DownloaderImpl(uiViewModel, taskRegister)
 
-        override suspend fun getUploader(): Uploader = UploaderImpl(uiViewModel, taskRegister)
-    }
+            override suspend fun getUploader(): Uploader = UploaderImpl(uiViewModel, taskRegister)
+        }
     application {
         Window(
             onCloseRequest = ::exitApplication,
@@ -90,7 +98,7 @@ fun main(args: Array<String>) {
             CompositionLocalProvider(
                 LocalClientFileProvider provides provider,
                 LocalUiViewModel provides uiViewModel,
-                LocalMediaPlayerService provides jvmMediaPlayerService
+                LocalMediaPlayerService provides jvmMediaPlayerService,
             ) {
                 App()
             }
@@ -107,12 +115,13 @@ private fun initForJvmMain(args: Array<String>) {
             layout = BorderLayout()
             val label = TextArea(e.stackTraceToString())
             add(label, BorderLayout.CENTER)
-            val button = Button("OK").apply {
-                addActionListener {
-                    dispose()
-                    exitProcess(1)
+            val button =
+                Button("OK").apply {
+                    addActionListener {
+                        dispose()
+                        exitProcess(1)
+                    }
                 }
-            }
             add(button, BorderLayout.SOUTH)
             setSize(300, 300)
             isVisible = true

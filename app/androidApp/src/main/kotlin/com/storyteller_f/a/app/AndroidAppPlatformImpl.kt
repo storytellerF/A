@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app
 
 import android.Manifest
@@ -34,14 +38,14 @@ import java.util.concurrent.atomic.AtomicInteger
 val notifyId = AtomicInteger(0)
 
 object AndroidAppPlatformImpl : AppPlatformImpl {
-
     override fun startCall(roomId: PrimaryKey) {
         val application = appContextRef.get() ?: return
-        val intent = Intent(application, RTCActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
-            putExtra("roomId", roomId)
-        }
+        val intent =
+            Intent(application, RTCActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+                putExtra("roomId", roomId)
+            }
         application.startActivity(intent)
     }
 
@@ -52,7 +56,7 @@ object AndroidAppPlatformImpl : AppPlatformImpl {
         }
         if (ActivityCompat.checkSelfPermission(
                 context,
-                Manifest.permission.POST_NOTIFICATIONS
+                Manifest.permission.POST_NOTIFICATIONS,
             ) == PackageManager.PERMISSION_GRANTED
         ) {
             val androidBitmap = bitmap?.asAndroidBitmap() ?: getIconBitmapFromName(context, room.name) ?: return
@@ -60,9 +64,10 @@ object AndroidAppPlatformImpl : AppPlatformImpl {
             val channel = "Message"
             val managerCompat = getOrCreateNotificationChannel(context, channel)
 
-            val person = Person.Builder()
-                .setName("Chat partner")
-                .build()
+            val person =
+                Person.Builder()
+                    .setName("Chat partner")
+                    .build()
             val user = Person.Builder().setName("You").build()
 
             val shortcutId = "room_${room.id}"
@@ -83,12 +88,13 @@ object AndroidAppPlatformImpl : AppPlatformImpl {
         room: RoomInfo,
         bitmap: IconCompat,
     ): NotificationCompat.Builder {
-        val bubbleIntent = PendingIntent.getActivity(
-            context,
-            1,
-            Intent(context, BubbleActivity::class.java).putExtra("roomId", room.id),
-            flagUpdateCurrent(true)
-        )
+        val bubbleIntent =
+            PendingIntent.getActivity(
+                context,
+                1,
+                Intent(context, BubbleActivity::class.java).putExtra("roomId", room.id),
+                flagUpdateCurrent(true),
+            )
         val bubbleData = NotificationCompat.BubbleMetadata.Builder(bubbleIntent, bitmap).setDesiredHeight(600)
         val style = NotificationCompat.MessagingStyle(user).setGroupConversation(false)
         return NotificationCompat.Builder(context, channel)
@@ -105,7 +111,7 @@ object AndroidAppPlatformImpl : AppPlatformImpl {
                     Intent(context, MainActivity::class.java)
                         .setAction(Intent.ACTION_VIEW)
                         .setData(getDeepLink("/room/${room.id}").toUri()),
-                    flagUpdateCurrent(true)
+                    flagUpdateCurrent(true),
                 ),
             )
             .setCategory(NotificationCompat.CATEGORY_MESSAGE)
@@ -117,30 +123,31 @@ object AndroidAppPlatformImpl : AppPlatformImpl {
         shortcutId: String,
         person: Person,
         room: RoomInfo,
-        iconCompat: IconCompat
+        iconCompat: IconCompat,
     ) {
         val category = "com.storyteller_f.a.category.SHARE_MESSAGE_TARGET"
 
-        val builder = ShortcutInfoCompat.Builder(context, shortcutId)
-            .setLocusId(LocusIdCompat(shortcutId))
-            .setCategories(setOf(category))
-            .setActivity(ComponentName(context, MainActivity::class.java))
-            .setIntent(
-                Intent(context, MainActivity::class.java)
-                    .setAction(Intent.ACTION_VIEW)
-                    .setData(getDeepLink("/room/${room.id}").toUri())
-            )
-            .setPerson(person)
-            .setLongLived(true)
-            .setShortLabel(room.name)
-            .setIcon(iconCompat)
+        val builder =
+            ShortcutInfoCompat.Builder(context, shortcutId)
+                .setLocusId(LocusIdCompat(shortcutId))
+                .setCategories(setOf(category))
+                .setActivity(ComponentName(context, MainActivity::class.java))
+                .setIntent(
+                    Intent(context, MainActivity::class.java)
+                        .setAction(Intent.ACTION_VIEW)
+                        .setData(getDeepLink("/room/${room.id}").toUri()),
+                )
+                .setPerson(person)
+                .setLongLived(true)
+                .setShortLabel(room.name)
+                .setIcon(iconCompat)
         ShortcutManagerCompat.pushDynamicShortcut(context, builder.build())
     }
 
-    private suspend fun getIconBitmapFromName(context: Application, name: String): Bitmap? {
-        return svgStringToBitmap(
-            context,
-            """<svg xmlns="http://www.w3.org/2000/svg"
+    private suspend fun getIconBitmapFromName(context: Application, name: String): Bitmap? =
+        svgStringToBitmap(
+        context,
+        """<svg xmlns="http://www.w3.org/2000/svg"
      width="40" height="30" viewBox="0 0 400 300"
      preserveAspectRatio="xMidYMid meet" role="img" aria-label="Centered star">
   <rect x="0" y="0" width="400" height="300" fill="#BCECE7" stroke="#cccccc"/>
@@ -150,32 +157,27 @@ object AndroidAppPlatformImpl : AppPlatformImpl {
         font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Color Emoji', sans-serif"
         font-size="160"
         fill="#1f77b4">
-    ${safeFirstUnicode(name)}
+    ${safeFirstUnicode(name) ?: "<none>"}
   </text>
 </svg>
-"""
-        )
-    }
+""",
+    )
 
-    private suspend fun svgStringToBitmap(
-        context: Application,
-        svgString: String
-    ): Bitmap? {
+    private suspend fun svgStringToBitmap(context: Application, svgString: String): Bitmap? {
         val file = File(context.cacheDir, "temp.svg")
         file.writeText(svgString)
         return SingletonImageLoader.get(context)
             .execute(ImageRequest.Builder(context).data(file).build()).image?.toBitmap()
     }
 
-    private fun flagUpdateCurrent(mutable: Boolean): Int {
-        return if (mutable) {
-            if (Build.VERSION.SDK_INT >= 31) {
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
-            } else {
-                PendingIntent.FLAG_UPDATE_CURRENT
-            }
+    private fun flagUpdateCurrent(mutable: Boolean): Int =
+        if (mutable) {
+        if (Build.VERSION.SDK_INT >= 31) {
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
         } else {
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_UPDATE_CURRENT
         }
+    } else {
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     }
 }

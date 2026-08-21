@@ -1,3 +1,9 @@
+/*
+ * This is a private project. All rights reserved.
+*/
+
+package com.storyteller_f.a.app
+
 import android.content.ContentProvider
 import com.storyteller_f.shared.appContextRef
 import org.junit.Before
@@ -10,21 +16,19 @@ import java.lang.ref.WeakReference
 
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [35])
-actual abstract class PlatformHeadlessTest {
+actual open class PlatformHeadlessTest {
     @Before
     fun setup() {
         System.setProperty("robolectric.logging.enabled", "true")
         setupAndroidContextProvider()
         val application = RuntimeEnvironment.getApplication()
         appContextRef = WeakReference(application)
-        println("setup: $application")
     }
 
     // Configures Compose's AndroidContextProvider to access resources in tests.
     // See https://youtrack.jetbrains.com/issue/CMP-6612
     private fun setupAndroidContextProvider() {
         val type = findAndroidContextProvider() ?: return
-        println("setupAndroidContextProvider: $type")
         Robolectric.setupContentProvider(type)
     }
 
@@ -34,11 +38,9 @@ actual abstract class PlatformHeadlessTest {
             @Suppress("UNCHECKED_CAST")
             Class.forName(providerClassName) as Class<ContentProvider>
         } catch (_: ClassNotFoundException) {
-            println("Class not found: $providerClassName")
             // Tests that don't depend on Compose will not have the provider class in classpath and will get
             // ClassNotFoundException. Skip configuring the provider for them.
             null
         }
     }
-
 }

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.community
 
 import androidx.compose.foundation.border
@@ -76,11 +80,7 @@ fun CommunityComposePage() {
     }
 }
 
-class MemberJoinPolicy(
-    val title: String,
-    val policy: MemberPolicy,
-    val description: String
-)
+data class MemberJoinPolicy(val title: String, val policy: MemberPolicy, val description: String)
 
 @Preview
 @Composable
@@ -90,7 +90,7 @@ fun CommunityComposeInternal(
     memberJoinPolicy: MemberPolicy = MemberPolicy.OPEN,
     onNameChange: (String) -> Unit = {},
     onMemberJoinPolicyChange: (MemberPolicy) -> Unit = {},
-    onAidChange: (String) -> Unit = {}
+    onAidChange: (String) -> Unit = {},
 ) {
     Column(
         modifier = Modifier.width(300.dp),
@@ -114,30 +114,26 @@ fun CommunityComposeInternal(
 }
 
 @Composable
-private fun SelectedMemberPolicyDescription(
-    radioOptions: List<MemberJoinPolicy>,
-    memberJoinPolicy: MemberPolicy
-) {
+private fun SelectedMemberPolicyDescription(radioOptions: List<MemberJoinPolicy>, memberJoinPolicy: MemberPolicy) {
     val selectedDescription = radioOptions.firstOrNull { it.policy == memberJoinPolicy }?.description ?: ""
     Text(selectedDescription, modifier = Modifier.padding(horizontal = 10.dp))
 }
 
-private fun getMemberPolicies(): List<MemberJoinPolicy> {
-    return listOf(
-        MemberJoinPolicy("Open", MemberPolicy.OPEN, "Anyone can join this community"),
-        MemberJoinPolicy("Invite Only", MemberPolicy.INVITE_ONLY, "Only invite members can join this community")
-    )
-}
+private fun getMemberPolicies(): List<MemberJoinPolicy> =
+    listOf(
+    MemberJoinPolicy("Open", MemberPolicy.OPEN, "Anyone can join this community"),
+    MemberJoinPolicy("Invite Only", MemberPolicy.INVITE_ONLY, "Only invite members can join this community"),
+)
 
 @Composable
 private fun CommunityMemberPolicyRadioGroup(
     radioOptions: List<MemberJoinPolicy>,
     memberJoinPolicy: MemberPolicy,
-    onMemberJoinPolicyChange: (MemberPolicy) -> Unit
+    onMemberJoinPolicyChange: (MemberPolicy) -> Unit,
 ) {
     Column(
         Modifier.padding(horizontal = 10.dp).border(1.dp, MaterialTheme.colorScheme.primary)
-            .padding(10.dp)
+            .padding(10.dp),
     ) {
         Text(stringResource(Res.string.member_join_policy))
         // Note that Modifier.selectableGroup() is essential to ensure correct accessibility behavior
@@ -148,21 +144,21 @@ private fun CommunityMemberPolicyRadioGroup(
                         .fillMaxWidth()
                         .height(56.dp)
                         .selectable(
-                            selected = (text.policy == memberJoinPolicy),
+                            selected = text.policy == memberJoinPolicy,
                             onClick = { onMemberJoinPolicyChange(text.policy) },
-                            role = Role.RadioButton
+                            role = Role.RadioButton,
                         )
                         .padding(horizontal = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     RadioButton(
-                        selected = (text.policy == memberJoinPolicy),
-                        onClick = null // null recommended for accessibility with screen readers
+                        selected = text.policy == memberJoinPolicy,
+                        onClick = null, // null recommended for accessibility with screen readers
                     )
                     Text(
                         text = text.title,
                         style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(start = 16.dp)
+                        modifier = Modifier.padding(start = 16.dp),
                     )
                 }
             }

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.cli
 
 import com.storyteller_f.shared.model.A_FILE_DEFAULT_BUCKET

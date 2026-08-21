@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.api
 
 import com.storyteller_f.shared.model.AlgoType
@@ -20,14 +24,14 @@ interface PageableQuery {
 }
 
 @Serializable
-class PaginationQuery(
+data class PaginationQuery(
     override val nextPageToken: String? = null,
     override val prePageToken: String? = null,
-    override val size: Int = DEFAULT_PAGE_SIZE
+    override val size: Int = DEFAULT_PAGE_SIZE,
 ) : PageableQuery
 
 @Serializable
-class SearchQuery(
+data class SearchQuery(
     val word: String,
     override val nextPageToken: String? = null,
     override val size: Int = DEFAULT_PAGE_SIZE,
@@ -35,43 +39,35 @@ class SearchQuery(
 ) : PageableQuery
 
 @Serializable
-class CommonPath(val id: PrimaryKey)
+data class CommonPath(val id: PrimaryKey)
 
 @Serializable
-class NewSubscription(
-    val objectId: PrimaryKey,
-    val objectType: ObjectType
-) {
+class NewSubscription(val objectId: PrimaryKey, val objectType: ObjectType) {
     fun tuple() = ObjectTuple(objectId, objectType)
 }
 
 @Serializable
-class NewCommunity(
+data class NewCommunity(
     val name: String,
     val aid: String,
     val icon: PrimaryKey? = null,
-    val memberPolicy: MemberPolicy = MemberPolicy.OPEN
+    val memberPolicy: MemberPolicy = MemberPolicy.OPEN,
 )
 
 @Serializable
-class NewDevice(val endpointUrl: String)
+data class NewDevice(val endpointUrl: String)
 
 @Serializable
-class NewReaction(val emoji: String)
+data class NewReaction(val emoji: String)
 
 @Serializable
-class DeleteReaction(val emoji: String)
+data class DeleteReaction(val emoji: String)
 
 @Serializable
-class NewRoom(
-    val name: String,
-    val aid: String,
-    val icon: PrimaryKey? = null,
-    val communityId: PrimaryKey? = null
-)
+data class NewRoom(val name: String, val aid: String, val icon: PrimaryKey? = null, val communityId: PrimaryKey? = null)
 
 @Serializable
-class NewTitle(
+data class NewTitle(
     val name: String,
     val type: TitleType,
     val receiver: PrimaryKey,
@@ -82,73 +78,58 @@ class NewTitle(
 )
 
 @Serializable
-class NewTopic(val parentType: ObjectType, val parentId: PrimaryKey, val content: String) {
+data class NewTopic(val parentType: ObjectType, val parentId: PrimaryKey, val content: String) {
     val tuple = ObjectTuple(parentId, parentType)
 }
 
 @Serializable
 class NewFavorite(val objectType: ObjectType, val objectId: PrimaryKey) {
-    fun tuple(): ObjectTuple {
-        return ObjectTuple(objectId, objectType)
-    }
+    fun tuple(): ObjectTuple = ObjectTuple(objectId, objectType)
 }
 
 @Serializable
-sealed class TransferAuthKey {
+sealed interface TransferAuthKey {
     abstract val algo: AlgoType
     abstract val derPublicKey: String
 
     @Serializable
     @SerialName("P256")
-    data class P256(
-        override val derPublicKey: String,
-    ) : TransferAuthKey() {
+    data class P256(override val derPublicKey: String) : TransferAuthKey {
         override val algo = AlgoType.P256
     }
 
     @Serializable
     @SerialName("Dilithium")
-    data class Dilithium(
-        override val derPublicKey: String,
-        val derEncryptionPublicKey: String,
-    ) : TransferAuthKey() {
+    data class Dilithium(override val derPublicKey: String, val derEncryptionPublicKey: String) : TransferAuthKey {
         override val algo = AlgoType.DILITHIUM
     }
 }
 
 @Serializable
-class NewUser(
-    val nickname: String? = null,
-    val aid: String? = null,
-    val authKey: TransferAuthKey
-)
+data class NewUser(val nickname: String? = null, val aid: String? = null, val authKey: TransferAuthKey)
 
 @Serializable
-class SignUpBody(
-    val publicKey: String,
-    val signature: String,
-    val encryptionPublicKey: String? = null
-)
+data class SignUpBody(val publicKey: String, val signature: String, val encryptionPublicKey: String? = null)
 
 @Serializable
-class SignInBody(val address: String, val signature: String)
+data class SignInBody(val address: String, val signature: String)
 
 @Serializable
-sealed class SignInResponse {
+sealed interface SignInResponse {
     @Serializable
     @SerialName("success")
-    data class Success(val userInfo: UserInfo) : SignInResponse()
+    data class Success(val userInfo: UserInfo) : SignInResponse
 
     @Serializable
     @SerialName("requires_totp")
-    data object RequiresTotp : SignInResponse()
+    data object RequiresTotp : SignInResponse
 }
 
 @Serializable
-class TotpCodeBody(val code: String)
+data class TotpCodeBody(val code: String)
 
 @Serializable
-class TopicQuery(
+data class TopicQuery(
     val pinType: TopicPinSearch? = null,
     val fillHasCommented: Boolean? = null,
     override val prePageToken: String? = null,
@@ -164,12 +145,12 @@ class TopicQuery(
         fillHasCommented,
         paginationQuery.prePageToken,
         paginationQuery.nextPageToken,
-        paginationQuery.size
+        paginationQuery.size,
     )
 }
 
 @Serializable
-class PanelLogsQuery(
+data class PanelLogsQuery(
     val targetId: PrimaryKey,
     val objectType: ObjectType,
     override val nextPageToken: String? = null,
@@ -184,7 +165,7 @@ class PanelLogsQuery(
 }
 
 @Serializable
-class TaskRecordsQuery(
+data class TaskRecordsQuery(
     val type: TaskRecordType? = null,
     /** Filters task executions by their outcome. */
     val isSuccess: Boolean? = null,

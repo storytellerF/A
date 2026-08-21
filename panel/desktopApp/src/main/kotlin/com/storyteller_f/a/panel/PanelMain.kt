@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.panel
 
 import androidx.compose.runtime.CompositionLocalProvider
@@ -40,12 +44,13 @@ private fun initForJvmMain() {
             layout = BorderLayout()
             val label = TextArea(e.stackTraceToString())
             add(label, BorderLayout.CENTER)
-            val button = Button("OK").apply {
-                addActionListener {
-                    dispose()
-                    exitProcess(1)
+            val button =
+                Button("OK").apply {
+                    addActionListener {
+                        dispose()
+                        exitProcess(1)
+                    }
                 }
-            }
             add(button, BorderLayout.SOUTH)
             setSize(300, 300)
             isVisible = true

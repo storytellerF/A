@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.cli
 
 import com.storyteller_f.a.backend.core.setLogPath
@@ -33,7 +37,7 @@ class AddPresetTest {
                 excludeArchiveEntries:
                   - "**/*.md"
                   - "docs/**"
-                """.trimIndent()
+                """.trimIndent(),
             )
 
             val config = parseDownloadConfig(configFile)
@@ -58,7 +62,7 @@ class AddPresetTest {
                 archive.zip
                 https://example.com/archive.zip
                 sha256:deadbeef
-                """.trimIndent()
+                """.trimIndent(),
             )
 
             val config = parseDownloadConfig(configFile)
@@ -85,13 +89,13 @@ class AddPresetTest {
                     "docs/readme.md" to "remove-md",
                     "nested/secret.txt" to "remove-folder",
                     "images/logo.png" to "keep-image",
-                )
+                ),
             )
 
             repackArchiveWithExclusionsAndInclusionsInPlace(
                 zipFile,
                 listOf("**/*.md", "nested/**"),
-                emptyList()
+                emptyList(),
             )
 
             ZipFile(zipFile).use { zip ->
@@ -120,7 +124,7 @@ class AddPresetTest {
                     "nested/secret.txt" to "remove-folder",
                     "images/logo.png" to "keep-image",
                     "images/other.jpg" to "other-image",
-                )
+                ),
             )
 
             val exclude = listOf("**/*.md", "nested/**")
@@ -128,7 +132,7 @@ class AddPresetTest {
             repackArchiveWithExclusionsAndInclusionsInPlace(
                 zipFile,
                 exclude,
-                include
+                include,
             )
 
             ZipFile(zipFile).use { zip ->
@@ -145,7 +149,8 @@ class AddPresetTest {
     }
 
     @Test
-    fun `download yaml config keeps downloaded file and returns processed archive`() = runTest {
+    fun `download yaml config keeps downloaded file and returns processed archive`() =
+        runTest {
         setLogPath()
         val tempDir = createTempDirectory(prefix = "addpreset-e2e-").toFile()
         val sourceZip = writeDownloadSourceZip(tempDir)
@@ -208,7 +213,7 @@ class AddPresetTest {
                 "keep.txt" to "keep",
                 "docs/readme.md" to "remove",
                 "nested/secret.txt" to "remove-folder",
-            )
+            ),
         )
         return sourceZip
     }
@@ -234,7 +239,7 @@ class AddPresetTest {
             excludeArchiveEntries:
               - "**/*.md"
               - "nested/**"
-            """.trimIndent()
+            """.trimIndent(),
         )
         return configFile
     }
@@ -246,11 +251,7 @@ class AddPresetTest {
         assertZipEntries(originalDownload, kept = setOf("docs/readme.md", "nested/secret.txt"))
     }
 
-    private fun assertZipEntries(
-        file: File,
-        kept: Set<String> = emptySet(),
-        removed: Set<String> = emptySet()
-    ) {
+    private fun assertZipEntries(file: File, kept: Set<String> = emptySet(), removed: Set<String> = emptySet()) {
         ZipFile(file).use { zip ->
             val names = zip.entries().asSequence().map { it.name }.toSet()
             assertTrue("keep.txt" in names)

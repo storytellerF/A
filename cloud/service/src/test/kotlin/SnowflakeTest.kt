@@ -1,3 +1,9 @@
+/*
+ * This is a private project. All rights reserved.
+*/
+
+package com.storyteller_f.a.cloud.core.service
+
 import com.perraco.utils.SnowflakeFactory
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test

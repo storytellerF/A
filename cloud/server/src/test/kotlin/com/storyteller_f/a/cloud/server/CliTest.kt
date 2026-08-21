@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.server
 
 import com.perraco.utils.SnowflakeFactory
@@ -16,8 +20,8 @@ import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.PassType
 import com.storyteller_f.shared.model.TaskRecordType
-import com.storyteller_f.shared.model.WorkerTask
 import com.storyteller_f.shared.model.TitleType
+import com.storyteller_f.shared.model.WorkerTask
 import com.storyteller_f.shared.obj.PresetCommunity
 import com.storyteller_f.shared.obj.PresetFile
 import com.storyteller_f.shared.obj.PresetPanelAccount
@@ -38,7 +42,7 @@ private data class P256KeyMaterial(
     val privatePem: String,
     val derPrivate: String,
     val derPublic: String,
-    val address: String
+    val address: String,
 )
 
 private suspend fun generateP256KeyMaterial(): P256KeyMaterial {
@@ -69,27 +73,29 @@ private suspend fun ensureSystemUser(testMate: TestMate) {
         val (_, sysPubPem) = algo.generatePemKeyPair().getOrThrow()
         val sysPubDer = algo.getDerPublicKeyFromPem(sysPubPem).getOrThrow()
         val sysAddress = algo.calcAddress(sysPubDer).getOrThrow()
-        val systemUser = User(
-            aid = "System",
-            encryptionPublicKey = null,
-            publicKey = sysPubDer,
-            address = sysAddress,
-            icon = null,
-            nickname = "System",
-            id = SnowflakeFactory.nextId(),
-            createdTime = now(),
-            acgAmount = 0L,
-            passType = PassType.RAW,
-            algoType = AlgoType.P256,
-            notificationId = SnowflakeFactory.nextId()
-        )
+        val systemUser =
+            User(
+                aid = "System",
+                encryptionPublicKey = null,
+                publicKey = sysPubDer,
+                address = sysAddress,
+                icon = null,
+                nickname = "System",
+                id = SnowflakeFactory.nextId(),
+                createdTime = now(),
+                acgAmount = 0L,
+                passType = PassType.RAW,
+                algoType = AlgoType.P256,
+                notificationId = SnowflakeFactory.nextId(),
+            )
         backend.database.user.createUser(systemUser).getOrThrow()
     }
 }
 
 class CliTest {
     @Test
-    fun `cli clean and init reset core data`() = test {
+    fun `cli clean and init reset core data`() =
+        test {
         attachSession {
             val community = createCommunityForTest("cli-clean-community", "cli-clean-community")
             createTopic(ObjectType.COMMUNITY, community.id, "seed-topic").getOrThrow()
@@ -113,7 +119,8 @@ class CliTest {
     }
 
     @Test
-    fun `cli apply user preset and sign in`() = test {
+    fun `cli apply user preset and sign in`() =
+        test {
         ensureSystemUser(this)
 
         val presetDir = preparePresetDir("user")
@@ -130,36 +137,40 @@ class CliTest {
             backend.applyPreset(
                 PresetValue(
                     type = "user",
-                    userData = listOf(
+                    userData =
+                    listOf(
                         PresetUser(
                             name = "Preset User",
                             aid = userAid,
-                            privateKey = userKeyPath.relativeTo(presetDir).path
-                        )
-                    )
+                            privateKey = userKeyPath.relativeTo(presetDir).path,
+                        ),
+                    ),
                 ),
-                presetDir
+                presetDir,
             )
         }
 
-        val userAuthKey = AuthKey.P256(
-            userKeys.privatePem,
-            userKeys.derPrivate,
-            userKeys.derPublic
-        )
+        val userAuthKey =
+            AuthKey.P256(
+                userKeys.privatePem,
+                userKeys.derPrivate,
+                userKeys.derPublic,
+            )
 
-        val userTuple = getAppSignInSession(
-            authKey = userAuthKey,
-            onReceive = { _, _, _ -> }
-        ) {
-            getUserInfo(it.uid).getOrThrow()
-        }
+        val userTuple =
+            getAppSignInSession(
+                authKey = userAuthKey,
+                onReceive = { _, _, _ -> },
+            ) {
+                getUserInfo(it.uid).getOrThrow()
+            }
         assertEquals(userAid, userTuple.custom.aid)
     }
 
     @Suppress("LongMethod")
     @Test
-    fun `cli apply community and room presets visible to admin`() = test {
+    fun `cli apply community and room presets visible to admin`() =
+        test {
         ensureSystemUser(this)
 
         val presetDir = preparePresetDir("community-room")
@@ -178,52 +189,55 @@ class CliTest {
             backend.applyPreset(
                 PresetValue(
                     type = "user",
-                    userData = listOf(
+                    userData =
+                    listOf(
                         PresetUser(
                             name = "Preset User",
                             aid = userAid,
-                            privateKey = userKeyPath.relativeTo(presetDir).path
-                        )
-                    )
+                            privateKey = userKeyPath.relativeTo(presetDir).path,
+                        ),
+                    ),
                 ),
-                presetDir
+                presetDir,
             )
 
             backend.applyPreset(
                 PresetValue(
                     type = "community",
-                    communityData = listOf(
+                    communityData =
+                    listOf(
                         PresetCommunity(
                             name = "Preset Community",
                             id = communityAid,
                             admin = userAid,
-                            users = emptyList()
-                        )
-                    )
+                            users = emptyList(),
+                        ),
+                    ),
                 ),
-                presetDir
+                presetDir,
             )
 
             backend.applyPreset(
                 PresetValue(
                     type = "room",
-                    roomData = listOf(
+                    roomData =
+                    listOf(
                         PresetRoom(
                             name = "Preset Public Room",
                             community = communityAid,
                             users = listOf(userAid),
                             id = publicRoomAid,
-                            admin = userAid
+                            admin = userAid,
                         ),
                         PresetRoom(
                             name = "Preset Private Room",
                             users = listOf(userAid),
                             id = privateRoomAid,
-                            admin = userAid
-                        )
-                    )
+                            admin = userAid,
+                        ),
+                    ),
                 ),
-                presetDir
+                presetDir,
             )
         }
 
@@ -241,7 +255,8 @@ class CliTest {
 
     @Suppress("LongMethod")
     @Test
-    fun `cli apply topic and title presets reflected in overview`() = test {
+    fun `cli apply topic and title presets reflected in overview`() =
+        test {
         ensureSystemUser(this)
 
         val presetDir = preparePresetDir("topic-title")
@@ -258,49 +273,53 @@ class CliTest {
             backend.applyPreset(
                 PresetValue(
                     type = "user",
-                    userData = listOf(
+                    userData =
+                    listOf(
                         PresetUser(
                             name = "Preset User",
                             aid = userAid,
-                            privateKey = userKeyPath.relativeTo(presetDir).path
-                        )
-                    )
+                            privateKey = userKeyPath.relativeTo(presetDir).path,
+                        ),
+                    ),
                 ),
-                presetDir
+                presetDir,
             )
 
             backend.applyPreset(
                 PresetValue(
                     type = "community",
-                    communityData = listOf(
+                    communityData =
+                    listOf(
                         PresetCommunity(
                             name = "Preset Community",
                             id = communityAid,
                             admin = userAid,
-                            users = emptyList()
-                        )
-                    )
+                            users = emptyList(),
+                        ),
+                    ),
                 ),
-                presetDir
+                presetDir,
             )
 
             backend.applyPreset(
                 PresetValue(
                     type = "topic",
-                    topicData = listOf(
+                    topicData =
+                    listOf(
                         PresetTopic(
                             content = "preset topic content",
-                            author = userAid
-                        )
-                    )
+                            author = userAid,
+                        ),
+                    ),
                 ),
-                presetDir
+                presetDir,
             )
 
             backend.applyPreset(
                 PresetValue(
                     type = "title",
-                    titleData = listOf(
+                    titleData =
+                    listOf(
                         PresetTitle(
                             creator = userAid,
                             uid = userAid,
@@ -308,11 +327,11 @@ class CliTest {
                             scope = communityAid,
                             scopeType = ObjectType.COMMUNITY,
                             type = TitleType.REGULAR,
-                            description = "preset title description"
-                        )
-                    )
+                            description = "preset title description",
+                        ),
+                    ),
                 ),
-                presetDir
+                presetDir,
             )
         }
 
@@ -323,7 +342,8 @@ class CliTest {
     }
 
     @Test
-    fun `cli apply file preset reflected in overview`() = test {
+    fun `cli apply file preset reflected in overview`() =
+        test {
         ensureSystemUser(this)
 
         val presetDir = preparePresetDir("file")
@@ -340,28 +360,30 @@ class CliTest {
             backend.applyPreset(
                 PresetValue(
                     type = "user",
-                    userData = listOf(
+                    userData =
+                    listOf(
                         PresetUser(
                             name = "Preset User",
                             aid = userAid,
-                            privateKey = userKeyPath.relativeTo(presetDir).path
-                        )
-                    )
+                            privateKey = userKeyPath.relativeTo(presetDir).path,
+                        ),
+                    ),
                 ),
-                presetDir
+                presetDir,
             )
 
             backend.applyPreset(
                 PresetValue(
                     type = "file",
-                    fileData = listOf(
+                    fileData =
+                    listOf(
                         PresetFile(
                             owner = userAid,
-                            paths = listOf(fileForPreset.relativeTo(presetDir).path)
-                        )
-                    )
+                            paths = listOf(fileForPreset.relativeTo(presetDir).path),
+                        ),
+                    ),
                 ),
-                presetDir
+                presetDir,
             )
         }
 
@@ -372,7 +394,8 @@ class CliTest {
     }
 
     @Test
-    fun `cli apply panel account preset can be queried by address`() = test {
+    fun `cli apply panel account preset can be queried by address`() =
+        test {
         ensureSystemUser(this)
 
         val presetDir = preparePresetDir("panel-account")
@@ -386,14 +409,15 @@ class CliTest {
             backend.applyPreset(
                 PresetValue(
                     type = "panelAccount",
-                    panelAccountData = listOf(
+                    panelAccountData =
+                    listOf(
                         PresetPanelAccount(
                             name = "Preset Panel",
-                            privateKey = panelKeyPath.relativeTo(presetDir).path
-                        )
-                    )
+                            privateKey = panelKeyPath.relativeTo(presetDir).path,
+                        ),
+                    ),
                 ),
-                presetDir
+                presetDir,
             )
 
             val panelAuth = backend.database.panelAccount.getUserAuthDataByAddress(panelKeys.address).getOrThrow()
@@ -402,7 +426,8 @@ class CliTest {
     }
 
     @Test
-    fun `cli preset data works with worker acg task`() = test {
+    fun `cli preset data works with worker acg task`() =
+        test {
         ensureSystemUser(this)
 
         val presetDir = preparePresetDir("worker-combination")
@@ -412,25 +437,29 @@ class CliTest {
         val userKeys = generateP256KeyMaterial()
         val userKeyPath = File(keysDir, "user.pem").apply { writeText(userKeys.privatePem) }
 
-        val presetUser = PresetValue(
-            type = "user",
-            userData = listOf(
-                PresetUser(
-                    name = "Worker User",
-                    aid = userAid,
-                    privateKey = userKeyPath.relativeTo(presetDir).path
-                )
+        val presetUser =
+            PresetValue(
+                type = "user",
+                userData =
+                listOf(
+                    PresetUser(
+                        name = "Worker User",
+                        aid = userAid,
+                        privateKey = userKeyPath.relativeTo(presetDir).path,
+                    ),
+                ),
             )
-        )
 
-        val presetTopic = PresetValue(
-            type = "topic",
-            topicData = listOf(
-                PresetTopic(content = "topic-1", author = userAid),
-                PresetTopic(content = "topic-2", author = userAid),
-                PresetTopic(content = "topic-3", author = userAid)
+        val presetTopic =
+            PresetValue(
+                type = "topic",
+                topicData =
+                listOf(
+                    PresetTopic(content = "topic-1", author = userAid),
+                    PresetTopic(content = "topic-2", author = userAid),
+                    PresetTopic(content = "topic-3", author = userAid),
+                ),
             )
-        )
 
         withCliBackend { backend ->
             backend.database.init()
@@ -440,9 +469,10 @@ class CliTest {
 
             val uid = backend.database.user.getRawUsers(AidListFetch(listOf(userAid))).getOrThrow().first().user.id
             backend.doAcgTask()
-            val userAcg = backend.database.user.getUserAcgByIds(
-                com.storyteller_f.a.backend.core.ObjectListFetch.IdListFetch(listOf(uid))
-            ).getOrThrow()
+            val userAcg =
+                backend.database.user.getUserAcgByIds(
+                    com.storyteller_f.a.backend.core.ObjectListFetch.IdListFetch(listOf(uid)),
+                ).getOrThrow()
             val totalAcg = userAcg.find { pair -> pair.first == uid }?.second ?: 0L
             assertTrue(totalAcg >= 3L)
         }

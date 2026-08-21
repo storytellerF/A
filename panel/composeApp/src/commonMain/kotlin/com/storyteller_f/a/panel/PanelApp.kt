@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 @file:OptIn(androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi::class)
 
 package com.storyteller_f.a.panel
@@ -116,13 +120,15 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
-typealias PanelGlobalDialogController = CustomGlobalDialogController<GlobalDialogContext<CustomPanelSessionManager>>
+internal typealias PanelGlobalDialogController =
+    CustomGlobalDialogController<GlobalDialogContext<CustomPanelSessionManager>>
 
-val LocalPanelGlobalDialog = compositionLocalOf<PanelGlobalDialogController> {
-    error("LocalPanelGlobalDialog must be provided")
-}
+internal val LocalPanelGlobalDialog =
+    compositionLocalOf<PanelGlobalDialogController> {
+        error("LocalPanelGlobalDialog must be provided")
+    }
 
-val LocalPanelGlobalTask =
+internal val LocalPanelGlobalTask =
     compositionLocalOf<CustomGlobalTask<GlobalTaskContext<CustomPanelSessionManager>>> {
         error("LocalPanelGlobalTask must be provided")
     }
@@ -141,28 +147,30 @@ fun App() {
     val panelAccountInstance by panelUiViewModel.instance.collectAsState()
     val sessionManager = panelAccountInstance.sessionManager
     val client = sessionManager.client
-    val config = remember {
-        SavedStateConfiguration {
-            serializersModule = panelNavSerializersModule
+    val config =
+        remember {
+            SavedStateConfiguration {
+                serializersModule = panelNavSerializersModule
+            }
         }
-    }
     val backStack = rememberNavBackStack(config, PanelOverviewScreen)
 
     val scope = rememberCoroutineScope()
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val controller = panelAccountInstance.controller
     val task = panelAccountInstance.task
-    val nav = remember {
-        object : PanelNavFactory {
-            val panelNav = newPanelNav(backStack, drawerState, scope)
-            override fun newPanelNav() = panelNav
+    val nav =
+        remember {
+            object : PanelNavFactory {
+                val panelNav = newPanelNav(backStack, drawerState, scope)
+                override fun newPanelNav() = panelNav
+            }
         }
-    }
     CompositionLocalProvider(
         LocalClient provides client,
         LocalPanelNav provides nav.newPanelNav(),
         LocalPanelGlobalDialog provides controller,
-        LocalPanelGlobalTask provides task
+        LocalPanelGlobalTask provides task,
     ) {
         PanelTheme {
             val scope = rememberCoroutineScope()
@@ -170,7 +178,7 @@ fun App() {
                 drawerState = drawerState,
                 drawerContent = { permanent ->
                     PanelDrawer(scope, drawerState, nav.newPanelNav(), permanent)
-                }
+                },
             ) {
                 mainPanelPage(backStack, nav.newPanelNav())
             }
@@ -184,20 +192,20 @@ fun App() {
 private fun PanelNavigationDrawer(
     drawerState: DrawerState,
     drawerContent: @Composable (permanent: Boolean) -> Unit,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     val windowSizeClass = calculateWindowSizeClass()
     val usePermanentDrawer = windowSizeClass.widthSizeClass != WindowWidthSizeClass.Compact
     if (usePermanentDrawer) {
         PermanentNavigationDrawer(
             drawerContent = { drawerContent(true) },
-            content = content
+            content = content,
         )
     } else {
         ModalNavigationDrawer(
             drawerState = drawerState,
             drawerContent = { drawerContent(false) },
-            content = content
+            content = content,
         )
     }
 }
@@ -248,58 +256,53 @@ internal fun calculatePanelPaneDirective(contentSize: DpSize, windowPosture: Pos
     ).copy(defaultPanePreferredWidth = 420.dp)
 
 @Composable
-private fun PanelDrawer(
-    scope: CoroutineScope,
-    drawerState: DrawerState,
-    nav: PanelNav,
-    permanent: Boolean
-) {
+private fun PanelDrawer(scope: CoroutineScope, drawerState: DrawerState, nav: PanelNav, permanent: Boolean) {
     val content: @Composable ColumnScope.() -> Unit = {
         DrawerHeader()
         DrawerNavItem(
             Icons.Default.Home,
             stringResource(Res.string.overview),
-            onNavigate(scope, drawerState) { nav.gotoOverview() }
+            onNavigate(scope, drawerState) { nav.gotoOverview() },
         )
         DrawerNavItem(
             Icons.Default.People,
             stringResource(Res.string.all_users),
-            onNavigate(scope, drawerState) { nav.gotoAllUsers() }
+            onNavigate(scope, drawerState) { nav.gotoAllUsers() },
         )
         DrawerNavItem(
             Icons.Default.Group,
             stringResource(Res.string.all_communities),
-            onNavigate(scope, drawerState) { nav.gotoAllCommunities() }
+            onNavigate(scope, drawerState) { nav.gotoAllCommunities() },
         )
         DrawerNavItem(
             Icons.Default.Public,
             stringResource(Res.string.all_public_rooms),
-            onNavigate(scope, drawerState) { nav.gotoAllPublicRooms() }
+            onNavigate(scope, drawerState) { nav.gotoAllPublicRooms() },
         )
         DrawerNavItem(
             Icons.Default.Lock,
             stringResource(Res.string.all_private_rooms),
-            onNavigate(scope, drawerState) { nav.gotoAllPrivateRooms() }
+            onNavigate(scope, drawerState) { nav.gotoAllPrivateRooms() },
         )
         DrawerNavItem(
             Icons.Default.Topic,
             stringResource(Res.string.all_topics),
-            onNavigate(scope, drawerState) { nav.gotoAllTopics() }
+            onNavigate(scope, drawerState) { nav.gotoAllTopics() },
         )
         DrawerNavItem(
             Icons.Default.FilePresent,
             stringResource(Res.string.all_files),
-            onNavigate(scope, drawerState) { nav.gotoAllFiles() }
+            onNavigate(scope, drawerState) { nav.gotoAllFiles() },
         )
         DrawerNavItem(
             Icons.Default.Title,
             stringResource(Res.string.all_titles),
-            onNavigate(scope, drawerState) { nav.gotoAllTitles() }
+            onNavigate(scope, drawerState) { nav.gotoAllTitles() },
         )
         DrawerNavItem(
             Icons.Default.Build,
             stringResource(Res.string.worker_records),
-            onNavigate(scope, drawerState) { nav.gotoTaskRecords() }
+            onNavigate(scope, drawerState) { nav.gotoTaskRecords() },
         )
         DrawerNavItem(
             Icons.Default.Settings,
@@ -319,7 +322,7 @@ private fun DrawerHeader() {
     Text(
         stringResource(Res.string.navigation_menu),
         modifier = Modifier.padding(16.dp),
-        style = MaterialTheme.typography.titleLarge
+        style = MaterialTheme.typography.titleLarge,
     )
     HorizontalDivider()
 }
@@ -331,23 +334,17 @@ private fun DrawerNavItem(icon: ImageVector, label: String, onClick: () -> Unit)
         icon = { Icon(icon, contentDescription = null) },
         label = { Text(label) },
         selected = false,
-        onClick = onClick
+        onClick = onClick,
     )
 }
 
-private fun onNavigate(
-    scope: CoroutineScope,
-    drawerState: DrawerState,
-    navigate: () -> Unit
-): () -> Unit = {
+private fun onNavigate(scope: CoroutineScope, drawerState: DrawerState, navigate: () -> Unit): () -> Unit = {
     scope.launch { drawerState.close() }
     navigate()
 }
 
-class CustomPanelSessionManager(
-    val proxy: SimplePanelSessionManager,
-    val historyFactory: SessionHistoryManager,
-) : PanelSessionManager by proxy {
+class CustomPanelSessionManager(val proxy: SimplePanelSessionManager, val historyFactory: SessionHistoryManager) :
+    PanelSessionManager by proxy {
     companion object
 }
 
@@ -366,18 +363,20 @@ sealed interface IPanelAccountInstance {
         val events = MutableSharedFlow<Any>()
         override val passHolder: ConstPassHolder = ConstPassHolder(null)
 
-        override val sessionManager = createPanelSessionManager(
-            httpUrl,
-            passHolder,
-            AcceptAllCookiesStorage()
-        )
+        override val sessionManager: CustomPanelSessionManager =
+            createPanelSessionManager(
+                httpUrl,
+                passHolder,
+                AcceptAllCookiesStorage(),
+            )
         override val database = getRoomModelStorage("guest")
         val context: GlobalTaskContext<CustomPanelSessionManager> =
             GlobalTaskContext(events, sessionManager)
         val dialogContext: GlobalDialogContext<CustomPanelSessionManager> =
             GlobalDialogContext(events, sessionManager)
         override val task = CustomGlobalTask(scope, context)
-        override val controller = CustomGlobalDialogController(scope, dialogContext)
+        override val controller: CustomGlobalDialogController<GlobalDialogContext<CustomPanelSessionManager>> =
+            CustomGlobalDialogController(scope, dialogContext)
         override val address: String = "guest"
     }
 
@@ -386,17 +385,19 @@ sealed interface IPanelAccountInstance {
         override val address: String,
         httpUrl: String,
         override val passHolder: ConstPassHolder,
-        cookiesStorage: AcceptAllCookiesStorage
+        cookiesStorage: AcceptAllCookiesStorage,
     ) : IPanelAccountInstance {
         val events = MutableSharedFlow<Any>()
-        override val sessionManager = createPanelSessionManager(httpUrl, passHolder, cookiesStorage)
+        override val sessionManager: CustomPanelSessionManager =
+            createPanelSessionManager(httpUrl, passHolder, cookiesStorage)
         override val database = getRoomModelStorage(address)
         val context: GlobalTaskContext<CustomPanelSessionManager> =
             GlobalTaskContext(events, sessionManager)
         val dialogContext: GlobalDialogContext<CustomPanelSessionManager> =
             GlobalDialogContext(events, sessionManager)
         override val task = CustomGlobalTask(scope, context)
-        override val controller = CustomGlobalDialogController(scope, dialogContext)
+        override val controller: CustomGlobalDialogController<GlobalDialogContext<CustomPanelSessionManager>> =
+            CustomGlobalDialogController(scope, dialogContext)
 
         init {
             scope.launch {
@@ -406,28 +407,27 @@ sealed interface IPanelAccountInstance {
             }
         }
 
-        private suspend fun processEvent(
-            any: Any,
-            storage: ModelStorage
-        ) {
+        private suspend fun processEvent(any: Any, storage: ModelStorage) {
             when (any) {
                 is OnUserAdded -> {
                     storage.user.saveToDefault(any.info)
                 }
 
                 is OnUserStatusUpdated -> handleUserStatusUpdated(storage, any)
+
                 is OnCommunityStatusUpdated -> handleCommunityReadOnlyUpdated(storage, any)
+
                 is OnRoomStatusUpdated -> handleRoomReadOnlyUpdated(storage, any)
+
                 is OnTopicStatusUpdated -> handleTopicReadOnlyUpdated(storage, any)
+
                 is OnTitleStatusUpdated -> handleTitleReadOnlyUpdated(storage, any)
+
                 is OnFileStatusUpdated -> handleFileReadOnlyUpdated(storage, any)
             }
         }
 
-        private suspend fun handleUserStatusUpdated(
-            storage: ModelStorage,
-            event: OnUserStatusUpdated
-        ) {
+        private suspend fun handleUserStatusUpdated(storage: ModelStorage, event: OnUserStatusUpdated) {
             storage.user.update(UserCollection.Users, event.uid) {
                 it.copy(status = event.status)
             }
@@ -441,10 +441,7 @@ sealed interface IPanelAccountInstance {
             }
         }
 
-        private suspend fun handleCommunityReadOnlyUpdated(
-            storage: ModelStorage,
-            event: OnCommunityStatusUpdated
-        ) {
+        private suspend fun handleCommunityReadOnlyUpdated(storage: ModelStorage, event: OnCommunityStatusUpdated) {
             storage.community.update(CommunityCollection.AllCommunities, event.id) {
                 it.copy(status = event.status)
             }
@@ -453,27 +450,22 @@ sealed interface IPanelAccountInstance {
             }
         }
 
-        private suspend fun handleRoomReadOnlyUpdated(
-            storage: ModelStorage,
-            event: OnRoomStatusUpdated
-        ) {
+        private suspend fun handleRoomReadOnlyUpdated(storage: ModelStorage, event: OnRoomStatusUpdated) {
             storage.room.update(RoomCollection.AllRooms(false), event.id) {
                 it.copy(status = event.status)
             }
             storage.room.update(RoomCollection.AllRooms(true), event.id) {
                 it.copy(status = event.status)
             }
-            val room = storage.room.getDocument(RoomCollection.AllRooms(false), event.id)
-                ?: storage.room.getDocument(RoomCollection.AllRooms(true), event.id)
+            val room =
+                storage.room.getDocument(RoomCollection.AllRooms(false), event.id)
+                    ?: storage.room.getDocument(RoomCollection.AllRooms(true), event.id)
             if (room != null) {
                 storage.room.saveToDefault(room.copy(status = event.status))
             }
         }
 
-        private suspend fun handleTopicReadOnlyUpdated(
-            storage: ModelStorage,
-            event: OnTopicStatusUpdated
-        ) {
+        private suspend fun handleTopicReadOnlyUpdated(storage: ModelStorage, event: OnTopicStatusUpdated) {
             storage.topic.update(TopicCollection.AllTopics, event.id) {
                 it.copy(status = event.status)
             }
@@ -482,10 +474,7 @@ sealed interface IPanelAccountInstance {
             }
         }
 
-        private suspend fun handleTitleReadOnlyUpdated(
-            storage: ModelStorage,
-            event: OnTitleStatusUpdated
-        ) {
+        private suspend fun handleTitleReadOnlyUpdated(storage: ModelStorage, event: OnTitleStatusUpdated) {
             storage.title.update(TitleCollection.AllTitles, event.id) {
                 it.copy(status = event.status)
             }
@@ -494,10 +483,7 @@ sealed interface IPanelAccountInstance {
             }
         }
 
-        private suspend fun handleFileReadOnlyUpdated(
-            storage: ModelStorage,
-            event: OnFileStatusUpdated
-        ) {
+        private suspend fun handleFileReadOnlyUpdated(storage: ModelStorage, event: OnFileStatusUpdated) {
             storage.fileInfo.update(FileCollection.FileList(0), event.id) {
                 it.copy(status = event.status)
             }
@@ -514,16 +500,17 @@ sealed interface IPanelAccountInstance {
 fun createPanelSessionManager(
     httpUrl: String,
     passHolder: ConstPassHolder,
-    cookiesStorage: AcceptAllCookiesStorage
+    cookiesStorage: AcceptAllCookiesStorage,
 ): CustomPanelSessionManager {
-    val simpleManager = createSimplePanelSessionManager(
-        passHolder,
-        cookiesStorage
-    ) { m, c ->
-        getClient {
-            defaultClientConfigureForPanel(c, m, passHolder, httpUrl)
+    val simpleManager =
+        createSimplePanelSessionManager(
+            passHolder,
+            cookiesStorage,
+        ) { m, c ->
+            getClient {
+                defaultClientConfigureForPanel(c, m, passHolder, httpUrl)
+            }
         }
-    }
     val settings = createSettings("main")
     val historyManager = buildSessionHistoryFactory(settings)
     return CustomPanelSessionManager(simpleManager, historyManager)
@@ -540,13 +527,14 @@ class PanelUIViewModel(val viewModelScope: CoroutineScope, val httpUrl: String) 
         if (state is ClientSessionState.Success) {
             viewModelScope.launch {
                 val address = state.userPass.address().getOrNull() ?: return@launch
-                val regular = IPanelAccountInstance.Regular(
-                    viewModelScope,
-                    address,
-                    httpUrl,
-                    ConstPassHolder(state.userPass),
-                    AcceptAllCookiesStorage()
-                )
+                val regular =
+                    IPanelAccountInstance.Regular(
+                        viewModelScope,
+                        address,
+                        httpUrl,
+                        ConstPassHolder(state.userPass),
+                        AcceptAllCookiesStorage(),
+                    )
                 instance.value = regular
             }
         }
@@ -558,9 +546,13 @@ class PanelUIViewModel(val viewModelScope: CoroutineScope, val httpUrl: String) 
 
     fun login(it: SignResult<PanelAccountInfo>, pass: UserPass) {
         val old = instance.value.sessionManager.proxy.cookieManager
-        instance.value = IPanelAccountInstance.Regular(
-            viewModelScope, it.address, httpUrl,
-            ConstPassHolder(pass), old
-        )
+        instance.value =
+            IPanelAccountInstance.Regular(
+                viewModelScope,
+                it.address,
+                httpUrl,
+                ConstPassHolder(pass),
+                old,
+            )
     }
 }

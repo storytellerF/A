@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.core.service
 
 import com.storyteller_f.a.backend.core.MergedEnv
@@ -7,24 +11,20 @@ import com.storyteller_f.a.backend.core.types.FileRecord
 import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.type.PrimaryKey
 
-data class FileDocument(
-    override val id: PrimaryKey,
-    val name: String,
-    val ownerId: PrimaryKey
-) : PrimaryKeyIdentifiable {
+data class FileDocument(override val id: PrimaryKey, val name: String, val ownerId: PrimaryKey) :
+    PrimaryKeyIdentifiable {
     companion object {
-        fun fromFileRecord(fileRecord: FileRecord): FileDocument {
-            return FileDocument(fileRecord.id, fileRecord.name, fileRecord.owner)
-        }
+        fun fromFileRecord(fileRecord: FileRecord): FileDocument =
+            FileDocument(
+            fileRecord.id,
+            fileRecord.name,
+            fileRecord.owner,
+        )
     }
 }
 
 sealed interface FileDocumentSearch {
-    data class Keyword(
-        val word: String,
-        val ownerId: PrimaryKey? = null,
-        val fetch: OffsetFetch
-    ) : FileDocumentSearch
+    data class Keyword(val word: String, val ownerId: PrimaryKey? = null, val fetch: OffsetFetch) : FileDocumentSearch
 }
 
 interface FileSearchService {
@@ -32,9 +32,7 @@ interface FileSearchService {
 
     suspend fun clean(): Result<Unit>
 
-    suspend fun searchDocument(
-        fileDocumentSearch: FileDocumentSearch
-    ): Result<PaginationResult<FileDocument>>
+    suspend fun searchDocument(fileDocumentSearch: FileDocumentSearch): Result<PaginationResult<FileDocument>>
 }
 
 interface FileSearchServiceFactory {

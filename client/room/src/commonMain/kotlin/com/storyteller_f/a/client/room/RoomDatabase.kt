@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.room
 
 import androidx.paging.PagingSource
@@ -29,7 +33,7 @@ abstract class AppDatabase : RoomDatabase() {
     "NO_ACTUAL_FOR_EXPECT",
     "EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING",
     "KotlinNoActualForExpect",
-    "RedundantSuppression"
+    "RedundantSuppression",
 )
 expect object AppDatabaseConstructor : RoomDatabaseConstructor<AppDatabase> {
     override fun initialize(): AppDatabase
@@ -78,18 +82,12 @@ interface CommonDao {
 }
 
 @Entity(primaryKeys = ["collection", "id"], indices = [Index("collection", "seq", unique = false)])
-data class CommonEntity(
-    val id: String,
-    val collection: String,
-    val data: String,
-    val seq: Long = 0,
-) {
+data class CommonEntity(val id: String, val collection: String, val data: String, val seq: Long = 0) {
     constructor(id: Long, collection: String, data: String, seq: Long = 0) : this(id.toString(), collection, data, seq)
 }
 
 @Dao
 interface UploadDao {
-
     @Insert(onConflict = REPLACE)
     suspend fun insert(item: UploadEntity)
 
@@ -113,12 +111,7 @@ interface UploadDao {
 }
 
 @Entity(primaryKeys = ["collection", "id"], indices = [Index("collection", "pathHash", unique = true)])
-data class UploadEntity(
-    val id: String,
-    val collection: String,
-    val data: String,
-    val pathHash: String,
-)
+data class UploadEntity(val id: String, val collection: String, val data: String, val pathHash: String)
 
 @Dao
 interface DownloadDao {
@@ -145,9 +138,4 @@ interface DownloadDao {
 }
 
 @Entity(primaryKeys = ["collection", "id"], indices = [Index("collection", "fileId", unique = true)])
-data class DownloadEntity(
-    val id: String,
-    val collection: String,
-    val fileId: Long,
-    val data: String,
-)
+data class DownloadEntity(val id: String, val collection: String, val fileId: Long, val data: String)

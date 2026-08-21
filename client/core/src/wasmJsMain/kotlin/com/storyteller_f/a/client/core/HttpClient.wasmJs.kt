@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 @file:OptIn(ExperimentalWasmJsInterop::class)
 
 package com.storyteller_f.a.client.core

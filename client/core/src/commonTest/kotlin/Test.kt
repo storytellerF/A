@@ -1,3 +1,9 @@
+/*
+ * This is a private project. All rights reserved.
+*/
+
+package com.storyteller_f.a.client.core
+
 import com.storyteller_f.a.client.core.ClientSessionState
 import com.storyteller_f.a.client.core.SimplePassHolder
 import com.storyteller_f.a.client.core.SingleFlightCustomAuthPlugin
@@ -34,32 +40,37 @@ class Test {
     fun `test request`() = Unit
 
     @Test
-    fun `custom auth refresh is single flight for concurrent 401 responses`() = runTest {
+    fun `custom auth refresh is single flight for concurrent 401 responses`() =
+        runTest {
         val initialResponsesReleased = CompletableDeferred<Unit>()
         val lock = Mutex()
         var initial401Count = 0
         val retryCookies = mutableListOf<String?>()
         val userPass = CountingUserPass(initialResponsesReleased)
-        val passHolder = SimplePassHolder().also {
-            it.updateState(ClientSessionState.Success(userPass))
-        }
-        val manager = UserSessionModel().also {
-            it.updateUser(UserInfo.EMPTY)
-        }
-        val client = buildSingleFlightTestClient(manager, passHolder) { request ->
-            handleSingleFlightRequest(request, lock, retryCookies) {
-                initial401Count += 1
-                if (initial401Count == 3) {
-                    initialResponsesReleased.complete(Unit)
+        val passHolder =
+            SimplePassHolder().also {
+                it.updateState(ClientSessionState.Success(userPass))
+            }
+        val manager =
+            UserSessionModel().also {
+                it.updateUser(UserInfo.EMPTY)
+            }
+        val client =
+            buildSingleFlightTestClient(manager, passHolder) { request ->
+                handleSingleFlightRequest(request, lock, retryCookies) {
+                    initial401Count += 1
+                    if (initial401Count == 3) {
+                        initialResponsesReleased.complete(Unit)
+                    }
                 }
             }
-        }
 
-        val responses = List(3) {
-            async {
-                client.get("https://example.test/resource/$it").bodyAsText()
-            }
-        }.awaitAll()
+        val responses =
+            List(3) {
+                async {
+                    client.get("https://example.test/resource/$it").bodyAsText()
+                }
+            }.awaitAll()
 
         assertEquals(listOf("ok", "ok", "ok"), responses)
         assertEquals(1, userPass.signatureCount)
@@ -70,7 +81,7 @@ class Test {
     private fun buildSingleFlightTestClient(
         manager: UserSessionModel,
         passHolder: SimplePassHolder,
-        handler: suspend MockRequestHandleScope.(HttpRequestData) -> HttpResponseData
+        handler: suspend MockRequestHandleScope.(HttpRequestData) -> HttpResponseData,
     ) = HttpClient(MockEngine) {
         install(SingleFlightCustomAuthPlugin) {
             configClientAuth(manager, passHolder) { u, l ->
@@ -89,7 +100,7 @@ class Test {
         request: HttpRequestData,
         lock: Mutex,
         retryCookies: MutableList<String?>,
-        onInitial401: () -> Unit
+        onInitial401: () -> Unit,
     ): HttpResponseData {
         val auth = request.headers[HttpHeaders.Authorization]
         return if (auth == null) {
@@ -97,10 +108,11 @@ class Test {
             respond(
                 content = "unauthorized",
                 status = HttpStatusCode.Unauthorized,
-                headers = headersOf(
+                headers =
+                headersOf(
                     HttpHeaders.WWWAuthenticate to listOf("Custom auth-data"),
-                    HttpHeaders.SetCookie to listOf("user_session=pending; Path=/")
-                )
+                    HttpHeaders.SetCookie to listOf("user_session=pending; Path=/"),
+                ),
             )
         } else {
             lock.withLock {
@@ -109,15 +121,13 @@ class Test {
             respond(
                 content = "ok",
                 status = HttpStatusCode.OK,
-                headers = headersOf(HttpHeaders.SetCookie to listOf("user_session=success; Path=/"))
+                headers = headersOf(HttpHeaders.SetCookie to listOf("user_session=success; Path=/")),
             )
         }
     }
 }
 
-private class CountingUserPass(
-    private val initialResponsesReleased: CompletableDeferred<Unit>
-) : UserPass {
+private class CountingUserPass(private val initialResponsesReleased: CompletableDeferred<Unit>) : UserPass {
     var signatureCount = 0
         private set
 
@@ -137,11 +147,11 @@ private class CountingUserPass(
         encryptedPrivateKey: String,
         encryptedAesKey: String,
         childAlgoType: AlgoType,
-        encryptedEncryptionPrivateKey: String?
+        encryptedEncryptionPrivateKey: String?,
     ): Result<Pair<String, String?>> = Result.success("" to null)
 
     override suspend fun encryptChildAccount(
-        childAlgoType: AlgoType
+        childAlgoType: AlgoType,
     ): Result<com.storyteller_f.a.api.CustomApi.Accounts.ChildAccounts.AddChildAccountRequest> =
         Result.failure(UnsupportedOperationException())
 }

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.core.utils
 
 import java.io.BufferedInputStream
@@ -15,9 +19,10 @@ fun <T> BufferedInputStream.readFlacAlbumFromAudioStream(saveAlbum: (ByteArray, 
         val blockType = header and 0x7F
         val lengthBytes = ByteArray(3)
         read(lengthBytes)
-        val blockLength = ((lengthBytes[0].toInt() and 0xFF) shl 16) or
-            ((lengthBytes[1].toInt() and 0xFF) shl 8) or
-            (lengthBytes[2].toInt() and 0xFF)
+        val blockLength =
+            lengthBytes[0].toInt() and 0xFF shl 16 or
+                (lengthBytes[1].toInt() and 0xFF shl 8) or
+                (lengthBytes[2].toInt() and 0xFF)
 
         if (blockType == 6) {
             val pictureData = ByteArray(blockLength)
@@ -30,7 +35,8 @@ fun <T> BufferedInputStream.readFlacAlbumFromAudioStream(saveAlbum: (ByteArray, 
             if (count != blockLength) return null
 
             return pictureData.inputStream().buffered().use { dataInput ->
-                fun readInt(): Int = (dataInput.read() shl 24) or (dataInput.read() shl 16) or
+                fun readInt(): Int =
+                    dataInput.read() shl 24 or (dataInput.read() shl 16) or
                     (dataInput.read() shl 8) or dataInput.read()
 
                 readInt() // picture type
@@ -57,7 +63,7 @@ fun <T> BufferedInputStream.readFlacAlbumFromAudioStream(saveAlbum: (ByteArray, 
             skip(blockLength.toLong())
         }
 
-        if ((header and 0x80) != 0) {
+        if (header and 0x80 != 0) {
             break
         }
     }
@@ -65,9 +71,7 @@ fun <T> BufferedInputStream.readFlacAlbumFromAudioStream(saveAlbum: (ByteArray, 
 }
 
 @Suppress("CyclomaticComplexMethod")
-fun <T> BufferedInputStream.readMp3AlbumFromAudioStream(
-    saveAlbum: (ByteArray, String) -> T
-): Pair<T, String>? {
+fun <T> BufferedInputStream.readMp3AlbumFromAudioStream(saveAlbum: (ByteArray, String) -> T): Pair<T, String>? {
     // 读取 ID3 header（10 bytes）
     val header = ByteArray(10)
     if (read(header) != 10 ||
@@ -93,10 +97,11 @@ fun <T> BufferedInputStream.readMp3AlbumFromAudioStream(
         if (countFrame != 10) break
 
         val frameId = String(frameHeader, 0, 4)
-        val frameSize = ((frameHeader[4].toInt() and 0xFF) shl 24) or
-            ((frameHeader[5].toInt() and 0xFF) shl 16) or
-            ((frameHeader[6].toInt() and 0xFF) shl 8) or
-            (frameHeader[7].toInt() and 0xFF)
+        val frameSize =
+            frameHeader[4].toInt() and 0xFF shl 24 or
+                (frameHeader[5].toInt() and 0xFF shl 16) or
+                (frameHeader[6].toInt() and 0xFF shl 8) or
+                (frameHeader[7].toInt() and 0xFF)
 
         totalRead += 10 + frameSize
         if (frameId != "APIC") {
@@ -136,9 +141,8 @@ fun <T> BufferedInputStream.readMp3AlbumFromAudioStream(
     return null
 }
 
-private fun syncSafeInt(bytes: ByteArray): Int {
-    return ((bytes[0].toInt() and 0x7F) shl 21) or
-        ((bytes[1].toInt() and 0x7F) shl 14) or
-        ((bytes[2].toInt() and 0x7F) shl 7) or
-        (bytes[3].toInt() and 0x7F)
-}
+private fun syncSafeInt(bytes: ByteArray): Int =
+    bytes[0].toInt() and 0x7F shl 21 or
+    (bytes[1].toInt() and 0x7F shl 14) or
+    (bytes[2].toInt() and 0x7F shl 7) or
+    (bytes[3].toInt() and 0x7F)

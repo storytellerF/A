@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.exposed
 
 import com.storyteller_f.a.backend.core.AdminDatabase
@@ -51,7 +55,7 @@ import org.jetbrains.exposed.v1.r2dbc.selectAll
 import org.jetbrains.exposed.v1.r2dbc.upsert
 import java.sql.SQLIntegrityConstraintViolationException
 
-abstract class BaseTable : Table() {
+open class BaseTable : Table() {
     val id = customPrimaryKey("id")
     val createdTime = datetime("created_time")
 
@@ -156,9 +160,7 @@ class ExposedDatabase(val databaseSession: ExposedDatabaseSession) : CombinedDat
         ExposedDatabaseFactory.migration(databaseSession.database)
     }
 
-    override fun isDup(throwable: Throwable): Boolean {
-        return throwable.cause?.isDup() ?: false
-    }
+    override fun isDup(throwable: Throwable): Boolean = throwable.cause?.isDup() ?: false
 }
 
 fun buildExposedDatabase(databaseConnection: DatabaseConnection): ExposedDatabase {

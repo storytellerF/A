@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.asciidoc_parser
 
 import kotlin.js.ExperimentalWasmJsInterop
@@ -20,8 +24,9 @@ actual suspend fun convertAsciidoc(source: String): String =
     AsciidoctorModule.create().convert(source, asciidoctorOptions())
 
 @OptIn(ExperimentalWasmJsInterop::class)
-private fun asciidoctorOptions(): AsciidoctorOptions = js(
+private fun asciidoctorOptions(): AsciidoctorOptions =
+    js(
     """
     ({ safe: 'safe', attributes: { showtitle: true } })
-    """
+    """,
 )

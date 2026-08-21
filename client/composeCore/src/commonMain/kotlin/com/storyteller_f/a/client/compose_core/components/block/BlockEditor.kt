@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.components.block
 
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,7 +23,7 @@ import androidx.compose.ui.unit.dp
 
 /**
  * Block 编辑器主组件
- * 类似 Notion 的编辑体验，每个块独立编辑，支持拖拽排序
+ * 类似 Notion 的编辑体验，每个块独立编辑，支持拖拽排序.
  *
  * @param blocks 外部管理的 Block 列表（由父组件通过 [rememberBlockEditorState] 创建）
  * @param initialMarkdown 初始 Markdown 内容（仅在 blocks 为空时使用）
@@ -31,7 +35,7 @@ fun BlockEditor(
     modifier: Modifier = Modifier,
     blocks: SnapshotStateList<ContentBlock>,
     initialMarkdown: String = "",
-    onMarkdownChange: (String) -> Unit
+    onMarkdownChange: (String) -> Unit,
 ) {
     // 如果 blocks 为空，解析初始 Markdown
     LaunchedEffect(Unit) {
@@ -56,7 +60,7 @@ fun BlockEditor(
 
     LazyColumn(
         state = rememberLazyListState(),
-        modifier = modifier.fillMaxSize().padding(horizontal = 20.dp)
+        modifier = modifier.fillMaxSize().padding(horizontal = 20.dp),
     ) {
         items(blocks, key = { it.id }) { block ->
             EditableBlock(
@@ -76,7 +80,7 @@ fun BlockEditor(
                 },
                 onChangeBlockType = { newBlock ->
                     changeBlockType(blocks, block, newBlock)
-                }
+                },
             )
         }
 
@@ -87,10 +91,7 @@ fun BlockEditor(
     }
 }
 
-private fun addBlock(
-    blocks: SnapshotStateList<ContentBlock>,
-    block: ContentBlock
-): String {
+private fun addBlock(blocks: SnapshotStateList<ContentBlock>, block: ContentBlock): String {
     val index = blocks.indexOfFirst { it.id == block.id }
     val newBlock = createEmptyParagraphBlock()
     blocks.add(index, newBlock)
@@ -98,21 +99,14 @@ private fun addBlock(
     return id
 }
 
-private fun changeBlockType(
-    blocks: SnapshotStateList<ContentBlock>,
-    block: ContentBlock,
-    newBlock: ContentBlock
-) {
+private fun changeBlockType(blocks: SnapshotStateList<ContentBlock>, block: ContentBlock, newBlock: ContentBlock) {
     val index = blocks.indexOfFirst { it.id == block.id }
     if (index >= 0) {
         blocks[index] = newBlock
     }
 }
 
-private fun removeBlock(
-    blocks: SnapshotStateList<ContentBlock>,
-    block: ContentBlock
-) {
+private fun removeBlock(blocks: SnapshotStateList<ContentBlock>, block: ContentBlock) {
     val index = blocks.indexOfFirst { it.id == block.id }
     if (index >= 0) {
         blocks.removeAt(index)
@@ -122,11 +116,7 @@ private fun removeBlock(
     }
 }
 
-private fun updateBlockContent(
-    blocks: SnapshotStateList<ContentBlock>,
-    block: ContentBlock,
-    newContent: String
-) {
+private fun updateBlockContent(blocks: SnapshotStateList<ContentBlock>, block: ContentBlock, newContent: String) {
     val index = blocks.indexOfFirst { it.id == block.id }
     if (index >= 0) {
         blocks[index] = updateBlockContent(blocks[index], newContent)
@@ -135,20 +125,18 @@ private fun updateBlockContent(
 
 /**
  * Block 编辑器状态类
- * 用于在父组件中管理 Block 列表，以便与 BlockToolbar 共享
+ * 用于在父组件中管理 Block 列表，以便与 BlockToolbar 共享.
  */
-class BlockEditorState(
-    val blocks: SnapshotStateList<ContentBlock>
-) {
+class BlockEditorState(val blocks: SnapshotStateList<ContentBlock>) {
     /**
-     * 在指定位置插入一个 Block
+     * 在指定位置插入一个 Block.
      */
     fun insertBlock(index: Int, block: ContentBlock) {
         blocks.add(index.coerceIn(0, blocks.size), block)
     }
 
     /**
-     * 在末尾添加一个 Block
+     * 在末尾添加一个 Block.
      */
     fun appendBlock(block: ContentBlock) {
         if (blocks.singleOrNull()?.isEmptyParagraph() == true) {
@@ -159,7 +147,7 @@ class BlockEditorState(
     }
 
     /**
-     * 替换指定 ID 的 Block
+     * 替换指定 ID 的 Block.
      */
     fun replaceBlock(blockId: String, newBlock: ContentBlock) {
         val index = blocks.indexOfFirst { it.id == blockId }
@@ -169,43 +157,47 @@ class BlockEditorState(
     }
 }
 
-private fun ContentBlock.isEmptyParagraph(): Boolean {
-    return this is ContentBlock.Paragraph && content.isEmpty() && level == 0
-}
+private fun ContentBlock.isEmptyParagraph(): Boolean = this is ContentBlock.Paragraph && content.isEmpty() && level == 0
 
 /**
- * 创建并记住 BlockEditorState
+ * 创建并记住 BlockEditorState.
  */
 @Composable
-fun rememberBlockEditorState(
-    initialMarkdown: String = ""
-): BlockEditorState {
-    val blocks = remember {
-        mutableStateListOf<ContentBlock>().apply {
-            if (initialMarkdown.isNotBlank()) {
-                addAll(parseMarkdownToBlocks(initialMarkdown))
+fun rememberBlockEditorState(initialMarkdown: String = ""): BlockEditorState {
+    val blocks =
+        remember {
+            mutableStateListOf<ContentBlock>().apply {
+                if (initialMarkdown.isNotBlank()) {
+                    addAll(parseMarkdownToBlocks(initialMarkdown))
+                }
             }
         }
-    }
     return remember { BlockEditorState(blocks) }
 }
 
 /**
  * 更新 Block 内容，保持类型不变
  * 注意：ImageBlock、ObjectBlock、RefBlock 的分支目前不会被调用，
- * 因为这些类型的 EditableBlock 没有实现 onContentChange 回调
+ * 因为这些类型的 EditableBlock 没有实现 onContentChange 回调.
  */
-private fun updateBlockContent(block: ContentBlock, newContent: String): ContentBlock {
-    return when (block) {
-        is ContentBlock.Paragraph -> block.copy(content = newContent)
-        is ContentBlock.ListItem -> block.copy(content = newContent)
-        is ContentBlock.Quote -> block.copy(content = newContent)
-        is ContentBlock.CodeBlock -> block.copy(content = newContent)
-        // TODO: 以下三种类型需要专门的编辑界面，目前不会执行这些分支
-        is ContentBlock.ImageBlock -> block.copy(alt = newContent)
-        is ContentBlock.ObjectBlock -> block.copy(title = newContent)
-        is ContentBlock.RefBlock -> block.copy(refPath = newContent)
-        is ContentBlock.MathBlock -> block.copy(content = newContent)
-        is ContentBlock.Divider -> block
-    }
+private fun updateBlockContent(block: ContentBlock, newContent: String): ContentBlock =
+    when (block) {
+    is ContentBlock.Paragraph -> block.copy(content = newContent)
+
+    is ContentBlock.ListItem -> block.copy(content = newContent)
+
+    is ContentBlock.Quote -> block.copy(content = newContent)
+
+    is ContentBlock.CodeBlock -> block.copy(content = newContent)
+
+    // TODO: 以下三种类型需要专门的编辑界面，目前不会执行这些分支
+    is ContentBlock.ImageBlock -> block.copy(alt = newContent)
+
+    is ContentBlock.ObjectBlock -> block.copy(title = newContent)
+
+    is ContentBlock.RefBlock -> block.copy(refPath = newContent)
+
+    is ContentBlock.MathBlock -> block.copy(content = newContent)
+
+    is ContentBlock.Divider -> block
 }

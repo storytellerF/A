@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.user
 
 import androidx.compose.foundation.layout.Column
@@ -72,14 +76,12 @@ fun UserPage(uid: PrimaryKey) {
 
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
 @Composable
-private fun UserPageInternal(
-    uid: PrimaryKey,
-    userViewModel: IdUserViewModel,
-) {
+private fun UserPageInternal(uid: PrimaryKey, userViewModel: IdUserViewModel) {
     val user by userViewModel.handler.data.collectAsState()
-    val pagerState = rememberPagerState {
-        3
-    }
+    val pagerState =
+        rememberPagerState {
+            3
+        }
     val size = calculateWindowSizeClass()
     if (size.widthSizeClass == WindowWidthSizeClass.Compact) {
         UserCompatInternal(uid, user, pagerState)
@@ -113,19 +115,21 @@ private fun UserNonCompatInternal(uid: PrimaryKey, user: UserInfo?) {
         listOf(
             NavRoute("/topics", Icons.Default.Topic, stringResource(Res.string.topics)),
             NavRoute("/communities", Icons.Default.ChatBubble, stringResource(Res.string.communities_title)),
-            NavRoute("/titles", Icons.Default.Badge, stringResource(Res.string.titles))
+            NavRoute("/titles", Icons.Default.Badge, stringResource(Res.string.titles)),
         )
-    val config = remember {
-        SavedStateConfiguration {
-            serializersModule = SerializersModule {
-                polymorphic(NavKey::class) {
-                    subclass(UserRoute.Topics::class)
-                    subclass(UserRoute.Communities::class)
-                    subclass(UserRoute.Titles::class)
-                }
+    val config =
+        remember {
+            SavedStateConfiguration {
+                serializersModule =
+                    SerializersModule {
+                        polymorphic(NavKey::class) {
+                            subclass(UserRoute.Topics::class)
+                            subclass(UserRoute.Communities::class)
+                            subclass(UserRoute.Titles::class)
+                        }
+                    }
             }
         }
-    }
     val backStack = rememberNavBackStack(config, UserRoute.Topics)
     val current = backStack.last()
     Scaffold(modifier = Modifier.testTag("user-page")) {
@@ -138,17 +142,14 @@ private fun UserNonCompatInternal(uid: PrimaryKey, user: UserInfo?) {
 }
 
 @Composable
-private fun UserRailNav(
-    backStack: NavBackStack<NavKey>,
-    current: NavKey,
-    navRoutes: List<NavRoute>,
-) {
+private fun UserRailNav(backStack: NavBackStack<NavKey>, current: NavKey, navRoutes: List<NavRoute>) {
     CustomRailNav(current.toString(), navRoutes) { path ->
-        val target = when (path) {
-            "/communities" -> UserRoute.Communities
-            "/titles" -> UserRoute.Titles
-            else -> UserRoute.Topics
-        }
+        val target =
+            when (path) {
+                "/communities" -> UserRoute.Communities
+                "/titles" -> UserRoute.Titles
+                else -> UserRoute.Topics
+            }
         if (backStack.last() != target) {
             val i = backStack.indexOf(target)
             if (i >= 0) {
@@ -170,21 +171,24 @@ private fun UserNonCompatContent(
     backStack: NavBackStack<NavKey>,
 ) {
     Column {
-        val searchScope = when (currentEntry) {
-            "/topics" -> SearchScope.UserTopic(uid)
-            "/titles" -> SearchScope.UserReceivedTitle(uid)
-            else -> SearchScope.UserCommunities(uid)
-        }
+        val searchScope =
+            when (currentEntry) {
+                "/topics" -> SearchScope.UserTopic(uid)
+                "/titles" -> SearchScope.UserReceivedTitle(uid)
+                else -> SearchScope.UserCommunities(uid)
+            }
         detailSearchBar(searchScope) {
             userSearchLeadingIcon(uid, user)
         }
         NavDisplay(
             backStack,
-            entryDecorators = listOf(
+            entryDecorators =
+            listOf(
                 rememberSaveableStateHolderNavEntryDecorator(),
-                rememberViewModelStoreNavEntryDecorator()
+                rememberViewModelStoreNavEntryDecorator(),
             ),
-            entryProvider = entryProvider {
+            entryProvider =
+            entryProvider {
                 entry<UserRoute.Topics> {
                     val topicsViewModel = createUserTopicsViewModel(uid)
                     UserTopicList(topicsViewModel)
@@ -197,18 +201,14 @@ private fun UserNonCompatContent(
                     val titlesViewModel = createUserTitlesViewModel(uid, TitleSearchType.RECEIVER)
                     TitleList(titlesViewModel)
                 }
-            }
+            },
         )
     }
 }
 
 @Suppress("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-private fun UserCompatInternal(
-    uid: PrimaryKey,
-    user: UserInfo?,
-    pagerState: PagerState,
-) {
+private fun UserCompatInternal(uid: PrimaryKey, user: UserInfo?, pagerState: PagerState) {
     Scaffold(bottomBar = {
         UserPageBottomNavBar(pagerState)
     }, modifier = Modifier.testTag("user-page")) {
@@ -267,19 +267,22 @@ private fun userSearchLeadingIcon(uid: PrimaryKey, user: UserInfo?) {
 @Composable
 private fun UserPageBottomNavBar(pagerState: PagerState) {
     val scope = rememberCoroutineScope()
-    val navRoutes = listOf(
-        NavRoute("/topics", Icons.Default.Topic, stringResource(Res.string.topics)),
-        NavRoute("/communities", Icons.Default.Diversity3, stringResource(Res.string.rooms)),
-        NavRoute("/titles", Icons.Default.Badge, stringResource(Res.string.titles))
-    )
+    val navRoutes =
+        listOf(
+            NavRoute("/topics", Icons.Default.Topic, stringResource(Res.string.topics)),
+            NavRoute("/communities", Icons.Default.Diversity3, stringResource(Res.string.rooms)),
+            NavRoute("/titles", Icons.Default.Badge, stringResource(Res.string.titles)),
+        )
     CustomBottomNav(
         navRoutes[pagerState.currentPage].path,
-        navRoutes
+        navRoutes,
     ) { path ->
         scope.launch {
-            pagerState.animateScrollToPage(navRoutes.indexOfFirst {
-                it.path == path
-            })
+            pagerState.animateScrollToPage(
+                navRoutes.indexOfFirst {
+                    it.path == path
+                },
+            )
         }
     }
 }

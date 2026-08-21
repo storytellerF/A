@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.server
 
 import com.maxmind.geoip2.DatabaseReader
@@ -7,9 +11,7 @@ import io.ktor.server.request.header
 import java.net.InetAddress
 import kotlin.jvm.optionals.getOrNull
 
-fun ApplicationCall.remoteIp(
-    reader: DatabaseReader,
-): List<Pair<String, String?>> {
+fun ApplicationCall.remoteIp(reader: DatabaseReader): List<Pair<String, String?>> {
     val remoteAddress = request.origin.remoteAddress
     val country = reader.tryCountry(InetAddress.getByName(remoteAddress)).getOrNull()
     return if (country == null) {

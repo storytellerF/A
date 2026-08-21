@@ -1,3 +1,9 @@
+/*
+ * This is a private project. All rights reserved.
+*/
+
+package com.storyteller_f.a.app
+
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -57,7 +63,8 @@ private object WasmMediaPlayerService : MediaPlayerService() {
     ) = Unit
 }
 
-private fun wasmQueryParameter(name: String): String? = window.location.search
+private fun wasmQueryParameter(name: String): String? =
+    window.location.search
     .removePrefix("?")
     .split('&')
     .firstOrNull { it.substringBefore('=') == name }

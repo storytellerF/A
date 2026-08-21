@@ -1,3 +1,9 @@
+/*
+ * This is a private project. All rights reserved.
+*/
+
+package com.storyteller_f.a.dev.appium
+
 import io.appium.java_client.AppiumDriver
 import io.appium.java_client.android.AndroidDriver
 import io.appium.java_client.android.options.UiAutomator2Options
@@ -9,10 +15,7 @@ import java.util.Base64
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-data class AppiumTestSetup<T>(
-    val data: T,
-    val injectedSession: InjectedSession? = null,
-)
+data class AppiumTestSetup<T>(val data: T, val injectedSession: InjectedSession? = null)
 
 interface AppiumTestScope {
     val driver: AppTestDriver
@@ -55,10 +58,11 @@ class AndroidAppiumHelper : PlatformAppiumHelper() {
                         content = buildInjectedSessionJson(session),
                     )
                 }
-                val options = UiAutomator2Options()
-                    .setAppPackage(target.androidApp.packageName)
-                    .setAppActivity(target.androidApp.mainActivityClassName)
-                    .setNoReset(true)
+                val options =
+                    UiAutomator2Options()
+                        .setAppPackage(target.androidApp.packageName)
+                        .setAppActivity(target.androidApp.mainActivityClassName)
+                        .setNoReset(true)
                 driver = AndroidDriver(URI("http://127.0.0.1:4723").toURL(), options)
                 driver.startRecordingScreen()
                 block(
@@ -68,6 +72,8 @@ class AndroidAppiumHelper : PlatformAppiumHelper() {
                     ),
                     prepared.data,
                 )
+            } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+                throw cancellation
             } catch (throwable: Throwable) {
                 testFailed = true
                 throw throwable
@@ -138,9 +144,10 @@ class AndroidAppiumHelper : PlatformAppiumHelper() {
         val devices = runAdbCommandAllowFailure(listOf("devices")).connectedDeviceSerials()
         check(devices.isNotEmpty()) { "No Android device available for adb reverse" }
         devices.forEach { device ->
-            val result = runAdbCommandAllowFailure(
-                listOf("-s", device, "reverse", "tcp:$devicePort", "tcp:$hostPort"),
-            )
+            val result =
+                runAdbCommandAllowFailure(
+                    listOf("-s", device, "reverse", "tcp:$devicePort", "tcp:$hostPort"),
+                )
             check(result.exitCode == 0) {
                 "Failed to bind android reverse for $device tcp:$devicePort -> tcp:$hostPort: " +
                     result.output.ifBlank { "exitCode=${result.exitCode}" }
@@ -150,9 +157,10 @@ class AndroidAppiumHelper : PlatformAppiumHelper() {
     }
 
     private fun waitForAndroidReverse(device: String, devicePort: Int) {
-        val result = runAdbCommandAllowFailure(
-            listOf("-s", device, "shell", "nc", "-z", "127.0.0.1", devicePort.toString()),
-        )
+        val result =
+            runAdbCommandAllowFailure(
+                listOf("-s", device, "shell", "nc", "-z", "127.0.0.1", devicePort.toString()),
+            )
         if (result.exitCode == 0) return
 
         val reverseList = runAdbCommandAllowFailure(listOf("-s", device, "reverse", "--list")).output
@@ -166,9 +174,10 @@ class AndroidAppiumHelper : PlatformAppiumHelper() {
         val outputDir = File("build/test/appium-logs/$suiteName")
         outputDir.mkdirs()
         val outputFile = File(outputDir, "$testName.log")
-        val logResult = runAdbCommandAllowFailure(
-            listOf("exec-out", "run-as", packageName, "cat", "files/logs/$APP_LOG_FILE_NAME"),
-        )
+        val logResult =
+            runAdbCommandAllowFailure(
+                listOf("exec-out", "run-as", packageName, "cat", "files/logs/$APP_LOG_FILE_NAME"),
+            )
         if (logResult.exitCode == 0 && logResult.output.isNotBlank()) {
             outputFile.writeText(logResult.output)
         } else {
@@ -187,9 +196,10 @@ class AndroidAppiumHelper : PlatformAppiumHelper() {
     }
 
     private fun copyAnrTracesToBuild(outputDir: File, testName: String, packageName: String) {
-        val anrResult = runAdbCommandAllowFailure(
-            listOf("shell", "dumpsys", "activity", "exit-info", packageName),
-        )
+        val anrResult =
+            runAdbCommandAllowFailure(
+                listOf("shell", "dumpsys", "activity", "exit-info", packageName),
+            )
         if (anrResult.exitCode == 0 && anrResult.output.isNotBlank()) {
             File(outputDir, "$testName.exit-info.txt").writeText(anrResult.output)
         }
@@ -219,18 +229,17 @@ class AndroidAppiumHelper : PlatformAppiumHelper() {
 
     private fun runAdbCommandAllowFailure(args: List<String>): AdbCommandResult {
         val home = System.getProperty("user.home")
-        val process = ProcessBuilder(listOf("$home/Android/Sdk/platform-tools/adb") + args)
-            .redirectErrorStream(true)
-            .start()
+        val process =
+            ProcessBuilder(listOf("$home/Android/Sdk/platform-tools/adb") + args)
+                .redirectErrorStream(true)
+                .start()
         val output = process.inputStream.bufferedReader().use { it.readText().trim() }
         return AdbCommandResult(exitCode = process.waitFor(), output = output)
     }
 
-    private data class AdbCommandResult(
-        val exitCode: Int,
-        val output: String,
-    ) {
-        fun connectedDeviceSerials(): List<String> = output.lineSequence()
+    private data class AdbCommandResult(val exitCode: Int, val output: String) {
+        fun connectedDeviceSerials(): List<String> =
+            output.lineSequence()
             .drop(1)
             .map { it.trim().split(Regex("\\s+")) }
             .filter { it.size >= 2 && it[1] == "device" }
@@ -291,26 +300,30 @@ class DesktopAppiumHelper : PlatformAppiumHelper() {
             appLogFile.delete()
 
             val setup = beforeLaunch(ports, sessionFile.canonicalPath)
-            val launchScript = buildLaunchScript(
-                ports = ports,
-                sessionFile = sessionFile,
-                runtimeDir = runtimeDir,
-                appLogFile = appLogFile,
-                runtimeClasspath = resolveRuntimeClasspath(config),
-                config = config,
-                browserCapture = browserCapture,
-            )
+            val launchScript =
+                buildLaunchScript(
+                    ports = ports,
+                    sessionFile = sessionFile,
+                    runtimeDir = runtimeDir,
+                    appLogFile = appLogFile,
+                    runtimeClasspath = resolveRuntimeClasspath(config),
+                    config = config,
+                    browserCapture = browserCapture,
+                )
 
             var driver: AppiumDriver? = null
             try {
-                val caps = DesiredCapabilities().apply {
-                    setCapability("platformName", "linux")
-                    setCapability("appium:automationName", "linux")
-                    setCapability("appium:app", launchScript.canonicalPath)
-                    setCapability("appium:newCommandTimeout", config.windowWaitSeconds)
-                }
+                val caps =
+                    DesiredCapabilities().apply {
+                        setCapability("platformName", "linux")
+                        setCapability("appium:automationName", "linux")
+                        setCapability("appium:app", launchScript.canonicalPath)
+                        setCapability("appium:newCommandTimeout", config.windowWaitSeconds)
+                    }
                 driver = AppiumDriver(URI("http://127.0.0.1:4723").toURL(), caps)
                 block(driver, setup)
+            } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+                throw cancellation
             } catch (throwable: Throwable) {
                 DesktopAppiumFailureDumper.dumpOnFailure(
                     suiteName = config.suiteName,
@@ -353,34 +366,37 @@ class DesktopAppiumHelper : PlatformAppiumHelper() {
         browserCapture: DesktopBrowserCapture?,
     ): File {
         val javaExec = System.getenv("APP_DESKTOP_TEST_JAVA") ?: "java"
-        val atspiClasspath = listOf(runtimeClasspath, "/usr/share/java/java-atk-wrapper.jar")
-            .joinToString(File.pathSeparator)
+        val atspiClasspath =
+            listOf(runtimeClasspath, "/usr/share/java/java-atk-wrapper.jar")
+                .joinToString(File.pathSeparator)
         val prefsDir = runtimeDir.resolve("prefs").also { it.mkdirs() }
         val tmpDir = runtimeDir.resolve("tmp").also { it.mkdirs() }
         val scriptDir = File("build/test/appium/tmp").also { it.mkdirs() }
         val script = File.createTempFile(config.scriptPrefix, ".sh", scriptDir)
-        val arguments = buildList {
-            add("--add-opens=java.desktop/sun.awt=ALL-UNNAMED")
-            add("--add-opens=java.desktop/java.awt.peer=ALL-UNNAMED")
-            add("-Dappium.server.url=http://127.0.0.1:${ports.server}")
-            if (config.includeWsUrl) {
-                add("-Dappium.ws.url=ws://127.0.0.1:${ports.ws}")
+        val arguments =
+            buildList {
+                add("--add-opens=java.desktop/sun.awt=ALL-UNNAMED")
+                add("--add-opens=java.desktop/java.awt.peer=ALL-UNNAMED")
+                add("-Dappium.server.url=http://127.0.0.1:${ports.server}")
+                if (config.includeWsUrl) {
+                    add("-Dappium.ws.url=ws://127.0.0.1:${ports.ws}")
+                }
+                add("-Dappium.session.file=${sessionFile.canonicalPath}")
+                add("-Djava.util.prefs.userRoot=${prefsDir.canonicalPath}")
+                add("-Djava.io.tmpdir=${tmpDir.canonicalPath}")
+                add("-XX:ErrorFile=${appLogFile.parentFile.canonicalPath}/hs_err_pid%p.log")
+                add("-Djavax.accessibility.assistive_technologies=org.GNOME.Accessibility.AtkWrapper")
+                add("-cp")
+                add(atspiClasspath)
+                add(config.mainClassName)
             }
-            add("-Dappium.session.file=${sessionFile.canonicalPath}")
-            add("-Djava.util.prefs.userRoot=${prefsDir.canonicalPath}")
-            add("-Djava.io.tmpdir=${tmpDir.canonicalPath}")
-            add("-XX:ErrorFile=${appLogFile.parentFile.canonicalPath}/hs_err_pid%p.log")
-            add("-Djavax.accessibility.assistive_technologies=org.GNOME.Accessibility.AtkWrapper")
-            add("-cp")
-            add(atspiClasspath)
-            add(config.mainClassName)
-        }
-        val browserEnvironment = browserCapture?.let {
-            """
-            export BROWSER="${it.command.canonicalPath.escapeForDoubleQuotedShell()}"
-            export PATH="${it.command.parentFile.canonicalPath.escapeForDoubleQuotedShell()}:${'$'}PATH"
-            """.trimIndent()
-        }.orEmpty()
+        val browserEnvironment =
+            browserCapture?.let {
+                """
+                export BROWSER="${it.command.canonicalPath.escapeForDoubleQuotedShell()}"
+                export PATH="${it.command.parentFile.canonicalPath.escapeForDoubleQuotedShell()}:${'$'}PATH"
+                """.trimIndent()
+            }.orEmpty()
         script.writeText(
             buildDesktopLaunchScriptContent(
                 javaExec = javaExec,
@@ -431,10 +447,8 @@ private fun String.escapeForDoubleQuotedShell(): String {
         .replace("`", "\\`")
 }
 
-private class AndroidAppiumTestScope(
-    override val driver: AndroidAppTestDriver,
-    private val packageName: String,
-) : AppiumTestScope {
+private class AndroidAppiumTestScope(override val driver: AndroidAppTestDriver, private val packageName: String) :
+    AppiumTestScope {
     override suspend fun assertAsciidocPreviewOpened(source: String) {
         driver.assertAsciidocPreviewOpened(packageName, source)
     }

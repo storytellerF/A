@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.storage
 
 import com.storyteller_f.shared.type.PrimaryKey
@@ -5,8 +9,10 @@ import kotlinx.serialization.Serializable
 
 enum class UploadStatus {
     NOT_UPLOADING,
-    UPLOADING, PAUSED, FAILED,
-    SUCCESS
+    UPLOADING,
+    PAUSED,
+    FAILED,
+    SUCCESS,
 }
 
 @Serializable
@@ -25,9 +31,10 @@ data class UploadInfo(
     val contentType: String,
     val chunkSize: Long,
     // 对应的上传记录 id
-    val recordId: PrimaryKey? = null
+    val recordId: PrimaryKey? = null,
 ) {
     companion object {
-        val EMPTY = UploadInfo(0, 0, "", "", "", 0, 0, 0, UploadStatus.NOT_UPLOADING, "", "", "", 0,)
+        /** Empty upload state used before an upload begins. */
+        val EMPTY: UploadInfo = UploadInfo(0, 0, "", "", "", 0, 0, 0, UploadStatus.NOT_UPLOADING, "", "", "", 0)
     }
 }

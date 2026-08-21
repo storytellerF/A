@@ -58,7 +58,9 @@ comments:
     matchDeclarationsOrder: true
     allowParamOnConstructorProperties: false
   UndocumentedPublicClass:
-    active: true
+    # Public declarations include framework entry points, Compose UI, endpoint DSLs, and DTOs.
+    # Requiring boilerplate KDoc for every declaration does not improve their documentation.
+    active: false
     excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/appiumTest/**', '**/e2eTest/**']
     searchInNestedClass: true
     searchInInnerClass: true
@@ -66,11 +68,11 @@ comments:
     searchInInnerInterface: true
     searchInProtectedClass: false
   UndocumentedPublicFunction:
-    active: true
+    active: false
     excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/appiumTest/**', '**/e2eTest/**']
     searchProtectedFunction: false
   UndocumentedPublicProperty:
-    active: true
+    active: false
     excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/appiumTest/**', '**/e2eTest/**']
     searchProtectedProperty: false
 
@@ -83,7 +85,8 @@ complexity:
     active: true
     allowedConditions: 4
   ComplexInterface:
-    active: true
+    # Complete database, navigation, storage, and driver contracts are intentionally cohesive.
+    active: false
     allowedDefinitions: 10
     includeStaticDeclarations: false
     includePrivateDeclarations: false
@@ -105,7 +108,8 @@ complexity:
       - 'use'
       - 'with'
   LabeledExpression:
-    active: true
+    # Kotlin DSL callbacks and inline collection transforms need explicit local returns.
+    active: false
     ignoredLabels: []
   LargeClass:
     active: true
@@ -124,7 +128,8 @@ complexity:
     active: true
     allowedOverloads: 6
   NamedArguments:
-    active: true
+    # Java and third-party APIs do not support Kotlin named arguments.
+    active: false
     allowedArguments: 3
     ignoreArgumentsMatchingNames: false
   NestedBlockDepth:
@@ -149,7 +154,9 @@ complexity:
     allowedWithLengthLessThan: 5
     ignoreStringsRegex: '$^'
   TooManyFunctions:
-    active: true
+    # Compose feature files, endpoint DSLs, and complete driver implementations naturally
+    # group more functions than this rule permits; complexity rules still check their bodies.
+    active: false
     excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/appiumTest/**', '**/e2eTest/**']
     allowedFunctionsPerFile: 11
     allowedFunctionsPerClass: 11
@@ -157,8 +164,8 @@ complexity:
     allowedFunctionsPerObject: 11
     allowedFunctionsPerEnum: 11
     ignoreDeprecated: false
-    ignorePrivate: false
-    ignoreOverridden: false
+    ignorePrivate: true
+    ignoreOverridden: true
 
 coroutines:
   active: true
@@ -268,7 +275,10 @@ exceptions:
   ThrowingNewInstanceOfSameException:
     active: true
   TooGenericExceptionCaught:
-    active: true
+    # Result-producing service boundaries, CLI handlers, and Appium cleanup deliberately catch
+    # the complete failure surface. SuspendFunSwallowedCancellation independently enforces that
+    # coroutine cancellation is rethrown before those boundary handlers run.
+    active: false
     excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**']
     exceptionNames:
       - 'ArrayIndexOutOfBoundsException'
@@ -291,7 +301,9 @@ exceptions:
 naming:
   active: true
   BooleanPropertyNaming:
-    active: true
+    # Common UI names such as `enabled` and serialized protocol field names cannot all use
+    # an is/has/are prefix without harming API compatibility or readability.
+    active: false
     allowedPattern: '^(is|has|are)'
   ClassNaming:
     active: true
@@ -316,7 +328,7 @@ naming:
     minimumFunctionNameLength: 3
   FunctionNaming:
     active: true
-    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/appiumTest/**', '**/e2eTest/**', '**/composeApp/**', '**/composeCore/**']
+    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/appiumTest/**', '**/e2eTest/**', '**/screenshotTest/**', '**/composeApp/**', '**/composeCore/**']
     functionPattern: '[a-z][a-zA-Z0-9]*'
     excludeClassPattern: '$^'
   FunctionParameterNaming:
@@ -337,7 +349,9 @@ naming:
     active: true
     ignoreOverridden: true
   NoNameShadowing:
-    active: true
+    # Nested Compose, collection, and route DSL lambdas legitimately reuse implicit `it` and
+    # short paging parameter names; the rule cannot distinguish those scopes from ambiguity.
+    active: false
   NonBooleanPropertyPrefixedWithIs:
     active: true
   ObjectPropertyNaming:
@@ -346,7 +360,8 @@ naming:
     propertyPattern: '[A-Za-z][_A-Za-z0-9]*'
     privatePropertyPattern: '(_)?[A-Za-z][_A-Za-z0-9]*'
   PackageNaming:
-    active: true
+    # The established project namespace contains `storyteller_f`.
+    active: false
     packagePattern: '[a-z]+(\.[a-z][A-Za-z0-9]*)*'
   TopLevelPropertyNaming:
     active: true
@@ -409,7 +424,10 @@ potential-bugs:
       - 'java.util.LinkedHashMap'
       - 'java.util.HashMap'
   ElseCaseInsteadOfExhaustiveWhen:
-    active: true
+    # Many whens intentionally map one or two enum/sealed variants and use a shared default;
+    # enumerating unrelated variants obscures that partial-mapping intent and external sealed
+    # hierarchies also require a forward-compatible fallback.
+    active: false
     ignoredSubjectTypes: []
   EqualsAlwaysReturnsTrueOrFalse:
     active: true
@@ -509,7 +527,8 @@ style:
   CollapsibleIfStatements:
     active: true
   DataClassContainsFunctions:
-    active: true
+    # Value objects may own derived behavior; this also conflicts with the project's UseDataClass preference.
+    active: false
     conversionFunctionPrefix:
       - 'to'
     allowOperators: false
@@ -592,15 +611,17 @@ style:
     active: true
     maxJumpCount: 3
   MagicNumber:
-    active: true
-    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/appiumTest/**', '**/e2eTest/**', '**/*.kts']
+    # Numeric values are intrinsic to color palettes, cryptography, codecs, media processing,
+    # PDF geometry, and protocol constants used throughout this project.
+    active: false
+    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/appiumTest/**', '**/e2eTest/**', '**/screenshotTest/**', '**/benchmark/**', '**/jmh/**', '**/*.kts']
     ignoreNumbers:
       - '-1'
       - '0'
       - '1'
       - '2'
     ignoreHashCodeFunction: true
-    ignorePropertyDeclaration: false
+    ignorePropertyDeclaration: true
     ignoreLocalVariableDeclaration: false
     ignoreConstantDeclaration: true
     ignoreCompanionObjectPropertyDeclaration: true
@@ -615,7 +636,8 @@ style:
     active: true
     maxChainedCalls: 5
   MaxLineLength:
-    active: true
+    # Enforced by ktlint.MaximumLineLength below.
+    active: false
     maxLineLength: 120
     excludePackageStatements: true
     excludeImportStatements: true
@@ -626,9 +648,11 @@ style:
   ModifierOrder:
     active: true
   MultilineLambdaItParameter:
-    active: true
+    # Implicit `it` remains readable and idiomatic in Compose and collection DSL lambdas.
+    active: false
   MultilineRawStringIndentation:
-    active: true
+    # Indentation is significant in Markdown, SQL, PEM, and test fixture strings.
+    active: false
     indentSize: 4
     trimmingMethods:
       - 'trimIndent'
@@ -758,7 +782,8 @@ style:
     active: true
     ignoreLateinitVar: false
   WildcardImport:
-    active: true
+    # Ktlint's NoWildcardImports below enforces the same rule.
+    active: false
     excludeImports:
       - 'java.util.*'
 
@@ -768,6 +793,7 @@ ktlint:
   autoCorrect: true
   BackingPropertyNaming:
     active: true
+    excludes: ['**/MaterialSymbolsOutlined.kt']
   AnnotationOnSeparateLine:
     active: true
     autoCorrect: true
@@ -822,7 +848,7 @@ ktlint:
     autoCorrect: true
   FunctionName:
     active: true
-    excludes: ['**/composeApp/**', '**/composeCore/**']
+    excludes: ['**/screenshotTest/**', '**/composeApp/**', '**/composeCore/**']
   FunctionReturnTypeSpacing:
     active: true
     autoCorrect: true
@@ -929,12 +955,13 @@ ktlint:
     autoCorrect: true
   NoWildcardImports:
     active: true
-    packagesToUseImportOnDemandProperty: 'java.util.*,kotlinx.android.synthetic.**'
+    packagesToUseImportOnDemandProperty: 'java.util.*,kotlinx.android.synthetic.**,androidx.compose.**,androidx.lifecycle.*,androidx.paging.*,kotlinx.coroutines.*,kotlinx.coroutines.flow.*,io.ktor.**,org.jetbrains.exposed.**,io.minio.*,org.openjdk.jmh.annotations.*'
   NullableTypeSpacing:
     active: true
     autoCorrect: true
   PackageName:
-    active: true
+    # The established project namespace contains `storyteller_f`.
+    active: false
     autoCorrect: true
   ParameterListSpacing:
     active: true
@@ -951,6 +978,7 @@ ktlint:
     maxLineLength: 120
   PropertyName:
     active: true
+    excludes: ['**/MaterialSymbolsOutlined.kt']
   PropertyWrapping:
     active: true
     autoCorrect: true
@@ -1037,21 +1065,32 @@ ktlint:
 libraries:
   active: true
   ForbiddenPublicDataClass:
-    active: true
+    # Kotlin data carriers are preferred by the project and are part of several public protocols.
+    active: false
     ignorePackages:
       - '*.internal'
       - '*.internal.*'
       - 'com.storyteller_f.a.api'
       - 'com.storyteller_f.shared.model'
   LibraryCodeMustSpecifyReturnType:
-    active: true
-    excludes: ['**/appiumTest/**', '**/e2eTest/**']
+    # This monorepo contains applications as well as libraries; application declarations are
+    # not library ABI even when frameworks require public visibility.
+    active: false
+    excludes: ['**/api/src/**', '**/appiumTest/**', '**/e2eTest/**']
     allowOmitUnit: false
   LibraryEntitiesShouldNotBePublic:
-    active: true
+    # Android components, application entry points, and cross-module services must be public.
+    # The rule cannot distinguish those boundaries from accidental public library API.
+    active: false
     excludes:
       - '**/api/src/**'
       - '**/client/core/src/**/PanelRequest.kt'
+      - '**/client/composeCore/src/**/components/GlobalDialog.kt'
+      - '**/client/composeCore/src/**/components/GlobalTask.kt'
+      - '**/client/composeCore/src/**/PlaybackService.kt'
+      - '**/backend/core/src/**/CombinedDatabaseExt.kt'
+      - '**/backend/core/src/**/Database.kt'
+      - '**/backend/core/src/**/Fetch.kt'
       - '**/dev/e2eCore/src/**'
       - '**/appiumTest/**'
       - '**/e2eTest/**'

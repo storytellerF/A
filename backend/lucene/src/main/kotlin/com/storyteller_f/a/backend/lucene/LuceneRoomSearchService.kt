@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.lucene
 
 import com.storyteller_f.a.backend.core.MergedEnv
@@ -19,8 +23,7 @@ import org.apache.lucene.search.Query
 import org.apache.lucene.search.Sort
 import java.nio.file.Path
 
-data class LuceneRoomDocument(val roomDocument: RoomDocument) :
-    LuceneDocument {
+data class LuceneRoomDocument(val roomDocument: RoomDocument) : LuceneDocument {
     override fun save(): Document {
         val id = roomDocument.id
         return Document().apply {
@@ -36,10 +39,7 @@ data class LuceneRoomDocument(val roomDocument: RoomDocument) :
     }
 
     companion object : LuceneDocumentCompanion<RoomDocument> {
-        override fun restore(
-            id: PrimaryKey,
-            document: Document
-        ): RoomDocument {
+        override fun restore(id: PrimaryKey, document: Document): RoomDocument {
             // 尝试从文档中获取communityId，如果不存在则为null
 
             return RoomDocument(id, document.get("name"), document.get("aid"), document.get("communityId")?.toLong())
@@ -47,24 +47,26 @@ data class LuceneRoomDocument(val roomDocument: RoomDocument) :
     }
 }
 
-class LuceneRoomSearchService(path: Path, isInMemory: Boolean = false) : Lucene(path, isInMemory),
+class LuceneRoomSearchService(path: Path, isInMemory: Boolean = false) :
+    Lucene(path, isInMemory),
     RoomSearchService {
-    override suspend fun saveDocument(documents: List<RoomDocument>): Result<Unit> {
-        return useLucene {
-            saveDocumentList(documents.map {
+    override suspend fun saveDocument(documents: List<RoomDocument>): Result<Unit> =
+        useLucene {
+        saveDocumentList(
+            documents.map {
                 LuceneRoomDocument(it)
-            }, analyzer)
-        }
+            },
+            analyzer,
+        )
     }
 
-    override suspend fun clean(): Result<Unit> {
-        return useLucene {
-            cleanAll(analyzer)
-        }
+    override suspend fun clean(): Result<Unit> =
+        useLucene {
+        cleanAll(analyzer)
     }
 
     override suspend fun searchDocument(
-        roomDocumentSearch: RoomDocumentSearch
+        roomDocumentSearch: RoomDocumentSearch,
     ): Result<PaginationResult<RoomDocument>> {
         if (roomDocumentSearch is RoomDocumentSearch.Keyword && roomDocumentSearch.words.isEmpty()) {
             return Result.success(PaginationResult(emptyList(), 0))
@@ -80,38 +82,32 @@ class LuceneRoomSearchService(path: Path, isInMemory: Boolean = false) : Lucene(
                         combinedQuery,
                         roomDocumentSearch.fetch,
                         Sort.RELEVANCE,
-                        LuceneRoomDocument
+                        LuceneRoomDocument,
                     )
                 }
             }
         }
     }
 
-    private fun buildQuery(
-        roomDocumentSearch: RoomDocumentSearch
-    ): Query {
-        return BooleanQuery.Builder().apply {
-            when (roomDocumentSearch) {
-                is RoomDocumentSearch.Keyword -> {
-                    addPrioritizedFieldsQuery(roomDocumentSearch.words, "aid", "name")
-                    // 添加对communityId的过滤
-                    roomDocumentSearch.communityId?.let { communityId ->
-                        add(LongField.newExactQuery("communityId", communityId), BooleanClause.Occur.MUST)
-                    }
+    private fun buildQuery(roomDocumentSearch: RoomDocumentSearch): Query =
+        BooleanQuery.Builder().apply {
+        when (roomDocumentSearch) {
+            is RoomDocumentSearch.Keyword -> {
+                addPrioritizedFieldsQuery(roomDocumentSearch.words, "aid", "name")
+                // 添加对communityId的过滤
+                roomDocumentSearch.communityId?.let { communityId ->
+                    add(LongField.newExactQuery("communityId", communityId), BooleanClause.Occur.MUST)
                 }
             }
-        }.build()
-    }
+        }
+    }.build()
 }
 
 class LuceneRoomSearchServiceFactory : RoomSearchServiceFactory {
-    override fun match(env: MergedEnv): Boolean {
-        return env["SEARCH_SERVICE"] == "lucene"
-    }
+    override fun match(env: MergedEnv): Boolean = env["SEARCH_SERVICE"] == "lucene"
 
-    override fun build(env: MergedEnv): RoomSearchService {
-        return buildLuceneSearchService(env) { path, isInMemory ->
-            LuceneRoomSearchService(path.resolve("room"), isInMemory)
-        }
+    override fun build(env: MergedEnv): RoomSearchService =
+        buildLuceneSearchService(env) { path, isInMemory ->
+        LuceneRoomSearchService(path.resolve("room"), isInMemory)
     }
 }

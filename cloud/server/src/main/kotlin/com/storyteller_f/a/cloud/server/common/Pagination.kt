@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.server.common
 
 import com.storyteller_f.a.api.PageableQuery
@@ -28,41 +32,43 @@ interface PagingGenerator<in T, F : Any> {
     fun generate(list: List<T>, fetch: F): Pair<String?, String?>
 }
 
-abstract class PrimaryKeyPagingGenerator<T>(val block: (T) -> PrimaryKey) :
-    PagingGenerator<T, PrimaryKeyFetch> {
-    override fun parse(prePageToken: String?, nextPageToken: String?, size: Int): PrimaryKeyFetch {
-        return PrimaryKeyFetch(
-            when {
-                !nextPageToken.isNullOrBlank() -> getPageToken(
+abstract class PrimaryKeyPagingGenerator<T>(val block: (T) -> PrimaryKey) : PagingGenerator<T, PrimaryKeyFetch> {
+    override fun parse(prePageToken: String?, nextPageToken: String?, size: Int): PrimaryKeyFetch =
+        PrimaryKeyFetch(
+        when {
+            !nextPageToken.isNullOrBlank() ->
+                getPageToken(
                     PrimaryKey::class,
-                    nextPageToken
+                    nextPageToken,
                 )?.let { Cursor.DescCursor(it) }
 
-                !prePageToken.isNullOrBlank() -> getPageToken(
+            !prePageToken.isNullOrBlank() ->
+                getPageToken(
                     PrimaryKey::class,
-                    prePageToken
+                    prePageToken,
                 )?.let {
                     Cursor.AscCursor(it)
                 }
 
-                else -> null
-            },
-            size
-        )
-    }
+            else -> null
+        },
+        size,
+    )
 
     override fun generate(list: List<T>, fetch: PrimaryKeyFetch): Pair<String?, String?> {
         val size = fetch.size
-        val next = if (size <= list.size) {
-            block(list.last()).toString()
-        } else {
-            null
-        }
-        val pre = if (list.isNotEmpty()) {
-            block(list.first()).toString()
-        } else {
-            null
-        }
+        val next =
+            if (size <= list.size) {
+                block(list.last()).toString()
+            } else {
+                null
+            }
+        val pre =
+            if (list.isNotEmpty()) {
+                block(list.first()).toString()
+            } else {
+                null
+            }
         return pre to next
     }
 }
@@ -70,33 +76,37 @@ abstract class PrimaryKeyPagingGenerator<T>(val block: (T) -> PrimaryKey) :
 object IdentifiablePagingGenerator :
     PrimaryKeyPagingGenerator<PrimaryKeyIdentifiable>(PrimaryKeyIdentifiable::id)
 
-fun <T> pagingGenerator(block: (T) -> PrimaryKey): PrimaryKeyPagingGenerator<T> {
-    return object : PrimaryKeyPagingGenerator<T>(block) {}
-}
+fun <T> pagingGenerator(block: (T) -> PrimaryKey): PrimaryKeyPagingGenerator<T> =
+    object : PrimaryKeyPagingGenerator<T>(
+    block,
+) {}
 
 abstract class OffsetPagingGenerator<T> : PagingGenerator<T, OffsetFetch> {
     override fun parse(prePageToken: String?, nextPageToken: String?, size: Int): OffsetFetch {
-        val cursor = when {
-            !nextPageToken.isNullOrBlank() -> nextPageToken.toIntOrNull()?.let { Cursor.DescCursor(it) }
-            !prePageToken.isNullOrBlank() -> prePageToken.toIntOrNull()?.let { Cursor.AscCursor(it) }
-            else -> null
-        }
+        val cursor =
+            when {
+                !nextPageToken.isNullOrBlank() -> nextPageToken.toIntOrNull()?.let { Cursor.DescCursor(it) }
+                !prePageToken.isNullOrBlank() -> prePageToken.toIntOrNull()?.let { Cursor.AscCursor(it) }
+                else -> null
+            }
         return OffsetFetch(cursor, size)
     }
 
     override fun generate(list: List<T>, fetch: OffsetFetch): Pair<String?, String?> {
         val currentOffset = fetch.cursor?.value ?: 0
         val size = fetch.size
-        val next = if (size <= list.size) {
-            (currentOffset + size).toString()
-        } else {
-            null
-        }
-        val pre = if (currentOffset > 0) {
-            (maxOf(0, currentOffset - size)).toString()
-        } else {
-            null
-        }
+        val next =
+            if (size <= list.size) {
+                (currentOffset + size).toString()
+            } else {
+                null
+            }
+        val pre =
+            if (currentOffset > 0) {
+                maxOf(0, currentOffset - size).toString()
+            } else {
+                null
+            }
         return pre to next
     }
 }
@@ -106,69 +116,70 @@ object GeneralOffsetPagingGenerator : OffsetPagingGenerator<Any>()
 suspend fun <T, F : Fetch, Response : ListResponse<T>> PageableQuery.pagination(
     generator: PagingGenerator<T, F>,
     responseBuilder: (ImmutableList<T>, Pagination<String>) -> Response,
-    block: suspend (F) -> Result<PaginationResult<T>?>
-): Result<Response?> {
-    return runCatching {
-        val size = size
-        require(size > 0) {
-            "Invalid query size"
-        }
-        val nextPageToken = nextPageToken
-        val prePageToken = prePageToken
+    block: suspend (F) -> Result<PaginationResult<T>?>,
+): Result<Response?> =
+    runCatching {
+    val size = size
+    require(size > 0) {
+        "Invalid query size"
+    }
+    val nextPageToken = nextPageToken
+    val prePageToken = prePageToken
 
-        require(nextPageToken.isNullOrBlank() || prePageToken.isNullOrBlank()) {
-            "Invalid query"
-        }
-        generator.parse(prePageToken, nextPageToken, size)
-    }.mapResult { f ->
-        block(f).mapCatchingNotNull { (list, count) ->
-            val (pre, next) = generator.generate(list, f)
-            responseBuilder(list.toImmutableList(), Pagination(next, pre, count))
-        }
+    require(nextPageToken.isNullOrBlank() || prePageToken.isNullOrBlank()) {
+        "Invalid query"
+    }
+    generator.parse(prePageToken, nextPageToken, size)
+}.mapResult { f ->
+    block(f).mapCatchingNotNull { (list, count) ->
+        val (pre, next) = generator.generate(list, f)
+        responseBuilder(list.toImmutableList(), Pagination(next, pre, count))
     }
 }
 
 @Suppress("UNCHECKED_CAST")
 fun <R : Any> getPageToken(pageTokenType: KClass<R>, pageToken: String): R? =
     if (pageTokenType == ULong::class) {
-        pageToken.toULongOrNull() as? R
-    } else {
-        DefaultConversionService.fromValue(pageToken, pageTokenType) as? R
-    }
+    pageToken.toULongOrNull() as? R
+} else {
+    DefaultConversionService.fromValue(pageToken, pageTokenType) as? R
+}
 
-class ReactionPaginationGenerator(val backend: Backend) :
-    PagingGenerator<ReactionInfo, ReactionFetch> {
-    override fun parse(prePageToken: String?, nextPageToken: String?, size: Int): ReactionFetch {
-        return ReactionFetch(
-            when {
-                !nextPageToken.isNullOrBlank() -> Cursor.DescCursor(
-                    commonJson.decodeFromString<ReactionCursorKey>(nextPageToken)
+class ReactionPaginationGenerator(val backend: Backend) : PagingGenerator<ReactionInfo, ReactionFetch> {
+    override fun parse(prePageToken: String?, nextPageToken: String?, size: Int): ReactionFetch =
+        ReactionFetch(
+        when {
+            !nextPageToken.isNullOrBlank() ->
+                Cursor.DescCursor(
+                    commonJson.decodeFromString<ReactionCursorKey>(nextPageToken),
                 )
 
-                !prePageToken.isNullOrBlank() -> Cursor.AscCursor(
-                    commonJson.decodeFromString<ReactionCursorKey>(prePageToken)
+            !prePageToken.isNullOrBlank() ->
+                Cursor.AscCursor(
+                    commonJson.decodeFromString<ReactionCursorKey>(prePageToken),
                 )
 
-                else -> null
-            },
-            size
-        )
-    }
+            else -> null
+        },
+        size,
+    )
 
     override fun generate(list: List<ReactionInfo>, fetch: ReactionFetch): Pair<String?, String?> {
         val size = fetch.size
-        val next = if (size <= list.size) {
-            val last = list.last()
-            commonJson.encodeToString(ReactionCursorKey(last.count, last.lastReactionId))
-        } else {
-            null
-        }
-        val pre = if (list.isNotEmpty()) {
-            val first = list.first()
-            commonJson.encodeToString(ReactionCursorKey(first.count, first.lastReactionId))
-        } else {
-            null
-        }
+        val next =
+            if (size <= list.size) {
+                val last = list.last()
+                commonJson.encodeToString(ReactionCursorKey(last.count, last.lastReactionId))
+            } else {
+                null
+            }
+        val pre =
+            if (list.isNotEmpty()) {
+                val first = list.first()
+                commonJson.encodeToString(ReactionCursorKey(first.count, first.lastReactionId))
+            } else {
+                null
+            }
         return pre to next
     }
 }

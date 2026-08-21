@@ -1,3 +1,9 @@
+/*
+ * This is a private project. All rights reserved.
+*/
+
+package com.storyteller_f.a.app
+
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.emptyPreferences
@@ -11,7 +17,8 @@ import kotlin.test.assertEquals
 
 class AppPreferencesTest {
     @Test
-    fun shouldObserveDefaultAndPersistStringValue() = runTest {
+    fun shouldObserveDefaultAndPersistStringValue() =
+        runTest {
         val preferences = AppPreferences(FakePreferencesDataStore())
 
         assertEquals("default", preferences.observeString("key", "default").first())
@@ -23,16 +30,15 @@ class AppPreferencesTest {
     }
 }
 
-private class FakePreferencesDataStore(
-    initialValue: Preferences = emptyPreferences(),
-) : DataStore<Preferences> {
+private class FakePreferencesDataStore(initialValue: Preferences = emptyPreferences()) : DataStore<Preferences> {
     private val state = MutableStateFlow(initialValue)
 
     override val data: Flow<Preferences> = state
 
-    override suspend fun updateData(transform: suspend (Preferences) -> Preferences): Preferences {
-        return transform(state.value).also { updatedValue ->
-            state.value = updatedValue
-        }
+    override suspend fun updateData(transform: suspend (Preferences) -> Preferences): Preferences =
+        transform(
+        state.value,
+    ).also { updatedValue ->
+        state.value = updatedValue
     }
 }

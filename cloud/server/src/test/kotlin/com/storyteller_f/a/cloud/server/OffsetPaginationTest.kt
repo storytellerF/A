@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.server
 
 import com.storyteller_f.a.backend.core.OffsetFetch
@@ -6,7 +10,6 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
 class OffsetPaginationTest {
-
     private val generator = GeneralOffsetPagingGenerator
 
     @Test

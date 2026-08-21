@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.shared.obj
 
 import com.storyteller_f.shared.model.LlmConfig
@@ -17,9 +21,7 @@ data class PresetCommunity(
     val tag: List<String>? = null,
     val font: String? = null,
 ) {
-    fun getSafeAdmin(): String {
-        return admin ?: "System"
-    }
+    fun getSafeAdmin(): String = admin ?: "System"
 }
 
 @Serializable
@@ -54,14 +56,11 @@ data class PresetRoom(
     val users: List<String>,
     val icon: String? = null,
     val id: String,
-    val admin: String
+    val admin: String,
 )
 
 @Serializable
-data class PresetFile(
-    val owner: String,
-    val paths: List<String>,
-)
+data class PresetFile(val owner: String, val paths: List<String>)
 
 @Serializable
 data class PresetTitle(

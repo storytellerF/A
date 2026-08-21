@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.file
 
 import androidx.compose.foundation.combinedClickable
@@ -52,19 +56,18 @@ import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)
 @Composable
-fun FileCell(
-    fileInfo: FileInfo?,
-    requiredDimension: Dimension? = null,
-    clickItem: (List<FileInfo>) -> Unit,
-) {
+fun FileCell(fileInfo: FileInfo?, requiredDimension: Dimension? = null, clickItem: (List<FileInfo>) -> Unit) {
     if (fileInfo != null) {
         var expanded by remember { mutableStateOf(false) }
 
-        Row(modifier = Modifier.fillMaxWidth().combinedClickable(onLongClick = {
-            expanded = true
-        }) {
-            clickItem(listOf(fileInfo))
-        }) {
+        Row(
+            modifier =
+            Modifier.fillMaxWidth().combinedClickable(onLongClick = {
+                expanded = true
+            }) {
+                clickItem(listOf(fileInfo))
+            },
+        ) {
             FileIcon(fileInfo)
             Spacer(modifier = Modifier.width(20.dp))
             Column {
@@ -77,16 +80,18 @@ fun FileCell(
                 }
                 if (fileInfo.contentType.startsWith("image")) {
                     Spacer(modifier = Modifier.height(5.dp))
-                    fileInfo.dimension?.let {
+                    fileInfo.dimension?.let { dimension ->
                         Text(
-                            stringResource(Res.string.image_dimension, it.width, it.height),
-                            style = MaterialTheme.typography.labelSmall
+                            stringResource(Res.string.image_dimension, dimension.width, dimension.height),
+                            style = MaterialTheme.typography.labelSmall,
                         )
-                        if (requiredDimension != null && !checkMediaFileDimensionRatioMatch(it, requiredDimension)) {
+                        if (requiredDimension != null &&
+                            !checkMediaFileDimensionRatioMatch(dimension, requiredDimension)
+                        ) {
                             Text(
                                 stringResource(Res.string.image_requires_crop_hint),
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.error
+                                color = MaterialTheme.colorScheme.error,
                             )
                         }
                     }
@@ -106,7 +111,7 @@ fun FileCellMenu(expanded: Boolean, updateExpanded: (Boolean) -> Unit, fileInfo:
         expanded = expanded,
         onDismissRequest = {
             updateExpanded(false)
-        }
+        },
     ) {
         DropdownMenuItem(
             leadingIcon = {
@@ -116,7 +121,7 @@ fun FileCellMenu(expanded: Boolean, updateExpanded: (Boolean) -> Unit, fileInfo:
             onClick = {
                 updateExpanded(false)
                 appNavFactory.newAppNav().gotoMedia(fileInfo)
-            }
+            },
         )
         val clipboardManager = LocalClipboard.current
         val scope = rememberCoroutineScope()
@@ -130,7 +135,7 @@ fun FileCellMenu(expanded: Boolean, updateExpanded: (Boolean) -> Unit, fileInfo:
                 scope.launch {
                     clipboardManager.setText(fileInfo.name)
                 }
-            }
+            },
         )
         DropdownMenuItem(
             leadingIcon = {
@@ -140,7 +145,7 @@ fun FileCellMenu(expanded: Boolean, updateExpanded: (Boolean) -> Unit, fileInfo:
             onClick = {
                 updateExpanded(false)
                 appNavFactory.newAppNav().gotoFileRefs(fileInfo.id)
-            }
+            },
         )
     }
 }
@@ -149,20 +154,23 @@ fun FileCellMenu(expanded: Boolean, updateExpanded: (Boolean) -> Unit, fileInfo:
 fun UploadIcon(contentType: String) {
     val modifier = Modifier.padding(4.dp)
     when {
-        contentType.startsWith("audio") -> Icon(
-            Icons.Default.AudioFile,
-            contentDescription = stringResource(Res.string.audio_content_description)
-        )
+        contentType.startsWith("audio") ->
+            Icon(
+                Icons.Default.AudioFile,
+                contentDescription = stringResource(Res.string.audio_content_description),
+            )
 
-        contentType.startsWith("video") -> Icon(
-            Icons.Default.VideoFile,
-            contentDescription = stringResource(Res.string.video_content_description)
-        )
+        contentType.startsWith("video") ->
+            Icon(
+                Icons.Default.VideoFile,
+                contentDescription = stringResource(Res.string.video_content_description),
+            )
 
-        else -> Icon(
-            Icons.Default.AttachFile,
-            contentDescription = stringResource(Res.string.file_content_description),
-            modifier = modifier
-        )
+        else ->
+            Icon(
+                Icons.Default.AttachFile,
+                contentDescription = stringResource(Res.string.file_content_description),
+                modifier = modifier,
+            )
     }
 }

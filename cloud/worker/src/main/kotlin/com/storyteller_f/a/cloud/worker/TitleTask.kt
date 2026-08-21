@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.worker
 
 import com.storyteller_f.a.backend.core.Backend
@@ -90,7 +94,7 @@ private suspend fun Backend.processTitle(title: Title, retryRecordId: PrimaryKey
 private suspend fun Backend.processTitleNotification(title: Title, successRecord: TaskRecord) {
     val rawUser =
         database.user.getRawUser(ObjectFetch.IdFetch(title.receiver))
-            .getOrThrow() ?: throw Exception("user not found")
+            .getOrThrow() ?: throw IllegalStateException("user not found")
 
     val content = generateTitleNotificationContent(title)
     sendTopicToNotificationRoom(getSystemUserId(), rawUser.user, content).getOrThrow()
@@ -116,15 +120,14 @@ private fun Result<Unit>.logTitleResult(objectId: PrimaryKey) {
     )
 }
 
-private fun generateTitleNotificationContent(title: Title): String {
-    return buildString {
-        appendLine("You received a new title!")
-        appendLine("Title: ${title.name}")
-        appendLine("From: System")
-        appendLine("Created: ${title.createdTime}")
-        if (title.expiresAt != null) {
-            appendLine("Expires: ${title.expiresAt}")
-        }
+private fun generateTitleNotificationContent(title: Title): String =
+    buildString {
+    appendLine("You received a new title!")
+    appendLine("Title: ${title.name}")
+    appendLine("From: System")
+    appendLine("Created: ${title.createdTime}")
+    if (title.expiresAt != null) {
+        appendLine("Expires: ${title.expiresAt ?: "<none>"}")
     }
 }
 

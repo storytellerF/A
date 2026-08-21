@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.common
 
 import androidx.paging.PagingSource
@@ -46,18 +50,19 @@ import kotlin.test.assertTrue
 
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class EventTest {
-
     @Test
-    fun testProcessTopicCreated() = runTest {
+    fun testProcessTopicCreated() =
+        runTest {
         val fakeTopicStorage = FakeTopicStorage()
         val fakeStorage = FakeModelStorage(topic = fakeTopicStorage)
         val bus = MutableSharedFlow<Any>()
         val parentId: PrimaryKey = 100L
         val topicInfo = TopicInfo.EMPTY.copy(id = 1L, parentId = parentId)
 
-        val job = launch(UnconfinedTestDispatcher(testScheduler)) {
-            processEvent(fakeStorage, bus)
-        }
+        val job =
+            launch(UnconfinedTestDispatcher(testScheduler)) {
+                processEvent(fakeStorage, bus)
+            }
         bus.emit(OnTopicCreated(topicInfo))
 
         val savedFirst = fakeTopicStorage.savedFirst
@@ -72,24 +77,27 @@ class EventTest {
     }
 
     @Test
-    fun testProcessTopicChanged() = runTest {
+    fun testProcessTopicChanged() =
+        runTest {
         val fakeTopicStorage = FakeTopicStorage()
         val fakeStorage = FakeModelStorage(topic = fakeTopicStorage)
         val bus = MutableSharedFlow<Any>()
         val parentId: PrimaryKey = 100L
         val topicId: PrimaryKey = 2L
-        val topicInfo = TopicInfo.EMPTY.copy(
-            id = topicId,
-            parentId = parentId,
-            content = com.storyteller_f.shared.model.TopicContent.Plain("Updated")
-        )
+        val topicInfo =
+            TopicInfo.EMPTY.copy(
+                id = topicId,
+                parentId = parentId,
+                content = com.storyteller_f.shared.model.TopicContent.Plain("Updated"),
+            )
 
         // Pre-populate recommend to test updateDocument call
         fakeTopicStorage.documents[TopicCollection.Recommend to topicId.toString()] = topicInfo
 
-        val job = launch(UnconfinedTestDispatcher(testScheduler)) {
-            processEvent(fakeStorage, bus)
-        }
+        val job =
+            launch(UnconfinedTestDispatcher(testScheduler)) {
+                processEvent(fakeStorage, bus)
+            }
         bus.emit(OnTopicChanged(topicInfo))
 
         // Check saveToDefault
@@ -110,9 +118,10 @@ class EventTest {
 
         bus.emit(OnTopicChanged(topicInfo))
 
-        val childListUpdate = fakeTopicStorage.updatedDocuments.find {
-            it.first == TopicCollection.ChildTopicList(parentId)
-        }
+        val childListUpdate =
+            fakeTopicStorage.updatedDocuments.find {
+                it.first == TopicCollection.ChildTopicList(parentId)
+            }
         assertTrue(childListUpdate != null, "Should update ChildTopicList collection")
         assertEquals(topicInfo, childListUpdate.second)
 
@@ -120,16 +129,18 @@ class EventTest {
     }
 
     @Test
-    fun testProcessRoomCreated() = runTest {
+    fun testProcessRoomCreated() =
+        runTest {
         val fakeRoomStorage = FakeRoomStorage()
         val fakeStorage = FakeModelStorage(room = fakeRoomStorage)
         val bus = MutableSharedFlow<Any>()
         val communityId: PrimaryKey = 200L
         val roomInfo = RoomInfo.EMPTY.copy(id = 10L, communityId = communityId)
 
-        val job = launch(UnconfinedTestDispatcher(testScheduler)) {
-            processEvent(fakeStorage, bus)
-        }
+        val job =
+            launch(UnconfinedTestDispatcher(testScheduler)) {
+                processEvent(fakeStorage, bus)
+            }
         bus.emit(OnRoomCreated(roomInfo))
 
         assertEquals(1, fakeRoomStorage.savedDefault.size)
@@ -144,7 +155,8 @@ class EventTest {
     }
 
     @Test
-    fun testProcessRoomUpdated() = runTest {
+    fun testProcessRoomUpdated() =
+        runTest {
         val fakeRoomStorage = FakeRoomStorage()
         val fakeStorage = FakeModelStorage(room = fakeRoomStorage)
         val bus = MutableSharedFlow<Any>()
@@ -154,9 +166,10 @@ class EventTest {
         // Pre-populate CommunityRooms to allow update
         fakeRoomStorage.documents[RoomCollection.CommunityRooms(communityId) to roomInfo.id.toString()] = roomInfo
 
-        val job = launch(UnconfinedTestDispatcher(testScheduler)) {
-            processEvent(fakeStorage, bus)
-        }
+        val job =
+            launch(UnconfinedTestDispatcher(testScheduler)) {
+                processEvent(fakeStorage, bus)
+            }
         bus.emit(OnRoomUpdated(roomInfo))
 
         assertEquals(1, fakeRoomStorage.savedDefault.size)
@@ -206,9 +219,15 @@ open class FakeCollectionListStorage<C, I : Any> : CollectionListStorageWithDefa
     override fun observeDatum(key: String): Flow<I?> = emptyFlow()
 }
 
-class FakeTopicStorage : FakeCollectionListStorage<TopicCollection, TopicInfo>(), TopicInfoStorage
-class FakeRoomStorage : FakeCollectionListStorage<RoomCollection, RoomInfo>(), RoomInfoStorage
-class FakeUserStorage : FakeCollectionListStorage<com.storyteller_f.storage.UserCollection, UserInfo>(), UserInfoStorage
+class FakeTopicStorage :
+    FakeCollectionListStorage<TopicCollection, TopicInfo>(),
+    TopicInfoStorage
+class FakeRoomStorage :
+    FakeCollectionListStorage<RoomCollection, RoomInfo>(),
+    RoomInfoStorage
+class FakeUserStorage :
+    FakeCollectionListStorage<com.storyteller_f.storage.UserCollection, UserInfo>(),
+    UserInfoStorage
 class FakeCommunityStorage :
     FakeCollectionListStorage<com.storyteller_f.storage.CommunityCollection, CommunityInfo>(),
     CommunityInfoStorage
@@ -218,28 +237,31 @@ class FakePagingSource<I : Any> : PagingSource<Int, I>() {
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, I> = LoadResult.Page(emptyList(), null, null)
 }
 
+private fun unavailableStorage(name: String): Nothing =
+    throw UnsupportedOperationException("$name storage is not configured for this focused test")
+
 class FakeModelStorage(
     override val topic: TopicInfoStorage = FakeTopicStorage(),
     override val room: RoomInfoStorage = FakeRoomStorage(),
     override val user: UserInfoStorage = FakeUserStorage(),
     override val community: CommunityInfoStorage = FakeCommunityStorage(),
 ) : ModelStorage {
-    override val title: TitleInfoStorage get() = TODO()
-    override val member: MemberInfoStorage get() = TODO()
-    override val remoteKey: RemoteKeyStorage get() = TODO()
-    override val reaction: ReactionInfoStorage get() = TODO()
-    override val childAccount: ChildAccountStorage get() = TODO()
-    override val fileInfo: FileInfoStorage get() = TODO()
-    override val download: DownloadInfoStorage get() = TODO()
-    override val upload: UploadInfoStorage get() = TODO()
-    override val overview: OverviewStorage get() = TODO()
-    override val userOverview: UserOverviewStorage get() = TODO()
-    override val favorite: UserFavoriteStorage get() = TODO()
-    override val subscription: UserSubscriptionStorage get() = TODO()
-    override val userReactionRecord: UserReactionRecordStorage get() = TODO()
-    override val userLog: UserLogInfoStorage get() = TODO()
-    override val uploadRecord: UploadRecordInfoStorage get() = TODO()
-    override val fileRef: FileRefInfoStorage get() = TODO()
-    override val panelLog: PanelLogInfoStorage get() = TODO()
-    override val taskRecord: TaskRecordInfoStorage get() = TODO()
+    override val title: TitleInfoStorage get() = unavailableStorage("title")
+    override val member: MemberInfoStorage get() = unavailableStorage("member")
+    override val remoteKey: RemoteKeyStorage get() = unavailableStorage("remote key")
+    override val reaction: ReactionInfoStorage get() = unavailableStorage("reaction")
+    override val childAccount: ChildAccountStorage get() = unavailableStorage("child account")
+    override val fileInfo: FileInfoStorage get() = unavailableStorage("file info")
+    override val download: DownloadInfoStorage get() = unavailableStorage("download")
+    override val upload: UploadInfoStorage get() = unavailableStorage("upload")
+    override val overview: OverviewStorage get() = unavailableStorage("overview")
+    override val userOverview: UserOverviewStorage get() = unavailableStorage("user overview")
+    override val favorite: UserFavoriteStorage get() = unavailableStorage("favorite")
+    override val subscription: UserSubscriptionStorage get() = unavailableStorage("subscription")
+    override val userReactionRecord: UserReactionRecordStorage get() = unavailableStorage("reaction record")
+    override val userLog: UserLogInfoStorage get() = unavailableStorage("user log")
+    override val uploadRecord: UploadRecordInfoStorage get() = unavailableStorage("upload record")
+    override val fileRef: FileRefInfoStorage get() = unavailableStorage("file reference")
+    override val panelLog: PanelLogInfoStorage get() = unavailableStorage("panel log")
+    override val taskRecord: TaskRecordInfoStorage get() = unavailableStorage("task record")
 }

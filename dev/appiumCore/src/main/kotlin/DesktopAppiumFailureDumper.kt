@@ -1,3 +1,9 @@
+/*
+ * This is a private project. All rights reserved.
+*/
+
+package com.storyteller_f.a.dev.appium
+
 import io.appium.java_client.AppiumDriver
 import java.io.File
 import java.time.Instant
@@ -13,8 +19,9 @@ object DesktopAppiumFailureDumper {
         logDir: File,
         appLogFile: File,
     ) {
-        val outputDir = File("build/test/appium-debug/$suiteName", DesktopAppiumHelper.safeName(testName))
-            .resolve(Instant.now().toString().replace(Regex("[^a-zA-Z0-9._-]"), "_"))
+        val outputDir =
+            File("build/test/appium-debug/$suiteName", DesktopAppiumHelper.safeName(testName))
+                .resolve(Instant.now().toString().replace(Regex("[^a-zA-Z0-9._-]"), "_"))
         outputDir.mkdirs()
 
         File(outputDir, "failure.txt").writeText(
@@ -23,7 +30,7 @@ object DesktopAppiumFailureDumper {
                 appendLine(throwable.message.orEmpty())
                 appendLine()
                 appendLine(throwable.stackTraceToString())
-            }
+            },
         )
 
         dumpPageSource(driver, outputDir)

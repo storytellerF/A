@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.built_in_bot
 
 import com.google.genai.Client
@@ -50,9 +54,9 @@ import kotlin.time.ExperimentalTime
 fun main() {
     setupKmpLogger()
     loadCryptoLibIfNeed()
-    val base64BotPem = System.getenv("BOT_PEM") ?: throw Exception("BOT_PEM not exists")
-    val httpUrl = System.getenv("SERVER_URL") ?: throw Exception("SERVER_URL not exists")
-    val wsUrl = System.getenv("WS_SERVER_URL") ?: throw Exception("WS_SERVER_URL not exists")
+    val base64BotPem = System.getenv("BOT_PEM") ?: throw IllegalStateException("BOT_PEM not exists")
+    val httpUrl = System.getenv("SERVER_URL") ?: throw IllegalStateException("SERVER_URL not exists")
+    val wsUrl = System.getenv("WS_SERVER_URL") ?: throw IllegalStateException("WS_SERVER_URL not exists")
     val pemPrivateKey = Base64.decode(base64BotPem).decodeToString()
     val passHolder = SimplePassHolder()
     val sessionManager =
@@ -64,37 +68,42 @@ fun main() {
                 getClient {
                     defaultClientConfigure(cookieManager, model, passHolder, httpUrl, LogLevel.INFO)
                 }
-            }
+            },
         ) { r, t, _ ->
         }
     val commentPrompt = readResource("comment.prompt")
     val newsPrompt = readResource("news.prompt")
     val client = Client()
     runBlocking {
-        val job = launch {
-            // 确保第一次登录成功
-            while (isActive) {
-                try {
-                    val algo = getAlgo(AlgoType.P256)
-                    val derPriKey = algo.getDerPrivateKey(pemPrivateKey).getOrThrow()
-                    val derPubKey = algo.getDerPublicKeyFromPrivateKey(pemPrivateKey).getOrThrow()
-                    val authKey = AuthKey.P256(pemPrivateKey, derPriKey, derPubKey)
-                    sessionManager.userSignIn(authKey, passHolder)
-                    break
-                } catch (e: Exception) {
-                    Napier.e(e) {
-                        "login failed"
+        val job =
+            launch {
+                // 确保第一次登录成功
+                while (isActive) {
+                    try {
+                        val algo = getAlgo(AlgoType.P256)
+                        val derPriKey = algo.getDerPrivateKey(pemPrivateKey).getOrThrow()
+                        val derPubKey = algo.getDerPublicKeyFromPrivateKey(pemPrivateKey).getOrThrow()
+                        val authKey = AuthKey.P256(pemPrivateKey, derPriKey, derPubKey)
+                        sessionManager.userSignIn(authKey, passHolder)
+                        break
+                    } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+                        throw cancellation
+                    } catch (e: Exception) {
+                        Napier.e(e) {
+                            "login failed"
+                        }
                     }
                 }
+                processJob(sessionManager, client, commentPrompt, newsPrompt)
             }
-            processJob(sessionManager, client, commentPrompt, newsPrompt)
-        }
         // 注册 JVM 关闭钩子，捕获 SIGINT / SIGTERM
-        Runtime.getRuntime().addShutdownHook(Thread {
-            println("🔻 收到终止信号，准备退出...")
-            job.cancel()
-            Thread.sleep(1000)
-        })
+        Runtime.getRuntime().addShutdownHook(
+            Thread {
+                Napier.i { "Shutdown signal received; stopping bot" }
+                job.cancel()
+                Thread.sleep(1000)
+            },
+        )
         job.join()
         Napier.i("bot done")
     }
@@ -104,22 +113,24 @@ private suspend fun CoroutineScope.processJob(
     sessionManager: SimpleUserSessionManager,
     client: Client,
     commentPrompt: String,
-    newsPrompt: String
+    newsPrompt: String,
 ) {
-    val job1 = launch {
-        loop(1.minutes) {
-            processCommunityTask(sessionManager) { communityInfo ->
-                handleCommunityComment(sessionManager, client, communityInfo, commentPrompt)
+    val job1 =
+        launch {
+            loop(1.minutes) {
+                processCommunityTask(sessionManager) { communityInfo ->
+                    handleCommunityComment(sessionManager, client, communityInfo, commentPrompt)
+                }
             }
         }
-    }
-    val job2 = launch {
-        loop(1.hours) {
-            processCommunityTask(sessionManager) { communityInfo ->
-                handleCommunityNews(sessionManager, client, communityInfo, newsPrompt)
+    val job2 =
+        launch {
+            loop(1.hours) {
+                processCommunityTask(sessionManager) { communityInfo ->
+                    handleCommunityNews(sessionManager, client, communityInfo, newsPrompt)
+                }
             }
         }
-    }
     job1.join()
     job2.join()
 }
@@ -128,6 +139,8 @@ private suspend fun CoroutineScope.loop(duration: Duration, block: suspend () ->
     while (isActive) {
         try {
             block()
+        } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+            throw cancellation
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) {
                 throw e
@@ -148,13 +161,14 @@ private fun readResource(name: String): String =
 
 private suspend fun processCommunityTask(
     sessionManager: SimpleUserSessionManager,
-    extracted: suspend (CommunityInfo) -> Unit
+    extracted: suspend (CommunityInfo) -> Unit,
 ) {
     var next: String? = null
     while (true) {
-        val resp = sessionManager.getUserCommunities(
-            com.storyteller_f.a.api.CustomApi.Users.JoinedCommunities.UserCommunitiesQuery(nextPageToken = next)
-        ).getOrThrow()
+        val resp =
+            sessionManager.getUserCommunities(
+                com.storyteller_f.a.api.CustomApi.Users.JoinedCommunities.UserCommunitiesQuery(nextPageToken = next),
+            ).getOrThrow()
         delay(1.seconds)
         resp.data.forEach { communityInfo ->
             extracted(communityInfo)
@@ -167,19 +181,20 @@ private suspend fun handleCommunityComment(
     sessionManager: SimpleUserSessionManager,
     client: Client,
     info: CommunityInfo,
-    prompt: String
+    prompt: String,
 ) {
     Napier.i {
         "check community latest commented topic ${info.name}[${info.aid}]"
     }
     var pre = getLatestHasCommentedTopic(sessionManager, info).toString()
     while (true) {
-        val resp = sessionManager.getTopicList(
-            ObjectType.COMMUNITY,
-            info.id,
-            TopicPinSearch.UNSPECIFIED,
-            PaginationQuery(null, pre, size = 10)
-        ).getOrThrow()
+        val resp =
+            sessionManager.getTopicList(
+                ObjectType.COMMUNITY,
+                info.id,
+                TopicPinSearch.UNSPECIFIED,
+                PaginationQuery(null, pre, size = 10),
+            ).getOrThrow()
         delay(1.seconds)
         resp.data.forEach { topicInfo ->
             val isAuthor = topicInfo.author == sessionManager.model.uid
@@ -202,20 +217,18 @@ private suspend fun handleCommunityComment(
     }
 }
 
-private suspend fun getLatestHasCommentedTopic(
-    sessionManager: SimpleUserSessionManager,
-    info: CommunityInfo
-): Long {
+private suspend fun getLatestHasCommentedTopic(sessionManager: SimpleUserSessionManager, info: CommunityInfo): Long {
     var next: String? = null
     // 找出最新的评论过的topic
     var latestHasCommentedTopicId = 0L
     while (true) {
-        val resp = sessionManager.getTopicList(
-            ObjectType.COMMUNITY,
-            info.id,
-            TopicPinSearch.UNSPECIFIED,
-            PaginationQuery(next, null, size = 10)
-        ).getOrThrow()
+        val resp =
+            sessionManager.getTopicList(
+                ObjectType.COMMUNITY,
+                info.id,
+                TopicPinSearch.UNSPECIFIED,
+                PaginationQuery(next, null, size = 10),
+            ).getOrThrow()
         delay(1.seconds)
         for (topicInfo in resp.data) {
             if (topicInfo.hasComment) {
@@ -236,19 +249,21 @@ private suspend fun handleTopic(
     topicInfo: TopicInfo,
     client: Client,
     sessionManager: SimpleUserSessionManager,
-    prompt: String
+    prompt: String,
 ) {
     val plain = (topicInfo.content as TopicContent.Plain).plain
-    val text = if (plain.length < 10) {
-        null
-    } else {
-        val response = client.models.generateContent(
-            "gemini-2.5-flash",
-            "$prompt\n${topicInfo.content}",
+    val text =
+        if (plain.length < 10) {
             null
-        )
-        response.text()?.take(1000)
-    } ?: "👍"
+        } else {
+            val response =
+                client.models.generateContent(
+                    "gemini-2.5-flash",
+                    "$prompt\n${topicInfo.content}",
+                    null,
+                )
+            response.text()?.take(1000)
+        } ?: "👍"
     sessionManager.createTopic(ObjectType.TOPIC, topicInfo.id, text)
         .onSuccess {
             Napier.i {
@@ -267,7 +282,7 @@ private suspend fun handleCommunityNews(
     sessionManager: UserSessionManager,
     client: Client,
     communityInfo: CommunityInfo,
-    prompt: String
+    prompt: String,
 ) {
     Napier.i {
         "check community bot created latest topic ${communityInfo.name}[${communityInfo.aid}]"
@@ -276,12 +291,13 @@ private suspend fun handleCommunityNews(
     // 找出最新的评论过的topic
     var latestTopic: TopicInfo? = null
     while (true) {
-        val resp = sessionManager.getTopicList(
-            ObjectType.COMMUNITY,
-            communityInfo.id,
-            TopicPinSearch.UNSPECIFIED,
-            PaginationQuery(next, null, size = 10)
-        ).getOrThrow()
+        val resp =
+            sessionManager.getTopicList(
+                ObjectType.COMMUNITY,
+                communityInfo.id,
+                TopicPinSearch.UNSPECIFIED,
+                PaginationQuery(next, null, size = 10),
+            ).getOrThrow()
         delay(1.seconds)
         for (topicInfo in resp.data) {
             if (topicInfo.author == sessionManager.model.uid) {
@@ -293,7 +309,7 @@ private suspend fun handleCommunityNews(
         next = resp.pagination?.nextPageToken ?: break
     }
     Napier.i {
-        "latest bot created topic ${latestTopic?.id}"
+        "latest bot created topic ${latestTopic?.id ?: "<none>"}"
     }
     addTopic(latestTopic, client, prompt, communityInfo, sessionManager)
 }
@@ -304,7 +320,7 @@ private suspend fun addTopic(
     client: Client,
     prompt: String,
     communityInfo: CommunityInfo,
-    sessionManager: UserSessionManager
+    sessionManager: UserSessionManager,
 ) {
     val now = now()
     val previousDate = now.toInstant(TimeZone.UTC).minus(1.days).toLocalDateTime(TimeZone.UTC)
@@ -342,17 +358,18 @@ private suspend fun createNewsTopic(
     newPrompt: String,
     communityInfo: CommunityInfo,
     sessionManager: UserSessionManager,
-    date: LocalDateTime
+    date: LocalDateTime,
 ) {
     val year = date.year
     val month = date.month // 1-12
     val day = date.day
-    val response = client.models.generateContent(
-        "gemini-2.5-flash",
-        "$newPrompt\n日期:${year}年${month}月${day}日，领域:${communityInfo.name}",
-        GenerateContentConfig.builder().tools(Tool.builder().googleSearch(GoogleSearch.builder()))
-            .build()
-    )
+    val response =
+        client.models.generateContent(
+            "gemini-2.5-flash",
+            "$newPrompt\n日期:${year}年${month}月${day}日，领域:${communityInfo.name}",
+            GenerateContentConfig.builder().tools(Tool.builder().googleSearch(GoogleSearch.builder()))
+                .build(),
+        )
     val content = response.text()?.take(1000) ?: "😴"
     sessionManager.createTopic(ObjectType.COMMUNITY, communityInfo.id, content).onSuccess {
         Napier.i {
