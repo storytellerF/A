@@ -70,7 +70,7 @@ class AdminFileTest {
     }
 
     @Test
-    fun `admin search files with empty keyword returns all files`() =
+    fun `empty admin search returns every file`() =
         test {
         val outer = attachPanelSession()
         attachSession {

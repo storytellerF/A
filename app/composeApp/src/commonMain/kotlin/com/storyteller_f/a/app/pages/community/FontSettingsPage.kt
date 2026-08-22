@@ -48,7 +48,6 @@ import com.storyteller_f.shared.model.FontSettings
 import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
-import kotlinx.serialization.encodeToString
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -81,8 +80,7 @@ fun FontSettingsPage(communityId: PrimaryKey) {
                 paddingValues,
                 info,
                 communityId,
-                { opt -> currentOption = opt },
-            )
+            ) { opt -> currentOption = opt }
         }
     }
 

@@ -26,7 +26,9 @@ interface ObjectStorageService {
     suspend fun upload(bucketName: String, uploadPacks: List<UploadPack>): Result<List<ObjectStorageWriteRecord>>
 
     /**
+     * @param bucketName 存储桶名称
      * @param names 完整的name
+     * @return 与名称对应的对象存储记录
      */
     suspend fun get(bucketName: String, names: List<String>): Result<List<ObjectStorageRecord>>
 

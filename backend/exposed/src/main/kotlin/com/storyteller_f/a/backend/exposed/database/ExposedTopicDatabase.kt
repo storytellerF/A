@@ -295,7 +295,7 @@ class ExposedTopicDatabase(val databaseSession: ExposedDatabaseSession, val comb
                     it.topicId to mapOf(it.uid to it.encryptedAes.toHexString())
                 }
             data.map {
-                val map = aesMap[it.id] ?: emptyMap()
+                val map = aesMap[it.id].orEmpty()
                 val content = it.content.toHexString()
                 it.id to TopicContent.Encrypted(content, map)
             }

@@ -14,8 +14,10 @@ import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.UserStatus
 import com.storyteller_f.shared.type.toPrimaryKey
+import com.storyteller_f.shared.utils.checkTsIsValid
 import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
+import com.storyteller_f.shared.utils.mapResultIfNotNull
 import io.ktor.http.auth.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*

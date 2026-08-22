@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 /**
  * 通用信息表格组件，用于以表格形式展示对象的所有属性.
  * @param items 键值对列表，每个 Pair 代表一行：key 为字段名，value 为字段值
+ * @param modifier 应用于表格容器的修饰符
  */
 @Composable
 fun InfoTable(items: List<Pair<String, String>>, modifier: Modifier = Modifier) {

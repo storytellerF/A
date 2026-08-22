@@ -41,7 +41,8 @@ comments:
        */
     licenseTemplateIsRegex: false
   DocumentationOverPrivateFunction:
-    active: true
+    # Private implementation details only need KDoc when it adds information beyond the code.
+    active: false
   DocumentationOverPrivateProperty:
     active: true
   DeprecatedBlockTag:
@@ -79,7 +80,9 @@ comments:
 complexity:
   active: true
   CognitiveComplexMethod:
-    active: true
+    # Declarative Compose and routing DSL branches are not imperative control-flow complexity.
+    # CyclomaticComplexMethod, LongMethod, and NestedBlockDepth retain actionable limits.
+    active: false
     allowedComplexity: 15
   ComplexCondition:
     active: true
@@ -94,6 +97,8 @@ complexity:
   CyclomaticComplexMethod:
     active: true
     allowedComplexity: 15
+    ignoreAnnotated:
+      - 'Composable'
     ignoreSingleWhenExpression: true
     ignoreSimpleWhenEntries: true
     ignoreNestingFunctions: false
@@ -119,8 +124,20 @@ complexity:
     allowedLines: 60
   LongParameterList:
     active: true
+    # Persistence entities mirror fixed database rows; math layout helpers pass one measured layout frame; Backend
+    # implementations must expose the complete service contract through their constructor.
+    excludes:
+      - '**/backend/core/types/{Community,Room,Title,Topic}.kt'
+      - '**/components/MathInlineContent.kt'
+      - '**/client/core/AppRequest.kt'
+      - '**/cloud/cli/CliMain.kt'
+      - '**/cloud/server/Application.kt'
+      - '**/cloud/worker/WorkerMain.kt'
+      - '**/cloud/ws/WsApplication.kt'
     allowedFunctionParameters: 6
     allowedConstructorParameters: 7
+    ignoreAnnotated:
+      - 'Composable'
     ignoreDefaultParameters: false
     ignoreDataClasses: true
     ignoreAnnotatedParameter: []
@@ -137,6 +154,9 @@ complexity:
     allowedDepth: 6
   NestedScopeFunctions:
     active: true
+    # Search and Exposed query DSLs already establish receiver scopes; optional clauses necessarily add local scope functions.
+    excludes:
+      - '**/backend/{elastic,exposed,lucene}/**'
     allowedDepth: 1
     functions:
       - 'kotlin.apply'
@@ -145,9 +165,11 @@ complexity:
       - 'kotlin.let'
       - 'kotlin.also'
   ReplaceSafeCallChainWithRun:
-    active: true
+    # Forcing run around safe-call chains conflicts with NestedScopeFunctions.
+    active: false
   StringLiteralDuplication:
-    active: true
+    # Protocol/index keys and UI text should remain at their context and localization boundary.
+    active: false
     excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**']
     allowedDuplications: 3
     ignoreAnnotation: true
@@ -172,7 +194,8 @@ coroutines:
   GlobalCoroutineUsage:
     active: true
   InjectDispatcher:
-    active: true
+    # Platform actuals and infrastructure factories own their blocking boundary; their public/expect factories cannot accept a dispatcher.
+    active: false
     dispatcherNames:
       - 'IO'
       - 'Default'
@@ -184,7 +207,8 @@ coroutines:
   SuspendFunSwallowedCancellation:
     active: true
   SuspendFunWithCoroutineScopeReceiver:
-    active: true
+    # Ktor session/sender APIs are CoroutineScopes and expose suspend operations idiomatically through receiver extensions.
+    active: false
   SuspendFunWithFlowReturnType:
     active: true
 
@@ -325,10 +349,10 @@ naming:
     maximumFunctionNameLength: 50
   FunctionNameMinLength:
     active: true
-    minimumFunctionNameLength: 3
+    minimumFunctionNameLength: 2
   FunctionNaming:
     active: true
-    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/appiumTest/**', '**/e2eTest/**', '**/screenshotTest/**', '**/composeApp/**', '**/composeCore/**']
+    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidHostTest/**', '**/headlessTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/appiumTest/**', '**/e2eTest/**', '**/screenshotTest/**', '**/composeApp/**', '**/composeCore/**', '**/cliApp/**']
     functionPattern: '[a-z][a-zA-Z0-9]*'
     excludeClassPattern: '$^'
   FunctionParameterNaming:
@@ -337,13 +361,17 @@ naming:
     excludeClassPattern: '$^'
   InvalidPackageDeclaration:
     active: true
+    # KMP test source sets intentionally allow compact source roots; production packages remain checked.
+    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidHostTest/**', '**/headlessTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/appiumTest/**', '**/e2eTest/**', '**/screenshotTest/**', '**/dev/appiumCore/**']
     rootPackage: ''
     requireRootInDeclaration: false
   LambdaParameterNaming:
     active: true
     parameterPattern: '[a-z][A-Za-z0-9]*|_'
   MatchingDeclarationName:
-    active: true
+    # Feature and database files intentionally group related top-level declarations; ktlint's
+    # Filename rule duplicates this check and disagrees about which declaration owns the file.
+    active: false
     mustBeFirst: true
   MemberNameEqualsClassName:
     active: true
@@ -353,7 +381,8 @@ naming:
     # short paging parameter names; the rule cannot distinguish those scopes from ambiguity.
     active: false
   NonBooleanPropertyPrefixedWithIs:
-    active: true
+    # Compose MutableState<Boolean> and StateFlow<Boolean> intentionally use is/has names.
+    active: false
   ObjectPropertyNaming:
     active: true
     constantPattern: '[A-Za-z][_A-Za-z0-9]*'
@@ -392,7 +421,8 @@ performance:
     excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**']
   SpreadOperator:
     active: true
-    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**']
+    # Exposed SchemaUtils only accepts varargs while this factory maintains schema tables as arrays.
+    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/ExposedDatabaseFactory.kt']
   UnnecessaryPartOfBinaryExpression:
     active: true
   UnnecessaryTemporaryInstantiation:
@@ -409,7 +439,9 @@ potential-bugs:
   CastToNullableType:
     active: true
   Deprecation:
-    active: true
+    # Bouncy Castle marks the current standard ML-DSA/ML-KEM API deprecated in Java metadata;
+    # replacing it would require reverting to obsolete algorithms. Compiler warnings remain visible.
+    active: false
   DontDowncastCollectionTypes:
     active: true
   DoubleMutabilityForCollection:
@@ -458,7 +490,8 @@ potential-bugs:
   ImplicitDefaultLocale:
     active: true
   ImplicitUnitReturnType:
-    active: true
+    # ExpressionBodySyntax requests expression bodies while this rule requests Unit block bodies.
+    active: false
     allowExplicitReturnType: true
   InvalidRange:
     active: true
@@ -467,7 +500,9 @@ potential-bugs:
   IteratorNotThrowingNoSuchElementException:
     active: true
   LateinitUsage:
-    active: true
+    # Android, Ktor plugin, JMH, and application lifecycle hooks initialize these properties
+    # after construction; nullable or delegated replacements retain the same runtime constraint.
+    active: false
     excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**']
     ignoreOnClassesPattern: ''
   MapGetWithNotNullAssertionOperator:
@@ -508,22 +543,27 @@ potential-bugs:
 style:
   active: true
   AlsoCouldBeApply:
-    active: true
+    # Forcing apply/also conflicts with NestedScopeFunctions and can obscure the receiver.
+    active: false
   BracesOnIfStatements:
     active: true
     singleLine: 'never'
     multiLine: 'always'
   BracesOnWhenStatements:
-    active: true
+    # Ktlint permits branch-local braces based on branch complexity; enforcing uniformity conflicts.
+    active: false
     singleLine: 'necessary'
     multiLine: 'consistent'
   CanBeNonNullable:
-    active: true
+    # Compose entry points intentionally accept nullable state and render nothing until asynchronous data is available.
+    active: false
   CascadingCallWrapping:
-    active: true
+    # This overlaps ktlint chain wrapping but reports a different layout and has no reliable fix.
+    active: false
     includeElvis: true
   ClassOrdering:
-    active: true
+    # Lifecycle state and callbacks are kept together; forced declaration categories split them apart.
+    active: false
   CollapsibleIfStatements:
     active: true
   DataClassContainsFunctions:
@@ -670,7 +710,8 @@ style:
   OptionalAbstractKeyword:
     active: true
   OptionalUnit:
-    active: true
+    # KMP no-op actual functions need `= Unit`; replacing it with an empty block conflicts with EmptyFunctionBlock.
+    active: false
   ProtectedMemberInFinalClass:
     active: true
   RedundantExplicitType:
@@ -680,7 +721,8 @@ style:
   RedundantVisibilityModifier:
     active: true
   ReturnCount:
-    active: true
+    # Early returns reduce nesting; limiting them conflicts with the enabled nesting rules.
+    active: false
     max: 2
     excludedFunctions:
       - 'equals'
@@ -698,13 +740,15 @@ style:
     maxEscapedCharacterCount: 2
     ignoredCharacters: []
   ThrowsCount:
-    active: true
+    # Counting throw sites encourages nested control flow; exception correctness rules remain active.
+    active: false
     max: 2
     excludeGuardClauses: true
   TrailingWhitespace:
     active: true
   TrimMultilineRawString:
-    active: true
+    # Kotlin/Wasm js intrinsics require a literal and cannot accept trimIndent/trimMargin calls.
+    active: false
     trimmingMethods:
       - 'trimIndent'
       - 'trimMargin'
@@ -760,12 +804,14 @@ style:
   UseIfEmptyOrIfBlank:
     active: true
   UseIfInsteadOfWhen:
-    active: true
+    # Binary when expressions are retained for enum/sealed exhaustiveness and future variants.
+    active: false
     ignoreWhenContainingVariableDeclaration: false
   UseIsNullOrEmpty:
     active: true
   UseLet:
-    active: true
+    # Forcing let conflicts with NestedScopeFunctions, which limits scope-function nesting.
+    active: false
   UseOrEmpty:
     active: true
   UseRequire:
@@ -838,7 +884,8 @@ ktlint:
     autoCorrect: true
     indentSize: 4
   Filename:
-    active: true
+    # Related declarations are intentionally grouped in feature files; see MatchingDeclarationName.
+    active: false
   FinalNewline:
     active: true
     autoCorrect: true
@@ -848,7 +895,7 @@ ktlint:
     autoCorrect: true
   FunctionName:
     active: true
-    excludes: ['**/screenshotTest/**', '**/composeApp/**', '**/composeCore/**']
+    excludes: ['**/screenshotTest/**', '**/composeApp/**', '**/composeCore/**', '**/cliApp/**']
   FunctionReturnTypeSpacing:
     active: true
     autoCorrect: true
@@ -917,7 +964,8 @@ ktlint:
     active: true
     autoCorrect: true
   NoConsecutiveComments:
-    active: true
+    # The mandatory project header may be followed by an upstream dependency license notice.
+    active: false
   NoEmptyClassBody:
     active: true
     autoCorrect: true

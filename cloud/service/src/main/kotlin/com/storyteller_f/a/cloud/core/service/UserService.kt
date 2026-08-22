@@ -5,6 +5,7 @@
 package com.storyteller_f.a.cloud.core.service
 
 import com.perraco.utils.SnowflakeFactory
+import com.storyteller_f.a.api.CustomApi.Accounts.ChildAccounts.AddChildAccountRequest
 import com.storyteller_f.a.api.NewDevice
 import com.storyteller_f.a.api.NewUser
 import com.storyteller_f.a.backend.core.AID_LENGTH
@@ -33,7 +34,6 @@ import com.storyteller_f.a.backend.core.types.UserTopicRead
 import com.storyteller_f.a.backend.core.types.toUserInfo
 import com.storyteller_f.a.backend.core.types.toUserLogInfo
 import com.storyteller_f.shared.getAlgo
-import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.ChildAccountInfo
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.MemberInfo
@@ -190,12 +190,14 @@ fun checkUserNickname(update: UpdateUserBody): Result<Unit> =
 fun isAllVisibleChar(s: String) =
     !s.codePoints().anyMatch { codePoint ->
     val type = Character.getType(codePoint).toByte()
+    val isNonSpaceWhitespace =
+        (Character.isWhitespace(codePoint) || Character.isSpaceChar(codePoint)) && codePoint != ' '.code
     type == Character.FORMAT ||
         type == Character.NON_SPACING_MARK ||
         type == Character.COMBINING_SPACING_MARK ||
         type == Character.ENCLOSING_MARK ||
         Character.isISOControl(codePoint) ||
-        (Character.isWhitespace(codePoint) || Character.isSpaceChar(codePoint)) && codePoint != ' '.code ||
+        isNonSpaceWhitespace ||
         !Character.isDefined(codePoint) ||
         !Character.isValidCodePoint(codePoint)
 }
@@ -256,65 +258,57 @@ suspend fun Backend.addReadLog(uid: PrimaryKey, tuple: UpdateUserRead): Result<U
     }
 }
 
-suspend fun Backend.addChildAccount(
-    uid: PrimaryKey,
-    encryptedPrivateKey: String,
-    encryptedAesKey: String,
-    derPublicKey: String,
-    algoType: AlgoType,
-    encryptedEncryptionPrivateKey: String? = null,
-    encryptionPublicKey: String? = null,
-): Result<ChildAccountInfo> =
+suspend fun Backend.addChildAccount(uid: PrimaryKey, request: AddChildAccountRequest): Result<ChildAccountInfo> =
     database.user.getRawChildAccount(uid).mapResult { childAccount ->
-    if (childAccount != null) {
-        Result.failure(CustomBadRequestException("child account can't create child account"))
-    } else {
-        cancellableRunCatching {
-            // Get user's public key based on algorithm type
-            // Generate new user account with the public key
-            val address = getAlgo(algoType).calcAddress(derPublicKey).getOrThrow()
-            val id = SnowflakeFactory.nextId()
-            val notificationId = SnowflakeFactory.nextId()
-            val user =
-                User(
-                    null,
-                    encryptionPublicKey,
-                    derPublicKey,
-                    address,
-                    null,
-                    nameService.parse(id),
-                    id,
-                    now(),
-                    0,
-                    PassType.RAW,
-                    algoType,
-                    notificationId,
-                )
-            database.user.createChildAccount(
-                uid,
-                encryptedPrivateKey,
-                encryptedAesKey,
-                user,
-                encryptedEncryptionPrivateKey,
-            ).getOrThrow()
-            userSearchService.saveDocument(listOf(UserDocument.fromUser(user)))
-                .onFailure { throwable ->
-                    Napier.e(throwable) {
-                        "save user document failed"
+        if (childAccount != null) {
+            Result.failure(CustomBadRequestException("child account can't create child account"))
+        } else {
+            cancellableRunCatching {
+                // Get user's public key based on algorithm type
+                // Generate new user account with the public key
+                val address = getAlgo(request.algoType).calcAddress(request.derPublicKey).getOrThrow()
+                val id = SnowflakeFactory.nextId()
+                val notificationId = SnowflakeFactory.nextId()
+                val user =
+                    User(
+                        null,
+                        request.encryptionPublicKey,
+                        request.derPublicKey,
+                        address,
+                        null,
+                        nameService.parse(id),
+                        id,
+                        now(),
+                        0,
+                        PassType.RAW,
+                        request.algoType,
+                        notificationId,
+                    )
+                database.user.createChildAccount(
+                    uid,
+                    request.encryptedPrivateKey,
+                    request.encryptedAesKey,
+                    user,
+                    request.encryptedEncryptionPrivateKey,
+                ).getOrThrow()
+                userSearchService.saveDocument(listOf(UserDocument.fromUser(user)))
+                    .onFailure { throwable ->
+                        Napier.e(throwable) {
+                            "save user document failed"
+                        }
                     }
-                }
-            addUserLog(uid, UserLogType.ADD_ALTERNATIVE_ACCOUNT, id ob ObjectType.USER)
-            ChildAccountInfo(
-                hostId = uid,
-                encryptedPrivateKey = encryptedPrivateKey,
-                encryptedAesKey = encryptedAesKey,
-                userInfo = user.toUserInfo(),
-                algoType = algoType,
-                encryptedEncryptionPrivateKey = encryptedEncryptionPrivateKey,
-            )
+                addUserLog(uid, UserLogType.ADD_ALTERNATIVE_ACCOUNT, id ob ObjectType.USER)
+                ChildAccountInfo(
+                    hostId = uid,
+                    encryptedPrivateKey = request.encryptedPrivateKey,
+                    encryptedAesKey = request.encryptedAesKey,
+                    userInfo = user.toUserInfo(),
+                    algoType = request.algoType,
+                    encryptedEncryptionPrivateKey = request.encryptedEncryptionPrivateKey,
+                )
+            }
         }
     }
-}
 
 suspend fun Backend.addUserLog(uid: PrimaryKey, type: UserLogType, objectTuple: ObjectTuple): Result<Unit> {
     val logId = SnowflakeFactory.nextId()
@@ -375,6 +369,7 @@ suspend fun Backend.isKeyVerified(roomId: PrimaryKey, encryptedAes: Map<PrimaryK
  * 搜索 room/community 的成员列表.
  * @param objectId 容器 ID（room 或 community）
  * @param word 搜索关键字，可选
+ * @param primaryKeyFetch 分页范围
  * @return 返回 MemberInfo 列表，包含成员关系信息
  */
 suspend fun Backend.searchContainerMembers(
@@ -416,6 +411,8 @@ suspend fun Backend.searchContainerMembers(
 /**
  * 搜索用户.
  * @param word 搜索关键字
+ * @param uid 可选的用户 ID
+ * @param primaryKeyFetch 分页范围
  * @return 返回 UserInfo 列表
  */
 suspend fun Backend.searchUsers(
@@ -519,9 +516,9 @@ private suspend fun Backend.processUserLogToUserLogInfo(list: List<UserLog>, uid
     val communities =
         database.community.getRawCommunities(ObjectListFetch.IdListFetch(communityIds))
             .mapResult { processRawCommunityToCommunityInfo(it) }.getOrThrow()
-            ?: emptyList()
+            .orEmpty()
     val rooms = getRoomInfoList(ObjectListFetch.IdListFetch(roomIds)).getOrThrow()
-    val topics = getTopicByIds(topicIds, uid).getOrThrow() ?: emptyList()
+    val topics = getTopicByIds(topicIds, uid).getOrThrow().orEmpty()
     val userMap = users.associateBy { it.id }
     val communityMap = communities.associateBy { it.id }
     val roomMap = rooms.associateBy { it.id }

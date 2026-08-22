@@ -378,37 +378,37 @@ private fun RoomInputTopContent(roomInfo: RoomInfo) {
     }
 }
 
-private fun sendRoomTopic(
-    roomInfo: RoomInfo,
-    input: String,
-    scrollToNew: () -> Unit,
-    scope: CoroutineScope,
-    toasterState: Toast,
-    keysViewModel: RoomKeysViewModel,
-    wsClient: WebSocketClient,
-    parentTarget: ObjectTuple,
-) {
-    val handler = keysViewModel.handler
+private fun sendRoomTopic(roomInfo: RoomInfo, input: String, context: SendRoomTopicContext) {
+    val handler = context.keysViewModel.handler
     val keyState = handler.state.value
     val keyData = handler.data.value
     checkContent(input).exceptionOrNull()?.let {
-        toasterState.showMessage(it.message?.toString().orEmpty())
+        context.toasterState.showMessage(it.message?.toString().orEmpty())
         return
     }
     if ((keyState !is LoadingState.Done || keyData == null) && roomInfo.isPrivate) {
-        scope.launch {
-            toasterState.showMessage(getString(Res.string.private_room_pub_key_loading))
+        context.scope.launch {
+            context.toasterState.showMessage(getString(Res.string.private_room_pub_key_loading))
         }
         return
     }
-    scope.launch {
-        wsClient.useWebSocket {
-            sendMessage(parentTarget, roomInfo.isPrivate, input, keyData.orEmpty())
+    context.scope.launch {
+        context.wsClient.useWebSocket {
+            sendMessage(context.parentTarget, roomInfo.isPrivate, input, keyData.orEmpty())
             delay(500)
-            scrollToNew()
+            context.scrollToNew()
         }
     }
 }
+
+private data class SendRoomTopicContext(
+    val scrollToNew: () -> Unit,
+    val scope: CoroutineScope,
+    val toasterState: Toast,
+    val keysViewModel: RoomKeysViewModel,
+    val wsClient: WebSocketClient,
+    val parentTarget: ObjectTuple,
+)
 
 private fun checkRoomRouteAndAlert(appNavFactory: AppNavFactory, roomId: PrimaryKey, startJoinRoom: () -> Unit) {
     val appNav = appNavFactory.newAppNav()
@@ -441,7 +441,11 @@ fun RoomSendButton(
     val keysViewModel = createRoomKeysViewModel(roomInfo.id, roomInfo)
     CommonInputButton(state, input, isSending) {
         if (roomInfo.isJoined) {
-            sendRoomTopic(roomInfo, input, scrollToNew, scope, toasterState, keysViewModel, wsClient, parentTarget)
+            sendRoomTopic(
+                roomInfo,
+                input,
+                SendRoomTopicContext(scrollToNew, scope, toasterState, keysViewModel, wsClient, parentTarget),
+            )
         } else {
             scope.launch {
                 val title = getString(Res.string.permission_denied)
@@ -746,8 +750,8 @@ private suspend fun joinRoom(
             cancellableRunCatching {
                 val communityId = roomInfo.communityId
                 if (communityId != null) {
-                    if (!getCommunityInfo(communityId).getOrThrow().isJoined) {
-                        throw IllegalStateException("you should join community first.")
+                    check(getCommunityInfo(communityId).getOrThrow().isJoined) {
+                        "you should join community first."
                     }
                 }
                 joinRoom(roomInfo.id).getOrThrow()

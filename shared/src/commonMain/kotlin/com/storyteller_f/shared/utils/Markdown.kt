@@ -346,7 +346,8 @@ fun getLang(node: ASTNode, content: String): String {
         children.indexOfFirst {
             it.type == MarkdownTokenTypes.FENCE_LANG
         }
-    return children.getOrNull(langOffset)?.getTextInNode(content)?.toString().orEmpty().lowercase()
+    val languageNode = children.getOrNull(langOffset) ?: return ""
+    return languageNode.getTextInNode(content).toString().lowercase()
 }
 
 @Serializable
@@ -372,7 +373,7 @@ fun generateModelMarkdownContent(objectTuple: ObjectTuple): String = """```csa
         ObjectType.COMMUNITY -> "community"
         ObjectType.ROOM -> "room"
         ObjectType.TOPIC -> "topic"
-        else -> throw IllegalStateException("unknown object type ${objectTuple.objectType}")
+        else -> error("unknown object type ${objectTuple.objectType}")
     }
 }/${objectTuple.objectId}
 ```"""

@@ -84,7 +84,7 @@ interface ClientFileServiceContainer {
 class FileConnection(val context: WeakReference<ClientFileServiceContainer>, val clipData: ImmutableList<ClipFile>) :
     ServiceConnection {
     override fun onServiceConnected(p0: ComponentName?, p1: IBinder?) {
-        val binder = p1 as FileBinder
+        val binder = checkNotNull(p1) { "File service connected without a binder" } as FileBinder
         binder.upload(clipData)
         val container = context.get() ?: return
         container.binder = binder

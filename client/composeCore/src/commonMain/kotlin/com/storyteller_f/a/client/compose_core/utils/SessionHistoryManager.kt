@@ -44,13 +44,13 @@ class DefaultSessionHistoryManager(val settings: Settings) : SessionHistoryManag
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
     override fun getSavedSession(): SavedSession {
         val list =
-            settings.keys.map {
+            settings.keys.asSequence().map {
                 it.split(".")[0]
             }.distinct().filter {
                 it.startsWith(SESSION_USER_PREFIX)
             }.mapNotNull {
                 settings.decodeValueOrNull<ConvertedRawUserPassInfo>(it)?.address
-            }
+            }.toList()
         val history = settings.decodeValueOrNull<SessionHistory>(SESSION_HISTORY)
         return SavedSession(list, history)
     }

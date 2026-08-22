@@ -38,7 +38,7 @@ open class Elastic(val connection: ElasticConnection) {
 
     suspend fun <T> useElasticClient(block: suspend ElasticsearchAsyncClient.() -> T): Result<T> {
         val elasticConnection = connection
-        val point = Exception()
+        val point = Exception("Elasticsearch request call site")
         return cancellableRunCatching {
             ElasticsearchAsyncClient.of { b ->
                 b.host(elasticConnection.url)
@@ -199,7 +199,7 @@ suspend fun <T> ElasticsearchAsyncClient.searchDocumentList(
 }
 
 fun <T> buildElasticSearchService(env: MergedEnv, b: (ElasticConnection) -> T): T {
-    val certFile = env["ELASTIC_CERT_FILE"] ?: throw IllegalStateException("ELASTIC_CERT_FILE is empty")
+    val certFile = env["ELASTIC_CERT_FILE"] ?: error("ELASTIC_CERT_FILE is empty")
     // need replace home dir
     val safeCertFile =
         when {
@@ -217,9 +217,9 @@ fun <T> buildElasticSearchService(env: MergedEnv, b: (ElasticConnection) -> T): 
             }
         }
 
-    val url = env["ELASTIC_URL"] ?: throw IllegalStateException("ELASTIC_URL is empty")
-    val name = env["ELASTIC_NAME"] ?: throw IllegalStateException("ELASTIC_NAME is empty")
-    val pass = env["ELASTIC_PASSWORD"] ?: throw IllegalStateException("ELASTIC_PASSWORD is empty")
+    val url = env["ELASTIC_URL"] ?: error("ELASTIC_URL is empty")
+    val name = env["ELASTIC_NAME"] ?: error("ELASTIC_NAME is empty")
+    val pass = env["ELASTIC_PASSWORD"] ?: error("ELASTIC_PASSWORD is empty")
     val connection = ElasticConnection(url, safeCertFile, name, pass, env["BUILD_TYPE"] == "test")
     return b(connection)
 }

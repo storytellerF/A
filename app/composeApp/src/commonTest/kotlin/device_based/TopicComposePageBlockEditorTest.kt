@@ -44,7 +44,7 @@ class TopicComposePageBlockEditorTest {
         }
 
         onNodeWithText("Title").assertExists()
-        waitUntil(timeoutMillis = TestTimeoutMillis) {
+        waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
             latestMarkdown == "# Title"
         }
 
@@ -63,7 +63,7 @@ class TopicComposePageBlockEditorTest {
         onNodeWithText("old item").performClick()
         onNode(hasSetTextAction()).performTextReplacement("new item")
 
-        waitUntil(timeoutMillis = TestTimeoutMillis) {
+        waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
             latestMarkdown == "- new item"
         }
 
@@ -79,12 +79,12 @@ class TopicComposePageBlockEditorTest {
             latestMarkdown = it
         }
 
-        waitUntil(timeoutMillis = TestTimeoutMillis) {
+        waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
             latestMarkdown == "Intro"
         }
         onNodeWithContentDescription("Code Block").performClick()
 
-        waitUntil(timeoutMillis = TestTimeoutMillis) {
+        waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
             latestMarkdown ==
                 """
                 Intro
@@ -136,7 +136,7 @@ class TopicComposePageBlockEditorTest {
         onNodeWithText("println(1)").assertExists()
         onNodeWithText("Math Formula").assertExists()
         onNodeWithText("x^2").assertExists()
-        waitUntil(timeoutMillis = TestTimeoutMillis) {
+        waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
             latestMarkdown == expectedComplexMarkdown
         }
 
@@ -158,7 +158,7 @@ class TopicComposePageBlockEditorTest {
         onNodeWithText("old quote").performClick()
         onNode(hasSetTextAction()).performTextReplacement("new quote")
 
-        waitUntil(timeoutMillis = TestTimeoutMillis) {
+        waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
             latestMarkdown == "> new quote"
         }
 
@@ -177,7 +177,7 @@ class TopicComposePageBlockEditorTest {
         onNodeWithText("old()").performClick()
         onNode(hasSetTextAction()).performTextReplacement("new()")
 
-        waitUntil(timeoutMillis = TestTimeoutMillis) {
+        waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
             latestMarkdown == "```\nnew()\n```"
         }
 
@@ -193,18 +193,18 @@ class TopicComposePageBlockEditorTest {
             latestMarkdown = it
         }
 
-        waitUntil(timeoutMillis = TestTimeoutMillis) {
+        waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
             latestMarkdown == "Only block"
         }
         onNodeWithContentDescription("Delete or change type").performClick()
         onNodeWithText("Delete").performClick()
 
-        waitUntil(timeoutMillis = TestTimeoutMillis) {
+        waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
             latestMarkdown == ""
         }
         onNodeWithContentDescription("Heading").performClick()
 
-        waitUntil(timeoutMillis = TestTimeoutMillis) {
+        waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
             latestMarkdown == "# "
         }
 
@@ -220,13 +220,13 @@ class TopicComposePageBlockEditorTest {
             latestMarkdown = it
         }
 
-        waitUntil(timeoutMillis = TestTimeoutMillis) {
+        waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
             latestMarkdown == "- item"
         }
         onNodeWithContentDescription("Delete or change type").performClick()
         onNodeWithText("To Code Block").performClick()
 
-        waitUntil(timeoutMillis = TestTimeoutMillis) {
+        waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
             latestMarkdown == "```\nitem\n```"
         }
 
@@ -242,13 +242,13 @@ class TopicComposePageBlockEditorTest {
             latestMarkdown = it
         }
 
-        waitUntil(timeoutMillis = TestTimeoutMillis) {
+        waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
             latestMarkdown == "Intro"
         }
         onNodeWithContentDescription("Insert media").performClick()
         onNodeWithText("Reference (CSA)").performClick()
 
-        waitUntil(timeoutMillis = TestTimeoutMillis) {
+        waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
             latestMarkdown ==
                 """
                 Intro
@@ -283,6 +283,6 @@ class TopicComposePageBlockEditorTest {
     }
 
     private companion object {
-        const val TestTimeoutMillis = 3_000L
+        const val TEST_TIMEOUT_MILLIS = 3_000L
     }
 }

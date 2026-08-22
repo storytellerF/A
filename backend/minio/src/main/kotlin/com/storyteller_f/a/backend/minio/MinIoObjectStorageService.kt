@@ -260,7 +260,7 @@ private suspend fun <R> useMinIoClient(
     minIoConnection: MinIoConnection,
     block: suspend MinioClient.() -> R,
 ): Result<R> {
-    val point = Exception()
+    val point = Exception("MinIO request call site")
     return cancellableRunCatching {
         MinioClient.builder()
             .endpoint(minIoConnection.url)
@@ -334,9 +334,9 @@ class MinioObjectStorageServiceFactory : ObjectStorageServiceFactory {
     override fun match(env: MergedEnv): Boolean = env["MEDIA_SERVICE"] == "minio"
 
     override fun build(env: MergedEnv): ObjectStorageService {
-        val url = env["MINIO_URL"] ?: throw IllegalStateException("MINIO_URL is empty")
-        val name = env["MINIO_NAME"] ?: throw IllegalStateException("MINIO_NAME is empty")
-        val pass = env["MINIO_PASS"] ?: throw IllegalStateException("MINIO_PASS is empty")
+        val url = env["MINIO_URL"] ?: error("MINIO_URL is empty")
+        val name = env["MINIO_NAME"] ?: error("MINIO_NAME is empty")
+        val pass = env["MINIO_PASS"] ?: error("MINIO_PASS is empty")
         return MinIoObjectStorageService(MinIoConnection(url, name, pass), env["MINIO_HOST"])
     }
 }

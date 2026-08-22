@@ -111,7 +111,7 @@ class AddPresetTest {
     }
 
     @Test
-    fun `repack zip with includeArchiveEntries only keeps included files after exclude`() {
+    fun `repack keeps included files after exclusions`() {
         setLogPath()
         val tempDir = createTempDirectory(prefix = "addpreset-include-").toFile()
         try {
@@ -149,7 +149,7 @@ class AddPresetTest {
     }
 
     @Test
-    fun `download yaml config keeps downloaded file and returns processed archive`() =
+    fun `yaml download returns the processed archive`() =
         runTest {
         setLogPath()
         val tempDir = createTempDirectory(prefix = "addpreset-e2e-").toFile()

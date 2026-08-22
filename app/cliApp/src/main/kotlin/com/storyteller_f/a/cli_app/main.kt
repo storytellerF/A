@@ -85,7 +85,7 @@ val logs = mutableStateListOf<String>()
 class ConsoleAntilog : Antilog() {
     override fun performLog(priority: LogLevel, tag: String?, throwable: Throwable?, message: String?) {
         if (message != null) {
-            val prefix = tag?.let { "[$it] " } ?: ""
+            val prefix = tag?.let { "[$it] " }.orEmpty()
             logs.add("$priority $prefix$message")
             if (logs.size > 15) logs.removeAt(0)
         }
@@ -108,25 +108,25 @@ fun sysLogError(s: String, t: Throwable? = null) {
     }
 }
 
-sealed class Screen {
-    data object Main : Screen()
-    data object PromptRegister : Screen()
-    data object PromptLogin : Screen()
-    data class TopicList(val topics: List<TopicInfo>) : Screen()
-    data class TopicDetail(val topic: TopicInfo) : Screen()
-    data class TopicAddComment(val topic: TopicInfo) : Screen()
-    data class TopicAddReaction(val topic: TopicInfo) : Screen()
-    data class CommunityList(val communities: List<CommunityInfo>) : Screen()
-    data class CommunityDetail(val community: CommunityInfo) : Screen()
-    data class CommunityMemberList(val members: List<MemberInfo>, val parent: Screen) : Screen()
-    data class RoomMemberList(val members: List<MemberInfo>, val parent: Screen) : Screen()
-    data class UserList(val users: List<UserInfo>) : Screen()
-    data class UserDetail(val user: UserInfo, val parent: Screen) : Screen()
-    data class RoomList(val rooms: List<RoomInfo>) : Screen()
-    data class RoomDetail(val room: RoomInfo) : Screen()
-    data class RoomSendMessage(val room: RoomInfo) : Screen()
-    data class FavoriteList(val favorites: List<UserFavoriteInfo>) : Screen()
-    data class SubscriptionList(val subscriptions: List<UserSubscriptionInfo>) : Screen()
+sealed interface Screen {
+    data object Main : Screen
+    data object PromptRegister : Screen
+    data object PromptLogin : Screen
+    data class TopicList(val topics: List<TopicInfo>) : Screen
+    data class TopicDetail(val topic: TopicInfo) : Screen
+    data class TopicAddComment(val topic: TopicInfo) : Screen
+    data class TopicAddReaction(val topic: TopicInfo) : Screen
+    data class CommunityList(val communities: List<CommunityInfo>) : Screen
+    data class CommunityDetail(val community: CommunityInfo) : Screen
+    data class CommunityMemberList(val members: List<MemberInfo>, val parent: Screen) : Screen
+    data class RoomMemberList(val members: List<MemberInfo>, val parent: Screen) : Screen
+    data class UserList(val users: List<UserInfo>) : Screen
+    data class UserDetail(val user: UserInfo, val parent: Screen) : Screen
+    data class RoomList(val rooms: List<RoomInfo>) : Screen
+    data class RoomDetail(val room: RoomInfo) : Screen
+    data class RoomSendMessage(val room: RoomInfo) : Screen
+    data class FavoriteList(val favorites: List<UserFavoriteInfo>) : Screen
+    data class SubscriptionList(val subscriptions: List<UserSubscriptionInfo>) : Screen
 }
 
 @Suppress("CyclomaticComplexMethod", "LongMethod")
@@ -136,6 +136,7 @@ suspend fun handleInput(
     setScreen: (Screen) -> Unit,
     sessionManager: UserSessionManager,
     passHolder: SimplePassHolder,
+    onExit: () -> Unit,
 ) {
     when (screen) {
         is Screen.Main -> {
@@ -194,7 +195,7 @@ suspend fun handleInput(
                     )
                 }
 
-                "0" -> kotlin.system.exitProcess(0)
+                "0" -> onExit()
 
                 else -> sysLog("Invalid Choice")
             }
@@ -204,7 +205,7 @@ suspend fun handleInput(
             var pk = line
             if (pk.isEmpty()) {
                 val algo = getAlgo(AlgoType.P256)
-                pk = algo.generatePemKeyPair().getOrNull()?.first ?: ""
+                pk = algo.generatePemKeyPair().getOrNull()?.first.orEmpty()
                 sysLog("Generated Private Key: $pk")
             }
             if (pk.isNotEmpty()) {
@@ -563,7 +564,7 @@ suspend fun handleInput(
 
 @Suppress("ComplexMethod", "LongMethod")
 @Composable
-fun App(sessionManager: UserSessionManager, passHolder: SimplePassHolder) {
+fun App(sessionManager: UserSessionManager, passHolder: SimplePassHolder, onExit: () -> Unit) {
     var screen by remember { mutableStateOf<Screen>(Screen.Main) }
     var inputBuffer by remember { mutableStateOf("") }
     val submitChannel = remember { Channel<String>(Channel.UNLIMITED) }
@@ -577,6 +578,7 @@ fun App(sessionManager: UserSessionManager, passHolder: SimplePassHolder) {
                 setScreen = { screen = it },
                 sessionManager = sessionManager,
                 passHolder = passHolder,
+                onExit = onExit,
             )
         }
     }
@@ -842,7 +844,7 @@ fun main() {
 
         sessionManager.onBackgroundTask {
             runMosaicBlocking {
-                App(sessionManager, passHolder)
+                App(sessionManager, passHolder) { kotlin.system.exitProcess(0) }
             }
         }
     }

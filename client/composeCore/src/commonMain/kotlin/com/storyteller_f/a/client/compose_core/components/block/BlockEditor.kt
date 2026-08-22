@@ -25,10 +25,10 @@ import androidx.compose.ui.unit.dp
  * Block 编辑器主组件
  * 类似 Notion 的编辑体验，每个块独立编辑，支持拖拽排序.
  *
+ * @param modifier 修饰符
  * @param blocks 外部管理的 Block 列表（由父组件通过 [rememberBlockEditorState] 创建）
  * @param initialMarkdown 初始 Markdown 内容（仅在 blocks 为空时使用）
  * @param onMarkdownChange Markdown 内容变化回调
- * @param modifier 修饰符
  */
 @Composable
 fun BlockEditor(
@@ -190,7 +190,7 @@ private fun updateBlockContent(block: ContentBlock, newContent: String): Content
 
     is ContentBlock.CodeBlock -> block.copy(content = newContent)
 
-    // TODO: 以下三种类型需要专门的编辑界面，目前不会执行这些分支
+    // 以下三种类型需要专门的编辑界面，目前不会执行这些分支。
     is ContentBlock.ImageBlock -> block.copy(alt = newContent)
 
     is ContentBlock.ObjectBlock -> block.copy(title = newContent)

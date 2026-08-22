@@ -99,7 +99,7 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
                 }
             combine(callingRoom, uiViewModel.instance, flow) { r, i, f ->
                 Triple(r, i, f)
-            }.collectLatest { (room, instance, frame) ->
+            }.collectLatest { (_, instance, frame) ->
                 when (frame) {
                     is RoomFrame.CreateOffer -> {
                         processCreateOffer(frame, instance)

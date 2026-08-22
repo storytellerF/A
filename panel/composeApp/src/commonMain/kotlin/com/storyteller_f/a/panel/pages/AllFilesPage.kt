@@ -61,7 +61,7 @@ fun AllFilesPageInternal(viewModel: AllFilesViewModel) {
                             val name = info.name
                             val type = info.contentType
                             val size = HumanReadable.fileSize(info.size)
-                            val dim = info.dimension?.let { "${it.width}x${it.height}" } ?: ""
+                            val dim = info.dimension?.let { "${it.width}x${it.height}" }.orEmpty()
                             ListItem(
                                 modifier = Modifier.clickable { panelNav.gotoFileDetail(info.id) },
                                 leadingContent = { FileIcon(info) },

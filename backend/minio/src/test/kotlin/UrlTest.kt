@@ -1,10 +1,9 @@
 /*
  * This is a private project. All rights reserved.
-*/
+ */
 
 package com.storyteller_f.a.backend.minio
 
-import com.storyteller_f.a.backend.minio.replaceUrl
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

@@ -51,12 +51,14 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
-fun main() {
+fun main() = runBot()
+
+private fun runBot() {
     setupKmpLogger()
     loadCryptoLibIfNeed()
-    val base64BotPem = System.getenv("BOT_PEM") ?: throw IllegalStateException("BOT_PEM not exists")
-    val httpUrl = System.getenv("SERVER_URL") ?: throw IllegalStateException("SERVER_URL not exists")
-    val wsUrl = System.getenv("WS_SERVER_URL") ?: throw IllegalStateException("WS_SERVER_URL not exists")
+    val base64BotPem = requireEnvironment("BOT_PEM")
+    val httpUrl = requireEnvironment("SERVER_URL")
+    val wsUrl = requireEnvironment("WS_SERVER_URL")
     val pemPrivateKey = Base64.decode(base64BotPem).decodeToString()
     val passHolder = SimplePassHolder()
     val sessionManager =
@@ -94,7 +96,7 @@ fun main() {
                         }
                     }
                 }
-                processJob(sessionManager, client, commentPrompt, newsPrompt)
+                processJob(this, sessionManager, client, commentPrompt, newsPrompt)
             }
         // 注册 JVM 关闭钩子，捕获 SIGINT / SIGTERM
         Runtime.getRuntime().addShutdownHook(
@@ -109,23 +111,26 @@ fun main() {
     }
 }
 
-private suspend fun CoroutineScope.processJob(
+private fun requireEnvironment(name: String): String = System.getenv(name) ?: error("$name does not exist")
+
+private suspend fun processJob(
+    scope: CoroutineScope,
     sessionManager: SimpleUserSessionManager,
     client: Client,
     commentPrompt: String,
     newsPrompt: String,
 ) {
     val job1 =
-        launch {
-            loop(1.minutes) {
+        scope.launch {
+            loop(this, 1.minutes) {
                 processCommunityTask(sessionManager) { communityInfo ->
                     handleCommunityComment(sessionManager, client, communityInfo, commentPrompt)
                 }
             }
         }
     val job2 =
-        launch {
-            loop(1.hours) {
+        scope.launch {
+            loop(this, 1.hours) {
                 processCommunityTask(sessionManager) { communityInfo ->
                     handleCommunityNews(sessionManager, client, communityInfo, newsPrompt)
                 }
@@ -135,8 +140,8 @@ private suspend fun CoroutineScope.processJob(
     job2.join()
 }
 
-private suspend fun CoroutineScope.loop(duration: Duration, block: suspend () -> Unit) {
-    while (isActive) {
+private suspend fun loop(scope: CoroutineScope, duration: Duration, block: suspend () -> Unit) {
+    while (scope.isActive) {
         try {
             block()
         } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {

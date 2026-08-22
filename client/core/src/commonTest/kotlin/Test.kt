@@ -1,16 +1,9 @@
 /*
  * This is a private project. All rights reserved.
-*/
+ */
 
 package com.storyteller_f.a.client.core
 
-import com.storyteller_f.a.client.core.ClientSessionState
-import com.storyteller_f.a.client.core.SimplePassHolder
-import com.storyteller_f.a.client.core.SingleFlightCustomAuthPlugin
-import com.storyteller_f.a.client.core.UserPass
-import com.storyteller_f.a.client.core.UserSessionModel
-import com.storyteller_f.a.client.core.addRequestHeadersFromInfo
-import com.storyteller_f.a.client.core.configClientAuth
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.UserInfo
 import io.ktor.client.HttpClient
@@ -40,7 +33,7 @@ class Test {
     fun `test request`() = Unit
 
     @Test
-    fun `custom auth refresh is single flight for concurrent 401 responses`() =
+    fun `concurrent 401 responses share an auth refresh`() =
         runTest {
         val initialResponsesReleased = CompletableDeferred<Unit>()
         val lock = Mutex()

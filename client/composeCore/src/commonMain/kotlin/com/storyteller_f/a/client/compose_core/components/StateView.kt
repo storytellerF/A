@@ -66,11 +66,9 @@ fun <T : Any> StateView(
     LaunchedEffect(key1 = pullRefreshing, key2 = refreshLoadState) {
         // 增加延时，确保pagingItems真正进入刷新状态
         delay(REFRESH_AFTER)
-        if (pullRefreshing) {
-            // 刷新结束或者当前没有内容时停止刷新，如果没有内容会使用列表刷新控件
-            if (refreshLoadState !is LoadState.Loading || pagingItems.itemCount == 0) {
-                pullRefreshing = false
-            }
+        // 刷新结束或者当前没有内容时停止刷新，如果没有内容会使用列表刷新控件
+        if (pullRefreshing && (refreshLoadState !is LoadState.Loading || pagingItems.itemCount == 0)) {
+            pullRefreshing = false
         }
     }
     Box(modifier = modifier.pullRefresh(refreshState)) {
@@ -177,7 +175,7 @@ class LoadingStatePreviewProvider : PreviewParameterProvider<LoadingState> {
             sequenceOf(
                 LoadingState.Loading,
                 LoadingState.Done,
-                LoadingState.Error(Exception()),
+                LoadingState.Error(Exception("Preview loading failure")),
             )
 }
 

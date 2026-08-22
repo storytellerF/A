@@ -24,6 +24,11 @@ import org.unifiedpush.android.connector.data.PushMessage
 class PushServiceImpl :
     PushService(),
     LifecycleOwner {
+    val registry = LifecycleRegistry(this)
+
+    override val lifecycle: Lifecycle
+        get() = registry
+
     override fun onCreate() {
         super.onCreate()
         registry.currentState = Lifecycle.State.STARTED
@@ -82,9 +87,4 @@ class PushServiceImpl :
         super.onDestroy()
         registry.currentState = Lifecycle.State.DESTROYED
     }
-
-    val registry = LifecycleRegistry(this)
-
-    override val lifecycle: Lifecycle
-        get() = registry
 }

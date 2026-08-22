@@ -186,14 +186,16 @@ fun ObjectSettingDialog(
             } else {
                 processSelectedMedia(
                     mediaList,
-                    scope,
-                    context,
-                    imageCropper,
                     ratio,
-                    mediaTarget,
-                    globalDialogController,
-                    alertDialogController,
-                    onInputMedia,
+                    SelectedMediaContext(
+                        scope,
+                        context,
+                        imageCropper,
+                        mediaTarget,
+                        globalDialogController,
+                        alertDialogController,
+                        onInputMedia,
+                    ),
                 )
             }
         },
@@ -238,21 +240,11 @@ private fun showFilePicker(currentOption: SettingOption?): Boolean =
     currentOption is SettingOption.CodeFont ||
     currentOption is SettingOption.FallbackFont
 
-private fun processSelectedMedia(
-    mediaList: List<FileInfo>,
-    scope: CoroutineScope,
-    context: PlatformContext,
-    imageCropper: ImageCropper,
-    ratio: AspectRatio,
-    mediaTarget: ObjectTuple,
-    globalDialogController: AppGlobalDialogController,
-    alertDialogController: CustomAlertDialogController,
-    onInputMedia: (FileInfo) -> Unit,
-) {
+private fun processSelectedMedia(mediaList: List<FileInfo>, ratio: AspectRatio, context: SelectedMediaContext) {
     val info = mediaList.first()
     val dimension = info.dimension
     if (dimension == null || !info.contentType.startsWith("image/")) {
-        alertDialogController.showTitle("invalid image: ${info.contentType} ${dimension ?: "<none>"}")
+        context.alertDialogController.showTitle("invalid image: ${info.contentType} ${dimension ?: "<none>"}")
         return
     }
     if (checkMediaFileDimensionRatioMatch(
@@ -260,19 +252,29 @@ private fun processSelectedMedia(
             Dimension(ratio.x, ratio.y),
         )
     ) {
-        onInputMedia(info)
+        context.onInputMedia(info)
         return
     }
-    scope.launch {
-        globalDialogController.useResult {
-            cropImage(context, info, imageCropper, mediaTarget)
+    context.scope.launch {
+        context.globalDialogController.useResult {
+            cropImage(context.platformContext, info, context.imageCropper, context.mediaTarget)
         }.onSuccess {
             if (it != null) {
-                onInputMedia(it)
+                context.onInputMedia(it)
             }
         }
     }
 }
+
+private data class SelectedMediaContext(
+    val scope: CoroutineScope,
+    val platformContext: PlatformContext,
+    val imageCropper: ImageCropper,
+    val mediaTarget: ObjectTuple,
+    val globalDialogController: AppGlobalDialogController,
+    val alertDialogController: CustomAlertDialogController,
+    val onInputMedia: (FileInfo) -> Unit,
+)
 
 private suspend fun AppGlobalDialogController.cropImage(
     context: PlatformContext,
@@ -389,9 +391,11 @@ private fun TwoFactorDialog(dismiss: () -> Unit) {
             toaster,
             clipboard,
             code,
-            { settings = it },
-            { setupInfo = it },
-            { code = it },
+            TwoFactorStateUpdates(
+                setSettings = { settings = it },
+                setSetupInfo = { setupInfo = it },
+                setCode = { code = it },
+            ),
         )
 
     AlertDialog(dismiss, {
@@ -437,42 +441,49 @@ private data class TwoFactorActions(
     val downloadRecoveryCodes: () -> Unit,
 )
 
+private data class TwoFactorStateUpdates(
+    val setSettings: (TwoFactorSettingsInfo) -> Unit,
+    val setSetupInfo: (TotpSetupInfo?) -> Unit,
+    val setCode: (String) -> Unit,
+)
+
 private fun kotlinx.coroutines.CoroutineScope.rememberTwoFactorActions(
     globalDialogController: AppGlobalDialogController,
     toaster: com.storyteller_f.a.client.compose_core.components.Toast,
     clipboard: androidx.compose.ui.platform.Clipboard,
     code: String,
-    setSettings: (TwoFactorSettingsInfo) -> Unit,
-    setSetupInfo: (TotpSetupInfo?) -> Unit,
-    setCode: (String) -> Unit,
-) = TwoFactorActions(
-    setupTotp = {
-        setupTotp(globalDialogController) { setSetupInfo(it) }
-    },
-    disableTwoFactor = {
-        disableTwoFactor(globalDialogController) {
-            setSettings(it)
-            setSetupInfo(null)
-            setCode("")
-        }
-    },
-    copyUri = { uri ->
-        launch {
-            clipboard.setText(uri)
-            toaster.showMessage("copied")
-        }
-    },
-    enableTotp = {
-        enableTotp(globalDialogController, code) {
-            setSettings(it)
-            setSetupInfo(null)
-            setCode("")
-        }
-    },
-    downloadRecoveryCodes = {
-        downloadRecoveryCodes(globalDialogController)
-    },
-)
+    stateUpdates: TwoFactorStateUpdates,
+): TwoFactorActions {
+    val (setSettings, setSetupInfo, setCode) = stateUpdates
+    return TwoFactorActions(
+        setupTotp = {
+            setupTotp(globalDialogController) { setSetupInfo(it) }
+        },
+        disableTwoFactor = {
+            disableTwoFactor(globalDialogController) {
+                setSettings(it)
+                setSetupInfo(null)
+                setCode("")
+            }
+        },
+        copyUri = { uri ->
+            launch {
+                clipboard.setText(uri)
+                toaster.showMessage("copied")
+            }
+        },
+        enableTotp = {
+            enableTotp(globalDialogController, code) {
+                setSettings(it)
+                setSetupInfo(null)
+                setCode("")
+            }
+        },
+        downloadRecoveryCodes = {
+            downloadRecoveryCodes(globalDialogController)
+        },
+    )
+}
 
 @Composable
 private fun TwoFactorDialogContent(

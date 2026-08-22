@@ -81,7 +81,7 @@ private val jvmMediaPlayerService =
 fun main(args: Array<String>) {
     appPlatformImpl = JvmAppPlatformImpl
     setupKmpLogger()
-    initForJvmMain(args)
+    initForJvmMain(args) { exitCode -> exitProcess(exitCode) }
     loadCryptoLibIfNeed()
     val taskRegister = SimpleTaskRegister(GlobalScope)
     val provider =
@@ -106,7 +106,7 @@ fun main(args: Array<String>) {
     }
 }
 
-private fun initForJvmMain(args: Array<String>) {
+private fun initForJvmMain(args: Array<String>, exitApplication: (Int) -> Unit) {
     Thread.setDefaultUncaughtExceptionHandler { _, e ->
         Napier.e(e) {
             "uncaught exception"
@@ -115,13 +115,11 @@ private fun initForJvmMain(args: Array<String>) {
             layout = BorderLayout()
             val label = TextArea(e.stackTraceToString())
             add(label, BorderLayout.CENTER)
-            val button =
-                Button("OK").apply {
-                    addActionListener {
-                        dispose()
-                        exitProcess(1)
-                    }
-                }
+            val button = Button("OK")
+            button.addActionListener {
+                dispose()
+                exitApplication(1)
+            }
             add(button, BorderLayout.SOUTH)
             setSize(300, 300)
             isVisible = true

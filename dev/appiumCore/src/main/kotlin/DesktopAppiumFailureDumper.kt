@@ -1,6 +1,6 @@
 /*
  * This is a private project. All rights reserved.
-*/
+ */
 
 package com.storyteller_f.a.dev.appium
 
@@ -9,18 +9,18 @@ import java.io.File
 import java.time.Instant
 
 object DesktopAppiumFailureDumper {
-    fun dumpOnFailure(
-        suiteName: String,
-        appLabel: String,
-        testName: String,
-        sessionFile: File,
-        driver: AppiumDriver?,
-        throwable: Throwable,
-        logDir: File,
-        appLogFile: File,
-    ) {
+    internal data class Context(
+        val suiteName: String,
+        val appLabel: String,
+        val testName: String,
+        val sessionFile: File,
+        val logDir: File,
+        val appLogFile: File,
+    )
+
+    internal fun dumpOnFailure(context: Context, driver: AppiumDriver?, throwable: Throwable) {
         val outputDir =
-            File("build/test/appium-debug/$suiteName", DesktopAppiumHelper.safeName(testName))
+            File("build/test/appium-debug/${context.suiteName}", DesktopAppiumHelper.safeName(context.testName))
                 .resolve(Instant.now().toString().replace(Regex("[^a-zA-Z0-9._-]"), "_"))
         outputDir.mkdirs()
 
@@ -34,8 +34,8 @@ object DesktopAppiumFailureDumper {
         )
 
         dumpPageSource(driver, outputDir)
-        dumpAwtAccessibilityTree(appLabel, sessionFile, outputDir)
-        copyDesktopLogs(appLabel, logDir, appLogFile, outputDir)
+        dumpAwtAccessibilityTree(context.appLabel, context.sessionFile, outputDir)
+        copyDesktopLogs(context.appLabel, context.logDir, context.appLogFile, outputDir)
     }
 
     private fun dumpPageSource(driver: AppiumDriver?, outputDir: File) {

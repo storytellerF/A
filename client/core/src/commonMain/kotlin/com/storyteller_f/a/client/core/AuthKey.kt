@@ -74,7 +74,7 @@ suspend fun getAuthKey(algo: AlgoType, pemPrivateKey: String, pemEncryptionPriva
     val derPrivateKey = alg.getDerPrivateKey(pemPrivateKey).getOrThrow()
     val derPublicKey = alg.getDerPublicKeyFromPrivateKey(pemPrivateKey).getOrThrow()
     return if (algo == AlgoType.DILITHIUM) {
-        pemEncryptionPrivateKey ?: throw IllegalStateException("encryption private key is null")
+        checkNotNull(pemEncryptionPrivateKey) { "encryption private key is null" }
         val encryptionAlgo = AlgoDilithium.encryptionAlgo as Type2Algo
         val derEncryptionPrivate =
             encryptionAlgo.getDerEncryptionPrivateKeyFromPemPrivateKey(pemEncryptionPrivateKey).getOrThrow()

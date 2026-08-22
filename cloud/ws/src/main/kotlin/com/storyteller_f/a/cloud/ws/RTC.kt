@@ -200,12 +200,12 @@ private suspend fun processUpdateCallMediaState(frame: RoomFrame.UpdateCallMedia
 suspend fun listenerRoomRTC() {
     while (true) {
         cleanupInactiveRtcUsers()
-        rtcSession.forEach { (roomId, it) ->
+        rtcSession.values.forEach {
             it.uidList.forEachIndexed { frontUserIndex, frontRtcUser ->
                 val frontSocket = frontRtcUser.session
                 if (!frontSocket.isActive) return@forEachIndexed
                 it.uidList.forEachIndexed { backUserIndex, backRtcUser ->
-                    processRTCSession(frontUserIndex, backUserIndex, backRtcUser, it, frontRtcUser, frontSocket, roomId)
+                    processRTCSession(frontUserIndex, backUserIndex, backRtcUser, it, frontRtcUser)
                 }
             }
         }
@@ -239,8 +239,6 @@ private suspend fun processRTCSession(
     backRtcUser: RtcUser,
     session: RtcSession,
     frontRtcUser: RtcUser,
-    frontSocket: DefaultWebSocketServerSession,
-    roomId: PrimaryKey,
 ) {
     if (frontUserIndex >= backUserIndex) return
     val backSocket = backRtcUser.session
@@ -265,8 +263,8 @@ private suspend fun processRTCSession(
         return
     }
     try {
-        val frame = RoomFrame.CreateOffer(backRtcUser.uid, roomId)
-        frontSocket.sendFrame(frame)
+        val frame = RoomFrame.CreateOffer(backRtcUser.uid, session.roomId)
+        frontRtcUser.session.sendFrame(frame)
     } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
         throw cancellation
     } catch (e: Exception) {

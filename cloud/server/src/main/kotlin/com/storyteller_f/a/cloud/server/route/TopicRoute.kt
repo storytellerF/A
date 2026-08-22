@@ -140,9 +140,10 @@ fun Route.bindProtectedTopicRoute(backend: Backend) {
     CustomApi.Topics.add(handleResult(backend)) { api ->
         usePrincipal { uid ->
             backend.createPlainTopic(uid, api.receiveBody()).also { result ->
-                result.getOrNull()?.let {
+                val topic = result.getOrNull()
+                if (topic != null) {
                     call.application.launch {
-                        GlobalWsEventPublisher.publishNewTopic(RoomFrame.NewTopicInfo(it))
+                        GlobalWsEventPublisher.publishNewTopic(RoomFrame.NewTopicInfo(topic))
                     }
                 }
             }

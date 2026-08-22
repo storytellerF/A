@@ -16,10 +16,10 @@ actual fun safeFirstUnicode(text: String): String? =
 
 actual fun checkContent(text: String): Result<Unit> =
     if (Regex("""^[\p{L}\p{N}\p{P}\p{Z}\p{S}\s]+$""").matches(text)) {
-        UNIT_RESULT
-    } else {
-        Result.failure(IllegalArgumentException("Content contains unsupported characters"))
-    }
+    UNIT_RESULT
+} else {
+    Result.failure(IllegalArgumentException("Content contains unsupported characters"))
+}
 
 actual fun safeFirstEmoji(text: String): String? =
     safeFirstUnicode(text)?.takeIf { Regex("^\\p{Emoji_Presentation}").containsMatchIn(it) }

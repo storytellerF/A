@@ -86,7 +86,7 @@ fun PrivateKeyInput(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                address ?: "",
+                address.orEmpty(),
                 modifier =
                 Modifier.weight(1f).appiumSemantics(
                     description = address?.let { ACCOUNT_ADDRESS_DESCRIPTION },
@@ -153,7 +153,7 @@ fun PrivateKeyEditor(
     onCancel: () -> Unit,
 ) {
     var currentKey by remember { mutableStateOf(privateKey) }
-    var currentEncryptionKey by remember { mutableStateOf(encryptionPrivateKey ?: "") }
+    var currentEncryptionKey by remember { mutableStateOf(encryptionPrivateKey.orEmpty()) }
     Column(
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {

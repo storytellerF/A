@@ -66,7 +66,7 @@ import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.core.Input
 
 suspend fun <R, U> SessionManager<U>.serviceCatching(block: suspend HttpClient.() -> R): Result<R> {
-    val point = Exception()
+    val point = Exception("Service request call site")
     return try {
         val value = client.block()
         Result.success(value)

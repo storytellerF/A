@@ -1,6 +1,6 @@
 /*
  * This is a private project. All rights reserved.
-*/
+ */
 
 package com.storyteller_f.a.dev.appium
 
@@ -10,7 +10,7 @@ import org.junit.Rule
 import org.junit.rules.TestName
 import kotlin.time.Duration.Companion.minutes
 
-abstract class AppiumTestBase {
+open class AppiumTestBase {
     @get:Rule
     val name = TestName()
 }

@@ -61,13 +61,12 @@ data class ConstPassHolder(override val currentUserPass: UserPass?) : PassHolder
 class SimpleSessionModel<U : PrimaryKeyIdentifiable> : SessionModel<U> {
     // 用于header 和server 协商被签名的数据
     private var currentStamp = 0L
+    override val userHandler = FixedLoadingHandler<U?>()
     override val uid: PrimaryKey?
         get() = userHandler.data.value?.id
 
     // currentData 是本地使用的，但是还是需要依据server 的为准
     override var dataAndSignature: Pair<String, String?>? = null
-
-    override val userHandler = FixedLoadingHandler<U?>()
 
     @OptIn(ExperimentalTime::class)
     override fun generateData(): String {

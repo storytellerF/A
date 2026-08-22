@@ -87,9 +87,9 @@ suspend fun UserSessionManager.getUserSignUpPass(authKey: AuthKey): SignResult<U
 }.getOrThrow()
 
 suspend fun PanelSessionManager.getPanelUserSignUpPass(authKey: AuthKey): SignResult<PanelAccountInfo> =
-    prepareSignInFromPrivateKey(authKey, {
+    prepareSignInFromPrivateKey(authKey) {
         getData()
-    }).mapResult { param ->
+    }.mapResult { param ->
         val encryptionPublicKey1 = (param.authKey as? AuthKey.Dilithium)?.derEncryptionPublicKey
         signUp(
             SignUpBody(
@@ -109,9 +109,9 @@ suspend fun PanelSessionManager.getPanelUserSignUpPass(authKey: AuthKey): SignRe
     }.getOrThrow()
 
 suspend fun PanelSessionManager.getPanelUserSignInPass(authKey: AuthKey): SignResult<PanelAccountInfo> =
-    prepareSignInFromPrivateKey(authKey, {
+    prepareSignInFromPrivateKey(authKey) {
         getData()
-    }).mapResult { param ->
+    }.mapResult { param ->
         signIn(SignInBody(param.address, param.signature)).map { response ->
             SignResult(
                 response,

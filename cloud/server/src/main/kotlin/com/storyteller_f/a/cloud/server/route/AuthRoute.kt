@@ -107,15 +107,7 @@ fun Route.bindProtectedAccountRoute(backend: Backend) {
     CustomApi.Accounts.ChildAccounts.add(handleResult(backend)) { api ->
         usePrincipal { uid ->
             val request: AddChildAccountRequest = api.receiveBody()
-            backend.addChildAccount(
-                uid,
-                request.encryptedPrivateKey,
-                request.encryptedAesKey,
-                request.derPublicKey,
-                request.algoType,
-                request.encryptedEncryptionPrivateKey,
-                request.encryptionPublicKey,
-            )
+            backend.addChildAccount(uid, request)
         }
     }
     CustomApi.Accounts.ChildAccounts.get(handleResult(backend)) { q ->

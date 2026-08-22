@@ -335,7 +335,7 @@ private fun AddressField(address: String?, gotoPrivateKey: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                address ?: "",
+                address.orEmpty(),
                 modifier = Modifier.weight(1f),
             )
             IconButton(gotoPrivateKey) {

@@ -124,7 +124,7 @@ class UploaderImpl(val uiViewModel: UIViewModel, val taskRegister: TaskRegister)
             return
         }
         val clientFile = getClientFile(uploadInfo.path) ?: return
-        upload(userSession, myUid, clientFile, modelStorage, collection, pathHash, uploadInfo)
+        upload(userSession, myUid, clientFile, UploadContext(modelStorage, collection, pathHash, uploadInfo))
     }
 
     @OptIn(ExperimentalTime::class)
@@ -165,18 +165,26 @@ class UploaderImpl(val uiViewModel: UIViewModel, val taskRegister: TaskRegister)
                 chunkSize = 10L * 1024 * 1024, // 10MB
             )
         modelStorage.upload.saveLast(UploadCollection.fromInfo(uploadInfo), uploadInfo)
-        upload(userSession, myUid, clipFile, modelStorage, collection, pathHash, uploadInfo)
+        upload(userSession, myUid, clipFile, UploadContext(modelStorage, collection, pathHash, uploadInfo))
     }
+
+    private data class UploadContext(
+        val modelStorage: ModelStorage,
+        val collection: UploadCollection,
+        val pathHash: String,
+        val uploadInfo: UploadInfo,
+    )
 
     private suspend fun upload(
         userSession: SimpleUserSessionManager,
         myUid: PrimaryKey,
         clientFile: ClientFile,
-        modelStorage: ModelStorage,
-        collection: UploadCollection,
-        pathHash: String,
-        uploadInfo: UploadInfo,
+        context: UploadContext,
     ) {
+        val modelStorage = context.modelStorage
+        val collection = context.collection
+        val pathHash = context.pathHash
+        val uploadInfo = context.uploadInfo
         if (uploadInfo.status != UploadStatus.UPLOADING) {
             updateUploadInfo(modelStorage, collection, pathHash) {
                 it.copy(status = UploadStatus.UPLOADING)

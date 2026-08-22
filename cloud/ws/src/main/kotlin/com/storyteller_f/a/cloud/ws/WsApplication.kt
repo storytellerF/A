@@ -65,7 +65,6 @@ import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.pingPeriod
 import io.ktor.server.websocket.timeout
 import io.ktor.server.websocket.webSocket
-import io.ktor.util.toMap
 import kotlinx.rpc.krpc.ktor.server.Krpc
 import kotlinx.rpc.krpc.ktor.server.rpc
 import kotlinx.rpc.krpc.serialization.json.json
@@ -221,8 +220,8 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
     Napier.i("load env: ${env.getAll("COMPOSE_PROJECT_NAME")}")
     val databaseConnection = databaseConnection(env)
     val buildType = env["BUILD_TYPE"] ?: "prod"
-    val flavor = env["FLAVOR"] ?: throw IllegalStateException("FLAVOR is empty")
-    val enableSignUp = env["ENABLE_SIGN_UP"]?.toBoolean() ?: true
+    val flavor = env["FLAVOR"] ?: error("FLAVOR is empty")
+    val enableSignUp = env["ENABLE_SIGN_UP"]?.toBoolean() != false
     return WsBackend(
         CustomConfig(buildType, flavor, null, enableSignUp),
         buildTopicSearchService(env),

@@ -67,8 +67,8 @@ fun TopicContentView(topicInfo: TopicInfo, onClick: (FileInfo) -> Unit, isEmbed:
             text = plain.lineSequence().firstOrNull { it.isNotBlank() }?.trim(),
         ),
     ) {
-        CustomMarkdown(plain, isEmbed, imageTransformer, dimensionMap, {
+        CustomMarkdown(plain, isEmbed, imageTransformer, dimensionMap) {
             CustomCodeFence(it, mediaMap, refBlock, onClick)
-        })
+        }
     }
 }

@@ -52,7 +52,7 @@ fun mediaService(env: MergedEnv): ObjectStorageService {
     val factory =
         ServiceLoader.load(ObjectStorageServiceFactory::class.java).firstOrNull {
             it.match(env)
-        } ?: throw IllegalStateException("unsupported media service type ${env["MEDIA_SERVICE"]}")
+        } ?: error("unsupported media service type ${env["MEDIA_SERVICE"]}")
     return factory.build(env)
 }
 
@@ -60,7 +60,7 @@ fun buildTopicSearchService(env: MergedEnv): TopicSearchService {
     val factory =
         ServiceLoader.load(TopicSearchServiceFactory::class.java).firstOrNull {
             it.match(env)
-        } ?: throw IllegalStateException("unsupported topic search service type ${env["SEARCH_SERVICE"]}")
+        } ?: error("unsupported topic search service type ${env["SEARCH_SERVICE"]}")
     return factory.build(env)
 }
 
@@ -68,7 +68,7 @@ fun buildUserSearchService(env: MergedEnv): UserSearchService {
     val factory =
         ServiceLoader.load(UserSearchServiceFactory::class.java).firstOrNull {
             it.match(env)
-        } ?: throw IllegalStateException("unsupported user search service type ${env["SEARCH_SERVICE"]}")
+        } ?: error("unsupported user search service type ${env["SEARCH_SERVICE"]}")
     return factory.build(env)
 }
 
@@ -76,7 +76,7 @@ fun buildRoomSearchService(env: MergedEnv): RoomSearchService {
     val factory =
         ServiceLoader.load(RoomSearchServiceFactory::class.java).firstOrNull {
             it.match(env)
-        } ?: throw IllegalStateException("unsupported room search service type ${env["SEARCH_SERVICE"]}")
+        } ?: error("unsupported room search service type ${env["SEARCH_SERVICE"]}")
     return factory.build(env)
 }
 
@@ -84,7 +84,7 @@ fun buildCommunitySearchService(env: MergedEnv): CommunitySearchService {
     val factory =
         ServiceLoader.load(CommunitySearchServiceFactory::class.java).firstOrNull {
             it.match(env)
-        } ?: throw IllegalStateException("unsupported community search service type ${env["SEARCH_SERVICE"]}")
+        } ?: error("unsupported community search service type ${env["SEARCH_SERVICE"]}")
     return factory.build(env)
 }
 
@@ -92,7 +92,7 @@ fun buildMemberSearchService(env: MergedEnv): MemberSearchService {
     val factory =
         ServiceLoader.load(MemberSearchServiceFactory::class.java).firstOrNull {
             it.match(env)
-        } ?: throw IllegalStateException("unsupported member search service type ${env["SEARCH_SERVICE"]}")
+        } ?: error("unsupported member search service type ${env["SEARCH_SERVICE"]}")
     return factory.build(env)
 }
 
@@ -100,22 +100,22 @@ fun buildFileSearchService(env: MergedEnv): FileSearchService {
     val factory =
         ServiceLoader.load(FileSearchServiceFactory::class.java).firstOrNull {
             it.match(env)
-        } ?: throw IllegalStateException("unsupported file search service type ${env["SEARCH_SERVICE"]}")
+        } ?: error("unsupported file search service type ${env["SEARCH_SERVICE"]}")
     return factory.build(env)
 }
 
 fun databaseConnection(env: MergedEnv): DatabaseConnection {
-    val uri = env["DATABASE_URI"] ?: throw IllegalStateException("DATABASE_URI is empty")
-    val driver = env["DATABASE_DRIVER"] ?: throw IllegalStateException("DATABASE_DRIVE is empty")
-    val user = env["DATABASE_USER"] ?: throw IllegalStateException("DATABASE_USER is empty")
-    val pass = env["DATABASE_PASS"] ?: throw IllegalStateException("DATABASE_PASS is empty")
+    val uri = env["DATABASE_URI"] ?: error("DATABASE_URI is empty")
+    val driver = env["DATABASE_DRIVER"] ?: error("DATABASE_DRIVE is empty")
+    val user = env["DATABASE_USER"] ?: error("DATABASE_USER is empty")
+    val pass = env["DATABASE_PASS"] ?: error("DATABASE_PASS is empty")
     return DatabaseConnection(uri, driver, user, pass)
 }
 
 fun buildNameService(env: MergedEnv): NameService {
     val factory =
         ServiceLoader.load(NameServiceFactory::class.java).firstOrNull()
-            ?: throw IllegalStateException("unsupported name service type")
+            ?: error("unsupported name service type")
     return factory.build(env)
 }
 
@@ -200,7 +200,7 @@ suspend fun getImageDimension(
                 }
             }
     if (dimension == null) {
-        throw IllegalStateException("get image dimension failed")
+        error("get image dimension failed")
     }
     return dimension
 }

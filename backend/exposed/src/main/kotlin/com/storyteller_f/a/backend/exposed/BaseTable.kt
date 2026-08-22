@@ -101,14 +101,14 @@ class ExposedDatabase(val databaseSession: ExposedDatabaseSession) : CombinedDat
         get() = ExposedTopicDatabase(databaseSession, this)
     override val title: TitleDatabase
         get() = ExposedTitleDatabase(databaseSession)
+    override val container: ContainerDatabase
+        get() = ExposedContainerDatabase(databaseSession, this)
     override val community: CommunityDatabase
         get() = ExposedCommunityDatabase(databaseSession, container)
     override val room: RoomDatabase
         get() = ExposedRoomDatabase(databaseSession, container)
     override val file: FileDatabase
         get() = ExposedFileDatabase(databaseSession)
-    override val container: ContainerDatabase
-        get() = ExposedContainerDatabase(databaseSession, this)
     override val admin: AdminDatabase
         get() = ExposedAdminDatabase(databaseSession)
     override val panelAccount: PanelAccountDatabase
@@ -160,7 +160,7 @@ class ExposedDatabase(val databaseSession: ExposedDatabaseSession) : CombinedDat
         ExposedDatabaseFactory.migration(databaseSession.database)
     }
 
-    override fun isDup(throwable: Throwable): Boolean = throwable.cause?.isDup() ?: false
+    override fun isDup(throwable: Throwable): Boolean = throwable.cause?.isDup() == true
 }
 
 fun buildExposedDatabase(databaseConnection: DatabaseConnection): ExposedDatabase {

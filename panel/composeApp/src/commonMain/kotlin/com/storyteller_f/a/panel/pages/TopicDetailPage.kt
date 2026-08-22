@@ -208,7 +208,7 @@ private fun TopicCell(info: TopicInfo, panelNav: PanelNav) {
             else -> ""
         }
     val author = info.extension?.authorInfo?.nickname ?: info.author.toString()
-    val room = info.extension?.roomInfo?.name ?: ""
+    val room = info.extension?.roomInfo?.name.orEmpty()
     val overline = listOf(author, room).filter { it.isNotEmpty() }.joinToString(" @ ")
     val counts =
         if (info.commentCount > 0 || info.reactionCount > 0) {

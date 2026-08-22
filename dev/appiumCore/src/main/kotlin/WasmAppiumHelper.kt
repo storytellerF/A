@@ -1,6 +1,6 @@
 /*
  * This is a private project. All rights reserved.
-*/
+ */
 
 package com.storyteller_f.a.dev.appium
 
@@ -18,7 +18,7 @@ class WasmAppiumHelper(
     private val distribution: File,
     private val startupLocator: By,
     private val browserArguments: List<String> = listOf("-headless"),
-) : PlatformAppiumHelper() {
+) : PlatformAppiumHelper {
     override val capturesExternalAsciidocPreview = false
 
     override suspend fun <T> runTest(

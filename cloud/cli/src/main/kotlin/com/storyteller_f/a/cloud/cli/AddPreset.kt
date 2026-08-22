@@ -86,7 +86,6 @@ import java.security.MessageDigest
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
-import kotlin.system.exitProcess
 
 data class EncryptedTopicTuple(
     val encryptedContent: ByteArray,
@@ -168,7 +167,7 @@ class AddPreset : Subcommand("add", "add entry") {
             Napier.i {
                 "$jsonFilePath not exists."
             }
-            exitProcess(1)
+            error("$jsonFilePath not exists")
         }
         loadCryptoLibIfNeed()
         val connected = requireBackend()
@@ -205,7 +204,7 @@ class AddPreset : Subcommand("add", "add entry") {
 
     private fun handleUnknownPresetType(type: String) {
         Napier.e { "unrecognized type $type" }
-        exitProcess(2)
+        error("unrecognized type $type")
     }
 
     private suspend fun Backend.addWorkerTasks(presetValue: PresetValue) {
@@ -786,7 +785,7 @@ class AddPreset : Subcommand("add", "add entry") {
             if (objectType == ObjectType.USER) {
                 userMap.getValue(addTopic.author).id
             } else {
-                communityMap.getValue(addTopic.community)
+                communityMap.getValue(checkNotNull(addTopic.community) { "Topic community is missing" })
             }
         InsertTopicTuple(
             addTopic,
@@ -882,7 +881,8 @@ class AddPreset : Subcommand("add", "add entry") {
                 val level = topic.level
                 val parent = topic.parent
                 val content = getTopicContent(topic, parentDir).encodeToByteArray()
-                val rootId = roomMap.getValue(topic.room).id
+                val roomName = checkNotNull(topic.room) { "Topic room is missing" }
+                val rootId = roomMap.getValue(roomName).id
                 val l =
                     if (parent == null || parent == 0 || level == null || level == 0) {
                         0
@@ -896,13 +896,14 @@ class AddPreset : Subcommand("add", "add entry") {
             tuples.mapIndexed { index, topicTuple ->
                 val topic = topicTuple.topic
                 val level = topic.level
+                val roomName = checkNotNull(topic.room) { "Topic room is missing" }
                 TopicDocument(
                     topicTuple.id,
                     topicTuple.content.decodeToString(),
-                    roomMap.getValue(topic.room).id,
+                    roomMap.getValue(roomName).id,
                     ObjectType.ROOM.name,
                     when (level) {
-                        null, 0 -> roomMap.getValue(topic.room).id
+                        null, 0 -> roomMap.getValue(roomName).id
                         else -> tuples[index - checkNotNull(topic.parent) { "Nested topic parent is missing" }].id
                     },
                     (if (level == 0) ObjectType.ROOM else ObjectType.TOPIC).name,
@@ -1034,7 +1035,7 @@ class AddPreset : Subcommand("add", "add entry") {
                 tuple.id,
                 tuple.encryptedContent,
                 true,
-                roomMap.getValue(tuple.presetTopic.room).id,
+                roomMap.getValue(checkNotNull(tuple.presetTopic.room) { "Topic room is missing" }).id,
             )
         }
 
@@ -1335,7 +1336,8 @@ internal fun repackArchiveWithExclusionsAndInclusionsInPlace(
     excludeGlobs: List<String>,
     includeGlobs: List<String>,
 ): File {
-    if (excludeGlobs.isEmpty() && includeGlobs.isEmpty() || !zipFile.name.endsWith(".zip", ignoreCase = true)) {
+    val hasNoFilters = excludeGlobs.isEmpty() && includeGlobs.isEmpty()
+    if (hasNoFilters || !zipFile.name.endsWith(".zip", ignoreCase = true)) {
         return zipFile
     }
     val parent = zipFile.parentFile ?: return zipFile
@@ -1369,5 +1371,5 @@ fun sha256File(file: File): String {
             read = fis.read(buffer)
         }
     }
-    return digest.digest().joinToString("") { "%02x".format(it) }
+    return digest.digest().joinToString("") { it.toUByte().toString(16).padStart(2, '0') }
 }

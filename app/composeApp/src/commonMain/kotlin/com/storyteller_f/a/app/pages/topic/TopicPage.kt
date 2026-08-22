@@ -343,48 +343,42 @@ fun TopicSendButton(
     ) {
         sendTopicInTopicPage(
             input,
-            scope,
-            snackBarHostState,
-            globalTask,
-            key,
             topic,
-            updateInput,
-            focusManager,
-            scrollToNew,
+            SendTopicContext(scope, snackBarHostState, globalTask, key, updateInput, focusManager, scrollToNew),
         )
     }
 }
 
-private fun sendTopicInTopicPage(
-    input: String,
-    scope: CoroutineScope,
-    snackBarHostState: SnackbarHostState,
-    globalTask: CustomGlobalTask<GlobalTaskContext<SimpleUserSessionManager>>,
-    key: String,
-    topic: TopicInfo,
-    updateInput: (String) -> Unit,
-    focusManager: FocusManager,
-    scrollToNew: () -> Unit,
-) {
+private fun sendTopicInTopicPage(input: String, topic: TopicInfo, context: SendTopicContext) {
     checkContent(input).exceptionOrNull()?.let {
-        scope.launch {
-            snackBarHostState.showSnackbar(it.message?.toString().orEmpty())
+        context.scope.launch {
+            context.snackBarHostState.showSnackbar(it.message?.toString().orEmpty())
         }
         return
     }
-    globalTask.launch(key) {
+    context.globalTask.launch(context.key) {
         use {
             request {
                 createTopic(ObjectType.TOPIC, topic.id, input).onSuccess {
                     emitEvent(OnTopicCreated(it))
-                    updateInput("")
-                    focusManager.clearFocus()
-                    scrollToNew()
+                    context.updateInput("")
+                    context.focusManager.clearFocus()
+                    context.scrollToNew()
                 }
             }
         }.onFailure {
-            snackBarHostState
+            context.snackBarHostState
                 .showSnackbar(it.message?.toString().orEmpty())
         }
     }
 }
+
+private data class SendTopicContext(
+    val scope: CoroutineScope,
+    val snackBarHostState: SnackbarHostState,
+    val globalTask: CustomGlobalTask<GlobalTaskContext<SimpleUserSessionManager>>,
+    val key: String,
+    val updateInput: (String) -> Unit,
+    val focusManager: FocusManager,
+    val scrollToNew: () -> Unit,
+)

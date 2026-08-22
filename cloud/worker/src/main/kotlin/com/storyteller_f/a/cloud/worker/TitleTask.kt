@@ -94,7 +94,7 @@ private suspend fun Backend.processTitle(title: Title, retryRecordId: PrimaryKey
 private suspend fun Backend.processTitleNotification(title: Title, successRecord: TaskRecord) {
     val rawUser =
         database.user.getRawUser(ObjectFetch.IdFetch(title.receiver))
-            .getOrThrow() ?: throw IllegalStateException("user not found")
+            .getOrThrow() ?: error("user not found")
 
     val content = generateTitleNotificationContent(title)
     sendTopicToNotificationRoom(getSystemUserId(), rawUser.user, content).getOrThrow()

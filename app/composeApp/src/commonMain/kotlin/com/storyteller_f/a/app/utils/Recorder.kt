@@ -17,6 +17,8 @@ import kotlin.uuid.Uuid
 
 object Recorder {
     var recording: AudioRecordingSession? = null
+    val isRecording: MutableState<Boolean> = mutableStateOf(false)
+
     suspend fun startRecord() {
         if (isRecording.value) {
             return
@@ -40,5 +42,4 @@ object Recorder {
         flow.writeToFile(AudioFileFormat.Wav, path)
         return path
     }
-    val isRecording: MutableState<Boolean> = mutableStateOf(false)
 }

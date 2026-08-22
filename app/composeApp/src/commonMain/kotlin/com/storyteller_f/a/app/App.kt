@@ -615,7 +615,9 @@ class UIViewModel(val viewModelScope: CoroutineScope, val wsServerUrl: String, v
                 ConstPassHolder(userPass),
             ).apply {
                 sessionManager.model.updateSignature(data, signature)
-                userInfo?.let { sessionManager.model.updateUser(it) }
+                if (userInfo != null) {
+                    sessionManager.model.updateUser(userInfo)
+                }
             }
     }
 
@@ -715,14 +717,14 @@ private fun sendTopicNotification(message: TopicContent.Plain, topicInfo: TopicI
 
 @Composable
 fun MediaPlayerPage(remoteMediaItem: RemoteMediaItem) {
-    CommonEntry({
+    CommonEntry {
         FileViewPage(FileViewData.Player(remoteMediaItem))
-    })
+    }
 }
 
 @Composable
 fun BubblePage(roomId: Long) {
-    CommonEntry({
+    CommonEntry {
         val appNav =
             remember {
                 createAppNavFactoryForBubble()
@@ -732,7 +734,7 @@ fun BubblePage(roomId: Long) {
         ) {
             RoomPage(roomId, false)
         }
-    })
+    }
 }
 
 private fun createAppNavFactoryForBubble(): AppNavFactory =

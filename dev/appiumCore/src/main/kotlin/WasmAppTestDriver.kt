@@ -1,6 +1,6 @@
 /*
  * This is a private project. All rights reserved.
-*/
+ */
 
 package com.storyteller_f.a.dev.appium
 
@@ -17,6 +17,8 @@ import java.time.Duration
 
 /** Drives Compose/Wasm through its transparent Appium-only HTML semantics overlay. */
 class WasmAppTestDriver(private val browser: WebDriver) : AppTestDriver {
+    private val wait get() = WebDriverWait(browser, Duration.ofSeconds(UI_WAIT_SECONDS))
+
     override suspend fun clickByDescription(description: String) = click(descriptionLocator(description))
 
     override suspend fun clickByText(text: String) = click(textLocator(text))
@@ -192,8 +194,6 @@ class WasmAppTestDriver(private val browser: WebDriver) : AppTestDriver {
                 ?.copyTo(File(outputDir, "$name.png"), overwrite = true)
         }
     }
-
-    private val wait get() = WebDriverWait(browser, Duration.ofSeconds(UI_WAIT_SECONDS))
 
     private fun String.cssAttributeValue(): String = replace("\\", "\\\\").replace("'", "\\'")
 

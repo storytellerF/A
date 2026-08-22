@@ -164,7 +164,7 @@ private fun parseQuote(node: ASTNode, content: String): ContentBlock.Quote {
 
 private fun parseCodeFence(node: ASTNode, content: String): ContentBlock {
     // getLang 在没有语言时可能返回 "null" 字符串，需要处理
-    val lang = getLang(node, content).lowercase().takeIf { it.isNotBlank() && it != "null" } ?: ""
+    val lang = getLang(node, content).lowercase().takeIf { it.isNotBlank() && it != "null" }.orEmpty()
     val codeContent = readCodeFence(node, content).trim()
 
     return when {

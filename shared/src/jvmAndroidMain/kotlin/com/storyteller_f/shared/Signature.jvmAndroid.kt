@@ -179,6 +179,8 @@ object CryptoJvm {
 
     /**
      * @param derPrivateKeyStr hex 的der 格式的密钥
+     * @param encrypted 加密后的正文
+     * @param encryptedAesKey 加密后的 AES 密钥
      */
     @Suppress("DeprecatedProvider")
     @OptIn(ExperimentalStdlibApi::class)
@@ -210,6 +212,7 @@ object CryptoJvm {
 
     /**
      * @param derPublicKeyStr hex 的der 格式的密钥
+     * @param aesKey 要加密的 AES 密钥
      */
     @Suppress("DeprecatedProvider")
     @OptIn(ExperimentalStdlibApi::class)
@@ -229,9 +232,7 @@ object CryptoJvm {
     fun createKeystore(keystorePassword: CharArray, path: String) {
         val file = File(path)
         file.parentFile!!.let {
-            if (!it.exists() && !it.mkdirs()) {
-                throw IllegalStateException("can not create parent file $path")
-            }
+            check(it.exists() || it.mkdirs()) { "can not create parent file $path" }
         }
         val alias = "snapshot"
         val validityDays = 365L

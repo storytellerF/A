@@ -104,7 +104,7 @@ private fun TranslateModelPreferenceItem() {
             it.value to it.key
         },
         summary = {
-            if (it.isNullOrBlank()) {
+            if (it.isBlank()) {
                 getGPTModelDirectory().toString()
                 Text("support ${gpt.supportList}")
             } else {

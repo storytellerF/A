@@ -4,7 +4,7 @@
 
 package headless
 
-import PlatformHeadlessTest
+import com.storyteller_f.a.app.PlatformHeadlessTest
 import com.storyteller_f.a.client.compose_core.utils.SessionHistoryManager
 import com.storyteller_f.a.client.compose_core.utils.buildSessionHistoryFactory
 import com.storyteller_f.a.client.compose_core.utils.createSettings

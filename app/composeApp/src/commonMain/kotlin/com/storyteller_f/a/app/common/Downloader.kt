@@ -220,8 +220,8 @@ class DownloaderImpl(val uiViewModel: UIViewModel, val register: TaskRegister) :
                 return
             }
         }
-        if (path.toString().endsWith(".zip")) {
-            if (extractFile(path, modelStorage, id)) return
+        if (path.toString().endsWith(".zip") && extractFile(path, modelStorage, id)) {
+            return
         }
         updateDownloadInfo(modelStorage, id) {
             it.copy(status = DownloadStatus.PROCESSED)
@@ -267,7 +267,7 @@ class DownloaderImpl(val uiViewModel: UIViewModel, val register: TaskRegister) :
         }
         try {
             userSession.serviceCatching {
-                segmentedDownload(modelStorage, fileInfo, path)
+                segmentedDownload(this, modelStorage, fileInfo, path)
             }.getOrThrow()
             updateDownloadInfo(modelStorage, id) { currentDownload ->
                 currentDownload.copy(
@@ -291,7 +291,7 @@ class DownloaderImpl(val uiViewModel: UIViewModel, val register: TaskRegister) :
         }
     }
 
-    suspend fun HttpClient.segmentedDownload(modelStorage: ModelStorage, fileInfo: FileInfo, path: Path) {
+    suspend fun segmentedDownload(client: HttpClient, modelStorage: ModelStorage, fileInfo: FileInfo, path: Path) {
         var downloadedBytes = 0L
 
         // Check if the file already exists and get its size to resume the download
@@ -299,14 +299,14 @@ class DownloaderImpl(val uiViewModel: UIViewModel, val register: TaskRegister) :
             downloadedBytes = SystemFileSystem.metadataOrNull(path)?.size ?: 0L
         }
 
-        prepareGet(fileInfo.url) {
+        client.prepareGet(fileInfo.url) {
             // Set the Range header to request the remaining part of the file
             header(HttpHeaders.Range, "bytes=$downloadedBytes-")
         }.execute { httpResponse ->
             // Check for successful partial or full content
             val httpStatus = httpResponse.status
-            if (httpStatus != HttpStatusCode.OK && httpStatus != HttpStatusCode.PartialContent) {
-                throw IllegalStateException("Download failed: ${httpStatus.description}")
+            check(httpStatus == HttpStatusCode.OK || httpStatus == HttpStatusCode.PartialContent) {
+                "Download failed: ${httpStatus.description}"
             }
 
             val channel: ByteReadChannel = httpResponse.body()

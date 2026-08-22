@@ -45,7 +45,7 @@ actual abstract class MediaPlayerService {
         val session = currentPlayerState ?: return
         val lastUuid = session.lastUuid ?: return
         Napier.i(tag = "MediaPlayer") {
-            "MediaPlayerService release ${lastUuid ?: "<none>"} ${localMediaPlaySession.uuid} count: ${session.uuidCount}"
+            "MediaPlayerService release $lastUuid ${localMediaPlaySession.uuid} count: ${session.uuidCount}"
         }
         if (lastUuid != localMediaPlaySession.uuid) return
         val new = session.uuids.subList(0, session.uuids.size - 1)

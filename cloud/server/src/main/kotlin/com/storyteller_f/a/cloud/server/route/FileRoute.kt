@@ -285,7 +285,7 @@ suspend fun RoutingContext.uploadMedia(
             val fileInfos =
                 when (part) {
                     is PartData.FileItem -> {
-                        val fileName = part.originalFileName as String
+                        val fileName = checkNotNull(part.originalFileName) { "Uploaded file name is missing" }
                         backend.uploadFilesFromChannel(root, it, fileName, query.sha256, ip) {
                             part.provider()
                         }

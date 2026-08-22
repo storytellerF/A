@@ -78,7 +78,7 @@ fun Modifier.androidPipMode(enable: Boolean, ratio: Rational): Modifier {
         // 12 之后引入
         builder.setSourceRectHint(sourceRect)
         builder.setAutoEnterEnabled(true)
-        builder.setActions(listOf())
+        builder.setActions(emptyList())
         builder.setAspectRatio(ratio)
         context.findActivity().setPictureInPictureParams(builder.build())
     }

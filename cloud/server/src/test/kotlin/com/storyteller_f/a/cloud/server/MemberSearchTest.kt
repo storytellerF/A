@@ -74,7 +74,7 @@ class MemberSearchTest {
     }
 
     @Test
-    fun `test private room member search with keyword and objectId`() =
+    fun `search private room members by keyword and id`() =
         test {
         val firstUser =
             attachSession {
@@ -220,7 +220,7 @@ class MemberSearchTest {
     }
 
     @Test
-    fun `test community member search with keyword and objectId`() =
+    fun `search community members by keyword and id`() =
         test {
         val communityId =
             attachSession {

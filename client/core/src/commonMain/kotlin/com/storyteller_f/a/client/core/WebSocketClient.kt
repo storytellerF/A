@@ -146,19 +146,14 @@ class WebSocketClientImpl(
                     frameFlow.emit(frame)
                 } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
                     throw cancellation
+                } catch (closed: ClosedReceiveChannelException) {
+                    Napier.e(closed, tag = "ClientWebSocket") {
+                        "WebSocket closed ${userInfo.id}"
+                    }
+                    break
                 } catch (e: Exception) {
-                    if (e is ClosedReceiveChannelException) {
-                        Napier.e(tag = "ClientWebSocket") {
-                            "WebSocket closed ${userInfo.id}"
-                        }
-                    } else if (e is CancellationException) {
-                        Napier.i(tag = "ClientWebSocket") {
-                            "WebSocket cancel: ${e.message ?: "<none>"}"
-                        }
-                    } else {
-                        Napier.e(e, tag = "ClientWebSocket") {
-                            "WebSocket failed: ${e.message ?: "<none>"} ${userInfo.id}"
-                        }
+                    Napier.e(e, tag = "ClientWebSocket") {
+                        "WebSocket failed: ${e.message ?: "<none>"} ${userInfo.id}"
                     }
                     break
                 }

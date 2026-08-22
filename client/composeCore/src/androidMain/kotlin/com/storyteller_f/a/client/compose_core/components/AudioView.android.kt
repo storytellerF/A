@@ -46,32 +46,23 @@ import kotlin.uuid.ExperimentalUuidApi
 
 @Composable
 actual fun AudioViewEmbed(remoteMediaItem: RemoteMediaItem) {
-    MediaPlayerEmbed(
-        remoteMediaItem,
-        { playingSession, localMediaPlaySession ->
-            AudioPlayer(playingSession, localMediaPlaySession, remoteMediaItem)
-        },
-    )
+    MediaPlayerEmbed(remoteMediaItem) { playingSession, localMediaPlaySession ->
+        AudioPlayer(playingSession, localMediaPlaySession, remoteMediaItem)
+    }
 }
 
 @Composable
 actual fun AudioViewFilled(remoteMediaItem: RemoteMediaItem) {
-    MediaPlayerFilled(
-        remoteMediaItem,
-        { playingSession, localMediaPlaySession ->
-            AudioPlayer(playingSession, localMediaPlaySession, remoteMediaItem)
-        },
-    )
+    MediaPlayerFilled(remoteMediaItem) { playingSession, localMediaPlaySession ->
+        AudioPlayer(playingSession, localMediaPlaySession, remoteMediaItem)
+    }
 }
 
 @Composable
 actual fun AudioViewFullScreen(remoteMediaItem: RemoteMediaItem) {
-    MediaPlayerFullScreen(
-        remoteMediaItem,
-        { playingSession, localMediaPlaySession ->
-            AudioPlayer(playingSession, localMediaPlaySession, remoteMediaItem)
-        },
-    )
+    MediaPlayerFullScreen(remoteMediaItem) { playingSession, localMediaPlaySession ->
+        AudioPlayer(playingSession, localMediaPlaySession, remoteMediaItem)
+    }
 }
 
 @OptIn(ExperimentalUuidApi::class)

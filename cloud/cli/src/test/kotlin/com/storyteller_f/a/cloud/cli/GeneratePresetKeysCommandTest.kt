@@ -66,7 +66,7 @@ class GeneratePresetKeysCommandTest {
     }
 
     @Test
-    fun `refuse to overwrite existing preset keys by default`() =
+    fun `existing preset keys are not overwritten`() =
         runTest {
         setLogPath()
         loadCryptoLibIfNeed()

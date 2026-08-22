@@ -87,22 +87,22 @@ suspend fun Backend.processUserFavoriteToUserFavoriteInfo(uid: PrimaryKey, userF
             }
         }
 
-        val topics = getTopicByIds(topicIds, uid).getOrNull()?.associateBy { it.id } ?: emptyMap()
+        val topics = getTopicByIds(topicIds, uid).getOrNull()?.associateBy { it.id }.orEmpty()
         val communities =
             database.community.getRawCommunities(ObjectListFetch.IdListFetch(communityIds))
                 .mapResult { processRawCommunityToCommunityInfo(it) }
-                .getOrNull()?.associateBy { it.id } ?: emptyMap()
+                .getOrNull()?.associateBy { it.id }.orEmpty()
         val rooms =
             getRoomInfoList(ObjectListFetch.IdListFetch(roomIds), uid)
-                .getOrNull()?.associateBy { it.id } ?: emptyMap()
+                .getOrNull()?.associateBy { it.id }.orEmpty()
         val users =
             getUserInfoList(ObjectListFetch.IdListFetch(userIds))
-                .getOrNull()?.associateBy { it.id } ?: emptyMap()
+                .getOrNull()?.associateBy { it.id }.orEmpty()
         val titles = titleIds.mapNotNull { getTitleInfo(it).getOrNull() }.associateBy { it.id }
         val files =
             database.file.getFileRecordByIds(fileIds)
                 .mapResult { processFileRecordToFileInfo(it) }
-                .getOrNull()?.associateBy { it.id } ?: emptyMap()
+                .getOrNull()?.associateBy { it.id }.orEmpty()
 
         userFavorite.map {
             val favoriteInfo = it.toUserFavoriteInfo()

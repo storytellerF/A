@@ -105,7 +105,7 @@ fun test(overrideEnv: Map<String, String> = emptyMap(), block: suspend TestMate.
             it.fileName != "TestBuilder.kt"
         }
     if (methodNameIndex < 0) {
-        throw IllegalStateException("test not found")
+        error("test not found")
     }
     val methodName = traceElements[methodNameIndex + 1].methodName
     Napier.i {
@@ -254,7 +254,10 @@ private suspend fun receiveExplainResult(task: CompletableDeferred<Unit>, port: 
 }
 
 fun saveDatabaseExplainResult(explainResult: ExplainResult, uuid: String) {
-    val (dialect, statements, result, stackTraceString) = explainResult
+    val dialect = explainResult.dialect
+    val statements = explainResult.sql
+    val result = explainResult.result
+    val stackTraceString = explainResult.stackTraceString
     val file =
         File(
             "./build/test/session/$uuid/$dialect/${extractTableNames(
@@ -263,7 +266,7 @@ fun saveDatabaseExplainResult(explainResult: ExplainResult, uuid: String) {
         )
     file.parentFile!!.let {
         if (!it.exists() && !it.mkdirs()) {
-            throw IllegalStateException("mkdirs failed ${it.canonicalPath}")
+            error("mkdirs failed ${it.canonicalPath}")
         }
     }
     val newText =

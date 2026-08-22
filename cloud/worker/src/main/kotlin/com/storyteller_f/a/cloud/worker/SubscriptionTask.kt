@@ -83,7 +83,7 @@ private suspend fun Backend.processTopicSubscription(topic: Topic, fetchSize: In
         userSubscriptions.forEach { userSubscription ->
             val rawUser =
                 database.user.getRawUser(ObjectFetch.IdFetch(userSubscription.uid))
-                    .getOrThrow() ?: throw IllegalStateException("user not found")
+                    .getOrThrow() ?: error("user not found")
             sendTopicToNotificationRoom(systemUserId, rawUser.user, content).getOrThrow()
             database.subscription.insertSubscriptionSentLog(
                 SubscriptionSentLog(

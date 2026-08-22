@@ -125,7 +125,7 @@ private fun generateRecoveryCodes(): List<String> =
 
 private fun hashRecoveryCode(code: String): String {
     val bytes = MessageDigest.getInstance("SHA-256").digest(code.encodeToByteArray())
-    return bytes.joinToString("") { "%02x".format(it) }
+    return bytes.joinToString("") { it.toUByte().toString(radix = 16).padStart(2, '0') }
 }
 
 private fun buildOtpAuthUri(label: String, secret: String): String {

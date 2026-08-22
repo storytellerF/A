@@ -62,14 +62,14 @@ private suspend fun Backend.processTitleList(list: List<RawTitle>, uid: PrimaryK
     val favoriteMap =
         if (uid != null && titleIds.isNotEmpty()) {
             database.favorite.getHasFavorite(ObjectListFetch.IdListFetch(titleIds), uid)
-                .getOrNull()?.associateBy { it.objectId } ?: emptyMap()
+                .getOrNull()?.associateBy { it.objectId }.orEmpty()
         } else {
             emptyMap()
         }
     val subscriptionMap =
         if (uid != null && titleIds.isNotEmpty()) {
             database.subscription.getHasSubscription(ObjectListFetch.IdListFetch(titleIds), uid)
-                .getOrNull()?.associateBy { it.objectId } ?: emptyMap()
+                .getOrNull()?.associateBy { it.objectId }.orEmpty()
         } else {
             emptyMap()
         }
@@ -193,7 +193,7 @@ private fun processTitleList(
 
 suspend fun Backend.getAllTitles(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<TitleInfo>> =
     database.title.getAllRawTitles(primaryKeyFetch).mapPagingResultNotNull { list ->
-        processTitleList(list, null).map { it ?: emptyList() }
+        processTitleList(list, null).map { it.orEmpty() }
     }
 
 suspend fun Backend.getTitleInfo(id: PrimaryKey): Result<TitleInfo?> =

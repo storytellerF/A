@@ -14,7 +14,10 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 
 /**
+ * @param text 需要测量的文本
+ * @param textStyle 用于测量的文本样式
  * @param extra 输入框中包含无法控制的padding
+ * @param textComponent 接收行数和可用宽度的内容组件
  */
 @Composable
 fun MeasureTextLineCount(text: String, textStyle: TextStyle, extra: Dp, textComponent: @Composable (Int, Int) -> Unit) {

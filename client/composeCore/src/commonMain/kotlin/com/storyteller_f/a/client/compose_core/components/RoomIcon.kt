@@ -60,7 +60,7 @@ fun RoomIcon(roomInfo: RoomInfo?, width: Dp, setClickEvent: Boolean, updateDialo
                 }.border(1.dp, Color.Gray, shape),
             contentAlignment = Alignment.Center,
         ) {
-            Text(roomInfo?.name?.let { safeFirstUnicode(it) } ?: "")
+            Text(roomInfo?.name?.let { safeFirstUnicode(it) }.orEmpty())
         }
     }
 }

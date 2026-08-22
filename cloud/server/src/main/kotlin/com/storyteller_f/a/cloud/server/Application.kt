@@ -77,7 +77,6 @@ import io.ktor.server.plugins.calllogging.CallLogging
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.partialcontent.PartialContent
 import io.ktor.server.plugins.ratelimit.RateLimit
-import io.ktor.server.request.header
 import io.ktor.server.request.httpMethod
 import io.ktor.server.request.queryString
 import io.ktor.server.request.uri
@@ -292,8 +291,8 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
     val databaseConnection = databaseConnection(env)
 
     val buildType = env["BUILD_TYPE"] ?: "prod"
-    val flavor = env["FLAVOR"] ?: throw IllegalStateException("FLAVOR is empty")
-    val enableSignUp = env["ENABLE_SIGN_UP"]?.toBoolean() ?: true
+    val flavor = env["FLAVOR"] ?: error("FLAVOR is empty")
+    val enableSignUp = env["ENABLE_SIGN_UP"]?.toBoolean() != false
 
     val topicSearchService = buildTopicSearchService(env)
     val userSearchService = buildUserSearchService(env)

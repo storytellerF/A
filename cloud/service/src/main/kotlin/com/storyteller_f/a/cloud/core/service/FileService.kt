@@ -481,14 +481,14 @@ suspend fun Backend.processFileRecordToFileInfo(
     val favoriteMap =
         if (uid != null && fileRecordIds.isNotEmpty()) {
             database.favorite.getHasFavorite(ObjectListFetch.IdListFetch(fileRecordIds), uid)
-                .getOrNull()?.associateBy { it.objectId } ?: emptyMap()
+                .getOrNull()?.associateBy { it.objectId }.orEmpty()
         } else {
             emptyMap()
         }
     val subscriptionMap =
         if (uid != null && fileRecordIds.isNotEmpty()) {
             database.subscription.getHasSubscription(ObjectListFetch.IdListFetch(fileRecordIds), uid)
-                .getOrNull()?.associateBy { it.objectId } ?: emptyMap()
+                .getOrNull()?.associateBy { it.objectId }.orEmpty()
         } else {
             emptyMap()
         }

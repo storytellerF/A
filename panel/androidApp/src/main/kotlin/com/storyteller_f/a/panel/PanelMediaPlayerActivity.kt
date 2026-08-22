@@ -4,7 +4,6 @@
 
 package com.storyteller_f.a.panel
 
-import PanelFilePreviewPage
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -15,6 +14,7 @@ import com.storyteller_f.a.client.compose_core.components.CenterBox
 import com.storyteller_f.a.client.compose_core.components.DefaultMediaPlayListHandlerProvider
 import com.storyteller_f.a.client.compose_core.components.LocalMediaPlayListHandlerProvider
 import com.storyteller_f.a.client.compose_core.components.LocalMediaPlayerService
+import com.storyteller_f.a.panel.pages.PanelFilePreviewPage
 
 class PanelMediaPlayerActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

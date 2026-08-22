@@ -54,9 +54,9 @@ private fun generateCodeBlockMarkdown(block: ContentBlock.CodeBlock): String {
 }
 
 private fun generateImageMarkdown(block: ContentBlock.ImageBlock): String {
-    val alt = if (block.alt.isNotBlank()) block.alt else block.name
+    val alt = block.alt.ifBlank { block.name }
     val title = if (block.title.isNotBlank()) " \"${block.title}\"" else ""
-    val url = if (block.url.isNotBlank()) block.url else block.name
+    val url = block.url.ifBlank { block.name }
     return "![$alt]($url$title)"
 }
 

@@ -4,7 +4,6 @@
 
 package com.storyteller_f.a.cloud.server
 
-import io.github.aakira.napier.Napier
 import com.storyteller_f.a.api.NewCommunity
 import com.storyteller_f.a.api.NewFavorite
 import com.storyteller_f.a.api.NewSubscription
@@ -40,6 +39,7 @@ import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.UploadRecordStatus
 import com.storyteller_f.shared.utils.sha256
+import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
@@ -130,10 +130,10 @@ class FileTest {
                     output.write(image)
                 }
             }
-        } ?: throw IllegalStateException("flac is not exists")
+        } ?: error("flac is not exists")
         ClassLoader.getSystemResourceAsStream("cover.jpg")?.use {
             Files.copy(it, Path("build/test/cover_origin.jpg"), StandardCopyOption.REPLACE_EXISTING)
-        } ?: throw IllegalStateException("cover is not exists")
+        } ?: error("cover is not exists")
         val img1 = opencv_imgcodecs.imread("build/test/cover.jpg")
         if (img1.empty()) {
             error("图像加载失败！")
@@ -361,7 +361,7 @@ class FileTest {
 
     @Test
     @Ignore
-    fun `file sha256 mismatch makes chunk complete fail and marks record failed`() =
+    fun `sha256 mismatch fails chunk completion and record`() =
         test {
         attachSession { session ->
             val tuple = ObjectTuple(session.uid, ObjectType.USER)
@@ -409,7 +409,7 @@ class FileTest {
     }
 
     @Test
-    fun `test get file refs when file is referenced by topic`() =
+    fun `get refs for a file referenced by a topic`() =
         test {
         attachSession { session ->
             // 上传一个文件
@@ -453,7 +453,7 @@ class FileTest {
     }
 
     @Test
-    fun `test get file refs when file is referenced by multiple topics`() =
+    fun `get refs for a file used by multiple topics`() =
         test {
         attachSession { session ->
             // 上传一个文件
@@ -588,7 +588,7 @@ private fun getMSSIM(i1: Mat, i2: Mat): Scalar? {
     val constant1 = 6.5025
     val constant2 = 58.5225
 
-    /**************************** INITS  */
+    // Initialize intermediate matrices.
     val dataType: Int = opencv_core.CV_32F
     val matrix1 = Mat()
     val matrix2 = Mat()
@@ -598,8 +598,7 @@ private fun getMSSIM(i1: Mat, i2: Mat): Scalar? {
     val matrix1Squared = matrix1.mul(matrix1).asMat() // I1^2
     val matrix1Matrix2 = matrix1.mul(matrix2).asMat() // I1 * I2
 
-    /************************** END INITS  */
-    // PRELIMINARY COMPUTING
+    // Compute intermediate statistics.
     val mean1 = Mat()
     val mean2 = Mat()
     opencv_imgproc.GaussianBlur(matrix1, mean1, Size(11, 11), 1.5)

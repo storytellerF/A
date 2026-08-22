@@ -169,7 +169,7 @@ class CliTest {
 
     @Suppress("LongMethod")
     @Test
-    fun `cli apply community and room presets visible to admin`() =
+    fun `admin sees CLI community and room presets`() =
         test {
         ensureSystemUser(this)
 
@@ -255,7 +255,7 @@ class CliTest {
 
     @Suppress("LongMethod")
     @Test
-    fun `cli apply topic and title presets reflected in overview`() =
+    fun `overview reflects CLI topic and title presets`() =
         test {
         ensureSystemUser(this)
 
@@ -394,7 +394,7 @@ class CliTest {
     }
 
     @Test
-    fun `cli apply panel account preset can be queried by address`() =
+    fun `panel preset is queryable by address`() =
         test {
         ensureSystemUser(this)
 
@@ -467,7 +467,12 @@ class CliTest {
             backend.applyPreset(presetUser, presetDir)
             backend.applyPreset(presetTopic, presetDir)
 
-            val uid = backend.database.user.getRawUsers(AidListFetch(listOf(userAid))).getOrThrow().first().user.id
+            val uid =
+                backend.database.user
+                    .getRawUsers(AidListFetch(listOf(userAid)))
+                    .getOrThrow()
+                    .first()
+                    .user.id
             backend.doAcgTask()
             val userAcg =
                 backend.database.user.getUserAcgByIds(

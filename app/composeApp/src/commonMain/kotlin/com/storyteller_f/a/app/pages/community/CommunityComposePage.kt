@@ -115,7 +115,7 @@ fun CommunityComposeInternal(
 
 @Composable
 private fun SelectedMemberPolicyDescription(radioOptions: List<MemberJoinPolicy>, memberJoinPolicy: MemberPolicy) {
-    val selectedDescription = radioOptions.firstOrNull { it.policy == memberJoinPolicy }?.description ?: ""
+    val selectedDescription = radioOptions.firstOrNull { it.policy == memberJoinPolicy }?.description.orEmpty()
     Text(selectedDescription, modifier = Modifier.padding(horizontal = 10.dp))
 }
 

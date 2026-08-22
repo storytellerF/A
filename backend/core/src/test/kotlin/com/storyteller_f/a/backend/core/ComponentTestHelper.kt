@@ -43,7 +43,7 @@ fun buildMemoryDatabaseConnection(): DatabaseConnection {
     val h2File = File("./build/test/session/$uuid/h2/default")
     h2File.parentFile!!.let {
         if (!it.exists() && !it.mkdirs()) {
-            throw IllegalStateException("mkdirs failed ${it.canonicalPath}")
+            error("mkdirs failed ${it.canonicalPath}")
         }
     }
     val url = "r2dbc:h2:file:///${h2File.path.replace("\\", "/")}"

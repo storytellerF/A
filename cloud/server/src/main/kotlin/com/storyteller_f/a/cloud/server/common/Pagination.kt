@@ -32,7 +32,7 @@ interface PagingGenerator<in T, F : Any> {
     fun generate(list: List<T>, fetch: F): Pair<String?, String?>
 }
 
-abstract class PrimaryKeyPagingGenerator<T>(val block: (T) -> PrimaryKey) : PagingGenerator<T, PrimaryKeyFetch> {
+open class PrimaryKeyPagingGenerator<T>(val block: (T) -> PrimaryKey) : PagingGenerator<T, PrimaryKeyFetch> {
     override fun parse(prePageToken: String?, nextPageToken: String?, size: Int): PrimaryKeyFetch =
         PrimaryKeyFetch(
         when {
@@ -76,12 +76,9 @@ abstract class PrimaryKeyPagingGenerator<T>(val block: (T) -> PrimaryKey) : Pagi
 object IdentifiablePagingGenerator :
     PrimaryKeyPagingGenerator<PrimaryKeyIdentifiable>(PrimaryKeyIdentifiable::id)
 
-fun <T> pagingGenerator(block: (T) -> PrimaryKey): PrimaryKeyPagingGenerator<T> =
-    object : PrimaryKeyPagingGenerator<T>(
-    block,
-) {}
+fun <T> pagingGenerator(block: (T) -> PrimaryKey): PrimaryKeyPagingGenerator<T> = PrimaryKeyPagingGenerator(block)
 
-abstract class OffsetPagingGenerator<T> : PagingGenerator<T, OffsetFetch> {
+open class OffsetPagingGenerator<T> : PagingGenerator<T, OffsetFetch> {
     override fun parse(prePageToken: String?, nextPageToken: String?, size: Int): OffsetFetch {
         val cursor =
             when {

@@ -1,6 +1,6 @@
 /*
  * This is a private project. All rights reserved.
-*/
+ */
 
 package com.storyteller_f.a.dev.appium
 
@@ -23,10 +23,10 @@ interface AppiumTestScope {
     suspend fun assertAsciidocPreviewOpened(source: String)
 }
 
-abstract class PlatformAppiumHelper {
-    abstract val capturesExternalAsciidocPreview: Boolean
+interface PlatformAppiumHelper {
+    val capturesExternalAsciidocPreview: Boolean
 
-    abstract suspend fun <T> runTest(
+    suspend fun <T> runTest(
         testName: String,
         target: TargetAppiumHelper,
         captureBrowserOpen: Boolean = false,
@@ -35,7 +35,7 @@ abstract class PlatformAppiumHelper {
     )
 }
 
-class AndroidAppiumHelper : PlatformAppiumHelper() {
+class AndroidAppiumHelper : PlatformAppiumHelper {
     override val capturesExternalAsciidocPreview = false
 
     override suspend fun <T> runTest(
@@ -255,7 +255,7 @@ class AndroidAppiumHelper : PlatformAppiumHelper() {
     }
 }
 
-class DesktopAppiumHelper : PlatformAppiumHelper() {
+class DesktopAppiumHelper : PlatformAppiumHelper {
     override val capturesExternalAsciidocPreview = false
 
     override suspend fun <T> runTest(
@@ -302,13 +302,15 @@ class DesktopAppiumHelper : PlatformAppiumHelper() {
             val setup = beforeLaunch(ports, sessionFile.canonicalPath)
             val launchScript =
                 buildLaunchScript(
-                    ports = ports,
-                    sessionFile = sessionFile,
-                    runtimeDir = runtimeDir,
-                    appLogFile = appLogFile,
-                    runtimeClasspath = resolveRuntimeClasspath(config),
-                    config = config,
-                    browserCapture = browserCapture,
+                    LaunchScriptContext(
+                        ports = ports,
+                        sessionFile = sessionFile,
+                        runtimeDir = runtimeDir,
+                        appLogFile = appLogFile,
+                        runtimeClasspath = resolveRuntimeClasspath(config),
+                        config = config,
+                        browserCapture = browserCapture,
+                    ),
                 )
 
             var driver: AppiumDriver? = null
@@ -326,14 +328,17 @@ class DesktopAppiumHelper : PlatformAppiumHelper() {
                 throw cancellation
             } catch (throwable: Throwable) {
                 DesktopAppiumFailureDumper.dumpOnFailure(
-                    suiteName = config.suiteName,
-                    appLabel = config.appLabel,
-                    testName = testName,
-                    sessionFile = sessionFile,
+                    context =
+                    DesktopAppiumFailureDumper.Context(
+                        suiteName = config.suiteName,
+                        appLabel = config.appLabel,
+                        testName = testName,
+                        sessionFile = sessionFile,
+                        logDir = logDir,
+                        appLogFile = appLogFile,
+                    ),
                     driver = driver,
                     throwable = throwable,
-                    logDir = logDir,
-                    appLogFile = appLogFile,
                 )
                 throw throwable
             } finally {
@@ -356,15 +361,24 @@ class DesktopAppiumHelper : PlatformAppiumHelper() {
             ?.takeIf { it.isNotEmpty() }
             ?: error(config.runtimeClasspathErrorMessage)
 
-    private fun buildLaunchScript(
-        ports: AppiumPorts,
-        sessionFile: File,
-        runtimeDir: File,
-        appLogFile: File,
-        runtimeClasspath: String,
-        config: DesktopAppiumRuntimeConfig,
-        browserCapture: DesktopBrowserCapture?,
-    ): File {
+    private data class LaunchScriptContext(
+        val ports: AppiumPorts,
+        val sessionFile: File,
+        val runtimeDir: File,
+        val appLogFile: File,
+        val runtimeClasspath: String,
+        val config: DesktopAppiumRuntimeConfig,
+        val browserCapture: DesktopBrowserCapture?,
+    )
+
+    private fun buildLaunchScript(context: LaunchScriptContext): File {
+        val ports = context.ports
+        val sessionFile = context.sessionFile
+        val runtimeDir = context.runtimeDir
+        val appLogFile = context.appLogFile
+        val runtimeClasspath = context.runtimeClasspath
+        val config = context.config
+        val browserCapture = context.browserCapture
         val javaExec = System.getenv("APP_DESKTOP_TEST_JAVA") ?: "java"
         val atspiClasspath =
             listOf(runtimeClasspath, "/usr/share/java/java-atk-wrapper.jar")

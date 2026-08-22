@@ -199,7 +199,7 @@ class UserTest {
                 derPrivateKey = decrypted,
                 derPublicKey = publicKey,
                 pemEncryptionPrivateKey = "",
-                derEncryptionPrivateKey = decryptedEnc ?: "",
+                derEncryptionPrivateKey = decryptedEnc.orEmpty(),
                 derEncryptionPublicKey = "",
             )
         } else {

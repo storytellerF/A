@@ -74,20 +74,17 @@ object AndroidAppPlatformImpl : AppPlatformImpl {
             createShortcut(context, shortcutId, person, room, iconCompat)
 
             val notification =
-                getBubbleNotificationBuilder(context, user, channel, shortcutId, person, room, iconCompat)
+                getBubbleNotificationBuilder(
+                    BubbleNotificationContext(context, user, channel, shortcutId, person, room, iconCompat),
+                )
             managerCompat.notify(notifyId.getAndIncrement(), notification.build())
         }
     }
 
     private fun getBubbleNotificationBuilder(
-        context: Application,
-        user: Person,
-        channel: String,
-        shortcutId: String,
-        person: Person,
-        room: RoomInfo,
-        bitmap: IconCompat,
-    ): NotificationCompat.Builder {
+        notificationContext: BubbleNotificationContext,
+    ): NotificationCompat.Builder =
+        with(notificationContext) {
         val bubbleIntent =
             PendingIntent.getActivity(
                 context,
@@ -97,7 +94,7 @@ object AndroidAppPlatformImpl : AppPlatformImpl {
             )
         val bubbleData = NotificationCompat.BubbleMetadata.Builder(bubbleIntent, bitmap).setDesiredHeight(600)
         val style = NotificationCompat.MessagingStyle(user).setGroupConversation(false)
-        return NotificationCompat.Builder(context, channel)
+        NotificationCompat.Builder(context, channel)
             .setSmallIcon(R.drawable.ic_notify)
             .setBubbleMetadata(bubbleData.build())
             .setLocusId(LocusIdCompat(shortcutId))
@@ -117,6 +114,16 @@ object AndroidAppPlatformImpl : AppPlatformImpl {
             .setCategory(NotificationCompat.CATEGORY_MESSAGE)
             .setContentTitle(room.name)
     }
+
+    private data class BubbleNotificationContext(
+        val context: Application,
+        val user: Person,
+        val channel: String,
+        val shortcutId: String,
+        val person: Person,
+        val room: RoomInfo,
+        val bitmap: IconCompat,
+    )
 
     private fun createShortcut(
         context: Application,

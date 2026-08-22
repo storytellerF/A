@@ -110,9 +110,10 @@ private fun AccountSwitchInternal(viewModel: ChildAccountsViewModel) {
         }
         FilledIconButton({
             scope.launch {
-                globalDialogController.useResult {
-                    mainSessionManager.addChildAccount()
-                }.getOrNull()?.let {
+                if (globalDialogController.useResult {
+                        mainSessionManager.addChildAccount()
+                    }.isSuccess
+                ) {
                     pagingItems.refresh()
                 }
             }
@@ -193,7 +194,7 @@ suspend fun AppGlobalDialogController.switchUser(childAccountInfo: ChildAccountI
     useResult {
         algoRunCatching {
             val currentUserPass = mainInstance.sessionManager.passHolder.currentUserPass
-            val userPass = currentUserPass ?: throw IllegalStateException("user not login")
+            val userPass = checkNotNull(currentUserPass) { "user not login" }
             val (decrypted, decryptedEnc) =
                 userPass.decryptChildAccount(
                     childAccountInfo.encryptedPrivateKey,
@@ -208,9 +209,7 @@ suspend fun AppGlobalDialogController.switchUser(childAccountInfo: ChildAccountI
             val address = algoImpl.calcAddress(publicKey).getOrThrow()
             val authKey =
                 if (childAccountInfo.algoType == com.storyteller_f.shared.model.AlgoType.DILITHIUM) {
-                    if (decryptedEnc == null) {
-                        throw IllegalStateException("decryptedEnc is null")
-                    }
+                    checkNotNull(decryptedEnc) { "decryptedEnc is null" }
                     val type2Algo = algoImpl.encryptionAlgo as Type2Algo
                     val pemPrivateKey =
                         type2Algo.getPemEncryptionPrivateKeyFromDerPrivateKey(decryptedEnc)

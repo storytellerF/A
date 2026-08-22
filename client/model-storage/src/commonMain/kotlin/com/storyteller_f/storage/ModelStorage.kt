@@ -202,7 +202,7 @@ fun RoomCollection.getName(): String =
     is RoomCollection.AllRooms -> "all_rooms_$isPrivate"
 
     // 添加社区房间相关的名称生成
-    is RoomCollection.CommunityRooms -> "community_rooms_${communityId ?: "<none>"}"
+    is RoomCollection.CommunityRooms -> "community_rooms_$communityId"
 
     is RoomCollection.CommunityRoomSearch -> "community_rooms_${communityId}_$word"
 }
@@ -231,14 +231,20 @@ fun TopicCollection.getName(): String =
 fun CommunityCollection.getName(): String =
     when (this) {
     CommunityCollection.Communities -> "communities"
-    is CommunityCollection.SearchCommunity -> "communities_${word}_${target ?: "<none>"}_${joinStatusSearch}_${hasPointer ?: "<none>"}"
+
+    is CommunityCollection.SearchCommunity ->
+        "communities_${word}_${target ?: "<none>"}_${joinStatusSearch}_${hasPointer ?: "<none>"}"
+
     CommunityCollection.AllCommunities -> "all_communities"
 }
 
 fun TitleCollection.getName(): String =
     when (this) {
-    is TitleCollection.SearchTitle -> "titles_${uid}_${searchType}_${status ?: "<none>"}_${type ?: "<none>"}_${scopeId ?: "<none>"}"
+    is TitleCollection.SearchTitle ->
+        "titles_${uid}_${searchType}_${status ?: "<none>"}_${type ?: "<none>"}_${scopeId ?: "<none>"}"
+
     TitleCollection.Titles -> "title"
+
     TitleCollection.AllTitles -> "all_titles"
 }
 

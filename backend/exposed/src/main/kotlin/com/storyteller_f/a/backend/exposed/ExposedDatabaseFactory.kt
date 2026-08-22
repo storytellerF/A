@@ -260,8 +260,7 @@ object ExposedDatabaseFactory {
         Napier.d {
             "connect $connection"
         }
-        val (uri, driver, user, password) = connection
-        return R2dbcDatabase.connect(uri, driver, user, password)
+        return R2dbcDatabase.connect(connection.uri, connection.driver, connection.user, connection.password)
     }
 
     suspend fun init(database: R2dbcDatabase) {

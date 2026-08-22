@@ -149,7 +149,7 @@ private fun HomeNonCompatPage(modifier: Modifier, homeNavRoutes: List<NavRoute>,
             CustomRailNav(
                 currentEntry = currentEntry.toString(),
                 navRoutes = homeNavRoutes,
-                unreadRoomsBadge = hasUnread ?: false,
+                unreadRoomsBadge = hasUnread == true,
             ) { path ->
                 val targetRoute =
                     when (path) {
@@ -231,7 +231,7 @@ private fun HomeCompatPage(homeNavRoutes: List<NavRoute>, modifier: Modifier, de
         CustomBottomNav(
             path = homeNavRoutes[pagerState.currentPage].path,
             navRoutes = homeNavRoutes,
-            unreadRoomsBadge = hasUnread ?: false,
+            unreadRoomsBadge = hasUnread == true,
         ) { path ->
             scope.launch {
                 pagerState.animateScrollToPage(

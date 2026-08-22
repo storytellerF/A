@@ -123,6 +123,9 @@
 
 ## CI
 
+- On Windows, Detekt can intermittently fail while opening Kotlin files with a user-mapped-section error. Run the required Git Bash `scripts/tool_scripts/exec-until-success.sh` wrapper with `--max-workers=1`; successful tasks remain cached across retries.
+- Appium runner sources live in the independent `*Appium` modules and use their target module package, while reusable drivers and helpers use `com.storyteller_f.a.dev.appium`.
+- The shared app interaction buttons are in the `com.storyteller_f.a.client.compose_core.components` package so both app pages and shared client UI conventions resolve them consistently.
 - `cloud:pdfbox` is intentionally excluded from `settings.gradle.kts`, and `cloud/server` snapshot tests cover only the enabled `OpenPdf` implementation. Do not restore the JitPack repository or a `cloud:pdfbox` test dependency merely to compile those tests.
 - `Alpha Server CI` runs backend/server tests before starting the remote alpha service: `:backend:minio:test`, `:cloud:cli:test`, `:cloud:service:test`, and `:cloud:server:test`. It also enables `ENABLE_TEST_CONTAINER=true` to override the Testcontainers path.
 - Test and release workflows use `gradle/actions/setup-gradle@v6` instead of a hand-written `actions/cache` Gradle User Home cache. PR test jobs should set `cache-read-only: true`; release/main jobs should keep the default write behavior and `cache-cleanup: on-success` so PR checks can restore default-branch Gradle cache without trying to save large merge-ref caches. The Windows MSI job temporarily disables cache cleanup because `setup-gradle` v6.2 can remove its Gradle User Home before saving; restore `on-success` after `gradle/actions#1013` is fixed.

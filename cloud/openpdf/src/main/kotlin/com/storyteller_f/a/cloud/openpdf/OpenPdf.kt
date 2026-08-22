@@ -440,7 +440,7 @@ class OpenPdfVisitor(
     }
 
     private fun addListItem(node: ASTNode) {
-        val isOrdered = listTypeStack.lastOrNull() ?: false
+        val isOrdered = listTypeStack.lastOrNull() == true
         val depth = listTypeStack.size
         val counter = listCounterStack.lastOrNull() ?: 0
         val prefix = if (isOrdered) "$counter." else "•"
@@ -505,7 +505,7 @@ class OpenPdfVisitor(
                 table.addCell(cell)
             }
             // Fill missing cells if any
-            for (i in cells.size until colCount) {
+            repeat(colCount - cells.size) {
                 table.addCell(PdfPCell(Paragraph("")))
             }
         }

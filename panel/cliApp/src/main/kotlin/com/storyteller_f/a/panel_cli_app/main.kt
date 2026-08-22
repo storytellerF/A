@@ -56,7 +56,7 @@ val logs = mutableStateListOf<String>()
 class ConsoleAntilog : Antilog() {
     override fun performLog(priority: LogLevel, tag: String?, throwable: Throwable?, message: String?) {
         if (message != null) {
-            val prefix = tag?.let { "[$it] " } ?: ""
+            val prefix = tag?.let { "[$it] " }.orEmpty()
             logs.add("$priority $prefix$message")
             if (logs.size > 15) logs.removeAt(0)
         }
@@ -79,14 +79,14 @@ fun sysLogError(s: String, t: Throwable? = null) {
     }
 }
 
-sealed class Screen {
-    data object Main : Screen()
-    data object PromptRegister : Screen()
-    data object PromptLogin : Screen()
-    data class UserList(val users: List<UserInfo>) : Screen()
-    data class CommunityList(val communities: List<CommunityInfo>) : Screen()
-    data class RoomList(val rooms: List<RoomInfo>) : Screen()
-    data class Overview(val state: PanelOverview) : Screen()
+sealed interface Screen {
+    data object Main : Screen
+    data object PromptRegister : Screen
+    data object PromptLogin : Screen
+    data class UserList(val users: List<UserInfo>) : Screen
+    data class CommunityList(val communities: List<CommunityInfo>) : Screen
+    data class RoomList(val rooms: List<RoomInfo>) : Screen
+    data class Overview(val state: PanelOverview) : Screen
 }
 
 @Suppress("CyclomaticComplexMethod", "LongMethod")
@@ -96,6 +96,7 @@ suspend fun handleInput(
     setScreen: (Screen) -> Unit,
     sessionManager: PanelSessionManager,
     passHolder: SimplePassHolder,
+    exit: () -> Nothing,
 ) {
     when (screen) {
         is Screen.Main -> {
@@ -136,7 +137,7 @@ suspend fun handleInput(
                     )
                 }
 
-                "0" -> kotlin.system.exitProcess(0)
+                "0" -> exit()
 
                 else -> sysLog("Invalid Choice")
             }
@@ -146,7 +147,7 @@ suspend fun handleInput(
             var pk = line
             if (pk.isEmpty()) {
                 val algo = getAlgo(AlgoType.P256)
-                pk = algo.generatePemKeyPair().getOrNull()?.first ?: ""
+                pk = algo.generatePemKeyPair().getOrNull()?.first.orEmpty()
                 sysLog("Generated Private Key: $pk")
             }
             if (pk.isNotEmpty()) {
@@ -218,14 +219,14 @@ suspend fun handleInput(
 
 @Suppress("ComplexMethod", "LongMethod")
 @Composable
-fun App(sessionManager: PanelSessionManager, passHolder: SimplePassHolder) {
+fun App(sessionManager: PanelSessionManager, passHolder: SimplePassHolder, exit: () -> Nothing) {
     var screen by remember { mutableStateOf<Screen>(Screen.Main) }
     var inputBuffer by remember { mutableStateOf("") }
     val submitChannel = remember { Channel<String>(Channel.UNLIMITED) }
 
     LaunchedEffect(Unit) {
         for (line in submitChannel) {
-            handleInput(line, screen, { screen = it }, sessionManager, passHolder)
+            handleInput(line, screen, { screen = it }, sessionManager, passHolder, exit)
         }
     }
 
@@ -361,7 +362,7 @@ fun main() {
             }
 
         runMosaicBlocking {
-            App(sessionManager, passHolder)
+            App(sessionManager, passHolder) { kotlin.system.exitProcess(0) }
         }
     }
 }

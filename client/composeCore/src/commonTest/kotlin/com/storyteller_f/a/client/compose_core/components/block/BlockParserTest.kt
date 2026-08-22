@@ -16,7 +16,7 @@ class BlockParserTest {
     // ========== 解析测试 ==========
 
     @Test
-    fun `test parse empty markdown returns empty paragraph block`() {
+    fun `empty markdown returns an empty paragraph`() {
         val blocks = parseMarkdownToBlocks("")
         assertEquals(1, blocks.size)
         assertTrue(blocks[0] is ContentBlock.Paragraph)
@@ -24,7 +24,7 @@ class BlockParserTest {
     }
 
     @Test
-    fun `test parse blank markdown returns empty paragraph block`() {
+    fun `blank markdown returns an empty paragraph`() {
         val blocks = parseMarkdownToBlocks("   \n\n   ")
         assertEquals(1, blocks.size)
         assertTrue(blocks[0] is ContentBlock.Paragraph)
@@ -470,7 +470,7 @@ Some text
     // ========== 边界情况测试 ==========
 
     @Test
-    fun `test parse invalid object block falls back to code block`() {
+    fun `invalid object falls back to a code block`() {
         val markdown =
             """
             ```object

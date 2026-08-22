@@ -255,7 +255,7 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
     val databaseConnection = databaseConnection(env)
 
     val buildType = env["BUILD_TYPE"] ?: "prod"
-    val flavor = env["FLAVOR"] ?: throw IllegalStateException("FLAVOR is empty")
+    val flavor = env["FLAVOR"] ?: error("FLAVOR is empty")
 
     val customConfig = CustomConfig(buildType, flavor, null)
 

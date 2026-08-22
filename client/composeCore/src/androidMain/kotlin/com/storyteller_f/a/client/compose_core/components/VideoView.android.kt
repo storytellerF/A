@@ -57,32 +57,23 @@ const val EXTRA_CONTROL_PAUSE = 2
 
 @Composable
 actual fun VideoViewEmbed(remoteMediaItem: RemoteMediaItem) {
-    MediaPlayerEmbed(
-        remoteMediaItem,
-        { playingSession, localMediaPlaySession ->
-            VideoPlayer(playingSession, localMediaPlaySession, remoteMediaItem)
-        },
-    )
+    MediaPlayerEmbed(remoteMediaItem) { playingSession, localMediaPlaySession ->
+        VideoPlayer(playingSession, localMediaPlaySession, remoteMediaItem)
+    }
 }
 
 @Composable
 actual fun VideoViewFullScreen(remoteMediaItem: RemoteMediaItem) {
-    MediaPlayerFullScreen(
-        remoteMediaItem,
-        { playingSession, localMediaPlaySession ->
-            VideoPlayer(playingSession, localMediaPlaySession, remoteMediaItem)
-        },
-    )
+    MediaPlayerFullScreen(remoteMediaItem) { playingSession, localMediaPlaySession ->
+        VideoPlayer(playingSession, localMediaPlaySession, remoteMediaItem)
+    }
 }
 
 @Composable
 actual fun VideoViewFilled(remoteMediaItem: RemoteMediaItem) {
-    MediaPlayerFilled(
-        remoteMediaItem,
-        { playingSession, localMediaPlaySession ->
-            VideoPlayer(playingSession, localMediaPlaySession, remoteMediaItem)
-        },
-    )
+    MediaPlayerFilled(remoteMediaItem) { playingSession, localMediaPlaySession ->
+        VideoPlayer(playingSession, localMediaPlaySession, remoteMediaItem)
+    }
 }
 
 @OptIn(ExperimentalUuidApi::class)

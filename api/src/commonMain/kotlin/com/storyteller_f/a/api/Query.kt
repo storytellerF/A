@@ -89,8 +89,8 @@ class NewFavorite(val objectType: ObjectType, val objectId: PrimaryKey) {
 
 @Serializable
 sealed interface TransferAuthKey {
-    abstract val algo: AlgoType
-    abstract val derPublicKey: String
+    val algo: AlgoType
+    val derPublicKey: String
 
     @Serializable
     @SerialName("P256")

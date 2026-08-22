@@ -107,16 +107,16 @@ suspend fun Backend.signIn(data: String, pack: SignInBody): Result<SignInService
         }
 }
 
-sealed class SignInServiceResponse {
-    abstract val uid: PrimaryKey
-    abstract val response: SignInResponse
+sealed interface SignInServiceResponse {
+    val uid: PrimaryKey
+    val response: SignInResponse
 
-    data class Success(val userInfo: UserInfo) : SignInServiceResponse() {
+    data class Success(val userInfo: UserInfo) : SignInServiceResponse {
         override val uid = userInfo.id
         override val response = SignInResponse.Success(userInfo)
     }
 
-    data class RequiresTotp(override val uid: PrimaryKey) : SignInServiceResponse() {
+    data class RequiresTotp(override val uid: PrimaryKey) : SignInServiceResponse {
         override val response = SignInResponse.RequiresTotp
     }
 }

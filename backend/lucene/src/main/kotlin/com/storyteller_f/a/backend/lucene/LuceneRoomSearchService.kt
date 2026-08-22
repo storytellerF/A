@@ -39,11 +39,9 @@ data class LuceneRoomDocument(val roomDocument: RoomDocument) : LuceneDocument {
     }
 
     companion object : LuceneDocumentCompanion<RoomDocument> {
-        override fun restore(id: PrimaryKey, document: Document): RoomDocument {
-            // 尝试从文档中获取communityId，如果不存在则为null
-
-            return RoomDocument(id, document.get("name"), document.get("aid"), document.get("communityId")?.toLong())
-        }
+        // 尝试从文档中获取communityId，如果不存在则为null
+        override fun restore(id: PrimaryKey, document: Document): RoomDocument =
+            RoomDocument(id, document.get("name"), document.get("aid"), document.get("communityId")?.toLong())
     }
 }
 

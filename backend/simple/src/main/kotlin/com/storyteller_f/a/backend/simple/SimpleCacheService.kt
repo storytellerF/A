@@ -23,10 +23,8 @@ class SimpleCacheService<K, V>(private val defaultExpireMillis: Duration) : Cach
 
     override suspend fun get(key: K, block: suspend () -> V): V {
         val entry = cache[key]
-        if (entry != null) {
-            if (System.currentTimeMillis() < entry.expiryTime) {
-                return entry.value
-            }
+        if (entry != null && System.currentTimeMillis() < entry.expiryTime) {
+            return entry.value
         }
         val value = block()
         put(key, value)

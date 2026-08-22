@@ -424,11 +424,14 @@ suspend fun Backend.processRawCommunityToCommunityInfo(list: List<RawCommunity>)
                 val fs = rawResult.community.fontSettings
                 val fontSettingsWithInfo =
                     fs?.let {
+                        val contentFont = if (it.contentFontId == null) null else map[it.contentFontId]
+                        val codeFont = if (it.codeFontId == null) null else map[it.codeFontId]
+                        val fallbackFont = if (it.fallbackFontId == null) null else map[it.fallbackFontId]
                         FontSettingsWithInfo(
                             settings = it,
-                            contentFont = it.contentFontId?.let { id -> map[id] },
-                            codeFont = it.codeFontId?.let { id -> map[id] },
-                            fallbackFont = it.fallbackFontId?.let { id -> map[id] },
+                            contentFont = contentFont,
+                            codeFont = codeFont,
+                            fallbackFont = fallbackFont,
                         )
                     }
                 rawResult.toCommunityIfo(

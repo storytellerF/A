@@ -124,7 +124,7 @@ class FileSystemObjectStorageService(private val url: String, base: Path) : Obje
             copyPacks.map {
                 val p = bucketPath.resolve(it.originFullName)
                 if (!p.exists()) {
-                    throw IllegalStateException("${it.originFullName} not exists")
+                    error("${it.originFullName} not exists")
                 }
                 val targetFile = bucketPath.resolve(it.newFullName).createParentDirectories()
                 p.copyTo(targetFile, true)
@@ -140,7 +140,7 @@ class FileSystemObjectStorageService(private val url: String, base: Path) : Obje
         if (mediaPath.exists()) {
             mediaPath.inputStream()
         } else {
-            throw IllegalStateException("file $name not exists")
+            error("file $name not exists")
         }
     }
 
@@ -155,7 +155,7 @@ class FileSystemObjectStorageService(private val url: String, base: Path) : Obje
         Files.newOutputStream(target).use { out ->
             sourceFullNames.forEach { src ->
                 val p = bucketPath.resolve(src)
-                if (!p.exists()) throw IllegalStateException("source $src not exists")
+                check(p.exists()) { "source $src not exists" }
                 Files.newInputStream(p).use { ins ->
                     ins.copyTo(out)
                 }
@@ -199,7 +199,7 @@ class FileSystemObjectStorageServiceFactory : ObjectStorageServiceFactory {
     override fun match(env: MergedEnv): Boolean = env["MEDIA_SERVICE"] == "filesystem"
 
     override fun build(env: MergedEnv): ObjectStorageService {
-        val url = env["SERVER_URL"] ?: throw IllegalStateException("SERVER_URL is empty")
+        val url = env["SERVER_URL"] ?: error("SERVER_URL is empty")
         val base = env["FILE_SYSTEM_MEDIA_PATH"]
         val p =
             if (base.isNullOrBlank()) {

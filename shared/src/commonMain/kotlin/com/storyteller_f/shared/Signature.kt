@@ -246,12 +246,11 @@ object AlgoP256 : Algo {
                 val macKey = derivedKey.copyOfRange(32, 64)
                 val noMacResult = encrypted.copyOfRange(0, encrypted.size - 32)
                 val macResult = encrypted.copyOfRange(encrypted.size - 32, encrypted.size)
-                if (!CryptographyProvider.Default.get(HMAC).keyDecoder(SHA256)
+                check(
+                    CryptographyProvider.Default.get(HMAC).keyDecoder(SHA256)
                         .decodeFromByteArray(HMAC.Key.Format.RAW, macKey)
-                        .signatureVerifier().tryVerifySignature(noMacResult, macResult)
-                ) {
-                    throw IllegalStateException("hmac verify failed")
-                }
+                        .signatureVerifier().tryVerifySignature(noMacResult, macResult),
+                ) { "hmac verify failed" }
                 val encryptedContent = encrypted.copyOfRange(65, encrypted.size - 32)
 
                 CryptographyProvider.Default.get(AES.GCM)

@@ -1,10 +1,9 @@
 /*
  * This is a private project. All rights reserved.
-*/
+ */
 
 package com.storyteller_f.shared
 
-import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.obj.NewRoomTopic
 import com.storyteller_f.shared.obj.RoomFrame

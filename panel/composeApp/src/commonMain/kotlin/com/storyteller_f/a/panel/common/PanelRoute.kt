@@ -6,7 +6,6 @@
 
 package com.storyteller_f.a.panel.common
 
-import PanelFilePreviewPage
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -52,6 +51,7 @@ import com.storyteller_f.a.panel.pages.AllUsersPage
 import com.storyteller_f.a.panel.pages.CommunityDetailPage
 import com.storyteller_f.a.panel.pages.FileDetailPage
 import com.storyteller_f.a.panel.pages.OverviewPage
+import com.storyteller_f.a.panel.pages.PanelFilePreviewPage
 import com.storyteller_f.a.panel.pages.PanelInputPage
 import com.storyteller_f.a.panel.pages.RoomDetailPage
 import com.storyteller_f.a.panel.pages.TaskRecordsPage

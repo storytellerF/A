@@ -85,7 +85,7 @@ fun setLogPath() {
             return
         }
         val osName = System.getProperty("os.name").lowercase(Locale.getDefault())
-        val envOs = System.getenv("OSTYPE")?.lowercase(Locale.getDefault()) ?: ""
+        val envOs = System.getenv("OSTYPE")?.lowercase(Locale.getDefault()).orEmpty()
 
         // 判断是否是 Windows 原生或 Cygwin / MINGW
         val isWindowsLike = osName.contains("win") || envOs.contains("cygwin") || envOs.contains("mingw")

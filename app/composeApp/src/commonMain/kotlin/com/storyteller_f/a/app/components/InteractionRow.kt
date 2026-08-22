@@ -149,7 +149,7 @@ private fun SubcomposeMeasureScope.measureFirstStage(
     content: @Composable (Int) -> Unit,
 ): Triple<MutableList<MutableList<Placeable>>, Int, Int> {
     val rows = mutableListOf<MutableList<Placeable>>()
-    var currentRow = mutableListOf<Placeable>()
+    var currentRow: List<Placeable> = emptyList()
     var currentWidth = 0
     var index = 0
     var emojiUsedCount = 0
@@ -171,7 +171,7 @@ private fun SubcomposeMeasureScope.measureFirstStage(
 
         when {
             nextWidth <= maxWidth -> {
-                currentRow.addAll(placeableList)
+                currentRow += placeableList
                 currentWidth = nextWidth
                 if (data.isNotEmpty()) {
                     emojiUsedCount++
@@ -182,14 +182,11 @@ private fun SubcomposeMeasureScope.measureFirstStage(
 
             rows.isEmpty() -> {
                 // 当前还没有完整的一行，并且需要折行
-                rows.add(currentRow)
+                rows.add(currentRow.toMutableList())
                 // 新的一行作为第二行，并且把计算好的placeable 放进list 中，防止重复测量
                 index++
                 emojiUsedCount++
-                currentRow =
-                    mutableListOf<Placeable>().apply {
-                        addAll(placeableList)
-                    }
+                currentRow = placeableList
                 currentWidth = placeableList.sumOf {
                     it.width
                 } + horizontalPx.roundToPx() * (placeableList.size - 1)
@@ -197,15 +194,15 @@ private fun SubcomposeMeasureScope.measureFirstStage(
 
             else -> {
                 // 再加一行就成了第二行，后面会退出循环，清空防止再次加一行
-                rows.add(currentRow)
-                currentRow = mutableListOf()
+                rows.add(currentRow.toMutableList())
+                currentRow = emptyList()
                 currentWidth = 0
             }
         }
     }
 
     if (currentRow.isNotEmpty()) {
-        rows.add(currentRow)
+        rows.add(currentRow.toMutableList())
     }
     val lastRowWidth =
         rows.last().let { list ->
