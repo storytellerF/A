@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.exposed.tables
 
 import com.storyteller_f.a.backend.core.types.Quota
@@ -17,13 +21,12 @@ object Quotas : Table() {
     override val primaryKey = PrimaryKey(ownerId, quotaType)
 }
 
-fun Quota.Companion.wrapRow(resultRow: ResultRow): Quota {
-    return Quota(
-        resultRow[Quotas.ownerId],
-        resultRow[Quotas.ownerType],
-        resultRow[Quotas.total],
-        resultRow[Quotas.used],
-        resultRow[Quotas.quotaType],
-        resultRow[Quotas.lockId]
-    )
-}
+fun Quota.Companion.wrapRow(resultRow: ResultRow): Quota =
+    Quota(
+    resultRow[Quotas.ownerId],
+    resultRow[Quotas.ownerType],
+    resultRow[Quotas.total],
+    resultRow[Quotas.used],
+    resultRow[Quotas.quotaType],
+    resultRow[Quotas.lockId],
+)

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.topic
 
 import androidx.compose.foundation.layout.Box
@@ -76,86 +80,59 @@ sealed interface TopicComposeData {
     fun getMediaTarget(): ObjectTuple?
     fun getParent(): ObjectTuple
 
-    data class PublicRoom(
-        val roomId: PrimaryKey,
-        val communityId: PrimaryKey,
-        val parentTuple: ObjectTuple
-    ) : TopicComposeData {
-        override fun getMediaTarget(): ObjectTuple? {
-            return null
-        }
+    data class PublicRoom(val roomId: PrimaryKey, val communityId: PrimaryKey, val parentTuple: ObjectTuple) :
+        TopicComposeData {
+        override fun getMediaTarget(): ObjectTuple? = null
 
         override fun getParent() = parentTuple
     }
 
-    data class PrivateRoom(
-        val roomId: PrimaryKey,
-        val parentTuple: ObjectTuple
-    ) : TopicComposeData {
-        override fun getMediaTarget(): ObjectTuple {
-            return roomId ob ObjectType.ROOM
-        }
+    data class PrivateRoom(val roomId: PrimaryKey, val parentTuple: ObjectTuple) : TopicComposeData {
+        override fun getMediaTarget(): ObjectTuple = roomId ob ObjectType.ROOM
 
         override fun getParent() = parentTuple
     }
 
-    data class User(
-        val uid: PrimaryKey,
-        val objectTuple: ObjectTuple
-    ) : TopicComposeData {
-        override fun getMediaTarget(): ObjectTuple? {
-            return null
-        }
+    data class User(val uid: PrimaryKey, val objectTuple: ObjectTuple) : TopicComposeData {
+        override fun getMediaTarget(): ObjectTuple? = null
 
         override fun getParent() = objectTuple
     }
 
-    data class Community(val communityId: PrimaryKey, val objectTuple: ObjectTuple) :
-        TopicComposeData {
-        override fun getMediaTarget(): ObjectTuple? {
-            return null
-        }
+    data class Community(val communityId: PrimaryKey, val objectTuple: ObjectTuple) : TopicComposeData {
+        override fun getMediaTarget(): ObjectTuple? = null
 
-        override fun getParent(): ObjectTuple {
-            return objectTuple
-        }
+        override fun getParent(): ObjectTuple = objectTuple
     }
 }
 
 @Composable
-fun TopicComposePage(
-    data: TopicComposeData,
-    backPrePage: () -> Unit
-) {
+fun TopicComposePage(data: TopicComposeData, backPrePage: () -> Unit) {
     val myInfo = LocalUserInfo.current ?: return
     val typography = getCommunityTypography(data)
     AppTheme(
-        typography = typography ?: MaterialTheme.typography
+        typography = typography ?: MaterialTheme.typography,
     ) {
-        TopicComposeScaffold(data, data.getMediaTarget() ?: (myInfo.id ob ObjectType.USER), backPrePage,)
+        TopicComposeScaffold(data, data.getMediaTarget() ?: myInfo.id ob ObjectType.USER, backPrePage)
     }
 }
 
 @Composable
 private fun getCommunityTypography(data: TopicComposeData): Typography? =
-    (data as? TopicComposeData.PublicRoom)?.communityId?.let {
-        val fontSettings = getFontSettings(it)
-        val typography = MaterialTheme.typography
-        val defaultFont = fontSettings.contentFontFamily ?: fontSettings.fallbackFontFamily
-        typography.copy(
-            bodyLarge = typography.bodyLarge.copy(fontFamily = defaultFont ?: typography.bodyLarge.fontFamily),
-            bodyMedium = typography.bodyMedium.copy(fontFamily = defaultFont ?: typography.bodyMedium.fontFamily),
-            bodySmall = typography.bodySmall.copy(fontFamily = defaultFont ?: typography.bodySmall.fontFamily)
-        )
-    }
+    (data as? TopicComposeData.PublicRoom)?.run {
+    val fontSettings = getFontSettings(communityId)
+    val typography = MaterialTheme.typography
+    val defaultFont = fontSettings.contentFontFamily ?: fontSettings.fallbackFontFamily
+    typography.copy(
+        bodyLarge = typography.bodyLarge.copy(fontFamily = defaultFont ?: typography.bodyLarge.fontFamily),
+        bodyMedium = typography.bodyMedium.copy(fontFamily = defaultFont ?: typography.bodyMedium.fontFamily),
+        bodySmall = typography.bodySmall.copy(fontFamily = defaultFont ?: typography.bodySmall.fontFamily),
+    )
+}
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-private fun TopicComposeScaffold(
-    data: TopicComposeData,
-    mediaTarget: ObjectTuple,
-    backPrePage: () -> Unit,
-) {
+private fun TopicComposeScaffold(data: TopicComposeData, mediaTarget: ObjectTuple, backPrePage: () -> Unit) {
     var input by remember {
         mutableStateOf("")
     }
@@ -200,16 +177,18 @@ private fun TopicComposeInternal(
     input: String,
     mediaTarget: ObjectTuple,
     data: TopicComposeData,
-    updateInput: (String) -> Unit
+    updateInput: (String) -> Unit,
 ) {
-    val pagerState = rememberPagerState {
-        3
-    }
-    val tabs = listOf(
-        stringResource(Res.string.preview),
-        stringResource(Res.string.raw),
-        "Block"
-    )
+    val pagerState =
+        rememberPagerState {
+            3
+        }
+    val tabs =
+        listOf(
+            stringResource(Res.string.preview),
+            stringResource(Res.string.raw),
+            "Block",
+        )
     val selected = pagerState.currentPage
     val coroutineScope = rememberCoroutineScope()
 
@@ -232,23 +211,22 @@ private fun TopicComposeInternal(
     HorizontalPager(pagerState, key = tabs::get) { index ->
         when (index) {
             0 -> PreviewTopicPage(input, mediaTarget)
-            1 -> EditTopicPage(input, data) {
-                Napier.i {
-                    "markdown update1 $it"
+
+            1 ->
+                EditTopicPage(input, data) {
+                    Napier.i {
+                        "markdown update1 $it"
+                    }
+                    updateInput(it)
                 }
-                updateInput(it)
-            }
+
             2 -> BlockEditTopicPage(input, updateInput)
         }
     }
 }
 
 @Composable
-private fun TopicComposeSubmitButton(
-    input: String,
-    data: TopicComposeData,
-    backPrePage: () -> Unit,
-) {
+private fun TopicComposeSubmitButton(input: String, data: TopicComposeData, backPrePage: () -> Unit) {
     val alertDialogController = rememberAlertDialogController()
     CustomAlertDialog(alertDialogController, alertDialogController::close) {}
     if (data is TopicComposeData.PublicRoom) {
@@ -315,14 +293,11 @@ fun PreviewTopicPage(input: String, objectTuple: ObjectTuple) {
 }
 
 @Composable
-private fun PreviewTopicInternal(
-    markdownMediasViewModel: MarkdownMediasViewModel,
-    input: String
-) {
+private fun PreviewTopicInternal(markdownMediasViewModel: MarkdownMediasViewModel, input: String) {
     val list by markdownMediasViewModel.handler.data.collectAsState()
     val topicInfo = TopicInfo.EMPTY.copy(content = TopicContent.Plain(input, list.orEmpty().toImmutableList()))
     LazyColumn(
-        modifier = Modifier.fillMaxSize().navigationBarsPadding().padding(horizontal = 20.dp)
+        modifier = Modifier.fillMaxSize().navigationBarsPadding().padding(horizontal = 20.dp),
     ) {
         item {
             AppTopicContentView(topicInfo)
@@ -338,7 +313,8 @@ fun EditTopicPage(input: String, data: TopicComposeData, updateInput: (String) -
         BasicTextField(
             input,
             updateInput,
-            modifier = Modifier.fillMaxSize()
+            modifier =
+            Modifier.fillMaxSize()
                 .appiumSemantics(
                     input = true,
                     inputValue = input,
@@ -350,23 +326,20 @@ fun EditTopicPage(input: String, data: TopicComposeData, updateInput: (String) -
                 if (input.isEmpty()) {
                     Text(
                         stringResource(Res.string.input_is_empty),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
                 innerTextField()
-            }
+            },
         )
     }
 }
 
 /**
- * Block 编辑模式页面
+ * Block 编辑模式页面.
  */
 @Composable
-fun BlockEditTopicPage(
-    input: String,
-    updateInput: (String) -> Unit
-) {
+fun BlockEditTopicPage(input: String, updateInput: (String) -> Unit) {
     // 提升状态，使 BlockToolbar 和 BlockEditor 共享 blocks 列表
     val editorState = rememberBlockEditorState(initialMarkdown = input)
 
@@ -375,13 +348,13 @@ fun BlockEditTopicPage(
         BlockToolbar(
             onInsertBlock = { block ->
                 editorState.appendBlock(block)
-            }
+            },
         )
 
         // Block 编辑器
         BlockEditor(
             modifier = Modifier.weight(1f),
-            blocks = editorState.blocks
+            blocks = editorState.blocks,
         ) { newMarkdown ->
             Napier.i {
                 "block editor markdown $newMarkdown"
@@ -392,9 +365,8 @@ fun BlockEditTopicPage(
 }
 
 @Composable
-private fun getFontFamily(data: TopicComposeData): FontFamily? {
-    return (data as? TopicComposeData.PublicRoom)?.communityId?.let {
+private fun getFontFamily(data: TopicComposeData): FontFamily? =
+    (data as? TopicComposeData.PublicRoom)?.communityId?.let {
         val fontSettings = getFontSettings(it)
         fontSettings.codeFontFamily ?: fontSettings.contentFontFamily
     }
-}

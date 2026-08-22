@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 import com.google.common.base.CaseFormat
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 

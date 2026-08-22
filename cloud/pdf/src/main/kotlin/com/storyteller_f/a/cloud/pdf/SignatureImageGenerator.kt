@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.pdf
 
 import java.awt.BasicStroke
@@ -11,11 +15,7 @@ import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
 
 object SignatureImageGenerator {
-    fun generate(
-        signee: String,
-        timestamp: String,
-        hint: String
-    ): ByteArray {
+    fun generate(signee: String, timestamp: String, hint: String): ByteArray {
         val width = 600
         val rowHeight = 30
         val height = rowHeight * 3
@@ -83,7 +83,7 @@ object SignatureImageGenerator {
         height: Int,
         dividerX: Int,
         font: Font,
-        boldFont: Font
+        boldFont: Font,
     ) {
         val centerY = y + height / 2 + 5 // Baseline approximation
 
@@ -117,7 +117,7 @@ object SignatureImageGenerator {
         // Checkmark
         val checkPath = Path2D.Double()
         // Simple checkmark
-        checkPath.moveTo((cx - 10).toDouble(), (cy).toDouble())
+        checkPath.moveTo((cx - 10).toDouble(), cy.toDouble())
         checkPath.lineTo((cx - 3).toDouble(), (cy + 10).toDouble())
         checkPath.lineTo((cx + 12).toDouble(), (cy - 10).toDouble())
         g2d.draw(checkPath)

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app
 
 import android.content.Context
@@ -24,11 +28,12 @@ fun handleAppNotificationIntent(intent: Intent) {
 
 fun registerDevice(context: Context) {
     try {
-        val distributor = UnifiedPush.getAckDistributor(context)
-            ?: UnifiedPush.getDistributors(context).firstOrNull()?.let { instance ->
-                UnifiedPush.saveDistributor(context, instance)
-                instance
-            }
+        val distributor =
+            UnifiedPush.getAckDistributor(context)
+                ?: UnifiedPush.getDistributors(context).firstOrNull()?.let { instance ->
+                    UnifiedPush.saveDistributor(context, instance)
+                    instance
+                }
         if (distributor != null) {
             UnifiedPush.register(context, distributor, "A")
             Napier.i(tag = "distributor") {

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.utils
 
 import androidx.compose.runtime.Stable
@@ -20,11 +24,7 @@ interface ClientFile {
     fun source(): Source
 }
 
-class AppPlatform(
-    val hasNativeBack: Boolean,
-    val isActive: Boolean = true,
-    val debug: Boolean,
-)
+data class AppPlatform(val hasNativeBack: Boolean, val isActive: Boolean = true, val debug: Boolean)
 
 interface AppPlatformImpl {
     fun startCall(roomId: PrimaryKey)

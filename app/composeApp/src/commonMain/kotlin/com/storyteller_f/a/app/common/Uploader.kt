@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.common
 
 import com.storyteller_f.a.api.CustomApi
@@ -15,6 +19,7 @@ import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.cancellableRunCatching
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.md5
 import com.storyteller_f.shared.utils.now
@@ -38,10 +43,7 @@ interface Uploader {
     fun pause(pathHash: String)
 }
 
-class UploaderImpl(
-    val uiViewModel: UIViewModel,
-    val taskRegister: TaskRegister
-) : Uploader {
+class UploaderImpl(val uiViewModel: UIViewModel, val taskRegister: TaskRegister) : Uploader {
     override fun upload(clipData: ImmutableList<ClientFile>) {
         if (clipData.isEmpty()) {
             return
@@ -61,6 +63,8 @@ class UploaderImpl(
             taskRegister.lockTask(md5(it.path)) {
                 try {
                     uploadIfNeed(userSession, myUid, it, modelStorage, UploadCollection(myUid))
+                } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+                    throw cancellation
                 } catch (e: Exception) {
                     Napier.e(e) {
                         "upload failed ${it.path}"
@@ -81,6 +85,8 @@ class UploaderImpl(
         taskRegister.lockTask(pathHash) {
             try {
                 resumeIfNeed(modelStorage, myUid, pathHash, userSession, UploadCollection(myUid))
+            } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+                throw cancellation
             } catch (e: Exception) {
                 Napier.e(e) {
                     "resume upload $pathHash"
@@ -108,7 +114,7 @@ class UploaderImpl(
         myUid: PrimaryKey,
         pathHash: String,
         userSession: SimpleUserSessionManager,
-        collection: UploadCollection
+        collection: UploadCollection,
     ) {
         val uploadInfo = modelStorage.upload.getDocument(collection, pathHash)
         if (uploadInfo == null) {
@@ -118,7 +124,7 @@ class UploaderImpl(
             return
         }
         val clientFile = getClientFile(uploadInfo.path) ?: return
-        upload(userSession, myUid, clientFile, modelStorage, collection, pathHash, uploadInfo)
+        upload(userSession, myUid, clientFile, UploadContext(modelStorage, collection, pathHash, uploadInfo))
     }
 
     @OptIn(ExperimentalTime::class)
@@ -127,7 +133,7 @@ class UploaderImpl(
         myUid: PrimaryKey,
         clipFile: ClientFile,
         modelStorage: ModelStorage,
-        collection: UploadCollection
+        collection: UploadCollection,
     ) {
         val pathHash = md5(clipFile.path)
         val existing = modelStorage.upload.getDocument(collection, pathHash)
@@ -137,37 +143,48 @@ class UploaderImpl(
             }
             return
         }
-        val fileSha256 = clipFile.source().use {
-            sha256(it)
-        }
-        val id = now().toInstant(
-            TimeZone.UTC
-        ).toEpochMilliseconds()
-        val uploadInfo = UploadInfo.EMPTY.copy(
-            id = id,
-            objectId = myUid,
-            pathHash = pathHash,
-            path = clipFile.path,
-            sha256 = fileSha256,
-            total = clipFile.size,
-            status = UploadStatus.UPLOADING,
-            name = clipFile.name,
-            contentType = clipFile.contentType.contentType,
-            chunkSize = 10L * 1024 * 1024 // 10MB
-        )
+        val fileSha256 =
+            clipFile.source().use {
+                sha256(it)
+            }
+        val id =
+            now().toInstant(
+                TimeZone.UTC,
+            ).toEpochMilliseconds()
+        val uploadInfo =
+            UploadInfo.EMPTY.copy(
+                id = id,
+                objectId = myUid,
+                pathHash = pathHash,
+                path = clipFile.path,
+                sha256 = fileSha256,
+                total = clipFile.size,
+                status = UploadStatus.UPLOADING,
+                name = clipFile.name,
+                contentType = clipFile.contentType.contentType,
+                chunkSize = 10L * 1024 * 1024, // 10MB
+            )
         modelStorage.upload.saveLast(UploadCollection.fromInfo(uploadInfo), uploadInfo)
-        upload(userSession, myUid, clipFile, modelStorage, collection, pathHash, uploadInfo)
+        upload(userSession, myUid, clipFile, UploadContext(modelStorage, collection, pathHash, uploadInfo))
     }
+
+    private data class UploadContext(
+        val modelStorage: ModelStorage,
+        val collection: UploadCollection,
+        val pathHash: String,
+        val uploadInfo: UploadInfo,
+    )
 
     private suspend fun upload(
         userSession: SimpleUserSessionManager,
         myUid: PrimaryKey,
         clientFile: ClientFile,
-        modelStorage: ModelStorage,
-        collection: UploadCollection,
-        pathHash: String,
-        uploadInfo: UploadInfo,
+        context: UploadContext,
     ) {
+        val modelStorage = context.modelStorage
+        val collection = context.collection
+        val pathHash = context.pathHash
+        val uploadInfo = context.uploadInfo
         if (uploadInfo.status != UploadStatus.UPLOADING) {
             updateUploadInfo(modelStorage, collection, pathHash) {
                 it.copy(status = UploadStatus.UPLOADING)
@@ -252,13 +269,14 @@ class UploaderImpl(
         modelStorage: ModelStorage,
         uploadInfo: UploadInfo,
         status: CustomApi.Files.Chunks.StatusResponse,
-    ): Result<PrimaryKey> {
-        return runCatching {
-            val collection = UploadCollection.fromInfo(uploadInfo)
-            val pathHash = uploadInfo.pathHash
-            val chunkSize = uploadInfo.chunkSize
-            val uploadedIndices = status.uploaded.toSet()
-            val totalSent = uploadedIndices.sumOf { idx ->
+    ): Result<PrimaryKey> =
+        cancellableRunCatching {
+        val collection = UploadCollection.fromInfo(uploadInfo)
+        val pathHash = uploadInfo.pathHash
+        val chunkSize = uploadInfo.chunkSize
+        val uploadedIndices = status.uploaded.toSet()
+        val totalSent =
+            uploadedIndices.sumOf { idx ->
                 val chunkCount = ((clipFile.size + chunkSize - 1) / chunkSize).toInt()
                 val isLast = idx == chunkCount - 1
                 if (isLast) {
@@ -267,43 +285,42 @@ class UploaderImpl(
                     chunkSize
                 }
             }
-            updateUploadInfo(modelStorage, collection, pathHash) {
-                it.copy(progress = totalSent)
-            }
-
-            var index = 0
-            var currentSent = totalSent
-            clipFile.source().use { raw ->
-                while (true) {
-                    val buf = Buffer()
-                    var count = 0L
-                    while (count < chunkSize) {
-                        val read = raw.readAtMostTo(buf, minOf(1024, chunkSize - count))
-                        if (read == -1L) break
-                        count += read
-                    }
-                    Napier.i(tag = "upload") {
-                        "upload chunk $index, size $count"
-                    }
-                    if (count == 0L) break
-                    // skip already uploaded chunks by index
-                    if (!uploadedIndices.contains(index)) {
-                        val hash = sha256(buf.peek())
-                        userSession.uploadChunk(uploadRecordId, index, buf, hash) { p, _ ->
-                            updateUploadInfo(modelStorage, collection, pathHash) {
-                                it.copy(progress = currentSent + p)
-                            }
-                        }.getOrThrow()
-                        currentSent += count
-                        updateUploadInfo(modelStorage, collection, pathHash) {
-                            it.copy(progress = currentSent)
-                        }
-                    }
-                    index++
-                }
-            }
-            uploadRecordId
+        updateUploadInfo(modelStorage, collection, pathHash) {
+            it.copy(progress = totalSent)
         }
+
+        var index = 0
+        var currentSent = totalSent
+        clipFile.source().use { raw ->
+            while (true) {
+                val buf = Buffer()
+                var count = 0L
+                while (count < chunkSize) {
+                    val read = raw.readAtMostTo(buf, minOf(1024, chunkSize - count))
+                    if (read == -1L) break
+                    count += read
+                }
+                Napier.i(tag = "upload") {
+                    "upload chunk $index, size $count"
+                }
+                if (count == 0L) break
+                // skip already uploaded chunks by index
+                if (!uploadedIndices.contains(index)) {
+                    val hash = sha256(buf.peek())
+                    userSession.uploadChunk(uploadRecordId, index, buf, hash) { p, _ ->
+                        updateUploadInfo(modelStorage, collection, pathHash) {
+                            it.copy(progress = currentSent + p)
+                        }
+                    }.getOrThrow()
+                    currentSent += count
+                    updateUploadInfo(modelStorage, collection, pathHash) {
+                        it.copy(progress = currentSent)
+                    }
+                }
+                index++
+            }
+        }
+        uploadRecordId
     }
 
     private suspend fun getUploadRecordId(
@@ -323,7 +340,7 @@ class UploaderImpl(
             clipFile.size,
             clipFile.contentType,
             chunkSize,
-            fileSha256
+            fileSha256,
         ).onSuccess { initResponse ->
             updateUploadInfo(modelStorage, collection, pathHash) {
                 it.copy(recordId = initResponse.recordId, chunkSize = initResponse.chunkSize)
@@ -337,7 +354,7 @@ class UploaderImpl(
         modelStorage: ModelStorage,
         collection: UploadCollection,
         pathHash: String,
-        block: (UploadInfo) -> UploadInfo
+        block: (UploadInfo) -> UploadInfo,
     ) {
         val uploadInfo = modelStorage.upload.getDocument(collection, pathHash) ?: return
         modelStorage.upload.saveLast(collection, block(uploadInfo))

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.utils
 
 import com.russhwolf.settings.ExperimentalSettingsApi
@@ -31,7 +35,7 @@ interface SessionHistoryManager {
 
 /**
  * 登录之后会修改last 和current，如果没有退出登录，再次打开时会读取current 重新登录
- * 如果退出登录current 会被删除
+ * 如果退出登录current 会被删除.
  */
 @Serializable
 data class SessionHistory(val last: String? = null, val current: String? = null)
@@ -39,13 +43,14 @@ data class SessionHistory(val last: String? = null, val current: String? = null)
 class DefaultSessionHistoryManager(val settings: Settings) : SessionHistoryManager {
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
     override fun getSavedSession(): SavedSession {
-        val list = settings.keys.map {
-            it.split(".")[0]
-        }.distinct().filter {
-            it.startsWith(SESSION_USER_PREFIX)
-        }.mapNotNull {
-            settings.decodeValueOrNull<ConvertedRawUserPassInfo>(it)?.address
-        }
+        val list =
+            settings.keys.asSequence().map {
+                it.split(".")[0]
+            }.distinct().filter {
+                it.startsWith(SESSION_USER_PREFIX)
+            }.mapNotNull {
+                settings.decodeValueOrNull<ConvertedRawUserPassInfo>(it)?.address
+            }.toList()
         val history = settings.decodeValueOrNull<SessionHistory>(SESSION_HISTORY)
         return SavedSession(list, history)
     }
@@ -89,16 +94,11 @@ class DefaultSessionHistoryManager(val settings: Settings) : SessionHistoryManag
     companion object {
         const val SESSION_HISTORY = "session_history"
         const val SESSION_USER_PREFIX = "S_U"
-        fun getUserKey(address: String): String {
-            return "${SESSION_USER_PREFIX}_$address"
-        }
+        fun getUserKey(address: String): String = "${SESSION_USER_PREFIX}_$address"
     }
 }
 
-data class SavedSession(
-    val alias: List<String>,
-    val history: SessionHistory?
-)
+data class SavedSession(val alias: List<String>, val history: SessionHistory?)
 
 expect fun buildSessionHistoryFactory(settings: Settings): SessionHistoryManager
 
@@ -119,7 +119,9 @@ fun restoreFromStorage(settings: Settings): ClientSessionState? {
     val (alias, history) = sessionFactory.getSavedSession()
     val current = history?.current
     Napier.d(
-        "APP_DESKTOP_SESSION_RESTORE storage current=${current.shortForLog()} aliases=${alias.map { it.shortForLog() }}"
+        "APP_DESKTOP_SESSION_RESTORE storage current=${current.shortForLog()} aliases=${alias.map {
+            it.shortForLog()
+        }}",
     )
     if (current != null && alias.contains(current)) {
         val session = sessionFactory.buildSession(current)
@@ -133,9 +135,7 @@ fun restoreFromStorage(settings: Settings): ClientSessionState? {
     return null
 }
 
-private fun String?.shortForLog(): String {
-    return this?.take(8) ?: "null"
-}
+private fun String?.shortForLog(): String = this?.take(8) ?: "null"
 
 @Serializable
 data class ConvertedRawUserPassInfo(
@@ -149,29 +149,42 @@ data class ConvertedRawUserPassInfo(
     val derEncryptionPublicKey: String? = null,
 ) {
     fun toRawUserPassInfo(): RawUserPassInfo {
-        val key = when (algo) {
-            AlgoType.P256 -> AuthKey.P256(
-                pemPrivateKey = pemPrivateKey,
-                derPrivateKey = derPrivateKey,
-                derPublicKey = derPublicKey,
-            )
+        val key =
+            when (algo) {
+                AlgoType.P256 ->
+                    AuthKey.P256(
+                        pemPrivateKey = pemPrivateKey,
+                        derPrivateKey = derPrivateKey,
+                        derPublicKey = derPublicKey,
+                    )
 
-            AlgoType.DILITHIUM -> AuthKey.Dilithium(
-                pemPrivateKey = pemPrivateKey,
-                derPrivateKey = derPrivateKey,
-                derPublicKey = derPublicKey,
-                pemEncryptionPrivateKey = pemEncryptionPrivateKey!!,
-                derEncryptionPrivateKey = derEncryptionPrivateKey!!,
-                derEncryptionPublicKey = derEncryptionPublicKey!!,
-            )
-        }
+                AlgoType.DILITHIUM ->
+                    AuthKey.Dilithium(
+                        pemPrivateKey = pemPrivateKey,
+                        derPrivateKey = derPrivateKey,
+                        derPublicKey = derPublicKey,
+                        pemEncryptionPrivateKey =
+                        checkNotNull(pemEncryptionPrivateKey) {
+                            "Dilithium PEM encryption private key is missing"
+                        },
+                        derEncryptionPrivateKey =
+                        checkNotNull(derEncryptionPrivateKey) {
+                            "Dilithium DER encryption private key is missing"
+                        },
+                        derEncryptionPublicKey =
+                        checkNotNull(derEncryptionPublicKey) {
+                            "Dilithium DER encryption public key is missing"
+                        },
+                    )
+            }
         return RawUserPassInfo(address, key)
     }
 }
 
-fun RawUserPassInfo.toConverted(): ConvertedRawUserPassInfo {
-    return when (val key = authKey) {
-        is AuthKey.Dilithium -> ConvertedRawUserPassInfo(
+fun RawUserPassInfo.toConverted(): ConvertedRawUserPassInfo =
+    when (val key = authKey) {
+    is AuthKey.Dilithium ->
+        ConvertedRawUserPassInfo(
             algo = key.algo,
             address = address,
             pemPrivateKey = key.pemPrivateKey,
@@ -182,12 +195,12 @@ fun RawUserPassInfo.toConverted(): ConvertedRawUserPassInfo {
             derEncryptionPublicKey = key.derEncryptionPublicKey,
         )
 
-        is AuthKey.P256 -> ConvertedRawUserPassInfo(
+    is AuthKey.P256 ->
+        ConvertedRawUserPassInfo(
             algo = key.algo,
             address = address,
             pemPrivateKey = key.pemPrivateKey,
             derPrivateKey = key.derPrivateKey,
             derPublicKey = key.derPublicKey,
         )
-    }
 }

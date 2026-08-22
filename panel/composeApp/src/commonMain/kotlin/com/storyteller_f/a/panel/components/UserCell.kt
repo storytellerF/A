@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.panel.components
 
 import androidx.compose.foundation.clickable
@@ -19,11 +23,12 @@ import com.storyteller_f.shared.model.UserInfo
 @Composable
 fun UserCell(userInfo: UserInfo?, onClick: (() -> Unit)? = null) {
     Row(
-        modifier = Modifier.fillMaxWidth().let { m ->
+        modifier =
+        Modifier.fillMaxWidth().let { m ->
             if (onClick != null) m.clickable { onClick() } else m
         }.padding(8.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         UserIcon(
             setClickEvent = false,

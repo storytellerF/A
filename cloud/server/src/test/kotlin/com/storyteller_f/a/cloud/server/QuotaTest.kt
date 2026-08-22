@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.server
 
 import com.storyteller_f.a.client.core.getQuotaInfo
@@ -11,7 +15,8 @@ import kotlin.test.assertEquals
 
 class QuotaTest {
     @Test
-    fun `test default user file quota`() = test {
+    fun `test default user file quota`() =
+        test {
         attachSession {
             val tuple = ObjectTuple(it.uid, ObjectType.USER)
             val quota = getQuotaInfo(tuple, QuotaType.FILE).getOrThrow()
@@ -25,7 +30,8 @@ class QuotaTest {
     }
 
     @Test
-    fun `test used increases after upload and not locking`() = test {
+    fun `test used increases after upload and not locking`() =
+        test {
         attachSession {
             val mediaTarget = it.uid ob ObjectType.USER
             val before = getQuotaInfo(mediaTarget).getOrThrow()

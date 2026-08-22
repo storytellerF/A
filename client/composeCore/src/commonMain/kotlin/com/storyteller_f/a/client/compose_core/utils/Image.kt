@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.utils
 
 import androidx.compose.ui.graphics.ImageBitmap
@@ -16,14 +20,14 @@ expect fun ImageRequest.Builder.androidAllowHardware(b: Boolean): ImageRequest.B
 enum class ImageFormat {
     PNG,
     JPEG,
-    WEBP
+    WEBP,
 }
 
 expect fun saveImageBitmap(
     imageBitmap: ImageBitmap,
     path: String,
     format: ImageFormat = ImageFormat.PNG,
-    quality: Int = 90
+    quality: Int = 90,
 ): Result<Path>
 
 fun writeImageFile(filePath: String, data: ByteArray): Path {

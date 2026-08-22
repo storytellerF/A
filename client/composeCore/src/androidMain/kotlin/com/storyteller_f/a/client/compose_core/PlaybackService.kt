@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core
 
 import android.content.Intent
@@ -27,9 +31,10 @@ class PlaybackService : MediaSessionService() {
             "PlaybackService onCreate"
         }
         val player = ExoPlayer.Builder(this).build()
-        mediaSession = MediaSession.Builder(this, player)
-            .setCallback(MyCallback())
-            .build()
+        mediaSession =
+            MediaSession.Builder(this, player)
+                .setCallback(MyCallback())
+                .build()
     }
 
     override fun onGetSession(p0: MediaSession.ControllerInfo): MediaSession? {
@@ -62,7 +67,7 @@ class PlaybackService : MediaSessionService() {
         @OptIn(UnstableApi::class)
         override fun onConnect(
             session: MediaSession,
-            controller: MediaSession.ControllerInfo
+            controller: MediaSession.ControllerInfo,
         ): MediaSession.ConnectionResult {
             Napier.d {
                 "PlaybackService onConnect"
@@ -74,18 +79,19 @@ class PlaybackService : MediaSessionService() {
                         .remove(COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
                         .remove(COMMAND_SEEK_TO_PREVIOUS)
                         .remove(COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
-                        .build()
+                        .build(),
                 )
                 .build()
         }
     }
 }
 
-suspend fun<C> CustomGlobalDialogController<C>.startPlayMedia(
+/** Starts playback while exposing progress and failures through this dialog controller. */
+suspend fun <C> CustomGlobalDialogController<C>.startPlayMedia(
     remoteMediaItem: RemoteMediaItem,
     localMediaPlaySession: LocalMediaPlaySession,
     mediaPlayerService: MediaPlayerService,
-    playList: List<ConstPlayItem>
+    playList: List<ConstPlayItem>,
 ) {
     useResult {
         mediaPlayerService.startPlay(remoteMediaItem, localMediaPlaySession, playList)

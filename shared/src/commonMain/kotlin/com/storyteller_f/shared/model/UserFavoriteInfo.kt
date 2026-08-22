@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.shared.model
 
 import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
@@ -14,7 +18,7 @@ data class UserFavoriteInfo(
     val objectId: PrimaryKey,
     val objectType: ObjectType,
     val createdTime: LocalDateTime,
-    val extensions: Extensions? = null
+    val extensions: Extensions? = null,
 ) : PrimaryKeyIdentifiable {
     @Serializable
     data class Extensions(
@@ -27,13 +31,15 @@ data class UserFavoriteInfo(
     )
 
     companion object {
-        val EMPTY = UserFavoriteInfo(
-            id = DEFAULT_PRIMARY_KEY,
-            uid = DEFAULT_PRIMARY_KEY,
-            objectId = DEFAULT_PRIMARY_KEY,
-            objectType = ObjectType.TOPIC,
-            now(),
-            null
-        )
+        /** Empty favorite record used before persisted data is available. */
+        val EMPTY: UserFavoriteInfo =
+            UserFavoriteInfo(
+                id = DEFAULT_PRIMARY_KEY,
+                uid = DEFAULT_PRIMARY_KEY,
+                objectId = DEFAULT_PRIMARY_KEY,
+                objectType = ObjectType.TOPIC,
+                now(),
+                null,
+            )
     }
 }

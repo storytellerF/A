@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.user
 
 import androidx.compose.foundation.background
@@ -40,7 +44,7 @@ fun SubscriptionPageInternal(viewModel: SubscriptionsViewModel) {
     Scaffold { paddingValues ->
         StateView(
             viewModel,
-            modifier = Modifier.padding(top = paddingValues.calculateTopPadding())
+            modifier = Modifier.padding(top = paddingValues.calculateTopPadding()),
         ) { items ->
             LazyColumn(contentPadding = PaddingValues(10.dp)) {
                 pagingItems(items, {
@@ -56,39 +60,39 @@ fun SubscriptionPageInternal(viewModel: SubscriptionsViewModel) {
 
 class UserSubscriptionPreviewProvider : PreviewParameterProvider<UserFavoriteInfo> {
     override val values: Sequence<UserFavoriteInfo>
-        get() = sequenceOf(
-            UserFavoriteInfo.EMPTY.copy(
-                extensions = UserFavoriteInfo.Extensions(TopicInfo.EMPTY.copy(content = TopicContent.Plain("hello")))
+        get() =
+            sequenceOf(
+                UserFavoriteInfo.EMPTY.copy(
+                    extensions =
+                    UserFavoriteInfo.Extensions(
+                        TopicInfo.EMPTY.copy(content = TopicContent.Plain("hello")),
+                    ),
+                ),
             )
-        )
 }
 
 @Preview(widthDp = 300)
 @Composable
 fun UserSubscriptionCell(
-    @PreviewParameter(UserSubscriptionPreviewProvider::class) userFavoriteInfo: UserSubscriptionInfo?
+    @PreviewParameter(UserSubscriptionPreviewProvider::class) userFavoriteInfo: UserSubscriptionInfo?,
 ) {
     Column(Modifier.padding(vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(
-            "Subscribed at ${userFavoriteInfo?.createdTime}",
-            modifier = Modifier.padding(horizontal = 10.dp)
+            "Subscribed at ${userFavoriteInfo?.createdTime ?: "<none>"}",
+            modifier = Modifier.padding(horizontal = 10.dp),
         )
-        when (userFavoriteInfo?.objectType) {
-            ObjectType.TOPIC -> {
-                val topicInfo = userFavoriteInfo.extensions?.topicInfo
-                if (topicInfo != null) {
-                    Box(
-                        modifier = Modifier.padding(horizontal = 10.dp).background(
-                            MaterialTheme.colorScheme.surfaceContainerHigh,
-                            RoundedCornerShape(8.dp)
-                        )
-                    ) {
-                        TopicCell(topicInfo)
-                    }
+        if (userFavoriteInfo?.objectType == ObjectType.TOPIC) {
+            val topicInfo = userFavoriteInfo.extensions?.topicInfo
+            if (topicInfo != null) {
+                Box(
+                    modifier =
+                    Modifier.padding(horizontal = 10.dp).background(
+                        MaterialTheme.colorScheme.surfaceContainerHigh,
+                        RoundedCornerShape(8.dp),
+                    ),
+                ) {
+                    TopicCell(topicInfo)
                 }
-            }
-
-            else -> {
             }
         }
     }

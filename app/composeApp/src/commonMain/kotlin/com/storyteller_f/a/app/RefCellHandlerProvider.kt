@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app
 
 import androidx.compose.runtime.Composable
@@ -67,6 +71,7 @@ object DefaultRefCellHandlerProvider : RefCellHandlerProvider {
     override fun userHandler(userAid: String): LoadingHandler<UserInfo> = createUserViewModel(userAid).handler
 }
 
-val LocalRefCellHandlerProvider = compositionLocalOf<RefCellHandlerProvider> {
-    error("LocalRefCellHandlerProvider must be provided")
-}
+val LocalRefCellHandlerProvider =
+    compositionLocalOf<RefCellHandlerProvider> {
+        error("LocalRefCellHandlerProvider must be provided")
+    }

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.core
 
 import com.storyteller_f.shared.model.PanelAccountInfo
@@ -9,13 +13,13 @@ import io.ktor.http.*
 suspend fun <U> HttpRequestBuilder.addRequestHeaders(
     sessionModel: SessionModel<U>,
     passHolder: PassHolder,
-    addRequestHeader: HttpRequestBuilder.(U, String) -> Unit
+    addRequestHeader: HttpRequestBuilder.(U, String) -> Unit,
 ) {
     val passSession = passHolder.currentUserPass
     val session = sessionModel.dataAndSignature
     val userInfo = sessionModel.userHandler.data.value
     Napier.i(tag = "ClientAuth") {
-        "addRequestHeaders session: $session"
+        "addRequestHeaders session: ${session ?: "<none>"}"
     }
     if (session != null && passSession != null) {
         val (localData, localSignature) = session
@@ -41,7 +45,7 @@ fun HttpRequestBuilder.addRequestHeadersFromInfo(userInfo: UserInfo, sig: String
             """Custom id="$userId", sig="$sig""""
     } else {
         headers[HttpHeaders.Authorization] =
-            """Custom aid="${userInfo.aid}", sig="$sig""""
+            """Custom aid="${userInfo.aid ?: "<none>"}", sig="$sig""""
     }
 }
 

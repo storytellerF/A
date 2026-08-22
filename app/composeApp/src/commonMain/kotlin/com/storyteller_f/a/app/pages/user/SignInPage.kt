@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.user
 
 import androidx.compose.foundation.background
@@ -67,23 +71,25 @@ fun SignInPage(signInAndSignUpNav: SignInAndSignUpNav) {
         footer = {
             TextButton(
                 onClick = { signInAndSignUpNav.gotoSignUp() },
-                modifier = Modifier.appiumSemantics(
+                modifier =
+                Modifier.appiumSemantics(
                     testTag = "goto_sign_up",
-                    text = stringResource(Res.string.go_to_sign_up)
-                )
+                    text = stringResource(Res.string.go_to_sign_up),
+                ),
             ) {
                 Text(stringResource(Res.string.go_to_sign_up))
             }
-        }
+        },
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             FilledTonalButton(
                 onClick = { signInAndSignUpNav.gotoPrivateKey(false) },
-                modifier = Modifier.fillMaxWidth().appiumSemantics(
+                modifier =
+                Modifier.fillMaxWidth().appiumSemantics(
                     testTag = "private_key",
                     text = stringResource(Res.string.private_key),
                 ),
-                shape = ButtonDefaults.filledTonalShape
+                shape = ButtonDefaults.filledTonalShape,
             ) {
                 Icon(Icons.Default.VpnKey, contentDescription = null)
                 Text(stringResource(Res.string.private_key), modifier = Modifier.padding(start = 8.dp))
@@ -109,7 +115,7 @@ private fun SelectFromHistoryInternal(viewModel: SessionHistoryViewModel) {
     val sheetState = rememberModalBottomSheetState()
     OutlinedButton(
         onClick = { showSheet = true },
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
     ) {
         Icon(Icons.Default.History, contentDescription = null)
         Text(stringResource(Res.string.last_used), modifier = Modifier.padding(start = 8.dp))
@@ -150,13 +156,16 @@ private fun SelectFromHistoryInternal(viewModel: SessionHistoryViewModel) {
 
 class PrivateParameterProvider : PreviewParameterProvider<String> {
     override val values: Sequence<String>
-        get() = sequence {
-            yield(buildString {
-                repeat(50) {
-                    append("a")
-                }
-            })
-        }
+        get() =
+            sequence {
+                yield(
+                    buildString {
+                        repeat(50) {
+                            append("a")
+                        }
+                    },
+                )
+            }
 }
 
 @Preview
@@ -165,33 +174,34 @@ private fun LoginHistoryCell(
     @PreviewParameter(PrivateParameterProvider::class) address: String,
     last: String? = "hello",
     onSelect: () -> Unit = {},
-    onDelete: () -> Unit = {}
+    onDelete: () -> Unit = {},
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
         shape = RoundedCornerShape(8.dp),
-        tonalElevation = 1.dp
+        tonalElevation = 1.dp,
     ) {
         Row(
             modifier = Modifier.clickable { onSelect() }.padding(horizontal = 16.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Text(
                 address,
                 maxLines = 1,
                 overflow = TextOverflow.MiddleEllipsis,
                 modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleMedium,
             )
             val shape = RoundedCornerShape(8.dp)
             if (address == last) {
                 Text(
                     stringResource(Res.string.last_used),
-                    modifier = Modifier.clip(shape)
+                    modifier =
+                    Modifier.clip(shape)
                         .background(MaterialTheme.colorScheme.primaryContainer, shape)
                         .padding(horizontal = 8.dp, vertical = 4.dp),
-                    style = MaterialTheme.typography.labelMedium
+                    style = MaterialTheme.typography.labelMedium,
                 )
             }
             IconButton(onClick = onDelete) {

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.exposed.tables
 
 import com.storyteller_f.a.backend.core.types.SubscriptionSentLog
@@ -17,15 +21,14 @@ object UserSubscriptions : BaseTable() {
     }
 }
 
-fun UserSubscription.Companion.wrapRow(resultRow: ResultRow): UserSubscription {
-    return UserSubscription(
-        resultRow[UserSubscriptions.id],
-        resultRow[UserSubscriptions.uid],
-        resultRow[UserSubscriptions.objectId],
-        resultRow[UserSubscriptions.objectType],
-        resultRow[UserSubscriptions.createdTime],
-    )
-}
+fun UserSubscription.Companion.wrapRow(resultRow: ResultRow): UserSubscription =
+    UserSubscription(
+    resultRow[UserSubscriptions.id],
+    resultRow[UserSubscriptions.uid],
+    resultRow[UserSubscriptions.objectId],
+    resultRow[UserSubscriptions.objectType],
+    resultRow[UserSubscriptions.createdTime],
+)
 
 object SubscriptionSentLogs : BaseTable() {
     val uid = customPrimaryKey("uid")
@@ -38,13 +41,12 @@ object SubscriptionSentLogs : BaseTable() {
     }
 }
 
-fun SubscriptionSentLog.Companion.wrapRow(resultRow: ResultRow): SubscriptionSentLog {
-    return SubscriptionSentLog(
-        resultRow[SubscriptionSentLogs.id],
-        resultRow[SubscriptionSentLogs.uid],
-        resultRow[SubscriptionSentLogs.objectId],
-        resultRow[SubscriptionSentLogs.objectType],
-        resultRow[SubscriptionSentLogs.subscriptionId],
-        resultRow[SubscriptionSentLogs.createdTime],
-    )
-}
+fun SubscriptionSentLog.Companion.wrapRow(resultRow: ResultRow): SubscriptionSentLog =
+    SubscriptionSentLog(
+    resultRow[SubscriptionSentLogs.id],
+    resultRow[SubscriptionSentLogs.uid],
+    resultRow[SubscriptionSentLogs.objectId],
+    resultRow[SubscriptionSentLogs.objectType],
+    resultRow[SubscriptionSentLogs.subscriptionId],
+    resultRow[SubscriptionSentLogs.createdTime],
+)

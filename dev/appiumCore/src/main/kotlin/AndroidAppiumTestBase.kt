@@ -1,3 +1,9 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
+package com.storyteller_f.a.dev.appium
+
 import com.storyteller_f.a.client.core.UserSessionManager
 import org.slf4j.LoggerFactory
 import org.testcontainers.containers.BindMode
@@ -12,25 +18,13 @@ import java.time.Duration
 
 const val CLI_READY_PORT = 8081
 
-data class AppiumPorts(
-    val server: Int,
-    val ws: Int,
-)
+data class AppiumPorts(val server: Int, val ws: Int)
 
-data class AuthenticatedSession(
-    val session: InjectedSession,
-    val sessionManager: UserSessionManager,
-)
+data class AuthenticatedSession(val session: InjectedSession, val sessionManager: UserSessionManager)
 
-data class AppUnderTest(
-    val packageName: String,
-    val mainActivityClassName: String,
-)
+data class AppUnderTest(val packageName: String, val mainActivityClassName: String)
 
-suspend fun useDatabaseContainer(
-    network: Network,
-    block: suspend (PostgreSQLContainer<*>) -> Unit,
-) {
+suspend fun useDatabaseContainer(network: Network, block: suspend (PostgreSQLContainer<*>) -> Unit) {
     PostgreSQLContainer("pgvector/pgvector:pg16").apply {
         withNetwork(network)
         withNetworkAliases("appium-postgres")
@@ -51,10 +45,11 @@ suspend fun useCliInitContainer(
     GenericContainer(DockerImageName.parse("a-cli:latest")).apply {
         withNetwork(network)
         withEnv(
-            commonEnv + mapOf(
-                "CLI_INIT_ENABLE" to "true",
-                "CLI_READY_PORT" to CLI_READY_PORT.toString(),
-            ),
+            commonEnv +
+                mapOf(
+                    "CLI_INIT_ENABLE" to "true",
+                    "CLI_READY_PORT" to CLI_READY_PORT.toString(),
+                ),
         )
         withFileSystemBind(hostSessionPath, containerDataPath, BindMode.READ_WRITE)
         withFileSystemBind(presetPath.canonicalPath, "/app/deploy/preset_data", BindMode.READ_ONLY)
@@ -156,30 +151,28 @@ fun prepareSessionDirectories(sessionPath: String) {
     File(sessionDir, "files").mkdirs()
 }
 
-fun buildContainerEnv(
-    containerDataPath: String,
-    postgresContainer: PostgreSQLContainer<*>,
-): Map<String, String> {
+fun buildContainerEnv(containerDataPath: String, postgresContainer: PostgreSQLContainer<*>): Map<String, String> {
     val envFromFile = parseEnvFile(File("../../cloud/server/src/test/resources/test.env"))
     val databaseUri = "r2dbc:postgresql://appium-postgres:5432/${postgresContainer.databaseName}"
-    return envFromFile + mapOf(
-        "BUILD_TYPE" to "test",
-        "FLAVOR" to "dev",
-        "SERVER_PORT" to "8811",
-        "WS_SERVER_PORT" to "8813",
-        "SERVER_URL" to "http://10.0.2.2:8811",
-        "WS_SERVER_URL" to "ws://10.0.2.2:8813",
-        "WS_RPC_URL" to "ws://appium-ws:8813/rpc",
-        "SESSION_SECRET" to "appium-session-secret",
-        "DATABASE_URI" to databaseUri,
-        "DATABASE_DRIVER" to "postgresql",
-        "DATABASE_USER" to postgresContainer.username,
-        "DATABASE_PASS" to postgresContainer.password,
-        "LUCENE_BASE_PATH" to "$containerDataPath/lucene",
-        "FILE_SYSTEM_MEDIA_PATH" to "$containerDataPath/files",
-        "LOG_PATH" to "$containerDataPath/logs",
-        "INIT_ENABLE" to "false",
-    )
+    return envFromFile +
+        mapOf(
+            "BUILD_TYPE" to "test",
+            "FLAVOR" to "dev",
+            "SERVER_PORT" to "8811",
+            "WS_SERVER_PORT" to "8813",
+            "SERVER_URL" to "http://10.0.2.2:8811",
+            "WS_SERVER_URL" to "ws://10.0.2.2:8813",
+            "WS_RPC_URL" to "ws://appium-ws:8813/rpc",
+            "SESSION_SECRET" to "appium-session-secret",
+            "DATABASE_URI" to databaseUri,
+            "DATABASE_DRIVER" to "postgresql",
+            "DATABASE_USER" to postgresContainer.username,
+            "DATABASE_PASS" to postgresContainer.password,
+            "LUCENE_BASE_PATH" to "$containerDataPath/lucene",
+            "FILE_SYSTEM_MEDIA_PATH" to "$containerDataPath/files",
+            "LOG_PATH" to "$containerDataPath/logs",
+            "INIT_ENABLE" to "false",
+        )
 }
 
 private fun parseEnvFile(file: File): Map<String, String> {

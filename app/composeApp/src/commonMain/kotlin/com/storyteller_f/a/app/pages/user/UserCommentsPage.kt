@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.user
 
 import androidx.compose.foundation.lazy.LazyColumn
@@ -24,7 +28,7 @@ fun UserCommentsPageInternal(viewModel: UserCommentsViewModel) {
     Scaffold { paddingValues ->
         StateView(
             viewModel,
-            modifier = Modifier.safeArea(paddingValues, LocalLayoutDirection.current)
+            modifier = Modifier.safeArea(paddingValues, LocalLayoutDirection.current),
         ) { items ->
             LazyColumn {
                 pagingItems(items, {

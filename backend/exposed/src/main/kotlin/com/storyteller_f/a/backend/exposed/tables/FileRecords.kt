@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.exposed.tables
 
 import com.storyteller_f.a.backend.core.types.FileRecord
@@ -28,22 +32,21 @@ object FileRecords : BaseTable() {
     }
 }
 
-fun FileRecord.Companion.wrapRow(resultRow: ResultRow): FileRecord {
-    return with(FileRecords) {
-        FileRecord(
-            resultRow[id],
-            resultRow[createdTime],
-            resultRow[name],
-            resultRow[duration],
-            resultRow[width],
-            resultRow[height],
-            resultRow[owner],
-            resultRow[ownerType],
-            resultRow[contentType],
-            resultRow[size],
-            resultRow[fullName],
-            resultRow[sha256],
-            resultRow[status]
-        )
-    }
+fun FileRecord.Companion.wrapRow(resultRow: ResultRow): FileRecord =
+    with(FileRecords) {
+    FileRecord(
+        resultRow[id],
+        resultRow[createdTime],
+        resultRow[name],
+        resultRow[duration],
+        resultRow[width],
+        resultRow[height],
+        resultRow[owner],
+        resultRow[ownerType],
+        resultRow[contentType],
+        resultRow[size],
+        resultRow[fullName],
+        resultRow[sha256],
+        resultRow[status],
+    )
 }

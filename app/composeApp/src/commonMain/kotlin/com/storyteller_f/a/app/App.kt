@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 @file:OptIn(androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi::class)
 
 package com.storyteller_f.a.app
@@ -144,28 +148,26 @@ internal fun getAsyncImageLoader(context: PlatformContext): ImageLoader {
 }
 
 /**
- * 可以通过lazy 的模式获取Downloader 和 Uploader
+ * 可以通过lazy 的模式获取Downloader 和 Uploader.
  */
 interface ClientFileProvider {
     suspend fun getDownloader(): Downloader?
     suspend fun getUploader(): Uploader?
 
     companion object {
-        val EMPTY = object : ClientFileProvider {
-            override suspend fun getDownloader(): Downloader {
-                TODO("Not yet implemented")
-            }
+        val EMPTY =
+            object : ClientFileProvider {
+                override suspend fun getDownloader(): Downloader? = null
 
-            override suspend fun getUploader(): Uploader {
-                TODO("Not yet implemented")
+                override suspend fun getUploader(): Uploader? = null
             }
-        }
     }
 }
 
-val LocalAppNavFactory = compositionLocalOf {
-    AppNavFactory.EMPTY
-}
+val LocalAppNavFactory =
+    compositionLocalOf {
+        AppNavFactory.EMPTY
+    }
 
 internal enum class AppListDetailScene {
     Home,
@@ -213,37 +215,45 @@ internal fun NavBackStack<NavKey>.selectAppDetail(detail: NavKey) {
     add(detail)
 }
 
-val LocalSessionManager = compositionLocalOf<SimpleUserSessionManager> {
-    error("LocalSessionManager must be provided")
-}
+val LocalSessionManager =
+    compositionLocalOf<SimpleUserSessionManager> {
+        error("LocalSessionManager must be provided")
+    }
 
-val LocalUserInfo = compositionLocalOf<UserInfo?> {
-    null
-}
+val LocalUserInfo =
+    compositionLocalOf<UserInfo?> {
+        null
+    }
 
-val LocalAccountSwitcher = compositionLocalOf {
-    AccountSwitcher()
-}
+val LocalAccountSwitcher =
+    compositionLocalOf {
+        AccountSwitcher()
+    }
 
-val LocalClientFileProvider = compositionLocalOf {
-    ClientFileProvider.EMPTY
-}
+val LocalClientFileProvider =
+    compositionLocalOf {
+        ClientFileProvider.EMPTY
+    }
 
 @OptIn(DelicateCoroutinesApi::class)
-val LocalUiViewModel = staticCompositionLocalOf<UIViewModel> {
-    error("LocalUiViewModel must be provided")
-}
-typealias AppGlobalDialogController = CustomGlobalDialogController<GlobalDialogContext<SimpleUserSessionManager>>
+val LocalUiViewModel =
+    staticCompositionLocalOf<UIViewModel> {
+        error("LocalUiViewModel must be provided")
+    }
+internal typealias AppGlobalDialogController =
+    CustomGlobalDialogController<GlobalDialogContext<SimpleUserSessionManager>>
 
-val LocalGlobalDialog = compositionLocalOf<AppGlobalDialogController> {
-    error("LocalGlobalDialog must be provided")
-}
+val LocalGlobalDialog =
+    compositionLocalOf<AppGlobalDialogController> {
+        error("LocalGlobalDialog must be provided")
+    }
 
-typealias AppGlobalTask = CustomGlobalTask<GlobalTaskContext<SimpleUserSessionManager>>
+internal typealias AppGlobalTask = CustomGlobalTask<GlobalTaskContext<SimpleUserSessionManager>>
 
-val LocalGlobalTask = compositionLocalOf<AppGlobalTask> {
-    error("LocalGlobalTask must be provided")
-}
+val LocalGlobalTask =
+    compositionLocalOf<AppGlobalTask> {
+        error("LocalGlobalTask must be provided")
+    }
 
 @Composable
 fun App() {
@@ -258,18 +268,20 @@ fun App() {
 @Composable
 fun AppInternal(mediaPlaySession: MediaPlaySession?) {
     val isPip = rememberIsInPipMode()
-    val config = remember {
-        SavedStateConfiguration {
-            serializersModule = appNavSerializersModule
+    val config =
+        remember {
+            SavedStateConfiguration {
+                serializersModule = appNavSerializersModule
+            }
         }
-    }
     val backStack = rememberNavBackStack(config, HomeScreen)
-    val appNav = remember {
-        object : AppNavFactory {
-            val appNav = newAppNav(backStack)
-            override fun newAppNav() = appNav
+    val appNav =
+        remember {
+            object : AppNavFactory {
+                val appNav = newAppNav(backStack)
+                override fun newAppNav() = appNav
+            }
         }
-    }
     if (!isPip || mediaPlaySession == null) {
         MainPage(appNav, backStack)
     } else {
@@ -283,10 +295,7 @@ fun AppInternal(mediaPlaySession: MediaPlaySession?) {
 }
 
 @Composable
-private fun MainPage(
-    appNav: AppNavFactory,
-    backStack: NavBackStack<NavKey>
-) {
+private fun MainPage(appNav: AppNavFactory, backStack: NavBackStack<NavKey>) {
     DisposableEffect(Unit) {
         ExternalUriHandler.listener = { _ ->
         }
@@ -364,7 +373,7 @@ fun CommonEntry(content: @Composable () -> Unit) {
             LocalGlobalDialog provides instance.controller,
             LocalGlobalTask provides instance.task,
             LocalUserInfo provides user,
-            LocalRefCellHandlerProvider provides DefaultRefCellHandlerProvider
+            LocalRefCellHandlerProvider provides DefaultRefCellHandlerProvider,
         ) {
             ProvideFontIcon {
                 val dataStore = createAppPreferencesDataStore()
@@ -393,35 +402,38 @@ sealed interface IAccountInstance {
     class None(scope: CoroutineScope, httpUrl: String, wsServerUrl: String) : IAccountInstance {
         override val passHolder: ConstPassHolder = ConstPassHolder(null)
         val events = MutableSharedFlow<Any>()
-        override val sessionManager = createSimpleUserSessionManager(
-            buildWebSocketUrl(wsServerUrl),
-            AcceptAllCookiesStorage(),
-            passHolder,
-            { m, c ->
-                buildHttpClient(
-                    httpUrl,
-                    c,
-                    m,
-                    passHolder
-                )
+        override val sessionManager: SimpleUserSessionManager =
+            createSimpleUserSessionManager(
+                buildWebSocketUrl(wsServerUrl),
+                AcceptAllCookiesStorage(),
+                passHolder,
+                { m, c ->
+                    buildHttpClient(
+                        httpUrl,
+                        c,
+                        m,
+                        passHolder,
+                    )
+                },
+            ) { frame, _, _ ->
+                if (frame is RoomFrame.NewTopicInfo) {
+                    events.emit(OnTopicCreated(frame.topicInfo))
+                }
             }
-        ) { frame, _, _ ->
-            if (frame is RoomFrame.NewTopicInfo) {
-                events.emit(OnTopicCreated(frame.topicInfo))
-            }
-        }
         override val database = getRoomModelStorage("guest")
-        override val task = CustomGlobalTask(
-            scope,
-            GlobalTaskContext(events, sessionManager)
-        )
-        override val controller = CustomGlobalDialogController(
-            scope,
-            GlobalDialogContext(
-                events,
-                sessionManager
+        override val task: CustomGlobalTask<GlobalTaskContext<SimpleUserSessionManager>> =
+            CustomGlobalTask(
+                scope,
+                GlobalTaskContext(events, sessionManager),
             )
-        )
+        override val controller: CustomGlobalDialogController<GlobalDialogContext<SimpleUserSessionManager>> =
+            CustomGlobalDialogController(
+                scope,
+                GlobalDialogContext(
+                    events,
+                    sessionManager,
+                ),
+            )
         override val address: String = "guest"
     }
 
@@ -431,10 +443,10 @@ sealed interface IAccountInstance {
         httpUrl: String,
         wsServerUrl: String,
         cookieManager: AcceptAllCookiesStorage,
-        override val passHolder: ConstPassHolder
+        override val passHolder: ConstPassHolder,
     ) : IAccountInstance {
         private val events = MutableSharedFlow<Any>()
-        override val sessionManager =
+        override val sessionManager: SimpleUserSessionManager =
             createSimpleUserSessionManager(buildWebSocketUrl(wsServerUrl), cookieManager, passHolder, { m, c ->
                 buildHttpClient(httpUrl, c, m, passHolder)
             }) { frame, _, _ ->
@@ -443,17 +455,19 @@ sealed interface IAccountInstance {
                 }
             }
         override val database = getRoomModelStorage(address)
-        override val task = CustomGlobalTask(
-            scope,
-            GlobalTaskContext(events, sessionManager)
-        )
-        override val controller = CustomGlobalDialogController(
-            scope,
-            GlobalDialogContext(
-                events,
-                sessionManager
+        override val task: CustomGlobalTask<GlobalTaskContext<SimpleUserSessionManager>> =
+            CustomGlobalTask(
+                scope,
+                GlobalTaskContext(events, sessionManager),
             )
-        )
+        override val controller: CustomGlobalDialogController<GlobalDialogContext<SimpleUserSessionManager>> =
+            CustomGlobalDialogController(
+                scope,
+                GlobalDialogContext(
+                    events,
+                    sessionManager,
+                ),
+            )
 
         init {
             scope.launch {
@@ -483,38 +497,41 @@ sealed interface IAccountInstance {
         httpUrl: String,
         wsServerUrl: String,
         val main: Regular,
-        override val passHolder: ConstPassHolder
+        override val passHolder: ConstPassHolder,
     ) : IAccountInstance {
         val events = MutableSharedFlow<Any>()
-        override val sessionManager = createSimpleUserSessionManager(
-            buildWebSocketUrl(wsServerUrl),
-            AcceptAllCookiesStorage(),
-            passHolder,
-            { m, c ->
-                buildHttpClient(
-                    httpUrl,
-                    c,
-                    m,
-                    passHolder
-                )
+        override val sessionManager: SimpleUserSessionManager =
+            createSimpleUserSessionManager(
+                buildWebSocketUrl(wsServerUrl),
+                AcceptAllCookiesStorage(),
+                passHolder,
+                { m, c ->
+                    buildHttpClient(
+                        httpUrl,
+                        c,
+                        m,
+                        passHolder,
+                    )
+                },
+            ) { frame, _, _ ->
+                if (frame is RoomFrame.NewTopicInfo) {
+                    events.emit(OnTopicCreated(frame.topicInfo))
+                }
             }
-        ) { frame, _, _ ->
-            if (frame is RoomFrame.NewTopicInfo) {
-                events.emit(OnTopicCreated(frame.topicInfo))
-            }
-        }
         override val database = getRoomModelStorage(address)
-        override val task = CustomGlobalTask(
-            scope,
-            GlobalTaskContext(events, sessionManager)
-        )
-        override val controller = CustomGlobalDialogController(
-            scope,
-            GlobalDialogContext(
-                events,
-                sessionManager
+        override val task: CustomGlobalTask<GlobalTaskContext<SimpleUserSessionManager>> =
+            CustomGlobalTask(
+                scope,
+                GlobalTaskContext(events, sessionManager),
             )
-        )
+        override val controller: CustomGlobalDialogController<GlobalDialogContext<SimpleUserSessionManager>> =
+            CustomGlobalDialogController(
+                scope,
+                GlobalDialogContext(
+                    events,
+                    sessionManager,
+                ),
+            )
 
         init {
             scope.launch {
@@ -539,11 +556,7 @@ sealed interface IAccountInstance {
     }
 }
 
-class UIViewModel(
-    val viewModelScope: CoroutineScope,
-    val wsServerUrl: String,
-    val httpUrl: String
-) {
+class UIViewModel(val viewModelScope: CoroutineScope, val wsServerUrl: String, val httpUrl: String) {
     val instance: MutableStateFlow<IAccountInstance>
     val settings = createSettings("main")
     val historyManager = buildSessionHistoryFactory(settings)
@@ -555,18 +568,20 @@ class UIViewModel(
         val state = restoreFromStorage(settings)
         if (state is ClientSessionState.Success) {
             viewModelScope.launch {
-                val address = when (val userPass = state.userPass) {
-                    is RawUserPass -> userPass.rawUSerPass.address
-                    else -> userPass.address().getOrNull() ?: return@launch
-                }
-                val regular = IAccountInstance.Regular(
-                    viewModelScope,
-                    address,
-                    httpUrl,
-                    wsServerUrl,
-                    AcceptAllCookiesStorage(),
-                    ConstPassHolder(state.userPass)
-                )
+                val address =
+                    when (val userPass = state.userPass) {
+                        is RawUserPass -> userPass.rawUSerPass.address
+                        else -> userPass.address().getOrNull() ?: return@launch
+                    }
+                val regular =
+                    IAccountInstance.Regular(
+                        viewModelScope,
+                        address,
+                        httpUrl,
+                        wsServerUrl,
+                        AcceptAllCookiesStorage(),
+                        ConstPassHolder(state.userPass),
+                    )
                 instance.value = regular
             }
         }
@@ -577,27 +592,33 @@ class UIViewModel(
     }
 
     fun switchUser(main: IAccountInstance.Regular, rawUserPass: RawUserPass) {
-        instance.value = IAccountInstance.Child(
-            viewModelScope, rawUserPass.rawUSerPass.address, httpUrl, wsServerUrl, main,
-            ConstPassHolder(rawUserPass)
-        )
+        instance.value =
+            IAccountInstance.Child(
+                viewModelScope,
+                rawUserPass.rawUSerPass.address,
+                httpUrl,
+                wsServerUrl,
+                main,
+                ConstPassHolder(rawUserPass),
+            )
     }
 
-    fun login(
-        address: String,
-        data: String,
-        signature: String,
-        userPass: UserPass,
-        userInfo: UserInfo? = null
-    ) {
+    fun login(address: String, data: String, signature: String, userPass: UserPass, userInfo: UserInfo? = null) {
         val cookieManager = instance.value.sessionManager.cookieManager
-        instance.value = IAccountInstance.Regular(
-            viewModelScope, address, httpUrl, wsServerUrl, cookieManager,
-            ConstPassHolder(userPass)
-        ).apply {
-            sessionManager.model.updateSignature(data, signature)
-            userInfo?.let { sessionManager.model.updateUser(it) }
-        }
+        instance.value =
+            IAccountInstance.Regular(
+                viewModelScope,
+                address,
+                httpUrl,
+                wsServerUrl,
+                cookieManager,
+                ConstPassHolder(userPass),
+            ).apply {
+                sessionManager.model.updateSignature(data, signature)
+                if (userInfo != null) {
+                    sessionManager.model.updateUser(userInfo)
+                }
+            }
     }
 
     fun switchToMain() {
@@ -618,7 +639,7 @@ fun ProvideFontIcon(block: @Composable () -> Unit) {
         LocalIconWeight provides FontWeight.Normal,
         content = {
             block()
-        }
+        },
     )
 }
 
@@ -627,7 +648,8 @@ fun buildHttpClient(
     cookieManager: CookiesStorage,
     model: UserSessionModel,
     passHolder: ConstPassHolder,
-): HttpClient = if (httpUrl.isEmpty()) {
+): HttpClient =
+    if (httpUrl.isEmpty()) {
     HttpClient { }
 } else {
     getClient {
@@ -651,13 +673,14 @@ private fun ObserveMessage() {
     LaunchedEffect(sessionManager) {
         sessionManager.webSocketClient.frameFlow.collect { frame ->
             if (frame is RoomFrame.NewTopicInfo) {
-                val plainFrame = if (frame.topicInfo.content is TopicContent.Encrypted) {
-                    val topicInfo =
-                        processEncryptedTopic(listOf(frame.topicInfo), sessionManager).first()
-                    RoomFrame.NewTopicInfo(topicInfo)
-                } else {
-                    frame
-                }
+                val plainFrame =
+                    if (frame.topicInfo.content is TopicContent.Encrypted) {
+                        val topicInfo =
+                            processEncryptedTopic(listOf(frame.topicInfo), sessionManager).first()
+                        RoomFrame.NewTopicInfo(topicInfo)
+                    } else {
+                        frame
+                    }
                 val topicInfo = plainFrame.topicInfo
                 val message = topicInfo.content
                 if (message is TopicContent.Plain) {
@@ -671,7 +694,7 @@ private fun ObserveMessage() {
                             topicId != topicInfo.parentId
                         ) {
                             val nickname = topicInfo.extension?.authorInfo?.nickname
-                            messageToasterState.show("$nickname: ${message.plain}")
+                            messageToasterState.show("${nickname ?: "<none>"}: ${message.plain}")
                         }
                     } else if (hasPermission) {
                         sendTopicNotification(message, topicInfo)
@@ -684,10 +707,7 @@ private fun ObserveMessage() {
 
 private const val TOPIC_NOTIFICATION_ID_KEY = "topic-id"
 
-private fun sendTopicNotification(
-    message: TopicContent.Plain,
-    topicInfo: TopicInfo,
-) {
+private fun sendTopicNotification(message: TopicContent.Plain, topicInfo: TopicInfo) {
     showAppNotification(
         title = "New topic",
         body = message.plain,
@@ -697,29 +717,32 @@ private fun sendTopicNotification(
 
 @Composable
 fun MediaPlayerPage(remoteMediaItem: RemoteMediaItem) {
-    CommonEntry({
+    CommonEntry {
         FileViewPage(FileViewData.Player(remoteMediaItem))
-    })
+    }
 }
 
 @Composable
 fun BubblePage(roomId: Long) {
-    CommonEntry({
-        val appNav = remember {
-            createAppNavFactoryForBubble()
-        }
+    CommonEntry {
+        val appNav =
+            remember {
+                createAppNavFactoryForBubble()
+            }
         CompositionLocalProvider(
             LocalAppNavFactory provides appNav,
         ) {
             RoomPage(roomId, false)
         }
-    })
+    }
 }
 
-private fun createAppNavFactoryForBubble(): AppNavFactory = object : AppNavFactory {
-    override fun newAppNav() = object : AppNav {
+private fun createAppNavFactoryForBubble(): AppNavFactory =
+    object : AppNavFactory {
+    override fun newAppNav() =
+        object : AppNav {
         override val backStack: NavBackStack<NavKey>
-            get() = TODO("Not yet implemented")
+            get() = throw UnsupportedOperationException("Bubble navigation does not expose a back stack")
 
         override fun gotoSignIn() = Unit
 

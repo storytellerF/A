@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.shared.model
 
 import com.storyteller_f.shared.type.PrimaryKey
@@ -109,7 +113,7 @@ data class LlmConfig(
 
 /** Runtime configuration for one worker task type. */
 @Serializable
-data class TaskConfig(
+data class WorkerTask(
     /** Worker task controlled by this configuration. */
     val type: TaskRecordType,
     /** Whether the worker may execute this task. */

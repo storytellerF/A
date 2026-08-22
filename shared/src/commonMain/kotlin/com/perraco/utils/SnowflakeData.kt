@@ -1,4 +1,8 @@
 /*
+ * This is a private project. All rights reserved.
+ */
+
+/*
  * Copyright (c) 2023 Perraco Labs. All rights reserved.
  * This work is licensed under the terms of the MIT license.
  * For a copy, see <https://opensource.org/licenses/MIT>
@@ -24,9 +28,4 @@ import kotlinx.serialization.Serializable
  * @property local Same as [utc], but converted to the local time zone.
  */
 @Serializable
-data class SnowflakeData(
-    val machineId: Int,
-    val sequence: Long,
-    val utc: LocalDateTime,
-    val local: LocalDateTime
-)
+data class SnowflakeData(val machineId: Int, val sequence: Long, val utc: LocalDateTime, val local: LocalDateTime)

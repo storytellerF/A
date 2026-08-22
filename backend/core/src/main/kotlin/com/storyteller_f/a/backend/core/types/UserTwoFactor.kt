@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.core.types
 
 import com.storyteller_f.shared.model.TwoFactorSettingsInfo
@@ -16,9 +20,8 @@ data class UserTwoFactor(
     companion object
 }
 
-fun UserTwoFactor?.toTwoFactorSettingsInfo(): TwoFactorSettingsInfo {
-    return TwoFactorSettingsInfo(
-        enabled = this?.enabled == true,
-        type = this?.type?.takeIf { enabled },
-    )
-}
+fun UserTwoFactor?.toTwoFactorSettingsInfo(): TwoFactorSettingsInfo =
+    TwoFactorSettingsInfo(
+    enabled = this?.enabled == true,
+    type = this?.type?.takeIf { enabled },
+)

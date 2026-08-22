@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.shared.utils
 
 import kotlin.js.ExperimentalWasmJsInterop
@@ -9,5 +13,4 @@ private external object MlHash {
     fun md5Hex(data: String): String
 }
 
-internal actual fun md5Platform(input: ByteArray): ByteArray =
-    MlHash.md5Hex(input.toHexString()).hexToByteArray()
+internal actual fun md5Platform(input: ByteArray): ByteArray = MlHash.md5Hex(input.toHexString()).hexToByteArray()

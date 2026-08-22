@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.common
 
 import com.storyteller_f.a.app.UIViewModel
@@ -97,10 +101,7 @@ class SimpleTaskRegister(val lifecycleScope: CoroutineScope) : TaskRegister {
     }
 }
 
-class DownloaderImpl(
-    val uiViewModel: UIViewModel,
-    val register: TaskRegister
-) : Downloader {
+class DownloaderImpl(val uiViewModel: UIViewModel, val register: TaskRegister) : Downloader {
     override fun download(fileInfo: FileInfo) {
         val path = Path(SystemTemporaryDirectory, "downloads", fileInfo.id.toString(), fileInfo.name)
         Napier.i(tag = "download") {
@@ -113,6 +114,8 @@ class DownloaderImpl(
         register.lockTask(fileInfo.id.toString()) {
             try {
                 downloadIfNeed(modelStorage, fileInfo, path, userSession)
+            } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+                throw cancellation
             } catch (e: Exception) {
                 Napier.e(e, tag = "download") {
                     "download failed"
@@ -131,6 +134,8 @@ class DownloaderImpl(
         register.lockTask(id.toString()) {
             try {
                 download(userSession, modelStorage, id)
+            } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+                throw cancellation
             } catch (e: Exception) {
                 Napier.e(e, tag = "download") {
                     "resume failed"
@@ -153,19 +158,20 @@ class DownloaderImpl(
         modelStorage: ModelStorage,
         fileInfo: FileInfo,
         path: Path,
-        userSession: SimpleUserSessionManager
+        userSession: SimpleUserSessionManager,
     ) {
         val document = modelStorage.download.getDocumentByFileId(fileInfo.id)
         if (document == null) {
-            val new = DownloadInfo(
-                nowInstance().epochSeconds,
-                fileInfo,
-                DownloadStatus.NOT_DOWNLOADED,
-                "",
-                path.toString(),
-                0,
-                fileInfo.size
-            )
+            val new =
+                DownloadInfo(
+                    nowInstance().epochSeconds,
+                    fileInfo,
+                    DownloadStatus.NOT_DOWNLOADED,
+                    "",
+                    path.toString(),
+                    0,
+                    fileInfo.size,
+                )
             modelStorage.download.save(new)
             Napier.i(tag = "download") {
                 "add new document"
@@ -180,10 +186,7 @@ class DownloaderImpl(
         return
     }
 
-    private fun pauseIfNeed(
-        id: PrimaryKey,
-        modelStorage: ModelStorage,
-    ) {
+    private fun pauseIfNeed(id: PrimaryKey, modelStorage: ModelStorage) {
         register.stop(id.toString()) {
             updateDownloadInfo(modelStorage, id) {
                 it.copy(status = DownloadStatus.PAUSED)
@@ -191,11 +194,7 @@ class DownloaderImpl(
         }
     }
 
-    private suspend fun download(
-        userSession: SimpleUserSessionManager,
-        modelStorage: ModelStorage,
-        id: PrimaryKey,
-    ) {
+    private suspend fun download(userSession: SimpleUserSessionManager, modelStorage: ModelStorage, id: PrimaryKey) {
         val downloadInfo = modelStorage.download.getDocumentByFileId(id)
         if (downloadInfo == null) {
             Napier.w(tag = "download") {
@@ -221,27 +220,29 @@ class DownloaderImpl(
                 return
             }
         }
-        if (path.toString().endsWith(".zip")) {
-            if (extractFile(path, modelStorage, id)) return
+        if (path.toString().endsWith(".zip") && extractFile(path, modelStorage, id)) {
+            return
         }
         updateDownloadInfo(modelStorage, id) {
             it.copy(status = DownloadStatus.PROCESSED)
         }
     }
 
-    private suspend fun extractFile(
-        path: Path,
-        modelStorage: ModelStorage,
-        id: PrimaryKey
-    ): Boolean {
+    private suspend fun extractFile(path: Path, modelStorage: ModelStorage, id: PrimaryKey): Boolean {
         try {
             SystemFileSystem.unzipFrom(
                 archive = path,
-                target = Path(path.parent!!, "${path.name}.extracted"),
+                target =
+                Path(
+                    checkNotNull(path.parent) { "Download path must have a parent" },
+                    "${path.name}.extracted",
+                ),
             )
+        } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+            throw cancellation
         } catch (e: Exception) {
             updateDownloadInfo(modelStorage, id) {
-                it.copy(status = DownloadStatus.PROCESS_FAILED, message = e.message.toString())
+                it.copy(status = DownloadStatus.PROCESS_FAILED, message = e.message?.toString().orEmpty())
             }
             return true
         }
@@ -257,7 +258,7 @@ class DownloaderImpl(
         id: PrimaryKey,
         userSession: SimpleUserSessionManager,
         fileInfo: FileInfo,
-        path: Path
+        path: Path,
     ): Boolean {
         if (downloadInfo.status != DownloadStatus.DOWNLOADING) {
             updateDownloadInfo(modelStorage, id) {
@@ -266,33 +267,31 @@ class DownloaderImpl(
         }
         try {
             userSession.serviceCatching {
-                segmentedDownload(modelStorage, fileInfo, path)
+                segmentedDownload(this, modelStorage, fileInfo, path)
             }.getOrThrow()
-            updateDownloadInfo(modelStorage, id) {
-                it.copy(
+            updateDownloadInfo(modelStorage, id) { currentDownload ->
+                currentDownload.copy(
                     status = DownloadStatus.DOWNLOADED,
-                    message = "download success ${now()}"
+                    message = "download success ${now()}",
                 )
             }
             return false
+        } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+            throw cancellation
         } catch (throwable: Exception) {
             if (throwable is CancellationException) {
                 Napier.e(throwable) {
                     "download failed ${fileInfo.name}"
                 }
                 updateDownloadInfo(modelStorage, id) {
-                    it.copy(status = DownloadStatus.DOWNLOAD_FAILED, message = throwable.message.toString())
+                    it.copy(status = DownloadStatus.DOWNLOAD_FAILED, message = throwable.message?.toString().orEmpty())
                 }
             }
             return true
         }
     }
 
-    suspend fun HttpClient.segmentedDownload(
-        modelStorage: ModelStorage,
-        fileInfo: FileInfo,
-        path: Path
-    ) {
+    suspend fun segmentedDownload(client: HttpClient, modelStorage: ModelStorage, fileInfo: FileInfo, path: Path) {
         var downloadedBytes = 0L
 
         // Check if the file already exists and get its size to resume the download
@@ -300,14 +299,14 @@ class DownloaderImpl(
             downloadedBytes = SystemFileSystem.metadataOrNull(path)?.size ?: 0L
         }
 
-        prepareGet(fileInfo.url) {
+        client.prepareGet(fileInfo.url) {
             // Set the Range header to request the remaining part of the file
             header(HttpHeaders.Range, "bytes=$downloadedBytes-")
         }.execute { httpResponse ->
             // Check for successful partial or full content
             val httpStatus = httpResponse.status
-            if (httpStatus != HttpStatusCode.OK && httpStatus != HttpStatusCode.PartialContent) {
-                throw Exception("Download failed: ${httpStatus.description}")
+            check(httpStatus == HttpStatusCode.OK || httpStatus == HttpStatusCode.PartialContent) {
+                "Download failed: ${httpStatus.description}"
             }
 
             val channel: ByteReadChannel = httpResponse.body()
@@ -315,7 +314,7 @@ class DownloaderImpl(
             // Open the sink in append mode to continue writing to the file
             SystemFileSystem.sink(path, append = true).use { sink ->
                 while (!channel.isClosedForRead) {
-                    val chunk = channel.readRemaining(10240)
+                    val chunk = channel.readRemaining(10_240)
                     if (chunk.exhausted()) continue
 
                     downloadedBytes += chunk.remaining
@@ -332,11 +331,7 @@ class DownloaderImpl(
         }
     }
 
-    suspend fun updateDownloadInfo(
-        modelStorage: ModelStorage,
-        id: PrimaryKey,
-        block: (DownloadInfo) -> DownloadInfo
-    ) {
+    suspend fun updateDownloadInfo(modelStorage: ModelStorage, id: PrimaryKey, block: (DownloadInfo) -> DownloadInfo) {
         val uploadInfo = modelStorage.download.getDocumentByFileId(id) ?: return
         modelStorage.download.save(block(uploadInfo))
     }

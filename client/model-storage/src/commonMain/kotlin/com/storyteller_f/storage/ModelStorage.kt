@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.storage
 
 import androidx.paging.PagingSource
@@ -92,11 +96,8 @@ sealed interface TitleCollection {
 
 sealed interface RoomCollection {
     data object Rooms : RoomCollection
-    data class SearchRoom(
-        val word: String,
-        val communityId: PrimaryKey?,
-        val joinStatusSearch: JoinStatusSearch
-    ) : RoomCollection
+    data class SearchRoom(val word: String, val communityId: PrimaryKey?, val joinStatusSearch: JoinStatusSearch) :
+        RoomCollection
 
     data class AllRooms(val isPrivate: Boolean) : RoomCollection
 
@@ -163,10 +164,8 @@ sealed interface FileRefCollection {
 }
 
 sealed interface PanelLogCollection {
-    data class PanelLogs(
-        val targetId: PrimaryKey,
-        val objectType: com.storyteller_f.shared.type.ObjectType
-    ) : PanelLogCollection
+    data class PanelLogs(val targetId: PrimaryKey, val objectType: com.storyteller_f.shared.type.ObjectType) :
+        PanelLogCollection
 }
 
 sealed interface TaskRecordCollection {
@@ -179,108 +178,104 @@ sealed interface TaskRecordCollection {
     ) : TaskRecordCollection
 }
 
-fun FileCollection.getName(): String {
-    return when (this) {
-        FileCollection.Files -> "files"
-        is FileCollection.FileList -> "files_$objectId"
-        is FileCollection.FileSearch -> "files_${objectId}_$word"
-    }
+fun FileCollection.getName(): String =
+    when (this) {
+    FileCollection.Files -> "files"
+    is FileCollection.FileList -> "files_$objectId"
+    is FileCollection.FileSearch -> "files_${objectId}_$word"
 }
 
-fun UserCollection.getName(): String {
-    return when (this) {
-        is UserCollection.SearchUser -> "users_$word"
-        UserCollection.Users -> "users"
-        is UserCollection.Members -> "members_${objectId}_$word"
-        UserCollection.AllUsers -> "all_users"
-    }
+fun UserCollection.getName(): String =
+    when (this) {
+    is UserCollection.SearchUser -> "users_$word"
+    UserCollection.Users -> "users"
+    is UserCollection.Members -> "members_${objectId}_$word"
+    UserCollection.AllUsers -> "all_users"
 }
 
-fun RoomCollection.getName(): String {
-    return when (this) {
-        RoomCollection.Rooms -> "rooms"
-        is RoomCollection.SearchRoom -> "rooms_${word}_${joinStatusSearch}_$communityId"
-        is RoomCollection.AllRooms -> "all_rooms_$isPrivate"
-        // 添加社区房间相关的名称生成
-        is RoomCollection.CommunityRooms -> "community_rooms_$communityId"
-        is RoomCollection.CommunityRoomSearch -> "community_rooms_${communityId}_$word"
-    }
+fun RoomCollection.getName(): String =
+    when (this) {
+    RoomCollection.Rooms -> "rooms"
+
+    is RoomCollection.SearchRoom -> "rooms_${word}_${joinStatusSearch}_${communityId ?: "<none>"}"
+
+    is RoomCollection.AllRooms -> "all_rooms_$isPrivate"
+
+    // 添加社区房间相关的名称生成
+    is RoomCollection.CommunityRooms -> "community_rooms_$communityId"
+
+    is RoomCollection.CommunityRoomSearch -> "community_rooms_${communityId}_$word"
 }
 
-fun ReactionCollection.getName(): String {
-    return when (this) {
-        ReactionCollection.Reactions -> "reactions"
-        is ReactionCollection.ReactionList -> "reactions_$objectId"
-    }
+fun ReactionCollection.getName(): String =
+    when (this) {
+    ReactionCollection.Reactions -> "reactions"
+    is ReactionCollection.ReactionList -> "reactions_$objectId"
 }
 
-fun UserReactionRecordCollection.getName(): String {
-    return when (this) {
-        is UserReactionRecordCollection.UserReactionRecords -> "user_reaction_records_$uid"
-    }
+fun UserReactionRecordCollection.getName(): String =
+    when (this) {
+    is UserReactionRecordCollection.UserReactionRecords -> "user_reaction_records_$uid"
 }
 
-fun TopicCollection.getName(): String {
-    return when (this) {
-        is TopicCollection.SearchTopic -> "topics_${word}_$parentId"
-        is TopicCollection.ChildTopicList -> "topics_$objectId"
-        TopicCollection.Topics -> "topics"
-        TopicCollection.Recommend -> "topics_recommend"
-        TopicCollection.AllTopics -> "all_topics"
-        is TopicCollection.UserComments -> "user_comments"
-    }
+fun TopicCollection.getName(): String =
+    when (this) {
+    is TopicCollection.SearchTopic -> "topics_${word}_${parentId ?: "<none>"}"
+    is TopicCollection.ChildTopicList -> "topics_$objectId"
+    TopicCollection.Topics -> "topics"
+    TopicCollection.Recommend -> "topics_recommend"
+    TopicCollection.AllTopics -> "all_topics"
+    is TopicCollection.UserComments -> "user_comments"
 }
 
-fun CommunityCollection.getName(): String {
-    return when (this) {
-        CommunityCollection.Communities -> "communities"
-        is CommunityCollection.SearchCommunity -> "communities_${word}_${target}_${joinStatusSearch}_$hasPointer"
-        CommunityCollection.AllCommunities -> "all_communities"
-    }
+fun CommunityCollection.getName(): String =
+    when (this) {
+    CommunityCollection.Communities -> "communities"
+
+    is CommunityCollection.SearchCommunity ->
+        "communities_${word}_${target ?: "<none>"}_${joinStatusSearch}_${hasPointer ?: "<none>"}"
+
+    CommunityCollection.AllCommunities -> "all_communities"
 }
 
-fun TitleCollection.getName(): String {
-    return when (this) {
-        is TitleCollection.SearchTitle -> "titles_${uid}_${searchType}_${status}_${type}_$scopeId"
-        TitleCollection.Titles -> "title"
-        TitleCollection.AllTitles -> "all_titles"
-    }
+fun TitleCollection.getName(): String =
+    when (this) {
+    is TitleCollection.SearchTitle ->
+        "titles_${uid}_${searchType}_${status ?: "<none>"}_${type ?: "<none>"}_${scopeId ?: "<none>"}"
+
+    TitleCollection.Titles -> "title"
+
+    TitleCollection.AllTitles -> "all_titles"
 }
 
-fun UserLogCollection.getName(): String {
-    return when (this) {
-        is UserLogCollection.UserLogs -> "user_logs_$uid"
-    }
+fun UserLogCollection.getName(): String =
+    when (this) {
+    is UserLogCollection.UserLogs -> "user_logs_$uid"
 }
 
-fun UserFavoriteCollection.getName(): String {
-    return when (this) {
-        is UserFavoriteCollection.UserFavorites -> "user_favorites_$uid"
-    }
+fun UserFavoriteCollection.getName(): String =
+    when (this) {
+    is UserFavoriteCollection.UserFavorites -> "user_favorites_$uid"
 }
 
-fun UserSubscriptionCollection.getName(): String {
-    return when (this) {
-        is UserSubscriptionCollection.UserSubscriptions -> "user_subscriptions_$uid"
-    }
+fun UserSubscriptionCollection.getName(): String =
+    when (this) {
+    is UserSubscriptionCollection.UserSubscriptions -> "user_subscriptions_$uid"
 }
 
-fun UploadRecordCollection.getName(): String {
-    return when (this) {
-        is UploadRecordCollection.UserUploadRecords -> "upload_records_$uid"
-    }
+fun UploadRecordCollection.getName(): String =
+    when (this) {
+    is UploadRecordCollection.UserUploadRecords -> "upload_records_$uid"
 }
 
-fun FileRefCollection.getName(): String {
-    return when (this) {
-        is FileRefCollection.FileRefs -> "file_refs_$fileId"
-    }
+fun FileRefCollection.getName(): String =
+    when (this) {
+    is FileRefCollection.FileRefs -> "file_refs_$fileId"
 }
 
-fun PanelLogCollection.getName(): String {
-    return when (this) {
-        is PanelLogCollection.PanelLogs -> "panel_logs_${targetId}_$objectType"
-    }
+fun PanelLogCollection.getName(): String =
+    when (this) {
+    is PanelLogCollection.PanelLogs -> "panel_logs_${targetId}_$objectType"
 }
 
 fun TaskRecordCollection.getName(): String {
@@ -322,8 +317,7 @@ interface ModelStorage {
 
 interface UserInfoStorage : CollectionListStorageWithDefault<UserCollection, UserInfo>
 
-interface CommunityInfoStorage :
-    CollectionListStorageWithDefault<CommunityCollection, CommunityInfo>
+interface CommunityInfoStorage : CollectionListStorageWithDefault<CommunityCollection, CommunityInfo>
 
 interface TopicInfoStorage : CollectionListStorageWithDefault<TopicCollection, TopicInfo>
 
@@ -338,20 +332,21 @@ sealed interface MemberCollection {
     data class RoomMembers(val objectId: PrimaryKey, val word: String? = null) : MemberCollection
 }
 
-fun MemberCollection.getName(): String {
-    return when (this) {
-        is MemberCollection.CommunityMembers -> if (word.isNullOrBlank()) {
+fun MemberCollection.getName(): String =
+    when (this) {
+    is MemberCollection.CommunityMembers ->
+        if (word.isNullOrBlank()) {
             "community_members_$objectId"
         } else {
             "community_members_${objectId}_$word"
         }
 
-        is MemberCollection.RoomMembers -> if (word.isNullOrBlank()) {
+    is MemberCollection.RoomMembers ->
+        if (word.isNullOrBlank()) {
             "room_members_$objectId"
         } else {
             "room_members_${objectId}_$word"
         }
-    }
 }
 
 interface MemberInfoStorage : CollectionListStorage<MemberCollection, MemberInfo>
@@ -442,31 +437,19 @@ data class RemoteKeyStorageWrapper(val remoteKeyStorage: RemoteKeyStorage, val c
 
 fun RemoteKeyStorage.wrap(collectionName: String) = RemoteKeyStorageWrapper(this, collectionName)
 
-suspend fun TopicInfoStorage.update(
-    collection: TopicCollection,
-    id: PrimaryKey,
-    block: (TopicInfo) -> TopicInfo
-) {
+suspend fun TopicInfoStorage.update(collection: TopicCollection, id: PrimaryKey, block: (TopicInfo) -> TopicInfo) {
     val document = getDocument(collection, id) ?: return
     val value = block(document)
     updateDocument(collection, value)
 }
 
-suspend fun TitleInfoStorage.update(
-    collection: TitleCollection,
-    id: PrimaryKey,
-    block: (TitleInfo) -> TitleInfo
-) {
+suspend fun TitleInfoStorage.update(collection: TitleCollection, id: PrimaryKey, block: (TitleInfo) -> TitleInfo) {
     val document = getDocument(collection, id) ?: return
     val value = block(document)
     updateDocument(collection, value)
 }
 
-suspend fun RoomInfoStorage.update(
-    collection: RoomCollection,
-    id: PrimaryKey,
-    block: (RoomInfo) -> RoomInfo
-) {
+suspend fun RoomInfoStorage.update(collection: RoomCollection, id: PrimaryKey, block: (RoomInfo) -> RoomInfo) {
     val document = getDocument(collection, id) ?: return
     val value = block(document)
     updateDocument(collection, value)
@@ -475,28 +458,20 @@ suspend fun RoomInfoStorage.update(
 suspend fun CommunityInfoStorage.update(
     collection: CommunityCollection,
     id: PrimaryKey,
-    block: (CommunityInfo) -> CommunityInfo
+    block: (CommunityInfo) -> CommunityInfo,
 ) {
     val document = getDocument(collection, id) ?: return
     val value = block(document)
     updateDocument(collection, value)
 }
 
-suspend fun FileInfoStorage.update(
-    collection: FileCollection,
-    id: PrimaryKey,
-    block: (FileInfo) -> FileInfo
-) {
+suspend fun FileInfoStorage.update(collection: FileCollection, id: PrimaryKey, block: (FileInfo) -> FileInfo) {
     val document = getDocument(collection, id) ?: return
     val value = block(document)
     updateDocument(collection, value)
 }
 
-suspend fun UserInfoStorage.update(
-    collection: UserCollection,
-    id: PrimaryKey,
-    block: (UserInfo) -> UserInfo
-) {
+suspend fun UserInfoStorage.update(collection: UserCollection, id: PrimaryKey, block: (UserInfo) -> UserInfo) {
     val document = getDocument(collection, id) ?: return
     val value = block(document)
     updateDocument(collection, value)
@@ -505,24 +480,19 @@ suspend fun UserInfoStorage.update(
 class WrappedPagingSource<K : Any, T : Any, M : Any>(
     val rawSource: PagingSource<K, T>,
     val process: suspend (List<T>) -> List<M>,
-) :
-    PagingSource<K, M>() {
+) : PagingSource<K, M>() {
     init {
         rawSource.registerInvalidatedCallback {
             invalidate()
         }
     }
 
-    override fun getRefreshKey(state: PagingState<K, M>): K? {
-        return null
-    }
+    override fun getRefreshKey(state: PagingState<K, M>): K? = null
 
-    override suspend fun load(params: LoadParams<K>): LoadResult<K, M> {
-        return when (val result = rawSource.load(params)) {
-            is LoadResult.Page<K, T> -> LoadResult.Page(process(result.data), result.prevKey, result.nextKey)
-
-            is LoadResult.Error<K, T> -> LoadResult.Error(result.throwable)
-            is LoadResult.Invalid<K, T> -> LoadResult.Invalid()
-        }
+    override suspend fun load(params: LoadParams<K>): LoadResult<K, M> =
+        when (val result = rawSource.load(params)) {
+        is LoadResult.Page<K, T> -> LoadResult.Page(process(result.data), result.prevKey, result.nextKey)
+        is LoadResult.Error<K, T> -> LoadResult.Error(result.throwable)
+        is LoadResult.Invalid<K, T> -> LoadResult.Invalid()
     }
 }

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.shared.model
 
 import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
@@ -28,7 +32,7 @@ data class RoomInfo(
     val readOnly get() = status == ObjectStatus.READ_ONLY
     val isPrivate get() = communityId == null
     val isJoined get() = joinedTime != null
-    val hasUnread get() = latestTopic != null && (lastRead != null && lastRead < latestTopic || lastRead == null)
+    val hasUnread get() = latestTopic != null && (lastRead == null || lastRead < latestTopic)
     override val objectType: ObjectType
         get() = ObjectType.ROOM
 

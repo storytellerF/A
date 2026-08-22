@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 import org.gradle.kotlin.dsl.kotlin
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -47,19 +51,22 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     sourceSets {
-        val headlessTest = create("headlessTest") {
-            dependsOn(commonTest.get())
-        }
-        val jvmAndroidMain = create("jvmAndroidMain") {
-            dependencies {
-                implementation(libs.bcprov.jdk18on)
-                implementation(libs.bcpkix.jdk18on)
+        val headlessTest =
+            create("headlessTest") {
+                dependsOn(commonTest.get())
             }
-            dependsOn(commonMain.get())
-        }
-        val noJvmMain = create("noJvmMain") {
-            dependsOn(commonMain.get())
-        }
+        val jvmAndroidMain =
+            create("jvmAndroidMain") {
+                dependencies {
+                    implementation(libs.bcprov.jdk18on)
+                    implementation(libs.bcpkix.jdk18on)
+                }
+                dependsOn(commonMain.get())
+            }
+        val noJvmMain =
+            create("noJvmMain") {
+                dependsOn(commonMain.get())
+            }
         androidMain.dependencies {
             implementation(libs.cryptography.provider.jdk)
         }

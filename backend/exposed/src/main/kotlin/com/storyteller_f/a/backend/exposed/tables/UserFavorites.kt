@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.exposed.tables
 
 import com.storyteller_f.a.backend.core.types.UserFavorite
@@ -16,12 +20,11 @@ object UserFavorites : BaseTable() {
     }
 }
 
-fun UserFavorite.Companion.wrapRow(resultRow: ResultRow): UserFavorite {
-    return UserFavorite(
-        resultRow[UserFavorites.id],
-        resultRow[UserFavorites.uid],
-        resultRow[UserFavorites.objectId],
-        resultRow[UserFavorites.objectType],
-        resultRow[UserFavorites.createdTime],
-    )
-}
+fun UserFavorite.Companion.wrapRow(resultRow: ResultRow): UserFavorite =
+    UserFavorite(
+    resultRow[UserFavorites.id],
+    resultRow[UserFavorites.uid],
+    resultRow[UserFavorites.objectId],
+    resultRow[UserFavorites.objectType],
+    resultRow[UserFavorites.createdTime],
+)

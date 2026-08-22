@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.room
 
 import android.content.Context
@@ -8,7 +12,7 @@ import com.storyteller_f.shared.getAppContextRefValue
 import kotlinx.coroutines.Dispatchers
 
 actual fun getRoomDatabase(scope: String): AppDatabase {
-    val ctx = getAppContextRefValue()!!
+    val ctx = checkNotNull(getAppContextRefValue()) { "Application context is not initialized" }
     val builder = getDatabaseBuilder(ctx, scope)
     return builder
         .fallbackToDestructiveMigrationOnDowngrade(true)

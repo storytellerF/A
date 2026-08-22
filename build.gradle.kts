@@ -1,5 +1,4 @@
 import dev.detekt.gradle.Detekt
-import dev.detekt.gradle.DetektCreateBaselineTask
 import dev.detekt.gradle.report.ReportMergeTask
 plugins {
     // this is necessary to avoid the plugins to be loaded multiple times
@@ -38,19 +37,6 @@ fun isNoReleaseCompileTask(taskName: String): Boolean {
     return (isKsp || isKotlinOrJavaCompile) && !isExcludedVariant
 }
 
-fun detektBaselineFileName(taskName: String): String {
-    val suffix = taskName
-        .removePrefix("detektBaseline")
-        .removePrefix("detekt")
-    if (suffix.isEmpty() || suffix.endsWith("SourceSet")) {
-        return "detekt-baseline.xml"
-    }
-    val kebabSuffix = suffix
-        .replace(Regex("([a-z0-9])([A-Z])"), "$1-$2")
-        .lowercase()
-    return "detekt-baseline-$kebabSuffix.xml"
-}
-
 val compileAllNoRelease = tasks.register("compileAllNoRelease") {
     group = "verification"
     description = "Compile all included modules without Android release or benchmark variants."
@@ -76,10 +62,7 @@ subprojects {
         // Can lead to speedups in larger projects. `false` by default.
         parallel = true
 
-        autoCorrect = false
-
-        // Keep existing violations separate from violations introduced by new code.
-        baseline = layout.projectDirectory.file("detekt-baseline.xml")
+        autoCorrect = true
 
         // Android: Don't create tasks for the specified build types (e.g. "release")
         ignoredBuildTypes = listOf("release")
@@ -98,7 +81,6 @@ subprojects {
     }
 
     tasks.withType<Detekt>().configureEach {
-        baseline.set(layout.projectDirectory.file(detektBaselineFileName(name)))
         exclude { source -> source.file.absolutePath.replace('\\', '/').contains("/build/") }
         reports {
             checkstyle.required = true
@@ -108,11 +90,6 @@ subprojects {
         }
         basePath = rootDir.absolutePath
         finalizedBy(detektReportMergeSarif)
-    }
-
-    tasks.withType<DetektCreateBaselineTask>().configureEach {
-        baseline.set(layout.projectDirectory.file(detektBaselineFileName(name)))
-        exclude { source -> source.file.absolutePath.replace('\\', '/').contains("/build/") }
     }
 
     detektReportMergeSarif {

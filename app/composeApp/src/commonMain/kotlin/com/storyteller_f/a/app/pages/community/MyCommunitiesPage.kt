@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.community
 
 import androidx.compose.foundation.background
@@ -75,17 +79,13 @@ fun MyCommunitiesPage() {
 }
 
 @Composable
-fun CommunityCellList(
-    onClick: ((CommunityInfo) -> Unit)? = null
-) {
+fun CommunityCellList(onClick: ((CommunityInfo) -> Unit)? = null) {
     val cellViewModel = createJoinedCommunitiesViewModel()
     CommunityList(cellViewModel, onClick)
 }
 
 @Composable
-fun CommunityPosterGrid(
-    onClick: ((CommunityInfo) -> Unit)? = null
-) {
+fun CommunityPosterGrid(onClick: ((CommunityInfo) -> Unit)? = null) {
     val posterViewModel = createJoinedCommunitiesWithPosterViewModel()
     StateView(posterViewModel, modifier = Modifier.fillMaxSize()) { items ->
         LazyVerticalGrid(
@@ -93,12 +93,12 @@ fun CommunityPosterGrid(
             modifier = Modifier.fillMaxSize(),
             contentPadding = LayoutDefaults.contentPadding,
             horizontalArrangement = LayoutDefaults.pagingHorizontalArrangement,
-            verticalArrangement = LayoutDefaults.pagingVerticalArrangement
+            verticalArrangement = LayoutDefaults.pagingVerticalArrangement,
         ) {
             topPrepend(items.loadState)
             pagingItems(
                 items,
-                { it.id.toString() }
+                { it.id.toString() },
             ) { index ->
                 val info = items[index]
                 if (info != null) {
@@ -111,19 +111,17 @@ fun CommunityPosterGrid(
 }
 
 @Composable
-fun CommunityList(
-    communitiesViewModel: PagingViewModel<CommunityInfo>,
-    onClick: ((CommunityInfo) -> Unit)? = null
-) {
+fun CommunityList(communitiesViewModel: PagingViewModel<CommunityInfo>, onClick: ((CommunityInfo) -> Unit)? = null) {
     StateView(communitiesViewModel, modifier = Modifier.fillMaxSize()) { items ->
         LazyColumn(
             contentPadding = LayoutDefaults.contentPadding,
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             topPrepend(items.loadState)
             items(
                 count = items.itemCount,
-                key = items.itemKey {
+                key =
+                items.itemKey {
                     it.id.toString()
                 },
             ) { index ->
@@ -137,17 +135,14 @@ fun CommunityList(
 
 @OptIn(ExperimentalHazeMaterialsApi::class)
 @Composable
-fun CommunityGrid(
-    communityInfo: CommunityInfo?,
-    padding: Dp,
-    onClick: ((CommunityInfo) -> Unit)? = null
-) {
+fun CommunityGrid(communityInfo: CommunityInfo?, padding: Dp, onClick: ((CommunityInfo) -> Unit)? = null) {
     val appNavFactory = LocalAppNavFactory.current
     val hazeState = rememberHazeState()
     Box(modifier = Modifier.fillMaxWidth().padding(end = padding)) {
         val shape = RoundedCornerShape(14.dp)
         Box(
-            modifier = Modifier
+            modifier =
+            Modifier
                 .fillMaxWidth()
                 .aspectRatio(3f / 4)
                 .clip(shape)
@@ -155,18 +150,19 @@ fun CommunityGrid(
                     communityInfo?.let {
                         onClick?.invoke(it) ?: appNavFactory.newAppNav().gotoCommunity(it.id, false)
                     }
-                }
+                },
         ) {
             Box(modifier = Modifier.hazeSource(hazeState)) {
                 CommunityPoster(communityInfo)
             }
             val shape = RoundedCornerShape(10.dp)
             Row(
-                modifier = Modifier.align(Alignment.BottomStart).padding(4.dp)
+                modifier =
+                Modifier.align(Alignment.BottomStart).padding(4.dp)
                     .clip(shape)
                     .hazeEffect(hazeState, HazeMaterials.ultraThin()),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 if (communityInfo != null) {
                     val commonDialogController = rememberCommonDialogController()
@@ -176,7 +172,7 @@ fun CommunityGrid(
                         communityInfo.name,
                         Modifier.fillMaxWidth(),
                         color = MaterialTheme.colorScheme.onSecondaryContainer,
-                        fontSize = MaterialTheme.typography.labelSmall.fontSize
+                        fontSize = MaterialTheme.typography.labelSmall.fontSize,
                     )
                 }
             }
@@ -188,43 +184,45 @@ fun CommunityGrid(
 fun CommunityCell(
     communityInfo: CommunityInfo?,
     customBackground: Boolean = false,
-    onClick: ((CommunityInfo) -> Unit)? = null
+    onClick: ((CommunityInfo) -> Unit)? = null,
 ) {
     val appNavFactory = LocalAppNavFactory.current
-    val isCommunityPage = appNavFactory.hasRouteFlow<CommunityScreen> {
-        it.communityId == communityInfo?.id
-    }
-    val openCommunity = communityInfo?.let { info ->
-        {
-            onClick?.invoke(info) ?: appNavFactory.newAppNav().gotoCommunity(
-                info.id,
-                false
-            )
+    val isCommunityPage =
+        appNavFactory.hasRouteFlow<CommunityScreen> {
+            it.communityId == communityInfo?.id
         }
-    }
-    Row(
-        modifier = when {
-            customBackground -> Modifier.appiumSemantics(
-                text = communityInfo?.name,
-                onClick = openCommunity
-            )
-            else -> {
-                val shape = RoundedCornerShape(10.dp)
-                Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.secondaryContainer, shape)
-                    .clip(shape)
-                    .clickable(!isCommunityPage) {
-                        openCommunity?.invoke()
-                    }
-                    .padding(10.dp)
-                    .appiumSemantics(
-                        text = communityInfo?.name,
-                        onClick = openCommunity.takeUnless { isCommunityPage }
-                    )
+    val openCommunity =
+        communityInfo?.let { info ->
+            {
+                onClick?.invoke(info) ?: appNavFactory.newAppNav().gotoCommunity(
+                    info.id,
+                    false,
+                )
             }
+        }
+    Row(
+        modifier =
+        if (customBackground) {
+            Modifier.appiumSemantics(
+                text = communityInfo?.name,
+                onClick = openCommunity,
+            )
+        } else {
+            val shape = RoundedCornerShape(10.dp)
+            Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.secondaryContainer, shape)
+                .clip(shape)
+                .clickable(!isCommunityPage) {
+                    openCommunity?.invoke()
+                }
+                .padding(10.dp)
+                .appiumSemantics(
+                    text = communityInfo?.name,
+                    onClick = openCommunity.takeUnless { isCommunityPage },
+                )
         },
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         val commonDialogController = rememberCommonDialogController()
         val shown by commonDialogController.shown
@@ -232,7 +230,7 @@ fun CommunityCell(
         Text(
             communityInfo?.name.orEmpty(),
             color = MaterialTheme.colorScheme.onSecondaryContainer,
-            style = MaterialTheme.typography.labelSmall
+            style = MaterialTheme.typography.labelSmall,
         )
     }
 }

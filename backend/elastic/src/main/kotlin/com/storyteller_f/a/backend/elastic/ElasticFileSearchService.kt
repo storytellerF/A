@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.elastic
 
 import co.elastic.clients.elasticsearch.core.SearchRequest
@@ -11,26 +15,25 @@ import com.storyteller_f.a.backend.core.service.FileSearchService
 import com.storyteller_f.a.backend.core.service.FileSearchServiceFactory
 import io.github.aakira.napier.Napier
 
-class ElasticFileSearchService(connection: ElasticConnection) : Elastic(connection),
+class ElasticFileSearchService(connection: ElasticConnection) :
+    Elastic(connection),
     FileSearchService {
     companion object {
         const val INDEX_NAME = "files"
     }
 
-    override suspend fun saveDocument(documents: List<FileDocument>): Result<Unit> {
-        return useElasticClient {
-            saveDocumentList(connection, documents, INDEX_NAME)
-        }
+    override suspend fun saveDocument(documents: List<FileDocument>): Result<Unit> =
+        useElasticClient {
+        saveDocumentList(connection, documents, INDEX_NAME)
     }
 
-    override suspend fun clean(): Result<Unit> {
-        return useElasticClient {
-            cleanAll(INDEX_NAME)
-        }
+    override suspend fun clean(): Result<Unit> =
+        useElasticClient {
+        cleanAll(INDEX_NAME)
     }
 
     override suspend fun searchDocument(
-        fileDocumentSearch: FileDocumentSearch
+        fileDocumentSearch: FileDocumentSearch,
     ): Result<PaginationResult<FileDocument>> {
         if (fileDocumentSearch is FileDocumentSearch.Keyword && fileDocumentSearch.word.isEmpty()) {
             return Result.success(PaginationResult(emptyList(), 0))
@@ -44,9 +47,8 @@ class ElasticFileSearchService(connection: ElasticConnection) : Elastic(connecti
         }
     }
 
-    private fun buildSearchRequest(
-        fileDocumentSearch: FileDocumentSearch
-    ): SearchRequest = SearchRequest.of { s ->
+    private fun buildSearchRequest(fileDocumentSearch: FileDocumentSearch): SearchRequest =
+        SearchRequest.of { s ->
         s.index(INDEX_NAME).apply {
             when (fileDocumentSearch) {
                 is FileDocumentSearch.Keyword -> {
@@ -75,13 +77,10 @@ class ElasticFileSearchService(connection: ElasticConnection) : Elastic(connecti
 }
 
 class ElasticFileSearchServiceFactory : FileSearchServiceFactory {
-    override fun match(env: MergedEnv): Boolean {
-        return env["SEARCH_SERVICE"] == "elastic"
-    }
+    override fun match(env: MergedEnv): Boolean = env["SEARCH_SERVICE"] == "elastic"
 
-    override fun build(env: MergedEnv): FileSearchService {
-        return buildElasticSearchService(env) {
-            ElasticFileSearchService(it)
-        }
+    override fun build(env: MergedEnv): FileSearchService =
+        buildElasticSearchService(env) {
+        ElasticFileSearchService(it)
     }
 }

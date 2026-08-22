@@ -1,3 +1,9 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
+package com.storyteller_f.shared
+
 import com.storyteller_f.shared.utils.checkContent
 import com.storyteller_f.shared.utils.safeFirstUnicode
 import kotlin.test.Test

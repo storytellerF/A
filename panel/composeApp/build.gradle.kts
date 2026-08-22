@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.BOOLEAN
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING
 import com.google.common.base.CaseFormat
@@ -40,7 +44,7 @@ kotlin {
     if (buildIosTarget) {
         listOf(
             iosArm64(),
-            iosSimulatorArm64()
+            iosSimulatorArm64(),
         ).forEach { iosTarget ->
             iosTarget.binaries.framework {
                 baseName = "ComposeApp"
@@ -67,9 +71,10 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     sourceSets {
-        val headlessTest = create("headlessTest") {
-            dependsOn(commonTest.get())
-        }
+        val headlessTest =
+            create("headlessTest") {
+                dependsOn(commonTest.get())
+            }
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)
 
@@ -193,14 +198,15 @@ dependencies {
 buildkonfig {
     packageName = "com.storyteller_f.a.panel"
     objectName = "PanelConfig"
-    val properties = Properties().apply {
-        val file = layout.projectDirectory.file("../../deploy/$flavorStr.env").asFile
-        if (file.exists()) {
-            FileInputStream(file).use {
-                load(it)
+    val properties =
+        Properties().apply {
+            val file = layout.projectDirectory.file("../../deploy/$flavorStr.env").asFile
+            if (file.exists()) {
+                FileInputStream(file).use {
+                    load(it)
+                }
             }
         }
-    }
     val serverUrl = properties["SERVER_URL"] as? String
     defaultConfigs {
         buildConfigField(STRING, "SERVER_URL", serverUrl ?: "", const = true)
@@ -229,7 +235,7 @@ rootProject.plugins.withType<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlu
 
 private fun KotlinDependencyHandler.implementation(
     dependencyNotation: Provider<MinimalExternalModuleDependency>,
-    configure: ExternalModuleDependency.() -> Unit
+    configure: ExternalModuleDependency.() -> Unit,
 ) {
     implementation(dependencyNotation.get().toString(), configure)
 }

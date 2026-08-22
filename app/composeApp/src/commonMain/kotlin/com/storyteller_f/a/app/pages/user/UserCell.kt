@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.user
 
 import androidx.compose.foundation.clickable
@@ -20,40 +24,31 @@ import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.shared.model.UserInfo
 
 @Composable
-fun UserCell(
-    userInfo: UserInfo?,
-    iconSize: Dp = 40.dp,
-    onClickCell: (UserInfo) -> Unit = {}
-) {
+fun UserCell(userInfo: UserInfo?, iconSize: Dp = 40.dp, onClickCell: (UserInfo) -> Unit = {}) {
     val shape = RoundedCornerShape(8.dp)
     val openUser = userInfo?.let { info -> { onClickCell(info) } }
-    val modifier = Modifier.fillMaxWidth()
-        .clip(shape)
-        .clickable(userInfo != null) { openUser?.invoke() }
-        .padding(8.dp)
-        .appiumSemantics(
-            text = userInfo?.let { "${it.nickname} ${it.address}" },
-            onClick = openUser,
-        )
+    val modifier =
+        Modifier.fillMaxWidth()
+            .clip(shape)
+            .clickable(userInfo != null) { openUser?.invoke() }
+            .padding(8.dp)
+            .appiumSemantics(
+                text = userInfo?.let { "${it.nickname} ${it.address}" },
+                onClick = openUser,
+            )
     UserCellInternal(modifier, userInfo, iconSize)
 }
 
 @Composable
-fun UnboundedUserCell(
-    userInfo: UserInfo?,
-    iconSize: Dp = 40.dp
-) = UserCellInternal(Modifier.fillMaxWidth().padding(8.dp), userInfo, iconSize)
+fun UnboundedUserCell(userInfo: UserInfo?, iconSize: Dp = 40.dp) =
+    UserCellInternal(Modifier.fillMaxWidth().padding(8.dp), userInfo, iconSize)
 
 @Composable
-fun UserCellInternal(
-    modifier: Modifier,
-    userInfo: UserInfo?,
-    iconSize: Dp
-) {
+fun UserCellInternal(modifier: Modifier, userInfo: UserInfo?, iconSize: Dp) {
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         UserIconWithDialog(userInfo, setClickEvent = true, size = iconSize)
         if (userInfo != null) {

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.components
 
 import androidx.compose.foundation.border
@@ -60,30 +64,33 @@ fun PrivateKeyInput(
     algo: AlgoType = AlgoType.P256,
     onAlgoChange: (AlgoType) -> Unit = {},
     update: (String) -> Unit,
-    updateEncryption: (String) -> Unit = {}
+    updateEncryption: (String) -> Unit = {},
 ) {
     var showDialog by remember { mutableStateOf(false) }
 
     Row(
-        modifier = Modifier.padding(top = 10.dp).fillMaxWidth().appiumSemantics(
+        modifier =
+        Modifier.padding(top = 10.dp).fillMaxWidth().appiumSemantics(
             testTag = "privateKeyInput",
             description = if (privateKey.isEmpty()) "Private Key Input" else "private key loaded",
         ),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         val shape = RoundedCornerShape(10.dp)
         Row(
-            modifier = Modifier.weight(1f)
+            modifier =
+            Modifier.weight(1f)
                 .border(1.dp, MaterialTheme.colorScheme.primaryContainer, shape)
                 .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                address ?: "",
-                modifier = Modifier.weight(1f).appiumSemantics(
+                address.orEmpty(),
+                modifier =
+                Modifier.weight(1f).appiumSemantics(
                     description = address?.let { ACCOUNT_ADDRESS_DESCRIPTION },
-                )
+                ),
             )
             IconButton({
                 showDialog = true
@@ -127,7 +134,7 @@ fun PrivateKeyDialog(
                 onAlgoChange,
                 onConfirmPrivateKey,
                 onConfirmEncryptionPrivateKey,
-                onDismissRequest
+                onDismissRequest,
             )
         }
     }
@@ -143,12 +150,12 @@ fun PrivateKeyEditor(
     onAlgoChange: (AlgoType) -> Unit,
     onConfirmPrivateKey: (String) -> Unit,
     onConfirmEncryptionPrivateKey: (String) -> Unit,
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
 ) {
     var currentKey by remember { mutableStateOf(privateKey) }
-    var currentEncryptionKey by remember { mutableStateOf(encryptionPrivateKey ?: "") }
+    var currentEncryptionKey by remember { mutableStateOf(encryptionPrivateKey.orEmpty()) }
     Column(
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Text(stringResource(Res.string.edit_private_key), style = MaterialTheme.typography.titleMedium)
 
@@ -161,7 +168,7 @@ fun PrivateKeyEditor(
             Text(
                 "P256 算法不够安全，可能面临未来被解密的风险",
                 color = androidx.compose.ui.graphics.Color.Red,
-                modifier = Modifier.padding(top = 8.dp)
+                modifier = Modifier.padding(top = 8.dp),
             )
         }
 
@@ -172,7 +179,8 @@ fun PrivateKeyEditor(
         OutlinedTextField(
             value = currentKey,
             onValueChange = { currentKey = it },
-            modifier = Modifier.fillMaxWidth().appiumSemantics(
+            modifier =
+            Modifier.fillMaxWidth().appiumSemantics(
                 input = true,
                 inputValue = currentKey,
                 onInputValueChange = { currentKey = it },
@@ -200,7 +208,7 @@ fun PrivateKeyEditor(
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.End,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             TextButton(onCancel) {
                 Text(stringResource(Res.string.cancel))

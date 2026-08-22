@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.user
 
 import androidx.compose.foundation.layout.Arrangement
@@ -46,14 +50,13 @@ fun MemberPage(objectId: PrimaryKey, objectType: ObjectType) {
     Scaffold {
         Column(
             Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             CustomSearchBar(
                 when (objectType) {
                     ObjectType.COMMUNITY -> SearchScope.CommunityMember(objectId)
-
                     else -> SearchScope.RoomMember(objectId)
-                }
+                },
             ) {
                 var expended by remember {
                     mutableStateOf(false)
@@ -96,7 +99,7 @@ fun MemberList(memberViewModel: ContainerMemberViewModel, onClick: ((UserInfo) -
     StateView(memberViewModel) { items ->
         LazyColumn(
             contentPadding = LayoutDefaults.contentPadding,
-            verticalArrangement = LayoutDefaults.pagingVerticalArrangement
+            verticalArrangement = LayoutDefaults.pagingVerticalArrangement,
         ) {
             topPrepend(items.loadState)
             pagingItems(items, {
@@ -121,7 +124,7 @@ fun MemberList(memberViewModel: UserSearchViewModel, onClick: ((UserInfo) -> Uni
     StateView(memberViewModel) { items ->
         LazyColumn(
             contentPadding = LayoutDefaults.contentPadding,
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             topPrepend(items.loadState)
             pagingItems(items, {

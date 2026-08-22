@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.user
 
 import androidx.compose.foundation.layout.padding
@@ -41,11 +45,15 @@ fun FavoritePageInternal(viewModel: FavoritesViewModel) {
 
 class UserFavoritePreviewProvider : PreviewParameterProvider<UserFavoriteInfo> {
     override val values: Sequence<UserFavoriteInfo>
-        get() = sequenceOf(
-            UserFavoriteInfo.EMPTY.copy(
-                extensions = UserFavoriteInfo.Extensions(TopicInfo.EMPTY.copy(content = TopicContent.Plain("hello")))
+        get() =
+            sequenceOf(
+                UserFavoriteInfo.EMPTY.copy(
+                    extensions =
+                    UserFavoriteInfo.Extensions(
+                        TopicInfo.EMPTY.copy(content = TopicContent.Plain("hello")),
+                    ),
+                ),
             )
-        )
 }
 
 @Preview(widthDp = 300)

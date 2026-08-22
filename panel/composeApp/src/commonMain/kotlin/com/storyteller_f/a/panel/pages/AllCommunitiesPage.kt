@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.panel.pages
 
 import androidx.compose.foundation.clickable
@@ -44,9 +48,9 @@ fun AllCommunitiesPageInternal(viewModel: AllCommunitiesViewModel) {
                 title = { Text(stringResource(Res.string.all_communities)) },
                 navigationIcon = {
                     IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) }
-                }
+                },
             )
-        }
+        },
     ) { paddingValues ->
         val direction = LocalLayoutDirection.current
         Box(Modifier.safeArea(paddingValues, direction)) {
@@ -68,9 +72,9 @@ fun AllCommunitiesPageInternal(viewModel: AllCommunitiesViewModel) {
                                     val policy = info.memberPolicy.name
                                     Text(
                                         listOf(owner, members, policy).filter { it.isNotEmpty() }
-                                            .joinToString(" • ")
+                                            .joinToString(" • "),
                                     )
-                                }
+                                },
                             )
                             HorizontalDivider()
                         } else {

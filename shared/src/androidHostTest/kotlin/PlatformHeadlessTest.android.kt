@@ -1,11 +1,7 @@
-import org.junit.Before
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
+/*
+ * This is a private project. All rights reserved.
+ */
 
-@RunWith(RobolectricTestRunner::class)
-@Config(manifest = Config.NONE, sdk = [35])
-actual abstract class PlatformHeadlessTest {
-    @Before
-    fun setup() = Unit
-}
+package com.storyteller_f.shared
+
+actual open class PlatformHeadlessTest

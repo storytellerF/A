@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.exposed.tables
 
 import com.storyteller_f.a.backend.core.MEDIA_NAME_LENGTH
@@ -19,16 +23,15 @@ object FileRefs : BaseTable() {
     }
 }
 
-fun FileRef.Companion.wrapRow(resultRow: ResultRow): FileRef {
-    return with(FileRefs) {
-        FileRef(
-            resultRow[id],
-            resultRow[createdTime],
-            resultRow[objectId],
-            resultRow[objectType],
-            resultRow[author],
-            resultRow[mediaName],
-            resultRow[fileId],
-        )
-    }
+fun FileRef.Companion.wrapRow(resultRow: ResultRow): FileRef =
+    with(FileRefs) {
+    FileRef(
+        resultRow[id],
+        resultRow[createdTime],
+        resultRow[objectId],
+        resultRow[objectType],
+        resultRow[author],
+        resultRow[mediaName],
+        resultRow[fileId],
+    )
 }

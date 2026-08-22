@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.components
 
 import androidx.compose.foundation.layout.padding
@@ -15,7 +19,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 
-class NavRoute(val path: String, val icon: ImageVector, val label: String)
+data class NavRoute(val path: String, val icon: ImageVector, val label: String)
 
 internal const val HOME_START_DESTINATION_ROOMS = "/rooms"
 
@@ -24,7 +28,7 @@ fun CustomRailNav(
     currentEntry: String?,
     navRoutes: List<NavRoute>,
     unreadRoomsBadge: Boolean = false,
-    navigate: (String) -> Unit = {}
+    navigate: (String) -> Unit = {},
 ) {
     NavigationRail(modifier = Modifier.padding(horizontal = 8.dp)) {
         navRoutes.forEach { route ->
@@ -43,7 +47,8 @@ fun CustomRailNav(
                     }
                 },
                 label = { Text(route.label) },
-                modifier = Modifier.appiumSemantics(
+                modifier =
+                Modifier.appiumSemantics(
                     testTag = route.label,
                     text = route.label,
                     onClick = onClick,
@@ -58,7 +63,7 @@ fun CustomBottomNav(
     path: String,
     navRoutes: List<NavRoute>,
     unreadRoomsBadge: Boolean = false,
-    navigate: (String) -> Unit = { }
+    navigate: (String) -> Unit = { },
 ) {
     NavigationBar {
         navRoutes.forEach { route ->
@@ -77,7 +82,8 @@ fun CustomBottomNav(
                     }
                 },
                 label = { Text(route.label) },
-                modifier = Modifier.appiumSemantics(
+                modifier =
+                Modifier.appiumSemantics(
                     testTag = route.label,
                     text = route.label,
                     onClick = onClick,

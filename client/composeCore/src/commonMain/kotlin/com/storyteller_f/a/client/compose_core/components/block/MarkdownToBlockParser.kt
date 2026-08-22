@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.components.block
 
 import com.storyteller_f.shared.commonJson
@@ -12,7 +16,7 @@ import org.intellij.markdown.ast.getTextInNode
 import org.intellij.markdown.flavours.gfm.GFMElementTypes
 
 /**
- * 将 Markdown 文本解析为 ContentBlock 列表
+ * 将 Markdown 文本解析为 ContentBlock 列表.
  */
 fun parseMarkdownToBlocks(markdown: String): List<ContentBlock> {
     if (markdown.isBlank()) {
@@ -38,7 +42,8 @@ private fun parseAstNode(node: ASTNode, content: String, blocks: MutableList<Con
         MarkdownElementTypes.ATX_3,
         MarkdownElementTypes.ATX_4,
         MarkdownElementTypes.ATX_5,
-        MarkdownElementTypes.ATX_6 -> {
+        MarkdownElementTypes.ATX_6,
+        -> {
             blocks.add(parseHeader(node, content))
         }
 
@@ -48,14 +53,15 @@ private fun parseAstNode(node: ASTNode, content: String, blocks: MutableList<Con
                 blocks.add(
                     ContentBlock.Paragraph(
                         id = generateBlockId(),
-                        content = text
-                    )
+                        content = text,
+                    ),
                 )
             }
         }
 
         MarkdownElementTypes.UNORDERED_LIST,
-        MarkdownElementTypes.ORDERED_LIST -> {
+        MarkdownElementTypes.ORDERED_LIST,
+        -> {
             parseList(node, content, blocks)
         }
 
@@ -72,8 +78,8 @@ private fun parseAstNode(node: ASTNode, content: String, blocks: MutableList<Con
                 ContentBlock.CodeBlock(
                     id = generateBlockId(),
                     content = node.getTextInNode(content).trim().toString(),
-                    language = ""
-                )
+                    language = "",
+                ),
             )
         }
 
@@ -98,19 +104,20 @@ private fun parseHeader(node: ASTNode, content: String): ContentBlock.Paragraph 
     val text = node.getTextInNode(content).trim().toString()
     // 移除开头的 # 符号
     val contentText = text.replace(Regex("^#+\\s*"), "")
-    val level = when (node.type) {
-        MarkdownElementTypes.ATX_1 -> 1
-        MarkdownElementTypes.ATX_2 -> 2
-        MarkdownElementTypes.ATX_3 -> 3
-        MarkdownElementTypes.ATX_4 -> 4
-        MarkdownElementTypes.ATX_5 -> 5
-        MarkdownElementTypes.ATX_6 -> 6
-        else -> 0
-    }
+    val level =
+        when (node.type) {
+            MarkdownElementTypes.ATX_1 -> 1
+            MarkdownElementTypes.ATX_2 -> 2
+            MarkdownElementTypes.ATX_3 -> 3
+            MarkdownElementTypes.ATX_4 -> 4
+            MarkdownElementTypes.ATX_5 -> 5
+            MarkdownElementTypes.ATX_6 -> 6
+            else -> 0
+        }
     return ContentBlock.Paragraph(
         id = generateBlockId(),
         content = contentText,
-        level = level
+        level = level,
     )
 }
 
@@ -125,8 +132,8 @@ private fun parseList(node: ASTNode, content: String, blocks: MutableList<Conten
                     id = generateBlockId(),
                     content = itemText,
                     ordered = ordered,
-                    indent = 0
-                )
+                    indent = 0,
+                ),
             )
         }
     }
@@ -136,11 +143,12 @@ private fun extractListItemText(listItemNode: ASTNode, content: String): String 
     // 查找实际的文本内容，跳过列表标记
     val children = listItemNode.children
     // 第一个子节点通常是列表标记，跳过它
-    val textNodes = children.filter {
-        it.type != MarkdownTokenTypes.LIST_BULLET &&
-            it.type != MarkdownTokenTypes.LIST_NUMBER &&
-            it.type != MarkdownTokenTypes.WHITE_SPACE
-    }
+    val textNodes =
+        children.filter {
+            it.type != MarkdownTokenTypes.LIST_BULLET &&
+                it.type != MarkdownTokenTypes.LIST_NUMBER &&
+                it.type != MarkdownTokenTypes.WHITE_SPACE
+        }
     return textNodes.joinToString("") { it.getTextInNode(content).toString() }.trim()
 }
 
@@ -150,21 +158,22 @@ private fun parseQuote(node: ASTNode, content: String): ContentBlock.Quote {
     val contentText = text.replace(Regex("(?m)^>\\s*"), "")
     return ContentBlock.Quote(
         id = generateBlockId(),
-        content = contentText
+        content = contentText,
     )
 }
 
 private fun parseCodeFence(node: ASTNode, content: String): ContentBlock {
     // getLang 在没有语言时可能返回 "null" 字符串，需要处理
-    val lang = getLang(node, content).lowercase().takeIf { it.isNotBlank() && it != "null" } ?: ""
+    val lang = getLang(node, content).lowercase().takeIf { it.isNotBlank() && it != "null" }.orEmpty()
     val codeContent = readCodeFence(node, content).trim()
 
     return when {
         lang == "object" -> parseObjectBlock(codeContent)
+
         lang in listOf("com.storyteller_f.a", "c.s.a", "csa") -> {
             ContentBlock.RefBlock(
                 id = generateBlockId(),
-                refPath = codeContent.trim()
+                refPath = codeContent.trim(),
             )
         }
 
@@ -172,7 +181,7 @@ private fun parseCodeFence(node: ASTNode, content: String): ContentBlock {
             ContentBlock.MathBlock(
                 id = generateBlockId(),
                 content = codeContent,
-                inline = false
+                inline = false,
             )
         }
 
@@ -180,32 +189,31 @@ private fun parseCodeFence(node: ASTNode, content: String): ContentBlock {
             ContentBlock.CodeBlock(
                 id = generateBlockId(),
                 content = codeContent,
-                language = lang
+                language = lang,
             )
         }
     }
 }
 
-private fun parseObjectBlock(jsonContent: String): ContentBlock {
-    return try {
-        val obj = commonJson.decodeFromString<MarkdownObject>(jsonContent)
-        ContentBlock.ObjectBlock(
-            id = generateBlockId(),
-            name = obj.name,
-            url = obj.url,
-            contentType = obj.contentType,
-            cover = obj.cover,
-            title = obj.title,
-            isPlaylist = obj.isPlayList
-        )
-    } catch (_: Exception) {
-        // JSON 解析失败，降级为代码块
-        ContentBlock.CodeBlock(
-            id = generateBlockId(),
-            content = jsonContent,
-            language = "object"
-        )
-    }
+private fun parseObjectBlock(jsonContent: String): ContentBlock =
+    try {
+    val obj = commonJson.decodeFromString<MarkdownObject>(jsonContent)
+    ContentBlock.ObjectBlock(
+        id = generateBlockId(),
+        name = obj.name,
+        url = obj.url,
+        contentType = obj.contentType,
+        cover = obj.cover,
+        title = obj.title,
+        isPlaylist = obj.isPlayList,
+    )
+} catch (_: Exception) {
+    // JSON 解析失败，降级为代码块
+    ContentBlock.CodeBlock(
+        id = generateBlockId(),
+        content = jsonContent,
+        language = "object",
+    )
 }
 
 private fun parseMathBlock(node: ASTNode, content: String, inline: Boolean): ContentBlock.MathBlock {
@@ -215,6 +223,6 @@ private fun parseMathBlock(node: ASTNode, content: String, inline: Boolean): Con
     return ContentBlock.MathBlock(
         id = generateBlockId(),
         content = mathContent,
-        inline = inline
+        inline = inline,
     )
 }

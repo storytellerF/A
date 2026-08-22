@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.exposed.database
 
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
@@ -16,6 +20,7 @@ import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.model.TitleWorkStatus
 import com.storyteller_f.shared.type.ObjectStatus
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.cancellableRunCatching
 import com.storyteller_f.shared.utils.now
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -36,7 +41,7 @@ class ExposedTitleDatabase(val exposedDatabaseSession: ExposedDatabaseSession) :
         searchType: TitleSearchType,
         type: TitleType?,
         scopeId: PrimaryKey?,
-        titleStatus: TitleWorkStatus?
+        titleStatus: TitleWorkStatus?,
     ) = paginationFromResults(
         getTitleListByPredicate {
             buildTitleSearchQuery(searchType, uid, type, scopeId, titleStatus)
@@ -44,7 +49,7 @@ class ExposedTitleDatabase(val exposedDatabaseSession: ExposedDatabaseSession) :
         },
         getTitleCountByPredicate {
             buildTitleSearchQuery(searchType, uid, type, scopeId, titleStatus)
-        }
+        },
     )
 
     fun Query.buildTitleSearchQuery(
@@ -52,14 +57,15 @@ class ExposedTitleDatabase(val exposedDatabaseSession: ExposedDatabaseSession) :
         uid: PrimaryKey,
         type: TitleType?,
         scopeId: PrimaryKey?,
-        titleStatus: TitleWorkStatus?
+        titleStatus: TitleWorkStatus?,
     ): Query {
-        val rows = where {
-            when (searchType) {
-                TitleSearchType.CREATOR -> Titles.creator eq uid
-                else -> Titles.receiver eq uid
+        val rows =
+            where {
+                when (searchType) {
+                    TitleSearchType.CREATOR -> Titles.creator eq uid
+                    else -> Titles.receiver eq uid
+                }
             }
-        }
         if (type != null) {
             rows.andWhere {
                 Titles.type eq type
@@ -75,13 +81,13 @@ class ExposedTitleDatabase(val exposedDatabaseSession: ExposedDatabaseSession) :
             rows.andWhere {
                 when (titleStatus) {
                     TitleWorkStatus.OK -> {
-                        (Titles.titleStatus eq TitleWorkStatus.OK) and
-                            (Titles.expiresAt.isNull().or(Titles.expiresAt greater currentTime))
+                        Titles.titleStatus eq TitleWorkStatus.OK and
+                            Titles.expiresAt.isNull().or(Titles.expiresAt greater currentTime)
                     }
 
                     TitleWorkStatus.EXPIRED -> {
                         (Titles.titleStatus eq TitleWorkStatus.EXPIRED).or(
-                            Titles.expiresAt.isNotNull() and (Titles.expiresAt lessEq currentTime)
+                            Titles.expiresAt.isNotNull() and (Titles.expiresAt lessEq currentTime),
                         )
                     }
                 }
@@ -90,36 +96,39 @@ class ExposedTitleDatabase(val exposedDatabaseSession: ExposedDatabaseSession) :
         return rows
     }
 
-    override suspend fun getAllRawTitles(primaryKeyFetch: PrimaryKeyFetch) = paginationFromResults(
+    override suspend fun getAllRawTitles(primaryKeyFetch: PrimaryKeyFetch) =
+        paginationFromResults(
         getTitleListByPredicate {
             bindPaginationQuery(Titles, primaryKeyFetch)
         },
-        getTitleCountByPredicate()
+        getTitleCountByPredicate(),
     )
 
     override suspend fun getTitleCount() = getTitleCountByPredicate()
 
-    override suspend fun getTitle(id: PrimaryKey) = runCatching {
-        val list = exposedDatabaseSession.dbSearch {
-            search {
-                Titles.selectAll().andWhere { Titles.id eq id }
-            }
-            map {
-                Title.wrapRow(it)
-            }
-        }.getOrThrow()
+    override suspend fun getTitle(id: PrimaryKey) =
+        cancellableRunCatching {
+        val list =
+            exposedDatabaseSession.dbSearch {
+                search {
+                    Titles.selectAll().andWhere { Titles.id eq id }
+                }
+                map {
+                    Title.wrapRow(it)
+                }
+            }.getOrThrow()
         list.firstOrNull()?.let { RawTitle(it) }
     }
 
-    override suspend fun updateTitleStatus(id: PrimaryKey, status: ObjectStatus) = exposedDatabaseSession.dbQuery {
+    override suspend fun updateTitleStatus(id: PrimaryKey, status: ObjectStatus) =
+        exposedDatabaseSession.dbQuery {
         Titles.update({ Titles.id eq id }) {
             it[Titles.status] = status
         } > 0
     }
 
-    private suspend fun getTitleListByPredicate(
-        queryProvider: Query.() -> Query
-    ) = exposedDatabaseSession.dbSearch {
+    private suspend fun getTitleListByPredicate(queryProvider: Query.() -> Query) =
+        exposedDatabaseSession.dbSearch {
         search {
             Titles.selectAll().queryProvider()
         }
@@ -128,12 +137,11 @@ class ExposedTitleDatabase(val exposedDatabaseSession: ExposedDatabaseSession) :
         }
     }
 
-    private suspend fun getTitleCountByPredicate(
-        queryProvider: Query.() -> Query = { this }
-    ) = exposedDatabaseSession.dbSearch {
-        search {
-            Titles.selectAll().queryProvider()
+    private suspend fun getTitleCountByPredicate(queryProvider: Query.() -> Query = { this }) =
+        exposedDatabaseSession.dbSearch {
+            search {
+                Titles.selectAll().queryProvider()
+            }
+            count()
         }
-        count()
-    }
 }

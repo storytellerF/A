@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.exposed.tables
 
 import com.storyteller_f.a.backend.core.types.Title
@@ -30,19 +34,18 @@ object Titles : BaseTable() {
     }
 }
 
-fun Title.Companion.wrapRow(row: ResultRow): Title {
-    return Title(
-        row[Titles.id],
-        row[Titles.createdTime],
-        row[Titles.name],
-        row[Titles.creator],
-        row[Titles.receiver],
-        row[Titles.type],
-        row[Titles.scopeId],
-        row[Titles.scopeType],
-        row[Titles.titleStatus],
-        row[Titles.descriptionTopicId],
-        row[Titles.expiresAt],
-        row[Titles.status]
-    )
-}
+fun Title.Companion.wrapRow(row: ResultRow): Title =
+    Title(
+    row[Titles.id],
+    row[Titles.createdTime],
+    row[Titles.name],
+    row[Titles.creator],
+    row[Titles.receiver],
+    row[Titles.type],
+    row[Titles.scopeId],
+    row[Titles.scopeType],
+    row[Titles.titleStatus],
+    row[Titles.descriptionTopicId],
+    row[Titles.expiresAt],
+    row[Titles.status],
+)

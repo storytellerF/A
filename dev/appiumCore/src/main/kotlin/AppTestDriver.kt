@@ -1,3 +1,9 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
+package com.storyteller_f.a.dev.appium
+
 interface AppTestDriver {
     suspend fun clickByDescription(description: String)
 

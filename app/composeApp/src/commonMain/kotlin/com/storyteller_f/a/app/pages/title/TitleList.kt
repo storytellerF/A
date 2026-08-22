@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.title
 
 import androidx.compose.foundation.layout.Column
@@ -26,12 +30,13 @@ fun TitleList(titlesViewModel: TitlesViewModel) {
         LazyColumn(
             modifier = Modifier.fillMaxHeight(),
             contentPadding = LayoutDefaults.contentPadding,
-            verticalArrangement = LayoutDefaults.pagingVerticalArrangement
+            verticalArrangement = LayoutDefaults.pagingVerticalArrangement,
         ) {
             topPrepend(pagingItems.loadState)
             items(
                 count = pagingItems.itemCount,
-                key = pagingItems.itemKey {
+                key =
+                pagingItems.itemKey {
                     it.id.toString()
                 },
             ) { index ->
@@ -56,7 +61,7 @@ fun TitleItem(titleInfo: TitleInfo) {
                 }
 
                 TitleWorkStatus.EXPIRED -> "status: expired"
-            }
+            },
         )
 
         titleInfo.extension?.let {

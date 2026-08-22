@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.panel.pages
 
 import androidx.compose.foundation.border
@@ -126,7 +130,7 @@ fun AllUsersPageInternal(viewModel: AllUsersViewModel) {
             AddUserDialog(showDialog) {
                 showDialog = false
             }
-        }
+        },
     ) { paddingValues ->
         val direction = LocalLayoutDirection.current
         Box(Modifier.safeArea(paddingValues, direction)) {
@@ -151,10 +155,7 @@ fun AllUsersPageInternal(viewModel: AllUsersViewModel) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddUserDialog(
-    showDialog: Boolean,
-    dismiss: () -> Unit,
-) {
+fun AddUserDialog(showDialog: Boolean, dismiss: () -> Unit) {
     if (showDialog) {
         BasicAlertDialog(
             {
@@ -168,30 +169,34 @@ fun AddUserDialog(
 
 @Composable
 fun AddUserInternal(dismiss: () -> Unit) {
-    val addUserViewModel = viewModel {
-        AddUserViewModel()
-    }
-    val module = SerializersModule {
-        polymorphic(NavKey::class) {
-            subclass(AddUserStartScreen::class, AddUserStartScreen.serializer())
-            subclass(AddUserPrivateKeyScreen::class, AddUserPrivateKeyScreen.serializer())
+    val addUserViewModel =
+        viewModel {
+            AddUserViewModel()
         }
-    }
-    val config = remember {
-        SavedStateConfiguration {
-            serializersModule = module
+    val module =
+        SerializersModule {
+            polymorphic(NavKey::class) {
+                subclass(AddUserStartScreen::class, AddUserStartScreen.serializer())
+                subclass(AddUserPrivateKeyScreen::class, AddUserPrivateKeyScreen.serializer())
+            }
         }
-    }
+    val config =
+        remember {
+            SavedStateConfiguration {
+                serializersModule = module
+            }
+        }
     DialogContainer {
         val addUserBackStack = rememberNavBackStack(config, AddUserStartScreen)
         NavDisplay(
             addUserBackStack,
-            entryProvider = entryProvider {
+            entryProvider =
+            entryProvider {
                 entry<AddUserStartScreen> {
                     AddUserProfilePage(
                         addUserViewModel,
                         { addUserBackStack.add(AddUserPrivateKeyScreen) },
-                        dismiss
+                        dismiss,
                     )
                 }
                 entry<AddUserPrivateKeyScreen> {
@@ -199,17 +204,14 @@ fun AddUserInternal(dismiss: () -> Unit) {
                         addUserBackStack.removeLastOrNull()
                     }
                 }
-            }
+            },
         )
     }
 }
 
 @Suppress("LongMethod")
 @Composable
-private fun AddUserPrivateKeyPage(
-    addUserViewModel: AddUserViewModel,
-    goBack: () -> Unit
-) {
+private fun AddUserPrivateKeyPage(addUserViewModel: AddUserViewModel, goBack: () -> Unit) {
     val privateKey by addUserViewModel.privateKey.collectAsState()
     val encryptionPrivateKey by addUserViewModel.encryptionPrivateKey.collectAsState()
     val scope = rememberCoroutineScope()
@@ -223,7 +225,7 @@ private fun AddUserPrivateKeyPage(
             Text(
                 "P256 算法不够安全，可能面临未来被解密的风险",
                 color = androidx.compose.ui.graphics.Color.Red,
-                modifier = Modifier.padding(top = 8.dp)
+                modifier = Modifier.padding(top = 8.dp),
             )
         }
         Row {
@@ -272,11 +274,7 @@ private fun AddUserPrivateKeyPage(
 }
 
 @Composable
-private fun AddUserProfilePage(
-    addUserViewModel: AddUserViewModel,
-    gotoPrivateKey: () -> Unit,
-    dismiss: () -> Unit
-) {
+private fun AddUserProfilePage(addUserViewModel: AddUserViewModel, gotoPrivateKey: () -> Unit, dismiss: () -> Unit) {
     val nickname by addUserViewModel.nickname.collectAsState()
     val aid by addUserViewModel.aid.collectAsState()
     val address by addUserViewModel.address.collectAsState()
@@ -299,10 +297,7 @@ private fun AddUserProfilePage(
 }
 
 @Composable
-private fun AddUserDialogButtons(
-    dismiss: () -> Unit,
-    addUserViewModel: AddUserViewModel
-) {
+private fun AddUserDialogButtons(dismiss: () -> Unit, addUserViewModel: AddUserViewModel) {
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         Button({
             dismiss()
@@ -329,18 +324,19 @@ private fun AddUserDialogButtons(
 private fun AddressField(address: String?, gotoPrivateKey: () -> Unit) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         val shape = RoundedCornerShape(10.dp)
         Row(
-            modifier = Modifier.weight(1f)
+            modifier =
+            Modifier.weight(1f)
                 .border(1.dp, MaterialTheme.colorScheme.primaryContainer, shape)
                 .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                address ?: "",
-                modifier = Modifier.weight(1f)
+                address.orEmpty(),
+                modifier = Modifier.weight(1f),
             )
             IconButton(gotoPrivateKey) {
                 Icon(Icons.Default.Edit, stringResource(Res.string.edit_private_key))
@@ -363,21 +359,22 @@ private fun CustomGlobalDialogController<GlobalDialogContext<CustomPanelSessionM
         return
     }
     val algoType = addUserViewModel.algoType.value
-    val authKey = if (algoType == AlgoType.DILITHIUM) {
-        val encryptionPublicKey = addUserViewModel.encryptionPublicKey.value
-        if (encryptionPublicKey == null) {
-            toast.showMessage(requiredPrivateKeyMessage)
-            return
+    val authKey =
+        if (algoType == AlgoType.DILITHIUM) {
+            val encryptionPublicKey = addUserViewModel.encryptionPublicKey.value
+            if (encryptionPublicKey == null) {
+                toast.showMessage(requiredPrivateKeyMessage)
+                return
+            }
+            com.storyteller_f.a.api.TransferAuthKey.Dilithium(
+                derPublicKey = publicKey,
+                derEncryptionPublicKey = encryptionPublicKey,
+            )
+        } else {
+            com.storyteller_f.a.api.TransferAuthKey.P256(
+                derPublicKey = publicKey,
+            )
         }
-        com.storyteller_f.a.api.TransferAuthKey.Dilithium(
-            derPublicKey = publicKey,
-            derEncryptionPublicKey = encryptionPublicKey
-        )
-    } else {
-        com.storyteller_f.a.api.TransferAuthKey.P256(
-            derPublicKey = publicKey
-        )
-    }
     val newUser = NewUser(nickname, aid, authKey)
     launch {
         useResult {

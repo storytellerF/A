@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cli_app
 
 import androidx.compose.runtime.Composable
@@ -79,19 +83,14 @@ private val TitleGreen = Color(100, 255, 100)
 val logs = mutableStateListOf<String>()
 
 class ConsoleAntilog : Antilog() {
-    override fun performLog(
-        priority: LogLevel,
-        tag: String?,
-        throwable: Throwable?,
-        message: String?
-    ) {
+    override fun performLog(priority: LogLevel, tag: String?, throwable: Throwable?, message: String?) {
         if (message != null) {
-            val prefix = tag?.let { "[$it] " } ?: ""
+            val prefix = tag?.let { "[$it] " }.orEmpty()
             logs.add("$priority $prefix$message")
             if (logs.size > 15) logs.removeAt(0)
         }
         throwable?.let {
-            logs.add("$priority ${it.message}")
+            logs.add("$priority ${it.message ?: "<none>"}")
             if (logs.size > 15) logs.removeAt(0)
         }
     }
@@ -109,25 +108,25 @@ fun sysLogError(s: String, t: Throwable? = null) {
     }
 }
 
-sealed class Screen {
-    data object Main : Screen()
-    data object PromptRegister : Screen()
-    data object PromptLogin : Screen()
-    data class TopicList(val topics: List<TopicInfo>) : Screen()
-    data class TopicDetail(val topic: TopicInfo) : Screen()
-    data class TopicAddComment(val topic: TopicInfo) : Screen()
-    data class TopicAddReaction(val topic: TopicInfo) : Screen()
-    data class CommunityList(val communities: List<CommunityInfo>) : Screen()
-    data class CommunityDetail(val community: CommunityInfo) : Screen()
-    data class CommunityMemberList(val members: List<MemberInfo>, val parent: Screen) : Screen()
-    data class RoomMemberList(val members: List<MemberInfo>, val parent: Screen) : Screen()
-    data class UserList(val users: List<UserInfo>) : Screen()
-    data class UserDetail(val user: UserInfo, val parent: Screen) : Screen()
-    data class RoomList(val rooms: List<RoomInfo>) : Screen()
-    data class RoomDetail(val room: RoomInfo) : Screen()
-    data class RoomSendMessage(val room: RoomInfo) : Screen()
-    data class FavoriteList(val favorites: List<UserFavoriteInfo>) : Screen()
-    data class SubscriptionList(val subscriptions: List<UserSubscriptionInfo>) : Screen()
+sealed interface Screen {
+    data object Main : Screen
+    data object PromptRegister : Screen
+    data object PromptLogin : Screen
+    data class TopicList(val topics: List<TopicInfo>) : Screen
+    data class TopicDetail(val topic: TopicInfo) : Screen
+    data class TopicAddComment(val topic: TopicInfo) : Screen
+    data class TopicAddReaction(val topic: TopicInfo) : Screen
+    data class CommunityList(val communities: List<CommunityInfo>) : Screen
+    data class CommunityDetail(val community: CommunityInfo) : Screen
+    data class CommunityMemberList(val members: List<MemberInfo>, val parent: Screen) : Screen
+    data class RoomMemberList(val members: List<MemberInfo>, val parent: Screen) : Screen
+    data class UserList(val users: List<UserInfo>) : Screen
+    data class UserDetail(val user: UserInfo, val parent: Screen) : Screen
+    data class RoomList(val rooms: List<RoomInfo>) : Screen
+    data class RoomDetail(val room: RoomInfo) : Screen
+    data class RoomSendMessage(val room: RoomInfo) : Screen
+    data class FavoriteList(val favorites: List<UserFavoriteInfo>) : Screen
+    data class SubscriptionList(val subscriptions: List<UserSubscriptionInfo>) : Screen
 }
 
 @Suppress("CyclomaticComplexMethod", "LongMethod")
@@ -136,28 +135,31 @@ suspend fun handleInput(
     screen: Screen,
     setScreen: (Screen) -> Unit,
     sessionManager: UserSessionManager,
-    passHolder: SimplePassHolder
+    passHolder: SimplePassHolder,
+    onExit: () -> Unit,
 ) {
     when (screen) {
         is Screen.Main -> {
             when (line) {
                 "1" -> setScreen(Screen.PromptRegister)
+
                 "2" -> setScreen(Screen.PromptLogin)
+
                 "3" -> {
                     sysLog("Fetching Recommended Topics...")
                     sessionManager.getRecommendTopics(PaginationQuery(size = 10)).fold(
                         onSuccess = { setScreen(Screen.TopicList(it.data)) },
-                        onFailure = { sysLogError("Failed", it) }
+                        onFailure = { sysLogError("Failed", it) },
                     )
                 }
 
                 "4" -> {
                     sysLog("Fetching Joined Communities...")
                     sessionManager.getUserCommunities(
-                        CustomApi.Users.JoinedCommunities.UserCommunitiesQuery(size = 10)
+                        CustomApi.Users.JoinedCommunities.UserCommunitiesQuery(size = 10),
                     ).fold(
                         onSuccess = { setScreen(Screen.CommunityList(it.data)) },
-                        onFailure = { sysLogError("Failed", it) }
+                        onFailure = { sysLogError("Failed", it) },
                     )
                 }
 
@@ -165,7 +167,7 @@ suspend fun handleInput(
                     sysLog("Fetching Joined Rooms...")
                     sessionManager.getUserRooms(PaginationQuery(size = 10)).fold(
                         onSuccess = { setScreen(Screen.RoomList(it.data)) },
-                        onFailure = { sysLogError("Failed", it) }
+                        onFailure = { sysLogError("Failed", it) },
                     )
                 }
 
@@ -173,7 +175,7 @@ suspend fun handleInput(
                     sysLog("Fetching Member List...")
                     sessionManager.searchAllMembers(null, 10, "").fold(
                         onSuccess = { setScreen(Screen.UserList(it.data)) },
-                        onFailure = { sysLogError("Failed", it) }
+                        onFailure = { sysLogError("Failed", it) },
                     )
                 }
 
@@ -181,7 +183,7 @@ suspend fun handleInput(
                     sysLog("Fetching Favorites...")
                     sessionManager.getFavorites(PaginationQuery(size = 10)).fold(
                         onSuccess = { setScreen(Screen.FavoriteList(it.data)) },
-                        onFailure = { sysLogError("Failed", it) }
+                        onFailure = { sysLogError("Failed", it) },
                     )
                 }
 
@@ -189,11 +191,12 @@ suspend fun handleInput(
                     sysLog("Fetching Subscriptions...")
                     sessionManager.getSubscriptions(PaginationQuery(size = 10)).fold(
                         onSuccess = { setScreen(Screen.SubscriptionList(it.data)) },
-                        onFailure = { sysLogError("Failed", it) }
+                        onFailure = { sysLogError("Failed", it) },
                     )
                 }
 
-                "0" -> kotlin.system.exitProcess(0)
+                "0" -> onExit()
+
                 else -> sysLog("Invalid Choice")
             }
         }
@@ -202,7 +205,7 @@ suspend fun handleInput(
             var pk = line
             if (pk.isEmpty()) {
                 val algo = getAlgo(AlgoType.P256)
-                pk = algo.generatePemKeyPair().getOrNull()?.first ?: ""
+                pk = algo.generatePemKeyPair().getOrNull()?.first.orEmpty()
                 sysLog("Generated Private Key: $pk")
             }
             if (pk.isNotEmpty()) {
@@ -214,6 +217,8 @@ suspend fun handleInput(
                     val user = sessionManager.userSignUp(authKey, passHolder)
                     sysLog("Registered and Logged in as: ${user.id} - ${user.nickname}")
                     setScreen(Screen.Main)
+                } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+                    throw cancellation
                 } catch (e: Exception) {
                     sysLogError("Error", e)
                     setScreen(Screen.Main)
@@ -230,6 +235,8 @@ suspend fun handleInput(
                 val user = sessionManager.userSignIn(authKey, passHolder)
                 sysLog("Logged in as: ${user.id} - ${user.nickname}")
                 setScreen(Screen.Main)
+            } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+                throw cancellation
             } catch (e: Exception) {
                 sysLogError("Error", e)
                 setScreen(Screen.Main)
@@ -253,7 +260,7 @@ suspend fun handleInput(
                     sysLog("Favoriting Topic...")
                     sessionManager.addFavorite(NewFavorite(ObjectType.TOPIC, screen.topic.id)).fold(
                         onSuccess = { sysLog("Favorited successfully") },
-                        onFailure = { sysLogError("Failed to favorite", it) }
+                        onFailure = { sysLogError("Failed to favorite", it) },
                     )
                 }
 
@@ -262,17 +269,20 @@ suspend fun handleInput(
                     sessionManager.addSubscription(
                         NewSubscription(
                             screen.topic.id,
-                            ObjectType.TOPIC
-                        )
+                            ObjectType.TOPIC,
+                        ),
                     ).fold(
                         onSuccess = { sysLog("Subscribed successfully") },
-                        onFailure = { sysLogError("Failed to subscribe", it) }
+                        onFailure = { sysLogError("Failed to subscribe", it) },
                     )
                 }
 
                 "3" -> setScreen(Screen.TopicAddComment(screen.topic))
+
                 "4" -> setScreen(Screen.TopicAddReaction(screen.topic))
+
                 "" -> setScreen(Screen.Main)
+
                 else -> sysLog("Invalid Choice")
             }
         }
@@ -284,7 +294,7 @@ suspend fun handleInput(
                 sysLog("Adding Comment...")
                 sessionManager.createTopic(ObjectType.TOPIC, screen.topic.id, line).fold(
                     onSuccess = { sysLog("Comment added successfully") },
-                    onFailure = { sysLogError("Failed to add comment", it) }
+                    onFailure = { sysLogError("Failed to add comment", it) },
                 )
                 setScreen(Screen.TopicDetail(screen.topic))
             }
@@ -297,7 +307,7 @@ suspend fun handleInput(
                 sysLog("Adding Reaction...")
                 sessionManager.addReaction(screen.topic.id, line).fold(
                     onSuccess = { sysLog("Reaction added successfully") },
-                    onFailure = { sysLogError("Failed to add reaction", it) }
+                    onFailure = { sysLogError("Failed to add reaction", it) },
                 )
                 setScreen(Screen.TopicDetail(screen.topic))
             }
@@ -321,10 +331,10 @@ suspend fun handleInput(
                     sessionManager.getCommunityTopics(
                         screen.community.id,
                         null,
-                        PaginationQuery(size = 10)
+                        PaginationQuery(size = 10),
                     ).fold(
                         onSuccess = { setScreen(Screen.TopicList(it.data)) },
-                        onFailure = { sysLogError("Failed", it) }
+                        onFailure = { sysLogError("Failed", it) },
                     )
                 }
 
@@ -332,10 +342,10 @@ suspend fun handleInput(
                     sysLog("Fetching Community Rooms...")
                     sessionManager.getCommunityRooms(
                         screen.community.id,
-                        CustomApi.Communities.Id.Rooms.CommunityRoomQuery(size = 10)
+                        CustomApi.Communities.Id.Rooms.CommunityRoomQuery(size = 10),
                     ).fold(
                         onSuccess = { setScreen(Screen.RoomList(it.data)) },
-                        onFailure = { sysLogError("Failed", it) }
+                        onFailure = { sysLogError("Failed", it) },
                     )
                 }
 
@@ -343,7 +353,7 @@ suspend fun handleInput(
                     sysLog("Fetching Community Members...")
                     sessionManager.searchCommunityMembers(screen.community.id, null, 10, "").fold(
                         onSuccess = { setScreen(Screen.CommunityMemberList(it.data, screen)) },
-                        onFailure = { sysLogError("Failed", it) }
+                        onFailure = { sysLogError("Failed", it) },
                     )
                 }
 
@@ -351,7 +361,7 @@ suspend fun handleInput(
                     sysLog("Joining Community...")
                     sessionManager.joinCommunity(screen.community.id).fold(
                         onSuccess = { sysLog("Joined Community successfully") },
-                        onFailure = { sysLogError("Failed to join", it) }
+                        onFailure = { sysLogError("Failed to join", it) },
                     )
                 }
 
@@ -359,7 +369,7 @@ suspend fun handleInput(
                     sysLog("Exiting Community...")
                     sessionManager.exitCommunity(screen.community.id).fold(
                         onSuccess = { sysLog("Exited Community successfully") },
-                        onFailure = { sysLogError("Failed to exit", it) }
+                        onFailure = { sysLogError("Failed to exit", it) },
                     )
                 }
 
@@ -368,11 +378,11 @@ suspend fun handleInput(
                     sessionManager.addFavorite(
                         NewFavorite(
                             ObjectType.COMMUNITY,
-                            screen.community.id
-                        )
+                            screen.community.id,
+                        ),
                     ).fold(
                         onSuccess = { sysLog("Favorited successfully") },
-                        onFailure = { sysLogError("Failed to favorite", it) }
+                        onFailure = { sysLogError("Failed to favorite", it) },
                     )
                 }
 
@@ -381,15 +391,16 @@ suspend fun handleInput(
                     sessionManager.addSubscription(
                         NewSubscription(
                             screen.community.id,
-                            ObjectType.COMMUNITY
-                        )
+                            ObjectType.COMMUNITY,
+                        ),
                     ).fold(
                         onSuccess = { sysLog("Subscribed successfully") },
-                        onFailure = { sysLogError("Failed to subscribe", it) }
+                        onFailure = { sysLogError("Failed to subscribe", it) },
                     )
                 }
 
                 "" -> setScreen(Screen.Main)
+
                 else -> sysLog("Invalid Choice")
             }
         }
@@ -449,7 +460,7 @@ suspend fun handleInput(
                     sessionManager.getRoomTopics(screen.room.id, null, PaginationQuery(size = 10))
                         .fold(
                             onSuccess = { setScreen(Screen.TopicList(it.data)) },
-                            onFailure = { sysLogError("Failed", it) }
+                            onFailure = { sysLogError("Failed", it) },
                         )
                 }
 
@@ -457,7 +468,7 @@ suspend fun handleInput(
                     sysLog("Fetching Room Members...")
                     sessionManager.searchRoomMembers(screen.room.id, null, 10, "").fold(
                         onSuccess = { setScreen(Screen.RoomMemberList(it.data, screen)) },
-                        onFailure = { sysLogError("Failed", it) }
+                        onFailure = { sysLogError("Failed", it) },
                     )
                 }
 
@@ -465,7 +476,7 @@ suspend fun handleInput(
                     sysLog("Joining Room...")
                     sessionManager.joinRoom(screen.room.id).fold(
                         onSuccess = { sysLog("Joined Room successfully") },
-                        onFailure = { sysLogError("Failed to join", it) }
+                        onFailure = { sysLogError("Failed to join", it) },
                     )
                 }
 
@@ -473,7 +484,7 @@ suspend fun handleInput(
                     sysLog("Exiting Room...")
                     sessionManager.exitRoom(screen.room.id).fold(
                         onSuccess = { sysLog("Exited Room successfully") },
-                        onFailure = { sysLogError("Failed to exit", it) }
+                        onFailure = { sysLogError("Failed to exit", it) },
                     )
                 }
 
@@ -485,7 +496,7 @@ suspend fun handleInput(
                     sysLog("Favoriting Room...")
                     sessionManager.addFavorite(NewFavorite(ObjectType.ROOM, screen.room.id)).fold(
                         onSuccess = { sysLog("Favorited successfully") },
-                        onFailure = { sysLogError("Failed to favorite", it) }
+                        onFailure = { sysLogError("Failed to favorite", it) },
                     )
                 }
 
@@ -494,11 +505,12 @@ suspend fun handleInput(
                     sessionManager.addSubscription(NewSubscription(screen.room.id, ObjectType.ROOM))
                         .fold(
                             onSuccess = { sysLog("Subscribed successfully") },
-                            onFailure = { sysLogError("Failed to subscribe", it) }
+                            onFailure = { sysLogError("Failed to subscribe", it) },
                         )
                 }
 
                 "" -> setScreen(Screen.Main)
+
                 else -> sysLog("Invalid Choice")
             }
         }
@@ -524,10 +536,11 @@ suspend fun handleInput(
 
                 var keyData: List<com.storyteller_f.shared.model.UserPubKeyInfo>? = null
                 if (screen.room.isPrivate) {
-                    val res = sessionManager.getRoomMembersPublicKeys(
-                        screen.room.id,
-                        PaginationQuery(size = 100)
-                    )
+                    val res =
+                        sessionManager.getRoomMembersPublicKeys(
+                            screen.room.id,
+                            PaginationQuery(size = 100),
+                        )
                     if (res.isSuccess) {
                         keyData = res.getOrNull()?.data
                     }
@@ -538,6 +551,8 @@ suspend fun handleInput(
                         sendMessage(parentTarget, screen.room.isPrivate, line, keyData.orEmpty())
                     }
                     sysLog("Message Sent")
+                } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+                    throw cancellation
                 } catch (e: Exception) {
                     sysLogError("Failed to send message", e)
                 }
@@ -549,7 +564,7 @@ suspend fun handleInput(
 
 @Suppress("ComplexMethod", "LongMethod")
 @Composable
-fun App(sessionManager: UserSessionManager, passHolder: SimplePassHolder) {
+fun App(sessionManager: UserSessionManager, passHolder: SimplePassHolder, onExit: () -> Unit) {
     var screen by remember { mutableStateOf<Screen>(Screen.Main) }
     var inputBuffer by remember { mutableStateOf("") }
     val submitChannel = remember { Channel<String>(Channel.UNLIMITED) }
@@ -563,29 +578,33 @@ fun App(sessionManager: UserSessionManager, passHolder: SimplePassHolder) {
                 setScreen = { screen = it },
                 sessionManager = sessionManager,
                 passHolder = passHolder,
+                onExit = onExit,
             )
         }
     }
 
-    Column(modifier = Modifier.onKeyEvent { event ->
-        if (event.key == "Enter") {
-            submitChannel.trySend(inputBuffer)
-            inputBuffer = ""
-        } else if (event.key == "Backspace") {
-            if (inputBuffer.isNotEmpty()) inputBuffer = inputBuffer.dropLast(1)
-        } else if (event.key == "Space") {
-            inputBuffer += " "
-        } else if (event.key.length == 1) {
-            inputBuffer += event.key
-        }
-        true
-    }) {
+    Column(
+        modifier =
+        Modifier.onKeyEvent { event ->
+            if (event.key == "Enter") {
+                submitChannel.trySend(inputBuffer)
+                inputBuffer = ""
+            } else if (event.key == "Backspace") {
+                if (inputBuffer.isNotEmpty()) inputBuffer = inputBuffer.dropLast(1)
+            } else if (event.key == "Space") {
+                inputBuffer += " "
+            } else if (event.key.length == 1) {
+                inputBuffer += event.key
+            }
+            true
+        },
+    ) {
         Text(
             buildAnnotatedString {
                 withStyle(SpanStyle(color = TitleGreen, textStyle = TextStyle.Bold)) {
                     append("STORYTELLER CLI")
                 }
-            }
+            },
         )
         Text("===============")
         Text("")
@@ -626,7 +645,7 @@ fun App(sessionManager: UserSessionManager, passHolder: SimplePassHolder) {
                 Text("=== Topic Detail ===")
                 Text("ID: ${s.topic.id}")
                 Text("Root ID: ${s.topic.rootId}")
-                Text("Author: ${s.topic.extension?.authorInfo?.nickname}")
+                Text("Author: ${s.topic.extension?.authorInfo?.nickname ?: "<none>"}")
                 Text("Content: ${s.topic.content}")
                 Text("====================")
                 Text("1. Favorite Topic")
@@ -744,10 +763,11 @@ fun App(sessionManager: UserSessionManager, passHolder: SimplePassHolder) {
             is Screen.FavoriteList -> {
                 Text("=== Favorites ===")
                 s.favorites.forEachIndexed { i, f ->
-                    val extra = f.extensions?.topicInfo?.content
-                        ?: f.extensions?.communityInfo?.name
-                        ?: f.extensions?.roomInfo?.name
-                        ?: "Unknown"
+                    val extra =
+                        f.extensions?.topicInfo?.content
+                            ?: f.extensions?.communityInfo?.name
+                            ?: f.extensions?.roomInfo?.name
+                            ?: "Unknown"
                     Text("[$i] ${f.objectType} ${f.objectId}: $extra")
                 }
                 Text("\nHit enter to go back: ")
@@ -772,13 +792,15 @@ fun App(sessionManager: UserSessionManager, passHolder: SimplePassHolder) {
         }
 
         Text("")
-        Text(buildAnnotatedString {
-            withStyle(SpanStyle(color = TitleGreen)) {
-                append("> ")
-            }
-            append(inputBuffer)
-            append("\u2588")
-        })
+        Text(
+            buildAnnotatedString {
+                withStyle(SpanStyle(color = TitleGreen)) {
+                    append("> ")
+                }
+                append(inputBuffer)
+                append("\u2588")
+            },
+        )
         Text("")
         Text("--- Logs ---")
         logs.forEach { logText ->
@@ -787,7 +809,7 @@ fun App(sessionManager: UserSessionManager, passHolder: SimplePassHolder) {
                     withStyle(SpanStyle(color = LogGray)) {
                         append(logText)
                     }
-                }
+                },
             )
         }
     }
@@ -822,7 +844,7 @@ fun main() {
 
         sessionManager.onBackgroundTask {
             runMosaicBlocking {
-                App(sessionManager, passHolder)
+                App(sessionManager, passHolder) { kotlin.system.exitProcess(0) }
             }
         }
     }

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.ws
 
 import com.maxmind.geoip2.DatabaseReader
@@ -61,7 +65,6 @@ import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.pingPeriod
 import io.ktor.server.websocket.timeout
 import io.ktor.server.websocket.webSocket
-import io.ktor.util.toMap
 import kotlinx.rpc.krpc.ktor.server.Krpc
 import kotlinx.rpc.krpc.ktor.server.rpc
 import kotlinx.rpc.krpc.serialization.json.json
@@ -110,7 +113,7 @@ private fun Application.configureWsPlugin(backend: Backend) {
         level = Level.INFO
         callIdMdc("call-id")
         format { call ->
-            "${call.request.httpMethod.value} ${call.request.uri} ${call.response.status()}"
+            "${call.request.httpMethod.value} ${call.request.uri} ${call.response.status() ?: "<none>"}"
         }
     }
     install(CallId) {
@@ -146,17 +149,15 @@ private fun Application.configureWsPlugin(backend: Backend) {
     }
 }
 
-private fun Application.configureWsRoute(
-    reader: DatabaseReader,
-    backend: Backend,
-) {
-    val httpClient = HttpClient {
-        expectSuccess = true
-        install(Logging)
-        install(ClientContentNegotiation) {
-            json()
+private fun Application.configureWsRoute(reader: DatabaseReader, backend: Backend) {
+    val httpClient =
+        HttpClient {
+            expectSuccess = true
+            install(Logging)
+            install(ClientContentNegotiation) {
+                json()
+            }
         }
-    }
     routing {
         authenticate("user") {
             webSocket("/ws") {
@@ -179,10 +180,7 @@ private fun Application.configureWsRoute(
     }
 }
 
-private class WsEventServiceImpl(
-    private val backend: Backend,
-    private val httpClient: HttpClient,
-) : WsEventService {
+private class WsEventServiceImpl(private val backend: Backend, private val httpClient: HttpClient) : WsEventService {
     override suspend fun publishNewTopic(frame: RoomFrame.NewTopicInfo): Boolean {
         dispatchNewMessageFrame(backend, httpClient, frame)
         return true
@@ -191,18 +189,18 @@ private class WsEventServiceImpl(
     override suspend fun health(): String = "ok"
 }
 
-private fun Application.buildWsBackend(): Backend {
-    return buildBackendFromEnv(readEnv(readInjectedEnv()))
-}
+private fun Application.buildWsBackend(): Backend = buildBackendFromEnv(readEnv(readInjectedEnv()))
 
-private fun Application.readInjectedEnv() = engine.environment.config.toMap().mapNotNull {
+private fun Application.readInjectedEnv() =
+    engine.environment.config.toMap().mapNotNull {
     (it.value as? String)?.let { v ->
         it.key to v
     }
 }.associate { it }
 
-private fun buildDatabaseReader() = DatabaseReader.Builder(
-    ClassLoader.getSystemResourceAsStream("GeoLite2-Country.mmdb")
+private fun buildDatabaseReader() =
+    DatabaseReader.Builder(
+    ClassLoader.getSystemResourceAsStream("GeoLite2-Country.mmdb"),
 ).build()
 
 class WsBackend(
@@ -215,15 +213,15 @@ class WsBackend(
     override val fileSearchService: FileSearchService,
     override val objectStorageService: ObjectStorageService,
     override val nameService: NameService,
-    override val database: CombinedDatabase
+    override val database: CombinedDatabase,
 ) : Backend
 
 fun buildBackendFromEnv(env: MergedEnv): Backend {
     Napier.i("load env: ${env.getAll("COMPOSE_PROJECT_NAME")}")
     val databaseConnection = databaseConnection(env)
     val buildType = env["BUILD_TYPE"] ?: "prod"
-    val flavor = env["FLAVOR"] ?: throw Exception("FLAVOR is empty")
-    val enableSignUp = env["ENABLE_SIGN_UP"]?.toBoolean() ?: true
+    val flavor = env["FLAVOR"] ?: error("FLAVOR is empty")
+    val enableSignUp = env["ENABLE_SIGN_UP"]?.toBoolean() != false
     return WsBackend(
         CustomConfig(buildType, flavor, null, enableSignUp),
         buildTopicSearchService(env),
@@ -234,6 +232,6 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
         buildFileSearchService(env),
         mediaService(env),
         buildNameService(env),
-        buildExposedDatabase(databaseConnection)
+        buildExposedDatabase(databaseConnection),
     )
 }

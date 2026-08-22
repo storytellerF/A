@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.core.service
 
 import com.storyteller_f.a.backend.core.MergedEnv
@@ -15,21 +19,19 @@ data class TopicDocument(
     val rootType: String,
     val parentId: PrimaryKey,
     val parentType: String,
-    val author: PrimaryKey
+    val author: PrimaryKey,
 ) : PrimaryKeyIdentifiable {
-
     companion object {
-        fun fromTopic(topic: Topic, content: TopicContent.Plain): TopicDocument {
-            return TopicDocument(
-                id = topic.id,
-                content = content.plain,
-                rootId = topic.rootId,
-                rootType = topic.rootType.name,
-                parentId = topic.parentId,
-                parentType = topic.parentType.name,
-                author = topic.author
-            )
-        }
+        fun fromTopic(topic: Topic, content: TopicContent.Plain): TopicDocument =
+            TopicDocument(
+            id = topic.id,
+            content = content.plain,
+            rootId = topic.rootId,
+            rootType = topic.rootType.name,
+            parentId = topic.parentId,
+            parentType = topic.parentType.name,
+            author = topic.author,
+        )
     }
 }
 
@@ -50,9 +52,7 @@ interface TopicSearchService {
 
     suspend fun clean(): Result<Unit>
 
-    suspend fun searchDocument(
-        topicDocumentSearch: TopicDocumentSearch
-    ): Result<PaginationResult<TopicDocument>>
+    suspend fun searchDocument(topicDocumentSearch: TopicDocumentSearch): Result<PaginationResult<TopicDocument>>
 }
 
 interface TopicSearchServiceFactory {

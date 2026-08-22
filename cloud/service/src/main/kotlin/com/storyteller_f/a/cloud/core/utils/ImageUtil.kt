@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.core.utils
 
 import io.github.aakira.napier.Napier
@@ -19,7 +23,7 @@ fun cleanImageMeta(input: File, output: BufferedOutputStream, mimeType: String) 
         "image/png", "image/bmp", "image/gif", "image/webp" -> {
             Napier.i("🧹 重写 $mimeType 图片以移除元数据...", tag = "ImageUtil")
             val image: BufferedImage = Imaging.getBufferedImage(input)
-            Imaging.writeImage(image, output, Imaging.guessFormat(input),)
+            Imaging.writeImage(image, output, Imaging.guessFormat(input))
         }
 
         "image/tif", "image/tiff" -> {

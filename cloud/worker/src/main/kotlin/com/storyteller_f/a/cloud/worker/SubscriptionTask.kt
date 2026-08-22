@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.worker
 
 import com.perraco.utils.SnowflakeFactory
@@ -79,7 +83,7 @@ private suspend fun Backend.processTopicSubscription(topic: Topic, fetchSize: In
         userSubscriptions.forEach { userSubscription ->
             val rawUser =
                 database.user.getRawUser(ObjectFetch.IdFetch(userSubscription.uid))
-                    .getOrThrow() ?: throw Exception("user not found")
+                    .getOrThrow() ?: error("user not found")
             sendTopicToNotificationRoom(systemUserId, rawUser.user, content).getOrThrow()
             database.subscription.insertSubscriptionSentLog(
                 SubscriptionSentLog(

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.room
 
 import androidx.sqlite.SQLiteConnection
@@ -6,27 +10,19 @@ import androidx.sqlite.SQLiteStatement
 import io.github.aakira.napier.Napier
 
 class LoggingSQLiteDriver(private val delegate: SQLiteDriver) : SQLiteDriver {
-    override fun open(fileName: String): SQLiteConnection {
-        return LoggingSQLiteConnection(delegate.open(fileName))
-    }
+    override fun open(fileName: String): SQLiteConnection = LoggingSQLiteConnection(delegate.open(fileName))
 }
 
-private class LoggingSQLiteConnection(
-    private val delegate: SQLiteConnection
-) : SQLiteConnection {
+private class LoggingSQLiteConnection(private val delegate: SQLiteConnection) : SQLiteConnection {
     override fun inTransaction(): Boolean = delegate.inTransaction()
 
-    override fun prepare(sql: String): SQLiteStatement {
-        return LoggingSQLiteStatement(delegate.prepare(sql), sql)
-    }
+    override fun prepare(sql: String): SQLiteStatement = LoggingSQLiteStatement(delegate.prepare(sql), sql)
 
     override fun close() = delegate.close()
 }
 
-private class LoggingSQLiteStatement(
-    private val delegate: SQLiteStatement,
-    private val sql: String,
-) : SQLiteStatement {
+private class LoggingSQLiteStatement(private val delegate: SQLiteStatement, private val sql: String) :
+    SQLiteStatement {
     private val bindArgs = mutableMapOf<Int, Any?>()
 
     override fun bindBlob(index: Int, value: ByteArray) {
@@ -84,7 +80,7 @@ private class LoggingSQLiteStatement(
         if (bindArgs.isEmpty()) {
             Napier.d(tag = "RoomQuery") { sql }
         } else {
-            val args = bindArgs.entries.sortedBy { it.key }.joinToString { "${it.value}" }
+            val args = bindArgs.entries.sortedBy { it.key }.joinToString { "${it.value ?: "<none>"}" }
             Napier.d(tag = "RoomQuery") { "$sql [$args]" }
         }
     }

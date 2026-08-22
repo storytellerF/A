@@ -3,11 +3,11 @@
  */
 package com.storytellerf.a.cloud.worker
 
-import com.storyteller_f.a.cloud.worker.TASK_CONFIG_POLL_MILLIS
 import com.storyteller_f.a.cloud.worker.TopicSafetyReviewerProvider
+import com.storyteller_f.a.cloud.worker.WORKER_TASK_POLL_MILLIS
 import com.storyteller_f.a.cloud.worker.executeConfiguredTaskIteration
-import com.storyteller_f.shared.model.TaskConfig
 import com.storyteller_f.shared.model.TaskRecordType
+import com.storyteller_f.shared.model.WorkerTask
 import com.storytellerf.a.cloud.worker.moderation.TopicSafetyReviewer
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -47,7 +47,7 @@ internal class WorkerMainTest {
             )
 
             assertFalse(isExecuted)
-            assertEquals(TASK_CONFIG_POLL_MILLIS, waited)
+            assertEquals(WORKER_TASK_POLL_MILLIS, waited)
         }
     }
 
@@ -55,7 +55,7 @@ internal class WorkerMainTest {
     fun `disabled task configuration does not execute task`() {
         runTest {
             val config =
-                TaskConfig(
+                WorkerTask(
                     type = TaskRecordType.INTRO,
                     isEnabled = false,
                     fetchSize = 10,
@@ -72,7 +72,7 @@ internal class WorkerMainTest {
             )
 
             assertFalse(isExecuted)
-            assertEquals(TASK_CONFIG_POLL_MILLIS, waited)
+            assertEquals(WORKER_TASK_POLL_MILLIS, waited)
         }
     }
 
@@ -80,13 +80,13 @@ internal class WorkerMainTest {
     fun `enabled task uses configured limits`() {
         runTest {
             val config =
-                TaskConfig(
+                WorkerTask(
                     type = TaskRecordType.INTRO,
                     isEnabled = true,
                     fetchSize = 23,
                     waitDurationMillis = 4_000,
                 )
-            var executedConfig: TaskConfig? = null
+            var executedConfig: WorkerTask? = null
             var waited = 0L
 
             executeConfiguredTaskIteration(

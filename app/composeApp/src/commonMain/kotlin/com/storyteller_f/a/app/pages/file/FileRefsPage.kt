@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.file
 
 import androidx.compose.foundation.clickable
@@ -42,9 +46,9 @@ fun FileRefsPage(fileId: PrimaryKey) {
                     IconButton(onClick = { appNavFactory.newAppNav().back() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
                     }
-                }
+                },
             )
-        }
+        },
     ) { paddingValues ->
         val direction = LocalLayoutDirection.current
         Box(Modifier.safeArea(paddingValues, direction)) {
@@ -54,16 +58,25 @@ fun FileRefsPage(fileId: PrimaryKey) {
                         val ref = items[index]
                         if (ref != null) {
                             ListItem(
-                                modifier = Modifier.clickable {
+                                modifier =
+                                Modifier.clickable {
                                     when (ref.objectType) {
-                                        ObjectType.COMMUNITY -> appNavFactory.newAppNav()
-                                            .gotoCommunity(ref.objectId, false)
-                                        ObjectType.ROOM -> appNavFactory.newAppNav()
-                                            .gotoRoom(ref.objectId, false)
-                                        ObjectType.TOPIC -> appNavFactory.newAppNav()
-                                            .gotoTopic(ref.objectId)
-                                        ObjectType.USER -> appNavFactory.newAppNav()
-                                            .gotoUser(ref.objectId)
+                                        ObjectType.COMMUNITY ->
+                                            appNavFactory.newAppNav()
+                                                .gotoCommunity(ref.objectId, false)
+
+                                        ObjectType.ROOM ->
+                                            appNavFactory.newAppNav()
+                                                .gotoRoom(ref.objectId, false)
+
+                                        ObjectType.TOPIC ->
+                                            appNavFactory.newAppNav()
+                                                .gotoTopic(ref.objectId)
+
+                                        ObjectType.USER ->
+                                            appNavFactory.newAppNav()
+                                                .gotoUser(ref.objectId)
+
                                         else -> {}
                                     }
                                 },
@@ -72,7 +85,7 @@ fun FileRefsPage(fileId: PrimaryKey) {
                                 },
                                 supportingContent = {
                                     Text("Author: ${ref.author}")
-                                }
+                                },
                             )
                             HorizontalDivider()
                         }

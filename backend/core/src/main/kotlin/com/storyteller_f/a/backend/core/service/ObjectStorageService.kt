@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.core.service
 
 import com.storyteller_f.a.backend.core.MergedEnv
@@ -6,34 +10,15 @@ import kotlinx.datetime.LocalDateTime
 import java.io.File
 import java.io.InputStream
 
-data class ObjectStorageRecord(
-    val url: String,
-    val lastModified: LocalDateTime,
-    val fullName: String,
-)
+data class ObjectStorageRecord(val url: String, val lastModified: LocalDateTime, val fullName: String)
 
-data class ObjectStorageWriteRecord(
-    val fullName: String,
-)
+data class ObjectStorageWriteRecord(val fullName: String)
 
-data class PresignContext(
-    val uid: String?,
-    val ip: String?,
-)
+data class PresignContext(val uid: String?, val ip: String?)
 
-data class UploadPack(
-    val file: File,
-    val name: String,
-    val size: Long,
-    val fullName: String,
-    val sha256: String,
-)
+data class UploadPack(val file: File, val name: String, val size: Long, val fullName: String, val sha256: String)
 
-data class ProcessedUploadPack(
-    val pack: UploadPack,
-    val contentType: String,
-    val dimension: Dimension? = null
-)
+data class ProcessedUploadPack(val pack: UploadPack, val contentType: String, val dimension: Dimension? = null)
 
 data class CopyPack(val originFullName: String, val newFullName: String)
 
@@ -41,7 +26,9 @@ interface ObjectStorageService {
     suspend fun upload(bucketName: String, uploadPacks: List<UploadPack>): Result<List<ObjectStorageWriteRecord>>
 
     /**
+     * @param bucketName 存储桶名称
      * @param names 完整的name
+     * @return 与名称对应的对象存储记录
      */
     suspend fun get(bucketName: String, names: List<String>): Result<List<ObjectStorageRecord>>
 
@@ -61,7 +48,7 @@ interface ObjectStorageService {
     suspend fun getInputStream(bucketName: String, name: String): Result<InputStream>
 
     /**
-     * 使用对象存储的 compose/concat 能力，将同一 bucket 下的多个源对象顺序合并为一个目标对象。
+     * 使用对象存储的 compose/concat 能力，将同一 bucket 下的多个源对象顺序合并为一个目标对象。.
      * @param bucketName 目标与源对象所在的 bucket（需相同）
      * @param targetFullName 合并后目标对象完整路径
      * @param sourceFullNames 源对象完整路径列表，按顺序依次合并
@@ -69,11 +56,11 @@ interface ObjectStorageService {
     suspend fun compose(
         bucketName: String,
         targetFullName: String,
-        sourceFullNames: List<String>
+        sourceFullNames: List<String>,
     ): Result<ObjectStorageWriteRecord>
 
     /**
-     * 删除 bucket 下的多个对象。
+     * 删除 bucket 下的多个对象。.
      */
     suspend fun delete(bucketName: String, names: List<String>): Result<Unit>
 }

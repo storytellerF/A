@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.utils
 
 import com.mmk.kmpnotifier.KMPNotifier
@@ -19,9 +23,11 @@ internal actual fun initializePlatformAppNotifications() {
     if (!KMPNotifier.isInitialized) {
         KMPNotifier.initialize(
             context = activity,
-            configuration = NotificationPlatformConfiguration.Android(
+            configuration =
+            NotificationPlatformConfiguration.Android(
                 notificationIconResId = R.drawable.ic_notify,
-                notificationChannelData = NotificationPlatformConfiguration.Android.NotificationChannelData(
+                notificationChannelData =
+                NotificationPlatformConfiguration.Android.NotificationChannelData(
                     id = "Regular",
                     name = "Regular",
                     description = "Regular",

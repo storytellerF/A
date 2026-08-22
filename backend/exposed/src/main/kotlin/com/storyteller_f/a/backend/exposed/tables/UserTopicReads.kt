@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.exposed.tables
 
 import com.storyteller_f.a.backend.core.types.UserTopicRead
@@ -20,14 +24,13 @@ object UserTopicReads : Table() {
     }
 }
 
-fun UserTopicRead.Companion.wrapRow(resultRow: ResultRow): UserTopicRead {
-    return with(UserTopicReads) {
-        UserTopicRead(
-            resultRow[uid],
-            resultRow[updatedAt],
-            resultRow[objectId],
-            resultRow[objectType],
-            resultRow[topicId]
-        )
-    }
+fun UserTopicRead.Companion.wrapRow(resultRow: ResultRow): UserTopicRead =
+    with(UserTopicReads) {
+    UserTopicRead(
+        resultRow[uid],
+        resultRow[updatedAt],
+        resultRow[objectId],
+        resultRow[objectType],
+        resultRow[topicId],
+    )
 }

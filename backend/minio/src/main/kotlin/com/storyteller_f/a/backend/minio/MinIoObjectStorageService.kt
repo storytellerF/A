@@ -1,7 +1,12 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.minio
 
 import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.MinIoConnection
+import com.storyteller_f.a.backend.core.service.CacheService
 import com.storyteller_f.a.backend.core.service.CacheServiceFactory
 import com.storyteller_f.a.backend.core.service.CopyPack
 import com.storyteller_f.a.backend.core.service.ObjectStorageRecord
@@ -10,6 +15,7 @@ import com.storyteller_f.a.backend.core.service.ObjectStorageServiceFactory
 import com.storyteller_f.a.backend.core.service.ObjectStorageWriteRecord
 import com.storyteller_f.a.backend.core.service.PresignContext
 import com.storyteller_f.a.backend.core.service.UploadPack
+import com.storyteller_f.shared.utils.cancellableRunCatching
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.recoverResult
 import io.github.aakira.napier.Napier
@@ -29,41 +35,39 @@ import kotlin.String
 import kotlin.getOrThrow
 import kotlin.time.ExperimentalTime
 
-class MinIoObjectStorageService(
-    private val connection: MinIoConnection,
-    private val minioHost: String?
-) : ObjectStorageService {
-    val cache =
+class MinIoObjectStorageService(private val connection: MinIoConnection, private val minioHost: String?) :
+    ObjectStorageService {
+    /** Cache used for generated object-storage metadata. */
+    val cache: CacheService<String, String> =
         ServiceLoader.load(CacheServiceFactory::class.java).first {
             it.match(MergedEnv(emptyList()))
         }.build<String, String>(
             MergedEnv(emptyList()),
-            String::class
+            String::class,
         )
 
-    override suspend fun clean(bucketName: String): Result<Unit> {
-        return useMinIoClient(connection) {
-            if (bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
-                removeAllObject(bucketName)
-                Napier.i {
-                    "clean media done"
-                }
-            } else {
-                Napier.i {
-                    "bucket not exists"
-                }
+    override suspend fun clean(bucketName: String): Result<Unit> =
+        useMinIoClient(connection) {
+        if (bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
+            removeAllObject(bucketName)
+            Napier.i {
+                "clean media done"
+            }
+        } else {
+            Napier.i {
+                "bucket not exists"
             }
         }
     }
 
-    override suspend fun list(
-        bucketName: String,
-        prefix: String
-    ): Result<List<ObjectStorageRecord>> {
-        return useMinIoClient(connection) {
-            val names = try {
+    override suspend fun list(bucketName: String, prefix: String): Result<List<ObjectStorageRecord>> =
+        useMinIoClient(
+        connection,
+    ) {
+        val names =
+            try {
                 listObjects(
-                    ListObjectsArgs.builder().bucket(bucketName).prefix(prefix).recursive(false).build()
+                    ListObjectsArgs.builder().bucket(bucketName).prefix(prefix).recursive(false).build(),
                 ).map {
                     it.get().objectName()
                 }
@@ -74,44 +78,37 @@ class MinIoObjectStorageService(
                     throw e
                 }
             }
-            get(bucketName, names).getOrThrow()
-        }
+        get(bucketName, names).getOrThrow()
     }
 
-    override suspend fun copy(
-        bucketName: String,
-        copyPacks: List<CopyPack>,
-    ): Result<List<ObjectStorageRecord>> {
-        return useMinIoClient(connection) {
-            copyPacks.map {
+    override suspend fun copy(bucketName: String, copyPacks: List<CopyPack>): Result<List<ObjectStorageRecord>> =
+        useMinIoClient(
+            connection,
+        ) {
+            copyPacks.map { copyPack ->
                 copyObject(
                     CopyObjectArgs.builder()
                         .bucket(bucketName)
-                        .`object`(it.newFullName)
+                        .`object`(copyPack.newFullName)
                         .metadataDirective(Directive.COPY)
                         .taggingDirective(Directive.COPY)
-                        .source(SourceObject.builder().bucket(bucketName).`object`(it.originFullName).build())
-                        .build()
+                        .source(SourceObject.builder().bucket(bucketName).`object`(copyPack.originFullName).build())
+                        .build(),
                 ).`object`()
             }
-        }.mapResult {
-            get(bucketName, it)
+        }.mapResult { objectNames ->
+            get(bucketName, objectNames)
         }
+
+    override suspend fun getInputStream(bucketName: String, name: String): Result<InputStream> =
+        useMinIoClient(
+        connection,
+    ) {
+        getObject(GetObjectArgs.builder().bucket(bucketName).`object`(name).build())
     }
 
-    override suspend fun getInputStream(
-        bucketName: String,
-        name: String,
-    ): Result<InputStream> {
-        return useMinIoClient(connection) {
-            getObject(GetObjectArgs.builder().bucket(bucketName).`object`(name).build())
-        }
-    }
-
-    override suspend operator fun get(
-        bucketName: String,
-        names: List<String>
-    ): Result<List<ObjectStorageRecord>> = getInternal(bucketName, names, null)
+    override suspend operator fun get(bucketName: String, names: List<String>): Result<List<ObjectStorageRecord>> =
+        getInternal(bucketName, names, null)
 
     override suspend fun getWithPresignContext(
         bucketName: String,
@@ -156,38 +153,37 @@ class MinIoObjectStorageService(
     override suspend fun compose(
         bucketName: String,
         targetFullName: String,
-        sourceFullNames: List<String>
-    ): Result<ObjectStorageWriteRecord> {
-        return useMinIoClient(connection) {
-            if (!bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
-                makeBucket(MakeBucketArgs.builder().bucket(bucketName).build())
-            }
-            val sources = sourceFullNames.map {
+        sourceFullNames: List<String>,
+    ): Result<ObjectStorageWriteRecord> =
+        useMinIoClient(connection) {
+        if (!bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
+            makeBucket(MakeBucketArgs.builder().bucket(bucketName).build())
+        }
+        val sources =
+            sourceFullNames.map {
                 SourceObject.builder()
                     .bucket(bucketName)
                     .`object`(it)
                     .build()
             }
-            composeObject(
-                ComposeObjectArgs.builder()
-                    .bucket(bucketName)
-                    .`object`(targetFullName)
-                    .sources(sources)
-                    .build()
-            )
-            ObjectStorageWriteRecord(targetFullName)
-        }
+        composeObject(
+            ComposeObjectArgs.builder()
+                .bucket(bucketName)
+                .`object`(targetFullName)
+                .sources(sources)
+                .build(),
+        )
+        ObjectStorageWriteRecord(targetFullName)
     }
 
-    override suspend fun delete(bucketName: String, names: List<String>): Result<Unit> {
-        return useMinIoClient(connection) {
-            names.forEach { name ->
-                try {
-                    removeObject(RemoveObjectArgs.builder().bucket(bucketName).`object`(name).build())
-                } catch (e: ErrorResponseException) {
-                    // Ignore missing keys
-                    if (e.errorResponse().code() != "NoSuchKey") throw e
-                }
+    override suspend fun delete(bucketName: String, names: List<String>): Result<Unit> =
+        useMinIoClient(connection) {
+        names.forEach { name ->
+            try {
+                removeObject(RemoveObjectArgs.builder().bucket(bucketName).`object`(name).build())
+            } catch (e: ErrorResponseException) {
+                // Ignore missing keys
+                if (e.errorResponse().code() != "NoSuchKey") throw e
             }
         }
     }
@@ -230,11 +226,12 @@ class MinIoObjectStorageService(
                                 )
                             }
                         }
-                    val url = if (minioHost.isNullOrBlank()) {
-                        minioObjectUrl
-                    } else {
-                        replaceUrl(minioHost, minioObjectUrl)
-                    }
+                    val url =
+                        if (minioHost.isNullOrBlank()) {
+                            minioObjectUrl
+                        } else {
+                            replaceUrl(minioHost, minioObjectUrl)
+                        }
                     val statObject = statObject(StatObjectArgs.builder().bucket(bucketName).`object`(objName).build())
                     val lastModified = statObject.lastModified().toLocalDateTime().toKotlinLocalDateTime()
                     ObjectStorageRecord(url, lastModified, objName)
@@ -263,8 +260,8 @@ private suspend fun <R> useMinIoClient(
     minIoConnection: MinIoConnection,
     block: suspend MinioClient.() -> R,
 ): Result<R> {
-    val point = Exception()
-    return runCatching {
+    val point = Exception("MinIO request call site")
+    return cancellableRunCatching {
         MinioClient.builder()
             .endpoint(minIoConnection.url)
             .credentials(minIoConnection.user, minIoConnection.pass)
@@ -334,14 +331,12 @@ private fun presignCacheKey(
 }
 
 class MinioObjectStorageServiceFactory : ObjectStorageServiceFactory {
-    override fun match(env: MergedEnv): Boolean {
-        return env["MEDIA_SERVICE"] == "minio"
-    }
+    override fun match(env: MergedEnv): Boolean = env["MEDIA_SERVICE"] == "minio"
 
     override fun build(env: MergedEnv): ObjectStorageService {
-        val url = env["MINIO_URL"] ?: throw Exception("MINIO_URL is empty")
-        val name = env["MINIO_NAME"] ?: throw Exception("MINIO_NAME is empty")
-        val pass = env["MINIO_PASS"] ?: throw Exception("MINIO_PASS is empty")
+        val url = env["MINIO_URL"] ?: error("MINIO_URL is empty")
+        val name = env["MINIO_NAME"] ?: error("MINIO_NAME is empty")
+        val pass = env["MINIO_PASS"] ?: error("MINIO_PASS is empty")
         return MinIoObjectStorageService(MinIoConnection(url, name, pass), env["MINIO_HOST"])
     }
 }

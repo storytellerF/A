@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.components
 
 import androidx.compose.foundation.background
@@ -59,7 +63,7 @@ fun imageInlineContent(
     maxWidth: Dp,
     density: Density,
     isEmbed: Boolean,
-    transformer: ImageTransformer
+    transformer: ImageTransformer,
 ): InlineTextContent {
     val dimension = mediaMap[uri]
     if (maxWidth <= 10.dp || dimension == null) {
@@ -68,10 +72,10 @@ fun imageInlineContent(
     val imageWidth = pxToDp(dimension.width, density.density)
     val imageHeight = pxToDp(dimension.height, density.density)
     val width = minOf(maxWidth, imageWidth)
-    val height = minOf((width.value / imageWidth.value) * imageHeight, if (isEmbed) 300.dp else width * 2)
+    val height = minOf(width.value / imageWidth.value * imageHeight, if (isEmbed) 300.dp else width * 2)
     val recalculatedWidth = height.value * imageWidth / imageHeight.value
     return InlineTextContent(
-        Placeholder(recalculatedWidth.value.sp, height.value.sp, PlaceholderVerticalAlign.Center)
+        Placeholder(recalculatedWidth.value.sp, height.value.sp, PlaceholderVerticalAlign.Center),
     ) {
         CompositionLocalProvider(LocalInspectionMode provides false) {
             transformer.transform(uri)?.let { imageData ->
@@ -82,28 +86,25 @@ fun imageInlineContent(
 }
 
 @Composable
-fun customMarkdownTypography(colors: MarkdownColors): MarkdownTypography = markdownTypography(
+fun customMarkdownTypography(colors: MarkdownColors): MarkdownTypography =
+    markdownTypography(
     code = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace, color = colors.text),
-    inlineCode = MaterialTheme.typography.bodyLarge.copy(fontFamily = FontFamily.Monospace, color = colors.text)
+    inlineCode = MaterialTheme.typography.bodyLarge.copy(fontFamily = FontFamily.Monospace, color = colors.text),
 )
 
 @Composable
-fun LatexInlineContent(
-    tex: String,
-    style: TextStyle,
-    backgroundColor: Color? = null
-) {
+fun LatexInlineContent(tex: String, style: TextStyle, backgroundColor: Color? = null) {
     if (backgroundColor != null) {
         Box(modifier = Modifier.background(backgroundColor)) {
             Latex(
                 latex = tex,
-                config = LatexConfig(fontSize = style.fontSize)
+                config = LatexConfig(fontSize = style.fontSize),
             )
         }
     } else {
         Latex(
             latex = tex,
-            config = LatexConfig(fontSize = style.fontSize)
+            config = LatexConfig(fontSize = style.fontSize),
         )
     }
 }
@@ -125,17 +126,19 @@ fun AnnotatedString.Builder.imageAnnotator(
     return when (childType) {
         MarkdownElementTypes.IMAGE -> {
             val id = "image${child.startOffset}-${child.endOffset}"
-            val name = child.findChildOfTypeRecursive(MarkdownElementTypes.LINK_DESTINATION)
-                ?.getUnescapedTextInNode(content)
+            val name =
+                child.findChildOfTypeRecursive(MarkdownElementTypes.LINK_DESTINATION)
+                    ?.getUnescapedTextInNode(content)
             if (name != null) {
-                inlineContentMap[id] = imageInlineContent(
-                    uri = name,
-                    mediaMap = dimensionMap,
-                    maxWidth = maxWidth,
-                    density = density,
-                    isEmbed = isEmbed,
-                    transformer = imageTransformer
-                )
+                inlineContentMap[id] =
+                    imageInlineContent(
+                        uri = name,
+                        mediaMap = dimensionMap,
+                        maxWidth = maxWidth,
+                        density = density,
+                        isEmbed = isEmbed,
+                        transformer = imageTransformer,
+                    )
                 appendInlineContent(id, name)
                 true
             } else {

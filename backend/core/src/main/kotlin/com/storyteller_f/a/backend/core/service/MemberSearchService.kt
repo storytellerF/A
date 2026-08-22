@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.core.service
 
 import com.storyteller_f.a.backend.core.MergedEnv
@@ -15,7 +19,7 @@ data class MemberDocument(
     val objectType: ObjectType,
     val nickname: String,
     val objectName: String,
-    val communityId: PrimaryKey? = null
+    val communityId: PrimaryKey? = null,
 ) : PrimaryKeyIdentifiable {
     companion object {
         fun fromUserInfo(
@@ -24,39 +28,32 @@ data class MemberDocument(
             objectId: PrimaryKey,
             objectType: ObjectType,
             objectName: String,
-            communityId: PrimaryKey? = null
-        ): MemberDocument {
-            return MemberDocument(
-                id = id,
-                uid = userInfo.id,
-                objectId = objectId,
-                objectType = objectType,
-                nickname = userInfo.nickname,
-                objectName = objectName,
-                communityId = communityId
-            )
-        }
+            communityId: PrimaryKey? = null,
+        ): MemberDocument =
+            MemberDocument(
+            id = id,
+            uid = userInfo.id,
+            objectId = objectId,
+            objectType = objectType,
+            nickname = userInfo.nickname,
+            objectName = objectName,
+            communityId = communityId,
+        )
     }
 }
 
 sealed interface MemberDocumentSearch {
-    data class Keyword(
-        val objectId: PrimaryKey? = null,
-        val nickname: String,
-        val fetch: OffsetFetch
-    ) : MemberDocumentSearch
+    data class Keyword(val objectId: PrimaryKey? = null, val nickname: String, val fetch: OffsetFetch) :
+        MemberDocumentSearch
 
-    data class CommunityMembers(
-        val uid: PrimaryKey,
-        val objectName: String,
-        val fetch: OffsetFetch
-    ) : MemberDocumentSearch
+    data class CommunityMembers(val uid: PrimaryKey, val objectName: String, val fetch: OffsetFetch) :
+        MemberDocumentSearch
 
     data class RoomMembers(
         val uid: PrimaryKey,
         val objectName: String,
         val communityId: PrimaryKey? = null,
-        val fetch: OffsetFetch
+        val fetch: OffsetFetch,
     ) : MemberDocumentSearch
 }
 
@@ -67,9 +64,7 @@ interface MemberSearchService {
 
     suspend fun clean(): Result<Unit>
 
-    suspend fun searchDocument(
-        memberDocumentSearch: MemberDocumentSearch
-    ): Result<PaginationResult<MemberDocument>>
+    suspend fun searchDocument(memberDocumentSearch: MemberDocumentSearch): Result<PaginationResult<MemberDocument>>
 }
 
 interface MemberSearchServiceFactory {
