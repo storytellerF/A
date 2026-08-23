@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.shared.type
 
 enum class ObjectType {
@@ -7,5 +11,5 @@ enum class ObjectType {
     USER,
     TITLE,
     FILE,
-    PANEL_ACCOUNT
+    PANEL_ACCOUNT,
 }

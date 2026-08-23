@@ -1,3 +1,9 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
+package com.storyteller_f.a.dev.appium
+
 import com.storyteller_f.a.client.core.AuthKey
 import com.storyteller_f.a.client.core.PanelSessionManager
 import com.storyteller_f.a.client.core.SimplePassHolder
@@ -60,21 +66,24 @@ abstract class TargetAppiumHelper {
     }
 
     protected fun resolvePackageName(metadataCandidates: Sequence<File>): String {
-        val metadataFile = metadataCandidates.firstOrNull { it.exists() }
-            ?: error("Android APK metadata file not found")
-        val applicationId = Json.parseToJsonElement(metadataFile.readText())
-            .jsonObject["applicationId"]
-            ?.jsonPrimitive
-            ?.contentOrNull
+        val metadataFile =
+            metadataCandidates.firstOrNull { it.exists() }
+                ?: error("Android APK metadata file not found")
+        val applicationId =
+            Json.parseToJsonElement(metadataFile.readText())
+                .jsonObject["applicationId"]
+                ?.jsonPrimitive
+                ?.contentOrNull
         check(!applicationId.isNullOrBlank()) { "Unable to read applicationId from ${metadataFile.path}" }
         return applicationId
     }
 }
 
 class AppAppiumHelper : TargetAppiumHelper() {
-    override val androidApp by lazy {
+    override val androidApp: AppUnderTest by lazy {
         AppUnderTest(
-            packageName = resolvePackageName(
+            packageName =
+            resolvePackageName(
                 sequenceOf(
                     File("../../app/androidApp/build/outputs/apk/debug/output-metadata.json"),
                     File("app/androidApp/build/outputs/apk/debug/output-metadata.json"),
@@ -83,19 +92,22 @@ class AppAppiumHelper : TargetAppiumHelper() {
             mainActivityClassName = "com.storyteller_f.a.app.MainActivity",
         )
     }
-    override val desktopRuntimeConfig = DesktopAppiumRuntimeConfig(
-        suiteName = "DesktopAppiumTest",
-        appLabel = "Desktop app",
-        mainClassName = "com.storyteller_f.a.app.JvmMainKt",
-        runtimeClasspathCandidates = listOf(
-            File("../../app/desktopApp/build/appium/runtimeClasspath.txt"),
-            File("app/desktopApp/build/appium/runtimeClasspath.txt"),
-        ),
-        runtimeClasspathErrorMessage = "Desktop runtime classpath not found. " +
-            "Run :app:desktopApp:writeAppiumRuntimeClasspath first.",
-        scriptPrefix = "desktop-appium-",
-        includeWsUrl = true,
-    )
+    override val desktopRuntimeConfig =
+        DesktopAppiumRuntimeConfig(
+            suiteName = "DesktopAppiumTest",
+            appLabel = "Desktop app",
+            mainClassName = "com.storyteller_f.a.app.JvmMainKt",
+            runtimeClasspathCandidates =
+            listOf(
+                File("../../app/desktopApp/build/appium/runtimeClasspath.txt"),
+                File("app/desktopApp/build/appium/runtimeClasspath.txt"),
+            ),
+            runtimeClasspathErrorMessage =
+            "Desktop runtime classpath not found. " +
+                "Run :app:desktopApp:writeAppiumRuntimeClasspath first.",
+            scriptPrefix = "desktop-appium-",
+            includeWsUrl = true,
+        )
     override val suiteName = "AppAppiumTest"
 
     fun readSystemPrivateKey(): String =
@@ -122,30 +134,29 @@ class AppAppiumHelper : TargetAppiumHelper() {
         return AuthenticatedSession(session, manager)
     }
 
-    private fun createApiSessionManager(
-        ports: AppiumPorts,
-        passHolder: SimplePassHolder,
-    ): UserSessionManager = createSimpleUserSessionManager(
-        buildWebSocketUrl("ws://127.0.0.1:${ports.ws}"),
-        AcceptAllCookiesStorage(),
-        passHolder,
-        { model, cookieStorage ->
-            getClient {
-                defaultClientConfigure(
-                    cookieStorage,
-                    model,
-                    passHolder,
-                    "http://127.0.0.1:${ports.server}",
-                )
-            }
-        },
-    ) { _, _, _ -> }
+    private fun createApiSessionManager(ports: AppiumPorts, passHolder: SimplePassHolder): UserSessionManager =
+        createSimpleUserSessionManager(
+            buildWebSocketUrl("ws://127.0.0.1:${ports.ws}"),
+            AcceptAllCookiesStorage(),
+            passHolder,
+            { model, cookieStorage ->
+                getClient {
+                    defaultClientConfigure(
+                        cookieStorage,
+                        model,
+                        passHolder,
+                        "http://127.0.0.1:${ports.server}",
+                    )
+                }
+            },
+        ) { _, _, _ -> }
 }
 
 class PanelAppiumHelper : TargetAppiumHelper() {
-    override val androidApp by lazy {
+    override val androidApp: AppUnderTest by lazy {
         AppUnderTest(
-            packageName = resolvePackageName(
+            packageName =
+            resolvePackageName(
                 sequenceOf(
                     File("../../panel/androidApp/build/outputs/apk/debug/output-metadata.json"),
                     File("panel/androidApp/build/outputs/apk/debug/output-metadata.json"),
@@ -154,19 +165,22 @@ class PanelAppiumHelper : TargetAppiumHelper() {
             mainActivityClassName = "com.storyteller_f.a.panel.MainActivity",
         )
     }
-    override val desktopRuntimeConfig = DesktopAppiumRuntimeConfig(
-        suiteName = "DesktopPanelAppiumTest",
-        appLabel = "Desktop panel app",
-        mainClassName = "com.storyteller_f.a.panel.PanelMainKt",
-        runtimeClasspathCandidates = listOf(
-            File("../../panel/desktopApp/build/appium/runtimeClasspath.txt"),
-            File("panel/desktopApp/build/appium/runtimeClasspath.txt"),
-        ),
-        runtimeClasspathErrorMessage = "Panel desktop runtime classpath not found. " +
-            "Run :panel:desktopApp:writeAppiumRuntimeClasspath first.",
-        scriptPrefix = "desktop-panel-appium-",
-        includeWsUrl = false,
-    )
+    override val desktopRuntimeConfig =
+        DesktopAppiumRuntimeConfig(
+            suiteName = "DesktopPanelAppiumTest",
+            appLabel = "Desktop panel app",
+            mainClassName = "com.storyteller_f.a.panel.PanelMainKt",
+            runtimeClasspathCandidates =
+            listOf(
+                File("../../panel/desktopApp/build/appium/runtimeClasspath.txt"),
+                File("panel/desktopApp/build/appium/runtimeClasspath.txt"),
+            ),
+            runtimeClasspathErrorMessage =
+            "Panel desktop runtime classpath not found. " +
+                "Run :panel:desktopApp:writeAppiumRuntimeClasspath first.",
+            scriptPrefix = "desktop-panel-appium-",
+            includeWsUrl = false,
+        )
     override val suiteName = "PanelAppiumTest"
 
     suspend fun createPreRegisteredSession(ports: AppiumPorts): InjectedSession {
@@ -181,20 +195,18 @@ class PanelAppiumHelper : TargetAppiumHelper() {
         }
     }
 
-    private fun createApiSessionManager(
-        ports: AppiumPorts,
-        passHolder: SimplePassHolder,
-    ): PanelSessionManager = createSimplePanelSessionManager(
-        passHolder,
-        AcceptAllCookiesStorage(),
-    ) { model, cookieStorage ->
-        getClient {
-            defaultClientConfigureForPanel(
-                cookieStorage,
-                model,
-                passHolder,
-                "http://127.0.0.1:${ports.server}",
-            )
+    private fun createApiSessionManager(ports: AppiumPorts, passHolder: SimplePassHolder): PanelSessionManager =
+        createSimplePanelSessionManager(
+            passHolder,
+            AcceptAllCookiesStorage(),
+        ) { model, cookieStorage ->
+            getClient {
+                defaultClientConfigureForPanel(
+                    cookieStorage,
+                    model,
+                    passHolder,
+                    "http://127.0.0.1:${ports.server}",
+                )
+            }
         }
-    }
 }

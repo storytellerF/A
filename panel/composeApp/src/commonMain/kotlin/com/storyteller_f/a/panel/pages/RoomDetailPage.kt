@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.panel.pages
 
 import androidx.compose.foundation.clickable
@@ -62,10 +66,11 @@ fun RoomDetailPage(id: PrimaryKey) {
     val pagerState = rememberPagerState { 2 }
     val scope = rememberCoroutineScope()
     Scaffold(topBar = { RoomTopBar(id) }, bottomBar = {
-        val navRoutes = listOf(
-            NavRoute("/info", Icons.Default.People, "Info"),
-            NavRoute("/logs", Icons.AutoMirrored.Filled.Article, "Logs"),
-        )
+        val navRoutes =
+            listOf(
+                NavRoute("/info", Icons.Default.People, "Info"),
+                NavRoute("/logs", Icons.AutoMirrored.Filled.Article, "Logs"),
+            )
         CustomBottomNav(navRoutes[pagerState.currentPage].path, navRoutes) { path ->
             scope.launch {
                 pagerState.animateScrollToPage(navRoutes.indexOfFirst { it.path == path })
@@ -73,7 +78,7 @@ fun RoomDetailPage(id: PrimaryKey) {
         }
     }) { paddingValues ->
         Column(
-            Modifier.padding(paddingValues)
+            Modifier.padding(paddingValues),
         ) {
             HorizontalPager(pagerState) { pageIndex ->
                 when (pageIndex) {
@@ -92,11 +97,12 @@ private fun RoomTopBar(id: PrimaryKey) {
     val info by vm.handler.data.collectAsState(null)
     val name = info?.name
     val aid = info?.aid
-    val title = if (name != null && aid != null) {
-        stringResource(Res.string.room_detail_title_with_info, name, aid)
-    } else {
-        stringResource(Res.string.room_detail_title)
-    }
+    val title =
+        if (name != null && aid != null) {
+            stringResource(Res.string.room_detail_title_with_info, name, aid)
+        } else {
+            stringResource(Res.string.room_detail_title)
+        }
     val nav = LocalPanelNav.current
     TopAppBar(
         title = {
@@ -106,17 +112,18 @@ private fun RoomTopBar(id: PrimaryKey) {
             IconButton(onClick = { nav.open() }) {
                 Icon(Icons.Default.Menu, null)
             }
-        }
+        },
     )
 }
 
 @Composable
 private fun RoomInfoTabs(id: PrimaryKey) {
-    val tabs = listOf(
-        stringResource(Res.string.tab_basic_info),
-        stringResource(Res.string.tab_members),
-        stringResource(Res.string.tab_files)
-    )
+    val tabs =
+        listOf(
+            stringResource(Res.string.tab_basic_info),
+            stringResource(Res.string.tab_members),
+            stringResource(Res.string.tab_files),
+        )
     val pagerState = rememberPagerState { tabs.size }
     val scope = rememberCoroutineScope()
     Column {
@@ -145,22 +152,23 @@ private fun RoomBasicInfoSection(id: PrimaryKey) {
     val dialogController = LocalPanelGlobalDialog.current
     val scope = rememberCoroutineScope()
     StateView(vm.handler, modifier = Modifier.fillMaxSize()) { info ->
-        val items = buildList {
-            add("id" to info.id.toString())
-            add("name" to info.name)
-            add("aid" to info.aid)
-            add("creator" to info.creator.toString())
-            add("createdTime" to info.createdTime.toString())
-            add("memberCount" to info.memberCount.toString())
-            add("icon" to (info.icon?.name ?: "null"))
-            add("joinedTime" to (info.joinedTime?.toString() ?: "null"))
-            add("communityId" to (info.communityId?.toString() ?: "null"))
-            add("latestTopic" to (info.latestTopic?.toString() ?: "null"))
-            add("isPrivate" to info.isPrivate.toString())
-            add("isJoined" to info.isJoined.toString())
-            add("hasUnread" to info.hasUnread.toString())
-            add("readOnly" to info.readOnly.toString())
-        }
+        val items =
+            buildList {
+                add("id" to info.id.toString())
+                add("name" to info.name)
+                add("aid" to info.aid)
+                add("creator" to info.creator.toString())
+                add("createdTime" to info.createdTime.toString())
+                add("memberCount" to info.memberCount.toString())
+                add("icon" to (info.icon?.name ?: "null"))
+                add("joinedTime" to (info.joinedTime?.toString() ?: "null"))
+                add("communityId" to (info.communityId?.toString() ?: "null"))
+                add("latestTopic" to (info.latestTopic?.toString() ?: "null"))
+                add("isPrivate" to info.isPrivate.toString())
+                add("isJoined" to info.isJoined.toString())
+                add("hasUnread" to info.hasUnread.toString())
+                add("readOnly" to info.readOnly.toString())
+            }
         Column {
             InfoTable(items, Modifier.padding(16.dp).weight(1f))
             Button(onClick = {
@@ -192,17 +200,17 @@ private fun RoomMembersTab(id: PrimaryKey) {
     val vm = createPanelRoomMembersViewModel(id)
     StateView(vm, modifier = Modifier.fillMaxSize()) { items ->
         LazyColumn {
-            pagingItems(items, key = { it.userInfo.id }) {
-                val m = items[it]
+            pagingItems(items, key = { it.userInfo.id }) { index ->
+                val m = items[index]
                 if (m != null) {
                     ListItem(
                         modifier = Modifier.clickable { nav.gotoUserDetail(m.userInfo.id) },
                         headlineContent = { Text(m.userInfo.nickname) },
                         supportingContent = {
-                            val joined = m.joinedTime.toString()
+                            val joined = m.joinedTime?.toString().orEmpty()
                             val status = m.status.name
                             Text(listOf(joined, status).joinToString(" • "))
-                        }
+                        },
                     )
                     HorizontalDivider()
                 }
@@ -217,8 +225,8 @@ private fun RoomFilesTab(id: PrimaryKey) {
     val vm = createPanelRoomFilesViewModel(id)
     StateView(vm, modifier = Modifier.fillMaxSize()) { items ->
         LazyColumn {
-            pagingItems(items, key = { it.id }) {
-                val info = items[it]
+            pagingItems(items, key = { it.id }) { index ->
+                val info = items[index]
                 if (info != null) {
                     ListItem(
                         modifier = Modifier.clickable { nav.gotoFileDetail(info.id) },
@@ -228,7 +236,7 @@ private fun RoomFilesTab(id: PrimaryKey) {
                             val s = listOf(ct).filter { it.isNotEmpty() }.joinToString(" • ")
                             Text(s)
                         },
-                        leadingContent = { Icon(Icons.Default.FilePresent, null) }
+                        leadingContent = { Icon(Icons.Default.FilePresent, null) },
                     )
                     HorizontalDivider()
                 }

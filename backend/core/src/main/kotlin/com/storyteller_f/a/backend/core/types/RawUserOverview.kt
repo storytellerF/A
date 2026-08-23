@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.core.types
 
 data class RawUserOverview(
@@ -8,5 +12,5 @@ data class RawUserOverview(
     val reactionRecordCount: Long,
     val commentCount: Long,
     val hasUnreadChildRoomMessage: Boolean,
-    val rawUser: RawUser
+    val rawUser: RawUser,
 )

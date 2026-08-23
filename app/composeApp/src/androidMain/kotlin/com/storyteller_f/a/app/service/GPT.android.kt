@@ -1,9 +1,14 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.service
 
 import com.google.ai.edge.litertlm.Backend.GPU
 import com.google.ai.edge.litertlm.Engine
 import com.google.ai.edge.litertlm.EngineConfig
 import com.storyteller_f.shared.getAppContextRefValue
+import com.storyteller_f.shared.utils.cancellableRunCatching
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -14,9 +19,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.io.files.Path
 import java.io.File
 
-actual fun buildGPT(): GPT {
-    return AndroidEdgeGPT()
-}
+actual fun buildGPT(): GPT = AndroidEdgeGPT()
 
 actual fun getGPTModelDirectory(): Path {
     val context = getAppContextRefValue() ?: error("context is nil")
@@ -27,19 +30,21 @@ class AndroidEdgeGPT : GPT {
     override val supportList: List<String> = listOf("litertlm")
 
     override suspend fun generate(path: String, prompt: String): Result<Flow<GPTOutput>> {
-        val application = getAppContextRefValue()
-            ?: return Result.failure(UnsupportedOperationException())
+        val application =
+            getAppContextRefValue()
+                ?: return Result.failure(UnsupportedOperationException())
         val file = File(path)
         if (!file.exists()) {
             return Result.failure(Exception("modal not exists"))
         }
-        val engineConfig = EngineConfig(
-            modelPath = path,
-            backend = GPU(),
-            cacheDir = application.cacheDir.path
-        )
+        val engineConfig =
+            EngineConfig(
+                modelPath = path,
+                backend = GPU(),
+                cacheDir = application.cacheDir.path,
+            )
         val engine = Engine(engineConfig)
-        return runCatching {
+        return cancellableRunCatching {
             withContext(Dispatchers.IO) {
                 engine.initialize()
             }
@@ -61,7 +66,10 @@ class AndroidEdgeGPT : GPT {
         }
     }
 
-    override fun models(scope: CoroutineScope): Flow<List<GPTModel>> {
-        return observeModels(scope, getGPTModelDirectory(), supportList)
-    }
+    override fun models(scope: CoroutineScope): Flow<List<GPTModel>> =
+        observeModels(
+        scope,
+        getGPTModelDirectory(),
+        supportList,
+    )
 }

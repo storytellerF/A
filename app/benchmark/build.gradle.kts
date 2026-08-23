@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 @file:Suppress("UnstableApiUsage")
 
 plugins {

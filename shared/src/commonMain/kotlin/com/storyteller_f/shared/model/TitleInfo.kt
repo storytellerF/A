@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.shared.model
 
 import com.storyteller_f.shared.type.ObjectStatus
@@ -48,9 +52,9 @@ enum class TitleType {
 
 enum class TitleWorkStatus {
     OK,
-    EXPIRED
+    EXPIRED,
 }
 enum class TitleSearchType {
     CREATOR,
-    RECEIVER
+    RECEIVER,
 }

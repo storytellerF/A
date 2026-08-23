@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.user
 
 import androidx.compose.foundation.background
@@ -107,8 +111,7 @@ import com.storyteller_f.shared.type.UserStatus
 import dev.jordond.connectivity.Connectivity
 import dev.jordond.connectivity.compose.rememberConnectivityState
 import io.github.aakira.napier.Napier
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import nl.jacobras.humanreadable.HumanReadable
 import org.jetbrains.compose.resources.stringResource
@@ -119,7 +122,7 @@ private fun SelfDialogInternal(
     userInfo: UserInfo?,
     dismiss: () -> Unit,
     clickCreate: () -> Unit,
-    overviewHandler: LoadingHandler<UserOverview>
+    overviewHandler: LoadingHandler<UserOverview>,
 ) {
     val instance by LocalUiViewModel.current.instance.collectAsState()
     val isAlreadySignIn = instance.isAlreadySign
@@ -141,16 +144,18 @@ private fun SelfDialogInternal(
 
 @Composable
 private fun RowScope.StatCell(value: Long, iconRes: IconRes, onClick: () -> Unit) {
-    val str = remember(value) {
-        HumanReadable.number(value.toFloat())
-    }
+    val str =
+        remember(value) {
+            HumanReadable.number(value.toFloat())
+        }
     val shape = RoundedCornerShape(8.dp)
     Row(
-        modifier = Modifier.weight(1f).clip(shape).clickable {
+        modifier =
+        Modifier.weight(1f).clip(shape).clickable {
             onClick()
         }.padding(8.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center
+        horizontalArrangement = Arrangement.Center,
     ) {
         CustomIcon(iconRes)
         Spacer(modifier = Modifier.width(8.dp))
@@ -163,7 +168,7 @@ fun SignInBox(dismiss: () -> Unit) {
     val appNavFactory = LocalAppNavFactory.current
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier.padding(vertical = 10.dp).fillMaxWidth()
+        modifier = Modifier.padding(vertical = 10.dp).fillMaxWidth(),
     ) {
         SignInButton {
             dismiss()
@@ -177,7 +182,7 @@ fun SystemSettingsButton(dismiss: () -> Unit) {
     val appNavFactory = LocalAppNavFactory.current
     ButtonNav(
         MaterialSymbolsOutlined.Settings,
-        stringResource(Res.string.preference)
+        stringResource(Res.string.preference),
     ) {
         dismiss()
         appNavFactory.newAppNav().gotoPreference()
@@ -203,10 +208,7 @@ class UserInfoPreviewProvider : PreviewParameterProvider<UserInfo> {
 
 @Preview
 @Composable
-fun UserCard(
-    @PreviewParameter(UserInfoPreviewProvider::class) userInfo: UserInfo?,
-    dismiss: () -> Unit = {}
-) {
+fun UserCard(@PreviewParameter(UserInfoPreviewProvider::class) userInfo: UserInfo?, dismiss: () -> Unit = {}) {
     UserCardContainer(userInfo, dismiss) {
         UnboundSimpleUserCell(userInfo)
     }
@@ -215,9 +217,10 @@ fun UserCard(
 @Composable
 fun UserCardContainer(userInfo: UserInfo?, dismiss: () -> Unit, content: @Composable () -> Unit) {
     val appNavFactory = LocalAppNavFactory.current
-    val isUserPage = appNavFactory.hasRouteFlow<UserScreen> {
-        it.uid == userInfo?.id
-    }
+    val isUserPage =
+        appNavFactory.hasRouteFlow<UserScreen> {
+            it.uid == userInfo?.id
+        }
     val shape = RoundedCornerShape(8.dp)
     val cellClickable = !isUserPage
     val openUser: () -> Unit = {
@@ -246,11 +249,11 @@ fun SelfUserDetailCard(
     userInfo: UserInfo?,
     dismiss: () -> Unit = {},
     overviewHandler: LoadingHandler<UserOverview>,
-    onClickCreate: () -> Unit
+    onClickCreate: () -> Unit,
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         UserCardContainer(userInfo, dismiss) {
             UnboundSimpleUserCell(userInfo)
@@ -269,7 +272,8 @@ fun SelfUserDetailCard(
             }
             FilledIconButton(
                 onClick = createTopic,
-                modifier = Modifier.appiumSemantics(
+                modifier =
+                Modifier.appiumSemantics(
                     description = "create",
                     onClick = createTopic,
                 ),
@@ -282,33 +286,30 @@ fun SelfUserDetailCard(
 }
 
 @Composable
-private fun UserOverviewRow(
-    userOverview: UserOverview?,
-    isLoading: Boolean,
-    dismiss: () -> Unit
-) {
+private fun UserOverviewRow(userOverview: UserOverview?, isLoading: Boolean, dismiss: () -> Unit) {
     val shape = RoundedCornerShape(10.dp)
     val appNav = LocalAppNavFactory.current
     Column(
-        modifier = Modifier.clip(shape)
-            .background(MaterialTheme.colorScheme.surfaceDim, shape)
+        modifier =
+        Modifier.clip(shape)
+            .background(MaterialTheme.colorScheme.surfaceDim, shape),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             StatCell(
                 userOverview?.acg ?: 0,
-                if (isLoading) IconRes.Loading else IconRes.Vector(Icons.Default.AccountBalanceWallet)
+                if (isLoading) IconRes.Loading else IconRes.Vector(Icons.Default.AccountBalanceWallet),
             ) {
             }
             StatCell(
                 userOverview?.favoriteCount ?: 0,
-                if (isLoading) IconRes.Loading else IconRes.Vector(Icons.Default.Favorite)
+                if (isLoading) IconRes.Loading else IconRes.Vector(Icons.Default.Favorite),
             ) {
                 dismiss()
                 appNav.newAppNav().gotoFavoritePage()
             }
             StatCell(
                 userOverview?.subscriptionCount ?: 0,
-                if (isLoading) IconRes.Loading else IconRes.Vector(Icons.Default.NotificationsActive)
+                if (isLoading) IconRes.Loading else IconRes.Vector(Icons.Default.NotificationsActive),
             ) {
                 dismiss()
                 appNav.newAppNav().gotoSubscriptionPage()
@@ -317,14 +318,14 @@ private fun UserOverviewRow(
         Row(verticalAlignment = Alignment.CenterVertically) {
             StatCell(
                 userOverview?.reactionRecordCount ?: 0,
-                if (isLoading) IconRes.Loading else IconRes.Vector(Icons.Default.ThumbUp)
+                if (isLoading) IconRes.Loading else IconRes.Vector(Icons.Default.ThumbUp),
             ) {
                 dismiss()
                 appNav.newAppNav().gotoUserReactionRecordsPage()
             }
             StatCell(
                 userOverview?.commentCount ?: 0,
-                if (isLoading) IconRes.Loading else IconRes.Vector(Icons.Default.ChatBubble)
+                if (isLoading) IconRes.Loading else IconRes.Vector(Icons.Default.ChatBubble),
             ) {
                 dismiss()
                 appNav.newAppNav().gotoUserCommentsPage()
@@ -339,12 +340,12 @@ private fun UnboundSimpleUserCell(userInfo: UserInfo?) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         UserIcon(
             setClickEvent = false,
             userInfo?.avatar?.url,
-            60.dp
+            60.dp,
         ) {}
         if (userInfo != null) {
             Column {
@@ -355,13 +356,14 @@ private fun UnboundSimpleUserCell(userInfo: UserInfo?) {
                         Text(
                             "ReadOnly",
                             style = MaterialTheme.typography.labelSmall,
-                            modifier = Modifier
+                            modifier =
+                            Modifier
                                 .background(
                                     MaterialTheme.colorScheme.errorContainer,
-                                    RoundedCornerShape(4.dp)
+                                    RoundedCornerShape(4.dp),
                                 )
                                 .padding(horizontal = 4.dp, vertical = 2.dp),
-                            color = MaterialTheme.colorScheme.onErrorContainer
+                            color = MaterialTheme.colorScheme.onErrorContainer,
                         )
                     }
                 }
@@ -371,7 +373,7 @@ private fun UnboundSimpleUserCell(userInfo: UserInfo?) {
                 } else {
                     Text(
                         CoreStrings.ad(userInfo.address),
-                        style = MaterialTheme.typography.labelSmall
+                        style = MaterialTheme.typography.labelSmall,
                     )
                 }
             }
@@ -397,7 +399,7 @@ fun AccountSwitchButton(dismiss: () -> Unit, overviewHandler: LoadingHandler<Use
                 number = userOverview?.childAccountCount ?: 0,
                 hasUnread = userOverview?.hasUnreadChildRoomMessage == true,
             )
-        }
+        },
     ) {
         dismiss()
         accountSwitcher.switch()
@@ -414,9 +416,10 @@ fun ButtonBadgeSuffix(number: Long, hasUnread: Boolean = false) {
     }) {
         Text(
             number.toString(),
-            modifier = Modifier.clip(shape)
+            modifier =
+            Modifier.clip(shape)
                 .background(MaterialTheme.colorScheme.primaryContainer, shape)
-                .padding(horizontal = 8.dp, vertical = 4.dp)
+                .padding(horizontal = 8.dp, vertical = 4.dp),
         )
     }
 }
@@ -448,25 +451,23 @@ fun NotificationButton() {
 fun ConnectionButton() {
     val inspectionMode = LocalInspectionMode.current
     if (inspectionMode) return
-    val connectivity = remember {
-        createConnectivity()
-    }
+    val connectivity =
+        remember {
+            createConnectivity()
+        }
     val scope = rememberCoroutineScope()
     val connectivityState = rememberConnectivityState(connectivity, scope)
-    when (val s = connectivityState.status) {
-        is Connectivity.Status.Connected -> {
-            ButtonNav(
-                if (s.metered) Icons.Default.SignalCellularAlt else Icons.Default.Wifi,
-                stringResource(Res.string.connected)
-            )
-        }
-
-        else -> {
-            ButtonNav(
-                MaterialSymbolsOutlined.SignalDisconnected,
-                stringResource(Res.string.disconnected)
-            )
-        }
+    val status = connectivityState.status
+    if (status is Connectivity.Status.Connected) {
+        ButtonNav(
+            if (status.metered) Icons.Default.SignalCellularAlt else Icons.Default.Wifi,
+            stringResource(Res.string.connected),
+        )
+    } else {
+        ButtonNav(
+            MaterialSymbolsOutlined.SignalDisconnected,
+            stringResource(Res.string.disconnected),
+        )
     }
 }
 
@@ -488,9 +489,7 @@ fun FileExplorerButton(dismiss: () -> Unit) {
     }
 }
 
-suspend fun AppGlobalDialogController.signOut(
-    uiViewModel: UIViewModel,
-) {
+suspend fun AppGlobalDialogController.signOut(uiViewModel: UIViewModel) {
     val address = uiViewModel.instance.value.address
     useResult {
         request {
@@ -503,49 +502,47 @@ suspend fun AppGlobalDialogController.signOut(
     }
 }
 
-@OptIn(DelicateCoroutinesApi::class)
-fun refreshMyInfo(my: UserInfo?, sessionManager: UserSessionManager) {
-    GlobalScope.launch {
-        try {
-            val sessionModel = sessionManager.model
-            if (my == null) {
-                val userPass = sessionManager.passHolder.currentUserPass ?: return@launch
-                val data = sessionManager.getData().getOrThrow()
-                val address = userPass.address().getOrThrow()
-                val signature = userPass.signature(finalData(data)).getOrThrow()
-                when (val response =
-                    sessionManager.signIn(SignInBody(address, signature)).getOrThrow()) {
-                    is SignInResponse.Success -> {
-                        sessionModel.updateUser(response.userInfo)
-                        sessionModel.updateSignature(data, signature)
-                    }
-
-                    SignInResponse.RequiresTotp -> Unit
+private suspend fun refreshMyInfo(my: UserInfo?, sessionManager: UserSessionManager) {
+    try {
+        val sessionModel = sessionManager.model
+        if (my == null) {
+            val userPass = sessionManager.passHolder.currentUserPass ?: return
+            val data = sessionManager.getData().getOrThrow()
+            val address = userPass.address().getOrThrow()
+            val signature = userPass.signature(finalData(data)).getOrThrow()
+            when (
+                val response =
+                    sessionManager.signIn(SignInBody(address, signature)).getOrThrow()
+            ) {
+                is SignInResponse.Success -> {
+                    sessionModel.updateUser(response.userInfo)
+                    sessionModel.updateSignature(data, signature)
                 }
-            } else {
-                val aid = my.aid
-                val userInfo = if (aid.isNullOrBlank()) {
+
+                SignInResponse.RequiresTotp -> Unit
+            }
+        } else {
+            val aid = my.aid
+            val userInfo =
+                if (aid.isNullOrBlank()) {
                     sessionManager.getUserInfo(my.id)
                 } else {
                     sessionManager.getUserInfoByAid(aid)
                 }.getOrThrow()
-                sessionModel.updateUser(userInfo)
-            }
-        } catch (e: Exception) {
-            Napier.e(e) {
-                "refresh user info"
-            }
+            sessionModel.updateUser(userInfo)
+        }
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Napier.e(e) {
+            "refresh user info"
         }
     }
 }
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-fun UserDialog(
-    userInfo: UserInfo?,
-    showDialog: Boolean,
-    dismiss: () -> Unit,
-) {
+fun UserDialog(userInfo: UserInfo?, showDialog: Boolean, dismiss: () -> Unit) {
     if (showDialog) {
         BasicAlertDialog({
             dismiss()
@@ -574,9 +571,10 @@ fun SelfDialog(
         BasicAlertDialog({
             dismiss()
         }) {
-            val signOutController = remember {
-                CustomAlertDialogController()
-            }
+            val signOutController =
+                remember {
+                    CustomAlertDialogController()
+                }
             val sessionManager = LocalSessionManager.current
             LaunchedEffect(userInfo) {
                 refreshMyInfo(userInfo, sessionManager)
@@ -597,11 +595,7 @@ fun SelfDialog(
 }
 
 @Composable
-fun UserIconWithDialog(
-    userInfo: UserInfo?,
-    setClickEvent: Boolean = true,
-    size: Dp = 40.dp,
-) {
+fun UserIconWithDialog(userInfo: UserInfo?, setClickEvent: Boolean = true, size: Dp = 40.dp) {
     var showUserDialog by remember {
         mutableStateOf(false)
     }
@@ -611,7 +605,7 @@ fun UserIconWithDialog(
     }
     UserDialog(
         userInfo,
-        showUserDialog
+        showUserDialog,
     ) {
         showUserDialog = false
     }
@@ -632,7 +626,8 @@ fun SelfUserIconWithDialog(
         showUserDialog = true
     }
     Box(
-        modifier = Modifier.appiumSemantics(
+        modifier =
+        Modifier.appiumSemantics(
             testTag = "me",
             description = "avatar",
             onClick = showDialog,
@@ -644,7 +639,7 @@ fun SelfUserIconWithDialog(
         userInfo,
         showUserDialog,
         overviewHandler,
-        onClickCreate
+        onClickCreate,
     ) {
         showUserDialog = false
     }

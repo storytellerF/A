@@ -1,8 +1,10 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.shared.obj
 
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class UpdateReadOnlyBody(
-    val readOnly: Boolean
-)
+data class UpdateReadOnlyBody(val readOnly: Boolean)

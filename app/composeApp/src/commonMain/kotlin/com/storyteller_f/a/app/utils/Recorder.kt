@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.utils
 
 import androidx.compose.runtime.MutableState
@@ -13,6 +17,8 @@ import kotlin.uuid.Uuid
 
 object Recorder {
     var recording: AudioRecordingSession? = null
+    val isRecording: MutableState<Boolean> = mutableStateOf(false)
+
     suspend fun startRecord() {
         if (isRecording.value) {
             return
@@ -36,5 +42,4 @@ object Recorder {
         flow.writeToFile(AudioFileFormat.Wav, path)
         return path
     }
-    val isRecording: MutableState<Boolean> = mutableStateOf(false)
 }

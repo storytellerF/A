@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.simple
 
 import com.storyteller_f.a.backend.core.MergedEnv
@@ -33,11 +37,7 @@ class NativeLockService : LockService {
 }
 
 class NativeLockServiceFactory : LockServiceFactory {
-    override fun match(env: MergedEnv): Boolean {
-        return true
-    }
+    override fun match(env: MergedEnv): Boolean = true
 
-    override fun build(env: MergedEnv): LockService {
-        return NativeLockService()
-    }
+    override fun build(env: MergedEnv): LockService = NativeLockService()
 }

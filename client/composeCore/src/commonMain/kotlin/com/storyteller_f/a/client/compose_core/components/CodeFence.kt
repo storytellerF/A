@@ -24,11 +24,12 @@ fun CustomCodeFence(
     modal: MarkdownComponentModel,
     mediaList: Map<String, FileInfo>,
     refBlock: @Composable (MarkdownComponentModel) -> Unit,
-    onClick: (FileInfo) -> Unit
+    onClick: (FileInfo) -> Unit,
 ) {
-    val lang = remember(modal.node, modal.content) {
-        getLang(modal.node, modal.content)
-    }
+    val lang =
+        remember(modal.node, modal.content) {
+            getLang(modal.node, modal.content)
+        }
     when (codeFenceKind(lang)) {
         CodeFenceKind.REF -> refBlock(modal)
         CodeFenceKind.MATH -> LatexBlock(modal)
@@ -62,15 +63,12 @@ internal fun codeFenceKind(language: String): CodeFenceKind {
 }
 
 @Composable
-fun ObjectBlock(
-    modal: MarkdownComponentModel,
-    mediaList: Map<String, FileInfo>,
-    onClick: (FileInfo) -> Unit
-) {
-    val obj = remember(modal.node, modal.content) {
-        val c = readCodeFence(modal.node, modal.content)
-        commonJson.decodeFromString<MarkdownObject>(c)
-    }
+fun ObjectBlock(modal: MarkdownComponentModel, mediaList: Map<String, FileInfo>, onClick: (FileInfo) -> Unit) {
+    val obj =
+        remember(modal.node, modal.content) {
+            val c = readCodeFence(modal.node, modal.content)
+            commonJson.decodeFromString<MarkdownObject>(c)
+        }
     if (obj.contentType.isNullOrBlank()) {
         FileObjectBlock(obj, modal, mediaList, onClick)
     } else {
@@ -83,7 +81,7 @@ private fun FileObjectBlock(
     obj: MarkdownObject,
     modal: MarkdownComponentModel,
     mediaMap: Map<String, FileInfo>,
-    onClick: (FileInfo) -> Unit
+    onClick: (FileInfo) -> Unit,
 ) {
     val mediaInfo = mediaMap[obj.name] ?: return HighlightCodeBlock(modal)
     val url = mediaInfo.url
@@ -118,20 +116,16 @@ private fun FileObjectBlock(
 }
 
 @Composable
-fun HighlightCodeBlock(
-    modal: MarkdownComponentModel
-) {
+fun HighlightCodeBlock(modal: MarkdownComponentModel) {
     highlightedCodeFence(modal)
 }
 
 @Composable
-private fun LatexBlock(
-    modal: MarkdownComponentModel
-) {
+private fun LatexBlock(modal: MarkdownComponentModel) {
     val typography = LocalMarkdownTypography.current
     val textStyle = typography.code
     Latex(
         latex = readCodeFence(modal.node, modal.content),
-        config = LatexConfig(fontSize = textStyle.fontSize)
+        config = LatexConfig(fontSize = textStyle.fontSize),
     )
 }

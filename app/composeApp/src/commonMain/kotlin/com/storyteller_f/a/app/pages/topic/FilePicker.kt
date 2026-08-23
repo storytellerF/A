@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.topic
 
 import androidx.compose.foundation.background
@@ -72,6 +76,7 @@ import com.storyteller_f.a.client.core.upload
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.obj.ObjectTuple
+import com.storyteller_f.shared.utils.cancellableRunCatching
 import com.storyteller_f.shared.utils.generateImageMarkdownContent
 import com.storyteller_f.shared.utils.generateObjectMarkdownContent
 import com.storyteller_f.shared.utils.mapIfNotNull
@@ -108,13 +113,14 @@ fun FilePicker(
     hideSheet: () -> Unit,
 ) {
     BaseSheet(showSheet, sheetState, hideSheet) {
-        val pagerState = rememberPagerState {
-            support.size
-        }
+        val pagerState =
+            rememberPagerState {
+                support.size
+            }
         val tabs =
             listOf(
                 Icons.Default.Cloud to stringResource(Res.string.files),
-                Icons.Default.Mic to stringResource(Res.string.audio_recorder)
+                Icons.Default.Mic to stringResource(Res.string.audio_recorder),
             ).filter {
                 support.contains(it.second)
             }
@@ -123,7 +129,7 @@ fun FilePicker(
             val scope = rememberCoroutineScope()
             PrimaryTabRow(
                 currentPage,
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
             ) {
                 tabs.forEachIndexed { index, pair ->
                     Tab(currentPage == index, {
@@ -147,18 +153,16 @@ fun FilePicker(
 }
 
 @Composable
-fun AudioRecorder(
-    mediaTarget: ObjectTuple,
-    uploadSuccess: (List<FileInfo>) -> Unit,
-) {
+fun AudioRecorder(mediaTarget: ObjectTuple, uploadSuccess: (List<FileInfo>) -> Unit) {
     val isRecording by Recorder.isRecording
     val isGranted by isPermissionGranted(Permission.Audio)
     Box(modifier = Modifier.fillMaxSize()) {
         RecorderButton(isGranted, isRecording, uploadSuccess, mediaTarget)
         if (!isGranted) {
             Box(
-                modifier = Modifier.fillMaxSize()
-                    .background(MaterialTheme.colorScheme.primaryContainer)
+                modifier =
+                Modifier.fillMaxSize()
+                    .background(MaterialTheme.colorScheme.primaryContainer),
             ) {
                 Button({
                     requestPermission(Permission.Audio)
@@ -180,7 +184,8 @@ private fun BoxScope.RecorderButton(
     val scope = rememberCoroutineScope()
     val globalDialogController = LocalGlobalDialog.current
     Box(
-        modifier = Modifier.size(150.dp)
+        modifier =
+        Modifier.size(150.dp)
             .background(MaterialTheme.colorScheme.primaryContainer, CircleShape)
             .clip(CircleShape)
             .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape).align(Alignment.Center)
@@ -190,7 +195,7 @@ private fun BoxScope.RecorderButton(
                         if (isRecording) {
                             val path = Recorder.stopRecord()
                             Napier.i {
-                                "save to $path"
+                                "save to ${path ?: "<none>"}"
                             }
                             if (path != null) {
                                 globalDialogController.uploadPath(path, mediaTarget)
@@ -200,7 +205,7 @@ private fun BoxScope.RecorderButton(
                             }
                         } else {
                             globalDialogController.useResult {
-                                runCatching {
+                                cancellableRunCatching {
                                     Recorder.startRecord()
                                 }
                             }
@@ -208,7 +213,7 @@ private fun BoxScope.RecorderButton(
                     }
                 }
             },
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         if (isRecording) {
             Icon(Icons.Default.Stop, stringResource(Res.string.stop_record), modifier = Modifier.size(50.dp))
@@ -285,11 +290,8 @@ suspend fun AppGlobalDialogController.selectFileAndUpload(
     }
 }
 
-private fun getUploadDataFromPlatformFile(
-    f: PlatformFile,
-    sha256: String,
-    bytes: ByteArray,
-) = UploadData(
+private fun getUploadDataFromPlatformFile(f: PlatformFile, sha256: String, bytes: ByteArray) =
+    UploadData(
     f.size(),
     f.name,
     ContentType.defaultForFileExtension(f.extension),
@@ -298,10 +300,8 @@ private fun getUploadDataFromPlatformFile(
     Buffer().also { it.write(bytes) }
 }
 
-class PlatformClientFile private constructor(
-    val platformFile: PlatformFile,
-    private val bytes: ByteArray,
-) : ClientFile {
+class PlatformClientFile private constructor(val platformFile: PlatformFile, private val bytes: ByteArray) :
+    ClientFile {
     override val name: String get() = platformFile.name
     override val contentType: ContentType get() = ContentType.defaultForFileExtension(platformFile.extension)
     override val size: Long get() = platformFile.size()
@@ -327,14 +327,12 @@ private class ByteArrayRawSource(private val bytes: ByteArray) : RawSource {
     override fun close() = Unit
 }
 
-suspend fun AppGlobalDialogController.uploadPath(
-    path: Path,
-    mediaTarget: ObjectTuple,
-): Result<List<FileInfo>?> {
+suspend fun AppGlobalDialogController.uploadPath(path: Path, mediaTarget: ObjectTuple): Result<List<FileInfo>?> {
     val meta = SystemFileSystem.metadataOrNull(path) ?: return Result.success(null)
-    val fileSha256 = SystemFileSystem.source(path).buffered().use {
-        sha256(it)
-    }
+    val fileSha256 =
+        SystemFileSystem.source(path).buffered().use {
+            sha256(it)
+        }
     return useResult {
         upload(
             mediaTarget,
@@ -363,15 +361,12 @@ suspend fun AppGlobalDialogController.upload(
     }
 }
 
-fun insertContent(
-    it: FileInfo,
-    input: String,
-    updateInput: (String) -> Unit,
-) {
-    val text = if (it.contentType.startsWith("image/")) {
-        "\n${generateImageMarkdownContent(it)}"
-    } else {
-        "\n${generateObjectMarkdownContent(it)}"
-    }
+fun insertContent(it: FileInfo, input: String, updateInput: (String) -> Unit) {
+    val text =
+        if (it.contentType.startsWith("image/")) {
+            "\n${generateImageMarkdownContent(it)}"
+        } else {
+            "\n${generateObjectMarkdownContent(it)}"
+        }
     updateInput(input + text)
 }

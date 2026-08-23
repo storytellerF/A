@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.server
 
 import com.storyteller_f.a.api.NewCommunity
@@ -62,9 +66,9 @@ import kotlin.uuid.Uuid
 
 @Suppress("LongMethod")
 class TopicTest {
-
     @Test
-    fun `test community topic search and pagination`() = test {
+    fun `test community topic search and pagination`() =
+        test {
         attachSession {
             val communityId = createCommunity(NewCommunity("aid", "name")).getOrThrow().id
             val lastTopic = createTopic(ObjectType.COMMUNITY, communityId, "hello world").getOrThrow()
@@ -80,7 +84,8 @@ class TopicTest {
     }
 
     @Test
-    fun `test community topic author is not null`() = test {
+    fun `test community topic author is not null`() =
+        test {
         attachSession {
             val communityId = createCommunity(NewCommunity("aid", "name")).getOrThrow().id
             createTopic(ObjectType.COMMUNITY, communityId, "hello world").getOrThrow()
@@ -91,7 +96,7 @@ class TopicTest {
             }
             getCommunityTopics(
                 communityId,
-                paginationQuery = PaginationQuery(size = 10)
+                paginationQuery = PaginationQuery(size = 10),
             ).getOrThrow().data.forEach {
                 assertNotNull(it.extension?.authorInfo)
             }
@@ -99,7 +104,8 @@ class TopicTest {
     }
 
     @Test
-    fun `test community topic has comment and comment count`() = test {
+    fun `test community topic has comment and comment count`() =
+        test {
         attachSession {
             val communityId = createCommunity(NewCommunity("aid", "name")).getOrThrow().id
             val topicId = createTopic(ObjectType.COMMUNITY, communityId, "hello world").getOrThrow().id
@@ -112,7 +118,7 @@ class TopicTest {
             }
             getCommunityTopics(
                 communityId,
-                paginationQuery = PaginationQuery(size = 10)
+                paginationQuery = PaginationQuery(size = 10),
             ).getOrThrow().data.forEach {
                 assertNotNull(it.hasComment)
                 assertEquals(1, it.commentCount)
@@ -122,23 +128,26 @@ class TopicTest {
 
     @OptIn(ExperimentalUuidApi::class)
     @Test
-    fun `test topic snapshot`() = test {
-        attachSession {
+    fun `test topic snapshot`() =
+        test {
+        attachSession { session ->
             val tmpFile = File("src/test/resources/avatar1.png")
             val size = tmpFile.length()
-            val info = upload(
-                ObjectTuple(it.uid, ObjectType.USER),
-                getUploadDataFromStream(size, tmpFile)
-            ).getOrThrow().data.first()
+            val info =
+                upload(
+                    ObjectTuple(session.uid, ObjectType.USER),
+                    getUploadDataFromStream(size, tmpFile),
+                ).getOrThrow().data.first()
             val communityId = createCommunity(NewCommunity("name", "aid")).getOrThrow().id
-            val topicInfo = createTopic(
-                ObjectType.COMMUNITY,
-                communityId,
-                """hello
+            val topicInfo =
+                createTopic(
+                    ObjectType.COMMUNITY,
+                    communityId,
+                    """hello
                 |
                 |![png](${info.name})
-                """.trimMargin()
-            ).getOrThrow()
+                    """.trimMargin(),
+                ).getOrThrow()
             val fileInfo = createTopicSnapshot(topicInfo.id).getOrThrow()
             val file = File("build/test/tmp/${Uuid.random()}.pdf")
             downloadFile(file, fileInfo)
@@ -150,7 +159,8 @@ class TopicTest {
     }
 
     @Test
-    fun `test add reaction`() = test {
+    fun `test add reaction`() =
+        test {
         val emoji = "\uD83D\uDE00"
         attachSession {
             val c = createCommunity(NewCommunity("name", "aid")).getOrThrow()
@@ -168,7 +178,8 @@ class TopicTest {
     }
 
     @Test
-    fun `test delete reaction`() = test {
+    fun `test delete reaction`() =
+        test {
         val emoji = "\uD83D\uDE00"
         attachSession {
             val c = createCommunity(NewCommunity("name", "aid")).getOrThrow()
@@ -186,14 +197,16 @@ class TopicTest {
     }
 
     @Test
-    fun `test reaction permission check`() = test {
+    fun `test reaction permission check`() =
+        test {
         val emoji = "\uD83D\uDE00"
-        val session = attachSession {
-            val communityInfo = createCommunity(NewCommunity("name", "aid")).getOrThrow()
-            val topicInfo = createTopic(ObjectType.COMMUNITY, communityInfo.id, "hello").getOrThrow()
-            addReaction(topicInfo.id, emoji).getOrThrow()
-            topicInfo
-        }
+        val session =
+            attachSession {
+                val communityInfo = createCommunity(NewCommunity("name", "aid")).getOrThrow()
+                val topicInfo = createTopic(ObjectType.COMMUNITY, communityInfo.id, "hello").getOrThrow()
+                addReaction(topicInfo.id, emoji).getOrThrow()
+                topicInfo
+            }
         val topicId = session.custom.id
         attachSession {
             assertFails {
@@ -205,14 +218,16 @@ class TopicTest {
     }
 
     @Test
-    fun `test file in user topic`() = test {
-        attachSession {
+    fun `test file in user topic`() =
+        test {
+        attachSession { session ->
             val string = "hello"
-            val fileInfo = upload(
-                ObjectTuple(it.uid, ObjectType.USER),
-                getUploadDataFromText(string)
-            ).getOrThrow().data.first()
-            val info = createTopic(ObjectType.USER, it.uid, "![hello.txt](${fileInfo.name})").getOrThrow()
+            val fileInfo =
+                upload(
+                    ObjectTuple(session.uid, ObjectType.USER),
+                    getUploadDataFromText(string),
+                ).getOrThrow().data.first()
+            val info = createTopic(ObjectType.USER, session.uid, "![hello.txt](${fileInfo.name})").getOrThrow()
             val plain = info.content as TopicContent.Plain
             assertEquals(fileInfo.fullName, plain.fileInfos.first().fullName)
             val topicInfo = getTopicInfo(info.id).getOrThrow()
@@ -221,7 +236,8 @@ class TopicTest {
     }
 
     @Test
-    fun `test create user topic`() = test {
+    fun `test create user topic`() =
+        test {
         attachSession {
             createTopic(ObjectType.USER, it.uid, "hello").getOrThrow()
             // 查询单个topic
@@ -233,12 +249,14 @@ class TopicTest {
     }
 
     @Test
-    fun `test forbid use api send message in room`() = test {
-        val (communityId, publicRoomId) = attachSession {
-            val communityId = createCommunity(NewCommunity("test1", "test1")).getOrThrow().id
-            val publicRoomId = createRoom(NewRoom("room1", "room1", communityId = communityId)).getOrThrow().id
-            communityId to publicRoomId
-        }.custom
+    fun `test forbid use api send message in room`() =
+        test {
+        val (communityId, publicRoomId) =
+            attachSession {
+                val communityId = createCommunity(NewCommunity("test1", "test1")).getOrThrow().id
+                val publicRoomId = createRoom(NewRoom("room1", "room1", communityId = communityId)).getOrThrow().id
+                communityId to publicRoomId
+            }.custom
         attachSession {
             joinCommunity(communityId).getOrThrow()
             joinRoom(publicRoomId).getOrThrow()
@@ -249,12 +267,14 @@ class TopicTest {
     }
 
     @Test
-    fun `test community room permission check`() = test {
-        val (communityId, publicRoomId) = attachSession {
-            val communityId = createCommunity(NewCommunity("test1", "test1")).getOrThrow().id
-            val publicRoomId = createRoom(NewRoom("room1", "room1", communityId = communityId)).getOrThrow().id
-            communityId to publicRoomId
-        }.custom
+    fun `test community room permission check`() =
+        test {
+        val (communityId, publicRoomId) =
+            attachSession {
+                val communityId = createCommunity(NewCommunity("test1", "test1")).getOrThrow().id
+                val publicRoomId = createRoom(NewRoom("room1", "room1", communityId = communityId)).getOrThrow().id
+                communityId to publicRoomId
+            }.custom
         val receivedFrame = mutableListOf<RoomFrame>()
         attachSession(onReceive = { roomFrame, _, _ ->
             receivedFrame.add(roomFrame)
@@ -275,13 +295,15 @@ class TopicTest {
     }
 
     @Test
-    fun `test create topic in private room`() = test {
+    fun `test create topic in private room`() =
+        test {
         val user2 = attachSession()
-        val user1 = attachSession {
-            val id = createRoom(NewRoom("room-create-topic", "room-create-topic")).getOrThrow().id
-            createTitle(NewTitle("join", TitleType.JOIN, user2.uid, id, ObjectType.ROOM, ""))
-            id
-        }
+        val user1 =
+            attachSession {
+                val id = createRoom(NewRoom("room-create-topic", "room-create-topic")).getOrThrow().id
+                createTitle(NewTitle("join", TitleType.JOIN, user2.uid, id, ObjectType.ROOM, ""))
+                id
+            }
         val privateRoomId = user1.custom
         val receivedFrame = mutableListOf<RoomFrame>()
         loginSession(user2, { roomFrame, _, _ ->
@@ -299,18 +321,21 @@ class TopicTest {
     }
 
     @Test
-    fun `test private room join`() = test {
-        val user1 = attachSession {
-            val id = createRoom(NewRoom("room-private-join", "room-private-join")).getOrThrow().id
-            id
-        }
+    fun `test private room join`() =
+        test {
+        val user1 =
+            attachSession {
+                val id = createRoom(NewRoom("room-private-join", "room-private-join")).getOrThrow().id
+                id
+            }
         val privateRoomId = user1.custom
 
-        val user2 = attachSession {
-            assertFails {
-                joinRoom(privateRoomId).getOrThrow()
+        val user2 =
+            attachSession {
+                assertFails {
+                    joinRoom(privateRoomId).getOrThrow()
+                }
             }
-        }
         loginSession(user1) {
             createTitle(NewTitle("join", TitleType.JOIN, user2.uid, privateRoomId, ObjectType.ROOM, ""))
         }
@@ -320,14 +345,16 @@ class TopicTest {
     }
 
     @Test
-    fun `test create in user`() = test {
+    fun `test create in user`() =
+        test {
         attachSession {
             createTopic(ObjectType.USER, it.uid, "hello").getOrThrow()
         }
     }
 
     @Test
-    fun `test recommend`() = test {
+    fun `test recommend`() =
+        test {
         attachSession {
             val id = createCommunity(NewCommunity("c1", "c1")).getOrThrow().id
             repeat(4) {
@@ -335,11 +362,12 @@ class TopicTest {
             }
             id
         }.custom
-        val custom2 = attachSession {
-            val id = createCommunity(NewCommunity("c2", "c2")).getOrThrow().id
-            createTopic(ObjectType.COMMUNITY, id, "hello 2").getOrThrow()
-            id
-        }.custom
+        val custom2 =
+            attachSession {
+                val id = createCommunity(NewCommunity("c2", "c2")).getOrThrow().id
+                createTopic(ObjectType.COMMUNITY, id, "hello 2").getOrThrow()
+                id
+            }.custom
         attachSession {
             joinCommunity(custom2).getOrThrow()
             createTopic(ObjectType.COMMUNITY, custom2, "only").getOrThrow()
@@ -348,7 +376,8 @@ class TopicTest {
     }
 
     @Test
-    fun `test none session recommend`() = test {
+    fun `test none session recommend`() =
+        test {
         attachSession {
             val id = createCommunity(NewCommunity("c1", "c1")).getOrThrow().id
             repeat(4) {
@@ -386,7 +415,8 @@ class TopicTest {
     }
 
     @Test
-    fun `test community last read`() = test {
+    fun `test community last read`() =
+        test {
         attachSession {
             val communityInfo = createCommunity(NewCommunity("r1", "r1")).getOrThrow()
             val topic = createTopic(ObjectType.COMMUNITY, communityInfo.id, "hello").getOrThrow()
@@ -399,7 +429,8 @@ class TopicTest {
     }
 
     @Test
-    fun `test pin topic`() = test {
+    fun `test pin topic`() =
+        test {
         attachSession {
             val communityInfo = createCommunity(NewCommunity("r1", "r1")).getOrThrow()
             val topic = createTopic(ObjectType.COMMUNITY, communityInfo.id, "hello").getOrThrow()
@@ -416,7 +447,8 @@ class TopicTest {
     }
 
     @Test
-    fun `test topic level`() = test {
+    fun `test topic level`() =
+        test {
         attachSession {
             val topicInfo = createTopic(ObjectType.USER, it.uid, "hello").getOrThrow()
             assertEquals(1, topicInfo.level)
@@ -424,7 +456,8 @@ class TopicTest {
     }
 
     @Test
-    fun `test community topic latest topic`() = test {
+    fun `test community topic latest topic`() =
+        test {
         attachSession {
             val communityInfo = createCommunity(NewCommunity("r1", "r1")).getOrThrow()
             val topic = createTopic(ObjectType.COMMUNITY, communityInfo.id, "hello").getOrThrow()
@@ -434,17 +467,19 @@ class TopicTest {
     }
 
     @Test
-    fun `test other user can decrypt`() = test {
+    fun `test other user can decrypt`() =
+        test {
         listOf(
             com.storyteller_f.shared.model.AlgoType.DILITHIUM,
-            com.storyteller_f.shared.model.AlgoType.P256
+            com.storyteller_f.shared.model.AlgoType.P256,
         ).forEach { algo ->
             val user2 = attachSession(algo = algo) {}
-            val user1 = attachSession(algo = algo) {
-                val id = createRoom(NewRoom("room2-${algo.name}", "room2-${algo.name}")).getOrThrow().id
-                createTitle(NewTitle("join", TitleType.JOIN, user2.uid, id, ObjectType.ROOM, ""))
-                id
-            }
+            val user1 =
+                attachSession(algo = algo) {
+                    val id = createRoom(NewRoom("room2-${algo.name}", "room2-${algo.name}")).getOrThrow().id
+                    createTitle(NewTitle("join", TitleType.JOIN, user2.uid, id, ObjectType.ROOM, ""))
+                    id
+                }
             val privateRoomId = user1.custom
             val receivedFrame = mutableListOf<RoomFrame>()
             loginSession(user2, onReceive = { roomFrame, _, _ ->
@@ -459,10 +494,12 @@ class TopicTest {
                 val first = receivedFrame.first() as RoomFrame.NewTopicInfo
                 assertEquals(
                     "hello",
-                    (processEncryptedTopic(
-                        listOf(first.topicInfo),
-                        this
-                    ).first().content as TopicContent.Plain).plain
+                    (
+                        processEncryptedTopic(
+                            listOf(first.topicInfo),
+                            this,
+                        ).first().content as TopicContent.Plain
+                        ).plain,
                 )
             }
             receivedFrame.clear()
@@ -470,17 +507,20 @@ class TopicTest {
     }
 
     @Test
-    fun `test P256 and Dilithium users in community room`() = test {
-        val user1 = attachSession(algo = com.storyteller_f.shared.model.AlgoType.P256) {
-            val communityId = createCommunity(NewCommunity("p256-c", "p256-c")).getOrThrow().id
-            val roomId = createRoom(NewRoom("p256-r", "p256-r", communityId = communityId)).getOrThrow().id
-            communityId to roomId
-        }
+    fun `test P256 and Dilithium users in community room`() =
+        test {
+        val user1 =
+            attachSession(algo = com.storyteller_f.shared.model.AlgoType.P256) {
+                val communityId = createCommunity(NewCommunity("p256-c", "p256-c")).getOrThrow().id
+                val roomId = createRoom(NewRoom("p256-r", "p256-r", communityId = communityId)).getOrThrow().id
+                communityId to roomId
+            }
         val (communityId, publicRoomId) = user1.custom
-        val user2 = attachSession(algo = com.storyteller_f.shared.model.AlgoType.DILITHIUM) {
-            joinCommunity(communityId).getOrThrow()
-            joinRoom(publicRoomId).getOrThrow()
-        }
+        val user2 =
+            attachSession(algo = com.storyteller_f.shared.model.AlgoType.DILITHIUM) {
+                joinCommunity(communityId).getOrThrow()
+                joinRoom(publicRoomId).getOrThrow()
+            }
         val receivedFrame1 = mutableListOf<RoomFrame>()
         val receivedFrame2 = mutableListOf<RoomFrame>()
 
@@ -505,13 +545,15 @@ class TopicTest {
     }
 
     @Test
-    fun `test P256 and Dilithium users in private room`() = test {
+    fun `test P256 and Dilithium users in private room`() =
+        test {
         val user2 = attachSession(algo = com.storyteller_f.shared.model.AlgoType.DILITHIUM) {}
-        val user1 = attachSession(algo = com.storyteller_f.shared.model.AlgoType.P256) {
-            val id = createRoom(NewRoom("p256-r-private", "p256-r-private")).getOrThrow().id
-            createTitle(NewTitle("join", TitleType.JOIN, user2.uid, id, ObjectType.ROOM, ""))
-            id
-        }
+        val user1 =
+            attachSession(algo = com.storyteller_f.shared.model.AlgoType.P256) {
+                val id = createRoom(NewRoom("p256-r-private", "p256-r-private")).getOrThrow().id
+                createTitle(NewTitle("join", TitleType.JOIN, user2.uid, id, ObjectType.ROOM, ""))
+                id
+            }
         val privateRoomId = user1.custom
 
         loginSession(user2) {
@@ -542,27 +584,29 @@ class TopicTest {
     }
 }
 
-private suspend fun getUploadDataFromStream(size: Long, tmpFile: File) = UploadData(
+private suspend fun getUploadDataFromStream(size: Long, tmpFile: File) =
+    UploadData(
     size,
     "avatar1.png",
     ContentType.defaultForFileExtension("png"),
     sha256(
         Buffer().apply {
             write(tmpFile.readBytes())
-        }.peek()
+        }.peek(),
     ),
 ) {
     tmpFile.inputStream().asInput()
 }
 
-suspend fun getUploadDataFromText(string: String, fileName: String = "hello.txt") = UploadData(
+suspend fun getUploadDataFromText(string: String, fileName: String = "hello.txt") =
+    UploadData(
     string.length.toLong(),
     fileName,
     ContentType.defaultForFileExtension("txt"),
     sha256(
         Buffer().apply {
             writeString(string)
-        }.peek()
+        }.peek(),
     ),
 ) {
     Buffer().apply {
@@ -570,9 +614,7 @@ suspend fun getUploadDataFromText(string: String, fileName: String = "hello.txt"
     }
 }
 
-suspend fun UploadData.calcSha256(): String {
-    return sha256(block())
-}
+suspend fun UploadData.calcSha256(): String = sha256(block())
 
 suspend fun UserSessionManager.upload(
     objectTuple: ObjectTuple,
@@ -582,7 +624,7 @@ suspend fun UserSessionManager.upload(
 
 suspend fun UserSessionManager.createTopicInRoomAndWait(
     receivedFrame: MutableList<RoomFrame>,
-    block: suspend DefaultClientWebSocketSession.() -> Unit
+    block: suspend DefaultClientWebSocketSession.() -> Unit,
 ) {
     val old = receivedFrame.size
     webSocketClient.useWebSocket(block).getOrThrow()

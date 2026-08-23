@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.pdf
 
 import com.storyteller_f.shared.model.UserInfo
@@ -22,7 +26,7 @@ sealed class SnapshotGeneration(open val path: File) {
     class SimpleGeneration(override val path: File) : SnapshotGeneration(path)
 }
 
-class PdfGenerationSpec(val created: LocalDateTime, val captured: LocalDateTime)
+data class PdfGenerationSpec(val created: LocalDateTime, val captured: LocalDateTime)
 
 interface PdfService {
     fun generateSignedSnapshot(
@@ -58,14 +62,16 @@ fun getMonoFont(): Font {
 
 fun collectPlainText(node: ASTNode, content: String): String {
     val sb = StringBuilder()
-    node.acceptChildren(object : Visitor {
-        override fun visitNode(node: ASTNode) {
-            if (node.type == MarkdownTokenTypes.TEXT) {
-                sb.append(node.getTextInNode(content))
-            } else {
-                node.acceptChildren(this)
+    node.acceptChildren(
+        object : Visitor {
+            override fun visitNode(node: ASTNode) {
+                if (node.type == MarkdownTokenTypes.TEXT) {
+                    sb.append(node.getTextInNode(content))
+                } else {
+                    node.acceptChildren(this)
+                }
             }
-        }
-    })
+        },
+    )
     return sb.toString().trim()
 }

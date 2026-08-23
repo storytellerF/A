@@ -1,3 +1,6 @@
+/*
+ * This is a private project. All rights reserved.
+ */
 
 plugins {
     alias(libs.plugins.kotlinJvm)

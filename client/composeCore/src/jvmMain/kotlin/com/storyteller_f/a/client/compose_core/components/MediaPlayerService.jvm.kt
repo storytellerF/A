@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.components
 
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -8,7 +12,7 @@ actual abstract class MediaPlayerService {
     actual abstract suspend fun start(
         remoteMediaItem: RemoteMediaItem,
         localMediaPlaySession: LocalMediaPlaySession,
-        playList: List<ConstPlayItem>
+        playList: List<ConstPlayItem>,
     )
 
     actual abstract val enablePip: Boolean

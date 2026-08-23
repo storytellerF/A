@@ -62,7 +62,7 @@ class UserDocumentInfoStorage(
                 }
             }
 
-            else -> throw Exception("unsupported")
+            else -> throw IllegalStateException("unsupported")
         }
     }
 
@@ -140,7 +140,7 @@ class CommunityDocumentInfoStorage(
                     }
             }
 
-            else -> throw Exception("unsupported")
+            else -> throw IllegalStateException("unsupported")
         }
     }
 
@@ -204,7 +204,7 @@ class TopicDocumentInfoStorage(
                     }
             }
 
-            else -> throw Exception("unsupported")
+            else -> throw IllegalStateException("unsupported")
         }
     }
 
@@ -277,7 +277,7 @@ class TitleDocumentInfoStorage(
                     }
             }
 
-            else -> throw Exception("unsupported")
+            else -> throw IllegalStateException("unsupported")
         }
     }
 
@@ -340,7 +340,7 @@ class RoomDocumentInfoStorage(
                 }
             }
 
-            else -> throw Exception("unsupported")
+            else -> throw IllegalStateException("unsupported")
         }
     }
 
@@ -438,7 +438,7 @@ class ReactionDocumentInfoStorage(val kotbaseDocumentSource: KotbaseDocumentSour
                     }
             }
 
-            else -> throw Exception("unsupported")
+            else -> throw IllegalStateException("unsupported")
         }
     }
 

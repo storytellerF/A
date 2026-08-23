@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.server
 
 import com.perraco.utils.SnowflakeFactory
@@ -7,6 +11,8 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import java.nio.file.Paths
 import kotlin.io.path.pathString
+import kotlin.test.assertNotEquals
+import kotlin.test.assertTrue
 
 class SnowflakeTest {
     @Test
@@ -14,14 +20,13 @@ class SnowflakeTest {
         runBlocking {
             SnowflakeFactory.setMachine(0)
             val nameService = buildNameService(MergedEnv(emptyList()))
-            println(nameService.parse(SnowflakeFactory.nextId()))
+            assertTrue(nameService.parse(SnowflakeFactory.nextId()).isNotBlank())
         }
     }
 
     @Test
     fun `test path`() {
         val get = Paths.get(".")
-        println(get.pathString)
-        println(get.toRealPath().pathString)
+        assertNotEquals(get.pathString, get.toRealPath().pathString)
     }
 }

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.components
 
 import androidx.compose.foundation.layout.Arrangement
@@ -32,16 +36,12 @@ class DialogSaveState {
 }
 
 @Composable
-fun rememberAlertDialogController(): CustomAlertDialogController {
-    return remember {
-        CustomAlertDialogController()
-    }
+fun rememberAlertDialogController(): CustomAlertDialogController =
+    remember {
+    CustomAlertDialogController()
 }
 
-class CustomAlertDialogController(
-    val state: MutableState<CustomAlertDialogState?> = mutableStateOf(null)
-) {
-
+class CustomAlertDialogController(val state: MutableState<CustomAlertDialogState?> = mutableStateOf(null)) {
     fun showMessage(title: String, message: String, enableCopy: Boolean = false) {
         state.value = CustomAlertDialogState(title, message, enableCopy = enableCopy)
     }
@@ -55,33 +55,25 @@ class CustomAlertDialogController(
     }
 
     fun showErrorMessage(e: Throwable) {
-        state.value = CustomAlertDialogState(e.message.toString(), e.stackTraceToString())
+        state.value = CustomAlertDialogState(e.message?.toString().orEmpty(), e.stackTraceToString())
     }
 }
 
-class CustomAlertDialogState(
+data class CustomAlertDialogState(
     val title: String?,
     val message: String,
     val positiveButton: String = "Yes",
-    val enableCopy: Boolean = false
+    val enableCopy: Boolean = false,
 )
 
 @Composable
-fun CustomAlertDialog(
-    controller: CustomAlertDialogController,
-    dismiss: () -> Unit,
-    onClickOk: () -> Unit
-) {
+fun CustomAlertDialog(controller: CustomAlertDialogController, dismiss: () -> Unit, onClickOk: () -> Unit) {
     val state by controller.state
     CustomAlertDialogInternal(state, dismiss, onClickOk)
 }
 
 @Composable
-fun CustomAlertDialogInternal(
-    dialogState: CustomAlertDialogState?,
-    dismiss: () -> Unit,
-    onClickOk: () -> Unit,
-) {
+fun CustomAlertDialogInternal(dialogState: CustomAlertDialogState?, dismiss: () -> Unit, onClickOk: () -> Unit) {
     if (dialogState == null) return
     AlertDialog({
         dismiss()
@@ -115,14 +107,12 @@ fun CustomAlertDialogInternal(
 }
 
 @Composable
-fun rememberCommonDialogController(): CommonDialogController {
-    return remember {
-        CommonDialogController()
-    }
+fun rememberCommonDialogController(): CommonDialogController =
+    remember {
+    CommonDialogController()
 }
 
 class CommonDialogController(val shown: MutableState<Boolean> = mutableStateOf(false)) {
-
     fun update(new: Boolean) {
         shown.value = new
     }
@@ -132,10 +122,11 @@ class CommonDialogController(val shown: MutableState<Boolean> = mutableStateOf(f
 fun DialogContainer(
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
     onDismissRequest: (() -> Unit)? = null,
-    block: @Composable ColumnScope.() -> Unit
+    block: @Composable ColumnScope.() -> Unit,
 ) {
     Surface(
-        modifier = Modifier.appiumSemantics(
+        modifier =
+        Modifier.appiumSemantics(
             description = "dialog",
             onClick = onDismissRequest,
         ),
@@ -144,7 +135,7 @@ fun DialogContainer(
         val scrollState = rememberScrollState()
         Column(
             modifier = Modifier.padding(20.dp).verticalScroll(scrollState),
-            verticalArrangement = verticalArrangement
+            verticalArrangement = verticalArrangement,
         ) {
             block()
         }

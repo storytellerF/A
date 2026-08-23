@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.shared.obj
 
 import com.storyteller_f.shared.model.TopicContent
@@ -15,7 +19,7 @@ sealed interface RoomFrame {
     @SerialName("message")
     data class Message(
         val newTopic: NewRoomTopic,
-        val encryptedAes: CustomImmutableMap<PrimaryKey, String> = persistentMapOf()
+        val encryptedAes: CustomImmutableMap<PrimaryKey, String> = persistentMapOf(),
     ) : RoomFrame
 
     @Serializable
@@ -40,11 +44,8 @@ sealed interface RoomFrame {
 
     @Serializable
     @SerialName("update-call-media-state")
-    data class UpdateCallMediaState(
-        val roomId: PrimaryKey,
-        val audioMuted: Boolean,
-        val videoMuted: Boolean,
-    ) : RoomFrame
+    data class UpdateCallMediaState(val roomId: PrimaryKey, val audioMuted: Boolean, val videoMuted: Boolean) :
+        RoomFrame
 
     @Serializable
     @SerialName("peer-media-state")
@@ -61,59 +62,33 @@ sealed interface RoomFrame {
 
     @Serializable
     @SerialName("send-offer")
-    data class SendOffer(
-        val offer: CustomOffer,
-        val roomId: PrimaryKey,
-        val targetUid: PrimaryKey
-    ) : RoomFrame
+    data class SendOffer(val offer: CustomOffer, val roomId: PrimaryKey, val targetUid: PrimaryKey) : RoomFrame
 
     @Serializable
     @SerialName("create-answer")
-    data class CreateAnswer(
-        val targetUid: PrimaryKey,
-        val offer: CustomOffer,
-        val roomId: PrimaryKey
-    ) : RoomFrame
+    data class CreateAnswer(val targetUid: PrimaryKey, val offer: CustomOffer, val roomId: PrimaryKey) : RoomFrame
 
     @Serializable
     @SerialName("send-answer")
-    data class SendAnswer(
-        val answer: CustomAnswer,
-        val roomId: PrimaryKey,
-        val targetUid: PrimaryKey
-    ) : RoomFrame
+    data class SendAnswer(val answer: CustomAnswer, val roomId: PrimaryKey, val targetUid: PrimaryKey) : RoomFrame
 
     @Serializable
     @SerialName("respond-answer")
-    data class RespondAnswer(
-        val answer: CustomAnswer,
-        val roomId: PrimaryKey,
-        val uid: PrimaryKey
-    ) : RoomFrame
+    data class RespondAnswer(val answer: CustomAnswer, val roomId: PrimaryKey, val uid: PrimaryKey) : RoomFrame
 
     @Serializable
     @SerialName("send-candidate")
-    data class SendCandidate(
-        val candidate: CustomCandidate,
-        val roomId: PrimaryKey,
-        val targetUid: PrimaryKey
-    ) : RoomFrame
+    data class SendCandidate(val candidate: CustomCandidate, val roomId: PrimaryKey, val targetUid: PrimaryKey) :
+        RoomFrame
 
     @Serializable
     @SerialName("receive-candidate")
-    data class ReceiveCandidate(
-        val candidate: CustomCandidate,
-        val roomId: PrimaryKey,
-        val uid: PrimaryKey
-    ) : RoomFrame
+    data class ReceiveCandidate(val candidate: CustomCandidate, val roomId: PrimaryKey, val uid: PrimaryKey) :
+        RoomFrame
 }
 
 @Serializable
-data class CustomCandidate(
-    val sdpMid: String,
-    val sdpMLineIndex: Int,
-    val candidate: String,
-)
+data class CustomCandidate(val sdpMid: String, val sdpMLineIndex: Int, val candidate: String)
 
 @Serializable
 data class CustomOffer(val sdp: String)
@@ -122,10 +97,6 @@ data class CustomOffer(val sdp: String)
 data class CustomAnswer(val sdp: String)
 
 @Serializable
-data class NewRoomTopic(
-    val parentType: ObjectType,
-    val parentId: PrimaryKey,
-    val content: TopicContent
-) {
+data class NewRoomTopic(val parentType: ObjectType, val parentId: PrimaryKey, val content: TopicContent) {
     val tuple = ObjectTuple(parentId, parentType)
 }

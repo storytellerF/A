@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.title
 
 import androidx.compose.foundation.background
@@ -15,7 +19,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.AccountBox
+import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.Check
@@ -136,7 +142,7 @@ internal fun TitleComposeSheet(vm: TitleComposeViewModel) {
         isSheetVisible,
         sheetState,
         supportedObjectTypes,
-        vm::clearShowSheetType
+        vm::clearShowSheetType,
     ) {
         when (vm.showSheetType.value) {
             TitleComposeSheetType.SCOPE -> vm.setTitleScope(it)
@@ -163,7 +169,7 @@ fun CommonComposePage(onCheck: () -> Unit, content: @Composable () -> Unit) {
         val direction = LocalLayoutDirection.current
         Box(
             Modifier.safeArea(paddingValues, direction).fillMaxWidth(),
-            contentAlignment = Alignment.TopCenter
+            contentAlignment = Alignment.TopCenter,
         ) {
             content()
         }
@@ -171,9 +177,7 @@ fun CommonComposePage(onCheck: () -> Unit, content: @Composable () -> Unit) {
 }
 
 @Composable
-fun TitleComposeInternalEdit(
-    vm: TitleComposeViewModel
-) {
+fun TitleComposeInternalEdit(vm: TitleComposeViewModel) {
     val name by vm.name.collectAsState()
     val titleType by vm.titleType.collectAsState()
     val titleScope by vm.titleScope.collectAsState()
@@ -183,7 +187,7 @@ fun TitleComposeInternalEdit(
     Column(
         modifier = Modifier.width(300.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         OutlinedTextField(name, vm::setName, label = {
             Text("name")
@@ -208,9 +212,10 @@ private fun ExpireTimeEditor(vm: TitleComposeViewModel) {
     var showExpireDialog by remember { mutableStateOf(false) }
     val expireShape = RoundedCornerShape(12.dp)
     Column(
-        modifier = Modifier.clip(expireShape)
+        modifier =
+        Modifier.clip(expireShape)
             .background(MaterialTheme.colorScheme.primaryContainer, expireShape)
-            .padding(10.dp)
+            .padding(10.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("Expire Time (UTC)", modifier = Modifier.weight(1f))
@@ -229,7 +234,7 @@ private fun ExpireTimeEditor(vm: TitleComposeViewModel) {
             onClear = {
                 vm.setExpiresAtText("")
                 showExpireDialog = false
-            }
+            },
         )
         Spacer(modifier = Modifier.height(8.dp))
         if (expiresAtText.isBlank()) {
@@ -249,18 +254,19 @@ private fun ExpireTimePickerDialog(
     init: String,
     dismiss: () -> Unit,
     onConfirm: (String) -> Unit,
-    onClear: () -> Unit
+    onClear: () -> Unit,
 ) {
     if (!show) {
         return
     }
-    val initialValue = remember(show, init) {
-        runCatching {
-            LocalDateTime.parse(init)
-        }.getOrElse {
-            now()
+    val initialValue =
+        remember(show, init) {
+            runCatching {
+                LocalDateTime.parse(init)
+            }.getOrElse {
+                now()
+            }
         }
-    }
     var year by remember(show, init) { mutableStateOf(initialValue.year.toString()) }
     var month by remember(show, init) { mutableStateOf(initialValue.month.number.toString()) }
     var day by remember(show, init) { mutableStateOf(initialValue.day.toString()) }
@@ -309,9 +315,9 @@ private fun ExpireTimePickerDialog(
                 onMinuteChange = { minute = it },
                 second = second,
                 onSecondChange = { second = it },
-                errorMessage = errorMessage
+                errorMessage = errorMessage,
             )
-        }
+        },
     )
 }
 
@@ -329,7 +335,7 @@ private fun ExpireTimeInputFields(
     onMinuteChange: (String) -> Unit,
     second: String,
     onSecondChange: (String) -> Unit,
-    errorMessage: String?
+    errorMessage: String?,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("Pick expiration date and time (UTC)")
@@ -355,7 +361,7 @@ private fun DateTimeNumberField(
     value: String,
     maxLength: Int,
     modifier: Modifier = Modifier,
-    onValueChange: (String) -> Unit
+    onValueChange: (String) -> Unit,
 ) {
     OutlinedTextField(
         value = value,
@@ -366,7 +372,7 @@ private fun DateTimeNumberField(
             Text(label)
         },
         modifier = modifier,
-        singleLine = true
+        singleLine = true,
     )
 }
 
@@ -376,7 +382,7 @@ private fun buildExpireTimeText(
     day: String,
     hour: String,
     minute: String,
-    second: String
+    second: String,
 ): String {
     val safeYear = year.padStart(4, '0')
     val safeMonth = month.padStart(2, '0')
@@ -394,11 +400,12 @@ private fun DescriptionEditor(vm: TitleComposeViewModel) {
     var showDescriptionDialog by remember { mutableStateOf(false) }
     val descriptionShape = RoundedCornerShape(12.dp)
     Column(
-        modifier = Modifier.clip(descriptionShape)
+        modifier =
+        Modifier.clip(descriptionShape)
             .background(MaterialTheme.colorScheme.primaryContainer, descriptionShape)
             .clickable {
             }
-            .padding(10.dp)
+            .padding(10.dp),
     ) {
         Row {
             Text("Description", modifier = Modifier.weight(1f))
@@ -421,16 +428,13 @@ private fun DescriptionEditor(vm: TitleComposeViewModel) {
 }
 
 @Composable
-private fun ReceiverEditor(
-    shape: RoundedCornerShape,
-    showReceiverSheet: () -> Unit,
-    receiver: PrimaryKey?
-) {
+private fun ReceiverEditor(shape: RoundedCornerShape, showReceiverSheet: () -> Unit, receiver: PrimaryKey?) {
     Row(
-        modifier = Modifier.height(78.dp).fillMaxWidth().clip(shape).clickable {
+        modifier =
+        Modifier.height(78.dp).fillMaxWidth().clip(shape).clickable {
             showReceiverSheet()
         }.background(MaterialTheme.colorScheme.primaryContainer, shape)
-            .padding(8.dp)
+            .padding(8.dp),
     ) {
         receiver.let {
             if (it != null) {
@@ -450,33 +454,39 @@ private fun TitleScopeEditor(
     showScopeSheet: () -> Unit,
     titleScope: ObjectTuple?,
     updateTitleScope: () -> Unit,
-    readOnly: Boolean = false
+    readOnly: Boolean = false,
 ) {
     Row(
-        modifier = Modifier
+        modifier =
+        Modifier
             .height(90.dp)
             .fillMaxWidth()
             .clip(shape)
             .then(if (readOnly) Modifier else Modifier.clickable { showScopeSheet() })
             .background(MaterialTheme.colorScheme.primaryContainer, shape)
-            .padding(8.dp)
+            .padding(8.dp),
     ) {
         if (titleScope != null) {
             when (titleScope.objectType) {
-                ObjectType.COMMUNITY -> CommunityRefCell(titleScope.objectId) {
-                    if (!readOnly) updateTitleScope()
-                }
+                ObjectType.COMMUNITY ->
+                    CommunityRefCell(titleScope.objectId) {
+                        if (!readOnly) updateTitleScope()
+                    }
 
-                ObjectType.ROOM -> RoomRefCell(titleScope.objectId) {
-                    if (!readOnly) updateTitleScope()
-                }
+                ObjectType.ROOM ->
+                    RoomRefCell(titleScope.objectId) {
+                        if (!readOnly) updateTitleScope()
+                    }
 
-                ObjectType.TOPIC -> TODO()
+                ObjectType.TOPIC -> Unit
+
                 ObjectType.USER -> UserRefCell(titleScope.objectId)
 
-                ObjectType.TITLE -> TODO()
-                ObjectType.FILE -> TODO()
-                ObjectType.PANEL_ACCOUNT -> TODO()
+                ObjectType.TITLE -> Unit
+
+                ObjectType.FILE -> Unit
+
+                ObjectType.PANEL_ACCOUNT -> Unit
             }
         } else {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -488,11 +498,7 @@ private fun TitleScopeEditor(
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-private fun TitleTypeSelector(
-    titleType: TitleType,
-    updateTitleType: (TitleType) -> Unit,
-    readOnly: Boolean = false
-) {
+private fun TitleTypeSelector(titleType: TitleType, updateTitleType: (TitleType) -> Unit, readOnly: Boolean = false) {
     var expanded by remember {
         mutableStateOf(false)
     }
@@ -516,7 +522,8 @@ private fun TitleTypeSelector(
                 titleType.name,
                 {
                 },
-                modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                modifier =
+                Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                     .fillMaxWidth(),
                 readOnly = true,
                 label = { Text("Title Type") },
@@ -543,12 +550,11 @@ private fun TitleTypeSelector(
     }
 }
 
-private suspend fun AppGlobalDialogController.createTitle(
-    newTitle: NewTitle,
-): Result<TitleInfo> {
-    return request { createTitle(newTitle) }.onSuccess { title ->
-        emitEvent(OnTitleCreated(title))
-    }
+private suspend fun AppGlobalDialogController.createTitle(newTitle: NewTitle): Result<TitleInfo> =
+    request {
+    createTitle(newTitle)
+}.onSuccess { title ->
+    emitEvent(OnTitleCreated(title))
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -558,7 +564,7 @@ fun ObjectPicker(
     sheetState: SheetState,
     supportObjectType: List<ObjectType>,
     hideSheet: () -> Unit,
-    onCheck: (ObjectTuple) -> Unit
+    onCheck: (ObjectTuple) -> Unit,
 ) {
     BaseSheet(showSheet, sheetState, hideSheet) {
         var input by remember {
@@ -591,7 +597,7 @@ private fun TypeSelector(
     currentType: ObjectType,
     setType: (ObjectType) -> Unit,
     input: String,
-    setInput: (String) -> Unit
+    setInput: (String) -> Unit,
 ) {
     var expanded by remember {
         mutableStateOf(false)
@@ -602,17 +608,18 @@ private fun TypeSelector(
     Row(
         modifier = Modifier.padding(horizontal = 20.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         val shape = RoundedCornerShape(10.dp)
         Row(
-            modifier = Modifier.background(MaterialTheme.colorScheme.primaryContainer, shape)
+            modifier =
+            Modifier.background(MaterialTheme.colorScheme.primaryContainer, shape)
                 .clip(shape)
                 .clickable {
                     expanded = true
                 }.padding(18.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Icon(
                 when (currentType) {
@@ -620,11 +627,11 @@ private fun TypeSelector(
                     ObjectType.ROOM -> Icons.AutoMirrored.Default.Chat
                     ObjectType.TOPIC -> Icons.Default.Topic
                     ObjectType.USER -> Icons.Default.AccountBox
-                    ObjectType.TITLE -> TODO()
-                    ObjectType.FILE -> TODO()
-                    ObjectType.PANEL_ACCOUNT -> TODO()
+                    ObjectType.TITLE -> Icons.Default.Badge
+                    ObjectType.FILE -> Icons.AutoMirrored.Default.InsertDriveFile
+                    ObjectType.PANEL_ACCOUNT -> Icons.Default.AdminPanelSettings
                 },
-                "icon"
+                "icon",
             )
             ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
         }
@@ -649,7 +656,7 @@ fun ObjectList(
     currentType: ObjectType?,
     onClickCommunity: (CommunityInfo) -> Unit,
     onClickRoom: (RoomInfo) -> Unit,
-    onClickUser: (UserInfo) -> Unit
+    onClickUser: (UserInfo) -> Unit,
 ) {
     if (input.isNotBlank() && currentType != null) {
         when (currentType) {
@@ -663,31 +670,29 @@ fun ObjectList(
                 RoomList(roomsViewModel, onClickRoom)
             }
 
-            ObjectType.TOPIC -> TODO()
+            ObjectType.TOPIC -> Unit
+
             ObjectType.USER -> {
                 val membersViewModel = createMemberSearchViewModel(input)
                 MemberList(membersViewModel, onClickUser)
             }
 
-            ObjectType.TITLE -> TODO()
-            ObjectType.FILE -> TODO()
-            ObjectType.PANEL_ACCOUNT -> TODO()
+            ObjectType.TITLE -> Unit
+
+            ObjectType.FILE -> Unit
+
+            ObjectType.PANEL_ACCOUNT -> Unit
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ComposeMenu(
-    showSheet: Boolean,
-    sheetState: SheetState,
-    hideSheet: () -> Unit,
-    onCheck: (ObjectType) -> Unit
-) {
+fun ComposeMenu(showSheet: Boolean, sheetState: SheetState, hideSheet: () -> Unit, onCheck: (ObjectType) -> Unit) {
     BaseSheet(showSheet, sheetState, hideSheet) {
         Column(
             modifier = Modifier.height(300.dp).padding(top = 20.dp).padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             ComposeMenuItem(Icons.Default.Diversity3, "create community") {
                 onCheck(ObjectType.COMMUNITY)
@@ -708,12 +713,13 @@ fun ComposeMenu(
 fun ComposeMenuItem(icon: ImageVector, title: String, onClick: () -> Unit) {
     val shape = RoundedCornerShape(12.dp)
     Row(
-        modifier = Modifier.fillMaxWidth()
+        modifier =
+        Modifier.fillMaxWidth()
             .background(MaterialTheme.colorScheme.primaryContainer, shape).clip(shape)
             .clickable {
                 onClick()
             }.padding(12.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Icon(icon, title)
         Text(title)

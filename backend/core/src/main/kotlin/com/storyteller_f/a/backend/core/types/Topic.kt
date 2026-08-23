@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.core.types
 
 import com.storyteller_f.shared.model.TopicContent
@@ -40,7 +44,8 @@ data class RawTopic(
     val subscriptionId: PrimaryKey? = null,
 )
 
-fun RawTopic.toTopicInfo(extensions: TopicInfo.Extension? = null) = TopicInfo(
+fun RawTopic.toTopicInfo(extensions: TopicInfo.Extension? = null) =
+    TopicInfo(
     id = topic.id,
     content = content,
     author = topic.author,

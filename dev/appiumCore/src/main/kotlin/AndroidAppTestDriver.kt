@@ -1,3 +1,9 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
+package com.storyteller_f.a.dev.appium
+
 import io.appium.java_client.AppiumBy
 import io.appium.java_client.android.AndroidDriver
 import kotlinx.coroutines.delay
@@ -9,24 +15,24 @@ import java.time.Duration
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
 
-class AndroidAppTestDriver(
-    private val driver: AndroidDriver,
-    private val runAdbCommand: (List<String>) -> String,
-) : AppTestDriver {
+class AndroidAppTestDriver(private val driver: AndroidDriver, private val runAdbCommand: (List<String>) -> String) :
+    AppTestDriver {
     suspend fun assertAsciidocPreviewOpened(appPackageName: String, expectedSource: String) {
         assertTrue(expectedSource.isNotBlank(), "AsciiDoc source must not be blank")
-        val expectedTitle = expectedSource.lineSequence()
-            .firstOrNull { it.startsWith("= ") }
-            ?.removePrefix("= ")
-            ?: error("AsciiDoc source must include a document title")
+        val expectedTitle =
+            expectedSource.lineSequence()
+                .firstOrNull { it.startsWith("= ") }
+                ?.removePrefix("= ")
+                ?: error("AsciiDoc source must include a document title")
         var resumedActivity = ""
         var previewPollCount = 0
         while (previewPollCount < 30) {
-            resumedActivity = runAdbCommand(
-                listOf("shell", "dumpsys", "activity", "activities"),
-            ).lineSequence()
-                .firstOrNull { "topResumedActivity=" in it }
-                .orEmpty()
+            resumedActivity =
+                runAdbCommand(
+                    listOf("shell", "dumpsys", "activity", "activities"),
+                ).lineSequence()
+                    .firstOrNull { "topResumedActivity=" in it }
+                    .orEmpty()
             if (resumedActivity.contains(appPackageName)) {
                 break
             }
@@ -84,8 +90,9 @@ class AndroidAppTestDriver(
 
     private fun assertElementVisible(selector: String) {
         try {
-            val element = WebDriverWait(driver, Duration.ofSeconds(UI_WAIT_SECONDS))
-                .until(ExpectedConditions.presenceOfElementLocated(AppiumBy.androidUIAutomator(selector)))
+            val element =
+                WebDriverWait(driver, Duration.ofSeconds(UI_WAIT_SECONDS))
+                    .until(ExpectedConditions.presenceOfElementLocated(AppiumBy.androidUIAutomator(selector)))
             assertTrue(element.isDisplayed)
         } catch (throwable: Throwable) {
             runCatching {

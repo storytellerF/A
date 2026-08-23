@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.topic
 
 import androidx.compose.foundation.clickable
@@ -35,12 +39,7 @@ import org.kodein.emoji.list
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EmojiPicker(
-    sheetState: SheetState,
-    showSheet: Boolean,
-    topic: TopicInfo,
-    hideSheet: () -> Unit,
-) {
+fun EmojiPicker(sheetState: SheetState, showSheet: Boolean, topic: TopicInfo, hideSheet: () -> Unit) {
     var query by remember {
         mutableStateOf("")
     }
@@ -68,37 +67,41 @@ private fun EmojiPickerInternal(
             suffix = {
                 Icon(Icons.Default.Clear, "clear reaction query")
             },
-            modifier = Modifier.align(Alignment.CenterHorizontally).fillMaxWidth()
+            modifier =
+            Modifier.align(Alignment.CenterHorizontally).fillMaxWidth()
                 .padding(horizontal = 20.dp),
             shape = RoundedCornerShape(10.dp),
-            colors = TextFieldDefaults.colors(
+            colors =
+            TextFieldDefaults.colors(
                 focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent
-            )
+                unfocusedIndicatorColor = Color.Transparent,
+            ),
         )
         Spacer(modifier = Modifier.height(10.dp))
         val emojiList by produceState(emptyList(), query) {
-            value = if (query.isEmpty()) {
-                Emoji.list()
-            } else {
-                Emoji.list().filter { emoji ->
-                    emoji.details.description.contains(query, true)
+            value =
+                if (query.isEmpty()) {
+                    Emoji.list()
+                } else {
+                    Emoji.list().filter { emoji ->
+                        emoji.details.description.contains(query, true)
+                    }
                 }
-            }
         }
         val emojiSize = 50.dp
         BoxWithConstraints(modifier = Modifier.align(Alignment.CenterHorizontally)) {
             val contentWidth = this.maxWidth - 40.dp
             val count = (contentWidth / emojiSize).toInt()
-            val style = if (emojiSize * count == contentWidth) {
-                GridCells.FixedSize(emojiSize)
-            } else {
-                GridCells.Fixed(count)
-            }
+            val style =
+                if (emojiSize * count == contentWidth) {
+                    GridCells.FixedSize(emojiSize)
+                } else {
+                    GridCells.Fixed(count)
+                }
             LazyVerticalGrid(
                 style,
                 contentPadding = PaddingValues(20.dp, 10.dp),
-                modifier = Modifier.wrapContentWidth().height(300.dp)
+                modifier = Modifier.wrapContentWidth().height(300.dp),
             ) {
                 items(emojiList, key = {
                     it.toString()
@@ -112,40 +115,41 @@ private fun EmojiPickerInternal(
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-private fun EmojiItem(
-    emojiSize: Dp,
-    topic: TopicInfo,
-    emoji: Emoji,
-    hideSheet: () -> Unit,
-) {
+private fun EmojiItem(emojiSize: Dp, topic: TopicInfo, emoji: Emoji, hideSheet: () -> Unit) {
     val globalTask = LocalGlobalTask.current
     val emojiText = emoji.details.string
-    Box(modifier = Modifier.size(emojiSize).clickable {
-        hideSheet()
-        globalTask.launch("${topic.id} $emojiText") {
-            use {
-                addReaction(topic, emojiText)
+    Box(
+        modifier =
+        Modifier.size(emojiSize).clickable {
+            hideSheet()
+            globalTask.launch("${topic.id} $emojiText") {
+                use {
+                    addReaction(topic, emojiText)
+                }
             }
-        }
-    }, contentAlignment = Alignment.Center) {
+        },
+        contentAlignment = Alignment.Center,
+    ) {
         Text(emojiText, fontSize = 25.sp)
     }
 }
 
-suspend fun NestedGlobalTask<GlobalTaskContext<SimpleUserSessionManager>>.addReaction(
+internal suspend fun NestedGlobalTask<GlobalTaskContext<SimpleUserSessionManager>>.addReaction(
     topic: TopicInfo,
     emojiText: String,
 ): Result<ReactionInfo> {
-    val existing = topic.extension?.reactions?.firstOrNull {
-        it.emoji == emojiText
-    }
-    val fakeInfo = existing?.copy(count = existing.count + 1) ?: ReactionInfo(
-        emojiText,
-        topic.id,
-        1,
-        true,
-        Long.MAX_VALUE
-    )
+    val existing =
+        topic.extension?.reactions?.firstOrNull {
+            it.emoji == emojiText
+        }
+    val fakeInfo =
+        existing?.copy(count = existing.count + 1) ?: ReactionInfo(
+            emojiText,
+            topic.id,
+            1,
+            true,
+            Long.MAX_VALUE,
+        )
     emitEvent(OnAddReaction(fakeInfo, topic))
     return request {
         addReaction(topic.id, emojiText)
@@ -156,7 +160,7 @@ suspend fun NestedGlobalTask<GlobalTaskContext<SimpleUserSessionManager>>.addRea
     }
 }
 
-suspend fun NestedGlobalTask<GlobalTaskContext<SimpleUserSessionManager>>.deleteReaction(
+internal suspend fun NestedGlobalTask<GlobalTaskContext<SimpleUserSessionManager>>.deleteReaction(
     topic: TopicInfo,
     emojiText: String,
     existing: ReactionInfo,

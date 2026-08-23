@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 @file:Suppress("UnstableApiUsage")
 
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
@@ -59,9 +63,10 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     sourceSets {
-        val headlessTest = create("headlessTest") {
-            dependsOn(commonTest.get())
-        }
+        val headlessTest =
+            create("headlessTest") {
+                dependsOn(commonTest.get())
+            }
         headlessTest.dependencies {
         }
         androidMain.dependencies {
@@ -105,12 +110,13 @@ kotlin {
             implementation(libs.javet.node.macos.x86.x4)
             implementation(libs.javet.node.windows.x86.x4)
         }
-        val jvmAndroidMain = create("jvmAndroidMain") {
-            dependsOn(commonMain.get())
-            dependencies {
-                compileOnly(libs.javet)
+        val jvmAndroidMain =
+            create("jvmAndroidMain") {
+                dependsOn(commonMain.get())
+                dependencies {
+                    compileOnly(libs.javet)
+                }
             }
-        }
         jvmMain.get().dependsOn(jvmAndroidMain)
         androidMain.get().dependsOn(jvmAndroidMain)
         jvmTest {

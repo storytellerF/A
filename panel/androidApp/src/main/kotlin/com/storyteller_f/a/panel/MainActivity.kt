@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.panel
 
 import android.content.ComponentName
@@ -29,24 +33,22 @@ class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         val sessionToken = SessionToken(this, ComponentName(this, PlaybackService::class.java))
-        val listener = object : MediaController.Listener {
-            override fun onAvailableSessionCommandsChanged(
-                controller: MediaController,
-                commands: SessionCommands
-            ) {
-                super.onAvailableSessionCommandsChanged(controller, commands)
-                Napier.d {
-                    "MediaController onAvailableSessionCommandsChanged"
+        val listener =
+            object : MediaController.Listener {
+                override fun onAvailableSessionCommandsChanged(controller: MediaController, commands: SessionCommands) {
+                    super.onAvailableSessionCommandsChanged(controller, commands)
+                    Napier.d {
+                        "MediaController onAvailableSessionCommandsChanged"
+                    }
                 }
-            }
 
-            override fun onDisconnected(controller: MediaController) {
-                super.onDisconnected(controller)
-                Napier.d {
-                    "MediaController onDisconnected"
+                override fun onDisconnected(controller: MediaController) {
+                    super.onDisconnected(controller)
+                    Napier.d {
+                        "MediaController onDisconnected"
+                    }
                 }
             }
-        }
         if (!isRunningOnRobolectric) {
             val future = MediaController.Builder(this, sessionToken).setListener(listener).buildAsync()
             controllerFuture = future
@@ -66,7 +68,7 @@ class MainActivity : ComponentActivity() {
             CompositionLocalProvider(
                 LocalPanelUiViewModel provides (application as PanelApplication).panelUiViewModel,
                 LocalMediaPlayListHandlerProvider provides DefaultMediaPlayListHandlerProvider,
-                LocalMediaPlayerService provides (application as PanelApplication).mediaPlayer
+                LocalMediaPlayerService provides (application as PanelApplication).mediaPlayer,
             ) {
                 App()
             }

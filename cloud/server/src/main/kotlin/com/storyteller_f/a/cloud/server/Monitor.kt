@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.server
 
 import io.ktor.server.application.*
@@ -20,15 +24,16 @@ fun Application.configureMonitor() {
         timers { call, exception ->
             tag("region", call.request.headers["regionId"] ?: "unspecified")
         }
-        meterBinders = listOf(
-            ClassLoaderMetrics(),
-            JvmMemoryMetrics(),
-            JvmGcMetrics(),
-            ProcessorMetrics(),
-            JvmThreadMetrics(),
-            FileDescriptorMetrics(),
-            UptimeMetrics()
-        )
+        meterBinders =
+            listOf(
+                ClassLoaderMetrics(),
+                JvmMemoryMetrics(),
+                JvmGcMetrics(),
+                ProcessorMetrics(),
+                JvmThreadMetrics(),
+                FileDescriptorMetrics(),
+                UptimeMetrics(),
+            )
         registry = appMicrometerRegistry
     }
     routing {

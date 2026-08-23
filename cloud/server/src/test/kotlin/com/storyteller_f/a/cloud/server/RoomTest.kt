@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.server
 
 import com.storyteller_f.a.api.CustomApi
@@ -46,11 +50,13 @@ import kotlin.time.Duration.Companion.seconds
 
 class RoomTest {
     @Test
-    fun `test get room`() = test {
-        val roomId = attachSession {
-            val id = createCommunityForTest().id
-            createPublicRoomForTest(id, "r1", "name1").id
-        }.custom
+    fun `test get room`() =
+        test {
+        val roomId =
+            attachSession {
+                val id = createCommunityForTest().id
+                createPublicRoomForTest(id, "r1", "name1").id
+            }.custom
         noneSession {
             assertEquals(1, getRoomInfo(roomId).getOrThrow().memberCount)
             getRoomInfoByAid("r1").getOrThrow()
@@ -58,16 +64,19 @@ class RoomTest {
     }
 
     @Test
-    fun `test joined private room count`() = test {
-        val firstTuple = attachSession {
-            createPrivateRoomForTest().id
-        }
-        val privateRoomId = firstTuple.custom
-        val secondTuple = attachSession {
-            assertFails {
-                joinRoom(privateRoomId).getOrThrow()
+    fun `test joined private room count`() =
+        test {
+        val firstTuple =
+            attachSession {
+                createPrivateRoomForTest().id
             }
-        }
+        val privateRoomId = firstTuple.custom
+        val secondTuple =
+            attachSession {
+                assertFails {
+                    joinRoom(privateRoomId).getOrThrow()
+                }
+            }
         loginSession(firstTuple) {
             createJoinRoomTitleForTest(privateRoomId, secondTuple.uid)
         }
@@ -78,13 +87,15 @@ class RoomTest {
     }
 
     @Test
-    fun `test join public room count`() = test {
-        val firstTuple = attachSession {
-            val communityId = createCommunityForTest().id
-            val publicRoom1Id = createPublicRoomForTest(communityId, "r1", "name1").id
-            val publicRoom2Id = createPublicRoomForTest(communityId, "r2", "name2").id
-            communityId to listOf(publicRoom1Id, publicRoom2Id)
-        }
+    fun `test join public room count`() =
+        test {
+        val firstTuple =
+            attachSession {
+                val communityId = createCommunityForTest().id
+                val publicRoom1Id = createPublicRoomForTest(communityId, "r1", "name1").id
+                val publicRoom2Id = createPublicRoomForTest(communityId, "r2", "name2").id
+                communityId to listOf(publicRoom1Id, publicRoom2Id)
+            }
         val (publicRoom1Id, publicRoom2Id) = firstTuple.custom.second
         val communityId = firstTuple.custom.first
         attachSession {
@@ -104,16 +115,19 @@ class RoomTest {
     }
 
     @Test
-    fun `test private room join`() = test {
-        val sessionOuterTuple = attachSession {
-            createPrivateRoomForTest().id
-        }
-        val privateRoomId = sessionOuterTuple.custom
-        val secondTuple = attachSession {
-            assertFails {
-                joinRoom(privateRoomId).getOrThrow()
+    fun `test private room join`() =
+        test {
+        val sessionOuterTuple =
+            attachSession {
+                createPrivateRoomForTest().id
             }
-        }
+        val privateRoomId = sessionOuterTuple.custom
+        val secondTuple =
+            attachSession {
+                assertFails {
+                    joinRoom(privateRoomId).getOrThrow()
+                }
+            }
         loginSession(sessionOuterTuple) {
             createJoinRoomTitleForTest(privateRoomId, secondTuple.uid)
         }
@@ -124,17 +138,20 @@ class RoomTest {
     }
 
     @Test
-    fun `test expired private room join title cannot join`() = test {
-        val user1 = attachSession {
-            createPrivateRoomForTest().id
-        }
+    fun `test expired private room join title cannot join`() =
+        test {
+        val user1 =
+            attachSession {
+                createPrivateRoomForTest().id
+            }
         val privateRoomId = user1.custom
 
-        val user2 = attachSession {
-            assertFails {
-                joinRoom(privateRoomId).getOrThrow()
+        val user2 =
+            attachSession {
+                assertFails {
+                    joinRoom(privateRoomId).getOrThrow()
+                }
             }
-        }
         loginSession(user1) {
             createTitle(
                 NewTitle(
@@ -144,8 +161,8 @@ class RoomTest {
                     privateRoomId,
                     ObjectType.ROOM,
                     "expired invite",
-                    LocalDateTime.parse("2000-01-01T00:00:00")
-                )
+                    LocalDateTime.parse("2000-01-01T00:00:00"),
+                ),
             ).getOrThrow()
         }
         loginSession(user2) {
@@ -156,12 +173,14 @@ class RoomTest {
     }
 
     @Test
-    fun `test public room join`() = test {
-        val sessionOuterTuple = attachSession {
-            val communityId = createCommunityForTest().id
-            val publicRoomId = createPublicRoomForTest(communityId, "r1", "name1").id
-            communityId to publicRoomId
-        }
+    fun `test public room join`() =
+        test {
+        val sessionOuterTuple =
+            attachSession {
+                val communityId = createCommunityForTest().id
+                val publicRoomId = createPublicRoomForTest(communityId, "r1", "name1").id
+                communityId to publicRoomId
+            }
         val communityId = sessionOuterTuple.custom.first
         val publicRoomId = sessionOuterTuple.custom.second
         attachSession {
@@ -176,7 +195,8 @@ class RoomTest {
     }
 
     @Test
-    fun `test update room`() = test {
+    fun `test update room`() =
+        test {
         attachSession {
             val id = createCommunityForTest().id
             val roomId = createPublicRoomForTest(id, "r1", "name1").id
@@ -186,13 +206,15 @@ class RoomTest {
     }
 
     @Test
-    fun `test rtc`() = test {
+    fun `test rtc`() =
+        test {
         val firstUser = attachSession()
-        val secondUser = attachSession {
-            val roomInfo = createRoom(NewRoom("test-rtc", "rtc")).getOrThrow()
-            createJoinRoomTitleForTest(roomInfo.id, firstUser.uid)
-            roomInfo
-        }
+        val secondUser =
+            attachSession {
+                val roomInfo = createRoom(NewRoom("test-rtc", "rtc")).getOrThrow()
+                createJoinRoomTitleForTest(roomInfo.id, firstUser.uid)
+                roomInfo
+            }
         loginSession(firstUser) {
             joinRoom(secondUser.custom.id).getOrThrow()
         }
@@ -224,16 +246,18 @@ class RoomTest {
     }
 
     @Test
-    fun `test rtc multi user`() = test {
+    fun `test rtc multi user`() =
+        test {
         rtcSession.clear()
         val firstUser = attachSession()
         val thirdUser = attachSession()
-        val secondUser = attachSession {
-            val roomInfo = createRoom(NewRoom("test-rtc-multi", "rtc-multi")).getOrThrow()
-            createJoinRoomTitleForTest(roomInfo.id, firstUser.uid)
-            createJoinRoomTitleForTest(roomInfo.id, thirdUser.uid)
-            roomInfo
-        }
+        val secondUser =
+            attachSession {
+                val roomInfo = createRoom(NewRoom("test-rtc-multi", "rtc-multi")).getOrThrow()
+                createJoinRoomTitleForTest(roomInfo.id, firstUser.uid)
+                createJoinRoomTitleForTest(roomInfo.id, thirdUser.uid)
+                roomInfo
+            }
         loginSession(firstUser) {
             joinRoom(secondUser.custom.id).getOrThrow()
         }
@@ -249,14 +273,16 @@ class RoomTest {
     }
 
     @Test
-    fun `test rtc mute state sync`() = test {
+    fun `test rtc mute state sync`() =
+        test {
         rtcSession.clear()
         val firstUser = attachSession()
-        val secondUser = attachSession {
-            val roomInfo = createRoom(NewRoom("test-rtc-mute", "rtc-mute")).getOrThrow()
-            createJoinRoomTitleForTest(roomInfo.id, firstUser.uid)
-            roomInfo
-        }
+        val secondUser =
+            attachSession {
+                val roomInfo = createRoom(NewRoom("test-rtc-mute", "rtc-mute")).getOrThrow()
+                createJoinRoomTitleForTest(roomInfo.id, firstUser.uid)
+                roomInfo
+            }
         loginSession(firstUser) {
             joinRoom(secondUser.custom.id).getOrThrow()
         }
@@ -326,7 +352,7 @@ suspend fun UserSessionManager.createPrivateRoomForTest(): RoomInfo = createRoom
 suspend fun UserSessionManager.createPublicRoomForTest(
     communityId: PrimaryKey,
     roomAid: String,
-    roomName: String
+    roomName: String,
 ): RoomInfo = createRoom(NewRoom(roomName, roomAid, communityId = communityId)).getOrThrow()
 
 suspend fun UserSessionManager.expectedRoomCountForJoinedRooms(
@@ -345,26 +371,24 @@ suspend fun UserSessionManager.expectedRoomCountForAllRooms(
     nextRoomId: String? = null,
     communityId: PrimaryKey? = null,
 ) {
-    val result = if (communityId != null) {
-        // 公开聊天室通过 communities/{id}/rooms/search 查询
-        searchCommunityRooms(communityId, word, joinStatusSearch, 10, nextRoomId)
-    } else {
-        // 搜索本人已加入的房间使用 users/joined-rooms/search
-        searchCurrentUserRooms(word, 10, nextRoomId)
-    }
+    val result =
+        if (communityId != null) {
+            // 公开聊天室通过 communities/{id}/rooms/search 查询
+            searchCommunityRooms(communityId, word, joinStatusSearch, 10, nextRoomId)
+        } else {
+            // 搜索本人已加入的房间使用 users/joined-rooms/search
+            searchCurrentUserRooms(word, 10, nextRoomId)
+        }
     assertListSize(expected, result)
 }
 
-suspend fun UserSessionManager.expectedRoomCountForJoinedRoomList(
-    expected: Int,
-    nextRoomId: String? = null,
-) {
+suspend fun UserSessionManager.expectedRoomCountForJoinedRoomList(expected: Int, nextRoomId: String? = null) {
     val result = getUserRooms(PaginationQuery(nextRoomId, size = 10))
     assertListSize(expected, result)
 }
 
 /**
- * 用于搜索社区中的所有房间（不带关键词）
+ * 用于搜索社区中的所有房间（不带关键词）.
  */
 suspend fun UserSessionManager.expectedRoomCountForCommunityRoomList(
     expected: Int,
@@ -373,31 +397,27 @@ suspend fun UserSessionManager.expectedRoomCountForCommunityRoomList(
     nextRoomId: String? = null,
 ) {
     // 公开聊天室通过 communities/{id}/rooms 查询
-    val result = getCommunityRooms(
-        communityId,
-        CustomApi.Communities.Id.Rooms.CommunityRoomQuery(nextRoomId, size = 10, joinStatus = joinStatusSearch)
-    )
+    val result =
+        getCommunityRooms(
+            communityId,
+            CustomApi.Communities.Id.Rooms.CommunityRoomQuery(nextRoomId, size = 10, joinStatus = joinStatusSearch),
+        )
     assertListSize(expected, result)
 }
 
 /**
- * 用于搜索当前用户的所有房间（不带关键词）
+ * 用于搜索当前用户的所有房间（不带关键词）.
  */
-suspend fun UserSessionManager.expectedRoomCountForAllRoomList(
-    expected: Int,
-    nextRoomId: String? = null,
-) {
+suspend fun UserSessionManager.expectedRoomCountForAllRoomList(expected: Int, nextRoomId: String? = null) {
     // 搜索本人已加入的房间使用 users/rooms
     val result = getUserRooms(PaginationQuery(nextRoomId, size = 10))
     assertListSize(expected, result)
 }
 
-suspend fun UserSessionManager.createJoinRoomTitleForTest(
-    privateRoomId: PrimaryKey,
-    uid: PrimaryKey
-): TitleInfo = createTitle(
-    NewTitle("invite", TitleType.JOIN, uid, privateRoomId, ObjectType.ROOM, "invite for test")
-).getOrThrow()
+suspend fun UserSessionManager.createJoinRoomTitleForTest(privateRoomId: PrimaryKey, uid: PrimaryKey): TitleInfo =
+    createTitle(
+        NewTitle("invite", TitleType.JOIN, uid, privateRoomId, ObjectType.ROOM, "invite for test"),
+    ).getOrThrow()
 
 suspend fun waitRTCAnswer(list: MutableList<RoomFrame>) {
     waitRTCAnswerCount(list, 1)
@@ -409,10 +429,7 @@ suspend fun waitRTCAnswerCount(list: MutableList<RoomFrame>, expectedCount: Int)
     }
 }
 
-suspend fun waitForRtcFrame(
-    list: MutableList<RoomFrame>,
-    predicate: (RoomFrame) -> Boolean,
-) {
+suspend fun waitForRtcFrame(list: MutableList<RoomFrame>, predicate: (RoomFrame) -> Boolean) {
     withTimeout(30.seconds) {
         while (!list.any(predicate)) {
             delay(200.milliseconds)

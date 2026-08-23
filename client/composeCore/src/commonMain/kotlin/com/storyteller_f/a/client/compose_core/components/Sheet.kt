@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.components
 
 import androidx.compose.foundation.layout.Column
@@ -21,7 +25,7 @@ fun BaseSheet(
     showSheet: Boolean,
     sheetState: SheetState,
     hideSheet: () -> Unit,
-    content: @Composable ColumnScope.() -> Unit
+    content: @Composable ColumnScope.() -> Unit,
 ) {
     if (showSheet) {
         ModalBottomSheet(

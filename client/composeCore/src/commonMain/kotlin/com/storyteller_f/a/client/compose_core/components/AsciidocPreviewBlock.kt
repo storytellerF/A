@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.components
 
 import androidx.compose.foundation.background
@@ -43,9 +47,10 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun AsciidocPreviewBlock(modal: MarkdownComponentModel) {
-    val source = remember(modal.node, modal.content) {
-        readCodeFence(modal.node, modal.content)
-    }
+    val source =
+        remember(modal.node, modal.content) {
+            readCodeFence(modal.node, modal.content)
+        }
     val scope = rememberCoroutineScope()
     var previewHtml by remember { mutableStateOf<String?>(null) }
     fun openPreview() {
@@ -55,10 +60,11 @@ fun AsciidocPreviewBlock(modal: MarkdownComponentModel) {
     }
     AsciidocPreviewCard(source, ::openPreview)
     previewHtml?.let { preview ->
-        val previewTitle = source.lineSequence()
-            .firstOrNull { it.startsWith("= ") }
-            ?.removePrefix("= ")
-            .orEmpty()
+        val previewTitle =
+            source.lineSequence()
+                .firstOrNull { it.startsWith("= ") }
+                ?.removePrefix("= ")
+                .orEmpty()
         AsciidocPreviewDialog(
             preview,
             previewTitle,
@@ -96,7 +102,8 @@ private fun AsciidocPreviewCard(source: String, openPreview: () -> Unit) {
             )
             IconButton(
                 onClick = openPreview,
-                modifier = Modifier.appiumSemantics(
+                modifier =
+                Modifier.appiumSemantics(
                     description = "open",
                     onClick = openPreview,
                 ),
@@ -119,7 +126,7 @@ private fun AsciidocPreviewCard(source: String, openPreview: () -> Unit) {
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
@@ -127,16 +134,13 @@ private fun AsciidocPreviewCard(source: String, openPreview: () -> Unit) {
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
-private fun AsciidocPreviewDialog(
-    html: String,
-    previewTitle: String,
-    onDismissRequest: () -> Unit,
-) {
+private fun AsciidocPreviewDialog(html: String, previewTitle: String, onDismissRequest: () -> Unit) {
     val state = rememberWebViewStateWithHTMLData(data = html, mimeType = "text/html")
     state.webSettings.isJavaScriptEnabled = true
     BasicAlertDialog(onDismissRequest = onDismissRequest) {
         Surface(
-            modifier = Modifier.fillMaxWidth().fillMaxSize().appiumSemantics(
+            modifier =
+            Modifier.fillMaxWidth().fillMaxSize().appiumSemantics(
                 description = "asciidoc-preview",
                 text = previewTitle,
             ),

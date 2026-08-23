@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.core.service
 
 import com.perraco.utils.SnowflakeFactory
@@ -28,6 +32,7 @@ import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.MemberStatus
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.cancellableRunCatching
 import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
@@ -40,64 +45,66 @@ suspend fun Backend.getUserTitles(
     type: TitleType? = null,
     scopeId: PrimaryKey? = null,
     titleStatus: TitleWorkStatus? = null,
-    fetch: PrimaryKeyFetch
+    fetch: PrimaryKeyFetch,
 ) = database.title.getTitlePaginationResult(
     fetch,
     uid,
     searchType,
     type,
     scopeId,
-    titleStatus
+    titleStatus,
 ).mapPagingResultIfNotNullNullable { list ->
     processTitleList(list, uid)
 }
 
-private suspend fun Backend.processTitleList(
-    list: List<RawTitle>,
-    uid: PrimaryKey?
-): Result<List<TitleInfo>?> {
+private suspend fun Backend.processTitleList(list: List<RawTitle>, uid: PrimaryKey?): Result<List<TitleInfo>?> {
     val titleIds = list.map { it.title.id }
-    val favoriteMap = if (uid != null && titleIds.isNotEmpty()) {
-        database.favorite.getHasFavorite(ObjectListFetch.IdListFetch(titleIds), uid)
-            .getOrNull()?.associateBy { it.objectId } ?: emptyMap()
-    } else {
-        emptyMap()
-    }
-    val subscriptionMap = if (uid != null && titleIds.isNotEmpty()) {
-        database.subscription.getHasSubscription(ObjectListFetch.IdListFetch(titleIds), uid)
-            .getOrNull()?.associateBy { it.objectId } ?: emptyMap()
-    } else {
-        emptyMap()
-    }
-    val listWithFavAndSub = list.map {
-        it.copy(
-            favoriteId = favoriteMap[it.title.id]?.id,
-            subscriptionId = subscriptionMap[it.title.id]?.id
-        )
-    }
+    val favoriteMap =
+        if (uid != null && titleIds.isNotEmpty()) {
+            database.favorite.getHasFavorite(ObjectListFetch.IdListFetch(titleIds), uid)
+                .getOrNull()?.associateBy { it.objectId }.orEmpty()
+        } else {
+            emptyMap()
+        }
+    val subscriptionMap =
+        if (uid != null && titleIds.isNotEmpty()) {
+            database.subscription.getHasSubscription(ObjectListFetch.IdListFetch(titleIds), uid)
+                .getOrNull()?.associateBy { it.objectId }.orEmpty()
+        } else {
+            emptyMap()
+        }
+    val listWithFavAndSub =
+        list.map { rawTitle ->
+            rawTitle.copy(
+                favoriteId = favoriteMap[rawTitle.title.id]?.id,
+                subscriptionId = subscriptionMap[rawTitle.title.id]?.id,
+            )
+        }
     val uidList = getUidList(list)
     val communityIdList = getCommunityIdList(list)
     val roomIdList = getRoomIdList(list)
 
     return getRelatedObject(uidList, communityIdList, roomIdList).mapResult {
-        val topicIdList = list.flatMap {
-            val title = it.title
-            buildList {
-                if (title.scopeType == ObjectType.TOPIC) {
-                    add(title.scopeId)
+        val topicIdList =
+            list.flatMap {
+                val title = it.title
+                buildList {
+                    if (title.scopeType == ObjectType.TOPIC) {
+                        add(title.scopeId)
+                    }
+                    if (title.descriptionTopicId != 0L) {
+                        add(title.descriptionTopicId)
+                    }
                 }
-                if (title.descriptionTopicId != 0L) {
-                    add(title.descriptionTopicId)
-                }
-            }
-        }.distinct()
+            }.distinct()
         getTopicByIds(topicIdList, uid).mapIfNotNull { topicList ->
             processTitleList(it.first.orEmpty(), it.third.orEmpty(), it.second.orEmpty(), listWithFavAndSub, topicList)
         }
     }
 }
 
-private fun getUidList(list: List<RawTitle>): List<PrimaryKey> = list.flatMap {
+private fun getUidList(list: List<RawTitle>): List<PrimaryKey> =
+    list.flatMap {
     val title = it.title
     val listOf = listOf(title.receiver, title.creator)
     if (title.scopeType == ObjectType.USER) {
@@ -107,7 +114,8 @@ private fun getUidList(list: List<RawTitle>): List<PrimaryKey> = list.flatMap {
     }
 }.distinct()
 
-private fun getCommunityIdList(list: List<RawTitle>): List<Long> = list.mapNotNull {
+private fun getCommunityIdList(list: List<RawTitle>): List<Long> =
+    list.mapNotNull {
     val title = it.title
     if (title.scopeType == ObjectType.COMMUNITY) {
         title.scopeId
@@ -116,7 +124,8 @@ private fun getCommunityIdList(list: List<RawTitle>): List<Long> = list.mapNotNu
     }
 }.distinct()
 
-private fun getRoomIdList(list: List<RawTitle>): List<Long> = list.mapNotNull {
+private fun getRoomIdList(list: List<RawTitle>): List<Long> =
+    list.mapNotNull {
     val title = it.title
     if (title.scopeType == ObjectType.ROOM) {
         title.scopeId
@@ -128,18 +137,18 @@ private fun getRoomIdList(list: List<RawTitle>): List<Long> = list.mapNotNull {
 private suspend fun Backend.getRelatedObject(
     uidList: List<PrimaryKey>,
     communityIdList: List<PrimaryKey>,
-    roomIdList: List<PrimaryKey>
-): Result<Triple<List<UserInfo>?, List<RoomInfo>?, List<CommunityInfo>?>> {
-    return runCatching {
-        val r1 = getUserInfoList(ObjectListFetch.IdListFetch(uidList)).getOrThrow()
-        val r2 = getRoomInfoList(ObjectListFetch.IdListFetch(roomIdList)).getOrThrow()
-        val r3 = database.community.getRawCommunities(
-            ObjectListFetch.IdListFetch(communityIdList)
+    roomIdList: List<PrimaryKey>,
+): Result<Triple<List<UserInfo>?, List<RoomInfo>?, List<CommunityInfo>?>> =
+    cancellableRunCatching {
+    val r1 = getUserInfoList(ObjectListFetch.IdListFetch(uidList)).getOrThrow()
+    val r2 = getRoomInfoList(ObjectListFetch.IdListFetch(roomIdList)).getOrThrow()
+    val r3 =
+        database.community.getRawCommunities(
+            ObjectListFetch.IdListFetch(communityIdList),
         ).mapResult {
             processRawCommunityToCommunityInfo(it)
         }.getOrThrow()
-        Triple(r1, r2, r3)
-    }
+    Triple(r1, r2, r3)
 }
 
 private fun processTitleList(
@@ -154,36 +163,37 @@ private fun processTitleList(
     val roomMap = roomList.associateBy { it.id }
     val topicMap = topicList.associateBy { it.id }
     val currentTime = now()
-    return list.map {
-        val title = it.title
-        val extension = TitleInfo.Extension(
-            userMap[title.creator]!!,
-            userMap[title.receiver]!!,
-            topicMap[title.descriptionTopicId]!!,
-            when (title.scopeType) {
-                ObjectType.COMMUNITY -> communityMap[title.scopeId]
-                else -> null
-            },
-            when (title.scopeType) {
-                ObjectType.ROOM -> roomMap[title.scopeId]
-                else -> null
-            },
-            when (title.scopeType) {
-                ObjectType.USER -> userMap[title.scopeId]
-                else -> null
-            },
-            when (title.scopeType) {
-                ObjectType.TOPIC -> topicMap[title.scopeId]
-                else -> null
-            }
-        )
-        title.toTitleInfo(extension, it.favoriteId, it.subscriptionId, currentTime)
+    return list.map { rawTitle ->
+        val title = rawTitle.title
+        val extension =
+            TitleInfo.Extension(
+                userMap.getValue(title.creator),
+                userMap.getValue(title.receiver),
+                topicMap.getValue(title.descriptionTopicId),
+                when (title.scopeType) {
+                    ObjectType.COMMUNITY -> communityMap[title.scopeId]
+                    else -> null
+                },
+                when (title.scopeType) {
+                    ObjectType.ROOM -> roomMap[title.scopeId]
+                    else -> null
+                },
+                when (title.scopeType) {
+                    ObjectType.USER -> userMap[title.scopeId]
+                    else -> null
+                },
+                when (title.scopeType) {
+                    ObjectType.TOPIC -> topicMap[title.scopeId]
+                    else -> null
+                },
+            )
+        title.toTitleInfo(extension, rawTitle.favoriteId, rawTitle.subscriptionId, currentTime)
     }
 }
 
 suspend fun Backend.getAllTitles(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<TitleInfo>> =
     database.title.getAllRawTitles(primaryKeyFetch).mapPagingResultNotNull { list ->
-        processTitleList(list, null).map { it ?: emptyList() }
+        processTitleList(list, null).map { it.orEmpty() }
     }
 
 suspend fun Backend.getTitleInfo(id: PrimaryKey): Result<TitleInfo?> =
@@ -191,35 +201,34 @@ suspend fun Backend.getTitleInfo(id: PrimaryKey): Result<TitleInfo?> =
         processTitleList(listOf(raw), null).map { it?.firstOrNull() }
     }
 
-suspend fun Backend.createTitle(
-    newTitle: NewTitle,
-    uid: PrimaryKey
-) = checkRootAdminPermission(newTitle.scopeType, newTitle.scopeId, uid).mapResultIfNotNull {
-    val title = toTitle(newTitle, uid)
-    val topic = Topic(
-        title.descriptionTopicId,
-        now(),
-        uid,
-        title.id,
-        ObjectType.TITLE,
-        title.id,
-        ObjectType.TITLE,
-        newTitle.description.encodeToByteArray(),
-        isEncrypted = false,
-        level = 1,
-        isPin = false,
-        lastModifiedTime = null
-    )
-    database.topic.createTitle(title, topic).onSuccess {
-        // 如果发送的title 类型是JOIN，插入一条Member 记录
-        inviteMemberIfNeed(title)
-    }.mapResult {
-        addUserLog(uid, UserLogType.CREATE, ObjectTuple(title.id, ObjectType.TITLE))
-        processTitleList(listOf(RawTitle(title)), uid).mapIfNotNull {
-            it.first()
+suspend fun Backend.createTitle(newTitle: NewTitle, uid: PrimaryKey) =
+    checkRootAdminPermission(newTitle.scopeType, newTitle.scopeId, uid).mapResultIfNotNull {
+        val title = toTitle(newTitle, uid)
+        val topic =
+            Topic(
+                title.descriptionTopicId,
+                now(),
+                uid,
+                title.id,
+                ObjectType.TITLE,
+                title.id,
+                ObjectType.TITLE,
+                newTitle.description.encodeToByteArray(),
+                isEncrypted = false,
+                level = 1,
+                isPin = false,
+                lastModifiedTime = null,
+            )
+        database.topic.createTitle(title, topic).onSuccess {
+            // 如果发送的title 类型是JOIN，插入一条Member 记录
+            inviteMemberIfNeed(title)
+        }.mapResult {
+            addUserLog(uid, UserLogType.CREATE, ObjectTuple(title.id, ObjectType.TITLE))
+            processTitleList(listOf(RawTitle(title)), uid).mapIfNotNull {
+                it.first()
+            }
         }
     }
-}
 
 private suspend fun Backend.inviteMemberIfNeed(title: Title) {
     if (title.type == TitleType.JOIN && !title.isExpired()) {
@@ -234,8 +243,8 @@ private suspend fun Backend.inviteMemberIfNeed(title: Title) {
                 invitedTime,
                 MemberStatus.INVITED,
                 null,
-                invitedTime
-            )
+                invitedTime,
+            ),
         ).onFailure {
             Napier.e(it) {
                 "create join title member failed $it"
@@ -244,10 +253,7 @@ private suspend fun Backend.inviteMemberIfNeed(title: Title) {
     }
 }
 
-private suspend fun toTitle(
-    newTitle: NewTitle,
-    id: PrimaryKey,
-): Title {
+private suspend fun toTitle(newTitle: NewTitle, id: PrimaryKey): Title {
     val titleId = SnowflakeFactory.nextId()
     val descriptionTopicId = SnowflakeFactory.nextId()
     return Title(
@@ -261,22 +267,20 @@ private suspend fun toTitle(
         newTitle.scopeType,
         TitleWorkStatus.OK,
         descriptionTopicId,
-        newTitle.expiresAt
+        newTitle.expiresAt,
     )
 }
 
-val titleMap = mutableMapOf(
-    ObjectType.COMMUNITY to listOf(TitleType.REGULAR, TitleType.JOIN),
-    ObjectType.ROOM to listOf(TitleType.REGULAR, TitleType.JOIN),
-    ObjectType.USER to listOf(TitleType.REGULAR),
-    ObjectType.TOPIC to listOf(TitleType.REGULAR)
-)
+/** Title types supported for each object scope. */
+val titleMap: MutableMap<ObjectType, List<TitleType>> =
+    mutableMapOf(
+        ObjectType.COMMUNITY to listOf(TitleType.REGULAR, TitleType.JOIN),
+        ObjectType.ROOM to listOf(TitleType.REGULAR, TitleType.JOIN),
+        ObjectType.USER to listOf(TitleType.REGULAR),
+        ObjectType.TOPIC to listOf(TitleType.REGULAR),
+    )
 
-suspend fun createTitle(
-    title: NewTitle,
-    backend: Backend,
-    uid: PrimaryKey
-): Result<TitleInfo?> {
+suspend fun createTitle(title: NewTitle, backend: Backend, uid: PrimaryKey): Result<TitleInfo?> {
     val supportType = titleMap[title.scopeType] ?: return Result.success(null)
     if (!supportType.contains(title.type)) {
         return Result.failure(ForbiddenException("unsupported title type ${title.type} in ${title.scopeType}"))

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.components
 
 import androidx.compose.foundation.background
@@ -25,11 +29,8 @@ interface PlayItem {
 }
 
 @Serializable
-data class ConstPlayItem(
-    val url: String,
-    override val icon: String? = null,
-    override val title: String? = null
-) : PlayItem {
+data class ConstPlayItem(val url: String, override val icon: String? = null, override val title: String? = null) :
+    PlayItem {
     override val id: String
         get() = url
 }
@@ -58,18 +59,20 @@ data class MediaPlaySession(
     val uuidCount get() = uuids.size
 }
 
-val LocalMediaPlayerService = staticCompositionLocalOf<MediaPlayerService> {
-    error("LocalMediaPlayerComponent not provided")
-}
+val LocalMediaPlayerService =
+    staticCompositionLocalOf<MediaPlayerService> {
+        error("LocalMediaPlayerComponent not provided")
+    }
 
 interface MediaPlayListHandlerProvider {
     @Composable
     fun playListHandler(remoteMediaItem: RemoteMediaItem): LoadingHandler<List<ConstPlayItem>>
 }
 
-val LocalMediaPlayListHandlerProvider = staticCompositionLocalOf<MediaPlayListHandlerProvider> {
-    error("LocalMediaPlayListHandlerProvider must be provided")
-}
+val LocalMediaPlayListHandlerProvider =
+    staticCompositionLocalOf<MediaPlayListHandlerProvider> {
+        error("LocalMediaPlayListHandlerProvider must be provided")
+    }
 
 expect abstract class MediaPlayerService {
     abstract val enablePip: Boolean
@@ -79,7 +82,7 @@ expect abstract class MediaPlayerService {
     abstract suspend fun start(
         remoteMediaItem: RemoteMediaItem,
         localMediaPlaySession: LocalMediaPlaySession,
-        playList: List<ConstPlayItem>
+        playList: List<ConstPlayItem>,
     )
 }
 
@@ -87,11 +90,11 @@ expect abstract class MediaPlayerService {
 fun MediaObjectBlock(maxHeight: Dp = 200.dp, block: @Composable ColumnScope.() -> Unit) {
     val shape = RoundedCornerShape(20.dp)
     Column(
-        modifier = Modifier
+        modifier =
+        Modifier
             .heightIn(max = maxHeight)
             .background(MaterialTheme.colorScheme.surfaceContainer, shape)
-            .clip(shape)
-
+            .clip(shape),
     ) {
         block()
     }

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.components
 
 import androidx.compose.foundation.layout.Column
@@ -51,13 +55,10 @@ fun ExceptionView(throwable: Throwable, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun ExceptionCell(
-    throwable: Throwable,
-    extraRefresh: () -> Unit,
-) {
+fun ExceptionCell(throwable: Throwable, extraRefresh: () -> Unit) {
     Column(
         modifier = Modifier.fillMaxWidth().padding(20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         ExceptionView(throwable)
         Button({

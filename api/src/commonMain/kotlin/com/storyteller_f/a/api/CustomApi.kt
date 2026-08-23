@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.api
 
 import com.storyteller_f.endpoint4k.common.MutationMethodType
@@ -50,23 +54,20 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class ReactionInfoListResponse(
     override val data: CustomImmutableList<ReactionInfo>,
-    override val pagination: Pagination<String>? = null
-) :
-    ListResponse<ReactionInfo>
+    override val pagination: Pagination<String>? = null,
+) : ListResponse<ReactionInfo>
 
 @Serializable
 data class UserPubKeyInfoListResponse(
     override val data: CustomImmutableList<UserPubKeyInfo>,
-    override val pagination: Pagination<String>? = null
-) :
-    ListResponse<UserPubKeyInfo>
+    override val pagination: Pagination<String>? = null,
+) : ListResponse<UserPubKeyInfo>
 
 @Serializable
 data class ChildAccountInfoListResponse(
     override val data: CustomImmutableList<ChildAccountInfo>,
-    override val pagination: Pagination<String>? = null
-) :
-    ListResponse<ChildAccountInfo>
+    override val pagination: Pagination<String>? = null,
+) : ListResponse<ChildAccountInfo>
 
 const val DEFAULT_PAGE_SIZE = 10
 const val MAX_PAGE_SIZE = 100
@@ -75,12 +76,13 @@ object CustomApi {
     object Topics {
         object Aid {
             @Serializable
-            class TopicAidQuery(val aid: String, val fillHasCommented: Boolean? = null)
+            data class TopicAidQuery(val aid: String, val fillHasCommented: Boolean? = null)
 
-            val get = safeEndpointWithQueryBuilder("topics/aid") {
-                resp(TopicInfo::class)
-                query(TopicAidQuery::class)
-            }
+            val get =
+                safeEndpointWithQueryBuilder("topics/aid") {
+                    resp(TopicInfo::class)
+                    query(TopicAidQuery::class)
+                }
         }
 
         @Serializable
@@ -91,10 +93,11 @@ object CustomApi {
             override val prePageToken: String? = null,
         ) : PageableQuery
 
-        val recommend = safeEndpointWithQueryBuilder("topics/recommend") {
-            resp(TopicInfoListResponse::class)
-            query(RecommendQuery::class)
-        }
+        val recommend =
+            safeEndpointWithQueryBuilder("topics/recommend") {
+                resp(TopicInfoListResponse::class)
+                query(RecommendQuery::class)
+            }
 
         // 用户主题搜索端点
         object Users {
@@ -105,7 +108,7 @@ object CustomApi {
                     override val nextPageToken: String? = null,
                     override val prePageToken: String? = null,
                     override val size: Int = DEFAULT_PAGE_SIZE,
-                    val fillHasCommented: Boolean? = null
+                    val fillHasCommented: Boolean? = null,
                 ) : PageableQuery
 
                 val search =
@@ -126,7 +129,7 @@ object CustomApi {
                     override val nextPageToken: String? = null,
                     override val prePageToken: String? = null,
                     override val size: Int = DEFAULT_PAGE_SIZE,
-                    val fillHasCommented: Boolean? = null
+                    val fillHasCommented: Boolean? = null,
                 ) : PageableQuery
 
                 val search =
@@ -147,7 +150,7 @@ object CustomApi {
                     override val nextPageToken: String? = null,
                     override val prePageToken: String? = null,
                     override val size: Int = DEFAULT_PAGE_SIZE,
-                    val fillHasCommented: Boolean? = null
+                    val fillHasCommented: Boolean? = null,
                 ) : PageableQuery
 
                 val search =
@@ -161,13 +164,14 @@ object CustomApi {
 
         object Id {
             @Serializable
-            class TopicIdQuery(val fillHasCommented: Boolean? = null)
+            data class TopicIdQuery(val fillHasCommented: Boolean? = null)
 
-            val get = safeEndpointWithQueryAndPathBuilder("topics/{id}") {
-                resp(TopicInfo::class)
-                query(TopicIdQuery::class)
-                path(CommonPath::class)
-            }
+            val get =
+                safeEndpointWithQueryAndPathBuilder("topics/{id}") {
+                    resp(TopicInfo::class)
+                    query(TopicIdQuery::class)
+                    path(CommonPath::class)
+                }
 
             object Topics {
                 val get =
@@ -193,11 +197,14 @@ object CustomApi {
                         query(ReactionQuery::class)
                         path(CommonPath::class)
                     }
-                val add = mutationEndpointWithPathBuilder("topics/{id}/reactions") {
-                    resp(ReactionInfo::class)
-                    body(NewReaction::class)
-                    path(CommonPath::class)
-                }
+                val add =
+                    mutationEndpointWithPathBuilder("topics/{id}/reactions") {
+                        resp(ReactionInfo::class)
+                        body(NewReaction::class)
+                        path(CommonPath::class)
+                    }
+
+                /** Deletes the resource association represented by this route. */
                 val delete =
                     mutationEndpointWithPathBuilder("topics/{id}/reactions", methodType = MutationMethodType.DELETE) {
                         resp(ReactionInfo::class)
@@ -207,65 +214,77 @@ object CustomApi {
             }
 
             object Favorite {
-                val add = mutationEndpointWithPathBuilder("topics/{id}/favorite") {
-                    resp(Unit::class)
-                    body(Unit::class)
-                    path(CommonPath::class)
-                }
-                val delete = mutationEndpointWithPathBuilder(
-                    "topics/{id}/favorite",
-                    methodType = MutationMethodType.DELETE
-                ) {
-                    resp(Unit::class)
-                    body(Unit::class)
-                    path(CommonPath::class)
-                }
+                val add =
+                    mutationEndpointWithPathBuilder("topics/{id}/favorite") {
+                        resp(Unit::class)
+                        body(Unit::class)
+                        path(CommonPath::class)
+                    }
+
+                /** Deletes the resource association represented by this route. */
+                val delete =
+                    mutationEndpointWithPathBuilder(
+                        "topics/{id}/favorite",
+                        methodType = MutationMethodType.DELETE,
+                    ) {
+                        resp(Unit::class)
+                        body(Unit::class)
+                        path(CommonPath::class)
+                    }
             }
 
             object Subscription {
-                val add = mutationEndpointWithPathBuilder("topics/{id}/subscription") {
-                    resp(Unit::class)
-                    body(Unit::class)
-                    path(CommonPath::class)
-                }
-                val delete = mutationEndpointWithPathBuilder(
-                    "topics/{id}/subscription",
-                    methodType = MutationMethodType.DELETE
-                ) {
-                    resp(Unit::class)
-                    body(Unit::class)
-                    path(CommonPath::class)
-                }
+                val add =
+                    mutationEndpointWithPathBuilder("topics/{id}/subscription") {
+                        resp(Unit::class)
+                        body(Unit::class)
+                        path(CommonPath::class)
+                    }
+
+                /** Deletes the resource association represented by this route. */
+                val delete =
+                    mutationEndpointWithPathBuilder(
+                        "topics/{id}/subscription",
+                        methodType = MutationMethodType.DELETE,
+                    ) {
+                        resp(Unit::class)
+                        body(Unit::class)
+                        path(CommonPath::class)
+                    }
             }
 
-            val pin = mutationEndpointWithPathBuilder("topics/{id}/pin") {
-                resp(TopicInfo::class)
-                body(Unit::class)
-                path(CommonPath::class)
-            }
+            val pin =
+                mutationEndpointWithPathBuilder("topics/{id}/pin") {
+                    resp(TopicInfo::class)
+                    body(Unit::class)
+                    path(CommonPath::class)
+                }
             val unpin =
                 mutationEndpointWithPathBuilder("topics/{id}/pin", methodType = MutationMethodType.DELETE) {
                     resp(TopicInfo::class)
                     body(Unit::class)
                     path(CommonPath::class)
                 }
-            val createSnapshot = mutationEndpointWithPathBuilder("topics/{id}/create-snapshot") {
-                resp(FileInfo::class)
-                body(Unit::class)
-                path(CommonPath::class)
-            }
+            val createSnapshot =
+                mutationEndpointWithPathBuilder("topics/{id}/create-snapshot") {
+                    resp(FileInfo::class)
+                    body(Unit::class)
+                    path(CommonPath::class)
+                }
         }
 
-        val add = mutationEndpointBuilder("topics") {
-            resp(TopicInfo::class)
-            body(NewTopic::class)
-        }
+        val add =
+            mutationEndpointBuilder("topics") {
+                resp(TopicInfo::class)
+                body(NewTopic::class)
+            }
     }
 
     object Root {
-        val get = safeEndpointBuilder("/") {
-            resp(String::class)
-        }
+        val get =
+            safeEndpointBuilder("/") {
+                resp(String::class)
+            }
     }
 
     object Communities {
@@ -280,30 +299,33 @@ object CustomApi {
             override val prePageToken: String? = null,
         ) : PageableQuery
 
-        val search = safeEndpointWithQueryBuilder("communities/search") {
-            resp(CommunityInfoListResponse::class)
-            query(CommunitySearchQuery::class)
-        }
+        val search =
+            safeEndpointWithQueryBuilder("communities/search") {
+                resp(CommunityInfoListResponse::class)
+                query(CommunitySearchQuery::class)
+            }
 
         object Aid {
             @Serializable
-            class CommunityAidQuery(val aid: String, val fillJoinInfo: Boolean? = null)
+            data class CommunityAidQuery(val aid: String, val fillJoinInfo: Boolean? = null)
 
-            val get = safeEndpointWithQueryBuilder("communities/aid") {
-                resp(CommunityInfo::class)
-                query(CommunityAidQuery::class)
-            }
+            val get =
+                safeEndpointWithQueryBuilder("communities/aid") {
+                    resp(CommunityInfo::class)
+                    query(CommunityAidQuery::class)
+                }
         }
 
         object Id {
             @Serializable
-            class CommunityIdQuery(val fillJoinInfo: Boolean = false)
+            data class CommunityIdQuery(val fillJoinInfo: Boolean = false)
 
-            val get = safeEndpointWithQueryAndPathBuilder("communities/{id}") {
-                resp(CommunityInfo::class)
-                query(CommunityIdQuery::class)
-                path(CommonPath::class)
-            }
+            val get =
+                safeEndpointWithQueryAndPathBuilder("communities/{id}") {
+                    resp(CommunityInfo::class)
+                    query(CommunityIdQuery::class)
+                    path(CommonPath::class)
+                }
 
             object Members {
                 val get =
@@ -318,15 +340,18 @@ object CustomApi {
                         query(SearchQuery::class)
                         path(CommonPath::class)
                     }
-                val join = mutationEndpointWithPathBuilder("communities/{id}/members") {
-                    resp(CommunityInfo::class)
-                    body(Unit::class)
-                    path(CommonPath::class)
-                }
+                val join =
+                    mutationEndpointWithPathBuilder("communities/{id}/members") {
+                        resp(CommunityInfo::class)
+                        body(Unit::class)
+                        path(CommonPath::class)
+                    }
+
+                /** Leaves the container represented by this route. */
                 val leave =
                     mutationEndpointWithPathBuilder(
                         "communities/{id}/members",
-                        methodType = MutationMethodType.DELETE
+                        methodType = MutationMethodType.DELETE,
                     ) {
                         resp(CommunityInfo::class)
                         body(Unit::class)
@@ -365,7 +390,7 @@ object CustomApi {
                     override val nextPageToken: String? = null,
                     override val prePageToken: String? = null,
                     override val size: Int = DEFAULT_PAGE_SIZE,
-                    val joinStatus: JoinStatusSearch? = null
+                    val joinStatus: JoinStatusSearch? = null,
                 ) : PageableQuery
 
                 @Serializable
@@ -392,61 +417,71 @@ object CustomApi {
             }
 
             object Favorite {
-                val add = mutationEndpointWithPathBuilder("communities/{id}/favorite") {
-                    resp(Unit::class)
-                    body(Unit::class)
-                    path(CommonPath::class)
-                }
-                val delete = mutationEndpointWithPathBuilder(
-                    "communities/{id}/favorite",
-                    methodType = MutationMethodType.DELETE
-                ) {
-                    resp(Unit::class)
-                    body(Unit::class)
-                    path(CommonPath::class)
-                }
+                val add =
+                    mutationEndpointWithPathBuilder("communities/{id}/favorite") {
+                        resp(Unit::class)
+                        body(Unit::class)
+                        path(CommonPath::class)
+                    }
+
+                /** Deletes the resource association represented by this route. */
+                val delete =
+                    mutationEndpointWithPathBuilder(
+                        "communities/{id}/favorite",
+                        methodType = MutationMethodType.DELETE,
+                    ) {
+                        resp(Unit::class)
+                        body(Unit::class)
+                        path(CommonPath::class)
+                    }
             }
 
             object Subscription {
-                val add = mutationEndpointWithPathBuilder("communities/{id}/subscription") {
-                    resp(Unit::class)
-                    body(Unit::class)
-                    path(CommonPath::class)
-                }
-                val delete = mutationEndpointWithPathBuilder(
-                    "communities/{id}/subscription",
-                    methodType = MutationMethodType.DELETE
-                ) {
-                    resp(Unit::class)
-                    body(Unit::class)
-                    path(CommonPath::class)
-                }
+                val add =
+                    mutationEndpointWithPathBuilder("communities/{id}/subscription") {
+                        resp(Unit::class)
+                        body(Unit::class)
+                        path(CommonPath::class)
+                    }
+
+                /** Deletes the resource association represented by this route. */
+                val delete =
+                    mutationEndpointWithPathBuilder(
+                        "communities/{id}/subscription",
+                        methodType = MutationMethodType.DELETE,
+                    ) {
+                        resp(Unit::class)
+                        body(Unit::class)
+                        path(CommonPath::class)
+                    }
             }
 
-            val update = mutationEndpointWithPathBuilder("communities/{id}") {
+            val update =
+                mutationEndpointWithPathBuilder("communities/{id}") {
+                    resp(CommunityInfo::class)
+                    body(UpdateCommunityBody::class)
+                    path(CommonPath::class)
+                }
+        }
+
+        val add =
+            mutationEndpointBuilder("communities") {
                 resp(CommunityInfo::class)
-                body(UpdateCommunityBody::class)
-                path(CommonPath::class)
+                body(NewCommunity::class)
             }
-        }
-
-        val add = mutationEndpointBuilder("communities") {
-            resp(CommunityInfo::class)
-            body(NewCommunity::class)
-        }
     }
 
     object Rooms {
-
         object Id {
             @Serializable
-            class RoomIdQuery(val fillJoinInfo: Boolean = false)
+            data class RoomIdQuery(val fillJoinInfo: Boolean = false)
 
-            val get = safeEndpointWithQueryAndPathBuilder("rooms/{id}") {
-                resp(RoomInfo::class)
-                query(RoomIdQuery::class)
-                path(CommonPath::class)
-            }
+            val get =
+                safeEndpointWithQueryAndPathBuilder("rooms/{id}") {
+                    resp(RoomInfo::class)
+                    query(RoomIdQuery::class)
+                    path(CommonPath::class)
+                }
 
             object Members {
                 val get =
@@ -467,6 +502,8 @@ object CustomApi {
                         body(Unit::class)
                         path(CommonPath::class)
                     }
+
+                /** Leaves the container represented by this route. */
                 val leave =
                     mutationEndpointWithPathBuilder("rooms/{id}/members", methodType = MutationMethodType.DELETE) {
                         resp(RoomInfo::class)
@@ -507,76 +544,89 @@ object CustomApi {
             }
 
             object Favorite {
-                val add = mutationEndpointWithPathBuilder("rooms/{id}/favorite") {
-                    resp(Unit::class)
-                    body(Unit::class)
-                    path(CommonPath::class)
-                }
-                val delete = mutationEndpointWithPathBuilder(
-                    "rooms/{id}/favorite",
-                    methodType = MutationMethodType.DELETE
-                ) {
-                    resp(Unit::class)
-                    body(Unit::class)
-                    path(CommonPath::class)
-                }
+                val add =
+                    mutationEndpointWithPathBuilder("rooms/{id}/favorite") {
+                        resp(Unit::class)
+                        body(Unit::class)
+                        path(CommonPath::class)
+                    }
+
+                /** Deletes the resource association represented by this route. */
+                val delete =
+                    mutationEndpointWithPathBuilder(
+                        "rooms/{id}/favorite",
+                        methodType = MutationMethodType.DELETE,
+                    ) {
+                        resp(Unit::class)
+                        body(Unit::class)
+                        path(CommonPath::class)
+                    }
             }
 
             object Subscription {
-                val add = mutationEndpointWithPathBuilder("rooms/{id}/subscription") {
-                    resp(Unit::class)
-                    body(Unit::class)
-                    path(CommonPath::class)
-                }
-                val delete = mutationEndpointWithPathBuilder(
-                    "rooms/{id}/subscription",
-                    methodType = MutationMethodType.DELETE
-                ) {
-                    resp(Unit::class)
-                    body(Unit::class)
-                    path(CommonPath::class)
-                }
+                val add =
+                    mutationEndpointWithPathBuilder("rooms/{id}/subscription") {
+                        resp(Unit::class)
+                        body(Unit::class)
+                        path(CommonPath::class)
+                    }
+
+                /** Deletes the resource association represented by this route. */
+                val delete =
+                    mutationEndpointWithPathBuilder(
+                        "rooms/{id}/subscription",
+                        methodType = MutationMethodType.DELETE,
+                    ) {
+                        resp(Unit::class)
+                        body(Unit::class)
+                        path(CommonPath::class)
+                    }
             }
 
-            val update = mutationEndpointWithPathBuilder("rooms/{id}/update") {
-                resp(RoomInfo::class)
-                body(UpdateRoomBody::class)
-                path(CommonPath::class)
-            }
+            val update =
+                mutationEndpointWithPathBuilder("rooms/{id}/update") {
+                    resp(RoomInfo::class)
+                    body(UpdateRoomBody::class)
+                    path(CommonPath::class)
+                }
         }
 
         object Aid {
             @Serializable
-            class RoomAidQuery(val aid: String, val fillJoinInfo: Boolean? = null)
+            data class RoomAidQuery(val aid: String, val fillJoinInfo: Boolean? = null)
 
-            val get = safeEndpointWithQueryBuilder("rooms/aid") {
+            val get =
+                safeEndpointWithQueryBuilder("rooms/aid") {
+                    resp(RoomInfo::class)
+                    query(RoomAidQuery::class)
+                }
+        }
+
+        val add =
+            mutationEndpointBuilder("rooms") {
                 resp(RoomInfo::class)
-                query(RoomAidQuery::class)
+                body(NewRoom::class)
             }
-        }
-
-        val add = mutationEndpointBuilder("rooms") {
-            resp(RoomInfo::class)
-            body(NewRoom::class)
-        }
     }
 
     object Users {
         object Aid {
             @Serializable
-            class UserAidQuery(val aid: String)
+            data class UserAidQuery(val aid: String)
 
-            val get = safeEndpointWithQueryBuilder("users/aid") {
-                resp(UserInfo::class)
-                query(UserAidQuery::class)
-            }
+            val get =
+                safeEndpointWithQueryBuilder("users/aid") {
+                    resp(UserInfo::class)
+                    query(UserAidQuery::class)
+                }
         }
 
         object Id {
-            val get = safeEndpointWithPathBuilder("users/{id}") {
-                resp(UserInfo::class)
-                path(CommonPath::class)
-            }
+            val get =
+                safeEndpointWithPathBuilder("users/{id}") {
+                    resp(UserInfo::class)
+                    path(CommonPath::class)
+                }
 
             object Topics {
                 val get =
@@ -588,11 +638,12 @@ object CustomApi {
             }
 
             object Communities {
-                val get = safeEndpointWithQueryAndPathBuilder("users/{id}/communities") {
-                    resp(CommunityInfoListResponse::class)
-                    query(JoinedCommunities.UserCommunitiesQuery::class)
-                    path(CommonPath::class)
-                }
+                val get =
+                    safeEndpointWithQueryAndPathBuilder("users/{id}/communities") {
+                        resp(CommunityInfoListResponse::class)
+                        query(JoinedCommunities.UserCommunitiesQuery::class)
+                        path(CommonPath::class)
+                    }
             }
 
             object Files {
@@ -632,104 +683,124 @@ object CustomApi {
             }
 
             object Favorite {
-                val add = mutationEndpointWithPathBuilder("users/{id}/favorite") {
-                    resp(Unit::class)
-                    body(Unit::class)
-                    path(CommonPath::class)
-                }
-                val delete = mutationEndpointWithPathBuilder(
-                    "users/{id}/favorite",
-                    methodType = MutationMethodType.DELETE
-                ) {
-                    resp(Unit::class)
-                    body(Unit::class)
-                    path(CommonPath::class)
-                }
+                val add =
+                    mutationEndpointWithPathBuilder("users/{id}/favorite") {
+                        resp(Unit::class)
+                        body(Unit::class)
+                        path(CommonPath::class)
+                    }
+
+                /** Deletes the resource association represented by this route. */
+                val delete =
+                    mutationEndpointWithPathBuilder(
+                        "users/{id}/favorite",
+                        methodType = MutationMethodType.DELETE,
+                    ) {
+                        resp(Unit::class)
+                        body(Unit::class)
+                        path(CommonPath::class)
+                    }
             }
 
             object Subscription {
-                val add = mutationEndpointWithPathBuilder("users/{id}/subscription") {
-                    resp(Unit::class)
-                    body(Unit::class)
-                    path(CommonPath::class)
-                }
-                val delete = mutationEndpointWithPathBuilder(
-                    "users/{id}/subscription",
-                    methodType = MutationMethodType.DELETE
-                ) {
-                    resp(Unit::class)
-                    body(Unit::class)
-                    path(CommonPath::class)
-                }
+                val add =
+                    mutationEndpointWithPathBuilder("users/{id}/subscription") {
+                        resp(Unit::class)
+                        body(Unit::class)
+                        path(CommonPath::class)
+                    }
+
+                /** Deletes the resource association represented by this route. */
+                val delete =
+                    mutationEndpointWithPathBuilder(
+                        "users/{id}/subscription",
+                        methodType = MutationMethodType.DELETE,
+                    ) {
+                        resp(Unit::class)
+                        body(Unit::class)
+                        path(CommonPath::class)
+                    }
             }
         }
 
-        val search = safeEndpointWithQueryBuilder("users/search") {
-            resp(UserInfoListResponse::class)
-            query(SearchQuery::class)
-        }
+        val search =
+            safeEndpointWithQueryBuilder("users/search") {
+                resp(UserInfoListResponse::class)
+                query(SearchQuery::class)
+            }
 
-        val update = mutationEndpointBuilder("users/update") {
-            resp(UserInfo::class)
-            body(UpdateUserBody::class)
-        }
+        val update =
+            mutationEndpointBuilder("users/update") {
+                resp(UserInfo::class)
+                body(UpdateUserBody::class)
+            }
 
         object TwoFactor {
-            val get = safeEndpointBuilder("users/two-factor") {
-                resp(TwoFactorSettingsInfo::class)
-            }
+            val get =
+                safeEndpointBuilder("users/two-factor") {
+                    resp(TwoFactorSettingsInfo::class)
+                }
 
             object Totp {
-                val setup = mutationEndpointBuilder("users/two-factor/totp/setup") {
-                    resp(TotpSetupInfo::class)
+                val setup =
+                    mutationEndpointBuilder("users/two-factor/totp/setup") {
+                        resp(TotpSetupInfo::class)
+                        body(Unit::class)
+                    }
+                val enable =
+                    mutationEndpointBuilder("users/two-factor/totp/enable") {
+                        resp(TwoFactorSettingsInfo::class)
+                        body(TotpCodeBody::class)
+                    }
+            }
+
+            val disable =
+                mutationEndpointBuilder("users/two-factor/disable") {
+                    resp(TwoFactorSettingsInfo::class)
                     body(Unit::class)
                 }
-                val enable = mutationEndpointBuilder("users/two-factor/totp/enable") {
-                    resp(TwoFactorSettingsInfo::class)
-                    body(TotpCodeBody::class)
+            val recoveryCodes =
+                mutationEndpointBuilder("users/two-factor/recovery-codes") {
+                    resp(RecoveryCodesResponse::class)
+                    body(Unit::class)
                 }
-            }
-
-            val disable = mutationEndpointBuilder("users/two-factor/disable") {
-                resp(TwoFactorSettingsInfo::class)
-                body(Unit::class)
-            }
-            val recoveryCodes = mutationEndpointBuilder("users/two-factor/recovery-codes") {
-                resp(RecoveryCodesResponse::class)
-                body(Unit::class)
-            }
         }
 
-        val overview = safeEndpointBuilder("users/overview") {
-            resp(UserOverview::class)
-        }
+        val overview =
+            safeEndpointBuilder("users/overview") {
+                resp(UserOverview::class)
+            }
 
         object Read {
-            val add = mutationEndpointBuilder("users/read") {
-                resp(Unit::class)
-                body(UpdateUserRead::class)
-            }
+            val add =
+                mutationEndpointBuilder("users/read") {
+                    resp(Unit::class)
+                    body(UpdateUserRead::class)
+                }
         }
 
         object Devices {
-            val add = mutationEndpointBuilder("users/devices") {
-                resp(Unit::class)
-                body(NewDevice::class)
-            }
+            val add =
+                mutationEndpointBuilder("users/devices") {
+                    resp(Unit::class)
+                    body(NewDevice::class)
+                }
         }
 
         object ReactionRecords {
-            val get = safeEndpointWithQueryBuilder("users/reaction-records") {
-                resp(ReactionRecordInfoListResponse::class)
-                query(PaginationQuery::class)
-            }
+            val get =
+                safeEndpointWithQueryBuilder("users/reaction-records") {
+                    resp(ReactionRecordInfoListResponse::class)
+                    query(PaginationQuery::class)
+                }
         }
 
         object Comments {
-            val get = safeEndpointWithQueryBuilder("users/comments") {
-                resp(TopicInfoListResponse::class)
-                query(PaginationQuery::class)
-            }
+            val get =
+                safeEndpointWithQueryBuilder("users/comments") {
+                    resp(TopicInfoListResponse::class)
+                    query(PaginationQuery::class)
+                }
         }
 
         object JoinedRooms {
@@ -741,10 +812,11 @@ object CustomApi {
                 override val prePageToken: String? = null,
             ) : PageableQuery
 
-            val get = safeEndpointWithQueryBuilder("users/joined-rooms") {
-                resp(RoomInfoListResponse::class)
-                query(PaginationQuery::class)
-            }
+            val get =
+                safeEndpointWithQueryBuilder("users/joined-rooms") {
+                    resp(RoomInfoListResponse::class)
+                    query(PaginationQuery::class)
+                }
 
             val search =
                 safeEndpointWithQueryBuilder("users/joined-rooms/search") {
@@ -770,10 +842,11 @@ object CustomApi {
                 override val prePageToken: String? = null,
             ) : PageableQuery
 
-            val get = safeEndpointWithQueryBuilder("users/joined-communities") {
-                resp(CommunityInfoListResponse::class)
-                query(UserCommunitiesQuery::class)
-            }
+            val get =
+                safeEndpointWithQueryBuilder("users/joined-communities") {
+                    resp(CommunityInfoListResponse::class)
+                    query(UserCommunitiesQuery::class)
+                }
             val search =
                 safeEndpointWithQueryBuilder("users/joined-communities/search") {
                     resp(CommunityInfoListResponse::class)
@@ -782,43 +855,48 @@ object CustomApi {
         }
 
         object Favorites {
-            val get = safeEndpointWithQueryBuilder("users/favorites") {
-                resp(UserFavoriteInfoListResponse::class)
-                query(PaginationQuery::class)
-            }
+            val get =
+                safeEndpointWithQueryBuilder("users/favorites") {
+                    resp(UserFavoriteInfoListResponse::class)
+                    query(PaginationQuery::class)
+                }
         }
 
         object Subscriptions {
-            val get = safeEndpointWithQueryBuilder("users/subscriptions") {
-                resp(UserSubscriptionInfoListResponse::class)
-                query(PaginationQuery::class)
-            }
+            val get =
+                safeEndpointWithQueryBuilder("users/subscriptions") {
+                    resp(UserSubscriptionInfoListResponse::class)
+                    query(PaginationQuery::class)
+                }
         }
 
         object Unread {
-            val hasUnreadRooms = safeEndpointBuilder("users/unread/rooms") {
-                resp(UnreadRoomsResponse::class)
-            }
+            val hasUnreadRooms =
+                safeEndpointBuilder("users/unread/rooms") {
+                    resp(UnreadRoomsResponse::class)
+                }
         }
     }
 
     object Files {
-
         object Id {
-            val copy = mutationEndpointWithPathBuilder("files/{id}/copy") {
-                resp(FileInfo::class)
-                body(Unit::class)
-                path(CommonPath::class)
-            }
-            val get = safeEndpointWithPathBuilder("files/{id}") {
-                resp(FileInfo::class)
-                path(CommonPath::class)
-            }
-            val extractAlbum = mutationEndpointWithPathBuilder("files/{id}/extract-album") {
-                resp(FileInfo::class)
-                body(Unit::class)
-                path(CommonPath::class)
-            }
+            val copy =
+                mutationEndpointWithPathBuilder("files/{id}/copy") {
+                    resp(FileInfo::class)
+                    body(Unit::class)
+                    path(CommonPath::class)
+                }
+            val get =
+                safeEndpointWithPathBuilder("files/{id}") {
+                    resp(FileInfo::class)
+                    path(CommonPath::class)
+                }
+            val extractAlbum =
+                mutationEndpointWithPathBuilder("files/{id}/extract-album") {
+                    resp(FileInfo::class)
+                    body(Unit::class)
+                    path(CommonPath::class)
+                }
 
             object Refs {
                 val get =
@@ -830,78 +908,81 @@ object CustomApi {
             }
 
             object Favorite {
-                val add = mutationEndpointWithPathBuilder("files/{id}/favorite") {
-                    resp(Unit::class)
-                    body(Unit::class)
-                    path(CommonPath::class)
-                }
-                val delete = mutationEndpointWithPathBuilder(
-                    "files/{id}/favorite",
-                    methodType = MutationMethodType.DELETE
-                ) {
-                    resp(Unit::class)
-                    body(Unit::class)
-                    path(CommonPath::class)
-                }
+                val add =
+                    mutationEndpointWithPathBuilder("files/{id}/favorite") {
+                        resp(Unit::class)
+                        body(Unit::class)
+                        path(CommonPath::class)
+                    }
+
+                /** Deletes the resource association represented by this route. */
+                val delete =
+                    mutationEndpointWithPathBuilder(
+                        "files/{id}/favorite",
+                        methodType = MutationMethodType.DELETE,
+                    ) {
+                        resp(Unit::class)
+                        body(Unit::class)
+                        path(CommonPath::class)
+                    }
             }
 
             object Subscription {
-                val add = mutationEndpointWithPathBuilder("files/{id}/subscription") {
-                    resp(Unit::class)
-                    body(Unit::class)
-                    path(CommonPath::class)
-                }
-                val delete = mutationEndpointWithPathBuilder(
-                    "files/{id}/subscription",
-                    methodType = MutationMethodType.DELETE
-                ) {
-                    resp(Unit::class)
-                    body(Unit::class)
-                    path(CommonPath::class)
-                }
+                val add =
+                    mutationEndpointWithPathBuilder("files/{id}/subscription") {
+                        resp(Unit::class)
+                        body(Unit::class)
+                        path(CommonPath::class)
+                    }
+
+                /** Deletes the resource association represented by this route. */
+                val delete =
+                    mutationEndpointWithPathBuilder(
+                        "files/{id}/subscription",
+                        methodType = MutationMethodType.DELETE,
+                    ) {
+                        resp(Unit::class)
+                        body(Unit::class)
+                        path(CommonPath::class)
+                    }
             }
         }
 
         @Serializable
-        class UploadQuery(
-            val objectId: PrimaryKey,
-            val objectType: ObjectType,
-            val sha256: String,
-        )
+        data class UploadQuery(val objectId: PrimaryKey, val objectType: ObjectType, val sha256: String)
 
-        val upload = mutationEndpointWithQueryBuilder("files/upload") {
-            resp(FileInfoListResponse::class)
-            body(Unit::class)
-            query(UploadQuery::class)
-        }
+        val upload =
+            mutationEndpointWithQueryBuilder("files/upload") {
+                resp(FileInfoListResponse::class)
+                body(Unit::class)
+                query(UploadQuery::class)
+            }
 
         @Serializable
-        class MediaSearchQuery(
-            val name: String,
-            val objectId: PrimaryKey,
-            val objectType: ObjectType,
-        )
+        data class MediaSearchQuery(val name: String, val objectId: PrimaryKey, val objectType: ObjectType)
 
-        val getByName = safeEndpointWithQueryBuilder("files/get-by-name") {
-            resp(FileInfo::class)
-            query(MediaSearchQuery::class)
-        }
+        val getByName =
+            safeEndpointWithQueryBuilder("files/get-by-name") {
+                resp(FileInfo::class)
+                query(MediaSearchQuery::class)
+            }
 
         @Serializable
-        class QuotaQuery(
+        data class QuotaQuery(
             val objectId: PrimaryKey,
             val objectType: ObjectType,
-            val quotaType: QuotaType = QuotaType.FILE
+            val quotaType: QuotaType = QuotaType.FILE,
         )
 
-        val quota = safeEndpointWithQueryBuilder("files/quota") {
-            resp(QuotaInfo::class)
-            query(QuotaQuery::class)
-        }
+        val quota =
+            safeEndpointWithQueryBuilder("files/quota") {
+                resp(QuotaInfo::class)
+                query(QuotaQuery::class)
+            }
 
         object Chunks {
             @Serializable
-            class InitBody(
+            data class InitBody(
                 val objectId: PrimaryKey,
                 val objectType: ObjectType,
                 val name: String,
@@ -912,24 +993,19 @@ object CustomApi {
             )
 
             @Serializable
-            class InitResponse(
-                val recordId: PrimaryKey,
-                val chunkSize: Long
-            )
+            data class InitResponse(val recordId: PrimaryKey, val chunkSize: Long)
 
             @Serializable
-            class UploadQuery(val hash: String)
+            data class UploadQuery(val hash: String)
 
-            val init = mutationEndpointBuilder("files/chunk/init") {
-                resp(InitResponse::class)
-                body(InitBody::class)
-            }
+            val init =
+                mutationEndpointBuilder("files/chunk/init") {
+                    resp(InitResponse::class)
+                    body(InitBody::class)
+                }
 
             @Serializable
-            class UploadPath(
-                val id: PrimaryKey,
-                val index: Int
-            )
+            data class UploadPath(val id: PrimaryKey, val index: Int)
 
             val upload =
                 mutationEndpointWithQueryAndPathBuilder("files/chunk/{id}/{index}/upload") {
@@ -939,94 +1015,111 @@ object CustomApi {
                     path(UploadPath::class)
                 }
 
-            val complete = mutationEndpointWithPathBuilder("files/chunk/{id}/complete") {
-                resp(FileInfo::class)
-                body(Unit::class)
-                path(CommonPath::class)
-            }
-            val abort = mutationEndpointWithPathBuilder("files/chunk/{id}/abort") {
-                resp(Unit::class)
-                body(Unit::class)
-                path(CommonPath::class)
-            }
+            val complete =
+                mutationEndpointWithPathBuilder("files/chunk/{id}/complete") {
+                    resp(FileInfo::class)
+                    body(Unit::class)
+                    path(CommonPath::class)
+                }
+            val abort =
+                mutationEndpointWithPathBuilder("files/chunk/{id}/abort") {
+                    resp(Unit::class)
+                    body(Unit::class)
+                    path(CommonPath::class)
+                }
 
             @Serializable
-            class StatusResponse(
+            data class StatusResponse(
                 val uploaded: List<Int>,
                 val chunkSize: Long,
                 val size: Long,
                 val id: PrimaryKey,
-                val status: UploadRecordStatus
+                val status: UploadRecordStatus,
             )
 
-            val status = safeEndpointWithPathBuilder("files/chunk/{id}/status") {
-                resp(StatusResponse::class)
-                path(CommonPath::class)
-            }
+            val status =
+                safeEndpointWithPathBuilder("files/chunk/{id}/status") {
+                    resp(StatusResponse::class)
+                    path(CommonPath::class)
+                }
         }
     }
 
     object Titles {
         object Id {
             object Favorite {
-                val add = mutationEndpointWithPathBuilder("titles/{id}/favorite") {
-                    resp(Unit::class)
-                    body(Unit::class)
-                    path(CommonPath::class)
-                }
-                val delete = mutationEndpointWithPathBuilder(
-                    "titles/{id}/favorite",
-                    methodType = MutationMethodType.DELETE
-                ) {
-                    resp(Unit::class)
-                    body(Unit::class)
-                    path(CommonPath::class)
-                }
+                val add =
+                    mutationEndpointWithPathBuilder("titles/{id}/favorite") {
+                        resp(Unit::class)
+                        body(Unit::class)
+                        path(CommonPath::class)
+                    }
+
+                /** Deletes the resource association represented by this route. */
+                val delete =
+                    mutationEndpointWithPathBuilder(
+                        "titles/{id}/favorite",
+                        methodType = MutationMethodType.DELETE,
+                    ) {
+                        resp(Unit::class)
+                        body(Unit::class)
+                        path(CommonPath::class)
+                    }
             }
 
             object Subscription {
-                val add = mutationEndpointWithPathBuilder("titles/{id}/subscription") {
-                    resp(Unit::class)
-                    body(Unit::class)
-                    path(CommonPath::class)
-                }
-                val delete = mutationEndpointWithPathBuilder(
-                    "titles/{id}/subscription",
-                    methodType = MutationMethodType.DELETE
-                ) {
-                    resp(Unit::class)
-                    body(Unit::class)
-                    path(CommonPath::class)
-                }
+                val add =
+                    mutationEndpointWithPathBuilder("titles/{id}/subscription") {
+                        resp(Unit::class)
+                        body(Unit::class)
+                        path(CommonPath::class)
+                    }
+
+                /** Deletes the resource association represented by this route. */
+                val delete =
+                    mutationEndpointWithPathBuilder(
+                        "titles/{id}/subscription",
+                        methodType = MutationMethodType.DELETE,
+                    ) {
+                        resp(Unit::class)
+                        body(Unit::class)
+                        path(CommonPath::class)
+                    }
             }
         }
 
-        val add = mutationEndpointBuilder("titles") {
-            resp(TitleInfo::class)
-            body(NewTitle::class)
-        }
+        val add =
+            mutationEndpointBuilder("titles") {
+                resp(TitleInfo::class)
+                body(NewTitle::class)
+            }
     }
 
     object Accounts {
-        val signIn = mutationEndpointBuilder("/accounts/sign-in") {
-            resp(SignInResponse::class)
-            body(SignInBody::class)
-        }
-        val signInTotp = mutationEndpointBuilder("/accounts/sign-in/totp") {
-            resp(UserInfo::class)
-            body(TotpCodeBody::class)
-        }
-        val signOut = mutationEndpointBuilder("/accounts/sign-out") {
-            resp(Unit::class)
-            body(Unit::class)
-        }
-        val signUp = mutationEndpointBuilder("/accounts/sign-up") {
-            resp(UserInfo::class)
-            body(SignUpBody::class)
-        }
-        val getData = safeEndpointBuilder("/accounts/get-data") {
-            resp(String::class)
-        }
+        val signIn =
+            mutationEndpointBuilder("/accounts/sign-in") {
+                resp(SignInResponse::class)
+                body(SignInBody::class)
+            }
+        val signInTotp =
+            mutationEndpointBuilder("/accounts/sign-in/totp") {
+                resp(UserInfo::class)
+                body(TotpCodeBody::class)
+            }
+        val signOut =
+            mutationEndpointBuilder("/accounts/sign-out") {
+                resp(Unit::class)
+                body(Unit::class)
+            }
+        val signUp =
+            mutationEndpointBuilder("/accounts/sign-up") {
+                resp(UserInfo::class)
+                body(SignUpBody::class)
+            }
+        val getData =
+            safeEndpointBuilder("/accounts/get-data") {
+                resp(String::class)
+            }
 
         object ChildAccounts {
             @Serializable
@@ -1037,13 +1130,13 @@ object CustomApi {
             ) : PageableQuery
 
             @Serializable
-            class AddChildAccountRequest(
+            data class AddChildAccountRequest(
                 val encryptedPrivateKey: String,
                 val encryptedAesKey: String,
                 val derPublicKey: String,
                 val algoType: AlgoType = AlgoType.P256,
                 val encryptedEncryptionPrivateKey: String? = null,
-                val encryptionPublicKey: String? = null
+                val encryptionPublicKey: String? = null,
             )
 
             val get =
@@ -1051,10 +1144,11 @@ object CustomApi {
                     resp(ChildAccountInfoListResponse::class)
                     query(ChildAccountQuery::class)
                 }
-            val add = mutationEndpointBuilder("/accounts/child-accounts") {
-                resp(ChildAccountInfo::class)
-                body(AddChildAccountRequest::class)
-            }
+            val add =
+                mutationEndpointBuilder("/accounts/child-accounts") {
+                    resp(ChildAccountInfo::class)
+                    body(AddChildAccountRequest::class)
+                }
         }
     }
 }

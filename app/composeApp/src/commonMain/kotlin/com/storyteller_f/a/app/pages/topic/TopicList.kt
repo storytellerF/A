@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.topic
 
 import androidx.compose.foundation.layout.Arrangement
@@ -48,7 +52,7 @@ fun CommonTopicList(
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(horizontal = 10.dp, vertical = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             topPrepend(items.loadState)
             pagingItems(items, {
@@ -62,11 +66,7 @@ fun CommonTopicList(
 }
 
 @Composable
-fun RoomTopicList(
-    items: LazyPagingItems<TopicInfo>,
-    topicsViewModel: TopicsViewModel,
-    lazyListState: LazyListState,
-) {
+fun RoomTopicList(items: LazyPagingItems<TopicInfo>, topicsViewModel: TopicsViewModel, lazyListState: LazyListState) {
     StateView(topicsViewModel) {
         LazyColumn(
             state = lazyListState,
@@ -78,11 +78,12 @@ fun RoomTopicList(
             pagingItems(items, {
                 it.id
             }) { index ->
-                val next = if (index + 1 < items.itemCount) {
-                    items[index + 1]
-                } else {
-                    null
-                }
+                val next =
+                    if (index + 1 < items.itemCount) {
+                        items[index + 1]
+                    } else {
+                        null
+                    }
                 val info = items[index]
                 RoomTopicCell(info, info != null && next?.author != info.author)
             }

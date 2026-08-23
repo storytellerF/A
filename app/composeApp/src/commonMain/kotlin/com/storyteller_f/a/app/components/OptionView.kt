@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.components
 
 import androidx.compose.foundation.clickable
@@ -22,9 +26,13 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun SettingOptionView(title: String, onClick: () -> Unit, content: @Composable () -> Unit) {
     val shape = RoundedCornerShape(8.dp)
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clip(shape).clickable {
-        onClick()
-    }.padding(18.dp)) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier =
+        Modifier.clip(shape).clickable {
+            onClick()
+        }.padding(18.dp),
+    ) {
         Text(title)
         Spacer(modifier = Modifier.weight(1f))
         content()
@@ -37,19 +45,23 @@ fun SettingOptionResettableView(
     title: String,
     supportReset: Boolean,
     onClick: (Boolean) -> Unit,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     val shape = RoundedCornerShape(8.dp)
     var expended by remember {
         mutableStateOf(false)
     }
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clip(shape).clickable {
-        if (supportReset) {
-            expended = true
-        } else {
-            onClick(false)
-        }
-    }.padding(18.dp)) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier =
+        Modifier.clip(shape).clickable {
+            if (supportReset) {
+                expended = true
+            } else {
+                onClick(false)
+            }
+        }.padding(18.dp),
+    ) {
         Text(title)
         Spacer(modifier = Modifier.weight(1f))
         content()

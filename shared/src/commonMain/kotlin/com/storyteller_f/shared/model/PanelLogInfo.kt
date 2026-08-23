@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.shared.model
 
 import com.storyteller_f.shared.type.ObjectType
@@ -12,5 +16,5 @@ data class PanelLogInfo(
     val targetId: PrimaryKey,
     val objectType: ObjectType,
     val action: String,
-    val createdTime: LocalDateTime
+    val createdTime: LocalDateTime,
 ) : PrimaryKeyIdentifiable

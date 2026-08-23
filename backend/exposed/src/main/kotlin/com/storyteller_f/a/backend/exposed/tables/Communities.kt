@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.exposed.tables
 
 import com.storyteller_f.a.backend.core.COMMUNITY_NAME_LENGTH
@@ -23,25 +27,25 @@ object Communities : BaseTable() {
 
 private val json = Json { ignoreUnknownKeys = true }
 
-fun Community.Companion.wrapRow(row: ResultRow): Community {
-    return with(Communities) {
-        val fontSettingsJson = row[fontSettings]
-        val fontSettings = fontSettingsJson?.let {
+fun Community.Companion.wrapRow(row: ResultRow): Community =
+    with(Communities) {
+    val fontSettingsJson = row[fontSettings]
+    val fontSettings =
+        fontSettingsJson?.let {
             runCatching { json.decodeFromString<FontSettings>(it) }
                 .onFailure { Napier.e("Failed to parse font_settings", it) }
                 .getOrNull()
         }
-        Community(
-            row[id],
-            row[createdTime],
-            row[Aids.value],
-            row[name],
-            row[owner],
-            row[memberPolicy],
-            row[icon],
-            row[poster],
-            fontSettings,
-            row[status],
-        )
-    }
+    Community(
+        row[id],
+        row[createdTime],
+        row[Aids.value],
+        row[name],
+        row[owner],
+        row[memberPolicy],
+        row[icon],
+        row[poster],
+        fontSettings,
+        row[status],
+    )
 }

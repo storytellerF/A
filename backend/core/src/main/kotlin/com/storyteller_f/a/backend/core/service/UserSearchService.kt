@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.core.service
 
 import com.storyteller_f.a.backend.core.MergedEnv
@@ -9,11 +13,8 @@ import com.storyteller_f.shared.type.PrimaryKey
 
 data class UserDocument(override val id: PrimaryKey, val nickname: String, val aid: String?) :
     PrimaryKeyIdentifiable {
-
     companion object {
-        fun fromUser(user: User): UserDocument {
-            return UserDocument(user.id, user.nickname, user.aid)
-        }
+        fun fromUser(user: User): UserDocument = UserDocument(user.id, user.nickname, user.aid)
     }
 }
 
@@ -26,9 +27,7 @@ interface UserSearchService {
 
     suspend fun clean(): Result<Unit>
 
-    suspend fun searchDocument(
-        userDocumentSearch: UserDocumentSearch
-    ): Result<PaginationResult<UserDocument>>
+    suspend fun searchDocument(userDocumentSearch: UserDocumentSearch): Result<PaginationResult<UserDocument>>
 }
 
 interface UserSearchServiceFactory {

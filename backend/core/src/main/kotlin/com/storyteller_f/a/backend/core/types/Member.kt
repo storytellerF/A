@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.core.types
 
 import com.storyteller_f.shared.model.MemberInfo
@@ -8,7 +12,7 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.datetime.LocalDateTime
 
-class Member(
+data class Member(
     val id: PrimaryKey,
     val uid: PrimaryKey,
     val objectId: PrimaryKey,
@@ -21,13 +25,15 @@ class Member(
     companion object
 }
 
-fun Member.toNestedMemberInfo() = NestedMemberInfo(
+fun Member.toNestedMemberInfo() =
+    NestedMemberInfo(
     status,
     joinedTime,
     invitedTime,
 )
 
-fun Member.toMemberInfo(userInfo: UserInfo) = MemberInfo(
+fun Member.toMemberInfo(userInfo: UserInfo) =
+    MemberInfo(
     id,
     uid,
     objectId,

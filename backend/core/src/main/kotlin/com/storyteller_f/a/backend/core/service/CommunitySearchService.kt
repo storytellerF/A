@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.core.service
 
 import com.storyteller_f.a.backend.core.MergedEnv
@@ -7,24 +11,21 @@ import com.storyteller_f.a.backend.core.types.Community
 import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.type.PrimaryKey
 
-data class CommunityDocument(
-    override val id: PrimaryKey,
-    val name: String,
-    val aid: String,
-    val owner: PrimaryKey,
-) : PrimaryKeyIdentifiable {
+data class CommunityDocument(override val id: PrimaryKey, val name: String, val aid: String, val owner: PrimaryKey) :
+    PrimaryKeyIdentifiable {
     companion object {
-        fun fromCommunity(community: Community): CommunityDocument {
-            return CommunityDocument(community.id, community.name, community.aid, community.owner)
-        }
+        fun fromCommunity(community: Community): CommunityDocument =
+            CommunityDocument(
+            community.id,
+            community.name,
+            community.aid,
+            community.owner,
+        )
     }
 }
 
 sealed interface CommunityDocumentSearch {
-    data class Keyword(
-        val keyword: String,
-        val fetch: OffsetFetch
-    ) : CommunityDocumentSearch
+    data class Keyword(val keyword: String, val fetch: OffsetFetch) : CommunityDocumentSearch
 }
 
 interface CommunitySearchService {
@@ -33,7 +34,7 @@ interface CommunitySearchService {
     suspend fun clean(): Result<Unit>
 
     suspend fun searchDocument(
-        communityDocumentSearch: CommunityDocumentSearch
+        communityDocumentSearch: CommunityDocumentSearch,
     ): Result<PaginationResult<CommunityDocument>>
 }
 

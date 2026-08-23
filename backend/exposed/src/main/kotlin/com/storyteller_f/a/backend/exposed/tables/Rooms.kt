@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.exposed.tables
 
 import com.storyteller_f.a.backend.core.ROOM_NAME_LENGTH
@@ -18,21 +22,21 @@ object Rooms : BaseTable() {
     val status = objectStatus("status")
 }
 
-fun Room.Companion.wrapRow(row: ResultRow): Room {
-    return with(Rooms) {
-        Room(
-            row[id],
-            row[createdTime],
-            row[Aids.value],
-            row[name],
-            row[creator],
-            row[icon],
-            row[communityId],
-            row[status]
-        )
-    }
+fun Room.Companion.wrapRow(row: ResultRow): Room =
+    with(Rooms) {
+    Room(
+        row[id],
+        row[createdTime],
+        row[Aids.value],
+        row[name],
+        row[creator],
+        row[icon],
+        row[communityId],
+        row[status],
+    )
 }
 
-fun Room.Companion.findRoomById(id: PrimaryKey) = Rooms.selectAll().where {
+fun Room.Companion.findRoomById(id: PrimaryKey) =
+    Rooms.selectAll().where {
     Rooms.id eq id
 }

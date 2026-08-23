@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.core
 
 import com.storyteller_f.shared.AlgoDilithium
@@ -58,7 +62,7 @@ suspend fun getAuthKey(algo: AlgoType): AuthKey {
             derPublicKey,
             pemPrivateKey,
             derEncryptionPrivate,
-            derEncryptionPublicKey
+            derEncryptionPublicKey,
         )
     } else {
         AuthKey.P256(priKey, derPrivateKey, derPublicKey)
@@ -70,7 +74,7 @@ suspend fun getAuthKey(algo: AlgoType, pemPrivateKey: String, pemEncryptionPriva
     val derPrivateKey = alg.getDerPrivateKey(pemPrivateKey).getOrThrow()
     val derPublicKey = alg.getDerPublicKeyFromPrivateKey(pemPrivateKey).getOrThrow()
     return if (algo == AlgoType.DILITHIUM) {
-        pemEncryptionPrivateKey ?: throw Exception("encryption private key is null")
+        checkNotNull(pemEncryptionPrivateKey) { "encryption private key is null" }
         val encryptionAlgo = AlgoDilithium.encryptionAlgo as Type2Algo
         val derEncryptionPrivate =
             encryptionAlgo.getDerEncryptionPrivateKeyFromPemPrivateKey(pemEncryptionPrivateKey).getOrThrow()
@@ -82,7 +86,7 @@ suspend fun getAuthKey(algo: AlgoType, pemPrivateKey: String, pemEncryptionPriva
             derPublicKey,
             pemEncryptionPrivateKey,
             derEncryptionPrivate,
-            derEncryptionPublicKey
+            derEncryptionPublicKey,
         )
     } else {
         AuthKey.P256(pemPrivateKey, derPrivateKey, derPublicKey)

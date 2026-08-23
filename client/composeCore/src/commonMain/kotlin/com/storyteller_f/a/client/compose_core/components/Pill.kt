@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.components
 
 import androidx.compose.foundation.background
@@ -25,19 +29,22 @@ fun Pill(
     icon: ImageVector? = null,
     emoji: String? = null,
     selected: Boolean = false,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     val shape = RoundedCornerShape(20.dp)
-    val background = when {
-        selected -> MaterialTheme.colorScheme.secondaryContainer
-        else -> MaterialTheme.colorScheme.surfaceVariant
-    }
-    val textColor = when {
-        selected -> MaterialTheme.colorScheme.onSecondaryContainer
-        else -> MaterialTheme.colorScheme.onSurfaceVariant
-    }
+    val background =
+        when {
+            selected -> MaterialTheme.colorScheme.secondaryContainer
+            else -> MaterialTheme.colorScheme.surfaceVariant
+        }
+    val textColor =
+        when {
+            selected -> MaterialTheme.colorScheme.onSecondaryContainer
+            else -> MaterialTheme.colorScheme.onSurfaceVariant
+        }
     Row(
-        modifier = Modifier.background(background, shape)
+        modifier =
+        Modifier.background(background, shape)
             .height(28.dp)
             .clip(shape)
             .clickable {
@@ -45,7 +52,7 @@ fun Pill(
             }
             .padding(horizontal = 10.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         when {
             icon != null -> Icon(icon, contentDescription = text, modifier = Modifier.size(15.dp), tint = textColor)

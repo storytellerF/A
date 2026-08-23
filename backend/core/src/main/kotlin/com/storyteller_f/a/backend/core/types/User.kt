@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.core.types
 
 import com.storyteller_f.shared.model.AlgoType
@@ -8,7 +12,7 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.UserStatus
 import kotlinx.datetime.LocalDateTime
 
-class User(
+data class User(
     val aid: String?,
     val encryptionPublicKey: String?,
     val publicKey: String,
@@ -26,26 +30,22 @@ class User(
     companion object
 }
 
-fun User.toUserInfo(avatar: FileInfo? = null): UserInfo {
-    return UserInfo(
-        id,
-        address,
-        aid,
-        nickname,
-        avatar,
-        null,
-        null,
-        status,
-    )
-}
-
-data class RawUser(
-    val user: User,
-    val favoriteId: PrimaryKey? = null,
-    val subscriptionId: PrimaryKey? = null,
+fun User.toUserInfo(avatar: FileInfo? = null): UserInfo =
+    UserInfo(
+    id,
+    address,
+    aid,
+    nickname,
+    avatar,
+    null,
+    null,
+    status,
 )
 
-fun RawUser.toUserInfo(avatar: FileInfo? = null) = user.toUserInfo(avatar).copy(
+data class RawUser(val user: User, val favoriteId: PrimaryKey? = null, val subscriptionId: PrimaryKey? = null)
+
+fun RawUser.toUserInfo(avatar: FileInfo? = null) =
+    user.toUserInfo(avatar).copy(
     favoriteId = favoriteId,
-    subscriptionId = subscriptionId
+    subscriptionId = subscriptionId,
 )

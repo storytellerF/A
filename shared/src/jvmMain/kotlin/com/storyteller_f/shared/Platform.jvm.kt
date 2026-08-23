@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.shared
 
 import io.github.aakira.napier.Antilog
@@ -12,7 +16,6 @@ class JVMPlatform : Platform {
 actual fun getPlatform(): Platform = JVMPlatform()
 
 class CustomAntilog : Antilog() {
-
     companion object {
         private const val CALL_STACK_INDEX = 8
     }
@@ -21,17 +24,13 @@ class CustomAntilog : Antilog() {
 
     private val anonymousClass = Pattern.compile("(\\$\\d+)+$")
 
-    override fun performLog(
-        priority: LogLevel,
-        tag: String?,
-        throwable: Throwable?,
-        message: String?,
-    ) {
-        val fullMessage = when {
-            message == null -> throwable?.stackTraceToString() ?: return
-            throwable != null -> "$message\n${throwable.stackTraceToString()}"
-            else -> message
-        }
+    override fun performLog(priority: LogLevel, tag: String?, throwable: Throwable?, message: String?) {
+        val fullMessage =
+            when {
+                message == null -> throwable?.stackTraceToString() ?: return
+                throwable != null -> "$message\n${throwable.stackTraceToString()}"
+                else -> message
+            }
 
         val log = buildLog(tag, fullMessage)
         when (priority) {
@@ -45,19 +44,21 @@ class CustomAntilog : Antilog() {
     }
 
     private fun buildLog(tag: String?, message: String?): String {
-        val customTag = tag ?: Thread.currentThread().stackTrace[CALL_STACK_INDEX].run {
-            "${createStackElementTag(className)}$$methodName"
-        }
-        return "$customTag - $message - ${Thread.currentThread().stackTrace[CALL_STACK_INDEX]}"
+        val customTag =
+            tag ?: Thread.currentThread().stackTrace[CALL_STACK_INDEX].run {
+                "${createStackElementTag(className)}$$methodName"
+            }
+        return "$customTag - ${message ?: "<none>"} - ${Thread.currentThread().stackTrace[CALL_STACK_INDEX]}"
     }
 
     private fun createStackElementTag(className: String): String {
         val m = anonymousClass.matcher(className)
-        val tag = if (m.find()) {
-            m.replaceAll("")
-        } else {
-            className
-        }
+        val tag =
+            if (m.find()) {
+                m.replaceAll("")
+            } else {
+                className
+            }
         return tag.substring(tag.lastIndexOf('.') + 1)
     }
 }

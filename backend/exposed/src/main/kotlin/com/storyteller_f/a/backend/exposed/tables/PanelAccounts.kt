@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.exposed.tables
 
 import com.storyteller_f.a.backend.core.ADDRESS_LENGTH
@@ -16,13 +20,12 @@ object PanelAccounts : BaseTable() {
     val algoType = algoType("algo_type")
 }
 
-fun PanelAccount.Companion.wrapRow(resultRow: ResultRow): PanelAccount {
-    return PanelAccount(
-        resultRow[PanelAccounts.id],
-        resultRow[PanelAccounts.name],
-        resultRow[PanelAccounts.passType],
-        resultRow[PanelAccounts.algoType],
-        resultRow[PanelAccounts.publicKey],
-        resultRow[PanelAccounts.address],
-    )
-}
+fun PanelAccount.Companion.wrapRow(resultRow: ResultRow): PanelAccount =
+    PanelAccount(
+    resultRow[PanelAccounts.id],
+    resultRow[PanelAccounts.name],
+    resultRow[PanelAccounts.passType],
+    resultRow[PanelAccounts.algoType],
+    resultRow[PanelAccounts.publicKey],
+    resultRow[PanelAccounts.address],
+)

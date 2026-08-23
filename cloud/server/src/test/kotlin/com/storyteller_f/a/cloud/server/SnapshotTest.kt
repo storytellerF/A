@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.server
 
 import com.storyteller_f.a.backend.core.loadAvif
@@ -32,31 +36,35 @@ class SnapshotTest {
             SnapshotGeneration.KeyStoreGeneration(path1, password1, pdfFile, signedFile),
             PdfGenerationSpec(
                 LocalDateTime.parse("2023-01-01T00:00:00"),
-                LocalDateTime.parse("2023-01-01T00:00:00")
-            )
+                LocalDateTime.parse("2023-01-01T00:00:00"),
+            ),
         ).getOrThrow()
     }
 
     @Test
-    fun `test generate code fence`() = openPdfSnapshot(
+    fun `test generate code fence`() =
+        openPdfSnapshot(
         """```kotlin
                 |fun main() {
                 |    println("hello world")
                 |}
-                |```""".trimMargin()
+                |```
+        """.trimMargin(),
     )
 
     @Test
-    fun `test generate code block`() = openPdfSnapshot(
+    fun `test generate code block`() =
+        openPdfSnapshot(
         """
                 |    fun main() {
                 |        println("hello world")
                 |    }
-        """.trimMargin()
+        """.trimMargin(),
     )
 
     @Test
-    fun `test generate headings`() = openPdfSnapshot(
+    fun `test generate headings`() =
+        openPdfSnapshot(
         """
         # Heading 1
         ## Heading 2
@@ -67,25 +75,28 @@ class SnapshotTest {
 
         Heading B
         ---
-        """.trimIndent()
+        """.trimIndent(),
     )
 
     @Test
-    fun `test generate emphasis and strong`() = openPdfSnapshot(
+    fun `test generate emphasis and strong`() =
+        openPdfSnapshot(
         """
         *italic* and **bold** text with normal content.
-        """.trimIndent()
+        """.trimIndent(),
     )
 
     @Test
-    fun `test generate code span`() = openPdfSnapshot(
+    fun `test generate code span`() =
+        openPdfSnapshot(
         """
         Inline `code` span inside a sentence.
-        """.trimIndent()
+        """.trimIndent(),
     )
 
     @Test
-    fun `test generate lists`() = openPdfSnapshot(
+    fun `test generate lists`() =
+        openPdfSnapshot(
         """
         - item 1
             - nested item 1.1
@@ -94,59 +105,65 @@ class SnapshotTest {
         1. first
         2. second
             1. sub first
-        """.trimIndent()
+        """.trimIndent(),
     )
 
     @Test
-    fun `test generate block quote`() = openPdfSnapshot(
+    fun `test generate block quote`() =
+        openPdfSnapshot(
         """
         > quoted line
         > second line
-        """.trimIndent()
+        """.trimIndent(),
     )
 
     @Test
-    fun `test generate block quote with empty line`() = openPdfSnapshot(
+    fun `test generate block quote with empty line`() =
+        openPdfSnapshot(
         """
         > quoted line
         >
         > second line
-        """.trimIndent()
+        """.trimIndent(),
     )
 
     @Test
-    fun `test generate link`() = openPdfSnapshot(
+    fun `test generate link`() =
+        openPdfSnapshot(
         """
         This is a [link text](https://example.com) in paragraph.
-        """.trimIndent()
+        """.trimIndent(),
     )
 
     @Test
-    fun `test generate horizontal rule`() = openPdfSnapshot(
+    fun `test generate horizontal rule`() =
+        openPdfSnapshot(
         """
         First paragraph.
 
         ---
 
         Second paragraph after horizontal rule.
-        """.trimIndent()
+        """.trimIndent(),
     )
 
     @Test
-    fun `test generate table`() = openPdfSnapshot(
+    fun `test generate table`() =
+        openPdfSnapshot(
         """
         | Header 1 | Header 2 | Header 3 |
         | --- | --- | --- |
         | Cell 1 | Cell 2 | Cell 3 |
         | Cell 4 | Cell 5 | Cell 6 |
-        """.trimIndent()
+        """.trimIndent(),
     )
 
     @Test
-    fun `test generate strikethrough`() = openPdfSnapshot(
+    fun `test generate strikethrough`() =
+        openPdfSnapshot(
         """
         This is ~~strikethrough~~ text in a paragraph.
-        """.trimIndent()
+        """.trimIndent(),
     )
 }
 
@@ -155,22 +172,24 @@ private fun openPdfSnapshot(content: String, map: Map<String, File> = emptyMap()
     loadAvif()
 
     // 从异常堆栈获取当前测试函数名
-    val methodName = Exception().stackTrace.first {
-        it.className.endsWith("SnapshotTest")
-    }.methodName
+    val methodName =
+        Exception().stackTrace.first {
+            it.className.endsWith("SnapshotTest")
+        }.methodName
 
     val pdf = OpenPdf()
     val name = pdf::class.simpleName
-    val baseDir = File("build/tmp/$name")
+    val baseDir = File("build/tmp/${name ?: "<none>"}")
 
-    val snapshotDir = File("src/test/pdf-snapshot/$name").apply { mkdirs() }
+    val snapshotDir = File("src/test/pdf-snapshot/${name ?: "<none>"}").apply { mkdirs() }
     val snapshotFile = File(snapshotDir, "$methodName.pdf")
 
-    val actualFile = if (snapshotFile.exists()) {
-        File(baseDir, "$methodName.actual.pdf")
-    } else {
-        snapshotFile
-    }
+    val actualFile =
+        if (snapshotFile.exists()) {
+            File(baseDir, "$methodName.actual.pdf")
+        } else {
+            snapshotFile
+        }
     actualFile.parentFile.mkdirs()
     pdf.generateSignedSnapshot(
         UserInfo.EMPTY,
@@ -178,13 +197,14 @@ private fun openPdfSnapshot(content: String, map: Map<String, File> = emptyMap()
         content,
         map,
         SnapshotGeneration.SimpleGeneration(actualFile),
-        PdfGenerationSpec(LocalDateTime.parse("2023-01-01T00:00:00"), LocalDateTime.parse("2023-01-01T00:00:00"))
+        PdfGenerationSpec(LocalDateTime.parse("2023-01-01T00:00:00"), LocalDateTime.parse("2023-01-01T00:00:00")),
     ).getOrThrow()
     if (snapshotFile.exists()) {
-        val result = PdfComparator<de.redsix.pdfcompare.CompareResultImpl>(
-            snapshotFile.absolutePath,
-            actualFile.absolutePath
-        ).compare()
+        val result =
+            PdfComparator<de.redsix.pdfcompare.CompareResultImpl>(
+                snapshotFile.absolutePath,
+                actualFile.absolutePath,
+            ).compare()
         val diffFile = baseDir.resolve("$methodName-diff")
         result.writeTo(diffFile.path)
 

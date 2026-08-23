@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.common
 
 import androidx.paging.ExperimentalPagingApi
@@ -27,7 +31,7 @@ class CachedLoadingHandler<T : Any>(
     flow: Flow<T?>,
     private val scope: CoroutineScope,
     private val onSave: suspend (T) -> Unit,
-    private val loader: suspend () -> Result<T>
+    private val loader: suspend () -> Result<T>,
 ) : LoadingHandler<T> {
     override val state: MutableStateFlow<LoadingState?> = MutableStateFlow(null)
 
@@ -55,45 +59,44 @@ class CustomRemoteMediator<Datum : Any>(
     private val wrapper: RemoteKeyStorageWrapper,
     private val networkService: PagingSource<String, Datum>,
     private val update: suspend (List<Datum>, LoadType) -> Unit,
-) :
-    RemoteMediator<String, Datum>() {
-
-    override suspend fun load(
-        loadType: LoadType,
-        state: PagingState<String, Datum>,
-    ): MediatorResult {
+) : RemoteMediator<String, Datum>() {
+    override suspend fun load(loadType: LoadType, state: PagingState<String, Datum>): MediatorResult {
         Napier.v(tag = "pagination") {
             "mediator load $loadType"
         }
-        val params = when (loadType) {
-            LoadType.REFRESH -> PagingSource.LoadParams.Refresh<String>(
-                null,
-                state.config.pageSize,
-                state.config.enablePlaceholders
-            )
+        val params =
+            when (loadType) {
+                LoadType.REFRESH ->
+                    PagingSource.LoadParams.Refresh<String>(
+                        null,
+                        state.config.pageSize,
+                        state.config.enablePlaceholders,
+                    )
 
-            LoadType.PREPEND -> {
-                val remoteKey = wrapper.getPreRemoteKey()?.key
-                PagingSource.LoadParams.Append(
-                    remoteKey
-                        ?: return MediatorResult.Success(endOfPaginationReached = true),
-                    state.config.pageSize,
-                    state.config.enablePlaceholders
-                )
-            }
+                LoadType.PREPEND -> {
+                    val remoteKey = wrapper.getPreRemoteKey()?.key
+                    PagingSource.LoadParams.Append(
+                        remoteKey
+                            ?: return MediatorResult.Success(endOfPaginationReached = true),
+                        state.config.pageSize,
+                        state.config.enablePlaceholders,
+                    )
+                }
 
-            LoadType.APPEND -> {
-                val remoteKey = wrapper.getNextRemoteKey()?.key
-                PagingSource.LoadParams.Append(
-                    remoteKey
-                        ?: return MediatorResult.Success(endOfPaginationReached = true),
-                    state.config.pageSize,
-                    state.config.enablePlaceholders
-                )
+                LoadType.APPEND -> {
+                    val remoteKey = wrapper.getNextRemoteKey()?.key
+                    PagingSource.LoadParams.Append(
+                        remoteKey
+                            ?: return MediatorResult.Success(endOfPaginationReached = true),
+                        state.config.pageSize,
+                        state.config.enablePlaceholders,
+                    )
+                }
             }
-        }
         return try {
             mediatorResult(params, loadType)
+        } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+            throw cancellation
         } catch (e: Exception) {
             Napier.e(e, tag = "pagination") {
                 "mediator load error"
@@ -102,65 +105,63 @@ class CustomRemoteMediator<Datum : Any>(
         }
     }
 
-    private suspend fun mediatorResult(
-        params: PagingSource.LoadParams<String>,
-        loadType: LoadType,
-    ) = when (val loadResult = networkService.load(params)) {
-        is PagingSource.LoadResult.Error<String, Datum> -> {
-            MediatorResult.Error(loadResult.throwable)
-        }
-
-        is PagingSource.LoadResult.Invalid<String, Datum> -> {
-            MediatorResult.Error(Exception("invalid"))
-        }
-
-        is PagingSource.LoadResult.Page<String, Datum> -> {
-            val data = loadResult.data
-            val nextKey = loadResult.nextKey
-            val preKey = loadResult.prevKey
-            wrapper.savePreRemoteKey(RemoteKeys(wrapper.collectionName, preKey))
-            wrapper.saveNextRemoteKey(RemoteKeys(wrapper.collectionName, nextKey))
-            update(data, loadType)
-            Napier.v(tag = "pagination") {
-                "mediator success type: $loadType key: ${params.key}"
+    private suspend fun mediatorResult(params: PagingSource.LoadParams<String>, loadType: LoadType) =
+        when (val loadResult = networkService.load(params)) {
+            is PagingSource.LoadResult.Error<String, Datum> -> {
+                MediatorResult.Error(loadResult.throwable)
             }
-            MediatorResult.Success(endOfPaginationReached = nextKey == null)
+
+            is PagingSource.LoadResult.Invalid<String, Datum> -> {
+                MediatorResult.Error(Exception("invalid"))
+            }
+
+            is PagingSource.LoadResult.Page<String, Datum> -> {
+                val data = loadResult.data
+                val nextKey = loadResult.nextKey
+                val preKey = loadResult.prevKey
+                wrapper.savePreRemoteKey(RemoteKeys(wrapper.collectionName, preKey))
+                wrapper.saveNextRemoteKey(RemoteKeys(wrapper.collectionName, nextKey))
+                update(data, loadType)
+                Napier.v(tag = "pagination") {
+                    "mediator success type: $loadType key: ${params.key ?: "<none>"}"
+                }
+                MediatorResult.Success(endOfPaginationReached = nextKey == null)
+            }
         }
-    }
 }
 
-class IntermediatePagingSource<Key : Any, T : Any>(
-    val clazz: KClass<Key>,
-    val pagingSource: PagingSource<Key, T>
-) : PagingSource<String, T>() {
-
-    override fun getRefreshKey(state: PagingState<String, T>): String? {
-        return null
-    }
+class IntermediatePagingSource<Key : Any, T : Any>(val clazz: KClass<Key>, val pagingSource: PagingSource<Key, T>) :
+    PagingSource<String, T>() {
+    override fun getRefreshKey(state: PagingState<String, T>): String? = null
 
     @OptIn(InternalSerializationApi::class)
     override suspend fun load(params: LoadParams<String>): LoadResult<String, T> {
         val serializer = clazz.serializer()
-        val loadParams: LoadParams<Key> = when (params) {
-            is LoadParams.Append<*> -> {
-                val key = params.key.let {
-                    commonJson.decodeFromString(serializer, it)
+        val loadParams: LoadParams<Key> =
+            when (params) {
+                is LoadParams.Append<*> -> {
+                    val key =
+                        params.key.let {
+                            commonJson.decodeFromString(serializer, it)
+                        }
+                    LoadParams.Append(key, params.loadSize, params.placeholdersEnabled)
                 }
-                LoadParams.Append(key, params.loadSize, params.placeholdersEnabled)
-            }
 
-            is LoadParams.Prepend<*> -> {
-                val key = params.key.let {
-                    commonJson.decodeFromString(serializer, it)
+                is LoadParams.Prepend<*> -> {
+                    val key =
+                        params.key.let {
+                            commonJson.decodeFromString(serializer, it)
+                        }
+                    LoadParams.Prepend(key, params.loadSize, params.placeholdersEnabled)
                 }
-                LoadParams.Prepend(key, params.loadSize, params.placeholdersEnabled)
-            }
 
-            is LoadParams.Refresh<*> -> LoadParams.Refresh(null, params.loadSize, params.placeholdersEnabled)
-        }
+                is LoadParams.Refresh<*> -> LoadParams.Refresh(null, params.loadSize, params.placeholdersEnabled)
+            }
         return when (val load = pagingSource.load(loadParams)) {
             is LoadResult.Error<Key, T> -> LoadResult.Error(load.throwable)
+
             is LoadResult.Invalid<Key, T> -> LoadResult.Invalid()
+
             is LoadResult.Page<Key, T> -> {
                 val preKey = load.prevKey?.let { commonJson.encodeToString(serializer, it) }
                 val nextKey = load.nextKey?.let { commonJson.encodeToString(serializer, it) }

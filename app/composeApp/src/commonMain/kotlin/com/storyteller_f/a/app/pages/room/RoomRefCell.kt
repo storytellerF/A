@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.room
 
 import androidx.compose.foundation.background
@@ -33,16 +37,14 @@ fun RoomRefCell(roomAid: String, onClick: ((RoomInfo) -> Unit)? = null) {
 }
 
 @Composable
-private fun RoomRefCellInternal(
-    handler: LoadingHandler<RoomInfo>,
-    onClick: ((RoomInfo) -> Unit)? = null
-) {
+private fun RoomRefCellInternal(handler: LoadingHandler<RoomInfo>, onClick: ((RoomInfo) -> Unit)? = null) {
     val roomInfo by handler.data.collectAsState()
     val appNavFactory = LocalAppNavFactory.current
     val shape = RoundedCornerShape(10.dp)
     RefCellStateView(
         handler,
-        modifier = Modifier
+        modifier =
+        Modifier
             .fillMaxWidth()
             .height(65.dp)
             .background(MaterialTheme.colorScheme.secondaryContainer, shape)
@@ -52,7 +54,7 @@ private fun RoomRefCellInternal(
                     onClick?.invoke(it) ?: appNavFactory.newAppNav().gotoRoom(it.id, false)
                 }
             }
-            .padding(10.dp)
+            .padding(10.dp),
     ) {
         UnboundedRoomCell(it)
     }

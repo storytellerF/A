@@ -1,3 +1,9 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
+package com.storyteller_f.a.dev.appium
+
 import org.openqa.selenium.By
 import org.openqa.selenium.JavascriptExecutor
 import org.openqa.selenium.WebDriver
@@ -12,7 +18,7 @@ class WasmAppiumHelper(
     private val distribution: File,
     private val startupLocator: By,
     private val browserArguments: List<String> = listOf("-headless"),
-) : PlatformAppiumHelper() {
+) : PlatformAppiumHelper {
     override val capturesExternalAsciidocPreview = false
 
     override suspend fun <T> runTest(
@@ -30,8 +36,8 @@ class WasmAppiumHelper(
                     initializeBrowserState(browser, server, prepared.injectedSession)
                     browser.get(
                         "${server.url}?appium=true&appiumHttpUrl=${server.url.removeSuffix(
-                            "/"
-                        )}&appiumWsUrl=ws://127.0.0.1:${ports.ws}"
+                            "/",
+                        )}&appiumWsUrl=ws://127.0.0.1:${ports.ws}",
                     )
                     awaitStartup(browser, server)
                     if (prepared.injectedSession != null) {
@@ -58,7 +64,7 @@ class WasmAppiumHelper(
             val body = browser.findElement(By.tagName("body")).getAttribute("innerHTML")
             val errors = (browser as JavascriptExecutor).executeScript("return window.appiumErrors || [];")
             throw AssertionError(
-                "Wasm Appium semantics did not mount; requested=${server.requestedPaths}; body=$body; errors=$errors",
+                "Wasm Appium semantics did not mount; requested=${server.requestedPaths}; body=${body ?: "<none>"}; errors=${errors ?: "<none>"}",
                 cause,
             )
         }
@@ -78,13 +84,12 @@ class WasmAppiumHelper(
     }
 }
 
-private class WasmAppiumTestScope(
-    override val driver: WasmAppTestDriver,
-    private val browser: WebDriver,
-) : AppiumTestScope {
+private class WasmAppiumTestScope(override val driver: WasmAppTestDriver, private val browser: WebDriver) :
+    AppiumTestScope {
     override suspend fun assertAsciidocPreviewOpened(source: String) {
-        val title = source.lineSequence().firstOrNull { it.startsWith("= ") }?.removePrefix("= ")
-            ?: error("AsciiDoc source must include a document title")
+        val title =
+            source.lineSequence().firstOrNull { it.startsWith("= ") }?.removePrefix("= ")
+                ?: error("AsciiDoc source must include a document title")
         WebDriverWait(browser, Duration.ofSeconds(15)).until(
             ExpectedConditions.presenceOfElementLocated(
                 By.cssSelector("[aria-label='asciidoc-preview'][data-appium-text='${title.cssAttributeValue()}']"),

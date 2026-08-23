@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.exposed.tables
 
 import com.storyteller_f.a.backend.core.types.UserDevice
@@ -9,8 +13,7 @@ object UserDevices : Table() {
     val endpointUrl = varchar("endpoint_url", 100).uniqueIndex()
 }
 
-fun UserDevice.Companion.wrapRow(row: ResultRow): UserDevice {
-    return with(UserDevices) {
-        UserDevice(row[uid], row[endpointUrl])
-    }
+fun UserDevice.Companion.wrapRow(row: ResultRow): UserDevice =
+    with(UserDevices) {
+    UserDevice(row[uid], row[endpointUrl])
 }

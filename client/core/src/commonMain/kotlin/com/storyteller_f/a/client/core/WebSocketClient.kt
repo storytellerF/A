@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.core
 
 import com.storyteller_f.shared.model.UserInfo
@@ -31,27 +35,29 @@ class WebSocketClientImpl(
     suspend fun connectWebSocket() {
         coroutineScope {
             val requests = Channel<UserInfo?>(Channel.CONFLATED)
-            val connector = launch {
-                var connectionJob: Job? = null
-                try {
-                    for (userInfo in requests) {
-                        connectionJob?.cancelAndJoin()
-                        connectionJob = null
-                        if (userInfo == null) {
-                            connectionHandler.data.value?.cancel(CancellationException("User sign out"))
-                        } else {
-                            connectionJob = launch {
-                                while (isActive && canConnectWebSocket(userInfo)) {
-                                    connectWebSocketIfNeed(userInfo)
-                                    delay(5000.milliseconds)
-                                }
+            val connector =
+                launch {
+                    var connectionJob: Job? = null
+                    try {
+                        for (userInfo in requests) {
+                            connectionJob?.cancelAndJoin()
+                            connectionJob = null
+                            if (userInfo == null) {
+                                connectionHandler.data.value?.cancel(CancellationException("User sign out"))
+                            } else {
+                                connectionJob =
+                                    launch {
+                                        while (isActive && canConnectWebSocket(userInfo)) {
+                                            connectWebSocketIfNeed(userInfo)
+                                            delay(5000.milliseconds)
+                                        }
+                                    }
                             }
                         }
+                    } finally {
+                        connectionJob?.cancelAndJoin()
                     }
-                } finally {
-                    connectionJob?.cancelAndJoin()
                 }
-            }
             try {
                 sessionModel.userHandler.data.collect { userInfo ->
                     if (userInfo != null) {
@@ -75,6 +81,8 @@ class WebSocketClientImpl(
                 val r = old.block()
                 localState.value = LoadingState.Done
                 Result.success(r)
+            } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+                throw cancellation
             } catch (e: Exception) {
                 localState.value = LoadingState.Error(e)
                 Result.failure(e)
@@ -92,6 +100,7 @@ class WebSocketClientImpl(
         if (sig == null) return
         when (connectionHandler.state.value) {
             is LoadingState.Loading -> return
+
             is LoadingState.Done -> {
                 val oldSession = connectionHandler.data.value
                 if (oldSession?.isActive == true) return
@@ -111,6 +120,8 @@ class WebSocketClientImpl(
             Napier.i(tag = "ws") {
                 "done"
             }
+        } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+            throw cancellation
         } catch (e: Exception) {
             connectionHandler.state.markError(e)
             Napier.i(tag = "ws") {
@@ -119,10 +130,9 @@ class WebSocketClientImpl(
         }
     }
 
-    private fun canConnectWebSocket(userInfo: UserInfo): Boolean {
-        return passHolder.currentUserPass != null &&
-            sessionModel.userHandler.data.value == userInfo
-    }
+    private fun canConnectWebSocket(userInfo: UserInfo): Boolean =
+        passHolder.currentUserPass != null &&
+        sessionModel.userHandler.data.value == userInfo
 
     private fun startListenerWebSocket(session: DefaultClientWebSocketSession, userInfo: UserInfo) {
         session.launch {
@@ -134,19 +144,16 @@ class WebSocketClientImpl(
                     }
                     onMessage(frame, session)
                     frameFlow.emit(frame)
+                } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+                    throw cancellation
+                } catch (closed: ClosedReceiveChannelException) {
+                    Napier.e(closed, tag = "ClientWebSocket") {
+                        "WebSocket closed ${userInfo.id}"
+                    }
+                    break
                 } catch (e: Exception) {
-                    if (e is ClosedReceiveChannelException) {
-                        Napier.e(tag = "ClientWebSocket") {
-                            "WebSocket closed ${userInfo.id}"
-                        }
-                    } else if (e is CancellationException) {
-                        Napier.i(tag = "ClientWebSocket") {
-                            "WebSocket cancel: ${e.message}"
-                        }
-                    } else {
-                        Napier.e(e, tag = "ClientWebSocket") {
-                            "WebSocket failed: ${e.message} ${userInfo.id}"
-                        }
+                    Napier.e(e, tag = "ClientWebSocket") {
+                        "WebSocket failed: ${e.message ?: "<none>"} ${userInfo.id}"
                     }
                     break
                 }

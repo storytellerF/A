@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.components
 
 import androidx.compose.foundation.ScrollState
@@ -46,30 +50,37 @@ sealed interface GlobalDialogState {
 
     data class Error(val throwable: Throwable) : GlobalDialogState
 
-    class Custom(val content: CustomGlobalDialogContent) : GlobalDialogState
+    data class Custom(val content: CustomGlobalDialogContent) : GlobalDialogState
 }
 
 data class GlobalDialogStateProgress(val value: Long, val total: Long?)
 
-class CustomGlobalDialogContent(val content: @Composable () -> Unit)
+data class CustomGlobalDialogContent(val content: @Composable () -> Unit)
 
 class GlobalDialogContext<C>(val events: MutableSharedFlow<Any>, val sessionManager: C) {
     suspend fun emitEvent(any: Any) {
         events.emit(any)
     }
 
-    suspend fun <T> request(block: suspend C.() -> Result<T>): Result<T> {
-        return block(sessionManager)
-    }
+    suspend fun <T> request(block: suspend C.() -> Result<T>): Result<T> = block(sessionManager)
 }
 
+/**
+ * Coordinates user-visible dialog work that must survive local UI changes.
+ *
+ * @param C type of request context used by dialog work.
+ * @property scope coroutine scope that owns launched dialog work.
+ * @property context request and event context available to dialog work.
+ * @property state stack of dialog states currently presented to the user.
+ */
 class CustomGlobalDialogController<C>(
     val scope: CoroutineScope,
     val context: C,
-    val state: MutableStateFlow<PersistentList<GlobalDialogState>> = MutableStateFlow(persistentListOf())
+    val state: MutableStateFlow<PersistentList<GlobalDialogState>> = MutableStateFlow(persistentListOf()),
 ) {
     private val mutex = Mutex()
 
+    /** Launches work with a nested dialog controller. */
     fun launch(block: suspend NestedGlobalDialogController<C>.() -> Unit) {
         scope.launch {
             val nestedController = NestedGlobalDialogController(this@CustomGlobalDialogController)
@@ -77,46 +88,57 @@ class CustomGlobalDialogController<C>(
         }
     }
 
+    /** Runs [block] while presenting its loading, custom-content, or error state. */
     @OptIn(ExperimentalUuidApi::class)
-    suspend fun <T> useResult(
-        block: suspend CustomGlobalDialogController<C>.() -> Result<T>,
-    ): Result<T> {
-        return mutex.withLock {
+    suspend fun <T> useResult(block: suspend CustomGlobalDialogController<C>.() -> Result<T>): Result<T> =
+        mutex.withLock {
             val dialogState = state.value
             if (!dialogState.isEmpty()) {
-                return@withLock Result.failure(Exception("dialog show failed"))
-            }
-            try {
-                state.value = persistentListOf(GlobalDialogState.Loading())
-                val result = this.block().getOrThrow()
-                if (result is CustomGlobalDialogContent) {
-                    state.value = persistentListOf(GlobalDialogState.Custom(result))
-                } else {
-                    state.value = persistentListOf()
+                Result.failure(Exception("dialog show failed"))
+            } else {
+                try {
+                    state.value = persistentListOf(GlobalDialogState.Loading())
+                    val result = this.block().getOrThrow()
+                    if (result is CustomGlobalDialogContent) {
+                        state.value = persistentListOf(GlobalDialogState.Custom(result))
+                    } else {
+                        state.value = persistentListOf()
+                    }
+                    Result.success(result)
+                } catch (e: Exception) {
+                    Napier.e(e) {
+                        "global dialog"
+                    }
+                    state.value = persistentListOf(GlobalDialogState.Error(e))
+                    Result.failure(e)
                 }
-                Result.success(result)
-            } catch (e: Exception) {
-                Napier.e(e) {
-                    "global dialog"
-                }
-                state.value = persistentListOf(GlobalDialogState.Error(e))
-                Result.failure(e)
             }
         }
-    }
 
-    fun emitProgress(block: (GlobalDialogState.Loading) -> GlobalDialogState.Loading) = Unit
+    /** Updates the active loading dialog with progress produced by [block]. */
+    fun emitProgress(block: (GlobalDialogState.Loading) -> GlobalDialogState.Loading) {
+        val currentState = state.value
+        val loading = currentState.lastOrNull() as? GlobalDialogState.Loading ?: return
+        state.value = currentState.replacingAt(currentState.lastIndex, block(loading))
+    }
 }
 
-class NestedGlobalDialogController<C>(
-    val controller: CustomGlobalDialogController<C>
-) {
+/**
+ * Adds a nested dialog state on top of an existing [controller].
+ *
+ * @param C type of request context used by nested dialog work.
+ * @property controller parent controller that owns the state stack.
+ */
+class NestedGlobalDialogController<C>(val controller: CustomGlobalDialogController<C>) {
+    /** Dialog state stack shared with the parent controller. */
     val state: MutableStateFlow<PersistentList<GlobalDialogState>>
         get() = controller.state
 
+    /** Request and event context shared with the parent controller. */
     val context: C
         get() = controller.context
 
+    /** Runs [block] with a nested loading state and removes it when complete. */
     suspend fun <T> useResult(block: suspend NestedGlobalDialogController<C>.() -> Result<T>): Result<T> {
         val currentState = state.value
         state.value = currentState.adding(GlobalDialogState.Loading())
@@ -127,6 +149,7 @@ class NestedGlobalDialogController<C>(
         }
     }
 
+    /** Updates the nested loading state with progress produced by [block]. */
     fun emitProgress(block: (GlobalDialogState.Loading) -> GlobalDialogState.Loading) {
         val value = state.value
         val last = value.lastOrNull() ?: return
@@ -153,11 +176,12 @@ fun GlobalDialogInternal(message: GlobalDialogState, dismiss: () -> Unit) {
 
     BasicAlertDialog(
         dismiss,
-        properties = if (message is GlobalDialogState.Loading) {
+        properties =
+        if (message is GlobalDialogState.Loading) {
             DialogProperties(dismissOnClickOutside = false, dismissOnBackPress = false)
         } else {
             DialogProperties()
-        }
+        },
     ) {
         DialogContainer {
             GlobalDialogContent(message, scrollState, dismiss)
@@ -166,11 +190,7 @@ fun GlobalDialogInternal(message: GlobalDialogState, dismiss: () -> Unit) {
 }
 
 @Composable
-private fun GlobalDialogContent(
-    message: GlobalDialogState,
-    scrollState: ScrollState,
-    onDismissRequest: () -> Unit,
-) {
+private fun GlobalDialogContent(message: GlobalDialogState, scrollState: ScrollState, onDismissRequest: () -> Unit) {
     Column(modifier = Modifier.height(200.dp)) {
         when (message) {
             is GlobalDialogState.Error -> {
@@ -203,9 +223,7 @@ private fun GlobalDialogContent(
 }
 
 @Composable
-private fun LoadingGlobalDialogContent(
-    loading: GlobalDialogState.Loading,
-) {
+private fun LoadingGlobalDialogContent(loading: GlobalDialogState.Loading) {
     if (loading.content != null) {
         loading.content.content()
     } else {
@@ -223,7 +241,7 @@ private fun LoadingGlobalDialogContent(
                     Box(modifier = Modifier, contentAlignment = Alignment.Center) {
                         CircularProgressIndicator(
                             modifier = Modifier.align(Alignment.Center),
-                            color = MaterialTheme.colorScheme.primary
+                            color = MaterialTheme.colorScheme.primary,
                         )
                     }
                 }
@@ -232,22 +250,22 @@ private fun LoadingGlobalDialogContent(
     }
 }
 
+/** Executes [block] against the session manager in this nested dialog context. */
 suspend inline fun <T, R> NestedGlobalDialogController<GlobalDialogContext<T>>.request(
-    noinline block: suspend T.() -> Result<R>
-): Result<R> {
-    return context.request(block)
-}
+    noinline block: suspend T.() -> Result<R>,
+): Result<R> = context.request(block)
 
+/** Emits [event] from this nested dialog context. */
 suspend inline fun <T> NestedGlobalDialogController<GlobalDialogContext<T>>.emitEvent(event: Any) {
     context.emitEvent(event)
 }
 
+/** Executes [block] against the session manager in this dialog context. */
 suspend inline fun <T, R> CustomGlobalDialogController<GlobalDialogContext<T>>.request(
-    noinline block: suspend T.() -> Result<R>
-): Result<R> {
-    return context.request(block)
-}
+    noinline block: suspend T.() -> Result<R>,
+): Result<R> = context.request(block)
 
+/** Emits [event] from this dialog context. */
 suspend inline fun <T> CustomGlobalDialogController<GlobalDialogContext<T>>.emitEvent(event: Any) {
     context.emitEvent(event)
 }

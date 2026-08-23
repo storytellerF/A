@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.exposed.tables
 
 import com.storyteller_f.a.backend.core.types.Topic
@@ -5,7 +9,6 @@ import com.storyteller_f.a.backend.exposed.BaseTable
 import com.storyteller_f.a.backend.exposed.customPrimaryKey
 import com.storyteller_f.a.backend.exposed.objectStatus
 import com.storyteller_f.a.backend.exposed.objectType
-import com.storyteller_f.shared.utils.*
 import org.jetbrains.exposed.v1.core.*
 import org.jetbrains.exposed.v1.datetime.datetime
 
@@ -27,23 +30,22 @@ object Topics : BaseTable() {
     }
 }
 
-fun Topic.Companion.wrapRow(row: ResultRow): Topic {
-    return with(Topics) {
-        Topic(
-            row[id],
-            row[createdTime],
-            row[author],
-            row[parentId],
-            row[parentType],
-            row[rootId],
-            row[rootType],
-            row[content].bytes,
-            row[isEncrypted],
-            row[level],
-            row[pinned],
-            row[lastModifiedTime],
-            row.getOrNull(Aids.value),
-            row[status],
-        )
-    }
+fun Topic.Companion.wrapRow(row: ResultRow): Topic =
+    with(Topics) {
+    Topic(
+        row[id],
+        row[createdTime],
+        row[author],
+        row[parentId],
+        row[parentType],
+        row[rootId],
+        row[rootType],
+        row[content].bytes,
+        row[isEncrypted],
+        row[level],
+        row[pinned],
+        row[lastModifiedTime],
+        row.getOrNull(Aids.value),
+        row[status],
+    )
 }

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.redis
 
 import com.storyteller_f.a.backend.core.MergedEnv
@@ -10,30 +14,28 @@ import io.github.crackthecodeabhi.kreds.connection.newClient
 import kotlin.reflect.KClass
 
 class RedisCacheService(private val endpoint: String) : CacheService<String, String> {
-    override suspend fun get(key: String, block: suspend () -> String): String {
-        return useRedis(endpoint) {
-            val cache = get(key)
-            if (cache == null) {
-                val new = block()
-                set(key, new)
-                new
-            } else {
-                cache
-            }
+    override suspend fun get(key: String, block: suspend () -> String): String =
+        useRedis(endpoint) {
+        val cache = get(key)
+        if (cache == null) {
+            val new = block()
+            set(key, new)
+            new
+        } else {
+            cache
         }
     }
 }
 
-private suspend fun <R> useRedis(endpoint: String, block: suspend KredsClient.() -> R): R {
-    return newClient(Endpoint.from(endpoint)).use {
-        it.block()
-    }
+private suspend fun <R> useRedis(endpoint: String, block: suspend KredsClient.() -> R): R =
+    newClient(
+    Endpoint.from(endpoint),
+).use {
+    it.block()
 }
 
 class RedisCacheServiceFactory : CacheServiceFactory {
-    override fun match(env: MergedEnv): Boolean {
-        return !env["CACHE_SERVICE"].isNullOrBlank()
-    }
+    override fun match(env: MergedEnv): Boolean = !env["CACHE_SERVICE"].isNullOrBlank()
 
     override fun <K, T : Any> build(env: MergedEnv, vClass: KClass<T>): CacheService<K, T> {
         val endpoint = env["REDIS_ENDPOINT"] ?: error("REDIS_ENDPOINT not set")

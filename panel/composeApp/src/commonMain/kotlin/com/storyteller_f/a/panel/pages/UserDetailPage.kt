@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.panel.pages
 
 import androidx.compose.foundation.clickable
@@ -85,11 +89,12 @@ fun UserDetailPage(uid: PrimaryKey) {
     val pagerState = rememberPagerState { 3 }
     val scope = rememberCoroutineScope()
     Scaffold(topBar = { UserTopBar(uid) }, bottomBar = {
-        val navRoutes = listOf(
-            NavRoute("/info", Icons.Default.People, stringResource(Res.string.user_info)),
-            NavRoute("/logs", Icons.AutoMirrored.Filled.Article, stringResource(Res.string.user_logs)),
-            NavRoute("/panel-logs", Icons.AutoMirrored.Filled.Article, stringResource(Res.string.tab_logs)),
-        )
+        val navRoutes =
+            listOf(
+                NavRoute("/info", Icons.Default.People, stringResource(Res.string.user_info)),
+                NavRoute("/logs", Icons.AutoMirrored.Filled.Article, stringResource(Res.string.user_logs)),
+                NavRoute("/panel-logs", Icons.AutoMirrored.Filled.Article, stringResource(Res.string.tab_logs)),
+            )
         CustomBottomNav(navRoutes[pagerState.currentPage].path, navRoutes) { path ->
             scope.launch {
                 pagerState.animateScrollToPage(navRoutes.indexOfFirst { it.path == path })
@@ -115,11 +120,12 @@ private fun UserTopBar(uid: PrimaryKey) {
     val info by vm.handler.data.collectAsState(null)
     val nickname = info?.nickname
     val aid = info?.aid
-    val title = if (nickname != null && aid != null) {
-        stringResource(Res.string.user_detail_title_with_info, nickname, aid)
-    } else {
-        stringResource(Res.string.user_detail_title)
-    }
+    val title =
+        if (nickname != null && aid != null) {
+            stringResource(Res.string.user_detail_title_with_info, nickname, aid)
+        } else {
+            stringResource(Res.string.user_detail_title)
+        }
     val nav = LocalPanelNav.current
     TopAppBar(
         title = {
@@ -129,25 +135,26 @@ private fun UserTopBar(uid: PrimaryKey) {
             IconButton(onClick = { nav.open() }) {
                 Icon(Icons.Default.Menu, null)
             }
-        }
+        },
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun UserInfoTabs(uid: PrimaryKey) {
-    val tabs = listOf(
-        stringResource(Res.string.tab_basic_info),
-        stringResource(Res.string.tab_joined_communities),
-        stringResource(Res.string.tab_joined_rooms),
-        stringResource(Res.string.tab_received_titles),
-        stringResource(Res.string.tab_created_files),
-        stringResource(Res.string.upload_records),
-        stringResource(Res.string.tab_user_reactions),
-        stringResource(Res.string.tab_user_comments),
-        stringResource(Res.string.tab_user_favorites),
-        stringResource(Res.string.tab_user_subscriptions)
-    )
+    val tabs =
+        listOf(
+            stringResource(Res.string.tab_basic_info),
+            stringResource(Res.string.tab_joined_communities),
+            stringResource(Res.string.tab_joined_rooms),
+            stringResource(Res.string.tab_received_titles),
+            stringResource(Res.string.tab_created_files),
+            stringResource(Res.string.upload_records),
+            stringResource(Res.string.tab_user_reactions),
+            stringResource(Res.string.tab_user_comments),
+            stringResource(Res.string.tab_user_favorites),
+            stringResource(Res.string.tab_user_subscriptions),
+        )
     val pagerState = rememberPagerState { tabs.size }
     val scope = rememberCoroutineScope()
     Column {
@@ -192,7 +199,7 @@ private fun UserJoinedCommunitiesSection(uid: PrimaryKey) {
                         },
                         headlineContent = { Text(info.name) },
                         overlineContent = { Text(info.aid) },
-                        modifier = Modifier.clickable { panelNav.gotoCommunityDetail(info.id) }
+                        modifier = Modifier.clickable { panelNav.gotoCommunityDetail(info.id) },
                     )
                     HorizontalDivider()
                 } else {
@@ -222,7 +229,7 @@ private fun UserJoinedRoomsSection(uid: PrimaryKey) {
                             val creator = info.creator.toString()
                             Text(listOf(creator).filter { it.isNotEmpty() }.joinToString(" • "))
                         },
-                        modifier = Modifier.clickable { panelNav.gotoRoomDetail(info.id) }
+                        modifier = Modifier.clickable { panelNav.gotoRoomDetail(info.id) },
                     )
                     HorizontalDivider()
                 } else {
@@ -246,7 +253,7 @@ private fun UserReceivedTitlesSection(uid: PrimaryKey) {
                     ListItem(
                         headlineContent = { Text(info.name) },
                         supportingContent = { Text(info.type.name) },
-                        modifier = Modifier.clickable { panelNav.gotoTitleDetail(info.id) }
+                        modifier = Modifier.clickable { panelNav.gotoTitleDetail(info.id) },
                     )
                     HorizontalDivider()
                 } else {
@@ -271,7 +278,7 @@ private fun UserCreatedFilesSection(uid: PrimaryKey) {
                         headlineContent = { Text(info.name) },
                         supportingContent = { Text(HumanReadable.fileSize(info.size)) },
                         leadingContent = { FileIcon(info) },
-                        modifier = Modifier.clickable { panelNav.gotoFileDetail(info.id) }
+                        modifier = Modifier.clickable { panelNav.gotoFileDetail(info.id) },
                     )
                     HorizontalDivider()
                 } else {
@@ -299,10 +306,10 @@ private fun UserUploadRecordsSection(uid: PrimaryKey) {
                                     Res.string.file_progress,
                                     info.status,
                                     HumanReadable.fileSize(info.progress),
-                                    HumanReadable.fileSize(info.total)
-                                )
+                                    HumanReadable.fileSize(info.total),
+                                ),
                             )
-                        }
+                        },
                     )
                     HorizontalDivider()
                 } else {
@@ -331,11 +338,12 @@ private fun UserLogsTab(uid: PrimaryKey) {
                                     Res.string.log_supporting,
                                     info.objectType,
                                     info.objectId.toString(),
-                                    info.createdTime.toString()
-                                )
+                                    info.createdTime.toString(),
+                                ),
                             )
                         },
-                        modifier = Modifier.clickable {
+                        modifier =
+                        Modifier.clickable {
                             when (info.objectType) {
                                 ObjectType.USER -> panelNav.gotoUserDetail(info.objectId)
                                 ObjectType.COMMUNITY -> panelNav.gotoCommunityDetail(info.objectId)
@@ -345,7 +353,7 @@ private fun UserLogsTab(uid: PrimaryKey) {
                                 ObjectType.FILE -> panelNav.gotoFileDetail(info.objectId)
                                 else -> {}
                             }
-                        }
+                        },
                     )
                     HorizontalDivider()
                 } else {
@@ -368,33 +376,35 @@ private fun UserBasicInfoSection(uid: PrimaryKey) {
     val dialogController = LocalPanelGlobalDialog.current
     val scope = rememberCoroutineScope()
     StateView(vm.handler, modifier = Modifier.fillMaxSize()) { overview ->
-        val items = buildList {
-            add("id" to overview.userInfo.id.toString())
-            add("nickname" to overview.userInfo.nickname)
-            add("status" to overview.userInfo.status.name)
-            add("address" to overview.userInfo.address)
-            add("aid" to overview.userInfo.aid.toString())
-            add("favoriteCount" to overview.favoriteCount.toString())
-            add("subscriptionCount" to overview.subscriptionCount.toString())
-            add("acg" to overview.acg.toString())
-            add("reactionRecordCount" to overview.reactionRecordCount.toString())
-            add("commentCount" to overview.commentCount.toString())
-            add("childAccountCount" to overview.childAccountCount.toString())
-        }
+        val items =
+            buildList {
+                add("id" to overview.userInfo.id.toString())
+                add("nickname" to overview.userInfo.nickname)
+                add("status" to overview.userInfo.status.name)
+                add("address" to overview.userInfo.address)
+                add("aid" to overview.userInfo.aid?.toString().orEmpty())
+                add("favoriteCount" to overview.favoriteCount.toString())
+                add("subscriptionCount" to overview.subscriptionCount.toString())
+                add("acg" to overview.acg.toString())
+                add("reactionRecordCount" to overview.reactionRecordCount.toString())
+                add("commentCount" to overview.commentCount.toString())
+                add("childAccountCount" to overview.childAccountCount.toString())
+            }
         Column {
             InfoTable(items, Modifier.padding(16.dp).weight(1f))
             Button(onClick = {
-                val newStatus = if (overview.userInfo.status == UserStatus.NORMAL) {
-                    UserStatus.READ_ONLY
-                } else {
-                    UserStatus.NORMAL
-                }
+                val newStatus =
+                    if (overview.userInfo.status == UserStatus.NORMAL) {
+                        UserStatus.READ_ONLY
+                    } else {
+                        UserStatus.NORMAL
+                    }
                 scope.launch {
                     dialogController.useResult {
                         context.request {
                             updateUserStatus(
                                 uid,
-                                UpdateUserStatusBody(newStatus)
+                                UpdateUserStatusBody(newStatus),
                             )
                         }
                     }.onSuccess {
@@ -407,7 +417,7 @@ private fun UserBasicInfoSection(uid: PrimaryKey) {
                         "Set to ReadOnly"
                     } else {
                         "Set to Normal"
-                    }
+                    },
                 )
             }
         }
@@ -426,7 +436,7 @@ private fun UserReactionsSection(uid: PrimaryKey) {
                     ListItem(
                         headlineContent = { Text("${info.emoji} • Topic ${info.objectId}") },
                         supportingContent = { Text("${info.objectType} • ${info.createdTime}") },
-                        modifier = Modifier.clickable { panelNav.gotoTopicDetail(info.objectId) }
+                        modifier = Modifier.clickable { panelNav.gotoTopicDetail(info.objectId) },
                     )
                     HorizontalDivider()
                 } else {
@@ -470,7 +480,8 @@ private fun UserFavoritesSection(uid: PrimaryKey) {
                     ListItem(
                         headlineContent = { Text("Object ${info.objectId}") },
                         supportingContent = { Text("Type: ${info.objectType} • Time: ${info.createdTime}") },
-                        modifier = Modifier.clickable {
+                        modifier =
+                        Modifier.clickable {
                             when (info.objectType) {
                                 ObjectType.USER -> panelNav.gotoUserDetail(info.objectId)
                                 ObjectType.COMMUNITY -> panelNav.gotoCommunityDetail(info.objectId)
@@ -480,7 +491,7 @@ private fun UserFavoritesSection(uid: PrimaryKey) {
                                 ObjectType.FILE -> panelNav.gotoFileDetail(info.objectId)
                                 else -> {}
                             }
-                        }
+                        },
                     )
                     HorizontalDivider()
                 } else {
@@ -504,7 +515,8 @@ private fun UserSubscriptionsSection(uid: PrimaryKey) {
                     ListItem(
                         headlineContent = { Text("Object ${info.objectId}") },
                         supportingContent = { Text("Type: ${info.objectType} • Time: ${info.createdTime}") },
-                        modifier = Modifier.clickable {
+                        modifier =
+                        Modifier.clickable {
                             when (info.objectType) {
                                 ObjectType.USER -> panelNav.gotoUserDetail(info.objectId)
                                 ObjectType.COMMUNITY -> panelNav.gotoCommunityDetail(info.objectId)
@@ -514,7 +526,7 @@ private fun UserSubscriptionsSection(uid: PrimaryKey) {
                                 ObjectType.FILE -> panelNav.gotoFileDetail(info.objectId)
                                 else -> {}
                             }
-                        }
+                        },
                     )
                     HorizontalDivider()
                 } else {

@@ -1,3 +1,9 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
+package com.storyteller_f.a.dev.appium
+
 import org.openqa.selenium.By
 import org.openqa.selenium.JavascriptExecutor
 import org.openqa.selenium.OutputType
@@ -11,11 +17,14 @@ import java.time.Duration
 
 /** Drives Compose/Wasm through its transparent Appium-only HTML semantics overlay. */
 class WasmAppTestDriver(private val browser: WebDriver) : AppTestDriver {
+    private val wait get() = WebDriverWait(browser, Duration.ofSeconds(UI_WAIT_SECONDS))
+
     override suspend fun clickByDescription(description: String) = click(descriptionLocator(description))
 
     override suspend fun clickByText(text: String) = click(textLocator(text))
 
-    override suspend fun clickByTextContaining(text: String) = click(
+    override suspend fun clickByTextContaining(text: String) =
+        click(
         By.cssSelector("[data-appium-text*='${text.cssAttributeValue()}']"),
     )
 
@@ -33,9 +42,10 @@ class WasmAppTestDriver(private val browser: WebDriver) : AppTestDriver {
             )
             wait.until { inputLengthAttributeMatchesValue("data-appium-input-delivered-length") }
             wait.until { inputLengthAttributeMatchesValue("data-appium-input-compose-length") }
-            val actualValue = (browser as JavascriptExecutor).executeScript(
-                "return document.querySelector('[data-appium-input=true]')?.value || '';",
-            ).toString()
+            val actualValue =
+                (browser as JavascriptExecutor).executeScript(
+                    "return document.querySelector('[data-appium-input=true]')?.value || '';",
+                )?.toString().orEmpty()
             check(actualValue == expectedValue) { "Wasm HTML input changed the supplied text" }
         } catch (throwable: Throwable) {
             runCatching { saveFailureSnapshot("input") }
@@ -43,8 +53,9 @@ class WasmAppTestDriver(private val browser: WebDriver) : AppTestDriver {
         }
     }
 
-    override suspend fun assertVisibleByDescription(description: String) = assertVisible(
-        descriptionLocator(description)
+    override suspend fun assertVisibleByDescription(description: String) =
+        assertVisible(
+        descriptionLocator(description),
     )
 
     override suspend fun assertVisibleByText(text: String) = assertVisible(textLocator(text))
@@ -148,11 +159,13 @@ class WasmAppTestDriver(private val browser: WebDriver) : AppTestDriver {
         }
     }
 
-    private fun findOnScreen(locator: By): WebElement = wait.until {
+    private fun findOnScreen(locator: By): WebElement =
+        wait.until {
         browser.findElements(locator).firstOrNull(::isOnScreen)
     }
 
-    private fun isOnScreen(element: WebElement): Boolean = runCatching {
+    private fun isOnScreen(element: WebElement): Boolean =
+        runCatching {
         (browser as JavascriptExecutor).executeScript(
             """
             const rect = arguments[0].getBoundingClientRect();
@@ -165,8 +178,9 @@ class WasmAppTestDriver(private val browser: WebDriver) : AppTestDriver {
         ) == true
     }.getOrDefault(false)
 
-    private fun descriptionLocator(description: String) = By.cssSelector(
-        "[aria-label='${description.cssAttributeValue()}']"
+    private fun descriptionLocator(description: String) =
+        By.cssSelector(
+        "[aria-label='${description.cssAttributeValue()}']",
     )
 
     private fun textLocator(text: String) = By.cssSelector("[data-appium-text='${text.cssAttributeValue()}']")
@@ -180,8 +194,6 @@ class WasmAppTestDriver(private val browser: WebDriver) : AppTestDriver {
                 ?.copyTo(File(outputDir, "$name.png"), overwrite = true)
         }
     }
-
-    private val wait get() = WebDriverWait(browser, Duration.ofSeconds(UI_WAIT_SECONDS))
 
     private fun String.cssAttributeValue(): String = replace("\\", "\\\\").replace("'", "\\'")
 

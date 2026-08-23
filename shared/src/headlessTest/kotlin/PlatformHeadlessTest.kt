@@ -1,2 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
 
-expect abstract class PlatformHeadlessTest()
+package com.storyteller_f.shared
+
+expect open class PlatformHeadlessTest()

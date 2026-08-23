@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.core
 
 import com.perraco.utils.SnowflakeFactory
@@ -17,7 +21,6 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 class DatabaseTest {
-
     init {
         SnowflakeFactory.setMachine(0)
     }
@@ -25,21 +28,22 @@ class DatabaseTest {
     private suspend fun createTestUser(db: CombinedDatabase): User {
         val id = SnowflakeFactory.nextId()
         val notificationId = SnowflakeFactory.nextId()
-        val shortId = (id % 100000).toString()
-        val user = User(
-            aid = "u$shortId",
-            encryptionPublicKey = null,
-            publicKey = "pk-$id",
-            address = "addr-$id",
-            icon = null,
-            nickname = "User$shortId",
-            id = id,
-            createdTime = now(),
-            acgAmount = 0,
-            passType = PassType.RAW,
-            algoType = AlgoType.P256,
-            notificationId = notificationId
-        )
+        val shortId = (id % 100_000).toString()
+        val user =
+            User(
+                aid = "u$shortId",
+                encryptionPublicKey = null,
+                publicKey = "pk-$id",
+                address = "addr-$id",
+                icon = null,
+                nickname = "User$shortId",
+                id = id,
+                createdTime = now(),
+                acgAmount = 0,
+                passType = PassType.RAW,
+                algoType = AlgoType.P256,
+                notificationId = notificationId,
+            )
         db.user.createUser(user).getOrThrow()
         return user
     }
@@ -55,7 +59,7 @@ class DatabaseTest {
     }
 
     private val userNotExistsReturnsNull: suspend (CombinedDatabase) -> Unit = { db ->
-        val rawUser = db.user.getRawUser(ObjectFetch.IdFetch(999999)).getOrThrow()
+        val rawUser = db.user.getRawUser(ObjectFetch.IdFetch(999_999)).getOrThrow()
         assertNull(rawUser)
     }
 
@@ -63,14 +67,15 @@ class DatabaseTest {
         val user = createTestUser(db)
         val communityId = SnowflakeFactory.nextId()
         val memberId = SnowflakeFactory.nextId()
-        val community = Community(
-            id = communityId,
-            createdTime = now(),
-            aid = "c${communityId % 100000}",
-            name = "TestCommunity",
-            owner = user.id,
-            memberPolicy = MemberPolicy.OPEN
-        )
+        val community =
+            Community(
+                id = communityId,
+                createdTime = now(),
+                aid = "c${communityId % 100_000}",
+                name = "TestCommunity",
+                owner = user.id,
+                memberPolicy = MemberPolicy.OPEN,
+            )
         db.community.createCommunity(community, memberId).getOrThrow()
 
         val rawCommunity = db.community.getRawCommunity(ObjectFetch.IdFetch(communityId)).getOrThrow()
@@ -82,22 +87,24 @@ class DatabaseTest {
         val user = createTestUser(db)
         val roomId = SnowflakeFactory.nextId()
         val memberId = SnowflakeFactory.nextId()
-        val room = Room(
-            id = roomId,
-            createdTime = now(),
-            aid = "r${roomId % 100000}",
-            name = "TestRoom",
-            creator = user.id
-        )
-        val member = Member(
-            id = memberId,
-            uid = user.id,
-            objectId = roomId,
-            objectType = ObjectType.ROOM,
-            createdTime = now(),
-            status = MemberStatus.JOINED,
-            joinedTime = now()
-        )
+        val room =
+            Room(
+                id = roomId,
+                createdTime = now(),
+                aid = "r${roomId % 100_000}",
+                name = "TestRoom",
+                creator = user.id,
+            )
+        val member =
+            Member(
+                id = memberId,
+                uid = user.id,
+                objectId = roomId,
+                objectType = ObjectType.ROOM,
+                createdTime = now(),
+                status = MemberStatus.JOINED,
+                joinedTime = now(),
+            )
         db.room.createRoom(room, listOf(member)).getOrThrow()
 
         val rawRoom = db.room.getRawRoom(ObjectFetch.IdFetch(roomId)).getOrThrow()

@@ -1,9 +1,0 @@
-<?xml version="1.0" ?>
-<SmellBaseline>
-  <ManuallySuppressedIssues/>
-  <CurrentIssues>
-    <ID>AbsentOrWrongFileLicense:UrlTest.kt:.UrlTest.kt</ID>
-    <ID>LibraryEntitiesShouldNotBePublic:UrlTest.kt:UrlTest</ID>
-    <ID>MissingPackageDeclaration:UrlTest.kt:.UrlTest.kt</ID>
-  </CurrentIssues>
-</SmellBaseline>

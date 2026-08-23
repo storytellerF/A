@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.panel.pages
 
 import androidx.compose.foundation.clickable
@@ -69,10 +73,11 @@ fun FileDetailPage(id: PrimaryKey) {
     val pagerState = rememberPagerState { 2 }
     val scope = rememberCoroutineScope()
     Scaffold(topBar = { FileTopBar(id) }, bottomBar = {
-        val navRoutes = listOf(
-            NavRoute("/info", Icons.Default.FilePresent, stringResource(Res.string.tab_info)),
-            NavRoute("/logs", Icons.AutoMirrored.Filled.Article, stringResource(Res.string.tab_logs)),
-        )
+        val navRoutes =
+            listOf(
+                NavRoute("/info", Icons.Default.FilePresent, stringResource(Res.string.tab_info)),
+                NavRoute("/logs", Icons.AutoMirrored.Filled.Article, stringResource(Res.string.tab_logs)),
+            )
         CustomBottomNav(navRoutes[pagerState.currentPage].path, navRoutes) { path ->
             scope.launch {
                 pagerState.animateScrollToPage(navRoutes.indexOfFirst { it.path == path })
@@ -96,11 +101,12 @@ private fun FileTopBar(id: PrimaryKey) {
     val vm = createPanelFileViewModel(id)
     val info by vm.handler.data.collectAsState(null)
     val name = info?.name
-    val title = if (name != null) {
-        stringResource(Res.string.file_detail_title_with_info, name)
-    } else {
-        stringResource(Res.string.file_detail_title)
-    }
+    val title =
+        if (name != null) {
+            stringResource(Res.string.file_detail_title_with_info, name)
+        } else {
+            stringResource(Res.string.file_detail_title)
+        }
     val nav = LocalPanelNav.current
     TopAppBar(
         title = {
@@ -110,7 +116,7 @@ private fun FileTopBar(id: PrimaryKey) {
             IconButton(onClick = { nav.open() }) {
                 Icon(Icons.Default.Menu, null)
             }
-        }
+        },
     )
 }
 
@@ -153,12 +159,14 @@ private fun FileBasicInfoSection(id: PrimaryKey) {
                         CoilZoomAsyncImage(
                             model = globalLoader(info.url),
                             contentDescription = stringResource(Res.string.preview_image),
-                            modifier = Modifier.fillMaxSize()
+                            modifier = Modifier.fillMaxSize(),
                         )
                     }
+
                     info.contentType == com.storyteller_f.shared.model.FileInfo.PDF_CONTENT_TYPE -> {
                         PdfView(info.url, Modifier.fillMaxSize())
                     }
+
                     info.contentType.startsWith("video") || info.contentType.startsWith("audio") -> {
                         Text(stringResource(Res.string.file_can_preview))
                     }
@@ -168,7 +176,7 @@ private fun FileBasicInfoSection(id: PrimaryKey) {
                 onClick = {
                     nav.gotoFilePreview(info.id, info.url, info.contentType, info.name)
                 },
-                modifier = Modifier.padding(top = 16.dp)
+                modifier = Modifier.padding(top = 16.dp),
             ) {
                 Text(stringResource(Res.string.fullscreen_preview))
             }
@@ -189,7 +197,8 @@ private fun FileBasicInfoSection(id: PrimaryKey) {
     }
 }
 
-private fun fileBasicInfoItems(info: com.storyteller_f.shared.model.FileInfo): List<Pair<String, String>> = buildList {
+private fun fileBasicInfoItems(info: com.storyteller_f.shared.model.FileInfo): List<Pair<String, String>> =
+    buildList {
     add("id" to info.id.toString())
     add("name" to info.name)
     add("fullName" to info.fullName)
@@ -204,10 +213,7 @@ private fun fileBasicInfoItems(info: com.storyteller_f.shared.model.FileInfo): L
 }
 
 @Composable
-private fun FileReadOnlyToggleButton(
-    readOnly: Boolean,
-    onToggle: (Boolean) -> Unit
-) {
+private fun FileReadOnlyToggleButton(readOnly: Boolean, onToggle: (Boolean) -> Unit) {
     Button(onClick = {
         val newValue = !readOnly
         onToggle(newValue)
@@ -227,19 +233,24 @@ private fun FileRefsSection(id: PrimaryKey) {
     val vm = createPanelFileRefsViewModel(id)
     StateView(vm, modifier = Modifier.fillMaxSize()) { fileRefs ->
         LazyColumn {
-            pagingItems(fileRefs, key = { it.fileId }) {
-                val ref = fileRefs[it]
+            pagingItems(fileRefs, key = { it.fileId }) { index ->
+                val ref = fileRefs[index]
                 ListItem(
-                    modifier = Modifier.clickable {
+                    modifier =
+                    Modifier.clickable {
                         when (ref?.objectType) {
                             com.storyteller_f.shared.type.ObjectType.COMMUNITY ->
                                 nav.gotoCommunityDetail(ref.objectId)
+
                             com.storyteller_f.shared.type.ObjectType.ROOM ->
                                 nav.gotoRoomDetail(ref.objectId)
+
                             com.storyteller_f.shared.type.ObjectType.TOPIC ->
                                 nav.gotoTopicDetail(ref.objectId)
+
                             com.storyteller_f.shared.type.ObjectType.USER ->
                                 nav.gotoUserDetail(ref.objectId)
+
                             else -> {}
                         }
                     },
@@ -248,7 +259,7 @@ private fun FileRefsSection(id: PrimaryKey) {
                     },
                     supportingContent = {
                         Text("Author: ${ref?.author ?: "Unknown"}")
-                    }
+                    },
                 )
                 HorizontalDivider()
             }

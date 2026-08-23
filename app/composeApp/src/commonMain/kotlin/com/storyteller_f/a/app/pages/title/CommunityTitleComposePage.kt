@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.title
 
 import androidx.compose.runtime.Composable
@@ -28,12 +32,13 @@ fun CommunityTitleComposePage(communityId: PrimaryKey) {
 @Composable
 private fun CommunityTitleComposeInternal(communityId: PrimaryKey) {
     val scope = communityId ob ObjectType.COMMUNITY
-    val vm = createTitleComposeViewModel(
-        initialScope = scope,
-        initialType = com.storyteller_f.shared.model.TitleType.JOIN,
-        lockScope = true,
-        lockType = true
-    )
+    val vm =
+        createTitleComposeViewModel(
+            initialScope = scope,
+            initialType = com.storyteller_f.shared.model.TitleType.JOIN,
+            lockScope = true,
+            lockType = true,
+        )
     val appNavFactory = LocalAppNavFactory.current
     val coroutineScope = rememberCoroutineScope()
     val globalDialog = LocalGlobalDialog.current
@@ -52,10 +57,9 @@ private fun CommunityTitleComposeInternal(communityId: PrimaryKey) {
     TitleComposeSheet(vm)
 }
 
-private suspend fun AppGlobalDialogController.createTitle(
-    newTitle: NewTitle,
-): Result<TitleInfo> {
-    return request { createTitle(newTitle) }.onSuccess { title ->
-        emitEvent(OnTitleCreated(title))
-    }
+private suspend fun AppGlobalDialogController.createTitle(newTitle: NewTitle): Result<TitleInfo> =
+    request {
+    createTitle(newTitle)
+}.onSuccess { title ->
+    emitEvent(OnTitleCreated(title))
 }

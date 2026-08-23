@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.utils
 
 import androidx.compose.ui.graphics.ImageBitmap
@@ -10,9 +14,5 @@ actual fun Image.coilImageToImageBitmap(): Result<ImageBitmap> =
 
 actual fun ImageRequest.Builder.androidAllowHardware(b: Boolean): ImageRequest.Builder = this
 
-actual fun saveImageBitmap(
-    imageBitmap: ImageBitmap,
-    path: String,
-    format: ImageFormat,
-    quality: Int
-): Result<Path> = Result.failure(UnsupportedOperationException("not supported on wasm"))
+actual fun saveImageBitmap(imageBitmap: ImageBitmap, path: String, format: ImageFormat, quality: Int): Result<Path> =
+    Result.failure(UnsupportedOperationException("not supported on wasm"))

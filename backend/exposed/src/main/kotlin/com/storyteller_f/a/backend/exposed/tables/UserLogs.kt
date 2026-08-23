@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.exposed.tables
 
 import com.storyteller_f.a.backend.core.types.UserLog
@@ -21,15 +25,14 @@ object UserLogs : BaseTable() {
     }
 }
 
-fun UserLog.Companion.wrapRow(resultRow: ResultRow): UserLog {
-    return with(UserLogs) {
-        UserLog(
-            resultRow[id],
-            resultRow[createdTime],
-            resultRow[uid],
-            resultRow[type],
-            resultRow[objectId],
-            resultRow[objectType]
-        )
-    }
+fun UserLog.Companion.wrapRow(resultRow: ResultRow): UserLog =
+    with(UserLogs) {
+    UserLog(
+        resultRow[id],
+        resultRow[createdTime],
+        resultRow[uid],
+        resultRow[type],
+        resultRow[objectId],
+        resultRow[objectType],
+    )
 }

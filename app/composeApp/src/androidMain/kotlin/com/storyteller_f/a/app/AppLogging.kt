@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app
 
 import android.app.Application
@@ -33,49 +37,51 @@ private fun installCrashHandler() {
     }
 }
 
-private fun ensureAppLogFile(application: Application): File {
-    return File(application.filesDir, "$LOG_DIR_NAME/$LOG_FILE_NAME").apply {
-        parentFile?.mkdirs()
-        if (!exists()) {
-            createNewFile()
-        }
+private fun ensureAppLogFile(application: Application): File =
+    File(
+    application.filesDir,
+    "$LOG_DIR_NAME/$LOG_FILE_NAME",
+).apply {
+    parentFile?.mkdirs()
+    if (!exists()) {
+        createNewFile()
     }
 }
 
-private class AppAntilog(
-    private val logFile: File
-) : Antilog() {
+private class AppAntilog(private val logFile: File) : Antilog() {
     private val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US)
 
     override fun performLog(priority: LogLevel, tag: String?, throwable: Throwable?, message: String?) {
         val actualTag = tag?.takeIf { it.isNotBlank() } ?: DEFAULT_TAG
-        val logcatMessage = when {
-            message == null -> throwable?.stackTraceToString().orEmpty()
-            throwable != null -> "$message\n${throwable.stackTraceToString()}"
-            else -> message
-        }
+        val logcatMessage =
+            when {
+                message == null -> throwable?.stackTraceToString().orEmpty()
+                throwable != null -> "$message\n${throwable.stackTraceToString()}"
+                else -> message
+            }
         if (logcatMessage.isNotBlank()) {
             Log.println(priority.toAndroidPriority(), actualTag, logcatMessage)
         }
-        val renderedMessage = buildString {
-            append(formatter.format(System.currentTimeMillis()))
-            append(' ')
-            append(priority.name)
-            append(' ')
-            append('[')
-            append(actualTag)
-            append(']')
-            message?.takeIf { it.isNotBlank() }?.let {
+        val renderedMessage =
+            buildString {
+                append(formatter.format(System.currentTimeMillis()))
                 append(' ')
-                append(it)
-            }
-            throwable?.let {
-                if (isNotEmpty()) {
-                    append('\n')
+                append(priority.name)
+                append(' ')
+                append('[')
+                append(actualTag)
+                append(']')
+                message?.takeIf { it.isNotBlank() }?.let {
+                    append(' ')
+                    append(it)
                 }
-                append(it.stackTraceToString())
+                throwable?.let {
+                    if (isNotEmpty()) {
+                        append('\n')
+                    }
+                    append(it.stackTraceToString())
+                }
             }
-        }
         if (renderedMessage.isBlank()) {
             return
         }
@@ -94,13 +100,12 @@ private class AppAntilog(
     }
 }
 
-private fun LogLevel.toAndroidPriority(): Int {
-    return when (this) {
-        LogLevel.VERBOSE -> Log.VERBOSE
-        LogLevel.DEBUG -> Log.DEBUG
-        LogLevel.INFO -> Log.INFO
-        LogLevel.WARNING -> Log.WARN
-        LogLevel.ERROR -> Log.ERROR
-        LogLevel.ASSERT -> Log.ASSERT
-    }
+private fun LogLevel.toAndroidPriority(): Int =
+    when (this) {
+    LogLevel.VERBOSE -> Log.VERBOSE
+    LogLevel.DEBUG -> Log.DEBUG
+    LogLevel.INFO -> Log.INFO
+    LogLevel.WARNING -> Log.WARN
+    LogLevel.ERROR -> Log.ERROR
+    LogLevel.ASSERT -> Log.ASSERT
 }

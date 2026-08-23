@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.utils
 
 import androidx.activity.ComponentActivity
@@ -29,22 +33,20 @@ actual fun initEnvironment(context: Any) {
     }
 }
 
-actual fun createConnectivity(): Connectivity {
-    return Connectivity {
-        autoStart = true
-    }
+actual fun createConnectivity(): Connectivity =
+    Connectivity {
+    autoStart = true
 }
 
-actual fun getClientFile(path: String): ClientFile? {
-    return getClipFile(getAppContextRefValue()!!, path.toUri())
-}
+actual fun getClientFile(path: String): ClientFile? =
+    getClipFile(checkNotNull(getAppContextRefValue()) { "Application context is not initialized" }, path.toUri())
 
 private val appPreferencesDataStore by lazy {
-    val context = getAppContextRefValue()!!
+    val context = checkNotNull(getAppContextRefValue()) { "Application context is not initialized" }
     PreferenceDataStoreFactory.createWithPath(
         produceFile = {
             context.filesDir.resolve("main.preferences_pb").toOkioPath()
-        }
+        },
     )
 }
 
@@ -55,10 +57,6 @@ actual fun unregisterPushService() {
     UnifiedPush.unregister(context, "A")
 }
 
-actual fun getDeepLinkHost(): String {
-    return AppConfig.DEEP_LINK_HOST
-}
+actual fun getDeepLinkHost(): String = AppConfig.DEEP_LINK_HOST
 
-actual fun getDeepLinkScheme(): String {
-    return "${AppConfig.DEEP_LINK_SCHEME_PREFIX}${if (AppConfig.DEBUG) "-debug" else ""}"
-}
+actual fun getDeepLinkScheme(): String = "${AppConfig.DEEP_LINK_SCHEME_PREFIX}${if (AppConfig.DEBUG) "-debug" else ""}"

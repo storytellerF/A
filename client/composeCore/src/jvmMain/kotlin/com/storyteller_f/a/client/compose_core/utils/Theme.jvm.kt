@@ -1,12 +1,11 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.utils
 
 import androidx.compose.material3.ColorScheme
 import androidx.compose.runtime.Composable
 
 @Composable
-actual fun getAppDynamicColorScheme(
-    dynamicColor: Boolean,
-    darkTheme: Boolean
-): ColorScheme? {
-    return null
-}
+actual fun getAppDynamicColorScheme(dynamicColor: Boolean, darkTheme: Boolean): ColorScheme? = null

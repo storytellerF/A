@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app
 
 import android.os.Bundle
@@ -28,7 +32,7 @@ class MediaPlayerActivity : ComponentActivity() {
                 CompositionLocalProvider(
                     LocalUiViewModel provides uiViewModel,
                     LocalMediaPlayListHandlerProvider provides DefaultMediaPlayListHandlerProvider,
-                    LocalMediaPlayerService provides (application as AApplication).mediaPlayer
+                    LocalMediaPlayerService provides (application as AApplication).mediaPlayer,
                 ) {
                     MediaPlayerPage(remoteMediaItem)
                 }

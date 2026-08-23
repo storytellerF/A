@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.core.types
 
 import com.storyteller_f.shared.model.UserFavoriteInfo
@@ -13,14 +17,9 @@ class UserFavorite(
     val objectType: ObjectType,
     val createdTime: LocalDateTime,
 ) {
-
-    fun objectTuple(): ObjectTuple {
-        return ObjectTuple(objectId, objectType)
-    }
+    fun objectTuple(): ObjectTuple = ObjectTuple(objectId, objectType)
 
     companion object
 }
 
-fun UserFavorite.toUserFavoriteInfo(): UserFavoriteInfo {
-    return UserFavoriteInfo(id, uid, objectId, objectType, createdTime)
-}
+fun UserFavorite.toUserFavoriteInfo(): UserFavoriteInfo = UserFavoriteInfo(id, uid, objectId, objectType, createdTime)

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.elastic
 
 import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient
@@ -16,6 +20,7 @@ import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.splitKeywords
 import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.cancellableRunCatching
 import com.storyteller_f.shared.utils.recoverResult
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
@@ -28,15 +33,13 @@ import java.io.FileInputStream
 import java.net.ConnectException
 import javax.net.ssl.SSLContext
 
-abstract class Elastic(val connection: ElasticConnection) {
+open class Elastic(val connection: ElasticConnection) {
     val sslContext = getSslContext(connection)
 
-    suspend fun <T> useElasticClient(
-        block: suspend ElasticsearchAsyncClient.() -> T,
-    ): Result<T> {
+    suspend fun <T> useElasticClient(block: suspend ElasticsearchAsyncClient.() -> T): Result<T> {
         val elasticConnection = connection
-        val point = Exception()
-        return runCatching {
+        val point = Exception("Elasticsearch request call site")
+        return cancellableRunCatching {
             ElasticsearchAsyncClient.of { b ->
                 b.host(elasticConnection.url)
                     .usernameAndPassword(elasticConnection.name, elasticConnection.pass)
@@ -44,9 +47,12 @@ abstract class Elastic(val connection: ElasticConnection) {
                     .transportOptions {
                         it.addHeader("Accept", ContentType.APPLICATION_JSON.mimeType)
                             .addHeader("Content-Type", ContentType.APPLICATION_JSON.mimeType)
-                    }.jsonMapper(JacksonJsonpMapper().apply {
-                        objectMapper().registerKotlinModule()
-                    })
+                    }
+                    .jsonMapper(
+                        JacksonJsonpMapper().apply {
+                            objectMapper().registerKotlinModule()
+                        },
+                    )
             }.use {
                 withContext(Dispatchers.IO) {
                     it.block()
@@ -61,7 +67,8 @@ abstract class Elastic(val connection: ElasticConnection) {
             Result.failure(
                 when (e) {
                     is ConnectException,
-                    is ConnectionClosedException ->
+                    is ConnectionClosedException,
+                    ->
                         Exception("elastic service unavailable", e)
 
                     is ElasticsearchException if e.status() == 404 ->
@@ -71,7 +78,7 @@ abstract class Elastic(val connection: ElasticConnection) {
                         point.initCause(e)
                         point
                     }
-                }
+                },
             )
         }
     }
@@ -80,10 +87,12 @@ abstract class Elastic(val connection: ElasticConnection) {
 suspend fun ElasticsearchAsyncClient.cleanAll(indexName: String) {
     if (indices().exists {
             it.index(indexName)
-        }.await().value()) {
-        val response = indices().delete {
-            it.index(indexName)
-        }.await()
+        }.await().value()
+    ) {
+        val response =
+            indices().delete {
+                it.index(indexName)
+            }.await()
         Napier.i {
             "elastic clean done $response"
         }
@@ -97,51 +106,54 @@ suspend fun ElasticsearchAsyncClient.cleanAll(indexName: String) {
 suspend fun <T> ElasticsearchAsyncClient.getDocumentList(
     idList: List<PrimaryKey>,
     indexName: String,
-    clazz: Class<T>
-): List<T?> {
-    return if (idList.size == 1) {
-        idList.map { id ->
-            get({
-                it.index(indexName).id(id.toString())
-            }, clazz).await().source()
-        }
-    } else {
-        mget({ builder ->
-            builder.index(indexName).ids(idList.map { it.toString() })
-        }, clazz).await().docs().map {
-            it.result().source()
-        }
+    clazz: Class<T>,
+): List<T?> =
+    if (idList.size == 1) {
+    idList.map { id ->
+        get({
+            it.index(indexName).id(id.toString())
+        }, clazz).await().source()
+    }
+} else {
+    mget({ builder ->
+        builder.index(indexName).ids(idList.map { it.toString() })
+    }, clazz).await().docs().map {
+        it.result().source()
     }
 }
 
 suspend fun <T : PrimaryKeyIdentifiable> ElasticsearchAsyncClient.saveDocumentList(
     connection: ElasticConnection,
     documents: List<T>,
-    indexName: String
+    indexName: String,
 ) {
     if (documents.size == 1) {
         val topic = documents.first()
-        val response = index {
-            it.index(indexName).id(topic.id.toString()).document(topic)
-                .refresh(if (connection.refresh) Refresh.WaitFor else Refresh.False)
-        }.await()
+        val response =
+            index {
+                it.index(indexName).id(topic.id.toString()).document(topic)
+                    .refresh(if (connection.refresh) Refresh.WaitFor else Refresh.False)
+            }.await()
         Napier.i(tag = "elastic save") {
             response.toString()
         }
     } else {
-        val response = bulk {
-            it.operations(documents.map { document ->
-                BulkOperation.of { op ->
-                    op.index(
-                        IndexOperation.Builder<T>()
-                            .index(indexName)
-                            .id(document.id.toString()) // 指定文档 ID
-                            .document(document)
-                            .build()
-                    )
-                }
-            }).refresh(Refresh.WaitFor)
-        }.await()
+        val response =
+            bulk { bulkRequest ->
+                bulkRequest.operations(
+                    documents.map { document ->
+                        BulkOperation.of { op ->
+                            op.index(
+                                IndexOperation.Builder<T>()
+                                    .index(indexName)
+                                    .id(document.id.toString()) // 指定文档 ID
+                                    .document(document)
+                                    .build(),
+                            )
+                        }
+                    },
+                ).refresh(Refresh.WaitFor)
+            }.await()
         Napier.i(tag = "elastic save bulk") {
             "errors:${response.errors()} took: ${response.took()}ms"
         }
@@ -162,45 +174,52 @@ fun getSslContext(elasticConnection: ElasticConnection): SSLContext? {
 
 suspend fun <T> ElasticsearchAsyncClient.searchDocumentList(
     request: SearchRequest?,
-    clazz: Class<T>
-): PaginationResult<T> {
-    return try {
-        val response = search(request, clazz).await()
-        val hits = response.hits()
-        val total = hits.total()?.value()
-        Napier.i {
-            "size: ${hits.hits().size} maxScore: ${hits.maxScore()} total: $total"
-        }
-        PaginationResult(hits.hits().mapNotNull {
-            it.source()
-        }, total ?: 0)
-    } catch (e: Exception) {
-        Napier.e(e) {
-            "elastic search failed"
-        }
-        PaginationResult(emptyList(), 0)
+    clazz: Class<T>,
+): PaginationResult<T> =
+    try {
+    val response = search(request, clazz).await()
+    val hits = response.hits()
+    val total = hits.total()?.value()
+    Napier.i {
+        "size: ${hits.hits().size} maxScore: ${hits.maxScore() ?: "<none>"} total: ${total ?: "<none>"}"
     }
+    PaginationResult(
+        hits.hits().mapNotNull {
+            it.source()
+        },
+        total ?: 0,
+    )
+} catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+    throw cancellation
+} catch (e: Exception) {
+    Napier.e(e) {
+        "elastic search failed"
+    }
+    PaginationResult(emptyList(), 0)
 }
 
 fun <T> buildElasticSearchService(env: MergedEnv, b: (ElasticConnection) -> T): T {
-    val certFile = env["ELASTIC_CERT_FILE"] ?: throw Exception("ELASTIC_CERT_FILE is empty")
+    val certFile = env["ELASTIC_CERT_FILE"] ?: error("ELASTIC_CERT_FILE is empty")
     // need replace home dir
-    val safeCertFile = when {
-        certFile.isBlank() -> {
-            ""
-        }
-        certFile.startsWith("~") -> {
-            val homeDir = System.getProperty("user.home")
-            File(certFile.replace("~", homeDir)).canonicalPath
-        }
-        else -> {
-            File(certFile).canonicalPath
-        }
-    }
+    val safeCertFile =
+        when {
+            certFile.isBlank() -> {
+                ""
+            }
 
-    val url = env["ELASTIC_URL"] ?: throw Exception("ELASTIC_URL is empty")
-    val name = env["ELASTIC_NAME"] ?: throw Exception("ELASTIC_NAME is empty")
-    val pass = env["ELASTIC_PASSWORD"] ?: throw Exception("ELASTIC_PASSWORD is empty")
+            certFile.startsWith("~") -> {
+                val homeDir = System.getProperty("user.home")
+                File(certFile.replace("~", homeDir)).canonicalPath
+            }
+
+            else -> {
+                File(certFile).canonicalPath
+            }
+        }
+
+    val url = env["ELASTIC_URL"] ?: error("ELASTIC_URL is empty")
+    val name = env["ELASTIC_NAME"] ?: error("ELASTIC_NAME is empty")
+    val pass = env["ELASTIC_PASSWORD"] ?: error("ELASTIC_PASSWORD is empty")
     val connection = ElasticConnection(url, safeCertFile, name, pass, env["BUILD_TYPE"] == "test")
     return b(connection)
 }

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.server.auth
 
 import com.storyteller_f.a.backend.core.Backend
@@ -27,20 +31,16 @@ import kotlin.io.path.name
 
 inline fun <reified R : Any> omitPrincipal(block: () -> Result<R?>) = block()
 
-inline fun <reified R : Any> RoutingContext.usePrincipal(
-    block: (uid: PrimaryKey) -> Result<R?>,
-) = usePrincipalOrNull { uid ->
-    if (uid != null) {
-        block(uid)
-    } else {
-        Result.failure(UnauthorizedException())
+inline fun <reified R : Any> RoutingContext.usePrincipal(block: (uid: PrimaryKey) -> Result<R?>) =
+    usePrincipalOrNull { uid ->
+        if (uid != null) {
+            block(uid)
+        } else {
+            Result.failure(UnauthorizedException())
+        }
     }
-}
 
-suspend inline fun <reified R : Any> RoutingContext.callRespond(
-    backend: Backend,
-    block: () -> Result<R?>?,
-) {
+suspend inline fun <reified R : Any> RoutingContext.callRespond(backend: Backend, block: () -> Result<R?>?) {
     try {
         val result = block()
         if (result == null) {
@@ -48,19 +48,20 @@ suspend inline fun <reified R : Any> RoutingContext.callRespond(
             return
         }
         handleResultInternal(result, backend.customConfig.buildType)
+    } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+        throw cancellation
     } catch (e: Exception) {
         handleCaughtException(e)
     }
 }
 
-inline fun <reified R : Any> RoutingContext.usePrincipalOrNull(
-    block: (uid: PrimaryKey?) -> Result<R?>?,
-) = block(call.principal<CustomPrincipal>()?.uid)
+inline fun <reified R : Any> RoutingContext.usePrincipalOrNull(block: (uid: PrimaryKey?) -> Result<R?>?) =
+    block(call.principal<CustomPrincipal>()?.uid)
 
 suspend fun RoutingContext.respondError(e: Throwable, buildType: String) {
     when (e) {
         is ForbiddenException -> {
-            call.respond(HttpStatusCode.Forbidden, e.message.toString())
+            call.respond(HttpStatusCode.Forbidden, e.message?.toString().orEmpty())
         }
 
         is UnauthorizedException -> {
@@ -78,7 +79,7 @@ suspend fun RoutingContext.respondError(e: Throwable, buildType: String) {
         else -> {
             call.respond(
                 HttpStatusCode.InternalServerError,
-                if (buildType == "prod") "" else (e.message ?: e.toString())
+                if (buildType == "prod") "" else e.message ?: e.toString(),
             )
         }
     }
@@ -93,38 +94,38 @@ inline fun <reified R : Any> DefaultWebSocketServerSession.usePrincipal(block: (
     }
 }
 
-inline fun <reified R> handleResult(backend: Backend): suspend RoutingContext.(it: Result<R>) -> Unit {
-    return { result ->
-        handleResultInternal(result, backend.customConfig.buildType)
-    }
+inline fun <reified R> handleResult(backend: Backend): suspend RoutingContext.(it: Result<R>) -> Unit = { result ->
+    handleResultInternal(result, backend.customConfig.buildType)
 }
 
-suspend inline fun <reified R> RoutingContext.handleResultInternal(it: Result<R>, buildType: String) {
-    it.onSuccess {
-        when (it) {
+suspend inline fun <reified R> RoutingContext.handleResultInternal(result: Result<R>, buildType: String) {
+    result.onSuccess { value ->
+        when (value) {
             null -> call.respond(HttpStatusCode.NotFound)
+
             is FileResponse -> {
                 call.response.header(
                     HttpHeaders.ContentDisposition,
                     ContentDisposition.Attachment.withParameter(
                         ContentDisposition.Parameters.FileName,
-                        it.file.name
-                    ).toString()
+                        value.file.name,
+                    ).toString(),
                 )
-                call.respondFile(it.file)
+                call.respondFile(value.file)
             }
 
             is PathResponse -> {
                 call.response.header(
                     HttpHeaders.ContentDisposition,
-                    ContentDisposition.Attachment.withParameter(ContentDisposition.Parameters.FileName, it.file.name)
-                        .toString()
+                    ContentDisposition.Attachment.withParameter(ContentDisposition.Parameters.FileName, value.file.name)
+                        .toString(),
                 )
-                call.respondPath(it.file)
+                call.respondPath(value.file)
             }
 
             is Unit -> call.respond(HttpStatusCode.OK)
-            else -> call.respond(it)
+
+            else -> call.respond(value)
         }
     }.onFailure { throwable ->
         respondError(throwable, buildType)

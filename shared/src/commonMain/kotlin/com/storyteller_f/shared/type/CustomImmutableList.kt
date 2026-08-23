@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.shared.type
 
 import kotlinx.collections.immutable.ImmutableList
@@ -22,20 +26,15 @@ class ImmutableListSerializer<T>(elementSerializer: KSerializer<T>) : KSerialize
         listSerializer.serialize(encoder, value)
     }
 
-    override fun deserialize(decoder: Decoder): ImmutableList<T> {
-        return listSerializer.deserialize(decoder).toImmutableList()
-    }
+    override fun deserialize(decoder: Decoder): ImmutableList<T> = listSerializer.deserialize(decoder).toImmutableList()
 }
 
 typealias CustomImmutableList<T> =
     @Serializable(ImmutableListSerializer::class)
     ImmutableList<T>
 
-class ImmutableMapSerializer<K, V>(
-    keySerializer: KSerializer<K>,
-    valueSerializer: KSerializer<V>
-) : KSerializer<ImmutableMap<K, V>> {
-
+class ImmutableMapSerializer<K, V>(keySerializer: KSerializer<K>, valueSerializer: KSerializer<V>) :
+    KSerializer<ImmutableMap<K, V>> {
     private val mapSerializer = MapSerializer(keySerializer, valueSerializer)
 
     override val descriptor: SerialDescriptor =
@@ -45,9 +44,7 @@ class ImmutableMapSerializer<K, V>(
         mapSerializer.serialize(encoder, value)
     }
 
-    override fun deserialize(decoder: Decoder): ImmutableMap<K, V> {
-        return mapSerializer.deserialize(decoder).toImmutableMap()
-    }
+    override fun deserialize(decoder: Decoder): ImmutableMap<K, V> = mapSerializer.deserialize(decoder).toImmutableMap()
 }
 typealias CustomImmutableMap<K, V> =
     @Serializable(ImmutableMapSerializer::class)

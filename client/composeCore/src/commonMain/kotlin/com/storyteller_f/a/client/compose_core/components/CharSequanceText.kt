@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.components
 
 import androidx.compose.material3.Text
@@ -8,6 +12,6 @@ fun CharSequenceText(content: CharSequence) {
     if (content is String) {
         Text(content)
     } else {
-        Text(content::class.simpleName.toString())
+        Text(content::class.simpleName?.toString().orEmpty())
     }
 }

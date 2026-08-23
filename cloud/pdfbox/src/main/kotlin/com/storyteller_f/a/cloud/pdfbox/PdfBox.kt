@@ -195,10 +195,10 @@ private fun loadFontBundle(document: PDDocument): PdfFontBundle {
 
     val bold = candidates.firstOrNull {
         it.name.contains("Bold") && !it.name.contains("Italic")
-    } ?: throw Exception("bold font not found")
+    } ?: throw IllegalStateException("bold font not found")
     val italic = candidates.firstOrNull {
         it.name.contains("Italic") && !it.name.contains("Bold")
-    } ?: throw Exception("italic font not found")
+    } ?: throw IllegalStateException("italic font not found")
     val mono = getMonoFont()
     return PdfFontBundle(
         loadByName(base),

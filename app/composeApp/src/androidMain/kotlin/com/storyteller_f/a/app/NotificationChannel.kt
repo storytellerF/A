@@ -1,21 +1,23 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app
 
 import android.content.Context
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationManagerCompat
 
-fun getOrCreateNotificationChannel(
-    context: Context,
-    channel: String
-): NotificationManagerCompat {
+fun getOrCreateNotificationChannel(context: Context, channel: String): NotificationManagerCompat {
     val notificationManager = NotificationManagerCompat.from(context)
     val notificationChannel = notificationManager.getNotificationChannel(channel)
     if (notificationChannel == null) {
         notificationManager.deleteNotificationChannel(channel)
     }
-    val channelBuilder = NotificationChannelCompat.Builder(channel, NotificationManagerCompat.IMPORTANCE_LOW)
-        .setSound(null, null)
-        .setVibrationEnabled(true)
+    val channelBuilder =
+        NotificationChannelCompat.Builder(channel, NotificationManagerCompat.IMPORTANCE_LOW)
+            .setSound(null, null)
+            .setVibrationEnabled(true)
     if (channel == "Regular") {
         channelBuilder.setName("Regular")
         channelBuilder.setDescription("Regular")

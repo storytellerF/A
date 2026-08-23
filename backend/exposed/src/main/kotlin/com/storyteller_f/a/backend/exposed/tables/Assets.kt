@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.exposed.tables
 
 import com.storyteller_f.a.backend.core.types.AssetTransaction
@@ -13,8 +17,7 @@ object AssetTransactions : BaseTable() {
     val uid = customPrimaryKey("uid")
 }
 
-fun AssetTransaction.Companion.wrapRow(row: ResultRow): AssetTransaction {
-    return with(AssetTransactions) {
-        AssetTransaction(row[id], row[uid], row[createdTime], row[type], row[before], row[after])
-    }
+fun AssetTransaction.Companion.wrapRow(row: ResultRow): AssetTransaction =
+    with(AssetTransactions) {
+    AssetTransaction(row[id], row[uid], row[createdTime], row[type], row[before], row[after])
 }

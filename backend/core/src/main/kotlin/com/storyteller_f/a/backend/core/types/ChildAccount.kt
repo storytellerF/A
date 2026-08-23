@@ -1,14 +1,18 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.core.types
 
 import com.storyteller_f.shared.type.PrimaryKey
 
-class ChildAccount(
+data class ChildAccount(
     val uid: PrimaryKey,
     val encryptedPrivateKey: String,
     val encryptedAesKey: String,
     val hostId: PrimaryKey,
     val remark: String?,
-    val encryptedEncryptionPrivateKey: String? = null
+    val encryptedEncryptionPrivateKey: String? = null,
 ) {
     companion object
 }

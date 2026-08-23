@@ -1,9 +1,8 @@
-@file:Suppress(
-    "AbsentOrWrongFileLicense",
-    "LibraryEntitiesShouldNotBePublic",
-    "MissingPackageDeclaration",
-    "StringShouldBeRawString",
-)
+/*
+ * This is a private project. All rights reserved.
+ */
+
+package com.storyteller_f.a.dev.appium
 
 import java.io.File
 import kotlin.test.Test
@@ -24,11 +23,11 @@ class DesktopLaunchScriptTest {
                 "#!/bin/bash",
                 "mkdir -p \"/tmp/appium logs\"",
                 "export BROWSER=\"/tmp/browser capture\"",
-                "exec \"java\" \\",
-                "              \"--flag\" \\",
-                "              \"-cp\" \\",
-                "              \"/tmp/runtime classpath\" \\",
-                "              \"example.Main\" \\",
+                """exec "java" \""",
+                """              "--flag" \""",
+                """              "-cp" \""",
+                """              "/tmp/runtime classpath" \""",
+                """              "example.Main" \""",
                 "  >> \"/tmp/appium logs/app.log\" 2>&1",
             ).joinToString("\n")
 

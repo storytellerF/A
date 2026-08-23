@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.user
 
 import androidx.lifecycle.ViewModel
@@ -16,35 +20,37 @@ class InputPrivateKeyViewModel : ViewModel() {
     val algo = MutableStateFlow(AlgoType.P256)
     val privateKeyError = MutableStateFlow<String?>(null)
 
-    val publicKey = privateKey.combine(algo) { privateKey, algo ->
-        if (privateKey.isEmpty()) {
-            null
-        } else {
-            getAlgo(algo).run {
-                getDerPublicKeyFromPrivateKey(privateKey)
-                    .onSuccess { privateKeyError.value = null }
-                    .onFailure { throwable ->
-                        privateKeyError.value = throwable.message ?: throwable::class.simpleName
-                    }
-                    .getOrNull()
+    val publicKey =
+        privateKey.combine(algo) { privateKey, algo ->
+            if (privateKey.isEmpty()) {
+                null
+            } else {
+                getAlgo(algo).run {
+                    getDerPublicKeyFromPrivateKey(privateKey)
+                        .onSuccess { privateKeyError.value = null }
+                        .onFailure { throwable ->
+                            privateKeyError.value = throwable.message ?: throwable::class.simpleName
+                        }
+                        .getOrNull()
+                }
             }
-        }
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    val address = publicKey.combine(algo) { publicKey, algo ->
-        if (publicKey == null) {
-            null
-        } else {
-            getAlgo(algo).run {
-                calcAddress(publicKey)
-                    .onSuccess { privateKeyError.value = null }
-                    .onFailure { throwable ->
-                        privateKeyError.value = throwable.message ?: throwable::class.simpleName
-                    }
-                    .getOrNull()
+    val address =
+        publicKey.combine(algo) { publicKey, algo ->
+            if (publicKey == null) {
+                null
+            } else {
+                getAlgo(algo).run {
+                    calcAddress(publicKey)
+                        .onSuccess { privateKeyError.value = null }
+                        .onFailure { throwable ->
+                            privateKeyError.value = throwable.message ?: throwable::class.simpleName
+                        }
+                        .getOrNull()
+                }
             }
-        }
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     fun updatePrivateKey(privateKey: String) {
         this.privateKey.value = privateKey

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.components
 
 import androidx.compose.foundation.layout.size
@@ -23,7 +27,7 @@ fun FileIcon(it: FileInfo) {
             it.url,
             it.name,
             modifier = modifier.clip(RoundedCornerShape(5.dp)),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.Crop,
         )
     } else if (contentType.startsWith("audio")) {
         Icon(Icons.Default.AudioFile, "audio file", modifier)

@@ -1,6 +1,11 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.ws.api
 
 import com.storyteller_f.shared.obj.RoomFrame
+import com.storyteller_f.shared.utils.cancellableRunCatching
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
@@ -25,21 +30,22 @@ class WsEventPublisher(private val rpcUrl: String?) {
         if (url.isNullOrBlank()) {
             return
         }
-        runCatching {
+        cancellableRunCatching {
             HttpClient(OkHttp) {
                 install(WebSockets)
                 installKrpc()
             }.use { client ->
-                val rpcClient = client.rpc {
-                    url {
-                        takeFrom(url)
-                    }
-                    rpcConfig {
-                        serialization {
-                            json()
+                val rpcClient =
+                    client.rpc {
+                        url {
+                            takeFrom(url)
+                        }
+                        rpcConfig {
+                            serialization {
+                                json()
+                            }
                         }
                     }
-                }
                 rpcClient.withService<WsEventService>().publishNewTopic(frame)
             }
         }.onFailure {

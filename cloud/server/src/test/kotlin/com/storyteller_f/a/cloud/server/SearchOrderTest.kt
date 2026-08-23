@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.server
 
 import com.storyteller_f.a.client.core.joinCommunity
@@ -8,9 +12,9 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class SearchOrderTest {
-
     @Test
-    fun `test community search order`() = test {
+    fun `test community search order`() =
+        test {
         attachSession {
             // 预期顺序: aid 前缀匹配 > name 前缀匹配 > aid 包含匹配 > name 包含匹配
             // 搜索词: "app"
@@ -21,11 +25,12 @@ class SearchOrderTest {
         }
 
         attachSession {
-            val result = searchCommunity(
-                size = 10,
-                joinStatusSearch = JoinStatusSearch.UNSPECIFIED,
-                word = "app"
-            ).getOrThrow()
+            val result =
+                searchCommunity(
+                    size = 10,
+                    joinStatusSearch = JoinStatusSearch.UNSPECIFIED,
+                    word = "app",
+                ).getOrThrow()
 
             assertEquals(4, result.data.size)
             assertEquals("apple", result.data[0].aid, "First result should be aid prefix match")
@@ -36,29 +41,32 @@ class SearchOrderTest {
     }
 
     @Test
-    fun `test room search order`() = test {
-        val session = attachSession {
-            val communityId = createCommunityForTest(id = "room_test_community").id
-            // 搜索词: "test"
-            createPublicRoomForTest(communityId, "test_room", "ignore_name_1") // 1. aid prefix
-            createPublicRoomForTest(communityId, "ignore_aid_1", "test search") // 2. name prefix
-            createPublicRoomForTest(communityId, "retest", "ignore_name_2") // 3. aid inclusion
-            createPublicRoomForTest(communityId, "ignore_aid_2", "latest test") // 4. name inclusion
-            communityId
-        }
+    fun `test room search order`() =
+        test {
+        val session =
+            attachSession {
+                val communityId = createCommunityForTest(id = "room_test_community").id
+                // 搜索词: "test"
+                createPublicRoomForTest(communityId, "test_room", "ignore_name_1") // 1. aid prefix
+                createPublicRoomForTest(communityId, "ignore_aid_1", "test search") // 2. name prefix
+                createPublicRoomForTest(communityId, "retest", "ignore_name_2") // 3. aid inclusion
+                createPublicRoomForTest(communityId, "ignore_aid_2", "latest test") // 4. name inclusion
+                communityId
+            }
 
         attachSession {
             val communityId = session.custom
             // 加入社区以搜索房间
             joinCommunity(communityId).getOrThrow()
 
-            val result = searchCommunityRooms(
-                communityId = communityId,
-                word = "test",
-                joinStatusSearch = JoinStatusSearch.UNSPECIFIED,
-                size = 10,
-                nextRoomId = null
-            ).getOrThrow()
+            val result =
+                searchCommunityRooms(
+                    communityId = communityId,
+                    word = "test",
+                    joinStatusSearch = JoinStatusSearch.UNSPECIFIED,
+                    size = 10,
+                    nextRoomId = null,
+                ).getOrThrow()
 
             assertEquals(4, result.data.size)
             assertEquals("test_room", result.data[0].aid)

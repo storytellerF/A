@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.panel
 
 import androidx.compose.runtime.CompositionLocalProvider
@@ -31,7 +35,8 @@ fun main() {
     }
 }
 
-private fun wasmQueryParameter(name: String): String? = window.location.search
+private fun wasmQueryParameter(name: String): String? =
+    window.location.search
     .removePrefix("?")
     .split('&')
     .firstOrNull { it.substringBefore('=') == name }

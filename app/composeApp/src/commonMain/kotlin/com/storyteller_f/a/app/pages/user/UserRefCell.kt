@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.user
 
 import androidx.compose.foundation.background
@@ -38,16 +42,14 @@ fun UserRefCell(userAid: String, onClick: ((UserInfo) -> Unit)? = null) {
 }
 
 @Composable
-private fun UserRefCellInternal(
-    handler: LoadingHandler<UserInfo>,
-    onClick: ((UserInfo) -> Unit)? = null
-) {
+private fun UserRefCellInternal(handler: LoadingHandler<UserInfo>, onClick: ((UserInfo) -> Unit)? = null) {
     val userInfo by handler.data.collectAsState()
     val shape = RoundedCornerShape(10.dp)
     val appNavFactory = LocalAppNavFactory.current
     RefCellStateView(
         handler,
-        modifier = Modifier
+        modifier =
+        Modifier
             .fillMaxWidth()
             .height(56.dp)
             .background(MaterialTheme.colorScheme.secondaryContainer, shape)
@@ -56,7 +58,7 @@ private fun UserRefCellInternal(
                 userInfo?.let {
                     onClick?.invoke(it) ?: appNavFactory.newAppNav().gotoUser(it.id)
                 }
-            }
+            },
     ) { info ->
         UnboundedUserCell(info)
     }

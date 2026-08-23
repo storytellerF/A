@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.utils
 
 import androidx.compose.runtime.Composable
@@ -30,26 +34,26 @@ internal class AppPreferences(private val dataStore: DataStore<Preferences>) {
     }
 }
 
-internal val LocalAppPreferences = staticCompositionLocalOf<AppPreferences> {
-    error("AppPreferences is not provided")
-}
+internal val LocalAppPreferences =
+    staticCompositionLocalOf<AppPreferences> {
+        error("AppPreferences is not provided")
+    }
 
 @Composable
-internal fun ProvideAppPreferences(
-    dataStore: DataStore<Preferences>,
-    content: @Composable () -> Unit,
-) {
-    val preferences = remember(dataStore) {
-        AppPreferences(dataStore)
-    }
+internal fun ProvideAppPreferences(dataStore: DataStore<Preferences>, content: @Composable () -> Unit) {
+    val preferences =
+        remember(dataStore) {
+            AppPreferences(dataStore)
+        }
     CompositionLocalProvider(LocalAppPreferences provides preferences, content = content)
 }
 
 @Composable
 internal fun rememberStringPreference(key: String, defaultValue: String): State<String> {
     val preferences = LocalAppPreferences.current
-    val values = remember(preferences, key, defaultValue) {
-        preferences.observeString(key, defaultValue)
-    }
+    val values =
+        remember(preferences, key, defaultValue) {
+            preferences.observeString(key, defaultValue)
+        }
     return values.collectAsState(initial = defaultValue)
 }

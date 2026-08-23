@@ -1,10 +1,14 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.components.block
 
 import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.utils.MarkdownObject
 
 /**
- * 将 ContentBlock 列表转换为 Markdown 文本
+ * 将 ContentBlock 列表转换为 Markdown 文本.
  */
 fun generateMarkdownFromBlocks(blocks: List<ContentBlock>): String {
     if (blocks.isEmpty()) {
@@ -26,12 +30,11 @@ fun generateMarkdownFromBlocks(blocks: List<ContentBlock>): String {
     }
 }
 
-private fun generateParagraphMarkdown(block: ContentBlock.Paragraph): String {
-    return if (block.level > 0) {
-        "${"#".repeat(block.level)} ${block.content}"
-    } else {
-        block.content
-    }
+private fun generateParagraphMarkdown(block: ContentBlock.Paragraph): String =
+    if (block.level > 0) {
+    "${"#".repeat(block.level)} ${block.content}"
+} else {
+    block.content
 }
 
 private fun generateListItemMarkdown(block: ContentBlock.ListItem): String {
@@ -40,8 +43,9 @@ private fun generateListItemMarkdown(block: ContentBlock.ListItem): String {
     return "$indent$prefix ${block.content}"
 }
 
-private fun generateQuoteMarkdown(block: ContentBlock.Quote): String {
-    return block.content.lines().joinToString("\n") { "> $it" }
+private fun generateQuoteMarkdown(block: ContentBlock.Quote): String =
+    block.content.lines().joinToString("\n") {
+    "> $it"
 }
 
 private fun generateCodeBlockMarkdown(block: ContentBlock.CodeBlock): String {
@@ -50,33 +54,31 @@ private fun generateCodeBlockMarkdown(block: ContentBlock.CodeBlock): String {
 }
 
 private fun generateImageMarkdown(block: ContentBlock.ImageBlock): String {
-    val alt = if (block.alt.isNotBlank()) block.alt else block.name
+    val alt = block.alt.ifBlank { block.name }
     val title = if (block.title.isNotBlank()) " \"${block.title}\"" else ""
-    val url = if (block.url.isNotBlank()) block.url else block.name
+    val url = block.url.ifBlank { block.name }
     return "![$alt]($url$title)"
 }
 
 private fun generateObjectBlockMarkdown(block: ContentBlock.ObjectBlock): String {
-    val obj = MarkdownObject(
-        name = block.name,
-        url = block.url,
-        isPlayList = block.isPlaylist,
-        contentType = block.contentType,
-        cover = block.cover,
-        title = block.title
-    )
+    val obj =
+        MarkdownObject(
+            name = block.name,
+            url = block.url,
+            isPlayList = block.isPlaylist,
+            contentType = block.contentType,
+            cover = block.cover,
+            title = block.title,
+        )
     val json = commonJson.encodeToString(obj)
     return "```object\n$json\n```"
 }
 
-private fun generateRefBlockMarkdown(block: ContentBlock.RefBlock): String {
-    return "```csa\n${block.refPath}\n```"
-}
+private fun generateRefBlockMarkdown(block: ContentBlock.RefBlock): String = "```csa\n${block.refPath}\n```"
 
-private fun generateMathBlockMarkdown(block: ContentBlock.MathBlock): String {
-    return if (block.inline) {
-        "$${block.content}$"
-    } else {
-        "```math\n${block.content}\n```"
-    }
+private fun generateMathBlockMarkdown(block: ContentBlock.MathBlock): String =
+    if (block.inline) {
+    "$${block.content}$"
+} else {
+    "```math\n${block.content}\n```"
 }

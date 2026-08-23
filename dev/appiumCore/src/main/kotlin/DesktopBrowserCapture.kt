@@ -1,3 +1,9 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
+package com.storyteller_f.a.dev.appium
+
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeout
 import java.io.File
@@ -6,10 +12,7 @@ import kotlin.test.assertContains
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 
-class DesktopBrowserCapture private constructor(
-    val command: File,
-    private val capturedUriFile: File,
-) {
+class DesktopBrowserCapture private constructor(val command: File, private val capturedUriFile: File) {
     suspend fun assertOpenedAsciidocPreview(expectedSource: String) {
         withTimeout(15.seconds) {
             while (!capturedUriFile.isFile || capturedUriFile.readText().isBlank()) {
@@ -37,7 +40,7 @@ class DesktopBrowserCapture private constructor(
                 """
                 #!/bin/sh
                 printf '%s' "${'$'}1" > "${capturedUriFile.canonicalPath}"
-                """.trimIndent()
+                """.trimIndent(),
             )
             check(command.setExecutable(true)) { "Failed to make browser capture command executable" }
             return DesktopBrowserCapture(command, capturedUriFile)

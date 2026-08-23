@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.shared.model
 
 import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
@@ -37,20 +41,26 @@ data class UserOverview(
     val reactionRecordCount: Long,
     val commentCount: Long,
     val hasUnreadChildRoomMessage: Boolean = false,
-    val userInfo: UserInfo
+    val userInfo: UserInfo,
 )
 
 @Serializable
-data class UnreadRoomsResponse(
-    val hasUnread: Boolean,
-    val unreadCount: Int = 0
-)
+data class UnreadRoomsResponse(val hasUnread: Boolean, val unreadCount: Int = 0)
 
 enum class UserLogType {
-    SIGN_IN, SIGN_UP, CREATE, DELETE, UPDATE, JOIN, EXIT,
-    ADD_ALTERNATIVE_ACCOUNT, REMOVE_ALTERNATIVE_ACCOUNT,
-    ADD_FAVORITE, REMOVE_FAVORITE,
-    ADD_SUBSCRIPTION, REMOVE_SUBSCRIPTION
+    SIGN_IN,
+    SIGN_UP,
+    CREATE,
+    DELETE,
+    UPDATE,
+    JOIN,
+    EXIT,
+    ADD_ALTERNATIVE_ACCOUNT,
+    REMOVE_ALTERNATIVE_ACCOUNT,
+    ADD_FAVORITE,
+    REMOVE_FAVORITE,
+    ADD_SUBSCRIPTION,
+    REMOVE_SUBSCRIPTION,
 }
 
 @Serializable
@@ -61,7 +71,7 @@ data class UserLogInfo(
     val objectId: PrimaryKey,
     val objectType: ObjectType,
     val createdTime: LocalDate,
-    val extensions: Extensions? = null
+    val extensions: Extensions? = null,
 ) : PrimaryKeyIdentifiable {
     @Serializable
     data class Extensions(
@@ -77,40 +87,33 @@ data class UserPubKeyInfo(
     val id: PrimaryKey,
     val pubKey: String,
     val algo: AlgoType = AlgoType.P256,
-    val encryptionPublicKey: String? = null
+    val encryptionPublicKey: String? = null,
 )
 
 enum class AlgoType {
     P256,
-    DILITHIUM
+    DILITHIUM,
 }
 
 enum class PassType {
-    RAW, ANDROID, BIT_WARDEN
+    RAW,
+    ANDROID,
+    BIT_WARDEN,
 }
 
 @Serializable
 enum class TwoFactorType {
-    TOTP
+    TOTP,
 }
 
 @Serializable
-data class TwoFactorSettingsInfo(
-    val enabled: Boolean,
-    val type: TwoFactorType? = null,
-)
+data class TwoFactorSettingsInfo(val enabled: Boolean, val type: TwoFactorType? = null)
 
 @Serializable
-data class TotpSetupInfo(
-    val secret: String,
-    val otpauthUri: String,
-    val recoveryCodes: List<String>,
-)
+data class TotpSetupInfo(val secret: String, val otpauthUri: String, val recoveryCodes: List<String>)
 
 @Serializable
-data class RecoveryCodesResponse(
-    val recoveryCodes: List<String>,
-)
+data class RecoveryCodesResponse(val recoveryCodes: List<String>)
 
 @Serializable
 data class ChildAccountInfo(
@@ -127,7 +130,7 @@ data class ChildAccountInfo(
 }
 
 enum class QuotaType {
-    FILE
+    FILE,
 }
 
 @Serializable
@@ -138,7 +141,7 @@ data class QuotaInfo(
     val total: Long,
     val used: Long,
     val lockId: PrimaryKey?,
-    val extensions: Extensions? = null
+    val extensions: Extensions? = null,
 ) {
     @Serializable
     data class Extensions(val uploadRecord: UploadRecordInfo? = null)

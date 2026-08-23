@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.core
 
 import com.storyteller_f.a.backend.core.types.AssetTransaction
@@ -13,9 +17,7 @@ import com.storyteller_f.a.backend.core.types.RawCommunity
 import com.storyteller_f.a.backend.core.types.RawPanelAccount
 import com.storyteller_f.a.backend.core.types.RawRoom
 import com.storyteller_f.a.backend.core.types.RawTitle
-import com.storyteller_f.a.backend.core.types.RawTopic
 import com.storyteller_f.a.backend.core.types.RawUser
-import com.storyteller_f.a.backend.core.types.RawUserOverview
 import com.storyteller_f.a.backend.core.types.ReactionRecord
 import com.storyteller_f.a.backend.core.types.Room
 import com.storyteller_f.a.backend.core.types.SubscriptionSentLog
@@ -38,7 +40,6 @@ import com.storyteller_f.shared.model.QuotaInfo
 import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.ReactionRecordInfo
-import com.storyteller_f.shared.model.TaskConfig
 import com.storyteller_f.shared.model.TaskRecordSummary
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.model.TitleSearchType
@@ -47,6 +48,7 @@ import com.storyteller_f.shared.model.TitleWorkStatus
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicPinSearch
 import com.storyteller_f.shared.model.UserPubKeyInfo
+import com.storyteller_f.shared.model.WorkerTask
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.PresetCommunity
 import com.storyteller_f.shared.obj.PresetRoom
@@ -57,73 +59,70 @@ import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.type.ObjectStatus
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.associateByPair
-import com.storyteller_f.shared.utils.firstOrNull
 import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import kotlinx.datetime.LocalDateTime
-import kotlin.collections.emptyList
 
 data class PaginationResult<T>(val list: List<T>, val total: Long)
 
-suspend fun <T> Result<List<T>?>.paging(total: Long) = mapIfNotNull {
+suspend fun <T> Result<List<T>?>.paging(total: Long) =
+    mapIfNotNull {
     PaginationResult(it, total)
 }
 
-fun <T> Result<List<T>>.pagingNotNull(total: Long) = map {
+fun <T> Result<List<T>>.pagingNotNull(total: Long) =
+    map {
     PaginationResult(it, total)
 }
 
-suspend fun <T, R> Result<PaginationResult<T>>.mapPagingResultNotNull(
-    block: suspend (List<T>) -> Result<List<R>>
-) = mapResult { paging ->
-    block(paging.list).map {
-        PaginationResult(it, paging.total)
+suspend fun <T, R> Result<PaginationResult<T>>.mapPagingResultNotNull(block: suspend (List<T>) -> Result<List<R>>) =
+    mapResult { paging ->
+        block(paging.list).map {
+            PaginationResult(it, paging.total)
+        }
     }
-}
 
-suspend fun <T, R> Result<PaginationResult<T>>.mapPagingNotNull(
-    block: suspend (List<T>) -> List<R>
-) = map { paging ->
+suspend fun <T, R> Result<PaginationResult<T>>.mapPagingNotNull(block: suspend (List<T>) -> List<R>) =
+    map { paging ->
     PaginationResult(block(paging.list), paging.total)
 }
 
-suspend fun <T, R> Result<PaginationResult<T>?>.mapPagingIfNotNull(
-    block: suspend (List<T>) -> Result<List<R>>
-) = mapResultIfNotNull { paging ->
-    block(paging.list).map {
-        PaginationResult(it, paging.total)
+suspend fun <T, R> Result<PaginationResult<T>?>.mapPagingIfNotNull(block: suspend (List<T>) -> Result<List<R>>) =
+    mapResultIfNotNull { paging ->
+        block(paging.list).map {
+            PaginationResult(it, paging.total)
+        }
     }
-}
 
 suspend fun <T, R> Result<PaginationResult<T>?>.mapPagingResultIfNotNullNullable(
-    block: suspend (List<T>) -> Result<List<R>?>
+    block: suspend (List<T>) -> Result<List<R>?>,
 ) = mapResultIfNotNull { paging ->
     block(paging.list).mapIfNotNull {
         PaginationResult(it, paging.total)
     }
 }
 
-suspend fun <T, R> Result<PaginationResult<T>>.mapPagingResultNullable(
-    block: suspend (List<T>) -> Result<List<R>?>
-) = mapResult { paging ->
-    block(paging.list).mapIfNotNull {
-        PaginationResult(it, paging.total)
+suspend fun <T, R> Result<PaginationResult<T>>.mapPagingResultNullable(block: suspend (List<T>) -> Result<List<R>?>) =
+    mapResult { paging ->
+        block(paging.list).mapIfNotNull {
+            PaginationResult(it, paging.total)
+        }
     }
-}
 
 suspend fun <T> paginationFromResults(
     listResult: Result<List<T>>,
-    totalResult: Result<Long>
-): Result<PaginationResult<T>> = listResult.mapResult { list ->
+    totalResult: Result<Long>,
+): Result<PaginationResult<T>> =
+    listResult.mapResult { list ->
     totalResult.map { total -> PaginationResult(list, total) }
 }
 
 suspend fun <T> paginationNullableFromResults(
     listResult: Result<List<T>?>,
-    totalResult: Result<Long>
-): Result<PaginationResult<T>?> = listResult.mapResultIfNotNull { list ->
+    totalResult: Result<Long>,
+): Result<PaginationResult<T>?> =
+    listResult.mapResultIfNotNull { list ->
     totalResult.map { total -> PaginationResult(list, total) }
 }
 
@@ -150,30 +149,42 @@ sealed interface JoinSearch {
     data class Unspecified(val uid: PrimaryKey?) : JoinSearch
 }
 
-class InsertTopicTuple(
+data class InsertTopicTuple(
     val topic: PresetTopic,
     val originalIndex: Int,
     val level: Int,
     val id: PrimaryKey,
     val content: ByteArray,
     val isEncrypted: Boolean,
-    val rootId: PrimaryKey
+    val rootId: PrimaryKey,
 )
 
-class InsertCommunityTuple(
+data class InsertCommunityTuple(
     val community: PresetCommunity,
     val icon: PrimaryKey?,
     val id: PrimaryKey,
     val fontSettings: FontSettings?,
-    val createdTime: LocalDateTime
+    val createdTime: LocalDateTime,
 )
 
-class InsertRoomTuple(
+data class InsertRoomTuple(
     val room: PresetRoom,
     val icon: PrimaryKey?,
     val id: PrimaryKey,
     val createdTime: LocalDateTime,
 )
+
+/** Database access for persisted worker task configurations. */
+interface WorkerTaskDatabase {
+    /** Returns the persisted configuration for one worker task, or null when it has not been configured. */
+    suspend fun getWorkerTask(type: TaskRecordType): Result<WorkerTask?>
+
+    /** Returns all persisted worker task configurations. */
+    suspend fun getWorkerTasks(): Result<List<WorkerTask>>
+
+    /** Creates or replaces worker task configurations by task type. */
+    suspend fun upsertWorkerTasks(configs: List<WorkerTask>): Result<Unit>
+}
 
 interface CombinedDatabase {
     val user: UserDatabase
@@ -189,20 +200,14 @@ interface CombinedDatabase {
     val favorite: FavoriteDatabase
     val subscription: SubscriptionDatabase
 
-    /** Returns the persisted configuration for one worker task, or null when it has not been configured. */
-    val getTaskConfig: suspend (TaskRecordType) -> Result<TaskConfig?>
-
-    /** Returns all persisted worker task configurations. */
-    val getTaskConfigs: suspend () -> Result<List<TaskConfig>>
-
-    /** Creates or replaces worker task configurations by task type. */
-    val upsertTaskConfigs: suspend (List<TaskConfig>) -> Result<Unit>
+    /** Persisted worker task configuration access. */
+    val workerTask: WorkerTaskDatabase
 
     /** Initializes the database schema and required resources. */
-    val init: suspend () -> Unit
+    suspend fun init()
 
     /** Removes persisted database data. */
-    val clean: suspend () -> Unit
+    suspend fun clean()
 
     /** Returns a persisted backend configuration value, or null if the key is not configured. */
     suspend fun getBackendConfig(key: String): Result<String?>
@@ -213,120 +218,6 @@ interface CombinedDatabase {
     suspend fun migration()
 
     fun isDup(throwable: Throwable): Boolean
-
-    suspend fun getUserOverview(uid: PrimaryKey): Result<RawUserOverview> = runCatching {
-        val subscriptionCount = subscription.getUserSubscriptionCount(uid).getOrThrow()
-        val favoriteCount = favorite.getUserFavoriteCount().getOrThrow()
-        val childAccountCount = user.getChildAccountCount(uid).getOrThrow()
-        val reactionRecordCount = reaction.getUserReactionRecordCount(uid).getOrThrow()
-        val commentCount = topic.getUserCommentCount(uid).getOrThrow()
-        val childAccountIds = user.getChildAccountIds(uid).getOrThrow()
-        val hasUnreadChildRoomMessage = if (childAccountIds.isEmpty()) {
-            false
-        } else {
-            container.getUsersHasUnreadRoomMap(childAccountIds).getOrThrow().values.any { it }
-        }
-        val rawUser = user.getRawUser(ObjectFetch.IdFetch(uid), uid).getOrThrow() ?: error("user not found")
-        RawUserOverview(
-            subscriptionCount,
-            favoriteCount,
-            rawUser.user.acgAmount,
-            childAccountCount,
-            reactionRecordCount,
-            commentCount,
-            hasUnreadChildRoomMessage,
-            rawUser
-        )
-    }
-
-    suspend fun processTopicToRawTopic(
-        uid: PrimaryKey?,
-        topics: List<Topic>
-    ): Result<List<RawTopic>> = runCatching {
-        val topicIds = topics.map { it.id }
-        if (topicIds.isEmpty()) return@runCatching emptyList()
-
-        val commentedSet = if (uid != null) {
-            topic.isUserCommented(uid, topicIds).map { it.toSet() }.getOrThrow()
-        } else {
-            emptySet()
-        }
-
-        val commentCountMap = topic.getTopicCommentCount(topicIds).map { it.associateByPair() }.getOrThrow()
-        val reactionCountMap = reaction.getReactionCount(topicIds).map { it.associateByPair() }.getOrThrow()
-
-        val lastReadMap = if (uid != null) {
-            container.getTopicReadList(topicIds, uid).map {
-                it.associateBy { userTopicRead -> userTopicRead.objectId }
-            }.getOrThrow()
-        } else {
-            emptyMap()
-        }
-
-        val contentMap = topic.getTopicContentFromByteArray(topics, uid).getOrThrow()
-
-        val favoriteMap = if (uid != null) {
-            favorite.getHasFavorite(ObjectListFetch.IdListFetch(topicIds), uid)
-                .getOrThrow().associateBy { it.objectId }
-        } else {
-            emptyMap()
-        }
-
-        val subscriptionMap = if (uid != null) {
-            subscription.getHasSubscription(ObjectListFetch.IdListFetch(topicIds), uid)
-                .getOrThrow().associateBy { it.objectId }
-        } else {
-            emptyMap()
-        }
-
-        topics.map { topic ->
-            val id = topic.id
-            RawTopic(
-                topic,
-                contentMap[id] ?: TopicContent.Nil,
-                commentCountMap[id] ?: 0,
-                commentedSet.contains(id),
-                reactionCountMap[id] ?: 0,
-                lastReadMap[id]?.topicId,
-                favoriteId = favoriteMap[id]?.id,
-                subscriptionId = subscriptionMap[id]?.id,
-            )
-        }
-    }
-
-    suspend fun getRawTopic(fetch: ObjectFetch, uid: PrimaryKey?) =
-        topic.getTopic(fetch).mapResultIfNotNull { topic ->
-            processTopicToRawTopic(uid, listOf(topic))
-        }.firstOrNull()
-
-    suspend fun getAllRawTopics(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<RawTopic>> {
-        return topic.getAllTopicPagination(primaryKeyFetch).mapResult {
-            processTopicToRawTopic(null, it.list).pagingNotNull(it.total)
-        }
-    }
-
-    suspend fun getRawTopicListByIds(
-        uid: PrimaryKey?,
-        ids: List<PrimaryKey>
-    ) = topic.getTopicListByIds(ids).mapResult {
-        processTopicToRawTopic(uid, it)
-    }
-
-    suspend fun getRawTopicByParentId(
-        uid: PrimaryKey?,
-        primaryKeyFetch: PrimaryKeyFetch,
-        parentId: PrimaryKey,
-        pinType: TopicPinSearch?
-    ) = topic.getTopicByParentId(uid, primaryKeyFetch, parentId, pinType).mapResult {
-        processTopicToRawTopic(uid, it.list).pagingNotNull(it.total)
-    }
-
-    suspend fun getLatestRawTopic(
-        uid: PrimaryKey?,
-        parentId: PrimaryKey
-    ) = topic.getLatestTopic(parentId).mapResult {
-        processTopicToRawTopic(uid, it)
-    }
 }
 
 interface UserDatabase {
@@ -338,7 +229,7 @@ interface UserDatabase {
     suspend fun updateUserStatus(id: PrimaryKey, status: com.storyteller_f.shared.type.UserStatus): Result<Boolean>
 
     /**
-     * nickname 为null 或者空字符串时不更新，avatar 为null 时不更新,aid 为null 或者空字符串时不更新
+     * nickname 为null 或者空字符串时不更新，avatar 为null 时不更新,aid 为null 或者空字符串时不更新.
      */
     suspend fun updateUserInfo(id: PrimaryKey, newUser: UpdateUserBody): Result<Boolean>
     suspend fun getUserAuthDataById(id: PrimaryKey): Result<UserAuthData?>
@@ -377,7 +268,7 @@ interface UserDatabase {
         encryptedPrivateKey: String,
         encryptedAesKey: String,
         user: User,
-        encryptedEncryptionPrivateKey: String? = null
+        encryptedEncryptionPrivateKey: String? = null,
     ): Result<Unit>
 
     suspend fun getAllUsers(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<RawUser>>
@@ -402,13 +293,13 @@ interface TopicDatabase {
     suspend fun updateTopicPinned(topicId: PrimaryKey, newValue: Boolean): Result<Boolean>
     suspend fun updateTopicStatus(topicId: PrimaryKey, status: ObjectStatus): Result<Boolean>
     suspend fun getTopicList(primaryKeyFetch: PrimaryKeyFetch): Result<List<Topic>>
-    suspend fun getTopicCommentCount(topicIdList: List<PrimaryKey>,): Result<List<Pair<Long, Long>>>
+    suspend fun getTopicCommentCount(topicIdList: List<PrimaryKey>): Result<List<Pair<Long, Long>>>
 
     suspend fun isUserCommented(uid: PrimaryKey, topicId: List<PrimaryKey>): Result<List<Long>>
 
     suspend fun getUserCommentedTopicsPaginationResult(
         uid: PrimaryKey,
-        primaryKeyFetch: PrimaryKeyFetch
+        primaryKeyFetch: PrimaryKeyFetch,
     ): Result<PaginationResult<Topic>>
 
     suspend fun getUserCommentCount(uid: PrimaryKey): Result<Long>
@@ -427,7 +318,7 @@ interface TopicDatabase {
         uid: PrimaryKey?,
         primaryKeyFetch: PrimaryKeyFetch,
         parentId: PrimaryKey,
-        pinType: TopicPinSearch?
+        pinType: TopicPinSearch?,
     ): Result<PaginationResult<Topic>>
 
     suspend fun getLatestTopic(parentId: PrimaryKey): Result<List<Topic>>
@@ -448,7 +339,7 @@ interface FavoriteDatabase {
 interface SubscriptionDatabase {
     suspend fun getUserSubscriptions(
         uid: PrimaryKey,
-        fetch: PrimaryKeyFetch
+        fetch: PrimaryKeyFetch,
     ): Result<PaginationResult<UserSubscription>>
 
     suspend fun addSubscription(userSubscription: UserSubscription): Result<UserSubscription>
@@ -457,7 +348,7 @@ interface SubscriptionDatabase {
     suspend fun getSubscription(uid: PrimaryKey, objectId: PrimaryKey): Result<UserSubscription?>
     suspend fun getSubscriptionsByObjectId(
         objectId: PrimaryKey,
-        primaryKeyFetch: PrimaryKeyFetch
+        primaryKeyFetch: PrimaryKeyFetch,
     ): Result<List<UserSubscription>>
 
     suspend fun insertSubscriptionSentLog(log: SubscriptionSentLog): Result<SubscriptionSentLog>
@@ -491,12 +382,12 @@ interface ReactionDatabase {
     suspend fun getReactionCount(objectIdList: List<PrimaryKey>): Result<List<Pair<Long, Long>>>
     suspend fun getReactionCountForEmoji(
         objectId: List<PrimaryKey>,
-        emoji: String
+        emoji: String,
     ): Result<List<Triple<Long, Long, PrimaryKey?>>>
 
     suspend fun getUserReactionRecordsPaginationResult(
         uid: PrimaryKey,
-        primaryKeyFetch: PrimaryKeyFetch
+        primaryKeyFetch: PrimaryKeyFetch,
     ): Result<PaginationResult<ReactionRecord>>
 
     suspend fun getUserReactionRecordCount(uid: PrimaryKey): Result<Long>
@@ -522,7 +413,7 @@ interface CommunityDatabase {
     suspend fun getRawCommunity(
         objectFetch: ObjectFetch,
         fillJoinInfo: Boolean? = null,
-        uid: PrimaryKey? = null
+        uid: PrimaryKey? = null,
     ): Result<RawCommunity?>
 
     suspend fun getJoinedCommunityIds(uid: PrimaryKey): Result<List<Long>>
@@ -537,7 +428,7 @@ interface CommunityDatabase {
     suspend fun getRawCommunities(objectListFetch: ObjectListFetch): Result<List<RawCommunity>>
 
     /**
-     * name 为null 或者空字符串时不更新，icon，poster 为null时不更新
+     * name 为null 或者空字符串时不更新，icon，poster 为null时不更新.
      */
     suspend fun updateCommunity(id: PrimaryKey, body: UpdateCommunityBody): Result<Boolean>
     suspend fun updateCommunityStatus(id: PrimaryKey, status: ObjectStatus): Result<Boolean>
@@ -597,13 +488,13 @@ interface FileDatabase {
     suspend fun insertFileRecord(
         fileRecordList: List<FileRecord>,
         ownerId: PrimaryKey,
-        ownerType: ObjectType
+        ownerType: ObjectType,
     ): Result<Unit>
 
     suspend fun insertUploadRecord(record: UploadRecord): Result<UploadRecord>
 
     /**
-     * 只有在插入文件记录成功后才更新上传记录状态，避免文件上传了但是配额没有更新的情况
+     * 只有在插入文件记录成功后才更新上传记录状态，避免文件上传了但是配额没有更新的情况.
      */
     suspend fun updateUploadRecordStatus(
         quotaInfo: QuotaInfo,
@@ -622,7 +513,7 @@ interface FileDatabase {
 
     suspend fun getFileRefsByFileId(
         fileId: PrimaryKey,
-        primaryKeyFetch: PrimaryKeyFetch
+        primaryKeyFetch: PrimaryKeyFetch,
     ): Result<PaginationResult<FileRef>>
 }
 
@@ -637,7 +528,7 @@ interface ContainerDatabase {
     suspend fun getUserJoinedTime(parentIds: List<PrimaryKey>, uid: PrimaryKey): Result<List<Member>>
 
     suspend fun getMemberCount(parentIds: List<PrimaryKey>): Result<List<Pair<Long, Long>>>
-    suspend fun getContainerInfo(parentIds: List<PrimaryKey>, uid: PrimaryKey?,): Result<Map<PrimaryKey, ContainerInfo>>
+    suspend fun getContainerInfo(parentIds: List<PrimaryKey>, uid: PrimaryKey?): Result<Map<PrimaryKey, ContainerInfo>>
 
     suspend fun getTopicReadList(parentIds: List<PrimaryKey>, uid: PrimaryKey): Result<List<UserTopicRead>>
     suspend fun getUsersHasUnreadRoomMap(uidList: List<PrimaryKey>): Result<Map<PrimaryKey, Boolean>>
@@ -646,17 +537,17 @@ interface ContainerDatabase {
     suspend fun getMemberPaginationResult(
         objectId: PrimaryKey?,
         word: String?,
-        fetch: PrimaryKeyFetch
+        fetch: PrimaryKeyFetch,
     ): Result<PaginationResult<RawUser>>
 
     suspend fun getMemberWithUserPaginationResult(
         objectId: PrimaryKey,
-        fetch: PrimaryKeyFetch
+        fetch: PrimaryKeyFetch,
     ): Result<PaginationResult<Pair<Member, RawUser>>>
 
     suspend fun getMemberWithUserByUids(
         objectId: PrimaryKey,
-        uidList: List<PrimaryKey>
+        uidList: List<PrimaryKey>,
     ): Result<List<Pair<Member, RawUser>>>
 
     suspend fun getQuotaInfo(ownerId: PrimaryKey, quotaType: QuotaType): Result<Quota?>
@@ -664,7 +555,7 @@ interface ContainerDatabase {
 
     suspend fun getLatestTopicInContainer(
         parentIds: List<PrimaryKey>,
-        uid: PrimaryKey?
+        uid: PrimaryKey?,
     ): Result<Map<PrimaryKey, PrimaryKey?>>
 
     suspend fun getMember(containerId: PrimaryKey, id: PrimaryKey): Result<Member?>
@@ -686,7 +577,7 @@ interface AdminDatabase {
     suspend fun batchAddTopics(
         tuples: List<InsertTopicTuple>,
         userMap: Map<String, User>,
-        objectType: ObjectType
+        objectType: ObjectType,
     ): Result<Unit>
 
     suspend fun createTaskRecord(record: TaskRecord): Result<TaskRecord>
@@ -703,7 +594,7 @@ interface AdminDatabase {
     suspend fun getPanelLogs(
         targetId: PrimaryKey,
         objectType: com.storyteller_f.shared.type.ObjectType,
-        fetch: PrimaryKeyFetch
+        fetch: PrimaryKeyFetch,
     ): Result<PaginationResult<com.storyteller_f.a.backend.core.types.PanelLog>>
 }
 

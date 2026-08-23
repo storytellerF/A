@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.service.benchmark
 
 import com.perraco.utils.SnowflakeFactory
@@ -11,25 +15,26 @@ import org.testcontainers.elasticsearch.ElasticsearchContainer
 
 @State(Scope.Benchmark)
 open class IndexBenchmark {
-
     private lateinit var elasticClient: ElasticsearchContainer
     private lateinit var service: ElasticTopicSearchService
 
     @Setup(Level.Trial)
     fun setUp() {
         SnowflakeFactory.setMachine(0)
-        elasticClient = ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch:8.17.0").apply {
-            withEnv("xpack.security.transport.ssl.enabled", "false")
-            withEnv("xpack.security.http.ssl.enabled", "false")
-            start() // 只启动一次
-        }
+        elasticClient =
+            ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch:8.17.0").apply {
+                withEnv("xpack.security.transport.ssl.enabled", "false")
+                withEnv("xpack.security.http.ssl.enabled", "false")
+                start() // 只启动一次
+            }
 
-        val connection = ElasticConnection(
-            "http://${elasticClient.httpHostAddress}",
-            "",
-            "elastic",
-            "changeme"
-        )
+        val connection =
+            ElasticConnection(
+                "http://${elasticClient.httpHostAddress}",
+                "",
+                "elastic",
+                "changeme",
+            )
         service = ElasticTopicSearchService(connection)
     }
 
@@ -39,13 +44,20 @@ open class IndexBenchmark {
     }
 
     @Benchmark
-    fun saveDocumentBenchmark(bh: Blackhole) = runBlocking {
-        val topics = listOf(
-            TopicDocument(
-                SnowflakeFactory.nextId(), "test", SnowflakeFactory.nextId(), "ROOM",
-                SnowflakeFactory.nextId(), "ROOM", SnowflakeFactory.nextId()
+    fun saveDocumentBenchmark(bh: Blackhole) =
+        runBlocking {
+        val topics =
+            listOf(
+                TopicDocument(
+                    SnowflakeFactory.nextId(),
+                    "test",
+                    SnowflakeFactory.nextId(),
+                    "ROOM",
+                    SnowflakeFactory.nextId(),
+                    "ROOM",
+                    SnowflakeFactory.nextId(),
+                ),
             )
-        )
         bh.consume(service.saveDocument(topics))
     }
 }

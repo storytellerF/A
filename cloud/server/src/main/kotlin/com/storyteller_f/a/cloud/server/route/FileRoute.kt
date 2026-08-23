@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.server.route
 
 import com.storyteller_f.a.api.CustomApi
@@ -42,6 +46,7 @@ import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.cancellableRunCatching
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.sha256
 import com.storyteller_f.shared.utils.unit
@@ -277,27 +282,27 @@ suspend fun RoutingContext.uploadMedia(
     val parentId = objectTuple.objectId
     return backend.checkRootWritePermission(parentType, parentId, id).mapResultIfNotNull {
         processFormData { part ->
-            val fileInfos = when (part) {
-                is PartData.FileItem -> {
-                    val fileName = part.originalFileName as String
-                    backend.uploadFilesFromChannel(root, it, fileName, query.sha256, ip) {
-                        part.provider()
+            val fileInfos =
+                when (part) {
+                    is PartData.FileItem -> {
+                        val fileName = checkNotNull(part.originalFileName) { "Uploaded file name is missing" }
+                        backend.uploadFilesFromChannel(root, it, fileName, query.sha256, ip) {
+                            part.provider()
+                        }
+                    }
+
+                    else -> {
+                        emptyList()
                     }
                 }
-
-                else -> {
-                    emptyList()
-                }
-            }
             part.dispose()
             fileInfos
         }
     }
 }
 
-private suspend fun RoutingContext.processFormData(
-    block: suspend (PartData) -> List<FileInfo>
-) = try {
+private suspend fun RoutingContext.processFormData(block: suspend (PartData) -> List<FileInfo>) =
+    try {
     val result = mutableListOf<FileInfo>()
     coroutineScope {
         call.receiveMultipart(1024 * 1024 * 100).forEachPart { part ->
@@ -305,6 +310,8 @@ private suspend fun RoutingContext.processFormData(
         }
     }
     Result.success(FileInfoListResponse(result.toImmutableList()))
+} catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+    throw cancellation
 } catch (e: Exception) {
     Result.failure(e)
 }
@@ -315,7 +322,7 @@ private suspend fun Backend.uploadFilesFromChannel(
     fileName: String,
     expectedSha256: String,
     clientIp: String?,
-    provider: () -> ByteReadChannel
+    provider: () -> ByteReadChannel,
 ): List<FileInfo> {
     val newSavedName = newFileName(fileName)
     val file = File(root, "$newSavedName.tmp")
@@ -349,8 +356,8 @@ suspend fun uploadChunkFromChannel(
     root: File,
     path: CustomApi.Files.Chunks.UploadPath,
     query: CustomApi.Files.Chunks.UploadQuery,
-    provider: suspend () -> ByteReadChannel
-) = runCatching {
+    provider: suspend () -> ByteReadChannel,
+) = cancellableRunCatching {
     // 写入本地临时文件以校验哈希并上传到对象存储临时桶
     val chunkTmp = File(root, "chunk_${path.id}_${path.index}.tmp")
     provider().copyAndClose(chunkTmp.writeChannel())
@@ -372,8 +379,8 @@ suspend fun uploadChunkFromChannel(
                         chunkTmp.length(),
                         "chunks/${path.id}/chunk_${path.index}",
                         expected,
-                    )
-                )
+                    ),
+                ),
             ).getOrThrow()
         }
     } finally {

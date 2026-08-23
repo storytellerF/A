@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.server
 
 import com.storyteller_f.a.api.CustomApi
@@ -14,16 +18,17 @@ import com.storyteller_f.shared.type.PrimaryKey
 import kotlin.test.Test
 
 class RoomSearchTest {
-
     @Test
-    fun `test search joined rooms by name`() = test {
-        val sessionOuterTuple = attachSession {
-            val communityId = createCommunityForTest().id
-            val room1Id = createPublicRoomForTest(communityId, "r1", "game room").id
-            val room2Id = createPublicRoomForTest(communityId, "r2", "study room").id
-            val room3Id = createPublicRoomForTest(communityId, "r3", "chat room").id
-            communityId to listOf(room1Id, room2Id, room3Id)
-        }
+    fun `test search joined rooms by name`() =
+        test {
+        val sessionOuterTuple =
+            attachSession {
+                val communityId = createCommunityForTest().id
+                val room1Id = createPublicRoomForTest(communityId, "r1", "game room").id
+                val room2Id = createPublicRoomForTest(communityId, "r2", "study room").id
+                val room3Id = createPublicRoomForTest(communityId, "r3", "chat room").id
+                communityId to listOf(room1Id, room2Id, room3Id)
+            }
         val communityId = sessionOuterTuple.custom.first
         val (room1Id, room2Id, room3Id) = sessionOuterTuple.custom.second
 
@@ -47,14 +52,16 @@ class RoomSearchTest {
     }
 
     @Test
-    fun `test search rooms with member search service`() = test {
-        val sessionOuterTuple = attachSession {
-            val communityId = createCommunityForTest().id
-            val room1Id = createPublicRoomForTest(communityId, "r1", "dragon ball").id
-            val room2Id = createPublicRoomForTest(communityId, "r2", "one piece").id
-            val room3Id = createPublicRoomForTest(communityId, "r3", "naruto").id
-            communityId to listOf(room1Id, room2Id, room3Id)
-        }
+    fun `test search rooms with member search service`() =
+        test {
+        val sessionOuterTuple =
+            attachSession {
+                val communityId = createCommunityForTest().id
+                val room1Id = createPublicRoomForTest(communityId, "r1", "dragon ball").id
+                val room2Id = createPublicRoomForTest(communityId, "r2", "one piece").id
+                val room3Id = createPublicRoomForTest(communityId, "r3", "naruto").id
+                communityId to listOf(room1Id, room2Id, room3Id)
+            }
         val communityId = sessionOuterTuple.custom.first
         val (room1Id, room2Id, room3Id) = sessionOuterTuple.custom.second
 
@@ -79,29 +86,32 @@ class RoomSearchTest {
     }
 
     @Test
-    fun `test private room cannot be searched unless joined`() = test {
-        val sessionOuterTuple = attachSession {
-            val privateRoomId = createPrivateRoomForTest().id
-            expectedRoomCountForJoinedRoomList(1)
-            expectedRoomCountForJoinedRooms(1, "name")
-            privateRoomId
-        }
+    fun `test private room cannot be searched unless joined`() =
+        test {
+        val sessionOuterTuple =
+            attachSession {
+                val privateRoomId = createPrivateRoomForTest().id
+                expectedRoomCountForJoinedRoomList(1)
+                expectedRoomCountForJoinedRooms(1, "name")
+                privateRoomId
+            }
         val privateRoomId = sessionOuterTuple.custom
 
         // 测试未加入的私有房间不应出现在搜索结果中
-        val secondTuple = attachSession {
-            // 搜索所有房间（不指定社区），私有房间不应出现
-            expectedRoomCountForAllRoomList(0)
+        val secondTuple =
+            attachSession {
+                // 搜索所有房间（不指定社区），私有房间不应出现
+                expectedRoomCountForAllRoomList(0)
 
-            // 尝试通过名称搜索私有房间，也不应出现（使用roomSearchService）
-            expectedRoomCountForAllRooms(0, "name")
+                // 尝试通过名称搜索私有房间，也不应出现（使用roomSearchService）
+                expectedRoomCountForAllRooms(0, "name")
 
-            expectedRoomCountForJoinedRoomList(0)
-            expectedRoomCountForJoinedRooms(0, "name")
+                expectedRoomCountForJoinedRoomList(0)
+                expectedRoomCountForJoinedRooms(0, "name")
 
-            // 即使使用 UNSPECIFIED 搜索，未加入的私有房间也不应出现
-            expectedRoomCountForAllRooms(0, "name")
-        }
+                // 即使使用 UNSPECIFIED 搜索，未加入的私有房间也不应出现
+                expectedRoomCountForAllRooms(0, "name")
+            }
 
         loginSession(sessionOuterTuple) {
             createJoinRoomTitleForTest(privateRoomId, secondTuple.uid)
@@ -115,14 +125,16 @@ class RoomSearchTest {
     }
 
     @Test
-    fun `test search rooms in community`() = test {
-        val sessionOuterTuple = attachSession {
-            val communityId = createCommunityForTest().id
-            val room1Id = createPublicRoomForTest(communityId, "r1", "game room").id
-            val room2Id = createPublicRoomForTest(communityId, "r2", "study room").id
-            val room3Id = createPublicRoomForTest(communityId, "r3", "chat room").id
-            communityId to listOf(room1Id, room2Id, room3Id)
-        }
+    fun `test search rooms in community`() =
+        test {
+        val sessionOuterTuple =
+            attachSession {
+                val communityId = createCommunityForTest().id
+                val room1Id = createPublicRoomForTest(communityId, "r1", "game room").id
+                val room2Id = createPublicRoomForTest(communityId, "r2", "study room").id
+                val room3Id = createPublicRoomForTest(communityId, "r3", "chat room").id
+                communityId to listOf(room1Id, room2Id, room3Id)
+            }
         val communityId = sessionOuterTuple.custom.first
         val (room1Id, room2Id, room3Id) = sessionOuterTuple.custom.second
 
@@ -153,14 +165,16 @@ class RoomSearchTest {
     }
 
     @Test
-    fun `test search user joined rooms`() = test {
-        val sessionOuterTuple = attachSession {
-            val communityId = createCommunityForTest().id
-            val room1Id = createPublicRoomForTest(communityId, "r1", "alice room").id
-            val room2Id = createPublicRoomForTest(communityId, "r2", "bob room").id
-            val room3Id = createPublicRoomForTest(communityId, "r3", "charlie room").id
-            communityId to listOf(room1Id, room2Id, room3Id)
-        }
+    fun `test search user joined rooms`() =
+        test {
+        val sessionOuterTuple =
+            attachSession {
+                val communityId = createCommunityForTest().id
+                val room1Id = createPublicRoomForTest(communityId, "r1", "alice room").id
+                val room2Id = createPublicRoomForTest(communityId, "r2", "bob room").id
+                val room3Id = createPublicRoomForTest(communityId, "r3", "charlie room").id
+                communityId to listOf(room1Id, room2Id, room3Id)
+            }
         val communityId = sessionOuterTuple.custom.first
         val (room1Id, room2Id, room3Id) = sessionOuterTuple.custom.second
         attachSession {
@@ -190,16 +204,21 @@ suspend fun UserSessionManager.expectedCommunityRoomCount(
     word: String? = null,
     joinStatusSearch: JoinStatusSearch = JoinStatusSearch.UNSPECIFIED,
     nextRoomId: String? = null,
-    size: Int = 10
+    size: Int = 10,
 ) {
-    val result = if (word != null) {
-        searchCommunityRooms(communityId, word, joinStatusSearch, size, nextRoomId)
-    } else {
-        getCommunityRooms(
-            communityId,
-            CustomApi.Communities.Id.Rooms.CommunityRoomQuery(nextRoomId, size = size, joinStatus = joinStatusSearch)
-        )
-    }
+    val result =
+        if (word != null) {
+            searchCommunityRooms(communityId, word, joinStatusSearch, size, nextRoomId)
+        } else {
+            getCommunityRooms(
+                communityId,
+                CustomApi.Communities.Id.Rooms.CommunityRoomQuery(
+                    nextRoomId,
+                    size = size,
+                    joinStatus = joinStatusSearch,
+                ),
+            )
+        }
     assertListSize(expected, result)
 }
 
@@ -207,12 +226,13 @@ suspend fun UserSessionManager.expectedCurrentUserRoomCount(
     expected: Int,
     word: String? = null,
     nextRoomId: String? = null,
-    size: Int = 10
+    size: Int = 10,
 ) {
-    val result = if (word != null) {
-        searchCurrentUserRooms(word, size, nextRoomId)
-    } else {
-        getUserRooms(PaginationQuery(nextRoomId, size = size))
-    }
+    val result =
+        if (word != null) {
+            searchCurrentUserRooms(word, size, nextRoomId)
+        } else {
+            getUserRooms(PaginationQuery(nextRoomId, size = size))
+        }
     assertListSize(expected, result)
 }

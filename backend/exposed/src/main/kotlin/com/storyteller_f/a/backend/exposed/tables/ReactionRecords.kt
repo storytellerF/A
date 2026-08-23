@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.exposed.tables
 
 import com.storyteller_f.a.backend.core.types.Reaction
@@ -20,17 +24,16 @@ object ReactionRecords : BaseTable() {
     }
 }
 
-fun ReactionRecord.Companion.wrapRow(resultRow: ResultRow): ReactionRecord {
-    return with(ReactionRecords) {
-        ReactionRecord(
-            resultRow[uid],
-            resultRow[objectId],
-            resultRow[objectType],
-            resultRow[emoji],
-            resultRow[id],
-            resultRow[createdTime]
-        )
-    }
+fun ReactionRecord.Companion.wrapRow(resultRow: ResultRow): ReactionRecord =
+    with(ReactionRecords) {
+    ReactionRecord(
+        resultRow[uid],
+        resultRow[objectId],
+        resultRow[objectType],
+        resultRow[emoji],
+        resultRow[id],
+        resultRow[createdTime],
+    )
 }
 object Reactions : Table() {
     val objectId = customPrimaryKey("object_id")
@@ -46,14 +49,13 @@ object Reactions : Table() {
     }
 }
 
-fun Reaction.Companion.wrapRow(resultRow: ResultRow): Reaction {
-    return with(Reactions) {
-        Reaction(
-            resultRow[objectId],
-            resultRow[objectType],
-            resultRow[emoji],
-            resultRow[count],
-            resultRow[lastReactionId]
-        )
-    }
+fun Reaction.Companion.wrapRow(resultRow: ResultRow): Reaction =
+    with(Reactions) {
+    Reaction(
+        resultRow[objectId],
+        resultRow[objectType],
+        resultRow[emoji],
+        resultRow[count],
+        resultRow[lastReactionId],
+    )
 }

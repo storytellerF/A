@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.server.auth
 
 import com.storyteller_f.shared.type.PrimaryKey
@@ -10,27 +14,15 @@ sealed interface UserSession {
 
     @Serializable
     @SerialName("pending")
-    data class Pending(
-        override val data: String,
-        val remote: String,
-        val label: String,
-    ) : UserSession
+    data class Pending(override val data: String, val remote: String, val label: String) : UserSession
 
     @Serializable
     @SerialName("two_factor_pending")
-    data class TwoFactorPending(
-        override val data: String,
-        val remote: String,
-        val id: PrimaryKey,
-        val label: String,
-    ) : UserSession
+    data class TwoFactorPending(override val data: String, val remote: String, val id: PrimaryKey, val label: String) :
+        UserSession
 
     @Serializable
     @SerialName("success")
-    data class Success(
-        override val data: String,
-        val remote: String,
-        val id: PrimaryKey,
-        val label: String
-    ) : UserSession
+    data class Success(override val data: String, val remote: String, val id: PrimaryKey, val label: String) :
+        UserSession
 }

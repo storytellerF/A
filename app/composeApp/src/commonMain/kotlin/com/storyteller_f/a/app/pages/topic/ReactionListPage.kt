@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.topic
 
 import androidx.compose.foundation.layout.Arrangement
@@ -25,20 +29,23 @@ fun ReactionListPage(topicId: PrimaryKey) {
     Scaffold { paddingValues ->
         StateView(
             viewModel,
-            modifier = Modifier.padding(paddingValues)
+            modifier = Modifier.padding(paddingValues),
         ) { pagingItems ->
             LazyColumn(
                 contentPadding = PaddingValues(20.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                items(pagingItems.itemCount, pagingItems.itemKey {
-                    it.emoji
-                }) {
-                    val info = pagingItems[it]
+                items(
+                    pagingItems.itemCount,
+                    pagingItems.itemKey {
+                        it.emoji
+                    },
+                ) { index ->
+                    val info = pagingItems[index]
                     if (info != null) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text(info.emoji, fontSize = 25.sp)
                             Spacer(modifier = Modifier.weight(1f))

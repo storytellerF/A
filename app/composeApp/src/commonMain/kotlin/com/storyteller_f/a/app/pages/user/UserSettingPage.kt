@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.user
 
 import androidx.compose.foundation.Image
@@ -166,9 +170,10 @@ fun ObjectSettingDialog(
     val globalDialogController = LocalGlobalDialog.current
     val alertDialogController = rememberAlertDialogController()
     val showSheet = showFilePicker(currentOption)
-    val isFontOption = currentOption is SettingOption.ContentFont ||
-        currentOption is SettingOption.CodeFont ||
-        currentOption is SettingOption.FallbackFont
+    val isFontOption =
+        currentOption is SettingOption.ContentFont ||
+            currentOption is SettingOption.CodeFont ||
+            currentOption is SettingOption.FallbackFont
     FilePicker(
         showSheet,
         sheetState,
@@ -181,17 +186,19 @@ fun ObjectSettingDialog(
             } else {
                 processSelectedMedia(
                     mediaList,
-                    scope,
-                    context,
-                    imageCropper,
                     ratio,
-                    mediaTarget,
-                    globalDialogController,
-                    alertDialogController,
-                    onInputMedia
+                    SelectedMediaContext(
+                        scope,
+                        context,
+                        imageCropper,
+                        mediaTarget,
+                        globalDialogController,
+                        alertDialogController,
+                        onInputMedia,
+                    ),
                 )
             }
-        }
+        },
     ) {
         closeDialog()
     }
@@ -208,66 +215,66 @@ fun ObjectSettingDialog(
     }
 }
 
-private fun getMediaTarget(
-    currentOption: SettingOption?,
-    my: UserInfo?
-): ObjectTuple = if (currentOption is SettingOption.RoomIcon && currentOption.roomId != null) {
-    ObjectTuple(currentOption.roomId, ObjectType.ROOM)
-} else {
-    ObjectTuple(my?.id ?: 0, ObjectType.USER)
-}
+private fun getMediaTarget(currentOption: SettingOption?, my: UserInfo?): ObjectTuple =
+    if (currentOption is SettingOption.RoomIcon && currentOption.roomId != null) {
+        ObjectTuple(currentOption.roomId, ObjectType.ROOM)
+    } else {
+        ObjectTuple(my?.id ?: 0, ObjectType.USER)
+    }
 
 private fun getRatio(currentOption: SettingOption?): AspectRatio {
-    val dimension = when (currentOption) {
-        is SettingOption.RoomIcon -> Dimension.ROOM_DIMENSION
-        is SettingOption.Poster -> Dimension.COMMUNITY_POSTER
-        else -> Dimension.DEFAULT_DIMENSION
-    }
+    val dimension =
+        when (currentOption) {
+            is SettingOption.RoomIcon -> Dimension.ROOM_DIMENSION
+            is SettingOption.Poster -> Dimension.COMMUNITY_POSTER
+            else -> Dimension.DEFAULT_DIMENSION
+        }
     return AspectRatio(dimension.width, dimension.height)
 }
 
-private fun showFilePicker(currentOption: SettingOption?): Boolean = currentOption is SettingOption.Icon ||
+private fun showFilePicker(currentOption: SettingOption?): Boolean =
+    currentOption is SettingOption.Icon ||
     currentOption is SettingOption.Poster ||
     currentOption is SettingOption.RoomIcon ||
     currentOption is SettingOption.ContentFont ||
     currentOption is SettingOption.CodeFont ||
     currentOption is SettingOption.FallbackFont
 
-private fun processSelectedMedia(
-    mediaList: List<FileInfo>,
-    scope: CoroutineScope,
-    context: PlatformContext,
-    imageCropper: ImageCropper,
-    ratio: AspectRatio,
-    mediaTarget: ObjectTuple,
-    globalDialogController: AppGlobalDialogController,
-    alertDialogController: CustomAlertDialogController,
-    onInputMedia: (FileInfo) -> Unit,
-) {
+private fun processSelectedMedia(mediaList: List<FileInfo>, ratio: AspectRatio, context: SelectedMediaContext) {
     val info = mediaList.first()
     val dimension = info.dimension
     if (dimension == null || !info.contentType.startsWith("image/")) {
-        alertDialogController.showTitle("invalid image: ${info.contentType} $dimension")
+        context.alertDialogController.showTitle("invalid image: ${info.contentType} ${dimension ?: "<none>"}")
         return
     }
     if (checkMediaFileDimensionRatioMatch(
             dimension,
-            Dimension(ratio.x, ratio.y)
+            Dimension(ratio.x, ratio.y),
         )
     ) {
-        onInputMedia(info)
+        context.onInputMedia(info)
         return
     }
-    scope.launch {
-        globalDialogController.useResult {
-            cropImage(context, info, imageCropper, mediaTarget)
+    context.scope.launch {
+        context.globalDialogController.useResult {
+            cropImage(context.platformContext, info, context.imageCropper, context.mediaTarget)
         }.onSuccess {
             if (it != null) {
-                onInputMedia(it)
+                context.onInputMedia(it)
             }
         }
     }
 }
+
+private data class SelectedMediaContext(
+    val scope: CoroutineScope,
+    val platformContext: PlatformContext,
+    val imageCropper: ImageCropper,
+    val mediaTarget: ObjectTuple,
+    val globalDialogController: AppGlobalDialogController,
+    val alertDialogController: CustomAlertDialogController,
+    val onInputMedia: (FileInfo) -> Unit,
+)
 
 private suspend fun AppGlobalDialogController.cropImage(
     context: PlatformContext,
@@ -275,10 +282,11 @@ private suspend fun AppGlobalDialogController.cropImage(
     imageCropper: ImageCropper,
     mediaTarget: ObjectTuple,
 ): Result<FileInfo?> {
-    val image = useResult {
-        getRemoteImageBitmap(this.context.sessionManager, context, info)
-            ?: Result.failure(Exception("download"))
-    }
+    val image =
+        useResult {
+            getRemoteImageBitmap(this.context.sessionManager, context, info)
+                ?: Result.failure(Exception("download"))
+        }
     return image.mapResult {
         when (val result = imageCropper.crop(ImageBitmapSrc(it))) {
             CropResult.Cancelled -> {
@@ -300,7 +308,6 @@ private suspend fun AppGlobalDialogController.cropImage(
                             "image/jpeg", "image/jpg" -> ImageFormat.JPEG
                             else -> ImageFormat.PNG
                         },
-
                     )
                 }
             }
@@ -340,7 +347,7 @@ private fun UserSettingInternal(
             },
             {
                 UserIconWithDialog(m, setClickEvent = false)
-            }
+            },
         )
         SettingOptionView("Name", {
             showDialog(SettingOption.Name(m.nickname))
@@ -378,15 +385,18 @@ private fun TwoFactorDialog(dismiss: () -> Unit) {
     var code by remember { mutableStateOf("") }
 
     LoadTwoFactorSettings(globalDialogController) { settings = it }
-    val actions = scope.rememberTwoFactorActions(
-        globalDialogController,
-        toaster,
-        clipboard,
-        code,
-        { settings = it },
-        { setupInfo = it },
-        { code = it },
-    )
+    val actions =
+        scope.rememberTwoFactorActions(
+            globalDialogController,
+            toaster,
+            clipboard,
+            code,
+            TwoFactorStateUpdates(
+                setSettings = { settings = it },
+                setSetupInfo = { setupInfo = it },
+                setCode = { code = it },
+            ),
+        )
 
     AlertDialog(dismiss, {
         Button(dismiss) {
@@ -431,42 +441,49 @@ private data class TwoFactorActions(
     val downloadRecoveryCodes: () -> Unit,
 )
 
+private data class TwoFactorStateUpdates(
+    val setSettings: (TwoFactorSettingsInfo) -> Unit,
+    val setSetupInfo: (TotpSetupInfo?) -> Unit,
+    val setCode: (String) -> Unit,
+)
+
 private fun kotlinx.coroutines.CoroutineScope.rememberTwoFactorActions(
     globalDialogController: AppGlobalDialogController,
     toaster: com.storyteller_f.a.client.compose_core.components.Toast,
     clipboard: androidx.compose.ui.platform.Clipboard,
     code: String,
-    setSettings: (TwoFactorSettingsInfo) -> Unit,
-    setSetupInfo: (TotpSetupInfo?) -> Unit,
-    setCode: (String) -> Unit,
-) = TwoFactorActions(
-    setupTotp = {
-        setupTotp(globalDialogController) { setSetupInfo(it) }
-    },
-    disableTwoFactor = {
-        disableTwoFactor(globalDialogController) {
-            setSettings(it)
-            setSetupInfo(null)
-            setCode("")
-        }
-    },
-    copyUri = { uri ->
-        launch {
-            clipboard.setText(uri)
-            toaster.showMessage("copied")
-        }
-    },
-    enableTotp = {
-        enableTotp(globalDialogController, code) {
-            setSettings(it)
-            setSetupInfo(null)
-            setCode("")
-        }
-    },
-    downloadRecoveryCodes = {
-        downloadRecoveryCodes(globalDialogController)
-    },
-)
+    stateUpdates: TwoFactorStateUpdates,
+): TwoFactorActions {
+    val (setSettings, setSetupInfo, setCode) = stateUpdates
+    return TwoFactorActions(
+        setupTotp = {
+            setupTotp(globalDialogController) { setSetupInfo(it) }
+        },
+        disableTwoFactor = {
+            disableTwoFactor(globalDialogController) {
+                setSettings(it)
+                setSetupInfo(null)
+                setCode("")
+            }
+        },
+        copyUri = { uri ->
+            launch {
+                clipboard.setText(uri)
+                toaster.showMessage("copied")
+            }
+        },
+        enableTotp = {
+            enableTotp(globalDialogController, code) {
+                setSettings(it)
+                setSetupInfo(null)
+                setCode("")
+            }
+        },
+        downloadRecoveryCodes = {
+            downloadRecoveryCodes(globalDialogController)
+        },
+    )
+}
 
 @Composable
 private fun TwoFactorDialogContent(
@@ -519,7 +536,7 @@ private fun ColumnScope.TotpSetupView(
     Image(
         rememberQrCodePainter(info.otpauthUri),
         "TOTP QR code",
-        modifier = Modifier.size(220.dp).align(Alignment.CenterHorizontally)
+        modifier = Modifier.size(220.dp).align(Alignment.CenterHorizontally),
     )
     Text("Secret: ${info.secret}")
     Button({
@@ -588,13 +605,12 @@ private suspend fun updateUser(
     globalDialogController: AppGlobalDialogController,
     closeDialog: () -> Unit,
 ) {
-    val body = when (showInputDialog) {
-        is SettingOption.Name -> UpdateUserBody(nickname = string)
-
-        is SettingOption.Aid -> UpdateUserBody(aid = string)
-
-        else -> null
-    } ?: return
+    val body =
+        when (showInputDialog) {
+            is SettingOption.Name -> UpdateUserBody(nickname = string)
+            is SettingOption.Aid -> UpdateUserBody(aid = string)
+            else -> null
+        } ?: return
     globalDialogController.useResult {
         request {
             updateUserInfo(body)

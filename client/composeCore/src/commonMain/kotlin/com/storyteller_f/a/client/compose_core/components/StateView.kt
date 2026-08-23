@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.components
 
 import androidx.compose.animation.AnimatedVisibility
@@ -53,19 +57,18 @@ fun <T : Any> StateView(
 ) {
     val pagingItems = pagingViewModel.flow.collectAsLazyPagingItems()
     var pullRefreshing by remember { mutableStateOf(false) }
-    val refreshState = rememberPullRefreshState(refreshing = pullRefreshing, onRefresh = {
-        pullRefreshing = true
-        pagingItems.refresh()
-    })
+    val refreshState =
+        rememberPullRefreshState(refreshing = pullRefreshing, onRefresh = {
+            pullRefreshing = true
+            pagingItems.refresh()
+        })
     val refreshLoadState = pagingItems.loadState.refresh
     LaunchedEffect(key1 = pullRefreshing, key2 = refreshLoadState) {
         // 增加延时，确保pagingItems真正进入刷新状态
         delay(REFRESH_AFTER)
-        if (pullRefreshing) {
-            // 刷新结束或者当前没有内容时停止刷新，如果没有内容会使用列表刷新控件
-            if (refreshLoadState !is LoadState.Loading || pagingItems.itemCount == 0) {
-                pullRefreshing = false
-            }
+        // 刷新结束或者当前没有内容时停止刷新，如果没有内容会使用列表刷新控件
+        if (pullRefreshing && (refreshLoadState !is LoadState.Loading || pagingItems.itemCount == 0)) {
+            pullRefreshing = false
         }
     }
     Box(modifier = modifier.pullRefresh(refreshState)) {
@@ -74,10 +77,11 @@ fun <T : Any> StateView(
             StateViewTopIndicator(pagingItems, pullRefreshing)
         } else {
             CenterBox {
-                when (val state = (pagingItems.loadState.refresh).toLoadingState()) {
-                    is LoadingState.Error -> ExceptionCell(state.e) {
-                        pagingItems.refresh()
-                    }
+                when (val state = pagingItems.loadState.refresh.toLoadingState()) {
+                    is LoadingState.Error ->
+                        ExceptionCell(state.e) {
+                            pagingItems.refresh()
+                        }
 
                     is LoadingState.Done ->
                         Text(text = stringResource(Res.string.no_content_yet))
@@ -92,17 +96,14 @@ fun <T : Any> StateView(
 
 @OptIn(ExperimentalMaterialApi::class, FlowPreview::class)
 @Composable
-fun <T> StateView(
-    handler: LoadingHandler<T>,
-    modifier: Modifier = Modifier,
-    content: @Composable (T & Any) -> Unit,
-) {
+fun <T> StateView(handler: LoadingHandler<T>, modifier: Modifier = Modifier, content: @Composable (T & Any) -> Unit) {
     val state by handler.state.collectAsState()
     var pullRefreshing by remember { mutableStateOf(false) }
-    val refreshState = rememberPullRefreshState(refreshing = pullRefreshing, onRefresh = {
-        pullRefreshing = true
-        handler.refresh()
-    })
+    val refreshState =
+        rememberPullRefreshState(refreshing = pullRefreshing, onRefresh = {
+            pullRefreshing = true
+            handler.refresh()
+        })
     LaunchedEffect(key1 = pullRefreshing, key2 = state) {
         delay(REFRESH_AFTER)
         if (pullRefreshing && state !is LoadingState.Loading) pullRefreshing = false
@@ -120,7 +121,7 @@ private fun <T> HandlerStateViewInternal(
     data: T?,
     handler: LoadingHandler<T>,
     pullRefreshing: Boolean,
-    content: @Composable ((T & Any) -> Unit)
+    content: @Composable ((T & Any) -> Unit),
 ) {
     val state by handler.state.collectAsState()
     if (data != null) {
@@ -144,11 +145,7 @@ private fun <T> HandlerStateViewInternal(
 }
 
 @Composable
-private fun <T> StateViewTopIndicator(
-    state: LoadingState?,
-    handler: LoadingHandler<T>,
-    pullRefreshing: Boolean
-) {
+private fun <T> StateViewTopIndicator(state: LoadingState?, handler: LoadingHandler<T>, pullRefreshing: Boolean) {
     val newState = if (state is LoadingState.Loading || pullRefreshing) LoadingState.Done else state
     StateViewTopIndicatorInternal(newState) {
         handler.refresh()
@@ -156,19 +153,17 @@ private fun <T> StateViewTopIndicator(
 }
 
 @Composable
-private fun <T : Any> StateViewTopIndicator(
-    pagingItems: LazyPagingItems<T>,
-    pullRefreshing: Boolean
-) {
+private fun <T : Any> StateViewTopIndicator(pagingItems: LazyPagingItems<T>, pullRefreshing: Boolean) {
     val combinedLoadStates = pagingItems.loadState
     val refreshState = combinedLoadStates.refresh.toLoadingState()
-    val newState = if (pullRefreshing && refreshState is LoadingState.Loading) {
-        LoadingState.Done
-    } else {
-        refreshState
-    }
+    val newState =
+        if (pullRefreshing && refreshState is LoadingState.Loading) {
+            LoadingState.Done
+        } else {
+            refreshState
+        }
     StateViewTopIndicatorInternal(
-        newState
+        newState,
     ) {
         pagingItems.refresh()
     }
@@ -176,11 +171,12 @@ private fun <T : Any> StateViewTopIndicator(
 
 class LoadingStatePreviewProvider : PreviewParameterProvider<LoadingState> {
     override val values: Sequence<LoadingState>
-        get() = sequenceOf(
-            LoadingState.Loading,
-            LoadingState.Done,
-            LoadingState.Error(Exception())
-        )
+        get() =
+            sequenceOf(
+                LoadingState.Loading,
+                LoadingState.Done,
+                LoadingState.Error(Exception("Preview loading failure")),
+            )
 }
 
 @Preview
@@ -195,7 +191,7 @@ private fun StateViewTopIndicatorInternal(
         Box(
             Modifier.padding(16.dp)
                 .clip(shape)
-                .background(MaterialTheme.colorScheme.primaryContainer)
+                .background(MaterialTheme.colorScheme.primaryContainer),
         ) {
             if (loadingState is LoadingState.Error) {
                 ExceptionCell(loadingState.e) {
@@ -217,27 +213,27 @@ fun <T : Any> RefCellStateView(
     val data by handler.data.collectAsState()
     val state by handler.state.collectAsState()
     Box(modifier = modifier) {
-        data.let {
-            if (it != null) {
-                content(it)
+        data.let { value ->
+            if (value != null) {
+                content(value)
             } else {
-                when (val localState = state) {
-                    is LoadingState.Error -> Box(
-                        modifier = Modifier.fillMaxSize().clickable {
+                val localState = state
+                if (localState is LoadingState.Error) {
+                    Box(
+                        modifier =
+                        Modifier.fillMaxSize().clickable {
                             // TODO show message
                         }.padding(vertical = 8.dp),
-                        contentAlignment = Alignment.Center
+                        contentAlignment = Alignment.Center,
                     ) {
                         ExceptionView(localState.e)
                     }
-
-                    else -> {
-                        Box(
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator()
-                        }
+                } else {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        CircularProgressIndicator()
                     }
                 }
             }
@@ -258,19 +254,17 @@ private fun RemoteMediatorLoadingView() {
     Column(
         modifier = Modifier.padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
         Text(
             text = "Waiting for items to load from the backend",
-            modifier = Modifier.fillMaxWidth().wrapContentWidth(Alignment.CenterHorizontally)
+            modifier = Modifier.fillMaxWidth().wrapContentWidth(Alignment.CenterHorizontally),
         )
     }
 }
 
-fun LazyGridScope.topPrepend(
-    combinedLoadStates: CombinedLoadStates
-) {
+fun LazyGridScope.topPrepend(combinedLoadStates: CombinedLoadStates) {
     if (combinedLoadStates.prepend == LoadState.Loading) {
         item("prepend", span = {
             GridItemSpan(maxLineSpan)
@@ -288,9 +282,7 @@ fun LazyListScope.bottomAppending(combinedLoadStates: CombinedLoadStates) {
     }
 }
 
-fun LazyGridScope.bottomAppending(
-    combinedLoadStates: CombinedLoadStates,
-) {
+fun LazyGridScope.bottomAppending(combinedLoadStates: CombinedLoadStates) {
     if (combinedLoadStates.append == LoadState.Loading) {
         item("append", span = {
             GridItemSpan(maxLineSpan)
@@ -307,13 +299,14 @@ fun <T : Any> LazyListScope.pagingItems(
     listId: String? = null,
     itemContent: @Composable LazyItemScope.(index: Int) -> Unit,
 ) {
-    val k = if (key != null) {
-        lazyPagingItems.itemKey {
-            key(it)
+    val k =
+        if (key != null) {
+            lazyPagingItems.itemKey {
+                key(it)
+            }
+        } else {
+            null
         }
-    } else {
-        null
-    }
     val spacerId = if (listId != null) "spacer_$listId" else "spacer_placeholder"
     item(spacerId) {
         Spacer(modifier = Modifier.height(1.dp))
@@ -329,23 +322,26 @@ fun <T : Any> LazyGridScope.pagingItems(
     listId: String? = null,
     itemContent: @Composable LazyGridItemScope.(index: Int) -> Unit,
 ) {
-    val k = if (key != null) {
-        lazyPagingItems.itemKey {
-            key(it)
+    val k =
+        if (key != null) {
+            lazyPagingItems.itemKey {
+                key(it)
+            }
+        } else {
+            null
         }
-    } else {
-        null
-    }
-    val c = lazyPagingItems.itemContentType {
-        contentType(it)
-    }
-    val s: (LazyGridItemSpanScope.(Int) -> GridItemSpan)? = if (span != null) {
-        {
-            span(lazyPagingItems[it]!!)
+    val c =
+        lazyPagingItems.itemContentType {
+            contentType(it)
         }
-    } else {
-        null
-    }
+    val s: (LazyGridItemSpanScope.(Int) -> GridItemSpan)? =
+        if (span != null) {
+            {
+                span(checkNotNull(lazyPagingItems[it]) { "Paging item at index $it is unavailable" })
+            }
+        } else {
+            null
+        }
     val spacerId = if (listId != null) "spacer_$listId" else "spacer_placeholder"
     item(spacerId, span = {
         GridItemSpan(maxLineSpan)
@@ -355,12 +351,11 @@ fun <T : Any> LazyGridScope.pagingItems(
     items(lazyPagingItems.itemCount, k, s, c, itemContent)
 }
 
-private fun LoadState?.toLoadingState() = when (this) { null -> null
-
+private fun LoadState?.toLoadingState() =
+    when (this) {
+    null -> null
     is LoadState.Loading -> LoadingState.Loading
-
     is LoadState.Error -> LoadingState.Error(error)
-
     is LoadState.NotLoading -> LoadingState.Done
 }
 

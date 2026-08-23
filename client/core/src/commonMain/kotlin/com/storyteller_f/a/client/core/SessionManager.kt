@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.core
 
 import com.storyteller_f.a.api.SignInBody
@@ -11,6 +15,7 @@ import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.cancellableRunCatching
 import com.storyteller_f.shared.utils.checkTsIsValid
 import com.storyteller_f.shared.utils.extractMarkdownMediaLink
 import io.ktor.client.HttpClient
@@ -51,19 +56,17 @@ class SimplePassHolder : PassHolder {
     }
 }
 
-class ConstPassHolder(override val currentUserPass: UserPass?) : PassHolder
+data class ConstPassHolder(override val currentUserPass: UserPass?) : PassHolder
 
 class SimpleSessionModel<U : PrimaryKeyIdentifiable> : SessionModel<U> {
-
     // 用于header 和server 协商被签名的数据
     private var currentStamp = 0L
+    override val userHandler = FixedLoadingHandler<U?>()
     override val uid: PrimaryKey?
         get() = userHandler.data.value?.id
 
     // currentData 是本地使用的，但是还是需要依据server 的为准
     override var dataAndSignature: Pair<String, String?>? = null
-
-    override val userHandler = FixedLoadingHandler<U?>()
 
     @OptIn(ExperimentalTime::class)
     override fun generateData(): String {
@@ -112,7 +115,7 @@ interface UserSessionManager : IUserSessionManager {
     val webSocketClient: WebSocketClientImpl
 }
 
-class SimpleUserSessionManager(
+data class SimpleUserSessionManager(
     override val client: HttpClient,
     override val webSocketClient: WebSocketClientImpl,
     override val model: SessionModel<UserInfo>,
@@ -122,7 +125,7 @@ class SimpleUserSessionManager(
 
 interface PanelSessionManager : SessionManager<PanelAccountInfo>
 
-class SimplePanelSessionManager(
+data class SimplePanelSessionManager(
     override val client: HttpClient,
     override val model: SessionModel<PanelAccountInfo>,
     val cookieManager: AcceptAllCookiesStorage,
@@ -138,17 +141,18 @@ fun createSimpleUserSessionManager(
 ): SimpleUserSessionManager {
     val model = UserSessionModel()
     val client = createClient(model, cookieManager)
-    val webSocketClient = WebSocketClientImpl(
-        model,
-        passHolder,
-        { userInfo, sig ->
-            client.webSocketSession(webSocketUrl) {
-                addRequestHeadersFromInfo(userInfo, sig)
-            }
-        },
-    ) { frame, session ->
-        onReceiveFrame(frame, model, session)
-    }
+    val webSocketClient =
+        WebSocketClientImpl(
+            model,
+            passHolder,
+            { userInfo, sig ->
+                client.webSocketSession(webSocketUrl) {
+                    addRequestHeadersFromInfo(userInfo, sig)
+                }
+            },
+        ) { frame, session ->
+            onReceiveFrame(frame, model, session)
+        }
     return SimpleUserSessionManager(client, webSocketClient, model, cookieManager, passHolder)
 }
 
@@ -168,7 +172,7 @@ suspend fun UserSessionManager.login() {
     userHandler.request({
         userHandler.done(it)
     }) {
-        runCatching {
+        cancellableRunCatching {
             val data = getData().getOrThrow()
             val address = userPass.address().getOrThrow()
             val signature = userPass.signature(finalData(data)).getOrThrow()
@@ -189,7 +193,7 @@ suspend fun PanelSessionManager.login() {
     userHandler.request({
         userHandler.done(it)
     }) {
-        runCatching {
+        cancellableRunCatching {
             val data = getData().getOrThrow()
             val address = userPass.address().getOrThrow()
             val signature = userPass.signature(finalData(data)).getOrThrow()
@@ -200,37 +204,26 @@ suspend fun PanelSessionManager.login() {
     }
 }
 
-data class PreparedSignInParam(
-    val signature: String,
-    val address: String,
-    val authKey: AuthKey,
-    val data: String,
-)
+data class PreparedSignInParam(val signature: String, val address: String, val authKey: AuthKey, val data: String)
 
-sealed class UserAuthResult {
-    data class Success(val signResult: SignResult<UserInfo>, val userPass: UserPass) : UserAuthResult()
-    data class RequiresTotp(val pending: PendingTotpSignIn) : UserAuthResult()
+sealed interface UserAuthResult {
+    data class Success(val signResult: SignResult<UserInfo>, val userPass: UserPass) : UserAuthResult
+    data class RequiresTotp(val pending: PendingTotpSignIn) : UserAuthResult
 }
 
-data class PendingTotpSignIn(
-    val authKey: AuthKey,
-    val data: String,
-    val signature: String,
-    val address: String,
-)
+data class PendingTotpSignIn(val authKey: AuthKey, val data: String, val signature: String, val address: String)
 
 suspend fun prepareSignInFromPrivateKey(
     authKey: AuthKey,
     getData: suspend () -> Result<String>,
-): Result<PreparedSignInParam> {
-    return getAlgo(authKey.algo).runCatching {
-        val data = getData().getOrThrow()
-        val f = finalData(data)
+): Result<PreparedSignInParam> =
+    getAlgo(authKey.algo).cancellableRunCatching {
+    val data = getData().getOrThrow()
+    val f = finalData(data)
 
-        val signature = signature(authKey.derPrivateKey, f).getOrThrow()
-        val address = calcAddress(authKey.derPublicKey).getOrThrow()
-        PreparedSignInParam(signature, address, authKey, data)
-    }
+    val signature = signature(authKey.derPrivateKey, f).getOrThrow()
+    val address = calcAddress(authKey.derPublicKey).getOrThrow()
+    PreparedSignInParam(signature, address, authKey, data)
 }
 
 data class SignResult<U>(
@@ -241,68 +234,60 @@ data class SignResult<U>(
     val authKey: AuthKey,
 )
 
-suspend fun UserSessionManager.userSignUp(
-    authKey: AuthKey,
-    passHolder: SimplePassHolder
-): UserInfo {
+suspend fun UserSessionManager.userSignUp(authKey: AuthKey, passHolder: SimplePassHolder): UserInfo {
     val signResult = getUserSignUpPass(authKey)
-    val userPass = RawUserPass(
-        RawUserPassInfo(
-            signResult.address,
-            signResult.authKey,
+    val userPass =
+        RawUserPass(
+            RawUserPassInfo(
+                signResult.address,
+                signResult.authKey,
+            ),
         )
-    )
     model.updateUser(signResult.userInfo)
     model.updateSignature(signResult.data, signResult.signature)
     passHolder.updateState(ClientSessionState.Success(userPass))
     return signResult.userInfo
 }
 
-suspend fun UserSessionManager.userSignIn(
-    authKey: AuthKey,
-    passHolder: SimplePassHolder
-): UserInfo {
+suspend fun UserSessionManager.userSignIn(authKey: AuthKey, passHolder: SimplePassHolder): UserInfo {
     val signResult = getUserSignInPass(authKey)
-    val userPass = RawUserPass(
-        RawUserPassInfo(
-            signResult.address,
-            signResult.authKey,
+    val userPass =
+        RawUserPass(
+            RawUserPassInfo(
+                signResult.address,
+                signResult.authKey,
+            ),
         )
-    )
     model.updateUser(signResult.userInfo)
     model.updateSignature(signResult.data, signResult.signature)
     passHolder.updateState(ClientSessionState.Success(userPass))
     return signResult.userInfo
 }
 
-suspend fun PanelSessionManager.panelSignUp(
-    authKey: AuthKey,
-    passHolder: SimplePassHolder
-): PanelAccountInfo {
+suspend fun PanelSessionManager.panelSignUp(authKey: AuthKey, passHolder: SimplePassHolder): PanelAccountInfo {
     val signResult = getPanelUserSignUpPass(authKey)
-    val userPass = RawUserPass(
-        RawUserPassInfo(
-            signResult.address,
-            signResult.authKey,
+    val userPass =
+        RawUserPass(
+            RawUserPassInfo(
+                signResult.address,
+                signResult.authKey,
+            ),
         )
-    )
     model.updateUser(signResult.userInfo)
     model.updateSignature(signResult.data, signResult.signature)
     passHolder.updateState(ClientSessionState.Success(userPass))
     return signResult.userInfo
 }
 
-suspend fun PanelSessionManager.panelSignIn(
-    authKey: AuthKey,
-    passHolder: SimplePassHolder
-): PanelAccountInfo {
+suspend fun PanelSessionManager.panelSignIn(authKey: AuthKey, passHolder: SimplePassHolder): PanelAccountInfo {
     val signResult = getPanelUserSignInPass(authKey)
-    val userPass = RawUserPass(
-        RawUserPassInfo(
-            signResult.address,
-            signResult.authKey,
+    val userPass =
+        RawUserPass(
+            RawUserPassInfo(
+                signResult.address,
+                signResult.authKey,
+            ),
         )
-    )
     model.updateUser(signResult.userInfo)
     model.updateSignature(signResult.data, signResult.signature)
     passHolder.updateState(ClientSessionState.Success(userPass))
@@ -310,10 +295,7 @@ suspend fun PanelSessionManager.panelSignIn(
 }
 
 @OptIn(ExperimentalStdlibApi::class)
-suspend fun processEncryptedTopic(
-    topicInfos: List<TopicInfo>,
-    manager: UserSessionManager
-): List<TopicInfo> {
+suspend fun processEncryptedTopic(topicInfos: List<TopicInfo>, manager: UserSessionManager): List<TopicInfo> {
     val model = manager.model
     val uid = model.uid
     val key = manager.passHolder.currentUserPass
@@ -326,18 +308,20 @@ suspend fun processEncryptedTopic(
         } else {
             val s = content.encryptedKey[uid]
             if (s != null) {
-                val topicContent = key.decrypt(
-                    content.encrypted.hexToByteArray(),
-                    s.hexToByteArray()
-                ).fold(onSuccess = {
-                    val mediaInfos = extractMarkdownMediaLink(it).mapNotNull { mediaName ->
-                        manager.getMediaByName(mediaName, topicInfo.rootId, topicInfo.rootType)
-                            .getOrNull()
-                    }
-                    TopicContent.Plain(it, mediaInfos)
-                }, onFailure = {
-                    TopicContent.DecryptFailed(it.message.toString())
-                })
+                val topicContent =
+                    key.decrypt(
+                        content.encrypted.hexToByteArray(),
+                        s.hexToByteArray(),
+                    ).fold(onSuccess = {
+                        val mediaInfos =
+                            extractMarkdownMediaLink(it).mapNotNull { mediaName ->
+                                manager.getMediaByName(mediaName, topicInfo.rootId, topicInfo.rootType)
+                                    .getOrNull()
+                            }
+                        TopicContent.Plain(it, mediaInfos)
+                    }, onFailure = {
+                        TopicContent.DecryptFailed(it.message?.toString().orEmpty())
+                    })
                 topicInfo.copy(content = topicContent)
             } else {
                 topicInfo.copy(content = TopicContent.DecryptFailed("auth failed"))

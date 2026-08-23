@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app
 
 import androidx.compose.foundation.layout.Arrangement
@@ -93,8 +97,8 @@ fun InfoTableScreenshot() {
                 listOf(
                     "Name" to "Snapshot fixture",
                     "Status" to "Ready",
-                    "Scope" to "client/composeCore"
-                )
+                    "Scope" to "client/composeCore",
+                ),
             )
         }
     }
@@ -128,7 +132,7 @@ fun PrivateKeyEditorScreenshot() {
                 onAlgoChange = {},
                 onConfirmPrivateKey = {},
                 onConfirmEncryptionPrivateKey = {},
-                onCancel = {}
+                onCancel = {},
             )
         }
     }
@@ -209,11 +213,12 @@ private fun ScreenshotAppTheme(content: @Composable () -> Unit) {
     }
 }
 
-private fun sampleRoom() = RoomInfo.EMPTY.copy(
+private fun sampleRoom() =
+    RoomInfo.EMPTY.copy(
     id = 301,
     createdTime = fixedTime(),
     name = "Snapshot room",
-    memberCount = 12
+    memberCount = 12,
 )
 
 private fun fixedTime() = LocalDateTime(2026, 1, 2, 3, 4, 5)

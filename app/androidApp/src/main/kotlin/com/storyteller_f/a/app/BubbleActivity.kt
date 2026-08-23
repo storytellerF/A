@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app
 
 import android.content.Intent
@@ -25,7 +29,7 @@ class BubbleActivity : ComponentActivity() {
                 }
             } else {
                 CompositionLocalProvider(
-                    LocalUiViewModel provides uiViewModel
+                    LocalUiViewModel provides uiViewModel,
                 ) {
                     BubblePage(currentRoomId)
                 }

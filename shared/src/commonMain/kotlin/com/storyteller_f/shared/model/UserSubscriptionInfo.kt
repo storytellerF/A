@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.shared.model
 
 import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
@@ -14,19 +18,21 @@ data class UserSubscriptionInfo(
     val objectId: PrimaryKey,
     val objectType: ObjectType,
     val createdTime: LocalDateTime,
-    val extensions: Extensions? = null
+    val extensions: Extensions? = null,
 ) : PrimaryKeyIdentifiable {
     @Serializable
     data class Extensions(val topicInfo: TopicInfo? = null)
 
     companion object {
-        val EMPTY = UserSubscriptionInfo(
-            id = DEFAULT_PRIMARY_KEY,
-            uid = DEFAULT_PRIMARY_KEY,
-            objectId = DEFAULT_PRIMARY_KEY,
-            objectType = ObjectType.TOPIC,
-            now(),
-            null
-        )
+        /** Empty subscription record used before persisted data is available. */
+        val EMPTY: UserSubscriptionInfo =
+            UserSubscriptionInfo(
+                id = DEFAULT_PRIMARY_KEY,
+                uid = DEFAULT_PRIMARY_KEY,
+                objectId = DEFAULT_PRIMARY_KEY,
+                objectType = ObjectType.TOPIC,
+                now(),
+                null,
+            )
     }
 }

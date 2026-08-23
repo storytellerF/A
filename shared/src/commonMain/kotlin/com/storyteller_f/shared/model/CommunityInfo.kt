@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.shared.model
 
 import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
@@ -51,9 +55,12 @@ data class CommunityInfo(
 }
 
 enum class PosterSearch {
-    HAS_POSTER, NO_POSTER, UNSPECIFIED
+    HAS_POSTER,
+    NO_POSTER,
+    UNSPECIFIED,
 }
 
 enum class MemberPolicy {
-    OPEN, INVITE_ONLY
+    OPEN,
+    INVITE_ONLY,
 }

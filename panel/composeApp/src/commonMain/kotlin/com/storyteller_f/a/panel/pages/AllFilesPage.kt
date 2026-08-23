@@ -1,5 +1,6 @@
-
-
+/*
+ * This is a private project. All rights reserved.
+ */
 
 package com.storyteller_f.a.panel.pages
 
@@ -43,10 +44,12 @@ fun AllFilesPage() {
 fun AllFilesPageInternal(viewModel: AllFilesViewModel) {
     val panelNav = LocalPanelNav.current
     Scaffold(
-        topBar = { TopAppBar(
-            title = { Text(stringResource(Res.string.all_files)) },
-            navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } }
-        ) }
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(Res.string.all_files)) },
+                navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } },
+            )
+        },
     ) { paddingValues ->
         val direction = LocalLayoutDirection.current
         Box(Modifier.safeArea(paddingValues, direction)) {
@@ -58,7 +61,7 @@ fun AllFilesPageInternal(viewModel: AllFilesViewModel) {
                             val name = info.name
                             val type = info.contentType
                             val size = HumanReadable.fileSize(info.size)
-                            val dim = info.dimension?.let { "${it.width}x${it.height}" } ?: ""
+                            val dim = info.dimension?.let { "${it.width}x${it.height}" }.orEmpty()
                             ListItem(
                                 modifier = Modifier.clickable { panelNav.gotoFileDetail(info.id) },
                                 leadingContent = { FileIcon(info) },
@@ -66,7 +69,7 @@ fun AllFilesPageInternal(viewModel: AllFilesViewModel) {
                                 overlineContent = { Text(type) },
                                 supportingContent = {
                                     Text(
-                                        listOf(size, dim).filter { it.isNotEmpty() }.joinToString(" • ")
+                                        listOf(size, dim).filter { it.isNotEmpty() }.joinToString(" • "),
                                     )
                                 },
                             )

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.panel
 
 import androidx.compose.runtime.CompositionLocalProvider
@@ -15,7 +19,7 @@ import kotlin.system.exitProcess
 
 fun main() {
     setupKmpLogger()
-    initForJvmMain()
+    initForJvmMain { exitProcess(1) }
     loadCryptoLibIfNeed()
     @Suppress("OPT_IN_USAGE")
     val panelUiViewModel = PanelUIViewModel(kotlinx.coroutines.GlobalScope, getDesktopPanelServerUrl())
@@ -31,20 +35,20 @@ fun main() {
     }
 }
 
-private fun initForJvmMain() {
+private fun initForJvmMain(exit: () -> Nothing) {
     Thread.setDefaultUncaughtExceptionHandler { _, e ->
         Napier.e(e) {
             "uncaught exception"
         }
-        Dialog(Frame(), e.message ?: "Error").apply {
+        val dialog = Dialog(Frame(), e.message ?: "Error")
+        dialog.apply {
             layout = BorderLayout()
             val label = TextArea(e.stackTraceToString())
             add(label, BorderLayout.CENTER)
-            val button = Button("OK").apply {
-                addActionListener {
-                    dispose()
-                    exitProcess(1)
-                }
+            val button = Button("OK")
+            button.addActionListener {
+                dispose()
+                exit()
             }
             add(button, BorderLayout.SOUTH)
             setSize(300, 300)

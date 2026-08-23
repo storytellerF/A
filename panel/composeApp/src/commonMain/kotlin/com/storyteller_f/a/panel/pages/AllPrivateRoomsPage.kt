@@ -1,4 +1,6 @@
-
+/*
+ * This is a private project. All rights reserved.
+ */
 
 package com.storyteller_f.a.panel.pages
 
@@ -42,10 +44,12 @@ fun AllPrivateRoomsPage() {
 fun AllPrivateRoomsPageInternal(viewModel: AllPrivateRoomsViewModel) {
     val panelNav = LocalPanelNav.current
     Scaffold(
-        topBar = { TopAppBar(
-            title = { Text(stringResource(Res.string.all_private_rooms)) },
-            navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } }
-        ) }
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(Res.string.all_private_rooms)) },
+                navigationIcon = { IconButton({ panelNav.open() }) { Icon(Icons.Default.Menu, null) } },
+            )
+        },
     ) { paddingValues ->
         val direction = LocalLayoutDirection.current
         Box(Modifier.safeArea(paddingValues, direction)) {
@@ -67,8 +71,8 @@ fun AllPrivateRoomsPageInternal(viewModel: AllPrivateRoomsViewModel) {
                                     Text(
                                         listOf(
                                             members,
-                                            stringResource(Res.string.room_private)
-                                        ).filter { it.isNotEmpty() }.joinToString(" • ")
+                                            stringResource(Res.string.room_private),
+                                        ).filter { it.isNotEmpty() }.joinToString(" • "),
                                     )
                                 },
                             )

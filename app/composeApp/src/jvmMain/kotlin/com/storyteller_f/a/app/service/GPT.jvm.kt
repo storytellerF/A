@@ -1,8 +1,13 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.service
 
 import com.google.ai.edge.litertlm.Backend.GPU
 import com.google.ai.edge.litertlm.Engine
 import com.google.ai.edge.litertlm.EngineConfig
+import com.storyteller_f.shared.utils.cancellableRunCatching
 import io.github.aakira.napier.Napier
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.utils.toFile
@@ -15,9 +20,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.io.files.Path
 import java.io.File
 
-actual fun buildGPT(): GPT {
-    return JvmEdgeGPT()
-}
+actual fun buildGPT(): GPT = JvmEdgeGPT()
 
 actual fun getGPTModelDirectory(): Path {
     val userHome = System.getProperty("user.home")
@@ -27,38 +30,35 @@ actual fun getGPTModelDirectory(): Path {
 class JvmEdgeGPT : GPT {
     override val supportList: List<String> = listOf("litertlm")
 
-    override suspend fun importModel(file: PlatformFile): Result<GPTModel> {
-        return runCatching {
-            val name = file.file.name
-            require(supportList.any { name.endsWith(it, ignoreCase = true) }) {
-                "unsupported model file: $name"
-            }
-            val target = Path(getGPTModelDirectory(), name)
-            withContext(Dispatchers.IO) {
-                val targetFile = target.toFile()
-                targetFile.parentFile?.mkdirs()
-                file.file.copyTo(targetFile, overwrite = true)
-            }
-            GPTModel(target.name, target.toString())
+    override suspend fun importModel(file: PlatformFile): Result<GPTModel> =
+        cancellableRunCatching {
+        val name = file.file.name
+        require(supportList.any { name.endsWith(it, ignoreCase = true) }) {
+            "unsupported model file: $name"
         }
+        val target = Path(getGPTModelDirectory(), name)
+        withContext(Dispatchers.IO) {
+            val targetFile = target.toFile()
+            targetFile.parentFile?.mkdirs()
+            file.file.copyTo(targetFile, overwrite = true)
+        }
+        GPTModel(target.name, target.toString())
     }
 
-    override suspend fun generate(
-        path: String,
-        prompt: String,
-    ): Result<Flow<GPTOutput>> {
+    override suspend fun generate(path: String, prompt: String): Result<Flow<GPTOutput>> {
         val file = File(path)
         if (!file.exists()) {
             return Result.failure(Exception("modal not exists"))
         }
         val userHome = System.getProperty("user.home")
-        val engineConfig = EngineConfig(
-            modelPath = path,
-            backend = GPU(),
-            cacheDir = File(userHome, ".storyteller_f_a/llm-cache").absolutePath
-        )
+        val engineConfig =
+            EngineConfig(
+                modelPath = path,
+                backend = GPU(),
+                cacheDir = File(userHome, ".storyteller_f_a/llm-cache").absolutePath,
+            )
         val engine = Engine(engineConfig)
-        return runCatching {
+        return cancellableRunCatching {
             withContext(Dispatchers.IO) {
                 engine.initialize()
             }
@@ -80,7 +80,10 @@ class JvmEdgeGPT : GPT {
         }
     }
 
-    override fun models(scope: CoroutineScope): Flow<List<GPTModel>> {
-        return observeModels(scope, getGPTModelDirectory(), supportList)
-    }
+    override fun models(scope: CoroutineScope): Flow<List<GPTModel>> =
+        observeModels(
+        scope,
+        getGPTModelDirectory(),
+        supportList,
+    )
 }

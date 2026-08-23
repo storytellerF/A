@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.lucene
 
 import com.storyteller_f.a.backend.core.MergedEnv
@@ -26,8 +30,7 @@ import org.apache.lucene.search.Sort
 import org.apache.lucene.search.TermQuery
 import java.nio.file.Path
 
-data class LuceneMemberDocument(val memberDocument: MemberDocument) :
-    LuceneDocument {
+data class LuceneMemberDocument(val memberDocument: MemberDocument) : LuceneDocument {
     override fun save(): Document {
         val id = memberDocument.id
         return Document().apply {
@@ -46,56 +49,54 @@ data class LuceneMemberDocument(val memberDocument: MemberDocument) :
     }
 
     companion object : LuceneDocumentCompanion<MemberDocument> {
-        override fun restore(
-            id: PrimaryKey,
-            document: Document
-        ): MemberDocument {
-            return MemberDocument(
-                id = id,
-                uid = document.get("uid").toLong(),
-                objectId = document.get("objectId").toLong(),
-                objectType = ObjectType.valueOf(document.get("objectType")),
-                nickname = document.get("nickname"),
-                objectName = document.get("objectName"),
-                communityId = document.get("communityId")?.toLong()
-            )
-        }
+        override fun restore(id: PrimaryKey, document: Document): MemberDocument =
+            MemberDocument(
+            id = id,
+            uid = document.get("uid").toLong(),
+            objectId = document.get("objectId").toLong(),
+            objectType = ObjectType.valueOf(document.get("objectType")),
+            nickname = document.get("nickname"),
+            objectName = document.get("objectName"),
+            communityId = document.get("communityId")?.toLong(),
+        )
     }
 }
 
-class LuceneMemberSearchService(path: Path, isInMemory: Boolean = false) : Lucene(path, isInMemory),
+class LuceneMemberSearchService(path: Path, isInMemory: Boolean = false) :
+    Lucene(path, isInMemory),
     MemberSearchService {
-    override suspend fun saveDocument(documents: List<MemberDocument>): Result<Unit> {
-        return useLucene {
-            saveDocumentList(documents.map {
+    override suspend fun saveDocument(documents: List<MemberDocument>): Result<Unit> =
+        useLucene {
+        saveDocumentList(
+            documents.map {
                 LuceneMemberDocument(it)
-            }, analyzer)
-        }
+            },
+            analyzer,
+        )
     }
 
-    override suspend fun deleteDocument(uid: PrimaryKey, objectId: PrimaryKey): Result<Unit> {
-        return useLucene {
-            IndexWriter(this, IndexWriterConfig(analyzer)).use { writer ->
-                val query = BooleanQuery.Builder().apply {
+    override suspend fun deleteDocument(uid: PrimaryKey, objectId: PrimaryKey): Result<Unit> =
+        useLucene {
+        IndexWriter(this, IndexWriterConfig(analyzer)).use { writer ->
+            val query =
+                BooleanQuery.Builder().apply {
                     add(LongPoint.newExactQuery("uid", uid), BooleanClause.Occur.MUST)
                     add(LongPoint.newExactQuery("objectId", objectId), BooleanClause.Occur.MUST)
                 }.build()
-                val deletedCount = writer.deleteDocuments(query)
-                Napier.d {
-                    "lucene delete member document: query=$query, deleted=$deletedCount"
-                }
+            val deletedCount = writer.deleteDocuments(query)
+            Napier.d {
+                "lucene delete member document: query=$query, deleted=$deletedCount"
             }
         }
     }
 
-    override suspend fun clean(): Result<Unit> {
-        return useLucene {
-            cleanAll(analyzer)
-        }
+    override suspend fun clean(): Result<Unit> =
+        useLucene {
+        cleanAll(analyzer)
     }
 
     override suspend fun searchDocument(
-        memberDocumentSearch: MemberDocumentSearch
+        memberDocumentSearch: MemberDocumentSearch,
     ): Result<PaginationResult<MemberDocument>> {
         if (memberDocumentSearch is MemberDocumentSearch.Keyword && memberDocumentSearch.nickname.isEmpty()) {
             return Result.success(PaginationResult(emptyList(), 0))
@@ -106,7 +107,8 @@ class LuceneMemberSearchService(path: Path, isInMemory: Boolean = false) : Lucen
             return Result.success(PaginationResult(emptyList(), 0))
         }
         if (memberDocumentSearch is MemberDocumentSearch.CommunityMembers &&
-            memberDocumentSearch.objectName.isBlank()) {
+            memberDocumentSearch.objectName.isBlank()
+        ) {
             return Result.success(PaginationResult(emptyList(), 0))
         }
         val combinedQuery = buildQuery(memberDocumentSearch)
@@ -115,55 +117,53 @@ class LuceneMemberSearchService(path: Path, isInMemory: Boolean = false) : Lucen
             "lucene search member query $combinedQuery"
         }
         return useLucene {
-            val (fetch, sort) = when (memberDocumentSearch) {
-                is MemberDocumentSearch.Keyword -> {
-                    memberDocumentSearch.fetch to Sort.RELEVANCE
-                }
+            val (fetch, sort) =
+                when (memberDocumentSearch) {
+                    is MemberDocumentSearch.Keyword -> {
+                        memberDocumentSearch.fetch to Sort.RELEVANCE
+                    }
 
-                is MemberDocumentSearch.CommunityMembers -> {
-                    memberDocumentSearch.fetch to Sort.RELEVANCE
-                }
+                    is MemberDocumentSearch.CommunityMembers -> {
+                        memberDocumentSearch.fetch to Sort.RELEVANCE
+                    }
 
-                is MemberDocumentSearch.RoomMembers -> {
-                    memberDocumentSearch.fetch to Sort.RELEVANCE
+                    is MemberDocumentSearch.RoomMembers -> {
+                        memberDocumentSearch.fetch to Sort.RELEVANCE
+                    }
                 }
-            }
             searchDocumentList(combinedQuery, fetch, sort, LuceneMemberDocument)
         }
     }
 
-    private fun buildQuery(
-        memberDocumentSearch: MemberDocumentSearch
-    ): Query {
-        return BooleanQuery.Builder().apply {
-            when (memberDocumentSearch) {
-                is MemberDocumentSearch.Keyword -> {
-                    // 按 objectId 搜索
-                    memberDocumentSearch.objectId?.let { objId ->
-                        add(LongPoint.newExactQuery("objectId", objId), BooleanClause.Occur.MUST)
-                    }
-                    // 按 nickname 搜索
-                    addPrefixAndInclusionQuery(memberDocumentSearch.nickname, "nickname")
+    private fun buildQuery(memberDocumentSearch: MemberDocumentSearch): Query =
+        BooleanQuery.Builder().apply {
+        when (memberDocumentSearch) {
+            is MemberDocumentSearch.Keyword -> {
+                // 按 objectId 搜索
+                memberDocumentSearch.objectId?.let { objId ->
+                    add(LongPoint.newExactQuery("objectId", objId), BooleanClause.Occur.MUST)
                 }
+                // 按 nickname 搜索
+                addPrefixAndInclusionQuery(memberDocumentSearch.nickname, "nickname")
+            }
 
-                is MemberDocumentSearch.CommunityMembers -> {
-                    addUidQuery(memberDocumentSearch.uid)
-                    addObjectTypeQuery(ObjectType.COMMUNITY)
-                    addObjectNameQuery(memberDocumentSearch.objectName)
-                }
+            is MemberDocumentSearch.CommunityMembers -> {
+                addUidQuery(memberDocumentSearch.uid)
+                addObjectTypeQuery(ObjectType.COMMUNITY)
+                addObjectNameQuery(memberDocumentSearch.objectName)
+            }
 
-                is MemberDocumentSearch.RoomMembers -> {
-                    addUidQuery(memberDocumentSearch.uid)
-                    addObjectTypeQuery(ObjectType.ROOM)
-                    addObjectNameQuery(memberDocumentSearch.objectName)
-                    // 添加对communityId的过滤
-                    memberDocumentSearch.communityId?.let { communityId ->
-                        add(LongField.newExactQuery("communityId", communityId), BooleanClause.Occur.MUST)
-                    }
+            is MemberDocumentSearch.RoomMembers -> {
+                addUidQuery(memberDocumentSearch.uid)
+                addObjectTypeQuery(ObjectType.ROOM)
+                addObjectNameQuery(memberDocumentSearch.objectName)
+                // 添加对communityId的过滤
+                memberDocumentSearch.communityId?.let { communityId ->
+                    add(LongField.newExactQuery("communityId", communityId), BooleanClause.Occur.MUST)
                 }
             }
-        }.build()
-    }
+        }
+    }.build()
 
     private fun BooleanQuery.Builder.addUidQuery(uid: PrimaryKey) {
         add(LongPoint.newExactQuery("uid", uid), BooleanClause.Occur.MUST)
@@ -179,13 +179,10 @@ class LuceneMemberSearchService(path: Path, isInMemory: Boolean = false) : Lucen
 }
 
 class LuceneMemberSearchServiceFactory : MemberSearchServiceFactory {
-    override fun match(env: MergedEnv): Boolean {
-        return env["SEARCH_SERVICE"] == "lucene"
-    }
+    override fun match(env: MergedEnv): Boolean = env["SEARCH_SERVICE"] == "lucene"
 
-    override fun build(env: MergedEnv): MemberSearchService {
-        return buildLuceneSearchService(env) { path, isInMemory ->
-            LuceneMemberSearchService(path.resolve("member"), isInMemory)
-        }
+    override fun build(env: MergedEnv): MemberSearchService =
+        buildLuceneSearchService(env) { path, isInMemory ->
+        LuceneMemberSearchService(path.resolve("member"), isInMemory)
     }
 }

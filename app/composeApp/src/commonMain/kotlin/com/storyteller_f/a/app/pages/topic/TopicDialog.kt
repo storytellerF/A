@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.topic
 
 import androidx.compose.foundation.layout.Box
@@ -137,7 +141,7 @@ private fun CopyButton(content: TopicContent) {
     val scope = rememberCoroutineScope()
     ButtonNav(
         Icons.Default.ContentCopy,
-        stringResource(Res.string.copy)
+        stringResource(Res.string.copy),
     ) {
         scope.launch {
             if (content is TopicContent.Plain) {
@@ -160,7 +164,7 @@ private fun SnapshotButton(topicInfo: TopicInfo) {
     val globalDialogController = LocalGlobalDialog.current
     ButtonNav(
         Icons.Default.PictureAsPdf,
-        stringResource(Res.string.snapshot)
+        stringResource(Res.string.snapshot),
     ) {
         scope.launch {
             globalDialogController.useResult {
@@ -178,7 +182,7 @@ private fun TopicPinButton(topicInfo: TopicInfo, dismissDialog: () -> Unit) {
     val globalDialogController = LocalGlobalDialog.current
     ButtonNav(
         if (topicInfo.isPin) MaterialSymbolsOutlined.KeepOff else MaterialSymbolsOutlined.Keep,
-        if (topicInfo.isPin) "Unpin" else "Pin"
+        if (topicInfo.isPin) "Unpin" else "Pin",
     ) {
         scope.launch {
             globalDialogController.pinOrUnpinTopic(topicInfo).onSuccess {
@@ -198,7 +202,7 @@ private fun TranslateButton(content: TopicContent, topicInfo: TopicInfo) {
     val sheetState = rememberModalBottomSheetState()
     ButtonNav(
         MaterialSymbolsOutlined.Translate,
-        "Translate"
+        "Translate",
     ) {
         if (content is TopicContent.Plain) {
             showSheet = true
@@ -211,50 +215,44 @@ private fun TranslateButton(content: TopicContent, topicInfo: TopicInfo) {
     }
 }
 
-suspend fun AppGlobalDialogController.pinOrUnpinTopic(
-    topicInfo: TopicInfo,
-): Result<TopicInfo> {
-    return useResult {
-        if (topicInfo.isPin) {
-            request { unpinTopic(topicInfo.id) }
-        } else {
-            request { pinTopic(topicInfo.id) }
-        }
+suspend fun AppGlobalDialogController.pinOrUnpinTopic(topicInfo: TopicInfo): Result<TopicInfo> =
+    useResult {
+    if (topicInfo.isPin) {
+        request { unpinTopic(topicInfo.id) }
+    } else {
+        request { pinTopic(topicInfo.id) }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class, InternalComposeUiApi::class)
 @Composable
-fun TopicTranslateSheet(
-    showSheet: Boolean,
-    sheetState: SheetState,
-    topicInfo: TopicInfo,
-    hideSheet: () -> Unit,
-) {
+fun TopicTranslateSheet(showSheet: Boolean, sheetState: SheetState, topicInfo: TopicInfo, hideSheet: () -> Unit) {
     BaseSheet(showSheet, sheetState, hideSheet) {
         SheetContainer {
             val currentModel by rememberStringPreference("gpt_model", "")
             val content = topicInfo.content
             Box(
-                modifier = Modifier.height(
-                    200.dp
+                modifier =
+                Modifier.height(
+                    200.dp,
                 ).padding(
-                    horizontal = 20.dp
+                    horizontal = 20.dp,
                 ).padding(
-                    bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-                ).fillMaxWidth()
+                    bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding(),
+                ).fillMaxWidth(),
             ) {
                 if (content is TopicContent.Plain) {
                     // TODO 转成ViewModel
                     val result by produceState<Result<Flow<GPTOutput>>?>(
                         null,
                         content,
-                        currentModel
+                        currentModel,
                     ) {
-                        val prompt = buildTranslatePrompt(
-                            content.plain,
-                            getCurrentLanguage()
-                        )
+                        val prompt =
+                            buildTranslatePrompt(
+                                content.plain,
+                                getCurrentLanguage(),
+                            )
                         Napier.i(tag = "gpt") {
                             "prompt $prompt"
                         }
@@ -285,15 +283,16 @@ private fun BoxScope.TopicTranslateSheetInternal(
             val scope = rememberCoroutineScope()
             val outputFlow = result.getOrThrow()
             DisposableEffect(outputFlow) {
-                val job = scope.launch {
-                    outputFlow.onCompletion {
-                        Napier.i(tag = "gpt") {
-                            "complete"
+                val job =
+                    scope.launch {
+                        outputFlow.onCompletion {
+                            Napier.i(tag = "gpt") {
+                                "complete"
+                            }
+                        }.collect {
+                            output += it.text
                         }
-                    }.collect {
-                        output += it.text
                     }
-                }
                 onDispose {
                     Napier.i(tag = "gpt") {
                         "dispose"
@@ -307,8 +306,9 @@ private fun BoxScope.TopicTranslateSheetInternal(
             }
         }
 
-        else -> result.exceptionOrNull()?.let {
-            ExceptionView(it, modifier = Modifier.align(Alignment.Center))
-        }
+        else ->
+            result.exceptionOrNull()?.let {
+                ExceptionView(it, modifier = Modifier.align(Alignment.Center))
+            }
     }
 }
